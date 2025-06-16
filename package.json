@@ -1,20 +1,29 @@
 {
-  "name": "full-stack-mobile-app",
+  "name": "pple-today",
   "private": true,
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev",
+    "dev": "turbo run start",
     "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "check-types": "turbo run check-types"
+    "format": "turbo run format",
+    "format:check": "turbo run format:check",
+    "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "^0.5.1",
+    "@changesets/cli": "^2.29.3",
+    "@pple-today/project-config": "workspace:^",
+    "eslint": "^9.22.0",
     "prettier": "^3.5.3",
     "turbo": "^2.5.2",
     "typescript": "5.8.2"
   },
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@9.9.0",
   "engines": {
     "node": ">=18"
+  },
+  "volta": {
+    "node": "22.15.0",
+    "pnpm": "9.9.0"
   }
 }

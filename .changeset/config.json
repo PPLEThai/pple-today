@@ -1,0 +1,14 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.0.2/schema.json",
+  "changelog": ["@changesets/changelog-github", { "repo": "PPLEThai/pple-today" }],
+  "commit": false,
+  "privatePackages": {
+    "tag": true,
+    "version": true
+  },
+  "fixed": [["@client/mobile"]],
+  "access": "restricted",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": []
+}

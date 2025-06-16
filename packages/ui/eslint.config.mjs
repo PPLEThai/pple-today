@@ -1,4 +1,10 @@
-import { config } from "@repo/eslint-config/react-internal";
+import { default as config } from '@pple-today/project-config/eslint/react.js'
 
-/** @type {import("eslint").Linter.Config} */
-export default config;
+export default [
+  ...config,
+  {
+    rules: {
+      '@typescript-eslint/no-require-imports': ['error', { allow: ['./assets/*'] }],
+    },
+  },
+]

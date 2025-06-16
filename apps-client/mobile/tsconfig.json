@@ -1,0 +1,18 @@
+{
+  "extends": "@pple-today/project-config/tsconfig/expo.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "rootDirs": [".", "./.expo/types"],
+    "paths": {
+      "@app/*": ["./*"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts",
+    "react-app-env.d.ts",
+    "nativewind-env.d.ts"
+  ]
+}

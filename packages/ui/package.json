@@ -1,27 +1,65 @@
 {
-  "name": "@repo/ui",
-  "version": "0.0.0",
-  "private": true,
+  "name": "@pple-today/ui",
+  "version": "0.1.0",
+  "description": "",
+  "main": "src/index.ts",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
   "exports": {
-    "./*": "./src/*.tsx"
+    "./*": "./src/components/ui/*.tsx",
+    "./components/*": "./src/components/*.tsx",
+    "./utils": "./src/utils.ts",
+    "./lib/*": "./src/lib/*.ts",
+    "./lib/icons/*": "./src/lib/icons/*.tsx",
+    "./global.css": "./global.css",
+    "./tailwind.config.js": "./tailwind.config.js"
   },
   "scripts": {
-    "lint": "eslint . --max-warnings 0",
-    "generate:component": "turbo gen react-component",
-    "check-types": "tsc --noEmit"
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@repo/eslint-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
-    "@turbo/gen": "^2.5.0",
-    "@types/node": "^22.15.3",
-    "@types/react": "19.1.0",
-    "@types/react-dom": "19.1.1",
-    "eslint": "^9.26.0",
-    "typescript": "5.8.2"
+    "@pple-today/project-config": "workspace:^",
+    "@types/node": "^22.13.9",
+    "@types/react": "19.0.0",
+    "@types/react-dom": "19.0.0",
+    "prettier-plugin-tailwindcss": "^0.5.11",
+    "tailwindcss": "^3.4.17"
   },
   "dependencies": {
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "@rn-primitives/accordion": "^1.2.0",
+    "@rn-primitives/alert-dialog": "^1.2.0",
+    "@rn-primitives/avatar": "^1.2.0",
+    "@rn-primitives/checkbox": "^1.2.0",
+    "@rn-primitives/collapsible": "^1.2.0",
+    "@rn-primitives/dialog": "^1.2.0",
+    "@rn-primitives/dropdown-menu": "^1.2.0",
+    "@rn-primitives/label": "^1.2.0",
+    "@rn-primitives/popover": "^1.2.0",
+    "@rn-primitives/progress": "^1.2.0",
+    "@rn-primitives/radio-group": "^1.2.0",
+    "@rn-primitives/select": "^1.2.0",
+    "@rn-primitives/separator": "^1.2.0",
+    "@rn-primitives/slot": "^1.2.0",
+    "@rn-primitives/switch": "^1.2.0",
+    "@rn-primitives/tabs": "^1.2.0",
+    "@rn-primitives/toggle": "^1.2.0",
+    "@rn-primitives/toggle-group": "^1.2.0",
+    "@rn-primitives/tooltip": "^1.2.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "expo-navigation-bar": "^4.2.5",
+    "lucide-react-native": "^0.514.0",
+    "nativewind": "^4.1.23",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "react-native": "0.79.2",
+    "react-native-reanimated": "~3.17.4",
+    "react-native-safe-area-context": "5.4.0",
+    "react-native-svg": "^15.12.0",
+    "tailwind-merge": "^3.3.1",
+    "tailwindcss-animate": "^1.0.7"
   }
 }
