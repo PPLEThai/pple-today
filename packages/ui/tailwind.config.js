@@ -1,5 +1,5 @@
 import nativewindPreset from 'nativewind/preset'
-import { hairlineWidth } from 'nativewind/theme'
+import { hairlineWidth, platformSelect } from 'nativewind/theme'
 import tailwindcssAnimation from 'tailwindcss-animate'
 
 /** @type {import('tailwindcss').Config} */
@@ -132,14 +132,18 @@ export default {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
       },
-      // fontFamily: {
-      //   sans: platformSelect({
-      //     android: ['Anakotmai', 'sans-serif'],
-      //     ios: ['Anakotmai', "'system font'"],
-      //     default: ['Anakotmai', 'ui-sans-serif'],
-      //   }),
-      //   serif: platformSelect({ android: 'serif', ios: 'Georgia' }),
-      // },
+      fontFamily: {
+        sans: platformSelect({
+          android: ['Anakotmai_500Medium', 'sans-serif'],
+          ios: ['Anakotmai-Medium', "'system font'"],
+          default: ['Anakotmai-Medium', 'ui-sans-serif'],
+        }),
+        serif: platformSelect({
+          android: ['NotoSansThaiLooped_500Medium', 'serif'],
+          ios: ['NotoSansThaiLooped-Medium', 'Georgia'],
+          default: ['NotoSansThaiLooped-Medium', 'serif'],
+        }),
+      },
     },
   },
   plugins: [tailwindcssAnimation],

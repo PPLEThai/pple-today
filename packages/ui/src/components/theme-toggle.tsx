@@ -6,6 +6,9 @@ import { Sun } from '../lib/icons/Sun'
 import { useColorScheme } from '../lib/useColorScheme'
 
 export function ThemeToggle() {
+  // We force light mode
+  // Please see ColorSchemeProvider
+  return null
   const { isDarkColorScheme, setColorScheme } = useColorScheme()
 
   function toggleColorScheme() {

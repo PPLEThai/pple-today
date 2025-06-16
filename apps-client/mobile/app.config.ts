@@ -36,60 +36,6 @@ export default {
           backgroundColor: '#ffffff',
         },
       ],
-      [
-        'expo-font',
-        {
-          fonts: [
-            'node_modules/@expo-google-fonts/inter/Inter_300Light.ttf',
-            'node_modules/@expo-google-fonts/inter/500Medium/Inter_500Medium.ttf',
-            'node_modules/@expo-google-fonts/inter/Inter_700Bold.ttf',
-            'node_modules/@expo-google-fonts/noto-sans-thai-looped/400Regular/NotoSansThaiLooped_400Regular.ttf',
-            // {
-            //   fontFamily: 'Anakotmai',
-            //   fontDefinitions: [
-            //     {
-            //       path: './assets/fonts/Anakotmai-Light.ttf',
-            //       weight: 300,
-            //     },
-            //     {
-            //       path: './assets/fonts/Anakotmai-Medium.ttf',
-            //       weight: 500,
-            //     },
-            //     {
-            //       path: './assets/fonts/Anakotmai-Bold.ttf',
-            //       weight: 700,
-            //     },
-            //   ],
-            // },
-          ],
-          // android: {
-          //   fonts: [
-          //     {
-          //       fontFamily: 'Anakotmai',
-          //       fontDefinitions: [
-          //         {
-          //           path: './assets/fonts/Anakotmai-Light.ttf',
-          //           weight: 300,
-          //         },
-          //         {
-          //           path: './assets/fonts/Anakotmai-Medium.ttf',
-          //           weight: 500,
-          //         },
-          //         {
-          //           path: './assets/fonts/Anakotmai-Bold.ttf',
-          //           weight: 700,
-          //         },
-          //       ],
-          //     },
-          //   ],
-          // },
-          // ios: [
-          //   './assets/fonts/Anakotmai-Light.ttf',
-          //   './assets/fonts/Anakotmai-Medium.ttf',
-          //   './assets/fonts/Anakotmai-Bold.ttf',
-          // ],
-        },
-      ],
     ],
     experiments: {
       typedRoutes: true,
