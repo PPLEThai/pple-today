@@ -1,6 +1,16 @@
 import { View } from 'react-native'
 
 import { Button } from '@pple-today/ui/button'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@pple-today/ui/dialog'
 import { Text } from '@pple-today/ui/text'
 import { H1, H2 } from '@pple-today/ui/typography'
 
@@ -44,6 +54,33 @@ export function Playground() {
         </View>
       </View>
       <AuthPlayground />
+      <View className="flex flex-col gap-2">
+        <H2>Dialog</H2>
+        <View className="flex flex-row gap-2 flex-wrap">
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Text>Edit Profile</Text>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Edit profile</DialogTitle>
+                <DialogDescription>
+                  Make changes to your profile here. Click save when you&apos;re done.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button>
+                    <Text>OK</Text>
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </View>
+      </View>
     </View>
   )
 }

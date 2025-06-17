@@ -9,6 +9,7 @@ import {
   NotoSansThaiLooped_700Bold,
 } from '@expo-google-fonts/noto-sans-thai-looped'
 import { NAV_THEME } from '@pple-today/ui/lib/constants'
+import { PortalHost } from '@pple-today/ui/portal'
 import { DarkTheme, DefaultTheme, Theme, ThemeProvider } from '@react-navigation/native'
 import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
@@ -33,11 +34,14 @@ export {
 
 export default function RootLayout() {
   return (
-    <ColorSchemeProvider>
-      <FontProvider>
-        <Stack />
-      </FontProvider>
-    </ColorSchemeProvider>
+    <>
+      <ColorSchemeProvider>
+        <FontProvider>
+          <Stack />
+        </FontProvider>
+      </ColorSchemeProvider>
+      <PortalHost />
+    </>
   )
 }
 
