@@ -59,10 +59,10 @@ function FontProvider({ children }: { children: React.ReactNode }) {
     }
   }, [fontLoaded, fontError])
 
-  // Uncomment this if you want to show a loading screen or spinner while fonts are loading
-  // if (!fontLoaded && !fontError) {
-  //   return null
-  // }
+  // TODO: add a loading screen or spinner while fonts are loading
+  if (!fontLoaded && !fontError) {
+    return null
+  }
 
   return children
 }
