@@ -29,6 +29,7 @@
     "tailwindcss": "^3.4.17"
   },
   "dependencies": {
+    "@gorhom/bottom-sheet": "^5.1.6",
     "@rn-primitives/accordion": "^1.2.0",
     "@rn-primitives/alert-dialog": "^1.2.0",
     "@rn-primitives/avatar": "^1.2.0",
@@ -56,7 +57,8 @@
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-native": "0.79.2",
-    "react-native-reanimated": "~3.17.4",
+    "react-native-gesture-handler": "~2.24.0",
+    "react-native-reanimated": "~3.17.5",
     "react-native-safe-area-context": "5.4.0",
     "react-native-svg": "^15.12.0",
     "tailwind-merge": "^3.3.1",

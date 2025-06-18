@@ -1,6 +1,7 @@
 import '../global.css'
 
 import * as React from 'react'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 import { Inter_300Light, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter'
 import {
@@ -8,6 +9,7 @@ import {
   NotoSansThaiLooped_500Medium,
   NotoSansThaiLooped_700Bold,
 } from '@expo-google-fonts/noto-sans-thai-looped'
+import { BottomSheetModalProvider } from '@pple-today/ui/bottom-sheet/index'
 import { NAV_THEME } from '@pple-today/ui/lib/constants'
 import { PortalHost } from '@pple-today/ui/portal'
 import { DarkTheme, DefaultTheme, Theme, ThemeProvider } from '@react-navigation/native'
@@ -37,7 +39,11 @@ export default function RootLayout() {
     <>
       <ColorSchemeProvider>
         <FontProvider>
-          <Stack />
+          <GestureHandlerRootView>
+            <BottomSheetModalProvider>
+              <Stack />
+            </BottomSheetModalProvider>
+          </GestureHandlerRootView>
         </FontProvider>
       </ColorSchemeProvider>
       <PortalHost />
