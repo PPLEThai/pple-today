@@ -4,3 +4,5 @@
 
 # except for sensitive files
 key.json
+# TODO: we might need this in android/app folder im not sure
+google-services.json
