@@ -1,0 +1,6 @@
+# Unignore fastlane config files
+!android/
+!ios/
+
+# except for sensitive files
+key.json
