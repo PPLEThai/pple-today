@@ -3,7 +3,7 @@
 Please run this after `pnpm prebuild` to setup fastlane
 
 ```
-sh ./fastlane/copy.sh
+sh ./fastlane/setup.sh
 ```
 
 These are fastlane config file that will be copied to `android/` and `ios/` folder which will copy files like

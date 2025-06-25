@@ -24,15 +24,37 @@ platform :android do
   
   desc "Submit a new Beta Build to Firebase App Distribution"
   lane :beta do
+    app_id = "1:565613412853:android:6b3534fdf4c6197c3fa0bc"
+    # Grab the latest build number from Firebase App Distribution
+    latest_release = firebase_app_distribution_get_latest_release(
+      app: app_id,
+      service_credentials_file: "key.json",
+    )
+
+    # If no release exists, start with build number 1
+    if latest_release.nil?
+      latest_release = { buildVersion: 0 }
+      UI.message "No previous release found on Firebase App Distribution."
+    end
+    # Increment the build number for the new release
+    current_version_code = latest_release[:buildVersion].to_i + 1
+    increment_version_code(
+      version_code: current_version_code,
+      gradle_file_path: "app/build.gradle" # Adjust path if needed
+    )
     gradle(
       task: 'assemble',
-      build_type: 'Release'
+      build_type: 'Release',
+      properties: {
+        "android.injected.version.code" => current_version_code,
+      }
     )
     firebase_app_distribution(
-      app: "1:565613412853:android:6b3534fdf4c6197c3fa0bc",
+      app: app_id,
       groups: "dev-team",
+      service_credentials_file: "key.json",
+      release_notes: "New build with automated version increment. Version Code: #{current_version_code}",
       # debug: true,
-      service_credentials_file: "key.json"
     )
   end
 end
