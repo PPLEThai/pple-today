@@ -5,11 +5,11 @@ import { version } from './package.json'
 export default {
   expo: {
     name: 'PPLE Today',
-    slug: 'mobile',
+    slug: 'pple-today',
+    scheme: 'pple-today',
     version: version,
     orientation: 'portrait',
     icon: './assets/images/icon.png',
-    scheme: 'mobile',
     userInterfaceStyle: 'automatic',
     newArchEnabled: true,
     ios: {

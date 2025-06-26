@@ -1,14 +1,7 @@
-# This file contains the fastlane.tools configuration
-# You can find the documentation at https://docs.fastlane.tools
-#
-# For a list of all available actions, check out
-#
-#     https://docs.fastlane.tools/actions
-#
-# For a list of all available plugins, check out
-#
-#     https://docs.fastlane.tools/plugins/available-plugins
-#
+# This file is used by fastlane to automate Firebase App Distribution
+# Please see
+# https://docs.fastlane.tools/getting-started/android/beta-deployment/
+# https://thecodingmachine.github.io/react-native-boilerplate/docs/BetaBuild/#android
 
 # Uncomment the line if you want fastlane to automatically update itself
 # update_fastlane
