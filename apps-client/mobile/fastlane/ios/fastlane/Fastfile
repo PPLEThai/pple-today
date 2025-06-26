@@ -42,7 +42,7 @@ platform :ios do
       },
       build_path: "./builds",
       output_directory: "./builds",
-      configuration: "Debug",
+      # configuration: "Debug",
     )
     # firebase_app_distribution(
     #   app: "1:565613412853:ios:8f3b9ee6792231af3fa0bc",
