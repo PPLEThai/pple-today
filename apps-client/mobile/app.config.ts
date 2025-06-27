@@ -1,16 +1,20 @@
+import { version } from './package.json'
+
+// TODO: update config when production release https://docs.expo.dev/versions/latest/config/app/
+
 export default {
   expo: {
-    name: 'mobile',
-    slug: 'mobile',
-    version: '1.0.0',
+    name: 'PPLE Today',
+    slug: 'pple-today',
+    scheme: 'pple-today',
+    version: version,
     orientation: 'portrait',
     icon: './assets/images/icon.png',
-    scheme: 'mobile',
     userInterfaceStyle: 'automatic',
     newArchEnabled: true,
     ios: {
       supportsTablet: true,
-      bundleIdentifier: 'com.anonymous.mobile',
+      bundleIdentifier: 'th.or.peoplesparty.ppletoday',
     },
     android: {
       adaptiveIcon: {
@@ -18,7 +22,7 @@ export default {
         backgroundColor: '#ffffff',
       },
       edgeToEdgeEnabled: true,
-      package: 'com.anonymous.mobile',
+      package: 'th.or.peoplesparty.ppletoday',
     },
     web: {
       bundler: 'metro',
@@ -39,6 +43,12 @@ export default {
     ],
     experiments: {
       typedRoutes: true,
+    },
+    // for local build like .apk
+    extra: {
+      eas: {
+        projectId: '90a95f98-0504-4546-bc89-dc954e009f22',
+      },
     },
   },
 }
