@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  actions: read
+  checks: read
+  contents: write
+  deployments: read
+  issues: write
+  discussions: read
+  packages: write
+  pull-requests: write
+  repository-projects: write
+  security-events: read
+  statuses: write
+
+jobs:
+  release:
+    name: Versioning
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.9.0
+
+      - name: Setup node
+        uses: actions/setup-node@v2
+        with:
+          node-version: 20.16.0
+          cache: pnpm
+
+      - name: Install changeset
+        run: pnpm install --ignore-workspace
+
+      - name: Create Versioning Pull Request
+        id: changesets
+        uses: changesets/action@v1.4.9
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          createGithubReleases: true
+          version: pnpm changeset version
+          publish: pnpm changeset tag
