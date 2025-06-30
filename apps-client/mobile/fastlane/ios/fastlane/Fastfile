@@ -44,11 +44,6 @@ platform :ios do
       output_directory: "./builds",
       # configuration: "Debug",
     )
-    # firebase_app_distribution(
-    #   app: "1:565613412853:ios:8f3b9ee6792231af3fa0bc",
-    #   groups: "dev-team",
-    #   debug: true
-    # )
     # Switch to use TestFlight instead of Firebase App Distribution
     # If you want to make it work
     # Please see https://stackoverflow.com/questions/58262038/testers-could-not-download-app-from-firebase-app-distribution/58383782#58383782

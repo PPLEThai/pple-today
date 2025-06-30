@@ -1,0 +1,63 @@
+name: Beta Deployment
+run-name: Beta Deployment - ${{ inputs.environment }} by @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    name: Build Android
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.9.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20.16.0'
+          cache: 'pnpm'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup .env
+        working-directory: apps-client/mobile
+        run: |
+          echo "FIREBASE_SERVICE_ACCOUNT_JSON=${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}" >> .env
+
+      - name: Prebuild Android
+        working-directory: apps-client/mobile
+        run: npx expo prebuild # --platform android
+
+      - name: Setup Fastlane
+        working-directory: apps-client/mobile
+        run: sh ./fastlane/setup.sh
+
+      - name: Install Fastlane
+        working-directory: apps-client/mobile
+        run: cd android && bundle install && cd ../
+        env:
+          CI: true
+
+      - name: Build android App via fastlane
+        working-directory: apps-client/mobile
+        run: fastlane beta
+        env:
+          CI: true
+          CD: true
