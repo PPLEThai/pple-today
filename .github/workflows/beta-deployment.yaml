@@ -43,7 +43,7 @@ jobs:
 
       - name: Prebuild Android
         working-directory: apps-client/mobile
-        run: npx expo prebuild # --platform android
+        run: npx expo prebuild --platform android
 
       - name: Setup Fastlane
         working-directory: apps-client/mobile
