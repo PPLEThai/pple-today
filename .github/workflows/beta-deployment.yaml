@@ -36,18 +36,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Setup .env
-        working-directory: apps-client/mobile
-        run: |
-          echo "FIREBASE_SERVICE_ACCOUNT_JSON=${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}" >> .env
-
       - name: Prebuild Android
         working-directory: apps-client/mobile
         run: npx expo prebuild --platform android
 
       - name: Setup Fastlane
         working-directory: apps-client/mobile
-        run: sh ./fastlane/setup.sh
+        run: |
+          echo "FIREBASE_SERVICE_ACCOUNT_JSON=${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}" >> .env
+          sh ./fastlane/setup.sh
 
       - name: Install Fastlane
         working-directory: apps-client/mobile
