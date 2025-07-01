@@ -93,6 +93,13 @@ jobs:
         with:
           ruby-version: '3.3'
 
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prebuild iOS
+        working-directory: apps-client/mobile
+        run: npx expo prebuild --platform ios
+
       - name: Install Fastlane
         working-directory: apps-client/mobile
         shell: bash
