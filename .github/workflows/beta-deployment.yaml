@@ -86,7 +86,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: '20.16.0'
-          cache: 'pnpm'
+          # cache: 'pnpm'
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
@@ -97,7 +97,8 @@ jobs:
         working-directory: apps-client/mobile
         shell: bash
         run: |
-          echo "FIREBASE_SERVICE_ACCOUNT_JSON=${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}" >> .env
+          echo "FASTLANE_USER=${{ secrets.FASTLANE_USER }}" >> .env
+          echo "FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD=${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}" >> .env
           sh ./fastlane/setup.sh
           cd ios && bundle install && cd ../
 
