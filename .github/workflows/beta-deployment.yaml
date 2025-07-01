@@ -30,6 +30,11 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
+      - name: Setup Ruby
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+
       # - name: Validate Gradle wrapper
       #   uses: gradle/wrapper-validation-action@v1
 
