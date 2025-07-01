@@ -13,7 +13,7 @@ jobs:
   build-android:
     name: Build Android
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.Android == true }}
+    if: ${{ github.event.inputs.Android == 'true' }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -71,7 +71,7 @@ jobs:
   build-ios:
     name: Build iOS
     runs-on: macos-latest
-    if: ${{ github.event.inputs.iOS == true }}
+    if: ${{ github.event.inputs.iOS == 'true' }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
