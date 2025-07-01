@@ -15,7 +15,7 @@ export $(cat .env | xargs)
 if [ ! -d "./android" ]; then
   echo "Warning: The 'android' directory does not exist. Please ensure you have run \`expo prebuild\` first."
 else
-  cp -r ./fastlane/android/ ./android
+  cp -r ./fastlane/android/* ./android
   echo "Fastlane directory copied to android folder."
 
   if [ -z "$FIREBASE_SERVICE_ACCOUNT_JSON" ]; then
@@ -28,7 +28,7 @@ fi
 if [ ! -d "./ios" ]; then
   echo "Warning: The 'ios' directory does not exist. Please ensure you have run \`expo prebuild\` first."
 else 
-  cp -r ./fastlane/ios/ ./ios
+  cp -r ./fastlane/ios/* ./ios
   echo "Fastlane directory copied to ios folder."
 
   echo "FASTLANE_USER=$FASTLANE_USER\nFASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD=$FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD" > ./ios/fastlane/.env.default
