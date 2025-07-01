@@ -51,8 +51,7 @@ jobs:
         run: |
           echo "FIREBASE_SERVICE_ACCOUNT_JSON=${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}" >> .env
           sh ./fastlane/setup.sh
-          cd android && ls -la
-        # bundle install && cd ../
+          cd android && bundle install && cd ../
         env:
           CI: true
 
