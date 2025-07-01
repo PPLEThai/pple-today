@@ -13,7 +13,7 @@ fi
 export $(cat .env | xargs)
 
 if [ ! -d "./android" ]; then
-  echo "Error: The 'android' directory does not exist. Please ensure you have run \`expo prebuild\` first."
+  echo "Warning: The 'android' directory does not exist. Please ensure you have run \`expo prebuild\` first."
 else
   cp -r ./fastlane/android/ ./android
   echo "Fastlane directory copied to android folder."
@@ -26,7 +26,7 @@ else
   fi
 fi
 if [ ! -d "./ios" ]; then
-  echo "Error: The 'ios' directory does not exist. Please ensure you have run \`expo prebuild\` first."
+  echo "Warning: The 'ios' directory does not exist. Please ensure you have run \`expo prebuild\` first."
 else 
   cp -r ./fastlane/ios/ ./ios
   echo "Fastlane directory copied to ios folder."
