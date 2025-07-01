@@ -6,7 +6,11 @@ cd "$(dirname "$0")/.."
 # echo "Current directory: $(pwd)"
 
 # Load environment variables
-source .env
+if [ ! -f .env ]; then
+  echo "Error: .env file not found. Please create a .env file with the required environment variables."
+  exit 1
+fi
+export $(cat .env | xargs)
 
 if [ ! -d "./android" ]; then
   echo "Error: The 'android' directory does not exist. Please ensure you have run \`expo prebuild\` first."
