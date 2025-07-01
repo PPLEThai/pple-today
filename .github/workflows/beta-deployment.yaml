@@ -105,6 +105,7 @@ jobs:
         shell: bash
         run: |
           echo "FASTLANE_USER=${{ secrets.FASTLANE_USER }}" >> .env
+          echo "FASTLANE_PASSWORD=${{ secrets.FASTLANE_PASSWORD }}" >> .env
           echo "FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD=${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}" >> .env
           sh ./fastlane/setup.sh
           cd ios && bundle install && cd ../
