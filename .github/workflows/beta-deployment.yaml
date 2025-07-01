@@ -3,11 +3,17 @@ run-name: Beta Deployment - ${{ inputs.environment }} by @${{ github.actor }}
 
 on:
   workflow_dispatch:
+    inputs:
+      Android:
+        type: boolean
+      iOS:
+        type: boolean
 
 jobs:
   build-android:
     name: Build Android
     runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.Android == true }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -57,6 +63,50 @@ jobs:
 
       - name: Build Android App via fastlane
         working-directory: apps-client/mobile/android
+        run: fastlane beta
+        env:
+          CI: true
+          CD: true
+
+  build-ios:
+    name: Build iOS
+    runs-on: macos-latest
+    if: ${{ github.event.inputs.iOS == true }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.9.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20.16.0'
+          cache: 'pnpm'
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+
+      - name: Install Fastlane
+        working-directory: apps-client/mobile
+        shell: bash
+        run: |
+          echo "FIREBASE_SERVICE_ACCOUNT_JSON=${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}" >> .env
+          sh ./fastlane/setup.sh
+          cd ios && bundle install && cd ../
+
+      - name: Install pods
+        working-directory: apps-client/mobile
+        run: cd ios && pod install --repo-update && cd ..
+
+      - name: Build iOS App via fastlane
+        working-directory: apps-client/mobile/ios
         run: fastlane beta
         env:
           CI: true

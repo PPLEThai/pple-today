@@ -31,6 +31,7 @@ else
   cp -r ./fastlane/ios/* ./ios
   echo "Fastlane directory copied to ios folder."
 
-  echo "FASTLANE_USER=$FASTLANE_USER\nFASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD=$FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD" > ./ios/fastlane/.env.default
+  echo "FASTLANE_USER=$FASTLANE_USER" > ./ios/fastlane/.env.default
+  echo "FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD=$FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD" >> ./ios/fastlane/.env.default
   echo "Fastlane TestFlight environment variables file created at ./ios/fastlane/.env.default"
 fi
