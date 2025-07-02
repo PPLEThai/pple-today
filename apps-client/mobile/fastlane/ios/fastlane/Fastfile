@@ -12,6 +12,18 @@ platform :ios do
 
   desc "Submit a new Beta Build to TestFlight"
   lane :beta do
+    app_identifier = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
+    # Seems like we need to fix this to use App Store Connect API Key
+    # https://github.com/fastlane/fastlane/issues/29468#issuecomment-2942861970
+    # https://github.com/fastlane/fastlane/issues/21109
+    # otherwise we need to use Spaceship to do 2 factor
+    # app_store_connect_api_key(
+    #   in_house: false,
+    #   is_key_content_base64: true,
+    # )
+    latest_build_number = latest_testflight_build_number(
+      app_identifier: app_identifier
+    )
     get_certificates( # Create or get certificate, and install it
       output_path: "./builds" # Download certificate in the build folder (you don't need to create the folder)
     )
@@ -29,7 +41,8 @@ platform :ios do
       teamid: CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
     )
     increment_build_number(
-      xcodeproj: "PPLEToday.xcodeproj"
+      xcodeproj: "PPLEToday.xcodeproj",
+      build_number: latest_build_number + 1
     )
     build_app(
       scheme: "PPLEToday", 
