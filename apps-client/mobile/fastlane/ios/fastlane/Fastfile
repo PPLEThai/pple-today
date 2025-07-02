@@ -12,6 +12,7 @@ platform :ios do
 
   desc "Submit a new Beta Build to TestFlight"
   lane :beta do
+    setup_ci if ENV['CI']
     app_identifier = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
     # Seems like we need to fix this to use App Store Connect API Key
     # https://github.com/fastlane/fastlane/issues/29468#issuecomment-2942861970
