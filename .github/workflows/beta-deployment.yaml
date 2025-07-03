@@ -123,3 +123,7 @@ jobs:
         env:
           CI: true
           CD: true
+
+      - name: Log Build Output
+        run: cat /Users/runner/Library/Logs/gym/PPLEToday-PPLEToday.log
+        # if: failure()
