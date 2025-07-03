@@ -54,6 +54,7 @@ platform :ios do
       scheme: "PPLEToday", 
       clean: true,
       export_method: "app-store",
+      configuration: "Release",
       # export_options: {
       #   provisioningProfiles: {
       #     app_identifier => "match AppStore " + app_identifier, # Value of this parameter is the name of the Provisioning Profile. By default, it will be "{bundleId} AppStore"
