@@ -56,8 +56,9 @@ platform :ios do
       export_method: "app-store",
       export_options: {
         provisioningProfiles: {
-            CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier) => CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier) + " AppStore" # Value of this parameter is the name of the Provisioning Profile. By default, it will be "{bundleId} AppStore"
-        }
+            app_identifier => "match AppStore " + app_identifier, # Value of this parameter is the name of the Provisioning Profile. By default, it will be "{bundleId} AppStore"
+          },
+          installerSigningCertificate: "Apple Distribution: SOFTNETICS COMPANY LIMITED (NUWUYARY34)", 
       },
       build_path: "./builds",
       output_directory: "./builds",
@@ -66,9 +67,9 @@ platform :ios do
     # Switch to use TestFlight instead of Firebase App Distribution
     # If you want to make it work
     # Please see https://stackoverflow.com/questions/58262038/testers-could-not-download-app-from-firebase-app-distribution/58383782#58383782
-    upload_to_testflight(
-      changelog: "TestFlight build for PPLE Today",
-      groups: "Dev Team"
-    )
+    # upload_to_testflight(
+    #   changelog: "TestFlight build for PPLE Today",
+    #   groups: "Dev Team"
+    # )
   end
 end
