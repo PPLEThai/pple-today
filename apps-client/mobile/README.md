@@ -62,7 +62,9 @@ Feel free to update this file :)
    brew install fastlane
    ```
 
-3. Setup environment variables, Please see Environment Setup down below
+3. Setup environment variables \
+   Ask your dev team for `.env` first \
+   If you are setting this for yourself, please see **Environment Setup** down below
 
 4. Setup Fastlane in native folders
 
