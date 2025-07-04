@@ -36,7 +36,7 @@ platform :ios do
       use_automatic_signing: false,
       team_id: team_id,
       code_sign_identity: "Apple Distribution",
-      profile_name: "match AppStore th.or.peoplesparty.ppletoday",
+      profile_name: ENV['PROVISIONING_PROFILE_SPECIFIER'],
       path: './PPLEToday.xcodeproj'
     )
     sync_code_signing(
@@ -79,7 +79,6 @@ platform :ios do
     upload_to_testflight(
       changelog: "TestFlight build for PPLE Today",
       groups: "Dev Team",
-      beta_app_description: "TestFlight build for PPLE Today"
     )
   end
 end
