@@ -17,6 +17,7 @@ else
   cp -r ./fastlane/android/* ./android
   echo "Fastlane directory copied to android folder."
   # source .env  
+  ls -la
   . .env
   # export $(cat .env.android | xargs)
   if [ -z "$FIREBASE_SERVICE_ACCOUNT_JSON" ]; then
