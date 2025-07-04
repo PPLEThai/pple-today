@@ -103,7 +103,7 @@ jobs:
       - name: Set up Xcode version
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16.4'
+          xcode-version: '16.2'
 
       - name: Install pods
         working-directory: apps-client/mobile
