@@ -16,10 +16,7 @@ if [ ! -d "./android" ]; then
 else
   cp -r ./fastlane/android/* ./android
   echo "Fastlane directory copied to android folder."
-  # source .env  
-  ls -la
-  . .env
-  # export $(cat .env.android | xargs)
+  source .env  
   if [ -z "$FIREBASE_SERVICE_ACCOUNT_JSON" ]; then
     echo "Error: FIREBASE_SERVICE_ACCOUNT_JSON environment variable is not set."
   else

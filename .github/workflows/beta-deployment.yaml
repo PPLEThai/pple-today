@@ -58,7 +58,7 @@ jobs:
           echo "DEVELOPER_APP_IDENTIFIER=${{ secrets.DEVELOPER_APP_IDENTIFIER }}" >> .env
           echo "FIREBASE_SERVICE_ACCOUNT_JSON=${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}" >> .env
           echo "FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}" >> .env
-          sh ./fastlane/setup.sh
+          bash ./fastlane/setup.sh
           cd android && bundle install && cd ../
         env:
           CI: true
@@ -129,7 +129,7 @@ jobs:
         working-directory: apps-client/mobile
         shell: bash
         run: |
-          sh ./fastlane/setup.sh
+          bash ./fastlane/setup.sh
           cd ios && bundle install && cd ../
 
       - name: Build iOS App via fastlane
