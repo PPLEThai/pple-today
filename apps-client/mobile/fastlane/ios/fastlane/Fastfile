@@ -9,7 +9,8 @@
 default_platform(:ios)
 
 before_all do
-  xcode_select("/Applications/Xcode-15.4.app")
+  # https://www.polpiella.dev/managing-xcode-installs-using-fastlane
+  xcodes(version: "16.4", select_for_current_build_only: true)
 end
 
 platform :ios do

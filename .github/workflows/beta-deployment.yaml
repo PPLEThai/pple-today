@@ -100,6 +100,15 @@ jobs:
         working-directory: apps-client/mobile
         run: npx expo prebuild --platform ios
 
+      - name: Set up Xcode version
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.4'
+
+      - name: Install pods
+        working-directory: apps-client/mobile
+        run: cd ios && pod install --repo-update && cd ..
+
       - name: Install Fastlane
         working-directory: apps-client/mobile
         shell: bash
@@ -112,10 +121,6 @@ jobs:
           echo "FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD=${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}" >> .env
           sh ./fastlane/setup.sh
           cd ios && bundle install && cd ../
-
-      - name: Install pods
-        working-directory: apps-client/mobile
-        run: cd ios && pod install --repo-update && cd ..
 
       - name: Build iOS App via fastlane
         working-directory: apps-client/mobile/ios
