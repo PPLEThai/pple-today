@@ -51,11 +51,18 @@ jobs:
         working-directory: apps-client/mobile
         run: npx expo prebuild --platform android
 
+      - name: Set up environment
+        working-directory: apps-client/mobile
+        shell: bash
+        run: |
+          echo "DEVELOPER_APP_IDENTIFIER=${{ secrets.DEVELOPER_APP_IDENTIFIER }}" >> .env
+          echo "FIREBASE_SERVICE_ACCOUNT_JSON=${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}" >> .env
+          echo "FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}" >> .env
+
       - name: Install Fastlane
         working-directory: apps-client/mobile
         shell: bash
         run: |
-          echo "FIREBASE_SERVICE_ACCOUNT_JSON=${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}" >> .env
           sh ./fastlane/setup.sh
           cd android && bundle install && cd ../
         env:
@@ -109,16 +116,24 @@ jobs:
         working-directory: apps-client/mobile
         run: cd ios && pod install --repo-update && cd ..
 
-      - name: Install Fastlane
+      - name: Set up environment
         working-directory: apps-client/mobile
         shell: bash
         run: |
+          echo "DEVELOPER_APP_IDENTIFIER=${{ secrets.DEVELOPER_APP_IDENTIFIER }}" >> .env
           echo "FASTLANE_USER=${{ secrets.FASTLANE_USER }}" >> .env
           echo "FASTLANE_PASSWORD=${{ secrets.FASTLANE_PASSWORD }}" >> .env
           echo "FASTLANE_SESSION=${{ secrets.FASTLANE_SESSION }}" >> .env
           echo "MATCH_PASSWORD=${{ secrets.MATCH_PASSWORD }}" >> .env
           echo "MATCH_GIT_BASIC_AUTHORIZATION=${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}" >> .env
-          echo "FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD=${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}" >> .env
+          echo "PROVISIONING_PROFILE_SPECIFIER=${{ secrets.PROVISIONING_PROFILE_SPECIFIER }}" >> .env
+          echo "APP_STORE_CONNECT_TEAM_ID=${{ secrets.APP_STORE_CONNECT_TEAM_ID }}" >> .env
+          echo "DEVELOPER_PORTAL_TEAM_ID=${{ secrets.DEVELOPER_PORTAL_TEAM_ID }}" >> .env
+
+      - name: Install Fastlane
+        working-directory: apps-client/mobile
+        shell: bash
+        run: |
           sh ./fastlane/setup.sh
           cd ios && bundle install && cd ../
 
