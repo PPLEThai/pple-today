@@ -9,15 +9,9 @@
 default_platform(:android)
 
 platform :android do
-  # TODO
-  # desc "Runs all the tests"
-  # lane :test do
-  #   gradle(task: "test")
-  # end
-  
   desc "Submit a new Beta Build to Firebase App Distribution"
   lane :beta do
-    app_id = "1:565613412853:android:6b3534fdf4c6197c3fa0bc"
+    app_id = ENV["FIREBASE_APP_ID"]
     # Grab the latest build number from Firebase App Distribution
     latest_release = firebase_app_distribution_get_latest_release(
       app: app_id,
