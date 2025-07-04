@@ -70,6 +70,12 @@ platform :ios do
       export_method: "app-store",
       configuration: "Release",
       build_path: "./builds",
+      export_options: {
+        provisioningProfiles: {
+          app_identifier => ENV['PROVISIONING_PROFILE_SPECIFIER']
+        },
+        # installerSigningCertificate: "Apple Distribution: <COMPANY_NAME> (<ID>)", 
+      },
       output_directory: "./builds",
       # configuration: "Debug",
     )
