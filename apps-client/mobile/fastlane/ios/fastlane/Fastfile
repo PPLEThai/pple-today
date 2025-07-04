@@ -85,7 +85,7 @@ platform :ios do
     upload_to_testflight(
       changelog: "TestFlight build for PPLE Today",
       groups: "Dev Team",
-      reject_build_waiting_for_review: true,
+      skip_waiting_for_build_processing: true
     )
   end
 end
