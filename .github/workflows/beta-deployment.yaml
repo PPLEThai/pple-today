@@ -51,18 +51,13 @@ jobs:
         working-directory: apps-client/mobile
         run: npx expo prebuild --platform android
 
-      - name: Set up environment
+      - name: Install Fastlane
         working-directory: apps-client/mobile
         shell: bash
         run: |
           echo "DEVELOPER_APP_IDENTIFIER=${{ secrets.DEVELOPER_APP_IDENTIFIER }}" >> .env
           echo "FIREBASE_SERVICE_ACCOUNT_JSON=${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}" >> .env
           echo "FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}" >> .env
-
-      - name: Install Fastlane
-        working-directory: apps-client/mobile
-        shell: bash
-        run: |
           sh ./fastlane/setup.sh
           cd android && bundle install && cd ../
         env:
