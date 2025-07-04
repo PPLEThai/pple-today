@@ -76,7 +76,6 @@ platform :ios do
         },
         # installerSigningCertificate: "Apple Distribution: <COMPANY_NAME> (<ID>)", 
       },
-      reject_build_waiting_for_review: true,
       output_directory: "./builds",
       # configuration: "Debug",
     )
@@ -86,6 +85,7 @@ platform :ios do
     upload_to_testflight(
       changelog: "TestFlight build for PPLE Today",
       groups: "Dev Team",
+      reject_build_waiting_for_review: true,
     )
   end
 end
