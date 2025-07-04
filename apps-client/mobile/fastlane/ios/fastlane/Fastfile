@@ -76,6 +76,7 @@ platform :ios do
         },
         # installerSigningCertificate: "Apple Distribution: <COMPANY_NAME> (<ID>)", 
       },
+      reject_build_waiting_for_review: true,
       output_directory: "./builds",
       # configuration: "Debug",
     )
