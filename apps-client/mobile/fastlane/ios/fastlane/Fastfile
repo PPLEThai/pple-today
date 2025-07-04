@@ -17,7 +17,7 @@ platform :ios do
 
   desc "Submit a new Beta Build to TestFlight"
   lane :beta do
-    setup_ci if ENV['CI']
+    setup_ci() if ENV['CI']
     app_identifier = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
     team_id = CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
     # Seems like we need to fix this to use App Store Connect API Key
@@ -78,7 +78,8 @@ platform :ios do
     # https://stackoverflow.com/questions/58262038/testers-could-not-download-app-from-firebase-app-distribution/58383782#58383782
     upload_to_testflight(
       changelog: "TestFlight build for PPLE Today",
-      groups: "Dev Team"
+      groups: "Dev Team",
+      beta_app_description: "TestFlight build for PPLE Today"
     )
   end
 end
