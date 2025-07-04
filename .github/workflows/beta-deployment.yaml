@@ -118,6 +118,7 @@ jobs:
           echo "DEVELOPER_APP_IDENTIFIER=${{ secrets.DEVELOPER_APP_IDENTIFIER }}" >> .env
           echo "FASTLANE_USER=${{ secrets.FASTLANE_USER }}" >> .env
           echo "FASTLANE_PASSWORD=${{ secrets.FASTLANE_PASSWORD }}" >> .env
+          echo "FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD=${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}" >> .env
           echo "FASTLANE_SESSION=${{ secrets.FASTLANE_SESSION }}" >> .env
           echo "MATCH_PASSWORD=${{ secrets.MATCH_PASSWORD }}" >> .env
           echo "MATCH_GIT_BASIC_AUTHORIZATION=${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}" >> .env
