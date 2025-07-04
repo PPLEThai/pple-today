@@ -8,6 +8,10 @@
 
 default_platform(:ios)
 
+before_all do
+  xcode_select("/Applications/Xcode-15.4.app")
+end
+
 platform :ios do
 
   desc "Submit a new Beta Build to TestFlight"
