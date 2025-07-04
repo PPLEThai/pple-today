@@ -30,7 +30,6 @@ platform :ios do
     update_code_signing_settings(
       use_automatic_signing: false,
       team_id: team_id,
-      # targets: [target],
       code_sign_identity: "Apple Distribution",
       profile_name: "match AppStore th.or.peoplesparty.ppletoday",
       path: './PPLEToday.xcodeproj'
@@ -65,22 +64,16 @@ platform :ios do
       clean: true,
       export_method: "app-store",
       configuration: "Release",
-      # export_options: {
-      #   provisioningProfiles: {
-      #     app_identifier => "match AppStore " + app_identifier, # Value of this parameter is the name of the Provisioning Profile. By default, it will be "{bundleId} AppStore"
-      #   },
-      #   installerSigningCertificate: "Apple Distribution: SOFTNETICS COMPANY LIMITED (NUWUYARY34)", 
-      # },
       build_path: "./builds",
       output_directory: "./builds",
       # configuration: "Debug",
     )
     # Switch to use TestFlight instead of Firebase App Distribution
-    # If you want to make it work
-    # Please see https://stackoverflow.com/questions/58262038/testers-could-not-download-app-from-firebase-app-distribution/58383782#58383782
-    # upload_to_testflight(
-    #   changelog: "TestFlight build for PPLE Today",
-    #   groups: "Dev Team"
-    # )
+    # If you want to use Firebase App Distribution you need to method `ad-hoc`, please see
+    # https://stackoverflow.com/questions/58262038/testers-could-not-download-app-from-firebase-app-distribution/58383782#58383782
+    upload_to_testflight(
+      changelog: "TestFlight build for PPLE Today",
+      groups: "Dev Team"
+    )
   end
 end
