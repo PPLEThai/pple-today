@@ -1,0 +1,64 @@
+enum PostReactionType {
+    UP_VOTE
+    DOWN_VOTE
+}
+
+model Post {
+    id          String   @id @default(cuid())
+    title       String
+    image       String?
+    content     String?
+    publishedAt DateTime @default(now())
+
+    authorId String
+    author   User   @relation(fields: [authorId], references: [id])
+
+    PostComment  PostComment[]
+    PostReaction PostReaction[]
+    PostTag      PostTag[]
+
+    @@index([authorId])
+}
+
+model PostComment {
+    id        String   @id @default(cuid())
+    content   String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    postId String
+    post   Post   @relation(fields: [postId], references: [id])
+
+    authorId String
+    author   User   @relation(fields: [authorId], references: [id])
+
+    @@index([postId])
+}
+
+model PostReaction {
+    id        String           @id @default(cuid())
+    type      PostReactionType
+    createdAt DateTime         @default(now())
+    updatedAt DateTime         @updatedAt
+
+    postId String
+    post   Post   @relation(fields: [postId], references: [id])
+
+    authorId String
+    author   User   @relation(fields: [authorId], references: [id])
+
+    @@index([postId])
+    @@index([authorId])
+}
+
+model PostTag {
+    createdAt DateTime @default(now())
+
+    postId String
+    post   Post   @relation(fields: [postId], references: [id])
+
+    hashTagId String
+    hashTag   HashTag @relation(fields: [hashTagId], references: [id])
+
+    @@id([postId, hashTagId])
+}

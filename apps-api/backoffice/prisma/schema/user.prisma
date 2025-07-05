@@ -1,0 +1,25 @@
+enum UserRole {
+    USER
+    REPRESENTATIVE
+    STAFF
+}
+
+model User {
+    id           String   @id @default(cuid())
+    name         String
+    phoneNumber  String   @unique
+    dateOfBirth  DateTime
+    profileImage String?
+    point        Int      @default(0)
+    role         UserRole @default(USER)
+
+    PollAnswer             PollAnswer[]
+    AuthorUser             FollowedUser[]           @relation("FollowedUserAuthor")
+    FollowedUser           FollowedUser[]           @relation("FollowedUserFollowed")
+    Post                   Post[]
+    PostComment            PostComment[]
+    PostReaction           PostReaction[]
+    EventAttendant         EventAttendant[]
+    ElectionEligibleVoter  ElectionEligibleVoter[]
+    ElectionEligibleBallot ElectionEligibleBallot[]
+}

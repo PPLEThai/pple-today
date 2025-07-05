@@ -1,0 +1,10 @@
+model FollowedUser {
+    id             String   @id @default(cuid())
+    authorId       String
+    followedUserId String
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt
+
+    author       User @relation(name: "FollowedUserAuthor", fields: [authorId], references: [id])
+    followedUser User @relation(name: "FollowedUserFollowed", fields: [followedUserId], references: [id])
+}

@@ -1,0 +1,40 @@
+enum EventAttendantStatus {
+    JOINED
+    CANCELLED
+    ATTENDED
+    NO_SHOW
+}
+
+model Event {
+    id             String  @id @default(cuid())
+    name           String
+    location       String?
+    locationName   String?
+    isCancelled    Boolean @default(false)
+    attendantCount Int     @default(0)
+
+    pointReward Int @default(0)
+
+    startAt DateTime
+    endAt   DateTime
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    EventAttendant EventAttendant[]
+}
+
+model EventAttendant {
+    id        String               @id @default(cuid())
+    userId    String
+    eventId   String
+    status    EventAttendantStatus @default(JOINED)
+    createdAt DateTime             @default(now())
+    updatedAt DateTime             @updatedAt
+
+    user  User  @relation(fields: [userId], references: [id])
+    event Event @relation(fields: [eventId], references: [id])
+
+    @@index([userId])
+    @@index([eventId])
+}

@@ -1,0 +1,31 @@
+enum AnnouncementType {
+    OFFICIAL
+    PARTY_COMMUNICATE
+    INTERNAL
+}
+
+model Announcement {
+    id      String           @id @default(cuid())
+    title   String
+    content String?
+    type    AnnouncementType
+
+    iconImage       String?
+    backgroundColor String?
+
+    publishedAt DateTime @default(now())
+
+    AnnouncementHashTag AnnouncementHashTag[]
+}
+
+model AnnouncementHashTag {
+    createdAt DateTime @default(now())
+
+    announcementId String
+    announcement   Announcement @relation(fields: [announcementId], references: [id])
+
+    hashTagId String
+    hashTag   HashTag @relation(fields: [hashTagId], references: [id])
+
+    @@id([announcementId, hashTagId])
+}
