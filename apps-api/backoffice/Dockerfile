@@ -32,13 +32,10 @@ RUN pnpm build --filter=@api/backoffice
 FROM base AS runner
 WORKDIR /app
  
-# Don't run production as root
 RUN addgroup --system --gid 1001 backoffice
 RUN adduser --system --uid 1001 backoffice
 USER backoffice
- 
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
+
 COPY --from=installer --chown=backoffice:nodejs /app/apps-api/backoffice/build ./
 
 CMD ["node", "index.js"]
