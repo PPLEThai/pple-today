@@ -1,4 +1,4 @@
 packages:
-  - "apps-client/*"
-  - "apps-api/*"
-  - "packages/*"
+  - 'apps-client/*'
+  - 'apps-api/*'
+  - 'packages/*'
