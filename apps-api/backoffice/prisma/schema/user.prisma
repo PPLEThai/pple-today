@@ -22,4 +22,5 @@ model User {
     EventAttendant         EventAttendant[]
     ElectionEligibleVoter  ElectionEligibleVoter[]
     ElectionEligibleBallot ElectionEligibleBallot[]
+    FollowingTopic         FollowedTopic[]
 }
