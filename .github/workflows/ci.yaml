@@ -54,5 +54,9 @@ jobs:
 
           echo "TURBO_FILTER=$TURBO_FILTER" >> $GITHUB_OUTPUT
 
-      - name: Run all
+      - name: Run Type Check and Format Check
         run: pnpm turbo typecheck format:check lint ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}
+
+      - name: Run Prebuild
+        working-directory: apps-client/mobile
+        run: npx expo prebuild
