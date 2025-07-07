@@ -5,13 +5,13 @@ enum UserRole {
 }
 
 model User {
-    id           String   @id @default(cuid())
+    id           String    @id @default(cuid())
     name         String
-    phoneNumber  String   @unique
-    dateOfBirth  DateTime
+    phoneNumber  String    @unique
+    dateOfBirth  DateTime?
     profileImage String?
-    point        Int      @default(0)
-    role         UserRole @default(USER)
+    point        Int       @default(0)
+    role         UserRole  @default(USER)
 
     PollAnswer             PollAnswer[]
     AuthorUser             FollowedUser[]           @relation("FollowedUserAuthor")

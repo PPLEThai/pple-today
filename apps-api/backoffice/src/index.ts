@@ -3,9 +3,11 @@ import { swagger } from '@elysiajs/swagger'
 import Elysia from 'elysia'
 
 import serverEnv from './config/env'
+import prismaService from './libs/prisma'
 
 const app = new Elysia({ adapter: node() })
   .use(swagger())
+  .use(prismaService)
   .get('/', () => 'Hello, Elysia!')
   .listen(serverEnv.PORT, () => {
     console.log(`Server is running on http://localhost:${serverEnv.PORT}`)
