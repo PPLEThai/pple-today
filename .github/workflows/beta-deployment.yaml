@@ -111,6 +111,10 @@ jobs:
         working-directory: apps-client/mobile
         run: cd ios && pod install --repo-update && cd ..
 
+      # Note that you might run into fastlane issue of 2 Factor Authentication
+      # run `fastlane spaceauth -u <your_apple_username>`
+      # copy the output and then single quote it in `FASTLANE_SESSION` variable like this '---\n ...'
+      # Read more at README.md in apps-client/mobile
       - name: Set up environment
         working-directory: apps-client/mobile
         shell: bash
