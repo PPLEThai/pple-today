@@ -28,7 +28,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: '20.16.0'
-          # cache: 'pnpm'
+          cache: 'pnpm'
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -59,7 +59,7 @@ jobs:
           echo "FIREBASE_SERVICE_ACCOUNT_JSON=${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}" >> .env
           echo "FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}" >> .env
           bash ./fastlane/setup.sh
-          cd android && bundle install && cd ../
+          cd android && bundle install
         env:
           CI: true
 
@@ -88,7 +88,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: '20.16.0'
-          # cache: 'pnpm'
+          cache: 'pnpm'
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
@@ -131,7 +131,7 @@ jobs:
         shell: bash
         run: |
           bash ./fastlane/setup.sh
-          cd ios && bundle install && cd ../
+          cd ios && bundle install
 
       - name: Build iOS App via fastlane
         working-directory: apps-client/mobile/ios

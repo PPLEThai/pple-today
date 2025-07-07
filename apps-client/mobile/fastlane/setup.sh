@@ -18,7 +18,7 @@ else
   echo "Fastlane directory copied to android folder."
   source .env  
   if [ -z "$FIREBASE_SERVICE_ACCOUNT_JSON" ]; then
-    echo "Error: FIREBASE_SERVICE_ACCOUNT_JSON environment variable is not set."
+    echo "Warning: FIREBASE_SERVICE_ACCOUNT_JSON environment variable is not set."
   else
     echo $FIREBASE_SERVICE_ACCOUNT_JSON | base64 -d > ./android/key.json
     echo "Firebase service account JSON file created at ./android/key.json."
