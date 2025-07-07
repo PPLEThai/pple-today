@@ -8,7 +8,7 @@ on:
 jobs:
   ci:
     if: ${{ github.event_name == 'push' || (!contains(github.event.pull_request.title, 'DRAFT') && !contains(github.event.pull_request.title, 'Draft') && !contains(github.event.pull_request.title, 'draft') && !contains(github.event.pull_request.labels.*.name, 'draft')) }}
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     timeout-minutes: 40
 
     concurrency:
