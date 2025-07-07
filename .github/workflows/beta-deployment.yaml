@@ -3,11 +3,17 @@ run-name: Beta Deployment - ${{ inputs.environment }} by @${{ github.actor }}
 
 on:
   workflow_dispatch:
+    inputs:
+      Android:
+        type: boolean
+      iOS:
+        type: boolean
 
 jobs:
   build-android:
     name: Build Android
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
+    if: ${{ github.event.inputs.Android == 'true' }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -19,10 +25,10 @@ jobs:
           version: 9.9.0
 
       - name: Setup Node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '20.16.0'
-          cache: 'pnpm'
+          node-version: 22.14.0
+          cache: pnpm
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -30,34 +36,110 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v1
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+
+      # - name: Validate Gradle wrapper
+      #   uses: gradle/wrapper-validation-action@v1
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Setup .env
-        working-directory: apps-client/mobile
-        run: |
-          echo "FIREBASE_SERVICE_ACCOUNT_JSON=${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}" >> .env
-
       - name: Prebuild Android
         working-directory: apps-client/mobile
-        run: npx expo prebuild # --platform android
-
-      - name: Setup Fastlane
-        working-directory: apps-client/mobile
-        run: sh ./fastlane/setup.sh
+        run: npx expo prebuild --platform android
 
       - name: Install Fastlane
         working-directory: apps-client/mobile
-        run: cd android && bundle install && cd ../
+        shell: bash
+        run: |
+          echo "DEVELOPER_APP_IDENTIFIER=${{ secrets.DEVELOPER_APP_IDENTIFIER }}" >> .env
+          echo "FIREBASE_SERVICE_ACCOUNT_JSON=${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}" >> .env
+          echo "FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}" >> .env
+          bash ./fastlane/setup.sh
+          cd android && bundle install
         env:
           CI: true
 
-      - name: Build android App via fastlane
-        working-directory: apps-client/mobile
+      - name: Build Android App via fastlane
+        working-directory: apps-client/mobile/android
         run: fastlane beta
         env:
           CI: true
           CD: true
+
+  build-ios:
+    name: Build iOS
+    runs-on: macos-latest
+    if: ${{ github.event.inputs.iOS == 'true' }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.9.0
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22.14.0
+          cache: pnpm
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prebuild iOS
+        working-directory: apps-client/mobile
+        run: npx expo prebuild --platform ios
+
+      - name: Set up Xcode version
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '16.2'
+
+      - name: Install pods
+        working-directory: apps-client/mobile
+        run: cd ios && pod install --repo-update && cd ..
+
+      - name: Set up environment
+        working-directory: apps-client/mobile
+        shell: bash
+        run: |
+          echo "DEVELOPER_APP_IDENTIFIER=${{ secrets.DEVELOPER_APP_IDENTIFIER }}" >> .env
+          echo "FASTLANE_USER=${{ secrets.FASTLANE_USER }}" >> .env
+          echo "FASTLANE_PASSWORD=${{ secrets.FASTLANE_PASSWORD }}" >> .env
+          echo "FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD=${{ secrets.FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD }}" >> .env
+          echo "FASTLANE_SESSION=${{ secrets.FASTLANE_SESSION }}" >> .env
+          echo "MATCH_PASSWORD=${{ secrets.MATCH_PASSWORD }}" >> .env
+          echo "MATCH_GIT_BASIC_AUTHORIZATION=${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}" >> .env
+          echo "PROVISIONING_PROFILE_SPECIFIER=${{ secrets.PROVISIONING_PROFILE_SPECIFIER }}" >> .env
+          echo "APP_STORE_CONNECT_TEAM_ID=${{ secrets.APP_STORE_CONNECT_TEAM_ID }}" >> .env
+          echo "DEVELOPER_PORTAL_TEAM_ID=${{ secrets.DEVELOPER_PORTAL_TEAM_ID }}" >> .env
+
+      - name: Install Fastlane
+        working-directory: apps-client/mobile
+        shell: bash
+        run: |
+          bash ./fastlane/setup.sh
+          cd ios && bundle install
+
+      - name: Build iOS App via fastlane
+        working-directory: apps-client/mobile/ios
+        run: fastlane beta
+        env:
+          CI: true
+          CD: true
+
+      # - name: Log Build Output
+      #   run: cat /Users/runner/Library/Logs/gym/PPLEToday-PPLEToday.log
+      #   if: failure()

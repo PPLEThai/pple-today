@@ -1,6 +1,4 @@
-app_identifier("th.or.peoplesparty.ppletoday") # The bundle identifier of your app
-# TODO: dev@softnetics.tech
-apple_id("anon.j@softnetics.tech") # Your Apple Developer Portal username
-
-itc_team_id("127930616") # App Store Connect Team ID
-team_id("NUWUYARY34") # Developer Portal Team ID
+app_identifier(ENV["DEVELOPER_APP_IDENTIFIER"])
+apple_id(ENV["FASTLANE_USER"])
+itc_team_id(ENV["APP_STORE_CONNECT_TEAM_ID"])
+team_id(ENV["DEVELOPER_PORTAL_TEAM_ID"])

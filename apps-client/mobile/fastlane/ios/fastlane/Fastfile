@@ -8,10 +8,42 @@
 
 default_platform(:ios)
 
+before_all do
+  # https://www.polpiella.dev/managing-xcode-installs-using-fastlane
+  xcodes(version: "16.2", select_for_current_build_only: true)
+end
+
 platform :ios do
 
   desc "Submit a new Beta Build to TestFlight"
   lane :beta do
+    setup_ci() if ENV['CI']
+    app_identifier = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
+    team_id = CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
+    # TODO: Seems like we need to fix this to use App Store Connect API Key
+    # https://github.com/fastlane/fastlane/issues/29468#issuecomment-2942861970
+    # https://github.com/fastlane/fastlane/issues/21109
+    # otherwise we need to use Spaceship to do 2 factor
+    # app_store_connect_api_key(
+    #   in_house: false,
+    #   is_key_content_base64: true,
+    # )
+    latest_build_number = latest_testflight_build_number(
+      app_identifier: app_identifier
+    )
+    # https://github.com/fastlane/fastlane/issues/20130#issuecomment-1455766139
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      team_id: team_id,
+      code_sign_identity: "Apple Distribution",
+      profile_name: ENV['PROVISIONING_PROFILE_SPECIFIER'],
+      path: './PPLEToday.xcodeproj'
+    )
+    sync_code_signing(
+      type: "appstore",
+      readonly: true,
+      output_path: "./builds"
+    )
     get_certificates( # Create or get certificate, and install it
       output_path: "./builds" # Download certificate in the build folder (you don't need to create the folder)
     )
@@ -26,30 +58,34 @@ platform :ios do
       build_configuration: "Release"
     )
     update_project_team( # Set the right team on your project
-      teamid: CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
+      teamid: team_id
     )
     increment_build_number(
-      xcodeproj: "PPLEToday.xcodeproj"
+      xcodeproj: "PPLEToday.xcodeproj",
+      build_number: latest_build_number + 1
     )
     build_app(
       scheme: "PPLEToday", 
       clean: true,
       export_method: "app-store",
+      configuration: "Release",
+      build_path: "./builds",
       export_options: {
         provisioningProfiles: {
-            CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier) => CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier) + " AppStore" # Value of this parameter is the name of the Provisioning Profile. By default, it will be "{bundleId} AppStore"
-        }
+          app_identifier => ENV['PROVISIONING_PROFILE_SPECIFIER']
+        },
+        # installerSigningCertificate: "Apple Distribution: <COMPANY_NAME> (<ID>)", 
       },
-      build_path: "./builds",
       output_directory: "./builds",
       # configuration: "Debug",
     )
     # Switch to use TestFlight instead of Firebase App Distribution
-    # If you want to make it work
-    # Please see https://stackoverflow.com/questions/58262038/testers-could-not-download-app-from-firebase-app-distribution/58383782#58383782
+    # If you want to use Firebase App Distribution you need to method `ad-hoc`, please see
+    # https://stackoverflow.com/questions/58262038/testers-could-not-download-app-from-firebase-app-distribution/58383782#58383782
     upload_to_testflight(
       changelog: "TestFlight build for PPLE Today",
-      groups: "Dev Team"
+      groups: "Dev Team",
+      skip_waiting_for_build_processing: true
     )
   end
 end
