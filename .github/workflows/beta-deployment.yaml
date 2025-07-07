@@ -25,10 +25,10 @@ jobs:
           version: 9.9.0
 
       - name: Setup Node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '20.16.0'
-          # cache: 'pnpm'
+          node-version: 22.14.0
+          cache: pnpm
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -85,10 +85,10 @@ jobs:
           version: 9.9.0
 
       - name: Setup Node
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
-          node-version: '20.16.0'
-          # cache: 'pnpm'
+          node-version: 22.14.0
+          cache: pnpm
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
