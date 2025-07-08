@@ -37,9 +37,6 @@ const POST_ERROR_SCHEMA = {
   },
   POST_REACTION_ALREADY_EXISTS: {
     status: 409,
-    data: t.Object({
-      message: t.String({ description: 'Reaction already exists for this post.' }),
-    }),
   },
 } satisfies InternalErrorSchemas
 
@@ -57,20 +54,20 @@ export const InternalErrorCode = Object.fromEntries(
 ) as InternalErrorCodeEnum
 export type InternalErrorCode = keyof typeof InternalErrorCode
 
-export function zApiErrorResponse<TErrors extends [TAnySchema, ...TAnySchema[]]>(
-  ...errors: TErrors
-) {
-  return t.Object({
-    error: t.Union(errors),
-  })
-}
-
 type GetDataFromSchema<TCode extends InternalErrorCode> =
   TCode extends keyof InternalErrorCodeSchemas
     ? InternalErrorCodeSchemas[TCode] extends { data: any }
       ? InternalErrorCodeSchemas[TCode]['data']
       : TOptional<TUnknown>
     : never
+
+export function zApiErrorResponse<TErrors extends [TAnySchema, ...TAnySchema[]]>(
+  ...errors: TErrors
+) {
+  return t.Object({
+    error: t.Union<TErrors>(errors),
+  })
+}
 
 export function zApiError<const TCode extends InternalErrorCode>(code: TCode) {
   const data: GetDataFromSchema<TCode> =
@@ -84,3 +81,6 @@ export function zApiError<const TCode extends InternalErrorCode>(code: TCode) {
     data,
   })
 }
+
+const x = zApiError('POST_REACTION_ALREADY_EXISTS')
+type P = GetDataFromSchema<'FORBIDDEN'>

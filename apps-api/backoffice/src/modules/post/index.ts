@@ -1,5 +1,7 @@
+import { InternalErrorCode, zApiError, zApiErrorResponse } from '@/dtos/error'
+
 import node from '@elysiajs/node'
-import Elysia, { t } from 'elysia'
+import Elysia from 'elysia'
 
 import {
   CreatePostCommentBody,
@@ -37,7 +39,10 @@ export const postController = new Elysia({
       const result = await PostService.getPostById(params.id, userId) // Replace 'user-id-placeholder' with actual user ID logic
       if (result.isErr()) {
         return status(404, {
-          x: 'Post not found',
+          error: {
+            code: InternalErrorCode.POST_NOT_FOUND,
+            message: 'Post not found',
+          },
         })
       }
 
@@ -47,44 +52,49 @@ export const postController = new Elysia({
       params: GetPostByIdParams,
       response: {
         200: GetPostByIdResponse,
-        404: t.Object({
-          x: t.String({ description: 'Post not found' }),
-        }),
+        404: zApiErrorResponse(zApiError(InternalErrorCode.POST_NOT_FOUND)),
       },
     }
   )
   .get(
     '/:id/comments',
-    async ({ params, query }) => {
+    async ({ params, query, status }) => {
       const result = await PostService.getPostComments(params.id, {
         userId,
         limit: query.limit,
         page: query.page,
       })
       if (result.isErr()) {
-        return {
-          status: 404,
-          body: { x: 'Post not found' },
-        } as any
+        return status(404, {
+          error: {
+            code: InternalErrorCode.POST_NOT_FOUND,
+            message: 'Post not found',
+          },
+        })
       }
 
-      return result.value
+      return status(200, result.value as GetPostCommentResponse)
     },
     {
       params: GetPostCommentParams,
       query: GetPostCommentQuery,
-      response: GetPostCommentResponse,
+      response: {
+        200: GetPostCommentResponse,
+        404: zApiErrorResponse(zApiError(InternalErrorCode.POST_NOT_FOUND)),
+      },
     }
   )
   .post(
     '/:id/reaction',
-    async ({ params, body }) => {
+    async ({ params, body, status }) => {
       const result = await PostService.createPostReaction(params.id, userId, body)
       if (result.isErr()) {
-        return {
-          status: 404,
-          body: { x: 'Post not found' },
-        } as any
+        return status(409, {
+          error: {
+            code: InternalErrorCode.POST_REACTION_ALREADY_EXISTS,
+            message: 'Reaction already exists for this post.',
+          },
+        })
       }
 
       return result.value
@@ -94,36 +104,45 @@ export const postController = new Elysia({
       body: CreatePostReactionBody,
       response: {
         201: CreatePostReactionResponse,
+        409: zApiErrorResponse(zApiError(InternalErrorCode.POST_REACTION_ALREADY_EXISTS)),
       },
     }
   )
   .delete(
     '/:id/reaction',
-    async ({ params }) => {
+    async ({ params, status }) => {
       const result = await PostService.deletePostReaction(params.id, userId)
+
       if (result.isErr()) {
-        return {
-          status: 404,
-          body: { x: 'Post not found' },
-        } as any
+        return status(404, {
+          error: {
+            code: InternalErrorCode.POST_REACTION_NOT_FOUND,
+            message: 'Reaction not found',
+          },
+        })
       }
 
-      return result.value
+      return status(200, result.value)
     },
     {
       params: DeletePostReactionParams,
-      response: DeletePostReactionResponse,
+      response: {
+        200: DeletePostReactionResponse,
+        404: zApiErrorResponse(zApiError(InternalErrorCode.POST_REACTION_NOT_FOUND)),
+      },
     }
   )
   .post(
     '/:id/comment',
-    async ({ params, body }) => {
+    async ({ params, body, status }) => {
       const result = await PostService.createPostComment(params.id, userId, body.content)
       if (result.isErr()) {
-        return {
-          status: 404,
-          body: { x: 'Post not found' },
-        } as any
+        return status(403, {
+          error: {
+            code: InternalErrorCode.FORBIDDEN,
+            message: 'You do not have permission to comment on this post.',
+          },
+        })
       }
 
       return result.value
@@ -131,12 +150,15 @@ export const postController = new Elysia({
     {
       params: CreatePostCommentParams,
       body: CreatePostCommentBody,
-      response: CreatePostCommentResponse,
+      response: {
+        201: CreatePostCommentResponse,
+        403: zApiErrorResponse(zApiError(InternalErrorCode.FORBIDDEN)),
+      },
     }
   )
   .put(
     '/:id/comment/:commentId',
-    async ({ params, body }) => {
+    async ({ params, body, status }) => {
       const result = await PostService.updatePostComment(
         params.id,
         params.commentId,
@@ -145,42 +167,49 @@ export const postController = new Elysia({
       )
 
       if (result.isErr()) {
-        return {
-          status: 404,
-          body: { x: 'Comment not found' },
-        } as any
+        return status(403, {
+          error: {
+            code: InternalErrorCode.FORBIDDEN,
+            message: 'You do not have permission to update this comment.',
+          },
+        })
       }
 
-      return result.value
+      return status(200, result.value)
     },
     {
       params: UpdatePostCommentParams,
       body: UpdatePostCommentBody,
       response: {
         200: UpdatePostCommentResponse,
-        404: t.Object({
-          x: t.String({ description: 'Comment not found' }),
-        }),
+        403: zApiErrorResponse(zApiError(InternalErrorCode.FORBIDDEN)),
+        404: zApiErrorResponse(zApiError(InternalErrorCode.POST_COMMENT_NOT_FOUND)),
       },
     }
   )
   .delete(
     '/:id/comment/:commentId',
-    async ({ params }) => {
+    async ({ params, status }) => {
       const result = await PostService.deletePostComment(params.id, params.commentId, userId)
 
       if (result.isErr()) {
-        return {
-          status: 404,
-          body: { x: 'Comment not found' },
-        } as any
+        return status(403, {
+          error: {
+            code: InternalErrorCode.FORBIDDEN,
+            message: 'You do not have permission to delete this comment.',
+          },
+        })
       }
 
-      return result.value
+      return status(200, result.value)
     },
     {
       params: DeletePostCommentParams,
-      response: DeletePostCommentResponse,
+      response: {
+        200: DeletePostCommentResponse,
+        403: zApiErrorResponse(zApiError(InternalErrorCode.FORBIDDEN)),
+        404: zApiErrorResponse(zApiError(InternalErrorCode.POST_COMMENT_NOT_FOUND)),
+      },
     }
   )
   .listen(3000)
