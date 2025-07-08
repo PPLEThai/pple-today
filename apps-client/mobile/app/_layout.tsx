@@ -2,6 +2,7 @@ import '../global.css'
 
 import * as React from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 
 import { Inter_300Light, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter'
 import {
@@ -37,15 +38,17 @@ export {
 export default function RootLayout() {
   return (
     <>
-      <ColorSchemeProvider>
-        <FontProvider>
-          <GestureHandlerRootView>
-            <BottomSheetModalProvider>
-              <Stack />
-            </BottomSheetModalProvider>
-          </GestureHandlerRootView>
-        </FontProvider>
-      </ColorSchemeProvider>
+      <SafeAreaProvider>
+        <ColorSchemeProvider>
+          <FontProvider>
+            <GestureHandlerRootView>
+              <BottomSheetModalProvider>
+                <Stack />
+              </BottomSheetModalProvider>
+            </GestureHandlerRootView>
+          </FontProvider>
+        </ColorSchemeProvider>
+      </SafeAreaProvider>
       <PortalHost />
     </>
   )

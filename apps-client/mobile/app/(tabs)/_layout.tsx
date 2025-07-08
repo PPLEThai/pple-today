@@ -1,4 +1,6 @@
 // https://www.reactnativereusables.com/extras/material-top-tabs/
+import { SafeAreaView } from 'react-native-safe-area-context'
+
 import type {
   MaterialTopTabNavigationEventMap,
   MaterialTopTabNavigationOptions,
@@ -19,35 +21,37 @@ const MaterialTopTabs = withLayoutContext<
 export default function MaterialTopTabsLayout() {
   const { colors } = useTheme()
   return (
-    <MaterialTopTabs
-      initialRouteName="index"
-      screenOptions={{
-        tabBarActiveTintColor: colors.text,
-        tabBarInactiveTintColor: 'grey',
-        tabBarLabelStyle: {
-          fontSize: 14,
-          textTransform: 'capitalize',
-          fontWeight: 'bold',
-        },
-        tabBarIndicatorStyle: {
-          backgroundColor: colors.text,
-        },
-        tabBarScrollEnabled: true,
-        tabBarItemStyle: { width: 'auto', minWidth: 100 },
-      }}
-    >
-      <MaterialTopTabs.Screen
-        name="index"
-        options={{
-          title: 'Index',
+    <SafeAreaView className="flex-1" edges={['bottom', 'left', 'right']}>
+      <MaterialTopTabs
+        initialRouteName="index"
+        screenOptions={{
+          tabBarActiveTintColor: colors.text,
+          tabBarInactiveTintColor: 'grey',
+          tabBarLabelStyle: {
+            fontSize: 14,
+            textTransform: 'capitalize',
+            fontWeight: 'bold',
+          },
+          tabBarIndicatorStyle: {
+            backgroundColor: colors.text,
+          },
+          tabBarScrollEnabled: true,
+          tabBarItemStyle: { width: 'auto', minWidth: 100 },
         }}
-      />
-      <MaterialTopTabs.Screen
-        name="red"
-        options={{
-          title: 'Red',
-        }}
-      />
-    </MaterialTopTabs>
+      >
+        <MaterialTopTabs.Screen
+          name="index"
+          options={{
+            title: 'Index',
+          }}
+        />
+        <MaterialTopTabs.Screen
+          name="blue"
+          options={{
+            title: 'Blue',
+          }}
+        />
+      </MaterialTopTabs>
+    </SafeAreaView>
   )
 }
