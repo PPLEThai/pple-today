@@ -1,5 +1,5 @@
-import { TAnySchema, TObject, TOptional, TUnknown } from '@sinclair/typebox'
-import { InvertedStatusMap, t } from 'elysia'
+import { TAnySchema } from '@sinclair/typebox'
+import { InvertedStatusMap } from 'elysia'
 
 export type InternalErrorSchema = {
   status: keyof InvertedStatusMap
@@ -53,29 +53,3 @@ export const InternalErrorCode = Object.fromEntries(
   Object.keys(InternalErrorCodeSchemas).map((key) => [key, key])
 ) as InternalErrorCodeEnum
 export type InternalErrorCode = keyof typeof InternalErrorCode
-
-type GetDataFromSchema<TCode extends InternalErrorCode> =
-  TCode extends keyof InternalErrorCodeSchemas
-    ? InternalErrorCodeSchemas[TCode] extends { data: any }
-      ? InternalErrorCodeSchemas[TCode]['data']
-      : TOptional<TUnknown>
-    : never
-
-export function zApiErrorResponse<TErrors extends [TObject, ...TObject[]]>(...errors: TErrors) {
-  return t.Object({
-    error: t.Union<TErrors>(errors),
-  })
-}
-
-export function zApiError<const TCode extends InternalErrorCode>(code: TCode) {
-  const data: GetDataFromSchema<TCode> =
-    'data' in InternalErrorCodeSchemas[code]
-      ? (InternalErrorCodeSchemas[code].data ?? t.Optional(t.Unknown()))
-      : (t.Optional(t.Unknown()) as any)
-
-  return t.Object({
-    code: t.Literal(code),
-    message: t.Optional(t.String()),
-    data,
-  })
-}

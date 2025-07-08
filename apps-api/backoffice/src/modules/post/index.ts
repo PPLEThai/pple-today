@@ -1,4 +1,5 @@
-import { InternalErrorCode, zApiError, zApiErrorResponse } from '@/dtos/error'
+import { InternalErrorCode } from '@/dtos/error'
+import { createErrorSchema } from '@/utils/error'
 
 import node from '@elysiajs/node'
 import Elysia from 'elysia'
@@ -43,6 +44,9 @@ export const postController = new Elysia({
           error: {
             code: InternalErrorCode.POST_NOT_FOUND,
             message: 'Post not found',
+            data: {
+              helloWorld: 'Post not found',
+            },
           },
         })
       }
@@ -53,7 +57,7 @@ export const postController = new Elysia({
       params: GetPostByIdParams,
       response: {
         200: GetPostByIdResponse,
-        404: zApiErrorResponse(zApiError(InternalErrorCode.POST_NOT_FOUND)),
+        ...createErrorSchema(InternalErrorCode.POST_NOT_FOUND),
       },
     }
   )
@@ -70,6 +74,9 @@ export const postController = new Elysia({
           error: {
             code: InternalErrorCode.POST_NOT_FOUND,
             message: 'Post not found',
+            data: {
+              helloWorld: 'Post not found',
+            },
           },
         })
       }
@@ -81,7 +88,7 @@ export const postController = new Elysia({
       query: GetPostCommentQuery,
       response: {
         200: GetPostCommentResponse,
-        404: zApiErrorResponse(zApiError(InternalErrorCode.POST_NOT_FOUND)),
+        ...createErrorSchema(InternalErrorCode.POST_NOT_FOUND),
       },
     }
   )
@@ -105,7 +112,7 @@ export const postController = new Elysia({
       body: CreatePostReactionBody,
       response: {
         201: CreatePostReactionResponse,
-        409: zApiErrorResponse(zApiError(InternalErrorCode.POST_REACTION_ALREADY_EXISTS)),
+        ...createErrorSchema(InternalErrorCode.POST_REACTION_ALREADY_EXISTS),
       },
     }
   )
@@ -129,7 +136,7 @@ export const postController = new Elysia({
       params: DeletePostReactionParams,
       response: {
         200: DeletePostReactionResponse,
-        404: zApiErrorResponse(zApiError(InternalErrorCode.POST_REACTION_NOT_FOUND)),
+        ...createErrorSchema(InternalErrorCode.POST_REACTION_NOT_FOUND),
       },
     }
   )
@@ -138,10 +145,10 @@ export const postController = new Elysia({
     async ({ params, body, status }) => {
       const result = await PostService.createPostComment(params.id, userId, body.content)
       if (result.isErr()) {
-        return status(403, {
+        return status(404, {
           error: {
-            code: InternalErrorCode.FORBIDDEN,
-            message: 'You do not have permission to comment on this post.',
+            code: 'POST_NOT_FOUND',
+            message: 'Post comment not found',
           },
         })
       }
@@ -153,7 +160,7 @@ export const postController = new Elysia({
       body: CreatePostCommentBody,
       response: {
         201: CreatePostCommentResponse,
-        403: zApiErrorResponse(zApiError(InternalErrorCode.FORBIDDEN)),
+        ...createErrorSchema(InternalErrorCode.POST_NOT_FOUND, InternalErrorCode.FORBIDDEN),
       },
     }
   )
@@ -183,8 +190,7 @@ export const postController = new Elysia({
       body: UpdatePostCommentBody,
       response: {
         200: UpdatePostCommentResponse,
-        403: zApiErrorResponse(zApiError(InternalErrorCode.FORBIDDEN)),
-        404: zApiErrorResponse(zApiError(InternalErrorCode.POST_COMMENT_NOT_FOUND)),
+        ...createErrorSchema(InternalErrorCode.POST_COMMENT_NOT_FOUND, InternalErrorCode.FORBIDDEN),
       },
     }
   )
@@ -208,8 +214,7 @@ export const postController = new Elysia({
       params: DeletePostCommentParams,
       response: {
         200: DeletePostCommentResponse,
-        403: zApiErrorResponse(zApiError(InternalErrorCode.FORBIDDEN)),
-        404: zApiErrorResponse(zApiError(InternalErrorCode.POST_COMMENT_NOT_FOUND)),
+        ...createErrorSchema(InternalErrorCode.POST_COMMENT_NOT_FOUND, InternalErrorCode.FORBIDDEN),
       },
     }
   )
