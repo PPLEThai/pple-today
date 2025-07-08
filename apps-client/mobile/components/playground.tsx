@@ -1,5 +1,7 @@
+import { useCallback, useMemo, useRef } from 'react'
 import { ScrollView, View } from 'react-native'
 
+import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
 import { Button } from '@pple-today/ui/button'
 import {
   Dialog,
@@ -12,9 +14,10 @@ import {
   DialogTrigger,
 } from '@pple-today/ui/dialog'
 import { Icon } from '@pple-today/ui/icon'
+import { Input, InputGroup, InputLeftIcon, InputRightIcon } from '@pple-today/ui/input'
 import { Text } from '@pple-today/ui/text'
 import { H1, H2 } from '@pple-today/ui/typography'
-import { PlusIcon } from 'lucide-react-native'
+import { PlusIcon, SearchIcon } from 'lucide-react-native'
 
 import { AuthPlayground } from './auth-playground'
 
@@ -27,10 +30,9 @@ export function Playground() {
         </View>
         <View className="flex flex-col gap-2">
           <H2>Font</H2>
-          <View className="flex flex-row gap-1 items-baseline">
-            <Text>สวัสดี</Text>
-            <Text className="font-serif">สวัสดี</Text>
-            <Text className="font-sans">สวัสดี</Text>
+          <View className="flex flex-col gap-1">
+            <Text className="font-sans">font-sans Anakotmai</Text>
+            <Text className="font-serif">font-serif NotoSansThaiLooped</Text>
           </View>
         </View>
         <View className="flex flex-col gap-2">
@@ -146,8 +148,39 @@ export function Playground() {
                   <Icon icon={PlusIcon} />
                 </Button>
               </View>
+              <View className="flex flex-col gap-2 flex-wrap">
+                <Button size="icon">
+                  <Icon icon={PlusIcon} />
+                </Button>
+                <Button size="icon" variant="secondary">
+                  <Icon icon={PlusIcon} />
+                </Button>
+                <Button size="icon" variant="outline">
+                  <Icon icon={PlusIcon} />
+                </Button>
+                <Button size="icon" variant="ghost">
+                  <Icon icon={PlusIcon} />
+                </Button>
+                <Button size="icon" variant="link">
+                  <Icon icon={PlusIcon} />
+                </Button>
+                <Button size="icon" variant="destructive">
+                  <Icon icon={PlusIcon} />
+                </Button>
+              </View>
             </View>
           </ScrollView>
+        </View>
+
+        <View className="flex flex-col gap-2">
+          <H2>Input</H2>
+          <Input />
+          <Input value="test@example.com ทดสอบ" />
+          <InputGroup>
+            <InputLeftIcon icon={SearchIcon} strokeWidth={1.5} />
+            <Input placeholder="Email" />
+            <InputRightIcon icon={SearchIcon} strokeWidth={1.5} />
+          </InputGroup>
         </View>
         <AuthPlayground />
         <View className="flex flex-col gap-2">
@@ -177,7 +210,34 @@ export function Playground() {
             </Dialog>
           </View>
         </View>
+        <View className="flex flex-col gap-2">
+          <H2>BottomSheet</H2>
+          <BottomSheetExample />
+        </View>
       </View>
     </ScrollView>
+  )
+}
+
+function BottomSheetExample() {
+  const bottomSheetModalRef = useRef<BottomSheetModal>(null)
+
+  const handlePresentModalPress = useCallback(() => {
+    bottomSheetModalRef.current?.present()
+  }, [])
+
+  const snapPoints = useMemo(() => ['25%', '50%'], [])
+
+  return (
+    <View>
+      <Button onPress={handlePresentModalPress}>
+        <Text>Present Modal</Text>
+      </Button>
+      <BottomSheetModal ref={bottomSheetModalRef} snapPoints={snapPoints}>
+        <BottomSheetView className="flex-1 items-center p-4">
+          <Text className="text-7xl font-bold">Bottom Sheet Component 🎉</Text>
+        </BottomSheetView>
+      </BottomSheetModal>
+    </View>
   )
 }
