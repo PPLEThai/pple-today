@@ -38,6 +38,7 @@ export const postController = new Elysia({
     async ({ params, status }) => {
       const result = await PostService.getPostById(params.id, userId) // Replace 'user-id-placeholder' with actual user ID logic
       if (result.isErr()) {
+        // TODO: Implement proper response and error mapping
         return status(404, {
           error: {
             code: InternalErrorCode.POST_NOT_FOUND,
