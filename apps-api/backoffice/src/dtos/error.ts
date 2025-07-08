@@ -1,4 +1,4 @@
-import { TAnySchema, TOptional, TUnknown } from '@sinclair/typebox'
+import { TAnySchema, TObject, TOptional, TUnknown } from '@sinclair/typebox'
 import { InvertedStatusMap, t } from 'elysia'
 
 export type InternalErrorSchema = {
@@ -61,9 +61,7 @@ type GetDataFromSchema<TCode extends InternalErrorCode> =
       : TOptional<TUnknown>
     : never
 
-export function zApiErrorResponse<TErrors extends [TAnySchema, ...TAnySchema[]]>(
-  ...errors: TErrors
-) {
+export function zApiErrorResponse<TErrors extends [TObject, ...TObject[]]>(...errors: TErrors) {
   return t.Object({
     error: t.Union<TErrors>(errors),
   })
