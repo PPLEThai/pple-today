@@ -15,7 +15,7 @@ model Announcement {
 
     publishedAt DateTime @default(now())
 
-    AnnouncementHashTag AnnouncementHashTag[]
+    announcementHashTags AnnouncementHashTag[]
 }
 
 model AnnouncementHashTag {

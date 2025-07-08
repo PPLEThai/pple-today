@@ -13,14 +13,14 @@ model User {
     point        Int       @default(0)
     role         UserRole  @default(USER)
 
-    PollAnswer             PollAnswer[]
-    AuthorUser             FollowedUser[]           @relation("FollowedUserAuthor")
-    FollowedUser           FollowedUser[]           @relation("FollowedUserFollowed")
-    Post                   Post[]
-    PostComment            PostComment[]
-    PostReaction           PostReaction[]
-    EventAttendant         EventAttendant[]
-    ElectionEligibleVoter  ElectionEligibleVoter[]
-    ElectionEligibleBallot ElectionEligibleBallot[]
-    FollowingTopic         FollowedTopic[]
+    pollAnswers             PollAnswer[]
+    suthorUsers             FollowedUser[]           @relation("FollowedUserAuthor")
+    followedUsers           FollowedUser[]           @relation("FollowedUserFollowed")
+    posts                   Post[]
+    postComments            PostComment[]
+    postReactions           PostReaction[]
+    eventAttendants         EventAttendant[]
+    electionEligibleVoters  ElectionEligibleVoter[]
+    electionEligibleBallots ElectionEligibleBallot[]
+    followingTopics         FollowedTopic[]
 }

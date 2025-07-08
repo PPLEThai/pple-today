@@ -15,10 +15,10 @@ model Election {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    candidates             ElectionCandidate[]
-    voters                 ElectionEligibleVoter[]
-    ElectionBallot         ElectionBallot[]
-    ElectionEligibleBallot ElectionEligibleBallot[]
+    candidates              ElectionCandidate[]
+    voters                  ElectionEligibleVoter[]
+    electionBallots         ElectionBallot[]
+    electionEligibleBallots ElectionEligibleBallot[]
 
     @@index([name])
 }
@@ -33,7 +33,7 @@ model ElectionCandidate {
     updatedAt DateTime @updatedAt
 
     electionId String
-    Election   Election @relation(fields: [electionId], references: [id])
+    election   Election @relation(fields: [electionId], references: [id])
 }
 
 model ElectionEligibleBallot {
@@ -61,7 +61,7 @@ model ElectionBallot {
 
     election Election @relation(fields: [electionId], references: [id])
 
-    ElectionEligibleBallot ElectionEligibleBallot[]
+    electionEligibleBallots ElectionEligibleBallot[]
 }
 
 model ElectionEligibleVoter {

@@ -1,11 +1,17 @@
 import { PrismaClient } from '@db/client'
+import { PrismaPg } from '@prisma/adapter-pg'
 import Elysia from 'elysia'
 
 export type WithPrisma = {
   prisma: typeof prismaClient
 }
 
-export const prismaClient = new PrismaClient()
+const connectionString = `${process.env.DATABASE_URL}`
+
+const adapter = new PrismaPg({ connectionString })
+export const prismaClient = new PrismaClient({
+  adapter,
+})
 
 const prismaService = new Elysia({ name: 'prismaService' }).decorate({
   prisma: prismaClient,
