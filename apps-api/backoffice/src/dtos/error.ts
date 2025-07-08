@@ -1,25 +1,86 @@
-import { TAnySchema } from '@sinclair/typebox'
+import { TAnySchema, TOptional, TUnknown } from '@sinclair/typebox'
+import { InvertedStatusMap, t } from 'elysia'
 
-export type InternalErrorSchema = Record<string, null | TAnySchema>
+export type InternalErrorSchema = {
+  status: keyof InvertedStatusMap
+  data?: TAnySchema
+}
+export type InternalErrorSchemas = Record<string, null | InternalErrorSchema>
 
 const COMMON_ERROR_SCHEMA = {
-  UNAUTHORIZED: null,
-  FORBIDDEN: null,
-  NOT_FOUND: null,
-  BAD_REQUEST: null,
-  INTERNAL_SERVER_ERROR: null,
-} satisfies InternalErrorSchema
+  UNAUTHORIZED: {
+    status: 401,
+  },
+  FORBIDDEN: {
+    status: 403,
+  },
+  NOT_FOUND: {
+    status: 404,
+  },
+  BAD_REQUEST: {
+    status: 400,
+  },
+  INTERNAL_SERVER_ERROR: {
+    status: 500,
+  },
+} satisfies InternalErrorSchemas
 
 const POST_ERROR_SCHEMA = {
-  POST_NOT_FOUND: null,
-  POST_COMMENT_NOT_FOUND: null,
-  POST_REACTION_NOT_FOUND: null,
-  POST_REACTION_ALREADY_EXISTS: null,
-} satisfies InternalErrorSchema
+  POST_NOT_FOUND: {
+    status: 404,
+  },
+  POST_COMMENT_NOT_FOUND: {
+    status: 404,
+  },
+  POST_REACTION_NOT_FOUND: {
+    status: 404,
+  },
+  POST_REACTION_ALREADY_EXISTS: {
+    status: 409,
+    data: t.Object({
+      message: t.String({ description: 'Reaction already exists for this post.' }),
+    }),
+  },
+} satisfies InternalErrorSchemas
 
-export const internalErrorSchemas = {
+export const InternalErrorCodeSchemas = {
   ...COMMON_ERROR_SCHEMA,
   ...POST_ERROR_SCHEMA,
+} as const
+export type InternalErrorCodeSchemas = typeof InternalErrorCodeSchemas
+
+type InternalErrorCodeEnum = {
+  [K in keyof typeof InternalErrorCodeSchemas]: K
+}
+export const InternalErrorCode = Object.fromEntries(
+  Object.keys(InternalErrorCodeSchemas).map((key) => [key, key])
+) as InternalErrorCodeEnum
+export type InternalErrorCode = keyof typeof InternalErrorCode
+
+export function zApiErrorResponse<TErrors extends [TAnySchema, ...TAnySchema[]]>(
+  ...errors: TErrors
+) {
+  return t.Object({
+    error: t.Union(errors),
+  })
 }
 
-export type InternalErrorType = keyof typeof internalErrorSchemas
+type GetDataFromSchema<TCode extends InternalErrorCode> =
+  TCode extends keyof InternalErrorCodeSchemas
+    ? InternalErrorCodeSchemas[TCode] extends { data: any }
+      ? InternalErrorCodeSchemas[TCode]['data']
+      : TOptional<TUnknown>
+    : never
+
+export function zApiError<const TCode extends InternalErrorCode>(code: TCode) {
+  const data: GetDataFromSchema<TCode> =
+    'data' in InternalErrorCodeSchemas[code]
+      ? (InternalErrorCodeSchemas[code].data ?? t.Optional(t.Unknown()))
+      : (t.Optional(t.Unknown()) as any)
+
+  return t.Object({
+    code: t.Literal(code),
+    message: t.Optional(t.String()),
+    data,
+  })
+}
