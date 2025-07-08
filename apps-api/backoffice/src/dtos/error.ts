@@ -81,6 +81,3 @@ export function zApiError<const TCode extends InternalErrorCode>(code: TCode) {
     data,
   })
 }
-
-const x = zApiError('POST_REACTION_ALREADY_EXISTS')
-type P = GetDataFromSchema<'FORBIDDEN'>
