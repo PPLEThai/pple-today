@@ -17,7 +17,7 @@ function H1({ className, asChild = false, ...props }: TypographyProps) {
       role="heading"
       aria-level="1"
       className={cn(
-        'web:scroll-m-20 text-4xl text-foreground tracking-tight lg:text-5xl web:select-text font-sans',
+        'web:scroll-m-20 text-4xl text-foreground tracking-tight lg:text-5xl web:select-text font-sans font-bold',
         className
       )}
       {...props}

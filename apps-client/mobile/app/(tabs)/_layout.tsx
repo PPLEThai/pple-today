@@ -46,9 +46,9 @@ export default function MaterialTopTabsLayout() {
           }}
         />
         <MaterialTopTabs.Screen
-          name="blue"
+          name="playground"
           options={{
-            title: 'Blue',
+            title: 'Playground',
           }}
         />
       </MaterialTopTabs>
