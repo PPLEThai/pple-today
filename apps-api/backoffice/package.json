@@ -11,6 +11,9 @@
     "db:reset": "prisma migrate reset",
     "test": "vitest",
     "test:cov": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx --fix",
+    "format:check": "prettier --check .",
     "coverage": "open-cli coverage/index.html"
   },
   "dependencies": {
