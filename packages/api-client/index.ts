@@ -26,7 +26,7 @@ export function createQueryClient<TSchema extends Record<string, any>>(
     })
 
     if (resp.status >= 300) {
-      throw resp
+      throw resp.error
     }
 
     return resp.data

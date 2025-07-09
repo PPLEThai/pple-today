@@ -9,6 +9,8 @@ import {
 import { Prettify2 } from 'elysia/dist/types'
 import { ConditionalExcept, IntClosedRange, IsNever, ValueOf } from 'type-fest'
 
+import { type InternalErrorCode } from '@api/backoffice/src/dtos/error'
+
 type GetAvailableMethods<TApiRouter extends Record<string, any>> = {
   [K in keyof TApiRouter]: keyof TApiRouter[K]
 }[keyof TApiRouter]
@@ -57,12 +59,41 @@ type RestPayload<TSchema extends Record<string, any>> = ConditionalExcept<
   never
 >
 
-type EdenError<TResponse extends Record<string, unknown>> =
-  MapError<TResponse> extends infer Errors
+type EdenError<TSchema extends Record<string, unknown>> = TSchema extends {
+  response: infer TResponse extends Record<string, unknown>
+}
+  ? MapError<TResponse> extends infer Errors
     ? IsNever<Errors> extends true
       ? EdenFetchError<number, string>
       : Errors
     : EdenFetchError<number, string>
+  : never
+
+type InjectEdenError<
+  TSchema extends Record<string, unknown>,
+  TError extends EdenError<TSchema> = EdenError<TSchema>,
+> =
+  | (TError extends { value: { type: 'validation' } } ? never : TError)
+  | EdenFetchError<
+      422,
+      {
+        error: {
+          code: typeof InternalErrorCode.VALIDATION_ERROR
+          message?: string | undefined
+          data?: unknown
+        }
+      }
+    >
+  | EdenFetchError<
+      500,
+      {
+        error: {
+          code: typeof InternalErrorCode.INTERNAL_SERVER_ERROR
+          message?: string | undefined
+          data?: unknown
+        }
+      }
+    >
 
 type SuccessRange = IntClosedRange<200, 299>
 type EdenSuccess<TResponse extends Record<string, unknown>> = {
@@ -92,7 +123,7 @@ export interface QueryClient<
     const TResponse extends
       TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
     const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
-    const TError extends EdenError<TResponse> = EdenError<TResponse>,
+    const TError extends InjectEdenError<TResponse> = InjectEdenError<TResponse>,
   >(
     method: TMethod,
     path: TPath,
@@ -108,7 +139,7 @@ export interface QueryClient<
     const TResponse extends
       TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
     const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
-    const TError extends EdenError<TResponse> = EdenError<TResponse>,
+    const TError extends InjectEdenError<TResponse> = InjectEdenError<TResponse>,
     const TContext = unknown,
   >(
     method: TMethod,
@@ -124,7 +155,7 @@ export interface QueryClient<
     const TResponse extends
       TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
     const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
-    const TError extends EdenError<TResponse> = EdenError<TResponse>,
+    const TError extends InjectEdenError<TResponse> = InjectEdenError<TResponse>,
   >(
     method: TMethod,
     path: TPath,
@@ -140,7 +171,7 @@ export interface QueryClient<
     const TResponse extends
       TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
     const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
-    const TError extends EdenError<TResponse> = EdenError<TResponse>,
+    const TError extends InjectEdenError<TResponse> = InjectEdenError<TResponse>,
     const TContext = unknown,
   >(
     method: TMethod,
