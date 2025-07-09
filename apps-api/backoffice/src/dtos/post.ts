@@ -2,7 +2,7 @@ import { Static, t } from 'elysia'
 
 import { AuthorSchema } from './user'
 
-export { PostReactionType } from '@db/index'
+export { PostReactionType } from '../../__generated__/prisma'
 
 export const Post = t.Object({
   id: t.String({ description: 'The ID of the post' }),

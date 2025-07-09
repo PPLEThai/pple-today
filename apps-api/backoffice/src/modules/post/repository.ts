@@ -1,6 +1,6 @@
-import { PostReactionType } from '@/dtos/post'
-import { prismaClient } from '@/libs/prisma'
-import { fromPrismaPromise } from '@/utils/prisma'
+import { PostReactionType } from '../../dtos/post'
+import { prismaClient } from '../../libs/prisma'
+import { fromPrismaPromise } from '../../utils/prisma'
 
 abstract class PostRepository {
   static async getPostById(postId: string, userId: string) {

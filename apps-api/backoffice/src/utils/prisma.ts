@@ -1,6 +1,7 @@
-import { PrismaClientKnownRequestError } from '@db/runtime/client'
 import { fromPromise } from 'neverthrow'
 import { match, P } from 'ts-pattern'
+
+import { PrismaClientKnownRequestError } from '../../__generated__/prisma/runtime/client'
 
 const prismaError = {
   P2002: 'UNIQUE_CONSTRAINT_FAILED',

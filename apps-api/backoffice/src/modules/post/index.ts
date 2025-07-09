@@ -1,6 +1,3 @@
-import { InternalErrorCode } from '@/dtos/error'
-import { createErrorSchema } from '@/utils/error'
-
 import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
@@ -25,6 +22,9 @@ import {
   UpdatePostCommentResponse,
 } from './models'
 import PostService from './services'
+
+import { InternalErrorCode } from '../../dtos/error'
+import { createErrorSchema } from '../../utils/error'
 
 // TODO: Replace with actual user ID logic and user guarding
 // This is a placeholder for demonstration purposes.

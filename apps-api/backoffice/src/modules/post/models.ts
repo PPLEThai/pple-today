@@ -1,6 +1,6 @@
-import { Post, PostComment, PostReactionType } from '@/dtos/post'
-
 import { Static, t } from 'elysia'
+
+import { Post, PostComment, PostReactionType } from '../../dtos/post'
 
 export const GetPostByIdParams = t.Object({
   id: t.String({ description: 'The ID of the post' }),

@@ -1,13 +1,5 @@
 {
   "extends": "@pple-today/project-config/tsconfig/base.json",
-  "include": ["src/**/*.ts", "prisma/**/*.ts"],
-  "exclude": ["node_modules", "dist", "build", "coverage", "scripts"],
-  "compilerOptions": {
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"],
-      "@db/*": ["__generated__/prisma/*"],
-      "@prismabox/*": ["__generated__/prismabox/*"]
-    }
-  }
+  "include": ["src/**/*.ts", "prisma/**/*.ts", "__generated__/**/*.ts"],
+  "exclude": ["node_modules", "dist", "build", "coverage", "scripts"]
 }

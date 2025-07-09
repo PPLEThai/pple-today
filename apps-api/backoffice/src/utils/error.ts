@@ -1,9 +1,9 @@
-import { InternalErrorCode, InternalErrorCodeSchemas } from '@/dtos/error'
-
 import { TLiteral, TObject, TOptional, TString, TUnion, TUnknown } from '@sinclair/typebox'
 import { t } from 'elysia'
 import { Prettify2 } from 'elysia/dist/types'
 import { groupBy, map, mapValues, pipe } from 'remeda'
+
+import { InternalErrorCode, InternalErrorCodeSchemas } from '../dtos/error'
 
 type ApiErrorSchema<TCode extends InternalErrorCode> = TCode extends InternalErrorCode
   ? TObject<{

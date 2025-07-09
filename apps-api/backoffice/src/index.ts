@@ -6,11 +6,10 @@ import serverEnv from './config/env'
 import prismaService from './libs/prisma'
 import { postController } from './modules/post'
 
-const app = new Elysia({ adapter: node() })
+export const app = new Elysia({ adapter: node() })
   .use(swagger())
-  .use(postController)
   .use(prismaService)
-  .get('/', () => 'Hello, Elysia!')
+  .use(postController)
   .listen(serverEnv.PORT, () => {
     console.log(`Server is running on http://localhost:${serverEnv.PORT}`)
   })
