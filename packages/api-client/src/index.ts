@@ -1,4 +1,4 @@
-import { EdenFetch, edenFetch } from '@elysiajs/eden/dist/fetch'
+import { edenFetch } from '@elysiajs/eden'
 import {
   useMutation,
   UseMutationOptions,
@@ -9,14 +9,15 @@ import {
 } from '@tanstack/react-query'
 import Elysia from 'elysia'
 
-import { type app } from '@api/backoffice'
+import { ApiSchema } from '@api/backoffice'
 
-import { QueryClient } from './types'
+import { EdenFetch, QueryClient } from './types'
 
-export function createQueryClient<TSchema extends Record<string, any>>(
+function createQueryClient<TSchema extends Record<string, any>>(
   restClient: EdenFetch.Fn<TSchema>
 ): QueryClient<TSchema> {
   const makeRequest = async (method: any, path: any, payload: any) => {
+    console.log('makeRequest', method, path, payload)
     const resp = await restClient(path, {
       method,
       params: payload?.pathParams ?? {},
@@ -81,7 +82,7 @@ export function queryKey(method: string, path: string | number | symbol, payload
   return [method, path, payloadKey] as const
 }
 
-export function createFetchClient<T extends Elysia<any, any, any, any, any, any>>(
+function createFetchClient<T extends Elysia<any, any, any, any, any, any>>(
   server: string,
   options?: EdenFetch.Config
 ) {
@@ -90,7 +91,8 @@ export function createFetchClient<T extends Elysia<any, any, any, any, any, any>
 }
 
 export function createReactQueryClient(server: string, options?: EdenFetch.Config) {
-  const fetchClient = createFetchClient<typeof app>(server, options)
+  const fetchClient = createFetchClient<ApiSchema>(server, options)
   const reactQueryClient = createQueryClient(fetchClient)
+
   return { fetchClient, reactQueryClient }
 }

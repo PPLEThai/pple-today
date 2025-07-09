@@ -1,15 +1,35 @@
-import { EdenFetchError } from '@elysiajs/eden/dist/errors'
-import { MapError } from '@elysiajs/eden/dist/types'
+export { type EdenFetch } from '@elysiajs/eden/fetch'
 import {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from '@tanstack/react-query'
-import { Prettify2 } from 'elysia/dist/types'
+import { Prettify2 } from 'elysia/types'
 import { ConditionalExcept, IntClosedRange, IsNever, ValueOf } from 'type-fest'
 
-import { type InternalErrorCode } from '@api/backoffice/src/dtos/error'
+/**
+ * Due to module resolution issues in application,
+ * we need to declare EdenFetchError here instead of importing it from
+ * - @elysiajs/eden/dist/fetch
+ * - @elysiajs/eden/dist/errors.
+ */
+type ErrorRange = IntClosedRange<300, 599>
+declare class EdenFetchError<Status extends number = number, Value = unknown> extends Error {
+  status: Status
+  value: Value
+  constructor(status: Status, value: Value)
+}
+
+type MapError<T extends Record<number, unknown>> = [
+  {
+    [K in keyof T]-?: K extends ErrorRange ? K : never
+  }[keyof T],
+] extends [infer A extends number]
+  ? {
+      [K in A]: EdenFetchError<K, T[K]>
+    }[A]
+  : false
 
 type GetAvailableMethods<TApiRouter extends Record<string, any>> = {
   [K in keyof TApiRouter]: keyof TApiRouter[K]
@@ -24,30 +44,28 @@ type GroupPathByMethod<
   }
 }
 
-type GetBody<TSchema extends Record<string, any>> = TSchema extends { body: infer TBody }
-  ? TBody extends Record<string, any>
-    ? TBody
-    : never
+type GetBody<TSchema extends Record<string, any>> = TSchema extends {
+  body: infer TBody extends Record<string, any>
+}
+  ? TBody
   : never
 
-type GetQuery<TSchema extends Record<string, any>> = TSchema extends { query: infer TQuery }
-  ? TQuery extends Record<string, any>
-    ? TQuery
-    : never
+type GetQuery<TSchema extends Record<string, any>> = TSchema extends {
+  query: infer TQuery extends Record<string, any>
+}
+  ? TQuery
   : never
 
 type GetHeaders<TSchema extends Record<string, any>> = TSchema extends { headers: infer THeaders }
   ? THeaders extends Record<string, any>
-    ? { headers: THeaders } & Record<string, unknown>
+    ? { headers: THeaders & Record<string, unknown> }
     : { headers?: Record<string, unknown> }
   : { headers?: Record<string, unknown> }
 
 type GetPathParams<TSchema extends Record<string, any>> = TSchema extends {
-  params: infer TPathParams
+  params: infer TPathParams extends Record<string, any>
 }
-  ? TPathParams extends Record<string, any>
-    ? TPathParams
-    : never
+  ? TPathParams
   : never
 
 type RestPayload<TSchema extends Record<string, any>> = ConditionalExcept<
@@ -79,7 +97,7 @@ type InjectEdenError<
       422,
       {
         error: {
-          code: typeof InternalErrorCode.VALIDATION_ERROR
+          code: 'VALIDATION_ERROR'
           message?: string | undefined
           data?: unknown
         }
@@ -89,7 +107,7 @@ type InjectEdenError<
       500,
       {
         error: {
-          code: typeof InternalErrorCode.INTERNAL_SERVER_ERROR
+          code: 'INTERNAL_SERVER_ERROR'
           message?: string | undefined
           data?: unknown
         }

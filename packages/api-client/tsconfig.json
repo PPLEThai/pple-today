@@ -1,3 +1,10 @@
 {
-  "extends": "@pple-today/project-config/tsconfig/base.json"
+  "extends": "@pple-today/project-config/tsconfig/base.json",
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist", "build", "coverage", "scripts"],
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "noUncheckedIndexedAccess": true
+  }
 }
