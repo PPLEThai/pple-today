@@ -91,6 +91,46 @@ const app = new Elysia({ adapter: node() })
       }),
     }
   )
+  .post(
+    '/test-post/:id',
+    ({ params, query, headers, body }) => {
+      console.log('Headers:', headers)
+      return {
+        message: `Hello, ${params.id}!`,
+        params,
+        query,
+        body,
+        headers,
+      }
+    },
+    {
+      params: t.Object({
+        id: t.String(),
+      }),
+      query: t.Object({
+        name: t.Optional(t.String()),
+        code: t.Optional(t.Number()),
+      }),
+      body: t.Object({
+        name: t.Optional(t.String()),
+        code: t.Optional(t.Number()),
+      }),
+      response: t.Object({
+        message: t.String(),
+        params: t.Object({
+          id: t.String(),
+        }),
+        query: t.Object({
+          name: t.Optional(t.String()),
+          code: t.Optional(t.Number()),
+        }),
+        headers: t.Record(t.String(), t.Any()),
+      }),
+      headers: t.Object({
+        'x-custom-header': t.Optional(t.String()),
+      }),
+    }
+  )
   .listen(serverEnv.PORT, () => {
     console.log(`Server is running on http://localhost:${serverEnv.PORT}`)
   })

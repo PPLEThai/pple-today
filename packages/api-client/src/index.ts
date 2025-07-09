@@ -17,7 +17,6 @@ function createQueryClient<TSchema extends Record<string, any>>(
   restClient: EdenFetch.Fn<TSchema>
 ): QueryClient<TSchema> {
   const makeRequest = async (method: any, path: any, payload: any) => {
-    console.log('makeRequest', method, path, payload)
     const resp = await restClient(path, {
       method,
       params: payload?.pathParams ?? {},
@@ -41,14 +40,10 @@ function createQueryClient<TSchema extends Record<string, any>>(
         ...options,
       }) as UseQueryResult<any, any>
     },
-    useMutation: function (method: any, path: any, payload: any, options?: any) {
+    useMutation: function (method: any, path: any, options?: any) {
       return useMutation({
-        mutationKey: queryKey(method, path, payload),
-        mutationFn: (data) =>
-          makeRequest(method, path, {
-            ...payload,
-            body: data,
-          }),
+        mutationKey: queryKey(method, path),
+        mutationFn: (data) => makeRequest(method, path, data),
         ...options,
       }) as UseMutationResult<any, any, any, any>
     },
@@ -59,21 +54,17 @@ function createQueryClient<TSchema extends Record<string, any>>(
         ...options,
       } as UseQueryOptions<any, any, any>
     },
-    mutationOptions: function (method: any, path: any, payload: any, options?: any) {
+    mutationOptions: function (method: any, path: any, options?: any) {
       return {
-        mutationKey: queryKey(method, path, payload),
-        mutationFn: (data) =>
-          makeRequest(method, path, {
-            ...payload,
-            body: data,
-          }),
+        mutationKey: queryKey(method, path),
+        mutationFn: (data) => makeRequest(method, path, data),
         ...options,
       } as UseMutationOptions<any, any, any, any>
     },
   }
 }
 
-export function queryKey(method: string, path: string | number | symbol, payload: any) {
+export function queryKey(method: string, path: string | number | symbol, payload?: any) {
   const payloadKey = {
     pathParams: payload?.pathParams ?? {},
     query: payload?.query ?? {},

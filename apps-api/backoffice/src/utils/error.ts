@@ -1,6 +1,6 @@
 import { TLiteral, TObject, TOptional, TString, TUnion, TUnknown } from '@sinclair/typebox'
 import { t } from 'elysia'
-import { Prettify2 } from 'elysia/dist/types'
+import { Prettify2 } from 'elysia/types'
 import { groupBy, map, mapValues, pipe } from 'remeda'
 
 import { InternalErrorCode, InternalErrorCodeSchemas } from '../dtos/error'

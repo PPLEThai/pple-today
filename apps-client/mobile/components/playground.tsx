@@ -14,9 +14,19 @@ import {
 import { Text } from '@pple-today/ui/text'
 import { H1, H2 } from '@pple-today/ui/typography'
 
+import { useMutation, useQuery } from '@app/libs/react-query'
+
 import { AuthPlayground } from './auth-playground'
 
 export function Playground() {
+  const sampleQuery = useQuery('get', '/:id', {
+    pathParams: { id: '123' },
+    query: { name: 'John Doe', code: 404 },
+    headers: { 'x-custom-header': 'value' },
+  })
+
+  const sampleMutation = useMutation('post', '/test-post/:id')
+
   return (
     <View className="p-4 flex flex-col gap-4 w-full">
       <View className="flex flex-row items-center justify-between">
@@ -29,6 +39,44 @@ export function Playground() {
           <Text className="font-serif">สวัสดี</Text>
           <Text className="font-sans">สวัสดี</Text>
         </View>
+      </View>
+      <View className="flex flex-col gap-2">
+        <H2>Query</H2>
+        <View className="flex flex-row gap-1 items-baseline">
+          <Text>
+            Query:{' '}
+            {sampleQuery.isLoading
+              ? 'Loading...'
+              : sampleQuery.data
+                ? JSON.stringify(sampleQuery.data)
+                : JSON.stringify(sampleQuery.error)}
+          </Text>
+        </View>
+      </View>
+      <View className="flex flex-col gap-2">
+        <H2>Mutation</H2>
+        <View className="flex flex-row gap-1 items-baseline">
+          <Text>
+            Mutation:{' '}
+            {sampleMutation.isPending
+              ? 'Loading...'
+              : sampleMutation.data
+                ? JSON.stringify(sampleMutation.data)
+                : JSON.stringify(sampleMutation.error)}
+          </Text>
+        </View>
+        <Button
+          onPress={() =>
+            sampleMutation.mutateAsync({
+              pathParams: { id: '123' },
+              body: { name: 'John Doe', code: 404 },
+              query: { code: 200, name: 'John Doe' },
+              headers: { 'x-custom-header': 'value' },
+            })
+          }
+        >
+          <Text>Trigger Mutation</Text>
+        </Button>
       </View>
       <View className="flex flex-col gap-2">
         <H2>Button</H2>
