@@ -1,6 +1,6 @@
 import node from '@elysiajs/node'
 import { swagger } from '@elysiajs/swagger'
-import Elysia from 'elysia'
+import Elysia, { t } from 'elysia'
 import { match } from 'ts-pattern'
 
 import serverEnv from './config/env'
@@ -8,7 +8,7 @@ import { InternalErrorCode } from './dtos/error'
 import prismaService from './libs/prisma'
 import { postController } from './modules/post'
 
-export const app = new Elysia({ adapter: node() })
+const app = new Elysia({ adapter: node() })
   .onError(({ status, ...props }) => {
     return match(props)
       .with({ code: 'INTERNAL_SERVER_ERROR' }, () =>
@@ -56,6 +56,43 @@ export const app = new Elysia({ adapter: node() })
   .use(swagger())
   .use(prismaService)
   .use(postController)
+  .get(
+    '/:id',
+    ({ params, query, headers }) => {
+      console.log('Headers:', headers)
+      return {
+        message: `Hello, ${params.id}!`,
+        params,
+        query,
+        headers,
+      }
+    },
+    {
+      params: t.Object({
+        id: t.String(),
+      }),
+      query: t.Object({
+        name: t.Optional(t.String()),
+        code: t.Optional(t.Number()),
+      }),
+      response: t.Object({
+        message: t.String(),
+        params: t.Object({
+          id: t.String(),
+        }),
+        query: t.Object({
+          name: t.Optional(t.String()),
+          code: t.Optional(t.Number()),
+        }),
+        headers: t.Record(t.String(), t.Any()),
+      }),
+      headers: t.Object({
+        'x-custom-header': t.Optional(t.String()),
+      }),
+    }
+  )
   .listen(serverEnv.PORT, () => {
     console.log(`Server is running on http://localhost:${serverEnv.PORT}`)
   })
+
+export type ApiSchema = typeof app
