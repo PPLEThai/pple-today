@@ -31,24 +31,15 @@ export function Playground() {
         <View className="flex flex-col gap-2">
           <H2>Font</H2>
           <View className="flex flex-col gap-1">
-            <Text className="underline">font-inter</Text>
-            <Text className="font-light" style={{ fontFamily: 'Inter_300Light' }}>
-              Inter
-            </Text>
-            <Text className="font-medium" style={{ fontFamily: 'Inter_500Medium' }}>
-              Inter
-            </Text>
-            <Text className="font-bold" style={{ fontFamily: 'Inter_700Bold' }}>
-              Inter
-            </Text>
-            <Text className="underline">font-sans</Text>
-            <Text className="font-sans font-light">Anakotmai</Text>
-            <Text className="font-sans font-medium">Anakotmai</Text>
-            <Text className="font-sans font-bold">Anakotmai</Text>
-            <Text className="underline">font-sans</Text>
-            <Text className="font-serif font-light">NotoSansThaiLooped</Text>
-            <Text className="font-serif font-medium">NotoSansThaiLooped</Text>
-            <Text className="font-serif font-bold">NotoSansThaiLooped</Text>
+            <Text style={{ fontFamily: 'Inter_300Light' }}>Inter</Text>
+            <Text style={{ fontFamily: 'Inter_500Medium' }}>Inter</Text>
+            <Text style={{ fontFamily: 'Inter_700Bold' }}>Inter</Text>
+            <Text className="font-anakotmai-light">Anakotmai</Text>
+            <Text className="font-anakotmai-medium">Anakotmai</Text>
+            <Text className="font-anakotmai-bold">Anakotmai</Text>
+            <Text className="font-noto-light">NotoSansThaiLooped</Text>
+            <Text className="font-noto-medium">NotoSansThaiLooped</Text>
+            <Text className="font-noto-bold">NotoSansThaiLooped</Text>
           </View>
         </View>
         <View className="flex flex-col gap-2">

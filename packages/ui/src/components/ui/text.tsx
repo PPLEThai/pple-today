@@ -19,7 +19,7 @@ function Text({
   return (
     <Component
       className={twMerge(
-        'text-base text-foreground web:select-text font-serif',
+        'text-base text-foreground web:select-text font-noto-medium',
         textClass,
         className
       )}

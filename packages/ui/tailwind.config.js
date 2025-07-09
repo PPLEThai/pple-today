@@ -133,15 +133,35 @@ export default {
         'accordion-up': 'accordion-up 0.2s ease-out',
       },
       fontFamily: {
-        sans: platformSelect({
-          android: ['Anakotmai_500Medium', 'sans-serif'],
-          ios: ['Anakotmai-Medium', "'system font'"],
-          default: ['Anakotmai-Medium', 'ui-sans-serif'],
+        'anakotmai-light': platformSelect({
+          android: 'Anakotmai_300Light',
+          ios: 'Anakotmai-Light',
+          default: ['Anakotmai-Light', 'sans-serif'],
         }),
-        serif: platformSelect({
-          android: ['NotoSansThaiLooped_500Medium', 'serif'],
-          ios: ['NotoSansThaiLooped-Medium', 'Georgia'],
-          default: ['NotoSansThaiLooped-Medium', 'serif'],
+        'anakotmai-medium': platformSelect({
+          android: 'Anakotmai_500Medium',
+          ios: 'Anakotmai-Medium',
+          default: ['Anakotmai-Medium', 'sans-serif'],
+        }),
+        'anakotmai-bold': platformSelect({
+          android: 'Anakotmai_700Bold',
+          ios: 'Anakotmai-Bold',
+          default: ['Anakotmai-Bold', 'sans-serif'],
+        }),
+        'noto-light': platformSelect({
+          android: 'NotoSansThaiLooped_300Light',
+          ios: 'NotoSansThaiLooped-Light',
+          default: ['NotoSansThaiLooped-Light', 'sans-serif'],
+        }),
+        'noto-medium': platformSelect({
+          android: 'NotoSansThaiLooped_500Medium',
+          ios: 'NotoSansThaiLooped-Medium',
+          default: ['NotoSansThaiLooped-Medium', 'sans-serif'],
+        }),
+        'noto-bold': platformSelect({
+          android: 'NotoSansThaiLooped_700Bold',
+          ios: 'NotoSansThaiLooped-Bold',
+          default: ['NotoSansThaiLooped-Bold', 'sans-serif'],
         }),
       },
     },
