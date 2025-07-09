@@ -26,10 +26,10 @@ export function Playground() {
     <ScrollView>
       <View className="p-4 flex flex-col gap-4 w-full">
         <View className="flex flex-row items-center justify-between">
-          <H1>Playground</H1>
+          <H1 className="font-inter-bold">Playground</H1>
         </View>
         <View className="flex flex-col gap-2">
-          <H2>Font</H2>
+          <H2 className="font-inter-bold">Font</H2>
           <View className="flex flex-col gap-1">
             <Text style={{ fontFamily: 'Inter_300Light' }}>Inter</Text>
             <Text style={{ fontFamily: 'Inter_500Medium' }}>Inter</Text>
@@ -43,7 +43,7 @@ export function Playground() {
           </View>
         </View>
         <View className="flex flex-col gap-2">
-          <H2>Button</H2>
+          <H2 className="font-inter-bold">Button</H2>
           <ScrollView
             horizontal
             className="-mx-4"
@@ -180,7 +180,7 @@ export function Playground() {
         </View>
 
         <View className="flex flex-col gap-2">
-          <H2>Input</H2>
+          <H2 className="font-inter-bold">Input</H2>
           <Input />
           <Input value="test@example.com ทดสอบ" />
           <InputGroup>
@@ -191,7 +191,7 @@ export function Playground() {
         </View>
         <AuthPlayground />
         <View className="flex flex-col gap-2">
-          <H2>Dialog</H2>
+          <H2 className="font-inter-bold">Dialog</H2>
           <View className="flex flex-row gap-2 flex-wrap">
             <Dialog>
               <DialogTrigger asChild>
@@ -218,7 +218,7 @@ export function Playground() {
           </View>
         </View>
         <View className="flex flex-col gap-2">
-          <H2>BottomSheet</H2>
+          <H2 className="font-inter-bold">BottomSheet</H2>
           <BottomSheetExample />
         </View>
       </View>

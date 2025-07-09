@@ -133,6 +133,21 @@ export default {
         'accordion-up': 'accordion-up 0.2s ease-out',
       },
       fontFamily: {
+        'inter-light': platformSelect({
+          android: 'Inter_300Light',
+          ios: 'Inter-Light',
+          default: ['Inter-Light', 'sans-serif'],
+        }),
+        'inter-medium': platformSelect({
+          android: 'Inter_500Medium',
+          ios: 'Inter-Medium',
+          default: ['Inter-Medium', 'sans-serif'],
+        }),
+        'inter-bold': platformSelect({
+          android: 'Inter_700Bold',
+          ios: 'Inter-Bold',
+          default: ['Inter-Bold', 'sans-serif'],
+        }),
         'anakotmai-light': platformSelect({
           android: 'Anakotmai_300Light',
           ios: 'Anakotmai-Light',

@@ -155,7 +155,7 @@ export function AuthPlayground() {
 
   return (
     <View className="flex flex-col gap-2">
-      <H2>Auth Playground </H2>
+      <H2 className="font-inter-bold">Auth Playground </H2>
       <Text>AccessToken: {JSON.stringify(accessToken)}</Text>
       <Button
         onPress={async () => {
