@@ -59,6 +59,7 @@ type RestPayload<TSchema extends Record<string, any>> = ConditionalExcept<
   never
 >
 
+// Ref: https://github.com/elysiajs/eden/blob/c1fa86868fd195500bacbb84c25c6d19c2de1349/src/fetch/types.ts#L75
 type EdenError<TSchema extends Record<string, unknown>> = TSchema extends {
   response: infer TResponse extends Record<string, unknown>
 }
