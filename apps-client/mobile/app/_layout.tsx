@@ -2,6 +2,7 @@ import '../global.css'
 
 import * as React from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { DevToolsBubble } from 'react-native-react-query-devtools'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 
 import { Inter_300Light, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter'
@@ -14,6 +15,8 @@ import { BottomSheetModalProvider } from '@pple-today/ui/bottom-sheet/index'
 import { NAV_THEME } from '@pple-today/ui/lib/constants'
 import { PortalHost } from '@pple-today/ui/portal'
 import { DarkTheme, DefaultTheme, Theme, ThemeProvider } from '@react-navigation/native'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import * as Clipboard from 'expo-clipboard'
 import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
@@ -35,23 +38,36 @@ export {
   ErrorBoundary,
 } from 'expo-router'
 
+const queryClient = new QueryClient()
 export default function RootLayout() {
   return (
     <>
       <SafeAreaProvider>
-        <ColorSchemeProvider>
-          <FontProvider>
-            <GestureHandlerRootView>
-              <BottomSheetModalProvider>
-                <Stack />
-              </BottomSheetModalProvider>
-            </GestureHandlerRootView>
-          </FontProvider>
-        </ColorSchemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <ColorSchemeProvider>
+            <FontProvider>
+              <GestureHandlerRootView>
+                <BottomSheetModalProvider>
+                  <Stack />
+                </BottomSheetModalProvider>
+              </GestureHandlerRootView>
+            </FontProvider>
+          </ColorSchemeProvider>
+          <DevToolsBubble onCopy={onCopy} queryClient={queryClient} />
+        </QueryClientProvider>
       </SafeAreaProvider>
       <PortalHost />
     </>
   )
+}
+
+const onCopy = async (text: string) => {
+  try {
+    await Clipboard.setStringAsync(text)
+    return true
+  } catch {
+    return false
+  }
 }
 
 function FontProvider({ children }: { children: React.ReactNode }) {
