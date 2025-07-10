@@ -1,3 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai+Looped:wght@100..900&display=swap');
 @import 'tailwindcss';
 @import '@pple-today/ui/global.css';
 @config '@pple-today/ui/tailwind.config.js';
+
+@font-face {
+  font-family: Anakotmai;
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/Anakotmai-Light.otf') format('opentype');
+}
+
+@font-face {
+  font-family: Anakotmai;
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/Anakotmai-Medium.otf') format('opentype');
+}
+
+@font-face {
+  font-family: Anakotmai;
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/Anakotmai-Bold.otf') format('opentype');
+}
+
+@theme {
+  --font-sans: 'Anakotmai', 'ui-san-serif';
+  --font-serif: 'Noto Sans Thai Looped', 'serif';
+}

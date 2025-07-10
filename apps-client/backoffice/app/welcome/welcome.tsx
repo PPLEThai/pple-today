@@ -13,8 +13,11 @@ export function Welcome() {
         </header>
         <div className="max-w-[300px] w-full space-y-6 px-4">
           <nav className="rounded-3xl border border-gray-200 p-6 dark:border-gray-700 space-y-4">
-            <p className="leading-6 text-primary-700 dark:text-gray-200 text-center">
-              What&apos;s next?
+            <p className="leading-6 font-sans text-primary-700 dark:text-gray-200 text-center">
+              This is font sans
+            </p>
+            <p className="leading-6 font-serif text-primary-700 dark:text-gray-200 text-center">
+              This is font serif
             </p>
             <ul>
               {resources.map(({ href, text, icon }) => (
