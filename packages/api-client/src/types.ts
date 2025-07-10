@@ -8,13 +8,22 @@ import {
 import { Prettify2 } from 'elysia/types'
 import { ConditionalExcept, IntClosedRange, IsNever, ValueOf } from 'type-fest'
 
+type ErrorRange = IntClosedRange<300, 599>
+
 /**
  * Due to module resolution issues in application,
- * we need to declare EdenFetchError here instead of importing it from
- * - @elysiajs/eden/dist/fetch
- * - @elysiajs/eden/dist/errors.
+ * we need to explicitly declare `EdenFetchError`, `BaseEdenError` and `MapError` here instead of importing it from
+ * - `@elysiajs/eden/dist/fetch`
+ * - `@elysiajs/eden/dist/errors`
+ *
+ * MIT License
+ *
+ * Copyright 2022 saltyAom
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
  */
-type ErrorRange = IntClosedRange<300, 599>
+
 declare class EdenFetchError<Status extends number = number, Value = unknown> extends Error {
   status: Status
   value: Value
@@ -30,6 +39,17 @@ type MapError<T extends Record<number, unknown>> = [
       [K in A]: EdenFetchError<K, T[K]>
     }[A]
   : false
+
+// Ref: https://github.com/elysiajs/eden/blob/c1fa86868fd195500bacbb84c25c6d19c2de1349/src/fetch/types.ts#L75
+type BaseEdenError<TSchema extends Record<string, unknown>> = TSchema extends {
+  response: infer TResponse extends Record<string, unknown>
+}
+  ? MapError<TResponse> extends infer Errors
+    ? IsNever<Errors> extends true
+      ? EdenFetchError<number, string>
+      : Errors
+    : EdenFetchError<number, string>
+  : never
 
 type GetAvailableMethods<TApiRouter extends Record<string, any>> = {
   [K in keyof TApiRouter]: keyof TApiRouter[K]
@@ -77,20 +97,9 @@ type RestPayload<TSchema extends Record<string, any>> = ConditionalExcept<
   never
 >
 
-// Ref: https://github.com/elysiajs/eden/blob/c1fa86868fd195500bacbb84c25c6d19c2de1349/src/fetch/types.ts#L75
-type EdenError<TSchema extends Record<string, unknown>> = TSchema extends {
-  response: infer TResponse extends Record<string, unknown>
-}
-  ? MapError<TResponse> extends infer Errors
-    ? IsNever<Errors> extends true
-      ? EdenFetchError<number, string>
-      : Errors
-    : EdenFetchError<number, string>
-  : never
-
-type InjectEdenError<
+type EdenError<
   TSchema extends Record<string, unknown>,
-  TError extends EdenError<TSchema> = EdenError<TSchema>,
+  TError extends BaseEdenError<TSchema> = BaseEdenError<TSchema>,
 > =
   | (TError extends { value: { type: 'validation' } } ? never : TError)
   | EdenFetchError<
@@ -142,7 +151,7 @@ export interface QueryClient<
     const TResponse extends
       TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
     const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
-    const TError extends InjectEdenError<TResponse> = InjectEdenError<TResponse>,
+    const TError extends EdenError<TResponse> = EdenError<TResponse>,
   >(
     method: TMethod,
     path: TPath,
@@ -158,7 +167,7 @@ export interface QueryClient<
     const TResponse extends
       TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
     const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
-    const TError extends InjectEdenError<TResponse> = InjectEdenError<TResponse>,
+    const TError extends EdenError<TResponse> = EdenError<TResponse>,
     const TContext = unknown,
   >(
     method: TMethod,
@@ -174,7 +183,7 @@ export interface QueryClient<
     const TResponse extends
       TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
     const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
-    const TError extends InjectEdenError<TResponse> = InjectEdenError<TResponse>,
+    const TError extends EdenError<TResponse> = EdenError<TResponse>,
   >(
     method: TMethod,
     path: TPath,
@@ -190,7 +199,7 @@ export interface QueryClient<
     const TResponse extends
       TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
     const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
-    const TError extends InjectEdenError<TResponse> = InjectEdenError<TResponse>,
+    const TError extends EdenError<TResponse> = EdenError<TResponse>,
     const TContext = unknown,
   >(
     method: TMethod,
