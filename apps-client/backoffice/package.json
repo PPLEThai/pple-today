@@ -6,6 +6,10 @@
     "build": "react-router build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
+    "lint": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "generate": "react-router typegen",
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
