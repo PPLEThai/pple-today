@@ -15,6 +15,14 @@
     "format:check": {
       "dependsOn": ["^format:check"]
     },
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", "build/**"]
+    },
+    "generate": {
+      "dependsOn": ["^generate"],
+      "outputs": []
+    },
     "dev": {
       "cache": false,
       "persistent": true

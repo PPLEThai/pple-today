@@ -1,6 +1,5 @@
 {
-  "name": "backoffice",
-  "private": true,
+  "name": "@client/backoffice",
   "type": "module",
   "scripts": {
     "build": "react-router build",
