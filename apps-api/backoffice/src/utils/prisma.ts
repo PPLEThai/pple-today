@@ -2,6 +2,11 @@ import { PrismaClientKnownRequestError } from '@db/runtime/client'
 import { fromPromise } from 'neverthrow'
 import { match, P } from 'ts-pattern'
 
+/**
+ * Reference for Prisma error codes
+ *
+ * https://www.prisma.io/docs/orm/reference/error-reference#error-codes
+ */
 const prismaError = {
   P2002: 'UNIQUE_CONSTRAINT_FAILED',
   P2003: 'FOREIGN_KEY_CONSTRAINT_FAILED',
