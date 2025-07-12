@@ -26,7 +26,7 @@ abstract class PostService {
         name: tag.hashTag.name,
       })),
       id: postDetails.id,
-      publishedAt: postDetails.publishedAt.toISOString(),
+      createdAt: postDetails.createdAt.toISOString(),
       reactions: postDetails.reactions.map((reaction) => ({
         type: reaction.type,
         count: reaction.count,

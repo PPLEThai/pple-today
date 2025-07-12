@@ -3,6 +3,11 @@ import { match, P } from 'ts-pattern'
 
 import { PrismaClientKnownRequestError } from '../../__generated__/prisma/runtime/client'
 
+/**
+ * Reference for Prisma error codes
+ *
+ * https://www.prisma.io/docs/orm/reference/error-reference#error-codes
+ */
 const prismaError = {
   P2002: 'UNIQUE_CONSTRAINT_FAILED',
   P2003: 'FOREIGN_KEY_CONSTRAINT_FAILED',

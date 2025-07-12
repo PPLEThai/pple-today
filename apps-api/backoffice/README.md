@@ -22,13 +22,21 @@ PPLE Today Backoffice API
    pnpm install
    ```
 
-2. Generate Prisma client
+2. Copy `.env.example` to `.env` and fill in the required environment variables.
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Make sure to set the `DATABASE_URL` variable to your database connection string.
+
+3. Generate Prisma client
 
    ```bash
    pnpm db:generate
    ```
 
-3. If you did not start postgresql yet, you can use Docker to run it. Make sure you have Docker installed and running.:
+4. If you did not start postgresql yet, you can use Docker to run it. Make sure you have Docker installed and running.:
 
    ```bash
    docker compose up -d
@@ -39,14 +47,6 @@ PPLE Today Backoffice API
    ```bash
    pnpm db:migrate
    ```
-
-4. Copy `.env.example` to `.env` and fill in the required environment variables.
-
-   ```bash
-   cp .env.example .env
-   ```
-
-   Make sure to set the `DATABASE_URL` variable to your database connection string.
 
 5. Start the application
 

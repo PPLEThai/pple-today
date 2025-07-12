@@ -13,6 +13,9 @@ model User {
     point        Int       @default(0)
     role         UserRole  @default(USER)
 
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
     pollAnswers             PollAnswer[]
     suthorUsers             FollowedUser[]           @relation("FollowedUserAuthor")
     followedUsers           FollowedUser[]           @relation("FollowedUserFollowed")
