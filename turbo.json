@@ -15,21 +15,21 @@
     "format:check": {
       "dependsOn": ["^format:check"]
     },
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", "build/**"]
+    },
+    "codegen": {
+      "dependsOn": ["^codegen"],
+      "outputs": []
+    },
     "dev": {
       "cache": false,
       "persistent": true
     },
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["build/**"]
-    },
     "typecheck": {
       "dependsOn": ["^typecheck"],
       "outputs": []
-    },
-    "db:generate": {
-      "dependsOn": ["^db:generate"],
-      "outputs": ["__generated__/prisma/**"]
     }
   }
 }
