@@ -1,7 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai+Looped:wght@100..900&display=swap');
-@import 'tailwindcss';
 @import '@pple-today/ui/global.css';
-@config '@pple-today/ui/tailwind.config.js';
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai+Looped:wght@100..900&display=swap');
 
 @font-face {
   font-family: Anakotmai;
@@ -27,7 +25,9 @@
   src: url('/fonts/Anakotmai-Bold.otf') format('opentype');
 }
 
-@theme {
-  --font-sans: 'Anakotmai', 'ui-san-serif';
-  --font-serif: 'Noto Sans Thai Looped', 'serif';
+@layer base {
+  :root {
+    --font-sans: 'Anakotmai', 'ui-san-serif';
+    --font-serif: 'Noto Sans Thai Looped', 'serif';
+  }
 }
