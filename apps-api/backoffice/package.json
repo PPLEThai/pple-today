@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsx build.ts",
-    "db:generate": "rimraf ./__generated__/prisma && prisma generate",
+    "codegen": "rimraf ./__generated__/prisma && prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
     "test": "vitest",

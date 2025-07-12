@@ -19,25 +19,17 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**", "build/**"]
     },
-    "generate": {
-      "dependsOn": ["^generate"],
+    "codegen": {
+      "dependsOn": ["^codegen"],
       "outputs": []
     },
     "dev": {
       "cache": false,
       "persistent": true
     },
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": ["build/**"]
-    },
     "typecheck": {
       "dependsOn": ["^typecheck"],
       "outputs": []
-    },
-    "db:generate": {
-      "dependsOn": ["^db:generate"],
-      "outputs": ["__generated__/prisma/**"]
     }
   }
 }
