@@ -19,9 +19,17 @@
       "cache": false,
       "persistent": true
     },
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["build/**"]
+    },
     "typecheck": {
       "dependsOn": ["^typecheck"],
       "outputs": []
+    },
+    "db:generate": {
+      "dependsOn": ["^db:generate"],
+      "outputs": ["__generated__/prisma/**"]
     }
   }
 }

@@ -1,0 +1,43 @@
+enum PollType {
+    SINGLE_CHOICE
+    MULTIPLE_CHOICE
+}
+
+model Poll {
+    id          String   @id @default(cuid())
+    title       String
+    description String?
+    endAt       DateTime
+    type        PollType
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    options PollOption[]
+}
+
+model PollOption {
+    id        String   @id @default(cuid())
+    title     String
+    votes     Int      @default(0)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    pollId      String
+    poll        Poll         @relation(fields: [pollId], references: [id])
+    pollAnswers PollAnswer[]
+
+    @@index([pollId])
+}
+
+model PollAnswer {
+    id        String   @id @default(cuid())
+    userId    String
+    optionId  String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user   User       @relation(fields: [userId], references: [id])
+    option PollOption @relation(fields: [optionId], references: [id])
+
+    @@unique([userId, optionId])
+}
