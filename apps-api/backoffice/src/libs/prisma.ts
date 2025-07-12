@@ -1,6 +1,7 @@
-import { PrismaClient } from '@db/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import Elysia from 'elysia'
+
+import { PrismaClient } from '../../__generated__/prisma/client'
 
 export type WithPrisma = {
   prisma: typeof prismaClient

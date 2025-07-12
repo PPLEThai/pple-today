@@ -1,0 +1,9 @@
+import { createReactQueryClient } from '@pple-today/api-client'
+
+// TODO: Update the server URL to use environment variables or a config file
+const {
+  fetchClient,
+  reactQueryClient: { useQuery, useMutation, queryOptions, mutationOptions },
+} = createReactQueryClient('http://192.168.1.5:2000', {})
+
+export { fetchClient, mutationOptions, queryOptions, useMutation, useQuery }

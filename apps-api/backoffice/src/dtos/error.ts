@@ -8,6 +8,9 @@ export type InternalErrorSchema = {
 export type InternalErrorSchemas = Record<string, null | InternalErrorSchema>
 
 const COMMON_ERROR_SCHEMA = {
+  BAD_REQUEST: {
+    status: 400,
+  },
   UNAUTHORIZED: {
     status: 401,
   },
@@ -17,8 +20,8 @@ const COMMON_ERROR_SCHEMA = {
   NOT_FOUND: {
     status: 404,
   },
-  BAD_REQUEST: {
-    status: 400,
+  VALIDATION_ERROR: {
+    status: 422,
   },
   INTERNAL_SERVER_ERROR: {
     status: 500,

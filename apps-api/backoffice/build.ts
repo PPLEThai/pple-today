@@ -10,6 +10,7 @@ async function main() {
     target: 'node18',
     outfile: './build/index.js',
     platform: 'node',
+    treeShaking: true,
     define: {
       __APP_VERSION__: JSON.stringify(version),
     },

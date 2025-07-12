@@ -1,6 +1,7 @@
-import { PrismaClientKnownRequestError } from '@db/runtime/client'
 import { fromPromise } from 'neverthrow'
 import { match, P } from 'ts-pattern'
+
+import { PrismaClientKnownRequestError } from '../../__generated__/prisma/runtime/client'
 
 /**
  * Reference for Prisma error codes
