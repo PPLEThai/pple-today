@@ -5,8 +5,7 @@ import { match } from 'ts-pattern'
 
 import serverEnv from './config/env'
 import { InternalErrorCode } from './dtos/error'
-import prismaService from './libs/prisma'
-import { postController } from './modules/post'
+import { postsController } from './modules/posts'
 
 const app = new Elysia({ adapter: node() })
   .onError(({ status, ...props }) => {
@@ -54,8 +53,7 @@ const app = new Elysia({ adapter: node() })
       )
   })
   .use(swagger())
-  .use(prismaService)
-  .use(postController)
+  .use(postsController)
   .get(
     '/:id',
     ({ params, query, headers }) => {

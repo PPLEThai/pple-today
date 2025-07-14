@@ -30,8 +30,8 @@ import { createErrorSchema } from '../../utils/error'
 // This is a placeholder for demonstration purposes.
 const userId = 'user-id-placeholder'
 
-export const postController = new Elysia({
-  prefix: '/post',
+export const postsController = new Elysia({
+  prefix: '/posts',
   adapter: node(),
 })
   .get(
