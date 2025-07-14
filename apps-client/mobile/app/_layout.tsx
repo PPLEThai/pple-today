@@ -47,7 +47,9 @@ export default function RootLayout() {
             <FontProvider>
               <GestureHandlerRootView>
                 <BottomSheetModalProvider>
-                  <Stack />
+                  <Stack>
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                  </Stack>
                 </BottomSheetModalProvider>
               </GestureHandlerRootView>
             </FontProvider>
