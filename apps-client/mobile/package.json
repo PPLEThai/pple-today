@@ -22,6 +22,7 @@
     "@expo-google-fonts/inter": "^0.4.1",
     "@expo-google-fonts/noto-sans-thai-looped": "^0.4.1",
     "@expo/vector-icons": "^14.1.0",
+    "@pple-today/api-client": "workspace:^",
     "@pple-today/ui": "workspace:^",
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",
