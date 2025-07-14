@@ -25,6 +25,7 @@ const authRequest: AuthRequest = new AuthRequest({
   scopes: ['openid', 'profile', 'email', 'offline_access'],
   codeChallengeMethod: CodeChallengeMethod.S256,
   redirectUri: makeRedirectUri({
+    // TODO: scheme should be set in app.config.ts
     scheme: 'th.or.peoplesparty.ppletoday',
     isTripleSlashed: true,
   }),
