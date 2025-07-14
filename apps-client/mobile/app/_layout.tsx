@@ -14,6 +14,7 @@ import { BottomSheetModalProvider } from '@pple-today/ui/bottom-sheet/index'
 import { NAV_THEME } from '@pple-today/ui/lib/constants'
 import { PortalHost } from '@pple-today/ui/portal'
 import { DarkTheme, DefaultTheme, Theme, ThemeProvider } from '@react-navigation/native'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
@@ -30,6 +31,8 @@ const DARK_THEME: Theme = {
   colors: NAV_THEME.dark,
 }
 
+const queryClient = new QueryClient()
+
 export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
@@ -39,15 +42,17 @@ export default function RootLayout() {
   return (
     <>
       <SafeAreaProvider>
-        <ColorSchemeProvider>
-          <FontProvider>
-            <GestureHandlerRootView>
-              <BottomSheetModalProvider>
-                <Stack />
-              </BottomSheetModalProvider>
-            </GestureHandlerRootView>
-          </FontProvider>
-        </ColorSchemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <ColorSchemeProvider>
+            <FontProvider>
+              <GestureHandlerRootView>
+                <BottomSheetModalProvider>
+                  <Stack />
+                </BottomSheetModalProvider>
+              </GestureHandlerRootView>
+            </FontProvider>
+          </ColorSchemeProvider>
+        </QueryClientProvider>
       </SafeAreaProvider>
       <PortalHost />
     </>

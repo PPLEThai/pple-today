@@ -45,10 +45,10 @@ export default {
       typedRoutes: true,
     },
     // for local build like .apk
-    extra: {
-      eas: {
-        projectId: '90a95f98-0504-4546-bc89-dc954e009f22',
-      },
-    },
+    // extra: {
+    //   eas: {
+    //     projectId: '90a95f98-0504-4546-bc89-dc954e009f22',
+    //   },
+    // },
   },
 }

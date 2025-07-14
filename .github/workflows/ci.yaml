@@ -54,6 +54,9 @@ jobs:
 
           echo "TURBO_FILTER=$TURBO_FILTER" >> $GITHUB_OUTPUT
 
+      - name: Run script generate
+        run: pnpm turbo codegen ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}
+
       - name: Run Type Check and Format Check
         run: pnpm turbo typecheck format:check lint ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}
 

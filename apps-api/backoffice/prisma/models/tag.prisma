@@ -1,0 +1,37 @@
+model HashTag {
+    id        String   @id @default(cuid())
+    name      String   @unique
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    postTags             PostTag[]
+    hashTagInTopics      HashTagInTopic[]
+    snnouncementHashTags AnnouncementHashTag[]
+
+    @@index([name])
+}
+
+model Topic {
+    id          String   @id @default(cuid())
+    name        String   @unique
+    description String?
+    bannerImage String?
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
+
+    hashTagInTopics HashTagInTopic[]
+    followedTopics  FollowedTopic[]
+
+    @@index([name])
+}
+
+model HashTagInTopic {
+    topicId   String
+    hashTagId String
+    createdAt DateTime @default(now())
+
+    topic   Topic   @relation(fields: [topicId], references: [id])
+    hashTag HashTag @relation(fields: [hashTagId], references: [id])
+
+    @@id([topicId, hashTagId])
+}
