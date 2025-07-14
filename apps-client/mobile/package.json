@@ -32,6 +32,7 @@
     "expo": "~53.0.12",
     "expo-auth-session": "^6.2.0",
     "expo-blur": "~14.1.4",
+    "expo-clipboard": "^7.1.5",
     "expo-constants": "~17.1.6",
     "expo-font": "~13.3.2",
     "expo-haptics": "~14.1.4",
@@ -51,16 +52,19 @@
     "react-native": "0.79.4",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-pager-view": "6.7.1",
+    "react-native-react-query-devtools": "^1.5.0",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.11.1",
     "react-native-tab-view": "^4.1.2",
     "react-native-web": "~0.20.0",
-    "react-native-webview": "13.13.5"
+    "react-native-webview": "13.13.5",
+    "react-query-kit": "^3.3.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@pple-today/project-config": "workspace:^",
+    "@tanstack/eslint-plugin-query": "^5.81.2",
     "@types/react": "~19.0.10",
     "@types/react-dom": "19.0.0",
     "prettier-plugin-tailwindcss": "^0.5.11",

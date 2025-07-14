@@ -40,6 +40,12 @@ export default {
           backgroundColor: '#ffffff',
         },
       ],
+      [
+        'expo-web-browser',
+        {
+          experimentalLauncherActivity: true,
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,
