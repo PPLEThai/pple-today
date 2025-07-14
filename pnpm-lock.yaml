@@ -149,6 +149,9 @@ importers:
       react-native-webview:
         specifier: 13.13.5
         version: 13.13.5(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
+      react-query-kit:
+        specifier: ^3.3.1
+        version: 3.3.1(@tanstack/react-query@5.81.5(react@19.0.0))
     devDependencies:
       '@babel/core':
         specifier: ^7.25.2
@@ -5340,6 +5343,14 @@ packages:
       react: ^19.0.0
     peerDependenciesMeta:
       '@types/react':
+        optional: true
+
+  react-query-kit@3.3.1:
+    resolution: {integrity: sha512-7eMfpqm+vHiHSTKMye08I7xuNwCnJfeehtMLJvrL/caS/41qSOG25jD3UP255eg8De1eU/KDeAq3jDnAMIBE8Q==}
+    peerDependencies:
+      '@tanstack/react-query': '*'
+    peerDependenciesMeta:
+      '@tanstack/react-query':
         optional: true
 
   react-refresh@0.14.2:
@@ -12693,6 +12704,10 @@ snapshots:
       - bufferutil
       - supports-color
       - utf-8-validate
+
+  react-query-kit@3.3.1(@tanstack/react-query@5.81.5(react@19.0.0)):
+    optionalDependencies:
+      '@tanstack/react-query': 5.81.5(react@19.0.0)
 
   react-refresh@0.14.2: {}
 
