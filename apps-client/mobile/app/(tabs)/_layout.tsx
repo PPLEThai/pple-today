@@ -1,6 +1,6 @@
 // https://www.reactnativereusables.com/extras/material-top-tabs/
 
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Icon } from '@pple-today/ui/icon'
 import { clsx } from '@pple-today/ui/lib/utils'
@@ -19,13 +19,21 @@ import {
 import PPLEIconBlack from '@app/assets/pple-icon-black.svg'
 
 export default function BottomTabsLayout() {
+  const insets = useSafeAreaInsets()
   return (
     <SafeAreaView className="flex-1" edges={['top', 'left', 'right']}>
       <Tabs
         screenOptions={{
           headerShown: false,
           animation: 'none',
-          tabBarStyle: { paddingHorizontal: 16, height: 94 },
+          tabBarStyle: {
+            paddingHorizontal: 16,
+            height: 60 + insets.bottom,
+            paddingBottom: insets.bottom,
+            borderTopColor: 'transparent',
+            borderTopWidth: 0,
+            elevation: 0,
+          },
         }}
         initialRouteName="(top-tabs)"
       >
@@ -117,6 +125,7 @@ function TabBarButton({ style, ...props }: BottomTabBarButtonProps) {
         'border-b-2 flex flex-col items-center justify-center',
         props['aria-selected'] ? 'border-base-primary-default' : 'border-transparent'
       )}
+      android_ripple={{ color: undefined }}
     />
   )
 }
