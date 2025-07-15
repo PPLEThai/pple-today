@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@pple-today/ui/dialog'
+import { FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
 import { Input, InputGroup, InputLeftIcon, InputRightIcon } from '@pple-today/ui/input'
 import { Progress } from '@pple-today/ui/progress'
@@ -27,6 +28,7 @@ import {
   SelectValue,
 } from '@pple-today/ui/select'
 import { Text } from '@pple-today/ui/text'
+import { Textarea } from '@pple-today/ui/textarea'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
@@ -346,8 +348,14 @@ function SelectExample() {
 }
 
 const formSchema = z.object({
-  name: z.string().check(z.minLength(1)).check(z.maxLength(50)),
-  comment: z.string().check(z.minLength(1)).check(z.maxLength(100)),
+  name: z
+    .string()
+    .check(z.minLength(1, { error: 'Name is required' }))
+    .check(z.maxLength(50, { error: 'Name must be less than 50 characters' })),
+  comment: z
+    .string()
+    .check(z.minLength(1, { error: 'Comment is required' }))
+    .check(z.maxLength(100, { error: 'Comment must be less than 100 characters' })),
 })
 function FormExample() {
   const form = useForm({
@@ -358,6 +366,11 @@ function FormExample() {
     validators: {
       onSubmit: formSchema,
     },
+    onSubmit: async (values) => {
+      console.log('Form submitted:', values)
+      // Simulate a network request
+      return new Promise((resolve) => setTimeout(resolve, 2000))
+    },
   })
   return (
     <View className="flex flex-col gap-2">
@@ -365,22 +378,38 @@ function FormExample() {
       <View className="flex flex-col gap-2">
         <form.Field name="name">
           {(field) => (
-            <Input placeholder="Name" value={field.state.value} onChangeText={field.handleChange} />
+            <FormItem field={field}>
+              <FormLabel>Name</FormLabel>
+              <Input
+                placeholder="Name"
+                value={field.state.value}
+                onChangeText={field.handleChange}
+              />
+              <FormMessage />
+            </FormItem>
           )}
         </form.Field>
       </View>
       <form.Field name="comment">
         {(field) => (
-          <Input
-            placeholder="Comment"
-            value={field.state.value}
-            onChangeText={field.handleChange}
-          />
+          <FormItem field={field}>
+            <FormLabel>Comment</FormLabel>
+            <Textarea
+              placeholder="Comment"
+              value={field.state.value}
+              onChangeText={field.handleChange}
+            />
+            <FormMessage />
+          </FormItem>
         )}
       </form.Field>
-      <Button>
-        <Text>Submit</Text>
-      </Button>
+      <form.Subscribe selector={(state) => [state.isSubmitting]}>
+        {([isSubmitting]) => (
+          <Button onPress={form.handleSubmit} disabled={isSubmitting}>
+            <Text>Submit</Text>
+          </Button>
+        )}
+      </form.Subscribe>
     </View>
   )
 }
