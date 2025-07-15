@@ -195,30 +195,28 @@ export function Playground() {
         </View>
         <View className="flex flex-col gap-2">
           <H2 className="font-inter-bold">Dialog</H2>
-          <View className="flex flex-row gap-2 flex-wrap">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Text>Edit Profile</Text>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Edit profile</DialogTitle>
-                  <DialogDescription>
-                    Make changes to your profile here. Click save when you&apos;re done.
-                  </DialogDescription>
-                </DialogHeader>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button>
-                      <Text>OK</Text>
-                    </Button>
-                  </DialogClose>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </View>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="secondary">
+                <Text>Edit Profile</Text>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Edit profile</DialogTitle>
+                <DialogDescription>
+                  Make changes to your profile here. Click save when you&apos;re done.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button>
+                    <Text>OK</Text>
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </View>
         <BottomSheetExample />
         <ToggleGroupExample />
@@ -242,7 +240,7 @@ function BottomSheetExample() {
   return (
     <View className="flex flex-col gap-2">
       <H2 className="font-inter-bold">BottomSheet</H2>
-      <Button onPress={handlePresentModalPress}>
+      <Button onPress={handlePresentModalPress} variant="secondary">
         <Text>Present Modal</Text>
       </Button>
       <BottomSheetModal ref={bottomSheetModalRef} snapPoints={snapPoints}>
@@ -267,7 +265,7 @@ const TAGS = [
   'สิ่งแวดล้อม',
 ]
 function ToggleGroupExample() {
-  const [value, setValue] = useState<string[]>([])
+  const [value, setValue] = useState<string[]>([TAGS[0]])
   return (
     <View className="flex flex-col gap-2">
       <H2 className="font-inter-bold">Radio Group</H2>
@@ -296,7 +294,7 @@ function ProgressExample() {
     <View className="flex flex-col gap-2">
       <H2 className="font-inter-bold">Progress</H2>
       <Progress value={progress} />
-      <Button onPress={incrementProgress}>
+      <Button onPress={incrementProgress} variant="ghost">
         <Text>Increment Progress</Text>
       </Button>
     </View>
