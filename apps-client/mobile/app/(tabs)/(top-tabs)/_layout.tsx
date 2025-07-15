@@ -19,7 +19,7 @@ export default function MaterialTopTabsLayout() {
   const { colors } = useTheme()
   return (
     <MaterialTopTabs
-      initialRouteName="index"
+      initialRouteName="playground"
       screenOptions={{
         tabBarActiveTintColor: colors.text,
         tabBarInactiveTintColor: 'grey',

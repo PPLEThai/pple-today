@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 
 import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
@@ -16,6 +16,7 @@ import {
 import { Icon } from '@pple-today/ui/icon'
 import { Input, InputGroup, InputLeftIcon, InputRightIcon } from '@pple-today/ui/input'
 import { Text } from '@pple-today/ui/text'
+import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { PlusIcon, SearchIcon } from 'lucide-react-native'
 
@@ -191,7 +192,6 @@ export function Playground() {
             <InputRightIcon icon={SearchIcon} strokeWidth={1.5} />
           </InputGroup>
         </View>
-        <AuthPlayground />
         <View className="flex flex-col gap-2">
           <H2 className="font-inter-bold">Dialog</H2>
           <View className="flex flex-row gap-2 flex-wrap">
@@ -219,12 +219,10 @@ export function Playground() {
             </Dialog>
           </View>
         </View>
-        <View className="flex flex-col gap-2">
-          <H2 className="font-inter-bold">BottomSheet</H2>
-          <BottomSheetExample />
-        </View>
-
+        <BottomSheetExample />
+        <ToggleGroupExample />
         <QueryExample />
+        <AuthPlayground />
       </View>
     </ScrollView>
   )
@@ -240,7 +238,8 @@ function BottomSheetExample() {
   const snapPoints = useMemo(() => ['25%', '50%'], [])
 
   return (
-    <View>
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">BottomSheet</H2>
       <Button onPress={handlePresentModalPress}>
         <Text>Present Modal</Text>
       </Button>
@@ -249,6 +248,39 @@ function BottomSheetExample() {
           <Text className="text-7xl font-bold">Bottom Sheet Component 🎉</Text>
         </BottomSheetView>
       </BottomSheetModal>
+    </View>
+  )
+}
+
+const TAGS = [
+  'การเมือง',
+  'สส',
+  'ไฟป่า',
+  'สว',
+  'เลือกตั้งนายก',
+  'เลือกตั้งท้องถิ่น',
+  'การศึกษา',
+  'เศรษฐกิจ',
+  'สังคม',
+  'สิ่งแวดล้อม',
+]
+function ToggleGroupExample() {
+  const [value, setValue] = useState<string[]>([])
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Radio Group</H2>
+      <ToggleGroup
+        type="multiple"
+        value={value}
+        onValueChange={setValue}
+        className="flex flex-row gap-2 flex-wrap justify-start"
+      >
+        {TAGS.map((tag) => (
+          <ToggleGroupItem key={tag} value={tag} variant="outline">
+            <Text>{tag}</Text>
+          </ToggleGroupItem>
+        ))}
+      </ToggleGroup>
     </View>
   )
 }
