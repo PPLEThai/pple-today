@@ -1,5 +1,6 @@
 import { networkInterfaces } from 'node:os'
 
+// https://stackoverflow.com/questions/3653065/get-local-ip-address-in-node-js
 const nets = networkInterfaces()
 const results = Object.create(null) // Or just '{}', an empty object
 
