@@ -67,7 +67,8 @@ function Toggle({
         className={cn(
           toggleVariants({ variant, size }),
           props.disabled && 'web:pointer-events-none opacity-50',
-          props.pressed && 'bg-accent',
+          props.pressed &&
+            'bg-base-primary-default active:bg-base-primary-medium web:hover:bg-base-primary-medium',
           className
         )}
         {...props}
