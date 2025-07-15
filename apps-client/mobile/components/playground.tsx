@@ -29,7 +29,9 @@ import {
 import { Text } from '@pple-today/ui/text'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H1, H2 } from '@pple-today/ui/typography'
+import { useForm } from '@tanstack/react-form'
 import { PlusIcon, SearchIcon } from 'lucide-react-native'
+import { z } from 'zod/v4'
 
 import { useMutation, useQuery } from '@app/libs/react-query'
 
@@ -231,6 +233,7 @@ export function Playground() {
         <ToggleGroupExample />
         <ProgressExample />
         <SelectExample />
+        <FormExample />
         <QueryExample />
         <AuthPlayground />
       </View>
@@ -249,7 +252,7 @@ function BottomSheetExample() {
 
   return (
     <View className="flex flex-col gap-2">
-      <H2 className="font-inter-bold">BottomSheet</H2>
+      <H2 className="font-inter-bold">Bottom Sheet</H2>
       <Button onPress={handlePresentModalPress} variant="secondary">
         <Text>Present Modal</Text>
       </Button>
@@ -338,6 +341,46 @@ function SelectExample() {
           </SelectGroup>
         </SelectContent>
       </Select>
+    </View>
+  )
+}
+
+const formSchema = z.object({
+  name: z.string().check(z.minLength(1)).check(z.maxLength(50)),
+  comment: z.string().check(z.minLength(1)).check(z.maxLength(100)),
+})
+function FormExample() {
+  const form = useForm({
+    defaultValues: {
+      name: '',
+      comment: '',
+    },
+    validators: {
+      onSubmit: formSchema,
+    },
+  })
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Form</H2>
+      <View className="flex flex-col gap-2">
+        <form.Field name="name">
+          {(field) => (
+            <Input placeholder="Name" value={field.state.value} onChangeText={field.handleChange} />
+          )}
+        </form.Field>
+      </View>
+      <form.Field name="comment">
+        {(field) => (
+          <Input
+            placeholder="Comment"
+            value={field.state.value}
+            onChangeText={field.handleChange}
+          />
+        )}
+      </form.Field>
+      <Button>
+        <Text>Submit</Text>
+      </Button>
     </View>
   )
 }

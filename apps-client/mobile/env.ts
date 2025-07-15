@@ -1,4 +1,4 @@
-import { z } from 'zod'
+import { z } from 'zod/v4'
 
 const environmentSchema = z.object({
   EXPO_PUBLIC_OIDC_BASE_URL: z.string().url(),
