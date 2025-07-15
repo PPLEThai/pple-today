@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { ScrollView, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
 import { Button } from '@pple-today/ui/button'
@@ -16,6 +17,15 @@ import {
 import { Icon } from '@pple-today/ui/icon'
 import { Input, InputGroup, InputLeftIcon, InputRightIcon } from '@pple-today/ui/input'
 import { Progress } from '@pple-today/ui/progress'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@pple-today/ui/select'
 import { Text } from '@pple-today/ui/text'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H1, H2 } from '@pple-today/ui/typography'
@@ -182,7 +192,6 @@ export function Playground() {
             </View>
           </ScrollView>
         </View>
-
         <View className="flex flex-col gap-2">
           <H2 className="font-inter-bold">Input</H2>
           <Input />
@@ -221,6 +230,7 @@ export function Playground() {
         <BottomSheetExample />
         <ToggleGroupExample />
         <ProgressExample />
+        <SelectExample />
         <QueryExample />
         <AuthPlayground />
       </View>
@@ -297,6 +307,37 @@ function ProgressExample() {
       <Button onPress={incrementProgress} variant="ghost">
         <Text>Increment Progress</Text>
       </Button>
+    </View>
+  )
+}
+
+function SelectExample() {
+  const insets = useSafeAreaInsets()
+  const contentInsets = {
+    top: insets.top,
+    bottom: insets.bottom,
+    left: 12,
+    right: 12,
+  }
+
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Select</H2>
+      <Select defaultValue={{ value: 'apple', label: 'Apple' }}>
+        <SelectTrigger className="w-[250px]">
+          <SelectValue placeholder="Select a fruit" />
+        </SelectTrigger>
+        <SelectContent insets={contentInsets} className="w-[250px]">
+          <SelectGroup>
+            <SelectLabel>Fruits</SelectLabel>
+            <SelectItem label="Apple" value="apple" />
+            <SelectItem label="Banana" value="banana" />
+            <SelectItem label="Blueberry" value="blueberry" />
+            <SelectItem label="Grapes" value="grapes" />
+            <SelectItem label="Pineapple" value="pineapple" />
+          </SelectGroup>
+        </SelectContent>
+      </Select>
     </View>
   )
 }
