@@ -15,6 +15,7 @@ import {
 } from '@pple-today/ui/dialog'
 import { Icon } from '@pple-today/ui/icon'
 import { Input, InputGroup, InputLeftIcon, InputRightIcon } from '@pple-today/ui/input'
+import { Progress } from '@pple-today/ui/progress'
 import { Text } from '@pple-today/ui/text'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H1, H2 } from '@pple-today/ui/typography'
@@ -221,6 +222,7 @@ export function Playground() {
         </View>
         <BottomSheetExample />
         <ToggleGroupExample />
+        <ProgressExample />
         <QueryExample />
         <AuthPlayground />
       </View>
@@ -281,6 +283,22 @@ function ToggleGroupExample() {
           </ToggleGroupItem>
         ))}
       </ToggleGroup>
+    </View>
+  )
+}
+
+function ProgressExample() {
+  const [progress, setProgress] = useState(30)
+  const incrementProgress = () => {
+    setProgress((prev) => (prev < 100 ? prev + 10 : 0))
+  }
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Progress</H2>
+      <Progress value={progress} />
+      <Button onPress={incrementProgress}>
+        <Text>Increment Progress</Text>
+      </Button>
     </View>
   )
 }

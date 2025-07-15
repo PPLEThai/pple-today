@@ -23,7 +23,7 @@ function Progress({
 }) {
   return (
     <ProgressPrimitive.Root
-      className={cn('relative h-4 w-full overflow-hidden rounded-full bg-secondary', className)}
+      className={cn('relative h-2 w-full overflow-hidden rounded-full bg-secondary', className)}
       {...props}
     >
       <Indicator value={value} className={indicatorClassName} />
@@ -58,7 +58,10 @@ function Indicator({ value, className }: { value: number | undefined | null; cla
 
   return (
     <ProgressPrimitive.Indicator asChild>
-      <Animated.View style={indicator} className={cn('h-full bg-foreground', className)} />
+      <Animated.View
+        style={indicator}
+        className={cn('h-full bg-base-primary-default', className)}
+      />
     </ProgressPrimitive.Indicator>
   )
 }
