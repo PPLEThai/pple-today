@@ -1,7 +1,8 @@
 import node from '@elysiajs/node'
 import Elysia from 'elysia'
+import { match } from 'ts-pattern'
 
-import { GetAuthMeHeaders, GetAuthMeResponse, RegisterUserResponse } from './models'
+import { GetAuthMeResponse, RegisterUserResponse } from './models'
 import { AuthService } from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
@@ -19,15 +20,14 @@ export const authController = new Elysia({
       const result = await AuthService.registerUser(oidcUser)
 
       if (result.isErr()) {
-        return status(409, {
-          error: {
-            code: InternalErrorCode.AUTH_USER_ALREADY_EXISTS,
-            message: 'User with this ID already exists',
-            data: {
-              helloWorld: 'User with this ID already exists',
+        return match(result.error)
+          .with(
+            {
+              code: InternalErrorCode.AUTH_USER_ALREADY_EXISTS,
             },
-          },
-        })
+            (err) => status(409, { error: err })
+          )
+          .otherwise((err) => status(500, { error: err }))
       }
 
       return status(201, {
@@ -38,7 +38,10 @@ export const authController = new Elysia({
       getOIDCUser: true,
       response: {
         201: RegisterUserResponse,
-        ...createErrorSchema(InternalErrorCode.AUTH_USER_ALREADY_EXISTS),
+        ...createErrorSchema(
+          InternalErrorCode.AUTH_USER_ALREADY_EXISTS,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
       },
     }
   )
@@ -46,13 +49,15 @@ export const authController = new Elysia({
     '/me',
     async ({ status, oidcUser }) => {
       const localInfo = await AuthService.getUserById(oidcUser.sub)
-      if (!localInfo) {
-        return status(404, {
-          error: {
-            code: InternalErrorCode.NOT_FOUND,
-            message: 'User not found',
-          },
-        })
+      if (localInfo.isErr()) {
+        return match(localInfo.error)
+          .with(
+            {
+              code: InternalErrorCode.AUTH_USER_NOT_FOUND,
+            },
+            (err) => status(401, { error: err })
+          )
+          .otherwise((err) => status(500, { error: err }))
       }
 
       return status(200, {
@@ -61,11 +66,13 @@ export const authController = new Elysia({
       })
     },
     {
-      headers: GetAuthMeHeaders,
       getOIDCUser: true,
       response: {
         200: GetAuthMeResponse,
-        ...createErrorSchema(InternalErrorCode.UNAUTHORIZED, InternalErrorCode.NOT_FOUND),
+        ...createErrorSchema(
+          InternalErrorCode.AUTH_USER_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
       },
     }
   )
