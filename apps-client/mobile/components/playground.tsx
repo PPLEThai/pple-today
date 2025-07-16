@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { Badge } from '@pple-today/ui/badge'
 import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
 import { Button } from '@pple-today/ui/button'
 import {
@@ -38,7 +39,6 @@ import { z } from 'zod/v4'
 import { useMutation, useQuery } from '@app/libs/react-query'
 
 import { AuthPlayground } from './auth-playground'
-
 export function Playground() {
   return (
     <ScrollView>
@@ -236,6 +236,7 @@ export function Playground() {
         <ProgressExample />
         <SelectExample />
         <FormExample />
+        <BadgeExample />
         <QueryExample />
         <AuthPlayground />
       </View>
@@ -414,6 +415,28 @@ function FormExample() {
   )
 }
 
+function BadgeExample() {
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Badge</H2>
+      <View className="flex flex-row gap-2 flex-wrap">
+        <Badge variant="default">
+          <Text>Default Badge</Text>
+        </Badge>
+        <Badge variant="secondary">
+          <Text>Secondary Badge</Text>
+        </Badge>
+        <Badge variant="destructive">
+          <Text>Destructive Badge</Text>
+        </Badge>
+        <Badge variant="outline">
+          <Text>Outline Badge</Text>
+        </Badge>
+      </View>
+    </View>
+  )
+}
+
 function QueryExample() {
   const sampleQuery = useQuery('get', '/:id', {
     pathParams: { id: '123' },
@@ -425,9 +448,8 @@ function QueryExample() {
 
   return (
     <>
-      {' '}
       <View className="flex flex-col gap-2">
-        <H2>Query</H2>
+        <H2 className="font-inter-bold">Query</H2>
         <View className="flex flex-row gap-1 items-baseline">
           <Text>
             Query:{' '}
@@ -440,7 +462,7 @@ function QueryExample() {
         </View>
       </View>
       <View className="flex flex-col gap-2">
-        <H2>Mutation</H2>
+        <H2 className="font-inter-bold">Mutation</H2>
         <View className="flex flex-row gap-1 items-baseline">
           <Text>
             Mutation:{' '}
