@@ -43,6 +43,7 @@ function SelectTrigger({
 }: SelectPrimitive.TriggerProps & {
   ref?: React.RefObject<SelectPrimitive.TriggerRef>
   children?: React.ReactNode
+  'aria-invalid'?: boolean
 }) {
   return (
     <SelectPrimitive.Trigger
@@ -50,6 +51,7 @@ function SelectTrigger({
       className={cn(
         'flex flex-row h-10 items-center justify-between rounded-lg border border-input bg-background px-3 py-2 web:ring-offset-background web:focus:outline-none web:focus:ring-2 web:focus:ring-ring web:focus:ring-offset-2 [&>span]:line-clamp-1',
         props.disabled && 'web:cursor-not-allowed opacity-50',
+        props['aria-invalid'] && 'border-destructive web:ring-destructive',
         className
       )}
       {...props}

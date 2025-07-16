@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@pple-today/ui/dialog'
-import { FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
+import { FormControl, FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
 import { Input, InputGroup, InputLeftIcon, InputRightIcon } from '@pple-today/ui/input'
 import { Progress } from '@pple-today/ui/progress'
@@ -381,11 +381,13 @@ function FormExample() {
           {(field) => (
             <FormItem field={field}>
               <FormLabel>Name</FormLabel>
-              <Input
-                placeholder="Name"
-                value={field.state.value}
-                onChangeText={field.handleChange}
-              />
+              <FormControl>
+                <Input
+                  placeholder="Name"
+                  value={field.state.value}
+                  onChangeText={field.handleChange}
+                />
+              </FormControl>
               <FormMessage />
             </FormItem>
           )}
@@ -395,11 +397,13 @@ function FormExample() {
         {(field) => (
           <FormItem field={field}>
             <FormLabel>Comment</FormLabel>
-            <Textarea
-              placeholder="Comment"
-              value={field.state.value}
-              onChangeText={field.handleChange}
-            />
+            <FormControl>
+              <Textarea
+                placeholder="Comment"
+                value={field.state.value}
+                onChangeText={field.handleChange}
+              />
+            </FormControl>
             <FormMessage />
           </FormItem>
         )}

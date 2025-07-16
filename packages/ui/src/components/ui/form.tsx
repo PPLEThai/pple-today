@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { View } from 'react-native'
 
+import * as Slot from '@rn-primitives/slot'
 import { AnyFieldApi, useStore } from '@tanstack/react-form'
 
 import { Label } from './label'
@@ -49,6 +50,12 @@ export const FormLabel = (props: React.ComponentProps<typeof Label>) => {
       {props.children}
     </Label>
   )
+}
+
+export const FormControl = (props: { children: React.ReactNode }) => {
+  const { field } = useFormItemContext()
+  const isValid = useStore(field.store, (state) => state.meta.isValid)
+  return <Slot.View aria-invalid={isValid ? undefined : true}>{props.children}</Slot.View>
 }
 
 export const FormMessage = (props: { className?: string }) => {
