@@ -1,7 +1,7 @@
 import node from '@elysiajs/node'
 import { swagger } from '@elysiajs/swagger'
 import Elysia, { t } from 'elysia'
-import { match } from 'ts-pattern'
+import { match, P } from 'ts-pattern'
 
 import serverEnv from './config/env'
 import { InternalErrorCode } from './dtos/error'
@@ -11,6 +11,7 @@ import { postsController } from './modules/posts'
 const app = new Elysia({ adapter: node() })
   .onError(({ status, ...props }) => {
     return match(props)
+      .with({ error: { response: P.any } }, (err) => status(err.error.code, err.error.response))
       .with({ code: 'INTERNAL_SERVER_ERROR' }, () =>
         status(500, {
           error: {

@@ -49,6 +49,7 @@ export const authController = new Elysia({
     '/me',
     async ({ status, oidcUser }) => {
       const localInfo = await AuthService.getUserById(oidcUser.sub)
+
       if (localInfo.isErr()) {
         return match(localInfo.error)
           .with(
