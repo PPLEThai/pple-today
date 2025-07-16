@@ -34,7 +34,7 @@ import { toast } from '@pple-today/ui/toast'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
-import { PlusIcon, SearchIcon } from 'lucide-react-native'
+import { InfoIcon, PlusIcon, SearchIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
 import { useMutation, useQuery } from '@app/libs/react-query'
@@ -448,7 +448,7 @@ function ToastExample() {
   const showDefaultToast = () => {
     toast({
       text1: 'Hello',
-      text2: 'This is some something 👋',
+      icon: InfoIcon,
     })
   }
   const showErrorToast = () => {
@@ -456,6 +456,7 @@ function ToastExample() {
       type: 'error',
       text1: 'Error',
       text2: 'Something went wrong 😢',
+      icon: InfoIcon,
     })
   }
   return (

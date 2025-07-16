@@ -3,7 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Toast, { ToastConfig, ToastConfigParams, ToastShowParams } from 'react-native-toast-message'
 
 import { cva } from 'class-variance-authority'
-import { InfoIcon, LucideIcon, XIcon } from 'lucide-react-native'
+import { LucideIcon, XIcon } from 'lucide-react-native'
 
 import { Button } from './button'
 import { Icon } from './icon'
@@ -33,17 +33,16 @@ function ToastBody(props: ToastConfigParams<ToastAdditionalProps>) {
   const type = props.type as ToastType
   return (
     <View className={toastVariants({ type })}>
-      {props.props.icon === null ? null : (
-        <Icon
-          icon={props.props.icon ?? InfoIcon}
-          className="text-white"
-          size={26}
-          strokeWidth={2}
-        />
-      )}
+      {props.props.icon ? (
+        <Icon icon={props.props.icon} className="text-white" size={26} strokeWidth={2} />
+      ) : null}
       <View className="flex flex-col gap-1">
-        <Text className="text-sm text-white font-anakotmai-medium">{props.text1}</Text>
-        <Text className="text-sm text-white font-anakotmai-light">{props.text2}</Text>
+        {props.text1 && (
+          <Text className="text-sm text-white font-anakotmai-medium">{props.text1}</Text>
+        )}
+        {props.text2 && (
+          <Text className="text-sm text-white font-anakotmai-light">{props.text2}</Text>
+        )}
       </View>
       {props.props.action === null ? null : typeof props.props.action === 'function' ? (
         props.props.action(props)
