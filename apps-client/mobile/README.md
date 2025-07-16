@@ -15,7 +15,7 @@ Feel free to update this file :)
 2. Start the app
 
    ```bash
-   pnpm start
+   pnpm dev
    ```
 
 ## Native Development
@@ -127,3 +127,11 @@ Feel free to update this file :)
   2. https://appstoreconnect.apple.com/WebObjects/iTunesConnect.woa/ra/user/detail
 - `DEVELOPER_PORTAL_TEAM_ID` \
    Please go to https://appstoreconnect.apple.com/access/users > Open User Profile Menu (Top Right) > Edit Profile
+
+## VPN Connect
+
+If you connect VPN and dev server can't find your devices, you can set fixed IP by following command to bundle
+
+```bash
+REACT_NATIVE_PACKAGER_HOSTNAME=<your_private_ip> npx expo start --clear
+```
