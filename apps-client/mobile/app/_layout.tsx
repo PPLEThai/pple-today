@@ -14,6 +14,7 @@ import {
 import { BottomSheetModalProvider } from '@pple-today/ui/bottom-sheet/index'
 import { NAV_THEME } from '@pple-today/ui/lib/constants'
 import { PortalHost } from '@pple-today/ui/portal'
+import { Toaster } from '@pple-today/ui/toast'
 import { DarkTheme, DefaultTheme, Theme, ThemeProvider } from '@react-navigation/native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import * as Clipboard from 'expo-clipboard'
@@ -51,6 +52,7 @@ export default function RootLayout() {
                   <Stack>
                     <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                   </Stack>
+                  <Toaster />
                 </BottomSheetModalProvider>
               </GestureHandlerRootView>
             </FontProvider>

@@ -30,6 +30,7 @@ import {
 } from '@pple-today/ui/select'
 import { Text } from '@pple-today/ui/text'
 import { Textarea } from '@pple-today/ui/textarea'
+import { toast } from '@pple-today/ui/toast'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
@@ -39,6 +40,7 @@ import { z } from 'zod/v4'
 import { useMutation, useQuery } from '@app/libs/react-query'
 
 import { AuthPlayground } from './auth-playground'
+
 export function Playground() {
   return (
     <ScrollView>
@@ -237,6 +239,7 @@ export function Playground() {
         <SelectExample />
         <FormExample />
         <BadgeExample />
+        <ToastExample />
         <QueryExample />
         <AuthPlayground />
       </View>
@@ -437,6 +440,33 @@ function BadgeExample() {
           <Text>Outline Badge</Text>
         </Badge>
       </View>
+    </View>
+  )
+}
+
+function ToastExample() {
+  const showDefaultToast = () => {
+    toast({
+      text1: 'Hello',
+      text2: 'This is some something 👋',
+    })
+  }
+  const showErrorToast = () => {
+    toast.error({
+      type: 'error',
+      text1: 'Error',
+      text2: 'Something went wrong 😢',
+    })
+  }
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Toast</H2>
+      <Button onPress={showDefaultToast}>
+        <Text>Show Default Toast</Text>
+      </Button>
+      <Button onPress={showErrorToast} variant="destructive">
+        <Text>Show Error Toast</Text>
+      </Button>
     </View>
   )
 }

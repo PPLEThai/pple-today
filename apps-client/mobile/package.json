@@ -4,6 +4,7 @@
   "version": "0.0.2",
   "scripts": {
     "dev": "node --env-file .env ./scripts/update-redirect.js && expo start",
+    "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
     "ios": "expo run:ios",
