@@ -15,7 +15,7 @@ Feel free to update this file :)
 2. Start the app
 
    ```bash
-   pnpm start
+   pnpm dev
    ```
 
 ## Native Development
