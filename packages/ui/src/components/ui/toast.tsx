@@ -1,4 +1,5 @@
 import { View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Toast, { ToastConfig, ToastConfigParams, ToastShowParams } from 'react-native-toast-message'
 
 import { cva } from 'class-variance-authority'
@@ -62,7 +63,8 @@ const config: ToastConfig = {
 } satisfies Record<ToastType, ToastConfig[ToastType]>
 
 export const Toaster = () => {
-  return <Toast config={config} />
+  const insets = useSafeAreaInsets()
+  return <Toast config={config} topOffset={insets.top + 20} />
 }
 
 interface Toast {
