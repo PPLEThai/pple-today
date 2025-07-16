@@ -1,7 +1,7 @@
 import node from '@elysiajs/node'
 import Elysia, { t } from 'elysia'
 
-import { InternalErrorCode } from '../dtos/error'
+import { InternalErrorCode, InternalErrorCodeSchemas } from '../dtos/error'
 import { introspectAccessToken } from '../utils/jwt'
 
 export const authPlugin = new Elysia({
@@ -30,13 +30,8 @@ export const authPlugin = new Elysia({
         const bearerToken = headers['authorization'].replace('Bearer ', '').trim()
         const user = await introspectAccessToken(bearerToken)
 
-        if (!user) {
-          return status(401, {
-            error: {
-              code: InternalErrorCode.UNAUTHORIZED,
-              message: 'Invalid or expired token',
-            },
-          })
+        if ('error' in user) {
+          return status(InternalErrorCodeSchemas[user.error.code].status, user.error)
         }
 
         return { oidcUser: user }

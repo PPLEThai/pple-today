@@ -21,7 +21,7 @@ const authRequest: AuthRequest = new AuthRequest({
   responseType: ResponseType.Code,
   clientId: process.env.EXPO_PUBLIC_OIDC_CLIENT_ID ?? '',
   usePKCE: true,
-  scopes: ['openid', 'profile', 'email', 'offline_access'],
+  scopes: ['openid', 'profile', 'phone'],
   codeChallengeMethod: CodeChallengeMethod.S256,
   redirectUri: makeRedirectUri({
     scheme: 'com.example.ticket-app',

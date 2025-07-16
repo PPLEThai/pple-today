@@ -51,15 +51,14 @@ export const postsController = new Elysia({
                 },
               })
           )
-          .otherwise(() => {
-            // Handle other errors
-            return status(500, {
+          .otherwise(() =>
+            status(500, {
               error: {
                 code: InternalErrorCode.INTERNAL_SERVER_ERROR,
                 message: 'An unexpected error occurred',
               },
             })
-          })
+          )
       }
 
       return status(200, result.value)

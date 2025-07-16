@@ -14,14 +14,14 @@ export abstract class AuthRepository {
   }
 
   static async createUser(data: IntrospectAccessTokenResult) {
-    const { sub, name, email } = data
+    const { sub, name, phone_number } = data
 
     const user = await fromPrismaPromise(
       prismaClient.user.create({
         data: {
           id: sub,
           name,
-          phoneNumber: email.replace('@example.com', ''),
+          phoneNumber: phone_number,
         },
       })
     )

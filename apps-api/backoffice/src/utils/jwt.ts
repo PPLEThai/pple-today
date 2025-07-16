@@ -1,8 +1,9 @@
-import { Parse } from '@sinclair/typebox/value'
+import { Check } from '@sinclair/typebox/value'
 import jwt from 'jsonwebtoken'
 
 import serverEnv from '../config/env'
 import { IntrospectAccessTokenResult } from '../dtos/auth'
+import { InternalErrorCode } from '../dtos/error'
 
 let jwtToken: string | null = null
 
@@ -50,14 +51,34 @@ export const introspectAccessToken = async (token: string) => {
 
   if (!response.ok) {
     console.error(`Error during introspection`)
-    return null
+    return {
+      error: {
+        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+        message: 'An error occurred while introspecting the access token',
+      },
+    }
   }
 
-  const token_data = Parse(IntrospectAccessTokenResult, await response.json())
-  if (!token_data.active) {
-    console.error(`Token is not active: ${token_data.sub}`)
-    return null
+  const body = await response.json()
+
+  if (Check(IntrospectAccessTokenResult, body)) {
+    if (!body.active) {
+      return {
+        error: {
+          code: InternalErrorCode.UNAUTHORIZED,
+          message: 'Token is not active or has expired',
+        },
+      }
+    }
+
+    return body
   }
 
-  return token_data
+  return {
+    error: {
+      code: InternalErrorCode.BAD_REQUEST,
+      message:
+        'Invalid token format maybe oidc scope is missing (required scope ["openid", "profile", "phone"])',
+    },
+  }
 }

@@ -19,8 +19,10 @@ export const IntrospectAccessTokenResult = t.Object({
   locale: t.Nullable(t.String({ description: 'Locale of the user, if available' })),
   updated_at: t.Number({ description: 'Last updated time of the user in seconds since epoch' }),
   preferred_username: t.String({ description: 'Preferred username of the user' }),
-  email: t.String({ description: 'Email address of the user' }),
-  email_verified: t.Boolean({ description: 'Indicates if the email is verified' }),
+  email: t.Optional(t.String({ description: 'Email address of the user' })),
+  email_verified: t.Optional(t.Boolean({ description: 'Indicates if the email is verified' })),
+  phone_number: t.String({ description: 'Phone number of the user' }),
+  phone_number_verified: t.Boolean({ description: 'Indicates if the phone number' }),
 })
 
 export type IntrospectAccessTokenResult = Static<typeof IntrospectAccessTokenResult>
