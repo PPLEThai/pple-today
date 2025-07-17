@@ -5,7 +5,7 @@ import { match } from 'ts-pattern'
 import { GetAuthMeResponse, RegisterUserResponse } from './models'
 import { AuthService } from './services'
 
-import { InternalErrorCode } from '../../dtos/error'
+import { InternalErrorCode, InternalErrorCodeSchemas } from '../../dtos/error'
 import { authPlugin } from '../../plugins/auth'
 import { createErrorSchema } from '../../utils/error'
 
@@ -21,13 +21,13 @@ export const authController = new Elysia({
 
       if (result.isErr()) {
         return match(result.error)
-          .with(
-            {
-              code: InternalErrorCode.AUTH_USER_ALREADY_EXISTS,
-            },
-            (err) => status(409, { error: err })
+          .with({ code: InternalErrorCode.AUTH_USER_ALREADY_EXISTS }, (error) =>
+            status(InternalErrorCodeSchemas[error.code].status, { error })
           )
-          .otherwise((err) => status(500, { error: err }))
+          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (error) =>
+            status(InternalErrorCodeSchemas[error.code].status, { error })
+          )
+          .exhaustive()
       }
 
       return status(201, {
@@ -52,13 +52,13 @@ export const authController = new Elysia({
 
       if (localInfo.isErr()) {
         return match(localInfo.error)
-          .with(
-            {
-              code: InternalErrorCode.AUTH_USER_NOT_FOUND,
-            },
-            (err) => status(401, { error: err })
+          .with({ code: InternalErrorCode.AUTH_USER_NOT_FOUND }, (error) =>
+            status(InternalErrorCodeSchemas[error.code].status, { error })
           )
-          .otherwise((err) => status(500, { error: err }))
+          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (error) =>
+            status(InternalErrorCodeSchemas[error.code].status, { error })
+          )
+          .exhaustive()
       }
 
       return status(200, {

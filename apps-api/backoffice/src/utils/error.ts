@@ -1,17 +1,19 @@
 import { TLiteral, TObject, TOptional, TString, TUnion, TUnknown } from '@sinclair/typebox'
-import { t } from 'elysia'
+import { Static, t } from 'elysia'
 import { Prettify2 } from 'elysia/types'
 import { groupBy, map, mapValues, pipe } from 'remeda'
 
 import { InternalErrorCode, InternalErrorCodeSchemas } from '../dtos/error'
 
-type ApiErrorSchema<TCode extends InternalErrorCode> = TCode extends InternalErrorCode
+export type ApiErrorSchema<TCode extends InternalErrorCode> = TCode extends InternalErrorCode
   ? TObject<{
       code: TLiteral<TCode>
       message: TOptional<TString>
       data: GetDataFromSchema<TCode>
     }>
   : never
+
+export type ApiErrorResponse<TCode extends InternalErrorCode> = Static<ApiErrorSchema<TCode>>
 
 type GroupErrorCodeToStatusCode<
   T extends InternalErrorCode[],

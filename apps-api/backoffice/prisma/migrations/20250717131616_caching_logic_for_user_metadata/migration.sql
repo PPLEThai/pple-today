@@ -1,0 +1,7 @@
+-- AlterEnum
+ALTER TYPE "UserRole" ADD VALUE 'OFFICIAL';
+
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN     "numberOfFollowers" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "numberOfFollowing" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "numberOfPosts" INTEGER NOT NULL DEFAULT 0;

@@ -62,7 +62,7 @@ const USER_ERROR_SCHEMA = {
   USER_ALREADY_FOLLOWS: {
     status: 409,
   },
-  USER_NOT_FOLLOWING: {
+  USER_NOT_FOLLOWS: {
     status: 404,
   },
 } satisfies InternalErrorSchemas

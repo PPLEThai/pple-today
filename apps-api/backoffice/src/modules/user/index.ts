@@ -1,10 +1,11 @@
 import node from '@elysiajs/node'
 import Elysia from 'elysia'
+import { match, P } from 'ts-pattern'
 
 import { FollowUserParams, FollowUserResponse } from './models'
 import { UserService } from './services'
 
-import { InternalErrorCode } from '../../dtos/error'
+import { InternalErrorCode, InternalErrorCodeSchemas } from '../../dtos/error'
 import { authPlugin } from '../../plugins/auth'
 import { createErrorSchema } from '../../utils/error'
 
@@ -19,12 +20,17 @@ export const userController = new Elysia({
       const result = await UserService.followUser(oidcUser.sub, params.id)
 
       if (result.isErr()) {
-        return status(400, {
-          error: {
-            code: InternalErrorCode.USER_INVALID_INPUT,
-            message: 'Invalid input for following user',
-          },
-        })
+        return match(result.error)
+          .with({ code: InternalErrorCode.USER_NOT_FOUND }, (error) =>
+            status(InternalErrorCodeSchemas[error.code].status, { error })
+          )
+          .with({ code: InternalErrorCode.USER_ALREADY_FOLLOWS }, (error) =>
+            status(InternalErrorCodeSchemas[error.code].status, { error })
+          )
+          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (error) =>
+            status(InternalErrorCodeSchemas[error.code].status, { error })
+          )
+          .exhaustive()
       }
 
       return status(200, {
@@ -37,7 +43,8 @@ export const userController = new Elysia({
       response: {
         200: FollowUserResponse,
         ...createErrorSchema(
-          InternalErrorCode.USER_INVALID_INPUT,
+          InternalErrorCode.USER_ALREADY_FOLLOWS,
+          InternalErrorCode.USER_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -49,12 +56,15 @@ export const userController = new Elysia({
       const result = await UserService.unfollowUser(oidcUser.sub, params.id)
 
       if (result.isErr()) {
-        return status(400, {
-          error: {
-            code: InternalErrorCode.USER_INVALID_INPUT,
-            message: 'Invalid input for unfollowing user',
-          },
-        })
+        return match(result.error)
+          .with(
+            { code: P.union(InternalErrorCode.USER_NOT_FOLLOWS, InternalErrorCode.USER_NOT_FOUND) },
+            (error) => status(InternalErrorCodeSchemas[error.code].status, { error })
+          )
+          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (error) =>
+            status(InternalErrorCodeSchemas[error.code].status, { error })
+          )
+          .exhaustive()
       }
 
       return status(200, {
@@ -63,5 +73,14 @@ export const userController = new Elysia({
     },
     {
       getOIDCUser: true,
+      params: FollowUserParams,
+      response: {
+        200: FollowUserResponse,
+        ...createErrorSchema(
+          InternalErrorCode.USER_NOT_FOLLOWS,
+          InternalErrorCode.USER_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
     }
   )

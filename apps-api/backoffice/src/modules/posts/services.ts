@@ -3,12 +3,19 @@ import { ok } from 'neverthrow'
 import { CreatePostReactionBody, GetPostByIdResponse } from './models'
 import PostRepository from './repository'
 
+import { InternalErrorCode } from '../../dtos/error'
+import { mapRawPrismaError } from '../../utils/prisma'
+
 abstract class PostService {
   static async getPostById(postId: string, userId: string) {
     const result = await PostRepository.getPostById(postId, userId)
-    if (result.isErr()) {
-      return result
-    }
+    if (result.isErr())
+      return mapRawPrismaError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POST_NOT_FOUND,
+        },
+        INTERNAL_SERVER_ERROR: 'An unexpected error occurred while fetching the post',
+      })
 
     const postDetails = result.value
 
@@ -39,11 +46,21 @@ abstract class PostService {
     postId: string,
     query: { userId: string; page?: number; limit?: number }
   ) {
-    return await PostRepository.getPostComments(postId, {
+    const postComments = await PostRepository.getPostComments(postId, {
       userId: query.userId,
       page: query.page ?? 1,
       limit: query.limit ?? 10,
     })
+
+    if (postComments.isErr())
+      return mapRawPrismaError(postComments.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POST_NOT_FOUND,
+        },
+        INTERNAL_SERVER_ERROR: 'An unexpected error occurred while fetching the post comments',
+      })
+
+    return ok(postComments.value)
   }
 
   static async createPostReaction(postId: string, userId: string, data: CreatePostReactionBody) {
@@ -51,7 +68,15 @@ abstract class PostService {
     const result = await PostRepository.createPostReaction(postId, userId, data.type, comment)
 
     if (result.isErr()) {
-      return result
+      return mapRawPrismaError(result.error, {
+        UNIQUE_CONSTRAINT_FAILED: {
+          code: InternalErrorCode.POST_REACTION_ALREADY_EXISTS,
+        },
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POST_NOT_FOUND,
+        },
+        INTERNAL_SERVER_ERROR: 'An unexpected error occurred while creating the post reaction',
+      })
     }
 
     return ok({
@@ -63,7 +88,12 @@ abstract class PostService {
     const result = await PostRepository.deletePostReaction(postId, userId)
 
     if (result.isErr()) {
-      return result
+      return mapRawPrismaError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POST_REACTION_NOT_FOUND,
+        },
+        INTERNAL_SERVER_ERROR: 'An unexpected error occurred while deleting the post reaction',
+      })
     }
 
     return ok({
@@ -75,7 +105,13 @@ abstract class PostService {
     const result = await PostRepository.createPostComment(postId, userId, { content })
 
     if (result.isErr()) {
-      return result
+      return mapRawPrismaError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POST_NOT_FOUND,
+          message: 'Post not found',
+        },
+        INTERNAL_SERVER_ERROR: 'An unexpected error occurred while creating the create comment',
+      })
     }
 
     return ok({
@@ -92,7 +128,13 @@ abstract class PostService {
     const result = await PostRepository.updatePostComment(postId, commentId, userId, { content })
 
     if (result.isErr()) {
-      return result
+      return mapRawPrismaError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POST_COMMENT_NOT_FOUND,
+          message: 'Post comment not found',
+        },
+        INTERNAL_SERVER_ERROR: 'An unexpected error occurred while updating the post comment',
+      })
     }
 
     return ok({
@@ -104,7 +146,13 @@ abstract class PostService {
     const result = await PostRepository.deletePostComment(postId, commentId, userId)
 
     if (result.isErr()) {
-      return result
+      return mapRawPrismaError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POST_COMMENT_NOT_FOUND,
+          message: 'Post comment not found',
+        },
+        INTERNAL_SERVER_ERROR: 'An unexpected error occurred while deleting the post comment',
+      })
     }
 
     return ok({

@@ -2,6 +2,7 @@ enum UserRole {
     USER
     REPRESENTATIVE
     STAFF
+    OFFICIAL
 }
 
 model User {
@@ -15,6 +16,10 @@ model User {
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+
+    numberOfPosts     Int @default(0)
+    numberOfFollowers Int @default(0)
+    numberOfFollowing Int @default(0)
 
     pollAnswers             PollAnswer[]
     followingUsers          FollowedUser[]           @relation("FollowedUserAuthor")
