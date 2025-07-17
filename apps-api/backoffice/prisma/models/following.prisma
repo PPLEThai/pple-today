@@ -1,5 +1,4 @@
 model FollowedUser {
-    id             String   @id @default(cuid())
     authorId       String
     followedUserId String
     createdAt      DateTime @default(now())
@@ -7,6 +6,8 @@ model FollowedUser {
 
     author       User @relation(name: "FollowedUserAuthor", fields: [authorId], references: [id])
     followedUser User @relation(name: "FollowedUserFollowed", fields: [followedUserId], references: [id])
+
+    @@id([authorId, followedUserId])
 }
 
 model FollowedTopic {
