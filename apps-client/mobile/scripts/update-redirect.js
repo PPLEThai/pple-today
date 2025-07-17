@@ -55,9 +55,25 @@ const updateLocalDomainInOIDConfig = async () => {
   const asIsConfigJson = await asIsConfig.json()
 
   const asIsRedirectUris = asIsConfigJson.app.oidcConfig.redirectUris ?? []
+  const postLogoutRedirectUris = asIsConfigJson.app.oidcConfig.postLogoutRedirectUris ?? []
+
+  let needToUpdate = false
 
   if (!asIsRedirectUris.includes(redirectUri)) {
-    console.log('Adding new redirect URI:', redirectUri)
+    console.log(`Redirect URI ${redirectUri} not found in existing configuration, adding it...`)
+    asIsRedirectUris.push(redirectUri)
+    needToUpdate = true
+  }
+
+  if (!postLogoutRedirectUris.includes(redirectUri)) {
+    console.log(
+      `Post logout redirect URI ${redirectUri} not found in existing configuration, adding it...`
+    )
+    postLogoutRedirectUris.push(redirectUri)
+    needToUpdate = true
+  }
+
+  if (needToUpdate) {
     const addResult = await fetch(
       `${process.env.OIDC_MANAGEMENT_URL}/management/v1/projects/${process.env.OIDC_PROJECT_ID}/apps/${process.env.OIDC_APPLICATION_ID}/oidc_config`,
       {
@@ -78,6 +94,7 @@ const updateLocalDomainInOIDConfig = async () => {
               baseUri: process.env.EXPO_PUBLIC_OIDC_BASE_URL,
             },
           },
+          postLogoutRedirectUris: [...postLogoutRedirectUris, redirectUri],
           redirectUris: [...asIsRedirectUris, redirectUri],
         }),
       }
