@@ -1,3 +1,4 @@
+import { UserRole } from '../../../__generated__/prisma'
 import { prismaClient } from '../../libs/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
 
@@ -8,7 +9,7 @@ export abstract class UserRepository {
         where: {
           id: userId,
           role: {
-            in: ['REPRESENTATIVE', 'OFFICIAL'],
+            in: [UserRole.OFFICIAL, UserRole.REPRESENTATIVE],
           },
         },
       })
