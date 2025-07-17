@@ -115,7 +115,10 @@ export const login = async ({ discovery }: { discovery: DiscoveryDocument }) => 
   const browserPackage = await getBrowserPackage()
   try {
     // open in-app browser to login flow in PPLE SSO
-    loginResult = await authRequest.promptAsync(discovery, { browserPackage })
+    loginResult = await authRequest.promptAsync(discovery, {
+      browserPackage,
+      // preferEphemeralSession: true, // Uncomment to test in incognito mode
+    })
   } catch (error) {
     console.error('Error during authentication prompt:', error)
     throw new Error('Error during authentication prompt')
