@@ -5,7 +5,6 @@ import { Button } from '@pple-today/ui/button'
 import { Text } from '@pple-today/ui/text'
 import { H1 } from '@pple-today/ui/typography'
 import { useMutation } from '@tanstack/react-query'
-import { DiscoveryDocument } from 'expo-auth-session'
 
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import {
@@ -35,6 +34,7 @@ export default function Index() {
     enabled: !!discoveryQuery.data && !!sessionQuery.data,
   })
   useEffect(() => {
+    // should this throw into userQuery.error instead?
     if (userQuery.data?.error === 'access_denied') {
       console.error('Error fetching user info:', userQuery.data)
       setSessionMutation.mutate(null)
@@ -50,9 +50,7 @@ export default function Index() {
   const setSessionMutation = useSetSession()
 
   const loginMutation = useMutation({
-    mutationFn: ({ discovery }: { discovery: DiscoveryDocument }) => {
-      return login({ discovery })
-    },
+    mutationFn: login,
     onSuccess: (result) => {
       setSessionMutation.mutate({
         accessToken: result.accessToken,
@@ -76,7 +74,11 @@ export default function Index() {
         >
           <Text>เข้าสู่ระบบ</Text>
         </Button>
-        <Button variant="outline">
+        <Button
+          variant="outline"
+          onPress={() => loginMutation.mutate({ discovery: discoveryQuery.data! })}
+          disabled={!discoveryQuery.data || loginMutation.isPending}
+        >
           <Text>สมัครสมาชิก</Text>
         </Button>
       </View>

@@ -5,10 +5,8 @@ import { Button } from '@pple-today/ui/button'
 import { Text } from '@pple-today/ui/text'
 import { H2 } from '@pple-today/ui/typography'
 import { useMutation } from '@tanstack/react-query'
-import { DiscoveryDocument } from 'expo-auth-session'
 
 import {
-  AuthSession,
   login,
   logout,
   useDiscoveryQuery,
@@ -51,9 +49,7 @@ export function AuthPlayground() {
   const setSessionMutation = useSetSession()
 
   const loginMutation = useMutation({
-    mutationFn: ({ discovery }: { discovery: DiscoveryDocument }) => {
-      return login({ discovery })
-    },
+    mutationFn: login,
     onSuccess: (result) => {
       setSessionMutation.mutate({
         accessToken: result.accessToken,
@@ -63,15 +59,7 @@ export function AuthPlayground() {
     },
   })
   const logoutMutation = useMutation({
-    mutationFn: ({
-      discovery,
-      session,
-    }: {
-      discovery: DiscoveryDocument
-      session: AuthSession
-    }) => {
-      return logout({ discovery, session })
-    },
+    mutationFn: logout,
     onSuccess: () => {
       // Clear tokens from secure storage
       setSessionMutation.mutate(null)
