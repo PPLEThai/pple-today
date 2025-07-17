@@ -23,6 +23,7 @@ export default {
       },
       edgeToEdgeEnabled: true,
       package: 'th.or.peoplesparty.ppletoday',
+      softwareKeyboardLayoutMode: 'pan',
     },
     web: {
       bundler: 'metro',
