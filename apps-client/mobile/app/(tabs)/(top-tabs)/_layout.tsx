@@ -1,9 +1,11 @@
+/* eslint-disable react/prop-types */
+import { Text } from '@pple-today/ui/text'
 import type {
   MaterialTopTabNavigationEventMap,
   MaterialTopTabNavigationOptions,
 } from '@react-navigation/material-top-tabs'
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs'
-import { type ParamListBase, type TabNavigationState, useTheme } from '@react-navigation/native'
+import { type ParamListBase, type TabNavigationState } from '@react-navigation/native'
 import { withLayoutContext } from 'expo-router'
 
 import { KeyboardAvoidingViewLayout } from '@app/components/keyboard-avoiding-view-layout'
@@ -17,25 +19,46 @@ const MaterialTopTabs = withLayoutContext<
   MaterialTopTabNavigationEventMap
 >(Navigator)
 
+/**
+ * Note: TapBar Indicator might be glitchy on Android
+ * especially when route navigating is slow or when the the page is very heavy.
+ */
+
 export default function MaterialTopTabsLayout() {
-  const { colors } = useTheme()
   return (
     <KeyboardAvoidingViewLayout>
       <MaterialTopTabs
         initialRouteName="index"
         screenOptions={{
-          tabBarActiveTintColor: colors.text,
-          tabBarInactiveTintColor: 'grey',
+          tabBarLabel: (props) => {
+            return (
+              <Text
+                className="text-sm font-anakotmai-medium"
+                {...props}
+                style={{ color: props.color }}
+              >
+                {props.children}
+              </Text>
+            )
+          },
+          tabBarActiveTintColor: '#FF6A13', // --base-primary-default
+          tabBarInactiveTintColor: '#64748B', // --base-text-medium
           tabBarLabelStyle: {
             fontSize: 14,
             textTransform: 'capitalize',
             fontWeight: 'bold',
           },
           tabBarIndicatorStyle: {
-            backgroundColor: colors.text,
+            backgroundColor: '#FF6A13', // --base-primary-default
           },
           tabBarScrollEnabled: true,
-          tabBarItemStyle: { width: 'auto', minWidth: 100 },
+          tabBarItemStyle: {
+            width: 'auto',
+            minWidth: 100,
+            paddingHorizontal: 16,
+            paddingTop: 8,
+            paddingBottom: 12,
+          },
         }}
       >
         <MaterialTopTabs.Screen
