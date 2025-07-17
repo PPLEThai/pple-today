@@ -82,6 +82,19 @@ If you have `.env` (environment variable) set up, you can run `pnpm dev` instead
 
 ## Environment Setup
 
+### Development
+
+- Public environment variables are used in the app, it should be set in `.env` file
+  - `EXPO_PUBLIC_OIDC_BASE_URL` is your OIDC service base URL
+  - `EXPO_PUBLIC_OIDC_CLIENT_ID` is your OIDC client ID used for mobile apps
+  - `EXPO_PUBLIC_BACKEND_BASE_URL` is your PPLE Today backend base URL
+    - For development, it is usually `http://localhost:2000`
+- The following environment variables are used in local development only, **it should not be included in production**:
+  - `OIDC_MANAGEMENT_URL` is your OIDC backend URL **which might not be the same as `EXPO_PUBLIC_OIDC_BASE_URL`**
+  - `OIDC_APPLICATION_ID` is your OIDC application resource ID used for mobile apps **not the same as `EXPO_PUBLIC_OIDC_CLIENT_ID`**
+  - `OIDC_PROJECT_ID` is your OIDC project ID where the application is registered
+  - `OIDC_ADMIN_TOKEN` is your OIDC admin token used for managing OIDC applications in backend
+
 ### Android
 
 - Please see prerequisite steps
