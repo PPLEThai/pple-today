@@ -50,7 +50,10 @@ export default function MaterialTopTabsLayout() {
           },
           tabBarIndicatorStyle: {
             backgroundColor: '#FF6A13', // --base-primary-default
+            height: 2,
+            marginBottom: -1,
           },
+          tabBarAndroidRipple: { color: undefined },
           tabBarScrollEnabled: true,
           tabBarItemStyle: {
             width: 'auto',
@@ -58,6 +61,12 @@ export default function MaterialTopTabsLayout() {
             paddingHorizontal: 16,
             paddingTop: 8,
             paddingBottom: 12,
+            height: 42,
+          },
+          tabBarStyle: {
+            elevation: 0,
+            borderBottomWidth: 1,
+            borderBottomColor: '#E5E7EB', // --base-border-default
           },
         }}
       >
