@@ -84,7 +84,8 @@ platform :ios do
     # https://stackoverflow.com/questions/58262038/testers-could-not-download-app-from-firebase-app-distribution/58383782#58383782
     upload_to_testflight(
       changelog: "TestFlight build for PPLE Today",
-      groups: "Dev Team",
+      # TODO: env variable for groups
+      groups: ["Dev Team", "QA Team"].join(","),
       skip_waiting_for_build_processing: true
     )
   end

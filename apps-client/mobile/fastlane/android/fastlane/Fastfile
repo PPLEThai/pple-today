@@ -38,7 +38,8 @@ platform :android do
     )
     firebase_app_distribution(
       app: app_id,
-      groups: "dev-team",
+      # TODO: env variable for groups
+      groups: ["dev-team", "qa-team"].join(","),
       service_credentials_file: "key.json",
       release_notes: "New build with automated version increment. Version Code: #{current_version_code}",
       # debug: true,

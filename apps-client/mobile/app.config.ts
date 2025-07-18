@@ -9,7 +9,7 @@ export default {
     scheme: 'pple-today',
     version: version,
     orientation: 'portrait',
-    icon: './assets/images/icon.png',
+    icon: './assets/images/favicon1024.png',
     userInterfaceStyle: 'automatic',
     newArchEnabled: true,
     ios: {
@@ -18,23 +18,24 @@ export default {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: './assets/images/adaptive-icon.png',
+        foregroundImage: './assets/images/transparent-icon.png',
         backgroundColor: '#ffffff',
       },
       edgeToEdgeEnabled: true,
       package: 'th.or.peoplesparty.ppletoday',
+      softwareKeyboardLayoutMode: 'pan',
     },
     web: {
       bundler: 'metro',
       output: 'static',
-      favicon: './assets/images/favicon.png',
+      favicon: './assets/images/favicon.svg',
     },
     plugins: [
       'expo-router',
       [
         'expo-splash-screen',
         {
-          image: './assets/images/splash-icon.png',
+          image: './assets/images/favicon1024.png',
           imageWidth: 200,
           resizeMode: 'contain',
           backgroundColor: '#ffffff',

@@ -61,7 +61,7 @@ function ToggleGroupItem({
       value={cn(
         toggleTextVariants({ variant, size }),
         ToggleGroupPrimitive.utils.getIsSelected(value, props.value)
-          ? 'text-accent-foreground'
+          ? 'text-base-text-invert'
           : 'web:group-hover:text-muted-foreground'
       )}
     >
@@ -72,7 +72,8 @@ function ToggleGroupItem({
             size: context.size || size,
           }),
           props.disabled && 'web:pointer-events-none opacity-50',
-          ToggleGroupPrimitive.utils.getIsSelected(value, props.value) && 'bg-accent',
+          ToggleGroupPrimitive.utils.getIsSelected(value, props.value) &&
+            'bg-base-primary-default active:bg-base-primary-medium web:hover:bg-base-primary-medium border-base-primary-default',
           className
         )}
         {...props}

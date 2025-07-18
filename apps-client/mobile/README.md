@@ -15,8 +15,10 @@ Feel free to update this file :)
 2. Start the app
 
    ```bash
-   pnpm dev
+   pnpm start
    ```
+
+If you have `.env` (environment variable) set up, you can run `pnpm dev` instead
 
 ## Native Development
 
