@@ -17,18 +17,29 @@ model User {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    numberOfPosts     Int @default(0)
-    numberOfFollowers Int @default(0)
-    numberOfFollowing Int @default(0)
+    onBoardingCompleted Boolean @default(false)
 
-    pollAnswers             PollAnswer[]
-    followingUsers          FollowedUser[]           @relation("FollowedUserAuthor")
-    followedUsers           FollowedUser[]           @relation("FollowedUserFollowed")
-    posts                   Post[]
-    postComments            PostComment[]
-    postReactions           PostReaction[]
-    eventAttendants         EventAttendant[]
+    numberOfPosts           Int @default(0)
+    numberOfFollowers       Int @default(0)
+    numberOfFollowing       Int @default(0)
+    numberOfFollowingTopics Int @default(0)
+
+    district    String?
+    subDistrict String?
+    address     Address? @relation(fields: [district, subDistrict], references: [district, subDistrict])
+
+    pollAnswers PollAnswer[]
+
+    followingUsers  FollowedUser[]  @relation("FollowedUserAuthor")
+    followedUsers   FollowedUser[]  @relation("FollowedUserFollowed")
+    followingTopics FollowedTopic[]
+
+    posts         Post[]
+    postComments  PostComment[]
+    postReactions PostReaction[]
+
+    eventAttendants EventAttendant[]
+
     electionEligibleVoters  ElectionEligibleVoter[]
     electionEligibleBallots ElectionEligibleBallot[]
-    followingTopics         FollowedTopic[]
 }

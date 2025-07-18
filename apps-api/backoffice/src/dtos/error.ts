@@ -53,6 +53,12 @@ const POST_ERROR_SCHEMA = {
 } satisfies InternalErrorSchemas
 
 const USER_ERROR_SCHEMA = {
+  USER_FOLLOWING_TOPIC_NOT_FOUND: {
+    status: 422,
+  },
+  USER_ALREADY_DONE_ONBOARDING: {
+    status: 409,
+  },
   USER_INVALID_INPUT: {
     status: 400,
   },

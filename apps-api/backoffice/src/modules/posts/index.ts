@@ -24,9 +24,9 @@ import {
 } from './models'
 import PostService from './services'
 
-import { InternalErrorCode, InternalErrorCodeSchemas } from '../../dtos/error'
+import { InternalErrorCode } from '../../dtos/error'
 import { authPlugin } from '../../plugins/auth'
-import { createErrorSchema } from '../../utils/error'
+import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 
 export const postsController = new Elysia({
   prefix: '/posts',
@@ -39,11 +39,11 @@ export const postsController = new Elysia({
       const result = await PostService.getPostById(params.id, oidcUser.sub) // Replace 'user-id-placeholder' with actual user ID logic
       if (result.isErr()) {
         return match(result.error)
-          .with({ code: InternalErrorCode.POST_NOT_FOUND }, (error) =>
-            status(InternalErrorCodeSchemas[error.code].status, { error })
+          .with({ code: InternalErrorCode.POST_NOT_FOUND }, (e) =>
+            mapErrorCodeToResponse(e, status)
           )
-          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (error) =>
-            status(InternalErrorCodeSchemas[error.code].status, { error })
+          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (e) =>
+            mapErrorCodeToResponse(e, status)
           )
           .exhaustive()
       }
@@ -72,11 +72,11 @@ export const postsController = new Elysia({
       })
       if (result.isErr()) {
         return match(result.error)
-          .with({ code: InternalErrorCode.POST_NOT_FOUND }, (error) =>
-            status(InternalErrorCodeSchemas[error.code].status, { error })
+          .with({ code: InternalErrorCode.POST_NOT_FOUND }, (e) =>
+            mapErrorCodeToResponse(e, status)
           )
-          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (error) =>
-            status(InternalErrorCodeSchemas[error.code].status, { error })
+          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (e) =>
+            mapErrorCodeToResponse(e, status)
           )
           .exhaustive()
       }
@@ -102,14 +102,14 @@ export const postsController = new Elysia({
       const result = await PostService.createPostReaction(params.id, oidcUser.sub, body)
       if (result.isErr()) {
         return match(result.error)
-          .with({ code: InternalErrorCode.POST_NOT_FOUND }, (error) =>
-            status(InternalErrorCodeSchemas[error.code].status, { error })
+          .with({ code: InternalErrorCode.POST_NOT_FOUND }, (e) =>
+            mapErrorCodeToResponse(e, status)
           )
-          .with({ code: InternalErrorCode.POST_REACTION_ALREADY_EXISTS }, (error) =>
-            status(InternalErrorCodeSchemas[error.code].status, { error })
+          .with({ code: InternalErrorCode.POST_REACTION_ALREADY_EXISTS }, (e) =>
+            mapErrorCodeToResponse(e, status)
           )
-          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (error) =>
-            status(InternalErrorCodeSchemas[error.code].status, { error })
+          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (e) =>
+            mapErrorCodeToResponse(e, status)
           )
           .exhaustive()
       }
@@ -137,11 +137,11 @@ export const postsController = new Elysia({
 
       if (result.isErr()) {
         return match(result.error)
-          .with({ code: InternalErrorCode.POST_REACTION_NOT_FOUND }, (error) =>
-            status(InternalErrorCodeSchemas[error.code].status, { error })
+          .with({ code: InternalErrorCode.POST_REACTION_NOT_FOUND }, (e) =>
+            mapErrorCodeToResponse(e, status)
           )
-          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (error) =>
-            status(InternalErrorCodeSchemas[error.code].status, { error })
+          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (e) =>
+            mapErrorCodeToResponse(e, status)
           )
           .exhaustive()
       }
@@ -166,11 +166,11 @@ export const postsController = new Elysia({
       const result = await PostService.createPostComment(params.id, oidcUser.sub, body.content)
       if (result.isErr()) {
         return match(result.error)
-          .with({ code: InternalErrorCode.POST_NOT_FOUND }, (error) =>
-            status(InternalErrorCodeSchemas[error.code].status, { error })
+          .with({ code: InternalErrorCode.POST_NOT_FOUND }, (e) =>
+            mapErrorCodeToResponse(e, status)
           )
-          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (error) =>
-            status(InternalErrorCodeSchemas[error.code].status, { error })
+          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (e) =>
+            mapErrorCodeToResponse(e, status)
           )
           .exhaustive()
       }
@@ -202,11 +202,11 @@ export const postsController = new Elysia({
 
       if (result.isErr()) {
         return match(result.error)
-          .with({ code: InternalErrorCode.POST_COMMENT_NOT_FOUND }, (error) =>
-            status(InternalErrorCodeSchemas[error.code].status, { error })
+          .with({ code: InternalErrorCode.POST_COMMENT_NOT_FOUND }, (e) =>
+            mapErrorCodeToResponse(e, status)
           )
-          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (error) =>
-            status(InternalErrorCodeSchemas[error.code].status, { error })
+          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (e) =>
+            mapErrorCodeToResponse(e, status)
           )
           .exhaustive()
       }
@@ -233,11 +233,11 @@ export const postsController = new Elysia({
 
       if (result.isErr()) {
         return match(result.error)
-          .with({ code: InternalErrorCode.POST_COMMENT_NOT_FOUND }, (error) =>
-            status(InternalErrorCodeSchemas[error.code].status, { error })
+          .with({ code: InternalErrorCode.POST_COMMENT_NOT_FOUND }, (e) =>
+            mapErrorCodeToResponse(e, status)
           )
-          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (error) =>
-            status(InternalErrorCodeSchemas[error.code].status, { error })
+          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (e) =>
+            mapErrorCodeToResponse(e, status)
           )
           .exhaustive()
       }

@@ -5,9 +5,9 @@ import { match } from 'ts-pattern'
 import { GetAuthMeResponse, RegisterUserResponse } from './models'
 import { AuthService } from './services'
 
-import { InternalErrorCode, InternalErrorCodeSchemas } from '../../dtos/error'
+import { InternalErrorCode } from '../../dtos/error'
 import { authPlugin } from '../../plugins/auth'
-import { createErrorSchema } from '../../utils/error'
+import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 
 export const authController = new Elysia({
   adapter: node(),
@@ -21,11 +21,11 @@ export const authController = new Elysia({
 
       if (result.isErr()) {
         return match(result.error)
-          .with({ code: InternalErrorCode.AUTH_USER_ALREADY_EXISTS }, (error) =>
-            status(InternalErrorCodeSchemas[error.code].status, { error })
+          .with({ code: InternalErrorCode.AUTH_USER_ALREADY_EXISTS }, (e) =>
+            mapErrorCodeToResponse(e, status)
           )
-          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (error) =>
-            status(InternalErrorCodeSchemas[error.code].status, { error })
+          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (e) =>
+            mapErrorCodeToResponse(e, status)
           )
           .exhaustive()
       }
@@ -52,11 +52,11 @@ export const authController = new Elysia({
 
       if (localInfo.isErr()) {
         return match(localInfo.error)
-          .with({ code: InternalErrorCode.AUTH_USER_NOT_FOUND }, (error) =>
-            status(InternalErrorCodeSchemas[error.code].status, { error })
+          .with({ code: InternalErrorCode.AUTH_USER_NOT_FOUND }, (e) =>
+            mapErrorCodeToResponse(e, status)
           )
-          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (error) =>
-            status(InternalErrorCodeSchemas[error.code].status, { error })
+          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (e) =>
+            mapErrorCodeToResponse(e, status)
           )
           .exhaustive()
       }

@@ -1,5 +1,6 @@
 import { TLiteral, TObject, TOptional, TString, TUnion, TUnknown } from '@sinclair/typebox'
 import { Static, t } from 'elysia'
+import { ElysiaCustomStatusResponse } from 'elysia/error'
 import { Prettify2 } from 'elysia/types'
 import { groupBy, map, mapValues, pipe } from 'remeda'
 
@@ -79,4 +80,17 @@ export const createErrorSchema = <T extends [InternalErrorCode, ...InternalError
       tApiErrorResponse(...map(errorSchemas, (errorSchema) => tApiError(errorSchema.code)))
     )
   ) as any
+}
+
+export const mapErrorCodeToResponse = <
+  TError extends ApiErrorResponse<InternalErrorCode>,
+  TCode extends TError['code'],
+  TStatusCode extends InternalErrorCodeSchemas[TCode]['status'],
+  TStatusReturn extends ElysiaCustomStatusResponse<any, any, any>,
+>(
+  error: TError,
+  status: (statusCode: TStatusCode, body: { error: TError }) => TStatusReturn
+) => {
+  const code = InternalErrorCodeSchemas[error.code].status as TStatusCode
+  return status(code, { error })
 }

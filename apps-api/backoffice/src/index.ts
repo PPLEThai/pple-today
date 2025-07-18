@@ -8,7 +8,6 @@ import { InternalErrorCode } from './dtos/error'
 import { authController } from './modules/auth'
 import { postsController } from './modules/posts'
 import { profileController } from './modules/profile'
-import { userController } from './modules/user'
 
 const app = new Elysia({ adapter: node() })
   .onError(({ status, ...props }) => {
@@ -59,7 +58,6 @@ const app = new Elysia({ adapter: node() })
   .use(swagger())
   .use(postsController)
   .use(authController)
-  .use(userController)
   .use(profileController)
   .get(
     '/:id',
