@@ -22,4 +22,20 @@ config.resolver.nodeModulesPaths = [
   path.resolve(monorepoRoot, 'node_modules'),
 ]
 
-module.exports = withNativeWind(config, { input: './global.css' })
+const { transformer, resolver } = config
+config.transformer = {
+  ...transformer,
+  babelTransformerPath: require.resolve('react-native-svg-transformer/expo'),
+}
+config.resolver = {
+  ...resolver,
+  assetExts: resolver.assetExts.filter((ext) => ext !== 'svg'),
+  sourceExts: [...resolver.sourceExts, 'svg'],
+}
+
+/**
+ * Web: 16px, Native: 14px (default)
+ * https://www.nativewind.dev/docs/tailwind/typography/font-size
+ * We change the default font sizes for the project.
+ * */
+module.exports = withNativeWind(config, { input: './global.css', inlineRem: 16 })

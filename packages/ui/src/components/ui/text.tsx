@@ -18,7 +18,11 @@ function Text({
   const Component = asChild ? Slot.Text : RNText
   return (
     <Component
-      className={twMerge('text-base text-foreground web:select-text', textClass, className)}
+      className={twMerge(
+        'text-base text-foreground web:select-text font-noto-medium',
+        textClass,
+        className
+      )}
       {...props}
     />
   )
