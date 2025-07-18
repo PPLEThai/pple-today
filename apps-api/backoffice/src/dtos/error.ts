@@ -28,6 +28,15 @@ const COMMON_ERROR_SCHEMA = {
   },
 } satisfies InternalErrorSchemas
 
+const AUTH_ERROR_SCHEMA = {
+  AUTH_USER_NOT_FOUND: {
+    status: 401,
+  },
+  AUTH_USER_ALREADY_EXISTS: {
+    status: 409,
+  },
+} satisfies InternalErrorSchemas
+
 const POST_ERROR_SCHEMA = {
   POST_NOT_FOUND: {
     status: 404,
@@ -44,6 +53,7 @@ const POST_ERROR_SCHEMA = {
 } satisfies InternalErrorSchemas
 
 export const InternalErrorCodeSchemas = {
+  ...AUTH_ERROR_SCHEMA,
   ...COMMON_ERROR_SCHEMA,
   ...POST_ERROR_SCHEMA,
 } as const

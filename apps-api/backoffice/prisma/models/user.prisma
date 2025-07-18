@@ -17,7 +17,7 @@ model User {
     updatedAt DateTime @updatedAt
 
     pollAnswers             PollAnswer[]
-    suthorUsers             FollowedUser[]           @relation("FollowedUserAuthor")
+    followingUsers          FollowedUser[]           @relation("FollowedUserAuthor")
     followedUsers           FollowedUser[]           @relation("FollowedUserFollowed")
     posts                   Post[]
     postComments            PostComment[]
