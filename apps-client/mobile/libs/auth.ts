@@ -16,6 +16,7 @@ import {
 import { getItemAsync, setItemAsync } from 'expo-secure-store'
 import * as WebBrowser from 'expo-web-browser'
 
+import appConfig from '@app/app.config'
 import { environment } from '@app/env'
 
 const authRequest: AuthRequest = new AuthRequest({
@@ -25,8 +26,7 @@ const authRequest: AuthRequest = new AuthRequest({
   scopes: ['openid', 'profile', 'phone'],
   codeChallengeMethod: CodeChallengeMethod.S256,
   redirectUri: makeRedirectUri({
-    // TODO: scheme should be set in app.config.ts
-    scheme: 'th.or.peoplesparty.ppletoday',
+    scheme: appConfig.expo.scheme,
     isTripleSlashed: true,
   }),
 })
