@@ -167,7 +167,12 @@ export const logout = async ({
     console.error('Error opening auth session:', error)
     throw new Error('Error opening auth session')
   }
-  if (result.type !== 'success') {
+  if (
+    !(
+      result.type === 'success' ||
+      (result.type === WebBrowser.WebBrowserResultType.DISMISS && Platform.OS === 'android')
+    )
+  ) {
     console.error('Logout cancelled or failed:', result)
     throw new Error('Logout cancelled or failed')
   }
