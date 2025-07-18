@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ScrollView, View } from 'react-native'
 
 import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
@@ -17,11 +17,14 @@ import { Icon } from '@pple-today/ui/icon'
 import { Input, InputGroup, InputLeftIcon, InputRightIcon } from '@pple-today/ui/input'
 import { Text } from '@pple-today/ui/text'
 import { H1, H2 } from '@pple-today/ui/typography'
+import { getItemAsync } from 'expo-secure-store'
 import { PlusIcon, SearchIcon } from 'lucide-react-native'
 
 import { useMutation, useQuery } from '@app/libs/react-query'
 
 import { AuthPlayground } from './auth-playground'
+
+const AUTH_ACCESS_TOKEN_STORAGE_KEY = 'authAccessToken'
 
 export function Playground() {
   return (
@@ -254,11 +257,28 @@ function BottomSheetExample() {
 }
 
 function QueryExample() {
-  const sampleQuery = useQuery('get', '/:id', {
-    pathParams: { id: '123' },
-    query: { name: 'John Doe', code: 404 },
-    headers: { 'x-custom-header': 'value' },
-  })
+  const [token, setToken] = useState<string>('')
+  const sampleQuery = useQuery(
+    'get',
+    '/auth/me',
+    {
+      pathParams: {},
+      headers: {
+        authorization: `Bearer ${token}`,
+      },
+    },
+    { enabled: !!token }
+  )
+
+  useEffect(() => {
+    const fetchToken = async () => {
+      const storedToken = await getItemAsync(AUTH_ACCESS_TOKEN_STORAGE_KEY)
+      if (storedToken) {
+        setToken(storedToken)
+      }
+    }
+    fetchToken()
+  }, [])
 
   const sampleMutation = useMutation('post', '/test-post/:id')
 
@@ -273,7 +293,7 @@ function QueryExample() {
             {sampleQuery.isLoading
               ? 'Loading...'
               : sampleQuery.data
-                ? JSON.stringify(sampleQuery.data)
+                ? JSON.stringify(sampleQuery)
                 : JSON.stringify(sampleQuery.error)}
           </Text>
         </View>
