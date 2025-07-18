@@ -13,7 +13,7 @@ import {
   useSessionQuery,
   useSetSession,
   useUserQuery,
-} from '@app/query/auth'
+} from '@app/libs/auth'
 
 export function AuthPlayground() {
   const discoveryQuery = useDiscoveryQuery()
