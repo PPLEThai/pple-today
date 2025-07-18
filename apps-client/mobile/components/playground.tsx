@@ -350,6 +350,11 @@ function SelectExample() {
           </SelectGroup>
         </SelectContent>
       </Select>
+      <Select>
+        <SelectTrigger className="w-[250px]" aria-invalid>
+          <SelectValue placeholder="Select a fruit" />
+        </SelectTrigger>
+      </Select>
     </View>
   )
 }
