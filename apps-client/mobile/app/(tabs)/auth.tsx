@@ -13,7 +13,7 @@ import {
   useSessionQuery,
   useSetSession,
   useUserQuery,
-} from '@app/query/auth'
+} from '@app/libs/auth'
 
 export default function Index() {
   const discoveryQuery = useDiscoveryQuery()
