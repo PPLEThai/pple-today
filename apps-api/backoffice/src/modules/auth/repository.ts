@@ -1,12 +1,12 @@
 import Elysia from 'elysia'
 
 import { IntrospectAccessTokenResult } from '../../dtos/auth'
-import prismaService from '../../libs/prisma'
+import prismaService from '../../plugins/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
 
 export const AuthRepository = new Elysia({ name: 'AuthRepository' })
   .use(prismaService)
-  .derive(({ prisma }) => ({
+  .decorate(({ prisma }) => ({
     authRepository: {
       async getUserById(id: string) {
         const user = await fromPrismaPromise(

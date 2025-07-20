@@ -1,12 +1,12 @@
 import Elysia from 'elysia'
 
 import { PostReactionType } from '../../dtos/post'
-import PrismaService from '../../libs/prisma'
+import PrismaService from '../../plugins/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
 
 export const PostRepository = new Elysia({ name: 'PostRepository' })
   .use(PrismaService)
-  .derive(({ prisma }) => ({
+  .decorate(({ prisma }) => ({
     postRepository: {
       async getPostById(postId: string, userId: string) {
         const response = await fromPrismaPromise(async () => {

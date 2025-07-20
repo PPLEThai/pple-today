@@ -3,12 +3,12 @@ import Elysia from 'elysia'
 import { CompleteOnboardingProfileBody } from './models'
 
 import { Prisma, UserRole } from '../../../__generated__/prisma'
-import PrismaService from '../../libs/prisma'
+import PrismaService from '../../plugins/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
 
 const ProfileRepository = new Elysia({ name: 'ProfileRepository' })
   .use(PrismaService)
-  .derive(({ prisma }) => ({
+  .decorate(({ prisma }) => ({
     profileRepository: {
       async getProfileById(id: string) {
         return await fromPrismaPromise(
@@ -148,6 +148,5 @@ const ProfileRepository = new Elysia({ name: 'ProfileRepository' })
       },
     },
   }))
-  .as('scoped')
 
 export default ProfileRepository

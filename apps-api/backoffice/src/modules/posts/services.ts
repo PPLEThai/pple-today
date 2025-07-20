@@ -9,7 +9,7 @@ import { mapRawPrismaError } from '../../utils/prisma'
 
 const PostService = new Elysia({ name: 'PostService' })
   .use(PostRepository)
-  .derive(({ postRepository }) => ({
+  .decorate(({ postRepository }) => ({
     postService: {
       async getPostById(postId: string, userId: string) {
         const result = await postRepository.getPostById(postId, userId)

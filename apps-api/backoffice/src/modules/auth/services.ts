@@ -8,7 +8,7 @@ import { mapRawPrismaError } from '../../utils/prisma'
 
 const AuthService = new Elysia({ name: 'AuthService' })
   .use(AuthRepository)
-  .derive(({ authRepository }) => ({
+  .decorate(({ authRepository }) => ({
     authService: {
       async getUserById(id: string) {
         const user = await authRepository.getUserById(id)

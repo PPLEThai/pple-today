@@ -10,7 +10,7 @@ import { AuthRepository } from '../auth/repository'
 
 const ProfileService = new Elysia({ name: 'ProfileService' })
   .use([ProfileRepository, AuthRepository])
-  .derive(({ profileRepository, authRepository }) => ({
+  .decorate(({ profileRepository, authRepository }) => ({
     profileService: {
       async getProfileById(id: string) {
         const user = await profileRepository.getProfileById(id)
@@ -178,6 +178,5 @@ const ProfileService = new Elysia({ name: 'ProfileService' })
       },
     },
   }))
-  .as('scoped')
 
 export default ProfileService
