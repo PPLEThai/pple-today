@@ -1,10 +1,11 @@
+import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import { PostReactionType } from '../../dtos/post'
 import PrismaService from '../../plugins/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
 
-export const PostRepository = new Elysia({ name: 'PostRepository' })
+export const PostRepository = new Elysia({ name: 'PostRepository', adapter: node() })
   .use(PrismaService)
   .decorate(({ prisma }) => ({
     postRepository: {

@@ -1,3 +1,4 @@
+import node from '@elysiajs/node'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 
@@ -8,7 +9,7 @@ import { InternalErrorCode } from '../../dtos/error'
 import { mapRawPrismaError } from '../../utils/prisma'
 import { AuthRepository } from '../auth/repository'
 
-const ProfileService = new Elysia({ name: 'ProfileService' })
+const ProfileService = new Elysia({ name: 'ProfileService', adapter: node() })
   .use([ProfileRepository, AuthRepository])
   .decorate(({ profileRepository, authRepository }) => ({
     profileService: {

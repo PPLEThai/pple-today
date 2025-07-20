@@ -1,3 +1,4 @@
+import { cors } from '@elysiajs/cors'
 import node from '@elysiajs/node'
 import { swagger } from '@elysiajs/swagger'
 import Elysia, { t } from 'elysia'
@@ -55,6 +56,7 @@ const app = new Elysia({ adapter: node() })
         })
       )
   })
+  .use(cors())
   .use(swagger())
   .use(postsController)
   .use(authController)

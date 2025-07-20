@@ -1,3 +1,4 @@
+import node from '@elysiajs/node'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -7,7 +8,7 @@ import { PostRepository } from './repository'
 import { InternalErrorCode } from '../../dtos/error'
 import { mapRawPrismaError } from '../../utils/prisma'
 
-const PostService = new Elysia({ name: 'PostService' })
+const PostService = new Elysia({ name: 'PostService', adapter: node() })
   .use(PostRepository)
   .decorate(({ postRepository }) => ({
     postService: {

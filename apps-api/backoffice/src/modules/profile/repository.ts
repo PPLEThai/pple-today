@@ -1,3 +1,4 @@
+import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import { CompleteOnboardingProfileBody } from './models'
@@ -6,7 +7,7 @@ import { Prisma, UserRole } from '../../../__generated__/prisma'
 import PrismaService from '../../plugins/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
 
-const ProfileRepository = new Elysia({ name: 'ProfileRepository' })
+const ProfileRepository = new Elysia({ name: 'ProfileRepository', adapter: node() })
   .use(PrismaService)
   .decorate(({ prisma }) => ({
     profileRepository: {

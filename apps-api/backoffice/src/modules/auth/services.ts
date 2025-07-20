@@ -1,3 +1,4 @@
+import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import { AuthRepository } from './repository'
@@ -6,7 +7,7 @@ import { IntrospectAccessTokenResult } from '../../dtos/auth'
 import { InternalErrorCode } from '../../dtos/error'
 import { mapRawPrismaError } from '../../utils/prisma'
 
-const AuthService = new Elysia({ name: 'AuthService' })
+const AuthService = new Elysia({ name: 'AuthService', adapter: node() })
   .use(AuthRepository)
   .decorate(({ authRepository }) => ({
     authService: {
