@@ -6,11 +6,11 @@ import { Prisma, UserRole } from '../../../__generated__/prisma'
 import PrismaService from '../../libs/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
 
-const UserRepository = new Elysia({ name: 'UserRepository' })
+const ProfileRepository = new Elysia({ name: 'ProfileRepository' })
   .use(PrismaService)
   .derive(({ prisma }) => ({
-    userRepository: {
-      async getUserById(id: string) {
+    profileRepository: {
+      async getProfileById(id: string) {
         return await fromPrismaPromise(
           prisma.user.findUniqueOrThrow({
             where: { id },
@@ -150,4 +150,4 @@ const UserRepository = new Elysia({ name: 'UserRepository' })
   }))
   .as('scoped')
 
-export default UserRepository
+export default ProfileRepository

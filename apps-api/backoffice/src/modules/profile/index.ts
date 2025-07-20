@@ -7,13 +7,13 @@ import {
   CompleteOnboardingProfileResponse,
   FollowUserParams,
   FollowUserResponse,
-  GetMyUserProfilesResponse,
-  GetUserProfileByIdParams,
-  GetUserProfileByIdResponse,
-  UpdateUserProfileBody,
-  UpdateUserProfileResponse,
+  GetMyProfileResponse,
+  GetProfileByIdParams,
+  GetProfileByIdResponse,
+  UpdateProfileBody,
+  UpdateProfileResponse,
 } from './models'
-import UserService from './services'
+import ProfileService from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
 import { AuthPlugin } from '../../plugins/auth'
@@ -23,11 +23,11 @@ export const profileController = new Elysia({
   prefix: '/profile',
   adapter: node(),
 })
-  .use([AuthPlugin, UserService])
+  .use([AuthPlugin, ProfileService])
   .get(
     '/me',
-    async ({ oidcUser, status, userService }) => {
-      const result = await userService.getUserById(oidcUser.sub)
+    async ({ oidcUser, status, profileService }) => {
+      const result = await profileService.getProfileById(oidcUser.sub)
 
       if (result.isErr()) {
         return match(result.error)
@@ -61,7 +61,7 @@ export const profileController = new Elysia({
     {
       getOIDCUser: true,
       response: {
-        200: GetMyUserProfilesResponse,
+        200: GetMyProfileResponse,
         ...createErrorSchema(
           InternalErrorCode.USER_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
@@ -71,8 +71,8 @@ export const profileController = new Elysia({
   )
   .patch(
     '/me',
-    async ({ body, oidcUser, status, userService }) => {
-      const result = await userService.updateUserProfile(oidcUser.sub, body)
+    async ({ body, oidcUser, status, profileService }) => {
+      const result = await profileService.updateProfile(oidcUser.sub, body)
 
       if (result.isErr()) {
         return match(result.error)
@@ -94,9 +94,9 @@ export const profileController = new Elysia({
     },
     {
       getOIDCUser: true,
-      body: UpdateUserProfileBody,
+      body: UpdateProfileBody,
       response: {
-        200: UpdateUserProfileResponse,
+        200: UpdateProfileResponse,
         ...createErrorSchema(
           InternalErrorCode.USER_NOT_FOUND,
           InternalErrorCode.USER_INVALID_INPUT,
@@ -107,8 +107,8 @@ export const profileController = new Elysia({
   )
   .get(
     '/:id',
-    async ({ status, params, userService }) => {
-      const user = await userService.getUserById(params.id)
+    async ({ status, params, profileService }) => {
+      const user = await profileService.getProfileById(params.id)
 
       if (user.isErr()) {
         return match(user.error)
@@ -138,9 +138,9 @@ export const profileController = new Elysia({
     },
     {
       getOIDCUser: true,
-      params: GetUserProfileByIdParams,
+      params: GetProfileByIdParams,
       response: {
-        200: GetUserProfileByIdResponse,
+        200: GetProfileByIdResponse,
         ...createErrorSchema(
           InternalErrorCode.USER_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
@@ -150,8 +150,8 @@ export const profileController = new Elysia({
   )
   .post(
     '/on-boarding',
-    async ({ oidcUser, status, body, userService }) => {
-      const result = await userService.completeOnboardingProfile(oidcUser.sub, body)
+    async ({ oidcUser, status, body, profileService }) => {
+      const result = await profileService.completeOnboardingProfile(oidcUser.sub, body)
 
       if (result.isErr()) {
         return match(result.error)
@@ -190,7 +190,7 @@ export const profileController = new Elysia({
   )
   .post(
     '/:id/follow',
-    async ({ params, oidcUser, status, userService }) => {
+    async ({ params, oidcUser, status, profileService }) => {
       if (oidcUser.sub === params.id) {
         return status(400, {
           error: {
@@ -200,7 +200,7 @@ export const profileController = new Elysia({
         })
       }
 
-      const result = await userService.followUser(oidcUser.sub, params.id)
+      const result = await profileService.followUser(oidcUser.sub, params.id)
 
       if (result.isErr()) {
         return match(result.error)
@@ -236,8 +236,8 @@ export const profileController = new Elysia({
   )
   .delete(
     '/:id/follow',
-    async ({ params, oidcUser, status, userService }) => {
-      const result = await userService.unfollowUser(oidcUser.sub, params.id)
+    async ({ params, oidcUser, status, profileService }) => {
+      const result = await profileService.unfollowUser(oidcUser.sub, params.id)
 
       if (result.isErr()) {
         return match(result.error)

@@ -2,7 +2,7 @@ import { Static, t } from 'elysia'
 
 import { UserRole } from '../../../__generated__/prisma'
 
-export const GetMyUserProfilesResponse = t.Object({
+export const GetMyProfileResponse = t.Object({
   id: t.String({ description: 'The ID of the user' }),
   name: t.String({ description: 'The name of the user' }),
   profileImage: t.Optional(t.String({ description: 'The URL of the profile image' })),
@@ -20,13 +20,13 @@ export const GetMyUserProfilesResponse = t.Object({
   ),
 })
 
-export type GetMyUserProfilesResponse = Static<typeof GetMyUserProfilesResponse>
+export type GetMyProfileResponse = Static<typeof GetMyProfileResponse>
 
-export const GetUserProfileByIdParams = t.Object({
+export const GetProfileByIdParams = t.Object({
   id: t.String({ description: 'The ID of the user' }),
 })
 
-export const GetUserProfileByIdResponse = t.Object({
+export const GetProfileByIdResponse = t.Object({
   id: t.String({ description: 'The ID of the user' }),
   role: t.Enum(UserRole, { description: 'The role of the user' }),
   name: t.String({ description: 'The name of the user' }),
@@ -42,8 +42,8 @@ export const GetUserProfileByIdResponse = t.Object({
   ),
 })
 
-export type GetUserProfileByIdParams = Static<typeof GetUserProfileByIdParams>
-export type GetUserProfileByIdResponse = Static<typeof GetUserProfileByIdResponse>
+export type GetProfileByIdParams = Static<typeof GetProfileByIdParams>
+export type GetProfileByIdResponse = Static<typeof GetProfileByIdResponse>
 
 export const CompleteOnboardingProfileBody = t.Object({
   profile: t.Optional(
@@ -93,7 +93,7 @@ export const UnfollowUserResponse = t.Object({
 export type UnfollowUserParams = Static<typeof UnfollowUserParams>
 export type UnfollowUserResponse = Static<typeof UnfollowUserResponse>
 
-export const UpdateUserProfileBody = t.Object({
+export const UpdateProfileBody = t.Object({
   name: t.Optional(t.String({ description: 'The name of the user' })),
   profileImage: t.Optional(t.String({ description: 'The URL of the profile image' })),
   birthDate: t.Optional(t.String({ description: 'The birth date of the user' })),
@@ -106,9 +106,9 @@ export const UpdateUserProfileBody = t.Object({
     })
   ),
 })
-export const UpdateUserProfileResponse = t.Object({
+export const UpdateProfileResponse = t.Object({
   message: t.String({ description: 'Success message' }),
 })
 
-export type UpdateUserProfileBody = Static<typeof UpdateUserProfileBody>
-export type UpdateUserProfileResponse = Static<typeof UpdateUserProfileResponse>
+export type UpdateProfileBody = Static<typeof UpdateProfileBody>
+export type UpdateProfileResponse = Static<typeof UpdateProfileResponse>

@@ -1,19 +1,19 @@
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 
-import { CompleteOnboardingProfileBody, UpdateUserProfileBody } from './models'
-import UserRepository from './repository'
+import { CompleteOnboardingProfileBody, UpdateProfileBody } from './models'
+import ProfileRepository from './repository'
 
 import { InternalErrorCode } from '../../dtos/error'
 import { mapRawPrismaError } from '../../utils/prisma'
 import { AuthRepository } from '../auth/repository'
 
-const UserService = new Elysia({ name: 'UserService' })
-  .use([UserRepository, AuthRepository])
-  .derive(({ userRepository, authRepository }) => ({
-    userService: {
-      async getUserById(id: string) {
-        const user = await userRepository.getUserById(id)
+const ProfileService = new Elysia({ name: 'ProfileService' })
+  .use([ProfileRepository, AuthRepository])
+  .derive(({ profileRepository, authRepository }) => ({
+    profileService: {
+      async getProfileById(id: string) {
+        const user = await profileRepository.getProfileById(id)
 
         if (user.isErr()) {
           return mapRawPrismaError(user.error, {
@@ -29,7 +29,7 @@ const UserService = new Elysia({ name: 'UserService' })
       },
 
       async checkFollowableUser(userId: string) {
-        const result = await userRepository.checkFollowableUser(userId)
+        const result = await profileRepository.checkFollowableUser(userId)
 
         if (result.isErr()) {
           return mapRawPrismaError(result.error, {
@@ -51,7 +51,7 @@ const UserService = new Elysia({ name: 'UserService' })
       },
 
       async followUser(userId: string, followedUserId: string) {
-        const isFollowable = await userRepository.checkFollowableUser(followedUserId)
+        const isFollowable = await profileRepository.checkFollowableUser(followedUserId)
 
         if (isFollowable.isErr())
           return mapRawPrismaError(isFollowable.error, {
@@ -62,7 +62,7 @@ const UserService = new Elysia({ name: 'UserService' })
             INTERNAL_SERVER_ERROR: 'An unexpected error occurred',
           })
 
-        const result = await userRepository.followUser(userId, followedUserId)
+        const result = await profileRepository.followUser(userId, followedUserId)
 
         if (result.isErr())
           return mapRawPrismaError(result.error, {
@@ -81,7 +81,7 @@ const UserService = new Elysia({ name: 'UserService' })
       },
 
       async unfollowUser(userId: string, followedUserId: string) {
-        const isFollowable = await userRepository.checkFollowableUser(followedUserId)
+        const isFollowable = await profileRepository.checkFollowableUser(followedUserId)
 
         if (isFollowable.isErr())
           return mapRawPrismaError(isFollowable.error, {
@@ -92,7 +92,7 @@ const UserService = new Elysia({ name: 'UserService' })
             INTERNAL_SERVER_ERROR: 'An unexpected error occurred',
           })
 
-        const result = await userRepository.unfollowUser(userId, followedUserId)
+        const result = await profileRepository.unfollowUser(userId, followedUserId)
 
         if (result.isErr())
           return mapRawPrismaError(result.error, {
@@ -106,8 +106,8 @@ const UserService = new Elysia({ name: 'UserService' })
         return ok()
       },
 
-      async updateUserProfile(userId: string, userData: UpdateUserProfileBody) {
-        const result = await userRepository.updateUserProfile(userId, {
+      async updateProfile(userId: string, userData: UpdateProfileBody) {
+        const result = await profileRepository.updateUserProfile(userId, {
           name: userData.name,
           profileImage: userData.profileImage,
           address: userData.address
@@ -159,7 +159,7 @@ const UserService = new Elysia({ name: 'UserService' })
           })
         }
 
-        const result = await userRepository.completeOnboarding(userId, profileData)
+        const result = await profileRepository.completeOnboarding(userId, profileData)
 
         if (result.isErr())
           return mapRawPrismaError(result.error, {
@@ -180,4 +180,4 @@ const UserService = new Elysia({ name: 'UserService' })
   }))
   .as('scoped')
 
-export default UserService
+export default ProfileService
