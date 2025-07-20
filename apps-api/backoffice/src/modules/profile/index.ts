@@ -268,10 +268,3 @@ export const profileController = new Elysia({
       },
     }
   )
-  .group('/pages', (app) => {
-    return app
-      .get('/', async () => {})
-      .put('/', async () => {})
-      .delete('/:id', async () => {})
-      .post('/token', async () => {})
-  })
