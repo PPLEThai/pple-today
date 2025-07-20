@@ -1,31 +1,38 @@
+import Elysia from 'elysia'
+
 import { IntrospectAccessTokenResult } from '../../dtos/auth'
-import { prismaClient } from '../../libs/prisma'
+import prismaService from '../../libs/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
 
-export abstract class AuthRepository {
-  static async getUserById(id: string) {
-    const user = await fromPrismaPromise(
-      prismaClient.user.findUniqueOrThrow({
-        where: { id },
-      })
-    )
+export const AuthRepository = new Elysia({ name: 'AuthRepository' })
+  .use(prismaService)
+  .derive(({ prisma }) => ({
+    authRepository: {
+      async getUserById(id: string) {
+        const user = await fromPrismaPromise(
+          prisma.user.findUniqueOrThrow({
+            where: { id },
+          })
+        )
 
-    return user
-  }
+        return user
+      },
 
-  static async createUser(data: IntrospectAccessTokenResult) {
-    const { sub, name, phone_number } = data
+      async createUser(data: IntrospectAccessTokenResult) {
+        const { sub, name, phone_number } = data
 
-    const user = await fromPrismaPromise(
-      prismaClient.user.create({
-        data: {
-          id: sub,
-          name,
-          phoneNumber: phone_number,
-        },
-      })
-    )
+        const user = await fromPrismaPromise(
+          prisma.user.create({
+            data: {
+              id: sub,
+              name,
+              phoneNumber: phone_number,
+            },
+          })
+        )
 
-    return user
-  }
-}
+        return user
+      },
+    },
+  }))
+  .as('scoped')

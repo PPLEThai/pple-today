@@ -3,21 +3,21 @@ import Elysia from 'elysia'
 import { match } from 'ts-pattern'
 
 import { GetAuthMeResponse, RegisterUserResponse } from './models'
-import { AuthService } from './services'
+import AuthService from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
-import { authPlugin } from '../../plugins/auth'
+import { AuthPlugin } from '../../plugins/auth'
 import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 
 export const authController = new Elysia({
   adapter: node(),
   prefix: '/auth',
 })
-  .use(authPlugin)
+  .use([AuthPlugin, AuthService])
   .post(
     '/register',
-    async ({ oidcUser, status }) => {
-      const result = await AuthService.registerUser(oidcUser)
+    async ({ oidcUser, status, authService }) => {
+      const result = await authService.registerUser(oidcUser)
 
       if (result.isErr()) {
         return match(result.error)
@@ -47,8 +47,8 @@ export const authController = new Elysia({
   )
   .get(
     '/me',
-    async ({ status, oidcUser }) => {
-      const localInfo = await AuthService.getUserById(oidcUser.sub)
+    async ({ status, oidcUser, authService }) => {
+      const localInfo = await authService.getUserById(oidcUser.sub)
 
       if (localInfo.isErr()) {
         return match(localInfo.error)
