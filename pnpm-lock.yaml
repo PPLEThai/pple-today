@@ -65,9 +65,6 @@ importers:
       remeda:
         specifier: ^2.24.0
         version: 2.24.0
-      ts-pattern:
-        specifier: ^5.7.1
-        version: 5.7.1
     devDependencies:
       '@pple-today/project-config':
         specifier: workspace:^
@@ -7177,9 +7174,6 @@ packages:
 
   ts-interface-checker@0.1.13:
     resolution: {integrity: sha512-Y/arvbn+rrz3JCKl9C4kVNfTfSm2/mEp5FSz5EsZSANGPSlQrpRI5M4PKF+mJnE52jOO90PnPSc3Ur3bTQw0gA==}
-
-  ts-pattern@5.7.1:
-    resolution: {integrity: sha512-EGs8PguQqAAUIcQfK4E9xdXxB6s2GK4sJfT/vcc9V1ELIvC4LH/zXu2t/5fajtv6oiRCxdv7BgtVK3vWgROxag==}
 
   tsconfck@3.1.6:
     resolution: {integrity: sha512-ks6Vjr/jEw0P1gmOVwutM3B7fWxoWBL2KRDb1JfqGVawBmO5UsvmWOQFGHBPl5yxYz4eERr19E6L7NMv+Fej4w==}
@@ -15604,8 +15598,6 @@ snapshots:
       typescript: 5.8.3
 
   ts-interface-checker@0.1.13: {}
-
-  ts-pattern@5.7.1: {}
 
   tsconfck@3.1.6(typescript@5.8.3):
     optionalDependencies:

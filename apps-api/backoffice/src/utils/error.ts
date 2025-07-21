@@ -94,3 +94,9 @@ export const mapErrorCodeToResponse = <
   const code = InternalErrorCodeSchemas[error.code].status as TStatusCode
   return status(code, { error })
 }
+
+export function exhaustiveGuard(_value: never): never {
+  throw new Error(
+    `ERROR! Reached forbidden guard function with unexpected value: ${JSON.stringify(_value)}`
+  )
+}

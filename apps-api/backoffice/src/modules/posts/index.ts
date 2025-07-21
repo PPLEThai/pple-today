@@ -1,6 +1,5 @@
 import node from '@elysiajs/node'
 import Elysia from 'elysia'
-import { match } from 'ts-pattern'
 
 import {
   CreatePostCommentBody,
@@ -26,7 +25,7 @@ import PostService from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
 import { AuthPlugin } from '../../plugins/auth'
-import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
+import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
 
 export const postsController = new Elysia({
   prefix: '/posts',
@@ -36,16 +35,16 @@ export const postsController = new Elysia({
   .get(
     '/:id',
     async ({ params, status, oidcUser, postService }) => {
-      const result = await postService.getPostById(params.id, oidcUser.sub) // Replace 'user-id-placeholder' with actual user ID logic
+      const result = await postService.getPostById(params.id, oidcUser.sub)
       if (result.isErr()) {
-        return match(result.error)
-          .with({ code: InternalErrorCode.POST_NOT_FOUND }, (e) =>
-            mapErrorCodeToResponse(e, status)
-          )
-          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (e) =>
-            mapErrorCodeToResponse(e, status)
-          )
-          .exhaustive()
+        switch (result.error.code) {
+          case InternalErrorCode.POST_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
       }
 
       return status(200, result.value)
@@ -71,14 +70,14 @@ export const postsController = new Elysia({
         page: query.page,
       })
       if (result.isErr()) {
-        return match(result.error)
-          .with({ code: InternalErrorCode.POST_NOT_FOUND }, (e) =>
-            mapErrorCodeToResponse(e, status)
-          )
-          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (e) =>
-            mapErrorCodeToResponse(e, status)
-          )
-          .exhaustive()
+        switch (result.error.code) {
+          case InternalErrorCode.POST_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
       }
 
       return status(200, result.value as GetPostCommentResponse)
@@ -101,17 +100,16 @@ export const postsController = new Elysia({
     async ({ params, body, oidcUser, status, postService }) => {
       const result = await postService.createPostReaction(params.id, oidcUser.sub, body)
       if (result.isErr()) {
-        return match(result.error)
-          .with({ code: InternalErrorCode.POST_NOT_FOUND }, (e) =>
-            mapErrorCodeToResponse(e, status)
-          )
-          .with({ code: InternalErrorCode.POST_REACTION_ALREADY_EXISTS }, (e) =>
-            mapErrorCodeToResponse(e, status)
-          )
-          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (e) =>
-            mapErrorCodeToResponse(e, status)
-          )
-          .exhaustive()
+        switch (result.error.code) {
+          case InternalErrorCode.POST_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.POST_REACTION_ALREADY_EXISTS:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
       }
 
       return result.value
@@ -136,14 +134,14 @@ export const postsController = new Elysia({
       const result = await postService.deletePostReaction(params.id, oidcUser.sub)
 
       if (result.isErr()) {
-        return match(result.error)
-          .with({ code: InternalErrorCode.POST_REACTION_NOT_FOUND }, (e) =>
-            mapErrorCodeToResponse(e, status)
-          )
-          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (e) =>
-            mapErrorCodeToResponse(e, status)
-          )
-          .exhaustive()
+        switch (result.error.code) {
+          case InternalErrorCode.POST_REACTION_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
       }
 
       return status(200, result.value)
@@ -165,14 +163,14 @@ export const postsController = new Elysia({
     async ({ params, body, oidcUser, status, postService }) => {
       const result = await postService.createPostComment(params.id, oidcUser.sub, body.content)
       if (result.isErr()) {
-        return match(result.error)
-          .with({ code: InternalErrorCode.POST_NOT_FOUND }, (e) =>
-            mapErrorCodeToResponse(e, status)
-          )
-          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (e) =>
-            mapErrorCodeToResponse(e, status)
-          )
-          .exhaustive()
+        switch (result.error.code) {
+          case InternalErrorCode.POST_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
       }
 
       return result.value
@@ -201,14 +199,14 @@ export const postsController = new Elysia({
       )
 
       if (result.isErr()) {
-        return match(result.error)
-          .with({ code: InternalErrorCode.POST_COMMENT_NOT_FOUND }, (e) =>
-            mapErrorCodeToResponse(e, status)
-          )
-          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (e) =>
-            mapErrorCodeToResponse(e, status)
-          )
-          .exhaustive()
+        switch (result.error.code) {
+          case InternalErrorCode.POST_COMMENT_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
       }
 
       return status(200, result.value)
@@ -232,14 +230,14 @@ export const postsController = new Elysia({
       const result = await postService.deletePostComment(params.id, params.commentId, oidcUser.sub)
 
       if (result.isErr()) {
-        return match(result.error)
-          .with({ code: InternalErrorCode.POST_COMMENT_NOT_FOUND }, (e) =>
-            mapErrorCodeToResponse(e, status)
-          )
-          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (e) =>
-            mapErrorCodeToResponse(e, status)
-          )
-          .exhaustive()
+        switch (result.error.code) {
+          case InternalErrorCode.POST_COMMENT_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
       }
 
       return status(200, result.value)

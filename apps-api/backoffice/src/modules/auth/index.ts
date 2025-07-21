@@ -1,6 +1,5 @@
 import node from '@elysiajs/node'
 import Elysia from 'elysia'
-import { match } from 'ts-pattern'
 
 import { GetAuthMeResponse, RegisterUserResponse } from './models'
 import AuthService from './services'
@@ -20,14 +19,15 @@ export const authController = new Elysia({
       const result = await authService.registerUser(oidcUser)
 
       if (result.isErr()) {
-        return match(result.error)
-          .with({ code: InternalErrorCode.AUTH_USER_ALREADY_EXISTS }, (e) =>
-            mapErrorCodeToResponse(e, status)
-          )
-          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (e) =>
-            mapErrorCodeToResponse(e, status)
-          )
-          .exhaustive()
+        const error = result.error
+        switch (error.code) {
+          case InternalErrorCode.AUTH_USER_ALREADY_EXISTS:
+            return mapErrorCodeToResponse(error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(error, status)
+          default:
+            throw new Error('Unhandled error code')
+        }
       }
 
       return status(201, {
@@ -51,14 +51,15 @@ export const authController = new Elysia({
       const localInfo = await authService.getUserById(oidcUser.sub)
 
       if (localInfo.isErr()) {
-        return match(localInfo.error)
-          .with({ code: InternalErrorCode.AUTH_USER_NOT_FOUND }, (e) =>
-            mapErrorCodeToResponse(e, status)
-          )
-          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (e) =>
-            mapErrorCodeToResponse(e, status)
-          )
-          .exhaustive()
+        const error = localInfo.error
+        switch (error.code) {
+          case InternalErrorCode.AUTH_USER_NOT_FOUND:
+            return mapErrorCodeToResponse(error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(error, status)
+          default:
+            throw new Error('Unhandled error code')
+        }
       }
 
       return status(200, {

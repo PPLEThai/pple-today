@@ -1,5 +1,4 @@
 import { Err, err, fromPromise } from 'neverthrow'
-import { match, P } from 'ts-pattern'
 import { Simplify, ValueOf } from 'type-fest'
 
 import { ApiErrorResponse } from './error'
@@ -23,17 +22,23 @@ const prismaError = {
 // This file contains utility functions for handling Prisma errors in a consistent manner.
 export const resolvePrismaError = (error: unknown) => {
   if (error instanceof PrismaClientKnownRequestError) {
-    return match(error)
-      .with({ code: P.union('P2002', 'P2016', 'P2025', 'P2003') }, ({ code, message }) => ({
-        originalError: error,
-        code: prismaError[code],
-        message,
-      }))
-      .otherwise(() => ({
-        originalError: error,
-        code: prismaError.UNKNOWN_ERROR,
-        message: error.message,
-      }))
+    switch (error.code) {
+      case 'P2002':
+      case 'P2003':
+      case 'P2016':
+      case 'P2025':
+        return {
+          code: prismaError[error.code],
+          originalError: error,
+          message: error.message,
+        } as const
+      default:
+        return {
+          originalError: error,
+          code: prismaError.UNKNOWN_ERROR,
+          message: error.message,
+        }
+    }
   }
   return {
     code: prismaError.UNKNOWN_ERROR,
@@ -72,6 +77,6 @@ export const mapRawPrismaError = <
 
   return err({
     code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-    message: 'An unexpected error occurred',
+    message: mapping.INTERNAL_SERVER_ERROR,
   }) as any
 }
