@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 0.1.1
+
+### Patch Changes
+
+- [`6ba3c08`](https://github.com/PPLEThai/pple-today/commit/6ba3c089b1f73607fef2229c62754975ca4b4a50) Thanks [@Anon-136](https://github.com/Anon-136)! - fix: crash app by adding missing package and update icon
+
 ## 0.1.0
 
 ### Minor Changes
