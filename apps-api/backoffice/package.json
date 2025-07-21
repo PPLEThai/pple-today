@@ -9,6 +9,7 @@
     "build": "tsx build.ts",
     "codegen": "rimraf ./__generated__/prisma && prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma migrate reset",
     "test": "vitest",
     "test:cov": "vitest run --coverage",
