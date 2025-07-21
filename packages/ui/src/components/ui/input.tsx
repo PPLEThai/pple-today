@@ -5,12 +5,6 @@ import { Icon } from './icon'
 
 import { cn } from '../../lib/utils'
 
-/**
- * TODO: use react-native-keyboard-controller
- * to handle for keyboard avoiding view
- * https://github.com/kirillzyusko/react-native-keyboard-controller
- */
-
 function Input({
   className,
   placeholderClassName,
