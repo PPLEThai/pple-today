@@ -107,6 +107,22 @@ const ProfileService = new Elysia({ name: 'ProfileService', adapter: node() })
         return ok()
       },
 
+      async getFollowingUsers(userId: string) {
+        const result = await profileRepository.getFollowingUsers(userId)
+
+        if (result.isErr()) {
+          return mapRawPrismaError(result.error, {
+            RECORD_NOT_FOUND: {
+              code: InternalErrorCode.USER_NOT_FOUND,
+              message: 'User not found',
+            },
+            INTERNAL_SERVER_ERROR: 'An unexpected error occurred while fetching following users',
+          })
+        }
+
+        return ok(result.value.followingUsers.map((user) => user.followedUser))
+      },
+
       async updateProfile(userId: string, userData: UpdateProfileBody) {
         const result = await profileRepository.updateUserProfile(userId, {
           name: userData.name,

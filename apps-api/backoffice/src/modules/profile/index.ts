@@ -7,6 +7,7 @@ import {
   CompleteOnboardingProfileResponse,
   FollowUserParams,
   FollowUserResponse,
+  GetFollowingUserResponse,
   GetMyProfileResponse,
   GetProfileByIdParams,
   GetProfileByIdResponse,
@@ -183,6 +184,42 @@ export const profileController = new Elysia({
           InternalErrorCode.USER_NOT_FOUND,
           InternalErrorCode.USER_INVALID_INPUT,
           InternalErrorCode.USER_ALREADY_DONE_ONBOARDING,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .get(
+    '/follow',
+    async ({ oidcUser, status, profileService }) => {
+      const result = await profileService.getFollowingUsers(oidcUser.sub)
+
+      if (result.isErr()) {
+        return match(result.error)
+          .with({ code: InternalErrorCode.USER_NOT_FOUND }, (e) =>
+            mapErrorCodeToResponse(e, status)
+          )
+          .with({ code: InternalErrorCode.INTERNAL_SERVER_ERROR }, (e) =>
+            mapErrorCodeToResponse(e, status)
+          )
+          .exhaustive()
+      }
+
+      const response = result.value.map((user) => ({
+        id: user.id,
+        name: user.name,
+        profileImage: user.profileImage ?? undefined,
+      }))
+
+      return status(200, response)
+    },
+    {
+      getOIDCUser: true,
+      response: {
+        200: GetFollowingUserResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.USER_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

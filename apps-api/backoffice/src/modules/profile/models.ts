@@ -93,6 +93,14 @@ export const UnfollowUserResponse = t.Object({
 export type UnfollowUserParams = Static<typeof UnfollowUserParams>
 export type UnfollowUserResponse = Static<typeof UnfollowUserResponse>
 
+export const GetFollowingUserResponse = t.Array(
+  t.Object({
+    id: t.String({ description: 'The ID of the user' }),
+    name: t.String({ description: 'The name of the user' }),
+    profileImage: t.Optional(t.String({ description: 'The URL of the profile image' })),
+  })
+)
+
 export const UpdateProfileBody = t.Object({
   name: t.Optional(t.String({ description: 'The name of the user' })),
   profileImage: t.Optional(t.String({ description: 'The URL of the profile image' })),

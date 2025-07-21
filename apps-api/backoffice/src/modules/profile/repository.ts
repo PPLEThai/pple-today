@@ -95,6 +95,29 @@ const ProfileRepository = new Elysia({ name: 'ProfileRepository', adapter: node(
         )
       },
 
+      async getFollowingUsers(userId: string) {
+        return await fromPrismaPromise(
+          prisma.user.findUniqueOrThrow({
+            where: {
+              id: userId,
+            },
+            select: {
+              followingUsers: {
+                select: {
+                  followedUser: {
+                    select: {
+                      id: true,
+                      name: true,
+                      profileImage: true,
+                    },
+                  },
+                },
+              },
+            },
+          })
+        )
+      },
+
       async completeOnboarding(userId: string, profileData: CompleteOnboardingProfileBody) {
         const userData: Prisma.UserUpdateArgs['data'] = {
           onBoardingCompleted: true,
