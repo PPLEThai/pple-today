@@ -18,8 +18,8 @@ export default {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: './assets/images/transparent-icon.png',
-        backgroundColor: '#ffffff',
+        foregroundImage: './assets/images/adaptive-icon.png',
+        backgroundColor: '#FF6A13',
       },
       edgeToEdgeEnabled: true,
       package: 'th.or.peoplesparty.ppletoday',
@@ -35,7 +35,7 @@ export default {
       [
         'expo-splash-screen',
         {
-          image: './assets/images/favicon1024.png',
+          image: './assets/images/transparent-icon.png',
           imageWidth: 200,
           resizeMode: 'contain',
           backgroundColor: '#ffffff',
