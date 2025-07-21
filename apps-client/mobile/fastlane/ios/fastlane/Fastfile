@@ -39,6 +39,13 @@ platform :ios do
       profile_name: ENV['PROVISIONING_PROFILE_SPECIFIER'],
       path: './PPLEToday.xcodeproj'
     )
+    # https://medium.com/@iamCoder/how-to-solve-missing-compliance-status-in-testflight-and-invites-not-coming-to-testers-4cbbe3c4ed12
+    # https://github.com/fastlane/fastlane/issues/15591
+    set_info_plist_value( 
+      path: "PPLEToday/Info.plist",
+      key: "ITSAppUsesNonExemptEncryption",
+      value: false
+    )
     sync_code_signing(
       type: "appstore",
       readonly: true,
@@ -65,7 +72,6 @@ platform :ios do
       build_number: latest_build_number + 1
     )
     build_app(
-      scheme: "PPLEToday", 
       clean: true,
       export_method: "app-store",
       configuration: "Release",
@@ -84,9 +90,8 @@ platform :ios do
     # https://stackoverflow.com/questions/58262038/testers-could-not-download-app-from-firebase-app-distribution/58383782#58383782
     upload_to_testflight(
       changelog: "TestFlight build for PPLE Today",
-      # TODO: env variable for groups
-      groups: ["Dev Team", "QA Team"].join(","),
-      skip_waiting_for_build_processing: true
+      groups: ENV['DISTRIBUTE_GROUPS'] || "dev-team",
+      skip_waiting_for_build_processing: true,
     )
   end
 end

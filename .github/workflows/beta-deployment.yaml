@@ -4,16 +4,22 @@ run-name: Beta Deployment - ${{ inputs.environment }} by @${{ github.actor }}
 on:
   workflow_dispatch:
     inputs:
-      Android:
+      android:
         type: boolean
-      iOS:
+        description: 'Build Android app'
+      ios:
         type: boolean
+        description: 'Build iOS app'
+      groups:
+        type: string
+        description: 'Distribute to these groups'
+        default: 'dev-team,qa-team'
 
 jobs:
   build-android:
     name: Build Android
     runs-on: macos-latest
-    if: ${{ github.event.inputs.Android == 'true' }}
+    if: ${{ github.event.inputs.android == 'true' }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -58,6 +64,7 @@ jobs:
           echo "DEVELOPER_APP_IDENTIFIER=${{ secrets.DEVELOPER_APP_IDENTIFIER }}" >> .env
           echo "FIREBASE_SERVICE_ACCOUNT_JSON=${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}" >> .env
           echo "FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}" >> .env
+          echo "DISTRIBUTE_GROUPS=${{ github.event.inputs.groups }}" >> .env
           bash ./fastlane/setup.sh
           cd android && bundle install
         env:
@@ -73,7 +80,7 @@ jobs:
   build-ios:
     name: Build iOS
     runs-on: macos-latest
-    if: ${{ github.event.inputs.iOS == 'true' }}
+    if: ${{ github.event.inputs.ios == 'true' }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -129,6 +136,7 @@ jobs:
           echo "PROVISIONING_PROFILE_SPECIFIER=${{ secrets.PROVISIONING_PROFILE_SPECIFIER }}" >> .env
           echo "APP_STORE_CONNECT_TEAM_ID=${{ secrets.APP_STORE_CONNECT_TEAM_ID }}" >> .env
           echo "DEVELOPER_PORTAL_TEAM_ID=${{ secrets.DEVELOPER_PORTAL_TEAM_ID }}" >> .env
+          echo "DISTRIBUTE_GROUPS=${{ github.event.inputs.groups }}" >> .env
 
       - name: Install Fastlane
         working-directory: apps-client/mobile
