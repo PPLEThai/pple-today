@@ -1,0 +1,11 @@
+model Address {
+  province    String
+  district    String
+  subDistrict String
+  postalCode  String
+
+  users User[]
+
+  @@id([district, subDistrict])
+  @@index([province, district, subDistrict, postalCode])
+}

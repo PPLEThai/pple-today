@@ -1,33 +1,33 @@
 import node from '@elysiajs/node'
 import Elysia from 'elysia'
-import { match } from 'ts-pattern'
 
 import { GetAuthMeResponse, RegisterUserResponse } from './models'
-import { AuthService } from './services'
+import AuthService from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
-import { authPlugin } from '../../plugins/auth'
-import { createErrorSchema } from '../../utils/error'
+import { AuthPlugin } from '../../plugins/auth'
+import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 
 export const authController = new Elysia({
   adapter: node(),
   prefix: '/auth',
 })
-  .use(authPlugin)
+  .use([AuthPlugin, AuthService])
   .post(
     '/register',
-    async ({ oidcUser, status }) => {
-      const result = await AuthService.registerUser(oidcUser)
+    async ({ oidcUser, status, authService }) => {
+      const result = await authService.registerUser(oidcUser)
 
       if (result.isErr()) {
-        return match(result.error)
-          .with(
-            {
-              code: InternalErrorCode.AUTH_USER_ALREADY_EXISTS,
-            },
-            (err) => status(409, { error: err })
-          )
-          .otherwise((err) => status(500, { error: err }))
+        const error = result.error
+        switch (error.code) {
+          case InternalErrorCode.AUTH_USER_ALREADY_EXISTS:
+            return mapErrorCodeToResponse(error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(error, status)
+          default:
+            throw new Error('Unhandled error code')
+        }
       }
 
       return status(201, {
@@ -47,18 +47,19 @@ export const authController = new Elysia({
   )
   .get(
     '/me',
-    async ({ status, oidcUser }) => {
-      const localInfo = await AuthService.getUserById(oidcUser.sub)
+    async ({ status, oidcUser, authService }) => {
+      const localInfo = await authService.getUserById(oidcUser.sub)
 
       if (localInfo.isErr()) {
-        return match(localInfo.error)
-          .with(
-            {
-              code: InternalErrorCode.AUTH_USER_NOT_FOUND,
-            },
-            (err) => status(401, { error: err })
-          )
-          .otherwise((err) => status(500, { error: err }))
+        const error = localInfo.error
+        switch (error.code) {
+          case InternalErrorCode.AUTH_USER_NOT_FOUND:
+            return mapErrorCodeToResponse(error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(error, status)
+          default:
+            throw new Error('Unhandled error code')
+        }
       }
 
       return status(200, {

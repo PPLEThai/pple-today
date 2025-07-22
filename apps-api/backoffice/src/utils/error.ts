@@ -1,17 +1,20 @@
 import { TLiteral, TObject, TOptional, TString, TUnion, TUnknown } from '@sinclair/typebox'
-import { t } from 'elysia'
+import { Static, t } from 'elysia'
+import { ElysiaCustomStatusResponse } from 'elysia/error'
 import { Prettify2 } from 'elysia/types'
 import { groupBy, map, mapValues, pipe } from 'remeda'
 
 import { InternalErrorCode, InternalErrorCodeSchemas } from '../dtos/error'
 
-type ApiErrorSchema<TCode extends InternalErrorCode> = TCode extends InternalErrorCode
+export type ApiErrorSchema<TCode extends InternalErrorCode> = TCode extends InternalErrorCode
   ? TObject<{
       code: TLiteral<TCode>
       message: TOptional<TString>
       data: GetDataFromSchema<TCode>
     }>
   : never
+
+export type ApiErrorResponse<TCode extends InternalErrorCode> = Static<ApiErrorSchema<TCode>>
 
 type GroupErrorCodeToStatusCode<
   T extends InternalErrorCode[],
@@ -77,4 +80,23 @@ export const createErrorSchema = <T extends [InternalErrorCode, ...InternalError
       tApiErrorResponse(...map(errorSchemas, (errorSchema) => tApiError(errorSchema.code)))
     )
   ) as any
+}
+
+export const mapErrorCodeToResponse = <
+  TError extends ApiErrorResponse<InternalErrorCode>,
+  TCode extends TError['code'],
+  TStatusCode extends InternalErrorCodeSchemas[TCode]['status'],
+  TStatusReturn extends ElysiaCustomStatusResponse<any, any, any>,
+>(
+  error: TError,
+  status: (statusCode: TStatusCode, body: { error: TError }) => TStatusReturn
+) => {
+  const code = InternalErrorCodeSchemas[error.code].status as TStatusCode
+  return status(code, { error })
+}
+
+export function exhaustiveGuard(_value: never): never {
+  throw new Error(
+    `ERROR! Reached forbidden guard function with unexpected value: ${JSON.stringify(_value)}`
+  )
 }
