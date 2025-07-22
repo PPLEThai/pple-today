@@ -17,9 +17,9 @@ abstract class AboutUsService {
     return ok(
       aboutUsData.map((data) => ({
         id: data.id,
-        name: data.name,
+        title: data.title,
         url: data.url,
-        iconImage: data.iconImage,
+        iconImageUrl: data.iconImageUrl,
         backgroundColor: data.backgroundColor,
       })) satisfies GetAboutUsResponse
     )
@@ -32,7 +32,7 @@ abstract class AboutUsService {
     }
 
     return ok({
-      message: `About us "${data.name}" created.`,
+      message: `About us "${data.title}" created.`,
     })
   }
 

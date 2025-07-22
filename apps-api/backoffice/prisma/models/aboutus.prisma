@@ -1,8 +1,8 @@
 model AboutUs {
   id              String @id @default(cuid())
-  name            String
+  title           String
   url             String
-  iconImage       String
+  iconImageUrl    String
   backgroundColor String
 
   createdAt DateTime @default(now())
