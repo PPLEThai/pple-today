@@ -33,6 +33,13 @@ const envConfigSchema = t.Object({
       description: 'Development OIDC Client ID for testing purposes',
     })
   ),
+
+  FACEBOOK_API_URL: t.String({
+    default: 'https://graph.facebook.com/v23.0',
+    description: 'Base URL for Facebook Graph API',
+  }),
+  FACEBOOK_APP_ID: t.String({ description: 'Facebook App ID' }),
+  FACEBOOK_APP_SECRET: t.String({ description: 'Facebook App Secret' }),
 })
 
 const serverEnv = Value.Parse(envConfigSchema, process.env)
