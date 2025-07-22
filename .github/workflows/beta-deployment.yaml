@@ -34,7 +34,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 22.14.0
-          cache: pnpm
+          # cache: pnpm
 
       - name: Setup Java
         uses: actions/setup-java@v4
