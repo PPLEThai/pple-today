@@ -36,9 +36,19 @@ abstract class AboutUsService {
     })
   }
 
+  static async updateAboutUs(aboutUsId: AboutUs['id'], data: Omit<AboutUs, 'id'>) {
+    const result = await AboutUsRepository.updateAboutUs(aboutUsId, data)
+    if (result.isErr()) {
+      return result
+    }
+
+    return ok({
+      message: `About us ${aboutUsId} updated.`,
+    })
+  }
+
   static async deleteAboutUs(aboutUsId: AboutUs['id']) {
     const result = await AboutUsRepository.deleteAboutUs(aboutUsId)
-
     if (result.isErr()) {
       return result
     }

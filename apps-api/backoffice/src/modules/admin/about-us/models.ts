@@ -10,6 +10,11 @@ export const CreateAboutUsResponse = t.Object({
 })
 export type CreateAboutUsResponse = Static<typeof CreateAboutUsResponse>
 
+export const UpdateAboutUsResponse = t.Object({
+  message: t.String({ description: 'Success message' }),
+})
+export type UpdateAboutUsResponse = Static<typeof CreateAboutUsResponse>
+
 export const DeleteAboutUsResponse = t.Object({
   message: t.String({ description: 'Success message' }),
 })

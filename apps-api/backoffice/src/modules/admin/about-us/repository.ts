@@ -15,6 +15,14 @@ abstract class AboutUsRepository {
     return response
   }
 
+  static async updateAboutUs(postId: AboutUs['id'], data: Omit<AboutUs, 'id'>) {
+    const response = await fromPrismaPromise(
+      prismaClient.aboutUs.update({ where: { id: postId }, data })
+    )
+
+    return response
+  }
+
   static async deleteAboutUs(postId: AboutUs['id']) {
     const response = await fromPrismaPromise(prismaClient.aboutUs.delete({ where: { id: postId } }))
 
