@@ -1,0 +1,10 @@
+model AboutUs {
+  id              String @id @default(cuid())
+  name            String
+  url             String
+  iconImage       String
+  backgroundColor String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

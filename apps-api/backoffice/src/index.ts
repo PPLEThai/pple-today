@@ -5,6 +5,7 @@ import { match, P } from 'ts-pattern'
 
 import serverEnv from './config/env'
 import { InternalErrorCode } from './dtos/error'
+import { aboutUsController } from './modules/admin/about-us'
 import { authController } from './modules/auth'
 import { postsController } from './modules/posts'
 
@@ -57,6 +58,7 @@ const app = new Elysia({ adapter: node() })
   .use(swagger())
   .use(postsController)
   .use(authController)
+  .use(aboutUsController)
   .get(
     '/:id',
     ({ params, query, headers }) => {
