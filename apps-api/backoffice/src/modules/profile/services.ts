@@ -22,47 +22,13 @@ const ProfileService = new Elysia({ name: 'ProfileService', adapter: node() })
               code: InternalErrorCode.USER_NOT_FOUND,
               message: 'User not found',
             },
-            INTERNAL_SERVER_ERROR: 'An unexpected error occurred while fetching the user',
           })
         }
 
         return ok(user.value)
       },
 
-      async checkFollowableUser(userId: string) {
-        const result = await profileRepository.checkFollowableUser(userId)
-
-        if (result.isErr()) {
-          return mapRawPrismaError(result.error, {
-            RECORD_NOT_FOUND: {
-              code: InternalErrorCode.USER_NOT_FOUND,
-              message: 'User not found or not followable',
-            },
-            INTERNAL_SERVER_ERROR: 'An unexpected error occurred',
-          })
-        }
-
-        if (!result.value)
-          return err({
-            code: InternalErrorCode.USER_NOT_FOUND,
-            message: 'User not found or not followable',
-          })
-
-        return ok()
-      },
-
       async followUser(userId: string, followedUserId: string) {
-        const isFollowable = await profileRepository.checkFollowableUser(followedUserId)
-
-        if (isFollowable.isErr())
-          return mapRawPrismaError(isFollowable.error, {
-            RECORD_NOT_FOUND: {
-              code: InternalErrorCode.USER_NOT_FOUND,
-              message: 'User not able to follow',
-            },
-            INTERNAL_SERVER_ERROR: 'An unexpected error occurred',
-          })
-
         const result = await profileRepository.followUser(userId, followedUserId)
 
         if (result.isErr())
@@ -75,24 +41,12 @@ const ProfileService = new Elysia({ name: 'ProfileService', adapter: node() })
               code: InternalErrorCode.USER_ALREADY_FOLLOWS,
               message: 'User already follows this user',
             },
-            INTERNAL_SERVER_ERROR: 'An unexpected error occurred',
           })
 
         return ok()
       },
 
       async unfollowUser(userId: string, followedUserId: string) {
-        const isFollowable = await profileRepository.checkFollowableUser(followedUserId)
-
-        if (isFollowable.isErr())
-          return mapRawPrismaError(isFollowable.error, {
-            RECORD_NOT_FOUND: {
-              code: InternalErrorCode.USER_NOT_FOUND,
-              message: 'User not able to follow',
-            },
-            INTERNAL_SERVER_ERROR: 'An unexpected error occurred',
-          })
-
         const result = await profileRepository.unfollowUser(userId, followedUserId)
 
         if (result.isErr())
@@ -101,7 +55,6 @@ const ProfileService = new Elysia({ name: 'ProfileService', adapter: node() })
               code: InternalErrorCode.USER_NOT_FOLLOWS,
               message: 'User not found or not followed',
             },
-            INTERNAL_SERVER_ERROR: 'An unexpected error occurred',
           })
 
         return ok()
@@ -116,7 +69,6 @@ const ProfileService = new Elysia({ name: 'ProfileService', adapter: node() })
               code: InternalErrorCode.USER_NOT_FOUND,
               message: 'User not found',
             },
-            INTERNAL_SERVER_ERROR: 'An unexpected error occurred while fetching following users',
           })
         }
 
@@ -149,7 +101,6 @@ const ProfileService = new Elysia({ name: 'ProfileService', adapter: node() })
               code: InternalErrorCode.USER_NOT_FOUND,
               message: 'User not found',
             },
-            INTERNAL_SERVER_ERROR: 'An unexpected error occurred while updating the user profile',
           })
         }
 
@@ -165,7 +116,6 @@ const ProfileService = new Elysia({ name: 'ProfileService', adapter: node() })
               code: InternalErrorCode.USER_NOT_FOUND,
               message: 'User not found',
             },
-            INTERNAL_SERVER_ERROR: 'An unexpected error occurred while fetching the user',
           })
         }
 
@@ -188,7 +138,6 @@ const ProfileService = new Elysia({ name: 'ProfileService', adapter: node() })
               code: InternalErrorCode.USER_NOT_FOUND,
               message: 'User not found',
             },
-            INTERNAL_SERVER_ERROR: 'An unexpected error occurred',
           })
 
         return ok(result.value)

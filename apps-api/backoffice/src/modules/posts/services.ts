@@ -19,7 +19,6 @@ const PostService = new Elysia({ name: 'PostService', adapter: node() })
             RECORD_NOT_FOUND: {
               code: InternalErrorCode.POST_NOT_FOUND,
             },
-            INTERNAL_SERVER_ERROR: 'An unexpected error occurred while fetching the post',
           })
 
         const postDetails = result.value
@@ -62,7 +61,6 @@ const PostService = new Elysia({ name: 'PostService', adapter: node() })
             RECORD_NOT_FOUND: {
               code: InternalErrorCode.POST_NOT_FOUND,
             },
-            INTERNAL_SERVER_ERROR: 'An unexpected error occurred while fetching the post comments',
           })
 
         return ok(postComments.value)
@@ -80,7 +78,6 @@ const PostService = new Elysia({ name: 'PostService', adapter: node() })
             RECORD_NOT_FOUND: {
               code: InternalErrorCode.POST_NOT_FOUND,
             },
-            INTERNAL_SERVER_ERROR: 'An unexpected error occurred while creating the post reaction',
           })
         }
 
@@ -97,7 +94,6 @@ const PostService = new Elysia({ name: 'PostService', adapter: node() })
             RECORD_NOT_FOUND: {
               code: InternalErrorCode.POST_REACTION_NOT_FOUND,
             },
-            INTERNAL_SERVER_ERROR: 'An unexpected error occurred while deleting the post reaction',
           })
         }
 
@@ -114,7 +110,6 @@ const PostService = new Elysia({ name: 'PostService', adapter: node() })
               code: InternalErrorCode.POST_NOT_FOUND,
               message: 'Post not found',
             },
-            INTERNAL_SERVER_ERROR: 'An unexpected error occurred while creating the create comment',
           })
         }
 
@@ -134,7 +129,6 @@ const PostService = new Elysia({ name: 'PostService', adapter: node() })
               code: InternalErrorCode.POST_COMMENT_NOT_FOUND,
               message: 'Post comment not found',
             },
-            INTERNAL_SERVER_ERROR: 'An unexpected error occurred while updating the post comment',
           })
         }
 
@@ -152,7 +146,6 @@ const PostService = new Elysia({ name: 'PostService', adapter: node() })
               code: InternalErrorCode.POST_COMMENT_NOT_FOUND,
               message: 'Post comment not found',
             },
-            INTERNAL_SERVER_ERROR: 'An unexpected error occurred while deleting the post comment',
           })
         }
 

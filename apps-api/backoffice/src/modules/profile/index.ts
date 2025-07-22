@@ -273,7 +273,6 @@ export const profileController = new Elysia({
 
       if (result.isErr()) {
         switch (result.error.code) {
-          case InternalErrorCode.USER_NOT_FOUND:
           case InternalErrorCode.USER_NOT_FOLLOWS:
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
@@ -294,7 +293,6 @@ export const profileController = new Elysia({
         200: FollowUserResponse,
         ...createErrorSchema(
           InternalErrorCode.USER_NOT_FOLLOWS,
-          InternalErrorCode.USER_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

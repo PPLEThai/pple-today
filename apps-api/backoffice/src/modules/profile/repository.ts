@@ -3,7 +3,7 @@ import Elysia from 'elysia'
 
 import { CompleteOnboardingProfileBody } from './models'
 
-import { Prisma, UserRole } from '../../../__generated__/prisma'
+import { Prisma } from '../../../__generated__/prisma'
 import PrismaService from '../../plugins/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
 
@@ -17,19 +17,6 @@ const ProfileRepository = new Elysia({ name: 'ProfileRepository', adapter: node(
             where: { id },
             include: {
               address: true,
-            },
-          })
-        )
-      },
-
-      async checkFollowableUser(userId: string) {
-        return fromPrismaPromise(
-          prisma.user.findUniqueOrThrow({
-            where: {
-              id: userId,
-              role: {
-                in: [UserRole.OFFICIAL, UserRole.REPRESENTATIVE],
-              },
             },
           })
         )

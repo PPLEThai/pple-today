@@ -20,7 +20,6 @@ const AuthService = new Elysia({ name: 'AuthService', adapter: node() })
               code: InternalErrorCode.AUTH_USER_NOT_FOUND,
               message: 'User not found',
             },
-            INTERNAL_SERVER_ERROR: 'An unexpected error occurred while fetching the user',
           })
         }
 
@@ -35,7 +34,6 @@ const AuthService = new Elysia({ name: 'AuthService', adapter: node() })
               code: InternalErrorCode.AUTH_USER_ALREADY_EXISTS,
               message: 'User already exists',
             },
-            INTERNAL_SERVER_ERROR: 'An unexpected error occurred while registering the user',
           })
         }
 
