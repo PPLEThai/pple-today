@@ -1,9 +1,10 @@
 import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
-import { GetAboutUsResponse } from './models'
+import { CreateAboutUsResponse, GetAboutUsResponse } from './models'
 import AboutUsService from './services'
 
+import { AboutUs } from '../../../dtos/aboutus'
 import { InternalErrorCode } from '../../../dtos/error'
 import { authPlugin } from '../../../plugins/auth'
 import { createErrorSchema } from '../../../utils/error'
@@ -17,14 +18,13 @@ export const aboutUsController = new Elysia({
     '/',
     async ({ status }) => {
       const result = await AboutUsService.getAboutUs()
-      if (result.isErr()) {
+      if (result.isErr())
         return status(500, {
           error: {
             code: InternalErrorCode.INTERNAL_SERVER_ERROR,
             message: 'An unexpected error occurred',
           },
         })
-      }
 
       return status(200, result.value)
     },
@@ -32,13 +32,32 @@ export const aboutUsController = new Elysia({
       getOIDCUser: true,
       response: {
         200: GetAboutUsResponse,
-        ...createErrorSchema(
-          InternalErrorCode.POST_NOT_FOUND,
-          InternalErrorCode.INTERNAL_SERVER_ERROR
-        ),
+        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
       },
     }
   )
-  .post('/', async () => {})
+  .post(
+    '/',
+    async ({ body, status }) => {
+      const result = await AboutUsService.createAboutUs(body)
+      if (result.isErr())
+        return status(500, {
+          error: {
+            code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+            message: 'An unexpected error occurred',
+          },
+        })
+
+      return result.value
+    },
+    {
+      getOIDCUser: true,
+      body: AboutUs,
+      response: {
+        200: CreateAboutUsResponse,
+        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+    }
+  )
   .put('/:id', async () => {})
   .delete('/:id', async () => {})
