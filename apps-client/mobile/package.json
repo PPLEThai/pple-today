@@ -14,10 +14,12 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prebuild": "expo prebuild",
+    "prebuild:android": "expo prebuild --clean --platform android",
+    "prebuild:ios": "expo prebuild --clean --platform ios",
     "build:android": "eas build -p android --profile preview --local",
     "fastlane:setup": "bash ./fastlane/setup.sh",
-    "fastlane:android": "pnpm fastlane:setup && cd android && fastlane beta",
-    "fastlane:ios": "pnpm fastlane:setup && cd ios && fastlane beta"
+    "fastlane:android": "pnpm prebuild:android && pnpm fastlane:setup && cd android && fastlane beta",
+    "fastlane:ios": "pnpm prebuild:ios && pnpm fastlane:setup && cd ios && fastlane beta"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.1",
