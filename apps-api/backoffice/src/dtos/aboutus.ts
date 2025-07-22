@@ -1,6 +1,7 @@
 import { Static, t } from 'elysia'
 
 export const AboutUs = t.Object({
+  id: t.String({ description: 'About us ID' }),
   name: t.String({ description: 'Card title text' }),
   url: t.String({ description: 'URL to go to', format: 'uri' }),
   iconImage: t.String({ description: 'Icon image URL', format: 'uri' }),

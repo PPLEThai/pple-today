@@ -1,7 +1,8 @@
 import node from '@elysiajs/node'
-import Elysia from 'elysia'
+import Elysia, { t } from 'elysia'
+import { match } from 'ts-pattern'
 
-import { CreateAboutUsResponse, GetAboutUsResponse } from './models'
+import { CreateAboutUsResponse, DeleteAboutUsResponse, GetAboutUsResponse } from './models'
 import AboutUsService from './services'
 
 import { AboutUs } from '../../../dtos/aboutus'
@@ -52,7 +53,7 @@ export const aboutUsController = new Elysia({
     },
     {
       getOIDCUser: true,
-      body: AboutUs,
+      body: t.Omit(AboutUs, ['id']),
       response: {
         200: CreateAboutUsResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
@@ -60,4 +61,39 @@ export const aboutUsController = new Elysia({
     }
   )
   .put('/:id', async () => {})
-  .delete('/:id', async () => {})
+  .delete(
+    '/:id',
+    async ({ params, status }) => {
+      const result = await AboutUsService.deleteAboutUs(params.id)
+
+      if (result.isErr()) {
+        return match(result.error)
+          .with({ code: 'RECORD_NOT_FOUND' }, () =>
+            status(404, {
+              error: { code: InternalErrorCode.ABOUTUS_NOT_FOUND, message: 'About us not found' },
+            })
+          )
+          .otherwise(() => {
+            return status(500, {
+              error: {
+                code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+                message: 'An unexpected error occurred',
+              },
+            })
+          })
+      }
+
+      return status(200, result.value)
+    },
+    {
+      getOIDCUser: true,
+      params: t.Pick(AboutUs, ['id']),
+      response: {
+        200: DeleteAboutUsResponse,
+        ...createErrorSchema(
+          InternalErrorCode.ABOUTUS_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )

@@ -25,7 +25,7 @@ abstract class AboutUsService {
     )
   }
 
-  static async createAboutUs(data: AboutUs) {
+  static async createAboutUs(data: Omit<AboutUs, 'id'>) {
     const result = await AboutUsRepository.createAboutUs(data)
     if (result.isErr()) {
       return result
@@ -33,6 +33,18 @@ abstract class AboutUsService {
 
     return ok({
       message: `About us "${data.name}" created.`,
+    })
+  }
+
+  static async deleteAboutUs(aboutUsId: AboutUs['id']) {
+    const result = await AboutUsRepository.deleteAboutUs(aboutUsId)
+
+    if (result.isErr()) {
+      return result
+    }
+
+    return ok({
+      message: `About us ${aboutUsId} deleted.`,
     })
   }
 }
