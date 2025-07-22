@@ -1,16 +1,16 @@
-model FollowedUser {
-    authorId       String
-    followedUserId String
-    createdAt      DateTime @default(now())
-    updatedAt      DateTime @updatedAt
+model UserFollowsUser {
+    followedId String
+    followerId String
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @updatedAt
 
-    author       User @relation(name: "FollowedUserAuthor", fields: [authorId], references: [id])
-    followedUser User @relation(name: "FollowedUserFollowed", fields: [followedUserId], references: [id])
+    followed User @relation(name: "Follows", fields: [followedId], references: [id])
+    follower User @relation(name: "FollowedBy", fields: [followerId], references: [id])
 
-    @@id([authorId, followedUserId])
+    @@id([followedId, followerId])
 }
 
-model FollowedTopic {
+model UserFollowsTopic {
     userId    String
     topicId   String
     createdAt DateTime @default(now())

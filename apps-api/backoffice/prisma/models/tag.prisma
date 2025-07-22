@@ -20,7 +20,7 @@ model Topic {
     updatedAt   DateTime @updatedAt
 
     hashTagInTopics HashTagInTopic[]
-    followedTopics  FollowedTopic[]
+    followedTopics  UserFollowsTopic[]
 
     @@index([name])
 }

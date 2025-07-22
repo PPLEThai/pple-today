@@ -120,7 +120,7 @@ const ProfileService = new Elysia({ name: 'ProfileService', adapter: node() })
           })
         }
 
-        return ok(result.value.followingUsers.map((user) => user.followedUser))
+        return ok(result.value.followings.map((user) => user.followed))
       },
 
       async updateProfile(userId: string, userData: UpdateProfileBody) {

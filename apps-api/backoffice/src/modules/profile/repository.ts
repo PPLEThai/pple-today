@@ -38,10 +38,10 @@ const ProfileRepository = new Elysia({ name: 'ProfileRepository', adapter: node(
       async followUser(userId: string, followedUserId: string) {
         return await fromPrismaPromise(
           prisma.$transaction([
-            prisma.followedUser.create({
+            prisma.userFollowsUser.create({
               data: {
-                authorId: userId,
-                followedUserId,
+                followedId: followedUserId,
+                followerId: userId,
               },
             }),
             prisma.user.update({
@@ -67,11 +67,11 @@ const ProfileRepository = new Elysia({ name: 'ProfileRepository', adapter: node(
       async unfollowUser(userId: string, followedUserId: string) {
         return await fromPrismaPromise(
           prisma.$transaction([
-            prisma.followedUser.delete({
+            prisma.userFollowsUser.delete({
               where: {
-                authorId_followedUserId: {
-                  authorId: userId,
-                  followedUserId,
+                followedId_followerId: {
+                  followedId: followedUserId,
+                  followerId: userId,
                 },
               },
             }),
@@ -102,9 +102,9 @@ const ProfileRepository = new Elysia({ name: 'ProfileRepository', adapter: node(
               id: userId,
             },
             select: {
-              followingUsers: {
+              followings: {
                 select: {
-                  followedUser: {
+                  followed: {
                     select: {
                       id: true,
                       name: true,
@@ -129,7 +129,7 @@ const ProfileRepository = new Elysia({ name: 'ProfileRepository', adapter: node(
         }
 
         if (profileData.interestTopics) {
-          userData.followingTopics = {
+          userData.followedTopics = {
             createMany: {
               data:
                 profileData.interestTopics.map((topic) => ({

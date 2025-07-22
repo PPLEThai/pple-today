@@ -30,9 +30,9 @@ model User {
 
     pollAnswers PollAnswer[]
 
-    followingUsers  FollowedUser[]  @relation("FollowedUserAuthor")
-    followedUsers   FollowedUser[]  @relation("FollowedUserFollowed")
-    followingTopics FollowedTopic[]
+    followings     UserFollowsUser[]  @relation("Follows")
+    followers      UserFollowsUser[]  @relation("FollowedBy")
+    followedTopics UserFollowsTopic[]
 
     posts         Post[]
     postComments  PostComment[]
