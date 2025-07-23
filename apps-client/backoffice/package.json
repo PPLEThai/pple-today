@@ -1,5 +1,7 @@
 {
   "name": "@client/backoffice",
+  "version": "0.0.0",
+  "description": "",
   "type": "module",
   "scripts": {
     "build": "react-router build",
