@@ -2,17 +2,17 @@ import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import { GetAuthMeResponse, RegisterUserResponse } from './models'
-import AuthService from './services'
+import { AuthServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
-import { AuthPlugin } from '../../plugins/auth'
+import { AuthGuardPlugin } from '../../plugins/auth-guard'
 import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 
 export const authController = new Elysia({
   adapter: node(),
   prefix: '/auth',
 })
-  .use([AuthPlugin, AuthService])
+  .use([AuthGuardPlugin, AuthServicePlugin])
   .post(
     '/register',
     async ({ oidcUser, status, authService }) => {

@@ -4,9 +4,9 @@ import Elysia, { t } from 'elysia'
 import { InternalErrorCode, InternalErrorCodeSchemas } from '../dtos/error'
 import { introspectAccessToken } from '../utils/jwt'
 
-export const AuthPlugin = new Elysia({
+export const AuthGuardPlugin = new Elysia({
   adapter: node(),
-  name: 'auth-plugin',
+  name: 'auth-guard-plugin',
 })
   .guard({
     headers: t.Object({

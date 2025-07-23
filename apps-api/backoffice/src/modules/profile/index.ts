@@ -13,17 +13,17 @@ import {
   UpdateProfileBody,
   UpdateProfileResponse,
 } from './models'
-import ProfileService from './services'
+import { ProfileServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
-import { AuthPlugin } from '../../plugins/auth'
+import { AuthGuardPlugin } from '../../plugins/auth-guard'
 import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
 
 export const profileController = new Elysia({
   prefix: '/profile',
   adapter: node(),
 })
-  .use([AuthPlugin, ProfileService])
+  .use([AuthGuardPlugin, ProfileServicePlugin])
   .get(
     '/me',
     async ({ oidcUser, status, profileService }) => {
