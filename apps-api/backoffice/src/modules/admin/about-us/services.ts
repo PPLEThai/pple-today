@@ -1,62 +1,65 @@
+import node from '@elysiajs/node'
+import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import { GetAboutUsResponse } from './models'
 import AboutUsRepository from './repository'
 
 import { AboutUs } from '../../../dtos/about-us'
+import { InternalErrorCode } from '../../../dtos/error'
+import { mapRawPrismaError } from '../../../utils/prisma'
 
-abstract class AboutUsService {
-  static async getAboutUs() {
-    const result = await AboutUsRepository.getAboutUs()
-    if (result.isErr()) {
-      return result
-    }
+const AboutUsService = new Elysia({ name: 'AboutUsService', adapter: node() })
+  .use(AboutUsRepository)
+  .decorate(({ aboutUsRepository }) => ({
+    aboutUsService: {
+      async getAboutUs() {
+        const result = await aboutUsRepository.getAboutUs()
+        if (result.isErr()) return mapRawPrismaError(result.error, {})
 
-    const aboutUsData = result.value
+        return ok(
+          result.value.map((data) => ({
+            id: data.id,
+            title: data.title,
+            url: data.url,
+            iconImageUrl: data.iconImageUrl,
+            backgroundColor: data.backgroundColor,
+          })) satisfies GetAboutUsResponse
+        )
+      },
 
-    return ok(
-      aboutUsData.map((data) => ({
-        id: data.id,
-        title: data.title,
-        url: data.url,
-        iconImageUrl: data.iconImageUrl,
-        backgroundColor: data.backgroundColor,
-      })) satisfies GetAboutUsResponse
-    )
-  }
+      async createAboutUs(data: Omit<AboutUs, 'id'>) {
+        const result = await aboutUsRepository.createAboutUs(data)
+        if (result.isErr()) return mapRawPrismaError(result.error, {})
 
-  static async createAboutUs(data: Omit<AboutUs, 'id'>) {
-    const result = await AboutUsRepository.createAboutUs(data)
-    if (result.isErr()) {
-      return result
-    }
+        return ok({ message: `About us "${data.title}" created.` })
+      },
 
-    return ok({
-      message: `About us "${data.title}" created.`,
-    })
-  }
+      async updateAboutUs(aboutUsId: AboutUs['id'], data: Omit<AboutUs, 'id'>) {
+        const result = await aboutUsRepository.updateAboutUs(aboutUsId, data)
+        if (result.isErr())
+          return mapRawPrismaError(result.error, {
+            RECORD_NOT_FOUND: {
+              code: InternalErrorCode.ABOUT_US_NOT_FOUND,
+            },
+          })
 
-  static async updateAboutUs(aboutUsId: AboutUs['id'], data: Omit<AboutUs, 'id'>) {
-    const result = await AboutUsRepository.updateAboutUs(aboutUsId, data)
-    if (result.isErr()) {
-      return result
-    }
+        return ok({ message: `About us ${aboutUsId} updated.` })
+      },
 
-    return ok({
-      message: `About us ${aboutUsId} updated.`,
-    })
-  }
+      async deleteAboutUs(aboutUsId: AboutUs['id']) {
+        const result = await aboutUsRepository.deleteAboutUs(aboutUsId)
+        if (result.isErr())
+          return mapRawPrismaError(result.error, {
+            RECORD_NOT_FOUND: {
+              code: InternalErrorCode.ABOUT_US_NOT_FOUND,
+            },
+          })
 
-  static async deleteAboutUs(aboutUsId: AboutUs['id']) {
-    const result = await AboutUsRepository.deleteAboutUs(aboutUsId)
-    if (result.isErr()) {
-      return result
-    }
-
-    return ok({
-      message: `About us ${aboutUsId} deleted.`,
-    })
-  }
-}
+        return ok({ message: `About us ${aboutUsId} deleted.` })
+      },
+    },
+  }))
+  .as('scoped')
 
 export default AboutUsService
