@@ -90,7 +90,10 @@ platform :ios do
     # https://stackoverflow.com/questions/58262038/testers-could-not-download-app-from-firebase-app-distribution/58383782#58383782
     upload_to_testflight(
       changelog: "TestFlight build for PPLE Today",
-      groups: ENV['DISTRIBUTE_GROUPS'] || "dev-team",
+      # Note: https://github.com/fastlane/fastlane/pull/19735#issuecomment-1084221116
+      # You have to disabled the checkbox "Enable automatic distribution" checkbox
+      # in App Store Connect when creating the internal group
+      groups: ENV['DISTRIBUTE_GROUPS'] || "dev-team", 
       skip_waiting_for_build_processing: true,
     )
   end

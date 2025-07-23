@@ -4,12 +4,11 @@ import Elysia, { t } from 'elysia'
 import { InternalErrorCode, InternalErrorCodeSchemas } from '../dtos/error'
 import { introspectAccessToken } from '../utils/jwt'
 
-export const authPlugin = new Elysia({
+export const AuthPlugin = new Elysia({
   adapter: node(),
   name: 'auth-plugin',
 })
   .guard({
-    as: 'scoped',
     headers: t.Object({
       authorization: t.String({
         description: 'Bearer token for authentication',
@@ -38,3 +37,4 @@ export const authPlugin = new Elysia({
       },
     },
   })
+  .as('scoped')

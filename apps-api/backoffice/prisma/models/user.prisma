@@ -2,6 +2,7 @@ enum UserRole {
     USER
     REPRESENTATIVE
     STAFF
+    OFFICIAL
 }
 
 model User {
@@ -16,14 +17,29 @@ model User {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    pollAnswers             PollAnswer[]
-    followingUsers          FollowedUser[]           @relation("FollowedUserAuthor")
-    followedUsers           FollowedUser[]           @relation("FollowedUserFollowed")
-    posts                   Post[]
-    postComments            PostComment[]
-    postReactions           PostReaction[]
-    eventAttendants         EventAttendant[]
+    onBoardingCompleted Boolean @default(false)
+
+    numberOfPosts           Int @default(0)
+    numberOfFollowers       Int @default(0)
+    numberOfFollowing       Int @default(0)
+    numberOfFollowingTopics Int @default(0)
+
+    district    String?
+    subDistrict String?
+    address     Address? @relation(fields: [district, subDistrict], references: [district, subDistrict])
+
+    pollAnswers PollAnswer[]
+
+    followings     UserFollowsUser[]  @relation("Follows")
+    followers      UserFollowsUser[]  @relation("FollowedBy")
+    followedTopics UserFollowsTopic[]
+
+    posts         Post[]
+    postComments  PostComment[]
+    postReactions PostReaction[]
+
+    eventAttendants EventAttendant[]
+
     electionEligibleVoters  ElectionEligibleVoter[]
     electionEligibleBallots ElectionEligibleBallot[]
-    followingTopics         FollowedTopic[]
 }

@@ -58,11 +58,33 @@ const ABOUT_US_ERROR_SCHEMA = {
   },
 } satisfies InternalErrorSchemas
 
+const USER_ERROR_SCHEMA = {
+  USER_FOLLOWING_TOPIC_NOT_FOUND: {
+    status: 422,
+  },
+  USER_ALREADY_DONE_ONBOARDING: {
+    status: 409,
+  },
+  USER_INVALID_INPUT: {
+    status: 400,
+  },
+  USER_NOT_FOUND: {
+    status: 404,
+  },
+  USER_ALREADY_FOLLOWS: {
+    status: 409,
+  },
+  USER_NOT_FOLLOWS: {
+    status: 404,
+  },
+} satisfies InternalErrorSchemas
+
 export const InternalErrorCodeSchemas = {
   ...AUTH_ERROR_SCHEMA,
   ...COMMON_ERROR_SCHEMA,
   ...POST_ERROR_SCHEMA,
   ...ABOUT_US_ERROR_SCHEMA,
+  ...USER_ERROR_SCHEMA,
 } as const
 export type InternalErrorCodeSchemas = typeof InternalErrorCodeSchemas
 

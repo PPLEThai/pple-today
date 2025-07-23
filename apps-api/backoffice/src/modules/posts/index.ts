@@ -1,6 +1,5 @@
 import node from '@elysiajs/node'
 import Elysia from 'elysia'
-import { match } from 'ts-pattern'
 
 import {
   CreatePostCommentBody,
@@ -25,40 +24,27 @@ import {
 import PostService from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
-import { authPlugin } from '../../plugins/auth'
-import { createErrorSchema } from '../../utils/error'
+import { AuthPlugin } from '../../plugins/auth'
+import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
 
 export const postsController = new Elysia({
   prefix: '/posts',
   adapter: node(),
 })
-  .use(authPlugin)
+  .use([AuthPlugin, PostService])
   .get(
     '/:id',
-    async ({ params, status, oidcUser }) => {
-      const result = await PostService.getPostById(params.id, oidcUser.sub) // Replace 'user-id-placeholder' with actual user ID logic
+    async ({ params, status, oidcUser, postService }) => {
+      const result = await postService.getPostById(params.id, oidcUser.sub)
       if (result.isErr()) {
-        return match(result.error)
-          .with(
-            {
-              code: 'RECORD_NOT_FOUND',
-            },
-            () =>
-              status(404, {
-                error: {
-                  code: InternalErrorCode.POST_NOT_FOUND,
-                  message: 'Post not found',
-                },
-              })
-          )
-          .otherwise(() =>
-            status(500, {
-              error: {
-                code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-                message: 'An unexpected error occurred',
-              },
-            })
-          )
+        switch (result.error.code) {
+          case InternalErrorCode.POST_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
       }
 
       return status(200, result.value)
@@ -77,38 +63,21 @@ export const postsController = new Elysia({
   )
   .get(
     '/:id/comments',
-    async ({ params, query, status, oidcUser }) => {
-      const result = await PostService.getPostComments(params.id, {
+    async ({ params, query, status, oidcUser, postService }) => {
+      const result = await postService.getPostComments(params.id, {
         userId: oidcUser.sub,
         limit: query.limit,
         page: query.page,
       })
       if (result.isErr()) {
-        return match(result.error)
-          .with(
-            {
-              code: 'RECORD_NOT_FOUND',
-            },
-            () =>
-              status(404, {
-                error: {
-                  code: InternalErrorCode.POST_NOT_FOUND,
-                  message: 'Post not found',
-                  data: {
-                    helloWorld: 'Post not found',
-                  },
-                },
-              })
-          )
-          .otherwise(() => {
-            // Handle other errors
-            return status(500, {
-              error: {
-                code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-                message: 'An unexpected error occurred',
-              },
-            })
-          })
+        switch (result.error.code) {
+          case InternalErrorCode.POST_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
       }
 
       return status(200, result.value as GetPostCommentResponse)
@@ -128,31 +97,19 @@ export const postsController = new Elysia({
   )
   .post(
     '/:id/reaction',
-    async ({ params, body, oidcUser, status }) => {
-      const result = await PostService.createPostReaction(params.id, oidcUser.sub, body)
+    async ({ params, body, oidcUser, status, postService }) => {
+      const result = await postService.createPostReaction(params.id, oidcUser.sub, body)
       if (result.isErr()) {
-        return match(result.error)
-          .with(
-            {
-              code: 'UNIQUE_CONSTRAINT_FAILED',
-            },
-            () =>
-              status(409, {
-                error: {
-                  code: InternalErrorCode.POST_REACTION_ALREADY_EXISTS,
-                  message: 'Reaction already exists',
-                },
-              })
-          )
-          .otherwise(() => {
-            // Handle other errors
-            return status(500, {
-              error: {
-                code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-                message: 'An unexpected error occurred',
-              },
-            })
-          })
+        switch (result.error.code) {
+          case InternalErrorCode.POST_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.POST_REACTION_ALREADY_EXISTS:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
       }
 
       return result.value
@@ -164,6 +121,7 @@ export const postsController = new Elysia({
       response: {
         201: CreatePostReactionResponse,
         ...createErrorSchema(
+          InternalErrorCode.POST_NOT_FOUND,
           InternalErrorCode.POST_REACTION_ALREADY_EXISTS,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
@@ -172,31 +130,18 @@ export const postsController = new Elysia({
   )
   .delete(
     '/:id/reaction',
-    async ({ params, status, oidcUser }) => {
-      const result = await PostService.deletePostReaction(params.id, oidcUser.sub)
+    async ({ params, status, oidcUser, postService }) => {
+      const result = await postService.deletePostReaction(params.id, oidcUser.sub)
 
       if (result.isErr()) {
-        return match(result.error)
-          .with(
-            {
-              code: 'RECORD_NOT_FOUND',
-            },
-            () =>
-              status(404, {
-                error: {
-                  code: InternalErrorCode.POST_REACTION_NOT_FOUND,
-                  message: 'Reaction not found',
-                },
-              })
-          )
-          .otherwise(() => {
-            return status(500, {
-              error: {
-                code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-                message: 'An unexpected error occurred',
-              },
-            })
-          })
+        switch (result.error.code) {
+          case InternalErrorCode.POST_REACTION_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
       }
 
       return status(200, result.value)
@@ -215,30 +160,17 @@ export const postsController = new Elysia({
   )
   .post(
     '/:id/comment',
-    async ({ params, body, oidcUser, status }) => {
-      const result = await PostService.createPostComment(params.id, oidcUser.sub, body.content)
+    async ({ params, body, oidcUser, status, postService }) => {
+      const result = await postService.createPostComment(params.id, oidcUser.sub, body.content)
       if (result.isErr()) {
-        return match(result.error)
-          .with(
-            {
-              code: 'RECORD_NOT_FOUND',
-            },
-            () =>
-              status(404, {
-                error: {
-                  code: InternalErrorCode.POST_NOT_FOUND,
-                  message: 'Post not found',
-                },
-              })
-          )
-          .otherwise(() => {
-            return status(500, {
-              error: {
-                code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-                message: 'An unexpected error occurred',
-              },
-            })
-          })
+        switch (result.error.code) {
+          case InternalErrorCode.POST_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
       }
 
       return result.value
@@ -258,8 +190,8 @@ export const postsController = new Elysia({
   )
   .put(
     '/:id/comment/:commentId',
-    async ({ params, body, oidcUser, status }) => {
-      const result = await PostService.updatePostComment(
+    async ({ params, body, oidcUser, status, postService }) => {
+      const result = await postService.updatePostComment(
         params.id,
         params.commentId,
         oidcUser.sub,
@@ -267,27 +199,14 @@ export const postsController = new Elysia({
       )
 
       if (result.isErr()) {
-        return match(result.error)
-          .with(
-            {
-              code: 'RECORD_NOT_FOUND',
-            },
-            () =>
-              status(404, {
-                error: {
-                  code: InternalErrorCode.POST_COMMENT_NOT_FOUND,
-                  message: 'Post comment not found',
-                },
-              })
-          )
-          .otherwise(() => {
-            return status(500, {
-              error: {
-                code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-                message: 'An unexpected error occurred',
-              },
-            })
-          })
+        switch (result.error.code) {
+          case InternalErrorCode.POST_COMMENT_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
       }
 
       return status(200, result.value)
@@ -307,31 +226,18 @@ export const postsController = new Elysia({
   )
   .delete(
     '/:id/comment/:commentId',
-    async ({ params, oidcUser, status }) => {
-      const result = await PostService.deletePostComment(params.id, params.commentId, oidcUser.sub)
+    async ({ params, oidcUser, status, postService }) => {
+      const result = await postService.deletePostComment(params.id, params.commentId, oidcUser.sub)
 
       if (result.isErr()) {
-        return match(result.error)
-          .with(
-            {
-              code: 'RECORD_NOT_FOUND',
-            },
-            () =>
-              status(404, {
-                error: {
-                  code: InternalErrorCode.POST_COMMENT_NOT_FOUND,
-                  message: 'Post comment not found',
-                },
-              })
-          )
-          .otherwise(() => {
-            return status(500, {
-              error: {
-                code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-                message: 'An unexpected error occurred',
-              },
-            })
-          })
+        switch (result.error.code) {
+          case InternalErrorCode.POST_COMMENT_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
       }
 
       return status(200, result.value)
