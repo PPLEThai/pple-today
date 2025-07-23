@@ -65,6 +65,9 @@ export function AuthPlayground() {
       setSessionMutation.mutate(null)
     },
   })
+
+  console.log(sessionQuery.data)
+
   return (
     <View className="flex flex-col gap-2">
       <H2 className="font-inter-bold">Auth Playground </H2>

@@ -5,6 +5,7 @@ import Elysia, { t } from 'elysia'
 
 import serverEnv from './config/env'
 import { InternalErrorCode } from './dtos/error'
+import { aboutUsController } from './modules/admin/about-us'
 import { authController } from './modules/auth'
 import { postsController } from './modules/posts'
 import { profileController } from './modules/profile'
@@ -56,6 +57,7 @@ const app = new Elysia({ adapter: node() })
   .use(swagger())
   .use(postsController)
   .use(authController)
+  .use(aboutUsController)
   .use(profileController)
   .get(
     '/:id',
