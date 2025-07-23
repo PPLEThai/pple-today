@@ -1,6 +1,6 @@
 import { Static, t } from 'elysia'
 
-import { AboutUs } from '../../../dtos/aboutus'
+import { AboutUs } from '../../../dtos/about-us'
 
 export const GetAboutUsResponse = t.Array(AboutUs)
 export type GetAboutUsResponse = Static<typeof GetAboutUsResponse>

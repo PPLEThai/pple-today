@@ -3,7 +3,7 @@ import { ok } from 'neverthrow'
 import { GetAboutUsResponse } from './models'
 import AboutUsRepository from './repository'
 
-import { AboutUs } from '../../../dtos/aboutus'
+import { AboutUs } from '../../../dtos/about-us'
 
 abstract class AboutUsService {
   static async getAboutUs() {

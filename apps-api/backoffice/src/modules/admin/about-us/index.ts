@@ -10,7 +10,7 @@ import {
 } from './models'
 import AboutUsService from './services'
 
-import { AboutUs } from '../../../dtos/aboutus'
+import { AboutUs } from '../../../dtos/about-us'
 import { InternalErrorCode } from '../../../dtos/error'
 import { authPlugin } from '../../../plugins/auth'
 import { createErrorSchema } from '../../../utils/error'
@@ -74,7 +74,7 @@ export const aboutUsController = new Elysia({
         return match(result.error)
           .with({ code: 'RECORD_NOT_FOUND' }, () =>
             status(404, {
-              error: { code: InternalErrorCode.ABOUTUS_NOT_FOUND, message: 'About us not found' },
+              error: { code: InternalErrorCode.ABOUT_US_NOT_FOUND, message: 'About us not found' },
             })
           )
           .otherwise(() => {
@@ -96,7 +96,7 @@ export const aboutUsController = new Elysia({
       response: {
         200: UpdateAboutUsResponse,
         ...createErrorSchema(
-          InternalErrorCode.ABOUTUS_NOT_FOUND,
+          InternalErrorCode.ABOUT_US_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -111,7 +111,7 @@ export const aboutUsController = new Elysia({
         return match(result.error)
           .with({ code: 'RECORD_NOT_FOUND' }, () =>
             status(404, {
-              error: { code: InternalErrorCode.ABOUTUS_NOT_FOUND, message: 'About us not found' },
+              error: { code: InternalErrorCode.ABOUT_US_NOT_FOUND, message: 'About us not found' },
             })
           )
           .otherwise(() => {
@@ -132,7 +132,7 @@ export const aboutUsController = new Elysia({
       response: {
         200: DeleteAboutUsResponse,
         ...createErrorSchema(
-          InternalErrorCode.ABOUTUS_NOT_FOUND,
+          InternalErrorCode.ABOUT_US_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
