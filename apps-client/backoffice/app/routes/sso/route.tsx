@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router'
 
 import { User } from 'oidc-client-ts'
 
@@ -6,10 +7,16 @@ import { userManager } from '~/config/oidc'
 
 export default function LoginWithSSO() {
   const [user, setUser] = useState<User | null>(null)
+  const [queryParams] = useSearchParams()
 
   useEffect(() => {
     const fetchUser = async () => {
-      const user = await userManager.getUser()
+      let user: User | null = null
+      if (queryParams.get('code')) {
+        user = await userManager.signinRedirectCallback()
+      } else {
+        user = await userManager.getUser()
+      }
       if (user) {
         console.log('User logged in:', user)
         setUser(user)

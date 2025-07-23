@@ -85,7 +85,11 @@ export default function FacebookLinkPage() {
           handleFetch()
         }}
       >
-        <input onChange={(e) => setFetchParams(e.target.value)} value={fetchParams}></input>
+        <input
+          className="border border-gray-300 p-2 rounded"
+          onChange={(e) => setFetchParams(e.target.value)}
+          value={fetchParams}
+        ></input>
         <button type="submit" className="bg-primary text-white px-4 py-2 rounded ml-2">
           Fetch
         </button>
