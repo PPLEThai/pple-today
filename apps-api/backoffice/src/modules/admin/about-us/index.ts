@@ -7,18 +7,18 @@ import {
   GetAboutUsResponse,
   UpdateAboutUsResponse,
 } from './models'
-import AboutUsService from './services'
+import { AboutUsServicePlugin } from './services'
 
 import { AboutUs } from '../../../dtos/about-us'
 import { InternalErrorCode } from '../../../dtos/error'
-import { AuthPlugin } from '../../../plugins/auth'
+import { AuthGuardPlugin } from '../../../plugins/auth-guard'
 import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../../utils/error'
 
-export const aboutUsController = new Elysia({
-  prefix: '/admin/about-us',
+export const AdminAboutUsController = new Elysia({
+  prefix: '/about-us',
   adapter: node(),
 })
-  .use([AuthPlugin, AboutUsService])
+  .use([AuthGuardPlugin, AboutUsServicePlugin])
   .get(
     '/',
     async ({ status, aboutUsService }) => {

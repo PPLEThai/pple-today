@@ -27,7 +27,7 @@ import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
 import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
 
-export const postsController = new Elysia({
+export const PostsController = new Elysia({
   prefix: '/posts',
   adapter: node(),
 })

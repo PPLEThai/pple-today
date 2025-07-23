@@ -19,7 +19,7 @@ import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
 import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
 
-export const profileController = new Elysia({
+export const ProfileController = new Elysia({
   prefix: '/profile',
   adapter: node(),
 })

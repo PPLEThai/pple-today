@@ -8,7 +8,7 @@ import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
 import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 
-export const authController = new Elysia({
+export const AuthController = new Elysia({
   adapter: node(),
   prefix: '/auth',
 })
