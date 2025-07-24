@@ -1,6 +1,6 @@
 import { Static, t } from 'elysia'
 
-export const IntrospectAccessTokenResult = t.Union([
+export const IntrospectAccessTokenBody = t.Union([
   t.Object({
     active: t.Literal(true, { description: 'Indicates if the token is active' }),
     scope: t.String({ description: 'Scopes associated with the token' }),
@@ -30,4 +30,7 @@ export const IntrospectAccessTokenResult = t.Union([
   }),
 ])
 
-export type IntrospectAccessTokenResult = Static<typeof IntrospectAccessTokenResult>
+export type IntrospectAccessTokenBody = Exclude<
+  Static<typeof IntrospectAccessTokenBody>,
+  { active: false }
+>

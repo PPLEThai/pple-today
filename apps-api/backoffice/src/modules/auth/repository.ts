@@ -1,7 +1,7 @@
 import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
-import { IntrospectAccessTokenResult } from '../../dtos/auth'
+import { IntrospectAccessTokenBody } from '../../dtos/auth'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
 
@@ -16,7 +16,7 @@ export class AuthRepository {
     )
   }
 
-  async createUser(data: IntrospectAccessTokenResult) {
+  async createUser(data: IntrospectAccessTokenBody) {
     const { sub, name, phone_number } = data
 
     return await fromPrismaPromise(

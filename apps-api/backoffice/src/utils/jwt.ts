@@ -2,7 +2,7 @@ import { Check } from '@sinclair/typebox/value'
 import jwt from 'jsonwebtoken'
 
 import serverEnv from '../config/env'
-import { IntrospectAccessTokenResult } from '../dtos/auth'
+import { IntrospectAccessTokenBody } from '../dtos/auth'
 import { InternalErrorCode } from '../dtos/error'
 
 let jwtToken: string | null = null
@@ -69,7 +69,7 @@ export const introspectAccessToken = async (token: string) => {
 
   const body = await response.json()
 
-  if (Check(IntrospectAccessTokenResult, body)) {
+  if (Check(IntrospectAccessTokenBody, body)) {
     if (!body.active) {
       return {
         error: {
