@@ -34,8 +34,9 @@ export const PostsController = new Elysia({
   .use([AuthGuardPlugin, PostServicePlugin])
   .get(
     '/:id',
-    async ({ params, status, postService }) => {
-      const result = await postService.getPostById(params.id)
+    async ({ params, status, user, postService }) => {
+      const result = await postService.getPostById(params.id, user?.sub)
+
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.POST_NOT_FOUND:
@@ -50,6 +51,7 @@ export const PostsController = new Elysia({
       return status(200, result.value)
     },
     {
+      fetchUser: true,
       params: GetPostByIdParams,
       response: {
         200: GetPostByIdResponse,
@@ -62,9 +64,9 @@ export const PostsController = new Elysia({
   )
   .get(
     '/:id/comments',
-    async ({ params, query, status, oidcUser, postService }) => {
+    async ({ params, query, status, user, postService }) => {
       const result = await postService.getPostComments(params.id, {
-        userId: oidcUser.sub,
+        userId: user.sub,
         limit: query.limit,
         page: query.page,
       })
@@ -82,7 +84,7 @@ export const PostsController = new Elysia({
       return status(200, result.value as GetPostCommentResponse)
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       params: GetPostCommentParams,
       query: GetPostCommentQuery,
       response: {
@@ -96,8 +98,8 @@ export const PostsController = new Elysia({
   )
   .post(
     '/:id/reaction',
-    async ({ params, body, oidcUser, status, postService }) => {
-      const result = await postService.createPostReaction(params.id, oidcUser.sub, body)
+    async ({ params, body, user, status, postService }) => {
+      const result = await postService.createPostReaction(params.id, user.sub, body)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.POST_NOT_FOUND:
@@ -114,7 +116,7 @@ export const PostsController = new Elysia({
       return result.value
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       params: CreatePostReactionParams,
       body: CreatePostReactionBody,
       response: {
@@ -129,8 +131,8 @@ export const PostsController = new Elysia({
   )
   .delete(
     '/:id/reaction',
-    async ({ params, status, oidcUser, postService }) => {
-      const result = await postService.deletePostReaction(params.id, oidcUser.sub)
+    async ({ params, status, user, postService }) => {
+      const result = await postService.deletePostReaction(params.id, user.sub)
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -146,7 +148,7 @@ export const PostsController = new Elysia({
       return status(200, result.value)
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       params: DeletePostReactionParams,
       response: {
         200: DeletePostReactionResponse,
@@ -159,8 +161,8 @@ export const PostsController = new Elysia({
   )
   .post(
     '/:id/comment',
-    async ({ params, body, oidcUser, status, postService }) => {
-      const result = await postService.createPostComment(params.id, oidcUser.sub, body.content)
+    async ({ params, body, user, status, postService }) => {
+      const result = await postService.createPostComment(params.id, user.sub, body.content)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.POST_NOT_FOUND:
@@ -175,7 +177,7 @@ export const PostsController = new Elysia({
       return result.value
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       params: CreatePostCommentParams,
       body: CreatePostCommentBody,
       response: {
@@ -189,11 +191,11 @@ export const PostsController = new Elysia({
   )
   .put(
     '/:id/comment/:commentId',
-    async ({ params, body, oidcUser, status, postService }) => {
+    async ({ params, body, user, status, postService }) => {
       const result = await postService.updatePostComment(
         params.id,
         params.commentId,
-        oidcUser.sub,
+        user.sub,
         body.content
       )
 
@@ -211,7 +213,7 @@ export const PostsController = new Elysia({
       return status(200, result.value)
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       params: UpdatePostCommentParams,
       body: UpdatePostCommentBody,
       response: {
@@ -225,8 +227,8 @@ export const PostsController = new Elysia({
   )
   .delete(
     '/:id/comment/:commentId',
-    async ({ params, oidcUser, status, postService }) => {
-      const result = await postService.deletePostComment(params.id, params.commentId, oidcUser.sub)
+    async ({ params, user, status, postService }) => {
+      const result = await postService.deletePostComment(params.id, params.commentId, user.sub)
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -242,7 +244,7 @@ export const PostsController = new Elysia({
       return status(200, result.value)
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       params: DeletePostCommentParams,
       response: {
         200: DeletePostCommentResponse,

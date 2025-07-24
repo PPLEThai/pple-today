@@ -15,8 +15,8 @@ export const AuthController = new Elysia({
   .use([AuthGuardPlugin, AuthServicePlugin])
   .post(
     '/register',
-    async ({ oidcUser, status, authService }) => {
-      const result = await authService.registerUser(oidcUser)
+    async ({ user, status, authService }) => {
+      const result = await authService.registerUser(user)
 
       if (result.isErr()) {
         const error = result.error
@@ -35,7 +35,7 @@ export const AuthController = new Elysia({
       })
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       response: {
         201: RegisterUserResponse,
         ...createErrorSchema(
@@ -47,8 +47,8 @@ export const AuthController = new Elysia({
   )
   .get(
     '/me',
-    async ({ status, oidcUser, authService }) => {
-      const localInfo = await authService.getUserById(oidcUser.sub)
+    async ({ status, user, authService }) => {
+      const localInfo = await authService.getUserById(user.sub)
 
       if (localInfo.isErr()) {
         const error = localInfo.error
@@ -63,12 +63,12 @@ export const AuthController = new Elysia({
       }
 
       return status(200, {
-        id: oidcUser.sub,
-        name: oidcUser.name,
+        id: user.sub,
+        name: user.name,
       })
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       response: {
         200: GetAuthMeResponse,
         ...createErrorSchema(

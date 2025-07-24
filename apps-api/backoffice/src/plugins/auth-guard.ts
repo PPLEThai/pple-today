@@ -1,5 +1,6 @@
 import node from '@elysiajs/node'
 import Elysia, { t } from 'elysia'
+import { ok } from 'neverthrow'
 
 import { InternalErrorCode, InternalErrorCodeSchemas } from '../dtos/error'
 import { introspectAccessToken } from '../utils/jwt'
@@ -15,26 +16,47 @@ export const AuthGuardPlugin = new Elysia({
       }),
     }),
   })
-  .macro({
-    getOIDCUser: {
-      async resolve({ status, headers }) {
-        if (!headers['authorization'] || !headers['authorization'].startsWith('Bearer ')) {
-          return status(401, {
-            error: {
-              code: InternalErrorCode.UNAUTHORIZED,
-              message: 'Authorization header is missing or invalid',
-            },
-          })
-        }
-        const bearerToken = headers['authorization'].replace('Bearer ', '').trim()
-        const user = await introspectAccessToken(bearerToken)
+  .decorate({
+    async getCurrentUser(headers: Record<string, string | undefined>) {
+      const token = headers['authorization']?.replace('Bearer ', '').trim()
 
-        if ('error' in user) {
+      if (!token) return ok(null)
+
+      return await introspectAccessToken(token)
+    },
+  })
+  .macro({
+    fetchUser: {
+      async resolve({ headers, status, getCurrentUser }) {
+        const user = await getCurrentUser(headers)
+
+        if (user.isErr()) {
+          if (user.error.code === InternalErrorCode.UNAUTHORIZED) {
+            return { user: null }
+          }
+
           return status(InternalErrorCodeSchemas[user.error.code].status, user.error)
         }
 
-        return { oidcUser: user }
+        return { user: user.value }
+      },
+    },
+    requiredUser: {
+      async resolve({ status, headers, getCurrentUser }) {
+        const user = await getCurrentUser(headers)
+
+        if (user.isErr()) {
+          return status(InternalErrorCodeSchemas[user.error.code].status, user.error)
+        }
+
+        if (!user.value) {
+          return status(401, {
+            code: InternalErrorCode.UNAUTHORIZED,
+            message: 'User not authenticated',
+          })
+        }
+
+        return { user: user.value }
       },
     },
   })
-  .as('scoped')

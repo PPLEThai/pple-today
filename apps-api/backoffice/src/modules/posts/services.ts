@@ -12,14 +12,29 @@ import { mapRawPrismaError } from '../../utils/prisma'
 export class PostService {
   constructor(private postRepository: PostRepository) {}
 
-  async getPostById(postId: string) {
-    const result = await this.postRepository.getPostById({ postId, userId: null })
+  async getPostById(postId: string, userId?: string) {
+    const result = await this.postRepository.getPostById({ postId })
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.POST_NOT_FOUND,
         },
       })
+
+    let userReaction: PostReactionType | undefined
+
+    if (userId) {
+      const userReactionResult = await this.postRepository.getUserPostReaction({
+        postId,
+        userId,
+      })
+
+      if (userReactionResult.isErr()) {
+        return mapRawPrismaError(userReactionResult.error)
+      }
+
+      userReaction = userReactionResult.value?.type
+    }
 
     const postDetails = result.value
 
@@ -43,6 +58,7 @@ export class PostService {
         type: reaction.type,
         count: reaction.count,
       })),
+      userReaction,
     } satisfies GetPostByIdResponse)
   }
 

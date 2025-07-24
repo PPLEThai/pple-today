@@ -13,7 +13,14 @@ export class PostRepository {
     private feedRepository: FeedRepository
   ) {}
 
-  async getPostById({ postId }: { postId: string; userId: string | null }) {
+  async getUserPostReaction({ postId, userId }: { postId: string; userId: string }) {
+    return await this.feedRepository.getFeedItemReactionByUserId({
+      feedItemId: postId,
+      userId,
+    })
+  }
+
+  async getPostById({ postId }: { postId: string }) {
     return await fromPrismaPromise(
       this.prismaService.post.findUniqueOrThrow({
         where: { feedItemId: postId },
