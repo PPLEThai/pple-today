@@ -1,8 +1,3 @@
-enum PostReactionType {
-    UP_VOTE
-    DOWN_VOTE
-}
-
 model Post {
     feedItemId String  @id @default(cuid())
     title      String

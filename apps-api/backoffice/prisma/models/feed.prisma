@@ -4,12 +4,19 @@ enum FeedItemType {
   ANNOUNCEMENT
 }
 
+enum FeedItemReactionType {
+  UP_VOTE
+  DOWN_VOTE
+}
+
 model FeedItem {
   id   String       @id @default(cuid())
   type FeedItemType
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  numberOfComments Int @default(0)
 
   authorId String
   author   User   @relation(fields: [authorId], references: [id])
@@ -24,27 +31,51 @@ model FeedItem {
   attachments FeedItemFile[]
 
   // Hashtag is used in poll and post but Topic is used only for announcement
-  hashTags FeedItemHashTag[]
-  topics   FeedItemTopic[]
+  hashTags       FeedItemHashTag[]
+  topics         FeedItemTopic[]
+  reactionCounts FeedItemReactionCount[]
 }
 
 model FeedItemReaction {
-  id         String   @id @default(cuid())
   userId     String
   feedItemId String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+
+  type FeedItemReactionType
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user     User     @relation(fields: [userId], references: [id])
   feedItem FeedItem @relation(fields: [feedItemId], references: [id])
+
+  @@id([userId, feedItemId])
+}
+
+model FeedItemReactionCount {
+  feedItemId String
+  type       FeedItemReactionType
+
+  count Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  feedItem FeedItem @relation(fields: [feedItemId], references: [id])
+
+  @@id([feedItemId, type])
 }
 
 model FeedItemComment {
-  id         String   @id @default(cuid())
+  id         String @id @default(cuid())
   userId     String
   feedItemId String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+
+  content String
+
+  isPrivate Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   user     User     @relation(fields: [userId], references: [id])
   feedItem FeedItem @relation(fields: [feedItemId], references: [id])
