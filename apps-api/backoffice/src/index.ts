@@ -11,7 +11,7 @@ import { PostsController } from './modules/posts'
 
 import packageJson from '../package.json'
 
-const app = new Elysia({ adapter: node() })
+let app = new Elysia({ adapter: node() })
   .onError(({ status, code, error }) => {
     if ('response' in error) return status(error.code, error.response)
     if (code === 'INTERNAL_SERVER_ERROR')
@@ -55,7 +55,12 @@ const app = new Elysia({ adapter: node() })
     })
   })
   .use(cors())
-  .use(
+  .use(PostsController)
+  .use(AuthController)
+  .use(AdminController)
+
+if (serverEnv.ENABLE_SWAGGER) {
+  app = app.use(
     swagger({
       documentation: {
         info: {
@@ -94,11 +99,10 @@ const app = new Elysia({ adapter: node() })
       },
     })
   )
-  .use(PostsController)
-  .use(AuthController)
-  .use(AdminController)
-  .listen(serverEnv.PORT, () => {
-    console.log(`Server is running on http://localhost:${serverEnv.PORT}`)
-  })
+}
+
+app.listen(serverEnv.PORT, () => {
+  console.log(`Server is running on http://localhost:${serverEnv.PORT}`)
+})
 
 export type ApiSchema = typeof app

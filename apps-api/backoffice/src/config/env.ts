@@ -15,6 +15,14 @@ const envConfigSchema = t.Object({
     description: 'Private JWT key for OIDC',
   }),
 
+  ENABLE_SWAGGER: t
+    .Transform(
+      t.Union([t.Literal('true'), t.Literal('false')], {
+        default: 'false',
+      })
+    )
+    .Decode((value) => value === 'true')
+    .Encode((value) => (value ? 'true' : 'false')),
   DEVELOPMENT_OIDC_URL: t.Optional(
     t.String({
       description: 'Development OIDC URL for testing purposes',
