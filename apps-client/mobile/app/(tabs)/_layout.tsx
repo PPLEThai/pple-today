@@ -36,10 +36,10 @@ export default function BottomTabsLayout() {
           },
           tabBarHideOnKeyboard: true,
         }}
-        initialRouteName="(top-tabs)"
+        initialRouteName="(index)"
       >
         <Tabs.Screen
-          name="(top-tabs)"
+          name="(index)"
           options={{
             title: 'หน้าแรก',
             tabBarIcon: (props) => <TabBarIcon {...props} icon={HouseIcon} />,
@@ -81,6 +81,13 @@ export default function BottomTabsLayout() {
             tabBarIcon: (props) => <TabBarIcon {...props} icon={CircleUserRoundIcon} />,
             tabBarLabel: TabBarLabel,
             tabBarButton: TabBarButton,
+          }}
+        />
+        <Tabs.Screen
+          name="(top-tabs)"
+          options={{
+            title: 'Playground',
+            href: null,
           }}
         />
       </Tabs>

@@ -87,6 +87,18 @@ export const useUserQuery = createQuery({
   initialData: null,
 })
 
+export const useUser = () => {
+  const sessionQuery = useSessionQuery()
+  const discoveryQuery = useDiscoveryQuery()
+  return useUserQuery({
+    variables: {
+      session: sessionQuery.data!,
+      discovery: discoveryQuery.data!,
+    },
+    enabled: !!discoveryQuery.data && !!sessionQuery.data,
+  })
+}
+
 export const codeExchange = async ({
   code,
   discovery,

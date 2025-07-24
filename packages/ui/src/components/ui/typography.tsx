@@ -17,7 +17,7 @@ function H1({ className, asChild = false, ...props }: TypographyProps) {
       role="heading"
       aria-level="1"
       className={cn(
-        'web:scroll-m-20 text-4xl text-foreground tracking-tight lg:text-5xl web:select-text font-anakotmai-bold',
+        'web:scroll-m-20 text-4xl text-foreground lg:text-5xl web:select-text font-anakotmai-bold',
         className
       )}
       {...props}
@@ -32,7 +32,7 @@ function H2({ className, asChild = false, ...props }: TypographyProps) {
       role="heading"
       aria-level="2"
       className={cn(
-        'web:scroll-m-20 border-b border-border pb-2 text-3xl text-foreground tracking-tight first:mt-0 web:select-text font-anakotmai-bold',
+        'web:scroll-m-20 text-3xl text-foreground web:select-text font-anakotmai-bold',
         className
       )}
       {...props}
@@ -47,7 +47,7 @@ function H3({ className, asChild = false, ...props }: TypographyProps) {
       role="heading"
       aria-level="3"
       className={cn(
-        'web:scroll-m-20 text-2xl text-foreground tracking-tight web:select-text font-anakotmai-bold',
+        'web:scroll-m-20 text-2xl text-foreground web:select-text font-anakotmai-bold',
         className
       )}
       {...props}
