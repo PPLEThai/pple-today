@@ -14,6 +14,17 @@ const envConfigSchema = t.Object({
   OIDC_PRIVATE_JWT_KEY: t.String({
     description: 'Private JWT key for OIDC',
   }),
+
+  DEVELOPMENT_OIDC_URL: t.Optional(
+    t.String({
+      description: 'Development OIDC URL for testing purposes',
+    })
+  ),
+  DEVELOPMENT_OIDC_CLIENT_ID: t.Optional(
+    t.String({
+      description: 'Development OIDC Client ID for testing purposes',
+    })
+  ),
 })
 
 const serverEnv = Value.Parse(envConfigSchema, process.env)

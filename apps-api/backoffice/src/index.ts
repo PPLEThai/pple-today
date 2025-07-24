@@ -70,9 +70,27 @@ const app = new Elysia({ adapter: node() })
               bearerFormat: 'JWT',
               description: 'Bearer Token',
             },
+            _developmentLogin: {
+              type: 'oauth2',
+              flows: {
+                authorizationCode: {
+                  authorizationUrl: `${serverEnv.DEVELOPMENT_OIDC_URL}/oauth/v2/authorize`,
+                  tokenUrl: `${serverEnv.DEVELOPMENT_OIDC_URL}/oauth/v2/token`,
+                  scopes: {
+                    openid: 'OpenID scope',
+                    profile: 'Profile scope',
+                    phone: 'Phone scope',
+                  },
+                  'x-scalar-client-id': serverEnv.DEVELOPMENT_OIDC_CLIENT_ID,
+                  'x-usePkce': 'SHA-256',
+                  selectedScopes: ['openid', 'profile', 'phone'],
+                } as any,
+              },
+              description: 'Development login for testing purposes',
+            },
           },
         },
-        security: [{ accessToken: [] }],
+        security: [{ _developmentLogin: [] }],
       },
     })
   )
