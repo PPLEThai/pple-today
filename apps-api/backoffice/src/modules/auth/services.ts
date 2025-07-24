@@ -3,7 +3,7 @@ import Elysia from 'elysia'
 
 import { AuthRepository, AuthRepositoryPlugin } from './repository'
 
-import { IntrospectAccessTokenBody } from '../../dtos/auth'
+import { IntrospectAccessTokenResult } from '../../dtos/auth'
 import { InternalErrorCode } from '../../dtos/error'
 import { mapRawPrismaError } from '../../utils/prisma'
 
@@ -25,7 +25,7 @@ export class AuthService {
     return user
   }
 
-  async registerUser(oidcUser: IntrospectAccessTokenBody) {
+  async registerUser(oidcUser: IntrospectAccessTokenResult) {
     const newUser = await this.authRepository.createUser(oidcUser)
 
     if (newUser.isErr()) {
@@ -59,7 +59,7 @@ export const AuthServicePlugin = new Elysia({ name: 'AuthService', adapter: node
 
         return user
       },
-      async registerUser(oidcUser: IntrospectAccessTokenBody) {
+      async registerUser(oidcUser: IntrospectAccessTokenResult) {
         const newUser = await authRepository.createUser(oidcUser)
 
         if (newUser.isErr()) {
