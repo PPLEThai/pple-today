@@ -1,0 +1,88 @@
+name: Deploy Application
+
+on:
+  workflow_dispatch:
+    inputs:
+      android:
+        type: boolean
+        description: 'Build Android app'
+        default: false
+      ios:
+        type: boolean
+        description: 'Build iOS app'
+        default: false
+      api:
+        type: boolean
+        description: 'Deploy API'
+        default: false
+      backoffice:
+        type: boolean
+        description: 'Deploy Backoffice'
+        default: false
+      migrate-database:
+        type: boolean
+        description: 'Run database migrations'
+        default: false
+      mobile-groups:
+        type: string
+        description: 'Distribute to these groups'
+        default: 'dev-team,qa-team'
+
+jobs:
+  deploy-mobile-app:
+    name: Deploy Beta Mobile App
+    if: ${{ github.event.inputs.android == 'true' || github.event.inputs.ios == 'true' }}
+    uses: ./.github/workflows/beta-deployment.yaml
+    secrets: 'inherit'
+    with:
+      android: ${{ github.event.inputs.android }}
+      ios: ${{ github.event.inputs.ios }}
+      groups: ${{ github.event.inputs.mobile-groups }}
+
+  deploy-backoffice:
+    name: Deploy Backoffice
+    if: ${{ github.event.inputs.backoffice == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Backoffice
+        run: pnpm build
+
+      - name: Deploy Backoffice
+        run: pnpm deploy-backoffice
+
+  deploy-api:
+    name: Deploy API
+    if: ${{ github.event.inputs.api == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+  migrate-database:
+    name: Deploy Backoffice
+    if: ${{ github.event.inputs.backoffice == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Backoffice
+        run: pnpm build
+
+      - name: Deploy Backoffice
+        run: pnpm deploy-backoffice

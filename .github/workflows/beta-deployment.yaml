@@ -1,8 +1,7 @@
-name: Beta Deployment
-run-name: Beta Deployment - ${{ inputs.environment }} by @${{ github.actor }}
+name: Mobile Beta Deployment
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       android:
         type: boolean
