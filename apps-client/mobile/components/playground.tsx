@@ -504,7 +504,7 @@ function QueryExample() {
     fetchToken()
   }, [])
 
-  const sampleMutation = useMutation('post', '/test-post/:id')
+  const sampleMutation = useMutation('post', '/admin/about-us')
 
   return (
     <>
@@ -536,10 +536,12 @@ function QueryExample() {
         <Button
           onPress={() =>
             sampleMutation.mutateAsync({
-              pathParams: { id: '123' },
-              body: { name: 'John Doe', code: 404 },
-              query: { code: 200, name: 'John Doe' },
-              headers: { 'x-custom-header': 'value' },
+              body: {
+                title: 'Test Title',
+                backgroundColor: '#ffffff',
+                iconImageUrl: 'https://example.com/icon.png',
+                url: 'https://example.com',
+              },
             })
           }
         >
