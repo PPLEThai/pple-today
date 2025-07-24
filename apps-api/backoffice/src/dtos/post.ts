@@ -2,7 +2,7 @@ import { Static, t } from 'elysia'
 
 import { AuthorSchema } from './user'
 
-export { PostReactionType } from '../../__generated__/prisma'
+export { FeedItemReactionType as PostReactionType } from '../../__generated__/prisma'
 
 export const Post = t.Object({
   id: t.String({ description: 'The ID of the post' }),
@@ -31,7 +31,7 @@ export const PostComment = t.Object({
   id: t.String({ description: 'The ID of the comment' }),
   content: t.String({ description: 'The content of the comment' }),
   createdAt: t.Date({ description: 'The creation date of the comment' }),
-  isPrivate: t.Optional(t.Boolean({ description: 'Whether the comment is private' })),
+  isPrivate: t.Boolean({ description: 'Whether the comment is private' }),
   author: AuthorSchema,
 })
 export type PostComment = Static<typeof PostComment>

@@ -34,8 +34,8 @@ export const PostsController = new Elysia({
   .use([AuthGuardPlugin, PostServicePlugin])
   .get(
     '/:id',
-    async ({ params, status, oidcUser, postService }) => {
-      const result = await postService.getPostById(params.id, oidcUser.sub)
+    async ({ params, status, postService }) => {
+      const result = await postService.getPostById(params.id)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.POST_NOT_FOUND:
@@ -50,7 +50,6 @@ export const PostsController = new Elysia({
       return status(200, result.value)
     },
     {
-      getOIDCUser: true,
       params: GetPostByIdParams,
       response: {
         200: GetPostByIdResponse,

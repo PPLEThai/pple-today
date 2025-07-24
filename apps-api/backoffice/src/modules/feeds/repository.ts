@@ -9,7 +9,13 @@ import { fromPrismaPromise } from '../../utils/prisma'
 export class FeedRepository {
   constructor(private prismaService: PrismaService) {}
 
-  async getFeedItemReactionByUserId(feedItemId: string, userId: string) {
+  async getFeedItemReactionByUserId({
+    feedItemId,
+    userId,
+  }: {
+    feedItemId: string
+    userId: string
+  }) {
     return await fromPrismaPromise(
       this.prismaService.feedItemReaction.findUnique({
         where: {
@@ -25,12 +31,17 @@ export class FeedRepository {
     )
   }
 
-  async createFeedItemReaction(
-    feedItemId: string,
-    userId: string,
-    type: FeedItemReactionType,
+  async createFeedItemReaction({
+    feedItemId,
+    userId,
+    type,
+    content,
+  }: {
+    feedItemId: string
+    userId: string
+    type: FeedItemReactionType
     content?: string
-  ) {
+  }) {
     return await fromPrismaPromise(
       this.prismaService.$transaction(async (tx) => {
         const result = await tx.feedItemReaction.create({
@@ -70,12 +81,17 @@ export class FeedRepository {
     )
   }
 
-  async updateFeedItemReaction(
-    feedItemId: string,
-    userId: string,
-    type: FeedItemReactionType,
+  async updateFeedItemReaction({
+    feedItemId,
+    userId,
+    type,
+    content,
+  }: {
+    feedItemId: string
+    userId: string
+    type: FeedItemReactionType
     content?: string
-  ) {
+  }) {
     return await fromPrismaPromise(
       this.prismaService.$transaction(async (tx) => {
         const reaction = await tx.feedItemReaction.findUniqueOrThrow({
@@ -138,7 +154,7 @@ export class FeedRepository {
     )
   }
 
-  async deleteFeedItemReaction(feedItemId: string, userId: string) {
+  async deleteFeedItemReaction({ feedItemId, userId }: { feedItemId: string; userId: string }) {
     return await fromPrismaPromise(
       this.prismaService.$transaction(async (tx) => {
         const reaction = await tx.feedItemReaction.delete({
@@ -187,12 +203,17 @@ export class FeedRepository {
     )
   }
 
-  async createFeedItemComment(
-    feedItemId: string,
-    userId: string,
-    content: string,
+  async createFeedItemComment({
+    feedItemId,
+    userId,
+    content,
+    isPrivate,
+  }: {
+    feedItemId: string
+    userId: string
+    content: string
     isPrivate: boolean
-  ) {
+  }) {
     const result = await fromPrismaPromise(
       this.prismaService.$transaction([
         this.prismaService.feedItemComment.create({
@@ -232,32 +253,46 @@ export class FeedRepository {
     return ok(result.value[0])
   }
 
-  async updateFeedItemComment(
-    commentId: string,
-    userId: string,
-    content: string,
-    isPrivate: boolean
-  ) {
+  async updateFeedItemComment({
+    feedItemId,
+    commentId,
+    userId,
+    content,
+  }: {
+    feedItemId: string
+    commentId: string
+    userId: string
+    content: string
+  }) {
     return await fromPrismaPromise(
       this.prismaService.feedItemComment.updateMany({
         where: {
           id: commentId,
+          feedItemId,
           userId,
         },
         data: {
           content,
-          isPrivate,
         },
       })
     )
   }
 
-  async deleteFeedItemComment(commentId: string, userId: string) {
+  async deleteFeedItemComment({
+    commentId,
+    userId,
+    feedItemId,
+  }: {
+    commentId: string
+    userId: string
+    feedItemId: string
+  }) {
     return await fromPrismaPromise(
       this.prismaService.feedItemComment.deleteMany({
         where: {
           id: commentId,
           userId,
+          feedItemId,
         },
       })
     )
