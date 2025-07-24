@@ -62,7 +62,7 @@ export class PostService {
     } satisfies GetPostByIdResponse)
   }
 
-  async getPostComments(postId: string, query: { userId: string; page?: number; limit?: number }) {
+  async getPostComments(postId: string, query: { userId?: string; page?: number; limit?: number }) {
     const postComments = await this.postRepository.getPostComments(postId, {
       userId: query.userId,
       page: query.page ?? 1,

@@ -1,14 +1,15 @@
 import { cors } from '@elysiajs/cors'
 import node from '@elysiajs/node'
 import { swagger } from '@elysiajs/swagger'
-import Elysia, { t } from 'elysia'
+import Elysia from 'elysia'
 
 import serverEnv from './config/env'
 import { InternalErrorCode } from './dtos/error'
 import { AdminController } from './modules/admin'
 import { AuthController } from './modules/auth'
 import { PostsController } from './modules/posts'
-import { ProfileController } from './modules/profile'
+
+import packageJson from '../package.json'
 
 const app = new Elysia({ adapter: node() })
   .onError(({ status, code, error }) => {
@@ -54,86 +55,30 @@ const app = new Elysia({ adapter: node() })
     })
   })
   .use(cors())
-  .use(swagger())
+  .use(
+    swagger({
+      documentation: {
+        info: {
+          title: 'PPLE Today API',
+          version: packageJson.version,
+        },
+        components: {
+          securitySchemes: {
+            accessToken: {
+              type: 'http',
+              scheme: 'bearer',
+              bearerFormat: 'JWT',
+              description: 'Bearer Token',
+            },
+          },
+        },
+        security: [{ accessToken: [] }],
+      },
+    })
+  )
   .use(PostsController)
   .use(AuthController)
   .use(AdminController)
-  .use(ProfileController)
-  .get(
-    '/:id',
-    ({ params, query, headers }) => {
-      console.log('Headers:', headers)
-      return {
-        message: `Hello, ${params.id}!`,
-        params,
-        query,
-        headers,
-      }
-    },
-    {
-      params: t.Object({
-        id: t.String(),
-      }),
-      query: t.Object({
-        name: t.Optional(t.String()),
-        code: t.Optional(t.Number()),
-      }),
-      response: t.Object({
-        message: t.String(),
-        params: t.Object({
-          id: t.String(),
-        }),
-        query: t.Object({
-          name: t.Optional(t.String()),
-          code: t.Optional(t.Number()),
-        }),
-        headers: t.Record(t.String(), t.Any()),
-      }),
-      headers: t.Object({
-        'x-custom-header': t.Optional(t.String()),
-      }),
-    }
-  )
-  .post(
-    '/test-post/:id',
-    ({ params, query, headers, body }) => {
-      console.log('Headers:', headers)
-      return {
-        message: `Hello, ${params.id}!`,
-        params,
-        query,
-        body,
-        headers,
-      }
-    },
-    {
-      params: t.Object({
-        id: t.String(),
-      }),
-      query: t.Object({
-        name: t.Optional(t.String()),
-        code: t.Optional(t.Number()),
-      }),
-      body: t.Object({
-        name: t.Optional(t.String()),
-        code: t.Optional(t.Number()),
-      }),
-      response: t.Object({
-        message: t.String(),
-        params: t.Object({
-          id: t.String(),
-        }),
-        query: t.Object({
-          name: t.Optional(t.String()),
-          code: t.Optional(t.Number()),
-        }),
-        headers: t.Record(t.String(), t.Any()),
-      }),
-      headers: t.Object({
-        'x-custom-header': t.Optional(t.String()),
-      }),
-    }
-  )
   .listen(serverEnv.PORT, () => {
     console.log(`Server is running on http://localhost:${serverEnv.PORT}`)
   })

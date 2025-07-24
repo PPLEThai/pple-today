@@ -69,7 +69,7 @@ export class PostRepository {
     )
   }
 
-  async getPostComments(postId: string, query: { userId: string; page: number; limit: number }) {
+  async getPostComments(postId: string, query: { userId?: string; page: number; limit: number }) {
     return await this.feedRepository.getFeedItemComments(postId, {
       ...query,
       feedItemType: FeedItemType.POST,

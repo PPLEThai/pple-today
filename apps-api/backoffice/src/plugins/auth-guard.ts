@@ -1,5 +1,5 @@
 import node from '@elysiajs/node'
-import Elysia, { t } from 'elysia'
+import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import { InternalErrorCode, InternalErrorCodeSchemas } from '../dtos/error'
@@ -9,13 +9,6 @@ export const AuthGuardPlugin = new Elysia({
   adapter: node(),
   name: 'auth-guard-plugin',
 })
-  .guard({
-    headers: t.Object({
-      authorization: t.String({
-        description: 'Bearer token for authentication',
-      }),
-    }),
-  })
   .decorate({
     async getCurrentUser(headers: Record<string, string | undefined>) {
       const token = headers['authorization']?.replace('Bearer ', '').trim()
@@ -60,3 +53,4 @@ export const AuthGuardPlugin = new Elysia({
       },
     },
   })
+  .as('scoped')

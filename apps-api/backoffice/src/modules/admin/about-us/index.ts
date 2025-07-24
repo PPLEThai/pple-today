@@ -17,6 +17,7 @@ import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../.
 export const AdminAboutUsController = new Elysia({
   prefix: '/about-us',
   adapter: node(),
+  tags: ['About Us'],
 })
   .use([AuthGuardPlugin, AboutUsServicePlugin])
   .get(
@@ -32,6 +33,10 @@ export const AdminAboutUsController = new Elysia({
       response: {
         200: GetAboutUsResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+      detail: {
+        summary: 'Get About Us',
+        description: 'Fetch all About Us entries',
       },
     }
   )
@@ -49,6 +54,10 @@ export const AdminAboutUsController = new Elysia({
       response: {
         201: CreateAboutUsResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+      detail: {
+        summary: 'Create About Us',
+        description: 'Add a new entry to About Us',
       },
     }
   )
@@ -81,6 +90,10 @@ export const AdminAboutUsController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
+      detail: {
+        summary: 'Update About Us',
+        description: 'Modify an existing About Us entry by its ID',
+      },
     }
   )
   .delete(
@@ -110,6 +123,10 @@ export const AdminAboutUsController = new Elysia({
           InternalErrorCode.ABOUT_US_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
+      },
+      detail: {
+        summary: 'Delete About Us',
+        description: 'Remove an About Us entry by its ID',
       },
     }
   )

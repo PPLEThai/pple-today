@@ -177,7 +177,7 @@ export class FeedRepository {
 
   async getFeedItemComments(
     feedItemId: string,
-    query: { feedItemType: FeedItemType; userId: string; page: number; limit: number }
+    query: { feedItemType: FeedItemType; userId?: string; page: number; limit: number }
   ) {
     return await fromPrismaPromise(
       this.prismaService.feedItemComment.findMany({

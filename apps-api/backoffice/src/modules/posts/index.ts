@@ -30,6 +30,7 @@ import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../.
 export const PostsController = new Elysia({
   prefix: '/posts',
   adapter: node(),
+  tags: ['Posts'],
 })
   .use([AuthGuardPlugin, PostServicePlugin])
   .get(
@@ -60,13 +61,17 @@ export const PostsController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
+      detail: {
+        summary: 'Get post by ID',
+        description: 'Fetch a specific post by its ID',
+      },
     }
   )
   .get(
     '/:id/comments',
     async ({ params, query, status, user, postService }) => {
       const result = await postService.getPostComments(params.id, {
-        userId: user.sub,
+        userId: user?.sub,
         limit: query.limit,
         page: query.page,
       })
@@ -84,7 +89,7 @@ export const PostsController = new Elysia({
       return status(200, result.value as GetPostCommentResponse)
     },
     {
-      requiredUser: true,
+      fetchUser: true,
       params: GetPostCommentParams,
       query: GetPostCommentQuery,
       response: {
@@ -93,6 +98,10 @@ export const PostsController = new Elysia({
           InternalErrorCode.POST_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
+      },
+      detail: {
+        summary: 'Get post comment by post ID',
+        description: 'Fetch a specific comment from a post by its ID',
       },
     }
   )
@@ -127,6 +136,15 @@ export const PostsController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
+      detail: {
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        summary: 'Create post reaction',
+        description: 'Add a reaction to a post by its ID',
+      },
     }
   )
   .delete(
@@ -157,6 +175,15 @@ export const PostsController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
+      detail: {
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        summary: 'Delete post reaction',
+        description: 'Remove a reaction from a post by its ID',
+      },
     }
   )
   .post(
@@ -186,6 +213,15 @@ export const PostsController = new Elysia({
           InternalErrorCode.POST_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
+      },
+      detail: {
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        summary: 'Create post comment',
+        description: 'Add a comment to a post by its ID',
       },
     }
   )
@@ -223,6 +259,15 @@ export const PostsController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
+      detail: {
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        summary: 'Update post comment',
+        description: 'Update a comment on a post by its ID',
+      },
     }
   )
   .delete(
@@ -252,6 +297,15 @@ export const PostsController = new Elysia({
           InternalErrorCode.POST_COMMENT_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
+      },
+      detail: {
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        summary: 'Delete post comment',
+        description: 'Remove a comment from a post by its ID',
       },
     }
   )

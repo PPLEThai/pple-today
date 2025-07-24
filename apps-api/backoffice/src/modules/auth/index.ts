@@ -11,6 +11,7 @@ import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 export const AuthController = new Elysia({
   adapter: node(),
   prefix: '/auth',
+  tags: ['Auth'],
 })
   .use([AuthGuardPlugin, AuthServicePlugin])
   .post(
@@ -42,6 +43,10 @@ export const AuthController = new Elysia({
           InternalErrorCode.AUTH_USER_ALREADY_EXISTS,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
+      },
+      detail: {
+        summary: 'Register user',
+        description: 'Create a new user account',
       },
     }
   )
@@ -75,6 +80,10 @@ export const AuthController = new Elysia({
           InternalErrorCode.AUTH_USER_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
+      },
+      detail: {
+        summary: 'Get authenticated user',
+        description: 'Fetch the currently authenticated user details',
       },
     }
   )
