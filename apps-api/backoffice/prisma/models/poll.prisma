@@ -3,16 +3,16 @@ enum PollType {
     MULTIPLE_CHOICE
 }
 
+// Published models for Poll and PollOption
 model Poll {
-    id          String   @id @default(cuid())
+    feedItemId  String   @id @default(cuid())
     title       String
     description String?
     endAt       DateTime
     type        PollType
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
 
-    options PollOption[]
+    options  PollOption[]
+    feedItem FeedItem     @relation(fields: [feedItemId], references: [id])
 }
 
 model PollOption {
@@ -23,7 +23,7 @@ model PollOption {
     updatedAt DateTime @updatedAt
 
     pollId      String
-    poll        Poll         @relation(fields: [pollId], references: [id])
+    poll        Poll         @relation(fields: [pollId], references: [feedItemId])
     pollAnswers PollAnswer[]
 
     @@index([pollId])
@@ -40,4 +40,30 @@ model PollAnswer {
     option PollOption @relation(fields: [optionId], references: [id])
 
     @@unique([userId, optionId])
+}
+
+// Draft models for Poll and PollOption
+model PollDraft {
+    id          String    @id @default(cuid())
+    title       String?
+    description String?
+    endAt       DateTime?
+    type        PollType
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+
+    options PollOptionDraft[]
+}
+
+model PollOptionDraft {
+    id        String   @id @default(cuid())
+    title     String
+    votes     Int      @default(0)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    pollDraftId String
+    pollDraft   PollDraft @relation(fields: [pollDraftId], references: [id])
+
+    @@index([pollDraftId])
 }

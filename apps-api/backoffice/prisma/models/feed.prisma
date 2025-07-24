@@ -1,0 +1,101 @@
+enum FeedItemType {
+  POST
+  POLL
+  ANNOUNCEMENT
+}
+
+model FeedItem {
+  id   String       @id @default(cuid())
+  type FeedItemType
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id])
+
+  post         Post?
+  poll         Poll?
+  announcement Announcement?
+
+  reactions   FeedItemReaction[]
+  comments    FeedItemComment[]
+  images      FeedItemImage[]
+  attachments FeedItemFile[]
+
+  // Hashtag is used in poll and post but Topic is used only for announcement
+  hashTags FeedItemHashTag[]
+  topics   FeedItemTopic[]
+}
+
+model FeedItemReaction {
+  id         String   @id @default(cuid())
+  userId     String
+  feedItemId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id])
+  feedItem FeedItem @relation(fields: [feedItemId], references: [id])
+}
+
+model FeedItemComment {
+  id         String   @id @default(cuid())
+  userId     String
+  feedItemId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id])
+  feedItem FeedItem @relation(fields: [feedItemId], references: [id])
+}
+
+model FeedItemImage {
+  id         String   @id @default(cuid())
+  feedItemId String
+  url        String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  feedItem FeedItem @relation(fields: [feedItemId], references: [id])
+
+  @@index([feedItemId])
+}
+
+model FeedItemFile {
+  id         String   @id @default(cuid())
+  feedItemId String
+  url        String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  feedItem FeedItem @relation(fields: [feedItemId], references: [id])
+
+  @@index([feedItemId])
+}
+
+model FeedItemHashTag {
+  feedItemId String
+  hashTagId  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  feedItem FeedItem @relation(fields: [feedItemId], references: [id])
+  hashTag  HashTag  @relation(fields: [hashTagId], references: [id])
+
+  @@id([feedItemId, hashTagId])
+}
+
+model FeedItemTopic {
+  feedItemId String
+  topicId    String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  feedItem FeedItem @relation(fields: [feedItemId], references: [id])
+  topic    Topic    @relation(fields: [topicId], references: [id])
+
+  @@id([feedItemId, topicId])
+}
