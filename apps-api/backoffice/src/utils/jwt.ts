@@ -6,18 +6,26 @@ import { IntrospectAccessTokenResult } from '../dtos/auth'
 import { InternalErrorCode } from '../dtos/error'
 
 let jwtToken: string | null = null
+let latestJwtGenerationTime: number | null = null
+
+const JWT_TOKEN_EXPIRATION_TIME = 60 * 60 // 1 hour
 
 export const generateJwtToken = (force: boolean = false) => {
-  if (jwtToken && !force) {
+  const currentEpoch = Math.floor(Date.now() / 1000)
+  if (
+    jwtToken &&
+    !force &&
+    latestJwtGenerationTime &&
+    currentEpoch - latestJwtGenerationTime < JWT_TOKEN_EXPIRATION_TIME
+  ) {
     return jwtToken
   }
 
-  const currentEpoch = Math.floor(Date.now() / 1000)
   const payload = {
     iss: serverEnv.OIDC_CLIENT_ID,
     sub: serverEnv.OIDC_CLIENT_ID,
     aud: serverEnv.OIDC_URL,
-    exp: currentEpoch + 60 * 60,
+    exp: currentEpoch + JWT_TOKEN_EXPIRATION_TIME,
     iat: currentEpoch,
   }
 
@@ -30,6 +38,7 @@ export const generateJwtToken = (force: boolean = false) => {
     algorithm: 'RS256',
     header: headers,
   })
+  latestJwtGenerationTime = currentEpoch
 
   return jwtToken
 }
@@ -50,7 +59,6 @@ export const introspectAccessToken = async (token: string) => {
   })
 
   if (!response.ok) {
-    console.error(`Error during introspection`)
     return {
       error: {
         code: InternalErrorCode.INTERNAL_SERVER_ERROR,

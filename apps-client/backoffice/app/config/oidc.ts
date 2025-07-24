@@ -7,5 +7,5 @@ export const userManager = new UserManager({
   client_id: clientEnv.OIDC_CLIENT_ID,
   redirect_uri: clientEnv.OIDC_REDIRECT_URL,
   response_type: 'code',
-  scope: 'openid profile phone',
+  scope: `openid profile phone ${clientEnv.OIDC_ADDITIONAL_SCOPE}`,
 })

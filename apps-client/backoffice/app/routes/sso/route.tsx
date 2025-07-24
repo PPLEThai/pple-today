@@ -11,12 +11,7 @@ export default function LoginWithSSO() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      let user: User | null = null
-      if (queryParams.get('code')) {
-        user = await userManager.signinRedirectCallback()
-      } else {
-        user = await userManager.getUser()
-      }
+      const user = await userManager.signinCallback()
       if (user) {
         console.log('User logged in:', user)
         setUser(user)
@@ -26,7 +21,7 @@ export default function LoginWithSSO() {
     }
 
     fetchUser()
-  }, [])
+  }, [queryParams])
 
   return (
     <div className="flex flex-col items-center justify-center h-screen">
