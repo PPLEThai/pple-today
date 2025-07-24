@@ -21,17 +21,17 @@ import {
   UpdatePostCommentParams,
   UpdatePostCommentResponse,
 } from './models'
-import PostService from './services'
+import { PostServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
-import { AuthPlugin } from '../../plugins/auth'
+import { AuthGuardPlugin } from '../../plugins/auth-guard'
 import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
 
-export const postsController = new Elysia({
+export const PostsController = new Elysia({
   prefix: '/posts',
   adapter: node(),
 })
-  .use([AuthPlugin, PostService])
+  .use([AuthGuardPlugin, PostServicePlugin])
   .get(
     '/:id',
     async ({ params, status, oidcUser, postService }) => {

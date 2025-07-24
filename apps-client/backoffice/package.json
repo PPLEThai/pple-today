@@ -1,5 +1,7 @@
 {
   "name": "@client/backoffice",
+  "version": "0.0.0",
+  "description": "",
   "type": "module",
   "scripts": {
     "build": "react-router build",
@@ -17,6 +19,7 @@
     "@react-router/node": "^7.5.3",
     "@react-router/serve": "^7.5.3",
     "isbot": "^5.1.27",
+    "oidc-client-ts": "^3.3.0",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-router": "^7.5.3"

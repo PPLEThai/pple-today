@@ -3,146 +3,150 @@ import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 
 import { CompleteOnboardingProfileBody, UpdateProfileBody } from './models'
-import ProfileRepository from './repository'
+import { ProfileRepository, ProfileRepositoryPlugin } from './repository'
 
 import { InternalErrorCode } from '../../dtos/error'
 import { mapRawPrismaError } from '../../utils/prisma'
-import { AuthRepository } from '../auth/repository'
+import { AuthRepository, AuthRepositoryPlugin } from '../auth/repository'
 
-const ProfileService = new Elysia({ name: 'ProfileService', adapter: node() })
-  .use([ProfileRepository, AuthRepository])
+export class ProfileService {
+  constructor(
+    private profileRepository: ProfileRepository,
+    private authRepository: AuthRepository
+  ) {}
+  async getProfileById(id: string) {
+    const user = await this.profileRepository.getProfileById(id)
+
+    if (user.isErr()) {
+      return mapRawPrismaError(user.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.USER_NOT_FOUND,
+          message: 'User not found',
+        },
+      })
+    }
+
+    return ok(user.value)
+  }
+
+  async followUser(userId: string, followedUserId: string) {
+    const result = await this.profileRepository.followUser(userId, followedUserId)
+
+    if (result.isErr())
+      return mapRawPrismaError(result.error, {
+        FOREIGN_KEY_CONSTRAINT_FAILED: {
+          code: InternalErrorCode.USER_NOT_FOUND,
+          message: 'User not found',
+        },
+        UNIQUE_CONSTRAINT_FAILED: {
+          code: InternalErrorCode.USER_ALREADY_FOLLOWS,
+          message: 'User already follows this user',
+        },
+      })
+
+    return ok()
+  }
+
+  async unfollowUser(userId: string, followedUserId: string) {
+    const result = await this.profileRepository.unfollowUser(userId, followedUserId)
+
+    if (result.isErr())
+      return mapRawPrismaError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.USER_NOT_FOLLOWS,
+          message: 'User not found or not followed',
+        },
+      })
+
+    return ok()
+  }
+
+  async getFollowingUsers(userId: string) {
+    const result = await this.profileRepository.getFollowingUsers(userId)
+
+    if (result.isErr()) {
+      return mapRawPrismaError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.USER_NOT_FOUND,
+          message: 'User not found',
+        },
+      })
+    }
+
+    return ok(result.value.followings.map((user) => user.followed))
+  }
+
+  async updateProfile(userId: string, userData: UpdateProfileBody) {
+    const result = await this.profileRepository.updateUserProfile(userId, {
+      name: userData.name,
+      profileImage: userData.profileImage,
+      address: userData.address
+        ? {
+            connect: {
+              district_subDistrict: {
+                district: userData.address.district,
+                subDistrict: userData.address.subDistrict,
+              },
+            },
+          }
+        : undefined,
+    })
+
+    if (result.isErr()) {
+      return mapRawPrismaError(result.error, {
+        FOREIGN_KEY_CONSTRAINT_FAILED: {
+          code: InternalErrorCode.USER_INVALID_INPUT,
+          message: 'Address not found',
+        },
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.USER_NOT_FOUND,
+          message: 'User not found',
+        },
+      })
+    }
+
+    return ok(result.value)
+  }
+
+  async completeOnboardingProfile(userId: string, profileData: CompleteOnboardingProfileBody) {
+    const user = await this.authRepository.getUserById(userId)
+
+    if (user.isErr()) {
+      return mapRawPrismaError(user.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.USER_NOT_FOUND,
+          message: 'User not found',
+        },
+      })
+    }
+
+    if (!user.value) {
+      return err({
+        code: InternalErrorCode.USER_ALREADY_DONE_ONBOARDING,
+        message: 'User not found',
+      })
+    }
+
+    const result = await this.profileRepository.completeOnboarding(userId, profileData)
+
+    if (result.isErr())
+      return mapRawPrismaError(result.error, {
+        FOREIGN_KEY_CONSTRAINT_FAILED: {
+          code: InternalErrorCode.USER_INVALID_INPUT,
+          message: 'Invalid address or topic',
+        },
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.USER_NOT_FOUND,
+          message: 'User not found',
+        },
+      })
+
+    return ok(result.value)
+  }
+}
+
+export const ProfileServicePlugin = new Elysia({ name: 'ProfileService', adapter: node() })
+  .use([ProfileRepositoryPlugin, AuthRepositoryPlugin])
   .decorate(({ profileRepository, authRepository }) => ({
-    profileService: {
-      async getProfileById(id: string) {
-        const user = await profileRepository.getProfileById(id)
-
-        if (user.isErr()) {
-          return mapRawPrismaError(user.error, {
-            RECORD_NOT_FOUND: {
-              code: InternalErrorCode.USER_NOT_FOUND,
-              message: 'User not found',
-            },
-          })
-        }
-
-        return ok(user.value)
-      },
-
-      async followUser(userId: string, followedUserId: string) {
-        const result = await profileRepository.followUser(userId, followedUserId)
-
-        if (result.isErr())
-          return mapRawPrismaError(result.error, {
-            FOREIGN_KEY_CONSTRAINT_FAILED: {
-              code: InternalErrorCode.USER_NOT_FOUND,
-              message: 'User not found',
-            },
-            UNIQUE_CONSTRAINT_FAILED: {
-              code: InternalErrorCode.USER_ALREADY_FOLLOWS,
-              message: 'User already follows this user',
-            },
-          })
-
-        return ok()
-      },
-
-      async unfollowUser(userId: string, followedUserId: string) {
-        const result = await profileRepository.unfollowUser(userId, followedUserId)
-
-        if (result.isErr())
-          return mapRawPrismaError(result.error, {
-            RECORD_NOT_FOUND: {
-              code: InternalErrorCode.USER_NOT_FOLLOWS,
-              message: 'User not found or not followed',
-            },
-          })
-
-        return ok()
-      },
-
-      async getFollowingUsers(userId: string) {
-        const result = await profileRepository.getFollowingUsers(userId)
-
-        if (result.isErr()) {
-          return mapRawPrismaError(result.error, {
-            RECORD_NOT_FOUND: {
-              code: InternalErrorCode.USER_NOT_FOUND,
-              message: 'User not found',
-            },
-          })
-        }
-
-        return ok(result.value.followings.map((user) => user.followed))
-      },
-
-      async updateProfile(userId: string, userData: UpdateProfileBody) {
-        const result = await profileRepository.updateUserProfile(userId, {
-          name: userData.name,
-          profileImage: userData.profileImage,
-          address: userData.address
-            ? {
-                connect: {
-                  district_subDistrict: {
-                    district: userData.address.district,
-                    subDistrict: userData.address.subDistrict,
-                  },
-                },
-              }
-            : undefined,
-        })
-
-        if (result.isErr()) {
-          return mapRawPrismaError(result.error, {
-            FOREIGN_KEY_CONSTRAINT_FAILED: {
-              code: InternalErrorCode.USER_INVALID_INPUT,
-              message: 'Address not found',
-            },
-            RECORD_NOT_FOUND: {
-              code: InternalErrorCode.USER_NOT_FOUND,
-              message: 'User not found',
-            },
-          })
-        }
-
-        return ok(result.value)
-      },
-
-      async completeOnboardingProfile(userId: string, profileData: CompleteOnboardingProfileBody) {
-        const user = await authRepository.getUserById(userId)
-
-        if (user.isErr()) {
-          return mapRawPrismaError(user.error, {
-            RECORD_NOT_FOUND: {
-              code: InternalErrorCode.USER_NOT_FOUND,
-              message: 'User not found',
-            },
-          })
-        }
-
-        if (!user.value) {
-          return err({
-            code: InternalErrorCode.USER_ALREADY_DONE_ONBOARDING,
-            message: 'User not found',
-          })
-        }
-
-        const result = await profileRepository.completeOnboarding(userId, profileData)
-
-        if (result.isErr())
-          return mapRawPrismaError(result.error, {
-            FOREIGN_KEY_CONSTRAINT_FAILED: {
-              code: InternalErrorCode.USER_INVALID_INPUT,
-              message: 'Invalid address or topic',
-            },
-            RECORD_NOT_FOUND: {
-              code: InternalErrorCode.USER_NOT_FOUND,
-              message: 'User not found',
-            },
-          })
-
-        return ok(result.value)
-      },
-    },
+    profileService: new ProfileService(profileRepository, authRepository),
   }))
-
-export default ProfileService

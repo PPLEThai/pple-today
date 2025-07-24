@@ -5,10 +5,10 @@ import Elysia, { t } from 'elysia'
 
 import serverEnv from './config/env'
 import { InternalErrorCode } from './dtos/error'
-import { aboutUsController } from './modules/admin/about-us'
-import { authController } from './modules/auth'
-import { postsController } from './modules/posts'
-import { profileController } from './modules/profile'
+import { AdminController } from './modules/admin'
+import { AuthController } from './modules/auth'
+import { PostsController } from './modules/posts'
+import { ProfileController } from './modules/profile'
 
 const app = new Elysia({ adapter: node() })
   .onError(({ status, code, error }) => {
@@ -55,10 +55,10 @@ const app = new Elysia({ adapter: node() })
   })
   .use(cors())
   .use(swagger())
-  .use(postsController)
-  .use(authController)
-  .use(aboutUsController)
-  .use(profileController)
+  .use(PostsController)
+  .use(AuthController)
+  .use(AdminController)
+  .use(ProfileController)
   .get(
     '/:id',
     ({ params, query, headers }) => {
