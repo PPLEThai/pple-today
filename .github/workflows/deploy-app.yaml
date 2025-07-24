@@ -1,4 +1,4 @@
-name: Deploy Application
+name: Deploy Beta Application
 
 on:
   workflow_dispatch:
@@ -69,20 +69,16 @@ jobs:
           fetch-depth: 0
 
   migrate-database:
-    name: Deploy Backoffice
+    name: Migrate Database
     if: ${{ github.event.inputs.backoffice == 'true' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build Backoffice
-        run: pnpm build
-
-      - name: Deploy Backoffice
-        run: pnpm deploy-backoffice
+    uses: ./.github/workflows/migrate-database.yaml
+    secrets:
+      OVPN_CONFIG: ${{ secrets.OVPN_CONFIG }}
+      OVPN_USERNAME: ${{ secrets.OVPN_USERNAME }}
+      OVPN_PASSWORD: ${{ secrets.OVPN_PASSWORD }}
+      OVPN_USER_KEY: ${{ secrets.OVPN_USER_KEY }}
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
