@@ -1,7 +1,33 @@
 model Post {
-    feedItemId String  @id @default(cuid())
-    title      String
-    content    String?
+    feedItemId String @id @default(cuid())
+
+    title    String
+    content  String?
+    images   PostImage[]
+    hashTags PostHashTag[]
 
     feedItem FeedItem @relation(fields: [feedItemId], references: [id])
+}
+
+model PostImage {
+    id        String   @id @default(cuid())
+    postId    String
+    url       String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    post Post @relation(fields: [postId], references: [feedItemId])
+}
+
+model PostHashTag {
+    postId    String
+    hashTagId String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    hashTag HashTag @relation(fields: [hashTagId], references: [id])
+    post    Post    @relation(fields: [postId], references: [feedItemId])
+
+    @@id([postId, hashTagId])
 }

@@ -11,8 +11,10 @@ model Poll {
     endAt       DateTime
     type        PollType
 
-    options  PollOption[]
-    feedItem FeedItem     @relation(fields: [feedItemId], references: [id])
+    topics  PollTopic[]
+    options PollOption[]
+
+    feedItem FeedItem @relation(fields: [feedItemId], references: [id])
 }
 
 model PollOption {
@@ -42,6 +44,19 @@ model PollAnswer {
     @@unique([userId, optionId])
 }
 
+model PollTopic {
+    pollId  String
+    topicId String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    poll  Poll  @relation(fields: [pollId], references: [feedItemId])
+    topic Topic @relation(fields: [topicId], references: [id])
+
+    @@id([pollId, topicId])
+}
+
 // Draft models for Poll and PollOption
 model PollDraft {
     id          String    @id @default(cuid())
@@ -52,6 +67,7 @@ model PollDraft {
     createdAt   DateTime  @default(now())
     updatedAt   DateTime  @updatedAt
 
+    topics  PollTopicDraft[]
     options PollOptionDraft[]
 }
 
@@ -66,4 +82,17 @@ model PollOptionDraft {
     pollDraft   PollDraft @relation(fields: [pollDraftId], references: [id])
 
     @@index([pollDraftId])
+}
+
+model PollTopicDraft {
+    pollDraftId String
+    topicId     String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    pollDraft PollDraft @relation(fields: [pollDraftId], references: [id])
+    topic     Topic     @relation(fields: [topicId], references: [id])
+
+    @@id([pollDraftId, topicId])
 }
