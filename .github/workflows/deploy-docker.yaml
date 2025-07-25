@@ -125,6 +125,6 @@ jobs:
             cd ~/app
 
             docker compose -f ${{ inputs.DOCKER_COMPOSE_FILE }} down
-            yq -e '.services."${{ inputs.PACKAGE_NAME }}".image = "${{ inputs.DOCKER_REGISTRY }}/${{ env.OWNER_LC }}/${{ inputs.PACKAGE_NAME }}:${{ inputs.TAG_NAME }}"' templates/${{ inputs.DOCKER_COMPOSE_FILE }}.tmpl > ${{ inputs.DOCKER_COMPOSE_FILE }}
+            yq -y '.services."${{ inputs.PACKAGE_NAME }}".image = "${{ inputs.DOCKER_REGISTRY }}/${{ env.OWNER_LC }}/${{ inputs.PACKAGE_NAME }}:${{ inputs.TAG_NAME }}"' templates/${{ inputs.DOCKER_COMPOSE_FILE }}.tmpl > ${{ inputs.DOCKER_COMPOSE_FILE }}
 
             docker compose -f ${{ inputs.DOCKER_COMPOSE_FILE }} up -d
