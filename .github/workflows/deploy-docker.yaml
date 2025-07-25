@@ -53,6 +53,8 @@ jobs:
   release:
     name: Build and push Docker image
     runs-on: ubuntu-latest
+    outputs:
+      DOCKER_IMAGE_URI: ${{ steps.set-docker-image-tags.outputs.DOCKER_IMAGE_URI }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -60,11 +62,11 @@ jobs:
           fetch-depth: 0 # fetch all history for tags
           persist-credentials: false # avoid checking out the repository again
 
-      - name: Set lowercase owner name
+      - name: Setup docker image tags
+        id: set-docker-image-tags
         run: |
-          echo "OWNER_LC=${OWNER,,}" | tee $GITHUB_ENV
-        env:
-          OWNER: '${{ github.repository_owner }}'
+          OWNER_LC=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')
+          echo "DOCKER_IMAGE_URI=${{ inputs.DOCKER_REGISTRY }}/${OWNER_LC}/${{ inputs.PACKAGE_NAME }}:${{ inputs.TAG_NAME }}" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -91,7 +93,7 @@ jobs:
           build-args: |
             VERSION=${{ inputs.TAG_NAME }}
             LOCAL_ENV=${{ secrets.WEB_CLIENT_ENV }}
-          tags: ${{ inputs.DOCKER_REGISTRY }}/${{ env.OWNER_LC }}/${{ inputs.PACKAGE_NAME }}:${{ inputs.TAG_NAME }}
+          tags: ${{ steps.set-docker-image-tags.outputs.DOCKER_IMAGE_URI }}
 
   deploy-app:
     name: Deploy app
@@ -125,6 +127,6 @@ jobs:
             cd ~/app
 
             docker compose -f ${{ inputs.DOCKER_COMPOSE_FILE }} down
-            yq -y '.services."${{ inputs.PACKAGE_NAME }}".image = "${{ inputs.DOCKER_REGISTRY }}/${{ env.OWNER_LC }}/${{ inputs.PACKAGE_NAME }}:${{ inputs.TAG_NAME }}"' templates/${{ inputs.DOCKER_COMPOSE_FILE }}.tmpl > ${{ inputs.DOCKER_COMPOSE_FILE }}
+            yq -y '.services."${{ inputs.PACKAGE_NAME }}".image = "${{ needs.release.outputs.DOCKER_IMAGE_URI }}"' templates/${{ inputs.DOCKER_COMPOSE_FILE }}.tmpl > ${{ inputs.DOCKER_COMPOSE_FILE }}
 
             docker compose -f ${{ inputs.DOCKER_COMPOSE_FILE }} up -d
