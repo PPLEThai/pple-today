@@ -119,7 +119,7 @@ jobs:
 
   migrate-database:
     name: Migrate Database
-    if: ${{ github.event.inputs.backoffice == 'true' }}
+    if: ${{ github.event.inputs.migrate-database == 'true' }}
     uses: ./.github/workflows/migrate-database.yaml
     secrets:
       OVPN_CONFIG: ${{ secrets.OVPN_CONFIG }}
