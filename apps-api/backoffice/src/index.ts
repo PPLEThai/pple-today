@@ -58,6 +58,15 @@ let app = new Elysia({ adapter: node() })
   .use(PostsController)
   .use(AuthController)
   .use(AdminController)
+  .use(ProfileController)
+  .get('/versions', ({ status }) => {
+    const body = JSON.stringify({
+      name: packageJson.name,
+      version: packageJson.version,
+    })
+
+    return status(200, body)
+  })
 
 if (serverEnv.ENABLE_SWAGGER) {
   app = app.use(

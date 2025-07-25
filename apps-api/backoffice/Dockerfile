@@ -2,6 +2,9 @@ FROM node:22-alpine3.22 AS base
 RUN apk update
 RUN apk add --no-cache libc6-compat
 
+ARG VERSION=latest
+RUN jq --arg version "$VERSION" '.version = $version' apps-api/backoffice/package.json > tmp.json && mv tmp.json apps-api/backoffice/package.json
+
 RUN npm install -g turbo@2.5.2
  
 FROM base AS builder
