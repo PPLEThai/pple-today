@@ -17,6 +17,7 @@ import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../.
 export const AdminAboutUsController = new Elysia({
   prefix: '/about-us',
   adapter: node(),
+  tags: ['About Us'],
 })
   .use([AuthGuardPlugin, AboutUsServicePlugin])
   .get(
@@ -28,10 +29,14 @@ export const AdminAboutUsController = new Elysia({
       return status(200, result.value)
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       response: {
         200: GetAboutUsResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+      detail: {
+        summary: 'Get About Us',
+        description: 'Fetch all About Us entries',
       },
     }
   )
@@ -44,11 +49,15 @@ export const AdminAboutUsController = new Elysia({
       return status(201, result.value)
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       body: t.Omit(AboutUs, ['id']),
       response: {
         201: CreateAboutUsResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+      detail: {
+        summary: 'Create About Us',
+        description: 'Add a new entry to About Us',
       },
     }
   )
@@ -71,7 +80,7 @@ export const AdminAboutUsController = new Elysia({
       return status(200, result.value)
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       params: t.Pick(AboutUs, ['id']),
       body: t.Omit(AboutUs, ['id']),
       response: {
@@ -80,6 +89,10 @@ export const AdminAboutUsController = new Elysia({
           InternalErrorCode.ABOUT_US_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
+      },
+      detail: {
+        summary: 'Update About Us',
+        description: 'Modify an existing About Us entry by its ID',
       },
     }
   )
@@ -102,7 +115,7 @@ export const AdminAboutUsController = new Elysia({
       return status(200, result.value)
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       params: t.Pick(AboutUs, ['id']),
       response: {
         200: DeleteAboutUsResponse,
@@ -110,6 +123,10 @@ export const AdminAboutUsController = new Elysia({
           InternalErrorCode.ABOUT_US_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
+      },
+      detail: {
+        summary: 'Delete About Us',
+        description: 'Remove an About Us entry by its ID',
       },
     }
   )

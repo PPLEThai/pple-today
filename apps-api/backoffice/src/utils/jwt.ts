@@ -1,5 +1,6 @@
 import { Check } from '@sinclair/typebox/value'
 import jwt from 'jsonwebtoken'
+import { err, ok } from 'neverthrow'
 
 import serverEnv from '../config/env'
 import { IntrospectAccessTokenResult } from '../dtos/auth'
@@ -52,6 +53,7 @@ export const introspectAccessToken = async (token: string) => {
     client_assertion: jwtToken,
     token: token,
   }
+
   const response = await fetch(`${serverEnv.OIDC_URL}/oauth/v2/introspect`, {
     method: 'POST',
     headers: httpHeaders,
@@ -59,34 +61,28 @@ export const introspectAccessToken = async (token: string) => {
   })
 
   if (!response.ok) {
-    return {
-      error: {
-        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-        message: 'An error occurred while introspecting the access token',
-      },
-    }
+    return err({
+      code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+      message: 'An error occurred while introspecting the access token',
+    })
   }
 
   const body = await response.json()
 
   if (Check(IntrospectAccessTokenResult, body)) {
     if (!body.active) {
-      return {
-        error: {
-          code: InternalErrorCode.UNAUTHORIZED,
-          message: 'Token is not active or has expired',
-        },
-      }
+      return err({
+        code: InternalErrorCode.UNAUTHORIZED,
+        message: 'Token is not active or has expired',
+      })
     }
 
-    return body
+    return ok(body)
   }
 
-  return {
-    error: {
-      code: InternalErrorCode.BAD_REQUEST,
-      message:
-        'Invalid token format maybe oidc scope is missing (required scope ["openid", "profile", "phone"])',
-    },
-  }
+  return err({
+    code: InternalErrorCode.BAD_REQUEST,
+    message:
+      'Invalid token format maybe oidc scope is missing (required scope ["openid", "profile", "phone"])',
+  })
 }

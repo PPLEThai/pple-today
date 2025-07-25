@@ -4,9 +4,8 @@ model HashTag {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    postTags             PostTag[]
-    hashTagInTopics      HashTagInTopic[]
-    snnouncementHashTags AnnouncementHashTag[]
+    feedItemHashTags FeedItemHashTag[]
+    hashTagInTopics  HashTagInTopic[]
 
     @@index([name])
 }
@@ -21,6 +20,7 @@ model Topic {
 
     hashTagInTopics HashTagInTopic[]
     followedTopics  UserFollowsTopic[]
+    feedItemTopics  FeedItemTopic[]
 
     @@index([name])
 }

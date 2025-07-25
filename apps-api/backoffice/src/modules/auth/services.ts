@@ -25,8 +25,8 @@ export class AuthService {
     return user
   }
 
-  async registerUser(oidcUser: IntrospectAccessTokenResult) {
-    const newUser = await this.authRepository.createUser(oidcUser)
+  async registerUser(user: IntrospectAccessTokenResult) {
+    const newUser = await this.authRepository.createUser(user)
 
     if (newUser.isErr()) {
       return mapRawPrismaError(newUser.error, {
@@ -59,8 +59,8 @@ export const AuthServicePlugin = new Elysia({ name: 'AuthService', adapter: node
 
         return user
       },
-      async registerUser(oidcUser: IntrospectAccessTokenResult) {
-        const newUser = await authRepository.createUser(oidcUser)
+      async registerUser(user: IntrospectAccessTokenResult) {
+        const newUser = await authRepository.createUser(user)
 
         if (newUser.isErr()) {
           return mapRawPrismaError(newUser.error, {

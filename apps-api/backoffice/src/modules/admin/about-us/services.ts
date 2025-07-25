@@ -13,7 +13,7 @@ export class AboutUsService {
   constructor(private aboutUsRepository: AboutUsRepository) {}
   async getAboutUs() {
     const result = await this.aboutUsRepository.getAboutUs()
-    if (result.isErr()) return mapRawPrismaError(result.error, {})
+    if (result.isErr()) return mapRawPrismaError(result.error)
 
     return ok(
       result.value.map((data) => ({
@@ -28,7 +28,7 @@ export class AboutUsService {
 
   async createAboutUs(data: Omit<AboutUs, 'id'>) {
     const result = await this.aboutUsRepository.createAboutUs(data)
-    if (result.isErr()) return mapRawPrismaError(result.error, {})
+    if (result.isErr()) return mapRawPrismaError(result.error)
 
     return ok({ message: `About us "${data.title}" created.` })
   }

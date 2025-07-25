@@ -4,30 +4,28 @@ enum AnnouncementType {
     INTERNAL
 }
 
+// Published Announcement model
 model Announcement {
-    id      String           @id @default(cuid())
-    title   String
-    content String?
-    type    AnnouncementType
+    feedItemId String           @id @default(cuid())
+    title      String
+    content    String?
+    type       AnnouncementType
 
+    iconImage       String?
+    backgroundColor String?
+
+    feedItem FeedItem @relation(fields: [feedItemId], references: [id])
+}
+
+// Draft Announcement model
+model AnnouncementDraft {
+    id              String            @id @default(cuid())
+    title           String?
+    content         String?
+    type            AnnouncementType?
     iconImage       String?
     backgroundColor String?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
-
-    announcementHashTags AnnouncementHashTag[]
-}
-
-model AnnouncementHashTag {
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    announcementId String
-    announcement   Announcement @relation(fields: [announcementId], references: [id])
-
-    hashTagId String
-    hashTag   HashTag @relation(fields: [hashTagId], references: [id])
-
-    @@id([announcementId, hashTagId])
 }
