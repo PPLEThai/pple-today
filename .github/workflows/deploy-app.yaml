@@ -47,12 +47,13 @@ jobs:
       - name: Set tag name
         id: set_tag
         run: |
-          if [ -z "${{ github.event.inputs.tag_name }}" ]; then
-            echo "No tag name provided, using commit SHA."
-            echo "TAG_NAME=${{ inputs.environment }}-${{ github.sha }}" >> $GITHUB_OUTPUT
+          if [[ "${{ github.ref_name }}" == "refs/tags/"* ]]; then
+            ref_name=$(git branch -r --contains ${{ github.ref }} --format "%(refname:lstrip=3)")
+            echo "This is a tag event. Using '${{ ref_name }}' as tag name."
+            echo "tag_name=${{ ref_name }}" >> $GITHUB_OUTPUT
           else
-            echo "Using provided tag name: ${{ github.event.inputs.tag_name }}"
-            echo "TAG_NAME=${{ github.event.inputs.tag_name }}" >> $GITHUB_OUTPUT
+            echo "This is not a tag event. Using 'latest' as tag name."
+            echo "tag_name=${{ github.event.inputs.environment }}-${{ github.sha }}" >> $GITHUB_OUTPUT
           fi
 
   deploy-mobile-app:
