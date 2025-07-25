@@ -64,18 +64,15 @@ jobs:
         id: check-mobile-changes
         shell: bash
         run: |
-          # `turbo-ignore` exits with 0 if workspace didn't change, and a non-zero (error) if it did change
-          # evaluate exit code to output true/false if packaged changed.
-          run: |
-            # disable "exit on failure"
-            set +e
-            npx -y turbo-ignore @client/mobile --fallback ${{ github.event.pull_request.base.sha }}
-            if [ $? -eq 0 ]
-            then
-              echo "MOBILE_CHANGES=false" >> $GITHUB_OUTPUT
-            else
-              echo "MOBILE_CHANGES=true" >> $GITHUB_OUTPUT
-            fi
+          # disable "exit on failure"
+          set +e
+          npx -y turbo-ignore @client/mobile --fallback ${{ github.event.pull_request.base.sha }}
+          if [ $? -eq 0 ]
+          then
+            echo "MOBILE_CHANGES=false" >> $GITHUB_OUTPUT
+          else
+            echo "MOBILE_CHANGES=true" >> $GITHUB_OUTPUT
+          fi
 
       - name: Run Prebuild
         if: ${{ github.event_name == 'push' || steps.check-mobile-changes.outputs.MOBILE_CHANGES == 'true' }}
