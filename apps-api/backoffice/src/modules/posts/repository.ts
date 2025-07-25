@@ -27,6 +27,23 @@ export class PostRepository {
         select: {
           title: true,
           content: true,
+          images: {
+            select: {
+              id: true,
+              url: true,
+              createdAt: true,
+            },
+          },
+          hashTags: {
+            select: {
+              hashTag: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
           feedItem: {
             select: {
               createdAt: true,
@@ -42,23 +59,6 @@ export class PostRepository {
                   id: true,
                   name: true,
                   profileImage: true,
-                  createdAt: true,
-                },
-              },
-              hashTags: {
-                select: {
-                  hashTag: {
-                    select: {
-                      id: true,
-                      name: true,
-                    },
-                  },
-                },
-              },
-              images: {
-                select: {
-                  id: true,
-                  url: true,
                   createdAt: true,
                 },
               },
