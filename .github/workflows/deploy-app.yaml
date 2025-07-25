@@ -43,7 +43,7 @@ permissions:
 jobs:
   get-tag-name:
     name: Get Tag Name
-    if: ${{ github.event.inputs.backoffice == true || github.event.inputs.api == true }}
+    if: ${{ (github.event.inputs.backoffice == true) || (github.event.inputs.api == true) }}
     runs-on: ubuntu-latest
     outputs:
       TAG_NAME: ${{ steps.set-tag.outputs.TAG_NAME }}
