@@ -96,8 +96,7 @@ jobs:
           cache-to: type=gha,mode=max
           args: |
             VERSION=${{ inputs.TAG_NAME }}
-          tags: |
-            ${{ inputs.DOCKER_REGISTRY }}/${{ env.OWNER_LC }}/${{ inputs.PACKAGE_NAME }}:${{ inputs.TAG_NAME }}
+          tags: ${{ inputs.DOCKER_REGISTRY }}/${{ env.OWNER_LC }}/${{ inputs.PACKAGE_NAME }}:${{ inputs.TAG_NAME }}
 
   deploy-app:
     name: Deploy app
@@ -133,9 +132,6 @@ jobs:
             cd ~/app
 
             docker compose -f ${{ inputs.DOCKER_COMPOSE_FILE }} down
-
-            cp template/${{ inputs.DOCKER_COMPOSE_FILE }}.tmpl ${{ inputs.DOCKER_COMPOSE_FILE }}.temp
-            sed -i "s|\${{ DOCKER_IMAGE }}|${{ inputs.DOCKER_REGISTRY }}/${{ env.OWNER_LC }}/${{ inputs.PACKAGE_NAME }}:${{ inputs.TAG_NAME }}|g" ${{ inputs.DOCKER_COMPOSE_FILE }}.temp
-            mv ${{ inputs.DOCKER_COMPOSE_FILE }}.temp ${{ inputs.DOCKER_COMPOSE_FILE }}
+            yq -e '.services."${{ inputs.PACKAGE_NAME }}".image = "${{ inputs.DOCKER_REGISTRY }}/${{ env.OWNER_LC }}/${{ inputs.PACKAGE_NAME }}:${{ inputs.TAG_NAME }}"' templates/${{ inputs.DOCKER_COMPOSE_FILE }}.tmpl > ${{ inputs.DOCKER_COMPOSE_FILE }}
 
             docker compose -f ${{ inputs.DOCKER_COMPOSE_FILE }} up -d
