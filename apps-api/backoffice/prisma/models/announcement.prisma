@@ -13,19 +13,74 @@ model Announcement {
 
     iconImage       String?
     backgroundColor String?
+    topics          AnnouncementTopic[]
+    attachments     AnnouncementFile[]
 
     feedItem FeedItem @relation(fields: [feedItemId], references: [id])
 }
 
-// Draft Announcement model
-model AnnouncementDraft {
-    id              String            @id @default(cuid())
-    title           String?
-    content         String?
-    type            AnnouncementType?
-    iconImage       String?
-    backgroundColor String?
+model AnnouncementTopic {
+    announcementId String
+    topicId        String
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+
+    announcement Announcement @relation(fields: [announcementId], references: [feedItemId])
+    topic        Topic        @relation(fields: [topicId], references: [id])
+
+    @@id([announcementId, topicId])
+}
+
+model AnnouncementFile {
+    id             String   @id @default(cuid())
+    announcementId String
+    url            String
+    createdAt      DateTime @default(now())
+    updatedAt      DateTime @updatedAt
+
+    announcement Announcement @relation(fields: [announcementId], references: [feedItemId])
+
+    @@index([announcementId])
+}
+
+// Draft Announcement model
+model AnnouncementDraft {
+    id      String            @id @default(cuid())
+    title   String?
+    content String?
+    type    AnnouncementType?
+
+    iconImage       String?
+    backgroundColor String?
+    topics          AnnouncementTopicDraft[]
+    attachments     AnnouncementFileDraft[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
+
+model AnnouncementTopicDraft {
+    announcementDraftId String
+    topicId             String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    announcementDraft AnnouncementDraft @relation(fields: [announcementDraftId], references: [id])
+    topic             Topic             @relation(fields: [topicId], references: [id])
+
+    @@id([announcementDraftId, topicId])
+}
+
+model AnnouncementFileDraft {
+    id                  String   @id @default(cuid())
+    announcementDraftId String
+    url                 String
+    createdAt           DateTime @default(now())
+    updatedAt           DateTime @updatedAt
+
+    announcementDraft AnnouncementDraft @relation(fields: [announcementDraftId], references: [id])
+
+    @@index([announcementDraftId])
 }
