@@ -66,7 +66,7 @@ jobs:
     uses: ./.github/workflows/deploy-docker.yaml
     with:
       PACKAGE_NAME: pple-backoffice
-      TAG_NAME: ${{ jobs.get-tag-name.outputs.TAG_NAME }}
+      TAG_NAME: ${{ needs.get-tag-name.outputs.TAG_NAME }}
       DOCKER_COMPOSE_FILE: docker-compose.backoffice.yaml
       DOCKER_REGISTRY: ghcr.io
       DOCKERFILE_PATH: ./apps-client/backoffice/Dockerfile
@@ -86,7 +86,7 @@ jobs:
     uses: ./.github/workflows/deploy-docker.yaml
     with:
       PACKAGE_NAME: pple-api
-      TAG_NAME: ${{ steps.get-tag-name.outputs.TAG_NAME }}
+      TAG_NAME: ${{ needs.get-tag-name.outputs.TAG_NAME }}
       DOCKER_COMPOSE_FILE: docker-compose.api.yaml
       DOCKER_REGISTRY: ghcr.io
       DOCKERFILE_PATH: ./apps-api/backoffice/Dockerfile
