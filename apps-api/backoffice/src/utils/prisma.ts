@@ -55,10 +55,10 @@ type RawPrismaError = ReturnType<typeof resolvePrismaError>
 export const mapRawPrismaError = <
   T extends Partial<Record<RawPrismaError['code'], ApiErrorResponse<InternalErrorCode>>> & {
     INTERNAL_SERVER_ERROR?: string
-  },
+  } = {},
 >(
   error: RawPrismaError,
-  mapping: T
+  mapping?: T
 ): Err<
   never,
   Simplify<
@@ -69,7 +69,7 @@ export const mapRawPrismaError = <
     >
   >
 > => {
-  const mappedError = mapping[error.code]
+  const mappedError = mapping?.[error.code]
 
   if (mappedError) {
     return err(mappedError) as any
@@ -77,6 +77,6 @@ export const mapRawPrismaError = <
 
   return err({
     code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-    message: mapping.INTERNAL_SERVER_ERROR ?? 'An unexpected error occurred',
+    message: mapping?.INTERNAL_SERVER_ERROR ?? 'An unexpected error occurred',
   }) as any
 }

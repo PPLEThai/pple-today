@@ -1,0 +1,12 @@
+model FacebookPage {
+  id                String   @id @default(cuid())
+  name              String   @unique
+  profilePictureUrl String?
+  isSubscribed      Boolean  @default(true)
+  pageAccessToken   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  managerId String? @unique
+  manager   User?   @relation(fields: [managerId], references: [id])
+}

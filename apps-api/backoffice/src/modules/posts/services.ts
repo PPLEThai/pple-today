@@ -6,13 +6,14 @@ import { CreatePostReactionBody, GetPostByIdResponse } from './models'
 import { PostRepository, PostRepositoryPlugin } from './repository'
 
 import { InternalErrorCode } from '../../dtos/error'
+import { PostComment, PostReactionType } from '../../dtos/post'
 import { mapRawPrismaError } from '../../utils/prisma'
 
 export class PostService {
   constructor(private postRepository: PostRepository) {}
 
-  async getPostById(postId: string, userId: string) {
-    const result = await this.postRepository.getPostById(postId, userId)
+  async getPostById(postId: string, userId?: string) {
+    const result = await this.postRepository.getPostById({ postId })
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         RECORD_NOT_FOUND: {
@@ -20,32 +21,48 @@ export class PostService {
         },
       })
 
+    let userReaction: PostReactionType | undefined
+
+    if (userId) {
+      const userReactionResult = await this.postRepository.getUserPostReaction({
+        postId,
+        userId,
+      })
+
+      if (userReactionResult.isErr()) {
+        return mapRawPrismaError(userReactionResult.error)
+      }
+
+      userReaction = userReactionResult.value?.type
+    }
+
     const postDetails = result.value
 
     return ok({
-      author: {
-        id: postDetails.author.id,
-        name: postDetails.author.name,
-        province: '',
-        profileImage: postDetails.author.profileImage ?? undefined,
-      },
-      commentCount: postDetails.commentCount,
+      id: postId,
+      title: postDetails.title,
       content: postDetails.content ?? '',
-      hashTags: postDetails.postTags.map((tag) => ({
+      author: {
+        id: postDetails.feedItem.author.id,
+        name: postDetails.feedItem.author.name,
+        province: '',
+        profileImage: postDetails.feedItem.author.profileImage ?? undefined,
+      },
+      commentCount: postDetails.feedItem.numberOfComments,
+      hashTags: postDetails.feedItem.hashTags.map((tag) => ({
         id: tag.hashTag.id,
         name: tag.hashTag.name,
       })),
-      id: postDetails.id,
-      createdAt: postDetails.createdAt.toISOString(),
-      reactions: postDetails.reactions.map((reaction) => ({
+      createdAt: postDetails.feedItem.createdAt.toISOString(),
+      reactions: postDetails.feedItem.reactionCounts.map((reaction) => ({
         type: reaction.type,
         count: reaction.count,
       })),
-      title: postDetails.title,
+      userReaction,
     } satisfies GetPostByIdResponse)
   }
 
-  async getPostComments(postId: string, query: { userId: string; page?: number; limit?: number }) {
+  async getPostComments(postId: string, query: { userId?: string; page?: number; limit?: number }) {
     const postComments = await this.postRepository.getPostComments(postId, {
       userId: query.userId,
       page: query.page ?? 1,
@@ -59,12 +76,33 @@ export class PostService {
         },
       })
 
-    return ok(postComments.value)
+    return ok(
+      postComments.value.map(
+        (comment) =>
+          ({
+            id: comment.id,
+            content: comment.content,
+            createdAt: comment.createdAt,
+            isPrivate: comment.isPrivate,
+            author: {
+              id: comment.user.id,
+              name: comment.user.name,
+              profileImage: comment.user.profileImage ?? undefined,
+              province: '',
+            },
+          }) satisfies PostComment
+      )
+    )
   }
 
   async createPostReaction(postId: string, userId: string, data: CreatePostReactionBody) {
-    const comment = data.type === 'DOWN_VOTE' ? data.comment : undefined
-    const result = await this.postRepository.createPostReaction(postId, userId, data.type, comment)
+    const comment = data.type === PostReactionType.DOWN_VOTE ? data.comment : undefined
+    const result = await this.postRepository.createPostReaction({
+      postId,
+      userId,
+      type: data.type,
+      content: comment,
+    })
 
     if (result.isErr()) {
       return mapRawPrismaError(result.error, {
@@ -83,7 +121,7 @@ export class PostService {
   }
 
   async deletePostReaction(postId: string, userId: string) {
-    const result = await this.postRepository.deletePostReaction(postId, userId)
+    const result = await this.postRepository.deletePostReaction({ postId, userId })
 
     if (result.isErr()) {
       return mapRawPrismaError(result.error, {
@@ -99,7 +137,7 @@ export class PostService {
   }
 
   async createPostComment(postId: string, userId: string, content: string) {
-    const result = await this.postRepository.createPostComment(postId, userId, { content })
+    const result = await this.postRepository.createPostComment({ postId, userId, content })
 
     if (result.isErr()) {
       return mapRawPrismaError(result.error, {
@@ -116,7 +154,10 @@ export class PostService {
   }
 
   async updatePostComment(postId: string, commentId: string, userId: string, content: string) {
-    const result = await this.postRepository.updatePostComment(postId, commentId, userId, {
+    const result = await this.postRepository.updatePostComment({
+      postId,
+      commentId,
+      userId,
       content,
     })
 
@@ -135,7 +176,7 @@ export class PostService {
   }
 
   async deletePostComment(postId: string, commentId: string, userId: string) {
-    const result = await this.postRepository.deletePostComment(postId, commentId, userId)
+    const result = await this.postRepository.deletePostComment({ postId, commentId, userId })
 
     if (result.isErr()) {
       return mapRawPrismaError(result.error, {
