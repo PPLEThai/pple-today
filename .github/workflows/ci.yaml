@@ -60,21 +60,5 @@ jobs:
       - name: Run Type Check and Format Check
         run: pnpm turbo typecheck format:check lint ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}
 
-      - name: Check for changes in mobile apps
-        id: check-mobile-changes
-        shell: bash
-        run: |
-          # disable "exit on failure"
-          set +e
-          npx -y turbo-ignore @client/mobile --fallback ${{ github.event.pull_request.base.sha }}
-          if [ $? -eq 0 ]
-          then
-            echo "MOBILE_CHANGES=false" >> $GITHUB_OUTPUT
-          else
-            echo "MOBILE_CHANGES=true" >> $GITHUB_OUTPUT
-          fi
-
       - name: Run Prebuild
-        if: ${{ github.event_name == 'push' || steps.check-mobile-changes.outputs.MOBILE_CHANGES == 'true' }}
-        working-directory: apps-client/mobile
-        run: npx expo prebuild
+        run: pnpm turbo prebuild ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}

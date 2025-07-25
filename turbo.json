@@ -30,6 +30,10 @@
     "typecheck": {
       "dependsOn": ["^typecheck"],
       "outputs": []
+    },
+    "prebuild": {
+      "dependsOn": ["^prebuild"],
+      "outputs": []
     }
   }
 }
