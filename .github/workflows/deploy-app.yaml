@@ -36,6 +36,10 @@ on:
         description: 'Distribute to these groups'
         default: 'dev-team,qa-team'
 
+permissions:
+  contents: read # for checkout
+  packages: write # to be able to push the Docker image to GitHub Container Registry
+
 jobs:
   get-tag-name:
     name: Get Tag Name

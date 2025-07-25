@@ -50,9 +50,6 @@ jobs:
   release:
     name: Build and push Docker image
     runs-on: ubuntu-latest
-    permissions:
-      contents: read # for checkout
-      packages: write # to be able to push the Docker image to GitHub Container Registry
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -96,8 +93,6 @@ jobs:
     name: Deploy app
     runs-on: ubuntu-latest
     needs: release
-    permissions:
-      packages: read
     steps:
       - name: Write OpenVPN config
         run: echo "${{ secrets.OVPN_CONFIG }}" > client.ovpn
