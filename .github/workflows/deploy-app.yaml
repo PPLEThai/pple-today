@@ -111,3 +111,4 @@ jobs:
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+      DATABASE_HOST_PORT: ${{ secrets.DATABASE_HOST_PORT }}
