@@ -8,6 +8,7 @@ import { InternalErrorCode } from './dtos/error'
 import { AdminController } from './modules/admin'
 import { AuthController } from './modules/auth'
 import { PostsController } from './modules/posts'
+import { ProfileController } from './modules/profile'
 
 import packageJson from '../package.json'
 

@@ -49,7 +49,7 @@ export class PostService {
         profileImage: postDetails.feedItem.author.profileImage ?? undefined,
       },
       commentCount: postDetails.feedItem.numberOfComments,
-      hashTags: postDetails.feedItem.hashTags.map((tag) => ({
+      hashTags: postDetails.hashTags.map((tag) => ({
         id: tag.hashTag.id,
         name: tag.hashTag.name,
       })),
