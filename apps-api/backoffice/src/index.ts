@@ -10,6 +10,8 @@ import { AuthController } from './modules/auth'
 import { PostsController } from './modules/posts'
 import { ProfileController } from './modules/profile'
 
+import packageJson from '../package.json'
+
 const app = new Elysia({ adapter: node() })
   .onError(({ status, code, error }) => {
     if ('response' in error) return status(error.code, error.response)
@@ -59,6 +61,14 @@ const app = new Elysia({ adapter: node() })
   .use(AuthController)
   .use(AdminController)
   .use(ProfileController)
+  .get('/versions', ({ status }) => {
+    const body = JSON.stringify({
+      name: packageJson.name,
+      version: packageJson.version,
+    })
+
+    return status(200, body)
+  })
   .get(
     '/:id',
     ({ params, query, headers }) => {
