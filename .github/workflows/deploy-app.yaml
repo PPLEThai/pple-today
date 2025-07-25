@@ -62,7 +62,7 @@ jobs:
   deploy-backoffice:
     name: Deploy Backoffice
     if: ${{ github.event.inputs.backoffice == true }}
-    uses: ./.github/workflows/deploy-deploy.yaml
+    uses: ./.github/workflows/deploy-docker.yaml
     with:
       PACKAGE_NAME: pple-backoffice
       TAG_NAME: ${{ steps.get-tag-name.outputs.TAG_NAME }}
@@ -81,7 +81,7 @@ jobs:
   deploy-api:
     name: Deploy API
     if: ${{ github.event.inputs.api == true }}
-    uses: ./.github/workflows/deploy-deploy.yaml
+    uses: ./.github/workflows/deploy-docker.yaml
     with:
       PACKAGE_NAME: pple-api
       TAG_NAME: ${{ steps.get-tag-name.outputs.TAG_NAME }}
