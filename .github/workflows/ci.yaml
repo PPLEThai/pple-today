@@ -62,6 +62,7 @@ jobs:
 
       - name: Check for changes in mobile apps
         id: check-mobile-changes
+        shell: bash
         run: |
           # `turbo-ignore` exits with 0 if workspace didn't change, and a non-zero (error) if it did change
           # evaluate exit code to output true/false if packaged changed.
