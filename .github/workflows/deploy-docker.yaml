@@ -47,7 +47,7 @@ on:
         required: true
       WEB_CLIENT_ENV:
         description: Web client environment variables
-        required: true
+        required: false
 
 jobs:
   release:
