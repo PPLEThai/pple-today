@@ -59,7 +59,7 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install -g prisma@^6.11.1
 
       - name: Install OpenVPN
         run: |

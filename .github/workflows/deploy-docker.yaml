@@ -45,6 +45,9 @@ on:
       SSH_PRIVATE_KEY:
         description: SSH private key
         required: true
+      WEB_CLIENT_ENV:
+        description: Web client environment variables
+        required: true
 
 jobs:
   release:
@@ -85,8 +88,9 @@ jobs:
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          args: |
+          build-args: |
             VERSION=${{ inputs.TAG_NAME }}
+            LOCAL_ENV=${{ secrets.WEB_CLIENT_ENV }}
           tags: ${{ inputs.DOCKER_REGISTRY }}/${{ env.OWNER_LC }}/${{ inputs.PACKAGE_NAME }}:${{ inputs.TAG_NAME }}
 
   deploy-app:
