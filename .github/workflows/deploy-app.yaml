@@ -40,19 +40,6 @@ permissions:
   packages: write # to be able to push the Docker image to GitHub Container Registry
 
 jobs:
-  print-all-options:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Print all options
-        run: |
-          echo "Environment: ${{ github.event.inputs.environment }}"
-          echo "Android: ${{ github.event.inputs.android }}"
-          echo "iOS: ${{ github.event.inputs.ios }}"
-          echo "API: ${{ github.event.inputs.api }}"
-          echo "Backoffice: ${{ github.event.inputs.backoffice }}"
-          echo "Migrate Database: ${{ github.event.inputs.migrate-database }}"
-          echo "Mobile Groups: ${{ github.event.inputs.mobile-groups }}"
-
   get-tag-name:
     name: Get Tag Name
     if: ${{ (github.event.inputs.backoffice == 'true') || (github.event.inputs.api == 'true') }}
