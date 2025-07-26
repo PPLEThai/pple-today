@@ -9,7 +9,7 @@ on:
         options:
           - dev
           - staging
-        default: 'staging'
+        default: 'dev'
       android:
         type: boolean
         description: 'Build Android app'
