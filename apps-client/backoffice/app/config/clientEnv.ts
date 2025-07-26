@@ -12,7 +12,17 @@ const CLIENT_ENV_SCHEMA = z.object({
   VITE_API_URL: z.string().url(),
 })
 
-const clientEnvResult = CLIENT_ENV_SCHEMA.safeParse(import.meta.env)
+const clientEnvResult = CLIENT_ENV_SCHEMA.safeParse({
+  VITE_OIDC_AUTHORITY_URL: import.meta.env.VITE_OIDC_AUTHORITY_URL,
+  VITE_OIDC_CLIENT_ID: import.meta.env.VITE_OIDC_CLIENT_ID,
+  VITE_OIDC_REDIRECT_URL: import.meta.env.VITE_OIDC_REDIRECT_URL,
+  VITE_OIDC_ADDITIONAL_SCOPE: import.meta.env.VITE_OIDC_ADDITIONAL_SCOPE,
+
+  VITE_FACEBOOK_APP_ID: import.meta.env.VITE_FACEBOOK_APP_ID,
+  VITE_FACEBOOK_REDIRECT_URL: import.meta.env.VITE_FACEBOOK_REDIRECT_URL,
+
+  VITE_API_URL: import.meta.env.VITE_API_URL,
+})
 
 if (!clientEnvResult.success) {
   console.error('Invalid client environment variables:', clientEnvResult.error.format())
