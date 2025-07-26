@@ -86,7 +86,7 @@ jobs:
       TAG_NAME: ${{ needs.get-tag-name.outputs.TAG_NAME }}
       DOCKER_COMPOSE_FILE: docker-compose.backoffice.yaml
       DOCKER_REGISTRY: ghcr.io
-      DOCKERFILE_PATH: ./apps-client/backoffice/Dockerfile
+      PROJECT_PATH: ./apps-client/backoffice
     secrets:
       OVPN_CONFIG: ${{ secrets.OVPN_CONFIG }}
       OVPN_USERNAME: ${{ secrets.OVPN_USERNAME }}
@@ -107,7 +107,7 @@ jobs:
       TAG_NAME: ${{ needs.get-tag-name.outputs.TAG_NAME }}
       DOCKER_COMPOSE_FILE: docker-compose.api.yaml
       DOCKER_REGISTRY: ghcr.io
-      DOCKERFILE_PATH: ./apps-api/backoffice/Dockerfile
+      PROJECT_PATH: ./apps-api/backoffice
     secrets:
       OVPN_CONFIG: ${{ secrets.OVPN_CONFIG }}
       OVPN_USERNAME: ${{ secrets.OVPN_USERNAME }}
