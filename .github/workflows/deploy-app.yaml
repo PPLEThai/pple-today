@@ -4,12 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        type: string
-        description: 'Deployment environment (e.g., dev, staging, production)'
+        type: choice
+        description: 'Deployment environment (e.g., dev, staging)'
         options:
           - dev
           - staging
-          - production
         default: 'staging'
       android:
         type: boolean
