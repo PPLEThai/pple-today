@@ -1,7 +1,7 @@
 model FacebookPage {
   id                String   @id @default(cuid())
   name              String   @unique
-  profilePictureUrl String?
+  profilePictureUrl String
   isSubscribed      Boolean  @default(true)
   pageAccessToken   String?
   createdAt         DateTime @default(now())

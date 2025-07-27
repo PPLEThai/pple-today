@@ -1,7 +1,7 @@
 model Post {
-    feedItemId String @id @default(cuid())
+    feedItemId     String @id @default(cuid())
+    facebookPostId String @unique
 
-    title    String
     content  String?
     images   PostImage[]
     hashTags PostHashTag[]

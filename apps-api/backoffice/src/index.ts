@@ -7,6 +7,7 @@ import serverEnv from './config/env'
 import { InternalErrorCode } from './dtos/error'
 import { AdminController } from './modules/admin'
 import { AuthController } from './modules/auth'
+import { FacebookController } from './modules/facebook'
 import { PostsController } from './modules/posts'
 import { ProfileController } from './modules/profile'
 
@@ -60,6 +61,7 @@ let app = new Elysia({ adapter: node() })
   .use(AuthController)
   .use(AdminController)
   .use(ProfileController)
+  .use(FacebookController)
   .get('/versions', ({ status }) => {
     const body = JSON.stringify({
       name: packageJson.name,

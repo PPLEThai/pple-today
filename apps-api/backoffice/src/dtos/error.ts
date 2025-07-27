@@ -79,12 +79,25 @@ const USER_ERROR_SCHEMA = {
   },
 } satisfies InternalErrorSchemas
 
+const FACEBOOK_ERROR_SCHEMA = {
+  FACEBOOK_INVALID_RESPONSE: {
+    status: 400,
+  },
+  FACEBOOK_INVALID_ACCESS_TOKEN: {
+    status: 401,
+  },
+  FACEBOOK_API_ERROR: {
+    status: 500,
+  },
+} satisfies InternalErrorSchemas
+
 export const InternalErrorCodeSchemas = {
   ...AUTH_ERROR_SCHEMA,
   ...COMMON_ERROR_SCHEMA,
   ...POST_ERROR_SCHEMA,
   ...ABOUT_US_ERROR_SCHEMA,
   ...USER_ERROR_SCHEMA,
+  ...FACEBOOK_ERROR_SCHEMA,
 } as const
 export type InternalErrorCodeSchemas = typeof InternalErrorCodeSchemas
 
