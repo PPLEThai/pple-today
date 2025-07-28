@@ -1,4 +1,4 @@
-import { t } from 'elysia'
+import { Static, t } from 'elysia'
 
 export const ExternalFacebookErrorBody = t.Object({
   error: t.Object({
@@ -145,6 +145,7 @@ export const ExternalFacebookPostMessageHashtag = t.Object({
   offset: t.Number({ description: 'Offset in the message where the hashtag starts' }),
   length: t.Number({ description: 'Length of the hashtag in characters' }),
 })
+export type ExternalFacebookPostMessageHashtag = Static<typeof ExternalFacebookPostMessageHashtag>
 
 export const ExternalFacebookPostAttachment = t.Object({
   media: t.Object({
@@ -161,6 +162,7 @@ export const ExternalFacebookPostAttachment = t.Object({
   type: t.String({ description: 'Type of the attachment (e.g., photo)' }),
   url: t.String({ description: 'URL of the attachment', format: 'uri' }),
 })
+export type ExternalFacebookPostAttachment = Static<typeof ExternalFacebookPostAttachment>
 
 export const ExternalFacebookPagePost = t.Object({
   id: t.String({ description: 'ID of the Facebook page post' }),
@@ -183,6 +185,7 @@ export const ExternalFacebookPagePost = t.Object({
     })
   ),
 })
+export type ExternalFacebookPagePost = Static<typeof ExternalFacebookPagePost>
 
 export const ExternalFacebookGetPagePostsResponse = t.Object(
   {
@@ -193,3 +196,6 @@ export const ExternalFacebookGetPagePostsResponse = t.Object(
     description: 'Response containing details of a Facebook page post',
   }
 )
+export type ExternalFacebookGetPagePostsResponse = Static<
+  typeof ExternalFacebookGetPagePostsResponse
+>

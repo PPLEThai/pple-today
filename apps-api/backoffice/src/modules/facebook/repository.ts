@@ -3,6 +3,7 @@ import { Check } from '@sinclair/typebox/value'
 import { Elysia } from 'elysia'
 import { err, fromPromise, ok } from 'neverthrow'
 
+import { FeedItemType } from '../../../__generated__/prisma'
 import serverEnv from '../../config/env'
 import { InternalErrorCode } from '../../dtos/error'
 import {
@@ -12,6 +13,7 @@ import {
   ExternalFacebookGetPagePostsResponse,
   ExternalFacebookInspectAccessTokenResponse,
   ExternalFacebookListUserPageResponse,
+  ExternalFacebookPagePost,
 } from '../../dtos/facebook'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
@@ -150,9 +152,109 @@ export class FacebookRepository {
     return ok(response.value)
   }
 
-  private async subscribeToPostUpdates(pageId: string, pageAccessToken: string) {}
+  // TODO: Implement the following methods when webhooks are available
+  private async subscribeToPostUpdates(userId: string, pageId: string) {
+    return await fromPrismaPromise(
+      this.prismaService.facebookPage.update({
+        where: { id: pageId },
+        data: {
+          isSubscribed: true,
+        },
+      })
+    )
+  }
 
-  private async unsubscribeFromPostUpdates(pageId: string, pageAccessToken: string) {}
+  private async unsubscribeFromPostUpdates(userId: string, pageId: string) {
+    return await fromPrismaPromise(
+      this.prismaService.facebookPage.update({
+        where: { id: pageId, managerId: userId },
+        data: {
+          isSubscribed: false,
+        },
+      })
+    )
+  }
+
+  private async syncPostsFromPage(userId: string, posts: ExternalFacebookPagePost[]) {
+    this.prismaService.$transaction(async (tx) => {
+      await Promise.all(
+        posts.map(async (post) => {
+          const existingPost = await tx.post.findUnique({
+            where: { facebookPostId: post.id },
+            include: {
+              images: true,
+              hashTags: {
+                include: {
+                  hashTag: true,
+                },
+              },
+            },
+          })
+
+          if (existingPost) {
+            await tx.post.update({
+              where: { feedItemId: existingPost.feedItemId },
+              data: {
+                content: post.message,
+                images: {
+                  deleteMany: {},
+                  create:
+                    post.attachments?.map((attachment) => ({
+                      url: attachment.media.image.src,
+                    })) ?? [],
+                },
+                hashTags: {
+                  deleteMany: {},
+                  create:
+                    post.message_tags?.map((tag) => ({
+                      hashTag: {
+                        connectOrCreate: {
+                          where: { name: tag.data.name },
+                          create: { name: tag.data.name },
+                        },
+                      },
+                    })) ?? [],
+                },
+              },
+            })
+            return
+          }
+
+          await tx.feedItem.create({
+            data: {
+              author: {
+                connect: { id: userId },
+              },
+              type: FeedItemType.POST,
+              post: {
+                create: {
+                  facebookPostId: post.id,
+                  content: post.message,
+                  hashTags: {
+                    create:
+                      post.message_tags?.map((tag) => ({
+                        hashTag: {
+                          connectOrCreate: {
+                            where: { name: tag.data.name },
+                            create: { name: tag.data.name },
+                          },
+                        },
+                      })) ?? [],
+                  },
+                  images: {
+                    create:
+                      post.attachments?.map((attachment) => ({
+                        url: attachment.media.image.src,
+                      })) ?? [],
+                  },
+                },
+              },
+            },
+          })
+        })
+      )
+    })
+  }
 
   async getUserAccessToken(code: string, redirectUri: string) {
     const queryParams = new URLSearchParams({
@@ -269,6 +371,14 @@ export class FacebookRepository {
       return err(initialPagePosts.error)
     }
 
+    await this.syncPostsFromPage(userId, initialPagePosts.value.data)
+
+    const result = await this.subscribeToPostUpdates(userId, facebookPageId)
+
+    if (result.isErr()) {
+      return err(result.error)
+    }
+
     return ok()
   }
 
@@ -283,6 +393,12 @@ export class FacebookRepository {
 
     if (deleteResult.isErr()) {
       return err(deleteResult.error)
+    }
+
+    const unsubscribeResult = await this.unsubscribeFromPostUpdates(userId, deleteResult.value.id)
+
+    if (unsubscribeResult.isErr()) {
+      return err(unsubscribeResult.error)
     }
 
     return ok()
