@@ -40,6 +40,19 @@ const envConfigSchema = t.Object({
   }),
   FACEBOOK_APP_ID: t.String({ description: 'Facebook App ID' }),
   FACEBOOK_APP_SECRET: t.String({ description: 'Facebook App Secret' }),
+
+  GCP_PROJECT_ID: t.String({
+    description: 'Google Cloud Project ID',
+  }),
+  GCP_CLIENT_EMAIL: t.String({
+    description: 'Google Cloud Client Email',
+  }),
+  GCP_PRIVATE_KEY: t.String({
+    description: 'Google Cloud Private Key',
+  }),
+  GCP_STORAGE_BUCKET_NAME: t.String({
+    description: 'Google Cloud Storage Bucket Name',
+  }),
 })
 
 const serverEnv = Value.Parse(envConfigSchema, process.env)

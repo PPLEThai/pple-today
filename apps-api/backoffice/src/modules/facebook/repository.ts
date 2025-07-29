@@ -17,6 +17,7 @@ import {
 } from '../../dtos/facebook'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
+import { FileService, FileServicePlugin } from '../file/services'
 
 export class FacebookRepository {
   private apiAccessToken: {
@@ -30,6 +31,7 @@ export class FacebookRepository {
       appId: string
       appSecret: string
     },
+    private readonly fileService: FileService,
     private readonly prismaService: PrismaService
   ) {}
 
@@ -385,6 +387,19 @@ export class FacebookRepository {
       return err(pageDetails.error)
     }
 
+    const profilePictureUrl = `profile/profile-picture-${facebookPageId}.png`
+    const uploadResult = await fromPromise(
+      this.fileService.uploadFileStream(pageDetails.value.picture.data.url, profilePictureUrl),
+      (err) => ({
+        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+        message: `Failed to upload profile image: ${(err as any).message}`,
+      })
+    )
+
+    if (uploadResult.isErr()) {
+      return err(uploadResult.error)
+    }
+
     const createResult = await fromPrismaPromise(
       this.prismaService.facebookPage.upsert({
         where: {
@@ -393,7 +408,7 @@ export class FacebookRepository {
         create: {
           id: facebookPageId,
           name: pageDetails.value.name,
-          profilePictureUrl: pageDetails.value.picture.data.url,
+          profilePictureUrl,
           pageAccessToken: facebookPageAccessToken,
           manager: {
             connect: { id: userId },
@@ -402,7 +417,7 @@ export class FacebookRepository {
         },
         update: {
           name: pageDetails.value.name,
-          profilePictureUrl: pageDetails.value.picture.data.url,
+          profilePictureUrl,
           pageAccessToken: facebookPageAccessToken,
           manager: {
             connect: { id: userId },
@@ -471,15 +486,27 @@ export class FacebookRepository {
       return err(linkedPage.error)
     }
 
-    return ok(
-      linkedPage.value
-        ? {
-            id: linkedPage.value.id,
-            name: linkedPage.value.name,
-            profilePictureUrl: linkedPage.value.profilePictureUrl,
-          }
-        : null
+    if (!linkedPage.value) {
+      return ok(null)
+    }
+
+    const profilePictureUrl = await fromPromise(
+      this.fileService.getSignedUrl(linkedPage.value.profilePictureUrl),
+      (err) => ({
+        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+        message: `Failed to get signed URL for profile picture: ${(err as any).message}`,
+      })
     )
+
+    if (profilePictureUrl.isErr()) {
+      return err(profilePictureUrl.error)
+    }
+
+    return ok({
+      id: linkedPage.value.id,
+      name: linkedPage.value.name,
+      profilePictureUrl: profilePictureUrl.value,
+    })
   }
 }
 
@@ -487,13 +514,15 @@ export const FacebookRepositoryPlugin = new Elysia({
   name: 'FacebookRepository',
 })
   .use(PrismaServicePlugin)
-  .decorate(({ prismaService }) => ({
+  .use(FileServicePlugin)
+  .decorate(({ prismaService, fileService }) => ({
     facebookRepository: new FacebookRepository(
       {
         apiUrl: serverEnv.FACEBOOK_API_URL,
         appId: serverEnv.FACEBOOK_APP_ID,
         appSecret: serverEnv.FACEBOOK_APP_SECRET,
       },
+      fileService,
       prismaService
     ),
   }))

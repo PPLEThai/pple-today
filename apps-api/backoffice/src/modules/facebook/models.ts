@@ -3,9 +3,11 @@ import { Static, t } from 'elysia'
 export const RequestAccessTokenQuery = t.Object({
   code: t.String({
     description: 'The authorization code received from Facebook after user consent',
+    minLength: 1,
   }),
   redirectUri: t.String({
     description: 'The redirect URI used in the OAuth flow',
+    format: 'uri',
   }),
 })
 export type RequestAccessTokenQuery = Static<typeof RequestAccessTokenQuery>
@@ -28,6 +30,7 @@ export type RequestAccessTokenResponse = Static<typeof RequestAccessTokenRespons
 export const GetFacebookUserPageListQuery = t.Object({
   facebookToken: t.String({
     description: 'The access token for the Facebook user',
+    minLength: 1,
   }),
 })
 export type GetFacebookUserPageListQuery = Static<typeof GetFacebookUserPageListQuery>
