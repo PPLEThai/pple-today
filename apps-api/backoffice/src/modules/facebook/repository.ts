@@ -178,7 +178,7 @@ export class FacebookRepository {
   private async subscribeToPostUpdates(userId: string, pageId: string) {
     return await fromPrismaPromise(
       this.prismaService.facebookPage.update({
-        where: { id: pageId },
+        where: { id: pageId, managerId: userId },
         data: {
           isSubscribed: true,
         },
@@ -404,7 +404,9 @@ export class FacebookRepository {
           name: pageDetails.value.name,
           profilePictureUrl: pageDetails.value.picture.data.url,
           pageAccessToken: facebookPageAccessToken,
-          managerId: userId,
+          manager: {
+            connect: { id: userId },
+          },
           isSubscribed: true,
         },
       })
