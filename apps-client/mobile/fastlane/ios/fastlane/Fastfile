@@ -85,11 +85,13 @@ platform :ios do
       output_directory: "./builds",
       # configuration: "Debug",
     )
+    changelog = "Beta build for iOS\n" \
+      "App environment: #{ENV['APP_ENVIRONMENT']}"
     # Switch to use TestFlight instead of Firebase App Distribution
     # If you want to use Firebase App Distribution you need to method `ad-hoc`, please see
     # https://stackoverflow.com/questions/58262038/testers-could-not-download-app-from-firebase-app-distribution/58383782#58383782
     upload_to_testflight(
-      changelog: "TestFlight build for PPLE Today",
+      changelog: changelog,
       # Note: https://github.com/fastlane/fastlane/pull/19735#issuecomment-1084221116
       # You have to disabled the checkbox "Enable automatic distribution" checkbox
       # in App Store Connect when creating the internal group

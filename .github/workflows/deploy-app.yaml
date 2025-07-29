@@ -55,7 +55,7 @@ jobs:
   deploy-mobile-app:
     name: Deploy Beta Mobile App
     if: ${{ (github.event.inputs.android == 'true') || (github.event.inputs.ios == 'true') }}
-    uses: ./.github/workflows/beta-deployment.yaml
+    uses: ./.github/workflows/mobile-beta-deployment.yaml
     secrets: 'inherit'
     with:
       android: ${{ github.event.inputs.android }}
