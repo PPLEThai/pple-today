@@ -1,11 +1,12 @@
 import { View } from 'react-native'
 
-import { Text } from '@pple-today/ui/text'
-
-export default function FollowingFeed() {
+export default function Following() {
   return (
-    <View className="bg-red-300 h-[2000px]">
-      <Text>This is the following feed screen</Text>
+    <View className="flex flex-col gap-3 p-4">
+      <View className="flex flex-col gap-3 p-4 h-40 bg-base-bg-white border border-base-outline-default rounded-2xl"></View>
+      <View className="flex flex-col gap-3 p-4 h-40 bg-base-bg-white border border-base-outline-default rounded-2xl"></View>
+      <View className="flex flex-col gap-3 p-4 h-40 bg-base-bg-white border border-base-outline-default rounded-2xl"></View>
+      <View className="flex flex-col gap-3 p-4 h-40 bg-base-bg-white border border-base-outline-default rounded-2xl"></View>
     </View>
   )
 }

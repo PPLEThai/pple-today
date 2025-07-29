@@ -1,23 +1,21 @@
 import * as React from 'react'
 import {
-  Insets,
   LayoutChangeEvent,
   NativeScrollEvent,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   useWindowDimensions,
   View,
 } from 'react-native'
+import PagerView from 'react-native-pager-view'
 import Animated, {
-  SharedValue,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
 } from 'react-native-reanimated'
-import { SceneMap, TabView } from 'react-native-tab-view'
+import { SceneMap } from 'react-native-tab-view'
 
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
@@ -44,7 +42,7 @@ import { useNonReactiveCallback } from '@app/libs/hooks/useNonReactiveCallback'
 export default function IndexLayout() {
   return (
     <KeyboardAvoidingViewLayout>
-      <TabViewInsideScrollViewExample />
+      <TabViewInsideScroll />
     </KeyboardAvoidingViewLayout>
   )
 }
@@ -53,7 +51,7 @@ function MainHeader() {
   const userQuery = useUser()
   const router = useRouter()
   return (
-    <View className="w-full px-4 pt-10 pb-2 flex flex-row justify-between gap-2 bg-base-bg-white border-b border-base-outline-default">
+    <View className="w-full px-4 pt-10 pb-2 flex flex-row justify-between gap-2 bg-base-bg-white border-b border-base-outline-default pointer-events-box-none">
       <View className="flex flex-row items-center gap-3">
         <Pressable
           className="w-10 h-10 flex flex-col items-center justify-center"
@@ -63,7 +61,7 @@ function MainHeader() {
         </Pressable>
         {/* TODO: What to show when user is loading or not logged in? */}
         {userQuery.data && (
-          <View className="flex flex-col">
+          <View className="flex flex-col pointer-events-none">
             <Text className="font-anakotmai-light text-xs">ยินดีต้อนรับ</Text>
             <Text className="font-anakotmai-bold text-2xl text-base-primary-default">
               {userQuery.data.given_name}
@@ -86,7 +84,7 @@ function MainHeader() {
 
 function TopContainer() {
   return (
-    <View className="flex flex-col w-full bg-base-bg-white">
+    <View className="flex flex-col w-full bg-base-bg-white pointer-events-box-none">
       <BannerSection />
       <EventSection />
       <UserInfoSection />
@@ -108,7 +106,7 @@ interface BannerItem {
 
 function BannerSection() {
   return (
-    <View className="w-full pt-2 py-4">
+    <View className="w-full pt-2 py-4 pointer-events-box-none">
       <Carousel>
         <CarouselScrollView>
           {BANNER_ITEMS.map((item) => (
@@ -168,8 +166,8 @@ function CarouselItem(props: { item: BannerItem }) {
 
 function EventSection() {
   return (
-    <View className="flex flex-col items-center justify-center gap-2 px-4 pb-4">
-      <View className="flex flex-row gap-2 justify-start items-center w-full">
+    <View className="flex flex-col items-center justify-center gap-2 px-4 pb-4 pointer-events-box-none">
+      <View className="flex flex-row gap-2 justify-start items-center w-full pointer-events-none">
         <Icon icon={RadioTowerIcon} size={20} className="text-base-primary-default" />
         <H2 className="text-xl font-anakotmai-bold text-base-text-high">อิเวนต์ตอนนี้</H2>
       </View>
@@ -180,15 +178,15 @@ function EventSection() {
 
 function ElectionCard() {
   return (
-    <View className="w-full bg-base-secondary-default rounded-2xl flex flex-col gap-4 p-4">
+    <View className="w-full bg-base-secondary-default rounded-2xl flex flex-col gap-4 p-4 pointer-events-box-none">
       <View className="flex flex-col items-start gap-2">
         <Badge variant="secondary">
           <Text>เลือกตั้งในสถานที่</Text>
         </Badge>
-        <H3 className="text-base-text-invert font-anakotmai-bold text-lg">
+        <H3 className="text-base-text-invert font-anakotmai-bold text-lg pointer-events-box-none">
           เลือกตั้งตัวแทนสมาชิกพรรคประจำ อ.เมือง จ.ระยอง
         </H3>
-        <View className="flex flex-col gap-1">
+        <View className="flex flex-col gap-1 pointer-events-none">
           <View className="flex flex-row gap-1 items-center">
             <Icon icon={ClockIcon} size={16} className="text-base-text-invert" />
             <Text className="text-sm text-base-text-invert font-anakotmai-light">
@@ -285,24 +283,24 @@ const routes = [
 
 // Ref: https://github.com/bluesky-social/social-app/blob/0610c822cf94995c75bbf3237c217b68dabfe5a0/src/view/com/pager/PagerWithHeader.tsx
 
-export function TabViewInsideScrollViewExample() {
+const AnimatedPagerView = Animated.createAnimatedComponent(PagerView)
+
+export function TabViewInsideScroll() {
   const layout = useWindowDimensions()
   const [index, setIndex] = React.useState(0)
 
+  const headerRef = React.useRef<View>(null)
   const isHeaderReady = React.useState(false)
-
   const [headerOnlyHeight, setHeaderOnlyHeight] = React.useState(0)
   const [tabBarHeight, setTabBarHeight] = React.useState(0)
-
   const headerHeight = headerOnlyHeight + tabBarHeight
 
   const scrollY = useSharedValue(0)
-
   const onScrollWorklet = React.useCallback(
     (e: NativeScrollEvent) => {
       'worklet'
       const nextScrollY = e.contentOffset.y
-      console.log('onScrollWorklet', nextScrollY)
+      // console.log('onScrollWorklet', nextScrollY)
       // HACK: onScroll is reporting some strange values on load (negative header height).
       // Highly improbable that you'd be overscrolled by over 400px -
       // in fact, I actually can't do it, so let's just ignore those. -sfn
@@ -321,11 +319,6 @@ export function TabViewInsideScrollViewExample() {
   const headerTransform = useAnimatedStyle(() => {
     return {
       transform: [{ translateY: -scrollY.get() }],
-    }
-  })
-  const transform = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateY: scrollY.get() }],
     }
   })
   const scrollIndicatorInsets = useDerivedValue(() => ({
@@ -347,72 +340,113 @@ export function TabViewInsideScrollViewExample() {
     }
   })
 
-  const headerRef = React.useRef<View>(null)
+  // const scrollRefs = useSharedValue<(AnimatedRef<any> | null)[]>([])
+  // const registerRef = React.useCallback(
+  //   (scrollRef: AnimatedRef<any> | null, atIndex: number) => {
+  //     scrollRefs.modify((refs) => {
+  //       'worklet'
+  //       refs[atIndex] = scrollRef
+  //       return refs
+  //     })
+  //   },
+  //   [scrollRefs]
+  // )
+
   return (
-    <>
+    <View className="flex-1 bg-base-bg-default">
       <Animated.View
-        pointerEvents={Platform.OS === 'ios' ? 'none' : 'none'}
+        pointerEvents="box-none"
         style={[styles.pageHeader, headerTransform]}
         ref={headerRef}
+        collapsable={false}
         onLayout={() => {
           headerRef.current?.measure((_x: number, _y: number, _width: number, height: number) => {
             onHeaderOnlyLayout(height)
           })
         }}
       >
+        {/* <View> */}
         <MainHeader />
         <TopContainer />
-        <View className="px-4 bg-base-bg-white flex flex-row items-start" pointerEvents="box-none">
+        <View className="px-4 bg-base-bg-white flex flex-row items-start pointer-events-none">
           <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
         </View>
+        {/* </View> */}
       </Animated.View>
-      <Animated.ScrollView
-        onScroll={scrollHandler}
-        style={{ paddingTop: headerHeight }}
-        scrollIndicatorInsets={scrollIndicatorInsets as SharedValue<Insets | undefined>}
-      >
-        <TabView
-          style={{ height: 2000 }}
-          navigationState={{ index, routes }}
-          renderScene={renderScene}
-          onIndexChange={setIndex}
-          initialLayout={{ width: layout.width }}
-        />
-      </Animated.ScrollView>
-    </>
+      {/* PagerProvider */}
+      <>
+        {/* <TabBar
+        items={items}
+        selectedPage={currentPage}
+        onSelect={onSelect}
+        onPressSelected={onCurrentPageSelected}
+        dragProgress={dragProgress}
+        dragState={dragState}
+        /> */}
+        {/* <Animated.ScrollView
+          onScroll={scrollHandler}
+          style={{ paddingTop: headerHeight }}
+          // scrollIndicatorInsets={scrollIndicatorInsets as SharedValue<Insets | undefined>}
+        ></Animated.ScrollView> */}
+
+        <AnimatedPagerView style={styles.pagerView} initialPage={0}>
+          {Array.from({ length: 3 }).map((_, index) => (
+            <View key={index} collapsable={false}>
+              <Animated.FlatList
+                onScroll={scrollHandler}
+                showsVerticalScrollIndicator
+                style={{ flex: 1 }}
+                contentContainerStyle={{ paddingTop: headerHeight + 16 }}
+                // contentOffset={{ x: 0, y: -headerHeight }}
+                contentInsetAdjustmentBehavior="scrollableAxes"
+                // scrollIndicatorInsets={{ top: headerHeight }}
+                // automaticallyAdjustsScrollIndicatorInsets={false}
+                // contentContainerStyle={{
+                //   paddingBottom: Platform.OS === 'android' ? headerHeight + 12 : 12,
+                // }}
+                data={Array.from({ length: 20 }, (_, i) => `Item ${i + 1}`)}
+                contentContainerClassName="px-3 py-4 flex flex-col gap-3"
+                renderItem={({ item }) => (
+                  <View className="flex flex-col gap-3 p-4 h-40 bg-base-bg-white border border-base-outline-default rounded-2xl">
+                    <Text>{item}</Text>
+                  </View>
+                )}
+              />
+            </View>
+          ))}
+        </AnimatedPagerView>
+      </>
+    </View>
   )
 }
 
-export function PagerHeaderProvider({
-  scrollY,
-  headerHeight,
-  children,
-}: {
-  scrollY: SharedValue<number>
-  headerHeight: number
-  children: React.ReactNode
-}) {
-  const value = React.useMemo(() => ({ scrollY, headerHeight }), [scrollY, headerHeight])
-  return <PagerHeaderContext.Provider value={value}>{children}</PagerHeaderContext.Provider>
-}
-
-export const PagerHeaderContext = React.createContext<{
-  scrollY: SharedValue<number>
-  headerHeight: number
-} | null>(null)
-
-export function usePagerHeaderContext() {
-  const ctx = React.useContext(PagerHeaderContext)
-  if (!ctx) {
-    throw new Error('usePagerHeaderContext must be used within a HeaderProvider')
-  }
-  return ctx
-}
+// brief structure for PagerView with Header
+// <Pager>
+//   <PagerHeader>
+//     <CustomHeader />
+//     <PagerTabBar>
+//       <PagerTab>Tab 1</PagerTab>
+//       <PagerTab>Tab 2</PagerTab>
+//       <PagerTab>Tab 3</PagerTab>
+//     </PagerTabBar>
+//   </PagerHeader>
+//   <PagerContent>
+//     <PagerItem>Tab 1</PagerItem>
+//     <PagerItem>Tab 2</PagerItem>
+//     <PagerItem>Tab 3</PagerItem>
+//   </PagerContent>
+// </Pager>
 
 const styles = StyleSheet.create({
   pageHeader: {
     position: 'absolute',
     zIndex: 1,
+    top: 0,
+    left: 0,
     width: '100%',
+  },
+
+  pagerView: {
+    flex: 1,
   },
 })
