@@ -34,12 +34,14 @@ model User {
     followers      UserFollowsUser[]  @relation("FollowedBy")
     followedTopics UserFollowsTopic[]
 
-    posts         Post[]
-    postComments  PostComment[]
-    postReactions PostReaction[]
-
     eventAttendants EventAttendant[]
 
     electionEligibleVoters  ElectionEligibleVoter[]
     electionEligibleBallots ElectionEligibleBallot[]
+
+    linkedPage FacebookPage?
+
+    feedItems     FeedItem[]
+    feedReactions FeedItemReaction[]
+    feedComments  FeedItemComment[]
 }

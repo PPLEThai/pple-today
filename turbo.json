@@ -16,7 +16,7 @@
       "dependsOn": ["^format:check"]
     },
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "^codegen"],
       "outputs": ["dist/**", "build/**"]
     },
     "codegen": {
@@ -29,6 +29,10 @@
     },
     "typecheck": {
       "dependsOn": ["^typecheck"],
+      "outputs": []
+    },
+    "prebuild": {
+      "dependsOn": ["^prebuild"],
       "outputs": []
     }
   }

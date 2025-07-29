@@ -3,16 +3,18 @@ enum PollType {
     MULTIPLE_CHOICE
 }
 
+// Published models for Poll and PollOption
 model Poll {
-    id          String   @id @default(cuid())
+    feedItemId  String   @id @default(cuid())
     title       String
     description String?
     endAt       DateTime
     type        PollType
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
 
+    topics  PollTopic[]
     options PollOption[]
+
+    feedItem FeedItem @relation(fields: [feedItemId], references: [id])
 }
 
 model PollOption {
@@ -23,7 +25,7 @@ model PollOption {
     updatedAt DateTime @updatedAt
 
     pollId      String
-    poll        Poll         @relation(fields: [pollId], references: [id])
+    poll        Poll         @relation(fields: [pollId], references: [feedItemId])
     pollAnswers PollAnswer[]
 
     @@index([pollId])
@@ -40,4 +42,57 @@ model PollAnswer {
     option PollOption @relation(fields: [optionId], references: [id])
 
     @@unique([userId, optionId])
+}
+
+model PollTopic {
+    pollId  String
+    topicId String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    poll  Poll  @relation(fields: [pollId], references: [feedItemId])
+    topic Topic @relation(fields: [topicId], references: [id])
+
+    @@id([pollId, topicId])
+}
+
+// Draft models for Poll and PollOption
+model PollDraft {
+    id          String    @id @default(cuid())
+    title       String?
+    description String?
+    endAt       DateTime?
+    type        PollType
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
+
+    topics  PollTopicDraft[]
+    options PollOptionDraft[]
+}
+
+model PollOptionDraft {
+    id        String   @id @default(cuid())
+    title     String
+    votes     Int      @default(0)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    pollDraftId String
+    pollDraft   PollDraft @relation(fields: [pollDraftId], references: [id])
+
+    @@index([pollDraftId])
+}
+
+model PollTopicDraft {
+    pollDraftId String
+    topicId     String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    pollDraft PollDraft @relation(fields: [pollDraftId], references: [id])
+    topic     Topic     @relation(fields: [topicId], references: [id])
+
+    @@id([pollDraftId, topicId])
 }

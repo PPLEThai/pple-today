@@ -21,21 +21,23 @@ import {
   UpdatePostCommentParams,
   UpdatePostCommentResponse,
 } from './models'
-import PostService from './services'
+import { PostServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
-import { AuthPlugin } from '../../plugins/auth'
+import { AuthGuardPlugin } from '../../plugins/auth-guard'
 import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
 
-export const postsController = new Elysia({
+export const PostsController = new Elysia({
   prefix: '/posts',
   adapter: node(),
+  tags: ['Posts'],
 })
-  .use([AuthPlugin, PostService])
+  .use([AuthGuardPlugin, PostServicePlugin])
   .get(
     '/:id',
-    async ({ params, status, oidcUser, postService }) => {
-      const result = await postService.getPostById(params.id, oidcUser.sub)
+    async ({ params, status, user, postService }) => {
+      const result = await postService.getPostById(params.id, user?.sub)
+
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.POST_NOT_FOUND:
@@ -50,7 +52,7 @@ export const postsController = new Elysia({
       return status(200, result.value)
     },
     {
-      getOIDCUser: true,
+      fetchUser: true,
       params: GetPostByIdParams,
       response: {
         200: GetPostByIdResponse,
@@ -59,13 +61,17 @@ export const postsController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
+      detail: {
+        summary: 'Get post by ID',
+        description: 'Fetch a specific post by its ID',
+      },
     }
   )
   .get(
     '/:id/comments',
-    async ({ params, query, status, oidcUser, postService }) => {
+    async ({ params, query, status, user, postService }) => {
       const result = await postService.getPostComments(params.id, {
-        userId: oidcUser.sub,
+        userId: user?.sub,
         limit: query.limit,
         page: query.page,
       })
@@ -83,7 +89,7 @@ export const postsController = new Elysia({
       return status(200, result.value as GetPostCommentResponse)
     },
     {
-      getOIDCUser: true,
+      fetchUser: true,
       params: GetPostCommentParams,
       query: GetPostCommentQuery,
       response: {
@@ -93,12 +99,16 @@ export const postsController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
+      detail: {
+        summary: 'Get post comment by post ID',
+        description: 'Fetch a specific comment from a post by its ID',
+      },
     }
   )
   .post(
     '/:id/reaction',
-    async ({ params, body, oidcUser, status, postService }) => {
-      const result = await postService.createPostReaction(params.id, oidcUser.sub, body)
+    async ({ params, body, user, status, postService }) => {
+      const result = await postService.createPostReaction(params.id, user.sub, body)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.POST_NOT_FOUND:
@@ -115,7 +125,7 @@ export const postsController = new Elysia({
       return result.value
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       params: CreatePostReactionParams,
       body: CreatePostReactionBody,
       response: {
@@ -126,12 +136,21 @@ export const postsController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
+      detail: {
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        summary: 'Create post reaction',
+        description: 'Add a reaction to a post by its ID',
+      },
     }
   )
   .delete(
     '/:id/reaction',
-    async ({ params, status, oidcUser, postService }) => {
-      const result = await postService.deletePostReaction(params.id, oidcUser.sub)
+    async ({ params, status, user, postService }) => {
+      const result = await postService.deletePostReaction(params.id, user.sub)
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -147,7 +166,7 @@ export const postsController = new Elysia({
       return status(200, result.value)
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       params: DeletePostReactionParams,
       response: {
         200: DeletePostReactionResponse,
@@ -156,12 +175,21 @@ export const postsController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
+      detail: {
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        summary: 'Delete post reaction',
+        description: 'Remove a reaction from a post by its ID',
+      },
     }
   )
   .post(
     '/:id/comment',
-    async ({ params, body, oidcUser, status, postService }) => {
-      const result = await postService.createPostComment(params.id, oidcUser.sub, body.content)
+    async ({ params, body, user, status, postService }) => {
+      const result = await postService.createPostComment(params.id, user.sub, body.content)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.POST_NOT_FOUND:
@@ -176,7 +204,7 @@ export const postsController = new Elysia({
       return result.value
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       params: CreatePostCommentParams,
       body: CreatePostCommentBody,
       response: {
@@ -186,15 +214,24 @@ export const postsController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
+      detail: {
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        summary: 'Create post comment',
+        description: 'Add a comment to a post by its ID',
+      },
     }
   )
   .put(
     '/:id/comment/:commentId',
-    async ({ params, body, oidcUser, status, postService }) => {
+    async ({ params, body, user, status, postService }) => {
       const result = await postService.updatePostComment(
         params.id,
         params.commentId,
-        oidcUser.sub,
+        user.sub,
         body.content
       )
 
@@ -212,7 +249,7 @@ export const postsController = new Elysia({
       return status(200, result.value)
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       params: UpdatePostCommentParams,
       body: UpdatePostCommentBody,
       response: {
@@ -222,12 +259,21 @@ export const postsController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
+      detail: {
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        summary: 'Update post comment',
+        description: 'Update a comment on a post by its ID',
+      },
     }
   )
   .delete(
     '/:id/comment/:commentId',
-    async ({ params, oidcUser, status, postService }) => {
-      const result = await postService.deletePostComment(params.id, params.commentId, oidcUser.sub)
+    async ({ params, user, status, postService }) => {
+      const result = await postService.deletePostComment(params.id, params.commentId, user.sub)
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -243,7 +289,7 @@ export const postsController = new Elysia({
       return status(200, result.value)
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       params: DeletePostCommentParams,
       response: {
         200: DeletePostCommentResponse,
@@ -251,6 +297,15 @@ export const postsController = new Elysia({
           InternalErrorCode.POST_COMMENT_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
+      },
+      detail: {
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        summary: 'Delete post comment',
+        description: 'Remove a comment from a post by its ID',
       },
     }
   )

@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 0
 
       - name: Setup GitHub Actions caching for Turbo
-        uses: dtinth/setup-github-actions-caching-for-turbo@v1
+        uses: rharkor/caching-for-turbo@v1.8
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -61,5 +61,4 @@ jobs:
         run: pnpm turbo typecheck format:check lint ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}
 
       - name: Run Prebuild
-        working-directory: apps-client/mobile
-        run: npx expo prebuild
+        run: pnpm turbo prebuild ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}

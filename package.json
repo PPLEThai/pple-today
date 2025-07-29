@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run start",
+    "dev": "turbo run dev",
     "lint": "turbo run lint",
     "format": "turbo run format",
     "format:check": "turbo run format:check",
@@ -21,7 +21,7 @@
   },
   "packageManager": "pnpm@9.9.0",
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "volta": {
     "node": "22.15.0",

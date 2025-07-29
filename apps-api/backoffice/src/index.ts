@@ -1,15 +1,18 @@
 import { cors } from '@elysiajs/cors'
 import node from '@elysiajs/node'
 import { swagger } from '@elysiajs/swagger'
-import Elysia, { t } from 'elysia'
+import Elysia from 'elysia'
 
 import serverEnv from './config/env'
 import { InternalErrorCode } from './dtos/error'
-import { authController } from './modules/auth'
-import { postsController } from './modules/posts'
-import { profileController } from './modules/profile'
+import { AdminController } from './modules/admin'
+import { AuthController } from './modules/auth'
+import { PostsController } from './modules/posts'
+import { ProfileController } from './modules/profile'
 
-const app = new Elysia({ adapter: node() })
+import packageJson from '../package.json'
+
+let app = new Elysia({ adapter: node() })
   .onError(({ status, code, error }) => {
     if ('response' in error) return status(error.code, error.response)
     if (code === 'INTERNAL_SERVER_ERROR')
@@ -53,87 +56,63 @@ const app = new Elysia({ adapter: node() })
     })
   })
   .use(cors())
-  .use(swagger())
-  .use(postsController)
-  .use(authController)
-  .use(profileController)
-  .get(
-    '/:id',
-    ({ params, query, headers }) => {
-      console.log('Headers:', headers)
-      return {
-        message: `Hello, ${params.id}!`,
-        params,
-        query,
-        headers,
-      }
-    },
-    {
-      params: t.Object({
-        id: t.String(),
-      }),
-      query: t.Object({
-        name: t.Optional(t.String()),
-        code: t.Optional(t.Number()),
-      }),
-      response: t.Object({
-        message: t.String(),
-        params: t.Object({
-          id: t.String(),
-        }),
-        query: t.Object({
-          name: t.Optional(t.String()),
-          code: t.Optional(t.Number()),
-        }),
-        headers: t.Record(t.String(), t.Any()),
-      }),
-      headers: t.Object({
-        'x-custom-header': t.Optional(t.String()),
-      }),
-    }
-  )
-  .post(
-    '/test-post/:id',
-    ({ params, query, headers, body }) => {
-      console.log('Headers:', headers)
-      return {
-        message: `Hello, ${params.id}!`,
-        params,
-        query,
-        body,
-        headers,
-      }
-    },
-    {
-      params: t.Object({
-        id: t.String(),
-      }),
-      query: t.Object({
-        name: t.Optional(t.String()),
-        code: t.Optional(t.Number()),
-      }),
-      body: t.Object({
-        name: t.Optional(t.String()),
-        code: t.Optional(t.Number()),
-      }),
-      response: t.Object({
-        message: t.String(),
-        params: t.Object({
-          id: t.String(),
-        }),
-        query: t.Object({
-          name: t.Optional(t.String()),
-          code: t.Optional(t.Number()),
-        }),
-        headers: t.Record(t.String(), t.Any()),
-      }),
-      headers: t.Object({
-        'x-custom-header': t.Optional(t.String()),
-      }),
-    }
-  )
-  .listen(serverEnv.PORT, () => {
-    console.log(`Server is running on http://localhost:${serverEnv.PORT}`)
+  .use(PostsController)
+  .use(AuthController)
+  .use(AdminController)
+  .use(ProfileController)
+  .get('/versions', ({ status }) => {
+    const body = JSON.stringify({
+      name: packageJson.name,
+      version: packageJson.version,
+    })
+
+    return status(200, body)
   })
+
+if (serverEnv.ENABLE_SWAGGER) {
+  app = app.use(
+    swagger({
+      documentation: {
+        info: {
+          title: 'PPLE Today API',
+          version: packageJson.version,
+        },
+        components: {
+          securitySchemes: {
+            accessToken: {
+              type: 'http',
+              scheme: 'bearer',
+              bearerFormat: 'JWT',
+              description: 'Bearer Token',
+            },
+            _developmentLogin: {
+              type: 'oauth2',
+              flows: {
+                authorizationCode: {
+                  authorizationUrl: `${serverEnv.DEVELOPMENT_OIDC_URL}/oauth/v2/authorize`,
+                  tokenUrl: `${serverEnv.DEVELOPMENT_OIDC_URL}/oauth/v2/token`,
+                  scopes: {
+                    openid: 'OpenID scope',
+                    profile: 'Profile scope',
+                    phone: 'Phone scope',
+                  },
+                  'x-scalar-client-id': serverEnv.DEVELOPMENT_OIDC_CLIENT_ID,
+                  'x-usePkce': 'SHA-256',
+                  selectedScopes: ['openid', 'profile', 'phone'],
+                } as any,
+              },
+              description: 'Development login for testing purposes',
+            },
+          },
+        },
+        security: [{ _developmentLogin: [] }],
+      },
+    })
+  )
+}
+
+app.listen(serverEnv.PORT, () => {
+  console.log(`Server is running on http://localhost:${serverEnv.PORT}`)
+})
 
 export type ApiSchema = typeof app

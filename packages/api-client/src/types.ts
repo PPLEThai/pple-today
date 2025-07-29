@@ -85,7 +85,9 @@ type GetHeaders<TSchema extends Record<string, any>> = TSchema extends { headers
 type GetPathParams<TSchema extends Record<string, any>> = TSchema extends {
   params: infer TPathParams extends Record<string, any>
 }
-  ? TPathParams
+  ? {} extends TPathParams
+    ? never
+    : TPathParams
   : never
 
 type RestPayload<TSchema extends Record<string, any>> = ConditionalExcept<

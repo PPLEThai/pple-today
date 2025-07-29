@@ -1,23 +1,32 @@
 import { Check } from '@sinclair/typebox/value'
 import jwt from 'jsonwebtoken'
+import { err, ok } from 'neverthrow'
 
 import serverEnv from '../config/env'
 import { IntrospectAccessTokenResult } from '../dtos/auth'
 import { InternalErrorCode } from '../dtos/error'
 
 let jwtToken: string | null = null
+let latestJwtGenerationTime: number | null = null
+
+const JWT_TOKEN_EXPIRATION_TIME = 60 * 60 // 1 hour
 
 export const generateJwtToken = (force: boolean = false) => {
-  if (jwtToken && !force) {
+  const currentEpoch = Math.floor(Date.now() / 1000)
+  if (
+    jwtToken &&
+    !force &&
+    latestJwtGenerationTime &&
+    currentEpoch - latestJwtGenerationTime < JWT_TOKEN_EXPIRATION_TIME
+  ) {
     return jwtToken
   }
 
-  const currentEpoch = Math.floor(Date.now() / 1000)
   const payload = {
     iss: serverEnv.OIDC_CLIENT_ID,
     sub: serverEnv.OIDC_CLIENT_ID,
     aud: serverEnv.OIDC_URL,
-    exp: currentEpoch + 60 * 60,
+    exp: currentEpoch + JWT_TOKEN_EXPIRATION_TIME,
     iat: currentEpoch,
   }
 
@@ -30,6 +39,7 @@ export const generateJwtToken = (force: boolean = false) => {
     algorithm: 'RS256',
     header: headers,
   })
+  latestJwtGenerationTime = currentEpoch
 
   return jwtToken
 }
@@ -43,6 +53,7 @@ export const introspectAccessToken = async (token: string) => {
     client_assertion: jwtToken,
     token: token,
   }
+
   const response = await fetch(`${serverEnv.OIDC_URL}/oauth/v2/introspect`, {
     method: 'POST',
     headers: httpHeaders,
@@ -50,35 +61,28 @@ export const introspectAccessToken = async (token: string) => {
   })
 
   if (!response.ok) {
-    console.error(`Error during introspection`)
-    return {
-      error: {
-        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-        message: 'An error occurred while introspecting the access token',
-      },
-    }
+    return err({
+      code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+      message: 'An error occurred while introspecting the access token',
+    })
   }
 
   const body = await response.json()
 
   if (Check(IntrospectAccessTokenResult, body)) {
     if (!body.active) {
-      return {
-        error: {
-          code: InternalErrorCode.UNAUTHORIZED,
-          message: 'Token is not active or has expired',
-        },
-      }
+      return err({
+        code: InternalErrorCode.UNAUTHORIZED,
+        message: 'Token is not active or has expired',
+      })
     }
 
-    return body
+    return ok(body)
   }
 
-  return {
-    error: {
-      code: InternalErrorCode.BAD_REQUEST,
-      message:
-        'Invalid token format maybe oidc scope is missing (required scope ["openid", "profile", "phone"])',
-    },
-  }
+  return err({
+    code: InternalErrorCode.BAD_REQUEST,
+    message:
+      'Invalid token format maybe oidc scope is missing (required scope ["openid", "profile", "phone"])',
+  })
 }

@@ -1,190 +1,178 @@
 import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
+import { FeedItemType } from '../../../__generated__/prisma'
 import { PostReactionType } from '../../dtos/post'
-import PrismaService from '../../plugins/prisma'
+import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
+import { FeedRepository, FeedRepositoryPlugin } from '../feeds/repository'
 
-export const PostRepository = new Elysia({ name: 'PostRepository', adapter: node() })
-  .use(PrismaService)
-  .decorate(({ prisma }) => ({
-    postRepository: {
-      async getPostById(postId: string, userId: string) {
-        const response = await fromPrismaPromise(async () => {
-          const postResponse = await prisma.post.findUniqueOrThrow({
-            where: { id: postId },
-            include: {
-              postTags: {
-                include: {
-                  hashTag: {
-                    select: {
-                      id: true,
-                      name: true,
-                    },
-                  },
-                },
-              },
-              author: true,
-            },
-          })
+export class PostRepository {
+  constructor(
+    private prismaService: PrismaService,
+    private feedRepository: FeedRepository
+  ) {}
 
-          const postReactions = await prisma.postReaction.groupBy({
-            _count: {
-              id: true,
-            },
-            by: ['type'],
-          })
+  async getUserPostReaction({ postId, userId }: { postId: string; userId: string }) {
+    return await this.feedRepository.getFeedItemReactionByUserId({
+      feedItemId: postId,
+      userId,
+    })
+  }
 
-          const postCommentCount = await prisma.postComment.count({
-            where: { postId, OR: [{ isPrivate: false }, { authorId: userId, isPrivate: true }] },
-          })
-
-          return {
-            ...postResponse,
-            reactions: postReactions.map((reaction) => ({
-              type: reaction.type,
-              count: reaction._count.id,
-            })),
-            commentCount: postCommentCount,
-          }
-        })
-
-        return response
-      },
-
-      async getPostComments(
-        postId: string,
-        query: { userId: string; page: number; limit: number }
-      ) {
-        const { userId, page, limit } = query
-
-        const response = await fromPrismaPromise(
-          prisma.postComment.findMany({
-            where: { postId, OR: [{ isPrivate: false }, { authorId: userId, isPrivate: true }] },
+  async getPostById({ postId }: { postId: string }) {
+    return await fromPrismaPromise(
+      this.prismaService.post.findUniqueOrThrow({
+        where: { feedItemId: postId },
+        select: {
+          title: true,
+          content: true,
+          images: {
             select: {
               id: true,
-              content: true,
-              isPrivate: true,
+              url: true,
               createdAt: true,
+            },
+          },
+          hashTags: {
+            select: {
+              hashTag: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+          feedItem: {
+            select: {
+              createdAt: true,
+              numberOfComments: true,
+              reactionCounts: {
+                select: {
+                  type: true,
+                  count: true,
+                },
+              },
               author: {
                 select: {
                   id: true,
                   name: true,
                   profileImage: true,
+                  createdAt: true,
                 },
               },
             },
-            orderBy: { createdAt: 'desc' },
-            skip: (page - 1) * limit,
-            take: limit,
-          })
-        )
+          },
+        },
+      })
+    )
+  }
 
-        return response
-      },
+  async getPostComments(postId: string, query: { userId?: string; page: number; limit: number }) {
+    return await this.feedRepository.getFeedItemComments(postId, {
+      ...query,
+      feedItemType: FeedItemType.POST,
+    })
+  }
 
-      async createPostReaction(
-        postId: string,
-        userId: string,
-        type: PostReactionType,
-        comment?: string
-      ) {
-        const response = await fromPrismaPromise(
-          prisma.$transaction(async (tx) => {
-            await tx.postReaction.create({
-              data: {
-                authorId: userId,
-                postId,
-                type,
-              },
-            })
-            if (type === PostReactionType.DOWN_VOTE) {
-              await tx.postComment.create({
-                data: {
-                  authorId: userId,
-                  postId,
-                  content: comment ?? '',
-                  isPrivate: true,
-                },
-              })
-            }
-          })
-        )
+  async createPostReaction({
+    postId,
+    userId,
+    type,
+    content,
+  }: {
+    postId: string
+    userId: string
+    type: PostReactionType
+    content?: string
+  }) {
+    return await this.feedRepository.createFeedItemReaction({
+      feedItemId: postId,
+      userId,
+      type,
+      content,
+    })
+  }
 
-        return response
-      },
+  async updatePostReaction({
+    userId,
+    postId,
+    type,
+    content,
+  }: {
+    userId: string
+    postId: string
+    type: PostReactionType
+    content?: string
+  }) {
+    return await this.feedRepository.updateFeedItemReaction({
+      feedItemId: postId,
+      userId,
+      type,
+      content,
+    })
+  }
 
-      async deletePostReaction(postId: string, userId: string) {
-        const response = await fromPrismaPromise(
-          prisma.postReaction.delete({
-            where: {
-              postId_authorId: {
-                postId: postId,
-                authorId: userId,
-              },
-            },
-          })
-        )
+  async deletePostReaction({ userId, postId }: { userId: string; postId: string }) {
+    return await this.feedRepository.deleteFeedItemReaction({ feedItemId: postId, userId })
+  }
 
-        return response
-      },
+  async createPostComment({
+    userId,
+    postId,
+    content,
+  }: {
+    userId: string
+    postId: string
+    content: string
+  }) {
+    return await this.feedRepository.createFeedItemComment({
+      feedItemId: postId,
+      userId,
+      content,
+      isPrivate: false,
+    })
+  }
 
-      async createPostComment(
-        userId: string,
-        postId: string,
-        data: {
-          content: string
-        }
-      ) {
-        const { content } = data
-        const response = await fromPrismaPromise(
-          prisma.postComment.create({
-            data: {
-              postId,
-              authorId: userId,
-              content,
-            },
-          })
-        )
+  async updatePostComment({
+    userId,
+    postId,
+    commentId,
+    content,
+  }: {
+    userId: string
+    postId: string
+    commentId: string
+    content: string
+  }) {
+    return await this.feedRepository.updateFeedItemComment({
+      commentId,
+      feedItemId: postId,
+      userId,
+      content,
+    })
+  }
 
-        return response.map((comment) => comment.id)
-      },
+  async deletePostComment({
+    userId,
+    postId,
+    commentId,
+  }: {
+    userId: string
+    postId: string
+    commentId: string
+  }) {
+    return await this.feedRepository.deleteFeedItemComment({
+      commentId,
+      userId,
+      feedItemId: postId,
+    })
+  }
+}
 
-      async updatePostComment(
-        userId: string,
-        postId: string,
-        commentId: string,
-        data: { content: string }
-      ) {
-        const response = await fromPrismaPromise(
-          prisma.postComment.update({
-            where: {
-              id: commentId,
-              postId,
-              authorId: userId,
-            },
-            data: {
-              content: data.content,
-            },
-          })
-        )
-
-        return response
-      },
-
-      async deletePostComment(postId: string, commentId: string, userId: string) {
-        const response = await fromPrismaPromise(
-          prisma.postComment.delete({
-            where: {
-              id: commentId,
-              postId,
-              authorId: userId,
-            },
-          })
-        )
-
-        return response
-      },
-    },
+export const PostRepositoryPlugin = new Elysia({ name: 'PostRepository', adapter: node() })
+  .use([PrismaServicePlugin, FeedRepositoryPlugin])
+  .decorate(({ prismaService, feedRepository }) => ({
+    postRepository: new PostRepository(prismaService, feedRepository),
   }))
-  .as('scoped')

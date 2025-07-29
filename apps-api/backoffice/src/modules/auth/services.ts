@@ -1,14 +1,48 @@
 import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
-import { AuthRepository } from './repository'
+import { AuthRepository, AuthRepositoryPlugin } from './repository'
 
 import { IntrospectAccessTokenResult } from '../../dtos/auth'
 import { InternalErrorCode } from '../../dtos/error'
 import { mapRawPrismaError } from '../../utils/prisma'
 
-const AuthService = new Elysia({ name: 'AuthService', adapter: node() })
-  .use(AuthRepository)
+export class AuthService {
+  constructor(private authRepository: AuthRepository) {}
+
+  async getUserById(id: string) {
+    const user = await this.authRepository.getUserById(id)
+
+    if (user.isErr()) {
+      return mapRawPrismaError(user.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.AUTH_USER_NOT_FOUND,
+          message: 'User not found',
+        },
+      })
+    }
+
+    return user
+  }
+
+  async registerUser(user: IntrospectAccessTokenResult) {
+    const newUser = await this.authRepository.createUser(user)
+
+    if (newUser.isErr()) {
+      return mapRawPrismaError(newUser.error, {
+        UNIQUE_CONSTRAINT_FAILED: {
+          code: InternalErrorCode.AUTH_USER_ALREADY_EXISTS,
+          message: 'User already exists',
+        },
+      })
+    }
+
+    return newUser
+  }
+}
+
+export const AuthServicePlugin = new Elysia({ name: 'AuthService', adapter: node() })
+  .use(AuthRepositoryPlugin)
   .decorate(({ authRepository }) => ({
     authService: {
       async getUserById(id: string) {
@@ -25,8 +59,8 @@ const AuthService = new Elysia({ name: 'AuthService', adapter: node() })
 
         return user
       },
-      async registerUser(oidcUser: IntrospectAccessTokenResult) {
-        const newUser = await authRepository.createUser(oidcUser)
+      async registerUser(user: IntrospectAccessTokenResult) {
+        const newUser = await authRepository.createUser(user)
 
         if (newUser.isErr()) {
           return mapRawPrismaError(newUser.error, {
@@ -41,6 +75,3 @@ const AuthService = new Elysia({ name: 'AuthService', adapter: node() })
       },
     },
   }))
-  .as('scoped')
-
-export default AuthService

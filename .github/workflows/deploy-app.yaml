@@ -1,0 +1,120 @@
+name: Deploy Beta Application
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: 'Deployment environment (e.g., dev, staging)'
+        options:
+          - dev
+          - staging
+        default: 'dev'
+      android:
+        type: boolean
+        description: 'Build Android app'
+        default: false
+      ios:
+        type: boolean
+        description: 'Build iOS app'
+        default: false
+      api:
+        type: boolean
+        description: 'Deploy API'
+        default: false
+      backoffice:
+        type: boolean
+        description: 'Deploy Backoffice'
+        default: false
+      migrate-database:
+        type: boolean
+        description: 'Run database migrations'
+        default: false
+      mobile-groups:
+        type: string
+        description: 'Distribute to these groups'
+        default: 'dev-team,qa-team'
+
+permissions:
+  contents: read # for checkout
+  packages: write # to be able to push the Docker image to GitHub Container Registry
+
+jobs:
+  get-tag-name:
+    name: Get Tag Name
+    if: ${{ (github.event.inputs.backoffice == 'true') || (github.event.inputs.api == 'true') }}
+    runs-on: ubuntu-latest
+    outputs:
+      TAG_NAME: ${{ steps.set-tag.outputs.TAG_NAME }}
+    steps:
+      - name: Set tag name
+        id: set-tag
+        run: |
+          echo "TAG_NAME=${{ github.event.inputs.environment }}-${{ github.sha }}" >> $GITHUB_OUTPUT
+
+  deploy-mobile-app:
+    name: Deploy Beta Mobile App
+    if: ${{ (github.event.inputs.android == 'true') || (github.event.inputs.ios == 'true') }}
+    uses: ./.github/workflows/beta-deployment.yaml
+    secrets: 'inherit'
+    with:
+      android: ${{ github.event.inputs.android }}
+      ios: ${{ github.event.inputs.ios }}
+      groups: ${{ github.event.inputs.mobile-groups }}
+
+  deploy-backoffice:
+    name: Deploy Backoffice
+    if: ${{ github.event.inputs.backoffice == 'true' }}
+    needs: get-tag-name
+    uses: ./.github/workflows/deploy-docker.yaml
+    with:
+      PACKAGE_NAME: pple-backoffice
+      TAG_NAME: ${{ needs.get-tag-name.outputs.TAG_NAME }}
+      DOCKER_COMPOSE_FILE: docker-compose.backoffice.yaml
+      DOCKER_REGISTRY: ghcr.io
+      PROJECT_PATH: ./apps-client/backoffice
+    secrets:
+      OVPN_CONFIG: ${{ secrets.OVPN_CONFIG }}
+      OVPN_USERNAME: ${{ secrets.OVPN_USERNAME }}
+      OVPN_PASSWORD: ${{ secrets.OVPN_PASSWORD }}
+      OVPN_USER_KEY: ${{ secrets.OVPN_USER_KEY }}
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      WEB_CLIENT_ENV: ${{ secrets.WEB_CLIENT_ENV }}
+
+  deploy-api:
+    name: Deploy API
+    if: ${{ github.event.inputs.api == 'true' }}
+    needs: get-tag-name
+    uses: ./.github/workflows/deploy-docker.yaml
+    with:
+      PACKAGE_NAME: pple-api
+      TAG_NAME: ${{ needs.get-tag-name.outputs.TAG_NAME }}
+      DOCKER_COMPOSE_FILE: docker-compose.api.yaml
+      DOCKER_REGISTRY: ghcr.io
+      PROJECT_PATH: ./apps-api/backoffice
+    secrets:
+      OVPN_CONFIG: ${{ secrets.OVPN_CONFIG }}
+      OVPN_USERNAME: ${{ secrets.OVPN_USERNAME }}
+      OVPN_PASSWORD: ${{ secrets.OVPN_PASSWORD }}
+      OVPN_USER_KEY: ${{ secrets.OVPN_USER_KEY }}
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+
+  migrate-database:
+    name: Migrate Database
+    if: ${{ github.event.inputs.migrate-database == 'true' }}
+    uses: ./.github/workflows/migrate-database.yaml
+    secrets:
+      OVPN_CONFIG: ${{ secrets.OVPN_CONFIG }}
+      OVPN_USERNAME: ${{ secrets.OVPN_USERNAME }}
+      OVPN_PASSWORD: ${{ secrets.OVPN_PASSWORD }}
+      OVPN_USER_KEY: ${{ secrets.OVPN_USER_KEY }}
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+      DATABASE_HOST_PORT: ${{ secrets.DATABASE_HOST_PORT }}

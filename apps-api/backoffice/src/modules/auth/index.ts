@@ -2,21 +2,22 @@ import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import { GetAuthMeResponse, RegisterUserResponse } from './models'
-import AuthService from './services'
+import { AuthServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
-import { AuthPlugin } from '../../plugins/auth'
+import { AuthGuardPlugin } from '../../plugins/auth-guard'
 import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 
-export const authController = new Elysia({
+export const AuthController = new Elysia({
   adapter: node(),
   prefix: '/auth',
+  tags: ['Auth'],
 })
-  .use([AuthPlugin, AuthService])
+  .use([AuthGuardPlugin, AuthServicePlugin])
   .post(
     '/register',
-    async ({ oidcUser, status, authService }) => {
-      const result = await authService.registerUser(oidcUser)
+    async ({ user, status, authService }) => {
+      const result = await authService.registerUser(user)
 
       if (result.isErr()) {
         const error = result.error
@@ -35,7 +36,7 @@ export const authController = new Elysia({
       })
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       response: {
         201: RegisterUserResponse,
         ...createErrorSchema(
@@ -43,12 +44,16 @@ export const authController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
+      detail: {
+        summary: 'Register user',
+        description: 'Create a new user account',
+      },
     }
   )
   .get(
     '/me',
-    async ({ status, oidcUser, authService }) => {
-      const localInfo = await authService.getUserById(oidcUser.sub)
+    async ({ status, user, authService }) => {
+      const localInfo = await authService.getUserById(user.sub)
 
       if (localInfo.isErr()) {
         const error = localInfo.error
@@ -63,18 +68,22 @@ export const authController = new Elysia({
       }
 
       return status(200, {
-        id: oidcUser.sub,
-        name: oidcUser.name,
+        id: user.sub,
+        name: user.name,
       })
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       response: {
         200: GetAuthMeResponse,
         ...createErrorSchema(
           InternalErrorCode.AUTH_USER_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
+      },
+      detail: {
+        summary: 'Get authenticated user',
+        description: 'Fetch the currently authenticated user details',
       },
     }
   )

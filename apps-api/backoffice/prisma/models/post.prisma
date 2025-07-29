@@ -1,66 +1,33 @@
-enum PostReactionType {
-    UP_VOTE
-    DOWN_VOTE
-}
-
 model Post {
+    feedItemId String @id @default(cuid())
+
+    title    String
+    content  String?
+    images   PostImage[]
+    hashTags PostHashTag[]
+
+    feedItem FeedItem @relation(fields: [feedItemId], references: [id])
+}
+
+model PostImage {
     id        String   @id @default(cuid())
-    title     String
-    image     String?
-    content   String?
+    postId    String
+    url       String
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    authorId String
-    author   User   @relation(fields: [authorId], references: [id])
-
-    postComments  PostComment[]
-    postReactions PostReaction[]
-    postTags      PostTag[]
-
-    @@index([authorId])
+    post Post @relation(fields: [postId], references: [feedItemId])
 }
 
-model PostComment {
-    id        String   @id @default(cuid())
-    content   String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    isPrivate Boolean @default(false)
-
-    postId String
-    post   Post   @relation(fields: [postId], references: [id])
-
-    authorId String
-    author   User   @relation(fields: [authorId], references: [id])
-
-    @@index([postId])
-}
-
-model PostReaction {
-    id        String           @id @default(cuid())
-    type      PostReactionType
-    createdAt DateTime         @default(now())
-    updatedAt DateTime         @updatedAt
-
-    postId String
-    post   Post   @relation(fields: [postId], references: [id])
-
-    authorId String
-    author   User   @relation(fields: [authorId], references: [id])
-
-    @@unique([postId, authorId])
-}
-
-model PostTag {
-    createdAt DateTime @default(now())
-
-    postId String
-    post   Post   @relation(fields: [postId], references: [id])
-
+model PostHashTag {
+    postId    String
     hashTagId String
-    hashTag   HashTag @relation(fields: [hashTagId], references: [id])
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    hashTag HashTag @relation(fields: [hashTagId], references: [id])
+    post    Post    @relation(fields: [postId], references: [feedItemId])
 
     @@id([postId, hashTagId])
 }

@@ -13,21 +13,22 @@ import {
   UpdateProfileBody,
   UpdateProfileResponse,
 } from './models'
-import ProfileService from './services'
+import { ProfileServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
-import { AuthPlugin } from '../../plugins/auth'
+import { AuthGuardPlugin } from '../../plugins/auth-guard'
 import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
 
-export const profileController = new Elysia({
+export const ProfileController = new Elysia({
   prefix: '/profile',
   adapter: node(),
+  tags: ['Profile'],
 })
-  .use([AuthPlugin, ProfileService])
+  .use([AuthGuardPlugin, ProfileServicePlugin])
   .get(
     '/me',
-    async ({ oidcUser, status, profileService }) => {
-      const result = await profileService.getProfileById(oidcUser.sub)
+    async ({ user, status, profileService }) => {
+      const result = await profileService.getProfileById(user.sub)
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -59,7 +60,7 @@ export const profileController = new Elysia({
       })
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       response: {
         200: GetMyProfileResponse,
         ...createErrorSchema(
@@ -67,12 +68,16 @@ export const profileController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
+      detail: {
+        summary: 'Get My Profile',
+        description: "Fetch the authenticated user's profile information",
+      },
     }
   )
   .patch(
     '/me',
-    async ({ body, oidcUser, status, profileService }) => {
-      const result = await profileService.updateProfile(oidcUser.sub, body)
+    async ({ body, user, status, profileService }) => {
+      const result = await profileService.updateProfile(user.sub, body)
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -92,7 +97,7 @@ export const profileController = new Elysia({
       })
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       body: UpdateProfileBody,
       response: {
         200: UpdateProfileResponse,
@@ -101,6 +106,10 @@ export const profileController = new Elysia({
           InternalErrorCode.USER_INVALID_INPUT,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
+      },
+      detail: {
+        summary: 'Update My Profile',
+        description: "Update the authenticated user's profile information",
       },
     }
   )
@@ -136,7 +145,7 @@ export const profileController = new Elysia({
       })
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       params: GetProfileByIdParams,
       response: {
         200: GetProfileByIdResponse,
@@ -145,12 +154,16 @@ export const profileController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
+      detail: {
+        summary: 'Get Profile By ID',
+        description: 'Fetch a user profile by its ID',
+      },
     }
   )
   .post(
     '/on-boarding',
-    async ({ oidcUser, status, body, profileService }) => {
-      const result = await profileService.completeOnboardingProfile(oidcUser.sub, body)
+    async ({ user, status, body, profileService }) => {
+      const result = await profileService.completeOnboardingProfile(user.sub, body)
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -172,7 +185,7 @@ export const profileController = new Elysia({
       })
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       body: CompleteOnboardingProfileBody,
       response: {
         200: CompleteOnboardingProfileResponse,
@@ -182,13 +195,17 @@ export const profileController = new Elysia({
           InternalErrorCode.USER_ALREADY_DONE_ONBOARDING,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
+        detail: {
+          summary: 'Complete Onboarding',
+          description: 'Complete the onboarding process for a user',
+        },
       },
     }
   )
   .get(
     '/follow',
-    async ({ oidcUser, status, profileService }) => {
-      const result = await profileService.getFollowingUsers(oidcUser.sub)
+    async ({ user, status, profileService }) => {
+      const result = await profileService.getFollowingUsers(user.sub)
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -210,7 +227,7 @@ export const profileController = new Elysia({
       return status(200, response)
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       response: {
         200: GetFollowingUserResponse,
         ...createErrorSchema(
@@ -219,12 +236,16 @@ export const profileController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
+      detail: {
+        summary: 'Get Following Users',
+        description: 'Fetch the list of users that the authenticated user is following',
+      },
     }
   )
   .post(
     '/:id/follow',
-    async ({ params, oidcUser, status, profileService }) => {
-      if (oidcUser.sub === params.id) {
+    async ({ params, user, status, profileService }) => {
+      if (user.sub === params.id) {
         return status(400, {
           error: {
             code: InternalErrorCode.USER_INVALID_INPUT,
@@ -233,7 +254,7 @@ export const profileController = new Elysia({
         })
       }
 
-      const result = await profileService.followUser(oidcUser.sub, params.id)
+      const result = await profileService.followUser(user.sub, params.id)
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -253,7 +274,7 @@ export const profileController = new Elysia({
       })
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       params: FollowUserParams,
       response: {
         200: FollowUserResponse,
@@ -264,12 +285,16 @@ export const profileController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
+      detail: {
+        summary: 'Follow User',
+        description: 'Follow a user by their ID',
+      },
     }
   )
   .delete(
     '/:id/follow',
-    async ({ params, oidcUser, status, profileService }) => {
-      const result = await profileService.unfollowUser(oidcUser.sub, params.id)
+    async ({ params, user, status, profileService }) => {
+      const result = await profileService.unfollowUser(user.sub, params.id)
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -287,7 +312,7 @@ export const profileController = new Elysia({
       })
     },
     {
-      getOIDCUser: true,
+      requiredUser: true,
       params: FollowUserParams,
       response: {
         200: FollowUserResponse,
@@ -295,6 +320,10 @@ export const profileController = new Elysia({
           InternalErrorCode.USER_NOT_FOLLOWS,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
+      },
+      detail: {
+        summary: 'Unfollow User',
+        description: 'Unfollow a user by their ID',
       },
     }
   )

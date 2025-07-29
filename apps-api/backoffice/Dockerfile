@@ -1,6 +1,8 @@
 FROM node:22-alpine3.22 AS base
 RUN apk update
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat jq
+
+ARG VERSION=latest
 
 RUN npm install -g turbo@2.5.2
  
@@ -27,6 +29,8 @@ RUN pnpm install --frozen-lockfile --prefer-offline
 
 # Build the project
 COPY --from=builder /app/out/full/ .
+RUN jq --arg version "$VERSION" '.version = $version' /app/apps-api/backoffice/package.json > tmp.json && mv tmp.json /app/apps-api/backoffice/package.json
+
 RUN pnpm build --filter=@api/backoffice
  
 FROM base AS runner
