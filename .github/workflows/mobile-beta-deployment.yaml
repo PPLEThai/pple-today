@@ -4,10 +4,10 @@ on:
   workflow_call:
     inputs:
       android:
-        type: boolean
+        type: string
         description: 'Build Android app'
       ios:
-        type: boolean
+        type: string
         description: 'Build iOS app'
       groups:
         type: string
