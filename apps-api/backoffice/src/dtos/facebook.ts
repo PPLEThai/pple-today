@@ -11,15 +11,15 @@ export const ExternalFacebookErrorBody = t.Object({
     error_user_msg: t.Optional(t.String({ description: 'User-facing error message' })),
   }),
 })
+export type ExternalFacebookErrorBody = Static<typeof ExternalFacebookErrorBody>
 
 export const ExternalFacebookPageCursor = t.Object({
-  paging: t.Object({
-    cursors: t.Object({
-      before: t.String({ description: 'Cursor for the previous page' }),
-      after: t.String({ description: 'Cursor for the next page' }),
-    }),
+  cursors: t.Object({
+    before: t.String({ description: 'Cursor for the previous page' }),
+    after: t.String({ description: 'Cursor for the next page' }),
   }),
 })
+export type ExternalFacebookPageCursor = Static<typeof ExternalFacebookPageCursor>
 
 export const ExternalFacebookAccessTokenResponse = t.Object({
   access_token: t.String({
@@ -34,6 +34,7 @@ export const ExternalFacebookAccessTokenResponse = t.Object({
     })
   ),
 })
+export type ExternalFacebookAccessTokenResponse = Static<typeof ExternalFacebookAccessTokenResponse>
 
 export const ExternalFacebookInspectAccessTokenResponseBody = t.Object({
   app_id: t.String({
@@ -83,10 +84,16 @@ export const ExternalFacebookInspectAccessTokenResponseBody = t.Object({
     })
   ),
 })
+export type ExternalFacebookInspectAccessTokenResponseBody = Static<
+  typeof ExternalFacebookInspectAccessTokenResponseBody
+>
 
 export const ExternalFacebookInspectAccessTokenResponse = t.Object({
   data: ExternalFacebookInspectAccessTokenResponseBody,
 })
+export type ExternalFacebookInspectAccessTokenResponse = Static<
+  typeof ExternalFacebookInspectAccessTokenResponse
+>
 
 export const ExternalFacebookGetProfileImageResponse = t.Object(
   {
@@ -101,14 +108,15 @@ export const ExternalFacebookGetProfileImageResponse = t.Object(
     description: 'Response containing the profile picture URL of the Facebook user',
   }
 )
+export type ExternalFacebookGetProfileImageResponse = Static<
+  typeof ExternalFacebookGetProfileImageResponse
+>
 
 export const ExternalFacebookGetPageDetailsResponse = t.Object(
   {
-    access_token: t.Optional(
-      t.String({
-        description: 'The access token for the Facebook page',
-      })
-    ),
+    access_token: t.String({
+      description: 'The access token for the Facebook page',
+    }),
     id: t.String({
       description: 'The ID of the Facebook page',
     }),
@@ -121,6 +129,9 @@ export const ExternalFacebookGetPageDetailsResponse = t.Object(
     description: 'Response containing details of a Facebook page',
   }
 )
+export type ExternalFacebookGetPageDetailsResponse = Static<
+  typeof ExternalFacebookGetPageDetailsResponse
+>
 
 export const ExternalFacebookListUserPageResponse = t.Object(
   {
@@ -138,6 +149,9 @@ export const ExternalFacebookListUserPageResponse = t.Object(
     description: 'Response containing the list of Facebook pages for the user',
   }
 )
+export type ExternalFacebookListUserPageResponse = Static<
+  typeof ExternalFacebookListUserPageResponse
+>
 
 export const ExternalFacebookPostMessageHashtag = t.Object({
   id: t.String({ description: 'ID of the hashtag' }),
@@ -148,6 +162,7 @@ export const ExternalFacebookPostMessageHashtag = t.Object({
 export type ExternalFacebookPostMessageHashtag = Static<typeof ExternalFacebookPostMessageHashtag>
 
 export const ExternalFacebookPostAttachment = t.Object({
+  description: t.Optional(t.String({ description: 'Description of the attachment' })),
   media: t.Object({
     image: t.Object({
       height: t.Number({ description: 'Height of the image' }),
@@ -180,8 +195,10 @@ export const ExternalFacebookPagePost = t.Object({
     )
   ),
   attachments: t.Optional(
-    t.Array(ExternalFacebookPostAttachment, {
-      description: 'List of attachments in the post',
+    t.Object({
+      data: t.Array(ExternalFacebookPostAttachment, {
+        description: 'List of attachments in the post',
+      }),
     })
   ),
 })
@@ -190,7 +207,7 @@ export type ExternalFacebookPagePost = Static<typeof ExternalFacebookPagePost>
 export const ExternalFacebookGetPagePostsResponse = t.Object(
   {
     data: t.Array(ExternalFacebookPagePost),
-    paging: ExternalFacebookPageCursor,
+    paging: t.Optional(ExternalFacebookPageCursor),
   },
   {
     description: 'Response containing details of a Facebook page post',

@@ -1,9 +1,7 @@
 import node from '@elysiajs/node'
 import Elysia from 'elysia'
-import { err } from 'neverthrow'
 
 import {
-  FacebookUnlinkPageResponse,
   GetFacebookUserPageListQuery,
   GetFacebookUserPageListResponse,
   GetLinkedFacebookPageResponse,
@@ -11,6 +9,7 @@ import {
   LinkFacebookPageToUserResponse,
   RequestAccessTokenQuery,
   RequestAccessTokenResponse,
+  UnlinkPageResponse,
 } from './models'
 import { FacebookServicePlugin } from './services'
 
@@ -106,13 +105,15 @@ export const FacebookController = new Elysia({
           const linkedPageResult = await facebookService.getLinkedFacebookPage(user.sub)
 
           if (linkedPageResult.isErr()) {
-            return err({
-              code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-              message: 'Failed to fetch linked Facebook page',
+            return status(500, {
+              error: {
+                code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+                message: 'Failed to fetch linked Facebook page',
+              },
             })
           }
 
-          return status(200, linkedPageResult.value)
+          return status(200, { linkedFacebookPage: linkedPageResult.value })
         },
         {
           requiredUser: true,
@@ -129,18 +130,21 @@ export const FacebookController = new Elysia({
       .post(
         '/',
         async ({ body, status, facebookService, user }) => {
-          const { facebookPageId, facebookAccessToken } = body
+          const { facebookPageId, facebookPageAccessToken } = body
 
           const linkResult = await facebookService.linkFacebookPageToUser({
             userId: user.sub,
             facebookPageId,
-            facebookAccessToken,
+            facebookPageAccessToken,
           })
 
           if (linkResult.isErr()) {
-            return err({
-              code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-              message: 'Failed to link Facebook page',
+            console.error('Facebook page linked successfully', linkResult.error)
+            return status(500, {
+              error: {
+                code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+                message: 'Failed to link Facebook page',
+              },
             })
           }
 
@@ -167,9 +171,12 @@ export const FacebookController = new Elysia({
           const unlinkResult = await facebookService.unlinkFacebookPageFromUser(user.sub)
 
           if (unlinkResult.isErr()) {
-            return err({
-              code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-              message: 'Failed to unlink Facebook page',
+            console.error('Failed to unlink Facebook page', unlinkResult.error)
+            return status(500, {
+              error: {
+                code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+                message: 'Failed to unlink Facebook page',
+              },
             })
           }
 
@@ -180,7 +187,7 @@ export const FacebookController = new Elysia({
         {
           requiredUser: true,
           response: {
-            200: FacebookUnlinkPageResponse,
+            200: UnlinkPageResponse,
             ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
           },
           detail: {

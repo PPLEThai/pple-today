@@ -1,6 +1,6 @@
 import { TAnySchema } from '@sinclair/typebox'
 import { Check } from '@sinclair/typebox/value'
-import { Elysia } from 'elysia'
+import { Elysia, t } from 'elysia'
 import { err, fromPromise, ok } from 'neverthrow'
 
 import { FeedItemType } from '../../../__generated__/prisma'
@@ -46,6 +46,7 @@ export class FacebookRepository {
     if (!response.ok) {
       console.error('Facebook API request failed:', response.status, response.statusText)
       console.error('Response body:', await response.text())
+      console.error('Request options:', path)
       return err({
         code: InternalErrorCode.FACEBOOK_API_ERROR,
         message: 'Failed to fetch from Facebook API',
@@ -93,6 +94,27 @@ export class FacebookRepository {
       accessToken: response.value.access_token,
       tokenType: response.value.token_type,
       expiresIn: response.value.expires_in,
+    })
+  }
+
+  private async fetchLongLivedAccessToken(pageAccessToken: string) {
+    const queryParams = new URLSearchParams({
+      grant_type: 'fb_exchange_token',
+      client_id: this.facebookConfig.appId,
+      client_secret: this.facebookConfig.appSecret,
+      fb_exchange_token: pageAccessToken,
+    })
+
+    const response = await this.getAccessToken(queryParams)
+
+    if (response.isErr()) {
+      return err(response.error)
+    }
+
+    return ok({
+      accessToken: response.value.accessToken,
+      tokenType: response.value.tokenType,
+      expiresIn: response.value.expiresIn,
     })
   }
 
@@ -176,61 +198,36 @@ export class FacebookRepository {
   }
 
   private async syncPostsFromPage(userId: string, posts: ExternalFacebookPagePost[]) {
-    this.prismaService.$transaction(async (tx) => {
-      await Promise.all(
-        posts.map(async (post) => {
-          const existingPost = await tx.post.findUnique({
-            where: { facebookPostId: post.id },
-            include: {
-              images: true,
-              hashTags: {
-                include: {
-                  hashTag: true,
-                },
-              },
-            },
-          })
-
-          if (existingPost) {
-            await tx.post.update({
-              where: { feedItemId: existingPost.feedItemId },
-              data: {
-                content: post.message,
-                images: {
-                  deleteMany: {},
-                  create:
-                    post.attachments?.map((attachment) => ({
-                      url: attachment.media.image.src,
-                    })) ?? [],
-                },
+    return await fromPrismaPromise(
+      this.prismaService.$transaction(async (tx) => {
+        await Promise.all(
+          posts.map(async (post) => {
+            const existingPost = await tx.post.findUnique({
+              where: { facebookPostId: post.id },
+              include: {
+                images: true,
                 hashTags: {
-                  deleteMany: {},
-                  create:
-                    post.message_tags?.map((tag) => ({
-                      hashTag: {
-                        connectOrCreate: {
-                          where: { name: tag.data.name },
-                          create: { name: tag.data.name },
-                        },
-                      },
-                    })) ?? [],
+                  include: {
+                    hashTag: true,
+                  },
                 },
               },
             })
-            return
-          }
 
-          await tx.feedItem.create({
-            data: {
-              author: {
-                connect: { id: userId },
-              },
-              type: FeedItemType.POST,
-              post: {
-                create: {
-                  facebookPostId: post.id,
+            if (existingPost) {
+              await tx.post.update({
+                where: { feedItemId: existingPost.feedItemId },
+                data: {
                   content: post.message,
+                  images: {
+                    deleteMany: {},
+                    create:
+                      post.attachments?.data.map((attachment) => ({
+                        url: attachment.media.image.src,
+                      })) ?? [],
+                  },
                   hashTags: {
+                    deleteMany: {},
                     create:
                       post.message_tags?.map((tag) => ({
                         hashTag: {
@@ -241,19 +238,46 @@ export class FacebookRepository {
                         },
                       })) ?? [],
                   },
-                  images: {
-                    create:
-                      post.attachments?.map((attachment) => ({
-                        url: attachment.media.image.src,
-                      })) ?? [],
+                },
+              })
+              return
+            }
+
+            await tx.feedItem.create({
+              data: {
+                author: {
+                  connect: { id: userId },
+                },
+                type: FeedItemType.POST,
+                post: {
+                  create: {
+                    facebookPostId: post.id,
+                    content: post.message,
+                    hashTags: {
+                      create:
+                        post.message_tags?.map((tag) => ({
+                          hashTag: {
+                            connectOrCreate: {
+                              where: { name: tag.data.name },
+                              create: { name: tag.data.name },
+                            },
+                          },
+                        })) ?? [],
+                    },
+                    images: {
+                      create:
+                        post.attachments?.data.map((attachment) => ({
+                          url: attachment.media.image.src,
+                        })) ?? [],
+                    },
                   },
                 },
               },
-            },
+            })
           })
-        })
-      )
-    })
+        )
+      })
+    )
   }
 
   async getUserAccessToken(code: string, redirectUri: string) {
@@ -282,7 +306,7 @@ export class FacebookRepository {
 
     const queryParams = new URLSearchParams({
       access_token: userAccessToken,
-      fields: 'id,name,picture',
+      fields: 'access_token,id,name,picture',
     })
 
     const response = await this.makeRequest({
@@ -297,21 +321,21 @@ export class FacebookRepository {
     return ok(response.value)
   }
 
-  async getUserPageById(userAccessToken: string, pageId: string) {
-    const inspectResponse = await this.inspectUserAccessToken(userAccessToken)
+  async getPageById(pageAccessToken: string, pageId: string) {
+    const inspectResponse = await this.inspectUserAccessToken(pageAccessToken)
 
     if (inspectResponse.isErr()) {
       return err(inspectResponse.error)
     }
 
     const queryParams = new URLSearchParams({
-      access_token: userAccessToken,
-      fields: 'access_token,id,name,picture',
+      access_token: pageAccessToken,
+      fields: 'id,name,picture',
     })
 
     const response = await this.makeRequest({
       path: `/${pageId}?${queryParams.toString()}`,
-      responseSchema: ExternalFacebookGetPageDetailsResponse,
+      responseSchema: t.Omit(ExternalFacebookGetPageDetailsResponse, ['access_token']),
     })
 
     if (response.isErr()) {
@@ -321,15 +345,15 @@ export class FacebookRepository {
     return ok(response.value)
   }
 
-  async getPagePosts(userAccessToken: string, pageId: string) {
-    const inspectResponse = await this.inspectUserAccessToken(userAccessToken)
+  async getPagePosts(pageAccessToken: string, pageId: string) {
+    const inspectResponse = await this.inspectUserAccessToken(pageAccessToken)
 
     if (inspectResponse.isErr()) {
       return err(inspectResponse.error)
     }
 
     const queryParams = new URLSearchParams({
-      access_token: userAccessToken,
+      access_token: pageAccessToken,
       fields: 'id,message_tags,message,attachments,updated_time,created_time',
       limit: '100',
     })
@@ -349,53 +373,81 @@ export class FacebookRepository {
   async linkFacebookPageToUser({
     userId,
     facebookPageId,
-    facebookAccessToken,
+    facebookPageAccessToken,
   }: {
     userId: string
     facebookPageId: string
-    facebookAccessToken: string
+    facebookPageAccessToken: string
   }) {
-    const existingPage = await this.prismaService.facebookPage.findUnique({
-      where: {
-        managerId: userId,
-      },
-    })
+    const pageDetails = await this.getPageById(facebookPageAccessToken, facebookPageId)
 
-    if (existingPage) {
-      return ok(existingPage)
+    if (pageDetails.isErr()) {
+      return err(pageDetails.error)
     }
 
-    const initialPagePosts = await this.getPagePosts(facebookAccessToken, facebookPageId)
+    const createResult = await fromPrismaPromise(
+      this.prismaService.facebookPage.upsert({
+        where: {
+          id: facebookPageId,
+        },
+        create: {
+          id: facebookPageId,
+          name: pageDetails.value.name,
+          profilePictureUrl: pageDetails.value.picture.data.url,
+          pageAccessToken: facebookPageAccessToken,
+          manager: {
+            connect: { id: userId },
+          },
+          isSubscribed: true,
+        },
+        update: {
+          name: pageDetails.value.name,
+          profilePictureUrl: pageDetails.value.picture.data.url,
+          pageAccessToken: facebookPageAccessToken,
+          managerId: userId,
+          isSubscribed: true,
+        },
+      })
+    )
+
+    if (createResult.isErr()) {
+      return err(createResult.error)
+    }
+
+    const initialPagePosts = await this.getPagePosts(facebookPageAccessToken, facebookPageId)
 
     if (initialPagePosts.isErr()) {
       return err(initialPagePosts.error)
     }
 
-    await this.syncPostsFromPage(userId, initialPagePosts.value.data)
+    const syncResult = await this.syncPostsFromPage(userId, initialPagePosts.value.data)
 
-    const result = await this.subscribeToPostUpdates(userId, facebookPageId)
-
-    if (result.isErr()) {
-      return err(result.error)
+    if (syncResult.isErr()) {
+      return err(syncResult.error)
     }
 
-    return ok()
+    return await this.subscribeToPostUpdates(userId, facebookPageId)
   }
 
   async unlinkFacebookPageFromUser({ userId }: { userId: string }) {
-    const deleteResult = await fromPrismaPromise(
-      this.prismaService.facebookPage.delete({
+    const unlinkResult = await fromPrismaPromise(
+      this.prismaService.facebookPage.update({
         where: {
           managerId: userId,
+        },
+        data: {
+          manager: {
+            disconnect: true,
+          },
         },
       })
     )
 
-    if (deleteResult.isErr()) {
-      return err(deleteResult.error)
+    if (unlinkResult.isErr()) {
+      return err(unlinkResult.error)
     }
 
-    const unsubscribeResult = await this.unsubscribeFromPostUpdates(userId, deleteResult.value.id)
+    const unsubscribeResult = await this.unsubscribeFromPostUpdates(userId, unlinkResult.value.id)
 
     if (unsubscribeResult.isErr()) {
       return err(unsubscribeResult.error)

@@ -23,6 +23,7 @@ export class FacebookService {
         id: page.id,
         name: page.name,
         profilePictureUrl: page.picture.data.url,
+        accessToken: page.access_token,
       }))
     )
   }
@@ -34,30 +35,22 @@ export class FacebookService {
       return linkedPageResult
     }
 
-    return linkedPageResult.map((page) =>
-      page
-        ? {
-            id: page.id,
-            name: page.name,
-            profilePictureUrl: page.profilePictureUrl,
-          }
-        : null
-    )
+    return ok(linkedPageResult.value)
   }
 
   async linkFacebookPageToUser({
     userId,
     facebookPageId,
-    facebookAccessToken,
+    facebookPageAccessToken,
   }: {
     userId: string
     facebookPageId: string
-    facebookAccessToken: string
+    facebookPageAccessToken: string
   }) {
     const linkResult = await this.facebookRepository.linkFacebookPageToUser({
       userId,
       facebookPageId,
-      facebookAccessToken,
+      facebookPageAccessToken,
     })
 
     if (linkResult.isErr()) {
