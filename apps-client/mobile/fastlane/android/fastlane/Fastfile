@@ -36,11 +36,13 @@ platform :android do
         "android.injected.version.code" => current_version_code,
       }
     )
+    changelog = "Beta build for Android\n" \
+      "Build from: #{ENV['APP_ENVIRONMENT']}"
     firebase_app_distribution(
       app: app_id,
       groups: ENV['DISTRIBUTE_GROUPS'] || "dev-team",
       service_credentials_file: "key.json",
-      release_notes: "New build with automated version increment. Version Code: #{current_version_code}",
+      release_notes: changelog,
       # debug: true,
     )
   end
