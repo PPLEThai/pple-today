@@ -4,13 +4,12 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        type: string
-        description: 'Deployment environment (e.g., dev, staging, production)'
+        type: choice
+        description: 'Deployment environment (e.g., dev, staging)'
         options:
           - dev
           - staging
-          - production
-        default: 'staging'
+        default: 'dev'
       android:
         type: boolean
         description: 'Build Android app'
@@ -36,28 +35,26 @@ on:
         description: 'Distribute to these groups'
         default: 'dev-team,qa-team'
 
+permissions:
+  contents: read # for checkout
+  packages: write # to be able to push the Docker image to GitHub Container Registry
+
 jobs:
   get-tag-name:
     name: Get Tag Name
-    if: ${{ github.event.inputs.backoffice == true || github.event.inputs.api == true }}
+    if: ${{ (github.event.inputs.backoffice == 'true') || (github.event.inputs.api == 'true') }}
     runs-on: ubuntu-latest
     outputs:
-      TAG_NAME: ${{ steps.set_tag.outputs.tag_name }}
+      TAG_NAME: ${{ steps.set-tag.outputs.TAG_NAME }}
     steps:
       - name: Set tag name
-        id: set_tag
+        id: set-tag
         run: |
-          if [ -z "${{ github.event.inputs.tag_name }}" ]; then
-            echo "No tag name provided, using commit SHA."
-            echo "TAG_NAME=${{ inputs.environment }}-${{ github.sha }}" >> $GITHUB_OUTPUT
-          else
-            echo "Using provided tag name: ${{ github.event.inputs.tag_name }}"
-            echo "TAG_NAME=${{ github.event.inputs.tag_name }}" >> $GITHUB_OUTPUT
-          fi
+          echo "TAG_NAME=${{ github.event.inputs.environment }}-${{ github.sha }}" >> $GITHUB_OUTPUT
 
   deploy-mobile-app:
     name: Deploy Beta Mobile App
-    if: ${{ github.event.inputs.android == true || github.event.inputs.ios == true }}
+    if: ${{ (github.event.inputs.android == 'true') || (github.event.inputs.ios == 'true') }}
     uses: ./.github/workflows/beta-deployment.yaml
     secrets: 'inherit'
     with:
@@ -67,14 +64,15 @@ jobs:
 
   deploy-backoffice:
     name: Deploy Backoffice
-    if: ${{ github.event.inputs.backoffice == true }}
-    uses: ./.github/workflows/deploy-deploy.yaml
+    if: ${{ github.event.inputs.backoffice == 'true' }}
+    needs: get-tag-name
+    uses: ./.github/workflows/deploy-docker.yaml
     with:
       PACKAGE_NAME: pple-backoffice
-      TAG_NAME: ${{ steps.get-tag-name.outputs.TAG_NAME }}
+      TAG_NAME: ${{ needs.get-tag-name.outputs.TAG_NAME }}
       DOCKER_COMPOSE_FILE: docker-compose.backoffice.yaml
       DOCKER_REGISTRY: ghcr.io
-      DOCKERFILE_PATH: ./apps-client/backoffice/Dockerfile
+      PROJECT_PATH: ./apps-client/backoffice
     secrets:
       OVPN_CONFIG: ${{ secrets.OVPN_CONFIG }}
       OVPN_USERNAME: ${{ secrets.OVPN_USERNAME }}
@@ -83,17 +81,19 @@ jobs:
       SSH_HOST: ${{ secrets.SSH_HOST }}
       SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      WEB_CLIENT_ENV: ${{ secrets.WEB_CLIENT_ENV }}
 
   deploy-api:
     name: Deploy API
-    if: ${{ github.event.inputs.api == true }}
-    uses: ./.github/workflows/deploy-deploy.yaml
+    if: ${{ github.event.inputs.api == 'true' }}
+    needs: get-tag-name
+    uses: ./.github/workflows/deploy-docker.yaml
     with:
       PACKAGE_NAME: pple-api
-      TAG_NAME: ${{ steps.get-tag-name.outputs.TAG_NAME }}
+      TAG_NAME: ${{ needs.get-tag-name.outputs.TAG_NAME }}
       DOCKER_COMPOSE_FILE: docker-compose.api.yaml
       DOCKER_REGISTRY: ghcr.io
-      DOCKERFILE_PATH: ./apps-api/backoffice/Dockerfile
+      PROJECT_PATH: ./apps-api/backoffice
     secrets:
       OVPN_CONFIG: ${{ secrets.OVPN_CONFIG }}
       OVPN_USERNAME: ${{ secrets.OVPN_USERNAME }}
@@ -105,7 +105,7 @@ jobs:
 
   migrate-database:
     name: Migrate Database
-    if: ${{ github.event.inputs.backoffice == true }}
+    if: ${{ github.event.inputs.migrate-database == 'true' }}
     uses: ./.github/workflows/migrate-database.yaml
     secrets:
       OVPN_CONFIG: ${{ secrets.OVPN_CONFIG }}
@@ -117,3 +117,4 @@ jobs:
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
       DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
+      DATABASE_HOST_PORT: ${{ secrets.DATABASE_HOST_PORT }}

@@ -19,7 +19,7 @@ on:
         type: string
         description: Docker registry URL
         required: true
-      DOCKERFILE_PATH:
+      PROJECT_PATH:
         type: string
         description: Path to the Dockerfile
         required: true
@@ -45,20 +45,16 @@ on:
       SSH_PRIVATE_KEY:
         description: SSH private key
         required: true
-
-permissions:
-  contents: read # for checkout
-  packages: write # to be able to push the Docker image to GitHub Container Registry
+      WEB_CLIENT_ENV:
+        description: Web client environment variables
+        required: false
 
 jobs:
   release:
     name: Build and push Docker image
     runs-on: ubuntu-latest
-    permissions:
-      contents: write # to be able to publish a GitHub release
-      issues: write # to be able to comment on released issues
-      packages: write
-      pull-requests: write # to be able to comment on released pull requests
+    outputs:
+      DOCKER_IMAGE_URI: ${{ steps.set-docker-image-tags.outputs.DOCKER_IMAGE_URI }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -66,11 +62,11 @@ jobs:
           fetch-depth: 0 # fetch all history for tags
           persist-credentials: false # avoid checking out the repository again
 
-      - name: Set lowercase owner name
+      - name: Setup docker image tags
+        id: set-docker-image-tags
         run: |
-          echo "OWNER_LC=${OWNER,,}" | tee $GITHUB_ENV
-        env:
-          OWNER: '${{ github.repository_owner }}'
+          OWNER_LC=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')
+          echo "DOCKER_IMAGE_URI=${{ inputs.DOCKER_REGISTRY }}/${OWNER_LC}/${{ inputs.PACKAGE_NAME }}:${{ inputs.TAG_NAME }}" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -89,21 +85,20 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: ${{ inputs.DOCKERFILE_PATH }}
+          file: ${{ inputs.PROJECT_PATH }}/Dockerfile
           platforms: linux/amd64
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          args: |
-            VERSION=${{ inputs.TAG_NAME }}
-          tags: ${{ inputs.DOCKER_REGISTRY }}/${{ env.OWNER_LC }}/${{ inputs.PACKAGE_NAME }}:${{ inputs.TAG_NAME }}
+          build-args: |
+            "VERSION=${{ inputs.TAG_NAME }}"
+            "LOCAL_ENV=${{ secrets.WEB_CLIENT_ENV }}"
+          tags: ${{ steps.set-docker-image-tags.outputs.DOCKER_IMAGE_URI }}
 
   deploy-app:
     name: Deploy app
     runs-on: ubuntu-latest
     needs: release
-    permissions:
-      packages: read
     steps:
       - name: Write OpenVPN config
         run: echo "${{ secrets.OVPN_CONFIG }}" > client.ovpn
@@ -132,6 +127,6 @@ jobs:
             cd ~/app
 
             docker compose -f ${{ inputs.DOCKER_COMPOSE_FILE }} down
-            yq -e '.services."${{ inputs.PACKAGE_NAME }}".image = "${{ inputs.DOCKER_REGISTRY }}/${{ env.OWNER_LC }}/${{ inputs.PACKAGE_NAME }}:${{ inputs.TAG_NAME }}"' templates/${{ inputs.DOCKER_COMPOSE_FILE }}.tmpl > ${{ inputs.DOCKER_COMPOSE_FILE }}
+            yq -y '.services."${{ inputs.PACKAGE_NAME }}".image = "${{ needs.release.outputs.DOCKER_IMAGE_URI }}"' templates/${{ inputs.DOCKER_COMPOSE_FILE }}.tmpl > ${{ inputs.DOCKER_COMPOSE_FILE }}
 
             docker compose -f ${{ inputs.DOCKER_COMPOSE_FILE }} up -d

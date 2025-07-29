@@ -30,6 +30,9 @@ on:
       DATABASE_HOST:
         description: Database internal hostname
         required: true
+      DATABASE_HOST_PORT:
+        description: Database internal port
+        required: true
 
 permissions:
   contents: read # for checkout
@@ -56,7 +59,7 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile --prefer-offline
+        run: pnpm install -g prisma@^6.11.1
 
       - name: Install OpenVPN
         run: |
@@ -82,7 +85,7 @@ jobs:
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
           eval `ssh-agent -s`
           ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
-          ssh -fN -L 5432:${{ secrets.DATABASE_HOST }}:5432 ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}
+          ssh -fN -L 5432:${{ secrets.DATABASE_HOST }}:${{ secrets.DATABASE_HOST_PORT }} ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}
           pnpm prisma migrate deploy
         shell: bash
         env:
