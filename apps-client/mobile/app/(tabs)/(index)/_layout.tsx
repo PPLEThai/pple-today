@@ -44,9 +44,13 @@ import {
   CirclePlusIcon,
   ClockIcon,
   ContactRoundIcon,
+  HeartCrackIcon,
+  HeartHandshakeIcon,
   MapPinIcon,
   MapPinnedIcon,
+  MessageCircleIcon,
   RadioTowerIcon,
+  Share2Icon,
 } from 'lucide-react-native'
 
 import PPLEIcon from '@app/assets/pple-icon.svg'
@@ -320,9 +324,6 @@ const AnimatedPagerView = Animated.createAnimatedComponent(PagerView)
 export function TabViewInsideScroll() {
   // const layout = useWindowDimensions()
   const [currentPage, setCurrentPage] = React.useState(0)
-  React.useEffect(() => {
-    console.log('Current page:', currentPage)
-  }, [currentPage])
 
   const headerRef = React.useRef<View>(null)
   const isHeaderReady = React.useState(false)
@@ -352,8 +353,9 @@ export function TabViewInsideScroll() {
     onScroll: onScrollWorklet,
   })
   const headerTransform = useAnimatedStyle(() => {
+    const translateY = Math.max(-scrollY.get(), -headerOnlyHeight)
     return {
-      transform: [{ translateY: -scrollY.get() }],
+      transform: [{ translateY: translateY }],
     }
   })
   // scroll indicators work inconsistently between Android and iOS so we disable them for now
@@ -536,16 +538,19 @@ export function TabViewInsideScroll() {
         <Animated.View
           pointerEvents="box-none"
           style={[styles.pagerHeader, headerTransform]}
-          ref={headerRef}
           collapsable={false}
-          onLayout={() => {
-            headerRef.current?.measure((_x: number, _y: number, _width: number, height: number) => {
-              // console.log('Header only height:', height)
-              onHeaderOnlyLayout(height)
-            })
-          }}
         >
-          <View>
+          <View
+            ref={headerRef}
+            onLayout={() => {
+              headerRef.current?.measure(
+                (_x: number, _y: number, _width: number, height: number) => {
+                  // console.log('Header only height:', height)
+                  onHeaderOnlyLayout(height)
+                }
+              )
+            }}
+          >
             <MainHeader />
             <TopContainer />
             <View className="px-4 bg-base-bg-white flex flex-row items-start pointer-events-none">
@@ -556,6 +561,7 @@ export function TabViewInsideScroll() {
             horizontal
             showsHorizontalScrollIndicator={false}
             className="bg-base-bg-white px-4"
+            onLayout={onTabBarLayout}
           >
             <View
               accessibilityRole="tablist"
@@ -641,19 +647,110 @@ function PagerContent({ index }: { index: number }) {
       // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
       // automaticallyAdjustsScrollIndicatorInsets={false}
       data={Array.from({ length: 20 }, (_, i) => `Item ${i + 1}`)}
-      contentContainerClassName="px-3 py-4 flex flex-col gap-3"
+      contentContainerClassName="px-3 py-4 flex flex-col"
+      // TODO: data and renderItem should be replaced with actual data
       renderItem={({ item, index }) => (
-        <View className="flex flex-col gap-3 p-4 h-40 bg-base-bg-white border border-base-outline-default rounded-2xl">
-          <Text>{item}</Text>
-          <Button
-            onPress={() =>
-              runOnUI(() => {
-                scrollTo(scrollElRef, 0, (160 + 12) * index + headerHeight, true)
-              })()
-            }
-          >
-            <Text>Scroll to {160 * index + headerHeight}</Text>
-          </Button>
+        <View className="flex flex-col gap-3 p-4 bg-base-bg-white border border-base-outline-default rounded-2xl mt-4">
+          <View className="flex flex-row items-center justify-between">
+            <View className="flex flex-row items-center">
+              <View className="w-8 h-8 rounded-full bg-base-primary-medium flex items-center justify-center mr-3">
+                <Icon icon={PPLEIcon} width={20} height={20} className="text-white" />
+              </View>
+              <View className="flex flex-col">
+                <Text className="text-base-text-medium font-anakotmai-medium text-sm">
+                  ศิริโรจน์ ธนิกกุล - Sirirot Thanikkun
+                </Text>
+                <Text className="text-base-text-medium font-anakotmai-light text-sm">
+                  สส.สมุทรสาคร | 1 ชม.
+                </Text>
+              </View>
+            </View>
+            <Button variant="ghost" size="icon" aria-label="Share">
+              <Icon
+                icon={Share2Icon}
+                width={16}
+                height={16}
+                className="text-base-text-high"
+                strokeWidth={1}
+              />
+            </Button>
+          </View>
+          <View className="rounded-lg overflow-hidden">
+            <Image
+              style={{ width: '100%', aspectRatio: 1 }}
+              source={require('@app/assets/post-1.png')}
+              alt=""
+            />
+          </View>
+          <View>
+            <Text className="text-base-text-high font-noto-light text-base">
+              พบปะแม่ๆ ชมรมผู้สูงอายุดอกลำดวน ณ หมู่บ้านวารัตน์ 3 ม.5 ต. อ้อมน้อย อ.กระทุ่มแบน
+              จ.สมุทรสาครชวนให้ผมออกสเตปประกอบ
+            </Text>
+            <Text className="text-base-primary-default font-noto-light text-base">
+              อ่านเพิ่มเติม...
+            </Text>
+          </View>
+          <View className="flex flex-row flex-wrap gap-1">
+            <Badge variant="secondary">
+              <Text>#pridemonth</Text>
+            </Badge>
+            <Badge variant="secondary">
+              <Text>#ร่างกฎหมาย68</Text>
+            </Badge>
+          </View>
+          <View className="flex flex-row justify-between">
+            <View className="flex flex-row gap-1">
+              <Icon
+                icon={HeartHandshakeIcon}
+                size={18}
+                className="fill-base-primary-medium text-white"
+              />
+              <Text className="text-xs font-anakotmai-light text-base-text-medium">32</Text>
+            </View>
+            <Pressable>
+              <Text className="text-xs font-anakotmai-light text-base-text-medium">
+                125 ความคิดเห็น
+              </Text>
+            </Pressable>
+          </View>
+          <View className="flex flex-col border-t border-base-outline-default pt-4 pb-1">
+            <View className="flex flex-row justify-between gap-2">
+              <View className="flex flex-row gap-2">
+                <Pressable className="flex flex-row items-center gap-1">
+                  <Icon
+                    icon={HeartHandshakeIcon}
+                    size={20}
+                    strokeWidth={1}
+                    className="text-base-text-high"
+                  />
+                  <Text className="text-sm font-anakotmai-light text-base-text-high">เห็นด้วย</Text>
+                </Pressable>
+                <Pressable className="flex flex-row items-center gap-1">
+                  <Icon
+                    icon={HeartCrackIcon}
+                    size={20}
+                    strokeWidth={1}
+                    className="text-base-text-high"
+                  />
+                  <Text className="text-sm font-anakotmai-light text-base-text-high">
+                    ไม่เห็นด้วย
+                  </Text>
+                </Pressable>
+              </View>
+              <Pressable className="flex flex-row items-center gap-1">
+                <Icon
+                  icon={MessageCircleIcon}
+                  size={20}
+                  strokeWidth={1}
+                  className="text-base-text-high"
+                />
+                <Text className="text-sm font-anakotmai-light text-base-text-high">
+                  ความคิดเห็น
+                </Text>
+              </Pressable>
+            </View>
+          </View>
         </View>
       )}
     />
