@@ -15,6 +15,8 @@ import PagerView, {
 } from 'react-native-pager-view'
 import Animated, {
   AnimatedRef,
+  interpolate,
+  interpolateColor,
   runOnJS,
   runOnUI,
   ScrollHandlerProcessed,
@@ -39,6 +41,7 @@ import { Stack, useRouter } from 'expo-router'
 import {
   ArrowRightIcon,
   BellIcon,
+  CirclePlusIcon,
   ClockIcon,
   ContactRoundIcon,
   MapPinIcon,
@@ -411,10 +414,15 @@ export function TabViewInsideScroll() {
     },
     [currentPageRef, headerOnlyHeightRef, lastForcedScrollY, scrollRefs, scrollY]
   )
-  const onTabPressed = React.useCallback(() => {
-    runOnUI(adjustScrollForOtherPages)('dragging')
-  }, [adjustScrollForOtherPages])
+  const onTabPressed = React.useCallback(
+    (index: number) => {
+      runOnUI(adjustScrollForOtherPages)('dragging')
+      pagerView.current?.setPage(index)
+    },
+    [adjustScrollForOtherPages]
+  )
 
+  // TODO: Prevent pageScroll on header
   const dragState = useSharedValue<'idle' | 'settling' | 'dragging'>('idle')
   const dragProgress = useSharedValue(0)
   const didInit = useSharedValue(false)
@@ -455,32 +463,131 @@ export function TabViewInsideScroll() {
     ]
   )
 
+  const tabListSize = useSharedValue(0)
+  const tabItemLayouts = useSharedValue<{ x: number; width: number }[]>([])
+  const indicatorStyle = useAnimatedStyle(() => {
+    const tabItems = tabItemLayouts.get()
+    if (tabItems.length === 0) {
+      return { opacity: 0, transform: [{ scaleX: 0 }] }
+    }
+    function getScaleX(index: number) {
+      'worklet'
+      const itemWidth = tabItems[index].width
+      return itemWidth / tabListSize.get()
+    }
+    function getTranslateX(index: number) {
+      'worklet'
+      const itemX = tabItems[index].x
+      const itemWidth = tabItems[index].width
+      return itemX + itemWidth / 2 - tabListSize.get() / 2
+    }
+    // const scaleX = getScaleX(currentPage)
+    // const translateX = getTranslateX(currentPage)
+    return {
+      opacity: 1,
+      transform: [
+        {
+          translateX: interpolate(
+            dragProgress.get(),
+            tabItems.map((_, i) => {
+              'worklet'
+              return i
+            }),
+            tabItems.map((_, index) => {
+              'worklet'
+              return getTranslateX(index)
+            })
+          ),
+        },
+        {
+          scaleX: interpolate(
+            dragProgress.get(),
+            tabItems.map((_, i) => {
+              'worklet'
+              return i
+            }),
+            tabItems.map((_, index) => {
+              'worklet'
+              return getScaleX(index)
+            })
+          ),
+        },
+      ],
+    }
+  })
+
+  const onTabLayout = React.useCallback(
+    (i: number, layout: { x: number; width: number }) => {
+      'worklet'
+      tabItemLayouts.modify((tab) => {
+        tab[i] = layout
+        return tab
+      })
+    },
+    [tabItemLayouts]
+  )
+
   // Scrolling with header is now laggy on Expo Go Android because of the "new architechture"
   // disabling it in `app.config.ts` fixes the issue on native build
   // https://github.com/software-mansion/react-native-reanimated/issues/6992
   return (
-    <View className="flex-1 bg-base-bg-default">
-      <Animated.View
-        pointerEvents="box-none"
-        style={[styles.pagerHeader, headerTransform]}
-        ref={headerRef}
-        collapsable={false}
-        onLayout={() => {
-          headerRef.current?.measure((_x: number, _y: number, _width: number, height: number) => {
-            // console.log('Header only height:', height)
-            onHeaderOnlyLayout(height)
-          })
-        }}
-      >
-        <View>
-          <MainHeader />
-          <TopContainer />
-          <View className="px-4 bg-base-bg-white flex flex-row items-start pointer-events-none">
-            <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
+    <PagerProvider value={{ dragProgress, registerRef, scrollHandler, headerHeight }}>
+      <View className="flex-1 bg-base-bg-default">
+        <Animated.View
+          pointerEvents="box-none"
+          style={[styles.pagerHeader, headerTransform]}
+          ref={headerRef}
+          collapsable={false}
+          onLayout={() => {
+            headerRef.current?.measure((_x: number, _y: number, _width: number, height: number) => {
+              // console.log('Header only height:', height)
+              onHeaderOnlyLayout(height)
+            })
+          }}
+        >
+          <View>
+            <MainHeader />
+            <TopContainer />
+            <View className="px-4 bg-base-bg-white flex flex-row items-start pointer-events-none">
+              <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
+            </View>
           </View>
-        </View>
-      </Animated.View>
-      <PagerProvider value={{ registerRef, scrollHandler, headerHeight }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            className="bg-base-bg-white px-4"
+          >
+            <View
+              accessibilityRole="tablist"
+              className="flex flex-row"
+              onLayout={(e) => {
+                tabListSize.set(e.nativeEvent.layout.width)
+              }}
+            >
+              <Button variant="ghost" aria-label="Add Label">
+                <Icon
+                  icon={CirclePlusIcon}
+                  strokeWidth={1}
+                  className="text-base-secondary-default"
+                  size={20}
+                />
+              </Button>
+              <TabBarItem index={0} onTabLayout={onTabLayout} onTabPress={onTabPressed}>
+                สำหรับคุณ
+              </TabBarItem>
+              <TabBarItem index={1} onTabLayout={onTabLayout} onTabPress={onTabPressed}>
+                กำลังติดตาม
+              </TabBarItem>
+              <TabBarItem index={2} onTabLayout={onTabLayout} onTabPress={onTabPressed}>
+                กรุงเทพฯ
+              </TabBarItem>
+              <Animated.View
+                className="absolute bottom-0 left-0 right-0 border-b-2 border-base-primary-default pointer-events-none"
+                style={indicatorStyle}
+              />
+            </View>
+          </ScrollView>
+        </Animated.View>
         <AnimatedPagerView
           ref={pagerView}
           style={styles.pagerView}
@@ -493,11 +600,12 @@ export function TabViewInsideScroll() {
             </View>
           ))}
         </AnimatedPagerView>
-      </PagerProvider>
-    </View>
+      </View>
+    </PagerProvider>
   )
 }
 interface PagerContextValue {
+  dragProgress: SharedValue<number>
   registerRef: (scrollRef: AnimatedRef<any> | null, atIndex: number) => void
   scrollHandler: ScrollHandlerProcessed<Record<string, unknown>>
   headerHeight: number
@@ -600,4 +708,53 @@ function useSharedState<T>(value: T): SharedValue<T> {
     sharedValue.value = value
   }, [sharedValue, value])
   return sharedValue
+}
+
+function TabBarItem({
+  index,
+  children,
+  onTabLayout,
+  onTabPress,
+  ...props
+}: React.ComponentProps<typeof Pressable> & {
+  index: number
+  children?: React.ReactNode
+  onTabLayout: (index: number, layout: { x: number; width: number }) => void
+  onTabPress: (index: number) => void
+}) {
+  const { dragProgress } = usePagerContext()
+  const style = useAnimatedStyle(() => {
+    return {
+      color: interpolateColor(
+        dragProgress.get(),
+        [index - 1, index, index + 1],
+        [
+          '#94A3B8', // --base-text-placeholder
+          '#FF6A13', // --base-primary-default
+          '#94A3B8', // --base-text-placeholder
+        ]
+      ),
+    }
+  })
+  const handleLayout = (e: LayoutChangeEvent) => {
+    runOnUI(onTabLayout)(index, e.nativeEvent.layout)
+  }
+
+  const handlePress = () => {
+    onTabPress?.(index)
+  }
+
+  return (
+    <Pressable
+      className="h-[41px] border-b border-base-outline-default"
+      accessibilityRole="tab"
+      onLayout={handleLayout}
+      onPress={handlePress}
+      {...props}
+    >
+      <Animated.Text style={style} className="px-4 pt-2 pb-3 text-sm font-anakotmai-medium">
+        {children}
+      </Animated.Text>
+    </Pressable>
+  )
 }
