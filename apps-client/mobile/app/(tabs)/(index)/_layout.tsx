@@ -472,6 +472,10 @@ export function TabViewInsideScroll() {
     if (tabItems.length === 0) {
       return { opacity: 0, transform: [{ scaleX: 0 }] }
     }
+    // interpolate requires at least 2 items to work properly
+    if (tabItems.length === 1) {
+      return { opacity: 1, transform: [{ scaleX: 1 }] }
+    }
     function getScaleX(index: number) {
       'worklet'
       const itemWidth = tabItems[index].width
