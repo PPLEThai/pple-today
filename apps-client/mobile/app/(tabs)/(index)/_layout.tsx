@@ -545,6 +545,7 @@ export function TabViewInsideScroll() {
           collapsable={false}
         >
           <View
+            className="pointer-events-box-none"
             ref={headerRef}
             onLayout={() => {
               headerRef.current?.measure(
