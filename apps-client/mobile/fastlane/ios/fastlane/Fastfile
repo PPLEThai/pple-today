@@ -86,7 +86,8 @@ platform :ios do
       # configuration: "Debug",
     )
     changelog = "Beta build for iOS\n" \
-      "App environment: #{ENV['APP_ENVIRONMENT']}"
+      "Build from: #{ENV['APP_ENVIRONMENT']}\n" \
+      "Distribute to: #{ENV['DISTRIBUTE_GROUPS']}"
     # Switch to use TestFlight instead of Firebase App Distribution
     # If you want to use Firebase App Distribution you need to method `ad-hoc`, please see
     # https://stackoverflow.com/questions/58262038/testers-could-not-download-app-from-firebase-app-distribution/58383782#58383782
