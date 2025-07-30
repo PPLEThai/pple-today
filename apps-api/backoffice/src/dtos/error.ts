@@ -26,6 +26,18 @@ const COMMON_ERROR_SCHEMA = {
   INTERNAL_SERVER_ERROR: {
     status: 500,
   },
+  FILE_UPLOAD_ERROR: {
+    status: 500,
+  },
+} satisfies InternalErrorSchemas
+
+const FILE_ERROR_SCHEMA = {
+  FILE_UPLOAD_ERROR: {
+    status: 500,
+  },
+  FILE_CREATE_SIGNED_URL_ERROR: {
+    status: 500,
+  },
 } satisfies InternalErrorSchemas
 
 const AUTH_ERROR_SCHEMA = {
@@ -97,6 +109,7 @@ export const InternalErrorCodeSchemas = {
   ...POST_ERROR_SCHEMA,
   ...ABOUT_US_ERROR_SCHEMA,
   ...USER_ERROR_SCHEMA,
+  ...FILE_ERROR_SCHEMA,
   ...FACEBOOK_ERROR_SCHEMA,
 } as const
 export type InternalErrorCodeSchemas = typeof InternalErrorCodeSchemas

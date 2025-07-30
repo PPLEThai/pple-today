@@ -177,7 +177,7 @@ export class FacebookRepository {
   }
 
   // TODO: Implement the following methods when webhooks are available
-  private async subscribeToPostUpdates(userId: string, pageId: string) {
+  async subscribeToPostUpdates(userId: string, pageId: string) {
     return await fromPrismaPromise(
       this.prismaService.facebookPage.update({
         where: { id: pageId, managerId: userId },
@@ -188,7 +188,8 @@ export class FacebookRepository {
     )
   }
 
-  private async unsubscribeFromPostUpdates(userId: string, pageId: string) {
+  // TODO: Implement the following methods when webhooks are available
+  async unsubscribeFromPostUpdates(userId: string, pageId: string) {
     return await fromPrismaPromise(
       this.prismaService.facebookPage.update({
         where: { id: pageId, managerId: userId },
@@ -199,7 +200,7 @@ export class FacebookRepository {
     )
   }
 
-  private async syncPostsFromPage(userId: string, posts: ExternalFacebookPagePost[]) {
+  async syncInitialPostsFromPage(userId: string, posts: ExternalFacebookPagePost[]) {
     return await fromPrismaPromise(
       this.prismaService.$transaction(async (tx) => {
         await Promise.all(
@@ -224,8 +225,10 @@ export class FacebookRepository {
                   images: {
                     deleteMany: {},
                     create:
-                      post.attachments?.data.map((attachment) => ({
+                      post.attachments?.data.map((attachment, idx) => ({
+                        cacheKey: attachment.target.id,
                         url: attachment.media.image.src,
+                        order: idx,
                       })) ?? [],
                   },
                   hashTags: {
@@ -268,8 +271,10 @@ export class FacebookRepository {
                     },
                     images: {
                       create:
-                        post.attachments?.data.map((attachment) => ({
+                        post.attachments?.data.map((attachment, idx) => ({
+                          cacheKey: attachment.target.id,
                           url: attachment.media.image.src,
+                          order: idx,
                         })) ?? [],
                     },
                   },
@@ -323,7 +328,7 @@ export class FacebookRepository {
     return ok(response.value)
   }
 
-  async getPageById(pageAccessToken: string, pageId: string) {
+  async getFacebookPageById(pageAccessToken: string, pageId: string) {
     const inspectResponse = await this.inspectUserAccessToken(pageAccessToken)
 
     if (inspectResponse.isErr()) {
@@ -332,7 +337,7 @@ export class FacebookRepository {
 
     const queryParams = new URLSearchParams({
       access_token: pageAccessToken,
-      fields: 'id,name,picture',
+      fields: 'id,name,picture{cache_key,url}',
     })
 
     const response = await this.makeRequest({
@@ -372,82 +377,55 @@ export class FacebookRepository {
     return ok(response.value)
   }
 
-  async linkFacebookPageToUser({
-    userId,
-    facebookPageId,
-    facebookPageAccessToken,
-  }: {
-    userId: string
-    facebookPageId: string
-    facebookPageAccessToken: string
-  }) {
-    const pageDetails = await this.getPageById(facebookPageAccessToken, facebookPageId)
-
-    if (pageDetails.isErr()) {
-      return err(pageDetails.error)
-    }
-
-    const profilePictureUrl = `profile/profile-picture-${facebookPageId}.png`
-    const uploadResult = await fromPromise(
-      this.fileService.uploadFileStream(pageDetails.value.picture.data.url, profilePictureUrl),
-      (err) => ({
-        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-        message: `Failed to upload profile image: ${(err as any).message}`,
+  async getLocalPageById(facebookPageId: string) {
+    return await fromPrismaPromise(
+      this.prismaService.facebookPage.findUnique({
+        where: { id: facebookPageId },
       })
     )
+  }
 
-    if (uploadResult.isErr()) {
-      return err(uploadResult.error)
+  async linkFacebookPageToUser(
+    userId: string,
+    facebookPageId: string,
+    data: {
+      facebookPageAccessToken: string
+      profilePictureUrl: string
+      profilePictureCacheKey: string
+      pageName: string
     }
+  ) {
+    const { facebookPageAccessToken, profilePictureUrl, profilePictureCacheKey, pageName } = data
 
-    const createResult = await fromPrismaPromise(
+    return await fromPrismaPromise(
       this.prismaService.facebookPage.upsert({
         where: {
           id: facebookPageId,
         },
         create: {
           id: facebookPageId,
-          name: pageDetails.value.name,
+          name: pageName,
           profilePictureUrl,
           pageAccessToken: facebookPageAccessToken,
           manager: {
             connect: { id: userId },
           },
-          isSubscribed: true,
+          profilePictureCacheKey: profilePictureCacheKey,
         },
         update: {
-          name: pageDetails.value.name,
+          name: pageName,
           profilePictureUrl,
           pageAccessToken: facebookPageAccessToken,
           manager: {
             connect: { id: userId },
           },
-          isSubscribed: true,
         },
       })
     )
-
-    if (createResult.isErr()) {
-      return err(createResult.error)
-    }
-
-    const initialPagePosts = await this.getPagePosts(facebookPageAccessToken, facebookPageId)
-
-    if (initialPagePosts.isErr()) {
-      return err(initialPagePosts.error)
-    }
-
-    const syncResult = await this.syncPostsFromPage(userId, initialPagePosts.value.data)
-
-    if (syncResult.isErr()) {
-      return err(syncResult.error)
-    }
-
-    return await this.subscribeToPostUpdates(userId, facebookPageId)
   }
 
   async unlinkFacebookPageFromUser({ userId }: { userId: string }) {
-    const unlinkResult = await fromPrismaPromise(
+    return await fromPrismaPromise(
       this.prismaService.facebookPage.update({
         where: {
           managerId: userId,
@@ -459,18 +437,6 @@ export class FacebookRepository {
         },
       })
     )
-
-    if (unlinkResult.isErr()) {
-      return err(unlinkResult.error)
-    }
-
-    const unsubscribeResult = await this.unsubscribeFromPostUpdates(userId, unlinkResult.value.id)
-
-    if (unsubscribeResult.isErr()) {
-      return err(unsubscribeResult.error)
-    }
-
-    return ok()
   }
 
   async getLinkedFacebookPage(userId: string) {
@@ -490,22 +456,10 @@ export class FacebookRepository {
       return ok(null)
     }
 
-    const profilePictureUrl = await fromPromise(
-      this.fileService.getSignedUrl(linkedPage.value.profilePictureUrl),
-      (err) => ({
-        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-        message: `Failed to get signed URL for profile picture: ${(err as any).message}`,
-      })
-    )
-
-    if (profilePictureUrl.isErr()) {
-      return err(profilePictureUrl.error)
-    }
-
     return ok({
       id: linkedPage.value.id,
       name: linkedPage.value.name,
-      profilePictureUrl: profilePictureUrl.value,
+      profilePictureUrl: linkedPage.value.profilePictureUrl,
     })
   }
 }

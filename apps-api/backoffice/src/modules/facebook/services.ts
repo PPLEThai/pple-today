@@ -4,8 +4,13 @@ import { err, ok } from 'neverthrow'
 
 import { FacebookRepository, FacebookRepositoryPlugin } from './repository'
 
+import { FileService, FileServicePlugin } from '../file/services'
+
 export class FacebookService {
-  constructor(private readonly facebookRepository: FacebookRepository) {}
+  constructor(
+    private readonly facebookRepository: FacebookRepository,
+    private readonly fileService: FileService
+  ) {}
 
   async getUserAccessToken(code: string, redirectUri: string) {
     return await this.facebookRepository.getUserAccessToken(code, redirectUri)
@@ -32,10 +37,26 @@ export class FacebookService {
     const linkedPageResult = await this.facebookRepository.getLinkedFacebookPage(userId)
 
     if (linkedPageResult.isErr()) {
-      return linkedPageResult
+      return err(linkedPageResult.error)
     }
 
-    return ok(linkedPageResult.value)
+    if (!linkedPageResult.value) {
+      return ok(null)
+    }
+
+    const signedProfilePictureUrl = await this.fileService.getSignedUrl(
+      linkedPageResult.value.profilePictureUrl
+    )
+
+    if (signedProfilePictureUrl.isErr()) {
+      return err(signedProfilePictureUrl.error)
+    }
+
+    return ok({
+      id: linkedPageResult.value.id,
+      name: linkedPageResult.value.name,
+      profilePictureUrl: signedProfilePictureUrl.value,
+    })
   }
 
   async linkFacebookPageToUser({
@@ -47,21 +68,87 @@ export class FacebookService {
     facebookPageId: string
     facebookPageAccessToken: string
   }) {
-    const linkResult = await this.facebookRepository.linkFacebookPageToUser({
-      userId,
-      facebookPageId,
-      facebookPageAccessToken,
-    })
+    const existingPage = await this.facebookRepository.getLocalPageById(facebookPageId)
 
-    if (linkResult.isErr()) {
-      return err(linkResult.error)
+    if (existingPage.isErr()) {
+      return err(existingPage.error)
     }
 
-    return ok()
+    const pageDetails = await this.facebookRepository.getFacebookPageById(
+      facebookPageAccessToken,
+      facebookPageId
+    )
+
+    if (pageDetails.isErr()) {
+      return err(pageDetails.error)
+    }
+
+    const profilePictureUrl = `profile/profile-picture-${facebookPageId}.png`
+
+    if (pageDetails.value.picture.data.cache_key !== existingPage.value?.profilePictureCacheKey) {
+      const uploadResult = await this.fileService.uploadFileStream(
+        pageDetails.value.picture.data.url,
+        profilePictureUrl
+      )
+
+      if (uploadResult.isErr()) {
+        return err(uploadResult.error)
+      }
+    }
+
+    const linkedPage = await this.facebookRepository.linkFacebookPageToUser(
+      userId,
+      facebookPageId,
+      {
+        facebookPageAccessToken,
+        profilePictureUrl,
+        profilePictureCacheKey: pageDetails.value.picture.data.cache_key,
+        pageName: pageDetails.value.name,
+      }
+    )
+
+    if (linkedPage.isErr()) {
+      return err(linkedPage.error)
+    }
+
+    const initialPagePosts = await this.facebookRepository.getPagePosts(
+      facebookPageId,
+      facebookPageAccessToken
+    )
+
+    if (initialPagePosts.isErr()) {
+      return err(initialPagePosts.error)
+    }
+
+    const syncResult = await this.facebookRepository.syncInitialPostsFromPage(
+      userId,
+      initialPagePosts.value.data
+    )
+
+    if (syncResult.isErr()) {
+      return err(syncResult.error)
+    }
+
+    return await this.facebookRepository.subscribeToPostUpdates(userId, facebookPageId)
   }
 
   async unlinkFacebookPageFromUser(userId: string) {
-    return await this.facebookRepository.unlinkFacebookPageFromUser({ userId })
+    const unlinkResult = await this.facebookRepository.unlinkFacebookPageFromUser({ userId })
+
+    if (unlinkResult.isErr()) {
+      return err(unlinkResult.error)
+    }
+
+    const unlinkPostsResult = await this.facebookRepository.unsubscribeFromPostUpdates(
+      userId,
+      unlinkResult.value.id
+    )
+
+    if (unlinkPostsResult.isErr()) {
+      return err(unlinkPostsResult.error)
+    }
+
+    return ok()
   }
 }
 
@@ -69,7 +156,7 @@ export const FacebookServicePlugin = new Elysia({
   name: 'FacebookService',
   adapter: node(),
 })
-  .use(FacebookRepositoryPlugin)
-  .decorate(({ facebookRepository }) => ({
-    facebookService: new FacebookService(facebookRepository),
+  .use([FacebookRepositoryPlugin, FileServicePlugin])
+  .decorate(({ facebookRepository, fileService }) => ({
+    facebookService: new FacebookService(facebookRepository, fileService),
   }))

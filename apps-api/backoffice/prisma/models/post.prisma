@@ -10,9 +10,13 @@ model Post {
 }
 
 model PostImage {
-    id        String   @id @default(cuid())
-    postId    String
-    url       String
+    id     String @id @default(cuid())
+    postId String
+
+    url      String
+    cacheKey String @unique
+    order    Int
+
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 

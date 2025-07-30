@@ -102,6 +102,16 @@ export const ExternalFacebookGetProfileImageResponse = t.Object(
         description: 'The URL of the profile picture for the Facebook user',
         format: 'uri',
       }),
+      cache_key: t.String({
+        description: 'Cache key for the profile picture, used for caching purposes',
+      }),
+      height: t.Optional(t.Number({ description: 'Height of the profile picture' })),
+      width: t.Optional(t.Number({ description: 'Width of the profile picture' })),
+      is_silhouette: t.Optional(
+        t.Boolean({
+          description: 'Indicates whether the profile picture is a silhouette',
+        })
+      ),
     }),
   },
   {
