@@ -23,7 +23,6 @@ import Animated, {
   useAnimatedRef,
   useAnimatedScrollHandler,
   useAnimatedStyle,
-  useDerivedValue,
   useEvent,
   useHandler,
   useSharedValue,
@@ -296,6 +295,23 @@ const routes = [
 
 // Ref: https://github.com/bluesky-social/social-app/blob/0610c822cf94995c75bbf3237c217b68dabfe5a0/src/view/com/pager/PagerWithHeader.tsx
 
+// brief structure for PagerView with Header
+// <Pager>
+//   <PagerHeader>
+//     <CustomHeader />
+//     <PagerTabBar>
+//       <PagerTab>Tab 1</PagerTab>
+//       <PagerTab>Tab 2</PagerTab>
+//       <PagerTab>Tab 3</PagerTab>
+//     </PagerTabBar>
+//   </PagerHeader>
+//   <PagerContent> -> PagerView
+//     <PagerItem>...</PagerItem> -> <View key="1"><List/></View>
+//     <PagerItem>...</PagerItem>
+//     <PagerItem>...</PagerItem>
+//   </PagerContent>
+// </Pager>
+
 const AnimatedPagerView = Animated.createAnimatedComponent(PagerView)
 
 export function TabViewInsideScroll() {
@@ -337,11 +353,11 @@ export function TabViewInsideScroll() {
       transform: [{ translateY: -scrollY.get() }],
     }
   })
+  // scroll indicators work inconsistently between Android and iOS so we disable them for now
+  // const scrollIndicatorInsets = useDerivedValue(() => ({
+  //   top: headerHeight - scrollY.get(),
+  // }))
 
-  const scrollIndicatorInsets = useDerivedValue(() => ({
-    top: headerHeight - scrollY.get(),
-  }))
-  // capture the header bar sizing
   const onTabBarLayout = useNonReactiveCallback((evt: LayoutChangeEvent) => {
     const height = evt.nativeEvent.layout.height
     if (height > 0) {
@@ -439,11 +455,14 @@ export function TabViewInsideScroll() {
     ]
   )
 
+  // Scrolling with header is now laggy on Expo Go Android because of the "new architechture"
+  // disabling it in `app.config.ts` fixes the issue on native build
+  // https://github.com/software-mansion/react-native-reanimated/issues/6992
   return (
     <View className="flex-1 bg-base-bg-default">
       <Animated.View
         pointerEvents="box-none"
-        style={[styles.pageHeader, headerTransform]}
+        style={[styles.pagerHeader, headerTransform]}
         ref={headerRef}
         collapsable={false}
         onLayout={() => {
@@ -453,42 +472,28 @@ export function TabViewInsideScroll() {
           })
         }}
       >
-        <MainHeader />
-        <TopContainer />
-        <View className="px-4 bg-base-bg-white flex flex-row items-start pointer-events-none">
-          <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
+        <View>
+          <MainHeader />
+          <TopContainer />
+          <View className="px-4 bg-base-bg-white flex flex-row items-start pointer-events-none">
+            <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
+          </View>
         </View>
       </Animated.View>
-      {/* PagerProvider */}
-      <>
-        {/* <TabBar
-        items={items}
-        selectedPage={currentPage}
-        onSelect={onSelect}
-        onPressSelected={onCurrentPageSelected}
-        dragProgress={dragProgress}
-        dragState={dragState}
-        /> */}
-        {/* <Animated.ScrollView
-          onScroll={scrollHandler}
-          style={{ paddingTop: headerHeight }}
-          // scrollIndicatorInsets={scrollIndicatorInsets as SharedValue<Insets | undefined>}
-        ></Animated.ScrollView> */}
-        <PagerProvider value={{ registerRef, scrollHandler, headerHeight }}>
-          <AnimatedPagerView
-            ref={pagerView}
-            style={styles.pagerView}
-            initialPage={0}
-            onPageScroll={handlePageScroll}
-          >
-            {Array.from({ length: 3 }).map((_, index) => (
-              <View key={index} collapsable={false}>
-                <PagerContent index={index} />
-              </View>
-            ))}
-          </AnimatedPagerView>
-        </PagerProvider>
-      </>
+      <PagerProvider value={{ registerRef, scrollHandler, headerHeight }}>
+        <AnimatedPagerView
+          ref={pagerView}
+          style={styles.pagerView}
+          initialPage={0}
+          onPageScroll={handlePageScroll}
+        >
+          {Array.from({ length: 3 }).map((_, index) => (
+            <View key={index} collapsable={false}>
+              <PagerContent index={index} />
+            </View>
+          ))}
+        </AnimatedPagerView>
+      </PagerProvider>
     </View>
   )
 }
@@ -547,32 +552,14 @@ function PagerContent({ index }: { index: number }) {
   )
 }
 
-// brief structure for PagerView with Header
-// <Pager>
-//   <PagerHeader>
-//     <CustomHeader />
-//     <PagerTabBar>
-//       <PagerTab>Tab 1</PagerTab>
-//       <PagerTab>Tab 2</PagerTab>
-//       <PagerTab>Tab 3</PagerTab>
-//     </PagerTabBar>
-//   </PagerHeader>
-//   <PagerContent> // PagerView
-//     <PagerItem>Tab 1</PagerItem> // <View key="1"><List/></View>
-//     <PagerItem>Tab 2</PagerItem>
-//     <PagerItem>Tab 3</PagerItem>
-//   </PagerContent>
-// </Pager>
-
 const styles = StyleSheet.create({
-  pageHeader: {
+  pagerHeader: {
     position: 'absolute',
     zIndex: 1,
     top: 0,
     left: 0,
     width: '100%',
   },
-
   pagerView: {
     flex: 1,
   },
