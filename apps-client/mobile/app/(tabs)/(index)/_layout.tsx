@@ -5,14 +5,27 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  useWindowDimensions,
   View,
 } from 'react-native'
-import PagerView from 'react-native-pager-view'
+import { FlatList } from 'react-native-gesture-handler'
+import PagerView, {
+  PagerViewOnPageScrollEventData,
+  PagerViewOnPageSelectedEventData,
+  PageScrollStateChangedNativeEventData,
+} from 'react-native-pager-view'
 import Animated, {
+  AnimatedRef,
+  runOnJS,
+  runOnUI,
+  ScrollHandlerProcessed,
+  scrollTo,
+  SharedValue,
+  useAnimatedRef,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useDerivedValue,
+  useEvent,
+  useHandler,
   useSharedValue,
 } from 'react-native-reanimated'
 import { SceneMap } from 'react-native-tab-view'
@@ -222,7 +235,7 @@ function ElectionCard() {
 function UserInfoSection() {
   return (
     <View className="flex flex-row justify-between items-center w-full px-4">
-      <View className="flex flex-col items-start">
+      <View className="flex flex-col items-start pointer-events-none">
         <View className="flex flex-row items-center gap-2">
           <Icon icon={MapPinnedIcon} size={16} className="text-base-primary-medium" />
           <H2 className="text-xs text-base-text-high font-anakotmai-light">พื้นที่ของคุณ</H2>
@@ -286,8 +299,11 @@ const routes = [
 const AnimatedPagerView = Animated.createAnimatedComponent(PagerView)
 
 export function TabViewInsideScroll() {
-  const layout = useWindowDimensions()
-  const [index, setIndex] = React.useState(0)
+  // const layout = useWindowDimensions()
+  const [currentPage, setCurrentPage] = React.useState(0)
+  React.useEffect(() => {
+    console.log('Current page:', currentPage)
+  }, [currentPage])
 
   const headerRef = React.useRef<View>(null)
   const isHeaderReady = React.useState(false)
@@ -312,19 +328,19 @@ export function TabViewInsideScroll() {
     },
     [scrollY, headerHeight]
   )
+
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: onScrollWorklet,
   })
-
   const headerTransform = useAnimatedStyle(() => {
     return {
       transform: [{ translateY: -scrollY.get() }],
     }
   })
+
   const scrollIndicatorInsets = useDerivedValue(() => ({
     top: headerHeight - scrollY.get(),
   }))
-
   // capture the header bar sizing
   const onTabBarLayout = useNonReactiveCallback((evt: LayoutChangeEvent) => {
     const height = evt.nativeEvent.layout.height
@@ -339,18 +355,89 @@ export function TabViewInsideScroll() {
       setHeaderOnlyHeight(Math.round(height * 2) / 2)
     }
   })
+  const pagerView = React.useRef<PagerView>(null)
 
-  // const scrollRefs = useSharedValue<(AnimatedRef<any> | null)[]>([])
-  // const registerRef = React.useCallback(
-  //   (scrollRef: AnimatedRef<any> | null, atIndex: number) => {
-  //     scrollRefs.modify((refs) => {
-  //       'worklet'
-  //       refs[atIndex] = scrollRef
-  //       return refs
-  //     })
-  //   },
-  //   [scrollRefs]
-  // )
+  const scrollRefs = useSharedValue<(AnimatedRef<any> | null)[]>([])
+  const registerRef = React.useCallback(
+    (scrollRef: AnimatedRef<any> | null, atIndex: number) => {
+      scrollRefs.modify((refs) => {
+        'worklet'
+        refs[atIndex] = scrollRef
+        return refs
+      })
+    },
+    [scrollRefs]
+  )
+
+  const lastForcedScrollY = useSharedValue(0)
+  const currentPageRef = useSharedState(currentPage)
+  const headerOnlyHeightRef = useSharedState(headerOnlyHeight)
+  const adjustScrollForOtherPages = React.useCallback(
+    (scrollState: 'idle' | 'dragging' | 'settling') => {
+      'worklet'
+      // if (global._WORKLET) {
+      //   console.log('UI Thread')
+      // } else {
+      //   console.log('JS Thread')
+      // }
+      if (scrollState !== 'dragging') return
+      const currentScrollY = scrollY.get()
+      const forcedScrollY = Math.min(currentScrollY, headerOnlyHeightRef.get())
+      if (lastForcedScrollY.get() === forcedScrollY) return
+      lastForcedScrollY.set(forcedScrollY)
+      const refs = scrollRefs.get()
+      for (let i = 0; i < refs.length; i++) {
+        const scollRef = refs[i]
+        if (i !== currentPageRef.get() && scollRef != null) {
+          scrollTo(scollRef, 0, forcedScrollY, false)
+        }
+      }
+    },
+    [currentPageRef, headerOnlyHeightRef, lastForcedScrollY, scrollRefs, scrollY]
+  )
+  const onTabPressed = React.useCallback(() => {
+    runOnUI(adjustScrollForOtherPages)('dragging')
+  }, [adjustScrollForOtherPages])
+
+  const dragState = useSharedValue<'idle' | 'settling' | 'dragging'>('idle')
+  const dragProgress = useSharedValue(0)
+  const didInit = useSharedValue(false)
+  const handlePageScroll = usePagerHandlers(
+    {
+      onPageScroll(e: PagerViewOnPageScrollEventData) {
+        'worklet'
+        if (didInit.get() === false) {
+          // On iOS, there's a spurious scroll event with 0 position
+          // even if a different page was supplied as the initial page.
+          // Ignore it and wait for the first confirmed selection instead.
+          return
+        }
+        dragProgress.set(e.offset + e.position)
+      },
+      onPageScrollStateChanged(e: PageScrollStateChangedNativeEventData) {
+        'worklet'
+        // runOnJS(setIsIdle)(e.pageScrollState === 'idle')
+        if (dragState.get() === 'idle' && e.pageScrollState === 'settling') {
+          // This is a programmatic scroll on Android.
+          // Stay "idle" to match iOS and avoid confusing downstream code.
+          return
+        }
+        dragState.set(e.pageScrollState)
+        // parentOnPageScrollStateChanged?.(e.pageScrollState)
+        adjustScrollForOtherPages(e.pageScrollState)
+      },
+      onPageSelected(e: PagerViewOnPageSelectedEventData) {
+        'worklet'
+        didInit.set(true)
+        // runOnJS(onPageSelectedJSThread)(e.position)
+        runOnJS(setCurrentPage)(e.position)
+      },
+    },
+    [
+      setCurrentPage,
+      // parentOnPageScrollStateChanged
+    ]
+  )
 
   return (
     <View className="flex-1 bg-base-bg-default">
@@ -361,17 +448,16 @@ export function TabViewInsideScroll() {
         collapsable={false}
         onLayout={() => {
           headerRef.current?.measure((_x: number, _y: number, _width: number, height: number) => {
+            // console.log('Header only height:', height)
             onHeaderOnlyLayout(height)
           })
         }}
       >
-        {/* <View> */}
         <MainHeader />
         <TopContainer />
         <View className="px-4 bg-base-bg-white flex flex-row items-start pointer-events-none">
           <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
         </View>
-        {/* </View> */}
       </Animated.View>
       {/* PagerProvider */}
       <>
@@ -388,35 +474,76 @@ export function TabViewInsideScroll() {
           style={{ paddingTop: headerHeight }}
           // scrollIndicatorInsets={scrollIndicatorInsets as SharedValue<Insets | undefined>}
         ></Animated.ScrollView> */}
-
-        <AnimatedPagerView style={styles.pagerView} initialPage={0}>
-          {Array.from({ length: 3 }).map((_, index) => (
-            <View key={index} collapsable={false}>
-              <Animated.FlatList
-                onScroll={scrollHandler}
-                showsVerticalScrollIndicator
-                style={{ flex: 1 }}
-                contentContainerStyle={{ paddingTop: headerHeight + 16 }}
-                // contentOffset={{ x: 0, y: -headerHeight }}
-                contentInsetAdjustmentBehavior="scrollableAxes"
-                // scrollIndicatorInsets={{ top: headerHeight }}
-                // automaticallyAdjustsScrollIndicatorInsets={false}
-                // contentContainerStyle={{
-                //   paddingBottom: Platform.OS === 'android' ? headerHeight + 12 : 12,
-                // }}
-                data={Array.from({ length: 20 }, (_, i) => `Item ${i + 1}`)}
-                contentContainerClassName="px-3 py-4 flex flex-col gap-3"
-                renderItem={({ item }) => (
-                  <View className="flex flex-col gap-3 p-4 h-40 bg-base-bg-white border border-base-outline-default rounded-2xl">
-                    <Text>{item}</Text>
-                  </View>
-                )}
-              />
-            </View>
-          ))}
-        </AnimatedPagerView>
+        <PagerProvider value={{ registerRef, scrollHandler, headerHeight }}>
+          <AnimatedPagerView
+            ref={pagerView}
+            style={styles.pagerView}
+            initialPage={0}
+            onPageScroll={handlePageScroll}
+          >
+            {Array.from({ length: 3 }).map((_, index) => (
+              <View key={index} collapsable={false}>
+                <PagerContent index={index} />
+              </View>
+            ))}
+          </AnimatedPagerView>
+        </PagerProvider>
       </>
     </View>
+  )
+}
+interface PagerContextValue {
+  registerRef: (scrollRef: AnimatedRef<any> | null, atIndex: number) => void
+  scrollHandler: ScrollHandlerProcessed<Record<string, unknown>>
+  headerHeight: number
+}
+const PagerContext = React.createContext<PagerContextValue | null>(null)
+const PagerProvider = PagerContext.Provider
+const usePagerContext = () => {
+  const context = React.useContext(PagerContext)
+  if (!context) {
+    throw new Error('usePagerContext must be used within a PagerProvider')
+  }
+  return context
+}
+
+function PagerContent({ index }: { index: number }) {
+  const { headerHeight, registerRef, scrollHandler } = usePagerContext()
+  const scrollElRef = useAnimatedRef<FlatList>()
+  React.useEffect(() => {
+    registerRef(scrollElRef, index)
+    return () => {
+      registerRef(null, index)
+    }
+  }, [scrollElRef, registerRef, index])
+
+  return (
+    <Animated.FlatList
+      ref={scrollElRef}
+      onScroll={scrollHandler}
+      showsVerticalScrollIndicator={false}
+      style={{ flex: 1 }}
+      contentContainerStyle={{ paddingTop: headerHeight }}
+      // contentOffset={{ x: 0, y: -headerHeight }}
+      // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
+      // automaticallyAdjustsScrollIndicatorInsets={false}
+      data={Array.from({ length: 20 }, (_, i) => `Item ${i + 1}`)}
+      contentContainerClassName="px-3 py-4 flex flex-col gap-3"
+      renderItem={({ item, index }) => (
+        <View className="flex flex-col gap-3 p-4 h-40 bg-base-bg-white border border-base-outline-default rounded-2xl">
+          <Text>{item}</Text>
+          <Button
+            onPress={() =>
+              runOnUI(() => {
+                scrollTo(scrollElRef, 0, (160 + 12) * index + headerHeight, true)
+              })()
+            }
+          >
+            <Text>Scroll to {160 * index + headerHeight}</Text>
+          </Button>
+        </View>
+      )}
+    />
   )
 }
 
@@ -430,8 +557,8 @@ export function TabViewInsideScroll() {
 //       <PagerTab>Tab 3</PagerTab>
 //     </PagerTabBar>
 //   </PagerHeader>
-//   <PagerContent>
-//     <PagerItem>Tab 1</PagerItem>
+//   <PagerContent> // PagerView
+//     <PagerItem>Tab 1</PagerItem> // <View key="1"><List/></View>
 //     <PagerItem>Tab 2</PagerItem>
 //     <PagerItem>Tab 3</PagerItem>
 //   </PagerContent>
@@ -450,3 +577,40 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 })
+
+function usePagerHandlers(
+  handlers: {
+    onPageScroll: (e: PagerViewOnPageScrollEventData) => void
+    onPageScrollStateChanged: (e: PageScrollStateChangedNativeEventData) => void
+    onPageSelected: (e: PagerViewOnPageSelectedEventData) => void
+  },
+  dependencies: unknown[]
+) {
+  const { doDependenciesDiffer } = useHandler(handlers as any, dependencies)
+  const subscribeForEvents = ['onPageScroll', 'onPageScrollStateChanged', 'onPageSelected']
+  return useEvent(
+    (event) => {
+      'worklet'
+      const { onPageScroll, onPageScrollStateChanged, onPageSelected } = handlers
+      if (event.eventName.endsWith('onPageScroll')) {
+        onPageScroll(event as any as PagerViewOnPageScrollEventData)
+      } else if (event.eventName.endsWith('onPageScrollStateChanged')) {
+        onPageScrollStateChanged(event as any as PageScrollStateChangedNativeEventData)
+      } else if (event.eventName.endsWith('onPageSelected')) {
+        onPageSelected(event as any as PagerViewOnPageSelectedEventData)
+      }
+    },
+    subscribeForEvents,
+    doDependenciesDiffer
+  )
+}
+
+// this is a hook is for moving and syncing react state to a SharedValue in the UI thread worklet
+// since SharedValue is not reactive and should not be used directly in the render
+function useSharedState<T>(value: T): SharedValue<T> {
+  const sharedValue = useSharedValue(value)
+  React.useEffect(() => {
+    sharedValue.value = value
+  }, [sharedValue, value])
+  return sharedValue
+}
