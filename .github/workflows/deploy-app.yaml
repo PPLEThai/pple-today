@@ -33,7 +33,7 @@ on:
       mobile-groups:
         type: string
         description: 'Distribute to these groups'
-        default: 'dev-team,qa-team'
+        default: 'dev-team'
 
 permissions:
   contents: read # for checkout

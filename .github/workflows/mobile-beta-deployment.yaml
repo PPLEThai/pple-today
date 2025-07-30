@@ -12,7 +12,7 @@ on:
       groups:
         type: string
         description: 'Distribute to these groups'
-        default: 'dev-team,qa-team'
+        default: 'dev-team'
 
 jobs:
   build-android:
