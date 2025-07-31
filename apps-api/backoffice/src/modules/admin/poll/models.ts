@@ -4,15 +4,19 @@ import { PollType } from '../../../../__generated__/prisma'
 import { DraftedPoll, PollDetails, PublishedPoll } from '../../../dtos/poll'
 
 export const GetPollsQuery = t.Object({
-  type: t.Union(
-    [
-      t.Literal('publish', { description: 'String `publish`' }),
-      t.Literal('draft', { description: 'String `draft`' }),
-    ],
-    {
-      description: 'Type of poll',
-    }
+  type: t.Optional(
+    t.Union(
+      [
+        t.Literal('publish', { description: 'String `publish`' }),
+        t.Literal('draft', { description: 'String `draft`' }),
+      ],
+      {
+        description: 'Type of poll',
+      }
+    )
   ),
+  limit: t.Optional(t.Number({ default: 10 })),
+  page: t.Optional(t.Number({ default: 1 })),
 })
 export type GetPollsQuery = Static<typeof GetPollsQuery>
 

@@ -25,8 +25,13 @@ export class PollService {
     return ok(result.value satisfies GetPollsResponse)
   }
 
-  async getPublishedPolls() {
-    const result = await this.pollRepository.getPolls()
+  async getPublishedPolls(
+    query: { limit: number; page: number } = {
+      limit: 10,
+      page: 1,
+    }
+  ) {
+    const result = await this.pollRepository.getPolls(query)
     if (result.isErr()) return mapRawPrismaError(result.error, {})
 
     return ok(result.value satisfies GetPublishedPollsResponse)
@@ -68,8 +73,13 @@ export class PollService {
     return ok({ message: `Poll "${result.value.id}" deleted.` })
   }
 
-  async getDraftedPolls() {
-    const result = await this.pollRepository.getDraftedPolls()
+  async getDraftedPolls(
+    query: { limit: number; page: number } = {
+      limit: 10,
+      page: 1,
+    }
+  ) {
+    const result = await this.pollRepository.getDraftedPolls(query)
     if (result.isErr()) return mapRawPrismaError(result.error, {})
 
     return ok(result.value satisfies GetDraftedPollsResponse)

@@ -176,13 +176,18 @@ export const PollsController = new Elysia({
   .get(
     '/',
     async ({ query, status, pollService }) => {
+      const pagingQuery = {
+        limit: query.limit ?? 10,
+        page: query.page ?? 1,
+      }
+
       if (query.type === 'publish') {
-        const result = await pollService.getPublishedPolls()
+        const result = await pollService.getPublishedPolls(pagingQuery)
         if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
         return status(200, result.value)
       } else if (query.type === 'draft') {
-        const result = await pollService.getDraftedPolls()
+        const result = await pollService.getDraftedPolls(pagingQuery)
         if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
         return status(200, result.value)

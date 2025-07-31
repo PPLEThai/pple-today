@@ -15,10 +15,25 @@ export class PollRepository {
 
   async getAllPolls() {
     return await fromPrismaPromise(async () => {
-      const [rawDraft, rawPublished] = await Promise.all([
-        this.prismaService.pollDraft.findMany(),
+      const [draft, published] = await Promise.all([
+        this.prismaService.pollDraft.findMany({
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            endAt: true,
+            type: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        }),
         this.prismaService.poll.findMany({
-          include: {
+          select: {
+            feedItemId: true,
+            title: true,
+            description: true,
+            endAt: true,
+            type: true,
             feedItem: {
               select: {
                 createdAt: true,
@@ -29,39 +44,36 @@ export class PollRepository {
         }),
       ])
 
-      const draft = rawDraft.map((item) => ({
-        id: item.id,
-
-        title: item.title,
-        description: item.description,
-        endAt: item.endAt,
-        type: item.type,
-
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-      }))
-
-      const published = rawPublished.map((item) => ({
-        id: item.feedItemId,
-
-        title: item.title,
-        description: item.description,
-        endAt: item.endAt,
-        type: item.type,
-
-        createdAt: item.feedItem.createdAt,
-        updatedAt: item.feedItem.updatedAt,
-      }))
-
-      return [...draft, ...published]
+      return [
+        ...draft,
+        ...published.map((item) => ({
+          ...item,
+          id: item.feedItemId,
+          createdAt: item.feedItem.createdAt,
+          updatedAt: item.feedItem.updatedAt,
+        })),
+      ]
     })
   }
 
-  async getPolls() {
-    return await fromPrismaPromise(async () => {
-      return (
+  async getPolls(
+    query: { limit: number; page: number } = {
+      limit: 10,
+      page: 1,
+    }
+  ) {
+    const { limit, page } = query
+    const skip = page ? (page - 1) * limit : 0
+
+    return await fromPrismaPromise(async () =>
+      (
         await this.prismaService.poll.findMany({
-          include: {
+          select: {
+            feedItemId: true,
+            title: true,
+            description: true,
+            endAt: true,
+            type: true,
             feedItem: {
               select: {
                 createdAt: true,
@@ -69,26 +81,33 @@ export class PollRepository {
               },
             },
           },
+          take: limit,
+          skip,
+          orderBy: {
+            feedItem: {
+              createdAt: 'desc',
+            },
+          },
         })
       ).map((item) => ({
+        ...item,
         id: item.feedItemId,
-
-        title: item.title,
-        description: item.description,
-        endAt: item.endAt,
-        type: item.type,
-
         createdAt: item.feedItem.createdAt,
         updatedAt: item.feedItem.updatedAt,
       }))
-    })
+    )
   }
 
   async getPollById(feedItemId: string) {
     return await fromPrismaPromise(async () => {
       const result = await this.prismaService.poll.findUniqueOrThrow({
         where: { feedItemId },
-        include: {
+        select: {
+          feedItemId: true,
+          title: true,
+          description: true,
+          endAt: true,
+          type: true,
           feedItem: {
             select: {
               createdAt: true,
@@ -120,16 +139,10 @@ export class PollRepository {
       })
 
       return {
+        ...result,
         id: result.feedItemId,
-
-        title: result.title,
-        description: result.description,
-        endAt: result.endAt,
-        type: result.type,
-
         createdAt: result.feedItem.createdAt,
         updatedAt: result.feedItem.updatedAt,
-
         options: result.options.map((option) => ({
           title: option.title,
           votes: option.votes,
@@ -206,19 +219,32 @@ export class PollRepository {
     )
   }
 
-  async getDraftedPolls() {
-    return await fromPrismaPromise(async () =>
-      (await this.prismaService.pollDraft.findMany()).map((item) => ({
-        id: item.id,
+  async getDraftedPolls(
+    query: { limit: number; page: number } = {
+      limit: 10,
+      page: 1,
+    }
+  ) {
+    const { limit, page } = query
+    const skip = page ? (page - 1) * limit : 0
 
-        title: item.title,
-        description: item.description,
-        endAt: item.endAt,
-        type: item.type,
-
-        createdAt: item.createdAt,
-        updatedAt: item.updatedAt,
-      }))
+    return await fromPrismaPromise(
+      this.prismaService.pollDraft.findMany({
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          endAt: true,
+          type: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        take: limit,
+        skip,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      })
     )
   }
 
@@ -226,20 +252,30 @@ export class PollRepository {
     return await fromPrismaPromise(async () => {
       const result = await this.prismaService.pollDraft.findUniqueOrThrow({
         where: { id: pollId },
-        include: { options: true, topics: true },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          endAt: true,
+          type: true,
+          createdAt: true,
+          updatedAt: true,
+          options: {
+            select: {
+              title: true,
+              votes: true,
+            },
+          },
+          topics: {
+            select: {
+              topicId: true,
+            },
+          },
+        },
       })
 
       return {
-        id: result.id,
-
-        title: result.title,
-        description: result.description,
-        endAt: result.endAt,
-        type: result.type,
-
-        createdAt: result.createdAt,
-        updatedAt: result.updatedAt,
-
+        ...result,
         options: result.options.map((option) => ({
           title: option.title,
           votes: option.votes,
