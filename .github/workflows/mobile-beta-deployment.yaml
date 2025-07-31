@@ -20,7 +20,7 @@ jobs:
   build-android:
     name: Build Android
     runs-on: macos-latest
-    if: ${{ github.event.inputs.android == 'true' }}
+    if: ${{ inputs.android == 'true' }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -68,8 +68,8 @@ jobs:
           echo "DEVELOPER_APP_IDENTIFIER=${{ secrets.DEVELOPER_APP_IDENTIFIER }}" >> .env
           echo "FIREBASE_SERVICE_ACCOUNT_JSON=${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}" >> .env
           echo "FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}" >> .env
-          echo "DISTRIBUTE_GROUPS=${{ github.event.inputs.groups }}" >> .env
-          echo "APP_ENVIRONMENT=${{ github.event.inputs.environment }}" >> .env
+          echo "DISTRIBUTE_GROUPS=${{ inputs.groups }}" >> .env
+          echo "APP_ENVIRONMENT=${{ inputs.environment }}" >> .env
           bash ./fastlane/setup.sh
           cd android && bundle install
         env:
@@ -85,7 +85,7 @@ jobs:
   build-ios:
     name: Build iOS
     runs-on: macos-latest
-    if: ${{ github.event.inputs.ios == 'true' }}
+    if: ${{ inputs.ios == 'true' }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -144,8 +144,8 @@ jobs:
           echo "PROVISIONING_PROFILE_SPECIFIER=${{ secrets.PROVISIONING_PROFILE_SPECIFIER }}" >> .env
           echo "APP_STORE_CONNECT_TEAM_ID=${{ secrets.APP_STORE_CONNECT_TEAM_ID }}" >> .env
           echo "DEVELOPER_PORTAL_TEAM_ID=${{ secrets.DEVELOPER_PORTAL_TEAM_ID }}" >> .env
-          echo "APP_ENVIRONMENT=${{ github.event.inputs.environment }}" >> .env
-          echo "DISTRIBUTE_GROUPS=${{ github.event.inputs.groups }}" >> .env
+          echo "APP_ENVIRONMENT=${{ inputs.environment }}" >> .env
+          echo "DISTRIBUTE_GROUPS=${{ inputs.groups }}" >> .env
 
       - name: Install Fastlane
         working-directory: apps-client/mobile

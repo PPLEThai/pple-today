@@ -30,7 +30,7 @@ on:
         type: boolean
         description: 'Run database migrations'
         default: false
-      mobile-groups:
+      groups:
         type: string
         description: 'Distribute to these groups'
         default: 'dev-team'
@@ -60,7 +60,7 @@ jobs:
     with:
       android: ${{ github.event.inputs.android }}
       ios: ${{ github.event.inputs.ios }}
-      groups: ${{ github.event.inputs.mobile-groups }}
+      groups: ${{ github.event.inputs.groups }}
       environment: ${{ github.event.inputs.environment }}
 
   deploy-backoffice:
