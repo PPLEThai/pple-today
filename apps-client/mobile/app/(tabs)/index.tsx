@@ -564,7 +564,8 @@ export function TabViewInsideScroll() {
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            className="bg-base-bg-white px-4 border-b border-base-outline-default"
+            className="bg-base-bg-white w-full"
+            contentContainerClassName="px-4 border-b border-base-outline-default w-full"
             onLayout={onTabBarLayout}
           >
             <View
