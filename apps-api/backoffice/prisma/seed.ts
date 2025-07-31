@@ -60,7 +60,7 @@ const seedAnnouncements = async () => {
     },
   })
   await prisma.feedItem.upsert({
-    where: { id: 'announcement-1' },
+    where: { id: 'announcement-2' },
     update: {},
     create: {
       id: 'announcement-2',

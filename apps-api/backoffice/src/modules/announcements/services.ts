@@ -11,6 +11,7 @@ export class AnnouncementService {
   constructor(private readonly announcementRepository: AnnouncementRepository) {}
 
   async getAnnouncements(query?: { limit: number; page: number }) {
+    // TODO: Filter by announcement type corresponding to the user role
     const announcementResult = await this.announcementRepository.getAnnouncements(query)
 
     if (announcementResult.isErr()) {
@@ -30,6 +31,7 @@ export class AnnouncementService {
   }
 
   async getAnnouncementById(id: string) {
+    // TODO: Filter by announcement type corresponding to the user role
     const announcementResult = await this.announcementRepository.getAnnouncementById(id)
 
     if (announcementResult.isErr()) {
