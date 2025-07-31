@@ -179,6 +179,9 @@ export const ExternalFacebookPostAttachment = t.Object({
       src: t.String({ description: 'Source URL of the image', format: 'uri' }),
       width: t.Number({ description: 'Width of the image' }),
     }),
+    source: t.Optional(
+      t.String({ description: 'Source URL of the media, if applicable', format: 'uri' })
+    ),
   }),
   target: t.Object({
     id: t.String({ description: 'ID of the target' }),
@@ -189,11 +192,30 @@ export const ExternalFacebookPostAttachment = t.Object({
 })
 export type ExternalFacebookPostAttachment = Static<typeof ExternalFacebookPostAttachment>
 
+export const ExternalFacebookPostAttachmentWithSubAttachment = t.Composite([
+  ExternalFacebookPostAttachment,
+  t.Object({
+    subattachments: t.Optional(
+      t.Object({
+        data: t.Array(ExternalFacebookPostAttachment, {
+          description: 'List of sub-attachments in the post',
+        }),
+      })
+    ),
+  }),
+])
+export type ExternalFacebookPostAttachmentWithSubAttachment = Static<
+  typeof ExternalFacebookPostAttachmentWithSubAttachment
+>
+
 export const ExternalFacebookPagePost = t.Object({
   id: t.String({ description: 'ID of the Facebook page post' }),
   message: t.Optional(t.String({ description: 'Content of the Facebook page post' })),
   created_time: t.String({ description: 'Creation time of the post in ISO 8601 format' }),
   updated_time: t.String({ description: 'Last update time of the post in ISO 8601 format' }),
+  parent_id: t.Optional(
+    t.String({ description: 'ID of the parent post, if this is a comment or reply' })
+  ),
   message_tags: t.Optional(
     t.Array(
       t.Object({
@@ -206,7 +228,7 @@ export const ExternalFacebookPagePost = t.Object({
   ),
   attachments: t.Optional(
     t.Object({
-      data: t.Array(ExternalFacebookPostAttachment, {
+      data: t.Array(ExternalFacebookPostAttachmentWithSubAttachment, {
         description: 'List of attachments in the post',
       }),
     })

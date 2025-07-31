@@ -12,6 +12,39 @@ export class FacebookService {
     private readonly fileService: FileService
   ) {}
 
+  // TODO: Move to admin section
+  // private async syncPostsFromPage({
+  //   userId,
+  //   facebookPageId,
+  //   facebookPageAccessToken,
+  // }: {
+  //   userId: string
+  //   facebookPageId: string
+  //   facebookPageAccessToken: string
+  // }) {
+  //   const initialPagePosts = await this.facebookRepository.getPagePosts(
+  //     facebookPageId,
+  //     facebookPageAccessToken
+  //   )
+
+  //   if (initialPagePosts.isErr()) {
+  //     return err(initialPagePosts.error)
+  //   }
+
+  //   const postWithoutParentId = initialPagePosts.value.data.filter((post) => !post.parent_id)
+
+  //   const syncResult = await this.facebookRepository.syncInitialPostsFromPage(
+  //     userId,
+  //     postWithoutParentId
+  //   )
+
+  //   if (syncResult.isErr()) {
+  //     return err(syncResult.error)
+  //   }
+
+  //   return await this.facebookRepository.subscribeToPostUpdates(userId, facebookPageId)
+  // }
+
   async getUserAccessToken(code: string, redirectUri: string) {
     return await this.facebookRepository.getUserAccessToken(code, redirectUri)
   }
@@ -111,25 +144,7 @@ export class FacebookService {
       return err(linkedPage.error)
     }
 
-    const initialPagePosts = await this.facebookRepository.getPagePosts(
-      facebookPageId,
-      facebookPageAccessToken
-    )
-
-    if (initialPagePosts.isErr()) {
-      return err(initialPagePosts.error)
-    }
-
-    const syncResult = await this.facebookRepository.syncInitialPostsFromPage(
-      userId,
-      initialPagePosts.value.data
-    )
-
-    if (syncResult.isErr()) {
-      return err(syncResult.error)
-    }
-
-    return await this.facebookRepository.subscribeToPostUpdates(userId, facebookPageId)
+    return ok(linkedPage.value)
   }
 
   async unlinkFacebookPageFromUser(userId: string) {

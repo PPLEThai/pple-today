@@ -4,7 +4,7 @@ model FacebookPage {
   profilePictureUrl      String
   profilePictureCacheKey String @unique
 
-  isSubscribed    Boolean @default(true)
+  isSubscribed    Boolean @default(false)
   pageAccessToken String?
 
   createdAt DateTime @default(now())

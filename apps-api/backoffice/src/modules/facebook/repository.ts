@@ -3,7 +3,6 @@ import { Check } from '@sinclair/typebox/value'
 import { Elysia, t } from 'elysia'
 import { err, fromPromise, ok } from 'neverthrow'
 
-import { FeedItemType } from '../../../__generated__/prisma'
 import serverEnv from '../../config/env'
 import { InternalErrorCode } from '../../dtos/error'
 import {
@@ -13,7 +12,6 @@ import {
   ExternalFacebookGetPagePostsResponse,
   ExternalFacebookInspectAccessTokenResponse,
   ExternalFacebookListUserPageResponse,
-  ExternalFacebookPagePost,
 } from '../../dtos/facebook'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
@@ -200,92 +198,93 @@ export class FacebookRepository {
     )
   }
 
-  async syncInitialPostsFromPage(userId: string, posts: ExternalFacebookPagePost[]) {
-    return await fromPrismaPromise(
-      this.prismaService.$transaction(async (tx) => {
-        await Promise.all(
-          posts.map(async (post) => {
-            const existingPost = await tx.post.findUnique({
-              where: { facebookPostId: post.id },
-              include: {
-                images: true,
-                hashTags: {
-                  include: {
-                    hashTag: true,
-                  },
-                },
-              },
-            })
+  // TODO: implement the following methods when starting to sync posts
+  // async syncInitialPostsFromPage(userId: string, posts: ExternalFacebookPagePost[]) {
+  //   return await fromPrismaPromise(
+  //     this.prismaService.$transaction(async (tx) => {
+  //       await Promise.all(
+  //         posts.map(async (post) => {
+  //           const existingPost = await tx.post.findUnique({
+  //             where: { facebookPostId: post.id },
+  //             include: {
+  //               images: true,
+  //               hashTags: {
+  //                 include: {
+  //                   hashTag: true,
+  //                 },
+  //               },
+  //             },
+  //           })
 
-            if (existingPost) {
-              await tx.post.update({
-                where: { feedItemId: existingPost.feedItemId },
-                data: {
-                  content: post.message,
-                  images: {
-                    deleteMany: {},
-                    create:
-                      post.attachments?.data.map((attachment, idx) => ({
-                        cacheKey: attachment.target.id,
-                        url: attachment.media.image.src,
-                        order: idx,
-                      })) ?? [],
-                  },
-                  hashTags: {
-                    deleteMany: {},
-                    create:
-                      post.message_tags?.map((tag) => ({
-                        hashTag: {
-                          connectOrCreate: {
-                            where: { name: tag.data.name },
-                            create: { name: tag.data.name },
-                          },
-                        },
-                      })) ?? [],
-                  },
-                },
-              })
-              return
-            }
+  //           if (existingPost) {
+  //             await tx.post.update({
+  //               where: { feedItemId: existingPost.feedItemId },
+  //               data: {
+  //                 content: post.message,
+  //                 images: {
+  //                   deleteMany: {},
+  //                   create:
+  //                     post.attachments?.data.map((attachment, idx) => ({
+  //                       cacheKey: attachment.target.id,
+  //                       url: attachment.media.image.src,
+  //                       order: idx,
+  //                     })) ?? [],
+  //                 },
+  //                 hashTags: {
+  //                   deleteMany: {},
+  //                   create:
+  //                     post.message_tags?.map((tag) => ({
+  //                       hashTag: {
+  //                         connectOrCreate: {
+  //                           where: { name: tag.data.name },
+  //                           create: { name: tag.data.name },
+  //                         },
+  //                       },
+  //                     })) ?? [],
+  //                 },
+  //               },
+  //             })
+  //             return
+  //           }
 
-            await tx.feedItem.create({
-              data: {
-                author: {
-                  connect: { id: userId },
-                },
-                type: FeedItemType.POST,
-                post: {
-                  create: {
-                    facebookPostId: post.id,
-                    content: post.message,
-                    hashTags: {
-                      create:
-                        post.message_tags?.map((tag) => ({
-                          hashTag: {
-                            connectOrCreate: {
-                              where: { name: tag.data.name },
-                              create: { name: tag.data.name },
-                            },
-                          },
-                        })) ?? [],
-                    },
-                    images: {
-                      create:
-                        post.attachments?.data.map((attachment, idx) => ({
-                          cacheKey: attachment.target.id,
-                          url: attachment.media.image.src,
-                          order: idx,
-                        })) ?? [],
-                    },
-                  },
-                },
-              },
-            })
-          })
-        )
-      })
-    )
-  }
+  //           await tx.feedItem.create({
+  //             data: {
+  //               author: {
+  //                 connect: { id: userId },
+  //               },
+  //               type: FeedItemType.POST,
+  //               post: {
+  //                 create: {
+  //                   facebookPostId: post.id,
+  //                   content: post.message,
+  //                   hashTags: {
+  //                     create:
+  //                       post.message_tags?.map((tag) => ({
+  //                         hashTag: {
+  //                           connectOrCreate: {
+  //                             where: { name: tag.data.name },
+  //                             create: { name: tag.data.name },
+  //                           },
+  //                         },
+  //                       })) ?? [],
+  //                   },
+  //                   images: {
+  //                     create:
+  //                       post.attachments?.data.map((attachment, idx) => ({
+  //                         cacheKey: attachment.target.id,
+  //                         url: attachment.media.image.src,
+  //                         order: idx,
+  //                       })) ?? [],
+  //                   },
+  //                 },
+  //               },
+  //             },
+  //           })
+  //         })
+  //       )
+  //     })
+  //   )
+  // }
 
   async getUserAccessToken(code: string, redirectUri: string) {
     const queryParams = new URLSearchParams({
@@ -361,7 +360,7 @@ export class FacebookRepository {
 
     const queryParams = new URLSearchParams({
       access_token: pageAccessToken,
-      fields: 'id,message_tags,message,attachments,updated_time,created_time',
+      fields: 'id,message_tags,message,attachments,updated_time,created_time,parent_id',
       limit: '100',
     })
 
