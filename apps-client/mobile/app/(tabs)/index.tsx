@@ -16,7 +16,6 @@ import PagerView, {
 import Animated, {
   AnimatedRef,
   interpolate,
-  interpolateColor,
   runOnJS,
   runOnUI,
   ScrollHandlerProcessed,
@@ -353,7 +352,7 @@ export function TabViewInsideScroll() {
     onScroll: onScrollWorklet,
   })
   const headerTransform = useAnimatedStyle(() => {
-    const translateY = Math.max(-scrollY.get(), -headerOnlyHeight)
+    const translateY = -Math.min(scrollY.get(), headerOnlyHeight)
     return {
       transform: [{ translateY: translateY }],
     }
@@ -418,8 +417,8 @@ export function TabViewInsideScroll() {
   )
   const onTabPressed = React.useCallback(
     (index: number) => {
-      runOnUI(adjustScrollForOtherPages)('dragging')
       pagerView.current?.setPage(index)
+      runOnUI(adjustScrollForOtherPages)('dragging')
     },
     [adjustScrollForOtherPages]
   )
@@ -825,18 +824,8 @@ function TabBarItem({
   onTabPress: (index: number) => void
 }) {
   const { dragProgress } = usePagerContext()
-  const style = useAnimatedStyle(() => {
-    return {
-      color: interpolateColor(
-        dragProgress.get(),
-        [index - 1, index, index + 1],
-        [
-          '#94A3B8', // --base-text-placeholder
-          '#FF6A13', // --base-primary-default
-          '#94A3B8', // --base-text-placeholder
-        ]
-      ),
-    }
+  const activeStyle = useAnimatedStyle(() => {
+    return { opacity: interpolate(dragProgress.get(), [index - 1, index, index + 1], [0, 1, 0]) }
   })
   const handleLayout = (e: LayoutChangeEvent) => {
     runOnUI(onTabLayout)(index, e.nativeEvent.layout)
@@ -854,7 +843,14 @@ function TabBarItem({
       onPress={handlePress}
       {...props}
     >
-      <Animated.Text style={style} className="px-4 pt-2 pb-3 text-sm font-anakotmai-medium">
+      <Text className="px-4 pt-2 pb-3 text-sm font-anakotmai-medium relative text-base-text-placeholder">
+        {children}
+      </Text>
+      <Animated.Text
+        style={activeStyle}
+        className="px-4 pt-2 pb-3 text-sm font-anakotmai-medium text-base-primary-default absolute left-0 top-0 bottom-0 right-0"
+        aria-hidden
+      >
         {children}
       </Animated.Text>
     </Pressable>
