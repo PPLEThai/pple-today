@@ -5,11 +5,11 @@ on:
     inputs:
       environment:
         type: choice
-        description: 'Deployment environment (e.g., dev, staging)'
+        description: 'Deployment environment (e.g., development, staging)'
         options:
-          - dev
+          - development
           - staging
-        default: 'dev'
+        default: 'development'
       android:
         type: boolean
         description: 'Build Android app'
@@ -61,6 +61,7 @@ jobs:
       android: ${{ github.event.inputs.android }}
       ios: ${{ github.event.inputs.ios }}
       groups: ${{ github.event.inputs.mobile-groups }}
+      environment: ${{ github.event.inputs.environment }}
 
   deploy-backoffice:
     name: Deploy Backoffice
