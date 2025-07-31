@@ -116,17 +116,22 @@ export class FacebookService {
       return err(pageDetails.error)
     }
 
-    const profilePictureUrl = `profile/profile-picture-${facebookPageId}.png`
+    let profilePictureUrl = existingPage.value?.profilePictureUrl
 
-    if (pageDetails.value.picture.data.cache_key !== existingPage.value?.profilePictureCacheKey) {
-      const uploadResult = await this.fileService.uploadFileStream(
+    if (
+      !profilePictureUrl ||
+      pageDetails.value.picture.data.cache_key !== existingPage.value?.profilePictureCacheKey
+    ) {
+      const uploadResult = await this.fileService.uploadProfilePagePicture(
         pageDetails.value.picture.data.url,
-        profilePictureUrl
+        facebookPageId
       )
 
       if (uploadResult.isErr()) {
         return err(uploadResult.error)
       }
+
+      profilePictureUrl = uploadResult.value
     }
 
     const linkedPage = await this.facebookRepository.linkFacebookPageToUser(

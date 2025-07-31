@@ -2,7 +2,7 @@ import node from '@elysiajs/node'
 import { GetSignedUrlConfig, Storage } from '@google-cloud/storage'
 import Elysia from 'elysia'
 import https from 'https'
-import { fromPromise } from 'neverthrow'
+import { fromPromise, ok } from 'neverthrow'
 
 import serverEnv from '../../config/env'
 import { InternalErrorCode } from '../../dtos/error'
@@ -44,6 +44,17 @@ export class FileService {
         message: (err as Error).message,
       })
     )
+  }
+
+  async uploadProfilePagePicture(url: string, pageId: string) {
+    const destination = `pages/profile-picture-${pageId}.jpg`
+    const result = await this.uploadFileStream(url, destination)
+
+    if (result.isErr()) {
+      return result
+    }
+
+    return ok(destination)
   }
 
   /**
