@@ -36,10 +36,10 @@ export default function BottomTabsLayout() {
           },
           tabBarHideOnKeyboard: true,
         }}
-        initialRouteName="(index)"
+        initialRouteName="index"
       >
         <Tabs.Screen
-          name="(index)"
+          name="index"
           options={{
             title: 'หน้าแรก',
             tabBarIcon: (props) => <TabBarIcon {...props} icon={HouseIcon} />,
