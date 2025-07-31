@@ -4,6 +4,8 @@ import { err, ok } from 'neverthrow'
 
 import { FacebookRepository, FacebookRepositoryPlugin } from './repository'
 
+import { InternalErrorCode } from '../../dtos/error'
+import { mapRawPrismaError } from '../../utils/prisma'
 import { FileService, FileServicePlugin } from '../file/services'
 
 export class FacebookService {
@@ -146,7 +148,12 @@ export class FacebookService {
     )
 
     if (linkedPage.isErr()) {
-      return err(linkedPage.error)
+      return mapRawPrismaError(linkedPage.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.USER_NOT_FOUND,
+          message: 'User not found',
+        },
+      })
     }
 
     return ok(linkedPage.value)
@@ -156,7 +163,12 @@ export class FacebookService {
     const unlinkResult = await this.facebookRepository.unlinkFacebookPageFromUser({ userId })
 
     if (unlinkResult.isErr()) {
-      return err(unlinkResult.error)
+      return mapRawPrismaError(unlinkResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.USER_NOT_FOUND,
+          message: 'User not found',
+        },
+      })
     }
 
     const unlinkPostsResult = await this.facebookRepository.unsubscribeFromPostUpdates(
@@ -165,7 +177,12 @@ export class FacebookService {
     )
 
     if (unlinkPostsResult.isErr()) {
-      return err(unlinkPostsResult.error)
+      return mapRawPrismaError(unlinkPostsResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POST_NOT_FOUND,
+          message: 'Post not found',
+        },
+      })
     }
 
     return ok()

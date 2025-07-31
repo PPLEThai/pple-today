@@ -312,7 +312,7 @@ export class FacebookRepository {
 
     const queryParams = new URLSearchParams({
       access_token: userAccessToken,
-      fields: 'access_token,id,name,picture',
+      fields: 'access_token,id,name,picture{cache_key,url}',
     })
 
     const response = await this.makeRequest({
