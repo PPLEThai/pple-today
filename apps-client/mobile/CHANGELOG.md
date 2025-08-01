@@ -1,5 +1,21 @@
 # @client/mobile
 
+## 0.2.0
+
+### Minor Changes
+
+- [#21](https://github.com/PPLEThai/pple-today/pull/21) [`3785323`](https://github.com/PPLEThai/pple-today/commit/378532394f5201053c1ab4e23eb178a9b9f0de0c) Thanks [@miello](https://github.com/miello)! - [PPLE-169] Restructure backend convention to use class
+
+### Patch Changes
+
+- [#26](https://github.com/PPLEThai/pple-today/pull/26) [`582551a`](https://github.com/PPLEThai/pple-today/commit/582551a28c606889dae9f3711d94f1f5df360d71) Thanks [@Anon-136](https://github.com/Anon-136)! - fix: add more env for beta mobile deployment
+
+- [#19](https://github.com/PPLEThai/pple-today/pull/19) [`1f189ab`](https://github.com/PPLEThai/pple-today/commit/1f189abd417c91208bc646570f4b3d4d3b4971d2) Thanks [@rootEnginear](https://github.com/rootEnginear)! - - [PPLE-161] About Us API
+  - Lock Node/PNPM versioning
+  - Log user session
+- Updated dependencies [[`2f36ecb`](https://github.com/PPLEThai/pple-today/commit/2f36ecbfb1b04b3c345da13e482134991f356763)]:
+  - @pple-today/api-client@0.2.0
+
 ## 0.1.1
 
 ### Patch Changes
