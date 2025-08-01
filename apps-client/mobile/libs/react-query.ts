@@ -1,10 +1,10 @@
 import { createReactQueryClient } from '@pple-today/api-client'
 
+import type { ApplicationApiSchema } from '@api/backoffice'
 import { environment } from '@app/env'
 
-const {
-  fetchClient,
-  reactQueryClient: { useQuery, useMutation, queryOptions, mutationOptions },
-} = createReactQueryClient(environment.EXPO_PUBLIC_BACKEND_BASE_URL)
+const { fetchClient, queryClient } = createReactQueryClient<ApplicationApiSchema>(
+  environment.EXPO_PUBLIC_BACKEND_BASE_URL
+)
 
-export { fetchClient, mutationOptions, queryOptions, useMutation, useQuery }
+export { fetchClient, queryClient }

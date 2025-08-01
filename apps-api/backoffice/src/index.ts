@@ -5,12 +5,8 @@ import Elysia from 'elysia'
 
 import serverEnv from './config/env'
 import { InternalErrorCode } from './dtos/error'
+import { ApplicationController } from './modules'
 import { AdminController } from './modules/admin'
-import { AnnouncementsController } from './modules/announcements'
-import { AuthController } from './modules/auth'
-import { FacebookController } from './modules/facebook'
-import { PostsController } from './modules/posts'
-import { ProfileController } from './modules/profile'
 
 import packageJson from '../package.json'
 
@@ -58,12 +54,8 @@ let app = new Elysia({ adapter: node() })
     })
   })
   .use(cors())
-  .use(PostsController)
-  .use(AuthController)
-  .use(AnnouncementsController)
+  .use(ApplicationController)
   .use(AdminController)
-  .use(ProfileController)
-  .use(FacebookController)
   .get('/versions', ({ status }) => {
     const body = JSON.stringify({
       name: packageJson.name,
@@ -119,4 +111,5 @@ app.listen(serverEnv.PORT, () => {
   console.log(`Server is running on http://localhost:${serverEnv.PORT}`)
 })
 
-export type ApiSchema = typeof app
+export type ApplicationApiSchema = typeof ApplicationController
+export type AdminApiSchema = typeof AdminController

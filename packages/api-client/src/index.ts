@@ -7,8 +7,7 @@ import {
   UseQueryOptions,
   UseQueryResult,
 } from '@tanstack/react-query'
-
-import { ApiSchema } from '@api/backoffice'
+import Elysia from 'elysia'
 
 import { EdenFetch, QueryClient } from './types'
 
@@ -72,9 +71,17 @@ export function queryKey(method: string, path: string | number | symbol, payload
   return [method, path, payloadKey] as const
 }
 
-export function createReactQueryClient(server: string, options?: EdenFetch.Config) {
-  const fetchClient = edenFetch<ApiSchema>(server, options)
-  const reactQueryClient = createQueryClient(fetchClient)
+export interface CreateReactQueryClientResult<T extends Elysia<any, any, any, any, any, any, any>> {
+  fetchClient: EdenFetch.Create<T>
+  queryClient: EdenFetch.Create<T> extends EdenFetch.Fn<infer Schema> ? QueryClient<Schema> : never
+}
 
-  return { fetchClient, reactQueryClient }
+export function createReactQueryClient<T extends Elysia<any, any, any, any, any, any, any>>(
+  server: string,
+  options?: EdenFetch.Config
+): CreateReactQueryClientResult<T> {
+  const fetchClient: any = edenFetch<T>(server, options)
+  const queryClient: any = createQueryClient(fetchClient)
+
+  return { fetchClient, queryClient }
 }

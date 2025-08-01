@@ -38,7 +38,7 @@ import { getItemAsync } from 'expo-secure-store'
 import { InfoIcon, PlusIcon, SearchIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import { useMutation, useQuery } from '@app/libs/react-query'
+import { queryClient } from '@app/libs/react-query'
 
 import { AuthPlayground } from './auth-playground'
 
@@ -482,11 +482,10 @@ function ToastExample() {
 
 function QueryExample() {
   const [token, setToken] = useState<string>('')
-  const sampleQuery = useQuery(
+  const sampleQuery = queryClient.useQuery(
     'get',
     '/auth/me',
     {
-      pathParams: {},
       headers: {
         authorization: `Bearer ${token}`,
       },
@@ -504,7 +503,7 @@ function QueryExample() {
     fetchToken()
   }, [])
 
-  const sampleMutation = useMutation('post', '/admin/about-us')
+  const sampleMutation = queryClient.useMutation('post', '/facebook/linked-page')
 
   return (
     <>
@@ -537,10 +536,8 @@ function QueryExample() {
           onPress={() =>
             sampleMutation.mutateAsync({
               body: {
-                title: 'Test Title',
-                backgroundColor: '#ffffff',
-                iconImageUrl: 'https://example.com/icon.png',
-                url: 'https://example.com',
+                facebookPageId: '123456789',
+                facebookPageAccessToken: 'EAAG...',
               },
             })
           }

@@ -1,0 +1,167 @@
+import node from '@elysiajs/node'
+import Elysia from 'elysia'
+import { err, ok } from 'neverthrow'
+
+import {
+  GetDraftedPollResponse,
+  GetDraftedPollsResponse,
+  GetPollsResponse,
+  GetPublishedPollResponse,
+  GetPublishedPollsResponse,
+  PutPollBody,
+} from './models'
+import { PollRepository, PollRepositoryPlugin } from './repository'
+
+import { InternalErrorCode } from '../../../dtos/error'
+import { mapRawPrismaError } from '../../../utils/prisma'
+
+export class PollService {
+  constructor(private pollRepository: PollRepository) {}
+
+  async getPolls() {
+    const result = await this.pollRepository.getAllPolls()
+    if (result.isErr()) return mapRawPrismaError(result.error, {})
+
+    return ok(result.value satisfies GetPollsResponse)
+  }
+
+  async getPublishedPolls(
+    query: { limit: number; page: number } = {
+      limit: 10,
+      page: 1,
+    }
+  ) {
+    const result = await this.pollRepository.getPolls(query)
+    if (result.isErr()) return mapRawPrismaError(result.error, {})
+
+    return ok(result.value satisfies GetPublishedPollsResponse)
+  }
+
+  async getPollById(pollId: string) {
+    const result = await this.pollRepository.getPollById(pollId)
+    if (result.isErr())
+      return mapRawPrismaError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POLL_NOT_FOUND,
+        },
+      })
+
+    return ok(result.value satisfies GetPublishedPollResponse)
+  }
+
+  async updatePollById(pollId: string, data: PutPollBody) {
+    const result = await this.pollRepository.updatePollById(pollId, data)
+    if (result.isErr())
+      return mapRawPrismaError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POLL_NOT_FOUND,
+        },
+      })
+
+    return ok({ message: `Poll "${result.value.feedItemId}" updated.` })
+  }
+
+  async unpublishPollById(pollId: string) {
+    const result = await this.pollRepository.unpublishPollById(pollId)
+    if (result.isErr())
+      return mapRawPrismaError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POLL_NOT_FOUND,
+        },
+      })
+
+    return ok({ message: `Poll "${result.value.id}" unpublished.` })
+  }
+
+  async deletePollById(pollId: string) {
+    const result = await this.pollRepository.deletePollById(pollId)
+    if (result.isErr())
+      return mapRawPrismaError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POLL_NOT_FOUND,
+        },
+      })
+
+    return ok({ message: `Poll "${result.value.id}" deleted.` })
+  }
+
+  async getDraftedPolls(
+    query: { limit: number; page: number } = {
+      limit: 10,
+      page: 1,
+    }
+  ) {
+    const result = await this.pollRepository.getDraftedPolls(query)
+    if (result.isErr()) return mapRawPrismaError(result.error, {})
+
+    return ok(result.value satisfies GetDraftedPollsResponse)
+  }
+
+  async getDraftedPollById(pollId: string) {
+    const result = await this.pollRepository.getDraftedPollById(pollId)
+    if (result.isErr())
+      return mapRawPrismaError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POLL_NOT_FOUND,
+        },
+      })
+
+    return ok(result.value satisfies GetDraftedPollResponse)
+  }
+
+  async createEmptyDraftedPoll() {
+    const result = await this.pollRepository.createEmptyDraftedPoll()
+    if (result.isErr()) return mapRawPrismaError(result.error, {})
+
+    return ok({ message: `Drafted Poll "${result.value.id}" created.` })
+  }
+
+  async updateDraftedPollById(pollId: string, data: PutPollBody) {
+    const result = await this.pollRepository.updateDraftedPollById(pollId, data)
+    if (result.isErr())
+      return mapRawPrismaError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POLL_NOT_FOUND,
+        },
+      })
+
+    return ok({ message: `Drafted Poll "${result.value.id}" updated.` })
+  }
+
+  async publishDraftedPollById(pollId: string, authorId?: string) {
+    if (!authorId)
+      // FIXME: Proper message
+      return err({
+        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+        message: InternalErrorCode.INTERNAL_SERVER_ERROR ?? 'An unexpected error occurred',
+      })
+
+    const result = await this.pollRepository.publishDraftedPollById(pollId, authorId)
+    if (result.isErr())
+      return mapRawPrismaError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POLL_NOT_FOUND,
+        },
+      })
+
+    return ok({ message: `Drafted Poll "${result.value.id}" published.` })
+  }
+
+  async deleteDraftedPoll(pollId: string) {
+    const result = await this.pollRepository.deleteDraftedPollById(pollId)
+    if (result.isErr())
+      return mapRawPrismaError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POLL_NOT_FOUND,
+        },
+      })
+
+    return ok({ message: `Drafted Poll "${result.value.id}" deleted.` })
+  }
+}
+
+export const PollServicePlugin = new Elysia({ name: 'PollService', adapter: node() })
+  .use(PollRepositoryPlugin)
+  .decorate(({ pollRepository }) => ({
+    pollService: new PollService(pollRepository),
+  }))

@@ -14,7 +14,7 @@ model Poll {
     topics  PollTopic[]
     options PollOption[]
 
-    feedItem FeedItem @relation(fields: [feedItemId], references: [id])
+    feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
 }
 
 model PollOption {
@@ -25,7 +25,7 @@ model PollOption {
     updatedAt DateTime @updatedAt
 
     pollId      String
-    poll        Poll         @relation(fields: [pollId], references: [feedItemId])
+    poll        Poll         @relation(fields: [pollId], references: [feedItemId], onDelete: Cascade)
     pollAnswers PollAnswer[]
 
     @@index([pollId])
@@ -51,8 +51,8 @@ model PollTopic {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    poll  Poll  @relation(fields: [pollId], references: [feedItemId])
-    topic Topic @relation(fields: [topicId], references: [id])
+    poll  Poll  @relation(fields: [pollId], references: [feedItemId], onDelete: Cascade)
+    topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
     @@id([pollId, topicId])
 }
@@ -64,11 +64,12 @@ model PollDraft {
     description String?
     endAt       DateTime?
     type        PollType
-    createdAt   DateTime  @default(now())
-    updatedAt   DateTime  @updatedAt
 
     topics  PollTopicDraft[]
     options PollOptionDraft[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 model PollOptionDraft {
@@ -79,7 +80,7 @@ model PollOptionDraft {
     updatedAt DateTime @updatedAt
 
     pollDraftId String
-    pollDraft   PollDraft @relation(fields: [pollDraftId], references: [id])
+    pollDraft   PollDraft @relation(fields: [pollDraftId], references: [id], onDelete: Cascade)
 
     @@index([pollDraftId])
 }
@@ -91,8 +92,8 @@ model PollTopicDraft {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    pollDraft PollDraft @relation(fields: [pollDraftId], references: [id])
-    topic     Topic     @relation(fields: [topicId], references: [id])
+    pollDraft PollDraft @relation(fields: [pollDraftId], references: [id], onDelete: Cascade)
+    topic     Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
     @@id([pollDraftId, topicId])
 }
