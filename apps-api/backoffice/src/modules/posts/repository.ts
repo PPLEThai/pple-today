@@ -25,7 +25,6 @@ export class PostRepository {
       this.prismaService.post.findUniqueOrThrow({
         where: { feedItemId: postId },
         select: {
-          title: true,
           content: true,
           images: {
             select: {
