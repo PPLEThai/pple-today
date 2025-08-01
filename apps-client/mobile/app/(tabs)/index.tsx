@@ -28,7 +28,6 @@ import Animated, {
   useHandler,
   useSharedValue,
 } from 'react-native-reanimated'
-import { SceneMap } from 'react-native-tab-view'
 
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
@@ -36,8 +35,8 @@ import { Icon } from '@pple-today/ui/icon'
 import { Text } from '@pple-today/ui/text'
 import { H2, H3 } from '@pple-today/ui/typography'
 import { Image } from 'expo-image'
-import { Stack, useRouter } from 'expo-router'
-import { ExpoScrollPassthroughView } from 'expo-scroll-passthrough'
+import { useRouter } from 'expo-router'
+import { ExpoScrollPassthroughView, ExpoScrollPassthroughView2 } from 'expo-scroll-passthrough'
 import {
   ArrowRightIcon,
   BellIcon,
@@ -269,36 +268,6 @@ function UserInfoSection() {
     </View>
   )
 }
-
-export function FeedTabs() {
-  return <Stack screenOptions={{ headerShown: false }} />
-}
-
-function FirstRoute() {
-  return (
-    <View style={{ flex: 1, padding: 20, backgroundColor: 'blue' }}>
-      <Text style={{ color: 'white' }}>First Route</Text>
-    </View>
-  )
-}
-
-function SecondRoute() {
-  return (
-    <View style={{ flex: 1, padding: 20, backgroundColor: 'purple' }}>
-      <Text style={{ color: 'white' }}>Second Route</Text>
-    </View>
-  )
-}
-
-const renderScene = SceneMap({
-  first: FeedTabs,
-  second: SecondRoute,
-})
-
-const routes = [
-  { key: 'first', title: 'First' },
-  { key: 'second', title: 'Second' },
-]
 
 // Ref: https://github.com/bluesky-social/social-app/blob/0610c822cf94995c75bbf3237c217b68dabfe5a0/src/view/com/pager/PagerWithHeader.tsx
 
@@ -604,18 +573,20 @@ export function TabViewInsideScroll() {
             </ScrollView>
           </View>
         </AnimatedExpoScrollPassthroughView>
-        <AnimatedPagerView
-          ref={pagerView}
-          style={styles.pagerView}
-          initialPage={0}
-          onPageScroll={handlePageScroll}
-        >
-          {Array.from({ length: 3 }).map((_, index) => (
-            <View key={index} collapsable={false}>
-              <PagerContent index={index} />
-            </View>
-          ))}
-        </AnimatedPagerView>
+        <ExpoScrollPassthroughView2>
+          <AnimatedPagerView
+            ref={pagerView}
+            style={styles.pagerView}
+            initialPage={0}
+            onPageScroll={handlePageScroll}
+          >
+            {Array.from({ length: 3 }).map((_, index) => (
+              <View key={index} collapsable={false}>
+                <PagerContent index={index} />
+              </View>
+            ))}
+          </AnimatedPagerView>
+        </ExpoScrollPassthroughView2>
       </View>
     </PagerProvider>
   )
@@ -656,7 +627,7 @@ function PagerContent({ index }: { index: number }) {
       // contentOffset={{ x: 0, y: -headerHeight }}
       // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
       // automaticallyAdjustsScrollIndicatorInsets={false}
-      data={Array.from({ length: 20 }, (_, i) => `Item ${i + 1}`)}
+      data={Array.from({ length: 5 }, (_, i) => `Item ${i + 1}`)}
       contentContainerClassName="px-3 py-4 flex flex-col"
       // TODO: data and renderItem should be replaced with actual data
       renderItem={({ item, index }) => <FeedPost />}
@@ -760,7 +731,7 @@ function TabBarItem({
   )
 }
 
-const FeedPost = () => {
+const FeedPost = React.memo(function FeedPost() {
   return (
     <View className="flex flex-col gap-3 p-4 bg-base-bg-white border border-base-outline-default rounded-2xl mt-4">
       <View className="flex flex-row items-center justify-between">
@@ -862,4 +833,4 @@ const FeedPost = () => {
       </View>
     </View>
   )
-}
+})

@@ -6,9 +6,9 @@ import { ExpoScrollPassthroughViewProps } from './ExpoScrollPassthrough.types'
 
 const NativeView: React.ComponentType<ExpoScrollPassthroughViewProps> = requireNativeView(
   'ExpoScrollPassthrough',
-  'ExpoScrollPassthroughView'
+  'ExpoScrollPassthroughView2'
 )
 
-export default function ExpoScrollPassthroughView(props: ExpoScrollPassthroughViewProps) {
+export default function ExpoScrollPassthroughView2(props: ExpoScrollPassthroughViewProps) {
   return <NativeView {...props} />
 }

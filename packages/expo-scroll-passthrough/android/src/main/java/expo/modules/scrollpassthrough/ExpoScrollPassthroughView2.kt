@@ -4,14 +4,14 @@ import android.content.Context
 import android.util.Log
 import android.view.GestureDetector
 import android.view.MotionEvent
+import android.view.ViewConfiguration
 import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.views.ExpoView
-import android.view.ViewConfiguration
 import kotlin.math.abs
 
-private const val TAG = "ExpoScrollPassthroughView"
+private const val TAG = "ExpoScrollPassthroughView2"
 
-class ExpoScrollPassthroughView(context: Context, appContext: AppContext) :
+class ExpoScrollPassthroughView2(context: Context, appContext: AppContext) :
     ExpoView(context, appContext) {
 //    override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
 //        return true
@@ -24,21 +24,30 @@ class ExpoScrollPassthroughView(context: Context, appContext: AppContext) :
     private var downEvent: MotionEvent? = null
 
     // --- Part 1: The GestureDetector to handle the details of the intercepted gesture ---
-    private val gestureDetector = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+    private val gestureDetector =
+        GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
 
-        override fun onScroll(e1: MotionEvent?, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
-            // This onScroll will ONLY be called if onInterceptTouchEvent returned true.
-            // We can now assume it's a horizontal pan and use the detailed information.
-            // You can implement your specific logic here (e.g., move a child view).
-            Log.d(TAG, "GestureDetector.onScroll: Handling horizontal pan. DistanceX: $distanceX")
-            return true
-        }
+            override fun onScroll(
+                e1: MotionEvent?,
+                e2: MotionEvent,
+                distanceX: Float,
+                distanceY: Float
+            ): Boolean {
+                // This onScroll will ONLY be called if onInterceptTouchEvent returned true.
+                // We can now assume it's a horizontal pan and use the detailed information.
+                // You can implement your specific logic here (e.g., move a child view).
+                Log.d(
+                    TAG,
+                    "GestureDetector.onScroll: Handling horizontal pan. DistanceX: $distanceX"
+                )
+                return true
+            }
 
-        override fun onDown(e: MotionEvent): Boolean {
-            Log.d(TAG, "GestureDetector.onDown ${e.x}, ${e.y}")
-            return true
-        }
-    })
+            override fun onDown(e: MotionEvent): Boolean {
+                Log.d(TAG, "GestureDetector.onDown ${e.x}, ${e.y}")
+                return true
+            }
+        })
 
     // --- Part 2: The onInterceptTouchEvent to make the initial decision ---
 //    override fun onInterceptTouchEvent(event: MotionEvent?): Boolean {
@@ -103,6 +112,7 @@ class ExpoScrollPassthroughView(context: Context, appContext: AppContext) :
         when (ev.action) {
             MotionEvent.ACTION_DOWN -> {
                 downX = ev.x
+                downY = ev.y
                 downEvent = MotionEvent.obtain(ev)
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
@@ -111,7 +121,7 @@ class ExpoScrollPassthroughView(context: Context, appContext: AppContext) :
                 downEvent = null
             }
             MotionEvent.ACTION_MOVE -> {
-                if (abs(ev.x - downX) > 1) {
+                if (abs(ev.x - downX) > touchSlop || abs(ev.y - downY) > touchSlop) {
                     isScrolling = true
                     Log.d("ExpoScrollPassthroughView", "dispatchTouchEvent super $ev")
                     if (downEvent != null) {

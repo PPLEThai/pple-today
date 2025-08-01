@@ -15,7 +15,7 @@ Pod::Spec.new do |s|
     :tvos => '15.1'
   }
   s.swift_version  = '5.4'
-  s.source         = { git: 'https://github.com/suphon-t/expo-scroll-passthrough' }
+  s.source         = { git: 'https://github.com/PPLEThai/pple-today/tree/main/packages/expo-scroll-passthrough' }
   s.static_framework = true
 
   s.dependency 'ExpoModulesCore'
