@@ -4,12 +4,14 @@ import Elysia from 'elysia'
 import {
   DeleteDraftedPollResponse,
   DeletePublishedPollResponse,
+  DraftedPollPublishedResponse,
   GetDraftedPollResponse,
   GetPollsQuery,
   GetPollsResponse,
   GetPublishedPollResponse,
   PollIdParam,
   PostDraftedPollResponse,
+  PublishedPollUnpublishedResponse,
   PutDraftedPollResponse,
   PutPollBody,
   PutPublishedPollResponse,
@@ -125,6 +127,45 @@ const DraftedPollsController = new Elysia({
         ],
         summary: 'Update drafted poll by ID',
         description: 'Update a specific drafted poll by its ID',
+      },
+    }
+  )
+  .post(
+    '/:pollId/publish',
+    async ({ params, user, status, pollService }) => {
+      const result = await pollService.publishDraftedPollById(params.pollId, user?.sub)
+      if (result.isErr()) {
+        switch (result.error.code) {
+          case InternalErrorCode.POLL_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
+      }
+
+      return status(200, result.value)
+    },
+    {
+      fetchUser: true,
+      requiredUser: true,
+      params: PollIdParam,
+      response: {
+        200: DraftedPollPublishedResponse,
+        ...createErrorSchema(
+          InternalErrorCode.POLL_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        summary: 'Publish drafted poll by ID',
+        description: 'Publish a specific drafted poll by its ID',
       },
     }
   )
@@ -293,6 +334,45 @@ export const PollsController = new Elysia({
         ],
         summary: 'Update poll by ID',
         description: 'Update a specific poll by its ID',
+      },
+    }
+  )
+  .post(
+    '/:pollId/unpublish',
+    async ({ params, status, pollService }) => {
+      const result = await pollService.unpublishPollById(params.pollId)
+      if (result.isErr()) {
+        switch (result.error.code) {
+          case InternalErrorCode.POLL_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
+      }
+
+      return status(200, result.value)
+    },
+    {
+      fetchUser: true,
+      requiredUser: true,
+      params: PollIdParam,
+      response: {
+        200: PublishedPollUnpublishedResponse,
+        ...createErrorSchema(
+          InternalErrorCode.POLL_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        security: [
+          {
+            bearerAuth: [],
+          },
+        ],
+        summary: 'Unpublish poll by ID',
+        description: 'Unpublish a specific poll by its ID',
       },
     }
   )

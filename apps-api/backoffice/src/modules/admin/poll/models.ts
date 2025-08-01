@@ -60,6 +60,11 @@ export const PutDraftedPollResponse = t.Object({
 })
 export type PutDraftedPollResponse = Static<typeof PutDraftedPollResponse>
 
+export const DraftedPollPublishedResponse = t.Object({
+  message: t.String({ description: 'Success message' }),
+})
+export type DraftedPollPublishedResponse = Static<typeof DraftedPollPublishedResponse>
+
 export const DeleteDraftedPollResponse = t.Object({
   message: t.String({ description: 'Success message' }),
 })
@@ -69,6 +74,11 @@ export const PutPublishedPollResponse = t.Object({
   message: t.String({ description: 'Success message' }),
 })
 export type PutPublishedPollResponse = Static<typeof PutPublishedPollResponse>
+
+export const PublishedPollUnpublishedResponse = t.Object({
+  message: t.String({ description: 'Success message' }),
+})
+export type PublishedPollUnpublishedResponse = Static<typeof PublishedPollUnpublishedResponse>
 
 export const DeletePublishedPollResponse = t.Object({
   message: t.String({ description: 'Success message' }),

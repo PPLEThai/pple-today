@@ -3,15 +3,12 @@ import Elysia from 'elysia'
 
 import { PutPollBody } from './models'
 
+import { FeedItemType } from '../../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { fromPrismaPromise } from '../../../utils/prisma'
-import { FeedRepository, FeedRepositoryPlugin } from '../../feeds/repository'
 
 export class PollRepository {
-  constructor(
-    private prismaService: PrismaService,
-    private feedRepository: FeedRepository
-  ) {}
+  constructor(private prismaService: PrismaService) {}
 
   async getAllPolls() {
     return await fromPrismaPromise(async () => {
@@ -201,14 +198,46 @@ export class PollRepository {
     })
   }
 
-  // ติดอะไรอยู่: เหมือนต้องสั่ง create feed อะ ซึ่งแปลว่าต้องกลับไปทำ feed ก่อน
   async unpublishPollById(feedItemId: string) {
-    throw new Error('Not implemented')
     return await fromPrismaPromise(
       this.prismaService.$transaction(async (tx) => {
-        // const poll = await tx.pollDraft.findUniqueOrThrow({
-        //   where: { id: pollId },
-        // })
+        // 1. Get poll
+        const feedPoll = await tx.feedItem.findUniqueOrThrow({
+          where: { id: feedItemId },
+          select: {
+            id: true,
+            poll: {
+              select: {
+                title: true,
+                description: true,
+                endAt: true,
+                type: true,
+                topics: { select: { topicId: true } },
+                options: { select: { title: true, votes: true } },
+              },
+            },
+          },
+        })
+
+        if (feedPoll.poll === null) throw new Error('Missing required fields')
+
+        // 2. Insert into drafted poll
+        const draftedPoll = await tx.pollDraft.create({
+          data: {
+            id: feedPoll.id,
+            title: feedPoll.poll.title,
+            description: feedPoll.poll.description,
+            endAt: feedPoll.poll.endAt,
+            type: feedPoll.poll.type,
+            topics: { createMany: { data: feedPoll.poll.topics } },
+            options: { createMany: { data: feedPoll.poll.options } },
+          },
+        })
+
+        // 3. Delete poll
+        await this.deletePollById(feedItemId)
+
+        return draftedPoll
       })
     )
   }
@@ -324,17 +353,50 @@ export class PollRepository {
     )
   }
 
-  // ติดอะไรอยู่: เหมือนต้องสั่ง create feed อะ ซึ่งแปลว่าต้องกลับไปทำ feed ก่อน
-  async publishDraftedPollById(pollId: string) {
-    throw new Error('Not implemented')
+  async publishDraftedPollById(pollId: string, authorId: string) {
     return await fromPrismaPromise(
       this.prismaService.$transaction(async (tx) => {
+        // 1. Get drafted poll
+        // const draftedPoll = await this.getDraftedPollById(pollId)
         const draftedPoll = await tx.pollDraft.findUniqueOrThrow({
           where: { id: pollId },
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            endAt: true,
+            type: true,
+            topics: { select: { topicId: true } },
+            options: { select: { title: true, votes: true } },
+          },
         })
 
-        // insert into feed
-        // await this.feedRepository.createFeedItem
+        if (draftedPoll.title === null || draftedPoll.endAt === null)
+          throw new Error('Missing required fields')
+
+        // 2. Insert into feed
+        const feedItem = await tx.feedItem.create({
+          data: {
+            id: draftedPoll.id,
+            type: FeedItemType.POLL,
+            authorId,
+            poll: {
+              create: {
+                title: draftedPoll.title,
+                description: draftedPoll.description,
+                endAt: draftedPoll.endAt,
+                type: draftedPoll.type,
+                topics: { createMany: { data: draftedPoll.topics } },
+                options: { createMany: { data: draftedPoll.options } },
+              },
+            },
+          },
+        })
+
+        // 3. Delete drafted poll
+        await this.deleteDraftedPollById(pollId)
+
+        return feedItem
       })
     )
   }
@@ -345,7 +407,7 @@ export class PollRepository {
 }
 
 export const PollRepositoryPlugin = new Elysia({ name: 'PollRepository', adapter: node() })
-  .use([PrismaServicePlugin, FeedRepositoryPlugin])
-  .decorate(({ prismaService, feedRepository }) => ({
-    pollRepository: new PollRepository(prismaService, feedRepository),
+  .use([PrismaServicePlugin])
+  .decorate(({ prismaService }) => ({
+    pollRepository: new PollRepository(prismaService),
   }))

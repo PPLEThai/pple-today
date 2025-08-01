@@ -1,6 +1,6 @@
 import node from '@elysiajs/node'
 import Elysia from 'elysia'
-import { ok } from 'neverthrow'
+import { err, ok } from 'neverthrow'
 
 import {
   GetDraftedPollResponse,
@@ -61,6 +61,18 @@ export class PollService {
     return ok({ message: `Poll "${result.value.feedItemId}" updated.` })
   }
 
+  async unpublishPollById(pollId: string) {
+    const result = await this.pollRepository.unpublishPollById(pollId)
+    if (result.isErr())
+      return mapRawPrismaError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POLL_NOT_FOUND,
+        },
+      })
+
+    return ok({ message: `Poll "${result.value.id}" unpublished.` })
+  }
+
   async deletePollById(pollId: string) {
     const result = await this.pollRepository.deletePollById(pollId)
     if (result.isErr())
@@ -114,6 +126,25 @@ export class PollService {
       })
 
     return ok({ message: `Drafted Poll "${result.value.id}" updated.` })
+  }
+
+  async publishDraftedPollById(pollId: string, authorId?: string) {
+    if (!authorId)
+      // FIXME: Proper message
+      return err({
+        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+        message: InternalErrorCode.INTERNAL_SERVER_ERROR ?? 'An unexpected error occurred',
+      })
+
+    const result = await this.pollRepository.publishDraftedPollById(pollId, authorId)
+    if (result.isErr())
+      return mapRawPrismaError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POLL_NOT_FOUND,
+        },
+      })
+
+    return ok({ message: `Drafted Poll "${result.value.id}" published.` })
   }
 
   async deleteDraftedPoll(pollId: string) {
