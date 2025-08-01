@@ -27,8 +27,6 @@ export default function HomeScreen() {
   return (
     <View>
       <AnimatedExpoScrollPassthroughView
-        url="https://reactjs.org"
-        onLoad={() => {}}
         style={[
           {
             position: 'absolute',
@@ -37,13 +35,12 @@ export default function HomeScreen() {
             right: 0,
             height: 250,
             width: '100%',
-            // backgroundColor: 'red',
+            backgroundColor: 'red',
             zIndex: 1,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            pointerEvents: 'box-only',
           },
           headerAnimatedStyle,
         ]}

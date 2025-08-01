@@ -1,6 +1,6 @@
 import type { StyleProp, ViewStyle } from 'react-native'
 
-export type ExpoScrollPassthroughViewProps = {
+export interface ExpoScrollPassthroughViewProps {
   style?: StyleProp<ViewStyle>
-  children: React.ReactNode
+  children?: React.ReactNode
 }

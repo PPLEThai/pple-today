@@ -1,11 +1,12 @@
-import { requireNativeView } from 'expo';
-import * as React from 'react';
+import * as React from 'react'
 
-import { ExpoScrollPassthroughViewProps } from './ExpoScrollPassthrough.types';
+import { requireNativeView } from 'expo'
+
+import { ExpoScrollPassthroughViewProps } from './ExpoScrollPassthrough.types'
 
 const NativeView: React.ComponentType<ExpoScrollPassthroughViewProps> =
-  requireNativeView('ExpoScrollPassthrough');
+  requireNativeView('ExpoScrollPassthrough')
 
 export default function ExpoScrollPassthroughView(props: ExpoScrollPassthroughViewProps) {
-  return <NativeView {...props} />;
+  return <NativeView {...props} />
 }

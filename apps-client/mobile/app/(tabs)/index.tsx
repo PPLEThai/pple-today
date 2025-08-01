@@ -543,8 +543,6 @@ export function TabViewInsideScroll() {
     <PagerProvider value={{ dragProgress, registerRef, scrollHandler, headerHeight }}>
       <View className="flex-1 bg-base-bg-default">
         <AnimatedExpoScrollPassthroughView
-          url="https://reactjs.org"
-          onLoad={() => {}}
           style={[styles.pagerHeader, headerTransform]}
           // collapsable={false}
         >

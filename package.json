@@ -18,5 +18,18 @@
     "prettier": "^3.5.3",
     "turbo": "^2.5.2",
     "typescript": "5.8.2"
+  },
+  "packageManager": "pnpm@9.9.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "volta": {
+    "node": "22.15.0",
+    "pnpm": "9.9.0"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "expo-module-scripts": "patches/expo-module-scripts.patch"
+    }
   }
 }

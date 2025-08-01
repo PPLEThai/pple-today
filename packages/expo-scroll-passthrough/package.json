@@ -15,19 +15,6 @@
     "open:ios": "xed example/ios",
     "open:android": "open -a \"Android Studio\" example/android"
   },
-  "keywords": [
-    "react-native",
-    "expo",
-    "expo-scroll-passthrough",
-    "ExpoScrollPassthrough"
-  ],
-  "repository": "https://github.com/suphon-t/expo-scroll-passthrough",
-  "bugs": {
-    "url": "https://github.com/suphon-t/expo-scroll-passthrough/issues"
-  },
-  "author": "Suphon Thanakornpakapong <8080853+suphon-t@users.noreply.github.com> (https://github.com/suphon-t)",
-  "license": "MIT",
-  "homepage": "https://github.com/suphon-t/expo-scroll-passthrough#readme",
   "dependencies": {},
   "devDependencies": {
     "@types/react": "~19.0.0",
