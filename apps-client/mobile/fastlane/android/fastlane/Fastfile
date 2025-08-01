@@ -37,7 +37,8 @@ platform :android do
       }
     )
     changelog = "Beta build for Android\n" \
-      "Build from: #{ENV['APP_ENVIRONMENT']}"
+      "App Environment: #{ENV['APP_ENVIRONMENT']}\n" \
+      "Distribute to: #{ENV['DISTRIBUTE_GROUPS']}"
     firebase_app_distribution(
       app: app_id,
       groups: ENV['DISTRIBUTE_GROUPS'] || "dev-team",

@@ -26,5 +26,10 @@
   "volta": {
     "node": "22.15.0",
     "pnpm": "9.9.0"
+  },
+  "pnpm": {
+    "patchedDependencies": {
+      "expo-module-scripts": "patches/expo-module-scripts.patch"
+    }
   }
 }

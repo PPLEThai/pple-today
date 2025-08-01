@@ -28,7 +28,7 @@ export default function MaterialTopTabsLayout() {
   return (
     <KeyboardAvoidingViewLayout>
       <MaterialTopTabs
-        initialRouteName="index"
+        initialRouteName="playground"
         screenOptions={{
           tabBarLabel: (props) => {
             return (
@@ -70,12 +70,12 @@ export default function MaterialTopTabsLayout() {
           },
         }}
       >
-        <MaterialTopTabs.Screen
+        {/* <MaterialTopTabs.Screen
           name="index"
           options={{
             title: 'Index',
           }}
-        />
+        /> */}
         <MaterialTopTabs.Screen
           name="playground"
           options={{

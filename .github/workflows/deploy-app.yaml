@@ -5,11 +5,11 @@ on:
     inputs:
       environment:
         type: choice
-        description: 'Deployment environment (e.g., dev, staging)'
+        description: 'Deployment environment'
         options:
-          - dev
+          - development
           - staging
-        default: 'dev'
+        default: 'development'
       android:
         type: boolean
         description: 'Build Android app'
@@ -30,10 +30,10 @@ on:
         type: boolean
         description: 'Run database migrations'
         default: false
-      mobile-groups:
+      groups:
         type: string
         description: 'Distribute to these groups'
-        default: 'dev-team,qa-team'
+        default: 'dev-team'
 
 permissions:
   contents: read # for checkout
@@ -60,7 +60,8 @@ jobs:
     with:
       android: ${{ github.event.inputs.android }}
       ios: ${{ github.event.inputs.ios }}
-      groups: ${{ github.event.inputs.mobile-groups }}
+      groups: ${{ github.event.inputs.groups }}
+      environment: ${{ github.event.inputs.environment }}
 
   deploy-backoffice:
     name: Deploy Backoffice
