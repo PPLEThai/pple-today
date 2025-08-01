@@ -155,25 +155,31 @@ export class PollRepository {
 
   async updatePollById(feedItemId: string, data: PutPollBody) {
     return await fromPrismaPromise(async () => {
-      const answers = await this.prismaService.poll.findMany({
+      const answer = await this.prismaService.poll.findUniqueOrThrow({
         where: { feedItemId },
         select: {
           options: {
             select: {
-              pollAnswers: true,
+              _count: {
+                select: {
+                  pollAnswers: true,
+                },
+              },
             },
           },
         },
       })
 
-      if (answers.length > 0) throw new Error('Cannot update poll with answers')
+      const answersCount = answer.options.reduce((a, c) => a + c._count.pollAnswers, 0)
+
+      if (answersCount > 0) throw new Error('Cannot update poll with answers')
 
       return await this.prismaService.poll.update({
         where: { feedItemId },
         data: {
-          title: data.title,
+          title: data.title ?? undefined,
           description: data.description,
-          endAt: data.endAt,
+          endAt: data.endAt ?? undefined,
           type: data.type,
           topics: {
             deleteMany: {},
@@ -235,7 +241,7 @@ export class PollRepository {
         })
 
         // 3. Delete poll
-        await this.deletePollById(feedItemId)
+        await tx.feedItem.delete({ where: { id: feedItemId } })
 
         return draftedPoll
       })
@@ -244,7 +250,7 @@ export class PollRepository {
 
   async deletePollById(feedItemId: string) {
     return await fromPrismaPromise(
-      this.prismaService.feedItem.delete({ where: { id: feedItemId } }) // NOTE - let feed item delete cascade into poll
+      this.prismaService.feedItem.delete({ where: { id: feedItemId } })
     )
   }
 
@@ -394,7 +400,7 @@ export class PollRepository {
         })
 
         // 3. Delete drafted poll
-        await this.deleteDraftedPollById(pollId)
+        await tx.pollDraft.delete({ where: { id: pollId } })
 
         return feedItem
       })

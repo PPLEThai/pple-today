@@ -45,9 +45,9 @@ export const PostDraftedPollResponse = t.Object({
 export type PostDraftedPollResponse = Static<typeof PostDraftedPollResponse>
 
 export const PutPollBody = t.Object({
-  title: t.Optional(t.String({ description: 'The title of the poll' })),
-  description: t.Optional(t.String({ description: 'The description of the poll' })),
-  endAt: t.Optional(t.Date({ description: 'The end date of the poll' })),
+  title: t.Nullable(t.String({ description: 'The title of the poll' })),
+  description: t.Nullable(t.String({ description: 'The description of the poll' })),
+  endAt: t.Nullable(t.Date({ description: 'The end date of the poll' })),
   type: t.Enum(PollType),
 
   optionTitles: t.Array(t.String({ description: 'The title of the poll option' })),
