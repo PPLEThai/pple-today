@@ -213,7 +213,8 @@ export const PollsController = new Elysia({
   adapter: node(),
   tags: ['Polls'],
 })
-  .use([AuthGuardPlugin, PollServicePlugin, DraftedPollsController])
+  .use([AuthGuardPlugin, PollServicePlugin])
+  .use(DraftedPollsController)
   .get(
     '/',
     async ({ query, status, pollService }) => {
