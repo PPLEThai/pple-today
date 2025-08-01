@@ -244,6 +244,9 @@ importers:
       expo-router:
         specifier: ~5.1.0
         version: 5.1.3(jtzwn7mx55yctlpwtan7zcebe4)
+      expo-scroll-passthrough:
+        specifier: workspace:^
+        version: link:../../packages/expo-scroll-passthrough
       expo-secure-store:
         specifier: ^14.2.3
         version: 14.2.3(expo@53.0.18(@babel/core@7.27.1)(@expo/metro-runtime@5.0.4(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0)))(react-native-webview@13.13.5(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))

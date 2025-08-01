@@ -1,20 +1,6 @@
-import type { StyleProp, ViewStyle } from 'react-native';
-
-export type OnLoadEventPayload = {
-  url: string;
-};
-
-export type ExpoScrollPassthroughModuleEvents = {
-  onChange: (params: ChangeEventPayload) => void;
-};
-
-export type ChangeEventPayload = {
-  value: string;
-};
+import type { StyleProp, ViewStyle } from 'react-native'
 
 export type ExpoScrollPassthroughViewProps = {
-  url: string;
-  onLoad: (event: { nativeEvent: OnLoadEventPayload }) => void;
-  style?: StyleProp<ViewStyle>;
-  children: React.ReactNode;
-};
+  style?: StyleProp<ViewStyle>
+  children: React.ReactNode
+}

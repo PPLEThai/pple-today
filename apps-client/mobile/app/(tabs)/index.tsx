@@ -37,6 +37,7 @@ import { Text } from '@pple-today/ui/text'
 import { H2, H3 } from '@pple-today/ui/typography'
 import { Image } from 'expo-image'
 import { Stack, useRouter } from 'expo-router'
+import { ExpoScrollPassthroughView } from 'expo-scroll-passthrough'
 import {
   ArrowRightIcon,
   BellIcon,
@@ -69,7 +70,7 @@ function MainHeader() {
   const userQuery = useUser()
   const router = useRouter()
   return (
-    <View className="w-full px-4 pt-10 pb-2 flex flex-row justify-between gap-2 bg-base-bg-white border-b border-base-outline-default pointer-events-box-none">
+    <View className="w-full px-4 pt-10 pb-2 flex flex-row justify-between gap-2 bg-base-bg-white border-b border-base-outline-default ">
       <View className="flex flex-row items-center gap-3">
         <Pressable
           className="w-10 h-10 flex flex-col items-center justify-center"
@@ -79,7 +80,7 @@ function MainHeader() {
         </Pressable>
         {/* TODO: What to show when user is loading or not logged in? */}
         {userQuery.data && (
-          <View className="flex flex-col pointer-events-none">
+          <View className="flex flex-col ">
             <Text className="font-anakotmai-light text-xs">ยินดีต้อนรับ</Text>
             <Text className="font-anakotmai-bold text-2xl text-base-primary-default">
               {userQuery.data.given_name}
@@ -102,7 +103,7 @@ function MainHeader() {
 
 function TopContainer() {
   return (
-    <View className="flex flex-col w-full bg-base-bg-white pointer-events-box-none">
+    <View className="flex flex-col w-full bg-base-bg-white ">
       <BannerSection />
       <EventSection />
       <UserInfoSection />
@@ -124,7 +125,7 @@ interface BannerItem {
 
 function BannerSection() {
   return (
-    <View className="w-full pt-2 py-4 pointer-events-box-none">
+    <View className="w-full pt-2 py-4 ">
       <Carousel>
         <CarouselScrollView>
           {BANNER_ITEMS.map((item) => (
@@ -184,8 +185,8 @@ function CarouselItem(props: { item: BannerItem }) {
 
 function EventSection() {
   return (
-    <View className="flex flex-col items-center justify-center gap-2 px-4 pb-4 pointer-events-box-none">
-      <View className="flex flex-row gap-2 justify-start items-center w-full pointer-events-none">
+    <View className="flex flex-col items-center justify-center gap-2 px-4 pb-4 ">
+      <View className="flex flex-row gap-2 justify-start items-center w-full ">
         <Icon icon={RadioTowerIcon} size={20} className="text-base-primary-default" />
         <H2 className="text-xl font-anakotmai-bold text-base-text-high">อิเวนต์ตอนนี้</H2>
       </View>
@@ -196,15 +197,15 @@ function EventSection() {
 
 function ElectionCard() {
   return (
-    <View className="w-full bg-base-secondary-default rounded-2xl flex flex-col gap-4 p-4 pointer-events-box-none">
+    <View className="w-full bg-base-secondary-default rounded-2xl flex flex-col gap-4 p-4 ">
       <View className="flex flex-col items-start gap-2">
         <Badge variant="secondary">
           <Text>เลือกตั้งในสถานที่</Text>
         </Badge>
-        <H3 className="text-base-text-invert font-anakotmai-bold text-lg pointer-events-box-none">
+        <H3 className="text-base-text-invert font-anakotmai-bold text-lg ">
           เลือกตั้งตัวแทนสมาชิกพรรคประจำ อ.เมือง จ.ระยอง
         </H3>
-        <View className="flex flex-col gap-1 pointer-events-none">
+        <View className="flex flex-col gap-1 ">
           <View className="flex flex-row gap-1 items-center">
             <Icon icon={ClockIcon} size={16} className="text-base-text-invert" />
             <Text className="text-sm text-base-text-invert font-anakotmai-light">
@@ -240,7 +241,7 @@ function ElectionCard() {
 function UserInfoSection() {
   return (
     <View className="flex flex-row justify-between items-center w-full px-4">
-      <View className="flex flex-col items-start pointer-events-none">
+      <View className="flex flex-col items-start ">
         <View className="flex flex-row items-center gap-2">
           <Icon icon={MapPinnedIcon} size={16} className="text-base-primary-medium" />
           <H2 className="text-xs text-base-text-high font-anakotmai-light">พื้นที่ของคุณ</H2>
@@ -319,6 +320,9 @@ const routes = [
 // </Pager>
 
 const AnimatedPagerView = Animated.createAnimatedComponent(PagerView)
+
+const AnimatedExpoScrollPassthroughView =
+  Animated.createAnimatedComponent(ExpoScrollPassthroughView)
 
 export function TabViewInsideScroll() {
   // const layout = useWindowDimensions()
@@ -538,67 +542,70 @@ export function TabViewInsideScroll() {
   return (
     <PagerProvider value={{ dragProgress, registerRef, scrollHandler, headerHeight }}>
       <View className="flex-1 bg-base-bg-default">
-        <Animated.View
-          pointerEvents="box-none"
+        <AnimatedExpoScrollPassthroughView
+          url="https://reactjs.org"
+          onLoad={() => {}}
           style={[styles.pagerHeader, headerTransform]}
-          collapsable={false}
+          // collapsable={false}
         >
-          <View
-            className="pointer-events-box-none"
-            ref={headerRef}
-            onLayout={() => {
-              headerRef.current?.measure(
-                (_x: number, _y: number, _width: number, height: number) => {
-                  // console.log('Header only height:', height)
-                  onHeaderOnlyLayout(height)
-                }
-              )
-            }}
-          >
-            <MainHeader />
-            <TopContainer />
-            <View className="px-4 bg-base-bg-white flex flex-row items-start pointer-events-none">
-              <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
-            </View>
-          </View>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="bg-base-bg-white w-full"
-            contentContainerClassName="px-4 border-b border-base-outline-default w-full"
-            onLayout={onTabBarLayout}
-          >
+          <View style={{ backgroundColor: 'transparent' }}>
             <View
-              accessibilityRole="tablist"
-              className="flex flex-row"
-              onLayout={(e) => {
-                tabListSize.set(e.nativeEvent.layout.width)
+              className=""
+              ref={headerRef}
+              onLayout={() => {
+                headerRef.current?.measure(
+                  (_x: number, _y: number, _width: number, height: number) => {
+                    // console.log('Header only height:', height)
+                    onHeaderOnlyLayout(height)
+                  }
+                )
               }}
             >
-              <Button variant="ghost" aria-label="Add Label" className="mb-px" size="icon">
-                <Icon
-                  icon={CirclePlusIcon}
-                  strokeWidth={1}
-                  className="text-base-secondary-default"
-                  size={24}
-                />
-              </Button>
-              <TabBarItem index={0} onTabLayout={onTabLayout} onTabPress={onTabPressed}>
-                สำหรับคุณ
-              </TabBarItem>
-              <TabBarItem index={1} onTabLayout={onTabLayout} onTabPress={onTabPressed}>
-                กำลังติดตาม
-              </TabBarItem>
-              <TabBarItem index={2} onTabLayout={onTabLayout} onTabPress={onTabPressed}>
-                กรุงเทพฯ
-              </TabBarItem>
-              <Animated.View
-                className="absolute -bottom-px left-0 right-0 border-b-2 border-base-primary-default pointer-events-none"
-                style={indicatorStyle}
-              />
+              <MainHeader />
+              <TopContainer />
+              <View className="px-4 bg-base-bg-white flex flex-row items-start ">
+                <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
+              </View>
             </View>
-          </ScrollView>
-        </Animated.View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="bg-base-bg-white w-full"
+              contentContainerClassName="px-4 border-b border-base-outline-default w-full"
+              onLayout={onTabBarLayout}
+            >
+              <View
+                accessibilityRole="tablist"
+                className="flex flex-row"
+                onLayout={(e) => {
+                  tabListSize.set(e.nativeEvent.layout.width)
+                }}
+              >
+                <Button variant="ghost" aria-label="Add Label" className="mb-px" size="icon">
+                  <Icon
+                    icon={CirclePlusIcon}
+                    strokeWidth={1}
+                    className="text-base-secondary-default"
+                    size={24}
+                  />
+                </Button>
+                <TabBarItem index={0} onTabLayout={onTabLayout} onTabPress={onTabPressed}>
+                  สำหรับคุณ
+                </TabBarItem>
+                <TabBarItem index={1} onTabLayout={onTabLayout} onTabPress={onTabPressed}>
+                  กำลังติดตาม
+                </TabBarItem>
+                <TabBarItem index={2} onTabLayout={onTabLayout} onTabPress={onTabPressed}>
+                  กรุงเทพฯ
+                </TabBarItem>
+                <Animated.View
+                  className="absolute -bottom-px left-0 right-0 border-b-2 border-base-primary-default "
+                  style={indicatorStyle}
+                />
+              </View>
+            </ScrollView>
+          </View>
+        </AnimatedExpoScrollPassthroughView>
         <AnimatedPagerView
           ref={pagerView}
           style={styles.pagerView}
