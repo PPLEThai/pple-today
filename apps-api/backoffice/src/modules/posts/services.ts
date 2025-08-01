@@ -40,7 +40,6 @@ export class PostService {
 
     return ok({
       id: postId,
-      title: postDetails.title,
       content: postDetails.content ?? '',
       author: {
         id: postDetails.feedItem.author.id,

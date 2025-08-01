@@ -33,6 +33,26 @@ const envConfigSchema = t.Object({
       description: 'Development OIDC Client ID for testing purposes',
     })
   ),
+
+  FACEBOOK_API_URL: t.String({
+    default: 'https://graph.facebook.com/v23.0',
+    description: 'Base URL for Facebook Graph API',
+  }),
+  FACEBOOK_APP_ID: t.String({ description: 'Facebook App ID' }),
+  FACEBOOK_APP_SECRET: t.String({ description: 'Facebook App Secret' }),
+
+  GCP_PROJECT_ID: t.String({
+    description: 'Google Cloud Project ID',
+  }),
+  GCP_CLIENT_EMAIL: t.String({
+    description: 'Google Cloud Client Email',
+  }),
+  GCP_PRIVATE_KEY: t.String({
+    description: 'Google Cloud Private Key',
+  }),
+  GCP_STORAGE_BUCKET_NAME: t.String({
+    description: 'Google Cloud Storage Bucket Name',
+  }),
 })
 
 const serverEnv = Value.Parse(envConfigSchema, process.env)
