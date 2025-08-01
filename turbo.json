@@ -16,12 +16,12 @@
       "dependsOn": ["^format:check"]
     },
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", "^codegen"],
       "outputs": ["dist/**", "build/**"]
     },
     "codegen": {
       "dependsOn": ["^codegen"],
-      "outputs": []
+      "outputs": ["__generated__/**", ".react-router/**"]
     },
     "dev": {
       "cache": false,

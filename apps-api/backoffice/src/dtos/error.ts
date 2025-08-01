@@ -29,6 +29,9 @@ const COMMON_ERROR_SCHEMA = {
   FILE_UPLOAD_ERROR: {
     status: 500,
   },
+  NOT_IMPLEMENTED: {
+    status: 501,
+  },
 } satisfies InternalErrorSchemas
 
 const FILE_ERROR_SCHEMA = {
@@ -46,6 +49,12 @@ const AUTH_ERROR_SCHEMA = {
   },
   AUTH_USER_ALREADY_EXISTS: {
     status: 409,
+  },
+} satisfies InternalErrorSchemas
+
+const ANNOUNCEMENT_ERROR_SCHEMA = {
+  ANNOUNCEMENT_NOT_FOUND: {
+    status: 404,
   },
 } satisfies InternalErrorSchemas
 
@@ -111,6 +120,7 @@ export const InternalErrorCodeSchemas = {
   ...USER_ERROR_SCHEMA,
   ...FILE_ERROR_SCHEMA,
   ...FACEBOOK_ERROR_SCHEMA,
+  ...ANNOUNCEMENT_ERROR_SCHEMA,
 } as const
 export type InternalErrorCodeSchemas = typeof InternalErrorCodeSchemas
 

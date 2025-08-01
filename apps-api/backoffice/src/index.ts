@@ -6,6 +6,7 @@ import Elysia from 'elysia'
 import serverEnv from './config/env'
 import { InternalErrorCode } from './dtos/error'
 import { AdminController } from './modules/admin'
+import { AnnouncementsController } from './modules/announcements'
 import { AuthController } from './modules/auth'
 import { FacebookController } from './modules/facebook'
 import { PostsController } from './modules/posts'
@@ -59,6 +60,7 @@ let app = new Elysia({ adapter: node() })
   .use(cors())
   .use(PostsController)
   .use(AuthController)
+  .use(AnnouncementsController)
   .use(AdminController)
   .use(ProfileController)
   .use(FacebookController)
