@@ -8,7 +8,8 @@ import {
   GetPollsResponse,
   GetPublishedPollResponse,
   GetPublishedPollsResponse,
-  PutPollBody,
+  PutDraftedPollBody,
+  PutPublishedPollBody,
 } from './models'
 import { PollRepository, PollRepositoryPlugin } from './repository'
 
@@ -49,7 +50,7 @@ export class PollService {
     return ok(result.value satisfies GetPublishedPollResponse)
   }
 
-  async updatePollById(pollId: string, data: PutPollBody) {
+  async updatePollById(pollId: string, data: PutPublishedPollBody) {
     const result = await this.pollRepository.updatePollById(pollId, data)
     if (result.isErr())
       return mapRawPrismaError(result.error, {
@@ -116,7 +117,7 @@ export class PollService {
     return ok({ message: `Drafted Poll "${result.value.id}" created.` })
   }
 
-  async updateDraftedPollById(pollId: string, data: PutPollBody) {
+  async updateDraftedPollById(pollId: string, data: PutDraftedPollBody) {
     const result = await this.pollRepository.updateDraftedPollById(pollId, data)
     if (result.isErr())
       return mapRawPrismaError(result.error, {

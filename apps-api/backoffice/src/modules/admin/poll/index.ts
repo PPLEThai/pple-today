@@ -12,8 +12,9 @@ import {
   PollIdParam,
   PostDraftedPollResponse,
   PublishedPollUnpublishedResponse,
+  PutDraftedPollBody,
   PutDraftedPollResponse,
-  PutPollBody,
+  PutPublishedPollBody,
   PutPublishedPollResponse,
 } from './models'
 import { PollServicePlugin } from './services'
@@ -111,7 +112,7 @@ const DraftedPollsController = new Elysia({
     {
       requiredUser: true,
       params: PollIdParam,
-      body: PutPollBody,
+      body: PutDraftedPollBody,
       response: {
         200: PutDraftedPollResponse,
         ...createErrorSchema(
@@ -319,7 +320,7 @@ export const PollsController = new Elysia({
     {
       requiredUser: true,
       params: PollIdParam,
-      body: PutPollBody,
+      body: PutPublishedPollBody,
       response: {
         200: PutPublishedPollResponse,
         ...createErrorSchema(

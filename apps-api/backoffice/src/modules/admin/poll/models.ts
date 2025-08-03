@@ -44,7 +44,7 @@ export const PostDraftedPollResponse = t.Object({
 })
 export type PostDraftedPollResponse = Static<typeof PostDraftedPollResponse>
 
-export const PutPollBody = t.Object({
+export const PutDraftedPollBody = t.Object({
   title: t.Nullable(t.String({ description: 'The title of the poll' })),
   description: t.Nullable(t.String({ description: 'The description of the poll' })),
   endAt: t.Nullable(t.Date({ description: 'The end date of the poll' })),
@@ -53,7 +53,7 @@ export const PutPollBody = t.Object({
   optionTitles: t.Array(t.String({ description: 'The title of the poll option' })),
   topicIds: t.Array(t.String({ description: 'The ID of the poll topic' })),
 })
-export type PutPollBody = Static<typeof PutPollBody>
+export type PutDraftedPollBody = Static<typeof PutDraftedPollBody>
 
 export const PutDraftedPollResponse = t.Object({
   message: t.String({ description: 'Success message' }),
@@ -69,6 +69,17 @@ export const DeleteDraftedPollResponse = t.Object({
   message: t.String({ description: 'Success message' }),
 })
 export type DeleteDraftedPollResponse = Static<typeof DeleteDraftedPollResponse>
+
+export const PutPublishedPollBody = t.Object({
+  title: t.String({ description: 'The title of the poll' }),
+  description: t.Nullable(t.String({ description: 'The description of the poll' })),
+  endAt: t.Date({ description: 'The end date of the poll' }),
+  type: t.Enum(PollType),
+
+  optionTitles: t.Array(t.String({ description: 'The title of the poll option' })),
+  topicIds: t.Array(t.String({ description: 'The ID of the poll topic' })),
+})
+export type PutPublishedPollBody = Static<typeof PutPublishedPollBody>
 
 export const PutPublishedPollResponse = t.Object({
   message: t.String({ description: 'Success message' }),

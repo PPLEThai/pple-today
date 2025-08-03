@@ -1,7 +1,7 @@
 import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
-import { PutPollBody } from './models'
+import { PutDraftedPollBody, PutPublishedPollBody } from './models'
 
 import { FeedItemType } from '../../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
@@ -153,7 +153,7 @@ export class PollRepository {
     })
   }
 
-  async updatePollById(feedItemId: string, data: PutPollBody) {
+  async updatePollById(feedItemId: string, data: PutPublishedPollBody) {
     return await fromPrismaPromise(async () => {
       const answer = await this.prismaService.poll.findUniqueOrThrow({
         where: { feedItemId },
@@ -177,9 +177,9 @@ export class PollRepository {
       return await this.prismaService.poll.update({
         where: { feedItemId },
         data: {
-          title: data.title ?? undefined,
+          title: data.title,
           description: data.description,
-          endAt: data.endAt ?? undefined,
+          endAt: data.endAt,
           type: data.type,
           topics: {
             deleteMany: {},
@@ -326,7 +326,7 @@ export class PollRepository {
     )
   }
 
-  async updateDraftedPollById(pollId: string, data: PutPollBody) {
+  async updateDraftedPollById(pollId: string, data: PutDraftedPollBody) {
     return await fromPrismaPromise(
       this.prismaService.pollDraft.update({
         where: { id: pollId },
