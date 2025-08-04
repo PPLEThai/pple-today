@@ -16,7 +16,7 @@ model Announcement {
     topics          AnnouncementTopic[]
     attachments     AnnouncementFile[]
 
-    feedItem FeedItem @relation(fields: [feedItemId], references: [id])
+    feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
 }
 
 model AnnouncementTopic {
@@ -26,8 +26,8 @@ model AnnouncementTopic {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    announcement Announcement @relation(fields: [announcementId], references: [feedItemId])
-    topic        Topic        @relation(fields: [topicId], references: [id])
+    announcement Announcement @relation(fields: [announcementId], references: [feedItemId], onDelete: Cascade)
+    topic        Topic        @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
     @@id([announcementId, topicId])
 }
@@ -39,7 +39,7 @@ model AnnouncementFile {
     createdAt      DateTime @default(now())
     updatedAt      DateTime @updatedAt
 
-    announcement Announcement @relation(fields: [announcementId], references: [feedItemId])
+    announcement Announcement @relation(fields: [announcementId], references: [feedItemId], onDelete: Cascade)
 
     @@index([announcementId])
 }
@@ -67,8 +67,8 @@ model AnnouncementTopicDraft {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    announcementDraft AnnouncementDraft @relation(fields: [announcementDraftId], references: [id])
-    topic             Topic             @relation(fields: [topicId], references: [id])
+    announcementDraft AnnouncementDraft @relation(fields: [announcementDraftId], references: [id], onDelete: Cascade)
+    topic             Topic             @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
     @@id([announcementDraftId, topicId])
 }
@@ -80,7 +80,7 @@ model AnnouncementFileDraft {
     createdAt           DateTime @default(now())
     updatedAt           DateTime @updatedAt
 
-    announcementDraft AnnouncementDraft @relation(fields: [announcementDraftId], references: [id])
+    announcementDraft AnnouncementDraft @relation(fields: [announcementDraftId], references: [id], onDelete: Cascade)
 
     @@index([announcementDraftId])
 }
