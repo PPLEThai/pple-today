@@ -17,22 +17,22 @@ import {
   PutPublishedPollBody,
   PutPublishedPollResponse,
 } from './models'
-import { PollServicePlugin } from './services'
+import { AdminPollServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../../dtos/error'
 import { AuthGuardPlugin } from '../../../plugins/auth-guard'
 import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../../utils/error'
 
-const DraftedPollsController = new Elysia({
+const AdminDraftedPollsController = new Elysia({
   prefix: '/draft',
   adapter: node(),
   tags: ['Drafted Polls'],
 })
-  .use([AuthGuardPlugin, PollServicePlugin])
+  .use([AuthGuardPlugin, AdminPollServicePlugin])
   .get(
     '/:pollId',
-    async ({ params, status, pollService }) => {
-      const result = await pollService.getDraftedPollById(params.pollId)
+    async ({ params, status, adminPollService }) => {
+      const result = await adminPollService.getDraftedPollById(params.pollId)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.POLL_NOT_FOUND:
@@ -64,8 +64,8 @@ const DraftedPollsController = new Elysia({
   )
   .post(
     '/',
-    async ({ status, pollService }) => {
-      const result = await pollService.createEmptyDraftedPoll()
+    async ({ status, adminPollService }) => {
+      const result = await adminPollService.createEmptyDraftedPoll()
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
       return status(201, result.value)
@@ -84,8 +84,8 @@ const DraftedPollsController = new Elysia({
   )
   .put(
     '/:pollId',
-    async ({ params, body, status, pollService }) => {
-      const result = await pollService.updateDraftedPollById(params.pollId, body)
+    async ({ params, body, status, adminPollService }) => {
+      const result = await adminPollService.updateDraftedPollById(params.pollId, body)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.POLL_NOT_FOUND:
@@ -118,8 +118,8 @@ const DraftedPollsController = new Elysia({
   )
   .post(
     '/:pollId/publish',
-    async ({ params, user, status, pollService }) => {
-      const result = await pollService.publishDraftedPollById(params.pollId, user?.sub)
+    async ({ params, user, status, adminPollService }) => {
+      const result = await adminPollService.publishDraftedPollById(params.pollId, user?.sub)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.POLL_NOT_FOUND:
@@ -151,8 +151,8 @@ const DraftedPollsController = new Elysia({
   )
   .delete(
     '/:pollId',
-    async ({ params, status, pollService }) => {
-      const result = await pollService.deleteDraftedPoll(params.pollId)
+    async ({ params, status, adminPollService }) => {
+      const result = await adminPollService.deleteDraftedPoll(params.pollId)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.POLL_NOT_FOUND:
@@ -183,34 +183,34 @@ const DraftedPollsController = new Elysia({
     }
   )
 
-export const PollsController = new Elysia({
+export const AdminPollsController = new Elysia({
   prefix: '/polls',
   adapter: node(),
   tags: ['Polls'],
 })
-  .use([AuthGuardPlugin, PollServicePlugin])
-  .use(DraftedPollsController)
+  .use([AuthGuardPlugin, AdminPollServicePlugin])
+  .use(AdminDraftedPollsController)
   .get(
     '/',
-    async ({ query, status, pollService }) => {
+    async ({ query, status, adminPollService }) => {
       const pagingQuery = {
         limit: query.limit ?? 10,
         page: query.page ?? 1,
       }
 
       if (query.type === 'publish') {
-        const result = await pollService.getPublishedPolls(pagingQuery)
+        const result = await adminPollService.getPublishedPolls(pagingQuery)
         if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
         return status(200, result.value)
       } else if (query.type === 'draft') {
-        const result = await pollService.getDraftedPolls(pagingQuery)
+        const result = await adminPollService.getDraftedPolls(pagingQuery)
         if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
         return status(200, result.value)
       }
 
-      const result = await pollService.getPolls()
+      const result = await adminPollService.getPolls()
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
       return status(200, result.value)
@@ -233,8 +233,8 @@ export const PollsController = new Elysia({
   )
   .get(
     '/:pollId',
-    async ({ params, status, pollService }) => {
-      const result = await pollService.getPollById(params.pollId)
+    async ({ params, status, adminPollService }) => {
+      const result = await adminPollService.getPollById(params.pollId)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.POLL_NOT_FOUND:
@@ -266,8 +266,8 @@ export const PollsController = new Elysia({
   )
   .put(
     '/:pollId',
-    async ({ params, body, status, pollService }) => {
-      const result = await pollService.updatePollById(params.pollId, body)
+    async ({ params, body, status, adminPollService }) => {
+      const result = await adminPollService.updatePollById(params.pollId, body)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.POLL_NOT_FOUND:
@@ -300,8 +300,8 @@ export const PollsController = new Elysia({
   )
   .post(
     '/:pollId/unpublish',
-    async ({ params, status, pollService }) => {
-      const result = await pollService.unpublishPollById(params.pollId)
+    async ({ params, status, adminPollService }) => {
+      const result = await adminPollService.unpublishPollById(params.pollId)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.POLL_NOT_FOUND:
@@ -333,8 +333,8 @@ export const PollsController = new Elysia({
   )
   .delete(
     '/:pollId',
-    async ({ params, status, pollService }) => {
-      const result = await pollService.deletePollById(params.pollId)
+    async ({ params, status, adminPollService }) => {
+      const result = await adminPollService.deletePollById(params.pollId)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.POLL_NOT_FOUND:

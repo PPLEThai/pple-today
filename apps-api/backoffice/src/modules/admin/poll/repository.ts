@@ -7,7 +7,7 @@ import { FeedItemType, PollType } from '../../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { fromPrismaPromise } from '../../../utils/prisma'
 
-export class PollRepository {
+export class AdminPollRepository {
   constructor(private prismaService: PrismaService) {}
 
   async getAllPolls() {
@@ -398,8 +398,11 @@ export class PollRepository {
   }
 }
 
-export const PollRepositoryPlugin = new Elysia({ name: 'PollRepository', adapter: node() })
+export const AdminPollRepositoryPlugin = new Elysia({
+  name: 'AdminPollRepository',
+  adapter: node(),
+})
   .use([PrismaServicePlugin])
   .decorate(({ prismaService }) => ({
-    pollRepository: new PollRepository(prismaService),
+    adminPollRepository: new AdminPollRepository(prismaService),
   }))
