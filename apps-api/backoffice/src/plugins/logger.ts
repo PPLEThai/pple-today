@@ -25,7 +25,7 @@ const formatters = {
         if ('message' in error) {
           log.message = error.message
         } else if ('code' in error && 'response' in error) {
-          const response: any = error.response
+          const response = (error.response as any).error
           log.message = `HTTP ${error.code}: Code ${response.code} with message ${response.message}`
           log.stack = response.stack
         } else {
