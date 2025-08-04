@@ -1,6 +1,10 @@
 import { cors } from '@elysiajs/cors'
 import node from '@elysiajs/node'
+import { opentelemetry } from '@elysiajs/opentelemetry'
 import { swagger } from '@elysiajs/swagger'
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto'
+import { PgInstrumentation } from '@opentelemetry/instrumentation-pg'
+import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-node'
 import { loggerBuilder, RequestIdPlugin } from '@pple-today/api-common/plugins'
 import Elysia, { AnyElysia } from 'elysia'
 import * as R from 'remeda'
@@ -139,6 +143,12 @@ if (process.env.ENABLE_SWAGGER === 'true') {
 
   app = app.use(swaggerPlugin).get('/swagger', () => response.clone(), hooks)
 }
+app = app.use(
+  opentelemetry({
+    spanProcessors: [new BatchSpanProcessor(new OTLPTraceExporter())],
+    instrumentations: [new PgInstrumentation()],
+  })
+)
 
 app.listen(process.env.PORT, () => {
   console.log(`Server is running on http://localhost:${process.env.PORT}`)
