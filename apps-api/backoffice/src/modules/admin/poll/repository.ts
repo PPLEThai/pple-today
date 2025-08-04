@@ -3,7 +3,7 @@ import Elysia from 'elysia'
 
 import { PutDraftedPollBody, PutPublishedPollBody } from './models'
 
-import { FeedItemType } from '../../../../__generated__/prisma'
+import { FeedItemType, PollType } from '../../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { fromPrismaPromise } from '../../../utils/prisma'
 
@@ -160,19 +160,15 @@ export class PollRepository {
         select: {
           options: {
             select: {
-              _count: {
-                select: {
-                  pollAnswers: true,
-                },
-              },
+              votes: true,
             },
           },
         },
       })
 
-      const answersCount = answer.options.reduce((a, c) => a + c._count.pollAnswers, 0)
+      const hasAnswer = answer.options.some((pollOption) => pollOption.votes > 0)
 
-      if (answersCount > 0) throw new Error('Cannot update poll with answers')
+      if (hasAnswer) throw new Error('Cannot update poll with answers')
 
       return await this.prismaService.poll.update({
         where: { feedItemId },
@@ -190,9 +186,7 @@ export class PollRepository {
             },
           },
           options: {
-            deleteMany: {
-              pollId: feedItemId,
-            },
+            deleteMany: {},
             createMany: {
               data: data.optionTitles.map((optionTitle) => ({
                 title: optionTitle,
@@ -208,35 +202,30 @@ export class PollRepository {
     return await fromPrismaPromise(
       this.prismaService.$transaction(async (tx) => {
         // 1. Get poll
-        const feedPoll = await tx.feedItem.findUniqueOrThrow({
-          where: { id: feedItemId },
+        const poll = await tx.poll.findUniqueOrThrow({
+          where: { feedItemId },
           select: {
-            id: true,
-            poll: {
-              select: {
-                title: true,
-                description: true,
-                endAt: true,
-                type: true,
-                topics: { select: { topicId: true } },
-                options: { select: { title: true, votes: true } },
-              },
-            },
+            title: true,
+            description: true,
+            endAt: true,
+            type: true,
+            topics: { select: { topicId: true } },
+            options: { select: { title: true, votes: true } },
           },
         })
 
-        if (feedPoll.poll === null) throw new Error('Missing required fields')
+        if (poll === null) throw new Error('Missing required fields')
 
         // 2. Insert into drafted poll
         const draftedPoll = await tx.pollDraft.create({
           data: {
-            id: feedPoll.id,
-            title: feedPoll.poll.title,
-            description: feedPoll.poll.description,
-            endAt: feedPoll.poll.endAt,
-            type: feedPoll.poll.type,
-            topics: { createMany: { data: feedPoll.poll.topics } },
-            options: { createMany: { data: feedPoll.poll.options } },
+            id: feedItemId,
+            title: poll.title,
+            description: poll.description,
+            endAt: poll.endAt,
+            type: poll.type,
+            topics: { createMany: { data: poll.topics } },
+            options: { createMany: { data: poll.options } },
           },
         })
 
@@ -322,7 +311,7 @@ export class PollRepository {
 
   async createEmptyDraftedPoll() {
     return await fromPrismaPromise(
-      this.prismaService.pollDraft.create({ data: { type: 'SINGLE_CHOICE' } })
+      this.prismaService.pollDraft.create({ data: { type: PollType.SINGLE_CHOICE } })
     )
   }
 
@@ -344,12 +333,9 @@ export class PollRepository {
             },
           },
           options: {
-            deleteMany: {
-              pollDraftId: pollId,
-            },
+            deleteMany: {},
             createMany: {
               data: data.optionTitles.map((optionTitle) => ({
-                // pollDraftId: pollId,
                 title: optionTitle,
               })),
             },

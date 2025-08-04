@@ -23,7 +23,7 @@ export type GetPollsQuery = Static<typeof GetPollsQuery>
 export const GetPollsResponse = t.Array(t.Union([PublishedPoll, DraftedPoll]))
 export type GetPollsResponse = Static<typeof GetPollsResponse>
 
-export const PollIdParam = t.Object({
+export const PollIdParams = t.Object({
   pollId: t.String({ description: 'The ID of the drafted poll' }),
 })
 
@@ -33,11 +33,11 @@ export type GetPublishedPollsResponse = Static<typeof GetPublishedPollsResponse>
 export const GetDraftedPollsResponse = t.Array(DraftedPoll)
 export type GetDraftedPollsResponse = Static<typeof GetDraftedPollsResponse>
 
-export const GetDraftedPollResponse = t.Union([GetDraftedPollsResponse, PollDetails])
-export type GetDraftedPollResponse = Static<typeof GetDraftedPollResponse>
-
-export const GetPublishedPollResponse = t.Union([GetPublishedPollsResponse, PollDetails])
+export const GetPublishedPollResponse = t.Composite([PublishedPoll, PollDetails])
 export type GetPublishedPollResponse = Static<typeof GetPublishedPollResponse>
+
+export const GetDraftedPollResponse = t.Composite([DraftedPoll, PollDetails])
+export type GetDraftedPollResponse = Static<typeof GetDraftedPollResponse>
 
 export const PostDraftedPollResponse = t.Object({
   message: t.String({ description: 'Success message' }),

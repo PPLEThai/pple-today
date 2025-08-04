@@ -9,7 +9,7 @@ import {
   GetPollsQuery,
   GetPollsResponse,
   GetPublishedPollResponse,
-  PollIdParam,
+  PollIdParams,
   PostDraftedPollResponse,
   PublishedPollUnpublishedResponse,
   PutDraftedPollBody,
@@ -48,7 +48,7 @@ const DraftedPollsController = new Elysia({
     },
     {
       requiredUser: true,
-      params: PollIdParam,
+      params: PollIdParams,
       response: {
         200: GetDraftedPollResponse,
         ...createErrorSchema(
@@ -57,11 +57,6 @@ const DraftedPollsController = new Elysia({
         ),
       },
       detail: {
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
         summary: 'Get drafted poll by ID',
         description: 'Fetch a specific drafted poll by its ID',
       },
@@ -82,11 +77,6 @@ const DraftedPollsController = new Elysia({
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
       },
       detail: {
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
         summary: 'Create empty drafted poll',
         description: 'Add empty poll to be updated later',
       },
@@ -111,7 +101,7 @@ const DraftedPollsController = new Elysia({
     },
     {
       requiredUser: true,
-      params: PollIdParam,
+      params: PollIdParams,
       body: PutDraftedPollBody,
       response: {
         200: PutDraftedPollResponse,
@@ -121,11 +111,6 @@ const DraftedPollsController = new Elysia({
         ),
       },
       detail: {
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
         summary: 'Update drafted poll by ID',
         description: 'Update a specific drafted poll by its ID',
       },
@@ -149,9 +134,8 @@ const DraftedPollsController = new Elysia({
       return status(200, result.value)
     },
     {
-      fetchUser: true,
       requiredUser: true,
-      params: PollIdParam,
+      params: PollIdParams,
       response: {
         200: DraftedPollPublishedResponse,
         ...createErrorSchema(
@@ -160,11 +144,6 @@ const DraftedPollsController = new Elysia({
         ),
       },
       detail: {
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
         summary: 'Publish drafted poll by ID',
         description: 'Publish a specific drafted poll by its ID',
       },
@@ -189,7 +168,7 @@ const DraftedPollsController = new Elysia({
     },
     {
       requiredUser: true,
-      params: PollIdParam,
+      params: PollIdParams,
       response: {
         200: DeleteDraftedPollResponse,
         ...createErrorSchema(
@@ -198,11 +177,6 @@ const DraftedPollsController = new Elysia({
         ),
       },
       detail: {
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
         summary: 'Delete drafted poll by ID',
         description: 'Remove a specific drafted poll by its ID',
       },
@@ -252,11 +226,6 @@ export const PollsController = new Elysia({
         ),
       },
       detail: {
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
         summary: 'Get polls by type',
         description: 'Fetch polls by type',
       },
@@ -281,7 +250,7 @@ export const PollsController = new Elysia({
     },
     {
       requiredUser: true,
-      params: PollIdParam,
+      params: PollIdParams,
       response: {
         200: GetPublishedPollResponse,
         ...createErrorSchema(
@@ -290,11 +259,6 @@ export const PollsController = new Elysia({
         ),
       },
       detail: {
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
         summary: 'Get poll by ID',
         description: 'Fetch a specific poll by its ID',
       },
@@ -319,7 +283,7 @@ export const PollsController = new Elysia({
     },
     {
       requiredUser: true,
-      params: PollIdParam,
+      params: PollIdParams,
       body: PutPublishedPollBody,
       response: {
         200: PutPublishedPollResponse,
@@ -329,11 +293,6 @@ export const PollsController = new Elysia({
         ),
       },
       detail: {
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
         summary: 'Update poll by ID',
         description: 'Update a specific poll by its ID',
       },
@@ -357,9 +316,8 @@ export const PollsController = new Elysia({
       return status(200, result.value)
     },
     {
-      fetchUser: true,
       requiredUser: true,
-      params: PollIdParam,
+      params: PollIdParams,
       response: {
         200: PublishedPollUnpublishedResponse,
         ...createErrorSchema(
@@ -368,11 +326,6 @@ export const PollsController = new Elysia({
         ),
       },
       detail: {
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
         summary: 'Unpublish poll by ID',
         description: 'Unpublish a specific poll by its ID',
       },
@@ -397,7 +350,7 @@ export const PollsController = new Elysia({
     },
     {
       requiredUser: true,
-      params: PollIdParam,
+      params: PollIdParams,
       response: {
         200: DeletePublishedPollResponse,
         ...createErrorSchema(
@@ -406,11 +359,6 @@ export const PollsController = new Elysia({
         ),
       },
       detail: {
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
         summary: 'Delete poll by ID',
         description: 'Remove a specific poll by its ID',
       },
