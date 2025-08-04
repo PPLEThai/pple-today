@@ -8,7 +8,7 @@ const envConfigSchema = t.Object({
   PORT: t.Number({ default: 5000 }),
   DATABASE_URL: t.String(),
   APP_ENV: t.Union([t.Literal('development'), t.Literal('production')], {
-    default: 'development',
+    default: 'production',
   }),
 
   OIDC_URL: t.String({ description: 'OIDC URL for authentication' }),
