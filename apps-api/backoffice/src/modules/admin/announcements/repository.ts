@@ -1,7 +1,7 @@
 import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
-import { PutDraftedAnnouncementBody } from './models'
+import { PutDraftedAnnouncementBody, PutPublishedAnnouncementBody } from './models'
 
 import { FeedItemType } from '../../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
@@ -178,7 +178,7 @@ export class AdminAnnouncementRepository {
     })
   }
 
-  async updateAnnouncementById(announcementId: string, data: PutDraftedAnnouncementBody) {
+  async updateAnnouncementById(announcementId: string, data: PutPublishedAnnouncementBody) {
     return await fromPrismaPromise(
       this.prismaService.announcement.update({
         where: { feedItemId: announcementId },
@@ -459,5 +459,3 @@ export const AdminAnnouncementRepositoryPlugin = new Elysia({
   .decorate(({ prismaService }) => ({
     adminAnnouncementRepository: new AdminAnnouncementRepository(prismaService),
   }))
-
-export default AdminAnnouncementRepository
