@@ -92,7 +92,7 @@ export const mapErrorCodeToResponse = <
   status: (statusCode: TStatusCode, body: { error: TError }) => TStatusReturn
 ) => {
   const code = InternalErrorCodeSchemas[error.code].status as TStatusCode
-  return status(code, { error })
+  throw status(code, { error })
 }
 
 export function exhaustiveGuard(_value: never): never {

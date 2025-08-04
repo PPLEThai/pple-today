@@ -1,20 +1,48 @@
 import { PrismaPg } from '@prisma/adapter-pg'
 import Elysia from 'elysia'
 
+import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from './logger'
+
 import { Prisma, PrismaClient } from '../../__generated__/prisma/client'
 
 const connectionString = `${process.env.DATABASE_URL}`
 
-class PrismaService extends PrismaClient {
-  constructor(optionsArg?: Prisma.PrismaClientOptions) {
-    super(optionsArg)
+class PrismaService extends PrismaClient<
+  Prisma.PrismaClientOptions,
+  'query' | 'error' | 'warn' | 'info'
+> {
+  constructor(loggerService: ElysiaLoggerInstance, optionsArg?: Prisma.PrismaClientOptions) {
+    super({
+      ...optionsArg,
+      errorFormat: 'minimal',
+      log: [
+        { emit: 'event', level: 'query' },
+        { emit: 'event', level: 'error' },
+        { emit: 'event', level: 'warn' },
+        { emit: 'event', level: 'info' },
+      ],
+    })
+
+    this.$on('error', (error) => {
+      loggerService.error({
+        message: error.message,
+        timestamp: error.timestamp,
+        target: error.target,
+        stackTrace: new Error().stack,
+      })
+    })
   }
 }
 
-const PrismaServicePlugin = new Elysia({ name: 'PrismaService' }).decorate(() => {
-  const adapter = new PrismaPg({ connectionString })
+const PrismaServicePlugin = new Elysia({ name: 'PrismaService' })
+  .use(ElysiaLoggerPlugin({ name: 'PrismaService' }))
+  .decorate(({ loggerService }) => {
+    const adapter = new PrismaPg({ connectionString })
+    const prismaService = new PrismaService(loggerService, {
+      adapter,
+    })
 
-  return { prismaService: new PrismaService({ adapter }) }
-})
+    return { prismaService }
+  })
 
 export { PrismaService, PrismaServicePlugin }

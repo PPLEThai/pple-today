@@ -3,6 +3,7 @@ import node from '@elysiajs/node'
 import { swagger } from '@elysiajs/swagger'
 import { randomUUID } from 'crypto'
 import Elysia from 'elysia'
+import { getIP } from 'elysia-ip'
 
 import serverEnv from './config/env'
 import { InternalErrorCode } from './dtos/error'
@@ -17,6 +18,9 @@ import packageJson from '../package.json'
 let app = new Elysia({ adapter: node() })
   .use(GlobalLoggerPlugin)
   .onRequest(({ request, set }) => {
+    const ipAddress = getIP(request.headers)
+    if (ipAddress) request.headers.set('x-real-ip', ipAddress)
+
     const requestId = request.headers.get('x-request-id') || randomUUID()
 
     set.headers['x-request-id'] = requestId

@@ -1,24 +1,66 @@
-import { logger } from '@bogeychan/elysia-logger'
-import { ElysiaStreamLoggerOptions } from '@bogeychan/elysia-logger/types'
+import {
+  createPinoLogger,
+  isContext,
+  isRequest,
+  serializeRequest,
+  serializers as defaultSerializer,
+} from '@bogeychan/elysia-logger'
+import { LoggerOptions, StandaloneLoggerOptions } from '@bogeychan/elysia-logger/types'
+import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import serverEnv from '../config/env'
 
-export const loggerPluginBuilder = (config: ElysiaStreamLoggerOptions) => {
-  return logger({
-    ...config,
-    level: 'info',
-    customProps: (ctx) => {
-      return {
-        method: ctx.request.method,
-        path: ctx.path,
-        headers: ctx.headers,
-        body: ctx.body,
-        response: ctx.response,
-        query: ctx.query,
-        params: ctx.params,
+const formatters = {
+  log(object) {
+    if (isContext(object)) {
+      const log: Record<string, any> = {
+        request: object.request,
       }
-    },
+
+      if (object.isError) {
+        const { code, error } = object
+
+        log.code = code
+
+        if ('message' in error) {
+          log.message = error.message
+        } else if ('code' in error && 'response' in error) {
+          const response: any = error.response
+          log.message = `HTTP ${error.code}: Code ${response.error.code} with message ${response.error.message}`
+        } else {
+          log.message = 'Unknown error'
+        }
+      } else {
+        if (object.store.responseTime) {
+          log.responseTime = object.store.responseTime
+        }
+      }
+
+      return log
+    } else if (isRequest(object)) {
+      return serializeRequest(object)
+    }
+    return object
+  },
+} satisfies LoggerOptions['formatters']
+
+const serializers = {
+  ...defaultSerializer,
+  request: (request: Request) => {
+    const url = new URL(request.url)
+
+    return {
+      ...serializeRequest(request),
+      path: url.pathname,
+      headers: Object.fromEntries(request.headers.entries()),
+    }
+  },
+}
+
+export const loggerBuilder = (config: StandaloneLoggerOptions) => {
+  return createPinoLogger({
+    ...config,
     transport:
       serverEnv.APP_ENV === 'development'
         ? {
@@ -29,34 +71,36 @@ export const loggerPluginBuilder = (config: ElysiaStreamLoggerOptions) => {
             },
           }
         : undefined,
-    redact: ['headers.cookie', 'headers.authorization', '*.accessToken'],
-    autoLogging: false,
+    redact: ['request.headers.cookie', 'request.headers.authorization', 'body.accessToken'],
+    serializers,
+    formatters,
   })
 }
 
-export const GlobalLoggerPlugin = new Elysia({
-  name: 'global-logger-plugin',
-})
-  .use(loggerPluginBuilder({ name: 'global-logger' }))
-  .onAfterResponse(({ error, log }) => {
-    const _error = error as any
-    console.error('Error in onAfterResponse:', _error)
-
-    if ('response' in _error) {
-      log.error({
-        error,
-      })
-    } else if (_error) {
-      log.warn({
-        error,
-      })
-    } else {
-      log.info({})
+export const GlobalLoggerPlugin = loggerBuilder({
+  name: 'Global Logger',
+}).into({
+  customProps: (ctx) => {
+    return {
+      body: ctx.body,
+      response: ctx.response,
     }
-  })
-  .onError(({ error, log }) => {
-    log?.error({
-      error,
-    })
-  })
-  .as('global')
+  },
+  autoLogging: {
+    ignore: (ctx) => {
+      return (
+        ctx.path.startsWith('/health') ||
+        ctx.path.startsWith('/swagger') ||
+        ctx.path.startsWith('/versions')
+      )
+    },
+  },
+})
+
+export const ElysiaLoggerPlugin = (options: StandaloneLoggerOptions) => {
+  return new Elysia({ name: `Logger-${options.name}`, adapter: node() }).decorate(() => ({
+    loggerService: loggerBuilder(options),
+  }))
+}
+
+export type ElysiaLoggerInstance = ReturnType<typeof createPinoLogger>
