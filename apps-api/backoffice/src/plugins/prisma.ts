@@ -23,11 +23,20 @@ class PrismaService extends PrismaClient<
       ],
     })
 
-    this.$on('error', (error) => {
+    this.$on('warn', (event) => {
+      loggerService.warn({
+        message: event.message,
+        timestamp: event.timestamp,
+        target: event.target,
+        stackTrace: new Error().stack,
+      })
+    })
+
+    this.$on('error', (event) => {
       loggerService.error({
-        message: error.message,
-        timestamp: error.timestamp,
-        target: error.target,
+        message: event.message,
+        timestamp: event.timestamp,
+        target: event.target,
         stackTrace: new Error().stack,
       })
     })

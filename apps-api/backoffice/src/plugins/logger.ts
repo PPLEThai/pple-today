@@ -26,7 +26,7 @@ const formatters = {
           log.message = error.message
         } else if ('code' in error && 'response' in error) {
           const response: any = error.response
-          log.message = `HTTP ${error.code}: Code ${response.error.code} with message ${response.error.message}`
+          log.message = `HTTP ${error.code}: Code ${response.code} with message ${response.message}`
         } else {
           log.message = 'Unknown error'
         }
