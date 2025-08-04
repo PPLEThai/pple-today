@@ -6,7 +6,6 @@ import {
   serializers as defaultSerializer,
 } from '@bogeychan/elysia-logger'
 import { LoggerOptions, StandaloneLoggerOptions } from '@bogeychan/elysia-logger/types'
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import serverEnv from '../config/env'
@@ -92,6 +91,9 @@ export const GlobalLoggerPlugin = loggerBuilder({
   },
   autoLogging: {
     ignore: (ctx) => {
+      // NOTE: This is a workaround for error response that logs in onAfterResponse
+      if (!ctx.isError && 'response' in ctx.error) return true
+
       return (
         ctx.path.startsWith('/health') ||
         ctx.path.startsWith('/swagger') ||
@@ -102,7 +104,7 @@ export const GlobalLoggerPlugin = loggerBuilder({
 })
 
 export const ElysiaLoggerPlugin = (options: StandaloneLoggerOptions) => {
-  return new Elysia({ name: `Logger-${options.name}`, adapter: node() }).decorate(() => ({
+  return new Elysia({ name: `Logger-${options.name}` }).decorate(() => ({
     loggerService: loggerBuilder(options),
   }))
 }
