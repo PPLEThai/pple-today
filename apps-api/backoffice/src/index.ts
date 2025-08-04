@@ -1,6 +1,10 @@
 import { cors } from '@elysiajs/cors'
 import node from '@elysiajs/node'
+import { opentelemetry } from '@elysiajs/opentelemetry'
 import { swagger } from '@elysiajs/swagger'
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto'
+import { PgInstrumentation } from '@opentelemetry/instrumentation-pg'
+import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-node'
 import { randomUUID } from 'crypto'
 import Elysia from 'elysia'
 import { getIP } from 'elysia-ip'
@@ -126,6 +130,12 @@ if (serverEnv.ENABLE_SWAGGER) {
     })
   )
 }
+app = app.use(
+  opentelemetry({
+    spanProcessors: [new BatchSpanProcessor(new OTLPTraceExporter())],
+    instrumentations: [new PgInstrumentation()],
+  })
+)
 
 app.listen(serverEnv.PORT, () => {
   console.log(`Server is running on http://localhost:${serverEnv.PORT}`)
