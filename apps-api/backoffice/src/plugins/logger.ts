@@ -81,9 +81,13 @@ export const GlobalLoggerPlugin = loggerBuilder({
   name: 'Global Logger',
 }).into({
   customProps: (ctx) => {
+    const responseBody = ctx.response || ('response' in ctx.error ? ctx.error.response : undefined)
+
     return {
       body: ctx.body,
-      response: ctx.response,
+      query: ctx.query,
+      params: ctx.params,
+      response: responseBody,
     }
   },
   autoLogging: {
