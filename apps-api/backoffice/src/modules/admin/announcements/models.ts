@@ -50,7 +50,9 @@ export const PutPublishedAnnouncementBody = t.Object({
   ),
 
   topicIds: t.Array(t.String({ description: 'The ID of the announcement topic' })),
-  attachmentUrls: t.Array(t.String({ description: 'The URL of the announcement attachment' })),
+  attachmentFilePaths: t.Array(
+    t.String({ description: 'The file path of the announcement attachment' })
+  ),
 })
 export type PutPublishedAnnouncementBody = Static<typeof PutPublishedAnnouncementBody>
 
@@ -97,7 +99,9 @@ export const PutDraftedAnnouncementBody = t.Object({
   ),
 
   topicIds: t.Array(t.String({ description: 'The ID of the announcement topic' })),
-  attachmentUrls: t.Array(t.String({ description: 'The URL of the announcement attachment' })),
+  attachmentFilePaths: t.Array(
+    t.String({ description: 'The file path of the announcement attachment' })
+  ),
 })
 export type PutDraftedAnnouncementBody = Static<typeof PutDraftedAnnouncementBody>
 

@@ -30,7 +30,7 @@ export class AdminAnnouncementRepository {
             },
             attachments: {
               select: {
-                url: true,
+                filePath: true,
               },
             },
           },
@@ -50,7 +50,7 @@ export class AdminAnnouncementRepository {
             },
             attachments: {
               select: {
-                url: true,
+                filePath: true,
               },
             },
             feedItem: {
@@ -67,12 +67,12 @@ export class AdminAnnouncementRepository {
         ...draft.map((item) => ({
           ...item,
           topics: item.topics.map((topic) => topic.topicId),
-          attachments: item.attachments.map((attachment) => attachment.url),
+          attachments: item.attachments.map((attachment) => attachment.filePath),
         })),
         ...published.map(({ feedItemId, topics, attachments, feedItem, ...item }) => ({
           id: feedItemId,
           topics: topics.map((topic) => topic.topicId),
-          attachments: attachments.map((attachment) => attachment.url),
+          attachments: attachments.map((attachment) => attachment.filePath),
           createdAt: feedItem.createdAt,
           updatedAt: feedItem.updatedAt,
           ...item,
@@ -106,7 +106,7 @@ export class AdminAnnouncementRepository {
           },
           attachments: {
             select: {
-              url: true,
+              filePath: true,
             },
           },
           feedItem: {
@@ -128,7 +128,7 @@ export class AdminAnnouncementRepository {
       return result.map(({ feedItemId, topics, attachments, feedItem, ...item }) => ({
         id: feedItemId,
         topics: topics.map((topic) => topic.topicId),
-        attachments: attachments.map((attachment) => attachment.url),
+        attachments: attachments.map((attachment) => attachment.filePath),
         createdAt: feedItem.createdAt,
         updatedAt: feedItem.updatedAt,
         ...item,
@@ -155,7 +155,7 @@ export class AdminAnnouncementRepository {
             },
             attachments: {
               select: {
-                url: true,
+                filePath: true,
               },
             },
             feedItem: {
@@ -170,7 +170,7 @@ export class AdminAnnouncementRepository {
       return {
         id: feedItemId,
         topics: topics.map((topic) => topic.topicId),
-        attachments: attachments.map((attachment) => attachment.url),
+        attachments: attachments.map((attachment) => attachment.filePath),
         createdAt: feedItem.createdAt,
         updatedAt: feedItem.updatedAt,
         ...result,
@@ -199,7 +199,7 @@ export class AdminAnnouncementRepository {
             deleteMany: {},
             // TODO: Call Create File
             createMany: {
-              data: data.attachmentUrls.map((url) => ({ url })),
+              data: data.attachmentFilePaths.map((filePath) => ({ filePath })),
             },
           },
         },
@@ -221,7 +221,7 @@ export class AdminAnnouncementRepository {
             iconImage: true,
             backgroundColor: true,
             topics: { select: { topicId: true } },
-            attachments: { select: { url: true } },
+            attachments: { select: { filePath: true } },
           },
         })
 
@@ -293,7 +293,7 @@ export class AdminAnnouncementRepository {
           },
           attachments: {
             select: {
-              url: true,
+              filePath: true,
             },
           },
         },
@@ -307,7 +307,7 @@ export class AdminAnnouncementRepository {
       return result.map((item) => ({
         ...item,
         topics: item.topics.map((topic) => topic.topicId),
-        attachments: item.attachments.map((attachment) => attachment.url),
+        attachments: item.attachments.map((attachment) => attachment.filePath),
       }))
     })
   }
@@ -332,7 +332,7 @@ export class AdminAnnouncementRepository {
           },
           attachments: {
             select: {
-              url: true,
+              filePath: true,
             },
           },
         },
@@ -341,7 +341,7 @@ export class AdminAnnouncementRepository {
       return {
         ...result,
         topics: result.topics.map((topic) => topic.topicId),
-        attachments: result.attachments.map((attachment) => attachment.url),
+        attachments: result.attachments.map((attachment) => attachment.filePath),
       }
     })
   }
@@ -374,7 +374,7 @@ export class AdminAnnouncementRepository {
             deleteMany: {},
             // TODO: Call Create File
             createMany: {
-              data: data.attachmentUrls.map((url) => ({ url })),
+              data: data.attachmentFilePaths.map((filePath) => ({ filePath })),
             },
           },
         },
@@ -396,7 +396,7 @@ export class AdminAnnouncementRepository {
             iconImage: true,
             backgroundColor: true,
             topics: { select: { topicId: true } },
-            attachments: { select: { url: true } },
+            attachments: { select: { filePath: true } },
           },
         })
 

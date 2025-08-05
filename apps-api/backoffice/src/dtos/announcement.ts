@@ -19,7 +19,7 @@ export const PublishedAnnouncement = t.Object({
   createdAt: t.Date({ description: 'Creation date of the announcement' }),
   updatedAt: t.Date({ description: 'Last update date of the announcement' }),
   topics: t.Array(t.String({ description: 'The ID of the announcement topic' })),
-  attachments: t.Array(t.String({ description: 'The URL of the announcement attachment' })),
+  attachments: t.Array(t.String({ description: 'The file path of the announcement attachment' })),
 })
 export type PublishedAnnouncement = Static<typeof PublishedAnnouncement>
 
