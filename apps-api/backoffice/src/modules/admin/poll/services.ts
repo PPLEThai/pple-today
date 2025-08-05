@@ -1,6 +1,6 @@
 import node from '@elysiajs/node'
 import Elysia from 'elysia'
-import { err, ok } from 'neverthrow'
+import { ok } from 'neverthrow'
 
 import {
   GetDraftedPollResponse,
@@ -129,14 +129,7 @@ export class AdminPollService {
     return ok({ message: `Drafted Poll "${result.value.id}" updated.` })
   }
 
-  async publishDraftedPollById(pollId: string, authorId?: string) {
-    if (!authorId)
-      // FIXME: Proper message
-      return err({
-        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-        message: InternalErrorCode.INTERNAL_SERVER_ERROR ?? 'An unexpected error occurred',
-      })
-
+  async publishDraftedPollById(pollId: string, authorId: string) {
     const result = await this.adminPollRepository.publishDraftedPollById(pollId, authorId)
     if (result.isErr())
       return mapRawPrismaError(result.error, {

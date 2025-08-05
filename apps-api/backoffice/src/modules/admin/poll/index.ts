@@ -119,7 +119,7 @@ const AdminDraftedPollsController = new Elysia({
   .post(
     '/:pollId/publish',
     async ({ params, user, status, adminPollService }) => {
-      const result = await adminPollService.publishDraftedPollById(params.pollId, user?.sub)
+      const result = await adminPollService.publishDraftedPollById(params.pollId, user.sub)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.POLL_NOT_FOUND:
