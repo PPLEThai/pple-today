@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import {
@@ -17,10 +16,9 @@ import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../.
 
 export const PollsController = new Elysia({
   prefix: '/polls',
-  adapter: node(),
+  tags: ['Application Polls'],
 })
-  .use(AuthGuardPlugin)
-  .use(PollsServicePlugin)
+  .use([AuthGuardPlugin, PollsServicePlugin])
   .get(
     '/',
     async ({ user, query, status, pollsService }) => {
@@ -41,6 +39,10 @@ export const PollsController = new Elysia({
       response: {
         200: ListPollsResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+      detail: {
+        summary: 'List polls',
+        description: 'Fetch a list of polls with pagination',
       },
     }
   )
@@ -75,6 +77,10 @@ export const PollsController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
+      detail: {
+        summary: 'Create poll vote',
+        description: 'Cast a vote for a specific option in a poll',
+      },
     }
   )
   .delete(
@@ -104,6 +110,10 @@ export const PollsController = new Elysia({
           InternalErrorCode.POLL_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
+      },
+      detail: {
+        summary: 'Delete poll vote',
+        description: 'Remove a vote for a specific option in a poll',
       },
     }
   )
