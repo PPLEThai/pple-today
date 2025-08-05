@@ -2,6 +2,7 @@ import { TLiteral, TObject, TOptional, TString, TUnion, TUnknown } from '@sincla
 import { Static, t } from 'elysia'
 import { ElysiaCustomStatusResponse } from 'elysia/error'
 import { Prettify2 } from 'elysia/types'
+import { Err, err as defaultErr } from 'neverthrow'
 import { groupBy, map, mapValues, pipe } from 'remeda'
 
 import { InternalErrorCode, InternalErrorCodeSchemas } from '../dtos/error'
@@ -92,11 +93,25 @@ export const mapErrorCodeToResponse = <
   status: (statusCode: TStatusCode, body: { error: TError }) => TStatusReturn
 ) => {
   const code = InternalErrorCodeSchemas[error.code].status as TStatusCode
-  return status(code, { error })
+  throw status(code, { error })
 }
 
 export function exhaustiveGuard(_value: never): never {
   throw new Error(
     `ERROR! Reached forbidden guard function with unexpected value: ${JSON.stringify(_value)}`
   )
+}
+
+export function err<E>(_err: E | Err<never, E>): Err<never, E> {
+  let errBody: any = _err
+
+  if (_err instanceof Err) {
+    errBody = _err.error
+  }
+
+  if (!('stack' in errBody)) {
+    Error.captureStackTrace(errBody, err)
+  }
+
+  return defaultErr(errBody) as Err<never, E>
 }

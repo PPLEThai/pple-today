@@ -1,18 +1,34 @@
 import { cors } from '@elysiajs/cors'
 import node from '@elysiajs/node'
 import { swagger } from '@elysiajs/swagger'
+import { randomUUID } from 'crypto'
 import Elysia from 'elysia'
+import { getIP } from 'elysia-ip'
 
 import serverEnv from './config/env'
 import { InternalErrorCode } from './dtos/error'
 import { ApplicationController } from './modules'
 import { AdminController } from './modules/admin'
+import { GlobalLoggerPlugin } from './plugins/logger'
 
 import packageJson from '../package.json'
 
 let app = new Elysia({ adapter: node() })
+  .use(GlobalLoggerPlugin)
+  .onRequest(({ request, set }) => {
+    const ipAddress = getIP(request.headers)
+    if (ipAddress) request.headers.set('x-real-ip', ipAddress)
+
+    const requestId = request.headers.get('x-request-id') || randomUUID()
+
+    set.headers['x-request-id'] = requestId
+    request.headers.set('x-request-id', requestId)
+  })
   .onError(({ status, code, error }) => {
-    if ('response' in error) return status(error.code, error.response)
+    if ('response' in error) {
+      return status(error.code, error.response)
+    }
+
     if (code === 'INTERNAL_SERVER_ERROR')
       return status(500, {
         error: {

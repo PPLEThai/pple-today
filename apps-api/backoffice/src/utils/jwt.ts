@@ -1,6 +1,8 @@
 import { Check } from '@sinclair/typebox/value'
 import jwt from 'jsonwebtoken'
-import { err, ok } from 'neverthrow'
+import { ok } from 'neverthrow'
+
+import { err } from './error'
 
 import serverEnv from '../config/env'
 import { IntrospectAccessTokenResult } from '../dtos/auth'
