@@ -43,11 +43,11 @@ export class AdminPollRepository {
 
       return [
         ...draft,
-        ...published.map((item) => ({
+        ...published.map(({ feedItemId, feedItem, ...item }) => ({
+          id: feedItemId,
+          createdAt: feedItem.createdAt,
+          updatedAt: feedItem.updatedAt,
           ...item,
-          id: item.feedItemId,
-          createdAt: item.feedItem.createdAt,
-          updatedAt: item.feedItem.updatedAt,
         })),
       ]
     })
@@ -86,18 +86,24 @@ export class AdminPollRepository {
             },
           },
         })
-      ).map((item) => ({
+      ).map(({ feedItemId, feedItem, ...item }) => ({
+        id: feedItemId,
+        createdAt: feedItem.createdAt,
+        updatedAt: feedItem.updatedAt,
         ...item,
-        id: item.feedItemId,
-        createdAt: item.feedItem.createdAt,
-        updatedAt: item.feedItem.updatedAt,
       }))
     )
   }
 
   async getPollById(feedItemId: string) {
     return await fromPrismaPromise(async () => {
-      const result = await this.prismaService.poll.findUniqueOrThrow({
+      const {
+        feedItemId: id,
+        feedItem,
+        options,
+        topics,
+        ...result
+      } = await this.prismaService.poll.findUniqueOrThrow({
         where: { feedItemId },
         select: {
           feedItemId: true,
@@ -136,11 +142,10 @@ export class AdminPollRepository {
       })
 
       return {
-        ...result,
-        id: result.feedItemId,
-        createdAt: result.feedItem.createdAt,
-        updatedAt: result.feedItem.updatedAt,
-        options: result.options.map((option) => ({
+        id,
+        createdAt: feedItem.createdAt,
+        updatedAt: feedItem.updatedAt,
+        options: options.map((option) => ({
           title: option.title,
           votes: option.votes,
           answers: option.pollAnswers.map((answer) => ({
@@ -148,7 +153,8 @@ export class AdminPollRepository {
             username: answer.user.name,
           })),
         })),
-        topics: result.topics.map((topic) => topic.topicId),
+        topics: topics.map((topic) => topic.topicId),
+        ...result,
       }
     })
   }
@@ -274,7 +280,7 @@ export class AdminPollRepository {
 
   async getDraftedPollById(pollId: string) {
     return await fromPrismaPromise(async () => {
-      const result = await this.prismaService.pollDraft.findUniqueOrThrow({
+      const { options, topics, ...result } = await this.prismaService.pollDraft.findUniqueOrThrow({
         where: { id: pollId },
         select: {
           id: true,
@@ -299,12 +305,12 @@ export class AdminPollRepository {
       })
 
       return {
-        ...result,
-        options: result.options.map((option) => ({
+        options: options.map((option) => ({
           title: option.title,
           votes: option.votes,
         })),
-        topics: result.topics.map((topic) => topic.topicId),
+        topics: topics.map((topic) => topic.topicId),
+        ...result,
       }
     })
   }
