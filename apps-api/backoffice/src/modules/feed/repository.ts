@@ -1,7 +1,7 @@
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { FeedItemReactionType, FeedItemType } from '../../../__generated__/prisma'
+import { FeedItemReactionType } from '../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
 
@@ -176,13 +176,12 @@ export class FeedRepository {
 
   async getFeedItemComments(
     feedItemId: string,
-    query: { feedItemType: FeedItemType; userId?: string; page: number; limit: number }
+    query: { userId?: string; page: number; limit: number }
   ) {
     return await fromPrismaPromise(
       this.prismaService.feedItemComment.findMany({
         where: {
           feedItemId,
-          feedItem: { type: query.feedItemType },
           OR: [{ isPrivate: false }, { userId: query.userId }],
         },
         select: {
