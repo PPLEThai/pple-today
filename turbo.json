@@ -21,7 +21,7 @@
     },
     "codegen": {
       "dependsOn": ["^codegen"],
-      "outputs": []
+      "outputs": ["__generated__/**", ".react-router/**"]
     },
     "dev": {
       "cache": false,

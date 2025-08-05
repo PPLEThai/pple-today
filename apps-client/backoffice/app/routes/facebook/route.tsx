@@ -67,7 +67,7 @@ export default function FacebookLinkPage() {
     <div className="flex flex-col items-center p-6">
       <h1 className="text-2xl font-bold mb-4">Login with facebook debug</h1>
       <a
-        href={`https://www.facebook.com/v23.0/dialog/oauth?client_id=${FACEBOOK_APP_ID}&redirect_uri=${FACEBOOK_REDIRECT_URI}&response_type=token&scope=pages_show_list%2Cpages_read_engagement%2Cpages_read_user_content`}
+        href={`https://www.facebook.com/v23.0/dialog/oauth?client_id=${FACEBOOK_APP_ID}&redirect_uri=${FACEBOOK_REDIRECT_URI}&response_type=token&scope=pages_show_list%2Cpages_read_engagement%2Cpages_read_user_content%2Cpages_manage_metadata`}
         className="bg-blue-600 text-white px-4 py-2 rounded"
       >
         Login with Facebook

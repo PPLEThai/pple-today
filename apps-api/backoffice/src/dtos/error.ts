@@ -26,6 +26,21 @@ const COMMON_ERROR_SCHEMA = {
   INTERNAL_SERVER_ERROR: {
     status: 500,
   },
+  FILE_UPLOAD_ERROR: {
+    status: 500,
+  },
+  NOT_IMPLEMENTED: {
+    status: 501,
+  },
+} satisfies InternalErrorSchemas
+
+const FILE_ERROR_SCHEMA = {
+  FILE_UPLOAD_ERROR: {
+    status: 500,
+  },
+  FILE_CREATE_SIGNED_URL_ERROR: {
+    status: 500,
+  },
 } satisfies InternalErrorSchemas
 
 const AUTH_ERROR_SCHEMA = {
@@ -34,6 +49,12 @@ const AUTH_ERROR_SCHEMA = {
   },
   AUTH_USER_ALREADY_EXISTS: {
     status: 409,
+  },
+} satisfies InternalErrorSchemas
+
+const ANNOUNCEMENT_ERROR_SCHEMA = {
+  ANNOUNCEMENT_NOT_FOUND: {
+    status: 404,
   },
 } satisfies InternalErrorSchemas
 
@@ -79,12 +100,34 @@ const USER_ERROR_SCHEMA = {
   },
 } satisfies InternalErrorSchemas
 
+const FACEBOOK_ERROR_SCHEMA = {
+  FACEBOOK_INVALID_RESPONSE: {
+    status: 400,
+  },
+  FACEBOOK_INVALID_ACCESS_TOKEN: {
+    status: 401,
+  },
+  FACEBOOK_API_ERROR: {
+    status: 500,
+  },
+} satisfies InternalErrorSchemas
+
+const POLL_ERROR_SCHEMA = {
+  POLL_NOT_FOUND: {
+    status: 404,
+  },
+} satisfies InternalErrorSchemas
+
 export const InternalErrorCodeSchemas = {
   ...AUTH_ERROR_SCHEMA,
   ...COMMON_ERROR_SCHEMA,
   ...POST_ERROR_SCHEMA,
   ...ABOUT_US_ERROR_SCHEMA,
   ...USER_ERROR_SCHEMA,
+  ...FILE_ERROR_SCHEMA,
+  ...FACEBOOK_ERROR_SCHEMA,
+  ...ANNOUNCEMENT_ERROR_SCHEMA,
+  ...POLL_ERROR_SCHEMA,
 } as const
 export type InternalErrorCodeSchemas = typeof InternalErrorCodeSchemas
 
