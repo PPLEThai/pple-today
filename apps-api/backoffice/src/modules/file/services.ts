@@ -77,7 +77,9 @@ export class FileService {
           contentType: file.type,
         })
 
-        Readable.fromWeb(file.stream()).pipe(writeStream)
+        // NOTE: I'm not sure why but the file.stream() is not compatible with Readable.fromWeb
+        const readableStream = Readable.fromWeb(file.stream() as any)
+        readableStream.pipe(writeStream)
 
         writeStream.on('finish', () => {
           resolve(`File uploaded successfully to ${destination}`)
