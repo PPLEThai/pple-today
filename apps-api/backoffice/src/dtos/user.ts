@@ -1,6 +1,6 @@
 import { t } from 'elysia'
 
-export const AuthorSchema = t.Object({
+export const Author = t.Object({
   id: t.String({ description: 'The ID of the author' }),
   name: t.String({ description: 'The name of the author' }),
   province: t.String({ description: 'The province of the author' }),

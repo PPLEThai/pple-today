@@ -26,9 +26,6 @@ const COMMON_ERROR_SCHEMA = {
   INTERNAL_SERVER_ERROR: {
     status: 500,
   },
-  FILE_UPLOAD_ERROR: {
-    status: 500,
-  },
   NOT_IMPLEMENTED: {
     status: 501,
   },
@@ -114,6 +111,12 @@ const FACEBOOK_ERROR_SCHEMA = {
 
 const POLL_ERROR_SCHEMA = {
   POLL_NOT_FOUND: {
+    status: 404,
+  },
+  POLL_ALREADY_VOTED: {
+    status: 409,
+  },
+  POLL_VOTE_NOT_FOUND: {
     status: 404,
   },
 } satisfies InternalErrorSchemas
