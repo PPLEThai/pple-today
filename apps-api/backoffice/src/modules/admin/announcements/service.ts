@@ -20,7 +20,7 @@ export class AdminAnnouncementService {
   constructor(private adminAnnouncementRepository: AdminAnnouncementRepository) {}
 
   async getAnnouncements() {
-    const result = await this.adminAnnouncementRepository.getAnnouncements()
+    const result = await this.adminAnnouncementRepository.getAllAnnouncements()
     if (result.isErr()) return mapRawPrismaError(result.error, {})
 
     return ok(result.value satisfies GetAnnouncementsResponse)

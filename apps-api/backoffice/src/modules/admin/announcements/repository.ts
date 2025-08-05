@@ -408,7 +408,7 @@ export class AdminAnnouncementRepository {
           throw new Error('Title and Type are required')
 
         // 2. Insert into FeedItem
-        const feedItem = tx.feedItem.create({
+        const feedItem = await tx.feedItem.create({
           data: {
             id: announcementDraft.id,
             type: FeedItemType.ANNOUNCEMENT,
@@ -428,7 +428,7 @@ export class AdminAnnouncementRepository {
         })
 
         // 3. Delete Announcement Draft
-        tx.announcementDraft.delete({ where: { id: announcementDraftId } })
+        await tx.announcementDraft.delete({ where: { id: announcementDraftId } })
 
         return feedItem
       })
