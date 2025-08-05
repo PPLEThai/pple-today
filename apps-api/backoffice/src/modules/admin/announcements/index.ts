@@ -126,7 +126,7 @@ const AdminDraftedAnnouncementsController = new Elysia({
     async ({ params, user, status, adminAnnouncementService }) => {
       const result = await adminAnnouncementService.publishDraftedAnnouncementById(
         params.announcementId,
-        user?.sub
+        user.sub
       )
       if (result.isErr()) {
         switch (result.error.code) {

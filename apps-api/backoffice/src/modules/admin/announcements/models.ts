@@ -80,7 +80,7 @@ export const GetDraftedAnnouncementResponse = DraftedAnnouncement
 export type GetDraftedAnnouncementResponse = Static<typeof GetDraftedAnnouncementResponse>
 
 export const PostDraftedAnnouncementResponse = t.Object({
-  message: t.String({ description: 'Success message' }),
+  announcementId: t.String({ description: 'The ID of the announcement' }),
 })
 export type PostDraftedAnnouncementResponse = Static<typeof PostDraftedAnnouncementResponse>
 

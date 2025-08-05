@@ -6,9 +6,13 @@ import { PutDraftedAnnouncementBody, PutPublishedAnnouncementBody } from './mode
 import { FeedItemType } from '../../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { fromPrismaPromise } from '../../../utils/prisma'
+import { FileService, FileServicePlugin } from '../../file/services'
 
 export class AdminAnnouncementRepository {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private fileService: FileService
+  ) {}
 
   async getAllAnnouncements() {
     return await fromPrismaPromise(async () => {
@@ -195,9 +199,7 @@ export class AdminAnnouncementRepository {
             },
           },
           attachments: {
-            // TODO: Call Delete File
             deleteMany: {},
-            // TODO: Call Create File
             createMany: {
               data: data.attachmentFilePaths.map((filePath) => ({ filePath })),
             },
@@ -235,13 +237,11 @@ export class AdminAnnouncementRepository {
             iconImage: announcement.iconImage,
             backgroundColor: announcement.backgroundColor,
             topics: { createMany: { data: announcement.topics } },
-            // TODO: Call Create File
             attachments: { createMany: { data: announcement.attachments } },
           },
         })
 
         // 3. Delete the announcement
-        // TODO: Call Delete File
         await tx.feedItem.delete({ where: { id: announcementId } })
 
         return draftedAnnouncement
@@ -250,20 +250,26 @@ export class AdminAnnouncementRepository {
   }
 
   async deleteAnnouncementById(announcementId: string) {
-    // TODO: Call Delete File
+    const announcement = await this.prismaService.announcement.findUniqueOrThrow({
+      where: { feedItemId: announcementId },
+      select: {
+        attachments: { select: { filePath: true } },
+      },
+    })
+
+    try {
+      await Promise.all(
+        announcement.attachments.map((attachment) =>
+          this.fileService.deleteFile(attachment.filePath)
+        )
+      )
+    } catch {
+      //...
+    }
+
     return await fromPrismaPromise(
       this.prismaService.feedItem.delete({ where: { id: announcementId } })
     )
-  }
-
-  // TODO
-  async uploadFileToAnnouncement(announcementId: string, file: unknown) {
-    throw new Error('Not implemented')
-  }
-
-  // TODO
-  async deleteFileInAnnouncement(announcementId: string, fileId: string) {
-    throw new Error('Not implemented')
   }
 
   async getDraftedAnnouncements(
@@ -370,9 +376,7 @@ export class AdminAnnouncementRepository {
             },
           },
           attachments: {
-            // TODO: Call Delete File
             deleteMany: {},
-            // TODO: Call Create File
             createMany: {
               data: data.attachmentFilePaths.map((filePath) => ({ filePath })),
             },
@@ -417,7 +421,6 @@ export class AdminAnnouncementRepository {
                 iconImage: announcementDraft.iconImage,
                 backgroundColor: announcementDraft.backgroundColor,
                 topics: { createMany: { data: announcementDraft.topics } },
-                // TODO: Call Create File
                 attachments: { createMany: { data: announcementDraft.attachments } },
               },
             },
@@ -425,7 +428,6 @@ export class AdminAnnouncementRepository {
         })
 
         // 3. Delete Announcement Draft
-        // TODO: Call Delete File
         tx.announcementDraft.delete({ where: { id: announcementDraftId } })
 
         return feedItem
@@ -434,20 +436,26 @@ export class AdminAnnouncementRepository {
   }
 
   async deleteDraftedAnnouncementById(announcementDraftId: string) {
-    // TODO: Call Delete File
+    const announcement = await this.prismaService.announcementDraft.findUniqueOrThrow({
+      where: { id: announcementDraftId },
+      select: {
+        attachments: { select: { filePath: true } },
+      },
+    })
+
+    try {
+      await Promise.all(
+        announcement.attachments.map((attachment) =>
+          this.fileService.deleteFile(attachment.filePath)
+        )
+      )
+    } catch {
+      //...
+    }
+
     return await fromPrismaPromise(
       this.prismaService.announcementDraft.delete({ where: { id: announcementDraftId } })
     )
-  }
-
-  // TODO
-  async uploadFileToDraftAnnouncement(announcementDraftId: string, file: unknown) {
-    throw new Error('Not implemented')
-  }
-
-  // TODO
-  async deleteFileInDraftAnnouncement(announcementDraftId: string, fileId: string) {
-    throw new Error('Not implemented')
   }
 }
 
@@ -455,7 +463,7 @@ export const AdminAnnouncementRepositoryPlugin = new Elysia({
   name: 'AdminAnnouncementRepository',
   adapter: node(),
 })
-  .use([PrismaServicePlugin])
-  .decorate(({ prismaService }) => ({
-    adminAnnouncementRepository: new AdminAnnouncementRepository(prismaService),
+  .use([PrismaServicePlugin, FileServicePlugin])
+  .decorate(({ prismaService, fileService }) => ({
+    adminAnnouncementRepository: new AdminAnnouncementRepository(prismaService, fileService),
   }))

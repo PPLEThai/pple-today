@@ -1,6 +1,6 @@
 import node from '@elysiajs/node'
 import Elysia from 'elysia'
-import { err, ok } from 'neverthrow'
+import { ok } from 'neverthrow'
 
 import {
   GetAnnouncementsResponse,
@@ -117,7 +117,7 @@ export class AdminAnnouncementService {
     const result = await this.adminAnnouncementRepository.createEmptyDraftedAnnouncement()
     if (result.isErr()) return mapRawPrismaError(result.error, {})
 
-    return ok({ message: `Drafted Announcement "${result.value.id}" created.` })
+    return ok({ announcementId: result.value.id })
   }
 
   async updateDraftedAnnouncementById(announcementId: string, data: PutDraftedAnnouncementBody) {
@@ -135,14 +135,7 @@ export class AdminAnnouncementService {
     return ok({ message: `Drafted Announcement "${result.value.id}" updated.` })
   }
 
-  async publishDraftedAnnouncementById(announcementId: string, authorId?: string) {
-    if (!authorId)
-      // FIXME: Proper message
-      return err({
-        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-        message: InternalErrorCode.INTERNAL_SERVER_ERROR ?? 'An unexpected error occurred',
-      })
-
+  async publishDraftedAnnouncementById(announcementId: string, authorId: string) {
     const result = await this.adminAnnouncementRepository.publishDraftedAnnouncementById(
       announcementId,
       authorId
