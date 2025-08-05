@@ -114,7 +114,7 @@ export class AdminPollService {
     const result = await this.adminPollRepository.createEmptyDraftedPoll()
     if (result.isErr()) return mapRawPrismaError(result.error, {})
 
-    return ok({ message: `Drafted Poll "${result.value.id}" created.` })
+    return ok({ pollId: result.value.id })
   }
 
   async updateDraftedPollById(pollId: string, data: PutDraftedPollBody) {

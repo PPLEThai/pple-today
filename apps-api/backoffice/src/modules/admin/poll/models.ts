@@ -40,7 +40,7 @@ export const GetDraftedPollResponse = t.Composite([DraftedPoll, PollDetails])
 export type GetDraftedPollResponse = Static<typeof GetDraftedPollResponse>
 
 export const PostDraftedPollResponse = t.Object({
-  message: t.String({ description: 'Success message' }),
+  pollId: t.String({ description: 'The ID of the drafted poll' }),
 })
 export type PostDraftedPollResponse = Static<typeof PostDraftedPollResponse>
 
