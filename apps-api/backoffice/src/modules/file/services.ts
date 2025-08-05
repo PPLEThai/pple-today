@@ -3,6 +3,7 @@ import { GetSignedUrlConfig, Storage } from '@google-cloud/storage'
 import Elysia from 'elysia'
 import https from 'https'
 import { fromPromise, ok } from 'neverthrow'
+import { Readable } from 'stream'
 
 import serverEnv from '../../config/env'
 import { InternalErrorCode } from '../../dtos/error'
@@ -46,9 +47,13 @@ export class FileService {
     )
   }
 
+  async getPublicFileUrl(fileKey: string) {
+    return ok(this.bucket.file(fileKey).publicUrl())
+  }
+
   async uploadProfilePagePicture(url: string, pageId: string) {
     const destination = `pages/profile-picture-${pageId}.jpg`
-    const result = await this.uploadFileStream(url, destination)
+    const result = await this.uploadFileFromUrl(url, destination)
 
     if (result.isErr()) {
       return result
@@ -57,11 +62,42 @@ export class FileService {
     return ok(destination)
   }
 
+  async deleteFile(fileKey: string) {
+    return fromPromise(this.bucket.file(fileKey).delete(), (err) => ({
+      code: InternalErrorCode.FILE_DELETE_ERROR,
+      message: (err as Error).message,
+    }))
+  }
+
+  async uploadFile(destination: string, file: File) {
+    return fromPromise(
+      new Promise<string>((resolve, reject) => {
+        const writeStream = this.bucket.file(destination).createWriteStream({
+          resumable: false,
+          contentType: file.type,
+        })
+
+        Readable.from(file.stream()).pipe(writeStream)
+
+        writeStream.on('finish', () => {
+          resolve(`File uploaded successfully to ${destination}`)
+        })
+        writeStream.on('error', (err) => {
+          reject(new Error(`Error uploading file to ${destination}: ${err.message}`))
+        })
+      }),
+      (err) => ({
+        code: InternalErrorCode.FILE_UPLOAD_ERROR,
+        message: (err as Error).message,
+      })
+    )
+  }
+
   /**
    * ## Warning
    * - Please take very good care of the URL you are passing here. because it might lead to SSRF attacks if the URL is not properly validated.
    */
-  async uploadFileStream(url: string, destination: string) {
+  async uploadFileFromUrl(url: string, destination: string) {
     return fromPromise(
       new Promise<string>((resolve, reject) => {
         https
