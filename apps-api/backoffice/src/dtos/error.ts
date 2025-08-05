@@ -115,6 +115,12 @@ const FACEBOOK_ERROR_SCHEMA = {
   },
 } satisfies InternalErrorSchemas
 
+const POLL_ERROR_SCHEMA = {
+  POLL_NOT_FOUND: {
+    status: 404,
+  },
+} satisfies InternalErrorSchemas
+
 export const InternalErrorCodeSchemas = {
   ...AUTH_ERROR_SCHEMA,
   ...COMMON_ERROR_SCHEMA,
@@ -124,6 +130,7 @@ export const InternalErrorCodeSchemas = {
   ...FILE_ERROR_SCHEMA,
   ...FACEBOOK_ERROR_SCHEMA,
   ...ANNOUNCEMENT_ERROR_SCHEMA,
+  ...POLL_ERROR_SCHEMA,
 } as const
 export type InternalErrorCodeSchemas = typeof InternalErrorCodeSchemas
 
