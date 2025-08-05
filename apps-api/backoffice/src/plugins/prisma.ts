@@ -16,10 +16,8 @@ class PrismaService extends PrismaClient<
       ...optionsArg,
       errorFormat: 'minimal',
       log: [
-        { emit: 'event', level: 'query' },
         { emit: 'event', level: 'error' },
         { emit: 'event', level: 'warn' },
-        { emit: 'event', level: 'info' },
       ],
     })
 
