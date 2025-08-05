@@ -55,7 +55,7 @@ export class PollsRepository {
     )
   }
 
-  async isVoteAllowed(pollId: string, userId: string) {
+  async getPollCondition(userId: string, pollId: string) {
     return fromPrismaPromise(async () => {
       const existingVote = await this.prisma.poll.findFirstOrThrow({
         where: {
@@ -63,6 +63,7 @@ export class PollsRepository {
         },
         select: {
           type: true,
+          endAt: true,
           options: {
             select: {
               pollAnswers: {
@@ -82,9 +83,12 @@ export class PollsRepository {
         (acc, option) => acc + option.pollAnswers.length,
         0
       )
-      const isUserAlreadyVoted = existingVote.type === 'SINGLE_CHOICE' ? numberOfVotes < 1 : true
 
-      return isUserAlreadyVoted
+      return {
+        type: existingVote.type,
+        endAt: existingVote.endAt,
+        numberOfVotes,
+      }
     })
   }
 

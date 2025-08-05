@@ -116,8 +116,14 @@ const POLL_ERROR_SCHEMA = {
   POLL_ALREADY_VOTED: {
     status: 409,
   },
+  POLL_OPTION_NOT_FOUND: {
+    status: 404,
+  },
   POLL_VOTE_NOT_FOUND: {
     status: 404,
+  },
+  POLL_ALREADY_ENDED: {
+    status: 403,
   },
 } satisfies InternalErrorSchemas
 

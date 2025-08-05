@@ -55,10 +55,10 @@ export class PollsService {
   }
 
   async createPollVote(userId: string, pollId: string, optionId: string) {
-    const isVoteAllowed = await this.pollsRepository.isVoteAllowed(userId, pollId)
+    const pollCondition = await this.pollsRepository.getPollCondition(userId, pollId)
 
-    if (isVoteAllowed.isErr()) {
-      return mapRawPrismaError(isVoteAllowed.error, {
+    if (pollCondition.isErr()) {
+      return mapRawPrismaError(pollCondition.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.POLL_NOT_FOUND,
           message: 'Poll not found',
@@ -66,10 +66,17 @@ export class PollsService {
       })
     }
 
-    if (!isVoteAllowed.value) {
+    if (pollCondition.value.type === 'SINGLE_CHOICE' && pollCondition.value.numberOfVotes > 0) {
       return err({
         code: InternalErrorCode.POLL_ALREADY_VOTED,
         message: 'User has already voted for this poll',
+      })
+    }
+
+    if (pollCondition.value.endAt < new Date()) {
+      return err({
+        code: InternalErrorCode.POLL_ALREADY_ENDED,
+        message: 'Poll has already ended',
       })
     }
 
@@ -81,6 +88,14 @@ export class PollsService {
           code: InternalErrorCode.POLL_NOT_FOUND,
           message: 'Poll not found',
         },
+        FOREIGN_KEY_CONSTRAINT_FAILED: {
+          code: InternalErrorCode.POLL_OPTION_NOT_FOUND,
+          message: 'Poll option not found',
+        },
+        UNIQUE_CONSTRAINT_FAILED: {
+          code: InternalErrorCode.POLL_ALREADY_VOTED,
+          message: 'User has already voted for this option',
+        },
       })
     }
 
@@ -88,6 +103,24 @@ export class PollsService {
   }
 
   async deletePollVote(userId: string, pollId: string, optionId: string) {
+    const pollCondition = await this.pollsRepository.getPollCondition(userId, pollId)
+
+    if (pollCondition.isErr()) {
+      return mapRawPrismaError(pollCondition.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POLL_NOT_FOUND,
+          message: 'Poll not found',
+        },
+      })
+    }
+
+    if (pollCondition.value.endAt < new Date()) {
+      return err({
+        code: InternalErrorCode.POLL_ALREADY_ENDED,
+        message: 'Poll has already ended',
+      })
+    }
+
     const result = await this.pollsRepository.deletePollVote(userId, pollId, optionId)
 
     if (result.isErr()) {

@@ -59,6 +59,10 @@ export const PollsController = new Elysia({
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.POLL_OPTION_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.POLL_ALREADY_ENDED:
+            return mapErrorCodeToResponse(result.error, status)
           default:
             exhaustiveGuard(result.error)
         }
@@ -73,6 +77,8 @@ export const PollsController = new Elysia({
         201: CreatePollVoteResponse,
         ...createErrorSchema(
           InternalErrorCode.POLL_NOT_FOUND,
+          InternalErrorCode.POLL_OPTION_NOT_FOUND,
+          InternalErrorCode.POLL_ALREADY_ENDED,
           InternalErrorCode.POLL_ALREADY_VOTED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
@@ -94,6 +100,8 @@ export const PollsController = new Elysia({
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.POLL_ALREADY_ENDED:
+            return mapErrorCodeToResponse(result.error, status)
           default:
             exhaustiveGuard(result.error)
         }
@@ -108,6 +116,7 @@ export const PollsController = new Elysia({
         200: DeletePollVoteResponse,
         ...createErrorSchema(
           InternalErrorCode.POLL_NOT_FOUND,
+          InternalErrorCode.POLL_ALREADY_ENDED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
