@@ -1,9 +1,10 @@
 import Elysia from 'elysia'
-import { ok } from 'neverthrow'
+import { err, ok } from 'neverthrow'
 
 import { ListPollsResponse } from './models'
 import { PollsRepository, PollsRepositoryPlugin } from './repository'
 
+import { InternalErrorCode } from '../../dtos/error'
 import { mapRawPrismaError } from '../../utils/prisma'
 
 export class PollsService {
@@ -54,10 +55,33 @@ export class PollsService {
   }
 
   async createPollVote(userId: string, pollId: string, optionId: string) {
+    const isVoteAllowed = await this.pollsRepository.isVoteAllowed(userId, pollId)
+
+    if (isVoteAllowed.isErr()) {
+      return mapRawPrismaError(isVoteAllowed.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POLL_NOT_FOUND,
+          message: 'Poll not found',
+        },
+      })
+    }
+
+    if (!isVoteAllowed.value) {
+      return err({
+        code: InternalErrorCode.POLL_ALREADY_VOTED,
+        message: 'User has already voted for this poll',
+      })
+    }
+
     const result = await this.pollsRepository.createPollVote(userId, pollId, optionId)
 
     if (result.isErr()) {
-      return mapRawPrismaError(result.error)
+      return mapRawPrismaError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POLL_NOT_FOUND,
+          message: 'Poll not found',
+        },
+      })
     }
 
     return ok()
@@ -67,7 +91,12 @@ export class PollsService {
     const result = await this.pollsRepository.deletePollVote(userId, pollId, optionId)
 
     if (result.isErr()) {
-      return mapRawPrismaError(result.error)
+      return mapRawPrismaError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POLL_NOT_FOUND,
+          message: 'Poll not found',
+        },
+      })
     }
 
     return ok()

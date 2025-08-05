@@ -1,5 +1,4 @@
 import { Elysia } from 'elysia'
-import { ok } from 'neverthrow'
 
 import { FeedItemType } from '../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
@@ -56,7 +55,7 @@ export class PollsRepository {
     )
   }
 
-  async createPollVote(userId: string, pollId: string, optionId: string) {
+  async isVoteAllowed(pollId: string, userId: string) {
     return fromPrismaPromise(async () => {
       const existingVote = await this.prisma.poll.findFirstOrThrow({
         where: {
@@ -83,32 +82,37 @@ export class PollsRepository {
         (acc, option) => acc + option.pollAnswers.length,
         0
       )
-      const isAllowedToVote = existingVote.type === 'SINGLE_CHOICE' ? numberOfVotes < 1 : true
+      const isUserAlreadyVoted = existingVote.type === 'SINGLE_CHOICE' ? numberOfVotes < 1 : true
 
-      if (isAllowedToVote) {
-        await this.prisma.pollOption.update({
-          where: {
-            id: optionId,
+      return isUserAlreadyVoted
+    })
+  }
+
+  async createPollVote(userId: string, pollId: string, optionId: string) {
+    return fromPrismaPromise(
+      this.prisma.pollOption.update({
+        where: {
+          id: optionId,
+          poll: {
+            feedItemId: pollId,
           },
-          data: {
-            votes: {
-              increment: 1,
-            },
-            pollAnswers: {
-              create: {
-                user: {
-                  connect: {
-                    id: userId,
-                  },
+        },
+        data: {
+          votes: {
+            increment: 1,
+          },
+          pollAnswers: {
+            create: {
+              user: {
+                connect: {
+                  id: userId,
                 },
               },
             },
           },
-        })
-      }
-
-      return ok()
-    })
+        },
+      })
+    )
   }
 
   async deletePollVote(userId: string, pollId: string, optionId: string) {
@@ -116,6 +120,7 @@ export class PollsRepository {
       this.prisma.pollOption.update({
         where: {
           id: optionId,
+          pollId,
         },
         data: {
           votes: {

@@ -13,7 +13,7 @@ import { PollsServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
-import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
+import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
 
 export const PollsController = new Elysia({
   prefix: '/polls',
@@ -50,7 +50,16 @@ export const PollsController = new Elysia({
       const result = await pollsService.createPollVote(user.sub, params.id, params.optionId)
 
       if (result.isErr()) {
-        return mapErrorCodeToResponse(result.error, status)
+        switch (result.error.code) {
+          case InternalErrorCode.POLL_ALREADY_VOTED:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.POLL_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
       }
 
       return status(201, { message: 'Vote created successfully' })
@@ -74,7 +83,14 @@ export const PollsController = new Elysia({
       const result = await pollsService.deletePollVote(user.sub, params.id, params.optionId)
 
       if (result.isErr()) {
-        return mapErrorCodeToResponse(result.error, status)
+        switch (result.error.code) {
+          case InternalErrorCode.POLL_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
       }
 
       return status(200, { message: 'Vote deleted successfully' })
@@ -86,7 +102,6 @@ export const PollsController = new Elysia({
         200: DeletePollVoteResponse,
         ...createErrorSchema(
           InternalErrorCode.POLL_NOT_FOUND,
-          InternalErrorCode.POLL_VOTE_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
