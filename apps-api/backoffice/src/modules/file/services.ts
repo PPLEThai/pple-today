@@ -77,7 +77,7 @@ export class FileService {
           contentType: file.type,
         })
 
-        Readable.from(file.stream()).pipe(writeStream)
+        Readable.fromWeb(file.stream()).pipe(writeStream)
 
         writeStream.on('finish', () => {
           resolve(`File uploaded successfully to ${destination}`)
