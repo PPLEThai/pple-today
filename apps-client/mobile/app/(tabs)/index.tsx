@@ -1,5 +1,6 @@
 import * as React from 'react'
 import {
+  findNodeHandle,
   LayoutChangeEvent,
   NativeScrollEvent,
   Pressable,
@@ -37,11 +38,6 @@ import { H2, H3 } from '@pple-today/ui/typography'
 import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
 import {
-  ExpoScrollPassthroughView,
-  ExpoScrollPassthroughView2,
-  ExpoScrollPassthroughView3,
-} from 'expo-scroll-passthrough'
-import {
   ArrowRightIcon,
   BellIcon,
   CirclePlusIcon,
@@ -60,6 +56,8 @@ import PPLEIcon from '@app/assets/pple-icon.svg'
 import { KeyboardAvoidingViewLayout } from '@app/components/keyboard-avoiding-view-layout'
 import { useUser } from '@app/libs/auth'
 import { useNonReactiveCallback } from '@app/libs/hooks/useNonReactiveCallback'
+
+import { ExpoScrollForwarderView } from '../../../../packages/expo-scroll-forwarder/build'
 
 export default function IndexLayout() {
   return (
@@ -294,8 +292,7 @@ function UserInfoSection() {
 
 const AnimatedPagerView = Animated.createAnimatedComponent(PagerView)
 
-const AnimatedExpoScrollPassthroughView =
-  Animated.createAnimatedComponent(ExpoScrollPassthroughView)
+const AnimatedExpoScrollForwarderView = Animated.createAnimatedComponent(ExpoScrollForwarderView)
 
 export function TabViewInsideScroll() {
   // const layout = useWindowDimensions()
@@ -509,104 +506,100 @@ export function TabViewInsideScroll() {
     [tabItemLayouts]
   )
 
+  const [scrollViewTag, setScrollViewTag] = React.useState<number | null>(null)
+  React.useEffect(() => {
+    if (pagerView.current) {
+      const scrollViewTag = findNodeHandle(pagerView.current)
+      setScrollViewTag(scrollViewTag)
+    }
+  }, [])
+
   // Scrolling with header is now laggy on Expo Go Android because of the "new architechture"
   // disabling it in `app.config.ts` fixes the issue on native build
   // https://github.com/software-mansion/react-native-reanimated/issues/6992
   return (
     <PagerProvider value={{ dragProgress, registerRef, scrollHandler, headerHeight }}>
-      <ExpoScrollPassthroughView3 style={{ flex: 1, flexDirection: 'column' }}>
-        <View className="flex-1 bg-base-bg-default">
-          <AnimatedExpoScrollPassthroughView
-            style={[styles.pagerHeader, headerTransform]}
-            // collapsable={false}
-          >
-            <View style={{ backgroundColor: 'transparent' }}>
+      <View className="flex-1 bg-base-bg-default">
+        <AnimatedExpoScrollForwarderView
+          style={[styles.pagerHeader, headerTransform]}
+          scrollViewTag={scrollViewTag}
+          // collapsable={false}
+        >
+          <View style={{ backgroundColor: 'transparent' }}>
+            <View
+              className=""
+              ref={headerRef}
+              onLayout={() => {
+                headerRef.current?.measure(
+                  (_x: number, _y: number, _width: number, height: number) => {
+                    // console.log('Header only height:', height)
+                    onHeaderOnlyLayout(height)
+                  }
+                )
+              }}
+            >
+              {/* <MainHeader /> */}
+              <TopContainer />
+              <View className="px-4 bg-base-bg-white flex flex-row items-start ">
+                <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
+              </View>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              className="bg-base-bg-white w-full"
+              contentContainerClassName="px-4 border-b border-base-outline-default w-full"
+              onLayout={onTabBarLayout}
+            >
               <View
-                className=""
-                ref={headerRef}
-                onLayout={() => {
-                  headerRef.current?.measure(
-                    (_x: number, _y: number, _width: number, height: number) => {
-                      // console.log('Header only height:', height)
-                      onHeaderOnlyLayout(height)
-                    }
-                  )
+                accessibilityRole="tablist"
+                className="flex flex-row"
+                onLayout={(e) => {
+                  tabListSize.set(e.nativeEvent.layout.width)
                 }}
               >
-                {/* <MainHeader /> */}
-                <TopContainer />
-                <View className="px-4 bg-base-bg-white flex flex-row items-start ">
-                  <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
-                </View>
-              </View>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                className="bg-base-bg-white w-full"
-                contentContainerClassName="px-4 border-b border-base-outline-default w-full"
-                onLayout={onTabBarLayout}
-              >
-                <View
-                  accessibilityRole="tablist"
-                  className="flex flex-row"
-                  onLayout={(e) => {
-                    tabListSize.set(e.nativeEvent.layout.width)
-                  }}
-                >
-                  <Button variant="ghost" aria-label="Add Label" className="mb-px" size="icon">
-                    <Icon
-                      icon={CirclePlusIcon}
-                      strokeWidth={1}
-                      className="text-base-secondary-default"
-                      size={24}
-                    />
-                  </Button>
-                  <TabBarItem index={0} onTabLayout={onTabLayout} onTabPress={onTabPressed}>
-                    สำหรับคุณ
-                  </TabBarItem>
-                  <TabBarItem index={1} onTabLayout={onTabLayout} onTabPress={onTabPressed}>
-                    กำลังติดตาม
-                  </TabBarItem>
-                  <TabBarItem index={2} onTabLayout={onTabLayout} onTabPress={onTabPressed}>
-                    กรุงเทพฯ
-                  </TabBarItem>
-                  <Animated.View
-                    className="absolute -bottom-px left-0 right-0 border-b-2 border-base-primary-default "
-                    style={indicatorStyle}
+                <Button variant="ghost" aria-label="Add Label" className="mb-px" size="icon">
+                  <Icon
+                    icon={CirclePlusIcon}
+                    strokeWidth={1}
+                    className="text-base-secondary-default"
+                    size={24}
                   />
-                </View>
-              </ScrollView>
+                </Button>
+                <TabBarItem index={0} onTabLayout={onTabLayout} onTabPress={onTabPressed}>
+                  สำหรับคุณ
+                </TabBarItem>
+                <TabBarItem index={1} onTabLayout={onTabLayout} onTabPress={onTabPressed}>
+                  กำลังติดตาม
+                </TabBarItem>
+                <TabBarItem index={2} onTabLayout={onTabLayout} onTabPress={onTabPressed}>
+                  กรุงเทพฯ
+                </TabBarItem>
+                <Animated.View
+                  className="absolute -bottom-px left-0 right-0 border-b-2 border-base-primary-default "
+                  style={indicatorStyle}
+                />
+              </View>
+            </ScrollView>
+          </View>
+        </AnimatedExpoScrollForwarderView>
+        <AnimatedPagerView
+          ref={pagerView}
+          style={styles.pagerView}
+          initialPage={0}
+          onPageScroll={handlePageScroll}
+        >
+          {Array.from({ length: 3 }).map((_, index) => (
+            <View key={index} collapsable={false}>
+              <PagerContent index={index} />
             </View>
-          </AnimatedExpoScrollPassthroughView>
-          <ExpoScrollPassthroughView2
-            style={{
-              position: 'absolute',
-              zIndex: 0,
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: 700,
-              // backgroundColor: 'lime',
-            }}
-          >
-            <AnimatedPagerView
-              ref={pagerView}
-              style={styles.pagerView}
-              initialPage={0}
-              onPageScroll={handlePageScroll}
-            >
-              {Array.from({ length: 3 }).map((_, index) => (
-                <View key={index} collapsable={false}>
-                  <PagerContent index={index} />
-                </View>
-              ))}
-            </AnimatedPagerView>
-          </ExpoScrollPassthroughView2>
-        </View>
-      </ExpoScrollPassthroughView3>
+          ))}
+        </AnimatedPagerView>
+      </View>
     </PagerProvider>
   )
 }
+
 interface PagerContextValue {
   dragProgress: SharedValue<number>
   registerRef: (scrollRef: AnimatedRef<any> | null, atIndex: number) => void

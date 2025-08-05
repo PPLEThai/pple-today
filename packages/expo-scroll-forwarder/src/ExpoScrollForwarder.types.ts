@@ -1,6 +1,7 @@
 import type { StyleProp, ViewStyle } from 'react-native'
 
-export interface ExpoScrollPassthroughViewProps {
+export interface ExpoScrollForwarderViewProps {
   style?: StyleProp<ViewStyle>
   children?: React.ReactNode
+  scrollViewTag: number | null
 }

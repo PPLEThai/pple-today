@@ -1,9 +1,0 @@
-{
-  "platforms": ["apple", "android", "web"],
-  "apple": {
-    "modules": ["ExpoScrollPassthroughModule"]
-  },
-  "android": {
-    "modules": ["expo.modules.scrollpassthrough.ExpoScrollPassthroughModule"]
-  }
-}
