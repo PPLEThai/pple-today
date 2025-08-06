@@ -73,10 +73,10 @@ let app = new Elysia({ adapter: node() })
   .use(ApplicationController)
   .use(AdminController)
   .get('/versions', ({ status }) => {
-    const body = JSON.stringify({
+    const body = {
       name: packageJson.name,
       version: packageJson.version,
-    })
+    }
 
     return status(200, body)
   })
