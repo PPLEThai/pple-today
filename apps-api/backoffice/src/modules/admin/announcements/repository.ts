@@ -92,7 +92,7 @@ export class AdminAnnouncementRepository {
     }
   ) {
     const { limit, page } = query
-    const skip = page ? (page - 1) * limit : 0
+    const skip = Math.max((page - 1) * limit, 0)
 
     return await fromPrismaPromise(async () => {
       const result = await this.prismaService.announcement.findMany({
@@ -280,7 +280,7 @@ export class AdminAnnouncementRepository {
     }
   ) {
     const { limit, page } = query
-    const skip = page ? (page - 1) * limit : 0
+    const skip = Math.max((page - 1) * limit, 0)
 
     return await fromPrismaPromise(async () => {
       const result = await this.prismaService.announcementDraft.findMany({
