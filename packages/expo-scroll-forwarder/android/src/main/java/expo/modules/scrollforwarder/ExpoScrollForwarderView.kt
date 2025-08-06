@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.ViewTreeObserver
 import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.views.ExpoView
 import kotlin.math.abs
@@ -33,12 +34,34 @@ class ExpoScrollForwarderView(context: Context, appContext: AppContext) :
             scrollView = null
             return
         }
-        scrollView = this.getRootView().findViewById(scrollViewTag)
-        Log.d(TAG, "scrollView $scrollView")
+        val rootView = this.getRootView()
+        val scrollView = rootView.findViewById<View>(scrollViewTag)
+        this.scrollView = scrollView
+        if (scrollView == null) {
+            Log.d(TAG, "ScrollView $scrollViewTag is not found")
+            fun setScrollView(view: View) {
+                this.scrollView = view
+            }
+            // Somehow the scrollView cannot be found on first render
+            // So we need to use a viewTreeObserver
+            rootView.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+                override fun onGlobalLayout() {
+                    val view = rootView.findViewById<View>(scrollViewTag)
+                    Log.d(TAG, "ScrollView observe view change $view")
+                    if (view != null) {
+                        setScrollView(view)
+                        Log.d(TAG, "ScrollView $scrollViewTag is found by observer")
+                        rootView.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                    }
+                }
+            })
+        } else {
+            Log.d(TAG, "ScrollView $scrollViewTag is found")
+        }
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
-        val scrollView = scrollView
+        val scrollView = this.scrollView
         if (scrollView == null) {
             return super.dispatchTouchEvent(ev)
         }
