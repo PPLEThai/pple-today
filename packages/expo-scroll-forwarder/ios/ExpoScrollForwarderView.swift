@@ -1,6 +1,42 @@
 // https://github.com/bluesky-social/social-app/blob/main/modules/expo-scroll-forwarder/ios/ExpoScrollForwarderView.swift
 import ExpoModulesCore
 
+extension UIView {
+    /// Recursively prints the view hierarchy of the current view and its subviews.
+    /// - Parameter level: The current depth in the view hierarchy (used for indentation).
+    func printSubviewsRecursively(level: Int = 0) {
+        let indentation = String(repeating: "  ", count: level)
+        print("\(indentation)\(level) \(type(of: self)) \(self is RCTScrollView)") /*(Frame: \(self.frame))*/
+
+        for subview in subviews {
+            subview.printSubviewsRecursively(level: level + 1)
+        }
+    }
+    
+    func findType<T:UIView>(_ ofType:T.Type) -> T? {
+        if let test = subviews.first(where: { $0 is T }) as? T {
+           return test
+       }
+       for view in subviews {
+           if let test = view.findType(ofType) {
+               return test
+           }
+       }
+       return nil
+    }
+    func findAll<T:UIView>(_ ofType:T.Type) -> [T] {
+        var views: [T] = []
+        if self is T {
+            views.append(self as! T)
+        }
+        for view in subviews {
+            views.append(contentsOf: view.findAll(ofType))
+        }
+        return views
+    }
+}
+
+
 // This view will be used as a native component. Make sure to inherit from `ExpoView`
 // to apply the proper styling (e.g. border radius and shadows).
 class ExpoScrollForwarderView: ExpoView, UIGestureRecognizerDelegate {
@@ -9,7 +45,7 @@ class ExpoScrollForwarderView: ExpoView, UIGestureRecognizerDelegate {
             self.tryFindScrollView()
         }
     }
-    private var scrollView: UIView?
+    private var taggedView: UIView?
     private var rctScrollView: RCTScrollView?
     // private var rctRefreshCtrl: RCTRefreshControl?
     private var cancelGestureRecognizers: [UIGestureRecognizer]?
@@ -34,6 +70,46 @@ class ExpoScrollForwarderView: ExpoView, UIGestureRecognizerDelegate {
         lpg.delegate = self
         
         self.cancelGestureRecognizers = [lpg, tg]
+    }
+    
+    func tryFindScrollView() {
+        guard let scrollViewTag = scrollViewTag else {
+            return
+        }
+        
+        // Before we switch to a different scrollview, we always want to remove the cancel gesture recognizer.
+        // Otherwise we might end up with duplicates when we switch back to that scrollview.
+        self.removeCancelGestureRecognizers()
+        
+//        self.rctScrollView = self.appContext?
+//            .findView(withTag: scrollViewTag, ofType: RCTScrollView.self)
+        // self.rctRefreshCtrl = self.rctScrollView?.scrollView.refreshControl as? RCTRefreshControl
+        
+        self.taggedView = self.appContext?
+            .findView(withTag: scrollViewTag, ofType: UIView.self)
+        print("Find scrollViewTag \(scrollViewTag) pagerView \(self.taggedView)")
+        
+        self.addCancelGestureRecognizers()
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        setup()
+    }
+    
+    private var isSetup = false
+    func setup() {
+        if (isSetup) {
+            return
+        }
+        isSetup = true
+        guard let taggedView = self.taggedView else {
+            return
+        }
+        
+        self.rctScrollView = taggedView.findType(RCTScrollView.self)
+        print("rctScrollView  \(self.rctScrollView)")
+        // taggedView.printSubviewsRecursively()
     }
     
     // We don't want to recognize the scroll pan gesture and the swipe back gesture together
@@ -162,26 +238,6 @@ class ExpoScrollForwarderView: ExpoView, UIGestureRecognizerDelegate {
         return offset
     }
     
-    func tryFindScrollView() {
-        guard let scrollViewTag = scrollViewTag else {
-            return
-        }
-        
-        // Before we switch to a different scrollview, we always want to remove the cancel gesture recognizer.
-        // Otherwise we might end up with duplicates when we switch back to that scrollview.
-        self.removeCancelGestureRecognizers()
-        
-        self.rctScrollView = self.appContext?
-            .findView(withTag: scrollViewTag, ofType: RCTScrollView.self)
-        // self.rctRefreshCtrl = self.rctScrollView?.scrollView.refreshControl as? RCTRefreshControl
-        
-        self.scrollView = self.appContext?
-            .findView(withTag: scrollViewTag, ofType: UIView.self)
-        print("Find scrollViewTag \(scrollViewTag) pagerView \(self.scrollView)")
-        
-        self.addCancelGestureRecognizers()
-    }
-    
     func addCancelGestureRecognizers() {
         self.cancelGestureRecognizers?.forEach { r in
             self.rctScrollView?.scrollView?.addGestureRecognizer(r)
@@ -216,29 +272,4 @@ class ExpoScrollForwarderView: ExpoView, UIGestureRecognizerDelegate {
         self.animTimer = nil
     }
     
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        var parent = self.superview
-        if (parent == nil) {
-            print("There is no parent")
-            return
-        }
-        var subviews = parent!.subviews
-        if subviews.isEmpty {
-            print("No subviews yet...")
-        } else {
-            print("subview length \(subviews.count)")
-            for subview in subviews {
-                print("Found a subview: \(subview)")
-            }
-        }
-        //        if subviews.isEmpty {
-        //            print("No subviews yet...")
-        //        } else {
-        //            print("subview length \(subviews.count)")
-        //            for subview in subviews {
-        //                print("Found a subview: \(subview)")
-        //            }
-        //        }
-    }
 }
