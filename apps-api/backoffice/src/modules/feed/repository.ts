@@ -8,6 +8,53 @@ import { fromPrismaPromise } from '../../utils/prisma'
 export class FeedRepository {
   constructor(private prismaService: PrismaService) {}
 
+  async getFeedItemById(feedItemId: string, userId?: string) {
+    return await fromPrismaPromise(
+      this.prismaService.feedItem.findUniqueOrThrow({
+        where: { id: feedItemId },
+        include: {
+          author: true,
+          announcement: {
+            include: {
+              attachments: true,
+            },
+          },
+          reactions: userId
+            ? {
+                where: { userId },
+              }
+            : undefined,
+          reactionCounts: true,
+          poll: {
+            include: {
+              options: {
+                include: {
+                  pollAnswers: userId
+                    ? {
+                        where: {
+                          userId,
+                        },
+                      }
+                    : undefined,
+                },
+              },
+            },
+          },
+          post: {
+            include: {
+              hashTags: {
+                include: {
+                  hashTag: true,
+                },
+              },
+              images: true,
+            },
+          },
+        },
+      })
+    )
+  }
+
   async getFeedItemReactionByUserId({
     feedItemId,
     userId,

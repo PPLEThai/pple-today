@@ -1,7 +1,15 @@
 import { Static, t } from 'elysia'
 
 import { FeedItemReactionType } from '../../../__generated__/prisma'
-import { FeedItemComment } from '../../dtos/feed'
+import { FeedItem, FeedItemComment } from '../../dtos/feed'
+
+export const GetFeedContentParams = t.Object({
+  id: t.String({ description: 'The ID of the feed item' }),
+})
+export type GetFeedContentParams = Static<typeof GetFeedContentParams>
+
+export const GetFeedContentResponse = FeedItem
+export type GetFeedContentResponse = Static<typeof GetFeedContentResponse>
 
 export const GetFeedCommentParams = t.Object({
   id: t.String({ description: 'The ID of the feed' }),
