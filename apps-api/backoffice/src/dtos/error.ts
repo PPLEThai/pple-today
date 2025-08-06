@@ -55,17 +55,17 @@ const ANNOUNCEMENT_ERROR_SCHEMA = {
   },
 } satisfies InternalErrorSchemas
 
-const POST_ERROR_SCHEMA = {
-  POST_NOT_FOUND: {
+const FEED_ERROR_SCHEMA = {
+  FEED_ITEM_NOT_FOUND: {
     status: 404,
   },
-  POST_COMMENT_NOT_FOUND: {
+  FEED_ITEM_COMMENT_NOT_FOUND: {
     status: 404,
   },
-  POST_REACTION_NOT_FOUND: {
+  FEED_ITEM_REACTION_NOT_FOUND: {
     status: 404,
   },
-  POST_REACTION_ALREADY_EXISTS: {
+  FEED_ITEM_REACTION_ALREADY_EXISTS: {
     status: 409,
   },
 } satisfies InternalErrorSchemas
@@ -130,11 +130,11 @@ const POLL_ERROR_SCHEMA = {
 export const InternalErrorCodeSchemas = {
   ...AUTH_ERROR_SCHEMA,
   ...COMMON_ERROR_SCHEMA,
-  ...POST_ERROR_SCHEMA,
   ...ABOUT_US_ERROR_SCHEMA,
   ...USER_ERROR_SCHEMA,
   ...FILE_ERROR_SCHEMA,
   ...FACEBOOK_ERROR_SCHEMA,
+  ...FEED_ERROR_SCHEMA,
   ...ANNOUNCEMENT_ERROR_SCHEMA,
   ...POLL_ERROR_SCHEMA,
 } as const

@@ -14,6 +14,8 @@ import {
   GetFeedCommentParams,
   GetFeedCommentQuery,
   GetFeedCommentResponse,
+  GetFeedContentParams,
+  GetFeedContentResponse,
   UpdateFeedCommentBody,
   UpdateFeedCommentParams,
   UpdateFeedCommentResponse,
@@ -28,8 +30,40 @@ export const FeedController = new Elysia({
   prefix: '/feeds',
   tags: ['Feeds'],
 })
-  .use(AuthGuardPlugin)
-  .use(FeedServicePlugin)
+  .use([AuthGuardPlugin, FeedServicePlugin])
+  .get(
+    '/:id',
+    async ({ params, user, status, feedService }) => {
+      const result = await feedService.getFeedContentById(params.id, user?.sub)
+      if (result.isErr()) {
+        switch (result.error.code) {
+          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
+      }
+
+      return status(200, result.value)
+    },
+    {
+      fetchUser: true,
+      params: GetFeedContentParams,
+      response: {
+        200: GetFeedContentResponse,
+        ...createErrorSchema(
+          InternalErrorCode.FEED_ITEM_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get feed item by ID',
+        description: 'Fetch a specific feed item by its ID',
+      },
+    }
+  )
   .get(
     '/:id/comments',
     async ({ params, query, status, user, feedService }) => {
@@ -40,7 +74,7 @@ export const FeedController = new Elysia({
       })
       if (result.isErr()) {
         switch (result.error.code) {
-          case InternalErrorCode.POST_NOT_FOUND:
+          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
@@ -58,7 +92,7 @@ export const FeedController = new Elysia({
       response: {
         200: GetFeedCommentResponse,
         ...createErrorSchema(
-          InternalErrorCode.POST_NOT_FOUND,
+          InternalErrorCode.FEED_ITEM_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -74,9 +108,9 @@ export const FeedController = new Elysia({
       const result = await feedService.createFeedReaction(params.id, user.sub, body)
       if (result.isErr()) {
         switch (result.error.code) {
-          case InternalErrorCode.POST_NOT_FOUND:
+          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
             return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.POST_REACTION_ALREADY_EXISTS:
+          case InternalErrorCode.FEED_ITEM_REACTION_ALREADY_EXISTS:
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
@@ -94,19 +128,14 @@ export const FeedController = new Elysia({
       response: {
         201: CreateFeedReactionResponse,
         ...createErrorSchema(
-          InternalErrorCode.POST_NOT_FOUND,
-          InternalErrorCode.POST_REACTION_ALREADY_EXISTS,
+          InternalErrorCode.FEED_ITEM_NOT_FOUND,
+          InternalErrorCode.FEED_ITEM_REACTION_ALREADY_EXISTS,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
       detail: {
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
-        summary: 'Create post reaction',
-        description: 'Add a reaction to a post by its ID',
+        summary: 'Create feed reaction',
+        description: 'Add a reaction to a feed item by its ID',
       },
     }
   )
@@ -117,7 +146,7 @@ export const FeedController = new Elysia({
 
       if (result.isErr()) {
         switch (result.error.code) {
-          case InternalErrorCode.POST_REACTION_NOT_FOUND:
+          case InternalErrorCode.FEED_ITEM_REACTION_NOT_FOUND:
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
@@ -134,18 +163,13 @@ export const FeedController = new Elysia({
       response: {
         200: DeleteFeedReactionResponse,
         ...createErrorSchema(
-          InternalErrorCode.POST_REACTION_NOT_FOUND,
+          InternalErrorCode.FEED_ITEM_REACTION_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
       detail: {
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
-        summary: 'Delete post reaction',
-        description: 'Remove a reaction from a post by its ID',
+        summary: 'Delete feed reaction',
+        description: 'Remove a reaction from a feed item by its ID',
       },
     }
   )
@@ -155,7 +179,7 @@ export const FeedController = new Elysia({
       const result = await feedService.createFeedComment(params.id, user.sub, body.content)
       if (result.isErr()) {
         switch (result.error.code) {
-          case InternalErrorCode.POST_NOT_FOUND:
+          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
@@ -173,18 +197,13 @@ export const FeedController = new Elysia({
       response: {
         201: CreateFeedCommentResponse,
         ...createErrorSchema(
-          InternalErrorCode.POST_NOT_FOUND,
+          InternalErrorCode.FEED_ITEM_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
       detail: {
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
-        summary: 'Create post comment',
-        description: 'Add a comment to a post by its ID',
+        summary: 'Create feed comment',
+        description: 'Add a comment to a feed item by its ID',
       },
     }
   )
@@ -200,7 +219,7 @@ export const FeedController = new Elysia({
 
       if (result.isErr()) {
         switch (result.error.code) {
-          case InternalErrorCode.POST_COMMENT_NOT_FOUND:
+          case InternalErrorCode.FEED_ITEM_COMMENT_NOT_FOUND:
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
@@ -218,18 +237,13 @@ export const FeedController = new Elysia({
       response: {
         200: UpdateFeedCommentResponse,
         ...createErrorSchema(
-          InternalErrorCode.POST_COMMENT_NOT_FOUND,
+          InternalErrorCode.FEED_ITEM_COMMENT_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
       detail: {
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
-        summary: 'Update post comment',
-        description: 'Update a comment on a post by its ID',
+        summary: 'Update feed comment',
+        description: 'Update a comment on a feed item by its ID',
       },
     }
   )
@@ -240,7 +254,7 @@ export const FeedController = new Elysia({
 
       if (result.isErr()) {
         switch (result.error.code) {
-          case InternalErrorCode.POST_COMMENT_NOT_FOUND:
+          case InternalErrorCode.FEED_ITEM_COMMENT_NOT_FOUND:
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
@@ -257,18 +271,13 @@ export const FeedController = new Elysia({
       response: {
         200: DeleteFeedCommentResponse,
         ...createErrorSchema(
-          InternalErrorCode.POST_COMMENT_NOT_FOUND,
+          InternalErrorCode.FEED_ITEM_COMMENT_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
       detail: {
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
-        summary: 'Delete post comment',
-        description: 'Remove a comment from a post by its ID',
+        summary: 'Delete feed comment',
+        description: 'Remove a comment from a feed item by its ID',
       },
     }
   )
