@@ -4,6 +4,7 @@ import { err, ok } from 'neverthrow'
 import { ListPollsResponse } from './models'
 import { PollsRepository, PollsRepositoryPlugin } from './repository'
 
+import { FeedItemType } from '../../../__generated__/prisma'
 import { InternalErrorCode } from '../../dtos/error'
 import { mapRawPrismaError } from '../../utils/prisma'
 
@@ -36,7 +37,7 @@ export class PollsService {
             type: reaction.type,
             count: reaction.count,
           })),
-          type: 'POLL',
+          type: FeedItemType.POLL,
           createdAt: item.createdAt,
           poll: {
             options:
@@ -44,9 +45,10 @@ export class PollsService {
                 id: option.id,
                 title: option.title,
                 votes: option.votes,
-                isSelected: option.pollAnswers.length > 0,
+                isSelected: (option.pollAnswers ?? []).length > 0,
               })) || [],
             title: item.poll!.title,
+            endAt: item.poll!.endAt,
             totalVotes: item.poll!.options.reduce((acc, option) => acc + option.votes, 0),
           },
         }

@@ -133,39 +133,41 @@ const seedHashtags = async () => {
 }
 
 const seedPolls = async () => {
-  await prisma.feedItem.upsert({
-    where: { id: 'poll-1' },
-    update: {},
-    create: {
-      id: 'poll-1',
-      author: {
-        connect: { id: OFFICIAL_USER_ID },
-      },
-      type: FeedItemType.POLL,
-      poll: {
-        create: {
-          title: 'Poll 1',
-          description: 'This is the first poll.',
-          options: {
-            create: [
-              { id: 'option-1', title: 'Option 1' },
-              { id: 'option-2', title: 'Option 2' },
-              { id: 'option-3', title: 'Option 3' },
-              { id: 'option-4', title: 'Option 4' },
-            ],
-          },
-          type: PollType.SINGLE_CHOICE,
-          endAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Poll ends in 7 days
-          topics: {
-            create: [
-              { topic: { connect: { id: 'topic-1' } } },
-              { topic: { connect: { id: 'topic-2' } } },
-            ],
+  for (let i = 0; i < 20; ++i) {
+    await prisma.feedItem.upsert({
+      where: { id: `poll-${i + 1}` },
+      update: {},
+      create: {
+        id: `poll-${i + 1}`,
+        author: {
+          connect: { id: OFFICIAL_USER_ID },
+        },
+        type: FeedItemType.POLL,
+        poll: {
+          create: {
+            title: `Poll ${i + 1}`,
+            description: `This is the ${i + 1}nth poll.`,
+            options: {
+              create: [
+                { title: 'Option 1' },
+                { title: 'Option 2' },
+                { title: 'Option 3' },
+                { title: 'Option 4' },
+              ],
+            },
+            type: PollType.SINGLE_CHOICE,
+            endAt: new Date(Date.now() + (i - 10) * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000),
+            topics: {
+              create: [
+                { topic: { connect: { id: 'topic-1' } } },
+                { topic: { connect: { id: 'topic-2' } } },
+              ],
+            },
           },
         },
       },
-    },
-  })
+    })
+  }
   console.log('Seeded polls successfully.')
 }
 

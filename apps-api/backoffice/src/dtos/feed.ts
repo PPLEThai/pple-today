@@ -64,6 +64,7 @@ export const FeedItemPollContent = t.Object({
   }),
   poll: t.Object({
     title: t.String({ description: 'The title of the poll' }),
+    endAt: t.Date({ description: 'The end date of the poll' }),
     options: t.Array(
       t.Object({
         id: t.String({ description: 'The ID of the poll option' }),
