@@ -13,6 +13,8 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "open:ios": "xed ios",
+    "open:android": "open -a /Applications/Android\\ Studio.app android",
     "prebuild": "expo prebuild",
     "prebuild:android": "expo prebuild --clean --platform android",
     "prebuild:ios": "expo prebuild --clean --platform ios",
