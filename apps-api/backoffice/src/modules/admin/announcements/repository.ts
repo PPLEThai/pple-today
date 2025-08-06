@@ -257,6 +257,7 @@ export class AdminAnnouncementRepository {
       },
     })
 
+    // TODO - Refactoring
     try {
       await Promise.all(
         announcement.attachments.map((attachment) =>
@@ -443,6 +444,7 @@ export class AdminAnnouncementRepository {
       },
     })
 
+    // TODO - Refactoring
     try {
       await Promise.all(
         announcement.attachments.map((attachment) =>

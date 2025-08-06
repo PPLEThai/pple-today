@@ -211,7 +211,9 @@ export const AdminAnnouncementsController = new Elysia({
         if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
         return status(200, result.value)
-      } else if (query.type === 'draft') {
+      }
+
+      if (query.type === 'draft') {
         const result = await adminAnnouncementService.getDraftedAnnouncements(pagingQuery)
         if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
