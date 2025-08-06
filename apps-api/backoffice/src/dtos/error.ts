@@ -118,6 +118,15 @@ const POLL_ERROR_SCHEMA = {
   },
 } satisfies InternalErrorSchemas
 
+const TOPIC_ERROR_SCHEMA = {
+  TOPIC_NOT_FOUND: {
+    status: 404,
+  },
+  TOPIC_INVALID_INPUT: {
+    status: 400,
+  },
+} satisfies InternalErrorSchemas
+
 export const InternalErrorCodeSchemas = {
   ...AUTH_ERROR_SCHEMA,
   ...COMMON_ERROR_SCHEMA,
@@ -128,6 +137,7 @@ export const InternalErrorCodeSchemas = {
   ...FACEBOOK_ERROR_SCHEMA,
   ...ANNOUNCEMENT_ERROR_SCHEMA,
   ...POLL_ERROR_SCHEMA,
+  ...TOPIC_ERROR_SCHEMA,
 } as const
 export type InternalErrorCodeSchemas = typeof InternalErrorCodeSchemas
 
