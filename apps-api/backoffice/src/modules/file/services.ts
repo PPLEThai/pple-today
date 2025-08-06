@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import { GetSignedUrlConfig, Storage } from '@google-cloud/storage'
 import Elysia from 'elysia'
 import https from 'https'
@@ -100,7 +99,6 @@ export class FileService {
 
 export const FileServicePlugin = new Elysia({
   name: 'FileService',
-  adapter: node(),
 }).decorate(() => ({
   fileService: new FileService({
     projectId: serverEnv.GCP_PROJECT_ID,

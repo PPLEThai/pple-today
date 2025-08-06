@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import {
@@ -18,7 +17,6 @@ import { AuthGuardPlugin } from '../../plugins/auth-guard'
 import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
 
 export const FacebookController = new Elysia({
-  adapter: node(),
   prefix: '/facebook',
   tags: ['Facebook'],
 })

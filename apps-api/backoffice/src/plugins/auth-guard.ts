@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -7,7 +6,6 @@ import { mapErrorCodeToResponse } from '../utils/error'
 import { introspectAccessToken } from '../utils/jwt'
 
 export const AuthGuardPlugin = new Elysia({
-  adapter: node(),
   name: 'auth-guard-plugin',
 })
   .decorate({
