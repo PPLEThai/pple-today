@@ -31,7 +31,7 @@ export class FeedService {
       id: feedItem.value.id,
       createdAt: feedItem.value.createdAt,
       commentCount: feedItem.value.numberOfComments,
-      userReaction: feedItem.value.reactions[0]?.type ?? null,
+      userReaction: feedItem.value.reactions?.[0]?.type,
       reactions: feedItem.value.reactionCounts,
       author: {
         id: feedItem.value.author.id,
@@ -58,11 +58,12 @@ export class FeedService {
             options: feedItem.value.poll.options.map((option) => ({
               id: option.id,
               title: option.title,
-              isSelected: option.pollAnswers.length > 0,
-              votes: option.pollAnswers.length,
+              isSelected: (option.pollAnswers ?? []).length > 0,
+              votes: (option.pollAnswers ?? []).length,
             })),
+            endAt: feedItem.value.poll.endAt,
             totalVotes: feedItem.value.poll.options.reduce(
-              (acc, option) => acc + option.pollAnswers.length,
+              (acc, option) => acc + (option.pollAnswers ?? []).length,
               0
             ),
           },
@@ -82,7 +83,7 @@ export class FeedService {
             content: feedItem.value.announcement.content ?? '',
             title: feedItem.value.announcement.title,
             attachments: feedItem.value.announcement.attachments.map(
-              (attachment) => attachment.filePath
+              (attachment) => attachment.url
             ),
           },
         } satisfies GetFeedContentResponse)

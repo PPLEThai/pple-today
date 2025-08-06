@@ -27,8 +27,8 @@ import { AuthGuardPlugin } from '../../plugins/auth-guard'
 import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
 
 export const FeedController = new Elysia({
-  prefix: '/feeds',
-  tags: ['Feeds'],
+  prefix: '/feed',
+  tags: ['Feed'],
 })
   .use([AuthGuardPlugin, FeedServicePlugin])
   .get(
