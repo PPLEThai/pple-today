@@ -6,7 +6,7 @@ import { mapErrorCodeToResponse } from '../utils/error'
 import { introspectAccessToken } from '../utils/jwt'
 
 export const AuthGuardPlugin = new Elysia({
-  name: 'auth-guard-plugin',
+  name: 'AuthGuardPlugin',
 })
   .decorate({
     async getCurrentUser(headers: Record<string, string | undefined>) {
