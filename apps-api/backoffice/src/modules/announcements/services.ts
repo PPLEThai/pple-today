@@ -50,7 +50,7 @@ export class AnnouncementService {
       title: announcementResult.value.title,
       content: announcementResult.value.content ?? '',
       backgroundColor: announcementResult.value.backgroundColor ?? '',
-      attachments: announcementResult.value.attachments.map((attachment) => attachment.filePath),
+      attachments: announcementResult.value.attachments.map((attachment) => attachment.url),
       createdAt: announcementResult.value.feedItem.createdAt,
       updatedAt: announcementResult.value.feedItem.updatedAt,
     } satisfies GetAnnouncementByIdResponse)
