@@ -6,7 +6,7 @@ enum AnnouncementType {
 
 // Published Announcement model
 model Announcement {
-    feedItemId String           @id @default(cuid())
+    feedItemId String           @id
     title      String
     content    String?
     type       AnnouncementType
