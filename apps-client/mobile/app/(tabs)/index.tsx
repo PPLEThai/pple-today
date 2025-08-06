@@ -635,7 +635,7 @@ function PagerContent({
     if (isFocused && scrollElRef.current) {
       const scrollViewTag = findNodeHandle(scrollElRef.current)
       setScrollViewTag(scrollViewTag)
-      console.log('scrollViewTag:', scrollViewTag)
+      // console.log('scrollViewTag:', scrollViewTag)
     }
   }, [isFocused, scrollElRef, setScrollViewTag])
   return (
