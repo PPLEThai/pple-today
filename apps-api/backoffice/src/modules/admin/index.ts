@@ -2,6 +2,7 @@ import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import { AdminAboutUsController } from './about-us'
+import { AdminHashtagController } from './hashtag'
 import { AdminPollsController } from './poll'
 
 export const AdminController = new Elysia({
@@ -11,3 +12,4 @@ export const AdminController = new Elysia({
 })
   .use(AdminAboutUsController)
   .use(AdminPollsController)
+  .use(AdminHashtagController)
