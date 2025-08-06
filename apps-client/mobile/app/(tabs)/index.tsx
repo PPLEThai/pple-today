@@ -507,13 +507,6 @@ export function TabViewInsideScroll() {
   )
 
   const [scrollViewTag, setScrollViewTag] = React.useState<number | null>(null)
-  React.useEffect(() => {
-    if (pagerView.current) {
-      const scrollViewTag = findNodeHandle(pagerView.current)
-      setScrollViewTag(scrollViewTag)
-    }
-  }, [])
-
   // Scrolling with header is now laggy on Expo Go Android because of the "new architechture"
   // disabling it in `app.config.ts` fixes the issue on native build
   // https://github.com/software-mansion/react-native-reanimated/issues/6992
@@ -591,7 +584,11 @@ export function TabViewInsideScroll() {
         >
           {Array.from({ length: 3 }).map((_, index) => (
             <View key={index} collapsable={false}>
-              <PagerContent index={index} />
+              <PagerContent
+                index={index}
+                isFocused={index === currentPage}
+                setScrollViewTag={setScrollViewTag}
+              />
             </View>
           ))}
         </AnimatedPagerView>
@@ -616,7 +613,15 @@ const usePagerContext = () => {
   return context
 }
 
-function PagerContent({ index }: { index: number }) {
+function PagerContent({
+  index,
+  setScrollViewTag,
+  isFocused,
+}: {
+  index: number
+  setScrollViewTag: (tag: number | null) => void
+  isFocused: boolean
+}) {
   const { headerHeight, registerRef, scrollHandler } = usePagerContext()
   const scrollElRef = useAnimatedRef<FlatList>()
   React.useEffect(() => {
@@ -626,6 +631,13 @@ function PagerContent({ index }: { index: number }) {
     }
   }, [scrollElRef, registerRef, index])
 
+  React.useEffect(() => {
+    if (isFocused && scrollElRef.current) {
+      const scrollViewTag = findNodeHandle(scrollElRef.current)
+      setScrollViewTag(scrollViewTag)
+      console.log('scrollViewTag:', scrollViewTag)
+    }
+  }, [isFocused, scrollElRef, setScrollViewTag])
   return (
     <Animated.FlatList
       ref={scrollElRef}
