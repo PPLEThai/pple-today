@@ -507,7 +507,7 @@ export function TabViewInsideScroll() {
   )
 
   const [scrollViewTag, setScrollViewTag] = React.useState<number | null>(null)
-  // Scrolling with header is now laggy on Expo Go Android because of the "new architechture"
+  // Scrolling with header is now laggy on Expo Go Android because of the "new architecture"
   // disabling it in `app.config.ts` fixes the issue on native build
   // https://github.com/software-mansion/react-native-reanimated/issues/6992
   return (
