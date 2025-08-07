@@ -1,15 +1,17 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import {
+  CreateTopicBody,
+  CreateTopicResponse,
+  DeleteTopicParams,
   DeleteTopicResponse,
-  GetTopicResponse,
+  GetTopicByIdParams,
+  GetTopicByIdResponse,
   GetTopicsQuery,
   GetTopicsResponse,
-  PostTopicResponse,
-  PutTopicBody,
-  PutTopicResponse,
-  TopicIdParams,
+  UpdateTopicBody,
+  UpdateTopicParams,
+  UpdateTopicResponse,
 } from './models'
 import { AdminTopicServicePlugin } from './services'
 
@@ -19,7 +21,6 @@ import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../.
 
 export const AdminTopicController = new Elysia({
   prefix: '/topics',
-  adapter: node(),
   tags: ['Topics'],
 })
   .use([AuthGuardPlugin, AdminTopicServicePlugin])
@@ -71,9 +72,9 @@ export const AdminTopicController = new Elysia({
     },
     {
       requiredUser: true,
-      params: TopicIdParams,
+      params: GetTopicByIdParams,
       response: {
-        200: GetTopicResponse,
+        200: GetTopicByIdResponse,
         ...createErrorSchema(
           InternalErrorCode.TOPIC_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
@@ -104,9 +105,9 @@ export const AdminTopicController = new Elysia({
     },
     {
       requiredUser: true,
-      body: PutTopicBody,
+      body: CreateTopicBody,
       response: {
-        201: PostTopicResponse,
+        201: CreateTopicResponse,
         ...createErrorSchema(
           InternalErrorCode.TOPIC_INVALID_INPUT,
           InternalErrorCode.INTERNAL_SERVER_ERROR
@@ -139,10 +140,10 @@ export const AdminTopicController = new Elysia({
     },
     {
       requiredUser: true,
-      params: TopicIdParams,
-      body: PutTopicBody,
+      params: UpdateTopicParams,
+      body: UpdateTopicBody,
       response: {
-        200: PutTopicResponse,
+        200: UpdateTopicResponse,
         ...createErrorSchema(
           InternalErrorCode.TOPIC_NOT_FOUND,
           InternalErrorCode.TOPIC_INVALID_INPUT,
@@ -174,7 +175,7 @@ export const AdminTopicController = new Elysia({
     },
     {
       requiredUser: true,
-      params: TopicIdParams,
+      params: DeleteTopicParams,
       response: {
         200: DeleteTopicResponse,
         ...createErrorSchema(

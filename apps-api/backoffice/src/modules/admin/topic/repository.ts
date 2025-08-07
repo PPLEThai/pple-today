@@ -1,7 +1,6 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
-import { PutTopicBody } from './models'
+import { CreateTopicBody, UpdateTopicBody } from './models'
 
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { fromPrismaPromise } from '../../../utils/prisma'
@@ -53,6 +52,7 @@ export class AdminTopicRepository {
             select: {
               hashTag: {
                 select: {
+                  id: true,
                   name: true,
                 },
               },
@@ -63,12 +63,12 @@ export class AdminTopicRepository {
 
       return {
         ...result,
-        hashtags: hashTagInTopics.map((hashTagInTopic) => hashTagInTopic.hashTag.name),
+        hashtags: hashTagInTopics.map((hashTagInTopic) => hashTagInTopic.hashTag),
       }
     })
   }
 
-  async createTopic(data: PutTopicBody) {
+  async createTopic(data: CreateTopicBody) {
     return await fromPrismaPromise(
       this.prismaService.topic.create({
         data: {
@@ -88,7 +88,7 @@ export class AdminTopicRepository {
     )
   }
 
-  async updateTopicById(topicId: string, data: PutTopicBody) {
+  async updateTopicById(topicId: string, data: UpdateTopicBody) {
     return await fromPrismaPromise(
       this.prismaService.topic.update({
         where: { id: topicId },
@@ -121,7 +121,6 @@ export class AdminTopicRepository {
 
 export const AdminTopicRepositoryPlugin = new Elysia({
   name: 'AdminTopicRepository',
-  adapter: node(),
 })
   .use([PrismaServicePlugin])
   .decorate(({ prismaService }) => ({

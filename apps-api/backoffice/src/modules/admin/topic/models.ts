@@ -9,34 +9,51 @@ export const GetTopicsQuery = t.Object({
 })
 export type GetTopicsQuery = Static<typeof GetTopicsQuery>
 
-export const TopicIdParams = t.Object({
-  topicId: t.String({ description: 'The ID of the topic' }),
-})
-
 export const GetTopicsResponse = t.Array(Topic)
 export type GetTopicsResponse = Static<typeof GetTopicsResponse>
 
-export const GetTopicResponse = DetailedTopic
-export type GetTopicResponse = Static<typeof GetTopicResponse>
-
-export const PostTopicResponse = t.Object({
+export const GetTopicByIdParams = t.Object({
   topicId: t.String({ description: 'The ID of the topic' }),
 })
-export type PostTopicResponse = Static<typeof PostTopicResponse>
 
-export const PutTopicBody = t.Object({
+export const GetTopicByIdResponse = DetailedTopic
+export type GetTopicByIdResponse = Static<typeof GetTopicByIdResponse>
+
+export const CreateTopicBody = t.Object({
   name: t.String({ description: 'The name of the topic' }),
   description: t.Nullable(t.String({ description: 'The description of the topic' })),
   bannerImage: t.Nullable(t.String({ description: 'The banner image of the topic' })),
   status: t.Enum(TopicStatus),
   hashtagIds: t.Array(t.String({ description: 'The ID of the hashtag' })),
 })
-export type PutTopicBody = Static<typeof PutTopicBody>
+export type CreateTopicBody = Static<typeof CreateTopicBody>
 
-export const PutTopicResponse = t.Object({
+export const CreateTopicResponse = t.Object({
+  topicId: t.String({ description: 'The ID of the topic' }),
+})
+export type CreateTopicResponse = Static<typeof CreateTopicResponse>
+
+export const UpdateTopicParams = t.Object({
+  topicId: t.String({ description: 'The ID of the topic' }),
+})
+
+export const UpdateTopicBody = t.Object({
+  name: t.String({ description: 'The name of the topic' }),
+  description: t.Nullable(t.String({ description: 'The description of the topic' })),
+  bannerImage: t.Nullable(t.String({ description: 'The banner image of the topic' })),
+  status: t.Enum(TopicStatus),
+  hashtagIds: t.Array(t.String({ description: 'The ID of the hashtag' })),
+})
+export type UpdateTopicBody = Static<typeof CreateTopicBody>
+
+export const UpdateTopicResponse = t.Object({
   message: t.String({ description: 'Success message' }),
 })
-export type PutTopicResponse = Static<typeof PutTopicResponse>
+export type UpdateTopicResponse = Static<typeof UpdateTopicResponse>
+
+export const DeleteTopicParams = t.Object({
+  topicId: t.String({ description: 'The ID of the topic' }),
+})
 
 export const DeleteTopicResponse = t.Object({
   message: t.String({ description: 'Success message' }),

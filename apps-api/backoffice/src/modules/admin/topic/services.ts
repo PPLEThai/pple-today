@@ -1,14 +1,14 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import {
+  CreateTopicBody,
+  CreateTopicResponse,
   DeleteTopicResponse,
-  GetTopicResponse,
+  GetTopicByIdResponse,
   GetTopicsResponse,
-  PostTopicResponse,
-  PutTopicBody,
-  PutTopicResponse,
+  UpdateTopicBody,
+  UpdateTopicResponse,
 } from './models'
 import { AdminTopicRepository, AdminTopicRepositoryPlugin } from './repository'
 
@@ -39,10 +39,10 @@ export class AdminTopicService {
         },
       })
 
-    return ok(result.value satisfies GetTopicResponse)
+    return ok(result.value satisfies GetTopicByIdResponse)
   }
 
-  async createTopic(data: PutTopicBody) {
+  async createTopic(data: CreateTopicBody) {
     const result = await this.adminTopicRepository.createTopic(data)
     if (result.isErr())
       return mapRawPrismaError(result.error, {
@@ -51,10 +51,10 @@ export class AdminTopicService {
         },
       })
 
-    return ok({ topicId: result.value.id } satisfies PostTopicResponse)
+    return ok({ topicId: result.value.id } satisfies CreateTopicResponse)
   }
 
-  async updateTopicById(topicId: string, data: PutTopicBody) {
+  async updateTopicById(topicId: string, data: UpdateTopicBody) {
     const result = await this.adminTopicRepository.updateTopicById(topicId, data)
     if (result.isErr())
       return mapRawPrismaError(result.error, {
@@ -66,7 +66,7 @@ export class AdminTopicService {
         },
       })
 
-    return ok({ message: `Topic "${result.value.id}" updated.` } satisfies PutTopicResponse)
+    return ok({ message: `Topic "${result.value.id}" updated.` } satisfies UpdateTopicResponse)
   }
 
   async deleteTopicById(topicId: string) {
@@ -84,7 +84,6 @@ export class AdminTopicService {
 
 export const AdminTopicServicePlugin = new Elysia({
   name: 'AdminTopicService',
-  adapter: node(),
 })
   .use(AdminTopicRepositoryPlugin)
   .decorate(({ adminTopicRepository }) => ({

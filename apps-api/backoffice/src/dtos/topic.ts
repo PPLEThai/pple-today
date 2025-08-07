@@ -16,7 +16,12 @@ export const DetailedTopic = t.Composite([
   Topic,
   t.Object({
     bannerImage: t.Nullable(t.String({ description: 'The banner image of the topic' })),
-    hashtags: t.Array(t.String({ description: 'The name of the hashtag' })),
+    hashtags: t.Array(
+      t.Object({
+        id: t.String({ description: 'The ID of the hashtag' }),
+        name: t.String({ description: 'The name of the hashtag' }),
+      })
+    ),
   }),
 ])
 export type DetailedTopic = Static<typeof DetailedTopic>
