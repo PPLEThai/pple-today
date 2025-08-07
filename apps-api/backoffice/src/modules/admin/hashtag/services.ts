@@ -1,14 +1,13 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import {
   DeleteHashtagResponse,
-  GetHashtagResponse,
+  GetHashtagByIdResponse,
   GetHashtagsResponse,
-  PostHashtagResponse,
-  PutHashtagBody,
-  PutHashtagResponse,
+  CreateHashtagResponse,
+  CreateHashtagBody,
+  UpdateHashtagResponse,
 } from './models'
 import { AdminHashtagRepository, AdminHashtagRepositoryPlugin } from './repository'
 
@@ -25,7 +24,7 @@ export class AdminHashtagService {
     }
   ) {
     const result = await this.adminHashtagRepository.getHashtags(query)
-    if (result.isErr()) return mapRawPrismaError(result.error, {})
+    if (result.isErr()) return mapRawPrismaError(result.error)
 
     return ok(result.value satisfies GetHashtagsResponse)
   }
@@ -84,7 +83,6 @@ export class AdminHashtagService {
 
 export const AdminHashtagServicePlugin = new Elysia({
   name: 'AdminHashtagService',
-  adapter: node(),
 })
   .use(AdminHashtagRepositoryPlugin)
   .decorate(({ adminHashtagRepository }) => ({

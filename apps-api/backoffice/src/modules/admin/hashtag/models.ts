@@ -9,31 +9,45 @@ export const GetHashtagsQuery = t.Object({
 })
 export type GetHashtagsQuery = Static<typeof GetHashtagsQuery>
 
-export const HashtagIdParams = t.Object({
-  hashtagId: t.String({ description: 'The ID of the hashtag' }),
-})
-
 export const GetHashtagsResponse = t.Array(HashTag)
 export type GetHashtagsResponse = Static<typeof GetHashtagsResponse>
 
-export const GetHashtagResponse = HashTag
-export type GetHashtagResponse = Static<typeof GetHashtagResponse>
-
-export const PostHashtagResponse = t.Object({
+export const GetHashtagByIdParams = t.Object({
   hashtagId: t.String({ description: 'The ID of the hashtag' }),
 })
-export type PostHashtagResponse = Static<typeof PostHashtagResponse>
 
-export const PutHashtagBody = t.Object({
+export const GetHashtagByIdResponse = HashTag
+export type GetHashtagByIdResponse = Static<typeof GetHashtagByIdResponse>
+
+export const CreateHashtagBody = t.Object({
   name: t.String({ description: 'The name of the hashtag' }),
   status: t.Enum(HashTagStatus),
 })
-export type PutHashtagBody = Static<typeof PutHashtagBody>
+export type CreateHashtagBody = Static<typeof CreateHashtagBody>
 
-export const PutHashtagResponse = t.Object({
+export const CreateHashtagResponse = t.Object({
+  hashtagId: t.String({ description: 'The ID of the hashtag' }),
+})
+export type CreateHashtagResponse = Static<typeof CreateHashtagResponse>
+
+export const UpdateHashtagParams = t.Object({
+  hashtagId: t.String({ description: 'The ID of the hashtag' }),
+})
+
+export const UpdateHashtagBody = t.Object({
+  name: t.String({ description: 'The name of the hashtag' }),
+  status: t.Enum(HashTagStatus),
+})
+export type UpdateHashtagBody = Static<typeof CreateHashtagBody>
+
+export const UpdateHashtagResponse = t.Object({
   message: t.String({ description: 'Success message' }),
 })
-export type PutHashtagResponse = Static<typeof PutHashtagResponse>
+export type UpdateHashtagResponse = Static<typeof UpdateHashtagResponse>
+
+export const DeleteHashtagParams = t.Object({
+  hashtagId: t.String({ description: 'The ID of the hashtag' }),
+})
 
 export const DeleteHashtagResponse = t.Object({
   message: t.String({ description: 'Success message' }),

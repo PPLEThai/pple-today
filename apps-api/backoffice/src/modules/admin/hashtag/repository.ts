@@ -1,7 +1,6 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
-import { PutHashtagBody } from './models'
+import { CreateHashtagBody } from './models'
 
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { fromPrismaPromise } from '../../../utils/prisma'
@@ -85,7 +84,6 @@ export class AdminHashtagRepository {
 
 export const AdminHashtagRepositoryPlugin = new Elysia({
   name: 'AdminHashtagRepository',
-  adapter: node(),
 })
   .use([PrismaServicePlugin])
   .decorate(({ prismaService }) => ({

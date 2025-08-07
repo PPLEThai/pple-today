@@ -1,15 +1,17 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import {
+  CreateHashtagBody,
+  CreateHashtagResponse,
+  DeleteHashtagParams,
   DeleteHashtagResponse,
-  GetHashtagResponse,
+  GetHashtagByIdParams,
+  GetHashtagByIdResponse,
   GetHashtagsQuery,
   GetHashtagsResponse,
-  HashtagIdParams,
-  PostHashtagResponse,
-  PutHashtagBody,
-  PutHashtagResponse,
+  UpdateHashtagBody,
+  UpdateHashtagParams,
+  UpdateHashtagResponse,
 } from './models'
 import { AdminHashtagServicePlugin } from './services'
 
@@ -19,7 +21,6 @@ import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../.
 
 export const AdminHashtagController = new Elysia({
   prefix: '/hashtags',
-  adapter: node(),
   tags: ['Hashtags'],
 })
   .use([AuthGuardPlugin, AdminHashtagServicePlugin])
@@ -71,9 +72,9 @@ export const AdminHashtagController = new Elysia({
     },
     {
       requiredUser: true,
-      params: HashtagIdParams,
+      params: GetHashtagByIdParams,
       response: {
-        200: GetHashtagResponse,
+        200: GetHashtagByIdResponse,
         ...createErrorSchema(
           InternalErrorCode.HASHTAG_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
@@ -104,9 +105,9 @@ export const AdminHashtagController = new Elysia({
     },
     {
       requiredUser: true,
-      body: PutHashtagBody,
+      body: CreateHashtagBody,
       response: {
-        201: PostHashtagResponse,
+        201: CreateHashtagResponse,
         ...createErrorSchema(
           InternalErrorCode.HASHTAG_INVALID_INPUT,
           InternalErrorCode.INTERNAL_SERVER_ERROR
@@ -139,10 +140,10 @@ export const AdminHashtagController = new Elysia({
     },
     {
       requiredUser: true,
-      params: HashtagIdParams,
-      body: PutHashtagBody,
+      params: UpdateHashtagParams,
+      body: UpdateHashtagBody,
       response: {
-        200: PutHashtagResponse,
+        200: UpdateHashtagResponse,
         ...createErrorSchema(
           InternalErrorCode.HASHTAG_NOT_FOUND,
           InternalErrorCode.HASHTAG_INVALID_INPUT,
@@ -174,7 +175,7 @@ export const AdminHashtagController = new Elysia({
     },
     {
       requiredUser: true,
-      params: HashtagIdParams,
+      params: DeleteHashtagParams,
       response: {
         200: DeleteHashtagResponse,
         ...createErrorSchema(
