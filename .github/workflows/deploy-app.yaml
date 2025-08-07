@@ -56,8 +56,8 @@ jobs:
           echo "Ref: ${{ github.ref }}"
 
           echo "deploy-mobile-app=${{ github.event.inputs.android || github.event.inputs.ios }}" >> $GITHUB_OUTPUT
-          echo "deploy-backoffice=${{ github.event.inputs.backoffice == 'true' && (startsWith(github.ref, '#/refs/tags/@client/backoffice') || startsWith(github.ref, '#/refs/heads/')) }}" >> $GITHUB_OUTPUT
-          echo "deploy-api=${{ github.event.inputs.api == 'true' && (startsWith(github.ref, '#/refs/tags/@api/backoffice') || startsWith(github.ref, '#/refs/heads/')) }}" >> $GITHUB_OUTPUT
+          echo "deploy-backoffice=${{ github.event.inputs.backoffice == 'true' && (startsWith(github.ref, 'refs/tags/@client/backoffice') || startsWith(github.ref, 'refs/heads/')) }}" >> $GITHUB_OUTPUT
+          echo "deploy-api=${{ github.event.inputs.api == 'true' && (startsWith(github.ref, 'refs/tags/@api/backoffice') || startsWith(github.ref, 'refs/heads/')) }}" >> $GITHUB_OUTPUT
           echo "migrate-database=${{ github.event.inputs.migrate-database == 'true' }}" >> $GITHUB_OUTPUT
 
   deploy-mobile-app:
