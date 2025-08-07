@@ -58,7 +58,7 @@ jobs:
 
   deploy-mobile-app:
     name: Deploy Beta Mobile App
-    if: ${{ steps.get-deploy-condition.outputs.deploy-mobile-app == 'true' }}
+    if: ${{ needs.get-deploy-condition.outputs.deploy-mobile-app == 'true' }}
     needs: get-deploy-condition
     uses: ./.github/workflows/mobile-beta-deployment.yaml
     secrets: 'inherit'
@@ -70,7 +70,7 @@ jobs:
 
   deploy-backoffice:
     name: Deploy Backoffice
-    if: ${{ steps.get-deploy-condition.outputs.deploy-backoffice == 'true' }}
+    if: ${{ needs.get-deploy-condition.outputs.deploy-backoffice == 'true' }}
     needs: get-deploy-condition
     uses: ./.github/workflows/deploy-docker.yaml
     with:
@@ -91,7 +91,7 @@ jobs:
 
   deploy-api:
     name: Deploy API
-    if: ${{ steps.get-deploy-condition.outputs.deploy-api == 'true' }}
+    if: ${{ needs.get-deploy-condition.outputs.deploy-api == 'true' }}
     needs: get-deploy-condition
     uses: ./.github/workflows/deploy-docker.yaml
     with:
@@ -111,7 +111,7 @@ jobs:
 
   migrate-database:
     name: Migrate Database
-    if: ${{ steps.get-deploy-condition.outputs.migrate-database == 'true' }}
+    if: ${{ needs.get-deploy-condition.outputs.migrate-database == 'true' }}
     needs: get-deploy-condition
     uses: ./.github/workflows/migrate-database.yaml
     secrets:
