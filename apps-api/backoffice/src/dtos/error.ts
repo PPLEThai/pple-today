@@ -125,6 +125,12 @@ const FACEBOOK_ERROR_SCHEMA = {
   FACEBOOK_API_ERROR: {
     status: 500,
   },
+  FACEBOOK_WEBHOOK_VERIFICATION_FAILED: {
+    status: 400,
+  },
+  FACEBOOK_WEBHOOK_INVALID_SIGNATURE: {
+    status: 400,
+  },
 } satisfies InternalErrorSchemas
 
 const POLL_ERROR_SCHEMA = {

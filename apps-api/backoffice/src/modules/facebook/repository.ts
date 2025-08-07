@@ -1,5 +1,6 @@
 import { TAnySchema } from '@sinclair/typebox'
 import { Check } from '@sinclair/typebox/value'
+import { createHmac } from 'crypto'
 import { Elysia, t } from 'elysia'
 import { fromPromise, ok } from 'neverthrow'
 
@@ -13,6 +14,7 @@ import {
   ExternalFacebookInspectAccessTokenResponse,
   ExternalFacebookListUserPageResponse,
 } from '../../dtos/facebook'
+import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '../../plugins/logger'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { err } from '../../utils/error'
 import { fromPrismaPromise } from '../../utils/prisma'
@@ -31,23 +33,45 @@ export class FacebookRepository {
       appSecret: string
     },
     private readonly fileService: FileService,
-    private readonly prismaService: PrismaService
+    private readonly prismaService: PrismaService,
+    private readonly loggerService: ElysiaLoggerInstance
   ) {}
+
+  private getAppSecretProof(accessToken: string) {
+    const hmac = createHmac('sha256', this.facebookConfig.appSecret)
+    const hash = hmac.update(accessToken).digest('hex')
+
+    return hash
+  }
 
   private async makeRequest<T extends TAnySchema>(
     options: Partial<RequestInit> & {
       path: string
       responseSchema: T
+      query: URLSearchParams
+      accessToken?: string
     }
   ) {
-    const { path, responseSchema, ...requestOptions } = options
+    const { path, responseSchema, query, accessToken, ...requestOptions } = options
 
-    const response = await fetch(`${this.facebookConfig.apiUrl}${path}`, requestOptions)
+    if (accessToken) query.set('appsecret_proof', this.getAppSecretProof(accessToken))
+
+    const response = await fetch(
+      `${this.facebookConfig.apiUrl}${path}?${query.toString()}`,
+      requestOptions
+    )
 
     if (!response.ok) {
+      const responseText = await response.text()
+
+      this.loggerService.error({
+        error: responseText,
+        message: 'Failed to parse Facebook API response',
+      })
+
       return err({
         code: InternalErrorCode.FACEBOOK_API_ERROR,
-        message: 'Failed to fetch from Facebook API',
+        message: responseText,
       })
     }
 
@@ -57,6 +81,10 @@ export class FacebookRepository {
     }))
 
     if (jsonBody.isErr()) {
+      this.loggerService.error({
+        error: jsonBody.error,
+        message: 'Failed to parse Facebook API response',
+      })
       return err(jsonBody.error)
     }
 
@@ -68,19 +96,30 @@ export class FacebookRepository {
     }
 
     if (!Check(responseSchema, jsonBody.value)) {
-      console.error('Invalid response format from Facebook API:', JSON.stringify(jsonBody.value))
+      this.loggerService.error({
+        error: jsonBody.value,
+        message: 'Invalid response format from Facebook API',
+      })
+
       return err({
         code: InternalErrorCode.FACEBOOK_INVALID_RESPONSE,
         message: 'Invalid response format from Facebook API',
       })
     }
 
+    this.loggerService.info({
+      message: 'Successfully fetched data from Facebook API',
+      path,
+      data: jsonBody.value,
+    })
+
     return ok(jsonBody.value)
   }
 
   private async getAccessToken(queryParams: URLSearchParams) {
     const response = await this.makeRequest({
-      path: `/oauth/access_token?${queryParams.toString()}`,
+      path: `/oauth/access_token`,
+      query: queryParams,
       responseSchema: ExternalFacebookAccessTokenResponse,
     })
 
@@ -154,7 +193,8 @@ export class FacebookRepository {
     })
 
     const response = await this.makeRequest({
-      path: `/debug_token?${queryParams.toString()}`,
+      path: `/debug_token`,
+      query: queryParams,
       responseSchema: ExternalFacebookInspectAccessTokenResponse,
     })
 
@@ -173,7 +213,33 @@ export class FacebookRepository {
   }
 
   // TODO: Implement the following methods when webhooks are available
-  async subscribeToPostUpdates(userId: string, pageId: string) {
+  async subscribeToPostUpdates(userId: string, pageId: string, pageAccessToken: string) {
+    const queryParams = new URLSearchParams({
+      subscribed_fields: 'feed',
+      access_token: pageAccessToken,
+    })
+
+    const result = await this.makeRequest({
+      path: `/${pageId}/subscribed_apps`,
+      method: 'POST',
+      accessToken: pageAccessToken,
+      query: queryParams,
+      responseSchema: t.Object({
+        success: t.Boolean(),
+      }),
+    })
+
+    if (result.isErr()) {
+      return err(result.error)
+    }
+
+    if (!result.value.success) {
+      return err({
+        code: InternalErrorCode.FACEBOOK_API_ERROR,
+        message: 'Failed to subscribe to feed updates',
+      })
+    }
+
     return await fromPrismaPromise(
       this.prismaService.facebookPage.update({
         where: { id: pageId, managerId: userId },
@@ -314,7 +380,9 @@ export class FacebookRepository {
     })
 
     const response = await this.makeRequest({
-      path: `/${inspectResponse.value.data.user_id}/accounts?${queryParams.toString()}`,
+      path: `/${inspectResponse.value.data.user_id}/accounts`,
+      query: queryParams,
+      accessToken: userAccessToken,
       responseSchema: ExternalFacebookListUserPageResponse,
     })
 
@@ -339,6 +407,8 @@ export class FacebookRepository {
 
     const response = await this.makeRequest({
       path: `/${pageId}?${queryParams.toString()}`,
+      query: queryParams,
+      accessToken: pageAccessToken,
       responseSchema: t.Pick(ExternalFacebookGetPageDetailsResponse, ['id', 'name', 'picture']),
     })
 
@@ -364,6 +434,8 @@ export class FacebookRepository {
 
     const response = await this.makeRequest({
       path: `/${pageId}/posts?${queryParams.toString()}`,
+      query: queryParams,
+      accessToken: pageAccessToken,
       responseSchema: ExternalFacebookGetPagePostsResponse,
     })
 
@@ -466,7 +538,8 @@ export const FacebookRepositoryPlugin = new Elysia({
 })
   .use(PrismaServicePlugin)
   .use(FileServicePlugin)
-  .decorate(({ prismaService, fileService }) => ({
+  .use(ElysiaLoggerPlugin({ name: 'FacebookRepository' }))
+  .decorate(({ prismaService, fileService, loggerService }) => ({
     facebookRepository: new FacebookRepository(
       {
         apiUrl: serverEnv.FACEBOOK_API_URL,
@@ -474,6 +547,7 @@ export const FacebookRepositoryPlugin = new Elysia({
         appSecret: serverEnv.FACEBOOK_APP_SECRET,
       },
       fileService,
-      prismaService
+      prismaService,
+      loggerService
     ),
   }))

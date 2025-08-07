@@ -1,12 +1,15 @@
+import crypto from 'node:crypto'
+
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 
+import { ValidateFacebookWebhookQuery } from './models'
 import { FacebookRepository, FacebookRepositoryPlugin } from './repository'
 
+import serverEnv from '../../config/env'
 import { InternalErrorCode } from '../../dtos/error'
 import { mapRawPrismaError } from '../../utils/prisma'
 import { FileService, FileServicePlugin } from '../file/services'
-
 export class FacebookService {
   constructor(
     private readonly facebookRepository: FacebookRepository,
@@ -45,6 +48,42 @@ export class FacebookService {
 
   //   return await this.facebookRepository.subscribeToPostUpdates(userId, facebookPageId)
   // }
+
+  async validateWebhookSignature(signature: string, body: unknown) {
+    if (!signature.startsWith('sha256=')) {
+      return err({
+        code: InternalErrorCode.FACEBOOK_WEBHOOK_INVALID_SIGNATURE,
+        message: 'Invalid signature format',
+      })
+    }
+
+    const sha256Signature = signature.replace('sha256=', '')
+
+    const hmac = crypto.createHmac('sha256', serverEnv.FACEBOOK_APP_SECRET)
+    const hash = hmac.update(JSON.stringify(body)).digest('hex')
+
+    if (sha256Signature !== hash) {
+      return err({
+        code: InternalErrorCode.FACEBOOK_WEBHOOK_INVALID_SIGNATURE,
+        message: 'Invalid signature',
+      })
+    }
+
+    return ok()
+  }
+
+  async validateFacebookWebhook(query: ValidateFacebookWebhookQuery) {
+    const { 'hub.mode': mode, 'hub.verify_token': verifyToken, 'hub.challenge': challenge } = query
+
+    if (mode !== 'subscribe' || verifyToken !== serverEnv.FACEBOOK_WEBHOOK_VERIFY_TOKEN) {
+      return err({
+        code: InternalErrorCode.FACEBOOK_WEBHOOK_VERIFICATION_FAILED,
+        message: 'Invalid verification token or mode',
+      })
+    }
+
+    return ok(challenge)
+  }
 
   async getUserAccessToken(code: string, redirectUri: string) {
     return await this.facebookRepository.getUserAccessToken(code, redirectUri)
@@ -147,6 +186,21 @@ export class FacebookService {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.USER_NOT_FOUND,
           message: 'User not found',
+        },
+      })
+    }
+
+    const subscribeResult = await this.facebookRepository.subscribeToPostUpdates(
+      userId,
+      linkedPage.value.id,
+      facebookPageAccessToken
+    )
+
+    if (subscribeResult.isErr()) {
+      return mapRawPrismaError(subscribeResult.error as any, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POST_NOT_FOUND,
+          message: 'Post not found',
         },
       })
     }

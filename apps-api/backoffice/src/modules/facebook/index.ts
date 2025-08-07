@@ -4,11 +4,14 @@ import {
   GetFacebookUserPageListQuery,
   GetFacebookUserPageListResponse,
   GetLinkedFacebookPageResponse,
+  HandleFacebookWebhookHeaders,
   LinkFacebookPageToUserBody,
   LinkFacebookPageToUserResponse,
   RequestAccessTokenQuery,
   RequestAccessTokenResponse,
   UnlinkPageResponse,
+  ValidateFacebookWebhookQuery,
+  ValidateFacebookWebhookResponse,
 } from './models'
 import { FacebookServicePlugin } from './services'
 
@@ -21,6 +24,56 @@ export const FacebookController = new Elysia({
   tags: ['Facebook'],
 })
   .use([FacebookServicePlugin, AuthGuardPlugin])
+  .group('/webhook', (app) =>
+    app
+      .get(
+        '/',
+        async ({ query, status, facebookService }) => {
+          const result = await facebookService.validateFacebookWebhook(query)
+
+          if (result.isErr()) {
+            return mapErrorCodeToResponse(result.error, status)
+          }
+
+          return status(200, result.value)
+        },
+        {
+          query: ValidateFacebookWebhookQuery,
+          response: {
+            200: ValidateFacebookWebhookResponse,
+            ...createErrorSchema(InternalErrorCode.FACEBOOK_WEBHOOK_VERIFICATION_FAILED),
+          },
+          detail: {
+            summary: 'Validate Facebook Webhook',
+            description: 'Validates the Facebook webhook by responding with the challenge code',
+          },
+        }
+      )
+      .post(
+        '/',
+        async ({ body, headers, status, facebookService }) => {
+          const isValidSignature = await facebookService.validateWebhookSignature(
+            headers['x-hub-signature-256'],
+            body
+          )
+
+          if (isValidSignature.isErr()) {
+            return mapErrorCodeToResponse(isValidSignature.error, status)
+          }
+
+          return status(200, {
+            message: 'Webhook event received successfully',
+          })
+        },
+        {
+          headers: HandleFacebookWebhookHeaders,
+          detail: {
+            summary: 'Handle Facebook Webhook',
+            description: 'Handles incoming webhook events from Facebook',
+          },
+        }
+      )
+  )
   .group('/token', (app) =>
     app
       .get(
