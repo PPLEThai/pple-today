@@ -1,85 +1,21 @@
 import { cors } from '@elysiajs/cors'
 import node from '@elysiajs/node'
 import { swagger } from '@elysiajs/swagger'
-import { randomUUID } from 'crypto'
 import Elysia from 'elysia'
-import { getIP } from 'elysia-ip'
 
 import serverEnv from './config/env'
-import { InternalErrorCode } from './dtos/error'
 import { ApplicationController } from './modules'
 import { AdminController } from './modules/admin'
+import { VersionController } from './modules/version'
+import { GlobalExceptionPlugin } from './plugins/global-exception'
 import { GlobalLoggerPlugin } from './plugins/logger'
+import { RequestIdPlugin } from './plugins/request-id'
 
 import packageJson from '../package.json'
 
 let app = new Elysia({ adapter: node() })
-  .use(GlobalLoggerPlugin)
-  .onRequest(({ request, set }) => {
-    const ipAddress = getIP(request.headers)
-    if (ipAddress) request.headers.set('x-real-ip', ipAddress)
-
-    const requestId = request.headers.get('x-request-id') || randomUUID()
-
-    set.headers['x-request-id'] = requestId
-    request.headers.set('x-request-id', requestId)
-  })
-  .onError(({ status, code, error }) => {
-    if ('response' in error) {
-      return status(error.code, error.response)
-    }
-
-    if (code === 'INTERNAL_SERVER_ERROR')
-      return status(500, {
-        error: {
-          code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-          message: 'An internal error occurred',
-        },
-      })
-
-    if (code === 'VALIDATION')
-      return status(422, {
-        error: {
-          code: InternalErrorCode.VALIDATION_ERROR,
-          message: 'Validation failed',
-          data: error.message,
-        },
-      })
-
-    if (code === 'NOT_FOUND')
-      return status(404, {
-        error: {
-          code: InternalErrorCode.NOT_FOUND,
-          message: 'Resource not found',
-        },
-      })
-
-    if (code === 'INVALID_FILE_TYPE')
-      return status(400, {
-        error: {
-          code: InternalErrorCode.BAD_REQUEST,
-          message: 'Invalid file type',
-        },
-      })
-
-    return status(500, {
-      error: {
-        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-        message: 'An internal error occurred',
-      },
-    })
-  })
-  .use(cors())
-  .use(ApplicationController)
-  .use(AdminController)
-  .get('/versions', ({ status }) => {
-    const body = JSON.stringify({
-      name: packageJson.name,
-      version: packageJson.version,
-    })
-
-    return status(200, body)
-  })
+  .use([GlobalLoggerPlugin, RequestIdPlugin, GlobalExceptionPlugin, cors()])
+  .use([ApplicationController, AdminController, VersionController])
 
 if (serverEnv.ENABLE_SWAGGER) {
   app = app.use(

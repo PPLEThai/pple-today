@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import { AnnouncementsController } from './announcements'
@@ -7,9 +6,7 @@ import { FacebookController } from './facebook'
 import { PostsController } from './posts'
 import { ProfileController } from './profile'
 
-export const ApplicationController = new Elysia({
-  adapter: node(),
-})
+export const ApplicationController = new Elysia()
   .use(PostsController)
   .use(AuthController)
   .use(AnnouncementsController)

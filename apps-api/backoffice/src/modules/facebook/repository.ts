@@ -1,7 +1,7 @@
 import { TAnySchema } from '@sinclair/typebox'
 import { Check } from '@sinclair/typebox/value'
 import { Elysia, t } from 'elysia'
-import { err, fromPromise, ok } from 'neverthrow'
+import { fromPromise, ok } from 'neverthrow'
 
 import serverEnv from '../../config/env'
 import { InternalErrorCode } from '../../dtos/error'
@@ -14,6 +14,7 @@ import {
   ExternalFacebookListUserPageResponse,
 } from '../../dtos/facebook'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
+import { err } from '../../utils/error'
 import { fromPrismaPromise } from '../../utils/prisma'
 import { FileService, FileServicePlugin } from '../file/services'
 
@@ -44,9 +45,6 @@ export class FacebookRepository {
     const response = await fetch(`${this.facebookConfig.apiUrl}${path}`, requestOptions)
 
     if (!response.ok) {
-      console.error('Facebook API request failed:', response.status, response.statusText)
-      console.error('Response body:', await response.text())
-      console.error('Request options:', path)
       return err({
         code: InternalErrorCode.FACEBOOK_API_ERROR,
         message: 'Failed to fetch from Facebook API',

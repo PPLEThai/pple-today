@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import { GetAuthMeResponse, RegisterUserResponse } from './models'
@@ -9,7 +8,6 @@ import { AuthGuardPlugin } from '../../plugins/auth-guard'
 import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
 
 export const AuthController = new Elysia({
-  adapter: node(),
   prefix: '/auth',
   tags: ['Auth'],
 })

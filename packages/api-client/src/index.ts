@@ -9,7 +9,16 @@ import {
 } from '@tanstack/react-query'
 import Elysia from 'elysia'
 
-import { EdenFetch, QueryClient } from './types'
+import { CreateReactQueryClientResult, EdenFetch, QueryClient } from './types'
+
+function queryKey(method: string, path: string | number | symbol, payload?: any) {
+  const payloadKey = {
+    pathParams: payload?.pathParams ?? {},
+    query: payload?.query ?? {},
+    headers: payload?.headers ?? {},
+  }
+  return [method, path, payloadKey] as const
+}
 
 function createQueryClient<TSchema extends Record<string, any>>(
   restClient: EdenFetch.Fn<TSchema>
@@ -31,10 +40,10 @@ function createQueryClient<TSchema extends Record<string, any>>(
   }
 
   return {
-    useQuery: function (method: any, path: any, payload: any, options?: any) {
+    useQuery: function (path: any, payload: any, options?: any) {
       return useQuery({
-        queryKey: queryKey(method, path, payload),
-        queryFn: () => makeRequest(method, path, payload),
+        queryKey: queryKey('get', path, payload),
+        queryFn: () => makeRequest('get', path, payload),
         ...options,
       }) as UseQueryResult<any, any>
     },
@@ -45,10 +54,10 @@ function createQueryClient<TSchema extends Record<string, any>>(
         ...options,
       }) as UseMutationResult<any, any, any, any>
     },
-    queryOptions: function (method: any, path: any, payload: any, options?: any) {
+    queryOptions: function (path: any, payload: any, options?: any) {
       return {
-        queryKey: queryKey(method, path, payload),
-        queryFn: () => makeRequest(method, path, payload),
+        queryKey: queryKey('get', path, payload),
+        queryFn: () => makeRequest('get', path, payload),
         ...options,
       } as UseQueryOptions<any, any, any>
     },
@@ -60,20 +69,6 @@ function createQueryClient<TSchema extends Record<string, any>>(
       } as UseMutationOptions<any, any, any, any>
     },
   }
-}
-
-export function queryKey(method: string, path: string | number | symbol, payload?: any) {
-  const payloadKey = {
-    pathParams: payload?.pathParams ?? {},
-    query: payload?.query ?? {},
-    headers: payload?.headers ?? {},
-  }
-  return [method, path, payloadKey] as const
-}
-
-export interface CreateReactQueryClientResult<T extends Elysia<any, any, any, any, any, any, any>> {
-  fetchClient: EdenFetch.Create<T>
-  queryClient: EdenFetch.Create<T> extends EdenFetch.Fn<infer Schema> ? QueryClient<Schema> : never
 }
 
 export function createReactQueryClient<T extends Elysia<any, any, any, any, any, any, any>>(

@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import { IntrospectAccessTokenResult } from '../../dtos/auth'
@@ -31,7 +30,7 @@ export class AuthRepository {
   }
 }
 
-export const AuthRepositoryPlugin = new Elysia({ name: 'AuthRepository', adapter: node() })
+export const AuthRepositoryPlugin = new Elysia({ name: 'AuthRepository' })
   .use(PrismaServicePlugin)
   .decorate(({ prismaService }) => ({
     authRepository: new AuthRepository(prismaService),

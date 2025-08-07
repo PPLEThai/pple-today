@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import { CompleteOnboardingProfileBody } from './models'
@@ -158,7 +157,7 @@ export class ProfileRepository {
   }
 }
 
-export const ProfileRepositoryPlugin = new Elysia({ name: 'ProfileRepository', adapter: node() })
+export const ProfileRepositoryPlugin = new Elysia({ name: 'ProfileRepository' })
   .use(PrismaServicePlugin)
   .decorate(({ prismaService }) => ({
     profileRepository: new ProfileRepository(prismaService),

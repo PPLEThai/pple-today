@@ -18,18 +18,24 @@ const formatters = {
       }
 
       if (object.isError) {
-        const { code, error } = object
-
-        log.code = code
-
-        if ('message' in error) {
-          log.message = error.message
-        } else if ('code' in error && 'response' in error) {
-          const response = (error.response as any).error
-          log.message = `HTTP ${error.code}: Code ${response.code} with message ${response.message}`
-          log.stack = response.stack
+        if (object.error instanceof Error && 'code' in object.error) {
+          log.message = object.error.message
+          log.code = object.error.code
+          log.stack = object.error.stack
         } else {
-          log.message = 'Unknown error'
+          const { code, error } = object
+
+          log.code = code
+
+          if ('message' in error) {
+            log.message = error.message
+          } else if ('code' in error && 'response' in error) {
+            const response = (error.response as any).error
+            log.message = `HTTP ${error.code}: Code ${response.code} with message ${response.message}`
+            log.stack = response.stack
+          } else {
+            log.message = 'Unknown error'
+          }
         }
       } else {
         if (object.store.responseTime) {

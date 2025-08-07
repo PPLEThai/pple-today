@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -154,7 +153,7 @@ export class AdminPollService {
   }
 }
 
-export const AdminPollServicePlugin = new Elysia({ name: 'AdminPollService', adapter: node() })
+export const AdminPollServicePlugin = new Elysia({ name: 'AdminPollService' })
   .use(AdminPollRepositoryPlugin)
   .decorate(({ adminPollRepository }) => ({
     adminPollService: new AdminPollService(adminPollRepository),
