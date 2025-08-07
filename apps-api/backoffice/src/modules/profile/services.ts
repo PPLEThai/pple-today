@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 
@@ -145,7 +144,7 @@ export class ProfileService {
   }
 }
 
-export const ProfileServicePlugin = new Elysia({ name: 'ProfileService', adapter: node() })
+export const ProfileServicePlugin = new Elysia({ name: 'ProfileService' })
   .use([ProfileRepositoryPlugin, AuthRepositoryPlugin])
   .decorate(({ profileRepository, authRepository }) => ({
     profileService: new ProfileService(profileRepository, authRepository),

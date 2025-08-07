@@ -6,9 +6,13 @@ import { AnnouncementRepository, AnnouncementRepositoryPlugin } from './reposito
 
 import { InternalErrorCode } from '../../dtos/error'
 import { mapRawPrismaError } from '../../utils/prisma'
+import { FileService, FileServicePlugin } from '../file/services'
 
 export class AnnouncementService {
-  constructor(private readonly announcementRepository: AnnouncementRepository) {}
+  constructor(
+    private readonly announcementRepository: AnnouncementRepository,
+    private fileService: FileService
+  ) {}
 
   async getAnnouncements(query?: { limit: number; page: number }) {
     // TODO: Filter by announcement type corresponding to the user role
@@ -45,12 +49,21 @@ export class AnnouncementService {
       })
     }
 
+    const attachmentSignedUrls: string[] = []
+    for (const filePath in announcementResult.value.attachments) {
+      const signedUrl = await this.fileService.getSignedUrl(filePath)
+      if (signedUrl.isErr()) {
+        return err(signedUrl.error)
+      }
+      attachmentSignedUrls.push(signedUrl.value)
+    }
+
     return ok({
       id: announcementResult.value.feedItemId,
       title: announcementResult.value.title,
       content: announcementResult.value.content ?? '',
       backgroundColor: announcementResult.value.backgroundColor ?? '',
-      attachments: announcementResult.value.attachments.map((attachment) => attachment.url),
+      attachments: attachmentSignedUrls,
       createdAt: announcementResult.value.feedItem.createdAt,
       updatedAt: announcementResult.value.feedItem.updatedAt,
     } satisfies GetAnnouncementByIdResponse)
@@ -60,7 +73,7 @@ export class AnnouncementService {
 export const AnnouncementServicePlugin = new Elysia({
   name: 'AnnouncementService',
 })
-  .use(AnnouncementRepositoryPlugin)
-  .decorate(({ announcementRepository }) => ({
-    announcementService: new AnnouncementService(announcementRepository),
+  .use([AnnouncementRepositoryPlugin, FileServicePlugin])
+  .decorate(({ announcementRepository, fileService }) => ({
+    announcementService: new AnnouncementService(announcementRepository, fileService),
   }))

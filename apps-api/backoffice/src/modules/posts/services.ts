@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -192,6 +191,6 @@ export class PostService {
   }
 }
 
-export const PostServicePlugin = new Elysia({ name: 'PostService', adapter: node() })
+export const PostServicePlugin = new Elysia({ name: 'PostService' })
   .use(PostRepositoryPlugin)
   .decorate(({ postRepository }) => ({ postService: new PostService(postRepository) }))

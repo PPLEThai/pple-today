@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 
@@ -191,7 +190,6 @@ export class FacebookService {
 
 export const FacebookServicePlugin = new Elysia({
   name: 'FacebookService',
-  adapter: node(),
 })
   .use([FacebookRepositoryPlugin, FileServicePlugin])
   .decorate(({ facebookRepository, fileService }) => ({
