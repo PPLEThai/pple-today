@@ -18,37 +18,71 @@ Feel free to update this file :)
    pnpm start
    ```
 
-If you have `.env` (environment variable) set up, you can run `pnpm dev` instead
+3. We deprecated the expo go dev server since we use expo-native module. \
+   Please see Native Development section down below
 
-## Native Development
+Note: If you have `.env` (environment variable) set up, you can run `pnpm dev` instead
 
-1. Generate Native `ios/` and `android/`
+## Android/iOS Build
+
+```bash
+pnpm android
+pnpm ios
+```
+
+## Android Native App
+
+1. Generate Native `android/`
 
    ```bash
-   pnpm prebuild
+   pnpm prebuild # for both ios or android
+   pnpm prebuild:android # android only
    ```
 
-2. Run Android/ios
+2. Run App
 
    ```bash
    pnpm android
+   ```
+
+3. You can edit Android native code via [Android Studio](https://developer.android.com/studio)
+
+   ```bash
+   pnpm open:android
+   ```
+
+## iOS Native App
+
+1. Generate Native `ios/`
+
+   ```bash
+   pnpm prebuild # for both ios or android
+   pnpm prebuild:ios # ios only
+   ```
+
+2. Run App
+
+   ```bash
    pnpm ios
    ```
 
-## Native Build
-
-1. Generate Native `ios/` and `android/`
+3. Open up Xcode
 
    ```bash
-   pnpm prebuild
+   pnpm open:ios
    ```
 
-2. Open Xcode/Android Studio
+4. You might need to ask your team for access to Development Team via [App Store Connect](https://appstoreconnect.apple.com/access/users) \
+   in order to build with Xcode
 
+5. After setup and login to your account \
+   Setup credentials git repo and run the following command
+
+   ```bash
+   fastlane match development
    ```
-   open -a Xcode ios/PPLEToday.xcodeproj
-   open -a /Applications/Android\ Studio.app android
-   ```
+
+   Read more here https://codesigning.guide/
 
 ## Fastlane - Beta Build
 

@@ -35,6 +35,9 @@ const FILE_ERROR_SCHEMA = {
   FILE_UPLOAD_ERROR: {
     status: 500,
   },
+  FILE_DELETE_ERROR: {
+    status: 500,
+  },
   FILE_CREATE_SIGNED_URL_ERROR: {
     status: 500,
   },
@@ -127,6 +130,15 @@ const POLL_ERROR_SCHEMA = {
   },
 } satisfies InternalErrorSchemas
 
+const HASHTAG_ERROR_SCHEMA = {
+  HASHTAG_NOT_FOUND: {
+    status: 404,
+  },
+  HASHTAG_INVALID_INPUT: {
+    status: 400,
+  },
+} satisfies InternalErrorSchemas
+
 const TOPIC_ERROR_SCHEMA = {
   TOPIC_NOT_FOUND: {
     status: 404,
@@ -146,6 +158,7 @@ export const InternalErrorCodeSchemas = {
   ...FACEBOOK_ERROR_SCHEMA,
   ...ANNOUNCEMENT_ERROR_SCHEMA,
   ...POLL_ERROR_SCHEMA,
+  ...HASHTAG_ERROR_SCHEMA,
   ...TOPIC_ERROR_SCHEMA,
 } as const
 export type InternalErrorCodeSchemas = typeof InternalErrorCodeSchemas

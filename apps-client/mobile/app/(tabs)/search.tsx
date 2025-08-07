@@ -1,5 +1,5 @@
 import { View } from 'react-native'
 
-export default function Index() {
-  return <View />
+export default function Search() {
+  return <View></View>
 }

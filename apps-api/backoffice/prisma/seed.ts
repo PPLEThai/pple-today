@@ -111,6 +111,7 @@ const seedHashtags = async () => {
     create: {
       id: 'hashtag-1',
       name: '#PPLEToday',
+      status: 'PUBLISH',
     },
   })
   await prisma.hashTag.upsert({
@@ -119,6 +120,7 @@ const seedHashtags = async () => {
     create: {
       id: 'hashtag-2',
       name: '#Announcements',
+      status: 'PUBLISH',
     },
   })
   await prisma.hashTag.upsert({
@@ -127,6 +129,7 @@ const seedHashtags = async () => {
     create: {
       id: 'hashtag-3',
       name: '#Polls',
+      status: 'PUBLISH',
     },
   })
   console.log('Seeded hashtags successfully.')
@@ -190,10 +193,10 @@ const seedAnnouncements = async () => {
           attachments: {
             create: [
               {
-                url: 'https://picsum.photos/300?random=0',
+                filePath: 'https://picsum.photos/300?random=0',
               },
               {
-                url: 'https://picsum.photos/300?random=1',
+                filePath: 'https://picsum.photos/300?random=1',
               },
             ],
           },
@@ -219,10 +222,10 @@ const seedAnnouncements = async () => {
           attachments: {
             create: [
               {
-                url: 'https://picsum.photos/300?random=4',
+                filePath: 'https://picsum.photos/300?random=4',
               },
               {
-                url: 'https://picsum.photos/300?random=5',
+                filePath: 'https://picsum.photos/300?random=5',
               },
             ],
           },
@@ -248,10 +251,10 @@ const seedAnnouncements = async () => {
           attachments: {
             create: [
               {
-                url: 'https://picsum.photos/300?random=2',
+                filePath: 'https://picsum.photos/300?random=2',
               },
               {
-                url: 'https://picsum.photos/300?random=3',
+                filePath: 'https://picsum.photos/300?random=3',
               },
             ],
           },

@@ -13,6 +13,8 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "open:ios": "xed ios",
+    "open:android": "open -a /Applications/Android\\ Studio.app android",
     "prebuild": "expo prebuild",
     "prebuild:android": "expo prebuild --clean --platform android",
     "prebuild:ios": "expo prebuild --clean --platform ios",
@@ -29,13 +31,14 @@
     "@pple-today/ui": "workspace:^",
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",
-    "@react-navigation/material-top-tabs": "^7.2.15",
+    "@react-navigation/material-top-tabs": "^7.3.2",
     "@react-navigation/native": "^7.1.6",
     "@tanstack/react-form": "^1.14.1",
     "@tanstack/react-query": "^5.81.5",
     "expo": "~53.0.12",
     "expo-auth-session": "^6.2.0",
     "expo-blur": "~14.1.4",
+    "expo-build-properties": "^0.14.8",
     "expo-clipboard": "^7.1.5",
     "expo-constants": "~17.1.6",
     "expo-font": "~13.3.2",
@@ -43,6 +46,7 @@
     "expo-image": "~2.3.0",
     "expo-linking": "~7.1.4",
     "expo-router": "~5.1.0",
+    "expo-scroll-forwarder": "workspace:^",
     "expo-secure-store": "^14.2.3",
     "expo-splash-screen": "~0.30.8",
     "expo-status-bar": "~2.2.3",
@@ -78,13 +82,5 @@
     "react-native-svg-transformer": "^1.5.1",
     "tailwindcss": "^3.4.17"
   },
-  "private": true,
-  "packageManager": "pnpm@9.9.0",
-  "engines": {
-    "node": ">=22"
-  },
-  "volta": {
-    "node": "22.15.0",
-    "pnpm": "9.9.0"
-  }
+  "private": true
 }
