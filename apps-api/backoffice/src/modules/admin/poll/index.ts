@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import {
@@ -25,7 +24,6 @@ import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../.
 
 const AdminDraftedPollsController = new Elysia({
   prefix: '/draft',
-  adapter: node(),
   tags: ['Drafted Polls'],
 })
   .use([AuthGuardPlugin, AdminPollServicePlugin])
@@ -185,7 +183,7 @@ const AdminDraftedPollsController = new Elysia({
 
 export const AdminPollsController = new Elysia({
   prefix: '/polls',
-  adapter: node(),
+
   tags: ['Polls'],
 })
   .use([AuthGuardPlugin, AdminPollServicePlugin])

@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import { PutDraftedPollBody, PutPublishedPollBody } from './models'
@@ -406,7 +405,6 @@ export class AdminPollRepository {
 
 export const AdminPollRepositoryPlugin = new Elysia({
   name: 'AdminPollRepository',
-  adapter: node(),
 })
   .use([PrismaServicePlugin])
   .decorate(({ prismaService }) => ({

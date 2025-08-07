@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -58,7 +57,7 @@ export class AboutUsService {
   }
 }
 
-export const AboutUsServicePlugin = new Elysia({ name: 'AboutUsService', adapter: node() })
+export const AboutUsServicePlugin = new Elysia({ name: 'AboutUsService' })
   .use(AboutUsRepositoryPlugin)
   .decorate(({ aboutUsRepository }) => ({
     aboutUsService: new AboutUsService(aboutUsRepository),

@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -299,9 +298,7 @@ export class FeedRepository {
   }
 }
 
-export const FeedRepositoryPlugin = new Elysia({
-  adapter: node(),
-})
+export const FeedRepositoryPlugin = new Elysia({ name: 'FeedRepository' })
   .use(PrismaServicePlugin)
   .decorate(({ prismaService }) => ({
     feedRepository: new FeedRepository(prismaService),
