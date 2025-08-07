@@ -62,22 +62,19 @@ jobs:
           fetch-depth: 0 # fetch all history for tags
           persist-credentials: false # avoid checking out the repository again
 
-      - name: Get docker image tag
-        id: get-tag
+      - name: Set docker image tags
+        id: set-docker-image-tags
         working-directory: ${{ inputs.PROJECT_PATH }}
         run: |
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             REF_NAME="${{ github.ref_name }}"
-            echo "TAG_NAME=${{ inputs.ENVIRONMENT }}-${REF_NAME##*@}" >> $GITHUB_OUTPUT
+            TAG_NAME=${{ inputs.ENVIRONMENT }}-${REF_NAME##*@}
           else
-            echo "TAG_NAME=${{ inputs.ENVIRONMENT }}-${{ github.sha }}" >> $GITHUB_OUTPUT
+            TAG_NAME=${{ inputs.ENVIRONMENT }}-${{ github.sha }}
           fi
 
-      - name: Setup docker image tags
-        id: set-docker-image-tags
-        run: |
           OWNER_LC=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')
-          echo "DOCKER_IMAGE_URI=${{ inputs.DOCKER_REGISTRY }}/${OWNER_LC}/${{ inputs.PACKAGE_NAME }}:${{ steps.get-tag.outputs.TAG_NAME }}" >> $GITHUB_OUTPUT
+          echo "DOCKER_IMAGE_URI=${{ inputs.DOCKER_REGISTRY }}/${OWNER_LC}/${{ inputs.PACKAGE_NAME }}:${TAG_NAME}" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
