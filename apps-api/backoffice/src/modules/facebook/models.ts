@@ -98,3 +98,31 @@ export const UnlinkPageResponse = t.Object({
   }),
 })
 export type UnlinkPageResponse = Static<typeof UnlinkPageResponse>
+
+export const ValidateFacebookWebhookQuery = t.Object({
+  'hub.mode': t.String({
+    description: 'The mode of the webhook request, should be "subscribe"',
+    enum: ['subscribe'],
+  }),
+  'hub.verify_token': t.String({
+    description: 'The verification token to validate the webhook request',
+    minLength: 1,
+  }),
+  'hub.challenge': t.String({
+    description: 'The challenge string to respond with for verification',
+    minLength: 1,
+  }),
+})
+export type ValidateFacebookWebhookQuery = Static<typeof ValidateFacebookWebhookQuery>
+
+export const ValidateFacebookWebhookResponse = t.String({
+  description: 'The challenge string to respond with for verification',
+})
+export type ValidateFacebookWebhookResponse = Static<typeof ValidateFacebookWebhookResponse>
+
+export const HandleFacebookWebhookHeaders = t.Object({
+  'x-hub-signature-256': t.String({
+    description: 'The SHA-256 signature header for the Facebook webhook request',
+    minLength: 1,
+  }),
+})

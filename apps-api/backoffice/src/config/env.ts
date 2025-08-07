@@ -43,6 +43,9 @@ const envConfigSchema = t.Object({
   }),
   FACEBOOK_APP_ID: t.String({ description: 'Facebook App ID' }),
   FACEBOOK_APP_SECRET: t.String({ description: 'Facebook App Secret' }),
+  FACEBOOK_WEBHOOK_VERIFY_TOKEN: t.String({
+    description: 'Token used to verify Facebook webhook requests',
+  }),
 
   GCP_PROJECT_ID: t.String({
     description: 'Google Cloud Project ID',

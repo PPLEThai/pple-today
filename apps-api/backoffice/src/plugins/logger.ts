@@ -77,7 +77,12 @@ export const loggerBuilder = (config: StandaloneLoggerOptions) => {
             },
           }
         : undefined,
-    redact: ['request.headers.cookie', 'request.headers.authorization', 'body.accessToken'],
+    redact: [
+      'request.headers.cookie',
+      'request.headers.authorization',
+      'body.accessToken',
+      'body.facebookPageAccessToken',
+    ],
     serializers,
     formatters,
   })
