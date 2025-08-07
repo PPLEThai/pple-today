@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import {
@@ -29,7 +28,6 @@ import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../.
 
 export const PostsController = new Elysia({
   prefix: '/posts',
-  adapter: node(),
   tags: ['Posts'],
 })
   .use([AuthGuardPlugin, PostServicePlugin])

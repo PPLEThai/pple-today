@@ -483,7 +483,6 @@ function ToastExample() {
 function QueryExample() {
   const [token, setToken] = useState<string>('')
   const sampleQuery = queryClient.useQuery(
-    'get',
     '/auth/me',
     {
       headers: {

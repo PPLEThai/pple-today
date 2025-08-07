@@ -1,13 +1,12 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { InternalErrorCode, InternalErrorCodeSchemas } from '../dtos/error'
+import { InternalErrorCode } from '../dtos/error'
+import { mapErrorCodeToResponse } from '../utils/error'
 import { introspectAccessToken } from '../utils/jwt'
 
 export const AuthGuardPlugin = new Elysia({
-  adapter: node(),
-  name: 'auth-guard-plugin',
+  name: 'AuthGuardPlugin',
 })
   .decorate({
     async getCurrentUser(headers: Record<string, string | undefined>) {
@@ -28,7 +27,7 @@ export const AuthGuardPlugin = new Elysia({
             return { user: null }
           }
 
-          return status(InternalErrorCodeSchemas[user.error.code].status, user.error)
+          return mapErrorCodeToResponse(user.error, status)
         }
 
         return { user: user.value }
@@ -39,14 +38,14 @@ export const AuthGuardPlugin = new Elysia({
         const user = await getCurrentUser(headers)
 
         if (user.isErr()) {
-          return status(InternalErrorCodeSchemas[user.error.code].status, user.error)
+          return mapErrorCodeToResponse(user.error, status)
         }
 
         if (!user.value) {
-          return status(401, {
-            code: InternalErrorCode.UNAUTHORIZED,
-            message: 'User not authenticated',
-          })
+          return mapErrorCodeToResponse(
+            { code: InternalErrorCode.UNAUTHORIZED, message: 'User not authenticated' },
+            status
+          )
         }
 
         return { user: user.value }

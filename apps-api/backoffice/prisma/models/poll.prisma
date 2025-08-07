@@ -5,7 +5,7 @@ enum PollType {
 
 // Published models for Poll and PollOption
 model Poll {
-    feedItemId  String   @id @default(cuid())
+    feedItemId  String   @id
     title       String
     description String?
     endAt       DateTime

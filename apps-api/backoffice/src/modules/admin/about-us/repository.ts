@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import { AboutUs } from '../../../dtos/about-us'
@@ -21,7 +20,7 @@ export class AboutUsRepository {
   }
 }
 
-export const AboutUsRepositoryPlugin = new Elysia({ name: 'AboutUsRepository', adapter: node() })
+export const AboutUsRepositoryPlugin = new Elysia({ name: 'AboutUsRepository' })
   .use(PrismaServicePlugin)
   .decorate(({ prismaService }) => ({
     aboutUsRepository: new AboutUsRepository(prismaService),
