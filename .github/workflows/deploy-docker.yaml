@@ -135,8 +135,7 @@ jobs:
               DOCKER_COMPOSE_FILE=$(echo $package | jq -r '.dockerComposePath')
 
               echo "Deploying ${PACKAGE_NAME} with image tag ${IMAGE_TAG}"
-
-              docker compose -f $DOCKER_COMPOSE_FILE down
+              
               yq -y '.services."${PACKAGE_NAME}".image = "${{ steps.set-docker-image-tags.outputs.DOCKER_IMAGE_URI }}"' templates/${DOCKER_COMPOSE_FILE}.tmpl > ${DOCKER_COMPOSE_FILE}
 
               docker compose -f $DOCKER_COMPOSE_FILE up -d
