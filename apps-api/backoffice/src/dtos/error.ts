@@ -35,6 +35,9 @@ const FILE_ERROR_SCHEMA = {
   FILE_UPLOAD_ERROR: {
     status: 500,
   },
+  FILE_DELETE_ERROR: {
+    status: 500,
+  },
   FILE_CREATE_SIGNED_URL_ERROR: {
     status: 500,
   },

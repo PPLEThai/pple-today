@@ -52,6 +52,8 @@ export const AnnouncementsController = new Elysia({
         switch (announcement.error.code) {
           case InternalErrorCode.ANNOUNCEMENT_NOT_FOUND:
             return mapErrorCodeToResponse(announcement.error, status)
+          case InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR:
+            return mapErrorCodeToResponse(announcement.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(announcement.error, status)
           default:
@@ -67,6 +69,7 @@ export const AnnouncementsController = new Elysia({
         200: GetAnnouncementByIdResponse,
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
+          InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

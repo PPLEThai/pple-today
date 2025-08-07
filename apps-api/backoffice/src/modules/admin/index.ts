@@ -1,6 +1,7 @@
 import Elysia from 'elysia'
 
 import { AdminAboutUsController } from './about-us'
+import { AdminAnnouncementsController } from './announcements'
 import { AdminPollsController } from './poll'
 
 export const AdminController = new Elysia({
@@ -10,3 +11,4 @@ export const AdminController = new Elysia({
 })
   .use(AdminAboutUsController)
   .use(AdminPollsController)
+  .use(AdminAnnouncementsController)
