@@ -67,7 +67,8 @@ jobs:
         working-directory: ${{ inputs.PROJECT_PATH }}
         run: |
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            echo "TAG_NAME=${{ inputs.ENVIRONMENT }}-${{ github.ref_name.split('@')[-1] }}" >> $GITHUB_OUTPUT
+            REF_NAME="${{ github.ref_name }}"
+            echo "TAG_NAME=${{ inputs.ENVIRONMENT }}-${REF_NAME##*@}" >> $GITHUB_OUTPUT
           else
             echo "TAG_NAME=${{ inputs.ENVIRONMENT }}-${{ github.sha }}" >> $GITHUB_OUTPUT
           fi
