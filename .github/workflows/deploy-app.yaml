@@ -40,30 +40,65 @@ permissions:
   packages: write # to be able to push the Docker image to GitHub Container Registry
 
 jobs:
-  get-deploy-condition:
-    name: Determine Deploy Conditions
+  get-affected-apps:
+    name: Get affected applications
     runs-on: ubuntu-latest
     outputs:
-      deploy-mobile-app: ${{ steps.set-deploy-condition.outputs.deploy-mobile-app }}
-      deploy-backoffice: ${{ steps.set-deploy-condition.outputs.deploy-backoffice }}
-      deploy-api: ${{ steps.set-deploy-condition.outputs.deploy-api }}
-      migrate-database: ${{ steps.set-deploy-condition.outputs.migrate-database }}
+      packages: ${{ steps.affected-apps.outputs.packages }}
+      deploy-mobile-app: ${{ steps.affected-apps.outputs.deploy-mobile-app }}
+      migrate-database: ${{ steps.affected-apps.outputs.migrate-database }}
     steps:
-      - name: Set deploy condition
-        id: set-deploy-condition
+      - name: Get affected web application names
+        id: affected-apps
         run: |
-          echo "Determining deployment conditions based on inputs and ref..."
-          echo "Ref: ${{ github.ref }}"
+          function constructMetadata {
+            NAME=$1
+            PACKAGE_PATH=$2
+            DOCKER_COMPOSE_PATH=$3
+            REF=${{ github.ref }}
 
-          echo "deploy-mobile-app=${{ github.event.inputs.android || github.event.inputs.ios }}" >> $GITHUB_OUTPUT
-          echo "deploy-backoffice=${{ github.event.inputs.backoffice == 'true' && (startsWith(github.ref, 'refs/tags/@client/backoffice') || startsWith(github.ref, 'refs/heads/')) }}" >> $GITHUB_OUTPUT
-          echo "deploy-api=${{ github.event.inputs.api == 'true' && (startsWith(github.ref, 'refs/tags/@api/backoffice') || startsWith(github.ref, 'refs/heads/')) }}" >> $GITHUB_OUTPUT
-          echo "migrate-database=${{ github.event.inputs.migrate-database == 'true' }}" >> $GITHUB_OUTPUT
+            if [[ "${{ github.ref }}" == "refs/tags"* ]]; then
+              IMAGE_TAG=${{ inputs.environment }}-$(cat $PACKAGE_PATH/package.json | jq -r '.version')
+            else 
+              IMAGE_TAG=${{ inputs.environment }}-${{ github.sha }}
+            fi
+
+            ITEM="{
+              \"name\": \"$NAME\",
+              \"ref\": \"$REF\",
+              \"imageTag\": \"$IMAGE_TAG\",
+              \"path\": \"$PACKAGE_PATH\",
+              \"version\": \"$IMAGE_TAG\",
+              \"dockerComposePath\": \"$DOCKER_COMPOSE_PATH\"
+            }"
+            
+            echo $ITEM
+          }
+
+          PACKAGES="[]"
+
+          if [[ ${{ inputs.api }} == true ]]; then
+            METADATA=$(constructMetadata "pple-api" "apps-api/backoffice" "docker-compose.api.yaml")
+            PACKAGES=$(echo $PACKAGES | jq -c ". += [${METADATA}]")
+          fi
+
+          if [[ ${{ inputs.backoffice }} == true ]]; then
+              METADATA=$(constructMetadata "pple-backoffice" "apps-client/backoffice" "docker-compose.backoffice.yaml")
+              PACKAGES=$(echo $PACKAGES | jq -c ". += [${METADATA}]")
+          fi
+
+          echo $PACKAGES | jq
+
+          echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
+          echo "packages=$PACKAGES"
+
+          echo "mobile-app=${{ inputs.android == 'true' || inputs.ios == 'true' }}" >> $GITHUB_OUTPUT
+          echo "migrate-database=${{ inputs.migrate-database == 'true' }}" >> $GITHUB_OUTPUT
 
   deploy-mobile-app:
     name: Deploy Beta Mobile App
-    if: ${{ needs.get-deploy-condition.outputs.deploy-mobile-app == 'true' }}
-    needs: get-deploy-condition
+    if: ${{ needs.get-affected-apps.outputs.mobile-app == 'true' }}
+    needs: get-affected-apps
     uses: ./.github/workflows/mobile-beta-deployment.yaml
     secrets: 'inherit'
     with:
@@ -72,17 +107,14 @@ jobs:
       groups: ${{ github.event.inputs.groups }}
       environment: ${{ github.event.inputs.environment }}
 
-  deploy-backoffice:
-    name: Deploy Backoffice
-    if: ${{ needs.get-deploy-condition.outputs.deploy-backoffice == 'true' }}
-    needs: get-deploy-condition
+  deploy-docker:
+    name: Deploy docker application And deploy
+    if: ${{ needs.get-affected-apps.outputs.packages != '[]' }}
+    needs: get-affected-apps
     uses: ./.github/workflows/deploy-docker.yaml
     with:
-      PACKAGE_NAME: pple-backoffice
-      ENVIRONMENT: ${{ github.event.inputs.environment }}
-      DOCKER_COMPOSE_FILE: docker-compose.backoffice.yaml
-      DOCKER_REGISTRY: ghcr.io
-      PROJECT_PATH: ./apps-client/backoffice
+      packages: ${{ needs.get-affected-apps.outputs.packages }}
+      docker_registry: ghcr.io
     secrets:
       OVPN_CONFIG: ${{ secrets.OVPN_CONFIG }}
       OVPN_USERNAME: ${{ secrets.OVPN_USERNAME }}
@@ -93,30 +125,10 @@ jobs:
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       WEB_CLIENT_ENV: ${{ secrets.WEB_CLIENT_ENV }}
 
-  deploy-api:
-    name: Deploy API
-    if: ${{ needs.get-deploy-condition.outputs.deploy-api == 'true' }}
-    needs: get-deploy-condition
-    uses: ./.github/workflows/deploy-docker.yaml
-    with:
-      PACKAGE_NAME: pple-api
-      ENVIRONMENT: ${{ github.event.inputs.environment }}
-      DOCKER_COMPOSE_FILE: docker-compose.api.yaml
-      DOCKER_REGISTRY: ghcr.io
-      PROJECT_PATH: ./apps-api/backoffice
-    secrets:
-      OVPN_CONFIG: ${{ secrets.OVPN_CONFIG }}
-      OVPN_USERNAME: ${{ secrets.OVPN_USERNAME }}
-      OVPN_PASSWORD: ${{ secrets.OVPN_PASSWORD }}
-      OVPN_USER_KEY: ${{ secrets.OVPN_USER_KEY }}
-      SSH_HOST: ${{ secrets.SSH_HOST }}
-      SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
-      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-
   migrate-database:
     name: Migrate Database
-    if: ${{ needs.get-deploy-condition.outputs.migrate-database == 'true' }}
-    needs: get-deploy-condition
+    if: ${{ needs.get-affected-apps.outputs.migrate-database == 'true' }}
+    needs: get-affected-apps
     uses: ./.github/workflows/migrate-database.yaml
     secrets:
       OVPN_CONFIG: ${{ secrets.OVPN_CONFIG }}

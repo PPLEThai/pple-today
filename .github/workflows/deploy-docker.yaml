@@ -3,25 +3,13 @@ name: Publish docker image and deploy new version
 on:
   workflow_call:
     inputs:
-      PACKAGE_NAME:
+      packages:
         type: string
-        description: Name of the package to be published
+        description: JSON array of package metadata to be published
         required: true
-      ENVIRONMENT:
-        type: string
-        description: Environment name (e.g., production, staging)
-        required: true
-      DOCKER_COMPOSE_FILE:
-        type: string
-        description: Path to the Docker Compose file
-        required: true
-      DOCKER_REGISTRY:
+      docker_registry:
         type: string
         description: Docker registry URL
-        required: true
-      PROJECT_PATH:
-        type: string
-        description: Path to the Dockerfile
         required: true
     secrets:
       OVPN_CONFIG:
@@ -53,8 +41,14 @@ jobs:
   release:
     name: Build and push Docker image
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        packages: ${{ fromJson(inputs.packages) }}
+
     outputs:
       DOCKER_IMAGE_URI: ${{ steps.set-docker-image-tags.outputs.DOCKER_IMAGE_URI }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -64,17 +58,10 @@ jobs:
 
       - name: Set docker image tags
         id: set-docker-image-tags
-        working-directory: ${{ inputs.PROJECT_PATH }}
+        working-directory: ${{ matrix.packages.path }}
         run: |
-          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            REF_NAME="${{ github.ref_name }}"
-            TAG_NAME=${{ inputs.ENVIRONMENT }}-${REF_NAME##*@}
-          else
-            TAG_NAME=${{ inputs.ENVIRONMENT }}-${{ github.sha }}
-          fi
-
           OWNER_LC=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')
-          echo "DOCKER_IMAGE_URI=${{ inputs.DOCKER_REGISTRY }}/${OWNER_LC}/${{ inputs.PACKAGE_NAME }}:${TAG_NAME}" >> $GITHUB_OUTPUT
+          echo "DOCKER_IMAGE_URI=${{ inputs.docker_registry }}/${OWNER_LC}/${{ matrix.packages.name }}:${{ matrix.packages.imageTag }}" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
@@ -85,7 +72,7 @@ jobs:
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1
         with:
-          registry: ${{ inputs.DOCKER_REGISTRY }}
+          registry: ${{ inputs.docker_registry }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -93,13 +80,13 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           context: .
-          file: ${{ inputs.PROJECT_PATH }}/Dockerfile
+          file: ${{ matrix.packages.path }}/Dockerfile
           platforms: linux/amd64
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            "VERSION=${{ inputs.TAG_NAME }}"
+            "VERSION=${{ matrix.packages.version }}"
             "LOCAL_ENV=${{ secrets.WEB_CLIENT_ENV }}"
           tags: ${{ steps.set-docker-image-tags.outputs.DOCKER_IMAGE_URI }}
 
@@ -124,6 +111,13 @@ jobs:
           password: ${{ secrets.OVPN_PASSWORD }}
           client_key: ${{ secrets.OVPN_USER_KEY }}
 
+      - name: Set docker image tags
+        id: set-docker-image-tags
+        run: |
+          OWNER_LC=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')
+
+          echo "BASE_DOCKER_IMAGE_URI=${{ inputs.docker_registry }}/${OWNER_LC}" >> $GITHUB_OUTPUT
+
       - name: Use SSH
         uses: appleboy/ssh-action@master
         with:
@@ -131,10 +125,20 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ inputs.DOCKER_REGISTRY }} -u ${{ github.actor }} --password-stdin
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ inputs.docker_registry }} -u ${{ github.actor }} --password-stdin
             cd ~/app
 
-            docker compose -f ${{ inputs.DOCKER_COMPOSE_FILE }} down
-            yq -y '.services."${{ inputs.PACKAGE_NAME }}".image = "${{ needs.release.outputs.DOCKER_IMAGE_URI }}"' templates/${{ inputs.DOCKER_COMPOSE_FILE }}.tmpl > ${{ inputs.DOCKER_COMPOSE_FILE }}
+            while read package
+            do
+              PACKAGE_NAME=$(echo $package | jq -r '.name')
+              IMAGE_TAG=$(echo $package | jq -r '.imageTag')
+              DOCKER_COMPOSE_FILE=$(echo $package | jq -r '.dockerComposePath')
 
-            docker compose -f ${{ inputs.DOCKER_COMPOSE_FILE }} up -d
+              echo "Deploying ${PACKAGE_NAME} with image tag ${IMAGE_TAG}"
+
+              docker compose -f $DOCKER_COMPOSE_FILE down
+              yq -y '.services."${PACKAGE_NAME}".image = "${{ steps.set-docker-image-tags.outputs.DOCKER_IMAGE_URI }}"' templates/${DOCKER_COMPOSE_FILE}.tmpl > ${DOCKER_COMPOSE_FILE}
+
+              docker compose -f $DOCKER_COMPOSE_FILE up -d
+
+            done < <(echo "${{ inputs.packages }}" | jq -c '.[]')
