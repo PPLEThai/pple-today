@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import { PutDraftedAnnouncementBody, PutPublishedAnnouncementBody } from './models'
@@ -463,7 +462,6 @@ export class AdminAnnouncementRepository {
 
 export const AdminAnnouncementRepositoryPlugin = new Elysia({
   name: 'AdminAnnouncementRepository',
-  adapter: node(),
 })
   .use([PrismaServicePlugin, FileServicePlugin])
   .decorate(({ prismaService, fileService }) => ({

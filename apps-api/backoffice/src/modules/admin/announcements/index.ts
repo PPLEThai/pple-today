@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import {
@@ -25,7 +24,6 @@ import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../.
 
 const AdminDraftedAnnouncementsController = new Elysia({
   prefix: '/draft',
-  adapter: node(),
   tags: ['Drafted Announcements'],
 })
   .use([AuthGuardPlugin, AdminAnnouncementServicePlugin])
@@ -193,7 +191,6 @@ const AdminDraftedAnnouncementsController = new Elysia({
 
 export const AdminAnnouncementsController = new Elysia({
   prefix: '/announcements',
-  adapter: node(),
   tags: ['Announcements'],
 })
   .use([AuthGuardPlugin, AdminAnnouncementServicePlugin])

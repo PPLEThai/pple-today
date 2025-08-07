@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -166,7 +165,6 @@ export class AdminAnnouncementService {
 
 export const AdminAnnouncementServicePlugin = new Elysia({
   name: 'AdminAnnouncementService',
-  adapter: node(),
 })
   .use(AdminAnnouncementRepositoryPlugin)
   .decorate(({ adminAnnouncementRepository }) => ({
