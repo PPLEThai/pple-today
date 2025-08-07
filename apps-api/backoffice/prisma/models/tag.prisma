@@ -3,6 +3,11 @@ enum HashTagStatus {
     SUSPEND
 }
 
+enum TopicStatus {
+    PUBLISH
+    DRAFT
+}
+
 model HashTag {
     id        String        @id @default(cuid())
     name      String        @unique
@@ -17,12 +22,13 @@ model HashTag {
 }
 
 model Topic {
-    id          String   @id @default(cuid())
-    name        String   @unique
+    id          String      @id @default(cuid())
+    name        String      @unique
     description String?
     bannerImage String?
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
+    status      TopicStatus @default(DRAFT)
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
 
     hashTagInTopics         HashTagInTopic[]
     followedTopics          UserFollowsTopic[]
