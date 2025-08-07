@@ -8,7 +8,6 @@ export { PostReactionType }
 
 export const Post = t.Object({
   id: t.String({ description: 'The ID of the post' }),
-  title: t.String({ description: 'The title of the post' }),
   content: t.String({ description: 'The content of the post' }),
   createdAt: t.String({ description: 'The creation date of the post' }),
   commentCount: t.Number({ description: 'The number of comments on the post' }),

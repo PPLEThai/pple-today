@@ -1,7 +1,7 @@
-import { Err, err, fromPromise } from 'neverthrow'
+import { Err, fromPromise } from 'neverthrow'
 import { Simplify, ValueOf } from 'type-fest'
 
-import { ApiErrorResponse } from './error'
+import { ApiErrorResponse, err } from './error'
 
 import { PrismaClientKnownRequestError } from '../../__generated__/prisma/runtime/client'
 import { InternalErrorCode } from '../dtos/error'

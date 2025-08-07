@@ -7,6 +7,9 @@ configDotenv()
 const envConfigSchema = t.Object({
   PORT: t.Number({ default: 5000 }),
   DATABASE_URL: t.String(),
+  APP_ENV: t.Union([t.Literal('development'), t.Literal('production')], {
+    default: 'production',
+  }),
 
   OIDC_URL: t.String({ description: 'OIDC URL for authentication' }),
   OIDC_KEY_ID: t.String({ description: 'Key ID for OIDC' }),
@@ -33,6 +36,26 @@ const envConfigSchema = t.Object({
       description: 'Development OIDC Client ID for testing purposes',
     })
   ),
+
+  FACEBOOK_API_URL: t.String({
+    default: 'https://graph.facebook.com/v23.0',
+    description: 'Base URL for Facebook Graph API',
+  }),
+  FACEBOOK_APP_ID: t.String({ description: 'Facebook App ID' }),
+  FACEBOOK_APP_SECRET: t.String({ description: 'Facebook App Secret' }),
+
+  GCP_PROJECT_ID: t.String({
+    description: 'Google Cloud Project ID',
+  }),
+  GCP_CLIENT_EMAIL: t.String({
+    description: 'Google Cloud Client Email',
+  }),
+  GCP_PRIVATE_KEY: t.String({
+    description: 'Google Cloud Private Key',
+  }),
+  GCP_STORAGE_BUCKET_NAME: t.String({
+    description: 'Google Cloud Storage Bucket Name',
+  }),
 })
 
 const serverEnv = Value.Parse(envConfigSchema, process.env)

@@ -1,7 +1,7 @@
 model Post {
-    feedItemId String @id @default(cuid())
+    feedItemId     String @id @default(cuid())
+    facebookPostId String @unique
 
-    title    String
     content  String?
     images   PostImage[]
     hashTags PostHashTag[]
@@ -10,9 +10,13 @@ model Post {
 }
 
 model PostImage {
-    id        String   @id @default(cuid())
-    postId    String
-    url       String
+    id     String @id @default(cuid())
+    postId String
+
+    url      String
+    cacheKey String @unique
+    order    Int
+
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 

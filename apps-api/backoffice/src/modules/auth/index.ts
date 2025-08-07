@@ -6,7 +6,7 @@ import { AuthServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
-import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
+import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
 
 export const AuthController = new Elysia({
   adapter: node(),
@@ -63,7 +63,7 @@ export const AuthController = new Elysia({
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(error, status)
           default:
-            throw new Error('Unhandled error code')
+            exhaustiveGuard(error)
         }
       }
 
