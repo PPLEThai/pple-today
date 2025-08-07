@@ -1,6 +1,6 @@
 import Elysia from 'elysia'
 
-import { CreateHashtagBody } from './models'
+import { CreateHashtagBody, UpdateHashtagBody } from './models'
 
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { fromPrismaPromise } from '../../../utils/prisma'
@@ -50,7 +50,7 @@ export class AdminHashtagRepository {
     )
   }
 
-  async createHashtag(data: PutHashtagBody) {
+  async createHashtag(data: CreateHashtagBody) {
     return await fromPrismaPromise(
       this.prismaService.hashTag.create({
         data: {
@@ -61,7 +61,7 @@ export class AdminHashtagRepository {
     )
   }
 
-  async updateHashtagById(hashtagId: string, data: PutHashtagBody) {
+  async updateHashtagById(hashtagId: string, data: UpdateHashtagBody) {
     return await fromPrismaPromise(
       this.prismaService.hashTag.update({
         where: { id: hashtagId },

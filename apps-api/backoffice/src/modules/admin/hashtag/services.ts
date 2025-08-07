@@ -2,11 +2,12 @@ import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import {
+  CreateHashtagBody,
+  CreateHashtagResponse,
   DeleteHashtagResponse,
   GetHashtagByIdResponse,
   GetHashtagsResponse,
-  CreateHashtagResponse,
-  CreateHashtagBody,
+  UpdateHashtagBody,
   UpdateHashtagResponse,
 } from './models'
 import { AdminHashtagRepository, AdminHashtagRepositoryPlugin } from './repository'
@@ -38,10 +39,10 @@ export class AdminHashtagService {
         },
       })
 
-    return ok(result.value satisfies GetHashtagResponse)
+    return ok(result.value satisfies GetHashtagByIdResponse)
   }
 
-  async createHashtag(data: PutHashtagBody) {
+  async createHashtag(data: CreateHashtagBody) {
     const result = await this.adminHashtagRepository.createHashtag(data)
     if (result.isErr())
       return mapRawPrismaError(result.error, {
@@ -50,10 +51,10 @@ export class AdminHashtagService {
         },
       })
 
-    return ok({ hashtagId: result.value.id } satisfies PostHashtagResponse)
+    return ok({ hashtagId: result.value.id } satisfies CreateHashtagResponse)
   }
 
-  async updateHashtagById(hashtagId: string, data: PutHashtagBody) {
+  async updateHashtagById(hashtagId: string, data: UpdateHashtagBody) {
     const result = await this.adminHashtagRepository.updateHashtagById(hashtagId, data)
     if (result.isErr())
       return mapRawPrismaError(result.error, {
@@ -65,7 +66,7 @@ export class AdminHashtagService {
         },
       })
 
-    return ok({ message: `Hashtag "${result.value.id}" updated.` } satisfies PutHashtagResponse)
+    return ok({ message: `Hashtag "${result.value.id}" updated.` } satisfies UpdateHashtagResponse)
   }
 
   async deleteHashtagById(hashtagId: string) {
