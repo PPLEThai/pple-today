@@ -16,7 +16,7 @@ class ExpoScrollForwarderView(context: Context, appContext: AppContext) :
     ExpoView(context, appContext) {
 
     var scrollViewTag: Int? = null
-        set (scrollViewTag) {
+        set(scrollViewTag) {
             field = scrollViewTag
             tryFindScrollView()
         }
@@ -44,7 +44,8 @@ class ExpoScrollForwarderView(context: Context, appContext: AppContext) :
             }
             // Somehow the scrollView cannot be found on first render
             // So we need to use a viewTreeObserver
-            rootView.viewTreeObserver.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+            rootView.viewTreeObserver.addOnGlobalLayoutListener(object :
+                ViewTreeObserver.OnGlobalLayoutListener {
                 override fun onGlobalLayout() {
                     val view = rootView.findViewById<View>(scrollViewTag)
                     Log.d(TAG, "ScrollView observe view change $view")
@@ -74,6 +75,7 @@ class ExpoScrollForwarderView(context: Context, appContext: AppContext) :
                     it.offsetLocation(translationX, translationY)
                 }
             }
+
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 shouldScrollVertical = isScrollingY
                 isScrollingX = false
@@ -81,6 +83,7 @@ class ExpoScrollForwarderView(context: Context, appContext: AppContext) :
                 downEvent?.recycle()
                 downEvent = null
             }
+
             MotionEvent.ACTION_MOVE -> {
                 if (abs(ev.x - downX) > touchSlop && !isScrollingX && !isScrollingY) {
                     isScrollingX = true
