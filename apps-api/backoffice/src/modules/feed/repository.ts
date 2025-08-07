@@ -2,12 +2,59 @@ import node from '@elysiajs/node'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { FeedItemReactionType, FeedItemType } from '../../../__generated__/prisma'
+import { FeedItemReactionType } from '../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
 
 export class FeedRepository {
   constructor(private prismaService: PrismaService) {}
+
+  async getFeedItemById(feedItemId: string, userId?: string) {
+    return await fromPrismaPromise(
+      this.prismaService.feedItem.findUniqueOrThrow({
+        where: { id: feedItemId },
+        include: {
+          author: true,
+          announcement: {
+            include: {
+              attachments: true,
+            },
+          },
+          reactions: userId
+            ? {
+                where: { userId },
+              }
+            : undefined,
+          reactionCounts: true,
+          poll: {
+            include: {
+              options: {
+                include: {
+                  pollAnswers: userId
+                    ? {
+                        where: {
+                          userId,
+                        },
+                      }
+                    : undefined,
+                },
+              },
+            },
+          },
+          post: {
+            include: {
+              hashTags: {
+                include: {
+                  hashTag: true,
+                },
+              },
+              images: true,
+            },
+          },
+        },
+      })
+    )
+  }
 
   async getFeedItemReactionByUserId({
     feedItemId,
@@ -177,13 +224,12 @@ export class FeedRepository {
 
   async getFeedItemComments(
     feedItemId: string,
-    query: { feedItemType: FeedItemType; userId?: string; page: number; limit: number }
+    query: { userId?: string; page: number; limit: number }
   ) {
     return await fromPrismaPromise(
       this.prismaService.feedItemComment.findMany({
         where: {
           feedItemId,
-          feedItem: { type: query.feedItemType },
           OR: [{ isPrivate: false }, { userId: query.userId }],
         },
         select: {

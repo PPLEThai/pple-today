@@ -179,8 +179,8 @@ export class FacebookService {
     if (unlinkPostsResult.isErr()) {
       return mapRawPrismaError(unlinkPostsResult.error, {
         RECORD_NOT_FOUND: {
-          code: InternalErrorCode.POST_NOT_FOUND,
-          message: 'Post not found',
+          code: InternalErrorCode.USER_NOT_FOUND,
+          message: 'User not found',
         },
       })
     }
