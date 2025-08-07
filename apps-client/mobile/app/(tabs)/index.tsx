@@ -392,6 +392,7 @@ export function TabViewInsideScroll() {
   const onTabPressed = React.useCallback(
     (index: number) => {
       pagerView.current?.setPage(index)
+      setCurrentPage(index)
       runOnUI(adjustScrollForOtherPages)('dragging')
     },
     [adjustScrollForOtherPages]
