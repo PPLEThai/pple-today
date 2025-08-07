@@ -512,13 +512,12 @@ export function TabViewInsideScroll() {
   // https://github.com/software-mansion/react-native-reanimated/issues/6992
   return (
     <PagerProvider value={{ dragProgress, registerRef, scrollHandler, headerHeight }}>
-      <View className="flex-1 bg-base-bg-default">
-        <AnimatedExpoScrollForwarderView
-          style={[styles.pagerHeader, headerTransform]}
-          scrollViewTag={scrollViewTag}
-          // collapsable={false}
-        >
-          <View style={{ backgroundColor: 'transparent' }}>
+      <AnimatedExpoScrollForwarderView scrollViewTag={scrollViewTag} style={{ flex: 1 }}>
+        <View className="flex-1 bg-base-bg-default">
+          <Animated.View
+            style={[styles.pagerHeader, headerTransform]}
+            // collapsable={false}
+          >
             <View
               className=""
               ref={headerRef}
@@ -574,25 +573,25 @@ export function TabViewInsideScroll() {
                 />
               </View>
             </ScrollView>
-          </View>
-        </AnimatedExpoScrollForwarderView>
-        <AnimatedPagerView
-          ref={pagerView}
-          style={styles.pagerView}
-          initialPage={0}
-          onPageScroll={handlePageScroll}
-        >
-          {Array.from({ length: 3 }).map((_, index) => (
-            <View key={index} collapsable={false}>
-              <PagerContent
-                index={index}
-                isFocused={index === currentPage}
-                setScrollViewTag={setScrollViewTag}
-              />
-            </View>
-          ))}
-        </AnimatedPagerView>
-      </View>
+          </Animated.View>
+          <AnimatedPagerView
+            ref={pagerView}
+            style={styles.pagerView}
+            initialPage={0}
+            onPageScroll={handlePageScroll}
+          >
+            {Array.from({ length: 3 }).map((_, index) => (
+              <View key={index} collapsable={false}>
+                <PagerContent
+                  index={index}
+                  isFocused={index === currentPage}
+                  setScrollViewTag={setScrollViewTag}
+                />
+              </View>
+            ))}
+          </AnimatedPagerView>
+        </View>
+      </AnimatedExpoScrollForwarderView>
     </PagerProvider>
   )
 }
