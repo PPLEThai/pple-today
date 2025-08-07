@@ -1,10 +1,11 @@
-export { type EdenFetch } from '@elysiajs/eden/fetch'
+import { type EdenFetch } from '@elysiajs/eden/fetch'
 import {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from '@tanstack/react-query'
+import Elysia from 'elysia'
 import { Prettify2 } from 'elysia/types'
 import { ConditionalExcept, IntClosedRange, IsNever, ValueOf } from 'type-fest'
 
@@ -125,6 +126,9 @@ type EdenError<
       }
     >
 
+type QueryMethod = 'get'
+type MutationMethod = 'post' | 'put' | 'patch' | 'delete'
+
 type SuccessRange = IntClosedRange<200, 299>
 type EdenSuccess<TResponse extends Record<string, unknown>> = {
   [K in keyof TResponse as K extends SuccessRange ? K : never]: TResponse[K]
@@ -145,7 +149,7 @@ export interface QueryClient<
   >,
 > {
   useQuery: <
-    const TMethod extends TAvailableMethod,
+    const TMethod extends Extract<TAvailableMethod, QueryMethod>,
     const TPath extends keyof TGroupedPathByMethod[TMethod],
     const TPayload extends RestPayload<TGroupedPathByMethod[TMethod][TPath]> = RestPayload<
       TGroupedPathByMethod[TMethod][TPath]
@@ -155,13 +159,12 @@ export interface QueryClient<
     const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
     const TError extends EdenError<TResponse> = EdenError<TResponse>,
   >(
-    method: TMethod,
     path: TPath,
     payload: TPayload,
     options?: Omit<UseQueryOptions<TSuccess, TError, TPayload>, 'queryKey'>
   ) => UseQueryResult<TSuccess, TError>
   useMutation: <
-    const TMethod extends TAvailableMethod,
+    const TMethod extends Extract<TAvailableMethod, MutationMethod>,
     const TPath extends keyof TGroupedPathByMethod[TMethod],
     const TPayload extends RestPayload<TGroupedPathByMethod[TMethod][TPath]> = RestPayload<
       TGroupedPathByMethod[TMethod][TPath]
@@ -177,7 +180,7 @@ export interface QueryClient<
     options?: UseMutationOptions<TSuccess, TError, TPayload, TContext>
   ) => UseMutationResult<TSuccess, TError, TPayload, TContext>
   queryOptions: <
-    const TMethod extends TAvailableMethod,
+    const TMethod extends Extract<TAvailableMethod, QueryMethod>,
     const TPath extends keyof TGroupedPathByMethod[TMethod],
     const TPayload extends RestPayload<TGroupedPathByMethod[TMethod][TPath]> = RestPayload<
       TGroupedPathByMethod[TMethod][TPath]
@@ -187,13 +190,12 @@ export interface QueryClient<
     const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
     const TError extends EdenError<TResponse> = EdenError<TResponse>,
   >(
-    method: TMethod,
     path: TPath,
     payload: TPayload,
     options?: Omit<UseQueryOptions<TSuccess, TError, TPayload>, 'queryKey'>
   ) => UseQueryOptions<TSuccess, TError, TPayload>
   mutationOptions: <
-    const TMethod extends TAvailableMethod,
+    const TMethod extends Extract<TAvailableMethod, MutationMethod>,
     const TPath extends keyof TGroupedPathByMethod[TMethod],
     const TPayload extends RestPayload<TGroupedPathByMethod[TMethod][TPath]> = RestPayload<
       TGroupedPathByMethod[TMethod][TPath]
@@ -209,3 +211,9 @@ export interface QueryClient<
     options?: UseMutationOptions<TSuccess, TError, TPayload, TContext>
   ) => UseMutationOptions<TSuccess, TError, TPayload, TContext>
 }
+
+export interface CreateReactQueryClientResult<T extends Elysia<any, any, any, any, any, any, any>> {
+  fetchClient: EdenFetch.Create<T>
+  queryClient: EdenFetch.Create<T> extends EdenFetch.Fn<infer Schema> ? QueryClient<Schema> : never
+}
+export { type EdenFetch }

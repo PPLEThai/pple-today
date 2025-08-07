@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import { AuthRepository, AuthRepositoryPlugin } from './repository'
@@ -41,7 +40,7 @@ export class AuthService {
   }
 }
 
-export const AuthServicePlugin = new Elysia({ name: 'AuthService', adapter: node() })
+export const AuthServicePlugin = new Elysia({ name: 'AuthService' })
   .use(AuthRepositoryPlugin)
   .decorate(({ authRepository }) => ({
     authService: {

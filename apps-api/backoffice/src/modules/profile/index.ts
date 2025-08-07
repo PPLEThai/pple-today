@@ -1,4 +1,3 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 
 import {
@@ -21,7 +20,6 @@ import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../.
 
 export const ProfileController = new Elysia({
   prefix: '/profile',
-  adapter: node(),
   tags: ['Profile'],
 })
   .use([AuthGuardPlugin, ProfileServicePlugin])
