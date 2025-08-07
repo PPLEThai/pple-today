@@ -7,9 +7,9 @@ on:
         type: string
         description: Name of the package to be published
         required: true
-      TAG_NAME:
+      ENVIRONMENT:
         type: string
-        description: Tag name for the Docker image
+        description: Environment name (e.g., production, staging)
         required: true
       DOCKER_COMPOSE_FILE:
         type: string
@@ -62,11 +62,21 @@ jobs:
           fetch-depth: 0 # fetch all history for tags
           persist-credentials: false # avoid checking out the repository again
 
+      - name: Get docker image tag
+        id: get-tag
+        working-directory: ${{ inputs.PROJECT_PATH }}
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "TAG_NAME=${{ inputs.ENVIRONMENT }}-${{ github.ref_name.split('@')[-1] }}" >> $GITHUB_OUTPUT
+          else
+            echo "TAG_NAME=${{ inputs.ENVIRONMENT }}-${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Setup docker image tags
         id: set-docker-image-tags
         run: |
           OWNER_LC=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')
-          echo "DOCKER_IMAGE_URI=${{ inputs.DOCKER_REGISTRY }}/${OWNER_LC}/${{ inputs.PACKAGE_NAME }}:${{ inputs.TAG_NAME }}" >> $GITHUB_OUTPUT
+          echo "DOCKER_IMAGE_URI=${{ inputs.DOCKER_REGISTRY }}/${OWNER_LC}/${{ inputs.PACKAGE_NAME }}:${{ steps.get-tag.outputs.TAG_NAME }}" >> $GITHUB_OUTPUT
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1

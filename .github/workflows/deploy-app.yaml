@@ -40,21 +40,26 @@ permissions:
   packages: write # to be able to push the Docker image to GitHub Container Registry
 
 jobs:
-  get-tag-name:
-    name: Get Tag Name
-    if: ${{ (github.event.inputs.backoffice == 'true') || (github.event.inputs.api == 'true') }}
+  get-deploy-condition:
     runs-on: ubuntu-latest
     outputs:
-      TAG_NAME: ${{ steps.set-tag.outputs.TAG_NAME }}
+      deploy-mobile-app: ${{ steps.set-deploy-condition.outputs.deploy-mobile-app }}
+      deploy-backoffice: ${{ steps.set-deploy-condition.outputs.deploy-backoffice }}
+      deploy-api: ${{ steps.set-deploy-condition.outputs.deploy-api }}
+      migrate-database: ${{ steps.set-deploy-condition.outputs.migrate-database }}
     steps:
-      - name: Set tag name
-        id: set-tag
+      - name: Set deploy condition
+        id: set-deploy-condition
         run: |
-          echo "TAG_NAME=${{ github.event.inputs.environment }}-${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "deploy-mobile-app=${{ github.event.inputs.android || github.event.inputs.ios }}" >> $GITHUB_OUTPUT
+          echo "deploy-backoffice=${{ github.event.inputs.backoffice == 'true' && (startsWith(github.ref_name, 'refs/tags/@client/backoffice') || startsWith(github.ref_name, 'refs/heads/')) }}" >> $GITHUB_OUTPUT
+          echo "deploy-api=${{ github.event.inputs.api == 'true' && (startsWith(github.ref_name, 'refs/tags/@api/backoffice') || startsWith(github.ref_name, 'refs/heads/')) }}" >> $GITHUB_OUTPUT
+          echo "migrate-database=${{ github.event.inputs.migrate-database == 'true' }}" >> $GITHUB_OUTPUT
 
   deploy-mobile-app:
     name: Deploy Beta Mobile App
-    if: ${{ (github.event.inputs.android == 'true') || (github.event.inputs.ios == 'true') }}
+    if: ${{ steps.get-deploy-condition.outputs.deploy-mobile-app == 'true' }}
+    needs: get-deploy-condition
     uses: ./.github/workflows/mobile-beta-deployment.yaml
     secrets: 'inherit'
     with:
@@ -65,12 +70,12 @@ jobs:
 
   deploy-backoffice:
     name: Deploy Backoffice
-    if: ${{ github.event.inputs.backoffice == 'true' }}
-    needs: get-tag-name
+    if: ${{ steps.get-deploy-condition.outputs.deploy-backoffice == 'true' }}
+    needs: get-deploy-condition
     uses: ./.github/workflows/deploy-docker.yaml
     with:
       PACKAGE_NAME: pple-backoffice
-      TAG_NAME: ${{ needs.get-tag-name.outputs.TAG_NAME }}
+      ENVIRONMENT: ${{ github.event.inputs.environment }}
       DOCKER_COMPOSE_FILE: docker-compose.backoffice.yaml
       DOCKER_REGISTRY: ghcr.io
       PROJECT_PATH: ./apps-client/backoffice
@@ -86,12 +91,12 @@ jobs:
 
   deploy-api:
     name: Deploy API
-    if: ${{ github.event.inputs.api == 'true' }}
-    needs: get-tag-name
+    if: ${{ steps.get-deploy-condition.outputs.deploy-api == 'true' }}
+    needs: get-deploy-condition
     uses: ./.github/workflows/deploy-docker.yaml
     with:
       PACKAGE_NAME: pple-api
-      TAG_NAME: ${{ needs.get-tag-name.outputs.TAG_NAME }}
+      ENVIRONMENT: ${{ github.event.inputs.environment }}
       DOCKER_COMPOSE_FILE: docker-compose.api.yaml
       DOCKER_REGISTRY: ghcr.io
       PROJECT_PATH: ./apps-api/backoffice
@@ -106,7 +111,8 @@ jobs:
 
   migrate-database:
     name: Migrate Database
-    if: ${{ github.event.inputs.migrate-database == 'true' }}
+    if: ${{ steps.get-deploy-condition.outputs.migrate-database == 'true' }}
+    needs: get-deploy-condition
     uses: ./.github/workflows/migrate-database.yaml
     secrets:
       OVPN_CONFIG: ${{ secrets.OVPN_CONFIG }}
