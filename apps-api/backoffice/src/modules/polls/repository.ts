@@ -7,6 +7,11 @@ import { fromPrismaPromise } from '../../utils/prisma'
 export class PollsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * Fetch all published polls prioritized by
+   * - nearest end date
+   * - latest creation date if end dates already passed
+   */
   async getPolls(query: { limit: number; page: number; userId?: string }) {
     const { limit, page } = query
     const skip = (page - 1) * limit
@@ -47,12 +52,16 @@ export class PollsRepository {
 
     return fromPrismaPromise(async () => {
       const polls = []
+
+      // Fetch total poll count
       const totalPollCount = await this.prisma.poll.count()
 
+      // If skip is greater than total count, return empty array
       if (totalPollCount <= skip) {
         return []
       }
 
+      // Fetch number of available polls that are not ended yet
       const availablePollCount = await this.prisma.feedItem.count({
         where: {
           type: FeedItemType.POLL,
@@ -64,6 +73,7 @@ export class PollsRepository {
         },
       })
 
+      // If skip is less than available poll count, fetch available polls first
       if (availablePollCount > skip) {
         const availablePolls = await this.prisma.feedItem.findMany({
           where: {
@@ -85,7 +95,9 @@ export class PollsRepository {
 
       const endedPollPosition = skip + limit - availablePollCount
 
+      // If we need to fetch ended polls and the position is valid
       if (endedPollPosition > 0) {
+        // Calculate the skip position for ended polls
         const endedPollSkip = ~~((endedPollPosition - 1) / limit) * limit
         const endedPolls = await this.prisma.feedItem.findMany({
           where: {
