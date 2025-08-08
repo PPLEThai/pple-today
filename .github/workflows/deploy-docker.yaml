@@ -125,7 +125,7 @@ jobs:
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            set -e
+            #!/usr/bin/env sh
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ inputs.docker_registry }} -u ${{ github.actor }} --password-stdin
             cd ~/app
 
