@@ -58,6 +58,15 @@ const ANNOUNCEMENT_ERROR_SCHEMA = {
   },
 } satisfies InternalErrorSchemas
 
+export const CAROUSEL_ERROR_SCHEMA = {
+  CAROUSEL_NOT_FOUND: {
+    status: 404,
+  },
+  CAROUSEL_INVALID_INPUT: {
+    status: 400,
+  },
+} satisfies InternalErrorSchemas
+
 const POST_ERROR_SCHEMA = {
   POST_NOT_FOUND: {
     status: 404,
@@ -158,6 +167,7 @@ export const InternalErrorCodeSchemas = {
   ...FACEBOOK_ERROR_SCHEMA,
   ...ANNOUNCEMENT_ERROR_SCHEMA,
   ...POLL_ERROR_SCHEMA,
+  ...CAROUSEL_ERROR_SCHEMA,
   ...HASHTAG_ERROR_SCHEMA,
   ...TOPIC_ERROR_SCHEMA,
 } as const
