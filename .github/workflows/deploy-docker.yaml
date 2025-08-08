@@ -139,5 +139,6 @@ jobs:
 
               yq -y ".services.\"${PACKAGE_NAME}\".image = \"${{ steps.set-docker-image-tags.outputs.BASE_DOCKER_IMAGE_URI }}/${PACKAGE_NAME}:${IMAGE_TAG}\"" templates/$DOCKER_COMPOSE_FILE.tmpl > $DOCKER_COMPOSE_FILE
 
-              COMPOSE_IGNORE_ORPHANS=true; docker compose -f $DOCKER_COMPOSE_FILE up -d
+              export COMPOSE_IGNORE_ORPHANS=True
+              docker compose -f $DOCKER_COMPOSE_FILE up -d
             done
