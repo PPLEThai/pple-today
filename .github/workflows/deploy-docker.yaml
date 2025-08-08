@@ -129,7 +129,7 @@ jobs:
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ inputs.docker_registry }} -u ${{ github.actor }} --password-stdin
             cd ~/app
 
-            (echo "${{ inputs.packages }}" | jq -c '.[]') || while read package
+            (echo '${{ inputs.packages }}' | jq -c '.[]') || while read package
             do
               PACKAGE_NAME=$(echo $package | jq -r '.name')
               IMAGE_TAG=$(echo $package | jq -r '.imageTag')
