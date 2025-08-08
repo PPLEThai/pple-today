@@ -1,5 +1,16 @@
 # @pple-today/api-client
 
+## 0.2.0
+
+### Minor Changes
+
+- [#28](https://github.com/PPLEThai/pple-today/pull/28) [`2f36ecb`](https://github.com/PPLEThai/pple-today/commit/2f36ecbfb1b04b3c345da13e482134991f356763) Thanks [@miello](https://github.com/miello)! - [PPLE-179] Implement GCP storage file upload
+  [PPLE-178] FB link page endpoint
+
+### Patch Changes
+
+- [#35](https://github.com/PPLEThai/pple-today/pull/35) [`c1db24b`](https://github.com/PPLEThai/pple-today/commit/c1db24be93cd2b3f59728268380d919b9fa276d0) Thanks [@miello](https://github.com/miello)! - [PPLE-204] Refactor plugin structure and default error stack trace
+
 ## 0.1.0
 
 ### Minor Changes
