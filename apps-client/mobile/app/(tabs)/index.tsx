@@ -129,10 +129,14 @@ interface BannerItem {
 function BannerSection() {
   return (
     <View className="w-full pt-2 py-4 ">
-      <Carousel count={BANNER_ITEMS.length} itemWidth={320} gap={8} paddingX={16}>
+      <Carousel count={BANNER_ITEMS.length} itemWidth={320} gap={8} paddingHorizontal={16}>
         <CarouselScrollView>
           {BANNER_ITEMS.map((item) => (
-            <CarouselItem key={item.id} item={item} />
+            <CarouselItem
+              key={item.id}
+              item={item}
+              className="bg-base-bg-light rounded-xl overflow-hidden"
+            />
           ))}
         </CarouselScrollView>
         <CarouselIndicators />
@@ -150,7 +154,7 @@ interface CarouselContextValue {
   scroll: SharedValue<number>
   scrollViewWidth: number
   setScrollViewWidth: React.Dispatch<React.SetStateAction<number>>
-  paddingX: number
+  paddingHorizontal: number
 }
 const CarouselContext = React.createContext<CarouselContextValue | null>(null)
 const CarouselProvider = CarouselContext.Provider
@@ -166,13 +170,13 @@ function Carousel({
   count,
   itemWidth,
   children,
-  paddingX,
+  paddingHorizontal,
 }: {
   gap: number
   count: number
   itemWidth: number
   children: React.ReactNode
-  paddingX: number
+  paddingHorizontal: number
 }) {
   const [currentPage, setCurrentPage] = React.useState(0)
   const [scrollViewWidth, setScrollViewWidth] = React.useState(0)
@@ -188,7 +192,7 @@ function Carousel({
         scroll,
         scrollViewWidth,
         setScrollViewWidth,
-        paddingX,
+        paddingHorizontal,
       }}
     >
       <View className="w-full flex flex-col gap-4">{children}</View>
@@ -210,13 +214,13 @@ function CarouselIndicators() {
 }
 
 function CarouselIndicator({ index }: { index: number }) {
-  const { scroll, itemWidth, count, scrollViewWidth, gap, paddingX } = useCarouselContext()
+  const { scroll, itemWidth, count, scrollViewWidth, gap, paddingHorizontal } = useCarouselContext()
   const animatedStyle = useAnimatedStyle(() => {
     const snapRange = (() => {
       const itemWidthWithGap = itemWidth + gap
       function getSnapPoint(i: number) {
         if (i === count - 1) {
-          return i * itemWidthWithGap - (scrollViewWidth - paddingX * 2 - itemWidth - gap)
+          return i * itemWidthWithGap - (scrollViewWidth - paddingHorizontal * 2 - itemWidth - gap)
         }
         return i * itemWidthWithGap
       }
@@ -236,8 +240,15 @@ function CarouselIndicator({ index }: { index: number }) {
 
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView)
 function CarouselScrollView(props: { children: React.ReactNode }) {
-  const { gap, itemWidth, currentPage, setCurrentPage, scroll, setScrollViewWidth } =
-    useCarouselContext()
+  const {
+    gap,
+    itemWidth,
+    currentPage,
+    setCurrentPage,
+    scroll,
+    setScrollViewWidth,
+    paddingHorizontal,
+  } = useCarouselContext()
   const onScrollWorklet = React.useCallback(
     (event: NativeScrollEvent) => {
       'worklet'
@@ -258,8 +269,7 @@ function CarouselScrollView(props: { children: React.ReactNode }) {
       horizontal
       showsHorizontalScrollIndicator={false}
       className="w-full"
-      contentContainerClassName="px-4"
-      contentContainerStyle={{ gap }}
+      contentContainerStyle={{ gap, paddingHorizontal }}
       pagingEnabled
       snapToInterval={itemWidth + gap}
       disableIntervalMomentum
@@ -275,9 +285,10 @@ function CarouselScrollView(props: { children: React.ReactNode }) {
 const blurhash =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj['
 
-function CarouselItem(props: { item: BannerItem }) {
+function CarouselItem(props: { item: BannerItem; className?: string }) {
+  const { itemWidth } = useCarouselContext()
   return (
-    <View className="w-[320px] h-[180px] bg-base-bg-light rounded-xl border border-base-outline-default flex items-center justify-center overflow-hidden">
+    <View style={{ width: itemWidth }} className={props.className}>
       <Image
         alt={props.item.description}
         source={props.item.image}
