@@ -137,7 +137,7 @@ jobs:
 
               echo "Deploying ${PACKAGE_NAME} with image tag ${IMAGE_TAG}"
 
-              yq -y ".services.\"${PACKAGE_NAME}\".image = \"${{ steps.set-docker-image-tags.outputs.BASE_DOCKER_IMAGE_URI }}/${PACKAGE_NAME}/${IMAGE_TAG}\"" templates/$DOCKER_COMPOSE_FILE.tmpl > $DOCKER_COMPOSE_FILE
+              yq -y ".services.\"${PACKAGE_NAME}\".image = \"${{ steps.set-docker-image-tags.outputs.BASE_DOCKER_IMAGE_URI }}/${PACKAGE_NAME}:${IMAGE_TAG}\"" templates/$DOCKER_COMPOSE_FILE.tmpl > $DOCKER_COMPOSE_FILE
 
               docker compose -f $DOCKER_COMPOSE_FILE up -d
             done
