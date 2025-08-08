@@ -92,8 +92,8 @@ jobs:
           echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
           echo "packages=$PACKAGES"
 
-          echo "mobile-app=${{ inputs.android == 'true' || inputs.ios == 'true' }}" >> $GITHUB_OUTPUT
-          echo "migrate-database=${{ inputs.migrate-database == 'true' }}" >> $GITHUB_OUTPUT
+          echo "mobile-app=${{ github.event.inputs.android == 'true' || github.event.inputs.ios == 'true' }}" >> $GITHUB_OUTPUT
+          echo "migrate-database=${{ github.event.inputs.migrate-database == 'true' }}" >> $GITHUB_OUTPUT
 
   deploy-mobile-app:
     name: Deploy Beta Mobile App
