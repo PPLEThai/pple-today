@@ -38,14 +38,6 @@ class ExpoScrollForwarderView(context: Context, appContext: AppContext) :
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
-        if (scrollViewTag != null && scrollView == null) {
-            // sometimes tryFindScrollView does not work on first layout, try it again here
-            tryFindScrollView()
-            if (scrollView == null) {
-                // if we still can't find it by the time user touches, give up
-                scrollViewTag = null
-            }
-        }
         val scrollView = this.scrollView
         if (scrollView == null) {
             return super.dispatchTouchEvent(ev)
