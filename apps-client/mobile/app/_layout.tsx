@@ -23,6 +23,8 @@ import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 
+import { environment } from '@app/env'
+
 SplashScreen.preventAutoHideAsync()
 
 const LIGHT_THEME: Theme = {
@@ -57,7 +59,10 @@ export default function RootLayout() {
               </GestureHandlerRootView>
             </FontProvider>
           </ColorSchemeProvider>
-          <DevToolsBubble onCopy={onCopy} queryClient={queryClient} />
+          {(environment.APP_ENVIRONMENT === 'development' ||
+            environment.APP_ENVIRONMENT === 'local') && (
+            <DevToolsBubble onCopy={onCopy} queryClient={queryClient} />
+          )}
         </QueryClientProvider>
       </SafeAreaProvider>
       <PortalHost />
