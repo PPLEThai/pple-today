@@ -119,7 +119,7 @@ jobs:
           echo "BASE_DOCKER_IMAGE_URI=${{ inputs.docker_registry }}/${OWNER_LC}" >> $GITHUB_OUTPUT
 
       - name: Use SSH
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@3ca8a7c5359ac6ad91aa47f1946ece1c3b025004
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
