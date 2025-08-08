@@ -83,7 +83,7 @@ export class FeedService {
             content: feedItem.value.announcement.content ?? '',
             title: feedItem.value.announcement.title,
             attachments: feedItem.value.announcement.attachments.map(
-              (attachment) => attachment.url
+              (attachment) => attachment.filePath
             ),
           },
         } satisfies GetFeedContentResponse)
