@@ -130,7 +130,6 @@ jobs:
             cd ~/app
 
             echo '${{ inputs.packages }}' | jq -c '.[]' | while read package
-            export COMPOSE_IGNORE_ORPHANS=true
             do
               PACKAGE_NAME=$(echo $package | jq -r '.name')
               IMAGE_TAG=$(echo $package | jq -r '.imageTag')
