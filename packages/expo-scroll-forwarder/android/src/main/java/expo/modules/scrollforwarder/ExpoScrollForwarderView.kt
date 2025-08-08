@@ -26,7 +26,6 @@ class ExpoScrollForwarderView(context: Context, appContext: AppContext) :
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
     private var isScrollingX = false
     private var isScrollingY = false
-    private var downEvent: MotionEvent? = null
 
     private fun tryFindScrollView() {
         val scrollViewTag = scrollViewTag
@@ -52,17 +51,27 @@ class ExpoScrollForwarderView(context: Context, appContext: AppContext) :
             MotionEvent.ACTION_DOWN -> {
                 downX = ev.x
                 downY = ev.y
-                downEvent = MotionEvent.obtain(ev).also {
-                    it.offsetLocation(translationX, translationY)
-                }
+                val translationX = this.translationX
+                val translationY = this.translationY
+                ev.offsetLocation(translationX, translationY)
+                scrollView.dispatchTouchEvent(ev)
+                ev.offsetLocation(-translationX, -translationY)
             }
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 shouldScrollVertical = isScrollingY
                 isScrollingX = false
                 isScrollingY = false
-                downEvent?.recycle()
-                downEvent = null
+                if (!shouldScrollVertical) {
+                    val action = ev.action
+                    val translationX = this.translationX
+                    val translationY = this.translationY
+                    ev.action = MotionEvent.ACTION_CANCEL
+                    ev.offsetLocation(translationX, translationY)
+                    scrollView.dispatchTouchEvent(ev)
+                    ev.offsetLocation(-translationX, -translationY)
+                    ev.action = action
+                }
             }
 
             MotionEvent.ACTION_MOVE -> {
@@ -71,9 +80,6 @@ class ExpoScrollForwarderView(context: Context, appContext: AppContext) :
                 }
                 if (abs(ev.y - downY) > touchSlop && !isScrollingX && !isScrollingY) {
                     isScrollingY = true
-                    if (downEvent != null) {
-                        scrollView.dispatchTouchEvent(downEvent)
-                    }
                 }
                 shouldScrollVertical = isScrollingY
             }
