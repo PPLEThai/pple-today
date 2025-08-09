@@ -2,10 +2,10 @@ import { GetSignedUrlConfig, Storage } from '@google-cloud/storage'
 import Elysia from 'elysia'
 import https from 'https'
 import { fromPromise, ok } from 'neverthrow'
-import { Readable } from 'stream'
 
 import serverEnv from '../../config/env'
 import { InternalErrorCode } from '../../dtos/error'
+import { err } from '../../utils/error'
 
 export class FileService {
   private storage: Storage
@@ -27,11 +27,24 @@ export class FileService {
     this.bucket = this.storage.bucket(config.bucketName)
   }
 
-  async getSignedUrl(fileKey: string, expiresIn: number = 3600) {
+  async getUploadSignedUrl(
+    fileKey: string,
+    config?: {
+      expiresIn?: number
+      maxSize?: number
+    }
+  ) {
+    const expiresIn = config?.expiresIn ?? 3600
+    const maxSize = config?.maxSize ?? 1048576
+
     const options: GetSignedUrlConfig = {
       version: 'v4',
-      action: 'read',
+      action: 'write',
       expires: Date.now() + expiresIn * 1000,
+      contentType: 'application/octet-stream',
+      extensionHeaders: {
+        'X-Goog-Content-Length-Range': `0,${maxSize}`,
+      },
     }
 
     return fromPromise(
@@ -44,6 +57,56 @@ export class FileService {
         message: (err as Error).message,
       })
     )
+  }
+
+  async batchGetFileSignedUrl(
+    fileKeys: string[],
+    config: {
+      expiresIn: number
+    } = { expiresIn: 3600 }
+  ) {
+    const signedUrls = await Promise.all(
+      fileKeys.map((fileKey) => this.getFileSignedUrl(fileKey, config))
+    )
+
+    const signedUrlWithError = signedUrls.filter((result) => result.isErr())
+
+    if (signedUrlWithError.length > 0) {
+      return err({
+        code: InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
+        message: 'Failed to create signed URLs',
+      })
+    }
+
+    return ok(signedUrls.map((result) => (result.isOk() ? result.value : '')))
+  }
+
+  async getFileSignedUrl(
+    fileKey: string,
+    config: {
+      expiresIn: number
+    } = { expiresIn: 3600 }
+  ) {
+    const options: GetSignedUrlConfig = {
+      version: 'v4',
+      action: 'read',
+      expires: Date.now() + config.expiresIn * 1000,
+    }
+
+    return fromPromise(
+      this.bucket
+        .file(fileKey)
+        .getSignedUrl(options)
+        .then((file) => file[0]),
+      (err) => ({
+        code: InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
+        message: (err as Error).message,
+      })
+    )
+  }
+
+  async batchGetPublicFileUrl(fileKeys: string[]) {
+    return ok(fileKeys.map((fileKey) => this.bucket.file(fileKey).publicUrl()))
   }
 
   async getPublicFileUrl(fileKey: string) {
@@ -66,32 +129,6 @@ export class FileService {
       code: InternalErrorCode.FILE_DELETE_ERROR,
       message: (err as Error).message,
     }))
-  }
-
-  async uploadFile(destination: string, file: File) {
-    return fromPromise(
-      new Promise<string>((resolve, reject) => {
-        const writeStream = this.bucket.file(destination).createWriteStream({
-          resumable: false,
-          contentType: file.type,
-        })
-
-        // NOTE: I'm not sure why but the file.stream() is not compatible with Readable.fromWeb
-        const readableStream = Readable.fromWeb(file.stream() as any)
-        readableStream.pipe(writeStream)
-
-        writeStream.on('finish', () => {
-          resolve(`File uploaded successfully to ${destination}`)
-        })
-        writeStream.on('error', (err) => {
-          reject(new Error(`Error uploading file to ${destination}: ${err.message}`))
-        })
-      }),
-      (err) => ({
-        code: InternalErrorCode.FILE_UPLOAD_ERROR,
-        message: (err as Error).message,
-      })
-    )
   }
 
   /**
