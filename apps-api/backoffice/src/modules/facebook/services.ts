@@ -78,7 +78,7 @@ export class FacebookService {
       return ok(null)
     }
 
-    const signedProfilePictureUrl = await this.fileService.getSignedUrl(
+    const signedProfilePictureUrl = await this.fileService.getPublicFileUrl(
       linkedPageResult.value.profilePictureUrl
     )
 

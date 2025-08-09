@@ -43,34 +43,5 @@ export class AuthService {
 export const AuthServicePlugin = new Elysia({ name: 'AuthService' })
   .use(AuthRepositoryPlugin)
   .decorate(({ authRepository }) => ({
-    authService: {
-      async getUserById(id: string) {
-        const user = await authRepository.getUserById(id)
-
-        if (user.isErr()) {
-          return mapRawPrismaError(user.error, {
-            RECORD_NOT_FOUND: {
-              code: InternalErrorCode.AUTH_USER_NOT_FOUND,
-              message: 'User not found',
-            },
-          })
-        }
-
-        return user
-      },
-      async registerUser(user: IntrospectAccessTokenResult) {
-        const newUser = await authRepository.createUser(user)
-
-        if (newUser.isErr()) {
-          return mapRawPrismaError(newUser.error, {
-            UNIQUE_CONSTRAINT_FAILED: {
-              code: InternalErrorCode.AUTH_USER_ALREADY_EXISTS,
-              message: 'User already exists',
-            },
-          })
-        }
-
-        return newUser
-      },
-    },
+    authService: new AuthService(authRepository),
   }))
