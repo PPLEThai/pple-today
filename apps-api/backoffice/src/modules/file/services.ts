@@ -2,6 +2,7 @@ import { GetSignedUrlConfig, Storage } from '@google-cloud/storage'
 import Elysia from 'elysia'
 import https from 'https'
 import { fromPromise, ok } from 'neverthrow'
+import { Readable } from 'stream'
 
 import serverEnv from '../../config/env'
 import { InternalErrorCode } from '../../dtos/error'
@@ -35,7 +36,7 @@ export class FileService {
     }
   ) {
     const expiresIn = config?.expiresIn ?? 3600
-    const maxSize = config?.maxSize ?? 1048576
+    const maxSize = config?.maxSize ?? 4 * 1024 * 1024
 
     const options: GetSignedUrlConfig = {
       version: 'v4',
@@ -129,6 +130,32 @@ export class FileService {
       code: InternalErrorCode.FILE_DELETE_ERROR,
       message: (err as Error).message,
     }))
+  }
+
+  async uploadFile(destination: string, file: File) {
+    return fromPromise(
+      new Promise<string>((resolve, reject) => {
+        const writeStream = this.bucket.file(destination).createWriteStream({
+          resumable: false,
+          contentType: file.type,
+        })
+
+        // NOTE: I'm not sure why but the file.stream() is not compatible with Readable.fromWeb
+        const readableStream = Readable.fromWeb(file.stream() as any)
+        readableStream.pipe(writeStream)
+
+        writeStream.on('finish', () => {
+          resolve(`File uploaded successfully to ${destination}`)
+        })
+        writeStream.on('error', (err) => {
+          reject(new Error(`Error uploading file to ${destination}: ${err.message}`))
+        })
+      }),
+      (err) => ({
+        code: InternalErrorCode.FILE_UPLOAD_ERROR,
+        message: (err as Error).message,
+      })
+    )
   }
 
   /**
