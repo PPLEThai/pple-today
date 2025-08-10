@@ -23,6 +23,19 @@ export class AdminAnnouncementService {
     private fileService: FileService
   ) {}
 
+  private async cleanUpUnusedAttachment(before: string[], after: string[]) {
+    const unusedAttachments = before.filter((filePath) => !after.includes(filePath))
+
+    if (unusedAttachments.length > 0) {
+      const deleteResult = await this.fileService.bulkDeleteFile(unusedAttachments)
+      if (deleteResult.isErr()) {
+        return err(deleteResult.error)
+      }
+    }
+
+    return ok(true)
+  }
+
   async getAnnouncements() {
     const result = await this.adminAnnouncementRepository.getAllAnnouncements()
 
@@ -82,6 +95,15 @@ export class AdminAnnouncementService {
           code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
         },
       })
+
+    const cleanUpResult = await this.cleanUpUnusedAttachment(
+      announcementResult.value.attachments,
+      data.attachmentFilePaths
+    )
+
+    if (cleanUpResult.isErr()) {
+      return err(cleanUpResult.error)
+    }
 
     const updatedAttachmentsResult = await this.fileService.moveFileToPublicFolder(
       announcementResult.value.attachments
@@ -213,6 +235,15 @@ export class AdminAnnouncementService {
         code: InternalErrorCode.FILE_MOVE_ERROR,
         message: 'Failed to move one or more files',
       })
+    }
+
+    const cleanUpResult = await this.cleanUpUnusedAttachment(
+      draftAnnouncementAttachments.value,
+      data.attachmentFilePaths
+    )
+
+    if (cleanUpResult.isErr()) {
+      return err(cleanUpResult.error)
     }
 
     const result = await this.adminAnnouncementRepository.updateDraftedAnnouncementById(

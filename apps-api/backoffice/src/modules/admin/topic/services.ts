@@ -78,12 +78,27 @@ export class AdminTopicService {
   }
 
   async updateTopicById(topicId: string, data: UpdateTopicBody) {
-    const result = await this.adminTopicRepository.updateTopicById(topicId, data)
-    if (result.isErr())
-      return mapRawPrismaError(result.error, {
+    const existingTopic = await this.adminTopicRepository.getTopicById(topicId)
+
+    if (existingTopic.isErr()) {
+      return mapRawPrismaError(existingTopic.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.TOPIC_NOT_FOUND,
         },
+      })
+    }
+
+    const isSameBannerUrl = existingTopic.value.bannerImage === data.bannerImage
+
+    if (!isSameBannerUrl && existingTopic.value.bannerImage) {
+      const moveResult = await this.fileService.deleteFile(existingTopic.value.bannerImage)
+      if (moveResult.isErr()) return err(moveResult.error)
+    }
+
+    const result = await this.adminTopicRepository.updateTopicById(topicId, data)
+
+    if (result.isErr())
+      return mapRawPrismaError(result.error, {
         INVALID_INPUT: {
           code: InternalErrorCode.TOPIC_INVALID_INPUT,
         },
