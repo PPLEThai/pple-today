@@ -28,12 +28,12 @@ export class AdminAnnouncementRepository {
             updatedAt: true,
             topics: {
               select: {
-                topicId: true,
-              },
-            },
-            attachments: {
-              select: {
-                filePath: true,
+                topic: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
               },
             },
           },
@@ -48,12 +48,12 @@ export class AdminAnnouncementRepository {
             backgroundColor: true,
             topics: {
               select: {
-                topicId: true,
-              },
-            },
-            attachments: {
-              select: {
-                filePath: true,
+                topic: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
               },
             },
             feedItem: {
@@ -69,13 +69,9 @@ export class AdminAnnouncementRepository {
       return [
         ...draft.map((item) => ({
           ...item,
-          topics: item.topics.map((topic) => topic.topicId),
-          attachments: item.attachments.map((attachment) => attachment.filePath),
         })),
-        ...published.map(({ feedItemId, topics, attachments, feedItem, ...item }) => ({
+        ...published.map(({ feedItemId, feedItem, ...item }) => ({
           id: feedItemId,
-          topics: topics.map((topic) => topic.topicId),
-          attachments: attachments.map((attachment) => attachment.filePath),
           createdAt: feedItem.createdAt,
           updatedAt: feedItem.updatedAt,
           ...item,
@@ -104,7 +100,12 @@ export class AdminAnnouncementRepository {
           backgroundColor: true,
           topics: {
             select: {
-              topicId: true,
+              topic: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
           attachments: {
@@ -130,7 +131,7 @@ export class AdminAnnouncementRepository {
 
       return result.map(({ feedItemId, topics, attachments, feedItem, ...item }) => ({
         id: feedItemId,
-        topics: topics.map((topic) => topic.topicId),
+        topics: topics.map(({ topic }) => topic),
         attachments: attachments.map((attachment) => attachment.filePath),
         createdAt: feedItem.createdAt,
         updatedAt: feedItem.updatedAt,
@@ -153,7 +154,12 @@ export class AdminAnnouncementRepository {
             backgroundColor: true,
             topics: {
               select: {
-                topicId: true,
+                topic: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
               },
             },
             attachments: {
@@ -172,7 +178,7 @@ export class AdminAnnouncementRepository {
 
       return {
         id: feedItemId,
-        topics: topics.map((topic) => topic.topicId),
+        topics: topics.map(({ topic }) => topic),
         attachments: attachments.map((attachment) => attachment.filePath),
         createdAt: feedItem.createdAt,
         updatedAt: feedItem.updatedAt,
@@ -279,7 +285,12 @@ export class AdminAnnouncementRepository {
           updatedAt: true,
           topics: {
             select: {
-              topicId: true,
+              topic: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
           attachments: {
@@ -297,7 +308,7 @@ export class AdminAnnouncementRepository {
 
       return result.map((item) => ({
         ...item,
-        topics: item.topics.map((topic) => topic.topicId),
+        topics: item.topics.map(({ topic }) => topic),
         attachments: item.attachments.map((attachment) => attachment.filePath),
       }))
     })
@@ -318,7 +329,12 @@ export class AdminAnnouncementRepository {
           updatedAt: true,
           topics: {
             select: {
-              topicId: true,
+              topic: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
           attachments: {
@@ -331,7 +347,7 @@ export class AdminAnnouncementRepository {
 
       return {
         ...result,
-        topics: result.topics.map((topic) => topic.topicId),
+        topics: result.topics.map(({ topic }) => topic),
         attachments: result.attachments.map((attachment) => attachment.filePath),
       }
     })

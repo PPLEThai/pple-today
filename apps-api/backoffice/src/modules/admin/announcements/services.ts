@@ -27,7 +27,12 @@ export class AdminAnnouncementService {
     const result = await this.adminAnnouncementRepository.getAllAnnouncements()
     if (result.isErr()) return mapRawPrismaError(result.error, {})
 
-    return ok(result.value satisfies GetAnnouncementsResponse)
+    return ok(
+      result.value.map((announcement) => ({
+        ...announcement,
+        topics: announcement.topics.map(({ topic }) => topic),
+      })) satisfies GetAnnouncementsResponse
+    )
   }
 
   async getPublishedAnnouncements(
@@ -51,7 +56,16 @@ export class AdminAnnouncementService {
         },
       })
 
-    return ok(result.value satisfies GetPublishedAnnouncementResponse)
+    const attachmentUrls = await this.fileService.batchGetFileSignedUrl(result.value.attachments)
+
+    if (attachmentUrls.isErr()) {
+      return err(attachmentUrls.error)
+    }
+
+    return ok({
+      ...result.value,
+      attachments: attachmentUrls.value,
+    } satisfies GetPublishedAnnouncementResponse)
   }
 
   async updateAnnouncementById(announcementId: string, data: PutPublishedAnnouncementBody) {
@@ -201,7 +215,7 @@ export class AdminAnnouncementService {
         iconImage: draftAnnouncement.iconImage,
         backgroundColor: draftAnnouncement.backgroundColor,
         attachments: attachments.value,
-        topics: draftAnnouncement.topics,
+        topics: draftAnnouncement.topics.map((topic) => topic.id),
       },
       authorId
     )

@@ -25,7 +25,10 @@ export const GetAnnouncementsQuery = t.Object({
 export type GetAnnouncementsQuery = Static<typeof GetAnnouncementsQuery>
 
 export const GetAnnouncementsResponse = t.Array(
-  t.Union([DraftedAnnouncement, PublishedAnnouncement])
+  t.Union([
+    t.Omit(DraftedAnnouncement, ['attachments']),
+    t.Omit(PublishedAnnouncement, ['attachments']),
+  ])
 )
 export type GetAnnouncementsResponse = Static<typeof GetAnnouncementsResponse>
 

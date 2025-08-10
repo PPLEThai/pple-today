@@ -201,11 +201,11 @@ export class FileService {
     )
   }
 
-  async batchGetPublicFileUrl(fileKeys: string[]) {
+  batchGetPublicFileUrl(fileKeys: string[]) {
     return ok(fileKeys.map((fileKey) => this.bucket.file(fileKey).publicUrl()))
   }
 
-  async getPublicFileUrl(fileKey: string) {
+  getPublicFileUrl(fileKey: string) {
     return ok(this.bucket.file(fileKey).publicUrl())
   }
 

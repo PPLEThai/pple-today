@@ -1,5 +1,7 @@
 import { Static, t } from 'elysia'
 
+import { Topic } from './topic'
+
 import { AnnouncementType } from '../../__generated__/prisma'
 
 export const PublishedAnnouncement = t.Object({
@@ -18,7 +20,7 @@ export const PublishedAnnouncement = t.Object({
   ),
   createdAt: t.Date({ description: 'Creation date of the announcement' }),
   updatedAt: t.Date({ description: 'Last update date of the announcement' }),
-  topics: t.Array(t.String({ description: 'The ID of the announcement topic' })),
+  topics: t.Array(t.Pick(Topic, ['id', 'name'])),
   attachments: t.Array(t.String({ description: 'The file path of the announcement attachment' })),
 })
 export type PublishedAnnouncement = Static<typeof PublishedAnnouncement>
