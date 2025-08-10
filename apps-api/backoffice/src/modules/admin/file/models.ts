@@ -1,16 +1,27 @@
-import { t } from 'elysia'
+import { Static, t } from 'elysia'
 
 export enum UploadFileCategory {
-  ANNOUNCEMENT,
-  TOPIC,
-  PROFILE_IMAGE,
+  ANNOUNCEMENT = 'ANNOUNCEMENT',
+  TOPIC = 'TOPIC',
+  PROFILE_IMAGE = 'PROFILE_IMAGE',
 }
 
-export const GetUploadSignedUrlBody = t.Object({
-  category: t.Enum(UploadFileCategory),
-  id: t.String({ title: 'Resource id in category' }),
-})
+export const GetUploadSignedUrlBody = t.Union([
+  t.Object({
+    category: t.Literal(UploadFileCategory.ANNOUNCEMENT),
+  }),
+  t.Object({
+    category: t.Literal(UploadFileCategory.TOPIC),
+  }),
+  t.Object({
+    category: t.Literal(UploadFileCategory.PROFILE_IMAGE),
+    id: t.String({ title: 'Resource id in category' }),
+  }),
+])
+export type GetUploadSignedUrlBody = Static<typeof GetUploadSignedUrlBody>
+
 export const GetUploadSignedUrlResponse = t.Object({
   filePath: t.String({ title: 'File Path' }),
   uploadUrl: t.String({ title: 'Upload URL' }),
 })
+export type GetUploadSignedUrlResponse = Static<typeof GetUploadSignedUrlResponse>

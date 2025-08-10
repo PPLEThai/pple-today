@@ -12,9 +12,7 @@ export const AdminFileController = new Elysia({ tags: ['Admin File'] })
   .post(
     '/upload-url',
     async ({ fileService, status, body }) => {
-      const { category, id } = body
-
-      const result = await fileService.getUploadSignedUrl(category, id)
+      const result = await fileService.getUploadSignedUrl(body)
 
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
@@ -23,6 +21,7 @@ export const AdminFileController = new Elysia({ tags: ['Admin File'] })
       return status(200, result.value)
     },
     {
+      requiredUser: true,
       body: GetUploadSignedUrlBody,
       response: {
         200: GetUploadSignedUrlResponse,

@@ -1,8 +1,8 @@
-import { randomUUID } from 'crypto'
+import { createId } from '@paralleldrive/cuid2'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { UploadFileCategory } from './models'
+import { GetUploadSignedUrlBody, UploadFileCategory } from './models'
 
 import { err, exhaustiveGuard } from '../../../utils/error'
 import { FileService, FileServicePlugin } from '../../file/services'
@@ -10,22 +10,22 @@ import { FileService, FileServicePlugin } from '../../file/services'
 export class AdminFileService {
   constructor(private readonly fileService: FileService) {}
 
-  async getUploadSignedUrl(category: UploadFileCategory, resourceId: string) {
+  async getUploadSignedUrl(body: GetUploadSignedUrlBody) {
     let filePath
-    const randomId = randomUUID()
+    const randomId = createId()
 
-    switch (category) {
+    switch (body.category) {
       case UploadFileCategory.ANNOUNCEMENT:
-        filePath = `announcement/${resourceId}-${randomId}.pdf`
+        filePath = `temp/announcement/${randomId}.pdf`
         break
       case UploadFileCategory.TOPIC:
-        filePath = `topic/${resourceId}-${randomUUID()}.png`
+        filePath = `temp/topic/${randomId}.png`
         break
       case UploadFileCategory.PROFILE_IMAGE:
-        filePath = `users/profile-image-${resourceId}.png`
+        filePath = `users/profile-image-${body.id}.png`
         break
       default:
-        exhaustiveGuard(category)
+        exhaustiveGuard(body)
     }
 
     const getResult = await this.fileService.getUploadSignedUrl(filePath)

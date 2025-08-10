@@ -60,6 +60,13 @@ export class FileService {
     )
   }
 
+  async moveFile(srcFile: string, destFile: string) {
+    return fromPromise(this.bucket.file(srcFile).move(this.bucket.file(destFile)), (err) => ({
+      code: InternalErrorCode.FILE_MOVE_ERROR,
+      message: (err as Error).message,
+    }))
+  }
+
   async batchGetFileSignedUrl(
     fileKeys: string[],
     config: {
