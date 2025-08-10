@@ -155,7 +155,8 @@ export class ProfileService {
 
     return ok({
       fileKey,
-      uploadUrl: uploadUrl.value,
+      uploadFields: uploadUrl.value.fields,
+      uploadUrl: uploadUrl.value.url,
     })
   }
 }

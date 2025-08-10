@@ -39,6 +39,8 @@ const AdminDraftedAnnouncementsController = new Elysia({
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
           default:
             exhaustiveGuard(result.error)
         }
@@ -53,6 +55,7 @@ const AdminDraftedAnnouncementsController = new Elysia({
         200: GetDraftedAnnouncementResponse,
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
+          InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -174,6 +177,8 @@ const AdminDraftedAnnouncementsController = new Elysia({
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.FILE_DELETE_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
           default:
             exhaustiveGuard(result.error)
         }
@@ -188,6 +193,7 @@ const AdminDraftedAnnouncementsController = new Elysia({
         200: DeleteDraftedAnnouncementResponse,
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
+          InternalErrorCode.FILE_DELETE_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -294,6 +300,8 @@ export const AdminAnnouncementsController = new Elysia({
         switch (result.error.code) {
           case InternalErrorCode.ANNOUNCEMENT_NOT_FOUND:
             return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.FILE_MOVE_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
           default:
@@ -311,6 +319,7 @@ export const AdminAnnouncementsController = new Elysia({
         200: PutPublishedAnnouncementResponse,
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
+          InternalErrorCode.FILE_MOVE_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -364,6 +373,8 @@ export const AdminAnnouncementsController = new Elysia({
         switch (result.error.code) {
           case InternalErrorCode.ANNOUNCEMENT_NOT_FOUND:
             return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.FILE_DELETE_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
           default:
@@ -380,6 +391,7 @@ export const AdminAnnouncementsController = new Elysia({
         200: DeletePublishedAnnouncementResponse,
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
+          InternalErrorCode.FILE_DELETE_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

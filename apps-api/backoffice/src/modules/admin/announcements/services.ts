@@ -65,7 +65,10 @@ export class AdminAnnouncementService {
 
     return ok({
       ...result.value,
-      attachments: attachmentUrls.value,
+      attachments: result.value.attachments.map((filePath, index) => ({
+        url: attachmentUrls.value[index],
+        filePath,
+      })),
     } satisfies GetPublishedAnnouncementResponse)
   }
 
@@ -178,7 +181,19 @@ export class AdminAnnouncementService {
         },
       })
 
-    return ok(result.value satisfies GetDraftedAnnouncementResponse)
+    const attachmentUrls = await this.fileService.batchGetFileSignedUrl(result.value.attachments)
+
+    if (attachmentUrls.isErr()) {
+      return err(attachmentUrls.error)
+    }
+
+    return ok({
+      ...result.value,
+      attachments: result.value.attachments.map((filePath, index) => ({
+        url: attachmentUrls.value[index],
+        filePath: filePath,
+      })),
+    } satisfies GetDraftedAnnouncementResponse)
   }
 
   async createEmptyDraftedAnnouncement() {

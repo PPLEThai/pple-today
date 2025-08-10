@@ -32,7 +32,9 @@ export const GetAnnouncementsResponse = t.Array(
 )
 export type GetAnnouncementsResponse = Static<typeof GetAnnouncementsResponse>
 
-export const GetPublishedAnnouncementsResponse = t.Array(PublishedAnnouncement)
+export const GetPublishedAnnouncementsResponse = t.Array(
+  t.Omit(PublishedAnnouncement, ['attachments'])
+)
 export type GetPublishedAnnouncementsResponse = Static<typeof GetPublishedAnnouncementsResponse>
 
 export const GetPublishedAnnouncementResponse = PublishedAnnouncement
@@ -76,7 +78,7 @@ export const DeletePublishedAnnouncementResponse = t.Object({
 })
 export type DeletePublishedAnnouncementResponse = Static<typeof DeletePublishedAnnouncementResponse>
 
-export const GetDraftedAnnouncementsResponse = t.Array(DraftedAnnouncement)
+export const GetDraftedAnnouncementsResponse = t.Array(t.Omit(DraftedAnnouncement, ['attachments']))
 export type GetDraftedAnnouncementsResponse = Static<typeof GetDraftedAnnouncementsResponse>
 
 export const GetDraftedAnnouncementResponse = DraftedAnnouncement

@@ -124,5 +124,8 @@ export type UpdateProfileResponse = Static<typeof UpdateProfileResponse>
 export const GetProfileUploadUrlResponse = t.Object({
   fileKey: t.String({ description: 'The key of the file to upload' }),
   uploadUrl: t.String({ description: 'The signed URL to upload the file' }),
+  uploadFields: t.Record(t.String(), t.String(), {
+    description: 'The fields required for the upload',
+  }),
 })
 export type GetProfileUploadUrlResponse = Static<typeof GetProfileUploadUrlResponse>

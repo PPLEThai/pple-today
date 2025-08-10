@@ -1,4 +1,8 @@
-import { GetSignedUrlConfig, Storage } from '@google-cloud/storage'
+import {
+  GenerateSignedPostPolicyV4Options,
+  GetSignedUrlConfig,
+  Storage,
+} from '@google-cloud/storage'
 import Elysia from 'elysia'
 import https from 'https'
 import { fromPromise, Ok, ok } from 'neverthrow'
@@ -121,25 +125,25 @@ export class FileService {
     config?: {
       expiresIn?: number
       maxSize?: number
+      contentType?: string
     }
   ) {
     const expiresIn = config?.expiresIn ?? 3600
     const maxSize = config?.maxSize ?? 4 * 1024 * 1024
+    const contentType = config?.contentType ?? 'application/octet-stream'
 
-    const options: GetSignedUrlConfig = {
-      version: 'v4',
-      action: 'write',
+    const options: GenerateSignedPostPolicyV4Options = {
       expires: Date.now() + expiresIn * 1000,
-      contentType: 'application/octet-stream',
-      extensionHeaders: {
-        'X-Goog-Content-Length-Range': `0,${maxSize}`,
-      },
+      conditions: [
+        ['content-length-range', 0, maxSize],
+        ['content-type', contentType],
+      ],
     }
 
     return fromPromise(
       this.bucket
         .file(fileKey)
-        .getSignedUrl(options)
+        .generateSignedPostPolicyV4(options)
         .then((file) => file[0]),
       (err) => ({
         code: InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
@@ -202,11 +206,11 @@ export class FileService {
   }
 
   batchGetPublicFileUrl(fileKeys: string[]) {
-    return ok(fileKeys.map((fileKey) => this.bucket.file(fileKey).publicUrl()))
+    return ok(fileKeys.map((fileKey) => decodeURIComponent(this.bucket.file(fileKey).publicUrl())))
   }
 
   getPublicFileUrl(fileKey: string) {
-    return ok(this.bucket.file(fileKey).publicUrl())
+    return ok(decodeURIComponent(this.bucket.file(fileKey).publicUrl()))
   }
 
   async uploadProfilePagePicture(url: string, pageId: string) {

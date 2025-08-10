@@ -21,7 +21,12 @@ export const PublishedAnnouncement = t.Object({
   createdAt: t.Date({ description: 'Creation date of the announcement' }),
   updatedAt: t.Date({ description: 'Last update date of the announcement' }),
   topics: t.Array(t.Pick(Topic, ['id', 'name'])),
-  attachments: t.Array(t.String({ description: 'The file path of the announcement attachment' })),
+  attachments: t.Array(
+    t.Object({
+      url: t.String({ description: 'The signed URL of the attachment', format: 'uri' }),
+      filePath: t.String({ description: 'The file path of the attachment' }),
+    })
+  ),
 })
 export type PublishedAnnouncement = Static<typeof PublishedAnnouncement>
 

@@ -23,5 +23,8 @@ export type GetUploadSignedUrlBody = Static<typeof GetUploadSignedUrlBody>
 export const GetUploadSignedUrlResponse = t.Object({
   filePath: t.String({ title: 'File Path' }),
   uploadUrl: t.String({ title: 'Upload URL' }),
+  uploadFields: t.Record(t.String(), t.String(), {
+    description: 'The fields required for the upload',
+  }),
 })
 export type GetUploadSignedUrlResponse = Static<typeof GetUploadSignedUrlResponse>
