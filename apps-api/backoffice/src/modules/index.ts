@@ -2,6 +2,7 @@ import Elysia from 'elysia'
 
 import { AnnouncementsController } from './announcements'
 import { AuthController } from './auth'
+import { CarouselController } from './carousel'
 import { FacebookController } from './facebook'
 import { FeedController } from './feed'
 import { PollsController } from './polls'
@@ -14,3 +15,4 @@ export const ApplicationController = new Elysia()
   .use(ProfileController)
   .use(PollsController)
   .use(FacebookController)
+  .use(CarouselController)
