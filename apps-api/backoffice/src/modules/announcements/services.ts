@@ -49,7 +49,7 @@ export class AnnouncementService {
       })
     }
 
-    const attachmentPublicUrls = await this.fileService.batchGetPublicFileUrl(
+    const attachmentPublicUrls = this.fileService.batchGetPublicFileUrl(
       announcementResult.value.attachments.map((attachment) => attachment.filePath)
     )
 

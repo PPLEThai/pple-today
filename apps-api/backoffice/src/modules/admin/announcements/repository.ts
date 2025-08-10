@@ -259,7 +259,13 @@ export class AdminAnnouncementRepository {
 
   async deleteAnnouncementById(announcementId: string) {
     return await fromPrismaPromise(
-      this.prismaService.feedItem.delete({ where: { id: announcementId } })
+      this.prismaService.feedItem.delete({
+        where: { id: announcementId },
+        select: {
+          id: true,
+          announcement: { select: { attachments: { select: { id: true, filePath: true } } } },
+        },
+      })
     )
   }
 
@@ -441,7 +447,17 @@ export class AdminAnnouncementRepository {
 
   async deleteDraftedAnnouncementById(announcementDraftId: string) {
     return await fromPrismaPromise(
-      this.prismaService.announcementDraft.delete({ where: { id: announcementDraftId } })
+      this.prismaService.announcementDraft.delete({
+        where: { id: announcementDraftId },
+        select: {
+          id: true,
+          attachments: {
+            select: {
+              filePath: true,
+            },
+          },
+        },
+      })
     )
   }
 }

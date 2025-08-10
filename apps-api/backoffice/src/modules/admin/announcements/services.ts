@@ -25,6 +25,7 @@ export class AdminAnnouncementService {
 
   async getAnnouncements() {
     const result = await this.adminAnnouncementRepository.getAllAnnouncements()
+
     if (result.isErr()) return mapRawPrismaError(result.error, {})
 
     return ok(
@@ -69,18 +70,51 @@ export class AdminAnnouncementService {
   }
 
   async updateAnnouncementById(announcementId: string, data: PutPublishedAnnouncementBody) {
-    const result = await this.adminAnnouncementRepository.updateAnnouncementById(
-      announcementId,
-      data
-    )
-    if (result.isErr())
-      return mapRawPrismaError(result.error, {
+    const announcementResult =
+      await this.adminAnnouncementRepository.getAnnouncementById(announcementId)
+
+    if (announcementResult.isErr())
+      return mapRawPrismaError(announcementResult.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
         },
       })
 
-    return ok({ message: `Announcement "${result.value.feedItemId}" updated.` })
+    const updatedAttachmentsResult = await this.fileService.moveFileToPublicFolder(
+      announcementResult.value.attachments
+    )
+
+    if (updatedAttachmentsResult.isErr()) {
+      return err({
+        code: InternalErrorCode.FILE_MOVE_ERROR,
+        message: 'Failed to move one or more files',
+      })
+    }
+
+    const updateResult = await this.adminAnnouncementRepository.updateAnnouncementById(
+      announcementId,
+      {
+        ...data,
+        attachmentFilePaths: updatedAttachmentsResult.value,
+      }
+    )
+
+    if (updateResult.isErr())
+      return mapRawPrismaError(updateResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
+        },
+      })
+
+    const markAsPublicResult = await this.fileService.bulkMarkAsPublic(
+      updatedAttachmentsResult.value
+    )
+
+    if (markAsPublicResult.isErr()) {
+      return err(markAsPublicResult.error)
+    }
+
+    return ok({ message: `Announcement "${updateResult.value.feedItemId}" updated.` })
   }
 
   async unpublishAnnouncementById(announcementId: string) {
@@ -111,6 +145,14 @@ export class AdminAnnouncementService {
           code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
         },
       })
+
+    const deleteResult = await this.fileService.bulkDeleteFile(
+      result.value.announcement?.attachments.map((attachment) => attachment.filePath) ?? []
+    )
+
+    if (deleteResult.isErr()) {
+      return err(deleteResult.error)
+    }
 
     return ok({ message: `Announcement "${result.value.id}" deleted.` })
   }
@@ -245,6 +287,14 @@ export class AdminAnnouncementService {
           code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
         },
       })
+
+    const deleteResult = await this.fileService.bulkDeleteFile(
+      result.value.attachments.map((attachment) => attachment.filePath)
+    )
+
+    if (deleteResult.isErr()) {
+      return err(deleteResult.error)
+    }
 
     return ok({ message: `Drafted Announcement "${result.value.id}" deleted.` })
   }
