@@ -11,18 +11,18 @@ export class AdminFileService {
   constructor(private readonly fileService: FileService) {}
 
   async getUploadSignedUrl(body: GetUploadSignedUrlBody) {
-    let filePath
+    let filePath: string
     const randomId = createId()
 
     switch (body.category) {
       case UploadFileCategory.ANNOUNCEMENT:
-        filePath = `temp/announcement/${randomId}.pdf`
+        filePath = `${this.fileService.prefixTempFolder}announcement/${randomId}.pdf`
         break
       case UploadFileCategory.TOPIC:
-        filePath = `temp/topic/${randomId}.png`
+        filePath = `${this.fileService.prefixTempFolder}topic/${randomId}.png`
         break
       case UploadFileCategory.PROFILE_IMAGE:
-        filePath = `users/profile-image-${body.id}.png`
+        filePath = `${this.fileService.prefixPublicFolder}users/profile-image-${body.id}.png`
         break
       default:
         exhaustiveGuard(body)

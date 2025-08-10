@@ -21,7 +21,6 @@ export const AdminFileController = new Elysia({ tags: ['Admin File'] })
       return status(200, result.value)
     },
     {
-      requiredUser: true,
       body: GetUploadSignedUrlBody,
       response: {
         200: GetUploadSignedUrlResponse,

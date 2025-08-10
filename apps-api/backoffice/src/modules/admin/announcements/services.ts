@@ -13,10 +13,15 @@ import {
 import { AdminAnnouncementRepository, AdminAnnouncementRepositoryPlugin } from './repository'
 
 import { InternalErrorCode } from '../../../dtos/error'
+import { err } from '../../../utils/error'
 import { mapRawPrismaError } from '../../../utils/prisma'
+import { FileService, FileServicePlugin } from '../../file/services'
 
 export class AdminAnnouncementService {
-  constructor(private adminAnnouncementRepository: AdminAnnouncementRepository) {}
+  constructor(
+    private adminAnnouncementRepository: AdminAnnouncementRepository,
+    private fileService: FileService
+  ) {}
 
   async getAnnouncements() {
     const result = await this.adminAnnouncementRepository.getAllAnnouncements()
@@ -73,6 +78,14 @@ export class AdminAnnouncementService {
         },
       })
 
+    const markAsPrivateResult = await this.fileService.bulkMarkAsPrivate(
+      result.value.attachments.map((attachment) => attachment.filePath)
+    )
+
+    if (markAsPrivateResult.isErr()) {
+      return err(markAsPrivateResult.error)
+    }
+
     return ok({ message: `Announcement "${result.value.id}" unpublished.` })
   }
 
@@ -114,16 +127,31 @@ export class AdminAnnouncementService {
 
   async createEmptyDraftedAnnouncement() {
     const result = await this.adminAnnouncementRepository.createEmptyDraftedAnnouncement()
-    if (result.isErr()) return mapRawPrismaError(result.error, {})
+    if (result.isErr()) return mapRawPrismaError(result.error)
 
     return ok({ announcementId: result.value.id })
   }
 
   async updateDraftedAnnouncementById(announcementId: string, data: PutDraftedAnnouncementBody) {
+    const draftAnnouncementAttachments = await this.fileService.moveFileToPublicFolder(
+      data.attachmentFilePaths
+    )
+
+    if (draftAnnouncementAttachments.isErr()) {
+      return err({
+        code: InternalErrorCode.FILE_MOVE_ERROR,
+        message: 'Failed to move one or more files',
+      })
+    }
+
     const result = await this.adminAnnouncementRepository.updateDraftedAnnouncementById(
       announcementId,
-      data
+      {
+        ...data,
+        attachmentFilePaths: draftAnnouncementAttachments.value,
+      }
     )
+
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         RECORD_NOT_FOUND: {
@@ -135,16 +163,61 @@ export class AdminAnnouncementService {
   }
 
   async publishDraftedAnnouncementById(announcementId: string, authorId: string) {
+    const draftAnnouncementResult =
+      await this.adminAnnouncementRepository.getDraftedAnnouncementById(announcementId)
+
+    if (draftAnnouncementResult.isErr()) {
+      return mapRawPrismaError(draftAnnouncementResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
+        },
+      })
+    }
+
+    const draftAnnouncement = draftAnnouncementResult.value
+
+    if (!draftAnnouncement.title || !draftAnnouncement.type) {
+      return err({
+        code: InternalErrorCode.ANNOUNCEMENT_INVALID_DRAFT,
+        message: 'Drafted announcement is missing required fields: title, type',
+      })
+    }
+
+    const attachments = await this.fileService.moveFileToPublicFolder(draftAnnouncement.attachments)
+
+    if (attachments.isErr()) {
+      return err({
+        code: InternalErrorCode.FILE_MOVE_ERROR,
+        message: 'Failed to move one or more files',
+      })
+    }
+
     const result = await this.adminAnnouncementRepository.publishDraftedAnnouncementById(
-      announcementId,
+      {
+        id: draftAnnouncement.id,
+        title: draftAnnouncement.title,
+        content: draftAnnouncement.content,
+        type: draftAnnouncement.type,
+        iconImage: draftAnnouncement.iconImage,
+        backgroundColor: draftAnnouncement.backgroundColor,
+        attachments: attachments.value,
+        topics: draftAnnouncement.topics,
+      },
       authorId
     )
+
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
         },
       })
+
+    const markPublicResult = await this.fileService.bulkMarkAsPublic(attachments.value)
+
+    if (markPublicResult.isErr()) {
+      return err(markPublicResult.error)
+    }
 
     return ok({ message: `Drafted Announcement "${result.value.id}" published.` })
   }
@@ -166,7 +239,10 @@ export class AdminAnnouncementService {
 export const AdminAnnouncementServicePlugin = new Elysia({
   name: 'AdminAnnouncementService',
 })
-  .use(AdminAnnouncementRepositoryPlugin)
-  .decorate(({ adminAnnouncementRepository }) => ({
-    adminAnnouncementService: new AdminAnnouncementService(adminAnnouncementRepository),
+  .use([AdminAnnouncementRepositoryPlugin, FileServicePlugin])
+  .decorate(({ adminAnnouncementRepository, fileService }) => ({
+    adminAnnouncementService: new AdminAnnouncementService(
+      adminAnnouncementRepository,
+      fileService
+    ),
   }))

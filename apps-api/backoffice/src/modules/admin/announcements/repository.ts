@@ -2,7 +2,7 @@ import Elysia from 'elysia'
 
 import { PutDraftedAnnouncementBody, PutPublishedAnnouncementBody } from './models'
 
-import { FeedItemType } from '../../../../__generated__/prisma'
+import { AnnouncementType, FeedItemType } from '../../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { fromPrismaPromise } from '../../../utils/prisma'
 import { FileService, FileServicePlugin } from '../../file/services'
@@ -238,6 +238,9 @@ export class AdminAnnouncementRepository {
             topics: { createMany: { data: announcement.topics } },
             attachments: { createMany: { data: announcement.attachments } },
           },
+          include: {
+            attachments: true,
+          },
         })
 
         // 3. Delete the announcement
@@ -249,24 +252,6 @@ export class AdminAnnouncementRepository {
   }
 
   async deleteAnnouncementById(announcementId: string) {
-    const announcement = await this.prismaService.announcement.findUniqueOrThrow({
-      where: { feedItemId: announcementId },
-      select: {
-        attachments: { select: { filePath: true } },
-      },
-    })
-
-    // TODO - Refactoring
-    try {
-      await Promise.all(
-        announcement.attachments.map((attachment) =>
-          this.fileService.deleteFile(attachment.filePath)
-        )
-      )
-    } catch {
-      //...
-    }
-
     return await fromPrismaPromise(
       this.prismaService.feedItem.delete({ where: { id: announcementId } })
     )
@@ -386,28 +371,21 @@ export class AdminAnnouncementRepository {
     )
   }
 
-  async publishDraftedAnnouncementById(announcementDraftId: string, authorId: string) {
+  async publishDraftedAnnouncementById(
+    announcementDraft: {
+      id: string
+      title: string
+      content: string | null
+      type: AnnouncementType
+      iconImage: string | null
+      backgroundColor: string | null
+      topics: string[]
+      attachments: string[]
+    },
+    authorId: string
+  ) {
     return await fromPrismaPromise(
       this.prismaService.$transaction(async (tx) => {
-        // 1. Get Announcement Draft
-        const announcementDraft = await tx.announcementDraft.findUniqueOrThrow({
-          where: { id: announcementDraftId },
-          select: {
-            id: true,
-            title: true,
-            content: true,
-            type: true,
-            iconImage: true,
-            backgroundColor: true,
-            topics: { select: { topicId: true } },
-            attachments: { select: { filePath: true } },
-          },
-        })
-
-        if (announcementDraft.title === null || announcementDraft.type === null)
-          throw new Error('Title and Type are required')
-
-        // 2. Insert into FeedItem
         const feedItem = await tx.feedItem.create({
           data: {
             id: announcementDraft.id,
@@ -420,15 +398,25 @@ export class AdminAnnouncementRepository {
                 type: announcementDraft.type,
                 iconImage: announcementDraft.iconImage,
                 backgroundColor: announcementDraft.backgroundColor,
-                topics: { createMany: { data: announcementDraft.topics } },
-                attachments: { createMany: { data: announcementDraft.attachments } },
+                topics: {
+                  createMany: {
+                    data: announcementDraft.topics.map((topicId) => ({ topicId })),
+                  },
+                },
+                attachments: {
+                  createMany: {
+                    data: announcementDraft.attachments.map((attachment) => ({
+                      filePath: attachment,
+                    })),
+                  },
+                },
               },
             },
           },
         })
 
         // 3. Delete Announcement Draft
-        await tx.announcementDraft.delete({ where: { id: announcementDraftId } })
+        await tx.announcementDraft.delete({ where: { id: announcementDraft.id } })
 
         return feedItem
       })
@@ -436,24 +424,6 @@ export class AdminAnnouncementRepository {
   }
 
   async deleteDraftedAnnouncementById(announcementDraftId: string) {
-    const announcement = await this.prismaService.announcementDraft.findUniqueOrThrow({
-      where: { id: announcementDraftId },
-      select: {
-        attachments: { select: { filePath: true } },
-      },
-    })
-
-    // TODO - Refactoring
-    try {
-      await Promise.all(
-        announcement.attachments.map((attachment) =>
-          this.fileService.deleteFile(attachment.filePath)
-        )
-      )
-    } catch {
-      //...
-    }
-
     return await fromPrismaPromise(
       this.prismaService.announcementDraft.delete({ where: { id: announcementDraftId } })
     )

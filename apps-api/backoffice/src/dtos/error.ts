@@ -59,6 +59,9 @@ const ANNOUNCEMENT_ERROR_SCHEMA = {
   ANNOUNCEMENT_NOT_FOUND: {
     status: 404,
   },
+  ANNOUNCEMENT_INVALID_DRAFT: {
+    status: 400,
+  },
 } satisfies InternalErrorSchemas
 
 const FEED_ERROR_SCHEMA = {

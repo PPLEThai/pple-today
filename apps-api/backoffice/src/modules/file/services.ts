@@ -1,7 +1,7 @@
 import { GetSignedUrlConfig, Storage } from '@google-cloud/storage'
 import Elysia from 'elysia'
 import https from 'https'
-import { fromPromise, ok } from 'neverthrow'
+import { fromPromise, Ok, ok } from 'neverthrow'
 import { Readable } from 'stream'
 
 import serverEnv from '../../config/env'
@@ -9,6 +9,9 @@ import { InternalErrorCode } from '../../dtos/error'
 import { err } from '../../utils/error'
 
 export class FileService {
+  public prefixPublicFolder = 'public/' as const
+  public prefixTempFolder = 'temp/' as const
+
   private storage: Storage
   private bucket: ReturnType<Storage['bucket']>
 
@@ -26,6 +29,91 @@ export class FileService {
       },
     })
     this.bucket = this.storage.bucket(config.bucketName)
+  }
+
+  async bulkMarkAsPublic(files: string[]) {
+    const results = await fromPromise(
+      Promise.all(files.map((file) => this.bucket.file(file).makePublic())),
+      (err) => ({
+        code: InternalErrorCode.FILE_MOVE_ERROR,
+        message: (err as Error).message,
+      })
+    )
+
+    if (results.isErr()) {
+      return err({
+        code: InternalErrorCode.FILE_MOVE_ERROR,
+        message: 'Failed to move one or more files',
+      })
+    }
+
+    return ok(files)
+  }
+
+  async bulkMarkAsPrivate(files: string[]) {
+    const results = await fromPromise(
+      Promise.all(files.map((file) => this.bucket.file(file).makePrivate())),
+      (err) => ({
+        code: InternalErrorCode.FILE_MOVE_ERROR,
+        message: (err as Error).message,
+      })
+    )
+
+    if (results.isErr()) {
+      return err({
+        code: InternalErrorCode.FILE_MOVE_ERROR,
+        message: 'Failed to move one or more files',
+      })
+    }
+
+    return ok(files)
+  }
+
+  async bulkDeleteFile(files: string[]) {
+    const results = await fromPromise(
+      Promise.all(files.map((file) => this.bucket.file(file).delete())),
+      (err) => ({
+        code: InternalErrorCode.FILE_DELETE_ERROR,
+        message: (err as Error).message,
+      })
+    )
+
+    if (results.isErr()) {
+      return err({
+        code: InternalErrorCode.FILE_DELETE_ERROR,
+        message: 'Failed to delete one or more files',
+      })
+    }
+
+    return ok(files)
+  }
+
+  async moveFileToPublicFolder(files: string[]) {
+    const moveResults = await Promise.all(
+      files.map(async (file) => {
+        if (file.startsWith(this.prefixTempFolder)) {
+          const realPath = `${this.prefixPublicFolder}${file.slice(this.prefixTempFolder.length)}`
+          const realAttachment = await this.moveFile(file, realPath)
+
+          if (realAttachment.isErr()) {
+            return err(realAttachment.error)
+          }
+
+          return ok(realPath)
+        }
+
+        return ok(file)
+      })
+    )
+
+    if (moveResults.some((result) => result.isErr())) {
+      return err({
+        code: InternalErrorCode.FILE_MOVE_ERROR,
+        message: 'Failed to move one or more files',
+      })
+    }
+
+    return ok((moveResults as Array<Ok<string, never>>).map((result) => result.value))
   }
 
   async getUploadSignedUrl(
