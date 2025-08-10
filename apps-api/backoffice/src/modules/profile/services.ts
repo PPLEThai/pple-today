@@ -147,7 +147,9 @@ export class ProfileService {
 
   async getProfileUploadUrl(userId: string) {
     const fileKey = `users/profile-picture-${userId}.png`
-    const uploadUrl = await this.fileService.getUploadSignedUrl(fileKey)
+    const uploadUrl = await this.fileService.getUploadSignedUrl(fileKey, {
+      contentType: 'image/png,image/jpg,image/jpeg',
+    })
 
     if (uploadUrl.isErr()) {
       return err(uploadUrl.error)

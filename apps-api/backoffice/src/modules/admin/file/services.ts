@@ -12,23 +12,30 @@ export class AdminFileService {
 
   async getUploadSignedUrl(body: GetUploadSignedUrlBody) {
     let filePath: string
+    let fileContentType: string
+
     const randomId = createId()
 
     switch (body.category) {
       case UploadFileCategory.ANNOUNCEMENT:
-        filePath = `${this.fileService.prefixTempFolder}announcement/${randomId}.pdf`
+        filePath = `${this.fileService.prefixTempFolder}announcement/announcement-${randomId}.pdf`
+        fileContentType = 'application/pdf'
         break
       case UploadFileCategory.TOPIC:
-        filePath = `${this.fileService.prefixTempFolder}topic/${randomId}.png`
+        filePath = `${this.fileService.prefixTempFolder}topic/topic-${randomId}.png`
+        fileContentType = 'image/png,image/jpeg,image/jpg'
         break
       case UploadFileCategory.PROFILE_IMAGE:
         filePath = `${this.fileService.prefixPublicFolder}users/profile-image-${body.id}.png`
+        fileContentType = 'image/png,image/jpeg,image/jpg'
         break
       default:
         exhaustiveGuard(body)
     }
 
-    const getResult = await this.fileService.getUploadSignedUrl(filePath)
+    const getResult = await this.fileService.getUploadSignedUrl(filePath, {
+      contentType: fileContentType,
+    })
 
     if (getResult.isErr()) {
       return err(getResult.error)

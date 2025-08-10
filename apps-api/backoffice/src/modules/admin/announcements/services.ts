@@ -106,7 +106,7 @@ export class AdminAnnouncementService {
     }
 
     const updatedAttachmentsResult = await this.fileService.moveFileToPublicFolder(
-      announcementResult.value.attachments
+      data.attachmentFilePaths
     )
 
     if (updatedAttachmentsResult.isErr()) {
@@ -226,6 +226,26 @@ export class AdminAnnouncementService {
   }
 
   async updateDraftedAnnouncementById(announcementId: string, data: PutDraftedAnnouncementBody) {
+    const draftAnnouncement =
+      await this.adminAnnouncementRepository.getDraftedAnnouncementById(announcementId)
+
+    if (draftAnnouncement.isErr()) {
+      return mapRawPrismaError(draftAnnouncement.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
+        },
+      })
+    }
+
+    const cleanUpResult = await this.cleanUpUnusedAttachment(
+      draftAnnouncement.value.attachments,
+      data.attachmentFilePaths
+    )
+
+    if (cleanUpResult.isErr()) {
+      return err(cleanUpResult.error)
+    }
+
     const draftAnnouncementAttachments = await this.fileService.moveFileToPublicFolder(
       data.attachmentFilePaths
     )
@@ -235,15 +255,6 @@ export class AdminAnnouncementService {
         code: InternalErrorCode.FILE_MOVE_ERROR,
         message: 'Failed to move one or more files',
       })
-    }
-
-    const cleanUpResult = await this.cleanUpUnusedAttachment(
-      draftAnnouncementAttachments.value,
-      data.attachmentFilePaths
-    )
-
-    if (cleanUpResult.isErr()) {
-      return err(cleanUpResult.error)
     }
 
     const result = await this.adminAnnouncementRepository.updateDraftedAnnouncementById(
