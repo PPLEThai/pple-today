@@ -19,7 +19,7 @@ import { FileService, FileServicePlugin } from '../../file/services'
 
 export class AdminTopicService {
   constructor(
-    private adminTopicRepository: AdminTopicRepository,
+    private readonly adminTopicRepository: AdminTopicRepository,
     private readonly fileService: FileService
   ) {}
 

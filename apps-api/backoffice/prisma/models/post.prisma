@@ -1,20 +1,27 @@
+enum PostAttachmentType {
+    IMAGE
+    VIDEO
+    AUDIO
+}
+
 model Post {
     feedItemId     String @id
     facebookPostId String @unique
 
     content  String?
-    images   PostImage[]
+    images   PostAttachment[]
     hashTags PostHashTag[]
 
     feedItem FeedItem @relation(fields: [feedItemId], references: [id])
 }
 
-model PostImage {
+model PostAttachment {
     id     String @id @default(cuid())
     postId String
 
     url      String
-    cacheKey String @unique
+    type     PostAttachmentType
+    cacheKey String             @unique
     order    Int
 
     createdAt DateTime @default(now())
