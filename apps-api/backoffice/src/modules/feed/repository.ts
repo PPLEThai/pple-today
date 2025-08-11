@@ -13,7 +13,16 @@ export class FeedRepository {
       this.prismaService.feedItem.findUniqueOrThrow({
         where: { id: feedItemId },
         include: {
-          author: true,
+          author: {
+            include: {
+              address: {
+                select: {
+                  province: true,
+                  district: true,
+                },
+              },
+            },
+          },
           announcement: {
             include: {
               attachments: true,
@@ -239,6 +248,12 @@ export class FeedRepository {
               id: true,
               name: true,
               profileImage: true,
+              address: {
+                select: {
+                  province: true,
+                  district: true,
+                },
+              },
             },
           },
           content: true,
