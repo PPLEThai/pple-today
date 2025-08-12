@@ -128,15 +128,18 @@ export class FileService {
       contentType?: string
     }
   ) {
-    const expiresIn = config?.expiresIn ?? 3600
+    const expiresIn = config?.expiresIn ?? 15 * 60
     const maxSize = config?.maxSize ?? 4 * 1024 * 1024
     const contentType = config?.contentType ?? 'application/octet-stream'
 
     const options: GenerateSignedPostPolicyV4Options = {
       expires: Date.now() + expiresIn * 1000,
+      fields: {
+        'Content-Type': contentType,
+      },
       conditions: [
         ['content-length-range', 0, maxSize],
-        ['content-type', contentType],
+        ['eq', '$Content-Type', contentType],
       ],
     }
 

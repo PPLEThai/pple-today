@@ -23,11 +23,11 @@ export class AdminFileService {
         break
       case UploadFileCategory.TOPIC:
         filePath = `${this.fileService.prefixTempFolder}topic/topic-${randomId}.png`
-        fileContentType = 'image/png,image/jpeg,image/jpg'
+        fileContentType = 'image/png'
         break
       case UploadFileCategory.PROFILE_IMAGE:
         filePath = `${this.fileService.prefixPublicFolder}users/profile-image-${body.id}.png`
-        fileContentType = 'image/png,image/jpeg,image/jpg'
+        fileContentType = 'image/png'
         break
       default:
         exhaustiveGuard(body)

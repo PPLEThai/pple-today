@@ -1,10 +1,12 @@
 import { Static, t } from 'elysia'
 
-export enum UploadFileCategory {
-  ANNOUNCEMENT = 'ANNOUNCEMENT',
-  TOPIC = 'TOPIC',
-  PROFILE_IMAGE = 'PROFILE_IMAGE',
-}
+export const UploadFileCategory = {
+  ANNOUNCEMENT: 'ANNOUNCEMENT',
+  TOPIC: 'TOPIC',
+  PROFILE_IMAGE: 'PROFILE_IMAGE',
+} as const
+
+export type UploadFileCategory = keyof typeof UploadFileCategory
 
 export const GetUploadSignedUrlBody = t.Union([
   t.Object({
