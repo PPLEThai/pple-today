@@ -56,7 +56,7 @@ export class CarouselService {
 
     const imageBannerFilePaths = result.value.map((carousel) => carousel.imageFilePath)
 
-    const imageBannerUrlResults = await this.fileService.batchGetFileSignedUrl(imageBannerFilePaths)
+    const imageBannerUrlResults = await this.fileService.bulkGetFileSignedUrl(imageBannerFilePaths)
     if (imageBannerUrlResults.isErr()) return err(imageBannerUrlResults.error)
 
     return ok(

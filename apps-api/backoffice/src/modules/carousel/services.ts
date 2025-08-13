@@ -25,7 +25,7 @@ export class CarouselService {
         id: carousel.id,
         navigation: carousel.navigation,
         order: carousel.order,
-        imageFilePath: this.fileService.getPublicFileUrl(carousel.imageFilePath).value,
+        imageFilePath: this.fileService.getPublicFileUrl(carousel.imageFilePath),
       })) satisfies GetCarouselsResponse
     )
   }
