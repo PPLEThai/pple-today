@@ -40,21 +40,65 @@ permissions:
   packages: write # to be able to push the Docker image to GitHub Container Registry
 
 jobs:
-  get-tag-name:
-    name: Get Tag Name
-    if: ${{ (github.event.inputs.backoffice == 'true') || (github.event.inputs.api == 'true') }}
+  get-affected-apps:
+    name: Get affected applications
     runs-on: ubuntu-latest
     outputs:
-      TAG_NAME: ${{ steps.set-tag.outputs.TAG_NAME }}
+      packages: ${{ steps.affected-apps.outputs.packages }}
+      deploy-mobile-app: ${{ steps.affected-apps.outputs.deploy-mobile-app }}
+      migrate-database: ${{ steps.affected-apps.outputs.migrate-database }}
     steps:
-      - name: Set tag name
-        id: set-tag
+      - name: Get affected web application names
+        id: affected-apps
         run: |
-          echo "TAG_NAME=${{ github.event.inputs.environment }}-${{ github.sha }}" >> $GITHUB_OUTPUT
+          function constructMetadata {
+            NAME=$1
+            PACKAGE_PATH=$2
+            DOCKER_COMPOSE_PATH=$3
+            REF=${{ github.ref }}
+
+            if [[ "${{ github.ref }}" == "refs/tags"* ]]; then
+              IMAGE_TAG=${{ inputs.environment }}-$(cat $PACKAGE_PATH/package.json | jq -r '.version')
+            else 
+              IMAGE_TAG=${{ inputs.environment }}-${{ github.sha }}
+            fi
+
+            ITEM="{
+              \"name\": \"$NAME\",
+              \"ref\": \"$REF\",
+              \"imageTag\": \"$IMAGE_TAG\",
+              \"path\": \"$PACKAGE_PATH\",
+              \"version\": \"$IMAGE_TAG\",
+              \"dockerComposePath\": \"$DOCKER_COMPOSE_PATH\"
+            }"
+            
+            echo $ITEM
+          }
+
+          PACKAGES="[]"
+
+          if [[ ${{ inputs.api }} == true ]]; then
+            METADATA=$(constructMetadata "pple-api" "apps-api/backoffice" "docker-compose.api.yaml")
+            PACKAGES=$(echo $PACKAGES | jq -c ". += [${METADATA}]")
+          fi
+
+          if [[ ${{ inputs.backoffice }} == true ]]; then
+              METADATA=$(constructMetadata "pple-backoffice" "apps-client/backoffice" "docker-compose.backoffice.yaml")
+              PACKAGES=$(echo $PACKAGES | jq -c ". += [${METADATA}]")
+          fi
+
+          echo $PACKAGES | jq
+
+          echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
+          echo "packages=$PACKAGES"
+
+          echo "mobile-app=${{ github.event.inputs.android == 'true' || github.event.inputs.ios == 'true' }}" >> $GITHUB_OUTPUT
+          echo "migrate-database=${{ github.event.inputs.migrate-database == 'true' }}" >> $GITHUB_OUTPUT
 
   deploy-mobile-app:
     name: Deploy Beta Mobile App
-    if: ${{ (github.event.inputs.android == 'true') || (github.event.inputs.ios == 'true') }}
+    if: ${{ needs.get-affected-apps.outputs.mobile-app == 'true' }}
+    needs: get-affected-apps
     uses: ./.github/workflows/mobile-beta-deployment.yaml
     secrets: 'inherit'
     with:
@@ -63,17 +107,14 @@ jobs:
       groups: ${{ github.event.inputs.groups }}
       environment: ${{ github.event.inputs.environment }}
 
-  deploy-backoffice:
-    name: Deploy Backoffice
-    if: ${{ github.event.inputs.backoffice == 'true' }}
-    needs: get-tag-name
+  deploy-docker:
+    name: Deploy docker application And deploy
+    if: ${{ needs.get-affected-apps.outputs.packages != '[]' }}
+    needs: get-affected-apps
     uses: ./.github/workflows/deploy-docker.yaml
     with:
-      PACKAGE_NAME: pple-backoffice
-      TAG_NAME: ${{ needs.get-tag-name.outputs.TAG_NAME }}
-      DOCKER_COMPOSE_FILE: docker-compose.backoffice.yaml
-      DOCKER_REGISTRY: ghcr.io
-      PROJECT_PATH: ./apps-client/backoffice
+      packages: ${{ needs.get-affected-apps.outputs.packages }}
+      docker_registry: ghcr.io
     secrets:
       OVPN_CONFIG: ${{ secrets.OVPN_CONFIG }}
       OVPN_USERNAME: ${{ secrets.OVPN_USERNAME }}
@@ -84,29 +125,10 @@ jobs:
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       WEB_CLIENT_ENV: ${{ secrets.WEB_CLIENT_ENV }}
 
-  deploy-api:
-    name: Deploy API
-    if: ${{ github.event.inputs.api == 'true' }}
-    needs: get-tag-name
-    uses: ./.github/workflows/deploy-docker.yaml
-    with:
-      PACKAGE_NAME: pple-api
-      TAG_NAME: ${{ needs.get-tag-name.outputs.TAG_NAME }}
-      DOCKER_COMPOSE_FILE: docker-compose.api.yaml
-      DOCKER_REGISTRY: ghcr.io
-      PROJECT_PATH: ./apps-api/backoffice
-    secrets:
-      OVPN_CONFIG: ${{ secrets.OVPN_CONFIG }}
-      OVPN_USERNAME: ${{ secrets.OVPN_USERNAME }}
-      OVPN_PASSWORD: ${{ secrets.OVPN_PASSWORD }}
-      OVPN_USER_KEY: ${{ secrets.OVPN_USER_KEY }}
-      SSH_HOST: ${{ secrets.SSH_HOST }}
-      SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
-      SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-
   migrate-database:
     name: Migrate Database
-    if: ${{ github.event.inputs.migrate-database == 'true' }}
+    if: ${{ needs.get-affected-apps.outputs.migrate-database == 'true' }}
+    needs: get-affected-apps
     uses: ./.github/workflows/migrate-database.yaml
     secrets:
       OVPN_CONFIG: ${{ secrets.OVPN_CONFIG }}
