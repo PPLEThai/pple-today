@@ -1,5 +1,7 @@
 import { Static, t } from 'elysia'
 
+import { Topic } from './topic'
+
 import { AnnouncementType } from '../../__generated__/prisma'
 
 export const PublishedAnnouncement = t.Object({
@@ -18,13 +20,27 @@ export const PublishedAnnouncement = t.Object({
   ),
   createdAt: t.Date({ description: 'Creation date of the announcement' }),
   updatedAt: t.Date({ description: 'Last update date of the announcement' }),
-  topics: t.Array(t.String({ description: 'The ID of the announcement topic' })),
-  attachments: t.Array(t.String({ description: 'The file path of the announcement attachment' })),
+  topics: t.Array(t.Pick(Topic, ['id', 'name'])),
+  attachments: t.Array(
+    t.Object({
+      url: t.String({ description: 'The signed URL of the attachment', format: 'uri' }),
+      filePath: t.String({ description: 'The file path of the attachment' }),
+    })
+  ),
 })
 export type PublishedAnnouncement = Static<typeof PublishedAnnouncement>
 
 export const DraftedAnnouncement = t.Composite([
-  t.Omit(PublishedAnnouncement, ['title', 'type']),
+  t.Pick(PublishedAnnouncement, [
+    'id',
+    'content',
+    'iconImage',
+    'backgroundColor',
+    'createdAt',
+    'updatedAt',
+    'topics',
+    'attachments',
+  ]),
   t.Object({
     title: t.Nullable(t.String({ description: 'The title of the announcement' })),
     type: t.Nullable(t.Enum(AnnouncementType, { description: 'The type of the announcement' })),

@@ -25,11 +25,46 @@ export const GetAnnouncementsQuery = t.Object({
 export type GetAnnouncementsQuery = Static<typeof GetAnnouncementsQuery>
 
 export const GetAnnouncementsResponse = t.Array(
-  t.Union([DraftedAnnouncement, PublishedAnnouncement])
+  t.Union([
+    t.Pick(DraftedAnnouncement, [
+      'id',
+      'content',
+      'iconImage',
+      'backgroundColor',
+      'createdAt',
+      'updatedAt',
+      'topics',
+      'title',
+      'type',
+    ]),
+    t.Pick(PublishedAnnouncement, [
+      'id',
+      'content',
+      'iconImage',
+      'backgroundColor',
+      'createdAt',
+      'updatedAt',
+      'topics',
+      'title',
+      'type',
+    ]),
+  ])
 )
 export type GetAnnouncementsResponse = Static<typeof GetAnnouncementsResponse>
 
-export const GetPublishedAnnouncementsResponse = t.Array(PublishedAnnouncement)
+export const GetPublishedAnnouncementsResponse = t.Array(
+  t.Pick(PublishedAnnouncement, [
+    'id',
+    'content',
+    'iconImage',
+    'backgroundColor',
+    'createdAt',
+    'updatedAt',
+    'topics',
+    'title',
+    'type',
+  ])
+)
 export type GetPublishedAnnouncementsResponse = Static<typeof GetPublishedAnnouncementsResponse>
 
 export const GetPublishedAnnouncementResponse = PublishedAnnouncement
@@ -73,7 +108,19 @@ export const DeletePublishedAnnouncementResponse = t.Object({
 })
 export type DeletePublishedAnnouncementResponse = Static<typeof DeletePublishedAnnouncementResponse>
 
-export const GetDraftedAnnouncementsResponse = t.Array(DraftedAnnouncement)
+export const GetDraftedAnnouncementsResponse = t.Array(
+  t.Pick(DraftedAnnouncement, [
+    'id',
+    'content',
+    'iconImage',
+    'backgroundColor',
+    'createdAt',
+    'updatedAt',
+    'topics',
+    'title',
+    'type',
+  ])
+)
 export type GetDraftedAnnouncementsResponse = Static<typeof GetDraftedAnnouncementsResponse>
 
 export const GetDraftedAnnouncementResponse = DraftedAnnouncement

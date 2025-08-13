@@ -9,6 +9,7 @@ import {
   GetMyProfileResponse,
   GetProfileByIdParams,
   GetProfileByIdResponse,
+  GetProfileUploadUrlResponse,
   UpdateProfileBody,
   UpdateProfileResponse,
 } from './models'
@@ -197,6 +198,29 @@ export const ProfileController = new Elysia({
           summary: 'Complete Onboarding',
           description: 'Complete the onboarding process for a user',
         },
+      },
+    }
+  )
+  .get(
+    '/upload-url',
+    async ({ user, status, profileService }) => {
+      const result = await profileService.getProfileUploadUrl(user.sub)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredUser: true,
+      response: {
+        200: GetProfileUploadUrlResponse,
+        ...createErrorSchema(InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR),
+      },
+      detail: {
+        summary: 'Get Profile Upload URL',
+        description: 'Fetch the signed URL to upload a profile image',
       },
     }
   )

@@ -7,11 +7,13 @@ import { ProfileRepository, ProfileRepositoryPlugin } from './repository'
 import { InternalErrorCode } from '../../dtos/error'
 import { mapRawPrismaError } from '../../utils/prisma'
 import { AuthRepository, AuthRepositoryPlugin } from '../auth/repository'
+import { FileService, FileServicePlugin } from '../file/services'
 
 export class ProfileService {
   constructor(
     private profileRepository: ProfileRepository,
-    private authRepository: AuthRepository
+    private authRepository: AuthRepository,
+    private fileService: FileService
   ) {}
   async getProfileById(id: string) {
     const user = await this.profileRepository.getProfileById(id)
@@ -142,10 +144,27 @@ export class ProfileService {
 
     return ok(result.value)
   }
+
+  async getProfileUploadUrl(userId: string) {
+    const fileKey = `users/profile-picture-${userId}.png`
+    const uploadUrl = await this.fileService.getUploadSignedUrl(fileKey, {
+      contentType: 'image/png',
+    })
+
+    if (uploadUrl.isErr()) {
+      return err(uploadUrl.error)
+    }
+
+    return ok({
+      fileKey,
+      uploadFields: uploadUrl.value.fields,
+      uploadUrl: uploadUrl.value.url,
+    })
+  }
 }
 
 export const ProfileServicePlugin = new Elysia({ name: 'ProfileService' })
-  .use([ProfileRepositoryPlugin, AuthRepositoryPlugin])
-  .decorate(({ profileRepository, authRepository }) => ({
-    profileService: new ProfileService(profileRepository, authRepository),
+  .use([ProfileRepositoryPlugin, AuthRepositoryPlugin, FileServicePlugin])
+  .decorate(({ profileRepository, authRepository, fileService }) => ({
+    profileService: new ProfileService(profileRepository, authRepository, fileService),
   }))

@@ -339,7 +339,7 @@ export class FacebookRepository {
 
     const response = await this.makeRequest({
       path: `/${pageId}?${queryParams.toString()}`,
-      responseSchema: t.Omit(ExternalFacebookGetPageDetailsResponse, ['access_token']),
+      responseSchema: t.Pick(ExternalFacebookGetPageDetailsResponse, ['id', 'name', 'picture']),
     })
 
     if (response.isErr()) {

@@ -2,7 +2,7 @@ import Elysia from 'elysia'
 
 import { PutDraftedAnnouncementBody, PutPublishedAnnouncementBody } from './models'
 
-import { FeedItemType } from '../../../../__generated__/prisma'
+import { AnnouncementType, FeedItemType } from '../../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { fromPrismaPromise } from '../../../utils/prisma'
 import { FileService, FileServicePlugin } from '../../file/services'
@@ -28,12 +28,12 @@ export class AdminAnnouncementRepository {
             updatedAt: true,
             topics: {
               select: {
-                topicId: true,
-              },
-            },
-            attachments: {
-              select: {
-                filePath: true,
+                topic: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
               },
             },
           },
@@ -48,12 +48,12 @@ export class AdminAnnouncementRepository {
             backgroundColor: true,
             topics: {
               select: {
-                topicId: true,
-              },
-            },
-            attachments: {
-              select: {
-                filePath: true,
+                topic: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
               },
             },
             feedItem: {
@@ -69,13 +69,9 @@ export class AdminAnnouncementRepository {
       return [
         ...draft.map((item) => ({
           ...item,
-          topics: item.topics.map((topic) => topic.topicId),
-          attachments: item.attachments.map((attachment) => attachment.filePath),
         })),
-        ...published.map(({ feedItemId, topics, attachments, feedItem, ...item }) => ({
+        ...published.map(({ feedItemId, feedItem, ...item }) => ({
           id: feedItemId,
-          topics: topics.map((topic) => topic.topicId),
-          attachments: attachments.map((attachment) => attachment.filePath),
           createdAt: feedItem.createdAt,
           updatedAt: feedItem.updatedAt,
           ...item,
@@ -104,7 +100,12 @@ export class AdminAnnouncementRepository {
           backgroundColor: true,
           topics: {
             select: {
-              topicId: true,
+              topic: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
           attachments: {
@@ -130,7 +131,7 @@ export class AdminAnnouncementRepository {
 
       return result.map(({ feedItemId, topics, attachments, feedItem, ...item }) => ({
         id: feedItemId,
-        topics: topics.map((topic) => topic.topicId),
+        topics: topics.map(({ topic }) => topic),
         attachments: attachments.map((attachment) => attachment.filePath),
         createdAt: feedItem.createdAt,
         updatedAt: feedItem.updatedAt,
@@ -153,7 +154,12 @@ export class AdminAnnouncementRepository {
             backgroundColor: true,
             topics: {
               select: {
-                topicId: true,
+                topic: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
               },
             },
             attachments: {
@@ -172,7 +178,7 @@ export class AdminAnnouncementRepository {
 
       return {
         id: feedItemId,
-        topics: topics.map((topic) => topic.topicId),
+        topics: topics.map(({ topic }) => topic),
         attachments: attachments.map((attachment) => attachment.filePath),
         createdAt: feedItem.createdAt,
         updatedAt: feedItem.updatedAt,
@@ -238,6 +244,9 @@ export class AdminAnnouncementRepository {
             topics: { createMany: { data: announcement.topics } },
             attachments: { createMany: { data: announcement.attachments } },
           },
+          include: {
+            attachments: true,
+          },
         })
 
         // 3. Delete the announcement
@@ -249,26 +258,14 @@ export class AdminAnnouncementRepository {
   }
 
   async deleteAnnouncementById(announcementId: string) {
-    const announcement = await this.prismaService.announcement.findUniqueOrThrow({
-      where: { feedItemId: announcementId },
-      select: {
-        attachments: { select: { filePath: true } },
-      },
-    })
-
-    // TODO - Refactoring
-    try {
-      await Promise.all(
-        announcement.attachments.map((attachment) =>
-          this.fileService.deleteFile(attachment.filePath)
-        )
-      )
-    } catch {
-      //...
-    }
-
     return await fromPrismaPromise(
-      this.prismaService.feedItem.delete({ where: { id: announcementId } })
+      this.prismaService.feedItem.delete({
+        where: { id: announcementId },
+        select: {
+          id: true,
+          announcement: { select: { attachments: { select: { id: true, filePath: true } } } },
+        },
+      })
     )
   }
 
@@ -294,7 +291,12 @@ export class AdminAnnouncementRepository {
           updatedAt: true,
           topics: {
             select: {
-              topicId: true,
+              topic: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
           attachments: {
@@ -312,7 +314,7 @@ export class AdminAnnouncementRepository {
 
       return result.map((item) => ({
         ...item,
-        topics: item.topics.map((topic) => topic.topicId),
+        topics: item.topics.map(({ topic }) => topic),
         attachments: item.attachments.map((attachment) => attachment.filePath),
       }))
     })
@@ -333,7 +335,12 @@ export class AdminAnnouncementRepository {
           updatedAt: true,
           topics: {
             select: {
-              topicId: true,
+              topic: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
           attachments: {
@@ -346,7 +353,7 @@ export class AdminAnnouncementRepository {
 
       return {
         ...result,
-        topics: result.topics.map((topic) => topic.topicId),
+        topics: result.topics.map(({ topic }) => topic),
         attachments: result.attachments.map((attachment) => attachment.filePath),
       }
     })
@@ -386,28 +393,21 @@ export class AdminAnnouncementRepository {
     )
   }
 
-  async publishDraftedAnnouncementById(announcementDraftId: string, authorId: string) {
+  async publishDraftedAnnouncementById(
+    announcementDraft: {
+      id: string
+      title: string
+      content: string | null
+      type: AnnouncementType
+      iconImage: string | null
+      backgroundColor: string | null
+      topics: string[]
+      attachments: string[]
+    },
+    authorId: string
+  ) {
     return await fromPrismaPromise(
       this.prismaService.$transaction(async (tx) => {
-        // 1. Get Announcement Draft
-        const announcementDraft = await tx.announcementDraft.findUniqueOrThrow({
-          where: { id: announcementDraftId },
-          select: {
-            id: true,
-            title: true,
-            content: true,
-            type: true,
-            iconImage: true,
-            backgroundColor: true,
-            topics: { select: { topicId: true } },
-            attachments: { select: { filePath: true } },
-          },
-        })
-
-        if (announcementDraft.title === null || announcementDraft.type === null)
-          throw new Error('Title and Type are required')
-
-        // 2. Insert into FeedItem
         const feedItem = await tx.feedItem.create({
           data: {
             id: announcementDraft.id,
@@ -420,15 +420,25 @@ export class AdminAnnouncementRepository {
                 type: announcementDraft.type,
                 iconImage: announcementDraft.iconImage,
                 backgroundColor: announcementDraft.backgroundColor,
-                topics: { createMany: { data: announcementDraft.topics } },
-                attachments: { createMany: { data: announcementDraft.attachments } },
+                topics: {
+                  createMany: {
+                    data: announcementDraft.topics.map((topicId) => ({ topicId })),
+                  },
+                },
+                attachments: {
+                  createMany: {
+                    data: announcementDraft.attachments.map((attachment) => ({
+                      filePath: attachment,
+                    })),
+                  },
+                },
               },
             },
           },
         })
 
         // 3. Delete Announcement Draft
-        await tx.announcementDraft.delete({ where: { id: announcementDraftId } })
+        await tx.announcementDraft.delete({ where: { id: announcementDraft.id } })
 
         return feedItem
       })
@@ -436,26 +446,18 @@ export class AdminAnnouncementRepository {
   }
 
   async deleteDraftedAnnouncementById(announcementDraftId: string) {
-    const announcement = await this.prismaService.announcementDraft.findUniqueOrThrow({
-      where: { id: announcementDraftId },
-      select: {
-        attachments: { select: { filePath: true } },
-      },
-    })
-
-    // TODO - Refactoring
-    try {
-      await Promise.all(
-        announcement.attachments.map((attachment) =>
-          this.fileService.deleteFile(attachment.filePath)
-        )
-      )
-    } catch {
-      //...
-    }
-
     return await fromPrismaPromise(
-      this.prismaService.announcementDraft.delete({ where: { id: announcementDraftId } })
+      this.prismaService.announcementDraft.delete({
+        where: { id: announcementDraftId },
+        select: {
+          id: true,
+          attachments: {
+            select: {
+              filePath: true,
+            },
+          },
+        },
+      })
     )
   }
 }

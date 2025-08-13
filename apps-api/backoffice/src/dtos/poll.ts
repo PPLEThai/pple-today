@@ -16,7 +16,7 @@ export const PublishedPoll = t.Object({
 export type PublishedPoll = Static<typeof PublishedPoll>
 
 export const DraftedPoll = t.Composite([
-  t.Omit(PublishedPoll, ['title', 'endAt']),
+  t.Pick(PublishedPoll, ['id', 'description', 'type', 'createdAt', 'updatedAt']),
   t.Object({
     title: t.Nullable(t.String({ description: 'The title of the poll' })),
     endAt: t.Nullable(t.Date({ description: 'The end date of the poll' })),

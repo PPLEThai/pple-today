@@ -49,21 +49,16 @@ export class AnnouncementService {
       })
     }
 
-    const attachmentSignedUrls: string[] = []
-    for (const filePath in announcementResult.value.attachments) {
-      const signedUrl = await this.fileService.getSignedUrl(filePath)
-      if (signedUrl.isErr()) {
-        return err(signedUrl.error)
-      }
-      attachmentSignedUrls.push(signedUrl.value)
-    }
+    const attachmentPublicUrls = this.fileService.bulkGetPublicFileUrl(
+      announcementResult.value.attachments.map((attachment) => attachment.filePath)
+    )
 
     return ok({
       id: announcementResult.value.feedItemId,
       title: announcementResult.value.title,
       content: announcementResult.value.content ?? '',
       backgroundColor: announcementResult.value.backgroundColor ?? '',
-      attachments: attachmentSignedUrls,
+      attachments: attachmentPublicUrls,
       createdAt: announcementResult.value.feedItem.createdAt,
       updatedAt: announcementResult.value.feedItem.updatedAt,
     } satisfies GetAnnouncementByIdResponse)

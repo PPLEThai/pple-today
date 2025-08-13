@@ -78,18 +78,14 @@ export class FacebookService {
       return ok(null)
     }
 
-    const signedProfilePictureUrl = await this.fileService.getSignedUrl(
+    const publicProfilePictureUrl = this.fileService.getPublicFileUrl(
       linkedPageResult.value.profilePictureUrl
     )
-
-    if (signedProfilePictureUrl.isErr()) {
-      return err(signedProfilePictureUrl.error)
-    }
 
     return ok({
       id: linkedPageResult.value.id,
       name: linkedPageResult.value.name,
-      profilePictureUrl: signedProfilePictureUrl.value,
+      profilePictureUrl: publicProfilePictureUrl,
     })
   }
 

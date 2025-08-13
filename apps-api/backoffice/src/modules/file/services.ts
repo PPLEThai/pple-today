@@ -1,13 +1,21 @@
-import { GetSignedUrlConfig, Storage } from '@google-cloud/storage'
+import {
+  GenerateSignedPostPolicyV4Options,
+  GetSignedUrlConfig,
+  Storage,
+} from '@google-cloud/storage'
 import Elysia from 'elysia'
 import https from 'https'
-import { fromPromise, ok } from 'neverthrow'
+import { fromPromise, Ok, ok } from 'neverthrow'
 import { Readable } from 'stream'
 
 import serverEnv from '../../config/env'
 import { InternalErrorCode } from '../../dtos/error'
+import { err } from '../../utils/error'
 
 export class FileService {
+  public prefixPublicFolder = 'public/' as const
+  public prefixTempFolder = 'temp/' as const
+
   private storage: Storage
   private bucket: ReturnType<Storage['bucket']>
 
@@ -27,11 +35,165 @@ export class FileService {
     this.bucket = this.storage.bucket(config.bucketName)
   }
 
-  async getSignedUrl(fileKey: string, expiresIn: number = 3600) {
+  async bulkMarkAsPublic(files: string[]) {
+    const results = await fromPromise(
+      Promise.all(files.map((file) => this.bucket.file(file).makePublic())),
+      (err) => ({
+        code: InternalErrorCode.FILE_MOVE_ERROR,
+        message: (err as Error).message,
+      })
+    )
+
+    if (results.isErr()) {
+      return err({
+        code: InternalErrorCode.FILE_MOVE_ERROR,
+        message: 'Failed to move one or more files',
+      })
+    }
+
+    return ok(files)
+  }
+
+  async bulkMarkAsPrivate(files: string[]) {
+    const results = await fromPromise(
+      Promise.all(files.map((file) => this.bucket.file(file).makePrivate())),
+      (err) => ({
+        code: InternalErrorCode.FILE_MOVE_ERROR,
+        message: (err as Error).message,
+      })
+    )
+
+    if (results.isErr()) {
+      return err({
+        code: InternalErrorCode.FILE_MOVE_ERROR,
+        message: 'Failed to move one or more files',
+      })
+    }
+
+    return ok(files)
+  }
+
+  async bulkDeleteFile(files: string[]) {
+    const results = await fromPromise(
+      Promise.all(files.map((file) => this.bucket.file(file).delete())),
+      (err) => ({
+        code: InternalErrorCode.FILE_DELETE_ERROR,
+        message: (err as Error).message,
+      })
+    )
+
+    if (results.isErr()) {
+      return err({
+        code: InternalErrorCode.FILE_DELETE_ERROR,
+        message: 'Failed to delete one or more files',
+      })
+    }
+
+    return ok(files)
+  }
+
+  async moveFileToPublicFolder(files: string[]) {
+    const moveResults = await Promise.all(
+      files.map(async (file) => {
+        if (file.startsWith(this.prefixTempFolder)) {
+          const realPath = `${this.prefixPublicFolder}${file.slice(this.prefixTempFolder.length)}`
+          const realAttachment = await this.moveFile(file, realPath)
+
+          if (realAttachment.isErr()) {
+            return err(realAttachment.error)
+          }
+
+          return ok(realPath)
+        }
+
+        return ok(file)
+      })
+    )
+
+    if (moveResults.some((result) => result.isErr())) {
+      return err({
+        code: InternalErrorCode.FILE_MOVE_ERROR,
+        message: 'Failed to move one or more files',
+      })
+    }
+
+    return ok((moveResults as Array<Ok<string, never>>).map((result) => result.value))
+  }
+
+  async getUploadSignedUrl(
+    fileKey: string,
+    config?: {
+      expiresIn?: number
+      maxSize?: number
+      contentType?: string
+    }
+  ) {
+    const expiresIn = config?.expiresIn ?? 15 * 60
+    const maxSize = config?.maxSize ?? 4 * 1024 * 1024
+    const contentType = config?.contentType ?? 'application/octet-stream'
+
+    const options: GenerateSignedPostPolicyV4Options = {
+      expires: Date.now() + expiresIn * 1000,
+      fields: {
+        'Content-Type': contentType,
+      },
+      conditions: [
+        ['content-length-range', 0, maxSize],
+        ['eq', '$Content-Type', contentType],
+      ],
+    }
+
+    return fromPromise(
+      this.bucket
+        .file(fileKey)
+        .generateSignedPostPolicyV4(options)
+        .then((file) => file[0]),
+      (err) => ({
+        code: InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
+        message: (err as Error).message,
+      })
+    )
+  }
+
+  async moveFile(srcFile: string, destFile: string) {
+    return fromPromise(this.bucket.file(srcFile).move(this.bucket.file(destFile)), (err) => ({
+      code: InternalErrorCode.FILE_MOVE_ERROR,
+      message: (err as Error).message,
+    }))
+  }
+
+  async bulkGetFileSignedUrl(
+    fileKeys: string[],
+    config: {
+      expiresIn: number
+    } = { expiresIn: 3600 }
+  ) {
+    const signedUrls = await Promise.all(
+      fileKeys.map((fileKey) => this.getFileSignedUrl(fileKey, config))
+    )
+
+    const signedUrlWithError = signedUrls.filter((result) => result.isErr())
+
+    if (signedUrlWithError.length > 0) {
+      return err({
+        code: InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
+        message: 'Failed to create signed URLs',
+      })
+    }
+
+    return ok(signedUrls.map((result) => (result.isOk() ? result.value : '')))
+  }
+
+  async getFileSignedUrl(
+    fileKey: string,
+    config: {
+      expiresIn: number
+    } = { expiresIn: 3600 }
+  ) {
     const options: GetSignedUrlConfig = {
       version: 'v4',
       action: 'read',
-      expires: Date.now() + expiresIn * 1000,
+      expires: Date.now() + config.expiresIn * 1000,
     }
 
     return fromPromise(
@@ -46,8 +208,12 @@ export class FileService {
     )
   }
 
-  async getPublicFileUrl(fileKey: string) {
-    return ok(this.bucket.file(fileKey).publicUrl())
+  bulkGetPublicFileUrl(fileKeys: string[]) {
+    return fileKeys.map((fileKey) => decodeURIComponent(this.bucket.file(fileKey).publicUrl()))
+  }
+
+  getPublicFileUrl(fileKey: string) {
+    return decodeURIComponent(this.bucket.file(fileKey).publicUrl())
   }
 
   async uploadProfilePagePicture(url: string, pageId: string) {

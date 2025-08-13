@@ -1,6 +1,6 @@
 import Elysia from 'elysia'
 
-import { CreateTopicBody, UpdateTopicBody } from './models'
+import { UpdateTopicBody } from './models'
 
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { fromPrismaPromise } from '../../../utils/prisma'
@@ -68,21 +68,13 @@ export class AdminTopicRepository {
     })
   }
 
-  async createTopic(data: CreateTopicBody) {
+  async createEmptyTopic() {
     return await fromPrismaPromise(
       this.prismaService.topic.create({
         data: {
-          name: data.name,
-          description: data.description,
-          bannerImage: data.bannerImage,
-          status: data.status,
-          hashTagInTopics: {
-            createMany: {
-              data: data.hashtagIds.map((hashtagId) => ({
-                hashTagId: hashtagId,
-              })),
-            },
-          },
+          name: '',
+          description: null,
+          bannerImage: null,
         },
       })
     )

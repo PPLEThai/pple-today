@@ -2,7 +2,6 @@ import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import {
-  CreateTopicBody,
   CreateTopicResponse,
   DeleteTopicResponse,
   GetTopicByIdResponse,
@@ -12,11 +11,17 @@ import {
 } from './models'
 import { AdminTopicRepository, AdminTopicRepositoryPlugin } from './repository'
 
+import { TopicStatus } from '../../../../__generated__/prisma'
 import { InternalErrorCode } from '../../../dtos/error'
+import { err } from '../../../utils/error'
 import { mapRawPrismaError } from '../../../utils/prisma'
+import { FileService, FileServicePlugin } from '../../file/services'
 
 export class AdminTopicService {
-  constructor(private adminTopicRepository: AdminTopicRepository) {}
+  constructor(
+    private readonly adminTopicRepository: AdminTopicRepository,
+    private readonly fileService: FileService
+  ) {}
 
   async getTopics(
     query: { limit: number; page: number } = {
@@ -39,11 +44,29 @@ export class AdminTopicService {
         },
       })
 
-    return ok(result.value satisfies GetTopicByIdResponse)
+    let bannerImageRes: {
+      url: string
+      filePath: string
+    } | null = null
+
+    if (result.value.bannerImage) {
+      const getSignedUrlResult = await this.fileService.getFileSignedUrl(result.value.bannerImage)
+      if (getSignedUrlResult.isErr()) return err(getSignedUrlResult.error)
+
+      bannerImageRes = {
+        url: getSignedUrlResult.value,
+        filePath: result.value.bannerImage,
+      }
+    }
+
+    return ok({
+      ...result.value,
+      bannerImage: bannerImageRes,
+    } satisfies GetTopicByIdResponse)
   }
 
-  async createTopic(data: CreateTopicBody) {
-    const result = await this.adminTopicRepository.createTopic(data)
+  async createEmptyTopic() {
+    const result = await this.adminTopicRepository.createEmptyTopic()
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         INVALID_INPUT: {
@@ -55,16 +78,44 @@ export class AdminTopicService {
   }
 
   async updateTopicById(topicId: string, data: UpdateTopicBody) {
-    const result = await this.adminTopicRepository.updateTopicById(topicId, data)
-    if (result.isErr())
-      return mapRawPrismaError(result.error, {
+    const existingTopic = await this.adminTopicRepository.getTopicById(topicId)
+
+    if (existingTopic.isErr()) {
+      return mapRawPrismaError(existingTopic.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.TOPIC_NOT_FOUND,
         },
+      })
+    }
+
+    const isSameBannerUrl = existingTopic.value.bannerImage === data.bannerImage
+
+    if (!isSameBannerUrl && existingTopic.value.bannerImage) {
+      const moveResult = await this.fileService.deleteFile(existingTopic.value.bannerImage)
+      if (moveResult.isErr()) return err(moveResult.error)
+    }
+
+    const result = await this.adminTopicRepository.updateTopicById(topicId, data)
+
+    if (result.isErr())
+      return mapRawPrismaError(result.error, {
         INVALID_INPUT: {
           code: InternalErrorCode.TOPIC_INVALID_INPUT,
         },
       })
+
+    if (result.value.bannerImage) {
+      const moveResult = await this.fileService.moveFileToPublicFolder([result.value.bannerImage])
+      if (moveResult.isErr()) return err(moveResult.error)
+
+      let markStatusResult
+
+      if (result.value.status === TopicStatus.DRAFT)
+        markStatusResult = await this.fileService.bulkMarkAsPrivate([result.value.id])
+      else markStatusResult = await this.fileService.bulkMarkAsPublic([result.value.id])
+
+      if (markStatusResult.isErr()) return err(markStatusResult.error)
+    }
 
     return ok({ message: `Topic "${result.value.id}" updated.` } satisfies UpdateTopicResponse)
   }
@@ -78,6 +129,11 @@ export class AdminTopicService {
         },
       })
 
+    if (result.value.bannerImage) {
+      const moveResult = await this.fileService.deleteFile(result.value.bannerImage)
+      if (moveResult.isErr()) return err(moveResult.error)
+    }
+
     return ok({ message: `Topic "${result.value.id}" deleted.` } satisfies DeleteTopicResponse)
   }
 }
@@ -85,7 +141,7 @@ export class AdminTopicService {
 export const AdminTopicServicePlugin = new Elysia({
   name: 'AdminTopicService',
 })
-  .use(AdminTopicRepositoryPlugin)
-  .decorate(({ adminTopicRepository }) => ({
-    adminTopicService: new AdminTopicService(adminTopicRepository),
+  .use([AdminTopicRepositoryPlugin, FileServicePlugin])
+  .decorate(({ adminTopicRepository, fileService }) => ({
+    adminTopicService: new AdminTopicService(adminTopicRepository, fileService),
   }))

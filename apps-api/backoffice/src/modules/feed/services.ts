@@ -1,6 +1,6 @@
-import node from '@elysiajs/node'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
+import { sumBy } from 'remeda'
 
 import { CreateFeedReactionBody, GetFeedContentResponse } from './models'
 import { FeedRepository, FeedRepositoryPlugin } from './repository'
@@ -11,9 +11,13 @@ import { FeedItemBaseContent } from '../../dtos/feed'
 import { PostComment, PostReactionType } from '../../dtos/post'
 import { err, exhaustiveGuard } from '../../utils/error'
 import { mapRawPrismaError } from '../../utils/prisma'
+import { FileService, FileServicePlugin } from '../file/services'
 
 export class FeedService {
-  constructor(private feedRepository: FeedRepository) {}
+  constructor(
+    private feedRepository: FeedRepository,
+    private readonly fileService: FileService
+  ) {}
 
   async getFeedContentById(feedId: string, userId?: string) {
     const feedItem = await this.feedRepository.getFeedItemById(feedId, userId)
@@ -36,8 +40,10 @@ export class FeedService {
       author: {
         id: feedItem.value.author.id,
         name: feedItem.value.author.name,
-        profileImage: feedItem.value.author.profileImage ?? undefined,
-        province: '',
+        profileImage: feedItem.value.author.profileImage
+          ? this.fileService.getPublicFileUrl(feedItem.value.author.profileImage)
+          : undefined,
+        address: feedItem.value.author.address ?? undefined,
       },
     }
 
@@ -62,9 +68,9 @@ export class FeedService {
               votes: (option.pollAnswers ?? []).length,
             })),
             endAt: feedItem.value.poll.endAt,
-            totalVotes: feedItem.value.poll.options.reduce(
-              (acc, option) => acc + (option.pollAnswers ?? []).length,
-              0
+            totalVotes: sumBy(
+              feedItem.value.poll.options,
+              (option) => (option.pollAnswers ?? []).length
             ),
           },
         } satisfies GetFeedContentResponse)
@@ -82,8 +88,8 @@ export class FeedService {
           announcement: {
             content: feedItem.value.announcement.content ?? '',
             title: feedItem.value.announcement.title,
-            attachments: feedItem.value.announcement.attachments.map(
-              (attachment) => attachment.filePath
+            attachments: feedItem.value.announcement.attachments.map((attachment) =>
+              this.fileService.getPublicFileUrl(attachment.filePath)
             ),
           },
         } satisfies GetFeedContentResponse)
@@ -106,9 +112,8 @@ export class FeedService {
             })),
             attachments: feedItem.value.post.images.map((image) => ({
               id: image.id,
-              url: image.url,
-              // TODO: Add type for attachments
-              type: '',
+              type: image.type,
+              url: this.fileService.getPublicFileUrl(image.url),
             })),
           },
         } satisfies GetFeedContentResponse)
@@ -145,8 +150,10 @@ export class FeedService {
             author: {
               id: comment.user.id,
               name: comment.user.name,
-              profileImage: comment.user.profileImage ?? undefined,
-              province: '',
+              address: comment.user.address ?? undefined,
+              profileImage: comment.user.profileImage
+                ? this.fileService.getPublicFileUrl(comment.user.profileImage)
+                : undefined,
             },
           }) satisfies PostComment
       )
@@ -261,6 +268,8 @@ export class FeedService {
   }
 }
 
-export const FeedServicePlugin = new Elysia({ name: 'FeedService', adapter: node() })
-  .use(FeedRepositoryPlugin)
-  .decorate(({ feedRepository }) => ({ feedService: new FeedService(feedRepository) }))
+export const FeedServicePlugin = new Elysia({ name: 'FeedService' })
+  .use([FeedRepositoryPlugin, FileServicePlugin])
+  .decorate(({ feedRepository, fileService }) => ({
+    feedService: new FeedService(feedRepository, fileService),
+  }))

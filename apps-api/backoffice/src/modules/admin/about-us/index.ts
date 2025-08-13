@@ -48,7 +48,7 @@ export const AdminAboutUsController = new Elysia({
     },
     {
       requiredUser: true,
-      body: t.Omit(AboutUs, ['id']),
+      body: t.Pick(AboutUs, ['title', 'url', 'iconImageUrl', 'backgroundColor']),
       response: {
         201: CreateAboutUsResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
@@ -80,7 +80,7 @@ export const AdminAboutUsController = new Elysia({
     {
       requiredUser: true,
       params: t.Pick(AboutUs, ['id']),
-      body: t.Omit(AboutUs, ['id']),
+      body: t.Pick(AboutUs, ['title', 'url', 'iconImageUrl', 'backgroundColor']),
       response: {
         200: UpdateAboutUsResponse,
         ...createErrorSchema(
