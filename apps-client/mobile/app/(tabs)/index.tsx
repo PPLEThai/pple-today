@@ -17,7 +17,6 @@ import PagerView, {
 import Animated, {
   AnimatedRef,
   interpolate,
-  interpolateColor,
   runOnJS,
   runOnUI,
   ScrollHandlerProcessed,
@@ -34,6 +33,12 @@ import Animated, {
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
+import {
+  Carousel,
+  CarouselIndicators,
+  CarouselItem,
+  CarouselScrollView,
+} from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { H2, H3 } from '@pple-today/ui/typography'
 import { Image } from 'expo-image'
@@ -48,12 +53,14 @@ import {
   HeartHandshakeIcon,
   MapPinIcon,
   MapPinnedIcon,
+  MegaphoneIcon,
   MessageCircleIcon,
   RadioTowerIcon,
   Share2Icon,
 } from 'lucide-react-native'
 
 import PPLEIcon from '@app/assets/pple-icon.svg'
+import { AnnouncementSlides } from '@app/components/announcement'
 import { KeyboardAvoidingViewLayout } from '@app/components/keyboard-avoiding-view-layout'
 import { useUser } from '@app/libs/auth'
 import { useNonReactiveCallback } from '@app/libs/hooks/useNonReactiveCallback'
@@ -128,175 +135,39 @@ interface BannerItem {
 
 function BannerSection() {
   return (
-    <View className="w-full pt-2 py-4 ">
-      <Carousel count={BANNER_ITEMS.length} itemWidth={320} gap={8} paddingHorizontal={16}>
-        <CarouselScrollView>
-          {BANNER_ITEMS.map((item) => (
-            <CarouselItem
-              key={item.id}
-              item={item}
-              className="bg-base-bg-light rounded-xl overflow-hidden"
-            />
-          ))}
-        </CarouselScrollView>
-        <CarouselIndicators />
-      </Carousel>
-    </View>
-  )
-}
-
-interface CarouselContextValue {
-  gap: number
-  count: number
-  itemWidth: number
-  currentPage: number
-  setCurrentPage: React.Dispatch<React.SetStateAction<number>>
-  scroll: SharedValue<number>
-  scrollViewWidth: number
-  setScrollViewWidth: React.Dispatch<React.SetStateAction<number>>
-  paddingHorizontal: number
-}
-const CarouselContext = React.createContext<CarouselContextValue | null>(null)
-const CarouselProvider = CarouselContext.Provider
-const useCarouselContext = () => {
-  const context = React.useContext(CarouselContext)
-  if (!context) {
-    throw new Error('useCarouselContext must be used within a CarouselProvider')
-  }
-  return context
-}
-function Carousel({
-  gap,
-  count,
-  itemWidth,
-  children,
-  paddingHorizontal,
-}: {
-  gap: number
-  count: number
-  itemWidth: number
-  children: React.ReactNode
-  paddingHorizontal: number
-}) {
-  const [currentPage, setCurrentPage] = React.useState(0)
-  const [scrollViewWidth, setScrollViewWidth] = React.useState(0)
-  const scroll = useSharedValue(0)
-  return (
-    <CarouselProvider
-      value={{
-        gap,
-        count,
-        itemWidth,
-        currentPage,
-        setCurrentPage,
-        scroll,
-        scrollViewWidth,
-        setScrollViewWidth,
-        paddingHorizontal,
-      }}
+    <Carousel
+      count={BANNER_ITEMS.length}
+      itemWidth={320}
+      gap={8}
+      paddingHorizontal={16}
+      className="w-full pt-2 py-4"
     >
-      <View className="w-full flex flex-col gap-4">{children}</View>
-    </CarouselProvider>
-  )
-}
-
-function CarouselIndicators() {
-  const { count } = useCarouselContext()
-  // TODO: calculate number of indicators based on the number of items and width of the carousel
-  // number of indicators might not equal the number of images since in large screen it might show more than one item
-  return (
-    <View className="flex flex-row items-center justify-center gap-1">
-      {Array.from({ length: count }).map((_, index) => (
-        <CarouselIndicator key={index} index={index} />
-      ))}
-    </View>
-  )
-}
-
-function CarouselIndicator({ index }: { index: number }) {
-  const { scroll, itemWidth, count, scrollViewWidth, gap, paddingHorizontal } = useCarouselContext()
-  const animatedStyle = useAnimatedStyle(() => {
-    const itemWidthWithGap = itemWidth + gap
-    const getSnapPoint = (i: number) => {
-      if (i === count - 1) {
-        return i * itemWidthWithGap - (scrollViewWidth - paddingHorizontal * 2 - itemWidth - gap)
-      }
-      return i * itemWidthWithGap
-    }
-
-    const snapRange = [getSnapPoint(index - 1), getSnapPoint(index), getSnapPoint(index + 1)]
-    const inputRange = [-1, 0, 1]
-    const input = interpolate(scroll.value, snapRange, inputRange, 'clamp')
-    const width = interpolate(input, inputRange, [6, 24, 6])
-    const color = interpolateColor(input, inputRange, ['#CBD5E1', '#FF6A13', '#CBD5E1'])
-    return {
-      width: width,
-      backgroundColor: color,
-    }
-  })
-  return <Animated.View style={animatedStyle} className="h-1.5 rounded-full" />
-}
-
-const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView)
-function CarouselScrollView(props: { children: React.ReactNode }) {
-  const {
-    gap,
-    itemWidth,
-    currentPage,
-    setCurrentPage,
-    scroll,
-    setScrollViewWidth,
-    paddingHorizontal,
-  } = useCarouselContext()
-  const onScrollWorklet = React.useCallback(
-    (event: NativeScrollEvent) => {
-      'worklet'
-      scroll.set(event.contentOffset.x)
-      const current = Math.max(0, Math.round(event.contentOffset.x / itemWidth))
-      if (currentPage !== current) {
-        runOnJS(setCurrentPage)(current)
-      }
-    },
-    [setCurrentPage, currentPage, itemWidth, scroll]
-  )
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: onScrollWorklet,
-  })
-  return (
-    <AnimatedScrollView
-      onScroll={scrollHandler}
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      className="w-full"
-      contentContainerStyle={{ gap, paddingHorizontal }}
-      pagingEnabled
-      snapToInterval={itemWidth + gap}
-      disableIntervalMomentum
-      onLayout={(e) => {
-        setScrollViewWidth(e.nativeEvent.layout.width)
-      }}
-    >
-      {props.children}
-    </AnimatedScrollView>
+      <CarouselScrollView>
+        {BANNER_ITEMS.map((item) => (
+          <CarouselItem key={item.id} className="bg-base-bg-light rounded-xl overflow-hidden">
+            <Banner item={item} />
+          </CarouselItem>
+        ))}
+      </CarouselScrollView>
+      <CarouselIndicators />
+    </Carousel>
   )
 }
 
 const blurhash =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj['
 
-function CarouselItem(props: { item: BannerItem; className?: string }) {
-  const { itemWidth } = useCarouselContext()
+function Banner(props: { item: BannerItem; className?: string }) {
+  // TODO: link
   return (
-    <View style={{ width: itemWidth }} className={props.className}>
-      <Image
-        alt={props.item.description}
-        source={props.item.image}
-        placeholder={{ blurhash }}
-        style={{ width: 320, height: 180 }}
-        contentFit="cover"
-        transition={300}
-      />
-    </View>
+    <Image
+      alt={props.item.description}
+      source={props.item.image}
+      placeholder={{ blurhash }}
+      style={{ width: 320, height: 180 }}
+      contentFit="cover"
+      transition={300}
+    />
   )
 }
 
@@ -758,9 +629,18 @@ function PagerContent({
       // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
       // automaticallyAdjustsScrollIndicatorInsets={false}
       data={Array.from({ length: 5 }, (_, i) => `Item ${i + 1}`)}
-      contentContainerClassName="px-3 py-4 flex flex-col"
+      contentContainerClassName="py-4 flex flex-col"
       // TODO: data and renderItem should be replaced with actual data
-      renderItem={({ item, index }) => <FeedPost />}
+      renderItem={({ item, index }) => {
+        if (index === 0) {
+          return <AnnouncementSection />
+        }
+        return (
+          <View className="px-4">
+            <FeedPost />
+          </View>
+        )
+      }}
     />
   )
 }
@@ -858,6 +738,30 @@ function TabBarItem({
         {children}
       </Animated.Text>
     </Pressable>
+  )
+}
+
+function AnnouncementSection() {
+  return (
+    <View className="flex flex-col">
+      <View className="flex flex-row pt-4 px-4 pb-3 justify-between">
+        <View className="flex flex-row items-center gap-2">
+          <Icon
+            icon={MegaphoneIcon}
+            className="color-base-primary-default"
+            width={32}
+            height={32}
+          />
+          <H3 className="text-base-text-high font-anakotmai-medium text-2xl">ประกาศ</H3>
+        </View>
+        {/* TODO: stack the page */}
+        <Button variant="ghost">
+          <Text>ดูเพิ่มเติม</Text>
+          <Icon icon={ArrowRightIcon} strokeWidth={2} />
+        </Button>
+      </View>
+      <AnnouncementSlides />
+    </View>
   )
 }
 
