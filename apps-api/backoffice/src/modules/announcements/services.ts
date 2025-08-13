@@ -49,20 +49,16 @@ export class AnnouncementService {
       })
     }
 
-    const attachmentPublicUrls = this.fileService.batchGetPublicFileUrl(
+    const attachmentPublicUrls = this.fileService.bulkGetPublicFileUrl(
       announcementResult.value.attachments.map((attachment) => attachment.filePath)
     )
-
-    if (attachmentPublicUrls.isErr()) {
-      return err(attachmentPublicUrls.error)
-    }
 
     return ok({
       id: announcementResult.value.feedItemId,
       title: announcementResult.value.title,
       content: announcementResult.value.content ?? '',
       backgroundColor: announcementResult.value.backgroundColor ?? '',
-      attachments: attachmentPublicUrls.value,
+      attachments: attachmentPublicUrls,
       createdAt: announcementResult.value.feedItem.createdAt,
       updatedAt: announcementResult.value.feedItem.updatedAt,
     } satisfies GetAnnouncementByIdResponse)

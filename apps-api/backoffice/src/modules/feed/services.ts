@@ -41,7 +41,7 @@ export class FeedService {
         id: feedItem.value.author.id,
         name: feedItem.value.author.name,
         profileImage: feedItem.value.author.profileImage
-          ? this.fileService.getPublicFileUrl(feedItem.value.author.profileImage).value
+          ? this.fileService.getPublicFileUrl(feedItem.value.author.profileImage)
           : undefined,
         address: feedItem.value.author.address ?? undefined,
       },
@@ -88,8 +88,8 @@ export class FeedService {
           announcement: {
             content: feedItem.value.announcement.content ?? '',
             title: feedItem.value.announcement.title,
-            attachments: feedItem.value.announcement.attachments.map(
-              (attachment) => this.fileService.getPublicFileUrl(attachment.filePath).value
+            attachments: feedItem.value.announcement.attachments.map((attachment) =>
+              this.fileService.getPublicFileUrl(attachment.filePath)
             ),
           },
         } satisfies GetFeedContentResponse)
@@ -113,7 +113,7 @@ export class FeedService {
             attachments: feedItem.value.post.images.map((image) => ({
               id: image.id,
               type: image.type,
-              url: this.fileService.getPublicFileUrl(image.url).value,
+              url: this.fileService.getPublicFileUrl(image.url),
             })),
           },
         } satisfies GetFeedContentResponse)
@@ -152,7 +152,7 @@ export class FeedService {
               name: comment.user.name,
               address: comment.user.address ?? undefined,
               profileImage: comment.user.profileImage
-                ? this.fileService.getPublicFileUrl(comment.user.profileImage).value
+                ? this.fileService.getPublicFileUrl(comment.user.profileImage)
                 : undefined,
             },
           }) satisfies PostComment

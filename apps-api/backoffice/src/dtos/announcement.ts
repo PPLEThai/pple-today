@@ -31,7 +31,16 @@ export const PublishedAnnouncement = t.Object({
 export type PublishedAnnouncement = Static<typeof PublishedAnnouncement>
 
 export const DraftedAnnouncement = t.Composite([
-  t.Omit(PublishedAnnouncement, ['title', 'type']),
+  t.Pick(PublishedAnnouncement, [
+    'id',
+    'content',
+    'iconImage',
+    'backgroundColor',
+    'createdAt',
+    'updatedAt',
+    'topics',
+    'attachments',
+  ]),
   t.Object({
     title: t.Nullable(t.String({ description: 'The title of the announcement' })),
     type: t.Nullable(t.Enum(AnnouncementType, { description: 'The type of the announcement' })),

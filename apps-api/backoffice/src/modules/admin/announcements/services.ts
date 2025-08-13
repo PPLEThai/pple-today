@@ -42,10 +42,10 @@ export class AdminAnnouncementService {
     if (result.isErr()) return mapRawPrismaError(result.error, {})
 
     return ok(
-      result.value.map((announcement) => ({
+      result.value.map((announcement): GetAnnouncementsResponse[number] => ({
         ...announcement,
         topics: announcement.topics.map(({ topic }) => topic),
-      })) satisfies GetAnnouncementsResponse
+      }))
     )
   }
 
@@ -58,7 +58,9 @@ export class AdminAnnouncementService {
     const result = await this.adminAnnouncementRepository.getAnnouncements(query)
     if (result.isErr()) return mapRawPrismaError(result.error, {})
 
-    return ok(result.value satisfies GetPublishedAnnouncementsResponse)
+    const value: GetPublishedAnnouncementsResponse = result.value
+
+    return ok(value)
   }
 
   async getAnnouncementById(announcementId: string) {
@@ -70,7 +72,7 @@ export class AdminAnnouncementService {
         },
       })
 
-    const attachmentUrls = await this.fileService.batchGetFileSignedUrl(result.value.attachments)
+    const attachmentUrls = await this.fileService.bulkGetFileSignedUrl(result.value.attachments)
 
     if (attachmentUrls.isErr()) {
       return err(attachmentUrls.error)
@@ -85,6 +87,7 @@ export class AdminAnnouncementService {
     } satisfies GetPublishedAnnouncementResponse)
   }
 
+  // TODO: Transactional file handling
   async updateAnnouncementById(announcementId: string, data: PutPublishedAnnouncementBody) {
     const announcementResult =
       await this.adminAnnouncementRepository.getAnnouncementById(announcementId)
@@ -182,7 +185,7 @@ export class AdminAnnouncementService {
     return ok({ message: `Announcement "${result.value.id}" deleted.` })
   }
 
-  async getDraftedAnnouncements(
+  async getDraftAnnouncements(
     query: { limit: number; page: number } = {
       limit: 10,
       page: 1,
@@ -203,7 +206,7 @@ export class AdminAnnouncementService {
         },
       })
 
-    const attachmentUrls = await this.fileService.batchGetFileSignedUrl(result.value.attachments)
+    const attachmentUrls = await this.fileService.bulkGetFileSignedUrl(result.value.attachments)
 
     if (attachmentUrls.isErr()) {
       return err(attachmentUrls.error)

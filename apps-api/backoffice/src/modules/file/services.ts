@@ -162,7 +162,7 @@ export class FileService {
     }))
   }
 
-  async batchGetFileSignedUrl(
+  async bulkGetFileSignedUrl(
     fileKeys: string[],
     config: {
       expiresIn: number
@@ -208,12 +208,12 @@ export class FileService {
     )
   }
 
-  batchGetPublicFileUrl(fileKeys: string[]) {
-    return ok(fileKeys.map((fileKey) => decodeURIComponent(this.bucket.file(fileKey).publicUrl())))
+  bulkGetPublicFileUrl(fileKeys: string[]) {
+    return fileKeys.map((fileKey) => decodeURIComponent(this.bucket.file(fileKey).publicUrl()))
   }
 
   getPublicFileUrl(fileKey: string) {
-    return ok(decodeURIComponent(this.bucket.file(fileKey).publicUrl()))
+    return decodeURIComponent(this.bucket.file(fileKey).publicUrl())
   }
 
   async uploadProfilePagePicture(url: string, pageId: string) {
