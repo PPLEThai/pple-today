@@ -2,7 +2,7 @@ import { Elysia } from 'elysia'
 
 import { FeedItemType, Prisma } from '../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
-import { fromPrismaPromise } from '../../utils/prisma'
+import { fromRepositoryPromise } from '../../utils/error'
 
 export class PollsRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -50,7 +50,7 @@ export class PollsRepository {
       },
     } satisfies Prisma.FeedItemFindManyArgs
 
-    return fromPrismaPromise(async () => {
+    return fromRepositoryPromise(async () => {
       const polls = []
 
       // Fetch total poll count
@@ -122,7 +122,7 @@ export class PollsRepository {
   }
 
   async getPollCondition(userId: string, pollId: string) {
-    return fromPrismaPromise(async () => {
+    return fromRepositoryPromise(async () => {
       const existingVote = await this.prisma.poll.findFirstOrThrow({
         where: {
           feedItemId: pollId,
@@ -159,7 +159,7 @@ export class PollsRepository {
   }
 
   async createPollVote(userId: string, pollId: string, optionId: string) {
-    return fromPrismaPromise(
+    return fromRepositoryPromise(
       this.prisma.pollOption.update({
         where: {
           id: optionId,
@@ -186,7 +186,7 @@ export class PollsRepository {
   }
 
   async deletePollVote(userId: string, pollId: string, optionId: string) {
-    return fromPrismaPromise(
+    return fromRepositoryPromise(
       this.prisma.pollOption.update({
         where: {
           id: optionId,

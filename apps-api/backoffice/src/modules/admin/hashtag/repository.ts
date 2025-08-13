@@ -3,7 +3,7 @@ import Elysia from 'elysia'
 import { CreateHashtagBody, UpdateHashtagBody } from './models'
 
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
-import { fromPrismaPromise } from '../../../utils/prisma'
+import { fromRepositoryPromise } from '../../../utils/error'
 
 export class AdminHashtagRepository {
   constructor(private prismaService: PrismaService) {}
@@ -17,7 +17,7 @@ export class AdminHashtagRepository {
     const { limit, page } = query
     const skip = Math.max((page - 1) * limit, 0)
 
-    return fromPrismaPromise(
+    return fromRepositoryPromise(
       this.prismaService.hashTag.findMany({
         select: {
           id: true,
@@ -36,7 +36,7 @@ export class AdminHashtagRepository {
   }
 
   async getHashtagById(hashtagId: string) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.hashTag.findUniqueOrThrow({
         where: { id: hashtagId },
         select: {
@@ -51,7 +51,7 @@ export class AdminHashtagRepository {
   }
 
   async createHashtag(data: CreateHashtagBody) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.hashTag.create({
         data: {
           name: data.name,
@@ -62,7 +62,7 @@ export class AdminHashtagRepository {
   }
 
   async updateHashtagById(hashtagId: string, data: UpdateHashtagBody) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.hashTag.update({
         where: { id: hashtagId },
         data: {
@@ -74,7 +74,7 @@ export class AdminHashtagRepository {
   }
 
   async deleteHashtagById(hashtagId: string) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.hashTag.delete({
         where: { id: hashtagId },
       })

@@ -3,13 +3,13 @@ import { ok } from 'neverthrow'
 
 import { FeedItemReactionType } from '../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
-import { fromPrismaPromise } from '../../utils/prisma'
+import { fromRepositoryPromise } from '../../utils/error'
 
 export class FeedRepository {
   constructor(private prismaService: PrismaService) {}
 
   async getFeedItemById(feedItemId: string, userId?: string) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.feedItem.findUniqueOrThrow({
         where: { id: feedItemId },
         include: {
@@ -71,7 +71,7 @@ export class FeedRepository {
     feedItemId: string
     userId: string
   }) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.feedItemReaction.findUnique({
         where: {
           userId_feedItemId: {
@@ -97,7 +97,7 @@ export class FeedRepository {
     type: FeedItemReactionType
     content?: string
   }) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
         const result = await tx.feedItemReaction.create({
           data: {
@@ -147,7 +147,7 @@ export class FeedRepository {
     type: FeedItemReactionType
     content?: string
   }) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
         const reaction = await tx.feedItemReaction.findUniqueOrThrow({
           where: {
@@ -210,7 +210,7 @@ export class FeedRepository {
   }
 
   async deleteFeedItemReaction({ feedItemId, userId }: { feedItemId: string; userId: string }) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
         const reaction = await tx.feedItemReaction.delete({
           where: {
@@ -234,7 +234,7 @@ export class FeedRepository {
     feedItemId: string,
     query: { userId?: string; page: number; limit: number }
   ) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.feedItemComment.findMany({
         where: {
           feedItemId,
@@ -274,7 +274,7 @@ export class FeedRepository {
     content: string
     isPrivate: boolean
   }) {
-    const result = await fromPrismaPromise(
+    const result = await fromRepositoryPromise(
       this.prismaService.$transaction([
         this.prismaService.feedItemComment.create({
           data: {
@@ -324,7 +324,7 @@ export class FeedRepository {
     userId: string
     content: string
   }) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.feedItemComment.updateMany({
         where: {
           id: commentId,
@@ -347,7 +347,7 @@ export class FeedRepository {
     userId: string
     feedItemId: string
   }) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.feedItemComment.deleteMany({
         where: {
           id: commentId,

@@ -1,7 +1,7 @@
-import { Err, fromPromise } from 'neverthrow'
+import { Err } from 'neverthrow'
 import { Simplify, ValueOf } from 'type-fest'
 
-import { ApiErrorResponse, err } from './error'
+import { ApiErrorResponse, err, ExtractApiErrorResponse } from './error'
 
 import { PrismaClientKnownRequestError } from '../../__generated__/prisma/runtime/client'
 import { InternalErrorCode } from '../dtos/error'
@@ -34,45 +34,51 @@ export const resolvePrismaError = (error: unknown) => {
         } as const
       default:
         return {
-          originalError: error,
           code: prismaError.UNKNOWN_ERROR,
+          originalError: error,
           message: error.message,
-        }
+        } as const
     }
   }
   return {
     code: prismaError.UNKNOWN_ERROR,
     originalError: error,
     message: 'An unknown error occurred',
-  }
+  } as const
 }
 
-export const fromPrismaPromise = <T>(promise: Promise<T> | (() => Promise<T>)) =>
-  fromPromise(typeof promise === 'function' ? promise() : promise, resolvePrismaError)
-
-type RawPrismaError = ReturnType<typeof resolvePrismaError>
+export type RawPrismaError = ReturnType<typeof resolvePrismaError>
 
 export const mapRawPrismaError = <
-  T extends Partial<Record<RawPrismaError['code'], ApiErrorResponse<InternalErrorCode>>> & {
+  T extends RawPrismaError | ApiErrorResponse<InternalErrorCode>,
+  U extends Partial<Record<RawPrismaError['code'], ApiErrorResponse<InternalErrorCode>>> & {
     INTERNAL_SERVER_ERROR?: string
   } = {},
 >(
-  error: RawPrismaError,
-  mapping?: T
+  error: T,
+  mapping?: U
 ): Err<
   never,
   Simplify<
     ValueOf<
-      Omit<T, 'INTERNAL_SERVER_ERROR'> & {
+      (Omit<U, 'INTERNAL_SERVER_ERROR'> & {
         INTERNAL_SERVER_ERROR: ApiErrorResponse<typeof InternalErrorCode.INTERNAL_SERVER_ERROR>
-      }
+      }) &
+        ExtractApiErrorResponse<T>
     >
   >
 > => {
-  const mappedError = mapping?.[error.code]
+  const mappedError = (mapping as any)?.[error.code]
 
   if (mappedError) {
     return err(mappedError) as any
+  }
+
+  if (error.code in InternalErrorCode) {
+    return err({
+      code: error.code as InternalErrorCode,
+      message: error.message,
+    }) as any
   }
 
   return err({

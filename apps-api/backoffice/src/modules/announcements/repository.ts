@@ -1,7 +1,7 @@
 import { Elysia } from 'elysia'
 
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
-import { fromPrismaPromise } from '../../utils/prisma'
+import { fromRepositoryPromise } from '../../utils/error'
 
 export class AnnouncementRepository {
   constructor(private readonly prismaService: PrismaService) {}
@@ -15,7 +15,7 @@ export class AnnouncementRepository {
     const { limit, page } = query
     const skip = page ? (page - 1) * limit : 0
 
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.announcement.findMany({
         select: {
           feedItemId: true,
@@ -42,7 +42,7 @@ export class AnnouncementRepository {
   }
 
   async getAnnouncementById(id: string) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.announcement.findUnique({
         where: { feedItemId: id },
         include: {

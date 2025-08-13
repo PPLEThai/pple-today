@@ -3,10 +3,15 @@ import Elysia from 'elysia'
 import { UpdateTopicBody } from './models'
 
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
-import { fromPrismaPromise } from '../../../utils/prisma'
+import { err } from '../../../utils/error'
+import { fromRepositoryPromise } from '../../../utils/error'
+import { FileService, FileServicePlugin } from '../../file/services'
 
 export class AdminTopicRepository {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private readonly fileService: FileService
+  ) {}
 
   async getTopics(
     query: { limit: number; page: number } = {
@@ -17,7 +22,7 @@ export class AdminTopicRepository {
     const { limit, page } = query
     const skip = Math.max((page - 1) * limit, 0)
 
-    return fromPrismaPromise(
+    return fromRepositoryPromise(
       this.prismaService.topic.findMany({
         select: {
           id: true,
@@ -37,7 +42,7 @@ export class AdminTopicRepository {
   }
 
   async getTopicById(topicId: string) {
-    return await fromPrismaPromise(async () => {
+    return await fromRepositoryPromise(async () => {
       const { hashTagInTopics, ...result } = await this.prismaService.topic.findUniqueOrThrow({
         where: { id: topicId },
         select: {
@@ -61,6 +66,9 @@ export class AdminTopicRepository {
         },
       })
 
+      const data = await this.fileService.getFileSignedUrl(result.bannerImage ?? '')
+      if (data.isErr()) return err(data.error)
+
       return {
         ...result,
         hashtags: hashTagInTopics.map((hashTagInTopic) => hashTagInTopic.hashTag),
@@ -69,7 +77,7 @@ export class AdminTopicRepository {
   }
 
   async createEmptyTopic() {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.topic.create({
         data: {
           name: '',
@@ -81,7 +89,7 @@ export class AdminTopicRepository {
   }
 
   async updateTopicById(topicId: string, data: UpdateTopicBody) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.topic.update({
         where: { id: topicId },
         data: {
@@ -103,7 +111,7 @@ export class AdminTopicRepository {
   }
 
   async deleteTopicById(topicId: string) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.topic.delete({
         where: { id: topicId },
       })
@@ -114,7 +122,7 @@ export class AdminTopicRepository {
 export const AdminTopicRepositoryPlugin = new Elysia({
   name: 'AdminTopicRepository',
 })
-  .use([PrismaServicePlugin])
-  .decorate(({ prismaService }) => ({
-    adminTopicRepository: new AdminTopicRepository(prismaService),
+  .use([PrismaServicePlugin, FileServicePlugin])
+  .decorate(({ prismaService, fileService }) => ({
+    adminTopicRepository: new AdminTopicRepository(prismaService, fileService),
   }))
