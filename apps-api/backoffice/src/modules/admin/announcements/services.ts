@@ -19,27 +19,13 @@ import { FileService, FileServicePlugin } from '../../file/services'
 
 export class AdminAnnouncementService {
   constructor(
-    private adminAnnouncementRepository: AdminAnnouncementRepository,
-    private fileService: FileService
+    private readonly adminAnnouncementRepository: AdminAnnouncementRepository,
+    private readonly fileService: FileService
   ) {}
-
-  private async cleanUpUnusedAttachment(before: string[], after: string[]) {
-    const unusedAttachments = before.filter((filePath) => !after.includes(filePath))
-
-    if (unusedAttachments.length > 0) {
-      const deleteResult = await this.fileService.bulkDeleteFile(unusedAttachments)
-      if (deleteResult.isErr()) {
-        return err(deleteResult.error)
-      }
-    }
-
-    return ok(true)
-  }
 
   async getAnnouncements() {
     const result = await this.adminAnnouncementRepository.getAllAnnouncements()
-
-    if (result.isErr()) return mapRawPrismaError(result.error, {})
+    if (result.isErr()) return mapRawPrismaError(result.error)
 
     return ok(
       result.value.map((announcement): GetAnnouncementsResponse[number] => ({
@@ -56,7 +42,7 @@ export class AdminAnnouncementService {
     }
   ) {
     const result = await this.adminAnnouncementRepository.getAnnouncements(query)
-    if (result.isErr()) return mapRawPrismaError(result.error, {})
+    if (result.isErr()) return mapRawPrismaError(result.error)
 
     const value: GetPublishedAnnouncementsResponse = result.value
 
@@ -87,44 +73,10 @@ export class AdminAnnouncementService {
     } satisfies GetPublishedAnnouncementResponse)
   }
 
-  // TODO: Transactional file handling
   async updateAnnouncementById(announcementId: string, data: PutPublishedAnnouncementBody) {
-    const announcementResult =
-      await this.adminAnnouncementRepository.getAnnouncementById(announcementId)
-
-    if (announcementResult.isErr())
-      return mapRawPrismaError(announcementResult.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
-        },
-      })
-
-    const cleanUpResult = await this.cleanUpUnusedAttachment(
-      announcementResult.value.attachments,
-      data.attachmentFilePaths
-    )
-
-    if (cleanUpResult.isErr()) {
-      return err(cleanUpResult.error)
-    }
-
-    const updatedAttachmentsResult = await this.fileService.moveFileToPublicFolder(
-      data.attachmentFilePaths
-    )
-
-    if (updatedAttachmentsResult.isErr()) {
-      return err({
-        code: InternalErrorCode.FILE_MOVE_ERROR,
-        message: 'Failed to move one or more files',
-      })
-    }
-
     const updateResult = await this.adminAnnouncementRepository.updateAnnouncementById(
       announcementId,
-      {
-        ...data,
-        attachmentFilePaths: updatedAttachmentsResult.value,
-      }
+      data
     )
 
     if (updateResult.isErr())
@@ -134,53 +86,31 @@ export class AdminAnnouncementService {
         },
       })
 
-    const markAsPublicResult = await this.fileService.bulkMarkAsPublic(
-      updatedAttachmentsResult.value
-    )
-
-    if (markAsPublicResult.isErr()) {
-      return err(markAsPublicResult.error)
-    }
-
     return ok({ message: `Announcement "${updateResult.value.feedItemId}" updated.` })
   }
 
   async unpublishAnnouncementById(announcementId: string) {
     const result = await this.adminAnnouncementRepository.unpublishAnnouncementById(announcementId)
+
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
         },
       })
-
-    const markAsPrivateResult = await this.fileService.bulkMarkAsPrivate(
-      result.value.attachments.map((attachment) => attachment.filePath)
-    )
-
-    if (markAsPrivateResult.isErr()) {
-      return err(markAsPrivateResult.error)
-    }
 
     return ok({ message: `Announcement "${result.value.id}" unpublished.` })
   }
 
   async deleteAnnouncementById(announcementId: string) {
     const result = await this.adminAnnouncementRepository.deleteAnnouncementById(announcementId)
+
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
         },
       })
-
-    const deleteResult = await this.fileService.bulkDeleteFile(
-      result.value.announcement?.attachments.map((attachment) => attachment.filePath) ?? []
-    )
-
-    if (deleteResult.isErr()) {
-      return err(deleteResult.error)
-    }
 
     return ok({ message: `Announcement "${result.value.id}" deleted.` })
   }
@@ -192,9 +122,25 @@ export class AdminAnnouncementService {
     }
   ) {
     const result = await this.adminAnnouncementRepository.getDraftAnnouncements(query)
-    if (result.isErr()) return mapRawPrismaError(result.error, {})
+    if (result.isErr()) return mapRawPrismaError(result.error)
 
-    return ok(result.value satisfies GetDraftAnnouncementsResponse)
+    const draftAnnouncements: GetDraftAnnouncementsResponse = result.value.map((draft) => ({
+      id: draft.id,
+      title: draft.title,
+      content: draft.content,
+      type: draft.type,
+      iconImage: draft.iconImage,
+      backgroundColor: draft.backgroundColor,
+      topics: draft.topics,
+      attachments: draft.attachments.map((filePath) => ({
+        url: this.fileService.getPublicFileUrl(filePath),
+        filePath,
+      })),
+      createdAt: draft.createdAt,
+      updatedAt: draft.updatedAt,
+    }))
+
+    return ok(draftAnnouncements)
   }
 
   async getDraftAnnouncementById(announcementId: string) {
@@ -229,43 +175,9 @@ export class AdminAnnouncementService {
   }
 
   async updateDraftAnnouncementById(announcementId: string, data: PutDraftAnnouncementBody) {
-    const draftAnnouncement =
-      await this.adminAnnouncementRepository.getDraftAnnouncementById(announcementId)
-
-    if (draftAnnouncement.isErr()) {
-      return mapRawPrismaError(draftAnnouncement.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
-        },
-      })
-    }
-
-    const cleanUpResult = await this.cleanUpUnusedAttachment(
-      draftAnnouncement.value.attachments,
-      data.attachmentFilePaths
-    )
-
-    if (cleanUpResult.isErr()) {
-      return err(cleanUpResult.error)
-    }
-
-    const draftAnnouncementAttachments = await this.fileService.moveFileToPublicFolder(
-      data.attachmentFilePaths
-    )
-
-    if (draftAnnouncementAttachments.isErr()) {
-      return err({
-        code: InternalErrorCode.FILE_MOVE_ERROR,
-        message: 'Failed to move one or more files',
-      })
-    }
-
     const result = await this.adminAnnouncementRepository.updateDraftAnnouncementById(
       announcementId,
-      {
-        ...data,
-        attachmentFilePaths: draftAnnouncementAttachments.value,
-      }
+      data
     )
 
     if (result.isErr())
@@ -279,46 +191,8 @@ export class AdminAnnouncementService {
   }
 
   async publishDraftAnnouncementById(announcementId: string, authorId: string) {
-    const draftAnnouncementResult =
-      await this.adminAnnouncementRepository.getDraftAnnouncementById(announcementId)
-
-    if (draftAnnouncementResult.isErr()) {
-      return mapRawPrismaError(draftAnnouncementResult.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
-        },
-      })
-    }
-
-    const draftAnnouncement = draftAnnouncementResult.value
-
-    if (!draftAnnouncement.title || !draftAnnouncement.type) {
-      return err({
-        code: InternalErrorCode.ANNOUNCEMENT_INVALID_DRAFT,
-        message: 'Draft announcement is missing required fields: title, type',
-      })
-    }
-
-    const attachments = await this.fileService.moveFileToPublicFolder(draftAnnouncement.attachments)
-
-    if (attachments.isErr()) {
-      return err({
-        code: InternalErrorCode.FILE_MOVE_ERROR,
-        message: 'Failed to move one or more files',
-      })
-    }
-
     const result = await this.adminAnnouncementRepository.publishDraftAnnouncementById(
-      {
-        id: draftAnnouncement.id,
-        title: draftAnnouncement.title,
-        content: draftAnnouncement.content,
-        type: draftAnnouncement.type,
-        iconImage: draftAnnouncement.iconImage,
-        backgroundColor: draftAnnouncement.backgroundColor,
-        attachments: attachments.value,
-        topics: draftAnnouncement.topics.map((topic) => topic.id),
-      },
+      announcementId,
       authorId
     )
 
@@ -329,32 +203,19 @@ export class AdminAnnouncementService {
         },
       })
 
-    const markPublicResult = await this.fileService.bulkMarkAsPublic(attachments.value)
-
-    if (markPublicResult.isErr()) {
-      return err(markPublicResult.error)
-    }
-
     return ok({ message: `Draft Announcement "${result.value.id}" published.` })
   }
 
   async deleteDraftAnnouncement(announcementId: string) {
     const result =
       await this.adminAnnouncementRepository.deleteDraftAnnouncementById(announcementId)
+
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
         },
       })
-
-    const deleteResult = await this.fileService.bulkDeleteFile(
-      result.value.attachments.map((attachment) => attachment.filePath)
-    )
-
-    if (deleteResult.isErr()) {
-      return err(deleteResult.error)
-    }
 
     return ok({ message: `Draft Announcement "${result.value.id}" deleted.` })
   }

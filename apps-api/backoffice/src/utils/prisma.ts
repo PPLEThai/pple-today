@@ -51,22 +51,24 @@ export type RawPrismaError = ReturnType<typeof resolvePrismaError>
 
 export const mapRawPrismaError = <
   T extends RawPrismaError | ApiErrorResponse<InternalErrorCode>,
-  U extends Partial<Record<RawPrismaError['code'], ApiErrorResponse<InternalErrorCode>>> & {
-    INTERNAL_SERVER_ERROR?: string
-  } = {},
+  U extends Partial<
+    Record<RawPrismaError['code'], ApiErrorResponse<InternalErrorCode>> & {
+      INTERNAL_SERVER_ERROR?: string
+    }
+  > = {},
 >(
   error: T,
   mapping?: U
 ): Err<
   never,
-  Simplify<
-    ValueOf<
-      (Omit<U, 'INTERNAL_SERVER_ERROR'> & {
-        INTERNAL_SERVER_ERROR: ApiErrorResponse<typeof InternalErrorCode.INTERNAL_SERVER_ERROR>
-      }) &
-        ExtractApiErrorResponse<T>
+  | Simplify<
+      ValueOf<
+        Omit<U, 'INTERNAL_SERVER_ERROR'> & {
+          INTERNAL_SERVER_ERROR: ApiErrorResponse<typeof InternalErrorCode.INTERNAL_SERVER_ERROR>
+        }
+      >
     >
-  >
+  | ExtractApiErrorResponse<T>
 > => {
   const mappedError = (mapping as any)?.[error.code]
 

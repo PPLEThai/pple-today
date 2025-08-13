@@ -2,6 +2,7 @@ import Elysia from 'elysia'
 
 import { UpdateTopicBody } from './models'
 
+import { TopicStatus } from '../../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { err } from '../../../utils/error'
 import { fromRepositoryPromise } from '../../../utils/error'
@@ -9,7 +10,7 @@ import { FileService, FileServicePlugin } from '../../file/services'
 
 export class AdminTopicRepository {
   constructor(
-    private prismaService: PrismaService,
+    private readonly prismaService: PrismaService,
     private readonly fileService: FileService
   ) {}
 
@@ -66,9 +67,6 @@ export class AdminTopicRepository {
         },
       })
 
-      const data = await this.fileService.getFileSignedUrl(result.bannerImage ?? '')
-      if (data.isErr()) return err(data.error)
-
       return {
         ...result,
         hashtags: hashTagInTopics.map((hashTagInTopic) => hashTagInTopic.hashTag),
@@ -90,30 +88,70 @@ export class AdminTopicRepository {
 
   async updateTopicById(topicId: string, data: UpdateTopicBody) {
     return await fromRepositoryPromise(
-      this.prismaService.topic.update({
-        where: { id: topicId },
-        data: {
-          name: data.name,
-          description: data.description,
-          bannerImage: data.bannerImage,
-          status: data.status,
-          hashTagInTopics: {
-            deleteMany: {},
-            createMany: {
-              data: data.hashtagIds.map((hashtagId) => ({
-                hashTagId: hashtagId,
-              })),
+      this.prismaService.$transaction(async (tx) => {
+        const existingTopic = await tx.topic.findUniqueOrThrow({
+          where: { id: topicId },
+          select: { bannerImage: true },
+        })
+
+        const isSameBannerUrl = existingTopic.bannerImage === data.bannerImage
+
+        if (!isSameBannerUrl && existingTopic.bannerImage) {
+          const moveResult = await this.fileService.deleteFile(existingTopic.bannerImage)
+          if (moveResult.isErr()) return err(moveResult.error)
+        }
+
+        const newTopic = await tx.topic.update({
+          where: { id: topicId },
+          data: {
+            name: data.name,
+            description: data.description,
+            bannerImage: data.bannerImage,
+            status: data.status,
+            hashTagInTopics: {
+              deleteMany: {},
+              createMany: {
+                data: data.hashtagIds.map((hashtagId) => ({
+                  hashTagId: hashtagId,
+                })),
+              },
             },
           },
-        },
+        })
+
+        if (newTopic.bannerImage) {
+          const moveResult = await this.fileService.moveFileToPublicFolder([newTopic.bannerImage])
+          if (moveResult.isErr()) return err(moveResult.error)
+
+          let markStatusResult
+
+          if (newTopic.status === TopicStatus.DRAFT)
+            markStatusResult = await this.fileService.bulkMarkAsPrivate([newTopic.id])
+          else markStatusResult = await this.fileService.bulkMarkAsPublic([newTopic.id])
+
+          if (markStatusResult.isErr()) return err(markStatusResult.error)
+        }
+
+        return newTopic
       })
     )
   }
 
   async deleteTopicById(topicId: string) {
     return await fromRepositoryPromise(
-      this.prismaService.topic.delete({
-        where: { id: topicId },
+      this.prismaService.$transaction(async (tx) => {
+        const deleteResult = await tx.topic.delete({
+          where: { id: topicId },
+        })
+
+        if (deleteResult.bannerImage) {
+          const moveResult = await this.fileService.deleteFile(deleteResult.bannerImage)
+          if (moveResult.isErr()) {
+            return err(moveResult.error)
+          }
+        }
+
+        return deleteResult
       })
     )
   }
