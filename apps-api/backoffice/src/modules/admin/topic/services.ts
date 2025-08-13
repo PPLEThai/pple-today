@@ -11,7 +11,6 @@ import {
 } from './models'
 import { AdminTopicRepository, AdminTopicRepositoryPlugin } from './repository'
 
-import { TopicStatus } from '../../../../__generated__/prisma'
 import { InternalErrorCode } from '../../../dtos/error'
 import { err } from '../../../utils/error'
 import { mapRawPrismaError } from '../../../utils/prisma'
@@ -78,23 +77,6 @@ export class AdminTopicService {
   }
 
   async updateTopicById(topicId: string, data: UpdateTopicBody) {
-    const existingTopic = await this.adminTopicRepository.getTopicById(topicId)
-
-    if (existingTopic.isErr()) {
-      return mapRawPrismaError(existingTopic.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.TOPIC_NOT_FOUND,
-        },
-      })
-    }
-
-    const isSameBannerUrl = existingTopic.value.bannerImage === data.bannerImage
-
-    if (!isSameBannerUrl && existingTopic.value.bannerImage) {
-      const moveResult = await this.fileService.deleteFile(existingTopic.value.bannerImage)
-      if (moveResult.isErr()) return err(moveResult.error)
-    }
-
     const result = await this.adminTopicRepository.updateTopicById(topicId, data)
 
     if (result.isErr())
@@ -102,20 +84,10 @@ export class AdminTopicService {
         INVALID_INPUT: {
           code: InternalErrorCode.TOPIC_INVALID_INPUT,
         },
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.TOPIC_NOT_FOUND,
+        },
       })
-
-    if (result.value.bannerImage) {
-      const moveResult = await this.fileService.moveFileToPublicFolder([result.value.bannerImage])
-      if (moveResult.isErr()) return err(moveResult.error)
-
-      let markStatusResult
-
-      if (result.value.status === TopicStatus.DRAFT)
-        markStatusResult = await this.fileService.bulkMarkAsPrivate([result.value.id])
-      else markStatusResult = await this.fileService.bulkMarkAsPublic([result.value.id])
-
-      if (markStatusResult.isErr()) return err(markStatusResult.error)
-    }
 
     return ok({ message: `Topic "${result.value.id}" updated.` } satisfies UpdateTopicResponse)
   }
@@ -128,11 +100,6 @@ export class AdminTopicService {
           code: InternalErrorCode.TOPIC_NOT_FOUND,
         },
       })
-
-    if (result.value.bannerImage) {
-      const moveResult = await this.fileService.deleteFile(result.value.bannerImage)
-      if (moveResult.isErr()) return err(moveResult.error)
-    }
 
     return ok({ message: `Topic "${result.value.id}" deleted.` } satisfies DeleteTopicResponse)
   }

@@ -49,7 +49,7 @@ type GetArgumentFromErrorResponse<T extends ApiErrorResponse<InternalErrorCode>>
 
 export type ExtractApiErrorResponse<T extends { code: any }> = T extends { code: InternalErrorCode }
   ? T
-  : {}
+  : never
 
 export type ApiErrorSchema<TCode extends InternalErrorCode> = TCode extends InternalErrorCode
   ? TObject<{
