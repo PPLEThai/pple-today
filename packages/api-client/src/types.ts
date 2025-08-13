@@ -212,8 +212,37 @@ export interface QueryClient<
   ) => UseMutationOptions<TSuccess, TError, TPayload, TContext>
 }
 
+export interface RequestConfig {
+  method: string
+  path: string
+  query?: Record<string, any>
+  body?: any
+  headers?: Record<string, string>
+}
+
+export type ResponseConfig =
+  | {
+      data: any
+      error: null
+      headers: Record<string, unknown>
+      status: number
+    }
+  | {
+      data: null
+      error: any
+      headers: Record<string, unknown>
+      status: number
+    }
+
+export interface FetchClientInterceptors {
+  request: (config: RequestConfig) => RequestConfig
+  response: (response: ResponseConfig) => any
+}
+
 export interface CreateReactQueryClientResult<T extends Elysia<any, any, any, any, any, any, any>> {
-  fetchClient: EdenFetch.Create<T>
+  fetchClient: EdenFetch.Create<T> & {
+    interceptors: FetchClientInterceptors
+  }
   queryClient: EdenFetch.Create<T> extends EdenFetch.Fn<infer Schema> ? QueryClient<Schema> : never
 }
 export { type EdenFetch }
