@@ -1,10 +1,10 @@
 import { Static, t } from 'elysia'
 
 import { AnnouncementType } from '../../../../__generated__/prisma'
-import { DraftedAnnouncement, PublishedAnnouncement } from '../../../dtos/announcement'
+import { DraftAnnouncement, PublishedAnnouncement } from '../../../dtos/announcement'
 
 export const AnnouncementIdParams = t.Object({
-  announcementId: t.String({ description: 'The ID of the published/drafted announcement' }),
+  announcementId: t.String({ description: 'The ID of the published/draft announcement' }),
 })
 
 export const GetAnnouncementsQuery = t.Object({
@@ -26,7 +26,7 @@ export type GetAnnouncementsQuery = Static<typeof GetAnnouncementsQuery>
 
 export const GetAnnouncementsResponse = t.Array(
   t.Union([
-    t.Pick(DraftedAnnouncement, [
+    t.Pick(DraftAnnouncement, [
       'id',
       'content',
       'iconImage',
@@ -108,8 +108,8 @@ export const DeletePublishedAnnouncementResponse = t.Object({
 })
 export type DeletePublishedAnnouncementResponse = Static<typeof DeletePublishedAnnouncementResponse>
 
-export const GetDraftedAnnouncementsResponse = t.Array(
-  t.Pick(DraftedAnnouncement, [
+export const GetDraftAnnouncementsResponse = t.Array(
+  t.Pick(DraftAnnouncement, [
     'id',
     'content',
     'iconImage',
@@ -121,17 +121,17 @@ export const GetDraftedAnnouncementsResponse = t.Array(
     'type',
   ])
 )
-export type GetDraftedAnnouncementsResponse = Static<typeof GetDraftedAnnouncementsResponse>
+export type GetDraftAnnouncementsResponse = Static<typeof GetDraftAnnouncementsResponse>
 
-export const GetDraftedAnnouncementResponse = DraftedAnnouncement
-export type GetDraftedAnnouncementResponse = Static<typeof GetDraftedAnnouncementResponse>
+export const GetDraftAnnouncementResponse = DraftAnnouncement
+export type GetDraftAnnouncementResponse = Static<typeof GetDraftAnnouncementResponse>
 
-export const PostDraftedAnnouncementResponse = t.Object({
+export const PostDraftAnnouncementResponse = t.Object({
   announcementId: t.String({ description: 'The ID of the announcement' }),
 })
-export type PostDraftedAnnouncementResponse = Static<typeof PostDraftedAnnouncementResponse>
+export type PostDraftAnnouncementResponse = Static<typeof PostDraftAnnouncementResponse>
 
-export const PutDraftedAnnouncementBody = t.Object({
+export const PutDraftAnnouncementBody = t.Object({
   title: t.Nullable(t.String({ description: 'The title of the announcement' })),
   content: t.Nullable(t.String({ description: 'The content of the announcement' })),
   type: t.Nullable(t.Enum(AnnouncementType, { description: 'The type of the announcement' })),
@@ -150,21 +150,19 @@ export const PutDraftedAnnouncementBody = t.Object({
     t.String({ description: 'The file path of the announcement attachment' })
   ),
 })
-export type PutDraftedAnnouncementBody = Static<typeof PutDraftedAnnouncementBody>
+export type PutDraftAnnouncementBody = Static<typeof PutDraftAnnouncementBody>
 
-export const PutDraftedAnnouncementResponse = t.Object({
+export const PutDraftAnnouncementResponse = t.Object({
   message: t.String({ description: 'Success message' }),
 })
-export type PutDraftedAnnouncementResponse = Static<typeof PutDraftedAnnouncementResponse>
+export type PutDraftAnnouncementResponse = Static<typeof PutDraftAnnouncementResponse>
 
-export const DraftedAnnouncementPublishedResponse = t.Object({
+export const DraftAnnouncementPublishedResponse = t.Object({
   message: t.String({ description: 'Success message' }),
 })
-export type DraftedAnnouncementPublishedResponse = Static<
-  typeof DraftedAnnouncementPublishedResponse
->
+export type DraftAnnouncementPublishedResponse = Static<typeof DraftAnnouncementPublishedResponse>
 
-export const DeleteDraftedAnnouncementResponse = t.Object({
+export const DeleteDraftAnnouncementResponse = t.Object({
   message: t.String({ description: 'Success message' }),
 })
-export type DeleteDraftedAnnouncementResponse = Static<typeof DeleteDraftedAnnouncementResponse>
+export type DeleteDraftAnnouncementResponse = Static<typeof DeleteDraftAnnouncementResponse>

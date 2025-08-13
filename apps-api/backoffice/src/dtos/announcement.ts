@@ -30,7 +30,7 @@ export const PublishedAnnouncement = t.Object({
 })
 export type PublishedAnnouncement = Static<typeof PublishedAnnouncement>
 
-export const DraftedAnnouncement = t.Composite([
+export const DraftAnnouncement = t.Composite([
   t.Pick(PublishedAnnouncement, [
     'id',
     'content',
@@ -46,4 +46,4 @@ export const DraftedAnnouncement = t.Composite([
     type: t.Nullable(t.Enum(AnnouncementType, { description: 'The type of the announcement' })),
   }),
 ])
-export type DraftedAnnouncement = Static<typeof DraftedAnnouncement>
+export type DraftAnnouncement = Static<typeof DraftAnnouncement>

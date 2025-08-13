@@ -1,6 +1,6 @@
 import Elysia from 'elysia'
 
-import { PutDraftedPollBody, PutPublishedPollBody } from './models'
+import { PutDraftPollBody, PutPublishedPollBody } from './models'
 
 import { FeedItemType, PollType } from '../../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
@@ -221,8 +221,8 @@ export class AdminPollRepository {
 
         if (poll === null) throw new Error('Missing required fields')
 
-        // 2. Insert into drafted poll
-        const draftedPoll = await tx.pollDraft.create({
+        // 2. Insert into draft poll
+        const draftPoll = await tx.pollDraft.create({
           data: {
             id: feedItemId,
             title: poll.title,
@@ -237,7 +237,7 @@ export class AdminPollRepository {
         // 3. Delete poll
         await tx.feedItem.delete({ where: { id: feedItemId } })
 
-        return draftedPoll
+        return draftPoll
       })
     )
   }
@@ -248,7 +248,7 @@ export class AdminPollRepository {
     )
   }
 
-  async getDraftedPolls(
+  async getDraftPolls(
     query: { limit: number; page: number } = {
       limit: 10,
       page: 1,
@@ -277,7 +277,7 @@ export class AdminPollRepository {
     )
   }
 
-  async getDraftedPollById(pollId: string) {
+  async getDraftPollById(pollId: string) {
     return await fromPrismaPromise(async () => {
       const { options, topics, ...result } = await this.prismaService.pollDraft.findUniqueOrThrow({
         where: { id: pollId },
@@ -314,13 +314,13 @@ export class AdminPollRepository {
     })
   }
 
-  async createEmptyDraftedPoll() {
+  async createEmptyDraftPoll() {
     return await fromPrismaPromise(
       this.prismaService.pollDraft.create({ data: { type: PollType.SINGLE_CHOICE } })
     )
   }
 
-  async updateDraftedPollById(pollId: string, data: PutDraftedPollBody) {
+  async updateDraftPollById(pollId: string, data: PutDraftPollBody) {
     return await fromPrismaPromise(
       this.prismaService.pollDraft.update({
         where: { id: pollId },
@@ -350,12 +350,12 @@ export class AdminPollRepository {
     )
   }
 
-  async publishDraftedPollById(pollId: string, authorId: string) {
+  async publishDraftPollById(pollId: string, authorId: string) {
     return await fromPrismaPromise(
       this.prismaService.$transaction(async (tx) => {
-        // 1. Get drafted poll
-        // const draftedPoll = await this.getDraftedPollById(pollId)
-        const draftedPoll = await tx.pollDraft.findUniqueOrThrow({
+        // 1. Get draft poll
+        // const draftPoll = await this.getDraftPollById(pollId)
+        const draftPoll = await tx.pollDraft.findUniqueOrThrow({
           where: { id: pollId },
           select: {
             id: true,
@@ -368,29 +368,29 @@ export class AdminPollRepository {
           },
         })
 
-        if (draftedPoll.title === null || draftedPoll.endAt === null)
+        if (draftPoll.title === null || draftPoll.endAt === null)
           throw new Error('Missing required fields')
 
         // 2. Insert into feed
         const feedItem = await tx.feedItem.create({
           data: {
-            id: draftedPoll.id,
+            id: draftPoll.id,
             type: FeedItemType.POLL,
             authorId,
             poll: {
               create: {
-                title: draftedPoll.title,
-                description: draftedPoll.description,
-                endAt: draftedPoll.endAt,
-                type: draftedPoll.type,
-                topics: { createMany: { data: draftedPoll.topics } },
-                options: { createMany: { data: draftedPoll.options } },
+                title: draftPoll.title,
+                description: draftPoll.description,
+                endAt: draftPoll.endAt,
+                type: draftPoll.type,
+                topics: { createMany: { data: draftPoll.topics } },
+                options: { createMany: { data: draftPoll.options } },
               },
             },
           },
         })
 
-        // 3. Delete drafted poll
+        // 3. Delete draft poll
         await tx.pollDraft.delete({ where: { id: pollId } })
 
         return feedItem
@@ -398,7 +398,7 @@ export class AdminPollRepository {
     )
   }
 
-  async deleteDraftedPollById(pollId: string) {
+  async deleteDraftPollById(pollId: string) {
     return await fromPrismaPromise(this.prismaService.pollDraft.delete({ where: { id: pollId } }))
   }
 }

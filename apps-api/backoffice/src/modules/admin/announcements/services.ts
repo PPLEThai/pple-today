@@ -3,11 +3,11 @@ import { ok } from 'neverthrow'
 
 import {
   GetAnnouncementsResponse,
-  GetDraftedAnnouncementResponse,
-  GetDraftedAnnouncementsResponse,
+  GetDraftAnnouncementResponse,
+  GetDraftAnnouncementsResponse,
   GetPublishedAnnouncementResponse,
   GetPublishedAnnouncementsResponse,
-  PutDraftedAnnouncementBody,
+  PutDraftAnnouncementBody,
   PutPublishedAnnouncementBody,
 } from './models'
 import { AdminAnnouncementRepository, AdminAnnouncementRepositoryPlugin } from './repository'
@@ -191,14 +191,14 @@ export class AdminAnnouncementService {
       page: 1,
     }
   ) {
-    const result = await this.adminAnnouncementRepository.getDraftedAnnouncements(query)
+    const result = await this.adminAnnouncementRepository.getDraftAnnouncements(query)
     if (result.isErr()) return mapRawPrismaError(result.error, {})
 
-    return ok(result.value satisfies GetDraftedAnnouncementsResponse)
+    return ok(result.value satisfies GetDraftAnnouncementsResponse)
   }
 
-  async getDraftedAnnouncementById(announcementId: string) {
-    const result = await this.adminAnnouncementRepository.getDraftedAnnouncementById(announcementId)
+  async getDraftAnnouncementById(announcementId: string) {
+    const result = await this.adminAnnouncementRepository.getDraftAnnouncementById(announcementId)
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         RECORD_NOT_FOUND: {
@@ -218,19 +218,19 @@ export class AdminAnnouncementService {
         url: attachmentUrls.value[index],
         filePath: filePath,
       })),
-    } satisfies GetDraftedAnnouncementResponse)
+    } satisfies GetDraftAnnouncementResponse)
   }
 
-  async createEmptyDraftedAnnouncement() {
-    const result = await this.adminAnnouncementRepository.createEmptyDraftedAnnouncement()
+  async createEmptyDraftAnnouncement() {
+    const result = await this.adminAnnouncementRepository.createEmptyDraftAnnouncement()
     if (result.isErr()) return mapRawPrismaError(result.error)
 
     return ok({ announcementId: result.value.id })
   }
 
-  async updateDraftedAnnouncementById(announcementId: string, data: PutDraftedAnnouncementBody) {
+  async updateDraftAnnouncementById(announcementId: string, data: PutDraftAnnouncementBody) {
     const draftAnnouncement =
-      await this.adminAnnouncementRepository.getDraftedAnnouncementById(announcementId)
+      await this.adminAnnouncementRepository.getDraftAnnouncementById(announcementId)
 
     if (draftAnnouncement.isErr()) {
       return mapRawPrismaError(draftAnnouncement.error, {
@@ -260,7 +260,7 @@ export class AdminAnnouncementService {
       })
     }
 
-    const result = await this.adminAnnouncementRepository.updateDraftedAnnouncementById(
+    const result = await this.adminAnnouncementRepository.updateDraftAnnouncementById(
       announcementId,
       {
         ...data,
@@ -275,12 +275,12 @@ export class AdminAnnouncementService {
         },
       })
 
-    return ok({ message: `Drafted Announcement "${result.value.id}" updated.` })
+    return ok({ message: `Draft Announcement "${result.value.id}" updated.` })
   }
 
-  async publishDraftedAnnouncementById(announcementId: string, authorId: string) {
+  async publishDraftAnnouncementById(announcementId: string, authorId: string) {
     const draftAnnouncementResult =
-      await this.adminAnnouncementRepository.getDraftedAnnouncementById(announcementId)
+      await this.adminAnnouncementRepository.getDraftAnnouncementById(announcementId)
 
     if (draftAnnouncementResult.isErr()) {
       return mapRawPrismaError(draftAnnouncementResult.error, {
@@ -295,7 +295,7 @@ export class AdminAnnouncementService {
     if (!draftAnnouncement.title || !draftAnnouncement.type) {
       return err({
         code: InternalErrorCode.ANNOUNCEMENT_INVALID_DRAFT,
-        message: 'Drafted announcement is missing required fields: title, type',
+        message: 'Draft announcement is missing required fields: title, type',
       })
     }
 
@@ -308,7 +308,7 @@ export class AdminAnnouncementService {
       })
     }
 
-    const result = await this.adminAnnouncementRepository.publishDraftedAnnouncementById(
+    const result = await this.adminAnnouncementRepository.publishDraftAnnouncementById(
       {
         id: draftAnnouncement.id,
         title: draftAnnouncement.title,
@@ -335,12 +335,12 @@ export class AdminAnnouncementService {
       return err(markPublicResult.error)
     }
 
-    return ok({ message: `Drafted Announcement "${result.value.id}" published.` })
+    return ok({ message: `Draft Announcement "${result.value.id}" published.` })
   }
 
-  async deleteDraftedAnnouncement(announcementId: string) {
+  async deleteDraftAnnouncement(announcementId: string) {
     const result =
-      await this.adminAnnouncementRepository.deleteDraftedAnnouncementById(announcementId)
+      await this.adminAnnouncementRepository.deleteDraftAnnouncementById(announcementId)
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         RECORD_NOT_FOUND: {
@@ -356,7 +356,7 @@ export class AdminAnnouncementService {
       return err(deleteResult.error)
     }
 
-    return ok({ message: `Drafted Announcement "${result.value.id}" deleted.` })
+    return ok({ message: `Draft Announcement "${result.value.id}" deleted.` })
   }
 }
 

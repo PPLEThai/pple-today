@@ -2,12 +2,12 @@ import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import {
-  GetDraftedPollResponse,
-  GetDraftedPollsResponse,
+  GetDraftPollResponse,
+  GetDraftPollsResponse,
   GetPollsResponse,
   GetPublishedPollResponse,
   GetPublishedPollsResponse,
-  PutDraftedPollBody,
+  PutDraftPollBody,
   PutPublishedPollBody,
 } from './models'
 import { AdminPollRepository, AdminPollRepositoryPlugin } from './repository'
@@ -85,20 +85,20 @@ export class AdminPollService {
     return ok({ message: `Poll "${result.value.id}" deleted.` })
   }
 
-  async getDraftedPolls(
+  async getDraftPolls(
     query: { limit: number; page: number } = {
       limit: 10,
       page: 1,
     }
   ) {
-    const result = await this.adminPollRepository.getDraftedPolls(query)
+    const result = await this.adminPollRepository.getDraftPolls(query)
     if (result.isErr()) return mapRawPrismaError(result.error, {})
 
-    return ok(result.value satisfies GetDraftedPollsResponse)
+    return ok(result.value satisfies GetDraftPollsResponse)
   }
 
-  async getDraftedPollById(pollId: string) {
-    const result = await this.adminPollRepository.getDraftedPollById(pollId)
+  async getDraftPollById(pollId: string) {
+    const result = await this.adminPollRepository.getDraftPollById(pollId)
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         RECORD_NOT_FOUND: {
@@ -106,18 +106,18 @@ export class AdminPollService {
         },
       })
 
-    return ok(result.value satisfies GetDraftedPollResponse)
+    return ok(result.value satisfies GetDraftPollResponse)
   }
 
-  async createEmptyDraftedPoll() {
-    const result = await this.adminPollRepository.createEmptyDraftedPoll()
+  async createEmptyDraftPoll() {
+    const result = await this.adminPollRepository.createEmptyDraftPoll()
     if (result.isErr()) return mapRawPrismaError(result.error, {})
 
     return ok({ pollId: result.value.id })
   }
 
-  async updateDraftedPollById(pollId: string, data: PutDraftedPollBody) {
-    const result = await this.adminPollRepository.updateDraftedPollById(pollId, data)
+  async updateDraftPollById(pollId: string, data: PutDraftPollBody) {
+    const result = await this.adminPollRepository.updateDraftPollById(pollId, data)
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         RECORD_NOT_FOUND: {
@@ -125,11 +125,11 @@ export class AdminPollService {
         },
       })
 
-    return ok({ message: `Drafted Poll "${result.value.id}" updated.` })
+    return ok({ message: `Draft Poll "${result.value.id}" updated.` })
   }
 
-  async publishDraftedPollById(pollId: string, authorId: string) {
-    const result = await this.adminPollRepository.publishDraftedPollById(pollId, authorId)
+  async publishDraftPollById(pollId: string, authorId: string) {
+    const result = await this.adminPollRepository.publishDraftPollById(pollId, authorId)
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         RECORD_NOT_FOUND: {
@@ -137,11 +137,11 @@ export class AdminPollService {
         },
       })
 
-    return ok({ message: `Drafted Poll "${result.value.id}" published.` })
+    return ok({ message: `Draft Poll "${result.value.id}" published.` })
   }
 
-  async deleteDraftedPoll(pollId: string) {
-    const result = await this.adminPollRepository.deleteDraftedPollById(pollId)
+  async deleteDraftPoll(pollId: string) {
+    const result = await this.adminPollRepository.deleteDraftPollById(pollId)
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         RECORD_NOT_FOUND: {
@@ -149,7 +149,7 @@ export class AdminPollService {
         },
       })
 
-    return ok({ message: `Drafted Poll "${result.value.id}" deleted.` })
+    return ok({ message: `Draft Poll "${result.value.id}" deleted.` })
   }
 }
 

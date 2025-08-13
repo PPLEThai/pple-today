@@ -1,6 +1,6 @@
 import Elysia from 'elysia'
 
-import { PutDraftedAnnouncementBody, PutPublishedAnnouncementBody } from './models'
+import { PutDraftAnnouncementBody, PutPublishedAnnouncementBody } from './models'
 
 import { AnnouncementType, FeedItemType } from '../../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
@@ -233,7 +233,7 @@ export class AdminAnnouncementRepository {
         })
 
         // 2. Insert into announcementDraft
-        const draftedAnnouncement = await tx.announcementDraft.create({
+        const draftAnnouncement = await tx.announcementDraft.create({
           data: {
             id: announcement.feedItemId,
             title: announcement.title,
@@ -252,7 +252,7 @@ export class AdminAnnouncementRepository {
         // 3. Delete the announcement
         await tx.feedItem.delete({ where: { id: announcementId } })
 
-        return draftedAnnouncement
+        return draftAnnouncement
       })
     )
   }
@@ -269,7 +269,7 @@ export class AdminAnnouncementRepository {
     )
   }
 
-  async getDraftedAnnouncements(
+  async getDraftAnnouncements(
     query: { limit: number; page: number } = {
       limit: 10,
       page: 1,
@@ -320,7 +320,7 @@ export class AdminAnnouncementRepository {
     })
   }
 
-  async getDraftedAnnouncementById(announcementDraftId: string) {
+  async getDraftAnnouncementById(announcementDraftId: string) {
     return await fromPrismaPromise(async () => {
       const result = await this.prismaService.announcementDraft.findUniqueOrThrow({
         where: { id: announcementDraftId },
@@ -359,14 +359,11 @@ export class AdminAnnouncementRepository {
     })
   }
 
-  async createEmptyDraftedAnnouncement() {
+  async createEmptyDraftAnnouncement() {
     return await fromPrismaPromise(this.prismaService.announcementDraft.create({ data: {} }))
   }
 
-  async updateDraftedAnnouncementById(
-    announcementDraftId: string,
-    data: PutDraftedAnnouncementBody
-  ) {
+  async updateDraftAnnouncementById(announcementDraftId: string, data: PutDraftAnnouncementBody) {
     return await fromPrismaPromise(
       this.prismaService.announcementDraft.update({
         where: { id: announcementDraftId },
@@ -393,7 +390,7 @@ export class AdminAnnouncementRepository {
     )
   }
 
-  async publishDraftedAnnouncementById(
+  async publishDraftAnnouncementById(
     announcementDraft: {
       id: string
       title: string
@@ -445,7 +442,7 @@ export class AdminAnnouncementRepository {
     )
   }
 
-  async deleteDraftedAnnouncementById(announcementDraftId: string) {
+  async deleteDraftAnnouncementById(announcementDraftId: string) {
     return await fromPrismaPromise(
       this.prismaService.announcementDraft.delete({
         where: { id: announcementDraftId },
