@@ -18,6 +18,16 @@ import {
   ResponseConfig,
 } from './types'
 
+export type {
+  CreateReactQueryClientResult,
+  ExtractBodyRequest,
+  ExtractBodyResponse,
+  FetchClientInterceptors,
+  QueryClient,
+  RequestConfig,
+  ResponseConfig,
+} from './types'
+
 function queryKey(method: string, path: string | number | symbol, payload?: any) {
   const payloadKey = {
     pathParams: payload?.pathParams ?? {},

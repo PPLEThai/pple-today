@@ -91,7 +91,7 @@ type GetPathParams<TSchema extends Record<string, any>> = TSchema extends {
     : TPathParams
   : never
 
-type RestPayload<TSchema extends Record<string, any>> = ConditionalExcept<
+export type RestPayload<TSchema extends Record<string, any>> = ConditionalExcept<
   {
     body: GetBody<TSchema>
     query: GetQuery<TSchema>
@@ -100,7 +100,7 @@ type RestPayload<TSchema extends Record<string, any>> = ConditionalExcept<
   never
 >
 
-type EdenError<
+export type EdenError<
   TSchema extends Record<string, unknown>,
   TError extends BaseEdenError<TSchema> = BaseEdenError<TSchema>,
 > =
@@ -130,15 +130,48 @@ type QueryMethod = 'get'
 type MutationMethod = 'post' | 'put' | 'patch' | 'delete'
 
 type SuccessRange = IntClosedRange<200, 299>
-type EdenSuccess<TResponse extends Record<string, unknown>> = {
+export type EdenSuccess<TResponse extends Record<string, unknown>> = {
   [K in keyof TResponse as K extends SuccessRange ? K : never]: TResponse[K]
 }
 
-type EdenResponse<TSchema extends Record<string, unknown>> = Prettify2<
+export type EdenResponse<TSchema extends Record<string, unknown>> = Prettify2<
   TSchema extends { response: infer TResponse extends Record<string, unknown> }
     ? ValueOf<EdenSuccess<TResponse>>
     : never
 >
+
+export type GetEdenFetchSchema<T extends Elysia<any, any, any, any, any, any, any>> =
+  EdenFetch.Create<T> extends EdenFetch.Fn<infer Schema> ? Schema : never
+
+export type ExtractBodyRequest<
+  TElysia extends Elysia<any, any, any, any, any, any, any>,
+  TMethod extends GetAvailableMethods<GetEdenFetchSchema<TElysia>> = GetAvailableMethods<
+    GetEdenFetchSchema<TElysia>
+  >,
+  TPath extends keyof GroupPathByMethod<
+    GetEdenFetchSchema<TElysia>,
+    TMethod
+  >[TMethod] = keyof GroupPathByMethod<GetEdenFetchSchema<TElysia>, TMethod>[TMethod],
+  TEndpoint extends GroupPathByMethod<
+    GetEdenFetchSchema<TElysia>,
+    TMethod
+  >[TMethod][TPath] = GroupPathByMethod<GetEdenFetchSchema<TElysia>, TMethod>[TMethod][TPath],
+> = GetBody<TEndpoint>
+
+export type ExtractBodyResponse<
+  TElysia extends Elysia<any, any, any, any, any, any, any>,
+  TMethod extends GetAvailableMethods<GetEdenFetchSchema<TElysia>> = GetAvailableMethods<
+    GetEdenFetchSchema<TElysia>
+  >,
+  TPath extends keyof GroupPathByMethod<
+    GetEdenFetchSchema<TElysia>,
+    TMethod
+  >[TMethod] = keyof GroupPathByMethod<GetEdenFetchSchema<TElysia>, TMethod>[TMethod],
+  TEndpoint extends GroupPathByMethod<
+    GetEdenFetchSchema<TElysia>,
+    TMethod
+  >[TMethod][TPath] = GroupPathByMethod<GetEdenFetchSchema<TElysia>, TMethod>[TMethod][TPath],
+> = EdenResponse<TEndpoint>
 
 export interface QueryClient<
   TPathSchema extends Record<string, any>,
@@ -243,6 +276,6 @@ export interface CreateReactQueryClientResult<T extends Elysia<any, any, any, an
   fetchClient: EdenFetch.Create<T> & {
     interceptors: FetchClientInterceptors
   }
-  queryClient: EdenFetch.Create<T> extends EdenFetch.Fn<infer Schema> ? QueryClient<Schema> : never
+  queryClient: QueryClient<GetEdenFetchSchema<T>>
 }
 export { type EdenFetch }
