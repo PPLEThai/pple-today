@@ -2,17 +2,17 @@ import Elysia from 'elysia'
 
 import {
   AnnouncementIdParams,
-  DeleteDraftedAnnouncementResponse,
+  DeleteDraftAnnouncementResponse,
   DeletePublishedAnnouncementResponse,
-  DraftedAnnouncementPublishedResponse,
+  DraftAnnouncementPublishedResponse,
   GetAnnouncementsQuery,
   GetAnnouncementsResponse,
-  GetDraftedAnnouncementResponse,
+  GetDraftAnnouncementResponse,
   GetPublishedAnnouncementResponse,
-  PostDraftedAnnouncementResponse,
+  PostDraftAnnouncementResponse,
   PublishedAnnouncementUnpublishedResponse,
-  PutDraftedAnnouncementBody,
-  PutDraftedAnnouncementResponse,
+  PutDraftAnnouncementBody,
+  PutDraftAnnouncementResponse,
   PutPublishedAnnouncementBody,
   PutPublishedAnnouncementResponse,
 } from './models'
@@ -22,17 +22,15 @@ import { InternalErrorCode } from '../../../dtos/error'
 import { AuthGuardPlugin } from '../../../plugins/auth-guard'
 import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../../utils/error'
 
-const AdminDraftedAnnouncementsController = new Elysia({
+const AdminDraftAnnouncementsController = new Elysia({
   prefix: '/draft',
-  tags: ['Drafted Announcements'],
+  tags: ['Draft Announcements'],
 })
   .use([AuthGuardPlugin, AdminAnnouncementServicePlugin])
   .get(
     '/:announcementId',
     async ({ params, status, adminAnnouncementService }) => {
-      const result = await adminAnnouncementService.getDraftedAnnouncementById(
-        params.announcementId
-      )
+      const result = await adminAnnouncementService.getDraftAnnouncementById(params.announcementId)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.ANNOUNCEMENT_NOT_FOUND:
@@ -52,7 +50,7 @@ const AdminDraftedAnnouncementsController = new Elysia({
       requiredUser: true,
       params: AnnouncementIdParams,
       response: {
-        200: GetDraftedAnnouncementResponse,
+        200: GetDraftAnnouncementResponse,
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
           InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
@@ -60,15 +58,15 @@ const AdminDraftedAnnouncementsController = new Elysia({
         ),
       },
       detail: {
-        summary: 'Get drafted announcement by ID',
-        description: 'Fetch a specific drafted announcement by its ID',
+        summary: 'Get draft announcement by ID',
+        description: 'Fetch a specific draft announcement by its ID',
       },
     }
   )
   .post(
     '/',
     async ({ status, adminAnnouncementService }) => {
-      const result = await adminAnnouncementService.createEmptyDraftedAnnouncement()
+      const result = await adminAnnouncementService.createEmptyDraftAnnouncement()
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
       return status(201, result.value)
@@ -76,11 +74,11 @@ const AdminDraftedAnnouncementsController = new Elysia({
     {
       requiredUser: true,
       response: {
-        201: PostDraftedAnnouncementResponse,
+        201: PostDraftAnnouncementResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
       },
       detail: {
-        summary: 'Create empty drafted announcement',
+        summary: 'Create empty draft announcement',
         description: 'Add empty announcement to be updated later',
       },
     }
@@ -88,7 +86,7 @@ const AdminDraftedAnnouncementsController = new Elysia({
   .put(
     '/:announcementId',
     async ({ params, body, status, adminAnnouncementService }) => {
-      const result = await adminAnnouncementService.updateDraftedAnnouncementById(
+      const result = await adminAnnouncementService.updateDraftAnnouncementById(
         params.announcementId,
         body
       )
@@ -112,9 +110,9 @@ const AdminDraftedAnnouncementsController = new Elysia({
     {
       requiredUser: true,
       params: AnnouncementIdParams,
-      body: PutDraftedAnnouncementBody,
+      body: PutDraftAnnouncementBody,
       response: {
-        200: PutDraftedAnnouncementResponse,
+        200: PutDraftAnnouncementResponse,
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
           InternalErrorCode.FILE_MOVE_ERROR,
@@ -123,15 +121,15 @@ const AdminDraftedAnnouncementsController = new Elysia({
         ),
       },
       detail: {
-        summary: 'Update drafted announcement by ID',
-        description: 'Update a specific drafted announcement by its ID',
+        summary: 'Update draft announcement by ID',
+        description: 'Update a specific draft announcement by its ID',
       },
     }
   )
   .post(
     '/:announcementId/publish',
     async ({ params, user, status, adminAnnouncementService }) => {
-      const result = await adminAnnouncementService.publishDraftedAnnouncementById(
+      const result = await adminAnnouncementService.publishDraftAnnouncementById(
         params.announcementId,
         user.sub
       )
@@ -156,7 +154,7 @@ const AdminDraftedAnnouncementsController = new Elysia({
       requiredUser: true,
       params: AnnouncementIdParams,
       response: {
-        200: DraftedAnnouncementPublishedResponse,
+        200: DraftAnnouncementPublishedResponse,
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
           InternalErrorCode.ANNOUNCEMENT_INVALID_DRAFT,
@@ -165,15 +163,15 @@ const AdminDraftedAnnouncementsController = new Elysia({
         ),
       },
       detail: {
-        summary: 'Publish drafted announcement by ID',
-        description: 'Publish a specific drafted announcement by its ID',
+        summary: 'Publish draft announcement by ID',
+        description: 'Publish a specific draft announcement by its ID',
       },
     }
   )
   .delete(
     '/:announcementId',
     async ({ params, status, adminAnnouncementService }) => {
-      const result = await adminAnnouncementService.deleteDraftedAnnouncement(params.announcementId)
+      const result = await adminAnnouncementService.deleteDraftAnnouncement(params.announcementId)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.ANNOUNCEMENT_NOT_FOUND:
@@ -193,7 +191,7 @@ const AdminDraftedAnnouncementsController = new Elysia({
       requiredUser: true,
       params: AnnouncementIdParams,
       response: {
-        200: DeleteDraftedAnnouncementResponse,
+        200: DeleteDraftAnnouncementResponse,
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
           InternalErrorCode.FILE_DELETE_ERROR,
@@ -201,8 +199,8 @@ const AdminDraftedAnnouncementsController = new Elysia({
         ),
       },
       detail: {
-        summary: 'Delete drafted announcement by ID',
-        description: 'Remove a specific drafted announcement by its ID',
+        summary: 'Delete draft announcement by ID',
+        description: 'Remove a specific draft announcement by its ID',
       },
     }
   )
@@ -212,7 +210,7 @@ export const AdminAnnouncementsController = new Elysia({
   tags: ['Announcements'],
 })
   .use([AuthGuardPlugin, AdminAnnouncementServicePlugin])
-  .use(AdminDraftedAnnouncementsController)
+  .use(AdminDraftAnnouncementsController)
   .get(
     '/',
     async ({ query, status, adminAnnouncementService }) => {
