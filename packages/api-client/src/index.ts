@@ -9,7 +9,24 @@ import {
 } from '@tanstack/react-query'
 import Elysia from 'elysia'
 
-import { CreateReactQueryClientResult, EdenFetch, QueryClient } from './types'
+import {
+  CreateReactQueryClientResult,
+  EdenFetch,
+  FetchClientInterceptors,
+  QueryClient,
+  RequestConfig,
+  ResponseConfig,
+} from './types'
+
+export type {
+  CreateReactQueryClientResult,
+  ExtractBodyRequest,
+  ExtractBodyResponse,
+  FetchClientInterceptors,
+  QueryClient,
+  RequestConfig,
+  ResponseConfig,
+} from './types'
 
 function queryKey(method: string, path: string | number | symbol, payload?: any) {
   const payloadKey = {
@@ -21,22 +38,22 @@ function queryKey(method: string, path: string | number | symbol, payload?: any)
 }
 
 function createQueryClient<TSchema extends Record<string, any>>(
-  restClient: EdenFetch.Fn<TSchema>
+  restClient: EdenFetch.Fn<TSchema> & {
+    interceptors: FetchClientInterceptors
+  }
 ): QueryClient<TSchema> {
   const makeRequest = async (method: any, path: any, payload: any) => {
-    const resp = await restClient(path, {
+    const requestConfig: any = restClient.interceptors.request({
       method,
-      params: payload?.pathParams ?? {},
+      path,
       query: payload?.query ?? {},
+      body: payload?.body ?? undefined,
       headers: payload?.headers ?? {},
-      body: payload?.body,
     })
 
-    if (resp.status >= 300) {
-      throw resp.error
-    }
+    const resp = await restClient(path, requestConfig)
 
-    return resp.data
+    return restClient.interceptors.response(resp)
   }
 
   return {
@@ -76,6 +93,19 @@ export function createReactQueryClient<T extends Elysia<any, any, any, any, any,
   options?: EdenFetch.Config
 ): CreateReactQueryClientResult<T> {
   const fetchClient: any = edenFetch<T>(server, options)
+  // Default interceptor
+  fetchClient.interceptors = {
+    request: (config: RequestConfig) => {
+      return config
+    },
+    response: (response: ResponseConfig) => {
+      if (response.status >= 400) {
+        throw response.error
+      }
+      return response.data
+    },
+  } satisfies FetchClientInterceptors
+
   const queryClient: any = createQueryClient(fetchClient)
 
   return { fetchClient, queryClient }
