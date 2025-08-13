@@ -4,13 +4,13 @@ import { PutDraftPollBody, PutPublishedPollBody } from './models'
 
 import { FeedItemType, PollType } from '../../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
-import { fromPrismaPromise } from '../../../utils/prisma'
+import { fromRepositoryPromise } from '../../../utils/error'
 
 export class AdminPollRepository {
   constructor(private prismaService: PrismaService) {}
 
   async getAllPolls() {
-    return await fromPrismaPromise(async () => {
+    return await fromRepositoryPromise(async () => {
       const [draft, published] = await Promise.all([
         this.prismaService.pollDraft.findMany({
           select: {
@@ -61,7 +61,7 @@ export class AdminPollRepository {
     const { limit, page } = query
     const skip = page ? (page - 1) * limit : 0
 
-    return await fromPrismaPromise(async () =>
+    return await fromRepositoryPromise(async () =>
       (
         await this.prismaService.poll.findMany({
           select: {
@@ -95,7 +95,7 @@ export class AdminPollRepository {
   }
 
   async getPollById(feedItemId: string) {
-    return await fromPrismaPromise(async () => {
+    return await fromRepositoryPromise(async () => {
       const {
         feedItemId: id,
         feedItem,
@@ -159,7 +159,7 @@ export class AdminPollRepository {
   }
 
   async updatePollById(feedItemId: string, data: PutPublishedPollBody) {
-    return await fromPrismaPromise(async () => {
+    return await fromRepositoryPromise(async () => {
       const answer = await this.prismaService.poll.findUniqueOrThrow({
         where: { feedItemId },
         select: {
@@ -204,7 +204,7 @@ export class AdminPollRepository {
   }
 
   async unpublishPollById(feedItemId: string) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
         // 1. Get poll
         const poll = await tx.poll.findUniqueOrThrow({
@@ -243,7 +243,7 @@ export class AdminPollRepository {
   }
 
   async deletePollById(feedItemId: string) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.feedItem.delete({ where: { id: feedItemId } })
     )
   }
@@ -257,7 +257,7 @@ export class AdminPollRepository {
     const { limit, page } = query
     const skip = page ? (page - 1) * limit : 0
 
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.pollDraft.findMany({
         select: {
           id: true,
@@ -278,7 +278,7 @@ export class AdminPollRepository {
   }
 
   async getDraftPollById(pollId: string) {
-    return await fromPrismaPromise(async () => {
+    return await fromRepositoryPromise(async () => {
       const { options, topics, ...result } = await this.prismaService.pollDraft.findUniqueOrThrow({
         where: { id: pollId },
         select: {
@@ -315,13 +315,13 @@ export class AdminPollRepository {
   }
 
   async createEmptyDraftPoll() {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.pollDraft.create({ data: { type: PollType.SINGLE_CHOICE } })
     )
   }
 
   async updateDraftPollById(pollId: string, data: PutDraftPollBody) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.pollDraft.update({
         where: { id: pollId },
         data: {
@@ -351,7 +351,7 @@ export class AdminPollRepository {
   }
 
   async publishDraftPollById(pollId: string, authorId: string) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
         // 1. Get draft poll
         // const draftPoll = await this.getDraftPollById(pollId)
@@ -399,7 +399,9 @@ export class AdminPollRepository {
   }
 
   async deleteDraftPollById(pollId: string) {
-    return await fromPrismaPromise(this.prismaService.pollDraft.delete({ where: { id: pollId } }))
+    return await fromRepositoryPromise(
+      this.prismaService.pollDraft.delete({ where: { id: pollId } })
+    )
   }
 }
 

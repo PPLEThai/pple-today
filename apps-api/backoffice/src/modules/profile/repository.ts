@@ -4,13 +4,13 @@ import { CompleteOnboardingProfileBody } from './models'
 
 import { Prisma } from '../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
-import { fromPrismaPromise } from '../../utils/prisma'
+import { fromRepositoryPromise } from '../../utils/error'
 
 export class ProfileRepository {
   constructor(private prismaService: PrismaService) {}
 
   async getProfileById(id: string) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.user.findUniqueOrThrow({
         where: { id },
         include: {
@@ -21,7 +21,7 @@ export class ProfileRepository {
   }
 
   async followUser(userId: string, followedUserId: string) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.$transaction([
         this.prismaService.userFollowsUser.create({
           data: {
@@ -50,7 +50,7 @@ export class ProfileRepository {
   }
 
   async unfollowUser(userId: string, followedUserId: string) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.$transaction([
         this.prismaService.userFollowsUser.delete({
           where: {
@@ -81,7 +81,7 @@ export class ProfileRepository {
   }
 
   async getFollowingUsers(userId: string) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.user.findUniqueOrThrow({
         where: {
           id: userId,
@@ -149,7 +149,7 @@ export class ProfileRepository {
   }
 
   async updateUserProfile(userId: string, profileData: Prisma.UserUpdateArgs['data']) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.user.update({
         where: { id: userId },
         include: { address: true },

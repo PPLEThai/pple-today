@@ -2,21 +2,15 @@ import { TLiteral, TObject, TOptional, TString, TUnion, TUnknown } from '@sincla
 import { Static, t } from 'elysia'
 import { ElysiaCustomStatusResponse } from 'elysia/error'
 import { Prettify2 } from 'elysia/types'
-import { Err, err as defaultErr } from 'neverthrow'
+import { Err, err as defaultErr, ok, Result } from 'neverthrow'
 import { groupBy, map, mapValues, pipe } from 'remeda'
+
+import { RawPrismaError, resolvePrismaError } from './prisma'
 
 import { InternalErrorCode, InternalErrorCodeSchemas } from '../dtos/error'
 
-export type ApiErrorSchema<TCode extends InternalErrorCode> = TCode extends InternalErrorCode
-  ? TObject<{
-      code: TLiteral<TCode>
-      message: TOptional<TString>
-      data: GetDataFromSchema<TCode>
-    }>
-  : never
-
-export type ApiErrorResponse<TCode extends InternalErrorCode> = Static<ApiErrorSchema<TCode>>
-
+type ExtractExplicitErr<T> = T extends Err<infer _, infer E> ? E : never
+type WithoutErr<T> = T extends Err<any, any> ? never : T
 type GroupErrorCodeToStatusCode<
   T extends InternalErrorCode[],
   Result extends Record<number, InternalErrorCode[]> = {},
@@ -52,6 +46,20 @@ type GetArgumentFromErrorResponse<T extends ApiErrorResponse<InternalErrorCode>>
   T extends ApiErrorResponse<any>
     ? [InternalErrorCodeSchemas[T['code']]['status'], { error: T }]
     : never
+
+export type ExtractApiErrorResponse<T extends { code: any }> = T extends { code: InternalErrorCode }
+  ? T
+  : {}
+
+export type ApiErrorSchema<TCode extends InternalErrorCode> = TCode extends InternalErrorCode
+  ? TObject<{
+      code: TLiteral<TCode>
+      message: TOptional<TString>
+      data: GetDataFromSchema<TCode>
+    }>
+  : never
+
+export type ApiErrorResponse<TCode extends InternalErrorCode> = Static<ApiErrorSchema<TCode>>
 
 export function tApiErrorResponse<TErrors extends [TObject, ...TObject[]]>(...errors: TErrors) {
   return t.Object({
@@ -118,4 +126,25 @@ export function err<E>(_err: E | Err<never, E>): Err<never, E> {
   }
 
   return defaultErr(errBody) as Err<never, E>
+}
+
+export const fromRepositoryPromise = async <T>(
+  promise: Promise<T> | (() => Promise<T>)
+): Promise<Result<WithoutErr<T>, RawPrismaError | ExtractExplicitErr<T>>> => {
+  let promiseEntry
+  if (typeof promise === 'function') {
+    promiseEntry = promise()
+  } else {
+    promiseEntry = promise
+  }
+
+  try {
+    const result = await promiseEntry
+    return ok(result as any)
+  } catch (_err) {
+    if (_err instanceof Err) {
+      return _err
+    }
+    return err(resolvePrismaError(_err))
+  }
 }
