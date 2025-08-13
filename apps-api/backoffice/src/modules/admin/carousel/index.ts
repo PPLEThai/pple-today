@@ -22,7 +22,7 @@ import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../.
 
 export const CarouselController = new Elysia({
   prefix: '/admin/carousels',
-  tags: ['Carousel'],
+  tags: ['Admin Carousel'],
 })
   .use([CarouselServicePlugin, AuthGuardPlugin])
   .get(
@@ -30,7 +30,16 @@ export const CarouselController = new Elysia({
     async ({ carouselService, status }) => {
       const result = await carouselService.getCarousels()
 
-      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+      if (result.isErr()) {
+        switch (result.error.code) {
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
+      }
 
       return status(200, result.value)
     },
@@ -38,7 +47,10 @@ export const CarouselController = new Elysia({
       requiredUser: true,
       response: {
         200: GetCarouselsResponse,
-        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+        ...createErrorSchema(
+          InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
       },
       detail: {
         summary: 'Get all carousels',
@@ -56,6 +68,8 @@ export const CarouselController = new Elysia({
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
           default:
             exhaustiveGuard(result.error)
         }
@@ -69,6 +83,7 @@ export const CarouselController = new Elysia({
         200: GetCarouselByIdResponse,
         ...createErrorSchema(
           InternalErrorCode.CAROUSEL_NOT_FOUND,
+          InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -88,6 +103,8 @@ export const CarouselController = new Elysia({
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.FILE_MOVE_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
           default:
             exhaustiveGuard(result.error)
         }
@@ -101,6 +118,7 @@ export const CarouselController = new Elysia({
         201: CreateCarouselResponse,
         ...createErrorSchema(
           InternalErrorCode.CAROUSEL_INVALID_INPUT,
+          InternalErrorCode.FILE_MOVE_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -120,6 +138,10 @@ export const CarouselController = new Elysia({
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.FILE_DELETE_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.FILE_MOVE_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
           default:
             exhaustiveGuard(result.error)
         }
@@ -134,6 +156,8 @@ export const CarouselController = new Elysia({
         200: UpdateCarouselResponse,
         ...createErrorSchema(
           InternalErrorCode.CAROUSEL_NOT_FOUND,
+          InternalErrorCode.FILE_DELETE_ERROR,
+          InternalErrorCode.FILE_MOVE_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -153,6 +177,8 @@ export const CarouselController = new Elysia({
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.FILE_DELETE_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
           default:
             exhaustiveGuard(result.error)
         }
@@ -165,6 +191,7 @@ export const CarouselController = new Elysia({
       response: {
         200: DeleteCarouselResponse,
         ...createErrorSchema(
+          InternalErrorCode.FILE_DELETE_ERROR,
           InternalErrorCode.CAROUSEL_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
