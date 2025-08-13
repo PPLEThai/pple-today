@@ -46,7 +46,7 @@ export class FeedService {
         if (!feedItem.value.poll) {
           return err({
             code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
-            message: 'Feed item content not found',
+            message: 'Feed item poll content not found',
           })
         }
 
@@ -72,7 +72,7 @@ export class FeedService {
         if (!feedItem.value.announcement) {
           return err({
             code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
-            message: 'Feed item content not found',
+            message: 'Feed item announcement content not found',
           })
         }
 
@@ -91,7 +91,7 @@ export class FeedService {
         if (!feedItem.value.post) {
           return err({
             code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
-            message: 'Feed item content not found',
+            message: 'Feed item post content not found',
           })
         }
 
