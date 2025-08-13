@@ -20,7 +20,7 @@ export const FeedItemReaction = t.Object({
 })
 export type FeedItemReaction = Static<typeof FeedItemReaction>
 
-export const BaseFeedItem = t.Object({
+export const FeedItemBaseContent = t.Object({
   id: t.String({ description: 'The ID of the feed item' }),
   createdAt: t.Date({ description: 'The creation date of the feed item' }),
   commentCount: t.Number({ description: 'The number of comments on the feed item' }),
@@ -28,7 +28,7 @@ export const BaseFeedItem = t.Object({
   reactions: t.Array(FeedItemReaction),
   author: Author,
 })
-export type BaseFeedItem = Static<typeof BaseFeedItem>
+export type FeedItemBaseContent = Static<typeof FeedItemBaseContent>
 
 export const FeedItemPostContent = t.Object({
   type: t.Literal(FeedItemType.POST, {
@@ -55,7 +55,7 @@ export const FeedItemPostContent = t.Object({
 })
 export type FeedItemPostContent = Static<typeof FeedItemPostContent>
 
-export const FeedItemPost = t.Composite([BaseFeedItem, FeedItemPostContent])
+export const FeedItemPost = t.Composite([FeedItemBaseContent, FeedItemPostContent])
 export type FeedItemPost = Static<typeof FeedItemPost>
 
 export const FeedItemPollContent = t.Object({
@@ -78,7 +78,7 @@ export const FeedItemPollContent = t.Object({
 })
 export type FeedItemPollContent = Static<typeof FeedItemPollContent>
 
-export const FeedItemPoll = t.Composite([BaseFeedItem, FeedItemPollContent])
+export const FeedItemPoll = t.Composite([FeedItemBaseContent, FeedItemPollContent])
 export type FeedItemPoll = Static<typeof FeedItemPoll>
 
 export const FeedItemAnnouncementContent = t.Object({
@@ -93,7 +93,7 @@ export const FeedItemAnnouncementContent = t.Object({
 })
 export type FeedItemAnnouncementContent = Static<typeof FeedItemAnnouncementContent>
 
-export const FeedItemAnnouncement = t.Composite([BaseFeedItem, FeedItemAnnouncementContent])
+export const FeedItemAnnouncement = t.Composite([FeedItemBaseContent, FeedItemAnnouncementContent])
 export type FeedItemAnnouncement = Static<typeof FeedItemAnnouncement>
 
 export const FeedItem = t.Union([FeedItemPost, FeedItemPoll, FeedItemAnnouncement])

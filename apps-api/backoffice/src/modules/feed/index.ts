@@ -1,44 +1,43 @@
 import Elysia from 'elysia'
 
 import {
-  CreatePostCommentBody,
-  CreatePostCommentParams,
-  CreatePostCommentResponse,
-  CreatePostReactionBody,
-  CreatePostReactionParams,
-  CreatePostReactionResponse,
-  DeletePostCommentParams,
-  DeletePostCommentResponse,
-  DeletePostReactionParams,
-  DeletePostReactionResponse,
-  GetPostByIdParams,
-  GetPostByIdResponse,
-  GetPostCommentParams,
-  GetPostCommentQuery,
-  GetPostCommentResponse,
-  UpdatePostCommentBody,
-  UpdatePostCommentParams,
-  UpdatePostCommentResponse,
+  CreateFeedCommentBody,
+  CreateFeedCommentParams,
+  CreateFeedCommentResponse,
+  CreateFeedReactionBody,
+  CreateFeedReactionParams,
+  CreateFeedReactionResponse,
+  DeleteFeedCommentParams,
+  DeleteFeedCommentResponse,
+  DeleteFeedReactionParams,
+  DeleteFeedReactionResponse,
+  GetFeedCommentParams,
+  GetFeedCommentQuery,
+  GetFeedCommentResponse,
+  GetFeedContentParams,
+  GetFeedContentResponse,
+  UpdateFeedCommentBody,
+  UpdateFeedCommentParams,
+  UpdateFeedCommentResponse,
 } from './models'
-import { PostServicePlugin } from './services'
+import { FeedServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
 import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
 
-export const PostsController = new Elysia({
-  prefix: '/posts',
-  tags: ['Posts'],
+export const FeedController = new Elysia({
+  prefix: '/feed',
+  tags: ['Feed'],
 })
-  .use([AuthGuardPlugin, PostServicePlugin])
+  .use([AuthGuardPlugin, FeedServicePlugin])
   .get(
     '/:id',
-    async ({ params, status, user, postService }) => {
-      const result = await postService.getPostById(params.id, user?.sub)
-
+    async ({ params, user, status, feedService }) => {
+      const result = await feedService.getFeedContentById(params.id, user?.sub)
       if (result.isErr()) {
         switch (result.error.code) {
-          case InternalErrorCode.POST_NOT_FOUND:
+          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
@@ -51,31 +50,31 @@ export const PostsController = new Elysia({
     },
     {
       fetchUser: true,
-      params: GetPostByIdParams,
+      params: GetFeedContentParams,
       response: {
-        200: GetPostByIdResponse,
+        200: GetFeedContentResponse,
         ...createErrorSchema(
-          InternalErrorCode.POST_NOT_FOUND,
+          InternalErrorCode.FEED_ITEM_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
       detail: {
-        summary: 'Get post by ID',
-        description: 'Fetch a specific post by its ID',
+        summary: 'Get feed item by ID',
+        description: 'Fetch a specific feed item by its ID',
       },
     }
   )
   .get(
     '/:id/comments',
-    async ({ params, query, status, user, postService }) => {
-      const result = await postService.getPostComments(params.id, {
+    async ({ params, query, status, user, feedService }) => {
+      const result = await feedService.getFeedComments(params.id, {
         userId: user?.sub,
         limit: query.limit,
         page: query.page,
       })
       if (result.isErr()) {
         switch (result.error.code) {
-          case InternalErrorCode.POST_NOT_FOUND:
+          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
@@ -84,34 +83,34 @@ export const PostsController = new Elysia({
         }
       }
 
-      return status(200, result.value as GetPostCommentResponse)
+      return status(200, result.value as GetFeedCommentResponse)
     },
     {
       fetchUser: true,
-      params: GetPostCommentParams,
-      query: GetPostCommentQuery,
+      params: GetFeedCommentParams,
+      query: GetFeedCommentQuery,
       response: {
-        200: GetPostCommentResponse,
+        200: GetFeedCommentResponse,
         ...createErrorSchema(
-          InternalErrorCode.POST_NOT_FOUND,
+          InternalErrorCode.FEED_ITEM_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
       detail: {
-        summary: 'Get post comment by post ID',
-        description: 'Fetch a specific comment from a post by its ID',
+        summary: 'Get feed comment by feed ID',
+        description: 'Fetch a specific comment from a feed by its ID',
       },
     }
   )
   .post(
     '/:id/reaction',
-    async ({ params, body, user, status, postService }) => {
-      const result = await postService.createPostReaction(params.id, user.sub, body)
+    async ({ params, body, user, status, feedService }) => {
+      const result = await feedService.createFeedReaction(params.id, user.sub, body)
       if (result.isErr()) {
         switch (result.error.code) {
-          case InternalErrorCode.POST_NOT_FOUND:
+          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
             return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.POST_REACTION_ALREADY_EXISTS:
+          case InternalErrorCode.FEED_ITEM_REACTION_ALREADY_EXISTS:
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
@@ -124,35 +123,30 @@ export const PostsController = new Elysia({
     },
     {
       requiredUser: true,
-      params: CreatePostReactionParams,
-      body: CreatePostReactionBody,
+      params: CreateFeedReactionParams,
+      body: CreateFeedReactionBody,
       response: {
-        201: CreatePostReactionResponse,
+        201: CreateFeedReactionResponse,
         ...createErrorSchema(
-          InternalErrorCode.POST_NOT_FOUND,
-          InternalErrorCode.POST_REACTION_ALREADY_EXISTS,
+          InternalErrorCode.FEED_ITEM_NOT_FOUND,
+          InternalErrorCode.FEED_ITEM_REACTION_ALREADY_EXISTS,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
       detail: {
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
-        summary: 'Create post reaction',
-        description: 'Add a reaction to a post by its ID',
+        summary: 'Create feed reaction',
+        description: 'Add a reaction to a feed item by its ID',
       },
     }
   )
   .delete(
     '/:id/reaction',
-    async ({ params, status, user, postService }) => {
-      const result = await postService.deletePostReaction(params.id, user.sub)
+    async ({ params, status, user, feedService }) => {
+      const result = await feedService.deleteFeedReaction(params.id, user.sub)
 
       if (result.isErr()) {
         switch (result.error.code) {
-          case InternalErrorCode.POST_REACTION_NOT_FOUND:
+          case InternalErrorCode.FEED_ITEM_REACTION_NOT_FOUND:
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
@@ -165,32 +159,27 @@ export const PostsController = new Elysia({
     },
     {
       requiredUser: true,
-      params: DeletePostReactionParams,
+      params: DeleteFeedReactionParams,
       response: {
-        200: DeletePostReactionResponse,
+        200: DeleteFeedReactionResponse,
         ...createErrorSchema(
-          InternalErrorCode.POST_REACTION_NOT_FOUND,
+          InternalErrorCode.FEED_ITEM_REACTION_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
       detail: {
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
-        summary: 'Delete post reaction',
-        description: 'Remove a reaction from a post by its ID',
+        summary: 'Delete feed reaction',
+        description: 'Remove a reaction from a feed item by its ID',
       },
     }
   )
   .post(
     '/:id/comment',
-    async ({ params, body, user, status, postService }) => {
-      const result = await postService.createPostComment(params.id, user.sub, body.content)
+    async ({ params, body, user, status, feedService }) => {
+      const result = await feedService.createFeedComment(params.id, user.sub, body.content)
       if (result.isErr()) {
         switch (result.error.code) {
-          case InternalErrorCode.POST_NOT_FOUND:
+          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
@@ -203,30 +192,25 @@ export const PostsController = new Elysia({
     },
     {
       requiredUser: true,
-      params: CreatePostCommentParams,
-      body: CreatePostCommentBody,
+      params: CreateFeedCommentParams,
+      body: CreateFeedCommentBody,
       response: {
-        201: CreatePostCommentResponse,
+        201: CreateFeedCommentResponse,
         ...createErrorSchema(
-          InternalErrorCode.POST_NOT_FOUND,
+          InternalErrorCode.FEED_ITEM_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
       detail: {
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
-        summary: 'Create post comment',
-        description: 'Add a comment to a post by its ID',
+        summary: 'Create feed comment',
+        description: 'Add a comment to a feed item by its ID',
       },
     }
   )
   .put(
     '/:id/comment/:commentId',
-    async ({ params, body, user, status, postService }) => {
-      const result = await postService.updatePostComment(
+    async ({ params, body, user, status, feedService }) => {
+      const result = await feedService.updateFeedComment(
         params.id,
         params.commentId,
         user.sub,
@@ -235,7 +219,7 @@ export const PostsController = new Elysia({
 
       if (result.isErr()) {
         switch (result.error.code) {
-          case InternalErrorCode.POST_COMMENT_NOT_FOUND:
+          case InternalErrorCode.FEED_ITEM_COMMENT_NOT_FOUND:
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
@@ -248,34 +232,29 @@ export const PostsController = new Elysia({
     },
     {
       requiredUser: true,
-      params: UpdatePostCommentParams,
-      body: UpdatePostCommentBody,
+      params: UpdateFeedCommentParams,
+      body: UpdateFeedCommentBody,
       response: {
-        200: UpdatePostCommentResponse,
+        200: UpdateFeedCommentResponse,
         ...createErrorSchema(
-          InternalErrorCode.POST_COMMENT_NOT_FOUND,
+          InternalErrorCode.FEED_ITEM_COMMENT_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
       detail: {
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
-        summary: 'Update post comment',
-        description: 'Update a comment on a post by its ID',
+        summary: 'Update feed comment',
+        description: 'Update a comment on a feed item by its ID',
       },
     }
   )
   .delete(
     '/:id/comment/:commentId',
-    async ({ params, user, status, postService }) => {
-      const result = await postService.deletePostComment(params.id, params.commentId, user.sub)
+    async ({ params, user, status, feedService }) => {
+      const result = await feedService.deleteFeedComment(params.id, params.commentId, user.sub)
 
       if (result.isErr()) {
         switch (result.error.code) {
-          case InternalErrorCode.POST_COMMENT_NOT_FOUND:
+          case InternalErrorCode.FEED_ITEM_COMMENT_NOT_FOUND:
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
@@ -288,22 +267,17 @@ export const PostsController = new Elysia({
     },
     {
       requiredUser: true,
-      params: DeletePostCommentParams,
+      params: DeleteFeedCommentParams,
       response: {
-        200: DeletePostCommentResponse,
+        200: DeleteFeedCommentResponse,
         ...createErrorSchema(
-          InternalErrorCode.POST_COMMENT_NOT_FOUND,
+          InternalErrorCode.FEED_ITEM_COMMENT_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
       detail: {
-        security: [
-          {
-            bearerAuth: [],
-          },
-        ],
-        summary: 'Delete post comment',
-        description: 'Remove a comment from a post by its ID',
+        summary: 'Delete feed comment',
+        description: 'Remove a comment from a feed item by its ID',
       },
     }
   )

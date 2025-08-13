@@ -1,0 +1,95 @@
+import { Static, t } from 'elysia'
+
+import { FeedItemReactionType } from '../../../__generated__/prisma'
+import { FeedItem, FeedItemComment } from '../../dtos/feed'
+
+export const GetFeedContentParams = t.Object({
+  id: t.String({ description: 'The ID of the feed item' }),
+})
+export type GetFeedContentParams = Static<typeof GetFeedContentParams>
+
+export const GetFeedContentResponse = FeedItem
+export type GetFeedContentResponse = Static<typeof GetFeedContentResponse>
+
+export const GetFeedCommentParams = t.Object({
+  id: t.String({ description: 'The ID of the feed' }),
+})
+export const GetFeedCommentQuery = t.Object({
+  page: t.Optional(t.Number({ description: 'The page number for pagination', default: 1 })),
+  limit: t.Optional(t.Number({ description: 'The number of comments per page', default: 10 })),
+})
+export const GetFeedCommentResponse = t.Array(FeedItemComment)
+
+export type GetFeedCommentParams = Static<typeof GetFeedCommentParams>
+export type GetFeedCommentQuery = Static<typeof GetFeedCommentQuery>
+export type GetFeedCommentResponse = Static<typeof GetFeedCommentResponse>
+
+export const CreateFeedReactionParams = t.Object({
+  id: t.String({ description: 'The ID of the feed' }),
+})
+export const CreateFeedReactionBody = t.Union([
+  t.Object({
+    type: t.Literal(FeedItemReactionType.UP_VOTE),
+  }),
+  t.Object({
+    type: t.Literal(FeedItemReactionType.DOWN_VOTE),
+    comment: t.String({ description: 'Optional comment for the reaction' }),
+  }),
+])
+export const CreateFeedReactionResponse = t.Object({
+  message: t.String({ description: 'Success message' }),
+})
+
+export type CreateFeedReactionParams = Static<typeof CreateFeedReactionParams>
+export type CreateFeedReactionBody = Static<typeof CreateFeedReactionBody>
+export type CreateFeedReactionResponse = Static<typeof CreateFeedReactionResponse>
+
+export const DeleteFeedReactionParams = t.Object({
+  id: t.String({ description: 'The ID of the feed' }),
+})
+export const DeleteFeedReactionResponse = t.Object({
+  message: t.String({ description: 'Success message' }),
+})
+
+export type DeleteFeedReactionParams = Static<typeof DeleteFeedReactionParams>
+export type DeleteFeedReactionResponse = Static<typeof DeleteFeedReactionResponse>
+
+export const CreateFeedCommentParams = t.Object({
+  id: t.String({ description: 'The ID of the feed' }),
+})
+export const CreateFeedCommentBody = t.Object({
+  content: t.String({ description: 'The content of the comment' }),
+})
+export const CreateFeedCommentResponse = t.Object({
+  id: t.String({ description: 'The ID of the created comment' }),
+})
+
+export type CreateFeedCommentParams = Static<typeof CreateFeedCommentParams>
+export type CreateFeedCommentBody = Static<typeof CreateFeedCommentBody>
+export type CreateFeedCommentResponse = Static<typeof CreateFeedCommentResponse>
+
+export const UpdateFeedCommentParams = t.Object({
+  id: t.String({ description: 'The ID of the feed' }),
+  commentId: t.String({ description: 'The ID of the comment' }),
+})
+export const UpdateFeedCommentBody = t.Object({
+  content: t.String({ description: 'The updated content of the comment' }),
+})
+export const UpdateFeedCommentResponse = t.Object({
+  message: t.String({ description: 'Success message' }),
+})
+
+export type UpdateFeedCommentParams = Static<typeof UpdateFeedCommentParams>
+export type UpdateFeedCommentBody = Static<typeof UpdateFeedCommentBody>
+export type UpdateFeedCommentResponse = Static<typeof UpdateFeedCommentResponse>
+
+export const DeleteFeedCommentParams = t.Object({
+  id: t.String({ description: 'The ID of the feed' }),
+  commentId: t.String({ description: 'The ID of the comment' }),
+})
+export const DeleteFeedCommentResponse = t.Object({
+  message: t.String({ description: 'Success message' }),
+})
+
+export type DeleteFeedCommentParams = Static<typeof DeleteFeedCommentParams>
+export type DeleteFeedCommentResponse = Static<typeof DeleteFeedCommentResponse>
