@@ -17,6 +17,7 @@ import PagerView, {
 import Animated, {
   AnimatedRef,
   interpolate,
+  interpolateColor,
   runOnJS,
   runOnUI,
   ScrollHandlerProcessed,
@@ -116,6 +117,7 @@ const BANNER_ITEMS: BannerItem[] = [
   { id: '1', image: require('@app/assets/banner-1.png'), description: 'พรรคประชาชน' },
   { id: '2', image: require('@app/assets/banner-2.png'), description: 'พรรคประชาชน' },
   { id: '3', image: require('@app/assets/banner-1.png'), description: 'พรรคประชาชน' },
+  { id: '4', image: require('@app/assets/banner-2.png'), description: 'พรรคประชาชน' },
 ]
 
 interface BannerItem {
@@ -127,51 +129,165 @@ interface BannerItem {
 function BannerSection() {
   return (
     <View className="w-full pt-2 py-4 ">
-      <Carousel>
+      <Carousel count={BANNER_ITEMS.length} itemWidth={320} gap={8} paddingHorizontal={16}>
         <CarouselScrollView>
           {BANNER_ITEMS.map((item) => (
-            <CarouselItem key={item.id} item={item} />
+            <CarouselItem
+              key={item.id}
+              item={item}
+              className="bg-base-bg-light rounded-xl overflow-hidden"
+            />
           ))}
         </CarouselScrollView>
-        <CarouselIndicator />
+        <CarouselIndicators />
       </Carousel>
     </View>
   )
 }
 
-function Carousel({ children }: { children: React.ReactNode }) {
-  return <View className="w-full flex flex-col gap-4">{children}</View>
+interface CarouselContextValue {
+  gap: number
+  count: number
+  itemWidth: number
+  currentPage: number
+  setCurrentPage: React.Dispatch<React.SetStateAction<number>>
+  scroll: SharedValue<number>
+  scrollViewWidth: number
+  setScrollViewWidth: React.Dispatch<React.SetStateAction<number>>
+  paddingHorizontal: number
+}
+const CarouselContext = React.createContext<CarouselContextValue | null>(null)
+const CarouselProvider = CarouselContext.Provider
+const useCarouselContext = () => {
+  const context = React.useContext(CarouselContext)
+  if (!context) {
+    throw new Error('useCarouselContext must be used within a CarouselProvider')
+  }
+  return context
+}
+function Carousel({
+  gap,
+  count,
+  itemWidth,
+  children,
+  paddingHorizontal,
+}: {
+  gap: number
+  count: number
+  itemWidth: number
+  children: React.ReactNode
+  paddingHorizontal: number
+}) {
+  const [currentPage, setCurrentPage] = React.useState(0)
+  const [scrollViewWidth, setScrollViewWidth] = React.useState(0)
+  const scroll = useSharedValue(0)
+  return (
+    <CarouselProvider
+      value={{
+        gap,
+        count,
+        itemWidth,
+        currentPage,
+        setCurrentPage,
+        scroll,
+        scrollViewWidth,
+        setScrollViewWidth,
+        paddingHorizontal,
+      }}
+    >
+      <View className="w-full flex flex-col gap-4">{children}</View>
+    </CarouselProvider>
+  )
 }
 
-function CarouselIndicator() {
-  // TODO: Implement actual indicator logic
+function CarouselIndicators() {
+  const { count } = useCarouselContext()
+  // TODO: calculate number of indicators based on the number of items and width of the carousel
+  // number of indicators might not equal the number of images since in large screen it might show more than one item
   return (
     <View className="flex flex-row items-center justify-center gap-1">
-      <View className="w-6 h-1.5 bg-base-primary-default rounded-full" />
-      <View className="w-1.5 h-1.5 bg-base-bg-dark rounded-full" />
-      <View className="w-1.5 h-1.5 bg-base-bg-dark rounded-full" />
+      {Array.from({ length: count }).map((_, index) => (
+        <CarouselIndicator key={index} index={index} />
+      ))}
     </View>
   )
 }
+
+function CarouselIndicator({ index }: { index: number }) {
+  const { scroll, itemWidth, count, scrollViewWidth, gap, paddingHorizontal } = useCarouselContext()
+  const animatedStyle = useAnimatedStyle(() => {
+    const itemWidthWithGap = itemWidth + gap
+    const getSnapPoint = (i: number) => {
+      if (i === count - 1) {
+        return i * itemWidthWithGap - (scrollViewWidth - paddingHorizontal * 2 - itemWidth - gap)
+      }
+      return i * itemWidthWithGap
+    }
+
+    const snapRange = [getSnapPoint(index - 1), getSnapPoint(index), getSnapPoint(index + 1)]
+    const inputRange = [-1, 0, 1]
+    const input = interpolate(scroll.value, snapRange, inputRange, 'clamp')
+    const width = interpolate(input, inputRange, [6, 24, 6])
+    const color = interpolateColor(input, inputRange, ['#CBD5E1', '#FF6A13', '#CBD5E1'])
+    return {
+      width: width,
+      backgroundColor: color,
+    }
+  })
+  return <Animated.View style={animatedStyle} className="h-1.5 rounded-full" />
+}
+
+const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView)
 function CarouselScrollView(props: { children: React.ReactNode }) {
+  const {
+    gap,
+    itemWidth,
+    currentPage,
+    setCurrentPage,
+    scroll,
+    setScrollViewWidth,
+    paddingHorizontal,
+  } = useCarouselContext()
+  const onScrollWorklet = React.useCallback(
+    (event: NativeScrollEvent) => {
+      'worklet'
+      scroll.set(event.contentOffset.x)
+      const current = Math.max(0, Math.round(event.contentOffset.x / itemWidth))
+      if (currentPage !== current) {
+        runOnJS(setCurrentPage)(current)
+      }
+    },
+    [setCurrentPage, currentPage, itemWidth, scroll]
+  )
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: onScrollWorklet,
+  })
   return (
-    <ScrollView
+    <AnimatedScrollView
+      onScroll={scrollHandler}
       horizontal
       showsHorizontalScrollIndicator={false}
       className="w-full"
-      contentContainerClassName="gap-2 px-4"
+      contentContainerStyle={{ gap, paddingHorizontal }}
+      pagingEnabled
+      snapToInterval={itemWidth + gap}
+      disableIntervalMomentum
+      onLayout={(e) => {
+        setScrollViewWidth(e.nativeEvent.layout.width)
+      }}
     >
       {props.children}
-    </ScrollView>
+    </AnimatedScrollView>
   )
 }
 
 const blurhash =
   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj['
 
-function CarouselItem(props: { item: BannerItem }) {
+function CarouselItem(props: { item: BannerItem; className?: string }) {
+  const { itemWidth } = useCarouselContext()
   return (
-    <View className="w-[320px] h-[180px] bg-base-bg-light rounded-xl border border-base-outline-default flex items-center justify-center overflow-hidden">
+    <View style={{ width: itemWidth }} className={props.className}>
       <Image
         alt={props.item.description}
         source={props.item.image}
@@ -292,8 +408,6 @@ function UserInfoSection() {
 
 const AnimatedPagerView = Animated.createAnimatedComponent(PagerView)
 
-const AnimatedExpoScrollForwarderView = Animated.createAnimatedComponent(ExpoScrollForwarderView)
-
 export function TabViewInsideScroll() {
   // const layout = useWindowDimensions()
   const [currentPage, setCurrentPage] = React.useState(0)
@@ -398,7 +512,6 @@ export function TabViewInsideScroll() {
     [adjustScrollForOtherPages]
   )
 
-  // TODO: Prevent pageScroll on header
   const dragState = useSharedValue<'idle' | 'settling' | 'dragging'>('idle')
   const dragProgress = useSharedValue(0)
   const didInit = useSharedValue(false)
@@ -513,14 +626,10 @@ export function TabViewInsideScroll() {
   // https://github.com/software-mansion/react-native-reanimated/issues/6992
   return (
     <PagerProvider value={{ dragProgress, registerRef, scrollHandler, headerHeight }}>
-      <AnimatedExpoScrollForwarderView scrollViewTag={scrollViewTag} style={{ flex: 1 }}>
+      <ExpoScrollForwarderView scrollViewTag={scrollViewTag} style={{ flex: 1 }}>
         <View className="flex-1 bg-base-bg-default">
-          <Animated.View
-            style={[styles.pagerHeader, headerTransform]}
-            // collapsable={false}
-          >
+          <Animated.View style={[styles.pagerHeader, headerTransform]}>
             <View
-              className=""
               ref={headerRef}
               onLayout={() => {
                 headerRef.current?.measure(
@@ -531,7 +640,7 @@ export function TabViewInsideScroll() {
                 )
               }}
             >
-              {/* <MainHeader /> */}
+              <MainHeader />
               <TopContainer />
               <View className="px-4 bg-base-bg-white flex flex-row items-start ">
                 <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
@@ -592,7 +701,7 @@ export function TabViewInsideScroll() {
             ))}
           </AnimatedPagerView>
         </View>
-      </AnimatedExpoScrollForwarderView>
+      </ExpoScrollForwarderView>
     </PagerProvider>
   )
 }
