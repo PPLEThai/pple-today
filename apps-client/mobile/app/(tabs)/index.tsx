@@ -218,10 +218,10 @@ function CarouselIndicator({ index }: { index: number }) {
   const animatedStyle = useAnimatedStyle(() => {
     const itemWidthWithGap = itemWidth + gap
     const getSnapPoint = (i: number) => {
-       if (i === count - 1) {
-          return i * itemWidthWithGap - (scrollViewWidth - paddingHorizontal * 2 - itemWidth - gap)
-       }
-       return i * itemWidthWithGap
+      if (i === count - 1) {
+        return i * itemWidthWithGap - (scrollViewWidth - paddingHorizontal * 2 - itemWidth - gap)
+      }
+      return i * itemWidthWithGap
     }
 
     const snapRange = [getSnapPoint(index - 1), getSnapPoint(index), getSnapPoint(index + 1)]
