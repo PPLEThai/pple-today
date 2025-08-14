@@ -2,6 +2,7 @@ import { PrismaPg } from '@prisma/adapter-pg'
 
 import {
   AnnouncementType,
+  BannerNavigationType,
   FeedItemType,
   PollType,
   PrismaClient,
@@ -16,6 +17,54 @@ const prisma = new PrismaClient({
 })
 
 const OFFICIAL_USER_ID = 'official-user'
+
+const seedBanners = async () => {
+  const externalBrowser = {
+    destination: `https://example.com/banner`,
+    navigation: 'EXTERNAL_BROWSER',
+  } as const
+  const inAppBrowser = {
+    destination: `/feed/id`,
+    navigation: 'IN_APP_NAVIGATION',
+  } as const
+  const miniApp = {
+    destination: 'https://example.com/mini-app',
+    navigation: 'MINI_APP',
+  } as const
+  for (let i = 1; i <= 5; ++i) {
+    let navigationDetails: { destination: string; navigation: BannerNavigationType }
+    switch (i % 3) {
+      case 0:
+        navigationDetails = externalBrowser
+        break
+      case 1:
+        navigationDetails = inAppBrowser
+        break
+      default:
+        navigationDetails = miniApp
+        break
+    }
+
+    await prisma.banner.upsert({
+      where: {
+        id: `banner-${i}`,
+      },
+      create: {
+        ...navigationDetails,
+        imageFilePath: `local/test/banner-${i}.png`,
+        status: 'PUBLISH',
+        order: i,
+      },
+      update: {
+        ...navigationDetails,
+        imageFilePath: `local/test/banner-${i}.png`,
+        status: 'PUBLISH',
+        order: i,
+      },
+    })
+  }
+  console.log('Seeded banners successfully.')
+}
 
 const seedOfficialUser = async () => {
   await prisma.user.upsert({
@@ -272,6 +321,7 @@ async function main() {
   await seedDraftPolls()
   await seedPolls()
   await seedAnnouncements()
+  await seedBanners()
 }
 
 main()
