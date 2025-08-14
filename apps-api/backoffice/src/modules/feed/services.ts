@@ -17,6 +17,7 @@ export class FeedService {
   ) {}
 
   async getMyFeed(userId?: string, query?: { page?: number; limit?: number }) {
+    // TODO: Use recommendation from dedicated recommendation service
     const feedItems = await this.feedRepository.listFeedItems({
       userId,
       page: query?.page ?? 1,
@@ -40,6 +41,7 @@ export class FeedService {
   }
 
   async getTopicFeed(topicId: string, userId?: string, query?: { page?: number; limit?: number }) {
+    // TODO: Use recommendation from dedicated recommendation service
     const feedItems = await this.feedRepository.listTopicFeedItems({
       userId,
       topicId,
@@ -68,6 +70,7 @@ export class FeedService {
     userId?: string,
     query?: { page?: number; limit?: number }
   ) {
+    // TODO: Use recommendation from dedicated recommendation service
     const feedItems = await this.feedRepository.listHashTagFeedItems({
       userId,
       hashTagId,
