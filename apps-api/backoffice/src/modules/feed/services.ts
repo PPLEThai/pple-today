@@ -16,12 +16,35 @@ export class FeedService {
     private readonly fileService: FileService
   ) {}
 
-  async getTopicFeed(topicId: string, userId?: string) {
+  async getMyFeed(userId?: string, query?: { page?: number; limit?: number }) {
+    const feedItems = await this.feedRepository.listFeedItems({
+      userId,
+      page: query?.page ?? 1,
+      limit: query?.limit ?? 10,
+    })
+
+    if (feedItems.isErr()) {
+      if (feedItems.error.code === InternalErrorCode.FEED_ITEM_NOT_FOUND) {
+        return err(feedItems.error)
+      }
+
+      return mapRawPrismaError(feedItems.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
+          message: 'Feed items not found',
+        },
+      })
+    }
+
+    return ok(feedItems.value)
+  }
+
+  async getTopicFeed(topicId: string, userId?: string, query?: { page?: number; limit?: number }) {
     const feedItems = await this.feedRepository.listTopicFeedItems({
       userId,
       topicId,
-      page: 1,
-      limit: 10,
+      page: query?.page ?? 1,
+      limit: query?.limit ?? 10,
     })
 
     if (feedItems.isErr()) {
@@ -40,32 +63,17 @@ export class FeedService {
     return ok(feedItems.value)
   }
 
-  async getHashTagFeed(hashTagId: string, userId?: string) {
+  async getHashTagFeed(
+    hashTagId: string,
+    userId?: string,
+    query?: { page?: number; limit?: number }
+  ) {
     const feedItems = await this.feedRepository.listHashTagFeedItems({
       userId,
       hashTagId,
-      page: 1,
-      limit: 10,
+      page: query?.page ?? 1,
+      limit: query?.limit ?? 10,
     })
-
-    if (feedItems.isErr()) {
-      if (feedItems.error.code === InternalErrorCode.FEED_ITEM_NOT_FOUND) {
-        return err(feedItems.error)
-      }
-
-      return mapRawPrismaError(feedItems.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
-          message: 'Feed items not found',
-        },
-      })
-    }
-
-    return ok(feedItems.value)
-  }
-
-  async getMyFeed(userId?: string) {
-    const feedItems = await this.feedRepository.listFeedItems({ userId, page: 1, limit: 10 })
 
     if (feedItems.isErr()) {
       if (feedItems.error.code === InternalErrorCode.FEED_ITEM_NOT_FOUND) {
