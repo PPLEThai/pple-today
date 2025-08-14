@@ -16,6 +16,11 @@ import {
   GetFeedCommentResponse,
   GetFeedContentParams,
   GetFeedContentResponse,
+  GetHashTagFeedQuery,
+  GetHashTagFeedResponse,
+  GetMyFeedResponse,
+  GetTopicFeedQuery,
+  GetTopicFeedResponse,
   UpdateFeedCommentBody,
   UpdateFeedCommentParams,
   UpdateFeedCommentResponse,
@@ -31,6 +36,107 @@ export const FeedController = new Elysia({
   tags: ['Feed'],
 })
   .use([AuthGuardPlugin, FeedServicePlugin])
+  .get(
+    '/me',
+    async ({ user, feedService, status }) => {
+      const feedResult = await feedService.getMyFeed(user?.sub)
+
+      if (feedResult.isErr()) {
+        switch (feedResult.error.code) {
+          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
+            return mapErrorCodeToResponse(feedResult.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(feedResult.error, status)
+          default:
+            exhaustiveGuard(feedResult.error)
+        }
+      }
+
+      return status(200, feedResult.value)
+    },
+    {
+      fetchUser: true,
+      response: {
+        200: GetMyFeedResponse,
+        ...createErrorSchema(
+          InternalErrorCode.FEED_ITEM_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get feed for current user',
+        description: 'Fetch feed items for the currently authenticated user',
+      },
+    }
+  )
+  .get(
+    '/topic',
+    async ({ query, user, status, feedService }) => {
+      const feedResult = await feedService.getTopicFeed(query.topicId, user?.sub)
+
+      if (feedResult.isErr()) {
+        switch (feedResult.error.code) {
+          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
+            return mapErrorCodeToResponse(feedResult.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(feedResult.error, status)
+          default:
+            exhaustiveGuard(feedResult.error)
+        }
+      }
+
+      return status(200, feedResult.value)
+    },
+    {
+      fetchUser: true,
+      query: GetTopicFeedQuery,
+      response: {
+        200: GetTopicFeedResponse,
+        ...createErrorSchema(
+          InternalErrorCode.FEED_ITEM_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get feed by topic',
+        description: 'Fetch feed items associated with a specific topic',
+      },
+    }
+  )
+  .get(
+    '/hashtag',
+    async ({ query, user, status, feedService }) => {
+      const feedResult = await feedService.getHashTagFeed(query.hashTagId, user?.sub)
+
+      if (feedResult.isErr()) {
+        switch (feedResult.error.code) {
+          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
+            return mapErrorCodeToResponse(feedResult.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(feedResult.error, status)
+          default:
+            exhaustiveGuard(feedResult.error)
+        }
+      }
+
+      return status(200, feedResult.value)
+    },
+    {
+      fetchUser: true,
+      query: GetHashTagFeedQuery,
+      response: {
+        200: GetHashTagFeedResponse,
+        ...createErrorSchema(
+          InternalErrorCode.FEED_ITEM_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get feed by hashtag',
+        description: 'Fetch feed items associated with a specific hashtag',
+      },
+    }
+  )
   .get(
     '/:id',
     async ({ params, user, status, feedService }) => {

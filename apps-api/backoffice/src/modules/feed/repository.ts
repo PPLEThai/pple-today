@@ -1,67 +1,345 @@
 import Elysia from 'elysia'
-import { ok } from 'neverthrow'
+import { Ok, ok } from 'neverthrow'
+import { sumBy } from 'remeda'
 
-import { FeedItemReactionType } from '../../../__generated__/prisma'
+import { GetFeedContentResponse } from './models'
+
+import { FeedItemReactionType, FeedItemType, Prisma } from '../../../__generated__/prisma'
+import { InternalErrorCode } from '../../dtos/error'
+import { FeedItem, FeedItemBaseContent } from '../../dtos/feed'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
+import { err, exhaustiveGuard } from '../../utils/error'
 import { fromPrismaPromise } from '../../utils/prisma'
+import { FileService, FileServicePlugin } from '../file/services'
 
 export class FeedRepository {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private fileService: FileService
+  ) {}
 
-  async getFeedItemById(feedItemId: string, userId?: string) {
-    return await fromPrismaPromise(
-      this.prismaService.feedItem.findUniqueOrThrow({
-        where: { id: feedItemId },
+  private readonly constructFeedItemInclude = (userId?: string) =>
+    ({
+      author: {
         include: {
-          author: {
-            include: {
-              address: {
-                select: {
-                  province: true,
-                  district: true,
-                },
-              },
-            },
-          },
-          announcement: {
-            include: {
-              attachments: true,
-            },
-          },
-          reactions: userId
-            ? {
-                where: { userId },
-              }
-            : undefined,
-          reactionCounts: true,
-          poll: {
-            include: {
-              options: {
-                include: {
-                  pollAnswers: userId
-                    ? {
-                        where: {
-                          userId,
-                        },
-                      }
-                    : undefined,
-                },
-              },
-            },
-          },
-          post: {
-            include: {
-              hashTags: {
-                include: {
-                  hashTag: true,
-                },
-              },
-              images: true,
+          address: {
+            select: {
+              province: true,
+              district: true,
             },
           },
         },
+      },
+      announcement: {
+        include: {
+          attachments: true,
+        },
+      },
+      reactions: userId
+        ? {
+            where: { userId },
+          }
+        : undefined,
+      reactionCounts: true,
+      poll: {
+        include: {
+          options: {
+            include: {
+              pollAnswers: userId
+                ? {
+                    where: {
+                      userId,
+                    },
+                  }
+                : undefined,
+            },
+          },
+        },
+      },
+      post: {
+        include: {
+          hashTags: {
+            include: {
+              hashTag: true,
+            },
+          },
+          images: true,
+        },
+      },
+    }) satisfies Prisma.FeedItemInclude
+
+  private transformToFeedItem(
+    rawFeedItem: Prisma.FeedItemGetPayload<{
+      include: ReturnType<typeof FeedRepository.prototype.constructFeedItemInclude>
+    }>
+  ) {
+    const feedItemBaseContent: FeedItemBaseContent = {
+      id: rawFeedItem.id,
+      createdAt: rawFeedItem.createdAt,
+      commentCount: rawFeedItem.numberOfComments,
+      userReaction: rawFeedItem.reactions?.[0]?.type,
+      reactions: rawFeedItem.reactionCounts,
+      author: {
+        id: rawFeedItem.author.id,
+        name: rawFeedItem.author.name,
+        profileImage: rawFeedItem.author.profileImage
+          ? this.fileService.getPublicFileUrl(rawFeedItem.author.profileImage)
+          : undefined,
+        address: rawFeedItem.author.address ?? undefined,
+      },
+    }
+
+    switch (rawFeedItem.type) {
+      case FeedItemType.POLL:
+        if (!rawFeedItem.poll) {
+          return err({
+            code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
+            message: 'Feed item poll content not found',
+          })
+        }
+
+        return ok({
+          ...feedItemBaseContent,
+          type: FeedItemType.POLL,
+          poll: {
+            title: rawFeedItem.poll.title,
+            options: rawFeedItem.poll.options.map((option) => ({
+              id: option.id,
+              title: option.title,
+              isSelected: (option.pollAnswers ?? []).length > 0,
+              votes: (option.pollAnswers ?? []).length,
+            })),
+            endAt: rawFeedItem.poll.endAt,
+            totalVotes: sumBy(
+              rawFeedItem.poll.options,
+              (option) => (option.pollAnswers ?? []).length
+            ),
+          },
+        } satisfies GetFeedContentResponse)
+      case FeedItemType.ANNOUNCEMENT:
+        if (!rawFeedItem.announcement) {
+          return err({
+            code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
+            message: 'Feed item announcement content not found',
+          })
+        }
+
+        return ok({
+          ...feedItemBaseContent,
+          type: FeedItemType.ANNOUNCEMENT,
+          announcement: {
+            content: rawFeedItem.announcement.content ?? '',
+            title: rawFeedItem.announcement.title,
+            attachments: rawFeedItem.announcement.attachments.map((attachment) =>
+              this.fileService.getPublicFileUrl(attachment.filePath)
+            ),
+          },
+        } satisfies GetFeedContentResponse)
+      case FeedItemType.POST:
+        if (!rawFeedItem.post) {
+          return err({
+            code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
+            message: 'Feed item post content not found',
+          })
+        }
+
+        return ok({
+          ...feedItemBaseContent,
+          type: FeedItemType.POST,
+          post: {
+            content: rawFeedItem.post.content ?? '',
+            hashTags: rawFeedItem.post.hashTags.map(({ hashTag }) => ({
+              id: hashTag.id,
+              name: hashTag.name,
+            })),
+            attachments: rawFeedItem.post.images.map((image) => ({
+              id: image.id,
+              type: image.type,
+              url: this.fileService.getPublicFileUrl(image.url),
+            })),
+          },
+        } satisfies GetFeedContentResponse)
+      default:
+        exhaustiveGuard(rawFeedItem.type)
+    }
+  }
+
+  async listTopicFeedItems({
+    userId,
+    topicId,
+    page,
+    limit,
+  }: {
+    userId?: string
+    topicId: string
+    page: number
+    limit: number
+  }) {
+    const offset = (page - 1) * limit
+    const rawFeedItems = await fromPrismaPromise(
+      this.prismaService.feedItem.findMany({
+        skip: offset,
+        take: limit,
+        where: {
+          OR: [
+            {
+              post: {
+                hashTags: {
+                  some: {
+                    hashTag: {
+                      hashTagInTopics: {
+                        some: {
+                          topicId,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            {
+              announcement: {
+                topics: {
+                  some: {
+                    topicId,
+                  },
+                },
+              },
+            },
+            {
+              poll: {
+                topics: {
+                  some: {
+                    topicId,
+                  },
+                },
+              },
+            },
+          ],
+        },
+        include: this.constructFeedItemInclude(userId),
       })
     )
+
+    if (rawFeedItems.isErr()) return err(rawFeedItems.error)
+
+    const feedItems = rawFeedItems.value.map((item) => this.transformToFeedItem(item))
+    const feedItemErr = feedItems.find((item) => item.isErr())
+
+    if (feedItemErr) {
+      return err(feedItemErr.error)
+    }
+
+    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
+  }
+
+  async listHashTagFeedItems({
+    userId,
+    hashTagId,
+    page,
+    limit,
+  }: {
+    userId?: string
+    hashTagId: string
+    page: number
+    limit: number
+  }) {
+    const offset = (page - 1) * limit
+    const rawFeedItems = await fromPrismaPromise(
+      this.prismaService.feedItem.findMany({
+        skip: offset,
+        take: limit,
+        where: {
+          OR: [
+            {
+              post: {
+                hashTags: {
+                  some: {
+                    hashTagId,
+                  },
+                },
+              },
+            },
+            {
+              announcement: {
+                topics: {
+                  some: {
+                    topic: {
+                      hashTagInTopics: {
+                        some: {
+                          hashTagId,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            {
+              poll: {
+                topics: {
+                  some: {
+                    topic: {
+                      hashTagInTopics: {
+                        some: {
+                          hashTagId,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+        include: this.constructFeedItemInclude(userId),
+      })
+    )
+
+    if (rawFeedItems.isErr()) return err(rawFeedItems.error)
+
+    const feedItems = rawFeedItems.value.map((item) => this.transformToFeedItem(item))
+    const feedItemErr = feedItems.find((item) => item.isErr())
+
+    if (feedItemErr) {
+      return err(feedItemErr.error)
+    }
+
+    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
+  }
+
+  async listFeedItems({ userId, page, limit }: { userId?: string; page: number; limit: number }) {
+    const offset = (page - 1) * limit
+    const rawFeedItems = await fromPrismaPromise(
+      this.prismaService.feedItem.findMany({
+        skip: offset,
+        take: limit,
+        include: this.constructFeedItemInclude(userId),
+      })
+    )
+
+    if (rawFeedItems.isErr()) return err(rawFeedItems.error)
+
+    const feedItems = rawFeedItems.value.map((item) => this.transformToFeedItem(item))
+    const feedItemErr = feedItems.find((item) => item.isErr())
+
+    if (feedItemErr) {
+      return err(feedItemErr.error)
+    }
+
+    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
+  }
+
+  async getFeedItemById(feedItemId: string, userId?: string) {
+    const rawFeedItem = await fromPrismaPromise(
+      this.prismaService.feedItem.findUniqueOrThrow({
+        where: { id: feedItemId },
+        include: this.constructFeedItemInclude(userId),
+      })
+    )
+    if (rawFeedItem.isErr()) return err(rawFeedItem.error)
+
+    return this.transformToFeedItem(rawFeedItem.value)
   }
 
   async getFeedItemReactionByUserId({
@@ -360,7 +638,7 @@ export class FeedRepository {
 }
 
 export const FeedRepositoryPlugin = new Elysia({ name: 'FeedRepository' })
-  .use(PrismaServicePlugin)
-  .decorate(({ prismaService }) => ({
-    feedRepository: new FeedRepository(prismaService),
+  .use([PrismaServicePlugin, FileServicePlugin])
+  .decorate(({ prismaService, fileService }) => ({
+    feedRepository: new FeedRepository(prismaService, fileService),
   }))
