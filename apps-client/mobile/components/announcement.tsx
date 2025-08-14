@@ -4,12 +4,7 @@ import { View } from 'react-native'
 
 import { Badge } from '@pple-today/ui/badge'
 import { cn } from '@pple-today/ui/lib/utils'
-import {
-  Carousel,
-  CarouselIndicators,
-  CarouselItem,
-  CarouselScrollView,
-} from '@pple-today/ui/slide'
+import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import dayjs from 'dayjs'
 import buddhistEra from 'dayjs/plugin/buddhistEra'
@@ -49,16 +44,16 @@ const ANNOUNCEMENTS: Announcement[] = [
 
 export function AnnouncementSlides() {
   return (
-    <Carousel count={ANNOUNCEMENTS.length} itemWidth={320} gap={8} paddingHorizontal={16}>
-      <CarouselScrollView>
+    <Slide count={ANNOUNCEMENTS.length} itemWidth={320} gap={8} paddingHorizontal={16}>
+      <SlideScrollView>
         {ANNOUNCEMENTS.map((item) => (
-          <CarouselItem key={item.id}>
+          <SlideItem key={item.id}>
             <AnnouncementCard item={item} />
-          </CarouselItem>
+          </SlideItem>
         ))}
-      </CarouselScrollView>
-      <CarouselIndicators />
-    </Carousel>
+      </SlideScrollView>
+      <SlideIndicators />
+    </Slide>
   )
 }
 

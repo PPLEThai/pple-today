@@ -35,12 +35,7 @@ import Animated, {
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
-import {
-  Carousel,
-  CarouselIndicators,
-  CarouselItem,
-  CarouselScrollView,
-} from '@pple-today/ui/slide'
+import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { H2, H3 } from '@pple-today/ui/typography'
 import { Image } from 'expo-image'
@@ -136,22 +131,22 @@ interface BannerItem {
 
 function BannerSection() {
   return (
-    <Carousel
+    <Slide
       count={BANNER_ITEMS.length}
       itemWidth={320}
       gap={8}
       paddingHorizontal={16}
       className="w-full pt-2 py-4"
     >
-      <CarouselScrollView>
+      <SlideScrollView>
         {BANNER_ITEMS.map((item) => (
-          <CarouselItem key={item.id} className="bg-base-bg-light rounded-xl overflow-hidden">
+          <SlideItem key={item.id} className="bg-base-bg-light rounded-xl overflow-hidden">
             <Banner item={item} />
-          </CarouselItem>
+          </SlideItem>
         ))}
-      </CarouselScrollView>
-      <CarouselIndicators />
-    </Carousel>
+      </SlideScrollView>
+      <SlideIndicators />
+    </Slide>
   )
 }
 

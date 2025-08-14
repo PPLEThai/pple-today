@@ -12,7 +12,7 @@ import Animated, {
 
 import { cn } from '../../lib/utils'
 
-interface CarouselContextValue {
+interface SlideContextValue {
   gap: number
   count: number
   itemWidth: number
@@ -23,16 +23,16 @@ interface CarouselContextValue {
   setScrollViewWidth: React.Dispatch<React.SetStateAction<number>>
   paddingHorizontal: number
 }
-const CarouselContext = React.createContext<CarouselContextValue | null>(null)
-const CarouselProvider = CarouselContext.Provider
-const useCarouselContext = () => {
-  const context = React.useContext(CarouselContext)
+const SlideContext = React.createContext<SlideContextValue | null>(null)
+const SlideProvider = SlideContext.Provider
+const useSlideContext = () => {
+  const context = React.useContext(SlideContext)
   if (!context) {
-    throw new Error('useCarouselContext must be used within a CarouselProvider')
+    throw new Error('useSlideContext must be used within a SlideProvider')
   }
   return context
 }
-export function Carousel({
+export function Slide({
   gap,
   count,
   itemWidth,
@@ -51,7 +51,7 @@ export function Carousel({
   const [scrollViewWidth, setScrollViewWidth] = React.useState(0)
   const scroll = useSharedValue(0)
   return (
-    <CarouselProvider
+    <SlideProvider
       value={{
         gap,
         count,
@@ -65,25 +65,25 @@ export function Carousel({
       }}
     >
       <View className={cn('w-full flex flex-col gap-4', className)}>{children}</View>
-    </CarouselProvider>
+    </SlideProvider>
   )
 }
 
-export function CarouselIndicators() {
-  const { count } = useCarouselContext()
+export function SlideIndicators() {
+  const { count } = useSlideContext()
   // TODO: calculate number of indicators based on the number of items and width of the carousel
   // number of indicators might not equal the number of images since in large screen it might show more than one item
   return (
     <View className="flex flex-row items-center justify-center gap-1">
       {Array.from({ length: count }).map((_, index) => (
-        <CarouselIndicator key={index} index={index} />
+        <SlideIndicator key={index} index={index} />
       ))}
     </View>
   )
 }
 
-export function CarouselIndicator({ index }: { index: number }) {
-  const { scroll, itemWidth, count, scrollViewWidth, gap, paddingHorizontal } = useCarouselContext()
+export function SlideIndicator({ index }: { index: number }) {
+  const { scroll, itemWidth, count, scrollViewWidth, gap, paddingHorizontal } = useSlideContext()
   const animatedStyle = useAnimatedStyle(() => {
     const itemWidthWithGap = itemWidth + gap
     const getSnapPoint = (i: number) => {
@@ -107,7 +107,7 @@ export function CarouselIndicator({ index }: { index: number }) {
 }
 
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView)
-export function CarouselScrollView(props: { children: React.ReactNode }) {
+export function SlideScrollView(props: { children: React.ReactNode }) {
   const {
     gap,
     itemWidth,
@@ -116,7 +116,7 @@ export function CarouselScrollView(props: { children: React.ReactNode }) {
     scroll,
     setScrollViewWidth,
     paddingHorizontal,
-  } = useCarouselContext()
+  } = useSlideContext()
   const onScrollWorklet = React.useCallback(
     (event: NativeScrollEvent) => {
       'worklet'
@@ -150,8 +150,8 @@ export function CarouselScrollView(props: { children: React.ReactNode }) {
   )
 }
 
-export function CarouselItem(props: { className?: string; children: React.ReactNode }) {
-  const { itemWidth } = useCarouselContext()
+export function SlideItem(props: { className?: string; children: React.ReactNode }) {
+  const { itemWidth } = useSlideContext()
   return (
     <View style={{ width: itemWidth }} className={props.className}>
       {props.children}
