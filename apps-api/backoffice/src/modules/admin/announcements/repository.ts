@@ -19,7 +19,7 @@ export class AdminAnnouncementRepository {
     const unusedAttachments = before.filter((filePath) => !after.includes(filePath))
 
     if (unusedAttachments.length > 0) {
-      const deleteResult = await this.fileService.bulkDeleteFile(unusedAttachments)
+      const deleteResult = await this.fileService.bulkMoveToTempFolder(unusedAttachments)
       if (deleteResult.isErr()) {
         return err(deleteResult.error)
       }
@@ -225,7 +225,7 @@ export class AdminAnnouncementRepository {
           return err(cleanUpResult.error)
         }
 
-        const updatedAttachmentsResult = await this.fileService.moveFileToPublicFolder(
+        const updatedAttachmentsResult = await this.fileService.bulkMoveToPublicFolder(
           data.attachmentFilePaths
         )
 
@@ -234,14 +234,6 @@ export class AdminAnnouncementRepository {
             code: InternalErrorCode.FILE_MOVE_ERROR,
             message: 'Failed to move one or more files',
           })
-        }
-
-        const markAsPublicResult = await this.fileService.bulkMarkAsPublic(
-          updatedAttachmentsResult.value
-        )
-
-        if (markAsPublicResult.isErr()) {
-          return err(markAsPublicResult.error)
         }
 
         return await tx.announcement.update({
@@ -308,7 +300,7 @@ export class AdminAnnouncementRepository {
         // 3. Delete the announcement
         await tx.feedItem.delete({ where: { id: announcementId } })
 
-        const markAsPrivateResult = await this.fileService.bulkMarkAsPrivate(
+        const markAsPrivateResult = await this.fileService.bulkMoveToPrivateFolder(
           draftAnnouncement.attachments.map((attachment) => attachment.filePath)
         )
 
@@ -332,7 +324,7 @@ export class AdminAnnouncementRepository {
           },
         })
 
-        const deleteResult = await this.fileService.bulkDeleteFile(
+        const deleteResult = await this.fileService.bulkMoveToTempFolder(
           feedItem.announcement?.attachments.map((attachment) => attachment.filePath) ?? []
         )
 
@@ -454,7 +446,7 @@ export class AdminAnnouncementRepository {
 
         if (cleanUpResult.isErr()) return err(cleanUpResult.error)
 
-        const draftAnnouncementAttachments = await this.fileService.moveFileToPublicFolder(
+        const draftAnnouncementAttachments = await this.fileService.bulkMoveToPrivateFolder(
           data.attachmentFilePaths
         )
 
@@ -501,7 +493,7 @@ export class AdminAnnouncementRepository {
           })
         }
 
-        const attachments = await this.fileService.moveFileToPublicFolder(
+        const attachments = await this.fileService.bulkMoveToPublicFolder(
           draftAnnouncement.attachments.map(({ filePath }) => filePath)
         )
 
@@ -510,12 +502,6 @@ export class AdminAnnouncementRepository {
             code: InternalErrorCode.FILE_MOVE_ERROR,
             message: 'Failed to move one or more files',
           })
-        }
-
-        const markPublicResult = await this.fileService.bulkMarkAsPublic(attachments.value)
-
-        if (markPublicResult.isErr()) {
-          return err(markPublicResult.error)
         }
 
         const feedItem = await tx.feedItem.create({
@@ -569,7 +555,7 @@ export class AdminAnnouncementRepository {
           },
         })
 
-        const deleteResult = await this.fileService.bulkDeleteFile(
+        const deleteResult = await this.fileService.bulkMoveToTempFolder(
           announcementDraft.attachments.map((attachment) => attachment.filePath)
         )
 

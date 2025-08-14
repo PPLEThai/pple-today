@@ -134,8 +134,6 @@ export const AdminTopicController = new Elysia({
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_DELETE_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
           default:
             exhaustiveGuard(result.error)
         }
@@ -153,7 +151,6 @@ export const AdminTopicController = new Elysia({
           InternalErrorCode.TOPIC_NOT_FOUND,
           InternalErrorCode.TOPIC_INVALID_INPUT,
           InternalErrorCode.FILE_MOVE_ERROR,
-          InternalErrorCode.FILE_DELETE_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
