@@ -1,15 +1,12 @@
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
-import { sumBy } from 'remeda'
 
-import { CreateFeedReactionBody, GetFeedContentResponse } from './models'
+import { CreateFeedReactionBody } from './models'
 import { FeedRepository, FeedRepositoryPlugin } from './repository'
 
-import { FeedItemType } from '../../../__generated__/prisma'
 import { InternalErrorCode } from '../../dtos/error'
-import { FeedItemBaseContent } from '../../dtos/feed'
 import { PostComment, PostReactionType } from '../../dtos/post'
-import { err, exhaustiveGuard } from '../../utils/error'
+import { err } from '../../utils/error'
 import { mapRawPrismaError } from '../../utils/prisma'
 import { FileService, FileServicePlugin } from '../file/services'
 
@@ -19,10 +16,79 @@ export class FeedService {
     private readonly fileService: FileService
   ) {}
 
+  async getTopicFeed(topicId: string, userId?: string) {
+    const feedItems = await this.feedRepository.listTopicFeedItems({
+      userId,
+      topicId,
+      page: 1,
+      limit: 10,
+    })
+
+    if (feedItems.isErr()) {
+      if (feedItems.error.code === InternalErrorCode.FEED_ITEM_NOT_FOUND) {
+        return err(feedItems.error)
+      }
+
+      return mapRawPrismaError(feedItems.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
+          message: 'Feed items not found',
+        },
+      })
+    }
+
+    return ok(feedItems.value)
+  }
+
+  async getHashTagFeed(hashTagId: string, userId?: string) {
+    const feedItems = await this.feedRepository.listHashTagFeedItems({
+      userId,
+      hashTagId,
+      page: 1,
+      limit: 10,
+    })
+
+    if (feedItems.isErr()) {
+      if (feedItems.error.code === InternalErrorCode.FEED_ITEM_NOT_FOUND) {
+        return err(feedItems.error)
+      }
+
+      return mapRawPrismaError(feedItems.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
+          message: 'Feed items not found',
+        },
+      })
+    }
+
+    return ok(feedItems.value)
+  }
+
+  async getMyFeed(userId?: string) {
+    const feedItems = await this.feedRepository.listFeedItems({ userId, page: 1, limit: 10 })
+
+    if (feedItems.isErr()) {
+      if (feedItems.error.code === InternalErrorCode.FEED_ITEM_NOT_FOUND) {
+        return err(feedItems.error)
+      }
+
+      return mapRawPrismaError(feedItems.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
+          message: 'Feed items not found',
+        },
+      })
+    }
+
+    return ok(feedItems.value)
+  }
+
   async getFeedContentById(feedId: string, userId?: string) {
     const feedItem = await this.feedRepository.getFeedItemById(feedId, userId)
 
     if (feedItem.isErr()) {
+      if (feedItem.error.code === InternalErrorCode.FEED_ITEM_NOT_FOUND) return err(feedItem.error)
+
       return mapRawPrismaError(feedItem.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
@@ -31,95 +97,7 @@ export class FeedService {
       })
     }
 
-    const feedItemBaseContent: FeedItemBaseContent = {
-      id: feedItem.value.id,
-      createdAt: feedItem.value.createdAt,
-      commentCount: feedItem.value.numberOfComments,
-      userReaction: feedItem.value.reactions?.[0]?.type,
-      reactions: feedItem.value.reactionCounts,
-      author: {
-        id: feedItem.value.author.id,
-        name: feedItem.value.author.name,
-        profileImage: feedItem.value.author.profileImage
-          ? this.fileService.getPublicFileUrl(feedItem.value.author.profileImage)
-          : undefined,
-        address: feedItem.value.author.address ?? undefined,
-      },
-    }
-
-    switch (feedItem.value.type) {
-      case FeedItemType.POLL:
-        if (!feedItem.value.poll) {
-          return err({
-            code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
-            message: 'Feed item poll content not found',
-          })
-        }
-
-        return ok({
-          ...feedItemBaseContent,
-          type: FeedItemType.POLL,
-          poll: {
-            title: feedItem.value.poll.title,
-            options: feedItem.value.poll.options.map((option) => ({
-              id: option.id,
-              title: option.title,
-              isSelected: (option.pollAnswers ?? []).length > 0,
-              votes: (option.pollAnswers ?? []).length,
-            })),
-            endAt: feedItem.value.poll.endAt,
-            totalVotes: sumBy(
-              feedItem.value.poll.options,
-              (option) => (option.pollAnswers ?? []).length
-            ),
-          },
-        } satisfies GetFeedContentResponse)
-      case FeedItemType.ANNOUNCEMENT:
-        if (!feedItem.value.announcement) {
-          return err({
-            code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
-            message: 'Feed item announcement content not found',
-          })
-        }
-
-        return ok({
-          ...feedItemBaseContent,
-          type: FeedItemType.ANNOUNCEMENT,
-          announcement: {
-            content: feedItem.value.announcement.content ?? '',
-            title: feedItem.value.announcement.title,
-            attachments: feedItem.value.announcement.attachments.map((attachment) =>
-              this.fileService.getPublicFileUrl(attachment.filePath)
-            ),
-          },
-        } satisfies GetFeedContentResponse)
-      case FeedItemType.POST:
-        if (!feedItem.value.post) {
-          return err({
-            code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
-            message: 'Feed item post content not found',
-          })
-        }
-
-        return ok({
-          ...feedItemBaseContent,
-          type: FeedItemType.POST,
-          post: {
-            content: feedItem.value.post.content ?? '',
-            hashTags: feedItem.value.post.hashTags.map(({ hashTag }) => ({
-              id: hashTag.id,
-              name: hashTag.name,
-            })),
-            attachments: feedItem.value.post.images.map((image) => ({
-              id: image.id,
-              type: image.type,
-              url: this.fileService.getPublicFileUrl(image.url),
-            })),
-          },
-        } satisfies GetFeedContentResponse)
-      default:
-        exhaustiveGuard(feedItem.value.type)
-    }
+    return ok(feedItem.value)
   }
 
   async getFeedComments(
