@@ -92,15 +92,21 @@ export function SlideIndicator({ index }: { index: number }) {
       }
       return i * itemWidthWithGap
     }
-
     const snapRange = [getSnapPoint(index - 1), getSnapPoint(index), getSnapPoint(index + 1)]
-    const inputRange = [-1, 0, 1]
-    const input = interpolate(scroll.value, snapRange, inputRange, 'clamp')
-    const width = interpolate(input, inputRange, [6, 24, 6])
-    const color = interpolateColor(input, inputRange, ['#CBD5E1', '#FF6A13', '#CBD5E1'])
+    const widthRange = [6, 24, 6]
+    const colorRange = ['#CBD5E1', '#FF6A13', '#CBD5E1']
+    if (index === 0) {
+      snapRange.shift()
+      widthRange.shift()
+      colorRange.shift()
+    } else if (index === count - 1) {
+      snapRange.pop()
+      widthRange.pop()
+      colorRange.pop()
+    }
     return {
-      width: width,
-      backgroundColor: color,
+      width: interpolate(scroll.value, snapRange, widthRange, 'clamp'),
+      backgroundColor: interpolateColor(scroll.value, snapRange, colorRange),
     }
   })
   return <Animated.View style={animatedStyle} className="h-1.5 rounded-full" />
