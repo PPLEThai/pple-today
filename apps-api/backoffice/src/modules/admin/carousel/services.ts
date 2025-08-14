@@ -59,15 +59,17 @@ export class CarouselService {
     const imageBannerUrlResults = await this.fileService.bulkGetFileSignedUrl(imageBannerFilePaths)
     if (imageBannerUrlResults.isErr()) return err(imageBannerUrlResults.error)
 
-    return ok(
-      result.value.map(({ imageFilePath, ...carouselBody }, index) => ({
+    const response: GetCarouselsResponse = result.value.map(
+      ({ imageFilePath, ...carouselBody }, index) => ({
         ...carouselBody,
         image: {
           url: imageBannerUrlResults.value[index],
           filePath: imageFilePath,
         },
-      })) satisfies GetCarouselsResponse
+      })
     )
+
+    return ok(response)
   }
 
   async getCarouselById(id: string) {
@@ -85,13 +87,15 @@ export class CarouselService {
     const imageUrlResult = await this.fileService.getFileSignedUrl(imageFilePath)
     if (imageUrlResult.isErr()) return err(imageUrlResult.error)
 
-    return ok({
+    const response: GetCarouselByIdResponse = {
       ...carouselBody,
       image: {
         url: imageUrlResult.value,
         filePath: imageFilePath,
       },
-    } satisfies GetCarouselByIdResponse)
+    }
+
+    return ok(response)
   }
 
   async createCarousel(data: CreateCarouselBody) {
@@ -111,7 +115,9 @@ export class CarouselService {
         },
       })
 
-    return ok(result.value satisfies CreateCarouselResponse)
+    const response: CreateCarouselResponse = result.value
+
+    return ok(response)
   }
 
   async updateCarouselById(id: string, data: UpdateCarouselBody) {
