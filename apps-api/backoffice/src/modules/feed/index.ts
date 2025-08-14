@@ -86,6 +86,8 @@ export const FeedController = new Elysia({
         switch (feedResult.error.code) {
           case InternalErrorCode.FEED_ITEM_NOT_FOUND:
             return mapErrorCodeToResponse(feedResult.error, status)
+          case InternalErrorCode.TOPIC_NOT_FOUND:
+            return mapErrorCodeToResponse(feedResult.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(feedResult.error, status)
           default:
@@ -102,6 +104,7 @@ export const FeedController = new Elysia({
         200: GetTopicFeedResponse,
         ...createErrorSchema(
           InternalErrorCode.FEED_ITEM_NOT_FOUND,
+          InternalErrorCode.TOPIC_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -123,6 +126,8 @@ export const FeedController = new Elysia({
         switch (feedResult.error.code) {
           case InternalErrorCode.FEED_ITEM_NOT_FOUND:
             return mapErrorCodeToResponse(feedResult.error, status)
+          case InternalErrorCode.TOPIC_NOT_FOUND:
+            return mapErrorCodeToResponse(feedResult.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(feedResult.error, status)
           default:
@@ -139,6 +144,7 @@ export const FeedController = new Elysia({
         200: GetHashTagFeedResponse,
         ...createErrorSchema(
           InternalErrorCode.FEED_ITEM_NOT_FOUND,
+          InternalErrorCode.TOPIC_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

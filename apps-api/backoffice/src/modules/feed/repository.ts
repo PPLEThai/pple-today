@@ -644,6 +644,22 @@ export class FeedRepository {
       })
     )
   }
+
+  async checkTopicExists(topicId: string) {
+    return await fromPrismaPromise(
+      this.prismaService.topic.findUniqueOrThrow({
+        where: { id: topicId },
+      })
+    )
+  }
+
+  async checkHashTagExists(hashTagId: string) {
+    return await fromPrismaPromise(
+      this.prismaService.hashTag.findUniqueOrThrow({
+        where: { id: hashTagId },
+      })
+    )
+  }
 }
 
 export const FeedRepositoryPlugin = new Elysia({ name: 'FeedRepository' })

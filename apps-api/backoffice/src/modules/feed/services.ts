@@ -41,6 +41,17 @@ export class FeedService {
   }
 
   async getTopicFeed(topicId: string, userId?: string, query?: { page?: number; limit?: number }) {
+    const topicExists = await this.feedRepository.checkTopicExists(topicId)
+
+    if (topicExists.isErr()) {
+      return mapRawPrismaError(topicExists.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.TOPIC_NOT_FOUND,
+          message: 'Topic not found',
+        },
+      })
+    }
+
     // TODO: Use recommendation from dedicated recommendation service
     const feedItems = await this.feedRepository.listTopicFeedItems({
       userId,
@@ -70,6 +81,17 @@ export class FeedService {
     userId?: string,
     query?: { page?: number; limit?: number }
   ) {
+    const hashTagExists = await this.feedRepository.checkHashTagExists(hashTagId)
+
+    if (hashTagExists.isErr()) {
+      return mapRawPrismaError(hashTagExists.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.TOPIC_NOT_FOUND,
+          message: 'Topic not found',
+        },
+      })
+    }
+
     // TODO: Use recommendation from dedicated recommendation service
     const feedItems = await this.feedRepository.listHashTagFeedItems({
       userId,
