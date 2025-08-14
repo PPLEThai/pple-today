@@ -64,6 +64,15 @@ const ANNOUNCEMENT_ERROR_SCHEMA = {
   },
 } satisfies InternalErrorSchemas
 
+export const BANNER_ERROR_SCHEMA = {
+  BANNER_NOT_FOUND: {
+    status: 404,
+  },
+  BANNER_INVALID_INPUT: {
+    status: 400,
+  },
+} satisfies InternalErrorSchemas
+
 const FEED_ERROR_SCHEMA = {
   FEED_ITEM_NOT_FOUND: {
     status: 404,
@@ -164,6 +173,7 @@ export const InternalErrorCodeSchemas = {
   ...FEED_ERROR_SCHEMA,
   ...ANNOUNCEMENT_ERROR_SCHEMA,
   ...POLL_ERROR_SCHEMA,
+  ...BANNER_ERROR_SCHEMA,
   ...HASHTAG_ERROR_SCHEMA,
   ...TOPIC_ERROR_SCHEMA,
 } as const

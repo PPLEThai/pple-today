@@ -1,0 +1,25 @@
+enum BannerStatusType {
+  PUBLISH
+  DRAFT
+}
+
+enum BannerNavigationType {
+  IN_APP_NAVIGATION
+  EXTERNAL_BROWSER
+  MINI_APP
+}
+
+model Banner {
+  id            String @id @default(cuid())
+  imageFilePath String
+
+  status      BannerStatusType
+  navigation  BannerNavigationType
+  destination String
+  order       Int                  @unique @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([order])
+}

@@ -47,6 +47,7 @@ function createQueryClient<TSchema extends Record<string, any>>(
       method,
       path,
       query: payload?.query ?? {},
+      params: payload?.pathParams ?? {},
       body: payload?.body ?? undefined,
       headers: payload?.headers ?? {},
     })

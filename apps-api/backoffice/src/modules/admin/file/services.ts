@@ -17,6 +17,10 @@ export class AdminFileService {
     const randomId = createId()
 
     switch (body.category) {
+      case UploadFileCategory.BANNER:
+        filePath = `${this.fileService.prefixTempFolder}banner/banner-${randomId}.png`
+        fileContentType = 'image/png'
+        break
       case UploadFileCategory.ANNOUNCEMENT:
         filePath = `${this.fileService.prefixTempFolder}announcement/announcement-${randomId}.pdf`
         fileContentType = 'application/pdf'
