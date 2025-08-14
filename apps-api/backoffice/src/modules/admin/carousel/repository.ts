@@ -8,7 +8,7 @@ import {
 import { PrismaServicePlugin } from '../../../plugins/prisma'
 import { fromPrismaPromise } from '../../../utils/prisma'
 
-export class CarouselRepository {
+export class AdminCarouselRepository {
   constructor(private prisma: PrismaClient) {}
 
   async getCarousels() {
@@ -119,8 +119,8 @@ export class CarouselRepository {
   }
 }
 
-export const CarouselRepositoryPlugin = new Elysia({ name: 'CarouselRepository' })
+export const AdminCarouselRepositoryPlugin = new Elysia({ name: 'AdminCarouselRepository' })
   .use(PrismaServicePlugin)
   .decorate(({ prismaService }) => ({
-    carouselRepository: new CarouselRepository(prismaService),
+    carouselRepository: new AdminCarouselRepository(prismaService),
   }))

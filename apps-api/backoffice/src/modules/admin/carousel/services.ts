@@ -8,16 +8,16 @@ import {
   GetCarouselsResponse,
   UpdateCarouselBody,
 } from './models'
-import { CarouselRepository, CarouselRepositoryPlugin } from './repository'
+import { AdminCarouselRepository, AdminCarouselRepositoryPlugin } from './repository'
 
 import { InternalErrorCode } from '../../../dtos/error'
 import { err } from '../../../utils/error'
 import { mapRawPrismaError } from '../../../utils/prisma'
 import { FileService, FileServicePlugin } from '../../file/services'
 
-export class CarouselService {
+export class AdminCarouselService {
   constructor(
-    private carouselRepository: CarouselRepository,
+    private readonly carouselRepository: AdminCarouselRepository,
     private readonly fileService: FileService
   ) {}
 
@@ -106,10 +106,13 @@ export class CarouselService {
     const moveResult = await this.fileService.moveFileToPublicFolder([data.imageFilePath])
 
     if (moveResult.isErr()) return err(moveResult.error)
-    const markFileStatusResult = await this.markShareMode([data.imageFilePath], data.status)
+    const markFileStatusResult = await this.markShareMode(moveResult.value, data.status)
 
     if (markFileStatusResult.isErr()) return err(markFileStatusResult.error)
-    const result = await this.carouselRepository.createCarousel(data)
+    const result = await this.carouselRepository.createCarousel({
+      ...data,
+      imageFilePath: moveResult.value[0],
+    })
 
     if (result.isErr())
       return mapRawPrismaError(result.error, {
@@ -131,7 +134,10 @@ export class CarouselService {
     const moveResult = await this.fileService.moveFileToPublicFolder([data.imageFilePath])
     if (moveResult.isErr()) return err(moveResult.error)
 
-    const result = await this.carouselRepository.updateCarouselById(id, data)
+    const result = await this.carouselRepository.updateCarouselById(id, {
+      ...data,
+      imageFilePath: moveResult.value[0],
+    })
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         RECORD_NOT_FOUND: {
@@ -172,8 +178,10 @@ export class CarouselService {
   }
 }
 
-export const CarouselServicePlugin = new Elysia({ name: 'CarouselService' })
-  .use([CarouselRepositoryPlugin, FileServicePlugin])
+export const AdminCarouselServicePlugin = new Elysia({
+  name: 'AdminCarouselService',
+})
+  .use([AdminCarouselRepositoryPlugin, FileServicePlugin])
   .decorate(({ carouselRepository, fileService }) => ({
-    carouselService: new CarouselService(carouselRepository, fileService),
+    adminCarouselService: new AdminCarouselService(carouselRepository, fileService),
   }))

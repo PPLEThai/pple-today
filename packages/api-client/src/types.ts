@@ -250,6 +250,7 @@ export interface RequestConfig {
   path: string
   query?: Record<string, any>
   body?: any
+  params?: Record<string, string>
   headers?: Record<string, string>
 }
 

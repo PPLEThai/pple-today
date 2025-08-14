@@ -14,7 +14,7 @@ import {
   UpdateCarouselParams,
   UpdateCarouselResponse,
 } from './models'
-import { CarouselServicePlugin } from './services'
+import { AdminCarouselServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../../dtos/error'
 import { AuthGuardPlugin } from '../../../plugins/auth-guard'
@@ -24,11 +24,11 @@ export const AdminCarouselController = new Elysia({
   prefix: '/carousels',
   tags: ['Admin Carousel'],
 })
-  .use([CarouselServicePlugin, AuthGuardPlugin])
+  .use([AdminCarouselServicePlugin, AuthGuardPlugin])
   .get(
     '/',
-    async ({ carouselService, status }) => {
-      const result = await carouselService.getCarousels()
+    async ({ adminCarouselService, status }) => {
+      const result = await adminCarouselService.getCarousels()
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -60,8 +60,8 @@ export const AdminCarouselController = new Elysia({
   )
   .get(
     '/:id',
-    async ({ params, carouselService, status }) => {
-      const result = await carouselService.getCarouselById(params.id)
+    async ({ params, adminCarouselService, status }) => {
+      const result = await adminCarouselService.getCarouselById(params.id)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.CAROUSEL_NOT_FOUND:
@@ -95,8 +95,8 @@ export const AdminCarouselController = new Elysia({
   )
   .post(
     '/',
-    async ({ body, carouselService, status }) => {
-      const result = await carouselService.createCarousel(body)
+    async ({ body, adminCarouselService, status }) => {
+      const result = await adminCarouselService.createCarousel(body)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.CAROUSEL_INVALID_INPUT:
@@ -130,8 +130,8 @@ export const AdminCarouselController = new Elysia({
   )
   .put(
     '/:id',
-    async ({ params, body, carouselService, status }) => {
-      const result = await carouselService.updateCarouselById(params.id, body)
+    async ({ params, body, adminCarouselService, status }) => {
+      const result = await adminCarouselService.updateCarouselById(params.id, body)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.CAROUSEL_NOT_FOUND:
@@ -169,8 +169,8 @@ export const AdminCarouselController = new Elysia({
   )
   .delete(
     '/:id',
-    async ({ params, carouselService, status }) => {
-      const result = await carouselService.deleteCarouselById(params.id)
+    async ({ params, adminCarouselService, status }) => {
+      const result = await adminCarouselService.deleteCarouselById(params.id)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.CAROUSEL_NOT_FOUND:
@@ -204,8 +204,8 @@ export const AdminCarouselController = new Elysia({
   )
   .post(
     '/reorder',
-    async ({ body, carouselService, status }) => {
-      const result = await carouselService.reorderCarousel(body.ids)
+    async ({ body, adminCarouselService, status }) => {
+      const result = await adminCarouselService.reorderCarousel(body.ids)
 
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 

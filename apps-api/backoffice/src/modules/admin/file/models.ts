@@ -4,16 +4,18 @@ export const UploadFileCategory = {
   ANNOUNCEMENT: 'ANNOUNCEMENT',
   TOPIC: 'TOPIC',
   PROFILE_IMAGE: 'PROFILE_IMAGE',
+  CAROUSERL: 'CAROUSEL',
 } as const
 
 export type UploadFileCategory = keyof typeof UploadFileCategory
 
 export const GetUploadSignedUrlBody = t.Union([
   t.Object({
-    category: t.Literal(UploadFileCategory.ANNOUNCEMENT),
-  }),
-  t.Object({
-    category: t.Literal(UploadFileCategory.TOPIC),
+    category: t.Union([
+      t.Literal(UploadFileCategory.TOPIC),
+      t.Literal(UploadFileCategory.ANNOUNCEMENT),
+      t.Literal(UploadFileCategory.CAROUSERL),
+    ]),
   }),
   t.Object({
     category: t.Literal(UploadFileCategory.PROFILE_IMAGE),
