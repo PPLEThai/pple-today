@@ -3,18 +3,24 @@ import { useEffect, useState } from 'react'
 import { userManager } from '~/config/oidc'
 import { queryClient } from '~/libs/react-query'
 
-const FileTestRoute = () => {
+const BannerTestRoute = () => {
   const [bannerId, setBannerId] = useState<string | null>(null)
   const [accessToken, setAccessToken] = useState<string | null>(null)
 
   const createBannerMutation = queryClient.useMutation('post', '/admin/banners')
   const getFileUploadUrl = queryClient.useMutation('post', '/admin/file/upload-url')
 
-  const getBanners = queryClient.useQuery('/admin/banners', {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
+  const getBanners = queryClient.useQuery(
+    '/admin/banners',
+    {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
     },
-  })
+    {
+      enabled: !!accessToken,
+    }
+  )
 
   const deleteBanner = queryClient.useMutation('delete', '/admin/banners/:id')
 
@@ -134,4 +140,4 @@ const FileTestRoute = () => {
   )
 }
 
-export default FileTestRoute
+export default BannerTestRoute
