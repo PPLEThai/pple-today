@@ -21,7 +21,7 @@ export class CarouselService {
     private readonly fileService: FileService
   ) {}
 
-  private async removeOldBannerImage(carouselId: string) {
+  private async removeOldBannerImage(carouselId: string, newImageFilePath?: string) {
     const result = await this.carouselRepository.getCarouselById(carouselId)
 
     if (result.isErr())
@@ -33,7 +33,11 @@ export class CarouselService {
 
     const { imageFilePath } = result.value
 
-    return await this.fileService.deleteFile(imageFilePath)
+    if (newImageFilePath || (imageFilePath && imageFilePath !== newImageFilePath)) {
+      return await this.fileService.deleteFile(imageFilePath)
+    }
+
+    return ok()
   }
 
   private async markShareMode(filePaths: string[], mode: 'PUBLISH' | 'DRAFT') {
@@ -121,19 +125,8 @@ export class CarouselService {
   }
 
   async updateCarouselById(id: string, data: UpdateCarouselBody) {
-    const existingCarousel = await this.carouselRepository.getCarouselById(id)
-
-    if (existingCarousel.isErr())
-      return mapRawPrismaError(existingCarousel.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.CAROUSEL_NOT_FOUND,
-        },
-      })
-
-    if (data.imageFilePath && data.imageFilePath !== existingCarousel.value.imageFilePath) {
-      const clearResult = await this.removeOldBannerImage(id)
-      if (clearResult.isErr()) return err(clearResult.error)
-    }
+    const clearResult = await this.removeOldBannerImage(id, data.imageFilePath)
+    if (clearResult.isErr()) return err(clearResult.error)
 
     const moveResult = await this.fileService.moveFileToPublicFolder([data.imageFilePath])
     if (moveResult.isErr()) return err(moveResult.error)
@@ -147,11 +140,7 @@ export class CarouselService {
         },
       })
 
-    const markFileStatusResult = await this.markShareMode(
-      [existingCarousel.value.imageFilePath],
-      data.status
-    )
-
+    const markFileStatusResult = await this.markShareMode(moveResult.value, data.status)
     if (markFileStatusResult.isErr()) return err(markFileStatusResult.error)
 
     return ok()
