@@ -27,7 +27,11 @@ export class CarouselRepository {
     )
   }
 
-  async createCarousel(data: { imageFilePath: string; navigation: CarouselNavigationType }) {
+  async createCarousel(data: {
+    imageFilePath: string
+    navigation: CarouselNavigationType
+    destination: string
+  }) {
     return fromPrismaPromise(
       this.prisma.$transaction(async (tx) => {
         const lastCarousel = await tx.carousel.findFirst({
@@ -39,6 +43,7 @@ export class CarouselRepository {
           data: {
             imageFilePath: data.imageFilePath,
             navigation: data.navigation,
+            destination: data.destination,
             status: CarouselStatusType.DRAFT, // Default value
             order: lastCarousel ? lastCarousel.order + 1 : 0,
           },
@@ -55,6 +60,7 @@ export class CarouselRepository {
     data: {
       imageFilePath: string
       navigation: CarouselNavigationType
+      destination: string
       status: CarouselStatusType
     }
   ) {
@@ -64,6 +70,7 @@ export class CarouselRepository {
         data: {
           imageFilePath: data.imageFilePath,
           navigation: data.navigation,
+          destination: data.destination,
           status: data.status,
         },
       })

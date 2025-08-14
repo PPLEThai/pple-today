@@ -4,7 +4,7 @@ import { Carousel } from '../../dtos/carousel'
 
 export const GetCarouselsResponse = t.Array(
   t.Composite([
-    t.Pick(Carousel, ['id', 'navigation', 'order']),
+    t.Pick(Carousel, ['id', 'navigation', 'destination']),
     t.Object({
       imageUrl: t.String({
         description: 'Public URL of the carousel image',

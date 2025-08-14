@@ -23,6 +23,9 @@ export const CreateCarouselBody = t.Object({
   navigation: t.Enum(CarouselNavigationType, {
     description: 'How the app should navigate when the item is tapped',
   }),
+  destination: t.String({
+    description: 'The destination URI for the carousel item',
+  }),
 })
 export type CreateCarouselBody = Static<typeof CreateCarouselBody>
 
@@ -42,6 +45,9 @@ export const UpdateCarouselBody = t.Object({
   status: t.Enum(CarouselStatusType, { description: 'Publish status of the carousel item' }),
   navigation: t.Enum(CarouselNavigationType, {
     description: 'How the app should navigate when the item is tapped',
+  }),
+  destination: t.String({
+    description: 'The destination URI for the carousel item',
   }),
 })
 export type UpdateCarouselBody = Static<typeof UpdateCarouselBody>

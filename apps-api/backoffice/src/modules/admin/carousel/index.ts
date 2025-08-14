@@ -20,8 +20,8 @@ import { InternalErrorCode } from '../../../dtos/error'
 import { AuthGuardPlugin } from '../../../plugins/auth-guard'
 import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../../utils/error'
 
-export const CarouselController = new Elysia({
-  prefix: '/admin/carousels',
+export const AdminCarouselController = new Elysia({
+  prefix: '/carousels',
   tags: ['Admin Carousel'],
 })
   .use([CarouselServicePlugin, AuthGuardPlugin])

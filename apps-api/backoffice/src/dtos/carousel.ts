@@ -12,6 +12,9 @@ export const Carousel = t.Object({
   navigation: t.Enum(CarouselNavigationType, {
     description: 'How the app should navigate when the item is tapped',
   }),
+  destination: t.String({
+    description: 'The destination URI for the carousel item',
+  }),
   order: t.Number({ description: 'Display order (ascending)' }),
 })
 export type Carousel = Static<typeof Carousel>

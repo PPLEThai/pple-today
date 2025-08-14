@@ -23,7 +23,7 @@ export class CarouselService {
     const response: GetCarouselsResponse = carousels.value.map((carousel) => ({
       id: carousel.id,
       navigation: carousel.navigation,
-      order: carousel.order,
+      destination: carousel.destination,
       imageUrl: this.fileService.getPublicFileUrl(carousel.imageFilePath),
     }))
 
