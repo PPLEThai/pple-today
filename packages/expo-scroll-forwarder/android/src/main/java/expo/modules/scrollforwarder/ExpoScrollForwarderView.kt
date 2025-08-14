@@ -35,6 +35,11 @@ class ExpoScrollForwarderView(context: Context, appContext: AppContext) :
             return
         }
         scrollView = rootView.findViewById<View>(scrollViewTag)
+        if (scrollView == null) {
+            Log.d(TAG, "ScrollView $scrollViewTag is not found")
+        } else {
+            Log.d(TAG, "ScrollView $scrollViewTag is found")
+        }
     }
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
         super.onLayout(changed, l, t, r, b)
