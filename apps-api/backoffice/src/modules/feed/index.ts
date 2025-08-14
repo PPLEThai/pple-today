@@ -18,6 +18,7 @@ import {
   GetFeedContentResponse,
   GetHashTagFeedQuery,
   GetHashTagFeedResponse,
+  GetMyFeedQuery,
   GetMyFeedResponse,
   GetTopicFeedQuery,
   GetTopicFeedResponse,
@@ -38,8 +39,11 @@ export const FeedController = new Elysia({
   .use([AuthGuardPlugin, FeedServicePlugin])
   .get(
     '/me',
-    async ({ user, feedService, status }) => {
-      const feedResult = await feedService.getMyFeed(user?.sub)
+    async ({ query, user, feedService, status }) => {
+      const feedResult = await feedService.getMyFeed(user?.sub, {
+        page: query?.page,
+        limit: query?.limit,
+      })
 
       if (feedResult.isErr()) {
         switch (feedResult.error.code) {
@@ -56,6 +60,7 @@ export const FeedController = new Elysia({
     },
     {
       fetchUser: true,
+      query: GetMyFeedQuery,
       response: {
         200: GetMyFeedResponse,
         ...createErrorSchema(
@@ -72,7 +77,10 @@ export const FeedController = new Elysia({
   .get(
     '/topic',
     async ({ query, user, status, feedService }) => {
-      const feedResult = await feedService.getTopicFeed(query.topicId, user?.sub)
+      const feedResult = await feedService.getTopicFeed(query.topicId, user?.sub, {
+        page: query?.page,
+        limit: query?.limit,
+      })
 
       if (feedResult.isErr()) {
         switch (feedResult.error.code) {
@@ -106,7 +114,10 @@ export const FeedController = new Elysia({
   .get(
     '/hashtag',
     async ({ query, user, status, feedService }) => {
-      const feedResult = await feedService.getHashTagFeed(query.hashTagId, user?.sub)
+      const feedResult = await feedService.getHashTagFeed(query.hashTagId, user?.sub, {
+        page: query.page,
+        limit: query.limit,
+      })
 
       if (feedResult.isErr()) {
         switch (feedResult.error.code) {

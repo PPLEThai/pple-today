@@ -175,11 +175,14 @@ export class FeedRepository {
     page: number
     limit: number
   }) {
-    const offset = (page - 1) * limit
+    const skip = Math.max((page - 1) * limit, 0)
     const rawFeedItems = await fromPrismaPromise(
       this.prismaService.feedItem.findMany({
-        skip: offset,
         take: limit,
+        skip,
+        orderBy: {
+          createdAt: 'desc',
+        },
         where: {
           OR: [
             {
@@ -244,11 +247,14 @@ export class FeedRepository {
     page: number
     limit: number
   }) {
-    const offset = (page - 1) * limit
+    const skip = Math.max((page - 1) * limit, 0)
     const rawFeedItems = await fromPrismaPromise(
       this.prismaService.feedItem.findMany({
-        skip: offset,
         take: limit,
+        skip,
+        orderBy: {
+          createdAt: 'desc',
+        },
         where: {
           OR: [
             {
@@ -309,10 +315,13 @@ export class FeedRepository {
   }
 
   async listFeedItems({ userId, page, limit }: { userId?: string; page: number; limit: number }) {
-    const offset = (page - 1) * limit
+    const skip = Math.max((page - 1) * limit, 0)
     const rawFeedItems = await fromPrismaPromise(
       this.prismaService.feedItem.findMany({
-        skip: offset,
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
         take: limit,
         include: this.constructFeedItemInclude(userId),
       })
