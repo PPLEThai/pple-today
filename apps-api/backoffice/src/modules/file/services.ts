@@ -8,12 +8,15 @@ import https from 'https'
 import { fromPromise, Ok, ok } from 'neverthrow'
 import { Readable } from 'stream'
 
+import { FileTransactionEntry } from './types'
+
 import serverEnv from '../../config/env'
 import { InternalErrorCode } from '../../dtos/error'
 import { err } from '../../utils/error'
 
 export class FileService {
   public prefixPublicFolder = 'public/' as const
+  public prefixPrivateFolder = 'private/' as const
   public prefixTempFolder = 'temp/' as const
 
   private storage: Storage
@@ -35,78 +38,46 @@ export class FileService {
     this.bucket = this.storage.bucket(config.bucketName)
   }
 
-  async bulkMarkAsPublic(files: string[]) {
-    const results = await fromPromise(
-      Promise.all(files.map((file) => this.bucket.file(file).makePublic())),
-      (err) => ({
-        code: InternalErrorCode.FILE_MOVE_ERROR,
-        message: (err as Error).message,
-      })
-    )
+  private async moveFileAndPermission(
+    file: string,
+    prefix: string,
+    shareType: 'PUBLIC' | 'PRIVATE'
+  ) {
+    const newPath = `${prefix}${this.getFilePath(file)}`
+    const realAttachment = await this.moveFile(file, newPath)
 
-    if (results.isErr()) {
-      return err({
-        code: InternalErrorCode.FILE_MOVE_ERROR,
-        message: 'Failed to move one or more files',
-      })
+    if (realAttachment.isErr()) {
+      return err(realAttachment.error)
     }
 
-    return ok(files)
-  }
+    let editShareTypeResult
 
-  async bulkMarkAsPrivate(files: string[]) {
-    const results = await fromPromise(
-      Promise.all(files.map((file) => this.bucket.file(file).makePrivate())),
-      (err) => ({
-        code: InternalErrorCode.FILE_MOVE_ERROR,
-        message: (err as Error).message,
-      })
-    )
+    if (shareType === 'PRIVATE') editShareTypeResult = await this.markAsPrivate(newPath)
+    else editShareTypeResult = await this.markAsPublic(newPath)
 
-    if (results.isErr()) {
-      return err({
-        code: InternalErrorCode.FILE_MOVE_ERROR,
-        message: 'Failed to move one or more files',
-      })
+    if (editShareTypeResult.isErr()) {
+      const revertPosition = await this.moveFile(newPath, file)
+      if (revertPosition.isErr()) return err(revertPosition.error)
+
+      return err(editShareTypeResult.error)
     }
 
-    return ok(files)
+    return ok(newPath)
   }
 
-  async bulkDeleteFile(files: string[]) {
-    const results = await fromPromise(
-      Promise.all(files.map((file) => this.bucket.file(file).delete())),
-      (err) => ({
-        code: InternalErrorCode.FILE_DELETE_ERROR,
-        message: (err as Error).message,
-      })
-    )
-
-    if (results.isErr()) {
-      return err({
-        code: InternalErrorCode.FILE_DELETE_ERROR,
-        message: 'Failed to delete one or more files',
-      })
-    }
-
-    return ok(files)
-  }
-
-  async moveFileToPublicFolder(files: string[]) {
+  private async bulkMoveToFolder(
+    files: string[],
+    prefix: string,
+    permission: 'PUBLIC' | 'PRIVATE'
+  ) {
     const moveResults = await Promise.all(
       files.map(async (file) => {
-        if (file.startsWith(this.prefixTempFolder)) {
-          const realPath = `${this.prefixPublicFolder}${file.slice(this.prefixTempFolder.length)}`
-          const realAttachment = await this.moveFile(file, realPath)
+        if (file.startsWith(prefix)) return ok(file)
 
-          if (realAttachment.isErr()) {
-            return err(realAttachment.error)
-          }
+        const moveResult = await this.moveFileAndPermission(file, prefix, permission)
+        if (moveResult.isErr()) return err(moveResult.error)
 
-          return ok(realPath)
-        }
-
-        return ok(file)
+        return ok(moveResult.value)
       })
     )
 
@@ -118,6 +89,61 @@ export class FileService {
     }
 
     return ok((moveResults as Array<Ok<string, never>>).map((result) => result.value))
+  }
+
+  getFilePath(fullPath: string) {
+    if (fullPath.startsWith(this.prefixPublicFolder)) {
+      return fullPath.slice(this.prefixPublicFolder.length)
+    } else if (fullPath.startsWith(this.prefixPrivateFolder)) {
+      return fullPath.slice(this.prefixPrivateFolder.length)
+    } else if (fullPath.startsWith(this.prefixTempFolder)) {
+      return fullPath.slice(this.prefixTempFolder.length)
+    }
+    return fullPath
+  }
+
+  async markAsPublic(file: string) {
+    const results = await fromPromise(this.bucket.file(file).makePublic(), (err) => ({
+      code: InternalErrorCode.FILE_MOVE_ERROR,
+      message: (err as Error).message,
+    }))
+
+    if (results.isErr()) {
+      return err({
+        code: InternalErrorCode.FILE_MOVE_ERROR,
+        message: 'Failed to move one or more files',
+      })
+    }
+
+    return ok(file)
+  }
+
+  async markAsPrivate(file: string) {
+    const results = await fromPromise(this.bucket.file(file).makePrivate(), (err) => ({
+      code: InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
+      message: (err as Error).message,
+    }))
+
+    if (results.isErr()) {
+      return err({
+        code: InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
+        message: 'Failed to move one or more files',
+      })
+    }
+
+    return ok(file)
+  }
+
+  async bulkMoveToTempFolder(files: string[]) {
+    return this.bulkMoveToFolder(files, this.prefixTempFolder, 'PRIVATE')
+  }
+
+  async bulkMoveToPrivateFolder(files: string[]) {
+    return this.bulkMoveToFolder(files, this.prefixPrivateFolder, 'PRIVATE')
+  }
+
+  async bulkMoveToPublicFolder(files: string[]) {
+    return this.bulkMoveToFolder(files, this.prefixPublicFolder, 'PUBLIC')
   }
 
   async getUploadSignedUrl(
@@ -217,7 +243,7 @@ export class FileService {
   }
 
   async uploadProfilePagePicture(url: string, pageId: string) {
-    const destination = `pages/profile-picture-${pageId}.jpg`
+    const destination = `public/pages/profile-picture-${pageId}.jpg`
     const result = await this.uploadFileFromUrl(url, destination)
 
     if (result.isErr()) {
@@ -303,6 +329,132 @@ export class FileService {
         message: (err as Error).message,
       })
     )
+  }
+
+  $transaction() {
+    return new FileTransactionService(this)
+  }
+}
+
+class FileTransactionService {
+  private transaction: FileTransactionEntry[] = []
+  constructor(private readonly fileService: FileService) {}
+
+  async bulkMoveToPublicFolder(fileKeys: string[]) {
+    const transactionKey: FileTransactionEntry[] = fileKeys
+      .map((file): FileTransactionEntry[] => [
+        {
+          target: file,
+          action: {
+            type: 'PERMISSION',
+            permission: {
+              before: 'PRIVATE',
+              after: 'PUBLIC',
+            },
+          },
+        },
+        {
+          target: file,
+          action: {
+            type: 'MOVE',
+            to: this.fileService.prefixPublicFolder + this.fileService.getFilePath(file),
+          },
+        },
+      ])
+      .flat()
+
+    const result = await this.fileService.bulkMoveToPublicFolder(fileKeys)
+
+    if (result.isErr()) {
+      return err(result.error)
+    }
+
+    this.transaction.push(...transactionKey)
+    return ok()
+  }
+
+  async bulkMoveToPrivateFolder(fileKeys: string[]) {
+    const transactionKey: FileTransactionEntry[] = fileKeys
+      .map((file): FileTransactionEntry[] => [
+        {
+          target: file,
+          action: {
+            type: 'PERMISSION',
+            permission: {
+              before: 'PUBLIC',
+              after: 'PRIVATE',
+            },
+          },
+        },
+        {
+          target: file,
+          action: {
+            type: 'MOVE',
+            to: this.fileService.prefixPrivateFolder + this.fileService.getFilePath(file),
+          },
+        },
+      ])
+      .flat()
+
+    const result = await this.fileService.bulkMoveToPrivateFolder(fileKeys)
+
+    if (result.isErr()) {
+      return err(result.error)
+    }
+
+    this.transaction.push(...transactionKey)
+    return ok()
+  }
+
+  async bulkMoveToTempFolder(fileKeys: string[]) {
+    const transactionKey: FileTransactionEntry[] = fileKeys
+      .map((file): FileTransactionEntry[] => [
+        {
+          target: file,
+          action: {
+            type: 'PERMISSION',
+            permission: {
+              before: 'PUBLIC',
+              after: 'PRIVATE',
+            },
+          },
+        },
+        {
+          target: file,
+          action: {
+            type: 'MOVE',
+            to: this.fileService.prefixTempFolder + this.fileService.getFilePath(file),
+          },
+        },
+      ])
+      .flat()
+
+    const result = await this.fileService.bulkMoveToTempFolder(fileKeys)
+
+    if (result.isErr()) {
+      return err(result.error)
+    }
+
+    this.transaction.push(...transactionKey)
+    return ok()
+  }
+
+  async rollback() {
+    for (const entry of this.transaction.reverse()) {
+      switch (entry.action.type) {
+        case 'PERMISSION':
+          if (entry.action.permission.before === entry.action.permission.after) continue
+          if (entry.action.permission.before === 'PUBLIC') {
+            await this.fileService.markAsPublic(entry.target)
+          } else {
+            await this.fileService.markAsPrivate(entry.target)
+          }
+          break
+        case 'MOVE':
+          await this.fileService.moveFile(entry.action.to, entry.target)
+          break
+      }
+    }
   }
 }
 

@@ -2,7 +2,6 @@ import Elysia from 'elysia'
 
 import { UpdateTopicBody } from './models'
 
-import { TopicStatus } from '../../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { err } from '../../../utils/error'
 import { fromRepositoryPromise } from '../../../utils/error'
@@ -97,8 +96,29 @@ export class AdminTopicRepository {
         const isSameBannerUrl = existingTopic.bannerImage === data.bannerImage
 
         if (!isSameBannerUrl && existingTopic.bannerImage) {
-          const moveResult = await this.fileService.deleteFile(existingTopic.bannerImage)
+          const moveResult = await this.fileService.bulkMoveToTempFolder([
+            existingTopic.bannerImage,
+          ])
           if (moveResult.isErr()) return err(moveResult.error)
+        }
+
+        let newBannerImage = data.bannerImage
+
+        if (data.bannerImage) {
+          const moveResult = await this.fileService.bulkMoveToPublicFolder([data.bannerImage])
+          if (moveResult.isErr()) {
+            if (!isSameBannerUrl && existingTopic.bannerImage) {
+              const moveResult = await this.fileService.bulkMoveToPublicFolder([
+                existingTopic.bannerImage,
+              ])
+              if (moveResult.isErr()) {
+                return err(moveResult.error)
+              }
+            }
+            return err(moveResult.error)
+          }
+
+          newBannerImage = moveResult.value[0]
         }
 
         const newTopic = await tx.topic.update({
@@ -106,7 +126,7 @@ export class AdminTopicRepository {
           data: {
             name: data.name,
             description: data.description,
-            bannerImage: data.bannerImage,
+            bannerImage: newBannerImage,
             status: data.status,
             hashTagInTopics: {
               deleteMany: {},
@@ -118,19 +138,6 @@ export class AdminTopicRepository {
             },
           },
         })
-
-        if (newTopic.bannerImage) {
-          const moveResult = await this.fileService.moveFileToPublicFolder([newTopic.bannerImage])
-          if (moveResult.isErr()) return err(moveResult.error)
-
-          let markStatusResult
-
-          if (newTopic.status === TopicStatus.DRAFT)
-            markStatusResult = await this.fileService.bulkMarkAsPrivate([newTopic.id])
-          else markStatusResult = await this.fileService.bulkMarkAsPublic([newTopic.id])
-
-          if (markStatusResult.isErr()) return err(markStatusResult.error)
-        }
 
         return newTopic
       })

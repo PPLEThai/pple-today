@@ -96,7 +96,6 @@ const AdminDraftAnnouncementsController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
           InternalErrorCode.FILE_MOVE_ERROR,
-          InternalErrorCode.FILE_DELETE_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -154,7 +153,7 @@ const AdminDraftAnnouncementsController = new Elysia({
         200: DeleteDraftAnnouncementResponse,
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
-          InternalErrorCode.FILE_DELETE_ERROR,
+          InternalErrorCode.FILE_MOVE_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -263,7 +262,6 @@ export const AdminAnnouncementsController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
           InternalErrorCode.FILE_MOVE_ERROR,
-          InternalErrorCode.FILE_DELETE_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -317,7 +315,7 @@ export const AdminAnnouncementsController = new Elysia({
         200: DeletePublishedAnnouncementResponse,
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
-          InternalErrorCode.FILE_DELETE_ERROR,
+          InternalErrorCode.FILE_MOVE_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
