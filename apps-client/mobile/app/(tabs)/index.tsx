@@ -3,6 +3,7 @@ import {
   findNodeHandle,
   LayoutChangeEvent,
   NativeScrollEvent,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,6 +17,7 @@ import PagerView, {
 } from 'react-native-pager-view'
 import Animated, {
   AnimatedRef,
+  EventHandlerProcessed,
   interpolate,
   runOnJS,
   runOnUI,
@@ -63,7 +65,6 @@ import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AnnouncementSlides } from '@app/components/announcement'
 import { KeyboardAvoidingViewLayout } from '@app/components/keyboard-avoiding-view-layout'
 import { useUser } from '@app/libs/auth'
-import { useNonReactiveCallback } from '@app/libs/hooks/useNonReactiveCallback'
 
 import { ExpoScrollForwarderView } from '../../../../packages/expo-scroll-forwarder/build'
 
@@ -263,27 +264,91 @@ function UserInfoSection() {
 // brief structure for PagerView with Header
 // <Pager>
 //   <PagerHeader>
-//     <CustomHeader />
+//     <PagerHeaderOnly>...</PagerHeaderOnly>
 //     <PagerTabBar>
 //       <PagerTab>Tab 1</PagerTab>
 //       <PagerTab>Tab 2</PagerTab>
 //       <PagerTab>Tab 3</PagerTab>
+//       <PagerTabBarItemIndicator />
 //     </PagerTabBar>
 //   </PagerHeader>
-//   <PagerContent> -> PagerView
-//     <PagerItem>...</PagerItem> -> <View key="1"><List/></View>
-//     <PagerItem>...</PagerItem>
-//     <PagerItem>...</PagerItem>
-//   </PagerContent>
+//   <PagerContentView>
+//     <View key="1">
+//       <PagerContent>...</PagerContent>
+//     </View>
+//     <View key="2">
+//       <PagerContent>...</PagerContent>
+//     </View>
+//     <View key="3">
+//       <PagerContent>...</PagerContent>
+//     </View>
+//   </PagerContentView>
 // </Pager>
 
-const AnimatedPagerView = Animated.createAnimatedComponent(PagerView)
-
 export function TabViewInsideScroll() {
+  return (
+    <Pager>
+      <PagerHeader>
+        <PagerHeaderOnly>
+          <MainHeader />
+          <TopContainer />
+          <View className="px-4 bg-base-bg-white flex flex-row items-start ">
+            <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
+          </View>
+        </PagerHeaderOnly>
+        <PagerTabBar>
+          <Button variant="ghost" aria-label="Add Label" className="mb-px" size="icon">
+            <Icon
+              icon={CirclePlusIcon}
+              strokeWidth={1}
+              className="text-base-secondary-default"
+              size={24}
+            />
+          </Button>
+          <PagerTabBarItem index={0}>สำหรับคุณ</PagerTabBarItem>
+          <PagerTabBarItem index={1}>กำลังติดตาม</PagerTabBarItem>
+          <PagerTabBarItem index={2}>กรุงเทพฯ</PagerTabBarItem>
+          <PagerTabBarItemIndicator />
+        </PagerTabBar>
+      </PagerHeader>
+      <PagerContentView>
+        {Array.from({ length: 3 }).map((_, index) => (
+          <View key={index} collapsable={false}>
+            <PagerContent index={index} />
+          </View>
+        ))}
+      </PagerContentView>
+    </Pager>
+  )
+}
+
+const AnimatedPagerView = Animated.createAnimatedComponent(PagerView)
+const AnimatedExpoScrollForwarderView = Animated.createAnimatedComponent(ExpoScrollForwarderView)
+
+// Scrolling with header is laggy on Expo Go Android because of the "new architecture"
+// disabling it in `app.config.ts` fixes the issue on native build
+// https://github.com/software-mansion/react-native-reanimated/issues/6992
+
+interface PagerContextValue {
+  pagerViewRef: React.RefObject<PagerView | null>
+  scrollY: SharedValue<number>
+  scrollViewTag: number | null
+  setScrollViewTag: (tag: number | null) => void
+  registerScrollViewRef: (scrollRef: AnimatedRef<any> | null, atIndex: number) => void
+  scrollHandler: ScrollHandlerProcessed<Record<string, unknown>>
+  headerHeight: number
+  headerOnlyHeight: number
+  setHeaderOnlyHeight: React.Dispatch<React.SetStateAction<number>>
+  setTabBarHeight: React.Dispatch<React.SetStateAction<number>>
+  currentPage: number
+  setCurrentPage: React.Dispatch<React.SetStateAction<number>>
+  adjustScrollForOtherPages: (scrollState: 'idle' | 'dragging' | 'settling') => void
+}
+const PagerContext = React.createContext<PagerContextValue | null>(null)
+function Pager({ children }: { children: React.ReactNode }) {
   // const layout = useWindowDimensions()
   const [currentPage, setCurrentPage] = React.useState(0)
 
-  const headerRef = React.useRef<View>(null)
   const isHeaderReady = React.useState(false)
   const [headerOnlyHeight, setHeaderOnlyHeight] = React.useState(0)
   const [tabBarHeight, setTabBarHeight] = React.useState(0)
@@ -310,34 +375,15 @@ export function TabViewInsideScroll() {
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: onScrollWorklet,
   })
-  const headerTransform = useAnimatedStyle(() => {
-    const translateY = -Math.min(scrollY.get(), headerOnlyHeight)
-    return {
-      transform: [{ translateY: translateY }],
-    }
-  })
   // scroll indicators work inconsistently between Android and iOS so we disable them for now
   // const scrollIndicatorInsets = useDerivedValue(() => ({
   //   top: headerHeight - scrollY.get(),
   // }))
 
-  const onTabBarLayout = useNonReactiveCallback((evt: LayoutChangeEvent) => {
-    const height = evt.nativeEvent.layout.height
-    if (height > 0) {
-      // The rounding is necessary to prevent jumps on iOS
-      setTabBarHeight(Math.round(height * 2) / 2)
-    }
-  })
-  const onHeaderOnlyLayout = useNonReactiveCallback((height: number) => {
-    if (height > 0) {
-      // The rounding is necessary to prevent jumps on iOS
-      setHeaderOnlyHeight(Math.round(height * 2) / 2)
-    }
-  })
-  const pagerView = React.useRef<PagerView>(null)
+  const pagerViewRef = React.useRef<PagerView>(null)
 
   const scrollRefs = useSharedValue<(AnimatedRef<any> | null)[]>([])
-  const registerRef = React.useCallback(
+  const registerScrollViewRef = React.useCallback(
     (scrollRef: AnimatedRef<any> | null, atIndex: number) => {
       scrollRefs.modify((refs) => {
         'worklet'
@@ -374,13 +420,129 @@ export function TabViewInsideScroll() {
     },
     [currentPageRef, headerOnlyHeightRef, lastForcedScrollY, scrollRefs, scrollY]
   )
+  const [scrollViewTag, setScrollViewTag] = React.useState<number | null>(null)
+
+  return (
+    <PagerContext.Provider
+      value={{
+        pagerViewRef,
+        scrollY,
+        scrollViewTag,
+        setScrollViewTag,
+        registerScrollViewRef,
+        scrollHandler,
+        headerHeight,
+        headerOnlyHeight,
+        setHeaderOnlyHeight,
+        setTabBarHeight,
+        currentPage,
+        setCurrentPage,
+        adjustScrollForOtherPages,
+      }}
+    >
+      <PagerTabBarProvider>
+        <View className="flex-1 bg-base-bg-default">
+          {/* PanGestureRecognizer only works for one view so we have to move it up to the parent */}
+          {Platform.OS === 'ios' ? (
+            <ExpoScrollForwarderView scrollViewTag={scrollViewTag} style={{ flex: 1 }}>
+              {children}
+            </ExpoScrollForwarderView>
+          ) : (
+            children
+          )}
+        </View>
+      </PagerTabBarProvider>
+    </PagerContext.Provider>
+  )
+}
+
+const usePagerContext = () => {
+  const context = React.useContext(PagerContext)
+  if (!context) {
+    throw new Error('usePagerContext must be used within a PagerProvider')
+  }
+  return context
+}
+
+function PagerHeader({ children }: { children: React.ReactNode }) {
+  const { scrollViewTag, scrollY, headerOnlyHeight } = usePagerContext()
+  const headerTransform = useAnimatedStyle(() => {
+    const translateY = -Math.min(scrollY.get(), headerOnlyHeight)
+    return { transform: [{ translateY: translateY }] }
+  })
+  if (Platform.OS === 'android') {
+    return (
+      <AnimatedExpoScrollForwarderView
+        scrollViewTag={scrollViewTag}
+        style={[styles.pagerHeader, headerTransform]}
+      >
+        {/* Somehow a view is required here to make ScrollForward working in android */}
+        <View className="bg-transparent">{children}</View>
+      </AnimatedExpoScrollForwarderView>
+    )
+  }
+  return <Animated.View style={[styles.pagerHeader, headerTransform]}>{children}</Animated.View>
+}
+
+function PagerHeaderOnly({ children }: { children: React.ReactNode }) {
+  const { setHeaderOnlyHeight } = usePagerContext()
+  const headerRef = React.useRef<View>(null)
+  return (
+    <View
+      ref={headerRef}
+      onLayout={() => {
+        headerRef.current?.measure((_x: number, _y: number, _width: number, height: number) => {
+          // console.log('Header only height:', height)
+
+          if (height > 0) {
+            // The rounding is necessary to prevent jumps on iOS
+            setHeaderOnlyHeight(Math.round(height * 2) / 2)
+          }
+        })
+      }}
+    >
+      {children}
+    </View>
+  )
+}
+
+function PagerContentView({ children }: { children: React.ReactNode }) {
+  const { pagerViewRef } = usePagerContext()
+  const { handlePageScroll } = usePagerTabBarContext()
+  return (
+    <AnimatedPagerView
+      ref={pagerViewRef}
+      style={styles.pagerView}
+      initialPage={0}
+      onPageScroll={handlePageScroll}
+    >
+      {children}
+    </AnimatedPagerView>
+  )
+}
+
+interface PagerTabBarContextValue {
+  dragProgress: SharedValue<number>
+  handlePageScroll: EventHandlerProcessed<object, never>
+  tabListSize: SharedValue<number>
+  tabItemLayouts: SharedValue<{ x: number; width: number }[]>
+
+  onTabLayout: (index: number, layout: { x: number; width: number }) => void
+  onTabPressed: (index: number) => void
+}
+const PagerTabBarContext = React.createContext<PagerTabBarContextValue | null>(null)
+interface PagerTabBarProviderProps {
+  children: React.ReactNode
+}
+function PagerTabBarProvider({ children }: PagerTabBarProviderProps) {
+  const { setCurrentPage, pagerViewRef, adjustScrollForOtherPages } = usePagerContext()
   const onTabPressed = React.useCallback(
     (index: number) => {
-      pagerView.current?.setPage(index)
+      pagerViewRef.current?.setPage(index)
       setCurrentPage(index)
       runOnUI(adjustScrollForOtherPages)('dragging')
     },
-    [adjustScrollForOtherPages]
+    [adjustScrollForOtherPages, pagerViewRef, setCurrentPage]
   )
 
   const dragState = useSharedValue<'idle' | 'settling' | 'dragging'>('idle')
@@ -425,6 +587,71 @@ export function TabViewInsideScroll() {
 
   const tabListSize = useSharedValue(0)
   const tabItemLayouts = useSharedValue<{ x: number; width: number }[]>([])
+  const onTabLayout = React.useCallback(
+    (i: number, layout: { x: number; width: number }) => {
+      'worklet'
+      tabItemLayouts.modify((tab) => {
+        tab[i] = layout
+        return tab
+      })
+    },
+    [tabItemLayouts]
+  )
+  return (
+    <PagerTabBarContext.Provider
+      value={{
+        dragProgress,
+        handlePageScroll,
+        onTabLayout,
+        onTabPressed,
+        tabListSize,
+        tabItemLayouts,
+      }}
+    >
+      {children}
+    </PagerTabBarContext.Provider>
+  )
+}
+const usePagerTabBarContext = () => {
+  const context = React.useContext(PagerTabBarContext)
+  if (!context) {
+    throw new Error('usePagerTabBarContext must be used within a PagerTabBarProvider')
+  }
+  return context
+}
+
+function PagerTabBar({ children }: { children: React.ReactNode }) {
+  const { tabListSize } = usePagerTabBarContext()
+  const { setTabBarHeight } = usePagerContext()
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      className="bg-base-bg-white w-full"
+      contentContainerClassName="px-4 border-b border-base-outline-default w-full"
+      onLayout={(evt) => {
+        const height = evt.nativeEvent.layout.height
+        if (height > 0) {
+          // The rounding is necessary to prevent jumps on iOS
+          setTabBarHeight(Math.round(height * 2) / 2)
+        }
+      }}
+    >
+      <View
+        accessibilityRole="tablist"
+        className="flex flex-row"
+        onLayout={(e) => {
+          tabListSize.set(e.nativeEvent.layout.width)
+        }}
+      >
+        {children}
+      </View>
+    </ScrollView>
+  )
+}
+
+function PagerTabBarItemIndicator() {
+  const { tabListSize, tabItemLayouts, dragProgress } = usePagerTabBarContext()
   const indicatorStyle = useAnimatedStyle(() => {
     const tabItems = tabItemLayouts.get()
     if (tabItems.length === 0) {
@@ -479,137 +706,25 @@ export function TabViewInsideScroll() {
       ],
     }
   })
-
-  const onTabLayout = React.useCallback(
-    (i: number, layout: { x: number; width: number }) => {
-      'worklet'
-      tabItemLayouts.modify((tab) => {
-        tab[i] = layout
-        return tab
-      })
-    },
-    [tabItemLayouts]
-  )
-
-  const [scrollViewTag, setScrollViewTag] = React.useState<number | null>(null)
-  // Scrolling with header is now laggy on Expo Go Android because of the "new architecture"
-  // disabling it in `app.config.ts` fixes the issue on native build
-  // https://github.com/software-mansion/react-native-reanimated/issues/6992
   return (
-    <PagerProvider value={{ dragProgress, registerRef, scrollHandler, headerHeight }}>
-      <ExpoScrollForwarderView scrollViewTag={scrollViewTag} style={{ flex: 1 }}>
-        <View className="flex-1 bg-base-bg-default">
-          <Animated.View style={[styles.pagerHeader, headerTransform]}>
-            <View
-              ref={headerRef}
-              onLayout={() => {
-                headerRef.current?.measure(
-                  (_x: number, _y: number, _width: number, height: number) => {
-                    // console.log('Header only height:', height)
-                    onHeaderOnlyLayout(height)
-                  }
-                )
-              }}
-            >
-              <MainHeader />
-              <TopContainer />
-              <View className="px-4 bg-base-bg-white flex flex-row items-start ">
-                <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
-              </View>
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              className="bg-base-bg-white w-full"
-              contentContainerClassName="px-4 border-b border-base-outline-default w-full"
-              onLayout={onTabBarLayout}
-            >
-              <View
-                accessibilityRole="tablist"
-                className="flex flex-row"
-                onLayout={(e) => {
-                  tabListSize.set(e.nativeEvent.layout.width)
-                }}
-              >
-                <Button variant="ghost" aria-label="Add Label" className="mb-px" size="icon">
-                  <Icon
-                    icon={CirclePlusIcon}
-                    strokeWidth={1}
-                    className="text-base-secondary-default"
-                    size={24}
-                  />
-                </Button>
-                <TabBarItem index={0} onTabLayout={onTabLayout} onTabPress={onTabPressed}>
-                  สำหรับคุณ
-                </TabBarItem>
-                <TabBarItem index={1} onTabLayout={onTabLayout} onTabPress={onTabPressed}>
-                  กำลังติดตาม
-                </TabBarItem>
-                <TabBarItem index={2} onTabLayout={onTabLayout} onTabPress={onTabPressed}>
-                  กรุงเทพฯ
-                </TabBarItem>
-                <Animated.View
-                  className="absolute -bottom-px left-0 right-0 border-b-2 border-base-primary-default "
-                  style={indicatorStyle}
-                />
-              </View>
-            </ScrollView>
-          </Animated.View>
-          <AnimatedPagerView
-            ref={pagerView}
-            style={styles.pagerView}
-            initialPage={0}
-            onPageScroll={handlePageScroll}
-          >
-            {Array.from({ length: 3 }).map((_, index) => (
-              <View key={index} collapsable={false}>
-                <PagerContent
-                  index={index}
-                  isFocused={index === currentPage}
-                  setScrollViewTag={setScrollViewTag}
-                />
-              </View>
-            ))}
-          </AnimatedPagerView>
-        </View>
-      </ExpoScrollForwarderView>
-    </PagerProvider>
+    <Animated.View
+      className="absolute -bottom-px left-0 right-0 border-b-2 border-base-primary-default "
+      style={indicatorStyle}
+    />
   )
 }
 
-interface PagerContextValue {
-  dragProgress: SharedValue<number>
-  registerRef: (scrollRef: AnimatedRef<any> | null, atIndex: number) => void
-  scrollHandler: ScrollHandlerProcessed<Record<string, unknown>>
-  headerHeight: number
-}
-const PagerContext = React.createContext<PagerContextValue | null>(null)
-const PagerProvider = PagerContext.Provider
-const usePagerContext = () => {
-  const context = React.useContext(PagerContext)
-  if (!context) {
-    throw new Error('usePagerContext must be used within a PagerProvider')
-  }
-  return context
-}
-
-function PagerContent({
-  index,
-  setScrollViewTag,
-  isFocused,
-}: {
-  index: number
-  setScrollViewTag: (tag: number | null) => void
-  isFocused: boolean
-}) {
-  const { headerHeight, registerRef, scrollHandler } = usePagerContext()
+function PagerContent({ index }: { index: number }) {
+  const { headerHeight, registerScrollViewRef, scrollHandler, currentPage, setScrollViewTag } =
+    usePagerContext()
+  const isFocused = index === currentPage
   const scrollElRef = useAnimatedRef<FlatList>()
   React.useEffect(() => {
-    registerRef(scrollElRef, index)
+    registerScrollViewRef(scrollElRef, index)
     return () => {
-      registerRef(null, index)
+      registerScrollViewRef(null, index)
     }
-  }, [scrollElRef, registerRef, index])
+  }, [scrollElRef, registerScrollViewRef, index])
 
   React.useEffect(() => {
     if (isFocused && scrollElRef.current) {
@@ -695,30 +810,24 @@ function useSharedState<T>(value: T): SharedValue<T> {
   return sharedValue
 }
 
-function TabBarItem({
+function PagerTabBarItem({
   index,
   children,
-  onTabLayout,
-  onTabPress,
   ...props
 }: React.ComponentProps<typeof Pressable> & {
   index: number
   children?: React.ReactNode
-  onTabLayout: (index: number, layout: { x: number; width: number }) => void
-  onTabPress: (index: number) => void
 }) {
-  const { dragProgress } = usePagerContext()
+  const { dragProgress, onTabLayout, onTabPressed } = usePagerTabBarContext()
   const activeStyle = useAnimatedStyle(() => {
     return { opacity: interpolate(dragProgress.get(), [index - 1, index, index + 1], [0, 1, 0]) }
   })
   const handleLayout = (e: LayoutChangeEvent) => {
     runOnUI(onTabLayout)(index, e.nativeEvent.layout)
   }
-
   const handlePress = () => {
-    onTabPress?.(index)
+    onTabPressed?.(index)
   }
-
   return (
     <Pressable
       className="h-10"

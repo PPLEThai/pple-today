@@ -140,7 +140,7 @@ export function CarouselScrollView(props: { children: React.ReactNode }) {
       contentContainerStyle={{ gap, paddingHorizontal }}
       pagingEnabled
       snapToInterval={itemWidth + gap}
-      // disableIntervalMomentum
+      disableIntervalMomentum
       onLayout={(e) => {
         setScrollViewWidth(e.nativeEvent.layout.width)
       }}

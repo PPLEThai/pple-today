@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.views.ExpoView
@@ -42,6 +43,14 @@ class ExpoScrollForwarderView(context: Context, appContext: AppContext) :
         }
     }
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (scrollViewTag != null && scrollView == null) {
+            // sometimes tryFindScrollView does not work on first layout, try it again here
+            tryFindScrollView()
+            if (scrollView == null) {
+                // if we still can't find it by the time user touches, give up
+                scrollViewTag = null
+            }
+        }
         val scrollView = this.scrollView
         if (scrollView == null) {
             return super.dispatchTouchEvent(ev)
