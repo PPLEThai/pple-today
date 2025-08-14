@@ -20,14 +20,14 @@ export class CarouselService {
       return mapRawPrismaError(carousels.error)
     }
 
-    return ok(
-      carousels.value.map((carousel) => ({
-        id: carousel.id,
-        navigation: carousel.navigation,
-        order: carousel.order,
-        imageFilePath: this.fileService.getPublicFileUrl(carousel.imageFilePath),
-      })) satisfies GetCarouselsResponse
-    )
+    const response: GetCarouselsResponse = carousels.value.map((carousel) => ({
+      id: carousel.id,
+      navigation: carousel.navigation,
+      order: carousel.order,
+      imageUrl: this.fileService.getPublicFileUrl(carousel.imageFilePath),
+    }))
+
+    return ok(response)
   }
 }
 
