@@ -31,6 +31,7 @@ export class CarouselRepository {
     imageFilePath: string
     navigation: CarouselNavigationType
     destination: string
+    status: CarouselStatusType
   }) {
     return fromPrismaPromise(
       this.prisma.$transaction(async (tx) => {
@@ -44,7 +45,7 @@ export class CarouselRepository {
             imageFilePath: data.imageFilePath,
             navigation: data.navigation,
             destination: data.destination,
-            status: CarouselStatusType.DRAFT, // Default value
+            status: data.status, // Default value
             order: lastCarousel ? lastCarousel.order + 1 : 0,
           },
           select: {
