@@ -1,0 +1,20 @@
+import { Static, t } from 'elysia'
+
+import { BannerNavigationType, BannerStatusType } from '../../__generated__/prisma'
+
+export const Banner = t.Object({
+  id: t.String({ description: 'Banner ID' }),
+  image: t.Object({
+    url: t.String({ description: 'Path to the banner image file' }),
+    filePath: t.String({ description: 'File path of the banner image' }),
+  }),
+  status: t.Enum(BannerStatusType, { description: 'Publish status of the banner item' }),
+  navigation: t.Enum(BannerNavigationType, {
+    description: 'How the app should navigate when the item is tapped',
+  }),
+  destination: t.String({
+    description: 'The destination URI for the banner item',
+  }),
+  order: t.Number({ description: 'Display order (ascending)' }),
+})
+export type Banner = Static<typeof Banner>

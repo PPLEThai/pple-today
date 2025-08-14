@@ -64,11 +64,11 @@ const ANNOUNCEMENT_ERROR_SCHEMA = {
   },
 } satisfies InternalErrorSchemas
 
-export const CAROUSEL_ERROR_SCHEMA = {
-  CAROUSEL_NOT_FOUND: {
+export const BANNER_ERROR_SCHEMA = {
+  BANNER_NOT_FOUND: {
     status: 404,
   },
-  CAROUSEL_INVALID_INPUT: {
+  BANNER_INVALID_INPUT: {
     status: 400,
   },
 } satisfies InternalErrorSchemas
@@ -173,7 +173,7 @@ export const InternalErrorCodeSchemas = {
   ...FEED_ERROR_SCHEMA,
   ...ANNOUNCEMENT_ERROR_SCHEMA,
   ...POLL_ERROR_SCHEMA,
-  ...CAROUSEL_ERROR_SCHEMA,
+  ...BANNER_ERROR_SCHEMA,
   ...HASHTAG_ERROR_SCHEMA,
   ...TOPIC_ERROR_SCHEMA,
 } as const

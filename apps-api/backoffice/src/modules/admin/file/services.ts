@@ -17,8 +17,8 @@ export class AdminFileService {
     const randomId = createId()
 
     switch (body.category) {
-      case UploadFileCategory.CAROUSERL:
-        filePath = `${this.fileService.prefixTempFolder}carousel/carousel-${randomId}.png`
+      case UploadFileCategory.BANNER:
+        filePath = `${this.fileService.prefixTempFolder}banner/banner-${randomId}.png`
         fileContentType = 'image/png'
         break
       case UploadFileCategory.ANNOUNCEMENT:

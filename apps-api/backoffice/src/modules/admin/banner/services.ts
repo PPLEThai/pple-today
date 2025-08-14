@@ -2,32 +2,32 @@ import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import {
-  CreateCarouselBody,
-  CreateCarouselResponse,
-  GetCarouselByIdResponse,
-  GetCarouselsResponse,
-  UpdateCarouselBody,
+  CreateBannerBody,
+  CreateBannerResponse,
+  GetBannerByIdResponse,
+  GetBannersResponse,
+  UpdateBannerBody,
 } from './models'
-import { AdminCarouselRepository, AdminCarouselRepositoryPlugin } from './repository'
+import { AdminBannerRepository, AdminBannerRepositoryPlugin } from './repository'
 
 import { InternalErrorCode } from '../../../dtos/error'
 import { err } from '../../../utils/error'
 import { mapRawPrismaError } from '../../../utils/prisma'
 import { FileService, FileServicePlugin } from '../../file/services'
 
-export class AdminCarouselService {
+export class AdminBannerService {
   constructor(
-    private readonly carouselRepository: AdminCarouselRepository,
+    private readonly bannerRepository: AdminBannerRepository,
     private readonly fileService: FileService
   ) {}
 
-  private async removeOldBannerImage(carouselId: string, newImageFilePath?: string) {
-    const result = await this.carouselRepository.getCarouselById(carouselId)
+  private async removeOldBannerImage(bannerId: string, newImageFilePath?: string) {
+    const result = await this.bannerRepository.getBannerById(bannerId)
 
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         RECORD_NOT_FOUND: {
-          code: InternalErrorCode.CAROUSEL_NOT_FOUND,
+          code: InternalErrorCode.BANNER_NOT_FOUND,
         },
       })
 
@@ -53,19 +53,19 @@ export class AdminCarouselService {
     return ok()
   }
 
-  async getCarousels() {
-    const result = await this.carouselRepository.getCarousels()
+  async getBanners() {
+    const result = await this.bannerRepository.getBanners()
 
     if (result.isErr()) return mapRawPrismaError(result.error)
 
-    const imageBannerFilePaths = result.value.map((carousel) => carousel.imageFilePath)
+    const imageBannerFilePaths = result.value.map((banner) => banner.imageFilePath)
 
     const imageBannerUrlResults = await this.fileService.bulkGetFileSignedUrl(imageBannerFilePaths)
     if (imageBannerUrlResults.isErr()) return err(imageBannerUrlResults.error)
 
-    const response: GetCarouselsResponse = result.value.map(
-      ({ imageFilePath, ...carouselBody }, index) => ({
-        ...carouselBody,
+    const response: GetBannersResponse = result.value.map(
+      ({ imageFilePath, ...bannerBody }, index) => ({
+        ...bannerBody,
         image: {
           url: imageBannerUrlResults.value[index],
           filePath: imageFilePath,
@@ -76,23 +76,23 @@ export class AdminCarouselService {
     return ok(response)
   }
 
-  async getCarouselById(id: string) {
-    const result = await this.carouselRepository.getCarouselById(id)
+  async getBannerById(id: string) {
+    const result = await this.bannerRepository.getBannerById(id)
 
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         RECORD_NOT_FOUND: {
-          code: InternalErrorCode.CAROUSEL_NOT_FOUND,
+          code: InternalErrorCode.BANNER_NOT_FOUND,
         },
       })
 
-    const { imageFilePath, ...carouselBody } = result.value
+    const { imageFilePath, ...bannerBody } = result.value
 
     const imageUrlResult = await this.fileService.getFileSignedUrl(imageFilePath)
     if (imageUrlResult.isErr()) return err(imageUrlResult.error)
 
-    const response: GetCarouselByIdResponse = {
-      ...carouselBody,
+    const response: GetBannerByIdResponse = {
+      ...bannerBody,
       image: {
         url: imageUrlResult.value,
         filePath: imageFilePath,
@@ -102,14 +102,14 @@ export class AdminCarouselService {
     return ok(response)
   }
 
-  async createCarousel(data: CreateCarouselBody) {
+  async createBanner(data: CreateBannerBody) {
     const moveResult = await this.fileService.moveFileToPublicFolder([data.imageFilePath])
 
     if (moveResult.isErr()) return err(moveResult.error)
     const markFileStatusResult = await this.markShareMode(moveResult.value, data.status)
 
     if (markFileStatusResult.isErr()) return err(markFileStatusResult.error)
-    const result = await this.carouselRepository.createCarousel({
+    const result = await this.bannerRepository.createBanner({
       ...data,
       imageFilePath: moveResult.value[0],
     })
@@ -117,32 +117,32 @@ export class AdminCarouselService {
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         UNIQUE_CONSTRAINT_FAILED: {
-          code: InternalErrorCode.CAROUSEL_INVALID_INPUT,
+          code: InternalErrorCode.BANNER_INVALID_INPUT,
           message: 'Invalid Input',
         },
       })
 
-    const response: CreateCarouselResponse = result.value
+    const response: CreateBannerResponse = result.value
 
     return ok(response)
   }
 
-  async updateCarouselById(id: string, data: UpdateCarouselBody) {
+  async updateBannerById(id: string, data: UpdateBannerBody) {
     const clearResult = await this.removeOldBannerImage(id, data.imageFilePath)
     if (clearResult.isErr()) return err(clearResult.error)
 
     const moveResult = await this.fileService.moveFileToPublicFolder([data.imageFilePath])
     if (moveResult.isErr()) return err(moveResult.error)
 
-    const result = await this.carouselRepository.updateCarouselById(id, {
+    const result = await this.bannerRepository.updateBannerById(id, {
       ...data,
       imageFilePath: moveResult.value[0],
     })
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         RECORD_NOT_FOUND: {
-          code: InternalErrorCode.CAROUSEL_NOT_FOUND,
-          message: 'Carousel not found',
+          code: InternalErrorCode.BANNER_NOT_FOUND,
+          message: 'Banner not found',
         },
       })
 
@@ -152,25 +152,25 @@ export class AdminCarouselService {
     return ok()
   }
 
-  async deleteCarouselById(id: string) {
+  async deleteBannerById(id: string) {
     const clearResult = await this.removeOldBannerImage(id)
     if (clearResult.isErr()) return err(clearResult.error)
 
-    const result = await this.carouselRepository.deleteCarouselById(id)
+    const result = await this.bannerRepository.deleteBannerById(id)
 
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         RECORD_NOT_FOUND: {
-          code: InternalErrorCode.CAROUSEL_NOT_FOUND,
-          message: 'Carousel not found',
+          code: InternalErrorCode.BANNER_NOT_FOUND,
+          message: 'Banner not found',
         },
       })
 
     return ok()
   }
 
-  async reorderCarousel(ids: string[]) {
-    const result = await this.carouselRepository.reorderCarousel(ids)
+  async reorderBanner(ids: string[]) {
+    const result = await this.bannerRepository.reorderBanner(ids)
 
     if (result.isErr()) return mapRawPrismaError(result.error)
 
@@ -178,10 +178,10 @@ export class AdminCarouselService {
   }
 }
 
-export const AdminCarouselServicePlugin = new Elysia({
-  name: 'AdminCarouselService',
+export const AdminBannerServicePlugin = new Elysia({
+  name: 'AdminBannerService',
 })
-  .use([AdminCarouselRepositoryPlugin, FileServicePlugin])
-  .decorate(({ carouselRepository, fileService }) => ({
-    adminCarouselService: new AdminCarouselService(carouselRepository, fileService),
+  .use([AdminBannerRepositoryPlugin, FileServicePlugin])
+  .decorate(({ bannerRepository, fileService }) => ({
+    adminBannerService: new AdminBannerService(bannerRepository, fileService),
   }))

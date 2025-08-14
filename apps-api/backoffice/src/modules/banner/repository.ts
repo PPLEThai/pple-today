@@ -1,17 +1,17 @@
 import Elysia from 'elysia'
 
-import { CarouselStatusType } from '../../../__generated__/prisma'
+import { BannerStatusType } from '../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
 
-export class CarouselRepository {
+export class BannerRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async getCarousels() {
+  async getBanners() {
     return fromPrismaPromise(
-      this.prismaService.carousel.findMany({
+      this.prismaService.banner.findMany({
         where: {
-          status: CarouselStatusType.PUBLISH,
+          status: BannerStatusType.PUBLISH,
         },
         orderBy: {
           order: 'asc',
@@ -21,8 +21,8 @@ export class CarouselRepository {
   }
 }
 
-export const CarouselRepositoryPlugin = new Elysia({ name: 'CarouselRepository' })
+export const BannerRepositoryPlugin = new Elysia({ name: 'BannerRepository' })
   .use(PrismaServicePlugin)
   .decorate(({ prismaService }) => ({
-    carouselRepository: new CarouselRepository(prismaService),
+    bannerRepository: new BannerRepository(prismaService),
   }))

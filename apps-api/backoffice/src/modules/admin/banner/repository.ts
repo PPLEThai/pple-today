@@ -1,52 +1,48 @@
 import Elysia from 'elysia'
 
-import {
-  CarouselNavigationType,
-  CarouselStatusType,
-  PrismaClient,
-} from '../../../../__generated__/prisma'
-import { PrismaServicePlugin } from '../../../plugins/prisma'
+import { BannerNavigationType, BannerStatusType } from '../../../../__generated__/prisma'
+import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { fromPrismaPromise } from '../../../utils/prisma'
 
-export class AdminCarouselRepository {
-  constructor(private prisma: PrismaClient) {}
+export class AdminBannerRepository {
+  constructor(private prisma: PrismaService) {}
 
-  async getCarousels() {
+  async getBanners() {
     return fromPrismaPromise(
-      this.prisma.carousel.findMany({
+      this.prisma.banner.findMany({
         orderBy: { order: 'asc' },
       })
     )
   }
 
-  async getCarouselById(id: string) {
+  async getBannerById(id: string) {
     return fromPrismaPromise(
-      this.prisma.carousel.findUniqueOrThrow({
+      this.prisma.banner.findUniqueOrThrow({
         where: { id },
       })
     )
   }
 
-  async createCarousel(data: {
+  async createBanner(data: {
     imageFilePath: string
-    navigation: CarouselNavigationType
+    navigation: BannerNavigationType
     destination: string
-    status: CarouselStatusType
+    status: BannerStatusType
   }) {
     return fromPrismaPromise(
       this.prisma.$transaction(async (tx) => {
-        const lastCarousel = await tx.carousel.findFirst({
+        const lastBanner = await tx.banner.findFirst({
           orderBy: { order: 'desc' },
           select: { order: true },
         })
 
-        return tx.carousel.create({
+        return tx.banner.create({
           data: {
             imageFilePath: data.imageFilePath,
             navigation: data.navigation,
             destination: data.destination,
             status: data.status, // Default value
-            order: lastCarousel ? lastCarousel.order + 1 : 0,
+            order: lastBanner ? lastBanner.order + 1 : 0,
           },
           select: {
             id: true,
@@ -56,17 +52,17 @@ export class AdminCarouselRepository {
     )
   }
 
-  async updateCarouselById(
+  async updateBannerById(
     id: string,
     data: {
       imageFilePath: string
-      navigation: CarouselNavigationType
+      navigation: BannerNavigationType
       destination: string
-      status: CarouselStatusType
+      status: BannerStatusType
     }
   ) {
     return fromPrismaPromise(
-      this.prisma.carousel.update({
+      this.prisma.banner.update({
         where: { id },
         data: {
           imageFilePath: data.imageFilePath,
@@ -78,23 +74,23 @@ export class AdminCarouselRepository {
     )
   }
 
-  async deleteCarouselById(id: string) {
+  async deleteBannerById(id: string) {
     return fromPrismaPromise(
       this.prisma.$transaction(async (tx) => {
-        const deleted = await tx.carousel.delete({
+        const deleted = await tx.banner.delete({
           where: { id },
         })
 
-        // Reorder remaining carousels
-        const carousels = await tx.carousel.findMany({
+        // Reorder remaining banners
+        const banners = await tx.banner.findMany({
           orderBy: { order: 'asc' },
           select: { id: true },
         })
 
         await Promise.all(
-          carousels.map((carousel, index) =>
-            tx.carousel.update({
-              where: { id: carousel.id },
+          banners.map((banner, index) =>
+            tx.banner.update({
+              where: { id: banner.id },
               data: { order: index },
             })
           )
@@ -105,11 +101,11 @@ export class AdminCarouselRepository {
     )
   }
 
-  async reorderCarousel(ids: string[]) {
+  async reorderBanner(ids: string[]) {
     return fromPrismaPromise(
       this.prisma.$transaction(
         ids.map((id, index) =>
-          this.prisma.carousel.update({
+          this.prisma.banner.update({
             where: { id },
             data: { order: index },
           })
@@ -119,8 +115,8 @@ export class AdminCarouselRepository {
   }
 }
 
-export const AdminCarouselRepositoryPlugin = new Elysia({ name: 'AdminCarouselRepository' })
+export const AdminBannerRepositoryPlugin = new Elysia({ name: 'AdminBannerRepository' })
   .use(PrismaServicePlugin)
   .decorate(({ prismaService }) => ({
-    carouselRepository: new AdminCarouselRepository(prismaService),
+    bannerRepository: new AdminBannerRepository(prismaService),
   }))

@@ -1,34 +1,34 @@
 import Elysia from 'elysia'
 
 import {
-  CreateCarouselBody,
-  CreateCarouselResponse,
-  DeleteCarouselParams,
-  DeleteCarouselResponse,
-  GetCarouselByIdParams,
-  GetCarouselByIdResponse,
-  GetCarouselsResponse,
-  ReorderCarouselBody,
-  ReorderCarouselResponse,
-  UpdateCarouselBody,
-  UpdateCarouselParams,
-  UpdateCarouselResponse,
+  CreateBannerBody,
+  CreateBannerResponse,
+  DeleteBannerParams,
+  DeleteBannerResponse,
+  GetBannerByIdParams,
+  GetBannerByIdResponse,
+  GetBannersResponse,
+  ReorderBannerBody,
+  ReorderBannerResponse,
+  UpdateBannerBody,
+  UpdateBannerParams,
+  UpdateBannerResponse,
 } from './models'
-import { AdminCarouselServicePlugin } from './services'
+import { AdminBannerServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../../dtos/error'
 import { AuthGuardPlugin } from '../../../plugins/auth-guard'
 import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../../utils/error'
 
-export const AdminCarouselController = new Elysia({
-  prefix: '/carousels',
-  tags: ['Admin Carousel'],
+export const AdminBannerController = new Elysia({
+  prefix: '/banners',
+  tags: ['Admin Banner'],
 })
-  .use([AdminCarouselServicePlugin, AuthGuardPlugin])
+  .use([AdminBannerServicePlugin, AuthGuardPlugin])
   .get(
     '/',
-    async ({ adminCarouselService, status }) => {
-      const result = await adminCarouselService.getCarousels()
+    async ({ adminBannerService, status }) => {
+      const result = await adminBannerService.getBanners()
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -46,25 +46,25 @@ export const AdminCarouselController = new Elysia({
     {
       requiredUser: true,
       response: {
-        200: GetCarouselsResponse,
+        200: GetBannersResponse,
         ...createErrorSchema(
           InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
       detail: {
-        summary: 'Get all carousels',
-        description: 'Fetch all carousel items sorted by order',
+        summary: 'Get all banners',
+        description: 'Fetch all banner items sorted by order',
       },
     }
   )
   .get(
     '/:id',
-    async ({ params, adminCarouselService, status }) => {
-      const result = await adminCarouselService.getCarouselById(params.id)
+    async ({ params, adminBannerService, status }) => {
+      const result = await adminBannerService.getBannerById(params.id)
       if (result.isErr()) {
         switch (result.error.code) {
-          case InternalErrorCode.CAROUSEL_NOT_FOUND:
+          case InternalErrorCode.BANNER_NOT_FOUND:
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
@@ -78,28 +78,28 @@ export const AdminCarouselController = new Elysia({
     },
     {
       requiredUser: true,
-      params: GetCarouselByIdParams,
+      params: GetBannerByIdParams,
       response: {
-        200: GetCarouselByIdResponse,
+        200: GetBannerByIdResponse,
         ...createErrorSchema(
-          InternalErrorCode.CAROUSEL_NOT_FOUND,
+          InternalErrorCode.BANNER_NOT_FOUND,
           InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
       detail: {
-        summary: 'Get carousel by id',
-        description: 'Fetch a specific carousel item by id',
+        summary: 'Get banner by id',
+        description: 'Fetch a specific banner item by id',
       },
     }
   )
   .post(
     '/',
-    async ({ body, adminCarouselService, status }) => {
-      const result = await adminCarouselService.createCarousel(body)
+    async ({ body, adminBannerService, status }) => {
+      const result = await adminBannerService.createBanner(body)
       if (result.isErr()) {
         switch (result.error.code) {
-          case InternalErrorCode.CAROUSEL_INVALID_INPUT:
+          case InternalErrorCode.BANNER_INVALID_INPUT:
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
@@ -113,28 +113,28 @@ export const AdminCarouselController = new Elysia({
     },
     {
       requiredUser: true,
-      body: CreateCarouselBody,
+      body: CreateBannerBody,
       response: {
-        201: CreateCarouselResponse,
+        201: CreateBannerResponse,
         ...createErrorSchema(
-          InternalErrorCode.CAROUSEL_INVALID_INPUT,
+          InternalErrorCode.BANNER_INVALID_INPUT,
           InternalErrorCode.FILE_MOVE_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
       detail: {
-        summary: 'Create carousel',
-        description: 'Create a new carousel item',
+        summary: 'Create banner',
+        description: 'Create a new banner item',
       },
     }
   )
   .put(
     '/:id',
-    async ({ params, body, adminCarouselService, status }) => {
-      const result = await adminCarouselService.updateCarouselById(params.id, body)
+    async ({ params, body, adminBannerService, status }) => {
+      const result = await adminBannerService.updateBannerById(params.id, body)
       if (result.isErr()) {
         switch (result.error.code) {
-          case InternalErrorCode.CAROUSEL_NOT_FOUND:
+          case InternalErrorCode.BANNER_NOT_FOUND:
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
@@ -146,34 +146,34 @@ export const AdminCarouselController = new Elysia({
             exhaustiveGuard(result.error)
         }
       }
-      return status(200, { message: 'Carousel updated.' })
+      return status(200, { message: 'Banner updated.' })
     },
     {
       requiredUser: true,
-      params: UpdateCarouselParams,
-      body: UpdateCarouselBody,
+      params: UpdateBannerParams,
+      body: UpdateBannerBody,
       response: {
-        200: UpdateCarouselResponse,
+        200: UpdateBannerResponse,
         ...createErrorSchema(
-          InternalErrorCode.CAROUSEL_NOT_FOUND,
+          InternalErrorCode.BANNER_NOT_FOUND,
           InternalErrorCode.FILE_DELETE_ERROR,
           InternalErrorCode.FILE_MOVE_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
       detail: {
-        summary: 'Update carousel',
-        description: 'Update a specific carousel item by id',
+        summary: 'Update banner',
+        description: 'Update a specific banner item by id',
       },
     }
   )
   .delete(
     '/:id',
-    async ({ params, adminCarouselService, status }) => {
-      const result = await adminCarouselService.deleteCarouselById(params.id)
+    async ({ params, adminBannerService, status }) => {
+      const result = await adminBannerService.deleteBannerById(params.id)
       if (result.isErr()) {
         switch (result.error.code) {
-          case InternalErrorCode.CAROUSEL_NOT_FOUND:
+          case InternalErrorCode.BANNER_NOT_FOUND:
             return mapErrorCodeToResponse(result.error, status)
           case InternalErrorCode.INTERNAL_SERVER_ERROR:
             return mapErrorCodeToResponse(result.error, status)
@@ -183,44 +183,44 @@ export const AdminCarouselController = new Elysia({
             exhaustiveGuard(result.error)
         }
       }
-      return status(200, { message: 'Carousel deleted.' })
+      return status(200, { message: 'Banner deleted.' })
     },
     {
       requiredUser: true,
-      params: DeleteCarouselParams,
+      params: DeleteBannerParams,
       response: {
-        200: DeleteCarouselResponse,
+        200: DeleteBannerResponse,
         ...createErrorSchema(
           InternalErrorCode.FILE_DELETE_ERROR,
-          InternalErrorCode.CAROUSEL_NOT_FOUND,
+          InternalErrorCode.BANNER_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
       detail: {
-        summary: 'Delete carousel',
-        description: 'Delete a specific carousel item by id',
+        summary: 'Delete banner',
+        description: 'Delete a specific banner item by id',
       },
     }
   )
   .post(
     '/reorder',
-    async ({ body, adminCarouselService, status }) => {
-      const result = await adminCarouselService.reorderCarousel(body.ids)
+    async ({ body, adminBannerService, status }) => {
+      const result = await adminBannerService.reorderBanner(body.ids)
 
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
-      return status(200, { message: 'Carousels reordered.' })
+      return status(200, { message: 'Banners reordered.' })
     },
     {
       requiredUser: true,
-      body: ReorderCarouselBody,
+      body: ReorderBannerBody,
       response: {
-        200: ReorderCarouselResponse,
+        200: ReorderBannerResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
       },
       detail: {
-        summary: 'Bulk reorder carousels',
-        description: 'Reorder carousels by array of ids',
+        summary: 'Bulk reorder banners',
+        description: 'Reorder banners by array of ids',
       },
     }
   )
