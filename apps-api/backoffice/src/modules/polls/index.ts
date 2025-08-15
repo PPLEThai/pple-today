@@ -22,7 +22,7 @@ export const PollsController = new Elysia({
   .get(
     '/',
     async ({ user, query, status, pollsService }) => {
-      const result = await pollsService.getPolls(user?.sub, {
+      const result = await pollsService.getPolls(user?.id, {
         limit: query.limit,
         page: query.page,
       })
@@ -34,7 +34,7 @@ export const PollsController = new Elysia({
       return status(200, result.value)
     },
     {
-      fetchUser: true,
+      fetchLocalUser: true,
       query: ListPollsQuery,
       response: {
         200: ListPollsResponse,
@@ -49,7 +49,7 @@ export const PollsController = new Elysia({
   .post(
     '/:id/vote/:optionId',
     async ({ params, user, pollsService, status }) => {
-      const result = await pollsService.createPollVote(user.sub, params.id, params.optionId)
+      const result = await pollsService.createPollVote(user.id, params.id, params.optionId)
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -71,7 +71,7 @@ export const PollsController = new Elysia({
       return status(201, { message: 'Vote created successfully' })
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: CreatePollVoteParams,
       response: {
         201: CreatePollVoteResponse,
@@ -92,7 +92,7 @@ export const PollsController = new Elysia({
   .delete(
     '/:id/vote/:optionId',
     async ({ params, user, status, pollsService }) => {
-      const result = await pollsService.deletePollVote(user.sub, params.id, params.optionId)
+      const result = await pollsService.deletePollVote(user.id, params.id, params.optionId)
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -110,7 +110,7 @@ export const PollsController = new Elysia({
       return status(200, { message: 'Vote deleted successfully' })
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: DeletePollVoteParams,
       response: {
         200: DeletePollVoteResponse,

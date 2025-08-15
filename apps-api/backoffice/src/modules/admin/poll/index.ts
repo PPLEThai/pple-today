@@ -45,7 +45,7 @@ const AdminDraftedPollsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: PollIdParams,
       response: {
         200: GetDraftedPollResponse,
@@ -69,7 +69,7 @@ const AdminDraftedPollsController = new Elysia({
       return status(201, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       response: {
         201: PostDraftedPollResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
@@ -98,7 +98,7 @@ const AdminDraftedPollsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: PollIdParams,
       body: PutDraftedPollBody,
       response: {
@@ -117,7 +117,7 @@ const AdminDraftedPollsController = new Elysia({
   .post(
     '/:pollId/publish',
     async ({ params, user, status, adminPollService }) => {
-      const result = await adminPollService.publishDraftedPollById(params.pollId, user.sub)
+      const result = await adminPollService.publishDraftedPollById(params.pollId, user.id)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.POLL_NOT_FOUND:
@@ -132,7 +132,7 @@ const AdminDraftedPollsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: PollIdParams,
       response: {
         200: DraftedPollPublishedResponse,
@@ -165,7 +165,7 @@ const AdminDraftedPollsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: PollIdParams,
       response: {
         200: DeleteDraftedPollResponse,
@@ -214,7 +214,7 @@ export const AdminPollsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       query: GetPollsQuery,
       response: {
         200: GetPollsResponse,
@@ -247,7 +247,7 @@ export const AdminPollsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: PollIdParams,
       response: {
         200: GetPublishedPollResponse,
@@ -280,7 +280,7 @@ export const AdminPollsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: PollIdParams,
       body: PutPublishedPollBody,
       response: {
@@ -314,7 +314,7 @@ export const AdminPollsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: PollIdParams,
       response: {
         200: PublishedPollUnpublishedResponse,
@@ -347,7 +347,7 @@ export const AdminPollsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: PollIdParams,
       response: {
         200: DeletePublishedPollResponse,

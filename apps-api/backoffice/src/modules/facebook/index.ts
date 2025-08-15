@@ -100,7 +100,7 @@ export const FacebookController = new Elysia({
       .get(
         '/',
         async ({ status, facebookService, user }) => {
-          const linkedPageResult = await facebookService.getLinkedFacebookPage(user.sub)
+          const linkedPageResult = await facebookService.getLinkedFacebookPage(user.id)
 
           if (linkedPageResult.isErr()) {
             return status(500, {
@@ -114,7 +114,7 @@ export const FacebookController = new Elysia({
           return status(200, { linkedFacebookPage: linkedPageResult.value })
         },
         {
-          requiredUser: true,
+          requiredLocalUser: true,
           response: {
             200: GetLinkedFacebookPageResponse,
             ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
@@ -131,7 +131,7 @@ export const FacebookController = new Elysia({
           const { facebookPageId, facebookPageAccessToken } = body
 
           const linkResult = await facebookService.linkFacebookPageToUser({
-            userId: user.sub,
+            userId: user.id,
             facebookPageId,
             facebookPageAccessToken,
           })
@@ -151,7 +151,7 @@ export const FacebookController = new Elysia({
           })
         },
         {
-          requiredUser: true,
+          requiredLocalUser: true,
           body: LinkFacebookPageToUserBody,
           response: {
             201: LinkFacebookPageToUserResponse,
@@ -166,7 +166,7 @@ export const FacebookController = new Elysia({
       .delete(
         '/',
         async ({ status, facebookService, user }) => {
-          const unlinkResult = await facebookService.unlinkFacebookPageFromUser(user.sub)
+          const unlinkResult = await facebookService.unlinkFacebookPageFromUser(user.id)
 
           if (unlinkResult.isErr()) {
             console.error('Failed to unlink Facebook page', unlinkResult.error)
@@ -183,7 +183,7 @@ export const FacebookController = new Elysia({
           })
         },
         {
-          requiredUser: true,
+          requiredLocalUser: true,
           response: {
             200: UnlinkPageResponse,
             ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
