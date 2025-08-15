@@ -24,7 +24,7 @@ import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../.
 
 const AdminDraftedPollsController = new Elysia({
   prefix: '/draft',
-  tags: ['Drafted Polls'],
+  tags: ['Admin Drafted Polls'],
 })
   .use([AuthGuardPlugin, AdminPollServicePlugin])
   .get(
@@ -183,8 +183,7 @@ const AdminDraftedPollsController = new Elysia({
 
 export const AdminPollsController = new Elysia({
   prefix: '/polls',
-
-  tags: ['Polls'],
+  tags: ['Admin Polls'],
 })
   .use([AuthGuardPlugin, AdminPollServicePlugin])
   .use(AdminDraftedPollsController)

@@ -24,7 +24,7 @@ import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../.
 
 const AdminDraftedAnnouncementsController = new Elysia({
   prefix: '/draft',
-  tags: ['Drafted Announcements'],
+  tags: ['Admin Drafted Announcements'],
 })
   .use([AuthGuardPlugin, AdminAnnouncementServicePlugin])
   .get(
@@ -209,7 +209,7 @@ const AdminDraftedAnnouncementsController = new Elysia({
 
 export const AdminAnnouncementsController = new Elysia({
   prefix: '/announcements',
-  tags: ['Announcements'],
+  tags: ['Admin Announcements'],
 })
   .use([AuthGuardPlugin, AdminAnnouncementServicePlugin])
   .use(AdminDraftedAnnouncementsController)

@@ -16,7 +16,7 @@ import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../.
 
 export const PollsController = new Elysia({
   prefix: '/polls',
-  tags: ['Application Polls'],
+  tags: ['Polls'],
 })
   .use([AuthGuardPlugin, PollsServicePlugin])
   .get(

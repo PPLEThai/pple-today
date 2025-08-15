@@ -21,7 +21,7 @@ import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../.
 
 export const AdminHashtagController = new Elysia({
   prefix: '/hashtags',
-  tags: ['Hashtags'],
+  tags: ['Admin Hashtags'],
 })
   .use([AuthGuardPlugin, AdminHashtagServicePlugin])
   .get(

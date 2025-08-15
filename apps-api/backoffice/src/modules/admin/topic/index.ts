@@ -20,7 +20,7 @@ import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../.
 
 export const AdminTopicController = new Elysia({
   prefix: '/topics',
-  tags: ['Topics'],
+  tags: ['Admin Topics'],
 })
   .use([AuthGuardPlugin, AdminTopicServicePlugin])
   .get(
