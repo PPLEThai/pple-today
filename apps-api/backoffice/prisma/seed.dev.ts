@@ -1,4 +1,5 @@
 import { PrismaPg } from '@prisma/adapter-pg'
+import * as R from 'remeda'
 
 import {
   AnnouncementType,
@@ -8,6 +9,44 @@ import {
   PrismaClient,
   UserRole,
 } from '../__generated__/prisma'
+const transformProvinceDetails = async () => {
+  const response = await fetch(
+    'https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_province_with_amphure_tambon.json'
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch province details')
+  }
+
+  const data = await response.json()
+
+  const result: {
+    province: string
+    district: string
+    subDistrict: string
+    postalCode: string
+  }[] = []
+
+  R.forEach(data, (province) => {
+    const { amphure, name_th: provinceTh } = province
+    R.forEach(amphure, (district) => {
+      const { name_th: districtTh, tambon } = district
+      R.forEach(tambon, (subDistrict) => {
+        const { name_th: subDistrictTh, zip_code: postalCodeNumber } = subDistrict
+        const postalCode = postalCodeNumber.toString()
+
+        result.push({
+          province: provinceTh,
+          district: districtTh,
+          subDistrict: subDistrictTh,
+          postalCode,
+        })
+      })
+    })
+  })
+
+  return result
+}
 
 const connectionString = `${process.env.DATABASE_URL}`
 
@@ -17,6 +56,35 @@ const prisma = new PrismaClient({
 })
 
 const OFFICIAL_USER_ID = 'official-user'
+
+const seedAddresses = async () => {
+  const provinces = await transformProvinceDetails()
+
+  for (const { province, district, subDistrict, postalCode } of provinces) {
+    await prisma.address.upsert({
+      where: {
+        district_subDistrict: {
+          district,
+          subDistrict,
+        },
+      },
+      create: {
+        province,
+        district,
+        subDistrict,
+        postalCode,
+      },
+      update: {
+        province,
+        district,
+        subDistrict,
+        postalCode,
+      },
+    })
+  }
+
+  console.log('Seeded address successfully.')
+}
 
 const seedBanners = async () => {
   const externalBrowser = {
@@ -50,16 +118,18 @@ const seedBanners = async () => {
         id: `banner-${i}`,
       },
       create: {
-        ...navigationDetails,
+        id: `banner-${i}`,
         imageFilePath: `local/test/banner-${i}.png`,
         status: 'PUBLISH',
         order: i,
+        ...navigationDetails,
       },
       update: {
-        ...navigationDetails,
+        id: `banner-${i}`,
         imageFilePath: `local/test/banner-${i}.png`,
         status: 'PUBLISH',
         order: i,
+        ...navigationDetails,
       },
     })
   }
@@ -315,6 +385,7 @@ const seedAnnouncements = async () => {
 }
 
 async function main() {
+  await seedAddresses()
   await seedHashtags()
   await seedOfficialUser()
   await seedTopics()
