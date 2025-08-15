@@ -10,8 +10,8 @@ import PPLEIcon from '@app/assets/pple-icon.svg'
 import {
   login,
   useDiscoveryQuery,
+  useSessionMutation,
   useSessionQuery,
-  useSetSession,
   useUserQuery,
 } from '@app/libs/auth'
 
@@ -25,6 +25,7 @@ export default function Index() {
   }, [discoveryQuery.error])
 
   const sessionQuery = useSessionQuery()
+  const sessionMutation = useSessionMutation()
 
   const userQuery = useUserQuery({
     variables: {
@@ -36,8 +37,9 @@ export default function Index() {
   useEffect(() => {
     // should this throw into userQuery.error instead?
     if (userQuery.data?.error === 'access_denied') {
-      console.error('Error fetching user info:', userQuery.data)
-      setSessionMutation.mutate(null)
+      // incase the token is expired
+      console.log('Error fetching user info:', userQuery.data)
+      sessionMutation.mutate(null)
       return
     }
     if (userQuery.data?.error) {
@@ -47,12 +49,10 @@ export default function Index() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userQuery.data])
 
-  const setSessionMutation = useSetSession()
-
   const loginMutation = useMutation({
     mutationFn: login,
     onSuccess: (result) => {
-      setSessionMutation.mutate({
+      sessionMutation.mutate({
         accessToken: result.accessToken,
         refreshToken: result.refreshToken ?? '',
         idToken: result.idToken ?? null,

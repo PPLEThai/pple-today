@@ -30,6 +30,7 @@ import Animated, {
   useEvent,
   useHandler,
   useSharedValue,
+  withTiming,
 } from 'react-native-reanimated'
 
 import { Badge } from '@pple-today/ui/badge'
@@ -39,10 +40,11 @@ import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/
 import { Text } from '@pple-today/ui/text'
 import { H2, H3 } from '@pple-today/ui/typography'
 import { Image } from 'expo-image'
+import * as Linking from 'expo-linking'
 import { useRouter } from 'expo-router'
+import * as WebBrowser from 'expo-web-browser'
 import {
   ArrowRightIcon,
-  BellIcon,
   CirclePlusIcon,
   ClockIcon,
   ContactRoundIcon,
@@ -56,10 +58,14 @@ import {
   Share2Icon,
 } from 'lucide-react-native'
 
+import { GetBannersResponse } from '@api/backoffice/src/modules/banner/models'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AnnouncementSlides } from '@app/components/announcement'
 import { KeyboardAvoidingViewLayout } from '@app/components/keyboard-avoiding-view-layout'
-import { useUser } from '@app/libs/auth'
+import { environment } from '@app/env'
+import { useAuthMe, useSessionQuery } from '@app/libs/auth'
+import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
+import { queryClient } from '@app/libs/react-query'
 
 import { ExpoScrollForwarderView } from '../../../../packages/expo-scroll-forwarder/build'
 
@@ -72,33 +78,46 @@ export default function IndexLayout() {
 }
 
 function MainHeader() {
-  const userQuery = useUser()
   const router = useRouter()
+  const authMe = useAuthMe()
+  const headings = authMe.data
+    ? { welcome: 'ยินดีต้อนรับ', title: authMe.data.name }
+    : { welcome: 'ยินดีต้อนรับสู่', title: 'PPLE Today' }
   return (
     <View className="w-full px-4 pt-10 pb-2 flex flex-row justify-between gap-2 bg-base-bg-white border-b border-base-outline-default ">
       <View className="flex flex-row items-center gap-3">
         <Pressable
           className="w-10 h-10 flex flex-col items-center justify-center"
-          onPress={() => router.navigate('/(tabs)/(top-tabs)/playground')}
+          onPress={() => {
+            if (
+              environment.APP_ENVIRONMENT === 'development' ||
+              environment.APP_ENVIRONMENT === 'local'
+            )
+              router.navigate('/(tabs)/(top-tabs)/playground')
+          }}
         >
           <PPLEIcon width={35} height={30} />
         </Pressable>
-        {/* TODO: What to show when user is loading or not logged in? */}
-        {userQuery.data && (
-          <View className="flex flex-col ">
-            <Text className="font-anakotmai-light text-xs">ยินดีต้อนรับ</Text>
-            <Text className="font-anakotmai-bold text-2xl text-base-primary-default">
-              {userQuery.data.given_name}
-            </Text>
-          </View>
-        )}
+        <View className="flex flex-col">
+          <Text className="font-anakotmai-light text-xs">{headings.welcome}</Text>
+          <Text className="font-anakotmai-bold text-2xl text-base-primary-default">
+            {headings.title}
+          </Text>
+        </View>
       </View>
       <View className="flex flex-row gap-4">
-        <Button variant="secondary" size="icon" aria-label="Notifications">
+        {/* TODO: Notification system */}
+        {/* <Button variant="secondary" size="icon" aria-label="Notifications">
           <Icon icon={BellIcon} size={20} className="fill-base-secondary-default" />
-        </Button>
+        </Button> */}
         {/* TODO: avatar or profile picture */}
-        <Button size="icon" aria-label="Profile Settings">
+        <Button
+          size="icon"
+          aria-label="Profile Settings"
+          onPress={() => {
+            router.push('/auth')
+          }}
+        >
           <Icon icon={PPLEIcon} width={20} height={20} color="white" />
         </Button>
       </View>
@@ -108,7 +127,7 @@ function MainHeader() {
 
 function TopContainer() {
   return (
-    <View className="flex flex-col w-full bg-base-bg-white ">
+    <View className="flex flex-col w-full bg-base-bg-white">
       <BannerSection />
       <EventSection />
       <UserInfoSection />
@@ -116,33 +135,37 @@ function TopContainer() {
   )
 }
 
-const BANNER_ITEMS: BannerItem[] = [
-  { id: '1', image: require('@app/assets/banner-1.png'), description: 'พรรคประชาชน' },
-  { id: '2', image: require('@app/assets/banner-2.png'), description: 'พรรคประชาชน' },
-  { id: '3', image: require('@app/assets/banner-1.png'), description: 'พรรคประชาชน' },
-  { id: '4', image: require('@app/assets/banner-2.png'), description: 'พรรคประชาชน' },
+// assuming there are usually 2 or more banners
+const PLACEHOLDER_BANNERS: GetBannersResponse = [
+  {
+    id: '1',
+    imageUrl: '',
+    destination: '',
+    navigation: 'IN_APP_NAVIGATION',
+  },
+  {
+    id: '2',
+    imageUrl: '',
+    destination: '',
+    navigation: 'IN_APP_NAVIGATION',
+  },
 ]
 
-interface BannerItem {
-  id: string
-  image: any
-  description: string
-}
-
 function BannerSection() {
+  const bannersQuery = queryClient.useQuery('/banners', {})
+  const banners = bannersQuery.data ?? PLACEHOLDER_BANNERS
+  if (banners.length === 0) return null
   return (
     <Slide
-      count={BANNER_ITEMS.length}
+      count={banners.length}
       itemWidth={320}
       gap={8}
       paddingHorizontal={16}
       className="w-full pt-2 py-4"
     >
       <SlideScrollView>
-        {BANNER_ITEMS.map((item) => (
-          <SlideItem key={item.id} className="bg-base-bg-light rounded-xl overflow-hidden">
-            <Banner item={item} />
-          </SlideItem>
+        {banners.map((banner) => (
+          <Banner key={banner.id} banner={banner} />
         ))}
       </SlideScrollView>
       <SlideIndicators />
@@ -150,22 +173,57 @@ function BannerSection() {
   )
 }
 
-const blurhash =
-  '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj['
+function Banner({ banner }: { banner: GetBannersResponse[number] }) {
+  const onPress = () => {
+    switch (banner.navigation) {
+      case 'IN_APP_NAVIGATION': // use deeplink scheme like 'pple-today:///auth'
+      case 'EXTERNAL_BROWSER':
+        Linking.openURL(banner.destination)
+        break
+      case 'MINI_APP':
+        WebBrowser.openBrowserAsync(banner.destination)
+        break
+      default:
+        return exhaustiveGuard(banner.navigation)
+    }
+  }
+  const opacity = useSharedValue(1)
+  const scale = useSharedValue(1)
+  const disabled = !banner.destination
+  const fadeIn = () => {
+    if (disabled) return
+    opacity.value = withTiming(0.9, { duration: 150 })
+    scale.value = withTiming(0.98, { duration: 150 })
+  }
+  const fadeOut = () => {
+    if (disabled) return
+    opacity.value = withTiming(1, { duration: 150 })
+    scale.value = withTiming(1, { duration: 150 })
+  }
 
-function Banner(props: { item: BannerItem; className?: string }) {
-  // TODO: link
   return (
-    <Image
-      alt={props.item.description}
-      source={props.item.image}
-      placeholder={{ blurhash }}
-      style={{ width: 320, height: 180 }}
-      contentFit="cover"
-      transition={300}
-    />
+    <SlideItem key={banner.id}>
+      <Pressable onPressIn={fadeIn} onPressOut={fadeOut} onPress={onPress} disabled={disabled}>
+        <Animated.View
+          style={{ opacity, transform: [{ scale }] }}
+          className="bg-base-bg-light rounded-xl overflow-hidden"
+        >
+          <Image
+            // alt={props.item.description}
+            source={banner.imageUrl}
+            // placeholder={{ blurhash }}
+            style={{ width: 320, height: 180 }}
+            contentFit="cover"
+            transition={300}
+          />
+        </Animated.View>
+      </Pressable>
+    </SlideItem>
   )
 }
+
+// const blurhash =
+//   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj['
 
 function EventSection() {
   return (
@@ -223,17 +281,29 @@ function ElectionCard() {
 }
 
 function UserInfoSection() {
+  const sessionQuery = useSessionQuery()
+  const authMeQuery = queryClient.useQuery(
+    '/auth/me',
+    { headers: { Authorization: sessionQuery.data?.accessToken } },
+    { enabled: !!sessionQuery.data?.accessToken }
+  )
+  // hide when not yet onboarded and therefore no address data
+  if (!authMeQuery.data?.address) {
+    return null
+  }
   return (
     <View className="flex flex-row justify-between items-center w-full px-4">
-      <View className="flex flex-col items-start ">
+      <View className="flex flex-col items-start">
         <View className="flex flex-row items-center gap-2">
           <Icon icon={MapPinnedIcon} size={16} className="text-base-primary-medium" />
           <H2 className="text-xs text-base-text-high font-anakotmai-light">พื้นที่ของคุณ</H2>
         </View>
         <Text className="text-lg text-base-primary-default font-anakotmai-bold">
-          สามเสนใน, พญาไท
+          {authMeQuery.data.address.subDistrict}, {authMeQuery.data.address.district}
         </Text>
-        <Text className="text-sm text-base-text-high font-anakotmai-light">กรุงเทพมหานคร</Text>
+        <Text className="text-sm text-base-text-high font-anakotmai-light">
+          {authMeQuery.data.address.province}
+        </Text>
       </View>
       {/* TODO: style active state & navigate */}
       <Pressable className="flex flex-row items-center gap-3 border border-base-outline-default rounded-2xl p-4">

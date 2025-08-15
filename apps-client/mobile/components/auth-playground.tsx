@@ -10,9 +10,9 @@ import {
   login,
   logout,
   useDiscoveryQuery,
+  useSessionMutation,
   useSessionQuery,
-  useSetSession,
-  useUserQuery,
+  useUser,
 } from '@app/libs/auth'
 
 export function AuthPlayground() {
@@ -25,33 +25,14 @@ export function AuthPlayground() {
   }, [discoveryQuery.error])
 
   const sessionQuery = useSessionQuery()
+  const sessionMutation = useSessionMutation()
 
-  const userQuery = useUserQuery({
-    variables: {
-      session: sessionQuery.data!,
-      discovery: discoveryQuery.data!,
-    },
-    enabled: !!discoveryQuery.data && !!sessionQuery.data,
-  })
-  useEffect(() => {
-    if (userQuery.data?.error === 'access_denied') {
-      console.error('Error fetching user info:', userQuery.data)
-      setSessionMutation.mutate(null)
-      return
-    }
-    if (userQuery.data?.error) {
-      console.error('Error fetching user info:', userQuery.data)
-      // TODO: handle error in other cases
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userQuery.data])
-
-  const setSessionMutation = useSetSession()
+  const userQuery = useUser()
 
   const loginMutation = useMutation({
     mutationFn: login,
     onSuccess: (result) => {
-      setSessionMutation.mutate({
+      sessionMutation.mutate({
         accessToken: result.accessToken,
         refreshToken: result.refreshToken ?? '',
         idToken: result.idToken ?? null,
@@ -62,7 +43,7 @@ export function AuthPlayground() {
     mutationFn: logout,
     onSuccess: () => {
       // Clear tokens from secure storage
-      setSessionMutation.mutate(null)
+      sessionMutation.mutate(null)
     },
   })
 
