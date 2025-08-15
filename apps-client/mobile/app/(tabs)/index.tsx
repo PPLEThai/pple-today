@@ -154,6 +154,7 @@ const PLACEHOLDER_BANNERS: GetBannersResponse = [
 function BannerSection() {
   const bannersQuery = queryClient.useQuery('/banners', {})
   const banners = bannersQuery.data ?? PLACEHOLDER_BANNERS
+  if (banners.length === 0) return null
   return (
     <Slide
       count={banners.length}
