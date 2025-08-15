@@ -19,6 +19,8 @@ import * as WebBrowser from 'expo-web-browser'
 import appConfig from '@app/app.config'
 import { environment } from '@app/env'
 
+import { queryClient } from './react-query'
+
 const authRequest: AuthRequest = new AuthRequest({
   responseType: ResponseType.Code,
   clientId: environment.EXPO_PUBLIC_OIDC_CLIENT_ID,
@@ -54,13 +56,13 @@ export const useSessionQuery = createQuery({
   },
 })
 
-export const useSetSessionMutation = createMutation({
-  mutationKey: ['setSession'],
+const useSetSessionMutation = createMutation({
+  mutationKey: ['session'],
   mutationFn: (session: AuthSession | null) => {
     return setItemAsync(AUTH_SESSION_STORAGE_KEY, JSON.stringify(session))
   },
 })
-export const useSetSession = () => {
+export const useSessionMutation = () => {
   const queryClient = useQueryClient()
   const sessionQuery = useSessionQuery()
   const userQuery = useUserQuery()
@@ -97,6 +99,16 @@ export const useUser = () => {
     },
     enabled: !!discoveryQuery.data && !!sessionQuery.data,
   })
+}
+
+export const useAuthMe = () => {
+  const sessionQuery = useSessionQuery()
+  // TODO: wait for /auth/me to accept bearer token
+  return queryClient.useQuery(
+    '/auth/me',
+    { headers: { authorization: `Bearer ${sessionQuery.data?.accessToken}` } },
+    { enabled: !!sessionQuery.data }
+  )
 }
 
 export const codeExchange = async ({
