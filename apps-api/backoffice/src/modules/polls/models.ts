@@ -3,7 +3,7 @@ import { Static, t } from 'elysia'
 import { FeedItemPoll } from '../../dtos/feed'
 import { PaginationQuery } from '../../dtos/pagination'
 
-export const ListPollsQuery = t.Pick(PaginationQuery, ['page', 'limit'])
+export const ListPollsQuery = PaginationQuery
 export type ListPollsQuery = Static<typeof ListPollsQuery>
 
 export const ListPollsResponse = t.Object({
