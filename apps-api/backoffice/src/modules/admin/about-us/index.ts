@@ -27,7 +27,7 @@ export const AdminAboutUsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       response: {
         200: GetAboutUsResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
@@ -47,7 +47,7 @@ export const AdminAboutUsController = new Elysia({
       return status(201, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       body: t.Pick(AboutUs, ['title', 'url', 'iconImageUrl', 'backgroundColor']),
       response: {
         201: CreateAboutUsResponse,
@@ -78,7 +78,7 @@ export const AdminAboutUsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: t.Pick(AboutUs, ['id']),
       body: t.Pick(AboutUs, ['title', 'url', 'iconImageUrl', 'backgroundColor']),
       response: {
@@ -113,7 +113,7 @@ export const AdminAboutUsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: t.Pick(AboutUs, ['id']),
       response: {
         200: DeleteAboutUsResponse,

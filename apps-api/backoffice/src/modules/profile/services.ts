@@ -27,7 +27,13 @@ export class ProfileService {
       })
     }
 
-    return ok(user.value)
+    return ok({
+      ...user.value,
+      address: user.value.address ?? undefined,
+      profileImage: user.value.profileImage
+        ? this.fileService.getPublicFileUrl(user.value.profileImage)
+        : undefined,
+    })
   }
 
   async followUser(userId: string, followedUserId: string) {
@@ -74,7 +80,15 @@ export class ProfileService {
       })
     }
 
-    return ok(result.value.followings.map((user) => user.followed))
+    return ok(
+      result.value.followings.map((user) => ({
+        ...user.followed,
+        address: user.followed.address ?? undefined,
+        profileImage: user.followed.profileImage
+          ? this.fileService.getPublicFileUrl(user.followed.profileImage)
+          : undefined,
+      }))
+    )
   }
 
   async updateProfile(userId: string, userData: UpdateProfileBody) {
@@ -106,7 +120,13 @@ export class ProfileService {
       })
     }
 
-    return ok(result.value)
+    return ok({
+      ...result.value,
+      address: result.value.address ?? undefined,
+      profileImage: result.value.profileImage
+        ? this.fileService.getPublicFileUrl(result.value.profileImage)
+        : undefined,
+    })
   }
 
   async completeOnboardingProfile(userId: string, profileData: CompleteOnboardingProfileBody) {
@@ -142,7 +162,13 @@ export class ProfileService {
         },
       })
 
-    return ok(result.value)
+    return ok({
+      ...result.value,
+      address: result.value.address ?? undefined,
+      profileImage: result.value.profileImage
+        ? this.fileService.getPublicFileUrl(result.value.profileImage)
+        : undefined,
+    })
   }
 
   async getProfileUploadUrl(userId: string) {

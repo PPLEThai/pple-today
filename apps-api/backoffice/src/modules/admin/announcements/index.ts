@@ -49,7 +49,7 @@ const AdminDraftedAnnouncementsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: AnnouncementIdParams,
       response: {
         200: GetDraftedAnnouncementResponse,
@@ -74,7 +74,7 @@ const AdminDraftedAnnouncementsController = new Elysia({
       return status(201, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       response: {
         201: PostDraftedAnnouncementResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
@@ -110,7 +110,7 @@ const AdminDraftedAnnouncementsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: AnnouncementIdParams,
       body: PutDraftedAnnouncementBody,
       response: {
@@ -133,7 +133,7 @@ const AdminDraftedAnnouncementsController = new Elysia({
     async ({ params, user, status, adminAnnouncementService }) => {
       const result = await adminAnnouncementService.publishDraftedAnnouncementById(
         params.announcementId,
-        user.sub
+        user.id
       )
       if (result.isErr()) {
         switch (result.error.code) {
@@ -153,7 +153,7 @@ const AdminDraftedAnnouncementsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: AnnouncementIdParams,
       response: {
         200: DraftedAnnouncementPublishedResponse,
@@ -190,7 +190,7 @@ const AdminDraftedAnnouncementsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: AnnouncementIdParams,
       response: {
         200: DeleteDraftedAnnouncementResponse,
@@ -241,7 +241,7 @@ export const AdminAnnouncementsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       query: GetAnnouncementsQuery,
       response: {
         200: GetAnnouncementsResponse,
@@ -276,7 +276,7 @@ export const AdminAnnouncementsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: AnnouncementIdParams,
       response: {
         200: GetPublishedAnnouncementResponse,
@@ -317,7 +317,7 @@ export const AdminAnnouncementsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: AnnouncementIdParams,
       body: PutPublishedAnnouncementBody,
       response: {
@@ -355,7 +355,7 @@ export const AdminAnnouncementsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: AnnouncementIdParams,
       response: {
         200: PublishedAnnouncementUnpublishedResponse,
@@ -391,7 +391,7 @@ export const AdminAnnouncementsController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: AnnouncementIdParams,
       response: {
         200: DeletePublishedAnnouncementResponse,

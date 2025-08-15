@@ -34,7 +34,7 @@ export const FeedController = new Elysia({
   .get(
     '/:id',
     async ({ params, user, status, feedService }) => {
-      const result = await feedService.getFeedContentById(params.id, user?.sub)
+      const result = await feedService.getFeedContentById(params.id, user?.id)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.FEED_ITEM_NOT_FOUND:
@@ -49,7 +49,7 @@ export const FeedController = new Elysia({
       return status(200, result.value)
     },
     {
-      fetchUser: true,
+      fetchLocalUser: true,
       params: GetFeedContentParams,
       response: {
         200: GetFeedContentResponse,
@@ -68,7 +68,7 @@ export const FeedController = new Elysia({
     '/:id/comments',
     async ({ params, query, status, user, feedService }) => {
       const result = await feedService.getFeedComments(params.id, {
-        userId: user?.sub,
+        userId: user?.id,
         limit: query.limit,
         page: query.page,
       })
@@ -86,7 +86,7 @@ export const FeedController = new Elysia({
       return status(200, result.value as GetFeedCommentResponse)
     },
     {
-      fetchUser: true,
+      fetchLocalUser: true,
       params: GetFeedCommentParams,
       query: GetFeedCommentQuery,
       response: {
@@ -105,7 +105,7 @@ export const FeedController = new Elysia({
   .post(
     '/:id/reaction',
     async ({ params, body, user, status, feedService }) => {
-      const result = await feedService.createFeedReaction(params.id, user.sub, body)
+      const result = await feedService.createFeedReaction(params.id, user.id, body)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.FEED_ITEM_NOT_FOUND:
@@ -122,7 +122,7 @@ export const FeedController = new Elysia({
       return result.value
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: CreateFeedReactionParams,
       body: CreateFeedReactionBody,
       response: {
@@ -142,7 +142,7 @@ export const FeedController = new Elysia({
   .delete(
     '/:id/reaction',
     async ({ params, status, user, feedService }) => {
-      const result = await feedService.deleteFeedReaction(params.id, user.sub)
+      const result = await feedService.deleteFeedReaction(params.id, user.id)
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -158,7 +158,7 @@ export const FeedController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: DeleteFeedReactionParams,
       response: {
         200: DeleteFeedReactionResponse,
@@ -176,7 +176,7 @@ export const FeedController = new Elysia({
   .post(
     '/:id/comment',
     async ({ params, body, user, status, feedService }) => {
-      const result = await feedService.createFeedComment(params.id, user.sub, body.content)
+      const result = await feedService.createFeedComment(params.id, user.id, body.content)
       if (result.isErr()) {
         switch (result.error.code) {
           case InternalErrorCode.FEED_ITEM_NOT_FOUND:
@@ -191,7 +191,7 @@ export const FeedController = new Elysia({
       return result.value
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: CreateFeedCommentParams,
       body: CreateFeedCommentBody,
       response: {
@@ -213,7 +213,7 @@ export const FeedController = new Elysia({
       const result = await feedService.updateFeedComment(
         params.id,
         params.commentId,
-        user.sub,
+        user.id,
         body.content
       )
 
@@ -231,7 +231,7 @@ export const FeedController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: UpdateFeedCommentParams,
       body: UpdateFeedCommentBody,
       response: {
@@ -250,7 +250,7 @@ export const FeedController = new Elysia({
   .delete(
     '/:id/comment/:commentId',
     async ({ params, user, status, feedService }) => {
-      const result = await feedService.deleteFeedComment(params.id, params.commentId, user.sub)
+      const result = await feedService.deleteFeedComment(params.id, params.commentId, user.id)
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -266,7 +266,7 @@ export const FeedController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: DeleteFeedCommentParams,
       response: {
         200: DeleteFeedCommentResponse,

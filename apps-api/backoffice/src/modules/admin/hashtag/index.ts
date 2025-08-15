@@ -38,7 +38,7 @@ export const AdminHashtagController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       query: GetHashtagsQuery,
       response: {
         200: GetHashtagsResponse,
@@ -71,7 +71,7 @@ export const AdminHashtagController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: GetHashtagByIdParams,
       response: {
         200: GetHashtagByIdResponse,
@@ -104,7 +104,7 @@ export const AdminHashtagController = new Elysia({
       return status(201, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       body: CreateHashtagBody,
       response: {
         201: CreateHashtagResponse,
@@ -139,7 +139,7 @@ export const AdminHashtagController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: UpdateHashtagParams,
       body: UpdateHashtagBody,
       response: {
@@ -174,7 +174,7 @@ export const AdminHashtagController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: DeleteHashtagParams,
       response: {
         200: DeleteHashtagResponse,

@@ -1,13 +1,19 @@
 import Elysia from 'elysia'
+import { ok } from 'neverthrow'
 
 import { AuthRepository, AuthRepositoryPlugin } from './repository'
 
+import { UserRole } from '../../../__generated__/prisma'
 import { IntrospectAccessTokenResult } from '../../dtos/auth'
 import { InternalErrorCode } from '../../dtos/error'
 import { mapRawPrismaError } from '../../utils/prisma'
+import { FileService, FileServicePlugin } from '../file/services'
 
 export class AuthService {
-  constructor(private authRepository: AuthRepository) {}
+  constructor(
+    private authRepository: AuthRepository,
+    private fileService: FileService
+  ) {}
 
   async getUserById(id: string) {
     const user = await this.authRepository.getUserById(id)
@@ -21,11 +27,20 @@ export class AuthService {
       })
     }
 
-    return user
+    return ok({
+      id: user.value.id,
+      name: user.value.name,
+      address: user.value.address ?? undefined,
+      onBoardingCompleted: user.value.onBoardingCompleted,
+      profileImage: user.value.profileImage
+        ? this.fileService.getPublicFileUrl(user.value.profileImage)
+        : undefined,
+      role: user.value.role,
+    })
   }
 
-  async registerUser(user: IntrospectAccessTokenResult) {
-    const newUser = await this.authRepository.createUser(user)
+  async registerUser(user: IntrospectAccessTokenResult, role: UserRole) {
+    const newUser = await this.authRepository.createUser(user, role)
 
     if (newUser.isErr()) {
       return mapRawPrismaError(newUser.error, {
@@ -41,7 +56,7 @@ export class AuthService {
 }
 
 export const AuthServicePlugin = new Elysia({ name: 'AuthService' })
-  .use(AuthRepositoryPlugin)
-  .decorate(({ authRepository }) => ({
-    authService: new AuthService(authRepository),
+  .use([AuthRepositoryPlugin, FileServicePlugin])
+  .decorate(({ authRepository, fileService }) => ({
+    authService: new AuthService(authRepository, fileService),
   }))

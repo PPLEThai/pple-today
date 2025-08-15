@@ -27,7 +27,7 @@ export const ProfileController = new Elysia({
   .get(
     '/me',
     async ({ user, status, profileService }) => {
-      const result = await profileService.getProfileById(user.sub)
+      const result = await profileService.getProfileById(user.id)
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -45,7 +45,6 @@ export const ProfileController = new Elysia({
         name: result.value.name,
         role: result.value.role,
         profileImage: result.value.profileImage ?? undefined,
-        birthDate: result.value.dateOfBirth?.toISOString() ?? undefined,
         numberOfFollowing: result.value.numberOfFollowing,
         point: result.value.point,
         numberOfFollowingTopics: result.value.numberOfFollowingTopics,
@@ -59,7 +58,7 @@ export const ProfileController = new Elysia({
       })
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       response: {
         200: GetMyProfileResponse,
         ...createErrorSchema(
@@ -76,7 +75,7 @@ export const ProfileController = new Elysia({
   .patch(
     '/me',
     async ({ body, user, status, profileService }) => {
-      const result = await profileService.updateProfile(user.sub, body)
+      const result = await profileService.updateProfile(user.id, body)
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -96,7 +95,7 @@ export const ProfileController = new Elysia({
       })
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       body: UpdateProfileBody,
       response: {
         200: UpdateProfileResponse,
@@ -128,23 +127,10 @@ export const ProfileController = new Elysia({
         }
       }
 
-      return status(200, {
-        id: user.value.id,
-        role: user.value.role,
-        name: user.value.name,
-        profileImage: user.value.profileImage ?? undefined,
-        numberOfFollowers: user.value.numberOfFollowers,
-        address: user.value.address
-          ? {
-              district: user.value.address.district,
-              subDistrict: user.value.address.subDistrict,
-              province: user.value.address.province,
-            }
-          : undefined,
-      })
+      return status(200, user.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: GetProfileByIdParams,
       response: {
         200: GetProfileByIdResponse,
@@ -162,7 +148,7 @@ export const ProfileController = new Elysia({
   .post(
     '/on-boarding',
     async ({ user, status, body, profileService }) => {
-      const result = await profileService.completeOnboardingProfile(user.sub, body)
+      const result = await profileService.completeOnboardingProfile(user.id, body)
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -184,7 +170,7 @@ export const ProfileController = new Elysia({
       })
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       body: CompleteOnboardingProfileBody,
       response: {
         200: CompleteOnboardingProfileResponse,
@@ -194,17 +180,17 @@ export const ProfileController = new Elysia({
           InternalErrorCode.USER_ALREADY_DONE_ONBOARDING,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
-        detail: {
-          summary: 'Complete Onboarding',
-          description: 'Complete the onboarding process for a user',
-        },
+      },
+      detail: {
+        summary: 'Complete Onboarding',
+        description: 'Complete the onboarding process for a user',
       },
     }
   )
   .get(
     '/upload-url',
     async ({ user, status, profileService }) => {
-      const result = await profileService.getProfileUploadUrl(user.sub)
+      const result = await profileService.getProfileUploadUrl(user.id)
 
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
@@ -213,7 +199,7 @@ export const ProfileController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       response: {
         200: GetProfileUploadUrlResponse,
         ...createErrorSchema(InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR),
@@ -227,7 +213,7 @@ export const ProfileController = new Elysia({
   .get(
     '/follow',
     async ({ user, status, profileService }) => {
-      const result = await profileService.getFollowingUsers(user.sub)
+      const result = await profileService.getFollowingUsers(user.id)
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -249,7 +235,7 @@ export const ProfileController = new Elysia({
       return status(200, response)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       response: {
         200: GetFollowingUserResponse,
         ...createErrorSchema(
@@ -267,7 +253,7 @@ export const ProfileController = new Elysia({
   .post(
     '/:id/follow',
     async ({ params, user, status, profileService }) => {
-      if (user.sub === params.id) {
+      if (user.id === params.id) {
         return status(400, {
           error: {
             code: InternalErrorCode.USER_INVALID_INPUT,
@@ -276,7 +262,7 @@ export const ProfileController = new Elysia({
         })
       }
 
-      const result = await profileService.followUser(user.sub, params.id)
+      const result = await profileService.followUser(user.id, params.id)
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -296,7 +282,7 @@ export const ProfileController = new Elysia({
       })
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: FollowUserParams,
       response: {
         200: FollowUserResponse,
@@ -316,7 +302,7 @@ export const ProfileController = new Elysia({
   .delete(
     '/:id/follow',
     async ({ params, user, status, profileService }) => {
-      const result = await profileService.unfollowUser(user.sub, params.id)
+      const result = await profileService.unfollowUser(user.id, params.id)
 
       if (result.isErr()) {
         switch (result.error.code) {
@@ -334,7 +320,7 @@ export const ProfileController = new Elysia({
       })
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: FollowUserParams,
       response: {
         200: FollowUserResponse,

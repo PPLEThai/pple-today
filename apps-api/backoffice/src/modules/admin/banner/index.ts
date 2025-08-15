@@ -44,7 +44,7 @@ export const AdminBannerController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       response: {
         200: GetBannersResponse,
         ...createErrorSchema(
@@ -77,7 +77,7 @@ export const AdminBannerController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: GetBannerByIdParams,
       response: {
         200: GetBannerByIdResponse,
@@ -112,7 +112,7 @@ export const AdminBannerController = new Elysia({
       return status(201, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       body: CreateBannerBody,
       response: {
         201: CreateBannerResponse,
@@ -149,7 +149,7 @@ export const AdminBannerController = new Elysia({
       return status(200, { message: 'Banner updated.' })
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: UpdateBannerParams,
       body: UpdateBannerBody,
       response: {
@@ -186,7 +186,7 @@ export const AdminBannerController = new Elysia({
       return status(200, { message: 'Banner deleted.' })
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: DeleteBannerParams,
       response: {
         200: DeleteBannerResponse,
@@ -212,7 +212,7 @@ export const AdminBannerController = new Elysia({
       return status(200, { message: 'Banners reordered.' })
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       body: ReorderBannerBody,
       response: {
         200: ReorderBannerResponse,

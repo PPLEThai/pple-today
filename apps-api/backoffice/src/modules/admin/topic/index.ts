@@ -37,7 +37,7 @@ export const AdminTopicController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       query: GetTopicsQuery,
       response: {
         200: GetTopicsResponse,
@@ -72,7 +72,7 @@ export const AdminTopicController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: GetTopicByIdParams,
       response: {
         200: GetTopicByIdResponse,
@@ -106,7 +106,7 @@ export const AdminTopicController = new Elysia({
       return status(201, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       response: {
         201: CreateTopicResponse,
         ...createErrorSchema(
@@ -144,7 +144,7 @@ export const AdminTopicController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: UpdateTopicParams,
       body: UpdateTopicBody,
       response: {
@@ -183,7 +183,7 @@ export const AdminTopicController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredUser: true,
+      requiredLocalUser: true,
       params: DeleteTopicParams,
       response: {
         200: DeleteTopicResponse,

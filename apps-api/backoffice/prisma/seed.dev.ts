@@ -8,6 +8,24 @@ import {
   PrismaClient,
   UserRole,
 } from '../__generated__/prisma'
+const transformProvinceDetails = async () => {
+  const response = await fetch(
+    'https://raw.githubusercontent.com/thailand-geography-data/thailand-geography-json/refs/heads/main/src/geography.json'
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch province details')
+  }
+
+  const data = await response.json()
+
+  return data.map(({ postalCode, provinceNameTh, districtNameTh, subdistrictNameTh }) => ({
+    postalCode: postalCode.toString(),
+    province: provinceNameTh,
+    district: districtNameTh,
+    subDistrict: subdistrictNameTh,
+  }))
+}
 
 const connectionString = `${process.env.DATABASE_URL}`
 
@@ -17,6 +35,35 @@ const prisma = new PrismaClient({
 })
 
 const OFFICIAL_USER_ID = 'official-user'
+
+const seedAddresses = async () => {
+  const provinces = await transformProvinceDetails()
+
+  for (const { province, district, subDistrict, postalCode } of provinces) {
+    await prisma.address.upsert({
+      where: {
+        district_subDistrict: {
+          district,
+          subDistrict,
+        },
+      },
+      create: {
+        province,
+        district,
+        subDistrict,
+        postalCode,
+      },
+      update: {
+        province,
+        district,
+        subDistrict,
+        postalCode,
+      },
+    })
+  }
+
+  console.log('Seeded address successfully.')
+}
 
 const seedBanners = async () => {
   const externalBrowser = {
@@ -50,16 +97,18 @@ const seedBanners = async () => {
         id: `banner-${i}`,
       },
       create: {
-        ...navigationDetails,
+        id: `banner-${i}`,
         imageFilePath: `local/test/banner-${i}.png`,
         status: 'PUBLISH',
         order: i,
+        ...navigationDetails,
       },
       update: {
-        ...navigationDetails,
+        id: `banner-${i}`,
         imageFilePath: `local/test/banner-${i}.png`,
         status: 'PUBLISH',
         order: i,
+        ...navigationDetails,
       },
     })
   }
@@ -315,6 +364,7 @@ const seedAnnouncements = async () => {
 }
 
 async function main() {
+  await seedAddresses()
   await seedHashtags()
   await seedOfficialUser()
   await seedTopics()

@@ -94,6 +94,7 @@ export class ProfileRepository {
                   id: true,
                   name: true,
                   profileImage: true,
+                  address: true,
                 },
               },
             },
@@ -151,6 +152,7 @@ export class ProfileRepository {
     return await fromPrismaPromise(
       this.prismaService.user.update({
         where: { id: userId },
+        include: { address: true },
         data: profileData,
       })
     )
