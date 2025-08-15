@@ -26,8 +26,7 @@ const authRequest: AuthRequest = new AuthRequest({
   scopes: ['openid', 'profile', 'phone'],
   codeChallengeMethod: CodeChallengeMethod.S256,
   redirectUri: makeRedirectUri({
-    scheme: appConfig.expo.scheme,
-    isTripleSlashed: true,
+    native: `${appConfig.expo.scheme}:/`,
   }),
 })
 
@@ -129,7 +128,7 @@ export const login = async ({ discovery }: { discovery: DiscoveryDocument }) => 
     // open in-app browser to login flow in PPLE SSO
     loginResult = await authRequest.promptAsync(discovery, {
       browserPackage,
-      // preferEphemeralSession: true, // Uncomment to test in incognito mode
+      showInRecents: true,
     })
   } catch (error) {
     console.error('Error during authentication prompt:', error)
