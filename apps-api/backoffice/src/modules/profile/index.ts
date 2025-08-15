@@ -180,10 +180,10 @@ export const ProfileController = new Elysia({
           InternalErrorCode.USER_ALREADY_DONE_ONBOARDING,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
-        detail: {
-          summary: 'Complete Onboarding',
-          description: 'Complete the onboarding process for a user',
-        },
+      },
+      detail: {
+        summary: 'Complete Onboarding',
+        description: 'Complete the onboarding process for a user',
       },
     }
   )
