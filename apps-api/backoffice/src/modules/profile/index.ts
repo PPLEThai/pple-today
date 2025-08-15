@@ -128,20 +128,7 @@ export const ProfileController = new Elysia({
         }
       }
 
-      return status(200, {
-        id: user.value.id,
-        role: user.value.role,
-        name: user.value.name,
-        profileImage: user.value.profileImage ?? undefined,
-        numberOfFollowers: user.value.numberOfFollowers,
-        address: user.value.address
-          ? {
-              district: user.value.address.district,
-              subDistrict: user.value.address.subDistrict,
-              province: user.value.address.province,
-            }
-          : undefined,
-      })
+      return status(200, user.value)
     },
     {
       requiredUser: true,
