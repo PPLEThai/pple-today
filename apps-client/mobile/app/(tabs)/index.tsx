@@ -60,7 +60,7 @@ import {
 
 import { GetBannersResponse } from '@api/backoffice/src/modules/banner/models'
 import PPLEIcon from '@app/assets/pple-icon.svg'
-import { AnnouncementSlides } from '@app/components/announcement'
+import { AnnouncementCard } from '@app/components/announcement'
 import { KeyboardAvoidingViewLayout } from '@app/components/keyboard-avoiding-view-layout'
 import { environment } from '@app/env'
 import { useAuthMe, useSessionQuery } from '@app/libs/auth'
@@ -916,6 +916,11 @@ function PagerTabBarItem({
 }
 
 function AnnouncementSection() {
+  const announcementsQuery = queryClient.useQuery('/announcements', {
+    query: { limit: 5 },
+  })
+  if (!announcementsQuery.data) return null
+  // TODO: might do loading here
   return (
     <View className="flex flex-col">
       <View className="flex flex-row pt-4 px-4 pb-3 justify-between">
@@ -934,7 +939,24 @@ function AnnouncementSection() {
           <Icon icon={ArrowRightIcon} strokeWidth={2} />
         </Button>
       </View>
-      <AnnouncementSlides />
+      <Slide
+        count={announcementsQuery.data.announcements.length}
+        itemWidth={320}
+        gap={8}
+        paddingHorizontal={16}
+      >
+        <SlideScrollView>
+          {announcementsQuery.data.announcements.map((announcement) => (
+            <SlideItem key={announcement.id}>
+              <AnnouncementCard
+                title={announcement.title}
+                date={announcement.createdAt.toString()}
+              />
+            </SlideItem>
+          ))}
+        </SlideScrollView>
+        <SlideIndicators />
+      </Slide>
     </View>
   )
 }
