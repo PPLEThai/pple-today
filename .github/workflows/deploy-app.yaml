@@ -97,7 +97,7 @@ jobs:
 
   deploy-mobile-app:
     name: Deploy Beta Mobile App
-    if: ${{ needs.get-affected-apps.outputs.mobile-app == 'true' }}
+    if: ${{ needs.get-affected-apps.outputs.deploy-mobile-app == 'true' }}
     needs: get-affected-apps
     uses: ./.github/workflows/mobile-beta-deployment.yaml
     secrets: 'inherit'
