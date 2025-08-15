@@ -1,5 +1,4 @@
 import { PrismaPg } from '@prisma/adapter-pg'
-import * as R from 'remeda'
 
 import {
   AnnouncementType,
@@ -11,7 +10,7 @@ import {
 } from '../__generated__/prisma'
 const transformProvinceDetails = async () => {
   const response = await fetch(
-    'https://raw.githubusercontent.com/kongvut/thai-province-data/master/api_province_with_amphure_tambon.json'
+    'https://raw.githubusercontent.com/thailand-geography-data/thailand-geography-json/refs/heads/main/src/geography.json'
   )
 
   if (!response.ok) {
@@ -20,32 +19,12 @@ const transformProvinceDetails = async () => {
 
   const data = await response.json()
 
-  const result: {
-    province: string
-    district: string
-    subDistrict: string
-    postalCode: string
-  }[] = []
-
-  R.forEach(data, (province) => {
-    const { amphure, name_th: provinceTh } = province
-    R.forEach(amphure, (district) => {
-      const { name_th: districtTh, tambon } = district
-      R.forEach(tambon, (subDistrict) => {
-        const { name_th: subDistrictTh, zip_code: postalCodeNumber } = subDistrict
-        const postalCode = postalCodeNumber.toString()
-
-        result.push({
-          province: provinceTh,
-          district: districtTh,
-          subDistrict: subDistrictTh,
-          postalCode,
-        })
-      })
-    })
-  })
-
-  return result
+  return data.map(({ postalCode, provinceNameTh, districtNameTh, subdistrictNameTh }) => ({
+    postalCode: postalCode,
+    province: provinceNameTh,
+    district: districtNameTh,
+    subDistrict: subdistrictNameTh,
+  }))
 }
 
 const connectionString = `${process.env.DATABASE_URL}`
