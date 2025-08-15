@@ -26,6 +26,7 @@ export const GetAuthMeResponse = t.Object({
       province: t.String({ description: 'User province' }),
     })
   ),
+  onBoardingCompleted: t.Boolean({ description: 'Whether the user has completed onboarding' }),
   profileImage: t.Optional(t.String({ description: 'User profile image URL' })),
   role: t.Enum(UserRole, { description: 'User role' }),
 })

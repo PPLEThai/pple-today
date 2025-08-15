@@ -31,6 +31,7 @@ export class AuthService {
       id: user.value.id,
       name: user.value.name,
       address: user.value.address ?? undefined,
+      onBoardingCompleted: user.value.onBoardingCompleted,
       profileImage: user.value.profileImage
         ? this.fileService.getPublicFileUrl(user.value.profileImage)
         : undefined,

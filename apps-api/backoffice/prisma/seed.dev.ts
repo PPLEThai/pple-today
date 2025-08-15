@@ -20,7 +20,7 @@ const transformProvinceDetails = async () => {
   const data = await response.json()
 
   return data.map(({ postalCode, provinceNameTh, districtNameTh, subdistrictNameTh }) => ({
-    postalCode: postalCode,
+    postalCode: postalCode.toString(),
     province: provinceNameTh,
     district: districtNameTh,
     subDistrict: subdistrictNameTh,
