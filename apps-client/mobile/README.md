@@ -19,11 +19,13 @@ Feel free to update this file :)
    ```
 
 3. We deprecated the expo go dev server since we use expo-native module. \
-   Please see Native Development section down below
+   **Press S** to switch to development build
+   Then **press i** to open iOS or **press a** to open Android \
+   or see Native Development section down below
 
 Note: If you have `.env` (environment variable) set up, you can run `pnpm dev` instead
 
-## Android/iOS Build
+## Android/iOS Development Build
 
 ```bash
 pnpm android

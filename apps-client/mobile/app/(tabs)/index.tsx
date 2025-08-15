@@ -60,7 +60,7 @@ import {
 
 import { GetBannersResponse } from '@api/backoffice/src/modules/banner/models'
 import PPLEIcon from '@app/assets/pple-icon.svg'
-import { AnnouncementSlides } from '@app/components/announcement'
+import { AnnouncementCard } from '@app/components/announcement'
 import { KeyboardAvoidingViewLayout } from '@app/components/keyboard-avoiding-view-layout'
 import { environment } from '@app/env'
 import { useAuthMe, useSessionQuery } from '@app/libs/auth'
@@ -72,7 +72,42 @@ import { ExpoScrollForwarderView } from '../../../../packages/expo-scroll-forwar
 export default function IndexLayout() {
   return (
     <KeyboardAvoidingViewLayout>
-      <TabViewInsideScroll />
+      <Pager>
+        <PagerHeader>
+          <PagerHeaderOnly>
+            <MainHeader />
+            <View className="flex flex-col w-full bg-base-bg-white">
+              <BannerSection />
+              {/* <EventSection /> */}
+              <UserInfoSection />
+            </View>
+            <View className="px-4 bg-base-bg-white flex flex-row items-start ">
+              <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
+            </View>
+          </PagerHeaderOnly>
+          <PagerTabBar>
+            <Button variant="ghost" aria-label="Add Label" className="mb-px" size="icon">
+              <Icon
+                icon={CirclePlusIcon}
+                strokeWidth={1}
+                className="text-base-secondary-default"
+                size={24}
+              />
+            </Button>
+            <PagerTabBarItem index={0}>สำหรับคุณ</PagerTabBarItem>
+            <PagerTabBarItem index={1}>กำลังติดตาม</PagerTabBarItem>
+            <PagerTabBarItem index={2}>กรุงเทพฯ</PagerTabBarItem>
+            <PagerTabBarItemIndicator />
+          </PagerTabBar>
+        </PagerHeader>
+        <PagerContentView>
+          {Array.from({ length: 3 }).map((_, index) => (
+            <View key={index} collapsable={false}>
+              <PagerContent index={index} />
+            </View>
+          ))}
+        </PagerContentView>
+      </Pager>
     </KeyboardAvoidingViewLayout>
   )
 }
@@ -121,16 +156,6 @@ function MainHeader() {
           <Icon icon={PPLEIcon} width={20} height={20} color="white" />
         </Button>
       </View>
-    </View>
-  )
-}
-
-function TopContainer() {
-  return (
-    <View className="flex flex-col w-full bg-base-bg-white">
-      <BannerSection />
-      <EventSection />
-      <UserInfoSection />
     </View>
   )
 }
@@ -349,43 +374,6 @@ function UserInfoSection() {
 //     </View>
 //   </PagerContentView>
 // </Pager>
-
-export function TabViewInsideScroll() {
-  return (
-    <Pager>
-      <PagerHeader>
-        <PagerHeaderOnly>
-          <MainHeader />
-          <TopContainer />
-          <View className="px-4 bg-base-bg-white flex flex-row items-start ">
-            <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
-          </View>
-        </PagerHeaderOnly>
-        <PagerTabBar>
-          <Button variant="ghost" aria-label="Add Label" className="mb-px" size="icon">
-            <Icon
-              icon={CirclePlusIcon}
-              strokeWidth={1}
-              className="text-base-secondary-default"
-              size={24}
-            />
-          </Button>
-          <PagerTabBarItem index={0}>สำหรับคุณ</PagerTabBarItem>
-          <PagerTabBarItem index={1}>กำลังติดตาม</PagerTabBarItem>
-          <PagerTabBarItem index={2}>กรุงเทพฯ</PagerTabBarItem>
-          <PagerTabBarItemIndicator />
-        </PagerTabBar>
-      </PagerHeader>
-      <PagerContentView>
-        {Array.from({ length: 3 }).map((_, index) => (
-          <View key={index} collapsable={false}>
-            <PagerContent index={index} />
-          </View>
-        ))}
-      </PagerContentView>
-    </Pager>
-  )
-}
 
 const AnimatedPagerView = Animated.createAnimatedComponent(PagerView)
 const AnimatedExpoScrollForwarderView = Animated.createAnimatedComponent(ExpoScrollForwarderView)
@@ -916,6 +904,11 @@ function PagerTabBarItem({
 }
 
 function AnnouncementSection() {
+  const announcementsQuery = queryClient.useQuery('/announcements', {
+    query: { limit: 5 },
+  })
+  if (!announcementsQuery.data) return null
+  // TODO: might do loading here
   return (
     <View className="flex flex-col">
       <View className="flex flex-row pt-4 px-4 pb-3 justify-between">
@@ -934,7 +927,24 @@ function AnnouncementSection() {
           <Icon icon={ArrowRightIcon} strokeWidth={2} />
         </Button>
       </View>
-      <AnnouncementSlides />
+      <Slide
+        count={announcementsQuery.data.announcements.length}
+        itemWidth={320}
+        gap={8}
+        paddingHorizontal={16}
+      >
+        <SlideScrollView>
+          {announcementsQuery.data.announcements.map((announcement) => (
+            <SlideItem key={announcement.id}>
+              <AnnouncementCard
+                title={announcement.title}
+                date={announcement.createdAt.toString()}
+              />
+            </SlideItem>
+          ))}
+        </SlideScrollView>
+        <SlideIndicators />
+      </Slide>
     </View>
   )
 }

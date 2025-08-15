@@ -4,7 +4,6 @@ import { View } from 'react-native'
 
 import { Badge } from '@pple-today/ui/badge'
 import { cn } from '@pple-today/ui/lib/utils'
-import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import dayjs from 'dayjs'
 import buddhistEra from 'dayjs/plugin/buddhistEra'
@@ -14,54 +13,14 @@ import PPLEIcon from '@app/assets/pple-icon.svg'
 dayjs.extend(buddhistEra)
 dayjs.locale('th')
 
-interface Announcement {
-  id: string
-  title: string
-  topics: string[]
-  date: string
-}
-const ANNOUNCEMENTS: Announcement[] = [
-  {
-    id: '1',
-    title: 'ประชุมเลือกตั้งตัวแทนพรรคประจำ อำเภอ(ตทอ.) ประจำอำเภอเมืองสมุทรปราการ',
-    topics: ['#เลือกตั้ง'],
-    date: '2023-01-01',
-  },
-  {
-    id: '2',
-    title:
-      'Lorem ipsum dolor sit amet consectetur adipisicing elit. Saepe cupiditate excepturi inventore, ipsa ipsam recusandae consequatur amet ab iusto, voluptatum, sapiente officia! Iste maiores voluptates perferendis doloremque. Voluptatum, excepturi accusamus officiis magni doloribus minus nesciunt veritatis exercitationem ab earum soluta enim voluptatem in architecto doloremque minima non vero error aspernatur?',
-    topics: ['Topic 2'],
-    date: '2023-01-02',
-  },
-  {
-    id: '3',
-    title: 'Announcement 3',
-    topics: ['Topic 3'],
-    date: '2023-01-03',
-  },
-]
-
-export function AnnouncementSlides() {
-  return (
-    <Slide count={ANNOUNCEMENTS.length} itemWidth={320} gap={8} paddingHorizontal={16}>
-      <SlideScrollView>
-        {ANNOUNCEMENTS.map((item) => (
-          <SlideItem key={item.id}>
-            <AnnouncementCard item={item} />
-          </SlideItem>
-        ))}
-      </SlideScrollView>
-      <SlideIndicators />
-    </Slide>
-  )
-}
-
 interface AnnouncementCardProps {
-  item: Announcement
+  title: string
+  hashtags?: string[] // no hashtags for now
+  date: string
   className?: string
 }
 export function AnnouncementCard(props: AnnouncementCardProps) {
+  // TODO: click card
   return (
     <View
       className={cn(
@@ -77,18 +36,18 @@ export function AnnouncementCard(props: AnnouncementCardProps) {
       </View>
       <View className="flex flex-col justify-between flex-1">
         <Text className="text-base-text-high font-anakotmai-medium text-sm line-clamp-3 flex-1">
-          {props.item.title}
+          {props.title}
         </Text>
         <View className="flex flex-row gap-1 justify-between items-center">
           <View className="flex flex-row flex-wrap gap-1">
-            {props.item.topics.map((topic, index) => (
+            {props.hashtags?.map((hashtag, index) => (
               <Badge key={index} variant="secondary">
-                <Text>{topic}</Text>
+                <Text>{hashtag}</Text>
               </Badge>
             ))}
           </View>
           <Text className="font-anakotmai-light text-xs text-base-text-medium">
-            {dayjs(props.item.date).format('DD MMM BB')}
+            {dayjs(props.date).format('DD MMM BB')}
           </Text>
         </View>
       </View>
