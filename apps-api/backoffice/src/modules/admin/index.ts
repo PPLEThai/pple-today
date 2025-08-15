@@ -9,7 +9,6 @@ import { AdminTopicController } from './topic'
 
 export const AdminController = new Elysia({
   prefix: '/admin',
-  tags: ['Admin'],
 })
   .use(AdminPollsController)
   .use(AdminFileController)

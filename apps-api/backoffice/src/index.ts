@@ -1,7 +1,8 @@
 import { cors } from '@elysiajs/cors'
 import node from '@elysiajs/node'
 import { swagger } from '@elysiajs/swagger'
-import Elysia from 'elysia'
+import Elysia, { AnyElysia } from 'elysia'
+import * as R from 'remeda'
 
 import serverEnv from './config/env'
 import { ApplicationController } from './modules'
@@ -18,6 +19,33 @@ let app = new Elysia({ adapter: node() })
   .use([ApplicationController, AdminController, VersionController])
 
 if (serverEnv.ENABLE_SWAGGER) {
+  const getTagsFromController = (controller: AnyElysia) =>
+    R.pipe(
+      controller,
+      R.prop('router'),
+      R.prop('history'),
+      R.flatMap((history) => R.pipe(history, R.prop('hooks'), R.prop('detail'), R.prop('tags'))),
+      R.unique(),
+      R.sort((a, b) => a.localeCompare(b))
+    )
+
+  const TAG_GROUPS: any = {
+    'x-tagGroups': [
+      {
+        name: 'Admin',
+        tags: getTagsFromController(AdminController),
+      },
+      {
+        name: 'Application',
+        tags: getTagsFromController(ApplicationController),
+      },
+      {
+        name: 'System',
+        tags: getTagsFromController(VersionController),
+      },
+    ],
+  }
+
   app = app.use(
     swagger({
       documentation: {
@@ -25,6 +53,7 @@ if (serverEnv.ENABLE_SWAGGER) {
           title: 'PPLE Today API',
           version: packageJson.version,
         },
+        ...TAG_GROUPS,
         components: {
           securitySchemes: {
             accessToken: {
