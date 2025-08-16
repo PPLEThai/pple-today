@@ -16,7 +16,7 @@ import { AdminTopicServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../../dtos/error'
 import { AuthGuardPlugin } from '../../../plugins/auth-guard'
-import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../../utils/error'
+import { createErrorSchema, mapErrorCodeToResponse } from '../../../utils/error'
 
 export const AdminTopicController = new Elysia({
   prefix: '/topics',
@@ -57,16 +57,7 @@ export const AdminTopicController = new Elysia({
     async ({ params, status, adminTopicService }) => {
       const result = await adminTopicService.getTopicById(params.topicId)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.TOPIC_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -93,14 +84,7 @@ export const AdminTopicController = new Elysia({
     async ({ status, adminTopicService }) => {
       const result = await adminTopicService.createEmptyTopic()
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.TOPIC_INVALID_INPUT:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(201, result.value)
@@ -125,20 +109,7 @@ export const AdminTopicController = new Elysia({
     async ({ params, body, status, adminTopicService }) => {
       const result = await adminTopicService.updateTopicById(params.topicId, body)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.TOPIC_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.TOPIC_INVALID_INPUT:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_MOVE_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_DELETE_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -168,16 +139,7 @@ export const AdminTopicController = new Elysia({
     async ({ params, status, adminTopicService }) => {
       const result = await adminTopicService.deleteTopicById(params.topicId)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.TOPIC_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_DELETE_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)

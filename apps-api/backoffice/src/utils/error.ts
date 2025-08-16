@@ -48,6 +48,11 @@ type GetDataFromSchema<TCode extends InternalErrorCode> =
       : TOptional<TUnknown>
     : never
 
+type GetArgumentFromErrorResponse<T extends ApiErrorResponse<InternalErrorCode>> =
+  T extends ApiErrorResponse<any>
+    ? [InternalErrorCodeSchemas[T['code']]['status'], { error: T }]
+    : never
+
 export function tApiErrorResponse<TErrors extends [TObject, ...TObject[]]>(...errors: TErrors) {
   return t.Object({
     error: t.Union<TErrors>(errors),
@@ -85,15 +90,14 @@ export const createErrorSchema = <T extends [InternalErrorCode, ...InternalError
 
 export const mapErrorCodeToResponse = <
   TError extends ApiErrorResponse<InternalErrorCode>,
-  TCode extends TError['code'],
-  TStatusCode extends InternalErrorCodeSchemas[TCode]['status'],
+  TParams extends GetArgumentFromErrorResponse<TError>,
   TStatusReturn extends ElysiaCustomStatusResponse<any, any, any>,
 >(
   error: TError,
-  status: (statusCode: TStatusCode, body: { error: TError }) => TStatusReturn
+  status: (...args: TParams) => TStatusReturn
 ) => {
-  const code = InternalErrorCodeSchemas[error.code].status as TStatusCode
-  throw status(code, { error })
+  const code = InternalErrorCodeSchemas[error.code].status
+  throw (status as any)(code, { error })
 }
 
 export function exhaustiveGuard(_value: never): never {

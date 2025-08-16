@@ -19,15 +19,7 @@ export const AuthController = new Elysia({
       const result = await authService.registerUser(oidcUser, query.role)
 
       if (result.isErr()) {
-        const error = result.error
-        switch (error.code) {
-          case InternalErrorCode.AUTH_USER_ALREADY_EXISTS:
-            return mapErrorCodeToResponse(error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(error, status)
-          default:
-            throw new Error('Unhandled error code')
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(201, {

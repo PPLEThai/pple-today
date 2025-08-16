@@ -20,7 +20,7 @@ import { AdminAnnouncementServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../../dtos/error'
 import { AuthGuardPlugin } from '../../../plugins/auth-guard'
-import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../../utils/error'
+import { createErrorSchema, mapErrorCodeToResponse } from '../../../utils/error'
 
 const AdminDraftedAnnouncementsController = new Elysia({
   prefix: '/draft',
@@ -34,16 +34,7 @@ const AdminDraftedAnnouncementsController = new Elysia({
         params.announcementId
       )
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.ANNOUNCEMENT_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -93,18 +84,7 @@ const AdminDraftedAnnouncementsController = new Elysia({
         body
       )
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.ANNOUNCEMENT_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_MOVE_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_DELETE_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -136,18 +116,7 @@ const AdminDraftedAnnouncementsController = new Elysia({
         user.id
       )
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.ANNOUNCEMENT_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_MOVE_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.ANNOUNCEMENT_INVALID_DRAFT:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -175,16 +144,7 @@ const AdminDraftedAnnouncementsController = new Elysia({
     async ({ params, status, adminAnnouncementService }) => {
       const result = await adminAnnouncementService.deleteDraftedAnnouncement(params.announcementId)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.ANNOUNCEMENT_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_DELETE_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -261,16 +221,7 @@ export const AdminAnnouncementsController = new Elysia({
     async ({ params, status, adminAnnouncementService }) => {
       const result = await adminAnnouncementService.getAnnouncementById(params.announcementId)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.ANNOUNCEMENT_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -300,18 +251,7 @@ export const AdminAnnouncementsController = new Elysia({
         body
       )
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.ANNOUNCEMENT_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_MOVE_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_DELETE_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -340,16 +280,7 @@ export const AdminAnnouncementsController = new Elysia({
     async ({ params, status, adminAnnouncementService }) => {
       const result = await adminAnnouncementService.unpublishAnnouncementById(params.announcementId)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.ANNOUNCEMENT_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_MOVE_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -376,16 +307,7 @@ export const AdminAnnouncementsController = new Elysia({
     async ({ params, status, adminAnnouncementService }) => {
       const result = await adminAnnouncementService.deleteAnnouncementById(params.announcementId)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.ANNOUNCEMENT_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_DELETE_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)

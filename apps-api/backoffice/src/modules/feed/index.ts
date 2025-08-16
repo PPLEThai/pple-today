@@ -24,7 +24,7 @@ import { FeedServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
-import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
+import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 
 export const FeedController = new Elysia({
   prefix: '/feed',
@@ -35,15 +35,9 @@ export const FeedController = new Elysia({
     '/:id',
     async ({ params, user, status, feedService }) => {
       const result = await feedService.getFeedContentById(params.id, user?.id)
+
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -72,15 +66,9 @@ export const FeedController = new Elysia({
         limit: query.limit,
         page: query.page,
       })
+
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value as GetFeedCommentResponse)
@@ -106,17 +94,9 @@ export const FeedController = new Elysia({
     '/:id/reaction',
     async ({ params, body, user, status, feedService }) => {
       const result = await feedService.createFeedReaction(params.id, user.id, body)
+
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FEED_ITEM_REACTION_ALREADY_EXISTS:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return result.value
@@ -145,14 +125,7 @@ export const FeedController = new Elysia({
       const result = await feedService.deleteFeedReaction(params.id, user.id)
 
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.FEED_ITEM_REACTION_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -177,15 +150,9 @@ export const FeedController = new Elysia({
     '/:id/comment',
     async ({ params, body, user, status, feedService }) => {
       const result = await feedService.createFeedComment(params.id, user.id, body.content)
+
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return result.value
@@ -218,14 +185,7 @@ export const FeedController = new Elysia({
       )
 
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.FEED_ITEM_COMMENT_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -253,14 +213,7 @@ export const FeedController = new Elysia({
       const result = await feedService.deleteFeedComment(params.id, params.commentId, user.id)
 
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.FEED_ITEM_COMMENT_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)

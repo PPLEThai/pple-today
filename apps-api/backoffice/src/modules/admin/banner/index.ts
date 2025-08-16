@@ -18,7 +18,7 @@ import { AdminBannerServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../../dtos/error'
 import { AuthGuardPlugin } from '../../../plugins/auth-guard'
-import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../../utils/error'
+import { createErrorSchema, mapErrorCodeToResponse } from '../../../utils/error'
 
 export const AdminBannerController = new Elysia({
   prefix: '/banners',
@@ -31,14 +31,7 @@ export const AdminBannerController = new Elysia({
       const result = await adminBannerService.getBanners()
 
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -63,16 +56,7 @@ export const AdminBannerController = new Elysia({
     async ({ params, adminBannerService, status }) => {
       const result = await adminBannerService.getBannerById(params.id)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.BANNER_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
       return status(200, result.value)
     },
@@ -98,16 +82,7 @@ export const AdminBannerController = new Elysia({
     async ({ body, adminBannerService, status }) => {
       const result = await adminBannerService.createBanner(body)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.BANNER_INVALID_INPUT:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_MOVE_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
       return status(201, result.value)
     },
@@ -133,18 +108,7 @@ export const AdminBannerController = new Elysia({
     async ({ params, body, adminBannerService, status }) => {
       const result = await adminBannerService.updateBannerById(params.id, body)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.BANNER_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_DELETE_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_MOVE_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
       return status(200, { message: 'Banner updated.' })
     },
@@ -172,16 +136,7 @@ export const AdminBannerController = new Elysia({
     async ({ params, adminBannerService, status }) => {
       const result = await adminBannerService.deleteBannerById(params.id)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.BANNER_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FILE_DELETE_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
       return status(200, { message: 'Banner deleted.' })
     },

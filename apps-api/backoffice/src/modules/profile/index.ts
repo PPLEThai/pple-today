@@ -17,7 +17,7 @@ import { ProfileServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
-import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
+import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 
 export const ProfileController = new Elysia({
   prefix: '/profile',
@@ -30,14 +30,7 @@ export const ProfileController = new Elysia({
       const result = await profileService.getProfileById(user.id)
 
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.USER_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, {
@@ -78,16 +71,7 @@ export const ProfileController = new Elysia({
       const result = await profileService.updateProfile(user.id, body)
 
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.USER_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.USER_INVALID_INPUT:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, {
@@ -117,14 +101,7 @@ export const ProfileController = new Elysia({
       const user = await profileService.getProfileById(params.id)
 
       if (user.isErr()) {
-        switch (user.error.code) {
-          case InternalErrorCode.USER_NOT_FOUND:
-            return mapErrorCodeToResponse(user.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(user.error, status)
-          default:
-            exhaustiveGuard(user.error)
-        }
+        return mapErrorCodeToResponse(user.error, status)
       }
 
       return status(200, user.value)
@@ -151,18 +128,7 @@ export const ProfileController = new Elysia({
       const result = await profileService.completeOnboardingProfile(user.id, body)
 
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.USER_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.USER_INVALID_INPUT:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.USER_ALREADY_DONE_ONBOARDING:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, {
@@ -216,14 +182,7 @@ export const ProfileController = new Elysia({
       const result = await profileService.getFollowingUsers(user.id)
 
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.USER_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       const response = result.value.map((user) => ({
@@ -265,16 +224,7 @@ export const ProfileController = new Elysia({
       const result = await profileService.followUser(user.id, params.id)
 
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.USER_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.USER_ALREADY_FOLLOWS:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, {
@@ -305,14 +255,7 @@ export const ProfileController = new Elysia({
       const result = await profileService.unfollowUser(user.id, params.id)
 
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.USER_NOT_FOLLOWS:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, {

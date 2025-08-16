@@ -17,7 +17,7 @@ import { AdminHashtagServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../../dtos/error'
 import { AuthGuardPlugin } from '../../../plugins/auth-guard'
-import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../../utils/error'
+import { createErrorSchema, mapErrorCodeToResponse } from '../../../utils/error'
 
 export const AdminHashtagController = new Elysia({
   prefix: '/hashtags',
@@ -58,14 +58,7 @@ export const AdminHashtagController = new Elysia({
     async ({ params, status, adminHashtagService }) => {
       const result = await adminHashtagService.getHashtagById(params.hashtagId)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.HASHTAG_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -91,14 +84,7 @@ export const AdminHashtagController = new Elysia({
     async ({ status, body, adminHashtagService }) => {
       const result = await adminHashtagService.createHashtag(body)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.HASHTAG_INVALID_INPUT:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(201, result.value)
@@ -124,16 +110,7 @@ export const AdminHashtagController = new Elysia({
     async ({ params, body, status, adminHashtagService }) => {
       const result = await adminHashtagService.updateHashtagById(params.hashtagId, body)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.HASHTAG_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.HASHTAG_INVALID_INPUT:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -161,14 +138,7 @@ export const AdminHashtagController = new Elysia({
     async ({ params, status, adminHashtagService }) => {
       const result = await adminHashtagService.deleteHashtagById(params.hashtagId)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.HASHTAG_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
