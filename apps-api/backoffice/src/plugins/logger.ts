@@ -99,7 +99,7 @@ export const GlobalLoggerPlugin = loggerBuilder({
   autoLogging: {
     ignore: (ctx) => {
       // NOTE: This is a workaround for error response that logs in onAfterResponse
-      if (!ctx.isError && 'response' in ctx.error) return true
+      if (ctx.isError) return false
 
       return (
         ctx.path.startsWith('/health') ||
