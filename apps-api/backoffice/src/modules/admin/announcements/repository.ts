@@ -341,7 +341,7 @@ export class AdminAnnouncementRepository {
           )
 
           if (deleteResult.isErr()) {
-            return err(deleteResult.error)
+            return throwWithReturnType(deleteResult)
           }
 
           return feedItem
