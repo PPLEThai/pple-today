@@ -339,7 +339,7 @@ export class FileService {
   }
 }
 
-class FileTransactionService {
+export class FileTransactionService {
   private transaction: FileTransactionEntry[] = []
   constructor(private readonly fileService: FileService) {}
 
@@ -479,6 +479,10 @@ class FileTransactionService {
 
   async bulkDeleteFile(fileKeys: string[]) {
     return await this.bulkMoveToTempFolder(fileKeys)
+  }
+
+  async deleteFile(fileKey: string) {
+    return await this.fileService.bulkMoveToTempFolder([fileKey])
   }
 
   async rollback() {

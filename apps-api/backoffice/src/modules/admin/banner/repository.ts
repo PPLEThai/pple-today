@@ -7,13 +7,13 @@ import { FileService, FileServicePlugin } from '../../file/services'
 
 export class AdminBannerRepository {
   constructor(
-    private prisma: PrismaService,
+    private prismaService: PrismaService,
     private fileService: FileService
   ) {}
 
   async getBanners() {
     return fromRepositoryPromise(
-      this.prisma.banner.findMany({
+      this.prismaService.banner.findMany({
         orderBy: { order: 'asc' },
       })
     )
@@ -21,7 +21,7 @@ export class AdminBannerRepository {
 
   async getBannerById(id: string) {
     return fromRepositoryPromise(
-      this.prisma.banner.findUniqueOrThrow({
+      this.prismaService.banner.findUniqueOrThrow({
         where: { id },
       })
     )
@@ -35,7 +35,7 @@ export class AdminBannerRepository {
   }) {
     return fromRepositoryPromise(
       this.fileService.$transaction((fileTx) =>
-        this.prisma.$transaction(async (tx) => {
+        this.prismaService.$transaction(async (tx) => {
           const lastBanner = await tx.banner.findFirst({
             orderBy: { order: 'desc' },
             select: { order: true },
@@ -72,7 +72,7 @@ export class AdminBannerRepository {
   ) {
     return fromRepositoryPromise(
       this.fileService.$transaction((fileTx) =>
-        this.prisma.$transaction(async (tx) => {
+        this.prismaService.$transaction(async (tx) => {
           const existingBanner = await tx.banner.findUniqueOrThrow({
             where: { id },
           })
@@ -102,7 +102,7 @@ export class AdminBannerRepository {
   async deleteBannerById(id: string) {
     return fromRepositoryPromise(
       this.fileService.$transaction((fileTx) =>
-        this.prisma.$transaction(async (tx) => {
+        this.prismaService.$transaction(async (tx) => {
           const deleted = await tx.banner.delete({
             where: { id },
           })
@@ -133,9 +133,9 @@ export class AdminBannerRepository {
 
   async reorderBanner(ids: string[]) {
     return fromRepositoryPromise(
-      this.prisma.$transaction(
+      this.prismaService.$transaction(
         ids.map((id, index) =>
-          this.prisma.banner.update({
+          this.prismaService.banner.update({
             where: { id },
             data: { order: index },
           })

@@ -6,8 +6,8 @@ import { PutDraftAnnouncementBody, PutPublishedAnnouncementBody } from './models
 import { FeedItemType } from '../../../../__generated__/prisma'
 import { InternalErrorCode } from '../../../dtos/error'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
-import { err, fromRepositoryPromise } from '../../../utils/error'
-import { FileService, FileServicePlugin } from '../../file/services'
+import { err, fromRepositoryPromise, throwWithReturnType } from '../../../utils/error'
+import { FileService, FileServicePlugin, FileTransactionService } from '../../file/services'
 
 export class AdminAnnouncementRepository {
   constructor(
@@ -15,11 +15,15 @@ export class AdminAnnouncementRepository {
     private readonly fileService: FileService
   ) {}
 
-  private async cleanUpUnusedAttachment(before: string[], after: string[]) {
+  private async cleanUpUnusedAttachment(
+    fileTx: FileTransactionService,
+    before: string[],
+    after: string[]
+  ) {
     const unusedAttachments = before.filter((filePath) => !after.includes(filePath))
 
     if (unusedAttachments.length > 0) {
-      const deleteResult = await this.fileService.bulkMoveToTempFolder(unusedAttachments)
+      const deleteResult = await fileTx.bulkMoveToTempFolder(unusedAttachments)
       if (deleteResult.isErr()) {
         return err(deleteResult.error)
       }
@@ -204,136 +208,145 @@ export class AdminAnnouncementRepository {
 
   async updateAnnouncementById(announcementId: string, data: PutPublishedAnnouncementBody) {
     return await fromRepositoryPromise(
-      this.prismaService.$transaction(async (tx) => {
-        const announcement = await tx.announcement.findUniqueOrThrow({
-          where: { feedItemId: announcementId },
-          select: {
-            attachments: {
-              select: {
-                filePath: true,
+      this.fileService.$transaction((fileTx) =>
+        this.prismaService.$transaction(async (tx) => {
+          const announcement = await tx.announcement.findUniqueOrThrow({
+            where: { feedItemId: announcementId },
+            select: {
+              attachments: {
+                select: {
+                  filePath: true,
+                },
               },
             },
-          },
-        })
-
-        const cleanUpResult = await this.cleanUpUnusedAttachment(
-          announcement.attachments.map((attachment) => attachment.filePath),
-          data.attachmentFilePaths
-        )
-
-        if (cleanUpResult.isErr()) {
-          return err(cleanUpResult.error)
-        }
-
-        const updatedAttachmentsResult = await this.fileService.bulkMoveToPublicFolder(
-          data.attachmentFilePaths
-        )
-
-        if (updatedAttachmentsResult.isErr()) {
-          return err({
-            code: InternalErrorCode.FILE_MOVE_ERROR,
-            message: 'Failed to move one or more files',
           })
-        }
 
-        return await tx.announcement.update({
-          where: { feedItemId: announcementId },
-          data: {
-            title: data.title,
-            content: data.content,
-            type: data.type,
-            iconImage: data.iconImage,
-            backgroundColor: data.backgroundColor,
-            topics: {
-              deleteMany: {},
-              createMany: {
-                data: data.topicIds.map((topicId) => ({ topicId })),
+          const cleanUpResult = await this.cleanUpUnusedAttachment(
+            fileTx,
+            announcement.attachments.map((attachment) => attachment.filePath),
+            data.attachmentFilePaths
+          )
+
+          if (cleanUpResult.isErr()) {
+            return throwWithReturnType(cleanUpResult)
+          }
+
+          const updatedAttachmentsResult = await fileTx.bulkMoveToPublicFolder(
+            data.attachmentFilePaths
+          )
+
+          if (updatedAttachmentsResult.isErr()) {
+            return throwWithReturnType(
+              err({
+                code: InternalErrorCode.FILE_MOVE_ERROR,
+                message: 'Failed to move one or more files',
+              })
+            )
+          }
+
+          return await tx.announcement.update({
+            where: { feedItemId: announcementId },
+            data: {
+              title: data.title,
+              content: data.content,
+              type: data.type,
+              iconImage: data.iconImage,
+              backgroundColor: data.backgroundColor,
+              topics: {
+                deleteMany: {},
+                createMany: {
+                  data: data.topicIds.map((topicId) => ({ topicId })),
+                },
+              },
+              attachments: {
+                deleteMany: {},
+                createMany: {
+                  data: updatedAttachmentsResult.value.map((filePath) => ({ filePath })),
+                },
               },
             },
-            attachments: {
-              deleteMany: {},
-              createMany: {
-                data: updatedAttachmentsResult.value.map((filePath) => ({ filePath })),
-              },
-            },
-          },
+          })
         })
-      })
+      )
     )
   }
 
   async unpublishAnnouncementById(announcementId: string) {
     return await fromRepositoryPromise(
-      this.prismaService.$transaction(async (tx) => {
-        // 1. Get the announcement
-        const announcement = await tx.announcement.findUniqueOrThrow({
-          where: { feedItemId: announcementId },
-          select: {
-            feedItemId: true,
-            title: true,
-            content: true,
-            type: true,
-            iconImage: true,
-            backgroundColor: true,
-            topics: { select: { topicId: true } },
-            attachments: { select: { filePath: true } },
-          },
+      this.fileService.$transaction((fileTx) =>
+        this.prismaService.$transaction(async (tx) => {
+          // 1. Get the announcement
+          const announcement = await tx.announcement.findUniqueOrThrow({
+            where: { feedItemId: announcementId },
+            select: {
+              feedItemId: true,
+              title: true,
+              content: true,
+              type: true,
+              iconImage: true,
+              backgroundColor: true,
+              topics: { select: { topicId: true } },
+              attachments: { select: { filePath: true } },
+            },
+          })
+
+          // 2. Insert into announcementDraft
+          const draftAnnouncement = await tx.announcementDraft.create({
+            data: {
+              id: announcement.feedItemId,
+              title: announcement.title,
+              content: announcement.content,
+              type: announcement.type,
+              iconImage: announcement.iconImage,
+              backgroundColor: announcement.backgroundColor,
+              topics: { createMany: { data: announcement.topics } },
+              attachments: { createMany: { data: announcement.attachments } },
+            },
+            include: {
+              attachments: true,
+            },
+          })
+
+          // 3. Delete the announcement
+          await tx.feedItem.delete({ where: { id: announcementId } })
+
+          const markAsPrivateResult = await fileTx.bulkMoveToPrivateFolder(
+            draftAnnouncement.attachments.map((attachment) => attachment.filePath)
+          )
+
+          if (markAsPrivateResult.isErr()) {
+            return throwWithReturnType(markAsPrivateResult)
+          }
+
+          return draftAnnouncement
         })
-
-        // 2. Insert into announcementDraft
-        const draftAnnouncement = await tx.announcementDraft.create({
-          data: {
-            id: announcement.feedItemId,
-            title: announcement.title,
-            content: announcement.content,
-            type: announcement.type,
-            iconImage: announcement.iconImage,
-            backgroundColor: announcement.backgroundColor,
-            topics: { createMany: { data: announcement.topics } },
-            attachments: { createMany: { data: announcement.attachments } },
-          },
-          include: {
-            attachments: true,
-          },
-        })
-
-        // 3. Delete the announcement
-        await tx.feedItem.delete({ where: { id: announcementId } })
-
-        const markAsPrivateResult = await this.fileService.bulkMoveToPrivateFolder(
-          draftAnnouncement.attachments.map((attachment) => attachment.filePath)
-        )
-
-        if (markAsPrivateResult.isErr()) {
-          return err(markAsPrivateResult.error)
-        }
-
-        return draftAnnouncement
-      })
+      )
     )
   }
 
   async deleteAnnouncementById(announcementId: string) {
     return await fromRepositoryPromise(
-      this.prismaService.$transaction(async (tx) => {
-        const feedItem = await tx.feedItem.delete({
-          where: { id: announcementId },
-          select: {
-            id: true,
-            announcement: { select: { attachments: { select: { id: true, filePath: true } } } },
-          },
+      this.fileService.$transaction((fileTx) =>
+        this.prismaService.$transaction(async (tx) => {
+          const feedItem = await tx.feedItem.delete({
+            where: { id: announcementId },
+            select: {
+              id: true,
+              announcement: { select: { attachments: { select: { id: true, filePath: true } } } },
+            },
+          })
+
+          const deleteResult = await fileTx.bulkMoveToTempFolder(
+            feedItem.announcement?.attachments.map((attachment) => attachment.filePath) ?? []
+          )
+
+          if (deleteResult.isErr()) {
+            return err(deleteResult.error)
+          }
+
+          return feedItem
         })
-
-        const deleteResult = await this.fileService.bulkMoveToTempFolder(
-          feedItem.announcement?.attachments.map((attachment) => attachment.filePath) ?? []
-        )
-
-        if (deleteResult.isErr()) {
-          return err(deleteResult.error)
-        }
-
-        return feedItem
-      })
+      )
     )
   }
 
@@ -433,138 +446,150 @@ export class AdminAnnouncementRepository {
 
   async updateDraftAnnouncementById(announcementDraftId: string, data: PutDraftAnnouncementBody) {
     return await fromRepositoryPromise(
-      this.prismaService.$transaction(async (tx) => {
-        const draftAnnouncement = await tx.announcementDraft.findUniqueOrThrow({
-          where: { id: announcementDraftId },
-          select: { attachments: { select: { filePath: true } } },
-        })
+      this.fileService.$transaction((fileTx) =>
+        this.prismaService.$transaction(async (tx) => {
+          const draftAnnouncement = await tx.announcementDraft.findUniqueOrThrow({
+            where: { id: announcementDraftId },
+            select: { attachments: { select: { filePath: true } } },
+          })
 
-        const cleanUpResult = await this.cleanUpUnusedAttachment(
-          draftAnnouncement.attachments.map(({ filePath }) => filePath),
-          data.attachmentFilePaths
-        )
+          const cleanUpResult = await this.cleanUpUnusedAttachment(
+            fileTx,
+            draftAnnouncement.attachments.map(({ filePath }) => filePath),
+            data.attachmentFilePaths
+          )
 
-        if (cleanUpResult.isErr()) return err(cleanUpResult.error)
+          if (cleanUpResult.isErr()) return throwWithReturnType(cleanUpResult)
 
-        const draftAnnouncementAttachments = await this.fileService.bulkMoveToPrivateFolder(
-          data.attachmentFilePaths
-        )
+          const draftAnnouncementAttachments = await fileTx.bulkMoveToPrivateFolder(
+            data.attachmentFilePaths
+          )
 
-        if (draftAnnouncementAttachments.isErr()) return err(draftAnnouncementAttachments.error)
+          if (draftAnnouncementAttachments.isErr())
+            return throwWithReturnType(draftAnnouncementAttachments)
 
-        return await tx.announcementDraft.update({
-          where: { id: announcementDraftId },
-          data: {
-            title: data.title,
-            content: data.content,
-            type: data.type,
-            iconImage: data.iconImage,
-            backgroundColor: data.backgroundColor,
-            topics: {
-              deleteMany: {},
-              createMany: {
-                data: data.topicIds.map((topicId) => ({ topicId })),
+          return await tx.announcementDraft.update({
+            where: { id: announcementDraftId },
+            data: {
+              title: data.title,
+              content: data.content,
+              type: data.type,
+              iconImage: data.iconImage,
+              backgroundColor: data.backgroundColor,
+              topics: {
+                deleteMany: {},
+                createMany: {
+                  data: data.topicIds.map((topicId) => ({ topicId })),
+                },
+              },
+              attachments: {
+                deleteMany: {},
+                createMany: {
+                  data: draftAnnouncementAttachments.value.map((filePath) => ({ filePath })),
+                },
               },
             },
-            attachments: {
-              deleteMany: {},
-              createMany: {
-                data: draftAnnouncementAttachments.value.map((filePath) => ({ filePath })),
-              },
-            },
-          },
+          })
         })
-      })
+      )
     )
   }
 
   async publishDraftAnnouncementById(announcementDraftId: string, authorId: string) {
     return await fromRepositoryPromise(
-      this.prismaService.$transaction(async (tx) => {
-        const draftAnnouncement = await tx.announcementDraft.findUniqueOrThrow({
-          where: { id: announcementDraftId },
-          include: { topics: true, attachments: { select: { filePath: true } } },
-        })
-
-        if (!draftAnnouncement.title || !draftAnnouncement.type) {
-          return err({
-            code: InternalErrorCode.ANNOUNCEMENT_INVALID_DRAFT,
-            message: 'Draft announcement is missing required fields: title, type',
+      this.fileService.$transaction((fileTx) =>
+        this.prismaService.$transaction(async (tx) => {
+          const draftAnnouncement = await tx.announcementDraft.findUniqueOrThrow({
+            where: { id: announcementDraftId },
+            include: { topics: true, attachments: { select: { filePath: true } } },
           })
-        }
 
-        const attachments = await this.fileService.bulkMoveToPublicFolder(
-          draftAnnouncement.attachments.map(({ filePath }) => filePath)
-        )
+          if (!draftAnnouncement.title || !draftAnnouncement.type) {
+            return throwWithReturnType(
+              err({
+                code: InternalErrorCode.ANNOUNCEMENT_INVALID_DRAFT,
+                message: 'Draft announcement is missing required fields: title, type',
+              })
+            )
+          }
 
-        if (attachments.isErr()) {
-          return err({
-            code: InternalErrorCode.FILE_MOVE_ERROR,
-            message: 'Failed to move one or more files',
-          })
-        }
+          const attachments = await fileTx.bulkMoveToPublicFolder(
+            draftAnnouncement.attachments.map(({ filePath }) => filePath)
+          )
 
-        const feedItem = await tx.feedItem.create({
-          data: {
-            id: draftAnnouncement.id,
-            type: FeedItemType.ANNOUNCEMENT,
-            authorId,
-            announcement: {
-              create: {
-                title: draftAnnouncement.title,
-                content: draftAnnouncement.content,
-                type: draftAnnouncement.type,
-                iconImage: draftAnnouncement.iconImage,
-                backgroundColor: draftAnnouncement.backgroundColor,
-                topics: {
-                  createMany: {
-                    data: draftAnnouncement.topics.map(({ topicId }) => ({ topicId })),
+          if (attachments.isErr()) {
+            return throwWithReturnType(
+              err({
+                code: InternalErrorCode.FILE_MOVE_ERROR,
+                message: 'Failed to move one or more files',
+              })
+            )
+          }
+
+          const feedItem = await tx.feedItem.create({
+            data: {
+              id: draftAnnouncement.id,
+              type: FeedItemType.ANNOUNCEMENT,
+              authorId,
+              announcement: {
+                create: {
+                  title: draftAnnouncement.title,
+                  content: draftAnnouncement.content,
+                  type: draftAnnouncement.type,
+                  iconImage: draftAnnouncement.iconImage,
+                  backgroundColor: draftAnnouncement.backgroundColor,
+                  topics: {
+                    createMany: {
+                      data: draftAnnouncement.topics.map(({ topicId }) => ({ topicId })),
+                    },
                   },
-                },
-                attachments: {
-                  createMany: {
-                    data: attachments.value.map((attachment) => ({
-                      filePath: attachment,
-                    })),
+                  attachments: {
+                    createMany: {
+                      data: attachments.value.map((attachment) => ({
+                        filePath: attachment,
+                      })),
+                    },
                   },
                 },
               },
             },
-          },
+          })
+
+          await tx.announcementDraft.delete({ where: { id: draftAnnouncement.id } })
+
+          return feedItem
         })
-
-        await tx.announcementDraft.delete({ where: { id: draftAnnouncement.id } })
-
-        return feedItem
-      })
+      )
     )
   }
 
   async deleteDraftAnnouncementById(announcementDraftId: string) {
     return await fromRepositoryPromise(
-      this.prismaService.$transaction(async (tx) => {
-        const announcementDraft = await tx.announcementDraft.delete({
-          where: { id: announcementDraftId },
-          select: {
-            id: true,
-            attachments: {
-              select: {
-                filePath: true,
+      this.fileService.$transaction((fileTx) =>
+        this.prismaService.$transaction(async (tx) => {
+          const announcementDraft = await tx.announcementDraft.delete({
+            where: { id: announcementDraftId },
+            select: {
+              id: true,
+              attachments: {
+                select: {
+                  filePath: true,
+                },
               },
             },
-          },
+          })
+
+          const deleteResult = await fileTx.bulkMoveToTempFolder(
+            announcementDraft.attachments.map((attachment) => attachment.filePath)
+          )
+
+          if (deleteResult.isErr()) {
+            return throwWithReturnType(deleteResult)
+          }
+
+          return announcementDraft
         })
-
-        const deleteResult = await this.fileService.bulkMoveToTempFolder(
-          announcementDraft.attachments.map((attachment) => attachment.filePath)
-        )
-
-        if (deleteResult.isErr()) {
-          return err(deleteResult.error)
-        }
-
-        return announcementDraft
-      })
+      )
     )
   }
 }

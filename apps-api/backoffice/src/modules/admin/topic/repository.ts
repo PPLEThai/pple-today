@@ -3,7 +3,7 @@ import Elysia from 'elysia'
 import { UpdateTopicBody } from './models'
 
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
-import { err } from '../../../utils/error'
+import { throwWithReturnType } from '../../../utils/error'
 import { fromRepositoryPromise } from '../../../utils/error'
 import { FileService, FileServicePlugin } from '../../file/services'
 
@@ -87,79 +87,68 @@ export class AdminTopicRepository {
 
   async updateTopicById(topicId: string, data: UpdateTopicBody) {
     return await fromRepositoryPromise(
-      this.prismaService.$transaction(async (tx) => {
-        const existingTopic = await tx.topic.findUniqueOrThrow({
-          where: { id: topicId },
-          select: { bannerImage: true },
-        })
+      this.fileService.$transaction((fileTx) =>
+        this.prismaService.$transaction(async (tx) => {
+          const existingTopic = await tx.topic.findUniqueOrThrow({
+            where: { id: topicId },
+            select: { bannerImage: true },
+          })
 
-        const isSameBannerUrl = existingTopic.bannerImage === data.bannerImage
+          const isSameBannerUrl = existingTopic.bannerImage === data.bannerImage
 
-        if (!isSameBannerUrl && existingTopic.bannerImage) {
-          const moveResult = await this.fileService.bulkMoveToTempFolder([
-            existingTopic.bannerImage,
-          ])
-          if (moveResult.isErr()) return err(moveResult.error)
-        }
-
-        let newBannerImage = data.bannerImage
-
-        if (data.bannerImage) {
-          const moveResult = await this.fileService.bulkMoveToPublicFolder([data.bannerImage])
-          if (moveResult.isErr()) {
-            if (!isSameBannerUrl && existingTopic.bannerImage) {
-              const moveResult = await this.fileService.bulkMoveToPublicFolder([
-                existingTopic.bannerImage,
-              ])
-              if (moveResult.isErr()) {
-                return err(moveResult.error)
-              }
-            }
-            return err(moveResult.error)
+          if (!isSameBannerUrl && existingTopic.bannerImage) {
+            const moveResult = await fileTx.bulkMoveToTempFolder([existingTopic.bannerImage])
+            if (moveResult.isErr()) return throwWithReturnType(moveResult)
           }
 
-          newBannerImage = moveResult.value[0]
-        }
+          let newBannerImage = data.bannerImage
 
-        const newTopic = await tx.topic.update({
-          where: { id: topicId },
-          data: {
-            name: data.name,
-            description: data.description,
-            bannerImage: newBannerImage,
-            status: data.status,
-            hashTagInTopics: {
-              deleteMany: {},
-              createMany: {
-                data: data.hashtagIds.map((hashtagId) => ({
-                  hashTagId: hashtagId,
-                })),
+          if (data.bannerImage) {
+            const moveResult = await fileTx.bulkMoveToPublicFolder([data.bannerImage])
+            if (moveResult.isErr()) return throwWithReturnType(moveResult)
+            newBannerImage = moveResult.value[0]
+          }
+
+          const newTopic = await tx.topic.update({
+            where: { id: topicId },
+            data: {
+              name: data.name,
+              description: data.description,
+              bannerImage: newBannerImage,
+              status: data.status,
+              hashTagInTopics: {
+                deleteMany: {},
+                createMany: {
+                  data: data.hashtagIds.map((hashtagId) => ({
+                    hashTagId: hashtagId,
+                  })),
+                },
               },
             },
-          },
-        })
+          })
 
-        return newTopic
-      })
+          return newTopic
+        })
+      )
     )
   }
 
   async deleteTopicById(topicId: string) {
     return await fromRepositoryPromise(
-      this.prismaService.$transaction(async (tx) => {
-        const deleteResult = await tx.topic.delete({
-          where: { id: topicId },
-        })
+      this.fileService.$transaction((fileTx) =>
+        this.prismaService.$transaction(async (tx) => {
+          const deleteResult = await tx.topic.delete({
+            where: { id: topicId },
+          })
 
-        if (deleteResult.bannerImage) {
-          const moveResult = await this.fileService.deleteFile(deleteResult.bannerImage)
-          if (moveResult.isErr()) {
-            return err(moveResult.error)
+          if (deleteResult.bannerImage) {
+            const moveResult = await fileTx.deleteFile(deleteResult.bannerImage)
+            if (moveResult.isErr()) return throwWithReturnType(moveResult)
           }
-        }
 
-        return deleteResult
-      })
+          return deleteResult
+        })
+      )
     )
   }
 }
