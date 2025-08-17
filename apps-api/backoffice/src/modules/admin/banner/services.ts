@@ -21,46 +21,14 @@ export class AdminBannerService {
     private readonly fileService: FileService
   ) {}
 
-  private async removeOldBannerImage(bannerId: string, newImageFilePath?: string) {
-    const result = await this.bannerRepository.getBannerById(bannerId)
-
-    if (result.isErr())
-      return mapRawPrismaError(result.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.BANNER_NOT_FOUND,
-        },
-      })
-
-    const { imageFilePath } = result.value
-
-    if (newImageFilePath || (imageFilePath && imageFilePath !== newImageFilePath)) {
-      return await this.fileService.deleteFile(imageFilePath)
-    }
-
-    return ok()
-  }
-
-  private async markShareMode(filePaths: string[], mode: 'PUBLISH' | 'DRAFT') {
-    let markFileStatus
-
-    if (mode === 'PUBLISH') {
-      markFileStatus = await this.fileService.bulkMarkAsPublic(filePaths)
-    } else {
-      markFileStatus = await this.fileService.bulkMarkAsPrivate(filePaths)
-    }
-
-    if (markFileStatus.isErr()) return err(markFileStatus.error)
-    return ok()
-  }
-
   async getBanners() {
     const result = await this.bannerRepository.getBanners()
 
     if (result.isErr()) return mapRawPrismaError(result.error)
 
     const imageBannerFilePaths = result.value.map((banner) => banner.imageFilePath)
-
     const imageBannerUrlResults = await this.fileService.bulkGetFileSignedUrl(imageBannerFilePaths)
+
     if (imageBannerUrlResults.isErr()) return err(imageBannerUrlResults.error)
 
     const response: GetBannersResponse = result.value.map(
@@ -103,16 +71,7 @@ export class AdminBannerService {
   }
 
   async createBanner(data: CreateBannerBody) {
-    const moveResult = await this.fileService.moveFileToPublicFolder([data.imageFilePath])
-
-    if (moveResult.isErr()) return err(moveResult.error)
-    const markFileStatusResult = await this.markShareMode(moveResult.value, data.status)
-
-    if (markFileStatusResult.isErr()) return err(markFileStatusResult.error)
-    const result = await this.bannerRepository.createBanner({
-      ...data,
-      imageFilePath: moveResult.value[0],
-    })
+    const result = await this.bannerRepository.createBanner(data)
 
     if (result.isErr())
       return mapRawPrismaError(result.error, {
@@ -128,16 +87,8 @@ export class AdminBannerService {
   }
 
   async updateBannerById(id: string, data: UpdateBannerBody) {
-    const clearResult = await this.removeOldBannerImage(id, data.imageFilePath)
-    if (clearResult.isErr()) return err(clearResult.error)
+    const result = await this.bannerRepository.updateBannerById(id, data)
 
-    const moveResult = await this.fileService.moveFileToPublicFolder([data.imageFilePath])
-    if (moveResult.isErr()) return err(moveResult.error)
-
-    const result = await this.bannerRepository.updateBannerById(id, {
-      ...data,
-      imageFilePath: moveResult.value[0],
-    })
     if (result.isErr())
       return mapRawPrismaError(result.error, {
         RECORD_NOT_FOUND: {
@@ -146,16 +97,10 @@ export class AdminBannerService {
         },
       })
 
-    const markFileStatusResult = await this.markShareMode(moveResult.value, data.status)
-    if (markFileStatusResult.isErr()) return err(markFileStatusResult.error)
-
     return ok()
   }
 
   async deleteBannerById(id: string) {
-    const clearResult = await this.removeOldBannerImage(id)
-    if (clearResult.isErr()) return err(clearResult.error)
-
     const result = await this.bannerRepository.deleteBannerById(id)
 
     if (result.isErr())

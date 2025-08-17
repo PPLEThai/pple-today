@@ -8,11 +8,11 @@ import https from 'https'
 import { fromPromise, Ok, ok } from 'neverthrow'
 import { Readable } from 'stream'
 
-import { FileTransactionEntry } from './types'
+import { FilePermission, FileTransactionEntry } from './types'
 
 import serverEnv from '../../config/env'
 import { InternalErrorCode } from '../../dtos/error'
-import { err } from '../../utils/error'
+import { err, exhaustiveGuard } from '../../utils/error'
 
 export class FileService {
   public prefixPublicFolder = 'public/' as const
@@ -52,8 +52,8 @@ export class FileService {
 
     let editShareTypeResult
 
-    if (shareType === 'PRIVATE') editShareTypeResult = await this.markAsPrivate(newPath)
-    else editShareTypeResult = await this.markAsPublic(newPath)
+    if (shareType === FilePermission.PUBLIC) editShareTypeResult = await this.markAsPublic(newPath)
+    else editShareTypeResult = await this.markAsPrivate(newPath)
 
     if (editShareTypeResult.isErr()) {
       const revertPosition = await this.moveFile(newPath, file)
@@ -65,11 +65,7 @@ export class FileService {
     return ok(newPath)
   }
 
-  private async bulkMoveToFolder(
-    files: string[],
-    prefix: string,
-    permission: 'PUBLIC' | 'PRIVATE'
-  ) {
+  private async bulkMoveToFolder(files: string[], prefix: string, permission: FilePermission) {
     const moveResults = await Promise.all(
       files.map(async (file) => {
         if (file.startsWith(prefix)) return ok(file)
@@ -135,15 +131,15 @@ export class FileService {
   }
 
   async bulkMoveToTempFolder(files: string[]) {
-    return this.bulkMoveToFolder(files, this.prefixTempFolder, 'PRIVATE')
+    return this.bulkMoveToFolder(files, this.prefixTempFolder, FilePermission.PRIVATE)
   }
 
   async bulkMoveToPrivateFolder(files: string[]) {
-    return this.bulkMoveToFolder(files, this.prefixPrivateFolder, 'PRIVATE')
+    return this.bulkMoveToFolder(files, this.prefixPrivateFolder, FilePermission.PRIVATE)
   }
 
   async bulkMoveToPublicFolder(files: string[]) {
-    return this.bulkMoveToFolder(files, this.prefixPublicFolder, 'PUBLIC')
+    return this.bulkMoveToFolder(files, this.prefixPublicFolder, FilePermission.PUBLIC)
   }
 
   async getUploadSignedUrl(
@@ -235,7 +231,7 @@ export class FileService {
   }
 
   bulkGetPublicFileUrl(fileKeys: string[]) {
-    return fileKeys.map((fileKey) => decodeURIComponent(this.bucket.file(fileKey).publicUrl()))
+    return fileKeys.map((fileKey) => this.getPublicFileUrl(fileKey))
   }
 
   getPublicFileUrl(fileKey: string) {
@@ -331,8 +327,15 @@ export class FileService {
     )
   }
 
-  $transaction() {
-    return new FileTransactionService(this)
+  $transaction = async <T>(cb: (tx: FileTransactionService) => Promise<T>) => {
+    const fileTransaction = new FileTransactionService(this)
+
+    try {
+      return await cb(fileTransaction)
+    } catch (err) {
+      await fileTransaction.rollback()
+      throw err
+    }
   }
 }
 
@@ -340,119 +343,178 @@ class FileTransactionService {
   private transaction: FileTransactionEntry[] = []
   constructor(private readonly fileService: FileService) {}
 
-  async bulkMoveToPublicFolder(fileKeys: string[]) {
-    const transactionKey: FileTransactionEntry[] = fileKeys
-      .map((file): FileTransactionEntry[] => [
-        {
-          target: file,
-          action: {
-            type: 'PERMISSION',
-            permission: {
-              before: 'PRIVATE',
-              after: 'PUBLIC',
-            },
-          },
-        },
-        {
-          target: file,
-          action: {
-            type: 'MOVE',
-            to: this.fileService.prefixPublicFolder + this.fileService.getFilePath(file),
-          },
-        },
-      ])
-      .flat()
-
-    const result = await this.fileService.bulkMoveToPublicFolder(fileKeys)
+  private async moveFile(fileKey: string, to: string) {
+    const result = await this.fileService.moveFile(fileKey, to)
 
     if (result.isErr()) {
       return err(result.error)
     }
 
-    this.transaction.push(...transactionKey)
-    return ok()
+    this.transaction.push({
+      target: fileKey,
+      action: {
+        type: 'MOVE',
+        to,
+      },
+    })
+
+    return ok(fileKey)
+  }
+
+  private async changePermission(fileKey: string, permission: FilePermission) {
+    const beforePermission = fileKey.startsWith(this.fileService.prefixPublicFolder)
+      ? FilePermission.PUBLIC
+      : FilePermission.PRIVATE
+
+    if (beforePermission === permission) return ok(fileKey)
+
+    const transactionEntry: FileTransactionEntry = {
+      target: fileKey,
+      action: {
+        type: 'PERMISSION',
+        permission: {
+          before: beforePermission,
+          after: permission,
+        },
+      },
+    }
+
+    let result
+    if (permission === FilePermission.PUBLIC) result = await this.fileService.markAsPublic(fileKey)
+    else result = await this.fileService.markAsPrivate(fileKey)
+
+    if (result.isErr()) {
+      return err(result.error)
+    }
+
+    this.transaction.push(transactionEntry)
+    return ok(fileKey)
+  }
+
+  private async bulkMoveToFolder(fileKeys: string[], prefixFolder: string) {
+    const newFileKeys: string[] = []
+    for (const fileKey of fileKeys) {
+      if (fileKey.startsWith(prefixFolder)) continue
+
+      const newFileKey = prefixFolder + this.fileService.getFilePath(fileKey)
+      const result = await this.moveFile(fileKey, newFileKey)
+
+      if (result.isErr()) {
+        return err(result.error)
+      }
+
+      const changePermissionResult = await this.changePermission(
+        newFileKey,
+        prefixFolder === this.fileService.prefixPublicFolder
+          ? FilePermission.PUBLIC
+          : FilePermission.PRIVATE
+      )
+
+      if (changePermissionResult.isErr()) {
+        return err(changePermissionResult.error)
+      }
+
+      newFileKeys.push(newFileKey)
+    }
+
+    return ok(newFileKeys)
+  }
+
+  async uploadFile(fileKey: string, file: File) {
+    const uploadResult = await this.fileService.uploadFile(fileKey, file)
+
+    if (uploadResult.isErr()) {
+      return err(uploadResult.error)
+    }
+
+    this.transaction.push({
+      target: fileKey,
+      action: {
+        type: 'UPLOAD',
+      },
+    })
+
+    return ok(fileKey)
+  }
+
+  async uploadFileFromUrl(url: string, fileKey: string) {
+    const uploadResult = await this.fileService.uploadFileFromUrl(url, fileKey)
+
+    if (uploadResult.isErr()) {
+      return err(uploadResult.error)
+    }
+
+    this.transaction.push({
+      target: fileKey,
+      action: {
+        type: 'UPLOAD',
+      },
+    })
+
+    const changePermissionResult = await this.changePermission(
+      fileKey,
+      fileKey.startsWith(this.fileService.prefixPublicFolder)
+        ? FilePermission.PUBLIC
+        : FilePermission.PRIVATE
+    )
+
+    if (changePermissionResult.isErr()) {
+      return err(changePermissionResult.error)
+    }
+
+    return ok(fileKey)
+  }
+
+  async bulkMoveToPublicFolder(fileKeys: string[]) {
+    return await this.bulkMoveToFolder(fileKeys, this.fileService.prefixPublicFolder)
   }
 
   async bulkMoveToPrivateFolder(fileKeys: string[]) {
-    const transactionKey: FileTransactionEntry[] = fileKeys
-      .map((file): FileTransactionEntry[] => [
-        {
-          target: file,
-          action: {
-            type: 'PERMISSION',
-            permission: {
-              before: 'PUBLIC',
-              after: 'PRIVATE',
-            },
-          },
-        },
-        {
-          target: file,
-          action: {
-            type: 'MOVE',
-            to: this.fileService.prefixPrivateFolder + this.fileService.getFilePath(file),
-          },
-        },
-      ])
-      .flat()
-
-    const result = await this.fileService.bulkMoveToPrivateFolder(fileKeys)
-
-    if (result.isErr()) {
-      return err(result.error)
-    }
-
-    this.transaction.push(...transactionKey)
-    return ok()
+    return await this.bulkMoveToFolder(fileKeys, this.fileService.prefixPrivateFolder)
   }
 
   async bulkMoveToTempFolder(fileKeys: string[]) {
-    const transactionKey: FileTransactionEntry[] = fileKeys
-      .map((file): FileTransactionEntry[] => [
-        {
-          target: file,
-          action: {
-            type: 'PERMISSION',
-            permission: {
-              before: 'PUBLIC',
-              after: 'PRIVATE',
-            },
-          },
-        },
-        {
-          target: file,
-          action: {
-            type: 'MOVE',
-            to: this.fileService.prefixTempFolder + this.fileService.getFilePath(file),
-          },
-        },
-      ])
-      .flat()
+    return await this.bulkMoveToFolder(fileKeys, this.fileService.prefixTempFolder)
+  }
 
-    const result = await this.fileService.bulkMoveToTempFolder(fileKeys)
-
-    if (result.isErr()) {
-      return err(result.error)
-    }
-
-    this.transaction.push(...transactionKey)
-    return ok()
+  async bulkDeleteFile(fileKeys: string[]) {
+    return await this.bulkMoveToTempFolder(fileKeys)
   }
 
   async rollback() {
     for (const entry of this.transaction.reverse()) {
+      let result
       switch (entry.action.type) {
         case 'PERMISSION':
           if (entry.action.permission.before === entry.action.permission.after) continue
-          if (entry.action.permission.before === 'PUBLIC') {
-            await this.fileService.markAsPublic(entry.target)
-          } else {
-            await this.fileService.markAsPrivate(entry.target)
+
+          if (entry.action.permission.before === FilePermission.PUBLIC)
+            result = await this.fileService.markAsPublic(entry.target)
+          else result = await this.fileService.markAsPrivate(entry.target)
+
+          if (result.isErr()) {
+            return err(result.error)
           }
+
           break
         case 'MOVE':
-          await this.fileService.moveFile(entry.action.to, entry.target)
+          result = await this.fileService.moveFile(entry.action.to, entry.target)
+
+          if (result.isErr()) {
+            return err(result.error)
+          }
+
           break
+        case 'UPLOAD':
+          result = await this.fileService.deleteFile(entry.target)
+
+          if (result.isErr()) {
+            return err(result.error)
+          }
+
+          break
+        default:
+          exhaustiveGuard(entry.action)
       }
     }
   }

@@ -128,6 +128,10 @@ export function err<E>(_err: E | Err<never, E>): Err<never, E> {
   return defaultErr(errBody) as Err<never, E>
 }
 
+export const throwWithReturnType = <E>(err: E): E => {
+  throw err
+}
+
 export const fromRepositoryPromise = async <T>(
   promise: Promise<T> | (() => Promise<T>)
 ): Promise<Result<WithoutErr<T>, RawPrismaError | ExtractExplicitErr<T>>> => {

@@ -8,8 +8,7 @@ import { FeedItemReactionType, FeedItemType, Prisma } from '../../../__generated
 import { InternalErrorCode } from '../../dtos/error'
 import { FeedItem, FeedItemBaseContent } from '../../dtos/feed'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
-import { err, exhaustiveGuard } from '../../utils/error'
-import { fromRepositoryPromise } from '../../utils/error'
+import { err, exhaustiveGuard, fromRepositoryPromise } from '../../utils/error'
 import { FileService, FileServicePlugin } from '../file/services'
 
 export class FeedRepository {
@@ -594,7 +593,7 @@ export class FeedRepository {
     )
 
     if (result.isErr()) {
-      return result
+      return err(result.error)
     }
 
     return ok(result.value[0])
