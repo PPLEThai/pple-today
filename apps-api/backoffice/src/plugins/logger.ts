@@ -98,7 +98,6 @@ export const GlobalLoggerPlugin = loggerBuilder({
   },
   autoLogging: {
     ignore: (ctx) => {
-      // NOTE: This is a workaround for error response that logs in onAfterResponse
       if (ctx.isError) return false
 
       return (
