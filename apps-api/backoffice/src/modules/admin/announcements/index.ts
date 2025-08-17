@@ -96,6 +96,7 @@ const AdminDraftAnnouncementsController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
           InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -154,6 +155,7 @@ const AdminDraftAnnouncementsController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
           InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -262,6 +264,7 @@ export const AdminAnnouncementsController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
           InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -289,6 +292,7 @@ export const AdminAnnouncementsController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
           InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -316,6 +320,7 @@ export const AdminAnnouncementsController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
           InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

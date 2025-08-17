@@ -94,6 +94,7 @@ export const AdminBannerController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.BANNER_INVALID_INPUT,
           InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -120,7 +121,7 @@ export const AdminBannerController = new Elysia({
         200: UpdateBannerResponse,
         ...createErrorSchema(
           InternalErrorCode.BANNER_NOT_FOUND,
-          InternalErrorCode.FILE_DELETE_ERROR,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.FILE_MOVE_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
@@ -146,7 +147,8 @@ export const AdminBannerController = new Elysia({
       response: {
         200: DeleteBannerResponse,
         ...createErrorSchema(
-          InternalErrorCode.FILE_DELETE_ERROR,
+          InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.BANNER_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
