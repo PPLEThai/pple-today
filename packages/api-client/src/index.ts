@@ -1,15 +1,15 @@
 import { edenFetch } from '@elysiajs/eden'
 import {
   useMutation,
-  UseMutationOptions,
-  UseMutationResult,
+  type UseMutationOptions,
+  type UseMutationResult,
   useQuery,
-  UseQueryOptions,
-  UseQueryResult,
+  type UseQueryOptions,
+  type UseQueryResult,
 } from '@tanstack/react-query'
-import Elysia from 'elysia'
+import type { AnyElysia } from 'elysia'
 
-import {
+import type {
   CreateReactQueryClientResult,
   EdenFetch,
   FetchClientInterceptors,
@@ -89,7 +89,7 @@ function createQueryClient<TSchema extends Record<string, any>>(
   }
 }
 
-export function createReactQueryClient<T extends Elysia<any, any, any, any, any, any, any>>(
+export function createReactQueryClient<T extends AnyElysia>(
   server: string,
   options?: EdenFetch.Config
 ): CreateReactQueryClientResult<T> {

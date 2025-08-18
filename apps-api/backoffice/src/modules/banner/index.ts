@@ -27,5 +27,9 @@ export const BannerController = new Elysia({
         200: GetBannersResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
       },
+      detail: {
+        summary: 'Get all banners',
+        description: 'Retrieves a list of all banners',
+      },
     }
   )

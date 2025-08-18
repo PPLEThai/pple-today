@@ -14,7 +14,7 @@ import { FacebookServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
-import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
+import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 
 export const FacebookController = new Elysia({
   prefix: '/facebook',
@@ -30,14 +30,7 @@ export const FacebookController = new Elysia({
 
           const accessTokenResult = await facebookService.getUserAccessToken(code, redirectUri)
           if (accessTokenResult.isErr()) {
-            switch (accessTokenResult.error.code) {
-              case InternalErrorCode.FACEBOOK_API_ERROR:
-                return mapErrorCodeToResponse(accessTokenResult.error, status)
-              case InternalErrorCode.FACEBOOK_INVALID_RESPONSE:
-                return mapErrorCodeToResponse(accessTokenResult.error, status)
-              default:
-                exhaustiveGuard(accessTokenResult.error)
-            }
+            return mapErrorCodeToResponse(accessTokenResult.error, status)
           }
 
           return status(200, accessTokenResult.value)
@@ -64,16 +57,7 @@ export const FacebookController = new Elysia({
           const pageList = await facebookService.getUserPageList(facebookToken)
 
           if (pageList.isErr()) {
-            switch (pageList.error.code) {
-              case InternalErrorCode.FACEBOOK_API_ERROR:
-                return mapErrorCodeToResponse(pageList.error, status)
-              case InternalErrorCode.FACEBOOK_INVALID_RESPONSE:
-                return mapErrorCodeToResponse(pageList.error, status)
-              case InternalErrorCode.FACEBOOK_INVALID_ACCESS_TOKEN:
-                return mapErrorCodeToResponse(pageList.error, status)
-              default:
-                exhaustiveGuard(pageList.error)
-            }
+            return mapErrorCodeToResponse(pageList.error, status)
           }
 
           return status(200, pageList.value)
@@ -103,12 +87,13 @@ export const FacebookController = new Elysia({
           const linkedPageResult = await facebookService.getLinkedFacebookPage(user.id)
 
           if (linkedPageResult.isErr()) {
-            return status(500, {
-              error: {
+            return mapErrorCodeToResponse(
+              {
                 code: InternalErrorCode.INTERNAL_SERVER_ERROR,
                 message: 'Failed to fetch linked Facebook page',
               },
-            })
+              status
+            )
           }
 
           return status(200, { linkedFacebookPage: linkedPageResult.value })
@@ -137,13 +122,13 @@ export const FacebookController = new Elysia({
           })
 
           if (linkResult.isErr()) {
-            console.error('Facebook page linked successfully', linkResult.error)
-            return status(500, {
-              error: {
+            return mapErrorCodeToResponse(
+              {
                 code: InternalErrorCode.INTERNAL_SERVER_ERROR,
                 message: 'Failed to link Facebook page',
               },
-            })
+              status
+            )
           }
 
           return status(201, {
@@ -169,13 +154,13 @@ export const FacebookController = new Elysia({
           const unlinkResult = await facebookService.unlinkFacebookPageFromUser(user.id)
 
           if (unlinkResult.isErr()) {
-            console.error('Failed to unlink Facebook page', unlinkResult.error)
-            return status(500, {
-              error: {
+            return mapErrorCodeToResponse(
+              {
                 code: InternalErrorCode.INTERNAL_SERVER_ERROR,
                 message: 'Failed to unlink Facebook page',
               },
-            })
+              status
+            )
           }
 
           return status(200, {

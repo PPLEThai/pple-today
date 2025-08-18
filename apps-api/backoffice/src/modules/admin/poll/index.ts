@@ -20,11 +20,11 @@ import { AdminPollServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../../dtos/error'
 import { AuthGuardPlugin } from '../../../plugins/auth-guard'
-import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../../utils/error'
+import { createErrorSchema, mapErrorCodeToResponse } from '../../../utils/error'
 
 const AdminDraftedPollsController = new Elysia({
   prefix: '/draft',
-  tags: ['Drafted Polls'],
+  tags: ['Admin Drafted Polls'],
 })
   .use([AuthGuardPlugin, AdminPollServicePlugin])
   .get(
@@ -32,14 +32,7 @@ const AdminDraftedPollsController = new Elysia({
     async ({ params, status, adminPollService }) => {
       const result = await adminPollService.getDraftedPollById(params.pollId)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.POLL_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -85,14 +78,7 @@ const AdminDraftedPollsController = new Elysia({
     async ({ params, body, status, adminPollService }) => {
       const result = await adminPollService.updateDraftedPollById(params.pollId, body)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.POLL_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -119,14 +105,7 @@ const AdminDraftedPollsController = new Elysia({
     async ({ params, user, status, adminPollService }) => {
       const result = await adminPollService.publishDraftedPollById(params.pollId, user.id)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.POLL_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -152,14 +131,7 @@ const AdminDraftedPollsController = new Elysia({
     async ({ params, status, adminPollService }) => {
       const result = await adminPollService.deleteDraftedPoll(params.pollId)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.POLL_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -183,8 +155,7 @@ const AdminDraftedPollsController = new Elysia({
 
 export const AdminPollsController = new Elysia({
   prefix: '/polls',
-
-  tags: ['Polls'],
+  tags: ['Admin Polls'],
 })
   .use([AuthGuardPlugin, AdminPollServicePlugin])
   .use(AdminDraftedPollsController)
@@ -234,14 +205,7 @@ export const AdminPollsController = new Elysia({
     async ({ params, status, adminPollService }) => {
       const result = await adminPollService.getPollById(params.pollId)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.POLL_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -267,14 +231,7 @@ export const AdminPollsController = new Elysia({
     async ({ params, body, status, adminPollService }) => {
       const result = await adminPollService.updatePollById(params.pollId, body)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.POLL_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -301,14 +258,7 @@ export const AdminPollsController = new Elysia({
     async ({ params, status, adminPollService }) => {
       const result = await adminPollService.unpublishPollById(params.pollId)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.POLL_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -334,14 +284,7 @@ export const AdminPollsController = new Elysia({
     async ({ params, status, adminPollService }) => {
       const result = await adminPollService.deletePollById(params.pollId)
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.POLL_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
