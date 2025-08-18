@@ -60,12 +60,7 @@ export class FeedService {
         return err(feedItems.error)
       }
 
-      return mapRawPrismaError(feedItems.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
-          message: 'Feed items not found',
-        },
-      })
+      return mapRawPrismaError(feedItems.error)
     }
 
     return ok(feedItems.value)
@@ -100,12 +95,7 @@ export class FeedService {
         return err(feedItems.error)
       }
 
-      return mapRawPrismaError(feedItems.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
-          message: 'Feed items not found',
-        },
-      })
+      return mapRawPrismaError(feedItems.error)
     }
 
     return ok(feedItems.value)
