@@ -49,12 +49,20 @@ export const FacebookController = new Elysia({
           },
         }
       )
+      .onParse(async ({ request, headers }) => {
+        if (headers['content-type'] === 'application/json') {
+          const arrayBuffer = await request.arrayBuffer()
+          const rawBody = Buffer.from(arrayBuffer)
+
+          return { rawBody, ...JSON.parse(rawBody.toString()) }
+        }
+      })
       .post(
         '/',
         async ({ body, headers, status, facebookService }) => {
           const isValidSignature = await facebookService.validateWebhookSignature(
             headers['x-hub-signature-256'],
-            body
+            (body as any).rawBody
           )
 
           if (isValidSignature.isErr()) {

@@ -49,7 +49,7 @@ export class FacebookService {
   //   return await this.facebookRepository.subscribeToPostUpdates(userId, facebookPageId)
   // }
 
-  async validateWebhookSignature(signature: string, body: unknown) {
+  async validateWebhookSignature(signature: string, body: Buffer) {
     if (!signature.startsWith('sha256=')) {
       return err({
         code: InternalErrorCode.FACEBOOK_WEBHOOK_INVALID_SIGNATURE,
@@ -60,7 +60,7 @@ export class FacebookService {
     const sha256Signature = signature.replace('sha256=', '')
 
     const hmac = crypto.createHmac('sha256', serverEnv.FACEBOOK_APP_SECRET)
-    const hash = hmac.update(JSON.stringify(body)).digest('hex')
+    const hash = hmac.update(body).digest('hex')
 
     if (sha256Signature !== hash) {
       return err({
@@ -197,12 +197,7 @@ export class FacebookService {
     )
 
     if (subscribeResult.isErr()) {
-      return mapRawPrismaError(subscribeResult.error as any, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.POST_NOT_FOUND,
-          message: 'Post not found',
-        },
-      })
+      return err(subscribeResult.error)
     }
 
     return ok(linkedPage.value)
