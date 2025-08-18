@@ -249,7 +249,6 @@ export class FacebookRepository {
     )
   }
 
-  // TODO: Implement the following methods when webhooks are available
   async unsubscribeFromPostUpdates(pageId: string, pageAccessToken: string) {
     const queryParams = new URLSearchParams({
       access_token: pageAccessToken,
