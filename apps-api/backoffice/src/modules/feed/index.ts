@@ -40,26 +40,19 @@ export const FeedController = new Elysia({
   .get(
     '/me',
     async ({ query, user, feedService, status }) => {
-      const feedResult = await feedService.getMyFeed(user?.sub, {
+      const feedResult = await feedService.getMyFeed(user?.id, {
         page: query?.page,
         limit: query?.limit,
       })
 
       if (feedResult.isErr()) {
-        switch (feedResult.error.code) {
-          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
-            return mapErrorCodeToResponse(feedResult.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(feedResult.error, status)
-          default:
-            exhaustiveGuard(feedResult.error)
-        }
+        return mapErrorCodeToResponse(feedResult.error, status)
       }
 
       return status(200, feedResult.value)
     },
     {
-      fetchUser: true,
+      fetchLocalUser: true,
       query: GetMyFeedQuery,
       response: {
         200: GetMyFeedResponse,
@@ -77,28 +70,19 @@ export const FeedController = new Elysia({
   .get(
     '/topic',
     async ({ query, user, status, feedService }) => {
-      const feedResult = await feedService.getTopicFeed(query.topicId, user?.sub, {
+      const feedResult = await feedService.getTopicFeed(query.topicId, user?.id, {
         page: query?.page,
         limit: query?.limit,
       })
 
       if (feedResult.isErr()) {
-        switch (feedResult.error.code) {
-          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
-            return mapErrorCodeToResponse(feedResult.error, status)
-          case InternalErrorCode.TOPIC_NOT_FOUND:
-            return mapErrorCodeToResponse(feedResult.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(feedResult.error, status)
-          default:
-            exhaustiveGuard(feedResult.error)
-        }
+        return mapErrorCodeToResponse(feedResult.error, status)
       }
 
       return status(200, feedResult.value)
     },
     {
-      fetchUser: true,
+      fetchLocalUser: true,
       query: GetTopicFeedQuery,
       response: {
         200: GetTopicFeedResponse,
@@ -117,28 +101,19 @@ export const FeedController = new Elysia({
   .get(
     '/hashtag',
     async ({ query, user, status, feedService }) => {
-      const feedResult = await feedService.getHashTagFeed(query.hashTagId, user?.sub, {
+      const feedResult = await feedService.getHashTagFeed(query.hashTagId, user?.id, {
         page: query.page,
         limit: query.limit,
       })
 
       if (feedResult.isErr()) {
-        switch (feedResult.error.code) {
-          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
-            return mapErrorCodeToResponse(feedResult.error, status)
-          case InternalErrorCode.TOPIC_NOT_FOUND:
-            return mapErrorCodeToResponse(feedResult.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(feedResult.error, status)
-          default:
-            exhaustiveGuard(feedResult.error)
-        }
+        return mapErrorCodeToResponse(feedResult.error, status)
       }
 
       return status(200, feedResult.value)
     },
     {
-      fetchUser: true,
+      fetchLocalUser: true,
       query: GetHashTagFeedQuery,
       response: {
         200: GetHashTagFeedResponse,
