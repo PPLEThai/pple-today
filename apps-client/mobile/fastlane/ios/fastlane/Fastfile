@@ -97,6 +97,7 @@ platform :ios do
       # You have to disabled the checkbox "Enable automatic distribution" checkbox
       # in App Store Connect when creating the internal group
       groups: ENV['DISTRIBUTE_GROUPS'] || "dev-team", 
+      distribute_external: true,
       skip_waiting_for_build_processing: true,
     )
   end

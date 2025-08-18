@@ -84,7 +84,8 @@ jobs:
 
   build-ios:
     name: Build iOS
-    runs-on: macos-latest
+    # TODO: update to macos-latest when this is fixed https://github.com/fastlane/fastlane/issues/29659
+    runs-on: macos-14
     if: ${{ inputs.ios == 'true' }}
     steps:
       - name: Checkout Repository
