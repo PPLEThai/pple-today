@@ -2,6 +2,7 @@ import { Static, t } from 'elysia'
 
 import { FeedItemReactionType } from '../../../__generated__/prisma'
 import { FeedItem, FeedItemComment } from '../../dtos/feed'
+import { ListQuery, PaginationQuery } from '../../dtos/pagination'
 
 export const GetFeedContentParams = t.Object({
   id: t.String({ description: 'The ID of the feed item' }),
@@ -93,3 +94,33 @@ export const DeleteFeedCommentResponse = t.Object({
 
 export type DeleteFeedCommentParams = Static<typeof DeleteFeedCommentParams>
 export type DeleteFeedCommentResponse = Static<typeof DeleteFeedCommentResponse>
+
+export const GetMyFeedQuery = PaginationQuery
+export type GetMyFeedQuery = Static<typeof GetMyFeedQuery>
+
+export const GetMyFeedResponse = t.Array(FeedItem)
+export type GetMyFeedResponse = Static<typeof GetMyFeedResponse>
+
+export const GetTopicFeedQuery = ListQuery(
+  t.Object({
+    topicId: t.String({
+      description: 'The ID of the topic to fetch feed items for',
+    }),
+  })
+)
+export type GetTopicFeedQuery = Static<typeof GetTopicFeedQuery>
+
+export const GetTopicFeedResponse = t.Array(FeedItem)
+export type GetTopicFeedResponse = Static<typeof GetTopicFeedResponse>
+
+export const GetHashTagFeedQuery = ListQuery(
+  t.Object({
+    hashTagId: t.String({
+      description: 'The hashtag to fetch feed items for',
+    }),
+  })
+)
+export type GetHashTagFeedQuery = Static<typeof GetHashTagFeedQuery>
+
+export const GetHashTagFeedResponse = t.Array(FeedItem)
+export type GetHashTagFeedResponse = Static<typeof GetHashTagFeedResponse>
