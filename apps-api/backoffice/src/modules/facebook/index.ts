@@ -4,6 +4,7 @@ import {
   GetFacebookUserPageListQuery,
   GetFacebookUserPageListResponse,
   GetLinkedFacebookPageResponse,
+  HandleFacebookWebhookBody,
   HandleFacebookWebhookHeaders,
   LinkFacebookPageToUserBody,
   LinkFacebookPageToUserResponse,
@@ -74,6 +75,7 @@ export const FacebookController = new Elysia({
           })
         },
         {
+          body: HandleFacebookWebhookBody,
           headers: HandleFacebookWebhookHeaders,
           detail: {
             summary: 'Handle Facebook Webhook',

@@ -90,7 +90,6 @@ export const loggerBuilder = (config: StandaloneLoggerOptions) => {
       'request.headers.authorization',
       'body.accessToken',
       'body.facebookPageAccessToken',
-      'body.rawBody',
     ],
     serializers,
     formatters,

@@ -212,7 +212,6 @@ export class FacebookRepository {
     return ok(response.value)
   }
 
-  // TODO: Implement the following methods when webhooks are available
   async subscribeToPostUpdates(userId: string, pageId: string, pageAccessToken: string) {
     const queryParams = new URLSearchParams({
       subscribed_fields: 'feed',
@@ -251,10 +250,35 @@ export class FacebookRepository {
   }
 
   // TODO: Implement the following methods when webhooks are available
-  async unsubscribeFromPostUpdates(userId: string, pageId: string) {
+  async unsubscribeFromPostUpdates(pageId: string, pageAccessToken: string) {
+    const queryParams = new URLSearchParams({
+      access_token: pageAccessToken,
+    })
+
+    const result = await this.makeRequest({
+      path: `/${pageId}/subscribed_apps`,
+      method: 'DELETE',
+      accessToken: pageAccessToken,
+      query: queryParams,
+      responseSchema: t.Object({
+        success: t.Boolean(),
+      }),
+    })
+
+    if (result.isErr()) {
+      return err(result.error)
+    }
+
+    if (!result.value.success) {
+      return err({
+        code: InternalErrorCode.FACEBOOK_API_ERROR,
+        message: 'Failed to subscribe to feed updates',
+      })
+    }
+
     return await fromPrismaPromise(
       this.prismaService.facebookPage.update({
-        where: { id: pageId, managerId: userId },
+        where: { id: pageId },
         data: {
           isSubscribed: false,
         },

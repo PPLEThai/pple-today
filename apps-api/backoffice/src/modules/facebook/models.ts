@@ -126,3 +126,26 @@ export const HandleFacebookWebhookHeaders = t.Object({
     minLength: 1,
   }),
 })
+export type HandleFacebookWebhookHeaders = Static<typeof HandleFacebookWebhookHeaders>
+
+export const HandleFacebookWebhookBody = t.Object({
+  object: t.String({
+    description: 'The object type being sent in the webhook',
+  }),
+  entry: t.Array(
+    t.Object({
+      id: t.String({
+        description: 'The ID of the Facebook page or user',
+      }),
+      changes: t.Array(
+        t.Object({
+          field: t.String({
+            description: 'The field that changed',
+          }),
+          value: t.Record(t.String(), t.Any()),
+        })
+      ),
+    })
+  ),
+})
+export type HandleFacebookWebhookBody = Static<typeof HandleFacebookWebhookBody>

@@ -143,6 +143,13 @@ export class FacebookService {
       return err(existingPage.error)
     }
 
+    if (existingPage.value?.managerId) {
+      return err({
+        code: InternalErrorCode.FACEBOOK_PAGE_ALREADY_LINKED,
+        message: 'Facebook page is already linked to another user',
+      })
+    }
+
     const pageDetails = await this.facebookRepository.getFacebookPageById(
       facebookPageAccessToken,
       facebookPageId
@@ -216,11 +223,18 @@ export class FacebookService {
     }
 
     const unlinkPostsResult = await this.facebookRepository.unsubscribeFromPostUpdates(
-      userId,
-      unlinkResult.value.id
+      unlinkResult.value.id,
+      unlinkResult.value.pageAccessToken ?? ''
     )
 
     if (unlinkPostsResult.isErr()) {
+      if (
+        unlinkPostsResult.error.code === InternalErrorCode.FACEBOOK_API_ERROR ||
+        unlinkPostsResult.error.code === InternalErrorCode.FACEBOOK_INVALID_RESPONSE
+      ) {
+        return err(unlinkPostsResult.error)
+      }
+
       return mapRawPrismaError(unlinkPostsResult.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.USER_NOT_FOUND,

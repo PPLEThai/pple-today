@@ -125,6 +125,9 @@ const FACEBOOK_ERROR_SCHEMA = {
   FACEBOOK_API_ERROR: {
     status: 500,
   },
+  FACEBOOK_PAGE_ALREADY_LINKED: {
+    status: 409,
+  },
   FACEBOOK_WEBHOOK_VERIFICATION_FAILED: {
     status: 400,
   },
