@@ -517,7 +517,7 @@ export class FacebookRepository {
     )
   }
 
-  async unlinkFacebookPageFromUser({ userId }: { userId: string }) {
+  async unlinkFacebookPageFromUser(userId: string) {
     return await fromPrismaPromise(
       this.prismaService.facebookPage.update({
         where: {

@@ -1,3 +1,4 @@
+import { Check } from '@sinclair/typebox/value'
 import Elysia from 'elysia'
 
 import {
@@ -61,6 +62,16 @@ export const FacebookController = new Elysia({
       .post(
         '/',
         async ({ body, headers, status, facebookService }) => {
+          if (!Check(HandleFacebookWebhookBody, body)) {
+            return mapErrorCodeToResponse(
+              {
+                code: InternalErrorCode.FACEBOOK_WEBHOOK_INVALID_SIGNATURE,
+                message: 'Invalid webhook body',
+              },
+              status
+            )
+          }
+
           const isValidSignature = await facebookService.validateWebhookSignature(
             headers['x-hub-signature-256'],
             (body as any).rawBody
@@ -75,7 +86,6 @@ export const FacebookController = new Elysia({
           })
         },
         {
-          body: HandleFacebookWebhookBody,
           headers: HandleFacebookWebhookHeaders,
           detail: {
             summary: 'Handle Facebook Webhook',
@@ -217,13 +227,7 @@ export const FacebookController = new Elysia({
           const unlinkResult = await facebookService.unlinkFacebookPageFromUser(user.id)
 
           if (unlinkResult.isErr()) {
-            return mapErrorCodeToResponse(
-              {
-                code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-                message: 'Failed to unlink Facebook page',
-              },
-              status
-            )
+            return mapErrorCodeToResponse(unlinkResult.error, status)
           }
 
           return status(200, {
@@ -234,7 +238,12 @@ export const FacebookController = new Elysia({
           requiredLocalUser: true,
           response: {
             200: UnlinkPageResponse,
-            ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+            ...createErrorSchema(
+              InternalErrorCode.INTERNAL_SERVER_ERROR,
+              InternalErrorCode.FACEBOOK_API_ERROR,
+              InternalErrorCode.FACEBOOK_INVALID_RESPONSE,
+              InternalErrorCode.FACEBOOK_LINKED_PAGE_NOT_FOUND
+            ),
           },
           detail: {
             summary: 'Unlink Facebook Page',

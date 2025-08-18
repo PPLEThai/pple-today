@@ -211,13 +211,13 @@ export class FacebookService {
   }
 
   async unlinkFacebookPageFromUser(userId: string) {
-    const unlinkResult = await this.facebookRepository.unlinkFacebookPageFromUser({ userId })
+    const unlinkResult = await this.facebookRepository.unlinkFacebookPageFromUser(userId)
 
     if (unlinkResult.isErr()) {
       return mapRawPrismaError(unlinkResult.error, {
         RECORD_NOT_FOUND: {
-          code: InternalErrorCode.USER_NOT_FOUND,
-          message: 'User not found',
+          code: InternalErrorCode.FACEBOOK_LINKED_PAGE_NOT_FOUND,
+          message: 'Linked Facebook page not found',
         },
       })
     }
@@ -237,8 +237,8 @@ export class FacebookService {
 
       return mapRawPrismaError(unlinkPostsResult.error, {
         RECORD_NOT_FOUND: {
-          code: InternalErrorCode.USER_NOT_FOUND,
-          message: 'User not found',
+          code: InternalErrorCode.FACEBOOK_LINKED_PAGE_NOT_FOUND,
+          message: 'Linked Facebook page not found',
         },
       })
     }
