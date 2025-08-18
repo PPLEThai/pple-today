@@ -90,7 +90,8 @@ pnpm ios
    Read more here https://codesigning.guide/
 
 5. Check your cert and profile in Xcode Project Setting > Signing & Capabilities tab\
-   Make sure it has Development Profile selected
+   Make sure it has Development Profile selected \
+   Restart Xcode if Certificate is not available
 
 6. Run App
 
