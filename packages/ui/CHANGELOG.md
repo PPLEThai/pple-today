@@ -1,5 +1,11 @@
 # @pple-today/ui
 
+## 0.1.1
+
+### Patch Changes
+
+- [#45](https://github.com/PPLEThai/pple-today/pull/45) [`3fe274f`](https://github.com/PPLEThai/pple-today/commit/3fe274f63a5e112086581e6ef1b09715e57ad1d1) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-214] Announcement Card](https://linear.app/snts/issue/PPLE-214/announcement-card)
+
 ## 0.1.0
 
 ### Minor Changes
