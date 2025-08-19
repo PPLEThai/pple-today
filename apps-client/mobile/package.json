@@ -8,7 +8,7 @@
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "ios:device": "expo run:ios --no-build-cache --device",
+    "ios:device": "expo run:ios --device",
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
