@@ -2,6 +2,7 @@ import Elysia from 'elysia'
 
 import { FeedItemType, PostAttachmentType } from '../../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
+import { err } from '../../../utils/error'
 import { fromPrismaPromise } from '../../../utils/prisma'
 
 export class FacebookWebhookRepository {
@@ -136,13 +137,16 @@ export class FacebookWebhookRepository {
   }
 
   async deletePost(facebookPostId: string) {
+    const existingPost = await this.getExistingPostByFacebookPostId(facebookPostId)
+
+    if (existingPost.isErr()) {
+      return err(existingPost.error)
+    }
+
     return await fromPrismaPromise(
       this.prismaService.feedItem.delete({
         where: {
-          id: undefined,
-          post: {
-            facebookPostId,
-          },
+          id: existingPost.value.feedItemId,
         },
         include: {
           post: {
