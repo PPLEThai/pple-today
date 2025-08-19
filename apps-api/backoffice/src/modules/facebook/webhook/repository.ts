@@ -174,11 +174,22 @@ export class FacebookWebhookRepository {
         },
         data: {
           attachments: {
-            create: links.map((link, idx) => ({
-              url: link.url,
-              type: link.type,
-              order: idx + 1,
-              cacheKey: link.cacheKey,
+            upsert: links.map((link, idx) => ({
+              where: {
+                cacheKey: link.cacheKey,
+              },
+              create: {
+                url: link.url,
+                type: link.type,
+                order: idx + 1,
+                cacheKey: link.cacheKey,
+              },
+              update: {
+                url: link.url,
+                type: link.type,
+                order: idx + 1,
+                cacheKey: link.cacheKey,
+              },
             })),
           },
         },

@@ -297,7 +297,7 @@ export class FacebookWebhookService {
           return ok()
         }
 
-        const addResult = await this.facebookWebhookRepository.addNewAttachments(body.from.id, [
+        const addResult = await this.facebookWebhookRepository.addNewAttachments(body.post_id, [
           ...existingPost.value.attachments,
           ...result.value.newUploads,
         ])
