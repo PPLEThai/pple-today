@@ -32,6 +32,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
+import { TextProps } from 'react-native-svg'
 
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
@@ -62,6 +63,7 @@ import { GetBannersResponse } from '@api/backoffice/src/modules/banner/models'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AnnouncementCard } from '@app/components/announcement'
 import { KeyboardAvoidingViewLayout } from '@app/components/keyboard-avoiding-view-layout'
+import { MoreOrLess } from '@app/components/more-or-less'
 import { environment } from '@app/env'
 import { useAuthMe, useSessionQuery } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
@@ -805,7 +807,7 @@ function PagerContent({ index }: { index: number }) {
         }
         return (
           <View className="px-4">
-            <FeedPost />
+            <FeedPostCard />
           </View>
         )
       }}
@@ -949,7 +951,7 @@ function AnnouncementSection() {
   )
 }
 
-const FeedPost = React.memo(function FeedPost() {
+const FeedPostCard = React.memo(function FeedPostCard() {
   return (
     <View className="flex flex-col gap-3 p-4 bg-base-bg-white border border-base-outline-default rounded-2xl mt-4">
       <View className="flex flex-row items-center justify-between">
@@ -984,13 +986,17 @@ const FeedPost = React.memo(function FeedPost() {
         />
       </View>
       <View>
-        <Text className="text-base-text-high font-noto-light text-base">
+        <MoreOrLess
+          numberOfLines={3}
+          moreText="อ่านเพิ่มเติม"
+          lessText="แสดงน้อยลง"
+          animated
+          textComponent={TextPost}
+          buttonComponent={ButtonTextPost}
+        >
           พบปะแม่ๆ ชมรมผู้สูงอายุดอกลำดวน ณ หมู่บ้านวารัตน์ 3 ม.5 ต. อ้อมน้อย อ.กระทุ่มแบน
           จ.สมุทรสาครชวนให้ผมออกสเตปประกอบ
-        </Text>
-        <Text className="text-base-primary-default font-noto-light text-base">
-          อ่านเพิ่มเติม...
-        </Text>
+        </MoreOrLess>
       </View>
       <View className="flex flex-row flex-wrap gap-1">
         <Badge variant="secondary">
@@ -1052,3 +1058,10 @@ const FeedPost = React.memo(function FeedPost() {
     </View>
   )
 })
+
+function TextPost(props: TextProps) {
+  return <Text {...props} className="text-base-text-high font-noto-light text-base" />
+}
+function ButtonTextPost(props: TextProps) {
+  return <Text {...props} className="text-base-primary-default font-noto-light text-base" />
+}

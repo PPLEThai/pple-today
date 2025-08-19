@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Platform, ScrollView, View } from 'react-native'
+import { ScrollView, TextProps, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Badge } from '@pple-today/ui/badge'
@@ -488,28 +488,29 @@ function MoreOrLessExample() {
       <H2 className="font-inter-bold">MoreOrLess</H2>
       <MoreOrLess
         numberOfLines={3}
-        textComponent={Text}
-        textButtonStyle={{
-          color: 'blue',
-          fontFamily: Platform.select({
-            android: 'NotoSansThaiLooped_300Light',
-            ios: 'NotoSansThaiLooped-Light',
-          }),
-        }}
         moreText="อ่านเพิ่มเติม"
         lessText="แสดงน้อยลง"
         animated
+        textComponent={TextPost}
+        buttonComponent={ButtonTextPost}
       >
         Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has
-        been the industry's standard dummy text ever since the 1500s, when an unknown printer took a
-        galley of type and scrambled it to make a type specimen book. It has survived not only five
-        centuries, but also the leap into electronic typesetting, remaining essentially unchanged.
-        It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum
-        passages, and more recently with desktop publishing software like Aldus PageMaker including
-        versions of Lorem.
+        been the industry&apos;s standard dummy text ever since the 1500s, when an unknown printer
+        took a galley of type and scrambled it to make a type specimen book. It has survived not
+        only five centuries, but also the leap into electronic typesetting, remaining essentially
+        unchanged. It was popularised in the 1960s with the release of Letraset sheets containing
+        Lorem Ipsum passages, and more recently with desktop publishing software like Aldus
+        PageMaker including versions of Lorem.
       </MoreOrLess>
     </View>
   )
+}
+
+function TextPost(props: TextProps) {
+  return <Text {...props} className="text-base-text-high font-noto-light text-base" />
+}
+function ButtonTextPost(props: TextProps) {
+  return <Text {...props} className="text-base-primary-default font-noto-light text-base" />
 }
 
 function QueryExample() {
