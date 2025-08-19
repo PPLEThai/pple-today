@@ -7,12 +7,12 @@ import { fromPromise, ok } from 'neverthrow'
 import serverEnv from '../../config/env'
 import { InternalErrorCode } from '../../dtos/error'
 import {
-  ExternalFacebookAccessTokenResponse,
-  ExternalFacebookErrorBody,
-  ExternalFacebookGetPageDetailsResponse,
-  ExternalFacebookGetPagePostsResponse,
-  ExternalFacebookInspectAccessTokenResponse,
-  ExternalFacebookListUserPageResponse,
+  AccessTokenResponse,
+  ErrorBody,
+  GetPageDetailsResponse,
+  GetPagePostsResponse,
+  InspectAccessTokenResponse,
+  ListUserPageResponse,
 } from '../../dtos/facebook'
 import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '../../plugins/logger'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
@@ -88,7 +88,7 @@ export class FacebookRepository {
       return err(jsonBody.error)
     }
 
-    if (Check(ExternalFacebookErrorBody, jsonBody.value)) {
+    if (Check(ErrorBody, jsonBody.value)) {
       return err({
         code: InternalErrorCode.FACEBOOK_API_ERROR,
         message: jsonBody.value.error.message,
@@ -120,7 +120,7 @@ export class FacebookRepository {
     const response = await this.makeRequest({
       path: `/oauth/access_token`,
       query: queryParams,
-      responseSchema: ExternalFacebookAccessTokenResponse,
+      responseSchema: AccessTokenResponse,
     })
 
     if (response.isErr()) {
@@ -195,7 +195,7 @@ export class FacebookRepository {
     const response = await this.makeRequest({
       path: `/debug_token`,
       query: queryParams,
-      responseSchema: ExternalFacebookInspectAccessTokenResponse,
+      responseSchema: InspectAccessTokenResponse,
     })
 
     if (response.isErr()) {
@@ -286,7 +286,7 @@ export class FacebookRepository {
   }
 
   // TODO: implement the following methods when starting to sync posts
-  // async syncInitialPostsFromPage(userId: string, posts: ExternalFacebookPagePost[]) {
+  // async syncInitialPostsFromPage(userId: string, posts: PagePost[]) {
   //   return await fromPrismaPromise(
   //     this.prismaService.$transaction(async (tx) => {
   //       await Promise.all(
@@ -406,7 +406,7 @@ export class FacebookRepository {
       path: `/${inspectResponse.value.data.user_id}/accounts`,
       query: queryParams,
       accessToken: userAccessToken,
-      responseSchema: ExternalFacebookListUserPageResponse,
+      responseSchema: ListUserPageResponse,
     })
 
     if (response.isErr()) {
@@ -432,7 +432,7 @@ export class FacebookRepository {
       path: `/${pageId}?${queryParams.toString()}`,
       query: queryParams,
       accessToken: pageAccessToken,
-      responseSchema: t.Pick(ExternalFacebookGetPageDetailsResponse, ['id', 'name', 'picture']),
+      responseSchema: t.Pick(GetPageDetailsResponse, ['id', 'name', 'picture']),
     })
 
     if (response.isErr()) {
@@ -459,7 +459,7 @@ export class FacebookRepository {
       path: `/${pageId}/posts?${queryParams.toString()}`,
       query: queryParams,
       accessToken: pageAccessToken,
-      responseSchema: ExternalFacebookGetPagePostsResponse,
+      responseSchema: GetPagePostsResponse,
     })
 
     if (response.isErr()) {
