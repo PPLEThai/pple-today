@@ -4,7 +4,6 @@ import Elysia from 'elysia'
 import {
   HandleFacebookWebhookBody,
   HandleFacebookWebhookHeaders,
-  HandleFacebookWebhookResponse,
   ValidateFacebookWebhookQuery,
   ValidateFacebookWebhookResponse,
 } from './models'
@@ -75,13 +74,7 @@ export const FacebookWebhookController = new Elysia({
 
       const handleResult = await facebookWebhookService.handleFacebookWebhook(body)
       if (handleResult.isErr()) {
-        return mapErrorCodeToResponse(
-          {
-            code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-            message: 'Failed to handle webhook event',
-          },
-          status
-        )
+        return mapErrorCodeToResponse(handleResult.error, status)
       }
 
       return status(200, {
@@ -90,14 +83,6 @@ export const FacebookWebhookController = new Elysia({
     },
     {
       headers: HandleFacebookWebhookHeaders,
-      response: {
-        200: HandleFacebookWebhookResponse,
-        ...createErrorSchema(
-          InternalErrorCode.FACEBOOK_WEBHOOK_NOT_SUPPORTED,
-          InternalErrorCode.FACEBOOK_WEBHOOK_INVALID_SIGNATURE,
-          InternalErrorCode.INTERNAL_SERVER_ERROR
-        ),
-      },
       detail: {
         summary: 'Handle Facebook Webhook',
         description: 'Handles incoming webhook events from Facebook',

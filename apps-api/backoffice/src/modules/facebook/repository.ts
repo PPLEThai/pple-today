@@ -13,6 +13,7 @@ import {
   GetPagePostsResponse,
   InspectAccessTokenResponse,
   ListUserPageResponse,
+  PagePost,
 } from '../../dtos/facebook'
 import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '../../plugins/logger'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
@@ -467,6 +468,43 @@ export class FacebookRepository {
     }
 
     return ok(response.value)
+  }
+
+  async getFacebookPostByPostId(postId: string, pageAccessToken: string) {
+    const inspectResponse = await this.inspectUserAccessToken(pageAccessToken)
+
+    if (inspectResponse.isErr()) {
+      return err(inspectResponse.error)
+    }
+
+    const queryParams = new URLSearchParams({
+      access_token: pageAccessToken,
+      fields: 'id,message_tags,message,attachments,updated_time,created_time,parent_id',
+      limit: '100',
+    })
+
+    const response = await this.makeRequest({
+      path: `/${postId}?${queryParams.toString()}`,
+      query: queryParams,
+      accessToken: pageAccessToken,
+      responseSchema: PagePost,
+    })
+
+    if (response.isErr()) {
+      return err(response.error)
+    }
+
+    return ok(response.value)
+  }
+
+  async getLocalFacebookPage(pageId: string) {
+    return await fromPrismaPromise(
+      this.prismaService.facebookPage.findUniqueOrThrow({
+        where: {
+          id: pageId,
+        },
+      })
+    )
   }
 
   async getLocalPageById(facebookPageId: string) {

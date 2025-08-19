@@ -284,7 +284,7 @@ export const WebhookFeedChanges = t.Union([
     WebhookBaseChangesFeedValue,
     t.Object({
       item: t.Literal(WebhookFeedType.VIDEO),
-      video_id: t.String({ description: 'ID of the video' }),
+      video_id: t.Optional(t.String({ description: 'ID of the video' })),
       link: t.Optional(t.String({ description: 'Link to the video', format: 'uri' })),
       message: t.Optional(t.String({ description: 'Content of the post' })),
     }),

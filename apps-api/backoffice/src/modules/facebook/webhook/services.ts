@@ -16,6 +16,7 @@ import { err } from '../../../utils/error'
 import { getFileName, getHashTag } from '../../../utils/facebook'
 import { mapRawPrismaError } from '../../../utils/prisma'
 import { FileService, FileServicePlugin } from '../../file/services'
+import { FacebookRepository, FacebookRepositoryPlugin } from '../repository'
 
 export class FacebookWebhookService {
   constructor(
@@ -24,18 +25,18 @@ export class FacebookWebhookService {
       verifyToken: string
     },
     private readonly fileService: FileService,
+    private readonly facebookRepository: FacebookRepository,
     private readonly facebookWebhookRepository: FacebookWebhookRepository
   ) {}
 
   private async handleAttachmentChanges(
     pageId: string,
     existingAttachments: PostAttachment[],
-    newAttachments: string[],
-    type: PostAttachmentType
+    newAttachments: Pick<PostAttachment, 'url' | 'type' | 'cacheKey'>[]
   ) {
     const requiredDelete = R.pipe(
       existingAttachments,
-      R.filter((ea) => !newAttachments.find((a) => ea.cacheKey === getFileName(a))),
+      R.filter((ea) => !newAttachments.find((a) => ea.cacheKey === a.cacheKey)),
       R.map((ea) => ea.url)
     )
 
@@ -47,14 +48,14 @@ export class FacebookWebhookService {
 
     const requiredUpload = R.pipe(
       newAttachments ?? [],
-      R.filter((a) => !existingAttachments.find((ea) => ea.cacheKey === getFileName(a)))
+      R.filter((a) => !existingAttachments.find((ea) => ea.cacheKey === a.cacheKey))
     )
 
     const result = await Promise.all(
-      requiredUpload.map(async (photo) => {
-        const fileName = getFileName(photo)
+      requiredUpload.map(async (attachment) => {
+        const fileName = getFileName(attachment.url)
         const newFilename = `temp/facebook/${pageId}/${cuid2.createId()}-${fileName}`
-        const uploadResult = await this.fileService.uploadFileFromUrl(photo, newFilename)
+        const uploadResult = await this.fileService.uploadFileFromUrl(attachment.url, newFilename)
 
         if (uploadResult.isErr()) {
           return err(uploadResult.error)
@@ -76,7 +77,7 @@ export class FacebookWebhookService {
 
         return ok({
           url: newFilename,
-          type,
+          type: attachment.type,
           cacheKey: fileName,
         })
       }) ?? []
@@ -95,9 +96,15 @@ export class FacebookWebhookService {
       })
     }
 
+    const unchangedAttachments = R.pipe(
+      existingAttachments,
+      R.filter((ea) => newAttachments.findIndex((a) => ea.cacheKey === a.cacheKey) !== -1)
+    )
+
     return ok({
       requiredDelete,
       newUploads: resultWithoutFailed,
+      unchangedAttachments,
     })
   }
 
@@ -109,8 +116,11 @@ export class FacebookWebhookService {
         const updateAttachmentResult = await this.handleAttachmentChanges(
           body.from.id,
           [],
-          body.photos ?? [],
-          PostAttachmentType.IMAGE
+          body.photos?.map((image) => ({
+            url: image,
+            type: PostAttachmentType.IMAGE,
+            cacheKey: getFileName(image),
+          })) ?? []
         )
 
         if (updateAttachmentResult.isErr()) {
@@ -175,9 +185,12 @@ export class FacebookWebhookService {
 
         const updateAttachmentResult = await this.handleAttachmentChanges(
           body.from.id,
-          existingPost.value.attachments ?? [],
-          body.photos ?? [],
-          PostAttachmentType.IMAGE
+          existingPost.value.attachments.filter((a) => a.type === PostAttachmentType.IMAGE) ?? [],
+          body.photos?.map((image) => ({
+            url: image,
+            type: PostAttachmentType.IMAGE,
+            cacheKey: getFileName(image),
+          })) ?? []
         )
 
         if (updateAttachmentResult.isErr()) {
@@ -190,6 +203,10 @@ export class FacebookWebhookService {
           facebookPageId: body.from.id,
           content: body.message,
           hashTags,
+          attachments: [
+            ...existingPost.value.attachments.filter((a) => a.type !== PostAttachmentType.IMAGE),
+            ...updateAttachmentResult.value.newUploads,
+          ],
         })
 
         if (updateResult.isErr()) {
@@ -209,8 +226,15 @@ export class FacebookWebhookService {
         const result = await this.handleAttachmentChanges(
           body.from.id,
           [],
-          body.link ? [body.link] : [],
-          PostAttachmentType.IMAGE
+          body.link
+            ? [
+                {
+                  cacheKey: getFileName(body.link),
+                  url: body.link,
+                  type: PostAttachmentType.IMAGE,
+                },
+              ]
+            : []
         )
 
         if (result.isErr()) {
@@ -254,7 +278,7 @@ export class FacebookWebhookService {
         })
 
         if (addResult.isErr()) {
-          return err(addResult.error)
+          return mapRawPrismaError(addResult.error)
         }
 
         break
@@ -269,8 +293,15 @@ export class FacebookWebhookService {
         const result = await this.handleAttachmentChanges(
           body.from.id,
           [],
-          body.link ? [body.link] : [],
-          PostAttachmentType.VIDEO
+          body.link
+            ? [
+                {
+                  url: body.link,
+                  type: PostAttachmentType.VIDEO,
+                  cacheKey: getFileName(body.link),
+                },
+              ]
+            : []
         )
 
         if (result.isErr()) {
@@ -304,6 +335,123 @@ export class FacebookWebhookService {
 
         if (addResult.isErr()) {
           return mapRawPrismaError(addResult.error, {
+            RECORD_NOT_FOUND: {
+              code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
+              message: 'Post not found',
+            },
+          })
+        }
+
+        break
+      }
+      case WebhookChangesVerb.REMOVE: {
+        const localPostDetails =
+          await this.facebookWebhookRepository.getExistingPostByFacebookPostId(body.post_id)
+
+        if (localPostDetails.isErr()) {
+          return mapRawPrismaError(localPostDetails.error, {
+            RECORD_NOT_FOUND: {
+              code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
+              message: 'Post not found',
+            },
+          })
+        }
+
+        const userPageResult = await this.facebookRepository.getLocalFacebookPage(body.from.id)
+
+        if (userPageResult.isErr()) {
+          return mapRawPrismaError(userPageResult.error, {
+            RECORD_NOT_FOUND: {
+              code: InternalErrorCode.FACEBOOK_LINKED_PAGE_NOT_FOUND,
+              message: 'Facebook page not found',
+            },
+          })
+        }
+
+        if (!userPageResult.value.pageAccessToken)
+          return err({
+            code: InternalErrorCode.FACEBOOK_LINKED_PAGE_NOT_FOUND,
+            message: 'Facebook page access token not found',
+          })
+
+        const postDetails = await this.facebookRepository.getFacebookPostByPostId(
+          body.post_id,
+          userPageResult.value.pageAccessToken
+        )
+
+        if (postDetails.isErr()) {
+          return err(postDetails.error)
+        }
+
+        const newAttachments = R.pipe(
+          postDetails.value.attachments?.data ?? [],
+          R.map((attachment) => {
+            if (attachment.type === 'album') {
+              return R.pipe(
+                attachment.subattachments!.data,
+                R.map((subattachment) => {
+                  if (subattachment.type === 'video_autoplay') {
+                    if (!subattachment.media.source) return
+                    return {
+                      url: subattachment.media.source,
+                      type: PostAttachmentType.VIDEO,
+                      cacheKey: getFileName(subattachment.media.source),
+                    }
+                  }
+                  if (subattachment.type === 'photo') {
+                    return {
+                      url: subattachment.media.image.src,
+                      type: PostAttachmentType.IMAGE,
+                      cacheKey: getFileName(subattachment.media.image.src),
+                    }
+                  }
+                }),
+                R.filter((val) => !!val),
+                R.flat()
+              )
+            }
+
+            if (attachment.type === 'photo') {
+              if (!attachment.media.image.src) return
+              return {
+                url: attachment.media.image.src,
+                type: PostAttachmentType.IMAGE,
+                cacheKey: getFileName(attachment.media.image.src),
+              }
+            }
+            if (attachment.media.source && attachment.type === 'video_autoplay') {
+              return {
+                url: attachment.media.source,
+                type: PostAttachmentType.VIDEO,
+                cacheKey: getFileName(attachment.media.source),
+              }
+            }
+          }),
+          R.filter((val) => !!val),
+          R.flat()
+        )
+
+        const attachmentChangesResult = await this.handleAttachmentChanges(
+          body.from.id,
+          localPostDetails.value.attachments ?? [],
+          newAttachments
+        )
+
+        if (attachmentChangesResult.isErr()) {
+          return err(attachmentChangesResult.error)
+        }
+
+        const updatedPostResult = await this.facebookWebhookRepository.updatePost({
+          facebookPageId: body.from.id,
+          postId: body.post_id,
+          // NOTE: New upload should have less attachments than old ones because this is removal action
+          attachments: attachmentChangesResult.value.unchangedAttachments,
+          content: body.message,
+          hashTags: getHashTag(body.message),
+        })
+
+        if (updatedPostResult.isErr()) {
+          return mapRawPrismaError(updatedPostResult.error, {
             RECORD_NOT_FOUND: {
               code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
               message: 'Post not found',
@@ -387,14 +535,15 @@ export class FacebookWebhookService {
 export const FacebookWebhookServicePlugin = new Elysia({
   name: 'FacebookWebhookService',
 })
-  .use([FacebookWebhookRepositoryPlugin, FileServicePlugin])
-  .decorate(({ fileService, facebookWebhookRepository }) => ({
+  .use([FacebookWebhookRepositoryPlugin, FacebookRepositoryPlugin, FileServicePlugin])
+  .decorate(({ fileService, facebookRepository, facebookWebhookRepository }) => ({
     facebookWebhookService: new FacebookWebhookService(
       {
         appSecret: serverEnv.FACEBOOK_APP_SECRET,
         verifyToken: serverEnv.FACEBOOK_WEBHOOK_VERIFY_TOKEN,
       },
       fileService,
+      facebookRepository,
       facebookWebhookRepository
     ),
   }))
