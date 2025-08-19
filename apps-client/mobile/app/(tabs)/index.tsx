@@ -794,16 +794,17 @@ function PagerContent({ index }: { index: number }) {
       // contentOffset={{ x: 0, y: -headerHeight }}
       // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
       // automaticallyAdjustsScrollIndicatorInsets={false}
-      data={Array.from({ length: 5 }, (_, i) => `Item ${i + 1}`)}
+      data={Array.from({ length: 6 }, (_, i) => `Item ${i + 1}`)}
       contentContainerClassName="py-4 flex flex-col"
       // TODO: data and renderItem should be replaced with actual data
-      renderItem={({ item, index }) => {
-        if (index === 0) {
+      renderItem={({ item, index: itemIndex }) => {
+        if (itemIndex === 0) {
           return <AnnouncementSection />
         }
         return (
           <View className="px-4">
             <PostCard
+              firstImageType={(['square', 'landscape', 'portrait'] as const)[index]!}
               author={{
                 name: 'ศิริโรจน์ ธนิกกุล - Sirirot Thanikkun',
                 district: 'สส.สมุทรสาคร',
@@ -813,13 +814,10 @@ function PagerContent({ index }: { index: number }) {
               content={
                 'พบปะแม่ๆ ชมรมผู้สูงอายุดอกลำดวน ณ หมู่บ้านวารัตน์ 3 ม.5 ต. อ้อมน้อย อ.กระทุ่มแบน จ.สมุทรสาครชวนให้ผมออกสเตปประกอบ'
               }
-              media={[
-                { type: 'IMAGE', imageSource: require('@app/assets/post-1.png') },
-                { type: 'IMAGE', imageSource: require('@app/assets/post-1.png') },
-                { type: 'IMAGE', imageSource: require('@app/assets/post-1.png') },
-                { type: 'IMAGE', imageSource: require('@app/assets/post-1.png') },
-                { type: 'IMAGE', imageSource: require('@app/assets/post-1.png') },
-              ]}
+              media={Array.from({ length: itemIndex }).map((_, i) => ({
+                type: 'IMAGE',
+                imageSource: require('@app/assets/post-1.png'),
+              }))}
               hashTags={[
                 { id: '1', name: '#pridemonth' },
                 { id: '2', name: '#ร่างกฎหมาย68' },

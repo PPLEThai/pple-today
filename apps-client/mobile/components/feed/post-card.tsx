@@ -37,6 +37,7 @@ interface PostCardProps {
   commentCount: number
   // TODO: support media type VIDEO
   media: { type: 'IMAGE'; imageSource: ImageURISource; description?: string }[]
+  firstImageType: 'landscape' | 'portrait' | 'square'
 }
 
 export const PostCard = React.memo(function PostCard(props: PostCardProps) {
@@ -68,7 +69,9 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
           />
         </Button>
       </View>
-      {props.media.length > 0 && <Lightbox media={props.media} />}
+      {props.media.length > 0 && (
+        <Lightbox media={props.media} firstImageType={props.firstImageType} />
+      )}
       <View>
         <MoreOrLess
           numberOfLines={3}
@@ -174,6 +177,7 @@ function formatDateInterval(date: string): string {
 
 interface LightboxProps {
   media: { type: 'IMAGE'; imageSource: ImageURISource; description?: string }[]
+  firstImageType: 'landscape' | 'portrait' | 'square'
 }
 function Lightbox(props: LightboxProps) {
   const [visible, setIsVisible] = React.useState(false)
@@ -184,7 +188,7 @@ function Lightbox(props: LightboxProps) {
   }
   return (
     <View className="rounded-lg overflow-hidden">
-      <ImageLayout firstImageType="square" media={props.media} onPress={onPress} />
+      <ImageLayout firstImageType={props.firstImageType} media={props.media} onPress={onPress} />
       <ImageView
         images={props.media.map((m) => m.imageSource)}
         imageIndex={imageIndex}
