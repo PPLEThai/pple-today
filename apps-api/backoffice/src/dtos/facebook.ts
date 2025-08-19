@@ -248,6 +248,7 @@ export const WebhookFeedType = {
   COMMENT: 'comment',
   REACTION: 'reaction',
   SHARE: 'share',
+  PHOTO: 'photo',
 } as const
 export type WebhookFeedType = (typeof WebhookFeedType)[keyof typeof WebhookFeedType]
 
@@ -266,6 +267,14 @@ export const WebhookFeedChanges = t.Union([
   t.Composite([
     WebhookBaseChangesFeedValue,
     t.Object({
+      item: t.Literal(WebhookFeedType.PHOTO),
+      link: t.String({ description: 'Link to the photo', format: 'uri' }),
+      message: t.Optional(t.String({ description: 'Content of the post' })),
+    }),
+  ]),
+  t.Composite([
+    WebhookBaseChangesFeedValue,
+    t.Object({
       item: t.Literal(WebhookFeedType.STATUS),
       photos: t.Optional(t.Array(t.String({ description: 'Array of photo URLs', format: 'uri' }))),
       message: t.Optional(t.String({ description: 'Content of the post' })),
@@ -277,6 +286,7 @@ export const WebhookFeedChanges = t.Union([
       item: t.Literal(WebhookFeedType.VIDEO),
       video_id: t.String({ description: 'ID of the video' }),
       link: t.Optional(t.String({ description: 'Link to the video', format: 'uri' })),
+      message: t.Optional(t.String({ description: 'Content of the post' })),
     }),
   ]),
   t.Composite([
@@ -325,7 +335,7 @@ export const WebhookFeedChanges = t.Union([
       item: t.Literal(WebhookFeedType.SHARE),
       share_id: t.String({ description: 'ID of the share' }),
       link: t.String({ description: 'Link to the shared content' }),
-      message: t.Optional(t.String({ description: 'Content of the share message' })),
+      message: t.Optional(t.String({ description: 'Content of the post' })),
     }),
   ]),
 ])

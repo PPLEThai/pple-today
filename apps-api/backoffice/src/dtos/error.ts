@@ -86,6 +86,9 @@ const FEED_ERROR_SCHEMA = {
   FEED_ITEM_REACTION_ALREADY_EXISTS: {
     status: 409,
   },
+  FEED_ITEM_ALREADY_EXISTED: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 const ABOUT_US_ERROR_SCHEMA = {
