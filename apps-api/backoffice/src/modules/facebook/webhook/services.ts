@@ -3,10 +3,11 @@ import * as crypto from 'node:crypto'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { ValidateFacebookWebhookQuery } from './models'
+import { HandleFacebookWebhookBody, ValidateFacebookWebhookQuery } from './models'
 
 import serverEnv from '../../../config/env'
 import { InternalErrorCode } from '../../../dtos/error'
+import { WebhookChangesVerb, WebhookFeedChanges, WebhookFeedType } from '../../../dtos/facebook'
 import { err } from '../../../utils/error'
 
 export class FacebookWebhookService {
@@ -16,6 +17,28 @@ export class FacebookWebhookService {
       verifyToken: string
     }
   ) {}
+
+  private async handleFeedStatusChange(body: Extract<WebhookFeedChanges, { item: 'status' }>) {
+    switch (body.verb) {
+      case WebhookChangesVerb.ADD:
+        break
+      case WebhookChangesVerb.EDIT:
+        break
+    }
+    // Handle the feed status change
+    return ok()
+  }
+
+  private async handleFeedVideoChange(body: Extract<WebhookFeedChanges, { item: 'video' }>) {
+    switch (body.verb) {
+      case WebhookChangesVerb.ADD:
+        break
+      case WebhookChangesVerb.EDIT:
+        break
+    }
+    // Handle the feed video change
+    return ok()
+  }
 
   async validateWebhookSignature(signature: string, body: Buffer) {
     if (!signature.startsWith('sha256=')) {
@@ -51,6 +74,34 @@ export class FacebookWebhookService {
     }
 
     return ok(challenge)
+  }
+
+  async handleFacebookWebhook(body: HandleFacebookWebhookBody) {
+    for (const entry of body.entry) {
+      for (const change of entry.changes) {
+        switch (change.value.item) {
+          case WebhookFeedType.STATUS: {
+            const result = await this.handleFeedStatusChange(change.value)
+
+            if (result.isErr()) {
+              return result
+            }
+
+            break
+          }
+          case WebhookFeedType.VIDEO: {
+            const videoResult = await this.handleFeedVideoChange(change.value)
+
+            if (videoResult.isErr()) {
+              // Handle error
+              return videoResult
+            }
+
+            break
+          }
+        }
+      }
+    }
   }
 }
 

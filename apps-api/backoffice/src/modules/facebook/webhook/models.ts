@@ -1,5 +1,7 @@
 import { Static, t } from 'elysia'
 
+import { WebhookFeedChanges } from '../../../dtos/facebook'
+
 export const ValidateFacebookWebhookQuery = t.Object({
   'hub.mode': t.String({
     description: 'The mode of the webhook request, should be "subscribe"',
@@ -38,15 +40,23 @@ export const HandleFacebookWebhookBody = t.Object({
       id: t.String({
         description: 'The ID of the Facebook page or user',
       }),
+      time: t.Number({
+        description: 'The time the change occurred in seconds since epoch',
+      }),
       changes: t.Array(
         t.Object({
-          field: t.String({
-            description: 'The field that changed',
-          }),
-          value: t.Record(t.String(), t.Any()),
+          field: t.Literal('feed'),
+          value: WebhookFeedChanges,
         })
       ),
     })
   ),
 })
 export type HandleFacebookWebhookBody = Static<typeof HandleFacebookWebhookBody>
+
+export const HandleFacebookWebhookResponse = t.Object({
+  message: t.String({
+    description: 'A message indicating the result of handling the webhook',
+  }),
+})
+export type HandleFacebookWebhookResponse = Static<typeof HandleFacebookWebhookResponse>

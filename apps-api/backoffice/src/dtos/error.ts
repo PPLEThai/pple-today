@@ -137,6 +137,9 @@ const FACEBOOK_ERROR_SCHEMA = {
   FACEBOOK_WEBHOOK_INVALID_SIGNATURE: {
     status: 400,
   },
+  FACEBOOK_WEBHOOK_NOT_SUPPORTED: {
+    status: 501,
+  },
 } satisfies InternalErrorSchemas
 
 const POLL_ERROR_SCHEMA = {

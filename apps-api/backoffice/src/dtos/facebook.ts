@@ -251,21 +251,20 @@ export const WebhookFeedType = {
 } as const
 export type WebhookFeedType = (typeof WebhookFeedType)[keyof typeof WebhookFeedType]
 
-export const WebhookBaseFeedValue = t.Object({
+export const WebhookBaseChangesFeedValue = t.Object({
   from: t.Object({
     id: t.String({ description: 'ID of the user who posted' }),
     name: t.String({ description: 'Name of the user who posted' }),
   }),
   post_id: t.String({ description: 'ID of the post' }),
-  created_time: t.String({ description: 'Creation time of the post in ISO 8601 format' }),
+  created_time: t.Number({ description: 'Creation time of the post in seconds since epoch' }),
   verb: t.Enum(WebhookChangesVerb),
   published: t.Union([t.Literal(1), t.Literal(0)]),
 })
-export type WebhookBaseFeedValue = Static<typeof WebhookBaseFeedValue>
 
-export const WebhookFeedValue = t.Union([
+export const WebhookFeedChanges = t.Union([
   t.Composite([
-    WebhookBaseFeedValue,
+    WebhookBaseChangesFeedValue,
     t.Object({
       item: t.Literal(WebhookFeedType.STATUS),
       photos: t.Optional(t.Array(t.String({ description: 'Array of photo URLs', format: 'uri' }))),
@@ -273,15 +272,15 @@ export const WebhookFeedValue = t.Union([
     }),
   ]),
   t.Composite([
-    WebhookBaseFeedValue,
+    WebhookBaseChangesFeedValue,
     t.Object({
       item: t.Literal(WebhookFeedType.VIDEO),
       video_id: t.String({ description: 'ID of the video' }),
-      link: t.String({ description: 'Link to the video', format: 'uri' }),
+      link: t.Optional(t.String({ description: 'Link to the video', format: 'uri' })),
     }),
   ]),
   t.Composite([
-    WebhookBaseFeedValue,
+    WebhookBaseChangesFeedValue,
     t.Object({
       item: t.Literal(WebhookFeedType.COMMENT),
       comment_id: t.String({ description: 'ID of the comment' }),
@@ -313,7 +312,7 @@ export const WebhookFeedValue = t.Union([
     }),
   ]),
   t.Composite([
-    WebhookBaseFeedValue,
+    WebhookBaseChangesFeedValue,
     t.Object({
       item: t.Literal(WebhookFeedType.REACTION),
       reaction_type: t.String({ description: 'Type of the reaction (e.g., like, love, wow)' }),
@@ -321,7 +320,7 @@ export const WebhookFeedValue = t.Union([
     }),
   ]),
   t.Composite([
-    WebhookBaseFeedValue,
+    WebhookBaseChangesFeedValue,
     t.Object({
       item: t.Literal(WebhookFeedType.SHARE),
       share_id: t.String({ description: 'ID of the share' }),
@@ -330,4 +329,4 @@ export const WebhookFeedValue = t.Union([
     }),
   ]),
 ])
-export type WebhookFeedValue = Static<typeof WebhookFeedValue>
+export type WebhookFeedChanges = Static<typeof WebhookFeedChanges>
