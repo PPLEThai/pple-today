@@ -15,7 +15,6 @@ import { WebhookChangesVerb, WebhookFeedChanges, WebhookFeedType } from '../../.
 import { err } from '../../../utils/error'
 import { getFileName, getHashTag } from '../../../utils/facebook'
 import { mapRawPrismaError } from '../../../utils/prisma'
-import { FeedRepository, FeedRepositoryPlugin } from '../../feed/repository'
 import { FileService, FileServicePlugin } from '../../file/services'
 
 export class FacebookWebhookService {
@@ -25,14 +24,14 @@ export class FacebookWebhookService {
       verifyToken: string
     },
     private readonly fileService: FileService,
-    private readonly feedRepository: FeedRepository,
     private readonly facebookWebhookRepository: FacebookWebhookRepository
   ) {}
 
   private async handleAttachmentChanges(
     pageId: string,
     existingAttachments: PostAttachment[],
-    newAttachments: string[]
+    newAttachments: string[],
+    type: PostAttachmentType
   ) {
     const requiredDelete = R.pipe(
       existingAttachments,
@@ -77,7 +76,7 @@ export class FacebookWebhookService {
 
         return ok({
           url: newFilename,
-          type: PostAttachmentType.IMAGE,
+          type,
           cacheKey: fileName,
         })
       }) ?? []
@@ -110,7 +109,8 @@ export class FacebookWebhookService {
         const updateAttachmentResult = await this.handleAttachmentChanges(
           body.from.id,
           [],
-          body.photos ?? []
+          body.photos ?? [],
+          PostAttachmentType.IMAGE
         )
 
         if (updateAttachmentResult.isErr()) {
@@ -176,7 +176,8 @@ export class FacebookWebhookService {
         const updateAttachmentResult = await this.handleAttachmentChanges(
           body.from.id,
           existingPost.value.attachments ?? [],
-          body.photos ?? []
+          body.photos ?? [],
+          PostAttachmentType.IMAGE
         )
 
         if (updateAttachmentResult.isErr()) {
@@ -202,30 +203,98 @@ export class FacebookWebhookService {
     return ok()
   }
 
-  private async handleFeedVideoChange(body: Extract<WebhookFeedChanges, { item: 'video' }>) {
+  private async handleFeedPhotoChange(body: Extract<WebhookFeedChanges, { item: 'photo' }>) {
     switch (body.verb) {
       case WebhookChangesVerb.ADD: {
+        const result = await this.handleAttachmentChanges(
+          body.from.id,
+          [],
+          body.link ? [body.link] : [],
+          PostAttachmentType.IMAGE
+        )
+
+        if (result.isErr()) {
+          return result
+        }
+
         const existingPost = await this.facebookWebhookRepository.getExistingPostByFacebookPostId(
           body.post_id
         )
 
         if (existingPost.isErr()) {
-          return mapRawPrismaError(existingPost.error, {
-            RECORD_NOT_FOUND: {
-              code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
-              message: 'Post not found',
-            },
+          const publishResult = await this.facebookWebhookRepository.publishNewPost({
+            postId: body.post_id,
+            content: body.message,
+            facebookPageId: body.from.id,
+            attachments: result.value.newUploads,
+            hashTags: getHashTag(body.message),
           })
+
+          if (publishResult.isErr()) {
+            return mapRawPrismaError(publishResult.error)
+          }
+
+          return ok()
         }
 
+        const deleteResult = await this.fileService.bulkDeleteFile(
+          existingPost.value.attachments.map((a) => a.url)
+        )
+
+        if (deleteResult.isErr()) {
+          return err(deleteResult.error)
+        }
+
+        const addResult = await this.facebookWebhookRepository.updatePost({
+          postId: body.post_id,
+          content: body.message,
+          facebookPageId: body.from.id,
+          attachments: result.value.newUploads,
+          hashTags: getHashTag(body.message),
+        })
+
+        if (addResult.isErr()) {
+          return err(addResult.error)
+        }
+
+        break
+      }
+    }
+    return ok()
+  }
+
+  private async handleFeedVideoChange(body: Extract<WebhookFeedChanges, { item: 'video' }>) {
+    switch (body.verb) {
+      case WebhookChangesVerb.ADD: {
         const result = await this.handleAttachmentChanges(
           body.from.id,
           [],
-          body.link ? [body.link] : []
+          body.link ? [body.link] : [],
+          PostAttachmentType.VIDEO
         )
 
         if (result.isErr()) {
           return result
+        }
+
+        const existingPost = await this.facebookWebhookRepository.getExistingPostByFacebookPostId(
+          body.post_id
+        )
+
+        if (existingPost.isErr()) {
+          const publishResult = await this.facebookWebhookRepository.publishNewPost({
+            postId: body.post_id,
+            content: body.message,
+            facebookPageId: body.from.id,
+            attachments: result.value.newUploads,
+            hashTags: getHashTag(body.message),
+          })
+
+          if (publishResult.isErr()) {
+            return mapRawPrismaError(publishResult.error)
+          }
+
+          return ok()
         }
 
         const addResult = await this.facebookWebhookRepository.addNewAttachments(body.from.id, [
@@ -301,6 +370,12 @@ export class FacebookWebhookService {
 
             break
           }
+          case WebhookFeedType.PHOTO: {
+            const photoResult = await this.handleFeedPhotoChange(change.value)
+            if (photoResult.isErr()) return photoResult
+
+            break
+          }
         }
       }
     }
@@ -312,15 +387,14 @@ export class FacebookWebhookService {
 export const FacebookWebhookServicePlugin = new Elysia({
   name: 'FacebookWebhookService',
 })
-  .use([FacebookWebhookRepositoryPlugin, FeedRepositoryPlugin, FileServicePlugin])
-  .decorate(({ fileService, feedRepository, facebookWebhookRepository }) => ({
+  .use([FacebookWebhookRepositoryPlugin, FileServicePlugin])
+  .decorate(({ fileService, facebookWebhookRepository }) => ({
     facebookWebhookService: new FacebookWebhookService(
       {
         appSecret: serverEnv.FACEBOOK_APP_SECRET,
         verifyToken: serverEnv.FACEBOOK_WEBHOOK_VERIFY_TOKEN,
       },
       fileService,
-      feedRepository,
       facebookWebhookRepository
     ),
   }))
