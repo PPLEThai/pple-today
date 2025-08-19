@@ -9,20 +9,12 @@ export class FacebookWebhookRepository {
 
   async getExistingPostByFacebookPostId(facebookPostId: string) {
     return await fromPrismaPromise(
-      this.prismaService.feedItem.findUniqueOrThrow({
+      this.prismaService.post.findUniqueOrThrow({
         where: {
-          id: undefined,
-          type: FeedItemType.POST,
-          post: {
-            facebookPostId,
-          },
+          facebookPostId,
         },
         include: {
-          post: {
-            include: {
-              attachments: true,
-            },
-          },
+          attachments: true,
         },
       })
     )
@@ -61,6 +53,30 @@ export class FacebookWebhookRepository {
             create: {
               facebookPostId: data.postId,
               content: data.content,
+              attachments:
+                data.attachments !== undefined
+                  ? {
+                      create: data.attachments.map((attachment, idx) => ({
+                        url: attachment.url,
+                        type: attachment.type,
+                        order: idx + 1,
+                        cacheKey: attachment.cacheKey,
+                      })),
+                    }
+                  : undefined,
+              hashTags:
+                data.hashTags !== undefined
+                  ? {
+                      create: data.hashTags.map((tag) => ({
+                        hashTag: {
+                          connectOrCreate: {
+                            where: { name: tag },
+                            create: { name: tag },
+                          },
+                        },
+                      })),
+                    }
+                  : undefined,
             },
           },
         },
@@ -80,48 +96,40 @@ export class FacebookWebhookRepository {
     hashTags?: string[]
   }) {
     return await fromPrismaPromise(
-      this.prismaService.feedItem.update({
+      this.prismaService.post.update({
         where: {
-          id: undefined,
-          type: FeedItemType.POST,
-          post: {
-            facebookPostId: data.postId,
-          },
+          facebookPostId: data.postId,
         },
         data: {
-          post: {
-            update: {
-              content: data.content,
-              attachments:
-                data.attachments !== undefined
-                  ? {
-                      deleteMany: {},
-                      create:
-                        data.attachments.map((attachment, idx) => ({
-                          url: attachment.url,
-                          type: attachment.type,
-                          order: idx + 1,
-                          cacheKey: attachment.cacheKey,
-                        })) ?? [],
-                    }
-                  : undefined,
-              hashTags:
-                data.hashTags !== undefined
-                  ? {
-                      deleteMany: {},
-                      create:
-                        data.hashTags.map((tag) => ({
-                          hashTag: {
-                            connectOrCreate: {
-                              where: { name: tag },
-                              create: { name: tag },
-                            },
-                          },
-                        })) ?? [],
-                    }
-                  : undefined,
-            },
-          },
+          content: data.content,
+          attachments:
+            data.attachments !== undefined
+              ? {
+                  deleteMany: {},
+                  create:
+                    data.attachments.map((attachment, idx) => ({
+                      url: attachment.url,
+                      type: attachment.type,
+                      order: idx + 1,
+                      cacheKey: attachment.cacheKey,
+                    })) ?? [],
+                }
+              : undefined,
+          hashTags:
+            data.hashTags !== undefined
+              ? {
+                  deleteMany: {},
+                  create:
+                    data.hashTags.map((tag) => ({
+                      hashTag: {
+                        connectOrCreate: {
+                          where: { name: tag },
+                          create: { name: tag },
+                        },
+                      },
+                    })) ?? [],
+                }
+              : undefined,
         },
       })
     )
@@ -156,25 +164,18 @@ export class FacebookWebhookRepository {
     }[]
   ) {
     return await fromPrismaPromise(
-      this.prismaService.feedItem.update({
+      this.prismaService.post.update({
         where: {
-          id: undefined,
-          post: {
-            facebookPostId,
-          },
+          facebookPostId,
         },
         data: {
-          post: {
-            update: {
-              attachments: {
-                create: links.map((link, idx) => ({
-                  url: link.url,
-                  type: link.type,
-                  order: idx + 1,
-                  cacheKey: link.cacheKey,
-                })),
-              },
-            },
+          attachments: {
+            create: links.map((link, idx) => ({
+              url: link.url,
+              type: link.type,
+              order: idx + 1,
+              cacheKey: link.cacheKey,
+            })),
           },
         },
       })

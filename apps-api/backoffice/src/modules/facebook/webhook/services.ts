@@ -175,7 +175,7 @@ export class FacebookWebhookService {
 
         const updateAttachmentResult = await this.handleAttachmentChanges(
           body.from.id,
-          existingPost.value.post?.attachments ?? [],
+          existingPost.value.attachments ?? [],
           body.photos ?? []
         )
 
@@ -229,7 +229,7 @@ export class FacebookWebhookService {
         }
 
         const addResult = await this.facebookWebhookRepository.addNewAttachments(body.from.id, [
-          ...(existingPost.value.post?.attachments ?? []),
+          ...existingPost.value.attachments,
           ...result.value.newUploads,
         ])
 
