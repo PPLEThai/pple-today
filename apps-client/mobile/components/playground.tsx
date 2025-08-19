@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ScrollView, TextProps, View } from 'react-native'
+import { Pressable, ScrollView, TextProps, View } from 'react-native'
+import ImageView from 'react-native-image-viewing'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Badge } from '@pple-today/ui/badge'
@@ -34,6 +35,7 @@ import { toast } from '@pple-today/ui/toast'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
+import { Image } from 'expo-image'
 import { getItemAsync } from 'expo-secure-store'
 import { InfoIcon, PlusIcon, SearchIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
@@ -245,6 +247,7 @@ export function Playground() {
         <BadgeExample />
         <ToastExample />
         <MoreOrLessExample />
+        <LightboxExample />
         <QueryExample />
         <AuthPlayground />
       </View>
@@ -511,6 +514,28 @@ function TextPost(props: TextProps) {
 }
 function ButtonTextPost(props: TextProps) {
   return <Text {...props} className="text-base-primary-default font-noto-light text-base" />
+}
+
+const images = [require('@app/assets/post-1.png'), require('@app/assets/banner-2.png')]
+function LightboxExample() {
+  const [visible, setIsVisible] = useState(false)
+  return (
+    <View className="flex flex-col">
+      <H2 className="font-inter-bold">Lightbox</H2>
+      <Pressable onPress={() => setIsVisible(true)}>
+        <Image
+          style={{ width: '100%', aspectRatio: 1 }}
+          source={require('@app/assets/post-1.png')}
+        />
+      </Pressable>
+      <ImageView
+        images={images}
+        imageIndex={0}
+        visible={visible}
+        onRequestClose={() => setIsVisible(false)}
+      />
+    </View>
+  )
 }
 
 function QueryExample() {
