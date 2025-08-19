@@ -520,7 +520,7 @@ const images = [require('@app/assets/post-1.png'), require('@app/assets/banner-2
 function LightboxExample() {
   const [visible, setIsVisible] = useState(false)
   return (
-    <View className="flex flex-col">
+    <View className="flex flex-col gap-2">
       <H2 className="font-inter-bold">Lightbox</H2>
       <Pressable onPress={() => setIsVisible(true)}>
         <Image

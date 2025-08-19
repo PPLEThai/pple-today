@@ -88,7 +88,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true)
 }
 
-type MoreOrLessProps = {
+interface MoreOrLessProps {
   children: string
   numberOfLines: number
   moreText?: string
