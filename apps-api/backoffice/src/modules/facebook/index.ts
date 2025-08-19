@@ -1,21 +1,17 @@
-import { Check } from '@sinclair/typebox/value'
 import Elysia from 'elysia'
 
 import {
   GetFacebookUserPageListQuery,
   GetFacebookUserPageListResponse,
   GetLinkedFacebookPageResponse,
-  HandleFacebookWebhookBody,
-  HandleFacebookWebhookHeaders,
   LinkFacebookPageToUserBody,
   LinkFacebookPageToUserResponse,
   RequestAccessTokenQuery,
   RequestAccessTokenResponse,
   UnlinkPageResponse,
-  ValidateFacebookWebhookQuery,
-  ValidateFacebookWebhookResponse,
 } from './models'
 import { FacebookServicePlugin } from './services'
+import { FacebookWebhookController } from './webhook'
 
 import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
@@ -26,74 +22,7 @@ export const FacebookController = new Elysia({
   tags: ['Facebook'],
 })
   .use([FacebookServicePlugin, AuthGuardPlugin])
-  .group('/webhook', (app) =>
-    app
-      .get(
-        '/',
-        async ({ query, status, facebookService }) => {
-          const result = await facebookService.validateFacebookWebhook(query)
-
-          if (result.isErr()) {
-            return mapErrorCodeToResponse(result.error, status)
-          }
-
-          return status(200, result.value)
-        },
-        {
-          query: ValidateFacebookWebhookQuery,
-          response: {
-            200: ValidateFacebookWebhookResponse,
-            ...createErrorSchema(InternalErrorCode.FACEBOOK_WEBHOOK_VERIFICATION_FAILED),
-          },
-          detail: {
-            summary: 'Validate Facebook Webhook',
-            description: 'Validates the Facebook webhook by responding with the challenge code',
-          },
-        }
-      )
-      .onParse(async ({ request, headers }) => {
-        if (headers['content-type'] === 'application/json') {
-          const arrayBuffer = await request.arrayBuffer()
-          const rawBody = Buffer.from(arrayBuffer)
-
-          return { rawBody, ...JSON.parse(rawBody.toString()) }
-        }
-      })
-      .post(
-        '/',
-        async ({ body, headers, status, facebookService }) => {
-          if (!Check(HandleFacebookWebhookBody, body)) {
-            return mapErrorCodeToResponse(
-              {
-                code: InternalErrorCode.FACEBOOK_WEBHOOK_INVALID_SIGNATURE,
-                message: 'Invalid webhook body',
-              },
-              status
-            )
-          }
-
-          const isValidSignature = await facebookService.validateWebhookSignature(
-            headers['x-hub-signature-256'],
-            (body as any).rawBody
-          )
-
-          if (isValidSignature.isErr()) {
-            return mapErrorCodeToResponse(isValidSignature.error, status)
-          }
-
-          return status(200, {
-            message: 'Webhook event received successfully',
-          })
-        },
-        {
-          headers: HandleFacebookWebhookHeaders,
-          detail: {
-            summary: 'Handle Facebook Webhook',
-            description: 'Handles incoming webhook events from Facebook',
-          },
-        }
-      )
-  )
+  .use(FacebookWebhookController)
   .group('/token', (app) =>
     app
       .get(
