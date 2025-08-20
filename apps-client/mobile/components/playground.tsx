@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Pressable, ScrollView, TextProps, View } from 'react-native'
+import { Platform, Pressable, ScrollView, TextProps, View } from 'react-native'
 import ImageView from 'react-native-image-viewing'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -37,6 +37,7 @@ import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
 import { Image } from 'expo-image'
 import { getItemAsync } from 'expo-secure-store'
+import LottieView from 'lottie-react-native'
 import { InfoIcon, PlusIcon, SearchIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
@@ -248,6 +249,7 @@ export function Playground() {
         <ToastExample />
         <MoreOrLessExample />
         <LightboxExample />
+        <LottieExample />
         <QueryExample />
         <AuthPlayground />
       </View>
@@ -534,6 +536,22 @@ function LightboxExample() {
         visible={visible}
         onRequestClose={() => setIsVisible(false)}
       />
+    </View>
+  )
+}
+
+// https://github.com/lottie-react-native/lottie-react-native/issues/1182#issuecomment-2696560014
+const LottieFile = Platform.select({
+  ios: require('../assets/PPLE-Like-Animation.lottie'),
+  android: require('../assets/PPLE-Like-Animation.zip'),
+})
+function LottieExample() {
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Lottie</H2>
+      <View className="border border-base-outline-default rounded-2xl w-[100px] h-[100px]">
+        <LottieView source={LottieFile} autoPlay loop style={{ width: '100%', height: '100%' }} />
+      </View>
     </View>
   )
 }

@@ -1,21 +1,17 @@
 import * as React from 'react'
-import { ImageURISource, Pressable, View } from 'react-native'
+import { ImageURISource, Platform, Pressable, View } from 'react-native'
 import ImageView from 'react-native-image-viewing'
+import Animated, { useSharedValue, withSpring, withTiming } from 'react-native-reanimated'
 import { TextProps } from 'react-native-svg'
 
 import { Badge } from '@pple-today/ui/badge'
-import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
-import { cn } from '@pple-today/ui/lib/utils'
+import { clsx, cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 import dayjs from 'dayjs'
 import { Image } from 'expo-image'
-import {
-  HeartCrackIcon,
-  HeartHandshakeIcon,
-  MessageCircleIcon,
-  Share2Icon,
-} from 'lucide-react-native'
+import LottieView from 'lottie-react-native'
+import { HeartCrackIcon, HeartHandshakeIcon, MessageCircleIcon } from 'lucide-react-native'
 
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { MoreOrLess } from '@app/components/more-or-less'
@@ -59,7 +55,7 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
             </Text>
           </View>
         </View>
-        <Button variant="ghost" size="icon" aria-label="Share">
+        {/* <Button variant="ghost" size="icon" aria-label="Share">
           <Icon
             icon={Share2Icon}
             width={16}
@@ -67,7 +63,7 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
             className="text-base-text-high"
             strokeWidth={1}
           />
-        </Button>
+        </Button> */}
       </View>
       {props.media.length > 0 && (
         <Lightbox media={props.media} firstImageType={props.firstImageType} />
@@ -115,15 +111,7 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
       <View className="flex flex-col border-t border-base-outline-default pt-4 pb-1">
         <View className="flex flex-row justify-between gap-2">
           <View className="flex flex-row gap-2">
-            <Pressable className="flex flex-row items-center gap-1">
-              <Icon
-                icon={HeartHandshakeIcon}
-                size={20}
-                strokeWidth={1}
-                className="text-base-text-high"
-              />
-              <Text className="text-sm font-anakotmai-light text-base-text-high">เห็นด้วย</Text>
-            </Pressable>
+            <UpvoteButton />
             <Pressable className="flex flex-row items-center gap-1">
               <Icon
                 icon={HeartCrackIcon}
@@ -586,6 +574,74 @@ function ImagePressable(props: ImagePressableProps) {
         source={props.media.imageSource}
         alt={props.media.description ?? ''}
       />
+    </Pressable>
+  )
+}
+
+const LottieFile = Platform.select({
+  ios: require('../../assets/PPLE-Like-Animation.lottie'),
+  android: require('../../assets/PPLE-Like-Animation.zip'),
+})
+
+function UpvoteButton() {
+  const [upvoted, setUpvoted] = React.useState(false)
+
+  const opacity = useSharedValue(1)
+  const scale = useSharedValue(1)
+
+  const onPressIn = () => {
+    opacity.value = withTiming(0.7, { duration: 150 })
+    scale.value = withSpring(0.7, {
+      stiffness: 300,
+      damping: 12,
+      mass: 1,
+      overshootClamping: false,
+    })
+  }
+  const onPressOut = () => {
+    opacity.value = withTiming(1, { duration: 150 })
+    scale.value = withSpring(1, {
+      stiffness: 300,
+      damping: 12,
+      mass: 1,
+      overshootClamping: false,
+    })
+  }
+
+  const likeAnimationRef = React.useRef<LottieView | null>(null)
+  const onPress = () => {
+    const isUpvoted = !upvoted
+    setUpvoted(isUpvoted)
+    if (isUpvoted) {
+      likeAnimationRef.current?.play(8, 31)
+    }
+  }
+
+  return (
+    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress}>
+      <Animated.View style={{ opacity }} className="flex flex-row items-center gap-1 rounded-md">
+        <View>
+          <Animated.View style={{ transform: [{ scale }] }}>
+            <Icon
+              icon={HeartHandshakeIcon}
+              size={20}
+              strokeWidth={1}
+              className={clsx(
+                upvoted ? 'fill-base-primary-medium text-white' : 'text-base-text-high'
+              )}
+            />
+          </Animated.View>
+          <View className="absolute top-0 left-0 right-0 bottom-0 pointer-events-none flex items-center justify-center">
+            <LottieView
+              ref={likeAnimationRef}
+              source={LottieFile}
+              loop={false}
+              style={{ width: 100, height: 100 }}
+            />
+          </View>
+        </View>
+        <Text className="text-sm font-anakotmai-light text-base-text-high">เห็นด้วย</Text>
+      </Animated.View>
     </Pressable>
   )
 }
