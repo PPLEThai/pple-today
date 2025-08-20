@@ -578,7 +578,7 @@ function ImagePressable(props: ImagePressableProps) {
   )
 }
 
-const LottieFile = Platform.select({
+const LikeAnimationFile = Platform.select({
   ios: require('../../assets/PPLE-Like-Animation.lottie'),
   android: require('../../assets/PPLE-Like-Animation.zip'),
 })
@@ -613,6 +613,7 @@ function UpvoteButton() {
     const isUpvoted = !upvoted
     setUpvoted(isUpvoted)
     if (isUpvoted) {
+      // skip some empty frames
       likeAnimationRef.current?.play(8, 31)
     }
   }
@@ -634,7 +635,7 @@ function UpvoteButton() {
           <View className="absolute top-0 left-0 right-0 bottom-0 pointer-events-none flex items-center justify-center">
             <LottieView
               ref={likeAnimationRef}
-              source={LottieFile}
+              source={LikeAnimationFile}
               loop={false}
               style={{ width: 100, height: 100 }}
             />
