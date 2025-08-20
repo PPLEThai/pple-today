@@ -211,6 +211,7 @@ export class FacebookWebhookService {
           hashTags,
           attachments: [
             ...existingPost.value.attachments.filter((a) => a.type !== PostAttachmentType.IMAGE),
+            ...updateAttachmentResult.value.unchangedAttachments,
             ...updateAttachmentResult.value.newUploads,
           ],
         })
