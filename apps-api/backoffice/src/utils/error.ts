@@ -9,8 +9,6 @@ import { RawPrismaError, resolvePrismaError } from './prisma'
 
 import { InternalErrorCode, InternalErrorCodeSchemas } from '../dtos/error'
 
-type ExtractExplicitErr<T> = T extends Err<infer _, infer E> ? E : never
-type WithoutErr<T> = T extends Err<any, any> ? never : T
 type GroupErrorCodeToStatusCode<
   T extends InternalErrorCode[],
   Result extends Record<number, InternalErrorCode[]> = {},
@@ -46,6 +44,10 @@ type GetArgumentFromErrorResponse<T extends ApiErrorResponse<InternalErrorCode>>
   T extends ApiErrorResponse<any>
     ? [InternalErrorCodeSchemas[T['code']]['status'], { error: T }]
     : never
+
+export type ExtractExplicitErr<T> = T extends Err<infer _, infer E> ? E : never
+export type WithoutErr<T> = T extends Err<any, any> ? never : T
+export type OnlyErr<T> = T extends Err<any, any> ? T : never
 
 export type ExtractApiErrorResponse<T extends { code: any }> = T extends { code: InternalErrorCode }
   ? T

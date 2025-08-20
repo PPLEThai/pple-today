@@ -1,4 +1,5 @@
 import Elysia from 'elysia'
+import { err, ok } from 'neverthrow'
 
 import { BannerNavigationType, BannerStatusType } from '../../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
@@ -33,32 +34,47 @@ export class AdminBannerRepository {
     destination: string
     status: BannerStatusType
   }) {
-    return fromRepositoryPromise(
-      this.fileService.$transaction((fileTx) =>
-        this.prismaService.$transaction(async (tx) => {
-          const lastBanner = await tx.banner.findFirst({
-            orderBy: { order: 'desc' },
-            select: { order: true },
-          })
+    const moveFileResult = await fromRepositoryPromise(
+      this.fileService.$transaction(async (fileTx) => {
+        const moveResult = await fileTx.bulkMoveToPublicFolder([data.imageFilePath])
+        if (moveResult.isErr()) return throwWithReturnType(moveResult)
 
-          const moveResult = await fileTx.bulkMoveToPublicFolder([data.imageFilePath])
-          if (moveResult.isErr()) return throwWithReturnType(moveResult)
-
-          return tx.banner.create({
-            data: {
-              imageFilePath: moveResult.value[0],
-              navigation: data.navigation,
-              destination: data.destination,
-              status: data.status, // Default value
-              order: lastBanner ? lastBanner.order + 1 : 0,
-            },
-            select: {
-              id: true,
-            },
-          })
-        })
-      )
+        return moveResult.value[0]
+      })
     )
+
+    if (moveFileResult.isErr()) return err(moveFileResult.error)
+
+    const [newFileName, fileTx] = moveFileResult.value
+    const createBannerResult = await fromRepositoryPromise(
+      this.prismaService.$transaction(async (tx) => {
+        const lastBanner = await this.prismaService.banner.findFirstOrThrow({
+          orderBy: { order: 'desc' },
+          select: { order: true },
+        })
+
+        return tx.banner.create({
+          data: {
+            imageFilePath: newFileName,
+            navigation: data.navigation,
+            destination: data.destination,
+            status: data.status, // Default value
+            order: lastBanner ? lastBanner.order + 1 : 0,
+          },
+          select: {
+            id: true,
+          },
+        })
+      })
+    )
+
+    if (createBannerResult.isErr()) {
+      const rollbackResult = await fileTx.rollback()
+      if (rollbackResult.isErr()) return err(rollbackResult.error)
+      return err(createBannerResult.error)
+    }
+
+    return ok(createBannerResult.value)
   }
 
   async updateBannerById(
@@ -70,65 +86,99 @@ export class AdminBannerRepository {
       status: BannerStatusType
     }
   ) {
-    return fromRepositoryPromise(
-      this.fileService.$transaction((fileTx) =>
-        this.prismaService.$transaction(async (tx) => {
-          const existingBanner = await tx.banner.findUniqueOrThrow({
-            where: { id },
-          })
-
-          if (existingBanner.imageFilePath !== data.imageFilePath) {
-            const deleteResult = await fileTx.bulkMoveToTempFolder([existingBanner.imageFilePath])
-            if (deleteResult.isErr()) return throwWithReturnType(deleteResult)
-          }
-
-          const moveResult = await fileTx.bulkMoveToPublicFolder([data.imageFilePath])
-          if (moveResult.isErr()) return throwWithReturnType(moveResult)
-
-          return tx.banner.update({
-            where: { id },
-            data: {
-              imageFilePath: moveResult.value[0],
-              navigation: data.navigation,
-              destination: data.destination,
-              status: data.status,
-            },
-          })
+    const updateFileResult = await fromRepositoryPromise(
+      this.fileService.$transaction(async (fileTx) => {
+        const existingBanner = await this.prismaService.banner.findUniqueOrThrow({
+          where: { id },
+          select: { imageFilePath: true },
         })
-      )
+
+        if (existingBanner.imageFilePath !== data.imageFilePath) {
+          const deleteResult = await fileTx.deleteFile(existingBanner.imageFilePath)
+          if (deleteResult.isErr()) return throwWithReturnType(deleteResult)
+        }
+
+        const moveResult = await fileTx.bulkMoveToPublicFolder([data.imageFilePath])
+        if (moveResult.isErr()) return throwWithReturnType(moveResult)
+
+        return moveResult.value[0]
+      })
     )
+
+    if (updateFileResult.isErr()) {
+      return err(updateFileResult.error)
+    }
+
+    const [newImageFilePath, fileTx] = updateFileResult.value
+    const updateBannerResult = await fromRepositoryPromise(
+      this.prismaService.banner.update({
+        where: { id },
+        data: {
+          imageFilePath: newImageFilePath,
+          navigation: data.navigation,
+          destination: data.destination,
+          status: data.status,
+        },
+      })
+    )
+
+    if (updateBannerResult.isErr()) {
+      const rollbackResult = await fileTx.rollback()
+      if (rollbackResult.isErr()) return err(rollbackResult.error)
+      return err(updateBannerResult.error)
+    }
+
+    return ok(updateBannerResult.value)
   }
 
   async deleteBannerById(id: string) {
-    return fromRepositoryPromise(
-      this.fileService.$transaction((fileTx) =>
-        this.prismaService.$transaction(async (tx) => {
-          const deleted = await tx.banner.delete({
-            where: { id },
-          })
-
-          // Reorder remaining banners
-          const banners = await tx.banner.findMany({
-            orderBy: { order: 'asc' },
-            select: { id: true },
-          })
-
-          const deleteImageResult = await fileTx.bulkMoveToTempFolder([deleted.imageFilePath])
-          if (deleteImageResult.isErr()) return throwWithReturnType(deleteImageResult)
-
-          await Promise.all(
-            banners.map((banner, index) =>
-              tx.banner.update({
-                where: { id: banner.id },
-                data: { order: index },
-              })
-            )
-          )
-
-          return deleted
+    const deleteFileResult = await fromRepositoryPromise(
+      this.fileService.$transaction(async (fileTx) => {
+        const existingBanner = await this.prismaService.banner.findUniqueOrThrow({
+          where: { id },
+          select: { imageFilePath: true },
         })
-      )
+
+        const deleteResult = await fileTx.deleteFile(existingBanner.imageFilePath)
+        if (deleteResult.isErr()) return throwWithReturnType(deleteResult)
+
+        return deleteResult.value
+      })
     )
+
+    if (deleteFileResult.isErr()) {
+      return err(deleteFileResult.error)
+    }
+
+    const [deletedFile, fileTx] = deleteFileResult.value
+    const deleteBannerResult = await fromRepositoryPromise(
+      this.prismaService.$transaction(async (tx) => {
+        // Reorder remaining banners
+        const banners = await tx.banner.findMany({
+          orderBy: { order: 'asc' },
+          select: { id: true },
+        })
+
+        await Promise.all(
+          banners.map((banner, index) =>
+            tx.banner.update({
+              where: { id: banner.id },
+              data: { order: index },
+            })
+          )
+        )
+
+        return
+      })
+    )
+
+    if (deleteBannerResult.isErr()) {
+      const rollbackResult = await fileTx.rollback()
+      if (rollbackResult.isErr()) return err(rollbackResult.error)
+      return err(deleteBannerResult.error)
+    }
+
+    return ok(deletedFile)
   }
 
   async reorderBanner(ids: string[]) {

@@ -62,10 +62,6 @@ export const AuthGuardPlugin = new Elysia({
         const user = await authGuard.getCurrentUser(headers)
 
         if (user.isErr()) {
-          if (user.error.code === InternalErrorCode.UNAUTHORIZED) {
-            return { user: null }
-          }
-
           return mapErrorCodeToResponse(user.error, status)
         }
 

@@ -96,6 +96,7 @@ const AdminDraftAnnouncementsController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
           InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
           InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
@@ -127,6 +128,8 @@ const AdminDraftAnnouncementsController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
           InternalErrorCode.ANNOUNCEMENT_INVALID_DRAFT,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.FILE_MOVE_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
@@ -156,6 +159,7 @@ const AdminDraftAnnouncementsController = new Elysia({
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
           InternalErrorCode.FILE_MOVE_ERROR,
           InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -264,6 +268,7 @@ export const AdminAnnouncementsController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
           InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
           InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
@@ -292,6 +297,7 @@ export const AdminAnnouncementsController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
           InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
           InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
@@ -320,6 +326,7 @@ export const AdminAnnouncementsController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
           InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
           InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),

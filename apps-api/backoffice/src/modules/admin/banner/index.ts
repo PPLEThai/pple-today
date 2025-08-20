@@ -94,6 +94,7 @@ export const AdminBannerController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.BANNER_INVALID_INPUT,
           InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
           InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
@@ -123,6 +124,7 @@ export const AdminBannerController = new Elysia({
           InternalErrorCode.BANNER_NOT_FOUND,
           InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -150,6 +152,7 @@ export const AdminBannerController = new Elysia({
           InternalErrorCode.FILE_MOVE_ERROR,
           InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.BANNER_NOT_FOUND,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

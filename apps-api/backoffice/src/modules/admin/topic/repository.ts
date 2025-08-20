@@ -1,9 +1,10 @@
 import Elysia from 'elysia'
+import { ok } from 'neverthrow'
 
 import { UpdateTopicBody } from './models'
 
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
-import { throwWithReturnType } from '../../../utils/error'
+import { err, throwWithReturnType } from '../../../utils/error'
 import { fromRepositoryPromise } from '../../../utils/error'
 import { FileService, FileServicePlugin } from '../../file/services'
 
@@ -86,70 +87,101 @@ export class AdminTopicRepository {
   }
 
   async updateTopicById(topicId: string, data: UpdateTopicBody) {
-    return await fromRepositoryPromise(
-      this.fileService.$transaction((fileTx) =>
-        this.prismaService.$transaction(async (tx) => {
-          const existingTopic = await tx.topic.findUniqueOrThrow({
-            where: { id: topicId },
-            select: { bannerImage: true },
-          })
-
-          const isSameBannerUrl = existingTopic.bannerImage === data.bannerImage
-
-          if (!isSameBannerUrl && existingTopic.bannerImage) {
-            const moveResult = await fileTx.bulkMoveToTempFolder([existingTopic.bannerImage])
-            if (moveResult.isErr()) return throwWithReturnType(moveResult)
-          }
-
-          let newBannerImage = data.bannerImage
-
-          if (data.bannerImage) {
-            const moveResult = await fileTx.bulkMoveToPublicFolder([data.bannerImage])
-            if (moveResult.isErr()) return throwWithReturnType(moveResult)
-            newBannerImage = moveResult.value[0]
-          }
-
-          const newTopic = await tx.topic.update({
-            where: { id: topicId },
-            data: {
-              name: data.name,
-              description: data.description,
-              bannerImage: newBannerImage,
-              status: data.status,
-              hashTagInTopics: {
-                deleteMany: {},
-                createMany: {
-                  data: data.hashtagIds.map((hashtagId) => ({
-                    hashTagId: hashtagId,
-                  })),
-                },
-              },
-            },
-          })
-
-          return newTopic
+    const updateFileResult = await fromRepositoryPromise(
+      this.fileService.$transaction(async (fileTx) => {
+        const existingTopic = await this.prismaService.topic.findUniqueOrThrow({
+          where: { id: topicId },
+          select: { bannerImage: true },
         })
-      )
+
+        const isSameBannerUrl = existingTopic.bannerImage === data.bannerImage
+        if (!isSameBannerUrl && existingTopic.bannerImage) {
+          const moveResult = await fileTx.deleteFile(existingTopic.bannerImage)
+          if (moveResult.isErr()) return throwWithReturnType(moveResult)
+        }
+
+        let newBannerImage = data.bannerImage
+
+        if (data.bannerImage) {
+          const moveResult = await fileTx.bulkMoveToPublicFolder([data.bannerImage])
+          if (moveResult.isErr()) return throwWithReturnType(moveResult)
+          newBannerImage = moveResult.value[0]
+        }
+
+        return newBannerImage
+      })
     )
+
+    if (updateFileResult.isErr()) {
+      return err(updateFileResult.error)
+    }
+    const [newBannerImage, fileTx] = updateFileResult.value
+
+    const updateResult = await fromRepositoryPromise(
+      this.prismaService.topic.update({
+        where: { id: topicId },
+        data: {
+          name: data.name,
+          description: data.description,
+          bannerImage: newBannerImage,
+          status: data.status,
+          hashTagInTopics: {
+            deleteMany: {},
+            createMany: {
+              data: data.hashtagIds.map((hashtagId) => ({
+                hashTagId: hashtagId,
+              })),
+            },
+          },
+        },
+      })
+    )
+
+    if (updateResult.isErr()) {
+      const rollbackResult = await fileTx.rollback()
+      if (rollbackResult.isErr()) return err(rollbackResult.error)
+      return err(updateResult.error)
+    }
+
+    return ok(updateResult.value)
   }
 
   async deleteTopicById(topicId: string) {
-    return await fromRepositoryPromise(
-      this.fileService.$transaction((fileTx) =>
-        this.prismaService.$transaction(async (tx) => {
-          const deleteResult = await tx.topic.delete({
-            where: { id: topicId },
-          })
-
-          if (deleteResult.bannerImage) {
-            const moveResult = await fileTx.deleteFile(deleteResult.bannerImage)
-            if (moveResult.isErr()) return throwWithReturnType(moveResult)
-          }
-
-          return deleteResult
-        })
-      )
+    const existingTopic = await fromRepositoryPromise(
+      this.prismaService.topic.findUniqueOrThrow({
+        where: { id: topicId },
+        select: { bannerImage: true },
+      })
     )
+
+    if (existingTopic.isErr()) {
+      return err(existingTopic.error)
+    }
+
+    const deleteFileResult = await fromRepositoryPromise(
+      this.fileService.$transaction(async (fileTx) => {
+        if (!existingTopic.value.bannerImage) return
+        const txDeleteResult = await fileTx.deleteFile(existingTopic.value.bannerImage)
+        if (txDeleteResult.isErr()) return throwWithReturnType(txDeleteResult)
+      })
+    )
+
+    if (deleteFileResult.isErr()) return err(deleteFileResult.error)
+
+    const [, fileTx] = deleteFileResult.value
+    const deleteTopicResult = await fromRepositoryPromise(
+      this.prismaService.topic.delete({
+        where: { id: topicId },
+      })
+    )
+
+    if (deleteTopicResult.isErr()) {
+      const rollbackResult = await fileTx.rollback()
+      if (rollbackResult.isErr()) return err(rollbackResult.error)
+      return err(deleteTopicResult.error)
+    }
+
+    return ok(deleteTopicResult.value)
   }
 }
 

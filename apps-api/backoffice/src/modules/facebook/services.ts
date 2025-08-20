@@ -188,13 +188,6 @@ export class FacebookService {
     )
 
     if (unlinkPostsResult.isErr()) {
-      if (
-        unlinkPostsResult.error.code === InternalErrorCode.FACEBOOK_API_ERROR ||
-        unlinkPostsResult.error.code === InternalErrorCode.FACEBOOK_INVALID_RESPONSE
-      ) {
-        return err(unlinkPostsResult.error)
-      }
-
       return mapRawPrismaError(unlinkPostsResult.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.FACEBOOK_LINKED_PAGE_NOT_FOUND,

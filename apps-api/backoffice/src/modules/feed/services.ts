@@ -6,7 +6,6 @@ import { FeedRepository, FeedRepositoryPlugin } from './repository'
 
 import { InternalErrorCode } from '../../dtos/error'
 import { PostComment, PostReactionType } from '../../dtos/post'
-import { err } from '../../utils/error'
 import { mapRawPrismaError } from '../../utils/prisma'
 import { FileService, FileServicePlugin } from '../file/services'
 
@@ -25,10 +24,6 @@ export class FeedService {
     })
 
     if (feedItems.isErr()) {
-      if (feedItems.error.code === InternalErrorCode.FEED_ITEM_NOT_FOUND) {
-        return err(feedItems.error)
-      }
-
       return mapRawPrismaError(feedItems.error)
     }
 
@@ -56,10 +51,6 @@ export class FeedService {
     })
 
     if (feedItems.isErr()) {
-      if (feedItems.error.code === InternalErrorCode.FEED_ITEM_NOT_FOUND) {
-        return err(feedItems.error)
-      }
-
       return mapRawPrismaError(feedItems.error)
     }
 
@@ -91,10 +82,6 @@ export class FeedService {
     })
 
     if (feedItems.isErr()) {
-      if (feedItems.error.code === InternalErrorCode.FEED_ITEM_NOT_FOUND) {
-        return err(feedItems.error)
-      }
-
       return mapRawPrismaError(feedItems.error)
     }
 
@@ -105,8 +92,6 @@ export class FeedService {
     const feedItem = await this.feedRepository.getFeedItemById(feedId, userId)
 
     if (feedItem.isErr()) {
-      if (feedItem.error.code === InternalErrorCode.FEED_ITEM_NOT_FOUND) return err(feedItem.error)
-
       return mapRawPrismaError(feedItem.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.FEED_ITEM_NOT_FOUND,

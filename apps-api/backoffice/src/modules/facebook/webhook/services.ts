@@ -40,16 +40,21 @@ export class FacebookWebhookService {
       R.map((ea) => ea.url)
     )
 
+    const requiredUpload = R.pipe(
+      newAttachments ?? [],
+      R.filter((a) => !existingAttachments.find((ea) => ea.cacheKey === a.cacheKey))
+    )
+
+    const unchangedAttachments = R.pipe(
+      existingAttachments,
+      R.filter((ea) => newAttachments.findIndex((a) => ea.cacheKey === a.cacheKey) !== -1)
+    )
+
     const deleteResult = await this.fileService.bulkDeleteFile(requiredDelete)
 
     if (deleteResult.isErr()) {
       return err(deleteResult.error)
     }
-
-    const requiredUpload = R.pipe(
-      newAttachments ?? [],
-      R.filter((a) => !existingAttachments.find((ea) => ea.cacheKey === a.cacheKey))
-    )
 
     const result = await Promise.all(
       requiredUpload.map(async (attachment) => {
@@ -61,13 +66,7 @@ export class FacebookWebhookService {
           return err(uploadResult.error)
         }
 
-        const markAsPublicResult = await this.fileService.bulkMarkAsPublic([newFilename])
-
-        if (markAsPublicResult.isErr()) {
-          return err(markAsPublicResult.error)
-        }
-
-        const moveToPublicFolderResult = await this.fileService.moveFileToPublicFolder([
+        const moveToPublicFolderResult = await this.fileService.bulkMoveToPublicFolder([
           newFilename,
         ])
 
@@ -95,11 +94,6 @@ export class FacebookWebhookService {
         message: 'File upload failed',
       })
     }
-
-    const unchangedAttachments = R.pipe(
-      existingAttachments,
-      R.filter((ea) => newAttachments.findIndex((a) => ea.cacheKey === a.cacheKey) !== -1)
-    )
 
     return ok({
       requiredDelete,
@@ -151,10 +145,6 @@ export class FacebookWebhookService {
           const deleteResult = await this.facebookWebhookRepository.deletePost(body.post_id)
 
           if (deleteResult.isErr()) {
-            if (deleteResult.error.code === InternalErrorCode.FEED_ITEM_NOT_FOUND) {
-              return err(deleteResult.error)
-            }
-
             return mapRawPrismaError(deleteResult.error, {
               RECORD_NOT_FOUND: {
                 code: InternalErrorCode.FEED_ITEM_NOT_FOUND,

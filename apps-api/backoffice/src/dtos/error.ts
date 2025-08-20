@@ -47,6 +47,9 @@ const FILE_ERROR_SCHEMA = {
   FILE_CHANGE_PERMISSION_ERROR: {
     status: 500,
   },
+  FILE_ROLLBACK_FAILED: {
+    status: 500,
+  },
 } satisfies InternalErrorSchemas
 
 const AUTH_ERROR_SCHEMA = {

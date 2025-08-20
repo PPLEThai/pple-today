@@ -5,18 +5,26 @@ import {
 } from '@google-cloud/storage'
 import Elysia from 'elysia'
 import https from 'https'
-import { fromPromise, Ok, ok } from 'neverthrow'
+import { Err, fromPromise, Ok, ok } from 'neverthrow'
 import { Readable } from 'stream'
 
 import { FilePermission, FileTransactionEntry } from './types'
 
 import serverEnv from '../../config/env'
 import { InternalErrorCode } from '../../dtos/error'
-import { err, exhaustiveGuard } from '../../utils/error'
+import {
+  ApiErrorResponse,
+  err,
+  exhaustiveGuard,
+  OnlyErr,
+  throwWithReturnType,
+  WithoutErr,
+} from '../../utils/error'
 
 export class FileService {
   public prefixPublicFolder = 'public/' as const
   public prefixPrivateFolder = 'private/' as const
+  public prefixDeletedFolder = 'deleted/' as const
   public prefixTempFolder = 'temp/' as const
 
   private storage: Storage
@@ -88,14 +96,15 @@ export class FileService {
   }
 
   getFilePath(fullPath: string) {
-    if (fullPath.startsWith(this.prefixPublicFolder)) {
-      return fullPath.slice(this.prefixPublicFolder.length)
-    } else if (fullPath.startsWith(this.prefixPrivateFolder)) {
-      return fullPath.slice(this.prefixPrivateFolder.length)
-    } else if (fullPath.startsWith(this.prefixTempFolder)) {
-      return fullPath.slice(this.prefixTempFolder.length)
-    }
-    return fullPath
+    let sliceRange = 0
+    if (fullPath.startsWith(this.prefixPublicFolder)) sliceRange = this.prefixPublicFolder.length
+    else if (fullPath.startsWith(this.prefixPrivateFolder))
+      sliceRange = this.prefixPrivateFolder.length
+    else if (fullPath.startsWith(this.prefixTempFolder)) sliceRange = this.prefixTempFolder.length
+    else if (fullPath.startsWith(this.prefixDeletedFolder))
+      sliceRange = this.prefixDeletedFolder.length
+
+    return fullPath.slice(sliceRange)
   }
 
   async markAsPublic(file: string) {
@@ -130,12 +139,12 @@ export class FileService {
     return ok(file)
   }
 
-  async bulkMoveToTempFolder(files: string[]) {
-    return this.bulkMoveToFolder(files, this.prefixTempFolder, FilePermission.PRIVATE)
-  }
-
   async bulkMoveToPrivateFolder(files: string[]) {
     return this.bulkMoveToFolder(files, this.prefixPrivateFolder, FilePermission.PRIVATE)
+  }
+
+  async bulkDeleteFile(files: string[]) {
+    return this.bulkMoveToFolder(files, this.prefixDeletedFolder, FilePermission.PRIVATE)
   }
 
   async bulkMoveToPublicFolder(files: string[]) {
@@ -246,7 +255,7 @@ export class FileService {
       return result
     }
 
-    const markAsPublicResult = await this.bulkMarkAsPublic([destination])
+    const markAsPublicResult = await this.markAsPublic(destination)
     if (markAsPublicResult.isErr()) {
       return markAsPublicResult
     }
@@ -327,13 +336,27 @@ export class FileService {
     )
   }
 
-  $transaction = async <T>(cb: (tx: FileTransactionService) => Promise<T>) => {
+  /**
+   * ### Note
+   * This method allows you to execute a series of file operations within a transaction.
+   * Please ignore type `Err` from return type because it will be served as error instead
+   * @param cb Callback function to execute within the transaction
+   * @returns [result, fileTransaction]
+   */
+  $transaction = async <T>(
+    cb: (tx: FileTransactionService) => Promise<T>
+  ): Promise<
+    | [WithoutErr<T>, FileTransactionService]
+    | OnlyErr<T>
+    | Err<never, ApiErrorResponse<typeof InternalErrorCode.FILE_ROLLBACK_FAILED>>
+  > => {
     const fileTransaction = new FileTransactionService(this)
 
     try {
-      return await cb(fileTransaction)
+      return [await cb(fileTransaction), fileTransaction] as any
     } catch (err) {
-      await fileTransaction.rollback()
+      const rollbackResult = await fileTransaction.rollback()
+      if (rollbackResult.isErr()) return throwWithReturnType(rollbackResult) as any
       throw err
     }
   }
@@ -473,16 +496,12 @@ export class FileTransactionService {
     return await this.bulkMoveToFolder(fileKeys, this.fileService.prefixPrivateFolder)
   }
 
-  async bulkMoveToTempFolder(fileKeys: string[]) {
-    return await this.bulkMoveToFolder(fileKeys, this.fileService.prefixTempFolder)
-  }
-
   async bulkDeleteFile(fileKeys: string[]) {
-    return await this.bulkMoveToTempFolder(fileKeys)
+    return await this.bulkMoveToFolder(fileKeys, this.fileService.prefixDeletedFolder)
   }
 
   async deleteFile(fileKey: string) {
-    return await this.fileService.bulkMoveToTempFolder([fileKey])
+    return await this.bulkDeleteFile([fileKey])
   }
 
   async rollback() {
@@ -497,15 +516,22 @@ export class FileTransactionService {
           else result = await this.fileService.markAsPrivate(entry.target)
 
           if (result.isErr()) {
-            return err(result.error)
+            return err({
+              code: InternalErrorCode.FILE_ROLLBACK_FAILED,
+              message: `Failed to delete file ${entry.target} during rollback`,
+            })
           }
 
           break
         case 'MOVE':
+          if (entry.action.to === entry.target) continue
           result = await this.fileService.moveFile(entry.action.to, entry.target)
 
           if (result.isErr()) {
-            return err(result.error)
+            return err({
+              code: InternalErrorCode.FILE_ROLLBACK_FAILED,
+              message: `Failed to delete file ${entry.target} during rollback`,
+            })
           }
 
           break
@@ -513,7 +539,10 @@ export class FileTransactionService {
           result = await this.fileService.deleteFile(entry.target)
 
           if (result.isErr()) {
-            return err(result.error)
+            return err({
+              code: InternalErrorCode.FILE_ROLLBACK_FAILED,
+              message: `Failed to delete file ${entry.target} during rollback`,
+            })
           }
 
           break
@@ -521,6 +550,8 @@ export class FileTransactionService {
           exhaustiveGuard(entry.action)
       }
     }
+
+    return ok()
   }
 }
 

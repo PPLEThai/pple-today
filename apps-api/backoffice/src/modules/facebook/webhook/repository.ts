@@ -4,13 +4,13 @@ import { FeedItemType, PostAttachmentType } from '../../../../__generated__/pris
 import { InternalErrorCode } from '../../../dtos/error'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { err } from '../../../utils/error'
-import { fromPrismaPromise } from '../../../utils/prisma'
+import { fromRepositoryPromise } from '../../../utils/error'
 
 export class FacebookWebhookRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
   async getExistingPostByFacebookPostId(facebookPostId: string) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.post.findUnique({
         where: {
           facebookPostId,
@@ -33,7 +33,7 @@ export class FacebookWebhookRepository {
     }[]
     hashTags?: string[]
   }) {
-    return await fromPrismaPromise(async () => {
+    return await fromRepositoryPromise(async () => {
       const pageManager = await this.prismaService.facebookPage.findUniqueOrThrow({
         where: {
           id: data.facebookPageId,
@@ -97,7 +97,7 @@ export class FacebookWebhookRepository {
     }[]
     hashTags?: string[]
   }) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.post.update({
         where: {
           facebookPostId: data.postId,
@@ -151,7 +151,7 @@ export class FacebookWebhookRepository {
       })
     }
 
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.feedItem.delete({
         where: {
           id: existingPost.value.feedItemId,
@@ -175,7 +175,7 @@ export class FacebookWebhookRepository {
       cacheKey: string
     }[]
   ) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.post.update({
         where: {
           facebookPostId,
