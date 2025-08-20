@@ -14,6 +14,7 @@ import { Icon } from '@pple-today/ui/icon'
 import { clsx, cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 import { Textarea } from '@pple-today/ui/textarea'
+import { toast } from '@pple-today/ui/toast'
 import { useForm } from '@tanstack/react-form'
 import dayjs from 'dayjs'
 import { Image } from 'expo-image'
@@ -108,6 +109,7 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
             {upvoteReaction.count}
           </Text>
         </View>
+        {/* TODO: comment count */}
         {props.commentCount > 0 && (
           <Pressable>
             <Text className="text-xs font-anakotmai-light text-base-text-medium">
@@ -685,8 +687,12 @@ function DownvoteButton() {
     onSubmit: async (values) => {
       console.log('Form submitted:', values)
       // Simulate a network request
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 500))
       onClose()
+      toast({
+        text1: 'เพิ่มความคิดเห็นส่วนตัวแล้ว',
+        icon: MessageCircleIcon,
+      })
     },
   })
   const insets = useSafeAreaInsets()
