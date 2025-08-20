@@ -94,7 +94,7 @@ export class AdminBannerRepository {
         })
 
         if (existingBanner.imageFilePath !== data.imageFilePath) {
-          const deleteResult = await fileTx.deleteFile(existingBanner.imageFilePath)
+          const deleteResult = await fileTx.removeFile(existingBanner.imageFilePath)
           if (deleteResult.isErr()) return throwWithReturnType(deleteResult)
         }
 
@@ -139,7 +139,7 @@ export class AdminBannerRepository {
           select: { imageFilePath: true },
         })
 
-        const deleteResult = await fileTx.deleteFile(existingBanner.imageFilePath)
+        const deleteResult = await fileTx.removeFile(existingBanner.imageFilePath)
         if (deleteResult.isErr()) return throwWithReturnType(deleteResult)
 
         return deleteResult.value

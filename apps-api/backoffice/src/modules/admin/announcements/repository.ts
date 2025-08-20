@@ -23,7 +23,7 @@ export class AdminAnnouncementRepository {
     const unusedAttachments = before.filter((filePath) => !after.includes(filePath))
 
     if (unusedAttachments.length > 0) {
-      const deleteResult = await fileTx.bulkDeleteFile(unusedAttachments)
+      const deleteResult = await fileTx.bulkRemoveFile(unusedAttachments)
       if (deleteResult.isErr()) {
         return err(deleteResult.error)
       }
@@ -367,7 +367,7 @@ export class AdminAnnouncementRepository {
           },
         })
 
-        const deleteResult = await fileTx.bulkDeleteFile(
+        const deleteResult = await fileTx.bulkRemoveFile(
           feedItem.announcement?.attachments.map((attachment) => attachment.filePath) ?? []
         )
 
@@ -650,7 +650,7 @@ export class AdminAnnouncementRepository {
           },
         })
 
-        const deleteResult = await fileTx.bulkDeleteFile(
+        const deleteResult = await fileTx.bulkRemoveFile(
           announcementDraft.attachments.map((attachment) => attachment.filePath)
         )
 

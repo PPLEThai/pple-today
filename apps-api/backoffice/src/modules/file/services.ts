@@ -496,12 +496,12 @@ export class FileTransactionService {
     return await this.bulkMoveToFolder(fileKeys, this.fileService.prefixPrivateFolder)
   }
 
-  async bulkDeleteFile(fileKeys: string[]) {
+  async bulkRemoveFile(fileKeys: string[]) {
     return await this.bulkMoveToFolder(fileKeys, this.fileService.prefixDeletedFolder)
   }
 
-  async deleteFile(fileKey: string) {
-    return await this.bulkDeleteFile([fileKey])
+  async removeFile(fileKey: string) {
+    return await this.bulkRemoveFile([fileKey])
   }
 
   async rollback() {

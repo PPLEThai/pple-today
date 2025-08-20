@@ -10,11 +10,15 @@ import { FacebookWebhookRepository, FacebookWebhookRepositoryPlugin } from './re
 import { PostAttachmentType } from '../../../../__generated__/prisma'
 import serverEnv from '../../../config/env'
 import { InternalErrorCode } from '../../../dtos/error'
-import { WebhookChangesVerb, WebhookFeedChanges, WebhookFeedType } from '../../../dtos/facebook'
+import {
+  PagePost,
+  WebhookChangesVerb,
+  WebhookFeedChanges,
+  WebhookFeedType,
+} from '../../../dtos/facebook'
 import { err } from '../../../utils/error'
 import { getFileName, getHashTag } from '../../../utils/facebook'
 import { mapRawPrismaError } from '../../../utils/prisma'
-import { FileService, FileServicePlugin } from '../../file/services'
 import { FacebookRepository, FacebookRepositoryPlugin } from '../repository'
 
 export class FacebookWebhookService {
@@ -23,10 +27,59 @@ export class FacebookWebhookService {
       appSecret: string
       verifyToken: string
     },
-    private readonly fileService: FileService,
     private readonly facebookRepository: FacebookRepository,
     private readonly facebookWebhookRepository: FacebookWebhookRepository
   ) {}
+
+  private getAttachmentsFromPagePost(post: PagePost) {
+    return R.pipe(
+      post.attachments?.data ?? [],
+      R.map((attachment) => {
+        if (attachment.type === 'album') {
+          return R.pipe(
+            attachment.subattachments!.data,
+            R.map((subattachment) => {
+              if (subattachment.type === 'video_autoplay') {
+                if (!subattachment.media.source) return
+                return {
+                  url: subattachment.media.source,
+                  type: PostAttachmentType.VIDEO,
+                  cacheKey: getFileName(subattachment.media.source),
+                }
+              }
+              if (subattachment.type === 'photo') {
+                return {
+                  url: subattachment.media.image.src,
+                  type: PostAttachmentType.IMAGE,
+                  cacheKey: getFileName(subattachment.media.image.src),
+                }
+              }
+            }),
+            R.filter((val) => !!val),
+            R.flat()
+          )
+        }
+
+        if (attachment.type === 'photo') {
+          if (!attachment.media.image.src) return
+          return {
+            url: attachment.media.image.src,
+            type: PostAttachmentType.IMAGE,
+            cacheKey: getFileName(attachment.media.image.src),
+          }
+        }
+        if (attachment.media.source && attachment.type === 'video_autoplay') {
+          return {
+            url: attachment.media.source,
+            type: PostAttachmentType.VIDEO,
+            cacheKey: getFileName(attachment.media.source),
+          }
+        }
+      }),
+      R.filter((val) => !!val),
+      R.flat()
+    )
+  }
 
   private async handleFeedStatusChange(body: Extract<WebhookFeedChanges, { item: 'status' }>) {
     switch (body.verb) {
@@ -56,6 +109,8 @@ export class FacebookWebhookService {
         })
 
         if (publishResult.isErr()) {
+          const rollbackResult = await fileTx.rollback()
+          if (rollbackResult.isErr()) return err(rollbackResult.error)
           return mapRawPrismaError(publishResult.error, {
             UNIQUE_CONSTRAINT_FAILED: {
               code: InternalErrorCode.FEED_ITEM_ALREADY_EXISTED,
@@ -77,14 +132,6 @@ export class FacebookWebhookService {
                 message: 'Post not found',
               },
             })
-          }
-
-          const deleteFileResult = await this.fileService.bulkDeleteFile(
-            deleteResult.value.post?.attachments.map((a) => a.url) ?? []
-          )
-
-          if (deleteFileResult.isErr()) {
-            return err(deleteFileResult.error)
           }
 
           return ok()
@@ -322,54 +369,7 @@ export class FacebookWebhookService {
           return err(postDetails.error)
         }
 
-        const newAttachments = R.pipe(
-          postDetails.value.attachments?.data ?? [],
-          R.map((attachment) => {
-            if (attachment.type === 'album') {
-              return R.pipe(
-                attachment.subattachments!.data,
-                R.map((subattachment) => {
-                  if (subattachment.type === 'video_autoplay') {
-                    if (!subattachment.media.source) return
-                    return {
-                      url: subattachment.media.source,
-                      type: PostAttachmentType.VIDEO,
-                      cacheKey: getFileName(subattachment.media.source),
-                    }
-                  }
-                  if (subattachment.type === 'photo') {
-                    return {
-                      url: subattachment.media.image.src,
-                      type: PostAttachmentType.IMAGE,
-                      cacheKey: getFileName(subattachment.media.image.src),
-                    }
-                  }
-                }),
-                R.filter((val) => !!val),
-                R.flat()
-              )
-            }
-
-            if (attachment.type === 'photo') {
-              if (!attachment.media.image.src) return
-              return {
-                url: attachment.media.image.src,
-                type: PostAttachmentType.IMAGE,
-                cacheKey: getFileName(attachment.media.image.src),
-              }
-            }
-            if (attachment.media.source && attachment.type === 'video_autoplay') {
-              return {
-                url: attachment.media.source,
-                type: PostAttachmentType.VIDEO,
-                cacheKey: getFileName(attachment.media.source),
-              }
-            }
-          }),
-          R.filter((val) => !!val),
-          R.flat()
-        )
-
+        const newAttachments = this.getAttachmentsFromPagePost(postDetails.value)
         const attachmentChangesResult =
           await this.facebookWebhookRepository.handleAttachmentChanges(
             body.from.id,
@@ -478,14 +478,13 @@ export class FacebookWebhookService {
 export const FacebookWebhookServicePlugin = new Elysia({
   name: 'FacebookWebhookService',
 })
-  .use([FacebookWebhookRepositoryPlugin, FacebookRepositoryPlugin, FileServicePlugin])
-  .decorate(({ fileService, facebookRepository, facebookWebhookRepository }) => ({
+  .use([FacebookWebhookRepositoryPlugin, FacebookRepositoryPlugin])
+  .decorate(({ facebookRepository, facebookWebhookRepository }) => ({
     facebookWebhookService: new FacebookWebhookService(
       {
         appSecret: serverEnv.FACEBOOK_APP_SECRET,
         verifyToken: serverEnv.FACEBOOK_WEBHOOK_VERIFY_TOKEN,
       },
-      fileService,
       facebookRepository,
       facebookWebhookRepository
     ),

@@ -40,7 +40,7 @@ export class FacebookWebhookRepository {
           R.filter((ea) => newAttachments.findIndex((a) => ea.cacheKey === a.cacheKey) !== -1)
         )
 
-        const deleteResult = await fileTx.bulkDeleteFile(requiredDelete)
+        const deleteResult = await fileTx.bulkRemoveFile(requiredDelete)
 
         if (deleteResult.isErr()) {
           return throwWithReturnType(deleteResult)
@@ -236,7 +236,20 @@ export class FacebookWebhookRepository {
       })
     }
 
-    return await fromRepositoryPromise(
+    const deleteFileResult = await fromRepositoryPromise(
+      this.fileService.$transaction(async (fileTx) => {
+        const bulkDeleteResult = await fileTx.bulkRemoveFile(
+          existingPost.value?.attachments.map((a) => a.url) ?? []
+        )
+
+        if (bulkDeleteResult.isErr()) return throwWithReturnType(bulkDeleteResult)
+      })
+    )
+
+    if (deleteFileResult.isErr()) return err(deleteFileResult.error)
+    const [, fileTx] = deleteFileResult.value
+
+    const deleteFeedResult = await fromRepositoryPromise(
       this.prismaService.feedItem.delete({
         where: {
           id: existingPost.value.feedItemId,
@@ -250,6 +263,14 @@ export class FacebookWebhookRepository {
         },
       })
     )
+
+    if (deleteFeedResult.isErr()) {
+      const rollbackResult = await fileTx.rollback()
+      if (rollbackResult.isErr()) return err(rollbackResult.error)
+      return err(deleteFeedResult.error)
+    }
+
+    return ok(deleteFeedResult.value)
   }
 
   async addNewAttachments(
