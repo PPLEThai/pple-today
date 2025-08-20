@@ -505,7 +505,10 @@ export class FileTransactionService {
   }
 
   async rollback() {
-    for (const entry of this.transaction.reverse()) {
+    while (true) {
+      const entry = this.transaction.pop()
+      if (!entry) break
+
       let result
       switch (entry.action.type) {
         case 'PERMISSION':
@@ -516,6 +519,7 @@ export class FileTransactionService {
           else result = await this.fileService.markAsPrivate(entry.target)
 
           if (result.isErr()) {
+            this.transaction.push(entry)
             return err({
               code: InternalErrorCode.FILE_ROLLBACK_FAILED,
               message: `Failed to delete file ${entry.target} during rollback`,
@@ -528,6 +532,7 @@ export class FileTransactionService {
           result = await this.fileService.moveFile(entry.action.to, entry.target)
 
           if (result.isErr()) {
+            this.transaction.push(entry)
             return err({
               code: InternalErrorCode.FILE_ROLLBACK_FAILED,
               message: `Failed to delete file ${entry.target} during rollback`,
@@ -539,6 +544,7 @@ export class FileTransactionService {
           result = await this.fileService.deleteFile(entry.target)
 
           if (result.isErr()) {
+            this.transaction.push(entry)
             return err({
               code: InternalErrorCode.FILE_ROLLBACK_FAILED,
               message: `Failed to delete file ${entry.target} during rollback`,

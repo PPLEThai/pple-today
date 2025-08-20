@@ -1,6 +1,5 @@
 import * as crypto from 'node:crypto'
 
-import cuid2 from '@paralleldrive/cuid2'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 import * as R from 'remeda'
@@ -8,7 +7,7 @@ import * as R from 'remeda'
 import { HandleFacebookWebhookBody, ValidateFacebookWebhookQuery } from './models'
 import { FacebookWebhookRepository, FacebookWebhookRepositoryPlugin } from './repository'
 
-import { PostAttachment, PostAttachmentType } from '../../../../__generated__/prisma'
+import { PostAttachmentType } from '../../../../__generated__/prisma'
 import serverEnv from '../../../config/env'
 import { InternalErrorCode } from '../../../dtos/error'
 import { WebhookChangesVerb, WebhookFeedChanges, WebhookFeedType } from '../../../dtos/facebook'
@@ -29,85 +28,11 @@ export class FacebookWebhookService {
     private readonly facebookWebhookRepository: FacebookWebhookRepository
   ) {}
 
-  private async handleAttachmentChanges(
-    pageId: string,
-    existingAttachments: PostAttachment[],
-    newAttachments: Pick<PostAttachment, 'url' | 'type' | 'cacheKey'>[]
-  ) {
-    const requiredDelete = R.pipe(
-      existingAttachments,
-      R.filter((ea) => !newAttachments.find((a) => ea.cacheKey === a.cacheKey)),
-      R.map((ea) => ea.url)
-    )
-
-    const requiredUpload = R.pipe(
-      newAttachments ?? [],
-      R.filter((a) => !existingAttachments.find((ea) => ea.cacheKey === a.cacheKey))
-    )
-
-    const unchangedAttachments = R.pipe(
-      existingAttachments,
-      R.filter((ea) => newAttachments.findIndex((a) => ea.cacheKey === a.cacheKey) !== -1)
-    )
-
-    const deleteResult = await this.fileService.bulkDeleteFile(requiredDelete)
-
-    if (deleteResult.isErr()) {
-      return err(deleteResult.error)
-    }
-
-    const result = await Promise.all(
-      requiredUpload.map(async (attachment) => {
-        const fileName = getFileName(attachment.url)
-        const newFilename = `temp/facebook/${pageId}/${cuid2.createId()}-${fileName}`
-        const uploadResult = await this.fileService.uploadFileFromUrl(attachment.url, newFilename)
-
-        if (uploadResult.isErr()) {
-          return err(uploadResult.error)
-        }
-
-        const moveToPublicFolderResult = await this.fileService.bulkMoveToPublicFolder([
-          newFilename,
-        ])
-
-        if (moveToPublicFolderResult.isErr()) {
-          return err(moveToPublicFolderResult.error)
-        }
-
-        return ok({
-          url: moveToPublicFolderResult.value[0],
-          type: attachment.type,
-          cacheKey: fileName,
-        })
-      }) ?? []
-    )
-
-    const resultWithoutFailed = R.pipe(
-      result,
-      R.filter((r) => r.isOk()),
-      R.map((r) => r.value)
-    )
-
-    if (resultWithoutFailed.length !== result.length) {
-      return err({
-        code: InternalErrorCode.FILE_UPLOAD_ERROR,
-        message: 'File upload failed',
-      })
-    }
-
-    return ok({
-      requiredDelete,
-      newUploads: resultWithoutFailed,
-      unchangedAttachments,
-    })
-  }
-
   private async handleFeedStatusChange(body: Extract<WebhookFeedChanges, { item: 'status' }>) {
     switch (body.verb) {
       case WebhookChangesVerb.ADD: {
         const hashTags = getHashTag(body.message)
-
-        const updateAttachmentResult = await this.handleAttachmentChanges(
+        const updateAttachmentResult = await this.facebookWebhookRepository.handleAttachmentChanges(
           body.from.id,
           [],
           body.photos?.map((image) => ({
@@ -118,15 +43,16 @@ export class FacebookWebhookService {
         )
 
         if (updateAttachmentResult.isErr()) {
-          return err(updateAttachmentResult.error)
+          return mapRawPrismaError(updateAttachmentResult.error)
         }
+        const [newUploads, fileTx] = updateAttachmentResult.value
 
         const publishResult = await this.facebookWebhookRepository.publishNewPost({
           facebookPageId: body.from.id,
           postId: body.post_id,
           content: body.message,
           hashTags,
-          attachments: updateAttachmentResult.value.newUploads,
+          attachments: newUploads.newUploads,
         })
 
         if (publishResult.isErr()) {
@@ -179,7 +105,7 @@ export class FacebookWebhookService {
           })
         }
 
-        const updateAttachmentResult = await this.handleAttachmentChanges(
+        const updateAttachmentResult = await this.facebookWebhookRepository.handleAttachmentChanges(
           body.from.id,
           existingPost.value.attachments.filter((a) => a.type === PostAttachmentType.IMAGE) ?? [],
           body.photos?.map((image) => ({
@@ -192,6 +118,7 @@ export class FacebookWebhookService {
         if (updateAttachmentResult.isErr()) {
           return err(updateAttachmentResult.error)
         }
+        const [updatedAttachment, fileTx] = updateAttachmentResult.value
 
         const hashTags = getHashTag(body.message)
         const updateResult = await this.facebookWebhookRepository.updatePost({
@@ -201,12 +128,14 @@ export class FacebookWebhookService {
           hashTags,
           attachments: [
             ...existingPost.value.attachments.filter((a) => a.type !== PostAttachmentType.IMAGE),
-            ...updateAttachmentResult.value.unchangedAttachments,
-            ...updateAttachmentResult.value.newUploads,
+            ...updatedAttachment.unchangedAttachments,
+            ...updatedAttachment.newUploads,
           ],
         })
 
         if (updateResult.isErr()) {
+          const rollbackResult = await fileTx.rollback()
+          if (rollbackResult.isErr()) return err(rollbackResult.error)
           return mapRawPrismaError(updateResult.error)
         }
 
@@ -221,9 +150,17 @@ export class FacebookWebhookService {
     switch (body.verb) {
       case WebhookChangesVerb.ADD:
       case WebhookChangesVerb.EDIT: {
-        const result = await this.handleAttachmentChanges(
+        const existingPost = await this.facebookWebhookRepository.getExistingPostByFacebookPostId(
+          body.post_id
+        )
+
+        if (existingPost.isErr()) {
+          return mapRawPrismaError(existingPost.error)
+        }
+
+        const result = await this.facebookWebhookRepository.handleAttachmentChanges(
           body.from.id,
-          [],
+          existingPost.value?.attachments ?? [],
           body.link
             ? [
                 {
@@ -236,50 +173,39 @@ export class FacebookWebhookService {
         )
 
         if (result.isErr()) {
-          return result
+          return mapRawPrismaError(result.error)
         }
-
-        const existingPost = await this.facebookWebhookRepository.getExistingPostByFacebookPostId(
-          body.post_id
-        )
-
-        if (existingPost.isErr()) {
-          return mapRawPrismaError(existingPost.error)
-        }
+        const [attachments, fileTx] = result.value
 
         if (!existingPost.value) {
           const publishResult = await this.facebookWebhookRepository.publishNewPost({
             postId: body.post_id,
             content: body.message,
             facebookPageId: body.from.id,
-            attachments: result.value.newUploads,
+            attachments: attachments.newUploads,
             hashTags: getHashTag(body.message),
           })
 
           if (publishResult.isErr()) {
+            const rollbackResult = await fileTx.rollback()
+            if (rollbackResult.isErr()) return err(rollbackResult.error)
             return mapRawPrismaError(publishResult.error)
           }
 
           return ok()
         }
 
-        const deleteResult = await this.fileService.bulkDeleteFile(
-          existingPost.value.attachments.map((a) => a.url)
-        )
-
-        if (deleteResult.isErr()) {
-          return err(deleteResult.error)
-        }
-
         const addResult = await this.facebookWebhookRepository.updatePost({
           postId: body.post_id,
           content: body.message,
           facebookPageId: body.from.id,
-          attachments: result.value.newUploads,
+          attachments: attachments.newUploads,
           hashTags: getHashTag(body.message),
         })
 
         if (addResult.isErr()) {
+          const rollbackResult = await fileTx.rollback()
+          if (rollbackResult.isErr()) return err(rollbackResult.error)
           return mapRawPrismaError(addResult.error)
         }
 
@@ -292,9 +218,17 @@ export class FacebookWebhookService {
   private async handleFeedVideoChange(body: Extract<WebhookFeedChanges, { item: 'video' }>) {
     switch (body.verb) {
       case WebhookChangesVerb.ADD: {
-        const result = await this.handleAttachmentChanges(
+        const existingPost = await this.facebookWebhookRepository.getExistingPostByFacebookPostId(
+          body.post_id
+        )
+
+        if (existingPost.isErr()) {
+          return mapRawPrismaError(existingPost.error)
+        }
+
+        const result = await this.facebookWebhookRepository.handleAttachmentChanges(
           body.from.id,
-          [],
+          existingPost.value?.attachments ?? [],
           body.link
             ? [
                 {
@@ -307,27 +241,22 @@ export class FacebookWebhookService {
         )
 
         if (result.isErr()) {
-          return result
+          return err(result.error)
         }
-
-        const existingPost = await this.facebookWebhookRepository.getExistingPostByFacebookPostId(
-          body.post_id
-        )
-
-        if (existingPost.isErr()) {
-          return mapRawPrismaError(existingPost.error)
-        }
+        const [attachments, fileTx] = result.value
 
         if (!existingPost.value) {
           const publishResult = await this.facebookWebhookRepository.publishNewPost({
             postId: body.post_id,
             content: body.message,
             facebookPageId: body.from.id,
-            attachments: result.value.newUploads,
+            attachments: attachments.newUploads,
             hashTags: getHashTag(body.message),
           })
 
           if (publishResult.isErr()) {
+            const rollbackResult = await fileTx.rollback()
+            if (rollbackResult.isErr()) return err(rollbackResult.error)
             return mapRawPrismaError(publishResult.error)
           }
 
@@ -335,11 +264,13 @@ export class FacebookWebhookService {
         }
 
         const addResult = await this.facebookWebhookRepository.addNewAttachments(body.post_id, [
-          ...existingPost.value.attachments,
-          ...result.value.newUploads,
+          ...attachments.unchangedAttachments,
+          ...attachments.newUploads,
         ])
 
         if (addResult.isErr()) {
+          const rollbackResult = await fileTx.rollback()
+          if (rollbackResult.isErr()) return err(rollbackResult.error)
           return mapRawPrismaError(addResult.error, {
             RECORD_NOT_FOUND: {
               code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
@@ -439,26 +370,30 @@ export class FacebookWebhookService {
           R.flat()
         )
 
-        const attachmentChangesResult = await this.handleAttachmentChanges(
-          body.from.id,
-          localPostDetails.value.attachments ?? [],
-          newAttachments
-        )
+        const attachmentChangesResult =
+          await this.facebookWebhookRepository.handleAttachmentChanges(
+            body.from.id,
+            localPostDetails.value.attachments ?? [],
+            newAttachments
+          )
 
         if (attachmentChangesResult.isErr()) {
           return err(attachmentChangesResult.error)
         }
+        const [attachments, fileTx] = attachmentChangesResult.value
 
         const updatedPostResult = await this.facebookWebhookRepository.updatePost({
           facebookPageId: body.from.id,
           postId: body.post_id,
           // NOTE: New upload should have less attachments than old ones because this is removal action
-          attachments: attachmentChangesResult.value.unchangedAttachments,
+          attachments: attachments.unchangedAttachments,
           content: body.message,
           hashTags: getHashTag(body.message),
         })
 
         if (updatedPostResult.isErr()) {
+          const rollbackResult = await fileTx.rollback()
+          if (rollbackResult.isErr()) return err(rollbackResult.error)
           return mapRawPrismaError(updatedPostResult.error, {
             RECORD_NOT_FOUND: {
               code: InternalErrorCode.FEED_ITEM_NOT_FOUND,

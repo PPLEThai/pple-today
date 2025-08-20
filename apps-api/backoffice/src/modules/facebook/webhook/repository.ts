@@ -1,13 +1,98 @@
+import { createId } from '@paralleldrive/cuid2'
 import Elysia from 'elysia'
+import { ok } from 'neverthrow'
+import * as R from 'remeda'
 
-import { FeedItemType, PostAttachmentType } from '../../../../__generated__/prisma'
+import { FeedItemType, PostAttachment, PostAttachmentType } from '../../../../__generated__/prisma'
 import { InternalErrorCode } from '../../../dtos/error'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
-import { err } from '../../../utils/error'
+import { err, throwWithReturnType } from '../../../utils/error'
 import { fromRepositoryPromise } from '../../../utils/error'
+import { getFileName } from '../../../utils/facebook'
+import { FileService, FileServicePlugin } from '../../file/services'
 
 export class FacebookWebhookRepository {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly fileService: FileService
+  ) {}
+
+  async handleAttachmentChanges(
+    pageId: string,
+    existingAttachments: PostAttachment[],
+    newAttachments: Pick<PostAttachment, 'url' | 'type' | 'cacheKey'>[]
+  ) {
+    return await fromRepositoryPromise(
+      this.fileService.$transaction(async (fileTx) => {
+        const requiredDelete = R.pipe(
+          existingAttachments,
+          R.filter((ea) => !newAttachments.find((a) => ea.cacheKey === a.cacheKey)),
+          R.map((ea) => ea.url)
+        )
+
+        const requiredUpload = R.pipe(
+          newAttachments ?? [],
+          R.filter((a) => !existingAttachments.find((ea) => ea.cacheKey === a.cacheKey))
+        )
+
+        const unchangedAttachments = R.pipe(
+          existingAttachments,
+          R.filter((ea) => newAttachments.findIndex((a) => ea.cacheKey === a.cacheKey) !== -1)
+        )
+
+        const deleteResult = await fileTx.bulkDeleteFile(requiredDelete)
+
+        if (deleteResult.isErr()) {
+          return throwWithReturnType(deleteResult)
+        }
+
+        const result = await Promise.all(
+          requiredUpload.map(async (attachment) => {
+            const fileName = getFileName(attachment.url)
+            const newFilename = `temp/facebook/${pageId}/${createId()}-${fileName}`
+            const uploadResult = await fileTx.uploadFileFromUrl(attachment.url, newFilename)
+
+            if (uploadResult.isErr()) {
+              return throwWithReturnType(uploadResult)
+            }
+
+            const moveToPublicFolderResult = await fileTx.bulkMoveToPublicFolder([newFilename])
+
+            if (moveToPublicFolderResult.isErr()) {
+              return throwWithReturnType(moveToPublicFolderResult)
+            }
+
+            return ok({
+              url: moveToPublicFolderResult.value[0],
+              type: attachment.type,
+              cacheKey: fileName,
+            })
+          }) ?? []
+        )
+
+        const resultWithoutFailed = R.pipe(
+          result,
+          R.filter((r) => r.isOk()),
+          R.map((r) => r.value)
+        )
+
+        if (resultWithoutFailed.length !== result.length) {
+          return throwWithReturnType(
+            err({
+              code: InternalErrorCode.FILE_UPLOAD_ERROR,
+              message: 'File upload failed',
+            })
+          )
+        }
+
+        return {
+          requiredDelete,
+          newUploads: resultWithoutFailed,
+          unchangedAttachments,
+        }
+      })
+    )
+  }
 
   async getExistingPostByFacebookPostId(facebookPostId: string) {
     return await fromRepositoryPromise(
@@ -209,7 +294,7 @@ export class FacebookWebhookRepository {
 export const FacebookWebhookRepositoryPlugin = new Elysia({
   name: 'FacebookWebhookRepository',
 })
-  .use(PrismaServicePlugin)
-  .decorate(({ prismaService }) => ({
-    facebookWebhookRepository: new FacebookWebhookRepository(prismaService),
+  .use([PrismaServicePlugin, FileServicePlugin])
+  .decorate(({ prismaService, fileService }) => ({
+    facebookWebhookRepository: new FacebookWebhookRepository(prismaService, fileService),
   }))
