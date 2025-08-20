@@ -677,24 +677,6 @@ function DownvoteButton() {
   const onClose = () => {
     bottomSheetModalRef.current?.dismiss()
   }
-  const form = useForm({
-    defaultValues: {
-      comment: '',
-    },
-    validators: {
-      onSubmit: formSchema,
-    },
-    onSubmit: async (values) => {
-      console.log('Form submitted:', values)
-      // Simulate a network request
-      await new Promise((resolve) => setTimeout(resolve, 500))
-      onClose()
-      toast({
-        text1: 'เพิ่มความคิดเห็นส่วนตัวแล้ว',
-        icon: MessageCircleIcon,
-      })
-    },
-  })
   const insets = useSafeAreaInsets()
   return (
     <View className="flex flex-col gap-2">
@@ -710,51 +692,72 @@ function DownvoteButton() {
         bottomInset={insets.bottom}
       >
         <BottomSheetView>
-          <View className="flex flex-col flex-1">
-            <View className="flex flex-col gap-1 p-4 pb-0">
-              <Text className="text-2xl font-anakotmai-bold">เหตุใดคุณถึงไม่เห็นด้วย</Text>
-              <Text className="text-sm font-anakotmai-light">
-                ความคิดเห็นของคุณจะถูกซ่อนจากสาธารณะ หากต้องการให้แสดงต่อสาธารณะกรุณา กด
-                “ความคิดเห็น”
-              </Text>
-            </View>
-            <form.Field name="comment">
-              {(field) => (
-                <FormItem field={field} className="p-4">
-                  <FormLabel
-                    style={[StyleSheet.absoluteFill, { opacity: 0, pointerEvents: 'none' }]}
-                  >
-                    ความคิดเห็น
-                  </FormLabel>
-                  <FormControl>
-                    <Textarea
-                      asChild
-                      placeholder="พิมพ์ความคิดเห็นของคุณ"
-                      value={field.state.value}
-                      onChangeText={field.handleChange}
-                    >
-                      <BottomSheetTextInput />
-                    </Textarea>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            </form.Field>
-            <View className="flex flex-col gap-2 px-4">
-              <form.Subscribe selector={(state) => [state.isSubmitting]}>
-                {([isSubmitting]) => (
-                  <Button onPress={form.handleSubmit} disabled={isSubmitting}>
-                    <Text>แสดงความคิดเห็น</Text>
-                  </Button>
-                )}
-              </form.Subscribe>
-              <Button variant="ghost" onPress={onClose}>
-                <Text>ข้าม</Text>
-              </Button>
-            </View>
-          </View>
+          <CommentForm onClose={onClose} />
         </BottomSheetView>
       </BottomSheetModal>
+    </View>
+  )
+}
+
+function CommentForm(props: { onClose: () => void }) {
+  const form = useForm({
+    defaultValues: {
+      comment: '',
+    },
+    validators: {
+      onSubmit: formSchema,
+    },
+    onSubmit: async (values) => {
+      console.log('Form submitted:', values)
+      // Simulate a network request
+      await new Promise((resolve) => setTimeout(resolve, 500))
+      props.onClose()
+      toast({
+        text1: 'เพิ่มความคิดเห็นส่วนตัวแล้ว',
+        icon: MessageCircleIcon,
+      })
+    },
+  })
+  return (
+    <View className="flex flex-col flex-1">
+      <View className="flex flex-col gap-1 p-4 pb-0">
+        <Text className="text-2xl font-anakotmai-bold">เหตุใดคุณถึงไม่เห็นด้วย</Text>
+        <Text className="text-sm font-anakotmai-light">
+          ความคิดเห็นของคุณจะถูกซ่อนจากสาธารณะ หากต้องการให้แสดงต่อสาธารณะกรุณา กด “ความคิดเห็น”
+        </Text>
+      </View>
+      <form.Field name="comment">
+        {(field) => (
+          <FormItem field={field} className="p-4">
+            <FormLabel style={[StyleSheet.absoluteFill, { opacity: 0, pointerEvents: 'none' }]}>
+              ความคิดเห็น
+            </FormLabel>
+            <FormControl>
+              <Textarea
+                asChild
+                placeholder="พิมพ์ความคิดเห็นของคุณ"
+                value={field.state.value}
+                onChangeText={field.handleChange}
+              >
+                <BottomSheetTextInput />
+              </Textarea>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      </form.Field>
+      <View className="flex flex-col gap-2 px-4">
+        <form.Subscribe selector={(state) => [state.isSubmitting]}>
+          {([isSubmitting]) => (
+            <Button onPress={form.handleSubmit} disabled={isSubmitting}>
+              <Text>แสดงความคิดเห็น</Text>
+            </Button>
+          )}
+        </form.Subscribe>
+        <Button variant="ghost" onPress={props.onClose}>
+          <Text>ข้าม</Text>
+        </Button>
+      </View>
     </View>
   )
 }
