@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ImageURISource, Platform, Pressable, View } from 'react-native'
+import { ImageURISource, Platform, Pressable, StyleSheet, View } from 'react-native'
 import ImageView from 'react-native-image-viewing'
 import Animated, { useSharedValue, withSpring, withTiming } from 'react-native-reanimated'
 import { TextProps } from 'react-native-svg'
@@ -632,17 +632,25 @@ function UpvoteButton() {
               )}
             />
           </Animated.View>
-          <View className="absolute top-0 left-0 right-0 bottom-0 pointer-events-none flex items-center justify-center">
-            <LottieView
-              ref={likeAnimationRef}
-              source={LikeAnimationFile}
-              loop={false}
-              style={{ width: 100, height: 100 }}
-            />
-          </View>
+          <LottieView
+            containerStyle={[StyleSheet.absoluteFill, styles.lottieContainer]}
+            ref={likeAnimationRef}
+            source={LikeAnimationFile}
+            loop={false}
+            style={{ width: 100, height: 100 }}
+          />
         </View>
         <Text className="text-sm font-anakotmai-light text-base-text-high">เห็นด้วย</Text>
       </Animated.View>
     </Pressable>
   )
 }
+
+const styles = StyleSheet.create({
+  lottieContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    pointerEvents: 'none',
+  },
+})
