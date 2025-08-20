@@ -2,16 +2,24 @@ import * as React from 'react'
 import { ImageURISource, Platform, Pressable, StyleSheet, View } from 'react-native'
 import ImageView from 'react-native-image-viewing'
 import Animated, { useSharedValue, withSpring, withTiming } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { TextProps } from 'react-native-svg'
 
+import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import { Badge } from '@pple-today/ui/badge'
+import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
+import { Button } from '@pple-today/ui/button'
+import { FormControl, FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
 import { clsx, cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
+import { Textarea } from '@pple-today/ui/textarea'
+import { useForm } from '@tanstack/react-form'
 import dayjs from 'dayjs'
 import { Image } from 'expo-image'
 import LottieView from 'lottie-react-native'
 import { HeartCrackIcon, HeartHandshakeIcon, MessageCircleIcon } from 'lucide-react-native'
+import { z } from 'zod/v4'
 
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { MoreOrLess } from '@app/components/more-or-less'
@@ -112,15 +120,7 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
         <View className="flex flex-row justify-between gap-2">
           <View className="flex flex-row gap-2">
             <UpvoteButton />
-            <Pressable className="flex flex-row items-center gap-1">
-              <Icon
-                icon={HeartCrackIcon}
-                size={20}
-                strokeWidth={1}
-                className="text-base-text-high"
-              />
-              <Text className="text-sm font-anakotmai-light text-base-text-high">ไม่เห็นด้วย</Text>
-            </Pressable>
+            <DownvoteButton />
           </View>
           <Pressable className="flex flex-row items-center gap-1">
             <Icon
@@ -590,7 +590,7 @@ function UpvoteButton() {
   const scale = useSharedValue(1)
 
   const onPressIn = () => {
-    opacity.value = withTiming(0.7, { duration: 150 })
+    opacity.value = withTiming(0.5, { duration: 150 })
     scale.value = withSpring(0.7, {
       stiffness: 300,
       damping: 12,
@@ -654,3 +654,101 @@ const styles = StyleSheet.create({
     pointerEvents: 'none',
   },
 })
+
+const formSchema = z.object({
+  comment: z.string().check(z.minLength(1, { error: 'กรุณาพิมพ์ความคิดเห็นของคุณ' })),
+})
+function DownvoteButton() {
+  const opacity = useSharedValue(1)
+
+  const onPressIn = () => {
+    opacity.value = withTiming(0.5, { duration: 150 })
+  }
+  const onPressOut = () => {
+    opacity.value = withTiming(1, { duration: 150 })
+  }
+  const bottomSheetModalRef = React.useRef<BottomSheetModal>(null)
+
+  const onOpen = () => {
+    bottomSheetModalRef.current?.present()
+  }
+  const onClose = () => {
+    bottomSheetModalRef.current?.dismiss()
+  }
+  const form = useForm({
+    defaultValues: {
+      comment: '',
+    },
+    validators: {
+      onSubmit: formSchema,
+    },
+    onSubmit: async (values) => {
+      console.log('Form submitted:', values)
+      // Simulate a network request
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+      onClose()
+    },
+  })
+  const insets = useSafeAreaInsets()
+  return (
+    <View className="flex flex-col gap-2">
+      <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onOpen}>
+        <Animated.View style={{ opacity }} className="flex flex-row items-center gap-1 rounded-md">
+          <Icon icon={HeartCrackIcon} size={20} strokeWidth={1} className="text-base-text-high" />
+          <Text className="text-sm font-anakotmai-light text-base-text-high">ไม่เห็นด้วย</Text>
+        </Animated.View>
+      </Pressable>
+      <BottomSheetModal
+        ref={bottomSheetModalRef}
+        keyboardBehavior="interactive"
+        bottomInset={insets.bottom}
+      >
+        <BottomSheetView>
+          <View className="flex flex-col flex-1">
+            <View className="flex flex-col gap-1 p-4 pb-0">
+              <Text className="text-2xl font-anakotmai-bold">เหตุใดคุณถึงไม่เห็นด้วย</Text>
+              <Text className="text-sm font-anakotmai-light">
+                ความคิดเห็นของคุณจะถูกซ่อนจากสาธารณะ หากต้องการให้แสดงต่อสาธารณะกรุณา กด
+                “ความคิดเห็น”
+              </Text>
+            </View>
+            <form.Field name="comment">
+              {(field) => (
+                <FormItem field={field} className="p-4">
+                  <FormLabel
+                    style={[StyleSheet.absoluteFill, { opacity: 0, pointerEvents: 'none' }]}
+                  >
+                    ความคิดเห็น
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      asChild
+                      placeholder="พิมพ์ความคิดเห็นของคุณ"
+                      value={field.state.value}
+                      onChangeText={field.handleChange}
+                    >
+                      <BottomSheetTextInput />
+                    </Textarea>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            </form.Field>
+            <View className="flex flex-col gap-2 px-4">
+              <form.Subscribe selector={(state) => [state.isSubmitting]}>
+                {([isSubmitting]) => (
+                  <Button onPress={form.handleSubmit} disabled={isSubmitting}>
+                    <Text>แสดงความคิดเห็น</Text>
+                  </Button>
+                )}
+              </form.Subscribe>
+              <Button variant="ghost" onPress={onClose}>
+                <Text>ข้าม</Text>
+              </Button>
+            </View>
+          </View>
+        </BottomSheetView>
+      </BottomSheetModal>
+    </View>
+  )
+}
