@@ -76,7 +76,7 @@ export class FacebookWebhookService {
         }
 
         return ok({
-          url: newFilename,
+          url: moveToPublicFolderResult.value[0],
           type: attachment.type,
           cacheKey: fileName,
         })
@@ -151,6 +151,10 @@ export class FacebookWebhookService {
           const deleteResult = await this.facebookWebhookRepository.deletePost(body.post_id)
 
           if (deleteResult.isErr()) {
+            if (deleteResult.error.code === InternalErrorCode.FEED_ITEM_NOT_FOUND) {
+              return err(deleteResult.error)
+            }
+
             return mapRawPrismaError(deleteResult.error, {
               RECORD_NOT_FOUND: {
                 code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
@@ -175,11 +179,13 @@ export class FacebookWebhookService {
         )
 
         if (existingPost.isErr()) {
-          return mapRawPrismaError(existingPost.error, {
-            RECORD_NOT_FOUND: {
-              code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
-              message: 'Post not found',
-            },
+          return mapRawPrismaError(existingPost.error)
+        }
+
+        if (!existingPost.value) {
+          return err({
+            code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
+            message: 'Post not found',
           })
         }
 
@@ -222,7 +228,8 @@ export class FacebookWebhookService {
 
   private async handleFeedPhotoChange(body: Extract<WebhookFeedChanges, { item: 'photo' }>) {
     switch (body.verb) {
-      case WebhookChangesVerb.ADD: {
+      case WebhookChangesVerb.ADD:
+      case WebhookChangesVerb.EDIT: {
         const result = await this.handleAttachmentChanges(
           body.from.id,
           [],
@@ -246,6 +253,10 @@ export class FacebookWebhookService {
         )
 
         if (existingPost.isErr()) {
+          return mapRawPrismaError(existingPost.error)
+        }
+
+        if (!existingPost.value) {
           const publishResult = await this.facebookWebhookRepository.publishNewPost({
             postId: body.post_id,
             content: body.message,
@@ -313,6 +324,10 @@ export class FacebookWebhookService {
         )
 
         if (existingPost.isErr()) {
+          return mapRawPrismaError(existingPost.error)
+        }
+
+        if (!existingPost.value) {
           const publishResult = await this.facebookWebhookRepository.publishNewPost({
             postId: body.post_id,
             content: body.message,
@@ -349,11 +364,13 @@ export class FacebookWebhookService {
           await this.facebookWebhookRepository.getExistingPostByFacebookPostId(body.post_id)
 
         if (localPostDetails.isErr()) {
-          return mapRawPrismaError(localPostDetails.error, {
-            RECORD_NOT_FOUND: {
-              code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
-              message: 'Post not found',
-            },
+          return mapRawPrismaError(localPostDetails.error)
+        }
+
+        if (!localPostDetails.value) {
+          return err({
+            code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
+            message: 'Post not found',
           })
         }
 

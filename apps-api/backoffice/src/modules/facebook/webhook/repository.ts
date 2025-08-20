@@ -1,6 +1,7 @@
 import Elysia from 'elysia'
 
 import { FeedItemType, PostAttachmentType } from '../../../../__generated__/prisma'
+import { InternalErrorCode } from '../../../dtos/error'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { err } from '../../../utils/error'
 import { fromPrismaPromise } from '../../../utils/prisma'
@@ -10,7 +11,7 @@ export class FacebookWebhookRepository {
 
   async getExistingPostByFacebookPostId(facebookPostId: string) {
     return await fromPrismaPromise(
-      this.prismaService.post.findUniqueOrThrow({
+      this.prismaService.post.findUnique({
         where: {
           facebookPostId,
         },
@@ -141,6 +142,13 @@ export class FacebookWebhookRepository {
 
     if (existingPost.isErr()) {
       return err(existingPost.error)
+    }
+
+    if (!existingPost.value) {
+      return err({
+        code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
+        message: 'Post not found',
+      })
     }
 
     return await fromPrismaPromise(
