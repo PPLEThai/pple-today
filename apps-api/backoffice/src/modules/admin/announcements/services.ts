@@ -14,7 +14,7 @@ import { AdminAnnouncementRepository, AdminAnnouncementRepositoryPlugin } from '
 
 import { InternalErrorCode } from '../../../dtos/error'
 import { err } from '../../../utils/error'
-import { mapRawPrismaError } from '../../../utils/prisma'
+import { mapRepositoryError } from '../../../utils/error'
 import { FileService, FileServicePlugin } from '../../file/services'
 
 export class AdminAnnouncementService {
@@ -25,7 +25,7 @@ export class AdminAnnouncementService {
 
   async getAnnouncements() {
     const result = await this.adminAnnouncementRepository.getAllAnnouncements()
-    if (result.isErr()) return mapRawPrismaError(result.error)
+    if (result.isErr()) return mapRepositoryError(result.error)
 
     return ok(
       result.value.map((announcement): GetAnnouncementsResponse[number] => ({
@@ -42,7 +42,7 @@ export class AdminAnnouncementService {
     }
   ) {
     const result = await this.adminAnnouncementRepository.getAnnouncements(query)
-    if (result.isErr()) return mapRawPrismaError(result.error)
+    if (result.isErr()) return mapRepositoryError(result.error)
 
     const value: GetPublishedAnnouncementsResponse = result.value
 
@@ -52,7 +52,7 @@ export class AdminAnnouncementService {
   async getAnnouncementById(announcementId: string) {
     const result = await this.adminAnnouncementRepository.getAnnouncementById(announcementId)
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
         },
@@ -80,7 +80,7 @@ export class AdminAnnouncementService {
     )
 
     if (updateResult.isErr())
-      return mapRawPrismaError(updateResult.error, {
+      return mapRepositoryError(updateResult.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
         },
@@ -93,7 +93,7 @@ export class AdminAnnouncementService {
     const result = await this.adminAnnouncementRepository.unpublishAnnouncementById(announcementId)
 
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
         },
@@ -106,7 +106,7 @@ export class AdminAnnouncementService {
     const result = await this.adminAnnouncementRepository.deleteAnnouncementById(announcementId)
 
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
         },
@@ -122,7 +122,7 @@ export class AdminAnnouncementService {
     }
   ) {
     const result = await this.adminAnnouncementRepository.getDraftAnnouncements(query)
-    if (result.isErr()) return mapRawPrismaError(result.error)
+    if (result.isErr()) return mapRepositoryError(result.error)
 
     const draftAnnouncements: GetDraftAnnouncementsResponse = result.value.map((draft) => ({
       id: draft.id,
@@ -146,7 +146,7 @@ export class AdminAnnouncementService {
   async getDraftAnnouncementById(announcementId: string) {
     const result = await this.adminAnnouncementRepository.getDraftAnnouncementById(announcementId)
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
         },
@@ -169,7 +169,7 @@ export class AdminAnnouncementService {
 
   async createEmptyDraftAnnouncement() {
     const result = await this.adminAnnouncementRepository.createEmptyDraftAnnouncement()
-    if (result.isErr()) return mapRawPrismaError(result.error)
+    if (result.isErr()) return mapRepositoryError(result.error)
 
     return ok({ announcementId: result.value.id })
   }
@@ -181,7 +181,7 @@ export class AdminAnnouncementService {
     )
 
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
         },
@@ -197,7 +197,7 @@ export class AdminAnnouncementService {
     )
 
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
         },
@@ -211,7 +211,7 @@ export class AdminAnnouncementService {
       await this.adminAnnouncementRepository.deleteDraftAnnouncementById(announcementId)
 
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
         },

@@ -12,7 +12,7 @@ import { AdminBannerRepository, AdminBannerRepositoryPlugin } from './repository
 
 import { InternalErrorCode } from '../../../dtos/error'
 import { err } from '../../../utils/error'
-import { mapRawPrismaError } from '../../../utils/prisma'
+import { mapRepositoryError } from '../../../utils/error'
 import { FileService, FileServicePlugin } from '../../file/services'
 
 export class AdminBannerService {
@@ -24,7 +24,7 @@ export class AdminBannerService {
   async getBanners() {
     const result = await this.bannerRepository.getBanners()
 
-    if (result.isErr()) return mapRawPrismaError(result.error)
+    if (result.isErr()) return mapRepositoryError(result.error)
 
     const imageBannerFilePaths = result.value.map((banner) => banner.imageFilePath)
     const imageBannerUrlResults = await this.fileService.bulkGetFileSignedUrl(imageBannerFilePaths)
@@ -48,7 +48,7 @@ export class AdminBannerService {
     const result = await this.bannerRepository.getBannerById(id)
 
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.BANNER_NOT_FOUND,
         },
@@ -74,7 +74,7 @@ export class AdminBannerService {
     const result = await this.bannerRepository.createBanner(data)
 
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         UNIQUE_CONSTRAINT_FAILED: {
           code: InternalErrorCode.BANNER_INVALID_INPUT,
           message: 'Invalid Input',
@@ -90,7 +90,7 @@ export class AdminBannerService {
     const result = await this.bannerRepository.updateBannerById(id, data)
 
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.BANNER_NOT_FOUND,
           message: 'Banner not found',
@@ -104,7 +104,7 @@ export class AdminBannerService {
     const result = await this.bannerRepository.deleteBannerById(id)
 
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.BANNER_NOT_FOUND,
           message: 'Banner not found',
@@ -117,7 +117,7 @@ export class AdminBannerService {
   async reorderBanner(ids: string[]) {
     const result = await this.bannerRepository.reorderBanner(ids)
 
-    if (result.isErr()) return mapRawPrismaError(result.error)
+    if (result.isErr()) return mapRepositoryError(result.error)
 
     return ok()
   }

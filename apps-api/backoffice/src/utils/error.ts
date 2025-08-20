@@ -4,6 +4,7 @@ import { ElysiaCustomStatusResponse } from 'elysia/error'
 import { Prettify2 } from 'elysia/types'
 import { Err, err as defaultErr, ok, Result } from 'neverthrow'
 import { groupBy, map, mapValues, pipe } from 'remeda'
+import { Simplify, ValueOf } from 'type-fest'
 
 import { RawPrismaError, resolvePrismaError } from './prisma'
 
@@ -153,4 +154,44 @@ export const fromRepositoryPromise = async <T>(
     }
     return err(resolvePrismaError(_err))
   }
+}
+
+export const mapRepositoryError = <
+  T extends RawPrismaError | ApiErrorResponse<InternalErrorCode>,
+  U extends Partial<
+    Record<RawPrismaError['code'], ApiErrorResponse<InternalErrorCode>> & {
+      INTERNAL_SERVER_ERROR?: string
+    }
+  > = {},
+>(
+  error: T,
+  mapping?: U
+): Err<
+  never,
+  | Simplify<
+      ValueOf<
+        Omit<U, 'INTERNAL_SERVER_ERROR'> & {
+          INTERNAL_SERVER_ERROR: ApiErrorResponse<typeof InternalErrorCode.INTERNAL_SERVER_ERROR>
+        }
+      >
+    >
+  | ExtractApiErrorResponse<T>
+> => {
+  const mappedError = (mapping as any)?.[error.code]
+
+  if (mappedError) {
+    return err(mappedError) as any
+  }
+
+  if (error.code in InternalErrorCode) {
+    return err({
+      code: error.code as InternalErrorCode,
+      message: error.message,
+    }) as any
+  }
+
+  return err({
+    code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+    message: mapping?.INTERNAL_SERVER_ERROR ?? 'An unexpected error occurred',
+  }) as any
 }

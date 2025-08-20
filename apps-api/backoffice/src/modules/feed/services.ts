@@ -6,7 +6,7 @@ import { FeedRepository, FeedRepositoryPlugin } from './repository'
 
 import { InternalErrorCode } from '../../dtos/error'
 import { PostComment, PostReactionType } from '../../dtos/post'
-import { mapRawPrismaError } from '../../utils/prisma'
+import { mapRepositoryError } from '../../utils/error'
 import { FileService, FileServicePlugin } from '../file/services'
 
 export class FeedService {
@@ -24,7 +24,7 @@ export class FeedService {
     })
 
     if (feedItems.isErr()) {
-      return mapRawPrismaError(feedItems.error)
+      return mapRepositoryError(feedItems.error)
     }
 
     return ok(feedItems.value)
@@ -34,7 +34,7 @@ export class FeedService {
     const topicExists = await this.feedRepository.checkTopicExists(topicId)
 
     if (topicExists.isErr()) {
-      return mapRawPrismaError(topicExists.error, {
+      return mapRepositoryError(topicExists.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.TOPIC_NOT_FOUND,
           message: 'Topic not found',
@@ -51,7 +51,7 @@ export class FeedService {
     })
 
     if (feedItems.isErr()) {
-      return mapRawPrismaError(feedItems.error)
+      return mapRepositoryError(feedItems.error)
     }
 
     return ok(feedItems.value)
@@ -65,7 +65,7 @@ export class FeedService {
     const hashTagExists = await this.feedRepository.checkHashTagExists(hashTagId)
 
     if (hashTagExists.isErr()) {
-      return mapRawPrismaError(hashTagExists.error, {
+      return mapRepositoryError(hashTagExists.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.TOPIC_NOT_FOUND,
           message: 'Topic not found',
@@ -82,7 +82,7 @@ export class FeedService {
     })
 
     if (feedItems.isErr()) {
-      return mapRawPrismaError(feedItems.error)
+      return mapRepositoryError(feedItems.error)
     }
 
     return ok(feedItems.value)
@@ -92,7 +92,7 @@ export class FeedService {
     const feedItem = await this.feedRepository.getFeedItemById(feedId, userId)
 
     if (feedItem.isErr()) {
-      return mapRawPrismaError(feedItem.error, {
+      return mapRepositoryError(feedItem.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
           message: 'Feed item not found',
@@ -114,7 +114,7 @@ export class FeedService {
     })
 
     if (feedComments.isErr())
-      return mapRawPrismaError(feedComments.error, {
+      return mapRepositoryError(feedComments.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
         },
@@ -151,7 +151,7 @@ export class FeedService {
     })
 
     if (result.isErr()) {
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         UNIQUE_CONSTRAINT_FAILED: {
           code: InternalErrorCode.FEED_ITEM_REACTION_ALREADY_EXISTS,
         },
@@ -170,7 +170,7 @@ export class FeedService {
     const result = await this.feedRepository.deleteFeedItemReaction({ feedItemId, userId })
 
     if (result.isErr()) {
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.FEED_ITEM_REACTION_NOT_FOUND,
           message: `Feed item reaction not found.`,
@@ -192,7 +192,7 @@ export class FeedService {
     })
 
     if (result.isErr()) {
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
           message: 'Feed item not found',
@@ -214,7 +214,7 @@ export class FeedService {
     })
 
     if (result.isErr()) {
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.FEED_ITEM_COMMENT_NOT_FOUND,
           message: 'Feed comment not found',
@@ -235,7 +235,7 @@ export class FeedService {
     })
 
     if (result.isErr()) {
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.FEED_ITEM_COMMENT_NOT_FOUND,
           message: 'Feed comment not found',

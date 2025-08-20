@@ -5,7 +5,7 @@ import { GetAnnouncementByIdResponse, GetAnnouncementsResponse } from './models'
 import { AnnouncementRepository, AnnouncementRepositoryPlugin } from './repository'
 
 import { InternalErrorCode } from '../../dtos/error'
-import { mapRawPrismaError } from '../../utils/prisma'
+import { mapRepositoryError } from '../../utils/error'
 import { FileService, FileServicePlugin } from '../file/services'
 
 export class AnnouncementService {
@@ -19,7 +19,7 @@ export class AnnouncementService {
     const announcementResult = await this.announcementRepository.getAnnouncements(query)
 
     if (announcementResult.isErr()) {
-      return mapRawPrismaError(announcementResult.error)
+      return mapRepositoryError(announcementResult.error)
     }
 
     return ok({
@@ -39,7 +39,7 @@ export class AnnouncementService {
     const announcementResult = await this.announcementRepository.getAnnouncementById(id)
 
     if (announcementResult.isErr()) {
-      return mapRawPrismaError(announcementResult.error)
+      return mapRepositoryError(announcementResult.error)
     }
 
     if (!announcementResult.value) {

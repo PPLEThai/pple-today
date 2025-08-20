@@ -1,10 +1,4 @@
-import { Err } from 'neverthrow'
-import { Simplify, ValueOf } from 'type-fest'
-
-import { ApiErrorResponse, err, ExtractApiErrorResponse } from './error'
-
 import { PrismaClientKnownRequestError } from '../../__generated__/prisma/runtime/client'
-import { InternalErrorCode } from '../dtos/error'
 
 /**
  * Reference for Prisma error codes
@@ -48,43 +42,3 @@ export const resolvePrismaError = (error: unknown) => {
 }
 
 export type RawPrismaError = ReturnType<typeof resolvePrismaError>
-
-export const mapRawPrismaError = <
-  T extends RawPrismaError | ApiErrorResponse<InternalErrorCode>,
-  U extends Partial<
-    Record<RawPrismaError['code'], ApiErrorResponse<InternalErrorCode>> & {
-      INTERNAL_SERVER_ERROR?: string
-    }
-  > = {},
->(
-  error: T,
-  mapping?: U
-): Err<
-  never,
-  | Simplify<
-      ValueOf<
-        Omit<U, 'INTERNAL_SERVER_ERROR'> & {
-          INTERNAL_SERVER_ERROR: ApiErrorResponse<typeof InternalErrorCode.INTERNAL_SERVER_ERROR>
-        }
-      >
-    >
-  | ExtractApiErrorResponse<T>
-> => {
-  const mappedError = (mapping as any)?.[error.code]
-
-  if (mappedError) {
-    return err(mappedError) as any
-  }
-
-  if (error.code in InternalErrorCode) {
-    return err({
-      code: error.code as InternalErrorCode,
-      message: error.message,
-    }) as any
-  }
-
-  return err({
-    code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-    message: mapping?.INTERNAL_SERVER_ERROR ?? 'An unexpected error occurred',
-  }) as any
-}

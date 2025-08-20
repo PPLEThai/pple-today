@@ -13,14 +13,14 @@ import {
 import { AdminPollRepository, AdminPollRepositoryPlugin } from './repository'
 
 import { InternalErrorCode } from '../../../dtos/error'
-import { mapRawPrismaError } from '../../../utils/prisma'
+import { mapRepositoryError } from '../../../utils/error'
 
 export class AdminPollService {
   constructor(private adminPollRepository: AdminPollRepository) {}
 
   async getPolls() {
     const result = await this.adminPollRepository.getAllPolls()
-    if (result.isErr()) return mapRawPrismaError(result.error, {})
+    if (result.isErr()) return mapRepositoryError(result.error, {})
 
     return ok(result.value satisfies GetPollsResponse)
   }
@@ -32,7 +32,7 @@ export class AdminPollService {
     }
   ) {
     const result = await this.adminPollRepository.getPolls(query)
-    if (result.isErr()) return mapRawPrismaError(result.error, {})
+    if (result.isErr()) return mapRepositoryError(result.error, {})
 
     return ok(result.value satisfies GetPublishedPollsResponse)
   }
@@ -40,7 +40,7 @@ export class AdminPollService {
   async getPollById(pollId: string) {
     const result = await this.adminPollRepository.getPollById(pollId)
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.POLL_NOT_FOUND,
         },
@@ -52,7 +52,7 @@ export class AdminPollService {
   async updatePollById(pollId: string, data: PutPublishedPollBody) {
     const result = await this.adminPollRepository.updatePollById(pollId, data)
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.POLL_NOT_FOUND,
         },
@@ -64,7 +64,7 @@ export class AdminPollService {
   async unpublishPollById(pollId: string) {
     const result = await this.adminPollRepository.unpublishPollById(pollId)
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.POLL_NOT_FOUND,
         },
@@ -76,7 +76,7 @@ export class AdminPollService {
   async deletePollById(pollId: string) {
     const result = await this.adminPollRepository.deletePollById(pollId)
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.POLL_NOT_FOUND,
         },
@@ -92,7 +92,7 @@ export class AdminPollService {
     }
   ) {
     const result = await this.adminPollRepository.getDraftPolls(query)
-    if (result.isErr()) return mapRawPrismaError(result.error, {})
+    if (result.isErr()) return mapRepositoryError(result.error, {})
 
     return ok(result.value satisfies GetDraftPollsResponse)
   }
@@ -100,7 +100,7 @@ export class AdminPollService {
   async getDraftPollById(pollId: string) {
     const result = await this.adminPollRepository.getDraftPollById(pollId)
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.POLL_NOT_FOUND,
         },
@@ -111,7 +111,7 @@ export class AdminPollService {
 
   async createEmptyDraftPoll() {
     const result = await this.adminPollRepository.createEmptyDraftPoll()
-    if (result.isErr()) return mapRawPrismaError(result.error, {})
+    if (result.isErr()) return mapRepositoryError(result.error, {})
 
     return ok({ pollId: result.value.id })
   }
@@ -119,7 +119,7 @@ export class AdminPollService {
   async updateDraftPollById(pollId: string, data: PutDraftPollBody) {
     const result = await this.adminPollRepository.updateDraftPollById(pollId, data)
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.POLL_NOT_FOUND,
         },
@@ -131,7 +131,7 @@ export class AdminPollService {
   async publishDraftPollById(pollId: string, authorId: string) {
     const result = await this.adminPollRepository.publishDraftPollById(pollId, authorId)
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.POLL_NOT_FOUND,
         },
@@ -143,7 +143,7 @@ export class AdminPollService {
   async deleteDraftPoll(pollId: string) {
     const result = await this.adminPollRepository.deleteDraftPollById(pollId)
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.POLL_NOT_FOUND,
         },

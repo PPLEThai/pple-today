@@ -13,7 +13,7 @@ import { AdminTopicRepository, AdminTopicRepositoryPlugin } from './repository'
 
 import { InternalErrorCode } from '../../../dtos/error'
 import { err } from '../../../utils/error'
-import { mapRawPrismaError } from '../../../utils/prisma'
+import { mapRepositoryError } from '../../../utils/error'
 import { FileService, FileServicePlugin } from '../../file/services'
 
 export class AdminTopicService {
@@ -29,7 +29,7 @@ export class AdminTopicService {
     }
   ) {
     const result = await this.adminTopicRepository.getTopics(query)
-    if (result.isErr()) return mapRawPrismaError(result.error, {})
+    if (result.isErr()) return mapRepositoryError(result.error, {})
 
     return ok(result.value satisfies GetTopicsResponse)
   }
@@ -37,7 +37,7 @@ export class AdminTopicService {
   async getTopicById(topicId: string) {
     const result = await this.adminTopicRepository.getTopicById(topicId)
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.TOPIC_NOT_FOUND,
         },
@@ -67,7 +67,7 @@ export class AdminTopicService {
   async createEmptyTopic() {
     const result = await this.adminTopicRepository.createEmptyTopic()
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         INVALID_INPUT: {
           code: InternalErrorCode.TOPIC_INVALID_INPUT,
         },
@@ -80,7 +80,7 @@ export class AdminTopicService {
     const result = await this.adminTopicRepository.updateTopicById(topicId, data)
 
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         INVALID_INPUT: {
           code: InternalErrorCode.TOPIC_INVALID_INPUT,
         },
@@ -95,7 +95,7 @@ export class AdminTopicService {
   async deleteTopicById(topicId: string) {
     const result = await this.adminTopicRepository.deleteTopicById(topicId)
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.TOPIC_NOT_FOUND,
         },
