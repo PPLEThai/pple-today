@@ -5,11 +5,12 @@ import { fromPrismaPromise } from '../../utils/prisma'
 export class AddressRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async getAddresses(province?: string) {
+  async getAddresses(options?: { province?: string; district?: string }) {
     return fromPrismaPromise(
       this.prismaService.address.findMany({
         where: {
-          province: province === undefined ? {} : { equals: province },
+          province: options?.province === undefined ? {} : { equals: options.province },
+          district: options?.district === undefined ? {} : { equals: options.district },
         },
         orderBy: [
           { province: 'asc' },

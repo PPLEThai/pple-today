@@ -56,13 +56,20 @@ export const AddressController = new Elysia({
   )
   .get(
     '/subdistinct',
-    () => {
-      return []
+    async ({ addressService, status, query }) => {
+      const subDistricts = await addressService.getSubDistricts(query.distinct)
+
+      if (subDistricts.isErr()) {
+        return mapErrorCodeToResponse(subDistricts.error, status)
+      }
+
+      return status(200, subDistricts.value)
     },
     {
       query: GetSubDistrictQuery,
       response: {
         200: GetSubDistrictResponse,
+        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
       },
     }
   )

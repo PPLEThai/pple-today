@@ -17,7 +17,7 @@ export class AddressService {
     const provinces: string[] = []
 
     addresses.value.forEach(({ province }) => {
-      if (!provinces.includes(province)) {
+      if (!provinceSet.has(province)) {
         provinces.push(province)
         provinceSet.add(province)
       }
@@ -27,7 +27,7 @@ export class AddressService {
   }
 
   async getDistricts(province?: string) {
-    const addresses = await this.addressRepository.getAddresses(province)
+    const addresses = await this.addressRepository.getAddresses({ province })
 
     if (addresses.isErr()) {
       return mapRawPrismaError(addresses.error)
@@ -37,13 +37,32 @@ export class AddressService {
     const districts: string[] = []
 
     addresses.value.forEach(({ district }) => {
-      if (!districts.includes(district)) {
+      if (!districtSet.has(district)) {
         districts.push(district)
         districtSet.add(district)
       }
     })
 
     return ok(districts)
+  }
+
+  async getSubDistricts(district?: string) {
+    const addresses = await this.addressRepository.getAddresses({ district })
+    if (addresses.isErr()) {
+      return mapRawPrismaError(addresses.error)
+    }
+
+    const subDistrictSet = new Set()
+    const subDistricts: string[] = []
+
+    addresses.value.forEach(({ subDistrict }) => {
+      if (!subDistrictSet.has(subDistrict)) {
+        subDistricts.push(subDistrict)
+        subDistrictSet.add(subDistrict)
+      }
+    })
+
+    return ok(subDistricts)
   }
 }
 
