@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ScrollView, View } from 'react-native'
+import { Platform, Pressable, ScrollView, TextProps, View } from 'react-native'
+import ImageView from 'react-native-image-viewing'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Badge } from '@pple-today/ui/badge'
@@ -34,13 +35,16 @@ import { toast } from '@pple-today/ui/toast'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
+import { Image } from 'expo-image'
 import { getItemAsync } from 'expo-secure-store'
+import LottieView from 'lottie-react-native'
 import { InfoIcon, PlusIcon, SearchIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
 import { queryClient } from '@app/libs/react-query'
 
 import { AuthPlayground } from './auth-playground'
+import { MoreOrLess } from './more-or-less'
 
 const AUTH_ACCESS_TOKEN_STORAGE_KEY = 'authAccessToken'
 
@@ -243,6 +247,9 @@ export function Playground() {
         <FormExample />
         <BadgeExample />
         <ToastExample />
+        <MoreOrLessExample />
+        <LightboxExample />
+        <LottieExample />
         <QueryExample />
         <AuthPlayground />
       </View>
@@ -476,6 +483,75 @@ function ToastExample() {
       <Button onPress={showErrorToast} variant="destructive">
         <Text>Show Error Toast</Text>
       </Button>
+    </View>
+  )
+}
+
+function MoreOrLessExample() {
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">MoreOrLess</H2>
+      <MoreOrLess
+        numberOfLines={3}
+        moreText="อ่านเพิ่มเติม"
+        lessText="แสดงน้อยลง"
+        animated
+        textComponent={TextPost}
+        buttonComponent={ButtonTextPost}
+      >
+        Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has
+        been the industry&apos;s standard dummy text ever since the 1500s, when an unknown printer
+        took a galley of type and scrambled it to make a type specimen book. It has survived not
+        only five centuries, but also the leap into electronic typesetting, remaining essentially
+        unchanged. It was popularised in the 1960s with the release of Letraset sheets containing
+        Lorem Ipsum passages, and more recently with desktop publishing software like Aldus
+        PageMaker including versions of Lorem.
+      </MoreOrLess>
+    </View>
+  )
+}
+
+function TextPost(props: TextProps) {
+  return <Text {...props} className="text-base-text-high font-noto-light text-base" />
+}
+function ButtonTextPost(props: TextProps) {
+  return <Text {...props} className="text-base-primary-default font-noto-light text-base" />
+}
+
+const images = [require('@app/assets/post-1.png'), require('@app/assets/banner-2.png')]
+function LightboxExample() {
+  const [visible, setIsVisible] = useState(false)
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Lightbox</H2>
+      <Pressable onPress={() => setIsVisible(true)}>
+        <Image
+          style={{ width: '100%', aspectRatio: 1 }}
+          source={require('@app/assets/post-1.png')}
+        />
+      </Pressable>
+      <ImageView
+        images={images}
+        imageIndex={0}
+        visible={visible}
+        onRequestClose={() => setIsVisible(false)}
+      />
+    </View>
+  )
+}
+
+// https://github.com/lottie-react-native/lottie-react-native/issues/1182#issuecomment-2696560014
+const LottieFile = Platform.select({
+  ios: require('../assets/PPLE-Like-Animation.lottie'),
+  android: require('../assets/PPLE-Like-Animation.zip'),
+})
+function LottieExample() {
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Lottie</H2>
+      <View className="border border-base-outline-default rounded-2xl w-[100px] h-[100px]">
+        <LottieView source={LottieFile} autoPlay loop style={{ width: '100%', height: '100%' }} />
+      </View>
     </View>
   )
 }

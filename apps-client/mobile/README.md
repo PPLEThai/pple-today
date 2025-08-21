@@ -21,20 +21,12 @@ Feel free to update this file :)
 
 4. We deprecated the expo go dev server since we use expo-native module.
    ```
-   Press s to switch to development build
    Press i to open iOS
    Press a to open Android
    ```
-   or see Native Development section down below
+   if problem occured, please see Development Build section down below
 
-## Android/iOS Development Build
-
-```bash
-pnpm android
-pnpm ios
-```
-
-## Android Native App
+## Android Development Build
 
 1. Generate Native `android/`
 
@@ -48,13 +40,13 @@ pnpm ios
    pnpm android
    ```
 
-3. You can edit Android native code via [Android Studio](https://developer.android.com/studio)
+3. You can also edit Android native code via [Android Studio](https://developer.android.com/studio)
 
    ```bash
    pnpm open:android
    ```
 
-## iOS Native App
+## iOS Development Build
 
 **IMPORTANT** you need a mac
 
