@@ -10,9 +10,9 @@ export class AddressRepository {
     return fromPrismaPromise(
       this.prismaService.address.findMany({
         where: {
-          province: filters?.province === undefined ? {} : { equals: filters.province },
-          district: filters?.district === undefined ? {} : { equals: filters.district },
-          subDistrict: filters?.subDistrict === undefined ? {} : { equals: filters.subDistrict },
+          province: filters?.province && { equals: filters.province },
+          district: filters?.district && { equals: filters.district },
+          subDistrict: filters?.subDistrict && { equals: filters.subDistrict },
         },
       })
     )
