@@ -22,6 +22,8 @@ export class AddressService {
       }
     })
 
+    provinces.sort()
+
     return ok(provinces)
   }
 
@@ -41,11 +43,14 @@ export class AddressService {
       }
     })
 
+    districts.sort()
+
     return ok(districts)
   }
 
   async getSubDistricts(district?: string) {
     const addresses = await this.addressRepository.getAddresses({ district })
+
     if (addresses.isErr()) {
       return mapRawPrismaError(addresses.error)
     }
@@ -60,12 +65,14 @@ export class AddressService {
       }
     })
 
+    subDistricts.sort()
+
     return ok(subDistricts)
   }
 
   async getPostalCodes(subDistrict?: string) {
     const addresses = await this.addressRepository.getAddresses({ subDistrict })
-
+    console.log('addresses', addresses)
     if (addresses.isErr()) {
       return mapRawPrismaError(addresses.error)
     }

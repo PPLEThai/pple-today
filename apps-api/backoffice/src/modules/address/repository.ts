@@ -13,12 +13,6 @@ export class AddressRepository {
           district: options?.district === undefined ? {} : { equals: options.district },
           subDistrict: options?.subDistrict === undefined ? {} : { equals: options.subDistrict },
         },
-        orderBy: [
-          { province: 'asc' },
-          { district: 'asc' },
-          { subDistrict: 'asc' },
-          { postalCode: 'asc' },
-        ],
       })
     )
   }
