@@ -47,7 +47,7 @@ export class AdminFileService {
     }
 
     return ok({
-      filePath,
+      filePath: filePath as FilePath,
       uploadUrl: getResult.value.url,
       uploadFields: getResult.value.fields,
     })
