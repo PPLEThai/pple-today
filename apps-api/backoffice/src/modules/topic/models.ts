@@ -1,4 +1,5 @@
 import { t } from 'elysia'
+
 import { HashTagStatus, TopicStatus } from '../../../__generated__/prisma'
 
 export const GetTopicsResponse = t.Array(

@@ -1,9 +1,11 @@
 import Elysia from 'elysia'
-import { TopicRepository, TopicRepostoryPlugin } from './repository'
-import { mapRawPrismaError } from '../../utils/prisma'
-import { GetTopicsResponse } from './models'
 import { ok } from 'neverthrow'
+
+import { GetTopicsResponse } from './models'
+import { TopicRepository, TopicRepostoryPlugin } from './repository'
+
 import { TopicStatus } from '../../../__generated__/prisma'
+import { mapRawPrismaError } from '../../utils/prisma'
 
 export class TopicService {
   constructor(private readonly topicRepository: TopicRepository) {}

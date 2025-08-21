@@ -1,8 +1,10 @@
 import Elysia from 'elysia'
-import { TopicServicePlugin } from './service'
+
 import { GetTopicsResponse } from './models'
-import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
+import { TopicServicePlugin } from './service'
+
 import { InternalErrorCode } from '../../dtos/error'
+import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 
 export const TopicController = new Elysia({
   prefix: '/topics',

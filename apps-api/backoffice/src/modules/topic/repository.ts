@@ -1,7 +1,7 @@
-import Elysia, { status } from 'elysia'
+import Elysia from 'elysia'
+
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
-import { TopicStatus } from '../../../__generated__/prisma'
 
 export class TopicRepository {
   constructor(private readonly prismaService: PrismaService) {}
