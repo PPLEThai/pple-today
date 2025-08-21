@@ -75,13 +75,20 @@ export const AddressController = new Elysia({
   )
   .get(
     '/postal-code',
-    () => {
-      return []
+    async ({ addressService, status, query }) => {
+      const postalCodes = await addressService.getPostalCodes(query.subdistrict)
+
+      if (postalCodes.isErr()) {
+        return mapErrorCodeToResponse(postalCodes.error, status)
+      }
+
+      return status(200, postalCodes.value)
     },
     {
       query: GetPostalCodeQuery,
       response: {
         200: GetPostalCodeResponse,
+        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
       },
     }
   )

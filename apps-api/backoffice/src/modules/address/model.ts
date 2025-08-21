@@ -13,6 +13,6 @@ export const GetSubDistrictQuery = t.Object({
 export const GetSubDistrictResponse = t.Array(t.String())
 
 export const GetPostalCodeQuery = t.Object({
-  subdistinct: t.Optional(t.String()),
+  subdistrict: t.Optional(t.String()),
 })
 export const GetPostalCodeResponse = t.Array(t.String())

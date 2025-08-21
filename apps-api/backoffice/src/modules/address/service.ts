@@ -8,7 +8,6 @@ export class AddressService {
 
   async getProvinces() {
     const addresses = await this.addressRepository.getAddresses()
-
     if (addresses.isErr()) {
       return mapRawPrismaError(addresses.error)
     }
@@ -28,7 +27,6 @@ export class AddressService {
 
   async getDistricts(province?: string) {
     const addresses = await this.addressRepository.getAddresses({ province })
-
     if (addresses.isErr()) {
       return mapRawPrismaError(addresses.error)
     }
@@ -63,6 +61,26 @@ export class AddressService {
     })
 
     return ok(subDistricts)
+  }
+
+  async getPostalCodes(subDistrict?: string) {
+    const addresses = await this.addressRepository.getAddresses({ subDistrict })
+
+    if (addresses.isErr()) {
+      return mapRawPrismaError(addresses.error)
+    }
+
+    const postalCodeSet = new Set()
+    const postalCodes: string[] = []
+
+    addresses.value.forEach(({ postalCode }) => {
+      if (!postalCodeSet.has(postalCode)) {
+        postalCodes.push(postalCode)
+        postalCodeSet.add(postalCode)
+      }
+    })
+
+    return ok(postalCodes)
   }
 }
 
