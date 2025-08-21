@@ -2,15 +2,15 @@ import { t } from 'elysia'
 
 export const GetProvinceResponse = t.Array(t.String())
 
-export const GetDistinctQuery = t.Object({
+export const GetDistrictQuery = t.Object({
   province: t.Optional(t.String()),
 })
-export const GetDistinctResponse = t.Array(t.String())
+export const GetDistrictResponse = t.Array(t.String())
 
-export const GetSubDistinctQuery = t.Object({
+export const GetSubDistrictQuery = t.Object({
   distinct: t.Optional(t.String()),
 })
-export const GetSubDistinctResponse = t.Array(t.String())
+export const GetSubDistrictResponse = t.Array(t.String())
 
 export const GetPostalCodeQuery = t.Object({
   subdistinct: t.Optional(t.String()),

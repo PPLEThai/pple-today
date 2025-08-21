@@ -1,12 +1,12 @@
 import Elysia from 'elysia'
 import {
-  GetDistinctQuery,
-  GetDistinctResponse,
+  GetDistrictQuery,
+  GetDistrictResponse,
   GetPostalCodeQuery,
   GetPostalCodeResponse,
   GetProvinceResponse,
-  GetSubDistinctQuery,
-  GetSubDistinctResponse,
+  GetSubDistrictQuery,
+  GetSubDistrictResponse,
 } from './model'
 import { AddressServicePlugin } from './service'
 import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
@@ -36,14 +36,21 @@ export const AddressController = new Elysia({
     }
   )
   .get(
-    '/distinct',
-    async () => {
-      return []
+    '/district',
+    async ({ query, addressService, status }) => {
+      const districts = await addressService.getDistricts(query.province)
+
+      if (districts.isErr()) {
+        return mapErrorCodeToResponse(districts.error, status)
+      }
+
+      return status(200, districts.value)
     },
     {
-      query: GetDistinctQuery,
+      query: GetDistrictQuery,
       response: {
-        200: GetDistinctResponse,
+        200: GetDistrictResponse,
+        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
       },
     }
   )
@@ -53,9 +60,9 @@ export const AddressController = new Elysia({
       return []
     },
     {
-      query: GetSubDistinctQuery,
+      query: GetSubDistrictQuery,
       response: {
-        200: GetSubDistinctResponse,
+        200: GetSubDistrictResponse,
       },
     }
   )

@@ -13,13 +13,37 @@ export class AddressService {
       return mapRawPrismaError(addresses.error)
     }
 
-    const provinces = addresses.value.reduce((acc, { province }) => {
-      if (!acc.includes(province)) acc.push(province)
+    const provinceSet = new Set()
+    const provinces: string[] = []
 
-      return acc
-    }, [] as string[])
+    addresses.value.forEach(({ province }) => {
+      if (!provinces.includes(province)) {
+        provinces.push(province)
+        provinceSet.add(province)
+      }
+    })
 
     return ok(provinces)
+  }
+
+  async getDistricts(province?: string) {
+    const addresses = await this.addressRepository.getAddresses(province)
+
+    if (addresses.isErr()) {
+      return mapRawPrismaError(addresses.error)
+    }
+
+    const districtSet = new Set()
+    const districts: string[] = []
+
+    addresses.value.forEach(({ district }) => {
+      if (!districts.includes(district)) {
+        districts.push(district)
+        districtSet.add(district)
+      }
+    })
+
+    return ok(districts)
   }
 }
 
