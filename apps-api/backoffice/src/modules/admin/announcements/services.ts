@@ -13,6 +13,7 @@ import {
 import { AdminAnnouncementRepository, AdminAnnouncementRepositoryPlugin } from './repository'
 
 import { InternalErrorCode } from '../../../dtos/error'
+import { FilePath } from '../../../dtos/file'
 import { err } from '../../../utils/error'
 import { mapRepositoryError } from '../../../utils/error'
 import { FileService, FileServicePlugin } from '../../file/services'
@@ -68,7 +69,7 @@ export class AdminAnnouncementService {
       ...result.value,
       attachments: result.value.attachments.map((filePath, index) => ({
         url: attachmentUrls.value[index],
-        filePath,
+        filePath: filePath as FilePath,
       })),
     } satisfies GetPublishedAnnouncementResponse)
   }
@@ -162,7 +163,7 @@ export class AdminAnnouncementService {
       ...result.value,
       attachments: result.value.attachments.map((filePath, index) => ({
         url: attachmentUrls.value[index],
-        filePath: filePath,
+        filePath: filePath as FilePath,
       })),
     } satisfies GetDraftAnnouncementResponse)
   }

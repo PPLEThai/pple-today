@@ -2,6 +2,7 @@ import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 
 import { BannerNavigationType, BannerStatusType } from '../../../../__generated__/prisma'
+import { FilePath } from '../../../dtos/file'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { fromRepositoryPromise, throwWithReturnType } from '../../../utils/error'
 import { FileService, FileServicePlugin } from '../../file/services'
@@ -29,7 +30,7 @@ export class AdminBannerRepository {
   }
 
   async createBanner(data: {
-    imageFilePath: string
+    imageFilePath: FilePath
     navigation: BannerNavigationType
     destination: string
     status: BannerStatusType
@@ -80,7 +81,7 @@ export class AdminBannerRepository {
   async updateBannerById(
     id: string,
     data: {
-      imageFilePath: string
+      imageFilePath: FilePath
       navigation: BannerNavigationType
       destination: string
       status: BannerStatusType
@@ -94,7 +95,7 @@ export class AdminBannerRepository {
         })
 
         if (existingBanner.imageFilePath !== data.imageFilePath) {
-          const deleteResult = await fileTx.removeFile(existingBanner.imageFilePath)
+          const deleteResult = await fileTx.removeFile(existingBanner.imageFilePath as FilePath)
           if (deleteResult.isErr()) return throwWithReturnType(deleteResult)
         }
 
@@ -139,7 +140,7 @@ export class AdminBannerRepository {
           select: { imageFilePath: true },
         })
 
-        const deleteResult = await fileTx.removeFile(existingBanner.imageFilePath)
+        const deleteResult = await fileTx.removeFile(existingBanner.imageFilePath as FilePath)
         if (deleteResult.isErr()) return throwWithReturnType(deleteResult)
 
         return deleteResult.value

@@ -12,6 +12,7 @@ import { FilePermission, FileTransactionEntry } from './types'
 
 import serverEnv from '../../config/env'
 import { InternalErrorCode } from '../../dtos/error'
+import { FilePath } from '../../dtos/file'
 import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '../../plugins/logger'
 import {
   ApiErrorResponse,
@@ -389,8 +390,8 @@ export class FileTransactionService {
   }
 
   private async changePermission(
-    oldFileKey: string,
-    newFileKey: string,
+    oldFileKey: FilePath,
+    newFileKey: FilePath,
     permission: FilePermission
   ) {
     const beforePermission = oldFileKey.startsWith(this.fileService.prefixPublicFolder)
@@ -423,12 +424,12 @@ export class FileTransactionService {
     return ok(newFileKey)
   }
 
-  private async bulkMoveToFolder(fileKeys: string[], prefixFolder: string) {
-    const newFileKeys: string[] = []
+  private async bulkMoveToFolder(fileKeys: FilePath[], prefixFolder: string) {
+    const newFileKeys: FilePath[] = []
     for (const fileKey of fileKeys) {
       if (fileKey.startsWith(prefixFolder)) continue
 
-      const newFileKey = prefixFolder + this.fileService.getFilePath(fileKey)
+      const newFileKey = (prefixFolder + this.fileService.getFilePath(fileKey)) as FilePath
       const result = await this.moveFile(fileKey, newFileKey)
 
       if (result.isErr()) {
@@ -453,7 +454,7 @@ export class FileTransactionService {
     return ok(newFileKeys)
   }
 
-  async uploadFile(fileKey: string, file: File) {
+  async uploadFile(fileKey: FilePath, file: File) {
     const uploadResult = await this.fileService.uploadFile(fileKey, file)
 
     if (uploadResult.isErr()) {
@@ -470,7 +471,7 @@ export class FileTransactionService {
     return ok(fileKey)
   }
 
-  async uploadFileFromUrl(url: string, fileKey: string) {
+  async uploadFileFromUrl(url: string, fileKey: FilePath) {
     const uploadResult = await this.fileService.uploadFileFromUrl(url, fileKey)
 
     if (uploadResult.isErr()) {
@@ -487,19 +488,19 @@ export class FileTransactionService {
     return ok(fileKey)
   }
 
-  async bulkMoveToPublicFolder(fileKeys: string[]) {
+  async bulkMoveToPublicFolder(fileKeys: FilePath[]) {
     return await this.bulkMoveToFolder(fileKeys, this.fileService.prefixPublicFolder)
   }
 
-  async bulkMoveToPrivateFolder(fileKeys: string[]) {
+  async bulkMoveToPrivateFolder(fileKeys: FilePath[]) {
     return await this.bulkMoveToFolder(fileKeys, this.fileService.prefixPrivateFolder)
   }
 
-  async bulkRemoveFile(fileKeys: string[]) {
+  async bulkRemoveFile(fileKeys: FilePath[]) {
     return await this.bulkMoveToFolder(fileKeys, this.fileService.prefixDeletedFolder)
   }
 
-  async removeFile(fileKey: string) {
+  async removeFile(fileKey: FilePath) {
     return await this.bulkRemoveFile([fileKey])
   }
 

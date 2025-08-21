@@ -2,6 +2,7 @@ import { Static, t } from 'elysia'
 
 import { BannerNavigationType, BannerStatusType } from '../../../../__generated__/prisma'
 import { Banner } from '../../../dtos/banner'
+import { FilePath } from '../../../dtos/file'
 
 // GET /admin/banners
 export const GetBannersResponse = t.Array(Banner)
@@ -18,7 +19,7 @@ export type GetBannerByIdResponse = Static<typeof GetBannerByIdResponse>
 
 // POST /admin/banners
 export const CreateBannerBody = t.Object({
-  imageFilePath: t.String({ description: 'Path to the banner image file' }),
+  imageFilePath: FilePath,
   status: t.Enum(BannerStatusType, { description: 'Publish status of the banner item' }),
   navigation: t.Enum(BannerNavigationType, {
     description: 'How the app should navigate when the item is tapped',
@@ -41,7 +42,7 @@ export const UpdateBannerParams = t.Object({
 export type UpdateBannerParams = Static<typeof UpdateBannerParams>
 
 export const UpdateBannerBody = t.Object({
-  imageFilePath: t.String({ description: 'Path to the banner image file' }),
+  imageFilePath: FilePath,
   status: t.Enum(BannerStatusType, { description: 'Publish status of the banner item' }),
   navigation: t.Enum(BannerNavigationType, {
     description: 'How the app should navigate when the item is tapped',

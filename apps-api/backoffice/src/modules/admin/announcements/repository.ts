@@ -5,6 +5,7 @@ import { PutDraftAnnouncementBody, PutPublishedAnnouncementBody } from './models
 
 import { FeedItemType } from '../../../../__generated__/prisma'
 import { InternalErrorCode } from '../../../dtos/error'
+import { FilePath } from '../../../dtos/file'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { err, fromRepositoryPromise, throwWithReturnType } from '../../../utils/error'
 import { FileService, FileServicePlugin, FileTransactionService } from '../../file/services'
@@ -17,8 +18,8 @@ export class AdminAnnouncementRepository {
 
   private async cleanUpUnusedAttachment(
     fileTx: FileTransactionService,
-    before: string[],
-    after: string[]
+    before: FilePath[],
+    after: FilePath[]
   ) {
     const unusedAttachments = before.filter((filePath) => !after.includes(filePath))
 
@@ -222,7 +223,7 @@ export class AdminAnnouncementRepository {
 
         const cleanUpResult = await this.cleanUpUnusedAttachment(
           fileTx,
-          announcement.attachments.map((attachment) => attachment.filePath),
+          announcement.attachments.map((attachment) => attachment.filePath as FilePath),
           data.attachmentFilePaths
         )
 
@@ -293,7 +294,7 @@ export class AdminAnnouncementRepository {
         })
 
         const moveToPrivateResult = await fileTx.bulkMoveToPrivateFolder(
-          announcement.attachments.map((attachment) => attachment.filePath)
+          announcement.attachments.map((attachment) => attachment.filePath as FilePath)
         )
 
         if (moveToPrivateResult.isErr()) return throwWithReturnType(moveToPrivateResult)
@@ -368,7 +369,8 @@ export class AdminAnnouncementRepository {
         })
 
         const deleteResult = await fileTx.bulkRemoveFile(
-          feedItem.announcement?.attachments.map((attachment) => attachment.filePath) ?? []
+          feedItem.announcement?.attachments.map((attachment) => attachment.filePath as FilePath) ??
+            []
         )
 
         if (deleteResult.isErr()) {
@@ -507,7 +509,7 @@ export class AdminAnnouncementRepository {
 
         const cleanUpResult = await this.cleanUpUnusedAttachment(
           fileTx,
-          draftAnnouncement.attachments.map(({ filePath }) => filePath),
+          draftAnnouncement.attachments.map(({ filePath }) => filePath as FilePath),
           data.attachmentFilePaths
         )
 
@@ -572,7 +574,7 @@ export class AdminAnnouncementRepository {
     const moveFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
         const moveResult = await fileTx.bulkMoveToPublicFolder(
-          draftAnnouncement.attachments.map(({ filePath }) => filePath)
+          draftAnnouncement.attachments.map(({ filePath }) => filePath as FilePath)
         )
         if (moveResult.isErr()) return throwWithReturnType(moveResult)
         return moveResult.value
@@ -651,7 +653,7 @@ export class AdminAnnouncementRepository {
         })
 
         const deleteResult = await fileTx.bulkRemoveFile(
-          announcementDraft.attachments.map((attachment) => attachment.filePath)
+          announcementDraft.attachments.map((attachment) => attachment.filePath as FilePath)
         )
 
         if (deleteResult.isErr()) {

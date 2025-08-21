@@ -1,5 +1,6 @@
 import { Static, t } from 'elysia'
 
+import { FilePath } from './file'
 import { Topic } from './topic'
 
 import { AnnouncementType } from '../../__generated__/prisma'
@@ -24,7 +25,7 @@ export const PublishedAnnouncement = t.Object({
   attachments: t.Array(
     t.Object({
       url: t.String({ description: 'The signed URL of the attachment', format: 'uri' }),
-      filePath: t.String({ description: 'The file path of the attachment' }),
+      filePath: FilePath,
     })
   ),
 })

@@ -3,6 +3,7 @@ import { ok } from 'neverthrow'
 
 import { UpdateTopicBody } from './models'
 
+import { FilePath } from '../../../dtos/file'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { err, throwWithReturnType } from '../../../utils/error'
 import { fromRepositoryPromise } from '../../../utils/error'
@@ -96,7 +97,7 @@ export class AdminTopicRepository {
 
         const isSameBannerUrl = existingTopic.bannerImage === data.bannerImage
         if (!isSameBannerUrl && existingTopic.bannerImage) {
-          const moveResult = await fileTx.removeFile(existingTopic.bannerImage)
+          const moveResult = await fileTx.removeFile(existingTopic.bannerImage as FilePath)
           if (moveResult.isErr()) return throwWithReturnType(moveResult)
         }
 
@@ -161,7 +162,7 @@ export class AdminTopicRepository {
     const deleteFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
         if (!existingTopic.value.bannerImage) return
-        const txDeleteResult = await fileTx.removeFile(existingTopic.value.bannerImage)
+        const txDeleteResult = await fileTx.removeFile(existingTopic.value.bannerImage as FilePath)
         if (txDeleteResult.isErr()) return throwWithReturnType(txDeleteResult)
       })
     )

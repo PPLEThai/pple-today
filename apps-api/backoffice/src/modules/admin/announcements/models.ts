@@ -2,6 +2,7 @@ import { Static, t } from 'elysia'
 
 import { AnnouncementType } from '../../../../__generated__/prisma'
 import { DraftAnnouncement, PublishedAnnouncement } from '../../../dtos/announcement'
+import { FilePath } from '../../../dtos/file'
 
 export const AnnouncementIdParams = t.Object({
   announcementId: t.String({ description: 'The ID of the published/draft announcement' }),
@@ -85,9 +86,7 @@ export const PutPublishedAnnouncementBody = t.Object({
   ),
 
   topicIds: t.Array(t.String({ description: 'The ID of the announcement topic' })),
-  attachmentFilePaths: t.Array(
-    t.String({ description: 'The file path of the announcement attachment' })
-  ),
+  attachmentFilePaths: t.Array(FilePath),
 })
 export type PutPublishedAnnouncementBody = Static<typeof PutPublishedAnnouncementBody>
 
@@ -146,9 +145,7 @@ export const PutDraftAnnouncementBody = t.Object({
   ),
 
   topicIds: t.Array(t.String({ description: 'The ID of the announcement topic' })),
-  attachmentFilePaths: t.Array(
-    t.String({ description: 'The file path of the announcement attachment' })
-  ),
+  attachmentFilePaths: t.Array(FilePath),
 })
 export type PutDraftAnnouncementBody = Static<typeof PutDraftAnnouncementBody>
 

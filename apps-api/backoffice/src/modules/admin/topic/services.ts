@@ -12,6 +12,7 @@ import {
 import { AdminTopicRepository, AdminTopicRepositoryPlugin } from './repository'
 
 import { InternalErrorCode } from '../../../dtos/error'
+import { FilePath } from '../../../dtos/file'
 import { err } from '../../../utils/error'
 import { mapRepositoryError } from '../../../utils/error'
 import { FileService, FileServicePlugin } from '../../file/services'
@@ -45,7 +46,7 @@ export class AdminTopicService {
 
     let bannerImageRes: {
       url: string
-      filePath: string
+      filePath: FilePath
     } | null = null
 
     if (result.value.bannerImage) {
@@ -54,7 +55,7 @@ export class AdminTopicService {
 
       bannerImageRes = {
         url: getSignedUrlResult.value,
-        filePath: result.value.bannerImage,
+        filePath: result.value.bannerImage as FilePath,
       }
     }
 

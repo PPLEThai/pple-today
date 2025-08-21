@@ -11,6 +11,7 @@ import {
 import { AdminBannerRepository, AdminBannerRepositoryPlugin } from './repository'
 
 import { InternalErrorCode } from '../../../dtos/error'
+import { FilePath } from '../../../dtos/file'
 import { err } from '../../../utils/error'
 import { mapRepositoryError } from '../../../utils/error'
 import { FileService, FileServicePlugin } from '../../file/services'
@@ -36,7 +37,7 @@ export class AdminBannerService {
         ...bannerBody,
         image: {
           url: imageBannerUrlResults.value[index],
-          filePath: imageFilePath,
+          filePath: imageFilePath as FilePath,
         },
       })
     )
@@ -63,7 +64,7 @@ export class AdminBannerService {
       ...bannerBody,
       image: {
         url: imageUrlResult.value,
-        filePath: imageFilePath,
+        filePath: imageFilePath as FilePath,
       },
     }
 

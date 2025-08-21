@@ -5,6 +5,7 @@ import * as R from 'remeda'
 
 import { FeedItemType, PostAttachment, PostAttachmentType } from '../../../../__generated__/prisma'
 import { InternalErrorCode } from '../../../dtos/error'
+import { FilePath } from '../../../dtos/file'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { err, throwWithReturnType } from '../../../utils/error'
 import { fromRepositoryPromise } from '../../../utils/error'
@@ -40,7 +41,7 @@ export class FacebookWebhookRepository {
           R.filter((ea) => newAttachments.findIndex((a) => ea.cacheKey === a.cacheKey) !== -1)
         )
 
-        const deleteResult = await fileTx.bulkRemoveFile(requiredDelete)
+        const deleteResult = await fileTx.bulkRemoveFile(requiredDelete as FilePath[])
 
         if (deleteResult.isErr()) {
           return throwWithReturnType(deleteResult)
@@ -49,7 +50,7 @@ export class FacebookWebhookRepository {
         const result = await Promise.all(
           requiredUpload.map(async (attachment) => {
             const fileName = getFileName(attachment.url)
-            const newFilename = `temp/facebook/${pageId}/${createId()}-${fileName}`
+            const newFilename: FilePath = `temp/facebook/${pageId}/${createId()}-${fileName}`
             const uploadResult = await fileTx.uploadFileFromUrl(attachment.url, newFilename)
 
             if (uploadResult.isErr()) {
@@ -239,7 +240,7 @@ export class FacebookWebhookRepository {
     const deleteFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
         const bulkDeleteResult = await fileTx.bulkRemoveFile(
-          existingPost.value?.attachments.map((a) => a.url) ?? []
+          existingPost.value?.attachments.map((a) => a.url as FilePath) ?? []
         )
 
         if (bulkDeleteResult.isErr()) return throwWithReturnType(bulkDeleteResult)
