@@ -12,6 +12,7 @@ import { FilePermission, FileTransactionEntry } from './types'
 
 import serverEnv from '../../config/env'
 import { InternalErrorCode } from '../../dtos/error'
+import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '../../plugins/logger'
 import {
   ApiErrorResponse,
   err,
@@ -30,12 +31,15 @@ export class FileService {
   private storage: Storage
   private bucket: ReturnType<Storage['bucket']>
 
-  constructor(config: {
-    projectId: string
-    bucketName: string
-    clientEmail: string
-    privateKey: string
-  }) {
+  constructor(
+    config: {
+      projectId: string
+      bucketName: string
+      clientEmail: string
+      privateKey: string
+    },
+    public readonly loggerService: ElysiaLoggerInstance
+  ) {
     this.storage = new Storage({
       projectId: config.projectId,
       credentials: {
@@ -384,15 +388,28 @@ export class FileTransactionService {
     return ok(fileKey)
   }
 
-  private async changePermission(fileKey: string, permission: FilePermission) {
-    const beforePermission = fileKey.startsWith(this.fileService.prefixPublicFolder)
+  private async changePermission(
+    oldFileKey: string,
+    newFileKey: string,
+    permission: FilePermission
+  ) {
+    const beforePermission = oldFileKey.startsWith(this.fileService.prefixPublicFolder)
       ? FilePermission.PUBLIC
       : FilePermission.PRIVATE
 
-    if (beforePermission === permission) return ok(fileKey)
+    if (beforePermission === permission) return ok(newFileKey)
+
+    let result
+    if (permission === FilePermission.PUBLIC)
+      result = await this.fileService.markAsPublic(newFileKey)
+    else result = await this.fileService.markAsPrivate(newFileKey)
+
+    if (result.isErr()) {
+      return err(result.error)
+    }
 
     const transactionEntry: FileTransactionEntry = {
-      target: fileKey,
+      target: newFileKey,
       action: {
         type: 'PERMISSION',
         permission: {
@@ -402,16 +419,8 @@ export class FileTransactionService {
       },
     }
 
-    let result
-    if (permission === FilePermission.PUBLIC) result = await this.fileService.markAsPublic(fileKey)
-    else result = await this.fileService.markAsPrivate(fileKey)
-
-    if (result.isErr()) {
-      return err(result.error)
-    }
-
     this.transaction.push(transactionEntry)
-    return ok(fileKey)
+    return ok(newFileKey)
   }
 
   private async bulkMoveToFolder(fileKeys: string[], prefixFolder: string) {
@@ -427,6 +436,7 @@ export class FileTransactionService {
       }
 
       const changePermissionResult = await this.changePermission(
+        fileKey,
         newFileKey,
         prefixFolder === this.fileService.prefixPublicFolder
           ? FilePermission.PUBLIC
@@ -474,17 +484,6 @@ export class FileTransactionService {
       },
     })
 
-    const changePermissionResult = await this.changePermission(
-      fileKey,
-      fileKey.startsWith(this.fileService.prefixPublicFolder)
-        ? FilePermission.PUBLIC
-        : FilePermission.PRIVATE
-    )
-
-    if (changePermissionResult.isErr()) {
-      return err(changePermissionResult.error)
-    }
-
     return ok(fileKey)
   }
 
@@ -508,6 +507,14 @@ export class FileTransactionService {
     while (true) {
       const entry = this.transaction.pop()
       if (!entry) break
+
+      this.fileService.loggerService.warn({
+        message: `Rolling back file operation: ${entry.action.type}`,
+        context: {
+          fileKey: entry.target,
+          action: entry.action,
+        },
+      })
 
       let result
       switch (entry.action.type) {
@@ -563,11 +570,16 @@ export class FileTransactionService {
 
 export const FileServicePlugin = new Elysia({
   name: 'FileService',
-}).decorate(() => ({
-  fileService: new FileService({
-    projectId: serverEnv.GCP_PROJECT_ID,
-    clientEmail: serverEnv.GCP_CLIENT_EMAIL,
-    privateKey: serverEnv.GCP_PRIVATE_KEY,
-    bucketName: serverEnv.GCP_STORAGE_BUCKET_NAME,
-  }),
-}))
+})
+  .use(ElysiaLoggerPlugin({ name: 'FileService' }))
+  .decorate(({ loggerService }) => ({
+    fileService: new FileService(
+      {
+        projectId: serverEnv.GCP_PROJECT_ID,
+        clientEmail: serverEnv.GCP_CLIENT_EMAIL,
+        privateKey: serverEnv.GCP_PRIVATE_KEY,
+        bucketName: serverEnv.GCP_STORAGE_BUCKET_NAME,
+      },
+      loggerService
+    ),
+  }))

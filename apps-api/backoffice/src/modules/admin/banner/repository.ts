@@ -48,7 +48,7 @@ export class AdminBannerRepository {
     const [newFileName, fileTx] = moveFileResult.value
     const createBannerResult = await fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
-        const lastBanner = await this.prismaService.banner.findFirstOrThrow({
+        const lastBanner = await this.prismaService.banner.findFirst({
           orderBy: { order: 'desc' },
           select: { order: true },
         })
@@ -59,7 +59,7 @@ export class AdminBannerRepository {
             navigation: data.navigation,
             destination: data.destination,
             status: data.status, // Default value
-            order: lastBanner ? lastBanner.order + 1 : 0,
+            order: lastBanner ? lastBanner.order + 1 : 1,
           },
           select: {
             id: true,
