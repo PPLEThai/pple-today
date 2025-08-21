@@ -154,7 +154,6 @@ function MainHeader() {
   )
 }
 
-// assuming there are usually 2 or more banners
 const PLACEHOLDER_BANNERS: GetBannersResponse = [
   {
     id: '1',
@@ -172,8 +171,15 @@ const PLACEHOLDER_BANNERS: GetBannersResponse = [
 
 function BannerSection() {
   const bannersQuery = queryClient.useQuery('/banners', {})
+  // Loading : assuming that there are usually 2 or more banners
   const banners = bannersQuery.data ?? PLACEHOLDER_BANNERS
+  React.useEffect(() => {
+    if (bannersQuery.error) {
+      console.error('Banner Query Error', bannersQuery.error)
+    }
+  }, [bannersQuery.error])
   if (banners.length === 0) return null
+  if (bannersQuery.error) return null
   return (
     <Slide
       count={banners.length}
@@ -817,6 +823,13 @@ function FeedContent(props: FeedContentProps) {
       // console.log('scrollViewTag:', scrollViewTag)
     }
   }, [isFocused, scrollElRef, setScrollViewTag])
+  const feedQuery = queryClient.useQuery('/feed/me', { query: { limit: 10 } })
+  // React.useEffect(() => {
+  //   console.log(feedQuery.data)
+  // }, [feedQuery.data])
+  // TODO: loading state
+  // TODO: empty state
+  // TODO: error state
   return (
     // TODO: use flashlist
     <Animated.FlatList
@@ -828,40 +841,54 @@ function FeedContent(props: FeedContentProps) {
       // contentOffset={{ x: 0, y: -headerHeight }}
       // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
       // automaticallyAdjustsScrollIndicatorInsets={false}
-      data={Array.from({ length: 6 }, (_, i) => `Item ${i + 1}`)}
+      data={feedQuery.data ?? []}
       contentContainerClassName="py-4 flex flex-col"
       ListHeaderComponent={<AnnouncementSection />}
-      // TODO: data and renderItem should be replaced with actual data
-      renderItem={({ item, index: itemIndex }) => {
-        return (
-          <View className="px-4">
-            <PostCard
-              firstImageType="square" // TODO
-              author={{
-                name: 'ศิริโรจน์ ธนิกกุล - Sirirot Thanikkun',
-                district: 'สส.สมุทรสาคร',
-                profileImageUrl: '',
-              }}
-              commentCount={125}
-              content={
-                'พบปะแม่ๆ ชมรมผู้สูงอายุดอกลำดวน ณ หมู่บ้านวารัตน์ 3 ม.5 ต. อ้อมน้อย อ.กระทุ่มแบน จ.สมุทรสาครชวนให้ผมออกสเตปประกอบ'
-              }
-              media={Array.from({ length: itemIndex }).map((_, i) => ({
-                type: 'IMAGE',
-                imageSource: require('@app/assets/post-1.png'),
-              }))}
-              hashTags={[
-                { id: '1', name: '#pridemonth' },
-                { id: '2', name: '#ร่างกฎหมาย68' },
-              ]}
-              createdAt="2025-08-19T14:14:49.406Z"
-              reactions={[
-                { type: 'UP_VOTE', count: 32 },
-                { type: 'DOWN_VOTE', count: 2 },
-              ]}
-            />
-          </View>
-        )
+      renderItem={({ item }) => {
+        switch (item.type) {
+          case 'POST':
+            return (
+              <PostCard
+                key={item.id}
+                author={item.author}
+                attachments={
+                  item.post.attachments?.map((attachment) => {
+                    switch (attachment.type) {
+                      case 'IMAGE':
+                        return {
+                          ...attachment,
+                          type: 'IMAGE',
+                        }
+                      case 'VIDEO':
+                        return {
+                          ...attachment,
+                          type: 'VIDEO',
+                        }
+                      default:
+                        throw new Error('There should be only IMAGE or VIDEO attachments')
+                    }
+                  }) ?? []
+                }
+                commentCount={item.commentCount}
+                content={item.post.content}
+                createdAt={item.createdAt.toString()}
+                firstImageType="square"
+                hashTags={item.post.hashTags}
+                reactions={item.reactions.map((reaction) => ({
+                  type: reaction.type as 'UP_VOTE' | 'DOWN_VOTE', // TODO: enum this
+                  count: reaction.count,
+                }))}
+              />
+            )
+          case 'POLL':
+            // TODO: poll feed card
+            return null
+          case 'ANNOUNCEMENT':
+            // expected no announcement
+            return null
+          default:
+            return exhaustiveGuard(item)
+        }
       }}
     />
   )
@@ -962,7 +989,7 @@ function AnnouncementSection() {
     query: { limit: 5 },
   })
   if (!announcementsQuery.data) return null
-  // TODO: might do loading here
+  // TODO: loading state
   return (
     <View className="flex flex-col">
       <View className="flex flex-row pt-4 px-4 pb-3 justify-between">

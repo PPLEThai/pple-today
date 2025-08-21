@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ImageURISource, Platform, Pressable, StyleSheet, View } from 'react-native'
+import { Platform, Pressable, StyleSheet, View } from 'react-native'
 import ImageView from 'react-native-image-viewing'
 import Animated, { useSharedValue, withSpring, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -18,6 +18,7 @@ import { toast } from '@pple-today/ui/toast'
 import { useForm } from '@tanstack/react-form'
 import dayjs from 'dayjs'
 import { Image } from 'expo-image'
+import { useVideoPlayer, VideoView } from 'expo-video'
 import LottieView from 'lottie-react-native'
 import { HeartCrackIcon, HeartHandshakeIcon, MessageCircleIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
@@ -26,11 +27,21 @@ import PPLEIcon from '@app/assets/pple-icon.svg'
 import { MoreOrLess } from '@app/components/more-or-less'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 
+interface Attachment {
+  id: string
+  type: 'IMAGE' | 'VIDEO'
+  url: string
+  description?: string
+}
 interface PostCardProps {
   author: {
+    id: string
     name: string
-    district: string
-    profileImageUrl: string
+    address?: {
+      province: string
+      district: string
+    }
+    profileImage?: string
   }
   hashTags: {
     id: string
@@ -41,15 +52,18 @@ interface PostCardProps {
   reactions: { type: 'UP_VOTE' | 'DOWN_VOTE'; count: number }[]
   commentCount: number
   // TODO: support media type VIDEO
-  media: { type: 'IMAGE'; imageSource: ImageURISource; description?: string }[]
+  attachments: Attachment[]
   firstImageType: 'landscape' | 'portrait' | 'square'
 }
 
 export const PostCard = React.memo(function PostCard(props: PostCardProps) {
-  const upvoteReaction = props.reactions.find((r) => r.type === 'UP_VOTE')!
+  const upvoteReaction = props.reactions.find((r) => r.type === 'UP_VOTE') ?? {
+    type: 'UP_VOTE',
+    count: 0,
+  }
 
   return (
-    <View className="flex flex-col gap-3 p-4 bg-base-bg-white border border-base-outline-default rounded-2xl mt-4">
+    <View className="flex flex-col gap-3 p-4 bg-base-bg-white border border-base-outline-default rounded-2xl mt-4 mx-4">
       <View className="flex flex-row items-center justify-between">
         <View className="flex flex-row items-center">
           <View className="w-8 h-8 rounded-full bg-base-primary-medium flex items-center justify-center mr-3">
@@ -60,7 +74,8 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
               {props.author.name}
             </Text>
             <Text className="text-base-text-medium font-anakotmai-light text-sm">
-              {props.author.district} | {formatDateInterval(props.createdAt)}
+              {props.author.address ? `${props.author.address.province} | ` : ''}
+              {formatDateInterval(props.createdAt)}
             </Text>
           </View>
         </View>
@@ -74,8 +89,8 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
           />
         </Button> */}
       </View>
-      {props.media.length > 0 && (
-        <Lightbox media={props.media} firstImageType={props.firstImageType} />
+      {props.attachments.length > 0 && (
+        <Lightbox attachments={props.attachments} firstImageType={props.firstImageType} />
       )}
       <View>
         <MoreOrLess
@@ -166,7 +181,7 @@ function formatDateInterval(date: string): string {
 }
 
 interface LightboxProps {
-  media: { type: 'IMAGE'; imageSource: ImageURISource; description?: string }[]
+  attachments: Attachment[]
   firstImageType: 'landscape' | 'portrait' | 'square'
 }
 function Lightbox(props: LightboxProps) {
@@ -178,9 +193,13 @@ function Lightbox(props: LightboxProps) {
   }
   return (
     <View className="rounded-lg overflow-hidden">
-      <ImageLayout firstImageType={props.firstImageType} media={props.media} onPress={onPress} />
+      <AlbumLayout
+        firstImageType={props.firstImageType}
+        attachments={props.attachments}
+        onPress={onPress}
+      />
       <ImageView
-        images={props.media.map((m) => m.imageSource)}
+        images={props.attachments.map((m) => ({ uri: m.url }))}
         imageIndex={imageIndex}
         visible={visible}
         onRequestClose={() => setIsVisible(false)}
@@ -190,121 +209,126 @@ function Lightbox(props: LightboxProps) {
 }
 
 // TODO: first pic dimension
-interface ImageLayoutProps {
+interface AttachmentLayoutProps {
   firstImageType: 'landscape' | 'portrait' | 'square'
-  media: { type: 'IMAGE'; imageSource: ImageURISource; description?: string }[]
+  attachments: Attachment[]
   onPress: (index: number) => void
 }
-function ImageLayout(props: ImageLayoutProps) {
+function AlbumLayout(props: AttachmentLayoutProps) {
   switch (props.firstImageType) {
     case 'landscape': {
-      if (props.media.length === 1) {
+      if (props.attachments.length === 1) {
         return (
-          <ImagePressable
+          <AttachmentPressable
             index={0}
             onPress={props.onPress}
-            media={props.media[0]!}
+            attachment={props.attachments[0]!}
             className="aspect-[3/2]"
           />
         )
-      } else if (props.media.length === 2) {
+      } else if (props.attachments.length === 2) {
         return (
           <View className="flex flex-col gap-0.5 aspect-square">
-            {props.media.map((m, i) => (
-              <ImagePressable
+            {props.attachments.map((m, i) => (
+              <AttachmentPressable
                 key={i}
                 index={i}
                 onPress={props.onPress}
-                media={m}
+                attachment={m}
                 className="flex-1"
               />
             ))}
           </View>
         )
-      } else if (props.media.length === 3) {
+      } else if (props.attachments.length === 3) {
         return (
           <View className="flex flex-col gap-0.5 aspect-square">
-            {props.media.slice(0, 1).map((m, i) => (
-              <ImagePressable
+            {props.attachments.slice(0, 1).map((m, i) => (
+              <AttachmentPressable
                 key={i}
                 index={i}
                 onPress={props.onPress}
-                media={m}
+                attachment={m}
                 className="flex-1"
               />
             ))}
             <View className="flex flex-row gap-0.5 flex-1">
-              {props.media.slice(1).map((m, i) => (
-                <ImagePressable
+              {props.attachments.slice(1).map((m, i) => (
+                <AttachmentPressable
                   key={i}
                   index={i + 1}
                   onPress={props.onPress}
-                  media={m}
+                  attachment={m}
                   className="flex-1"
                 />
               ))}
             </View>
           </View>
         )
-      } else if (props.media.length === 4) {
+      } else if (props.attachments.length === 4) {
         return (
           <View className="flex flex-col gap-0.5 aspect-square">
             <View className="flex flex-row gap-0.5 flex-1">
-              {props.media.slice(0, 2).map((m, i) => (
-                <ImagePressable
+              {props.attachments.slice(0, 2).map((m, i) => (
+                <AttachmentPressable
                   key={i}
                   index={i}
                   onPress={props.onPress}
-                  media={m}
+                  attachment={m}
                   className="flex-1"
                 />
               ))}
             </View>
             <View className="flex flex-row gap-0.5 flex-1">
-              {props.media.slice(2).map((m, i) => (
-                <ImagePressable
+              {props.attachments.slice(2).map((m, i) => (
+                <AttachmentPressable
                   key={i}
                   index={i + 2}
                   onPress={props.onPress}
-                  media={m}
+                  attachment={m}
                   className="flex-1"
                 />
               ))}
             </View>
           </View>
         )
-      } else if (props.media.length > 4) {
+      } else if (props.attachments.length > 4) {
         return (
           <View className="flex flex-col gap-0.5 aspect-square">
-            {props.media.slice(0, 1).map((m, i) => (
-              <ImagePressable
+            {props.attachments.slice(0, 1).map((m, i) => (
+              <AttachmentPressable
                 key={i}
                 index={i}
                 onPress={props.onPress}
-                media={m}
+                attachment={m}
                 className="flex-[2]"
               />
             ))}
             <View className="flex flex-row gap-0.5 flex-1">
-              {props.media.slice(1, 4).map((m, i) => {
+              {props.attachments.slice(1, 4).map((m, i) => {
                 if (i === 2) {
                   return (
                     <View key={i} className="flex-1 relative">
-                      <ImagePressable key={i} index={i + 1} onPress={props.onPress} media={m} />
+                      <AttachmentPressable
+                        key={i}
+                        index={i + 1}
+                        onPress={props.onPress}
+                        attachment={m}
+                      />
                       <View className="absolute top-0 left-0 right-0 bottom-0 bg-black/50 flex items-center justify-center z-[1] pointer-events-none">
                         <Text className="text-2xl text-white font-anakotmai-medium">
-                          +{props.media.length - 4}
+                          +{props.attachments.length - 4}
                         </Text>
                       </View>
                     </View>
                   )
                 }
                 return (
-                  <ImagePressable
+                  <AttachmentPressable
                     key={i}
                     index={i + 1}
                     onPress={props.onPress}
-                    media={m}
+                    attachment={m}
                     className="flex-1"
                   />
                 )
@@ -317,113 +341,118 @@ function ImageLayout(props: ImageLayoutProps) {
     }
 
     case 'portrait': {
-      if (props.media.length === 1) {
+      if (props.attachments.length === 1) {
         return (
-          <ImagePressable
+          <AttachmentPressable
             index={0}
             onPress={props.onPress}
-            media={props.media[0]!}
+            attachment={props.attachments[0]!}
             className="aspect-[3/4]"
           />
         )
-      } else if (props.media.length === 2) {
+      } else if (props.attachments.length === 2) {
         return (
           <View className="flex flex-row gap-0.5 aspect-[5/4]">
-            {props.media.map((m, i) => (
-              <ImagePressable
+            {props.attachments.map((m, i) => (
+              <AttachmentPressable
                 key={i}
                 index={i}
                 onPress={props.onPress}
-                media={m}
+                attachment={m}
                 className="flex-1"
               />
             ))}
           </View>
         )
-      } else if (props.media.length === 3) {
+      } else if (props.attachments.length === 3) {
         return (
           <View className="flex flex-row gap-0.5 aspect-square">
-            {props.media.slice(0, 1).map((m, i) => (
-              <ImagePressable
+            {props.attachments.slice(0, 1).map((m, i) => (
+              <AttachmentPressable
                 key={i}
                 index={i}
                 onPress={props.onPress}
-                media={m}
+                attachment={m}
                 className="flex-1"
               />
             ))}
             <View className="flex flex-col gap-0.5 flex-1">
-              {props.media.slice(1).map((m, i) => (
-                <ImagePressable
+              {props.attachments.slice(1).map((m, i) => (
+                <AttachmentPressable
                   key={i}
                   index={i + 1}
                   onPress={props.onPress}
-                  media={m}
+                  attachment={m}
                   className="flex-1"
                 />
               ))}
             </View>
           </View>
         )
-      } else if (props.media.length === 4) {
+      } else if (props.attachments.length === 4) {
         return (
           <View className="flex flex-col gap-0.5 aspect-square">
             <View className="flex flex-row gap-0.5 flex-1">
-              {props.media.slice(0, 2).map((m, i) => (
-                <ImagePressable
+              {props.attachments.slice(0, 2).map((m, i) => (
+                <AttachmentPressable
                   key={i}
                   index={i}
                   onPress={props.onPress}
-                  media={m}
+                  attachment={m}
                   className="flex-1"
                 />
               ))}
             </View>
             <View className="flex flex-row gap-0.5 flex-1">
-              {props.media.slice(2).map((m, i) => (
-                <ImagePressable
+              {props.attachments.slice(2).map((m, i) => (
+                <AttachmentPressable
                   key={i}
                   index={i + 2}
                   onPress={props.onPress}
-                  media={m}
+                  attachment={m}
                   className="flex-1"
                 />
               ))}
             </View>
           </View>
         )
-      } else if (props.media.length > 4) {
+      } else if (props.attachments.length > 4) {
         return (
           <View className="flex flex-row gap-0.5 aspect-square">
-            {props.media.slice(0, 1).map((m, i) => (
-              <ImagePressable
+            {props.attachments.slice(0, 1).map((m, i) => (
+              <AttachmentPressable
                 key={i}
                 index={i}
                 onPress={props.onPress}
-                media={m}
+                attachment={m}
                 className="flex-[2]"
               />
             ))}
             <View className="flex flex-col gap-0.5 flex-1">
-              {props.media.slice(1, 4).map((m, i) => {
+              {props.attachments.slice(1, 4).map((m, i) => {
                 if (i === 2) {
                   return (
                     <View key={i} className="flex-1 relative">
-                      <ImagePressable key={i} index={i + 1} onPress={props.onPress} media={m} />
+                      <AttachmentPressable
+                        key={i}
+                        index={i + 1}
+                        onPress={props.onPress}
+                        attachment={m}
+                      />
                       <View className="absolute top-0 left-0 right-0 bottom-0 bg-black/50 flex items-center justify-center z-[1] pointer-events-none">
                         <Text className="text-2xl text-white font-anakotmai-medium">
-                          +{props.media.length - 4}
+                          +{props.attachments.length - 4}
                         </Text>
                       </View>
                     </View>
                   )
                 }
                 return (
-                  <ImagePressable
+                  <AttachmentPressable
                     key={i}
                     index={i + 1}
                     onPress={props.onPress}
-                    media={m}
+                    attachment={m}
                     className="flex-1"
                   />
                 )
@@ -435,115 +464,120 @@ function ImageLayout(props: ImageLayoutProps) {
       break
     }
     case 'square': {
-      if (props.media.length === 1) {
+      if (props.attachments.length === 1) {
         return (
-          <ImagePressable
+          <AttachmentPressable
             index={0}
             onPress={props.onPress}
-            media={props.media[0]!}
+            attachment={props.attachments[0]!}
             className="aspect-square"
           />
         )
-      } else if (props.media.length === 2) {
+      } else if (props.attachments.length === 2) {
         return (
           <View className="flex flex-row gap-0.5 aspect-[2/1]">
-            {props.media.map((m, i) => (
-              <ImagePressable
+            {props.attachments.map((m, i) => (
+              <AttachmentPressable
                 key={i}
                 index={i}
                 onPress={props.onPress}
-                media={m}
+                attachment={m}
                 className="flex-1"
               />
             ))}
           </View>
         )
-      } else if (props.media.length === 3) {
+      } else if (props.attachments.length === 3) {
         return (
           <View className="flex flex-row gap-0.5 aspect-[2/1]">
-            {props.media.slice(0, 1).map((m, i) => (
-              <ImagePressable
+            {props.attachments.slice(0, 1).map((m, i) => (
+              <AttachmentPressable
                 key={i}
                 index={i}
                 onPress={props.onPress}
-                media={m}
+                attachment={m}
                 className="flex-1"
               />
             ))}
             <View className="flex flex-col gap-0.5 flex-1">
-              {props.media.slice(1).map((m, i) => (
-                <ImagePressable
+              {props.attachments.slice(1).map((m, i) => (
+                <AttachmentPressable
                   key={i}
                   index={i + 1}
                   onPress={props.onPress}
-                  media={m}
+                  attachment={m}
                   className="flex-1"
                 />
               ))}
             </View>
           </View>
         )
-      } else if (props.media.length === 4) {
+      } else if (props.attachments.length === 4) {
         return (
           <View className="flex flex-col gap-0.5 aspect-square">
             <View className="flex flex-row gap-0.5 flex-1">
-              {props.media.slice(0, 2).map((m, i) => (
-                <ImagePressable
+              {props.attachments.slice(0, 2).map((m, i) => (
+                <AttachmentPressable
                   key={i}
                   index={i}
                   onPress={props.onPress}
-                  media={m}
+                  attachment={m}
                   className="flex-1"
                 />
               ))}
             </View>
             <View className="flex flex-row gap-0.5 flex-1">
-              {props.media.slice(2).map((m, i) => (
-                <ImagePressable
+              {props.attachments.slice(2).map((m, i) => (
+                <AttachmentPressable
                   key={i}
                   index={i + 2}
                   onPress={props.onPress}
-                  media={m}
+                  attachment={m}
                   className="flex-1"
                 />
               ))}
             </View>
           </View>
         )
-      } else if (props.media.length > 4) {
+      } else if (props.attachments.length > 4) {
         return (
           <View className="flex flex-row gap-0.5 aspect-square">
             <View className="flex flex-col gap-0.5 flex-1">
-              {props.media.slice(0, 2).map((m, i) => (
-                <ImagePressable
+              {props.attachments.slice(0, 2).map((m, i) => (
+                <AttachmentPressable
                   key={i}
                   index={i}
                   onPress={props.onPress}
-                  media={m}
+                  attachment={m}
                   className="flex-1"
                 />
               ))}
             </View>
             <View className="flex flex-col gap-0.5 flex-1">
-              {props.media.slice(2, 4).map((m, i) => {
+              {props.attachments.slice(2, 4).map((m, i) => {
                 if (i === 1) {
                   return (
                     <View key={i} className="flex-1 relative">
-                      <ImagePressable key={i} index={i + 2} onPress={props.onPress} media={m} />
+                      <AttachmentPressable
+                        key={i}
+                        index={i + 2}
+                        onPress={props.onPress}
+                        attachment={m}
+                      />
                       <View className="absolute top-0 left-0 right-0 bottom-0 bg-black/50 flex items-center justify-center z-[1] rounded-[2px] pointer-events-none">
                         <Text className="text-2xl text-white font-anakotmai-medium">
-                          +{props.media.length - 4}
+                          +{props.attachments.length - 4}
                         </Text>
                       </View>
                     </View>
                   )
                 }
                 return (
-                  <ImagePressable
+                  <AttachmentPressable
                     key={i}
                     index={i + 1}
                     onPress={props.onPress}
-                    media={m}
+                    attachment={m}
                     className="flex-1"
                   />
                 )
@@ -559,24 +593,51 @@ function ImageLayout(props: ImageLayoutProps) {
   }
 }
 
-interface ImagePressableProps {
+interface AttachmentPressableProps {
   index: number
   onPress: (index: number) => void
-  media: { type: 'IMAGE'; imageSource: ImageURISource; description?: string }
+  attachment: Attachment
   className?: string
 }
-function ImagePressable(props: ImagePressableProps) {
+function AttachmentPressable(props: AttachmentPressableProps) {
+  if (props.attachment.type === 'VIDEO') {
+    return (
+      <View className={cn(`rounded-[2px] overflow-hidden w-full bg-gray-50`, props.className)}>
+        <VideoComp url={props.attachment.url} />
+      </View>
+    )
+  }
+  if (props.attachment.type === 'IMAGE') {
+    return (
+      <Pressable
+        onPress={() => props.onPress(props.index)}
+        className={cn(`rounded-[2px] overflow-hidden w-full bg-gray-50`, props.className)}
+      >
+        <Image
+          style={{ width: '100%', height: '100%' }}
+          source={{ uri: props.attachment.url }}
+          alt={props.attachment.description ?? ''}
+        />
+      </Pressable>
+    )
+  }
+}
+
+// TODO: always open full screen to lightbox
+// TODO: this should only display thumbnail of the clip
+function VideoComp(props: { url: string }) {
+  const player = useVideoPlayer(props.url, (player) => {
+    player.loop = true
+    // player.play()
+  })
+  // const { isPlaying } = useEvent(player, 'playingChange', { isPlaying: player.playing })
   return (
-    <Pressable
-      onPress={() => props.onPress(props.index)}
-      className={cn(`rounded-[2px] overflow-hidden w-full bg-gray-50`, props.className)}
-    >
-      <Image
-        style={{ width: '100%', height: '100%' }}
-        source={props.media.imageSource}
-        alt={props.media.description ?? ''}
-      />
-    </Pressable>
+    <VideoView
+      style={{ width: '100%', height: '100%' }}
+      player={player}
+      allowsFullscreen
+      contentFit="cover"
+    />
   )
 }
 
