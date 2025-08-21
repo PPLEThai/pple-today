@@ -8,6 +8,7 @@ export class AddressService {
 
   async getProvinces() {
     const addresses = await this.addressRepository.getAddresses()
+
     if (addresses.isErr()) {
       return mapRawPrismaError(addresses.error)
     }
@@ -29,6 +30,7 @@ export class AddressService {
 
   async getDistricts(province?: string) {
     const addresses = await this.addressRepository.getAddresses({ province })
+
     if (addresses.isErr()) {
       return mapRawPrismaError(addresses.error)
     }
@@ -72,7 +74,7 @@ export class AddressService {
 
   async getPostalCodes(subDistrict?: string) {
     const addresses = await this.addressRepository.getAddresses({ subDistrict })
-    console.log('addresses', addresses)
+    
     if (addresses.isErr()) {
       return mapRawPrismaError(addresses.error)
     }
