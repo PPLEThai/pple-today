@@ -7,6 +7,7 @@ import { FacebookController } from './facebook'
 import { FeedController } from './feed'
 import { PollsController } from './polls'
 import { ProfileController } from './profile'
+import { AddressController } from './address'
 
 export const ApplicationController = new Elysia()
   .use(FeedController)
@@ -16,3 +17,4 @@ export const ApplicationController = new Elysia()
   .use(PollsController)
   .use(FacebookController)
   .use(BannerController)
+  .use(AddressController)
