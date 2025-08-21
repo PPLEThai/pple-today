@@ -1,4 +1,5 @@
 import Elysia from 'elysia'
+
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
 

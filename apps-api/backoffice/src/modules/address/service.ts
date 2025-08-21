@@ -1,7 +1,9 @@
-import { ok } from 'neverthrow'
-import { mapRawPrismaError } from '../../utils/prisma'
-import { AddressRepository, AddressRepositoryPlugin } from './repository'
 import Elysia from 'elysia'
+import { ok } from 'neverthrow'
+
+import { AddressRepository, AddressRepositoryPlugin } from './repository'
+
+import { mapRawPrismaError } from '../../utils/prisma'
 
 export class AddressService {
   constructor(private readonly addressRepository: AddressRepository) {}
@@ -74,7 +76,7 @@ export class AddressService {
 
   async getPostalCodes(subDistrict?: string) {
     const addresses = await this.addressRepository.getAddresses({ subDistrict })
-    
+
     if (addresses.isErr()) {
       return mapRawPrismaError(addresses.error)
     }
