@@ -40,7 +40,9 @@ export const AddressController = new Elysia({
   .get(
     '/district',
     async ({ query, addressService, status }) => {
-      const districts = await addressService.getDistricts(query.province)
+      const districts = await addressService.getDistricts({
+        province: query.province,
+      })
 
       if (districts.isErr()) {
         return mapErrorCodeToResponse(districts.error, status)
@@ -57,9 +59,12 @@ export const AddressController = new Elysia({
     }
   )
   .get(
-    '/subdistinct',
+    '/subdistrict',
     async ({ addressService, status, query }) => {
-      const subDistricts = await addressService.getSubDistricts(query.distinct)
+      const subDistricts = await addressService.getSubDistricts({
+        province: query.province,
+        district: query.district,
+      })
 
       if (subDistricts.isErr()) {
         return mapErrorCodeToResponse(subDistricts.error, status)
@@ -78,7 +83,11 @@ export const AddressController = new Elysia({
   .get(
     '/postal-code',
     async ({ addressService, status, query }) => {
-      const postalCodes = await addressService.getPostalCodes(query.subdistrict)
+      const postalCodes = await addressService.getPostalCodes({
+        province: query.province,
+        district: query.district,
+        subDistrict: query.subDistrict,
+      })
 
       if (postalCodes.isErr()) {
         return mapErrorCodeToResponse(postalCodes.error, status)

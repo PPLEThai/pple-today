@@ -8,11 +8,14 @@ export const GetDistrictQuery = t.Object({
 export const GetDistrictResponse = t.Array(t.String())
 
 export const GetSubDistrictQuery = t.Object({
-  distinct: t.Optional(t.String()),
+  province: t.Optional(t.String()),
+  district: t.Optional(t.String()),
 })
 export const GetSubDistrictResponse = t.Array(t.String())
 
 export const GetPostalCodeQuery = t.Object({
-  subdistrict: t.Optional(t.String()),
+  province: t.Optional(t.String()),
+  district: t.Optional(t.String()),
+  subDistrict: t.Optional(t.String()),
 })
 export const GetPostalCodeResponse = t.Array(t.String())
