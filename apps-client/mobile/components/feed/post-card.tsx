@@ -616,7 +616,7 @@ function UpvoteButton() {
     setUpvoted(isUpvoted)
     if (isUpvoted) {
       // skip some empty frames
-      likeAnimationRef.current?.play(8, 31)
+      likeAnimationRef.current?.play(8, 30)
     }
   }
 
