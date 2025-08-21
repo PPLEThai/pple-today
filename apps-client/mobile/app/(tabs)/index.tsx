@@ -98,7 +98,7 @@ export default function IndexLayout() {
       <PagerContentView>
         {Array.from({ length: 3 }).map((_, index) => (
           <View key={index} collapsable={false}>
-            <PagerContent index={index} />
+            <PagerContent index={index}>{(props) => <FeedContent {...props} />}</PagerContent>
           </View>
         ))}
       </PagerContentView>
@@ -376,27 +376,10 @@ const AnimatedExpoScrollForwarderView = Animated.createAnimatedComponent(ExpoScr
 // disabling it in `app.config.ts` fixes the issue on native build
 // https://github.com/software-mansion/react-native-reanimated/issues/6992
 
-interface PagerContextValue {
-  pagerViewRef: React.RefObject<PagerView | null>
-  scrollY: SharedValue<number>
-  scrollViewTag: number | null
-  setScrollViewTag: (tag: number | null) => void
-  registerScrollViewRef: (scrollRef: AnimatedRef<any> | null, atIndex: number) => void
-  scrollHandler: ScrollHandlerProcessed<Record<string, unknown>>
-  headerHeight: number
-  headerOnlyHeight: number
-  setHeaderOnlyHeight: React.Dispatch<React.SetStateAction<number>>
-  setTabBarHeight: React.Dispatch<React.SetStateAction<number>>
-  currentPage: number
-  setCurrentPage: React.Dispatch<React.SetStateAction<number>>
-  adjustScrollForOtherPages: (scrollState: 'idle' | 'dragging' | 'settling') => void
-}
-const PagerContext = React.createContext<PagerContextValue | null>(null)
 function Pager({ children }: { children: React.ReactNode }) {
   // const layout = useWindowDimensions()
   const [currentPage, setCurrentPage] = React.useState(0)
-
-  const isHeaderReady = React.useState(false)
+  const [isHeaderReady, setHeaderReady] = React.useState(false)
   const [headerOnlyHeight, setHeaderOnlyHeight] = React.useState(0)
   const [tabBarHeight, setTabBarHeight] = React.useState(0)
   const headerHeight = headerOnlyHeight + tabBarHeight
@@ -485,6 +468,8 @@ function Pager({ children }: { children: React.ReactNode }) {
         currentPage,
         setCurrentPage,
         adjustScrollForOtherPages,
+        isHeaderReady,
+        setHeaderReady,
       }}
     >
       <PagerTabBarProvider>
@@ -502,6 +487,25 @@ function Pager({ children }: { children: React.ReactNode }) {
     </PagerContext.Provider>
   )
 }
+
+interface PagerContextValue {
+  pagerViewRef: React.RefObject<PagerView | null>
+  scrollY: SharedValue<number>
+  scrollViewTag: number | null
+  setScrollViewTag: (tag: number | null) => void
+  registerScrollViewRef: (scrollRef: AnimatedRef<any> | null, atIndex: number) => void
+  scrollHandler: ScrollHandlerProcessed<Record<string, unknown>>
+  headerHeight: number
+  headerOnlyHeight: number
+  setHeaderOnlyHeight: React.Dispatch<React.SetStateAction<number>>
+  setTabBarHeight: React.Dispatch<React.SetStateAction<number>>
+  currentPage: number
+  setCurrentPage: React.Dispatch<React.SetStateAction<number>>
+  adjustScrollForOtherPages: (scrollState: 'idle' | 'dragging' | 'settling') => void
+  isHeaderReady: boolean
+  setHeaderReady: React.Dispatch<React.SetStateAction<boolean>>
+}
+const PagerContext = React.createContext<PagerContextValue | null>(null)
 
 const usePagerContext = () => {
   const context = React.useContext(PagerContext)
@@ -532,7 +536,7 @@ function PagerHeader({ children }: { children: React.ReactNode }) {
 }
 
 function PagerHeaderOnly({ children }: { children: React.ReactNode }) {
-  const { setHeaderOnlyHeight } = usePagerContext()
+  const { setHeaderOnlyHeight, setHeaderReady } = usePagerContext()
   const headerRef = React.useRef<View>(null)
   return (
     <View
@@ -544,6 +548,7 @@ function PagerHeaderOnly({ children }: { children: React.ReactNode }) {
           if (height > 0) {
             // The rounding is necessary to prevent jumps on iOS
             setHeaderOnlyHeight(Math.round(height * 2) / 2)
+            setHeaderReady(true)
           }
         })
       }}
@@ -761,9 +766,27 @@ function PagerTabBarItemIndicator() {
   )
 }
 
-function PagerContent({ index }: { index: number }) {
-  const { headerHeight, registerScrollViewRef, scrollHandler, currentPage, setScrollViewTag } =
-    usePagerContext()
+interface PagerContentProps {
+  children: (props: PagerScrollViewProps) => React.ReactNode
+  index: number
+}
+
+interface PagerScrollViewProps {
+  isFocused: boolean
+  headerHeight: number
+  scrollElRef: AnimatedRef<FlatList>
+  scrollHandler: ScrollHandlerProcessed<Record<string, unknown>>
+  setScrollViewTag: (tag: number | null) => void
+}
+function PagerContent({ children, index }: PagerContentProps) {
+  const {
+    isHeaderReady,
+    headerHeight,
+    registerScrollViewRef,
+    scrollHandler,
+    currentPage,
+    setScrollViewTag,
+  } = usePagerContext()
   const isFocused = index === currentPage
   const scrollElRef = useAnimatedRef<FlatList>()
   React.useEffect(() => {
@@ -772,7 +795,21 @@ function PagerContent({ index }: { index: number }) {
       registerScrollViewRef(null, index)
     }
   }, [scrollElRef, registerScrollViewRef, index])
+  if (!isHeaderReady) {
+    return null
+  }
+  return children({
+    isFocused,
+    headerHeight,
+    scrollElRef,
+    scrollHandler,
+    setScrollViewTag,
+  })
+}
 
+interface FeedContentProps extends PagerScrollViewProps {}
+function FeedContent(props: FeedContentProps) {
+  const { headerHeight, isFocused, scrollElRef, scrollHandler, setScrollViewTag } = props
   React.useEffect(() => {
     if (isFocused && scrollElRef.current) {
       const scrollViewTag = findNodeHandle(scrollElRef.current)
@@ -793,15 +830,13 @@ function PagerContent({ index }: { index: number }) {
       // automaticallyAdjustsScrollIndicatorInsets={false}
       data={Array.from({ length: 6 }, (_, i) => `Item ${i + 1}`)}
       contentContainerClassName="py-4 flex flex-col"
+      ListHeaderComponent={<AnnouncementSection />}
       // TODO: data and renderItem should be replaced with actual data
       renderItem={({ item, index: itemIndex }) => {
-        if (itemIndex === 0) {
-          return <AnnouncementSection />
-        }
         return (
           <View className="px-4">
             <PostCard
-              firstImageType={(['square', 'landscape', 'portrait'] as const)[index]!}
+              firstImageType="square" // TODO
               author={{
                 name: 'ศิริโรจน์ ธนิกกุล - Sirirot Thanikkun',
                 district: 'สส.สมุทรสาคร',
