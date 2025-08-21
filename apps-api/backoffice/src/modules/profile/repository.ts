@@ -9,6 +9,45 @@ import { fromPrismaPromise } from '../../utils/prisma'
 export class ProfileRepository {
   constructor(private prismaService: PrismaService) {}
 
+  async getRecentActivity(userId: string) {
+    return await fromPrismaPromise(
+      this.prismaService.poll.findMany({
+        where: {
+          options: {
+            some: {
+              pollAnswers: {
+                some: {
+                  userId,
+                },
+              },
+            },
+          },
+        },
+        distinct: ['feedItemId'],
+        select: {
+          title: true,
+          feedItemId: true,
+          options: {
+            select: {
+              pollAnswers: {
+                where: {
+                  userId,
+                },
+                take: 1,
+                orderBy: {
+                  createdAt: 'desc',
+                },
+                select: {
+                  createdAt: true,
+                },
+              },
+            },
+          },
+        },
+      })
+    )
+  }
+
   async getProfileById(id: string) {
     return await fromPrismaPromise(
       this.prismaService.user.findUniqueOrThrow({
