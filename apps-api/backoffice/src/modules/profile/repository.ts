@@ -28,6 +28,13 @@ export class ProfileRepository {
           title: true,
           feedItemId: true,
           options: {
+            where: {
+              pollAnswers: {
+                some: {
+                  userId,
+                },
+              },
+            },
             select: {
               pollAnswers: {
                 where: {
