@@ -15,5 +15,10 @@ export default defineConfig({
     __APP_NAME__: JSON.stringify(packageJson.name),
     __APP_VERSION__: JSON.stringify(packageJson.version),
   },
+  server: process.env.VITE_WEB_DOMAIN
+    ? {
+        allowedHosts: [process.env.VITE_WEB_DOMAIN],
+      }
+    : undefined,
   plugins: [reactRouter(), tsconfigPaths()],
 })

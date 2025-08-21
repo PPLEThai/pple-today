@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "HashTag" ALTER COLUMN "status" SET DEFAULT 'PUBLISH';

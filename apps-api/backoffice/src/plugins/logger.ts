@@ -7,6 +7,7 @@ import {
 } from '@bogeychan/elysia-logger'
 import { LoggerOptions, StandaloneLoggerOptions } from '@bogeychan/elysia-logger/types'
 import Elysia from 'elysia'
+import { omit } from 'remeda'
 
 import serverEnv from '../config/env'
 
@@ -53,6 +54,13 @@ const formatters = {
 
 const serializers = {
   ...defaultSerializer,
+  body: (body: any) => {
+    if ('rawBody' in body) {
+      return omit(body, ['rawBody'])
+    }
+
+    return body
+  },
   request: (request: Request) => {
     const url = new URL(request.url)
 
@@ -77,7 +85,12 @@ export const loggerBuilder = (config: StandaloneLoggerOptions) => {
             },
           }
         : undefined,
-    redact: ['request.headers.cookie', 'request.headers.authorization', 'body.accessToken'],
+    redact: [
+      'request.headers.cookie',
+      'request.headers.authorization',
+      'body.accessToken',
+      'body.facebookPageAccessToken',
+    ],
     serializers,
     formatters,
   })
@@ -99,6 +112,7 @@ export const GlobalLoggerPlugin = loggerBuilder({
   autoLogging: {
     ignore: (ctx) => {
       if (ctx.isError) return false
+      if (!ctx.isError && 'response' in ctx.error) return true
 
       return (
         ctx.path.startsWith('/health') ||

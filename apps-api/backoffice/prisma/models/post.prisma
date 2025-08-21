@@ -8,9 +8,9 @@ model Post {
     feedItemId     String @id
     facebookPostId String @unique
 
-    content  String?
-    images   PostAttachment[]
-    hashTags PostHashTag[]
+    content     String?
+    attachments PostAttachment[]
+    hashTags    PostHashTag[]
 
     feedItem FeedItem @relation(fields: [feedItemId], references: [id])
 }

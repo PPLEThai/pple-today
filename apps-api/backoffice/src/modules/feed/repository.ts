@@ -63,7 +63,7 @@ export class FeedRepository {
               hashTag: true,
             },
           },
-          images: true,
+          attachments: true,
         },
       },
     }) satisfies Prisma.FeedItemInclude
@@ -152,7 +152,7 @@ export class FeedRepository {
               id: hashTag.id,
               name: hashTag.name,
             })),
-            attachments: rawFeedItem.post.images.map((image) => ({
+            attachments: rawFeedItem.post.attachments.map((image) => ({
               id: image.id,
               type: image.type,
               url: this.fileService.getPublicFileUrl(image.url),
