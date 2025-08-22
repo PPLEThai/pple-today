@@ -4,20 +4,43 @@ import { ok } from 'neverthrow'
 import { GetTopicsResponse } from './models'
 import { TopicRepository, TopicRepostoryPlugin } from './repository'
 
-import { TopicStatus } from '../../../__generated__/prisma'
+import { HashTagInTopic, Topic, TopicStatus } from '../../../__generated__/prisma'
+import { HashTag } from '../../dtos/tag'
 import { mapRawPrismaError } from '../../utils/prisma'
 
 export class TopicService {
   constructor(private readonly topicRepository: TopicRepository) {}
 
-  async GetTopics() {
+  async getTopics() {
     const topics = await this.topicRepository.getTopics()
 
     if (topics.isErr()) {
       return mapRawPrismaError(topics.error)
     }
 
-    const result: GetTopicsResponse = topics.value
+    return ok(this.mapTopicsToTopicsResponse(topics.value))
+  }
+
+  async getFollowedTopics(userId: string) {
+    const userFollowTopics = await this.topicRepository.getUserFollowedTopics(userId)
+
+    if (userFollowTopics.isErr()) {
+      return mapRawPrismaError(userFollowTopics.error)
+    }
+
+    const topics = userFollowTopics.value.map(({ topic }) => topic)
+
+    return ok(this.mapTopicsToTopicsResponse(topics))
+  }
+
+  private mapTopicsToTopicsResponse(
+    topics: (Topic & {
+      hashTagInTopics: (HashTagInTopic & {
+        hashTag: HashTag
+      })[]
+    })[]
+  ): GetTopicsResponse {
+    return topics
       .map((topic) => ({
         id: topic.id,
         name: topic.name,
@@ -37,8 +60,6 @@ export class TopicService {
           .filter(({ status }) => status === TopicStatus.PUBLISH),
       }))
       .filter(({ status }) => status === TopicStatus.PUBLISH)
-
-    return ok(result)
   }
 }
 

@@ -19,6 +19,27 @@ export class TopicRepository {
       })
     )
   }
+
+  async getUserFollowedTopics(userId: string) {
+    return fromPrismaPromise(
+      this.prismaService.userFollowsTopic.findMany({
+        where: {
+          userId: { equals: userId },
+        },
+        include: {
+          topic: {
+            include: {
+              hashTagInTopics: {
+                include: {
+                  hashTag: true,
+                },
+              },
+            },
+          },
+        },
+      })
+    )
+  }
 }
 
 export const TopicRepostoryPlugin = new Elysia({ name: 'TopicRepository' })
