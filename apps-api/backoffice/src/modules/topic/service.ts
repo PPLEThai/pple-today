@@ -5,10 +5,10 @@ import { GetTopicsResponse } from './models'
 import { TopicRepository, TopicRepostoryPlugin } from './repository'
 
 import { HashTagInTopic, Topic, TopicStatus } from '../../../__generated__/prisma'
-import { HashTag } from '../../dtos/tag'
-import { mapRawPrismaError } from '../../utils/prisma'
-import { err } from '../../utils/error'
 import { InternalErrorCode } from '../../dtos/error'
+import { HashTag } from '../../dtos/tag'
+import { err } from '../../utils/error'
+import { mapRawPrismaError } from '../../utils/prisma'
 
 export class TopicService {
   constructor(private readonly topicRepository: TopicRepository) {}
