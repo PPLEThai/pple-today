@@ -28,6 +28,7 @@ import { z } from 'zod/v4'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { MoreOrLess } from '@app/components/more-or-less'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
+import { queryClient } from '@app/libs/react-query'
 
 export interface PostCardAttachment {
   id: string
@@ -62,8 +63,8 @@ interface PostCardProps {
 
 export const PostCard = React.memo(function PostCard(props: PostCardProps) {
   return (
-    <View className="flex flex-col gap-3 p-4 bg-base-bg-white border border-base-outline-default rounded-2xl mt-4 mx-4">
-      <View className="flex flex-row items-center justify-between">
+    <View className="flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl mt-4 mx-4">
+      <View className="px-4 pt-4 pb-3 flex flex-row items-center justify-between">
         {/* TODO: link */}
         <View className="flex flex-row items-center">
           {/* TODO: link */}
@@ -101,7 +102,7 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
       {props.attachments.length > 0 && (
         <Lightbox attachments={props.attachments} firstImageType={props.firstImageType} />
       )}
-      <View>
+      <View className="px-4 py-3">
         <MoreOrLess
           numberOfLines={3}
           moreText="อ่านเพิ่มเติม"
@@ -113,15 +114,17 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
           {props.content}
         </MoreOrLess>
       </View>
-      <View className="flex flex-row flex-wrap gap-1">
-        {props.hashTags.map((tag) => (
-          // TODO: link
-          <Badge variant="secondary" key={tag.id}>
-            <Text>{tag.name}</Text>
-          </Badge>
-        ))}
-      </View>
-      <View className="flex flex-row justify-between items-center">
+      {props.hashTags.length > 0 && (
+        <View className="flex flex-row flex-wrap gap-1 px-4 pb-3">
+          {props.hashTags.map((tag) => (
+            // TODO: link
+            <Badge variant="secondary" key={tag.id}>
+              <Text>{tag.name}</Text>
+            </Badge>
+          ))}
+        </View>
+      )}
+      <View className="flex flex-row justify-between items-center px-4 pb-3">
         <UpvoteReactionCount
           id={props.id}
           reactions={props.reactions}
@@ -136,13 +139,16 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
           </Pressable>
         )}
       </View>
-      <View className="flex flex-col border-t border-base-outline-default pt-4 pb-1">
-        <View className="flex flex-row justify-between gap-2">
+      <View className="flex flex-col">
+        <View className="px-4">
+          <View className="border-b border-base-outline-default" />
+        </View>
+        <View className="flex flex-row justify-between gap-2 px-3 pb-2 pt-1">
           <View className="flex flex-row gap-2">
             <UpvoteButton postId={props.id} />
             <DownvoteButton postId={props.id} />
           </View>
-          <Pressable className="flex flex-row items-center gap-1">
+          <Pressable className="flex flex-row items-center gap-1 px-1 py-3">
             <Icon
               icon={MessageCircleIcon}
               size={20}
@@ -195,12 +201,14 @@ function Lightbox(props: LightboxProps) {
     setIsVisible(true)
   }
   return (
-    <View className="rounded-lg overflow-hidden">
-      <AlbumLayout
-        firstImageType={props.firstImageType}
-        attachments={props.attachments}
-        onPress={onPress}
-      />
+    <View className="px-4">
+      <View className="rounded-lg overflow-hidden">
+        <AlbumLayout
+          firstImageType={props.firstImageType}
+          attachments={props.attachments}
+          onPress={onPress}
+        />
+      </View>
       <ImageView
         images={props.attachments.map((m) => ({ uri: m.url }))}
         imageIndex={imageIndex}
@@ -718,20 +726,27 @@ function UpvoteButton(props: UpvoteButtonProps) {
   }
 
   const likeAnimationRef = React.useRef<LottieView | null>(null)
-  const queryClient = useQueryClient()
-  const postReactionStore = usePostReactionStore({
-    variables: { id: props.postId },
-  })
+  const client = useQueryClient()
+  const postReactionStore = usePostReactionStore({ variables: { id: props.postId } })
   const userReaction = postReactionStore.data?.userReaction
-
+  const createReactionQuery = queryClient.useMutation('post', '/feed/:id/reaction')
+  const deleteReactionQuery = queryClient.useMutation('delete', '/feed/:id/reaction')
   const onPress = () => {
     const newUserReaction = userReaction === 'UP_VOTE' ? null : 'UP_VOTE'
     if (newUserReaction === 'UP_VOTE') {
       // skip some empty frames
       likeAnimationRef.current?.play(8, 30)
+      createReactionQuery.mutateAsync({
+        pathParams: { id: props.postId },
+        body: { type: 'UP_VOTE' },
+      })
+    } else {
+      deleteReactionQuery.mutateAsync({
+        pathParams: { id: props.postId },
+      })
     }
     // optimistic update
-    queryClient.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
+    client.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
       if (!old) return
       return {
         upvoteCount: newUserReaction === 'UP_VOTE' ? old.upvoteCount + 1 : old.upvoteCount - 1,
@@ -742,7 +757,10 @@ function UpvoteButton(props: UpvoteButtonProps) {
 
   return (
     <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress}>
-      <Animated.View style={{ opacity }} className="flex flex-row items-center gap-1 rounded-md">
+      <Animated.View
+        style={{ opacity }}
+        className="flex flex-row items-center gap-1 rounded-md py-3 px-1"
+      >
         <View>
           <Animated.View style={{ transform: [{ scale }] }}>
             <Icon
@@ -780,44 +798,35 @@ const styles = StyleSheet.create({
 })
 function DownvoteButton(props: { postId: string }) {
   const opacity = useSharedValue(1)
-  const scale = useSharedValue(1)
   const onPressIn = () => {
     opacity.value = withTiming(0.5, { duration: 150 })
-    scale.value = withSpring(0.7, {
-      stiffness: 300,
-      damping: 12,
-      mass: 1,
-      overshootClamping: false,
-    })
   }
   const onPressOut = () => {
     opacity.value = withTiming(1, { duration: 150 })
-    scale.value = withSpring(1, {
-      stiffness: 300,
-      damping: 12,
-      mass: 1,
-      overshootClamping: false,
-    })
   }
 
   const bottomSheetModalRef = React.useRef<BottomSheetModal>(null)
-  const postReactionStore = usePostReactionStore({
-    variables: { id: props.postId },
-  })
+  const postReactionStore = usePostReactionStore({ variables: { id: props.postId } })
   const userReaction = postReactionStore.data?.userReaction
-  const queryClient = useQueryClient()
+  const deleteReactionQuery = queryClient.useMutation('delete', '/feed/:id/reaction')
+  const client = useQueryClient()
   const onPress = () => {
-    if (userReaction !== 'DOWN_VOTE') {
+    const newUserReaction = userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE'
+    if (newUserReaction === 'DOWN_VOTE') {
       bottomSheetModalRef.current?.present()
+    } else if (newUserReaction === null) {
+      deleteReactionQuery.mutateAsync({
+        pathParams: { id: props.postId },
+      })
+      // optimistic update
+      client.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
+        if (!old) return
+        return {
+          upvoteCount: old.userReaction === 'UP_VOTE' ? old.upvoteCount - 1 : old.upvoteCount,
+          userReaction: newUserReaction,
+        } as const
+      })
     }
-    // optimistic update
-    queryClient.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
-      if (!old) return
-      return {
-        upvoteCount: old.userReaction === 'UP_VOTE' ? old.upvoteCount - 1 : old.upvoteCount,
-        userReaction: old.userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE',
-      } as const
-    })
   }
   const onClose = () => {
     bottomSheetModalRef.current?.dismiss()
@@ -828,19 +837,20 @@ function DownvoteButton(props: { postId: string }) {
   return (
     <>
       <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress}>
-        <Animated.View style={{ opacity }} className="flex flex-row items-center gap-1 rounded-md">
-          <Animated.View style={{ transform: [{ scale }] }}>
-            <Icon
-              icon={HeartCrackIcon}
-              size={20}
-              strokeWidth={1}
-              className={clsx(
-                userReaction === 'DOWN_VOTE'
-                  ? 'fill-base-primary-medium text-white'
-                  : 'text-base-text-high'
-              )}
-            />
-          </Animated.View>
+        <Animated.View
+          style={{ opacity }}
+          className="flex flex-row items-center gap-1 rounded-md py-3 px-1"
+        >
+          <Icon
+            icon={HeartCrackIcon}
+            size={20}
+            strokeWidth={1}
+            className={clsx(
+              userReaction === 'DOWN_VOTE'
+                ? 'fill-base-primary-medium text-white'
+                : 'text-base-text-high'
+            )}
+          />
           <Text className="text-sm font-anakotmai-light text-base-text-high">ไม่เห็นด้วย</Text>
         </Animated.View>
       </Pressable>
@@ -865,6 +875,8 @@ interface CommentFormProps {
   postId: string
 }
 function CommentForm(props: CommentFormProps) {
+  const createReactionQuery = queryClient.useMutation('post', '/feed/:id/reaction')
+  const client = useQueryClient()
   const form = useForm({
     defaultValues: {
       comment: '',
@@ -873,14 +885,47 @@ function CommentForm(props: CommentFormProps) {
       onSubmit: formSchema,
     },
     onSubmit: async ({ value }) => {
-      // TODO: submit
       props.onClose()
-      toast({
-        text1: 'เพิ่มความคิดเห็นส่วนตัวแล้ว',
-        icon: MessageCircleIcon,
+      const comment = value.comment.trim()
+      createReactionQuery.mutateAsync(
+        {
+          pathParams: { id: props.postId },
+          body: { type: 'DOWN_VOTE', comment: comment ? comment : undefined },
+        },
+        {
+          onSuccess: () => {
+            toast({
+              text1: 'เพิ่มความคิดเห็นส่วนตัวแล้ว',
+              icon: MessageCircleIcon,
+            })
+          },
+        }
+      )
+      // optimistic update
+      client.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
+        if (!old) return
+        return {
+          upvoteCount: old.userReaction === 'UP_VOTE' ? old.upvoteCount - 1 : old.upvoteCount,
+          userReaction: old.userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE',
+        } as const
       })
     },
   })
+  const onSkip = () => {
+    props.onClose()
+    createReactionQuery.mutateAsync({
+      pathParams: { id: props.postId },
+      body: { type: 'DOWN_VOTE', comment: undefined },
+    })
+    // optimistic update
+    client.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
+      if (!old) return
+      return {
+        upvoteCount: old.userReaction === 'UP_VOTE' ? old.upvoteCount - 1 : old.upvoteCount,
+        userReaction: old.userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE',
+      } as const
+    })
+  }
   return (
     <View className="flex flex-col flex-1">
       <View className="flex flex-col gap-1 p-4 pb-0">
@@ -917,7 +962,7 @@ function CommentForm(props: CommentFormProps) {
             </Button>
           )}
         </form.Subscribe>
-        <Button variant="ghost" onPress={props.onClose}>
+        <Button variant="ghost" onPress={onSkip}>
           <Text>ข้าม</Text>
         </Button>
       </View>
