@@ -35,6 +35,10 @@ export const AddressController = new Elysia({
         200: GetProvinceResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
       },
+      detail: {
+        summary: 'Get Provinces',
+        description: 'Retrieve a list of provinces',
+      },
     }
   )
   .get(
@@ -55,6 +59,12 @@ export const AddressController = new Elysia({
       response: {
         200: GetDistrictResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+      detail: {
+        summary: 'Get Districts',
+        description:
+          'Retrieve a list of districts for a given province, \
+           if province is not provided, it will return all districts',
       },
     }
   )
@@ -78,6 +88,12 @@ export const AddressController = new Elysia({
         200: GetSubDistrictResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
       },
+      detail: {
+        summary: 'Get Sub-Districts',
+        description:
+          'Retrieve a list of sub-districts for a given province and district,\
+           if province or district is not provided, it will return all sub-districts',
+      },
     }
   )
   .get(
@@ -100,6 +116,12 @@ export const AddressController = new Elysia({
       response: {
         200: GetPostalCodeResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+      detail: {
+        summary: 'Get Postal Codes',
+        description:
+          'Retrieve a list of postal codes for a given province, district, and sub-district,\
+           if any of these are not provided, it will return all postal codes',
       },
     }
   )
