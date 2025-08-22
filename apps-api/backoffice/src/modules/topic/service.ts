@@ -27,16 +27,16 @@ export class TopicService {
         createdAt: topic.createdAt,
         updatedAt: topic.updatedAt,
         hashTags: topic.hashTagInTopics
-          .map((hashTag) => ({
-            id: hashTag.hashTag.id,
-            name: hashTag.hashTag.name,
-            status: hashTag.hashTag.status,
-            createdAt: hashTag.hashTag.createdAt,
-            updatedAt: hashTag.hashTag.updatedAt,
+          .map(({ hashTag }) => ({
+            id: hashTag.id,
+            name: hashTag.name,
+            status: hashTag.status,
+            createdAt: hashTag.createdAt,
+            updatedAt: hashTag.updatedAt,
           }))
-          .filter((hashTag) => hashTag.status === TopicStatus.PUBLISH),
+          .filter(({ status }) => status === TopicStatus.PUBLISH),
       }))
-      .filter((topic) => topic.status === TopicStatus.PUBLISH)
+      .filter(({ status }) => status === TopicStatus.PUBLISH)
 
     return ok(result)
   }
