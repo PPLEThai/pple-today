@@ -77,7 +77,7 @@ export class FeedRepository {
       id: rawFeedItem.id,
       createdAt: rawFeedItem.createdAt,
       commentCount: rawFeedItem.numberOfComments,
-      userReaction: rawFeedItem.reactions?.[0]?.type,
+      userReaction: rawFeedItem.reactions?.[0]?.type ?? null,
       reactions: rawFeedItem.reactionCounts,
       author: {
         id: rawFeedItem.author.id,

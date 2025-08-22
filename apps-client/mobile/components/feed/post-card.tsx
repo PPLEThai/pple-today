@@ -4,6 +4,7 @@ import ImageView from 'react-native-image-viewing'
 import Animated, { useSharedValue, withSpring, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { TextProps } from 'react-native-svg'
+import { createQuery } from 'react-query-kit'
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
 import { Badge } from '@pple-today/ui/badge'
@@ -16,6 +17,7 @@ import { Text } from '@pple-today/ui/text'
 import { Textarea } from '@pple-today/ui/textarea'
 import { toast } from '@pple-today/ui/toast'
 import { useForm } from '@tanstack/react-form'
+import { useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { Image } from 'expo-image'
 import { useVideoPlayer, VideoView } from 'expo-video'
@@ -27,13 +29,14 @@ import PPLEIcon from '@app/assets/pple-icon.svg'
 import { MoreOrLess } from '@app/components/more-or-less'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 
-interface Attachment {
+export interface PostCardAttachment {
   id: string
   type: 'IMAGE' | 'VIDEO'
   url: string
   description?: string
 }
 interface PostCardProps {
+  id: string
   author: {
     id: string
     name: string
@@ -51,15 +54,36 @@ interface PostCardProps {
   content: string
   reactions: { type: 'UP_VOTE' | 'DOWN_VOTE'; count: number }[]
   commentCount: number
-  attachments: Attachment[]
+  attachments: PostCardAttachment[]
   firstImageType: 'landscape' | 'portrait' | 'square'
+  userReaction: 'UP_VOTE' | 'DOWN_VOTE' | null
 }
 
+interface PostReaction {
+  upvoteCount: number
+  userReaction: 'UP_VOTE' | 'DOWN_VOTE' | null
+}
+export const usePostReactionQuery = createQuery({
+  queryKey: ['post-reaction'],
+  fetcher: (_: { id: string }): PostReaction => {
+    throw new Error('PostReaction should not be fetched')
+  },
+  enabled: false,
+})
+
 export const PostCard = React.memo(function PostCard(props: PostCardProps) {
-  const upvoteReaction = props.reactions.find((r) => r.type === 'UP_VOTE') ?? {
-    type: 'UP_VOTE',
-    count: 0,
+  const initialPostReaction = (): PostReaction => {
+    const upvote = props.reactions.find((r) => r.type === 'UP_VOTE')
+    return {
+      upvoteCount: upvote?.count ?? 0,
+      userReaction: props.userReaction,
+    }
   }
+  const postReaction = usePostReactionQuery({
+    variables: { id: props.id },
+    initialData: initialPostReaction,
+    enabled: false,
+  })
 
   return (
     <View className="flex flex-col gap-3 p-4 bg-base-bg-white border border-base-outline-default rounded-2xl mt-4 mx-4">
@@ -130,7 +154,7 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
             strokeWidth={1}
           />
           <Text className="text-xs font-anakotmai-light text-base-text-medium">
-            {upvoteReaction.count}
+            {postReaction.data.upvoteCount}
           </Text>
         </View>
         {/* TODO: link */}
@@ -145,8 +169,8 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
       <View className="flex flex-col border-t border-base-outline-default pt-4 pb-1">
         <View className="flex flex-row justify-between gap-2">
           <View className="flex flex-row gap-2">
-            <UpvoteButton />
-            <DownvoteButton />
+            <UpvoteButton postId={props.id} />
+            <DownvoteButton postId={props.id} />
           </View>
           <Pressable className="flex flex-row items-center gap-1">
             <Icon
@@ -190,7 +214,7 @@ function formatDateInterval(date: string): string {
 }
 
 interface LightboxProps {
-  attachments: Attachment[]
+  attachments: PostCardAttachment[]
   firstImageType: 'landscape' | 'portrait' | 'square'
 }
 function Lightbox(props: LightboxProps) {
@@ -220,7 +244,7 @@ function Lightbox(props: LightboxProps) {
 // TODO: first pic dimension
 interface AttachmentLayoutProps {
   firstImageType: 'landscape' | 'portrait' | 'square'
-  attachments: Attachment[]
+  attachments: PostCardAttachment[]
   onPress: (index: number) => void
 }
 function AlbumLayout(props: AttachmentLayoutProps) {
@@ -605,7 +629,7 @@ function AlbumLayout(props: AttachmentLayoutProps) {
 interface AttachmentPressableProps {
   index: number
   onPress: (index: number) => void
-  attachment: Attachment
+  attachment: PostCardAttachment
   className?: string
 }
 function AttachmentPressable(props: AttachmentPressableProps) {
@@ -655,9 +679,10 @@ const LikeAnimationFile = Platform.select({
   android: require('../../assets/PPLE-Like-Animation.zip'),
 })
 
-function UpvoteButton() {
-  const [upvoted, setUpvoted] = React.useState(false)
-
+interface UpvoteButtonProps {
+  postId: string
+}
+function UpvoteButton(props: UpvoteButtonProps) {
   const opacity = useSharedValue(1)
   const scale = useSharedValue(1)
 
@@ -681,13 +706,27 @@ function UpvoteButton() {
   }
 
   const likeAnimationRef = React.useRef<LottieView | null>(null)
+  const queryClient = useQueryClient()
+  const postReactionQuery = usePostReactionQuery({
+    variables: { id: props.postId },
+    enabled: false,
+  })
+  const userReaction = postReactionQuery.data?.userReaction
+
   const onPress = () => {
-    const isUpvoted = !upvoted
-    setUpvoted(isUpvoted)
-    if (isUpvoted) {
+    const newUserReaction = userReaction === 'UP_VOTE' ? null : 'UP_VOTE'
+    if (newUserReaction === 'UP_VOTE') {
       // skip some empty frames
       likeAnimationRef.current?.play(8, 30)
     }
+    // optimistic update
+    queryClient.setQueryData(usePostReactionQuery.getKey({ id: props.postId }), (old) => {
+      if (!old) return
+      return {
+        upvoteCount: newUserReaction === 'UP_VOTE' ? old.upvoteCount + 1 : old.upvoteCount - 1,
+        userReaction: newUserReaction,
+      } as const
+    })
   }
 
   return (
@@ -700,7 +739,9 @@ function UpvoteButton() {
               size={20}
               strokeWidth={1}
               className={clsx(
-                upvoted ? 'fill-base-primary-medium text-white' : 'text-base-text-high'
+                userReaction === 'UP_VOTE'
+                  ? 'fill-base-primary-medium text-white'
+                  : 'text-base-text-high'
               )}
             />
           </Animated.View>
@@ -726,11 +767,7 @@ const styles = StyleSheet.create({
     pointerEvents: 'none',
   },
 })
-
-const formSchema = z.object({
-  comment: z.string().check(z.minLength(1, { error: 'กรุณาพิมพ์ความคิดเห็นของคุณ' })),
-})
-function DownvoteButton() {
+function DownvoteButton(props: { postId: string }) {
   const opacity = useSharedValue(1)
 
   const onPressIn = () => {
@@ -748,11 +785,26 @@ function DownvoteButton() {
     bottomSheetModalRef.current?.dismiss()
   }
   const insets = useSafeAreaInsets()
+
+  const postReactionQuery = usePostReactionQuery({
+    variables: { id: props.postId },
+    enabled: false,
+  })
+  const userReaction = postReactionQuery.data?.userReaction
   return (
     <View className="flex flex-col gap-2">
       <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onOpen}>
         <Animated.View style={{ opacity }} className="flex flex-row items-center gap-1 rounded-md">
-          <Icon icon={HeartCrackIcon} size={20} strokeWidth={1} className="text-base-text-high" />
+          <Icon
+            icon={HeartCrackIcon}
+            size={20}
+            strokeWidth={1}
+            className={clsx(
+              userReaction === 'DOWN_VOTE'
+                ? 'fill-base-primary-medium text-white'
+                : 'text-base-text-high'
+            )}
+          />
           <Text className="text-sm font-anakotmai-light text-base-text-high">ไม่เห็นด้วย</Text>
         </Animated.View>
       </Pressable>
@@ -762,14 +814,22 @@ function DownvoteButton() {
         bottomInset={insets.bottom}
       >
         <BottomSheetView>
-          <CommentForm onClose={onClose} />
+          <CommentForm onClose={onClose} postId={props.postId} />
         </BottomSheetView>
       </BottomSheetModal>
     </View>
   )
 }
 
-function CommentForm(props: { onClose: () => void }) {
+const formSchema = z.object({
+  comment: z.string().check(z.minLength(1, { error: 'กรุณาพิมพ์ความคิดเห็นของคุณ' })),
+})
+interface CommentFormProps {
+  onClose: () => void
+  postId: string
+}
+function CommentForm(props: CommentFormProps) {
+  const queryClient = useQueryClient()
   const form = useForm({
     defaultValues: {
       comment: '',
@@ -777,14 +837,20 @@ function CommentForm(props: { onClose: () => void }) {
     validators: {
       onSubmit: formSchema,
     },
-    onSubmit: async (values) => {
-      console.log('Form submitted:', values)
-      // Simulate a network request
-      await new Promise((resolve) => setTimeout(resolve, 500))
+    onSubmit: async ({ value }) => {
       props.onClose()
       toast({
         text1: 'เพิ่มความคิดเห็นส่วนตัวแล้ว',
         icon: MessageCircleIcon,
+      })
+      // optimistic update
+      queryClient.setQueryData(usePostReactionQuery.getKey({ id: props.postId }), (old) => {
+        if (!old) return
+        return {
+          upvoteCount:
+            old.userReaction === 'UP_VOTE' ? Math.max(0, old.upvoteCount - 1) : old.upvoteCount,
+          userReaction: 'DOWN_VOTE',
+        } as const
       })
     },
   })

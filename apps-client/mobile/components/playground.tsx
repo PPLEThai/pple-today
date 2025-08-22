@@ -599,6 +599,7 @@ function PostCardExample() {
       <H2 className="font-inter-bold">PostCard</H2>
       <View className="-mx-4">
         <PostCard
+          id="1"
           firstImageType="square" // TODO
           author={{
             id: '1',
@@ -627,6 +628,7 @@ function PostCardExample() {
             { type: 'UP_VOTE', count: 32 },
             { type: 'DOWN_VOTE', count: 2 },
           ]}
+          userReaction={null}
         />
       </View>
     </View>

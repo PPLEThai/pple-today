@@ -26,7 +26,7 @@ import {
 import { GetBannersResponse } from '@api/backoffice/src/modules/banner/models'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AnnouncementCard } from '@app/components/announcement'
-import { PostCard } from '@app/components/feed/post-card'
+import { PostCard, PostCardAttachment } from '@app/components/feed/post-card'
 import {
   Pager,
   PagerContent,
@@ -364,25 +364,10 @@ function FeedContent(props: FeedContentProps) {
             return (
               <PostCard
                 key={item.id}
+                id={item.id}
                 author={item.author}
-                attachments={
-                  item.post.attachments?.map((attachment) => {
-                    switch (attachment.type) {
-                      case 'IMAGE':
-                        return {
-                          ...attachment,
-                          type: 'IMAGE',
-                        }
-                      case 'VIDEO':
-                        return {
-                          ...attachment,
-                          type: 'VIDEO',
-                        }
-                      default:
-                        throw new Error('There should be only IMAGE or VIDEO attachments')
-                    }
-                  }) ?? []
-                }
+                // TODO: remove type casting
+                attachments={(item.post.attachments as PostCardAttachment[]) ?? []}
                 commentCount={item.commentCount}
                 content={item.post.content}
                 createdAt={item.createdAt.toString()}
@@ -392,6 +377,7 @@ function FeedContent(props: FeedContentProps) {
                   type: reaction.type as 'UP_VOTE' | 'DOWN_VOTE', // TODO: enum this
                   count: reaction.count,
                 }))}
+                userReaction={item.userReaction}
               />
             )
           case 'POLL':
