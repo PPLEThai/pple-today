@@ -35,6 +35,7 @@ export interface PostCardAttachment {
   url: string
   description?: string
 }
+type UserReaction = 'UP_VOTE' | 'DOWN_VOTE' | null
 interface PostCardProps {
   id: string
   author: {
@@ -56,35 +57,10 @@ interface PostCardProps {
   commentCount: number
   attachments: PostCardAttachment[]
   firstImageType: 'landscape' | 'portrait' | 'square'
-  userReaction: 'UP_VOTE' | 'DOWN_VOTE' | null
+  userReaction: UserReaction
 }
-
-interface PostReaction {
-  upvoteCount: number
-  userReaction: 'UP_VOTE' | 'DOWN_VOTE' | null
-}
-export const usePostReactionQuery = createQuery({
-  queryKey: ['post-reaction'],
-  fetcher: (_: { id: string }): PostReaction => {
-    throw new Error('PostReaction should not be fetched')
-  },
-  enabled: false,
-})
 
 export const PostCard = React.memo(function PostCard(props: PostCardProps) {
-  const initialPostReaction = (): PostReaction => {
-    const upvote = props.reactions.find((r) => r.type === 'UP_VOTE')
-    return {
-      upvoteCount: upvote?.count ?? 0,
-      userReaction: props.userReaction,
-    }
-  }
-  const postReaction = usePostReactionQuery({
-    variables: { id: props.id },
-    initialData: initialPostReaction,
-    enabled: false,
-  })
-
   return (
     <View className="flex flex-col gap-3 p-4 bg-base-bg-white border border-base-outline-default rounded-2xl mt-4 mx-4">
       <View className="flex flex-row items-center justify-between">
@@ -146,17 +122,11 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
         ))}
       </View>
       <View className="flex flex-row justify-between items-center">
-        <View className="flex flex-row gap-1 items-center">
-          <Icon
-            icon={HeartHandshakeIcon}
-            size={18}
-            className="fill-base-primary-medium text-white"
-            strokeWidth={1}
-          />
-          <Text className="text-xs font-anakotmai-light text-base-text-medium">
-            {postReaction.data.upvoteCount}
-          </Text>
-        </View>
+        <UpvoteReactionCount
+          id={props.id}
+          reactions={props.reactions}
+          userReaction={props.userReaction}
+        />
         {/* TODO: link */}
         {props.commentCount > 0 && (
           <Pressable>
@@ -674,18 +644,60 @@ function VideoComp(props: { url: string }) {
   )
 }
 
+interface PostReaction {
+  upvoteCount: number
+  userReaction: UserReaction
+}
+// create store using react query
+export const usePostReactionStore = createQuery({
+  queryKey: ['post-reaction'],
+  fetcher: (_: { id: string }): PostReaction => {
+    throw new Error('PostReactionStore should be enabled')
+  },
+  enabled: false,
+})
+interface UpvoteReactionCountProps {
+  id: string
+  reactions: PostCardProps['reactions']
+  userReaction: UserReaction | null
+}
+function UpvoteReactionCount(props: UpvoteReactionCountProps) {
+  const initialPostReaction = (): PostReaction => {
+    const upvote = props.reactions.find((r) => r.type === 'UP_VOTE')
+    return {
+      upvoteCount: upvote?.count ?? 0,
+      userReaction: props.userReaction,
+    }
+  }
+  const postReactionStore = usePostReactionStore({
+    variables: { id: props.id },
+    initialData: initialPostReaction,
+  })
+  return (
+    <View className="flex flex-row gap-1 items-center">
+      <Icon
+        icon={HeartHandshakeIcon}
+        size={18}
+        className="fill-base-primary-medium text-white"
+        strokeWidth={1}
+      />
+      <Text className="text-xs font-anakotmai-light text-base-text-medium">
+        {postReactionStore.data.upvoteCount}
+      </Text>
+    </View>
+  )
+}
+
 const LikeAnimationFile = Platform.select({
   ios: require('../../assets/PPLE-Like-Animation.lottie'),
   android: require('../../assets/PPLE-Like-Animation.zip'),
 })
-
 interface UpvoteButtonProps {
   postId: string
 }
 function UpvoteButton(props: UpvoteButtonProps) {
   const opacity = useSharedValue(1)
   const scale = useSharedValue(1)
-
   const onPressIn = () => {
     opacity.value = withTiming(0.5, { duration: 150 })
     scale.value = withSpring(0.7, {
@@ -707,11 +719,10 @@ function UpvoteButton(props: UpvoteButtonProps) {
 
   const likeAnimationRef = React.useRef<LottieView | null>(null)
   const queryClient = useQueryClient()
-  const postReactionQuery = usePostReactionQuery({
+  const postReactionStore = usePostReactionStore({
     variables: { id: props.postId },
-    enabled: false,
   })
-  const userReaction = postReactionQuery.data?.userReaction
+  const userReaction = postReactionStore.data?.userReaction
 
   const onPress = () => {
     const newUserReaction = userReaction === 'UP_VOTE' ? null : 'UP_VOTE'
@@ -720,7 +731,7 @@ function UpvoteButton(props: UpvoteButtonProps) {
       likeAnimationRef.current?.play(8, 30)
     }
     // optimistic update
-    queryClient.setQueryData(usePostReactionQuery.getKey({ id: props.postId }), (old) => {
+    queryClient.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
       if (!old) return
       return {
         upvoteCount: newUserReaction === 'UP_VOTE' ? old.upvoteCount + 1 : old.upvoteCount - 1,
@@ -769,42 +780,67 @@ const styles = StyleSheet.create({
 })
 function DownvoteButton(props: { postId: string }) {
   const opacity = useSharedValue(1)
-
+  const scale = useSharedValue(1)
   const onPressIn = () => {
     opacity.value = withTiming(0.5, { duration: 150 })
+    scale.value = withSpring(0.7, {
+      stiffness: 300,
+      damping: 12,
+      mass: 1,
+      overshootClamping: false,
+    })
   }
   const onPressOut = () => {
     opacity.value = withTiming(1, { duration: 150 })
+    scale.value = withSpring(1, {
+      stiffness: 300,
+      damping: 12,
+      mass: 1,
+      overshootClamping: false,
+    })
   }
-  const bottomSheetModalRef = React.useRef<BottomSheetModal>(null)
 
-  const onOpen = () => {
-    bottomSheetModalRef.current?.present()
+  const bottomSheetModalRef = React.useRef<BottomSheetModal>(null)
+  const postReactionStore = usePostReactionStore({
+    variables: { id: props.postId },
+  })
+  const userReaction = postReactionStore.data?.userReaction
+  const queryClient = useQueryClient()
+  const onPress = () => {
+    if (userReaction !== 'DOWN_VOTE') {
+      bottomSheetModalRef.current?.present()
+    }
+    // optimistic update
+    queryClient.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
+      if (!old) return
+      return {
+        upvoteCount: old.userReaction === 'UP_VOTE' ? old.upvoteCount - 1 : old.upvoteCount,
+        userReaction: old.userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE',
+      } as const
+    })
   }
   const onClose = () => {
     bottomSheetModalRef.current?.dismiss()
   }
+
   const insets = useSafeAreaInsets()
 
-  const postReactionQuery = usePostReactionQuery({
-    variables: { id: props.postId },
-    enabled: false,
-  })
-  const userReaction = postReactionQuery.data?.userReaction
   return (
-    <View className="flex flex-col gap-2">
-      <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onOpen}>
+    <>
+      <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress}>
         <Animated.View style={{ opacity }} className="flex flex-row items-center gap-1 rounded-md">
-          <Icon
-            icon={HeartCrackIcon}
-            size={20}
-            strokeWidth={1}
-            className={clsx(
-              userReaction === 'DOWN_VOTE'
-                ? 'fill-base-primary-medium text-white'
-                : 'text-base-text-high'
-            )}
-          />
+          <Animated.View style={{ transform: [{ scale }] }}>
+            <Icon
+              icon={HeartCrackIcon}
+              size={20}
+              strokeWidth={1}
+              className={clsx(
+                userReaction === 'DOWN_VOTE'
+                  ? 'fill-base-primary-medium text-white'
+                  : 'text-base-text-high'
+              )}
+            />
+          </Animated.View>
           <Text className="text-sm font-anakotmai-light text-base-text-high">ไม่เห็นด้วย</Text>
         </Animated.View>
       </Pressable>
@@ -817,7 +853,7 @@ function DownvoteButton(props: { postId: string }) {
           <CommentForm onClose={onClose} postId={props.postId} />
         </BottomSheetView>
       </BottomSheetModal>
-    </View>
+    </>
   )
 }
 
@@ -829,7 +865,6 @@ interface CommentFormProps {
   postId: string
 }
 function CommentForm(props: CommentFormProps) {
-  const queryClient = useQueryClient()
   const form = useForm({
     defaultValues: {
       comment: '',
@@ -838,19 +873,11 @@ function CommentForm(props: CommentFormProps) {
       onSubmit: formSchema,
     },
     onSubmit: async ({ value }) => {
+      // TODO: submit
       props.onClose()
       toast({
         text1: 'เพิ่มความคิดเห็นส่วนตัวแล้ว',
         icon: MessageCircleIcon,
-      })
-      // optimistic update
-      queryClient.setQueryData(usePostReactionQuery.getKey({ id: props.postId }), (old) => {
-        if (!old) return
-        return {
-          upvoteCount:
-            old.userReaction === 'UP_VOTE' ? Math.max(0, old.upvoteCount - 1) : old.upvoteCount,
-          userReaction: 'DOWN_VOTE',
-        } as const
       })
     },
   })
