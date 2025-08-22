@@ -70,6 +70,32 @@ export class TopicService {
     return ok()
   }
 
+  async unFollowTopic(topicId: string, userId: string) {
+    const topic = await this.topicRepository.getTopicById(topicId)
+
+    if (topic.isErr()) {
+      return mapRawPrismaError(topic.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.TOPIC_NOT_FOUND,
+          message: `topic not found`,
+        },
+      })
+    }
+
+    const result = await this.topicRepository.deleteUserFollowTopic(userId, topicId)
+
+    if (result.isErr()) {
+      return mapRawPrismaError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.TOPIC_NOT_FOLLOWED,
+          message: `topic is not followed`,
+        },
+      })
+    }
+
+    return ok()
+  }
+
   private mapTopicsToTopicsResponse(
     topics: (Topic & {
       hashTagInTopics: (HashTagInTopic & {

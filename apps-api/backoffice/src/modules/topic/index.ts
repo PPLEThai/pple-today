@@ -1,11 +1,17 @@
 import Elysia from 'elysia'
 
-import { FollowTopicParams, FollowTopicResponse, GetTopicsResponse } from './models'
+import {
+  FollowTopicParams,
+  FollowTopicResponse,
+  GetTopicsResponse,
+  UnFollowTopicParams,
+} from './models'
 import { TopicServicePlugin } from './service'
 
 import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
 import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
+import { UnfollowUserResponse } from '../profile/models'
 
 export const TopicController = new Elysia({
   prefix: '/topics',
@@ -106,4 +112,46 @@ export const TopicController = new Elysia({
       },
     }
   )
-  .delete('/:id/follow', () => {})
+  .delete(
+    '/:topicId/follow',
+    async ({ params, user, topicService, status }) => {
+      const topicId = params.topicId
+      const userId = user.id
+
+      const result = await topicService.unFollowTopic(topicId, userId)
+
+      if (result.isErr()) {
+        switch (result.error.code) {
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.TOPIC_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.TOPIC_NOT_FOLLOWED:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
+      }
+
+      return status(200, {
+        message: 'success unfollowing topic',
+      })
+    },
+    {
+      requiredLocalUser: true,
+      params: UnFollowTopicParams,
+      response: {
+        200: UnfollowUserResponse,
+        ...createErrorSchema(
+          InternalErrorCode.INTERNAL_SERVER_ERROR,
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.TOPIC_NOT_FOUND,
+          InternalErrorCode.TOPIC_NOT_FOLLOWED
+        ),
+      },
+      detail: {
+        summary: 'Unfollow topic',
+        description: 'Unfollow topic',
+      },
+    }
+  )

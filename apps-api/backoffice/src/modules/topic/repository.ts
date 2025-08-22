@@ -60,6 +60,19 @@ export class TopicRepository {
       })
     )
   }
+
+  async deleteUserFollowTopic(userId: string, topicId: string) {
+    return fromPrismaPromise(
+      this.prismaService.userFollowsTopic.delete({
+        where: {
+          userId_topicId: {
+            userId: userId,
+            topicId: topicId,
+          },
+        },
+      })
+    )
+  }
 }
 
 export const TopicRepostoryPlugin = new Elysia({ name: 'TopicRepository' })

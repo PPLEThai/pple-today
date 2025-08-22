@@ -167,6 +167,9 @@ const TOPIC_ERROR_SCHEMA = {
   TOPIC_ALREADY_FOLLOWED: {
     status: 409,
   },
+  TOPIC_NOT_FOLLOWED: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 export const InternalErrorCodeSchemas = {

@@ -36,3 +36,9 @@ export const FollowTopicResponse = t.Object({
 })
 
 export type FollowTopicResponse = typeof FollowTopicResponse.static
+
+export const UnFollowTopicParams = t.Object({
+  topicId: t.String(),
+})
+
+export type UnFollowTopicParams = typeof UnFollowTopicParams.static
