@@ -2,22 +2,29 @@ import Elysia from 'elysia'
 
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
+import { err, ok } from 'neverthrow'
 
 export class AddressRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
   async getProvinces() {
-    return fromPrismaPromise(
+    const provinces = await fromPrismaPromise(
       this.prismaService.address.findMany({
         distinct: ['province'],
         select: { province: true },
         orderBy: { province: 'asc' },
       })
     )
+
+    if (provinces.isErr()) {
+      return err(provinces.error)
+    }
+
+    return ok(provinces.value.map((province) => province.province))
   }
 
   async getDistricts(filters?: { province?: string }) {
-    return fromPrismaPromise(
+    const districts = await fromPrismaPromise(
       this.prismaService.address.findMany({
         where: {
           province: filters?.province && { equals: filters.province },
@@ -27,10 +34,16 @@ export class AddressRepository {
         orderBy: { district: 'asc' },
       })
     )
+
+    if (districts.isErr()) {
+      return err(districts.error)
+    }
+
+    return ok(districts.value.map(({ district }) => district))
   }
 
   async getSubDistricts(filters?: { province?: string; district?: string }) {
-    return fromPrismaPromise(
+    const subDistricts = await fromPrismaPromise(
       this.prismaService.address.findMany({
         where: {
           province: filters?.province && { equals: filters.province },
@@ -41,10 +54,16 @@ export class AddressRepository {
         orderBy: { subDistrict: 'asc' },
       })
     )
+
+    if (subDistricts.isErr()) {
+      return err(subDistricts.error)
+    }
+
+    return ok(subDistricts.value.map(({ subDistrict }) => subDistrict))
   }
 
   async getPostalCodes(filters?: { province?: string; district?: string; subDistrict?: string }) {
-    return fromPrismaPromise(
+    const postalCodes = await fromPrismaPromise(
       this.prismaService.address.findMany({
         where: {
           province: filters?.province && { equals: filters.province },
@@ -56,6 +75,12 @@ export class AddressRepository {
         orderBy: { postalCode: 'asc' },
       })
     )
+
+    if (postalCodes.isErr()) {
+      return err(postalCodes.error)
+    }
+
+    return ok(postalCodes.value.map(({ postalCode }) => postalCode))
   }
 }
 

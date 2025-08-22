@@ -15,7 +15,7 @@ export class AddressService {
       return mapRawPrismaError(provinces.error)
     }
 
-    return ok(provinces.value.map(({ province }) => province))
+    return ok(provinces.value)
   }
 
   async getDistricts(filters?: { province?: string }) {
@@ -27,7 +27,7 @@ export class AddressService {
       return mapRawPrismaError(distincts.error)
     }
 
-    return ok(distincts.value.map(({ district }) => district))
+    return ok(distincts.value)
   }
 
   async getSubDistricts(filters?: { province?: string; district?: string }) {
@@ -40,7 +40,7 @@ export class AddressService {
       return mapRawPrismaError(subDistricts.error)
     }
 
-    return ok(subDistricts.value.map(({ subDistrict }) => subDistrict))
+    return ok(subDistricts.value)
   }
 
   async getPostalCodes(filters?: { province?: string; district?: string; subDistrict?: string }) {
@@ -54,7 +54,7 @@ export class AddressService {
       return mapRawPrismaError(postalCodes.error)
     }
 
-    return ok(postalCodes.value.map(({ postalCode }) => postalCode))
+    return ok(postalCodes.value)
   }
 }
 
