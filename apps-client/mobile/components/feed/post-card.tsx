@@ -51,7 +51,6 @@ interface PostCardProps {
   content: string
   reactions: { type: 'UP_VOTE' | 'DOWN_VOTE'; count: number }[]
   commentCount: number
-  // TODO: support media type VIDEO
   attachments: Attachment[]
   firstImageType: 'landscape' | 'portrait' | 'square'
 }
@@ -65,11 +64,21 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
   return (
     <View className="flex flex-col gap-3 p-4 bg-base-bg-white border border-base-outline-default rounded-2xl mt-4 mx-4">
       <View className="flex flex-row items-center justify-between">
+        {/* TODO: link */}
         <View className="flex flex-row items-center">
-          <View className="w-8 h-8 rounded-full bg-base-primary-medium flex items-center justify-center mr-3">
-            <Icon icon={PPLEIcon} width={20} height={20} className="text-white" />
+          {/* TODO: link */}
+          <View className="w-8 h-8 rounded-full bg-base-primary-medium flex items-center justify-center mr-3 overflow-hidden">
+            {props.author.profileImage ? (
+              <Image
+                source={{ uri: props.author.profileImage }}
+                style={{ width: '100%', height: '100%' }}
+              />
+            ) : (
+              <Icon icon={PPLEIcon} width={20} height={20} className="text-white" />
+            )}
           </View>
           <View className="flex flex-col">
+            {/* TODO: link */}
             <Text className="text-base-text-medium font-anakotmai-medium text-sm">
               {props.author.name}
             </Text>
@@ -124,7 +133,7 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
             {upvoteReaction.count}
           </Text>
         </View>
-        {/* TODO: comment count */}
+        {/* TODO: link */}
         {props.commentCount > 0 && (
           <Pressable>
             <Text className="text-xs font-anakotmai-light text-base-text-medium">
