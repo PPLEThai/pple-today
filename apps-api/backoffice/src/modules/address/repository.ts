@@ -1,8 +1,8 @@
 import Elysia from 'elysia'
+import { err, ok } from 'neverthrow'
 
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { fromPrismaPromise } from '../../utils/prisma'
-import { err, ok } from 'neverthrow'
 
 export class AddressRepository {
   constructor(private readonly prismaService: PrismaService) {}
