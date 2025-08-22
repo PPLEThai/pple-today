@@ -7,6 +7,8 @@ import { TopicRepository, TopicRepostoryPlugin } from './repository'
 import { HashTagInTopic, Topic, TopicStatus } from '../../../__generated__/prisma'
 import { HashTag } from '../../dtos/tag'
 import { mapRawPrismaError } from '../../utils/prisma'
+import { err } from '../../utils/error'
+import { InternalErrorCode } from '../../dtos/error'
 
 export class TopicService {
   constructor(private readonly topicRepository: TopicRepository) {}
@@ -31,6 +33,41 @@ export class TopicService {
     const topics = userFollowTopics.value.map(({ topic }) => topic)
 
     return ok(this.mapTopicsToTopicsResponse(topics))
+  }
+
+  async followTopic(topicId: string, userId: string) {
+    const topic = await this.topicRepository.getTopicById(topicId)
+
+    if (topic.isErr()) {
+      return mapRawPrismaError(topic.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.TOPIC_NOT_FOUND,
+          message: `topic not found`,
+        },
+      })
+    }
+
+    // cannot follow draft topic
+    if (topic.value?.status == TopicStatus.DRAFT) {
+      return err({
+        code: InternalErrorCode.TOPIC_CANNOT_FOLLOW_DRAFT,
+        message: `cannot follow topic with status '${TopicStatus.DRAFT}'`,
+      })
+    }
+
+    const userFollowTopic = await this.topicRepository.createUserFollowTopic(userId, topicId)
+
+    if (userFollowTopic.isErr()) {
+      return mapRawPrismaError(userFollowTopic.error, {
+        //  user already followed the topic
+        UNIQUE_CONSTRAINT_FAILED: {
+          code: InternalErrorCode.TOPIC_ALREADY_FOLLOWED,
+          message: `user already followed the topic`,
+        },
+      })
+    }
+
+    return ok()
   }
 
   private mapTopicsToTopicsResponse(

@@ -1,11 +1,11 @@
 import Elysia from 'elysia'
 
-import { GetTopicsResponse } from './models'
+import { FollowTopicParams, FollowTopicResponse, GetTopicsResponse } from './models'
 import { TopicServicePlugin } from './service'
 
 import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
-import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
+import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
 
 export const TopicController = new Elysia({
   prefix: '/topics',
@@ -61,5 +61,49 @@ export const TopicController = new Elysia({
       },
     }
   )
-  .post('/:id/follow', () => {})
+  .post(
+    '/:topicId/follow',
+    async ({ params, user, topicService, status }) => {
+      const topicId = params.topicId
+      const userId = user.id
+      const result = await topicService.followTopic(topicId, userId)
+
+      if (result.isErr()) {
+        switch (result.error.code) {
+          case InternalErrorCode.TOPIC_NOT_FOUND:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.TOPIC_CANNOT_FOLLOW_DRAFT:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.TOPIC_ALREADY_FOLLOWED:
+            return mapErrorCodeToResponse(result.error, status)
+          case InternalErrorCode.INTERNAL_SERVER_ERROR:
+            return mapErrorCodeToResponse(result.error, status)
+          default:
+            exhaustiveGuard(result.error)
+        }
+      }
+
+      return status(200, {
+        message: 'success following topic',
+      })
+    },
+    {
+      requiredLocalUser: true,
+      params: FollowTopicParams,
+      response: {
+        200: FollowTopicResponse,
+        ...createErrorSchema(
+          InternalErrorCode.INTERNAL_SERVER_ERROR,
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.TOPIC_NOT_FOUND,
+          InternalErrorCode.TOPIC_CANNOT_FOLLOW_DRAFT,
+          InternalErrorCode.TOPIC_ALREADY_FOLLOWED
+        ),
+      },
+      detail: {
+        summary: 'Follow topic',
+        description: 'Follow topic',
+      },
+    }
+  )
   .delete('/:id/follow', () => {})

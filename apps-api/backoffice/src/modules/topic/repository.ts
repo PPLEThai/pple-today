@@ -5,6 +5,15 @@ import { fromPrismaPromise } from '../../utils/prisma'
 
 export class TopicRepository {
   constructor(private readonly prismaService: PrismaService) {}
+  async getTopicById(topicId: string) {
+    return fromPrismaPromise(
+      this.prismaService.topic.findFirstOrThrow({
+        where: {
+          id: topicId,
+        },
+      })
+    )
+  }
 
   async getTopics() {
     return fromPrismaPromise(
@@ -36,6 +45,17 @@ export class TopicRepository {
               },
             },
           },
+        },
+      })
+    )
+  }
+
+  async createUserFollowTopic(userId: string, topicId: string) {
+    return fromPrismaPromise(
+      this.prismaService.userFollowsTopic.create({
+        data: {
+          userId: userId,
+          topicId: topicId,
         },
       })
     )
