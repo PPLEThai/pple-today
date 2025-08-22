@@ -15,6 +15,7 @@ import {
 } from 'expo-auth-session'
 import { getItemAsync, setItemAsync } from 'expo-secure-store'
 import * as WebBrowser from 'expo-web-browser'
+import { z } from 'zod/v4'
 
 import appConfig from '@app/app.config'
 import { environment } from '@app/env'
@@ -33,10 +34,24 @@ const authRequest: AuthRequest = new AuthRequest({
 })
 
 const AUTH_SESSION_STORAGE_KEY = 'authSession'
-export interface AuthSession {
-  accessToken: string
-  refreshToken: string
-  idToken: string | null
+
+const AuthSessionSchema = z.object({
+  accessToken: z.string(),
+  refreshToken: z.string(),
+  idToken: z.nullable(z.string()),
+})
+export type AuthSession = z.output<typeof AuthSessionSchema>
+function parseAuthSession(json: string | null): AuthSession | null {
+  if (json === null) return null
+  const data = JSON.parse(json)
+  const result = AuthSessionSchema.safeParse(data)
+  if (result.error) return null
+  return result.data
+}
+
+export async function getAuthSession(): Promise<AuthSession | null> {
+  const session = await getItemAsync(AUTH_SESSION_STORAGE_KEY)
+  return parseAuthSession(session)
 }
 
 export const useDiscoveryQuery = createQuery({
@@ -50,8 +65,7 @@ export const useSessionQuery = createQuery({
   queryKey: ['session'],
   fetcher: async () => {
     const session = await getItemAsync(AUTH_SESSION_STORAGE_KEY)
-    if (!session) return null
-    return JSON.parse(session) as AuthSession | null
+    return parseAuthSession(session)
   },
 })
 
@@ -102,12 +116,7 @@ export const useUser = () => {
 
 export const useAuthMe = () => {
   const sessionQuery = useSessionQuery()
-  // TODO: wait for /auth/me to accept bearer token
-  return queryClient.useQuery(
-    '/auth/me',
-    { headers: { authorization: `Bearer ${sessionQuery.data?.accessToken}` } },
-    { enabled: !!sessionQuery.data }
-  )
+  return queryClient.useQuery('/auth/me', {}, { enabled: !!sessionQuery.data })
 }
 
 export const codeExchange = async ({

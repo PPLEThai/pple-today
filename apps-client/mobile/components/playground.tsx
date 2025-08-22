@@ -637,15 +637,7 @@ function PostCardExample() {
 
 function QueryExample() {
   const [token, setToken] = useState<string>('')
-  const sampleQuery = queryClient.useQuery(
-    '/auth/me',
-    {
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    },
-    { enabled: !!token }
-  )
+  const sampleQuery = queryClient.useQuery('/auth/me', {}, { enabled: !!token })
 
   useEffect(() => {
     const fetchToken = async () => {

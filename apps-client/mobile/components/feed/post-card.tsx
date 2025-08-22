@@ -22,7 +22,12 @@ import dayjs from 'dayjs'
 import { Image } from 'expo-image'
 import { useVideoPlayer, VideoView } from 'expo-video'
 import LottieView from 'lottie-react-native'
-import { HeartCrackIcon, HeartHandshakeIcon, MessageCircleIcon } from 'lucide-react-native'
+import {
+  HeartCrackIcon,
+  HeartHandshakeIcon,
+  MessageCircleIcon,
+  TriangleAlertIcon,
+} from 'lucide-react-native'
 import { z } from 'zod/v4'
 
 import PPLEIcon from '@app/assets/pple-icon.svg'
@@ -897,6 +902,13 @@ function CommentForm(props: CommentFormProps) {
             toast({
               text1: 'เพิ่มความคิดเห็นส่วนตัวแล้ว',
               icon: MessageCircleIcon,
+            })
+          },
+          onError: (error) => {
+            console.error(error)
+            toast.error({
+              text1: 'เกิดข้อผิดพลาดบางอย่าง',
+              icon: TriangleAlertIcon,
             })
           },
         }
