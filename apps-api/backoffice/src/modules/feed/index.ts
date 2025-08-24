@@ -188,7 +188,7 @@ export const FeedController = new Elysia({
       },
     }
   )
-  .post(
+  .put(
     '/:id/reaction',
     async ({ params, body, user, status, feedService }) => {
       const result = await feedService.createFeedReaction(params.id, user.id, body)
