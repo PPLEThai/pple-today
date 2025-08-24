@@ -366,9 +366,16 @@ export class FileTransactionService {
     if (beforePermission === permission) return ok(newFileKey)
 
     let result
-    if (permission === FilePermission.PUBLIC)
-      result = await this.fileService.markAsPublic(newFileKey)
-    else result = await this.fileService.markAsPrivate(newFileKey)
+    switch (permission) {
+      case FilePermission.PUBLIC:
+        result = await this.fileService.markAsPublic(newFileKey)
+        break
+      case FilePermission.PRIVATE:
+        result = await this.fileService.markAsPrivate(newFileKey)
+        break
+      default:
+        exhaustiveGuard(permission)
+    }
 
     if (result.isErr()) {
       return err(result.error)
@@ -478,9 +485,16 @@ export class FileTransactionService {
         case 'PERMISSION':
           if (entry.before === entry.after) continue
 
-          if (entry.before === FilePermission.PUBLIC)
-            result = await this.fileService.markAsPublic(entry.target)
-          else result = await this.fileService.markAsPrivate(entry.target)
+          switch (entry.before) {
+            case FilePermission.PUBLIC:
+              result = await this.fileService.markAsPublic(entry.target)
+              break
+            case FilePermission.PRIVATE:
+              result = await this.fileService.markAsPrivate(entry.target)
+              break
+            default:
+              exhaustiveGuard(entry.before)
+          }
 
           if (result.isErr()) {
             this.transaction.push(entry)
