@@ -177,7 +177,7 @@ export class FeedService {
     }
 
     return ok({
-      message: `Reaction for feed item ${feedItemId} created.`,
+      message: `Reaction for feed item ${feedItemId} updated.`,
     })
   }
 

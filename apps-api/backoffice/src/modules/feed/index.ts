@@ -212,8 +212,8 @@ export const FeedController = new Elysia({
         ),
       },
       detail: {
-        summary: 'Create feed reaction',
-        description: 'Add a reaction to a feed item by its ID',
+        summary: 'Update feed reaction',
+        description: 'Update a reaction in feed item by its ID',
       },
     }
   )
