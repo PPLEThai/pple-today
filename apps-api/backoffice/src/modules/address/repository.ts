@@ -2,13 +2,13 @@ import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
-import { fromPrismaPromise } from '../../utils/prisma'
+import { fromRepositoryPromise } from '../../utils/error'
 
 export class AddressRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
   async getProvinces() {
-    const provinces = await fromPrismaPromise(
+    const provinces = await fromRepositoryPromise(
       this.prismaService.address.findMany({
         distinct: ['province'],
         select: { province: true },
@@ -24,7 +24,7 @@ export class AddressRepository {
   }
 
   async getDistricts(filters?: { province?: string }) {
-    const districts = await fromPrismaPromise(
+    const districts = await fromRepositoryPromise(
       this.prismaService.address.findMany({
         where: {
           province: filters?.province && { equals: filters.province },
@@ -43,7 +43,7 @@ export class AddressRepository {
   }
 
   async getSubDistricts(filters?: { province?: string; district?: string }) {
-    const subDistricts = await fromPrismaPromise(
+    const subDistricts = await fromRepositoryPromise(
       this.prismaService.address.findMany({
         where: {
           province: filters?.province && { equals: filters.province },
@@ -63,7 +63,7 @@ export class AddressRepository {
   }
 
   async getPostalCodes(filters?: { province?: string; district?: string; subDistrict?: string }) {
-    const postalCodes = await fromPrismaPromise(
+    const postalCodes = await fromRepositoryPromise(
       this.prismaService.address.findMany({
         where: {
           province: filters?.province && { equals: filters.province },
