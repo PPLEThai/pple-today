@@ -6,25 +6,17 @@ export type FilePermission = (typeof FilePermission)[keyof typeof FilePermission
 
 export type FileTransactionEntry =
   | {
+      action: 'PERMISSION'
       target: string
-      action: {
-        type: 'PERMISSION'
-        permission: {
-          before: FilePermission
-          after: FilePermission
-        }
-      }
+      before: FilePermission
+      after: FilePermission
     }
   | {
-      target: string
-      action: {
-        type: 'MOVE'
-        to: string
-      }
+      action: 'MOVE'
+      from: string
+      to: string
     }
   | {
+      action: 'UPLOAD'
       target: string
-      action: {
-        type: 'UPLOAD'
-      }
     }

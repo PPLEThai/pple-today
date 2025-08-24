@@ -51,28 +51,32 @@ export class FileService {
     this.bucket = this.storage.bucket(config.bucketName)
   }
 
-  private async moveFileAndPermission(
-    file: string,
-    prefix: string,
-    shareType: 'PUBLIC' | 'PRIVATE'
-  ) {
+  private async moveFileAndPermission(file: string, prefix: string, shareType: FilePermission) {
     const newPath = `${prefix}${this.getFilePath(file)}`
-    const realAttachment = await this.moveFile(file, newPath)
+    const moveResult = await this.moveFile(file, newPath)
 
-    if (realAttachment.isErr()) {
-      return err(realAttachment.error)
+    if (moveResult.isErr()) {
+      return err(moveResult.error)
     }
 
-    let editShareTypeResult
+    let updatePermissionResult
 
-    if (shareType === FilePermission.PUBLIC) editShareTypeResult = await this.markAsPublic(newPath)
-    else editShareTypeResult = await this.markAsPrivate(newPath)
+    switch (shareType) {
+      case FilePermission.PUBLIC:
+        updatePermissionResult = await this.markAsPublic(newPath)
+        break
+      case FilePermission.PRIVATE:
+        updatePermissionResult = await this.markAsPrivate(newPath)
+        break
+      default:
+        exhaustiveGuard(shareType)
+    }
 
-    if (editShareTypeResult.isErr()) {
+    if (updatePermissionResult.isErr()) {
       const revertPosition = await this.moveFile(newPath, file)
       if (revertPosition.isErr()) return err(revertPosition.error)
 
-      return err(editShareTypeResult.error)
+      return err(updatePermissionResult.error)
     }
 
     return ok(newPath)
@@ -82,11 +86,7 @@ export class FileService {
     const moveResults = await Promise.all(
       files.map(async (file) => {
         if (file.startsWith(prefix)) return ok(file)
-
-        const moveResult = await this.moveFileAndPermission(file, prefix, permission)
-        if (moveResult.isErr()) return err(moveResult.error)
-
-        return ok(moveResult.value)
+        return await this.moveFileAndPermission(file, prefix, permission)
       })
     )
 
@@ -101,47 +101,21 @@ export class FileService {
   }
 
   getFilePath(fullPath: string) {
-    let sliceRange = 0
-    if (fullPath.startsWith(this.prefixPublicFolder)) sliceRange = this.prefixPublicFolder.length
-    else if (fullPath.startsWith(this.prefixPrivateFolder))
-      sliceRange = this.prefixPrivateFolder.length
-    else if (fullPath.startsWith(this.prefixTempFolder)) sliceRange = this.prefixTempFolder.length
-    else if (fullPath.startsWith(this.prefixDeletedFolder))
-      sliceRange = this.prefixDeletedFolder.length
-
-    return fullPath.slice(sliceRange)
+    return fullPath.split('/')[0]
   }
 
   async markAsPublic(file: string) {
-    const results = await fromPromise(this.bucket.file(file).makePublic(), (err) => ({
-      code: InternalErrorCode.FILE_MOVE_ERROR,
-      message: (err as Error).message,
+    return await fromPromise(this.bucket.file(file).makePublic(), (err) => ({
+      code: InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
+      message: err instanceof Error ? err.message : '',
     }))
-
-    if (results.isErr()) {
-      return err({
-        code: InternalErrorCode.FILE_MOVE_ERROR,
-        message: 'Failed to move one or more files',
-      })
-    }
-
-    return ok(file)
   }
 
   async markAsPrivate(file: string) {
-    const results = await fromPromise(this.bucket.file(file).makePrivate(), (err) => ({
+    return await fromPromise(this.bucket.file(file).makePrivate(), (err) => ({
       code: InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
-      message: (err as Error).message,
+      message: err instanceof Error ? err.message : '',
     }))
-
-    if (results.isErr()) {
-      return err({
-        code: InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
-        message: 'Failed to move one or more files',
-      })
-    }
-
-    return ok(file)
   }
 
   async bulkMoveToPrivateFolder(files: string[]) {
@@ -379,11 +353,9 @@ export class FileTransactionService {
     }
 
     this.transaction.push({
-      target: fileKey,
-      action: {
-        type: 'MOVE',
-        to,
-      },
+      action: 'MOVE',
+      from: fileKey,
+      to,
     })
 
     return ok(fileKey)
@@ -410,14 +382,10 @@ export class FileTransactionService {
     }
 
     const transactionEntry: FileTransactionEntry = {
+      action: 'PERMISSION',
       target: newFileKey,
-      action: {
-        type: 'PERMISSION',
-        permission: {
-          before: beforePermission,
-          after: permission,
-        },
-      },
+      before: beforePermission,
+      after: permission,
     }
 
     this.transaction.push(transactionEntry)
@@ -463,9 +431,7 @@ export class FileTransactionService {
 
     this.transaction.push({
       target: fileKey,
-      action: {
-        type: 'UPLOAD',
-      },
+      action: 'UPLOAD',
     })
 
     return ok(fileKey)
@@ -480,9 +446,7 @@ export class FileTransactionService {
 
     this.transaction.push({
       target: fileKey,
-      action: {
-        type: 'UPLOAD',
-      },
+      action: 'UPLOAD',
     })
 
     return ok(fileKey)
@@ -510,19 +474,18 @@ export class FileTransactionService {
       if (!entry) break
 
       this.fileService.loggerService.warn({
-        message: `Rolling back file operation: ${entry.action.type}`,
+        message: `Rolling back file operation: ${entry.action}`,
         context: {
-          fileKey: entry.target,
-          action: entry.action,
+          entry,
         },
       })
 
       let result
-      switch (entry.action.type) {
+      switch (entry.action) {
         case 'PERMISSION':
-          if (entry.action.permission.before === entry.action.permission.after) continue
+          if (entry.before === entry.after) continue
 
-          if (entry.action.permission.before === FilePermission.PUBLIC)
+          if (entry.before === FilePermission.PUBLIC)
             result = await this.fileService.markAsPublic(entry.target)
           else result = await this.fileService.markAsPrivate(entry.target)
 
@@ -530,20 +493,20 @@ export class FileTransactionService {
             this.transaction.push(entry)
             return err({
               code: InternalErrorCode.FILE_ROLLBACK_FAILED,
-              message: `Failed to delete file ${entry.target} during rollback`,
+              message: `Failed to change file permission for ${entry.target} during rollback`,
             })
           }
 
           break
         case 'MOVE':
-          if (entry.action.to === entry.target) continue
-          result = await this.fileService.moveFile(entry.action.to, entry.target)
+          if (entry.to === entry.from) continue
+          result = await this.fileService.moveFile(entry.to, entry.from)
 
           if (result.isErr()) {
             this.transaction.push(entry)
             return err({
               code: InternalErrorCode.FILE_ROLLBACK_FAILED,
-              message: `Failed to delete file ${entry.target} during rollback`,
+              message: `Failed to move file ${entry.from} during rollback`,
             })
           }
 
@@ -561,7 +524,7 @@ export class FileTransactionService {
 
           break
         default:
-          exhaustiveGuard(entry.action)
+          exhaustiveGuard(entry)
       }
     }
 

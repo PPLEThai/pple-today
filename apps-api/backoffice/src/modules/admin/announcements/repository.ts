@@ -208,22 +208,26 @@ export class AdminAnnouncementRepository {
   }
 
   async updateAnnouncementById(announcementId: string, data: PutPublishedAnnouncementBody) {
-    const uploadAttachmentResult = await fromRepositoryPromise(
-      this.fileService.$transaction(async (fileTx) => {
-        const announcement = await this.prismaService.announcement.findUniqueOrThrow({
-          where: { feedItemId: announcementId },
-          select: {
-            attachments: {
-              select: {
-                filePath: true,
-              },
+    const announcement = await fromRepositoryPromise(
+      this.prismaService.announcement.findUniqueOrThrow({
+        where: { feedItemId: announcementId },
+        select: {
+          attachments: {
+            select: {
+              filePath: true,
             },
           },
-        })
+        },
+      })
+    )
 
+    if (announcement.isErr()) return err(announcement.error)
+
+    const uploadAttachmentResult = await fromRepositoryPromise(
+      this.fileService.$transaction(async (fileTx) => {
         const cleanUpResult = await this.cleanUpUnusedAttachment(
           fileTx,
-          announcement.attachments.map((attachment) => attachment.filePath as FilePath),
+          announcement.value.attachments.map((attachment) => attachment.filePath as FilePath),
           data.attachmentFilePaths
         )
 
