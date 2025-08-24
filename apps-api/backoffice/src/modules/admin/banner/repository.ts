@@ -4,7 +4,7 @@ import { err, ok } from 'neverthrow'
 import { BannerNavigationType, BannerStatusType } from '../../../../__generated__/prisma'
 import { FilePath } from '../../../dtos/file'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
-import { fromRepositoryPromise, throwWithReturnType } from '../../../utils/error'
+import { fromRepositoryPromise } from '../../../utils/error'
 import { FileService, FileServicePlugin } from '../../file/services'
 
 export class AdminBannerRepository {
@@ -38,7 +38,7 @@ export class AdminBannerRepository {
     const moveFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
         const moveResult = await fileTx.bulkMoveToPublicFolder([data.imageFilePath])
-        if (moveResult.isErr()) return throwWithReturnType(moveResult)
+        if (moveResult.isErr()) return moveResult
 
         return moveResult.value[0]
       })
@@ -96,11 +96,11 @@ export class AdminBannerRepository {
 
         if (existingBanner.imageFilePath !== data.imageFilePath) {
           const deleteResult = await fileTx.removeFile(existingBanner.imageFilePath as FilePath)
-          if (deleteResult.isErr()) return throwWithReturnType(deleteResult)
+          if (deleteResult.isErr()) return deleteResult
         }
 
         const moveResult = await fileTx.bulkMoveToPublicFolder([data.imageFilePath])
-        if (moveResult.isErr()) return throwWithReturnType(moveResult)
+        if (moveResult.isErr()) return moveResult
 
         return moveResult.value[0]
       })
@@ -141,7 +141,7 @@ export class AdminBannerRepository {
         })
 
         const deleteResult = await fileTx.removeFile(existingBanner.imageFilePath as FilePath)
-        if (deleteResult.isErr()) return throwWithReturnType(deleteResult)
+        if (deleteResult.isErr()) return deleteResult
 
         return deleteResult.value
       })

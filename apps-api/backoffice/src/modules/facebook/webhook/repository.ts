@@ -7,7 +7,7 @@ import { FeedItemType, PostAttachment, PostAttachmentType } from '../../../../__
 import { InternalErrorCode } from '../../../dtos/error'
 import { FilePath } from '../../../dtos/file'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
-import { err, throwWithReturnType } from '../../../utils/error'
+import { err } from '../../../utils/error'
 import { fromRepositoryPromise } from '../../../utils/error'
 import { getFileName } from '../../../utils/facebook'
 import { FileService, FileServicePlugin } from '../../file/services'
@@ -44,7 +44,7 @@ export class FacebookWebhookRepository {
         const deleteResult = await fileTx.bulkRemoveFile(requiredDelete as FilePath[])
 
         if (deleteResult.isErr()) {
-          return throwWithReturnType(deleteResult)
+          return deleteResult
         }
 
         const result = await Promise.all(
@@ -54,13 +54,13 @@ export class FacebookWebhookRepository {
             const uploadResult = await fileTx.uploadFileFromUrl(attachment.url, newFilename)
 
             if (uploadResult.isErr()) {
-              return throwWithReturnType(uploadResult)
+              return uploadResult
             }
 
             const moveToPublicFolderResult = await fileTx.bulkMoveToPublicFolder([newFilename])
 
             if (moveToPublicFolderResult.isErr()) {
-              return throwWithReturnType(moveToPublicFolderResult)
+              return moveToPublicFolderResult
             }
 
             return ok({
@@ -78,12 +78,10 @@ export class FacebookWebhookRepository {
         )
 
         if (resultWithoutFailed.length !== result.length) {
-          return throwWithReturnType(
-            err({
-              code: InternalErrorCode.FILE_UPLOAD_ERROR,
-              message: 'File upload failed',
-            })
-          )
+          return err({
+            code: InternalErrorCode.FILE_UPLOAD_ERROR,
+            message: 'File upload failed',
+          })
         }
 
         return {
@@ -243,7 +241,7 @@ export class FacebookWebhookRepository {
           existingPost.value?.attachments.map((a) => a.url as FilePath) ?? []
         )
 
-        if (bulkDeleteResult.isErr()) return throwWithReturnType(bulkDeleteResult)
+        if (bulkDeleteResult.isErr()) return bulkDeleteResult
       })
     )
 

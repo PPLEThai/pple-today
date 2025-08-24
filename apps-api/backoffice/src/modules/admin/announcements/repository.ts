@@ -7,7 +7,7 @@ import { FeedItemType } from '../../../../__generated__/prisma'
 import { InternalErrorCode } from '../../../dtos/error'
 import { FilePath } from '../../../dtos/file'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
-import { err, fromRepositoryPromise, throwWithReturnType } from '../../../utils/error'
+import { err, fromRepositoryPromise } from '../../../utils/error'
 import { FileService, FileServicePlugin, FileTransactionService } from '../../file/services'
 
 export class AdminAnnouncementRepository {
@@ -232,18 +232,16 @@ export class AdminAnnouncementRepository {
         )
 
         if (cleanUpResult.isErr()) {
-          return throwWithReturnType(cleanUpResult)
+          return cleanUpResult
         }
 
         const movePublicResult = await fileTx.bulkMoveToPublicFolder(data.attachmentFilePaths)
 
         if (movePublicResult.isErr()) {
-          return throwWithReturnType(
-            err({
-              code: InternalErrorCode.FILE_MOVE_ERROR,
-              message: 'Failed to move one or more files',
-            })
-          )
+          return err({
+            code: InternalErrorCode.FILE_MOVE_ERROR,
+            message: 'Failed to move one or more files',
+          })
         }
 
         return movePublicResult.value
@@ -301,7 +299,7 @@ export class AdminAnnouncementRepository {
           announcement.attachments.map((attachment) => attachment.filePath as FilePath)
         )
 
-        if (moveToPrivateResult.isErr()) return throwWithReturnType(moveToPrivateResult)
+        if (moveToPrivateResult.isErr()) return moveToPrivateResult
 
         return moveToPrivateResult.value
       })
@@ -378,7 +376,7 @@ export class AdminAnnouncementRepository {
         )
 
         if (deleteResult.isErr()) {
-          return throwWithReturnType(deleteResult)
+          return deleteResult
         }
 
         return feedItem
@@ -517,10 +515,10 @@ export class AdminAnnouncementRepository {
           data.attachmentFilePaths
         )
 
-        if (cleanUpResult.isErr()) return throwWithReturnType(cleanUpResult)
+        if (cleanUpResult.isErr()) return cleanUpResult
 
         const moveResult = await fileTx.bulkMoveToPrivateFolder(data.attachmentFilePaths)
-        if (moveResult.isErr()) return throwWithReturnType(moveResult)
+        if (moveResult.isErr()) return moveResult
         return moveResult.value
       })
     )
@@ -580,7 +578,7 @@ export class AdminAnnouncementRepository {
         const moveResult = await fileTx.bulkMoveToPublicFolder(
           draftAnnouncement.attachments.map(({ filePath }) => filePath as FilePath)
         )
-        if (moveResult.isErr()) return throwWithReturnType(moveResult)
+        if (moveResult.isErr()) return moveResult
         return moveResult.value
       })
     )
@@ -661,7 +659,7 @@ export class AdminAnnouncementRepository {
         )
 
         if (deleteResult.isErr()) {
-          return throwWithReturnType(deleteResult)
+          return deleteResult
         }
       })
     )

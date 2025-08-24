@@ -14,14 +14,7 @@ import serverEnv from '../../config/env'
 import { InternalErrorCode } from '../../dtos/error'
 import { FilePath } from '../../dtos/file'
 import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '../../plugins/logger'
-import {
-  ApiErrorResponse,
-  err,
-  exhaustiveGuard,
-  OnlyErr,
-  throwWithReturnType,
-  WithoutErr,
-} from '../../utils/error'
+import { ApiErrorResponse, err, exhaustiveGuard, OnlyErr, WithoutErr } from '../../utils/error'
 
 export class FileService {
   public prefixPublicFolder = 'public/' as const
@@ -335,7 +328,7 @@ export class FileService {
       return [await cb(fileTransaction), fileTransaction] as any
     } catch (err) {
       const rollbackResult = await fileTransaction.rollback()
-      if (rollbackResult.isErr()) return throwWithReturnType(rollbackResult) as any
+      if (rollbackResult.isErr()) return rollbackResult as any
       throw err
     }
   }

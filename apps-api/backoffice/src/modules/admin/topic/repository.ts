@@ -5,7 +5,7 @@ import { UpdateTopicBody } from './models'
 
 import { FilePath } from '../../../dtos/file'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
-import { err, throwWithReturnType } from '../../../utils/error'
+import { err } from '../../../utils/error'
 import { fromRepositoryPromise } from '../../../utils/error'
 import { FileService, FileServicePlugin } from '../../file/services'
 
@@ -98,14 +98,14 @@ export class AdminTopicRepository {
         const isSameBannerUrl = existingTopic.bannerImage === data.bannerImage
         if (!isSameBannerUrl && existingTopic.bannerImage) {
           const moveResult = await fileTx.removeFile(existingTopic.bannerImage as FilePath)
-          if (moveResult.isErr()) return throwWithReturnType(moveResult)
+          if (moveResult.isErr()) return moveResult
         }
 
         let newBannerImage = data.bannerImage
 
         if (data.bannerImage) {
           const moveResult = await fileTx.bulkMoveToPublicFolder([data.bannerImage])
-          if (moveResult.isErr()) return throwWithReturnType(moveResult)
+          if (moveResult.isErr()) return moveResult
           newBannerImage = moveResult.value[0]
         }
 
@@ -163,7 +163,7 @@ export class AdminTopicRepository {
       this.fileService.$transaction(async (fileTx) => {
         if (!existingTopic.value.bannerImage) return
         const txDeleteResult = await fileTx.removeFile(existingTopic.value.bannerImage as FilePath)
-        if (txDeleteResult.isErr()) return throwWithReturnType(txDeleteResult)
+        if (txDeleteResult.isErr()) return txDeleteResult
       })
     )
 
