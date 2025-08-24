@@ -1,6 +1,6 @@
 import { Static, t } from 'elysia'
 
-export const ExternalFacebookErrorBody = t.Object({
+export const ErrorBody = t.Object({
   error: t.Object({
     message: t.String({ description: 'Message describing the error' }),
     type: t.String({ description: 'Type of the error' }),
@@ -11,17 +11,17 @@ export const ExternalFacebookErrorBody = t.Object({
     error_user_msg: t.Optional(t.String({ description: 'User-facing error message' })),
   }),
 })
-export type ExternalFacebookErrorBody = Static<typeof ExternalFacebookErrorBody>
+export type ErrorBody = Static<typeof ErrorBody>
 
-export const ExternalFacebookPageCursor = t.Object({
+export const PageCursor = t.Object({
   cursors: t.Object({
     before: t.String({ description: 'Cursor for the previous page' }),
     after: t.String({ description: 'Cursor for the next page' }),
   }),
 })
-export type ExternalFacebookPageCursor = Static<typeof ExternalFacebookPageCursor>
+export type PageCursor = Static<typeof PageCursor>
 
-export const ExternalFacebookAccessTokenResponse = t.Object({
+export const AccessTokenResponse = t.Object({
   access_token: t.String({
     description: 'The access token for the Facebook page',
   }),
@@ -34,9 +34,9 @@ export const ExternalFacebookAccessTokenResponse = t.Object({
     })
   ),
 })
-export type ExternalFacebookAccessTokenResponse = Static<typeof ExternalFacebookAccessTokenResponse>
+export type AccessTokenResponse = Static<typeof AccessTokenResponse>
 
-export const ExternalFacebookInspectAccessTokenResponseBody = t.Object({
+export const InspectAccessTokenResponseBody = t.Object({
   app_id: t.String({
     description: 'The ID of the Facebook app',
   }),
@@ -84,18 +84,14 @@ export const ExternalFacebookInspectAccessTokenResponseBody = t.Object({
     })
   ),
 })
-export type ExternalFacebookInspectAccessTokenResponseBody = Static<
-  typeof ExternalFacebookInspectAccessTokenResponseBody
->
+export type InspectAccessTokenResponseBody = Static<typeof InspectAccessTokenResponseBody>
 
-export const ExternalFacebookInspectAccessTokenResponse = t.Object({
-  data: ExternalFacebookInspectAccessTokenResponseBody,
+export const InspectAccessTokenResponse = t.Object({
+  data: InspectAccessTokenResponseBody,
 })
-export type ExternalFacebookInspectAccessTokenResponse = Static<
-  typeof ExternalFacebookInspectAccessTokenResponse
->
+export type InspectAccessTokenResponse = Static<typeof InspectAccessTokenResponse>
 
-export const ExternalFacebookGetProfileImageResponse = t.Object(
+export const GetProfileImageResponse = t.Object(
   {
     data: t.Object({
       url: t.String({
@@ -118,11 +114,9 @@ export const ExternalFacebookGetProfileImageResponse = t.Object(
     description: 'Response containing the profile picture URL of the Facebook user',
   }
 )
-export type ExternalFacebookGetProfileImageResponse = Static<
-  typeof ExternalFacebookGetProfileImageResponse
->
+export type GetProfileImageResponse = Static<typeof GetProfileImageResponse>
 
-export const ExternalFacebookGetPageDetailsResponse = t.Object(
+export const GetPageDetailsResponse = t.Object(
   {
     access_token: t.String({
       description: 'The access token for the Facebook page',
@@ -133,19 +127,17 @@ export const ExternalFacebookGetPageDetailsResponse = t.Object(
     name: t.String({
       description: 'The name of the Facebook page',
     }),
-    picture: ExternalFacebookGetProfileImageResponse,
+    picture: GetProfileImageResponse,
   },
   {
     description: 'Response containing details of a Facebook page',
   }
 )
-export type ExternalFacebookGetPageDetailsResponse = Static<
-  typeof ExternalFacebookGetPageDetailsResponse
->
+export type GetPageDetailsResponse = Static<typeof GetPageDetailsResponse>
 
-export const ExternalFacebookListUserPageResponse = t.Object(
+export const ListUserPageResponse = t.Object(
   {
-    data: t.Array(ExternalFacebookGetPageDetailsResponse),
+    data: t.Array(GetPageDetailsResponse),
     paging: t.Optional(
       t.Object({
         cursors: t.Object({
@@ -159,19 +151,17 @@ export const ExternalFacebookListUserPageResponse = t.Object(
     description: 'Response containing the list of Facebook pages for the user',
   }
 )
-export type ExternalFacebookListUserPageResponse = Static<
-  typeof ExternalFacebookListUserPageResponse
->
+export type ListUserPageResponse = Static<typeof ListUserPageResponse>
 
-export const ExternalFacebookPostMessageHashtag = t.Object({
+export const PostMessageHashtag = t.Object({
   id: t.String({ description: 'ID of the hashtag' }),
   name: t.String({ description: 'Name of the hashtag' }),
   offset: t.Number({ description: 'Offset in the message where the hashtag starts' }),
   length: t.Number({ description: 'Length of the hashtag in characters' }),
 })
-export type ExternalFacebookPostMessageHashtag = Static<typeof ExternalFacebookPostMessageHashtag>
+export type PostMessageHashtag = Static<typeof PostMessageHashtag>
 
-export const ExternalFacebookPostAttachment = t.Object({
+export const PostAttachment = t.Object({
   description: t.Optional(t.String({ description: 'Description of the attachment' })),
   media: t.Object({
     image: t.Object({
@@ -190,25 +180,23 @@ export const ExternalFacebookPostAttachment = t.Object({
   type: t.String({ description: 'Type of the attachment (e.g., photo)' }),
   url: t.String({ description: 'URL of the attachment', format: 'uri' }),
 })
-export type ExternalFacebookPostAttachment = Static<typeof ExternalFacebookPostAttachment>
+export type PostAttachment = Static<typeof PostAttachment>
 
-export const ExternalFacebookPostAttachmentWithSubAttachment = t.Composite([
-  ExternalFacebookPostAttachment,
+export const PostAttachmentWithSubAttachment = t.Composite([
+  PostAttachment,
   t.Object({
     subattachments: t.Optional(
       t.Object({
-        data: t.Array(ExternalFacebookPostAttachment, {
+        data: t.Array(PostAttachment, {
           description: 'List of sub-attachments in the post',
         }),
       })
     ),
   }),
 ])
-export type ExternalFacebookPostAttachmentWithSubAttachment = Static<
-  typeof ExternalFacebookPostAttachmentWithSubAttachment
->
+export type PostAttachmentWithSubAttachment = Static<typeof PostAttachmentWithSubAttachment>
 
-export const ExternalFacebookPagePost = t.Object({
+export const PagePost = t.Object({
   id: t.String({ description: 'ID of the Facebook page post' }),
   message: t.Optional(t.String({ description: 'Content of the Facebook page post' })),
   created_time: t.String({ description: 'Creation time of the post in ISO 8601 format' }),
@@ -219,7 +207,7 @@ export const ExternalFacebookPagePost = t.Object({
   message_tags: t.Optional(
     t.Array(
       t.Object({
-        data: ExternalFacebookPostMessageHashtag,
+        data: PostMessageHashtag,
       }),
       {
         description: 'List of hashtags in the post message',
@@ -228,23 +216,127 @@ export const ExternalFacebookPagePost = t.Object({
   ),
   attachments: t.Optional(
     t.Object({
-      data: t.Array(ExternalFacebookPostAttachmentWithSubAttachment, {
+      data: t.Array(PostAttachmentWithSubAttachment, {
         description: 'List of attachments in the post',
       }),
     })
   ),
 })
-export type ExternalFacebookPagePost = Static<typeof ExternalFacebookPagePost>
+export type PagePost = Static<typeof PagePost>
 
-export const ExternalFacebookGetPagePostsResponse = t.Object(
+export const GetPagePostsResponse = t.Object(
   {
-    data: t.Array(ExternalFacebookPagePost),
-    paging: t.Optional(ExternalFacebookPageCursor),
+    data: t.Array(PagePost),
+    paging: t.Optional(PageCursor),
   },
   {
     description: 'Response containing details of a Facebook page post',
   }
 )
-export type ExternalFacebookGetPagePostsResponse = Static<
-  typeof ExternalFacebookGetPagePostsResponse
->
+export type GetPagePostsResponse = Static<typeof GetPagePostsResponse>
+
+export const WebhookChangesVerb = {
+  ADD: 'add',
+  EDIT: 'edited',
+  REMOVE: 'remove',
+} as const
+export type WebhookChangesVerb = (typeof WebhookChangesVerb)[keyof typeof WebhookChangesVerb]
+
+export const WebhookFeedType = {
+  STATUS: 'status',
+  VIDEO: 'video',
+  COMMENT: 'comment',
+  REACTION: 'reaction',
+  SHARE: 'share',
+  PHOTO: 'photo',
+} as const
+export type WebhookFeedType = (typeof WebhookFeedType)[keyof typeof WebhookFeedType]
+
+export const WebhookBaseChangesFeedValue = t.Object({
+  from: t.Object({
+    id: t.String({ description: 'ID of the user who posted' }),
+    name: t.String({ description: 'Name of the user who posted' }),
+  }),
+  post_id: t.String({ description: 'ID of the post' }),
+  created_time: t.Number({ description: 'Creation time of the post in seconds since epoch' }),
+  verb: t.Enum(WebhookChangesVerb),
+  published: t.Union([t.Literal(1), t.Literal(0)]),
+})
+
+export const WebhookFeedChanges = t.Union([
+  t.Composite([
+    WebhookBaseChangesFeedValue,
+    t.Object({
+      item: t.Literal(WebhookFeedType.PHOTO),
+      link: t.String({ description: 'Link to the photo', format: 'uri' }),
+      message: t.Optional(t.String({ description: 'Content of the post' })),
+    }),
+  ]),
+  t.Composite([
+    WebhookBaseChangesFeedValue,
+    t.Object({
+      item: t.Literal(WebhookFeedType.STATUS),
+      photos: t.Optional(t.Array(t.String({ description: 'Array of photo URLs', format: 'uri' }))),
+      message: t.Optional(t.String({ description: 'Content of the post' })),
+    }),
+  ]),
+  t.Composite([
+    WebhookBaseChangesFeedValue,
+    t.Object({
+      item: t.Literal(WebhookFeedType.VIDEO),
+      video_id: t.Optional(t.String({ description: 'ID of the video' })),
+      link: t.Optional(t.String({ description: 'Link to the video', format: 'uri' })),
+      message: t.Optional(t.String({ description: 'Content of the post' })),
+    }),
+  ]),
+  t.Composite([
+    WebhookBaseChangesFeedValue,
+    t.Object({
+      item: t.Literal(WebhookFeedType.COMMENT),
+      comment_id: t.String({ description: 'ID of the comment' }),
+      message: t.Optional(t.String({ description: 'Content of the comment' })),
+      parent_id: t.Optional(
+        t.String({ description: 'ID of the parent post or comment, if applicable' })
+      ),
+      post: t.Object({
+        status_type: t.String({
+          description: 'Type of the post (e.g., status, photo, video)',
+        }),
+        is_published: t.Boolean({
+          description: 'Indicates whether the post is published',
+        }),
+        updated_time: t.String({
+          description: 'Last update time of the post in ISO 8601 format',
+          format: 'date-time',
+        }),
+        permalink_url: t.String({
+          description: 'Permanent link to the post',
+        }),
+        promotion_status: t.String({
+          description: 'Promotion status of the post (e.g., active, inactive)',
+        }),
+        id: t.String({
+          description: 'ID of the post',
+        }),
+      }),
+    }),
+  ]),
+  t.Composite([
+    WebhookBaseChangesFeedValue,
+    t.Object({
+      item: t.Literal(WebhookFeedType.REACTION),
+      reaction_type: t.String({ description: 'Type of the reaction (e.g., like, love, wow)' }),
+      parent_id: t.String({ description: 'ID of the parent post or comment, if applicable' }),
+    }),
+  ]),
+  t.Composite([
+    WebhookBaseChangesFeedValue,
+    t.Object({
+      item: t.Literal(WebhookFeedType.SHARE),
+      share_id: t.String({ description: 'ID of the share' }),
+      link: t.String({ description: 'Link to the shared content' }),
+      message: t.Optional(t.String({ description: 'Content of the post' })),
+    }),
+  ]),
+])
+export type WebhookFeedChanges = Static<typeof WebhookFeedChanges>

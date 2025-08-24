@@ -12,11 +12,11 @@ import { PollsServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
-import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
+import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 
 export const PollsController = new Elysia({
   prefix: '/polls',
-  tags: ['Application Polls'],
+  tags: ['Polls'],
 })
   .use([AuthGuardPlugin, PollsServicePlugin])
   .get(
@@ -52,20 +52,7 @@ export const PollsController = new Elysia({
       const result = await pollsService.createPollVote(user.id, params.id, params.optionId)
 
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.POLL_ALREADY_VOTED:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.POLL_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.POLL_OPTION_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.POLL_ALREADY_ENDED:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(201, { message: 'Vote created successfully' })
@@ -95,16 +82,7 @@ export const PollsController = new Elysia({
       const result = await pollsService.deletePollVote(user.id, params.id, params.optionId)
 
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.POLL_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.POLL_ALREADY_ENDED:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, { message: 'Vote deleted successfully' })

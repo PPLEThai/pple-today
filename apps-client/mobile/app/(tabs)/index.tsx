@@ -48,20 +48,16 @@ import {
   CirclePlusIcon,
   ClockIcon,
   ContactRoundIcon,
-  HeartCrackIcon,
-  HeartHandshakeIcon,
   MapPinIcon,
   MapPinnedIcon,
   MegaphoneIcon,
-  MessageCircleIcon,
   RadioTowerIcon,
-  Share2Icon,
 } from 'lucide-react-native'
 
 import { GetBannersResponse } from '@api/backoffice/src/modules/banner/models'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AnnouncementCard } from '@app/components/announcement'
-import { KeyboardAvoidingViewLayout } from '@app/components/keyboard-avoiding-view-layout'
+import { PostCard } from '@app/components/feed/post-card'
 import { environment } from '@app/env'
 import { useAuthMe, useSessionQuery } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
@@ -71,44 +67,42 @@ import { ExpoScrollForwarderView } from '../../../../packages/expo-scroll-forwar
 
 export default function IndexLayout() {
   return (
-    <KeyboardAvoidingViewLayout>
-      <Pager>
-        <PagerHeader>
-          <PagerHeaderOnly>
-            <MainHeader />
-            <View className="flex flex-col w-full bg-base-bg-white">
-              <BannerSection />
-              {/* <EventSection /> */}
-              <UserInfoSection />
-            </View>
-            <View className="px-4 bg-base-bg-white flex flex-row items-start ">
-              <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
-            </View>
-          </PagerHeaderOnly>
-          <PagerTabBar>
-            <Button variant="ghost" aria-label="Add Label" className="mb-px" size="icon">
-              <Icon
-                icon={CirclePlusIcon}
-                strokeWidth={1}
-                className="text-base-secondary-default"
-                size={24}
-              />
-            </Button>
-            <PagerTabBarItem index={0}>สำหรับคุณ</PagerTabBarItem>
-            <PagerTabBarItem index={1}>กำลังติดตาม</PagerTabBarItem>
-            <PagerTabBarItem index={2}>กรุงเทพฯ</PagerTabBarItem>
-            <PagerTabBarItemIndicator />
-          </PagerTabBar>
-        </PagerHeader>
-        <PagerContentView>
-          {Array.from({ length: 3 }).map((_, index) => (
-            <View key={index} collapsable={false}>
-              <PagerContent index={index} />
-            </View>
-          ))}
-        </PagerContentView>
-      </Pager>
-    </KeyboardAvoidingViewLayout>
+    <Pager>
+      <PagerHeader>
+        <PagerHeaderOnly>
+          <MainHeader />
+          <View className="flex flex-col w-full bg-base-bg-white">
+            <BannerSection />
+            {/* <EventSection /> */}
+            <UserInfoSection />
+          </View>
+          <View className="px-4 bg-base-bg-white flex flex-row items-start ">
+            <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
+          </View>
+        </PagerHeaderOnly>
+        <PagerTabBar>
+          <Button variant="ghost" aria-label="Add Label" className="mb-px" size="icon">
+            <Icon
+              icon={CirclePlusIcon}
+              strokeWidth={1}
+              className="text-base-secondary-default"
+              size={24}
+            />
+          </Button>
+          <PagerTabBarItem index={0}>สำหรับคุณ</PagerTabBarItem>
+          <PagerTabBarItem index={1}>กำลังติดตาม</PagerTabBarItem>
+          <PagerTabBarItem index={2}>กรุงเทพฯ</PagerTabBarItem>
+          <PagerTabBarItemIndicator />
+        </PagerTabBar>
+      </PagerHeader>
+      <PagerContentView>
+        {Array.from({ length: 3 }).map((_, index) => (
+          <View key={index} collapsable={false}>
+            <PagerContent index={index} />
+          </View>
+        ))}
+      </PagerContentView>
+    </Pager>
   )
 }
 
@@ -787,6 +781,7 @@ function PagerContent({ index }: { index: number }) {
     }
   }, [isFocused, scrollElRef, setScrollViewTag])
   return (
+    // TODO: use flashlist
     <Animated.FlatList
       ref={scrollElRef}
       onScroll={scrollHandler}
@@ -796,16 +791,40 @@ function PagerContent({ index }: { index: number }) {
       // contentOffset={{ x: 0, y: -headerHeight }}
       // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
       // automaticallyAdjustsScrollIndicatorInsets={false}
-      data={Array.from({ length: 5 }, (_, i) => `Item ${i + 1}`)}
+      data={Array.from({ length: 6 }, (_, i) => `Item ${i + 1}`)}
       contentContainerClassName="py-4 flex flex-col"
       // TODO: data and renderItem should be replaced with actual data
-      renderItem={({ item, index }) => {
-        if (index === 0) {
+      renderItem={({ item, index: itemIndex }) => {
+        if (itemIndex === 0) {
           return <AnnouncementSection />
         }
         return (
           <View className="px-4">
-            <FeedPost />
+            <PostCard
+              firstImageType={(['square', 'landscape', 'portrait'] as const)[index]!}
+              author={{
+                name: 'ศิริโรจน์ ธนิกกุล - Sirirot Thanikkun',
+                district: 'สส.สมุทรสาคร',
+                profileImageUrl: '',
+              }}
+              commentCount={125}
+              content={
+                'พบปะแม่ๆ ชมรมผู้สูงอายุดอกลำดวน ณ หมู่บ้านวารัตน์ 3 ม.5 ต. อ้อมน้อย อ.กระทุ่มแบน จ.สมุทรสาครชวนให้ผมออกสเตปประกอบ'
+              }
+              media={Array.from({ length: itemIndex }).map((_, i) => ({
+                type: 'IMAGE',
+                imageSource: require('@app/assets/post-1.png'),
+              }))}
+              hashTags={[
+                { id: '1', name: '#pridemonth' },
+                { id: '2', name: '#ร่างกฎหมาย68' },
+              ]}
+              createdAt="2025-08-19T14:14:49.406Z"
+              reactions={[
+                { type: 'UP_VOTE', count: 32 },
+                { type: 'DOWN_VOTE', count: 2 },
+              ]}
+            />
           </View>
         )
       }}
@@ -948,107 +967,3 @@ function AnnouncementSection() {
     </View>
   )
 }
-
-const FeedPost = React.memo(function FeedPost() {
-  return (
-    <View className="flex flex-col gap-3 p-4 bg-base-bg-white border border-base-outline-default rounded-2xl mt-4">
-      <View className="flex flex-row items-center justify-between">
-        <View className="flex flex-row items-center">
-          <View className="w-8 h-8 rounded-full bg-base-primary-medium flex items-center justify-center mr-3">
-            <Icon icon={PPLEIcon} width={20} height={20} className="text-white" />
-          </View>
-          <View className="flex flex-col">
-            <Text className="text-base-text-medium font-anakotmai-medium text-sm">
-              ศิริโรจน์ ธนิกกุล - Sirirot Thanikkun
-            </Text>
-            <Text className="text-base-text-medium font-anakotmai-light text-sm">
-              สส.สมุทรสาคร | 1 ชม.
-            </Text>
-          </View>
-        </View>
-        <Button variant="ghost" size="icon" aria-label="Share">
-          <Icon
-            icon={Share2Icon}
-            width={16}
-            height={16}
-            className="text-base-text-high"
-            strokeWidth={1}
-          />
-        </Button>
-      </View>
-      <View className="rounded-lg overflow-hidden">
-        <Image
-          style={{ width: '100%', aspectRatio: 1 }}
-          source={require('@app/assets/post-1.png')}
-          alt=""
-        />
-      </View>
-      <View>
-        <Text className="text-base-text-high font-noto-light text-base">
-          พบปะแม่ๆ ชมรมผู้สูงอายุดอกลำดวน ณ หมู่บ้านวารัตน์ 3 ม.5 ต. อ้อมน้อย อ.กระทุ่มแบน
-          จ.สมุทรสาครชวนให้ผมออกสเตปประกอบ
-        </Text>
-        <Text className="text-base-primary-default font-noto-light text-base">
-          อ่านเพิ่มเติม...
-        </Text>
-      </View>
-      <View className="flex flex-row flex-wrap gap-1">
-        <Badge variant="secondary">
-          <Text>#pridemonth</Text>
-        </Badge>
-        <Badge variant="secondary">
-          <Text>#ร่างกฎหมาย68</Text>
-        </Badge>
-      </View>
-      <View className="flex flex-row justify-between items-center">
-        <View className="flex flex-row gap-1 items-center">
-          <Icon
-            icon={HeartHandshakeIcon}
-            size={18}
-            className="fill-base-primary-medium text-white"
-            strokeWidth={1}
-          />
-          <Text className="text-xs font-anakotmai-light text-base-text-medium">32</Text>
-        </View>
-        <Pressable>
-          <Text className="text-xs font-anakotmai-light text-base-text-medium">
-            125 ความคิดเห็น
-          </Text>
-        </Pressable>
-      </View>
-      <View className="flex flex-col border-t border-base-outline-default pt-4 pb-1">
-        <View className="flex flex-row justify-between gap-2">
-          <View className="flex flex-row gap-2">
-            <Pressable className="flex flex-row items-center gap-1">
-              <Icon
-                icon={HeartHandshakeIcon}
-                size={20}
-                strokeWidth={1}
-                className="text-base-text-high"
-              />
-              <Text className="text-sm font-anakotmai-light text-base-text-high">เห็นด้วย</Text>
-            </Pressable>
-            <Pressable className="flex flex-row items-center gap-1">
-              <Icon
-                icon={HeartCrackIcon}
-                size={20}
-                strokeWidth={1}
-                className="text-base-text-high"
-              />
-              <Text className="text-sm font-anakotmai-light text-base-text-high">ไม่เห็นด้วย</Text>
-            </Pressable>
-          </View>
-          <Pressable className="flex flex-row items-center gap-1">
-            <Icon
-              icon={MessageCircleIcon}
-              size={20}
-              strokeWidth={1}
-              className="text-base-text-high"
-            />
-            <Text className="text-sm font-anakotmai-light text-base-text-high">ความคิดเห็น</Text>
-          </Pressable>
-        </View>
-      </View>
-    </View>
-  )
-})

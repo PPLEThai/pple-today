@@ -2,4 +2,4 @@
 '@api/backoffice': minor
 ---
 
-[PPLE-203] Hashtag Management API
+[PPLE-201] Feed Recommendation

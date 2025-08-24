@@ -12,33 +12,26 @@ Feel free to update this file :)
    pnpm install
    ```
 
-2. Start the app
+2. Setup `.env`
+3. Start the app
 
    ```bash
-   pnpm start
+   pnpm dev
    ```
 
-3. We deprecated the expo go dev server since we use expo-native module. \
-   **Press S** to switch to development build
-   Then **press i** to open iOS or **press a** to open Android \
-   or see Native Development section down below
+4. We deprecated the expo go dev server since we use expo-native module.
+   ```
+   Press i to open iOS
+   Press a to open Android
+   ```
+   if problem occured, please see Development Build section down below
 
-Note: If you have `.env` (environment variable) set up, you can run `pnpm dev` instead
-
-## Android/iOS Development Build
-
-```bash
-pnpm android
-pnpm ios
-```
-
-## Android Native App
+## Android Development Build
 
 1. Generate Native `android/`
 
    ```bash
-   pnpm prebuild # for both ios or android
-   pnpm prebuild:android # android only
+   pnpm prebuild:android
    ```
 
 2. Run App
@@ -47,44 +40,64 @@ pnpm ios
    pnpm android
    ```
 
-3. You can edit Android native code via [Android Studio](https://developer.android.com/studio)
+3. You can also edit Android native code via [Android Studio](https://developer.android.com/studio)
 
    ```bash
    pnpm open:android
    ```
 
-## iOS Native App
+## iOS Development Build
+
+**IMPORTANT** you need a mac
 
 1. Generate Native `ios/`
 
    ```bash
-   pnpm prebuild # for both ios or android
-   pnpm prebuild:ios # ios only
+   pnpm prebuild:ios
    ```
 
-2. Run App
-
-   ```bash
-   pnpm ios
-   ```
-
-3. Open up Xcode
+2. Open `ios/` folder with Xcode \
+   You need to install xcode and iOS development kit
 
    ```bash
    pnpm open:ios
    ```
 
-4. You might need to ask your team for access to Development Team via [App Store Connect](https://appstoreconnect.apple.com/access/users) \
-   in order to build with Xcode
+3. Install fastlane
 
-5. After setup and login to your account \
-   Setup credentials git repo and run the following command
+   ```bash
+   brew install fastlane
+   ```
+
+4. Get shared certificates and provisioning profiles
+
+   You need to ask your team for access to development team via [App Store Connect](https://appstoreconnect.apple.com/access/users)
 
    ```bash
    fastlane match development
    ```
 
+   Ask your team for private git repository access \
+   Input your apple account username and password \
    Read more here https://codesigning.guide/
+
+5. Check your cert and profile in Xcode Project Setting > Signing & Capabilities tab\
+   Make sure it has Development Profile selected \
+   Restart Xcode if Certificate is not available
+
+6. Run App
+
+   ```bash
+   pnpm ios
+   ```
+
+   or you can run on your physical device with
+
+   ```bash
+   pnpm ios:device
+   ```
+
+   check your device and simulators in Xcode > Window > Devices and Simulators
 
 ## Fastlane - Beta Build
 

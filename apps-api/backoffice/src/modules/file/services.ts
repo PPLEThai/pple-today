@@ -224,6 +224,11 @@ export class FileService {
       return result
     }
 
+    const markAsPublicResult = await this.bulkMarkAsPublic([destination])
+    if (markAsPublicResult.isErr()) {
+      return markAsPublicResult
+    }
+
     return ok(destination)
   }
 

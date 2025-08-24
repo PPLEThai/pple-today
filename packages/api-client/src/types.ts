@@ -1,13 +1,13 @@
-import { type EdenFetch } from '@elysiajs/eden/fetch'
-import {
+import type { EdenFetch } from '@elysiajs/eden/fetch'
+import type {
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from '@tanstack/react-query'
-import Elysia from 'elysia'
-import { Prettify2 } from 'elysia/types'
-import { ConditionalExcept, IntClosedRange, IsNever, ValueOf } from 'type-fest'
+import type { AnyElysia } from 'elysia'
+import type { Prettify2 } from 'elysia/types'
+import type { ConditionalExcept, IntClosedRange, IsNever, ValueOf } from 'type-fest'
 
 type ErrorRange = IntClosedRange<300, 599>
 
@@ -140,11 +140,11 @@ export type EdenResponse<TSchema extends Record<string, unknown>> = Prettify2<
     : never
 >
 
-export type GetEdenFetchSchema<T extends Elysia<any, any, any, any, any, any, any>> =
+export type GetEdenFetchSchema<T extends AnyElysia> =
   EdenFetch.Create<T> extends EdenFetch.Fn<infer Schema> ? Schema : never
 
 export type ExtractBodyRequest<
-  TElysia extends Elysia<any, any, any, any, any, any, any>,
+  TElysia extends AnyElysia,
   TMethod extends GetAvailableMethods<GetEdenFetchSchema<TElysia>> = GetAvailableMethods<
     GetEdenFetchSchema<TElysia>
   >,
@@ -159,7 +159,7 @@ export type ExtractBodyRequest<
 > = GetBody<TEndpoint>
 
 export type ExtractBodyResponse<
-  TElysia extends Elysia<any, any, any, any, any, any, any>,
+  TElysia extends AnyElysia,
   TMethod extends GetAvailableMethods<GetEdenFetchSchema<TElysia>> = GetAvailableMethods<
     GetEdenFetchSchema<TElysia>
   >,
@@ -273,7 +273,7 @@ export interface FetchClientInterceptors {
   response: (response: ResponseConfig) => any
 }
 
-export interface CreateReactQueryClientResult<T extends Elysia<any, any, any, any, any, any, any>> {
+export interface CreateReactQueryClientResult<T extends AnyElysia> {
   fetchClient: EdenFetch.Create<T> & {
     interceptors: FetchClientInterceptors
   }

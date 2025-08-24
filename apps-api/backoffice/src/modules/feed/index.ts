@@ -16,6 +16,12 @@ import {
   GetFeedCommentResponse,
   GetFeedContentParams,
   GetFeedContentResponse,
+  GetHashTagFeedQuery,
+  GetHashTagFeedResponse,
+  GetMyFeedQuery,
+  GetMyFeedResponse,
+  GetTopicFeedQuery,
+  GetTopicFeedResponse,
   UpdateFeedCommentBody,
   UpdateFeedCommentParams,
   UpdateFeedCommentResponse,
@@ -24,7 +30,7 @@ import { FeedServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
-import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
+import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 
 export const FeedController = new Elysia({
   prefix: '/feed',
@@ -32,18 +38,104 @@ export const FeedController = new Elysia({
 })
   .use([AuthGuardPlugin, FeedServicePlugin])
   .get(
+    '/me',
+    async ({ query, user, feedService, status }) => {
+      const feedResult = await feedService.getMyFeed(user?.id, {
+        page: query?.page,
+        limit: query?.limit,
+      })
+
+      if (feedResult.isErr()) {
+        return mapErrorCodeToResponse(feedResult.error, status)
+      }
+
+      return status(200, feedResult.value)
+    },
+    {
+      fetchLocalUser: true,
+      query: GetMyFeedQuery,
+      response: {
+        200: GetMyFeedResponse,
+        ...createErrorSchema(
+          InternalErrorCode.FEED_ITEM_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get feed for current user',
+        description: 'Fetch feed items for the currently authenticated user',
+      },
+    }
+  )
+  .get(
+    '/topic',
+    async ({ query, user, status, feedService }) => {
+      const feedResult = await feedService.getTopicFeed(query.topicId, user?.id, {
+        page: query?.page,
+        limit: query?.limit,
+      })
+
+      if (feedResult.isErr()) {
+        return mapErrorCodeToResponse(feedResult.error, status)
+      }
+
+      return status(200, feedResult.value)
+    },
+    {
+      fetchLocalUser: true,
+      query: GetTopicFeedQuery,
+      response: {
+        200: GetTopicFeedResponse,
+        ...createErrorSchema(
+          InternalErrorCode.FEED_ITEM_NOT_FOUND,
+          InternalErrorCode.TOPIC_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get feed by topic',
+        description: 'Fetch feed items associated with a specific topic',
+      },
+    }
+  )
+  .get(
+    '/hashtag',
+    async ({ query, user, status, feedService }) => {
+      const feedResult = await feedService.getHashTagFeed(query.hashTagId, user?.id, {
+        page: query.page,
+        limit: query.limit,
+      })
+
+      if (feedResult.isErr()) {
+        return mapErrorCodeToResponse(feedResult.error, status)
+      }
+
+      return status(200, feedResult.value)
+    },
+    {
+      fetchLocalUser: true,
+      query: GetHashTagFeedQuery,
+      response: {
+        200: GetHashTagFeedResponse,
+        ...createErrorSchema(
+          InternalErrorCode.FEED_ITEM_NOT_FOUND,
+          InternalErrorCode.TOPIC_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get feed by hashtag',
+        description: 'Fetch feed items associated with a specific hashtag',
+      },
+    }
+  )
+  .get(
     '/:id',
     async ({ params, user, status, feedService }) => {
       const result = await feedService.getFeedContentById(params.id, user?.id)
+
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -72,15 +164,9 @@ export const FeedController = new Elysia({
         limit: query.limit,
         page: query.page,
       })
+
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value as GetFeedCommentResponse)
@@ -106,17 +192,9 @@ export const FeedController = new Elysia({
     '/:id/reaction',
     async ({ params, body, user, status, feedService }) => {
       const result = await feedService.createFeedReaction(params.id, user.id, body)
+
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.FEED_ITEM_REACTION_ALREADY_EXISTS:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return result.value
@@ -145,14 +223,7 @@ export const FeedController = new Elysia({
       const result = await feedService.deleteFeedReaction(params.id, user.id)
 
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.FEED_ITEM_REACTION_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -177,15 +248,9 @@ export const FeedController = new Elysia({
     '/:id/comment',
     async ({ params, body, user, status, feedService }) => {
       const result = await feedService.createFeedComment(params.id, user.id, body.content)
+
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.FEED_ITEM_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return result.value
@@ -218,14 +283,7 @@ export const FeedController = new Elysia({
       )
 
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.FEED_ITEM_COMMENT_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)
@@ -253,14 +311,7 @@ export const FeedController = new Elysia({
       const result = await feedService.deleteFeedComment(params.id, params.commentId, user.id)
 
       if (result.isErr()) {
-        switch (result.error.code) {
-          case InternalErrorCode.FEED_ITEM_COMMENT_NOT_FOUND:
-            return mapErrorCodeToResponse(result.error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(result.error, status)
-          default:
-            exhaustiveGuard(result.error)
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(200, result.value)

@@ -6,7 +6,6 @@ import { FacebookRepository, FacebookRepositoryPlugin } from './repository'
 import { InternalErrorCode } from '../../dtos/error'
 import { mapRawPrismaError } from '../../utils/prisma'
 import { FileService, FileServicePlugin } from '../file/services'
-
 export class FacebookService {
   constructor(
     private readonly facebookRepository: FacebookRepository,
@@ -104,6 +103,13 @@ export class FacebookService {
       return err(existingPage.error)
     }
 
+    if (existingPage.value?.managerId) {
+      return err({
+        code: InternalErrorCode.FACEBOOK_PAGE_ALREADY_LINKED,
+        message: 'Facebook page is already linked to another user',
+      })
+    }
+
     const pageDetails = await this.facebookRepository.getFacebookPageById(
       facebookPageAccessToken,
       facebookPageId
@@ -151,31 +157,48 @@ export class FacebookService {
       })
     }
 
+    const subscribeResult = await this.facebookRepository.subscribeToPostUpdates(
+      userId,
+      linkedPage.value.id,
+      facebookPageAccessToken
+    )
+
+    if (subscribeResult.isErr()) {
+      return err(subscribeResult.error)
+    }
+
     return ok(linkedPage.value)
   }
 
   async unlinkFacebookPageFromUser(userId: string) {
-    const unlinkResult = await this.facebookRepository.unlinkFacebookPageFromUser({ userId })
+    const unlinkResult = await this.facebookRepository.unlinkFacebookPageFromUser(userId)
 
     if (unlinkResult.isErr()) {
       return mapRawPrismaError(unlinkResult.error, {
         RECORD_NOT_FOUND: {
-          code: InternalErrorCode.USER_NOT_FOUND,
-          message: 'User not found',
+          code: InternalErrorCode.FACEBOOK_LINKED_PAGE_NOT_FOUND,
+          message: 'Linked Facebook page not found',
         },
       })
     }
 
     const unlinkPostsResult = await this.facebookRepository.unsubscribeFromPostUpdates(
-      userId,
-      unlinkResult.value.id
+      unlinkResult.value.id,
+      unlinkResult.value.pageAccessToken ?? ''
     )
 
     if (unlinkPostsResult.isErr()) {
+      if (
+        unlinkPostsResult.error.code === InternalErrorCode.FACEBOOK_API_ERROR ||
+        unlinkPostsResult.error.code === InternalErrorCode.FACEBOOK_INVALID_RESPONSE
+      ) {
+        return err(unlinkPostsResult.error)
+      }
+
       return mapRawPrismaError(unlinkPostsResult.error, {
         RECORD_NOT_FOUND: {
-          code: InternalErrorCode.USER_NOT_FOUND,
-          message: 'User not found',
+          code: InternalErrorCode.FACEBOOK_LINKED_PAGE_NOT_FOUND,
+          message: 'Linked Facebook page not found',
         },
       })
     }

@@ -86,6 +86,9 @@ const FEED_ERROR_SCHEMA = {
   FEED_ITEM_REACTION_ALREADY_EXISTS: {
     status: 409,
   },
+  FEED_ITEM_ALREADY_EXISTED: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 const ABOUT_US_ERROR_SCHEMA = {
@@ -124,6 +127,21 @@ const FACEBOOK_ERROR_SCHEMA = {
   },
   FACEBOOK_API_ERROR: {
     status: 500,
+  },
+  FACEBOOK_PAGE_ALREADY_LINKED: {
+    status: 409,
+  },
+  FACEBOOK_LINKED_PAGE_NOT_FOUND: {
+    status: 404,
+  },
+  FACEBOOK_WEBHOOK_VERIFICATION_FAILED: {
+    status: 400,
+  },
+  FACEBOOK_WEBHOOK_INVALID_SIGNATURE: {
+    status: 400,
+  },
+  FACEBOOK_WEBHOOK_NOT_SUPPORTED: {
+    status: 501,
   },
 } satisfies InternalErrorSchemas
 

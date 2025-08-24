@@ -5,7 +5,7 @@ import { AuthServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
-import { createErrorSchema, exhaustiveGuard, mapErrorCodeToResponse } from '../../utils/error'
+import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 
 export const AuthController = new Elysia({
   prefix: '/auth',
@@ -19,15 +19,7 @@ export const AuthController = new Elysia({
       const result = await authService.registerUser(oidcUser, query.role)
 
       if (result.isErr()) {
-        const error = result.error
-        switch (error.code) {
-          case InternalErrorCode.AUTH_USER_ALREADY_EXISTS:
-            return mapErrorCodeToResponse(error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(error, status)
-          default:
-            throw new Error('Unhandled error code')
-        }
+        return mapErrorCodeToResponse(result.error, status)
       }
 
       return status(201, {
@@ -56,15 +48,7 @@ export const AuthController = new Elysia({
       const localInfo = await authService.getUserById(user.id)
 
       if (localInfo.isErr()) {
-        const error = localInfo.error
-        switch (error.code) {
-          case InternalErrorCode.AUTH_USER_NOT_FOUND:
-            return mapErrorCodeToResponse(error, status)
-          case InternalErrorCode.INTERNAL_SERVER_ERROR:
-            return mapErrorCodeToResponse(error, status)
-          default:
-            exhaustiveGuard(error)
-        }
+        return mapErrorCodeToResponse(localInfo.error, status)
       }
 
       return status(200, localInfo.value)
