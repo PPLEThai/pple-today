@@ -191,7 +191,7 @@ export const FeedController = new Elysia({
   .put(
     '/:id/reaction',
     async ({ params, body, user, status, feedService }) => {
-      const result = await feedService.createFeedReaction(params.id, user.id, body)
+      const result = await feedService.upsertFeedReaction(params.id, user.id, body)
 
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
