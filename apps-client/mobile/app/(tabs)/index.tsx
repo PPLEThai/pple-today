@@ -367,11 +367,10 @@ function FeedContent(props: FeedContentProps) {
                 key={item.id}
                 id={item.id}
                 author={item.author}
-                attachments={item.post.attachments ?? []}
+                attachments={item.post.attachments}
                 commentCount={item.commentCount}
                 content={item.post.content}
                 createdAt={item.createdAt.toString()}
-                firstImageType="square"
                 hashTags={item.post.hashTags}
                 reactions={item.reactions}
                 userReaction={item.userReaction}

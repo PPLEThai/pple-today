@@ -63,8 +63,7 @@ interface PostCardProps {
   content: string
   reactions: { type: 'UP_VOTE' | 'DOWN_VOTE'; count: number }[]
   commentCount: number
-  attachments: PostCardAttachment[]
-  firstImageType: 'landscape' | 'portrait' | 'square'
+  attachments?: PostCardAttachment[]
   userReaction: UserReaction
 }
 
@@ -106,8 +105,8 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
           />
         </Button> */}
       </View>
-      {props.attachments.length > 0 && (
-        <Lightbox attachments={props.attachments} firstImageType={props.firstImageType} />
+      {props.attachments && props.attachments.length > 0 && (
+        <Lightbox attachments={props.attachments} />
       )}
       <View className="px-4 py-3">
         <MoreOrLess
@@ -198,7 +197,6 @@ function formatDateInterval(date: string): string {
 
 interface LightboxProps {
   attachments: PostCardAttachment[]
-  firstImageType: 'landscape' | 'portrait' | 'square'
 }
 function Lightbox(props: LightboxProps) {
   const [visible, setIsVisible] = React.useState(false)
