@@ -286,17 +286,21 @@ export class AdminAnnouncementRepository {
   }
 
   async unpublishAnnouncementById(announcementId: string) {
+    const announcement = await fromRepositoryPromise(
+      this.prismaService.announcement.findUniqueOrThrow({
+        where: { feedItemId: announcementId },
+        select: {
+          attachments: { select: { filePath: true } },
+        },
+      })
+    )
+
+    if (announcement.isErr()) return err(announcement.error)
+
     const unpublishFile = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
-        const announcement = await this.prismaService.announcement.findUniqueOrThrow({
-          where: { feedItemId: announcementId },
-          select: {
-            attachments: { select: { filePath: true } },
-          },
-        })
-
         const moveToPrivateResult = await fileTx.bulkMoveToPrivateFolder(
-          announcement.attachments.map((attachment) => attachment.filePath as FilePath)
+          announcement.value.attachments.map((attachment) => attachment.filePath as FilePath)
         )
 
         if (moveToPrivateResult.isErr()) return moveToPrivateResult
@@ -360,19 +364,24 @@ export class AdminAnnouncementRepository {
   }
 
   async deleteAnnouncementById(announcementId: string) {
+    const feedItem = await fromRepositoryPromise(
+      this.prismaService.feedItem.findUniqueOrThrow({
+        where: { id: announcementId },
+        select: {
+          id: true,
+          announcement: { select: { attachments: { select: { id: true, filePath: true } } } },
+        },
+      })
+    )
+
+    if (feedItem.isErr()) return err(feedItem.error)
+
     const deleteFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
-        const feedItem = await this.prismaService.feedItem.findUniqueOrThrow({
-          where: { id: announcementId },
-          select: {
-            id: true,
-            announcement: { select: { attachments: { select: { id: true, filePath: true } } } },
-          },
-        })
-
         const deleteResult = await fileTx.bulkRemoveFile(
-          feedItem.announcement?.attachments.map((attachment) => attachment.filePath as FilePath) ??
-            []
+          feedItem.value.announcement?.attachments.map(
+            (attachment) => attachment.filePath as FilePath
+          ) ?? []
         )
 
         if (deleteResult.isErr()) {
@@ -502,16 +511,20 @@ export class AdminAnnouncementRepository {
   }
 
   async updateDraftAnnouncementById(announcementDraftId: string, data: PutDraftAnnouncementBody) {
+    const draftAnnouncement = await fromRepositoryPromise(
+      this.prismaService.announcementDraft.findUniqueOrThrow({
+        where: { id: announcementDraftId },
+        select: { attachments: { select: { filePath: true } } },
+      })
+    )
+
+    if (draftAnnouncement.isErr()) return err(draftAnnouncement.error)
+
     const movePrivateFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
-        const draftAnnouncement = await this.prismaService.announcementDraft.findUniqueOrThrow({
-          where: { id: announcementDraftId },
-          select: { attachments: { select: { filePath: true } } },
-        })
-
         const cleanUpResult = await this.cleanUpUnusedAttachment(
           fileTx,
-          draftAnnouncement.attachments.map(({ filePath }) => filePath as FilePath),
+          draftAnnouncement.value.attachments.map(({ filePath }) => filePath as FilePath),
           data.attachmentFilePaths
         )
 
@@ -573,6 +586,13 @@ export class AdminAnnouncementRepository {
     if (draftAnnouncementResult.isErr()) return err(draftAnnouncementResult.error)
     const draftAnnouncement = draftAnnouncementResult.value
 
+    if (!draftAnnouncement.title || !draftAnnouncement.type) {
+      return err({
+        code: InternalErrorCode.ANNOUNCEMENT_INVALID_DRAFT,
+        message: 'Draft announcement is missing required fields: title, type',
+      })
+    }
+
     const moveFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
         const moveResult = await fileTx.bulkMoveToPublicFolder(
@@ -588,13 +608,6 @@ export class AdminAnnouncementRepository {
 
     const publishResult = await fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
-        if (!draftAnnouncement.title || !draftAnnouncement.type) {
-          return err({
-            code: InternalErrorCode.ANNOUNCEMENT_INVALID_DRAFT,
-            message: 'Draft announcement is missing required fields: title, type',
-          })
-        }
-
         const feedItem = await tx.feedItem.create({
           data: {
             id: draftAnnouncement.id,
@@ -602,9 +615,9 @@ export class AdminAnnouncementRepository {
             authorId,
             announcement: {
               create: {
-                title: draftAnnouncement.title,
+                title: draftAnnouncement.title!,
                 content: draftAnnouncement.content,
-                type: draftAnnouncement.type,
+                type: draftAnnouncement.type!,
                 iconImage: draftAnnouncement.iconImage,
                 backgroundColor: draftAnnouncement.backgroundColor,
                 topics: {
@@ -640,22 +653,26 @@ export class AdminAnnouncementRepository {
   }
 
   async deleteDraftAnnouncementById(announcementDraftId: string) {
-    const deleteFileResult = await fromRepositoryPromise(
-      this.fileService.$transaction(async (fileTx) => {
-        const announcementDraft = await this.prismaService.announcementDraft.findUniqueOrThrow({
-          where: { id: announcementDraftId },
-          select: {
-            id: true,
-            attachments: {
-              select: {
-                filePath: true,
-              },
+    const announcementDraft = await fromRepositoryPromise(
+      this.prismaService.announcementDraft.findUniqueOrThrow({
+        where: { id: announcementDraftId },
+        select: {
+          id: true,
+          attachments: {
+            select: {
+              filePath: true,
             },
           },
-        })
+        },
+      })
+    )
 
+    if (announcementDraft.isErr()) return err(announcementDraft.error)
+
+    const deleteFileResult = await fromRepositoryPromise(
+      this.fileService.$transaction(async (fileTx) => {
         const deleteResult = await fileTx.bulkRemoveFile(
-          announcementDraft.attachments.map((attachment) => attachment.filePath as FilePath)
+          announcementDraft.value.attachments.map((attachment) => attachment.filePath as FilePath)
         )
 
         if (deleteResult.isErr()) {

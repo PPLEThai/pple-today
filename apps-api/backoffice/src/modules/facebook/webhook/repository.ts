@@ -23,24 +23,24 @@ export class FacebookWebhookRepository {
     existingAttachments: PostAttachment[],
     newAttachments: Pick<PostAttachment, 'url' | 'type' | 'cacheKey'>[]
   ) {
+    const requiredDelete = R.pipe(
+      existingAttachments,
+      R.filter((ea) => !newAttachments.find((a) => ea.cacheKey === a.cacheKey)),
+      R.map((ea) => ea.url)
+    )
+
+    const requiredUpload = R.pipe(
+      newAttachments ?? [],
+      R.filter((a) => !existingAttachments.find((ea) => ea.cacheKey === a.cacheKey))
+    )
+
+    const unchangedAttachments = R.pipe(
+      existingAttachments,
+      R.filter((ea) => newAttachments.findIndex((a) => ea.cacheKey === a.cacheKey) !== -1)
+    )
+
     return await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
-        const requiredDelete = R.pipe(
-          existingAttachments,
-          R.filter((ea) => !newAttachments.find((a) => ea.cacheKey === a.cacheKey)),
-          R.map((ea) => ea.url)
-        )
-
-        const requiredUpload = R.pipe(
-          newAttachments ?? [],
-          R.filter((a) => !existingAttachments.find((ea) => ea.cacheKey === a.cacheKey))
-        )
-
-        const unchangedAttachments = R.pipe(
-          existingAttachments,
-          R.filter((ea) => newAttachments.findIndex((a) => ea.cacheKey === a.cacheKey) !== -1)
-        )
-
         const deleteResult = await fileTx.bulkRemoveFile(requiredDelete as FilePath[])
 
         if (deleteResult.isErr()) {

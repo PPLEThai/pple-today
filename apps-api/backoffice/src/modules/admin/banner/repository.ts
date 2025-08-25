@@ -87,15 +87,21 @@ export class AdminBannerRepository {
       status: BannerStatusType
     }
   ) {
+    const existingBanner = await fromRepositoryPromise(
+      this.prismaService.banner.findUniqueOrThrow({
+        where: { id },
+        select: { imageFilePath: true },
+      })
+    )
+
+    if (existingBanner.isErr()) return err(existingBanner.error)
+
     const updateFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
-        const existingBanner = await this.prismaService.banner.findUniqueOrThrow({
-          where: { id },
-          select: { imageFilePath: true },
-        })
-
-        if (existingBanner.imageFilePath !== data.imageFilePath) {
-          const deleteResult = await fileTx.removeFile(existingBanner.imageFilePath as FilePath)
+        if (existingBanner.value.imageFilePath !== data.imageFilePath) {
+          const deleteResult = await fileTx.removeFile(
+            existingBanner.value.imageFilePath as FilePath
+          )
           if (deleteResult.isErr()) return deleteResult
         }
 
@@ -133,14 +139,18 @@ export class AdminBannerRepository {
   }
 
   async deleteBannerById(id: string) {
+    const existingBanner = await fromRepositoryPromise(
+      this.prismaService.banner.findUniqueOrThrow({
+        where: { id },
+        select: { imageFilePath: true },
+      })
+    )
+
+    if (existingBanner.isErr()) return err(existingBanner.error)
+
     const deleteFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
-        const existingBanner = await this.prismaService.banner.findUniqueOrThrow({
-          where: { id },
-          select: { imageFilePath: true },
-        })
-
-        const deleteResult = await fileTx.removeFile(existingBanner.imageFilePath as FilePath)
+        const deleteResult = await fileTx.removeFile(existingBanner.value.imageFilePath as FilePath)
         if (deleteResult.isErr()) return deleteResult
 
         return deleteResult.value

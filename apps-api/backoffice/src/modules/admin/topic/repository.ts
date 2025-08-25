@@ -88,16 +88,20 @@ export class AdminTopicRepository {
   }
 
   async updateTopicById(topicId: string, data: UpdateTopicBody) {
+    const existingTopic = await fromRepositoryPromise(
+      this.prismaService.topic.findUniqueOrThrow({
+        where: { id: topicId },
+        select: { bannerImage: true },
+      })
+    )
+
+    if (existingTopic.isErr()) return err(existingTopic.error)
+
     const updateFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
-        const existingTopic = await this.prismaService.topic.findUniqueOrThrow({
-          where: { id: topicId },
-          select: { bannerImage: true },
-        })
-
-        const isSameBannerUrl = existingTopic.bannerImage === data.bannerImage
-        if (!isSameBannerUrl && existingTopic.bannerImage) {
-          const moveResult = await fileTx.removeFile(existingTopic.bannerImage as FilePath)
+        const isSameBannerUrl = existingTopic.value.bannerImage === data.bannerImage
+        if (!isSameBannerUrl && existingTopic.value.bannerImage) {
+          const moveResult = await fileTx.removeFile(existingTopic.value.bannerImage as FilePath)
           if (moveResult.isErr()) return moveResult
         }
 
