@@ -6,7 +6,7 @@ import { AuthRepository, AuthRepositoryPlugin } from './repository'
 import { UserRole } from '../../../__generated__/prisma'
 import { IntrospectAccessTokenResult } from '../../dtos/auth'
 import { InternalErrorCode } from '../../dtos/error'
-import { mapRawPrismaError } from '../../utils/prisma'
+import { mapRepositoryError } from '../../utils/error'
 import { FileService, FileServicePlugin } from '../file/services'
 
 export class AuthService {
@@ -19,7 +19,7 @@ export class AuthService {
     const user = await this.authRepository.getUserById(id)
 
     if (user.isErr()) {
-      return mapRawPrismaError(user.error, {
+      return mapRepositoryError(user.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.AUTH_USER_NOT_FOUND,
           message: 'User not found',
@@ -43,7 +43,7 @@ export class AuthService {
     const newUser = await this.authRepository.createUser(user, role)
 
     if (newUser.isErr()) {
-      return mapRawPrismaError(newUser.error, {
+      return mapRepositoryError(newUser.error, {
         UNIQUE_CONSTRAINT_FAILED: {
           code: InternalErrorCode.AUTH_USER_ALREADY_EXISTS,
           message: 'User already exists',

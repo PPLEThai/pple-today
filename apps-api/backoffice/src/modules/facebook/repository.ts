@@ -18,7 +18,7 @@ import {
 import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '../../plugins/logger'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { err } from '../../utils/error'
-import { fromPrismaPromise } from '../../utils/prisma'
+import { fromRepositoryPromise } from '../../utils/error'
 import { FileService, FileServicePlugin } from '../file/services'
 
 export class FacebookRepository {
@@ -240,7 +240,7 @@ export class FacebookRepository {
       })
     }
 
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.facebookPage.update({
         where: { id: pageId, managerId: userId },
         data: {
@@ -276,7 +276,7 @@ export class FacebookRepository {
       })
     }
 
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.facebookPage.update({
         where: { id: pageId },
         data: {
@@ -288,7 +288,7 @@ export class FacebookRepository {
 
   // TODO: implement the following methods when starting to sync posts
   // async syncInitialPostsFromPage(userId: string, posts: PagePost[]) {
-  //   return await fromPrismaPromise(
+  //   return await fromRepositoryPromise(
   //     this.prismaService.$transaction(async (tx) => {
   //       await Promise.all(
   //         posts.map(async (post) => {
@@ -498,7 +498,7 @@ export class FacebookRepository {
   }
 
   async getLocalFacebookPage(pageId: string) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.facebookPage.findUniqueOrThrow({
         where: {
           id: pageId,
@@ -508,7 +508,7 @@ export class FacebookRepository {
   }
 
   async getLocalPageById(facebookPageId: string) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.facebookPage.findUnique({
         where: { id: facebookPageId },
       })
@@ -527,7 +527,7 @@ export class FacebookRepository {
   ) {
     const { facebookPageAccessToken, profilePictureUrl, profilePictureCacheKey, pageName } = data
 
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.facebookPage.upsert({
         where: {
           id: facebookPageId,
@@ -555,7 +555,7 @@ export class FacebookRepository {
   }
 
   async unlinkFacebookPageFromUser(userId: string) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.facebookPage.update({
         where: {
           managerId: userId,
@@ -570,7 +570,7 @@ export class FacebookRepository {
   }
 
   async getLinkedFacebookPage(userId: string) {
-    const linkedPage = await fromPrismaPromise(
+    const linkedPage = await fromRepositoryPromise(
       this.prismaService.facebookPage.findUnique({
         where: {
           managerId: userId,

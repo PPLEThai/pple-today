@@ -4,7 +4,7 @@ import { ok } from 'neverthrow'
 import { GetBannersResponse } from './models'
 import { BannerRepository, BannerRepositoryPlugin } from './repository'
 
-import { mapRawPrismaError } from '../../utils/prisma'
+import { mapRepositoryError } from '../../utils/error'
 import { FileService, FileServicePlugin } from '../file/services'
 
 export class BannerService {
@@ -17,7 +17,7 @@ export class BannerService {
     const banners = await this.bannerRepository.getBanners()
 
     if (banners.isErr()) {
-      return mapRawPrismaError(banners.error)
+      return mapRepositoryError(banners.error)
     }
 
     const response: GetBannersResponse = banners.value.map((banner) => ({

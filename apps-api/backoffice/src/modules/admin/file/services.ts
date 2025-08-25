@@ -4,6 +4,7 @@ import { ok } from 'neverthrow'
 
 import { GetUploadSignedUrlBody, UploadFileCategory } from './models'
 
+import { FilePath } from '../../../dtos/file'
 import { err, exhaustiveGuard } from '../../../utils/error'
 import { FileService, FileServicePlugin } from '../../file/services'
 
@@ -11,7 +12,7 @@ export class AdminFileService {
   constructor(private readonly fileService: FileService) {}
 
   async getUploadSignedUrl(body: GetUploadSignedUrlBody) {
-    let filePath: string
+    let filePath: FilePath
     let fileContentType: string
 
     const randomId = createId()
@@ -46,7 +47,7 @@ export class AdminFileService {
     }
 
     return ok({
-      filePath,
+      filePath: filePath as FilePath,
       uploadUrl: getResult.value.url,
       uploadFields: getResult.value.fields,
     })

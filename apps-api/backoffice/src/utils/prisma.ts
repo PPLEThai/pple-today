@@ -1,10 +1,4 @@
-import { Err, fromPromise } from 'neverthrow'
-import { Simplify, ValueOf } from 'type-fest'
-
-import { ApiErrorResponse, err } from './error'
-
 import { PrismaClientKnownRequestError } from '../../__generated__/prisma/runtime/client'
-import { InternalErrorCode } from '../dtos/error'
 
 /**
  * Reference for Prisma error codes
@@ -34,49 +28,17 @@ export const resolvePrismaError = (error: unknown) => {
         } as const
       default:
         return {
-          originalError: error,
           code: prismaError.UNKNOWN_ERROR,
+          originalError: error,
           message: error.message,
-        }
+        } as const
     }
   }
   return {
     code: prismaError.UNKNOWN_ERROR,
     originalError: error,
     message: 'An unknown error occurred',
-  }
+  } as const
 }
 
-export const fromPrismaPromise = <T>(promise: Promise<T> | (() => Promise<T>)) =>
-  fromPromise(typeof promise === 'function' ? promise() : promise, resolvePrismaError)
-
-type RawPrismaError = ReturnType<typeof resolvePrismaError>
-
-export const mapRawPrismaError = <
-  T extends Partial<Record<RawPrismaError['code'], ApiErrorResponse<InternalErrorCode>>> & {
-    INTERNAL_SERVER_ERROR?: string
-  } = {},
->(
-  error: RawPrismaError,
-  mapping?: T
-): Err<
-  never,
-  Simplify<
-    ValueOf<
-      Omit<T, 'INTERNAL_SERVER_ERROR'> & {
-        INTERNAL_SERVER_ERROR: ApiErrorResponse<typeof InternalErrorCode.INTERNAL_SERVER_ERROR>
-      }
-    >
-  >
-> => {
-  const mappedError = mapping?.[error.code]
-
-  if (mappedError) {
-    return err(mappedError) as any
-  }
-
-  return err({
-    code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-    message: mapping?.INTERNAL_SERVER_ERROR ?? 'An unexpected error occurred',
-  }) as any
-}
+export type RawPrismaError = ReturnType<typeof resolvePrismaError>
