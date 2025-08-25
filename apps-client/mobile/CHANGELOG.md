@@ -1,5 +1,16 @@
 # @client/mobile
 
+## 0.3.0
+
+### Minor Changes
+
+- [#60](https://github.com/PPLEThai/pple-today/pull/60) [`c24f94e`](https://github.com/PPLEThai/pple-today/commit/c24f94ee07064c71a21007e125de4b21a8d1bb6d) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-99] Post Card UI](https://linear.app/snts/issue/PPLE-99/post-card-ui)
+
+### Patch Changes
+
+- Updated dependencies [[`c24f94e`](https://github.com/PPLEThai/pple-today/commit/c24f94ee07064c71a21007e125de4b21a8d1bb6d)]:
+  - @pple-today/ui@0.2.0
+
 ## 0.2.0
 
 ### Minor Changes

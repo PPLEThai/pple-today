@@ -1,5 +1,21 @@
 # @api/backoffice
 
+## 0.3.0
+
+### Minor Changes
+
+- [#62](https://github.com/PPLEThai/pple-today/pull/62) [`be2e09e`](https://github.com/PPLEThai/pple-today/commit/be2e09e433c00a44cf3af7e6ff46e56f2c0b73bb) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE - 254] [API] Get address filtering](https://linear.app/snts/issue/PPLE-254/api-get-address-filtering)
+
+- [#47](https://github.com/PPLEThai/pple-today/pull/47) [`0287e05`](https://github.com/PPLEThai/pple-today/commit/0287e05b80a0852b02f3ccfafa053a0d2b4691b9) Thanks [@miello](https://github.com/miello)! - [PPLE-201] Feed Recommendation
+
+- [#59](https://github.com/PPLEThai/pple-today/pull/59) [`276fab6`](https://github.com/PPLEThai/pple-today/commit/276fab60bad09b0cfc436d97757f53427a4304aa) Thanks [@miello](https://github.com/miello)! - [[PPLE-177] [API] FB Webhook endpoint and subscription](https://linear.app/snts/issue/PPLE-177/api-fb-webhook-endpoint-and-subscription)
+
+- [#61](https://github.com/PPLEThai/pple-today/pull/61) [`a6d0d71`](https://github.com/PPLEThai/pple-today/commit/a6d0d7138821d613911af5f76bb8fc591903dc7a) Thanks [@miello](https://github.com/miello)! - [[PPLE-269] [API] File transaction and rollback mechanism](https://linear.app/snts/issue/PPLE-269/api-file-transaction-and-rollback-mechanism)
+
+### Patch Changes
+
+- [#66](https://github.com/PPLEThai/pple-today/pull/66) [`afcfad9`](https://github.com/PPLEThai/pple-today/commit/afcfad927006e99831c2d55f09be84e824b0b659) Thanks [@miello](https://github.com/miello)! - [[PPLE-273] [API] Fix upsert feed item reaction](https://linear.app/snts/issue/PPLE-273/api-fix-upsert-feed-item-reaction)
+
 ## 0.2.0
 
 ### Minor Changes
