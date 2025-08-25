@@ -14,14 +14,15 @@ import {
   makeRedirectUri,
   ResponseType,
 } from 'expo-auth-session'
-import { getItemAsync, setItemAsync } from 'expo-secure-store'
 import * as WebBrowser from 'expo-web-browser'
 import { z } from 'zod/v4'
 
 import appConfig from '@app/app.config'
 import { environment } from '@app/env'
 
-import { queryClient } from './react-query'
+import { AuthSession, getAuthSession, setAuthSession } from './session'
+
+import { queryClient } from '../react-query'
 
 const authRequest: AuthRequest = new AuthRequest({
   responseType: ResponseType.Code,
@@ -34,31 +35,6 @@ const authRequest: AuthRequest = new AuthRequest({
   }),
 })
 
-const AUTH_SESSION_STORAGE_KEY = 'authSession'
-
-const AuthSessionSchema = z.object({
-  accessToken: z.string(),
-  refreshToken: z.string(),
-  idToken: z.nullable(z.string()),
-})
-export type AuthSession = z.output<typeof AuthSessionSchema>
-function parseAuthSession(json: string | null): AuthSession | null {
-  if (json === null) return null
-  const data = JSON.parse(json)
-  if (data === null) return null
-  const result = AuthSessionSchema.safeParse(data)
-  if (result.error) {
-    console.error('Error parsing auth session:', result.error, json)
-    return null
-  }
-  return result.data
-}
-
-export async function getAuthSession(): Promise<AuthSession | null> {
-  const session = await getItemAsync(AUTH_SESSION_STORAGE_KEY)
-  return parseAuthSession(session)
-}
-
 export const useDiscoveryQuery = createQuery({
   queryKey: ['discovery'],
   fetcher: () => {
@@ -68,18 +44,14 @@ export const useDiscoveryQuery = createQuery({
 
 export const useSessionQuery = createQuery({
   queryKey: ['session'],
-  fetcher: async () => {
-    const session = await getItemAsync(AUTH_SESSION_STORAGE_KEY)
-    return parseAuthSession(session)
-  },
+  fetcher: getAuthSession,
 })
 
 const useSetSessionMutation = createMutation({
   mutationKey: ['session'],
-  mutationFn: (session: AuthSession | null) => {
-    return setItemAsync(AUTH_SESSION_STORAGE_KEY, JSON.stringify(session))
-  },
+  mutationFn: setAuthSession,
 })
+
 export const useSessionMutation = () => {
   const queryClient = useQueryClient()
   const sessionQuery = useSessionQuery()
