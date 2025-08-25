@@ -105,31 +105,35 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
           />
         </Button> */}
       </View>
-      {props.attachments && props.attachments.length > 0 && (
-        <Lightbox attachments={props.attachments} />
-      )}
-      <View className="px-4 py-3">
-        <MoreOrLess
-          numberOfLines={3}
-          moreText="อ่านเพิ่มเติม"
-          lessText="แสดงน้อยลง"
-          animated
-          textComponent={TextPost}
-          buttonComponent={ButtonTextPost}
-        >
-          {props.content}
-        </MoreOrLess>
+      <View className="flex flex-col gap-3 pb-3">
+        {props.attachments && props.attachments.length > 0 && (
+          <Lightbox attachments={props.attachments} />
+        )}
+        {props.content && (
+          <View className="px-4">
+            <MoreOrLess
+              numberOfLines={3}
+              moreText="อ่านเพิ่มเติม"
+              lessText="แสดงน้อยลง"
+              animated
+              textComponent={TextPost}
+              buttonComponent={ButtonTextPost}
+            >
+              {props.content}
+            </MoreOrLess>
+          </View>
+        )}
+        {props.hashTags.length > 0 && (
+          <View className="flex flex-row flex-wrap gap-1 px-4">
+            {props.hashTags.map((tag) => (
+              // TODO: link
+              <Badge variant="secondary" key={tag.id}>
+                <Text>{tag.name}</Text>
+              </Badge>
+            ))}
+          </View>
+        )}
       </View>
-      {props.hashTags.length > 0 && (
-        <View className="flex flex-row flex-wrap gap-1 px-4 pb-3">
-          {props.hashTags.map((tag) => (
-            // TODO: link
-            <Badge variant="secondary" key={tag.id}>
-              <Text>{tag.name}</Text>
-            </Badge>
-          ))}
-        </View>
-      )}
       <View className="flex flex-row justify-between items-center px-4 pb-3">
         <UpvoteReactionCount
           id={props.id}
@@ -168,6 +172,40 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
     </View>
   )
 })
+export const PostCardSkeleton = () => {
+  return (
+    <View className="flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl mt-4 mx-4">
+      <View className="px-4 pt-4 pb-3 flex flex-row items-center justify-between">
+        <View className="flex flex-row items-center">
+          <View className="w-8 h-8 rounded-full bg-base-bg-default flex items-center justify-center mr-3 overflow-hidden" />
+          <View className="flex flex-col py-1 gap-2">
+            <View className="rounded-md bg-base-bg-default h-[12px] w-[160px]" />
+            <View className="rounded-md bg-base-bg-default h-[12px] w-[100px]" />
+          </View>
+        </View>
+      </View>
+      <View className="px-4 pb-3">
+        <View className="rounded-lg bg-base-bg-default w-full aspect-square" />
+      </View>
+      <View className="flex flex-row justify-between items-center px-4 pb-3">
+        <View className="rounded-md bg-base-bg-default h-[20px] w-[100px]" />
+        <View className="rounded-md bg-base-bg-default h-[20px] w-[100px]" />
+      </View>
+      <View className="flex flex-col">
+        <View className="px-4">
+          <View className="border-b border-base-outline-default" />
+        </View>
+        <View className="flex flex-row justify-between gap-2 px-3 pb-3 pt-3">
+          <View className="flex flex-row gap-2">
+            <View className="rounded-md bg-base-bg-default h-[32px] w-[100px]" />
+            <View className="rounded-md bg-base-bg-default h-[32px] w-[100px]" />
+          </View>
+          <View className="rounded-md bg-base-bg-default h-[32px] w-[100px]" />
+        </View>
+      </View>
+    </View>
+  )
+}
 
 function TextPost(props: TextProps) {
   return <Text {...props} className="text-base-text-high font-noto-light text-base" />

@@ -46,7 +46,7 @@ import { z } from 'zod/v4'
 import { queryClient } from '@app/libs/react-query'
 
 import { AuthPlayground } from './auth-playground'
-import { PostCard } from './feed/post-card'
+import { PostCard, PostCardSkeleton } from './feed/post-card'
 import { MoreOrLess } from './more-or-less'
 
 const AUTH_ACCESS_TOKEN_STORAGE_KEY = 'authAccessToken'
@@ -629,6 +629,7 @@ function PostCardExample() {
           ]}
           userReaction={null}
         />
+        <PostCardSkeleton />
       </View>
     </View>
   )

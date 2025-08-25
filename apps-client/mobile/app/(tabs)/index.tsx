@@ -8,6 +8,8 @@ import { Icon } from '@pple-today/ui/icon'
 import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { H2, H3 } from '@pple-today/ui/typography'
+import VisibilitySensor from '@svanboxel/visibility-sensor-react-native'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import * as Linking from 'expo-linking'
 import { useRouter } from 'expo-router'
@@ -26,7 +28,7 @@ import {
 import { GetBannersResponse } from '@api/backoffice/src/modules/banner/models'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AnnouncementCard } from '@app/components/announcement'
-import { PostCard } from '@app/components/feed/post-card'
+import { PostCard, PostCardSkeleton } from '@app/components/feed/post-card'
 import {
   Pager,
   PagerContent,
@@ -41,7 +43,7 @@ import {
 import { environment } from '@app/env'
 import { useAuthMe, useSessionQuery } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
-import { queryClient } from '@app/libs/react-query'
+import { fetchClient, queryClient } from '@app/libs/react-query'
 
 export default function IndexLayout() {
   return (
@@ -327,8 +329,7 @@ function UserInfoSection() {
   )
 }
 
-interface FeedContentProps extends PagerScrollViewProps {}
-function FeedContent(props: FeedContentProps) {
+function FeedContent(props: PagerScrollViewProps) {
   const { headerHeight, isFocused, scrollElRef, scrollHandler, setScrollViewTag } = props
   React.useEffect(() => {
     if (isFocused && scrollElRef.current) {
@@ -337,14 +338,46 @@ function FeedContent(props: FeedContentProps) {
       // console.log('scrollViewTag:', scrollViewTag)
     }
   }, [isFocused, scrollElRef, setScrollViewTag])
-  // TODO: infinite query and load more
-  const feedQuery = queryClient.useQuery('/feed/me', { query: { limit: 10 } })
-  // React.useEffect(() => {
-  //   console.log(feedQuery.data)
-  // }, [feedQuery.data])
-  // TODO: loading state
-  // TODO: empty state
-  // TODO: error state
+
+  const feedInfiniteQuery = useInfiniteQuery({
+    queryKey: ['feed'],
+    queryFn: ({ pageParam }) => fetchClient('/feed/me', { query: { page: pageParam, limit: 5 } }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, _, lastPageParam) => {
+      if (lastPage.data && lastPage.data.length === 0) {
+        return undefined
+      }
+      return lastPageParam + 1
+    },
+  })
+  React.useEffect(() => {
+    if (feedInfiniteQuery.error) {
+      console.error('Error fetching feed:', feedInfiniteQuery.error)
+    }
+  }, [feedInfiniteQuery.error])
+
+  const Footer =
+    feedInfiniteQuery.hasNextPage || feedInfiniteQuery.isLoading || feedInfiniteQuery.error ? (
+      <VisibilitySensor
+        onChange={(visible) => {
+          if (visible && feedInfiniteQuery.hasNextPage) {
+            feedInfiniteQuery.fetchNextPage()
+          }
+        }}
+      >
+        <PostCardSkeleton />
+      </VisibilitySensor>
+    ) : feedInfiniteQuery.data?.pages.length === 0 ? (
+      // Empty State
+      <View className="flex flex-col items-center justify-center py-6">
+        <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีโพสต์</Text>
+      </View>
+    ) : (
+      // Reach end of feed
+      <View className="flex flex-col items-center justify-center py-6">
+        <Text className="text-base-text-medium font-anakotmai-medium">ไม่มีโพสต์เพิ่มเติม</Text>
+      </View>
+    )
   return (
     // TODO: use flashlist
     <Animated.FlatList
@@ -356,35 +389,45 @@ function FeedContent(props: FeedContentProps) {
       // contentOffset={{ x: 0, y: -headerHeight }}
       // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
       // automaticallyAdjustsScrollIndicatorInsets={false}
-      data={feedQuery.data ?? []}
+      data={feedInfiniteQuery.data?.pages ?? []}
       contentContainerClassName="py-4 flex flex-col"
       ListHeaderComponent={<AnnouncementSection />}
-      renderItem={({ item }) => {
-        switch (item.type) {
-          case 'POST':
-            return (
-              <PostCard
-                key={item.id}
-                id={item.id}
-                author={item.author}
-                attachments={item.post.attachments}
-                commentCount={item.commentCount}
-                content={item.post.content}
-                createdAt={item.createdAt.toString()}
-                hashTags={item.post.hashTags}
-                reactions={item.reactions}
-                userReaction={item.userReaction}
-              />
-            )
-          case 'POLL':
-            // TODO: poll feed card
-            return null
-          case 'ANNOUNCEMENT':
-            // expected no announcement
-            return null
-          default:
-            return exhaustiveGuard(item)
+      ListFooterComponent={Footer}
+      renderItem={({ item: items }) => {
+        if (!items.data) {
+          return null
         }
+        return (
+          <>
+            {items.data.map((item) => {
+              switch (item.type) {
+                case 'POST':
+                  return (
+                    <PostCard
+                      key={item.id}
+                      id={item.id}
+                      author={item.author}
+                      attachments={item.post.attachments}
+                      commentCount={item.commentCount}
+                      content={item.post.content}
+                      createdAt={item.createdAt.toString()}
+                      hashTags={item.post.hashTags}
+                      reactions={item.reactions}
+                      userReaction={item.userReaction}
+                    />
+                  )
+                case 'POLL':
+                  // TODO: poll feed card
+                  return null
+                case 'ANNOUNCEMENT':
+                  // expected no announcement
+                  return null
+                default:
+                  return exhaustiveGuard(item)
+              }
+            })}
+          </>
+        )
       }}
     />
   )
