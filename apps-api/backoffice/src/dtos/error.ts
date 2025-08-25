@@ -185,6 +185,15 @@ const TOPIC_ERROR_SCHEMA = {
   TOPIC_INVALID_INPUT: {
     status: 400,
   },
+  TOPIC_CANNOT_FOLLOW_DRAFT: {
+    status: 409,
+  },
+  TOPIC_ALREADY_FOLLOWED: {
+    status: 409,
+  },
+  TOPIC_NOT_FOLLOWED: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 export const InternalErrorCodeSchemas = {
