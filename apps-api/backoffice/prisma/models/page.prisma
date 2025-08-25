@@ -11,5 +11,5 @@ model FacebookPage {
   updatedAt DateTime @updatedAt
 
   managerId String? @unique
-  manager   User?   @relation(fields: [managerId], references: [id])
+  manager   User?   @relation(fields: [managerId], references: [id], onDelete: SetNull)
 }

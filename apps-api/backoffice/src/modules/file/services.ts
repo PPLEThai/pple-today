@@ -306,9 +306,6 @@ export class FileService {
   }
 
   /**
-   * ### Note
-   * This method allows you to execute a series of file operations within a transaction.
-   * Please ignore type `Err` from return type because it will be served as error instead
    * @param cb Callback function to execute within the transaction
    * @returns [result, fileTransaction]
    */

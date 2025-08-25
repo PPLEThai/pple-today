@@ -52,6 +52,9 @@ export class FacebookWebhookRepository {
             if (existingAttachment) {
               return ok({
                 ...existingAttachment,
+                height: attachment.height,
+                width: attachment.width,
+                description: attachment.description,
                 order: idx + 1,
               })
             }

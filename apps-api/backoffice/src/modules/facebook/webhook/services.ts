@@ -161,6 +161,11 @@ export class FacebookWebhookService {
     switch (body.verb) {
       case WebhookChangesVerb.ADD:
       case WebhookChangesVerb.EDIT: {
+        if (!body.message && !body.photos) {
+          const deleteResult = await this.facebookWebhookRepository.deletePost(body.post_id)
+          if (deleteResult.isErr()) return mapRepositoryError(deleteResult.error)
+          return ok()
+        }
         return await this.upsertPostDetails(body.from.id, body.post_id)
       }
     }
