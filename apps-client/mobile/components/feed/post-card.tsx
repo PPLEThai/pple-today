@@ -185,7 +185,7 @@ export const PostCardSkeleton = () => {
         </View>
       </View>
       <View className="px-4 pb-3">
-        <View className="rounded-lg bg-base-bg-default w-full aspect-square" />
+        <View className="rounded-lg bg-base-bg-default w-full aspect-[2/1]" />
       </View>
       <View className="flex flex-row justify-between items-center px-4 pb-3">
         <View className="rounded-md bg-base-bg-default h-[20px] w-[100px]" />
