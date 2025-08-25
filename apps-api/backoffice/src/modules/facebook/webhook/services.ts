@@ -38,6 +38,7 @@ export class FacebookWebhookService {
 
     const newPostDetails = await this.facebookRepository.getFacebookPostByPostId(
       postId,
+      // TODO: Implement fetch long lived access token
       page.value.pageAccessToken!
     )
     if (newPostDetails.isErr()) return mapRepositoryError(newPostDetails.error)
