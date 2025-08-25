@@ -42,7 +42,7 @@ export class TopicService {
       return mapRawPrismaError(topic.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.TOPIC_NOT_FOUND,
-          message: `topic not found`,
+          message: `Topic not found`,
         },
       })
     }
@@ -51,7 +51,7 @@ export class TopicService {
     if (topic.value?.status == TopicStatus.DRAFT) {
       return err({
         code: InternalErrorCode.TOPIC_CANNOT_FOLLOW_DRAFT,
-        message: `cannot follow topic with status '${TopicStatus.DRAFT}'`,
+        message: `Cannot follow topic with status '${TopicStatus.DRAFT}'`,
       })
     }
 
@@ -62,7 +62,7 @@ export class TopicService {
         //  user already followed the topic
         UNIQUE_CONSTRAINT_FAILED: {
           code: InternalErrorCode.TOPIC_ALREADY_FOLLOWED,
-          message: `user already followed the topic`,
+          message: `User already followed the topic`,
         },
       })
     }
@@ -77,7 +77,7 @@ export class TopicService {
       return mapRawPrismaError(topic.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.TOPIC_NOT_FOUND,
-          message: `topic not found`,
+          message: `Topic not found`,
         },
       })
     }
@@ -88,7 +88,7 @@ export class TopicService {
       return mapRawPrismaError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.TOPIC_NOT_FOLLOWED,
-          message: `topic is not followed`,
+          message: `Topic is not followed`,
         },
       })
     }
