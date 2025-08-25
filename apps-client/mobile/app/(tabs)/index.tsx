@@ -1,6 +1,10 @@
 import * as React from 'react'
 import { findNodeHandle, Pressable, View } from 'react-native'
-import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
+import Animated, {
+  useAnimatedScrollHandler,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated'
 
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
@@ -8,7 +12,6 @@ import { Icon } from '@pple-today/ui/icon'
 import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { H2, H3 } from '@pple-today/ui/typography'
-import VisibilitySensor from '@svanboxel/visibility-sensor-react-native'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import * as Linking from 'expo-linking'
@@ -26,6 +29,7 @@ import {
 } from 'lucide-react-native'
 
 import { GetBannersResponse } from '@api/backoffice/src/modules/banner/models'
+import { GetMyFeedResponse } from '@api/backoffice/src/modules/feed/models'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AnnouncementCard } from '@app/components/announcement'
 import { PostCard, PostCardSkeleton } from '@app/components/feed/post-card'
@@ -44,6 +48,7 @@ import { environment } from '@app/env'
 import { useAuthMe, useSessionQuery } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { fetchClient, queryClient } from '@app/libs/react-query'
+import { useScrollContext } from '@app/libs/scroll-context'
 
 export default function IndexLayout() {
   return (
@@ -330,7 +335,7 @@ function UserInfoSection() {
 }
 
 function FeedContent(props: PagerScrollViewProps) {
-  const { headerHeight, isFocused, scrollElRef, scrollHandler, setScrollViewTag } = props
+  const { headerHeight, isFocused, scrollElRef, setScrollViewTag } = props
   React.useEffect(() => {
     if (isFocused && scrollElRef.current) {
       const scrollViewTag = findNodeHandle(scrollElRef.current)
@@ -356,18 +361,25 @@ function FeedContent(props: PagerScrollViewProps) {
     }
   }, [feedInfiniteQuery.error])
 
+  const onEndReached = React.useCallback(() => {
+    if (!feedInfiniteQuery.isFetching && feedInfiniteQuery.hasNextPage) {
+      feedInfiniteQuery.fetchNextPage()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
+
+  const data = React.useMemo((): GetMyFeedResponse[] => {
+    if (!feedInfiniteQuery.data) return []
+    return feedInfiniteQuery.data.pages.filter((page) => !!page.data).map((page) => page.data)
+  }, [feedInfiniteQuery.data])
+
+  const scrollContext = useScrollContext()
+  const scrollHandler = useAnimatedScrollHandler(scrollContext)
+
   const Footer =
     feedInfiniteQuery.hasNextPage || feedInfiniteQuery.isLoading || feedInfiniteQuery.error ? (
-      <VisibilitySensor
-        onChange={(visible) => {
-          if (visible && feedInfiniteQuery.hasNextPage) {
-            feedInfiniteQuery.fetchNextPage()
-          }
-        }}
-      >
-        <PostCardSkeleton />
-      </VisibilitySensor>
-    ) : feedInfiniteQuery.data?.pages.length === 0 ? (
+      <PostCardSkeleton />
+    ) : data.length === 0 ? (
       // Empty State
       <View className="flex flex-col items-center justify-center py-6">
         <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีโพสต์</Text>
@@ -378,8 +390,49 @@ function FeedContent(props: PagerScrollViewProps) {
         <Text className="text-base-text-medium font-anakotmai-medium">ไม่มีโพสต์เพิ่มเติม</Text>
       </View>
     )
+
+  const renderFeedItem = React.useCallback(
+    ({ item: items }: { item: GetMyFeedResponse; index: number }) => {
+      if (!items) {
+        return null
+      }
+      return (
+        <>
+          {items.map((item) => {
+            switch (item.type) {
+              case 'POST':
+                return (
+                  <PostCard
+                    key={item.id}
+                    id={item.id}
+                    author={item.author}
+                    attachments={item.post.attachments}
+                    commentCount={item.commentCount}
+                    content={item.post.content}
+                    createdAt={item.createdAt.toString()}
+                    hashTags={item.post.hashTags}
+                    reactions={item.reactions}
+                    userReaction={item.userReaction}
+                  />
+                )
+              case 'POLL':
+                // TODO: poll feed card
+                return null
+              case 'ANNOUNCEMENT':
+                // expected no announcement
+                return null
+              default:
+                return exhaustiveGuard(item)
+            }
+          })}
+        </>
+      )
+    },
+    []
+  )
   return (
     // TODO: use flashlist
+    // TODO: memoize FlatList component to optimized performance
     <Animated.FlatList
       ref={scrollElRef}
       onScroll={scrollHandler}
@@ -389,46 +442,13 @@ function FeedContent(props: PagerScrollViewProps) {
       // contentOffset={{ x: 0, y: -headerHeight }}
       // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
       // automaticallyAdjustsScrollIndicatorInsets={false}
-      data={feedInfiniteQuery.data?.pages ?? []}
+      data={data}
       contentContainerClassName="py-4 flex flex-col"
       ListHeaderComponent={<AnnouncementSection />}
       ListFooterComponent={Footer}
-      renderItem={({ item: items }) => {
-        if (!items.data) {
-          return null
-        }
-        return (
-          <>
-            {items.data.map((item) => {
-              switch (item.type) {
-                case 'POST':
-                  return (
-                    <PostCard
-                      key={item.id}
-                      id={item.id}
-                      author={item.author}
-                      attachments={item.post.attachments}
-                      commentCount={item.commentCount}
-                      content={item.post.content}
-                      createdAt={item.createdAt.toString()}
-                      hashTags={item.post.hashTags}
-                      reactions={item.reactions}
-                      userReaction={item.userReaction}
-                    />
-                  )
-                case 'POLL':
-                  // TODO: poll feed card
-                  return null
-                case 'ANNOUNCEMENT':
-                  // expected no announcement
-                  return null
-                default:
-                  return exhaustiveGuard(item)
-              }
-            })}
-          </>
-        )
-      }}
+      onEndReachedThreshold={1}
+      onEndReached={onEndReached}
+      renderItem={renderFeedItem}
     />
   )
 }

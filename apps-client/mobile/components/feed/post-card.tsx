@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Platform, Pressable, StyleSheet, View } from 'react-native'
+import { Platform, Pressable, StyleSheet, View, ViewProps } from 'react-native'
 import ImageView from 'react-native-image-viewing'
 import Animated, { useSharedValue, withSpring, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -172,9 +172,12 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
     </View>
   )
 })
-export const PostCardSkeleton = () => {
+export const PostCardSkeleton = (props: ViewProps) => {
   return (
-    <View className="flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl mt-4 mx-4">
+    <View
+      className="flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl mt-4 mx-4"
+      {...props}
+    >
       <View className="px-4 pt-4 pb-3 flex flex-row items-center justify-between">
         <View className="flex flex-row items-center">
           <View className="w-8 h-8 rounded-full bg-base-bg-default flex items-center justify-center mr-3 overflow-hidden" />

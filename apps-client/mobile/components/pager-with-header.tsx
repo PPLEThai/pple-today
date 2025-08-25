@@ -22,11 +22,9 @@ import Animated, {
   interpolate,
   runOnJS,
   runOnUI,
-  ScrollHandlerProcessed,
   scrollTo,
   SharedValue,
   useAnimatedRef,
-  useAnimatedScrollHandler,
   useAnimatedStyle,
   useEvent,
   useHandler,
@@ -34,6 +32,8 @@ import Animated, {
 } from 'react-native-reanimated'
 
 import { Text } from '@pple-today/ui/text'
+
+import { ScrollContextProvider } from '@app/libs/scroll-context'
 
 import { ExpoScrollForwarderView } from '../../../packages/expo-scroll-forwarder/build'
 
@@ -94,9 +94,6 @@ export function Pager({ children }: { children: React.ReactNode }) {
     [scrollY, headerHeight]
   )
 
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: onScrollWorklet,
-  })
   // scroll indicators work inconsistently between Android and iOS so we disable them for now
   // const scrollIndicatorInsets = useDerivedValue(() => ({
   //   top: headerHeight - scrollY.get(),
@@ -152,7 +149,6 @@ export function Pager({ children }: { children: React.ReactNode }) {
         scrollViewTag,
         setScrollViewTag,
         registerScrollViewRef,
-        scrollHandler,
         headerHeight,
         headerOnlyHeight,
         setHeaderOnlyHeight,
@@ -165,16 +161,18 @@ export function Pager({ children }: { children: React.ReactNode }) {
       }}
     >
       <PagerTabBarProvider>
-        <View className="flex-1 bg-base-bg-default">
-          {/* PanGestureRecognizer only works for one view so we have to move it up to the parent */}
-          {Platform.OS === 'ios' ? (
-            <ExpoScrollForwarderView scrollViewTag={scrollViewTag} style={{ flex: 1 }}>
-              {children}
-            </ExpoScrollForwarderView>
-          ) : (
-            children
-          )}
-        </View>
+        <ScrollContextProvider onScroll={onScrollWorklet}>
+          <View className="flex-1 bg-base-bg-default">
+            {/* PanGestureRecognizer only works for one view so we have to move it up to the parent */}
+            {Platform.OS === 'ios' ? (
+              <ExpoScrollForwarderView scrollViewTag={scrollViewTag} style={{ flex: 1 }}>
+                {children}
+              </ExpoScrollForwarderView>
+            ) : (
+              children
+            )}
+          </View>
+        </ScrollContextProvider>
       </PagerTabBarProvider>
     </PagerContext.Provider>
   )
@@ -186,7 +184,6 @@ interface PagerContextValue {
   scrollViewTag: number | null
   setScrollViewTag: (tag: number | null) => void
   registerScrollViewRef: (scrollRef: AnimatedRef<any> | null, atIndex: number) => void
-  scrollHandler: ScrollHandlerProcessed<Record<string, unknown>>
   headerHeight: number
   headerOnlyHeight: number
   setHeaderOnlyHeight: React.Dispatch<React.SetStateAction<number>>
@@ -467,18 +464,11 @@ export interface PagerScrollViewProps {
   isFocused: boolean
   headerHeight: number
   scrollElRef: AnimatedRef<FlatList>
-  scrollHandler: ScrollHandlerProcessed<Record<string, unknown>>
   setScrollViewTag: (tag: number | null) => void
 }
 export function PagerContent({ children, index }: PagerContentProps) {
-  const {
-    isHeaderReady,
-    headerHeight,
-    registerScrollViewRef,
-    scrollHandler,
-    currentPage,
-    setScrollViewTag,
-  } = usePagerContext()
+  const { isHeaderReady, headerHeight, registerScrollViewRef, currentPage, setScrollViewTag } =
+    usePagerContext()
   const isFocused = index === currentPage
   const scrollElRef = useAnimatedRef<FlatList>()
   React.useEffect(() => {
@@ -494,7 +484,6 @@ export function PagerContent({ children, index }: PagerContentProps) {
     isFocused,
     headerHeight,
     scrollElRef,
-    scrollHandler,
     setScrollViewTag,
   })
 }

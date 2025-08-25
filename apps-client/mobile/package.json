@@ -35,7 +35,6 @@
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/material-top-tabs": "^7.3.2",
     "@react-navigation/native": "^7.1.6",
-    "@svanboxel/visibility-sensor-react-native": "^1.0.2",
     "@tanstack/react-form": "^1.14.1",
     "@tanstack/react-query": "^5.81.5",
     "dayjs": "^1.11.13",
