@@ -7,8 +7,7 @@ import { TopicRepository, TopicRepostoryPlugin } from './repository'
 import { HashTagInTopic, Topic, TopicStatus } from '../../../__generated__/prisma'
 import { InternalErrorCode } from '../../dtos/error'
 import { HashTag } from '../../dtos/tag'
-import { err } from '../../utils/error'
-import { mapRawPrismaError } from '../../utils/prisma'
+import { err, mapRepositoryError } from '../../utils/error'
 
 export class TopicService {
   constructor(private readonly topicRepository: TopicRepository) {}
@@ -17,7 +16,7 @@ export class TopicService {
     const topics = await this.topicRepository.getTopics()
 
     if (topics.isErr()) {
-      return mapRawPrismaError(topics.error)
+      return mapRepositoryError(topics.error)
     }
 
     return ok(this.mapTopicsToTopicsResponse(topics.value))
@@ -27,7 +26,7 @@ export class TopicService {
     const userFollowTopics = await this.topicRepository.getUserFollowedTopics(userId)
 
     if (userFollowTopics.isErr()) {
-      return mapRawPrismaError(userFollowTopics.error)
+      return mapRepositoryError(userFollowTopics.error)
     }
 
     const topics = userFollowTopics.value.map(({ topic }) => topic)
@@ -39,7 +38,7 @@ export class TopicService {
     const topic = await this.topicRepository.getTopicById(topicId)
 
     if (topic.isErr()) {
-      return mapRawPrismaError(topic.error, {
+      return mapRepositoryError(topic.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.TOPIC_NOT_FOUND,
           message: `Topic not found`,
@@ -58,7 +57,7 @@ export class TopicService {
     const userFollowTopic = await this.topicRepository.createUserFollowTopic(userId, topicId)
 
     if (userFollowTopic.isErr()) {
-      return mapRawPrismaError(userFollowTopic.error, {
+      return mapRepositoryError(userFollowTopic.error, {
         //  user already followed the topic
         UNIQUE_CONSTRAINT_FAILED: {
           code: InternalErrorCode.TOPIC_ALREADY_FOLLOWED,
@@ -74,7 +73,7 @@ export class TopicService {
     const topic = await this.topicRepository.getTopicById(topicId)
 
     if (topic.isErr()) {
-      return mapRawPrismaError(topic.error, {
+      return mapRepositoryError(topic.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.TOPIC_NOT_FOUND,
           message: `Topic not found`,
@@ -85,8 +84,8 @@ export class TopicService {
     const result = await this.topicRepository.deleteUserFollowTopic(userId, topicId)
 
     if (result.isErr()) {
-      return mapRawPrismaError(result.error, {
-        RECORD_NOT_FOUND: {
+      return mapRepositoryError(result.error, {
+        MODEL_NOT_CONNECT: {
           code: InternalErrorCode.TOPIC_NOT_FOLLOWED,
           message: `Topic is not followed`,
         },

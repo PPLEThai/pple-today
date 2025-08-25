@@ -9,6 +9,7 @@ const prismaError = {
   P2002: 'UNIQUE_CONSTRAINT_FAILED',
   P2003: 'FOREIGN_KEY_CONSTRAINT_FAILED',
   P2016: 'INVALID_INPUT',
+  P2017: 'MODEL_NOT_CONNECT',
   P2025: 'RECORD_NOT_FOUND',
   UNKNOWN_ERROR: 'UNKNOWN_ERROR',
 } as const
@@ -21,6 +22,7 @@ export const resolvePrismaError = (error: unknown) => {
       case 'P2003':
       case 'P2016':
       case 'P2025':
+      case 'P2017':
         return {
           code: prismaError[error.code],
           originalError: error,

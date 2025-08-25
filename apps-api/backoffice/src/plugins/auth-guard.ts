@@ -4,8 +4,8 @@ import { ok } from 'neverthrow'
 import { InternalErrorCode } from '../dtos/error'
 import { AuthRepository, AuthRepositoryPlugin } from '../modules/auth/repository'
 import { err, mapErrorCodeToResponse } from '../utils/error'
-import { introspectAccessToken } from '../utils/jwt'
 import { mapRepositoryError } from '../utils/error'
+import { introspectAccessToken } from '../utils/jwt'
 
 export class AuthGuard {
   constructor(private readonly authRepository: AuthRepository) {}

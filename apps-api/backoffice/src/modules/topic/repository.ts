@@ -1,12 +1,12 @@
 import Elysia from 'elysia'
 
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
-import { fromPrismaPromise } from '../../utils/prisma'
+import { fromRepositoryPromise } from '../../utils/error'
 
 export class TopicRepository {
   constructor(private readonly prismaService: PrismaService) {}
   async getTopicById(topicId: string) {
-    return fromPrismaPromise(
+    return fromRepositoryPromise(
       this.prismaService.topic.findFirstOrThrow({
         where: {
           id: topicId,
@@ -16,7 +16,7 @@ export class TopicRepository {
   }
 
   async getTopics() {
-    return fromPrismaPromise(
+    return fromRepositoryPromise(
       this.prismaService.topic.findMany({
         include: {
           hashTagInTopics: {
@@ -30,7 +30,7 @@ export class TopicRepository {
   }
 
   async getUserFollowedTopics(userId: string) {
-    return fromPrismaPromise(
+    return fromRepositoryPromise(
       this.prismaService.userFollowsTopic.findMany({
         where: {
           userId: { equals: userId },
@@ -51,23 +51,42 @@ export class TopicRepository {
   }
 
   async createUserFollowTopic(userId: string, topicId: string) {
-    return fromPrismaPromise(
-      this.prismaService.userFollowsTopic.create({
+    return fromRepositoryPromise(
+      this.prismaService.user.update({
+        where: {
+          id: userId,
+        },
         data: {
-          userId: userId,
-          topicId: topicId,
+          followedTopics: {
+            create: {
+              topicId,
+            },
+          },
+          numberOfFollowingTopics: {
+            increment: 1,
+          },
         },
       })
     )
   }
 
   async deleteUserFollowTopic(userId: string, topicId: string) {
-    return fromPrismaPromise(
-      this.prismaService.userFollowsTopic.delete({
+    return fromRepositoryPromise(
+      this.prismaService.user.update({
         where: {
-          userId_topicId: {
-            userId: userId,
-            topicId: topicId,
+          id: userId,
+        },
+        data: {
+          followedTopics: {
+            delete: {
+              userId_topicId: {
+                userId,
+                topicId,
+              },
+            },
+          },
+          numberOfFollowingTopics: {
+            decrement: 1,
           },
         },
       })
