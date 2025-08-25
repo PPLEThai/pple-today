@@ -600,7 +600,6 @@ function PostCardExample() {
       <View className="-mx-4">
         <PostCard
           id="1"
-          firstImageType="square" // TODO
           author={{
             id: '1',
             name: 'ศิริโรจน์ ธนิกกุล - Sirirot Thanikkun',
