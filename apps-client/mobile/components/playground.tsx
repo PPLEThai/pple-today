@@ -3,6 +3,7 @@ import { Platform, Pressable, ScrollView, TextProps, View } from 'react-native'
 import ImageView from 'react-native-image-viewing'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { Avatar, AvatarFallback, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
 import { Button } from '@pple-today/ui/button'
@@ -151,11 +152,7 @@ export function Playground() {
                 </Button>
               </View>
               <View className="flex flex-col gap-2 flex-wrap">
-                <Button size="sm">
-                  <Icon icon={PlusIcon} />
-                  <Text>Button</Text>
-                  <Icon icon={PlusIcon} />
-                </Button>
+                f
                 <Button size="sm" variant="secondary">
                   <Icon icon={PlusIcon} />
                   <Text>Button</Text>
@@ -240,6 +237,7 @@ export function Playground() {
             </DialogContent>
           </Dialog>
         </View>
+        <AvatarExample />
         <BottomSheetExample />
         <ToggleGroupExample />
         <ProgressExample />
@@ -621,5 +619,45 @@ function QueryExample() {
         </Button>
       </View>
     </>
+  )
+}
+
+function AvatarExample() {
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Avatar</H2>
+      <View className="flex flex-row gap-4 items-baseline">
+        <Avatar className="size-16" alt="NativewindUI Avatar">
+          <AvatarImage
+            source={{
+              uri: 'https://pbs.twimg.com/profile_images/1782428433898708992/1voyv4_A_400x400.jpg',
+            }}
+          />
+          <AvatarFallback>
+            <Text className="text-foreground">NUI</Text>
+          </AvatarFallback>
+        </Avatar>
+        <Avatar className="size-24" alt="NativewindUI Avatar">
+          <AvatarImage
+            source={{
+              uri: 'https://pbs.twimg.com/profile_images/1782428433898708992/1voyv4_A_400x400.jpg',
+            }}
+          />
+          <AvatarFallback>
+            <Text className="text-foreground">NUI</Text>
+          </AvatarFallback>
+        </Avatar>
+        <Avatar className="size-32" alt="NativewindUI Avatar">
+          <AvatarImage
+            source={{
+              uri: 'https://pbs.twimg.com/profile_images/1782428433898708992/1voyv4_A_400x400.jpg',
+            }}
+          />
+          <AvatarFallback>
+            <Text className="text-foreground">NUI</Text>
+          </AvatarFallback>
+        </Avatar>
+      </View>
+    </View>
   )
 }
