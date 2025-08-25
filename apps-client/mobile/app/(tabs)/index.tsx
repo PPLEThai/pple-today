@@ -26,7 +26,7 @@ import {
 import { GetBannersResponse } from '@api/backoffice/src/modules/banner/models'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AnnouncementCard } from '@app/components/announcement'
-import { PostCard, PostCardAttachment } from '@app/components/feed/post-card'
+import { PostCard } from '@app/components/feed/post-card'
 import {
   Pager,
   PagerContent,
@@ -367,15 +367,14 @@ function FeedContent(props: FeedContentProps) {
                 key={item.id}
                 id={item.id}
                 author={item.author}
-                // TODO: remove type casting
-                attachments={(item.post.attachments as PostCardAttachment[]) ?? []}
+                attachments={item.post.attachments ?? []}
                 commentCount={item.commentCount}
                 content={item.post.content}
                 createdAt={item.createdAt.toString()}
                 firstImageType="square"
                 hashTags={item.post.hashTags}
                 reactions={item.reactions.map((reaction) => ({
-                  type: reaction.type as 'UP_VOTE' | 'DOWN_VOTE', // TODO: enum this
+                  type: reaction.type,
                   count: reaction.count,
                 }))}
                 userReaction={item.userReaction}

@@ -34,11 +34,12 @@ import { z } from 'zod/v4'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { MoreOrLess } from '@app/components/more-or-less'
 import { useSessionQuery } from '@app/libs/auth'
+import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { queryClient } from '@app/libs/react-query'
 
 export interface PostCardAttachment {
   id: string
-  type: 'IMAGE' | 'VIDEO'
+  type: 'IMAGE' | 'VIDEO' | 'AUDIO'
   url: string
   description?: string
 }
@@ -341,27 +342,31 @@ interface AttachmentProps {
   className?: string
 }
 function Attachment(props: AttachmentProps) {
-  if (props.attachment.type === 'VIDEO') {
-    return (
-      <View className={cn(`rounded-[2px] overflow-hidden w-full bg-gray-50`, props.className)}>
-        <VideoComp url={props.attachment.url} />
-      </View>
-    )
-  }
-  if (props.attachment.type === 'IMAGE') {
-    return (
-      <Pressable
-        onPress={() => props.onPress(props.index)}
-        className={cn(`rounded-[2px] overflow-hidden w-full bg-gray-50`, props.className)}
-      >
-        <Image
-          style={{ width: '100%', height: '100%' }}
-          source={{ uri: props.attachment.url }}
-          alt={props.attachment.description ?? ''}
-          contentPosition="top center"
-        />
-      </Pressable>
-    )
+  switch (props.attachment.type) {
+    case 'VIDEO':
+      return (
+        <View className={cn(`rounded-[2px] overflow-hidden w-full bg-gray-50`, props.className)}>
+          <VideoComp url={props.attachment.url} />
+        </View>
+      )
+    case 'IMAGE':
+      return (
+        <Pressable
+          onPress={() => props.onPress(props.index)}
+          className={cn(`rounded-[2px] overflow-hidden w-full bg-gray-50`, props.className)}
+        >
+          <Image
+            style={{ width: '100%', height: '100%' }}
+            source={{ uri: props.attachment.url }}
+            alt={props.attachment.description ?? ''}
+            contentPosition="top center"
+          />
+        </Pressable>
+      )
+    case 'AUDIO':
+      throw new Error('Unsupported attachment type')
+    default:
+      exhaustiveGuard(props.attachment.type)
   }
 }
 
