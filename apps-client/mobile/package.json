@@ -47,6 +47,7 @@
     "expo-font": "~13.3.2",
     "expo-haptics": "~14.1.4",
     "expo-image": "~2.3.0",
+    "expo-image-picker": "~16.1.4",
     "expo-linking": "~7.1.4",
     "expo-router": "~5.1.0",
     "expo-scroll-forwarder": "workspace:^",
