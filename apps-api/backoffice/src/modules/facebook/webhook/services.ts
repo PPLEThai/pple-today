@@ -177,6 +177,11 @@ export class FacebookWebhookService {
     switch (body.verb) {
       case WebhookChangesVerb.ADD:
       case WebhookChangesVerb.EDIT: {
+        if (!body.link) {
+          const deleteResult = await this.facebookWebhookRepository.deletePost(body.post_id)
+          if (deleteResult.isErr()) return mapRepositoryError(deleteResult.error)
+          return ok()
+        }
         return await this.upsertPostDetails(body.from.id, body.post_id)
       }
     }
@@ -189,8 +194,15 @@ export class FacebookWebhookService {
       case WebhookChangesVerb.REMOVE: {
         return await this.upsertPostDetails(body.from.id, body.post_id)
       }
+      case WebhookChangesVerb.EDIT: {
+        if (!body.link) {
+          const deleteResult = await this.facebookWebhookRepository.deletePost(body.post_id)
+          if (deleteResult.isErr()) return mapRepositoryError(deleteResult.error)
+          return ok()
+        }
+        return await this.upsertPostDetails(body.from.id, body.post_id)
+      }
     }
-    return ok()
   }
 
   async validateWebhookSignature(signature: string, body: Buffer) {

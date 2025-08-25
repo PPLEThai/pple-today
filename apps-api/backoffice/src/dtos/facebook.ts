@@ -263,7 +263,7 @@ export const WebhookFeedChanges = t.Union([
     WebhookBaseChangesFeedValue,
     t.Object({
       item: t.Literal(WebhookFeedType.PHOTO),
-      link: t.String({ description: 'Link to the photo', format: 'uri' }),
+      link: t.Optional(t.String({ description: 'Link to the photo', format: 'uri' })),
       message: t.Optional(t.String({ description: 'Content of the post' })),
     }),
   ]),

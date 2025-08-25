@@ -5,5 +5,5 @@ export const getFileName = (url: string) => {
 }
 
 export const getFilePath = (fullPath: string) => {
-  return fullPath.split('/').slice(0, -1).join('/')
+  return fullPath.split('/').slice(1).join('/')
 }
