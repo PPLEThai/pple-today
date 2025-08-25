@@ -372,7 +372,7 @@ export class FeedRepository {
     )
   }
 
-  async createFeedItemReaction({
+  async upsertFeedItemReaction({
     feedItemId,
     userId,
     type,
@@ -385,8 +385,30 @@ export class FeedRepository {
   }) {
     return await fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
-        const result = await tx.feedItemReaction.create({
-          data: {
+        const existingFeedItemReaction = await tx.feedItemReaction.findUnique({
+          where: {
+            userId_feedItemId: {
+              userId,
+              feedItemId,
+            },
+          },
+        })
+
+        if (existingFeedItemReaction?.type === type) {
+          return existingFeedItemReaction
+        }
+
+        const result = await tx.feedItemReaction.upsert({
+          where: {
+            userId_feedItemId: {
+              userId,
+              feedItemId,
+            },
+          },
+          update: {
+            type,
+          },
+          create: {
             feedItemId,
             userId,
             type,
@@ -398,6 +420,14 @@ export class FeedRepository {
           update: { count: { increment: 1 } },
           create: { feedItemId, type, count: 1 },
         })
+
+        if (existingFeedItemReaction) {
+          await tx.feedItemReactionCount.upsert({
+            where: { feedItemId_type: { feedItemId, type: existingFeedItemReaction.type } },
+            update: { count: { decrement: 1 } },
+            create: { feedItemId, type: existingFeedItemReaction.type, count: 0 },
+          })
+        }
 
         if (type === FeedItemReactionType.DOWN_VOTE && content) {
           await tx.feedItemComment.create({
@@ -418,79 +448,6 @@ export class FeedRepository {
         }
 
         return result
-      })
-    )
-  }
-
-  async updateFeedItemReaction({
-    feedItemId,
-    userId,
-    type,
-    content,
-  }: {
-    feedItemId: string
-    userId: string
-    type: FeedItemReactionType
-    content?: string
-  }) {
-    return await fromRepositoryPromise(
-      this.prismaService.$transaction(async (tx) => {
-        const reaction = await tx.feedItemReaction.findUniqueOrThrow({
-          where: {
-            userId_feedItemId: {
-              userId,
-              feedItemId,
-            },
-          },
-        })
-
-        if (reaction.type === type) {
-          return reaction // No change needed
-        }
-
-        const updatedReaction = await tx.feedItemReaction.update({
-          where: {
-            userId_feedItemId: {
-              userId,
-              feedItemId,
-            },
-          },
-          data: { type },
-        })
-
-        await tx.feedItemReactionCount.upsert({
-          where: { feedItemId_type: { feedItemId, type } },
-          update: { count: { increment: 1 } },
-          create: { feedItemId, type, count: 1 },
-        })
-
-        await tx.feedItemReactionCount.upsert({
-          where: { feedItemId_type: { feedItemId, type: reaction.type } },
-          update: { count: { decrement: 1 } },
-          create: { feedItemId, type: reaction.type, count: 0 },
-        })
-
-        if (type === FeedItemReactionType.DOWN_VOTE) {
-          await tx.feedItem.update({
-            where: { id: feedItemId },
-            data: {
-              numberOfComments: { increment: content ? 1 : 0 },
-            },
-          })
-
-          if (content) {
-            await tx.feedItemComment.create({
-              data: {
-                feedItemId,
-                userId,
-                content,
-                isPrivate: true, // Assuming downvotes are private comments
-              },
-            })
-          }
-        }
-
-        return updatedReaction
       })
     )
   }
