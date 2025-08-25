@@ -10,6 +10,7 @@ import {
   GetProfileByIdParams,
   GetProfileByIdResponse,
   GetProfileUploadUrlResponse,
+  GetRecentActivityResponse,
   UpdateProfileBody,
   UpdateProfileResponse,
 } from './models'
@@ -24,6 +25,32 @@ export const ProfileController = new Elysia({
   tags: ['Profile'],
 })
   .use([AuthGuardPlugin, ProfileServicePlugin])
+  .get(
+    '/recent-activity',
+    async ({ user, profileService, status }) => {
+      const result = await profileService.getRecentActivity(user.id)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      response: {
+        200: GetRecentActivityResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get Recent Activity',
+        description: "Fetch the authenticated user's recent activity",
+      },
+    }
+  )
   .get(
     '/me',
     async ({ user, status, profileService }) => {

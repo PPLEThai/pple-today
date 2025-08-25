@@ -1,0 +1,12 @@
+import { t } from 'elysia'
+
+import { FeedItemType } from '../../__generated__/prisma'
+
+export const RecentActivity = t.Union([
+  t.Object({
+    type: t.Literal(FeedItemType.POLL),
+    feedItemId: t.String({ description: 'The ID of the feed item' }),
+    title: t.String({ description: 'The title of the poll' }),
+    createdAt: t.Date({ description: 'The date and time when the activity occurred' }),
+  }),
+])
