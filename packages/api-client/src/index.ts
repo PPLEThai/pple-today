@@ -43,7 +43,7 @@ function createQueryClient<TSchema extends Record<string, any>>(
   }
 ): QueryClient<TSchema> {
   const makeRequest = async (method: any, path: any, payload: any) => {
-    const requestConfig: any = restClient.interceptors.request({
+    const requestConfig: any = await restClient.interceptors.request({
       method,
       path,
       query: payload?.query ?? {},

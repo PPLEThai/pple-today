@@ -5,6 +5,7 @@ export default [
   {
     rules: {
       '@typescript-eslint/no-require-imports': ['error', { allow: ['./assets/*'] }],
+      'react/prop-types': 'off',
     },
   },
 ]

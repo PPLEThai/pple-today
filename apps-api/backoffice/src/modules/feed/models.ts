@@ -34,7 +34,7 @@ export const CreateFeedReactionBody = t.Union([
   }),
   t.Object({
     type: t.Literal(FeedItemReactionType.DOWN_VOTE),
-    comment: t.String({ description: 'Optional comment for the reaction' }),
+    comment: t.Optional(t.String({ description: 'Optional comment for the reaction' })),
   }),
 ])
 export const CreateFeedReactionResponse = t.Object({

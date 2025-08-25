@@ -24,6 +24,7 @@ import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 
 import { environment } from '@app/env'
+import { AuthLifeCycleHook } from '@app/libs/auth'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -63,6 +64,7 @@ export default function RootLayout() {
             environment.APP_ENVIRONMENT === 'local') && (
             <DevToolsBubble onCopy={onCopy} queryClient={queryClient} />
           )}
+          <AuthLifeCycleHook />
         </QueryClientProvider>
       </SafeAreaProvider>
       <PortalHost />

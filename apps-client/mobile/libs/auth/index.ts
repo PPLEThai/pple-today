@@ -1,7 +1,8 @@
+import { useEffect } from 'react'
 import { Platform } from 'react-native'
 import { createMutation, createQuery } from 'react-query-kit'
 
-import { useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   AuthRequest,
   AuthSessionResult,
@@ -13,13 +14,15 @@ import {
   makeRedirectUri,
   ResponseType,
 } from 'expo-auth-session'
-import { getItemAsync, setItemAsync } from 'expo-secure-store'
 import * as WebBrowser from 'expo-web-browser'
+import { z } from 'zod/v4'
 
 import appConfig from '@app/app.config'
 import { environment } from '@app/env'
 
-import { queryClient } from './react-query'
+import { AuthSession, getAuthSession, setAuthSession } from './session'
+
+import { queryClient } from '../react-query'
 
 const authRequest: AuthRequest = new AuthRequest({
   responseType: ResponseType.Code,
@@ -32,13 +35,6 @@ const authRequest: AuthRequest = new AuthRequest({
   }),
 })
 
-const AUTH_SESSION_STORAGE_KEY = 'authSession'
-export interface AuthSession {
-  accessToken: string
-  refreshToken: string
-  idToken: string | null
-}
-
 export const useDiscoveryQuery = createQuery({
   queryKey: ['discovery'],
   fetcher: () => {
@@ -48,19 +44,14 @@ export const useDiscoveryQuery = createQuery({
 
 export const useSessionQuery = createQuery({
   queryKey: ['session'],
-  fetcher: async () => {
-    const session = await getItemAsync(AUTH_SESSION_STORAGE_KEY)
-    if (!session) return null
-    return JSON.parse(session) as AuthSession | null
-  },
+  fetcher: getAuthSession,
 })
 
 const useSetSessionMutation = createMutation({
   mutationKey: ['session'],
-  mutationFn: (session: AuthSession | null) => {
-    return setItemAsync(AUTH_SESSION_STORAGE_KEY, JSON.stringify(session))
-  },
+  mutationFn: setAuthSession,
 })
+
 export const useSessionMutation = () => {
   const queryClient = useQueryClient()
   const sessionQuery = useSessionQuery()
@@ -80,10 +71,42 @@ export const useSessionMutation = () => {
   })
 }
 
-export const useUserQuery = createQuery({
+const UserInfoSchema = z.object({
+  sub: z.string(),
+  name: z.string(),
+  given_name: z.string(),
+  family_name: z.string(),
+  locale: z.nullable(z.string()),
+  updated_at: z.number(),
+  preferred_username: z.string(),
+  phone_number: z.string(),
+  phone_number_verified: z.boolean(),
+})
+type UserInfo = z.infer<typeof UserInfoSchema>
+interface UseUserQueryVariables {
+  session: AuthSession
+  discovery: DiscoveryDocument
+}
+export const useUserQuery = createQuery<
+  UserInfo | null,
+  UseUserQueryVariables,
+  Record<string, any>
+>({
   queryKey: ['user'],
-  fetcher: (variables: { session: AuthSession; discovery: DiscoveryDocument }) => {
-    return fetchUserInfoAsync({ accessToken: variables.session.accessToken }, variables.discovery)
+  fetcher: async (variables: UseUserQueryVariables) => {
+    const userInfo = await fetchUserInfoAsync(
+      { accessToken: variables.session.accessToken },
+      variables.discovery
+    )
+    if (userInfo?.error) {
+      throw userInfo
+    }
+    const userInfoResult = UserInfoSchema.safeParse(userInfo)
+    if (userInfoResult.error) {
+      console.error('Error parsing user info:', userInfoResult.error, userInfo)
+      throw userInfoResult.error
+    }
+    return userInfoResult.data
   },
   initialData: null,
 })
@@ -102,12 +125,7 @@ export const useUser = () => {
 
 export const useAuthMe = () => {
   const sessionQuery = useSessionQuery()
-  // TODO: wait for /auth/me to accept bearer token
-  return queryClient.useQuery(
-    '/auth/me',
-    { headers: { authorization: `Bearer ${sessionQuery.data?.accessToken}` } },
-    { enabled: !!sessionQuery.data }
-  )
+  return queryClient.useQuery('/auth/me', {}, { enabled: !!sessionQuery.data })
 }
 
 export const codeExchange = async ({
@@ -130,6 +148,46 @@ export const codeExchange = async ({
     },
     discovery
   )
+}
+
+export const AuthLifeCycleHook = () => {
+  const discoveryQuery = useDiscoveryQuery()
+  useEffect(() => {
+    if (discoveryQuery.error) {
+      console.error('Error fetching discovery document:', discoveryQuery.error)
+    }
+  }, [discoveryQuery.error])
+
+  const sessionQuery = useSessionQuery()
+  const sessionMutation = useSessionMutation()
+  useEffect(() => {
+    if (sessionQuery.error) {
+      console.error('Error fetching session:', sessionQuery.error)
+      // Should we reset session on error here?
+      // sessionMutation.mutate(null)
+    }
+  }, [sessionQuery.error, sessionMutation])
+
+  const userQuery = useUserQuery({
+    variables: {
+      session: sessionQuery.data!,
+      discovery: discoveryQuery.data!,
+    },
+    enabled: !!discoveryQuery.data && !!sessionQuery.data,
+  })
+  useEffect(() => {
+    // incase the session's access token is expired
+    if (userQuery.error?.error === 'access_denied') {
+      console.log('Error fetching user info:', userQuery.error)
+      sessionMutation.mutate(null)
+      return
+    }
+    if (userQuery.error) {
+      console.error('Error fetching user info:', userQuery.error)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userQuery.error])
+  return null
 }
 
 // Might consider using neverthrow
@@ -163,6 +221,20 @@ export const login = async ({ discovery }: { discovery: DiscoveryDocument }) => 
     console.error('Error exchanging code:', error)
     throw error
   }
+}
+
+export const useLoginMutation = () => {
+  const sessionMutation = useSessionMutation()
+  return useMutation({
+    mutationFn: login,
+    onSuccess: (result) => {
+      sessionMutation.mutate({
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken ?? '',
+        idToken: result.idToken ?? null,
+      })
+    },
+  })
 }
 
 // Might consider using neverthrow
@@ -200,6 +272,17 @@ export const logout = async ({
     throw new Error('Logout cancelled or failed')
   }
   return result
+}
+
+export const useLogoutMutation = () => {
+  const sessionMutation = useSessionMutation()
+  return useMutation({
+    mutationFn: logout,
+    onSuccess: () => {
+      // Clear tokens from secure storage
+      sessionMutation.mutate(null)
+    },
+  })
 }
 
 async function getBrowserPackage() {

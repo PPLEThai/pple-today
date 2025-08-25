@@ -55,6 +55,7 @@
     "expo-status-bar": "~2.2.3",
     "expo-symbols": "~0.4.4",
     "expo-system-ui": "~5.0.7",
+    "expo-video": "~2.2.2",
     "expo-web-browser": "~14.2.0",
     "lottie-react-native": "^7.3.2",
     "lucide-react-native": "^0.514.0",

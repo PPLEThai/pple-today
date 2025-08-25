@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import { Text } from '@pple-today/ui/text'
 import type {
   MaterialTopTabNavigationEventMap,
