@@ -3,7 +3,7 @@ import { ok } from 'neverthrow'
 
 import { AddressRepository, AddressRepositoryPlugin } from './repository'
 
-import { mapRawPrismaError } from '../../utils/prisma'
+import { mapRepositoryError } from '../../utils/error'
 
 export class AddressService {
   constructor(private readonly addressRepository: AddressRepository) {}
@@ -12,7 +12,7 @@ export class AddressService {
     const provinces = await this.addressRepository.getProvinces()
 
     if (provinces.isErr()) {
-      return mapRawPrismaError(provinces.error)
+      return mapRepositoryError(provinces.error)
     }
 
     return ok(provinces.value)
@@ -24,7 +24,7 @@ export class AddressService {
     })
 
     if (distincts.isErr()) {
-      return mapRawPrismaError(distincts.error)
+      return mapRepositoryError(distincts.error)
     }
 
     return ok(distincts.value)
@@ -37,7 +37,7 @@ export class AddressService {
     })
 
     if (subDistricts.isErr()) {
-      return mapRawPrismaError(subDistricts.error)
+      return mapRepositoryError(subDistricts.error)
     }
 
     return ok(subDistricts.value)
@@ -51,7 +51,7 @@ export class AddressService {
     })
 
     if (postalCodes.isErr()) {
-      return mapRawPrismaError(postalCodes.error)
+      return mapRepositoryError(postalCodes.error)
     }
 
     return ok(postalCodes.value)

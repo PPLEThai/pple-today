@@ -13,7 +13,7 @@ import {
 import { AdminHashtagRepository, AdminHashtagRepositoryPlugin } from './repository'
 
 import { InternalErrorCode } from '../../../dtos/error'
-import { mapRawPrismaError } from '../../../utils/prisma'
+import { mapRepositoryError } from '../../../utils/error'
 
 export class AdminHashtagService {
   constructor(private adminHashtagRepository: AdminHashtagRepository) {}
@@ -25,7 +25,7 @@ export class AdminHashtagService {
     }
   ) {
     const result = await this.adminHashtagRepository.getHashtags(query)
-    if (result.isErr()) return mapRawPrismaError(result.error)
+    if (result.isErr()) return mapRepositoryError(result.error)
 
     return ok(result.value satisfies GetHashtagsResponse)
   }
@@ -33,7 +33,7 @@ export class AdminHashtagService {
   async getHashtagById(hashtagId: string) {
     const result = await this.adminHashtagRepository.getHashtagById(hashtagId)
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.HASHTAG_NOT_FOUND,
         },
@@ -45,7 +45,7 @@ export class AdminHashtagService {
   async createHashtag(data: CreateHashtagBody) {
     const result = await this.adminHashtagRepository.createHashtag(data)
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         INVALID_INPUT: {
           code: InternalErrorCode.HASHTAG_INVALID_INPUT,
         },
@@ -57,7 +57,7 @@ export class AdminHashtagService {
   async updateHashtagById(hashtagId: string, data: UpdateHashtagBody) {
     const result = await this.adminHashtagRepository.updateHashtagById(hashtagId, data)
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.HASHTAG_NOT_FOUND,
         },
@@ -72,7 +72,7 @@ export class AdminHashtagService {
   async deleteHashtagById(hashtagId: string) {
     const result = await this.adminHashtagRepository.deleteHashtagById(hashtagId)
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.HASHTAG_NOT_FOUND,
         },

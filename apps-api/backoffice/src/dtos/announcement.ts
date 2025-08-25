@@ -1,5 +1,6 @@
 import { Static, t } from 'elysia'
 
+import { FilePath } from './file'
 import { Topic } from './topic'
 
 import { AnnouncementType } from '../../__generated__/prisma'
@@ -24,13 +25,13 @@ export const PublishedAnnouncement = t.Object({
   attachments: t.Array(
     t.Object({
       url: t.String({ description: 'The signed URL of the attachment', format: 'uri' }),
-      filePath: t.String({ description: 'The file path of the attachment' }),
+      filePath: FilePath,
     })
   ),
 })
 export type PublishedAnnouncement = Static<typeof PublishedAnnouncement>
 
-export const DraftedAnnouncement = t.Composite([
+export const DraftAnnouncement = t.Composite([
   t.Pick(PublishedAnnouncement, [
     'id',
     'content',
@@ -46,4 +47,4 @@ export const DraftedAnnouncement = t.Composite([
     type: t.Nullable(t.Enum(AnnouncementType, { description: 'The type of the announcement' })),
   }),
 ])
-export type DraftedAnnouncement = Static<typeof DraftedAnnouncement>
+export type DraftAnnouncement = Static<typeof DraftAnnouncement>

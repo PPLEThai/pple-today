@@ -6,7 +6,7 @@ import { PollsRepository, PollsRepositoryPlugin } from './repository'
 
 import { FeedItemType } from '../../../__generated__/prisma'
 import { InternalErrorCode } from '../../dtos/error'
-import { mapRawPrismaError } from '../../utils/prisma'
+import { mapRepositoryError } from '../../utils/error'
 
 export class PollsService {
   constructor(private readonly pollsRepository: PollsRepository) {}
@@ -19,7 +19,7 @@ export class PollsService {
     })
 
     if (polls.isErr()) {
-      return mapRawPrismaError(polls.error)
+      return mapRepositoryError(polls.error)
     }
 
     return ok({
@@ -60,7 +60,7 @@ export class PollsService {
     const pollCondition = await this.pollsRepository.getPollCondition(userId, pollId)
 
     if (pollCondition.isErr()) {
-      return mapRawPrismaError(pollCondition.error, {
+      return mapRepositoryError(pollCondition.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.POLL_NOT_FOUND,
           message: 'Poll not found',
@@ -85,7 +85,7 @@ export class PollsService {
     const result = await this.pollsRepository.createPollVote(userId, pollId, optionId)
 
     if (result.isErr()) {
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.POLL_NOT_FOUND,
           message: 'Poll not found',
@@ -108,7 +108,7 @@ export class PollsService {
     const pollCondition = await this.pollsRepository.getPollCondition(userId, pollId)
 
     if (pollCondition.isErr()) {
-      return mapRawPrismaError(pollCondition.error, {
+      return mapRepositoryError(pollCondition.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.POLL_NOT_FOUND,
           message: 'Poll not found',
@@ -126,7 +126,7 @@ export class PollsService {
     const result = await this.pollsRepository.deletePollVote(userId, pollId, optionId)
 
     if (result.isErr()) {
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.POLL_NOT_FOUND,
           message: 'Poll not found',

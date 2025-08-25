@@ -4,7 +4,7 @@ import { err, ok } from 'neverthrow'
 import { FacebookRepository, FacebookRepositoryPlugin } from './repository'
 
 import { InternalErrorCode } from '../../dtos/error'
-import { mapRawPrismaError } from '../../utils/prisma'
+import { mapRepositoryError } from '../../utils/error'
 import { FileService, FileServicePlugin } from '../file/services'
 export class FacebookService {
   constructor(
@@ -149,7 +149,7 @@ export class FacebookService {
     )
 
     if (linkedPage.isErr()) {
-      return mapRawPrismaError(linkedPage.error, {
+      return mapRepositoryError(linkedPage.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.USER_NOT_FOUND,
           message: 'User not found',
@@ -174,7 +174,7 @@ export class FacebookService {
     const unlinkResult = await this.facebookRepository.unlinkFacebookPageFromUser(userId)
 
     if (unlinkResult.isErr()) {
-      return mapRawPrismaError(unlinkResult.error, {
+      return mapRepositoryError(unlinkResult.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.FACEBOOK_LINKED_PAGE_NOT_FOUND,
           message: 'Linked Facebook page not found',
@@ -188,14 +188,7 @@ export class FacebookService {
     )
 
     if (unlinkPostsResult.isErr()) {
-      if (
-        unlinkPostsResult.error.code === InternalErrorCode.FACEBOOK_API_ERROR ||
-        unlinkPostsResult.error.code === InternalErrorCode.FACEBOOK_INVALID_RESPONSE
-      ) {
-        return err(unlinkPostsResult.error)
-      }
-
-      return mapRawPrismaError(unlinkPostsResult.error, {
+      return mapRepositoryError(unlinkPostsResult.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.FACEBOOK_LINKED_PAGE_NOT_FOUND,
           message: 'Linked Facebook page not found',

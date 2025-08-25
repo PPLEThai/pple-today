@@ -124,7 +124,8 @@ export const AdminTopicController = new Elysia({
           InternalErrorCode.TOPIC_NOT_FOUND,
           InternalErrorCode.TOPIC_INVALID_INPUT,
           InternalErrorCode.FILE_MOVE_ERROR,
-          InternalErrorCode.FILE_DELETE_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -151,7 +152,9 @@ export const AdminTopicController = new Elysia({
         200: DeleteTopicResponse,
         ...createErrorSchema(
           InternalErrorCode.TOPIC_NOT_FOUND,
-          InternalErrorCode.FILE_DELETE_ERROR,
+          InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

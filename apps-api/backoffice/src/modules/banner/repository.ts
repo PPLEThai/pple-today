@@ -2,13 +2,13 @@ import Elysia from 'elysia'
 
 import { BannerStatusType } from '../../../__generated__/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
-import { fromPrismaPromise } from '../../utils/prisma'
+import { fromRepositoryPromise } from '../../utils/error'
 
 export class BannerRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
   async getBanners() {
-    return fromPrismaPromise(
+    return fromRepositoryPromise(
       this.prismaService.banner.findMany({
         where: {
           status: BannerStatusType.PUBLISH,

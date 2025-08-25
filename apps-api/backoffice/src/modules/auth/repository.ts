@@ -3,13 +3,13 @@ import Elysia from 'elysia'
 import { UserRole } from '../../../__generated__/prisma'
 import { IntrospectAccessTokenResult } from '../../dtos/auth'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
-import { fromPrismaPromise } from '../../utils/prisma'
+import { fromRepositoryPromise } from '../../utils/error'
 
 export class AuthRepository {
   constructor(private prismaService: PrismaService) {}
 
   async getUserById(id: string) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.user.findUniqueOrThrow({
         where: { id },
         include: { address: true },
@@ -20,7 +20,7 @@ export class AuthRepository {
   async createUser(data: IntrospectAccessTokenResult, role: UserRole = UserRole.USER) {
     const { sub, name, phone_number } = data
 
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.user.create({
         data: {
           id: sub,

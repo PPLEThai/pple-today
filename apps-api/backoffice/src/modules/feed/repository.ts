@@ -8,8 +8,7 @@ import { FeedItemReactionType, FeedItemType, Prisma } from '../../../__generated
 import { InternalErrorCode } from '../../dtos/error'
 import { FeedItem, FeedItemBaseContent } from '../../dtos/feed'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
-import { err, exhaustiveGuard } from '../../utils/error'
-import { fromPrismaPromise } from '../../utils/prisma'
+import { err, exhaustiveGuard, fromRepositoryPromise } from '../../utils/error'
 import { FileService, FileServicePlugin } from '../file/services'
 
 export class FeedRepository {
@@ -176,7 +175,7 @@ export class FeedRepository {
     limit: number
   }) {
     const skip = Math.max((page - 1) * limit, 0)
-    const rawFeedItems = await fromPrismaPromise(
+    const rawFeedItems = await fromRepositoryPromise(
       this.prismaService.feedItem.findMany({
         take: limit,
         skip,
@@ -248,7 +247,7 @@ export class FeedRepository {
     limit: number
   }) {
     const skip = Math.max((page - 1) * limit, 0)
-    const rawFeedItems = await fromPrismaPromise(
+    const rawFeedItems = await fromRepositoryPromise(
       this.prismaService.feedItem.findMany({
         take: limit,
         skip,
@@ -316,7 +315,7 @@ export class FeedRepository {
 
   async listFeedItems({ userId, page, limit }: { userId?: string; page: number; limit: number }) {
     const skip = Math.max((page - 1) * limit, 0)
-    const rawFeedItems = await fromPrismaPromise(
+    const rawFeedItems = await fromRepositoryPromise(
       this.prismaService.feedItem.findMany({
         orderBy: {
           createdAt: 'desc',
@@ -340,7 +339,7 @@ export class FeedRepository {
   }
 
   async getFeedItemById(feedItemId: string, userId?: string) {
-    const rawFeedItem = await fromPrismaPromise(
+    const rawFeedItem = await fromRepositoryPromise(
       this.prismaService.feedItem.findUniqueOrThrow({
         where: { id: feedItemId },
         include: this.constructFeedItemInclude(userId),
@@ -358,7 +357,7 @@ export class FeedRepository {
     feedItemId: string
     userId: string
   }) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.feedItemReaction.findUnique({
         where: {
           userId_feedItemId: {
@@ -384,7 +383,7 @@ export class FeedRepository {
     type: FeedItemReactionType
     content?: string
   }) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
         const existingFeedItemReaction = await tx.feedItemReaction.findUnique({
           where: {
@@ -454,7 +453,7 @@ export class FeedRepository {
   }
 
   async deleteFeedItemReaction({ feedItemId, userId }: { feedItemId: string; userId: string }) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
         const reaction = await tx.feedItemReaction.delete({
           where: {
@@ -478,7 +477,7 @@ export class FeedRepository {
     feedItemId: string,
     query: { userId?: string; page: number; limit: number }
   ) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.feedItemComment.findMany({
         where: {
           feedItemId,
@@ -518,7 +517,7 @@ export class FeedRepository {
     content: string
     isPrivate: boolean
   }) {
-    const result = await fromPrismaPromise(
+    const result = await fromRepositoryPromise(
       this.prismaService.$transaction([
         this.prismaService.feedItemComment.create({
           data: {
@@ -551,7 +550,7 @@ export class FeedRepository {
     )
 
     if (result.isErr()) {
-      return result
+      return err(result.error)
     }
 
     return ok(result.value[0])
@@ -568,7 +567,7 @@ export class FeedRepository {
     userId: string
     content: string
   }) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.feedItemComment.updateMany({
         where: {
           id: commentId,
@@ -591,7 +590,7 @@ export class FeedRepository {
     userId: string
     feedItemId: string
   }) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.feedItemComment.deleteMany({
         where: {
           id: commentId,
@@ -603,7 +602,7 @@ export class FeedRepository {
   }
 
   async checkTopicExists(topicId: string) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.topic.findUniqueOrThrow({
         where: { id: topicId },
       })
@@ -611,7 +610,7 @@ export class FeedRepository {
   }
 
   async checkHashTagExists(hashTagId: string) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.hashTag.findUniqueOrThrow({
         where: { id: hashTagId },
       })
