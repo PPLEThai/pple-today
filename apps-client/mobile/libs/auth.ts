@@ -1,7 +1,8 @@
+import { useEffect } from 'react'
 import { Platform } from 'react-native'
 import { createMutation, createQuery } from 'react-query-kit'
 
-import { useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   AuthRequest,
   AuthSessionResult,
@@ -44,8 +45,12 @@ export type AuthSession = z.output<typeof AuthSessionSchema>
 function parseAuthSession(json: string | null): AuthSession | null {
   if (json === null) return null
   const data = JSON.parse(json)
+  if (data === null) return null
   const result = AuthSessionSchema.safeParse(data)
-  if (result.error) return null
+  if (result.error) {
+    console.error('Error parsing auth session:', result.error, json)
+    return null
+  }
   return result.data
 }
 
@@ -94,10 +99,42 @@ export const useSessionMutation = () => {
   })
 }
 
-export const useUserQuery = createQuery({
+const UserInfoSchema = z.object({
+  sub: z.string(),
+  name: z.string(),
+  given_name: z.string(),
+  family_name: z.string(),
+  locale: z.nullable(z.string()),
+  updated_at: z.number(),
+  preferred_username: z.string(),
+  phone_number: z.string(),
+  phone_number_verified: z.boolean(),
+})
+type UserInfo = z.infer<typeof UserInfoSchema>
+interface UseUserQueryVariables {
+  session: AuthSession
+  discovery: DiscoveryDocument
+}
+export const useUserQuery = createQuery<
+  UserInfo | null,
+  UseUserQueryVariables,
+  Record<string, any>
+>({
   queryKey: ['user'],
-  fetcher: (variables: { session: AuthSession; discovery: DiscoveryDocument }) => {
-    return fetchUserInfoAsync({ accessToken: variables.session.accessToken }, variables.discovery)
+  fetcher: async (variables: UseUserQueryVariables) => {
+    const userInfo = await fetchUserInfoAsync(
+      { accessToken: variables.session.accessToken },
+      variables.discovery
+    )
+    if (userInfo?.error) {
+      throw userInfo
+    }
+    const userInfoResult = UserInfoSchema.safeParse(userInfo)
+    if (userInfoResult.error) {
+      console.error('Error parsing user info:', userInfoResult.error, userInfo)
+      throw userInfoResult.error
+    }
+    return userInfoResult.data
   },
   initialData: null,
 })
@@ -141,6 +178,46 @@ export const codeExchange = async ({
   )
 }
 
+export const AuthLifeCycleHook = () => {
+  const discoveryQuery = useDiscoveryQuery()
+  useEffect(() => {
+    if (discoveryQuery.error) {
+      console.error('Error fetching discovery document:', discoveryQuery.error)
+    }
+  }, [discoveryQuery.error])
+
+  const sessionQuery = useSessionQuery()
+  const sessionMutation = useSessionMutation()
+  useEffect(() => {
+    if (sessionQuery.error) {
+      console.error('Error fetching session:', sessionQuery.error)
+      // Should we reset session on error here?
+      // sessionMutation.mutate(null)
+    }
+  }, [sessionQuery.error, sessionMutation])
+
+  const userQuery = useUserQuery({
+    variables: {
+      session: sessionQuery.data!,
+      discovery: discoveryQuery.data!,
+    },
+    enabled: !!discoveryQuery.data && !!sessionQuery.data,
+  })
+  useEffect(() => {
+    // incase the session's access token is expired
+    if (userQuery.error?.error === 'access_denied') {
+      console.log('Error fetching user info:', userQuery.error)
+      sessionMutation.mutate(null)
+      return
+    }
+    if (userQuery.error) {
+      console.error('Error fetching user info:', userQuery.error)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userQuery.error])
+  return null
+}
+
 // Might consider using neverthrow
 export const login = async ({ discovery }: { discovery: DiscoveryDocument }) => {
   let loginResult: AuthSessionResult
@@ -172,6 +249,20 @@ export const login = async ({ discovery }: { discovery: DiscoveryDocument }) => 
     console.error('Error exchanging code:', error)
     throw error
   }
+}
+
+export const useLoginMutation = () => {
+  const sessionMutation = useSessionMutation()
+  return useMutation({
+    mutationFn: login,
+    onSuccess: (result) => {
+      sessionMutation.mutate({
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken ?? '',
+        idToken: result.idToken ?? null,
+      })
+    },
+  })
 }
 
 // Might consider using neverthrow
@@ -209,6 +300,17 @@ export const logout = async ({
     throw new Error('Logout cancelled or failed')
   }
   return result
+}
+
+export const useLogoutMutation = () => {
+  const sessionMutation = useSessionMutation()
+  return useMutation({
+    mutationFn: logout,
+    onSuccess: () => {
+      // Clear tokens from secure storage
+      sessionMutation.mutate(null)
+    },
+  })
 }
 
 async function getBrowserPackage() {
