@@ -373,10 +373,7 @@ function FeedContent(props: FeedContentProps) {
                 createdAt={item.createdAt.toString()}
                 firstImageType="square"
                 hashTags={item.post.hashTags}
-                reactions={item.reactions.map((reaction) => ({
-                  type: reaction.type,
-                  count: reaction.count,
-                }))}
+                reactions={item.reactions}
                 userReaction={item.userReaction}
               />
             )
