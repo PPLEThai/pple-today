@@ -3,7 +3,7 @@ import { Static, t } from 'elysia'
 import { PostReactionType } from './post'
 import { Author } from './user'
 
-import { FeedItemType } from '../../__generated__/prisma'
+import { FeedItemType, PostAttachmentType } from '../../__generated__/prisma'
 
 export const FeedItemComment = t.Object({
   id: t.String({ description: 'The ID of the comment' }),
@@ -47,7 +47,14 @@ export const FeedItemPostContent = t.Object({
         t.Object({
           id: t.String({ description: 'The ID of the attachment' }),
           url: t.String({ description: 'The URL of the attachment' }),
-          type: t.String({ description: 'The type of the attachment, e.g., image, video' }),
+          thumbnailUrl: t.Optional(
+            t.String({ description: 'The thumbnail URL of the attachment' })
+          ),
+          width: t.Optional(t.Number({ description: 'The width of the attachment' })),
+          height: t.Optional(t.Number({ description: 'The height of the attachment' })),
+          type: t.Enum(PostAttachmentType, {
+            description: 'The type of the attachment, e.g., image, video',
+          }),
         })
       )
     ),

@@ -154,6 +154,11 @@ export class FeedRepository {
             attachments: rawFeedItem.post.attachments.map((image) => ({
               id: image.id,
               type: image.type,
+              width: image.width ?? undefined,
+              height: image.height ?? undefined,
+              thumbnailUrl: image.thumbnailPath
+                ? this.fileService.getPublicFileUrl(image.thumbnailPath)
+                : undefined,
               url: this.fileService.getPublicFileUrl(image.url),
             })),
           },
