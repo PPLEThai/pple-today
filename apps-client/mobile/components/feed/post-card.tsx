@@ -20,6 +20,7 @@ import { useForm } from '@tanstack/react-form'
 import { useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { Image } from 'expo-image'
+import { useRouter } from 'expo-router'
 import { useVideoPlayer, VideoView } from 'expo-video'
 import LottieView from 'lottie-react-native'
 import {
@@ -32,6 +33,7 @@ import { z } from 'zod/v4'
 
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { MoreOrLess } from '@app/components/more-or-less'
+import { useSessionQuery } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { queryClient } from '@app/libs/react-query'
 
@@ -736,7 +738,12 @@ function UpvoteButton(props: UpvoteButtonProps) {
   const userReaction = postReactionStore.data?.userReaction
   const createReactionQuery = queryClient.useMutation('post', '/feed/:id/reaction')
   const deleteReactionQuery = queryClient.useMutation('delete', '/feed/:id/reaction')
+  const router = useRouter()
+  const sessionQuery = useSessionQuery()
   const onPress = () => {
+    if (!sessionQuery.data) {
+      return router.push('/auth')
+    }
     const newUserReaction = userReaction === 'UP_VOTE' ? null : 'UP_VOTE'
     if (newUserReaction === 'UP_VOTE') {
       // skip some empty frames
@@ -815,7 +822,13 @@ function DownvoteButton(props: { postId: string }) {
   const userReaction = postReactionStore.data?.userReaction
   const deleteReactionQuery = queryClient.useMutation('delete', '/feed/:id/reaction')
   const client = useQueryClient()
+
+  const router = useRouter()
+  const sessionQuery = useSessionQuery()
   const onPress = () => {
+    if (!sessionQuery.data) {
+      return router.push('/auth')
+    }
     const newUserReaction = userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE'
     if (newUserReaction === 'DOWN_VOTE') {
       bottomSheetModalRef.current?.present()
@@ -904,8 +917,7 @@ function CommentForm(props: CommentFormProps) {
               icon: MessageCircleIcon,
             })
           },
-          onError: (error) => {
-            console.error(error)
+          onError: () => {
             toast.error({
               text1: 'เกิดข้อผิดพลาดบางอย่าง',
               icon: TriangleAlertIcon,
