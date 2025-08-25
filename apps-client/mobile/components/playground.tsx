@@ -37,6 +37,7 @@ import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
 import { Image } from 'expo-image'
+import { useRouter } from 'expo-router'
 import { getItemAsync } from 'expo-secure-store'
 import LottieView from 'lottie-react-native'
 import { InfoIcon, PlusIcon, SearchIcon } from 'lucide-react-native'
@@ -152,7 +153,6 @@ export function Playground() {
                 </Button>
               </View>
               <View className="flex flex-col gap-2 flex-wrap">
-                f
                 <Button size="sm" variant="secondary">
                   <Icon icon={PlusIcon} />
                   <Text>Button</Text>
@@ -247,6 +247,7 @@ export function Playground() {
         <ToastExample />
         <MoreOrLessExample />
         <LightboxExample />
+        <OnboardPlayground />
         <LottieExample />
         <QueryExample />
         <AuthPlayground />
@@ -657,6 +658,20 @@ function AvatarExample() {
             <Text className="text-foreground">NUI</Text>
           </AvatarFallback>
         </Avatar>
+      </View>
+    </View>
+  )
+}
+
+function OnboardPlayground() {
+  const router = useRouter()
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Onboarding</H2>
+      <View className="flex flex-row gap-4 items-baseline">
+        <Button onPress={() => router.push('/onboarding')}>
+          <Text>Start Onboarding</Text>
+        </Button>
       </View>
     </View>
   )
