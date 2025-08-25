@@ -34,7 +34,6 @@ import { z } from 'zod/v4'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { MoreOrLess } from '@app/components/more-or-less'
 import { useSessionQuery } from '@app/libs/auth'
-import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { queryClient } from '@app/libs/react-query'
 
 export interface PostCardAttachment {
@@ -210,11 +209,7 @@ function Lightbox(props: LightboxProps) {
   return (
     <View className="px-4">
       <View className="rounded-lg overflow-hidden">
-        <AlbumLayout
-          firstImageType={props.firstImageType}
-          attachments={props.attachments}
-          onPress={onPress}
-        />
+        <AlbumLayout attachments={props.attachments} onPress={onPress} />
       </View>
       <ImageView
         images={props.attachments.map((m) => ({ uri: m.url }))}
@@ -228,396 +223,124 @@ function Lightbox(props: LightboxProps) {
 
 // TODO: first pic dimension
 interface AttachmentLayoutProps {
-  firstImageType: 'landscape' | 'portrait' | 'square'
   attachments: PostCardAttachment[]
   onPress: (index: number) => void
 }
 function AlbumLayout(props: AttachmentLayoutProps) {
-  switch (props.firstImageType) {
-    case 'landscape': {
-      if (props.attachments.length === 1) {
-        return (
-          <AttachmentPressable
-            index={0}
+  if (props.attachments.length === 1) {
+    return (
+      <Attachment
+        index={0}
+        onPress={props.onPress}
+        attachment={props.attachments[0]!}
+        className="aspect-square"
+      />
+    )
+  } else if (props.attachments.length === 2) {
+    return (
+      <View className="flex flex-row gap-0.5">
+        {props.attachments.map((m, i) => (
+          <Attachment
+            key={i}
+            index={i}
             onPress={props.onPress}
-            attachment={props.attachments[0]!}
-            className="aspect-[3/2]"
+            attachment={m}
+            className="flex-1 aspect-square"
           />
-        )
-      } else if (props.attachments.length === 2) {
-        return (
-          <View className="flex flex-col gap-0.5 aspect-square">
-            {props.attachments.map((m, i) => (
-              <AttachmentPressable
-                key={i}
-                index={i}
-                onPress={props.onPress}
-                attachment={m}
-                className="flex-1"
-              />
-            ))}
-          </View>
-        )
-      } else if (props.attachments.length === 3) {
-        return (
-          <View className="flex flex-col gap-0.5 aspect-square">
-            {props.attachments.slice(0, 1).map((m, i) => (
-              <AttachmentPressable
-                key={i}
-                index={i}
-                onPress={props.onPress}
-                attachment={m}
-                className="flex-1"
-              />
-            ))}
-            <View className="flex flex-row gap-0.5 flex-1">
-              {props.attachments.slice(1).map((m, i) => (
-                <AttachmentPressable
-                  key={i}
-                  index={i + 1}
-                  onPress={props.onPress}
-                  attachment={m}
-                  className="flex-1"
-                />
-              ))}
-            </View>
-          </View>
-        )
-      } else if (props.attachments.length === 4) {
-        return (
-          <View className="flex flex-col gap-0.5 aspect-square">
-            <View className="flex flex-row gap-0.5 flex-1">
-              {props.attachments.slice(0, 2).map((m, i) => (
-                <AttachmentPressable
-                  key={i}
-                  index={i}
-                  onPress={props.onPress}
-                  attachment={m}
-                  className="flex-1"
-                />
-              ))}
-            </View>
-            <View className="flex flex-row gap-0.5 flex-1">
-              {props.attachments.slice(2).map((m, i) => (
-                <AttachmentPressable
-                  key={i}
-                  index={i + 2}
-                  onPress={props.onPress}
-                  attachment={m}
-                  className="flex-1"
-                />
-              ))}
-            </View>
-          </View>
-        )
-      } else if (props.attachments.length > 4) {
-        return (
-          <View className="flex flex-col gap-0.5 aspect-square">
-            {props.attachments.slice(0, 1).map((m, i) => (
-              <AttachmentPressable
-                key={i}
-                index={i}
-                onPress={props.onPress}
-                attachment={m}
-                className="flex-[2]"
-              />
-            ))}
-            <View className="flex flex-row gap-0.5 flex-1">
-              {props.attachments.slice(1, 4).map((m, i) => {
-                if (i === 2) {
-                  return (
-                    <View key={i} className="flex-1 relative">
-                      <AttachmentPressable
-                        key={i}
-                        index={i + 1}
-                        onPress={props.onPress}
-                        attachment={m}
-                      />
-                      <View className="absolute top-0 left-0 right-0 bottom-0 bg-black/50 flex items-center justify-center z-[1] pointer-events-none">
-                        <Text className="text-2xl text-white font-anakotmai-medium">
-                          +{props.attachments.length - 4}
-                        </Text>
-                      </View>
-                    </View>
-                  )
-                }
-                return (
-                  <AttachmentPressable
-                    key={i}
-                    index={i + 1}
-                    onPress={props.onPress}
-                    attachment={m}
-                    className="flex-1"
-                  />
-                )
-              })}
-            </View>
-          </View>
-        )
-      }
-      break
-    }
-
-    case 'portrait': {
-      if (props.attachments.length === 1) {
-        return (
-          <AttachmentPressable
-            index={0}
+        ))}
+      </View>
+    )
+  } else if (props.attachments.length === 3) {
+    return (
+      <View className="flex flex-row gap-0.5">
+        {props.attachments.slice(0, 1).map((m, i) => (
+          <Attachment
+            key={i}
+            index={i}
             onPress={props.onPress}
-            attachment={props.attachments[0]!}
-            className="aspect-[3/4]"
+            attachment={m}
+            className="flex-[2] aspect-square"
           />
-        )
-      } else if (props.attachments.length === 2) {
-        return (
-          <View className="flex flex-row gap-0.5 aspect-[5/4]">
-            {props.attachments.map((m, i) => (
-              <AttachmentPressable
-                key={i}
-                index={i}
-                onPress={props.onPress}
-                attachment={m}
-                className="flex-1"
-              />
-            ))}
-          </View>
-        )
-      } else if (props.attachments.length === 3) {
-        return (
-          <View className="flex flex-row gap-0.5 aspect-square">
-            {props.attachments.slice(0, 1).map((m, i) => (
-              <AttachmentPressable
-                key={i}
-                index={i}
-                onPress={props.onPress}
-                attachment={m}
-                className="flex-1"
-              />
-            ))}
-            <View className="flex flex-col gap-0.5 flex-1">
-              {props.attachments.slice(1).map((m, i) => (
-                <AttachmentPressable
-                  key={i}
-                  index={i + 1}
-                  onPress={props.onPress}
-                  attachment={m}
-                  className="flex-1"
-                />
-              ))}
-            </View>
-          </View>
-        )
-      } else if (props.attachments.length === 4) {
-        return (
-          <View className="flex flex-col gap-0.5 aspect-square">
-            <View className="flex flex-row gap-0.5 flex-1">
-              {props.attachments.slice(0, 2).map((m, i) => (
-                <AttachmentPressable
-                  key={i}
-                  index={i}
-                  onPress={props.onPress}
-                  attachment={m}
-                  className="flex-1"
-                />
-              ))}
-            </View>
-            <View className="flex flex-row gap-0.5 flex-1">
-              {props.attachments.slice(2).map((m, i) => (
-                <AttachmentPressable
-                  key={i}
-                  index={i + 2}
-                  onPress={props.onPress}
-                  attachment={m}
-                  className="flex-1"
-                />
-              ))}
-            </View>
-          </View>
-        )
-      } else if (props.attachments.length > 4) {
-        return (
-          <View className="flex flex-row gap-0.5 aspect-square">
-            {props.attachments.slice(0, 1).map((m, i) => (
-              <AttachmentPressable
-                key={i}
-                index={i}
-                onPress={props.onPress}
-                attachment={m}
-                className="flex-[2]"
-              />
-            ))}
-            <View className="flex flex-col gap-0.5 flex-1">
-              {props.attachments.slice(1, 4).map((m, i) => {
-                if (i === 2) {
-                  return (
-                    <View key={i} className="flex-1 relative">
-                      <AttachmentPressable
-                        key={i}
-                        index={i + 1}
-                        onPress={props.onPress}
-                        attachment={m}
-                      />
-                      <View className="absolute top-0 left-0 right-0 bottom-0 bg-black/50 flex items-center justify-center z-[1] pointer-events-none">
-                        <Text className="text-2xl text-white font-anakotmai-medium">
-                          +{props.attachments.length - 4}
-                        </Text>
-                      </View>
-                    </View>
-                  )
-                }
-                return (
-                  <AttachmentPressable
-                    key={i}
-                    index={i + 1}
-                    onPress={props.onPress}
-                    attachment={m}
-                    className="flex-1"
-                  />
-                )
-              })}
-            </View>
-          </View>
-        )
-      }
-      break
-    }
-    case 'square': {
-      if (props.attachments.length === 1) {
-        return (
-          <AttachmentPressable
-            index={0}
+        ))}
+        <View className="flex flex-col gap-0.5 flex-1">
+          {props.attachments.slice(1).map((m, i) => (
+            <Attachment
+              key={i}
+              index={i + 1}
+              onPress={props.onPress}
+              attachment={m}
+              className="flex-1"
+            />
+          ))}
+        </View>
+      </View>
+    )
+  } else if (props.attachments.length === 4) {
+    return (
+      <View className="flex flex-row gap-0.5">
+        {props.attachments.slice(0, 1).map((m, i) => (
+          <Attachment
+            key={i}
+            index={i}
             onPress={props.onPress}
-            attachment={props.attachments[0]!}
-            className="aspect-square"
+            attachment={m}
+            className="flex-[3] aspect-square"
           />
-        )
-      } else if (props.attachments.length === 2) {
-        return (
-          <View className="flex flex-row gap-0.5 aspect-[2/1]">
-            {props.attachments.map((m, i) => (
-              <AttachmentPressable
-                key={i}
-                index={i}
-                onPress={props.onPress}
-                attachment={m}
-                className="flex-1"
-              />
-            ))}
-          </View>
-        )
-      } else if (props.attachments.length === 3) {
-        return (
-          <View className="flex flex-row gap-0.5 aspect-[2/1]">
-            {props.attachments.slice(0, 1).map((m, i) => (
-              <AttachmentPressable
-                key={i}
-                index={i}
-                onPress={props.onPress}
-                attachment={m}
-                className="flex-1"
-              />
-            ))}
-            <View className="flex flex-col gap-0.5 flex-1">
-              {props.attachments.slice(1).map((m, i) => (
-                <AttachmentPressable
-                  key={i}
-                  index={i + 1}
-                  onPress={props.onPress}
-                  attachment={m}
-                  className="flex-1"
-                />
-              ))}
-            </View>
-          </View>
-        )
-      } else if (props.attachments.length === 4) {
-        return (
-          <View className="flex flex-col gap-0.5 aspect-square">
-            <View className="flex flex-row gap-0.5 flex-1">
-              {props.attachments.slice(0, 2).map((m, i) => (
-                <AttachmentPressable
-                  key={i}
-                  index={i}
-                  onPress={props.onPress}
-                  attachment={m}
-                  className="flex-1"
-                />
-              ))}
-            </View>
-            <View className="flex flex-row gap-0.5 flex-1">
-              {props.attachments.slice(2).map((m, i) => (
-                <AttachmentPressable
-                  key={i}
-                  index={i + 2}
-                  onPress={props.onPress}
-                  attachment={m}
-                  className="flex-1"
-                />
-              ))}
-            </View>
-          </View>
-        )
-      } else if (props.attachments.length > 4) {
-        return (
-          <View className="flex flex-row gap-0.5 aspect-square">
-            <View className="flex flex-col gap-0.5 flex-1">
-              {props.attachments.slice(0, 2).map((m, i) => (
-                <AttachmentPressable
-                  key={i}
-                  index={i}
-                  onPress={props.onPress}
-                  attachment={m}
-                  className="flex-1"
-                />
-              ))}
-            </View>
-            <View className="flex flex-col gap-0.5 flex-1">
-              {props.attachments.slice(2, 4).map((m, i) => {
-                if (i === 1) {
-                  return (
-                    <View key={i} className="flex-1 relative">
-                      <AttachmentPressable
-                        key={i}
-                        index={i + 2}
-                        onPress={props.onPress}
-                        attachment={m}
-                      />
-                      <View className="absolute top-0 left-0 right-0 bottom-0 bg-black/50 flex items-center justify-center z-[1] rounded-[2px] pointer-events-none">
-                        <Text className="text-2xl text-white font-anakotmai-medium">
-                          +{props.attachments.length - 4}
-                        </Text>
-                      </View>
-                    </View>
-                  )
-                }
-                return (
-                  <AttachmentPressable
-                    key={i}
-                    index={i + 1}
-                    onPress={props.onPress}
-                    attachment={m}
-                    className="flex-1"
-                  />
-                )
-              })}
-            </View>
-          </View>
-        )
-      }
-      break
-    }
-    default:
-      exhaustiveGuard(props.firstImageType)
+        ))}
+        <View className="flex flex-col gap-0.5 flex-1">
+          {props.attachments.slice(1).map((m, i) => (
+            <Attachment
+              key={i}
+              index={i + 1}
+              onPress={props.onPress}
+              attachment={m}
+              className="flex-1"
+            />
+          ))}
+        </View>
+      </View>
+    )
+  } else if (props.attachments.length > 4) {
+    return (
+      <View className="flex flex-row gap-0.5">
+        {props.attachments.slice(0, 1).map((m, i) => (
+          <Attachment
+            key={i}
+            index={i}
+            onPress={props.onPress}
+            attachment={m}
+            className="flex-[3] aspect-square"
+          />
+        ))}
+        <View className="flex flex-col gap-0.5 flex-1">
+          {props.attachments.slice(1, 4).map((m, i) => {
+            if (i === 2) {
+              return (
+                <View key={i} className="relative">
+                  <Attachment key={i} index={i + 1} onPress={props.onPress} attachment={m} />
+                  <View className="absolute top-0 left-0 right-0 bottom-0 bg-black/50 flex items-center justify-center z-[1] rounded-[2px] pointer-events-none">
+                    <Text className="text-2xl text-white font-anakotmai-medium">
+                      +{props.attachments.length - 4}
+                    </Text>
+                  </View>
+                </View>
+              )
+            }
+            return <Attachment key={i} index={i + 1} onPress={props.onPress} attachment={m} />
+          })}
+        </View>
+      </View>
+    )
   }
 }
 
-interface AttachmentPressableProps {
+interface AttachmentProps {
   index: number
   onPress: (index: number) => void
   attachment: PostCardAttachment
   className?: string
 }
-function AttachmentPressable(props: AttachmentPressableProps) {
+function Attachment(props: AttachmentProps) {
   if (props.attachment.type === 'VIDEO') {
     return (
       <View className={cn(`rounded-[2px] overflow-hidden w-full bg-gray-50`, props.className)}>
@@ -635,6 +358,7 @@ function AttachmentPressable(props: AttachmentPressableProps) {
           style={{ width: '100%', height: '100%' }}
           source={{ uri: props.attachment.url }}
           alt={props.attachment.description ?? ''}
+          contentPosition="top center"
         />
       </Pressable>
     )
@@ -736,7 +460,7 @@ function UpvoteButton(props: UpvoteButtonProps) {
   const client = useQueryClient()
   const postReactionStore = usePostReactionStore({ variables: { id: props.postId } })
   const userReaction = postReactionStore.data?.userReaction
-  const createReactionQuery = queryClient.useMutation('post', '/feed/:id/reaction')
+  const createReactionQuery = queryClient.useMutation('put', '/feed/:id/reaction')
   const deleteReactionQuery = queryClient.useMutation('delete', '/feed/:id/reaction')
   const router = useRouter()
   const sessionQuery = useSessionQuery()
@@ -893,7 +617,7 @@ interface CommentFormProps {
   postId: string
 }
 function CommentForm(props: CommentFormProps) {
-  const createReactionQuery = queryClient.useMutation('post', '/feed/:id/reaction')
+  const createReactionQuery = queryClient.useMutation('put', '/feed/:id/reaction')
   const client = useQueryClient()
   const form = useForm({
     defaultValues: {

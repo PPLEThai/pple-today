@@ -337,6 +337,7 @@ function FeedContent(props: FeedContentProps) {
       // console.log('scrollViewTag:', scrollViewTag)
     }
   }, [isFocused, scrollElRef, setScrollViewTag])
+  // TODO: infinite query and load more
   const feedQuery = queryClient.useQuery('/feed/me', { query: { limit: 10 } })
   // React.useEffect(() => {
   //   console.log(feedQuery.data)
