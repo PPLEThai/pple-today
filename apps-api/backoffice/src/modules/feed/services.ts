@@ -156,9 +156,9 @@ export class FeedService {
     )
   }
 
-  async createFeedReaction(feedItemId: string, userId: string, data: CreateFeedReactionBody) {
+  async upsertFeedReaction(feedItemId: string, userId: string, data: CreateFeedReactionBody) {
     const comment = data.type === PostReactionType.DOWN_VOTE ? data.comment : undefined
-    const result = await this.feedRepository.createFeedItemReaction({
+    const result = await this.feedRepository.upsertFeedItemReaction({
       feedItemId,
       userId,
       type: data.type,
@@ -177,7 +177,7 @@ export class FeedService {
     }
 
     return ok({
-      message: `Reaction for feed item ${feedItemId} created.`,
+      message: `Reaction for feed item ${feedItemId} updated.`,
     })
   }
 
