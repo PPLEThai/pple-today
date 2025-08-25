@@ -11,8 +11,9 @@ import {
 import { AdminBannerRepository, AdminBannerRepositoryPlugin } from './repository'
 
 import { InternalErrorCode } from '../../../dtos/error'
+import { FilePath } from '../../../dtos/file'
 import { err } from '../../../utils/error'
-import { mapRawPrismaError } from '../../../utils/prisma'
+import { mapRepositoryError } from '../../../utils/error'
 import { FileService, FileServicePlugin } from '../../file/services'
 
 export class AdminBannerService {
@@ -21,46 +22,14 @@ export class AdminBannerService {
     private readonly fileService: FileService
   ) {}
 
-  private async removeOldBannerImage(bannerId: string, newImageFilePath?: string) {
-    const result = await this.bannerRepository.getBannerById(bannerId)
-
-    if (result.isErr())
-      return mapRawPrismaError(result.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.BANNER_NOT_FOUND,
-        },
-      })
-
-    const { imageFilePath } = result.value
-
-    if (newImageFilePath || (imageFilePath && imageFilePath !== newImageFilePath)) {
-      return await this.fileService.deleteFile(imageFilePath)
-    }
-
-    return ok()
-  }
-
-  private async markShareMode(filePaths: string[], mode: 'PUBLISH' | 'DRAFT') {
-    let markFileStatus
-
-    if (mode === 'PUBLISH') {
-      markFileStatus = await this.fileService.bulkMarkAsPublic(filePaths)
-    } else {
-      markFileStatus = await this.fileService.bulkMarkAsPrivate(filePaths)
-    }
-
-    if (markFileStatus.isErr()) return err(markFileStatus.error)
-    return ok()
-  }
-
   async getBanners() {
     const result = await this.bannerRepository.getBanners()
 
-    if (result.isErr()) return mapRawPrismaError(result.error)
+    if (result.isErr()) return mapRepositoryError(result.error)
 
     const imageBannerFilePaths = result.value.map((banner) => banner.imageFilePath)
-
     const imageBannerUrlResults = await this.fileService.bulkGetFileSignedUrl(imageBannerFilePaths)
+
     if (imageBannerUrlResults.isErr()) return err(imageBannerUrlResults.error)
 
     const response: GetBannersResponse = result.value.map(
@@ -68,7 +37,7 @@ export class AdminBannerService {
         ...bannerBody,
         image: {
           url: imageBannerUrlResults.value[index],
-          filePath: imageFilePath,
+          filePath: imageFilePath as FilePath,
         },
       })
     )
@@ -80,7 +49,7 @@ export class AdminBannerService {
     const result = await this.bannerRepository.getBannerById(id)
 
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.BANNER_NOT_FOUND,
         },
@@ -95,7 +64,7 @@ export class AdminBannerService {
       ...bannerBody,
       image: {
         url: imageUrlResult.value,
-        filePath: imageFilePath,
+        filePath: imageFilePath as FilePath,
       },
     }
 
@@ -103,19 +72,10 @@ export class AdminBannerService {
   }
 
   async createBanner(data: CreateBannerBody) {
-    const moveResult = await this.fileService.moveFileToPublicFolder([data.imageFilePath])
-
-    if (moveResult.isErr()) return err(moveResult.error)
-    const markFileStatusResult = await this.markShareMode(moveResult.value, data.status)
-
-    if (markFileStatusResult.isErr()) return err(markFileStatusResult.error)
-    const result = await this.bannerRepository.createBanner({
-      ...data,
-      imageFilePath: moveResult.value[0],
-    })
+    const result = await this.bannerRepository.createBanner(data)
 
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         UNIQUE_CONSTRAINT_FAILED: {
           code: InternalErrorCode.BANNER_INVALID_INPUT,
           message: 'Invalid Input',
@@ -128,38 +88,24 @@ export class AdminBannerService {
   }
 
   async updateBannerById(id: string, data: UpdateBannerBody) {
-    const clearResult = await this.removeOldBannerImage(id, data.imageFilePath)
-    if (clearResult.isErr()) return err(clearResult.error)
+    const result = await this.bannerRepository.updateBannerById(id, data)
 
-    const moveResult = await this.fileService.moveFileToPublicFolder([data.imageFilePath])
-    if (moveResult.isErr()) return err(moveResult.error)
-
-    const result = await this.bannerRepository.updateBannerById(id, {
-      ...data,
-      imageFilePath: moveResult.value[0],
-    })
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.BANNER_NOT_FOUND,
           message: 'Banner not found',
         },
       })
 
-    const markFileStatusResult = await this.markShareMode(moveResult.value, data.status)
-    if (markFileStatusResult.isErr()) return err(markFileStatusResult.error)
-
     return ok()
   }
 
   async deleteBannerById(id: string) {
-    const clearResult = await this.removeOldBannerImage(id)
-    if (clearResult.isErr()) return err(clearResult.error)
-
     const result = await this.bannerRepository.deleteBannerById(id)
 
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.BANNER_NOT_FOUND,
           message: 'Banner not found',
@@ -172,7 +118,7 @@ export class AdminBannerService {
   async reorderBanner(ids: string[]) {
     const result = await this.bannerRepository.reorderBanner(ids)
 
-    if (result.isErr()) return mapRawPrismaError(result.error)
+    if (result.isErr()) return mapRepositoryError(result.error)
 
     return ok()
   }

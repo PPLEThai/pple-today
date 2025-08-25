@@ -1,5 +1,7 @@
 import { Static, t } from 'elysia'
 
+import { FilePath } from '../../../dtos/file'
+
 export const UploadFileCategory = {
   ANNOUNCEMENT: 'ANNOUNCEMENT',
   TOPIC: 'TOPIC',
@@ -25,7 +27,7 @@ export const GetUploadSignedUrlBody = t.Union([
 export type GetUploadSignedUrlBody = Static<typeof GetUploadSignedUrlBody>
 
 export const GetUploadSignedUrlResponse = t.Object({
-  filePath: t.String({ title: 'File Path' }),
+  filePath: FilePath,
   uploadUrl: t.String({ title: 'Upload URL' }),
   uploadFields: t.Record(t.String(), t.String(), {
     description: 'The fields required for the upload',

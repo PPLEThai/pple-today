@@ -5,7 +5,7 @@ import { InternalErrorCode } from '../dtos/error'
 import { AuthRepository, AuthRepositoryPlugin } from '../modules/auth/repository'
 import { err, mapErrorCodeToResponse } from '../utils/error'
 import { introspectAccessToken } from '../utils/jwt'
-import { mapRawPrismaError } from '../utils/prisma'
+import { mapRepositoryError } from '../utils/error'
 
 export class AuthGuard {
   constructor(private readonly authRepository: AuthRepository) {}
@@ -29,7 +29,7 @@ export class AuthGuard {
     const user = await this.authRepository.getUserById(oidcUser.sub)
 
     if (user.isErr())
-      return mapRawPrismaError(user.error, {
+      return mapRepositoryError(user.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.UNAUTHORIZED,
           message: 'Please register first',
@@ -62,10 +62,6 @@ export const AuthGuardPlugin = new Elysia({
         const user = await authGuard.getCurrentUser(headers)
 
         if (user.isErr()) {
-          if (user.error.code === InternalErrorCode.UNAUTHORIZED) {
-            return { user: null }
-          }
-
           return mapErrorCodeToResponse(user.error, status)
         }
 

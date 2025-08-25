@@ -5,7 +5,7 @@ import { CompleteOnboardingProfileBody, UpdateProfileBody } from './models'
 import { ProfileRepository, ProfileRepositoryPlugin } from './repository'
 
 import { InternalErrorCode } from '../../dtos/error'
-import { mapRawPrismaError } from '../../utils/prisma'
+import { mapRepositoryError } from '../../utils/error'
 import { AuthRepository, AuthRepositoryPlugin } from '../auth/repository'
 import { FileService, FileServicePlugin } from '../file/services'
 
@@ -19,7 +19,7 @@ export class ProfileService {
     const user = await this.profileRepository.getProfileById(id)
 
     if (user.isErr()) {
-      return mapRawPrismaError(user.error, {
+      return mapRepositoryError(user.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.USER_NOT_FOUND,
           message: 'User not found',
@@ -40,7 +40,7 @@ export class ProfileService {
     const result = await this.profileRepository.followUser(userId, followedUserId)
 
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         FOREIGN_KEY_CONSTRAINT_FAILED: {
           code: InternalErrorCode.USER_NOT_FOUND,
           message: 'User not found',
@@ -58,7 +58,7 @@ export class ProfileService {
     const result = await this.profileRepository.unfollowUser(userId, followedUserId)
 
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.USER_NOT_FOLLOWS,
           message: 'User not found or not followed',
@@ -72,7 +72,7 @@ export class ProfileService {
     const result = await this.profileRepository.getFollowingUsers(userId)
 
     if (result.isErr()) {
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.USER_NOT_FOUND,
           message: 'User not found',
@@ -108,7 +108,7 @@ export class ProfileService {
     })
 
     if (result.isErr()) {
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         FOREIGN_KEY_CONSTRAINT_FAILED: {
           code: InternalErrorCode.USER_INVALID_INPUT,
           message: 'Address not found',
@@ -133,7 +133,7 @@ export class ProfileService {
     const user = await this.authRepository.getUserById(userId)
 
     if (user.isErr()) {
-      return mapRawPrismaError(user.error, {
+      return mapRepositoryError(user.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.USER_NOT_FOUND,
           message: 'User not found',
@@ -151,7 +151,7 @@ export class ProfileService {
     const result = await this.profileRepository.completeOnboarding(userId, profileData)
 
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         FOREIGN_KEY_CONSTRAINT_FAILED: {
           code: InternalErrorCode.USER_INVALID_INPUT,
           message: 'Invalid address or topic',

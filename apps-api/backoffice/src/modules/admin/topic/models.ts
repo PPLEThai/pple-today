@@ -1,6 +1,7 @@
 import { Static, t } from 'elysia'
 
 import { TopicStatus } from '../../../../__generated__/prisma'
+import { FilePath } from '../../../dtos/file'
 import { DetailedTopic, Topic } from '../../../dtos/topic'
 
 export const GetTopicsQuery = t.Object({
@@ -31,7 +32,7 @@ export const UpdateTopicParams = t.Object({
 export const UpdateTopicBody = t.Object({
   name: t.String({ description: 'The name of the topic' }),
   description: t.Nullable(t.String({ description: 'The description of the topic' })),
-  bannerImage: t.Nullable(t.String({ description: 'The banner image of the topic' })),
+  bannerImage: t.Nullable(FilePath),
   status: t.Enum(TopicStatus),
   hashtagIds: t.Array(t.String({ description: 'The ID of the hashtag' })),
 })

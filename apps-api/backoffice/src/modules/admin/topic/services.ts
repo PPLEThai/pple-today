@@ -11,10 +11,10 @@ import {
 } from './models'
 import { AdminTopicRepository, AdminTopicRepositoryPlugin } from './repository'
 
-import { TopicStatus } from '../../../../__generated__/prisma'
 import { InternalErrorCode } from '../../../dtos/error'
+import { FilePath } from '../../../dtos/file'
 import { err } from '../../../utils/error'
-import { mapRawPrismaError } from '../../../utils/prisma'
+import { mapRepositoryError } from '../../../utils/error'
 import { FileService, FileServicePlugin } from '../../file/services'
 
 export class AdminTopicService {
@@ -30,7 +30,7 @@ export class AdminTopicService {
     }
   ) {
     const result = await this.adminTopicRepository.getTopics(query)
-    if (result.isErr()) return mapRawPrismaError(result.error, {})
+    if (result.isErr()) return mapRepositoryError(result.error, {})
 
     return ok(result.value satisfies GetTopicsResponse)
   }
@@ -38,7 +38,7 @@ export class AdminTopicService {
   async getTopicById(topicId: string) {
     const result = await this.adminTopicRepository.getTopicById(topicId)
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.TOPIC_NOT_FOUND,
         },
@@ -46,7 +46,7 @@ export class AdminTopicService {
 
     let bannerImageRes: {
       url: string
-      filePath: string
+      filePath: FilePath
     } | null = null
 
     if (result.value.bannerImage) {
@@ -55,7 +55,7 @@ export class AdminTopicService {
 
       bannerImageRes = {
         url: getSignedUrlResult.value,
-        filePath: result.value.bannerImage,
+        filePath: result.value.bannerImage as FilePath,
       }
     }
 
@@ -68,7 +68,7 @@ export class AdminTopicService {
   async createEmptyTopic() {
     const result = await this.adminTopicRepository.createEmptyTopic()
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         INVALID_INPUT: {
           code: InternalErrorCode.TOPIC_INVALID_INPUT,
         },
@@ -78,44 +78,17 @@ export class AdminTopicService {
   }
 
   async updateTopicById(topicId: string, data: UpdateTopicBody) {
-    const existingTopic = await this.adminTopicRepository.getTopicById(topicId)
+    const result = await this.adminTopicRepository.updateTopicById(topicId, data)
 
-    if (existingTopic.isErr()) {
-      return mapRawPrismaError(existingTopic.error, {
+    if (result.isErr())
+      return mapRepositoryError(result.error, {
+        INVALID_INPUT: {
+          code: InternalErrorCode.TOPIC_INVALID_INPUT,
+        },
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.TOPIC_NOT_FOUND,
         },
       })
-    }
-
-    const isSameBannerUrl = existingTopic.value.bannerImage === data.bannerImage
-
-    if (!isSameBannerUrl && existingTopic.value.bannerImage) {
-      const moveResult = await this.fileService.deleteFile(existingTopic.value.bannerImage)
-      if (moveResult.isErr()) return err(moveResult.error)
-    }
-
-    const result = await this.adminTopicRepository.updateTopicById(topicId, data)
-
-    if (result.isErr())
-      return mapRawPrismaError(result.error, {
-        INVALID_INPUT: {
-          code: InternalErrorCode.TOPIC_INVALID_INPUT,
-        },
-      })
-
-    if (result.value.bannerImage) {
-      const moveResult = await this.fileService.moveFileToPublicFolder([result.value.bannerImage])
-      if (moveResult.isErr()) return err(moveResult.error)
-
-      let markStatusResult
-
-      if (result.value.status === TopicStatus.DRAFT)
-        markStatusResult = await this.fileService.bulkMarkAsPrivate([result.value.id])
-      else markStatusResult = await this.fileService.bulkMarkAsPublic([result.value.id])
-
-      if (markStatusResult.isErr()) return err(markStatusResult.error)
-    }
 
     return ok({ message: `Topic "${result.value.id}" updated.` } satisfies UpdateTopicResponse)
   }
@@ -123,16 +96,11 @@ export class AdminTopicService {
   async deleteTopicById(topicId: string) {
     const result = await this.adminTopicRepository.deleteTopicById(topicId)
     if (result.isErr())
-      return mapRawPrismaError(result.error, {
+      return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.TOPIC_NOT_FOUND,
         },
       })
-
-    if (result.value.bannerImage) {
-      const moveResult = await this.fileService.deleteFile(result.value.bannerImage)
-      if (moveResult.isErr()) return err(moveResult.error)
-    }
 
     return ok({ message: `Topic "${result.value.id}" deleted.` } satisfies DeleteTopicResponse)
   }
