@@ -205,14 +205,9 @@ export const PagePost = t.Object({
     t.String({ description: 'ID of the parent post, if this is a comment or reply' })
   ),
   message_tags: t.Optional(
-    t.Array(
-      t.Object({
-        data: PostMessageHashtag,
-      }),
-      {
-        description: 'List of hashtags in the post message',
-      }
-    )
+    t.Array(PostMessageHashtag, {
+      description: 'List of hashtags in the post message',
+    })
   ),
   attachments: t.Optional(
     t.Object({

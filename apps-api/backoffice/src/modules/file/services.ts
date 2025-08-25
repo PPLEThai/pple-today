@@ -15,6 +15,7 @@ import { InternalErrorCode } from '../../dtos/error'
 import { FilePath } from '../../dtos/file'
 import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '../../plugins/logger'
 import { ApiErrorResponse, err, exhaustiveGuard, OnlyErr, WithoutErr } from '../../utils/error'
+import { getFilePath } from '../../utils/facebook'
 
 export class FileService {
   public prefixPublicFolder = 'public/' as const
@@ -45,7 +46,7 @@ export class FileService {
   }
 
   private async moveFileAndPermission(file: string, prefix: string, shareType: FilePermission) {
-    const newPath = `${prefix}${this.getFilePath(file)}`
+    const newPath = `${prefix}${getFilePath(file)}`
     const moveResult = await this.moveFile(file, newPath)
 
     if (moveResult.isErr()) {
@@ -91,10 +92,6 @@ export class FileService {
     }
 
     return ok((moveResults as Array<Ok<string, never>>).map((result) => result.value))
-  }
-
-  getFilePath(fullPath: string) {
-    return fullPath.split('/')[0]
   }
 
   async markAsPublic(file: string) {
@@ -327,6 +324,10 @@ export class FileService {
     try {
       return [await cb(fileTransaction), fileTransaction] as any
     } catch (err) {
+      this.loggerService.warn({
+        message: 'File transaction failed, rolling back changes',
+        context: { err },
+      })
       const rollbackResult = await fileTransaction.rollback()
       if (rollbackResult.isErr()) return rollbackResult as any
       throw err
@@ -397,7 +398,7 @@ export class FileTransactionService {
     for (const fileKey of fileKeys) {
       if (fileKey.startsWith(prefixFolder)) continue
 
-      const newFileKey = (prefixFolder + this.fileService.getFilePath(fileKey)) as FilePath
+      const newFileKey = (prefixFolder + getFilePath(fileKey)) as FilePath
       const result = await this.moveFile(fileKey, newFileKey)
 
       if (result.isErr()) {

@@ -21,74 +21,102 @@ export class FacebookWebhookRepository {
   async handleAttachmentChanges(
     pageId: string,
     existingAttachments: PostAttachment[],
-    newAttachments: Pick<PostAttachment, 'url' | 'type' | 'cacheKey'>[]
+    newAttachments: Pick<
+      PostAttachment,
+      'description' | 'cacheKey' | 'order' | 'thumbnailPath' | 'type' | 'url' | 'width' | 'height'
+    >[]
   ) {
     const requiredDelete = R.pipe(
       existingAttachments,
       R.filter((ea) => !newAttachments.find((a) => ea.cacheKey === a.cacheKey)),
-      R.map((ea) => ea.url)
-    )
-
-    const requiredUpload = R.pipe(
-      newAttachments ?? [],
-      R.filter((a) => !existingAttachments.find((ea) => ea.cacheKey === a.cacheKey))
-    )
-
-    const unchangedAttachments = R.pipe(
-      existingAttachments,
-      R.filter((ea) => newAttachments.findIndex((a) => ea.cacheKey === a.cacheKey) !== -1)
+      R.flatMap((ea) => [
+        ea.url as FilePath,
+        ...(ea.thumbnailPath ? [ea.thumbnailPath as FilePath] : []),
+      ])
     )
 
     return await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
-        const deleteResult = await fileTx.bulkRemoveFile(requiredDelete as FilePath[])
+        const deleteResult = await fileTx.bulkRemoveFile(requiredDelete)
 
         if (deleteResult.isErr()) {
           return deleteResult
         }
 
-        const result = await Promise.all(
-          requiredUpload.map(async (attachment) => {
+        const uploadResult = await Promise.all(
+          newAttachments.map(async (attachment, idx) => {
+            const existingAttachment = existingAttachments.find(
+              (ea) => ea.cacheKey === attachment.cacheKey
+            )
+
+            if (existingAttachment) {
+              return ok({
+                ...existingAttachment,
+                order: idx + 1,
+              })
+            }
+
             const fileName = getFileName(attachment.url)
             const newFilename: FilePath = `temp/facebook/${pageId}/${createId()}-${fileName}`
-            const uploadResult = await fileTx.uploadFileFromUrl(attachment.url, newFilename)
 
+            const uploadResult = await fileTx.uploadFileFromUrl(attachment.url, newFilename)
             if (uploadResult.isErr()) {
               return uploadResult
             }
 
             const moveToPublicFolderResult = await fileTx.bulkMoveToPublicFolder([newFilename])
-
             if (moveToPublicFolderResult.isErr()) {
               return moveToPublicFolderResult
             }
 
+            let thumbnailPath: FilePath | null = null
+            if (attachment.thumbnailPath) {
+              thumbnailPath = `temp/facebook/${pageId}/${createId()}-${getFileName(attachment.thumbnailPath)}`
+              const thumbnailUploadResult = await fileTx.uploadFileFromUrl(
+                attachment.thumbnailPath,
+                thumbnailPath
+              )
+              if (thumbnailUploadResult.isErr()) {
+                return thumbnailUploadResult
+              }
+
+              const thumbnailMoveToPublicFolderResult = await fileTx.bulkMoveToPublicFolder([
+                thumbnailPath,
+              ])
+              if (thumbnailMoveToPublicFolderResult.isErr()) {
+                return thumbnailMoveToPublicFolderResult
+              }
+
+              thumbnailPath = thumbnailMoveToPublicFolderResult.value[0]
+            }
+
             return ok({
+              width: attachment.width,
+              height: attachment.height,
+              thumbnailPath: thumbnailPath,
+              description: attachment.description,
+              order: idx + 1,
               url: moveToPublicFolderResult.value[0],
               type: attachment.type,
               cacheKey: fileName,
             })
-          }) ?? []
+          })
         )
 
-        const resultWithoutFailed = R.pipe(
-          result,
+        const uploadWithoutFailed = R.pipe(
+          uploadResult,
           R.filter((r) => r.isOk()),
           R.map((r) => r.value)
         )
 
-        if (resultWithoutFailed.length !== result.length) {
+        if (uploadWithoutFailed.length !== uploadResult.length) {
           return err({
             code: InternalErrorCode.FILE_UPLOAD_ERROR,
             message: 'File upload failed',
           })
         }
 
-        return {
-          requiredDelete,
-          newUploads: resultWithoutFailed,
-          unchangedAttachments,
-        }
+        return uploadWithoutFailed
       })
     )
   }
@@ -110,11 +138,10 @@ export class FacebookWebhookRepository {
     facebookPageId: string
     content?: string
     postId: string
-    attachments?: {
-      url: string
-      type: PostAttachmentType
-      cacheKey: string
-    }[]
+    attachments?: Pick<
+      PostAttachment,
+      'description' | 'cacheKey' | 'order' | 'thumbnailPath' | 'type' | 'url' | 'width' | 'height'
+    >[]
     hashTags?: string[]
   }) {
     return await fromRepositoryPromise(async () => {
@@ -142,11 +169,15 @@ export class FacebookWebhookRepository {
               attachments:
                 data.attachments !== undefined
                   ? {
-                      create: data.attachments.map((attachment, idx) => ({
+                      create: data.attachments.map((attachment) => ({
                         url: attachment.url,
                         type: attachment.type,
-                        order: idx + 1,
+                        order: attachment.order,
+                        width: attachment.width,
+                        height: attachment.height,
+                        description: attachment.description,
                         cacheKey: attachment.cacheKey,
+                        thumbnailPath: attachment.thumbnailPath,
                       })),
                     }
                   : undefined,
@@ -174,11 +205,10 @@ export class FacebookWebhookRepository {
     postId: string
     facebookPageId: string
     content?: string
-    attachments?: {
-      url: string
-      type: PostAttachmentType
-      cacheKey: string
-    }[]
+    attachments?: Pick<
+      PostAttachment,
+      'description' | 'cacheKey' | 'order' | 'thumbnailPath' | 'type' | 'url' | 'width' | 'height'
+    >[]
     hashTags?: string[]
   }) {
     return await fromRepositoryPromise(
@@ -193,11 +223,15 @@ export class FacebookWebhookRepository {
               ? {
                   deleteMany: {},
                   create:
-                    data.attachments.map((attachment, idx) => ({
+                    data.attachments.map((attachment) => ({
                       url: attachment.url,
                       type: attachment.type,
-                      order: idx + 1,
+                      order: attachment.order,
+                      width: attachment.width,
+                      height: attachment.height,
+                      description: attachment.description,
                       cacheKey: attachment.cacheKey,
+                      thumbnailPath: attachment.thumbnailPath,
                     })) ?? [],
                 }
               : undefined,

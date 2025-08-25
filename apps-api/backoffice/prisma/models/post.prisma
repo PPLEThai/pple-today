@@ -24,6 +24,12 @@ model PostAttachment {
     cacheKey String             @unique
     order    Int
 
+    description   String?
+    thumbnailPath String?
+
+    width  Int?
+    height Int?
+
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
