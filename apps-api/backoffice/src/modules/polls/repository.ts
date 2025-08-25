@@ -32,6 +32,7 @@ export class PollsRepository {
             count: true,
           },
         },
+        reactions: query.userId ? { where: { userId: query.userId } } : undefined,
         poll: {
           include: {
             options: {
