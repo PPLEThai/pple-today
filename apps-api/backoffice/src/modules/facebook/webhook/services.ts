@@ -16,30 +16,118 @@ import {
   WebhookFeedChanges,
   WebhookFeedType,
 } from '../../../dtos/facebook'
+import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '../../../plugins/logger'
 import { err } from '../../../utils/error'
 import { mapRepositoryError } from '../../../utils/error'
 import { getFileName } from '../../../utils/facebook'
 import { FacebookRepository, FacebookRepositoryPlugin } from '../repository'
 
 export class FacebookWebhookService {
+  private debouncePostUpdate: Map<string, NodeJS.Timeout> = new Map()
+  private postActionQueue: Map<string, WebhookChangesVerb> = new Map()
+
+  private readonly DEBOUNCE_TIMEOUT = 25000
+
   constructor(
     private readonly facebookConfig: {
       appSecret: string
       verifyToken: string
     },
     private readonly facebookRepository: FacebookRepository,
-    private readonly facebookWebhookRepository: FacebookWebhookRepository
+    private readonly facebookWebhookRepository: FacebookWebhookRepository,
+    private readonly loggerService: ElysiaLoggerInstance
   ) {}
+
+  private enqueuePostFetching(pageId: string, postId: string, action: WebhookChangesVerb) {
+    const key = postId
+    const existingAction = this.postActionQueue.get(key)
+
+    if (this.debouncePostUpdate.has(key)) {
+      clearTimeout(this.debouncePostUpdate.get(key)!)
+    }
+
+    this.loggerService.info({
+      message: `Post action enqueued for post ${postId}`,
+      context: {
+        pageId,
+        postId,
+        action,
+      },
+    })
+
+    if (!existingAction) {
+      this.postActionQueue.set(key, action)
+    } else if (action === WebhookChangesVerb.ADD) {
+      this.postActionQueue.set(key, action)
+    } else if (action === WebhookChangesVerb.REMOVE) {
+      // NOTE: ADD and REMOVE actions should cancel each other out
+      if (existingAction === WebhookChangesVerb.ADD) {
+        this.debouncePostUpdate.delete(key)
+        this.postActionQueue.delete(key)
+        return ok()
+      }
+
+      this.postActionQueue.set(key, action)
+    }
+
+    this.debouncePostUpdate.set(
+      key,
+      setTimeout(async () => {
+        this.debouncePostUpdate.delete(key)
+        const postAction = this.postActionQueue.get(key)
+
+        if (!postAction) {
+          this.loggerService.warn({
+            message: `No post action found for post ${postId}`,
+            context: {
+              pageId,
+              postId,
+            },
+          })
+          return
+        }
+
+        this.loggerService.info({
+          message: `Post action found for post ${postId}`,
+          context: {
+            pageId,
+            postId,
+            action: postAction,
+          },
+        })
+
+        const result =
+          postAction === WebhookChangesVerb.REMOVE
+            ? await this.facebookWebhookRepository.deletePost(postId)
+            : await this.upsertPostDetails(pageId, postId)
+
+        if (result.isErr()) {
+          if (
+            result.error.code === 'RECORD_NOT_FOUND' ||
+            result.error.code === InternalErrorCode.FEED_ITEM_NOT_FOUND
+          ) {
+            return ok()
+          }
+
+          this.loggerService.error({
+            message: `Failed to upsert post details for post ${postId}. Try again`,
+            error: result.error,
+          })
+          this.enqueuePostFetching(pageId, postId, postAction)
+        }
+      }, this.DEBOUNCE_TIMEOUT)
+    )
+
+    return ok()
+  }
 
   private async upsertPostDetails(pageId: string, postId: string) {
     const page = await this.facebookRepository.getLocalFacebookPage(pageId)
-
     if (page.isErr()) return mapRepositoryError(page.error)
 
     const newPostDetails = await this.facebookRepository.getFacebookPostByPostId(
       postId,
-      // TODO: Implement fetch long lived access token
-      page.value.pageAccessToken!
+      page.value.pageAccessToken
     )
     if (newPostDetails.isErr()) return mapRepositoryError(newPostDetails.error)
 
@@ -55,6 +143,7 @@ export class FacebookWebhookService {
       newAttachments
     )
     if (updatedAttachmentResult.isErr()) return mapRepositoryError(updatedAttachmentResult.error)
+
     const [updatedAttachment, fileTx] = updatedAttachmentResult.value
 
     const upsertResult = existingPost.value
@@ -161,13 +250,12 @@ export class FacebookWebhookService {
   private async handleFeedStatusChange(body: Extract<WebhookFeedChanges, { item: 'status' }>) {
     switch (body.verb) {
       case WebhookChangesVerb.ADD:
+        return this.enqueuePostFetching(body.from.id, body.post_id, WebhookChangesVerb.ADD)
       case WebhookChangesVerb.EDIT: {
         if (!body.message && !body.photos) {
-          const deleteResult = await this.facebookWebhookRepository.deletePost(body.post_id)
-          if (deleteResult.isErr()) return mapRepositoryError(deleteResult.error)
-          return ok()
+          return this.enqueuePostFetching(body.from.id, body.post_id, WebhookChangesVerb.REMOVE)
         }
-        return await this.upsertPostDetails(body.from.id, body.post_id)
+        return this.enqueuePostFetching(body.from.id, body.post_id, WebhookChangesVerb.EDIT)
       }
     }
 
@@ -177,13 +265,12 @@ export class FacebookWebhookService {
   private async handleFeedPhotoChange(body: Extract<WebhookFeedChanges, { item: 'photo' }>) {
     switch (body.verb) {
       case WebhookChangesVerb.ADD:
+        return this.enqueuePostFetching(body.from.id, body.post_id, WebhookChangesVerb.ADD)
       case WebhookChangesVerb.EDIT: {
         if (!body.link) {
-          const deleteResult = await this.facebookWebhookRepository.deletePost(body.post_id)
-          if (deleteResult.isErr()) return mapRepositoryError(deleteResult.error)
-          return ok()
+          return this.enqueuePostFetching(body.from.id, body.post_id, WebhookChangesVerb.REMOVE)
         }
-        return await this.upsertPostDetails(body.from.id, body.post_id)
+        return this.enqueuePostFetching(body.from.id, body.post_id, WebhookChangesVerb.EDIT)
       }
     }
     return ok()
@@ -192,16 +279,15 @@ export class FacebookWebhookService {
   private async handleFeedVideoChange(body: Extract<WebhookFeedChanges, { item: 'video' }>) {
     switch (body.verb) {
       case WebhookChangesVerb.ADD:
+        return this.enqueuePostFetching(body.from.id, body.post_id, WebhookChangesVerb.ADD)
       case WebhookChangesVerb.REMOVE: {
-        return await this.upsertPostDetails(body.from.id, body.post_id)
+        return this.enqueuePostFetching(body.from.id, body.post_id, WebhookChangesVerb.EDIT)
       }
       case WebhookChangesVerb.EDIT: {
         if (!body.link) {
-          const deleteResult = await this.facebookWebhookRepository.deletePost(body.post_id)
-          if (deleteResult.isErr()) return mapRepositoryError(deleteResult.error)
-          return ok()
+          return this.enqueuePostFetching(body.from.id, body.post_id, WebhookChangesVerb.REMOVE)
         }
-        return await this.upsertPostDetails(body.from.id, body.post_id)
+        return this.enqueuePostFetching(body.from.id, body.post_id, WebhookChangesVerb.EDIT)
       }
     }
   }
@@ -247,22 +333,13 @@ export class FacebookWebhookService {
       for (const change of entry.changes) {
         switch (change.value.item) {
           case WebhookFeedType.STATUS: {
-            const statusResult = await this.handleFeedStatusChange(change.value)
-            if (statusResult.isErr()) return statusResult
-
-            break
+            return await this.handleFeedStatusChange(change.value)
           }
           case WebhookFeedType.VIDEO: {
-            const videoResult = await this.handleFeedVideoChange(change.value)
-            if (videoResult.isErr()) return videoResult
-
-            break
+            return await this.handleFeedVideoChange(change.value)
           }
           case WebhookFeedType.PHOTO: {
-            const photoResult = await this.handleFeedPhotoChange(change.value)
-            if (photoResult.isErr()) return photoResult
-
-            break
+            return await this.handleFeedPhotoChange(change.value)
           }
         }
       }
@@ -275,14 +352,19 @@ export class FacebookWebhookService {
 export const FacebookWebhookServicePlugin = new Elysia({
   name: 'FacebookWebhookService',
 })
-  .use([FacebookWebhookRepositoryPlugin, FacebookRepositoryPlugin])
-  .decorate(({ facebookRepository, facebookWebhookRepository }) => ({
+  .use([
+    FacebookWebhookRepositoryPlugin,
+    FacebookRepositoryPlugin,
+    ElysiaLoggerPlugin({ name: 'FacebookWebhookService' }),
+  ])
+  .decorate(({ facebookRepository, facebookWebhookRepository, loggerService }) => ({
     facebookWebhookService: new FacebookWebhookService(
       {
         appSecret: serverEnv.FACEBOOK_APP_SECRET,
         verifyToken: serverEnv.FACEBOOK_WEBHOOK_VERIFY_TOKEN,
       },
       facebookRepository,
-      facebookWebhookRepository
+      facebookWebhookRepository,
+      loggerService
     ),
   }))
