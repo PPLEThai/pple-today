@@ -153,6 +153,11 @@ export function Playground() {
                 </Button>
               </View>
               <View className="flex flex-col gap-2 flex-wrap">
+                <Button size="sm">
+                  <Icon icon={PlusIcon} />
+                  <Text>Button</Text>
+                  <Icon icon={PlusIcon} />
+                </Button>
                 <Button size="sm" variant="secondary">
                   <Icon icon={PlusIcon} />
                   <Text>Button</Text>
