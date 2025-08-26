@@ -1,6 +1,7 @@
 import * as React from 'react'
-import { findNodeHandle, Pressable, View } from 'react-native'
+import { findNodeHandle, FlatListComponent, Pressable, View } from 'react-native'
 import Animated, {
+  FlatListPropsWithLayout,
   useAnimatedScrollHandler,
   useSharedValue,
   withTiming,
@@ -431,17 +432,11 @@ function FeedContent(props: PagerScrollViewProps) {
     []
   )
   return (
-    // TODO: use flashlist
-    // TODO: memoize FlatList component to optimized performance
-    <Animated.FlatList
+    <FlatListMemo
+      // @ts-expect-error FlatListMemo ref type is wrong
       ref={scrollElRef}
       onScroll={scrollHandler}
-      showsVerticalScrollIndicator={false}
-      style={{ flex: 1 }}
-      contentContainerStyle={{ paddingTop: headerHeight }}
-      // contentOffset={{ x: 0, y: -headerHeight }}
-      // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
-      // automaticallyAdjustsScrollIndicatorInsets={false}
+      headerHeight={headerHeight}
       data={data}
       contentContainerClassName="py-4 flex flex-col"
       ListHeaderComponent={<AnnouncementSection />}
@@ -452,6 +447,49 @@ function FeedContent(props: PagerScrollViewProps) {
     />
   )
 }
+
+// https://github.com/bluesky-social/social-app/blob/27c591f031fbe8b3a5837c4ef7082b2ce146a050/src/view/com/util/List.tsx#L19
+type FlatListMethods<ItemT = any> = FlatListComponent<ItemT, FlatListPropsWithLayout<ItemT>>
+type FlatListProps<ItemT = any> = FlatListPropsWithLayout<ItemT> & {
+  headerHeight?: number
+}
+// TODO: try flashlist
+let FlatListMemo = React.forwardRef<FlatListMethods, FlatListProps>(
+  function FlatListMemo(props, ref) {
+    const {
+      onScroll,
+      headerHeight,
+      data,
+      ListHeaderComponent,
+      ListFooterComponent,
+      onEndReached,
+      onEndReachedThreshold,
+      renderItem,
+      contentContainerClassName,
+    } = props
+    return (
+      <Animated.FlatList
+        // @ts-expect-error FlatListMemo ref type is wrong
+        ref={ref}
+        onScroll={onScroll}
+        showsVerticalScrollIndicator={false}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingTop: headerHeight }}
+        // contentOffset={{ x: 0, y: -headerHeight }}
+        // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
+        // automaticallyAdjustsScrollIndicatorInsets={false}
+        data={data}
+        contentContainerClassName={contentContainerClassName}
+        ListHeaderComponent={ListHeaderComponent}
+        ListFooterComponent={ListFooterComponent}
+        onEndReachedThreshold={onEndReachedThreshold}
+        onEndReached={onEndReached}
+        renderItem={renderItem}
+      />
+    )
+  }
+)
+FlatListMemo = React.memo(FlatListMemo)
 
 function AnnouncementSection() {
   const announcementsQuery = queryClient.useQuery('/announcements', {
