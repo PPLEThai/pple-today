@@ -27,7 +27,7 @@ export const AuthController = new Elysia({
       })
     },
     {
-      fetchOIDCUser: true,
+      requiredOIDCUser: true,
       query: RegisterUserQuery,
       response: {
         201: RegisterUserResponse,
