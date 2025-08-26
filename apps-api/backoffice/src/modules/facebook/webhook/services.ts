@@ -23,7 +23,7 @@ import { getFileName } from '../../../utils/facebook'
 import { FacebookRepository, FacebookRepositoryPlugin } from '../repository'
 
 export class FacebookWebhookService {
-  private debouncePostUpdate: Map<string, NodeJS.Timeout> = new Map()
+  private debouncePostUpdate: Map<string, number | NodeJS.Timeout> = new Map()
   private postActionQueue: Map<string, WebhookChangesVerb> = new Map()
 
   private readonly DEBOUNCE_TIMEOUT = 25000
