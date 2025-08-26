@@ -104,19 +104,26 @@ export class FacebookService {
     }
 
     if (existingPage.value?.managerId) {
-      return err({
+      return mapRepositoryError({
         code: InternalErrorCode.FACEBOOK_PAGE_ALREADY_LINKED,
         message: 'Facebook page is already linked to another user',
       })
     }
 
     const pageDetails = await this.facebookRepository.getFacebookPageById(
-      facebookPageAccessToken,
-      facebookPageId
+      facebookPageId,
+      facebookPageAccessToken
     )
 
     if (pageDetails.isErr()) {
-      return err(pageDetails.error)
+      return mapRepositoryError(pageDetails.error)
+    }
+
+    const pageAccessToken =
+      await this.facebookRepository.fetchLongLivedAccessToken(facebookPageAccessToken)
+
+    if (pageAccessToken.isErr()) {
+      return mapRepositoryError(pageAccessToken.error)
     }
 
     let profilePictureUrl = existingPage.value?.profilePictureUrl
@@ -141,7 +148,7 @@ export class FacebookService {
       userId,
       facebookPageId,
       {
-        facebookPageAccessToken,
+        facebookPageAccessToken: pageAccessToken.value.accessToken,
         profilePictureUrl,
         profilePictureCacheKey: pageDetails.value.picture.data.cache_key,
         pageName: pageDetails.value.name,
@@ -160,7 +167,7 @@ export class FacebookService {
     const subscribeResult = await this.facebookRepository.subscribeToPostUpdates(
       userId,
       linkedPage.value.id,
-      facebookPageAccessToken
+      pageAccessToken.value.accessToken
     )
 
     if (subscribeResult.isErr()) {
@@ -171,6 +178,28 @@ export class FacebookService {
   }
 
   async unlinkFacebookPageFromUser(userId: string) {
+    const pageResult = await this.facebookRepository.getLinkedFacebookPage(userId)
+
+    if (pageResult.isErr()) {
+      return mapRepositoryError(pageResult.error)
+    }
+
+    if (!pageResult.value) {
+      return err({
+        code: InternalErrorCode.FACEBOOK_LINKED_PAGE_NOT_FOUND,
+        message: 'Linked Facebook page not found',
+      })
+    }
+
+    const pageAccessTokenResult = await this.facebookRepository.updatePageAccessToken(
+      pageResult.value.id,
+      pageResult.value.pageAccessToken
+    )
+
+    if (pageAccessTokenResult.isErr()) {
+      return mapRepositoryError(pageAccessTokenResult.error)
+    }
+
     const unlinkResult = await this.facebookRepository.unlinkFacebookPageFromUser(userId)
 
     if (unlinkResult.isErr()) {
@@ -184,16 +213,11 @@ export class FacebookService {
 
     const unlinkPostsResult = await this.facebookRepository.unsubscribeFromPostUpdates(
       unlinkResult.value.id,
-      unlinkResult.value.pageAccessToken ?? ''
+      pageAccessTokenResult.value.pageAccessToken
     )
 
     if (unlinkPostsResult.isErr()) {
-      return mapRepositoryError(unlinkPostsResult.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.FACEBOOK_LINKED_PAGE_NOT_FOUND,
-          message: 'Linked Facebook page not found',
-        },
-      })
+      return mapRepositoryError(unlinkPostsResult.error)
     }
 
     return ok()
