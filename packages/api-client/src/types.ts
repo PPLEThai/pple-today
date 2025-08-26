@@ -269,7 +269,7 @@ export type ResponseConfig =
     }
 
 export interface FetchClientInterceptors {
-  request: (config: RequestConfig) => RequestConfig
+  request: (config: RequestConfig) => Promise<RequestConfig> | RequestConfig
   response: (response: ResponseConfig) => any
 }
 
