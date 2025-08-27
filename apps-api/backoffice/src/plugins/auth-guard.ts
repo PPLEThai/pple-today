@@ -4,14 +4,14 @@ import { ok } from 'neverthrow'
 import { InternalErrorCode } from '../dtos/error'
 import { AuthRepository, AuthRepositoryPlugin } from '../modules/auth/repository'
 import { err, mapErrorCodeToResponse } from '../utils/error'
-import { introspectAccessToken } from '../utils/jwt'
 import { mapRepositoryError } from '../utils/error'
+import { introspectAccessToken } from '../utils/jwt'
 
 export class AuthGuard {
   constructor(private readonly authRepository: AuthRepository) {}
 
   async getOIDCUser(headers: Record<string, string | undefined>) {
-    const token = headers['authorization']?.replace('Bearer ', '').trim()
+    const token = headers['authorization']?.replace('Bearer', '').trim()
     if (!token)
       return err({ code: InternalErrorCode.UNAUTHORIZED, message: 'User not authenticated' })
 
@@ -48,11 +48,13 @@ export const AuthGuardPlugin = new Elysia({
     authGuard: new AuthGuard(authRepository),
   }))
   .macro({
-    fetchOIDCUser: {
+    requiredOIDCUser: {
       async resolve({ headers, status, authGuard }) {
         const oidcUserResult = await authGuard.getOIDCUser(headers)
 
-        if (oidcUserResult.isErr()) return mapErrorCodeToResponse(oidcUserResult.error, status)
+        if (oidcUserResult.isErr()) {
+          return mapErrorCodeToResponse(oidcUserResult.error, status)
+        }
 
         return { oidcUser: oidcUserResult.value }
       },
@@ -62,6 +64,7 @@ export const AuthGuardPlugin = new Elysia({
         const user = await authGuard.getCurrentUser(headers)
 
         if (user.isErr()) {
+          if (user.error.code === InternalErrorCode.UNAUTHORIZED) return { user: null }
           return mapErrorCodeToResponse(user.error, status)
         }
 
@@ -74,13 +77,6 @@ export const AuthGuardPlugin = new Elysia({
 
         if (user.isErr()) {
           return mapErrorCodeToResponse(user.error, status)
-        }
-
-        if (!user.value) {
-          return mapErrorCodeToResponse(
-            { code: InternalErrorCode.UNAUTHORIZED, message: 'User not authenticated' },
-            status
-          )
         }
 
         return { user: user.value }

@@ -200,15 +200,6 @@ export class FeedRepository {
               },
             },
             {
-              announcement: {
-                topics: {
-                  some: {
-                    topicId,
-                  },
-                },
-              },
-            },
-            {
               poll: {
                 topics: {
                   some: {
@@ -261,21 +252,6 @@ export class FeedRepository {
                 hashTags: {
                   some: {
                     hashTagId,
-                  },
-                },
-              },
-            },
-            {
-              announcement: {
-                topics: {
-                  some: {
-                    topic: {
-                      hashTagInTopics: {
-                        some: {
-                          hashTagId,
-                        },
-                      },
-                    },
                   },
                 },
               },
