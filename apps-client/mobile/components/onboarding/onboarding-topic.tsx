@@ -94,7 +94,7 @@ export function OnboardingTopic() {
 
   return (
     <View className="flex-1 justify-between">
-      <ScrollView>
+      <ScrollView className="px-6 pt-4 pb-6">
         <ToggleGroup
           type="multiple"
           value={value}
@@ -102,13 +102,13 @@ export function OnboardingTopic() {
           className="flex flex-row gap-2 flex-wrap justify-start"
         >
           {mockTopics.map((tag, index) => (
-            <ToggleGroupItem key={'topic_' + index} value={tag} variant="outline">
+            <ToggleGroupItem key={index} value={tag} variant="outline">
               <Text>{tag}</Text>
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
       </ScrollView>
-      <View className="gap-2 pb-6 pt-4">
+      <View className="gap-2 px-6 pb-6 pt-4">
         <Button onPress={handleNext}>
           <Text>ถัดไป</Text>
         </Button>

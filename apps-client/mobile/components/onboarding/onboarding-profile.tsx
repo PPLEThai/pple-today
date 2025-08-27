@@ -12,11 +12,7 @@ import * as ImagePicker from 'expo-image-picker'
 import { Pencil } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import {
-  OnboardingContext,
-  OnboardingProfileState,
-  useOnboardingContext,
-} from './onboarding-context'
+import { OnboardingProfileState, useOnboardingContext } from './onboarding-context'
 
 const formSchema = z.object({
   name: z.string(),
@@ -69,55 +65,56 @@ export function OnboardingProfile() {
       quality: 1,
     })
 
-    if (!result.canceled) {
-      const imageObj = {
-        path: result.assets[0].uri,
-        mime: 'image',
-        size: result.assets[0].fileSize || 0,
-        width: result.assets[0].width,
-        height: result.assets[0].height,
-      }
-
-      console.log(result.assets[0].mimeType)
-
-      setSelectedImage(imageObj)
+    if (result.canceled) {
+      console.log('ImagePicker: cancelled ...')
+      return
     }
+
+    const imageObj = {
+      path: result.assets[0].uri,
+      mime: 'image',
+      size: result.assets[0].fileSize || 0,
+      width: result.assets[0].width,
+      height: result.assets[0].height,
+    }
+
+    console.log(result.assets[0].mimeType)
+
+    setSelectedImage(imageObj)
   }, [])
 
   return (
-    <OnboardingContext.Provider value={{ state, dispatch }}>
-      <View className="flex-1 items-center py-6 gap-10">
-        <View>
-          <form.Field name="profileTest">
-            {(field) => (
-              <FormItem field={field}>
-                <FormControl>
-                  <Button
-                    variant="ghost"
-                    className="relative size-fit p-0 rounded-full"
-                    onPress={pickImageAsync}
-                  >
-                    <Avatar className="size-36" alt="Profile">
-                      <AvatarImage
-                        source={{
-                          uri: selectedImage?.path,
-                        }}
-                      />
-                      <AvatarFallback>
-                        <View />
-                      </AvatarFallback>
-                    </Avatar>
-                    <View className="absolute bottom-0 right-0">
-                      <View className="bg-base-primary-default rounded-full border-2 size-fit border-background p-2">
-                        <Icon icon={Pencil} size={20} className="text-white" />
-                      </View>
+    <>
+      <View className="flex-1 items-center p-6 gap-10">
+        <form.Field name="profileTest">
+          {(field) => (
+            <FormItem field={field}>
+              <FormControl>
+                <Button
+                  variant="ghost"
+                  className="relative size-fit p-0 rounded-full"
+                  onPress={pickImageAsync}
+                >
+                  <Avatar className="size-36" alt="Profile">
+                    <AvatarImage
+                      source={{
+                        uri: selectedImage?.path,
+                      }}
+                    />
+                    <AvatarFallback>
+                      <View />
+                    </AvatarFallback>
+                  </Avatar>
+                  <View className="absolute bottom-0 right-0">
+                    <View className="bg-base-primary-default rounded-full border-2 size-fit border-background p-2">
+                      <Icon icon={Pencil} size={20} className="text-white" />
                     </View>
-                  </Button>
-                </FormControl>
-              </FormItem>
-            )}
-          </form.Field>
-        </View>
+                  </View>
+                </Button>
+              </FormControl>
+            </FormItem>
+          )}
+        </form.Field>
         <View className="w-full">
           <form.Field name="name">
             {(field) => (
@@ -135,7 +132,7 @@ export function OnboardingProfile() {
           </form.Field>
         </View>
       </View>
-      <View className="gap-2 pb-6">
+      <View className="gap-2 px-6 pb-6">
         <Button disabled={!canContinue} onPress={handleNext}>
           <Text>ถัดไป</Text>
         </Button>
@@ -143,6 +140,6 @@ export function OnboardingProfile() {
           <Text>ข้าม</Text>
         </Button>
       </View>
-    </OnboardingContext.Provider>
+    </>
   )
 }

@@ -2,7 +2,7 @@ import React from 'react'
 
 // reference: https://github.com/bluesky-social/social-app/blob/main/src/screens/Onboarding/state.ts
 
-export type OnboardingState = {
+export interface OnboardingState {
   hasPrev: boolean
   totalSteps: number
   activeStep: 'profile' | 'topic' | 'address'
@@ -10,10 +10,10 @@ export type OnboardingState = {
 
   profileStepResult: OnboardingProfileState
   topicStepResult: OnboardingTopicState
-  addressStepResult: OnboardingAddressState
+  addressStepResult: OnboardingAddressState | undefined
 }
 
-export type OnboardingProfileState = {
+export interface OnboardingProfileState {
   name: string
   image?: {
     path: string
@@ -26,11 +26,11 @@ export type OnboardingProfileState = {
   imageMime?: string
 }
 
-export type OnboardingTopicState = {
+export interface OnboardingTopicState {
   topics: string[]
 }
 
-export type OnboardingAddressState = {
+export interface OnboardingAddressState {
   province: string
   district: string
   subdistrict: string
@@ -51,12 +51,7 @@ export const OnboardingInitialState: OnboardingState = {
   topicStepResult: {
     topics: [],
   },
-  addressStepResult: {
-    province: '',
-    district: '',
-    subdistrict: '',
-    postalCode: '',
-  },
+  addressStepResult: undefined,
 }
 
 export type OnboardingAction =
@@ -88,14 +83,6 @@ interface OnboardingContextValue {
 }
 
 export const OnboardingContext = React.createContext<OnboardingContextValue | null>(null)
-
-export function useOnboardingContext() {
-  const context = React.useContext(OnboardingContext)
-  if (!context) {
-    throw new Error('useOnboardingContext must be used within an OnboardingProvider')
-  }
-  return context
-}
 
 interface OnboardingProviderProps {
   children: React.ReactNode
@@ -169,4 +156,12 @@ export function OnboardingReducer(s: OnboardingState, a: OnboardingAction): Onbo
   }
 
   return state
+}
+
+export function useOnboardingContext() {
+  const context = React.useContext(OnboardingContext)
+  if (!context) {
+    throw new Error('useOnboardingContext must be used within an OnboardingProvider')
+  }
+  return context
 }

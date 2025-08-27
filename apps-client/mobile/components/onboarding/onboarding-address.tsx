@@ -23,10 +23,10 @@ import { z } from 'zod/v4'
 import { OnboardingAddressState, useOnboardingContext } from './onboarding-context'
 
 const formSchema = z.object({
-  province: z.string(),
-  district: z.string(),
-  subdistrict: z.string(),
-  postalCode: z.string(),
+  province: z.string().min(1),
+  district: z.string().min(1),
+  subdistrict: z.string().min(1),
+  postalCode: z.string().min(1),
 })
 
 const mockSelect = [
@@ -46,25 +46,24 @@ const mockSelect = [
 
 export function OnboardingAddress() {
   const { state, dispatch } = useOnboardingContext()
-
-  const [address, setAddress] = React.useState<OnboardingAddressState>(state.addressStepResult)
+  const [address, setAddress] = React.useState<OnboardingAddressState | null>(
+    state.addressStepResult ?? null
+  )
   const [openForm, setOpenForm] = React.useState(false)
-
-  console.log(state.addressStepResult)
 
   const form = useForm({
     defaultValues: {
-      province: state.addressStepResult.province,
-      district: state.addressStepResult.district,
-      subdistrict: state.addressStepResult.subdistrict,
-
-      postalCode: state.addressStepResult.postalCode,
+      province: state.addressStepResult?.province ?? '',
+      district: state.addressStepResult?.district ?? '',
+      subdistrict: state.addressStepResult?.subdistrict ?? '',
+      postalCode: state.addressStepResult?.postalCode ?? '',
     },
     validators: {
       onSubmit: formSchema,
     },
     onSubmit: async (values) => {
       console.log('Form submitted:', values.value)
+
       dispatch({ type: 'setAddressStepResults', payload: values.value })
       setAddress(values.value)
     },
@@ -109,8 +108,10 @@ export function OnboardingAddress() {
     <View className="flex-1 justify-between">
       {!openForm && (
         <>
-          <OnboardingAddressDetail address={address} handleOpenForm={handleOpenForm} />
-          <View className="gap-2 pb-6">
+          <View className="p-6 pt-4 w-full gap-2">
+            <OnboardingAddressDetail address={address} handleOpenForm={handleOpenForm} />
+          </View>
+          <View className="gap-2 p-6 pt-0">
             <Button disabled={!canContinue} onPress={handleNext}>
               <Text>ยืนยัน</Text>
             </Button>
@@ -122,7 +123,7 @@ export function OnboardingAddress() {
       )}
       {openForm && (
         <>
-          <View className="gap-2">
+          <View className="gap-2 px-6 pb-6 pt-4">
             <form.Field name="province">
               {(field) => (
                 <FormItem field={field}>
@@ -208,7 +209,7 @@ export function OnboardingAddress() {
               )}
             </form.Field>
           </View>
-          <View className="gap-2 pb-6">
+          <View className="gap-2 px-6 pb-6">
             <Button disabled={!canContinue} onPress={handleOnSubmit}>
               <Text>บันทึก</Text>
             </Button>
@@ -226,15 +227,10 @@ export function OnboardingAddressDetail({
   address,
   handleOpenForm,
 }: {
-  address: OnboardingAddressState
+  address: OnboardingAddressState | null
   handleOpenForm: () => void
 }) {
-  if (
-    address.province !== '' &&
-    address.district !== '' &&
-    address.subdistrict !== '' &&
-    address.postalCode !== ''
-  ) {
+  if (address) {
     return (
       <View className="p-4 bg-base-bg-default rounded-xl gap-2">
         <View>
