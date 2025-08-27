@@ -2,7 +2,6 @@ import React from 'react'
 
 // reference: https://github.com/bluesky-social/social-app/blob/main/src/screens/Onboarding/state.ts
 
-// TODO: add more fields
 export type OnboardingState = {
   hasPrev: boolean
   totalSteps: number
@@ -12,8 +11,6 @@ export type OnboardingState = {
   profileStepResult: OnboardingProfileState
   topicStepResult: OnboardingTopicState
   addressStepResult: OnboardingAddressState
-
-  isDataReady: boolean
 }
 
 export type OnboardingProfileState = {
@@ -60,7 +57,6 @@ export const OnboardingInitialState: OnboardingState = {
     subdistrict: '',
     postalCode: '',
   },
-  isDataReady: false,
 }
 
 // TODO: add more action
@@ -152,7 +148,6 @@ export function OnboardingReducer(s: OnboardingState, a: OnboardingAction): Onbo
         subdistrict: a.payload.subdistrict,
         postalCode: a.payload.postalCode,
       }
-      next.isDataReady = true
       break
     }
     default:
