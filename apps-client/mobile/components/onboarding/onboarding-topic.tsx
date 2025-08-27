@@ -4,7 +4,6 @@ import { ScrollView, View } from 'react-native'
 import { Button } from '@pple-today/ui/button'
 import { Text } from '@pple-today/ui/text'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
-import { useRouter } from 'expo-router'
 
 import { useOnboardingContext } from './onboarding-context'
 
@@ -84,15 +83,14 @@ const mockTopics = [
 export function OnboardingTopic() {
   const { dispatch } = useOnboardingContext()
   const [value, setValue] = React.useState<string[]>([mockTopics[0]])
-  const router = useRouter()
 
   const handleNext = React.useCallback(() => {
     dispatch({ type: 'next' })
   }, [dispatch])
 
   const handleSkip = React.useCallback(() => {
-    router.navigate('/')
-  }, [router])
+    dispatch({ type: 'next' })
+  }, [dispatch])
 
   return (
     <View className="flex-1 justify-between">
@@ -110,7 +108,7 @@ export function OnboardingTopic() {
           ))}
         </ToggleGroup>
       </ScrollView>
-      <View className="gap-2 pb-6">
+      <View className="gap-2 pb-6 pt-4">
         <Button onPress={handleNext}>
           <Text>ถัดไป</Text>
         </Button>

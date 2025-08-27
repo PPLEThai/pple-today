@@ -67,9 +67,6 @@ export type OnboardingAction =
       type: 'prev'
     }
   | {
-      type: 'address'
-    }
-  | {
       type: 'setProfileStepResults'
       name: string
       image: OnboardingState['profileStepResult']['image'] | undefined

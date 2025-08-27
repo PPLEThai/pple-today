@@ -9,7 +9,6 @@ import { Input } from '@pple-today/ui/input'
 import { Text } from '@pple-today/ui/text'
 import { useForm, useStore } from '@tanstack/react-form'
 import * as ImagePicker from 'expo-image-picker'
-import { useRouter } from 'expo-router'
 import { Pencil } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
@@ -30,8 +29,6 @@ export function OnboardingProfile() {
   const [selectedImage, setSelectedImage] = React.useState<
     OnboardingProfileState['image'] | undefined
   >(state.profileStepResult.image || undefined)
-
-  const router = useRouter()
 
   const form = useForm({
     defaultValues: {
@@ -62,8 +59,8 @@ export function OnboardingProfile() {
   }, [form])
 
   const handleSkip = React.useCallback(() => {
-    router.navigate('/')
-  }, [router])
+    dispatch({ type: 'next' })
+  }, [dispatch])
 
   const pickImageAsync = React.useCallback(async () => {
     const result = await ImagePicker.launchImageLibraryAsync({

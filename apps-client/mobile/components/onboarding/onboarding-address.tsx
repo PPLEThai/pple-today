@@ -45,7 +45,7 @@ const mockSelect = [
 ]
 
 export function OnboardingAddress() {
-  const { state, dispatch } = useOnboardingContext()  
+  const { state, dispatch } = useOnboardingContext()
 
   const [address, setAddress] = React.useState<OnboardingAddressState>(state.addressStepResult)
   const [openForm, setOpenForm] = React.useState(false)
@@ -86,8 +86,10 @@ export function OnboardingAddress() {
   }, [form])
 
   const handleNext = React.useCallback(() => {
-    console.log('next!!! finished')
-  }, [])
+    router.navigate('/')
+    console.log('Next')
+    console.log(state.profileStepResult, state.topicStepResult, state.addressStepResult)
+  }, [state, router])
 
   const hasProvince = useStore(form.store, (state) => state.values.province !== '')
   const hasDistrict = useStore(form.store, (state) => state.values.district !== '')
