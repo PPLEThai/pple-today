@@ -13,7 +13,11 @@ import { useRouter } from 'expo-router'
 import { Pencil } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import { OnboardingContext, OnboardingProfileState } from '@app/libs/onboarding'
+import {
+  OnboardingContext,
+  OnboardingProfileState,
+  useOnboardingContext,
+} from './onboarding-context'
 
 const formSchema = z.object({
   name: z.string(),
@@ -22,7 +26,7 @@ const formSchema = z.object({
 })
 
 export function OnboardingProfile() {
-  const { state, dispatch } = React.useContext(OnboardingContext)
+  const { state, dispatch } = useOnboardingContext()
   const [selectedImage, setSelectedImage] = React.useState<
     OnboardingProfileState['image'] | undefined
   >(state.profileStepResult.image || undefined)

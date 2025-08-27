@@ -59,7 +59,6 @@ export const OnboardingInitialState: OnboardingState = {
   },
 }
 
-// TODO: add more action
 export type OnboardingAction =
   | {
       type: 'next'
@@ -86,13 +85,34 @@ export type OnboardingAction =
       payload: OnboardingAddressState
     }
 
-export const OnboardingContext = React.createContext<{
+interface OnboardingContextValue {
   state: OnboardingState
   dispatch: React.Dispatch<OnboardingAction>
-}>({
-  state: { ...OnboardingInitialState },
-  dispatch: () => {},
-})
+}
+
+export const OnboardingContext = React.createContext<OnboardingContextValue | null>(null)
+
+export function useOnboardingContext() {
+  const context = React.useContext(OnboardingContext)
+  if (!context) {
+    throw new Error('useOnboardingContext must be used within an OnboardingProvider')
+  }
+  return context
+}
+
+interface OnboardingProviderProps {
+  children: React.ReactNode
+}
+
+export function OnboardingProvider(props: OnboardingProviderProps) {
+  const [state, dispatch] = React.useReducer(OnboardingReducer, OnboardingInitialState)
+
+  return (
+    <OnboardingContext.Provider value={{ state, dispatch }}>
+      {props.children}
+    </OnboardingContext.Provider>
+  )
+}
 
 export function OnboardingReducer(s: OnboardingState, a: OnboardingAction): OnboardingState {
   const next = { ...s }
@@ -106,11 +126,6 @@ export function OnboardingReducer(s: OnboardingState, a: OnboardingAction): Onbo
         next.activeStep = 'address'
         next.activeStepIndex = 3
       }
-      //TODO: delete after this this is for mock-test only
-      else {
-        next.activeStep = 'profile'
-        next.activeStepIndex = 1
-      }
       break
     }
     case 'prev': {
@@ -120,9 +135,6 @@ export function OnboardingReducer(s: OnboardingState, a: OnboardingAction): Onbo
       } else if (s.activeStep === 'address') {
         next.activeStep = 'topic'
         next.activeStepIndex = 2
-      } else {
-        next.activeStep = 'address'
-        next.activeStepIndex = 3
       }
       break
     }

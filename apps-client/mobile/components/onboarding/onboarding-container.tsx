@@ -8,10 +8,10 @@ import { Text } from '@pple-today/ui/text'
 import { H2 } from '@pple-today/ui/typography'
 import { ArrowLeftIcon } from 'lucide-react-native'
 
-import { OnboardingContext } from './onboarding'
+import { useOnboardingContext } from './onboarding-context'
 
 export function OnboardingContainer({ children }: { children: React.ReactNode }) {
-  const { state, dispatch } = React.useContext(OnboardingContext)
+  const { state, dispatch } = useOnboardingContext()
 
   return (
     <>

@@ -20,7 +20,7 @@ import { useRouter } from 'expo-router'
 import { Pencil, PlusIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import { OnboardingAddressState, OnboardingContext } from '@app/libs/onboarding'
+import { OnboardingAddressState, useOnboardingContext } from './onboarding-context'
 
 const formSchema = z.object({
   province: z.string(),
@@ -45,7 +45,8 @@ const mockSelect = [
 ]
 
 export function OnboardingAddress() {
-  const { state, dispatch } = React.useContext(OnboardingContext)
+  const { state, dispatch } = useOnboardingContext()  
+
   const [address, setAddress] = React.useState<OnboardingAddressState>(state.addressStepResult)
   const [openForm, setOpenForm] = React.useState(false)
 

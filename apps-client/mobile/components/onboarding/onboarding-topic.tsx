@@ -6,7 +6,7 @@ import { Text } from '@pple-today/ui/text'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { useRouter } from 'expo-router'
 
-import { OnboardingContext } from '@app/libs/onboarding'
+import { useOnboardingContext } from './onboarding-context'
 
 const mockTopics = [
   'การเมือง',
@@ -82,7 +82,7 @@ const mockTopics = [
 ]
 
 export function OnboardingTopic() {
-  const { dispatch } = React.useContext(OnboardingContext)
+  const { dispatch } = useOnboardingContext()
   const [value, setValue] = React.useState<string[]>([mockTopics[0]])
   const router = useRouter()
 
