@@ -2,7 +2,7 @@ import React from 'react'
 import { View } from 'react-native'
 
 import { Button } from '@pple-today/ui/button'
-import { FormControl, FormItem, FormLabel } from '@pple-today/ui/form'
+import { FormControl, FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
 import { Input } from '@pple-today/ui/input'
 import {
@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@pple-today/ui/select'
 import { Text } from '@pple-today/ui/text'
-import { useForm, useStore } from '@tanstack/react-form'
+import { useForm } from '@tanstack/react-form'
 import { useRouter } from 'expo-router'
 import { Pencil, PlusIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
@@ -23,24 +23,24 @@ import { z } from 'zod/v4'
 import { OnboardingAddressState, useOnboardingContext } from './onboarding-context'
 
 const formSchema = z.object({
-  province: z.string().min(1),
-  district: z.string().min(1),
-  subdistrict: z.string().min(1),
-  postalCode: z.string().min(1),
+  province: z.string().min(1, 'กรุณาเลือกจังหวัด'),
+  district: z.string().min(1, 'กรุณาเลือกอำเภอ'),
+  subdistrict: z.string().min(1, 'กรุณาเลือกตำบล'),
+  postalCode: z.string().regex(/^\d{5}$/, 'รหัสไปรษณีย์ต้องประกอบไปด้วยตัวเลข 5 หลัก'),
 })
 
 const mockSelect = [
   {
     label: 'test_p1',
-    value: 'TestP1',
+    value: 'test_p1',
   },
   {
     label: 'test_p2',
-    value: 'TestP2',
+    value: 'test_p2',
   },
   {
     label: 'test_p3',
-    value: 'TestP3',
+    value: 'test_p3',
   },
 ]
 
@@ -53,10 +53,10 @@ export function OnboardingAddress() {
 
   const form = useForm({
     defaultValues: {
-      province: state.addressStepResult?.province ?? '',
-      district: state.addressStepResult?.district ?? '',
-      subdistrict: state.addressStepResult?.subdistrict ?? '',
-      postalCode: state.addressStepResult?.postalCode ?? '',
+      province: address?.province ?? '',
+      district: address?.district ?? '',
+      subdistrict: address?.subdistrict ?? '',
+      postalCode: address?.postalCode ?? '',
     },
     validators: {
       onSubmit: formSchema,
@@ -66,6 +66,7 @@ export function OnboardingAddress() {
 
       dispatch({ type: 'setAddressStepResults', payload: values.value })
       setAddress(values.value)
+      setOpenForm(false)
     },
   })
 
@@ -80,7 +81,6 @@ export function OnboardingAddress() {
   }, [])
 
   const handleOnSubmit = React.useCallback(() => {
-    setOpenForm(false)
     form.handleSubmit()
   }, [form])
 
@@ -89,15 +89,6 @@ export function OnboardingAddress() {
     console.log('Next')
     console.log(state.profileStepResult, state.topicStepResult, state.addressStepResult)
   }, [state, router])
-
-  const hasProvince = useStore(form.store, (state) => state.values.province !== '')
-  const hasDistrict = useStore(form.store, (state) => state.values.district !== '')
-  const hasSubdistrict = useStore(form.store, (state) => state.values.subdistrict !== '')
-  const hasPostalCode = useStore(form.store, (state) => state.values.postalCode !== '')
-  const canContinue = useStore(
-    form.store,
-    () => hasProvince && hasDistrict && hasSubdistrict && hasPostalCode
-  )
 
   const contentInsets = {
     left: 24,
@@ -112,7 +103,7 @@ export function OnboardingAddress() {
             <OnboardingAddressDetail address={address} handleOpenForm={handleOpenForm} />
           </View>
           <View className="gap-2 p-6 pt-0">
-            <Button disabled={!canContinue} onPress={handleNext}>
+            <Button disabled={!address} onPress={handleNext}>
               <Text>ยืนยัน</Text>
             </Button>
             <Button variant="ghost" onPress={handleSkip}>
@@ -124,12 +115,24 @@ export function OnboardingAddress() {
       {openForm && (
         <>
           <View className="gap-2 px-6 pb-6 pt-4">
-            <form.Field name="province">
+            <form.Field
+              name="province"
+              listeners={{
+                onChange: () => {
+                  form.setFieldValue('district', '')
+                  form.setFieldValue('subdistrict', '')
+                  form.setFieldValue('postalCode', '')
+                },
+              }}
+            >
               {(field) => (
                 <FormItem field={field}>
                   <FormLabel>จังหวัด</FormLabel>
                   <FormControl>
-                    <Select onValueChange={(option) => field.handleChange(option?.value || '')}>
+                    <Select
+                      defaultValue={{ label: field.state.value, value: field.state.value }}
+                      onValueChange={(option) => field.handleChange(option?.value || '')}
+                    >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="เลือกจังหวัด" />
                       </SelectTrigger>
@@ -146,73 +149,118 @@ export function OnboardingAddress() {
                 </FormItem>
               )}
             </form.Field>
-            <form.Field name="district">
-              {(field) => (
-                <FormItem field={field}>
-                  <FormLabel>อำเภอ</FormLabel>
-                  <FormControl>
-                    <Select onValueChange={(option) => field.handleChange(option?.value || '')}>
-                      <SelectTrigger className="w-full" disabled={!hasProvince}>
-                        <SelectValue placeholder="เลือกอำเภอ" />
-                      </SelectTrigger>
-                      <SelectContent insets={contentInsets} className="w-full">
-                        <SelectGroup>
-                          <SelectLabel className="font-bold">เลือกอำเภอ</SelectLabel>
-                          {mockSelect.map((district, index) => (
-                            <SelectItem key={index} label={district.label} value={district.value} />
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                </FormItem>
+            <form.Subscribe selector={(state) => state.values.province}>
+              {(province) => (
+                <form.Field
+                  name="district"
+                  listeners={{
+                    onChange: () => {
+                      form.setFieldValue('subdistrict', '')
+                      form.setFieldValue('postalCode', '')
+                    },
+                  }}
+                >
+                  {(field) => (
+                    <FormItem field={field}>
+                      <FormLabel>อำเภอ</FormLabel>
+                      <FormControl>
+                        <Select
+                          defaultValue={{ label: field.state.value, value: field.state.value }}
+                          onValueChange={(option) => field.handleChange(option?.value || '')}
+                        >
+                          <SelectTrigger className="w-full" disabled={!province}>
+                            <SelectValue placeholder="เลือกอำเภอ" />
+                          </SelectTrigger>
+                          <SelectContent insets={contentInsets} className="w-full">
+                            <SelectGroup>
+                              <SelectLabel className="font-bold">เลือกอำเภอ</SelectLabel>
+                              {mockSelect.map((district, index) => (
+                                <SelectItem
+                                  key={index}
+                                  label={district.label}
+                                  value={district.value}
+                                />
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                </form.Field>
               )}
-            </form.Field>
-            <form.Field name="subdistrict">
-              {(field) => (
-                <FormItem field={field}>
-                  <FormLabel>ตำบล</FormLabel>
-                  <FormControl>
-                    <Select onValueChange={(option) => field.handleChange(option?.value || '')}>
-                      <SelectTrigger className="w-full" disabled={!hasDistrict}>
-                        <SelectValue placeholder="เลือกตำบล" />
-                      </SelectTrigger>
-                      <SelectContent insets={contentInsets} className="w-full">
-                        <SelectGroup>
-                          <SelectLabel className="font-bold">เลือกตำบล</SelectLabel>
-                          {mockSelect.map((subdistrict, index) => (
-                            <SelectItem
-                              key={index}
-                              label={subdistrict.label}
-                              value={subdistrict.value}
-                            />
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                </FormItem>
+            </form.Subscribe>
+            <form.Subscribe selector={(state) => state.values.district}>
+              {(district) => (
+                <form.Field
+                  name="subdistrict"
+                  listeners={{
+                    onChange: () => {
+                      form.setFieldValue('postalCode', '')
+                    },
+                  }}
+                >
+                  {(field) => (
+                    <FormItem field={field}>
+                      <FormLabel>ตำบล</FormLabel>
+                      <FormControl>
+                        <Select
+                          defaultValue={{ label: field.state.value, value: field.state.value }}
+                          onValueChange={(option) => field.handleChange(option?.value || '')}
+                        >
+                          <SelectTrigger className="w-full" disabled={!district}>
+                            <SelectValue placeholder="เลือกตำบล" />
+                          </SelectTrigger>
+                          <SelectContent insets={contentInsets} className="w-full">
+                            <SelectGroup>
+                              <SelectLabel className="font-bold">เลือกตำบล</SelectLabel>
+                              {mockSelect.map((subdistrict, index) => (
+                                <SelectItem
+                                  key={index}
+                                  label={subdistrict.label}
+                                  value={subdistrict.value}
+                                />
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                </form.Field>
               )}
-            </form.Field>
-            <form.Field name="postalCode">
-              {(field) => (
-                <FormItem field={field}>
-                  <FormLabel>รหัสไปรษณีย์</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="กรอกรหัสไปรษณีย์"
-                      value={field.state.value}
-                      onChangeText={field.handleChange}
-                    />
-                  </FormControl>
-                </FormItem>
+            </form.Subscribe>
+            <form.Subscribe selector={(state) => state.values.subdistrict}>
+              {(subdistrict) => (
+                <form.Field name="postalCode">
+                  {(field) => (
+                    <FormItem field={field}>
+                      <FormLabel>รหัสไปรษณีย์</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="กรอกรหัสไปรษณีย์"
+                          value={field.state.value}
+                          onChangeText={field.handleChange}
+                          editable={!!subdistrict}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                </form.Field>
               )}
-            </form.Field>
+            </form.Subscribe>
           </View>
           <View className="gap-2 px-6 pb-6">
-            <Button disabled={!canContinue} onPress={handleOnSubmit}>
-              <Text>บันทึก</Text>
-            </Button>
+            <form.Subscribe selector={(state) => [state.isSubmitting, state.canSubmit]}>
+              {([isSubmitting, canSubmit]) => (
+                <Button disabled={isSubmitting || !canSubmit} onPress={handleOnSubmit}>
+                  <Text>บันทึก</Text>
+                </Button>
+              )}
+            </form.Subscribe>
             <Button variant="ghost" onPress={handleSkip}>
               <Text>ข้าม</Text>
             </Button>
