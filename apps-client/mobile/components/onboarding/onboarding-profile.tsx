@@ -37,8 +37,6 @@ export function OnboardingProfile() {
       onSubmit: formSchema,
     },
     onSubmit: async (values) => {
-      console.log('Form submitted:', values.value)
-
       if (!selectedImage) {
         // alert
         return
@@ -82,7 +80,6 @@ export function OnboardingProfile() {
     })
 
     if (result.canceled) {
-      console.log('ImagePicker: cancelled ...')
       return
     }
 
@@ -93,8 +90,6 @@ export function OnboardingProfile() {
       width: result.assets[0].width,
       height: result.assets[0].height,
     }
-
-    console.log(result.assets[0].mimeType)
 
     setSelectedImage(imageObj)
   }, [requestPhotoAccessIfNeeded])
