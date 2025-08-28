@@ -26,7 +26,7 @@ export class ProfileService {
     const result = await this.profileRepository.getRecentActivity(userId)
 
     if (result.isErr()) {
-      return mapRawPrismaError(result.error)
+      return mapRepositoryError(result.error)
     }
 
     const transformResult: GetRecentActivityResponse = R.pipe(

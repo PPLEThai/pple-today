@@ -10,7 +10,7 @@ export class ProfileRepository {
   constructor(private prismaService: PrismaService) {}
 
   async getRecentActivity(userId: string) {
-    return await fromPrismaPromise(
+    return await fromRepositoryPromise(
       this.prismaService.poll.findMany({
         where: {
           options: {
