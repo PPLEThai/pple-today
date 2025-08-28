@@ -3,6 +3,7 @@ import { Platform, Pressable, ScrollView, TextProps, View } from 'react-native'
 import ImageView from 'react-native-image-viewing'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { Avatar, AvatarFallback, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
 import { Button } from '@pple-today/ui/button'
@@ -37,6 +38,7 @@ import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
 import { useEvent } from 'expo'
 import { Image } from 'expo-image'
+import { useRouter } from 'expo-router'
 import { getItemAsync } from 'expo-secure-store'
 import { useVideoPlayer, VideoView } from 'expo-video'
 import LottieView from 'lottie-react-native'
@@ -243,6 +245,7 @@ export function Playground() {
             </DialogContent>
           </Dialog>
         </View>
+        <AvatarExample />
         <BottomSheetExample />
         <ToggleGroupExample />
         <ProgressExample />
@@ -252,6 +255,7 @@ export function Playground() {
         <ToastExample />
         <MoreOrLessExample />
         <LightboxExample />
+        <OnboardPlayground />
         <LottieExample />
         <VideoExample />
         <PostCardExample />
@@ -692,5 +696,59 @@ function QueryExample() {
         </Button>
       </View>
     </>
+  )
+}
+
+function AvatarExample() {
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Avatar</H2>
+      <View className="flex flex-row gap-4 items-baseline">
+        <Avatar className="size-16" alt="NativewindUI Avatar">
+          <AvatarImage
+            source={{
+              uri: 'https://pbs.twimg.com/profile_images/1782428433898708992/1voyv4_A_400x400.jpg',
+            }}
+          />
+          <AvatarFallback>
+            <Text className="text-foreground">NUI</Text>
+          </AvatarFallback>
+        </Avatar>
+        <Avatar className="size-24" alt="NativewindUI Avatar">
+          <AvatarImage
+            source={{
+              uri: 'https://pbs.twimg.com/profile_images/1782428433898708992/1voyv4_A_400x400.jpg',
+            }}
+          />
+          <AvatarFallback>
+            <Text className="text-foreground">NUI</Text>
+          </AvatarFallback>
+        </Avatar>
+        <Avatar className="size-32" alt="NativewindUI Avatar">
+          <AvatarImage
+            source={{
+              uri: 'https://pbs.twimg.com/profile_images/1782428433898708992/1voyv4_A_400x400.jpg',
+            }}
+          />
+          <AvatarFallback>
+            <Text className="text-foreground">NUI</Text>
+          </AvatarFallback>
+        </Avatar>
+      </View>
+    </View>
+  )
+}
+
+function OnboardPlayground() {
+  const router = useRouter()
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Onboarding</H2>
+      <View className="flex flex-row gap-4 items-baseline">
+        <Button onPress={() => router.push('/onboarding')}>
+          <Text>Start Onboarding</Text>
+        </Button>
+      </View>
+    </View>
   )
 }
