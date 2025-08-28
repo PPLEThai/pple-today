@@ -47,7 +47,7 @@ const mockSelect = [
 export function OnboardingAddress() {
   const { state, dispatch } = useOnboardingContext()
   const [address, setAddress] = React.useState<OnboardingAddressState | null>(
-    state.addressStepResult ?? null
+    state.addressStepResult
   )
   const [openForm, setOpenForm] = React.useState(false)
 
@@ -62,8 +62,6 @@ export function OnboardingAddress() {
       onSubmit: formSchema,
     },
     onSubmit: async (values) => {
-      console.log('Form submitted:', values.value)
-
       dispatch({ type: 'setAddressStepResults', payload: values.value })
       setAddress(values.value)
       setOpenForm(false)
@@ -86,9 +84,7 @@ export function OnboardingAddress() {
 
   const handleNext = React.useCallback(() => {
     router.navigate('/')
-    console.log('Next')
-    console.log(state.profileStepResult, state.topicStepResult, state.addressStepResult)
-  }, [state, router])
+  }, [router])
 
   const contentInsets = {
     left: 24,

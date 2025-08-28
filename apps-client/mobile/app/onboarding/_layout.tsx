@@ -1,23 +1,14 @@
 import { SafeAreaView } from 'react-native-safe-area-context'
 
-import { Stack } from 'expo-router'
+import { Slot } from 'expo-router'
 
 import { OnboardingProvider } from '@app/components/onboarding/onboarding-context'
 
 export default function OnboardingLayout() {
   return (
-    <SafeAreaView className="flex-1" edges={['top', 'left', 'right']}>
+    <SafeAreaView className="flex-1" edges={['top', 'left', 'right', 'bottom']}>
       <OnboardingProvider>
-        <Stack
-          initialRouteName="index"
-          screenOptions={{
-            headerShown: false,
-            animation: 'simple_push',
-            animationDuration: 300,
-          }}
-        >
-          <Stack.Screen name="index" options={{ headerShown: false }} />
-        </Stack>
+        <Slot />
       </OnboardingProvider>
     </SafeAreaView>
   )
