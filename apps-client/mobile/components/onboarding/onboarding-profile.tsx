@@ -12,24 +12,26 @@ import * as ImagePicker from 'expo-image-picker'
 import { Pencil } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
+import { usePhotoLibraryPermission } from '@app/libs/use-permission'
+
 import { OnboardingProfileState, useOnboardingContext } from './onboarding-context'
 
 const formSchema = z.object({
   name: z.string(),
-  // profileImage: z.file().mime(['image/jpeg', 'image/png']).max(5_242_880),
-  profileTest: z.string(),
+  profileSignedImage: z.string(),
 })
 
 export function OnboardingProfile() {
   const { state, dispatch } = useOnboardingContext()
-  const [selectedImage, setSelectedImage] = React.useState<
-    OnboardingProfileState['image'] | undefined
-  >(state.profileStepResult.image || undefined)
+  const [selectedImage, setSelectedImage] = React.useState<OnboardingProfileState['image'] | null>(
+    state.profileStepResult?.image ?? null
+  )
+  const { requestPhotoAccessIfNeeded } = usePhotoLibraryPermission()
 
   const form = useForm({
     defaultValues: {
-      name: state.profileStepResult.name || '',
-      profileTest: state.profileStepResult.image?.path || '',
+      name: state.profileStepResult?.name ?? '',
+      profileSignedImage: state.profileStepResult?.imageUri ?? '',
     },
     validators: {
       onSubmit: formSchema,
@@ -37,12 +39,21 @@ export function OnboardingProfile() {
     onSubmit: async (values) => {
       console.log('Form submitted:', values.value)
 
-      dispatch({
-        type: 'setProfileStepResults',
+      if (!selectedImage) {
+        // alert
+        return
+      }
+
+      const profilePayload = {
         name: values.value.name,
         image: selectedImage,
-        imageUri: selectedImage?.path || undefined,
-        imageMime: selectedImage?.mime || 'image/jpeg', //mock
+        imageUri: '', // get signed image here
+        imageMime: '', // get signed image mime here
+      }
+
+      dispatch({
+        type: 'setProfileStepResults',
+        payload: profilePayload,
       })
       dispatch({ type: 'next' })
     },
@@ -59,6 +70,11 @@ export function OnboardingProfile() {
   }, [dispatch])
 
   const pickImageAsync = React.useCallback(async () => {
+    const hasPermission = await requestPhotoAccessIfNeeded()
+    if (!hasPermission) {
+      alert('Permission to access media library is required!')
+      return
+    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
@@ -81,12 +97,12 @@ export function OnboardingProfile() {
     console.log(result.assets[0].mimeType)
 
     setSelectedImage(imageObj)
-  }, [])
+  }, [requestPhotoAccessIfNeeded])
 
   return (
     <>
       <View className="flex-1 items-center p-6 gap-10">
-        <form.Field name="profileTest">
+        <form.Field name="profileSignedImage">
           {(field) => (
             <FormItem field={field}>
               <FormControl>

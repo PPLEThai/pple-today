@@ -74,6 +74,12 @@ export default {
           },
         },
       ],
+      [
+        'expo-image-picker',
+        {
+          photosPermission: 'The app accesses your photos to let you set up your profile image.',
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,

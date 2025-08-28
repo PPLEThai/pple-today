@@ -1,7 +1,8 @@
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { OnboardingProvider } from '@app/components/onboarding/onboarding-context'
 
 import { Stack } from 'expo-router'
+
+import { OnboardingProvider } from '@app/components/onboarding/onboarding-context'
 
 export default function OnboardingLayout() {
   return (

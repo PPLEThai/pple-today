@@ -8,22 +8,22 @@ export interface OnboardingState {
   activeStep: 'profile' | 'topic' | 'address'
   activeStepIndex: number
 
-  profileStepResult: OnboardingProfileState
-  topicStepResult: OnboardingTopicState
-  addressStepResult: OnboardingAddressState | undefined
+  profileStepResult: OnboardingProfileState | null
+  topicStepResult: OnboardingTopicState | null
+  addressStepResult: OnboardingAddressState | null
 }
 
 export interface OnboardingProfileState {
   name: string
-  image?: {
+  image: {
     path: string
     mime: string
     size: number
     width: number
     height: number
   }
-  imageUri?: string
-  imageMime?: string
+  imageUri: string
+  imageMime: string
 }
 
 export interface OnboardingTopicState {
@@ -42,16 +42,9 @@ export const OnboardingInitialState: OnboardingState = {
   totalSteps: 3,
   activeStep: 'profile',
   activeStepIndex: 1, // start from 1
-  profileStepResult: {
-    name: '',
-    image: undefined,
-    imageUri: '',
-    imageMime: '',
-  },
-  topicStepResult: {
-    topics: [],
-  },
-  addressStepResult: undefined,
+  profileStepResult: null,
+  topicStepResult: null,
+  addressStepResult: null,
 }
 
 export type OnboardingAction =
@@ -63,10 +56,7 @@ export type OnboardingAction =
     }
   | {
       type: 'setProfileStepResults'
-      name: string
-      image: OnboardingState['profileStepResult']['image'] | undefined
-      imageUri: string | undefined
-      imageMime: string
+      payload: OnboardingProfileState
     }
   | {
       type: 'setTopicStepResults'
@@ -124,10 +114,10 @@ export function OnboardingReducer(s: OnboardingState, a: OnboardingAction): Onbo
     }
     case 'setProfileStepResults': {
       next.profileStepResult = {
-        name: a.name,
-        image: a.image,
-        imageUri: a.imageUri,
-        imageMime: a.imageMime,
+        name: a.payload.name,
+        image: a.payload.image,
+        imageUri: a.payload.imageUri,
+        imageMime: a.payload.imageMime,
       }
       break
     }
