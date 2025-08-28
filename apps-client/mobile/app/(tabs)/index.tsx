@@ -46,9 +46,10 @@ import {
   PagerTabBarItemIndicator,
 } from '@app/components/pager-with-header'
 import { environment } from '@app/env'
-import { useAuthMe, useSessionQuery } from '@app/libs/auth'
+import { fetchClient, reactQueryClient } from '@app/libs/api-client'
+import { useAuthMe } from '@app/libs/auth'
+import { getAuthSession } from '@app/libs/auth/session'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
-import { fetchClient, queryClient } from '@app/libs/react-query'
 import { useScrollContext } from '@app/libs/scroll-context'
 
 export default function IndexLayout() {
@@ -114,10 +115,19 @@ function MainHeader() {
           <PPLEIcon width={35} height={30} />
         </Pressable>
         <View className="flex flex-col">
-          <Text className="font-anakotmai-light text-xs">{headings.welcome}</Text>
-          <Text className="font-anakotmai-bold text-2xl text-base-primary-default">
-            {headings.title}
-          </Text>
+          {authMe.isLoading ? (
+            <>
+              <View className="h-3 mt-1 bg-base-bg-default rounded-full w-[80px]" />
+              <View className="h-6 mt-2 bg-base-bg-default rounded-full w-[150px]" />
+            </>
+          ) : (
+            <>
+              <Text className="font-anakotmai-light text-xs">{headings.welcome}</Text>
+              <Text className="font-anakotmai-bold text-2xl text-base-primary-default">
+                {headings.title}
+              </Text>
+            </>
+          )}
         </View>
       </View>
       <View className="flex flex-row gap-4">
@@ -156,7 +166,7 @@ const PLACEHOLDER_BANNERS: GetBannersResponse = [
 ]
 
 function BannerSection() {
-  const bannersQuery = queryClient.useQuery('/banners', {})
+  const bannersQuery = reactQueryClient.useQuery('/banners', {})
   // Loading : assuming that there are usually 2 or more banners
   const banners = bannersQuery.data ?? PLACEHOLDER_BANNERS
   React.useEffect(() => {
@@ -292,12 +302,7 @@ function ElectionCard() {
 }
 
 function UserInfoSection() {
-  const sessionQuery = useSessionQuery()
-  const authMeQuery = queryClient.useQuery(
-    '/auth/me',
-    { headers: { Authorization: sessionQuery.data?.accessToken } },
-    { enabled: !!sessionQuery.data?.accessToken }
-  )
+  const authMeQuery = useAuthMe()
   // hide when not yet onboarded and therefore no address data
   if (!authMeQuery.data?.address) {
     return null
@@ -346,11 +351,21 @@ function FeedContent(props: PagerScrollViewProps) {
   }, [isFocused, scrollElRef, setScrollViewTag])
 
   const feedInfiniteQuery = useInfiniteQuery({
-    queryKey: ['feed'],
-    queryFn: ({ pageParam }) => fetchClient('/feed/me', { query: { page: pageParam, limit: 5 } }),
+    queryKey: reactQueryClient.getQueryKey('get', '/feed/me'),
+    queryFn: async ({ pageParam }) => {
+      const session = await getAuthSession()
+      const response = await fetchClient('/feed/me', {
+        query: { page: pageParam, limit: 5 },
+        headers: session ? { Authorization: `Bearer ${session.accessToken}` } : {},
+      })
+      if (response.error) {
+        throw response.error
+      }
+      return response.data
+    },
     initialPageParam: 1,
     getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage.data && lastPage.data.length === 0) {
+      if (lastPage && lastPage.length === 0) {
         return undefined
       }
       return lastPageParam + 1
@@ -358,7 +373,7 @@ function FeedContent(props: PagerScrollViewProps) {
   })
   React.useEffect(() => {
     if (feedInfiniteQuery.error) {
-      console.error('Error fetching feed:', feedInfiniteQuery.error)
+      console.error('Error fetching feed:', JSON.stringify(feedInfiniteQuery.error))
     }
   }, [feedInfiniteQuery.error])
 
@@ -371,7 +386,7 @@ function FeedContent(props: PagerScrollViewProps) {
 
   const data = React.useMemo((): GetMyFeedResponse[] => {
     if (!feedInfiniteQuery.data) return []
-    return feedInfiniteQuery.data.pages.filter((page) => !!page.data).map((page) => page.data)
+    return feedInfiniteQuery.data.pages.filter((page) => !!page)
   }, [feedInfiniteQuery.data])
 
   const scrollContext = useScrollContext()
@@ -492,7 +507,7 @@ let FlatListMemo = React.forwardRef<FlatListMethods, FlatListProps>(
 FlatListMemo = React.memo(FlatListMemo)
 
 function AnnouncementSection() {
-  const announcementsQuery = queryClient.useQuery('/announcements', {
+  const announcementsQuery = reactQueryClient.useQuery('/announcements', {
     query: { limit: 5 },
   })
   if (!announcementsQuery.data) return null

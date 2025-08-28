@@ -34,7 +34,7 @@ export function AuthPlayground() {
         onPress={() =>
           logoutMutation.mutate({ discovery: discoveryQuery.data!, session: sessionQuery.data! })
         }
-        disabled={!sessionQuery.data || !sessionQuery.data}
+        disabled={!discoveryQuery.data || !sessionQuery.data || logoutMutation.isPending}
       >
         <Text>Logout</Text>
       </Button>

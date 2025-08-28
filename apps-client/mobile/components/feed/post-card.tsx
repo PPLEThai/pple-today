@@ -33,9 +33,9 @@ import { z } from 'zod/v4'
 
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { MoreOrLess } from '@app/components/more-or-less'
+import { reactQueryClient } from '@app/libs/api-client'
 import { useSessionQuery } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
-import { queryClient } from '@app/libs/react-query'
 
 export interface PostCardAttachment {
   id: string
@@ -435,7 +435,7 @@ interface PostReaction {
 export const usePostReactionStore = createQuery({
   queryKey: ['post-reaction'],
   fetcher: (_: { id: string }): PostReaction => {
-    throw new Error('PostReactionStore should be enabled')
+    throw new Error('PostReactionStore should not be enabled')
   },
   enabled: false,
 })
@@ -501,11 +501,11 @@ function UpvoteButton(props: UpvoteButtonProps) {
   }
 
   const likeAnimationRef = React.useRef<LottieView | null>(null)
-  const client = useQueryClient()
+  const queryClient = useQueryClient()
   const postReactionStore = usePostReactionStore({ variables: { id: props.postId } })
   const userReaction = postReactionStore.data?.userReaction
-  const createReactionQuery = queryClient.useMutation('put', '/feed/:id/reaction')
-  const deleteReactionQuery = queryClient.useMutation('delete', '/feed/:id/reaction')
+  const createReactionQuery = reactQueryClient.useMutation('put', '/feed/:id/reaction')
+  const deleteReactionQuery = reactQueryClient.useMutation('delete', '/feed/:id/reaction')
   const router = useRouter()
   const sessionQuery = useSessionQuery()
   const onPress = () => {
@@ -526,7 +526,7 @@ function UpvoteButton(props: UpvoteButtonProps) {
       })
     }
     // optimistic update
-    client.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
+    queryClient.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
       if (!old) return
       return {
         upvoteCount: newUserReaction === 'UP_VOTE' ? old.upvoteCount + 1 : old.upvoteCount - 1,
@@ -588,8 +588,8 @@ function DownvoteButton(props: { postId: string }) {
   const bottomSheetModalRef = React.useRef<BottomSheetModal>(null)
   const postReactionStore = usePostReactionStore({ variables: { id: props.postId } })
   const userReaction = postReactionStore.data?.userReaction
-  const deleteReactionQuery = queryClient.useMutation('delete', '/feed/:id/reaction')
-  const client = useQueryClient()
+  const deleteReactionQuery = reactQueryClient.useMutation('delete', '/feed/:id/reaction')
+  const queryClient = useQueryClient()
 
   const router = useRouter()
   const sessionQuery = useSessionQuery()
@@ -605,7 +605,7 @@ function DownvoteButton(props: { postId: string }) {
         pathParams: { id: props.postId },
       })
       // optimistic update
-      client.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
+      queryClient.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
         if (!old) return
         return {
           upvoteCount: old.userReaction === 'UP_VOTE' ? old.upvoteCount - 1 : old.upvoteCount,
@@ -661,8 +661,8 @@ interface CommentFormProps {
   postId: string
 }
 function CommentForm(props: CommentFormProps) {
-  const createReactionQuery = queryClient.useMutation('put', '/feed/:id/reaction')
-  const client = useQueryClient()
+  const createReactionQuery = reactQueryClient.useMutation('put', '/feed/:id/reaction')
+  const queryClient = useQueryClient()
   const form = useForm({
     defaultValues: {
       comment: '',
@@ -694,7 +694,7 @@ function CommentForm(props: CommentFormProps) {
         }
       )
       // optimistic update
-      client.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
+      queryClient.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
         if (!old) return
         return {
           upvoteCount: old.userReaction === 'UP_VOTE' ? old.upvoteCount - 1 : old.upvoteCount,
@@ -710,7 +710,7 @@ function CommentForm(props: CommentFormProps) {
       body: { type: 'DOWN_VOTE', comment: undefined },
     })
     // optimistic update
-    client.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
+    queryClient.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
       if (!old) return
       return {
         upvoteCount: old.userReaction === 'UP_VOTE' ? old.upvoteCount - 1 : old.upvoteCount,
