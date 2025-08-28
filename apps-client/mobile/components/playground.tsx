@@ -43,7 +43,7 @@ import LottieView from 'lottie-react-native'
 import { InfoIcon, PlusIcon, SearchIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import { queryClient } from '@app/libs/react-query'
+import { reactQueryClient } from '@app/libs/api-client'
 
 import { AuthPlayground } from './auth-playground'
 import { PostCard, PostCardSkeleton } from './feed/post-card'
@@ -637,7 +637,7 @@ function PostCardExample() {
 
 function QueryExample() {
   const [token, setToken] = useState<string>('')
-  const sampleQuery = queryClient.useQuery('/auth/me', {}, { enabled: !!token })
+  const sampleQuery = reactQueryClient.useQuery('/auth/me', {}, { enabled: !!token })
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -649,7 +649,7 @@ function QueryExample() {
     fetchToken()
   }, [])
 
-  const sampleMutation = queryClient.useMutation('post', '/facebook/linked-page')
+  const sampleMutation = reactQueryClient.useMutation('post', '/facebook/linked-page')
 
   return (
     <>

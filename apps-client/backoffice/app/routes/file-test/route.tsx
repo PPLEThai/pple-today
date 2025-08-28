@@ -1,26 +1,26 @@
 import { useEffect, useState } from 'react'
 
 import { userManager } from '~/config/oidc'
-import { queryClient } from '~/libs/react-query'
+import { reactQueryClient } from '~/libs/api-client'
 
 const FileTestRoute = () => {
   const [announcementId, setAnnouncementId] = useState<string | null>(null)
   const [publishAnnouncementId, setPublishAnnouncementId] = useState<string | null>(null)
   const [accessToken, setAccessToken] = useState<string | null>(null)
 
-  const createEmptyAnnouncementMutation = queryClient.useMutation(
+  const createEmptyAnnouncementMutation = reactQueryClient.useMutation(
     'post',
     '/admin/announcements/draft'
   )
 
-  const getFileUploadUrl = queryClient.useMutation('post', '/admin/file/upload-url')
+  const getFileUploadUrl = reactQueryClient.useMutation('post', '/admin/file/upload-url')
 
-  const updateDraftAnnouncement = queryClient.useMutation(
+  const updateDraftAnnouncement = reactQueryClient.useMutation(
     'put',
     '/admin/announcements/draft/:announcementId'
   )
 
-  const getDraftAnnouncement = queryClient.useQuery(
+  const getDraftAnnouncement = reactQueryClient.useQuery(
     '/admin/announcements/draft/:announcementId',
     {
       pathParams: {
@@ -35,7 +35,7 @@ const FileTestRoute = () => {
     }
   )
 
-  const getPublishedAnnouncement = queryClient.useQuery(
+  const getPublishedAnnouncement = reactQueryClient.useQuery(
     '/admin/announcements/:announcementId',
     {
       pathParams: {
@@ -50,7 +50,7 @@ const FileTestRoute = () => {
     }
   )
 
-  const publishAnnouncement = queryClient.useMutation(
+  const publishAnnouncement = reactQueryClient.useMutation(
     'post',
     '/admin/announcements/draft/:announcementId/publish'
   )

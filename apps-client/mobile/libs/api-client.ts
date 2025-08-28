@@ -1,11 +1,11 @@
-import { createReactQueryClient } from '@pple-today/api-client'
+import { createApiClient } from '@pple-today/api-client'
 
 import type { ApplicationApiSchema } from '@api/backoffice'
 import { environment } from '@app/env'
 
 import { getAuthSession } from './auth/session'
 
-const { fetchClient, queryClient } = createReactQueryClient<ApplicationApiSchema>(
+const { fetchClient, reactQueryClient } = createApiClient<ApplicationApiSchema>(
   environment.EXPO_PUBLIC_BACKEND_BASE_URL
 )
 fetchClient.interceptors.request = async (config) => {
@@ -16,4 +16,4 @@ fetchClient.interceptors.request = async (config) => {
   return config
 }
 
-export { fetchClient, queryClient }
+export { fetchClient, reactQueryClient }

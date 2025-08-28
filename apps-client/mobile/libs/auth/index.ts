@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { Platform } from 'react-native'
 import { createMutation, createQuery } from 'react-query-kit'
 
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AuthRequest,
   AuthSessionResult,
@@ -14,6 +14,7 @@ import {
   makeRedirectUri,
   ResponseType,
 } from 'expo-auth-session'
+import { useRouter } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
 import { z } from 'zod/v4'
 
@@ -22,7 +23,7 @@ import { environment } from '@app/env'
 
 import { AuthSession, getAuthSession, setAuthSession } from './session'
 
-import { queryClient } from '../react-query'
+import { fetchClient, reactQueryClient } from '../api-client'
 
 const authRequest: AuthRequest = new AuthRequest({
   responseType: ResponseType.Code,
@@ -31,10 +32,11 @@ const authRequest: AuthRequest = new AuthRequest({
   scopes: ['openid', 'profile', 'phone'],
   codeChallengeMethod: CodeChallengeMethod.S256,
   redirectUri: makeRedirectUri({
-    native: `${appConfig.expo.scheme}:/`,
+    native: `${appConfig.expo.scheme}:///loading`,
   }),
 })
 
+// TODO: try queryOptions
 export const useDiscoveryQuery = createQuery({
   queryKey: ['discovery'],
   fetcher: () => {
@@ -54,8 +56,6 @@ const useSetSessionMutation = createMutation({
 
 export const useSessionMutation = () => {
   const queryClient = useQueryClient()
-  const sessionQuery = useSessionQuery()
-  const userQuery = useUserQuery()
   return useSetSessionMutation({
     onMutate: (session) => {
       // Optimistically update the session query cache
@@ -65,8 +65,8 @@ export const useSessionMutation = () => {
       }
     },
     onSuccess: () => {
-      sessionQuery.refetch()
-      userQuery.refetch()
+      queryClient.refetchQueries({ queryKey: useSessionQuery.getKey() })
+      queryClient.refetchQueries({ queryKey: useUserQuery.getKey() })
     },
   })
 }
@@ -124,11 +124,25 @@ export const useUser = () => {
 }
 
 export const useAuthMe = () => {
-  const sessionQuery = useSessionQuery()
-  return queryClient.useQuery('/auth/me', {}, { enabled: !!sessionQuery.data })
+  return useQuery({
+    queryKey: reactQueryClient.getQueryKey('get', '/auth/me'),
+    queryFn: async () => {
+      const session = await getAuthSession()
+      if (!session) {
+        return null
+      }
+      const authMeResult = await fetchClient('/auth/me', {
+        headers: { Authorization: `Bearer ${session.accessToken}` },
+      })
+      if (authMeResult.error) {
+        throw authMeResult.error
+      }
+      return authMeResult.data
+    },
+  })
 }
 
-export const codeExchange = async ({
+export const codeExchange = ({
   code,
   discovery,
 }: {
@@ -225,19 +239,31 @@ export const login = async ({ discovery }: { discovery: DiscoveryDocument }) => 
 
 export const useLoginMutation = () => {
   const sessionMutation = useSessionMutation()
+  const queryClient = useQueryClient()
+  const router = useRouter()
   return useMutation({
     mutationFn: login,
-    onSuccess: (result) => {
-      sessionMutation.mutate({
+    onMutate: () => {
+      router.push('/loading')
+    },
+    onError: (error) => {
+      console.error('Error logging out: ', error)
+      router.push('/auth')
+    },
+    onSuccess: async (result) => {
+      // save session in expo session store
+      await sessionMutation.mutateAsync({
         accessToken: result.accessToken,
         refreshToken: result.refreshToken ?? '',
         idToken: result.idToken ?? null,
       })
+      // reset all reactQueryClient cache
+      await queryClient.resetQueries({ queryKey: reactQueryClient.getPartialQueryKey() })
+      router.push('/')
     },
   })
 }
 
-// Might consider using neverthrow
 export const logout = async ({
   discovery,
   session,
@@ -245,42 +271,38 @@ export const logout = async ({
   discovery: DiscoveryDocument
   session: AuthSession
 }) => {
-  const endSessionEndpoint = discovery.endSessionEndpoint
-  const idToken = session.idToken
-  if (!endSessionEndpoint || !idToken) {
-    console.error('End session endpoint or id token not available.')
-    throw new Error('End session endpoint or id token not available.')
+  if (!discovery.revocationEndpoint) {
+    throw new Error('Revocation endpoint is not available.')
   }
-  const url = `${endSessionEndpoint}?id_token_hint=${idToken}&post_logout_redirect_uri=${authRequest.redirectUri}`
-  const browserPackage = await getBrowserPackage()
-  let result: WebBrowser.WebBrowserAuthSessionResult
-  try {
-    // open in-app browser to revoke the access token
-    // TODO: find a way to customize `Sign In` message to `Logout` instead
-    result = await WebBrowser.openAuthSessionAsync(url, null, { browserPackage })
-  } catch (error) {
-    console.error('Error opening auth session:', error)
-    throw new Error('Error opening auth session')
-  }
-  if (
-    !(
-      result.type === 'success' ||
-      (result.type === WebBrowser.WebBrowserResultType.DISMISS && Platform.OS === 'android')
-    )
-  ) {
-    console.error('Logout cancelled or failed:', result)
-    throw new Error('Logout cancelled or failed')
-  }
-  return result
+  return fetch(discovery.revocationEndpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      token: session.accessToken,
+      client_id: environment.EXPO_PUBLIC_OIDC_CLIENT_ID,
+    }),
+  })
 }
 
 export const useLogoutMutation = () => {
   const sessionMutation = useSessionMutation()
+  const queryClient = useQueryClient()
+  const router = useRouter()
   return useMutation({
     mutationFn: logout,
-    onSuccess: () => {
+    onMutate: () => {
+      router.push('/loading')
+    },
+    onSettled: async (_data, error) => {
+      if (error) {
+        console.error('Revocation failed', error)
+      }
+      // Even error occurred, reset session anyway
       // Clear tokens from secure storage
-      sessionMutation.mutate(null)
+      await sessionMutation.mutateAsync(null)
+      // reset all reactQueryClient cache
+      await queryClient.resetQueries({ queryKey: reactQueryClient.getPartialQueryKey() })
+      router.push('/auth')
     },
   })
 }

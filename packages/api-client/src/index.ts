@@ -13,7 +13,7 @@ import type {
   CreateReactQueryClientResult,
   EdenFetch,
   FetchClientInterceptors,
-  QueryClient,
+  ReactQueryClient,
   RequestConfig,
   ResponseConfig,
 } from './types'
@@ -23,25 +23,18 @@ export type {
   ExtractBodyRequest,
   ExtractBodyResponse,
   FetchClientInterceptors,
-  QueryClient,
+  ReactQueryClient as QueryClient,
   RequestConfig,
   ResponseConfig,
 } from './types'
 
-function queryKey(method: string, path: string | number | symbol, payload?: any) {
-  const payloadKey = {
-    pathParams: payload?.pathParams ?? {},
-    query: payload?.query ?? {},
-    headers: payload?.headers ?? {},
-  }
-  return [method, path, payloadKey] as const
-}
+export const QUERY_KEY = '$'
 
-function createQueryClient<TSchema extends Record<string, any>>(
+function createReactQueryClient<TSchema extends Record<string, any>>(
   restClient: EdenFetch.Fn<TSchema> & {
     interceptors: FetchClientInterceptors
   }
-): QueryClient<TSchema> {
+): ReactQueryClient<TSchema> {
   const makeRequest = async (method: any, path: any, payload: any) => {
     const requestConfig: any = await restClient.interceptors.request({
       method,
@@ -57,39 +50,63 @@ function createQueryClient<TSchema extends Record<string, any>>(
     return restClient.interceptors.response(resp)
   }
 
+  function getQueryKey(method: any, path: any, payload?: any) {
+    const payloadKey = {
+      pathParams: payload?.pathParams ?? {},
+      query: payload?.query ?? {},
+      headers: payload?.headers ?? {},
+    }
+    return [QUERY_KEY, method, path, payloadKey] as const
+  }
+
+  function getPartialQueryKey(method?: any, path?: any, payload?: any) {
+    if (method === undefined && path === undefined && payload === undefined) {
+      return [QUERY_KEY]
+    }
+    if (path === undefined && payload === undefined) {
+      return [QUERY_KEY, method]
+    }
+    if (payload === undefined) {
+      return [QUERY_KEY, method, path]
+    }
+    return getQueryKey(method, path, payload)
+  }
+
   return {
     useQuery: function (path: any, payload: any, options?: any) {
       return useQuery({
-        queryKey: queryKey('get', path, payload),
+        queryKey: getQueryKey('get', path, payload),
         queryFn: () => makeRequest('get', path, payload),
         ...options,
       }) as UseQueryResult<any, any>
     },
     useMutation: function (method: any, path: any, options?: any) {
       return useMutation({
-        mutationKey: queryKey(method, path),
+        mutationKey: getQueryKey(method, path),
         mutationFn: (data) => makeRequest(method, path, data),
         ...options,
       }) as UseMutationResult<any, any, any, any>
     },
     queryOptions: function (path: any, payload: any, options?: any) {
       return {
-        queryKey: queryKey('get', path, payload),
+        queryKey: getQueryKey('get', path, payload),
         queryFn: () => makeRequest('get', path, payload),
         ...options,
       } as UseQueryOptions<any, any, any>
     },
     mutationOptions: function (method: any, path: any, options?: any) {
       return {
-        mutationKey: queryKey(method, path),
+        mutationKey: getQueryKey(method, path),
         mutationFn: (data) => makeRequest(method, path, data),
         ...options,
       } as UseMutationOptions<any, any, any, any>
     },
+    getQueryKey,
+    getPartialQueryKey,
   }
 }
 
-export function createReactQueryClient<T extends AnyElysia>(
+export function createApiClient<T extends AnyElysia>(
   server: string,
   options?: EdenFetch.Config
 ): CreateReactQueryClientResult<T> {
@@ -107,7 +124,7 @@ export function createReactQueryClient<T extends AnyElysia>(
     },
   } satisfies FetchClientInterceptors
 
-  const queryClient: any = createQueryClient(fetchClient)
+  const reactQueryClient: any = createReactQueryClient(fetchClient)
 
-  return { fetchClient, queryClient }
+  return { fetchClient, reactQueryClient }
 }
