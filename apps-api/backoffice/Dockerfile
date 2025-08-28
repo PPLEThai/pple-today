@@ -40,6 +40,7 @@ RUN addgroup --system --gid 1001 backoffice
 RUN adduser --system --uid 1001 backoffice
 USER backoffice
 
+COPY --from=installer /app/apps-api/backoffice/__generated__/ ./__generated__/
 COPY --from=installer --chown=backoffice:nodejs /app/apps-api/backoffice/build ./
 
 CMD ["node", "index.js"]
