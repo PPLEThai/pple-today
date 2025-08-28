@@ -7,6 +7,7 @@ import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { Text } from '@pple-today/ui/text'
 import { H1, H2 } from '@pple-today/ui/typography'
+import { Image } from 'expo-image'
 import * as WebBrowser from 'expo-web-browser'
 import {
   ArrowLeftToLineIcon,
@@ -27,6 +28,7 @@ import {
 
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { environment } from '@app/env'
+import { reactQueryClient } from '@app/libs/api-client'
 import {
   useDiscoveryQuery,
   useLoginMutation,
@@ -81,7 +83,7 @@ const ProfileSetting = () => {
         <View className="p-4 flex flex-col gap-3">
           <ProfileSection />
           {/* <AchievementSection /> */}
-          <AreaSection />
+          <AddressSection />
           <PointSection />
         </View>
       </View>
@@ -98,7 +100,7 @@ const ProfileSetting = () => {
 
 const HeaderSection = () => {
   return (
-    <View className="p-4 pt-8 flex flex-col gap-1">
+    <View className="p-4 flex flex-col gap-1">
       <View className="flex flex-row gap-1 items-center">
         <Icon
           icon={CircleUserRoundIcon}
@@ -117,22 +119,37 @@ const HeaderSection = () => {
   )
 }
 const ProfileSection = () => {
-  return (
-    <View className="flex flex-row justify-between items-center">
-      <View className="flex flex-row items-center gap-4">
-        {/* <Avatar /> */}
-        <View className="rounded-full size-16 bg-base-bg-default"></View>
-        {/* </Avatar> */}
+  const profileQuery = reactQueryClient.useQuery('/profile/me', {})
+  const Profile =
+    profileQuery.isLoading || !profileQuery.data ? (
+      <>
+        <View className="rounded-full size-16 bg-base-bg-default" />
+        <View className="flex flex-col gap-2 items-start">
+          <View className="rounded-full h-6 mt-2 bg-base-bg-default w-[120px]" />
+        </View>
+      </>
+    ) : (
+      <>
+        {/* TODO: Avatar */}
+        <View className="rounded-full size-16 bg-base-bg-default overflow-hidden">
+          <Image source={{ uri: profileQuery.data.profileImage }} className="w-full h-full" />
+        </View>
         <View className="flex flex-col gap-2 items-start">
           <Text className="text-base-text-high font-anakotmai-medium text-2xl">
-            ปกรณ์ พิมพ์โคตร
+            {profileQuery.data.name}
           </Text>
-          {/* ROLE: สส, user: hidden */}
-          <Badge>
-            <Text>สมาชิกสส.พรรคประชาชน</Text>
-          </Badge>
+          {/* TODO: สส, user: hidden */}
+          {profileQuery.data.role === 'REPRESENTATIVE' && (
+            <Badge>
+              <Text>สมาชิกสส.พรรคประชาชน</Text>
+            </Badge>
+          )}
         </View>
-      </View>
+      </>
+    )
+  return (
+    <View className="flex flex-row justify-between items-center">
+      <View className="flex flex-row items-center gap-4">{Profile}</View>
       <Button size="icon" variant="outline" className="border-base-outline-default">
         <Icon icon={PencilIcon} strokeWidth={1} size={20} />
       </Button>
@@ -159,23 +176,43 @@ const AchievementSection = () => {
   )
 }
 
-const AreaSection = () => {
+const AddressSection = () => {
+  const profileQuery = reactQueryClient.useQuery('/profile/me', {})
+  if (profileQuery.data && profileQuery.data.address === undefined) {
+    return null
+  }
+  const Address =
+    profileQuery.isLoading || profileQuery.data === undefined ? (
+      <>
+        <View className="rounded-full h-[18px] mt-2.5 w-[60px]" />
+        <View className="rounded-full h-[14px] mt-1.5 w-[40px]" />
+      </>
+    ) : (
+      <>
+        <Text className="text-lg font-anakotmai-bold text-base-primary-default">
+          {profileQuery.data.address!.subDistrict}, {profileQuery.data.address!.district}
+        </Text>
+        <Text className="text-sm text-base-text-high font-anakotmai-light">
+          {profileQuery.data.address!.province}
+        </Text>
+      </>
+    )
   return (
     <View className="rounded-xl border border-base-outline-default px-4 py-2 flex flex-row gap-2">
       <View className="flex flex-row gap-2 items-center">
         <Icon icon={MapPinnedIcon} className="text-base-primary-default" size={24} />
         <H2 className="text-sm text-base-text-high font-anakotmai-medium">พื้นที่ของคุณ</H2>
       </View>
-      <View className="flex flex-col flex-1 items-end">
-        <Text className="text-lg font-anakotmai-bold text-base-primary-default">
-          สามเสนใน, พญาไท
-        </Text>
-        <Text className="text-sm text-base-text-high font-anakotmai-light">กรุงเทพมหานคร</Text>
-      </View>
+      <View className="flex flex-col flex-1 items-end">{Address}</View>
     </View>
   )
 }
+
 const PointSection = () => {
+  const profileQuery = reactQueryClient.useQuery('/profile/me', {})
+  if (profileQuery.isLoading || !profileQuery.data) {
+    return <View className="rounded-xl bg-base-primary-default h-[72px]" />
+  }
   return (
     <View className="rounded-xl bg-base-primary-default p-2 flex flex-row justify-between items-center">
       <View className="flex flex-col">
@@ -184,18 +221,24 @@ const PointSection = () => {
           <H2 className="text-base-text-invert text-sm font-anakotmai-bold">PPLE Points</H2>
         </View>
         <Text className="text-base-text-invert text-3xl font-anakotmai-bold">
-          {(1234).toLocaleString()}
+          {profileQuery.data.point.toLocaleString()}
         </Text>
       </View>
       {/* TODO: active style */}
-      <Button variant="outline" className="bg-transparent border-base-text-invert">
-        <Text className="text-base-text-invert">ดูประวัติคะแนน</Text>
+      <Button
+        variant="outline"
+        className="bg-base-primary-default border-base-text-invert active:bg-base-primary-medium"
+      >
+        <Text className="text-base-text-invert group-active:text-base-text-invert">
+          ดูประวัติคะแนน
+        </Text>
       </Button>
     </View>
   )
 }
 
 const FollowingSection = () => {
+  const profileQuery = reactQueryClient.useQuery('/profile/me', {})
   return (
     <View className="flex flex-col gap-3 border border-base-outline-default rounded-xl py-3 px-4 bg-base-bg-white">
       <View className="flex flex-row items-center justify-between pb-2 border-b border-base-outline-default">
@@ -218,7 +261,14 @@ const FollowingSection = () => {
           <Text className="text-base text-base-text-high font-anakotmai-medium">หัวข้อ</Text>
         </View>
         <Text className="text-base text-base-text-high font-anakotmai-light">
-          <Text className="text-base-primary-medium font-anakotmai-medium">10</Text> หัวข้อ
+          {profileQuery.isLoading || !profileQuery.data ? (
+            <View className="rounded-full bg-base-bg-default mt-2 h-4" />
+          ) : (
+            <Text className="text-base text-base-primary-medium font-anakotmai-medium">
+              {profileQuery.data.numberOfFollowingTopics}
+            </Text>
+          )}{' '}
+          หัวข้อ
         </Text>
       </View>
       <View className="flex flex-row items-center justify-between px-1">
@@ -232,7 +282,14 @@ const FollowingSection = () => {
           <Text className="text-base text-base-text-high font-anakotmai-medium">ผู้คน</Text>
         </View>
         <Text className="text-base text-base-text-high font-anakotmai-light">
-          <Text className="text-base-primary-medium font-anakotmai-medium">10</Text> คน
+          {profileQuery.isLoading || !profileQuery.data ? (
+            <View className="rounded-full bg-base-bg-default mt-2 h-4" />
+          ) : (
+            <Text className="text-base text-base-primary-medium font-anakotmai-medium">
+              {profileQuery.data.numberOfFollowing}
+            </Text>
+          )}{' '}
+          คน
         </Text>
       </View>
     </View>
