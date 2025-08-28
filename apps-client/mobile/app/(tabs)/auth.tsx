@@ -93,7 +93,7 @@ const ProfileSetting = () => {
         {/* TODO: สส connect facebook */}
         <FollowingSection />
         {/* <ParticipationSection /> */}
-        {/* <ActivitySection /> */}
+        <ActivitySection />
         <SettingSection />
       </View>
     </ScrollView>
@@ -377,6 +377,10 @@ const ParticipationSection = () => {
   )
 }
 const ActivitySection = () => {
+  const recentActivityQuery = reactQueryClient.useQuery('/profile/recent-activity', {})
+  if (recentActivityQuery.isLoading || !recentActivityQuery.data) {
+    return null
+  }
   return (
     <View className="flex flex-col gap-3 border border-base-outline-default rounded-xl py-3 px-4 bg-base-bg-white">
       <View className="flex flex-row items-center justify-between pb-2 border-b border-base-outline-default">
@@ -385,36 +389,38 @@ const ActivitySection = () => {
           <H2 className="text-xl text-base-text-high font-anakotmai-medium">กิจกรรมของฉัน</H2>
         </View>
       </View>
-      <View className="flex flex-row items-center gap-1">
-        <View className="flex flex-row gap-3 items-center flex-1">
-          {/* TODO: image */}
-          <View className="rounded-lg size-12 bg-slate-500" />
-          <View className="flex flex-col gap-1 flex-1">
-            <Text className="text-sm text-base-text-high font-anakotmai-medium line-clamp-2">
-              Knowledge Center ครั้งที่ 1 – “เอาชีวิตรอดอย่างโปร ปฐมพยาบาล
-            </Text>
-            <View className="flex flex-row gap-1 items-center">
-              <Icon
-                icon={CalendarIcon}
-                className="text-base-primary-default"
-                strokeWidth={1.5}
-                size={12}
-              />
-              <Text className="text-xs text-base-primary-default font-anakotmai-light">
-                อ, 20 พ.ค. - 22 พ.ค. 68
+      {recentActivityQuery.data.map((activity) => (
+        <View className="flex flex-row items-center gap-1" key={activity.id}>
+          <View className="flex flex-row gap-3 items-center flex-1">
+            {/* TODO: image */}
+            <View className="rounded-lg size-12 bg-slate-500" />
+            <View className="flex flex-col gap-1 flex-1">
+              <Text className="text-sm text-base-text-high font-anakotmai-medium line-clamp-2">
+                Knowledge Center ครั้งที่ 1 – “เอาชีวิตรอดอย่างโปร ปฐมพยาบาล
               </Text>
+              <View className="flex flex-row gap-1 items-center">
+                <Icon
+                  icon={CalendarIcon}
+                  className="text-base-primary-default"
+                  strokeWidth={1.5}
+                  size={12}
+                />
+                <Text className="text-xs text-base-primary-default font-anakotmai-light">
+                  อ, 20 พ.ค. - 22 พ.ค. 68
+                </Text>
+              </View>
             </View>
           </View>
+          <Button variant="ghost" size="icon">
+            <Icon
+              icon={CircleArrowRightIcon}
+              className="text-base-text-high"
+              size={24}
+              strokeWidth={1}
+            />
+          </Button>
         </View>
-        <Button variant="ghost" size="icon">
-          <Icon
-            icon={CircleArrowRightIcon}
-            className="text-base-text-high"
-            size={24}
-            strokeWidth={1}
-          />
-        </Button>
-      </View>
+      ))}
     </View>
   )
 }
