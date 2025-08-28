@@ -81,7 +81,7 @@ export default {
           appID: process.env.EXPO_PUBLIC_FACEBOOK_APP_ID,
           clientToken: process.env.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN,
           displayName: 'Another Page Webhook',
-          scheme: `fb${process.env.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN}`,
+          scheme: `fb${process.env.EXPO_PUBLIC_FACEBOOK_APP_ID}`,
           advertiserIDCollectionEnabled: false,
           autoLogAppEventsEnabled: false,
           isAutoInitEnabled: true,

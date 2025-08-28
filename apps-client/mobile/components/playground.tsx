@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Platform, Pressable, ScrollView, TextProps, View } from 'react-native'
-import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
+import { AccessToken, LoginButton, LoginManager } from 'react-native-fbsdk-next'
 import ImageView from 'react-native-image-viewing'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -650,6 +650,23 @@ function FacebookSDKExample() {
       <H2 className="font-inter-bold">Facebook SDK</H2>
       <Text className="line-clamp-1">Token: {facebookAccessToken}</Text>
       <Text>Pages: {JSON.stringify(facebookPagesQuery.data, null, 2)}</Text>
+      <LoginButton
+        onLoginFinished={async (error, result) => {
+          if (error) {
+            console.error('Login failed: ', error)
+            return
+          }
+          console.log('Login success: ' + result)
+          const accessTokenResult = await AccessToken.getCurrentAccessToken()
+          if (!accessTokenResult || !accessTokenResult.accessToken) {
+            console.error('Failed to get facebook access token')
+            return
+          }
+          console.log('AccessToken result: ' + accessTokenResult)
+          setFacebookAccessToken(accessTokenResult.accessToken)
+        }}
+        permissions={['email', 'public_profile']}
+      />
       <Button
         onPress={async () => {
           try {
