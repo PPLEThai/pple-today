@@ -74,6 +74,19 @@ export default {
           },
         },
       ],
+
+      [
+        'react-native-fbsdk-next',
+        {
+          appID: process.env.EXPO_PUBLIC_FACEBOOK_APP_ID,
+          clientToken: process.env.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN,
+          displayName: 'Another Page Webhook',
+          scheme: `fb${process.env.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN}`,
+          advertiserIDCollectionEnabled: false,
+          autoLogAppEventsEnabled: false,
+          isAutoInitEnabled: true,
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Platform, Pressable, ScrollView, TextProps, View } from 'react-native'
+import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import ImageView from 'react-native-image-viewing'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -255,6 +256,7 @@ export function Playground() {
         <LottieExample />
         <VideoExample />
         <PostCardExample />
+        <FacebookSDKExample />
         <QueryExample />
         <AuthPlayground />
       </View>
@@ -631,6 +633,59 @@ function PostCardExample() {
         />
         <PostCardSkeleton />
       </View>
+    </View>
+  )
+}
+
+function FacebookSDKExample() {
+  const [facebookAccessToken, setFacebookAccessToken] = useState<string | null>(null)
+  const facebookPagesQuery = reactQueryClient.useQuery(
+    '/facebook/token/pages',
+    { query: { facebookToken: facebookAccessToken! } },
+    { enabled: !!facebookAccessToken }
+  )
+
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Facebook SDK</H2>
+      <Text className="line-clamp-1">Token: {facebookAccessToken}</Text>
+      <Text>Pages: {JSON.stringify(facebookPagesQuery.data, null, 2)}</Text>
+      <Button
+        onPress={async () => {
+          try {
+            const loginResult = await LoginManager.logInWithPermissions([
+              'pages_show_list',
+              'pages_read_engagement',
+              'pages_read_user_content',
+              'pages_manage_metadata',
+            ])
+            if (loginResult.isCancelled) {
+              console.log('User cancelled login')
+              return
+            }
+            console.log('Login success: ' + loginResult)
+            const accessTokenResult = await AccessToken.getCurrentAccessToken()
+            if (!accessTokenResult || !accessTokenResult.accessToken) {
+              console.error('Failed to get facebook access token')
+              return
+            }
+            console.log('AccessToken result: ' + accessTokenResult)
+            setFacebookAccessToken(accessTokenResult.accessToken)
+          } catch (error) {
+            console.error('Login Error: ', error)
+          }
+        }}
+      >
+        <Text>Login with Facebook</Text>
+      </Button>
+      <Button
+        onPress={() => {
+          LoginManager.logOut()
+        }}
+        variant="secondary"
+      >
+        <Text>Logout</Text>
+      </Button>
     </View>
   )
 }
