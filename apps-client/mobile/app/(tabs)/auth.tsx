@@ -24,10 +24,10 @@ import {
   ScrollTextIcon,
   TicketIcon,
   TrophyIcon,
-  VoteIcon,
 } from 'lucide-react-native'
 
 import { UserRole } from '@api/backoffice/__generated__/prisma/client'
+import { GetUserParticipationResponse } from '@api/backoffice/src/modules/profile/models'
 import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { environment } from '@app/env'
@@ -39,6 +39,7 @@ import {
   useSessionQuery,
 } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
+import { formatDateInterval } from '@app/libs/format-date-interval'
 
 export default function Index() {
   const sessionQuery = useSessionQuery()
@@ -94,8 +95,8 @@ const ProfileSetting = () => {
       <View className="bg-base-bg-light flex-1 flex flex-col gap-3 px-4 py-2.5">
         <FacebookPageSection />
         <FollowingSection />
-        {/* <ParticipationSection /> */}
-        <ActivitySection />
+        <ParticipationSection />
+        {/* <ActivitySection /> */}
         <SettingSection />
       </View>
     </ScrollView>
@@ -326,6 +327,14 @@ const FollowingSection = () => {
   )
 }
 const ParticipationSection = () => {
+  const participationQuery = reactQueryClient.useQuery('/profile/participation', {})
+  if (
+    participationQuery.isLoading ||
+    !participationQuery.data ||
+    participationQuery.data.length === 0
+  ) {
+    return null
+  }
   return (
     <View className="flex flex-col gap-3 border border-base-outline-default rounded-xl py-3 px-4 bg-base-bg-white">
       <View className="flex flex-row items-center justify-between pb-2 border-b border-base-outline-default">
@@ -334,97 +343,35 @@ const ParticipationSection = () => {
           <H2 className="text-xl text-base-text-high font-anakotmai-medium">การเข้าร่วมของฉัน</H2>
         </View>
       </View>
-      <View className="flex flex-row items-center justify-between gap-1">
-        <View className="flex flex-row gap-3 items-center flex-1">
-          <Icon
-            icon={MessageCircleQuestionIcon}
-            className="text-base-primary-default"
-            size={32}
-            strokeWidth={2}
-          />
-          <View className="flex flex-col gap-1 flex-1">
-            <Text className="text-sm text-base-text-high font-anakotmai-medium line-clamp-2">
-              คุณคิดว่าปัญหาที่สำคัญที่สุด ของประเทศไทยคืออะไร?
-            </Text>
-            <Text className="text-xs text-base-text-high font-anakotmai-light">
-              2 สัปดาห์ที่แล้ว
-            </Text>
-          </View>
-        </View>
-        <Button variant="ghost" size="icon">
-          <Icon
-            icon={CircleArrowRightIcon}
-            className="text-base-text-high"
-            size={24}
-            strokeWidth={1}
-          />
-        </Button>
-      </View>
-      <View className="flex flex-row items-center justify-between gap-1">
-        <View className="flex flex-row gap-3 items-center flex-1">
-          <Icon icon={VoteIcon} className="text-base-primary-default" size={32} strokeWidth={2} />
-          <View className="flex flex-col gap-1 flex-1">
-            <Text className="text-sm text-base-text-high font-anakotmai-medium line-clamp-2">
-              เลือกตั้ง อบจ. ระยอง
-            </Text>
-            <View className="flex flex-row gap-1 flex-wrap">
-              <Badge variant="secondary">
-                <Text>เลือกตั้งออนไลน์</Text>
-              </Badge>
-              <Badge>
-                <Text>ประกาศผล</Text>
-              </Badge>
-            </View>
-            <Text className="text-xs text-base-text-high font-anakotmai-light">
-              2 สัปดาห์ที่แล้ว
-            </Text>
-          </View>
-        </View>
-        <Button variant="ghost" size="icon">
-          <Icon
-            icon={CircleArrowRightIcon}
-            className="text-base-text-high"
-            size={24}
-            strokeWidth={1}
-          />
-        </Button>
-      </View>
+      {participationQuery.data.map((participation) => (
+        <Participation key={participation.feedItemId} participation={participation} />
+      ))}
     </View>
   )
 }
-const ActivitySection = () => {
-  const recentActivityQuery = reactQueryClient.useQuery('/profile/recent-activity', {})
-  if (recentActivityQuery.isLoading || !recentActivityQuery.data) {
-    return null
-  }
-  return (
-    <View className="flex flex-col gap-3 border border-base-outline-default rounded-xl py-3 px-4 bg-base-bg-white">
-      <View className="flex flex-row items-center justify-between pb-2 border-b border-base-outline-default">
-        <View className="flex flex-row gap-2 items-center">
-          <Icon icon={TicketIcon} className="text-base-primary-default" size={32} />
-          <H2 className="text-xl text-base-text-high font-anakotmai-medium">กิจกรรมของฉัน</H2>
-        </View>
-      </View>
-      {recentActivityQuery.data.map((activity) => (
-        <View className="flex flex-row items-center gap-1" key={activity.id}>
+const Participation = ({
+  participation,
+}: {
+  participation: GetUserParticipationResponse[number]
+}) => {
+  switch (participation.type) {
+    case 'POLL':
+      return (
+        <View className="flex flex-row items-center justify-between gap-1">
           <View className="flex flex-row gap-3 items-center flex-1">
-            {/* TODO: image */}
-            <View className="rounded-lg size-12 bg-slate-500" />
+            <Icon
+              icon={MessageCircleQuestionIcon}
+              className="text-base-primary-default"
+              size={32}
+              strokeWidth={2}
+            />
             <View className="flex flex-col gap-1 flex-1">
               <Text className="text-sm text-base-text-high font-anakotmai-medium line-clamp-2">
-                Knowledge Center ครั้งที่ 1 – “เอาชีวิตรอดอย่างโปร ปฐมพยาบาล
+                {participation.title}
               </Text>
-              <View className="flex flex-row gap-1 items-center">
-                <Icon
-                  icon={CalendarIcon}
-                  className="text-base-primary-default"
-                  strokeWidth={1.5}
-                  size={12}
-                />
-                <Text className="text-xs text-base-primary-default font-anakotmai-light">
-                  อ, 20 พ.ค. - 22 พ.ค. 68
-                </Text>
-              </View>
+              <Text className="text-xs text-base-text-high font-anakotmai-light">
+                {formatDateInterval(participation.createdAt.toString())}
+              </Text>
             </View>
           </View>
           <Button variant="ghost" size="icon">
@@ -436,7 +383,83 @@ const ActivitySection = () => {
             />
           </Button>
         </View>
-      ))}
+      )
+    // case 'VOTE':
+    //   return (
+    //     <View className="flex flex-row items-center justify-between gap-1">
+    //       <View className="flex flex-row gap-3 items-center flex-1">
+    //         <Icon icon={VoteIcon} className="text-base-primary-default" size={32} strokeWidth={2} />
+    //         <View className="flex flex-col gap-1 flex-1">
+    //           <Text className="text-sm text-base-text-high font-anakotmai-medium line-clamp-2">
+    //             เลือกตั้ง อบจ. ระยอง
+    //           </Text>
+    //           <View className="flex flex-row gap-1 flex-wrap">
+    //             <Badge variant="secondary">
+    //               <Text>เลือกตั้งออนไลน์</Text>
+    //             </Badge>
+    //             <Badge>
+    //               <Text>ประกาศผล</Text>
+    //             </Badge>
+    //           </View>
+    //           <Text className="text-xs text-base-text-high font-anakotmai-light">
+    //             2 สัปดาห์ที่แล้ว
+    //           </Text>
+    //         </View>
+    //       </View>
+    //       <Button variant="ghost" size="icon">
+    //         <Icon
+    //           icon={CircleArrowRightIcon}
+    //           className="text-base-text-high"
+    //           size={24}
+    //           strokeWidth={1}
+    //         />
+    //       </Button>
+    //     </View>
+    //   )
+    default:
+      return exhaustiveGuard(participation.type)
+  }
+}
+
+const ActivitySection = () => {
+  return (
+    <View className="flex flex-col gap-3 border border-base-outline-default rounded-xl py-3 px-4 bg-base-bg-white">
+      <View className="flex flex-row items-center justify-between pb-2 border-b border-base-outline-default">
+        <View className="flex flex-row gap-2 items-center">
+          <Icon icon={TicketIcon} className="text-base-primary-default" size={32} />
+          <H2 className="text-xl text-base-text-high font-anakotmai-medium">กิจกรรมของฉัน</H2>
+        </View>
+      </View>
+      <View className="flex flex-row items-center gap-1">
+        <View className="flex flex-row gap-3 items-center flex-1">
+          {/* TODO: image */}
+          <View className="rounded-lg size-12 bg-slate-500" />
+          <View className="flex flex-col gap-1 flex-1">
+            <Text className="text-sm text-base-text-high font-anakotmai-medium line-clamp-2">
+              Knowledge Center ครั้งที่ 1 – “เอาชีวิตรอดอย่างโปร ปฐมพยาบาล
+            </Text>
+            <View className="flex flex-row gap-1 items-center">
+              <Icon
+                icon={CalendarIcon}
+                className="text-base-primary-default"
+                strokeWidth={1.5}
+                size={12}
+              />
+              <Text className="text-xs text-base-primary-default font-anakotmai-light">
+                อ, 20 พ.ค. - 22 พ.ค. 68
+              </Text>
+            </View>
+          </View>
+        </View>
+        <Button variant="ghost" size="icon">
+          <Icon
+            icon={CircleArrowRightIcon}
+            className="text-base-text-high"
+            size={24}
+            strokeWidth={1}
+          />
+        </Button>
+      </View>
     </View>
   )
 }
