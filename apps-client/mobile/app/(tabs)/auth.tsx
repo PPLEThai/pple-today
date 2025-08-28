@@ -227,9 +227,6 @@ const AddressSection = () => {
 
 const PointSection = () => {
   const profileQuery = reactQueryClient.useQuery('/profile/me', {})
-  if (profileQuery.isLoading || !profileQuery.data) {
-    return <View className="rounded-xl bg-base-primary-default h-[72px]" />
-  }
   return (
     <View className="rounded-xl bg-base-primary-default p-2 flex flex-row justify-between items-center">
       <View className="flex flex-col">
@@ -238,7 +235,7 @@ const PointSection = () => {
           <H2 className="text-base-text-invert text-sm font-anakotmai-bold">PPLE Points</H2>
         </View>
         <Text className="text-base-text-invert text-3xl font-anakotmai-bold">
-          {profileQuery.data.point.toLocaleString()}
+          {profileQuery.data ? profileQuery.data.point.toLocaleString() : ''}
         </Text>
       </View>
       {/* TODO: active style */}
