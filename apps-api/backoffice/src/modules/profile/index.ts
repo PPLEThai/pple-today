@@ -10,7 +10,7 @@ import {
   GetProfileByIdParams,
   GetProfileByIdResponse,
   GetProfileUploadUrlResponse,
-  GetRecentActivityResponse,
+  GetUserParticipationResponse,
   UpdateProfileBody,
   UpdateProfileResponse,
 } from './models'
@@ -26,9 +26,9 @@ export const ProfileController = new Elysia({
 })
   .use([AuthGuardPlugin, ProfileServicePlugin])
   .get(
-    '/recent-activity',
+    '/participation',
     async ({ user, profileService, status }) => {
-      const result = await profileService.getRecentActivity(user.id)
+      const result = await profileService.getUserParticipation(user.id)
 
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
@@ -39,7 +39,7 @@ export const ProfileController = new Elysia({
     {
       requiredLocalUser: true,
       response: {
-        200: GetRecentActivityResponse,
+        200: GetUserParticipationResponse,
         ...createErrorSchema(
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.INTERNAL_SERVER_ERROR

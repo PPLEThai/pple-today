@@ -4,7 +4,7 @@ import * as R from 'remeda'
 
 import {
   CompleteOnboardingProfileBody,
-  GetRecentActivityResponse,
+  GetUserParticipationResponse,
   UpdateProfileBody,
 } from './models'
 import { ProfileRepository, ProfileRepositoryPlugin } from './repository'
@@ -22,14 +22,14 @@ export class ProfileService {
   ) {}
 
   // TODO: Add election to recent activity or formulate new table for activity
-  async getRecentActivity(userId: string) {
-    const result = await this.profileRepository.getRecentActivity(userId)
+  async getUserParticipation(userId: string) {
+    const result = await this.profileRepository.getUserParticipation(userId)
 
     if (result.isErr()) {
-      return mapRawPrismaError(result.error)
+      return mapRepositoryError(result.error)
     }
 
-    const transformResult: GetRecentActivityResponse = R.pipe(
+    const transformResult: GetUserParticipationResponse = R.pipe(
       result.value,
       R.map((poll) => ({
         type: 'POLL' as const,

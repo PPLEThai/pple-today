@@ -2,7 +2,7 @@ import { t } from 'elysia'
 
 import { FeedItemType } from '../../__generated__/prisma'
 
-export const RecentActivity = t.Union([
+export const UserParticipation = t.Union([
   t.Object({
     type: t.Literal(FeedItemType.POLL),
     feedItemId: t.String({ description: 'The ID of the feed item' }),
