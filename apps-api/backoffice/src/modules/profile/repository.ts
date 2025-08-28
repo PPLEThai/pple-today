@@ -9,7 +9,7 @@ import { fromRepositoryPromise } from '../../utils/error'
 export class ProfileRepository {
   constructor(private prismaService: PrismaService) {}
 
-  async getRecentActivity(userId: string) {
+  async getUserParticipation(userId: string) {
     return await fromRepositoryPromise(
       this.prismaService.poll.findMany({
         where: {
