@@ -20,6 +20,7 @@ import {
   MessageCircleQuestionIcon,
   MessageSquareHeartIcon,
   PencilIcon,
+  PlusIcon,
   ScrollTextIcon,
   TicketIcon,
   TrophyIcon,
@@ -27,6 +28,7 @@ import {
 } from 'lucide-react-native'
 
 import { UserRole } from '@api/backoffice/__generated__/prisma/client'
+import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { environment } from '@app/env'
 import { reactQueryClient } from '@app/libs/api-client'
@@ -90,7 +92,7 @@ const ProfileSetting = () => {
         </View>
       </View>
       <View className="bg-base-bg-light flex-1 flex flex-col gap-3 px-4 py-2.5">
-        {/* TODO: สส connect facebook */}
+        <FacebookPageSection />
         <FollowingSection />
         {/* <ParticipationSection /> */}
         <ActivitySection />
@@ -251,6 +253,20 @@ const PointSection = () => {
   )
 }
 
+const FacebookPageSection = () => {
+  return (
+    <View className="flex flex-col gap-3 border border-base-outline-default rounded-xl py-3 px-4 bg-base-bg-white">
+      <View className="flex flex-row items-center pb-2.5 gap-2 border-b border-base-outline-default">
+        <FacebookIcon size={32} />
+        <H2 className="text-xl text-base-text-high font-anakotmai-medium">เพจ Facebook ที่ดูแล</H2>
+      </View>
+      <Button variant="secondary">
+        <Icon icon={PlusIcon} />
+        <Text>เพิ่มเพจที่ดูแล</Text>
+      </Button>
+    </View>
+  )
+}
 const FollowingSection = () => {
   const profileQuery = reactQueryClient.useQuery('/profile/me', {})
   return (
