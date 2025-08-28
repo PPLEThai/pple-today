@@ -1,6 +1,11 @@
 import { Static, t } from 'elysia'
 
 import { UserRole } from '../../../__generated__/prisma'
+import { RecentActivity } from '../../dtos/activity'
+
+// TODO: Add election
+export const GetRecentActivityResponse = t.Array(RecentActivity)
+export type GetRecentActivityResponse = Static<typeof GetRecentActivityResponse>
 
 export const GetMyProfileResponse = t.Object({
   id: t.String({ description: 'The ID of the user' }),

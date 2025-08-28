@@ -1,7 +1,12 @@
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
+import * as R from 'remeda'
 
-import { CompleteOnboardingProfileBody, UpdateProfileBody } from './models'
+import {
+  CompleteOnboardingProfileBody,
+  GetRecentActivityResponse,
+  UpdateProfileBody,
+} from './models'
 import { ProfileRepository, ProfileRepositoryPlugin } from './repository'
 
 import { InternalErrorCode } from '../../dtos/error'
@@ -15,6 +20,33 @@ export class ProfileService {
     private authRepository: AuthRepository,
     private fileService: FileService
   ) {}
+
+  // TODO: Add election to recent activity or formulate new table for activity
+  async getRecentActivity(userId: string) {
+    const result = await this.profileRepository.getRecentActivity(userId)
+
+    if (result.isErr()) {
+      return mapRawPrismaError(result.error)
+    }
+
+    const transformResult: GetRecentActivityResponse = R.pipe(
+      result.value,
+      R.map((poll) => ({
+        type: 'POLL' as const,
+        feedItemId: poll.feedItemId,
+        title: poll.title,
+        createdAt: R.pipe(
+          poll.options,
+          R.map((option) => option.pollAnswers[0].createdAt),
+          R.flat(),
+          R.firstBy([R.identity(), 'desc'])
+        )!,
+      }))
+    )
+
+    return ok(transformResult)
+  }
+
   async getProfileById(id: string) {
     const user = await this.profileRepository.getProfileById(id)
 
