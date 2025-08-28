@@ -44,6 +44,12 @@ const FILE_ERROR_SCHEMA = {
   FILE_MOVE_ERROR: {
     status: 500,
   },
+  FILE_CHANGE_PERMISSION_ERROR: {
+    status: 500,
+  },
+  FILE_ROLLBACK_FAILED: {
+    status: 500,
+  },
 } satisfies InternalErrorSchemas
 
 const AUTH_ERROR_SCHEMA = {
@@ -178,6 +184,15 @@ const TOPIC_ERROR_SCHEMA = {
   },
   TOPIC_INVALID_INPUT: {
     status: 400,
+  },
+  TOPIC_CANNOT_FOLLOW_DRAFT: {
+    status: 409,
+  },
+  TOPIC_ALREADY_FOLLOWED: {
+    status: 409,
+  },
+  TOPIC_NOT_FOLLOWED: {
+    status: 409,
   },
 } satisfies InternalErrorSchemas
 

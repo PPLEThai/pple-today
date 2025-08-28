@@ -1,5 +1,7 @@
 import { Static, t } from 'elysia'
 
+import { FilePath } from './file'
+
 import { TopicStatus } from '../../__generated__/prisma'
 
 export const Topic = t.Object({
@@ -18,7 +20,7 @@ export const DetailedTopic = t.Composite([
     bannerImage: t.Nullable(
       t.Object({
         url: t.String({ description: 'The URL of the banner image' }),
-        filePath: t.String({ description: 'The file path of the banner image' }),
+        filePath: FilePath,
       })
     ),
     hashtags: t.Array(

@@ -24,7 +24,7 @@ export const Post = t.Object({
       count: t.Number({ description: 'Optional comment for the reaction' }),
     })
   ),
-  userReaction: t.Optional(t.Enum(PostReactionType)),
+  userReaction: t.Nullable(t.Enum(PostReactionType)),
 })
 export type Post = Static<typeof Post>
 

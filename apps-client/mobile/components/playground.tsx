@@ -35,15 +35,18 @@ import { toast } from '@pple-today/ui/toast'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
+import { useEvent } from 'expo'
 import { Image } from 'expo-image'
 import { getItemAsync } from 'expo-secure-store'
+import { useVideoPlayer, VideoView } from 'expo-video'
 import LottieView from 'lottie-react-native'
 import { InfoIcon, PlusIcon, SearchIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import { queryClient } from '@app/libs/react-query'
+import { reactQueryClient } from '@app/libs/api-client'
 
 import { AuthPlayground } from './auth-playground'
+import { PostCard, PostCardSkeleton } from './feed/post-card'
 import { MoreOrLess } from './more-or-less'
 
 const AUTH_ACCESS_TOKEN_STORAGE_KEY = 'authAccessToken'
@@ -250,6 +253,8 @@ export function Playground() {
         <MoreOrLessExample />
         <LightboxExample />
         <LottieExample />
+        <VideoExample />
+        <PostCardExample />
         <QueryExample />
         <AuthPlayground />
       </View>
@@ -556,17 +561,83 @@ function LottieExample() {
   )
 }
 
+const videoSource =
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+
+function VideoExample() {
+  const player = useVideoPlayer(videoSource, (player) => {
+    player.loop = true
+    // player.play()
+  })
+
+  const { isPlaying } = useEvent(player, 'playingChange', { isPlaying: player.playing })
+
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Video</H2>
+      <View className="w-full aspect-square">
+        <VideoView style={{ width: '100%', height: '100%' }} player={player} allowsFullscreen />
+      </View>
+      <Button
+        onPress={() => {
+          if (isPlaying) {
+            player.pause()
+          } else {
+            player.play()
+          }
+        }}
+      >
+        <Text>{isPlaying ? 'Pause' : 'Play'}</Text>
+      </Button>
+    </View>
+  )
+}
+
+function PostCardExample() {
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">PostCard</H2>
+      <View className="-mx-4">
+        <PostCard
+          id="1"
+          author={{
+            id: '1',
+            name: 'ศิริโรจน์ ธนิกกุล - Sirirot Thanikkun',
+            address: {
+              district: 'สส.สมุทรสาคร',
+              province: 'สมุทรสาคร',
+            },
+            profileImage: '',
+          }}
+          commentCount={125}
+          content={
+            'พบปะแม่ๆ ชมรมผู้สูงอายุดอกลำดวน ณ หมู่บ้านวารัตน์ 3 ม.5 ต. อ้อมน้อย อ.กระทุ่มแบน จ.สมุทรสาครชวนให้ผมออกสเตปประกอบ'
+          }
+          attachments={Array.from({ length: 4 }).map((_, i) => ({
+            type: 'IMAGE',
+            id: i.toString(),
+            url: 'https://picsum.photos/600/600',
+          }))}
+          hashTags={[
+            { id: '1', name: '#pridemonth' },
+            { id: '2', name: '#ร่างกฎหมาย68' },
+          ]}
+          createdAt="2025-08-19T14:14:49.406Z"
+          reactions={[
+            { type: 'UP_VOTE', count: 32 },
+            { type: 'DOWN_VOTE', count: 2 },
+          ]}
+          userReaction={null}
+        />
+        <PostCardSkeleton />
+      </View>
+    </View>
+  )
+}
+
 function QueryExample() {
   const [token, setToken] = useState<string>('')
-  const sampleQuery = queryClient.useQuery(
-    '/auth/me',
-    {
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    },
-    { enabled: !!token }
-  )
+  const sampleQuery = reactQueryClient.useQuery('/auth/me', {}, { enabled: !!token })
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -578,7 +649,7 @@ function QueryExample() {
     fetchToken()
   }, [])
 
-  const sampleMutation = queryClient.useMutation('post', '/facebook/linked-page')
+  const sampleMutation = reactQueryClient.useMutation('post', '/facebook/linked-page')
 
   return (
     <>
