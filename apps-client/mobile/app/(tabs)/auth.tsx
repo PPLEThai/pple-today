@@ -26,6 +26,7 @@ import {
   VoteIcon,
 } from 'lucide-react-native'
 
+import { UserRole } from '@api/backoffice/__generated__/prisma/client'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { environment } from '@app/env'
 import { reactQueryClient } from '@app/libs/api-client'
@@ -35,6 +36,7 @@ import {
   useLogoutMutation,
   useSessionQuery,
 } from '@app/libs/auth'
+import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 
 export default function Index() {
   const sessionQuery = useSessionQuery()
@@ -120,12 +122,27 @@ const HeaderSection = () => {
 }
 const ProfileSection = () => {
   const profileQuery = reactQueryClient.useQuery('/profile/me', {})
+  const getRoleName = (role: UserRole) => {
+    switch (role) {
+      case 'REPRESENTATIVE':
+        return 'สมาชิกสส.พรรคประชาชน'
+      case 'USER':
+        return 'ประชาชน'
+      case 'STAFF':
+        return 'สมาชิกพรรค'
+      case 'OFFICIAL':
+        return 'คณะทำงาน'
+      default:
+        throw exhaustiveGuard(role)
+    }
+  }
   const Profile =
     profileQuery.isLoading || !profileQuery.data ? (
       <>
         <View className="rounded-full size-16 bg-base-bg-default" />
         <View className="flex flex-col gap-2 items-start">
-          <View className="rounded-full h-6 mt-2 bg-base-bg-default w-[120px]" />
+          <View className="rounded-full h-6 mt-2 bg-base-bg-default w-[160px]" />
+          <View className="rounded-full h-6 bg-base-bg-default w-[80px]" />
         </View>
       </>
     ) : (
@@ -138,12 +155,9 @@ const ProfileSection = () => {
           <Text className="text-base-text-high font-anakotmai-medium text-2xl">
             {profileQuery.data.name}
           </Text>
-          {/* TODO: สส, user: hidden */}
-          {profileQuery.data.role === 'REPRESENTATIVE' && (
-            <Badge>
-              <Text>สมาชิกสส.พรรคประชาชน</Text>
-            </Badge>
-          )}
+          <Badge>
+            <Text>{getRoleName(profileQuery.data.role)}</Text>
+          </Badge>
         </View>
       </>
     )
@@ -416,7 +430,7 @@ const SettingSection = () => {
         <Icon icon={BellIcon} className="text-base-primary-default" strokeWidth={1} size={24} />
         <Text className="text-base text-base-text-high font-anakotmai-light">การแจ้งเตือน</Text>
       </SettingItem> */}
-      {/* TODO: active state */}
+      {/* TODO: dismiss button inside webview */}
       <SettingItem
         onPress={() =>
           WebBrowser.openBrowserAsync(environment.EXPO_PUBLIC_OIDC_BASE_URL + '/privacy-policy')
