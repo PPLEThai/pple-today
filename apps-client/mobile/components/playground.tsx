@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Platform, Pressable, ScrollView, TextProps, View } from 'react-native'
-import { AccessToken, LoginButton, LoginManager } from 'react-native-fbsdk-next'
+import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import ImageView from 'react-native-image-viewing'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -39,6 +39,7 @@ import { useForm } from '@tanstack/react-form'
 import { useEvent } from 'expo'
 import { Image } from 'expo-image'
 import { getItemAsync } from 'expo-secure-store'
+import { useTrackingPermissions } from 'expo-tracking-transparency'
 import { useVideoPlayer, VideoView } from 'expo-video'
 import LottieView from 'lottie-react-native'
 import { InfoIcon, PlusIcon, SearchIcon } from 'lucide-react-native'
@@ -59,6 +60,7 @@ export function Playground() {
         <View className="flex flex-row items-center justify-between">
           <H1 className="font-inter-bold">Playground</H1>
         </View>
+        <FacebookSDKExample />
         <View className="flex flex-col gap-2">
           <H2 className="font-inter-bold">Font</H2>
           <View className="flex flex-col gap-1">
@@ -256,7 +258,7 @@ export function Playground() {
         <LottieExample />
         <VideoExample />
         <PostCardExample />
-        <FacebookSDKExample />
+
         <QueryExample />
         <AuthPlayground />
       </View>
@@ -637,6 +639,8 @@ function PostCardExample() {
   )
 }
 
+// Settings.initializeSDK()
+
 function FacebookSDKExample() {
   const [facebookAccessToken, setFacebookAccessToken] = useState<string | null>(null)
   const facebookPagesQuery = reactQueryClient.useQuery(
@@ -645,12 +649,31 @@ function FacebookSDKExample() {
     { enabled: !!facebookAccessToken }
   )
 
+  /**
+   * NOTE: (iOS)
+   * Facebook Login works only with ATTrackingManager enabled
+   * https://github.com/facebook/facebook-ios-sdk/issues/2375#issuecomment-2051743845
+   * https://github.com/thebergamo/react-native-fbsdk-next#troubleshooting (item 9.)
+   */
+  const [status, requestPermission] = useTrackingPermissions()
+  const requestTracking = useCallback(async () => {
+    const { status } = await requestPermission()
+    if (status === 'granted') {
+      console.log('Yay! I have user permission to track data')
+    }
+  }, [requestPermission])
   return (
     <View className="flex flex-col gap-2">
       <H2 className="font-inter-bold">Facebook SDK</H2>
-      <Text className="line-clamp-1">Token: {facebookAccessToken}</Text>
-      <Text>Pages: {JSON.stringify(facebookPagesQuery.data, null, 2)}</Text>
-      <LoginButton
+      {Platform.OS === 'ios' && (
+        <>
+          <Text>Tracking: {JSON.stringify(status, null, 2)}</Text>
+          <Button onPress={requestTracking} variant="outline">
+            <Text>Ask to track</Text>
+          </Button>
+        </>
+      )}
+      {/* <LoginButton
         onLoginFinished={async (error, result) => {
           if (error) {
             console.error('Login failed: ', error)
@@ -666,8 +689,9 @@ function FacebookSDKExample() {
           setFacebookAccessToken(accessTokenResult.accessToken)
         }}
         permissions={['email', 'public_profile']}
-      />
+      /> */}
       <Button
+        disabled={Platform.OS === 'ios' && !status?.granted}
         onPress={async () => {
           try {
             const loginResult = await LoginManager.logInWithPermissions([
@@ -703,6 +727,8 @@ function FacebookSDKExample() {
       >
         <Text>Logout</Text>
       </Button>
+      <Text className="line-clamp-1">Token: {facebookAccessToken}</Text>
+      <Text>Pages: {JSON.stringify(facebookPagesQuery.data, null, 2)}</Text>
     </View>
   )
 }
