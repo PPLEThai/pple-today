@@ -1,3 +1,4 @@
+import React from 'react'
 import { Pressable, PressableProps, View } from 'react-native'
 import { ScrollView } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
@@ -8,6 +9,7 @@ import { Icon } from '@pple-today/ui/icon'
 import { Text } from '@pple-today/ui/text'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { Image } from 'expo-image'
+import { useRouter } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
 import {
   ArrowLeftToLineIcon,
@@ -33,6 +35,7 @@ import PPLEIcon from '@app/assets/pple-icon.svg'
 import { environment } from '@app/env'
 import { reactQueryClient } from '@app/libs/api-client'
 import {
+  useAuthMe,
   useDiscoveryQuery,
   useLoginMutation,
   useLogoutMutation,
@@ -43,6 +46,16 @@ import { formatDateInterval } from '@app/libs/format-date-interval'
 
 export default function Index() {
   const sessionQuery = useSessionQuery()
+  const authMe = useAuthMe()
+  const router = useRouter()
+
+  React.useEffect(() => {
+    if (authMe.data && authMe.data.onBoardingCompleted === false) {
+      // TODO: move this logic, test first login flow only
+      router.push('/onboarding')
+    }
+  }, [authMe, router])
+
   if (sessionQuery.data) {
     // User is already logged in
     return <ProfileSetting />

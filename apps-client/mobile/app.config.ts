@@ -78,10 +78,10 @@ export default {
       [
         'react-native-fbsdk-next',
         {
-          appID: process.env.EXPO_PUBLIC_FACEBOOK_APP_ID,
-          clientToken: process.env.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN,
-          displayName: process.env.EXPO_PUBLIC_FACEBOOK_DISPLAY_NAME,
-          scheme: `fb${process.env.EXPO_PUBLIC_FACEBOOK_APP_ID}`,
+          appID: process.env.FACEBOOK_APP_ID,
+          clientToken: process.env.FACEBOOK_CLIENT_TOKEN,
+          displayName: process.env.FACEBOOK_DISPLAY_NAME,
+          scheme: `fb${process.env.FACEBOOK_APP_ID}`,
           advertiserIDCollectionEnabled: false,
           autoLogAppEventsEnabled: false,
           isAutoInitEnabled: true,

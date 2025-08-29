@@ -54,6 +54,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Setup Prebuild Environment
+        working-directory: apps-client/mobile
+        shell: bash
+        run: |
+          echo "FACEBOOK_APP_ID=${{ secrets.FACEBOOK_APP_ID }}" >> .env
+          echo "FACEBOOK_CLIENT_TOKEN=${{ secrets.FACEBOOK_CLIENT_TOKEN }}" >> .env
+          echo "FACEBOOK_DISPLAY_NAME=${{ secrets.FACEBOOK_DISPLAY_NAME }}" >> .env
+
       - name: Prebuild Android
         working-directory: apps-client/mobile
         run: npx expo prebuild --platform android
@@ -65,9 +73,6 @@ jobs:
           echo "EXPO_PUBLIC_OIDC_BASE_URL=${{ secrets.EXPO_PUBLIC_OIDC_BASE_URL }}" >> .env
           echo "EXPO_PUBLIC_OIDC_CLIENT_ID=${{ secrets.EXPO_PUBLIC_OIDC_CLIENT_ID }}" >> .env
           echo "EXPO_PUBLIC_BACKEND_BASE_URL=${{ secrets.EXPO_PUBLIC_BACKEND_BASE_URL }}" >> .env
-          echo "EXPO_PUBLIC_FACEBOOK_APP_ID=${{ secrets.EXPO_PUBLIC_FACEBOOK_APP_ID }}" >> .env
-          echo "EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN=${{ secrets.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN }}" >> .env
-          echo "EXPO_PUBLIC_FACEBOOK_DISPLAY_NAME=${{ secrets.EXPO_PUBLIC_FACEBOOK_DISPLAY_NAME }}" >> .env
           echo "DEVELOPER_APP_IDENTIFIER=${{ secrets.DEVELOPER_APP_IDENTIFIER }}" >> .env
           echo "FIREBASE_SERVICE_ACCOUNT_JSON=${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}" >> .env
           echo "FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}" >> .env
@@ -114,6 +119,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Setup Prebuild Environment
+        working-directory: apps-client/mobile
+        shell: bash
+        run: |
+          echo "FACEBOOK_APP_ID=${{ secrets.FACEBOOK_APP_ID }}" >> .env
+          echo "FACEBOOK_CLIENT_TOKEN=${{ secrets.FACEBOOK_CLIENT_TOKEN }}" >> .env
+          echo "FACEBOOK_DISPLAY_NAME=${{ secrets.FACEBOOK_DISPLAY_NAME }}" >> .env
+
       - name: Prebuild iOS
         working-directory: apps-client/mobile
         run: npx expo prebuild --platform ios
@@ -138,9 +151,6 @@ jobs:
           echo "EXPO_PUBLIC_OIDC_BASE_URL=${{ secrets.EXPO_PUBLIC_OIDC_BASE_URL }}" >> .env
           echo "EXPO_PUBLIC_OIDC_CLIENT_ID=${{ secrets.EXPO_PUBLIC_OIDC_CLIENT_ID }}" >> .env
           echo "EXPO_PUBLIC_BACKEND_BASE_URL=${{ secrets.EXPO_PUBLIC_BACKEND_BASE_URL }}" >> .env
-          echo "EXPO_PUBLIC_FACEBOOK_APP_ID=${{ secrets.EXPO_PUBLIC_FACEBOOK_APP_ID }}" >> .env
-          echo "EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN=${{ secrets.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN }}" >> .env
-          echo "EXPO_PUBLIC_FACEBOOK_DISPLAY_NAME=${{ secrets.EXPO_PUBLIC_FACEBOOK_DISPLAY_NAME }}" >> .env
           echo "DEVELOPER_APP_IDENTIFIER=${{ secrets.DEVELOPER_APP_IDENTIFIER }}" >> .env
           echo "FASTLANE_USER=${{ secrets.FASTLANE_USER }}" >> .env
           echo "FASTLANE_PASSWORD=${{ secrets.FASTLANE_PASSWORD }}" >> .env

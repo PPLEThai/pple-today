@@ -7,46 +7,42 @@ import { FormControl, FormItem, FormLabel } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
 import { Input } from '@pple-today/ui/input'
 import { Text } from '@pple-today/ui/text'
-import { useForm, useStore } from '@tanstack/react-form'
+import { useForm } from '@tanstack/react-form'
 import * as ImagePicker from 'expo-image-picker'
 import { Pencil } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
 import { usePhotoLibraryPermission } from '@app/libs/use-permission'
 
-import { OnboardingProfileState, useOnboardingContext } from './onboarding-context'
+import { useOnboardingContext } from './onboarding-context'
 
 const formSchema = z.object({
   name: z.string(),
-  profileSignedImage: z.string(),
+  profileImage: z.string(),
 })
 
 export function OnboardingProfile() {
   const { state, dispatch } = useOnboardingContext()
-  const [selectedImage, setSelectedImage] = React.useState<OnboardingProfileState['image'] | null>(
-    state.profileStepResult?.image ?? null
+  const [selectedImage, setSelectedImage] = React.useState<string | null>(
+    state.profileStepResult?.imagePickerResult?.assets[0].uri ?? null
   )
+  const [imagePickerRes, setImagePickerRes] = React.useState<
+    ImagePicker.ImagePickerSuccessResult | undefined
+  >(undefined)
   const { requestPhotoAccessIfNeeded } = usePhotoLibraryPermission()
 
   const form = useForm({
     defaultValues: {
       name: state.profileStepResult?.name ?? '',
-      profileSignedImage: state.profileStepResult?.imageUri ?? '',
+      profileImage: selectedImage ?? '',
     },
     validators: {
       onSubmit: formSchema,
     },
     onSubmit: async (values) => {
-      if (!selectedImage) {
-        // alert
-        return
-      }
-
       const profilePayload = {
         name: values.value.name,
-        image: selectedImage,
-        imageUri: '', // get signed image here
-        imageMime: '', // get signed image mime here
+        imagePickerResult: imagePickerRes,
       }
 
       dispatch({
@@ -56,8 +52,6 @@ export function OnboardingProfile() {
       dispatch({ type: 'next' })
     },
   })
-
-  const canContinue = useStore(form.store, (state) => state.values.name)
 
   const handleNext = React.useCallback(() => {
     form.handleSubmit()
@@ -77,27 +71,46 @@ export function OnboardingProfile() {
       mediaTypes: ['images'],
       allowsEditing: true,
       quality: 1,
+      base64: true,
     })
-
     if (result.canceled) {
       return
     }
 
+    const selectedFromMedia = result.assets[0]
     const imageObj = {
-      path: result.assets[0].uri,
-      mime: 'image',
-      size: result.assets[0].fileSize || 0,
-      width: result.assets[0].width,
-      height: result.assets[0].height,
+      path: selectedFromMedia.uri,
+      mime: selectedFromMedia.mimeType || 'image/unknown',
+      size: selectedFromMedia.fileSize || 0,
+      width: selectedFromMedia.width,
+      height: selectedFromMedia.height,
     }
 
-    setSelectedImage(imageObj)
+    // 5 MB image
+    // validation process
+    const minimumImageSize = 0
+    const maximumImageSize = 5242880
+    if (imageObj.size > maximumImageSize) {
+      alert('Image size must be less than 5 MB')
+      return
+    }
+    if (imageObj.size <= minimumImageSize) {
+      alert('Image size must be greater than 0 bytes')
+      return
+    }
+    if (imageObj.mime !== 'image/jpeg' && imageObj.mime !== 'image/png') {
+      alert('Image must be in JPEG or PNG format')
+      return
+    }
+
+    setSelectedImage(imageObj.path)
+    setImagePickerRes(result)
   }, [requestPhotoAccessIfNeeded])
 
   return (
     <>
       <View className="flex-1 items-center p-6 gap-10">
-        <form.Field name="profileSignedImage">
+        <form.Field name="profileImage">
           {(field) => (
             <FormItem field={field}>
               <FormControl>
@@ -107,11 +120,7 @@ export function OnboardingProfile() {
                   onPress={pickImageAsync}
                 >
                   <Avatar className="size-36" alt="Profile">
-                    <AvatarImage
-                      source={{
-                        uri: selectedImage?.path,
-                      }}
-                    />
+                    <AvatarImage source={{ uri: selectedImage ?? '' }} />
                     <AvatarFallback>
                       <View />
                     </AvatarFallback>
@@ -144,9 +153,13 @@ export function OnboardingProfile() {
         </View>
       </View>
       <View className="gap-2 px-6 pb-6">
-        <Button disabled={!canContinue} onPress={handleNext}>
-          <Text>ถัดไป</Text>
-        </Button>
+        <form.Subscribe selector={(state) => [state.values.name]}>
+          {([name]) => (
+            <Button disabled={!name} onPress={handleNext}>
+              <Text>ถัดไป</Text>
+            </Button>
+          )}
+        </form.Subscribe>
         <Button variant="ghost" onPress={handleSkip}>
           <Text>ข้าม</Text>
         </Button>
