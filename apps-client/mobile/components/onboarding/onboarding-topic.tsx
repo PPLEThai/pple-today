@@ -4,89 +4,44 @@ import { ScrollView, View } from 'react-native'
 import { Button } from '@pple-today/ui/button'
 import { Text } from '@pple-today/ui/text'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
+import { FormControl, FormItem } from '@pple-today/ui/form'
 
 import { useOnboardingContext } from './onboarding-context'
+import { z } from 'zod/v4'
+import { useForm } from '@tanstack/react-form'
+import { reactQueryClient } from '@app/libs/api-client'
 
-const mockTopics = [
-  'การเมือง',
-  'สส',
-  'ไฟฟ่า',
-  'สว',
-  'เลือกตั้งนายก',
-  'อองค์กลิ่งกาย',
-  'โควิด',
-  'ลดบะ',
-  'PM2.5',
-  'เลือกตั้ง อบจ.',
-  'น้ำท่วม',
-  'อาสาสมัคร',
-  'สมรสเท่าเทียม',
-  'กิจกรรม',
-  'การเมือง',
-  'สส',
-  'ไฟฟ่า',
-  'สว',
-  'เลือกตั้งนายก',
-  'อองค์กลิ่งกาย',
-  'โควิด',
-  'ลดบะ',
-  'PM2.5',
-  'เลือกตั้ง อบจ.',
-  'น้ำท่วม',
-  'อาสาสมัคร',
-  'สมรสเท่าเทียม',
-  'กิจกรรม',
-  'การเมือง',
-  'สส',
-  'ไฟฟ่า',
-  'สว',
-  'เลือกตั้งนายก',
-  'อองค์กลิ่งกาย',
-  'โควิด',
-  'ลดบะ',
-  'PM2.5',
-  'เลือกตั้ง อบจ.',
-  'น้ำท่วม',
-  'อาสาสมัคร',
-  'สมรสเท่าเทียม',
-  'กิจกรรม',
-  'การเมือง',
-  'สส',
-  'ไฟฟ่า',
-  'สว',
-  'เลือกตั้งนายก',
-  'อองค์กลิ่งกาย',
-  'โควิด',
-  'ลดบะ',
-  'PM2.5',
-  'เลือกตั้ง อบจ.',
-  'น้ำท่วม',
-  'อาสาสมัคร',
-  'สมรสเท่าเทียม',
-  'กิจกรรม',
-  'การเมือง',
-  'สส',
-  'ไฟฟ่า',
-  'สว',
-  'เลือกตั้งนายก',
-  'อองค์กลิ่งกาย',
-  'โควิด',
-  'ลดบะ',
-  'PM2.5',
-  'เลือกตั้ง อบจ.',
-  'น้ำท่วม',
-  'อาสาสมัคร',
-  'สมรสเท่าเทียม',
-  'กิจกรรม',
-]
+const formSchema = z.object({
+  topics: z.array(z.string()).min(3, 'กรุณาเลือกอย่างน้อย 3 หัวข้อที่สนใจ'),
+})
 
 export function OnboardingTopic() {
-  const { dispatch } = useOnboardingContext()
-  const [value, setValue] = React.useState<string[]>([mockTopics[0]])
+  const { state, dispatch } = useOnboardingContext()
+  const [interestedTopics, setInterestedTopics] = React.useState<string[]>(
+    state.topicStepResult?.topics ?? []
+  )
+
+  const getTopicQuery = reactQueryClient.useQuery('/topics', {})
+
+  const form = useForm({
+    defaultValues: {
+      topics: interestedTopics,
+    },
+    validators: {
+      onSubmit: formSchema,
+    },
+    onSubmit: (values) => {
+      dispatch({
+        type: 'setTopicStepResults',
+        payload: values.value,
+      })
+      dispatch({ type: 'next' })
+    },
+  })
 
   const handleNext = React.useCallback(() => {
-    dispatch({ type: 'next' })
-  }, [dispatch])
+    form.handleSubmit()
+  }, [form])
 
   const handleSkip = React.useCallback(() => {
     dispatch({ type: 'next' })
@@ -95,23 +50,41 @@ export function OnboardingTopic() {
   return (
     <View className="flex-1 justify-between">
       <ScrollView className="px-6 pt-4 pb-6">
-        <ToggleGroup
-          type="multiple"
-          value={value}
-          onValueChange={setValue}
-          className="flex flex-row gap-2 flex-wrap justify-start"
-        >
-          {mockTopics.map((tag, index) => (
-            <ToggleGroupItem key={index} value={tag} variant="outline">
-              <Text>{tag}</Text>
-            </ToggleGroupItem>
-          ))}
-        </ToggleGroup>
+        <form.Field name="topics">
+          {(field) => (
+            <FormItem field={field}>
+              <FormControl>
+                <ToggleGroup
+                  type="multiple"
+                  value={interestedTopics}
+                  onValueChange={setInterestedTopics}
+                  className="flex flex-row gap-2 flex-wrap justify-start"
+                >
+                  {getTopicQuery.isLoading ? (
+                    <Text>Loading...</Text>
+                  ) : getTopicQuery.data ? (
+                    getTopicQuery.data.map((tag) => (
+                      <ToggleGroupItem key={tag.id} value={tag.name} variant="outline">
+                        <Text>{tag.name}</Text>
+                      </ToggleGroupItem>
+                    ))
+                  ) : (
+                    <Text>No topics found</Text>
+                  )}
+                </ToggleGroup>
+              </FormControl>
+            </FormItem>
+          )}
+        </form.Field>
       </ScrollView>
       <View className="gap-2 px-6 pb-6 pt-4">
-        <Button onPress={handleNext}>
-          <Text>ถัดไป</Text>
-        </Button>
+        <form.Subscribe selector={(state) => state.values.topics}>
+          {(topics) => (
+            <Button onPress={handleNext} disabled={topics.length < 3}>
+              <Text>ถัดไป</Text>
+            </Button>
+          )}
+        </form.Subscribe>
         <Button variant="ghost" onPress={handleSkip}>
           <Text>ข้าม</Text>
         </Button>
