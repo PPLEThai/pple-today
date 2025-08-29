@@ -100,7 +100,7 @@ function MainHeader() {
     ? { welcome: 'ยินดีต้อนรับ', title: authMe.data.name }
     : { welcome: 'ยินดีต้อนรับสู่', title: 'PPLE Today' }
   return (
-    <View className="w-full px-4 pt-10 pb-2 flex flex-row justify-between gap-2 bg-base-bg-white border-b border-base-outline-default ">
+    <View className="w-full px-4 pt-4 pb-2 flex flex-row justify-between gap-2 bg-base-bg-white border-b border-base-outline-default ">
       <View className="flex flex-row items-center gap-3">
         <Pressable
           className="w-10 h-10 flex flex-col items-center justify-center"

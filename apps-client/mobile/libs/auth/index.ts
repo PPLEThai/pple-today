@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import { Platform } from 'react-native'
 import { createMutation, createQuery } from 'react-query-kit'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -15,7 +14,6 @@ import {
   ResponseType,
 } from 'expo-auth-session'
 import { useRouter } from 'expo-router'
-import * as WebBrowser from 'expo-web-browser'
 import { z } from 'zod/v4'
 
 import appConfig from '@app/app.config'
@@ -24,6 +22,7 @@ import { environment } from '@app/env'
 import { AuthSession, getAuthSession, setAuthSession } from './session'
 
 import { fetchClient, reactQueryClient } from '../api-client'
+import { getBrowserPackage } from '../get-browser-package'
 
 const authRequest: AuthRequest = new AuthRequest({
   responseType: ResponseType.Code,
@@ -305,19 +304,4 @@ export const useLogoutMutation = () => {
       router.push('/auth')
     },
   })
-}
-
-async function getBrowserPackage() {
-  try {
-    // when default browser is not chrome on Android it will throw an error `No matching browser activity found`
-    // we can use `WebBrowser.getCustomTabsSupportingBrowsersAsync()` to get the preferred browser package or list service packages
-    if (Platform.OS === 'android') {
-      const { preferredBrowserPackage, servicePackages } =
-        await WebBrowser.getCustomTabsSupportingBrowsersAsync()
-      return preferredBrowserPackage ?? servicePackages[0]
-    }
-  } catch (error) {
-    console.warn('Error getting browser package:', error)
-    return undefined
-  }
 }
