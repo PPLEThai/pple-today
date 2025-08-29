@@ -2,14 +2,15 @@ import React from 'react'
 import { ScrollView, View } from 'react-native'
 
 import { Button } from '@pple-today/ui/button'
+import { FormControl, FormItem } from '@pple-today/ui/form'
 import { Text } from '@pple-today/ui/text'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
-import { FormControl, FormItem } from '@pple-today/ui/form'
+import { useForm } from '@tanstack/react-form'
+import { z } from 'zod/v4'
+
+import { reactQueryClient } from '@app/libs/api-client'
 
 import { useOnboardingContext } from './onboarding-context'
-import { z } from 'zod/v4'
-import { useForm } from '@tanstack/react-form'
-import { reactQueryClient } from '@app/libs/api-client'
 
 const formSchema = z.object({
   topics: z.array(z.string()).min(3, 'กรุณาเลือกอย่างน้อย 3 หัวข้อที่สนใจ'),

@@ -1,5 +1,7 @@
 import React from 'react'
 
+import { ImagePickerSuccessResult } from 'expo-image-picker'
+
 // reference: https://github.com/bluesky-social/social-app/blob/main/src/screens/Onboarding/state.ts
 
 export interface OnboardingState {
@@ -15,15 +17,7 @@ export interface OnboardingState {
 
 export interface OnboardingProfileState {
   name: string
-  image: {
-    path: string
-    mime: string
-    size: number
-    width: number
-    height: number
-  }
-  imageUri: string
-  imageMime: string
+  imagePickerResult?: ImagePickerSuccessResult
 }
 
 export interface OnboardingTopicState {
@@ -33,7 +27,7 @@ export interface OnboardingTopicState {
 export interface OnboardingAddressState {
   province: string
   district: string
-  subdistrict: string
+  subDistrict: string
   postalCode: string
 }
 
@@ -115,9 +109,7 @@ export function OnboardingReducer(s: OnboardingState, a: OnboardingAction): Onbo
     case 'setProfileStepResults': {
       next.profileStepResult = {
         name: a.payload.name,
-        image: a.payload.image,
-        imageUri: a.payload.imageUri,
-        imageMime: a.payload.imageMime,
+        imagePickerResult: a.payload.imagePickerResult,
       }
       break
     }
@@ -131,7 +123,7 @@ export function OnboardingReducer(s: OnboardingState, a: OnboardingAction): Onbo
       next.addressStepResult = {
         province: a.payload.province,
         district: a.payload.district,
-        subdistrict: a.payload.subdistrict,
+        subDistrict: a.payload.subDistrict,
         postalCode: a.payload.postalCode,
       }
       break

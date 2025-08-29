@@ -4,7 +4,6 @@ import { View } from 'react-native'
 import { Button } from '@pple-today/ui/button'
 import { FormControl, FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
-import { Input } from '@pple-today/ui/input'
 import {
   Select,
   SelectContent,
@@ -15,34 +14,24 @@ import {
   SelectValue,
 } from '@pple-today/ui/select'
 import { Text } from '@pple-today/ui/text'
-import { useForm } from '@tanstack/react-form'
+import { toast } from '@pple-today/ui/toast'
+import { useForm, useStore } from '@tanstack/react-form'
+import { ImagePickerSuccessResult } from 'expo-image-picker'
 import { useRouter } from 'expo-router'
-import { Pencil, PlusIcon } from 'lucide-react-native'
+import { MessageCircleIcon, Pencil, PlusIcon, TriangleAlertIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
+
+import { fetchClient, reactQueryClient } from '@app/libs/api-client'
+import { getAuthSession } from '@app/libs/auth/session'
 
 import { OnboardingAddressState, useOnboardingContext } from './onboarding-context'
 
-const formSchema = z.object({
+const outputFormSchema = z.object({
   province: z.string().min(1, 'กรุณาเลือกจังหวัด'),
   district: z.string().min(1, 'กรุณาเลือกอำเภอ'),
-  subdistrict: z.string().min(1, 'กรุณาเลือกตำบล'),
-  postalCode: z.string().regex(/^\d{5}$/, 'รหัสไปรษณีย์ต้องประกอบไปด้วยตัวเลข 5 หลัก'),
+  subDistrict: z.string().min(1, 'กรุณาเลือกตำบล'),
+  postalCode: z.string().min(1, 'กรุณาเลือกรหัสไปรษณีย์'),
 })
-
-const mockSelect = [
-  {
-    label: 'test_p1',
-    value: 'test_p1',
-  },
-  {
-    label: 'test_p2',
-    value: 'test_p2',
-  },
-  {
-    label: 'test_p3',
-    value: 'test_p3',
-  },
-]
 
 export function OnboardingAddress() {
   const { state, dispatch } = useOnboardingContext()
@@ -51,15 +40,17 @@ export function OnboardingAddress() {
   )
   const [openForm, setOpenForm] = React.useState(false)
 
+  const getProvinceQuery = reactQueryClient.useQuery('/address/province', {})
+
   const form = useForm({
     defaultValues: {
       province: address?.province ?? '',
       district: address?.district ?? '',
-      subdistrict: address?.subdistrict ?? '',
+      subDistrict: address?.subDistrict ?? '',
       postalCode: address?.postalCode ?? '',
     },
     validators: {
-      onSubmit: formSchema,
+      onSubmit: outputFormSchema,
     },
     onSubmit: async (values) => {
       dispatch({ type: 'setAddressStepResults', payload: values.value })
@@ -67,6 +58,27 @@ export function OnboardingAddress() {
       setOpenForm(false)
     },
   })
+  const provinceValues = useStore(form.store, (state) => state.values.province)
+  const districtValues = useStore(form.store, (state) => state.values.district)
+  const subdistrictValues = useStore(form.store, (state) => state.values.subDistrict)
+
+  const getDistrictQuery = reactQueryClient.useQuery(
+    '/address/district',
+    { query: { province: provinceValues } },
+    { enabled: !!provinceValues }
+  )
+  const getSubdistrictQuery = reactQueryClient.useQuery(
+    '/address/subdistrict',
+    { query: { province: provinceValues, district: districtValues } },
+    { enabled: !!districtValues }
+  )
+  const getPostalCodeQuery = reactQueryClient.useQuery(
+    '/address/postal-code',
+    {
+      query: { province: provinceValues, district: districtValues, subDistrict: subdistrictValues },
+    },
+    { enabled: !!subdistrictValues }
+  )
 
   const router = useRouter()
 
@@ -81,10 +93,107 @@ export function OnboardingAddress() {
   const handleOnSubmit = React.useCallback(() => {
     form.handleSubmit()
   }, [form])
+  const completeOnboardingMutation = reactQueryClient.useMutation('post', '/profile/on-boarding')
 
-  const handleNext = React.useCallback(() => {
-    router.navigate('/')
-  }, [router])
+  const handleUploadProfileImageFile = async (
+    imgPickerResult: ImagePickerSuccessResult,
+    uploadUrl: string,
+    uploadFields: Record<string, string>
+  ) => {
+    // create blob to upload
+    const asset = imgPickerResult.assets[0]
+    if (!asset) return
+
+    const resultImage = await fetch(asset.uri)
+    const blob = await resultImage.blob()
+
+    const formData = new FormData()
+    formData.append('file', blob)
+    for (const [key, value] of Object.entries(uploadFields)) {
+      formData.append(key, value)
+    }
+
+    const result = await fetch(uploadUrl, {
+      method: 'POST',
+      body: formData,
+    })
+
+    if (!result.ok) {
+      throw new Error('failed to upload Image')
+    }
+  }
+
+  const handleEndOnboarding = React.useCallback(async () => {
+    const addressPayload = {
+      province: state.addressStepResult?.province ?? '',
+      district: state.addressStepResult?.district ?? '',
+      subDistrict: state.addressStepResult?.subDistrict ?? '',
+      postalCode: state.addressStepResult?.postalCode ?? '',
+    }
+    const interestedTopicPayload = state.topicStepResult?.topics
+
+    let profilePayload
+    if (state.profileStepResult?.imagePickerResult) {
+      const session = await getAuthSession()
+      if (!session) {
+        throw new Error('No auth session found')
+      }
+
+      const result = await fetchClient('/profile/upload-url', {
+        headers: {
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+      })
+      if (!result || !result.data) {
+        throw new Error('Cannot get upload url')
+      }
+
+      await handleUploadProfileImageFile(
+        state.profileStepResult.imagePickerResult,
+        result.data.uploadUrl,
+        result.data.uploadFields
+      )
+      profilePayload = {
+        name: state.profileStepResult?.name ?? '',
+        profileImage: result.data.fileKey ?? '',
+      }
+    } else {
+      profilePayload = {
+        name: state.profileStepResult?.name ?? '',
+      }
+    }
+
+    completeOnboardingMutation.mutateAsync(
+      {
+        body: {
+          address: addressPayload ? addressPayload : undefined,
+          interestTopics: interestedTopicPayload ? interestedTopicPayload : undefined,
+          profile: profilePayload ? profilePayload : undefined,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast({
+            text1: 'ระบบบันทึกข้อมูลของคุณเรียบร้อย',
+            icon: MessageCircleIcon,
+          })
+          router.navigate('/')
+        },
+        onError: () => {
+          toast.error({
+            text1: 'เกิดข้อผิดพลาดบางอย่าง',
+            icon: TriangleAlertIcon,
+          })
+        },
+      }
+    )
+  }, [
+    completeOnboardingMutation,
+    state.profileStepResult,
+    state.topicStepResult,
+    state.addressStepResult,
+    router,
+  ])
 
   const contentInsets = {
     left: 24,
@@ -99,7 +208,7 @@ export function OnboardingAddress() {
             <OnboardingAddressDetail address={address} handleOpenForm={handleOpenForm} />
           </View>
           <View className="gap-2 p-6 pt-0">
-            <Button disabled={!address} onPress={handleNext}>
+            <Button disabled={!address} onPress={handleEndOnboarding}>
               <Text>ยืนยัน</Text>
             </Button>
             <Button variant="ghost" onPress={handleSkip}>
@@ -114,9 +223,9 @@ export function OnboardingAddress() {
             <form.Field
               name="province"
               listeners={{
-                onChange: () => {
+                onBlur: () => {
                   form.setFieldValue('district', '')
-                  form.setFieldValue('subdistrict', '')
+                  form.setFieldValue('subDistrict', '')
                   form.setFieldValue('postalCode', '')
                 },
               }}
@@ -135,8 +244,8 @@ export function OnboardingAddress() {
                       <SelectContent insets={contentInsets} className="w-full">
                         <SelectGroup>
                           <SelectLabel className="font-bold">เลือกจังหวัด</SelectLabel>
-                          {mockSelect.map((province, index) => (
-                            <SelectItem key={index} label={province.label} value={province.value} />
+                          {getProvinceQuery.data?.map((province, index) => (
+                            <SelectItem key={index} label={province} value={province} />
                           ))}
                         </SelectGroup>
                       </SelectContent>
@@ -150,8 +259,8 @@ export function OnboardingAddress() {
                 <form.Field
                   name="district"
                   listeners={{
-                    onChange: () => {
-                      form.setFieldValue('subdistrict', '')
+                    onBlur: () => {
+                      form.setFieldValue('subDistrict', '')
                       form.setFieldValue('postalCode', '')
                     },
                   }}
@@ -170,12 +279,8 @@ export function OnboardingAddress() {
                           <SelectContent insets={contentInsets} className="w-full">
                             <SelectGroup>
                               <SelectLabel className="font-bold">เลือกอำเภอ</SelectLabel>
-                              {mockSelect.map((district, index) => (
-                                <SelectItem
-                                  key={index}
-                                  label={district.label}
-                                  value={district.value}
-                                />
+                              {getDistrictQuery.data?.map((district, index) => (
+                                <SelectItem key={index} label={district} value={district} />
                               ))}
                             </SelectGroup>
                           </SelectContent>
@@ -190,9 +295,9 @@ export function OnboardingAddress() {
             <form.Subscribe selector={(state) => state.values.district}>
               {(district) => (
                 <form.Field
-                  name="subdistrict"
+                  name="subDistrict"
                   listeners={{
-                    onChange: () => {
+                    onBlur: () => {
                       form.setFieldValue('postalCode', '')
                     },
                   }}
@@ -211,12 +316,8 @@ export function OnboardingAddress() {
                           <SelectContent insets={contentInsets} className="w-full">
                             <SelectGroup>
                               <SelectLabel className="font-bold">เลือกตำบล</SelectLabel>
-                              {mockSelect.map((subdistrict, index) => (
-                                <SelectItem
-                                  key={index}
-                                  label={subdistrict.label}
-                                  value={subdistrict.value}
-                                />
+                              {getSubdistrictQuery.data?.map((subDistrict, index) => (
+                                <SelectItem key={index} label={subDistrict} value={subDistrict} />
                               ))}
                             </SelectGroup>
                           </SelectContent>
@@ -228,19 +329,29 @@ export function OnboardingAddress() {
                 </form.Field>
               )}
             </form.Subscribe>
-            <form.Subscribe selector={(state) => state.values.subdistrict}>
-              {(subdistrict) => (
+            <form.Subscribe selector={(state) => state.values.subDistrict}>
+              {(subDistrict) => (
                 <form.Field name="postalCode">
                   {(field) => (
                     <FormItem field={field}>
                       <FormLabel>รหัสไปรษณีย์</FormLabel>
                       <FormControl>
-                        <Input
-                          placeholder="กรอกรหัสไปรษณีย์"
-                          value={field.state.value}
-                          onChangeText={field.handleChange}
-                          editable={!!subdistrict}
-                        />
+                        <Select
+                          defaultValue={{ label: field.state.value, value: field.state.value }}
+                          onValueChange={(option) => field.handleChange(option?.value || '')}
+                        >
+                          <SelectTrigger className="w-full" disabled={!subDistrict}>
+                            <SelectValue placeholder="เลือกรหัสไปรษณีย์" />
+                          </SelectTrigger>
+                          <SelectContent insets={contentInsets} className="w-full">
+                            <SelectGroup>
+                              <SelectLabel className="font-bold">เลือกรหัสไปรษณีย์</SelectLabel>
+                              {getPostalCodeQuery.data?.map((postalCode, index) => (
+                                <SelectItem key={index} label={postalCode} value={postalCode} />
+                              ))}
+                            </SelectGroup>
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -283,7 +394,7 @@ export function OnboardingAddressDetail({
         <View className="pb-2">
           <View>
             <Text className="font-noto-light line-clamp-1">
-              ต.{address.subdistrict} อ.{address.district}
+              ต.{address.subDistrict} อ.{address.district}
             </Text>
             <Text className="font-noto-light line-clamp-1">
               จ.{address.province} {address.postalCode}
