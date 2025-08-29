@@ -94,6 +94,12 @@ export default {
             'This permission will be required to login with Facebook due to their policy.',
         },
       ],
+      [
+        'expo-image-picker',
+        {
+          photosPermission: 'The app accesses your photos to let you set up your profile image.',
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,

@@ -10,3 +10,4 @@ android
 ios
 *.apk
 *.aab
+.idea

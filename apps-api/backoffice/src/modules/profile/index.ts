@@ -46,8 +46,8 @@ export const ProfileController = new Elysia({
         ),
       },
       detail: {
-        summary: 'Get Recent Activity',
-        description: "Fetch the authenticated user's recent activity",
+        summary: 'Get User Participation',
+        description: "Fetch the authenticated user's participation",
       },
     }
   )
