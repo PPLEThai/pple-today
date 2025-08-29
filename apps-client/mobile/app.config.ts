@@ -74,6 +74,26 @@ export default {
           },
         },
       ],
+
+      [
+        'react-native-fbsdk-next',
+        {
+          appID: process.env.EXPO_PUBLIC_FACEBOOK_APP_ID,
+          clientToken: process.env.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN,
+          displayName: process.env.EXPO_PUBLIC_FACEBOOK_DISPLAY_NAME,
+          scheme: `fb${process.env.EXPO_PUBLIC_FACEBOOK_APP_ID}`,
+          advertiserIDCollectionEnabled: false,
+          autoLogAppEventsEnabled: false,
+          isAutoInitEnabled: true,
+        },
+      ],
+      [
+        'expo-tracking-transparency',
+        {
+          userTrackingPermission:
+            'This permission will be required to login with Facebook due to their policy.',
+        },
+      ],
       [
         'expo-image-picker',
         {
