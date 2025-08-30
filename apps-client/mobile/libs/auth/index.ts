@@ -237,12 +237,12 @@ export const login = async ({ discovery }: { discovery: DiscoveryDocument }) => 
     })
     if (registerResponse.error?.status === 409) {
       console.log('User already exists:', registerResponse.error)
-      return tokenResponse
+      return { tokenResponse, action: 'login' } as const
     }
     if (registerResponse.error) {
       throw registerResponse.error
     }
-    return tokenResponse
+    return { tokenResponse, action: 'register' } as const
   } catch (error) {
     console.error('Error during registration:', error)
     throw error
@@ -265,13 +265,17 @@ export const useLoginMutation = () => {
     onSuccess: async (result) => {
       // save session in expo session store
       await sessionMutation.mutateAsync({
-        accessToken: result.accessToken,
-        refreshToken: result.refreshToken ?? '',
-        idToken: result.idToken ?? null,
+        accessToken: result.tokenResponse.accessToken,
+        refreshToken: result.tokenResponse.refreshToken ?? '',
+        idToken: result.tokenResponse.idToken ?? null,
       })
       // reset all reactQueryClient cache
       await queryClient.resetQueries({ queryKey: reactQueryClient.getPartialQueryKey() })
-      router.push('/')
+      if (result.action === 'register') {
+        router.push('/onboarding')
+      } else if (result.action === 'login') {
+        router.push('/')
+      }
     },
   })
 }
