@@ -225,13 +225,26 @@ export const login = async ({ discovery }: { discovery: DiscoveryDocument }) => 
     }
     throw new Error('Authentication failed or was cancelled')
   }
+  const tokenResponse = await codeExchange({
+    code: loginResult.params.code,
+    discovery: discovery,
+  })
   try {
-    return await codeExchange({
-      code: loginResult.params.code,
-      discovery: discovery,
+    const registerResponse = await fetchClient('/auth/register', {
+      headers: { Authorization: `Bearer ${tokenResponse.accessToken}` },
+      method: 'POST',
+      query: { role: 'USER' },
     })
+    if (registerResponse.error?.status === 409) {
+      console.log('User already exists:', registerResponse.error)
+      return tokenResponse
+    }
+    if (registerResponse.error) {
+      throw registerResponse.error
+    }
+    return tokenResponse
   } catch (error) {
-    console.error('Error exchanging code:', error)
+    console.error('Error during registration:', error)
     throw error
   }
 }
