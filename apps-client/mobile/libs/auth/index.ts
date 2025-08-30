@@ -141,7 +141,7 @@ export const useAuthMe = () => {
   })
 }
 
-export const codeExchange = ({
+export const codeExchange = async ({
   code,
   discovery,
 }: {
@@ -152,15 +152,20 @@ export const codeExchange = ({
     console.error('Code verifier is not set. This should not happen.')
     throw new Error('Code verifier is not set. This should not happen.')
   }
-  return exchangeCodeAsync(
-    {
-      clientId: authRequest.clientId,
-      redirectUri: authRequest.redirectUri,
-      code: code,
-      extraParams: { code_verifier: authRequest.codeVerifier },
-    },
-    discovery
-  )
+  try {
+    return await exchangeCodeAsync(
+      {
+        clientId: authRequest.clientId,
+        redirectUri: authRequest.redirectUri,
+        code: code,
+        extraParams: { code_verifier: authRequest.codeVerifier },
+      },
+      discovery
+    )
+  } catch (error) {
+    console.error('Error exchanging code:', error)
+    throw error
+  }
 }
 
 export const AuthLifeCycleHook = () => {
@@ -225,13 +230,26 @@ export const login = async ({ discovery }: { discovery: DiscoveryDocument }) => 
     }
     throw new Error('Authentication failed or was cancelled')
   }
+  const tokenResponse = await codeExchange({
+    code: loginResult.params.code,
+    discovery: discovery,
+  })
   try {
-    return await codeExchange({
-      code: loginResult.params.code,
-      discovery: discovery,
+    const registerResponse = await fetchClient('/auth/register', {
+      headers: { Authorization: `Bearer ${tokenResponse.accessToken}` },
+      method: 'POST',
+      query: { role: 'USER' },
     })
+    if (registerResponse.error?.status === 409) {
+      console.log('User already exists:', registerResponse.error)
+      return { tokenResponse, action: 'login' } as const
+    }
+    if (registerResponse.error) {
+      throw registerResponse.error
+    }
+    return { tokenResponse, action: 'register' } as const
   } catch (error) {
-    console.error('Error exchanging code:', error)
+    console.error('Error during registration:', error)
     throw error
   }
 }
@@ -252,13 +270,17 @@ export const useLoginMutation = () => {
     onSuccess: async (result) => {
       // save session in expo session store
       await sessionMutation.mutateAsync({
-        accessToken: result.accessToken,
-        refreshToken: result.refreshToken ?? '',
-        idToken: result.idToken ?? null,
+        accessToken: result.tokenResponse.accessToken,
+        refreshToken: result.tokenResponse.refreshToken ?? '',
+        idToken: result.tokenResponse.idToken ?? null,
       })
       // reset all reactQueryClient cache
       await queryClient.resetQueries({ queryKey: reactQueryClient.getPartialQueryKey() })
-      router.push('/')
+      if (result.action === 'register') {
+        router.push('/onboarding')
+      } else if (result.action === 'login') {
+        router.push('/')
+      }
     },
   })
 }
