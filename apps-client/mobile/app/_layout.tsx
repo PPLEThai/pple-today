@@ -62,8 +62,8 @@ export default function RootLayout() {
               </GestureHandlerRootView>
             </FontProvider>
           </ColorSchemeProvider>
-          {(environment.APP_ENVIRONMENT === 'development' ||
-            environment.APP_ENVIRONMENT === 'local') && (
+          {(environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'development' ||
+            environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'local') && (
             <DevToolsBubble onCopy={onCopy} queryClient={queryClient} />
           )}
           <AuthLifeCycleHook />

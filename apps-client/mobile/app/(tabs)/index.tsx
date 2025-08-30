@@ -106,8 +106,8 @@ function MainHeader() {
           className="w-10 h-10 flex flex-col items-center justify-center"
           onPress={() => {
             if (
-              environment.APP_ENVIRONMENT === 'development' ||
-              environment.APP_ENVIRONMENT === 'local'
+              environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'development' ||
+              environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'local'
             )
               router.navigate('/(tabs)/(top-tabs)/playground')
           }}

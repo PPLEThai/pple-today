@@ -70,6 +70,7 @@ jobs:
         working-directory: apps-client/mobile
         shell: bash
         run: |
+          echo "EXPO_PUBLIC_APP_ENVIRONMENT=${{ inputs.environment }}" >> .env
           echo "EXPO_PUBLIC_OIDC_BASE_URL=${{ secrets.EXPO_PUBLIC_OIDC_BASE_URL }}" >> .env
           echo "EXPO_PUBLIC_OIDC_CLIENT_ID=${{ secrets.EXPO_PUBLIC_OIDC_CLIENT_ID }}" >> .env
           echo "EXPO_PUBLIC_BACKEND_BASE_URL=${{ secrets.EXPO_PUBLIC_BACKEND_BASE_URL }}" >> .env
@@ -77,7 +78,6 @@ jobs:
           echo "FIREBASE_SERVICE_ACCOUNT_JSON=${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}" >> .env
           echo "FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}" >> .env
           echo "DISTRIBUTE_GROUPS=${{ inputs.groups }}" >> .env
-          echo "APP_ENVIRONMENT=${{ inputs.environment }}" >> .env
           bash ./fastlane/setup.sh
           cd android && bundle install
         env:
@@ -148,6 +148,7 @@ jobs:
         working-directory: apps-client/mobile
         shell: bash
         run: |
+          echo "EXPO_PUBLIC_APP_ENVIRONMENT=${{ inputs.environment }}" >> .env
           echo "EXPO_PUBLIC_OIDC_BASE_URL=${{ secrets.EXPO_PUBLIC_OIDC_BASE_URL }}" >> .env
           echo "EXPO_PUBLIC_OIDC_CLIENT_ID=${{ secrets.EXPO_PUBLIC_OIDC_CLIENT_ID }}" >> .env
           echo "EXPO_PUBLIC_BACKEND_BASE_URL=${{ secrets.EXPO_PUBLIC_BACKEND_BASE_URL }}" >> .env
@@ -161,7 +162,6 @@ jobs:
           echo "PROVISIONING_PROFILE_SPECIFIER=${{ secrets.PROVISIONING_PROFILE_SPECIFIER }}" >> .env
           echo "APP_STORE_CONNECT_TEAM_ID=${{ secrets.APP_STORE_CONNECT_TEAM_ID }}" >> .env
           echo "DEVELOPER_PORTAL_TEAM_ID=${{ secrets.DEVELOPER_PORTAL_TEAM_ID }}" >> .env
-          echo "APP_ENVIRONMENT=${{ inputs.environment }}" >> .env
           echo "DISTRIBUTE_GROUPS=${{ inputs.groups }}" >> .env
 
       - name: Install Fastlane
