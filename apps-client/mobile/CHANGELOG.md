@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 0.3.1
+
+### Patch Changes
+
+- [#76](https://github.com/PPLEThai/pple-today/pull/76) [`09c382f`](https://github.com/PPLEThai/pple-today/commit/09c382f54bd412f8ea187cbf7983ac7d8685966d) Thanks [@Anon-136](https://github.com/Anon-136)! - feat: register user
+
 ## 0.3.0
 
 ### Minor Changes
