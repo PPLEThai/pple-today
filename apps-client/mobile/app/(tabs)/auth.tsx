@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Pressable, PressableProps, View } from 'react-native'
 import { ScrollView } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
@@ -55,6 +55,12 @@ export default function Index() {
       router.push('/onboarding')
     }
   }, [authMe, router])
+
+  useEffect(() => {
+    if (authMe.error) {
+      console.error('Error fetching authMe:', JSON.stringify(authMe.error))
+    }
+  }, [authMe.error])
 
   if (sessionQuery.data) {
     // User is already logged in
