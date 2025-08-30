@@ -1,8 +1,10 @@
 import Elysia from 'elysia'
 
-import { GetAuthMeResponse, RegisterUserQuery, RegisterUserResponse } from './models'
+import { GetAuthMeResponse, RegisterUserResponse } from './models'
 import { AuthServicePlugin } from './services'
 
+import { UserRole } from '../../../__generated__/prisma'
+import { PPLERole } from '../../dtos/auth'
 import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
 import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
@@ -14,9 +16,28 @@ export const AuthController = new Elysia({
   .use([AuthGuardPlugin, AuthServicePlugin])
   .post(
     '/register',
-    async ({ oidcUser, query, status, authService }) => {
-      // TODO: Remove role from register endpoint
-      const result = await authService.registerUser(oidcUser, query.role)
+    async ({ oidcUser, status, authService }) => {
+      let role: UserRole
+      switch (oidcUser.pple_roles[0]) {
+        case PPLERole.MP:
+          role = UserRole.REPRESENTATIVE
+          break
+        case PPLERole.PROVINCE:
+        case PPLERole.CANDIDATE:
+        case PPLERole.LOCAL:
+        case PPLERole.MPASSISTANT:
+        case PPLERole.TTO:
+        case PPLERole.HQ:
+          role = UserRole.STAFF
+          break
+        case PPLERole.FOUNDATION:
+          role = UserRole.MEMBER
+          break
+        default:
+          role = UserRole.USER
+      }
+
+      const result = await authService.registerUser(oidcUser, role)
 
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
@@ -28,7 +49,6 @@ export const AuthController = new Elysia({
     },
     {
       requiredOIDCUser: true,
-      query: RegisterUserQuery,
       response: {
         201: RegisterUserResponse,
         ...createErrorSchema(
