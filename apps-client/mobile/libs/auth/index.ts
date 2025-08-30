@@ -141,7 +141,7 @@ export const useAuthMe = () => {
   })
 }
 
-export const codeExchange = ({
+export const codeExchange = async ({
   code,
   discovery,
 }: {
@@ -152,15 +152,20 @@ export const codeExchange = ({
     console.error('Code verifier is not set. This should not happen.')
     throw new Error('Code verifier is not set. This should not happen.')
   }
-  return exchangeCodeAsync(
-    {
-      clientId: authRequest.clientId,
-      redirectUri: authRequest.redirectUri,
-      code: code,
-      extraParams: { code_verifier: authRequest.codeVerifier },
-    },
-    discovery
-  )
+  try {
+    return await exchangeCodeAsync(
+      {
+        clientId: authRequest.clientId,
+        redirectUri: authRequest.redirectUri,
+        code: code,
+        extraParams: { code_verifier: authRequest.codeVerifier },
+      },
+      discovery
+    )
+  } catch (error) {
+    console.error('Error exchanging code:', error)
+    throw error
+  }
 }
 
 export const AuthLifeCycleHook = () => {
