@@ -1,6 +1,7 @@
 import { Static, t } from 'elysia'
 
 import { UserRole } from '../../../__generated__/prisma'
+import { FilePath } from '../../dtos/file'
 import { UserParticipation } from '../../dtos/participation'
 
 // TODO: Add election
@@ -52,7 +53,7 @@ export const CompleteOnboardingProfileBody = t.Object({
   profile: t.Optional(
     t.Object({
       name: t.String({ description: 'The name of the user' }),
-      profileImage: t.Optional(t.String({ description: 'The URL of the profile image' })),
+      profileImage: t.Optional(FilePath),
     })
   ),
   interestTopics: t.Optional(

@@ -216,7 +216,7 @@ export class FileService {
   }
 
   getPublicFileUrl(fileKey: string) {
-    return decodeURIComponent(this.bucket.file(fileKey).publicUrl())
+    return this.bucket.file(fileKey).publicUrl()
   }
 
   async uploadProfilePagePicture(url: string, pageId: string) {
