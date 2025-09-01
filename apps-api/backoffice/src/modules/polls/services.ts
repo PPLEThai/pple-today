@@ -32,6 +32,7 @@ export class PollsService {
             profileImage: item.author.profileImage ?? undefined,
             province: item.author.district ?? '',
           },
+          userReaction: item.reactions?.[0]?.type,
           commentCount: item.numberOfComments,
           reactions: item.reactionCounts.map((reaction) => ({
             type: reaction.type,

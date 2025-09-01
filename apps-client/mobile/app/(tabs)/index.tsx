@@ -1,34 +1,8 @@
 import * as React from 'react'
-import {
-  findNodeHandle,
-  LayoutChangeEvent,
-  NativeScrollEvent,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native'
-import { FlatList } from 'react-native-gesture-handler'
-import PagerView, {
-  PagerViewOnPageScrollEventData,
-  PagerViewOnPageSelectedEventData,
-  PageScrollStateChangedNativeEventData,
-} from 'react-native-pager-view'
+import { findNodeHandle, FlatListComponent, Pressable, View } from 'react-native'
 import Animated, {
-  AnimatedRef,
-  EventHandlerProcessed,
-  interpolate,
-  runOnJS,
-  runOnUI,
-  ScrollHandlerProcessed,
-  scrollTo,
-  SharedValue,
-  useAnimatedRef,
+  FlatListPropsWithLayout,
   useAnimatedScrollHandler,
-  useAnimatedStyle,
-  useEvent,
-  useHandler,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
@@ -39,6 +13,7 @@ import { Icon } from '@pple-today/ui/icon'
 import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { H2, H3 } from '@pple-today/ui/typography'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import * as Linking from 'expo-linking'
 import { useRouter } from 'expo-router'
@@ -55,15 +30,27 @@ import {
 } from 'lucide-react-native'
 
 import { GetBannersResponse } from '@api/backoffice/src/modules/banner/models'
+import { GetMyFeedResponse } from '@api/backoffice/src/modules/feed/models'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AnnouncementCard } from '@app/components/announcement'
-import { PostCard } from '@app/components/feed/post-card'
+import { PostCard, PostCardSkeleton } from '@app/components/feed/post-card'
+import {
+  Pager,
+  PagerContent,
+  PagerContentView,
+  PagerHeader,
+  PagerHeaderOnly,
+  PagerScrollViewProps,
+  PagerTabBar,
+  PagerTabBarItem,
+  PagerTabBarItemIndicator,
+} from '@app/components/pager-with-header'
 import { environment } from '@app/env'
-import { useAuthMe, useSessionQuery } from '@app/libs/auth'
+import { fetchClient, reactQueryClient } from '@app/libs/api-client'
+import { useAuthMe } from '@app/libs/auth'
+import { getAuthSession } from '@app/libs/auth/session'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
-import { queryClient } from '@app/libs/react-query'
-
-import { ExpoScrollForwarderView } from '../../../../packages/expo-scroll-forwarder/build'
+import { useScrollContext } from '@app/libs/scroll-context'
 
 export default function IndexLayout() {
   return (
@@ -98,7 +85,7 @@ export default function IndexLayout() {
       <PagerContentView>
         {Array.from({ length: 3 }).map((_, index) => (
           <View key={index} collapsable={false}>
-            <PagerContent index={index} />
+            <PagerContent index={index}>{(props) => <FeedContent {...props} />}</PagerContent>
           </View>
         ))}
       </PagerContentView>
@@ -113,14 +100,14 @@ function MainHeader() {
     ? { welcome: 'ยินดีต้อนรับ', title: authMe.data.name }
     : { welcome: 'ยินดีต้อนรับสู่', title: 'PPLE Today' }
   return (
-    <View className="w-full px-4 pt-10 pb-2 flex flex-row justify-between gap-2 bg-base-bg-white border-b border-base-outline-default ">
+    <View className="w-full px-4 pt-4 pb-2 flex flex-row justify-between gap-2 bg-base-bg-white border-b border-base-outline-default ">
       <View className="flex flex-row items-center gap-3">
         <Pressable
           className="w-10 h-10 flex flex-col items-center justify-center"
           onPress={() => {
             if (
-              environment.APP_ENVIRONMENT === 'development' ||
-              environment.APP_ENVIRONMENT === 'local'
+              environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'development' ||
+              environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'local'
             )
               router.navigate('/(tabs)/(top-tabs)/playground')
           }}
@@ -128,10 +115,19 @@ function MainHeader() {
           <PPLEIcon width={35} height={30} />
         </Pressable>
         <View className="flex flex-col">
-          <Text className="font-anakotmai-light text-xs">{headings.welcome}</Text>
-          <Text className="font-anakotmai-bold text-2xl text-base-primary-default">
-            {headings.title}
-          </Text>
+          {authMe.isLoading ? (
+            <>
+              <View className="h-3 mt-1 bg-base-bg-default rounded-full w-[80px]" />
+              <View className="h-6 mt-2 bg-base-bg-default rounded-full w-[150px]" />
+            </>
+          ) : (
+            <>
+              <Text className="font-anakotmai-light text-xs">{headings.welcome}</Text>
+              <Text className="font-anakotmai-bold text-2xl text-base-primary-default">
+                {headings.title}
+              </Text>
+            </>
+          )}
         </View>
       </View>
       <View className="flex flex-row gap-4">
@@ -154,7 +150,6 @@ function MainHeader() {
   )
 }
 
-// assuming there are usually 2 or more banners
 const PLACEHOLDER_BANNERS: GetBannersResponse = [
   {
     id: '1',
@@ -171,9 +166,16 @@ const PLACEHOLDER_BANNERS: GetBannersResponse = [
 ]
 
 function BannerSection() {
-  const bannersQuery = queryClient.useQuery('/banners', {})
+  const bannersQuery = reactQueryClient.useQuery('/banners', {})
+  // Loading : assuming that there are usually 2 or more banners
   const banners = bannersQuery.data ?? PLACEHOLDER_BANNERS
+  React.useEffect(() => {
+    if (bannersQuery.error) {
+      console.error('Banner Query Error', bannersQuery.error)
+    }
+  }, [bannersQuery.error])
   if (banners.length === 0) return null
+  if (bannersQuery.error) return null
   return (
     <Slide
       count={banners.length}
@@ -300,12 +302,7 @@ function ElectionCard() {
 }
 
 function UserInfoSection() {
-  const sessionQuery = useSessionQuery()
-  const authMeQuery = queryClient.useQuery(
-    '/auth/me',
-    { headers: { Authorization: sessionQuery.data?.accessToken } },
-    { enabled: !!sessionQuery.data?.accessToken }
-  )
+  const authMeQuery = useAuthMe()
   // hide when not yet onboarded and therefore no address data
   if (!authMeQuery.data?.address) {
     return null
@@ -343,436 +340,8 @@ function UserInfoSection() {
   )
 }
 
-// Ref: https://github.com/bluesky-social/social-app/blob/0610c822cf94995c75bbf3237c217b68dabfe5a0/src/view/com/pager/PagerWithHeader.tsx
-
-// brief structure for PagerView with Header
-// <Pager>
-//   <PagerHeader>
-//     <PagerHeaderOnly>...</PagerHeaderOnly>
-//     <PagerTabBar>
-//       <PagerTab>Tab 1</PagerTab>
-//       <PagerTab>Tab 2</PagerTab>
-//       <PagerTab>Tab 3</PagerTab>
-//       <PagerTabBarItemIndicator />
-//     </PagerTabBar>
-//   </PagerHeader>
-//   <PagerContentView>
-//     <View key="1">
-//       <PagerContent>...</PagerContent>
-//     </View>
-//     <View key="2">
-//       <PagerContent>...</PagerContent>
-//     </View>
-//     <View key="3">
-//       <PagerContent>...</PagerContent>
-//     </View>
-//   </PagerContentView>
-// </Pager>
-
-const AnimatedPagerView = Animated.createAnimatedComponent(PagerView)
-const AnimatedExpoScrollForwarderView = Animated.createAnimatedComponent(ExpoScrollForwarderView)
-
-// Scrolling with header is laggy on Expo Go Android because of the "new architecture"
-// disabling it in `app.config.ts` fixes the issue on native build
-// https://github.com/software-mansion/react-native-reanimated/issues/6992
-
-interface PagerContextValue {
-  pagerViewRef: React.RefObject<PagerView | null>
-  scrollY: SharedValue<number>
-  scrollViewTag: number | null
-  setScrollViewTag: (tag: number | null) => void
-  registerScrollViewRef: (scrollRef: AnimatedRef<any> | null, atIndex: number) => void
-  scrollHandler: ScrollHandlerProcessed<Record<string, unknown>>
-  headerHeight: number
-  headerOnlyHeight: number
-  setHeaderOnlyHeight: React.Dispatch<React.SetStateAction<number>>
-  setTabBarHeight: React.Dispatch<React.SetStateAction<number>>
-  currentPage: number
-  setCurrentPage: React.Dispatch<React.SetStateAction<number>>
-  adjustScrollForOtherPages: (scrollState: 'idle' | 'dragging' | 'settling') => void
-}
-const PagerContext = React.createContext<PagerContextValue | null>(null)
-function Pager({ children }: { children: React.ReactNode }) {
-  // const layout = useWindowDimensions()
-  const [currentPage, setCurrentPage] = React.useState(0)
-
-  const isHeaderReady = React.useState(false)
-  const [headerOnlyHeight, setHeaderOnlyHeight] = React.useState(0)
-  const [tabBarHeight, setTabBarHeight] = React.useState(0)
-  const headerHeight = headerOnlyHeight + tabBarHeight
-
-  const scrollY = useSharedValue(0)
-  const onScrollWorklet = React.useCallback(
-    (e: NativeScrollEvent) => {
-      'worklet'
-      const nextScrollY = e.contentOffset.y
-      // console.log('onScrollWorklet', nextScrollY)
-      // HACK: onScroll is reporting some strange values on load (negative header height).
-      // Highly improbable that you'd be overscrolled by over 400px -
-      // in fact, I actually can't do it, so let's just ignore those. -sfn
-      const isPossiblyInvalid =
-        headerHeight > 0 && Math.round(nextScrollY * 2) / 2 === -headerHeight
-      if (!isPossiblyInvalid) {
-        scrollY.set(nextScrollY)
-      }
-    },
-    [scrollY, headerHeight]
-  )
-
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: onScrollWorklet,
-  })
-  // scroll indicators work inconsistently between Android and iOS so we disable them for now
-  // const scrollIndicatorInsets = useDerivedValue(() => ({
-  //   top: headerHeight - scrollY.get(),
-  // }))
-
-  const pagerViewRef = React.useRef<PagerView>(null)
-
-  const scrollRefs = useSharedValue<(AnimatedRef<any> | null)[]>([])
-  const registerScrollViewRef = React.useCallback(
-    (scrollRef: AnimatedRef<any> | null, atIndex: number) => {
-      scrollRefs.modify((refs) => {
-        'worklet'
-        refs[atIndex] = scrollRef
-        return refs
-      })
-    },
-    [scrollRefs]
-  )
-
-  const lastForcedScrollY = useSharedValue(0)
-  const currentPageRef = useSharedState(currentPage)
-  const headerOnlyHeightRef = useSharedState(headerOnlyHeight)
-  const adjustScrollForOtherPages = React.useCallback(
-    (scrollState: 'idle' | 'dragging' | 'settling') => {
-      'worklet'
-      // if (global._WORKLET) {
-      //   console.log('UI Thread')
-      // } else {
-      //   console.log('JS Thread')
-      // }
-      if (scrollState !== 'dragging') return
-      const currentScrollY = scrollY.get()
-      const forcedScrollY = Math.min(currentScrollY, headerOnlyHeightRef.get())
-      if (lastForcedScrollY.get() === forcedScrollY) return
-      lastForcedScrollY.set(forcedScrollY)
-      const refs = scrollRefs.get()
-      for (let i = 0; i < refs.length; i++) {
-        const scollRef = refs[i]
-        if (i !== currentPageRef.get() && scollRef != null) {
-          scrollTo(scollRef, 0, forcedScrollY, false)
-        }
-      }
-    },
-    [currentPageRef, headerOnlyHeightRef, lastForcedScrollY, scrollRefs, scrollY]
-  )
-  const [scrollViewTag, setScrollViewTag] = React.useState<number | null>(null)
-
-  return (
-    <PagerContext.Provider
-      value={{
-        pagerViewRef,
-        scrollY,
-        scrollViewTag,
-        setScrollViewTag,
-        registerScrollViewRef,
-        scrollHandler,
-        headerHeight,
-        headerOnlyHeight,
-        setHeaderOnlyHeight,
-        setTabBarHeight,
-        currentPage,
-        setCurrentPage,
-        adjustScrollForOtherPages,
-      }}
-    >
-      <PagerTabBarProvider>
-        <View className="flex-1 bg-base-bg-default">
-          {/* PanGestureRecognizer only works for one view so we have to move it up to the parent */}
-          {Platform.OS === 'ios' ? (
-            <ExpoScrollForwarderView scrollViewTag={scrollViewTag} style={{ flex: 1 }}>
-              {children}
-            </ExpoScrollForwarderView>
-          ) : (
-            children
-          )}
-        </View>
-      </PagerTabBarProvider>
-    </PagerContext.Provider>
-  )
-}
-
-const usePagerContext = () => {
-  const context = React.useContext(PagerContext)
-  if (!context) {
-    throw new Error('usePagerContext must be used within a PagerProvider')
-  }
-  return context
-}
-
-function PagerHeader({ children }: { children: React.ReactNode }) {
-  const { scrollViewTag, scrollY, headerOnlyHeight } = usePagerContext()
-  const headerTransform = useAnimatedStyle(() => {
-    const translateY = -Math.min(scrollY.get(), headerOnlyHeight)
-    return { transform: [{ translateY: translateY }] }
-  })
-  if (Platform.OS === 'android') {
-    return (
-      <AnimatedExpoScrollForwarderView
-        scrollViewTag={scrollViewTag}
-        style={[styles.pagerHeader, headerTransform]}
-      >
-        {/* Somehow a view is required here to make ScrollForward working in android */}
-        <View className="bg-transparent">{children}</View>
-      </AnimatedExpoScrollForwarderView>
-    )
-  }
-  return <Animated.View style={[styles.pagerHeader, headerTransform]}>{children}</Animated.View>
-}
-
-function PagerHeaderOnly({ children }: { children: React.ReactNode }) {
-  const { setHeaderOnlyHeight } = usePagerContext()
-  const headerRef = React.useRef<View>(null)
-  return (
-    <View
-      ref={headerRef}
-      onLayout={() => {
-        headerRef.current?.measure((_x: number, _y: number, _width: number, height: number) => {
-          // console.log('Header only height:', height)
-
-          if (height > 0) {
-            // The rounding is necessary to prevent jumps on iOS
-            setHeaderOnlyHeight(Math.round(height * 2) / 2)
-          }
-        })
-      }}
-    >
-      {children}
-    </View>
-  )
-}
-
-function PagerContentView({ children }: { children: React.ReactNode }) {
-  const { pagerViewRef } = usePagerContext()
-  const { handlePageScroll } = usePagerTabBarContext()
-  return (
-    <AnimatedPagerView
-      ref={pagerViewRef}
-      style={styles.pagerView}
-      initialPage={0}
-      onPageScroll={handlePageScroll}
-    >
-      {children}
-    </AnimatedPagerView>
-  )
-}
-
-interface PagerTabBarContextValue {
-  dragProgress: SharedValue<number>
-  handlePageScroll: EventHandlerProcessed<object, never>
-  tabListSize: SharedValue<number>
-  tabItemLayouts: SharedValue<{ x: number; width: number }[]>
-
-  onTabLayout: (index: number, layout: { x: number; width: number }) => void
-  onTabPressed: (index: number) => void
-}
-const PagerTabBarContext = React.createContext<PagerTabBarContextValue | null>(null)
-interface PagerTabBarProviderProps {
-  children: React.ReactNode
-}
-function PagerTabBarProvider({ children }: PagerTabBarProviderProps) {
-  const { setCurrentPage, pagerViewRef, adjustScrollForOtherPages } = usePagerContext()
-  const onTabPressed = React.useCallback(
-    (index: number) => {
-      pagerViewRef.current?.setPage(index)
-      setCurrentPage(index)
-      runOnUI(adjustScrollForOtherPages)('dragging')
-    },
-    [adjustScrollForOtherPages, pagerViewRef, setCurrentPage]
-  )
-
-  const dragState = useSharedValue<'idle' | 'settling' | 'dragging'>('idle')
-  const dragProgress = useSharedValue(0)
-  const didInit = useSharedValue(false)
-  const handlePageScroll = usePagerHandlers(
-    {
-      onPageScroll(e: PagerViewOnPageScrollEventData) {
-        'worklet'
-        if (didInit.get() === false) {
-          // On iOS, there's a spurious scroll event with 0 position
-          // even if a different page was supplied as the initial page.
-          // Ignore it and wait for the first confirmed selection instead.
-          return
-        }
-        dragProgress.set(e.offset + e.position)
-      },
-      onPageScrollStateChanged(e: PageScrollStateChangedNativeEventData) {
-        'worklet'
-        // runOnJS(setIsIdle)(e.pageScrollState === 'idle')
-        if (dragState.get() === 'idle' && e.pageScrollState === 'settling') {
-          // This is a programmatic scroll on Android.
-          // Stay "idle" to match iOS and avoid confusing downstream code.
-          return
-        }
-        dragState.set(e.pageScrollState)
-        // parentOnPageScrollStateChanged?.(e.pageScrollState)
-        adjustScrollForOtherPages(e.pageScrollState)
-      },
-      onPageSelected(e: PagerViewOnPageSelectedEventData) {
-        'worklet'
-        didInit.set(true)
-        // runOnJS(onPageSelectedJSThread)(e.position)
-        runOnJS(setCurrentPage)(e.position)
-      },
-    },
-    [
-      setCurrentPage,
-      // parentOnPageScrollStateChanged
-    ]
-  )
-
-  const tabListSize = useSharedValue(0)
-  const tabItemLayouts = useSharedValue<{ x: number; width: number }[]>([])
-  const onTabLayout = React.useCallback(
-    (i: number, layout: { x: number; width: number }) => {
-      'worklet'
-      tabItemLayouts.modify((tab) => {
-        tab[i] = layout
-        return tab
-      })
-    },
-    [tabItemLayouts]
-  )
-  return (
-    <PagerTabBarContext.Provider
-      value={{
-        dragProgress,
-        handlePageScroll,
-        onTabLayout,
-        onTabPressed,
-        tabListSize,
-        tabItemLayouts,
-      }}
-    >
-      {children}
-    </PagerTabBarContext.Provider>
-  )
-}
-const usePagerTabBarContext = () => {
-  const context = React.useContext(PagerTabBarContext)
-  if (!context) {
-    throw new Error('usePagerTabBarContext must be used within a PagerTabBarProvider')
-  }
-  return context
-}
-
-function PagerTabBar({ children }: { children: React.ReactNode }) {
-  const { tabListSize } = usePagerTabBarContext()
-  const { setTabBarHeight } = usePagerContext()
-  return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      className="bg-base-bg-white w-full"
-      contentContainerClassName="px-4 border-b border-base-outline-default w-full"
-      onLayout={(evt) => {
-        const height = evt.nativeEvent.layout.height
-        if (height > 0) {
-          // The rounding is necessary to prevent jumps on iOS
-          setTabBarHeight(Math.round(height * 2) / 2)
-        }
-      }}
-    >
-      <View
-        accessibilityRole="tablist"
-        className="flex flex-row"
-        onLayout={(e) => {
-          tabListSize.set(e.nativeEvent.layout.width)
-        }}
-      >
-        {children}
-      </View>
-    </ScrollView>
-  )
-}
-
-function PagerTabBarItemIndicator() {
-  const { tabListSize, tabItemLayouts, dragProgress } = usePagerTabBarContext()
-  const indicatorStyle = useAnimatedStyle(() => {
-    const tabItems = tabItemLayouts.get()
-    if (tabItems.length === 0) {
-      return { opacity: 0, transform: [{ scaleX: 0 }] }
-    }
-    // interpolate requires at least 2 items to work properly
-    if (tabItems.length === 1) {
-      return { opacity: 1, transform: [{ scaleX: 1 }] }
-    }
-    function getScaleX(index: number) {
-      'worklet'
-      const itemWidth = tabItems[index].width
-      return itemWidth / tabListSize.get()
-    }
-    function getTranslateX(index: number) {
-      'worklet'
-      const itemX = tabItems[index].x
-      const itemWidth = tabItems[index].width
-      return itemX + itemWidth / 2 - tabListSize.get() / 2
-    }
-    // const scaleX = getScaleX(currentPage)
-    // const translateX = getTranslateX(currentPage)
-    return {
-      opacity: 1,
-      transform: [
-        {
-          translateX: interpolate(
-            dragProgress.get(),
-            tabItems.map((_, i) => {
-              'worklet'
-              return i
-            }),
-            tabItems.map((_, index) => {
-              'worklet'
-              return getTranslateX(index)
-            })
-          ),
-        },
-        {
-          scaleX: interpolate(
-            dragProgress.get(),
-            tabItems.map((_, i) => {
-              'worklet'
-              return i
-            }),
-            tabItems.map((_, index) => {
-              'worklet'
-              return getScaleX(index)
-            })
-          ),
-        },
-      ],
-    }
-  })
-  return (
-    <Animated.View
-      className="absolute -bottom-px left-0 right-0 border-b-2 border-base-primary-default "
-      style={indicatorStyle}
-    />
-  )
-}
-
-function PagerContent({ index }: { index: number }) {
-  const { headerHeight, registerScrollViewRef, scrollHandler, currentPage, setScrollViewTag } =
-    usePagerContext()
-  const isFocused = index === currentPage
-  const scrollElRef = useAnimatedRef<FlatList>()
-  React.useEffect(() => {
-    registerScrollViewRef(scrollElRef, index)
-    return () => {
-      registerScrollViewRef(null, index)
-    }
-  }, [scrollElRef, registerScrollViewRef, index])
-
+function FeedContent(props: PagerScrollViewProps) {
+  const { headerHeight, isFocused, scrollElRef, setScrollViewTag } = props
   React.useEffect(() => {
     if (isFocused && scrollElRef.current) {
       const scrollViewTag = findNodeHandle(scrollElRef.current)
@@ -780,154 +349,169 @@ function PagerContent({ index }: { index: number }) {
       // console.log('scrollViewTag:', scrollViewTag)
     }
   }, [isFocused, scrollElRef, setScrollViewTag])
+
+  const feedInfiniteQuery = useInfiniteQuery({
+    queryKey: reactQueryClient.getQueryKey('get', '/feed/me'),
+    queryFn: async ({ pageParam }) => {
+      const session = await getAuthSession()
+      const response = await fetchClient('/feed/me', {
+        query: { page: pageParam, limit: 5 },
+        headers: session ? { Authorization: `Bearer ${session.accessToken}` } : {},
+      })
+      if (response.error) {
+        throw response.error
+      }
+      return response.data
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, _, lastPageParam) => {
+      if (lastPage && lastPage.length === 0) {
+        return undefined
+      }
+      return lastPageParam + 1
+    },
+  })
+  React.useEffect(() => {
+    if (feedInfiniteQuery.error) {
+      console.error('Error fetching feed:', JSON.stringify(feedInfiniteQuery.error))
+    }
+  }, [feedInfiniteQuery.error])
+
+  const onEndReached = React.useCallback(() => {
+    if (!feedInfiniteQuery.isFetching && feedInfiniteQuery.hasNextPage) {
+      feedInfiniteQuery.fetchNextPage()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
+
+  const data = React.useMemo((): GetMyFeedResponse[] => {
+    if (!feedInfiniteQuery.data) return []
+    return feedInfiniteQuery.data.pages.filter((page) => !!page)
+  }, [feedInfiniteQuery.data])
+
+  const scrollContext = useScrollContext()
+  const scrollHandler = useAnimatedScrollHandler(scrollContext)
+
+  const Footer =
+    feedInfiniteQuery.hasNextPage || feedInfiniteQuery.isLoading || feedInfiniteQuery.error ? (
+      <PostCardSkeleton />
+    ) : data.length === 0 ? (
+      // Empty State
+      <View className="flex flex-col items-center justify-center py-6">
+        <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีโพสต์</Text>
+      </View>
+    ) : (
+      // Reach end of feed
+      <View className="flex flex-col items-center justify-center py-6">
+        <Text className="text-base-text-medium font-anakotmai-medium">ไม่มีโพสต์เพิ่มเติม</Text>
+      </View>
+    )
+
+  const renderFeedItem = React.useCallback(
+    ({ item: items }: { item: GetMyFeedResponse; index: number }) => {
+      if (!items) {
+        return null
+      }
+      return (
+        <>
+          {items.map((item) => {
+            switch (item.type) {
+              case 'POST':
+                return (
+                  <PostCard
+                    key={item.id}
+                    id={item.id}
+                    author={item.author}
+                    attachments={item.post.attachments}
+                    commentCount={item.commentCount}
+                    content={item.post.content}
+                    createdAt={item.createdAt.toString()}
+                    hashTags={item.post.hashTags}
+                    reactions={item.reactions}
+                    userReaction={item.userReaction}
+                  />
+                )
+              case 'POLL':
+                // TODO: poll feed card
+                return null
+              case 'ANNOUNCEMENT':
+                // expected no announcement
+                return null
+              default:
+                return exhaustiveGuard(item)
+            }
+          })}
+        </>
+      )
+    },
+    []
+  )
   return (
-    // TODO: use flashlist
-    <Animated.FlatList
+    <FlatListMemo
+      // @ts-expect-error FlatListMemo ref type is wrong
       ref={scrollElRef}
       onScroll={scrollHandler}
-      showsVerticalScrollIndicator={false}
-      style={{ flex: 1 }}
-      contentContainerStyle={{ paddingTop: headerHeight }}
-      // contentOffset={{ x: 0, y: -headerHeight }}
-      // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
-      // automaticallyAdjustsScrollIndicatorInsets={false}
-      data={Array.from({ length: 6 }, (_, i) => `Item ${i + 1}`)}
+      headerHeight={headerHeight}
+      data={data}
       contentContainerClassName="py-4 flex flex-col"
-      // TODO: data and renderItem should be replaced with actual data
-      renderItem={({ item, index: itemIndex }) => {
-        if (itemIndex === 0) {
-          return <AnnouncementSection />
-        }
-        return (
-          <View className="px-4">
-            <PostCard
-              firstImageType={(['square', 'landscape', 'portrait'] as const)[index]!}
-              author={{
-                name: 'ศิริโรจน์ ธนิกกุล - Sirirot Thanikkun',
-                district: 'สส.สมุทรสาคร',
-                profileImageUrl: '',
-              }}
-              commentCount={125}
-              content={
-                'พบปะแม่ๆ ชมรมผู้สูงอายุดอกลำดวน ณ หมู่บ้านวารัตน์ 3 ม.5 ต. อ้อมน้อย อ.กระทุ่มแบน จ.สมุทรสาครชวนให้ผมออกสเตปประกอบ'
-              }
-              media={Array.from({ length: itemIndex }).map((_, i) => ({
-                type: 'IMAGE',
-                imageSource: require('@app/assets/post-1.png'),
-              }))}
-              hashTags={[
-                { id: '1', name: '#pridemonth' },
-                { id: '2', name: '#ร่างกฎหมาย68' },
-              ]}
-              createdAt="2025-08-19T14:14:49.406Z"
-              reactions={[
-                { type: 'UP_VOTE', count: 32 },
-                { type: 'DOWN_VOTE', count: 2 },
-              ]}
-            />
-          </View>
-        )
-      }}
+      ListHeaderComponent={<AnnouncementSection />}
+      ListFooterComponent={Footer}
+      onEndReachedThreshold={1}
+      onEndReached={onEndReached}
+      renderItem={renderFeedItem}
     />
   )
 }
 
-const styles = StyleSheet.create({
-  pagerHeader: {
-    position: 'absolute',
-    zIndex: 1,
-    top: 0,
-    left: 0,
-    width: '100%',
-  },
-  pagerView: {
-    flex: 1,
-  },
-})
-
-function usePagerHandlers(
-  handlers: {
-    onPageScroll: (e: PagerViewOnPageScrollEventData) => void
-    onPageScrollStateChanged: (e: PageScrollStateChangedNativeEventData) => void
-    onPageSelected: (e: PagerViewOnPageSelectedEventData) => void
-  },
-  dependencies: unknown[]
-) {
-  const { doDependenciesDiffer } = useHandler(handlers as any, dependencies)
-  const subscribeForEvents = ['onPageScroll', 'onPageScrollStateChanged', 'onPageSelected']
-  return useEvent(
-    (event) => {
-      'worklet'
-      const { onPageScroll, onPageScrollStateChanged, onPageSelected } = handlers
-      if (event.eventName.endsWith('onPageScroll')) {
-        onPageScroll(event as any as PagerViewOnPageScrollEventData)
-      } else if (event.eventName.endsWith('onPageScrollStateChanged')) {
-        onPageScrollStateChanged(event as any as PageScrollStateChangedNativeEventData)
-      } else if (event.eventName.endsWith('onPageSelected')) {
-        onPageSelected(event as any as PagerViewOnPageSelectedEventData)
-      }
-    },
-    subscribeForEvents,
-    doDependenciesDiffer
-  )
+// https://github.com/bluesky-social/social-app/blob/27c591f031fbe8b3a5837c4ef7082b2ce146a050/src/view/com/util/List.tsx#L19
+type FlatListMethods<ItemT = any> = FlatListComponent<ItemT, FlatListPropsWithLayout<ItemT>>
+type FlatListProps<ItemT = any> = FlatListPropsWithLayout<ItemT> & {
+  headerHeight?: number
 }
-
-// this is a hook is for moving and syncing react state to a SharedValue in the UI thread worklet
-// since SharedValue is not reactive and should not be used directly in the render
-function useSharedState<T>(value: T): SharedValue<T> {
-  const sharedValue = useSharedValue(value)
-  React.useEffect(() => {
-    sharedValue.value = value
-  }, [sharedValue, value])
-  return sharedValue
-}
-
-function PagerTabBarItem({
-  index,
-  children,
-  ...props
-}: React.ComponentProps<typeof Pressable> & {
-  index: number
-  children?: React.ReactNode
-}) {
-  const { dragProgress, onTabLayout, onTabPressed } = usePagerTabBarContext()
-  const activeStyle = useAnimatedStyle(() => {
-    return { opacity: interpolate(dragProgress.get(), [index - 1, index, index + 1], [0, 1, 0]) }
-  })
-  const handleLayout = (e: LayoutChangeEvent) => {
-    runOnUI(onTabLayout)(index, e.nativeEvent.layout)
+// TODO: try flashlist
+let FlatListMemo = React.forwardRef<FlatListMethods, FlatListProps>(
+  function FlatListMemo(props, ref) {
+    const {
+      onScroll,
+      headerHeight,
+      data,
+      ListHeaderComponent,
+      ListFooterComponent,
+      onEndReached,
+      onEndReachedThreshold,
+      renderItem,
+      contentContainerClassName,
+    } = props
+    return (
+      <Animated.FlatList
+        // @ts-expect-error FlatListMemo ref type is wrong
+        ref={ref}
+        onScroll={onScroll}
+        showsVerticalScrollIndicator={false}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingTop: headerHeight }}
+        // contentOffset={{ x: 0, y: -headerHeight }}
+        // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
+        // automaticallyAdjustsScrollIndicatorInsets={false}
+        data={data}
+        contentContainerClassName={contentContainerClassName}
+        ListHeaderComponent={ListHeaderComponent}
+        ListFooterComponent={ListFooterComponent}
+        onEndReachedThreshold={onEndReachedThreshold}
+        onEndReached={onEndReached}
+        renderItem={renderItem}
+      />
+    )
   }
-  const handlePress = () => {
-    onTabPressed?.(index)
-  }
-  return (
-    <Pressable
-      className="h-10"
-      accessibilityRole="tab"
-      onLayout={handleLayout}
-      onPress={handlePress}
-      {...props}
-    >
-      <Text className="px-4 pt-2 pb-2.5 text-sm font-anakotmai-medium relative text-base-text-placeholder">
-        {children}
-      </Text>
-      <Animated.Text
-        style={activeStyle}
-        className="px-4 pt-2 pb-2.5 text-sm font-anakotmai-medium text-base-primary-default absolute left-0 top-0 bottom-0 right-0"
-        aria-hidden
-      >
-        {children}
-      </Animated.Text>
-    </Pressable>
-  )
-}
+)
+FlatListMemo = React.memo(FlatListMemo)
 
 function AnnouncementSection() {
-  const announcementsQuery = queryClient.useQuery('/announcements', {
+  const announcementsQuery = reactQueryClient.useQuery('/announcements', {
     query: { limit: 5 },
   })
   if (!announcementsQuery.data) return null
-  // TODO: might do loading here
+  // TODO: loading state
   return (
     <View className="flex flex-col">
       <View className="flex flex-row pt-4 px-4 pb-3 justify-between">

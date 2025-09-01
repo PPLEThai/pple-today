@@ -1,5 +1,6 @@
 import type { EdenFetch } from '@elysiajs/eden/fetch'
 import type {
+  QueryKey,
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
@@ -173,7 +174,7 @@ export type ExtractBodyResponse<
   >[TMethod][TPath] = GroupPathByMethod<GetEdenFetchSchema<TElysia>, TMethod>[TMethod][TPath],
 > = EdenResponse<TEndpoint>
 
-export interface QueryClient<
+export interface ReactQueryClient<
   TPathSchema extends Record<string, any>,
   TAvailableMethod extends GetAvailableMethods<TPathSchema> = GetAvailableMethods<TPathSchema>,
   TGroupedPathByMethod extends GroupPathByMethod<TPathSchema, TAvailableMethod> = GroupPathByMethod<
@@ -243,6 +244,28 @@ export interface QueryClient<
     path: TPath,
     options?: UseMutationOptions<TSuccess, TError, TPayload, TContext>
   ) => UseMutationOptions<TSuccess, TError, TPayload, TContext>
+  getQueryKey: <
+    const TMethod extends TAvailableMethod,
+    const TPath extends keyof TGroupedPathByMethod[TMethod],
+    const TPayload extends RestPayload<TGroupedPathByMethod[TMethod][TPath]> = RestPayload<
+      TGroupedPathByMethod[TMethod][TPath]
+    >,
+  >(
+    method: TMethod,
+    path: TPath,
+    payload?: TPayload
+  ) => QueryKey
+  getPartialQueryKey: <
+    const TMethod extends TAvailableMethod,
+    const TPath extends keyof TGroupedPathByMethod[TMethod],
+    const TPayload extends RestPayload<TGroupedPathByMethod[TMethod][TPath]> = RestPayload<
+      TGroupedPathByMethod[TMethod][TPath]
+    >,
+  >(
+    method?: TMethod,
+    path?: TPath,
+    payload?: TPayload
+  ) => QueryKey
 }
 
 export interface RequestConfig {
@@ -269,7 +292,7 @@ export type ResponseConfig =
     }
 
 export interface FetchClientInterceptors {
-  request: (config: RequestConfig) => RequestConfig
+  request: (config: RequestConfig) => Promise<RequestConfig> | RequestConfig
   response: (response: ResponseConfig) => any
 }
 
@@ -277,6 +300,6 @@ export interface CreateReactQueryClientResult<T extends AnyElysia> {
   fetchClient: EdenFetch.Create<T> & {
     interceptors: FetchClientInterceptors
   }
-  queryClient: QueryClient<GetEdenFetchSchema<T>>
+  reactQueryClient: ReactQueryClient<GetEdenFetchSchema<T>>
 }
 export { type EdenFetch }

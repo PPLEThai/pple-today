@@ -1,6 +1,11 @@
 import { Static, t } from 'elysia'
 
 import { UserRole } from '../../../__generated__/prisma'
+import { UserParticipation } from '../../dtos/participation'
+
+// TODO: Add election
+export const GetUserParticipationResponse = t.Array(UserParticipation)
+export type GetUserParticipationResponse = Static<typeof GetUserParticipationResponse>
 
 export const GetMyProfileResponse = t.Object({
   id: t.String({ description: 'The ID of the user' }),
