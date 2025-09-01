@@ -102,9 +102,7 @@ function DialogContent({
 }
 
 function DialogHeader({ className, ...props }: ViewProps) {
-  return (
-    <View className={cn('flex flex-col gap-1.5 text-center sm:text-left', className)} {...props} />
-  )
+  return <View className={cn('flex flex-col gap-1.5 items-center', className)} {...props} />
 }
 
 function DialogFooter({ className, ...props }: ViewProps) {
