@@ -135,27 +135,6 @@ export class FacebookRepository {
     })
   }
 
-  private async fetchLongLivedAccessToken(pageAccessToken: string) {
-    const queryParams = new URLSearchParams({
-      grant_type: 'fb_exchange_token',
-      client_id: this.facebookConfig.appId,
-      client_secret: this.facebookConfig.appSecret,
-      fb_exchange_token: pageAccessToken,
-    })
-
-    const response = await this.getAccessToken(queryParams)
-
-    if (response.isErr()) {
-      return err(response.error)
-    }
-
-    return ok({
-      accessToken: response.value.accessToken,
-      tokenType: response.value.tokenType,
-      expiresIn: response.value.expiresIn,
-    })
-  }
-
   private async fetchApiAccessToken() {
     if (this.apiAccessToken) {
       return ok(this.apiAccessToken.access_token)
@@ -281,6 +260,41 @@ export class FacebookRepository {
         where: { id: pageId },
         data: {
           isSubscribed: false,
+        },
+      })
+    )
+  }
+
+  async fetchLongLivedAccessToken(pageAccessToken: string) {
+    const queryParams = new URLSearchParams({
+      grant_type: 'fb_exchange_token',
+      client_id: this.facebookConfig.appId,
+      client_secret: this.facebookConfig.appSecret,
+      fb_exchange_token: pageAccessToken,
+    })
+
+    const response = await this.getAccessToken(queryParams)
+
+    if (response.isErr()) {
+      return err(response.error)
+    }
+
+    return ok({
+      accessToken: response.value.accessToken,
+      tokenType: response.value.tokenType,
+      expiresIn: response.value.expiresIn,
+    })
+  }
+
+  async updatePageAccessToken(pageId: string, oldAccessToken: string) {
+    const response = await this.fetchLongLivedAccessToken(oldAccessToken)
+    if (response.isErr()) return err(response.error)
+
+    return await fromRepositoryPromise(
+      this.prismaService.facebookPage.update({
+        where: { id: pageId },
+        data: {
+          pageAccessToken: response.value.accessToken,
         },
       })
     )
@@ -417,7 +431,7 @@ export class FacebookRepository {
     return ok(response.value)
   }
 
-  async getFacebookPageById(pageAccessToken: string, pageId: string) {
+  async getFacebookPageById(pageId: string, pageAccessToken: string) {
     const inspectResponse = await this.inspectUserAccessToken(pageAccessToken)
 
     if (inspectResponse.isErr()) {
@@ -590,6 +604,7 @@ export class FacebookRepository {
       id: linkedPage.value.id,
       name: linkedPage.value.name,
       profilePictureUrl: linkedPage.value.profilePictureUrl,
+      pageAccessToken: linkedPage.value.pageAccessToken,
     })
   }
 }

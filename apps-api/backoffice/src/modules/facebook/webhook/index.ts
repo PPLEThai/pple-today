@@ -72,10 +72,7 @@ export const FacebookWebhookController = new Elysia({
         )
       }
 
-      const handleResult = await facebookWebhookService.handleFacebookWebhook(body)
-      if (handleResult.isErr()) {
-        return mapErrorCodeToResponse(handleResult.error, status)
-      }
+      await facebookWebhookService.handleFacebookWebhook(body)
 
       return status(200, {
         message: 'Webhook event received successfully',
