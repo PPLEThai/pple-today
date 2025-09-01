@@ -104,23 +104,28 @@ export function OnboardingAddress() {
     // create blob to upload
     const asset = imgPickerResult.assets[0]
     if (!asset) return
-    const formData = new FormData()
+    try {
+      const formData = new FormData()
 
-    for (const [key, value] of Object.entries(uploadFields)) {
-      formData.append(key, value)
-    }
+      for (const [key, value] of Object.entries(uploadFields)) {
+        formData.append(key, value)
+      }
 
-    // @ts-expect-error: Special react native format for form data
-    formData.append('file', {
-      uri: asset.uri,
-      name: asset.fileName ?? `profile-picture-${new Date().getTime()}.png`,
-      type: asset.mimeType,
-    })
+      // @ts-expect-error: Special react native format for form data
+      formData.append('file', {
+        uri: asset.uri,
+        name: asset.fileName ?? `profile-picture-${new Date().getTime()}.png`,
+        type: asset.mimeType,
+      })
 
-    const resp = await handleUploadSignedUrl(uploadUrl, formData)
+      const result = await handleUploadSignedUrl(uploadUrl, formData)
 
-    if (!resp.ok) {
-      throw new Error('Failed to upload Image')
+      if (!result.ok) {
+        throw new Error('Failed to upload image')
+      }
+    } catch (err) {
+      console.error('Error uploading image', err)
+      throw err
     }
   }
 

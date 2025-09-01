@@ -3,7 +3,7 @@ export const handleUploadSignedUrl = (uploadUrl: string, formData: FormData) => 
     const xhr = new XMLHttpRequest()
     xhr.open('POST', uploadUrl)
     xhr.setRequestHeader('Content-Type', 'multipart/form-data')
-    xhr.setRequestHeader('Accept', '')
+    xhr.timeout = 5000 // 5 seconds
     xhr.onerror = (ev) => {
       return reject({
         error: xhr.statusText || 'Network Error',
@@ -12,7 +12,7 @@ export const handleUploadSignedUrl = (uploadUrl: string, formData: FormData) => 
       })
     }
     xhr.onreadystatechange = function (ev) {
-      if (xhr.readyState === 4) {
+      if (xhr.readyState === xhr.DONE) {
         const isOk = xhr.status >= 200 && xhr.status < 300
         return resolve({
           ok: isOk,
