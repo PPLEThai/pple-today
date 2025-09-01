@@ -10,6 +10,7 @@ import {
 import { ProfileRepository, ProfileRepositoryPlugin } from './repository'
 
 import { InternalErrorCode } from '../../dtos/error'
+import { FilePath } from '../../dtos/file'
 import { mapRepositoryError } from '../../utils/error'
 import { AuthRepository, AuthRepositoryPlugin } from '../auth/repository'
 import { FileService, FileServicePlugin } from '../file/services'
@@ -204,7 +205,7 @@ export class ProfileService {
   }
 
   async getProfileUploadUrl(userId: string) {
-    const fileKey = `temp/users/profile-picture-${userId}.png`
+    const fileKey = `temp/users/profile-picture-${userId}.png` satisfies FilePath
     const uploadUrl = await this.fileService.getUploadSignedUrl(fileKey, {
       contentType: 'image/png',
     })
