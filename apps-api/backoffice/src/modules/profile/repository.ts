@@ -174,21 +174,14 @@ export class ProfileRepository {
     if (profileData.address) {
       userData.address = {
         connect: {
-          district_subDistrict: {
+          province_district_subDistrict_postalCode: {
+            province: profileData.address.province,
             district: profileData.address.district,
             subDistrict: profileData.address.subDistrict,
+            postalCode: profileData.address.postalCode,
           },
         },
       }
-
-      await this.prismaService.address.findFirstOrThrow({
-        where: {
-          district: profileData.address.district,
-          subDistrict: profileData.address.subDistrict,
-          postalCode: profileData.address.postalCode,
-          province: profileData.address.province,
-        },
-      })
     }
 
     return await this.updateUserProfile(userId, userData)

@@ -130,9 +130,11 @@ export class ProfileService {
       address: userData.address
         ? {
             connect: {
-              district_subDistrict: {
+              province_district_subDistrict_postalCode: {
+                province: userData.address.province,
                 district: userData.address.district,
                 subDistrict: userData.address.subDistrict,
+                postalCode: userData.address.postalCode,
               },
             },
           }
