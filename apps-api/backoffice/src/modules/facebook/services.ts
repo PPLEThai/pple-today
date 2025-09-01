@@ -100,7 +100,7 @@ export class FacebookService {
     const existingPage = await this.facebookRepository.getLocalPageById(facebookPageId)
 
     if (existingPage.isErr()) {
-      return err(existingPage.error)
+      return mapRepositoryError(existingPage.error)
     }
 
     if (existingPage.value?.managerId) {
@@ -164,7 +164,7 @@ export class FacebookService {
     )
 
     if (subscribeResult.isErr()) {
-      return err(subscribeResult.error)
+      return mapRepositoryError(subscribeResult.error)
     }
 
     return ok(linkedPage.value)
