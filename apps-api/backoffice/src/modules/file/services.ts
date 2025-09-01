@@ -94,7 +94,7 @@ export class FileService {
   }
 
   getFilePath(fullPath: string) {
-    return fullPath.split('/')[0]
+    return fullPath.split('/').slice(1).join('/')
   }
 
   async markAsPublic(file: string) {
