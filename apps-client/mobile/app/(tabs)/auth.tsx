@@ -153,8 +153,6 @@ const ProfileSection = () => {
         return 'คณะทำงาน'
       case 'OFFICIAL':
         return 'คณะทำงาน'
-      case 'MEMBER':
-        return 'สมาชิกพรรค'
       default:
         throw exhaustiveGuard(role)
     }
