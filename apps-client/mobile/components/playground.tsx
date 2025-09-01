@@ -39,6 +39,7 @@ import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
 import { useEvent } from 'expo'
 import { Image } from 'expo-image'
+import * as Linking from 'expo-linking'
 import { useRouter } from 'expo-router'
 import { getItemAsync } from 'expo-secure-store'
 import { useTrackingPermissions } from 'expo-tracking-transparency'
@@ -652,6 +653,11 @@ function FacebookSDKExample() {
     { query: { facebookToken: facebookAccessToken! } },
     { enabled: !!facebookAccessToken }
   )
+  useEffect(() => {
+    if (facebookPagesQuery.error) {
+      console.error('Error fetching Facebook pages:', JSON.stringify(facebookPagesQuery.error))
+    }
+  }, [facebookPagesQuery.error])
 
   /**
    * NOTE: (iOS)
@@ -694,6 +700,14 @@ function FacebookSDKExample() {
         }}
         permissions={['email', 'public_profile']}
       /> */}
+      <Button
+        onPress={() => {
+          Linking.openURL(`app-settings:`)
+        }}
+        variant="ghost"
+      >
+        <Text>Open Setting</Text>
+      </Button>
       <Button
         disabled={Platform.OS === 'ios' && !status?.granted}
         onPress={async () => {

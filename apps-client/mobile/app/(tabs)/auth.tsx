@@ -1,14 +1,25 @@
 import React, { useEffect } from 'react'
-import { Pressable, PressableProps, View } from 'react-native'
+import { Linking, Platform, Pressable, PressableProps, View } from 'react-native'
+import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import { ScrollView } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
 
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@pple-today/ui/dialog'
 import { Icon } from '@pple-today/ui/icon'
 import { Text } from '@pple-today/ui/text'
+import { toast } from '@pple-today/ui/toast'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { Image } from 'expo-image'
+import { PermissionStatus, useTrackingPermissions } from 'expo-tracking-transparency'
 import * as WebBrowser from 'expo-web-browser'
 import {
   ArrowLeftToLineIcon,
@@ -46,14 +57,6 @@ import { formatDateInterval } from '@app/libs/format-date-interval'
 export default function Index() {
   const sessionQuery = useSessionQuery()
   const authMe = useAuthMe()
-
-  // const router = useRouter()
-  // React.useEffect(() => {
-  //   if (authMe.data && authMe.data.onBoardingCompleted === false) {
-  //     // TODO: move this logic, test first login flow only
-  //     router.push('/onboarding')
-  //   }
-  // }, [authMe, router])
 
   useEffect(() => {
     if (authMe.error) {
@@ -270,16 +273,98 @@ const PointSection = () => {
 }
 
 const FacebookPageSection = () => {
+  const [permissionStatus, requestPermission] = useTrackingPermissions()
+  const [permissionDialogOpen, setPermissionDialogOpen] = React.useState(false)
+  const [facebookAccessToken, setFacebookAccessToken] = React.useState<string | null>(null)
+
+  async function loginWithFacebook() {
+    try {
+      const loginResult = await LoginManager.logInWithPermissions([
+        'pages_show_list',
+        'pages_read_engagement',
+        'pages_read_user_content',
+        'pages_manage_metadata',
+      ])
+      if (loginResult.isCancelled) {
+        console.log('User cancelled login')
+        toast({ text1: 'Facebook login is cancelled' })
+        return
+      }
+      const accessTokenResult = await AccessToken.getCurrentAccessToken()
+      if (!accessTokenResult || !accessTokenResult.accessToken) {
+        console.error('Failed to get facebook access token')
+        return
+      }
+      setFacebookAccessToken(accessTokenResult.accessToken)
+    } catch (error) {
+      console.error('Login Error: ', error)
+    }
+  }
+  function addFacebookPage() {
+    if (Platform.OS !== 'ios') {
+      loginWithFacebook()
+      return
+    }
+    if (permissionStatus === null) {
+      return
+    }
+    if (permissionStatus.status !== PermissionStatus.GRANTED) {
+      setPermissionDialogOpen(true)
+      return
+    }
+    loginWithFacebook()
+  }
   return (
     <View className="flex flex-col gap-3 border border-base-outline-default rounded-xl py-3 px-4 bg-base-bg-white">
       <View className="flex flex-row items-center pb-2.5 gap-2 border-b border-base-outline-default">
         <FacebookIcon size={32} />
         <H2 className="text-xl text-base-text-high font-anakotmai-medium">เพจ Facebook ที่ดูแล</H2>
       </View>
-      <Button variant="secondary">
-        <Icon icon={PlusIcon} />
-        <Text>เพิ่มเพจที่ดูแล</Text>
-      </Button>
+      {/* This dialog should only open on iOS when permission is not granted */}
+      <Dialog open={permissionDialogOpen} onOpenChange={setPermissionDialogOpen}>
+        <Button variant="secondary" disabled={permissionStatus === null} onPress={addFacebookPage}>
+          <Icon icon={PlusIcon} />
+          <Text>เพิ่มเพจที่ดูแล</Text>
+        </Button>
+        <DialogContent>
+          {/* TODO: content */}
+          <DialogHeader>
+            <DialogTitle>Please Allow Tracking</DialogTitle>
+            <DialogDescription>
+              To use Facebook Page feature, please enable tracking in Privacy Settings.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              onPress={async () => {
+                if (permissionStatus === null) {
+                  console.warn('permissionStatus is null')
+                  return
+                }
+                if (!permissionStatus.granted) {
+                  if (permissionStatus.canAskAgain) {
+                    const { status } = await requestPermission()
+                    if (status !== PermissionStatus.GRANTED) {
+                      console.log('Permission not granted')
+                      toast({ text1: 'Permission not granted' })
+                      return
+                    }
+                    setPermissionDialogOpen(false)
+                    loginWithFacebook()
+                    return
+                  }
+                  Linking.openSettings()
+                  return
+                }
+                setPermissionDialogOpen(false)
+                loginWithFacebook()
+              }}
+            >
+              <Text>OK</Text>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </View>
   )
 }

@@ -5,6 +5,7 @@ import { Button } from '@pple-today/ui/button'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -225,9 +226,9 @@ export const AuthLifeCycleHook = () => {
             กรุณาเข้าสู่ระบบอีกครั้ง
           </DialogTitle>
         </DialogHeader>
-        <Text className="text-base font-anakotmai-light text-center">
+        <DialogDescription>
           {'ขณะนี้ได้หมดเวลาการใช้งานของคุณ\nกรุณาเข้าสู่ระบบใหม่อีกครั้งเพื่อใช้งานต่อ'}
-        </Text>
+        </DialogDescription>
         <DialogFooter>
           <Button
             onPress={async () => {

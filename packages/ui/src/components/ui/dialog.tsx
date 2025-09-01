@@ -122,10 +122,7 @@ function DialogTitle({
 }) {
   return (
     <DialogPrimitive.Title
-      className={cn(
-        'text-lg native:text-xl text-foreground font-semibold leading-none tracking-tight',
-        className
-      )}
+      className={cn('text-2xl text-base-text-high font-anakotmai-medium', className)}
       {...props}
     />
   )
@@ -139,7 +136,7 @@ function DialogDescription({
 }) {
   return (
     <DialogPrimitive.Description
-      className={cn('text-sm native:text-base text-muted-foreground', className)}
+      className={cn('text-base font-anakotmai-light text-center', className)}
       {...props}
     />
   )
