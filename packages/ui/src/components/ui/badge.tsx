@@ -14,6 +14,8 @@ const badgeVariants = cva(
       variant: {
         default:
           'border-transparent bg-base-primary-default web:hover:opacity-80 active:bg-base-primary-medium',
+        success:
+          'border-transparent bg-system-success-default web:hover:opacity-80 active:bg-system-success-default/80',
         secondary: 'border-transparent bg-secondary web:hover:opacity-80 active:opacity-80',
         destructive: 'border-transparent bg-destructive web:hover:opacity-80 active:opacity-80',
         outline: 'text-foreground web:hover:bg-base-bg-default active:bg-base-bg-default/50',
@@ -29,6 +31,7 @@ const badgeTextVariants = cva('text-xs font-anakotmai-medium ', {
   variants: {
     variant: {
       default: 'text-primary-foreground',
+      success: 'text-primary-foreground',
       secondary: 'text-secondary-foreground',
       destructive: 'text-destructive-foreground',
       outline: 'text-foreground',
