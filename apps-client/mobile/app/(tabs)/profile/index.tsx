@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { Linking, Platform, Pressable, PressableProps, View } from 'react-native'
 import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import { ScrollView } from 'react-native-gesture-handler'
@@ -51,7 +51,6 @@ import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { environment } from '@app/env'
 import { reactQueryClient } from '@app/libs/api-client'
 import {
-  useAuthMe,
   useDiscoveryQuery,
   useLoginMutation,
   useLogoutMutation,
@@ -62,14 +61,6 @@ import { formatDateInterval } from '@app/libs/format-date-interval'
 
 export default function Index() {
   const sessionQuery = useSessionQuery()
-  const authMe = useAuthMe()
-
-  useEffect(() => {
-    if (authMe.error) {
-      console.error('Error fetching authMe:', JSON.stringify(authMe.error))
-    }
-  }, [authMe.error])
-
   if (sessionQuery.data) {
     // User is already logged in
     return <ProfileSetting />
