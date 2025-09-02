@@ -12,7 +12,7 @@ model Post {
     attachments PostAttachment[]
     hashTags    PostHashTag[]
 
-    feedItem FeedItem @relation(fields: [feedItemId], references: [id])
+    feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
 }
 
 model PostAttachment {
@@ -24,10 +24,16 @@ model PostAttachment {
     cacheKey String             @unique
     order    Int
 
+    description   String?
+    thumbnailPath String?
+
+    width  Int?
+    height Int?
+
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    post Post @relation(fields: [postId], references: [feedItemId])
+    post Post @relation(fields: [postId], references: [feedItemId], onDelete: Cascade)
 }
 
 model PostHashTag {
@@ -37,8 +43,8 @@ model PostHashTag {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    hashTag HashTag @relation(fields: [hashTagId], references: [id])
-    post    Post    @relation(fields: [postId], references: [feedItemId])
+    hashTag HashTag @relation(fields: [hashTagId], references: [id], onDelete: Cascade)
+    post    Post    @relation(fields: [postId], references: [feedItemId], onDelete: Cascade)
 
     @@id([postId, hashTagId])
 }

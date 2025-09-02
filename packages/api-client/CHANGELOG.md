@@ -1,5 +1,15 @@
 # @pple-today/api-client
 
+## 0.3.0
+
+### Minor Changes
+
+- [#71](https://github.com/PPLEThai/pple-today/pull/71) [`27e34fd`](https://github.com/PPLEThai/pple-today/commit/27e34fdc4cfa9cea948f4e5196a9b7ea8a583a7f) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-103] User Profile Setting](https://linear.app/snts/issue/PPLE-103/user-profile-setting)
+
+### Patch Changes
+
+- [#65](https://github.com/PPLEThai/pple-today/pull/65) [`30e3c62`](https://github.com/PPLEThai/pple-today/commit/30e3c62ae4e662c850eab10f0c65f9ba85a63c49) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-218] Post Card Integrate](https://linear.app/snts/issue/PPLE-218/post-card-integrate)
+
 ## 0.2.0
 
 ### Minor Changes

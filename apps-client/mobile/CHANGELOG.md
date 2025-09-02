@@ -1,5 +1,23 @@
 # @client/mobile
 
+## 0.3.0
+
+### Minor Changes
+
+- [#60](https://github.com/PPLEThai/pple-today/pull/60) [`c24f94e`](https://github.com/PPLEThai/pple-today/commit/c24f94ee07064c71a21007e125de4b21a8d1bb6d) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-99] Post Card UI](https://linear.app/snts/issue/PPLE-99/post-card-ui)
+
+- [#71](https://github.com/PPLEThai/pple-today/pull/71) [`27e34fd`](https://github.com/PPLEThai/pple-today/commit/27e34fdc4cfa9cea948f4e5196a9b7ea8a583a7f) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-103] User Profile Setting](https://linear.app/snts/issue/PPLE-103/user-profile-setting)
+
+- [#65](https://github.com/PPLEThai/pple-today/pull/65) [`30e3c62`](https://github.com/PPLEThai/pple-today/commit/30e3c62ae4e662c850eab10f0c65f9ba85a63c49) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-218] Post Card Integrate](https://linear.app/snts/issue/PPLE-218/post-card-integrate)
+
+- [#68](https://github.com/PPLEThai/pple-today/pull/68) [`c8208f7`](https://github.com/PPLEThai/pple-today/commit/c8208f7a1102021faeb786aa982104abc49f134a) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-252] onboard name and profile image](https://linear.app/snts/issue/PPLE-252/1-onboard-name-and-profile-image)
+
+### Patch Changes
+
+- Updated dependencies [[`c24f94e`](https://github.com/PPLEThai/pple-today/commit/c24f94ee07064c71a21007e125de4b21a8d1bb6d), [`27e34fd`](https://github.com/PPLEThai/pple-today/commit/27e34fdc4cfa9cea948f4e5196a9b7ea8a583a7f), [`30e3c62`](https://github.com/PPLEThai/pple-today/commit/30e3c62ae4e662c850eab10f0c65f9ba85a63c49)]:
+  - @pple-today/ui@0.2.0
+  - @pple-today/api-client@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes

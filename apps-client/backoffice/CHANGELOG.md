@@ -1,5 +1,20 @@
 # @client/backoffice
 
+## 0.2.0
+
+### Minor Changes
+
+- [#59](https://github.com/PPLEThai/pple-today/pull/59) [`276fab6`](https://github.com/PPLEThai/pple-today/commit/276fab60bad09b0cfc436d97757f53427a4304aa) Thanks [@miello](https://github.com/miello)! - [[PPLE-177] [API] FB Webhook endpoint and subscription](https://linear.app/snts/issue/PPLE-177/api-fb-webhook-endpoint-and-subscription)
+
+- [#61](https://github.com/PPLEThai/pple-today/pull/61) [`a6d0d71`](https://github.com/PPLEThai/pple-today/commit/a6d0d7138821d613911af5f76bb8fc591903dc7a) Thanks [@miello](https://github.com/miello)! - [[PPLE-269] [API] File transaction and rollback mechanism](https://linear.app/snts/issue/PPLE-269/api-file-transaction-and-rollback-mechanism)
+
+### Patch Changes
+
+- [#71](https://github.com/PPLEThai/pple-today/pull/71) [`27e34fd`](https://github.com/PPLEThai/pple-today/commit/27e34fdc4cfa9cea948f4e5196a9b7ea8a583a7f) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-103] User Profile Setting](https://linear.app/snts/issue/PPLE-103/user-profile-setting)
+
+- Updated dependencies [[`27e34fd`](https://github.com/PPLEThai/pple-today/commit/27e34fdc4cfa9cea948f4e5196a9b7ea8a583a7f), [`30e3c62`](https://github.com/PPLEThai/pple-today/commit/30e3c62ae4e662c850eab10f0c65f9ba85a63c49)]:
+  - @pple-today/api-client@0.3.0
+
 ## 0.1.0
 
 ### Minor Changes

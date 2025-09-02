@@ -7,7 +7,7 @@ import * as R from 'remeda'
 import { HandleFacebookWebhookBody, ValidateFacebookWebhookQuery } from './models'
 import { FacebookWebhookRepository, FacebookWebhookRepositoryPlugin } from './repository'
 
-import { PostAttachmentType } from '../../../../__generated__/prisma'
+import { PostAttachment, PostAttachmentType } from '../../../../__generated__/prisma'
 import serverEnv from '../../../config/env'
 import { InternalErrorCode } from '../../../dtos/error'
 import {
@@ -16,32 +16,181 @@ import {
   WebhookFeedChanges,
   WebhookFeedType,
 } from '../../../dtos/facebook'
+import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '../../../plugins/logger'
 import { err } from '../../../utils/error'
 import { mapRepositoryError } from '../../../utils/error'
-import { getFileName, getHashTag } from '../../../utils/facebook'
+import { getFileName } from '../../../utils/facebook'
 import { FacebookRepository, FacebookRepositoryPlugin } from '../repository'
 
 export class FacebookWebhookService {
+  private debouncePostUpdate: Map<string, number | NodeJS.Timeout> = new Map()
+  private postActionQueue: Map<string, WebhookChangesVerb> = new Map()
+
+  private readonly DEBOUNCE_TIMEOUT = 25000
+
   constructor(
     private readonly facebookConfig: {
       appSecret: string
       verifyToken: string
     },
     private readonly facebookRepository: FacebookRepository,
-    private readonly facebookWebhookRepository: FacebookWebhookRepository
+    private readonly facebookWebhookRepository: FacebookWebhookRepository,
+    private readonly loggerService: ElysiaLoggerInstance
   ) {}
 
-  private getAttachmentsFromPagePost(post: PagePost) {
+  private enqueuePostFetching(pageId: string, postId: string, action: WebhookChangesVerb) {
+    const key = postId
+    const existingAction = this.postActionQueue.get(key)
+
+    if (this.debouncePostUpdate.has(key)) {
+      clearTimeout(this.debouncePostUpdate.get(key)!)
+    }
+
+    this.loggerService.info({
+      message: `Post action enqueued for post ${postId}`,
+      context: {
+        pageId,
+        postId,
+        action,
+      },
+    })
+
+    if (!existingAction) {
+      this.postActionQueue.set(key, action)
+    } else if (action === WebhookChangesVerb.ADD) {
+      this.postActionQueue.set(key, action)
+    } else if (action === WebhookChangesVerb.REMOVE) {
+      // NOTE: ADD and REMOVE actions should cancel each other out
+      if (existingAction === WebhookChangesVerb.ADD) {
+        this.debouncePostUpdate.delete(key)
+        this.postActionQueue.delete(key)
+        return ok()
+      }
+
+      this.postActionQueue.set(key, action)
+    }
+
+    this.debouncePostUpdate.set(
+      key,
+      setTimeout(async () => {
+        this.debouncePostUpdate.delete(key)
+        const postAction = this.postActionQueue.get(key)
+
+        if (!postAction) {
+          this.loggerService.warn({
+            message: `No post action found for post ${postId}`,
+            context: {
+              pageId,
+              postId,
+            },
+          })
+          return
+        }
+
+        this.loggerService.info({
+          message: `Post action found for post ${postId}`,
+          context: {
+            pageId,
+            postId,
+            action: postAction,
+          },
+        })
+
+        const result =
+          postAction === WebhookChangesVerb.REMOVE
+            ? await this.facebookWebhookRepository.deletePost(postId)
+            : await this.upsertPostDetails(pageId, postId)
+
+        if (result.isErr()) {
+          if (
+            result.error.code === 'RECORD_NOT_FOUND' ||
+            result.error.code === InternalErrorCode.FEED_ITEM_NOT_FOUND
+          ) {
+            return ok()
+          }
+
+          this.loggerService.error({
+            message: `Failed to upsert post details for post ${postId}. Try again`,
+            error: result.error,
+          })
+          this.enqueuePostFetching(pageId, postId, postAction)
+        }
+      }, this.DEBOUNCE_TIMEOUT)
+    )
+
+    return ok()
+  }
+
+  private async upsertPostDetails(pageId: string, postId: string) {
+    const page = await this.facebookRepository.getLocalFacebookPage(pageId)
+    if (page.isErr()) return mapRepositoryError(page.error)
+
+    const newPostDetails = await this.facebookRepository.getFacebookPostByPostId(
+      postId,
+      page.value.pageAccessToken
+    )
+    if (newPostDetails.isErr()) return mapRepositoryError(newPostDetails.error)
+
+    const newAttachments = this.getAttachmentsFromPagePost(newPostDetails.value)
+
+    const existingPost =
+      await this.facebookWebhookRepository.getExistingPostByFacebookPostId(postId)
+    if (existingPost.isErr()) return mapRepositoryError(existingPost.error)
+
+    const updatedAttachmentResult = await this.facebookWebhookRepository.handleAttachmentChanges(
+      pageId,
+      existingPost.value?.attachments ?? [],
+      newAttachments
+    )
+    if (updatedAttachmentResult.isErr()) return mapRepositoryError(updatedAttachmentResult.error)
+
+    const [updatedAttachment, fileTx] = updatedAttachmentResult.value
+
+    const upsertResult = existingPost.value
+      ? await this.facebookWebhookRepository.updatePost({
+          facebookPageId: pageId,
+          postId: postId,
+          content: newPostDetails.value.message,
+          hashTags: newPostDetails.value.message_tags?.map((tag) => tag.name) ?? [],
+          attachments: updatedAttachment,
+        })
+      : await this.facebookWebhookRepository.publishNewPost({
+          facebookPageId: pageId,
+          postId: postId,
+          content: newPostDetails.value.message,
+          hashTags: newPostDetails.value.message_tags?.map((tag) => tag.name) ?? [],
+          attachments: updatedAttachment,
+        })
+
+    if (upsertResult.isErr()) {
+      const rollbackResult = await fileTx.rollback()
+      if (rollbackResult.isErr()) return rollbackResult
+      return mapRepositoryError(upsertResult.error)
+    }
+
+    return ok()
+  }
+
+  private getAttachmentsFromPagePost(
+    post: PagePost
+  ): Pick<
+    PostAttachment,
+    'description' | 'cacheKey' | 'order' | 'thumbnailPath' | 'type' | 'url' | 'width' | 'height'
+  >[] {
     return R.pipe(
       post.attachments?.data ?? [],
-      R.map((attachment) => {
+      R.map((attachment, idx) => {
         if (attachment.type === 'album') {
           return R.pipe(
             attachment.subattachments!.data,
             R.map((subattachment) => {
-              if (subattachment.type === 'video_autoplay') {
+              if (subattachment.type === 'video_autoplay' || subattachment.type === 'video') {
                 if (!subattachment.media.source) return
                 return {
+                  description: subattachment.description ?? null,
+                  width: subattachment.media.image.width,
+                  height: subattachment.media.image.height,
+                  thumbnailPath: subattachment.media.image.src,
                   url: subattachment.media.source,
                   type: PostAttachmentType.VIDEO,
                   cacheKey: getFileName(subattachment.media.source),
@@ -49,6 +198,10 @@ export class FacebookWebhookService {
               }
               if (subattachment.type === 'photo') {
                 return {
+                  description: subattachment.description ?? null,
+                  width: subattachment.media.image.width,
+                  height: subattachment.media.image.height,
+                  thumbnailPath: null,
                   url: subattachment.media.image.src,
                   type: PostAttachmentType.IMAGE,
                   cacheKey: getFileName(subattachment.media.image.src),
@@ -56,22 +209,35 @@ export class FacebookWebhookService {
               }
             }),
             R.filter((val) => !!val),
-            R.flat()
+            R.flat(),
+            R.map((value, idx) => ({
+              ...value,
+              order: idx + 1,
+            }))
           )
         }
 
         if (attachment.type === 'photo') {
-          if (!attachment.media.image.src) return
           return {
+            description: attachment.description ?? null,
+            width: attachment.media.image.width,
+            height: attachment.media.image.height,
             url: attachment.media.image.src,
+            thumbnailPath: null,
             type: PostAttachmentType.IMAGE,
             cacheKey: getFileName(attachment.media.image.src),
+            order: idx + 1,
           }
         }
         if (attachment.media.source && attachment.type === 'video_autoplay') {
           return {
+            description: attachment.description ?? null,
+            width: attachment.media.image.width,
+            height: attachment.media.image.height,
+            thumbnailPath: attachment.media.image.src,
             url: attachment.media.source,
             type: PostAttachmentType.VIDEO,
+            order: idx + 1,
             cacheKey: getFileName(attachment.media.source),
           }
         }
@@ -83,110 +249,13 @@ export class FacebookWebhookService {
 
   private async handleFeedStatusChange(body: Extract<WebhookFeedChanges, { item: 'status' }>) {
     switch (body.verb) {
-      case WebhookChangesVerb.ADD: {
-        const hashTags = getHashTag(body.message)
-        const updateAttachmentResult = await this.facebookWebhookRepository.handleAttachmentChanges(
-          body.from.id,
-          [],
-          body.photos?.map((image) => ({
-            url: image,
-            type: PostAttachmentType.IMAGE,
-            cacheKey: getFileName(image),
-          })) ?? []
-        )
-
-        if (updateAttachmentResult.isErr()) {
-          return mapRepositoryError(updateAttachmentResult.error)
-        }
-        const [newUploads, fileTx] = updateAttachmentResult.value
-
-        const publishResult = await this.facebookWebhookRepository.publishNewPost({
-          facebookPageId: body.from.id,
-          postId: body.post_id,
-          content: body.message,
-          hashTags,
-          attachments: newUploads.newUploads,
-        })
-
-        if (publishResult.isErr()) {
-          const rollbackResult = await fileTx.rollback()
-          if (rollbackResult.isErr()) return err(rollbackResult.error)
-          return mapRepositoryError(publishResult.error, {
-            UNIQUE_CONSTRAINT_FAILED: {
-              code: InternalErrorCode.FEED_ITEM_ALREADY_EXISTED,
-              message: 'Post already exists',
-            },
-          })
-        }
-
-        return ok()
-      }
+      case WebhookChangesVerb.ADD:
+        return this.enqueuePostFetching(body.from.id, body.post_id, WebhookChangesVerb.ADD)
       case WebhookChangesVerb.EDIT: {
-        if (!body.photos && !body.message) {
-          const deleteResult = await this.facebookWebhookRepository.deletePost(body.post_id)
-
-          if (deleteResult.isErr()) {
-            return mapRepositoryError(deleteResult.error, {
-              RECORD_NOT_FOUND: {
-                code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
-                message: 'Post not found',
-              },
-            })
-          }
-
-          return ok()
+        if (!body.message && !body.photos) {
+          return this.enqueuePostFetching(body.from.id, body.post_id, WebhookChangesVerb.REMOVE)
         }
-
-        const existingPost = await this.facebookWebhookRepository.getExistingPostByFacebookPostId(
-          body.post_id
-        )
-
-        if (existingPost.isErr()) {
-          return mapRepositoryError(existingPost.error)
-        }
-
-        if (!existingPost.value) {
-          return err({
-            code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
-            message: 'Post not found',
-          })
-        }
-
-        const updateAttachmentResult = await this.facebookWebhookRepository.handleAttachmentChanges(
-          body.from.id,
-          existingPost.value.attachments.filter((a) => a.type === PostAttachmentType.IMAGE) ?? [],
-          body.photos?.map((image) => ({
-            url: image,
-            type: PostAttachmentType.IMAGE,
-            cacheKey: getFileName(image),
-          })) ?? []
-        )
-
-        if (updateAttachmentResult.isErr()) {
-          return mapRepositoryError(updateAttachmentResult.error)
-        }
-        const [updatedAttachment, fileTx] = updateAttachmentResult.value
-
-        const hashTags = getHashTag(body.message)
-        const updateResult = await this.facebookWebhookRepository.updatePost({
-          postId: body.post_id,
-          facebookPageId: body.from.id,
-          content: body.message,
-          hashTags,
-          attachments: [
-            ...existingPost.value.attachments.filter((a) => a.type !== PostAttachmentType.IMAGE),
-            ...updatedAttachment.unchangedAttachments,
-            ...updatedAttachment.newUploads,
-          ],
-        })
-
-        if (updateResult.isErr()) {
-          const rollbackResult = await fileTx.rollback()
-          if (rollbackResult.isErr()) return err(rollbackResult.error)
-          return mapRepositoryError(updateResult.error)
-        }
-
-        return ok()
+        return this.enqueuePostFetching(body.from.id, body.post_id, WebhookChangesVerb.EDIT)
       }
     }
 
@@ -196,67 +265,12 @@ export class FacebookWebhookService {
   private async handleFeedPhotoChange(body: Extract<WebhookFeedChanges, { item: 'photo' }>) {
     switch (body.verb) {
       case WebhookChangesVerb.ADD:
+        return this.enqueuePostFetching(body.from.id, body.post_id, WebhookChangesVerb.ADD)
       case WebhookChangesVerb.EDIT: {
-        const existingPost = await this.facebookWebhookRepository.getExistingPostByFacebookPostId(
-          body.post_id
-        )
-
-        if (existingPost.isErr()) {
-          return mapRepositoryError(existingPost.error)
+        if (!body.link) {
+          return this.enqueuePostFetching(body.from.id, body.post_id, WebhookChangesVerb.REMOVE)
         }
-
-        const result = await this.facebookWebhookRepository.handleAttachmentChanges(
-          body.from.id,
-          existingPost.value?.attachments ?? [],
-          body.link
-            ? [
-                {
-                  cacheKey: getFileName(body.link),
-                  url: body.link,
-                  type: PostAttachmentType.IMAGE,
-                },
-              ]
-            : []
-        )
-
-        if (result.isErr()) {
-          return mapRepositoryError(result.error)
-        }
-        const [attachments, fileTx] = result.value
-
-        if (!existingPost.value) {
-          const publishResult = await this.facebookWebhookRepository.publishNewPost({
-            postId: body.post_id,
-            content: body.message,
-            facebookPageId: body.from.id,
-            attachments: attachments.newUploads,
-            hashTags: getHashTag(body.message),
-          })
-
-          if (publishResult.isErr()) {
-            const rollbackResult = await fileTx.rollback()
-            if (rollbackResult.isErr()) return err(rollbackResult.error)
-            return mapRepositoryError(publishResult.error)
-          }
-
-          return ok()
-        }
-
-        const addResult = await this.facebookWebhookRepository.updatePost({
-          postId: body.post_id,
-          content: body.message,
-          facebookPageId: body.from.id,
-          attachments: attachments.newUploads,
-          hashTags: getHashTag(body.message),
-        })
-
-        if (addResult.isErr()) {
-          const rollbackResult = await fileTx.rollback()
-          if (rollbackResult.isErr()) return err(rollbackResult.error)
-          return mapRepositoryError(addResult.error)
-        }
-
-        break
+        return this.enqueuePostFetching(body.from.id, body.post_id, WebhookChangesVerb.EDIT)
       }
     }
     return ok()
@@ -264,149 +278,18 @@ export class FacebookWebhookService {
 
   private async handleFeedVideoChange(body: Extract<WebhookFeedChanges, { item: 'video' }>) {
     switch (body.verb) {
-      case WebhookChangesVerb.ADD: {
-        const existingPost = await this.facebookWebhookRepository.getExistingPostByFacebookPostId(
-          body.post_id
-        )
-
-        if (existingPost.isErr()) {
-          return mapRepositoryError(existingPost.error)
-        }
-
-        const result = await this.facebookWebhookRepository.handleAttachmentChanges(
-          body.from.id,
-          existingPost.value?.attachments ?? [],
-          body.link
-            ? [
-                {
-                  url: body.link,
-                  type: PostAttachmentType.VIDEO,
-                  cacheKey: getFileName(body.link),
-                },
-              ]
-            : []
-        )
-
-        if (result.isErr()) {
-          return mapRepositoryError(result.error)
-        }
-        const [attachments, fileTx] = result.value
-
-        if (!existingPost.value) {
-          const publishResult = await this.facebookWebhookRepository.publishNewPost({
-            postId: body.post_id,
-            content: body.message,
-            facebookPageId: body.from.id,
-            attachments: attachments.newUploads,
-            hashTags: getHashTag(body.message),
-          })
-
-          if (publishResult.isErr()) {
-            const rollbackResult = await fileTx.rollback()
-            if (rollbackResult.isErr()) return err(rollbackResult.error)
-            return mapRepositoryError(publishResult.error)
-          }
-
-          return ok()
-        }
-
-        const addResult = await this.facebookWebhookRepository.addNewAttachments(body.post_id, [
-          ...attachments.unchangedAttachments,
-          ...attachments.newUploads,
-        ])
-
-        if (addResult.isErr()) {
-          const rollbackResult = await fileTx.rollback()
-          if (rollbackResult.isErr()) return err(rollbackResult.error)
-          return mapRepositoryError(addResult.error, {
-            RECORD_NOT_FOUND: {
-              code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
-              message: 'Post not found',
-            },
-          })
-        }
-
-        break
-      }
+      case WebhookChangesVerb.ADD:
+        return this.enqueuePostFetching(body.from.id, body.post_id, WebhookChangesVerb.ADD)
       case WebhookChangesVerb.REMOVE: {
-        const localPostDetails =
-          await this.facebookWebhookRepository.getExistingPostByFacebookPostId(body.post_id)
-
-        if (localPostDetails.isErr()) {
-          return mapRepositoryError(localPostDetails.error)
+        return this.enqueuePostFetching(body.from.id, body.post_id, WebhookChangesVerb.EDIT)
+      }
+      case WebhookChangesVerb.EDIT: {
+        if (!body.link) {
+          return this.enqueuePostFetching(body.from.id, body.post_id, WebhookChangesVerb.REMOVE)
         }
-
-        if (!localPostDetails.value) {
-          return err({
-            code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
-            message: 'Post not found',
-          })
-        }
-
-        const userPageResult = await this.facebookRepository.getLocalFacebookPage(body.from.id)
-
-        if (userPageResult.isErr()) {
-          return mapRepositoryError(userPageResult.error, {
-            RECORD_NOT_FOUND: {
-              code: InternalErrorCode.FACEBOOK_LINKED_PAGE_NOT_FOUND,
-              message: 'Facebook page not found',
-            },
-          })
-        }
-
-        if (!userPageResult.value.pageAccessToken)
-          return err({
-            code: InternalErrorCode.FACEBOOK_LINKED_PAGE_NOT_FOUND,
-            message: 'Facebook page access token not found',
-          })
-
-        const postDetails = await this.facebookRepository.getFacebookPostByPostId(
-          body.post_id,
-          userPageResult.value.pageAccessToken
-        )
-
-        if (postDetails.isErr()) {
-          return err(postDetails.error)
-        }
-
-        const newAttachments = this.getAttachmentsFromPagePost(postDetails.value)
-        const attachmentChangesResult =
-          await this.facebookWebhookRepository.handleAttachmentChanges(
-            body.from.id,
-            localPostDetails.value.attachments ?? [],
-            newAttachments
-          )
-
-        if (attachmentChangesResult.isErr()) {
-          return mapRepositoryError(attachmentChangesResult.error)
-        }
-        const [attachments, fileTx] = attachmentChangesResult.value
-
-        const updatedPostResult = await this.facebookWebhookRepository.updatePost({
-          facebookPageId: body.from.id,
-          postId: body.post_id,
-          // NOTE: New upload should have less attachments than old ones because this is removal action
-          attachments: attachments.unchangedAttachments,
-          content: body.message,
-          hashTags: getHashTag(body.message),
-        })
-
-        if (updatedPostResult.isErr()) {
-          const rollbackResult = await fileTx.rollback()
-          if (rollbackResult.isErr()) return err(rollbackResult.error)
-          return mapRepositoryError(updatedPostResult.error, {
-            RECORD_NOT_FOUND: {
-              code: InternalErrorCode.FEED_ITEM_NOT_FOUND,
-              message: 'Post not found',
-            },
-          })
-        }
-
-        break
+        return this.enqueuePostFetching(body.from.id, body.post_id, WebhookChangesVerb.EDIT)
       }
     }
-    // Handle the feed video change
-    return ok()
   }
 
   async validateWebhookSignature(signature: string, body: Buffer) {
@@ -450,22 +333,13 @@ export class FacebookWebhookService {
       for (const change of entry.changes) {
         switch (change.value.item) {
           case WebhookFeedType.STATUS: {
-            const statusResult = await this.handleFeedStatusChange(change.value)
-            if (statusResult.isErr()) return statusResult
-
-            break
+            return await this.handleFeedStatusChange(change.value)
           }
           case WebhookFeedType.VIDEO: {
-            const videoResult = await this.handleFeedVideoChange(change.value)
-            if (videoResult.isErr()) return videoResult
-
-            break
+            return await this.handleFeedVideoChange(change.value)
           }
           case WebhookFeedType.PHOTO: {
-            const photoResult = await this.handleFeedPhotoChange(change.value)
-            if (photoResult.isErr()) return photoResult
-
-            break
+            return await this.handleFeedPhotoChange(change.value)
           }
         }
       }
@@ -478,14 +352,19 @@ export class FacebookWebhookService {
 export const FacebookWebhookServicePlugin = new Elysia({
   name: 'FacebookWebhookService',
 })
-  .use([FacebookWebhookRepositoryPlugin, FacebookRepositoryPlugin])
-  .decorate(({ facebookRepository, facebookWebhookRepository }) => ({
+  .use([
+    FacebookWebhookRepositoryPlugin,
+    FacebookRepositoryPlugin,
+    ElysiaLoggerPlugin({ name: 'FacebookWebhookService' }),
+  ])
+  .decorate(({ facebookRepository, facebookWebhookRepository, loggerService }) => ({
     facebookWebhookService: new FacebookWebhookService(
       {
         appSecret: serverEnv.FACEBOOK_APP_SECRET,
         verifyToken: serverEnv.FACEBOOK_WEBHOOK_VERIFY_TOKEN,
       },
       facebookRepository,
-      facebookWebhookRepository
+      facebookWebhookRepository,
+      loggerService
     ),
   }))

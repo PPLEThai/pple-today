@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import { Platform } from 'react-native'
 import { createMutation, createQuery } from 'react-query-kit'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -15,7 +14,6 @@ import {
   ResponseType,
 } from 'expo-auth-session'
 import { useRouter } from 'expo-router'
-import * as WebBrowser from 'expo-web-browser'
 import { z } from 'zod/v4'
 
 import appConfig from '@app/app.config'
@@ -24,6 +22,7 @@ import { environment } from '@app/env'
 import { AuthSession, getAuthSession, setAuthSession } from './session'
 
 import { fetchClient, reactQueryClient } from '../api-client'
+import { getBrowserPackage } from '../get-browser-package'
 
 const authRequest: AuthRequest = new AuthRequest({
   responseType: ResponseType.Code,
@@ -142,7 +141,7 @@ export const useAuthMe = () => {
   })
 }
 
-export const codeExchange = ({
+export const codeExchange = async ({
   code,
   discovery,
 }: {
@@ -153,15 +152,20 @@ export const codeExchange = ({
     console.error('Code verifier is not set. This should not happen.')
     throw new Error('Code verifier is not set. This should not happen.')
   }
-  return exchangeCodeAsync(
-    {
-      clientId: authRequest.clientId,
-      redirectUri: authRequest.redirectUri,
-      code: code,
-      extraParams: { code_verifier: authRequest.codeVerifier },
-    },
-    discovery
-  )
+  try {
+    return await exchangeCodeAsync(
+      {
+        clientId: authRequest.clientId,
+        redirectUri: authRequest.redirectUri,
+        code: code,
+        extraParams: { code_verifier: authRequest.codeVerifier },
+      },
+      discovery
+    )
+  } catch (error) {
+    console.error('Error exchanging code:', error)
+    throw error
+  }
 }
 
 export const AuthLifeCycleHook = () => {
@@ -226,13 +230,26 @@ export const login = async ({ discovery }: { discovery: DiscoveryDocument }) => 
     }
     throw new Error('Authentication failed or was cancelled')
   }
+  const tokenResponse = await codeExchange({
+    code: loginResult.params.code,
+    discovery: discovery,
+  })
   try {
-    return await codeExchange({
-      code: loginResult.params.code,
-      discovery: discovery,
+    const registerResponse = await fetchClient('/auth/register', {
+      headers: { Authorization: `Bearer ${tokenResponse.accessToken}` },
+      method: 'POST',
+      query: { role: 'USER' },
     })
+    if (registerResponse.error?.status === 409) {
+      console.log('User already exists:', registerResponse.error)
+      return { tokenResponse, action: 'login' } as const
+    }
+    if (registerResponse.error) {
+      throw registerResponse.error
+    }
+    return { tokenResponse, action: 'register' } as const
   } catch (error) {
-    console.error('Error exchanging code:', error)
+    console.error('Error during registration:', error)
     throw error
   }
 }
@@ -253,13 +270,17 @@ export const useLoginMutation = () => {
     onSuccess: async (result) => {
       // save session in expo session store
       await sessionMutation.mutateAsync({
-        accessToken: result.accessToken,
-        refreshToken: result.refreshToken ?? '',
-        idToken: result.idToken ?? null,
+        accessToken: result.tokenResponse.accessToken,
+        refreshToken: result.tokenResponse.refreshToken ?? '',
+        idToken: result.tokenResponse.idToken ?? null,
       })
       // reset all reactQueryClient cache
       await queryClient.resetQueries({ queryKey: reactQueryClient.getPartialQueryKey() })
-      router.push('/')
+      if (result.action === 'register') {
+        router.push('/onboarding')
+      } else if (result.action === 'login') {
+        router.push('/')
+      }
     },
   })
 }
@@ -305,19 +326,4 @@ export const useLogoutMutation = () => {
       router.push('/auth')
     },
   })
-}
-
-async function getBrowserPackage() {
-  try {
-    // when default browser is not chrome on Android it will throw an error `No matching browser activity found`
-    // we can use `WebBrowser.getCustomTabsSupportingBrowsersAsync()` to get the preferred browser package or list service packages
-    if (Platform.OS === 'android') {
-      const { preferredBrowserPackage, servicePackages } =
-        await WebBrowser.getCustomTabsSupportingBrowsersAsync()
-      return preferredBrowserPackage ?? servicePackages[0]
-    }
-  } catch (error) {
-    console.warn('Error getting browser package:', error)
-    return undefined
-  }
 }

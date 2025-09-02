@@ -49,6 +49,11 @@ export const FeedItemPostContent = t.Object({
         t.Object({
           id: t.String({ description: 'The ID of the attachment' }),
           url: t.String({ description: 'The URL of the attachment' }),
+          thumbnailUrl: t.Optional(
+            t.String({ description: 'The thumbnail URL of the attachment' })
+          ),
+          width: t.Optional(t.Number({ description: 'The width of the attachment' })),
+          height: t.Optional(t.Number({ description: 'The height of the attachment' })),
           type: t.Enum(PostAttachmentType, {
             description: 'The type of the attachment, e.g., image, video',
           }),

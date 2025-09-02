@@ -18,7 +18,6 @@ import { Textarea } from '@pple-today/ui/textarea'
 import { toast } from '@pple-today/ui/toast'
 import { useForm } from '@tanstack/react-form'
 import { useQueryClient } from '@tanstack/react-query'
-import dayjs from 'dayjs'
 import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
 import { useVideoPlayer, VideoView } from 'expo-video'
@@ -36,6 +35,7 @@ import { MoreOrLess } from '@app/components/more-or-less'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSessionQuery } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
+import { formatDateInterval } from '@app/libs/format-date-interval'
 
 export interface PostCardAttachment {
   id: string
@@ -215,25 +215,6 @@ function TextPost(props: TextProps) {
 }
 function ButtonTextPost(props: TextProps) {
   return <Text {...props} className="text-base-primary-default font-noto-light text-base" />
-}
-
-function formatDateInterval(date: string): string {
-  const now = new Date()
-  const diff = dayjs(now).diff(dayjs(date))
-  const seconds = Math.floor(diff / 1000)
-  const minutes = Math.floor(seconds / 60)
-  const hours = Math.floor(minutes / 60)
-  const days = Math.floor(hours / 24)
-
-  if (days > 0) {
-    return `${days} วัน`
-  } else if (hours > 0) {
-    return `${hours} ชั่วโมง`
-  } else if (minutes > 0) {
-    return `${minutes} นาที`
-  } else {
-    return `เพิ่งเกิดขึ้น`
-  }
 }
 
 interface LightboxProps {
