@@ -19,6 +19,7 @@ import { Text } from '@pple-today/ui/text'
 import { toast } from '@pple-today/ui/toast'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { Image } from 'expo-image'
+import { useRouter } from 'expo-router'
 import { PermissionStatus, useTrackingPermissions } from 'expo-tracking-transparency'
 import * as WebBrowser from 'expo-web-browser'
 import {
@@ -275,7 +276,7 @@ const PointSection = () => {
 const FacebookPageSection = () => {
   const [permissionStatus, requestPermission] = useTrackingPermissions()
   const [permissionDialogOpen, setPermissionDialogOpen] = React.useState(false)
-  const [facebookAccessToken, setFacebookAccessToken] = React.useState<string | null>(null)
+  const router = useRouter()
 
   async function loginWithFacebook() {
     try {
@@ -295,7 +296,7 @@ const FacebookPageSection = () => {
         console.error('Failed to get facebook access token')
         return
       }
-      setFacebookAccessToken(accessTokenResult.accessToken)
+      router.push(`/profile/facebook?facebookAccessToken=${accessTokenResult.accessToken}`)
     } catch (error) {
       console.error('Login Error: ', error)
     }

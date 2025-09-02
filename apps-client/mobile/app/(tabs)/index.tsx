@@ -140,7 +140,7 @@ function MainHeader() {
           size="icon"
           aria-label="Profile Settings"
           onPress={() => {
-            router.push('/auth')
+            router.push('/profile')
           }}
         >
           <Icon icon={PPLEIcon} width={20} height={20} color="white" />

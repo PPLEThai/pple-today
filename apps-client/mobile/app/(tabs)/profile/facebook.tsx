@@ -1,0 +1,143 @@
+import React, { useEffect, useState } from 'react'
+import { View } from 'react-native'
+
+import { Avatar, AvatarFallback, AvatarImage } from '@pple-today/ui/avatar'
+import { Button } from '@pple-today/ui/button'
+import { Icon } from '@pple-today/ui/icon'
+import { clsx } from '@pple-today/ui/lib/utils'
+import { Text } from '@pple-today/ui/text'
+import { toast } from '@pple-today/ui/toast'
+import { H1 } from '@pple-today/ui/typography'
+import * as RadioGroupPrimitive from '@rn-primitives/radio-group'
+import { useQueryClient } from '@tanstack/react-query'
+import { useLocalSearchParams, useRouter } from 'expo-router'
+import { ArrowLeftIcon } from 'lucide-react-native'
+
+import FacebookIcon from '@app/assets/facebook-icon.svg'
+import PPLEIcon from '@app/assets/pple-icon.svg'
+import { reactQueryClient } from '@app/libs/api-client'
+
+export default function FacebookListProfile() {
+  const params = useLocalSearchParams()
+  const facebookAccessToken = params.facebookAccessToken as string
+  const router = useRouter()
+  useEffect(() => {
+    if (facebookAccessToken === undefined || Array.isArray(facebookAccessToken)) {
+      router.push('/profile')
+      console.error('Invalid Facebook access token')
+      toast({ text1: 'Invalid Facebook access token' })
+      return
+    }
+  }, [facebookAccessToken, router])
+  const facebookPagesQuery = reactQueryClient.useQuery(
+    '/facebook/token/pages',
+    { query: { facebookToken: facebookAccessToken! } },
+    { enabled: !!facebookAccessToken }
+  )
+  const queryClient = useQueryClient()
+  const linkPageMutation = reactQueryClient.useMutation('post', '/facebook/linked-page')
+  const [value, setValue] = useState('')
+  return (
+    <View className="flex-1 flex-col">
+      <View className="p-4 flex flex-row justify-between items-center border-b border-base-outline-default">
+        <Button
+          variant="outline-primary"
+          size="icon"
+          onPress={() => router.push('/profile')}
+          aria-label="กลับ"
+        >
+          <Icon icon={ArrowLeftIcon} size={24} strokeWidth={2} />
+        </Button>
+        <View className="flex flex-row gap-2">
+          <FacebookIcon size={32} />
+          <H1 className="font-anakotmai-bold text-2xl text-base-text-high">จัดการเพจที่ดูแล</H1>
+        </View>
+      </View>
+      <RadioGroupPrimitive.Root
+        className="p-4 flex flex-col"
+        value={value}
+        onValueChange={(val) => {
+          setValue(val)
+          if (!facebookPagesQuery.data) {
+            return
+          }
+          const page = facebookPagesQuery.data.find((p) => p.id === val)
+          if (!page) {
+            return
+          }
+          linkPageMutation.mutateAsync(
+            { body: { facebookPageId: page.id, facebookPageAccessToken: page.accessToken } },
+            {
+              onSuccess: () => {
+                queryClient.invalidateQueries({
+                  queryKey: reactQueryClient.getQueryKey('get', '/facebook/linked-page'),
+                })
+                router.push('/profile')
+              },
+              onError: (error) => {
+                console.error('Failed to link Facebook page', error)
+                toast.error({ text1: 'Failed to link Facebook page' })
+              },
+            }
+          )
+        }}
+      >
+        {/* TODO: Remove mock data */}
+        <FacebookRadioItem value="1" name="Page 1" imageUrl="" />
+        <FacebookRadioItem value="2" name="Page 2" imageUrl="" />
+        <FacebookRadioItem value="3" name="Page 3" imageUrl="" disabled />
+        {facebookPagesQuery.data &&
+          facebookPagesQuery.data.map((page) => (
+            <FacebookRadioItem
+              key={page.id}
+              value={page.id}
+              name={page.name}
+              imageUrl={page.profilePictureUrl}
+            />
+          ))}
+      </RadioGroupPrimitive.Root>
+    </View>
+  )
+}
+
+// eslint-disable-next-line import/namespace
+interface RadioGroupItemProps extends RadioGroupPrimitive.ItemProps {
+  ref?: React.RefObject<RadioGroupPrimitive.ItemRef>
+  name: string
+  imageUrl: string
+}
+// Rerendering avatar causing image to flicker somehow
+const FacebookRadioItem = React.memo(function FacebookRadioItem({
+  className,
+  ...props
+}: RadioGroupItemProps) {
+  return (
+    <RadioGroupPrimitive.Item
+      className={clsx(
+        'py-2 flex flex-row gap-2 items-center',
+        props.disabled && 'web:cursor-not-allowed opacity-50'
+      )}
+      {...props}
+    >
+      <View className="aspect-square h-4 w-4 rounded-full justify-center items-center border border-primary text-primary">
+        <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
+          <View className="aspect-square h-[9px] w-[9px] native:h-[10] native:w-[10] bg-primary rounded-full" />
+        </RadioGroupPrimitive.Indicator>
+      </View>
+      <Avatar alt={props.name} className="size-8">
+        <AvatarImage source={{ uri: props.imageUrl }} />
+        <AvatarFallback className="w-8 h-8 rounded-full bg-base-primary-default flex items-center justify-center overflow-hidden pt-0.5">
+          <Icon icon={PPLEIcon} width={20} height={20} className="text-white" />
+        </AvatarFallback>
+      </Avatar>
+      <View className="flex flex-col">
+        <Text className="text-sm text-base-text-high font-noto-medium">{props.name}</Text>
+        {props.disabled && (
+          <Text className="text-sm text-base-text-medium font-anakotmai-light">
+            เพจนี้ได้มีการเชื่อมต่อกับ PPLE Today แล้ว
+          </Text>
+        )}
+      </View>
+    </RadioGroupPrimitive.Item>
+  )
+})
