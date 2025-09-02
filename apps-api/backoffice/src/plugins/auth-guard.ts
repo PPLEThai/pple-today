@@ -1,7 +1,6 @@
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { UserRole } from '../../__generated__/prisma'
 import { InternalErrorCode } from '../dtos/error'
 import { AuthRepository, AuthRepositoryPlugin } from '../modules/auth/repository'
 import { err, mapErrorCodeToResponse } from '../utils/error'
@@ -60,7 +59,7 @@ export const AuthGuardPlugin = new Elysia({
         return { oidcUser: oidcUserResult.value }
       },
     },
-    requiredLocalRole: (allowedRole: UserRole[]) => ({
+    requiredLocalRole: (allowedRoles: string[]) => ({
       async resolve({ status, headers, authGuard }) {
         const user = await authGuard.getCurrentUser(headers)
 
@@ -68,7 +67,7 @@ export const AuthGuardPlugin = new Elysia({
           return mapErrorCodeToResponse(user.error, status)
         }
 
-        if (!allowedRole.includes(user.value.role)) {
+        if (!user.value.roles.some((role) => allowedRoles.includes(role))) {
           return mapErrorCodeToResponse(
             { code: InternalErrorCode.FORBIDDEN, message: 'Forbidden' },
             status

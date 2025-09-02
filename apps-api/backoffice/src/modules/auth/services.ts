@@ -3,7 +3,6 @@ import { ok } from 'neverthrow'
 
 import { AuthRepository, AuthRepositoryPlugin } from './repository'
 
-import { UserRole } from '../../../__generated__/prisma'
 import { IntrospectAccessTokenResult } from '../../dtos/auth'
 import { InternalErrorCode } from '../../dtos/error'
 import { mapRepositoryError } from '../../utils/error'
@@ -35,12 +34,12 @@ export class AuthService {
       profileImage: user.value.profileImage
         ? this.fileService.getPublicFileUrl(user.value.profileImage)
         : undefined,
-      role: user.value.role,
+      roles: user.value.roles,
     })
   }
 
-  async registerUser(user: IntrospectAccessTokenResult, role: UserRole) {
-    const newUser = await this.authRepository.createUser(user, role)
+  async registerUser(user: IntrospectAccessTokenResult, roles: string[]) {
+    const newUser = await this.authRepository.createUser(user, roles)
 
     if (newUser.isErr()) {
       return mapRepositoryError(newUser.error, {

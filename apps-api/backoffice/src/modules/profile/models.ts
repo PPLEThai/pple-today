@@ -1,6 +1,5 @@
 import { Static, t } from 'elysia'
 
-import { UserRole } from '../../../__generated__/prisma'
 import { UserParticipation } from '../../dtos/participation'
 
 // TODO: Add election
@@ -11,7 +10,7 @@ export const GetMyProfileResponse = t.Object({
   id: t.String({ description: 'The ID of the user' }),
   name: t.String({ description: 'The name of the user' }),
   profileImage: t.Optional(t.String({ description: 'The URL of the profile image' })),
-  role: t.Enum(UserRole, { description: 'The role of the user' }),
+  roles: t.Array(t.String({ description: 'The role of the user' })),
   numberOfFollowing: t.Number({ description: 'Number of users the user is following' }),
   point: t.Number({ description: 'Points earned by the user' }),
   numberOfFollowingTopics: t.Number({ description: 'Number of topics the user is following' }),
@@ -32,7 +31,7 @@ export const GetProfileByIdParams = t.Object({
 
 export const GetProfileByIdResponse = t.Object({
   id: t.String({ description: 'The ID of the user' }),
-  role: t.Enum(UserRole, { description: 'The role of the user' }),
+  roles: t.Array(t.String({ description: 'The role of the user' })),
   name: t.String({ description: 'The name of the user' }),
   profileImage: t.Optional(t.String({ description: 'The URL of the profile image' })),
   numberOfFollowers: t.Number({ description: 'Number of followers the user has' }),
