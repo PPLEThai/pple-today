@@ -381,17 +381,19 @@ function LinkFacebookPageDialog() {
                     return
                   }
                   setPermissionDialogOpen(false)
-                  loginWithFacebook()
+                  // add a delay to wait for dialog to close
+                  // otherwise loginWithFacebook will be cancelled
+                  setTimeout(() => loginWithFacebook(), 1000)
                   return
                 }
                 Linking.openSettings()
                 return
               }
               setPermissionDialogOpen(false)
-              loginWithFacebook()
+              setTimeout(() => loginWithFacebook(), 1000)
             }}
           >
-            <Text>OK</Text>
+            <Text>ตกลง</Text>
           </Button>
         </DialogFooter>
       </DialogContent>
