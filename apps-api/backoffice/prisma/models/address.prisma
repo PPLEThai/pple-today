@@ -6,6 +6,5 @@ model Address {
 
   users User[]
 
-  @@id([district, subDistrict])
-  @@index([province, district, subDistrict, postalCode])
+  @@id([province, district, subDistrict, postalCode])
 }

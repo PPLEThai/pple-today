@@ -10,7 +10,7 @@ import {
 } from '../__generated__/prisma'
 const transformProvinceDetails = async () => {
   const response = await fetch(
-    'https://raw.githubusercontent.com/thailand-geography-data/thailand-geography-json/refs/heads/main/src/geography.json'
+    'https://raw.githubusercontent.com/earthchie/jquery.Thailand.js/refs/heads/master/jquery.Thailand.js/database/raw_database/raw_database.json'
   )
 
   if (!response.ok) {
@@ -19,11 +19,11 @@ const transformProvinceDetails = async () => {
 
   const data = await response.json()
 
-  return data.map(({ postalCode, provinceNameTh, districtNameTh, subdistrictNameTh }) => ({
-    postalCode: postalCode.toString(),
-    province: provinceNameTh,
-    district: districtNameTh,
-    subDistrict: subdistrictNameTh,
+  return data.map(({ zipcode, amphoe, province, district }) => ({
+    postalCode: zipcode.toString(),
+    province,
+    district: amphoe,
+    subDistrict: district,
   }))
 }
 
@@ -42,9 +42,11 @@ const seedAddresses = async () => {
   for (const { province, district, subDistrict, postalCode } of provinces) {
     await prisma.address.upsert({
       where: {
-        district_subDistrict: {
+        province_district_subDistrict_postalCode: {
+          province,
           district,
           subDistrict,
+          postalCode,
         },
       },
       create: {
