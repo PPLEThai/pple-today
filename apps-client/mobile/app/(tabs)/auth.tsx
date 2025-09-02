@@ -150,7 +150,7 @@ const ProfileSection = () => {
       case 'USER':
         return 'ประชาชน'
       case 'STAFF':
-        return 'สมาชิกพรรค'
+        return 'คณะทำงาน'
       case 'OFFICIAL':
         return 'คณะทำงาน'
       default:

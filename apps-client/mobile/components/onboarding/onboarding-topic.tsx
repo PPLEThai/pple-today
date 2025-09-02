@@ -65,7 +65,7 @@ export function OnboardingTopic() {
                     <Text>Loading...</Text>
                   ) : getTopicQuery.data ? (
                     getTopicQuery.data.map((tag) => (
-                      <ToggleGroupItem key={tag.id} value={tag.name} variant="outline">
+                      <ToggleGroupItem key={tag.id} value={tag.id} variant="outline">
                         <Text>{tag.name}</Text>
                       </ToggleGroupItem>
                     ))

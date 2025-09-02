@@ -23,6 +23,7 @@ import { z } from 'zod/v4'
 
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { getAuthSession } from '@app/libs/auth/session'
+import { handleUploadSignedUrl } from '@app/utils/upload'
 
 import { OnboardingAddressState, useOnboardingContext } from './onboarding-context'
 
@@ -103,23 +104,28 @@ export function OnboardingAddress() {
     // create blob to upload
     const asset = imgPickerResult.assets[0]
     if (!asset) return
+    try {
+      const formData = new FormData()
 
-    const resultImage = await fetch(asset.uri)
-    const blob = await resultImage.blob()
+      for (const [key, value] of Object.entries(uploadFields)) {
+        formData.append(key, value)
+      }
 
-    const formData = new FormData()
-    formData.append('file', blob)
-    for (const [key, value] of Object.entries(uploadFields)) {
-      formData.append(key, value)
-    }
+      // @ts-expect-error: Special react native format for form data
+      formData.append('file', {
+        uri: asset.uri,
+        name: asset.fileName ?? `profile-picture-${new Date().getTime()}.png`,
+        type: asset.mimeType,
+      })
 
-    const result = await fetch(uploadUrl, {
-      method: 'POST',
-      body: formData,
-    })
+      const result = await handleUploadSignedUrl(uploadUrl, formData)
 
-    if (!result.ok) {
-      throw new Error('failed to upload Image')
+      if (!result.ok) {
+        throw new Error('Failed to upload image')
+      }
+    } catch (err) {
+      console.error('Error uploading image', err)
+      throw err
     }
   }
 

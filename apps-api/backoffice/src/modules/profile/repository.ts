@@ -3,11 +3,16 @@ import Elysia from 'elysia'
 import { CompleteOnboardingProfileBody } from './models'
 
 import { Prisma } from '../../../__generated__/prisma'
+import { FilePath } from '../../dtos/file'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
-import { fromRepositoryPromise } from '../../utils/error'
+import { err, fromRepositoryPromise } from '../../utils/error'
+import { FileService, FileServicePlugin, FileTransactionService } from '../file/services'
 
 export class ProfileRepository {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService,
+    private fileService: FileService
+  ) {}
 
   async getUserParticipation(userId: string) {
     return await fromRepositoryPromise(
@@ -181,32 +186,65 @@ export class ProfileRepository {
         },
       }
 
-      await this.prismaService.address.findFirstOrThrow({
-        where: {
-          district: profileData.address.district,
-          subDistrict: profileData.address.subDistrict,
-          postalCode: profileData.address.postalCode,
-          province: profileData.address.province,
-        },
-      })
+      const addressResult = await fromRepositoryPromise(
+        this.prismaService.address.findFirstOrThrow({
+          where: {
+            district: profileData.address.district,
+            subDistrict: profileData.address.subDistrict,
+            postalCode: profileData.address.postalCode,
+            province: profileData.address.province,
+          },
+        })
+      )
+
+      if (addressResult.isErr()) return err(addressResult.error)
     }
 
     return await this.updateUserProfile(userId, userData)
   }
 
   async updateUserProfile(userId: string, profileData: Prisma.UserUpdateArgs['data']) {
-    return await fromRepositoryPromise(
+    let globalFileTx: FileTransactionService | null = null
+    if (profileData.profileImage) {
+      const moveFileResult = await fromRepositoryPromise(
+        this.fileService.$transaction(async (tx) => {
+          const moveResult = await tx.bulkMoveToPublicFolder([profileData.profileImage as FilePath])
+          if (moveResult.isErr()) return moveResult
+
+          return moveResult.value[0]
+        })
+      )
+
+      if (moveFileResult.isErr()) return err(moveFileResult.error)
+
+      const [publicFile, fileTx] = moveFileResult.value
+      profileData.profileImage = publicFile
+
+      globalFileTx = fileTx
+    }
+
+    const updateResult = await fromRepositoryPromise(
       this.prismaService.user.update({
         where: { id: userId },
         include: { address: true },
         data: profileData,
       })
     )
+
+    if (updateResult.isErr()) {
+      if (globalFileTx) {
+        const rollbackResult = await globalFileTx.rollback()
+        if (rollbackResult.isErr()) return err(rollbackResult.error)
+      }
+      return err(updateResult.error)
+    }
+
+    return updateResult
   }
 }
 
 export const ProfileRepositoryPlugin = new Elysia({ name: 'ProfileRepository' })
-  .use(PrismaServicePlugin)
-  .decorate(({ prismaService }) => ({
-    profileRepository: new ProfileRepository(prismaService),
+  .use([PrismaServicePlugin, FileServicePlugin])
+  .decorate(({ prismaService, fileService }) => ({
+    profileRepository: new ProfileRepository(prismaService, fileService),
   }))
