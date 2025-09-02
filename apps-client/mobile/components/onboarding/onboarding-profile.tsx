@@ -1,7 +1,7 @@
 import React from 'react'
 import { View } from 'react-native'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@pple-today/ui/avatar'
+import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Button } from '@pple-today/ui/button'
 import { FormControl, FormItem, FormLabel } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
@@ -15,6 +15,8 @@ import { z } from 'zod/v4'
 import { usePhotoLibraryPermission } from '@app/libs/use-permission'
 
 import { useOnboardingContext } from './onboarding-context'
+
+import { AvatarPPLEFallback } from '../avatar-pple-fallback'
 
 const formSchema = z.object({
   name: z.string(),
@@ -121,9 +123,7 @@ export function OnboardingProfile() {
                 >
                   <Avatar className="size-36" alt="Profile">
                     <AvatarImage source={{ uri: selectedImage ?? '' }} />
-                    <AvatarFallback>
-                      <View />
-                    </AvatarFallback>
+                    <AvatarPPLEFallback />
                   </Avatar>
                   <View className="absolute bottom-0 right-0">
                     <View className="bg-base-primary-default rounded-full border-2 size-fit border-background p-2">

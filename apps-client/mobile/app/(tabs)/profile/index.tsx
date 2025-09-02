@@ -4,6 +4,7 @@ import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import { ScrollView } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
 
+import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
 import {
@@ -18,7 +19,6 @@ import { Icon } from '@pple-today/ui/icon'
 import { Text } from '@pple-today/ui/text'
 import { toast } from '@pple-today/ui/toast'
 import { H1, H2 } from '@pple-today/ui/typography'
-import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
 import { PermissionStatus, useTrackingPermissions } from 'expo-tracking-transparency'
 import * as WebBrowser from 'expo-web-browser'
@@ -43,6 +43,7 @@ import { UserRole } from '@api/backoffice/__generated__/prisma/client'
 import { GetUserParticipationResponse } from '@api/backoffice/src/modules/profile/models'
 import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
+import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { environment } from '@app/env'
 import { reactQueryClient } from '@app/libs/api-client'
 import {
@@ -154,7 +155,7 @@ const ProfileSection = () => {
       case 'USER':
         return 'ประชาชน'
       case 'STAFF':
-        return 'คณะทำงาน'
+        return 'สมาชิกพรรค'
       case 'OFFICIAL':
         return 'คณะทำงาน'
       default:
@@ -172,10 +173,10 @@ const ProfileSection = () => {
       </>
     ) : (
       <>
-        {/* TODO: Avatar */}
-        <View className="rounded-full size-16 bg-base-bg-default overflow-hidden">
-          <Image source={{ uri: profileQuery.data.profileImage }} className="w-full h-full" />
-        </View>
+        <Avatar className="size-16" alt={profileQuery.data.name}>
+          <AvatarImage source={{ uri: profileQuery.data.profileImage }} />
+          <AvatarPPLEFallback />
+        </Avatar>
         <View className="flex flex-col gap-2 items-start">
           <Text className="text-base-text-high font-anakotmai-medium text-2xl">
             {profileQuery.data.name}
