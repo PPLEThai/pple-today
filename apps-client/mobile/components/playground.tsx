@@ -37,6 +37,7 @@ import { toast } from '@pple-today/ui/toast'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
+import { useQuery } from '@tanstack/react-query'
 import { useEvent } from 'expo'
 import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
@@ -647,11 +648,20 @@ function PostCardExample() {
 
 function FacebookSDKExample() {
   const [facebookAccessToken, setFacebookAccessToken] = useState<string | null>(null)
-  const facebookPagesQuery = reactQueryClient.useQuery(
-    '/facebook/token/pages',
-    { query: { facebookToken: facebookAccessToken! } },
-    { enabled: !!facebookAccessToken }
-  )
+
+  const facebookPagesQuery = useQuery({
+    queryFn: async () => {
+      const response = await fetch(
+        `https://graph.facebook.com/v23.0/me/accounts?fields=access_token,id,name,picture{cache_key,url}&access_token=${facebookAccessToken}`
+      )
+
+      return response.json()
+    },
+    queryKey: ['facebookPages', facebookAccessToken],
+    enabled: !!facebookAccessToken,
+  })
+
+  const linkPage = reactQueryClient.useMutation('post', '/facebook/linked-page')
 
   /**
    * NOTE: (iOS)
@@ -666,6 +676,7 @@ function FacebookSDKExample() {
       console.log('Yay! I have user permission to track data')
     }
   }, [requestPermission])
+
   return (
     <View className="flex flex-col gap-2">
       <H2 className="font-inter-bold">Facebook SDK</H2>
@@ -677,23 +688,6 @@ function FacebookSDKExample() {
           </Button>
         </>
       )}
-      {/* <LoginButton
-        onLoginFinished={async (error, result) => {
-          if (error) {
-            console.error('Login failed: ', error)
-            return
-          }
-          console.log('Login success: ' + result)
-          const accessTokenResult = await AccessToken.getCurrentAccessToken()
-          if (!accessTokenResult || !accessTokenResult.accessToken) {
-            console.error('Failed to get facebook access token')
-            return
-          }
-          console.log('AccessToken result: ' + accessTokenResult)
-          setFacebookAccessToken(accessTokenResult.accessToken)
-        }}
-        permissions={['email', 'public_profile']}
-      /> */}
       <Button
         disabled={Platform.OS === 'ios' && !status?.granted}
         onPress={async () => {
@@ -714,7 +708,6 @@ function FacebookSDKExample() {
               console.error('Failed to get facebook access token')
               return
             }
-            console.log('AccessToken result: ' + accessTokenResult)
             setFacebookAccessToken(accessTokenResult.accessToken)
           } catch (error) {
             console.error('Login Error: ', error)
@@ -722,6 +715,25 @@ function FacebookSDKExample() {
         }}
       >
         <Text>Login with Facebook</Text>
+      </Button>
+      <Button
+        onPress={async () => {
+          console.log('Linking Facebook Page...', facebookPagesQuery.data?.data)
+          try {
+            const result = await linkPage.mutateAsync({
+              body: {
+                facebookPageId: facebookPagesQuery.data?.data?.[0]?.id,
+                facebookPageAccessToken: facebookPagesQuery.data?.data?.[0]?.access_token,
+              },
+            })
+            console.log(result)
+          } catch (error) {
+            console.error('Error linking Facebook Page: ', JSON.stringify(error))
+          }
+        }}
+        disabled={!facebookPagesQuery.data || facebookPagesQuery.data?.data?.length === 0}
+      >
+        <Text>Link with PPLE Today</Text>
       </Button>
       <Button
         onPress={() => {

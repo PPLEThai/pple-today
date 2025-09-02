@@ -45,27 +45,6 @@ export class FacebookService {
   //   return await this.facebookRepository.subscribeToPostUpdates(userId, facebookPageId)
   // }
 
-  async getUserAccessToken(code: string, redirectUri: string) {
-    return await this.facebookRepository.getUserAccessToken(code, redirectUri)
-  }
-
-  async getUserPageList(facebookToken: string) {
-    const userPageListResult = await this.facebookRepository.getUserPageList(facebookToken)
-
-    if (userPageListResult.isErr()) {
-      return userPageListResult
-    }
-
-    return userPageListResult.map((result) =>
-      result.data.map((page) => ({
-        id: page.id,
-        name: page.name,
-        profilePictureUrl: page.picture.data.url,
-        accessToken: page.access_token,
-      }))
-    )
-  }
-
   async getLinkedFacebookPage(userId: string) {
     const linkedPageResult = await this.facebookRepository.getLinkedFacebookPage(userId)
 
