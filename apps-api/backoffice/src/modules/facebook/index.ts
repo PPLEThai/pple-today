@@ -23,6 +23,7 @@ export const FacebookController = new Elysia({
 })
   .use([FacebookServicePlugin, AuthGuardPlugin])
   .use(FacebookWebhookController)
+  // TODO: Remove this endpoint groups
   .group('/token', (app) =>
     app
       .get(
@@ -124,13 +125,7 @@ export const FacebookController = new Elysia({
           })
 
           if (linkResult.isErr()) {
-            return mapErrorCodeToResponse(
-              {
-                code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-                message: 'Failed to link Facebook page',
-              },
-              status
-            )
+            return mapErrorCodeToResponse(linkResult.error, status)
           }
 
           return status(201, {
@@ -142,7 +137,16 @@ export const FacebookController = new Elysia({
           body: LinkFacebookPageToUserBody,
           response: {
             201: LinkFacebookPageToUserResponse,
-            ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+            ...createErrorSchema(
+              InternalErrorCode.INTERNAL_SERVER_ERROR,
+              InternalErrorCode.FACEBOOK_API_ERROR,
+              InternalErrorCode.FACEBOOK_INVALID_RESPONSE,
+              InternalErrorCode.FACEBOOK_INVALID_ACCESS_TOKEN,
+              InternalErrorCode.FACEBOOK_PAGE_ALREADY_LINKED,
+              InternalErrorCode.FILE_UPLOAD_ERROR,
+              InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
+              InternalErrorCode.USER_NOT_FOUND
+            ),
           },
           detail: {
             summary: 'Link Facebook Page',
