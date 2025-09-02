@@ -275,10 +275,14 @@ const FacebookPageSection = () => {
     <View className="flex flex-col gap-3 border border-base-outline-default rounded-xl py-3 px-4 bg-base-bg-white">
       <View className="flex flex-row items-center pb-2.5 gap-2 border-b border-base-outline-default">
         <FacebookIcon size={32} />
-        <H2 className="text-xl text-base-text-high font-anakotmai-medium flex-1 h-9">
+        <H2 className="text-xl text-base-text-high font-anakotmai-medium flex-1">
           เพจ Facebook ที่ดูแล
         </H2>
-        {linkedPageQuery.data?.linkedFacebookPage && <UnlinkFacebookPageDialog />}
+        {linkedPageQuery.data?.linkedFacebookPage ? (
+          <UnlinkFacebookPageDialog />
+        ) : (
+          <View className="h-9" />
+        )}
       </View>
       {linkedPageQuery.status !== 'success' ? (
         <View className="bg-base-bg-default h-10 rounded-lg w-full" />
