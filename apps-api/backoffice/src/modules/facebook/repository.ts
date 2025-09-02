@@ -12,6 +12,7 @@ import {
   GetPageDetailsResponse,
   GetPagePostsResponse,
   InspectAccessTokenResponse,
+  ListUserPageResponse,
   PagePost,
 } from '../../dtos/facebook'
 import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '../../plugins/logger'
@@ -386,6 +387,49 @@ export class FacebookRepository {
   //     })
   //   )
   // }
+
+  async getUserAccessToken(code: string, redirectUri: string) {
+    const queryParams = new URLSearchParams({
+      client_id: this.facebookConfig.appId,
+      client_secret: this.facebookConfig.appSecret,
+      redirect_uri: redirectUri,
+      code,
+    })
+
+    const response = await this.getAccessToken(queryParams)
+
+    if (response.isErr()) {
+      return err(response.error)
+    }
+
+    return ok(response.value)
+  }
+
+  async getUserPageList(userAccessToken: string) {
+    const inspectResponse = await this.inspectUserAccessToken(userAccessToken)
+
+    if (inspectResponse.isErr()) {
+      return err(inspectResponse.error)
+    }
+
+    const queryParams = new URLSearchParams({
+      access_token: userAccessToken,
+      fields: 'access_token,id,name,picture{cache_key,url}',
+    })
+
+    const response = await this.makeRequest({
+      path: `/${inspectResponse.value.data.user_id}/accounts`,
+      query: queryParams,
+      accessToken: userAccessToken,
+      responseSchema: ListUserPageResponse,
+    })
+
+    if (response.isErr()) {
+      return err(response.error)
+    }
+
+    return ok(response.value)
+  }
 
   async getFacebookPageById(pageId: string, pageAccessToken: string) {
     const inspectResponse = await this.inspectUserAccessToken(pageAccessToken)

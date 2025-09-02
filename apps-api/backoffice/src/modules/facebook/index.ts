@@ -1,9 +1,13 @@
 import Elysia from 'elysia'
 
 import {
+  GetFacebookUserPageListQuery,
+  GetFacebookUserPageListResponse,
   GetLinkedFacebookPageResponse,
   LinkFacebookPageToUserBody,
   LinkFacebookPageToUserResponse,
+  RequestAccessTokenQuery,
+  RequestAccessTokenResponse,
   UnlinkPageResponse,
 } from './models'
 import { FacebookServicePlugin } from './services'
@@ -19,6 +23,65 @@ export const FacebookController = new Elysia({
 })
   .use([FacebookServicePlugin, AuthGuardPlugin])
   .use(FacebookWebhookController)
+  // TODO: Remove this endpoint groups
+  .group('/token', (app) =>
+    app
+      .get(
+        '/callback',
+        async ({ query, status, facebookService }) => {
+          const { code, redirectUri } = query
+
+          const accessTokenResult = await facebookService.getUserAccessToken(code, redirectUri)
+          if (accessTokenResult.isErr()) {
+            return mapErrorCodeToResponse(accessTokenResult.error, status)
+          }
+
+          return status(200, accessTokenResult.value)
+        },
+        {
+          detail: {
+            summary: 'Get Facebook User Access Token',
+            description: 'Fetches the user access token from Facebook using the authorization code',
+          },
+          query: RequestAccessTokenQuery,
+          response: {
+            200: RequestAccessTokenResponse,
+            ...createErrorSchema(
+              InternalErrorCode.FACEBOOK_API_ERROR,
+              InternalErrorCode.FACEBOOK_INVALID_RESPONSE
+            ),
+          },
+        }
+      )
+      .get(
+        '/pages',
+        async ({ query, status, facebookService }) => {
+          const { facebookToken } = query
+          const pageList = await facebookService.getUserPageList(facebookToken)
+
+          if (pageList.isErr()) {
+            return mapErrorCodeToResponse(pageList.error, status)
+          }
+
+          return status(200, pageList.value)
+        },
+        {
+          detail: {
+            summary: 'Get Facebook User Page List',
+            description: 'Fetches the list of Facebook pages associated with the user',
+          },
+          query: GetFacebookUserPageListQuery,
+          response: {
+            200: GetFacebookUserPageListResponse,
+            ...createErrorSchema(
+              InternalErrorCode.FACEBOOK_API_ERROR,
+              InternalErrorCode.FACEBOOK_INVALID_RESPONSE,
+              InternalErrorCode.FACEBOOK_INVALID_ACCESS_TOKEN
+            ),
+          },
+        }
+      )
+  )
   .group('/linked-page', (app) =>
     app
       .get(
