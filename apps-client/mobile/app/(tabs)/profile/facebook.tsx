@@ -30,11 +30,16 @@ export default function FacebookListProfile() {
       return
     }
   }, [facebookAccessToken, router])
-  // TODO: see if any page is already connected in the backend and disable it
+
   const facebookPagesQuery = useFacebookPagesQuery({
     variables: { facebookAccessToken: facebookAccessToken! },
     enabled: !!facebookAccessToken,
   })
+  const availableLinkPagesQuery = reactQueryClient.useQuery(
+    '/facebook/linked-page/available',
+    { query: { pageIds: facebookPagesQuery.data?.map((p) => p.id) || [] } },
+    { enabled: !!facebookPagesQuery.data }
+  )
   useEffect(() => {
     if (facebookPagesQuery.error) {
       console.error('Failed to fetch Facebook pages', JSON.stringify(facebookPagesQuery.error))
@@ -117,6 +122,12 @@ export default function FacebookListProfile() {
               value={page.id}
               name={page.name}
               imageUrl={page.picture.data.url}
+              disabled={
+                availableLinkPagesQuery.isLoading ||
+                availableLinkPagesQuery.isError ||
+                linkPageMutation.isPending
+              }
+              available={availableLinkPagesQuery.data?.[page.id] ?? true}
             />
           ))
         )}
@@ -130,6 +141,7 @@ interface RadioGroupItemProps extends RadioGroupPrimitive.ItemProps {
   ref?: React.RefObject<RadioGroupPrimitive.ItemRef>
   name: string
   imageUrl: string
+  available: boolean
 }
 // Rerendering avatar causing image to flicker somehow
 const FacebookPageRadioItem = React.memo(function FacebookRadioItem({
@@ -155,7 +167,7 @@ const FacebookPageRadioItem = React.memo(function FacebookRadioItem({
       </Avatar>
       <View className="flex flex-col">
         <Text className="text-sm text-base-text-high font-noto-medium">{props.name}</Text>
-        {props.disabled && (
+        {!props.available && (
           <Text className="text-sm text-base-text-medium font-anakotmai-light">
             เพจนี้ได้มีการเชื่อมต่อกับ PPLE Today แล้ว
           </Text>
