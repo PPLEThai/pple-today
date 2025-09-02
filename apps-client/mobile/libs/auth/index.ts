@@ -249,7 +249,7 @@ export const login = async ({ discovery }: { discovery: DiscoveryDocument }) => 
     }
     return { tokenResponse, action: 'register' } as const
   } catch (error) {
-    console.error('Error during registration:', error)
+    console.error('Error during registration:', JSON.stringify(error))
     throw error
   }
 }

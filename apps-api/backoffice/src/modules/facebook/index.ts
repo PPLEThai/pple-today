@@ -23,6 +23,7 @@ export const FacebookController = new Elysia({
 })
   .use([FacebookServicePlugin, AuthGuardPlugin])
   .use(FacebookWebhookController)
+  // TODO: Remove this endpoint groups
   .group('/token', (app) =>
     app
       .get(
