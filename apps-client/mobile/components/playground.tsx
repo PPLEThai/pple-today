@@ -37,7 +37,6 @@ import { toast } from '@pple-today/ui/toast'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
-import { useQuery } from '@tanstack/react-query'
 import { useEvent } from 'expo'
 import { Image } from 'expo-image'
 import * as Linking from 'expo-linking'
@@ -50,6 +49,7 @@ import { InfoIcon, PlusIcon, SearchIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
 import { reactQueryClient } from '@app/libs/api-client'
+import { useFacebookPageQuery } from '@app/libs/facebook'
 
 import { AuthPlayground } from './auth-playground'
 import { PostCard, PostCardSkeleton } from './feed/post-card'
@@ -649,15 +649,8 @@ function PostCardExample() {
 
 function FacebookSDKExample() {
   const [facebookAccessToken, setFacebookAccessToken] = useState<string | null>(null)
-  const facebookPagesQuery = useQuery({
-    queryFn: async () => {
-      const response = await fetch(
-        `https://graph.facebook.com/v23.0/me/accounts?fields=access_token,id,name,picture{cache_key,url}&access_token=${facebookAccessToken}`
-      )
-
-      return response.json()
-    },
-    queryKey: ['facebookPages', facebookAccessToken],
+  const facebookPagesQuery = useFacebookPageQuery({
+    variables: { facebookAccessToken: facebookAccessToken! },
     enabled: !!facebookAccessToken,
   })
 
@@ -732,12 +725,16 @@ function FacebookSDKExample() {
       </Button>
       <Button
         onPress={async () => {
-          console.log('Linking Facebook Page...', facebookPagesQuery.data?.data)
+          const page = facebookPagesQuery.data?.[0]
+          console.log('Linking Facebook Page...', page)
+          if (!page) {
+            return
+          }
           try {
             const result = await linkPage.mutateAsync({
               body: {
-                facebookPageId: facebookPagesQuery.data?.data?.[0]?.id,
-                facebookPageAccessToken: facebookPagesQuery.data?.data?.[0]?.access_token,
+                facebookPageId: page.id,
+                facebookPageAccessToken: page.access_token,
               },
             })
             console.log(result)
@@ -745,7 +742,7 @@ function FacebookSDKExample() {
             console.error('Error linking Facebook Page: ', JSON.stringify(error))
           }
         }}
-        disabled={!facebookPagesQuery.data || facebookPagesQuery.data?.data?.length === 0}
+        disabled={!facebookPagesQuery.data || facebookPagesQuery.data?.length === 0}
       >
         <Text>Link with PPLE Today</Text>
       </Button>

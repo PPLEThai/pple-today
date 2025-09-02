@@ -16,6 +16,7 @@ import { ArrowLeftIcon } from 'lucide-react-native'
 import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { reactQueryClient } from '@app/libs/api-client'
+import { useFacebookPageQuery } from '@app/libs/facebook'
 
 export default function FacebookListProfile() {
   const params = useLocalSearchParams()
@@ -29,11 +30,18 @@ export default function FacebookListProfile() {
       return
     }
   }, [facebookAccessToken, router])
-  const facebookPagesQuery = reactQueryClient.useQuery(
-    '/facebook/token/pages',
-    { query: { facebookToken: facebookAccessToken! } },
-    { enabled: !!facebookAccessToken }
-  )
+  // TODO: see if any page is already connected in the backend and disable it
+  const facebookPagesQuery = useFacebookPageQuery({
+    variables: { facebookAccessToken: facebookAccessToken! },
+    enabled: !!facebookAccessToken,
+  })
+  useEffect(() => {
+    if (facebookPagesQuery.error) {
+      console.error('Failed to fetch Facebook pages', JSON.stringify(facebookPagesQuery.error))
+      toast({ text1: 'Failed to fetch Facebook pages' })
+    }
+  }, [facebookPagesQuery.error])
+
   const queryClient = useQueryClient()
   const linkPageMutation = reactQueryClient.useMutation('post', '/facebook/linked-page')
   const [value, setValue] = useState('')
@@ -66,7 +74,7 @@ export default function FacebookListProfile() {
             return
           }
           linkPageMutation.mutateAsync(
-            { body: { facebookPageId: page.id, facebookPageAccessToken: page.accessToken } },
+            { body: { facebookPageId: page.id, facebookPageAccessToken: page.access_token } },
             {
               onSuccess: () => {
                 queryClient.invalidateQueries({
@@ -75,26 +83,43 @@ export default function FacebookListProfile() {
                 router.push('/profile')
               },
               onError: (error) => {
-                console.error('Failed to link Facebook page', error)
+                console.error('Failed to link Facebook page', JSON.stringify(error))
                 toast.error({ text1: 'Failed to link Facebook page' })
               },
             }
           )
         }}
       >
-        {/* TODO: Remove mock data */}
-        <FacebookRadioItem value="1" name="Page 1" imageUrl="" />
-        <FacebookRadioItem value="2" name="Page 2" imageUrl="" />
-        <FacebookRadioItem value="3" name="Page 3" imageUrl="" disabled />
-        {facebookPagesQuery.data &&
-          facebookPagesQuery.data.map((page) => (
+        {facebookPagesQuery.isLoading ? (
+          <>
+            <View className="py-2 flex flex-row gap-2 items-center">
+              <View className="rounded-full h-8 w-full bg-base-bg-default" />
+            </View>
+            <View className="py-2 flex flex-row gap-2 items-center">
+              <View className="rounded-full h-8 w-full bg-base-bg-default" />
+            </View>
+            <View className="py-2 flex flex-row gap-2 items-center">
+              <View className="rounded-full h-8 w-full bg-base-bg-default" />
+            </View>
+          </>
+        ) : facebookPagesQuery.isError ? (
+          <View className="flex flex-row justify-center w-full">
+            <Text>Error loading Facebook pages</Text>
+          </View>
+        ) : facebookPagesQuery.data!.length === 0 ? (
+          <View className="flex flex-row justify-center w-full">
+            <Text className="text-base-text-placeholder">No Facebook pages found</Text>
+          </View>
+        ) : (
+          facebookPagesQuery.data!.map((page) => (
             <FacebookRadioItem
               key={page.id}
               value={page.id}
               name={page.name}
-              imageUrl={page.profilePictureUrl}
+              imageUrl={page.picture.data.url}
             />
-          ))}
+          ))
+        )}
       </RadioGroupPrimitive.Root>
     </View>
   )
