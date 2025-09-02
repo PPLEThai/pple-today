@@ -2,7 +2,6 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { IntrospectAccessTokenResult } from '@pple-today/api-common/dtos'
 import { FileService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
-import { UserRole } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -36,12 +35,12 @@ export class AuthService {
       profileImage: user.value.profileImagePath
         ? this.fileService.getPublicFileUrl(user.value.profileImagePath)
         : undefined,
-      role: user.value.role,
+      roles: user.value.roles,
     })
   }
 
-  async registerUser(user: IntrospectAccessTokenResult, role: UserRole) {
-    const newUser = await this.authRepository.createUser(user, role)
+  async registerUser(user: IntrospectAccessTokenResult, roles: string[]) {
+    const newUser = await this.authRepository.createUser(user, roles)
 
     if (newUser.isErr()) {
       return mapRepositoryError(newUser.error, {

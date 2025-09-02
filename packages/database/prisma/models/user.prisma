@@ -1,18 +1,10 @@
-enum UserRole {
-    USER
-    REPRESENTATIVE
-    MEMBER
-    STAFF
-    OFFICIAL
-}
-
 model User {
     id               String   @id @default(cuid())
     name             String
     phoneNumber      String   @unique
     profileImagePath String?
     point            Int      @default(0)
-    role             UserRole @default(USER)
+    roles            String[] @default([])
 
     responsibleArea String?
 

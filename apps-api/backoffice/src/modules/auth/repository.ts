@@ -1,7 +1,6 @@
 import { IntrospectAccessTokenResult } from '@pple-today/api-common/dtos'
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { UserRole } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import { PrismaServicePlugin } from '../../plugins/prisma'
@@ -18,7 +17,7 @@ export class AuthRepository {
     )
   }
 
-  async createUser(data: IntrospectAccessTokenResult, role: UserRole = UserRole.USER) {
+  async createUser(data: IntrospectAccessTokenResult, roles: string[]) {
     const { sub, name, phone_number } = data
 
     return await fromRepositoryPromise(
@@ -26,7 +25,7 @@ export class AuthRepository {
         data: {
           id: sub,
           name,
-          role,
+          roles,
           phoneNumber: phone_number,
         },
       })

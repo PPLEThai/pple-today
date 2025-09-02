@@ -64,7 +64,7 @@ export const ProfileController = new Elysia({
       return status(200, {
         id: result.value.id,
         name: result.value.name,
-        role: result.value.role,
+        roles: result.value.roles,
         profileImage: result.value.profileImage ?? undefined,
         numberOfFollowing: result.value.numberOfFollowing,
         point: result.value.point,

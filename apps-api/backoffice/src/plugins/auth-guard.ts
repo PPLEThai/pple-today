@@ -1,6 +1,5 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { err, mapErrorCodeToResponse, mapRepositoryError } from '@pple-today/api-common/utils'
-import { UserRole } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -74,7 +73,7 @@ export const AuthGuardPlugin = new Elysia({
         return { oidcUser: oidcUserResult.value }
       },
     },
-    requiredLocalRole: (allowedRole: UserRole[]) => ({
+    requiredLocalRole: (allowedRoles: string[]) => ({
       async resolve({ status, headers, authGuard }) {
         const user = await authGuard.getCurrentUser(headers)
 
@@ -82,7 +81,7 @@ export const AuthGuardPlugin = new Elysia({
           return mapErrorCodeToResponse(user.error, status)
         }
 
-        if (!allowedRole.includes(user.value.role)) {
+        if (!user.value.roles.some((role) => allowedRoles.includes(role))) {
           return mapErrorCodeToResponse(
             { code: InternalErrorCode.FORBIDDEN, message: 'Forbidden' },
             status
