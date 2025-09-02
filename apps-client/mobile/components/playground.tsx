@@ -4,7 +4,7 @@ import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import ImageView from 'react-native-image-viewing'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@pple-today/ui/avatar'
+import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
 import { Button } from '@pple-today/ui/button'
@@ -52,6 +52,7 @@ import { reactQueryClient } from '@app/libs/api-client'
 import { useFacebookPagesQuery } from '@app/libs/facebook'
 
 import { AuthPlayground } from './auth-playground'
+import { AvatarPPLEFallback } from './avatar-pple-fallback'
 import { PostCard, PostCardSkeleton } from './feed/post-card'
 import { MoreOrLess } from './more-or-less'
 
@@ -824,16 +825,22 @@ function AvatarExample() {
   return (
     <View className="flex flex-col gap-2">
       <H2 className="font-inter-bold">Avatar</H2>
-      <View className="flex flex-row gap-4 items-baseline">
+      <View className="flex flex-row gap-1">
+        <Avatar className="size-8" alt="NativewindUI Avatar">
+          <AvatarImage
+            source={{
+              uri: 'https://pbs.twimg.com/profile_images/1782428433898708992/1voyv4_A_400x400.jpg',
+            }}
+          />
+          <AvatarPPLEFallback />
+        </Avatar>
         <Avatar className="size-16" alt="NativewindUI Avatar">
           <AvatarImage
             source={{
               uri: 'https://pbs.twimg.com/profile_images/1782428433898708992/1voyv4_A_400x400.jpg',
             }}
           />
-          <AvatarFallback>
-            <Text className="text-foreground">NUI</Text>
-          </AvatarFallback>
+          <AvatarPPLEFallback />
         </Avatar>
         <Avatar className="size-24" alt="NativewindUI Avatar">
           <AvatarImage
@@ -841,9 +848,7 @@ function AvatarExample() {
               uri: 'https://pbs.twimg.com/profile_images/1782428433898708992/1voyv4_A_400x400.jpg',
             }}
           />
-          <AvatarFallback>
-            <Text className="text-foreground">NUI</Text>
-          </AvatarFallback>
+          <AvatarPPLEFallback />
         </Avatar>
         <Avatar className="size-32" alt="NativewindUI Avatar">
           <AvatarImage
@@ -851,9 +856,25 @@ function AvatarExample() {
               uri: 'https://pbs.twimg.com/profile_images/1782428433898708992/1voyv4_A_400x400.jpg',
             }}
           />
-          <AvatarFallback>
-            <Text className="text-foreground">NUI</Text>
-          </AvatarFallback>
+          <AvatarPPLEFallback />
+        </Avatar>
+      </View>
+      <View className="flex flex-row gap-1">
+        <Avatar className="size-8" alt="NativewindUI Avatar">
+          <AvatarImage source={{ uri: '' }} />
+          <AvatarPPLEFallback />
+        </Avatar>
+        <Avatar className="size-16" alt="NativewindUI Avatar">
+          <AvatarImage source={{ uri: '' }} />
+          <AvatarPPLEFallback />
+        </Avatar>
+        <Avatar className="size-24" alt="NativewindUI Avatar">
+          <AvatarImage source={{ uri: '' }} />
+          <AvatarPPLEFallback />
+        </Avatar>
+        <Avatar className="size-32" alt="NativewindUI Avatar">
+          <AvatarImage source={{ uri: '' }} />
+          <AvatarPPLEFallback />
         </Avatar>
       </View>
     </View>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { View } from 'react-native'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@pple-today/ui/avatar'
+import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { clsx } from '@pple-today/ui/lib/utils'
@@ -14,7 +14,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeftIcon } from 'lucide-react-native'
 
 import FacebookIcon from '@app/assets/facebook-icon.svg'
-import PPLEIcon from '@app/assets/pple-icon.svg'
+import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useFacebookPagesQuery } from '@app/libs/facebook'
 
@@ -151,9 +151,7 @@ const FacebookPageRadioItem = React.memo(function FacebookRadioItem({
       </View>
       <Avatar alt={props.name} className="size-8">
         <AvatarImage source={{ uri: props.imageUrl }} />
-        <AvatarFallback className="w-8 h-8 rounded-full bg-base-primary-default flex items-center justify-center overflow-hidden pt-0.5">
-          <Icon icon={PPLEIcon} width={20} height={20} className="text-white" />
-        </AvatarFallback>
+        <AvatarPPLEFallback />
       </Avatar>
       <View className="flex flex-col">
         <Text className="text-sm text-base-text-high font-noto-medium">{props.name}</Text>
