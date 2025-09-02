@@ -18,7 +18,7 @@ import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useFacebookPagesQuery } from '@app/libs/facebook'
 
-export default function FacebookListProfile() {
+export default function FacebookListPage() {
   const params = useLocalSearchParams()
   const facebookAccessToken = params.facebookAccessToken as string
   const router = useRouter()
