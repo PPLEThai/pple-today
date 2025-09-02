@@ -406,18 +406,18 @@ function LinkFacebookPageDialog() {
 }
 
 function UnlinkFacebookPageDialog() {
-  const [removeDialogOpen, setRemoveDialogOpen] = React.useState(false)
+  const [unlinkDialogOpen, setUnlinkDialogOpen] = React.useState(false)
   const unlinkPageMutation = reactQueryClient.useMutation('delete', '/facebook/linked-page')
   const queryClient = useQueryClient()
   return (
-    <Dialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
+    <Dialog open={unlinkDialogOpen} onOpenChange={setUnlinkDialogOpen}>
       <DialogTrigger asChild>
         <Button
           variant="ghost"
           size="icon"
           className="size-9"
           aria-label="ลบเพจ"
-          onPress={() => setRemoveDialogOpen(true)}
+          onPress={() => setUnlinkDialogOpen(true)}
         >
           <Icon icon={TrashIcon} className="size-5 text-system-danger-default" strokeWidth={1} />
         </Button>
@@ -450,7 +450,7 @@ function UnlinkFacebookPageDialog() {
                       queryKey: reactQueryClient.getQueryKey('get', '/facebook/linked-page'),
                     })
                     toast({ text1: 'ลบเพจ Facebook สำเร็จ' })
-                    setRemoveDialogOpen(false)
+                    setUnlinkDialogOpen(false)
                   },
                   onError: (error) => {
                     toast({ text1: 'เกิดข้อผิดพลาดบางอย่าง' })

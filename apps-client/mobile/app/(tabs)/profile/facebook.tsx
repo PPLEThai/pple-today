@@ -24,7 +24,7 @@ export default function FacebookListPage() {
   const router = useRouter()
   useEffect(() => {
     if (facebookAccessToken === undefined || Array.isArray(facebookAccessToken)) {
-      router.push('/profile')
+      router.back()
       console.error('Invalid Facebook access token')
       toast({ text1: 'Invalid Facebook access token' })
       return
@@ -56,7 +56,7 @@ export default function FacebookListPage() {
         <Button
           variant="outline-primary"
           size="icon"
-          onPress={() => router.push('/profile')}
+          onPress={() => router.back()}
           aria-label="กลับ"
         >
           <Icon icon={ArrowLeftIcon} size={24} strokeWidth={2} />
@@ -82,10 +82,10 @@ export default function FacebookListPage() {
             { body: { facebookPageId: page.id, facebookPageAccessToken: page.access_token } },
             {
               onSuccess: () => {
-                queryClient.invalidateQueries({
+                queryClient.resetQueries({
                   queryKey: reactQueryClient.getQueryKey('get', '/facebook/linked-page'),
                 })
-                router.push('/profile')
+                router.back()
               },
               onError: (error) => {
                 console.error('Failed to link Facebook page', JSON.stringify(error))
@@ -116,20 +116,24 @@ export default function FacebookListPage() {
             <Text className="text-base-text-placeholder">No Facebook pages found</Text>
           </View>
         ) : (
-          facebookPagesQuery.data!.map((page) => (
-            <FacebookPageRadioItem
-              key={page.id}
-              value={page.id}
-              name={page.name}
-              imageUrl={page.picture.data.url}
-              disabled={
-                availableLinkPagesQuery.isLoading ||
-                availableLinkPagesQuery.isError ||
-                linkPageMutation.isPending
-              }
-              available={availableLinkPagesQuery.data?.[page.id] ?? true}
-            />
-          ))
+          facebookPagesQuery.data!.map((page) => {
+            const available = availableLinkPagesQuery.data?.[page.id] ?? true
+            return (
+              <FacebookPageRadioItem
+                key={page.id}
+                value={page.id}
+                name={page.name}
+                imageUrl={page.picture.data.url}
+                disabled={
+                  linkPageMutation.isPending ||
+                  availableLinkPagesQuery.isLoading ||
+                  availableLinkPagesQuery.isError ||
+                  !available
+                }
+                available={available}
+              />
+            )
+          })
         )}
       </RadioGroupPrimitive.Root>
     </View>

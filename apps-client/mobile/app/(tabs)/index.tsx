@@ -142,7 +142,7 @@ function MainHeader() {
           aria-label="Profile Settings"
           className="overflow-hidden"
           onPress={() => {
-            router.push('/profile')
+            router.navigate('/profile')
           }}
         >
           <Avatar alt={authMe.data?.name ?? ''} className="size-full rounded-none">
