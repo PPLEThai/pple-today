@@ -49,7 +49,7 @@ import { InfoIcon, PlusIcon, SearchIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
 import { reactQueryClient } from '@app/libs/api-client'
-import { useFacebookPageQuery } from '@app/libs/facebook'
+import { useFacebookPagesQuery } from '@app/libs/facebook'
 
 import { AuthPlayground } from './auth-playground'
 import { PostCard, PostCardSkeleton } from './feed/post-card'
@@ -649,7 +649,7 @@ function PostCardExample() {
 
 function FacebookSDKExample() {
   const [facebookAccessToken, setFacebookAccessToken] = useState<string | null>(null)
-  const facebookPagesQuery = useFacebookPageQuery({
+  const facebookPagesQuery = useFacebookPagesQuery({
     variables: { facebookAccessToken: facebookAccessToken! },
     enabled: !!facebookAccessToken,
   })

@@ -16,7 +16,7 @@ import { ArrowLeftIcon } from 'lucide-react-native'
 import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { reactQueryClient } from '@app/libs/api-client'
-import { useFacebookPageQuery } from '@app/libs/facebook'
+import { useFacebookPagesQuery } from '@app/libs/facebook'
 
 export default function FacebookListProfile() {
   const params = useLocalSearchParams()
@@ -31,7 +31,7 @@ export default function FacebookListProfile() {
     }
   }, [facebookAccessToken, router])
   // TODO: see if any page is already connected in the backend and disable it
-  const facebookPagesQuery = useFacebookPageQuery({
+  const facebookPagesQuery = useFacebookPagesQuery({
     variables: { facebookAccessToken: facebookAccessToken! },
     enabled: !!facebookAccessToken,
   })
@@ -112,7 +112,7 @@ export default function FacebookListProfile() {
           </View>
         ) : (
           facebookPagesQuery.data!.map((page) => (
-            <FacebookRadioItem
+            <FacebookPageRadioItem
               key={page.id}
               value={page.id}
               name={page.name}
@@ -132,7 +132,7 @@ interface RadioGroupItemProps extends RadioGroupPrimitive.ItemProps {
   imageUrl: string
 }
 // Rerendering avatar causing image to flicker somehow
-const FacebookRadioItem = React.memo(function FacebookRadioItem({
+const FacebookPageRadioItem = React.memo(function FacebookRadioItem({
   className,
   ...props
 }: RadioGroupItemProps) {
