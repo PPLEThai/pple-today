@@ -44,7 +44,7 @@ import {
   TrophyIcon,
 } from 'lucide-react-native'
 
-import type { GetMyProfileResponse, GetUserParticipationResponse } from '@api/backoffice/app'
+import type { GetUserParticipationResponse } from '@api/backoffice/app'
 import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
@@ -58,8 +58,6 @@ import {
 } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
-
-type UserRole = GetMyProfileResponse['role']
 
 export default function Index() {
   const sessionQuery = useSessionQuery()
@@ -173,21 +171,20 @@ const HeaderSection = () => {
 const ProfileSection = () => {
   const router = useRouter()
   const profileQuery = reactQueryClient.useQuery('/profile/me', {})
-  const getRoleName = (role: UserRole) => {
-    switch (role) {
-      case 'REPRESENTATIVE':
-        return 'สมาชิกสส.พรรคประชาชน'
-      case 'USER':
-        return 'ประชาชน'
-      case 'STAFF':
-        return 'สมาชิกพรรค'
-      case 'OFFICIAL':
-        return 'คณะทำงาน'
-      case 'MEMBER':
-        return 'สมาชิกพรรค'
-      default:
-        exhaustiveGuard(role)
+  const getRoleName = (roles: string[]) => {
+    for (const role of roles) {
+      switch (role) {
+        case 'mp':
+          return 'สมาชิกสส.พรรคประชาชน'
+        case 'hq':
+          return 'ส่วนกลาง'
+        case 'province':
+        case 'local':
+          return 'คณะทำงาน'
+      }
     }
+
+    return 'ประชาชน'
   }
   const Profile =
     profileQuery.isLoading || !profileQuery.data ? (
@@ -209,7 +206,7 @@ const ProfileSection = () => {
             {profileQuery.data.name}
           </Text>
           <Badge>
-            <Text>{getRoleName(profileQuery.data.role)}</Text>
+            <Text>{getRoleName(profileQuery.data.roles)}</Text>
           </Badge>
         </View>
       </>
