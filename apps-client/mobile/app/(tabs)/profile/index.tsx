@@ -279,6 +279,45 @@ const PointSection = () => {
 }
 
 const FacebookPageSection = () => {
+  const linkedPageQuery = reactQueryClient.useQuery('/facebook/linked-page', {})
+  return (
+    <View className="flex flex-col gap-3 border border-base-outline-default rounded-xl py-3 px-4 bg-base-bg-white">
+      <View className="flex flex-row items-center pb-2.5 gap-2 border-b border-base-outline-default">
+        <FacebookIcon size={32} />
+        <H2 className="text-xl text-base-text-high font-anakotmai-medium flex-1 h-9">
+          เพจ Facebook ที่ดูแล
+        </H2>
+        {linkedPageQuery.data?.linkedFacebookPage && <UnlinkFacebookPageDialog />}
+      </View>
+      {linkedPageQuery.status !== 'success' ? (
+        <View className="bg-base-bg-default h-10 rounded-lg w-full" />
+      ) : linkedPageQuery.data.linkedFacebookPage ? (
+        <View className="flex flex-row gap-3 items-center">
+          <Avatar alt={linkedPageQuery.data.linkedFacebookPage.name} className="size-8">
+            <AvatarImage
+              source={{ uri: linkedPageQuery.data.linkedFacebookPage.profilePictureUrl }}
+            />
+            <AvatarFallback />
+          </Avatar>
+          <Text className="text-base-text-medium text-sm font-anakotmai-medium flex-1 line-clamp-2">
+            {linkedPageQuery.data.linkedFacebookPage.name}
+          </Text>
+          {/* TODO: linked page status */}
+          {/* <Badge>
+            <Text>รอการอนุมัติ</Text>
+          </Badge> */}
+          <Badge variant="success">
+            <Text>อนุมัติ</Text>
+          </Badge>
+        </View>
+      ) : (
+        <LinkFacebookPageDialog />
+      )}
+    </View>
+  )
+}
+
+function LinkFacebookPageDialog() {
   const [permissionStatus, requestPermission] = useTrackingPermissions()
   const [permissionDialogOpen, setPermissionDialogOpen] = React.useState(false)
   const router = useRouter()
@@ -320,88 +359,52 @@ const FacebookPageSection = () => {
     }
     loginWithFacebook()
   }
-  const linkedPageQuery = reactQueryClient.useQuery('/facebook/linked-page', {})
+  /* This dialog should only open on iOS when permission is not granted */
   return (
-    <View className="flex flex-col gap-3 border border-base-outline-default rounded-xl py-3 px-4 bg-base-bg-white">
-      <View className="flex flex-row items-center pb-2.5 gap-2 border-b border-base-outline-default">
-        <FacebookIcon size={32} />
-        <H2 className="text-xl text-base-text-high font-anakotmai-medium flex-1 h-9">
-          เพจ Facebook ที่ดูแล
-        </H2>
-        {linkedPageQuery.data?.linkedFacebookPage && <UnlinkFacebookPageDialog />}
-      </View>
-      {linkedPageQuery.status !== 'success' ? (
-        <View className="bg-base-bg-default h-10 rounded-lg w-full" />
-      ) : linkedPageQuery.data.linkedFacebookPage ? (
-        <View className="flex flex-row gap-3 items-center">
-          <Avatar alt={linkedPageQuery.data.linkedFacebookPage.name} className="size-8">
-            <AvatarImage
-              source={{ uri: linkedPageQuery.data.linkedFacebookPage.profilePictureUrl }}
-            />
-            <AvatarFallback />
-          </Avatar>
-          <Text className="text-base-text-medium text-sm font-anakotmai-medium flex-1 line-clamp-2">
-            {linkedPageQuery.data.linkedFacebookPage.name}
-          </Text>
-          {/* <Badge>
-            <Text>รอการอนุมัติ</Text>
-          </Badge> */}
-          <Badge variant="success">
-            <Text>อนุมัติ</Text>
-          </Badge>
-        </View>
-      ) : (
-        <Dialog open={permissionDialogOpen} onOpenChange={setPermissionDialogOpen}>
-          {/* This dialog should only open on iOS when permission is not granted */}
+    <Dialog open={permissionDialogOpen} onOpenChange={setPermissionDialogOpen}>
+      <Button variant="secondary" disabled={permissionStatus === null} onPress={addFacebookPage}>
+        <Icon icon={PlusIcon} />
+        <Text>เพิ่มเพจที่ดูแล</Text>
+      </Button>
+      <DialogContent>
+        {/* TODO: content */}
+        <DialogHeader>
+          <DialogTitle>กรุณาอนุญาตการติดตาม</DialogTitle>
+          <DialogDescription>
+            เพื่อใช้ฟีเจอร์เพจ Facebook กรุณาเปิดใช้งานการติดตามในการตั้งค่าความเป็นส่วนตัว
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
           <Button
-            variant="secondary"
-            disabled={permissionStatus === null}
-            onPress={addFacebookPage}
-          >
-            <Icon icon={PlusIcon} />
-            <Text>เพิ่มเพจที่ดูแล</Text>
-          </Button>
-          <DialogContent>
-            {/* TODO: content */}
-            <DialogHeader>
-              <DialogTitle>Please Allow Tracking</DialogTitle>
-              <DialogDescription>
-                To use Facebook Page feature, please enable tracking in Privacy Settings.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button
-                onPress={async () => {
-                  if (permissionStatus === null) {
-                    console.warn('permissionStatus is null')
-                    return
-                  }
-                  if (!permissionStatus.granted) {
-                    if (permissionStatus.canAskAgain) {
-                      const { status } = await requestPermission()
-                      if (status !== PermissionStatus.GRANTED) {
-                        console.log('Permission not granted')
-                        toast({ text1: 'Permission not granted' })
-                        return
-                      }
-                      setPermissionDialogOpen(false)
-                      loginWithFacebook()
-                      return
-                    }
-                    Linking.openSettings()
+            onPress={async () => {
+              if (permissionStatus === null) {
+                console.warn('permissionStatus is null')
+                return
+              }
+              if (!permissionStatus.granted) {
+                if (permissionStatus.canAskAgain) {
+                  const { status } = await requestPermission()
+                  if (status !== PermissionStatus.GRANTED) {
+                    console.log('Permission not granted')
+                    toast({ text1: 'Permission not granted' })
                     return
                   }
                   setPermissionDialogOpen(false)
                   loginWithFacebook()
-                }}
-              >
-                <Text>OK</Text>
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-    </View>
+                  return
+                }
+                Linking.openSettings()
+                return
+              }
+              setPermissionDialogOpen(false)
+              loginWithFacebook()
+            }}
+          >
+            <Text>OK</Text>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -423,6 +426,7 @@ function UnlinkFacebookPageDialog() {
         </Button>
       </DialogTrigger>
       <DialogContent>
+        {/* TODO: content */}
         <DialogHeader>
           <DialogTitle>ยืนยันการลบเพจ</DialogTitle>
         </DialogHeader>
