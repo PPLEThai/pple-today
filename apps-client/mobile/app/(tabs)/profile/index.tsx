@@ -1,7 +1,7 @@
 import React from 'react'
 import { Linking, Platform, Pressable, PressableProps, ScrollView, View } from 'react-native'
 import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
-import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
@@ -713,6 +713,9 @@ const SettingItem = ({ children, ...props }: SettingItemProps) => {
   const onPressOut = () => {
     opacity.value = withTiming(1, { duration: 150 })
   }
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }))
   return (
     <Pressable
       onPressIn={onPressIn}
@@ -721,7 +724,7 @@ const SettingItem = ({ children, ...props }: SettingItemProps) => {
       className="disabled:opacity-50"
     >
       <Animated.View
-        style={{ opacity }}
+        style={animatedStyle}
         className="flex flex-row gap-2 items-center px-4 py-3 rounded-2xl bg-base-bg-white border border-base-outline-default"
       >
         {children}
