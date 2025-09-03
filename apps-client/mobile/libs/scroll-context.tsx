@@ -4,10 +4,10 @@ import { createContext, useContext, useMemo } from 'react'
 import { type ScrollHandlers } from 'react-native-reanimated'
 
 const ScrollContext = createContext<ScrollHandlers<any>>({
-  onBeginDrag: undefined,
-  onEndDrag: undefined,
+  // onBeginDrag: undefined,
+  // onEndDrag: undefined,
   onScroll: undefined,
-  onMomentumEnd: undefined,
+  // onMomentumEnd: undefined,
 })
 ScrollContext.displayName = 'ScrollContext'
 
@@ -21,19 +21,24 @@ type ProviderProps = { children: React.ReactNode } & ScrollHandlers<any>
 // It's up to you to compose them with the parent ones via useScrollHandlers() if needed.
 export function ScrollContextProvider({
   children,
-  onBeginDrag,
-  onEndDrag,
+  // onBeginDrag,
+  // onEndDrag,
   onScroll,
-  onMomentumEnd,
+  // onMomentumEnd,
 }: ProviderProps) {
   const handlers = useMemo(
     () => ({
-      onBeginDrag,
-      onEndDrag,
+      // onBeginDrag,
+      // onEndDrag,
       onScroll,
-      onMomentumEnd,
+      // onMomentumEnd,
     }),
-    [onBeginDrag, onEndDrag, onScroll, onMomentumEnd]
+    [
+      // onBeginDrag,
+      // onEndDrag,
+      onScroll,
+      // onMomentumEnd
+    ]
   )
   return <ScrollContext.Provider value={handlers}>{children}</ScrollContext.Provider>
 }
@@ -43,25 +48,25 @@ export function composeScrollHandler(
   scrollHandler: ScrollHandlers<any>
 ): ScrollHandlers<any> {
   return {
-    onBeginDrag: (event, ctx) => {
-      'worklet'
-      context.onBeginDrag?.(event, ctx)
-      scrollHandler?.onBeginDrag?.(event, ctx)
-    },
-    onEndDrag: (event, ctx) => {
-      'worklet'
-      context.onEndDrag?.(event, ctx)
-      scrollHandler?.onEndDrag?.(event, ctx)
-    },
+    // onBeginDrag: (event, ctx) => {
+    //   'worklet'
+    //   context.onBeginDrag?.(event, ctx)
+    //   scrollHandler?.onBeginDrag?.(event, ctx)
+    // },
+    // onEndDrag: (event, ctx) => {
+    //   'worklet'
+    //   context.onEndDrag?.(event, ctx)
+    //   scrollHandler?.onEndDrag?.(event, ctx)
+    // },
     onScroll: (event, ctx) => {
       'worklet'
       context.onScroll?.(event, ctx)
       scrollHandler?.onScroll?.(event, ctx)
     },
-    onMomentumEnd: (event, ctx) => {
-      'worklet'
-      context.onMomentumEnd?.(event, ctx)
-      scrollHandler?.onMomentumEnd?.(event, ctx)
-    },
+    // onMomentumEnd: (event, ctx) => {
+    //   'worklet'
+    //   context.onMomentumEnd?.(event, ctx)
+    //   scrollHandler?.onMomentumEnd?.(event, ctx)
+    // },
   }
 }
