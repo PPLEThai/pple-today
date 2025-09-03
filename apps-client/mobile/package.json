@@ -84,7 +84,7 @@
   },
   "devDependencies": {
     "@api/backoffice": "workspace:^",
-    "@babel/core": "^7.25.2",
+    "@babel/core": "^7.28.3",
     "@pple-today/project-config": "workspace:^",
     "@tanstack/eslint-plugin-query": "^5.81.2",
     "@types/react": "~19.0.10",

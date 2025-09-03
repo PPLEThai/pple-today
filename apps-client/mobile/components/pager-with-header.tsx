@@ -484,7 +484,6 @@ export function PagerContent({ children, index }: PagerContentProps) {
     }
   }, [scrollElRef, registerScrollViewRef, index])
   if (!isHeaderReady) {
-    console.log('Header not ready, skipping render of page', index)
     return null
   }
   return children({
