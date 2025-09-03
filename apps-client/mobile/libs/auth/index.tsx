@@ -301,8 +301,8 @@ export const useLoginMutation = () => {
       router.push('/loading')
     },
     onError: (error) => {
-      console.error('Error logging out: ', error)
-      router.push('/profile')
+      console.error('Error logging in: ', JSON.stringify(error))
+      router.navigate('/profile')
     },
     onSuccess: async (result) => {
       // save session in expo session store
