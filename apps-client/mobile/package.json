@@ -2,6 +2,7 @@
   "name": "@client/mobile",
   "main": "expo-router/entry",
   "version": "0.3.0",
+  "private": true,
   "scripts": {
     "dev": "node --env-file .env ./scripts/update-redirect.js && expo start --dev-client",
     "start": "expo start",
@@ -92,5 +93,9 @@
     "react-native-svg-transformer": "^1.5.1",
     "tailwindcss": "^3.4.17"
   },
-  "private": true
+  "reanimated": {
+    "staticFeatureFlags": {
+      "DISABLE_COMMIT_PAUSING_MECHANISM": true
+    }
+  }
 }

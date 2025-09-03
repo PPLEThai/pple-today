@@ -55,6 +55,7 @@ export default {
         {
           ios: {
             deploymentTarget: '15.1',
+            reactNativeReleaseLevel: 'experimental',
           },
           /**
            * Unfortunately, the performance issue with scrolling (Android) is really deep
@@ -78,6 +79,7 @@ export default {
             compileSdkVersion: 35,
             targetSdkVersion: 35,
             buildToolsVersion: '35.0.0',
+            reactNativeReleaseLevel: 'experimental',
           },
         },
       ],
