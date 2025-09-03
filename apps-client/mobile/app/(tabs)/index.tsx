@@ -395,7 +395,24 @@ function FeedContent(props: PagerScrollViewProps) {
   }, [feedInfiniteQuery.data])
 
   const scrollContext = useScrollContext()
-  const scrollHandler = useAnimatedScrollHandler(scrollContext)
+  const scrollHandler = useAnimatedScrollHandler({
+    onBeginDrag: (event, ctx) => {
+      'worklet'
+      scrollContext?.onBeginDrag?.(event, ctx)
+    },
+    onEndDrag: (event, ctx) => {
+      'worklet'
+      scrollContext?.onEndDrag?.(event, ctx)
+    },
+    onScroll: (event, ctx) => {
+      'worklet'
+      scrollContext?.onScroll?.(event, ctx)
+    },
+    onMomentumEnd: (event, ctx) => {
+      'worklet'
+      scrollContext?.onMomentumEnd?.(event, ctx)
+    },
+  })
 
   const Footer =
     feedInfiniteQuery.hasNextPage || feedInfiniteQuery.isLoading || feedInfiniteQuery.error ? (
