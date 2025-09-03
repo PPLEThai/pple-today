@@ -1,7 +1,6 @@
 import React from 'react'
-import { Linking, Platform, Pressable, PressableProps, View } from 'react-native'
+import { Linking, Platform, Pressable, PressableProps, ScrollView, View } from 'react-native'
 import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
-import { ScrollView } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@pple-today/ui/avatar'

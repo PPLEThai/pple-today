@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import {
+  FlatList,
   LayoutChangeEvent,
   NativeScrollEvent,
   Platform,
@@ -10,7 +11,6 @@ import {
   StyleSheet,
   View,
 } from 'react-native'
-import { FlatList } from 'react-native-gesture-handler'
 import PagerView, {
   PagerViewOnPageScrollEventData,
   PagerViewOnPageSelectedEventData,
