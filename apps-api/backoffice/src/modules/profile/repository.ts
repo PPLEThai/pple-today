@@ -3,7 +3,9 @@ import Elysia from 'elysia'
 import { CompleteOnboardingProfileBody } from './models'
 
 import { Prisma } from '../../../__generated__/prisma'
+import serverEnv from '../../config/env'
 import { FilePath } from '../../dtos/file'
+import { BigQueryClient, BigQueryClientPlugin } from '../../plugins/big-query'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { err, fromRepositoryPromise } from '../../utils/error'
 import { FileService, FileServicePlugin, FileTransactionService } from '../file/services'
@@ -11,7 +13,8 @@ import { FileService, FileServicePlugin, FileTransactionService } from '../file/
 export class ProfileRepository {
   constructor(
     private prismaService: PrismaService,
-    private fileService: FileService
+    private fileService: FileService,
+    private bigQueryClient: BigQueryClient
   ) {}
 
   async getUserParticipation(userId: string) {
@@ -230,10 +233,54 @@ export class ProfileRepository {
 
     return updateResult
   }
+
+  async getProfileSuggestion(currentUserId: string) {
+    return fromRepositoryPromise(async () => {
+      const result = await this.bigQueryClient.createQueryJob({
+        query: `
+            SELECT following_user_id
+            FROM ML.RECOMMEND(MODEL \`${serverEnv.GCP_BIGQUERY_PROFILE_MODEL_NAME}\`, (
+              SELECT "@userId" AS user_id
+            )) ORDER BY predicted_rating_confidence DESC
+          `,
+        params: {
+          userId: currentUserId,
+        },
+      })
+
+      const job = result[0]
+      const [rawUserIds] = await job.getQueryResults()
+
+      const userIds: string[] = rawUserIds.map(({ following_user_id }) => following_user_id)
+
+      const users = await this.prismaService.user.findMany({
+        where: {
+          id: {
+            in: userIds,
+          },
+          followings: {
+            every: {
+              followerId: {
+                not: currentUserId,
+              },
+            },
+          },
+        },
+        take: 50,
+        select: {
+          id: true,
+          name: true,
+          profileImage: true,
+        },
+      })
+
+      return users
+    })
+  }
 }
 
 export const ProfileRepositoryPlugin = new Elysia({ name: 'ProfileRepository' })
-  .use([PrismaServicePlugin, FileServicePlugin])
-  .decorate(({ prismaService, fileService }) => ({
-    profileRepository: new ProfileRepository(prismaService, fileService),
+  .use([PrismaServicePlugin, FileServicePlugin, BigQueryClientPlugin])
+  .decorate(({ prismaService, fileService, bigQueryClient }) => ({
+    profileRepository: new ProfileRepository(prismaService, fileService, bigQueryClient),
   }))

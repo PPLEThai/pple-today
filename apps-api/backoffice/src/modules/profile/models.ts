@@ -140,3 +140,14 @@ export const GetProfileUploadUrlResponse = t.Object({
   }),
 })
 export type GetProfileUploadUrlResponse = Static<typeof GetProfileUploadUrlResponse>
+
+export const GetSuggestedUsersResponse = t.Array(
+  t.Object({
+    id: t.String({ description: 'The ID of the suggested user' }),
+    name: t.String({ description: 'The name of the suggested user' }),
+    profileImage: t.Optional(
+      t.String({ description: "The URL of the suggested user's profile image", format: 'uri' })
+    ),
+  })
+)
+export type GetSuggestedUsersResponse = Static<typeof GetSuggestedUsersResponse>
