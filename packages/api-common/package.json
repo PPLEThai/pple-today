@@ -1,11 +1,13 @@
 {
   "name": "@pple-today/api-common",
+  "type": "module",
   "version": "0.0.0",
   "description": "",
   "exports": {
     "./plugins": {
       "types": "./src/plugins/index.ts",
-      "import": "./src/plugins/index.ts"
+      "import": "./src/plugins/index.ts",
+      "require": "./src/plugins/index.ts"
     }
   },
   "scripts": {
