@@ -46,7 +46,7 @@ export function OnboardingTopic() {
   }, [form])
 
   const handleSkip = React.useCallback(() => {
-    dispatch({ type: 'next' })
+    dispatch({ type: 'skip' })
   }, [dispatch])
 
   return (
@@ -100,11 +100,22 @@ const TopicSkeleton = () => {
     <>
       <Skeleton className="rounded-full h-10 w-20" />
       <Skeleton className="rounded-full h-10 w-16" />
+      <Skeleton className="rounded-full h-10 w-18" />
+      <Skeleton className="rounded-full h-10 w-16" />
       <Skeleton className="rounded-full h-10 w-20" />
+      <Skeleton className="rounded-full h-10 w-24" />
+      <Skeleton className="rounded-full h-10 w-20" />
+      <Skeleton className="rounded-full h-10 w-24" />
+      <Skeleton className="rounded-full h-10 w-24" />
+      <Skeleton className="rounded-full h-10 w-20" />
+      <Skeleton className="rounded-full h-10 w-16" />
+      <Skeleton className="rounded-full h-10 w-18" />
+      <Skeleton className="rounded-full h-10 w-16" />
       <Skeleton className="rounded-full h-10 w-16" />
       <Skeleton className="rounded-full h-10 w-20" />
       <Skeleton className="rounded-full h-10 w-16" />
       <Skeleton className="rounded-full h-10 w-20" />
+      <Skeleton className="rounded-full h-10 w-28" />
     </>
   )
 }

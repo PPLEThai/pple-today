@@ -58,7 +58,7 @@ export function OnboardingProfile() {
   }, [form])
 
   const handleSkip = React.useCallback(() => {
-    dispatch({ type: 'next' })
+    dispatch({ type: 'skip' })
   }, [dispatch])
 
   const pickImageAsync = React.useCallback(async () => {
