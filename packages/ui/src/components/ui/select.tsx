@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Platform, StyleSheet, View } from 'react-native'
+import { Platform, ScrollView, StyleSheet, View } from 'react-native'
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated'
 
 import * as SelectPrimitive from '@rn-primitives/select'
@@ -200,7 +200,19 @@ function SelectSeparator({
   )
 }
 
+/**
+ * @platform Native only
+ * Returns the children on the web
+ */
+function NativeSelectScrollView({ className, ...props }: React.ComponentProps<typeof ScrollView>) {
+  if (Platform.OS === 'web') {
+    return <>{props.children}</>
+  }
+  return <ScrollView className={cn('max-h-52', className)} {...props} />
+}
+
 export {
+  NativeSelectScrollView,
   type Option,
   Select,
   SelectContent,
