@@ -46,6 +46,9 @@ export type OnboardingAction =
       type: 'next'
     }
   | {
+      type: 'skip'
+    }
+  | {
       type: 'prev'
     }
   | {
@@ -86,6 +89,20 @@ export function OnboardingReducer(s: OnboardingState, a: OnboardingAction): Onbo
   const next = { ...s }
 
   switch (a.type) {
+    case 'skip': {
+      if (s.activeStep === 'profile') {
+        next.profileStepResult = null
+        next.activeStep = 'topic'
+        next.activeStepIndex = 2
+      } else if (s.activeStep === 'topic') {
+        next.topicStepResult = null
+        next.activeStep = 'address'
+        next.activeStepIndex = 3
+      } else if (s.activeStep === 'address') {
+        next.addressStepResult = null
+      }
+      break
+    }
     case 'next': {
       if (s.activeStep === 'profile') {
         next.activeStep = 'topic'
