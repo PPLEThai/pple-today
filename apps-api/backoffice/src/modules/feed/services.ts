@@ -17,9 +17,21 @@ export class FeedService {
   ) {}
 
   async getMyFeed(userId?: string, query?: { page?: number; limit?: number }) {
-    // TODO: Use recommendation from dedicated recommendation service
+    if (userId) {
+      const result = await this.feedRepository.recommendFeedItems({
+        userId,
+        page: query?.page ?? 1,
+        limit: query?.limit ?? 10,
+      })
+
+      if (result.isErr()) {
+        return mapRepositoryError(result.error)
+      }
+
+      return ok(result.value)
+    }
+
     const feedItems = await this.feedRepository.listFeedItems({
-      userId,
       page: query?.page ?? 1,
       limit: query?.limit ?? 10,
     })

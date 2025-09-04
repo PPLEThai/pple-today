@@ -15,7 +15,8 @@ import { PrismaServicePlugin } from '../../plugins/prisma'
 export class FeedRepository {
   constructor(
     private prismaService: PrismaService,
-    private fileService: FileService
+    private fileService: FileService,
+    private bigQueryClient: BigQueryClient
   ) {}
 
   private readonly constructFeedItemInclude = (userId?: string) =>
@@ -295,16 +296,92 @@ export class FeedRepository {
     return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
   }
 
-  async listFeedItems({ userId, page, limit }: { userId?: string; page: number; limit: number }) {
+  async recommendFeedItems({
+    userId,
+    page,
+    limit,
+  }: {
+    userId: string
+    page: number
+    limit: number
+  }) {
+    return await fromRepositoryPromise(async () => {
+      const skip = Math.max((page - 1) * limit, 0)
+      const result = await this.bigQueryClient.createQueryJob({
+        query: `
+          SELECT feed_item_id
+          FROM ML.RECOMMEND(MODEL \`${serverEnv.GCP_BIGQUERY_MODEL_NAME}\`, (
+            SELECT "@userId" AS user_id
+          )) ORDER BY predicted_rating_confidence DESC
+        `,
+        params: {
+          userId,
+        },
+      })
+
+      const job = result[0]
+      const [feedItemIdObjs] = await job.getQueryResults()
+
+      const feedItemIds = feedItemIdObjs.map(({ feed_item_id }) => feed_item_id)
+
+      const rawFeedItems = await this.prismaService.feedItem.findMany({
+        where: {
+          id: {
+            in: feedItemIds,
+          },
+          type: {
+            not: FeedItemType.ANNOUNCEMENT,
+          },
+        },
+        skip,
+        take: limit,
+        include: this.constructFeedItemInclude(userId),
+      })
+
+      if (rawFeedItems.length < limit) {
+        const take = limit - rawFeedItems.length
+        const otherRawFeedItems = await this.prismaService.feedItem.findMany({
+          where: {
+            id: {
+              notIn: feedItemIds,
+            },
+            type: {
+              not: FeedItemType.ANNOUNCEMENT,
+            },
+          },
+          skip,
+          take,
+          include: this.constructFeedItemInclude(userId),
+        })
+        rawFeedItems.push(...otherRawFeedItems)
+      }
+
+      const feedItems = rawFeedItems.map((item) => this.transformToFeedItem(item))
+      const feedItemErr = feedItems.find((item) => item.isErr())
+
+      if (feedItemErr) {
+        return err(feedItemErr.error)
+      }
+
+      return feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value)
+    })
+  }
+
+  async listFeedItems({ page, limit }: { page: number; limit: number }) {
     const skip = Math.max((page - 1) * limit, 0)
     const rawFeedItems = await fromRepositoryPromise(
       this.prismaService.feedItem.findMany({
+        where: {
+          type: {
+            not: FeedItemType.ANNOUNCEMENT,
+          },
+        },
         orderBy: {
           createdAt: 'desc',
         },
         skip,
         take: limit,
-        include: this.constructFeedItemInclude(userId),
+        include: this.constructFeedItemInclude(),
       })
     )
 
@@ -482,13 +559,7 @@ export class FeedRepository {
             },
           })
 
-          await tx.feedItem.update({
-            where: { id: feedItemId },
-            data: {
-              numberOfComments: { increment: 1 },
-            },
-          })
-          return { ...reaction, comment }
+          return { reaction, comment }
         }
 
         return { reaction, comment: null }
@@ -673,7 +744,7 @@ export class FeedRepository {
 }
 
 export const FeedRepositoryPlugin = new Elysia({ name: 'FeedRepository' })
-  .use([PrismaServicePlugin, FileServicePlugin])
-  .decorate(({ prismaService, fileService }) => ({
-    feedRepository: new FeedRepository(prismaService, fileService),
+  .use([PrismaServicePlugin, FileServicePlugin, BigQueryClientPlugin])
+  .decorate(({ prismaService, fileService, bigQueryClient }) => ({
+    feedRepository: new FeedRepository(prismaService, fileService, bigQueryClient),
   }))
