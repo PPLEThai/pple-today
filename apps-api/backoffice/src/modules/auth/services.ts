@@ -1,9 +1,9 @@
+import { UserRole } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import { AuthRepository, AuthRepositoryPlugin } from './repository'
 
-import { UserRole } from '@pple-today/database/prisma'
 import { IntrospectAccessTokenResult } from '../../dtos/auth'
 import { InternalErrorCode } from '../../dtos/error'
 import { mapRepositoryError } from '../../utils/error'

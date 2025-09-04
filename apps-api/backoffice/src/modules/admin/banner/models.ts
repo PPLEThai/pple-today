@@ -1,6 +1,6 @@
+import { BannerNavigationType, BannerStatusType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
-import { BannerNavigationType, BannerStatusType } from '@pple-today/database/prisma'
 import { Banner } from '../../../dtos/banner'
 import { FilePath } from '../../../dtos/file'
 

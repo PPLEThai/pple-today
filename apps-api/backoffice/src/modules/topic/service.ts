@@ -1,10 +1,10 @@
+import { HashTagInTopic, Topic, TopicStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import { GetTopicsResponse } from './models'
 import { TopicRepository, TopicRepostoryPlugin } from './repository'
 
-import { HashTagInTopic, Topic, TopicStatus } from '@pple-today/database/prisma'
 import { InternalErrorCode } from '../../dtos/error'
 import { HashTag } from '../../dtos/tag'
 import { err, mapRepositoryError } from '../../utils/error'

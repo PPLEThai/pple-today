@@ -1,10 +1,10 @@
+import { PrismaService, PrismaServicePlugin } from '@pple-today/api-common/plugins/prisma'
 import { Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import { CompleteOnboardingProfileBody } from './models'
 
 import { FilePath } from '../../dtos/file'
-import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { err, fromRepositoryPromise } from '../../utils/error'
 import { FileService, FileServicePlugin, FileTransactionService } from '../file/services'
 

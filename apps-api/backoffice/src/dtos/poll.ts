@@ -1,6 +1,5 @@
-import { Static, t } from 'elysia'
-
 import { PollType } from '@pple-today/database/prisma'
+import { Static, t } from 'elysia'
 
 export const PublishedPoll = t.Object({
   id: t.String({ description: 'The ID of the poll' }),

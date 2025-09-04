@@ -1,3 +1,4 @@
+import { PrismaService, PrismaServicePlugin } from '@pple-today/api-common/plugins/prisma'
 import { FeedItemReactionType, FeedItemType, Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { Ok, ok } from 'neverthrow'
@@ -7,7 +8,6 @@ import { GetFeedContentResponse } from './models'
 
 import { InternalErrorCode } from '../../dtos/error'
 import { FeedItem, FeedItemBaseContent } from '../../dtos/feed'
-import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { err, exhaustiveGuard, fromRepositoryPromise } from '../../utils/error'
 import { FileService, FileServicePlugin } from '../file/services'
 

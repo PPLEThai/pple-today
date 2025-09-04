@@ -1,8 +1,7 @@
+import { FeedItemReactionType as PostReactionType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 import { Author } from './user'
-
-import { FeedItemReactionType as PostReactionType } from '@pple-today/database/prisma'
 
 export { PostReactionType }
 

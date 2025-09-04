@@ -1,9 +1,9 @@
+import { PrismaService, PrismaServicePlugin } from '@pple-today/api-common/plugins/prisma'
 import { BannerNavigationType, BannerStatusType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 
 import { FilePath } from '../../../dtos/file'
-import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { fromRepositoryPromise } from '../../../utils/error'
 import { FileService, FileServicePlugin } from '../../file/services'
 

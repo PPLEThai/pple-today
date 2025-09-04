@@ -1,6 +1,8 @@
 import { cors } from '@elysiajs/cors'
 import node from '@elysiajs/node'
 import { swagger } from '@elysiajs/swagger'
+import { loggerBuilder } from '@pple-today/api-common/plugins/logger'
+import { RequestIdPlugin } from '@pple-today/api-common/plugins/request-id'
 import Elysia, { AnyElysia } from 'elysia'
 import * as R from 'remeda'
 
@@ -9,13 +11,42 @@ import { ApplicationController } from './modules'
 import { AdminController } from './modules/admin'
 import { VersionController } from './modules/version'
 import { GlobalExceptionPlugin } from './plugins/global-exception'
-import { GlobalLoggerPlugin } from './plugins/logger'
-import { RequestIdPlugin } from './plugins/request-id'
 
 import packageJson from '../package.json'
 
 let app = new Elysia({ adapter: node() })
-  .use([GlobalLoggerPlugin, RequestIdPlugin, GlobalExceptionPlugin, cors()])
+  .use([
+    loggerBuilder({
+      name: 'Global Logger',
+    }).into({
+      customProps: (ctx) => {
+        const responseBody =
+          ctx.response || ('response' in ctx.error ? ctx.error.response : undefined)
+
+        return {
+          body: ctx.body,
+          query: ctx.query,
+          params: ctx.params,
+          response: responseBody,
+        }
+      },
+      autoLogging: {
+        ignore: (ctx) => {
+          if (ctx.isError) return false
+          if (!ctx.isError && 'response' in ctx.error) return true
+
+          return (
+            ctx.path.startsWith('/health') ||
+            ctx.path.startsWith('/swagger') ||
+            ctx.path.startsWith('/versions')
+          )
+        },
+      },
+    }),
+    RequestIdPlugin,
+    GlobalExceptionPlugin,
+    cors(),
+  ])
   .use([ApplicationController, AdminController, VersionController])
 
 if (serverEnv.ENABLE_SWAGGER) {

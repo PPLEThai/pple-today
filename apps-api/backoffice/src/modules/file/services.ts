@@ -3,6 +3,7 @@ import {
   GetSignedUrlConfig,
   Storage,
 } from '@google-cloud/storage'
+import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins/logger'
 import Elysia from 'elysia'
 import https from 'https'
 import { Err, fromPromise, Ok, ok } from 'neverthrow'
@@ -13,7 +14,6 @@ import { FilePermission, FileTransactionEntry } from './types'
 import serverEnv from '../../config/env'
 import { InternalErrorCode } from '../../dtos/error'
 import { FilePath } from '../../dtos/file'
-import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '../../plugins/logger'
 import { ApiErrorResponse, err, exhaustiveGuard, OnlyErr, WithoutErr } from '../../utils/error'
 import { getFilePath } from '../../utils/facebook'
 

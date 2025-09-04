@@ -12,6 +12,7 @@ async function main() {
     outfile: './build/index.js',
     platform: 'node',
     treeShaking: true,
+    minify: true,
     define: {
       __APP_VERSION__: JSON.stringify(version),
     },
@@ -19,7 +20,7 @@ async function main() {
       copy({
         assets: [
           {
-            from: './node_modules/@pple-today/database/__generated__',
+            from: './node_modules/@pple-today/database/__generated__/prisma/*.wasm',
             to: './',
           },
         ],

@@ -1,17 +1,17 @@
 {
   "name": "@pple-today/database",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "",
   "main": "index.js",
   "exports": {
     "./prisma": {
+      "types": "./__generated__/prisma/index.d.ts",
       "import": "./__generated__/prisma/index.js",
-      "require": "./__generated__/prisma/index-browser.js",
-      "types": "./__generated__/prisma/index.d.ts"
+      "require": "./__generated__/prisma/index-browser.js"
     },
     "./prisma/runtime/client": {
-      "import": "./__generated__/prisma/runtime/client.js",
-      "types": "./__generated__/prisma/runtime/client.d.ts"
+      "types": "./__generated__/prisma/runtime/client.d.ts",
+      "import": "./__generated__/prisma/runtime/client.js"
     }
   },
   "scripts": {

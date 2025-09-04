@@ -1,10 +1,10 @@
+import { PrismaService, PrismaServicePlugin } from '@pple-today/api-common/plugins/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import { UpdateTopicBody } from './models'
 
 import { FilePath } from '../../../dtos/file'
-import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { err } from '../../../utils/error'
 import { fromRepositoryPromise } from '../../../utils/error'
 import { FileService, FileServicePlugin } from '../../file/services'

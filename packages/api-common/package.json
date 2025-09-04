@@ -1,0 +1,24 @@
+{
+  "name": "@pple-today/api-common",
+  "version": "0.0.0",
+  "description": "",
+  "exports": {
+    "./plugins/*": {
+      "types": "./src/plugins/*.ts",
+      "import": "./src/plugins/*.ts"
+    }
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@bogeychan/elysia-logger": "^0.1.8",
+    "@pple-today/database": "workspace:^",
+    "@prisma/adapter-pg": "^6.11.1",
+    "elysia": "^1.3.5",
+    "remeda": "^2.24.0"
+  }
+}

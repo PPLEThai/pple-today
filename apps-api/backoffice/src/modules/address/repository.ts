@@ -1,7 +1,7 @@
+import { PrismaService, PrismaServicePlugin } from '@pple-today/api-common/plugins/prisma'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 
-import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { fromRepositoryPromise } from '../../utils/error'
 
 export class AddressRepository {

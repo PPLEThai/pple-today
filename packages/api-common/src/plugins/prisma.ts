@@ -4,8 +4,6 @@ import Elysia from 'elysia'
 
 import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from './logger'
 
-const connectionString = `${process.env.DATABASE_URL}`
-
 class PrismaService extends PrismaClient<
   Prisma.PrismaClientOptions,
   'query' | 'error' | 'warn' | 'info'
@@ -43,6 +41,7 @@ class PrismaService extends PrismaClient<
 const PrismaServicePlugin = new Elysia({ name: 'PrismaService' })
   .use(ElysiaLoggerPlugin({ name: 'PrismaService' }))
   .decorate(({ loggerService }) => {
+    const connectionString = `${process.env.DATABASE_URL}`
     const adapter = new PrismaPg({ connectionString })
     const prismaService = new PrismaService(loggerService, {
       adapter,
