@@ -147,12 +147,7 @@ export function OnboardingAddress() {
   const handleEndOnboarding = React.useCallback(async () => {
     setIsEndOnboarding(true)
 
-    const addressPayload = {
-      province: state.addressStepResult?.province ?? '',
-      district: state.addressStepResult?.district ?? '',
-      subDistrict: state.addressStepResult?.subDistrict ?? '',
-      postalCode: state.addressStepResult?.postalCode ?? '',
-    }
+    const addressPayload = state.addressStepResult
     const interestedTopicPayload = state.topicStepResult?.topics
 
     let profilePayload
