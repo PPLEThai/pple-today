@@ -1,6 +1,5 @@
 import Elysia from 'elysia'
 
-import { UserRole } from '../../../__generated__/prisma'
 import { IntrospectAccessTokenResult } from '../../dtos/auth'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { fromRepositoryPromise } from '../../utils/error'
@@ -17,7 +16,7 @@ export class AuthRepository {
     )
   }
 
-  async createUser(data: IntrospectAccessTokenResult, role: UserRole = UserRole.USER) {
+  async createUser(data: IntrospectAccessTokenResult, roles: string[]) {
     const { sub, name, phone_number } = data
 
     return await fromRepositoryPromise(
@@ -25,7 +24,7 @@ export class AuthRepository {
         data: {
           id: sub,
           name,
-          role,
+          roles,
           phoneNumber: phone_number,
         },
       })

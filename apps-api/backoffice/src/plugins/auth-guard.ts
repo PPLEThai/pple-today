@@ -59,6 +59,24 @@ export const AuthGuardPlugin = new Elysia({
         return { oidcUser: oidcUserResult.value }
       },
     },
+    requiredLocalRole: (allowedRoles: string[]) => ({
+      async resolve({ status, headers, authGuard }) {
+        const user = await authGuard.getCurrentUser(headers)
+
+        if (user.isErr()) {
+          return mapErrorCodeToResponse(user.error, status)
+        }
+
+        if (!user.value.roles.some((role) => allowedRoles.includes(role))) {
+          return mapErrorCodeToResponse(
+            { code: InternalErrorCode.FORBIDDEN, message: 'Forbidden' },
+            status
+          )
+        }
+
+        return { user: user.value }
+      },
+    }),
     fetchLocalUser: {
       async resolve({ headers, status, authGuard }) {
         const user = await authGuard.getCurrentUser(headers)

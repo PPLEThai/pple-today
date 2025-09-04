@@ -1,17 +1,12 @@
-enum UserRole {
-    USER
-    REPRESENTATIVE
-    STAFF
-    OFFICIAL
-}
-
 model User {
     id           String   @id @default(cuid())
     name         String
     phoneNumber  String   @unique
     profileImage String?
     point        Int      @default(0)
-    role         UserRole @default(USER)
+    roles        String[] @default([])
+
+    responsibleArea String?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

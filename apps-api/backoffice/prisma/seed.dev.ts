@@ -6,7 +6,6 @@ import {
   FeedItemType,
   PollType,
   PrismaClient,
-  UserRole,
 } from '../__generated__/prisma'
 const transformProvinceDetails = async () => {
   const response = await fetch(
@@ -123,13 +122,13 @@ const seedOfficialUser = async () => {
     update: {
       name: 'Official User',
       phoneNumber: '+1234567890',
-      role: UserRole.OFFICIAL,
+      roles: ['official'],
     },
     create: {
       id: OFFICIAL_USER_ID,
       name: 'Official User',
       phoneNumber: '+1234567890',
-      role: UserRole.OFFICIAL,
+      roles: ['official'],
     },
   })
   console.log('Seeded official user successfully.')

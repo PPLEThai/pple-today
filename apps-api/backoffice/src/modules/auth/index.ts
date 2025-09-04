@@ -1,6 +1,6 @@
 import Elysia from 'elysia'
 
-import { GetAuthMeResponse, RegisterUserQuery, RegisterUserResponse } from './models'
+import { GetAuthMeResponse, RegisterUserResponse } from './models'
 import { AuthServicePlugin } from './services'
 
 import { InternalErrorCode } from '../../dtos/error'
@@ -14,9 +14,8 @@ export const AuthController = new Elysia({
   .use([AuthGuardPlugin, AuthServicePlugin])
   .post(
     '/register',
-    async ({ oidcUser, query, status, authService }) => {
-      // TODO: Remove role from register endpoint
-      const result = await authService.registerUser(oidcUser, query.role)
+    async ({ oidcUser, status, authService }) => {
+      const result = await authService.registerUser(oidcUser, oidcUser.pple_roles)
 
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
@@ -28,7 +27,6 @@ export const AuthController = new Elysia({
     },
     {
       requiredOIDCUser: true,
-      query: RegisterUserQuery,
       response: {
         201: RegisterUserResponse,
         ...createErrorSchema(

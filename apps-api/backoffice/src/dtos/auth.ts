@@ -23,7 +23,8 @@ export const IntrospectAccessTokenResult = t.Union([
     email: t.Optional(t.String({ description: 'Email address of the user' })),
     email_verified: t.Optional(t.Boolean({ description: 'Indicates if the email is verified' })),
     phone_number: t.String({ description: 'Phone number of the user' }),
-    phone_number_verified: t.Boolean({ description: 'Indicates if the phone number' }),
+    phone_number_verified: t.Boolean({ description: 'Indicates if the phone number is verified' }),
+    pple_roles: t.Array(t.String({ description: 'Roles assigned to the user' })),
   }),
   t.Object({
     active: t.Literal(false, { description: 'Indicates if the token is active' }),

@@ -22,7 +22,7 @@ export class PollsRepository {
             id: true,
             name: true,
             profileImage: true,
-            role: true,
+            roles: true,
             district: true,
           },
         },
