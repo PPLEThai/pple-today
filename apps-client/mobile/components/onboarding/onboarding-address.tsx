@@ -5,6 +5,7 @@ import { Button } from '@pple-today/ui/button'
 import { FormControl, FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
 import {
+  NativeSelectScrollView,
   Select,
   SelectContent,
   SelectGroup,
@@ -27,7 +28,7 @@ import { handleUploadSignedUrl } from '@app/utils/upload'
 
 import { OnboardingAddressState, useOnboardingContext } from './onboarding-context'
 
-const outputFormSchema = z.object({
+const formSchema = z.object({
   province: z.string().min(1, 'กรุณาเลือกจังหวัด'),
   district: z.string().min(1, 'กรุณาเลือกอำเภอ'),
   subDistrict: z.string().min(1, 'กรุณาเลือกตำบล'),
@@ -45,20 +46,47 @@ export function OnboardingAddress() {
 
   const form = useForm({
     defaultValues: {
-      province: address?.province ?? '',
-      district: address?.district ?? '',
-      subDistrict: address?.subDistrict ?? '',
-      postalCode: address?.postalCode ?? '',
+      province: address?.province,
+      district: address?.district,
+      subDistrict: address?.subDistrict,
+      postalCode: address?.postalCode,
     },
     validators: {
-      onSubmit: outputFormSchema,
+      onSubmit: formSchema,
     },
     onSubmit: async (values) => {
-      dispatch({ type: 'setAddressStepResults', payload: values.value })
-      setAddress(values.value)
+      const _province = values.value.province
+      const _district = values.value.district
+      const _subDistrict = values.value.subDistrict
+      const _postalCode = values.value.postalCode
+
+      if (!_province || !_district || !_subDistrict || !_postalCode) return
+
+      const addressPayload = {
+        province: _province,
+        district: _district,
+        subDistrict: _subDistrict,
+        postalCode: _postalCode,
+      }
+      dispatch({
+        type: 'setAddressStepResults',
+        payload: addressPayload,
+      })
+      setAddress(addressPayload)
       setOpenForm(false)
     },
   })
+
+  React.useEffect(() => {
+    if (address) {
+      form.setFieldValue('province', address.province)
+      form.setFieldValue('district', address.district)
+      form.setFieldValue('subDistrict', address.subDistrict)
+      form.setFieldValue('postalCode', address.postalCode)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const provinceValues = useStore(form.store, (state) => state.values.province)
   const districtValues = useStore(form.store, (state) => state.values.district)
   const subdistrictValues = useStore(form.store, (state) => state.values.subDistrict)
@@ -218,7 +246,7 @@ export function OnboardingAddress() {
               <Text>ยืนยัน</Text>
             </Button>
             <Button variant="ghost" onPress={handleSkip}>
-              <Text>ข้าม</Text>
+              <Text>ข้ามและเริ่มต้นใช้งาน</Text>
             </Button>
           </View>
         </>
@@ -229,10 +257,10 @@ export function OnboardingAddress() {
             <form.Field
               name="province"
               listeners={{
-                onBlur: () => {
-                  form.setFieldValue('district', '')
-                  form.setFieldValue('subDistrict', '')
-                  form.setFieldValue('postalCode', '')
+                onChange: () => {
+                  form.resetField('district')
+                  form.resetField('subDistrict')
+                  form.resetField('postalCode')
                 },
               }}
             >
@@ -240,20 +268,19 @@ export function OnboardingAddress() {
                 <FormItem field={field}>
                   <FormLabel>จังหวัด</FormLabel>
                   <FormControl>
-                    <Select
-                      defaultValue={{ label: field.state.value, value: field.state.value }}
-                      onValueChange={(option) => field.handleChange(option?.value || '')}
-                    >
+                    <Select onValueChange={(option) => field.handleChange(option?.value || '')}>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="เลือกจังหวัด" />
                       </SelectTrigger>
                       <SelectContent insets={contentInsets} className="w-full">
-                        <SelectGroup>
-                          <SelectLabel className="font-bold">เลือกจังหวัด</SelectLabel>
-                          {getProvinceQuery.data?.map((province, index) => (
-                            <SelectItem key={index} label={province} value={province} />
-                          ))}
-                        </SelectGroup>
+                        <NativeSelectScrollView>
+                          <SelectGroup>
+                            <SelectLabel className="font-bold">เลือกจังหวัด</SelectLabel>
+                            {getProvinceQuery.data?.map((province, index) => (
+                              <SelectItem key={index} label={province} value={province} />
+                            ))}
+                          </SelectGroup>
+                        </NativeSelectScrollView>
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -265,9 +292,9 @@ export function OnboardingAddress() {
                 <form.Field
                   name="district"
                   listeners={{
-                    onBlur: () => {
-                      form.setFieldValue('subDistrict', '')
-                      form.setFieldValue('postalCode', '')
+                    onChange: () => {
+                      form.setFieldValue('subDistrict', undefined)
+                      form.setFieldValue('postalCode', undefined)
                     },
                   }}
                 >
@@ -275,20 +302,19 @@ export function OnboardingAddress() {
                     <FormItem field={field}>
                       <FormLabel>อำเภอ</FormLabel>
                       <FormControl>
-                        <Select
-                          defaultValue={{ label: field.state.value, value: field.state.value }}
-                          onValueChange={(option) => field.handleChange(option?.value || '')}
-                        >
+                        <Select onValueChange={(option) => field.handleChange(option?.value || '')}>
                           <SelectTrigger className="w-full" disabled={!province}>
                             <SelectValue placeholder="เลือกอำเภอ" />
                           </SelectTrigger>
                           <SelectContent insets={contentInsets} className="w-full">
-                            <SelectGroup>
-                              <SelectLabel className="font-bold">เลือกอำเภอ</SelectLabel>
-                              {getDistrictQuery.data?.map((district, index) => (
-                                <SelectItem key={index} label={district} value={district} />
-                              ))}
-                            </SelectGroup>
+                            <NativeSelectScrollView>
+                              <SelectGroup>
+                                <SelectLabel className="font-bold">เลือกอำเภอ</SelectLabel>
+                                {getDistrictQuery.data?.map((district, index) => (
+                                  <SelectItem key={index} label={district} value={district} />
+                                ))}
+                              </SelectGroup>
+                            </NativeSelectScrollView>
                           </SelectContent>
                         </Select>
                       </FormControl>
@@ -303,8 +329,8 @@ export function OnboardingAddress() {
                 <form.Field
                   name="subDistrict"
                   listeners={{
-                    onBlur: () => {
-                      form.setFieldValue('postalCode', '')
+                    onChange: () => {
+                      form.setFieldValue('postalCode', undefined)
                     },
                   }}
                 >
@@ -312,20 +338,19 @@ export function OnboardingAddress() {
                     <FormItem field={field}>
                       <FormLabel>ตำบล</FormLabel>
                       <FormControl>
-                        <Select
-                          defaultValue={{ label: field.state.value, value: field.state.value }}
-                          onValueChange={(option) => field.handleChange(option?.value || '')}
-                        >
+                        <Select onValueChange={(option) => field.handleChange(option?.value || '')}>
                           <SelectTrigger className="w-full" disabled={!district}>
                             <SelectValue placeholder="เลือกตำบล" />
                           </SelectTrigger>
                           <SelectContent insets={contentInsets} className="w-full">
-                            <SelectGroup>
-                              <SelectLabel className="font-bold">เลือกตำบล</SelectLabel>
-                              {getSubdistrictQuery.data?.map((subDistrict, index) => (
-                                <SelectItem key={index} label={subDistrict} value={subDistrict} />
-                              ))}
-                            </SelectGroup>
+                            <NativeSelectScrollView>
+                              <SelectGroup>
+                                <SelectLabel className="font-bold">เลือกตำบล</SelectLabel>
+                                {getSubdistrictQuery.data?.map((subDistrict, index) => (
+                                  <SelectItem key={index} label={subDistrict} value={subDistrict} />
+                                ))}
+                              </SelectGroup>
+                            </NativeSelectScrollView>
                           </SelectContent>
                         </Select>
                       </FormControl>
@@ -342,20 +367,19 @@ export function OnboardingAddress() {
                     <FormItem field={field}>
                       <FormLabel>รหัสไปรษณีย์</FormLabel>
                       <FormControl>
-                        <Select
-                          defaultValue={{ label: field.state.value, value: field.state.value }}
-                          onValueChange={(option) => field.handleChange(option?.value || '')}
-                        >
+                        <Select onValueChange={(option) => field.handleChange(option?.value || '')}>
                           <SelectTrigger className="w-full" disabled={!subDistrict}>
                             <SelectValue placeholder="เลือกรหัสไปรษณีย์" />
                           </SelectTrigger>
                           <SelectContent insets={contentInsets} className="w-full">
-                            <SelectGroup>
-                              <SelectLabel className="font-bold">เลือกรหัสไปรษณีย์</SelectLabel>
-                              {getPostalCodeQuery.data?.map((postalCode, index) => (
-                                <SelectItem key={index} label={postalCode} value={postalCode} />
-                              ))}
-                            </SelectGroup>
+                            <NativeSelectScrollView>
+                              <SelectGroup>
+                                <SelectLabel className="font-bold">เลือกรหัสไปรษณีย์</SelectLabel>
+                                {getPostalCodeQuery.data?.map((postalCode, index) => (
+                                  <SelectItem key={index} label={postalCode} value={postalCode} />
+                                ))}
+                              </SelectGroup>
+                            </NativeSelectScrollView>
                           </SelectContent>
                         </Select>
                       </FormControl>
@@ -375,7 +399,7 @@ export function OnboardingAddress() {
               )}
             </form.Subscribe>
             <Button variant="ghost" onPress={handleSkip}>
-              <Text>ข้าม</Text>
+              <Text>ข้ามและเริ่มต้นใช้งาน</Text>
             </Button>
           </View>
         </>
