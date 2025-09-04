@@ -9,7 +9,9 @@
     }
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "typecheck": "tsc --noEmit",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --ext .ts,.tsx --fix"
   },
   "keywords": [],
   "author": "",
