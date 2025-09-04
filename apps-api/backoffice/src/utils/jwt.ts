@@ -1,11 +1,9 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { IntrospectAccessTokenResult } from '@pple-today/api-common/dtos'
+import { err } from '@pple-today/api-common/utils'
 import { Check } from '@sinclair/typebox/value'
 import jwt from 'jsonwebtoken'
 import { ok } from 'neverthrow'
-
-import { err } from './error'
-
-import { IntrospectAccessTokenResult } from '../dtos/auth'
-import { InternalErrorCode } from '../dtos/error'
 
 let jwtToken: string | null = null
 let latestJwtGenerationTime: number | null = null

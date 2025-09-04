@@ -1,13 +1,13 @@
-import { PrismaService } from '@pple-today/api-common/services'
+import { FilePath } from '@pple-today/api-common/dtos'
+import { FileService, FileTransactionService, PrismaService } from '@pple-today/api-common/services'
+import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import { CompleteOnboardingProfileBody } from './models'
 
-import { FilePath } from '../../dtos/file'
+import { FileServicePlugin } from '../../plugins/file'
 import { PrismaServicePlugin } from '../../plugins/prisma'
-import { err, fromRepositoryPromise } from '../../utils/error'
-import { FileService, FileServicePlugin, FileTransactionService } from '../file/services'
 
 export class ProfileRepository {
   constructor(

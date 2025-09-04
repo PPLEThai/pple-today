@@ -1,8 +1,6 @@
+import { FilePath, UserParticipation } from '@pple-today/api-common/dtos'
 import { UserRole } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
-
-import { FilePath } from '../../dtos/file'
-import { UserParticipation } from '../../dtos/participation'
 
 // TODO: Add election
 export const GetUserParticipationResponse = t.Array(UserParticipation)

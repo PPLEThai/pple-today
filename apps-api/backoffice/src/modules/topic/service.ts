@@ -1,3 +1,5 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { err, mapRepositoryError } from '@pple-today/api-common/utils'
 import { HashTagInTopic, Topic, TopicStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
@@ -5,9 +7,7 @@ import { ok } from 'neverthrow'
 import { GetTopicsResponse } from './models'
 import { TopicRepository, TopicRepositoryPlugin } from './repository'
 
-import { InternalErrorCode } from '../../dtos/error'
-import { HashTag } from '../../dtos/tag'
-import { err, mapRepositoryError } from '../../utils/error'
+import { HashTag } from '@pple-today/api-common/dtos'
 
 export class TopicService {
   constructor(private readonly topicRepository: TopicRepository) {}

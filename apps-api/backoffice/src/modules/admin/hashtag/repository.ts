@@ -1,10 +1,10 @@
 import { PrismaService } from '@pple-today/api-common/services'
+import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
 import { CreateHashtagBody, UpdateHashtagBody } from './models'
 
 import { PrismaServicePlugin } from '../../../plugins/prisma'
-import { fromRepositoryPromise } from '../../../utils/error'
 
 export class AdminHashtagRepository {
   constructor(private prismaService: PrismaService) {}

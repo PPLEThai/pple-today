@@ -1,13 +1,14 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { IntrospectAccessTokenResult } from '@pple-today/api-common/dtos'
+import { FileService } from '@pple-today/api-common/services'
+import { mapRepositoryError } from '@pple-today/api-common/utils'
 import { UserRole } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import { AuthRepository, AuthRepositoryPlugin } from './repository'
 
-import { IntrospectAccessTokenResult } from '../../dtos/auth'
-import { InternalErrorCode } from '../../dtos/error'
-import { mapRepositoryError } from '../../utils/error'
-import { FileService, FileServicePlugin } from '../file/services'
+import { FileServicePlugin } from '../../plugins/file'
 
 export class AuthService {
   constructor(

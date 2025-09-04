@@ -1,8 +1,7 @@
+import { FilePath } from '@pple-today/api-common/dtos'
+import { DetailedTopic, Topic } from '@pple-today/api-common/dtos'
 import { TopicStatus } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
-
-import { FilePath } from '../../../dtos/file'
-import { DetailedTopic, Topic } from '../../../dtos/topic'
 
 export const GetTopicsQuery = t.Object({
   limit: t.Optional(t.Number({ default: 10 })),

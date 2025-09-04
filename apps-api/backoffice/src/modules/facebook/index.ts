@@ -1,3 +1,5 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
 import {
@@ -13,9 +15,7 @@ import {
 import { FacebookServicePlugin } from './services'
 import { FacebookWebhookController } from './webhook'
 
-import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
-import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 
 export const FacebookController = new Elysia({
   prefix: '/facebook',

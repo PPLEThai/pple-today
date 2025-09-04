@@ -1,12 +1,4 @@
-import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
-import { PrismaService } from '@pple-today/api-common/services'
-import { TAnySchema } from '@sinclair/typebox'
-import { Check } from '@sinclair/typebox/value'
-import { createHmac } from 'crypto'
-import { Elysia, t } from 'elysia'
-import { fromPromise, ok } from 'neverthrow'
-
-import { InternalErrorCode } from '../../dtos/error'
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import {
   AccessTokenResponse,
   ErrorBody,
@@ -15,12 +7,21 @@ import {
   InspectAccessTokenResponse,
   ListUserPageResponse,
   PagePost,
-} from '../../dtos/facebook'
+} from '@pple-today/api-common/dtos'
+import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
+import { PrismaService } from '@pple-today/api-common/services'
+import { FileService } from '@pple-today/api-common/services'
+import { err } from '@pple-today/api-common/utils'
+import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { TAnySchema } from '@sinclair/typebox'
+import { Check } from '@sinclair/typebox/value'
+import { createHmac } from 'crypto'
+import { Elysia, t } from 'elysia'
+import { fromPromise, ok } from 'neverthrow'
+
 import { ConfigServicePlugin } from '../../plugins/config'
+import { FileServicePlugin } from '../../plugins/file'
 import { PrismaServicePlugin } from '../../plugins/prisma'
-import { err } from '../../utils/error'
-import { fromRepositoryPromise } from '../../utils/error'
-import { FileService, FileServicePlugin } from '../file/services'
 
 export class FacebookRepository {
   private apiAccessToken: {

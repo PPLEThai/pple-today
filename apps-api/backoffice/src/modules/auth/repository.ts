@@ -1,10 +1,10 @@
+import { IntrospectAccessTokenResult } from '@pple-today/api-common/dtos'
 import { PrismaService } from '@pple-today/api-common/services'
+import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { UserRole } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
-import { IntrospectAccessTokenResult } from '../../dtos/auth'
 import { PrismaServicePlugin } from '../../plugins/prisma'
-import { fromRepositoryPromise } from '../../utils/error'
 
 export class AuthRepository {
   constructor(private prismaService: PrismaService) {}

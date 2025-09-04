@@ -1,9 +1,9 @@
 import { PrismaService } from '@pple-today/api-common/services'
+import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 
 import { PrismaServicePlugin } from '../../plugins/prisma'
-import { fromRepositoryPromise } from '../../utils/error'
 
 export class AddressRepository {
   constructor(private readonly prismaService: PrismaService) {}

@@ -1,12 +1,12 @@
-import { PrismaService } from '@pple-today/api-common/services'
+import { FilePath } from '@pple-today/api-common/dtos'
+import { FileService, PrismaService } from '@pple-today/api-common/services'
+import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { BannerNavigationType, BannerStatusType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 
-import { FilePath } from '../../../dtos/file'
+import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
-import { fromRepositoryPromise } from '../../../utils/error'
-import { FileService, FileServicePlugin } from '../../file/services'
 
 export class AdminBannerRepository {
   constructor(

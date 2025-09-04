@@ -1,7 +1,7 @@
 import { HashTagStatus } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
-import { HashTag } from '../../../dtos/tag'
+import { HashTag } from '@pple-today/api-common/dtos'
 
 export const GetHashtagsQuery = t.Object({
   limit: t.Optional(t.Number({ default: 10 })),

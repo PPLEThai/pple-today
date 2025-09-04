@@ -1,8 +1,6 @@
+import { FeedItem, FeedItemComment, ListQuery, PaginationQuery } from '@pple-today/api-common/dtos'
 import { FeedItemReactionType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
-
-import { FeedItem, FeedItemComment } from '../../dtos/feed'
-import { ListQuery, PaginationQuery } from '../../dtos/pagination'
 
 export const GetFeedContentParams = t.Object({
   id: t.String({ description: 'The ID of the feed item' }),
