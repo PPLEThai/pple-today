@@ -1,24 +1,35 @@
+enum ElectionType {
+    ONSITE
+    ONLINE
+    HYBRID
+}
+
 enum EligibleVoterType {
     ONSITE
     ONLINE
 }
 
 model Election {
-    id          String   @id @default(cuid())
+    id          String       @id @default(cuid())
     name        String
     description String?
-    startDate   DateTime
-    endDate     DateTime
+    type        ElectionType
+
+    openRegister  DateTime
+    closeRegister DateTime
+    openVoting    DateTime
+    closeVoting   DateTime
+    startResult   DateTime?
+    endResult     DateTime?
 
     publicKey String?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    candidates              ElectionCandidate[]
-    voters                  ElectionEligibleVoter[]
-    electionBallots         ElectionBallot[]
-    electionEligibleBallots ElectionEligibleBallot[]
+    candidates ElectionCandidate[]
+    voters     ElectionEligibleVoter[]
+    ballots    ElectionEligbleBallot[]
 
     @@index([name])
 }
@@ -28,6 +39,7 @@ model ElectionCandidate {
     name         String
     description  String?
     profileImage String?
+    number       Int?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -36,45 +48,32 @@ model ElectionCandidate {
     election   Election @relation(fields: [electionId], references: [id])
 }
 
-model ElectionEligibleBallot {
-    id         String   @id @default(cuid())
-    electionId String
-    userId     String
-    ballotId   String?
-    createdAt  DateTime @default(now())
-    updatedAt  DateTime @updatedAt
-
-    election Election        @relation(fields: [electionId], references: [id])
-    user     User            @relation(fields: [userId], references: [id])
-    ballot   ElectionBallot? @relation(fields: [ballotId], references: [id])
-
-    @@index([electionId])
-    @@index([userId])
-}
-
-model ElectionBallot {
-    id              String   @id @default(cuid())
-    electionId      String
-    encryptedBallot String
-    createdAt       DateTime @default(now())
-    updatedAt       DateTime @updatedAt
-
-    election Election @relation(fields: [electionId], references: [id])
-
-    electionEligibleBallots ElectionEligibleBallot[]
-}
-
 model ElectionEligibleVoter {
     id         String             @id @default(cuid())
     electionId String
     userId     String
-    createdAt  DateTime           @default(now())
-    updatedAt  DateTime           @updatedAt
     type       EligibleVoterType?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
     election Election @relation(fields: [electionId], references: [id])
     user     User     @relation(fields: [userId], references: [id])
 
-    @@index([electionId])
     @@index([userId])
+}
+
+model ElectionEligbleBallot {
+    id              String  @id @default(cuid())
+    electionId      String
+    userId          String
+    encryptedBallot String
+    location        String?
+    faceImageURL    String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    election Election @relation(fields: [electionId], references: [id])
+    user     User     @relation(fields: [userId], references: [id])
 }
