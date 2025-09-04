@@ -23,7 +23,7 @@
   "devDependencies": {
     "@pple-today/project-config": "workspace:^",
     "@types/node": "^22.13.9",
-    "@types/react": "~19.0.10",
+    "@types/react": "~19.1.10",
     "@types/react-dom": "19.0.0",
     "prettier-plugin-tailwindcss": "^0.5.11",
     "tailwindcss": "^3.4.17"
