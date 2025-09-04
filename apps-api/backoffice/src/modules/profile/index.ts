@@ -13,6 +13,7 @@ import {
   GetMyProfileResponse,
   GetProfileByIdParams,
   GetProfileByIdResponse,
+  GetSuggestedUsersResponse,
   GetUserParticipationResponse,
   UpdateProfileBody,
   UpdateProfileResponse,
@@ -314,6 +315,32 @@ export const ProfileController = new Elysia({
       detail: {
         summary: 'Unfollow User',
         description: 'Unfollow a user by their ID',
+      },
+    }
+  )
+  .get(
+    '/suggest',
+    async ({ user, status, profileService }) => {
+      const result = await profileService.getProfileSuggestion(user.id)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      response: {
+        200: GetSuggestedUsersResponse,
+        ...createErrorSchema(
+          InternalErrorCode.USER_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get Suggested Users',
+        description: 'Fetch a list of users suggested for the authenticated user',
       },
     }
   )

@@ -230,6 +230,28 @@ export class ProfileService {
       uploadUrl: uploadUrl.value.url,
     })
   }
+
+  async getProfileSuggestion(userId: string) {
+    const result = await this.profileRepository.getProfileSuggestion(userId)
+
+    if (result.isErr()) {
+      return mapRepositoryError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.USER_NOT_FOUND,
+          message: 'User not found',
+        },
+      })
+    }
+
+    return ok(
+      result.value.map((user) => ({
+        ...user,
+        profileImage: user.profileImage
+          ? this.fileService.getPublicFileUrl(user.profileImage)
+          : undefined,
+      }))
+    )
+  }
 }
 
 export const ProfileServicePlugin = new Elysia({ name: 'ProfileService' })

@@ -310,7 +310,7 @@ export class FeedRepository {
       const result = await this.bigQueryClient.createQueryJob({
         query: `
           SELECT feed_item_id
-          FROM ML.RECOMMEND(MODEL \`${serverEnv.GCP_BIGQUERY_MODEL_NAME}\`, (
+          FROM ML.RECOMMEND(MODEL \`${serverEnv.GCP_BIGQUERY_FEED_MODEL_NAME}\`, (
             SELECT "@userId" AS user_id
           )) ORDER BY predicted_rating_confidence DESC
         `,
