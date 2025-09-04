@@ -30,8 +30,8 @@ import { OnboardingAddressState, useOnboardingContext } from './onboarding-conte
 
 const formSchema = z.object({
   province: z.string().min(1, 'กรุณาเลือกจังหวัด'),
-  district: z.string().min(1, 'กรุณาเลือกอำเภอ'),
-  subDistrict: z.string().min(1, 'กรุณาเลือกตำบล'),
+  district: z.string().min(1, 'กรุณาเลือกอเขต/อำเภอ'),
+  subDistrict: z.string().min(1, 'กรุณาเลือกแขวง/ตำบล'),
   postalCode: z.string().min(1, 'กรุณาเลือกรหัสไปรษณีย์'),
 })
 
@@ -299,19 +299,19 @@ export function OnboardingAddress() {
                 >
                   {(field) => (
                     <FormItem field={field}>
-                      <FormLabel>อำเภอ</FormLabel>
+                      <FormLabel>เขต/อำเภอ</FormLabel>
                       <FormControl>
                         <Select
                           value={{ label: field.state.value, value: field.state.value }}
                           onValueChange={(option) => field.handleChange(option?.value || '')}
                         >
                           <SelectTrigger className="w-full" disabled={!province}>
-                            <SelectValue placeholder="เลือกอำเภอ" />
+                            <SelectValue placeholder="เลือกเขต/อำเภอ" />
                           </SelectTrigger>
                           <SelectContent insets={contentInsets} className="w-full">
                             <NativeSelectScrollView>
                               <SelectGroup>
-                                <SelectLabel className="font-bold">เลือกอำเภอ</SelectLabel>
+                                <SelectLabel className="font-bold">เลือกเขต/อำเภอ</SelectLabel>
                                 {getDistrictQuery.data?.map((district, index) => (
                                   <SelectItem key={index} label={district} value={district} />
                                 ))}
@@ -338,19 +338,19 @@ export function OnboardingAddress() {
                 >
                   {(field) => (
                     <FormItem field={field}>
-                      <FormLabel>ตำบล</FormLabel>
+                      <FormLabel>แขวง/ตำบล</FormLabel>
                       <FormControl>
                         <Select
                           value={{ label: field.state.value, value: field.state.value }}
                           onValueChange={(option) => field.handleChange(option?.value || '')}
                         >
                           <SelectTrigger className="w-full" disabled={!district}>
-                            <SelectValue placeholder="เลือกตำบล" />
+                            <SelectValue placeholder="เลือกแขวง/ตำบล" />
                           </SelectTrigger>
                           <SelectContent insets={contentInsets} className="w-full">
                             <NativeSelectScrollView>
                               <SelectGroup>
-                                <SelectLabel className="font-bold">เลือกตำบล</SelectLabel>
+                                <SelectLabel className="font-bold">เลือกแขวง/ตำบล</SelectLabel>
                                 {getSubdistrictQuery.data?.map((subDistrict, index) => (
                                   <SelectItem key={index} label={subDistrict} value={subDistrict} />
                                 ))}
@@ -432,7 +432,9 @@ export function OnboardingAddressDetail({
         <View className="pb-2">
           <View>
             <Text className="font-noto-light line-clamp-1">
-              ต.{address.subDistrict} อ.{address.district}
+              {address.province === 'กรุงเทพมหานคร' ? 'แขวง' : 'ต.'}
+              {address.subDistrict} {address.province === 'กรุงเทพมหานคร' ? 'เขต' : 'อ.'}
+              {address.district}
             </Text>
             <Text className="font-noto-light line-clamp-1">
               จ.{address.province} {address.postalCode}
