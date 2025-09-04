@@ -1,8 +1,9 @@
-import { PrismaService, PrismaServicePlugin } from '@pple-today/api-common/plugins'
+import { PrismaService } from '@pple-today/api-common/services'
 import { UserRole } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import { IntrospectAccessTokenResult } from '../../dtos/auth'
+import { PrismaServicePlugin } from '../../plugins/prisma'
 import { fromRepositoryPromise } from '../../utils/error'
 
 export class AuthRepository {

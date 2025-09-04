@@ -1,9 +1,5 @@
-import {
-  ElysiaLoggerInstance,
-  ElysiaLoggerPlugin,
-  PrismaService,
-  PrismaServicePlugin,
-} from '@pple-today/api-common/plugins'
+import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
+import { PrismaService } from '@pple-today/api-common/services'
 import { TAnySchema } from '@sinclair/typebox'
 import { Check } from '@sinclair/typebox/value'
 import { createHmac } from 'crypto'
@@ -21,6 +17,7 @@ import {
   PagePost,
 } from '../../dtos/facebook'
 import { ConfigServicePlugin } from '../../plugins/config'
+import { PrismaServicePlugin } from '../../plugins/prisma'
 import { err } from '../../utils/error'
 import { fromRepositoryPromise } from '../../utils/error'
 import { FileService, FileServicePlugin } from '../file/services'

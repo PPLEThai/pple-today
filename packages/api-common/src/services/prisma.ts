@@ -1,8 +1,6 @@
 import { Prisma, PrismaClient } from '@pple-today/database/prisma'
-import { PrismaPg } from '@prisma/adapter-pg'
-import Elysia from 'elysia'
 
-import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from './logger'
+import { ElysiaLoggerInstance } from '../plugins/logger'
 
 class PrismaService extends PrismaClient<
   Prisma.PrismaClientOptions,
@@ -38,16 +36,4 @@ class PrismaService extends PrismaClient<
   }
 }
 
-const PrismaServicePlugin = new Elysia({ name: 'PrismaService' })
-  .use(ElysiaLoggerPlugin({ name: 'PrismaService' }))
-  .decorate(({ loggerService }) => {
-    const connectionString = `${process.env.DATABASE_URL}`
-    const adapter = new PrismaPg({ connectionString })
-    const prismaService = new PrismaService(loggerService, {
-      adapter,
-    })
-
-    return { prismaService }
-  })
-
-export { PrismaService, PrismaServicePlugin }
+export { PrismaService }
