@@ -1,12 +1,15 @@
-import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins/logger'
-import { PrismaService, PrismaServicePlugin } from '@pple-today/api-common/plugins/prisma'
+import {
+  ElysiaLoggerInstance,
+  ElysiaLoggerPlugin,
+  PrismaService,
+  PrismaServicePlugin,
+} from '@pple-today/api-common/plugins'
 import { TAnySchema } from '@sinclair/typebox'
 import { Check } from '@sinclair/typebox/value'
 import { createHmac } from 'crypto'
 import { Elysia, t } from 'elysia'
 import { fromPromise, ok } from 'neverthrow'
 
-import serverEnv from '../../config/env'
 import { InternalErrorCode } from '../../dtos/error'
 import {
   AccessTokenResponse,
@@ -17,6 +20,7 @@ import {
   ListUserPageResponse,
   PagePost,
 } from '../../dtos/facebook'
+import { ConfigServicePlugin } from '../../plugins/config'
 import { err } from '../../utils/error'
 import { fromRepositoryPromise } from '../../utils/error'
 import { FileService, FileServicePlugin } from '../file/services'
@@ -614,13 +618,14 @@ export const FacebookRepositoryPlugin = new Elysia({
 })
   .use(PrismaServicePlugin)
   .use(FileServicePlugin)
+  .use(ConfigServicePlugin)
   .use(ElysiaLoggerPlugin({ name: 'FacebookRepository' }))
-  .decorate(({ prismaService, fileService, loggerService }) => ({
+  .decorate(({ prismaService, fileService, loggerService, configService }) => ({
     facebookRepository: new FacebookRepository(
       {
-        apiUrl: serverEnv.FACEBOOK_API_URL,
-        appId: serverEnv.FACEBOOK_APP_ID,
-        appSecret: serverEnv.FACEBOOK_APP_SECRET,
+        apiUrl: configService.get('FACEBOOK_API_URL'),
+        appId: configService.get('FACEBOOK_APP_ID'),
+        appSecret: configService.get('FACEBOOK_APP_SECRET'),
       },
       fileService,
       prismaService,

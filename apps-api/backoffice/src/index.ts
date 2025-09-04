@@ -1,15 +1,14 @@
 import { cors } from '@elysiajs/cors'
 import node from '@elysiajs/node'
 import { swagger } from '@elysiajs/swagger'
-import { loggerBuilder } from '@pple-today/api-common/plugins/logger'
-import { RequestIdPlugin } from '@pple-today/api-common/plugins/request-id'
+import { loggerBuilder, RequestIdPlugin } from '@pple-today/api-common/plugins'
 import Elysia, { AnyElysia } from 'elysia'
 import * as R from 'remeda'
 
-import serverEnv from './config/env'
 import { ApplicationController } from './modules'
 import { AdminController } from './modules/admin'
 import { VersionController } from './modules/version'
+import { ConfigServicePlugin } from './plugins/config'
 import { GlobalExceptionPlugin } from './plugins/global-exception'
 
 import packageJson from '../package.json'
@@ -45,11 +44,12 @@ let app = new Elysia({ adapter: node() })
     }),
     RequestIdPlugin,
     GlobalExceptionPlugin,
+    ConfigServicePlugin,
     cors(),
   ])
   .use([ApplicationController, AdminController, VersionController])
 
-if (serverEnv.ENABLE_SWAGGER) {
+if (process.env.ENABLE_SWAGGER === 'true') {
   const getTagsFromController = (controller: AnyElysia) =>
     R.pipe(
       controller,
@@ -96,14 +96,16 @@ if (serverEnv.ENABLE_SWAGGER) {
             type: 'oauth2',
             flows: {
               authorizationCode: {
-                authorizationUrl: `${serverEnv.DEVELOPMENT_OIDC_URL}/oauth/v2/authorize`,
-                tokenUrl: `${serverEnv.DEVELOPMENT_OIDC_URL}/oauth/v2/token`,
+                authorizationUrl: `${ConfigServicePlugin.decorator.configService.get('DEVELOPMENT_OIDC_URL')}/oauth/v2/authorize`,
+                tokenUrl: `${ConfigServicePlugin.decorator.configService.get('DEVELOPMENT_OIDC_URL')}/oauth/v2/token`,
                 scopes: {
                   openid: 'OpenID scope',
                   profile: 'Profile scope',
                   phone: 'Phone scope',
                 },
-                'x-scalar-client-id': serverEnv.DEVELOPMENT_OIDC_CLIENT_ID,
+                'x-scalar-client-id': ConfigServicePlugin.decorator.configService.get(
+                  'DEVELOPMENT_OIDC_CLIENT_ID'
+                ),
                 'x-usePkce': 'SHA-256',
                 selectedScopes: ['openid', 'profile', 'phone'],
               } as any,
@@ -122,8 +124,8 @@ if (serverEnv.ENABLE_SWAGGER) {
   app = app.use(swaggerPlugin).get('/swagger', () => response.clone(), hooks)
 }
 
-app.listen(serverEnv.PORT, () => {
-  console.log(`Server is running on http://localhost:${serverEnv.PORT}`)
+app.listen(process.env.PORT, () => {
+  console.log(`Server is running on http://localhost:${process.env.PORT}`)
 })
 
 export type ApplicationApiSchema = typeof ApplicationController

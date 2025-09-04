@@ -1,5 +1,5 @@
 import { createId } from '@paralleldrive/cuid2'
-import { PrismaService, PrismaServicePlugin } from '@pple-today/api-common/plugins/prisma'
+import { PrismaService, PrismaServicePlugin } from '@pple-today/api-common/plugins'
 import { FeedItemType, PostAttachment, PostAttachmentType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'

@@ -3,7 +3,7 @@ import {
   GetSignedUrlConfig,
   Storage,
 } from '@google-cloud/storage'
-import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins/logger'
+import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
 import Elysia from 'elysia'
 import https from 'https'
 import { Err, fromPromise, Ok, ok } from 'neverthrow'
@@ -11,9 +11,9 @@ import { Readable } from 'stream'
 
 import { FilePermission, FileTransactionEntry } from './types'
 
-import serverEnv from '../../config/env'
 import { InternalErrorCode } from '../../dtos/error'
 import { FilePath } from '../../dtos/file'
+import { ConfigServicePlugin } from '../../plugins/config'
 import { ApiErrorResponse, err, exhaustiveGuard, OnlyErr, WithoutErr } from '../../utils/error'
 import { getFilePath } from '../../utils/facebook'
 
@@ -540,14 +540,14 @@ export class FileTransactionService {
 export const FileServicePlugin = new Elysia({
   name: 'FileService',
 })
-  .use(ElysiaLoggerPlugin({ name: 'FileService' }))
-  .decorate(({ loggerService }) => ({
+  .use([ElysiaLoggerPlugin({ name: 'FileService' }), ConfigServicePlugin])
+  .decorate(({ loggerService, configService }) => ({
     fileService: new FileService(
       {
-        projectId: serverEnv.GCP_PROJECT_ID,
-        clientEmail: serverEnv.GCP_CLIENT_EMAIL,
-        privateKey: serverEnv.GCP_PRIVATE_KEY,
-        bucketName: serverEnv.GCP_STORAGE_BUCKET_NAME,
+        projectId: configService.get('GCP_PROJECT_ID'),
+        clientEmail: configService.get('GCP_CLIENT_EMAIL'),
+        privateKey: configService.get('GCP_PRIVATE_KEY'),
+        bucketName: configService.get('GCP_STORAGE_BUCKET_NAME'),
       },
       loggerService
     ),

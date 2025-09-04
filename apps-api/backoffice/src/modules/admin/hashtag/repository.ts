@@ -1,4 +1,4 @@
-import { PrismaService, PrismaServicePlugin } from '@pple-today/api-common/plugins/prisma'
+import { PrismaService, PrismaServicePlugin } from '@pple-today/api-common/plugins'
 import Elysia from 'elysia'
 
 import { CreateHashtagBody, UpdateHashtagBody } from './models'

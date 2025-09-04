@@ -1,4 +1,4 @@
-import { PrismaService, PrismaServicePlugin } from '@pple-today/api-common/plugins/prisma'
+import { PrismaService, PrismaServicePlugin } from '@pple-today/api-common/plugins'
 import { FeedItemType, PollType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 

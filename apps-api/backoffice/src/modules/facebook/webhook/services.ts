@@ -1,6 +1,6 @@
 import * as crypto from 'node:crypto'
 
-import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins/logger'
+import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
 import { PostAttachment, PostAttachmentType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
@@ -9,7 +9,6 @@ import * as R from 'remeda'
 import { HandleFacebookWebhookBody, ValidateFacebookWebhookQuery } from './models'
 import { FacebookWebhookRepository, FacebookWebhookRepositoryPlugin } from './repository'
 
-import serverEnv from '../../../config/env'
 import { InternalErrorCode } from '../../../dtos/error'
 import {
   PagePost,
@@ -17,6 +16,7 @@ import {
   WebhookFeedChanges,
   WebhookFeedType,
 } from '../../../dtos/facebook'
+import { ConfigServicePlugin } from '../../../plugins/config'
 import { err } from '../../../utils/error'
 import { mapRepositoryError } from '../../../utils/error'
 import { getFileName } from '../../../utils/facebook'
@@ -355,13 +355,14 @@ export const FacebookWebhookServicePlugin = new Elysia({
   .use([
     FacebookWebhookRepositoryPlugin,
     FacebookRepositoryPlugin,
+    ConfigServicePlugin,
     ElysiaLoggerPlugin({ name: 'FacebookWebhookService' }),
   ])
-  .decorate(({ facebookRepository, facebookWebhookRepository, loggerService }) => ({
+  .decorate(({ facebookRepository, facebookWebhookRepository, loggerService, configService }) => ({
     facebookWebhookService: new FacebookWebhookService(
       {
-        appSecret: serverEnv.FACEBOOK_APP_SECRET,
-        verifyToken: serverEnv.FACEBOOK_WEBHOOK_VERIFY_TOKEN,
+        appSecret: configService.get('FACEBOOK_APP_SECRET'),
+        verifyToken: configService.get('FACEBOOK_WEBHOOK_VERIFY_TOKEN'),
       },
       facebookRepository,
       facebookWebhookRepository,

@@ -4,7 +4,6 @@ import { ok } from 'neverthrow'
 
 import { err } from './error'
 
-import serverEnv from '../config/env'
 import { IntrospectAccessTokenResult } from '../dtos/auth'
 import { InternalErrorCode } from '../dtos/error'
 
@@ -13,7 +12,15 @@ let latestJwtGenerationTime: number | null = null
 
 const JWT_TOKEN_EXPIRATION_TIME = 60 * 60 // 1 hour
 
-export const generateJwtToken = (force: boolean = false) => {
+export const generateJwtToken = (
+  config: {
+    oidcClientId: string
+    oidcUrl: string
+    oidcPrivateJwtKey: string
+    oidcKeyId: string
+  },
+  force: boolean = false
+) => {
   const currentEpoch = Math.floor(Date.now() / 1000)
   if (
     jwtToken &&
@@ -25,19 +32,19 @@ export const generateJwtToken = (force: boolean = false) => {
   }
 
   const payload = {
-    iss: serverEnv.OIDC_CLIENT_ID,
-    sub: serverEnv.OIDC_CLIENT_ID,
-    aud: serverEnv.OIDC_URL,
+    iss: config.oidcClientId,
+    sub: config.oidcClientId,
+    aud: config.oidcUrl,
     exp: currentEpoch + JWT_TOKEN_EXPIRATION_TIME,
     iat: currentEpoch,
   }
 
   const headers = {
     alg: 'RS256',
-    kid: serverEnv.OIDC_KEY_ID,
+    kid: config.oidcKeyId,
   }
 
-  jwtToken = jwt.sign(payload, serverEnv.OIDC_PRIVATE_JWT_KEY, {
+  jwtToken = jwt.sign(payload, config.oidcPrivateJwtKey, {
     algorithm: 'RS256',
     header: headers,
   })
@@ -46,8 +53,16 @@ export const generateJwtToken = (force: boolean = false) => {
   return jwtToken
 }
 
-export const introspectAccessToken = async (token: string) => {
-  const jwtToken = generateJwtToken()
+export const introspectAccessToken = async (
+  token: string,
+  config: {
+    oidcClientId: string
+    oidcUrl: string
+    oidcPrivateJwtKey: string
+    oidcKeyId: string
+  }
+) => {
+  const jwtToken = generateJwtToken(config)
 
   const httpHeaders = { 'Content-Type': 'application/x-www-form-urlencoded' }
   const data = {
@@ -56,7 +71,7 @@ export const introspectAccessToken = async (token: string) => {
     token: token,
   }
 
-  const response = await fetch(`${serverEnv.OIDC_URL}/oauth/v2/introspect`, {
+  const response = await fetch(`${config.oidcUrl}/oauth/v2/introspect`, {
     method: 'POST',
     headers: httpHeaders,
     body: new URLSearchParams(data),

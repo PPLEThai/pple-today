@@ -1,4 +1,4 @@
-import { PrismaService, PrismaServicePlugin } from '@pple-today/api-common/plugins/prisma'
+import { PrismaService, PrismaServicePlugin } from '@pple-today/api-common/plugins'
 import { BannerNavigationType, BannerStatusType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
