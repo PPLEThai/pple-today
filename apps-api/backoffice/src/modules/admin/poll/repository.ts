@@ -2,7 +2,7 @@ import Elysia from 'elysia'
 
 import { PutDraftPollBody, PutPublishedPollBody } from './models'
 
-import { FeedItemType, PollType } from '../../../../__generated__/prisma'
+import { FeedItemType, PollType } from '@pple-today/database/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { fromRepositoryPromise } from '../../../utils/error'
 

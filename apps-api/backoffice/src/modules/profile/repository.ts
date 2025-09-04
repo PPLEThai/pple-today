@@ -1,8 +1,8 @@
+import { Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import { CompleteOnboardingProfileBody } from './models'
 
-import { Prisma } from '../../../__generated__/prisma'
 import { FilePath } from '../../dtos/file'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { err, fromRepositoryPromise } from '../../utils/error'

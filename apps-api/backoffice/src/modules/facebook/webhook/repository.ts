@@ -3,7 +3,7 @@ import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 import * as R from 'remeda'
 
-import { FeedItemType, PostAttachment, PostAttachmentType } from '../../../../__generated__/prisma'
+import { FeedItemType, PostAttachment, PostAttachmentType } from '@pple-today/database/prisma'
 import { InternalErrorCode } from '../../../dtos/error'
 import { FilePath } from '../../../dtos/file'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'

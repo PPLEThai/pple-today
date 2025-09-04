@@ -1,6 +1,6 @@
 import { t } from 'elysia'
 
-import { HashTagStatus, TopicStatus } from '../../../__generated__/prisma'
+import { HashTagStatus, TopicStatus } from '@pple-today/database/prisma'
 
 export const GetTopicsResponse = t.Array(
   t.Object({

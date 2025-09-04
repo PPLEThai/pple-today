@@ -1,6 +1,6 @@
 import { Static, t } from 'elysia'
 
-import { HashTagStatus } from '../../__generated__/prisma'
+import { HashTagStatus } from '@pple-today/database/prisma'
 
 export const HashTag = t.Object({
   id: t.String({ description: 'The ID of the hashtag' }),

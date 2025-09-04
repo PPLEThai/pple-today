@@ -1,6 +1,6 @@
+import { TopicStatus } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
-import { TopicStatus } from '../../../../__generated__/prisma'
 import { FilePath } from '../../../dtos/file'
 import { DetailedTopic, Topic } from '../../../dtos/topic'
 

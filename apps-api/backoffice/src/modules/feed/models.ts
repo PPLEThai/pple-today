@@ -1,6 +1,6 @@
+import { FeedItemReactionType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
-import { FeedItemReactionType } from '../../../__generated__/prisma'
 import { FeedItem, FeedItemComment } from '../../dtos/feed'
 import { ListQuery, PaginationQuery } from '../../dtos/pagination'
 

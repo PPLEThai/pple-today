@@ -2,7 +2,7 @@ import { Static, t } from 'elysia'
 
 import { Author } from './user'
 
-import { FeedItemReactionType as PostReactionType } from '../../__generated__/prisma'
+import { FeedItemReactionType as PostReactionType } from '@pple-today/database/prisma'
 
 export { PostReactionType }
 

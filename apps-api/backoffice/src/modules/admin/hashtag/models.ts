@@ -1,6 +1,6 @@
 import { Static, t } from 'elysia'
 
-import { HashTagStatus } from '../../../../__generated__/prisma'
+import { HashTagStatus } from '@pple-today/database/prisma'
 import { HashTag } from '../../../dtos/tag'
 
 export const GetHashtagsQuery = t.Object({

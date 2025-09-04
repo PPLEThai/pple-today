@@ -1,6 +1,6 @@
 import Elysia from 'elysia'
 
-import { UserRole } from '../../../__generated__/prisma'
+import { UserRole } from '@pple-today/database/prisma'
 import { IntrospectAccessTokenResult } from '../../dtos/auth'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { fromRepositoryPromise } from '../../utils/error'

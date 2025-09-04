@@ -1,6 +1,6 @@
 import Elysia from 'elysia'
 
-import { BannerStatusType } from '../../../__generated__/prisma'
+import { BannerStatusType } from '@pple-today/database/prisma'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
 import { fromRepositoryPromise } from '../../utils/error'
 

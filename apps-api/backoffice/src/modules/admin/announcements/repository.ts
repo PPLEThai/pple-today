@@ -3,7 +3,7 @@ import { ok } from 'neverthrow'
 
 import { PutDraftAnnouncementBody, PutPublishedAnnouncementBody } from './models'
 
-import { FeedItemType } from '../../../../__generated__/prisma'
+import { FeedItemType } from '@pple-today/database/prisma'
 import { InternalErrorCode } from '../../../dtos/error'
 import { FilePath } from '../../../dtos/file'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'

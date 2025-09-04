@@ -7,7 +7,7 @@ import * as R from 'remeda'
 import { HandleFacebookWebhookBody, ValidateFacebookWebhookQuery } from './models'
 import { FacebookWebhookRepository, FacebookWebhookRepositoryPlugin } from './repository'
 
-import { PostAttachment, PostAttachmentType } from '../../../../__generated__/prisma'
+import { PostAttachment, PostAttachmentType } from '@pple-today/database/prisma'
 import serverEnv from '../../../config/env'
 import { InternalErrorCode } from '../../../dtos/error'
 import {

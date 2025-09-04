@@ -8,6 +8,7 @@ import {
   PrismaClient,
   UserRole,
 } from '../__generated__/prisma'
+
 const transformProvinceDetails = async () => {
   const response = await fetch(
     'https://raw.githubusercontent.com/earthchie/jquery.Thailand.js/refs/heads/master/jquery.Thailand.js/database/raw_database/raw_database.json'

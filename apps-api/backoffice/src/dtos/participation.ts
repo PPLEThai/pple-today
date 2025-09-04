@@ -1,6 +1,6 @@
 import { t } from 'elysia'
 
-import { FeedItemType } from '../../__generated__/prisma'
+import { FeedItemType } from '@pple-today/database/prisma'
 
 export const UserParticipation = t.Union([
   t.Object({

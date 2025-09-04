@@ -2,7 +2,7 @@ import { Static, t } from 'elysia'
 
 import { FilePath } from './file'
 
-import { TopicStatus } from '../../__generated__/prisma'
+import { TopicStatus } from '@pple-today/database/prisma'
 
 export const Topic = t.Object({
   id: t.String({ description: 'The ID of the topic' }),

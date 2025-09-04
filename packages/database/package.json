@@ -1,0 +1,34 @@
+{
+  "name": "@pple-today/database",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "exports": {
+    "./prisma": {
+      "import": "./__generated__/prisma/index.js",
+      "require": "./__generated__/prisma/index-browser.js",
+      "types": "./__generated__/prisma/index.d.ts"
+    },
+    "./prisma/runtime/client": {
+      "import": "./__generated__/prisma/runtime/client.js",
+      "types": "./__generated__/prisma/runtime/client.d.ts"
+    }
+  },
+  "scripts": {
+    "codegen": "rimraf ./__generated__/prisma && prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:dev:seed": "tsx prisma/seed.dev.ts",
+    "db:prod:seed": "tsx prisma/seed.prod.ts",
+    "db:reset": "prisma migrate reset"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "prisma": {
+    "schema": "./prisma"
+  },
+  "devDependencies": {
+    "@pple-today/project-config": "workspace:^",
+    "prisma": "^6.11.1"
+  }
+}

@@ -1,10 +1,10 @@
+import { FeedItemReactionType, FeedItemType, Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { Ok, ok } from 'neverthrow'
 import { sumBy } from 'remeda'
 
 import { GetFeedContentResponse } from './models'
 
-import { FeedItemReactionType, FeedItemType, Prisma } from '../../../__generated__/prisma'
 import { InternalErrorCode } from '../../dtos/error'
 import { FeedItem, FeedItemBaseContent } from '../../dtos/feed'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'

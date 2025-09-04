@@ -1,7 +1,7 @@
+import { BannerNavigationType, BannerStatusType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 
-import { BannerNavigationType, BannerStatusType } from '../../../../__generated__/prisma'
 import { FilePath } from '../../../dtos/file'
 import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
 import { fromRepositoryPromise } from '../../../utils/error'

@@ -1,6 +1,6 @@
 import { Static, t } from 'elysia'
 
-import { AnnouncementType } from '../../../../__generated__/prisma'
+import { AnnouncementType } from '@pple-today/database/prisma'
 import { DraftAnnouncement, PublishedAnnouncement } from '../../../dtos/announcement'
 import { FilePath } from '../../../dtos/file'
 

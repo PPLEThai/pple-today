@@ -1,6 +1,6 @@
+import { UserRole } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
-import { UserRole } from '../../../__generated__/prisma'
 import { FilePath } from '../../dtos/file'
 import { UserParticipation } from '../../dtos/participation'
 

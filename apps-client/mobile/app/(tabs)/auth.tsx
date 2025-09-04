@@ -27,7 +27,6 @@ import {
   TrophyIcon,
 } from 'lucide-react-native'
 
-import { UserRole } from '@api/backoffice/__generated__/prisma/client'
 import { GetUserParticipationResponse } from '@api/backoffice/src/modules/profile/models'
 import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
@@ -143,7 +142,7 @@ const HeaderSection = () => {
 }
 const ProfileSection = () => {
   const profileQuery = reactQueryClient.useQuery('/profile/me', {})
-  const getRoleName = (role: UserRole) => {
+  const getRoleName = (role: string) => {
     switch (role) {
       case 'REPRESENTATIVE':
         return 'สมาชิกสส.พรรคประชาชน'
@@ -154,7 +153,7 @@ const ProfileSection = () => {
       case 'OFFICIAL':
         return 'คณะทำงาน'
       default:
-        throw exhaustiveGuard(role)
+        return 'Unknown Role'
     }
   }
   const Profile =

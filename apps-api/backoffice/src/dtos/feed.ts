@@ -1,9 +1,8 @@
+import { FeedItemType, PostAttachmentType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 import { PostReactionType } from './post'
 import { Author } from './user'
-
-import { FeedItemType, PostAttachmentType } from '../../__generated__/prisma'
 
 export const FeedItemComment = t.Object({
   id: t.String({ description: 'The ID of the comment' }),

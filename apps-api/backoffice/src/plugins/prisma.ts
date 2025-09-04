@@ -1,9 +1,8 @@
+import { Prisma, PrismaClient } from '@pple-today/database/prisma'
 import { PrismaPg } from '@prisma/adapter-pg'
 import Elysia from 'elysia'
 
 import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from './logger'
-
-import { Prisma, PrismaClient } from '../../__generated__/prisma/client'
 
 const connectionString = `${process.env.DATABASE_URL}`
 
