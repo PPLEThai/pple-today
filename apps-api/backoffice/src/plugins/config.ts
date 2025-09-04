@@ -56,6 +56,9 @@ export const envSchema = t.Object({
   GCP_STORAGE_BUCKET_NAME: t.String({
     description: 'Google Cloud Storage Bucket Name',
   }),
+  GCP_BIGQUERY_MODEL_NAME: t.String({
+    description: 'Google Cloud BigQuery Model Name for recommendations',
+  }),
 })
 
 export const ConfigServicePlugin = createConfigServicePlugin({
