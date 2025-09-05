@@ -1,4 +1,3 @@
-export * from './about-us'
 export * from './announcement'
 export * from './auth'
 export * from './banner'

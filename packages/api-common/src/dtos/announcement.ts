@@ -1,7 +1,7 @@
-import { FilePath } from '@pple-today/api-common/dtos'
 import { AnnouncementType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
+import { FilePath } from './file'
 import { Topic } from './topic'
 
 export const PublishedAnnouncement = t.Object({

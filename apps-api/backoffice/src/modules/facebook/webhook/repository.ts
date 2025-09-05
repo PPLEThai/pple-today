@@ -3,7 +3,7 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FilePath } from '@pple-today/api-common/dtos'
 import { PrismaService } from '@pple-today/api-common/services'
 import { FileService } from '@pple-today/api-common/services'
-import { err } from '@pple-today/api-common/utils'
+import { err, getFileName } from '@pple-today/api-common/utils'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { FeedItemType, PostAttachment, PostAttachmentType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
@@ -12,7 +12,6 @@ import * as R from 'remeda'
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
-import { getFileName } from '../../../utils/facebook'
 
 export class FacebookWebhookRepository {
   constructor(

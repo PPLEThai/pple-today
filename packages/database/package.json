@@ -16,7 +16,7 @@
     }
   },
   "scripts": {
-    "codegen": "rimraf ./__generated__/prisma && prisma generate",
+    "codegen": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:dev:seed": "tsx prisma/seed.dev.ts",
     "db:prod:seed": "tsx prisma/seed.prod.ts",
@@ -28,11 +28,13 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "prisma": {
-    "schema": "./prisma"
-  },
   "devDependencies": {
     "@pple-today/project-config": "workspace:^",
-    "prisma": "^6.11.1"
+    "@prisma/adapter-pg": "^6.15.0",
+    "dotenv": "^17.0.1",
+    "prisma": "^6.15.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.15.0"
   }
 }

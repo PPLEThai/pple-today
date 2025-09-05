@@ -8,7 +8,7 @@ import {
   WebhookFeedType,
 } from '@pple-today/api-common/dtos'
 import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
-import { err } from '@pple-today/api-common/utils'
+import { err, getFileName } from '@pple-today/api-common/utils'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import { PostAttachment, PostAttachmentType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
@@ -19,7 +19,6 @@ import { HandleFacebookWebhookBody, ValidateFacebookWebhookQuery } from './model
 import { FacebookWebhookRepository, FacebookWebhookRepositoryPlugin } from './repository'
 
 import { ConfigServicePlugin } from '../../../plugins/config'
-import { getFileName } from '../../../utils/facebook'
 import { FacebookRepository, FacebookRepositoryPlugin } from '../repository'
 
 export class FacebookWebhookService {

@@ -1,6 +1,7 @@
-import { FilePath } from '@pple-today/api-common/dtos'
 import { BannerNavigationType, BannerStatusType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
+
+import { FilePath } from './file'
 
 export const Banner = t.Object({
   id: t.String({ description: 'Banner ID' }),
