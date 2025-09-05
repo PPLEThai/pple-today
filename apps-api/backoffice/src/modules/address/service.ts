@@ -1,9 +1,8 @@
+import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import { AddressRepository, AddressRepositoryPlugin } from './repository'
-
-import { mapRepositoryError } from '../../utils/error'
 
 export class AddressService {
   constructor(private readonly addressRepository: AddressRepository) {}

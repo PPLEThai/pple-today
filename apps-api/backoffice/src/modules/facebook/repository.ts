@@ -1,11 +1,4 @@
-import { TAnySchema } from '@sinclair/typebox'
-import { Check } from '@sinclair/typebox/value'
-import { createHmac } from 'crypto'
-import { Elysia, t } from 'elysia'
-import { fromPromise, ok } from 'neverthrow'
-
-import serverEnv from '../../config/env'
-import { InternalErrorCode } from '../../dtos/error'
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import {
   AccessTokenResponse,
   ErrorBody,
@@ -14,12 +7,21 @@ import {
   InspectAccessTokenResponse,
   ListUserPageResponse,
   PagePost,
-} from '../../dtos/facebook'
-import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '../../plugins/logger'
-import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
-import { err } from '../../utils/error'
-import { fromRepositoryPromise } from '../../utils/error'
-import { FileService, FileServicePlugin } from '../file/services'
+} from '@pple-today/api-common/dtos'
+import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
+import { PrismaService } from '@pple-today/api-common/services'
+import { FileService } from '@pple-today/api-common/services'
+import { err } from '@pple-today/api-common/utils'
+import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { TAnySchema } from '@sinclair/typebox'
+import { Check } from '@sinclair/typebox/value'
+import { createHmac } from 'crypto'
+import { Elysia, t } from 'elysia'
+import { fromPromise, ok } from 'neverthrow'
+
+import { ConfigServicePlugin } from '../../plugins/config'
+import { FileServicePlugin } from '../../plugins/file'
+import { PrismaServicePlugin } from '../../plugins/prisma'
 
 export class FacebookRepository {
   private apiAccessToken: {
@@ -626,13 +628,14 @@ export const FacebookRepositoryPlugin = new Elysia({
 })
   .use(PrismaServicePlugin)
   .use(FileServicePlugin)
+  .use(ConfigServicePlugin)
   .use(ElysiaLoggerPlugin({ name: 'FacebookRepository' }))
-  .decorate(({ prismaService, fileService, loggerService }) => ({
+  .decorate(({ prismaService, fileService, loggerService, configService }) => ({
     facebookRepository: new FacebookRepository(
       {
-        apiUrl: serverEnv.FACEBOOK_API_URL,
-        appId: serverEnv.FACEBOOK_APP_ID,
-        appSecret: serverEnv.FACEBOOK_APP_SECRET,
+        apiUrl: configService.get('FACEBOOK_API_URL'),
+        appId: configService.get('FACEBOOK_APP_ID'),
+        appSecret: configService.get('FACEBOOK_APP_SECRET'),
       },
       fileService,
       prismaService,

@@ -1,12 +1,14 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { FileService } from '@pple-today/api-common/services'
+import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 import * as R from 'remeda'
 
 import { FacebookRepository, FacebookRepositoryPlugin } from './repository'
 
-import { InternalErrorCode } from '../../dtos/error'
-import { mapRepositoryError } from '../../utils/error'
-import { FileService, FileServicePlugin } from '../file/services'
+import { FileServicePlugin } from '../../plugins/file'
+
 export class FacebookService {
   constructor(
     private readonly facebookRepository: FacebookRepository,
