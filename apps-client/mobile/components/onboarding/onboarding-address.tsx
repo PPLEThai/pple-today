@@ -27,10 +27,10 @@ import { handleUploadSignedUrl } from '@app/utils/upload'
 
 import { OnboardingAddressState, useOnboardingContext } from './onboarding-context'
 
-const outputFormSchema = z.object({
+const formSchema = z.object({
   province: z.string().min(1, 'กรุณาเลือกจังหวัด'),
-  district: z.string().min(1, 'กรุณาเลือกอำเภอ'),
-  subDistrict: z.string().min(1, 'กรุณาเลือกตำบล'),
+  district: z.string().min(1, 'กรุณาเลือกอเขต/อำเภอ'),
+  subDistrict: z.string().min(1, 'กรุณาเลือกแขวง/ตำบล'),
   postalCode: z.string().min(1, 'กรุณาเลือกรหัสไปรษณีย์'),
 })
 
@@ -40,6 +40,7 @@ export function OnboardingAddress() {
     state.addressStepResult
   )
   const [openForm, setOpenForm] = React.useState(false)
+  const [isEndOnboarding, setIsEndOnboarding] = React.useState(false)
 
   const getProvinceQuery = reactQueryClient.useQuery('/address/province', {})
 
@@ -51,14 +52,31 @@ export function OnboardingAddress() {
       postalCode: address?.postalCode ?? '',
     },
     validators: {
-      onSubmit: outputFormSchema,
+      onSubmit: formSchema,
     },
-    onSubmit: async (values) => {
-      dispatch({ type: 'setAddressStepResults', payload: values.value })
-      setAddress(values.value)
+    onSubmit: (values) => {
+      const _province = values.value.province
+      const _district = values.value.district
+      const _subDistrict = values.value.subDistrict
+      const _postalCode = values.value.postalCode
+
+      if (!_province || !_district || !_subDistrict || !_postalCode) return
+
+      const addressPayload = {
+        province: _province,
+        district: _district,
+        subDistrict: _subDistrict,
+        postalCode: _postalCode,
+      }
+      dispatch({
+        type: 'setAddressStepResults',
+        payload: addressPayload,
+      })
+      setAddress(addressPayload)
       setOpenForm(false)
     },
   })
+
   const provinceValues = useStore(form.store, (state) => state.values.province)
   const districtValues = useStore(form.store, (state) => state.values.district)
   const subdistrictValues = useStore(form.store, (state) => state.values.subDistrict)
@@ -82,10 +100,6 @@ export function OnboardingAddress() {
   )
 
   const router = useRouter()
-
-  const handleSkip = React.useCallback(() => {
-    router.navigate('/')
-  }, [router])
 
   const handleOpenForm = React.useCallback(() => {
     setOpenForm(true)
@@ -130,12 +144,9 @@ export function OnboardingAddress() {
   }
 
   const handleEndOnboarding = React.useCallback(async () => {
-    const addressPayload = {
-      province: state.addressStepResult?.province ?? '',
-      district: state.addressStepResult?.district ?? '',
-      subDistrict: state.addressStepResult?.subDistrict ?? '',
-      postalCode: state.addressStepResult?.postalCode ?? '',
-    }
+    setIsEndOnboarding(true)
+
+    const addressPayload = state.addressStepResult
     const interestedTopicPayload = state.topicStepResult?.topics
 
     let profilePayload
@@ -163,7 +174,7 @@ export function OnboardingAddress() {
         name: state.profileStepResult?.name ?? '',
         profileImage: result.data.fileKey ?? '',
       }
-    } else {
+    } else if (state.profileStepResult?.name) {
       profilePayload = {
         name: state.profileStepResult?.name ?? '',
       }
@@ -186,6 +197,7 @@ export function OnboardingAddress() {
           router.navigate('/')
         },
         onError: () => {
+          setIsEndOnboarding(false)
           toast.error({
             text1: 'เกิดข้อผิดพลาดบางอย่าง',
             icon: TriangleAlertIcon,
@@ -201,6 +213,17 @@ export function OnboardingAddress() {
     router,
   ])
 
+  const handleSkip = React.useCallback(() => {
+    dispatch({ type: 'skip' })
+    const { profileStepResult, topicStepResult, addressStepResult } = state
+
+    if (profileStepResult || topicStepResult || addressStepResult) {
+      handleEndOnboarding()
+    } else {
+      router.navigate('/')
+    }
+  }, [state, dispatch, handleEndOnboarding, router])
+
   const contentInsets = {
     left: 24,
     right: 24,
@@ -214,11 +237,11 @@ export function OnboardingAddress() {
             <OnboardingAddressDetail address={address} handleOpenForm={handleOpenForm} />
           </View>
           <View className="gap-2 p-6 pt-0">
-            <Button disabled={!address} onPress={handleEndOnboarding}>
+            <Button disabled={!address || isEndOnboarding} onPress={handleEndOnboarding}>
               <Text>ยืนยัน</Text>
             </Button>
-            <Button variant="ghost" onPress={handleSkip}>
-              <Text>ข้าม</Text>
+            <Button disabled={isEndOnboarding} variant="ghost" onPress={handleSkip}>
+              <Text>ข้ามและเริ่มต้นใช้งาน</Text>
             </Button>
           </View>
         </>
@@ -229,7 +252,7 @@ export function OnboardingAddress() {
             <form.Field
               name="province"
               listeners={{
-                onBlur: () => {
+                onChange: () => {
                   form.setFieldValue('district', '')
                   form.setFieldValue('subDistrict', '')
                   form.setFieldValue('postalCode', '')
@@ -241,7 +264,7 @@ export function OnboardingAddress() {
                   <FormLabel>จังหวัด</FormLabel>
                   <FormControl>
                     <Select
-                      defaultValue={{ label: field.state.value, value: field.state.value }}
+                      value={{ label: field.state.value, value: field.state.value }}
                       onValueChange={(option) => field.handleChange(option?.value || '')}
                     >
                       <SelectTrigger className="w-full">
@@ -265,7 +288,7 @@ export function OnboardingAddress() {
                 <form.Field
                   name="district"
                   listeners={{
-                    onBlur: () => {
+                    onChange: () => {
                       form.setFieldValue('subDistrict', '')
                       form.setFieldValue('postalCode', '')
                     },
@@ -273,18 +296,18 @@ export function OnboardingAddress() {
                 >
                   {(field) => (
                     <FormItem field={field}>
-                      <FormLabel>อำเภอ</FormLabel>
+                      <FormLabel>เขต/อำเภอ</FormLabel>
                       <FormControl>
                         <Select
-                          defaultValue={{ label: field.state.value, value: field.state.value }}
+                          value={{ label: field.state.value, value: field.state.value }}
                           onValueChange={(option) => field.handleChange(option?.value || '')}
                         >
                           <SelectTrigger className="w-full" disabled={!province}>
-                            <SelectValue placeholder="เลือกอำเภอ" />
+                            <SelectValue placeholder="เลือกเขต/อำเภอ" />
                           </SelectTrigger>
                           <SelectContent insets={contentInsets} className="w-full">
                             <SelectGroup>
-                              <SelectLabel className="font-bold">เลือกอำเภอ</SelectLabel>
+                              <SelectLabel className="font-bold">เลือกเขต/อำเภอ</SelectLabel>
                               {getDistrictQuery.data?.map((district, index) => (
                                 <SelectItem key={index} label={district} value={district} />
                               ))}
@@ -303,25 +326,25 @@ export function OnboardingAddress() {
                 <form.Field
                   name="subDistrict"
                   listeners={{
-                    onBlur: () => {
+                    onChange: () => {
                       form.setFieldValue('postalCode', '')
                     },
                   }}
                 >
                   {(field) => (
                     <FormItem field={field}>
-                      <FormLabel>ตำบล</FormLabel>
+                      <FormLabel>แขวง/ตำบล</FormLabel>
                       <FormControl>
                         <Select
-                          defaultValue={{ label: field.state.value, value: field.state.value }}
+                          value={{ label: field.state.value, value: field.state.value }}
                           onValueChange={(option) => field.handleChange(option?.value || '')}
                         >
                           <SelectTrigger className="w-full" disabled={!district}>
-                            <SelectValue placeholder="เลือกตำบล" />
+                            <SelectValue placeholder="เลือกแขวง/ตำบล" />
                           </SelectTrigger>
                           <SelectContent insets={contentInsets} className="w-full">
                             <SelectGroup>
-                              <SelectLabel className="font-bold">เลือกตำบล</SelectLabel>
+                              <SelectLabel className="font-bold">เลือกแขวง/ตำบล</SelectLabel>
                               {getSubdistrictQuery.data?.map((subDistrict, index) => (
                                 <SelectItem key={index} label={subDistrict} value={subDistrict} />
                               ))}
@@ -343,7 +366,7 @@ export function OnboardingAddress() {
                       <FormLabel>รหัสไปรษณีย์</FormLabel>
                       <FormControl>
                         <Select
-                          defaultValue={{ label: field.state.value, value: field.state.value }}
+                          value={{ label: field.state.value, value: field.state.value }}
                           onValueChange={(option) => field.handleChange(option?.value || '')}
                         >
                           <SelectTrigger className="w-full" disabled={!subDistrict}>
@@ -375,7 +398,7 @@ export function OnboardingAddress() {
               )}
             </form.Subscribe>
             <Button variant="ghost" onPress={handleSkip}>
-              <Text>ข้าม</Text>
+              <Text>ข้ามและเริ่มต้นใช้งาน</Text>
             </Button>
           </View>
         </>
@@ -400,7 +423,9 @@ export function OnboardingAddressDetail({
         <View className="pb-2">
           <View>
             <Text className="font-noto-light line-clamp-1">
-              ต.{address.subDistrict} อ.{address.district}
+              {address.province === 'กรุงเทพมหานคร' ? 'แขวง' : 'ต.'}
+              {address.subDistrict} {address.province === 'กรุงเทพมหานคร' ? 'เขต' : 'อ.'}
+              {address.district}
             </Text>
             <Text className="font-noto-light line-clamp-1">
               จ.{address.province} {address.postalCode}
