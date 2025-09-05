@@ -6,6 +6,8 @@ import {
   GetFacebookUserPageListQuery,
   GetFacebookUserPageListResponse,
   GetLinkedFacebookPageResponse,
+  GetLinkedPageAvailableStatusQuery,
+  GetLinkedPageAvailableStatusResponse,
   LinkFacebookPageToUserBody,
   LinkFacebookPageToUserResponse,
   RequestAccessTokenQuery,
@@ -84,6 +86,26 @@ export const FacebookController = new Elysia({
   )
   .group('/linked-page', (app) =>
     app
+      .get(
+        '/available',
+        async ({ query, status, facebookService }) => {
+          const availableStatus = await facebookService.getLinkedPageAvailableStatus(query.pageIds)
+
+          if (availableStatus.isErr()) {
+            return mapErrorCodeToResponse(availableStatus.error, status)
+          }
+
+          return status(200, availableStatus.value)
+        },
+        {
+          requiredLocalUser: true,
+          query: GetLinkedPageAvailableStatusQuery,
+          response: {
+            200: GetLinkedPageAvailableStatusResponse,
+            ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+          },
+        }
+      )
       .get(
         '/',
         async ({ status, facebookService, user }) => {

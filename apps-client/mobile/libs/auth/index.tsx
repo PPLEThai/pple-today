@@ -1,6 +1,17 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { createMutation, createQuery } from 'react-query-kit'
 
+import { Button } from '@pple-today/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@pple-today/ui/dialog'
+import { Icon } from '@pple-today/ui/icon'
+import { Text } from '@pple-today/ui/text'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AuthRequest,
@@ -14,6 +25,7 @@ import {
   ResponseType,
 } from 'expo-auth-session'
 import { useRouter } from 'expo-router'
+import { TriangleAlertIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
 import appConfig from '@app/app.config'
@@ -180,9 +192,8 @@ export const AuthLifeCycleHook = () => {
   const sessionMutation = useSessionMutation()
   useEffect(() => {
     if (sessionQuery.error) {
-      console.error('Error fetching session:', sessionQuery.error)
-      // Should we reset session on error here?
-      // sessionMutation.mutate(null)
+      console.error('Error fetching session:', JSON.stringify(sessionQuery.error))
+      sessionMutation.mutate(null)
     }
   }, [sessionQuery.error, sessionMutation])
 
@@ -193,19 +204,45 @@ export const AuthLifeCycleHook = () => {
     },
     enabled: !!discoveryQuery.data && !!sessionQuery.data,
   })
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const router = useRouter()
   useEffect(() => {
     // incase the session's access token is expired
     if (userQuery.error?.error === 'access_denied') {
       console.log('Error fetching user info:', userQuery.error)
-      sessionMutation.mutate(null)
+      setDialogOpen(true)
       return
     }
     if (userQuery.error) {
       console.error('Error fetching user info:', userQuery.error)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userQuery.error])
-  return null
+  return (
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <Icon icon={TriangleAlertIcon} size={40} strokeWidth={1} />
+          <DialogTitle className="text-2xl font-anakotmai-medium">
+            กรุณาเข้าสู่ระบบอีกครั้ง
+          </DialogTitle>
+        </DialogHeader>
+        <DialogDescription>
+          {'ขณะนี้ได้หมดเวลาการใช้งานของคุณ\nกรุณาเข้าสู่ระบบใหม่อีกครั้งเพื่อใช้งานต่อ'}
+        </DialogDescription>
+        <DialogFooter>
+          <Button
+            onPress={async () => {
+              await sessionMutation.mutateAsync(null)
+              router.navigate('/profile')
+              setDialogOpen(false)
+            }}
+          >
+            <Text>เข้าสู่ระบบ</Text>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }
 
 // Might consider using neverthrow
@@ -265,7 +302,7 @@ export const useLoginMutation = () => {
     },
     onError: (error) => {
       console.error('Error logging out: ', error)
-      router.push('/auth')
+      router.navigate('/profile')
     },
     onSuccess: async (result) => {
       // save session in expo session store
@@ -277,9 +314,9 @@ export const useLoginMutation = () => {
       // reset all reactQueryClient cache
       await queryClient.resetQueries({ queryKey: reactQueryClient.getPartialQueryKey() })
       if (result.action === 'register') {
-        router.push('/onboarding')
+        router.navigate('/onboarding')
       } else if (result.action === 'login') {
-        router.push('/')
+        router.navigate('/')
       }
     },
   })
@@ -323,7 +360,7 @@ export const useLogoutMutation = () => {
       await sessionMutation.mutateAsync(null)
       // reset all reactQueryClient cache
       await queryClient.resetQueries({ queryKey: reactQueryClient.getPartialQueryKey() })
-      router.push('/auth')
+      router.navigate('/profile')
     },
   })
 }

@@ -3,6 +3,7 @@ import { FileService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
+import * as R from 'remeda'
 
 import { FacebookRepository, FacebookRepositoryPlugin } from './repository'
 
@@ -65,6 +66,24 @@ export class FacebookService {
         profilePictureUrl: page.picture.data.url,
         accessToken: page.access_token,
       }))
+    )
+  }
+
+  async getLinkedPageAvailableStatus(pageIds: string[]) {
+    const existingPages = await this.facebookRepository.getLinkedPageAvailableStatus(pageIds)
+
+    if (existingPages.isErr()) {
+      return mapRepositoryError(existingPages.error)
+    }
+
+    return ok(
+      R.pipe(
+        existingPages.value,
+        R.map((page) => [page.id, page.managerId] as const),
+        R.fromEntries(),
+        (obj) => R.map(pageIds, (id) => [id, !obj[id]] as const),
+        R.fromEntries()
+      )
     )
   }
 

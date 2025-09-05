@@ -491,7 +491,7 @@ function UpvoteButton(props: UpvoteButtonProps) {
   const sessionQuery = useSessionQuery()
   const onPress = () => {
     if (!sessionQuery.data) {
-      return router.push('/auth')
+      return router.push('/profile')
     }
     const newUserReaction = userReaction === 'UP_VOTE' ? null : 'UP_VOTE'
     if (newUserReaction === 'UP_VOTE') {
@@ -576,7 +576,7 @@ function DownvoteButton(props: { postId: string }) {
   const sessionQuery = useSessionQuery()
   const onPress = () => {
     if (!sessionQuery.data) {
-      return router.push('/auth')
+      return router.push('/profile')
     }
     const newUserReaction = userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE'
     if (newUserReaction === 'DOWN_VOTE') {

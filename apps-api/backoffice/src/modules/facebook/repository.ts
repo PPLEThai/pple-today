@@ -513,6 +513,18 @@ export class FacebookRepository {
     return ok(response.value)
   }
 
+  async getLinkedPageAvailableStatus(pageIds: string[]) {
+    return await fromRepositoryPromise(
+      this.prismaService.facebookPage.findMany({
+        where: {
+          id: {
+            in: pageIds,
+          },
+        },
+      })
+    )
+  }
+
   async getLocalFacebookPage(pageId: string) {
     return await fromRepositoryPromise(
       this.prismaService.facebookPage.findUniqueOrThrow({
