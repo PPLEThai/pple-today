@@ -9,6 +9,7 @@ import { FeedController } from './feed'
 import { PollsController } from './polls'
 import { ProfileController } from './profile'
 import { TopicController } from './topic'
+import { ElectionController } from './election'
 
 export const ApplicationController = new Elysia()
   .use(FeedController)
@@ -20,3 +21,4 @@ export const ApplicationController = new Elysia()
   .use(BannerController)
   .use(AddressController)
   .use(TopicController)
+  .use(ElectionController)
