@@ -33,7 +33,6 @@ model Election {
 
     candidates ElectionCandidate[]
     voters     ElectionEligibleVoter[]
-    ballots    ElectionEligibleBallot[]
 
     @@index([name])
 }
@@ -66,22 +65,22 @@ model ElectionEligibleVoter {
     election Election @relation(fields: [electionId], references: [id])
     user     User     @relation(fields: [userId], references: [id])
 
+    ElectionEligibleBallot ElectionEligibleBallot[]
+
     @@index([userId])
 }
 
 model ElectionEligibleBallot {
-    id              String  @id @default(cuid())
-    electionId      String
-    userId          String
+    id              String @id @default(cuid())
+    voterId         String @unique
     encryptedBallot String
-    location        String?
-    faceImageURL    String?
+    location        String
+    faceImageURL    String
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    election Election @relation(fields: [electionId], references: [id])
-    user     User     @relation(fields: [userId], references: [id])
+    voter ElectionEligibleVoter @relation(fields: [voterId], references: [id])
 }
 
 model ElectionResult {
