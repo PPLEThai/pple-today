@@ -1,7 +1,8 @@
+import { PrismaService } from '@pple-today/api-common/services'
+import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
-import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
-import { fromRepositoryPromise } from '../../utils/error'
+import { PrismaServicePlugin } from '../../plugins/prisma'
 
 export class TopicRepository {
   constructor(private readonly prismaService: PrismaService) {}
@@ -94,7 +95,7 @@ export class TopicRepository {
   }
 }
 
-export const TopicRepostoryPlugin = new Elysia({ name: 'TopicRepository' })
+export const TopicRepositoryPlugin = new Elysia({ name: 'TopicRepository' })
   .use(PrismaServicePlugin)
   .decorate(({ prismaService }) => ({
     topicRepository: new TopicRepository(prismaService),

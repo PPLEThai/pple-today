@@ -1,11 +1,11 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
 import { GetUploadSignedUrlBody, GetUploadSignedUrlResponse } from './models'
 import { AdminFileServicePlugin } from './services'
 
-import { InternalErrorCode } from '../../../dtos/error'
 import { AuthGuardPlugin } from '../../../plugins/auth-guard'
-import { createErrorSchema, mapErrorCodeToResponse } from '../../../utils/error'
 
 export const AdminFileController = new Elysia({ prefix: '/file', tags: ['Admin File'] })
   .use([AdminFileServicePlugin, AuthGuardPlugin])

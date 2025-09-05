@@ -1,0 +1,40 @@
+{
+  "name": "@pple-today/database",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "exports": {
+    "./prisma": {
+      "types": "./__generated__/prisma/index.d.ts",
+      "import": "./__generated__/prisma/index.js",
+      "require": "./__generated__/prisma/index-browser.js"
+    },
+    "./prisma/runtime/client": {
+      "types": "./__generated__/prisma/runtime/client.d.ts",
+      "import": "./__generated__/prisma/runtime/client.js"
+    }
+  },
+  "scripts": {
+    "codegen": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:dev:seed": "tsx prisma/seed.dev.ts",
+    "db:prod:seed": "tsx prisma/seed.prod.ts",
+    "db:reset": "prisma migrate reset",
+    "typecheck": "tsc --noEmit",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --ext .ts,.tsx --fix"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@pple-today/project-config": "workspace:^",
+    "@prisma/adapter-pg": "^6.15.0",
+    "dotenv": "^17.0.1",
+    "prisma": "^6.15.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.15.0"
+  }
+}

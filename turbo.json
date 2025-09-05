@@ -17,7 +17,7 @@
     },
     "build": {
       "dependsOn": ["^build", "^codegen"],
-      "outputs": ["dist/**", "build/**"]
+      "outputs": ["dist/**", "build/**", "__generated__/**"]
     },
     "codegen": {
       "dependsOn": ["^codegen"],

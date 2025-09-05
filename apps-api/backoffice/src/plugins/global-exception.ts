@@ -1,6 +1,5 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import Elysia from 'elysia'
-
-import { InternalErrorCode } from '../dtos/error'
 
 export const GlobalExceptionPlugin = new Elysia({
   name: 'GlobalExceptionPlugin',

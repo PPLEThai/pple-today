@@ -1,11 +1,12 @@
+import { FileService } from '@pple-today/api-common/services'
+import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import { GetBannersResponse } from './models'
 import { BannerRepository, BannerRepositoryPlugin } from './repository'
 
-import { mapRepositoryError } from '../../utils/error'
-import { FileService, FileServicePlugin } from '../file/services'
+import { FileServicePlugin } from '../../plugins/file'
 
 export class BannerService {
   constructor(

@@ -1,7 +1,7 @@
+import { PollType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
-import { PollType } from '../../../../__generated__/prisma'
-import { DraftPoll, PollDetails, PublishedPoll } from '../../../dtos/poll'
+import { DraftPoll, PollDetails, PublishedPoll } from '@pple-today/api-common/dtos'
 
 export const GetPollsQuery = t.Object({
   type: t.Optional(
