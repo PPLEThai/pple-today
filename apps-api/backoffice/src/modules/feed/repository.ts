@@ -4,7 +4,7 @@ import { sumBy } from 'remeda'
 
 import { GetFeedContentResponse } from './models'
 
-import { FeedItemReactionType, FeedItemType, Prisma } from '../../../__generated__/prisma'
+import { FeedItemReactionType, FeedItemType, Prisma, UserRole } from '../../../__generated__/prisma'
 import { InternalErrorCode } from '../../dtos/error'
 import { FeedItem, FeedItemBaseContent } from '../../dtos/feed'
 import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
@@ -319,10 +319,15 @@ export class FeedRepository {
     return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
   }
 
-  async listFeedItemsByUserId(userId: string, query: { page: number; limit: number }) {
+  async listFeedItemsByUserId(userId: string | undefined, query: { page: number; limit: number }) {
     const skip = Math.max((query.page - 1) * query.limit, 0)
-    const rawFeedItems = await fromRepositoryPromise(
-      this.prismaService.feedItem.findMany({
+    const rawFeedItems = await fromRepositoryPromise(async () => {
+      await this.prismaService.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { id: true },
+      })
+
+      return await this.prismaService.feedItem.findMany({
         orderBy: {
           createdAt: 'desc',
         },
@@ -330,10 +335,15 @@ export class FeedRepository {
         take: query.limit,
         where: {
           authorId: userId,
+          author: {
+            role: {
+              not: UserRole.OFFICIAL,
+            },
+          },
         },
         include: this.constructFeedItemInclude(userId),
       })
-    )
+    })
 
     if (rawFeedItems.isErr()) return err(rawFeedItems.error)
 

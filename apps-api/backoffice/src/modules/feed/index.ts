@@ -147,7 +147,7 @@ export const FeedController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredLocalUser: true,
+      fetchLocalUser: true,
       params: GetFeedItemsByUserIdParams,
       query: GetFeedItemsByUserIdQuery,
       response: {
@@ -157,6 +157,10 @@ export const FeedController = new Elysia({
           InternalErrorCode.USER_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
+      },
+      detail: {
+        summary: 'Get feed items by user ID',
+        description: 'Fetch feed items created by a specific user',
       },
     }
   )
