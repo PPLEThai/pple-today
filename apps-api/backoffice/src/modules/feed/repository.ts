@@ -2,7 +2,7 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FeedItem, FeedItemBaseContent } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { FeedItemReactionType, FeedItemType, Prisma } from '@pple-today/database/prisma'
+import { FeedItemReactionType, FeedItemType, Prisma, UserRole } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { Ok, ok } from 'neverthrow'
 import { sumBy } from 'remeda'
@@ -307,6 +307,44 @@ export class FeedRepository {
         include: this.constructFeedItemInclude(userId),
       })
     )
+
+    if (rawFeedItems.isErr()) return err(rawFeedItems.error)
+
+    const feedItems = rawFeedItems.value.map((item) => this.transformToFeedItem(item))
+    const feedItemErr = feedItems.find((item) => item.isErr())
+
+    if (feedItemErr) {
+      return err(feedItemErr.error)
+    }
+
+    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
+  }
+
+  async listFeedItemsByUserId(userId: string | undefined, query: { page: number; limit: number }) {
+    const skip = Math.max((query.page - 1) * query.limit, 0)
+    const rawFeedItems = await fromRepositoryPromise(async () => {
+      await this.prismaService.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { id: true },
+      })
+
+      return await this.prismaService.feedItem.findMany({
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
+        take: query.limit,
+        where: {
+          authorId: userId,
+          author: {
+            role: {
+              not: UserRole.OFFICIAL,
+            },
+          },
+        },
+        include: this.constructFeedItemInclude(userId),
+      })
+    })
 
     if (rawFeedItems.isErr()) return err(rawFeedItems.error)
 
