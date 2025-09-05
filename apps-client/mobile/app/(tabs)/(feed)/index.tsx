@@ -356,7 +356,7 @@ function FeedContent(props: PagerScrollViewProps) {
   }, [isFocused, scrollElRef, setScrollViewTag])
 
   const feedInfiniteQuery = useInfiniteQuery({
-    queryKey: reactQueryClient.getQueryKey('get', '/feed/me'),
+    queryKey: reactQueryClient.getQueryKey('/feed/me'),
     queryFn: async ({ pageParam }) => {
       const session = await getAuthSession()
       const response = await fetchClient('/feed/me', {

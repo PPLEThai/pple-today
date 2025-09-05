@@ -448,6 +448,7 @@ const formSchema = z.object({
 interface CommentFormProps {
   onClose: () => void
   postId: string
+  feedId: string
 }
 function CommentForm(props: CommentFormProps) {
   const createReactionQuery = reactQueryClient.useMutation('put', '/feed/:id/reaction')
@@ -483,13 +484,11 @@ function CommentForm(props: CommentFormProps) {
         }
       )
       // TODO
-      // queryClient.invalidateQueries(
-      //   reactQueryClient.getPartialQueryKey(
-      //     'get',
-      //     '/feed/:id/comments'
-      //     { params: { id: props.postId }, }
-      //   )
-      // )
+      queryClient.invalidateQueries({
+        queryKey: reactQueryClient.getQueryKey('/feed/:id/comments', {
+          pathParams: { id: props.feedId },
+        }),
+      })
       // optimistic update
       queryClient.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
         if (!old) return
