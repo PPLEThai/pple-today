@@ -1,5 +1,26 @@
 # @client/mobile
 
+## 0.4.0
+
+### Minor Changes
+
+- [#85](https://github.com/PPLEThai/pple-today/pull/85) [`e0ee9cf`](https://github.com/PPLEThai/pple-today/commit/e0ee9cf9deb103059b6b6dc95d7d355a78247df3) Thanks [@miello](https://github.com/miello)! - [[PPLE-329] Refactor project structure to support multiple api services](https://linear.app/snts/issue/PPLE-329/refactor-project-structure-to-support-multiple-api-services)
+
+- [#81](https://github.com/PPLEThai/pple-today/pull/81) [`6975dfe`](https://github.com/PPLEThai/pple-today/commit/6975dfee6559d3525934ee025749d6730a9e1b55) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-300] Link Facebook Page UI & Integrate](https://linear.app/snts/issue/PPLE-300/link-facebook-page-ui-and-integrate)
+
+### Patch Changes
+
+- [#80](https://github.com/PPLEThai/pple-today/pull/80) [`c73bd3d`](https://github.com/PPLEThai/pple-today/commit/c73bd3d9f16ebf020d92245e35256836136b799d) Thanks [@miello](https://github.com/miello)! - [[PPLE-325] [API] Facebook linked page not working](https://linear.app/snts/issue/PPLE-325/api-facebook-linked-page-not-working)
+
+- [#76](https://github.com/PPLEThai/pple-today/pull/76) [`09c382f`](https://github.com/PPLEThai/pple-today/commit/09c382f54bd412f8ea187cbf7983ac7d8685966d) Thanks [@Anon-136](https://github.com/Anon-136)! - feat: register user
+
+- [#84](https://github.com/PPLEThai/pple-today/pull/84) [`4018e76`](https://github.com/PPLEThai/pple-today/commit/4018e762a4a1d2c437fb7a2a303ea190e62a08a5) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [PPLE-278] Integrated Onboarding
+
+- [#78](https://github.com/PPLEThai/pple-today/pull/78) [`8f9a3ea`](https://github.com/PPLEThai/pple-today/commit/8f9a3ea9be106bc4816f84bab4fbbccf5b38855c) Thanks [@miello](https://github.com/miello)! - [[PPLE-295] [API] Fail to get banner](https://linear.app/snts/issue/PPLE-295/api-fail-to-get-banner)
+
+- Updated dependencies [[`6975dfe`](https://github.com/PPLEThai/pple-today/commit/6975dfee6559d3525934ee025749d6730a9e1b55), [`4018e76`](https://github.com/PPLEThai/pple-today/commit/4018e762a4a1d2c437fb7a2a303ea190e62a08a5)]:
+  - @pple-today/ui@0.2.1
+
 ## 0.3.0
 
 ### Minor Changes
