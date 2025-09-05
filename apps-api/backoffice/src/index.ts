@@ -17,6 +17,22 @@ let app = new Elysia({ adapter: node() })
   .use([
     loggerBuilder({
       name: 'Global Logger',
+      transport:
+        process.env.APP_ENV === 'development'
+          ? {
+              target: 'pino-pretty',
+              options: {
+                colorize: true,
+                translateTime: 'SYS:standard',
+              },
+            }
+          : undefined,
+      redact: [
+        'request.headers.cookie',
+        'request.headers.authorization',
+        'body.accessToken',
+        'body.facebookPageAccessToken',
+      ],
     }).into({
       customProps: (ctx) => {
         const responseBody =
