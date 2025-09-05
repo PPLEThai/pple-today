@@ -50,59 +50,45 @@ function createReactQueryClient<TSchema extends Record<string, any>>(
     return restClient.interceptors.response(resp)
   }
 
-  function getQueryKey(method: any, path: any, payload?: any) {
-    const payloadKey = {
-      pathParams: payload?.pathParams ?? {},
-      query: payload?.query ?? {},
-      headers: payload?.headers ?? {},
-    }
-    return [QUERY_KEY, method, path, payloadKey] as const
+  function getKey(method: any, path: any, payload: any = {}) {
+    return [QUERY_KEY, method, path, payload?.pathParams, payload?.query, payload?.headers]
   }
 
-  function getPartialQueryKey(method?: any, path?: any, payload?: any) {
-    if (method === undefined && path === undefined && payload === undefined) {
-      return [QUERY_KEY]
-    }
-    if (path === undefined && payload === undefined) {
-      return [QUERY_KEY, method]
-    }
-    if (payload === undefined) {
-      return [QUERY_KEY, method, path]
-    }
-    return getQueryKey(method, path, payload)
+  function getQueryKey(path: any, payload: any = {}) {
+    return [QUERY_KEY, 'get', path, payload?.pathParams, payload?.query, payload?.headers]
   }
 
   return {
     useQuery: function (path: any, payload: any, options?: any) {
       return useQuery({
-        queryKey: getQueryKey('get', path, payload),
+        queryKey: getKey('get', path, payload),
         queryFn: () => makeRequest('get', path, payload),
         ...options,
       }) as UseQueryResult<any, any>
     },
     useMutation: function (method: any, path: any, options?: any) {
       return useMutation({
-        mutationKey: getQueryKey(method, path),
+        mutationKey: getKey(method, path),
         mutationFn: (data) => makeRequest(method, path, data),
         ...options,
       }) as UseMutationResult<any, any, any, any>
     },
     queryOptions: function (path: any, payload: any, options?: any) {
       return {
-        queryKey: getQueryKey('get', path, payload),
+        queryKey: getKey('get', path, payload),
         queryFn: () => makeRequest('get', path, payload),
         ...options,
       } as UseQueryOptions<any, any, any>
     },
     mutationOptions: function (method: any, path: any, options?: any) {
       return {
-        mutationKey: getQueryKey(method, path),
+        mutationKey: getKey(method, path),
         mutationFn: (data) => makeRequest(method, path, data),
         ...options,
       } as UseMutationOptions<any, any, any, any>
     },
+    getKey,
     getQueryKey,
-    getPartialQueryKey,
   }
 }
 

@@ -446,11 +446,11 @@ function UnlinkFacebookPageDialog() {
                 {
                   onSuccess: () => {
                     queryClient.setQueryData(
-                      reactQueryClient.getQueryKey('get', '/facebook/linked-page'),
+                      reactQueryClient.getQueryKey('/facebook/linked-page'),
                       { linkedFacebookPage: null }
                     )
                     queryClient.invalidateQueries({
-                      queryKey: reactQueryClient.getQueryKey('get', '/facebook/linked-page'),
+                      queryKey: reactQueryClient.getQueryKey('/facebook/linked-page'),
                     })
                     toast({ text1: 'ลบเพจ Facebook สำเร็จ' })
                     setUnlinkDialogOpen(false)

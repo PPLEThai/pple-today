@@ -83,7 +83,7 @@ export default function FacebookListPage() {
             {
               onSuccess: () => {
                 queryClient.resetQueries({
-                  queryKey: reactQueryClient.getQueryKey('get', '/facebook/linked-page'),
+                  queryKey: reactQueryClient.getQueryKey('/facebook/linked-page'),
                 })
                 router.back()
               },
