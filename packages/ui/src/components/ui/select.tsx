@@ -135,7 +135,7 @@ function SelectContent({
                   'h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]'
               )}
             >
-              {children}
+              <NativeSelectScrollView>{children}</NativeSelectScrollView>
             </SelectPrimitive.Viewport>
             <SelectScrollDownButton />
           </SelectPrimitive.Content>
@@ -212,7 +212,6 @@ function NativeSelectScrollView({ className, ...props }: React.ComponentProps<ty
 }
 
 export {
-  NativeSelectScrollView,
   type Option,
   Select,
   SelectContent,

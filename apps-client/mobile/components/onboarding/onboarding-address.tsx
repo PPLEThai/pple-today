@@ -5,7 +5,6 @@ import { Button } from '@pple-today/ui/button'
 import { FormControl, FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
 import {
-  NativeSelectScrollView,
   Select,
   SelectContent,
   SelectGroup,
@@ -272,14 +271,12 @@ export function OnboardingAddress() {
                         <SelectValue placeholder="เลือกจังหวัด" />
                       </SelectTrigger>
                       <SelectContent insets={contentInsets} className="w-full">
-                        <NativeSelectScrollView>
-                          <SelectGroup>
-                            <SelectLabel className="font-bold">เลือกจังหวัด</SelectLabel>
-                            {getProvinceQuery.data?.map((province, index) => (
-                              <SelectItem key={index} label={province} value={province} />
-                            ))}
-                          </SelectGroup>
-                        </NativeSelectScrollView>
+                        <SelectGroup>
+                          <SelectLabel className="font-bold">เลือกจังหวัด</SelectLabel>
+                          {getProvinceQuery.data?.map((province, index) => (
+                            <SelectItem key={index} label={province} value={province} />
+                          ))}
+                        </SelectGroup>
                       </SelectContent>
                     </Select>
                   </FormControl>
@@ -309,14 +306,12 @@ export function OnboardingAddress() {
                             <SelectValue placeholder="เลือกเขต/อำเภอ" />
                           </SelectTrigger>
                           <SelectContent insets={contentInsets} className="w-full">
-                            <NativeSelectScrollView>
-                              <SelectGroup>
-                                <SelectLabel className="font-bold">เลือกเขต/อำเภอ</SelectLabel>
-                                {getDistrictQuery.data?.map((district, index) => (
-                                  <SelectItem key={index} label={district} value={district} />
-                                ))}
-                              </SelectGroup>
-                            </NativeSelectScrollView>
+                            <SelectGroup>
+                              <SelectLabel className="font-bold">เลือกเขต/อำเภอ</SelectLabel>
+                              {getDistrictQuery.data?.map((district, index) => (
+                                <SelectItem key={index} label={district} value={district} />
+                              ))}
+                            </SelectGroup>
                           </SelectContent>
                         </Select>
                       </FormControl>
@@ -348,14 +343,12 @@ export function OnboardingAddress() {
                             <SelectValue placeholder="เลือกแขวง/ตำบล" />
                           </SelectTrigger>
                           <SelectContent insets={contentInsets} className="w-full">
-                            <NativeSelectScrollView>
-                              <SelectGroup>
-                                <SelectLabel className="font-bold">เลือกแขวง/ตำบล</SelectLabel>
-                                {getSubdistrictQuery.data?.map((subDistrict, index) => (
-                                  <SelectItem key={index} label={subDistrict} value={subDistrict} />
-                                ))}
-                              </SelectGroup>
-                            </NativeSelectScrollView>
+                            <SelectGroup>
+                              <SelectLabel className="font-bold">เลือกแขวง/ตำบล</SelectLabel>
+                              {getSubdistrictQuery.data?.map((subDistrict, index) => (
+                                <SelectItem key={index} label={subDistrict} value={subDistrict} />
+                              ))}
+                            </SelectGroup>
                           </SelectContent>
                         </Select>
                       </FormControl>
@@ -380,14 +373,12 @@ export function OnboardingAddress() {
                             <SelectValue placeholder="เลือกรหัสไปรษณีย์" />
                           </SelectTrigger>
                           <SelectContent insets={contentInsets} className="w-full">
-                            <NativeSelectScrollView>
-                              <SelectGroup>
-                                <SelectLabel className="font-bold">เลือกรหัสไปรษณีย์</SelectLabel>
-                                {getPostalCodeQuery.data?.map((postalCode, index) => (
-                                  <SelectItem key={index} label={postalCode} value={postalCode} />
-                                ))}
-                              </SelectGroup>
-                            </NativeSelectScrollView>
+                            <SelectGroup>
+                              <SelectLabel className="font-bold">เลือกรหัสไปรษณีย์</SelectLabel>
+                              {getPostalCodeQuery.data?.map((postalCode, index) => (
+                                <SelectItem key={index} label={postalCode} value={postalCode} />
+                              ))}
+                            </SelectGroup>
                           </SelectContent>
                         </Select>
                       </FormControl>
