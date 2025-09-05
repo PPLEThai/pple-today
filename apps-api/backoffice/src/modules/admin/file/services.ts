@@ -1,12 +1,12 @@
 import { createId } from '@paralleldrive/cuid2'
 import { FilePath } from '@pple-today/api-common/dtos'
+import { FileService } from '@pple-today/api-common/services'
 import { err, exhaustiveGuard } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import { GetUploadSignedUrlBody, UploadFileCategory } from './models'
 
-import { FileService } from '../../../../../../packages/api-common/src/services/file'
 import { FileServicePlugin } from '../../../plugins/file'
 
 export class AdminFileService {
