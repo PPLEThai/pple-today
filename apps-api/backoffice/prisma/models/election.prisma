@@ -9,20 +9,24 @@ enum EligibleVoterType {
     ONLINE
 }
 
+enum ElectionResultType {
+    ONSITE
+    ONLINE
+}
+
 model Election {
     id          String       @id @default(cuid())
     name        String
     description String?
     type        ElectionType
 
-    openRegister  DateTime
-    closeRegister DateTime
+    publishDate   DateTime?
+    openRegister  DateTime?
+    closeRegister DateTime?
     openVoting    DateTime
     closeVoting   DateTime
     startResult   DateTime?
     endResult     DateTime?
-
-    publicKey String?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -36,6 +40,7 @@ model Election {
 
 model ElectionCandidate {
     id           String  @id @default(cuid())
+    electionId   String
     name         String
     description  String?
     profileImage String?
@@ -44,8 +49,9 @@ model ElectionCandidate {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    electionId String
-    election   Election @relation(fields: [electionId], references: [id])
+    election Election @relation(fields: [electionId], references: [id])
+
+    results ElectionResult[]
 }
 
 model ElectionEligibleVoter {
@@ -76,4 +82,18 @@ model ElectionEligbleBallot {
 
     election Election @relation(fields: [electionId], references: [id])
     user     User     @relation(fields: [userId], references: [id])
+}
+
+model ElectionResult {
+    id          String             @id @default(cuid())
+    candidateId String
+    type        ElectionResultType
+    count       Int                @default(0)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    candidate ElectionCandidate @relation(fields: [candidateId], references: [id])
+
+    @@unique([candidateId, type])
 }
