@@ -1,7 +1,9 @@
 import '../global.css'
 
 import * as React from 'react'
-import { Pressable, Text, View } from 'react-native'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { DevToolsBubble } from 'react-native-react-query-devtools'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 
 import { Inter_300Light, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter'
 import {
@@ -9,13 +11,20 @@ import {
   NotoSansThaiLooped_500Medium,
   NotoSansThaiLooped_700Bold,
 } from '@expo-google-fonts/noto-sans-thai-looped'
+import { BottomSheetModalProvider } from '@pple-today/ui/bottom-sheet/index'
 import { NAV_THEME } from '@pple-today/ui/lib/constants'
+import { PortalHost } from '@pple-today/ui/portal'
+import { Toaster } from '@pple-today/ui/toast'
 import { DarkTheme, DefaultTheme, Theme, ThemeProvider } from '@react-navigation/native'
-import { QueryClient } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import * as Clipboard from 'expo-clipboard'
 import { useFonts } from 'expo-font'
+import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
+
+import { environment } from '@app/env'
+import { AuthLifeCycleHook } from '@app/libs/auth'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -35,34 +44,33 @@ export {
 
 const queryClient = new QueryClient()
 export default function RootLayout() {
-  const targetRef = React.useRef<View>(null)
-  React.useEffect(() => {
-    console.log('onLayout', targetRef.current)
-    targetRef.current?.measureInWindow((x, y, width, height) => {
-      console.log(x, y, width, height)
-      // This state update is not guaranteed to run in the same commit
-      // This results in a visual "jump" as the ToolTip repositions itself
-      // setTargetRect({ x, y, width, height })
-    })
-  }, [])
-  const setOpacityTo = React.useCallback((value: number) => {
-    // Redacted: animation related code
-    console.log(targetRef.current)
-    targetRef.current?.setNativeProps({
-      opacity: value,
-    })
-  }, [])
   return (
-    <View>
-      <Pressable
-        ref={targetRef}
-        onPress={() => {
-          setOpacityTo(0)
-        }}
-      >
-        <Text>Test</Text>
-      </Pressable>
-    </View>
+    <>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <ColorSchemeProvider>
+            <FontProvider>
+              <GestureHandlerRootView>
+                <BottomSheetModalProvider>
+                  <Stack initialRouteName="(tabs)">
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen name="loading" options={{ headerShown: false }} />
+                    <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+                  </Stack>
+                  <Toaster />
+                </BottomSheetModalProvider>
+              </GestureHandlerRootView>
+            </FontProvider>
+          </ColorSchemeProvider>
+          {(environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'development' ||
+            environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'local') && (
+            <DevToolsBubble onCopy={onCopy} queryClient={queryClient} />
+          )}
+          <AuthLifeCycleHook />
+        </QueryClientProvider>
+      </SafeAreaProvider>
+      <PortalHost />
+    </>
   )
 }
 
