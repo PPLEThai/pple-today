@@ -1,10 +1,7 @@
-import { Value } from '@sinclair/typebox/value'
-import { configDotenv } from 'dotenv'
+import { createConfigServicePlugin } from '@pple-today/api-common/plugins'
 import { t } from 'elysia'
 
-configDotenv()
-
-const envConfigSchema = t.Object({
+export const envSchema = t.Object({
   PORT: t.Number({ default: 5000 }),
   DATABASE_URL: t.String(),
   APP_ENV: t.Union([t.Literal('development'), t.Literal('production')], {
@@ -61,6 +58,7 @@ const envConfigSchema = t.Object({
   }),
 })
 
-const serverEnv = Value.Parse(envConfigSchema, process.env)
-
-export default serverEnv
+export const ConfigServicePlugin = createConfigServicePlugin({
+  autoLoadEnv: true,
+  schema: envSchema,
+})

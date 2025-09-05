@@ -1,8 +1,6 @@
+import { FilePath } from '@pple-today/api-common/dtos'
+import { TopicStatus } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
-
-import { FilePath } from './file'
-
-import { TopicStatus } from '../../__generated__/prisma'
 
 export const Topic = t.Object({
   id: t.String({ description: 'The ID of the topic' }),

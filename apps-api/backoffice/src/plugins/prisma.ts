@@ -1,49 +1,14 @@
+import { ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
+import { PrismaService } from '@pple-today/api-common/services'
 import { PrismaPg } from '@prisma/adapter-pg'
 import Elysia from 'elysia'
 
-import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from './logger'
+import { ConfigServicePlugin } from './config'
 
-import { Prisma, PrismaClient } from '../../__generated__/prisma/client'
-
-const connectionString = `${process.env.DATABASE_URL}`
-
-class PrismaService extends PrismaClient<
-  Prisma.PrismaClientOptions,
-  'query' | 'error' | 'warn' | 'info'
-> {
-  constructor(loggerService: ElysiaLoggerInstance, optionsArg?: Prisma.PrismaClientOptions) {
-    super({
-      ...optionsArg,
-      errorFormat: 'minimal',
-      log: [
-        { emit: 'event', level: 'error' },
-        { emit: 'event', level: 'warn' },
-      ],
-    })
-
-    this.$on('warn', (event) => {
-      loggerService.warn({
-        message: event.message,
-        timestamp: event.timestamp,
-        target: event.target,
-        stackTrace: new Error().stack,
-      })
-    })
-
-    this.$on('error', (event) => {
-      loggerService.error({
-        message: event.message,
-        timestamp: event.timestamp,
-        target: event.target,
-        stackTrace: new Error().stack,
-      })
-    })
-  }
-}
-
-const PrismaServicePlugin = new Elysia({ name: 'PrismaService' })
-  .use(ElysiaLoggerPlugin({ name: 'PrismaService' }))
-  .decorate(({ loggerService }) => {
+export const PrismaServicePlugin = new Elysia({ name: 'PrismaService' })
+  .use([ElysiaLoggerPlugin({ name: 'PrismaService' }), ConfigServicePlugin])
+  .decorate(({ loggerService, configService }) => {
+    const connectionString = configService.get('DATABASE_URL')
     const adapter = new PrismaPg({ connectionString })
     const prismaService = new PrismaService(loggerService, {
       adapter,
@@ -51,5 +16,3 @@ const PrismaServicePlugin = new Elysia({ name: 'PrismaService' })
 
     return { prismaService }
   })
-
-export { PrismaService, PrismaServicePlugin }

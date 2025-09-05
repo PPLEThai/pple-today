@@ -1,8 +1,9 @@
+import { PrismaService } from '@pple-today/api-common/services'
+import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { FeedItemType, Prisma } from '@pple-today/database/prisma'
 import { Elysia } from 'elysia'
 
-import { FeedItemType, Prisma } from '../../../__generated__/prisma'
-import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
-import { fromRepositoryPromise } from '../../utils/error'
+import { PrismaServicePlugin } from '../../plugins/prisma'
 
 export class PollsRepository {
   constructor(private readonly prismaService: PrismaService) {}

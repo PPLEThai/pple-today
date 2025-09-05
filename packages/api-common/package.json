@@ -1,0 +1,51 @@
+{
+  "name": "@pple-today/api-common",
+  "type": "module",
+  "version": "0.0.0",
+  "description": "",
+  "exports": {
+    "./plugins": {
+      "types": "./src/plugins/index.ts",
+      "import": "./src/plugins/index.ts",
+      "require": "./src/plugins/index.ts"
+    },
+    "./services": {
+      "types": "./src/services/index.ts",
+      "import": "./src/services/index.ts",
+      "require": "./src/services/index.ts"
+    },
+    "./dtos": {
+      "types": "./src/dtos/index.ts",
+      "import": "./src/dtos/index.ts",
+      "require": "./src/dtos/index.ts"
+    },
+    "./utils": {
+      "types": "./src/utils/index.ts",
+      "import": "./src/utils/index.ts",
+      "require": "./src/utils/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "format:check": "prettier --check .",
+    "lint": "eslint . --ext .ts,.tsx --fix"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@bogeychan/elysia-logger": "^0.1.8",
+    "@google-cloud/storage": "^7.16.0",
+    "@pple-today/database": "workspace:^",
+    "@prisma/adapter-pg": "^6.15.0",
+    "@sinclair/typebox": "^0.34.37",
+    "dotenv": "^17.0.1",
+    "elysia": "^1.3.5",
+    "neverthrow": "^8.2.0",
+    "remeda": "^2.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.1",
+    "type-fest": "^4.41.0"
+  }
+}

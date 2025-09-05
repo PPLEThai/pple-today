@@ -4,6 +4,7 @@ import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import { ScrollView } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
 
+import type { ExtractBodyResponse } from '@pple-today/api-client'
 import { Avatar, AvatarFallback, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
@@ -43,7 +44,7 @@ import {
   TrophyIcon,
 } from 'lucide-react-native'
 
-import { UserRole } from '@api/backoffice/__generated__/prisma/client'
+import type { ApplicationApiSchema } from '@api/backoffice'
 import { GetUserParticipationResponse } from '@api/backoffice/src/modules/profile/models'
 import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
@@ -58,6 +59,8 @@ import {
 } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
+
+type UserRole = ExtractBodyResponse<ApplicationApiSchema, 'get', '/profile/me'>['role']
 
 export default function Index() {
   const sessionQuery = useSessionQuery()
@@ -154,7 +157,7 @@ const ProfileSection = () => {
       case 'OFFICIAL':
         return 'คณะทำงาน'
       default:
-        throw exhaustiveGuard(role)
+        exhaustiveGuard(role)
     }
   }
   const Profile =

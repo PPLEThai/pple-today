@@ -1,3 +1,5 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import { Check } from '@sinclair/typebox/value'
 import Elysia from 'elysia'
 
@@ -8,9 +10,6 @@ import {
   ValidateFacebookWebhookResponse,
 } from './models'
 import { FacebookWebhookServicePlugin } from './services'
-
-import { InternalErrorCode } from '../../../dtos/error'
-import { createErrorSchema, mapErrorCodeToResponse } from '../../../utils/error'
 
 export const FacebookWebhookController = new Elysia({
   prefix: '/webhook',
