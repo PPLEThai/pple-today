@@ -21,8 +21,8 @@
     "@tanstack/react-query": "^5.81.5",
     "isbot": "^5.1.27",
     "oidc-client-ts": "^3.3.0",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
     "react-router": "^7.5.3"
   },
   "devDependencies": {
@@ -32,7 +32,7 @@
     "@react-router/dev": "^7.5.3",
     "@tailwindcss/vite": "^4.1.4",
     "@types/node": "^20",
-    "@types/react": "~19.0.10",
+    "@types/react": "~19.1.10",
     "@types/react-dom": "19.0.0",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",

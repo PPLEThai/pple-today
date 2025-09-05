@@ -10,7 +10,6 @@ import {
   TextLayoutEventData,
   TextLayoutLine,
   TextProps,
-  UIManager,
   View,
 } from 'react-native'
 
@@ -84,9 +83,10 @@ const ClippedShrunkText = ({
 }
 
 // TODO: figure out why animation doesn't work on android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true)
-}
+// setLayoutAnimationEnabledExperimental is currently a no-op in the New Architecture.
+// if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+//   UIManager.setLayoutAnimationEnabledExperimental(true)
+// }
 
 interface MoreOrLessProps {
   children: string

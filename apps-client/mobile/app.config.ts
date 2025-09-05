@@ -11,7 +11,7 @@ export default {
     orientation: 'portrait',
     icon: './assets/images/favicon1024.png',
     userInterfaceStyle: 'automatic',
-    // newArchEnabled: true, // this is true by default
+    newArchEnabled: true,
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'th.or.peoplesparty.ppletoday',
@@ -32,6 +32,9 @@ export default {
     },
     plugins: [
       'expo-router',
+      'expo-secure-store',
+      'expo-font',
+      'expo-video',
       [
         'expo-splash-screen',
         {
@@ -52,15 +55,21 @@ export default {
         {
           ios: {
             deploymentTarget: '15.1',
-            newArchEnabled: false,
+            reactNativeReleaseLevel: 'experimental',
           },
           /**
            * Unfortunately, the performance issue with scrolling (Android) is really deep
            * I dug in and found that its related to the "new arch" (fabric)
+           *
+           * UPDATE: facebook fixed this issues
+           * https://github.com/facebook/react-native/issues/51870
+           * we should wait for react-native-reanimated to confirm that this behavior is fixed
+           * and we might as well try this
+           * https://github.com/software-mansion/react-native-reanimated/issues/7108#issuecomment-3135327546
+           * https://github.com/software-mansion/react-native-reanimated/issues/7435
+           *
            * https://github.com/software-mansion/react-native-reanimated/issues/6992
            * https://github.com/bluesky-social/social-app/issues/8535
-           * https://github.com/facebook/react-native/pull/52314
-           *
            * https://github.com/bluesky-social/social-app/releases/tag/1.104.0
            * Bluesky fixes this by disabling new arch (which i try and it successfully solves the problem)
            * but expo go only support new arch and this may lead to unexpected behavior
@@ -70,7 +79,7 @@ export default {
             compileSdkVersion: 35,
             targetSdkVersion: 35,
             buildToolsVersion: '35.0.0',
-            newArchEnabled: false,
+            reactNativeReleaseLevel: 'experimental',
           },
         },
       ],

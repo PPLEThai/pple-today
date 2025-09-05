@@ -1,7 +1,12 @@
 import * as React from 'react'
 import { Platform, Pressable, StyleSheet, View, ViewProps } from 'react-native'
 import ImageView from 'react-native-image-viewing'
-import Animated, { useSharedValue, withSpring, withTiming } from 'react-native-reanimated'
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { TextProps } from 'react-native-svg'
 import { createQuery } from 'react-query-kit'
@@ -516,14 +521,20 @@ function UpvoteButton(props: UpvoteButtonProps) {
     })
   }
 
+  const buttonAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }))
+  const iconAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }))
   return (
     <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress}>
       <Animated.View
-        style={{ opacity }}
+        style={buttonAnimatedStyle}
         className="flex flex-row items-center gap-1 rounded-md py-3 px-1"
       >
         <View>
-          <Animated.View style={{ transform: [{ scale }] }}>
+          <Animated.View style={iconAnimatedStyle}>
             <Icon
               icon={HeartHandshakeIcon}
               size={20}
@@ -601,11 +612,14 @@ function DownvoteButton(props: { postId: string }) {
 
   const insets = useSafeAreaInsets()
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }))
   return (
     <>
       <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress}>
         <Animated.View
-          style={{ opacity }}
+          style={animatedStyle}
           className="flex flex-row items-center gap-1 rounded-md py-3 px-1"
         >
           <Icon
