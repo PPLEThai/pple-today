@@ -3,6 +3,7 @@ import { Pressable, PressableProps, View } from 'react-native'
 import { ScrollView } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
 
+import type { ExtractBodyResponse } from '@pple-today/api-client'
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
@@ -27,6 +28,7 @@ import {
   TrophyIcon,
 } from 'lucide-react-native'
 
+import type { ApplicationApiSchema } from '@api/backoffice'
 import { GetUserParticipationResponse } from '@api/backoffice/src/modules/profile/models'
 import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
@@ -41,6 +43,8 @@ import {
 } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
+
+type UserRole = ExtractBodyResponse<ApplicationApiSchema, 'get', '/profile/me'>['role']
 
 export default function Index() {
   const sessionQuery = useSessionQuery()
@@ -142,7 +146,7 @@ const HeaderSection = () => {
 }
 const ProfileSection = () => {
   const profileQuery = reactQueryClient.useQuery('/profile/me', {})
-  const getRoleName = (role: string) => {
+  const getRoleName = (role: UserRole) => {
     switch (role) {
       case 'REPRESENTATIVE':
         return 'สมาชิกสส.พรรคประชาชน'
@@ -153,7 +157,7 @@ const ProfileSection = () => {
       case 'OFFICIAL':
         return 'คณะทำงาน'
       default:
-        return 'Unknown Role'
+        exhaustiveGuard(role)
     }
   }
   const Profile =
