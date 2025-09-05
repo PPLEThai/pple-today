@@ -319,6 +319,34 @@ export class FeedRepository {
     return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
   }
 
+  async listFeedItemsByUserId(userId: string, query: { page: number; limit: number }) {
+    const skip = Math.max((query.page - 1) * query.limit, 0)
+    const rawFeedItems = await fromRepositoryPromise(
+      this.prismaService.feedItem.findMany({
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
+        take: query.limit,
+        where: {
+          authorId: userId,
+        },
+        include: this.constructFeedItemInclude(userId),
+      })
+    )
+
+    if (rawFeedItems.isErr()) return err(rawFeedItems.error)
+
+    const feedItems = rawFeedItems.value.map((item) => this.transformToFeedItem(item))
+    const feedItemErr = feedItems.find((item) => item.isErr())
+
+    if (feedItemErr) {
+      return err(feedItemErr.error)
+    }
+
+    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
+  }
+
   async getFeedItemById(feedItemId: string, userId?: string) {
     const rawFeedItem = await fromRepositoryPromise(
       this.prismaService.feedItem.findUniqueOrThrow({

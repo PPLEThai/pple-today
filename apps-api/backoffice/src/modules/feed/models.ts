@@ -124,3 +124,14 @@ export type GetHashTagFeedQuery = Static<typeof GetHashTagFeedQuery>
 
 export const GetHashTagFeedResponse = t.Array(FeedItem)
 export type GetHashTagFeedResponse = Static<typeof GetHashTagFeedResponse>
+
+export const GetFeedItemsByUserIdParams = t.Object({
+  id: t.String({ description: 'The ID of the user whose feed items are to be fetched' }),
+})
+export type GetFeedItemsByUserIdParams = Static<typeof GetFeedItemsByUserIdParams>
+
+export const GetFeedItemsByUserIdQuery = PaginationQuery
+export type GetFeedItemsByUserIdQuery = Static<typeof GetFeedItemsByUserIdQuery>
+
+export const GetFeedItemsByUserIdResponse = t.Array(FeedItem)
+export type GetFeedItemsByUserIdResponse = Static<typeof GetFeedItemsByUserIdResponse>

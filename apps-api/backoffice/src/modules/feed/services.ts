@@ -141,6 +141,24 @@ export class FeedService {
     )
   }
 
+  async getFeedByUserId(userId: string, query?: { page?: number; limit?: number }) {
+    const feedItems = await this.feedRepository.listFeedItemsByUserId(userId, {
+      page: query?.page ?? 1,
+      limit: query?.limit ?? 10,
+    })
+
+    if (feedItems.isErr()) {
+      return mapRepositoryError(feedItems.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.USER_NOT_FOUND,
+          message: 'User not found',
+        },
+      })
+    }
+
+    return ok(feedItems.value)
+  }
+
   async upsertFeedReaction(feedItemId: string, userId: string, data: CreateFeedReactionBody) {
     const comment = data.type === PostReactionType.DOWN_VOTE ? data.comment : undefined
     const result = await this.feedRepository.upsertFeedItemReaction({
