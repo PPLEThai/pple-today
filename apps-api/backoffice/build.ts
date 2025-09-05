@@ -7,7 +7,7 @@ async function main() {
   await build({
     entryPoints: ['./src/index.ts'],
     bundle: true,
-    target: 'node18',
+    target: 'node22',
     outfile: './build/index.js',
     platform: 'node',
     define: {
