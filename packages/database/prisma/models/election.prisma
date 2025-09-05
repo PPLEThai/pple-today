@@ -55,10 +55,10 @@ model ElectionCandidate {
 }
 
 model ElectionEligibleVoter {
-    id         String             @id @default(cuid())
+    id         String            @id @default(cuid())
     electionId String
     userId     String
-    type       EligibleVoterType?
+    type       EligibleVoterType
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -66,7 +66,7 @@ model ElectionEligibleVoter {
     election Election @relation(fields: [electionId], references: [id])
     user     User     @relation(fields: [userId], references: [id])
 
-    ElectionEligibleBallot ElectionEligibleBallot[]
+    bollot ElectionEligibleBallot?
 
     @@index([userId])
 }
