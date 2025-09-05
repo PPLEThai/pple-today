@@ -13,12 +13,14 @@ import { GlobalExceptionPlugin } from './plugins/global-exception'
 
 import packageJson from '../package.json'
 
+const configService = ConfigServicePlugin.decorator.configService
+
 let app = new Elysia({ adapter: node() })
   .use([
     loggerBuilder({
       name: 'Global Logger',
       transport:
-        process.env.APP_ENV === 'development'
+        configService.get('APP_ENV') === 'development'
           ? {
               target: 'pino-pretty',
               options: {
@@ -112,16 +114,14 @@ if (process.env.ENABLE_SWAGGER === 'true') {
             type: 'oauth2',
             flows: {
               authorizationCode: {
-                authorizationUrl: `${ConfigServicePlugin.decorator.configService.get('DEVELOPMENT_OIDC_URL')}/oauth/v2/authorize`,
-                tokenUrl: `${ConfigServicePlugin.decorator.configService.get('DEVELOPMENT_OIDC_URL')}/oauth/v2/token`,
+                authorizationUrl: `${configService.get('DEVELOPMENT_OIDC_URL')}/oauth/v2/authorize`,
+                tokenUrl: `${configService.get('DEVELOPMENT_OIDC_URL')}/oauth/v2/token`,
                 scopes: {
                   openid: 'OpenID scope',
                   profile: 'Profile scope',
                   phone: 'Phone scope',
                 },
-                'x-scalar-client-id': ConfigServicePlugin.decorator.configService.get(
-                  'DEVELOPMENT_OIDC_CLIENT_ID'
-                ),
+                'x-scalar-client-id': configService.get('DEVELOPMENT_OIDC_CLIENT_ID'),
                 'x-usePkce': 'SHA-256',
                 selectedScopes: ['openid', 'profile', 'phone'],
               } as any,
