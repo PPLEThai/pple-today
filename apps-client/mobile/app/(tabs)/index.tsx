@@ -7,6 +7,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 
+import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
@@ -33,6 +34,7 @@ import { GetBannersResponse } from '@api/backoffice/src/modules/banner/models'
 import { GetMyFeedResponse } from '@api/backoffice/src/modules/feed/models'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AnnouncementCard } from '@app/components/announcement'
+import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { PostCard, PostCardSkeleton } from '@app/components/feed/post-card'
 import {
   Pager,
@@ -135,15 +137,18 @@ function MainHeader() {
         {/* <Button variant="secondary" size="icon" aria-label="Notifications">
           <Icon icon={BellIcon} size={20} className="fill-base-secondary-default" />
         </Button> */}
-        {/* TODO: avatar or profile picture */}
         <Button
           size="icon"
           aria-label="Profile Settings"
+          className="overflow-hidden"
           onPress={() => {
-            router.push('/auth')
+            router.navigate('/profile')
           }}
         >
-          <Icon icon={PPLEIcon} width={20} height={20} color="white" />
+          <Avatar alt={authMe.data?.name ?? ''} className="size-full rounded-none">
+            <AvatarImage source={{ uri: authMe.data?.profileImage }} />
+            <AvatarPPLEFallback />
+          </Avatar>
         </Button>
       </View>
     </View>

@@ -17,6 +17,8 @@ const buttonVariants = cva(
         secondary: 'bg-base-bg-default web:hover:opacity-80 active:bg-base-bg-medium',
         outline:
           'border border-base-outline-dark bg-background web:hover:bg-accent web:hover:text-accent-foreground active:bg-base-bg-default',
+        'outline-primary':
+          'border border-base-primary-default bg-background web:hover:bg-accent web:hover:text-accent-foreground active:bg-base-bg-default',
         ghost: 'web:hover:bg-accent web:hover:text-accent-foreground active:bg-base-bg-default',
         destructive: 'bg-destructive web:hover:opacity-90 active:opacity-90',
         link: 'web:underline-offset-4 web:hover:underline web:focus:underline',
@@ -42,6 +44,7 @@ const buttonTextVariants = cva(
         primary: 'text-base-text-invert',
         secondary: 'text-secondary-foreground group-active:text-secondary-foreground',
         outline: 'group-active:text-accent-foreground',
+        'outline-primary': 'text-base-primary-default group-active:text-base-primary-medium',
         ghost: 'text-base-primary-default',
         destructive: 'text-destructive-foreground',
         link: 'text-primary group-active:underline',

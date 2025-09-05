@@ -4,7 +4,7 @@ import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import ImageView from 'react-native-image-viewing'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@pple-today/ui/avatar'
+import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
 import { Button } from '@pple-today/ui/button'
@@ -37,9 +37,9 @@ import { toast } from '@pple-today/ui/toast'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
-import { useQuery } from '@tanstack/react-query'
 import { useEvent } from 'expo'
 import { Image } from 'expo-image'
+import * as Linking from 'expo-linking'
 import { useRouter } from 'expo-router'
 import { getItemAsync } from 'expo-secure-store'
 import { useTrackingPermissions } from 'expo-tracking-transparency'
@@ -49,8 +49,10 @@ import { InfoIcon, PlusIcon, SearchIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
 import { reactQueryClient } from '@app/libs/api-client'
+import { useFacebookPagesQuery } from '@app/libs/facebook'
 
 import { AuthPlayground } from './auth-playground'
+import { AvatarPPLEFallback } from './avatar-pple-fallback'
 import { PostCard, PostCardSkeleton } from './feed/post-card'
 import { MoreOrLess } from './more-or-less'
 
@@ -648,18 +650,16 @@ function PostCardExample() {
 
 function FacebookSDKExample() {
   const [facebookAccessToken, setFacebookAccessToken] = useState<string | null>(null)
-
-  const facebookPagesQuery = useQuery({
-    queryFn: async () => {
-      const response = await fetch(
-        `https://graph.facebook.com/v23.0/me/accounts?fields=access_token,id,name,picture{cache_key,url}&access_token=${facebookAccessToken}`
-      )
-
-      return response.json()
-    },
-    queryKey: ['facebookPages', facebookAccessToken],
+  const facebookPagesQuery = useFacebookPagesQuery({
+    variables: { facebookAccessToken: facebookAccessToken! },
     enabled: !!facebookAccessToken,
   })
+
+  useEffect(() => {
+    if (facebookPagesQuery.error) {
+      console.error('Error fetching Facebook pages:', JSON.stringify(facebookPagesQuery.error))
+    }
+  }, [facebookPagesQuery.error])
 
   const linkPage = reactQueryClient.useMutation('post', '/facebook/linked-page')
 
@@ -688,6 +688,14 @@ function FacebookSDKExample() {
           </Button>
         </>
       )}
+      <Button
+        onPress={() => {
+          Linking.openURL(`app-settings:`)
+        }}
+        variant="ghost"
+      >
+        <Text>Open Setting</Text>
+      </Button>
       <Button
         disabled={Platform.OS === 'ios' && !status?.granted}
         onPress={async () => {
@@ -718,12 +726,16 @@ function FacebookSDKExample() {
       </Button>
       <Button
         onPress={async () => {
-          console.log('Linking Facebook Page...', facebookPagesQuery.data?.data)
+          const page = facebookPagesQuery.data?.[0]
+          console.log('Linking Facebook Page...', page)
+          if (!page) {
+            return
+          }
           try {
             const result = await linkPage.mutateAsync({
               body: {
-                facebookPageId: facebookPagesQuery.data?.data?.[0]?.id,
-                facebookPageAccessToken: facebookPagesQuery.data?.data?.[0]?.access_token,
+                facebookPageId: page.id,
+                facebookPageAccessToken: page.access_token,
               },
             })
             console.log(result)
@@ -731,7 +743,7 @@ function FacebookSDKExample() {
             console.error('Error linking Facebook Page: ', JSON.stringify(error))
           }
         }}
-        disabled={!facebookPagesQuery.data || facebookPagesQuery.data?.data?.length === 0}
+        disabled={!facebookPagesQuery.data || facebookPagesQuery.data?.length === 0}
       >
         <Text>Link with PPLE Today</Text>
       </Button>
@@ -813,16 +825,22 @@ function AvatarExample() {
   return (
     <View className="flex flex-col gap-2">
       <H2 className="font-inter-bold">Avatar</H2>
-      <View className="flex flex-row gap-4 items-baseline">
+      <View className="flex flex-row gap-1">
+        <Avatar className="size-8" alt="NativewindUI Avatar">
+          <AvatarImage
+            source={{
+              uri: 'https://pbs.twimg.com/profile_images/1782428433898708992/1voyv4_A_400x400.jpg',
+            }}
+          />
+          <AvatarPPLEFallback />
+        </Avatar>
         <Avatar className="size-16" alt="NativewindUI Avatar">
           <AvatarImage
             source={{
               uri: 'https://pbs.twimg.com/profile_images/1782428433898708992/1voyv4_A_400x400.jpg',
             }}
           />
-          <AvatarFallback>
-            <Text className="text-foreground">NUI</Text>
-          </AvatarFallback>
+          <AvatarPPLEFallback />
         </Avatar>
         <Avatar className="size-24" alt="NativewindUI Avatar">
           <AvatarImage
@@ -830,9 +848,7 @@ function AvatarExample() {
               uri: 'https://pbs.twimg.com/profile_images/1782428433898708992/1voyv4_A_400x400.jpg',
             }}
           />
-          <AvatarFallback>
-            <Text className="text-foreground">NUI</Text>
-          </AvatarFallback>
+          <AvatarPPLEFallback />
         </Avatar>
         <Avatar className="size-32" alt="NativewindUI Avatar">
           <AvatarImage
@@ -840,9 +856,25 @@ function AvatarExample() {
               uri: 'https://pbs.twimg.com/profile_images/1782428433898708992/1voyv4_A_400x400.jpg',
             }}
           />
-          <AvatarFallback>
-            <Text className="text-foreground">NUI</Text>
-          </AvatarFallback>
+          <AvatarPPLEFallback />
+        </Avatar>
+      </View>
+      <View className="flex flex-row gap-1">
+        <Avatar className="size-8" alt="NativewindUI Avatar">
+          <AvatarImage source={{ uri: '' }} />
+          <AvatarPPLEFallback />
+        </Avatar>
+        <Avatar className="size-16" alt="NativewindUI Avatar">
+          <AvatarImage source={{ uri: '' }} />
+          <AvatarPPLEFallback />
+        </Avatar>
+        <Avatar className="size-24" alt="NativewindUI Avatar">
+          <AvatarImage source={{ uri: '' }} />
+          <AvatarPPLEFallback />
+        </Avatar>
+        <Avatar className="size-32" alt="NativewindUI Avatar">
+          <AvatarImage source={{ uri: '' }} />
+          <AvatarPPLEFallback />
         </Avatar>
       </View>
     </View>
