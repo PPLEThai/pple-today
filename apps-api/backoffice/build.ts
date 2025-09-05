@@ -7,12 +7,9 @@ async function main() {
   await build({
     entryPoints: ['./src/index.ts'],
     bundle: true,
-    sourcemap: true,
     target: 'node18',
     outfile: './build/index.js',
     platform: 'node',
-    treeShaking: true,
-    minify: true,
     define: {
       __APP_VERSION__: JSON.stringify(version),
     },
@@ -21,7 +18,7 @@ async function main() {
         assets: [
           {
             from: './node_modules/@pple-today/database/__generated__/prisma/*.wasm',
-            to: './',
+            to: './__generated__/prisma',
           },
         ],
       }),
