@@ -40,10 +40,10 @@ export default function BottomTabsLayout() {
           },
           tabBarHideOnKeyboard: true,
         }}
-        initialRouteName="index"
+        initialRouteName="(feed)"
       >
         <Tabs.Screen
-          name="index"
+          name="(feed)"
           options={{
             title: 'หน้าแรก',
             tabBarIcon: (props) => <TabBarIcon {...props} icon={HouseIcon} />,

@@ -427,13 +427,11 @@ function FeedContent(props: PagerScrollViewProps) {
                     key={item.id}
                     id={item.id}
                     author={item.author}
-                    attachments={item.post.attachments}
                     commentCount={item.commentCount}
-                    content={item.post.content}
                     createdAt={item.createdAt.toString()}
-                    hashTags={item.post.hashTags}
                     reactions={item.reactions}
                     userReaction={item.userReaction}
+                    post={item.post}
                   />
                 )
               case 'POLL':

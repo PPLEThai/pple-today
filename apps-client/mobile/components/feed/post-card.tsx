@@ -1,26 +1,24 @@
 import * as React from 'react'
 import { Platform, Pressable, StyleSheet, View, ViewProps } from 'react-native'
-import ImageView from 'react-native-image-viewing'
 import Animated, { useSharedValue, withSpring, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { TextProps } from 'react-native-svg'
 import { createQuery } from 'react-query-kit'
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
+import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
 import { Button } from '@pple-today/ui/button'
 import { FormControl, FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
-import { clsx, cn } from '@pple-today/ui/lib/utils'
+import { clsx } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 import { Textarea } from '@pple-today/ui/textarea'
 import { toast } from '@pple-today/ui/toast'
 import { useForm } from '@tanstack/react-form'
 import { useQueryClient } from '@tanstack/react-query'
-import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
-import { useVideoPlayer, VideoView } from 'expo-video'
 import LottieView from 'lottie-react-native'
 import {
   HeartCrackIcon,
@@ -30,20 +28,24 @@ import {
 } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import PPLEIcon from '@app/assets/pple-icon.svg'
 import { MoreOrLess } from '@app/components/more-or-less'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSessionQuery } from '@app/libs/auth'
-import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 
-export interface PostCardAttachment {
-  id: string
-  type: 'IMAGE' | 'VIDEO' | 'AUDIO'
-  url: string
-  description?: string
-}
+import { Lightbox, PostCardAttachment } from './lightbox'
+
+import { AvatarPPLEFallback } from '../avatar-pple-fallback'
+
 type UserReaction = 'UP_VOTE' | 'DOWN_VOTE' | null
+interface PostItem {
+  content: string
+  hashTags: {
+    id: string
+    name: string
+  }[]
+  attachments?: PostCardAttachment[]
+}
 interface PostCardProps {
   id: string
   author: {
@@ -55,35 +57,26 @@ interface PostCardProps {
     }
     profileImage?: string
   }
-  hashTags: {
-    id: string
-    name: string
-  }[]
   createdAt: string
-  content: string
   reactions: { type: 'UP_VOTE' | 'DOWN_VOTE'; count: number }[]
   commentCount: number
-  attachments?: PostCardAttachment[]
+  post: PostItem
+
   userReaction: UserReaction
 }
 
 export const PostCard = React.memo(function PostCard(props: PostCardProps) {
+  const router = useRouter()
   return (
     <View className="flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl mt-4 mx-4">
       <View className="px-4 pt-4 pb-3 flex flex-row items-center justify-between">
         {/* TODO: link */}
         <View className="flex flex-row items-center">
           {/* TODO: link */}
-          <View className="w-8 h-8 rounded-full bg-base-primary-medium flex items-center justify-center mr-3 overflow-hidden">
-            {props.author.profileImage ? (
-              <Image
-                source={{ uri: props.author.profileImage }}
-                style={{ width: '100%', height: '100%' }}
-              />
-            ) : (
-              <Icon icon={PPLEIcon} width={20} height={20} className="text-white" />
-            )}
-          </View>
+          <Avatar alt={props.author.name} className="w-8 h-8 mr-3">
+            <AvatarImage source={{ uri: props.author.profileImage }} />
+            <AvatarPPLEFallback />
+          </Avatar>
           <View className="flex flex-col">
             {/* TODO: link */}
             <Text className="text-base-text-medium font-anakotmai-medium text-sm">
@@ -106,10 +99,10 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
         </Button> */}
       </View>
       <View className="flex flex-col gap-3 pb-3">
-        {props.attachments && props.attachments.length > 0 && (
-          <Lightbox attachments={props.attachments} />
+        {props.post.attachments && props.post.attachments.length > 0 && (
+          <Lightbox attachments={props.post.attachments} />
         )}
-        {props.content && (
+        {props.post.content && (
           <View className="px-4">
             <MoreOrLess
               numberOfLines={3}
@@ -119,13 +112,13 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
               textComponent={TextPost}
               buttonComponent={ButtonTextPost}
             >
-              {props.content}
+              {props.post.content}
             </MoreOrLess>
           </View>
         )}
-        {props.hashTags.length > 0 && (
+        {props.post.hashTags.length > 0 && (
           <View className="flex flex-row flex-wrap gap-1 px-4">
-            {props.hashTags.map((tag) => (
+            {props.post.hashTags.map((tag) => (
               // TODO: link
               <Badge variant="secondary" key={tag.id}>
                 <Text>{tag.name}</Text>
@@ -156,9 +149,14 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
         <View className="flex flex-row justify-between gap-2 px-3 pb-2 pt-1">
           <View className="flex flex-row gap-2">
             <UpvoteButton postId={props.id} />
-            <DownvoteButton postId={props.id} />
+            <DownvoteButton postId={props.id} feedId={props.id} />
           </View>
-          <Pressable className="flex flex-row items-center gap-1 px-1 py-3">
+          <Pressable
+            className="flex flex-row items-center gap-1 px-1 py-3"
+            onPress={() => {
+              router.navigate(`/(feed)/${props.id}`)
+            }}
+          >
             <Icon
               icon={MessageCircleIcon}
               size={20}
@@ -172,6 +170,7 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
     </View>
   )
 })
+
 export const PostCardSkeleton = (props: ViewProps) => {
   return (
     <View
@@ -215,197 +214,6 @@ function TextPost(props: TextProps) {
 }
 function ButtonTextPost(props: TextProps) {
   return <Text {...props} className="text-base-primary-default font-noto-light text-base" />
-}
-
-interface LightboxProps {
-  attachments: PostCardAttachment[]
-}
-function Lightbox(props: LightboxProps) {
-  const [visible, setIsVisible] = React.useState(false)
-  const [imageIndex, setImageIndex] = React.useState(0)
-  const onPress = (index: number) => {
-    setImageIndex(index)
-    setIsVisible(true)
-  }
-  return (
-    <View className="px-4">
-      <View className="rounded-lg overflow-hidden">
-        <AlbumLayout attachments={props.attachments} onPress={onPress} />
-      </View>
-      <ImageView
-        images={props.attachments.map((m) => ({ uri: m.url }))}
-        imageIndex={imageIndex}
-        visible={visible}
-        onRequestClose={() => setIsVisible(false)}
-      />
-    </View>
-  )
-}
-
-// TODO: first pic dimension
-interface AttachmentLayoutProps {
-  attachments: PostCardAttachment[]
-  onPress: (index: number) => void
-}
-function AlbumLayout(props: AttachmentLayoutProps) {
-  if (props.attachments.length === 1) {
-    return (
-      <Attachment
-        index={0}
-        onPress={props.onPress}
-        attachment={props.attachments[0]!}
-        className="aspect-square"
-      />
-    )
-  } else if (props.attachments.length === 2) {
-    return (
-      <View className="flex flex-row gap-0.5">
-        {props.attachments.map((m, i) => (
-          <Attachment
-            key={i}
-            index={i}
-            onPress={props.onPress}
-            attachment={m}
-            className="flex-1 aspect-square"
-          />
-        ))}
-      </View>
-    )
-  } else if (props.attachments.length === 3) {
-    return (
-      <View className="flex flex-row gap-0.5">
-        {props.attachments.slice(0, 1).map((m, i) => (
-          <Attachment
-            key={i}
-            index={i}
-            onPress={props.onPress}
-            attachment={m}
-            className="flex-[2] aspect-square"
-          />
-        ))}
-        <View className="flex flex-col gap-0.5 flex-1">
-          {props.attachments.slice(1).map((m, i) => (
-            <Attachment
-              key={i}
-              index={i + 1}
-              onPress={props.onPress}
-              attachment={m}
-              className="flex-1"
-            />
-          ))}
-        </View>
-      </View>
-    )
-  } else if (props.attachments.length === 4) {
-    return (
-      <View className="flex flex-row gap-0.5">
-        {props.attachments.slice(0, 1).map((m, i) => (
-          <Attachment
-            key={i}
-            index={i}
-            onPress={props.onPress}
-            attachment={m}
-            className="flex-[3] aspect-square"
-          />
-        ))}
-        <View className="flex flex-col gap-0.5 flex-1">
-          {props.attachments.slice(1).map((m, i) => (
-            <Attachment
-              key={i}
-              index={i + 1}
-              onPress={props.onPress}
-              attachment={m}
-              className="flex-1"
-            />
-          ))}
-        </View>
-      </View>
-    )
-  } else if (props.attachments.length > 4) {
-    return (
-      <View className="flex flex-row gap-0.5">
-        {props.attachments.slice(0, 1).map((m, i) => (
-          <Attachment
-            key={i}
-            index={i}
-            onPress={props.onPress}
-            attachment={m}
-            className="flex-[3] aspect-square"
-          />
-        ))}
-        <View className="flex flex-col gap-0.5 flex-1">
-          {props.attachments.slice(1, 4).map((m, i) => {
-            if (i === 2) {
-              return (
-                <View key={i} className="relative">
-                  <Attachment key={i} index={i + 1} onPress={props.onPress} attachment={m} />
-                  <View className="absolute top-0 left-0 right-0 bottom-0 bg-black/50 flex items-center justify-center z-[1] rounded-[2px] pointer-events-none">
-                    <Text className="text-2xl text-white font-anakotmai-medium">
-                      +{props.attachments.length - 4}
-                    </Text>
-                  </View>
-                </View>
-              )
-            }
-            return <Attachment key={i} index={i + 1} onPress={props.onPress} attachment={m} />
-          })}
-        </View>
-      </View>
-    )
-  }
-}
-
-interface AttachmentProps {
-  index: number
-  onPress: (index: number) => void
-  attachment: PostCardAttachment
-  className?: string
-}
-function Attachment(props: AttachmentProps) {
-  switch (props.attachment.type) {
-    case 'VIDEO':
-      return (
-        <View className={cn(`rounded-[2px] overflow-hidden w-full bg-gray-50`, props.className)}>
-          <VideoComp url={props.attachment.url} />
-        </View>
-      )
-    case 'IMAGE':
-      return (
-        <Pressable
-          onPress={() => props.onPress(props.index)}
-          className={cn(`rounded-[2px] overflow-hidden w-full bg-gray-50`, props.className)}
-        >
-          <Image
-            style={{ width: '100%', height: '100%' }}
-            source={{ uri: props.attachment.url }}
-            alt={props.attachment.description ?? ''}
-            contentPosition="top center"
-          />
-        </Pressable>
-      )
-    case 'AUDIO':
-      throw new Error('Unsupported attachment type')
-    default:
-      exhaustiveGuard(props.attachment.type)
-  }
-}
-
-// TODO: always open full screen to lightbox
-// TODO: this should only display thumbnail of the clip
-function VideoComp(props: { url: string }) {
-  const player = useVideoPlayer(props.url, (player) => {
-    player.loop = true
-    // player.play()
-  })
-  // const { isPlaying } = useEvent(player, 'playingChange', { isPlaying: player.playing })
-  return (
-    <VideoView
-      style={{ width: '100%', height: '100%' }}
-      player={player}
-      allowsFullscreen
-      contentFit="cover"
-    />
-  )
 }
 
 interface PostReaction {
@@ -557,7 +365,7 @@ const styles = StyleSheet.create({
     pointerEvents: 'none',
   },
 })
-function DownvoteButton(props: { postId: string }) {
+function DownvoteButton(props: { postId: string; feedId: string }) {
   const opacity = useSharedValue(1)
   const onPressIn = () => {
     opacity.value = withTiming(0.5, { duration: 150 })
@@ -627,7 +435,7 @@ function DownvoteButton(props: { postId: string }) {
         bottomInset={insets.bottom}
       >
         <BottomSheetView>
-          <CommentForm onClose={onClose} postId={props.postId} />
+          <CommentForm onClose={onClose} postId={props.postId} feedId={props.feedId} />
         </BottomSheetView>
       </BottomSheetModal>
     </>
@@ -674,6 +482,14 @@ function CommentForm(props: CommentFormProps) {
           },
         }
       )
+      // TODO
+      // queryClient.invalidateQueries(
+      //   reactQueryClient.getPartialQueryKey(
+      //     'get',
+      //     '/feed/:id/comments'
+      //     { params: { id: props.postId }, }
+      //   )
+      // )
       // optimistic update
       queryClient.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
         if (!old) return
@@ -738,6 +554,91 @@ function CommentForm(props: CommentFormProps) {
         <Button variant="ghost" onPress={onSkip}>
           <Text>ข้าม</Text>
         </Button>
+      </View>
+    </View>
+  )
+}
+
+export const PostDetail = (props: PostCardProps) => {
+  return (
+    <View className="flex flex-col bg-base-bg-white">
+      <View className="px-4 pt-4 pb-3 flex flex-row items-center justify-between">
+        <View className="flex flex-row items-center">
+          <Avatar alt={props.author.name} className="w-8 h-8 mr-3">
+            <AvatarImage source={{ uri: props.author.profileImage }} />
+            <AvatarPPLEFallback />
+          </Avatar>
+          <View className="flex flex-col">
+            <Text className="text-base-text-medium font-anakotmai-medium text-sm">
+              {props.author.name}
+            </Text>
+            <Text className="text-base-text-medium font-anakotmai-light text-sm">
+              {props.author.address ? `${props.author.address.province} | ` : ''}
+              {formatDateInterval(props.createdAt.toString())}
+            </Text>
+          </View>
+        </View>
+      </View>
+      <View className="flex flex-col gap-3 pb-3">
+        {props.post.attachments && props.post.attachments.length > 0 && (
+          <Lightbox attachments={props.post.attachments} />
+        )}
+        {props.post.content && (
+          <View className="px-4">
+            <MoreOrLess
+              numberOfLines={3}
+              moreText="อ่านเพิ่มเติม"
+              lessText="แสดงน้อยลง"
+              animated
+              textComponent={TextPost}
+              buttonComponent={ButtonTextPost}
+            >
+              {props.post.content}
+            </MoreOrLess>
+          </View>
+        )}
+        {props.post.hashTags.length > 0 && (
+          <View className="flex flex-row flex-wrap gap-1 px-4">
+            {props.post.hashTags.map((tag) => (
+              // TODO: link
+              <Badge variant="secondary" key={tag.id}>
+                <Text>{tag.name}</Text>
+              </Badge>
+            ))}
+          </View>
+        )}
+      </View>
+      <View className="flex flex-row justify-between items-center px-4 pb-3">
+        <UpvoteReactionCount
+          id={props.id}
+          reactions={props.reactions}
+          userReaction={props.userReaction}
+        />
+        {props.commentCount > 0 && (
+          <Text className="text-xs font-anakotmai-light text-base-text-medium">
+            {props.commentCount} ความคิดเห็น
+          </Text>
+        )}
+      </View>
+      <View className="flex flex-col">
+        <View className="px-4">
+          <View className="border-b border-base-outline-default" />
+        </View>
+        <View className="flex flex-row justify-between gap-2 px-3 pb-2 pt-1">
+          <View className="flex flex-row gap-2">
+            <UpvoteButton postId={props.id} />
+            <DownvoteButton postId={props.id} feedId={props.id} />
+          </View>
+          <View className="flex flex-row items-center gap-1 px-1 py-3">
+            <Icon
+              icon={MessageCircleIcon}
+              size={20}
+              strokeWidth={1}
+              className="text-base-text-high"
+            />
+            <Text className="text-sm font-anakotmai-light text-base-text-high">ความคิดเห็น</Text>
+          </View>
+        </View>
       </View>
     </View>
   )
