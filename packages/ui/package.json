@@ -23,7 +23,7 @@
   "devDependencies": {
     "@pple-today/project-config": "workspace:^",
     "@types/node": "^22.13.9",
-    "@types/react": "~19.1.10",
+    "@types/react": "~19.1.0",
     "@types/react-dom": "19.0.0",
     "prettier-plugin-tailwindcss": "^0.5.11",
     "tailwindcss": "^3.4.17"
@@ -52,7 +52,7 @@
     "@tanstack/react-form": "^1.14.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "expo": "54.0.0-preview.13",
+    "expo": "54.0.0-preview.15",
     "expo-navigation-bar": "^5.0.7",
     "lucide-react-native": "^0.514.0",
     "nativewind": "^4.1.23",
