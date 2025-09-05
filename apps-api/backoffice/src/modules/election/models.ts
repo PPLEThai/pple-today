@@ -1,6 +1,5 @@
+import { ElectionType } from '@pple-today/database/prisma'
 import { t } from 'elysia'
-
-import { ElectionType } from '../../../__generated__/prisma'
 
 export const ListElectionResponse = t.Object({
   id: t.String(),
