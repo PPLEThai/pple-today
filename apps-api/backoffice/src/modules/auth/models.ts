@@ -1,6 +1,5 @@
+import { UserRole } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
-
-import { UserRole } from '../../../__generated__/prisma'
 
 export const RegisterUserQuery = t.Object({
   role: t.Enum(UserRole, { description: 'User role' }),

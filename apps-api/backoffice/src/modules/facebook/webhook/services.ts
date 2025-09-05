@@ -1,5 +1,16 @@
 import * as crypto from 'node:crypto'
 
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import {
+  PagePost,
+  WebhookChangesVerb,
+  WebhookFeedChanges,
+  WebhookFeedType,
+} from '@pple-today/api-common/dtos'
+import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
+import { err, getFileName } from '@pple-today/api-common/utils'
+import { mapRepositoryError } from '@pple-today/api-common/utils'
+import { PostAttachment, PostAttachmentType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 import * as R from 'remeda'
@@ -7,19 +18,7 @@ import * as R from 'remeda'
 import { HandleFacebookWebhookBody, ValidateFacebookWebhookQuery } from './models'
 import { FacebookWebhookRepository, FacebookWebhookRepositoryPlugin } from './repository'
 
-import { PostAttachment, PostAttachmentType } from '../../../../__generated__/prisma'
-import serverEnv from '../../../config/env'
-import { InternalErrorCode } from '../../../dtos/error'
-import {
-  PagePost,
-  WebhookChangesVerb,
-  WebhookFeedChanges,
-  WebhookFeedType,
-} from '../../../dtos/facebook'
-import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '../../../plugins/logger'
-import { err } from '../../../utils/error'
-import { mapRepositoryError } from '../../../utils/error'
-import { getFileName } from '../../../utils/facebook'
+import { ConfigServicePlugin } from '../../../plugins/config'
 import { FacebookRepository, FacebookRepositoryPlugin } from '../repository'
 
 export class FacebookWebhookService {
@@ -355,13 +354,14 @@ export const FacebookWebhookServicePlugin = new Elysia({
   .use([
     FacebookWebhookRepositoryPlugin,
     FacebookRepositoryPlugin,
+    ConfigServicePlugin,
     ElysiaLoggerPlugin({ name: 'FacebookWebhookService' }),
   ])
-  .decorate(({ facebookRepository, facebookWebhookRepository, loggerService }) => ({
+  .decorate(({ facebookRepository, facebookWebhookRepository, loggerService, configService }) => ({
     facebookWebhookService: new FacebookWebhookService(
       {
-        appSecret: serverEnv.FACEBOOK_APP_SECRET,
-        verifyToken: serverEnv.FACEBOOK_WEBHOOK_VERIFY_TOKEN,
+        appSecret: configService.get('FACEBOOK_APP_SECRET'),
+        verifyToken: configService.get('FACEBOOK_WEBHOOK_VERIFY_TOKEN'),
       },
       facebookRepository,
       facebookWebhookRepository,

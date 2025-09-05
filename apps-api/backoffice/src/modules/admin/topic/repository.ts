@@ -1,13 +1,14 @@
+import { FilePath } from '@pple-today/api-common/dtos'
+import { FileService, PrismaService } from '@pple-today/api-common/services'
+import { err } from '@pple-today/api-common/utils'
+import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import { UpdateTopicBody } from './models'
 
-import { FilePath } from '../../../dtos/file'
-import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
-import { err } from '../../../utils/error'
-import { fromRepositoryPromise } from '../../../utils/error'
-import { FileService, FileServicePlugin } from '../../file/services'
+import { FileServicePlugin } from '../../../plugins/file'
+import { PrismaServicePlugin } from '../../../plugins/prisma'
 
 export class AdminTopicRepository {
   constructor(

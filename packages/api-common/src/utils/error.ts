@@ -8,7 +8,7 @@ import { Simplify, ValueOf } from 'type-fest'
 
 import { RawPrismaError, resolvePrismaError } from './prisma'
 
-import { InternalErrorCode, InternalErrorCodeSchemas } from '../dtos/error'
+import { InternalErrorCode, InternalErrorCodeSchemas } from '../dtos'
 
 type GroupErrorCodeToStatusCode<
   T extends InternalErrorCode[],
@@ -109,12 +109,6 @@ export const mapErrorCodeToResponse = <
 ) => {
   const code = InternalErrorCodeSchemas[error.code].status
   throw (status as any)(code, { error })
-}
-
-export function exhaustiveGuard(_value: never): never {
-  throw new Error(
-    `ERROR! Reached forbidden guard function with unexpected value: ${JSON.stringify(_value)}`
-  )
 }
 
 export function err<E>(_err: E | Err<never, E>): Err<never, E> {

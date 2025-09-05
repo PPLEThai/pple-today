@@ -1,4 +1,4 @@
-import { PrismaClientKnownRequestError } from '../../__generated__/prisma/runtime/client'
+import { PrismaClientKnownRequestError } from '@pple-today/database/prisma/runtime/client'
 
 /**
  * Reference for Prisma error codes

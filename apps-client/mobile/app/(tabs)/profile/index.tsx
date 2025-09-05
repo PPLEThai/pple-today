@@ -3,6 +3,7 @@ import { Linking, Platform, Pressable, PressableProps, ScrollView, View } from '
 import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 
+import type { ExtractBodyResponse } from '@pple-today/api-client'
 import { Avatar, AvatarFallback, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
@@ -42,7 +43,7 @@ import {
   TrophyIcon,
 } from 'lucide-react-native'
 
-import { UserRole } from '@api/backoffice/__generated__/prisma/client'
+import type { ApplicationApiSchema } from '@api/backoffice'
 import { GetUserParticipationResponse } from '@api/backoffice/src/modules/profile/models'
 import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
@@ -57,6 +58,8 @@ import {
 } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
+
+type UserRole = ExtractBodyResponse<ApplicationApiSchema, 'get', '/profile/me'>['role']
 
 export default function Index() {
   const sessionQuery = useSessionQuery()
@@ -153,7 +156,7 @@ const ProfileSection = () => {
       case 'OFFICIAL':
         return 'คณะทำงาน'
       default:
-        throw exhaustiveGuard(role)
+        exhaustiveGuard(role)
     }
   }
   const Profile =
@@ -274,10 +277,14 @@ const FacebookPageSection = () => {
     <View className="flex flex-col gap-3 border border-base-outline-default rounded-xl py-3 px-4 bg-base-bg-white">
       <View className="flex flex-row items-center pb-2.5 gap-2 border-b border-base-outline-default">
         <FacebookIcon size={32} />
-        <H2 className="text-xl text-base-text-high font-anakotmai-medium flex-1 h-9">
+        <H2 className="text-xl text-base-text-high font-anakotmai-medium flex-1">
           เพจ Facebook ที่ดูแล
         </H2>
-        {linkedPageQuery.data?.linkedFacebookPage && <UnlinkFacebookPageDialog />}
+        {linkedPageQuery.data?.linkedFacebookPage ? (
+          <UnlinkFacebookPageDialog />
+        ) : (
+          <View className="h-9" />
+        )}
       </View>
       {linkedPageQuery.status !== 'success' ? (
         <View className="bg-base-bg-default h-10 rounded-lg w-full" />
@@ -380,17 +387,19 @@ function LinkFacebookPageDialog() {
                     return
                   }
                   setPermissionDialogOpen(false)
-                  loginWithFacebook()
+                  // add a delay to wait for dialog to close
+                  // otherwise loginWithFacebook will be cancelled
+                  setTimeout(() => loginWithFacebook(), 1000)
                   return
                 }
                 Linking.openSettings()
                 return
               }
               setPermissionDialogOpen(false)
-              loginWithFacebook()
+              setTimeout(() => loginWithFacebook(), 1000)
             }}
           >
-            <Text>OK</Text>
+            <Text>ตกลง</Text>
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -399,18 +408,18 @@ function LinkFacebookPageDialog() {
 }
 
 function UnlinkFacebookPageDialog() {
-  const [removeDialogOpen, setRemoveDialogOpen] = React.useState(false)
+  const [unlinkDialogOpen, setUnlinkDialogOpen] = React.useState(false)
   const unlinkPageMutation = reactQueryClient.useMutation('delete', '/facebook/linked-page')
   const queryClient = useQueryClient()
   return (
-    <Dialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
+    <Dialog open={unlinkDialogOpen} onOpenChange={setUnlinkDialogOpen}>
       <DialogTrigger asChild>
         <Button
           variant="ghost"
           size="icon"
           className="size-9"
           aria-label="ลบเพจ"
-          onPress={() => setRemoveDialogOpen(true)}
+          onPress={() => setUnlinkDialogOpen(true)}
         >
           <Icon icon={TrashIcon} className="size-5 text-system-danger-default" strokeWidth={1} />
         </Button>
@@ -443,7 +452,7 @@ function UnlinkFacebookPageDialog() {
                       queryKey: reactQueryClient.getQueryKey('get', '/facebook/linked-page'),
                     })
                     toast({ text1: 'ลบเพจ Facebook สำเร็จ' })
-                    setRemoveDialogOpen(false)
+                    setUnlinkDialogOpen(false)
                   },
                   onError: (error) => {
                     toast({ text1: 'เกิดข้อผิดพลาดบางอย่าง' })

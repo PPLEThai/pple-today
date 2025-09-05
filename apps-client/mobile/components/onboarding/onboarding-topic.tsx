@@ -3,6 +3,7 @@ import { ScrollView, View } from 'react-native'
 
 import { Button } from '@pple-today/ui/button'
 import { FormControl, FormItem } from '@pple-today/ui/form'
+import { Skeleton } from '@pple-today/ui/skeleton'
 import { Text } from '@pple-today/ui/text'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { useForm } from '@tanstack/react-form'
@@ -45,7 +46,7 @@ export function OnboardingTopic() {
   }, [form])
 
   const handleSkip = React.useCallback(() => {
-    dispatch({ type: 'next' })
+    dispatch({ type: 'skip' })
   }, [dispatch])
 
   return (
@@ -62,7 +63,7 @@ export function OnboardingTopic() {
                   className="flex flex-row gap-2 flex-wrap justify-start"
                 >
                   {getTopicQuery.isLoading ? (
-                    <Text>Loading...</Text>
+                    <TopicSkeleton />
                   ) : getTopicQuery.data ? (
                     getTopicQuery.data.map((tag) => (
                       <ToggleGroupItem key={tag.id} value={tag.id} variant="outline">
@@ -91,5 +92,30 @@ export function OnboardingTopic() {
         </Button>
       </View>
     </View>
+  )
+}
+
+const TopicSkeleton = () => {
+  return (
+    <>
+      <Skeleton className="rounded-full h-10 w-20" />
+      <Skeleton className="rounded-full h-10 w-16" />
+      <Skeleton className="rounded-full h-10 w-18" />
+      <Skeleton className="rounded-full h-10 w-16" />
+      <Skeleton className="rounded-full h-10 w-20" />
+      <Skeleton className="rounded-full h-10 w-24" />
+      <Skeleton className="rounded-full h-10 w-20" />
+      <Skeleton className="rounded-full h-10 w-24" />
+      <Skeleton className="rounded-full h-10 w-24" />
+      <Skeleton className="rounded-full h-10 w-20" />
+      <Skeleton className="rounded-full h-10 w-16" />
+      <Skeleton className="rounded-full h-10 w-18" />
+      <Skeleton className="rounded-full h-10 w-16" />
+      <Skeleton className="rounded-full h-10 w-16" />
+      <Skeleton className="rounded-full h-10 w-20" />
+      <Skeleton className="rounded-full h-10 w-16" />
+      <Skeleton className="rounded-full h-10 w-20" />
+      <Skeleton className="rounded-full h-10 w-28" />
+    </>
   )
 }
