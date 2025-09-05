@@ -22,9 +22,10 @@ export const ListElectionResponse = t.Object({
 
   status: t.Enum({
     NOT_OPENED: 'NOT_OPENED',
-    VOTING: 'VOTING',
+    OPEN: 'OPEN',
     CLOSED: 'CLOSED',
     RESULT_ANNOUNCE: 'RESULT_ANNOUNCE',
   }),
   votePercentage: t.Nullable(t.Number()),
+  isRegistered: t.Boolean(),
 })
