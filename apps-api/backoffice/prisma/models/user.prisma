@@ -23,9 +23,11 @@ model User {
     numberOfFollowing       Int @default(0)
     numberOfFollowingTopics Int @default(0)
 
+    province    String?
     district    String?
     subDistrict String?
-    address     Address? @relation(fields: [district, subDistrict], references: [district, subDistrict])
+    postalCode  String?
+    address     Address? @relation(fields: [province, district, subDistrict, postalCode], references: [province, district, subDistrict, postalCode])
 
     pollAnswers PollAnswer[]
 

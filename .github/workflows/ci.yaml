@@ -60,5 +60,13 @@ jobs:
       - name: Run Type Check and Format Check
         run: pnpm turbo typecheck format:check lint ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}
 
+      - name: Setup Prebuild Environment
+        working-directory: apps-client/mobile
+        shell: bash
+        run: |
+          echo "FACEBOOK_APP_ID=${{ secrets.FACEBOOK_APP_ID }}" >> .env
+          echo "FACEBOOK_CLIENT_TOKEN=${{ secrets.FACEBOOK_CLIENT_TOKEN }}" >> .env
+          echo "FACEBOOK_DISPLAY_NAME=${{ secrets.FACEBOOK_DISPLAY_NAME }}" >> .env
+
       - name: Run Prebuild
         run: pnpm turbo prebuild ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}

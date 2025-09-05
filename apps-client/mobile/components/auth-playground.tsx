@@ -1,52 +1,25 @@
-import { useEffect } from 'react'
 import { View } from 'react-native'
 
 import { Button } from '@pple-today/ui/button'
 import { Text } from '@pple-today/ui/text'
 import { H2 } from '@pple-today/ui/typography'
-import { useMutation } from '@tanstack/react-query'
 
 import {
-  login,
-  logout,
+  useAuthMe,
   useDiscoveryQuery,
-  useSessionMutation,
+  useLoginMutation,
+  useLogoutMutation,
   useSessionQuery,
   useUser,
 } from '@app/libs/auth'
 
 export function AuthPlayground() {
   const discoveryQuery = useDiscoveryQuery()
-  useEffect(() => {
-    if (discoveryQuery.error) {
-      console.error('Error fetching discovery document:', discoveryQuery.error)
-      // TODO: handle error
-    }
-  }, [discoveryQuery.error])
-
   const sessionQuery = useSessionQuery()
-  const sessionMutation = useSessionMutation()
-
   const userQuery = useUser()
-
-  const loginMutation = useMutation({
-    mutationFn: login,
-    onSuccess: (result) => {
-      sessionMutation.mutate({
-        accessToken: result.accessToken,
-        refreshToken: result.refreshToken ?? '',
-        idToken: result.idToken ?? null,
-      })
-    },
-  })
-  const logoutMutation = useMutation({
-    mutationFn: logout,
-    onSuccess: () => {
-      // Clear tokens from secure storage
-      sessionMutation.mutate(null)
-    },
-  })
-
+  const loginMutation = useLoginMutation()
+  const logoutMutation = useLogoutMutation()
+  const authMeQuery = useAuthMe()
   return (
     <View className="flex flex-col gap-2">
       <H2 className="font-inter-bold">Auth Playground </H2>
@@ -61,12 +34,17 @@ export function AuthPlayground() {
         onPress={() =>
           logoutMutation.mutate({ discovery: discoveryQuery.data!, session: sessionQuery.data! })
         }
-        disabled={!sessionQuery.data || !sessionQuery.data}
+        disabled={!discoveryQuery.data || !sessionQuery.data || logoutMutation.isPending}
       >
         <Text>Logout</Text>
       </Button>
+      <Text>See Full Data in Tanstack Bubble</Text>
+      <Text className="line-clamp-2">
+        Discovery: {JSON.stringify(discoveryQuery.data, null, 2)}
+      </Text>
+      <Text className="line-clamp-2">Session: {JSON.stringify(sessionQuery.data, null, 2)}</Text>
       <Text>User: {JSON.stringify(userQuery.data, null, 2)}</Text>
-      <Text>Session: {JSON.stringify(sessionQuery.data, null, 2)}</Text>
+      <Text>Auth Me: {JSON.stringify(authMeQuery.data, null, 2)}</Text>
     </View>
   )
 }

@@ -10,6 +10,7 @@ import {
   GetProfileByIdParams,
   GetProfileByIdResponse,
   GetProfileUploadUrlResponse,
+  GetUserParticipationResponse,
   UpdateProfileBody,
   UpdateProfileResponse,
 } from './models'
@@ -24,6 +25,32 @@ export const ProfileController = new Elysia({
   tags: ['Profile'],
 })
   .use([AuthGuardPlugin, ProfileServicePlugin])
+  .get(
+    '/participation',
+    async ({ user, profileService, status }) => {
+      const result = await profileService.getUserParticipation(user.id)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      response: {
+        200: GetUserParticipationResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get User Participation',
+        description: "Fetch the authenticated user's participation",
+      },
+    }
+  )
   .get(
     '/me',
     async ({ user, status, profileService }) => {
@@ -86,6 +113,9 @@ export const ProfileController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.USER_NOT_FOUND,
           InternalErrorCode.USER_INVALID_INPUT,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
+          InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -144,6 +174,9 @@ export const ProfileController = new Elysia({
           InternalErrorCode.USER_NOT_FOUND,
           InternalErrorCode.USER_INVALID_INPUT,
           InternalErrorCode.USER_ALREADY_DONE_ONBOARDING,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
+          InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

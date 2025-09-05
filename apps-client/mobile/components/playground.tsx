@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Platform, Pressable, ScrollView, TextProps, View } from 'react-native'
+import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import ImageView from 'react-native-image-viewing'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
 import { Button } from '@pple-today/ui/button'
@@ -35,15 +37,23 @@ import { toast } from '@pple-today/ui/toast'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
+import { useEvent } from 'expo'
 import { Image } from 'expo-image'
+import * as Linking from 'expo-linking'
+import { useRouter } from 'expo-router'
 import { getItemAsync } from 'expo-secure-store'
+import { useTrackingPermissions } from 'expo-tracking-transparency'
+import { useVideoPlayer, VideoView } from 'expo-video'
 import LottieView from 'lottie-react-native'
 import { InfoIcon, PlusIcon, SearchIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import { queryClient } from '@app/libs/react-query'
+import { reactQueryClient } from '@app/libs/api-client'
+import { useFacebookPagesQuery } from '@app/libs/facebook'
 
 import { AuthPlayground } from './auth-playground'
+import { AvatarPPLEFallback } from './avatar-pple-fallback'
+import { PostCard, PostCardSkeleton } from './feed/post-card'
 import { MoreOrLess } from './more-or-less'
 
 const AUTH_ACCESS_TOKEN_STORAGE_KEY = 'authAccessToken'
@@ -55,6 +65,7 @@ export function Playground() {
         <View className="flex flex-row items-center justify-between">
           <H1 className="font-inter-bold">Playground</H1>
         </View>
+        <FacebookSDKExample />
         <View className="flex flex-col gap-2">
           <H2 className="font-inter-bold">Font</H2>
           <View className="flex flex-col gap-1">
@@ -240,6 +251,7 @@ export function Playground() {
             </DialogContent>
           </Dialog>
         </View>
+        <AvatarExample />
         <BottomSheetExample />
         <ToggleGroupExample />
         <ProgressExample />
@@ -249,7 +261,11 @@ export function Playground() {
         <ToastExample />
         <MoreOrLessExample />
         <LightboxExample />
+        <OnboardPlayground />
         <LottieExample />
+        <VideoExample />
+        <PostCardExample />
+
         <QueryExample />
         <AuthPlayground />
       </View>
@@ -556,17 +572,198 @@ function LottieExample() {
   )
 }
 
+const videoSource =
+  'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+
+function VideoExample() {
+  const player = useVideoPlayer(videoSource, (player) => {
+    player.loop = true
+    // player.play()
+  })
+
+  const { isPlaying } = useEvent(player, 'playingChange', { isPlaying: player.playing })
+
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Video</H2>
+      <View className="w-full aspect-square">
+        <VideoView style={{ width: '100%', height: '100%' }} player={player} allowsFullscreen />
+      </View>
+      <Button
+        onPress={() => {
+          if (isPlaying) {
+            player.pause()
+          } else {
+            player.play()
+          }
+        }}
+      >
+        <Text>{isPlaying ? 'Pause' : 'Play'}</Text>
+      </Button>
+    </View>
+  )
+}
+
+function PostCardExample() {
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">PostCard</H2>
+      <View className="-mx-4">
+        <PostCard
+          id="1"
+          author={{
+            id: '1',
+            name: 'ศิริโรจน์ ธนิกกุล - Sirirot Thanikkun',
+            address: {
+              district: 'สส.สมุทรสาคร',
+              province: 'สมุทรสาคร',
+            },
+            profileImage: '',
+          }}
+          commentCount={125}
+          content={
+            'พบปะแม่ๆ ชมรมผู้สูงอายุดอกลำดวน ณ หมู่บ้านวารัตน์ 3 ม.5 ต. อ้อมน้อย อ.กระทุ่มแบน จ.สมุทรสาครชวนให้ผมออกสเตปประกอบ'
+          }
+          attachments={Array.from({ length: 4 }).map((_, i) => ({
+            type: 'IMAGE',
+            id: i.toString(),
+            url: 'https://picsum.photos/600/600',
+          }))}
+          hashTags={[
+            { id: '1', name: '#pridemonth' },
+            { id: '2', name: '#ร่างกฎหมาย68' },
+          ]}
+          createdAt="2025-08-19T14:14:49.406Z"
+          reactions={[
+            { type: 'UP_VOTE', count: 32 },
+            { type: 'DOWN_VOTE', count: 2 },
+          ]}
+          userReaction={null}
+        />
+        <PostCardSkeleton />
+      </View>
+    </View>
+  )
+}
+
+// Settings.initializeSDK()
+
+function FacebookSDKExample() {
+  const [facebookAccessToken, setFacebookAccessToken] = useState<string | null>(null)
+  const facebookPagesQuery = useFacebookPagesQuery({
+    variables: { facebookAccessToken: facebookAccessToken! },
+    enabled: !!facebookAccessToken,
+  })
+
+  useEffect(() => {
+    if (facebookPagesQuery.error) {
+      console.error('Error fetching Facebook pages:', JSON.stringify(facebookPagesQuery.error))
+    }
+  }, [facebookPagesQuery.error])
+
+  const linkPage = reactQueryClient.useMutation('post', '/facebook/linked-page')
+
+  /**
+   * NOTE: (iOS)
+   * Facebook Login works only with ATTrackingManager enabled
+   * https://github.com/facebook/facebook-ios-sdk/issues/2375#issuecomment-2051743845
+   * https://github.com/thebergamo/react-native-fbsdk-next#troubleshooting (item 9.)
+   */
+  const [status, requestPermission] = useTrackingPermissions()
+  const requestTracking = useCallback(async () => {
+    const { status } = await requestPermission()
+    if (status === 'granted') {
+      console.log('Yay! I have user permission to track data')
+    }
+  }, [requestPermission])
+
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Facebook SDK</H2>
+      {Platform.OS === 'ios' && (
+        <>
+          <Text>Tracking: {JSON.stringify(status, null, 2)}</Text>
+          <Button onPress={requestTracking} variant="outline">
+            <Text>Ask to track</Text>
+          </Button>
+        </>
+      )}
+      <Button
+        onPress={() => {
+          Linking.openURL(`app-settings:`)
+        }}
+        variant="ghost"
+      >
+        <Text>Open Setting</Text>
+      </Button>
+      <Button
+        disabled={Platform.OS === 'ios' && !status?.granted}
+        onPress={async () => {
+          try {
+            const loginResult = await LoginManager.logInWithPermissions([
+              'pages_show_list',
+              'pages_read_engagement',
+              'pages_read_user_content',
+              'pages_manage_metadata',
+            ])
+            if (loginResult.isCancelled) {
+              console.log('User cancelled login')
+              return
+            }
+            console.log('Login success: ' + loginResult)
+            const accessTokenResult = await AccessToken.getCurrentAccessToken()
+            if (!accessTokenResult || !accessTokenResult.accessToken) {
+              console.error('Failed to get facebook access token')
+              return
+            }
+            setFacebookAccessToken(accessTokenResult.accessToken)
+          } catch (error) {
+            console.error('Login Error: ', error)
+          }
+        }}
+      >
+        <Text>Login with Facebook</Text>
+      </Button>
+      <Button
+        onPress={async () => {
+          const page = facebookPagesQuery.data?.[0]
+          console.log('Linking Facebook Page...', page)
+          if (!page) {
+            return
+          }
+          try {
+            const result = await linkPage.mutateAsync({
+              body: {
+                facebookPageId: page.id,
+                facebookPageAccessToken: page.access_token,
+              },
+            })
+            console.log(result)
+          } catch (error) {
+            console.error('Error linking Facebook Page: ', JSON.stringify(error))
+          }
+        }}
+        disabled={!facebookPagesQuery.data || facebookPagesQuery.data?.length === 0}
+      >
+        <Text>Link with PPLE Today</Text>
+      </Button>
+      <Button
+        onPress={() => {
+          LoginManager.logOut()
+        }}
+        variant="secondary"
+      >
+        <Text>Logout</Text>
+      </Button>
+      <Text className="line-clamp-1">Token: {facebookAccessToken}</Text>
+      <Text>Pages: {JSON.stringify(facebookPagesQuery.data, null, 2)}</Text>
+    </View>
+  )
+}
+
 function QueryExample() {
   const [token, setToken] = useState<string>('')
-  const sampleQuery = queryClient.useQuery(
-    '/auth/me',
-    {
-      headers: {
-        authorization: `Bearer ${token}`,
-      },
-    },
-    { enabled: !!token }
-  )
+  const sampleQuery = reactQueryClient.useQuery('/auth/me', {}, { enabled: !!token })
 
   useEffect(() => {
     const fetchToken = async () => {
@@ -578,7 +775,7 @@ function QueryExample() {
     fetchToken()
   }, [])
 
-  const sampleMutation = queryClient.useMutation('post', '/facebook/linked-page')
+  const sampleMutation = reactQueryClient.useMutation('post', '/facebook/linked-page')
 
   return (
     <>
@@ -621,5 +818,79 @@ function QueryExample() {
         </Button>
       </View>
     </>
+  )
+}
+
+function AvatarExample() {
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Avatar</H2>
+      <View className="flex flex-row gap-1">
+        <Avatar className="size-8" alt="NativewindUI Avatar">
+          <AvatarImage
+            source={{
+              uri: 'https://pbs.twimg.com/profile_images/1782428433898708992/1voyv4_A_400x400.jpg',
+            }}
+          />
+          <AvatarPPLEFallback />
+        </Avatar>
+        <Avatar className="size-16" alt="NativewindUI Avatar">
+          <AvatarImage
+            source={{
+              uri: 'https://pbs.twimg.com/profile_images/1782428433898708992/1voyv4_A_400x400.jpg',
+            }}
+          />
+          <AvatarPPLEFallback />
+        </Avatar>
+        <Avatar className="size-24" alt="NativewindUI Avatar">
+          <AvatarImage
+            source={{
+              uri: 'https://pbs.twimg.com/profile_images/1782428433898708992/1voyv4_A_400x400.jpg',
+            }}
+          />
+          <AvatarPPLEFallback />
+        </Avatar>
+        <Avatar className="size-32" alt="NativewindUI Avatar">
+          <AvatarImage
+            source={{
+              uri: 'https://pbs.twimg.com/profile_images/1782428433898708992/1voyv4_A_400x400.jpg',
+            }}
+          />
+          <AvatarPPLEFallback />
+        </Avatar>
+      </View>
+      <View className="flex flex-row gap-1">
+        <Avatar className="size-8" alt="NativewindUI Avatar">
+          <AvatarImage source={{ uri: '' }} />
+          <AvatarPPLEFallback />
+        </Avatar>
+        <Avatar className="size-16" alt="NativewindUI Avatar">
+          <AvatarImage source={{ uri: '' }} />
+          <AvatarPPLEFallback />
+        </Avatar>
+        <Avatar className="size-24" alt="NativewindUI Avatar">
+          <AvatarImage source={{ uri: '' }} />
+          <AvatarPPLEFallback />
+        </Avatar>
+        <Avatar className="size-32" alt="NativewindUI Avatar">
+          <AvatarImage source={{ uri: '' }} />
+          <AvatarPPLEFallback />
+        </Avatar>
+      </View>
+    </View>
+  )
+}
+
+function OnboardPlayground() {
+  const router = useRouter()
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Onboarding</H2>
+      <View className="flex flex-row gap-4 items-baseline">
+        <Button onPress={() => router.push('/onboarding')}>
+          <Text>Start Onboarding</Text>
+        </Button>
+      </View>
+    </View>
   )
 }

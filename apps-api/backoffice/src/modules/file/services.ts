@@ -129,7 +129,7 @@ export class FileService {
     }
   ) {
     const expiresIn = config?.expiresIn ?? 15 * 60
-    const maxSize = config?.maxSize ?? 4 * 1024 * 1024
+    const maxSize = config?.maxSize ?? 5 * 1024 * 1024
     const contentType = config?.contentType ?? 'application/octet-stream'
 
     const options: GenerateSignedPostPolicyV4Options = {
@@ -213,7 +213,7 @@ export class FileService {
   }
 
   getPublicFileUrl(fileKey: string) {
-    return decodeURIComponent(this.bucket.file(fileKey).publicUrl())
+    return this.bucket.file(fileKey).publicUrl()
   }
 
   async uploadProfilePagePicture(url: string, pageId: string) {

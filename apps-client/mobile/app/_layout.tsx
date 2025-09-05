@@ -24,6 +24,7 @@ import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 
 import { environment } from '@app/env'
+import { AuthLifeCycleHook } from '@app/libs/auth'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -51,18 +52,21 @@ export default function RootLayout() {
             <FontProvider>
               <GestureHandlerRootView>
                 <BottomSheetModalProvider>
-                  <Stack>
+                  <Stack initialRouteName="(tabs)">
                     <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen name="loading" options={{ headerShown: false }} />
+                    <Stack.Screen name="onboarding" options={{ headerShown: false }} />
                   </Stack>
                   <Toaster />
                 </BottomSheetModalProvider>
               </GestureHandlerRootView>
             </FontProvider>
           </ColorSchemeProvider>
-          {(environment.APP_ENVIRONMENT === 'development' ||
-            environment.APP_ENVIRONMENT === 'local') && (
+          {(environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'development' ||
+            environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'local') && (
             <DevToolsBubble onCopy={onCopy} queryClient={queryClient} />
           )}
+          <AuthLifeCycleHook />
         </QueryClientProvider>
       </SafeAreaProvider>
       <PortalHost />

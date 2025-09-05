@@ -1,10 +1,16 @@
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
+import * as R from 'remeda'
 
-import { CompleteOnboardingProfileBody, UpdateProfileBody } from './models'
+import {
+  CompleteOnboardingProfileBody,
+  GetUserParticipationResponse,
+  UpdateProfileBody,
+} from './models'
 import { ProfileRepository, ProfileRepositoryPlugin } from './repository'
 
 import { InternalErrorCode } from '../../dtos/error'
+import { FilePath } from '../../dtos/file'
 import { mapRepositoryError } from '../../utils/error'
 import { AuthRepository, AuthRepositoryPlugin } from '../auth/repository'
 import { FileService, FileServicePlugin } from '../file/services'
@@ -15,6 +21,33 @@ export class ProfileService {
     private authRepository: AuthRepository,
     private fileService: FileService
   ) {}
+
+  // TODO: Add election to recent activity or formulate new table for activity
+  async getUserParticipation(userId: string) {
+    const result = await this.profileRepository.getUserParticipation(userId)
+
+    if (result.isErr()) {
+      return mapRepositoryError(result.error)
+    }
+
+    const transformResult: GetUserParticipationResponse = R.pipe(
+      result.value,
+      R.map((poll) => ({
+        type: 'POLL' as const,
+        feedItemId: poll.feedItemId,
+        title: poll.title,
+        createdAt: R.pipe(
+          poll.options,
+          R.map((option) => option.pollAnswers[0].createdAt),
+          R.flat(),
+          R.firstBy([R.identity(), 'desc'])
+        )!,
+      }))
+    )
+
+    return ok(transformResult)
+  }
+
   async getProfileById(id: string) {
     const user = await this.profileRepository.getProfileById(id)
 
@@ -98,9 +131,11 @@ export class ProfileService {
       address: userData.address
         ? {
             connect: {
-              district_subDistrict: {
+              province_district_subDistrict_postalCode: {
+                province: userData.address.province,
                 district: userData.address.district,
                 subDistrict: userData.address.subDistrict,
+                postalCode: userData.address.postalCode,
               },
             },
           }
@@ -172,7 +207,7 @@ export class ProfileService {
   }
 
   async getProfileUploadUrl(userId: string) {
-    const fileKey = `users/profile-picture-${userId}.png`
+    const fileKey = `temp/users/profile-picture-${userId}.png` satisfies FilePath
     const uploadUrl = await this.fileService.getUploadSignedUrl(fileKey, {
       contentType: 'image/png',
     })

@@ -7,6 +7,7 @@ import { clsx } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs'
 import { PlatformPressable } from '@react-navigation/elements'
+import { Image } from 'expo-image'
 import { Tabs } from 'expo-router'
 import {
   CircleUserRoundIcon,
@@ -15,8 +16,11 @@ import {
   LucideIcon,
   SearchIcon,
 } from 'lucide-react-native'
+import { cssInterop } from 'nativewind'
 
 import PPLEIconBlack from '@app/assets/pple-icon-black.svg'
+
+cssInterop(Image, { className: 'style' })
 
 export default function BottomTabsLayout() {
   const insets = useSafeAreaInsets()
@@ -75,7 +79,7 @@ export default function BottomTabsLayout() {
           }}
         />
         <Tabs.Screen
-          name="auth"
+          name="profile"
           options={{
             title: 'ฉัน',
             tabBarIcon: (props) => <TabBarIcon {...props} icon={CircleUserRoundIcon} />,

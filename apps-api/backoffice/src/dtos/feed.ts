@@ -15,7 +15,9 @@ export const FeedItemComment = t.Object({
 export type FeedItemComment = Static<typeof FeedItemComment>
 
 export const FeedItemReaction = t.Object({
-  type: t.String({ description: 'The type of reaction, e.g., UP_VOTE or DOWN_VOTE' }),
+  type: t.Enum(PostReactionType, {
+    description: 'The type of reaction, e.g., UP_VOTE or DOWN_VOTE',
+  }),
   count: t.Number({ description: 'The count of reactions of this type' }),
 })
 export type FeedItemReaction = Static<typeof FeedItemReaction>
@@ -24,7 +26,7 @@ export const FeedItemBaseContent = t.Object({
   id: t.String({ description: 'The ID of the feed item' }),
   createdAt: t.Date({ description: 'The creation date of the feed item' }),
   commentCount: t.Number({ description: 'The number of comments on the feed item' }),
-  userReaction: t.Optional(t.Enum(PostReactionType)),
+  userReaction: t.Nullable(t.Enum(PostReactionType)),
   reactions: t.Array(FeedItemReaction),
   author: Author,
 })
