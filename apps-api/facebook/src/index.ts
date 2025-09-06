@@ -58,6 +58,8 @@ const app = new Elysia({ adapter: node() })
   ])
   .use([FacebookWebhookController, VersionController])
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server is running on http://localhost:${process.env.PORT}`)
+const PORT = configService.get('PORT')
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`)
 })

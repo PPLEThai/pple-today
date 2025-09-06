@@ -140,8 +140,10 @@ if (process.env.ENABLE_SWAGGER === 'true') {
   app = app.use(swaggerPlugin).get('/swagger', () => response.clone(), hooks)
 }
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server is running on http://localhost:${process.env.PORT}`)
+const PORT = configService.get('PORT')
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`)
 })
 
 export type ApplicationApiSchema = typeof ApplicationController
