@@ -12,7 +12,7 @@ import {
 import { FacebookWebhookServicePlugin } from './services'
 
 export const FacebookWebhookController = new Elysia({
-  prefix: '/webhook',
+  prefix: '/facebook/webhook',
   detail: {
     hide: true,
   },

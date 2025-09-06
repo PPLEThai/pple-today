@@ -1,6 +1,5 @@
-import { Static, t } from 'elysia'
-
 import { WebhookFeedChanges } from '@pple-today/api-common/dtos'
+import { Static, t } from 'elysia'
 
 export const ValidateFacebookWebhookQuery = t.Object({
   'hub.mode': t.String({

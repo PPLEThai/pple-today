@@ -15,7 +15,6 @@ import {
   UnlinkPageResponse,
 } from './models'
 import { FacebookServicePlugin } from './services'
-import { FacebookWebhookController } from './webhook'
 
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
 
@@ -24,7 +23,6 @@ export const FacebookController = new Elysia({
   tags: ['Facebook'],
 })
   .use([FacebookServicePlugin, AuthGuardPlugin])
-  .use(FacebookWebhookController)
   // TODO: Remove this endpoint groups
   .group('/token', (app) =>
     app

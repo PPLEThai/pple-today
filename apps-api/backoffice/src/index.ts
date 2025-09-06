@@ -55,7 +55,7 @@ let app = new Elysia({ adapter: node() })
           return (
             ctx.path.startsWith('/health') ||
             ctx.path.startsWith('/swagger') ||
-            ctx.path.startsWith('/versions')
+            ctx.path.startsWith('/version')
           )
         },
       },
