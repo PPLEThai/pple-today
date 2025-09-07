@@ -47,7 +47,7 @@ const variantsMapping = {
   h6: 'h6',
   tiny: 'p',
   p: 'p',
-  blockquote: 'p',
+  blockquote: 'blockquote',
   code: 'code',
   lead: 'p',
   large: 'p',
@@ -57,13 +57,13 @@ const variantsMapping = {
   span: 'span',
 } as const
 
-export const Typography = forwardRef<HTMLDivElement, TypographyProps>(
+export const Typography = forwardRef<HTMLElement, TypographyProps>(
   ({ className, variant, fontWeight, component, ...props }, ref) => {
     const Component = component ? variantsMapping[component] : 'p'
 
     return (
       <Component
-        {...props}
+        {...(props as any)}
         className={typographyVariant({ fontWeight, variant, className })}
         ref={ref}
       />
