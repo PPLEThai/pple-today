@@ -2,6 +2,17 @@ import { useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema'
+import { Avatar, AvatarFallback, AvatarImage } from '@pple-today/web-ui/avatar'
+import { Badge } from '@pple-today/web-ui/badge'
+import {
+  Breadcrumb,
+  BreadcrumbEllipsis,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@pple-today/web-ui/breadcrumb'
 import { Button } from '@pple-today/web-ui/button'
 import {
   Card,
@@ -25,6 +36,20 @@ import {
 } from '@pple-today/web-ui/command'
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@pple-today/web-ui/dialog'
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from '@pple-today/web-ui/dropdown-menu'
+import {
   Form,
   FormControl,
   FormField,
@@ -33,9 +58,39 @@ import {
   FormMessage,
 } from '@pple-today/web-ui/form'
 import { Input } from '@pple-today/web-ui/input'
+import { Label } from '@pple-today/web-ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '@pple-today/web-ui/popover'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@pple-today/web-ui/select'
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@pple-today/web-ui/sheet'
+import { Switch } from '@pple-today/web-ui/switch'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@pple-today/web-ui/tooltip'
 import { Typography } from '@pple-today/web-ui/typography'
-import { Calculator, Calendar, CreditCard, Settings, Smile, User } from 'lucide-react'
+import {
+  BadgeCheckIcon,
+  Calculator,
+  Calendar,
+  CreditCard,
+  Settings,
+  Smile,
+  User,
+} from 'lucide-react'
 import z from 'zod'
 
 const ColorPaletteSection = () => {
@@ -104,6 +159,117 @@ const TypographySection = () => {
         </div>
       </div>
     </section>
+  )
+}
+
+const BadgeSection = () => {
+  return (
+    <div className="flex flex-col gap-2">
+      <Typography className="text-left" variant="h2">
+        Badge
+      </Typography>
+      <div className="flex w-full flex-wrap gap-2">
+        <Badge>Badge</Badge>
+        <Badge variant="secondary">Secondary</Badge>
+        <Badge variant="destructive">Destructive</Badge>
+        <Badge variant="outline">Outline</Badge>
+      </div>
+      <div className="flex w-full flex-wrap gap-2">
+        <Badge variant="secondary" className="bg-blue-500 text-white dark:bg-blue-600">
+          <BadgeCheckIcon />
+          Verified
+        </Badge>
+        <Badge className="h-5 min-w-5 rounded-full px-1 font-sans tabular-nums">8</Badge>
+        <Badge
+          className="h-5 min-w-5 rounded-full px-1 font-sans tabular-nums"
+          variant="destructive"
+        >
+          99
+        </Badge>
+        <Badge className="h-5 min-w-5 rounded-full px-1 font-sans tabular-nums" variant="outline">
+          20+
+        </Badge>
+      </div>
+    </div>
+  )
+}
+
+const SwitchSection = () => {
+  return (
+    <div className="space-y-2">
+      <Typography className="text-left" variant="h2">
+        Switch
+      </Typography>
+      <div className="flex items-center space-x-2">
+        <Switch id="airplane-mode" />
+        <Label htmlFor="airplane-mode">Airplane Mode</Label>
+      </div>
+    </div>
+  )
+}
+
+const SelectSection = () => {
+  return (
+    <div className="flex flex-col space-y-2">
+      <Typography className="text-left" variant="h2">
+        Select
+      </Typography>
+
+      <Select>
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Select a fruit" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectGroup>
+            <SelectLabel>Fruits</SelectLabel>
+            <SelectItem value="apple">Apple</SelectItem>
+            <SelectItem value="banana">Banana</SelectItem>
+            <SelectItem value="blueberry">Blueberry</SelectItem>
+            <SelectItem value="grapes">Grapes</SelectItem>
+            <SelectItem value="pineapple">Pineapple</SelectItem>
+          </SelectGroup>
+        </SelectContent>
+      </Select>
+    </div>
+  )
+}
+
+const SheetSection = () => {
+  return (
+    <div className="flex flex-col space-y-2">
+      <Typography className="text-left" variant="h2">
+        Sheet
+      </Typography>
+      <Sheet>
+        <SheetTrigger className="w-fit" asChild>
+          <Button variant="outline">Open</Button>
+        </SheetTrigger>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Edit profile</SheetTitle>
+            <SheetDescription>
+              Make changes to your profile here. Click save when you&apos;re done.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="grid flex-1 auto-rows-min gap-6 px-4">
+            <div className="grid gap-3">
+              <Label htmlFor="sheet-demo-name">Name</Label>
+              <Input id="sheet-demo-name" defaultValue="Pedro Duarte" />
+            </div>
+            <div className="grid gap-3">
+              <Label htmlFor="sheet-demo-username">Username</Label>
+              <Input id="sheet-demo-username" defaultValue="@peduarte" />
+            </div>
+          </div>
+          <SheetFooter>
+            <Button type="submit">Save changes</Button>
+            <SheetClose asChild>
+              <Button variant="outline">Close</Button>
+            </SheetClose>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+    </div>
   )
 }
 
@@ -269,6 +435,151 @@ const DialogSection = () => {
   )
 }
 
+const DropdownMenuSection = () => {
+  return (
+    <div className="flex flex-col space-y-2">
+      <Typography className="text-left" variant="h2">
+        Dropdown Menu
+      </Typography>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" className="w-fit">
+            Open
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56" align="start">
+          <DropdownMenuLabel>My Account</DropdownMenuLabel>
+          <DropdownMenuGroup>
+            <DropdownMenuItem>
+              Profile
+              <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              Billing
+              <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              Settings
+              <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              Keyboard shortcuts
+              <DropdownMenuShortcut>⌘K</DropdownMenuShortcut>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuItem>Team</DropdownMenuItem>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>Invite users</DropdownMenuSubTrigger>
+              <DropdownMenuPortal>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem>Email</DropdownMenuItem>
+                  <DropdownMenuItem>Message</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem>More...</DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuPortal>
+            </DropdownMenuSub>
+            <DropdownMenuItem>
+              New Team
+              <DropdownMenuShortcut>⌘+T</DropdownMenuShortcut>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem>GitHub</DropdownMenuItem>
+          <DropdownMenuItem>Support</DropdownMenuItem>
+          <DropdownMenuItem disabled>API</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem>
+            Log out
+            <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
+}
+
+const AvatarSection = () => {
+  return (
+    <div className="flex flex-col space-y-2">
+      <Typography className="text-left" variant="h2">
+        Avatar
+      </Typography>
+      <div className="flex flex-row flex-wrap items-center gap-12">
+        <Avatar>
+          <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+          <AvatarFallback>CN</AvatarFallback>
+        </Avatar>
+        <Avatar className="rounded-lg">
+          <AvatarImage src="https://github.com/evilrabbit.png" alt="@evilrabbit" />
+          <AvatarFallback>ER</AvatarFallback>
+        </Avatar>
+        <div className="*:data-[slot=avatar]:ring-background flex -space-x-2 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:grayscale">
+          <Avatar>
+            <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
+          <Avatar>
+            <AvatarImage src="https://github.com/leerob.png" alt="@leerob" />
+            <AvatarFallback>LR</AvatarFallback>
+          </Avatar>
+          <Avatar>
+            <AvatarImage src="https://github.com/evilrabbit.png" alt="@evilrabbit" />
+            <AvatarFallback>ER</AvatarFallback>
+          </Avatar>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const BreadcrumbSection = () => {
+  return (
+    <div className="flex flex-col space-y-2">
+      <Typography className="text-left" variant="h2">
+        Breadcrumb
+      </Typography>
+
+      <Breadcrumb>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <a href="#">Home</a>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1">
+                <BreadcrumbEllipsis className="size-4" />
+                <span className="sr-only">Toggle menu</span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem>Documentation</DropdownMenuItem>
+                <DropdownMenuItem>Themes</DropdownMenuItem>
+                <DropdownMenuItem>GitHub</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <a href="#">Components</a>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Breadcrumb</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+    </div>
+  )
+}
+
 const TestFormSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
@@ -354,6 +665,24 @@ const PopoverSection = () => {
   )
 }
 
+const TooltipSection = () => {
+  return (
+    <div className="flex flex-col space-y-2">
+      <Typography className="text-left" variant="h2">
+        Tooltip
+      </Typography>
+      <Tooltip>
+        <TooltipTrigger className="w-fit" asChild>
+          <Button>Hover</Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Add to library</p>
+        </TooltipContent>
+      </Tooltip>
+    </div>
+  )
+}
+
 const PlaygroundPage = () => {
   return (
     <div className="p-5 space-y-6">
@@ -363,13 +692,27 @@ const PlaygroundPage = () => {
       <hr className="border border-secondary-100" />
       <TypographySection />
       <hr className="border border-secondary-100" />
+      <TooltipSection />
+      <hr className="border border-secondary-100" />
       <ButtonSection />
+      <hr className="border border-secondary-100" />
+      <AvatarSection />
       <hr className="border border-secondary-100" />
       <CardSection />
       <hr className="border border-secondary-100" />
+      <SelectSection />
+      <hr className="border border-secondary-100" />
+      <SheetSection />
+      <hr className="border border-secondary-100" />
       <ComboBoxSection />
       <hr className="border border-secondary-100" />
+      <DropdownMenuSection />
+      <hr className="border border-secondary-100" />
+      <SwitchSection />
+      <hr className="border border-secondary-100" />
       <CommandSection />
+      <hr className="border border-secondary-100" />
+      <BreadcrumbSection />
       <hr className="border border-secondary-100" />
       <DialogSection />
       <hr className="border border-secondary-100" />
@@ -378,6 +721,8 @@ const PlaygroundPage = () => {
       <InputSection />
       <hr className="border border-secondary-100" />
       <PopoverSection />
+      <hr className="border border-secondary-100" />
+      <BadgeSection />
     </div>
   )
 }
