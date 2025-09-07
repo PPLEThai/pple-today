@@ -1,4 +1,4 @@
-@import '@pple-today/ui/global.css';
+@import '@pple-today/web-ui/global.css';
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai+Looped:wght@100..900&display=swap');
 
 @font-face {
@@ -6,7 +6,7 @@
   font-style: normal;
   font-weight: 300;
   font-display: swap;
-  src: url('/fonts/Anakotmai-Light.otf') format('opentype');
+  src: url('../public/fonts/Anakotmai-Light.otf') format('opentype');
 }
 
 @font-face {
@@ -14,7 +14,7 @@
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url('/fonts/Anakotmai-Medium.otf') format('opentype');
+  src: url('../public/fonts/Anakotmai-Medium.otf') format('opentype');
 }
 
 @font-face {
@@ -22,7 +22,7 @@
   font-style: normal;
   font-weight: 700;
   font-display: swap;
-  src: url('/fonts/Anakotmai-Bold.otf') format('opentype');
+  src: url('../public/fonts/Anakotmai-Bold.otf') format('opentype');
 }
 
 @layer base {
