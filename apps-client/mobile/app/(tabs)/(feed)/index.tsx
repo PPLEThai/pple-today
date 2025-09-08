@@ -1,19 +1,24 @@
 import * as React from 'react'
-import { findNodeHandle, FlatListComponent, Pressable, View } from 'react-native'
+import { findNodeHandle, FlatListComponent, Pressable, StyleSheet, View } from 'react-native'
 import Animated, {
   FlatListPropsWithLayout,
   useAnimatedScrollHandler,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
+import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
 import { Button } from '@pple-today/ui/button'
+import { FormControl, FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
 import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
+import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H2, H3 } from '@pple-today/ui/typography'
+import { useForm } from '@tanstack/react-form'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import * as Linking from 'expo-linking'
@@ -29,6 +34,7 @@ import {
   MegaphoneIcon,
   RadioTowerIcon,
 } from 'lucide-react-native'
+import { z } from 'zod/v4'
 
 import { GetBannersResponse } from '@api/backoffice/src/modules/banner/models'
 import { GetMyFeedResponse } from '@api/backoffice/src/modules/feed/models'
@@ -70,22 +76,15 @@ export default function IndexLayout() {
           </View>
         </PagerHeaderOnly>
         <PagerTabBar>
-          <Button variant="ghost" aria-label="Add Label" className="mb-px" size="icon">
-            <Icon
-              icon={CirclePlusIcon}
-              strokeWidth={1}
-              className="text-base-secondary-default"
-              size={24}
-            />
-          </Button>
+          <SelectTopicButton />
           <PagerTabBarItem index={0}>สำหรับคุณ</PagerTabBarItem>
           <PagerTabBarItem index={1}>กำลังติดตาม</PagerTabBarItem>
-          <PagerTabBarItem index={2}>กรุงเทพฯ</PagerTabBarItem>
+          {/* <PagerTabBarItem index={2}>กรุงเทพฯ</PagerTabBarItem> */}
           <PagerTabBarItemIndicator />
         </PagerTabBar>
       </PagerHeader>
       <PagerContentView>
-        {Array.from({ length: 3 }).map((_, index) => (
+        {Array.from({ length: 2 }).map((_, index) => (
           <View key={index} collapsable={false}>
             <PagerContent index={index}>{(props) => <FeedContent {...props} />}</PagerContent>
           </View>
@@ -344,6 +343,119 @@ function UserInfoSection() {
     </View>
   )
 }
+
+function SelectTopicButton() {
+  const bottomSheetModalRef = React.useRef<BottomSheetModal>(null)
+  const onOpen = () => {
+    bottomSheetModalRef.current?.present()
+  }
+  const onClose = () => {
+    bottomSheetModalRef.current?.dismiss()
+  }
+  const insets = useSafeAreaInsets()
+  return (
+    <>
+      <Button
+        variant="ghost"
+        aria-label="เลือกหัวข้อ"
+        className="mb-px"
+        size="icon"
+        onPress={onOpen}
+      >
+        <Icon
+          icon={CirclePlusIcon}
+          strokeWidth={1}
+          className="text-base-secondary-default"
+          size={24}
+        />
+      </Button>
+
+      <BottomSheetModal ref={bottomSheetModalRef} bottomInset={insets.bottom}>
+        <BottomSheetView>
+          <SelectTopicForm onClose={onClose} />
+        </BottomSheetView>
+      </BottomSheetModal>
+    </>
+  )
+}
+
+const formSchema = z.object({
+  topics: z.array(z.string()),
+})
+
+const SelectTopicForm = (props: { onClose: () => void }) => {
+  const form = useForm({
+    defaultValues: {
+      topics: [] as string[],
+    },
+    validators: {
+      onSubmit: formSchema,
+    },
+    onSubmit: async () => {
+      props.onClose()
+    },
+  })
+  const onSkip = () => {
+    props.onClose()
+  }
+  return (
+    <View className="flex flex-col flex-1">
+      <View className="flex flex-col gap-1 p-4 pb-0">
+        <Text className="text-2xl font-anakotmai-bold">เลือกหัวข้อที่สนใจ</Text>
+        <Text className="text-sm font-anakotmai-light">เลือก 1 หัวข้อสำหรับเพิ่มลงบนหน้าแรก</Text>
+      </View>
+      <form.Field name="topics">
+        {(field) => (
+          <FormItem field={field} className="p-4">
+            <FormLabel style={[StyleSheet.absoluteFill, { opacity: 0, pointerEvents: 'none' }]}>
+              ความคิดเห็น
+            </FormLabel>
+            <FormControl>
+              <ToggleGroup
+                type="multiple"
+                value={field.state.value}
+                onValueChange={field.handleChange}
+                className="flex flex-row gap-2 flex-wrap justify-start bg-base-bg-light p-2 rounded-lg border border-base-outline-default"
+              >
+                {TAGS.map((tag) => (
+                  <ToggleGroupItem key={tag} value={tag} variant="outline">
+                    <Text>{tag}</Text>
+                  </ToggleGroupItem>
+                ))}
+              </ToggleGroup>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      </form.Field>
+      <View className="flex flex-col gap-2 px-4">
+        <form.Subscribe selector={(state) => [state.isSubmitting]}>
+          {([isSubmitting]) => (
+            <Button onPress={form.handleSubmit} disabled={isSubmitting}>
+              <Text>ตกลง</Text>
+            </Button>
+          )}
+        </form.Subscribe>
+        <Button variant="ghost" onPress={onSkip}>
+          <Text>ยกเลิก</Text>
+        </Button>
+      </View>
+    </View>
+  )
+}
+
+const TAGS = [
+  'การเมือง',
+  'สส',
+  'ไฟป่า',
+  'สว',
+  'เลือกตั้งนายก',
+  'เลือกตั้งท้องถิ่น',
+  'การศึกษา',
+  'เศรษฐกิจ',
+  'สังคม',
+  'สิ่งแวดล้อม',
+]
 
 function FeedContent(props: PagerScrollViewProps) {
   const { headerHeight, isFocused, scrollElRef, setScrollViewTag } = props
