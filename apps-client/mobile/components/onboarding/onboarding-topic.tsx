@@ -11,7 +11,7 @@ import { z } from 'zod/v4'
 
 import { reactQueryClient } from '@app/libs/api-client'
 
-import { useOnboardingContext } from './onboarding-context'
+import { useOnboardingContext } from '../../contexts/onboarding-context'
 
 const formSchema = z.object({
   topics: z.array(z.string()).min(3, 'กรุณาเลือกอย่างน้อย 3 หัวข้อที่สนใจ'),
