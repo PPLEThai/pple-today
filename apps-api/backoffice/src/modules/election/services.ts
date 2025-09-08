@@ -93,9 +93,9 @@ export class ElectionService {
     voters: (ElectionEligibleVoter & { ballot: ElectionEligibleBallot | null })[]
   ): number {
     const totalVoters = voters.length
-    const totalvoted = voters.filter((voter) => !!voter.ballot).length
+    const totalVoted = voters.filter((voter) => !!voter.ballot).length
 
-    return 100 * (totalvoted / totalVoters)
+    return 100 * (totalVoted / totalVoters)
   }
 
   private isHybridElectionVoterRegistered(
