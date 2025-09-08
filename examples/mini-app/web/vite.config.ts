@@ -6,7 +6,7 @@ import tsconfigPaths from 'vite-tsconfig-paths'
 export default defineConfig({
   server: {
     port: 2001,
-    allowedHosts: ['testminiapp.miello.dev'],
+    allowedHosts: [process.env.VITE_WEB_DOMAIN || 'localhost:2001'],
   },
   plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
 })
