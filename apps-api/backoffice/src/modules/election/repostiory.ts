@@ -7,7 +7,7 @@ import { PrismaServicePlugin } from '../../plugins/prisma'
 export class ElectionRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async listEligibleVotersByUserId(userId: string) {
+  async listMyEligibleVoters(userId: string) {
     return fromRepositoryPromise(
       this.prismaService.electionEligibleVoter.findMany({
         where: {

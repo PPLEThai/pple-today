@@ -16,7 +16,7 @@ export const ElectionController = new Elysia({
   .get(
     '/',
     async ({ user, electionService, status }) => {
-      const elections = await electionService.listEligibleElectionsByUserId(user.id)
+      const elections = await electionService.listMyEligibleElections(user.id)
       if (elections.isErr()) {
         return mapErrorCodeToResponse(elections.error, status)
       }
