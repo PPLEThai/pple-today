@@ -73,6 +73,7 @@ export const ProfileController = new Elysia({
               district: result.value.address.district,
               subDistrict: result.value.address.subDistrict,
               province: result.value.address.province,
+              postalCode: result.value.address.postalCode,
             }
           : undefined,
       })
