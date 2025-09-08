@@ -126,7 +126,7 @@ export class ElectionService {
       }
     })
 
-    const formatted: ListElectionResponse = filtered.map(({ election, type as voterType }) => {
+    const formatted: ListElectionResponse = filtered.map(({ election, type: voterType }) => {
       const { voters, ...rest } = election
 
       return {
