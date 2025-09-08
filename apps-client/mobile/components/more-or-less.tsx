@@ -154,23 +154,25 @@ export const MoreOrLess = ({
   // Is rendered for the first time or children changed.
   if (lines === null || previousChildren !== children)
     return (
-      <TextComponent
-        style={styles.absoluteFill}
-        // "+ 1" because we want to see if
-        // the lines include another one
-        // or just fit all in 3 lines.
-        numberOfLines={numberOfLines + 1}
-        onTextLayout={onTextLayoutGetLines}
-      >
-        {children}
-      </TextComponent>
+      <View>
+        <TextComponent
+          style={styles.absoluteFill}
+          // "+ 1" because we want to see if
+          // the lines include another one
+          // or just fit all in 3 lines.
+          numberOfLines={numberOfLines + 1}
+          onTextLayout={onTextLayoutGetLines}
+        >
+          {children}
+        </TextComponent>
+      </View>
     )
 
   const linesToRender = lines ?? previousLines
-
+  const Comp = hasMore ? Pressable : View
   if (linesToRender) {
     return (
-      <Pressable onPress={isExpanded ? shrinkText : onMorePress}>
+      <Comp onPress={isExpanded ? shrinkText : onMorePress}>
         {isExpanded ? (
           <TextComponent>
             {children}
@@ -186,23 +188,20 @@ export const MoreOrLess = ({
               {children}
             </ClippedShrunkText>
             <View style={styles.flexRow}>
-              <TextComponent style={styles.flex1} numberOfLines={1}>
+              <TextComponent numberOfLines={1} ellipsizeMode="tail">
                 {linesToRender[linesToRender.length - 1].text}
               </TextComponent>
               {onMorePress && <ButtonComponent>{moreText}</ButtonComponent>}
             </View>
           </>
         )}
-      </Pressable>
+      </Comp>
     )
   }
   return null
 }
 
 const styles = StyleSheet.create({
-  flex1: {
-    flex: 1,
-  },
   absoluteFill: {
     left: 0,
     opacity: 0,
@@ -212,6 +211,7 @@ const styles = StyleSheet.create({
   },
   flexRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
   },
 })
 export default ClippedShrunkText

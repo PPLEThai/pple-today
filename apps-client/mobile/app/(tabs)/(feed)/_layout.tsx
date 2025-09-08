@@ -4,7 +4,7 @@ export default function FeedLayout() {
   return (
     <Stack initialRouteName="index">
       <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="[feedId]" options={{ headerShown: false }} />
     </Stack>
   )
 }

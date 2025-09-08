@@ -145,7 +145,7 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
           />
         </Button> */}
       </AnimatedBackgroundPressable>
-      <View className="flex flex-col gap-3 pb-3">
+      <View className="flex flex-col gap-3">
         {props.post.attachments && props.post.attachments.length > 0 && (
           <Lightbox attachments={props.post.attachments} />
         )}
@@ -175,7 +175,7 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
         )}
       </View>
       <AnimatedBackgroundPressable
-        className="flex flex-row justify-between items-center px-4 pb-3"
+        className="flex flex-row justify-between items-center px-4 py-3"
         onPress={navigateToDetailPage}
       >
         <UpvoteReactionCount
@@ -757,7 +757,7 @@ function CommentForm(props: CommentFormProps) {
 export const PostDetail = (props: PostCardProps) => {
   return (
     <View className="flex flex-col bg-base-bg-white">
-      <View className="px-4 pt-4 pb-3 flex flex-row items-center justify-between">
+      <View className="px-4 pt-1 pb-3 flex flex-row items-center justify-between">
         <View className="flex flex-row items-center">
           <Avatar alt={props.author.name} className="w-8 h-8 mr-3">
             <AvatarImage source={{ uri: props.author.profileImage }} />
