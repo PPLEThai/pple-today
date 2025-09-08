@@ -512,7 +512,7 @@ function FeedContent(props: PagerScrollViewProps) {
   const Footer =
     feedInfiniteQuery.hasNextPage || feedInfiniteQuery.isLoading || feedInfiniteQuery.error ? (
       <PostCardSkeleton />
-    ) : data.length === 0 ? (
+    ) : data.length === 1 && data[0].length === 0 ? (
       // Empty State
       <View className="flex flex-col items-center justify-center py-6">
         <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีโพสต์</Text>

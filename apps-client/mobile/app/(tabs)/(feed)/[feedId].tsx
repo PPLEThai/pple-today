@@ -1,5 +1,5 @@
 import React from 'react'
-import { FlatList, Pressable, View } from 'react-native'
+import { FlatList, View } from 'react-native'
 
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Button } from '@pple-today/ui/button'
@@ -128,7 +128,7 @@ function FeedComment({
     commentInfiniteQuery.isLoading ||
     commentInfiniteQuery.error ? (
       <FeedCommentSkeleton />
-    ) : data.length === 0 ? (
+    ) : data.length === 1 && data[0].length === 0 ? (
       // Empty State
       <View className="flex flex-col items-center justify-center py-6">
         <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีคอมเมนต์</Text>
@@ -153,8 +153,7 @@ function FeedComment({
                   <AvatarPPLEFallback />
                 </Avatar>
                 <View className="flex flex-col gap-1">
-                  {/* TODO: if isPrivate clickable */}
-                  <Pressable
+                  <View
                     className={clsx(
                       'flex flex-col gap-1 rounded-2xl border px-3 py-2',
                       item.isPrivate
@@ -173,7 +172,7 @@ function FeedComment({
                     <Text className="font-noto-light text-base-text-high text-sm">
                       {item.content}
                     </Text>
-                  </Pressable>
+                  </View>
                   <Text className="font-anakotmai-light text-base-text-medium text-xs">
                     {formatDateInterval(item.createdAt.toString())}
                   </Text>
