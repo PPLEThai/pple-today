@@ -69,3 +69,6 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# local signoz
+signoz
