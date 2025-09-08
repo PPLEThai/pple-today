@@ -2,7 +2,7 @@ import React from 'react'
 import { ScrollView, View } from 'react-native'
 
 import { Button } from '@pple-today/ui/button'
-import { FormControl, FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
+import { FormControl, FormItem, FormLabel } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
 import {
   Select,
@@ -53,6 +53,7 @@ export function OnboardingAddress() {
     },
     validators: {
       onSubmit: formSchema,
+      onBlur: formSchema,
     },
     onSubmit: (values) => {
       const _province = values.value.province
@@ -343,7 +344,6 @@ export function OnboardingAddress() {
                             </SelectContent>
                           </Select>
                         </FormControl>
-                        <FormMessage />
                       </FormItem>
                     )}
                   </form.Field>
@@ -380,7 +380,6 @@ export function OnboardingAddress() {
                             </SelectContent>
                           </Select>
                         </FormControl>
-                        <FormMessage />
                       </FormItem>
                     )}
                   </form.Field>
@@ -410,7 +409,6 @@ export function OnboardingAddress() {
                             </SelectContent>
                           </Select>
                         </FormControl>
-                        <FormMessage />
                       </FormItem>
                     )}
                   </form.Field>
@@ -419,9 +417,14 @@ export function OnboardingAddress() {
             </ScrollView>
           </View>
           <View className="gap-2 px-6 pb-6">
-            <form.Subscribe selector={(state) => [state.isSubmitting, state.canSubmit]}>
-              {([isSubmitting, canSubmit]) => (
-                <Button disabled={isSubmitting || !canSubmit} onPress={handleOnSubmit}>
+            <form.Subscribe
+              selector={(state) => [state.isSubmitting, state.isFormValid, state.isTouched]}
+            >
+              {([isSubmitting, isFormValid, isTouched]) => (
+                <Button
+                  disabled={isSubmitting || !isFormValid || !isTouched}
+                  onPress={handleOnSubmit}
+                >
                   <Text>บันทึก</Text>
                 </Button>
               )}

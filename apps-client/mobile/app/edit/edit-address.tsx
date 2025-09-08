@@ -271,9 +271,14 @@ export default function EditAddressPage() {
         </ScrollView>
       </View>
       <View className="p-6 pt-4 absolute bottom-0 bg-base-bg-white w-full">
-        <form.Subscribe selector={(state) => [state.isFormValid]}>
-          {([isFormValid]) => (
-            <Button onPress={form.handleSubmit} disabled={!isFormValid}>
+        <form.Subscribe
+          selector={(state) => [state.isFormValid, state.isTouched, state.isSubmitting]}
+        >
+          {([isFormValid, isTouched, isSubmitting]) => (
+            <Button
+              onPress={form.handleSubmit}
+              disabled={!isFormValid || !isTouched || isSubmitting}
+            >
               <Text>บันทึก</Text>
             </Button>
           )}
