@@ -196,6 +196,12 @@ const TOPIC_ERROR_SCHEMA = {
   },
 } satisfies InternalErrorSchemas
 
+const ELECTION_ERROR_SCHEMA = {
+  ELECTION_NOT_FOUND: {
+    status: 404,
+  },
+}
+
 export const InternalErrorCodeSchemas = {
   ...AUTH_ERROR_SCHEMA,
   ...COMMON_ERROR_SCHEMA,
@@ -209,6 +215,7 @@ export const InternalErrorCodeSchemas = {
   ...BANNER_ERROR_SCHEMA,
   ...HASHTAG_ERROR_SCHEMA,
   ...TOPIC_ERROR_SCHEMA,
+  ...ELECTION_ERROR_SCHEMA,
 } as const
 export type InternalErrorCodeSchemas = typeof InternalErrorCodeSchemas
 
