@@ -93,8 +93,6 @@ export default function EditProfilePage() {
         return
       }
 
-      console.log('Updating profile with payload:', updateProfilePayload)
-
       updateProfileMutation.mutateAsync(
         {
           body: updateProfilePayload,
