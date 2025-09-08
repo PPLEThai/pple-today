@@ -19,8 +19,8 @@ const seedElections = async (userId: string) => {
   const dateNow = new Date()
 
   // create mock user
-  const userId1 = 'seed-election-user-1'
-  const userId2 = 'seed-election-user-2'
+  const userId1 = 'election-user-1'
+  const userId2 = 'election-user-2'
   await prisma.user.upsert({
     where: {
       id: userId1,
@@ -48,8 +48,8 @@ const seedElections = async (userId: string) => {
     // online
     // no eligible voter
     {
-      id: 'seed-online-with-no-eligible',
-      name: 'seed-online-with-no-eligible',
+      id: 'online-with-no-eligible',
+      name: 'online-with-no-eligible',
       type: ElectionType.ONLINE,
       publishDate: dateNow,
       openVoting: addDays(dateNow, 1),
@@ -58,25 +58,35 @@ const seedElections = async (userId: string) => {
     // onsite
     // not publish
     {
-      id: 'seed-onsite-not-publish',
-      name: 'seed-onsite-not-publish',
+      id: 'onsite-not-publish',
+      name: 'onsite-not-publish',
       type: ElectionType.ONSITE,
       publishDate: addDays(dateNow, 1),
       openVoting: addDays(dateNow, 2),
       closeVoting: addDays(dateNow, 3),
       voters: {
         create: {
-          id: 'seed-onsite-not-publish-voter',
+          id: 'onsite-not-publish-voter',
           userId: userId,
           type: EligibleVoterType.ONSITE,
         },
       },
     },
+    // onsite
+    // exceed close vote date for 7 days
+    {
+      id: 'onsite-exceed-close-vote-date-limit',
+      name: 'onsite-exceed-close-vote-date-limit',
+      type: ElectionType.ONSITE,
+      publishDate: addDays(dateNow, -20),
+      openVoting: addDays(dateNow, -10),
+      closeVoting: addDays(dateNow, -9),
+    },
     // hybrid
     // wait register
     {
-      id: 'seed-hybrid-wait-register',
-      name: 'seed-hybrid-wait-register',
+      id: 'hybrid-wait-register',
+      name: 'hybrid-wait-register',
       type: ElectionType.HYBRID,
       openRegister: addDays(dateNow, 1),
       closeRegister: addDays(dateNow, 2),
@@ -84,7 +94,7 @@ const seedElections = async (userId: string) => {
       closeVoting: addDays(dateNow, 4),
       voters: {
         create: {
-          id: 'seed-hybrid-wait-register-voter',
+          id: 'hybrid-wait-register-voter',
           userId: userId,
           type: EligibleVoterType.ONSITE,
         },
@@ -93,8 +103,8 @@ const seedElections = async (userId: string) => {
     // hybrid
     // open register
     {
-      id: 'seed-hybrid-open-register-not-registed',
-      name: 'seed-hybrid-open-register',
+      id: 'hybrid-open-register-not-registed',
+      name: 'hybrid-open-register',
       type: ElectionType.HYBRID,
       openRegister: dateNow,
       closeRegister: addDays(dateNow, 1),
@@ -102,7 +112,7 @@ const seedElections = async (userId: string) => {
       closeVoting: addDays(dateNow, 3),
       voters: {
         create: {
-          id: 'seed-hybrid-open-register-voter',
+          id: 'hybrid-open-register-voter',
           userId: userId,
           type: EligibleVoterType.ONSITE,
         },
@@ -111,8 +121,8 @@ const seedElections = async (userId: string) => {
     // hybrid
     // close register
     {
-      id: 'seed-hybrid-close-register',
-      name: 'seed-hybrid-close-register',
+      id: 'hybrid-close-register',
+      name: 'hybrid-close-register',
       type: ElectionType.HYBRID,
       openRegister: addDays(dateNow, -3),
       closeRegister: addDays(dateNow, -2),
@@ -120,7 +130,7 @@ const seedElections = async (userId: string) => {
       closeVoting: addDays(dateNow, 2),
       voters: {
         create: {
-          id: 'seed-hybrid-close-register-voter',
+          id: 'hybrid-close-register-voter',
           userId: userId,
           type: EligibleVoterType.ONLINE,
         },
@@ -129,8 +139,8 @@ const seedElections = async (userId: string) => {
     // hybrid
     // open vote
     {
-      id: 'seed-hybrid-open-vote',
-      name: 'seed-hybrid-open-vote',
+      id: 'hybrid-open-vote',
+      name: 'hybrid-open-vote',
       type: ElectionType.HYBRID,
       openRegister: addDays(dateNow, -2),
       closeRegister: addDays(dateNow, -1),
@@ -138,12 +148,12 @@ const seedElections = async (userId: string) => {
       closeVoting: addDays(dateNow, 1),
       voters: {
         create: {
-          id: 'seed-hybrid-open-vote-voter-1',
+          id: 'hybrid-open-vote-voter-1',
           userId: userId,
           type: EligibleVoterType.ONLINE,
           bollot: {
             create: {
-              id: 'seed-hybrid-open-vote-voter-1-bollot',
+              id: 'hybrid-open-vote-voter-1-bollot',
               encryptedBallot: 'mock-encrypted-bollot',
               location: 'mock-location',
               faceImageURL: 'mock-faceImageURL',
@@ -153,12 +163,12 @@ const seedElections = async (userId: string) => {
         createMany: {
           data: [
             {
-              id: 'seed-hybrid-open-vote-voter-2',
+              id: 'hybrid-open-vote-voter-2',
               userId: userId1,
               type: EligibleVoterType.ONLINE,
             },
             {
-              id: 'seed-hybrid-open-vote-voter-3',
+              id: 'hybrid-open-vote-voter-3',
               userId: userId2,
               type: EligibleVoterType.ONLINE,
             },
@@ -169,8 +179,8 @@ const seedElections = async (userId: string) => {
     // hybrid
     // closed vote
     {
-      id: 'seed-hybrid-close-vote',
-      name: 'seed-hybrid-close-vote',
+      id: 'hybrid-close-vote',
+      name: 'hybrid-close-vote',
       type: ElectionType.HYBRID,
       openRegister: addDays(dateNow, -4),
       closeRegister: addDays(dateNow, -3),
@@ -178,7 +188,7 @@ const seedElections = async (userId: string) => {
       closeVoting: addDays(dateNow, -1),
       voters: {
         create: {
-          id: 'seed-hybrid-close-vote-voter',
+          id: 'hybrid-close-vote-voter',
           userId: userId,
           type: EligibleVoterType.ONLINE,
         },
@@ -187,8 +197,8 @@ const seedElections = async (userId: string) => {
     // hybrid
     // result announcement
     {
-      id: 'seed-hybrid-result-announcement',
-      name: 'seed-hybrid-result-announcement',
+      id: 'hybrid-result-announcement',
+      name: 'hybrid-result-announcement',
       type: ElectionType.HYBRID,
       openRegister: addDays(dateNow, -4),
       closeRegister: addDays(dateNow, -3),
@@ -198,7 +208,7 @@ const seedElections = async (userId: string) => {
       endResult: addDays(dateNow, 1),
       voters: {
         create: {
-          id: 'seed-hybrid-result-annoucement',
+          id: 'hybrid-result-annoucement',
           userId: userId,
           type: EligibleVoterType.ONLINE,
         },
@@ -207,8 +217,8 @@ const seedElections = async (userId: string) => {
     // hybrid
     // close result announcement
     {
-      id: 'seed-hybrid-close-result-announcement',
-      name: 'seed-hybrid-close-result-announcement',
+      id: 'hybrid-close-result-announcement',
+      name: 'hybrid-close-result-announcement',
       type: ElectionType.HYBRID,
       openRegister: addDays(dateNow, -6),
       closeRegister: addDays(dateNow, -5),
@@ -218,7 +228,7 @@ const seedElections = async (userId: string) => {
       endResult: addDays(dateNow, -1),
       voters: {
         create: {
-          id: 'seed-hybrid-close-result-announcement-voter',
+          id: 'hybrid-close-result-announcement-voter',
           userId: userId,
           type: EligibleVoterType.ONLINE,
         },
