@@ -15,6 +15,8 @@ import { ElectionRepository, ElectionRepositoryPlugin } from './repostiory'
 export class ElectionService {
   constructor(private readonly electionRepository: ElectionRepository) {}
 
+  private readonly SECONDS_IN_A_DAY = 60 * 60 * 24
+
   private isShowElection(election: Election): boolean {
     switch (election.type) {
       case 'ONSITE':
@@ -34,7 +36,6 @@ export class ElectionService {
       return false
     }
 
-    const SECONDS_IN_A_DAY = 60 * 60 * 24
     const { startResult, endResult, closeVoting } = election
     const isResultAnnounced = startResult && endResult
 
@@ -44,7 +45,8 @@ export class ElectionService {
         return false
       }
     } else {
-      const daysSinceClose = (now.getTime() - closeVoting.getTime()) / (SECONDS_IN_A_DAY * 1000)
+      const daysSinceClose =
+        (now.getTime() - closeVoting.getTime()) / (this.SECONDS_IN_A_DAY * 1000)
       const hasExceededGracePeriod = daysSinceClose > 7
 
       if (hasExceededGracePeriod) {
