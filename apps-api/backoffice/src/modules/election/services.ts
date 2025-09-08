@@ -9,7 +9,7 @@ import {
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { ElectionStatus, ListElectionResponse } from './models'
+import { ElectionStatus } from './models'
 import { ElectionRepository, ElectionRepositoryPlugin } from './repostiory'
 
 export class ElectionService {
@@ -102,11 +102,10 @@ export class ElectionService {
   }
 
   private getVotePercentage(
-    voters: (ElectionEligibleVoter & { bollot: ElectionEligibleBallot | null })[]
+    voters: (ElectionEligibleVoter & { ballot: ElectionEligibleBallot | null })[]
   ): number {
     const totalVoters = voters.length
-    const totalvoted = voters.filter((voter) => !!voter.bollot).length
-
+    const totalvoted = voters.filter((voter) => !!voter.ballot).length
     return 100 * (totalvoted / totalVoters)
   }
 

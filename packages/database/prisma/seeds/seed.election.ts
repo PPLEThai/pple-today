@@ -151,7 +151,7 @@ const seedElections = async (userId: string) => {
           id: 'hybrid-open-vote-voter-1',
           userId: userId,
           type: EligibleVoterType.ONLINE,
-          bollot: {
+          ballot: {
             create: {
               id: 'hybrid-open-vote-voter-1-bollot',
               encryptedBallot: 'mock-encrypted-bollot',

@@ -18,7 +18,7 @@ export class ElectionRepository {
             include: {
               voters: {
                 include: {
-                  bollot: true,
+                  ballot: true,
                 },
               },
             },
