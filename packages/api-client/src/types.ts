@@ -1,5 +1,7 @@
 import type { EdenFetch } from '@elysiajs/eden/fetch'
 import type {
+  dataTagErrorSymbol,
+  dataTagSymbol,
   QueryKey,
   UseMutationOptions,
   UseMutationResult,
@@ -249,6 +251,10 @@ export interface ReactQueryClient<
     const TPath extends keyof TGroupedPathByMethod[TMethod],
     const TSchema extends
       TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
+    const TResponse extends
+      TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
+    const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
+    const TError extends EdenError<TResponse> = EdenError<TResponse>,
   >(
     method?: TMethod,
     path?: TPath,
@@ -257,12 +263,19 @@ export interface ReactQueryClient<
       query?: GetQuery<TSchema>
       headers?: GetHeaders<TSchema>
     }
-  ) => QueryKey
+  ) => QueryKey & {
+    [dataTagSymbol]: TSuccess
+    [dataTagErrorSymbol]: TError
+  }
   getQueryKey: <
     const TMethod extends Extract<TAvailableMethod, QueryMethod>,
     const TPath extends keyof TGroupedPathByMethod[TMethod],
     const TSchema extends
       TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
+    const TResponse extends
+      TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
+    const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
+    const TError extends EdenError<TResponse> = EdenError<TResponse>,
   >(
     path: TPath,
     payload?: {
@@ -270,7 +283,10 @@ export interface ReactQueryClient<
       query?: GetQuery<TSchema>
       headers?: GetHeaders<TSchema>
     }
-  ) => QueryKey
+  ) => QueryKey & {
+    [dataTagSymbol]: TSuccess
+    [dataTagErrorSymbol]: TError
+  }
 }
 
 export interface RequestConfig {

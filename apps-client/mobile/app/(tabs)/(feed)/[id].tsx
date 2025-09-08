@@ -42,8 +42,7 @@ export default function FeedDetailPage() {
           <Icon icon={ArrowLeftIcon} size={24} />
         </Button>
       </View>
-      <FeedItemDetail item={feedQuery.data} />
-      <FeedComment feedId={feedId} />
+      <FeedComment feedId={feedId} headerComponent={<FeedItemDetail item={feedQuery.data} />} />
     </View>
   )
 }
@@ -74,7 +73,13 @@ function FeedItemDetail({ item }: { item: GetFeedContentResponse }) {
   }
 }
 
-function FeedComment({ feedId }: { feedId: string }) {
+function FeedComment({
+  feedId,
+  headerComponent,
+}: {
+  feedId: string
+  headerComponent?: React.ReactElement
+}) {
   // TODO: infinite query
   const commentsQuery = reactQueryClient.useQuery('/feed/:id/comments', {
     pathParams: { id: feedId },
@@ -83,9 +88,10 @@ function FeedComment({ feedId }: { feedId: string }) {
   return (
     <FlatList
       data={commentsQuery.data ?? []}
-      contentContainerClassName="px-4 py-2"
+      ListHeaderComponent={headerComponent}
+      ListHeaderComponentClassName="pb-2"
       ListFooterComponent={
-        <View className="flex flex-col gap-3 mt-3">
+        <View className="flex flex-col gap-3 mt-3 mx-4">
           <View className="flex flex-row gap-2">
             <View className="w-8 h-8 bg-base-bg-medium rounded-full" />
             <View className="flex flex-col flex-1 gap-1">
@@ -110,7 +116,7 @@ function FeedComment({ feedId }: { feedId: string }) {
         </View>
       }
       renderItem={({ item }) => (
-        <View className="flex flex-row gap-2 mt-3">
+        <View className="flex flex-row gap-2 mt-3 mx-4">
           {/* TODO: Link */}
           <Avatar alt={item.author.name} className="w-8 h-8">
             <AvatarImage source={{ uri: item.author.profileImage }} />

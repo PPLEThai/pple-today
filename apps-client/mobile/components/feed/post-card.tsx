@@ -615,7 +615,7 @@ function CommentForm(props: CommentFormProps) {
         {
           onSuccess: () => {
             toast({
-              text1: 'เพิ่มความคิดเห็นส่วนตัวแล้ว',
+              text1: 'เพิ่มความคิดเห็นแล้ว',
               icon: MessageCircleIcon,
             })
           },
@@ -627,19 +627,28 @@ function CommentForm(props: CommentFormProps) {
           },
         }
       )
-      // TODO
+      // optimistic update
+      queryClient.setQueryData(
+        reactQueryClient.getQueryKey('/feed/:id/comments', {
+          pathParams: { id: props.feedId },
+        }),
+        (old) => {
+          if (!old) return
+          return {
+            ...old,
+            comments: [
+              {
+                id: 'temp-id',
+                content: comment,
+              },
+            ],
+          }
+        }
+      )
       queryClient.invalidateQueries({
         queryKey: reactQueryClient.getQueryKey('/feed/:id/comments', {
           pathParams: { id: props.feedId },
         }),
-      })
-      // optimistic update
-      queryClient.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
-        if (!old) return
-        return {
-          upvoteCount: old.userReaction === 'UP_VOTE' ? old.upvoteCount - 1 : old.upvoteCount,
-          userReaction: old.userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE',
-        } as const
       })
     },
   })
@@ -760,15 +769,7 @@ export const PostDetail = (props: PostCardProps) => {
             <UpvoteButton postId={props.id} />
             <DownvoteButton postId={props.id} feedId={props.id} />
           </View>
-          <View className="flex flex-row items-center gap-1 px-1 py-3">
-            <Icon
-              icon={MessageCircleIcon}
-              size={20}
-              strokeWidth={1}
-              className="text-base-text-high"
-            />
-            <Text className="text-sm font-anakotmai-light text-base-text-high">ความคิดเห็น</Text>
-          </View>
+          <CommentButton postId={props.id} feedId={props.id} />
         </View>
       </View>
     </View>
