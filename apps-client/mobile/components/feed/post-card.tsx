@@ -1,6 +1,19 @@
 import * as React from 'react'
-import { Platform, Pressable, StyleSheet, View, ViewProps } from 'react-native'
-import Animated, { useSharedValue, withSpring, withTiming } from 'react-native-reanimated'
+import {
+  GestureResponderEvent,
+  Platform,
+  Pressable,
+  PressableProps,
+  StyleSheet,
+  View,
+  ViewProps,
+} from 'react-native'
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { TextProps } from 'react-native-svg'
 import { createQuery } from 'react-query-kit'
@@ -252,6 +265,32 @@ function UpvoteReactionCount(props: UpvoteReactionCountProps) {
   )
 }
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
+
+function AnimatedButton(props: PressableProps) {
+  const opacity = useSharedValue(1)
+  const onPressIn = (event: GestureResponderEvent) => {
+    opacity.value = withTiming(0.5, { duration: 150 })
+    props.onPressIn?.(event)
+  }
+  const onPressOut = (event: GestureResponderEvent) => {
+    opacity.value = withTiming(1, { duration: 150 })
+    props.onPressOut?.(event)
+  }
+  const styles = useAnimatedStyle(() => {
+    return { opacity: opacity.value }
+  })
+  return (
+    <AnimatedPressable
+      style={styles}
+      className="flex flex-row items-center gap-1 rounded-md py-3 px-1"
+      {...props}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+    />
+  )
+}
+
 const LikeAnimationFile = Platform.select({
   ios: require('../../assets/PPLE-Like-Animation.lottie'),
   android: require('../../assets/PPLE-Like-Animation.zip'),
@@ -260,10 +299,8 @@ interface UpvoteButtonProps {
   postId: string
 }
 function UpvoteButton(props: UpvoteButtonProps) {
-  const opacity = useSharedValue(1)
   const scale = useSharedValue(1)
   const onPressIn = () => {
-    opacity.value = withTiming(0.5, { duration: 150 })
     scale.value = withSpring(0.7, {
       stiffness: 300,
       damping: 12,
@@ -272,7 +309,6 @@ function UpvoteButton(props: UpvoteButtonProps) {
     })
   }
   const onPressOut = () => {
-    opacity.value = withTiming(1, { duration: 150 })
     scale.value = withSpring(1, {
       stiffness: 300,
       damping: 12,
@@ -280,6 +316,11 @@ function UpvoteButton(props: UpvoteButtonProps) {
       overshootClamping: false,
     })
   }
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    }
+  })
 
   const likeAnimationRef = React.useRef<LottieView | null>(null)
   const queryClient = useQueryClient()
@@ -317,35 +358,30 @@ function UpvoteButton(props: UpvoteButtonProps) {
   }
 
   return (
-    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress}>
-      <Animated.View
-        style={{ opacity }}
-        className="flex flex-row items-center gap-1 rounded-md py-3 px-1"
-      >
-        <View>
-          <Animated.View style={{ transform: [{ scale }] }}>
-            <Icon
-              icon={HeartHandshakeIcon}
-              size={20}
-              strokeWidth={1}
-              className={clsx(
-                userReaction === 'UP_VOTE'
-                  ? 'fill-base-primary-medium text-white'
-                  : 'text-base-text-high'
-              )}
-            />
-          </Animated.View>
-          <LottieView
-            containerStyle={[StyleSheet.absoluteFill, styles.lottieContainer]}
-            ref={likeAnimationRef}
-            source={LikeAnimationFile}
-            loop={false}
-            style={{ width: 100, height: 100 }}
+    <AnimatedButton onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
+      <View>
+        <Animated.View style={animatedStyle}>
+          <Icon
+            icon={HeartHandshakeIcon}
+            size={20}
+            strokeWidth={1}
+            className={clsx(
+              userReaction === 'UP_VOTE'
+                ? 'fill-base-primary-medium text-white'
+                : 'text-base-text-high'
+            )}
           />
-        </View>
-        <Text className="text-sm font-anakotmai-light text-base-text-high">เห็นด้วย</Text>
-      </Animated.View>
-    </Pressable>
+        </Animated.View>
+        <LottieView
+          containerStyle={[StyleSheet.absoluteFill, styles.lottieContainer]}
+          ref={likeAnimationRef}
+          source={LikeAnimationFile}
+          loop={false}
+          style={{ width: 100, height: 100 }}
+        />
+      </View>
+      <Text className="text-sm font-anakotmai-light text-base-text-high">เห็นด้วย</Text>
+    </AnimatedButton>
   )
 }
 
@@ -358,14 +394,6 @@ const styles = StyleSheet.create({
   },
 })
 function DownvoteButton(props: { postId: string; feedId: string }) {
-  const opacity = useSharedValue(1)
-  const onPressIn = () => {
-    opacity.value = withTiming(0.5, { duration: 150 })
-  }
-  const onPressOut = () => {
-    opacity.value = withTiming(1, { duration: 150 })
-  }
-
   const bottomSheetModalRef = React.useRef<BottomSheetModal>(null)
   const onOpen = () => {
     bottomSheetModalRef.current?.present()
@@ -406,24 +434,19 @@ function DownvoteButton(props: { postId: string; feedId: string }) {
 
   return (
     <>
-      <Pressable onPressIn={onPressIn} onPressOut={onPressOut} onPress={onPress}>
-        <Animated.View
-          style={{ opacity }}
-          className="flex flex-row items-center gap-1 rounded-md py-3 px-1"
-        >
-          <Icon
-            icon={HeartCrackIcon}
-            size={20}
-            strokeWidth={1}
-            className={clsx(
-              userReaction === 'DOWN_VOTE'
-                ? 'fill-base-primary-medium text-white'
-                : 'text-base-text-high'
-            )}
-          />
-          <Text className="text-sm font-anakotmai-light text-base-text-high">ไม่เห็นด้วย</Text>
-        </Animated.View>
-      </Pressable>
+      <AnimatedButton onPress={onPress}>
+        <Icon
+          icon={HeartCrackIcon}
+          size={20}
+          strokeWidth={1}
+          className={clsx(
+            userReaction === 'DOWN_VOTE'
+              ? 'fill-base-primary-medium text-white'
+              : 'text-base-text-high'
+          )}
+        />
+        <Text className="text-sm font-anakotmai-light text-base-text-high">ไม่เห็นด้วย</Text>
+      </AnimatedButton>
       <BottomSheetModal
         ref={bottomSheetModalRef}
         keyboardBehavior="interactive"
@@ -573,10 +596,10 @@ function CommentButton(props: { postId: string; feedId: string }) {
   }
   return (
     <>
-      <Pressable className="flex flex-row items-center gap-1 px-1 py-3" onPress={onPress}>
+      <AnimatedButton onPress={onPress}>
         <Icon icon={MessageCircleIcon} size={20} strokeWidth={1} className="text-base-text-high" />
         <Text className="text-sm font-anakotmai-light text-base-text-high">ความคิดเห็น</Text>
-      </Pressable>
+      </AnimatedButton>
       <BottomSheetModal
         ref={bottomSheetModalRef}
         keyboardBehavior="interactive"
