@@ -75,15 +75,13 @@ const InputGroup = ({ className, children, ref, ...props }: InputGroupProps) => 
 }
 InputGroup.displayName = 'InputGroup'
 
-export const InputLeftIcon = ({ className, ref, ...props }: React.ComponentProps<typeof Icon>) => {
-  return <Icon ref={ref} {...props} className={cn('absolute ml-3 left-0 top-3 z-[1]', className)} />
+export const InputLeftIcon = ({ className, ...props }: React.ComponentProps<typeof Icon>) => {
+  return <Icon {...props} className={cn('absolute ml-3 left-0 top-3 z-[1]', className)} />
 }
 InputLeftIcon.displayName = 'InputLeftIcon'
 
-export const InputRightIcon = ({ className, ref, ...props }: React.ComponentProps<typeof Icon>) => {
-  return (
-    <Icon ref={ref} {...props} className={cn('absolute mr-3 right-0 top-3 z-[1]', className)} />
-  )
+export const InputRightIcon = ({ className, ...props }: React.ComponentProps<typeof Icon>) => {
+  return <Icon {...props} className={cn('absolute mr-3 right-0 top-3 z-[1]', className)} />
 }
 InputRightIcon.displayName = 'InputRightIcon'
 

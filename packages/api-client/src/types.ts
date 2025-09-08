@@ -1,5 +1,7 @@
 import type { EdenFetch } from '@elysiajs/eden/fetch'
 import type {
+  dataTagErrorSymbol,
+  dataTagSymbol,
   QueryKey,
   UseMutationOptions,
   UseMutationResult,
@@ -244,28 +246,47 @@ export interface ReactQueryClient<
     path: TPath,
     options?: UseMutationOptions<TSuccess, TError, TPayload, TContext>
   ) => UseMutationOptions<TSuccess, TError, TPayload, TContext>
-  getQueryKey: <
+  getKey: <
     const TMethod extends TAvailableMethod,
     const TPath extends keyof TGroupedPathByMethod[TMethod],
-    const TPayload extends RestPayload<TGroupedPathByMethod[TMethod][TPath]> = RestPayload<
-      TGroupedPathByMethod[TMethod][TPath]
-    >,
-  >(
-    method: TMethod,
-    path: TPath,
-    payload?: TPayload
-  ) => QueryKey
-  getPartialQueryKey: <
-    const TMethod extends TAvailableMethod,
-    const TPath extends keyof TGroupedPathByMethod[TMethod],
-    const TPayload extends RestPayload<TGroupedPathByMethod[TMethod][TPath]> = RestPayload<
-      TGroupedPathByMethod[TMethod][TPath]
-    >,
+    const TSchema extends
+      TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
+    const TResponse extends
+      TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
+    const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
+    const TError extends EdenError<TResponse> = EdenError<TResponse>,
   >(
     method?: TMethod,
     path?: TPath,
-    payload?: TPayload
-  ) => QueryKey
+    payload?: {
+      pathParams?: GetPathParams<TSchema>
+      query?: GetQuery<TSchema>
+      headers?: GetHeaders<TSchema>
+    }
+  ) => QueryKey & {
+    [dataTagSymbol]: TSuccess
+    [dataTagErrorSymbol]: TError
+  }
+  getQueryKey: <
+    const TMethod extends Extract<TAvailableMethod, QueryMethod>,
+    const TPath extends keyof TGroupedPathByMethod[TMethod],
+    const TSchema extends
+      TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
+    const TResponse extends
+      TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
+    const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
+    const TError extends EdenError<TResponse> = EdenError<TResponse>,
+  >(
+    path: TPath,
+    payload?: {
+      pathParams?: GetPathParams<TSchema>
+      query?: GetQuery<TSchema>
+      headers?: GetHeaders<TSchema>
+    }
+  ) => QueryKey & {
+    [dataTagSymbol]: TSuccess
+    [dataTagErrorSymbol]: TError
+  }
 }
 
 export interface RequestConfig {
