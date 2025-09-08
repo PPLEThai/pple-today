@@ -472,7 +472,7 @@ function FeedContent(props: PagerScrollViewProps) {
     queryFn: async ({ pageParam }) => {
       const session = await getAuthSession()
       const response = await fetchClient('/feed/me', {
-        query: { page: pageParam, limit: 5 },
+        query: { page: pageParam, limit: 10 },
         headers: session ? { Authorization: `Bearer ${session.accessToken}` } : {},
       })
       if (response.error) {

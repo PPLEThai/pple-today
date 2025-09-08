@@ -458,8 +458,14 @@ export class FeedRepository {
     feedItemId: string,
     query: { userId?: string; page: number; limit: number }
   ) {
+    const skip = Math.max((query.page - 1) * query.limit, 0)
     return await fromRepositoryPromise(
       this.prismaService.feedItemComment.findMany({
+        take: query.limit,
+        skip,
+        orderBy: {
+          createdAt: 'desc',
+        },
         where: {
           feedItemId,
           OR: [{ isPrivate: false }, { userId: query.userId }],
