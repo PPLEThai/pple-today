@@ -31,6 +31,7 @@ export function ProfileSelect({
     }
     const result = await launchImageLibraryAsync({
       mediaTypes: ['images'],
+      aspect: [1, 1],
       allowsEditing: true,
       quality: 1,
       base64: true,

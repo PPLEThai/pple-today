@@ -13,12 +13,10 @@ export function handleUploadSignedUrl(uploadUrl: string, formData: FormData) {
         response: xhr.responseText,
       })
     }
-    console.log('FormData:', formData)
 
     xhr.onreadystatechange = function (ev) {
       if (xhr.readyState === xhr.DONE) {
         const isOk = xhr.status >= 200 && xhr.status < 300
-        console.log('Upload response:', xhr)
         return resolve({
           ok: isOk,
           status: xhr.status,
@@ -54,7 +52,6 @@ export async function handleUploadImage(
     })
 
     const result = await handleUploadSignedUrl(uploadUrl, formData)
-    console.log(result)
 
     if (!result.ok) {
       throw new Error('Failed to upload image')

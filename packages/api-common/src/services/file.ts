@@ -156,6 +156,7 @@ export class FileService {
       expires: Date.now() + expiresIn * 1000,
       fields: {
         'Content-Type': contentType,
+        'Cache-Control': 'private, max-age=0',
       },
       conditions: [
         ['content-length-range', 0, maxSize],
