@@ -9,7 +9,10 @@ import {
   ViewProps,
 } from 'react-native'
 import Animated, {
+  interpolate,
+  interpolateColor,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
   withSpring,
   withTiming,
@@ -78,11 +81,42 @@ interface PostCardProps {
   userReaction: UserReaction
 }
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
+
+function AnimatedBackgroundPressable(props: PressableProps) {
+  const [isActive, setIsActive] = React.useState(false)
+  const progress = useDerivedValue(() =>
+    isActive ? withTiming(1, { duration: 150 }) : withTiming(0, { duration: 150 })
+  )
+  const onPressIn = (event: GestureResponderEvent) => {
+    setIsActive(true)
+    props.onPressIn?.(event)
+  }
+  const onPressOut = (event: GestureResponderEvent) => {
+    setIsActive(false)
+    props.onPressOut?.(event)
+  }
+  const styles = useAnimatedStyle(() => {
+    return {
+      backgroundColor: interpolateColor(progress.value, [0, 1], ['#FFFFFF', '#F1F5F9']),
+    }
+  })
+  return (
+    <AnimatedPressable {...props} onPressIn={onPressIn} onPressOut={onPressOut} style={styles} />
+  )
+}
+
 export const PostCard = React.memo(function PostCard(props: PostCardProps) {
   const router = useRouter()
+  const navigateToDetailPage = React.useCallback(() => {
+    router.navigate(`/(feed)/${props.id}`)
+  }, [router, props.id])
   return (
-    <View className="flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl mt-4 mx-4">
-      <View className="px-4 pt-4 pb-3 flex flex-row items-center justify-between">
+    <View className="flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl overflow-hidden mt-4 mx-4">
+      <AnimatedBackgroundPressable
+        className="px-4 pt-4 pb-3 flex flex-row items-center justify-between"
+        onPress={navigateToDetailPage}
+      >
         {/* TODO: link */}
         <View className="flex flex-row items-center">
           {/* TODO: link */}
@@ -110,13 +144,13 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
             strokeWidth={1}
           />
         </Button> */}
-      </View>
+      </AnimatedBackgroundPressable>
       <View className="flex flex-col gap-3 pb-3">
         {props.post.attachments && props.post.attachments.length > 0 && (
           <Lightbox attachments={props.post.attachments} />
         )}
         {props.post.content && (
-          <View className="px-4">
+          <AnimatedBackgroundPressable className="px-4" onPress={navigateToDetailPage}>
             <MoreOrLess
               numberOfLines={3}
               moreText="อ่านเพิ่มเติม"
@@ -127,7 +161,7 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
             >
               {props.post.content}
             </MoreOrLess>
-          </View>
+          </AnimatedBackgroundPressable>
         )}
         {props.post.hashTags.length > 0 && (
           <View className="flex flex-row flex-wrap gap-1 px-4">
@@ -140,26 +174,21 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
           </View>
         )}
       </View>
-      <Pressable
+      <AnimatedBackgroundPressable
         className="flex flex-row justify-between items-center px-4 pb-3"
-        onPress={() => {
-          router.navigate(`/(feed)/${props.id}`)
-        }}
+        onPress={navigateToDetailPage}
       >
         <UpvoteReactionCount
           id={props.id}
           reactions={props.reactions}
           userReaction={props.userReaction}
         />
-        {/* TODO: link */}
         {props.commentCount > 0 && (
-          <Pressable>
-            <Text className="text-xs font-anakotmai-light text-base-text-medium">
-              {props.commentCount} ความคิดเห็น
-            </Text>
-          </Pressable>
+          <Text className="text-xs font-anakotmai-light text-base-text-medium">
+            {props.commentCount} ความคิดเห็น
+          </Text>
         )}
-      </Pressable>
+      </AnimatedBackgroundPressable>
       <View className="flex flex-col">
         <View className="px-4">
           <View className="border-b border-base-outline-default" />
@@ -265,20 +294,23 @@ function UpvoteReactionCount(props: UpvoteReactionCountProps) {
   )
 }
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
-
 function AnimatedButton(props: PressableProps) {
-  const opacity = useSharedValue(1)
+  const [isActive, setIsActive] = React.useState(false)
+  const progress = useDerivedValue(() =>
+    isActive ? withTiming(1, { duration: 150 }) : withTiming(0, { duration: 150 })
+  )
   const onPressIn = (event: GestureResponderEvent) => {
-    opacity.value = withTiming(0.5, { duration: 150 })
+    setIsActive(true)
     props.onPressIn?.(event)
   }
   const onPressOut = (event: GestureResponderEvent) => {
-    opacity.value = withTiming(1, { duration: 150 })
+    setIsActive(false)
     props.onPressOut?.(event)
   }
   const styles = useAnimatedStyle(() => {
-    return { opacity: opacity.value }
+    return {
+      opacity: interpolate(progress.value, [0, 1], [1, 0.5]),
+    }
   })
   return (
     <AnimatedPressable
