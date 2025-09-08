@@ -15,7 +15,18 @@ import { ElectionRepository, ElectionRepositoryPlugin } from './repostiory'
 export class ElectionService {
   constructor(private readonly electionRepository: ElectionRepository) {}
 
-  private filterOnsiteElection(election: Election): boolean {
+  private isShowElection(election: Election): boolean {
+    switch (election.type) {
+      case 'ONSITE':
+        return this.isShowOnsiteElection(election)
+      case 'ONLINE':
+        return this.isShowOnlineElection(election)
+      case 'HYBRID':
+        return this.isShowHybridElection(election)
+    }
+  }
+
+  private isShowOnsiteElection(election: Election): boolean {
     const now = new Date()
 
     const isPublished = election.publishDate && now > election.publishDate
@@ -44,7 +55,7 @@ export class ElectionService {
     return true
   }
 
-  private filterOnlineElection(election: Election): boolean {
+  private isShowOnlineElection(election: Election): boolean {
     const now = new Date()
 
     const isPublished = election.publishDate && now < election.publishDate
@@ -60,7 +71,7 @@ export class ElectionService {
     return true
   }
 
-  private filterhybridElection(election: Election): boolean {
+  private isShowHybridElection(election: Election): boolean {
     const now = new Date()
 
     const isOpenRegister = election.openRegister && now < election.openRegister
@@ -115,29 +126,19 @@ export class ElectionService {
       return mapRepositoryError(eligibleVoters.error)
     }
 
-    const filtered = eligibleVoters.value.filter(({ election }) => {
-      switch (election.type) {
-        case 'ONSITE':
-          return this.filterOnsiteElection(election)
-        case 'ONLINE':
-          return this.filterOnlineElection(election)
-        case 'HYBRID':
-          return this.filterhybridElection(election)
-      }
-    })
+    const result = eligibleVoters.value
+      .filter(({ election }) => this.isShowElection(election))
+      .map(({ election, type: voterType }) => {
+        const { voters, ...rest } = election
+        return {
+          ...rest,
+          status: this.getElectionStatus(election),
+          votePercentage: this.getVotePercentage(voters),
+          isRegistered: this.isVoterRegistered(voterType, election.type),
+        }
+      })
 
-    const formatted: ListElectionResponse = filtered.map(({ election, type: voterType }) => {
-      const { voters, ...rest } = election
-
-      return {
-        ...rest,
-        status: this.getElectionStatus(election),
-        votePercentage: this.getVotePercentage(voters),
-        isRegistered: this.isVoterRegistered(voterType, election.type),
-      }
-    })
-
-    return ok(formatted)
+    return ok(result)
   }
 }
 
