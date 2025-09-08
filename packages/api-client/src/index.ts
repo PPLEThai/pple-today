@@ -50,11 +50,11 @@ function createReactQueryClient<TSchema extends Record<string, any>>(
     return restClient.interceptors.response(resp)
   }
 
-  function getKey(method: any, path: any, payload: any = {}) {
+  function getKey(method: any, path: any, payload: any = {}): any {
     return [QUERY_KEY, method, path, payload?.pathParams, payload?.query, payload?.headers]
   }
 
-  function getQueryKey(path: any, payload: any = {}) {
+  function getQueryKey(path: any, payload: any = {}): any {
     return [QUERY_KEY, 'get', path, payload?.pathParams, payload?.query, payload?.headers]
   }
 
