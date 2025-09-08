@@ -36,6 +36,10 @@ export type ElectionInfo = Static<typeof ElectionInfo>
 export const ListElectionResponse = t.Array(ElectionInfo)
 export type ListElectionResponse = Static<typeof ListElectionResponse>
 
+export const GetElectionQuery = t.Object({
+  electionId: t.String(),
+})
+
 export const ElectionCandidate = t.Object({
   id: t.String(),
   electionId: t.String(),

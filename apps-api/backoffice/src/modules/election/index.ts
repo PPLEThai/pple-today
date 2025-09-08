@@ -2,7 +2,7 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
-import { GetElectionResponse, ListElectionResponse } from './models'
+import { GetElectionQuery, GetElectionResponse, ListElectionResponse } from './models'
 import { ElectionServicePlugin } from './services'
 
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
@@ -38,18 +38,30 @@ export const ElectionController = new Elysia({
       },
     }
   )
-  .get('/:electionId', async () => {}, {
-    detail: {
-      summary: 'get election by id based on user',
-      description: 'get election by id based on user',
+  .get(
+    '/:electionId',
+    async ({ user, query: { electionId }, status, electionService }) => {
+      const election = await electionService.getMeEligibleElection(user.id, electionId)
+      if (election.isErr()) {
+        return mapErrorCodeToResponse(election.error, status)
+      }
+
+      return status(200, election.value)
     },
-    requiredLocalUser: true,
-    response: {
-      200: GetElectionResponse,
-      ...createErrorSchema(
-        InternalErrorCode.UNAUTHORIZED,
-        InternalErrorCode.INTERNAL_SERVER_ERROR,
-        InternalErrorCode.ELECTION_NOT_FOUND
-      ),
-    },
-  })
+    {
+      detail: {
+        summary: 'Get election by id based on user',
+        description: 'Get election by id based on user',
+      },
+      requiredLocalUser: true,
+      query: GetElectionQuery,
+      response: {
+        200: GetElectionResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )

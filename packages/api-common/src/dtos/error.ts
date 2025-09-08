@@ -200,7 +200,7 @@ const ELECTION_ERROR_SCHEMA = {
   ELECTION_NOT_FOUND: {
     status: 404,
   },
-}
+} satisfies InternalErrorSchemas
 
 export const InternalErrorCodeSchemas = {
   ...AUTH_ERROR_SCHEMA,

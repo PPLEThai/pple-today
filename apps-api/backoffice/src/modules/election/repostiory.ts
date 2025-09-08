@@ -27,6 +27,29 @@ export class ElectionRepository {
       })
     )
   }
+
+  async getMyEligibleVoter(userId: string, electionId: string) {
+    return fromRepositoryPromise(
+      this.prismaService.electionEligibleVoter.findFirstOrThrow({
+        where: {
+          userId,
+          electionId,
+        },
+        include: {
+          election: {
+            include: {
+              voters: {
+                include: {
+                  ballot: true,
+                },
+              },
+              candidates: true,
+            },
+          },
+        },
+      })
+    )
+  }
 }
 
 export const ElectionRepositoryPlugin = new Elysia()
