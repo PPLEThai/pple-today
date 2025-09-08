@@ -111,14 +111,14 @@ export class ElectionService {
     return 100 * (totalvoted / totalVoters)
   }
 
-  private isVoterRegistered(
+  private isHybridElectionVoterRegistered(
     voterType: EligibleVoterType,
     electionType: ElectionType
   ): boolean | null {
-    if (electionType != 'HYBRID') {
+    if (electionType !== 'HYBRID') {
       return null
     }
-    return voterType == 'ONLINE'
+    return voterType === 'ONLINE'
   }
 
   async listMyEligibleElections(userId: string) {
@@ -135,7 +135,7 @@ export class ElectionService {
           ...rest,
           status: this.getElectionStatus(election),
           votePercentage: this.getVotePercentage(voters),
-          isRegistered: this.isVoterRegistered(voterType, election.type),
+          isRegistered: this.isHybridElectionVoterRegistered(voterType, election.type),
         }
       })
 
