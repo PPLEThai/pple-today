@@ -15,6 +15,7 @@ import { Icon } from '@pple-today/ui/icon'
 import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { H2, H3 } from '@pple-today/ui/typography'
+import { FlashList } from '@shopify/flash-list'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import * as Linking from 'expo-linking'
@@ -462,6 +463,15 @@ function FeedContent(props: PagerScrollViewProps) {
     []
   )
   return (
+    <AnimatedFlashList
+      contentContainerStyle={{ paddingTop: headerHeight }}
+      ref={scrollElRef}
+      onScroll={scrollHandler}
+      data={Array.from({ length: 100 }, (_, i) => i)}
+      renderItem={({ item }) => <PostCardSkeleton />}
+    />
+  )
+  return (
     <FlatListMemo
       // @ts-expect-error FlatListMemo ref type is wrong
       ref={scrollElRef}
@@ -477,6 +487,8 @@ function FeedContent(props: PagerScrollViewProps) {
     />
   )
 }
+
+const AnimatedFlashList = Animated.createAnimatedComponent(FlashList)
 
 // https://github.com/bluesky-social/social-app/blob/27c591f031fbe8b3a5837c4ef7082b2ce146a050/src/view/com/util/List.tsx#L19
 type FlatListMethods<ItemT = any> = FlatListComponent<ItemT, FlatListPropsWithLayout<ItemT>>
