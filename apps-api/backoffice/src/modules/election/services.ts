@@ -60,19 +60,19 @@ export class ElectionService {
   private isOnlineElectionActive(election: Election): boolean {
     const now = new Date()
 
-    const isPublished = Boolean(election.publishDate && now < election.publishDate)
+    const isPublished = Boolean(election.publishDate && now >= election.publishDate)
     const isPastAnnouncePeriod = Boolean(election.endResult && now > election.endResult)
 
-    return isPublished && isPastAnnouncePeriod
+    return isPublished && !isPastAnnouncePeriod
   }
 
   private isHybridElectionActive(election: Election): boolean {
     const now = new Date()
 
-    const isOpenRegister = Boolean(election.openRegister && now < election.openRegister)
+    const isOpenRegister = Boolean(election.openRegister && now >= election.openRegister)
     const isPastAnnouncePeriod = Boolean(election.endResult && now > election.endResult)
 
-    return isOpenRegister && isPastAnnouncePeriod
+    return isOpenRegister && !isPastAnnouncePeriod
   }
 
   private getElectionStatus(election: Election): ElectionStatus {
