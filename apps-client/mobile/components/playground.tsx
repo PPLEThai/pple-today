@@ -621,18 +621,19 @@ function PostCardExample() {
             profileImage: '',
           }}
           commentCount={125}
-          content={
-            'พบปะแม่ๆ ชมรมผู้สูงอายุดอกลำดวน ณ หมู่บ้านวารัตน์ 3 ม.5 ต. อ้อมน้อย อ.กระทุ่มแบน จ.สมุทรสาครชวนให้ผมออกสเตปประกอบ'
-          }
-          attachments={Array.from({ length: 4 }).map((_, i) => ({
-            type: 'IMAGE',
-            id: i.toString(),
-            url: 'https://picsum.photos/600/600',
-          }))}
-          hashTags={[
-            { id: '1', name: '#pridemonth' },
-            { id: '2', name: '#ร่างกฎหมาย68' },
-          ]}
+          post={{
+            content:
+              'พบปะแม่ๆ ชมรมผู้สูงอายุดอกลำดวน ณ หมู่บ้านวารัตน์ 3 ม.5 ต. อ้อมน้อย อ.กระทุ่มแบน จ.สมุทรสาครชวนให้ผมออกสเตปประกอบ',
+            attachments: Array.from({ length: 4 }).map((_, i) => ({
+              type: 'IMAGE',
+              id: i.toString(),
+              url: 'https://picsum.photos/600/600',
+            })),
+            hashTags: [
+              { id: '1', name: '#pridemonth' },
+              { id: '2', name: '#ร่างกฎหมาย68' },
+            ],
+          }}
           createdAt="2025-08-19T14:14:49.406Z"
           reactions={[
             { type: 'UP_VOTE', count: 32 },
