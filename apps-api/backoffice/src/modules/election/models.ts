@@ -1,30 +1,38 @@
 import { ElectionType } from '@pple-today/database/prisma'
-import { t } from 'elysia'
+import { Static, t } from 'elysia'
 
-export const ListElectionResponse = t.Object({
-  id: t.String(),
-  name: t.String(),
-  description: t.Nullable(t.String()),
-  location: t.Nullable(t.String()),
-  type: t.Enum(ElectionType),
-
-  publishDate: t.Nullable(t.Date()),
-  openRegister: t.Nullable(t.Date()),
-  closeRegister: t.Nullable(t.Date()),
-  openVoting: t.Date(),
-  closeVoting: t.Date(),
-  startResult: t.Nullable(t.Date()),
-  endResult: t.Nullable(t.Date()),
-
-  createdAt: t.Date(),
-  updatedAt: t.Date(),
-
-  status: t.Enum({
-    NOT_OPENED: 'NOT_OPENED',
-    OPEN: 'OPEN',
-    CLOSED: 'CLOSED',
-    RESULT_ANNOUNCE: 'RESULT_ANNOUNCE',
-  }),
-  votePercentage: t.Nullable(t.Number()),
-  isRegistered: t.Boolean(),
+export const ElectionStatus = t.Enum({
+  NOT_OPENED_VOTE: 'NOT_OPENED_VOTE',
+  OPEN_VOTE: 'OPEN_VOTE',
+  CLOSED_VOTE: 'CLOSED_VOTE',
+  RESULT_ANNOUNCE: 'RESULT_ANNOUNCE',
 })
+
+export type ElectionStatus = Static<typeof ElectionStatus>
+
+export const ListElectionResponse = t.Array(
+  t.Object({
+    id: t.String(),
+    name: t.String(),
+    description: t.Nullable(t.String()),
+    location: t.Nullable(t.String()),
+    type: t.Enum(ElectionType),
+
+    publishDate: t.Nullable(t.Date()),
+    openRegister: t.Nullable(t.Date()),
+    closeRegister: t.Nullable(t.Date()),
+    openVoting: t.Date(),
+    closeVoting: t.Date(),
+    startResult: t.Nullable(t.Date()),
+    endResult: t.Nullable(t.Date()),
+
+    createdAt: t.Date(),
+    updatedAt: t.Date(),
+
+    status: ElectionStatus,
+    votePercentage: t.Number(),
+    isRegistered: t.Nullable(t.Boolean()),
+  })
+)
+
+export type ListElectionResponse = Static<typeof ListElectionResponse>

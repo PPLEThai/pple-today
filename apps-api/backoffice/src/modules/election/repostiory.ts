@@ -1,9 +1,32 @@
+import { PrismaService } from '@pple-today/api-common/services'
+import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
-import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
+import { PrismaServicePlugin } from '../../plugins/prisma'
 
 export class ElectionRepository {
   constructor(private readonly prismaService: PrismaService) {}
+
+  async listEligibleVotersByUserId(userId: string) {
+    return fromRepositoryPromise(
+      this.prismaService.electionEligibleVoter.findMany({
+        where: {
+          userId,
+        },
+        include: {
+          election: {
+            include: {
+              voters: {
+                include: {
+                  bollot: true,
+                },
+              },
+            },
+          },
+        },
+      })
+    )
+  }
 }
 
 export const ElectionRepositoryPlugin = new Elysia()
