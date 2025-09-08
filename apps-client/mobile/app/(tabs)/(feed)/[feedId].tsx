@@ -131,7 +131,7 @@ function FeedComment({
     ) : data.length === 1 && data[0].length === 0 ? (
       // Empty State
       <View className="flex flex-col items-center justify-center py-6">
-        <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีคอมเมนต์</Text>
+        <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีความคิดเห็น</Text>
       </View>
     ) : null // Reach end of feed
 
