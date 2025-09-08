@@ -17,18 +17,18 @@ export class ElectionService {
 
   private readonly SECONDS_IN_A_DAY = 60 * 60 * 24
 
-  private isShowElection(election: Election): boolean {
+  private isElectionActive(election: Election): boolean {
     switch (election.type) {
       case 'ONSITE':
-        return this.isShowOnsiteElection(election)
+        return this.isOnsiteElectionActive(election)
       case 'ONLINE':
-        return this.isShowOnlineElection(election)
+        return this.isOnlineElectionActive(election)
       case 'HYBRID':
-        return this.isShowHybridElection(election)
+        return this.isHybridElectionActive(election)
     }
   }
 
-  private isShowOnsiteElection(election: Election): boolean {
+  private isOnsiteElectionActive(election: Election): boolean {
     const now = new Date()
 
     const isPublished = election.publishDate && now > election.publishDate
@@ -57,36 +57,22 @@ export class ElectionService {
     return true
   }
 
-  private isShowOnlineElection(election: Election): boolean {
+  private isOnlineElectionActive(election: Election): boolean {
     const now = new Date()
 
-    const isPublished = election.publishDate && now < election.publishDate
-    if (isPublished) {
-      return false
-    }
+    const isPublished = Boolean(election.publishDate && now < election.publishDate)
+    const isPastAnnouncePeriod = Boolean(election.endResult && now > election.endResult)
 
-    const isPastAnnouncePeriod = election.endResult && now > election.endResult
-    if (isPastAnnouncePeriod) {
-      return false
-    }
-
-    return true
+    return isPublished && isPastAnnouncePeriod
   }
 
-  private isShowHybridElection(election: Election): boolean {
+  private isHybridElectionActive(election: Election): boolean {
     const now = new Date()
 
-    const isOpenRegister = election.openRegister && now < election.openRegister
-    if (isOpenRegister) {
-      return false
-    }
+    const isOpenRegister = Boolean(election.openRegister && now < election.openRegister)
+    const isPastAnnouncePeriod = Boolean(election.endResult && now > election.endResult)
 
-    const isPastAnnouncePeriod = election.endResult && now > election.endResult
-    if (isPastAnnouncePeriod) {
-      return false
-    }
-
-    return true
+    return isOpenRegister && isPastAnnouncePeriod
   }
 
   private getElectionStatus(election: Election): ElectionStatus {
@@ -108,6 +94,7 @@ export class ElectionService {
   ): number {
     const totalVoters = voters.length
     const totalvoted = voters.filter((voter) => !!voter.ballot).length
+
     return 100 * (totalvoted / totalVoters)
   }
 
@@ -128,7 +115,7 @@ export class ElectionService {
     }
 
     const result = eligibleVoters.value
-      .filter(({ election }) => this.isShowElection(election))
+      .filter(({ election }) => this.isElectionActive(election))
       .map(({ election, type: voterType }) => {
         const { voters, ...rest } = election
         return {
