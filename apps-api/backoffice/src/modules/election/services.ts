@@ -9,24 +9,26 @@ import {
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { ElectionStatus, ListElectionResponse } from './models'
+import { ElectionStatus } from './models'
 import { ElectionRepository, ElectionRepositoryPlugin } from './repostiory'
 
 export class ElectionService {
   constructor(private readonly electionRepository: ElectionRepository) {}
 
-  private isShowElection(election: Election): boolean {
+  private readonly SECONDS_IN_A_DAY = 60 * 60 * 24
+
+  private isElectionActive(election: Election): boolean {
     switch (election.type) {
       case 'ONSITE':
-        return this.isShowOnsiteElection(election)
+        return this.isOnsiteElectionActive(election)
       case 'ONLINE':
-        return this.isShowOnlineElection(election)
+        return this.isOnlineElectionActive(election)
       case 'HYBRID':
-        return this.isShowHybridElection(election)
+        return this.isHybridElectionActive(election)
     }
   }
 
-  private isShowOnsiteElection(election: Election): boolean {
+  private isOnsiteElectionActive(election: Election): boolean {
     const now = new Date()
 
     const isPublished = election.publishDate && now > election.publishDate
@@ -34,7 +36,6 @@ export class ElectionService {
       return false
     }
 
-    const SECONDS_IN_A_DAY = 60 * 60 * 24
     const { startResult, endResult, closeVoting } = election
     const isResultAnnounced = startResult && endResult
 
@@ -44,7 +45,8 @@ export class ElectionService {
         return false
       }
     } else {
-      const daysSinceClose = (now.getTime() - closeVoting.getTime()) / (SECONDS_IN_A_DAY * 1000)
+      const daysSinceClose =
+        (now.getTime() - closeVoting.getTime()) / (this.SECONDS_IN_A_DAY * 1000)
       const hasExceededGracePeriod = daysSinceClose > 7
 
       if (hasExceededGracePeriod) {
@@ -55,36 +57,22 @@ export class ElectionService {
     return true
   }
 
-  private isShowOnlineElection(election: Election): boolean {
+  private isOnlineElectionActive(election: Election): boolean {
     const now = new Date()
 
-    const isPublished = election.publishDate && now < election.publishDate
-    if (isPublished) {
-      return false
-    }
+    const isPublished = Boolean(election.publishDate && now >= election.publishDate)
+    const isPastAnnouncePeriod = Boolean(election.endResult && now > election.endResult)
 
-    const isPastAnnouncePeriod = election.endResult && now > election.endResult
-    if (isPastAnnouncePeriod) {
-      return false
-    }
-
-    return true
+    return isPublished && !isPastAnnouncePeriod
   }
 
-  private isShowHybridElection(election: Election): boolean {
+  private isHybridElectionActive(election: Election): boolean {
     const now = new Date()
 
-    const isOpenRegister = election.openRegister && now < election.openRegister
-    if (isOpenRegister) {
-      return false
-    }
+    const isOpenRegister = Boolean(election.openRegister && now >= election.openRegister)
+    const isPastAnnouncePeriod = Boolean(election.endResult && now > election.endResult)
 
-    const isPastAnnouncePeriod = election.endResult && now > election.endResult
-    if (isPastAnnouncePeriod) {
-      return false
-    }
-
-    return true
+    return isOpenRegister && !isPastAnnouncePeriod
   }
 
   private getElectionStatus(election: Election): ElectionStatus {
@@ -102,22 +90,22 @@ export class ElectionService {
   }
 
   private getVotePercentage(
-    voters: (ElectionEligibleVoter & { bollot: ElectionEligibleBallot | null })[]
+    voters: (ElectionEligibleVoter & { ballot: ElectionEligibleBallot | null })[]
   ): number {
     const totalVoters = voters.length
-    const totalvoted = voters.filter((voter) => !!voter.bollot).length
+    const totalVoted = voters.filter((voter) => !!voter.ballot).length
 
-    return 100 * (totalvoted / totalVoters)
+    return 100 * (totalVoted / totalVoters)
   }
 
-  private isVoterRegistered(
+  private isHybridElectionVoterRegistered(
     voterType: EligibleVoterType,
     electionType: ElectionType
   ): boolean | null {
-    if (electionType != 'HYBRID') {
+    if (electionType !== 'HYBRID') {
       return null
     }
-    return voterType == 'ONLINE'
+    return voterType === 'ONLINE'
   }
 
   async listMyEligibleElections(userId: string) {
@@ -127,14 +115,14 @@ export class ElectionService {
     }
 
     const result = eligibleVoters.value
-      .filter(({ election }) => this.isShowElection(election))
+      .filter(({ election }) => this.isElectionActive(election))
       .map(({ election, type: voterType }) => {
         const { voters, ...rest } = election
         return {
           ...rest,
           status: this.getElectionStatus(election),
           votePercentage: this.getVotePercentage(voters),
-          isRegistered: this.isVoterRegistered(voterType, election.type),
+          isRegistered: this.isHybridElectionVoterRegistered(voterType, election.type),
         }
       })
 
