@@ -97,7 +97,7 @@ export const AddressController = new Elysia({
   )
   .get(
     '/postal-code',
-    async ({ addressService, status, query }) => {
+    async function postalCode({ addressService, status, query }) {
       const postalCodes = await addressService.getPostalCodes({
         province: query.province,
         district: query.district,

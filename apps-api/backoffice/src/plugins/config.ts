@@ -90,6 +90,21 @@ export const envSchema = t.Object({
   IMAGE_SERVER_BASE_URL: t.String({
     description: 'Base URL for image server',
   }),
+
+  ENABLE_OPENTELEMETRY: t
+    .Transform(
+      t.Union([t.Literal('true'), t.Literal('false')], {
+        default: 'false',
+      })
+    )
+    .Decode((value) => value === 'true')
+    .Encode((value) => (value ? 'true' : 'false')),
+  OTEL_EXPORTER_OTLP_ENDPOINT: t.Optional(
+    t.String({ description: 'OTel Exporter OTLP Endpoint', default: 'http://localhost:4317' })
+  ),
+  OTEL_SERVICE_NAME: t.Optional(
+    t.String({ description: 'OTel Service Name', default: 'pple-backoffice' })
+  ),
 })
 
 export const ConfigServicePlugin = createConfigServicePlugin({

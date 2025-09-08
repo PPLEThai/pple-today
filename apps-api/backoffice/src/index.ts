@@ -76,7 +76,7 @@ let app = new Elysia({ adapter: node() })
   ])
   .use([ApplicationController, AdminController, VersionController])
 
-if (process.env.ENABLE_SWAGGER === 'true') {
+if (configService.get('ENABLE_SWAGGER')) {
   const getTagsFromController = (controller: AnyElysia) =>
     R.pipe(
       controller,
@@ -161,12 +161,21 @@ if (process.env.ENABLE_SWAGGER === 'true') {
     hooks
   )
 }
-app = app.use(
-  opentelemetry({
-    spanProcessors: [new BatchSpanProcessor(new OTLPTraceExporter())],
-    instrumentations: [new PgInstrumentation()],
-  })
-)
+
+if (configService.get('ENABLE_OPENTELEMETRY')) {
+  app = app.use(
+    opentelemetry({
+      spanProcessors: [
+        new BatchSpanProcessor(
+          new OTLPTraceExporter({
+            url: configService.get('OTEL_EXPORTER_OTLP_ENDPOINT'),
+          })
+        ),
+      ],
+      instrumentations: [new PgInstrumentation()],
+    })
+  )
+}
 
 app.listen(process.env.PORT, () => {
   console.log(`Server is running on http://localhost:${process.env.PORT}`)
