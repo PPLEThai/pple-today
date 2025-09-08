@@ -62,7 +62,8 @@ interface PostItem {
   }[]
   attachments?: PostCardAttachment[]
 }
-interface PostCardProps {
+
+interface FeedPostItem {
   id: string
   author: {
     id: string
@@ -73,7 +74,7 @@ interface PostCardProps {
     }
     profileImage?: string
   }
-  createdAt: string
+  createdAt: Date
   reactions: { type: 'UP_VOTE' | 'DOWN_VOTE'; count: number }[]
   commentCount: number
   post: PostItem
@@ -106,32 +107,37 @@ function AnimatedBackgroundPressable(props: PressableProps) {
   )
 }
 
-export const PostCard = React.memo(function PostCard(props: PostCardProps) {
+export const FeedPostCard = React.memo(function FeedPostCard(props: { feedItem: FeedPostItem }) {
   const router = useRouter()
   const navigateToDetailPage = React.useCallback(() => {
-    router.navigate(`/(feed)/${props.id}`)
-  }, [router, props.id])
+    router.navigate(`/(feed)/${props.feedItem.id}`)
+  }, [router, props.feedItem.id])
+  const feedContentQuery = reactQueryClient.useQuery(
+    '/feed/:id',
+    { pathParams: { id: props.feedItem.id } },
+    { initialData: props.feedItem as any, enabled: false }
+  )
+  const feedContent = feedContentQuery.data as FeedPostItem
   return (
     <View className="flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl overflow-hidden mt-4 mx-4">
       <AnimatedBackgroundPressable
         className="px-4 pt-4 pb-3 flex flex-row items-center justify-between"
         onPress={navigateToDetailPage}
       >
-        {/* TODO: link */}
         <View className="flex flex-row items-center">
           {/* TODO: link */}
-          <Avatar alt={props.author.name} className="w-8 h-8 mr-3">
-            <AvatarImage source={{ uri: props.author.profileImage }} />
+          <Avatar alt={feedContent.author.name} className="w-8 h-8 mr-3">
+            <AvatarImage source={{ uri: feedContent.author.profileImage }} />
             <AvatarPPLEFallback />
           </Avatar>
           <View className="flex flex-col">
             {/* TODO: link */}
             <Text className="text-base-text-medium font-anakotmai-medium text-sm">
-              {props.author.name}
+              {feedContent.author.name}
             </Text>
             <Text className="text-base-text-medium font-anakotmai-light text-sm">
-              {props.author.address ? `${props.author.address.province} | ` : ''}
-              {formatDateInterval(props.createdAt)}
+              {feedContent.author.address ? `${feedContent.author.address.province} | ` : ''}
+              {formatDateInterval(feedContent.createdAt.toString())}
             </Text>
           </View>
         </View>
@@ -146,10 +152,10 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
         </Button> */}
       </AnimatedBackgroundPressable>
       <View className="flex flex-col gap-3">
-        {props.post.attachments && props.post.attachments.length > 0 && (
-          <Lightbox attachments={props.post.attachments} />
+        {feedContent.post.attachments && feedContent.post.attachments.length > 0 && (
+          <Lightbox attachments={feedContent.post.attachments} />
         )}
-        {props.post.content && (
+        {feedContent.post.content && (
           <AnimatedBackgroundPressable className="px-4" onPress={navigateToDetailPage}>
             <MoreOrLess
               numberOfLines={3}
@@ -159,13 +165,13 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
               textComponent={TextPost}
               buttonComponent={ButtonTextPost}
             >
-              {props.post.content}
+              {feedContent.post.content}
             </MoreOrLess>
           </AnimatedBackgroundPressable>
         )}
-        {props.post.hashTags.length > 0 && (
+        {feedContent.post.hashTags.length > 0 && (
           <View className="flex flex-row flex-wrap gap-1 px-4">
-            {props.post.hashTags.map((tag) => (
+            {feedContent.post.hashTags.map((tag) => (
               // TODO: link
               <Badge variant="secondary" key={tag.id}>
                 <Text>{tag.name}</Text>
@@ -179,13 +185,13 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
         onPress={navigateToDetailPage}
       >
         <UpvoteReactionCount
-          id={props.id}
-          reactions={props.reactions}
-          userReaction={props.userReaction}
+          id={feedContent.id}
+          reactions={feedContent.reactions}
+          userReaction={feedContent.userReaction}
         />
-        {props.commentCount > 0 && (
+        {feedContent.commentCount > 0 && (
           <Text className="text-xs font-anakotmai-light text-base-text-medium">
-            {props.commentCount} ความคิดเห็น
+            {feedContent.commentCount} ความคิดเห็น
           </Text>
         )}
       </AnimatedBackgroundPressable>
@@ -195,10 +201,10 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
         </View>
         <View className="flex flex-row justify-between gap-2 px-3 pb-2 pt-1">
           <View className="flex flex-row gap-2">
-            <UpvoteButton postId={props.id} />
-            <DownvoteButton postId={props.id} feedId={props.id} />
+            <UpvoteButton postId={feedContent.id} />
+            <DownvoteButton postId={feedContent.id} feedId={feedContent.id} />
           </View>
-          <CommentButton postId={props.id} feedId={props.id} />
+          <CommentButton postId={feedContent.id} feedId={feedContent.id} />
         </View>
       </View>
     </View>
@@ -264,7 +270,7 @@ export const usePostReactionStore = createQuery({
 })
 interface UpvoteReactionCountProps {
   id: string
-  reactions: PostCardProps['reactions']
+  reactions: FeedPostItem['reactions']
   userReaction: UserReaction | null
 }
 function UpvoteReactionCount(props: UpvoteReactionCountProps) {
@@ -754,31 +760,31 @@ function CommentForm(props: CommentFormProps) {
   )
 }
 
-export const PostDetail = (props: PostCardProps) => {
+export const PostContent = (props: { feedItem: FeedPostItem }) => {
   return (
     <View className="flex flex-col bg-base-bg-white">
       <View className="px-4 pt-1 pb-3 flex flex-row items-center justify-between">
         <View className="flex flex-row items-center">
-          <Avatar alt={props.author.name} className="w-8 h-8 mr-3">
-            <AvatarImage source={{ uri: props.author.profileImage }} />
+          <Avatar alt={props.feedItem.author.name} className="w-8 h-8 mr-3">
+            <AvatarImage source={{ uri: props.feedItem.author.profileImage }} />
             <AvatarPPLEFallback />
           </Avatar>
           <View className="flex flex-col">
             <Text className="text-base-text-medium font-anakotmai-medium text-sm">
-              {props.author.name}
+              {props.feedItem.author.name}
             </Text>
             <Text className="text-base-text-medium font-anakotmai-light text-sm">
-              {props.author.address ? `${props.author.address.province} | ` : ''}
-              {formatDateInterval(props.createdAt.toString())}
+              {props.feedItem.author.address ? `${props.feedItem.author.address.province} | ` : ''}
+              {formatDateInterval(props.feedItem.createdAt.toString())}
             </Text>
           </View>
         </View>
       </View>
       <View className="flex flex-col gap-3 pb-3">
-        {props.post.attachments && props.post.attachments.length > 0 && (
-          <Lightbox attachments={props.post.attachments} />
+        {props.feedItem.post.attachments && props.feedItem.post.attachments.length > 0 && (
+          <Lightbox attachments={props.feedItem.post.attachments} />
         )}
-        {props.post.content && (
+        {props.feedItem.post.content && (
           <View className="px-4">
             <MoreOrLess
               numberOfLines={3}
@@ -788,13 +794,13 @@ export const PostDetail = (props: PostCardProps) => {
               textComponent={TextPost}
               buttonComponent={ButtonTextPost}
             >
-              {props.post.content}
+              {props.feedItem.post.content}
             </MoreOrLess>
           </View>
         )}
-        {props.post.hashTags.length > 0 && (
+        {props.feedItem.post.hashTags.length > 0 && (
           <View className="flex flex-row flex-wrap gap-1 px-4">
-            {props.post.hashTags.map((tag) => (
+            {props.feedItem.post.hashTags.map((tag) => (
               // TODO: link
               <Badge variant="secondary" key={tag.id}>
                 <Text>{tag.name}</Text>
@@ -805,13 +811,13 @@ export const PostDetail = (props: PostCardProps) => {
       </View>
       <View className="flex flex-row justify-between items-center px-4 pb-3">
         <UpvoteReactionCount
-          id={props.id}
-          reactions={props.reactions}
-          userReaction={props.userReaction}
+          id={props.feedItem.id}
+          reactions={props.feedItem.reactions}
+          userReaction={props.feedItem.userReaction}
         />
-        {props.commentCount > 0 && (
+        {props.feedItem.commentCount > 0 && (
           <Text className="text-xs font-anakotmai-light text-base-text-medium">
-            {props.commentCount} ความคิดเห็น
+            {props.feedItem.commentCount} ความคิดเห็น
           </Text>
         )}
       </View>
@@ -821,10 +827,10 @@ export const PostDetail = (props: PostCardProps) => {
         </View>
         <View className="flex flex-row justify-between gap-2 px-3 pb-2 pt-1">
           <View className="flex flex-row gap-2">
-            <UpvoteButton postId={props.id} />
-            <DownvoteButton postId={props.id} feedId={props.id} />
+            <UpvoteButton postId={props.feedItem.id} />
+            <DownvoteButton postId={props.feedItem.id} feedId={props.feedItem.id} />
           </View>
-          <CommentButton postId={props.id} feedId={props.id} />
+          <CommentButton postId={props.feedItem.id} feedId={props.feedItem.id} />
         </View>
       </View>
     </View>

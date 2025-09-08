@@ -41,7 +41,7 @@ import { GetMyFeedResponse } from '@api/backoffice/src/modules/feed/models'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AnnouncementCard } from '@app/components/announcement'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
-import { PostCard, PostCardSkeleton } from '@app/components/feed/post-card'
+import { FeedPostCard, PostCardSkeleton } from '@app/components/feed/post-card'
 import {
   Pager,
   PagerContent,
@@ -534,18 +534,7 @@ function FeedContent(props: PagerScrollViewProps) {
           {items.map((item) => {
             switch (item.type) {
               case 'POST':
-                return (
-                  <PostCard
-                    key={item.id}
-                    id={item.id}
-                    author={item.author}
-                    commentCount={item.commentCount}
-                    createdAt={item.createdAt.toString()}
-                    reactions={item.reactions}
-                    userReaction={item.userReaction}
-                    post={item.post}
-                  />
-                )
+                return <FeedPostCard key={item.id} feedItem={item} />
               case 'POLL':
                 // TODO: poll feed card
                 return null

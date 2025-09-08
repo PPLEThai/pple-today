@@ -15,7 +15,7 @@ import {
   GetFeedContentResponse,
 } from '@api/backoffice/src/modules/feed/models'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
-import { PostDetail } from '@app/components/feed/post-card'
+import { PostContent } from '@app/components/feed/post-card'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { getAuthSession } from '@app/libs/auth/session'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
@@ -25,7 +25,7 @@ export default function FeedDetailPage() {
   const router = useRouter()
   const pathname = usePathname()
   const feedId = pathname.split('/').at(-1)
-  const feedQuery = reactQueryClient.useQuery('/feed/:id', {
+  const feedContentQuery = reactQueryClient.useQuery('/feed/:id', {
     pathParams: { id: feedId! },
     enabled: !!feedId,
   })
@@ -33,7 +33,7 @@ export default function FeedDetailPage() {
     router.replace('/(feed)')
     return null
   }
-  if (feedQuery.isLoading || !feedQuery.data) {
+  if (feedContentQuery.isLoading || !feedContentQuery.data) {
     return null
   }
   return (
@@ -48,26 +48,18 @@ export default function FeedDetailPage() {
           <Icon icon={ArrowLeftIcon} size={24} />
         </Button>
       </View>
-      <FeedComment feedId={feedId} headerComponent={<FeedItemDetail item={feedQuery.data} />} />
+      <FeedComment
+        feedId={feedId}
+        headerComponent={<FeedItemContent item={feedContentQuery.data} />}
+      />
     </View>
   )
 }
 
-function FeedItemDetail({ item }: { item: GetFeedContentResponse }) {
+function FeedItemContent({ item }: { item: GetFeedContentResponse }) {
   switch (item.type) {
     case 'POST':
-      return (
-        <PostDetail
-          key={item.id}
-          id={item.id}
-          author={item.author}
-          commentCount={item.commentCount}
-          createdAt={item.createdAt.toString()}
-          reactions={item.reactions}
-          userReaction={item.userReaction}
-          post={item.post}
-        />
-      )
+      return <PostContent key={item.id} feedItem={item} />
     case 'POLL':
       // TODO: poll feed
       return null
