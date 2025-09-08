@@ -101,7 +101,7 @@ export default function EditProfilePage() {
           onSuccess: () => {
             toast({ text1: 'บันทึกโปรไฟล์เรียบร้อย' })
             queryClient.invalidateQueries({
-              queryKey: reactQueryClient.getQueryKey('get', '/profile/me'),
+              queryKey: reactQueryClient.getQueryKey('/profile/me'),
             })
             dispatch({ type: 'reset' })
             router.replace('/(tabs)/profile')
