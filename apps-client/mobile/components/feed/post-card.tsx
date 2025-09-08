@@ -127,7 +127,12 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
           </View>
         )}
       </View>
-      <View className="flex flex-row justify-between items-center px-4 pb-3">
+      <Pressable
+        className="flex flex-row justify-between items-center px-4 pb-3"
+        onPress={() => {
+          router.navigate(`/(feed)/${props.id}`)
+        }}
+      >
         <UpvoteReactionCount
           id={props.id}
           reactions={props.reactions}
@@ -141,7 +146,7 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
             </Text>
           </Pressable>
         )}
-      </View>
+      </Pressable>
       <View className="flex flex-col">
         <View className="px-4">
           <View className="border-b border-base-outline-default" />
@@ -151,20 +156,7 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
             <UpvoteButton postId={props.id} />
             <DownvoteButton postId={props.id} feedId={props.id} />
           </View>
-          <Pressable
-            className="flex flex-row items-center gap-1 px-1 py-3"
-            onPress={() => {
-              router.navigate(`/(feed)/${props.id}`)
-            }}
-          >
-            <Icon
-              icon={MessageCircleIcon}
-              size={20}
-              strokeWidth={1}
-              className="text-base-text-high"
-            />
-            <Text className="text-sm font-anakotmai-light text-base-text-high">ความคิดเห็น</Text>
-          </Pressable>
+          <CommentButton postId={props.id} feedId={props.id} />
         </View>
       </View>
     </View>
@@ -375,6 +367,12 @@ function DownvoteButton(props: { postId: string; feedId: string }) {
   }
 
   const bottomSheetModalRef = React.useRef<BottomSheetModal>(null)
+  const onOpen = () => {
+    bottomSheetModalRef.current?.present()
+  }
+  const onClose = () => {
+    bottomSheetModalRef.current?.dismiss()
+  }
   const postReactionStore = usePostReactionStore({ variables: { id: props.postId } })
   const userReaction = postReactionStore.data?.userReaction
   const deleteReactionQuery = reactQueryClient.useMutation('delete', '/feed/:id/reaction')
@@ -388,7 +386,7 @@ function DownvoteButton(props: { postId: string; feedId: string }) {
     }
     const newUserReaction = userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE'
     if (newUserReaction === 'DOWN_VOTE') {
-      bottomSheetModalRef.current?.present()
+      onOpen()
     } else if (newUserReaction === null) {
       deleteReactionQuery.mutateAsync({
         pathParams: { id: props.postId },
@@ -402,9 +400,6 @@ function DownvoteButton(props: { postId: string; feedId: string }) {
         } as const
       })
     }
-  }
-  const onClose = () => {
-    bottomSheetModalRef.current?.dismiss()
   }
 
   const insets = useSafeAreaInsets()
@@ -435,7 +430,7 @@ function DownvoteButton(props: { postId: string; feedId: string }) {
         bottomInset={insets.bottom}
       >
         <BottomSheetView>
-          <CommentForm onClose={onClose} postId={props.postId} feedId={props.feedId} />
+          <DownvoteCommentForm onClose={onClose} postId={props.postId} feedId={props.feedId} />
         </BottomSheetView>
       </BottomSheetModal>
     </>
@@ -445,13 +440,13 @@ function DownvoteButton(props: { postId: string; feedId: string }) {
 const formSchema = z.object({
   comment: z.string().check(z.minLength(1, { error: 'กรุณาพิมพ์ความคิดเห็นของคุณ' })),
 })
-interface CommentFormProps {
+interface DownvoteCommentFormProps {
   onClose: () => void
   postId: string
   feedId: string
 }
-function CommentForm(props: CommentFormProps) {
-  const createReactionQuery = reactQueryClient.useMutation('put', '/feed/:id/reaction')
+function DownvoteCommentForm(props: DownvoteCommentFormProps) {
+  const createReactionMutation = reactQueryClient.useMutation('put', '/feed/:id/reaction')
   const queryClient = useQueryClient()
   const form = useForm({
     defaultValues: {
@@ -463,7 +458,7 @@ function CommentForm(props: CommentFormProps) {
     onSubmit: async ({ value }) => {
       props.onClose()
       const comment = value.comment.trim()
-      createReactionQuery.mutateAsync(
+      createReactionMutation.mutateAsync(
         {
           pathParams: { id: props.postId },
           body: { type: 'DOWN_VOTE', comment: comment ? comment : undefined },
@@ -501,7 +496,7 @@ function CommentForm(props: CommentFormProps) {
   })
   const onSkip = () => {
     props.onClose()
-    createReactionQuery.mutateAsync({
+    createReactionMutation.mutateAsync({
       pathParams: { id: props.postId },
       body: { type: 'DOWN_VOTE', comment: undefined },
     })
@@ -520,6 +515,143 @@ function CommentForm(props: CommentFormProps) {
         <Text className="text-2xl font-anakotmai-bold">เหตุใดคุณถึงไม่เห็นด้วย</Text>
         <Text className="text-sm font-anakotmai-light">
           ความคิดเห็นของคุณจะถูกซ่อนจากสาธารณะ หากต้องการให้แสดงต่อสาธารณะกรุณา กด “ความคิดเห็น”
+        </Text>
+      </View>
+      <form.Field name="comment">
+        {(field) => (
+          <FormItem field={field} className="p-4">
+            <FormLabel style={[StyleSheet.absoluteFill, { opacity: 0, pointerEvents: 'none' }]}>
+              ความคิดเห็น
+            </FormLabel>
+            <FormControl>
+              <Textarea
+                asChild
+                placeholder="พิมพ์ความคิดเห็นของคุณ"
+                value={field.state.value}
+                onChangeText={field.handleChange}
+              >
+                <BottomSheetTextInput />
+              </Textarea>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      </form.Field>
+      <View className="flex flex-col gap-2 px-4">
+        <form.Subscribe selector={(state) => [state.isSubmitting]}>
+          {([isSubmitting]) => (
+            <Button onPress={form.handleSubmit} disabled={isSubmitting}>
+              <Text>แสดงความคิดเห็น</Text>
+            </Button>
+          )}
+        </form.Subscribe>
+        <Button variant="ghost" onPress={onSkip}>
+          <Text>ข้าม</Text>
+        </Button>
+      </View>
+    </View>
+  )
+}
+
+function CommentButton(props: { postId: string; feedId: string }) {
+  const bottomSheetModalRef = React.useRef<BottomSheetModal>(null)
+  const onOpen = () => {
+    bottomSheetModalRef.current?.present()
+  }
+  const onClose = () => {
+    bottomSheetModalRef.current?.dismiss()
+  }
+  const insets = useSafeAreaInsets()
+
+  const router = useRouter()
+  const sessionQuery = useSessionQuery()
+  const onPress = () => {
+    if (!sessionQuery.data) {
+      return router.push('/profile')
+    }
+    onOpen()
+  }
+  return (
+    <>
+      <Pressable className="flex flex-row items-center gap-1 px-1 py-3" onPress={onPress}>
+        <Icon icon={MessageCircleIcon} size={20} strokeWidth={1} className="text-base-text-high" />
+        <Text className="text-sm font-anakotmai-light text-base-text-high">ความคิดเห็น</Text>
+      </Pressable>
+      <BottomSheetModal
+        ref={bottomSheetModalRef}
+        keyboardBehavior="interactive"
+        bottomInset={insets.bottom}
+      >
+        <BottomSheetView>
+          <CommentForm onClose={onClose} postId={props.postId} feedId={props.feedId} />
+        </BottomSheetView>
+      </BottomSheetModal>
+    </>
+  )
+}
+interface CommentFormProps {
+  onClose: () => void
+  postId: string
+  feedId: string
+}
+function CommentForm(props: CommentFormProps) {
+  const commentMutation = reactQueryClient.useMutation('post', '/feed/:id/comment')
+  const queryClient = useQueryClient()
+  const form = useForm({
+    defaultValues: {
+      comment: '',
+    },
+    validators: {
+      onSubmit: formSchema,
+    },
+    onSubmit: async ({ value }) => {
+      props.onClose()
+      const comment = value.comment.trim()
+      commentMutation.mutateAsync(
+        {
+          pathParams: { id: props.postId },
+          body: { content: comment },
+        },
+        {
+          onSuccess: () => {
+            toast({
+              text1: 'เพิ่มความคิดเห็นส่วนตัวแล้ว',
+              icon: MessageCircleIcon,
+            })
+          },
+          onError: () => {
+            toast.error({
+              text1: 'เกิดข้อผิดพลาดบางอย่าง',
+              icon: TriangleAlertIcon,
+            })
+          },
+        }
+      )
+      // TODO
+      queryClient.invalidateQueries({
+        queryKey: reactQueryClient.getQueryKey('/feed/:id/comments', {
+          pathParams: { id: props.feedId },
+        }),
+      })
+      // optimistic update
+      queryClient.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
+        if (!old) return
+        return {
+          upvoteCount: old.userReaction === 'UP_VOTE' ? old.upvoteCount - 1 : old.upvoteCount,
+          userReaction: old.userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE',
+        } as const
+      })
+    },
+  })
+  const onSkip = () => {
+    props.onClose()
+  }
+  return (
+    <View className="flex flex-col flex-1">
+      <View className="flex flex-col gap-1 p-4 pb-0">
+        <Text className="text-2xl font-anakotmai-bold">ข้อเสนอแนะ</Text>
+        <Text className="text-sm font-anakotmai-light">
+          บอกพวกเราทีว่าเหตุใดคุณถึงไม่เห็นด้วย ความคิดเห็นของคุณจะถูกแสดงเป็นความคิดเห็นส่วนตัว
         </Text>
       </View>
       <form.Field name="comment">
