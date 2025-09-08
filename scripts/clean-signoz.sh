@@ -1,9 +1,5 @@
 #!/bin/bash
 
 set -e
-
-# If not, clone the repo and start the services
-cd signoz/deploy/
-docker compose -f docker/clickhouse-setup/docker-compose.yaml down
-cd ../..
+docker compose -f signoz/deploy/docker/docker-compose.yaml down
 rm -rf signoz
