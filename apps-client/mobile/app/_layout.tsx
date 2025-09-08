@@ -56,6 +56,7 @@ export default function RootLayout() {
                     <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                     <Stack.Screen name="loading" options={{ headerShown: false }} />
                     <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+                    <Stack.Screen name="edit" options={{ headerShown: false }} />
                   </Stack>
                   <Toaster />
                 </BottomSheetModalProvider>

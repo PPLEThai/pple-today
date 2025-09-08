@@ -1,4 +1,6 @@
-export const handleUploadSignedUrl = (uploadUrl: string, formData: FormData) => {
+import { ImagePickerSuccessResult } from 'expo-image-picker'
+
+export function handleUploadSignedUrl(uploadUrl: string, formData: FormData) {
   return new Promise<{ ok: boolean; status: number; response: string }>((resolve, reject) => {
     const xhr = new XMLHttpRequest()
     xhr.open('POST', uploadUrl)
@@ -11,9 +13,12 @@ export const handleUploadSignedUrl = (uploadUrl: string, formData: FormData) => 
         response: xhr.responseText,
       })
     }
+    console.log('FormData:', formData)
+
     xhr.onreadystatechange = function (ev) {
       if (xhr.readyState === xhr.DONE) {
         const isOk = xhr.status >= 200 && xhr.status < 300
+        console.log('Upload response:', xhr)
         return resolve({
           ok: isOk,
           status: xhr.status,
@@ -23,4 +28,39 @@ export const handleUploadSignedUrl = (uploadUrl: string, formData: FormData) => 
     }
     xhr.send(formData)
   })
+}
+
+export async function handleUploadImage(
+  imgPickerResult: ImagePickerSuccessResult,
+  uploadUrl: string,
+  uploadFields: Record<string, string>
+) {
+  const asset = imgPickerResult.assets[0]
+
+  if (!asset) return
+
+  try {
+    const formData = new FormData()
+
+    for (const [key, value] of Object.entries(uploadFields)) {
+      formData.append(key, value)
+    }
+
+    // @ts-expect-error: Special react native format for form data
+    formData.append('file', {
+      uri: asset.uri,
+      name: asset.fileName ?? `profile-picture-${new Date().getTime()}.png`,
+      type: asset.mimeType,
+    })
+
+    const result = await handleUploadSignedUrl(uploadUrl, formData)
+    console.log(result)
+
+    if (!result.ok) {
+      throw new Error('Failed to upload image')
+    }
+  } catch (err) {
+    console.error('Error uploading image', err)
+    throw err
+  }
 }
