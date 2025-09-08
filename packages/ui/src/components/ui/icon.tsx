@@ -1,34 +1,41 @@
 import * as React from 'react'
-import { Text as RNText } from 'react-native'
 
-import * as Slot from '@rn-primitives/slot'
 import type { LucideIcon, LucideProps } from 'lucide-react-native'
-import { twMerge } from 'tailwind-merge'
+import { cssInterop } from 'nativewind'
 
-import { iconWithClassName } from '../../lib/icons/iconWithClassName'
+import { cn } from '../../lib/utils'
 
 const IconClassContext = React.createContext<string | undefined>(undefined)
 
-function Icon({
-  className,
-  size = 16,
-  strokeWidth = 2,
-  ...props
-}: React.ComponentProps<typeof RNText> & {
-  ref?: React.RefObject<RNText>
-  icon: LucideIcon
-} & LucideProps) {
+function Icon({ icon: IconComponent, className, size = 16, strokeWidth = 2, ...props }: IconProps) {
   const iconClass = React.useContext(IconClassContext)
-  iconWithClassName(props.icon)
   return (
-    <Slot.Text
-      className={twMerge('text-foreground web:pointer-events-none', iconClass, className)}
-      pointerEvents="none"
+    <IconImpl
+      icon={IconComponent}
+      className={cn('text-foreground web:pointer-events-none', iconClass, className)}
+      size={size}
+      strokeWidth={strokeWidth}
       {...props}
-    >
-      {React.createElement(props.icon, { size, strokeWidth })}
-    </Slot.Text>
+    />
   )
 }
+
+interface IconProps extends LucideProps {
+  icon: LucideIcon
+}
+
+function IconImpl({ icon: IconComponent, ...props }: IconProps) {
+  return <IconComponent {...props} />
+}
+
+cssInterop(IconImpl, {
+  className: {
+    target: 'style',
+    nativeStyleToProp: {
+      height: 'size',
+      width: 'size',
+    },
+  },
+})
 
 export { Icon, IconClassContext }
