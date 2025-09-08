@@ -109,8 +109,8 @@ export class ElectionService {
     return voterType == 'ONLINE'
   }
 
-  async listEligibleElectionsByUserId(userId: string) {
-    const eligibleVoters = await this.electionRepository.listEligibleVotersByUserId(userId)
+  async listMyEligibleElections(userId: string) {
+    const eligibleVoters = await this.electionRepository.listMyEligibleVoters(userId)
     if (eligibleVoters.isErr()) {
       return mapRepositoryError(eligibleVoters.error)
     }
