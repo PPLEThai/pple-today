@@ -1,5 +1,11 @@
 # @pple-today/api-client
 
+## 0.3.1
+
+### Patch Changes
+
+- [#88](https://github.com/PPLEThai/pple-today/pull/88) [`fdfb5ff`](https://github.com/PPLEThai/pple-today/commit/fdfb5ffea6c4bf1e10c18e0698250f7d3f68fefe) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-219] Post Detail Page UI](https://linear.app/snts/issue/PPLE-219/post-detail-page-ui)
+
 ## 0.3.0
 
 ### Minor Changes
