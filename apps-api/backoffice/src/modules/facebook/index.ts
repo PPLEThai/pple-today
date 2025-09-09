@@ -13,7 +13,6 @@ import {
 import { FacebookServicePlugin } from './services'
 import { FacebookWebhookController } from './webhook'
 
-import { UserRole } from '../../../__generated__/prisma'
 import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
 import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
@@ -39,7 +38,6 @@ export const FacebookController = new Elysia({
           return status(200, accessTokenResult.value)
         },
         {
-          requiredLocalRole: [UserRole.REPRESENTATIVE],
           detail: {
             summary: 'Get Facebook User Access Token',
             description: 'Fetches the user access token from Facebook using the authorization code',
@@ -67,7 +65,6 @@ export const FacebookController = new Elysia({
           return status(200, pageList.value)
         },
         {
-          requiredLocalRole: [UserRole.REPRESENTATIVE],
           detail: {
             summary: 'Get Facebook User Page List',
             description: 'Fetches the list of Facebook pages associated with the user',
@@ -104,7 +101,7 @@ export const FacebookController = new Elysia({
           return status(200, { linkedFacebookPage: linkedPageResult.value })
         },
         {
-          requiredLocalRole: [UserRole.REPRESENTATIVE],
+          requiredLocalUser: true,
           response: {
             200: GetLinkedFacebookPageResponse,
             ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
@@ -141,7 +138,7 @@ export const FacebookController = new Elysia({
           })
         },
         {
-          requiredLocalRole: [UserRole.REPRESENTATIVE],
+          requiredLocalUser: true,
           body: LinkFacebookPageToUserBody,
           response: {
             201: LinkFacebookPageToUserResponse,
@@ -167,7 +164,7 @@ export const FacebookController = new Elysia({
           })
         },
         {
-          requiredLocalRole: [UserRole.REPRESENTATIVE],
+          requiredLocalUser: true,
           response: {
             200: UnlinkPageResponse,
             ...createErrorSchema(

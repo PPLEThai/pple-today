@@ -31,7 +31,7 @@ export const AuthController = new Elysia({
           role = UserRole.STAFF
           break
         case PPLERole.FOUNDATION:
-          role = UserRole.MEMBER
+          role = UserRole.STAFF
           break
         default:
           role = UserRole.USER
