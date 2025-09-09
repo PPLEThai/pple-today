@@ -339,7 +339,10 @@ function FeedReactionHook({ feedId }: { feedId: string }) {
     pathParams: { id: feedId },
   })
   // TODO: make sure that this initialData run before render
-  useFeedReactionQuery({ initialData: () => getFeedReaction(feedContentQuery.data!) })
+  useFeedReactionQuery({
+    variables: { feedId },
+    initialData: () => getFeedReaction(feedContentQuery.data!),
+  })
   const queryClient = useQueryClient()
   React.useEffect(() => {
     if (!feedContentQuery.data) return
