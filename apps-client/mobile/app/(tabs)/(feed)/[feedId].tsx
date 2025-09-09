@@ -70,6 +70,7 @@ function FeedItemContent({ item }: { item: GetFeedContentResponse }) {
   }
 }
 
+const LIMIT = 10
 function FeedComment({
   feedId,
   headerComponent,
@@ -83,7 +84,7 @@ function FeedComment({
       const session = await getAuthSession()
       const response = await fetchClient('/feed/:id/comments', {
         params: { id: feedId! },
-        query: { cursor: pageParam, limit: 10 },
+        query: { cursor: pageParam, limit: LIMIT },
         headers: session ? { Authorization: `Bearer ${session.accessToken}` } : {},
       })
       if (response.error) {
@@ -92,8 +93,8 @@ function FeedComment({
       return response.data
     },
     initialPageParam: undefined as string | undefined,
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage && lastPage.length === 0) {
+    getNextPageParam: (lastPage, _, _lastPageParam) => {
+      if (!lastPage || lastPage.length === 0 || lastPage.length < LIMIT) {
         return undefined
       }
       return lastPage.at(-1)!.id
