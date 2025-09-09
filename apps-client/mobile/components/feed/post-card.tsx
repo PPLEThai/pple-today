@@ -573,9 +573,9 @@ function DownvoteCommentForm(props: DownvoteCommentFormProps) {
   return (
     <View className="flex flex-col flex-1">
       <View className="flex flex-col gap-1 p-4 pb-0">
-        <Text className="text-2xl font-anakotmai-bold">เหตุใดคุณถึงไม่เห็นด้วย</Text>
+        <Text className="text-2xl font-anakotmai-bold">ข้อเสนอแนะ</Text>
         <Text className="text-sm font-anakotmai-light">
-          ความคิดเห็นของคุณจะถูกซ่อนจากสาธารณะ หากต้องการให้แสดงต่อสาธารณะกรุณา กด “ความคิดเห็น”
+          บอกพวกเราทีว่าเหตุใดคุณถึงไม่เห็นด้วย ความคิดเห็นของคุณจะถูกแสดงเป็นความคิดเห็นส่วนตัว
         </Text>
       </View>
       <form.Field name="comment">
@@ -722,10 +722,11 @@ function CommentForm(props: CommentFormProps) {
   return (
     <View className="flex flex-col flex-1">
       <View className="flex flex-col gap-1 p-4 pb-0">
-        <Text className="text-2xl font-anakotmai-bold">ข้อเสนอแนะ</Text>
-        <Text className="text-sm font-anakotmai-light">
+        {/* TODO: Writing */}
+        <Text className="text-2xl font-anakotmai-bold">แสดงความคิดเห็น</Text>
+        {/* <Text className="text-sm font-anakotmai-light">
           บอกพวกเราทีว่าเหตุใดคุณถึงไม่เห็นด้วย ความคิดเห็นของคุณจะถูกแสดงเป็นความคิดเห็นส่วนตัว
-        </Text>
+        </Text> */}
       </View>
       <form.Field name="comment">
         {(field) => (
