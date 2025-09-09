@@ -148,6 +148,7 @@ function FeedComment({
       ListHeaderComponent={headerComponent}
       ListHeaderComponentClassName="pb-2"
       ListFooterComponent={Footer}
+      contentContainerClassName="pb-2"
       renderItem={({ item: items, index: _pageIndex }) => {
         return (
           <>
