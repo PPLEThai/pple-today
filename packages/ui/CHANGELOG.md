@@ -1,5 +1,15 @@
 # @pple-today/ui
 
+## 0.2.1
+
+### Patch Changes
+
+- [#81](https://github.com/PPLEThai/pple-today/pull/81) [`6975dfe`](https://github.com/PPLEThai/pple-today/commit/6975dfee6559d3525934ee025749d6730a9e1b55) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-300] Link Facebook Page UI & Integrate](https://linear.app/snts/issue/PPLE-300/link-facebook-page-ui-and-integrate)
+
+- [#88](https://github.com/PPLEThai/pple-today/pull/88) [`fdfb5ff`](https://github.com/PPLEThai/pple-today/commit/fdfb5ffea6c4bf1e10c18e0698250f7d3f68fefe) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-219] Post Detail Page UI](https://linear.app/snts/issue/PPLE-219/post-detail-page-ui)
+
+- [#84](https://github.com/PPLEThai/pple-today/pull/84) [`4018e76`](https://github.com/PPLEThai/pple-today/commit/4018e762a4a1d2c437fb7a2a303ea190e62a08a5) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [PPLE-278] Integrated Onboarding
+
 ## 0.2.0
 
 ### Minor Changes
