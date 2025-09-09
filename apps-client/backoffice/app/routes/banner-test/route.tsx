@@ -83,6 +83,7 @@ const BannerTestRoute = () => {
         const result = await getFileUploadUrl.mutateAsync({
           body: {
             category: 'BANNER',
+            contentType: file.type as any,
           },
           headers: {
             Authorization: `Bearer ${user.access_token}`,
@@ -95,7 +96,7 @@ const BannerTestRoute = () => {
           body: {
             destination: 'https://google.com',
             navigation: 'EXTERNAL_BROWSER',
-            imageFilePath: result.filePath,
+            imageFilePath: result.filePath as any,
             status: 'PUBLISH',
           },
           headers: {
