@@ -1,8 +1,7 @@
-import { BannerNavigationType, BannerStatusType } from '@pple-today/database/prisma'
-import { Static, t } from 'elysia'
-
 import { Banner } from '@pple-today/api-common/dtos'
 import { FilePath } from '@pple-today/api-common/dtos'
+import { BannerNavigationType, BannerStatusType } from '@pple-today/database/prisma'
+import { Static, t } from 'elysia'
 
 // GET /admin/banners
 export const GetBannersResponse = t.Array(Banner)
