@@ -458,6 +458,7 @@ const TAGS = [
   'สิ่งแวดล้อม',
 ]
 
+const LIMIT = 10
 function FeedContent(props: PagerScrollViewProps) {
   const { headerHeight, isFocused, scrollElRef, setScrollViewTag } = props
   React.useEffect(() => {
@@ -473,7 +474,7 @@ function FeedContent(props: PagerScrollViewProps) {
     queryFn: async ({ pageParam }) => {
       const session = await getAuthSession()
       const response = await fetchClient('/feed/me', {
-        query: { page: pageParam, limit: 10 },
+        query: { page: pageParam, limit: LIMIT },
         headers: session ? { Authorization: `Bearer ${session.accessToken}` } : {},
       })
       if (response.error) {
@@ -484,6 +485,9 @@ function FeedContent(props: PagerScrollViewProps) {
     initialPageParam: 1,
     getNextPageParam: (lastPage, _, lastPageParam) => {
       if (lastPage && lastPage.length === 0) {
+        return undefined
+      }
+      if (lastPage.length < LIMIT) {
         return undefined
       }
       return lastPageParam + 1
