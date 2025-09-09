@@ -143,6 +143,7 @@ function FeedComment({
     <FlatList
       data={data}
       onEndReached={onEndReached}
+      onEndReachedThreshold={1}
       ListHeaderComponent={headerComponent}
       ListHeaderComponentClassName="pb-2"
       ListFooterComponent={Footer}
