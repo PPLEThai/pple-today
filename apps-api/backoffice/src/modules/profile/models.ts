@@ -1,8 +1,6 @@
+import { FilePath, UserParticipation } from '@pple-today/api-common/dtos'
+import { UserRole } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
-
-import { UserRole } from '../../../__generated__/prisma'
-import { FilePath } from '../../dtos/file'
-import { UserParticipation } from '../../dtos/participation'
 
 // TODO: Add election
 export const GetUserParticipationResponse = t.Array(UserParticipation)
@@ -23,6 +21,7 @@ export const GetMyProfileResponse = t.Object({
       province: t.String({ description: "Province or state of the user's address" }),
       district: t.String({ description: "District or city of the user's address" }),
       subDistrict: t.String({ description: "Sub-district of the user's address" }),
+      postalCode: t.String({ description: "Postal code of the user's address" }),
     })
   ),
 })
@@ -113,9 +112,7 @@ export const GetFollowingUserResponse = t.Array(
 
 export const UpdateProfileBody = t.Object({
   name: t.Optional(t.String({ description: 'The name of the user' })),
-  profileImage: t.Optional(
-    t.String({ description: 'The URL of the profile image', format: 'uri' })
-  ),
+  profileImage: t.Optional(FilePath),
   address: t.Optional(
     t.Object({
       province: t.String({ description: "Province or state of the user's address" }),

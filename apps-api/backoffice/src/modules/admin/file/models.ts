@@ -1,6 +1,6 @@
 import { Static, t } from 'elysia'
 
-import { FilePath } from '../../../dtos/file'
+import { FilePath } from '@pple-today/api-common/dtos'
 
 export const UploadFileCategory = {
   ANNOUNCEMENT: 'ANNOUNCEMENT',

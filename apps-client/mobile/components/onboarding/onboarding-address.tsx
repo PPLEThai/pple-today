@@ -1,8 +1,8 @@
 import React from 'react'
-import { View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 
 import { Button } from '@pple-today/ui/button'
-import { FormControl, FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
+import { FormControl, FormItem, FormLabel } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
 import {
   Select,
@@ -25,7 +25,7 @@ import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { getAuthSession } from '@app/libs/auth/session'
 import { handleUploadSignedUrl } from '@app/utils/upload'
 
-import { OnboardingAddressState, useOnboardingContext } from './onboarding-context'
+import { OnboardingAddressState, useOnboardingContext } from '../../contexts/onboarding-context'
 
 const formSchema = z.object({
   province: z.string().min(1, 'กรุณาเลือกจังหวัด'),
@@ -53,6 +53,7 @@ export function OnboardingAddress() {
     },
     validators: {
       onSubmit: formSchema,
+      onBlur: formSchema,
     },
     onSubmit: (values) => {
       const _province = values.value.province
@@ -98,6 +99,33 @@ export function OnboardingAddress() {
     },
     { enabled: !!subdistrictValues }
   )
+
+  const provinceList = React.useMemo(() => {
+    if (getProvinceQuery.data) {
+      return getProvinceQuery.data
+    }
+    return []
+  }, [getProvinceQuery.data])
+
+  const districtList = React.useMemo(() => {
+    if (getDistrictQuery.data) {
+      return getDistrictQuery.data
+    }
+    return []
+  }, [getDistrictQuery.data])
+
+  const subDistrictList = React.useMemo(() => {
+    if (getSubdistrictQuery.data) {
+      return getSubdistrictQuery.data
+    }
+    return []
+  }, [getSubdistrictQuery.data])
+  const postalCodeList = React.useMemo(() => {
+    if (getPostalCodeQuery.data) {
+      return getPostalCodeQuery.data
+    }
+    return []
+  }, [getPostalCodeQuery.data])
 
   const router = useRouter()
 
@@ -249,150 +277,154 @@ export function OnboardingAddress() {
       {openForm && (
         <>
           <View className="gap-2 px-6 pb-6 pt-4">
-            <form.Field
-              name="province"
-              listeners={{
-                onChange: () => {
-                  form.setFieldValue('district', '')
-                  form.setFieldValue('subDistrict', '')
-                  form.setFieldValue('postalCode', '')
-                },
-              }}
-            >
-              {(field) => (
-                <FormItem field={field}>
-                  <FormLabel>จังหวัด</FormLabel>
-                  <FormControl>
-                    <Select
-                      value={{ label: field.state.value, value: field.state.value }}
-                      onValueChange={(option) => field.handleChange(option?.value || '')}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="เลือกจังหวัด" />
-                      </SelectTrigger>
-                      <SelectContent insets={contentInsets} className="w-full">
-                        <SelectGroup>
-                          <SelectLabel className="font-bold">เลือกจังหวัด</SelectLabel>
-                          {getProvinceQuery.data?.map((province, index) => (
-                            <SelectItem key={index} label={province} value={province} />
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                </FormItem>
-              )}
-            </form.Field>
-            <form.Subscribe selector={(state) => state.values.province}>
-              {(province) => (
-                <form.Field
-                  name="district"
-                  listeners={{
-                    onChange: () => {
-                      form.setFieldValue('subDistrict', '')
-                      form.setFieldValue('postalCode', '')
-                    },
-                  }}
-                >
-                  {(field) => (
-                    <FormItem field={field}>
-                      <FormLabel>เขต/อำเภอ</FormLabel>
-                      <FormControl>
-                        <Select
-                          value={{ label: field.state.value, value: field.state.value }}
-                          onValueChange={(option) => field.handleChange(option?.value || '')}
-                        >
-                          <SelectTrigger className="w-full" disabled={!province}>
-                            <SelectValue placeholder="เลือกเขต/อำเภอ" />
-                          </SelectTrigger>
-                          <SelectContent insets={contentInsets} className="w-full">
-                            <SelectGroup>
-                              <SelectLabel className="font-bold">เลือกเขต/อำเภอ</SelectLabel>
-                              {getDistrictQuery.data?.map((district, index) => (
-                                <SelectItem key={index} label={district} value={district} />
-                              ))}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                </form.Field>
-              )}
-            </form.Subscribe>
-            <form.Subscribe selector={(state) => state.values.district}>
-              {(district) => (
-                <form.Field
-                  name="subDistrict"
-                  listeners={{
-                    onChange: () => {
-                      form.setFieldValue('postalCode', '')
-                    },
-                  }}
-                >
-                  {(field) => (
-                    <FormItem field={field}>
-                      <FormLabel>แขวง/ตำบล</FormLabel>
-                      <FormControl>
-                        <Select
-                          value={{ label: field.state.value, value: field.state.value }}
-                          onValueChange={(option) => field.handleChange(option?.value || '')}
-                        >
-                          <SelectTrigger className="w-full" disabled={!district}>
-                            <SelectValue placeholder="เลือกแขวง/ตำบล" />
-                          </SelectTrigger>
-                          <SelectContent insets={contentInsets} className="w-full">
-                            <SelectGroup>
-                              <SelectLabel className="font-bold">เลือกแขวง/ตำบล</SelectLabel>
-                              {getSubdistrictQuery.data?.map((subDistrict, index) => (
-                                <SelectItem key={index} label={subDistrict} value={subDistrict} />
-                              ))}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                </form.Field>
-              )}
-            </form.Subscribe>
-            <form.Subscribe selector={(state) => state.values.subDistrict}>
-              {(subDistrict) => (
-                <form.Field name="postalCode">
-                  {(field) => (
-                    <FormItem field={field}>
-                      <FormLabel>รหัสไปรษณีย์</FormLabel>
-                      <FormControl>
-                        <Select
-                          value={{ label: field.state.value, value: field.state.value }}
-                          onValueChange={(option) => field.handleChange(option?.value || '')}
-                        >
-                          <SelectTrigger className="w-full" disabled={!subDistrict}>
-                            <SelectValue placeholder="เลือกรหัสไปรษณีย์" />
-                          </SelectTrigger>
-                          <SelectContent insets={contentInsets} className="w-full">
-                            <SelectGroup>
-                              <SelectLabel className="font-bold">เลือกรหัสไปรษณีย์</SelectLabel>
-                              {getPostalCodeQuery.data?.map((postalCode, index) => (
-                                <SelectItem key={index} label={postalCode} value={postalCode} />
-                              ))}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                </form.Field>
-              )}
-            </form.Subscribe>
+            <ScrollView contentContainerClassName="gap-2">
+              <form.Field
+                name="province"
+                listeners={{
+                  onChange: () => {
+                    form.setFieldValue('district', '')
+                    form.setFieldValue('subDistrict', '')
+                    form.setFieldValue('postalCode', '')
+                  },
+                }}
+              >
+                {(field) => (
+                  <FormItem field={field}>
+                    <FormLabel>จังหวัด</FormLabel>
+                    <FormControl>
+                      <Select
+                        value={{ label: field.state.value, value: field.state.value }}
+                        onValueChange={(option) => field.handleChange(option?.value || '')}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="เลือกจังหวัด" />
+                        </SelectTrigger>
+                        <SelectContent insets={contentInsets} className="w-full">
+                          <SelectGroup>
+                            <SelectLabel className="font-bold">เลือกจังหวัด</SelectLabel>
+                            {provinceList.map((province, index) => (
+                              <SelectItem key={index} label={province} value={province} />
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                  </FormItem>
+                )}
+              </form.Field>
+              <form.Subscribe selector={(state) => state.values.province}>
+                {(province) => (
+                  <form.Field
+                    name="district"
+                    listeners={{
+                      onChange: () => {
+                        form.setFieldValue('subDistrict', '')
+                        form.setFieldValue('postalCode', '')
+                      },
+                    }}
+                  >
+                    {(field) => (
+                      <FormItem field={field}>
+                        <FormLabel>เขต/อำเภอ</FormLabel>
+                        <FormControl>
+                          <Select
+                            value={{ label: field.state.value, value: field.state.value }}
+                            onValueChange={(option) => field.handleChange(option?.value || '')}
+                          >
+                            <SelectTrigger className="w-full" disabled={!province}>
+                              <SelectValue placeholder="เลือกเขต/อำเภอ" />
+                            </SelectTrigger>
+                            <SelectContent insets={contentInsets} className="w-full">
+                              <SelectGroup>
+                                <SelectLabel className="font-bold">เลือกเขต/อำเภอ</SelectLabel>
+                                {districtList.map((district, index) => (
+                                  <SelectItem key={index} label={district} value={district} />
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  </form.Field>
+                )}
+              </form.Subscribe>
+              <form.Subscribe selector={(state) => state.values.district}>
+                {(district) => (
+                  <form.Field
+                    name="subDistrict"
+                    listeners={{
+                      onChange: () => {
+                        form.setFieldValue('postalCode', '')
+                      },
+                    }}
+                  >
+                    {(field) => (
+                      <FormItem field={field}>
+                        <FormLabel>แขวง/ตำบล</FormLabel>
+                        <FormControl>
+                          <Select
+                            value={{ label: field.state.value, value: field.state.value }}
+                            onValueChange={(option) => field.handleChange(option?.value || '')}
+                          >
+                            <SelectTrigger className="w-full" disabled={!district}>
+                              <SelectValue placeholder="เลือกแขวง/ตำบล" />
+                            </SelectTrigger>
+                            <SelectContent insets={contentInsets} className="w-full">
+                              <SelectGroup>
+                                <SelectLabel className="font-bold">เลือกแขวง/ตำบล</SelectLabel>
+                                {subDistrictList.map((subDistrict, index) => (
+                                  <SelectItem key={index} label={subDistrict} value={subDistrict} />
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  </form.Field>
+                )}
+              </form.Subscribe>
+              <form.Subscribe selector={(state) => state.values.subDistrict}>
+                {(subDistrict) => (
+                  <form.Field name="postalCode">
+                    {(field) => (
+                      <FormItem field={field}>
+                        <FormLabel>รหัสไปรษณีย์</FormLabel>
+                        <FormControl>
+                          <Select
+                            value={{ label: field.state.value, value: field.state.value }}
+                            onValueChange={(option) => field.handleChange(option?.value || '')}
+                          >
+                            <SelectTrigger className="w-full" disabled={!subDistrict}>
+                              <SelectValue placeholder="เลือกรหัสไปรษณีย์" />
+                            </SelectTrigger>
+                            <SelectContent insets={contentInsets} className="w-full">
+                              <SelectGroup>
+                                <SelectLabel className="font-bold">เลือกรหัสไปรษณีย์</SelectLabel>
+                                {postalCodeList.map((postalCode, index) => (
+                                  <SelectItem key={index} label={postalCode} value={postalCode} />
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  </form.Field>
+                )}
+              </form.Subscribe>
+            </ScrollView>
           </View>
           <View className="gap-2 px-6 pb-6">
-            <form.Subscribe selector={(state) => [state.isSubmitting, state.canSubmit]}>
-              {([isSubmitting, canSubmit]) => (
-                <Button disabled={isSubmitting || !canSubmit} onPress={handleOnSubmit}>
+            <form.Subscribe
+              selector={(state) => [state.isSubmitting, state.isFormValid, state.isTouched]}
+            >
+              {([isSubmitting, isFormValid, isTouched]) => (
+                <Button
+                  disabled={isSubmitting || !isFormValid || !isTouched}
+                  onPress={handleOnSubmit}
+                >
                   <Text>บันทึก</Text>
                 </Button>
               )}

@@ -1,0 +1,27 @@
+{
+  "name": "@mini-app/api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc src/index.ts --outDir dist",
+    "start": "NODE_ENV=production node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@elysiajs/cors": "^1.3.3",
+    "@elysiajs/node": "^1.3.0",
+    "@sinclair/typebox": "^0.34.37",
+    "dotenv": "^17.0.1",
+    "elysia": "^1.3.5",
+    "jsonwebtoken": "^9.0.2",
+    "neverthrow": "^8.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.1",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  }
+}

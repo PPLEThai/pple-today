@@ -3,19 +3,39 @@ import {
   GetSignedUrlConfig,
   Storage,
 } from '@google-cloud/storage'
-import Elysia from 'elysia'
 import https from 'https'
 import { Err, fromPromise, Ok, ok } from 'neverthrow'
 import { Readable } from 'stream'
 
-import { FilePermission, FileTransactionEntry } from './types'
+import { InternalErrorCode } from '../dtos'
+import { FilePath } from '../dtos/file'
+import { ElysiaLoggerInstance } from '../plugins'
+import { exhaustiveGuard } from '../utils/common'
+import { ApiErrorResponse, err, OnlyErr, WithoutErr } from '../utils/error'
+import { getFilePath } from '../utils/file'
 
-import serverEnv from '../../config/env'
-import { InternalErrorCode } from '../../dtos/error'
-import { FilePath } from '../../dtos/file'
-import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '../../plugins/logger'
-import { ApiErrorResponse, err, exhaustiveGuard, OnlyErr, WithoutErr } from '../../utils/error'
-import { getFilePath } from '../../utils/facebook'
+export const FilePermission = {
+  PUBLIC: 'PUBLIC',
+  PRIVATE: 'PRIVATE',
+} as const
+export type FilePermission = (typeof FilePermission)[keyof typeof FilePermission]
+
+export type FileTransactionEntry =
+  | {
+      action: 'PERMISSION'
+      target: string
+      before: FilePermission
+      after: FilePermission
+    }
+  | {
+      action: 'MOVE'
+      from: string
+      to: string
+    }
+  | {
+      action: 'UPLOAD'
+      target: string
+    }
 
 export class FileService {
   public prefixPublicFolder = 'public/' as const
@@ -136,6 +156,7 @@ export class FileService {
       expires: Date.now() + expiresIn * 1000,
       fields: {
         'Content-Type': contentType,
+        'Cache-Control': 'private, max-age=0',
       },
       conditions: [
         ['content-length-range', 0, maxSize],
@@ -536,19 +557,3 @@ export class FileTransactionService {
     return ok()
   }
 }
-
-export const FileServicePlugin = new Elysia({
-  name: 'FileService',
-})
-  .use(ElysiaLoggerPlugin({ name: 'FileService' }))
-  .decorate(({ loggerService }) => ({
-    fileService: new FileService(
-      {
-        projectId: serverEnv.GCP_PROJECT_ID,
-        clientEmail: serverEnv.GCP_CLIENT_EMAIL,
-        privateKey: serverEnv.GCP_PRIVATE_KEY,
-        bucketName: serverEnv.GCP_STORAGE_BUCKET_NAME,
-      },
-      loggerService
-    ),
-  }))

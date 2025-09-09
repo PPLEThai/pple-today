@@ -1,11 +1,11 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
 import { GetAuthMeResponse, RegisterUserQuery, RegisterUserResponse } from './models'
 import { AuthServicePlugin } from './services'
 
-import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
-import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 
 export const AuthController = new Elysia({
   prefix: '/auth',

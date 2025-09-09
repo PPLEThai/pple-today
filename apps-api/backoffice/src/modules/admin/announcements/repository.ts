@@ -1,14 +1,15 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { FilePath } from '@pple-today/api-common/dtos'
+import { FileService, FileTransactionService, PrismaService } from '@pple-today/api-common/services'
+import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { FeedItemType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import { PutDraftAnnouncementBody, PutPublishedAnnouncementBody } from './models'
 
-import { FeedItemType } from '../../../../__generated__/prisma'
-import { InternalErrorCode } from '../../../dtos/error'
-import { FilePath } from '../../../dtos/file'
-import { PrismaService, PrismaServicePlugin } from '../../../plugins/prisma'
-import { err, fromRepositoryPromise } from '../../../utils/error'
-import { FileService, FileServicePlugin, FileTransactionService } from '../../file/services'
+import { FileServicePlugin } from '../../../plugins/file'
+import { PrismaServicePlugin } from '../../../plugins/prisma'
 
 export class AdminAnnouncementRepository {
   constructor(

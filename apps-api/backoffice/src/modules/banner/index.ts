@@ -1,10 +1,9 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
 import { GetBannersResponse } from './models'
 import { BannerServicePlugin } from './services'
-
-import { InternalErrorCode } from '../../dtos/error'
-import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 
 export const BannerController = new Elysia({
   tags: ['Banner'],

@@ -1,13 +1,14 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { PostComment, PostReactionType } from '@pple-today/api-common/dtos'
+import { FileService } from '@pple-today/api-common/services'
+import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import { CreateFeedReactionBody } from './models'
 import { FeedRepository, FeedRepositoryPlugin } from './repository'
 
-import { InternalErrorCode } from '../../dtos/error'
-import { PostComment, PostReactionType } from '../../dtos/post'
-import { mapRepositoryError } from '../../utils/error'
-import { FileService, FileServicePlugin } from '../file/services'
+import { FileServicePlugin } from '../../plugins/file'
 
 export class FeedService {
   constructor(
@@ -139,6 +140,24 @@ export class FeedService {
           }) satisfies PostComment
       )
     )
+  }
+
+  async getFeedByUserId(userId?: string, query?: { page?: number; limit?: number }) {
+    const feedItems = await this.feedRepository.listFeedItemsByUserId(userId, {
+      page: query?.page ?? 1,
+      limit: query?.limit ?? 10,
+    })
+
+    if (feedItems.isErr()) {
+      return mapRepositoryError(feedItems.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.USER_NOT_FOUND,
+          message: 'User not found',
+        },
+      })
+    }
+
+    return ok(feedItems.value)
   }
 
   async upsertFeedReaction(feedItemId: string, userId: string, data: CreateFeedReactionBody) {
