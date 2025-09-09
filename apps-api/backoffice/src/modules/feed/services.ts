@@ -181,7 +181,10 @@ export class FeedService {
     }
 
     return ok({
-      message: `Reaction for feed item ${feedItemId} updated.`,
+      ...result.value,
+      comment: result.value.comment
+        ? { ...result.value.comment, author: result.value.comment.user }
+        : null,
     })
   }
 

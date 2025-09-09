@@ -524,17 +524,11 @@ function DownvoteCommentForm(props: DownvoteCommentFormProps) {
           body: { type: 'DOWN_VOTE', comment: comment ? comment : undefined },
         },
         {
-          onSuccess: () => {
+          onSuccess: (response) => {
             props.onClose()
             toast({
               text1: 'เพิ่มความคิดเห็นส่วนตัวแล้ว',
               icon: MessageCircleIcon,
-            })
-
-            queryClient.invalidateQueries({
-              queryKey: reactQueryClient.getQueryKey('/feed/:id/comments', {
-                pathParams: { id: props.feedId },
-              }),
             })
             // optimistic update
             queryClient.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
@@ -544,6 +538,21 @@ function DownvoteCommentForm(props: DownvoteCommentFormProps) {
                 userReaction: old.userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE',
               } as const
             })
+            // manually update infinite query
+            queryClient.setQueryData(
+              // TODO fix type
+              reactQueryClient.getQueryKey('/feed/:id/comments', {
+                pathParams: { id: props.feedId },
+              }) as any,
+              (old: any) => {
+                if (!old) return undefined
+                const updatedFirstPage = [response.comment, ...old.pages[0]]
+                return {
+                  pages: [updatedFirstPage, ...old.pages.slice(1)],
+                  pageParams: old.pageParams,
+                }
+              }
+            )
           },
           onError: () => {
             toast.error({

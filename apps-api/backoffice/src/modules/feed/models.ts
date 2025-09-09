@@ -36,7 +36,10 @@ export const CreateFeedReactionBody = t.Union([
   }),
 ])
 export const CreateFeedReactionResponse = t.Object({
-  message: t.String({ description: 'Success message' }),
+  feedItemId: t.String({ description: 'The ID of the feed item' }),
+  userId: t.String({ description: 'The ID of the user who reacted' }),
+  type: t.Enum(FeedItemReactionType, { description: 'The type of reaction' }),
+  comment: t.Nullable(FeedItemComment),
 })
 
 export type CreateFeedReactionParams = Static<typeof CreateFeedReactionParams>
