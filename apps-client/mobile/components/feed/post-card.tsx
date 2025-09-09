@@ -575,7 +575,9 @@ function DownvoteCommentForm(props: DownvoteCommentFormProps) {
       <View className="flex flex-col gap-1 p-4 pb-0">
         <Text className="text-2xl font-anakotmai-bold">ข้อเสนอแนะ</Text>
         <Text className="text-sm font-anakotmai-light">
-          บอกพวกเราทีว่าเหตุใดคุณถึงไม่เห็นด้วย ความคิดเห็นของคุณจะถูกแสดงเป็นความคิดเห็นส่วนตัว
+          {
+            'บอกพวกเราทีว่าเหตุใดคุณถึงไม่เห็นด้วย\nความคิดเห็นของคุณจะถูกแสดงเป็นความคิดเห็นส่วนตัว'
+          }
         </Text>
       </View>
       <form.Field name="comment">
