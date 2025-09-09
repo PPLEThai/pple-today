@@ -106,11 +106,11 @@ export class FeedService {
 
   async getFeedComments(
     feedItemId: string,
-    query: { userId?: string; page?: number; limit?: number }
+    query: { userId?: string; cursor?: string; limit?: number }
   ) {
     const feedComments = await this.feedRepository.getFeedItemComments(feedItemId, {
       userId: query.userId,
-      page: query.page ?? 1,
+      cursor: query.cursor,
       limit: query.limit ?? 10,
     })
 

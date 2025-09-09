@@ -14,7 +14,11 @@ export const GetFeedCommentParams = t.Object({
   id: t.String({ description: 'The ID of the feed' }),
 })
 export const GetFeedCommentQuery = t.Object({
-  page: t.Optional(t.Number({ description: 'The page number for pagination', default: 1 })),
+  cursor: t.Optional(
+    t.String({
+      description: 'The cursor for pagination which should be last comment ID of previous page',
+    })
+  ),
   limit: t.Optional(t.Number({ description: 'The number of comments per page', default: 10 })),
 })
 export const GetFeedCommentResponse = t.Array(FeedItemComment)

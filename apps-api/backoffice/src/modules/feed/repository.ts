@@ -519,13 +519,17 @@ export class FeedRepository {
 
   async getFeedItemComments(
     feedItemId: string,
-    query: { userId?: string; page: number; limit: number }
+    query: { userId?: string; cursor?: string; limit: number }
   ) {
-    const skip = Math.max((query.page - 1) * query.limit, 0)
     return await fromRepositoryPromise(
       this.prismaService.feedItemComment.findMany({
         take: query.limit,
-        skip,
+        skip: query.cursor ? 1 : 0,
+        cursor: query.cursor
+          ? {
+              id: query.cursor,
+            }
+          : undefined,
         orderBy: {
           createdAt: 'desc',
         },
