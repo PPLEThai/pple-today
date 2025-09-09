@@ -204,6 +204,7 @@ export const AuthLifeCycleHook = () => {
     },
     enabled: !!discoveryQuery.data && !!sessionQuery.data,
   })
+  useAuthMe()
   const [dialogOpen, setDialogOpen] = useState(false)
   const router = useRouter()
   useEffect(() => {
