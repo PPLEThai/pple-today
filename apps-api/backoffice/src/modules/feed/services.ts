@@ -200,9 +200,7 @@ export class FeedService {
       })
     }
 
-    return ok({
-      id: result.value,
-    })
+    return ok({ ...result.value, author: result.value.user })
   }
 
   async updateFeedComment(postId: string, commentId: string, userId: string, content: string) {

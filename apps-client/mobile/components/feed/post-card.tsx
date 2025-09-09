@@ -517,7 +517,6 @@ function DownvoteCommentForm(props: DownvoteCommentFormProps) {
       onSubmit: formSchema,
     },
     onSubmit: async ({ value }) => {
-      props.onClose()
       const comment = value.comment.trim()
       createReactionMutation.mutateAsync(
         {
@@ -526,9 +525,24 @@ function DownvoteCommentForm(props: DownvoteCommentFormProps) {
         },
         {
           onSuccess: () => {
+            props.onClose()
             toast({
               text1: 'เพิ่มความคิดเห็นส่วนตัวแล้ว',
               icon: MessageCircleIcon,
+            })
+
+            queryClient.invalidateQueries({
+              queryKey: reactQueryClient.getQueryKey('/feed/:id/comments', {
+                pathParams: { id: props.feedId },
+              }),
+            })
+            // optimistic update
+            queryClient.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
+              if (!old) return
+              return {
+                upvoteCount: old.userReaction === 'UP_VOTE' ? old.upvoteCount - 1 : old.upvoteCount,
+                userReaction: old.userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE',
+              } as const
             })
           },
           onError: () => {
@@ -539,20 +553,6 @@ function DownvoteCommentForm(props: DownvoteCommentFormProps) {
           },
         }
       )
-      // TODO
-      queryClient.invalidateQueries({
-        queryKey: reactQueryClient.getQueryKey('/feed/:id/comments', {
-          pathParams: { id: props.feedId },
-        }),
-      })
-      // optimistic update
-      queryClient.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
-        if (!old) return
-        return {
-          upvoteCount: old.userReaction === 'UP_VOTE' ? old.upvoteCount - 1 : old.upvoteCount,
-          userReaction: old.userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE',
-        } as const
-      })
     },
   })
   const onSkip = () => {
@@ -606,7 +606,7 @@ function DownvoteCommentForm(props: DownvoteCommentFormProps) {
             </Button>
           )}
         </form.Subscribe>
-        <Button variant="ghost" onPress={onSkip}>
+        <Button variant="ghost" onPress={onSkip} disabled={createReactionMutation.isPending}>
           <Text>ข้าม</Text>
         </Button>
       </View>
@@ -666,7 +666,6 @@ function CommentForm(props: CommentFormProps) {
       onSubmit: formSchema,
     },
     onSubmit: async ({ value }) => {
-      props.onClose()
       const comment = value.comment.trim()
       commentMutation.mutateAsync(
         {
@@ -674,11 +673,38 @@ function CommentForm(props: CommentFormProps) {
           body: { content: comment },
         },
         {
-          onSuccess: () => {
+          onSuccess: (response) => {
+            props.onClose()
             toast({
               text1: 'เพิ่มความคิดเห็นแล้ว',
               icon: MessageCircleIcon,
             })
+            // optimistic update
+            queryClient.setQueryData(
+              reactQueryClient.getQueryKey('/feed/:id', { pathParams: { id: props.feedId } }),
+              (old) => {
+                if (!old) return
+                return {
+                  ...old,
+                  commentCount: old.commentCount + 1,
+                }
+              }
+            )
+            // manually update infinite query
+            queryClient.setQueryData(
+              // TODO fix type
+              reactQueryClient.getQueryKey('/feed/:id/comments', {
+                pathParams: { id: props.feedId },
+              }) as any,
+              (old: any) => {
+                if (!old) return undefined
+                const updatedFirstPage = [response, ...old.pages[0]]
+                return {
+                  pages: [updatedFirstPage, ...old.pages.slice(1)],
+                  pageParams: old.pageParams,
+                }
+              }
+            )
           },
           onError: () => {
             toast.error({
@@ -688,29 +714,6 @@ function CommentForm(props: CommentFormProps) {
           },
         }
       )
-      // optimistic update
-      queryClient.setQueryData(
-        reactQueryClient.getQueryKey('/feed/:id/comments', {
-          pathParams: { id: props.feedId },
-        }),
-        (old) => {
-          if (!old) return
-          return {
-            ...old,
-            comments: [
-              {
-                id: 'temp-id',
-                content: comment,
-              },
-            ],
-          }
-        }
-      )
-      queryClient.invalidateQueries({
-        queryKey: reactQueryClient.getQueryKey('/feed/:id/comments', {
-          pathParams: { id: props.feedId },
-        }),
-      })
     },
   })
   const onSkip = () => {
@@ -747,12 +750,15 @@ function CommentForm(props: CommentFormProps) {
       <View className="flex flex-col gap-2 px-4">
         <form.Subscribe selector={(state) => [state.isSubmitting]}>
           {([isSubmitting]) => (
-            <Button onPress={form.handleSubmit} disabled={isSubmitting}>
+            <Button
+              onPress={form.handleSubmit}
+              disabled={isSubmitting || commentMutation.isPending}
+            >
               <Text>แสดงความคิดเห็น</Text>
             </Button>
           )}
         </form.Subscribe>
-        <Button variant="ghost" onPress={onSkip}>
+        <Button variant="ghost" onPress={onSkip} disabled={commentMutation.isPending}>
           <Text>ข้าม</Text>
         </Button>
       </View>

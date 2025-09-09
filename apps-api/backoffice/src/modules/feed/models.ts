@@ -61,9 +61,7 @@ export const CreateFeedCommentParams = t.Object({
 export const CreateFeedCommentBody = t.Object({
   content: t.String({ description: 'The content of the comment' }),
 })
-export const CreateFeedCommentResponse = t.Object({
-  id: t.String({ description: 'The ID of the created comment' }),
-})
+export const CreateFeedCommentResponse = FeedItemComment
 
 export type CreateFeedCommentParams = Static<typeof CreateFeedCommentParams>
 export type CreateFeedCommentBody = Static<typeof CreateFeedCommentBody>
