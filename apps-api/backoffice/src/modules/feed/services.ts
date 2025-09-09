@@ -106,11 +106,11 @@ export class FeedService {
 
   async getFeedComments(
     feedItemId: string,
-    query: { userId?: string; page?: number; limit?: number }
+    query: { userId?: string; cursor?: string; limit?: number }
   ) {
     const feedComments = await this.feedRepository.getFeedItemComments(feedItemId, {
       userId: query.userId,
-      page: query.page ?? 1,
+      cursor: query.cursor,
       limit: query.limit ?? 10,
     })
 
@@ -181,7 +181,10 @@ export class FeedService {
     }
 
     return ok({
-      message: `Reaction for feed item ${feedItemId} updated.`,
+      ...result.value,
+      comment: result.value.comment
+        ? { ...result.value.comment, author: result.value.comment.user }
+        : null,
     })
   }
 
@@ -219,9 +222,7 @@ export class FeedService {
       })
     }
 
-    return ok({
-      id: result.value,
-    })
+    return ok({ ...result.value, author: result.value.user })
   }
 
   async updateFeedComment(postId: string, commentId: string, userId: string, content: string) {

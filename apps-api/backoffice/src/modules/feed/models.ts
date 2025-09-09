@@ -14,7 +14,11 @@ export const GetFeedCommentParams = t.Object({
   id: t.String({ description: 'The ID of the feed' }),
 })
 export const GetFeedCommentQuery = t.Object({
-  page: t.Optional(t.Number({ description: 'The page number for pagination', default: 1 })),
+  cursor: t.Optional(
+    t.String({
+      description: 'The cursor for pagination which should be last comment ID of previous page',
+    })
+  ),
   limit: t.Optional(t.Number({ description: 'The number of comments per page', default: 10 })),
 })
 export const GetFeedCommentResponse = t.Array(FeedItemComment)
@@ -36,7 +40,10 @@ export const CreateFeedReactionBody = t.Union([
   }),
 ])
 export const CreateFeedReactionResponse = t.Object({
-  message: t.String({ description: 'Success message' }),
+  feedItemId: t.String({ description: 'The ID of the feed item' }),
+  userId: t.String({ description: 'The ID of the user who reacted' }),
+  type: t.Enum(FeedItemReactionType, { description: 'The type of reaction' }),
+  comment: t.Nullable(FeedItemComment),
 })
 
 export type CreateFeedReactionParams = Static<typeof CreateFeedReactionParams>
@@ -59,9 +66,7 @@ export const CreateFeedCommentParams = t.Object({
 export const CreateFeedCommentBody = t.Object({
   content: t.String({ description: 'The content of the comment' }),
 })
-export const CreateFeedCommentResponse = t.Object({
-  id: t.String({ description: 'The ID of the created comment' }),
-})
+export const CreateFeedCommentResponse = FeedItemComment
 
 export type CreateFeedCommentParams = Static<typeof CreateFeedCommentParams>
 export type CreateFeedCommentBody = Static<typeof CreateFeedCommentBody>

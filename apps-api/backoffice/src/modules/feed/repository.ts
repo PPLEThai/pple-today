@@ -412,13 +412,18 @@ export class FeedRepository {
               feedItemId,
             },
           },
+          select: {
+            userId: true,
+            feedItemId: true,
+            type: true,
+          },
         })
 
         if (existingFeedItemReaction?.type === type) {
-          return existingFeedItemReaction
+          return { ...existingFeedItemReaction, comment: null }
         }
 
-        const result = await tx.feedItemReaction.upsert({
+        const reaction = await tx.feedItemReaction.upsert({
           where: {
             userId_feedItemId: {
               userId,
@@ -432,6 +437,11 @@ export class FeedRepository {
             feedItemId,
             userId,
             type,
+          },
+          select: {
+            userId: true,
+            feedItemId: true,
+            type: true,
           },
         })
 
@@ -450,12 +460,25 @@ export class FeedRepository {
         }
 
         if (type === FeedItemReactionType.DOWN_VOTE && content) {
-          await tx.feedItemComment.create({
+          const comment = await tx.feedItemComment.create({
             data: {
               feedItemId,
               userId,
               content,
               isPrivate: true, // Assuming downvotes are private comments
+            },
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
+              isPrivate: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  profileImage: true,
+                },
+              },
             },
           })
 
@@ -465,9 +488,10 @@ export class FeedRepository {
               numberOfComments: { increment: 1 },
             },
           })
+          return { ...reaction, comment }
         }
 
-        return result
+        return { reaction, comment: null }
       })
     )
   }
@@ -495,10 +519,20 @@ export class FeedRepository {
 
   async getFeedItemComments(
     feedItemId: string,
-    query: { userId?: string; page: number; limit: number }
+    query: { userId?: string; cursor?: string; limit: number }
   ) {
     return await fromRepositoryPromise(
       this.prismaService.feedItemComment.findMany({
+        take: query.limit,
+        skip: query.cursor ? 1 : 0,
+        cursor: query.cursor
+          ? {
+              id: query.cursor,
+            }
+          : undefined,
+        orderBy: {
+          createdAt: 'desc',
+        },
         where: {
           feedItemId,
           OR: [{ isPrivate: false }, { userId: query.userId }],

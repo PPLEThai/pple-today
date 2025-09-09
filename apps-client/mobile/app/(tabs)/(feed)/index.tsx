@@ -8,6 +8,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { ExtractBodyResponse } from '@pple-today/api-client'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
@@ -36,12 +37,11 @@ import {
 } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import { GetBannersResponse } from '@api/backoffice/src/modules/banner/models'
-import { GetMyFeedResponse } from '@api/backoffice/src/modules/feed/models'
+import { ApplicationApiSchema } from '@api/backoffice'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AnnouncementCard } from '@app/components/announcement'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
-import { PostCard, PostCardSkeleton } from '@app/components/feed/post-card'
+import { FeedPostCard, PostCardSkeleton } from '@app/components/feed/post-card'
 import {
   Pager,
   PagerContent,
@@ -154,6 +154,7 @@ function MainHeader() {
   )
 }
 
+type GetBannersResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/banners'>
 const PLACEHOLDER_BANNERS: GetBannersResponse = [
   {
     id: '1',
@@ -457,6 +458,7 @@ const TAGS = [
   'สิ่งแวดล้อม',
 ]
 
+const LIMIT = 10
 function FeedContent(props: PagerScrollViewProps) {
   const { headerHeight, isFocused, scrollElRef, setScrollViewTag } = props
   React.useEffect(() => {
@@ -472,7 +474,7 @@ function FeedContent(props: PagerScrollViewProps) {
     queryFn: async ({ pageParam }) => {
       const session = await getAuthSession()
       const response = await fetchClient('/feed/me', {
-        query: { page: pageParam, limit: 5 },
+        query: { page: pageParam, limit: LIMIT },
         headers: session ? { Authorization: `Bearer ${session.accessToken}` } : {},
       })
       if (response.error) {
@@ -483,6 +485,9 @@ function FeedContent(props: PagerScrollViewProps) {
     initialPageParam: 1,
     getNextPageParam: (lastPage, _, lastPageParam) => {
       if (lastPage && lastPage.length === 0) {
+        return undefined
+      }
+      if (lastPage.length < LIMIT) {
         return undefined
       }
       return lastPageParam + 1
@@ -501,6 +506,7 @@ function FeedContent(props: PagerScrollViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
 
+  type GetMyFeedResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/me'>
   const data = React.useMemo((): GetMyFeedResponse[] => {
     if (!feedInfiniteQuery.data) return []
     return feedInfiniteQuery.data.pages.filter((page) => !!page)
@@ -512,7 +518,7 @@ function FeedContent(props: PagerScrollViewProps) {
   const Footer =
     feedInfiniteQuery.hasNextPage || feedInfiniteQuery.isLoading || feedInfiniteQuery.error ? (
       <PostCardSkeleton />
-    ) : data.length === 0 ? (
+    ) : data.length === 1 && data[0].length === 0 ? (
       // Empty State
       <View className="flex flex-col items-center justify-center py-6">
         <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีโพสต์</Text>
@@ -534,18 +540,7 @@ function FeedContent(props: PagerScrollViewProps) {
           {items.map((item) => {
             switch (item.type) {
               case 'POST':
-                return (
-                  <PostCard
-                    key={item.id}
-                    id={item.id}
-                    author={item.author}
-                    commentCount={item.commentCount}
-                    createdAt={item.createdAt.toString()}
-                    reactions={item.reactions}
-                    userReaction={item.userReaction}
-                    post={item.post}
-                  />
-                )
+                return <FeedPostCard key={item.id} feedItem={item} />
               case 'POLL':
                 // TODO: poll feed card
                 return null
