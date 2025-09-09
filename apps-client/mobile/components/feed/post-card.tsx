@@ -853,16 +853,7 @@ export const PostContent = (props: { feedItem: FeedPostItem }) => {
         )}
         {props.feedItem.post.content && (
           <View className="px-4">
-            <MoreOrLess
-              numberOfLines={3}
-              moreText="อ่านเพิ่มเติม"
-              lessText="แสดงน้อยลง"
-              animated
-              textComponent={TextPost}
-              buttonComponent={ButtonTextPost}
-            >
-              {props.feedItem.post.content}
-            </MoreOrLess>
+            <TextPost>{props.feedItem.post.content}</TextPost>
           </View>
         )}
         {props.feedItem.post.hashTags.length > 0 && (
