@@ -145,6 +145,7 @@ const HeaderSection = () => {
   )
 }
 const ProfileSection = () => {
+  const router = useRouter()
   const profileQuery = reactQueryClient.useQuery('/profile/me', {})
   const getRoleName = (role: UserRole) => {
     switch (role) {
@@ -188,7 +189,15 @@ const ProfileSection = () => {
   return (
     <View className="flex flex-row justify-between items-center">
       <View className="flex flex-row items-center gap-4">{Profile}</View>
-      <Button size="icon" variant="outline" className="border-base-outline-default">
+      <Button
+        size="icon"
+        variant="outline"
+        className="border-base-outline-default"
+        onPress={(e) => {
+          e.preventDefault()
+          router.push('/edit/edit-profile')
+        }}
+      >
         <Icon icon={PencilIcon} strokeWidth={1} size={20} />
       </Button>
     </View>
