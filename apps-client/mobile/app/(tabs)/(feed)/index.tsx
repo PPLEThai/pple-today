@@ -8,6 +8,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { ExtractBodyResponse } from '@pple-today/api-client'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
@@ -36,8 +37,7 @@ import {
 } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import { GetBannersResponse } from '@api/backoffice/src/modules/banner/models'
-import { GetMyFeedResponse } from '@api/backoffice/src/modules/feed/models'
+import { ApplicationApiSchema } from '@api/backoffice'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AnnouncementCard } from '@app/components/announcement'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
@@ -154,6 +154,7 @@ function MainHeader() {
   )
 }
 
+type GetBannersResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/banners'>
 const PLACEHOLDER_BANNERS: GetBannersResponse = [
   {
     id: '1',
@@ -501,6 +502,7 @@ function FeedContent(props: PagerScrollViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
 
+  type GetMyFeedResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/me'>
   const data = React.useMemo((): GetMyFeedResponse[] => {
     if (!feedInfiniteQuery.data) return []
     return feedInfiniteQuery.data.pages.filter((page) => !!page)

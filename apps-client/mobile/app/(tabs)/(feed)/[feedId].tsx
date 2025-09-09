@@ -1,6 +1,7 @@
 import React from 'react'
 import { FlatList, View } from 'react-native'
 
+import { ExtractBodyResponse } from '@pple-today/api-client'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
@@ -10,10 +11,7 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { usePathname, useRouter } from 'expo-router'
 import { ArrowLeftIcon, EyeOffIcon } from 'lucide-react-native'
 
-import {
-  GetFeedCommentResponse,
-  GetFeedContentResponse,
-} from '@api/backoffice/src/modules/feed/models'
+import { ApplicationApiSchema } from '@api/backoffice'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { PostContent } from '@app/components/feed/post-card'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
@@ -56,6 +54,7 @@ export default function FeedDetailPage() {
   )
 }
 
+type GetFeedContentResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/:id'>
 function FeedItemContent({ item }: { item: GetFeedContentResponse }) {
   switch (item.type) {
     case 'POST':
@@ -84,7 +83,7 @@ function FeedComment({
       const session = await getAuthSession()
       const response = await fetchClient('/feed/:id/comments', {
         params: { id: feedId! },
-        query: { page: pageParam, limit: 10 },
+        query: { cursor: pageParam, limit: 10 },
         headers: session ? { Authorization: `Bearer ${session.accessToken}` } : {},
       })
       if (response.error) {
@@ -92,12 +91,12 @@ function FeedComment({
       }
       return response.data
     },
-    initialPageParam: 1,
+    initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage, _, lastPageParam) => {
       if (lastPage && lastPage.length === 0) {
         return undefined
       }
-      return lastPageParam + 1
+      return lastPage.at(-1)!.id
     },
     enabled: !!feedId,
   })
@@ -118,6 +117,11 @@ function FeedComment({
     commentInfiniteQuery.fetchNextPage,
   ])
 
+  type GetFeedCommentResponse = ExtractBodyResponse<
+    ApplicationApiSchema,
+    'get',
+    '/feed/:id/comments'
+  >
   const data = React.useMemo((): GetFeedCommentResponse[] => {
     if (!commentInfiniteQuery.data) return []
     return commentInfiniteQuery.data.pages.filter((page) => !!page)
