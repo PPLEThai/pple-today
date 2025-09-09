@@ -36,8 +36,7 @@ import {
 } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import { GetBannersResponse } from '@api/backoffice/src/modules/banner/models'
-import { GetMyFeedResponse } from '@api/backoffice/src/modules/feed/models'
+import type { GetBannersResponse, GetMyFeedResponse } from '@api/backoffice/app'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AnnouncementCard } from '@app/components/announcement'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'

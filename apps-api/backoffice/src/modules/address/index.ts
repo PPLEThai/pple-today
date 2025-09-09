@@ -10,7 +10,7 @@ import {
   GetProvinceResponse,
   GetSubDistrictQuery,
   GetSubDistrictResponse,
-} from './model'
+} from './models'
 import { AddressServicePlugin } from './service'
 
 export const AddressController = new Elysia({

@@ -143,6 +143,3 @@ if (process.env.ENABLE_SWAGGER === 'true') {
 app.listen(process.env.PORT, () => {
   console.log(`Server is running on http://localhost:${process.env.PORT}`)
 })
-
-export type ApplicationApiSchema = typeof ApplicationController
-export type AdminApiSchema = typeof AdminController

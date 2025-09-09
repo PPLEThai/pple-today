@@ -8,7 +8,7 @@ import { Text } from '@pple-today/ui/text'
 import { usePathname, useRouter } from 'expo-router'
 import { ArrowLeftIcon, EyeOffIcon } from 'lucide-react-native'
 
-import { GetFeedContentResponse } from '@api/backoffice/src/modules/feed/models'
+import type { GetFeedContentResponse } from '@api/backoffice/app'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { PostDetail } from '@app/components/feed/post-card'
 import { reactQueryClient } from '@app/libs/api-client'

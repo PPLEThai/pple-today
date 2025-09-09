@@ -4,7 +4,6 @@ import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import { ScrollView } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
 
-import type { ExtractBodyResponse } from '@pple-today/api-client'
 import { Avatar, AvatarFallback, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
@@ -44,8 +43,7 @@ import {
   TrophyIcon,
 } from 'lucide-react-native'
 
-import type { ApplicationApiSchema } from '@api/backoffice'
-import { GetUserParticipationResponse } from '@api/backoffice/src/modules/profile/models'
+import type { GetMyProfileResponse, GetUserParticipationResponse } from '@api/backoffice/app'
 import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
@@ -60,7 +58,7 @@ import {
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 
-type UserRole = ExtractBodyResponse<ApplicationApiSchema, 'get', '/profile/me'>['role']
+type UserRole = GetMyProfileResponse['role']
 
 export default function Index() {
   const sessionQuery = useSessionQuery()
