@@ -23,6 +23,7 @@ import { z } from 'zod/v4'
 
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { getAuthSession } from '@app/libs/auth/session'
+import { ImageMimeType } from '@app/types/file'
 import { handleUploadSignedUrl } from '@app/utils/upload'
 
 import { OnboardingAddressState, useOnboardingContext } from '../../contexts/onboarding-context'
@@ -185,6 +186,11 @@ export function OnboardingAddress() {
       }
 
       const result = await fetchClient('/profile/upload-url', {
+        method: 'POST',
+        body: {
+          contentType: (state.profileStepResult.imagePickerResult.assets[0].mimeType ||
+            'image/png') as ImageMimeType,
+        },
         headers: {
           Authorization: `Bearer ${session.accessToken}`,
         },

@@ -2,7 +2,7 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
-import { GetUploadSignedUrlBody, GetUploadSignedUrlResponse } from './models'
+import { CreateUploadSignedUrlBody, CreateUploadSignedUrlResponse } from './models'
 import { AdminFileServicePlugin } from './services'
 
 import { AuthGuardPlugin } from '../../../plugins/auth-guard'
@@ -12,7 +12,7 @@ export const AdminFileController = new Elysia({ prefix: '/file', tags: ['Admin F
   .post(
     '/upload-url',
     async ({ fileService, status, body }) => {
-      const result = await fileService.getUploadSignedUrl(body)
+      const result = await fileService.createUploadSignedUrl(body)
 
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
@@ -22,10 +22,13 @@ export const AdminFileController = new Elysia({ prefix: '/file', tags: ['Admin F
     },
     {
       requiredLocalUser: true,
-      body: GetUploadSignedUrlBody,
+      body: CreateUploadSignedUrlBody,
       response: {
-        200: GetUploadSignedUrlResponse,
-        ...createErrorSchema(InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR),
+        200: CreateUploadSignedUrlResponse,
+        ...createErrorSchema(
+          InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
+          InternalErrorCode.FILE_UNSUPPORTED_MIME_TYPE
+        ),
       },
       detail: {
         summary: 'Get upload signed URL',
