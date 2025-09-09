@@ -204,7 +204,6 @@ export const AuthLifeCycleHook = () => {
     },
     enabled: !!discoveryQuery.data && !!sessionQuery.data,
   })
-  useAuthMe()
   const [dialogOpen, setDialogOpen] = useState(false)
   const router = useRouter()
   useEffect(() => {
@@ -218,6 +217,10 @@ export const AuthLifeCycleHook = () => {
       console.error('Error fetching user info:', userQuery.error)
     }
   }, [userQuery.error])
+
+  // TODO: make these queries run in background with low priority after logging in
+  useAuthMe()
+  reactQueryClient.useQuery('/profile/me', {}, { enabled: !!userQuery.data })
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogContent>
@@ -302,7 +305,7 @@ export const useLoginMutation = () => {
       router.push('/loading')
     },
     onError: (error) => {
-      console.error('Error logging out: ', error)
+      console.error('Error logging in: ', error)
       router.navigate('/profile')
     },
     onSuccess: async (result) => {
