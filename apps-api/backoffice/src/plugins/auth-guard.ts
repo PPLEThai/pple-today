@@ -4,6 +4,8 @@ import { UserRole } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
+import { ConfigServicePlugin } from './config'
+
 import { AuthRepository, AuthRepositoryPlugin } from '../modules/auth/repository'
 import { introspectAccessToken } from '../utils/jwt'
 
