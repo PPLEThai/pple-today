@@ -1,5 +1,31 @@
 # @api/backoffice
 
+## 0.3.0
+
+### Minor Changes
+
+- [#62](https://github.com/PPLEThai/pple-today/pull/62) [`be2e09e`](https://github.com/PPLEThai/pple-today/commit/be2e09e433c00a44cf3af7e6ff46e56f2c0b73bb) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE - 254] [API] Get address filtering](https://linear.app/snts/issue/PPLE-254/api-get-address-filtering)
+
+- [#64](https://github.com/PPLEThai/pple-today/pull/64) [`595b0cc`](https://github.com/PPLEThai/pple-today/commit/595b0cca7309cd435942fd990cc28161fb1d571b) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-260] [API] Topics](https://linear.app/snts/issue/PPLE-260/api-topics)
+
+- [#47](https://github.com/PPLEThai/pple-today/pull/47) [`0287e05`](https://github.com/PPLEThai/pple-today/commit/0287e05b80a0852b02f3ccfafa053a0d2b4691b9) Thanks [@miello](https://github.com/miello)! - [PPLE-201] Feed Recommendation
+
+- [#59](https://github.com/PPLEThai/pple-today/pull/59) [`276fab6`](https://github.com/PPLEThai/pple-today/commit/276fab60bad09b0cfc436d97757f53427a4304aa) Thanks [@miello](https://github.com/miello)! - [[PPLE-177] [API] FB Webhook endpoint and subscription](https://linear.app/snts/issue/PPLE-177/api-fb-webhook-endpoint-and-subscription)
+
+- [#63](https://github.com/PPLEThai/pple-today/pull/63) [`249fdcc`](https://github.com/PPLEThai/pple-today/commit/249fdcc240b76a333568b8eab770658333b80b47) Thanks [@miello](https://github.com/miello)! - [[PPLE-270] Recent Activity in PPLE Today application endpoint](https://linear.app/snts/issue/PPLE-270/recent-activity-in-pple-today-application-endpoint)
+
+- [#61](https://github.com/PPLEThai/pple-today/pull/61) [`a6d0d71`](https://github.com/PPLEThai/pple-today/commit/a6d0d7138821d613911af5f76bb8fc591903dc7a) Thanks [@miello](https://github.com/miello)! - [[PPLE-269] [API] File transaction and rollback mechanism](https://linear.app/snts/issue/PPLE-269/api-file-transaction-and-rollback-mechanism)
+
+### Patch Changes
+
+- [#66](https://github.com/PPLEThai/pple-today/pull/66) [`afcfad9`](https://github.com/PPLEThai/pple-today/commit/afcfad927006e99831c2d55f09be84e824b0b659) Thanks [@miello](https://github.com/miello)! - [[PPLE-273] [API] Fix upsert feed item reaction](https://linear.app/snts/issue/PPLE-273/api-fix-upsert-feed-item-reaction)
+
+- [#65](https://github.com/PPLEThai/pple-today/pull/65) [`30e3c62`](https://github.com/PPLEThai/pple-today/commit/30e3c62ae4e662c850eab10f0c65f9ba85a63c49) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-218] Post Card Integrate](https://linear.app/snts/issue/PPLE-218/post-card-integrate)
+
+- [#72](https://github.com/PPLEThai/pple-today/pull/72) [`0880af9`](https://github.com/PPLEThai/pple-today/commit/0880af9c90bbcb13e40139182911e419202fb566) Thanks [@miello](https://github.com/miello)! - [[PPLE-290] [API] Prisma not working in staging environment](https://linear.app/snts/issue/PPLE-290/api-prisma-not-working-in-staging-environment)
+
+- [#70](https://github.com/PPLEThai/pple-today/pull/70) [`16f19f0`](https://github.com/PPLEThai/pple-today/commit/16f19f0e9197e31fc77cfae54729c5c5e62c2fa0) Thanks [@miello](https://github.com/miello)! - [[PPLE-288] [API] Feed Bug when no user authorize](https://linear.app/snts/issue/PPLE-288/api-feed-bug-when-no-user-authorize)
+
 ## 0.2.0
 
 ### Minor Changes

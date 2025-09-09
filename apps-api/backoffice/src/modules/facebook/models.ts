@@ -35,6 +35,22 @@ export const GetFacebookUserPageListQuery = t.Object({
 })
 export type GetFacebookUserPageListQuery = Static<typeof GetFacebookUserPageListQuery>
 
+export const GetLinkedPageAvailableStatusQuery = t.Object({
+  pageIds: t.Array(
+    t.String({
+      description: 'The IDs of the Facebook pages to check availability for',
+      minLength: 1,
+    }),
+    { minItems: 1 }
+  ),
+})
+export type GetLinkedPageAvailableStatusQuery = Static<typeof GetLinkedPageAvailableStatusQuery>
+
+export const GetLinkedPageAvailableStatusResponse = t.Record(t.String(), t.Boolean())
+export type GetLinkedPageAvailableStatusResponse = Static<
+  typeof GetLinkedPageAvailableStatusResponse
+>
+
 export const GetFacebookUserPageListResponse = t.Array(
   t.Object({
     accessToken: t.String({

@@ -1,8 +1,8 @@
+import { AnnouncementType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
-import { AnnouncementType } from '../../../../__generated__/prisma'
-import { DraftAnnouncement, PublishedAnnouncement } from '../../../dtos/announcement'
-import { FilePath } from '../../../dtos/file'
+import { DraftAnnouncement, PublishedAnnouncement } from '@pple-today/api-common/dtos'
+import { FilePath } from '@pple-today/api-common/dtos'
 
 export const AnnouncementIdParams = t.Object({
   announcementId: t.String({ description: 'The ID of the published/draft announcement' }),

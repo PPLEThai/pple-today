@@ -1,52 +1,44 @@
 import React from 'react'
 import { View } from 'react-native'
 
-import { Avatar, AvatarFallback, AvatarImage } from '@pple-today/ui/avatar'
 import { Button } from '@pple-today/ui/button'
 import { FormControl, FormItem, FormLabel } from '@pple-today/ui/form'
-import { Icon } from '@pple-today/ui/icon'
 import { Input } from '@pple-today/ui/input'
 import { Text } from '@pple-today/ui/text'
-import { useForm, useStore } from '@tanstack/react-form'
+import { useForm } from '@tanstack/react-form'
 import * as ImagePicker from 'expo-image-picker'
-import { Pencil } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import { usePhotoLibraryPermission } from '@app/libs/use-permission'
+import { ProfileSelect } from '@app/components/profile/profile-select'
+import { reactQueryClient } from '@app/libs/api-client'
 
-import { OnboardingProfileState, useOnboardingContext } from './onboarding-context'
+import { useOnboardingContext } from '../../contexts/onboarding-context'
 
 const formSchema = z.object({
   name: z.string(),
-  profileSignedImage: z.string(),
+  profileImage: z.string(),
 })
 
 export function OnboardingProfile() {
   const { state, dispatch } = useOnboardingContext()
-  const [selectedImage, setSelectedImage] = React.useState<OnboardingProfileState['image'] | null>(
-    state.profileStepResult?.image ?? null
-  )
-  const { requestPhotoAccessIfNeeded } = usePhotoLibraryPermission()
+  const [imagePickerRes, setImagePickerRes] = React.useState<
+    ImagePicker.ImagePickerSuccessResult | undefined
+  >(state.profileStepResult?.imagePickerResult)
+
+  const profileQuery = reactQueryClient.useQuery('/profile/me', {})
 
   const form = useForm({
     defaultValues: {
-      name: state.profileStepResult?.name ?? '',
-      profileSignedImage: state.profileStepResult?.imageUri ?? '',
+      name: state.profileStepResult?.name ?? profileQuery.data?.name ?? '',
+      profileImage: imagePickerRes?.assets[0]?.uri ?? '',
     },
     validators: {
       onSubmit: formSchema,
     },
     onSubmit: async (values) => {
-      if (!selectedImage) {
-        // alert
-        return
-      }
-
       const profilePayload = {
         name: values.value.name,
-        image: selectedImage,
-        imageUri: '', // get signed image here
-        imageMime: '', // get signed image mime here
+        imagePickerResult: imagePickerRes,
       }
 
       dispatch({
@@ -57,71 +49,25 @@ export function OnboardingProfile() {
     },
   })
 
-  const canContinue = useStore(form.store, (state) => state.values.name)
-
   const handleNext = React.useCallback(() => {
     form.handleSubmit()
   }, [form])
 
   const handleSkip = React.useCallback(() => {
-    dispatch({ type: 'next' })
+    dispatch({ type: 'skip' })
   }, [dispatch])
-
-  const pickImageAsync = React.useCallback(async () => {
-    const hasPermission = await requestPhotoAccessIfNeeded()
-    if (!hasPermission) {
-      alert('Permission to access media library is required!')
-      return
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      allowsEditing: true,
-      quality: 1,
-    })
-
-    if (result.canceled) {
-      return
-    }
-
-    const imageObj = {
-      path: result.assets[0].uri,
-      mime: 'image',
-      size: result.assets[0].fileSize || 0,
-      width: result.assets[0].width,
-      height: result.assets[0].height,
-    }
-
-    setSelectedImage(imageObj)
-  }, [requestPhotoAccessIfNeeded])
 
   return (
     <>
       <View className="flex-1 items-center p-6 gap-10">
-        <form.Field name="profileSignedImage">
+        <form.Field name="profileImage">
           {(field) => (
             <FormItem field={field}>
               <FormControl>
-                <Button
-                  variant="ghost"
-                  className="relative size-fit p-0 rounded-full"
-                  onPress={pickImageAsync}
-                >
-                  <Avatar className="size-36" alt="Profile">
-                    <AvatarImage
-                      source={{
-                        uri: selectedImage?.path,
-                      }}
-                    />
-                    <AvatarFallback>
-                      <View />
-                    </AvatarFallback>
-                  </Avatar>
-                  <View className="absolute bottom-0 right-0">
-                    <View className="bg-base-primary-default rounded-full border-2 size-fit border-background p-2">
-                      <Icon icon={Pencil} size={20} className="text-white" />
-                    </View>
-                  </View>
-                </Button>
+                <ProfileSelect
+                  imagePickerResult={imagePickerRes}
+                  onChangeImagePickerResult={setImagePickerRes}
+                />
               </FormControl>
             </FormItem>
           )}
@@ -144,9 +90,13 @@ export function OnboardingProfile() {
         </View>
       </View>
       <View className="gap-2 px-6 pb-6">
-        <Button disabled={!canContinue} onPress={handleNext}>
-          <Text>ถัดไป</Text>
-        </Button>
+        <form.Subscribe selector={(state) => [state.values.name]}>
+          {([name]) => (
+            <Button disabled={!name} onPress={handleNext}>
+              <Text>ถัดไป</Text>
+            </Button>
+          )}
+        </form.Subscribe>
         <Button variant="ghost" onPress={handleSkip}>
           <Text>ข้าม</Text>
         </Button>

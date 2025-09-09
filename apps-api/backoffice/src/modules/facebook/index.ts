@@ -1,9 +1,13 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
 import {
   GetFacebookUserPageListQuery,
   GetFacebookUserPageListResponse,
   GetLinkedFacebookPageResponse,
+  GetLinkedPageAvailableStatusQuery,
+  GetLinkedPageAvailableStatusResponse,
   LinkFacebookPageToUserBody,
   LinkFacebookPageToUserResponse,
   RequestAccessTokenQuery,
@@ -13,9 +17,7 @@ import {
 import { FacebookServicePlugin } from './services'
 import { FacebookWebhookController } from './webhook'
 
-import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
-import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 
 export const FacebookController = new Elysia({
   prefix: '/facebook',
@@ -23,6 +25,7 @@ export const FacebookController = new Elysia({
 })
   .use([FacebookServicePlugin, AuthGuardPlugin])
   .use(FacebookWebhookController)
+  // TODO: Remove this endpoint groups
   .group('/token', (app) =>
     app
       .get(
@@ -84,6 +87,26 @@ export const FacebookController = new Elysia({
   .group('/linked-page', (app) =>
     app
       .get(
+        '/available',
+        async ({ query, status, facebookService }) => {
+          const availableStatus = await facebookService.getLinkedPageAvailableStatus(query.pageIds)
+
+          if (availableStatus.isErr()) {
+            return mapErrorCodeToResponse(availableStatus.error, status)
+          }
+
+          return status(200, availableStatus.value)
+        },
+        {
+          requiredLocalUser: true,
+          query: GetLinkedPageAvailableStatusQuery,
+          response: {
+            200: GetLinkedPageAvailableStatusResponse,
+            ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+          },
+        }
+      )
+      .get(
         '/',
         async ({ status, facebookService, user }) => {
           const linkedPageResult = await facebookService.getLinkedFacebookPage(user.id)
@@ -124,13 +147,7 @@ export const FacebookController = new Elysia({
           })
 
           if (linkResult.isErr()) {
-            return mapErrorCodeToResponse(
-              {
-                code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-                message: 'Failed to link Facebook page',
-              },
-              status
-            )
+            return mapErrorCodeToResponse(linkResult.error, status)
           }
 
           return status(201, {
@@ -142,7 +159,16 @@ export const FacebookController = new Elysia({
           body: LinkFacebookPageToUserBody,
           response: {
             201: LinkFacebookPageToUserResponse,
-            ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+            ...createErrorSchema(
+              InternalErrorCode.INTERNAL_SERVER_ERROR,
+              InternalErrorCode.FACEBOOK_API_ERROR,
+              InternalErrorCode.FACEBOOK_INVALID_RESPONSE,
+              InternalErrorCode.FACEBOOK_INVALID_ACCESS_TOKEN,
+              InternalErrorCode.FACEBOOK_PAGE_ALREADY_LINKED,
+              InternalErrorCode.FILE_UPLOAD_ERROR,
+              InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
+              InternalErrorCode.USER_NOT_FOUND
+            ),
           },
           detail: {
             summary: 'Link Facebook Page',

@@ -1,3 +1,7 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { FilePath } from '@pple-today/api-common/dtos'
+import { FileService } from '@pple-today/api-common/services'
+import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 import * as R from 'remeda'
@@ -9,10 +13,8 @@ import {
 } from './models'
 import { ProfileRepository, ProfileRepositoryPlugin } from './repository'
 
-import { InternalErrorCode } from '../../dtos/error'
-import { mapRepositoryError } from '../../utils/error'
+import { FileServicePlugin } from '../../plugins/file'
 import { AuthRepository, AuthRepositoryPlugin } from '../auth/repository'
-import { FileService, FileServicePlugin } from '../file/services'
 
 export class ProfileService {
   constructor(
@@ -130,9 +132,11 @@ export class ProfileService {
       address: userData.address
         ? {
             connect: {
-              district_subDistrict: {
+              province_district_subDistrict_postalCode: {
+                province: userData.address.province,
                 district: userData.address.district,
                 subDistrict: userData.address.subDistrict,
+                postalCode: userData.address.postalCode,
               },
             },
           }
@@ -204,7 +208,7 @@ export class ProfileService {
   }
 
   async getProfileUploadUrl(userId: string) {
-    const fileKey = `users/profile-picture-${userId}.png`
+    const fileKey = `temp/users/profile-picture-${userId}.png` satisfies FilePath
     const uploadUrl = await this.fileService.getUploadSignedUrl(fileKey, {
       contentType: 'image/png',
     })

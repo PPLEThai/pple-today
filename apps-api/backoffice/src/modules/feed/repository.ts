@@ -1,15 +1,16 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { FeedItem, FeedItemBaseContent } from '@pple-today/api-common/dtos'
+import { FileService, PrismaService } from '@pple-today/api-common/services'
+import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { FeedItemReactionType, FeedItemType, Prisma, UserRole } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { Ok, ok } from 'neverthrow'
 import { sumBy } from 'remeda'
 
 import { GetFeedContentResponse } from './models'
 
-import { FeedItemReactionType, FeedItemType, Prisma } from '../../../__generated__/prisma'
-import { InternalErrorCode } from '../../dtos/error'
-import { FeedItem, FeedItemBaseContent } from '../../dtos/feed'
-import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
-import { err, exhaustiveGuard, fromRepositoryPromise } from '../../utils/error'
-import { FileService, FileServicePlugin } from '../file/services'
+import { FileServicePlugin } from '../../plugins/file'
+import { PrismaServicePlugin } from '../../plugins/prisma'
 
 export class FeedRepository {
   constructor(
@@ -154,6 +155,11 @@ export class FeedRepository {
             attachments: rawFeedItem.post.attachments.map((image) => ({
               id: image.id,
               type: image.type,
+              width: image.width ?? undefined,
+              height: image.height ?? undefined,
+              thumbnailUrl: image.thumbnailPath
+                ? this.fileService.getPublicFileUrl(image.thumbnailPath)
+                : undefined,
               url: this.fileService.getPublicFileUrl(image.url),
             })),
           },
@@ -301,6 +307,44 @@ export class FeedRepository {
         include: this.constructFeedItemInclude(userId),
       })
     )
+
+    if (rawFeedItems.isErr()) return err(rawFeedItems.error)
+
+    const feedItems = rawFeedItems.value.map((item) => this.transformToFeedItem(item))
+    const feedItemErr = feedItems.find((item) => item.isErr())
+
+    if (feedItemErr) {
+      return err(feedItemErr.error)
+    }
+
+    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
+  }
+
+  async listFeedItemsByUserId(userId: string | undefined, query: { page: number; limit: number }) {
+    const skip = Math.max((query.page - 1) * query.limit, 0)
+    const rawFeedItems = await fromRepositoryPromise(async () => {
+      await this.prismaService.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { id: true },
+      })
+
+      return await this.prismaService.feedItem.findMany({
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
+        take: query.limit,
+        where: {
+          authorId: userId,
+          author: {
+            role: {
+              not: UserRole.OFFICIAL,
+            },
+          },
+        },
+        include: this.constructFeedItemInclude(userId),
+      })
+    })
 
     if (rawFeedItems.isErr()) return err(rawFeedItems.error)
 

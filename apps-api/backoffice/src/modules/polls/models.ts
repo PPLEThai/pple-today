@@ -1,7 +1,7 @@
 import { Static, t } from 'elysia'
 
-import { FeedItemPoll } from '../../dtos/feed'
-import { PaginationQuery } from '../../dtos/pagination'
+import { FeedItemPoll } from '@pple-today/api-common/dtos'
+import { PaginationQuery } from '@pple-today/api-common/dtos'
 
 export const ListPollsQuery = PaginationQuery
 export type ListPollsQuery = Static<typeof ListPollsQuery>

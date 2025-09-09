@@ -1,0 +1,50 @@
+enum UserRole {
+    USER
+    REPRESENTATIVE
+    MEMBER
+    STAFF
+    OFFICIAL
+}
+
+model User {
+    id           String   @id @default(cuid())
+    name         String
+    phoneNumber  String   @unique
+    profileImage String?
+    point        Int      @default(0)
+    role         UserRole @default(USER)
+
+    responsibleArea String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    onBoardingCompleted Boolean @default(false)
+
+    numberOfPosts           Int @default(0)
+    numberOfFollowers       Int @default(0)
+    numberOfFollowing       Int @default(0)
+    numberOfFollowingTopics Int @default(0)
+
+    province    String?
+    district    String?
+    subDistrict String?
+    postalCode  String?
+    address     Address? @relation(fields: [province, district, subDistrict, postalCode], references: [province, district, subDistrict, postalCode])
+
+    pollAnswers PollAnswer[]
+
+    followings     UserFollowsUser[]  @relation("Follows")
+    followers      UserFollowsUser[]  @relation("FollowedBy")
+    followedTopics UserFollowsTopic[]
+
+    eventAttendants EventAttendant[]
+
+    electionEligibleVoters ElectionEligibleVoter[]
+
+    linkedPage FacebookPage?
+
+    feedItems     FeedItem[]
+    feedReactions FeedItemReaction[]
+    feedComments  FeedItemComment[]
+}

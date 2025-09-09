@@ -1,11 +1,4 @@
-import { TAnySchema } from '@sinclair/typebox'
-import { Check } from '@sinclair/typebox/value'
-import { createHmac } from 'crypto'
-import { Elysia, t } from 'elysia'
-import { fromPromise, ok } from 'neverthrow'
-
-import serverEnv from '../../config/env'
-import { InternalErrorCode } from '../../dtos/error'
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import {
   AccessTokenResponse,
   ErrorBody,
@@ -14,12 +7,21 @@ import {
   InspectAccessTokenResponse,
   ListUserPageResponse,
   PagePost,
-} from '../../dtos/facebook'
-import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '../../plugins/logger'
-import { PrismaService, PrismaServicePlugin } from '../../plugins/prisma'
-import { err } from '../../utils/error'
-import { fromRepositoryPromise } from '../../utils/error'
-import { FileService, FileServicePlugin } from '../file/services'
+} from '@pple-today/api-common/dtos'
+import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
+import { PrismaService } from '@pple-today/api-common/services'
+import { FileService } from '@pple-today/api-common/services'
+import { err } from '@pple-today/api-common/utils'
+import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { TAnySchema } from '@sinclair/typebox'
+import { Check } from '@sinclair/typebox/value'
+import { createHmac } from 'crypto'
+import { Elysia, t } from 'elysia'
+import { fromPromise, ok } from 'neverthrow'
+
+import { ConfigServicePlugin } from '../../plugins/config'
+import { FileServicePlugin } from '../../plugins/file'
+import { PrismaServicePlugin } from '../../plugins/prisma'
 
 export class FacebookRepository {
   private apiAccessToken: {
@@ -132,27 +134,6 @@ export class FacebookRepository {
       accessToken: response.value.access_token,
       tokenType: response.value.token_type,
       expiresIn: response.value.expires_in,
-    })
-  }
-
-  private async fetchLongLivedAccessToken(pageAccessToken: string) {
-    const queryParams = new URLSearchParams({
-      grant_type: 'fb_exchange_token',
-      client_id: this.facebookConfig.appId,
-      client_secret: this.facebookConfig.appSecret,
-      fb_exchange_token: pageAccessToken,
-    })
-
-    const response = await this.getAccessToken(queryParams)
-
-    if (response.isErr()) {
-      return err(response.error)
-    }
-
-    return ok({
-      accessToken: response.value.accessToken,
-      tokenType: response.value.tokenType,
-      expiresIn: response.value.expiresIn,
     })
   }
 
@@ -281,6 +262,41 @@ export class FacebookRepository {
         where: { id: pageId },
         data: {
           isSubscribed: false,
+        },
+      })
+    )
+  }
+
+  async fetchLongLivedAccessToken(pageAccessToken: string) {
+    const queryParams = new URLSearchParams({
+      grant_type: 'fb_exchange_token',
+      client_id: this.facebookConfig.appId,
+      client_secret: this.facebookConfig.appSecret,
+      fb_exchange_token: pageAccessToken,
+    })
+
+    const response = await this.getAccessToken(queryParams)
+
+    if (response.isErr()) {
+      return err(response.error)
+    }
+
+    return ok({
+      accessToken: response.value.accessToken,
+      tokenType: response.value.tokenType,
+      expiresIn: response.value.expiresIn,
+    })
+  }
+
+  async updatePageAccessToken(pageId: string, oldAccessToken: string) {
+    const response = await this.fetchLongLivedAccessToken(oldAccessToken)
+    if (response.isErr()) return err(response.error)
+
+    return await fromRepositoryPromise(
+      this.prismaService.facebookPage.update({
+        where: { id: pageId },
+        data: {
+          pageAccessToken: response.value.accessToken,
         },
       })
     )
@@ -417,7 +433,7 @@ export class FacebookRepository {
     return ok(response.value)
   }
 
-  async getFacebookPageById(pageAccessToken: string, pageId: string) {
+  async getFacebookPageById(pageId: string, pageAccessToken: string) {
     const inspectResponse = await this.inspectUserAccessToken(pageAccessToken)
 
     if (inspectResponse.isErr()) {
@@ -495,6 +511,18 @@ export class FacebookRepository {
     }
 
     return ok(response.value)
+  }
+
+  async getLinkedPageAvailableStatus(pageIds: string[]) {
+    return await fromRepositoryPromise(
+      this.prismaService.facebookPage.findMany({
+        where: {
+          id: {
+            in: pageIds,
+          },
+        },
+      })
+    )
   }
 
   async getLocalFacebookPage(pageId: string) {
@@ -590,6 +618,7 @@ export class FacebookRepository {
       id: linkedPage.value.id,
       name: linkedPage.value.name,
       profilePictureUrl: linkedPage.value.profilePictureUrl,
+      pageAccessToken: linkedPage.value.pageAccessToken,
     })
   }
 }
@@ -599,13 +628,14 @@ export const FacebookRepositoryPlugin = new Elysia({
 })
   .use(PrismaServicePlugin)
   .use(FileServicePlugin)
+  .use(ConfigServicePlugin)
   .use(ElysiaLoggerPlugin({ name: 'FacebookRepository' }))
-  .decorate(({ prismaService, fileService, loggerService }) => ({
+  .decorate(({ prismaService, fileService, loggerService, configService }) => ({
     facebookRepository: new FacebookRepository(
       {
-        apiUrl: serverEnv.FACEBOOK_API_URL,
-        appId: serverEnv.FACEBOOK_APP_ID,
-        appSecret: serverEnv.FACEBOOK_APP_SECRET,
+        apiUrl: configService.get('FACEBOOK_API_URL'),
+        appId: configService.get('FACEBOOK_APP_ID'),
+        appSecret: configService.get('FACEBOOK_APP_SECRET'),
       },
       fileService,
       prismaService,

@@ -1,13 +1,12 @@
+import { InternalErrorCode, PPLERole } from '@pple-today/api-common/dtos'
+import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
+import { UserRole } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import { GetAuthMeResponse, RegisterUserResponse } from './models'
 import { AuthServicePlugin } from './services'
 
-import { UserRole } from '../../../__generated__/prisma'
-import { PPLERole } from '../../dtos/auth'
-import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
-import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 
 export const AuthController = new Elysia({
   prefix: '/auth',

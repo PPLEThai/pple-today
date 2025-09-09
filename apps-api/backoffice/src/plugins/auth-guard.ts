@@ -1,22 +1,29 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { err, mapErrorCodeToResponse, mapRepositoryError } from '@pple-today/api-common/utils'
+import { UserRole } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { UserRole } from '../../__generated__/prisma'
-import { InternalErrorCode } from '../dtos/error'
 import { AuthRepository, AuthRepositoryPlugin } from '../modules/auth/repository'
-import { err, mapErrorCodeToResponse } from '../utils/error'
-import { mapRepositoryError } from '../utils/error'
 import { introspectAccessToken } from '../utils/jwt'
 
 export class AuthGuard {
-  constructor(private readonly authRepository: AuthRepository) {}
+  constructor(
+    private readonly authRepository: AuthRepository,
+    private readonly oidcConfig: {
+      oidcClientId: string
+      oidcUrl: string
+      oidcPrivateJwtKey: string
+      oidcKeyId: string
+    }
+  ) {}
 
   async getOIDCUser(headers: Record<string, string | undefined>) {
     const token = headers['authorization']?.replace('Bearer', '').trim()
     if (!token)
       return err({ code: InternalErrorCode.UNAUTHORIZED, message: 'User not authenticated' })
 
-    return await introspectAccessToken(token)
+    return await introspectAccessToken(token, this.oidcConfig)
   }
 
   async getCurrentUser(headers: Record<string, string | undefined>) {
@@ -44,9 +51,14 @@ export class AuthGuard {
 export const AuthGuardPlugin = new Elysia({
   name: 'AuthGuardPlugin',
 })
-  .use([AuthRepositoryPlugin])
-  .decorate(({ authRepository }) => ({
-    authGuard: new AuthGuard(authRepository),
+  .use([AuthRepositoryPlugin, ConfigServicePlugin])
+  .decorate(({ authRepository, configService }) => ({
+    authGuard: new AuthGuard(authRepository, {
+      oidcClientId: configService.get('OIDC_CLIENT_ID'),
+      oidcUrl: configService.get('OIDC_URL'),
+      oidcPrivateJwtKey: configService.get('OIDC_PRIVATE_JWT_KEY'),
+      oidcKeyId: configService.get('OIDC_KEY_ID'),
+    }),
   }))
   .macro({
     requiredOIDCUser: {

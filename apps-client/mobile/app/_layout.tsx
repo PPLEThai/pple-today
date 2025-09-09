@@ -52,18 +52,19 @@ export default function RootLayout() {
             <FontProvider>
               <GestureHandlerRootView>
                 <BottomSheetModalProvider>
-                  <Stack>
-                    <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+                  <Stack initialRouteName="(tabs)">
                     <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                     <Stack.Screen name="loading" options={{ headerShown: false }} />
+                    <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+                    <Stack.Screen name="edit" options={{ headerShown: false }} />
                   </Stack>
                   <Toaster />
                 </BottomSheetModalProvider>
               </GestureHandlerRootView>
             </FontProvider>
           </ColorSchemeProvider>
-          {(environment.APP_ENVIRONMENT === 'development' ||
-            environment.APP_ENVIRONMENT === 'local') && (
+          {(environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'development' ||
+            environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'local') && (
             <DevToolsBubble onCopy={onCopy} queryClient={queryClient} />
           )}
           <AuthLifeCycleHook />

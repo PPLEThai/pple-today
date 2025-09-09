@@ -1,3 +1,5 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
 import {
@@ -16,9 +18,7 @@ import {
 } from './models'
 import { ProfileServicePlugin } from './services'
 
-import { InternalErrorCode } from '../../dtos/error'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
-import { createErrorSchema, mapErrorCodeToResponse } from '../../utils/error'
 
 export const ProfileController = new Elysia({
   prefix: '/profile',
@@ -73,6 +73,7 @@ export const ProfileController = new Elysia({
               district: result.value.address.district,
               subDistrict: result.value.address.subDistrict,
               province: result.value.address.province,
+              postalCode: result.value.address.postalCode,
             }
           : undefined,
       })
@@ -113,6 +114,9 @@ export const ProfileController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.USER_NOT_FOUND,
           InternalErrorCode.USER_INVALID_INPUT,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
+          InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -171,6 +175,9 @@ export const ProfileController = new Elysia({
           InternalErrorCode.USER_NOT_FOUND,
           InternalErrorCode.USER_INVALID_INPUT,
           InternalErrorCode.USER_ALREADY_DONE_ONBOARDING,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
+          InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

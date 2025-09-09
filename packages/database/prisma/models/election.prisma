@@ -1,0 +1,99 @@
+enum ElectionType {
+    ONSITE
+    ONLINE
+    HYBRID
+}
+
+enum EligibleVoterType {
+    ONSITE
+    ONLINE
+}
+
+enum ElectionResultType {
+    ONSITE
+    ONLINE
+}
+
+model Election {
+    id          String       @id @default(cuid())
+    name        String
+    description String?
+    location    String?
+    type        ElectionType
+
+    publishDate   DateTime?
+    openRegister  DateTime?
+    closeRegister DateTime?
+    openVoting    DateTime
+    closeVoting   DateTime
+    startResult   DateTime?
+    endResult     DateTime?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    candidates ElectionCandidate[]
+    voters     ElectionEligibleVoter[]
+
+    @@index([name])
+}
+
+model ElectionCandidate {
+    id           String  @id @default(cuid())
+    electionId   String
+    name         String
+    description  String?
+    profileImage String?
+    number       Int?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    election Election @relation(fields: [electionId], references: [id])
+
+    results ElectionResult[]
+}
+
+model ElectionEligibleVoter {
+    id         String             @id @default(cuid())
+    electionId String
+    userId     String
+    type       EligibleVoterType?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    election Election @relation(fields: [electionId], references: [id])
+    user     User     @relation(fields: [userId], references: [id])
+
+    ElectionEligibleBallot ElectionEligibleBallot[]
+
+    @@index([userId])
+}
+
+model ElectionEligibleBallot {
+    id              String @id @default(cuid())
+    voterId         String @unique
+    encryptedBallot String
+    location        String
+    faceImageURL    String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    voter ElectionEligibleVoter @relation(fields: [voterId], references: [id])
+}
+
+model ElectionResult {
+    id          String             @id @default(cuid())
+    candidateId String
+    type        ElectionResultType
+    count       Int                @default(0)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    candidate ElectionCandidate @relation(fields: [candidateId], references: [id])
+
+    @@unique([candidateId, type])
+}
