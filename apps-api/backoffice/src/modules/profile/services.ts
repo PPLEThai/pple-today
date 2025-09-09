@@ -1,3 +1,4 @@
+import { createId } from '@paralleldrive/cuid2'
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService } from '@pple-today/api-common/services'
@@ -208,7 +209,7 @@ export class ProfileService {
   }
 
   async getProfileUploadUrl(userId: string) {
-    const fileKey = `temp/users/profile-picture-${userId}.png` satisfies FilePath
+    const fileKey = `temp/users/profile-picture-${userId}-${createId()}.png` satisfies FilePath
     const uploadUrl = await this.fileService.getUploadSignedUrl(fileKey, {
       contentType: 'image/png',
     })
