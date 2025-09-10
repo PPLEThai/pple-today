@@ -40,6 +40,7 @@ import {
   HeartCrackIcon,
   HeartHandshakeIcon,
   MessageCircleIcon,
+  SendIcon,
   TriangleAlertIcon,
 } from 'lucide-react-native'
 import { z } from 'zod/v4'
@@ -700,6 +701,7 @@ function CommentButton(props: { feedId: string }) {
         ref={bottomSheetModalRef}
         keyboardBehavior="interactive"
         bottomInset={insets.bottom}
+        handleComponent={null}
       >
         <BottomSheetView>
           <CommentForm onClose={onClose} feedId={props.feedId} />
@@ -708,6 +710,7 @@ function CommentButton(props: { feedId: string }) {
     </>
   )
 }
+
 interface CommentFormProps {
   onClose: () => void
   feedId: string
@@ -773,53 +776,38 @@ function CommentForm(props: CommentFormProps) {
       )
     },
   })
-  const onSkip = () => {
-    props.onClose()
-  }
   return (
-    <View className="flex flex-col flex-1">
-      <View className="flex flex-col gap-1 p-4 pb-0">
-        {/* TODO: Writing */}
-        <Text className="text-2xl font-anakotmai-bold">แสดงความคิดเห็น</Text>
-        {/* <Text className="text-sm font-anakotmai-light">
-          บอกพวกเราทีว่าเหตุใดคุณถึงไม่เห็นด้วย ความคิดเห็นของคุณจะถูกแสดงเป็นความคิดเห็นส่วนตัว
-        </Text> */}
-      </View>
+    <View className="flex flex-row items-end flex-1 bg-base-bg-default p-3 pt-1 gap-2">
       <form.Field name="comment">
         {(field) => (
-          <FormItem field={field} className="p-4">
-            <FormLabel style={[StyleSheet.absoluteFill, { opacity: 0, pointerEvents: 'none' }]}>
-              ความคิดเห็น
-            </FormLabel>
+          <FormItem field={field} className="flex-1">
+            <FormLabel className="sr-only">ความคิดเห็น</FormLabel>
             <FormControl>
               <Textarea
                 asChild
+                className={clsx('min-h-10', Platform.select({ android: 'py-1' }))}
+                numberOfLines={1}
                 placeholder="พิมพ์ความคิดเห็นของคุณ"
                 value={field.state.value}
                 onChangeText={field.handleChange}
+                textAlignVertical="center"
               >
                 <BottomSheetTextInput />
               </Textarea>
             </FormControl>
-            <FormMessage />
+            <FormMessage className="sr-only" />
           </FormItem>
         )}
       </form.Field>
-      <View className="flex flex-col gap-2 px-4">
-        <form.Subscribe selector={(state) => [state.isSubmitting]}>
-          {([isSubmitting]) => (
-            <Button
-              onPress={form.handleSubmit}
-              disabled={isSubmitting || commentMutation.isPending}
-            >
-              <Text>แสดงความคิดเห็น</Text>
+      <form.Subscribe selector={(state) => [state.values.comment]}>
+        {([comment]) =>
+          comment.trim() !== '' && (
+            <Button size="icon" onPress={form.handleSubmit} disabled={commentMutation.isPending}>
+              <Icon icon={SendIcon} strokeWidth={1} />
             </Button>
-          )}
-        </form.Subscribe>
-        <Button variant="ghost" onPress={onSkip} disabled={commentMutation.isPending}>
-          <Text>ข้าม</Text>
-        </Button>
-      </View>
+          )
+        }
+      </form.Subscribe>
     </View>
   )
 }
