@@ -305,7 +305,7 @@ export const useLoginMutation = () => {
       router.push('/loading')
     },
     onError: (error) => {
-      console.error('Error logging in: ', error)
+      console.error('Error logging in: ', JSON.stringify(error))
       router.navigate('/profile')
     },
     onSuccess: async (result) => {

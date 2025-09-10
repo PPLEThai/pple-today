@@ -41,6 +41,7 @@ import {
   ScrollTextIcon,
   TicketIcon,
   TrashIcon,
+  TriangleAlertIcon,
   TrophyIcon,
 } from 'lucide-react-native'
 
@@ -375,11 +376,11 @@ function LinkFacebookPageDialog() {
         <Text>เพิ่มเพจที่ดูแล</Text>
       </Button>
       <DialogContent>
-        {/* TODO: content */}
-        <DialogHeader>
+        <DialogHeader className="gap-4">
+          <Icon icon={TriangleAlertIcon} size={40} />
           <DialogTitle>กรุณาอนุญาตการติดตาม</DialogTitle>
           <DialogDescription>
-            เพื่อใช้ฟีเจอร์เพจ Facebook กรุณาเปิดใช้งานการติดตามในการตั้งค่าความเป็นส่วนตัว
+            เพื่อเชื่อมต่อข้อมูลเพจ Facebook กรุณาเปิดใช้งานการติดตามในการตั้งค่าความเป็นส่วนตัว
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -411,6 +412,9 @@ function LinkFacebookPageDialog() {
             }}
           >
             <Text>ตกลง</Text>
+          </Button>
+          <Button variant="ghost" onPress={() => setPermissionDialogOpen(false)}>
+            <Text>ยกเลิก</Text>
           </Button>
         </DialogFooter>
       </DialogContent>
