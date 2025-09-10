@@ -1,6 +1,5 @@
+import { FileMimeType, FilePath, ImageFileMimeType } from '@pple-today/api-common/dtos'
 import { Static, t } from 'elysia'
-
-import { FilePath } from '@pple-today/api-common/dtos'
 
 export const UploadFileCategory = {
   ANNOUNCEMENT: 'ANNOUNCEMENT',
@@ -11,26 +10,32 @@ export const UploadFileCategory = {
 
 export type UploadFileCategory = keyof typeof UploadFileCategory
 
-export const GetUploadSignedUrlBody = t.Union([
+export const CreateUploadSignedUrlBody = t.Union([
   t.Object({
-    category: t.Union([
-      t.Literal(UploadFileCategory.TOPIC),
-      t.Literal(UploadFileCategory.ANNOUNCEMENT),
-      t.Literal(UploadFileCategory.BANNER),
-    ]),
+    category: t.Literal(UploadFileCategory.ANNOUNCEMENT),
+    contentType: FileMimeType,
+  }),
+  t.Object({
+    category: t.Literal(UploadFileCategory.TOPIC),
+    contentType: ImageFileMimeType,
+  }),
+  t.Object({
+    category: t.Literal(UploadFileCategory.BANNER),
+    contentType: ImageFileMimeType,
   }),
   t.Object({
     category: t.Literal(UploadFileCategory.PROFILE_IMAGE),
+    contentType: ImageFileMimeType,
     id: t.String({ title: 'Resource id in category' }),
   }),
 ])
-export type GetUploadSignedUrlBody = Static<typeof GetUploadSignedUrlBody>
+export type CreateUploadSignedUrlBody = Static<typeof CreateUploadSignedUrlBody>
 
-export const GetUploadSignedUrlResponse = t.Object({
+export const CreateUploadSignedUrlResponse = t.Object({
   filePath: FilePath,
   uploadUrl: t.String({ title: 'Upload URL' }),
   uploadFields: t.Record(t.String(), t.String(), {
     description: 'The fields required for the upload',
   }),
 })
-export type GetUploadSignedUrlResponse = Static<typeof GetUploadSignedUrlResponse>
+export type CreateUploadSignedUrlResponse = Static<typeof CreateUploadSignedUrlResponse>

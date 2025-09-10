@@ -19,6 +19,7 @@ import { ProfileSelect } from '@app/components/profile/profile-select'
 import { useEditingContext } from '@app/contexts/profile-context'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { getAuthSession } from '@app/libs/auth/session'
+import { ImageMimeType } from '@app/types/file'
 import { handleUploadImage } from '@app/utils/upload'
 
 const formSchema = z.object({
@@ -57,6 +58,10 @@ export default function EditProfilePage() {
           }
 
           const getLink = await fetchClient('/profile/upload-url', {
+            method: 'POST',
+            body: {
+              contentType: (imagePickerRes.assets[0].mimeType || 'image/png') as ImageMimeType,
+            },
             headers: {
               Authorization: `Bearer ${session.accessToken}`,
             },

@@ -1,6 +1,5 @@
-import { Static, t } from 'elysia'
-
 import { Banner } from '@pple-today/api-common/dtos'
+import { Static, t } from 'elysia'
 
 export const GetBannersResponse = t.Array(
   t.Composite([
