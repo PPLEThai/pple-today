@@ -11,7 +11,7 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { usePathname, useRouter } from 'expo-router'
 import { ArrowLeftIcon, EyeOffIcon } from 'lucide-react-native'
 
-import { ApplicationApiSchema } from '@api/backoffice'
+import type { ApplicationApiSchema, GetFeedContentResponse } from '@api/backoffice/app'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { PostContent } from '@app/components/feed/post-card'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
@@ -54,7 +54,6 @@ export default function FeedDetailPage() {
   )
 }
 
-type GetFeedContentResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/:id'>
 function FeedItemContent({ item }: { item: GetFeedContentResponse }) {
   switch (item.type) {
     case 'POST':

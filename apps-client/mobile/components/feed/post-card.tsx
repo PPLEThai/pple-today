@@ -22,7 +22,6 @@ import { TextProps } from 'react-native-svg'
 import { createQuery } from 'react-query-kit'
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
-import { ExtractBodyResponse } from '@pple-today/api-client'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
@@ -45,7 +44,7 @@ import {
 } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import { ApplicationApiSchema } from '@api/backoffice'
+import type { GetFeedContentResponse } from '@api/backoffice/app'
 import { MoreOrLess } from '@app/components/more-or-less'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSessionQuery } from '@app/libs/auth'
@@ -324,9 +323,7 @@ function getNewReactionCount(
   return { upvoteCount, downvoteCount }
 }
 
-function getFeedReaction(
-  data: ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/:id'>
-): FeedReaction {
+function getFeedReaction(data: GetFeedContentResponse): FeedReaction {
   const reactions = data.reactions
   const upvoteCount = reactions.find((r) => r.type === 'UP_VOTE')?.count ?? 0
   const downvoteCount = reactions.find((r) => r.type === 'DOWN_VOTE')?.count ?? 0

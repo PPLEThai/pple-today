@@ -37,7 +37,7 @@ import {
 } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import { ApplicationApiSchema } from '@api/backoffice'
+import type { ApplicationApiSchema, GetBannersResponse } from '@api/backoffice/app'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AnnouncementCard } from '@app/components/announcement'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
@@ -154,7 +154,6 @@ function MainHeader() {
   )
 }
 
-type GetBannersResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/banners'>
 const PLACEHOLDER_BANNERS: GetBannersResponse = [
   {
     id: '1',
