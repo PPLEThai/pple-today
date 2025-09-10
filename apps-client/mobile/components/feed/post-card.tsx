@@ -788,7 +788,7 @@ function CommentForm(props: CommentFormProps) {
             <FormControl>
               <Textarea
                 asChild
-                className="min-h-10 py-1"
+                className={clsx('min-h-10', Platform.select({ android: 'py-1' }))}
                 numberOfLines={1}
                 placeholder="พิมพ์ความคิดเห็นของคุณ"
                 value={field.state.value}
