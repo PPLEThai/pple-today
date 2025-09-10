@@ -54,7 +54,6 @@ export default function FeedDetailPage() {
   )
 }
 
-type GetFeedContentResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/:id'>
 function FeedItemContent({ item }: { item: GetFeedContentResponse }) {
   switch (item.type) {
     case 'POST':

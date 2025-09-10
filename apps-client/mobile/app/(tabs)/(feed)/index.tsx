@@ -154,7 +154,6 @@ function MainHeader() {
   )
 }
 
-type GetBannersResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/banners'>
 const PLACEHOLDER_BANNERS: GetBannersResponse = [
   {
     id: '1',
