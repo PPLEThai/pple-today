@@ -61,8 +61,6 @@ function AnnouncementList() {
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (!lastPage) return undefined
-      if (lastPage && lastPage.announcements.length === 0) return undefined
       if (lastPage.announcements.length < 5) {
         return undefined
       }
