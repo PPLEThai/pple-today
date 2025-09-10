@@ -22,6 +22,7 @@ import { TextProps } from 'react-native-svg'
 import { createQuery } from 'react-query-kit'
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
+import { ExtractBodyResponse } from '@pple-today/api-client'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
@@ -44,6 +45,7 @@ import {
 } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
+import { ApplicationApiSchema } from '@api/backoffice'
 import { MoreOrLess } from '@app/components/more-or-less'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSessionQuery } from '@app/libs/auth'
@@ -62,7 +64,8 @@ interface PostItem {
   }[]
   attachments?: PostCardAttachment[]
 }
-interface PostCardProps {
+
+interface FeedPostItem {
   id: string
   author: {
     id: string
@@ -73,7 +76,7 @@ interface PostCardProps {
     }
     profileImage?: string
   }
-  createdAt: string
+  createdAt: Date
   reactions: { type: 'UP_VOTE' | 'DOWN_VOTE'; count: number }[]
   commentCount: number
   post: PostItem
@@ -106,32 +109,39 @@ function AnimatedBackgroundPressable(props: PressableProps) {
   )
 }
 
-export const PostCard = React.memo(function PostCard(props: PostCardProps) {
+export const FeedPostCard = React.memo(function FeedPostCard(props: { feedItem: FeedPostItem }) {
   const router = useRouter()
   const navigateToDetailPage = React.useCallback(() => {
-    router.navigate(`/(feed)/${props.id}`)
-  }, [router, props.id])
+    router.navigate(`/(feed)/${props.feedItem.id}`)
+  }, [router, props.feedItem.id])
+  // cache initialData of feed item when navigating to detail page
+  const feedContentQuery = reactQueryClient.useQuery(
+    '/feed/:id',
+    { pathParams: { id: props.feedItem.id } },
+    // TODO: fix type
+    { initialData: props.feedItem as any, enabled: false }
+  )
+  const feedContent = feedContentQuery.data as FeedPostItem
   return (
     <View className="flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl overflow-hidden mt-4 mx-4">
       <AnimatedBackgroundPressable
         className="px-4 pt-4 pb-3 flex flex-row items-center justify-between"
         onPress={navigateToDetailPage}
       >
-        {/* TODO: link */}
         <View className="flex flex-row items-center">
           {/* TODO: link */}
-          <Avatar alt={props.author.name} className="w-8 h-8 mr-3">
-            <AvatarImage source={{ uri: props.author.profileImage }} />
+          <Avatar alt={feedContent.author.name} className="w-8 h-8 mr-3">
+            <AvatarImage source={{ uri: feedContent.author.profileImage }} />
             <AvatarPPLEFallback />
           </Avatar>
           <View className="flex flex-col">
             {/* TODO: link */}
             <Text className="text-base-text-medium font-anakotmai-medium text-sm">
-              {props.author.name}
+              {feedContent.author.name}
             </Text>
             <Text className="text-base-text-medium font-anakotmai-light text-sm">
-              {props.author.address ? `${props.author.address.province} | ` : ''}
-              {formatDateInterval(props.createdAt)}
+              {feedContent.author.address ? `${feedContent.author.address.province} | ` : ''}
+              {formatDateInterval(feedContent.createdAt.toString())}
             </Text>
           </View>
         </View>
@@ -146,10 +156,10 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
         </Button> */}
       </AnimatedBackgroundPressable>
       <View className="flex flex-col gap-3">
-        {props.post.attachments && props.post.attachments.length > 0 && (
-          <Lightbox attachments={props.post.attachments} />
+        {feedContent.post.attachments && feedContent.post.attachments.length > 0 && (
+          <Lightbox attachments={feedContent.post.attachments} />
         )}
-        {props.post.content && (
+        {feedContent.post.content && (
           <AnimatedBackgroundPressable className="px-4" onPress={navigateToDetailPage}>
             <MoreOrLess
               numberOfLines={3}
@@ -159,13 +169,13 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
               textComponent={TextPost}
               buttonComponent={ButtonTextPost}
             >
-              {props.post.content}
+              {feedContent.post.content}
             </MoreOrLess>
           </AnimatedBackgroundPressable>
         )}
-        {props.post.hashTags.length > 0 && (
+        {feedContent.post.hashTags.length > 0 && (
           <View className="flex flex-row flex-wrap gap-1 px-4">
-            {props.post.hashTags.map((tag) => (
+            {feedContent.post.hashTags.map((tag) => (
               // TODO: link
               <Badge variant="secondary" key={tag.id}>
                 <Text>{tag.name}</Text>
@@ -178,14 +188,11 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
         className="flex flex-row justify-between items-center px-4 py-3"
         onPress={navigateToDetailPage}
       >
-        <UpvoteReactionCount
-          id={props.id}
-          reactions={props.reactions}
-          userReaction={props.userReaction}
-        />
-        {props.commentCount > 0 && (
+        <FeedReactionHook feedId={feedContent.id} />
+        <UpvoteReactionCount feedId={feedContent.id} />
+        {feedContent.commentCount > 0 && (
           <Text className="text-xs font-anakotmai-light text-base-text-medium">
-            {props.commentCount} ความคิดเห็น
+            {feedContent.commentCount} ความคิดเห็น
           </Text>
         )}
       </AnimatedBackgroundPressable>
@@ -195,10 +202,10 @@ export const PostCard = React.memo(function PostCard(props: PostCardProps) {
         </View>
         <View className="flex flex-row justify-between gap-2 px-3 pb-2 pt-1">
           <View className="flex flex-row gap-2">
-            <UpvoteButton postId={props.id} />
-            <DownvoteButton postId={props.id} feedId={props.id} />
+            <UpvoteButton feedId={feedContent.id} />
+            <DownvoteButton feedId={feedContent.id} />
           </View>
-          <CommentButton postId={props.id} feedId={props.id} />
+          <CommentButton feedId={feedContent.id} />
         </View>
       </View>
     </View>
@@ -250,35 +257,108 @@ function ButtonTextPost(props: TextProps) {
   return <Text {...props} className="text-base-primary-default font-noto-light text-base" />
 }
 
-interface PostReaction {
+interface FeedReaction {
   upvoteCount: number
+  downvoteCount: number
   userReaction: UserReaction
 }
 // create store using react query
-export const usePostReactionStore = createQuery({
-  queryKey: ['post-reaction'],
-  fetcher: (_: { id: string }): PostReaction => {
+export const useFeedReactionQuery = createQuery({
+  queryKey: ['feed-reaction'],
+  fetcher: (_: { feedId: string }): FeedReaction => {
     throw new Error('PostReactionStore should not be enabled')
   },
   enabled: false,
 })
+
+function useFeedReactionValue(feedId: string): FeedReaction {
+  const feedReactionQuery = useFeedReactionQuery({ variables: { feedId } })
+  return feedReactionQuery.data!
+}
+
+function useSetFeedReaction(feedId: string) {
+  const queryClient = useQueryClient()
+  return React.useCallback(
+    (newReaction: UserReaction) => {
+      queryClient.setQueryData(
+        useFeedReactionQuery.getKey({ feedId }),
+        (oldData: FeedReaction | undefined) => {
+          if (!oldData) return
+          const { upvoteCount, downvoteCount } = getNewReactionCount(
+            oldData.userReaction,
+            newReaction,
+            oldData.upvoteCount,
+            oldData.downvoteCount
+          )
+          return {
+            ...oldData,
+            userReaction: newReaction,
+            upvoteCount,
+            downvoteCount,
+          }
+        }
+      )
+    },
+    [queryClient, feedId]
+  )
+}
+
+function getNewReactionCount(
+  oldReaction: UserReaction,
+  newReaction: UserReaction,
+  upvoteCount: number,
+  downvoteCount: number
+) {
+  if (newReaction === 'UP_VOTE' && oldReaction !== 'UP_VOTE') {
+    upvoteCount += 1
+  }
+  if (newReaction === 'DOWN_VOTE' && oldReaction !== 'DOWN_VOTE') {
+    downvoteCount += 1
+  }
+  if (newReaction !== 'UP_VOTE' && oldReaction === 'UP_VOTE') {
+    upvoteCount -= 1
+  }
+  if (newReaction !== 'DOWN_VOTE' && oldReaction === 'DOWN_VOTE') {
+    downvoteCount -= 1
+  }
+  return { upvoteCount, downvoteCount }
+}
+
+function getFeedReaction(
+  data: ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/:id'>
+): FeedReaction {
+  const reactions = data.reactions
+  const upvoteCount = reactions.find((r) => r.type === 'UP_VOTE')?.count ?? 0
+  const downvoteCount = reactions.find((r) => r.type === 'DOWN_VOTE')?.count ?? 0
+  const userReaction = data.userReaction
+  return { upvoteCount, downvoteCount, userReaction }
+}
+
+function FeedReactionHook({ feedId }: { feedId: string }) {
+  const feedContentQuery = reactQueryClient.useQuery('/feed/:id', {
+    pathParams: { id: feedId },
+  })
+  // TODO: make sure that this initialData run before render
+  useFeedReactionQuery({
+    variables: { feedId },
+    initialData: () => getFeedReaction(feedContentQuery.data!),
+  })
+  const queryClient = useQueryClient()
+  React.useEffect(() => {
+    if (!feedContentQuery.data) return
+    queryClient.setQueryData(
+      useFeedReactionQuery.getKey({ feedId }),
+      getFeedReaction(feedContentQuery.data)
+    )
+  }, [feedContentQuery.data, queryClient, feedId])
+  return null
+}
+
 interface UpvoteReactionCountProps {
-  id: string
-  reactions: PostCardProps['reactions']
-  userReaction: UserReaction | null
+  feedId: string
 }
 function UpvoteReactionCount(props: UpvoteReactionCountProps) {
-  const initialPostReaction = (): PostReaction => {
-    const upvote = props.reactions.find((r) => r.type === 'UP_VOTE')
-    return {
-      upvoteCount: upvote?.count ?? 0,
-      userReaction: props.userReaction,
-    }
-  }
-  const postReactionStore = usePostReactionStore({
-    variables: { id: props.id },
-    initialData: initialPostReaction,
-  })
+  const { upvoteCount } = useFeedReactionValue(props.feedId)
   return (
     <View className="flex flex-row gap-1 items-center">
       <Icon
@@ -287,9 +367,7 @@ function UpvoteReactionCount(props: UpvoteReactionCountProps) {
         className="fill-base-primary-medium text-white"
         strokeWidth={1}
       />
-      <Text className="text-xs font-anakotmai-light text-base-text-medium">
-        {postReactionStore.data.upvoteCount}
-      </Text>
+      <Text className="text-xs font-anakotmai-light text-base-text-medium">{upvoteCount}</Text>
     </View>
   )
 }
@@ -328,7 +406,7 @@ const LikeAnimationFile = Platform.select({
   android: require('../../assets/PPLE-Like-Animation.zip'),
 })
 interface UpvoteButtonProps {
-  postId: string
+  feedId: string
 }
 function UpvoteButton(props: UpvoteButtonProps) {
   const scale = useSharedValue(1)
@@ -355,9 +433,8 @@ function UpvoteButton(props: UpvoteButtonProps) {
   })
 
   const likeAnimationRef = React.useRef<LottieView | null>(null)
-  const queryClient = useQueryClient()
-  const postReactionStore = usePostReactionStore({ variables: { id: props.postId } })
-  const userReaction = postReactionStore.data?.userReaction
+  const { userReaction } = useFeedReactionValue(props.feedId)
+  const setFeedReaction = useSetFeedReaction(props.feedId)
   const createReactionQuery = reactQueryClient.useMutation('put', '/feed/:id/reaction')
   const deleteReactionQuery = reactQueryClient.useMutation('delete', '/feed/:id/reaction')
   const router = useRouter()
@@ -371,22 +448,16 @@ function UpvoteButton(props: UpvoteButtonProps) {
       // skip some empty frames
       likeAnimationRef.current?.play(8, 30)
       createReactionQuery.mutateAsync({
-        pathParams: { id: props.postId },
+        pathParams: { id: props.feedId },
         body: { type: 'UP_VOTE' },
       })
     } else {
       deleteReactionQuery.mutateAsync({
-        pathParams: { id: props.postId },
+        pathParams: { id: props.feedId },
       })
     }
     // optimistic update
-    queryClient.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
-      if (!old) return
-      return {
-        upvoteCount: newUserReaction === 'UP_VOTE' ? old.upvoteCount + 1 : old.upvoteCount - 1,
-        userReaction: newUserReaction,
-      } as const
-    })
+    setFeedReaction(newUserReaction)
   }
 
   return (
@@ -425,7 +496,7 @@ const styles = StyleSheet.create({
     pointerEvents: 'none',
   },
 })
-function DownvoteButton(props: { postId: string; feedId: string }) {
+function DownvoteButton(props: { feedId: string }) {
   const bottomSheetModalRef = React.useRef<BottomSheetModal>(null)
   const onOpen = () => {
     bottomSheetModalRef.current?.present()
@@ -433,10 +504,10 @@ function DownvoteButton(props: { postId: string; feedId: string }) {
   const onClose = () => {
     bottomSheetModalRef.current?.dismiss()
   }
-  const postReactionStore = usePostReactionStore({ variables: { id: props.postId } })
-  const userReaction = postReactionStore.data?.userReaction
+
+  const { userReaction } = useFeedReactionValue(props.feedId)
+  const setFeedReaction = useSetFeedReaction(props.feedId)
   const deleteReactionQuery = reactQueryClient.useMutation('delete', '/feed/:id/reaction')
-  const queryClient = useQueryClient()
 
   const router = useRouter()
   const sessionQuery = useSessionQuery()
@@ -449,16 +520,10 @@ function DownvoteButton(props: { postId: string; feedId: string }) {
       onOpen()
     } else if (newUserReaction === null) {
       deleteReactionQuery.mutateAsync({
-        pathParams: { id: props.postId },
+        pathParams: { id: props.feedId },
       })
       // optimistic update
-      queryClient.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
-        if (!old) return
-        return {
-          upvoteCount: old.userReaction === 'UP_VOTE' ? old.upvoteCount - 1 : old.upvoteCount,
-          userReaction: newUserReaction,
-        } as const
-      })
+      setFeedReaction(newUserReaction)
     }
   }
 
@@ -485,7 +550,7 @@ function DownvoteButton(props: { postId: string; feedId: string }) {
         bottomInset={insets.bottom}
       >
         <BottomSheetView>
-          <DownvoteCommentForm onClose={onClose} postId={props.postId} feedId={props.feedId} />
+          <DownvoteCommentForm onClose={onClose} feedId={props.feedId} />
         </BottomSheetView>
       </BottomSheetModal>
     </>
@@ -497,12 +562,13 @@ const formSchema = z.object({
 })
 interface DownvoteCommentFormProps {
   onClose: () => void
-  postId: string
   feedId: string
 }
 function DownvoteCommentForm(props: DownvoteCommentFormProps) {
   const createReactionMutation = reactQueryClient.useMutation('put', '/feed/:id/reaction')
   const queryClient = useQueryClient()
+  const { userReaction } = useFeedReactionValue(props.feedId)
+  const setFeedReaction = useSetFeedReaction(props.feedId)
   const form = useForm({
     defaultValues: {
       comment: '',
@@ -511,19 +577,37 @@ function DownvoteCommentForm(props: DownvoteCommentFormProps) {
       onSubmit: formSchema,
     },
     onSubmit: async ({ value }) => {
-      props.onClose()
       const comment = value.comment.trim()
       createReactionMutation.mutateAsync(
         {
-          pathParams: { id: props.postId },
+          pathParams: { id: props.feedId },
           body: { type: 'DOWN_VOTE', comment: comment ? comment : undefined },
         },
         {
-          onSuccess: () => {
+          onSuccess: (response) => {
+            props.onClose()
             toast({
               text1: 'เพิ่มความคิดเห็นส่วนตัวแล้ว',
               icon: MessageCircleIcon,
             })
+            // optimistic update
+            const newUserReaction = userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE'
+            setFeedReaction(newUserReaction)
+            // manually update infinite query
+            queryClient.setQueryData(
+              // TODO fix type
+              reactQueryClient.getQueryKey('/feed/:id/comments', {
+                pathParams: { id: props.feedId },
+              }) as any,
+              (old: any) => {
+                if (!old) return undefined
+                const updatedFirstPage = [response.comment, ...old.pages[0]]
+                return {
+                  pages: [updatedFirstPage, ...old.pages.slice(1)],
+                  pageParams: old.pageParams,
+                }
+              }
+            )
           },
           onError: () => {
             toast.error({
@@ -533,43 +617,26 @@ function DownvoteCommentForm(props: DownvoteCommentFormProps) {
           },
         }
       )
-      // TODO
-      queryClient.invalidateQueries({
-        queryKey: reactQueryClient.getQueryKey('/feed/:id/comments', {
-          pathParams: { id: props.feedId },
-        }),
-      })
-      // optimistic update
-      queryClient.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
-        if (!old) return
-        return {
-          upvoteCount: old.userReaction === 'UP_VOTE' ? old.upvoteCount - 1 : old.upvoteCount,
-          userReaction: old.userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE',
-        } as const
-      })
     },
   })
   const onSkip = () => {
     props.onClose()
     createReactionMutation.mutateAsync({
-      pathParams: { id: props.postId },
+      pathParams: { id: props.feedId },
       body: { type: 'DOWN_VOTE', comment: undefined },
     })
     // optimistic update
-    queryClient.setQueryData(usePostReactionStore.getKey({ id: props.postId }), (old) => {
-      if (!old) return
-      return {
-        upvoteCount: old.userReaction === 'UP_VOTE' ? old.upvoteCount - 1 : old.upvoteCount,
-        userReaction: old.userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE',
-      } as const
-    })
+    const newUserReaction = userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE'
+    setFeedReaction(newUserReaction)
   }
   return (
     <View className="flex flex-col flex-1">
       <View className="flex flex-col gap-1 p-4 pb-0">
-        <Text className="text-2xl font-anakotmai-bold">เหตุใดคุณถึงไม่เห็นด้วย</Text>
+        <Text className="text-2xl font-anakotmai-bold">ข้อเสนอแนะ</Text>
         <Text className="text-sm font-anakotmai-light">
-          ความคิดเห็นของคุณจะถูกซ่อนจากสาธารณะ หากต้องการให้แสดงต่อสาธารณะกรุณา กด “ความคิดเห็น”
+          {
+            'บอกพวกเราทีว่าเหตุใดคุณถึงไม่เห็นด้วย\nความคิดเห็นของคุณจะถูกแสดงเป็นความคิดเห็นส่วนตัว'
+          }
         </Text>
       </View>
       <form.Field name="comment">
@@ -600,7 +667,7 @@ function DownvoteCommentForm(props: DownvoteCommentFormProps) {
             </Button>
           )}
         </form.Subscribe>
-        <Button variant="ghost" onPress={onSkip}>
+        <Button variant="ghost" onPress={onSkip} disabled={createReactionMutation.isPending}>
           <Text>ข้าม</Text>
         </Button>
       </View>
@@ -608,7 +675,7 @@ function DownvoteCommentForm(props: DownvoteCommentFormProps) {
   )
 }
 
-function CommentButton(props: { postId: string; feedId: string }) {
+function CommentButton(props: { feedId: string }) {
   const bottomSheetModalRef = React.useRef<BottomSheetModal>(null)
   const onOpen = () => {
     bottomSheetModalRef.current?.present()
@@ -638,7 +705,7 @@ function CommentButton(props: { postId: string; feedId: string }) {
         bottomInset={insets.bottom}
       >
         <BottomSheetView>
-          <CommentForm onClose={onClose} postId={props.postId} feedId={props.feedId} />
+          <CommentForm onClose={onClose} feedId={props.feedId} />
         </BottomSheetView>
       </BottomSheetModal>
     </>
@@ -646,7 +713,6 @@ function CommentButton(props: { postId: string; feedId: string }) {
 }
 interface CommentFormProps {
   onClose: () => void
-  postId: string
   feedId: string
 }
 function CommentForm(props: CommentFormProps) {
@@ -660,19 +726,45 @@ function CommentForm(props: CommentFormProps) {
       onSubmit: formSchema,
     },
     onSubmit: async ({ value }) => {
-      props.onClose()
       const comment = value.comment.trim()
       commentMutation.mutateAsync(
         {
-          pathParams: { id: props.postId },
+          pathParams: { id: props.feedId },
           body: { content: comment },
         },
         {
-          onSuccess: () => {
+          onSuccess: (response) => {
+            props.onClose()
             toast({
               text1: 'เพิ่มความคิดเห็นแล้ว',
               icon: MessageCircleIcon,
             })
+            // optimistic update
+            queryClient.setQueryData(
+              reactQueryClient.getQueryKey('/feed/:id', { pathParams: { id: props.feedId } }),
+              (old) => {
+                if (!old) return
+                return {
+                  ...old,
+                  commentCount: old.commentCount + 1,
+                }
+              }
+            )
+            // manually update infinite query
+            queryClient.setQueryData(
+              // TODO fix type
+              reactQueryClient.getQueryKey('/feed/:id/comments', {
+                pathParams: { id: props.feedId },
+              }) as any,
+              (old: any) => {
+                if (!old) return undefined
+                const updatedFirstPage = [response, ...old.pages[0]]
+                return {
+                  pages: [updatedFirstPage, ...old.pages.slice(1)],
+                  pageParams: old.pageParams,
+                }
+              }
+            )
           },
           onError: () => {
             toast.error({
@@ -682,29 +774,6 @@ function CommentForm(props: CommentFormProps) {
           },
         }
       )
-      // optimistic update
-      queryClient.setQueryData(
-        reactQueryClient.getQueryKey('/feed/:id/comments', {
-          pathParams: { id: props.feedId },
-        }),
-        (old) => {
-          if (!old) return
-          return {
-            ...old,
-            comments: [
-              {
-                id: 'temp-id',
-                content: comment,
-              },
-            ],
-          }
-        }
-      )
-      queryClient.invalidateQueries({
-        queryKey: reactQueryClient.getQueryKey('/feed/:id/comments', {
-          pathParams: { id: props.feedId },
-        }),
-      })
     },
   })
   const onSkip = () => {
@@ -713,10 +782,11 @@ function CommentForm(props: CommentFormProps) {
   return (
     <View className="flex flex-col flex-1">
       <View className="flex flex-col gap-1 p-4 pb-0">
-        <Text className="text-2xl font-anakotmai-bold">ข้อเสนอแนะ</Text>
-        <Text className="text-sm font-anakotmai-light">
+        {/* TODO: Writing */}
+        <Text className="text-2xl font-anakotmai-bold">แสดงความคิดเห็น</Text>
+        {/* <Text className="text-sm font-anakotmai-light">
           บอกพวกเราทีว่าเหตุใดคุณถึงไม่เห็นด้วย ความคิดเห็นของคุณจะถูกแสดงเป็นความคิดเห็นส่วนตัว
-        </Text>
+        </Text> */}
       </View>
       <form.Field name="comment">
         {(field) => (
@@ -741,12 +811,15 @@ function CommentForm(props: CommentFormProps) {
       <View className="flex flex-col gap-2 px-4">
         <form.Subscribe selector={(state) => [state.isSubmitting]}>
           {([isSubmitting]) => (
-            <Button onPress={form.handleSubmit} disabled={isSubmitting}>
+            <Button
+              onPress={form.handleSubmit}
+              disabled={isSubmitting || commentMutation.isPending}
+            >
               <Text>แสดงความคิดเห็น</Text>
             </Button>
           )}
         </form.Subscribe>
-        <Button variant="ghost" onPress={onSkip}>
+        <Button variant="ghost" onPress={onSkip} disabled={commentMutation.isPending}>
           <Text>ข้าม</Text>
         </Button>
       </View>
@@ -754,47 +827,38 @@ function CommentForm(props: CommentFormProps) {
   )
 }
 
-export const PostDetail = (props: PostCardProps) => {
+export const PostContent = (props: { feedItem: FeedPostItem }) => {
   return (
     <View className="flex flex-col bg-base-bg-white">
       <View className="px-4 pt-1 pb-3 flex flex-row items-center justify-between">
         <View className="flex flex-row items-center">
-          <Avatar alt={props.author.name} className="w-8 h-8 mr-3">
-            <AvatarImage source={{ uri: props.author.profileImage }} />
+          <Avatar alt={props.feedItem.author.name} className="w-8 h-8 mr-3">
+            <AvatarImage source={{ uri: props.feedItem.author.profileImage }} />
             <AvatarPPLEFallback />
           </Avatar>
           <View className="flex flex-col">
             <Text className="text-base-text-medium font-anakotmai-medium text-sm">
-              {props.author.name}
+              {props.feedItem.author.name}
             </Text>
             <Text className="text-base-text-medium font-anakotmai-light text-sm">
-              {props.author.address ? `${props.author.address.province} | ` : ''}
-              {formatDateInterval(props.createdAt.toString())}
+              {props.feedItem.author.address ? `${props.feedItem.author.address.province} | ` : ''}
+              {formatDateInterval(props.feedItem.createdAt.toString())}
             </Text>
           </View>
         </View>
       </View>
       <View className="flex flex-col gap-3 pb-3">
-        {props.post.attachments && props.post.attachments.length > 0 && (
-          <Lightbox attachments={props.post.attachments} />
+        {props.feedItem.post.attachments && props.feedItem.post.attachments.length > 0 && (
+          <Lightbox attachments={props.feedItem.post.attachments} />
         )}
-        {props.post.content && (
+        {props.feedItem.post.content && (
           <View className="px-4">
-            <MoreOrLess
-              numberOfLines={3}
-              moreText="อ่านเพิ่มเติม"
-              lessText="แสดงน้อยลง"
-              animated
-              textComponent={TextPost}
-              buttonComponent={ButtonTextPost}
-            >
-              {props.post.content}
-            </MoreOrLess>
+            <TextPost>{props.feedItem.post.content}</TextPost>
           </View>
         )}
-        {props.post.hashTags.length > 0 && (
+        {props.feedItem.post.hashTags.length > 0 && (
           <View className="flex flex-row flex-wrap gap-1 px-4">
-            {props.post.hashTags.map((tag) => (
+            {props.feedItem.post.hashTags.map((tag) => (
               // TODO: link
               <Badge variant="secondary" key={tag.id}>
                 <Text>{tag.name}</Text>
@@ -804,14 +868,10 @@ export const PostDetail = (props: PostCardProps) => {
         )}
       </View>
       <View className="flex flex-row justify-between items-center px-4 pb-3">
-        <UpvoteReactionCount
-          id={props.id}
-          reactions={props.reactions}
-          userReaction={props.userReaction}
-        />
-        {props.commentCount > 0 && (
+        <UpvoteReactionCount feedId={props.feedItem.id} />
+        {props.feedItem.commentCount > 0 && (
           <Text className="text-xs font-anakotmai-light text-base-text-medium">
-            {props.commentCount} ความคิดเห็น
+            {props.feedItem.commentCount} ความคิดเห็น
           </Text>
         )}
       </View>
@@ -821,10 +881,10 @@ export const PostDetail = (props: PostCardProps) => {
         </View>
         <View className="flex flex-row justify-between gap-2 px-3 pb-2 pt-1">
           <View className="flex flex-row gap-2">
-            <UpvoteButton postId={props.id} />
-            <DownvoteButton postId={props.id} feedId={props.id} />
+            <UpvoteButton feedId={props.feedItem.id} />
+            <DownvoteButton feedId={props.feedItem.id} />
           </View>
-          <CommentButton postId={props.id} feedId={props.id} />
+          <CommentButton feedId={props.feedItem.id} />
         </View>
       </View>
     </View>

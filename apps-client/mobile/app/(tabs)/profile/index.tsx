@@ -43,7 +43,11 @@ import {
   TrophyIcon,
 } from 'lucide-react-native'
 
-import type { GetMyProfileResponse, GetUserParticipationResponse } from '@api/backoffice/app'
+import type {
+  ApplicationApiSchema,
+  GetMyProfileResponse,
+  GetUserParticipationResponse,
+} from '@api/backoffice/app'
 import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
@@ -155,6 +159,8 @@ const ProfileSection = () => {
         return 'สมาชิกพรรค'
       case 'OFFICIAL':
         return 'คณะทำงาน'
+      case 'MEMBER':
+        return 'สมาชิกพรรค'
       default:
         exhaustiveGuard(role)
     }
@@ -559,6 +565,11 @@ const ParticipationSection = () => {
     </View>
   )
 }
+type GetUserParticipationResponse = ExtractBodyResponse<
+  ApplicationApiSchema,
+  'get',
+  '/profile/participation'
+>
 const Participation = ({
   participation,
 }: {

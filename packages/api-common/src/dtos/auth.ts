@@ -1,5 +1,17 @@
 import { Static, t } from 'elysia'
 
+export const PPLERole = {
+  LOCAL: 'local',
+  MP: 'mp',
+  PROVINCE: 'province',
+  TTO: 'tto',
+  HQ: 'hq',
+  FOUNDATION: 'foundation',
+  MPASSISTANT: 'mp_assistant',
+  CANDIDATE: 'candidate',
+} as const
+export type PPLERole = (typeof PPLERole)[keyof typeof PPLERole]
+
 export const IntrospectAccessTokenResult = t.Union([
   t.Object({
     active: t.Literal(true, { description: 'Indicates if the token is active' }),
@@ -24,6 +36,7 @@ export const IntrospectAccessTokenResult = t.Union([
     email_verified: t.Optional(t.Boolean({ description: 'Indicates if the email is verified' })),
     phone_number: t.String({ description: 'Phone number of the user' }),
     phone_number_verified: t.Boolean({ description: 'Indicates if the phone number' }),
+    pple_roles: t.Array(t.Enum(PPLERole), { description: 'Roles assigned to the user' }),
   }),
   t.Object({
     active: t.Literal(false, { description: 'Indicates if the token is active' }),

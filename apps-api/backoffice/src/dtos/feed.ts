@@ -4,12 +4,19 @@ import { Static, t } from 'elysia'
 import { PostReactionType } from './post'
 import { Author } from './user'
 
+export const Commenter = t.Object({
+  id: t.String({ description: 'The ID of the user' }),
+  name: t.String({ description: 'The name of the user' }),
+  profileImage: t.Optional(t.String({ description: 'The profile image URL of the user' })),
+})
+export type Commenter = Static<typeof Commenter>
+
 export const FeedItemComment = t.Object({
   id: t.String({ description: 'The ID of the comment' }),
   content: t.String({ description: 'The content of the comment' }),
   createdAt: t.Date({ description: 'The creation date of the comment' }),
   isPrivate: t.Boolean({ description: 'Whether the comment is private' }),
-  author: Author,
+  author: Commenter,
 })
 export type FeedItemComment = Static<typeof FeedItemComment>
 
