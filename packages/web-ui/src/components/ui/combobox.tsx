@@ -2,7 +2,9 @@
 
 import * as React from 'react'
 
-import { Button } from '@/components/ui/button'
+import { CheckIcon, ChevronsUpDownIcon } from 'lucide-react'
+
+import { Button } from './button'
 import {
   Command,
   CommandEmpty,
@@ -10,11 +12,10 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-} from '@/components/ui/command'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { cn } from '@/libs/utils'
+} from './command'
+import { Popover, PopoverContent, PopoverTrigger } from './popover'
 
-import { CheckIcon, ChevronsUpDownIcon } from 'lucide-react'
+import { cn } from '../../libs/utils'
 
 interface ComboBoxProps {
   value?: string

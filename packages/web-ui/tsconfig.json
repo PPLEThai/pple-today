@@ -3,9 +3,6 @@
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "build", "coverage", "storybook-static"],
   "compilerOptions": {
-    "baseUrl": "./src",
-    "paths": {
-      "@/*": ["./*"]
-    }
+    "baseUrl": "./src"
   }
 }
