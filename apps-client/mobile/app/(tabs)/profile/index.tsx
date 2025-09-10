@@ -341,7 +341,7 @@ function LinkFacebookPageDialog() {
       ])
       if (loginResult.isCancelled) {
         console.log('User cancelled login')
-        toast({ text1: 'Facebook login is cancelled' })
+        // toast({ text1: 'Facebook login is cancelled' })
         return
       }
       const accessTokenResult = await AccessToken.getCurrentAccessToken()
