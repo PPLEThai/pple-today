@@ -101,7 +101,7 @@ function AnnouncementList() {
       className="flex-1"
       contentContainerClassName="px-[12.5px] pt-1 pb-4"
       data={infiniteAnnouncementsQuery.data}
-      onEndReachedThreshold={0.5}
+      onEndReachedThreshold={1}
       onEndReached={onEndReached}
       ListFooterComponent={Footer}
       renderItem={({ item: items, index: pageIndex }) => {
