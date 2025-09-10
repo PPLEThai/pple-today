@@ -619,6 +619,7 @@ function AnnouncementSection() {
   const announcementsQuery = reactQueryClient.useQuery('/announcements', {
     query: { limit: 5 },
   })
+  const router = useRouter()
   if (!announcementsQuery.data) return null
   // TODO: loading state
   return (
@@ -633,8 +634,7 @@ function AnnouncementSection() {
           />
           <H3 className="text-base-text-high font-anakotmai-medium text-2xl">ประกาศ</H3>
         </View>
-        {/* TODO: stack the page */}
-        <Button variant="ghost">
+        <Button variant="ghost" onPress={() => router.navigate('/(official)/announcement')}>
           <Text>ดูเพิ่มเติม</Text>
           <Icon icon={ArrowRightIcon} strokeWidth={2} />
         </Button>

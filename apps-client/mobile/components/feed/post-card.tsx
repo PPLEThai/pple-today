@@ -2,7 +2,6 @@ import * as React from 'react'
 import {
   GestureResponderEvent,
   Platform,
-  Pressable,
   PressableProps,
   StyleSheet,
   View,
@@ -10,7 +9,6 @@ import {
 } from 'react-native'
 import Animated, {
   interpolate,
-  interpolateColor,
   useAnimatedStyle,
   useDerivedValue,
   useSharedValue,
@@ -22,6 +20,7 @@ import { TextProps } from 'react-native-svg'
 import { createQuery } from 'react-query-kit'
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
+import { AnimatedBackgroundPressable, AnimatedPressable } from '@pple-today/ui/animated-pressable'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
@@ -82,31 +81,6 @@ interface FeedPostItem {
   post: PostItem
 
   userReaction: UserReaction
-}
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
-
-function AnimatedBackgroundPressable(props: PressableProps) {
-  const [isActive, setIsActive] = React.useState(false)
-  const progress = useDerivedValue(() =>
-    isActive ? withTiming(1, { duration: 150 }) : withTiming(0, { duration: 150 })
-  )
-  const onPressIn = (event: GestureResponderEvent) => {
-    setIsActive(true)
-    props.onPressIn?.(event)
-  }
-  const onPressOut = (event: GestureResponderEvent) => {
-    setIsActive(false)
-    props.onPressOut?.(event)
-  }
-  const styles = useAnimatedStyle(() => {
-    return {
-      backgroundColor: interpolateColor(progress.value, [0, 1], ['#FFFFFF', '#F1F5F9']),
-    }
-  })
-  return (
-    <AnimatedPressable {...props} onPressIn={onPressIn} onPressOut={onPressOut} style={styles} />
-  )
 }
 
 export const FeedPostCard = React.memo(function FeedPostCard(props: { feedItem: FeedPostItem }) {
