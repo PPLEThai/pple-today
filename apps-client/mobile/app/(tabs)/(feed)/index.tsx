@@ -649,6 +649,7 @@ function AnnouncementSection() {
           {announcementsQuery.data.announcements.map((announcement) => (
             <SlideItem key={announcement.id}>
               <AnnouncementCard
+                id={announcement.id}
                 title={announcement.title}
                 date={announcement.createdAt.toString()}
               />

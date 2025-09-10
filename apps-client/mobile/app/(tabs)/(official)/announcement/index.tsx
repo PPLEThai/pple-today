@@ -111,6 +111,7 @@ function AnnouncementList() {
               <AnnouncementCard
                 className="w-full mt-3"
                 key={item.id}
+                id={item.id}
                 title={item.title}
                 date={item.createdAt.toString()}
               />
