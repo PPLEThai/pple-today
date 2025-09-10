@@ -375,15 +375,20 @@ function LinkFacebookPageDialog() {
         <Icon icon={PlusIcon} />
         <Text>เพิ่มเพจที่ดูแล</Text>
       </Button>
-      <DialogContent>
+      <DialogContent className="gap-6">
         <DialogHeader className="gap-4">
-          <Icon icon={TriangleAlertIcon} size={40} />
+          <Icon icon={TriangleAlertIcon} size={40} strokeWidth={1.5} />
           <DialogTitle>กรุณาอนุญาตการติดตาม</DialogTitle>
           <DialogDescription>
-            เพื่อเชื่อมต่อข้อมูลเพจ Facebook กรุณาเปิดใช้งานการติดตามในการตั้งค่าความเป็นส่วนตัว
+            {
+              'เพื่อเชื่อมต่อข้อมูลเพจ Facebook\nกรุณาเปิดใช้งานการติดตามในการตั้งค่า\nความเป็นส่วนตัว'
+            }
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
+          <Button variant="ghost" onPress={() => setPermissionDialogOpen(false)}>
+            <Text>ยกเลิก</Text>
+          </Button>
           <Button
             onPress={async () => {
               if (permissionStatus === null) {
@@ -412,9 +417,6 @@ function LinkFacebookPageDialog() {
             }}
           >
             <Text>ตกลง</Text>
-          </Button>
-          <Button variant="ghost" onPress={() => setPermissionDialogOpen(false)}>
-            <Text>ยกเลิก</Text>
           </Button>
         </DialogFooter>
       </DialogContent>
