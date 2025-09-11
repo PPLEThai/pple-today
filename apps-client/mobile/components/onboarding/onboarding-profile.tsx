@@ -9,10 +9,10 @@ import { useForm } from '@tanstack/react-form'
 import * as ImagePicker from 'expo-image-picker'
 import { z } from 'zod/v4'
 
-import { ProfileSelect } from '@app/components/profile/profile-select'
+import { AvatarImagePicker } from '@app/components/avatar-imagepicker'
 import { reactQueryClient } from '@app/libs/api-client'
 
-import { useOnboardingContext } from '../../contexts/onboarding-context'
+import { useOnboardingContext } from './onboarding-context'
 
 const formSchema = z.object({
   name: z.string(),
@@ -21,16 +21,16 @@ const formSchema = z.object({
 
 export function OnboardingProfile() {
   const { state, dispatch } = useOnboardingContext()
-  const [imagePickerRes, setImagePickerRes] = React.useState<
-    ImagePicker.ImagePickerSuccessResult | undefined
-  >(state.profileStepResult?.imagePickerResult)
+  const [imagePickerAsset, setImagePickerAsset] = React.useState<
+    ImagePicker.ImagePickerAsset | undefined
+  >(state.profileStepResult?.imagePickerAsset)
 
   const profileQuery = reactQueryClient.useQuery('/profile/me', {})
 
   const form = useForm({
     defaultValues: {
       name: state.profileStepResult?.name ?? profileQuery.data?.name ?? '',
-      profileImage: imagePickerRes?.assets[0]?.uri ?? '',
+      profileImage: imagePickerAsset?.uri ?? '',
     },
     validators: {
       onSubmit: formSchema,
@@ -38,7 +38,7 @@ export function OnboardingProfile() {
     onSubmit: async (values) => {
       const profilePayload = {
         name: values.value.name,
-        imagePickerResult: imagePickerRes,
+        imagePickerAsset: imagePickerAsset,
       }
 
       dispatch({
@@ -64,9 +64,9 @@ export function OnboardingProfile() {
           {(field) => (
             <FormItem field={field}>
               <FormControl>
-                <ProfileSelect
-                  imagePickerResult={imagePickerRes}
-                  onChangeImagePickerResult={setImagePickerRes}
+                <AvatarImagePicker
+                  imagePickerAsset={imagePickerAsset}
+                  onChangeImagePickerAsset={setImagePickerAsset}
                 />
               </FormControl>
             </FormItem>

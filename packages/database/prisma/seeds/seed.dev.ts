@@ -7,7 +7,7 @@ import {
   PollType,
   PrismaClient,
   UserRole,
-} from '../__generated__/prisma'
+} from '../../__generated__/prisma'
 
 const transformProvinceDetails = async () => {
   const response = await fetch(

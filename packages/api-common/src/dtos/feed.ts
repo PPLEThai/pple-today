@@ -1,20 +1,26 @@
-import { FeedItemType, PostAttachmentType } from '@pple-today/database/prisma'
+import { FeedItemReactionType, FeedItemType, PostAttachmentType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
-import { PostReactionType } from './post'
 import { Author } from './user'
+
+export const Commenter = t.Object({
+  id: t.String({ description: 'The ID of the user' }),
+  name: t.String({ description: 'The name of the user' }),
+  profileImage: t.Optional(t.String({ description: 'The profile image URL of the user' })),
+})
+export type Commenter = Static<typeof Commenter>
 
 export const FeedItemComment = t.Object({
   id: t.String({ description: 'The ID of the comment' }),
   content: t.String({ description: 'The content of the comment' }),
   createdAt: t.Date({ description: 'The creation date of the comment' }),
   isPrivate: t.Boolean({ description: 'Whether the comment is private' }),
-  author: Author,
+  author: Commenter,
 })
 export type FeedItemComment = Static<typeof FeedItemComment>
 
 export const FeedItemReaction = t.Object({
-  type: t.Enum(PostReactionType, {
+  type: t.Enum(FeedItemReactionType, {
     description: 'The type of reaction, e.g., UP_VOTE or DOWN_VOTE',
   }),
   count: t.Number({ description: 'The count of reactions of this type' }),
@@ -25,7 +31,7 @@ export const FeedItemBaseContent = t.Object({
   id: t.String({ description: 'The ID of the feed item' }),
   createdAt: t.Date({ description: 'The creation date of the feed item' }),
   commentCount: t.Number({ description: 'The number of comments on the feed item' }),
-  userReaction: t.Nullable(t.Enum(PostReactionType)),
+  userReaction: t.Nullable(t.Enum(FeedItemReactionType)),
   reactions: t.Array(FeedItemReaction),
   author: Author,
 })
