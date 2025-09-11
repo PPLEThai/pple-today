@@ -110,9 +110,9 @@ function AnnouncementList() {
             <AnnouncementCard
               className="w-full mt-3"
               key={item.id}
-              onPress={() => router.navigate(`/(official)/announcement/${item.feedItemId}`)}
+              onPress={() => router.navigate(`/(official)/announcement/${item.id}`)}
               id={item.id}
-              feedId={item.feedItemId}
+              feedId={item.id}
               title={item.title}
               date={item.createdAt.toString()}
             />
