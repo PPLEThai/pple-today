@@ -8,12 +8,12 @@ import {
   ElectionType,
   EligibleVoterType,
 } from '@pple-today/database/prisma'
+import dayjs from 'dayjs'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import { GetElectionResponse } from './models'
 import { ElectionRepository, ElectionRepositoryPlugin } from './repostiory'
-import dayjs from 'dayjs'
 
 export class ElectionService {
   constructor(private readonly electionRepository: ElectionRepository) {}
