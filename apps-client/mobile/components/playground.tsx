@@ -53,7 +53,7 @@ import { useFacebookPagesQuery } from '@app/libs/facebook'
 
 import { AuthPlayground } from './auth-playground'
 import { AvatarPPLEFallback } from './avatar-pple-fallback'
-import { PostCard, PostCardSkeleton } from './feed/post-card'
+import { FeedPostCard, PostCardSkeleton } from './feed/post-card'
 import { MoreOrLess } from './more-or-less'
 
 const AUTH_ACCESS_TOKEN_STORAGE_KEY = 'authAccessToken'
@@ -609,36 +609,39 @@ function PostCardExample() {
     <View className="flex flex-col gap-2">
       <H2 className="font-inter-bold">PostCard</H2>
       <View className="-mx-4">
-        <PostCard
-          id="1"
-          author={{
+        <FeedPostCard
+          feedItem={{
             id: '1',
-            name: 'ศิริโรจน์ ธนิกกุล - Sirirot Thanikkun',
-            address: {
-              district: 'สส.สมุทรสาคร',
-              province: 'สมุทรสาคร',
+            author: {
+              id: '1',
+              name: 'ศิริโรจน์ ธนิกกุล - Sirirot Thanikkun',
+              address: {
+                district: 'สส.สมุทรสาคร',
+                province: 'สมุทรสาคร',
+              },
+              profileImage: '',
             },
-            profileImage: '',
+            commentCount: 125,
+            post: {
+              content:
+                'พบปะแม่ๆ ชมรมผู้สูงอายุดอกลำดวน ณ หมู่บ้านวารัตน์ 3 ม.5 ต. อ้อมน้อย อ.กระทุ่มแบน จ.สมุทรสาครชวนให้ผมออกสเตปประกอบ',
+              attachments: Array.from({ length: 4 }).map((_, i) => ({
+                type: 'IMAGE',
+                id: i.toString(),
+                url: 'https://picsum.photos/600/600',
+              })),
+              hashTags: [
+                { id: '1', name: '#pridemonth' },
+                { id: '2', name: '#ร่างกฎหมาย68' },
+              ],
+            },
+            createdAt: new Date('2025-08-19T14:14:49.406Z'),
+            reactions: [
+              { type: 'UP_VOTE', count: 32 },
+              { type: 'DOWN_VOTE', count: 2 },
+            ],
+            userReaction: null,
           }}
-          commentCount={125}
-          content={
-            'พบปะแม่ๆ ชมรมผู้สูงอายุดอกลำดวน ณ หมู่บ้านวารัตน์ 3 ม.5 ต. อ้อมน้อย อ.กระทุ่มแบน จ.สมุทรสาครชวนให้ผมออกสเตปประกอบ'
-          }
-          attachments={Array.from({ length: 4 }).map((_, i) => ({
-            type: 'IMAGE',
-            id: i.toString(),
-            url: 'https://picsum.photos/600/600',
-          }))}
-          hashTags={[
-            { id: '1', name: '#pridemonth' },
-            { id: '2', name: '#ร่างกฎหมาย68' },
-          ]}
-          createdAt="2025-08-19T14:14:49.406Z"
-          reactions={[
-            { type: 'UP_VOTE', count: 32 },
-            { type: 'DOWN_VOTE', count: 2 },
-          ]}
-          userReaction={null}
         />
         <PostCardSkeleton />
       </View>

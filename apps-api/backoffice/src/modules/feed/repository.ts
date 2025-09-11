@@ -2,7 +2,7 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FeedItem, FeedItemBaseContent } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { FeedItemReactionType, FeedItemType, Prisma } from '@pple-today/database/prisma'
+import { FeedItemReactionType, FeedItemType, Prisma, UserRole } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { Ok, ok } from 'neverthrow'
 import { sumBy } from 'remeda'
@@ -320,6 +320,44 @@ export class FeedRepository {
     return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
   }
 
+  async listFeedItemsByUserId(userId: string | undefined, query: { page: number; limit: number }) {
+    const skip = Math.max((query.page - 1) * query.limit, 0)
+    const rawFeedItems = await fromRepositoryPromise(async () => {
+      await this.prismaService.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { id: true },
+      })
+
+      return await this.prismaService.feedItem.findMany({
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip,
+        take: query.limit,
+        where: {
+          authorId: userId,
+          author: {
+            role: {
+              not: UserRole.OFFICIAL,
+            },
+          },
+        },
+        include: this.constructFeedItemInclude(userId),
+      })
+    })
+
+    if (rawFeedItems.isErr()) return err(rawFeedItems.error)
+
+    const feedItems = rawFeedItems.value.map((item) => this.transformToFeedItem(item))
+    const feedItemErr = feedItems.find((item) => item.isErr())
+
+    if (feedItemErr) {
+      return err(feedItemErr.error)
+    }
+
+    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
+  }
+
   async getFeedItemById(feedItemId: string, userId?: string) {
     const rawFeedItem = await fromRepositoryPromise(
       this.prismaService.feedItem.findUniqueOrThrow({
@@ -374,13 +412,18 @@ export class FeedRepository {
               feedItemId,
             },
           },
+          select: {
+            userId: true,
+            feedItemId: true,
+            type: true,
+          },
         })
 
         if (existingFeedItemReaction?.type === type) {
-          return existingFeedItemReaction
+          return { ...existingFeedItemReaction, comment: null }
         }
 
-        const result = await tx.feedItemReaction.upsert({
+        const reaction = await tx.feedItemReaction.upsert({
           where: {
             userId_feedItemId: {
               userId,
@@ -394,6 +437,11 @@ export class FeedRepository {
             feedItemId,
             userId,
             type,
+          },
+          select: {
+            userId: true,
+            feedItemId: true,
+            type: true,
           },
         })
 
@@ -412,12 +460,25 @@ export class FeedRepository {
         }
 
         if (type === FeedItemReactionType.DOWN_VOTE && content) {
-          await tx.feedItemComment.create({
+          const comment = await tx.feedItemComment.create({
             data: {
               feedItemId,
               userId,
               content,
               isPrivate: true, // Assuming downvotes are private comments
+            },
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
+              isPrivate: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  profileImage: true,
+                },
+              },
             },
           })
 
@@ -427,9 +488,10 @@ export class FeedRepository {
               numberOfComments: { increment: 1 },
             },
           })
+          return { ...reaction, comment }
         }
 
-        return result
+        return { reaction, comment: null }
       })
     )
   }
@@ -457,10 +519,20 @@ export class FeedRepository {
 
   async getFeedItemComments(
     feedItemId: string,
-    query: { userId?: string; page: number; limit: number }
+    query: { userId?: string; cursor?: string; limit: number }
   ) {
     return await fromRepositoryPromise(
       this.prismaService.feedItemComment.findMany({
+        take: query.limit,
+        skip: query.cursor ? 1 : 0,
+        cursor: query.cursor
+          ? {
+              id: query.cursor,
+            }
+          : undefined,
+        orderBy: {
+          createdAt: 'desc',
+        },
         where: {
           feedItemId,
           OR: [{ isPrivate: false }, { userId: query.userId }],

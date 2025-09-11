@@ -1,6 +1,6 @@
 import { createApiClient } from '@pple-today/api-client'
 
-import type { ApplicationApiSchema } from '@api/backoffice'
+import type { ApplicationApiSchema } from '@api/backoffice/app'
 import { environment } from '@app/env'
 
 import { getAuthSession } from './auth/session'

@@ -1,7 +1,7 @@
 {
   "name": "@pple-today/api-common",
   "type": "module",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "",
   "exports": {
     "./plugins": {
@@ -28,7 +28,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --check .",
-    "lint": "eslint . --ext .ts,.tsx --fix"
+    "lint": "eslint . --ext .ts,.tsx"
   },
   "keywords": [],
   "author": "",

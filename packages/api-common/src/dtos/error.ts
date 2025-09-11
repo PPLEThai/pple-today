@@ -44,6 +44,9 @@ const FILE_ERROR_SCHEMA = {
   FILE_MOVE_ERROR: {
     status: 500,
   },
+  FILE_UNSUPPORTED_MIME_TYPE: {
+    status: 400,
+  },
   FILE_CHANGE_PERMISSION_ERROR: {
     status: 500,
   },

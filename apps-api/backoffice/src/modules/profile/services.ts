@@ -1,5 +1,5 @@
-import { InternalErrorCode } from '@pple-today/api-common/dtos'
-import { FilePath } from '@pple-today/api-common/dtos'
+import { createId } from '@paralleldrive/cuid2'
+import { ImageFileMimeType, InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FileService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
@@ -207,10 +207,17 @@ export class ProfileService {
     })
   }
 
-  async getProfileUploadUrl(userId: string) {
-    const fileKey = `temp/users/profile-picture-${userId}.png` satisfies FilePath
-    const uploadUrl = await this.fileService.getUploadSignedUrl(fileKey, {
-      contentType: 'image/png',
+  async createProfileUploadUrl(userId: string, contentType: ImageFileMimeType) {
+    const fileKeyResult = this.fileService.getFilePathFromMimeType(
+      `temp/users/${userId}/profile-picture-${userId}-${createId()}`,
+      contentType
+    )
+
+    if (fileKeyResult.isErr()) return err(fileKeyResult.error)
+
+    const fileKey = fileKeyResult.value
+    const uploadUrl = await this.fileService.createUploadSignedUrl(fileKey, {
+      contentType,
     })
 
     if (uploadUrl.isErr()) {

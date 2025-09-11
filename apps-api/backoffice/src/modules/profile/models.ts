@@ -1,4 +1,4 @@
-import { FilePath, UserParticipation } from '@pple-today/api-common/dtos'
+import { FilePath, ImageFileMimeType, UserParticipation } from '@pple-today/api-common/dtos'
 import { UserRole } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
@@ -21,6 +21,7 @@ export const GetMyProfileResponse = t.Object({
       province: t.String({ description: "Province or state of the user's address" }),
       district: t.String({ description: "District or city of the user's address" }),
       subDistrict: t.String({ description: "Sub-district of the user's address" }),
+      postalCode: t.String({ description: "Postal code of the user's address" }),
     })
   ),
 })
@@ -111,9 +112,7 @@ export const GetFollowingUserResponse = t.Array(
 
 export const UpdateProfileBody = t.Object({
   name: t.Optional(t.String({ description: 'The name of the user' })),
-  profileImage: t.Optional(
-    t.String({ description: 'The URL of the profile image', format: 'uri' })
-  ),
+  profileImage: t.Optional(FilePath),
   address: t.Optional(
     t.Object({
       province: t.String({ description: "Province or state of the user's address" }),
@@ -130,11 +129,16 @@ export const UpdateProfileResponse = t.Object({
 export type UpdateProfileBody = Static<typeof UpdateProfileBody>
 export type UpdateProfileResponse = Static<typeof UpdateProfileResponse>
 
-export const GetProfileUploadUrlResponse = t.Object({
+export const CreateProfileUploadUrlBody = t.Object({
+  contentType: ImageFileMimeType,
+})
+export type CreateProfileUploadUrlBody = Static<typeof CreateProfileUploadUrlBody>
+
+export const CreateProfileUploadUrlResponse = t.Object({
   fileKey: FilePath,
   uploadUrl: t.String({ description: 'The signed URL to upload the file' }),
   uploadFields: t.Record(t.String(), t.String(), {
     description: 'The fields required for the upload',
   }),
 })
-export type GetProfileUploadUrlResponse = Static<typeof GetProfileUploadUrlResponse>
+export type CreateProfileUploadUrlResponse = Static<typeof CreateProfileUploadUrlResponse>

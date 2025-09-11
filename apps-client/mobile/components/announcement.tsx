@@ -2,6 +2,7 @@ import 'dayjs/locale/th'
 
 import { View } from 'react-native'
 
+import { AnimatedBackgroundPressable } from '@pple-today/ui/animated-pressable'
 import { Badge } from '@pple-today/ui/badge'
 import { cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
@@ -22,7 +23,7 @@ interface AnnouncementCardProps {
 export function AnnouncementCard(props: AnnouncementCardProps) {
   // TODO: click card
   return (
-    <View
+    <AnimatedBackgroundPressable
       className={cn(
         'w-[320px] h-[120px] border border-base-outline-default bg-base-bg-white rounded-2xl flex flex-row gap-4 items-center px-3 py-4',
         props.className
@@ -51,6 +52,6 @@ export function AnnouncementCard(props: AnnouncementCardProps) {
           </Text>
         </View>
       </View>
-    </View>
+    </AnimatedBackgroundPressable>
   )
 }

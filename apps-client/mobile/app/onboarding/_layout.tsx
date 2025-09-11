@@ -2,7 +2,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 import { Slot } from 'expo-router'
 
-import { OnboardingProvider } from '@app/components/onboarding/onboarding-context'
+import { OnboardingProvider } from '@app/contexts/onboarding-context'
 
 export default function OnboardingLayout() {
   return (

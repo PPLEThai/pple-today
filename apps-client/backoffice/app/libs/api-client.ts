@@ -1,6 +1,6 @@
 import { createApiClient } from '@pple-today/api-client'
 
-import type { AdminApiSchema } from '@api/backoffice'
+import type { AdminApiSchema } from '@api/backoffice/admin'
 
 import { clientEnv } from '~/config/clientEnv'
 
