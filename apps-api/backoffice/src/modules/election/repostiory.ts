@@ -52,7 +52,7 @@ export class ElectionRepository {
     )
   }
 
-  async UpdateEligibleVoterType(voterId: string, type: EligibleVoterType) {
+  async updateEligibleVoterType(voterId: string, type: EligibleVoterType) {
     return fromRepositoryPromise(
       this.prismaService.electionEligibleVoter.update({
         where: {

@@ -160,7 +160,7 @@ export class ElectionService {
     return ok(result)
   }
 
-  async RegisterEleciton(userId: string, electionId: string, type: EligibleVoterType) {
+  async registerEleciton(userId: string, electionId: string, type: EligibleVoterType) {
     const eligibleVoter = await this.electionRepository.getMyEligibleVoter(userId, electionId)
     if (eligibleVoter.isErr()) {
       return mapRepositoryError(eligibleVoter.error, {
@@ -173,7 +173,7 @@ export class ElectionService {
 
     const election = eligibleVoter.value.election
 
-    const isHybirdElection = election.type == ElectionType.HYBRID
+    const isHybirdElection = election.type === ElectionType.HYBRID
     if (!isHybirdElection) {
       return err({
         code: InternalErrorCode.ELECTION_REGISTER_TO_INVALID_TYPE,
@@ -194,7 +194,7 @@ export class ElectionService {
       })
     }
 
-    const updateVoterType = await this.electionRepository.UpdateEligibleVoterType(
+    const updateVoterType = await this.electionRepository.updateEligibleVoterType(
       eligibleVoter.value.id,
       type
     )
