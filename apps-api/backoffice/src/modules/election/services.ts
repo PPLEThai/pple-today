@@ -13,6 +13,7 @@ import { ok } from 'neverthrow'
 
 import { GetElectionResponse } from './models'
 import { ElectionRepository, ElectionRepositoryPlugin } from './repostiory'
+import dayjs from 'dayjs'
 
 export class ElectionService {
   constructor(private readonly electionRepository: ElectionRepository) {}
@@ -160,7 +161,7 @@ export class ElectionService {
     return ok(result)
   }
 
-  async RegisterEleciton(userId: string, electionId: string, type: EligibleVoterType) {
+  async registerEleciton(userId: string, electionId: string, type: EligibleVoterType) {
     const eligibleVoter = await this.electionRepository.getMyEligibleVoter(userId, electionId)
     if (eligibleVoter.isErr()) {
       return mapRepositoryError(eligibleVoter.error, {
@@ -173,7 +174,7 @@ export class ElectionService {
 
     const election = eligibleVoter.value.election
 
-    const isHybirdElection = election.type == ElectionType.HYBRID
+    const isHybirdElection = election.type === ElectionType.HYBRID
     if (!isHybirdElection) {
       return err({
         code: InternalErrorCode.ELECTION_REGISTER_TO_INVALID_TYPE,
@@ -190,11 +191,11 @@ export class ElectionService {
     if (!isInRegisterPeriod) {
       return err({
         code: InternalErrorCode.ELECTION_NOT_IN_REGISTER_PERIOD,
-        message: `Cannot register at this time. The registration period is from ${election.openRegister?.toDateString()} ${election.openRegister?.toTimeString()} to ${election.closeRegister?.toDateString()} ${election.closeRegister?.toTimeString()}.`,
+        message: `Cannot register at this time. The registration period is from ${dayjs(election.openRegister).format()} to ${dayjs(election.closeRegister).format()}.`,
       })
     }
 
-    const updateVoterType = await this.electionRepository.UpdateEligibleVoterType(
+    const updateVoterType = await this.electionRepository.updateEligibleVoterType(
       eligibleVoter.value.id,
       type
     )

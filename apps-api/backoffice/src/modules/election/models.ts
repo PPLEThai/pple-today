@@ -1,4 +1,5 @@
 import { ElectionCandidate, ElectionInfo } from '@pple-today/api-common/dtos'
+import { EligibleVoterType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const ListElectionResponse = t.Array(ElectionInfo)

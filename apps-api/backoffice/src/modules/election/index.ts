@@ -77,7 +77,7 @@ export const ElectionController = new Elysia({
   .post(
     '/:electionId/register',
     async ({ user, params, body, electionService, status }) => {
-      const registerElection = await electionService.RegisterEleciton(
+      const registerElection = await electionService.registerEleciton(
         user.id,
         params.electionId,
         body.type
