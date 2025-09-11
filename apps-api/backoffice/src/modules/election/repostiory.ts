@@ -64,6 +64,16 @@ export class ElectionRepository {
       })
     )
   }
+
+  async deleteMyBollot(voterId: string) {
+    return fromRepositoryPromise(
+      this.prismaService.electionEligibleBallot.delete({
+        where: {
+          voterId,
+        },
+      })
+    )
+  }
 }
 
 export const ElectionRepositoryPlugin = new Elysia()

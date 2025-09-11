@@ -204,6 +204,44 @@ export class ElectionService {
 
     return ok()
   }
+
+  async withdrawBollot(userId: string, electionId: string) {
+    const eligibleVoter = await this.electionRepository.getMyEligibleVoter(userId, electionId)
+    if (eligibleVoter.isErr()) {
+      return mapRepositoryError(eligibleVoter.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id: ${electionId}`,
+        },
+      })
+    }
+
+    const election = eligibleVoter.value.election
+
+    const canVoteOnline = election.type == 'HYBRID' || election.type == 'ONLINE'
+    if (!canVoteOnline) {
+      return err({
+        code: InternalErrorCode.ELECTION_WITHDRAW_TO_INVALID_TYPE,
+        message: `Can only withdraw to election with type ONLINE and HYBRID`,
+      })
+    }
+
+    const now = new Date()
+    const isInVotePeriod = now >= election.openVoting && now <= election.closeVoting
+    if (!isInVotePeriod) {
+      return err({
+        code: InternalErrorCode.ELECTION_NOT_IN_VOTE_PERIOD,
+        message: `Cannot withdraw at this time. The vote period is from ${election.openVoting.toDateString()} ${election.openVoting.toTimeString()} to ${election.closeVoting.toDateString()} ${election.closeVoting.toTimeString()}.`,
+      })
+    }
+
+    const deleteBollot = await this.electionRepository.deleteMyBollot(eligibleVoter.value.id)
+    if (deleteBollot.isErr()) {
+      return mapRepositoryError(deleteBollot.error)
+    }
+
+    return ok()
+  }
 }
 
 export const ElectionServicePlugin = new Elysia()

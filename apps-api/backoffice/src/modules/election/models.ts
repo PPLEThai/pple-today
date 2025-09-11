@@ -75,3 +75,13 @@ export const RegisterElectionResponse = t.Object({
   message: t.String(),
 })
 export type RegisterElectionResponse = Static<typeof RegisterElectionResponse>
+
+export const WithdrawBollotParams = t.Object({
+  electionId: t.String(),
+})
+export type WithdrawBollotParams = Static<typeof WithdrawBollotParams>
+
+export const WithdrawBollotResponse = t.Object({
+  message: t.String(),
+})
+export type WithdrawBollotResponse = Static<typeof WithdrawBollotResponse>
