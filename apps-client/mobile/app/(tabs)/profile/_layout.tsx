@@ -8,7 +8,7 @@ export default function Layout() {
     >
       <Stack.Screen name="index" />
       <Stack.Screen name="facebook" />
-      <Stack.Screen name="follow" options={{ headerShown: false }} />
+      <Stack.Screen name="follow" />
     </Stack>
   )
 }
