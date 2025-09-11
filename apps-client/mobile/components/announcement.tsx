@@ -8,7 +8,6 @@ import { cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 import dayjs from 'dayjs'
 import buddhistEra from 'dayjs/plugin/buddhistEra'
-import { useRouter } from 'expo-router'
 
 import PPLEIcon from '@app/assets/pple-icon.svg'
 
@@ -22,18 +21,16 @@ interface AnnouncementCardProps {
   hashtags?: string[] // no hashtags for now
   date: string
   className?: string
+  onPress?: () => void
 }
 export function AnnouncementCard(props: AnnouncementCardProps) {
-  const router = useRouter()
   return (
     <AnimatedBackgroundPressable
-      onPress={() => {
-        router.push(`/(feed)/${props.feedId}`)
-      }}
       className={cn(
         'w-[320px] h-[120px] border border-base-outline-default bg-base-bg-white rounded-2xl flex flex-row gap-4 items-center px-3 py-4',
         props.className
       )}
+      onPress={props.onPress}
     >
       {/* TODO: Logo */}
       <View className="w-[80px] h-[80px] bg-primary-500 rounded-xl flex flex-row items-center justify-center">

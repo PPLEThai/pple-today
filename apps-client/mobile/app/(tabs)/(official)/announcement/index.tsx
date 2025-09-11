@@ -95,6 +95,7 @@ function AnnouncementList() {
       </View>
     ) : null // Reach end of feed
 
+  const router = useRouter()
   const renderItem = useCallback(
     ({
       item: items,
@@ -109,6 +110,7 @@ function AnnouncementList() {
             <AnnouncementCard
               className="w-full mt-3"
               key={item.id}
+              onPress={() => router.navigate(`/(official)/announcement/${item.feedItemId}`)}
               id={item.id}
               feedId={item.feedItemId}
               title={item.title}
@@ -118,7 +120,7 @@ function AnnouncementList() {
         </Fragment>
       )
     },
-    []
+    [router]
   )
 
   return (

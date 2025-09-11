@@ -639,6 +639,7 @@ function AnnouncementSection() {
             <SlideItem key={announcement.id}>
               <AnnouncementCard
                 id={announcement.id}
+                onPress={() => router.navigate(`/(feed)/${announcement.feedItemId}`)}
                 feedId={announcement.feedItemId}
                 title={announcement.title}
                 date={announcement.createdAt.toString()}
