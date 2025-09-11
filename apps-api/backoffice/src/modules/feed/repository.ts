@@ -1,6 +1,6 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FeedItem, FeedItemBaseContent } from '@pple-today/api-common/dtos'
-import { FileService, PrismaService } from '@pple-today/api-common/services'
+import { BigQueryService, FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { FeedItemReactionType, FeedItemType, Prisma, UserRole } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
@@ -9,7 +9,7 @@ import { sumBy } from 'remeda'
 
 import { GetFeedContentResponse } from './models'
 
-import { BigQueryClient, BigQueryClientPlugin } from '../../plugins/big-query'
+import { BigQueryServicePlugin } from '../../plugins/big-query'
 import { ConfigServicePlugin } from '../../plugins/config'
 import { FileServicePlugin } from '../../plugins/file'
 import { PrismaServicePlugin } from '../../plugins/prisma'
@@ -18,7 +18,7 @@ export class FeedRepository {
   constructor(
     private prismaService: PrismaService,
     private fileService: FileService,
-    private bigQueryClient: BigQueryClient,
+    private bigQueryService: BigQueryService,
     private recommendationConfig: {
       feedModelName: string
     }
@@ -312,7 +312,7 @@ export class FeedRepository {
   }) {
     return await fromRepositoryPromise(async () => {
       const skip = Math.max((page - 1) * limit, 0)
-      const result = await this.bigQueryClient.createQueryJob({
+      const result = await this.bigQueryService.createQueryJob({
         query: `
           SELECT feed_item_id
           FROM ML.RECOMMEND(MODEL \`${this.recommendationConfig.feedModelName}\`, (
@@ -752,9 +752,9 @@ export class FeedRepository {
 }
 
 export const FeedRepositoryPlugin = new Elysia({ name: 'FeedRepository' })
-  .use([PrismaServicePlugin, FileServicePlugin, ConfigServicePlugin, BigQueryClientPlugin])
-  .decorate(({ prismaService, fileService, bigQueryClient, configService }) => ({
-    feedRepository: new FeedRepository(prismaService, fileService, bigQueryClient, {
+  .use([PrismaServicePlugin, FileServicePlugin, ConfigServicePlugin, BigQueryServicePlugin])
+  .decorate(({ prismaService, fileService, bigQueryService, configService }) => ({
+    feedRepository: new FeedRepository(prismaService, fileService, bigQueryService, {
       feedModelName: configService.get('GCP_BIGQUERY_FEED_MODEL_NAME'),
     }),
   }))

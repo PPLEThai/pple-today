@@ -1,12 +1,12 @@
 import { FilePath } from '@pple-today/api-common/dtos'
-import { FileService, PrismaService } from '@pple-today/api-common/services'
+import { BigQueryService, FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import { CompleteOnboardingProfileBody } from './models'
 
-import { BigQueryClient, BigQueryClientPlugin } from '../../plugins/big-query'
+import { BigQueryServicePlugin } from '../../plugins/big-query'
 import { ConfigServicePlugin } from '../../plugins/config'
 import { FileServicePlugin } from '../../plugins/file'
 import { PrismaServicePlugin } from '../../plugins/prisma'
@@ -15,7 +15,7 @@ export class ProfileRepository {
   constructor(
     private prismaService: PrismaService,
     private fileService: FileService,
-    private bigQueryClient: BigQueryClient,
+    private bigQueryService: BigQueryService,
     private recommendationConfig: {
       profileModelName: string
     }
@@ -250,7 +250,7 @@ export class ProfileRepository {
 
   async getProfileSuggestion(currentUserId: string) {
     return fromRepositoryPromise(async () => {
-      const result = await this.bigQueryClient.createQueryJob({
+      const result = await this.bigQueryService.createQueryJob({
         query: `
             SELECT following_user_id
             FROM ML.RECOMMEND(MODEL \`${this.recommendationConfig.profileModelName}\`, (
@@ -294,9 +294,9 @@ export class ProfileRepository {
 }
 
 export const ProfileRepositoryPlugin = new Elysia({ name: 'ProfileRepository' })
-  .use([PrismaServicePlugin, FileServicePlugin, BigQueryClientPlugin, ConfigServicePlugin])
-  .decorate(({ prismaService, fileService, bigQueryClient, configService }) => ({
-    profileRepository: new ProfileRepository(prismaService, fileService, bigQueryClient, {
+  .use([PrismaServicePlugin, FileServicePlugin, BigQueryServicePlugin, ConfigServicePlugin])
+  .decorate(({ prismaService, fileService, bigQueryService, configService }) => ({
+    profileRepository: new ProfileRepository(prismaService, fileService, bigQueryService, {
       profileModelName: configService.get('GCP_BIGQUERY_PROFILE_MODEL_NAME'),
     }),
   }))
