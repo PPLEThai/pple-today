@@ -1,4 +1,4 @@
-import { ImagePickerSuccessResult } from 'expo-image-picker'
+import { ImagePickerAsset } from 'expo-image-picker'
 
 export function handleUploadSignedUrl(uploadUrl: string, formData: FormData) {
   return new Promise<{ ok: boolean; status: number; response: string }>((resolve, reject) => {
@@ -29,12 +29,10 @@ export function handleUploadSignedUrl(uploadUrl: string, formData: FormData) {
 }
 
 export async function handleUploadImage(
-  imgPickerResult: ImagePickerSuccessResult,
+  asset: ImagePickerAsset,
   uploadUrl: string,
   uploadFields: Record<string, string>
 ) {
-  const asset = imgPickerResult.assets[0]
-
   if (!asset) return
 
   try {

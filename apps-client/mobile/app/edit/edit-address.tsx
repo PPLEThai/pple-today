@@ -19,8 +19,8 @@ import { useRouter } from 'expo-router'
 import { MapPin } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import { HeaderWithNoDescription } from '@app/components/common/header-navigation'
-import { useEditingContext } from '@app/contexts/profile-context'
+import { useEditingContext } from '@app/app/edit/_layout'
+import { Header } from '@app/components/header-navigation'
 import { reactQueryClient } from '@app/libs/api-client'
 
 const formSchema = z.object({
@@ -123,7 +123,7 @@ export default function EditAddressPage() {
 
   return (
     <>
-      <HeaderWithNoDescription icon={MapPin} title="แก้ไขข้อมูลที่อยู่" />
+      <Header icon={MapPin} title="แก้ไขข้อมูลที่อยู่" />
       <View className="flex flex-col pt-1 px-6 gap-1 justify-between">
         <H2 className="text-base-primary-default pt-3 font-anakotmai-medium">ข้อมูลที่อยู่</H2>
         <Text className="font-anakotmai-medium text-base-text-medium">
