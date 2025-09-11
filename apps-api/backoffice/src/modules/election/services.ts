@@ -137,7 +137,7 @@ export class ElectionService {
       return mapRepositoryError(eligibleVoter.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.ELECTION_NOT_FOUND,
-          message: `cannot found election id "${electionId}"`,
+          message: `Cannot found election id "${electionId}"`,
         },
       })
     }
@@ -145,7 +145,7 @@ export class ElectionService {
     if (!this.isElectionActive(eligibleVoter.value.election)) {
       return err({
         code: InternalErrorCode.ELECTION_NOT_FOUND,
-        message: `cannot found election id "${electionId}"`,
+        message: `Cannot found election id "${electionId}"`,
       })
     }
 
