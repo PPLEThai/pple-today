@@ -1,5 +1,6 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
+import { err } from '@pple-today/api-common/utils'
 import {
   Election,
   ElectionEligibleBallot,
@@ -8,7 +9,7 @@ import {
   EligibleVoterType,
 } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
-import { err, ok } from 'neverthrow'
+import { ok } from 'neverthrow'
 
 import { ElectionStatus, GetElectionResponse } from './models'
 import { ElectionRepository, ElectionRepositoryPlugin } from './repostiory'
