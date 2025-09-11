@@ -8,15 +8,15 @@ import { Text } from '@pple-today/ui/text'
 import { toast } from '@pple-today/ui/toast'
 import { useForm } from '@tanstack/react-form'
 import { useQueryClient } from '@tanstack/react-query'
-import { ImagePickerSuccessResult } from 'expo-image-picker'
+import { ImagePickerAsset } from 'expo-image-picker'
 import { useRouter } from 'expo-router'
 import { CircleUserRoundIcon, TriangleAlertIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import { AddressCard } from '@app/components/address/address-card'
-import { HeaderWithNoDescription } from '@app/components/common/header-navigation'
-import { ProfileSelect } from '@app/components/profile/profile-select'
-import { useEditingContext } from '@app/contexts/profile-context'
+import { useEditingContext } from '@app/app/edit/_layout'
+import { AddressCard } from '@app/components/address-card'
+import { AvatarImagePicker } from '@app/components/avatar-imagepicker'
+import { Header } from '@app/components/header-navigation'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { getAuthSession } from '@app/libs/auth/session'
 import { ImageMimeType } from '@app/types/file'
@@ -29,7 +29,7 @@ const formSchema = z.object({
 
 export default function EditProfilePage() {
   const { state, dispatch } = useEditingContext()
-  const [imagePickerRes, setImagePickerRes] = React.useState<ImagePickerSuccessResult | undefined>(
+  const [imagePickerAsset, setImagePickerAsset] = React.useState<ImagePickerAsset | undefined>(
     undefined
   )
 
@@ -50,32 +50,28 @@ export default function EditProfilePage() {
       const updateProfilePayload: Record<string, any> = {}
 
       // Handle image update
-      if (imagePickerRes) {
+      if (imagePickerAsset) {
         try {
           const session = await getAuthSession()
           if (!session) {
             throw new Error('No auth session found')
           }
 
-          const getLink = await fetchClient('/profile/upload-url', {
+          const { data: getLink } = await fetchClient('/profile/upload-url', {
             method: 'POST',
             body: {
-              contentType: (imagePickerRes.assets[0].mimeType || 'image/png') as ImageMimeType,
+              contentType: (imagePickerAsset.mimeType || 'image/png') as ImageMimeType,
             },
             headers: {
               Authorization: `Bearer ${session.accessToken}`,
             },
           })
-            .then((res) => res.data)
-            .catch((err) => {
-              console.error('Error getting upload URL:', err)
-              throw err
-            })
+
           if (!getLink || !getLink.uploadUrl || !getLink.uploadFields) {
             throw new Error('Invalid upload URL response')
           }
 
-          await handleUploadImage(imagePickerRes, getLink.uploadUrl, getLink.uploadFields)
+          await handleUploadImage(imagePickerAsset, getLink.uploadUrl, getLink.uploadFields)
           updateProfilePayload.profileImage = getLink.fileKey
         } catch (error) {
           console.error('Image upload failed:', error)
@@ -119,16 +115,12 @@ export default function EditProfilePage() {
     },
   })
 
-  const handleSubmit = React.useCallback(() => {
-    form.handleSubmit()
-  }, [form])
-
   return (
     <>
-      <HeaderWithNoDescription
+      <Header
         icon={CircleUserRoundIcon}
         title="แก้ไขโปรไฟล์"
-        extraFunc={() => dispatch({ type: 'reset' })}
+        onBack={() => dispatch({ type: 'reset' })}
       />
       <ScrollView className="p-4">
         <View className="py-6 gap-10">
@@ -136,10 +128,10 @@ export default function EditProfilePage() {
             {(field) => (
               <FormItem field={field}>
                 <FormControl>
-                  <ProfileSelect
+                  <AvatarImagePicker
                     originalImage={field.state.value}
-                    imagePickerResult={imagePickerRes}
-                    onChangeImagePickerResult={setImagePickerRes}
+                    imagePickerAsset={imagePickerAsset}
+                    onChangeImagePickerAsset={setImagePickerAsset}
                   />
                 </FormControl>
               </FormItem>
@@ -170,7 +162,7 @@ export default function EditProfilePage() {
       <View className="p-6 pt-4 fixed bottom-0 bg-base-bg-white w-full">
         <form.Subscribe selector={(state) => [state.isSubmitting]}>
           {([isSubmitting]) => (
-            <Button onPress={handleSubmit} disabled={isSubmitting}>
+            <Button onPress={form.handleSubmit} disabled={isSubmitting}>
               <Text>บันทึก</Text>
             </Button>
           )}
