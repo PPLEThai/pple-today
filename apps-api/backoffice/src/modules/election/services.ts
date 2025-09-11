@@ -199,7 +199,7 @@ export class ElectionService {
       type
     )
     if (updateVoterType.isErr()) {
-      return mapRepositoryError(updateVoteType.error)
+      return mapRepositoryError(updateVoterType.error)
     }
 
     return ok()
