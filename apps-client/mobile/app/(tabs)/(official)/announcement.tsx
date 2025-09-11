@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { Fragment } from 'react/jsx-runtime'
 import { FlatList, View } from 'react-native'
 
@@ -10,6 +10,7 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
 import { ArrowLeftIcon, MegaphoneIcon } from 'lucide-react-native'
 
+import type { GetAnnouncementsResponse } from '@api/backoffice/app'
 import { AnnouncementCard } from '@app/components/announcement'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 
@@ -94,6 +95,32 @@ function AnnouncementList() {
       </View>
     ) : null // Reach end of feed
 
+  const renderItem = useCallback(
+    ({
+      item: items,
+      index: pageIndex,
+    }: {
+      item: GetAnnouncementsResponse['announcements']
+      index: number
+    }) => {
+      return (
+        <Fragment key={pageIndex}>
+          {items.map((item) => (
+            <AnnouncementCard
+              className="w-full mt-3"
+              key={item.id}
+              id={item.id}
+              feedId={item.feedItemId}
+              title={item.title}
+              date={item.createdAt.toString()}
+            />
+          ))}
+        </Fragment>
+      )
+    },
+    []
+  )
+
   return (
     <FlatList
       className="flex-1"
@@ -102,22 +129,7 @@ function AnnouncementList() {
       onEndReachedThreshold={0.8}
       onEndReached={onEndReached}
       ListFooterComponent={Footer}
-      renderItem={({ item: items, index: pageIndex }) => {
-        return (
-          <Fragment key={pageIndex}>
-            {items.map((item) => (
-              <AnnouncementCard
-                className="w-full mt-3"
-                key={item.id}
-                id={item.id}
-                feedId={item.feedItemId}
-                title={item.title}
-                date={item.createdAt.toString()}
-              />
-            ))}
-          </Fragment>
-        )
-      }}
+      renderItem={renderItem}
     />
   )
 }
