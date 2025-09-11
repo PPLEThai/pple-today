@@ -16,7 +16,7 @@ import { z } from 'zod/v4'
 import { useEditingContext } from '@app/app/edit/_layout'
 import { AddressCard } from '@app/components/address-card'
 import { AvatarImagePicker } from '@app/components/avatar-imagepicker'
-import { PageHeader } from '@app/components/header-navigation'
+import { Header } from '@app/components/header-navigation'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { getAuthSession } from '@app/libs/auth/session'
 import { ImageMimeType } from '@app/types/file'
@@ -117,7 +117,7 @@ export default function EditProfilePage() {
 
   return (
     <>
-      <PageHeader
+      <Header
         icon={CircleUserRoundIcon}
         title="แก้ไขโปรไฟล์"
         onBack={() => dispatch({ type: 'reset' })}

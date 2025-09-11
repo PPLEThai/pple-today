@@ -486,6 +486,7 @@ function UnlinkFacebookPageDialog() {
 }
 
 const FollowingSection = () => {
+  const router = useRouter()
   const profileQuery = reactQueryClient.useQuery('/profile/me', {})
   return (
     <View className="flex flex-col gap-3 border border-base-outline-default rounded-xl py-3 px-4 bg-base-bg-white">
@@ -494,7 +495,14 @@ const FollowingSection = () => {
           <Icon icon={HeartIcon} className="text-base-primary-default" size={32} />
           <H2 className="text-xl text-base-text-high font-anakotmai-medium">เนื้อหาที่ติดตาม</H2>
         </View>
-        <Button variant="ghost" size="icon" className="size-9">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-9"
+          onPress={() => {
+            router.push('/profile/follow')
+          }}
+        >
           <Icon icon={PencilIcon} strokeWidth={1} size={20} className="text-base-text-high" />
         </Button>
       </View>

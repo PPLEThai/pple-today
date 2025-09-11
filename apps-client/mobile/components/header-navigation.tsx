@@ -12,7 +12,7 @@ interface HeaderProps {
   onBack?: () => void
 }
 
-export function PageHeader(props: HeaderProps) {
+export function Header(props: HeaderProps) {
   const router = useRouter()
 
   return (
