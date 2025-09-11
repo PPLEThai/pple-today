@@ -175,6 +175,7 @@ export class ProfileRepository {
             })) || [],
         },
       }
+      userData.numberOfFollowingTopics = profileData.interestTopics.length
     }
 
     if (profileData.address) {
