@@ -35,6 +35,7 @@
   "license": "ISC",
   "dependencies": {
     "@bogeychan/elysia-logger": "^0.1.8",
+    "@google-cloud/bigquery": "^8.1.1",
     "@google-cloud/storage": "^7.16.0",
     "@pple-today/database": "workspace:^",
     "@prisma/adapter-pg": "^6.15.0",
