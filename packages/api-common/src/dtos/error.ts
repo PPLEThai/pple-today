@@ -203,6 +203,12 @@ const ELECTION_ERROR_SCHEMA = {
   ELECTION_NOT_FOUND: {
     status: 404,
   },
+  ELECTION_REGISTER_TO_INVALID_TYPE: {
+    status: 409,
+  },
+  ELECTION_NOT_IN_REGISTER_PERIOD: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 export const InternalErrorCodeSchemas = {

@@ -1,5 +1,6 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { EligibleVoterType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import { PrismaServicePlugin } from '../../plugins/prisma'
@@ -46,6 +47,19 @@ export class ElectionRepository {
               candidates: true,
             },
           },
+        },
+      })
+    )
+  }
+
+  async UpdateEligibleVoterType(voterId: string, type: EligibleVoterType) {
+    return fromRepositoryPromise(
+      this.prismaService.electionEligibleVoter.update({
+        where: {
+          id: voterId,
+        },
+        data: {
+          type,
         },
       })
     )

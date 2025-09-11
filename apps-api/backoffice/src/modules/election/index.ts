@@ -2,7 +2,14 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
-import { GetElectionParams, GetElectionResponse, ListElectionResponse } from './models'
+import {
+  GetElectionParams,
+  GetElectionResponse,
+  ListElectionResponse,
+  RegisterElectionBody,
+  RegisterElectionParams,
+  RegisterElectionResponse,
+} from './models'
 import { ElectionServicePlugin } from './services'
 
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
@@ -60,6 +67,42 @@ export const ElectionController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .post(
+    '/:electionId/register',
+    async ({ user, params, body, electionService, status }) => {
+      const registerElection = await electionService.RegisterEleciton(
+        user.id,
+        params.electionId,
+        body.type
+      )
+      if (registerElection.isErr()) {
+        return mapErrorCodeToResponse(registerElection.error, status)
+      }
+
+      return {
+        message: 'Register election success',
+      }
+    },
+    {
+      detail: {
+        summary: 'Register hybrid election',
+        description: 'Can choose to vote either ONLINE or ONSITE.',
+      },
+      requiredLocalUser: true,
+      params: RegisterElectionParams,
+      body: RegisterElectionBody,
+      response: {
+        200: RegisterElectionResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.ELECTION_NOT_IN_REGISTER_PERIOD,
+          InternalErrorCode.ELECTION_REGISTER_TO_INVALID_TYPE,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

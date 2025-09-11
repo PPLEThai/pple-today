@@ -159,6 +159,51 @@ export class ElectionService {
 
     return ok(result)
   }
+
+  async RegisterEleciton(userId: string, electionId: string, type: EligibleVoterType) {
+    const eligibleVoter = await this.electionRepository.getMyEligibleVoter(userId, electionId)
+    if (eligibleVoter.isErr()) {
+      return mapRepositoryError(eligibleVoter.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id: ${electionId}`,
+        },
+      })
+    }
+
+    const election = eligibleVoter.value.election
+
+    const isHybirdElection = election.type == ElectionType.HYBRID
+    if (!isHybirdElection) {
+      return err({
+        code: InternalErrorCode.ELECTION_REGISTER_TO_INVALID_TYPE,
+        message: `Registration is allowed only for HYBRID elections.`,
+      })
+    }
+
+    const now = new Date()
+    const isInRegisterPeriod =
+      election.openRegister &&
+      election.closeRegister &&
+      now >= election.openRegister &&
+      now <= election.closeRegister
+    if (!isInRegisterPeriod) {
+      return err({
+        code: InternalErrorCode.ELECTION_NOT_IN_REGISTER_PERIOD,
+        message: `Cannot register at this time. The registration period is from ${election.openRegister?.toDateString()} ${election.openRegister?.toTimeString()} to ${election.closeRegister?.toDateString()} ${election.closeRegister?.toTimeString()}.`,
+      })
+    }
+
+    const updateVoterType = await this.electionRepository.UpdateEligibleVoterType(
+      eligibleVoter.value.id,
+      type
+    )
+    if (updateVoterType.isErr()) {
+      return mapRepositoryError(updateVoteType.error)
+    }
+
+    return ok()
+  }
 }
 
 export const ElectionServicePlugin = new Elysia()
