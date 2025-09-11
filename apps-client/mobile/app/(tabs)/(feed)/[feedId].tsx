@@ -8,7 +8,7 @@ import { ArrowLeftIcon } from 'lucide-react-native'
 
 import type { GetFeedContentResponse } from '@api/backoffice/app'
 import { FeedCommentSection } from '@app/components/feed/comment-section'
-import { PostContent } from '@app/components/feed/post-card'
+import { FeedDetail } from '@app/components/feed/feed-card'
 import { reactQueryClient } from '@app/libs/api-client'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 
@@ -41,16 +41,16 @@ export default function FeedDetailPage() {
       </View>
       <FeedCommentSection
         feedId={feedId}
-        headerComponent={<FeedItemContent item={feedContentQuery.data} />}
+        headerComponent={<FeedItemDetail item={feedContentQuery.data} />}
       />
     </View>
   )
 }
 
-function FeedItemContent({ item }: { item: GetFeedContentResponse }) {
+function FeedItemDetail({ item }: { item: GetFeedContentResponse }) {
   switch (item.type) {
     case 'POST':
-      return <PostContent key={item.id} feedItem={item} />
+      return <FeedDetail key={item.id} feedItem={item} />
     case 'POLL':
       // TODO: poll feed
       return null

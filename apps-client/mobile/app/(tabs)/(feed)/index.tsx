@@ -41,7 +41,7 @@ import type { ApplicationApiSchema, GetBannersResponse } from '@api/backoffice/a
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AnnouncementCard } from '@app/components/announcement'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
-import { FeedPostCard, PostCardSkeleton } from '@app/components/feed/post-card'
+import { FeedCard, PostCardSkeleton } from '@app/components/feed/feed-card'
 import {
   Pager,
   PagerContent,
@@ -537,18 +537,7 @@ function FeedContent(props: PagerScrollViewProps) {
       return (
         <>
           {items.map((item) => {
-            switch (item.type) {
-              case 'POST':
-                return <FeedPostCard key={item.id} feedItem={item} />
-              case 'POLL':
-                // TODO: poll feed card
-                return null
-              case 'ANNOUNCEMENT':
-                // expected no announcement
-                return null
-              default:
-                return exhaustiveGuard(item)
-            }
+            return <FeedCard key={item.id} feedItem={item} />
           })}
         </>
       )
