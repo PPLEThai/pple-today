@@ -18,8 +18,9 @@
   "scripts": {
     "codegen": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:dev:seed": "tsx prisma/seed.dev.ts",
-    "db:prod:seed": "tsx prisma/seed.prod.ts",
+    "db:dev:seed": "tsx prisma/seeds/seed.dev.ts",
+    "db:election:seed": "tsx prisma/seeds/seed.election.ts",
+    "db:prod:seed": "tsx prisma/seeds/seed.prod.ts",
     "db:reset": "prisma migrate reset",
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --check .",
