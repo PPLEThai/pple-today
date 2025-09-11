@@ -1,10 +1,11 @@
+import baseTailwindConfig from '@pple-today/tailwind-config/tailwind.config.js'
 import nativewindPreset from 'nativewind/preset'
 import { hairlineWidth, platformSelect } from 'nativewind/theme'
 import tailwindcssAnimation from 'tailwindcss-animate'
 
 /** @type {import('tailwindcss').Config} */
 export default {
-  darkMode: 'class',
+  ...baseTailwindConfig,
   content: [
     './app/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
@@ -13,124 +14,9 @@ export default {
   presets: [nativewindPreset],
   theme: {
     extend: {
-      colors: {
-        'base-bg-white': 'rgb(var(--base-bg-white))',
-        'base-bg-light': 'rgb(var(--base-bg-light))',
-        'base-bg-default': 'rgb(var(--base-bg-default))',
-        'base-bg-medium': 'rgb(var(--base-bg-medium))',
-        'base-bg-dark': 'rgb(var(--base-bg-dark))',
-        'base-bg-invert': 'rgb(var(--base-bg-invert))',
-        'base-text-high': 'rgb(var(--base-text-high))',
-        'base-text-medium': 'rgb(var(--base-text-medium))',
-        'base-text-placeholder': 'rgb(var(--base-text-placeholder))',
-        'base-text-invert': 'rgb(var(--base-text-invert))',
-        'base-primary-extra-light': 'rgb(var(--base-primary-extra-light))',
-        'base-primary-light': 'rgb(var(--base-primary-light))',
-        'base-primary-default': 'rgb(var(--base-primary-default))',
-        'base-primary-medium': 'rgb(var(--base-primary-medium))',
-        'base-primary-dark': 'rgb(var(--base-primary-dark))',
-        'base-secondary-extra-light': 'rgb(var(--base-secondary-extra-light))',
-        'base-secondary-light': 'rgb(var(--base-secondary-light))',
-        'base-secondary-default': 'rgb(var(--base-secondary-default))',
-        'base-secondary-medium': 'rgb(var(--base-secondary-medium))',
-        'base-secondary-dark': 'rgb(var(--base-secondary-dark))',
-        'base-outline-default': 'rgb(var(--base-outline-default))',
-        'base-outline-medium': 'rgb(var(--base-outline-medium))',
-        'base-outline-dark': 'rgb(var(--base-outline-dark))',
-
-        'system-info-default': 'rgb(var(--system-info-default))',
-        'system-info-extra-light': 'rgb(var(--system-info-extra-light))',
-        'system-info-light': 'rgb(var(--system-info-light))',
-        'system-info-medium': 'rgb(var(--system-info-medium))',
-        'system-info-dark': 'rgb(var(--system-info-dark))',
-        'system-success-default': 'rgb(var(--system-success-default))',
-        'system-success-extra-light': 'rgb(var(--system-success-extra-light))',
-        'system-success-light': 'rgb(var(--system-success-light))',
-        'system-success-medium': 'rgb(var(--system-success-medium))',
-        'system-success-dark': 'rgb(var(--system-success-dark))',
-        'system-danger-default': 'rgb(var(--system-danger-default))',
-        'system-danger-extra-light': 'rgb(var(--system-danger-extra-light))',
-        'system-danger-light': 'rgb(var(--system-danger-light))',
-        'system-danger-medium': 'rgb(var(--system-danger-medium))',
-        'system-danger-dark': 'rgb(var(--system-danger-dark))',
-        'system-warning-default': 'rgb(var(--system-warning-default))',
-        'system-warning-extra-light': 'rgb(var(--system-warning-extra-light))',
-        'system-warning-light': 'rgb(var(--system-warning-light))',
-        'system-warning-medium': 'rgb(var(--system-warning-medium))',
-        'system-warning-dark': 'rgb(var(--system-warning-dark))',
-
-        border: 'rgb(var(--border))',
-        input: 'rgb(var(--input))',
-        ring: 'rgb(var(--ring))',
-        background: 'rgb(var(--background))',
-        foreground: 'rgb(var(--foreground))',
-        primary: {
-          50: 'rgb(var(--color-primary-50))',
-          100: 'rgb(var(--color-primary-100))',
-          200: 'rgb(var(--color-primary-200))',
-          300: 'rgb(var(--color-primary-300))',
-          400: 'rgb(var(--color-primary-400))',
-          500: 'rgb(var(--color-primary-500))',
-          600: 'rgb(var(--color-primary-600))',
-          700: 'rgb(var(--color-primary-700))',
-          800: 'rgb(var(--color-primary-800))',
-          900: 'rgb(var(--color-primary-900))',
-          950: 'rgb(var(--color-primary-950))',
-          DEFAULT: 'rgb(var(--primary))',
-          foreground: 'rgb(var(--primary-foreground))',
-        },
-        secondary: {
-          50: 'rgb(var(--color-secondary-50))',
-          100: 'rgb(var(--color-secondary-100))',
-          200: 'rgb(var(--color-secondary-200))',
-          300: 'rgb(var(--color-secondary-300))',
-          400: 'rgb(var(--color-secondary-400))',
-          500: 'rgb(var(--color-secondary-500))',
-          600: 'rgb(var(--color-secondary-600))',
-          700: 'rgb(var(--color-secondary-700))',
-          800: 'rgb(var(--color-secondary-800))',
-          900: 'rgb(var(--color-secondary-900))',
-          950: 'rgb(var(--color-secondary-950))',
-          DEFAULT: 'rgb(var(--secondary))',
-          foreground: 'rgb(var(--secondary-foreground))',
-        },
-        destructive: {
-          DEFAULT: 'rgb(var(--destructive))',
-          foreground: 'rgb(var(--destructive-foreground))',
-        },
-        muted: {
-          DEFAULT: 'rgb(var(--muted))',
-          foreground: 'rgb(var(--muted-foreground))',
-        },
-        accent: {
-          DEFAULT: 'rgb(var(--accent))',
-          foreground: 'rgb(var(--accent-foreground))',
-        },
-        popover: {
-          DEFAULT: 'rgb(var(--popover))',
-          foreground: 'rgb(var(--popover-foreground))',
-        },
-        card: {
-          DEFAULT: 'rgb(var(--card))',
-          foreground: 'rgb(var(--card-foreground))',
-        },
-      },
+      ...baseTailwindConfig.theme.extend,
       borderWidth: {
         hairline: hairlineWidth(),
-      },
-      keyframes: {
-        'accordion-down': {
-          from: { height: '0' },
-          to: { height: 'var(--radix-accordion-content-height)' },
-        },
-        'accordion-up': {
-          from: { height: 'var(--radix-accordion-content-height)' },
-          to: { height: '0' },
-        },
-      },
-      animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
       },
       fontFamily: {
         'inter-light': platformSelect({
