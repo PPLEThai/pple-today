@@ -402,8 +402,10 @@ export class FeedRepository {
     return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
   }
 
-  async listFeedItemsByUserId(userId: string | undefined, query: { page: number; limit: number }) {
-    const skip = Math.max((query.page - 1) * query.limit, 0)
+  async listFeedItemsByUserId(
+    userId: string | undefined,
+    query: { cursor?: string; limit: number }
+  ) {
     const rawFeedItems = await fromRepositoryPromise(async () => {
       await this.prismaService.user.findUniqueOrThrow({
         where: { id: userId },
@@ -414,7 +416,8 @@ export class FeedRepository {
         orderBy: {
           createdAt: 'desc',
         },
-        skip,
+        cursor: query.cursor ? { id: query.cursor } : undefined,
+        skip: query.cursor ? 1 : 0,
         take: query.limit,
         where: {
           authorId: userId,

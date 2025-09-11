@@ -153,9 +153,9 @@ export class FeedService {
     )
   }
 
-  async getFeedByUserId(userId?: string, query?: { page?: number; limit?: number }) {
+  async getFeedByUserId(userId?: string, query?: { cursor?: string; limit?: number }) {
     const feedItems = await this.feedRepository.listFeedItemsByUserId(userId, {
-      page: query?.page ?? 1,
+      cursor: query?.cursor,
       limit: query?.limit ?? 10,
     })
 

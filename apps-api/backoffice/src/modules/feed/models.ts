@@ -133,7 +133,10 @@ export const GetFeedItemsByUserIdParams = t.Object({
 })
 export type GetFeedItemsByUserIdParams = Static<typeof GetFeedItemsByUserIdParams>
 
-export const GetFeedItemsByUserIdQuery = PaginationQuery
+export const GetFeedItemsByUserIdQuery = t.Object({
+  cursor: t.Optional(t.String({ description: 'The cursor for pagination' })),
+  limit: t.Optional(t.Number({ description: 'The number of items per page', default: 10 })),
+})
 export type GetFeedItemsByUserIdQuery = Static<typeof GetFeedItemsByUserIdQuery>
 
 export const GetFeedItemsByUserIdResponse = t.Array(FeedItem)
