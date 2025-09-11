@@ -1,6 +1,6 @@
 import { PrismaPg } from '@prisma/adapter-pg'
 
-import { PrismaClient, UserRole } from '../../__generated__/prisma'
+import { PrismaClient, TopicStatus, UserRole } from '../../__generated__/prisma'
 
 const transformProvinceDetails = async (): Promise<{
   province: string[]
@@ -45,30 +45,32 @@ const prisma = new PrismaClient({
 const OFFICIAL_USER_ID = 'pple-official-page'
 
 const seedAddresses = async (addresses: any) => {
-  for (const { province, district, subDistrict, postalCode } of addresses) {
-    await prisma.address.upsert({
-      where: {
-        province_district_subDistrict_postalCode: {
+  await prisma.$transaction(async (tx) => {
+    for (const { province, district, subDistrict, postalCode } of addresses) {
+      await tx.address.upsert({
+        where: {
+          province_district_subDistrict_postalCode: {
+            province,
+            district,
+            subDistrict,
+            postalCode,
+          },
+        },
+        create: {
           province,
           district,
           subDistrict,
           postalCode,
         },
-      },
-      create: {
-        province,
-        district,
-        subDistrict,
-        postalCode,
-      },
-      update: {
-        province,
-        district,
-        subDistrict,
-        postalCode,
-      },
-    })
-  }
+        update: {
+          province,
+          district,
+          subDistrict,
+          postalCode,
+        },
+      })
+    }
+  })
 
   console.log('Seeded address successfully.')
 }
@@ -91,7 +93,7 @@ const seedOfficialUser = async () => {
   console.log('Seeded official user successfully.')
 }
 
-const seedTopics = async (provinces: any[]) => {
+const seedTopics = async (provinces: string[]) => {
   await prisma.$transaction(async (tx) => {
     for (const province of provinces) {
       await tx.topic.upsert({
@@ -101,6 +103,7 @@ const seedTopics = async (provinces: any[]) => {
           id: `${province}`,
           name: province,
           description: `ข่าวเกี่ยวกับจังหวัด${province}`,
+          status: TopicStatus.PUBLISH,
         },
       })
     }

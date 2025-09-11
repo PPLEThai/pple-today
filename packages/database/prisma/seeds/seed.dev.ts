@@ -6,6 +6,7 @@ import {
   FeedItemType,
   PollType,
   PrismaClient,
+  TopicStatus,
   UserRole,
 } from '../../__generated__/prisma'
 
@@ -165,6 +166,7 @@ const seedTopics = async (provinces: any[]) => {
           id: `${province}`,
           name: province,
           description: `ข่าวเกี่ยวกับจังหวัด${province}`,
+          status: TopicStatus.PUBLISH,
         },
       })
     }
