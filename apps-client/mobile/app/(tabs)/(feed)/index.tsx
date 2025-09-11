@@ -41,7 +41,7 @@ import type { ApplicationApiSchema, GetBannersResponse } from '@api/backoffice/a
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AnnouncementCard } from '@app/components/announcement'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
-import { FeedCard, PostCardSkeleton } from '@app/components/feed/feed-card'
+import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
 import {
   Pager,
   PagerContent,
@@ -516,7 +516,7 @@ function FeedContent(props: PagerScrollViewProps) {
 
   const Footer =
     feedInfiniteQuery.hasNextPage || feedInfiniteQuery.isLoading || feedInfiniteQuery.error ? (
-      <PostCardSkeleton />
+      <FeedCardSkeleton />
     ) : data.length === 1 && data[0].length === 0 ? (
       // Empty State
       <View className="flex flex-col items-center justify-center py-6">

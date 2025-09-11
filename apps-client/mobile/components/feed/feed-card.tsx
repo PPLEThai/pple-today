@@ -206,7 +206,7 @@ function PostCardContent(props: { feedItem: FeedItemPost }) {
   )
 }
 
-export const PostCardSkeleton = (props: ViewProps) => {
+export const FeedCardSkeleton = (props: ViewProps) => {
   return (
     <View
       className="flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl mt-4 mx-4"
@@ -216,8 +216,8 @@ export const PostCardSkeleton = (props: ViewProps) => {
         <View className="flex flex-row items-center">
           <View className="w-8 h-8 rounded-full bg-base-bg-default flex items-center justify-center mr-3 overflow-hidden" />
           <View className="flex flex-col py-1 gap-2">
-            <View className="rounded-md bg-base-bg-default h-[12px] w-[160px]" />
-            <View className="rounded-md bg-base-bg-default h-[12px] w-[100px]" />
+            <View className="rounded-full bg-base-bg-default h-[12px] w-[160px]" />
+            <View className="rounded-full bg-base-bg-default h-[12px] w-[100px]" />
           </View>
         </View>
       </View>
@@ -225,8 +225,8 @@ export const PostCardSkeleton = (props: ViewProps) => {
         <View className="rounded-lg bg-base-bg-default w-full aspect-[2/1]" />
       </View>
       <View className="flex flex-row justify-between items-center px-4 pb-3">
-        <View className="rounded-md bg-base-bg-default h-[20px] w-[100px]" />
-        <View className="rounded-md bg-base-bg-default h-[20px] w-[100px]" />
+        <View className="rounded-full bg-base-bg-default h-[20px] w-[100px]" />
+        <View className="rounded-full bg-base-bg-default h-[20px] w-[100px]" />
       </View>
       <View className="flex flex-col">
         <View className="px-4">
@@ -234,10 +234,10 @@ export const PostCardSkeleton = (props: ViewProps) => {
         </View>
         <View className="flex flex-row justify-between gap-2 px-3 pb-3 pt-3">
           <View className="flex flex-row gap-2">
-            <View className="rounded-md bg-base-bg-default h-[32px] w-[100px]" />
-            <View className="rounded-md bg-base-bg-default h-[32px] w-[100px]" />
+            <View className="rounded-full bg-base-bg-default h-6 mt-2 w-[100px]" />
+            <View className="rounded-full bg-base-bg-default h-6 mt-2 w-[100px]" />
           </View>
-          <View className="rounded-md bg-base-bg-default h-[32px] w-[100px]" />
+          <View className="rounded-full bg-base-bg-default h-6 mt-2 w-[100px]" />
         </View>
       </View>
     </View>
@@ -818,6 +818,41 @@ export const FeedDetail = (props: { feedItem: FeedItem }) => {
             <DownvoteButton feedId={props.feedItem.id} />
           </View>
           <CommentButton feedId={props.feedItem.id} />
+        </View>
+      </View>
+    </View>
+  )
+}
+
+export const FeedDetailSkeleton = () => {
+  return (
+    <View className="flex flex-col bg-base-bg-white">
+      <View className="px-4 pb-3 flex flex-row items-center justify-between">
+        <View className="flex flex-row items-center">
+          <View className="w-8 h-8 rounded-full bg-base-bg-default flex items-center justify-center mr-3 overflow-hidden" />
+          <View className="flex flex-col py-1 gap-2">
+            <View className="rounded-full bg-base-bg-default h-[12px] w-[160px]" />
+            <View className="rounded-full bg-base-bg-default h-[12px] w-[100px]" />
+          </View>
+        </View>
+      </View>
+      <View className="px-4 pb-3">
+        <View className="rounded-lg bg-base-bg-default w-full aspect-[2/1]" />
+      </View>
+      <View className="flex flex-row justify-between items-center px-4 pb-3">
+        <View className="rounded-full bg-base-bg-default h-[20px] w-[100px]" />
+        <View className="rounded-full bg-base-bg-default h-[20px] w-[100px]" />
+      </View>
+      <View className="flex flex-col">
+        <View className="px-4">
+          <View className="border-b border-base-outline-default" />
+        </View>
+        <View className="flex flex-row justify-between gap-2 px-3 pb-3 pt-3">
+          <View className="flex flex-row gap-2">
+            <View className="rounded-full bg-base-bg-default h-6 mt-2 w-[100px]" />
+            <View className="rounded-full bg-base-bg-default h-6 mt-2 w-[100px]" />
+          </View>
+          <View className="rounded-full bg-base-bg-default h-6 mt-2 w-[100px]" />
         </View>
       </View>
     </View>

@@ -7,7 +7,7 @@ import { usePathname, useRouter } from 'expo-router'
 import { ArrowLeftIcon } from 'lucide-react-native'
 
 import { FeedCommentSection } from '@app/components/feed/comment-section'
-import { FeedDetail } from '@app/components/feed/feed-card'
+import { FeedDetail, FeedDetailSkeleton } from '@app/components/feed/feed-card'
 import { reactQueryClient } from '@app/libs/api-client'
 
 export default function FeedDetailPage() {
@@ -28,10 +28,6 @@ export default function FeedDetailPage() {
     router.replace('/(feed)')
     return null
   }
-  if (feedContentQuery.isLoading || !feedContentQuery.data) {
-    // TODO: Loading skeleton
-    return null
-  }
   return (
     <View className="flex-1 flex-col bg-base-bg-default">
       <View className="pt-4 pb-2 px-4 bg-base-bg-white">
@@ -46,7 +42,13 @@ export default function FeedDetailPage() {
       </View>
       <FeedCommentSection
         feedId={feedId}
-        headerComponent={<FeedDetail feedItem={feedContentQuery.data} />}
+        headerComponent={
+          feedContentQuery.isLoading || !feedContentQuery.data ? (
+            <FeedDetailSkeleton />
+          ) : (
+            <FeedDetail feedItem={feedContentQuery.data} />
+          )
+        }
       />
     </View>
   )
