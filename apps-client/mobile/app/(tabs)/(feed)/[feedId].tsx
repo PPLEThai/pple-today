@@ -25,7 +25,6 @@ export default function FeedDetailPage() {
     }
   }, [feedContentQuery.error, router])
   if (!feedId) {
-    router.replace('/(feed)')
     return null
   }
   return (
