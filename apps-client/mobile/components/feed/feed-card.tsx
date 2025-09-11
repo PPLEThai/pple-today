@@ -20,12 +20,6 @@ import { TextProps } from 'react-native-svg'
 import { createQuery } from 'react-query-kit'
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
-import type {
-  FeedItem,
-  FeedItemAnnouncement,
-  FeedItemBaseContent,
-  FeedItemPost,
-} from '@pple-today/api-common/dtos'
 import { AnimatedBackgroundPressable, AnimatedPressable } from '@pple-today/ui/animated-pressable'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
@@ -54,6 +48,12 @@ import {
 } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
+import type {
+  FeedItem,
+  FeedItemAnnouncement,
+  FeedItemBaseContent,
+  FeedItemPost,
+} from '@api/backoffice/app'
 import { MoreOrLess } from '@app/components/more-or-less'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSessionQuery } from '@app/libs/auth'
