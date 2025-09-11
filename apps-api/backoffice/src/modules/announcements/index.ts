@@ -5,8 +5,15 @@ import Elysia from 'elysia'
 import {
   GetAnnouncementByIdParams,
   GetAnnouncementByIdResponse,
-  GetAnnouncementsQuery,
-  GetAnnouncementsResponse,
+  ListAnnouncementByHashTagIdQuery,
+  ListAnnouncementByHashTagIdResponse,
+  ListAnnouncementByTopicIdParams,
+  ListAnnouncementByTopicIdQuery,
+  ListAnnouncementByTopicIdResponse,
+  ListAnnouncementsQuery,
+  ListAnnouncementsResponse,
+  ListFollowedAnnouncementsQuery,
+  ListFollowedAnnouncementsResponse,
 } from './models'
 import { AnnouncementServicePlugin } from './services'
 
@@ -20,9 +27,9 @@ export const AnnouncementsController = new Elysia({
   .get(
     '/',
     async ({ announcementService, status, query }) => {
-      const result = await announcementService.getAnnouncements({
+      const result = await announcementService.listAnnouncements({
+        cursor: query.cursor,
         limit: query.limit ?? 10,
-        page: query.page ?? 1,
       })
 
       if (result.isErr()) {
@@ -32,14 +39,95 @@ export const AnnouncementsController = new Elysia({
       return status(200, result.value)
     },
     {
-      query: GetAnnouncementsQuery,
+      query: ListAnnouncementsQuery,
       response: {
-        200: GetAnnouncementsResponse,
+        200: ListAnnouncementsResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
       },
       detail: {
         summary: 'Get all announcements',
         description: 'Fetch a list of all announcements',
+      },
+    }
+  )
+  .get(
+    '/topic/:id',
+    async ({ announcementService, params, status, query }) => {
+      const result = await announcementService.listAnnouncementByTopicId(params.id, {
+        cursor: query.cursor,
+        limit: query.limit ?? 10,
+      })
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      params: ListAnnouncementByTopicIdParams,
+      query: ListAnnouncementByTopicIdQuery,
+      response: {
+        200: ListAnnouncementByTopicIdResponse,
+        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+      detail: {
+        summary: 'Get announcements by topic ID',
+        description: 'Fetch a list of announcements filtered by topic ID',
+      },
+    }
+  )
+  .get(
+    '/followed',
+    async ({ user, announcementService, status, query }) => {
+      const result = await announcementService.listFollowedAnnouncements(user.id, {
+        cursor: query.cursor,
+        limit: query.limit ?? 10,
+      })
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      query: ListFollowedAnnouncementsQuery,
+      response: {
+        200: ListFollowedAnnouncementsResponse,
+        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+      detail: {
+        summary: 'Get followed announcements',
+        description: 'Fetch a list of announcements from followed topics',
+      },
+    }
+  )
+  .get(
+    '/hashtag/:id',
+    async ({ announcementService, query, status, params }) => {
+      const result = await announcementService.listAnnouncementByHashTagId(params.id, {
+        cursor: query.cursor,
+        limit: query.limit ?? 10,
+      })
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      query: ListAnnouncementByHashTagIdQuery,
+      response: {
+        200: ListAnnouncementByHashTagIdResponse,
+        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+      detail: {
+        summary: 'Get announcements by hashtag ID',
+        description: 'Fetch a list of announcements filtered by hashtag ID',
       },
     }
   )
