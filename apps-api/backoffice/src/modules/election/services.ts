@@ -13,6 +13,7 @@ import { ok } from 'neverthrow'
 
 import { ElectionStatus, GetElectionResponse } from './models'
 import { ElectionRepository, ElectionRepositoryPlugin } from './repostiory'
+import dayjs from 'dayjs'
 
 export class ElectionService {
   constructor(private readonly electionRepository: ElectionRepository) {}
@@ -190,7 +191,7 @@ export class ElectionService {
     if (!isInRegisterPeriod) {
       return err({
         code: InternalErrorCode.ELECTION_NOT_IN_REGISTER_PERIOD,
-        message: `Cannot register at this time. The registration period is from ${election.openRegister?.toDateString()} ${election.openRegister?.toTimeString()} to ${election.closeRegister?.toDateString()} ${election.closeRegister?.toTimeString()}.`,
+        message: `Cannot register at this time. The registration period is from ${dayjs(election.openRegister).format()} to ${dayjs(election.closeRegister).format()}.`,
       })
     }
 
