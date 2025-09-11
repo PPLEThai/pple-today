@@ -1,7 +1,7 @@
 import { BigQuery } from '@google-cloud/bigquery'
 import Elysia from 'elysia'
 
-import serverEnv from '../config/env'
+import { ConfigServicePlugin } from './config'
 
 export class BigQueryClient extends BigQuery {
   constructor(config: { projectId: string; clientEmail: string; privateKey: string }) {
@@ -17,10 +17,12 @@ export class BigQueryClient extends BigQuery {
 
 export const BigQueryClientPlugin = new Elysia({
   name: 'BigQueryClient',
-}).decorate(() => ({
-  bigQueryClient: new BigQueryClient({
-    projectId: serverEnv.GCP_PROJECT_ID,
-    clientEmail: serverEnv.GCP_CLIENT_EMAIL,
-    privateKey: serverEnv.GCP_PRIVATE_KEY,
-  }),
-}))
+})
+  .use(ConfigServicePlugin)
+  .decorate(({ configService }) => ({
+    bigQueryClient: new BigQueryClient({
+      projectId: configService.get('GCP_PROJECT_ID'),
+      clientEmail: configService.get('GCP_CLIENT_EMAIL'),
+      privateKey: configService.get('GCP_PRIVATE_KEY'),
+    }),
+  }))
