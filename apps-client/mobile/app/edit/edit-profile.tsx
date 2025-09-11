@@ -57,7 +57,7 @@ export default function EditProfilePage() {
             throw new Error('No auth session found')
           }
 
-          const getLink = await fetchClient('/profile/upload-url', {
+          const { data: getLink } = await fetchClient('/profile/upload-url', {
             method: 'POST',
             body: {
               contentType: (imagePickerAsset.mimeType || 'image/png') as ImageMimeType,
@@ -65,7 +65,7 @@ export default function EditProfilePage() {
             headers: {
               Authorization: `Bearer ${session.accessToken}`,
             },
-          }).then((res) => res.data)
+          })
 
           if (!getLink || !getLink.uploadUrl || !getLink.uploadFields) {
             throw new Error('Invalid upload URL response')

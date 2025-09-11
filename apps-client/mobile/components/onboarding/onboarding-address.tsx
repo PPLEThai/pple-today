@@ -152,7 +152,7 @@ export function OnboardingAddress() {
         throw new Error('No auth session found')
       }
 
-      const result = await fetchClient('/profile/upload-url', {
+      const { data: getLink } = await fetchClient('/profile/upload-url', {
         method: 'POST',
         body: {
           contentType: (state.profileStepResult.imagePickerAsset?.mimeType ||
@@ -162,18 +162,19 @@ export function OnboardingAddress() {
           Authorization: `Bearer ${session.accessToken}`,
         },
       })
-      if (!result || !result.data) {
+
+      if (!getLink || !getLink.uploadUrl || !getLink.uploadFields) {
         throw new Error('Cannot get upload url')
       }
 
       await handleUploadImage(
         state.profileStepResult.imagePickerAsset,
-        result.data.uploadUrl,
-        result.data.uploadFields
+        getLink.uploadUrl,
+        getLink.uploadFields
       )
       profilePayload = {
         name: state.profileStepResult?.name ?? '',
-        profileImage: result.data.fileKey ?? '',
+        profileImage: getLink.fileKey ?? '',
       }
     } else if (state.profileStepResult?.name) {
       profilePayload = {
