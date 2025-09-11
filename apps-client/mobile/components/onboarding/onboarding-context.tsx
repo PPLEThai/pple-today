@@ -1,6 +1,6 @@
 import React from 'react'
 
-import { ImagePickerSuccessResult } from 'expo-image-picker'
+import { ImagePickerAsset } from 'expo-image-picker'
 
 // reference: https://github.com/bluesky-social/social-app/blob/main/src/screens/Onboarding/state.ts
 
@@ -17,7 +17,7 @@ export interface OnboardingState {
 
 export interface OnboardingProfileState {
   name: string
-  imagePickerResult?: ImagePickerSuccessResult
+  imagePickerAsset?: ImagePickerAsset
 }
 
 export interface OnboardingTopicState {
@@ -126,7 +126,7 @@ export function OnboardingReducer(s: OnboardingState, a: OnboardingAction): Onbo
     case 'setProfileStepResults': {
       next.profileStepResult = {
         name: a.payload.name,
-        imagePickerResult: a.payload.imagePickerResult,
+        imagePickerAsset: a.payload.imagePickerAsset,
       }
       break
     }
