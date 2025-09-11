@@ -9,6 +9,8 @@ import { sumBy } from 'remeda'
 
 import { GetFeedContentResponse } from './models'
 
+import { BigQueryClient, BigQueryClientPlugin } from '../../plugins/big-query'
+import { ConfigServicePlugin } from '../../plugins/config'
 import { FileServicePlugin } from '../../plugins/file'
 import { PrismaServicePlugin } from '../../plugins/prisma'
 
@@ -16,7 +18,10 @@ export class FeedRepository {
   constructor(
     private prismaService: PrismaService,
     private fileService: FileService,
-    private bigQueryClient: BigQueryClient
+    private bigQueryClient: BigQueryClient,
+    private recommendationConfig: {
+      feedModelName: string
+    }
   ) {}
 
   private readonly constructFeedItemInclude = (userId?: string) =>
@@ -310,7 +315,7 @@ export class FeedRepository {
       const result = await this.bigQueryClient.createQueryJob({
         query: `
           SELECT feed_item_id
-          FROM ML.RECOMMEND(MODEL \`${serverEnv.GCP_BIGQUERY_FEED_MODEL_NAME}\`, (
+          FROM ML.RECOMMEND(MODEL \`${this.recommendationConfig.feedModelName}\`, (
             SELECT "@userId" AS user_id
           )) ORDER BY predicted_rating_confidence DESC
         `,
@@ -744,7 +749,9 @@ export class FeedRepository {
 }
 
 export const FeedRepositoryPlugin = new Elysia({ name: 'FeedRepository' })
-  .use([PrismaServicePlugin, FileServicePlugin, BigQueryClientPlugin])
-  .decorate(({ prismaService, fileService, bigQueryClient }) => ({
-    feedRepository: new FeedRepository(prismaService, fileService, bigQueryClient),
+  .use([PrismaServicePlugin, FileServicePlugin, ConfigServicePlugin, BigQueryClientPlugin])
+  .decorate(({ prismaService, fileService, bigQueryClient, configService }) => ({
+    feedRepository: new FeedRepository(prismaService, fileService, bigQueryClient, {
+      feedModelName: configService.get('GCP_BIGQUERY_FEED_MODEL_NAME'),
+    }),
   }))
