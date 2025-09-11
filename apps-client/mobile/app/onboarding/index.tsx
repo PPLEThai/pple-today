@@ -1,8 +1,8 @@
 import { OnboardingAddress } from '@app/components/onboarding/onboarding-address'
 import { OnboardingContainer } from '@app/components/onboarding/onboarding-container'
+import { useOnboardingContext } from '@app/components/onboarding/onboarding-context'
 import { OnboardingProfile } from '@app/components/onboarding/onboarding-profile'
 import { OnboardingTopic } from '@app/components/onboarding/onboarding-topic'
-import { useOnboardingContext } from '@app/components/onboarding/onboarding-context'
 
 export default function Index() {
   const { state } = useOnboardingContext()
