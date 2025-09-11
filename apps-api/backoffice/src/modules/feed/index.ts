@@ -136,7 +136,7 @@ export const FeedController = new Elysia({
     '/users/:id',
     async ({ feedService, query, params, status }) => {
       const result = await feedService.getFeedByUserId(params.id, {
-        page: query?.page,
+        cursor: query?.cursor,
         limit: query?.limit,
       })
 
