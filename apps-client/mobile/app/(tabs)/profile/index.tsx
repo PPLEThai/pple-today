@@ -195,7 +195,6 @@ const ProfileSection = () => {
         variant="outline"
         className="border-base-outline-default"
         onPress={(e) => {
-          e.preventDefault()
           router.push('/edit/edit-profile')
         }}
       >

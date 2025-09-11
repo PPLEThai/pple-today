@@ -3,24 +3,24 @@ import { Pressable, View } from 'react-native'
 
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Icon } from '@pple-today/ui/icon'
-import { ImagePickerSuccessResult, launchImageLibraryAsync } from 'expo-image-picker'
+import { ImagePickerAsset, launchImageLibraryAsync } from 'expo-image-picker'
 import { Pencil } from 'lucide-react-native'
 
 import { usePhotoLibraryPermission } from '@app/libs/use-permission'
 
-import { AvatarPPLEFallback } from '../avatar-pple-fallback'
+import { AvatarPPLEFallback } from './avatar-pple-fallback'
 
-interface ProfileSelectProps {
+interface AvatarImagePickerProps {
   originalImage?: string
-  imagePickerResult?: ImagePickerSuccessResult
-  onChangeImagePickerResult: (imagePickerSuccessResult: ImagePickerSuccessResult) => void
+  imagePickerAsset?: ImagePickerAsset
+  onChangeImagePickerAsset: (imagePickerSuccessResult: ImagePickerAsset) => void
 }
 
-export function ProfileSelect({
+export function AvatarImagePicker({
   originalImage,
-  imagePickerResult,
-  onChangeImagePickerResult,
-}: ProfileSelectProps) {
+  imagePickerAsset,
+  onChangeImagePickerAsset,
+}: AvatarImagePickerProps) {
   const { requestPhotoAccessIfNeeded } = usePhotoLibraryPermission()
 
   const pickImageAsync = React.useCallback(async () => {
@@ -66,14 +66,14 @@ export function ProfileSelect({
       return
     }
 
-    onChangeImagePickerResult(result)
-  }, [requestPhotoAccessIfNeeded, onChangeImagePickerResult])
+    onChangeImagePickerAsset(result.assets[0])
+  }, [requestPhotoAccessIfNeeded, onChangeImagePickerAsset])
 
   return (
     <View className="items-center">
       <Pressable className="rounded-full" onPress={pickImageAsync}>
         <Avatar className="size-36" alt="Profile">
-          <AvatarImage source={{ uri: imagePickerResult?.assets[0]?.uri ?? originalImage }} />
+          <AvatarImage source={{ uri: imagePickerAsset?.uri ?? originalImage }} />
           <AvatarPPLEFallback />
         </Avatar>
         <View className="absolute bottom-0 right-0">
