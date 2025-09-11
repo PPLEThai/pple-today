@@ -1,4 +1,4 @@
-import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { ElectionStatus, InternalErrorCode } from '@pple-today/api-common/dtos'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import { err } from '@pple-today/api-common/utils'
 import {
@@ -11,7 +11,7 @@ import {
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { ElectionStatus, GetElectionResponse } from './models'
+import { GetElectionResponse } from './models'
 import { ElectionRepository, ElectionRepositoryPlugin } from './repostiory'
 
 export class ElectionService {
