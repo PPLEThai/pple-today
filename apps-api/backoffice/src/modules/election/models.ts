@@ -1,4 +1,5 @@
 import { ElectionCandidate, ElectionInfo } from '@pple-today/api-common/dtos'
+import { EligibleVoterType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const ListElectionResponse = t.Array(ElectionInfo)
@@ -16,3 +17,18 @@ export const GetElectionResponse = t.Intersect([
   }),
 ])
 export type GetElectionResponse = Static<typeof GetElectionResponse>
+
+export const RegisterElectionParams = t.Object({
+  electionId: t.String(),
+})
+export type RegisterElectionParams = Static<typeof RegisterElectionParams>
+
+export const RegisterElectionBody = t.Object({
+  type: t.Enum(EligibleVoterType),
+})
+export type RegisterElectionBody = Static<typeof RegisterElectionBody>
+
+export const RegisterElectionResponse = t.Object({
+  message: t.String(),
+})
+export type RegisterElectionResponse = Static<typeof RegisterElectionResponse>
