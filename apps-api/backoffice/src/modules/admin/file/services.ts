@@ -5,42 +5,44 @@ import { err, exhaustiveGuard } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { GetUploadSignedUrlBody, UploadFileCategory } from './models'
+import { CreateUploadSignedUrlBody, UploadFileCategory } from './models'
 
 import { FileServicePlugin } from '../../../plugins/file'
 
 export class AdminFileService {
   constructor(private readonly fileService: FileService) {}
 
-  async getUploadSignedUrl(body: GetUploadSignedUrlBody) {
-    let filePath: FilePath
-    let fileContentType: string
+  async createUploadSignedUrl(body: CreateUploadSignedUrlBody) {
+    let filePathWithoutExt: FilePath
 
     const randomId = createId()
 
     switch (body.category) {
       case UploadFileCategory.BANNER:
-        filePath = `${this.fileService.prefixTempFolder}banner/banner-${randomId}.png`
-        fileContentType = 'image/png'
+        filePathWithoutExt =
+          `${this.fileService.prefixTempFolder}banner/banner-${randomId}` as FilePath
         break
       case UploadFileCategory.ANNOUNCEMENT:
-        filePath = `${this.fileService.prefixTempFolder}announcement/announcement-${randomId}.pdf`
-        fileContentType = 'application/pdf'
+        filePathWithoutExt =
+          `${this.fileService.prefixTempFolder}announcement/announcement-${randomId}` as FilePath
         break
       case UploadFileCategory.TOPIC:
-        filePath = `${this.fileService.prefixTempFolder}topic/topic-${randomId}.png`
-        fileContentType = 'image/png'
+        filePathWithoutExt =
+          `${this.fileService.prefixTempFolder}topic/topic-${randomId}` as FilePath
         break
       case UploadFileCategory.PROFILE_IMAGE:
-        filePath = `${this.fileService.prefixPublicFolder}users/profile-image-${body.id}.png`
-        fileContentType = 'image/png'
+        filePathWithoutExt =
+          `${this.fileService.prefixTempFolder}users/profile-image-${body.id}` as FilePath
         break
       default:
         exhaustiveGuard(body)
     }
 
-    const getResult = await this.fileService.getUploadSignedUrl(filePath, {
-      contentType: fileContentType,
+    const filePath = this.fileService.getFilePathFromMimeType(filePathWithoutExt, body.contentType)
+    if (filePath.isErr()) return err(filePath.error)
+
+    const getResult = await this.fileService.createUploadSignedUrl(filePath.value, {
+      contentType: body.contentType,
     })
 
     if (getResult.isErr()) {
@@ -48,7 +50,7 @@ export class AdminFileService {
     }
 
     return ok({
-      filePath: filePath as FilePath,
+      filePath: filePath.value,
       uploadUrl: getResult.value.url,
       uploadFields: getResult.value.fields,
     })

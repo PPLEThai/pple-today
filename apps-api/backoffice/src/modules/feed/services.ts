@@ -1,7 +1,7 @@
-import { InternalErrorCode } from '@pple-today/api-common/dtos'
-import { PostComment, PostReactionType } from '@pple-today/api-common/dtos'
+import { FeedItemComment, InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FileService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
+import { FeedItemReactionType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -106,11 +106,11 @@ export class FeedService {
 
   async getFeedComments(
     feedItemId: string,
-    query: { userId?: string; page?: number; limit?: number }
+    query: { userId?: string; cursor?: string; limit?: number }
   ) {
     const feedComments = await this.feedRepository.getFeedItemComments(feedItemId, {
       userId: query.userId,
-      page: query.page ?? 1,
+      cursor: query.cursor,
       limit: query.limit ?? 10,
     })
 
@@ -132,18 +132,35 @@ export class FeedService {
             author: {
               id: comment.user.id,
               name: comment.user.name,
-              address: comment.user.address ?? undefined,
               profileImage: comment.user.profileImage
                 ? this.fileService.getPublicFileUrl(comment.user.profileImage)
                 : undefined,
             },
-          }) satisfies PostComment
+          }) satisfies FeedItemComment
       )
     )
   }
 
+  async getFeedByUserId(userId?: string, query?: { page?: number; limit?: number }) {
+    const feedItems = await this.feedRepository.listFeedItemsByUserId(userId, {
+      page: query?.page ?? 1,
+      limit: query?.limit ?? 10,
+    })
+
+    if (feedItems.isErr()) {
+      return mapRepositoryError(feedItems.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.USER_NOT_FOUND,
+          message: 'User not found',
+        },
+      })
+    }
+
+    return ok(feedItems.value)
+  }
+
   async upsertFeedReaction(feedItemId: string, userId: string, data: CreateFeedReactionBody) {
-    const comment = data.type === PostReactionType.DOWN_VOTE ? data.comment : undefined
+    const comment = data.type === FeedItemReactionType.DOWN_VOTE ? data.comment : undefined
     const result = await this.feedRepository.upsertFeedItemReaction({
       feedItemId,
       userId,
@@ -163,7 +180,10 @@ export class FeedService {
     }
 
     return ok({
-      message: `Reaction for feed item ${feedItemId} updated.`,
+      ...result.value,
+      comment: result.value.comment
+        ? { ...result.value.comment, author: result.value.comment.user }
+        : null,
     })
   }
 
@@ -201,9 +221,7 @@ export class FeedService {
       })
     }
 
-    return ok({
-      id: result.value,
-    })
+    return ok({ ...result.value, author: result.value.user })
   }
 
   async updateFeedComment(postId: string, commentId: string, userId: string, content: string) {

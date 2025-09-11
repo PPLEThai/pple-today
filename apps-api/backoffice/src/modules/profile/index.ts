@@ -5,13 +5,14 @@ import Elysia from 'elysia'
 import {
   CompleteOnboardingProfileBody,
   CompleteOnboardingProfileResponse,
+  CreateProfileUploadUrlBody,
+  CreateProfileUploadUrlResponse,
   FollowUserParams,
   FollowUserResponse,
   GetFollowingUserResponse,
   GetMyProfileResponse,
   GetProfileByIdParams,
   GetProfileByIdResponse,
-  GetProfileUploadUrlResponse,
   GetUserParticipationResponse,
   UpdateProfileBody,
   UpdateProfileResponse,
@@ -73,6 +74,7 @@ export const ProfileController = new Elysia({
               district: result.value.address.district,
               subDistrict: result.value.address.subDistrict,
               province: result.value.address.province,
+              postalCode: result.value.address.postalCode,
             }
           : undefined,
       })
@@ -186,10 +188,10 @@ export const ProfileController = new Elysia({
       },
     }
   )
-  .get(
+  .post(
     '/upload-url',
-    async ({ user, status, profileService }) => {
-      const result = await profileService.getProfileUploadUrl(user.id)
+    async ({ user, status, body, profileService }) => {
+      const result = await profileService.createProfileUploadUrl(user.id, body.contentType)
 
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
@@ -199,9 +201,13 @@ export const ProfileController = new Elysia({
     },
     {
       requiredLocalUser: true,
+      body: CreateProfileUploadUrlBody,
       response: {
-        200: GetProfileUploadUrlResponse,
-        ...createErrorSchema(InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR),
+        200: CreateProfileUploadUrlResponse,
+        ...createErrorSchema(
+          InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
+          InternalErrorCode.FILE_UNSUPPORTED_MIME_TYPE
+        ),
       },
       detail: {
         summary: 'Get Profile Upload URL',

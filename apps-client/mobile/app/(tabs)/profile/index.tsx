@@ -4,7 +4,6 @@ import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import { ScrollView } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
 
-import type { ExtractBodyResponse } from '@pple-today/api-client'
 import { Avatar, AvatarFallback, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
@@ -41,11 +40,11 @@ import {
   ScrollTextIcon,
   TicketIcon,
   TrashIcon,
+  TriangleAlertIcon,
   TrophyIcon,
 } from 'lucide-react-native'
 
-import type { ApplicationApiSchema } from '@api/backoffice'
-import { GetUserParticipationResponse } from '@api/backoffice/src/modules/profile/models'
+import type { GetMyProfileResponse, GetUserParticipationResponse } from '@api/backoffice/app'
 import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
@@ -60,7 +59,7 @@ import {
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 
-type UserRole = ExtractBodyResponse<ApplicationApiSchema, 'get', '/profile/me'>['role']
+type UserRole = GetMyProfileResponse['role']
 
 export default function Index() {
   const sessionQuery = useSessionQuery()
@@ -145,6 +144,7 @@ const HeaderSection = () => {
   )
 }
 const ProfileSection = () => {
+  const router = useRouter()
   const profileQuery = reactQueryClient.useQuery('/profile/me', {})
   const getRoleName = (role: UserRole) => {
     switch (role) {
@@ -156,6 +156,8 @@ const ProfileSection = () => {
         return 'สมาชิกพรรค'
       case 'OFFICIAL':
         return 'คณะทำงาน'
+      case 'MEMBER':
+        return 'สมาชิกพรรค'
       default:
         exhaustiveGuard(role)
     }
@@ -188,7 +190,15 @@ const ProfileSection = () => {
   return (
     <View className="flex flex-row justify-between items-center">
       <View className="flex flex-row items-center gap-4">{Profile}</View>
-      <Button size="icon" variant="outline" className="border-base-outline-default">
+      <Button
+        size="icon"
+        variant="outline"
+        className="border-base-outline-default"
+        onPress={(e) => {
+          e.preventDefault()
+          router.push('/edit/edit-profile')
+        }}
+      >
         <Icon icon={PencilIcon} strokeWidth={1} size={20} />
       </Button>
     </View>
@@ -330,7 +340,7 @@ function LinkFacebookPageDialog() {
       ])
       if (loginResult.isCancelled) {
         console.log('User cancelled login')
-        toast({ text1: 'Facebook login is cancelled' })
+        // toast({ text1: 'Facebook login is cancelled' })
         return
       }
       const accessTokenResult = await AccessToken.getCurrentAccessToken()
@@ -364,15 +374,20 @@ function LinkFacebookPageDialog() {
         <Icon icon={PlusIcon} />
         <Text>เพิ่มเพจที่ดูแล</Text>
       </Button>
-      <DialogContent>
-        {/* TODO: content */}
-        <DialogHeader>
+      <DialogContent className="gap-6">
+        <DialogHeader className="gap-4">
+          <Icon icon={TriangleAlertIcon} size={40} strokeWidth={1.5} />
           <DialogTitle>กรุณาอนุญาตการติดตาม</DialogTitle>
           <DialogDescription>
-            เพื่อใช้ฟีเจอร์เพจ Facebook กรุณาเปิดใช้งานการติดตามในการตั้งค่าความเป็นส่วนตัว
+            {
+              'เพื่อเชื่อมต่อข้อมูลเพจ Facebook\nกรุณาเปิดใช้งานการติดตามในการตั้งค่า\nความเป็นส่วนตัว'
+            }
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
+          <Button variant="ghost" onPress={() => setPermissionDialogOpen(false)}>
+            <Text>ยกเลิก</Text>
+          </Button>
           <Button
             onPress={async () => {
               if (permissionStatus === null) {
@@ -446,11 +461,11 @@ function UnlinkFacebookPageDialog() {
                 {
                   onSuccess: () => {
                     queryClient.setQueryData(
-                      reactQueryClient.getQueryKey('get', '/facebook/linked-page'),
+                      reactQueryClient.getQueryKey('/facebook/linked-page'),
                       { linkedFacebookPage: null }
                     )
                     queryClient.invalidateQueries({
-                      queryKey: reactQueryClient.getQueryKey('get', '/facebook/linked-page'),
+                      queryKey: reactQueryClient.getQueryKey('/facebook/linked-page'),
                     })
                     toast({ text1: 'ลบเพจ Facebook สำเร็จ' })
                     setUnlinkDialogOpen(false)
@@ -552,6 +567,7 @@ const ParticipationSection = () => {
     </View>
   )
 }
+
 const Participation = ({
   participation,
 }: {

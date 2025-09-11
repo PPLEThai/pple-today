@@ -18,6 +18,9 @@ import {
   GetFeedCommentResponse,
   GetFeedContentParams,
   GetFeedContentResponse,
+  GetFeedItemsByUserIdParams,
+  GetFeedItemsByUserIdQuery,
+  GetFeedItemsByUserIdResponse,
   GetHashTagFeedQuery,
   GetHashTagFeedResponse,
   GetMyFeedQuery,
@@ -130,6 +133,38 @@ export const FeedController = new Elysia({
     }
   )
   .get(
+    '/users/:id',
+    async ({ feedService, query, params, status }) => {
+      const result = await feedService.getFeedByUserId(params.id, {
+        page: query?.page,
+        limit: query?.limit,
+      })
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      fetchLocalUser: true,
+      params: GetFeedItemsByUserIdParams,
+      query: GetFeedItemsByUserIdQuery,
+      response: {
+        200: GetFeedItemsByUserIdResponse,
+        ...createErrorSchema(
+          InternalErrorCode.FEED_ITEM_NOT_FOUND,
+          InternalErrorCode.USER_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get feed items by user ID',
+        description: 'Fetch feed items created by a specific user',
+      },
+    }
+  )
+  .get(
     '/:id',
     async ({ params, user, status, feedService }) => {
       const result = await feedService.getFeedContentById(params.id, user?.id)
@@ -162,7 +197,7 @@ export const FeedController = new Elysia({
       const result = await feedService.getFeedComments(params.id, {
         userId: user?.id,
         limit: query.limit,
-        page: query.page,
+        cursor: query.cursor,
       })
 
       if (result.isErr()) {
