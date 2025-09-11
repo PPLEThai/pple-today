@@ -110,6 +110,7 @@ function AnnouncementList() {
                 className="w-full mt-3"
                 key={item.id}
                 id={item.id}
+                feedId={item.feedItemId}
                 title={item.title}
                 date={item.createdAt.toString()}
               />

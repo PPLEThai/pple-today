@@ -20,7 +20,12 @@ import { TextProps } from 'react-native-svg'
 import { createQuery } from 'react-query-kit'
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
-import type { FeedItem, FeedItemPost } from '@pple-today/api-common/dtos'
+import type {
+  FeedItem,
+  FeedItemAnnouncement,
+  FeedItemBaseContent,
+  FeedItemPost,
+} from '@pple-today/api-common/dtos'
 import { AnimatedBackgroundPressable, AnimatedPressable } from '@pple-today/ui/animated-pressable'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
@@ -32,20 +37,22 @@ import { clsx } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 import { Textarea } from '@pple-today/ui/textarea'
 import { toast } from '@pple-today/ui/toast'
+import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
 import LottieView from 'lottie-react-native'
 import {
+  FileTextIcon,
   HeartCrackIcon,
   HeartHandshakeIcon,
+  LandmarkIcon,
   MessageCircleIcon,
   SendIcon,
   TriangleAlertIcon,
 } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import type { GetFeedContentResponse } from '@api/backoffice/app'
 import { MoreOrLess } from '@app/components/more-or-less'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSessionQuery } from '@app/libs/auth'
@@ -105,7 +112,7 @@ export const FeedCard = React.memo(function FeedCard(props: { feedItem: FeedItem
         </Button> */}
       </AnimatedBackgroundPressable>
       <FeedCardContent feedItem={feedContent} />
-      <FeedReactionHook feedId={feedContent.id} />
+      <FeedReactionHook feedId={feedContent.id} data={feedContent} />
       <FeedReactionSection feedItem={feedContent} />
       <View className="flex flex-col">
         <View className="px-4">
@@ -310,7 +317,8 @@ function getNewReactionCount(
   return { upvoteCount, downvoteCount }
 }
 
-function getFeedReaction(data: GetFeedContentResponse): FeedReaction {
+type FeedReactionData = Pick<FeedItemBaseContent, 'reactions' | 'userReaction'>
+function getFeedReaction(data: FeedReactionData): FeedReaction {
   const reactions = data.reactions
   const upvoteCount = reactions.find((r) => r.type === 'UP_VOTE')?.count ?? 0
   const downvoteCount = reactions.find((r) => r.type === 'DOWN_VOTE')?.count ?? 0
@@ -318,23 +326,16 @@ function getFeedReaction(data: GetFeedContentResponse): FeedReaction {
   return { upvoteCount, downvoteCount, userReaction }
 }
 
-function FeedReactionHook({ feedId }: { feedId: string }) {
-  const feedContentQuery = reactQueryClient.useQuery('/feed/:id', {
-    pathParams: { id: feedId },
-  })
-  // TODO: make sure that this initialData run before render
+function FeedReactionHook({ feedId, data }: { feedId: string; data: FeedReactionData }) {
   useFeedReactionQuery({
     variables: { feedId },
-    initialData: () => getFeedReaction(feedContentQuery.data!),
+    initialData: () => getFeedReaction(data),
   })
   const queryClient = useQueryClient()
   React.useEffect(() => {
-    if (!feedContentQuery.data) return
-    queryClient.setQueryData(
-      useFeedReactionQuery.getKey({ feedId }),
-      getFeedReaction(feedContentQuery.data)
-    )
-  }, [feedContentQuery.data, queryClient, feedId])
+    if (!data) return
+    queryClient.setQueryData(useFeedReactionQuery.getKey({ feedId }), getFeedReaction(data))
+  }, [data, queryClient, feedId])
   return null
 }
 
@@ -802,32 +803,10 @@ function CommentForm(props: CommentFormProps) {
 export const FeedDetail = (props: { feedItem: FeedItem }) => {
   return (
     <View className="flex flex-col bg-base-bg-white">
-      <View className="px-4 pt-1 pb-3 flex flex-row items-center justify-between">
-        <View className="flex flex-row items-center">
-          <Avatar alt={props.feedItem.author.name} className="w-8 h-8 mr-3">
-            <AvatarImage source={{ uri: props.feedItem.author.profileImage }} />
-            <AvatarPPLEFallback />
-          </Avatar>
-          <View className="flex flex-col">
-            <Text className="text-base-text-medium font-anakotmai-medium text-sm">
-              {props.feedItem.author.name}
-            </Text>
-            <Text className="text-base-text-medium font-anakotmai-light text-sm">
-              {props.feedItem.author.address ? `${props.feedItem.author.address.province} | ` : ''}
-              {formatDateInterval(props.feedItem.createdAt.toString())}
-            </Text>
-          </View>
-        </View>
-      </View>
+      <FeedDetailAuthorSection feedItem={props.feedItem} />
       <FeedDetailContent feedItem={props.feedItem} />
-      <View className="flex flex-row justify-between items-center px-4 pb-3">
-        <UpvoteReactionCount feedId={props.feedItem.id} />
-        {props.feedItem.commentCount > 0 && (
-          <Text className="text-xs font-anakotmai-light text-base-text-medium">
-            {props.feedItem.commentCount} ความคิดเห็น
-          </Text>
-        )}
-      </View>
+      <FeedReactionHook feedId={props.feedItem.id} data={props.feedItem} />
+      <FeedReactionSection feedItem={props.feedItem} />
       <View className="flex flex-col">
         <View className="px-4">
           <View className="border-b border-base-outline-default" />
@@ -844,16 +823,38 @@ export const FeedDetail = (props: { feedItem: FeedItem }) => {
   )
 }
 
+const FeedDetailAuthorSection = (props: { feedItem: FeedItem }) => {
+  if (props.feedItem.type === 'ANNOUNCEMENT') return null
+  return (
+    <View className="px-4 pt-1 pb-3 flex flex-row items-center justify-between">
+      <View className="flex flex-row items-center">
+        <Avatar alt={props.feedItem.author.name} className="w-8 h-8 mr-3">
+          <AvatarImage source={{ uri: props.feedItem.author.profileImage }} />
+          <AvatarPPLEFallback />
+        </Avatar>
+        <View className="flex flex-col">
+          <Text className="text-base-text-medium font-anakotmai-medium text-sm">
+            {props.feedItem.author.name}
+          </Text>
+          <Text className="text-base-text-medium font-anakotmai-light text-sm">
+            {props.feedItem.author.address ? `${props.feedItem.author.address.province} | ` : ''}
+            {formatDateInterval(props.feedItem.createdAt.toString())}
+          </Text>
+        </View>
+      </View>
+    </View>
+  )
+}
+
 const FeedDetailContent = (props: { feedItem: FeedItem }) => {
   switch (props.feedItem.type) {
     case 'POST':
-      return <PostDetailContent key={props.feedItem.id} feedItem={props.feedItem} />
+      return <PostDetailContent feedItem={props.feedItem} />
     case 'POLL':
       // TODO
       return null
     case 'ANNOUNCEMENT':
-      // expected no announcement
-      return null
+      return <AnnouncementDetailContent feedItem={props.feedItem} />
     default:
       exhaustiveGuard(props.feedItem)
   }
@@ -880,6 +881,30 @@ const PostDetailContent = (props: { feedItem: FeedItemPost }) => {
           ))}
         </View>
       )}
+    </View>
+  )
+}
+
+const AnnouncementDetailContent = (props: { feedItem: FeedItemAnnouncement }) => {
+  return (
+    <View className="px-4 pb-0 pt-1 flex flex-col gap-3 bg-base-bg-white">
+      <View className="flex flex-row items-center gap-2">
+        {/* TODO: Logo */}
+        <View className="rounded-full size-8 bg-rose-800 flex items-center justify-center">
+          <Icon icon={LandmarkIcon} size={16} className="text-base-bg-white" />
+        </View>
+        <H2 className="text-sm font-anakotmai-medium text-base-text-medium">ประกาศจากทางการ</H2>
+      </View>
+      <H1 className="text-lg font-anakotmai-medium text-base-text-high">
+        {props.feedItem.announcement.title}
+      </H1>
+      <Text className="text-base font-noto-light text-base-text-high">
+        {props.feedItem.announcement.content}
+      </Text>
+      <Button className="self-start">
+        <Icon icon={FileTextIcon} />
+        <Text>ดูเอกสาร</Text>
+      </Button>
     </View>
   )
 }

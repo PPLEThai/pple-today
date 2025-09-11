@@ -17,6 +17,7 @@ dayjs.locale('th')
 
 interface AnnouncementCardProps {
   id: string
+  feedId: string
   title: string
   hashtags?: string[] // no hashtags for now
   date: string
@@ -27,7 +28,7 @@ export function AnnouncementCard(props: AnnouncementCardProps) {
   return (
     <AnimatedBackgroundPressable
       onPress={() => {
-        router.push(`/(official)/announcement/${props.id}`)
+        router.push(`/(feed)/${props.feedId}`)
       }}
       className={cn(
         'w-[320px] h-[120px] border border-base-outline-default bg-base-bg-white rounded-2xl flex flex-row gap-4 items-center px-3 py-4',

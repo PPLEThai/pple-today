@@ -639,6 +639,7 @@ function AnnouncementSection() {
             <SlideItem key={announcement.id}>
               <AnnouncementCard
                 id={announcement.id}
+                feedId={announcement.feedItemId}
                 title={announcement.title}
                 date={announcement.createdAt.toString()}
               />

@@ -15,6 +15,7 @@ export const GetAnnouncementsResponse = t.Object({
       backgroundColor: t.String({ description: 'Background color for the announcement' }),
       createdAt: t.Date({ description: 'Creation date of the announcement' }),
       updatedAt: t.Date({ description: 'Last update date of the announcement' }),
+      feedItemId: t.String({ description: 'The related feed item ID' }),
     })
   ),
 })

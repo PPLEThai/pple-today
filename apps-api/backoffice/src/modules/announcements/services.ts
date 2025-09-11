@@ -31,6 +31,7 @@ export class AnnouncementService {
         backgroundColor: announcement.backgroundColor ?? '',
         createdAt: announcement.feedItem.createdAt,
         updatedAt: announcement.feedItem.updatedAt,
+        feedItemId: announcement.feedItemId,
       })),
     } satisfies GetAnnouncementsResponse)
   }
