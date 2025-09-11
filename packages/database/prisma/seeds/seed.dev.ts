@@ -9,7 +9,15 @@ import {
   UserRole,
 } from '../../__generated__/prisma'
 
-const transformProvinceDetails = async () => {
+const transformProvinceDetails = async (): Promise<{
+  provinces: string[]
+  address: {
+    postalCode: string
+    province: string
+    district: string
+    subDistrict: string
+  }[]
+}> => {
   const response = await fetch(
     'https://raw.githubusercontent.com/earthchie/jquery.Thailand.js/refs/heads/master/jquery.Thailand.js/database/raw_database/raw_database.json'
   )
@@ -20,12 +28,18 @@ const transformProvinceDetails = async () => {
 
   const data = await response.json()
 
-  return data.map(({ zipcode, amphoe, province, district }) => ({
-    postalCode: zipcode.toString(),
-    province,
-    district: amphoe,
-    subDistrict: district,
-  }))
+  const onlyProvince = data.map(({ province }) => province)
+  const uniqueProvince = Array.from(new Set<string>(onlyProvince))
+
+  return {
+    provinces: uniqueProvince,
+    address: data.map(({ zipcode, amphoe, province, district }) => ({
+      postalCode: zipcode.toString(),
+      province,
+      district: amphoe,
+      subDistrict: district,
+    })),
+  }
 }
 
 const connectionString = `${process.env.DATABASE_URL}`
@@ -35,12 +49,17 @@ const prisma = new PrismaClient({
   adapter,
 })
 
-const OFFICIAL_USER_ID = 'official-user'
+const OFFICIAL_USER_ID = 'pple-official-user'
 
-const seedAddresses = async () => {
-  const provinces = await transformProvinceDetails()
-
-  for (const { province, district, subDistrict, postalCode } of provinces) {
+const seedAddresses = async (
+  addresses: {
+    postalCode: string
+    province: string
+    district: string
+    subDistrict: string
+  }[]
+) => {
+  for (const { province, district, subDistrict, postalCode } of addresses) {
     await prisma.address.upsert({
       where: {
         province_district_subDistrict_postalCode: {
@@ -122,57 +141,33 @@ const seedOfficialUser = async () => {
   await prisma.user.upsert({
     where: { id: OFFICIAL_USER_ID },
     update: {
-      name: 'Official User',
-      phoneNumber: '+1234567890',
+      name: `พรรคประชาชน - People's Party`,
+      phoneNumber: '+0000000000',
       role: UserRole.OFFICIAL,
     },
     create: {
       id: OFFICIAL_USER_ID,
-      name: 'Official User',
-      phoneNumber: '+1234567890',
+      name: `พรรคประชาชน - People's Party`,
+      phoneNumber: '+0000000000',
       role: UserRole.OFFICIAL,
     },
   })
   console.log('Seeded official user successfully.')
 }
 
-const seedTopics = async () => {
-  await prisma.topic.upsert({
-    where: { id: 'topic-1' },
-    update: {},
-    create: {
-      id: 'topic-1',
-      name: 'General Discussion',
-      description: 'A place for general discussions about PPLE Today.',
-      bannerImage: 'https://picsum.photos/300?random=9',
-      hashTagInTopics: {
-        create: [
-          {
-            hashTag: { connect: { id: 'hashtag-1' } },
-          },
-        ],
-      },
-    },
-  })
-  await prisma.topic.upsert({
-    where: { id: 'topic-2' },
-    update: {},
-    create: {
-      id: 'topic-2',
-      name: 'Announcements',
-      description: 'Official announcements and updates.',
-      bannerImage: 'https://picsum.photos/300?random=0',
-      hashTagInTopics: {
-        create: [
-          {
-            hashTag: { connect: { id: 'hashtag-2' } },
-          },
-          {
-            hashTag: { connect: { id: 'hashtag-3' } },
-          },
-        ],
-      },
-    },
+const seedTopics = async (provinces: any[]) => {
+  await prisma.$transaction(async (tx) => {
+    for (const province of provinces) {
+      await tx.topic.upsert({
+        where: { id: `${province}` },
+        update: {},
+        create: {
+          id: `${province}`,
+          name: province,
+          description: `ข่าวเกี่ยวกับจังหวัด${province}`,
+        },
+      })
+    }
   })
   console.log('Seeded topics successfully.')
 }
@@ -367,10 +362,12 @@ const seedAnnouncements = async () => {
 }
 
 async function main() {
-  await seedAddresses()
+  const { address, provinces } = await transformProvinceDetails()
+
+  await seedAddresses(address)
   await seedHashtags()
   await seedOfficialUser()
-  await seedTopics()
+  await seedTopics(provinces)
   await seedDraftPolls()
   await seedPolls()
   await seedAnnouncements()
