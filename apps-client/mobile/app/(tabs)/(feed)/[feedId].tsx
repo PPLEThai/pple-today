@@ -29,6 +29,7 @@ export default function FeedDetailPage() {
     return null
   }
   if (feedContentQuery.isLoading || !feedContentQuery.data) {
+    // TODO: Loading skeleton
     return null
   }
   return (

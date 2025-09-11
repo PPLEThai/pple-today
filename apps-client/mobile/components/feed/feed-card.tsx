@@ -41,6 +41,7 @@ import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
+import * as WebBrowser from 'expo-web-browser'
 import LottieView from 'lottie-react-native'
 import {
   FileTextIcon,
@@ -901,10 +902,18 @@ const AnnouncementDetailContent = (props: { feedItem: FeedItemAnnouncement }) =>
       <Text className="text-base font-noto-light text-base-text-high">
         {props.feedItem.announcement.content}
       </Text>
-      <Button className="self-start">
-        <Icon icon={FileTextIcon} />
-        <Text>ดูเอกสาร</Text>
-      </Button>
+      {props.feedItem.announcement.attachments?.map((url) => (
+        <Button
+          key={url}
+          className="self-start"
+          onPress={() => {
+            WebBrowser.openBrowserAsync(url)
+          }}
+        >
+          <Icon icon={FileTextIcon} />
+          <Text>ดูเอกสาร</Text>
+        </Button>
+      ))}
     </View>
   )
 }
