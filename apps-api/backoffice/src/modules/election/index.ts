@@ -2,7 +2,7 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
-import { GetElectionQuery, GetElectionResponse, ListElectionResponse } from './models'
+import { GetElectionParams, GetElectionResponse, ListElectionResponse } from './models'
 import { ElectionServicePlugin } from './services'
 
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
@@ -40,7 +40,7 @@ export const ElectionController = new Elysia({
   )
   .get(
     '/:electionId',
-    async ({ user, query: { electionId }, status, electionService }) => {
+    async ({ user, params: { electionId }, status, electionService }) => {
       const election = await electionService.getMyEligibleElection(user.id, electionId)
       if (election.isErr()) {
         return mapErrorCodeToResponse(election.error, status)
@@ -54,7 +54,7 @@ export const ElectionController = new Elysia({
         description: 'Get election by id based on user',
       },
       requiredLocalUser: true,
-      query: GetElectionQuery,
+      params: GetElectionParams,
       response: {
         200: GetElectionResponse,
         ...createErrorSchema(
