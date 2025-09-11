@@ -219,7 +219,7 @@ export class ElectionService {
 
     const election = eligibleVoter.value.election
 
-    const canVoteOnline = election.type == 'HYBRID' || election.type == 'ONLINE'
+    const canVoteOnline = election.type === 'HYBRID' || election.type === 'ONLINE'
     if (!canVoteOnline) {
       return err({
         code: InternalErrorCode.ELECTION_WITHDRAW_TO_INVALID_TYPE,
@@ -232,7 +232,7 @@ export class ElectionService {
     if (!isInVotePeriod) {
       return err({
         code: InternalErrorCode.ELECTION_NOT_IN_VOTE_PERIOD,
-        message: `Cannot withdraw at this time. The vote period is from ${election.openVoting.toDateString()} ${election.openVoting.toTimeString()} to ${election.closeVoting.toDateString()} ${election.closeVoting.toTimeString()}.`,
+        message: `Cannot withdraw at this time. The vote period is from ${dayjs(election.openVoting).format()} to ${dayjs(election.closeVoting).format()}.`,
       })
     }
 
