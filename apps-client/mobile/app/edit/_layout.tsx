@@ -14,8 +14,8 @@ export default function EditingLayout() {
             gestureEnabled: true,
           }}
         >
-          <Stack.Screen name="edit-profile" options={{ headerShown: false }} />
-          <Stack.Screen name="edit-address" options={{ headerShown: false }} />
+          <Stack.Screen name="edit-profile" />
+          <Stack.Screen name="edit-address" />
         </Stack>
       </EditingProvider>
     </SafeAreaView>

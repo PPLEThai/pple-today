@@ -62,6 +62,7 @@ export class AnnouncementService {
       attachments: attachmentPublicUrls,
       createdAt: announcementResult.value.feedItem.createdAt,
       updatedAt: announcementResult.value.feedItem.updatedAt,
+      feedItemId: announcementResult.value.feedItemId,
     } satisfies GetAnnouncementByIdResponse)
   }
 }
