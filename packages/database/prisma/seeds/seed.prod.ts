@@ -45,32 +45,30 @@ const prisma = new PrismaClient({
 const OFFICIAL_USER_ID = 'pple-official-page'
 
 const seedAddresses = async (addresses: any) => {
-  await prisma.$transaction(async (tx) => {
-    for (const { province, district, subDistrict, postalCode } of addresses) {
-      await tx.address.upsert({
-        where: {
-          province_district_subDistrict_postalCode: {
-            province,
-            district,
-            subDistrict,
-            postalCode,
-          },
-        },
-        create: {
+  for (const { province, district, subDistrict, postalCode } of addresses) {
+    await prisma.address.upsert({
+      where: {
+        province_district_subDistrict_postalCode: {
           province,
           district,
           subDistrict,
           postalCode,
         },
-        update: {
-          province,
-          district,
-          subDistrict,
-          postalCode,
-        },
-      })
-    }
-  })
+      },
+      create: {
+        province,
+        district,
+        subDistrict,
+        postalCode,
+      },
+      update: {
+        province,
+        district,
+        subDistrict,
+        postalCode,
+      },
+    })
+  }
 
   console.log('Seeded address successfully.')
 }
