@@ -199,17 +199,19 @@ export class ProfileRepository {
 
     const moveFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (tx) => {
-        if (existingUser.value.profileImage) {
-          const removeResult = await tx.bulkRemoveFile([
-            existingUser.value.profileImage as FilePath,
-          ])
-
-          if (removeResult.isErr()) return removeResult
-        }
-
         if (profileData.profileImage) {
+          if (existingUser.value.profileImage) {
+            const removeResult = await tx.bulkRemoveFile([
+              existingUser.value.profileImage as FilePath,
+            ])
+
+            if (removeResult.isErr()) return removeResult
+          }
+
           const moveResult = await tx.bulkMoveToPublicFolder([profileData.profileImage as FilePath])
           if (moveResult.isErr()) return moveResult
+
+          profileData.profileImage = moveResult.value[0]
 
           return moveResult.value[0]
         }
@@ -220,8 +222,7 @@ export class ProfileRepository {
 
     if (moveFileResult.isErr()) return err(moveFileResult.error)
 
-    const [publicFile, fileTx] = moveFileResult.value
-    profileData.profileImage = publicFile
+    const [_, fileTx] = moveFileResult.value
 
     const updateResult = await fromRepositoryPromise(
       this.prismaService.user.update({
