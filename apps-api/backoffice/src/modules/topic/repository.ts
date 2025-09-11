@@ -93,6 +93,32 @@ export class TopicRepository {
       })
     )
   }
+
+  async getHashtagById(hashtagId: string) {
+    return fromRepositoryPromise(
+      this.prismaService.hashTag.findFirstOrThrow({
+        where: {
+          id: hashtagId,
+          status: 'PUBLISH',
+        },
+        select: {
+          id: true,
+          name: true,
+          createdAt: true,
+          hashTagInTopics: {
+            select: {
+              topic: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      })
+    )
+  }
 }
 
 export const TopicRepositoryPlugin = new Elysia({ name: 'TopicRepository' })

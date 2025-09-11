@@ -5,6 +5,7 @@ import Elysia from 'elysia'
 import {
   FollowTopicParams,
   FollowTopicResponse,
+  GetHashtagResponse,
   GetTopicsResponse,
   UnFollowTopicParams,
 } from './models'
@@ -132,6 +133,32 @@ export const TopicController = new Elysia({
       detail: {
         summary: 'Unfollow topic',
         description: 'Unfollow topic',
+      },
+    }
+  )
+  .get(
+    '/hashtag/:id',
+    async ({ params, status, topicService }) => {
+      const hashtagId = params.id
+      const hashtag = await topicService.getHashtagById(hashtagId)
+      if (hashtag.isErr()) {
+        return mapErrorCodeToResponse(hashtag.error, status)
+      }
+
+      return status(200, hashtag.value)
+    },
+    {
+      response: {
+        200: GetHashtagResponse,
+        ...createErrorSchema(
+          InternalErrorCode.INTERNAL_SERVER_ERROR,
+          InternalErrorCode.HASHTAG_NOT_FOUND,
+          InternalErrorCode.UNAUTHORIZED
+        ),
+      },
+      detail: {
+        summary: 'Get hashtag detail',
+        description: 'Get hashtag detail',
       },
     }
   )

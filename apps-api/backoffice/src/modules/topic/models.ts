@@ -21,8 +21,15 @@ export const GetTopicsResponse = t.Array(
     ),
   })
 )
-
 export type GetTopicsResponse = typeof GetTopicsResponse.static
+
+export const GetHashtagResponse = t.Object({
+  id: t.String(),
+  name: t.String(),
+  createdAt: t.Date(),
+  topics: t.Array(t.Object({ id: t.String(), name: t.String() })),
+})
+export type GetHashtagResponse = typeof GetHashtagResponse.static
 
 export const FollowTopicParams = t.Object({
   topicId: t.String(),
