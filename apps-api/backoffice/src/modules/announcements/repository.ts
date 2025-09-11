@@ -1,5 +1,6 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { Prisma } from '@pple-today/database/prisma'
 import { Elysia } from 'elysia'
 
 import { PrismaServicePlugin } from '../../plugins/prisma'
@@ -7,17 +8,16 @@ import { PrismaServicePlugin } from '../../plugins/prisma'
 export class AnnouncementRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async getAnnouncements(
-    query: { limit: number; page: number } = {
-      limit: 10,
-      page: 1,
-    }
-  ) {
-    const { limit, page } = query
-    const skip = page ? (page - 1) * limit : 0
+  private queryAnnouncements(query: {
+    limit: number
+    cursor?: string
+    where?: Prisma.AnnouncementFindManyArgs['where']
+  }) {
+    const { limit, cursor } = query
 
-    return await fromRepositoryPromise(
+    return fromRepositoryPromise(
       this.prismaService.announcement.findMany({
+        where: query.where,
         select: {
           feedItemId: true,
           title: true,
@@ -31,7 +31,8 @@ export class AnnouncementRepository {
           },
         },
         take: limit,
-        skip,
+        cursor: cursor ? { feedItemId: cursor } : undefined,
+        skip: cursor ? 1 : 0,
         orderBy: {
           feedItem: {
             createdAt: 'desc',
@@ -39,6 +40,86 @@ export class AnnouncementRepository {
         },
       })
     )
+  }
+
+  async listAnnouncements(query: { limit: number; cursor?: string }) {
+    const { limit, cursor } = query
+
+    return await this.queryAnnouncements({
+      limit,
+      cursor,
+    })
+  }
+
+  async listFollowedAnnouncements(
+    userId: string,
+    query: { limit: number; cursor?: string } = {
+      limit: 10,
+    }
+  ) {
+    const { limit, cursor } = query
+
+    return await this.queryAnnouncements({
+      limit,
+      cursor,
+      where: {
+        topics: {
+          some: {
+            topic: {
+              followedTopics: {
+                some: {
+                  userId,
+                },
+              },
+            },
+          },
+        },
+      },
+    })
+  }
+
+  async listAnnouncementByTopicId(
+    topicId: string,
+    query: { limit: number; cursor?: string } = { limit: 10 }
+  ) {
+    const { limit, cursor } = query
+
+    return await this.queryAnnouncements({
+      limit,
+      cursor,
+      where: {
+        topics: {
+          some: {
+            topicId,
+          },
+        },
+      },
+    })
+  }
+
+  async listAnnouncementByHashTagId(
+    hashTagId: string,
+    query: { limit: number; cursor?: string } = { limit: 10 }
+  ) {
+    const { limit, cursor } = query
+
+    return await this.queryAnnouncements({
+      limit,
+      cursor,
+      where: {
+        topics: {
+          some: {
+            topic: {
+              hashTagInTopics: {
+                some: {
+                  hashTagId,
+                },
+              },
+            },
+          },
+        },
+      },
+    })
   }
 
   async getAnnouncementById(id: string) {
