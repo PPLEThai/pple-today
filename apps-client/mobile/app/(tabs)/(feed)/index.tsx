@@ -508,7 +508,7 @@ function FeedContent(props: PagerScrollViewProps) {
   type GetMyFeedResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/me'>
   const data = React.useMemo((): GetMyFeedResponse[] => {
     if (!feedInfiniteQuery.data) return []
-    return feedInfiniteQuery.data.pages.filter((page) => !!page)
+    return feedInfiniteQuery.data.pages
   }, [feedInfiniteQuery.data])
 
   const scrollContext = useScrollContext()
