@@ -17,11 +17,8 @@ export class ElectionRepository {
         include: {
           election: {
             include: {
-              voters: {
-                include: {
-                  ballot: true,
-                },
-              },
+              voters: true,
+              voteRecords: true,
             },
           },
         },
@@ -39,11 +36,8 @@ export class ElectionRepository {
         include: {
           election: {
             include: {
-              voters: {
-                include: {
-                  ballot: true,
-                },
-              },
+              voters: true,
+              voteRecords: true,
               candidates: true,
             },
           },

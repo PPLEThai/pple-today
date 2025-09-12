@@ -6,6 +6,7 @@ import {
   ElectionEligibleBallot,
   ElectionEligibleVoter,
   ElectionType,
+  ElectionVoteRecord,
   EligibleVoterType,
 } from '@pple-today/database/prisma'
 import dayjs from 'dayjs'
@@ -93,12 +94,10 @@ export class ElectionService {
   }
 
   private getVotePercentage(
-    voters: (ElectionEligibleVoter & { ballot: ElectionEligibleBallot | null })[]
+    voters: ElectionEligibleVoter[],
+    voteRecords: ElectionVoteRecord[]
   ): number {
-    const totalVoters = voters.length
-    const totalVoted = voters.filter((voter) => !!voter.ballot).length
-
-    return 100 * (totalVoted / totalVoters)
+    return 100 * (voteRecords.length / voters.length)
   }
 
   private isHybridElectionVoterRegistered(
@@ -120,11 +119,23 @@ export class ElectionService {
     const result = eligibleVoters.value
       .filter(({ election }) => this.isElectionActive(election))
       .map(({ election, type: voterType }) => {
-        const { voters, ...rest } = election
         return {
-          ...rest,
+          id: election.id,
+          name: election.name,
+          description: election.description,
+          location: election.location,
+          type: election.type,
+          publishDate: election.publishDate,
+          openRegister: election.openRegister,
+          closeRegister: election.closeRegister,
+          openVoting: election.openVoting,
+          closeVoting: election.closeVoting,
+          startResult: election.startResult,
+          endResult: election.endResult,
+          createdAt: election.createdAt,
+          updatedAt: election.updatedAt,
           status: this.getElectionStatus(election),
-          votePercentage: this.getVotePercentage(voters),
+          votePercentage: this.getVotePercentage(election.voters, election.voteRecords),
           isRegistered: this.isHybridElectionVoterRegistered(voterType, election.type),
         }
       })
