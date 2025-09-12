@@ -9,5 +9,6 @@ export type * from './modules/feed/models'
 export type * from './modules/polls/models'
 export type * from './modules/profile/models'
 export type * from './modules/topic/models'
+export type * from '@pple-today/api-common/dtos'
 
 export type ApplicationApiSchema = typeof ApplicationController
