@@ -2,12 +2,17 @@ import React from 'react'
 import { ScrollView, View } from 'react-native'
 
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
+import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { Skeleton } from '@pple-today/ui/skeleton'
 import { Text } from '@pple-today/ui/text'
+import { useQueryClient } from '@tanstack/react-query'
+import { Image } from 'expo-image'
+import { Link } from 'expo-router'
 import { CircleUserRoundIcon, Heart, MessageSquareHeartIcon } from 'lucide-react-native'
 
+import type { GetTopicsResponse } from '@api/backoffice/app'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { Header } from '@app/components/header-navigation'
 import { reactQueryClient } from '@app/libs/api-client'
@@ -19,6 +24,7 @@ export default function FollowPage() {
       <ScrollView>
         <NumberFollowingSection />
         <PeopleFollowingSection />
+        <TopicsFollowingSection />
       </ScrollView>
     </View>
   )
@@ -79,7 +85,7 @@ const NumberFollowingSection = () => {
 const PeopleFollowingSection = () => {
   const followingPeopleQuery = reactQueryClient.useQuery('/profile/follow', {})
 
-  if (followingPeopleQuery.isLoading) {
+  if (followingPeopleQuery.isLoading || !followingPeopleQuery.data) {
     return (
       <View className="my-2 flex flex-col">
         <View className="px-4 items-start">
@@ -94,7 +100,7 @@ const PeopleFollowingSection = () => {
     )
   }
 
-  if (!followingPeopleQuery.data || followingPeopleQuery.data.length === 0)
+  if (followingPeopleQuery.data.length === 0)
     return (
       <View className="my-2 flex flex-col">
         <View className="px-4 items-start">
@@ -136,6 +142,7 @@ interface PeopleFollowingItemProps {
 }
 
 const PeopleFollowingItem = (profile: PeopleFollowingItemProps) => {
+  const queryClient = useQueryClient()
   const [isFollowing, setIsFollowing] = React.useState(true)
 
   const followMutation = reactQueryClient.useMutation('post', '/profile/:id/follow', {})
@@ -149,6 +156,9 @@ const PeopleFollowingItem = (profile: PeopleFollowingItemProps) => {
         },
         {
           onSuccess: () => {
+            queryClient.invalidateQueries({
+              queryKey: reactQueryClient.getQueryKey('/profile/me'),
+            })
             setIsFollowing(!isFollowing)
           },
         }
@@ -161,6 +171,9 @@ const PeopleFollowingItem = (profile: PeopleFollowingItemProps) => {
         },
         {
           onSuccess: () => {
+            queryClient.invalidateQueries({
+              queryKey: reactQueryClient.getQueryKey('/profile/me'),
+            })
             setIsFollowing(!isFollowing)
           },
         }
@@ -200,6 +213,159 @@ const PeopleFollowingSkeleton = () => {
         <Skeleton className="h-12 flex-1 w-44" />
       </View>
       <Skeleton className="h-9 w-24 px-3 rounded-lg" />
+    </View>
+  )
+}
+
+const TopicsFollowingSection = () => {
+  const followingTopicsQuery = reactQueryClient.useQuery('/topics/follows', {})
+
+  if (followingTopicsQuery.isLoading || !followingTopicsQuery.data) {
+    return (
+      <View className="my-2 flex flex-col">
+        <View className="px-4 items-start">
+          <Text className="text-base text-base-text-high font-anakotmai-medium">หัวข้อ</Text>
+        </View>
+        <View className="flex flex-col">
+          <TopicsFollowingSkeleton />
+          <TopicsFollowingSkeleton />
+          <TopicsFollowingSkeleton />
+        </View>
+      </View>
+    )
+  }
+
+  if (followingTopicsQuery.data.length === 0) {
+    return (
+      <View className="my-2 flex flex-col">
+        <View className="px-4 items-start">
+          <Text className="text-base text-base-text-high font-anakotmai-medium">หัวข้อ</Text>
+        </View>
+        <View className="mt-2 p-4 flex flex-col">
+          <Text className="font-anakotmai-light text-center">คุณยังไม่ได้ติดตามหัวข้อใดๆ</Text>
+        </View>
+      </View>
+    )
+  }
+
+  return (
+    <View className="my-2 flex flex-col">
+      <View className="px-4 items-start">
+        <Text className="text-base text-base-text-high font-anakotmai-medium">หัวข้อ</Text>
+      </View>
+      <View className="flex flex-col">
+        {followingTopicsQuery.data.map((item) => (
+          <TopicsFollowingItem
+            key={item.id}
+            id={item.id}
+            name={item.name}
+            bannerImage={item.bannerImage ?? ''}
+            hashtags={item.hashTags}
+          />
+        ))}
+      </View>
+    </View>
+  )
+}
+
+type HashtagList = GetTopicsResponse[number]['hashTags']
+
+interface TopicsFollowingItemProps {
+  id: string
+  name: string
+  bannerImage: string
+  hashtags: HashtagList
+}
+
+const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
+  const queryClient = useQueryClient()
+  const [isFollowing, setIsFollowing] = React.useState(true)
+
+  const followTopicMutation = reactQueryClient.useMutation('post', '/topics/:topicId/follow', {})
+  const unfollowTopicMutation = reactQueryClient.useMutation(
+    'delete',
+    '/topics/:topicId/follow',
+    {}
+  )
+
+  const toggleFollow = async () => {
+    if (isFollowing) {
+      await unfollowTopicMutation.mutateAsync(
+        {
+          pathParams: { topicId: topic.id },
+        },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({
+              queryKey: reactQueryClient.getQueryKey('/profile/me'),
+            })
+            setIsFollowing(!isFollowing)
+          },
+        }
+      )
+      return
+    } else {
+      await followTopicMutation.mutateAsync(
+        {
+          pathParams: { topicId: topic.id },
+        },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({
+              queryKey: reactQueryClient.getQueryKey('/profile/me'),
+            })
+            setIsFollowing(!isFollowing)
+          },
+        }
+      )
+    }
+  }
+
+  return (
+    <View className="items-center px-4 my-2 gap-4 flex flex-row">
+      <Image
+        source={{
+          uri: topic.bannerImage,
+        }}
+        contentFit="cover"
+        style={{ width: 80, height: '100%', borderRadius: 12 }}
+        transition={300}
+      />
+      <View className="flex-1 flex flex-col gap-2">
+        <Text className="font-anakotmai-medium text-base text-base-text-high">{topic.name}</Text>
+        <View className="flex flex-row gap-2 mb-0.5 flex-wrap min-h-5">
+          {topic.hashtags.map((hashtag) => (
+            <Link key={hashtag.id} href={`/(feed)/hashtag/${hashtag.id}`} asChild>
+              <Badge variant="secondary">
+                <Text>{hashtag.name}</Text>
+              </Badge>
+            </Link>
+          ))}
+        </View>
+        <Button
+          variant={isFollowing ? 'outline-primary' : 'primary'}
+          size="sm"
+          onPress={toggleFollow}
+        >
+          <Text>{isFollowing ? 'กำลังติดตาม' : 'ติดตาม'} </Text>
+        </Button>
+      </View>
+    </View>
+  )
+}
+
+const TopicsFollowingSkeleton = () => {
+  return (
+    <View className="items-center px-4 my-2 gap-4 flex flex-row">
+      <Skeleton className="h-[98px] w-[80px] rounded-xl" />
+      <View className="flex-1 flex flex-col gap-2">
+        <Skeleton className="h-6 w-32 rounded-lg" />
+        <View className="flex flex-row gap-2 mb-1 flex-wrap">
+          <Skeleton className="h-5 w-28 rounded-lg" />
+          <Skeleton className="h-5 w-24 rounded-lg" />
+        </View>
+        <Skeleton className="h-9 w-full rounded-lg" />
+      </View>
     </View>
   )
 }
