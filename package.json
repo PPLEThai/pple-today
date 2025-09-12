@@ -29,7 +29,7 @@
   },
   "pnpm": {
     "patchedDependencies": {
-      "expo-module-scripts": "patches/expo-module-scripts.patch"
+      "react-native-css-interop": "patches/react-native-css-interop.patch"
     }
   }
 }

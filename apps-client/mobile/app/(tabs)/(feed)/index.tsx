@@ -3,6 +3,7 @@ import { findNodeHandle, FlatListComponent, Pressable, StyleSheet, View } from '
 import Animated, {
   FlatListPropsWithLayout,
   useAnimatedScrollHandler,
+  useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
@@ -19,6 +20,7 @@ import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/
 import { Text } from '@pple-today/ui/text'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H2, H3 } from '@pple-today/ui/typography'
+import { FlashList } from '@shopify/flash-list'
 import { useForm } from '@tanstack/react-form'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { Image } from 'expo-image'
@@ -226,11 +228,15 @@ function Banner({ banner }: { banner: GetBannersResponse[number] }) {
     scale.value = withTiming(1, { duration: 150 })
   }
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }))
   return (
     <SlideItem key={banner.id}>
       <Pressable onPressIn={fadeIn} onPressOut={fadeOut} onPress={onPress} disabled={disabled}>
         <Animated.View
-          style={{ opacity, transform: [{ scale }] }}
+          style={animatedStyle}
           className="bg-base-bg-light rounded-xl overflow-hidden"
         >
           <Image
@@ -512,7 +518,12 @@ function FeedContent(props: PagerScrollViewProps) {
   }, [feedInfiniteQuery.data])
 
   const scrollContext = useScrollContext()
-  const scrollHandler = useAnimatedScrollHandler(scrollContext)
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event, ctx) => {
+      'worklet'
+      scrollContext?.onScroll?.(event, ctx)
+    },
+  })
 
   const Footer =
     feedInfiniteQuery.hasNextPage || feedInfiniteQuery.isLoading || feedInfiniteQuery.error ? (
@@ -545,6 +556,15 @@ function FeedContent(props: PagerScrollViewProps) {
     []
   )
   return (
+    <AnimatedFlashList
+      contentContainerStyle={{ paddingTop: headerHeight }}
+      ref={scrollElRef}
+      onScroll={scrollHandler}
+      data={Array.from({ length: 100 }, (_, i) => i)}
+      renderItem={({ item }) => <FeedCardSkeleton />}
+    />
+  )
+  return (
     <FlatListMemo
       // @ts-expect-error FlatListMemo ref type is wrong
       ref={scrollElRef}
@@ -560,6 +580,8 @@ function FeedContent(props: PagerScrollViewProps) {
     />
   )
 }
+
+const AnimatedFlashList = Animated.createAnimatedComponent(FlashList)
 
 // https://github.com/bluesky-social/social-app/blob/27c591f031fbe8b3a5837c4ef7082b2ce146a050/src/view/com/util/List.tsx#L19
 type FlatListMethods<ItemT = any> = FlatListComponent<ItemT, FlatListPropsWithLayout<ItemT>>
