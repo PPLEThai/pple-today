@@ -1,5 +1,5 @@
 import { FilePath } from '@pple-today/api-common/dtos'
-import { FileService, FileTransactionService, PrismaService } from '@pple-today/api-common/services'
+import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
@@ -175,6 +175,7 @@ export class ProfileRepository {
             })) || [],
         },
       }
+      userData.numberOfFollowingTopics = profileData.interestTopics.length
     }
 
     if (profileData.address) {
@@ -194,24 +195,35 @@ export class ProfileRepository {
   }
 
   async updateUserProfile(userId: string, profileData: Prisma.UserUpdateArgs['data']) {
-    let globalFileTx: FileTransactionService | null = null
-    if (profileData.profileImage) {
-      const moveFileResult = await fromRepositoryPromise(
-        this.fileService.$transaction(async (tx) => {
+    const existingUser = await this.getProfileById(userId)
+    if (existingUser.isErr()) return err(existingUser.error)
+
+    const moveFileResult = await fromRepositoryPromise(
+      this.fileService.$transaction(async (tx) => {
+        if (profileData.profileImage) {
+          if (existingUser.value.profileImage) {
+            const removeResult = await tx.bulkRemoveFile([
+              existingUser.value.profileImage as FilePath,
+            ])
+
+            if (removeResult.isErr()) return removeResult
+          }
+
           const moveResult = await tx.bulkMoveToPublicFolder([profileData.profileImage as FilePath])
           if (moveResult.isErr()) return moveResult
 
+          profileData.profileImage = moveResult.value[0]
+
           return moveResult.value[0]
-        })
-      )
+        }
 
-      if (moveFileResult.isErr()) return err(moveFileResult.error)
+        return null
+      })
+    )
 
-      const [publicFile, fileTx] = moveFileResult.value
-      profileData.profileImage = publicFile
+    if (moveFileResult.isErr()) return err(moveFileResult.error)
 
-      globalFileTx = fileTx
-    }
+    const [_, fileTx] = moveFileResult.value
 
     const updateResult = await fromRepositoryPromise(
       this.prismaService.user.update({
@@ -222,10 +234,8 @@ export class ProfileRepository {
     )
 
     if (updateResult.isErr()) {
-      if (globalFileTx) {
-        const rollbackResult = await globalFileTx.rollback()
-        if (rollbackResult.isErr()) return err(rollbackResult.error)
-      }
+      const rollbackResult = await fileTx.rollback()
+      if (rollbackResult.isErr()) return err(rollbackResult.error)
       return err(updateResult.error)
     }
 

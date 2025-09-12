@@ -8,7 +8,7 @@ import {
   GetTopicsResponse,
   UnFollowTopicParams,
 } from './models'
-import { TopicServicePlugin } from './service'
+import { TopicServicePlugin } from './services'
 
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
 import { UnfollowUserResponse } from '../profile/models'

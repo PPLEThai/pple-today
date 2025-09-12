@@ -1,5 +1,39 @@
 # @api/backoffice
 
+## 0.4.0
+
+### Minor Changes
+
+- [#82](https://github.com/PPLEThai/pple-today/pull/82) [`a386520`](https://github.com/PPLEThai/pple-today/commit/a386520d7dd12690c0d1249fcec236dbc4cd97d6) Thanks [@miello](https://github.com/miello)! - [[PPLE-326] [API] Get linked page available status endpoint](https://linear.app/snts/issue/PPLE-326/api-get-linked-page-available-status-endpoint)
+
+- [#85](https://github.com/PPLEThai/pple-today/pull/85) [`e0ee9cf`](https://github.com/PPLEThai/pple-today/commit/e0ee9cf9deb103059b6b6dc95d7d355a78247df3) Thanks [@miello](https://github.com/miello)! - [[PPLE-329] Refactor project structure to support multiple api services](https://linear.app/snts/issue/PPLE-329/refactor-project-structure-to-support-multiple-api-services)
+
+- [#67](https://github.com/PPLEThai/pple-today/pull/67) [`106e560`](https://github.com/PPLEThai/pple-today/commit/106e5609aa565de051c7988cba11c3a9a12f36bc) Thanks [@miello](https://github.com/miello)! - [[PPLE-275] [API] Improve metadata in webhook](https://linear.app/snts/issue/PPLE-275/api-improve-metadata-in-webhook)
+
+- [#87](https://github.com/PPLEThai/pple-today/pull/87) [`3b4890f`](https://github.com/PPLEThai/pple-today/commit/3b4890f322767a0af4cc0f78b76579deb831f50e) Thanks [@miello](https://github.com/miello)! - [[PPLE-335] All User Feed Items in User Detail Page API](https://linear.app/snts/issue/PPLE-335/all-user-feed-items-in-user-detail-page-api)
+
+- [#69](https://github.com/PPLEThai/pple-today/pull/69) [`6fadf31`](https://github.com/PPLEThai/pple-today/commit/6fadf315752ec9149b5546b4c53d34c8dfa58635) Thanks [@miello](https://github.com/miello)! - [[PPLE-277] [API] Improve redundancy logic in webhook and token retrieval logic](https://linear.app/snts/issue/PPLE-277/api-improve-redundancy-logic-in-webhook-and-token-retrieval-logic)
+
+- [#86](https://github.com/PPLEThai/pple-today/pull/86) [`4817d99`](https://github.com/PPLEThai/pple-today/commit/4817d9978051cf75e585ce0fe6cbcbf8bef87b81) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-328] Redesign Election models](https://linear.app/snts/issue/PPLE-328/redesign-election-models)
+
+- [#74](https://github.com/PPLEThai/pple-today/pull/74) [`6fd3398`](https://github.com/PPLEThai/pple-today/commit/6fd339813cbf5443cee23ece3823dec0234775c0) Thanks [@miello](https://github.com/miello)! - [[PPLE-292] [API] Integrate PPLE roles to local roles](https://linear.app/snts/issue/PPLE-292/api-integrate-pple-roles-to-local-roles)
+
+### Patch Changes
+
+- [#92](https://github.com/PPLEThai/pple-today/pull/92) [`78a4b95`](https://github.com/PPLEThai/pple-today/commit/78a4b9537fd8dd42bb6a7253860062c6cceecd05) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-220] Post Detail Page Integrate](https://linear.app/snts/issue/PPLE-220/post-detail-page-integrate)
+
+- [#80](https://github.com/PPLEThai/pple-today/pull/80) [`c73bd3d`](https://github.com/PPLEThai/pple-today/commit/c73bd3d9f16ebf020d92245e35256836136b799d) Thanks [@miello](https://github.com/miello)! - [[PPLE-325] [API] Facebook linked page not working](https://linear.app/snts/issue/PPLE-325/api-facebook-linked-page-not-working)
+
+- [#79](https://github.com/PPLEThai/pple-today/pull/79) [`ecf85b0`](https://github.com/PPLEThai/pple-today/commit/ecf85b099ba5fd54298bf4602e27d55646c224bb) Thanks [@miello](https://github.com/miello)! - [[PPLE-293] [API] Change address query strategy](https://linear.app/snts/issue/PPLE-293/api-change-address-query-strategy)
+
+- [#78](https://github.com/PPLEThai/pple-today/pull/78) [`8f9a3ea`](https://github.com/PPLEThai/pple-today/commit/8f9a3ea9be106bc4816f84bab4fbbccf5b38855c) Thanks [@miello](https://github.com/miello)! - [[PPLE-295] [API] Fail to get banner](https://linear.app/snts/issue/PPLE-295/api-fail-to-get-banner)
+
+- [#94](https://github.com/PPLEThai/pple-today/pull/94) [`1ef583f`](https://github.com/PPLEThai/pple-today/commit/1ef583f01f5c27c1a043f0f01534ade6bae56a27) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-299] Edit profile page](https://linear.app/snts/issue/PPLE-299/edit-profile-page)
+
+- Updated dependencies [[`e0ee9cf`](https://github.com/PPLEThai/pple-today/commit/e0ee9cf9deb103059b6b6dc95d7d355a78247df3), [`1ef583f`](https://github.com/PPLEThai/pple-today/commit/1ef583f01f5c27c1a043f0f01534ade6bae56a27)]:
+  - @pple-today/api-common@0.1.0
+  - @pple-today/database@0.1.0
+
 ## 0.3.0
 
 ### Minor Changes

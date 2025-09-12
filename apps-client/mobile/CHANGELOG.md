@@ -1,5 +1,35 @@
 # @client/mobile
 
+## 0.4.0
+
+### Minor Changes
+
+- [#92](https://github.com/PPLEThai/pple-today/pull/92) [`78a4b95`](https://github.com/PPLEThai/pple-today/commit/78a4b9537fd8dd42bb6a7253860062c6cceecd05) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-220] Post Detail Page Integrate](https://linear.app/snts/issue/PPLE-220/post-detail-page-integrate)
+
+- [#85](https://github.com/PPLEThai/pple-today/pull/85) [`e0ee9cf`](https://github.com/PPLEThai/pple-today/commit/e0ee9cf9deb103059b6b6dc95d7d355a78247df3) Thanks [@miello](https://github.com/miello)! - [[PPLE-329] Refactor project structure to support multiple api services](https://linear.app/snts/issue/PPLE-329/refactor-project-structure-to-support-multiple-api-services)
+
+- [#81](https://github.com/PPLEThai/pple-today/pull/81) [`6975dfe`](https://github.com/PPLEThai/pple-today/commit/6975dfee6559d3525934ee025749d6730a9e1b55) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-300] Link Facebook Page UI & Integrate](https://linear.app/snts/issue/PPLE-300/link-facebook-page-ui-and-integrate)
+
+- [#88](https://github.com/PPLEThai/pple-today/pull/88) [`fdfb5ff`](https://github.com/PPLEThai/pple-today/commit/fdfb5ffea6c4bf1e10c18e0698250f7d3f68fefe) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-219] Post Detail Page UI](https://linear.app/snts/issue/PPLE-219/post-detail-page-ui)
+
+- [#94](https://github.com/PPLEThai/pple-today/pull/94) [`1ef583f`](https://github.com/PPLEThai/pple-today/commit/1ef583f01f5c27c1a043f0f01534ade6bae56a27) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-299] Edit profile page](https://linear.app/snts/issue/PPLE-299/edit-profile-page)
+
+### Patch Changes
+
+- [#80](https://github.com/PPLEThai/pple-today/pull/80) [`c73bd3d`](https://github.com/PPLEThai/pple-today/commit/c73bd3d9f16ebf020d92245e35256836136b799d) Thanks [@miello](https://github.com/miello)! - [[PPLE-325] [API] Facebook linked page not working](https://linear.app/snts/issue/PPLE-325/api-facebook-linked-page-not-working)
+
+- [#76](https://github.com/PPLEThai/pple-today/pull/76) [`09c382f`](https://github.com/PPLEThai/pple-today/commit/09c382f54bd412f8ea187cbf7983ac7d8685966d) Thanks [@Anon-136](https://github.com/Anon-136)! - feat: register user
+
+- [#91](https://github.com/PPLEThai/pple-today/pull/91) [`f21d5e7`](https://github.com/PPLEThai/pple-today/commit/f21d5e7e3584efb1971db08494ff6880f3cfd059) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-353] Coming Soon](https://linear.app/snts/issue/PPLE-353/coming-soon)
+
+- [#84](https://github.com/PPLEThai/pple-today/pull/84) [`4018e76`](https://github.com/PPLEThai/pple-today/commit/4018e762a4a1d2c437fb7a2a303ea190e62a08a5) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [PPLE-278] Integrated Onboarding
+
+- [#78](https://github.com/PPLEThai/pple-today/pull/78) [`8f9a3ea`](https://github.com/PPLEThai/pple-today/commit/8f9a3ea9be106bc4816f84bab4fbbccf5b38855c) Thanks [@miello](https://github.com/miello)! - [[PPLE-295] [API] Fail to get banner](https://linear.app/snts/issue/PPLE-295/api-fail-to-get-banner)
+
+- Updated dependencies [[`6975dfe`](https://github.com/PPLEThai/pple-today/commit/6975dfee6559d3525934ee025749d6730a9e1b55), [`fdfb5ff`](https://github.com/PPLEThai/pple-today/commit/fdfb5ffea6c4bf1e10c18e0698250f7d3f68fefe), [`4018e76`](https://github.com/PPLEThai/pple-today/commit/4018e762a4a1d2c437fb7a2a303ea190e62a08a5)]:
+  - @pple-today/ui@0.2.1
+  - @pple-today/api-client@0.3.1
+
 ## 0.3.0
 
 ### Minor Changes

@@ -197,7 +197,7 @@ export const FeedController = new Elysia({
       const result = await feedService.getFeedComments(params.id, {
         userId: user?.id,
         limit: query.limit,
-        page: query.page,
+        cursor: query.cursor,
       })
 
       if (result.isErr()) {

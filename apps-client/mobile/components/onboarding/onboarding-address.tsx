@@ -1,9 +1,8 @@
 import React from 'react'
-import { View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 
 import { Button } from '@pple-today/ui/button'
-import { FormControl, FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
-import { Icon } from '@pple-today/ui/icon'
+import { FormControl, FormItem, FormLabel } from '@pple-today/ui/form'
 import {
   Select,
   SelectContent,
@@ -16,16 +15,18 @@ import {
 import { Text } from '@pple-today/ui/text'
 import { toast } from '@pple-today/ui/toast'
 import { useForm, useStore } from '@tanstack/react-form'
-import { ImagePickerSuccessResult } from 'expo-image-picker'
 import { useRouter } from 'expo-router'
-import { MessageCircleIcon, Pencil, PlusIcon, TriangleAlertIcon } from 'lucide-react-native'
+import { MessageCircleIcon, TriangleAlertIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { getAuthSession } from '@app/libs/auth/session'
-import { handleUploadSignedUrl } from '@app/utils/upload'
+import { ImageMimeType } from '@app/types/file'
+import { handleUploadImage } from '@app/utils/upload'
 
 import { OnboardingAddressState, useOnboardingContext } from './onboarding-context'
+
+import { AddressCard } from '../address-card'
 
 const formSchema = z.object({
   province: z.string().min(1, 'กรุณาเลือกจังหวัด'),
@@ -53,6 +54,7 @@ export function OnboardingAddress() {
     },
     validators: {
       onSubmit: formSchema,
+      onBlur: formSchema,
     },
     onSubmit: (values) => {
       const _province = values.value.province
@@ -99,6 +101,33 @@ export function OnboardingAddress() {
     { enabled: !!subdistrictValues }
   )
 
+  const provinceList = React.useMemo(() => {
+    if (getProvinceQuery.data) {
+      return getProvinceQuery.data
+    }
+    return []
+  }, [getProvinceQuery.data])
+
+  const districtList = React.useMemo(() => {
+    if (getDistrictQuery.data) {
+      return getDistrictQuery.data
+    }
+    return []
+  }, [getDistrictQuery.data])
+
+  const subDistrictList = React.useMemo(() => {
+    if (getSubdistrictQuery.data) {
+      return getSubdistrictQuery.data
+    }
+    return []
+  }, [getSubdistrictQuery.data])
+  const postalCodeList = React.useMemo(() => {
+    if (getPostalCodeQuery.data) {
+      return getPostalCodeQuery.data
+    }
+    return []
+  }, [getPostalCodeQuery.data])
+
   const router = useRouter()
 
   const handleOpenForm = React.useCallback(() => {
@@ -110,39 +139,6 @@ export function OnboardingAddress() {
   }, [form])
   const completeOnboardingMutation = reactQueryClient.useMutation('post', '/profile/on-boarding')
 
-  const handleUploadProfileImageFile = async (
-    imgPickerResult: ImagePickerSuccessResult,
-    uploadUrl: string,
-    uploadFields: Record<string, string>
-  ) => {
-    // create blob to upload
-    const asset = imgPickerResult.assets[0]
-    if (!asset) return
-    try {
-      const formData = new FormData()
-
-      for (const [key, value] of Object.entries(uploadFields)) {
-        formData.append(key, value)
-      }
-
-      // @ts-expect-error: Special react native format for form data
-      formData.append('file', {
-        uri: asset.uri,
-        name: asset.fileName ?? `profile-picture-${new Date().getTime()}.png`,
-        type: asset.mimeType,
-      })
-
-      const result = await handleUploadSignedUrl(uploadUrl, formData)
-
-      if (!result.ok) {
-        throw new Error('Failed to upload image')
-      }
-    } catch (err) {
-      console.error('Error uploading image', err)
-      throw err
-    }
-  }
-
   const handleEndOnboarding = React.useCallback(async () => {
     setIsEndOnboarding(true)
 
@@ -150,29 +146,35 @@ export function OnboardingAddress() {
     const interestedTopicPayload = state.topicStepResult?.topics
 
     let profilePayload
-    if (state.profileStepResult?.imagePickerResult) {
+    if (state.profileStepResult?.imagePickerAsset) {
       const session = await getAuthSession()
       if (!session) {
         throw new Error('No auth session found')
       }
 
-      const result = await fetchClient('/profile/upload-url', {
+      const { data: getLink } = await fetchClient('/profile/upload-url', {
+        method: 'POST',
+        body: {
+          contentType: (state.profileStepResult.imagePickerAsset?.mimeType ||
+            'image/png') as ImageMimeType,
+        },
         headers: {
           Authorization: `Bearer ${session.accessToken}`,
         },
       })
-      if (!result || !result.data) {
+
+      if (!getLink || !getLink.uploadUrl || !getLink.uploadFields) {
         throw new Error('Cannot get upload url')
       }
 
-      await handleUploadProfileImageFile(
-        state.profileStepResult.imagePickerResult,
-        result.data.uploadUrl,
-        result.data.uploadFields
+      await handleUploadImage(
+        state.profileStepResult.imagePickerAsset,
+        getLink.uploadUrl,
+        getLink.uploadFields
       )
       profilePayload = {
         name: state.profileStepResult?.name ?? '',
-        profileImage: result.data.fileKey ?? '',
+        profileImage: getLink.fileKey ?? '',
       }
     } else if (state.profileStepResult?.name) {
       profilePayload = {
@@ -234,7 +236,7 @@ export function OnboardingAddress() {
       {!openForm && (
         <>
           <View className="p-6 pt-4 w-full gap-2">
-            <OnboardingAddressDetail address={address} handleOpenForm={handleOpenForm} />
+            <AddressCard address={address} handleOpenForm={handleOpenForm} />
           </View>
           <View className="gap-2 p-6 pt-0">
             <Button disabled={!address || isEndOnboarding} onPress={handleEndOnboarding}>
@@ -249,150 +251,154 @@ export function OnboardingAddress() {
       {openForm && (
         <>
           <View className="gap-2 px-6 pb-6 pt-4">
-            <form.Field
-              name="province"
-              listeners={{
-                onChange: () => {
-                  form.setFieldValue('district', '')
-                  form.setFieldValue('subDistrict', '')
-                  form.setFieldValue('postalCode', '')
-                },
-              }}
-            >
-              {(field) => (
-                <FormItem field={field}>
-                  <FormLabel>จังหวัด</FormLabel>
-                  <FormControl>
-                    <Select
-                      value={{ label: field.state.value, value: field.state.value }}
-                      onValueChange={(option) => field.handleChange(option?.value || '')}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="เลือกจังหวัด" />
-                      </SelectTrigger>
-                      <SelectContent insets={contentInsets} className="w-full">
-                        <SelectGroup>
-                          <SelectLabel className="font-bold">เลือกจังหวัด</SelectLabel>
-                          {getProvinceQuery.data?.map((province, index) => (
-                            <SelectItem key={index} label={province} value={province} />
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                </FormItem>
-              )}
-            </form.Field>
-            <form.Subscribe selector={(state) => state.values.province}>
-              {(province) => (
-                <form.Field
-                  name="district"
-                  listeners={{
-                    onChange: () => {
-                      form.setFieldValue('subDistrict', '')
-                      form.setFieldValue('postalCode', '')
-                    },
-                  }}
-                >
-                  {(field) => (
-                    <FormItem field={field}>
-                      <FormLabel>เขต/อำเภอ</FormLabel>
-                      <FormControl>
-                        <Select
-                          value={{ label: field.state.value, value: field.state.value }}
-                          onValueChange={(option) => field.handleChange(option?.value || '')}
-                        >
-                          <SelectTrigger className="w-full" disabled={!province}>
-                            <SelectValue placeholder="เลือกเขต/อำเภอ" />
-                          </SelectTrigger>
-                          <SelectContent insets={contentInsets} className="w-full">
-                            <SelectGroup>
-                              <SelectLabel className="font-bold">เลือกเขต/อำเภอ</SelectLabel>
-                              {getDistrictQuery.data?.map((district, index) => (
-                                <SelectItem key={index} label={district} value={district} />
-                              ))}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                </form.Field>
-              )}
-            </form.Subscribe>
-            <form.Subscribe selector={(state) => state.values.district}>
-              {(district) => (
-                <form.Field
-                  name="subDistrict"
-                  listeners={{
-                    onChange: () => {
-                      form.setFieldValue('postalCode', '')
-                    },
-                  }}
-                >
-                  {(field) => (
-                    <FormItem field={field}>
-                      <FormLabel>แขวง/ตำบล</FormLabel>
-                      <FormControl>
-                        <Select
-                          value={{ label: field.state.value, value: field.state.value }}
-                          onValueChange={(option) => field.handleChange(option?.value || '')}
-                        >
-                          <SelectTrigger className="w-full" disabled={!district}>
-                            <SelectValue placeholder="เลือกแขวง/ตำบล" />
-                          </SelectTrigger>
-                          <SelectContent insets={contentInsets} className="w-full">
-                            <SelectGroup>
-                              <SelectLabel className="font-bold">เลือกแขวง/ตำบล</SelectLabel>
-                              {getSubdistrictQuery.data?.map((subDistrict, index) => (
-                                <SelectItem key={index} label={subDistrict} value={subDistrict} />
-                              ))}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                </form.Field>
-              )}
-            </form.Subscribe>
-            <form.Subscribe selector={(state) => state.values.subDistrict}>
-              {(subDistrict) => (
-                <form.Field name="postalCode">
-                  {(field) => (
-                    <FormItem field={field}>
-                      <FormLabel>รหัสไปรษณีย์</FormLabel>
-                      <FormControl>
-                        <Select
-                          value={{ label: field.state.value, value: field.state.value }}
-                          onValueChange={(option) => field.handleChange(option?.value || '')}
-                        >
-                          <SelectTrigger className="w-full" disabled={!subDistrict}>
-                            <SelectValue placeholder="เลือกรหัสไปรษณีย์" />
-                          </SelectTrigger>
-                          <SelectContent insets={contentInsets} className="w-full">
-                            <SelectGroup>
-                              <SelectLabel className="font-bold">เลือกรหัสไปรษณีย์</SelectLabel>
-                              {getPostalCodeQuery.data?.map((postalCode, index) => (
-                                <SelectItem key={index} label={postalCode} value={postalCode} />
-                              ))}
-                            </SelectGroup>
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                </form.Field>
-              )}
-            </form.Subscribe>
+            <ScrollView contentContainerClassName="gap-2">
+              <form.Field
+                name="province"
+                listeners={{
+                  onChange: () => {
+                    form.setFieldValue('district', '')
+                    form.setFieldValue('subDistrict', '')
+                    form.setFieldValue('postalCode', '')
+                  },
+                }}
+              >
+                {(field) => (
+                  <FormItem field={field}>
+                    <FormLabel>จังหวัด</FormLabel>
+                    <FormControl>
+                      <Select
+                        value={{ label: field.state.value, value: field.state.value }}
+                        onValueChange={(option) => field.handleChange(option?.value || '')}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="เลือกจังหวัด" />
+                        </SelectTrigger>
+                        <SelectContent insets={contentInsets} className="w-full">
+                          <SelectGroup>
+                            <SelectLabel className="font-bold">เลือกจังหวัด</SelectLabel>
+                            {provinceList.map((province, index) => (
+                              <SelectItem key={index} label={province} value={province} />
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                  </FormItem>
+                )}
+              </form.Field>
+              <form.Subscribe selector={(state) => state.values.province}>
+                {(province) => (
+                  <form.Field
+                    name="district"
+                    listeners={{
+                      onChange: () => {
+                        form.setFieldValue('subDistrict', '')
+                        form.setFieldValue('postalCode', '')
+                      },
+                    }}
+                  >
+                    {(field) => (
+                      <FormItem field={field}>
+                        <FormLabel>เขต/อำเภอ</FormLabel>
+                        <FormControl>
+                          <Select
+                            value={{ label: field.state.value, value: field.state.value }}
+                            onValueChange={(option) => field.handleChange(option?.value || '')}
+                          >
+                            <SelectTrigger className="w-full" disabled={!province}>
+                              <SelectValue placeholder="เลือกเขต/อำเภอ" />
+                            </SelectTrigger>
+                            <SelectContent insets={contentInsets} className="w-full">
+                              <SelectGroup>
+                                <SelectLabel className="font-bold">เลือกเขต/อำเภอ</SelectLabel>
+                                {districtList.map((district, index) => (
+                                  <SelectItem key={index} label={district} value={district} />
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  </form.Field>
+                )}
+              </form.Subscribe>
+              <form.Subscribe selector={(state) => state.values.district}>
+                {(district) => (
+                  <form.Field
+                    name="subDistrict"
+                    listeners={{
+                      onChange: () => {
+                        form.setFieldValue('postalCode', '')
+                      },
+                    }}
+                  >
+                    {(field) => (
+                      <FormItem field={field}>
+                        <FormLabel>แขวง/ตำบล</FormLabel>
+                        <FormControl>
+                          <Select
+                            value={{ label: field.state.value, value: field.state.value }}
+                            onValueChange={(option) => field.handleChange(option?.value || '')}
+                          >
+                            <SelectTrigger className="w-full" disabled={!district}>
+                              <SelectValue placeholder="เลือกแขวง/ตำบล" />
+                            </SelectTrigger>
+                            <SelectContent insets={contentInsets} className="w-full">
+                              <SelectGroup>
+                                <SelectLabel className="font-bold">เลือกแขวง/ตำบล</SelectLabel>
+                                {subDistrictList.map((subDistrict, index) => (
+                                  <SelectItem key={index} label={subDistrict} value={subDistrict} />
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  </form.Field>
+                )}
+              </form.Subscribe>
+              <form.Subscribe selector={(state) => state.values.subDistrict}>
+                {(subDistrict) => (
+                  <form.Field name="postalCode">
+                    {(field) => (
+                      <FormItem field={field}>
+                        <FormLabel>รหัสไปรษณีย์</FormLabel>
+                        <FormControl>
+                          <Select
+                            value={{ label: field.state.value, value: field.state.value }}
+                            onValueChange={(option) => field.handleChange(option?.value || '')}
+                          >
+                            <SelectTrigger className="w-full" disabled={!subDistrict}>
+                              <SelectValue placeholder="เลือกรหัสไปรษณีย์" />
+                            </SelectTrigger>
+                            <SelectContent insets={contentInsets} className="w-full">
+                              <SelectGroup>
+                                <SelectLabel className="font-bold">เลือกรหัสไปรษณีย์</SelectLabel>
+                                {postalCodeList.map((postalCode, index) => (
+                                  <SelectItem key={index} label={postalCode} value={postalCode} />
+                                ))}
+                              </SelectGroup>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  </form.Field>
+                )}
+              </form.Subscribe>
+            </ScrollView>
           </View>
           <View className="gap-2 px-6 pb-6">
-            <form.Subscribe selector={(state) => [state.isSubmitting, state.canSubmit]}>
-              {([isSubmitting, canSubmit]) => (
-                <Button disabled={isSubmitting || !canSubmit} onPress={handleOnSubmit}>
+            <form.Subscribe
+              selector={(state) => [state.isSubmitting, state.isFormValid, state.isTouched]}
+            >
+              {([isSubmitting, isFormValid, isTouched]) => (
+                <Button
+                  disabled={isSubmitting || !isFormValid || !isTouched}
+                  onPress={handleOnSubmit}
+                >
                   <Text>บันทึก</Text>
                 </Button>
               )}
@@ -403,52 +409,6 @@ export function OnboardingAddress() {
           </View>
         </>
       )}
-    </View>
-  )
-}
-
-export function OnboardingAddressDetail({
-  address,
-  handleOpenForm,
-}: {
-  address: OnboardingAddressState | null
-  handleOpenForm: () => void
-}) {
-  if (address) {
-    return (
-      <View className="p-4 bg-base-bg-default rounded-xl gap-2">
-        <View>
-          <Text className="font-anakotmai-medium">ที่อยู่ของคุณ</Text>
-        </View>
-        <View className="pb-2">
-          <View>
-            <Text className="font-noto-light line-clamp-1">
-              {address.province === 'กรุงเทพมหานคร' ? 'แขวง' : 'ต.'}
-              {address.subDistrict} {address.province === 'กรุงเทพมหานคร' ? 'เขต' : 'อ.'}
-              {address.district}
-            </Text>
-            <Text className="font-noto-light line-clamp-1">
-              จ.{address.province} {address.postalCode}
-            </Text>
-          </View>
-        </View>
-        <Button variant="outline" onPress={handleOpenForm}>
-          <Icon icon={Pencil} />
-          <Text>แก้ไขที่อยู่</Text>
-        </Button>
-      </View>
-    )
-  }
-
-  return (
-    <View className="p-4 bg-base-bg-default rounded-xl">
-      <View className="pb-4">
-        <Text className="font-anakotmai-medium">ที่อยู่ของคุณ</Text>
-      </View>
-      <Button onPress={handleOpenForm}>
-        <Icon icon={PlusIcon} />
-        <Text>เพิ่มที่อยู่</Text>
-      </Button>
     </View>
   )
 }

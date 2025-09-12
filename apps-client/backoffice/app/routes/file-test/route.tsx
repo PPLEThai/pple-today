@@ -99,6 +99,7 @@ const FileTestRoute = () => {
         const result = await getFileUploadUrl.mutateAsync({
           body: {
             category: 'ANNOUNCEMENT',
+            contentType: file.type as any,
           },
           headers: {
             Authorization: `Bearer ${user.access_token}`,
@@ -122,7 +123,7 @@ const FileTestRoute = () => {
           body: {
             title: 'Test Announcement',
             content: 'This is a test announcement with an uploaded file.',
-            attachmentFilePaths: [result.filePath],
+            attachmentFilePaths: [result.filePath as any],
             backgroundColor: null,
             iconImage: null,
             topicIds: [],

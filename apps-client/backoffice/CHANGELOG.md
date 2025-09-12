@@ -1,5 +1,12 @@
 # @client/backoffice
 
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies [[`fdfb5ff`](https://github.com/PPLEThai/pple-today/commit/fdfb5ffea6c4bf1e10c18e0698250f7d3f68fefe)]:
+  - @pple-today/api-client@0.3.1
+
 ## 0.2.0
 
 ### Minor Changes

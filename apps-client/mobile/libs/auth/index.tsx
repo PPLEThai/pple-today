@@ -136,7 +136,7 @@ export const useUser = () => {
 
 export const useAuthMe = () => {
   return useQuery({
-    queryKey: reactQueryClient.getQueryKey('get', '/auth/me'),
+    queryKey: reactQueryClient.getQueryKey('/auth/me'),
     queryFn: async () => {
       const session = await getAuthSession()
       if (!session) {
@@ -217,6 +217,10 @@ export const AuthLifeCycleHook = () => {
       console.error('Error fetching user info:', userQuery.error)
     }
   }, [userQuery.error])
+
+  // TODO: make these queries run in background with low priority after logging in
+  useAuthMe()
+  reactQueryClient.useQuery('/profile/me', {}, { enabled: !!userQuery.data })
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogContent>
@@ -312,7 +316,7 @@ export const useLoginMutation = () => {
         idToken: result.tokenResponse.idToken ?? null,
       })
       // reset all reactQueryClient cache
-      await queryClient.resetQueries({ queryKey: reactQueryClient.getPartialQueryKey() })
+      await queryClient.resetQueries({ queryKey: reactQueryClient.getKey() })
       if (result.action === 'register') {
         router.navigate('/onboarding')
       } else if (result.action === 'login') {
@@ -359,7 +363,7 @@ export const useLogoutMutation = () => {
       // Clear tokens from secure storage
       await sessionMutation.mutateAsync(null)
       // reset all reactQueryClient cache
-      await queryClient.resetQueries({ queryKey: reactQueryClient.getPartialQueryKey() })
+      await queryClient.resetQueries({ queryKey: reactQueryClient.getKey() })
       router.navigate('/profile')
     },
   })

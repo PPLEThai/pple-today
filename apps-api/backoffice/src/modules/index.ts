@@ -4,6 +4,7 @@ import { AddressController } from './address'
 import { AnnouncementsController } from './announcements'
 import { AuthController } from './auth'
 import { BannerController } from './banner'
+import { ElectionController } from './election'
 import { FacebookController } from './facebook'
 import { FeedController } from './feed'
 import { PollsController } from './polls'
@@ -20,3 +21,4 @@ export const ApplicationController = new Elysia()
   .use(BannerController)
   .use(AddressController)
   .use(TopicController)
+  .use(ElectionController)

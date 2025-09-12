@@ -1,18 +1,19 @@
 import {
+  DeleteFileResponse,
   GenerateSignedPostPolicyV4Options,
   GetSignedUrlConfig,
   Storage,
 } from '@google-cloud/storage'
 import https from 'https'
-import { Err, fromPromise, Ok, ok } from 'neverthrow'
+import { Err, fromPromise, Ok, ok, Result } from 'neverthrow'
 import { Readable } from 'stream'
 
 import { InternalErrorCode } from '../dtos'
-import { FilePath } from '../dtos/file'
+import { FileMimeType, FilePath } from '../dtos/file'
 import { ElysiaLoggerInstance } from '../plugins'
 import { exhaustiveGuard } from '../utils/common'
 import { ApiErrorResponse, err, OnlyErr, WithoutErr } from '../utils/error'
-import { getFilePath } from '../utils/file'
+import { getFilePath, MIME_TYPE_TO_EXTENSION } from '../utils/file'
 
 export const FilePermission = {
   PUBLIC: 'PUBLIC',
@@ -140,7 +141,18 @@ export class FileService {
     return this.bulkMoveToFolder(files, this.prefixPublicFolder, FilePermission.PUBLIC)
   }
 
-  async getUploadSignedUrl(
+  getFilePathFromMimeType(basePath: FilePath, contentType: FileMimeType) {
+    const extension = MIME_TYPE_TO_EXTENSION[contentType]
+    if (!extension) {
+      return err({
+        code: InternalErrorCode.FILE_UNSUPPORTED_MIME_TYPE,
+        message: 'Invalid file mime type',
+      })
+    }
+    return ok(`${basePath}.${extension}` satisfies FilePath)
+  }
+
+  async createUploadSignedUrl(
     fileKey: string,
     config?: {
       expiresIn?: number
@@ -148,7 +160,7 @@ export class FileService {
       contentType?: string
     }
   ) {
-    const expiresIn = config?.expiresIn ?? 15 * 60
+    const expiresIn = config?.expiresIn ?? 5 * 60
     const maxSize = config?.maxSize ?? 5 * 1024 * 1024
     const contentType = config?.contentType ?? 'application/octet-stream'
 
@@ -252,7 +264,15 @@ export class FileService {
     return ok(destination)
   }
 
-  async deleteFile(fileKey: string) {
+  async deleteFile(fileKey: string): Promise<
+    Result<
+      DeleteFileResponse,
+      {
+        code: 'FILE_DELETE_ERROR'
+        message: string
+      }
+    >
+  > {
     return fromPromise(this.bucket.file(fileKey).delete(), (err) => ({
       code: InternalErrorCode.FILE_DELETE_ERROR,
       message: (err as Error).message,

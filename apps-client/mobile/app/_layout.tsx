@@ -52,10 +52,14 @@ export default function RootLayout() {
             <FontProvider>
               <GestureHandlerRootView>
                 <BottomSheetModalProvider>
-                  <Stack initialRouteName="(tabs)">
-                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                    <Stack.Screen name="loading" options={{ headerShown: false }} />
-                    <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+                  <Stack
+                    initialRouteName="(tabs)"
+                    screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
+                  >
+                    <Stack.Screen name="(tabs)" />
+                    <Stack.Screen name="loading" />
+                    <Stack.Screen name="onboarding" />
+                    <Stack.Screen name="edit" />
                   </Stack>
                   <Toaster />
                 </BottomSheetModalProvider>
