@@ -276,7 +276,7 @@ export class ElectionService {
       })
     }
 
-    const deleteBallot = await this.electionRepository.deleteMyBallot(eligibleVoter.value.id)
+    const deleteBallot = await this.electionRepository.deleteMyBallot(userId, electionId)
     if (deleteBallot.isErr()) {
       return mapRepositoryError(deleteBallot.error)
     }
