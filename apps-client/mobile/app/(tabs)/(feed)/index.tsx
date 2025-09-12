@@ -29,7 +29,6 @@ import {
   ArrowRightIcon,
   CirclePlusIcon,
   ClockIcon,
-  ContactRoundIcon,
   MapPinIcon,
   MapPinnedIcon,
   MegaphoneIcon,
@@ -39,6 +38,7 @@ import { z } from 'zod/v4'
 
 import type { ApplicationApiSchema, GetBannersResponse } from '@api/backoffice/app'
 import PPLEIcon from '@app/assets/pple-icon.svg'
+import { UserAddressInfoSection } from '@app/components/address-info'
 import { AnnouncementCard } from '@app/components/announcement'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
@@ -68,7 +68,7 @@ export default function IndexLayout() {
           <View className="flex flex-col w-full bg-base-bg-white">
             <BannerSection />
             {/* <EventSection /> */}
-            <UserInfoSection />
+            <UserAddressInfoSection />
           </View>
           <View className="px-4 bg-base-bg-white flex flex-row items-start ">
             <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
@@ -299,45 +299,6 @@ function ElectionCard() {
           </Button>
         </View>
       </View>
-    </View>
-  )
-}
-
-function UserInfoSection() {
-  const authMeQuery = useAuthMe()
-  // hide when not yet onboarded and therefore no address data
-  if (!authMeQuery.data?.address) {
-    return null
-  }
-  return (
-    <View className="flex flex-row justify-between items-center w-full px-4">
-      <View className="flex flex-col items-start">
-        <View className="flex flex-row items-center gap-2">
-          <Icon icon={MapPinnedIcon} size={16} className="text-base-primary-medium" />
-          <H2 className="text-xs text-base-text-high font-anakotmai-light">พื้นที่ของคุณ</H2>
-        </View>
-        <Text className="text-lg text-base-primary-default font-anakotmai-bold">
-          {authMeQuery.data.address.subDistrict}, {authMeQuery.data.address.district}
-        </Text>
-        <Text className="text-sm text-base-text-high font-anakotmai-light">
-          {authMeQuery.data.address.province}
-        </Text>
-      </View>
-      {/* TODO: style active state & navigate */}
-      <Pressable className="flex flex-row items-center gap-3 border border-base-outline-default rounded-2xl p-4">
-        <View className="w-8 h-8 flex items-center justify-center rounded-lg bg-base-primary-medium">
-          <Icon
-            icon={ContactRoundIcon}
-            size={24}
-            className="text-base-text-invert"
-            strokeWidth={1}
-          />
-        </View>
-        <Text className="text-sm text-base-text-high font-anakotmai-medium">
-          ดูข้อมูล{'\n'}
-          สส. ของคุณ
-        </Text>
-      </Pressable>
     </View>
   )
 }
