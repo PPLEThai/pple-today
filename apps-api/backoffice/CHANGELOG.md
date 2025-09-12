@@ -1,5 +1,40 @@
 # @api/backoffice
 
+## 0.5.0
+
+### Minor Changes
+
+- [#109](https://github.com/PPLEThai/pple-today/pull/109) [`6f86a7e`](https://github.com/PPLEThai/pple-today/commit/6f86a7e5b4f8d959cf5880e6a9d0f1f3c56a3213) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-250] Hashtag Detail UI](https://linear.app/snts/issue/PPLE-250/hashtag-detail-ui)
+  [[PPLE-251] Hashtag Detail Integrate](https://linear.app/snts/issue/PPLE-251/hashtag-detail-integrate)
+
+- [#90](https://github.com/PPLEThai/pple-today/pull/90) [`4717a0f`](https://github.com/PPLEThai/pple-today/commit/4717a0f2f34b63bd8d895ae6e62dbe80160662ce) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-308] [API] list elections for user](https://linear.app/snts/issue/PPLE-308/api-list-elections-for-user)
+
+- [#107](https://github.com/PPLEThai/pple-today/pull/107) [`fdda383`](https://github.com/PPLEThai/pple-today/commit/fdda383786043c721a28098593855c6f309f1b3f) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-314] [API] withdraw user ballot endpoint](https://linear.app/snts/issue/PPLE-314/api-withdraw-user-ballot-endpoint)
+
+- [#104](https://github.com/PPLEThai/pple-today/pull/104) [`15e37f5`](https://github.com/PPLEThai/pple-today/commit/15e37f528e06db7d5260afbc2079da5efe9f6644) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-310] [API] Submit ballot type endpoint](https://linear.app/snts/issue/PPLE-310/api-submit-ballot-type-endpoint)
+
+- [#93](https://github.com/PPLEThai/pple-today/pull/93) [`eaff3af`](https://github.com/PPLEThai/pple-today/commit/eaff3af09e08670b7d04af60f365c673cfecc1e2) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-309] [API] Get election details by id](https://linear.app/snts/issue/PPLE-309/api-get-election-details-by-id)
+
+### Patch Changes
+
+- [#95](https://github.com/PPLEThai/pple-today/pull/95) [`8ec7aeb`](https://github.com/PPLEThai/pple-today/commit/8ec7aeb678d9db9b56c15d28ec7330b59bba53a3) Thanks [@miello](https://github.com/miello)! - [[PPLE-357] [API] Lint script problem and profile image caching](https://linear.app/snts/issue/PPLE-357/api-lint-script-problem-and-profile-image-caching)
+
+- [#105](https://github.com/PPLEThai/pple-today/pull/105) [`f628877`](https://github.com/PPLEThai/pple-today/commit/f62887776147b67ff799bf60b06aec6464f987ca) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-302] followed content UI integrate](https://linear.app/snts/issue/PPLE-302/followed-content-ui-and-integrate)
+
+- [#103](https://github.com/PPLEThai/pple-today/pull/103) [`65f8bf0`](https://github.com/PPLEThai/pple-today/commit/65f8bf07d27689b00661f8eba1c421c06a11105c) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-215] Announcement Detail Page](https://linear.app/snts/issue/PPLE-215/announcement-detail-page)
+
+- [#102](https://github.com/PPLEThai/pple-today/pull/102) [`9b20b56`](https://github.com/PPLEThai/pple-today/commit/9b20b561489992cdfd5dd3d7b8c213ea3b2ac352) Thanks [@miello](https://github.com/miello)! - [[PPLE-361] [API] Remove dtos folder from api package](https://linear.app/snts/issue/PPLE-361/api-remove-dtos-folder-from-api-package)
+
+- [#97](https://github.com/PPLEThai/pple-today/pull/97) [`0eba2a1`](https://github.com/PPLEThai/pple-today/commit/0eba2a10fb4c7e8677490cf8c11f7963a0a8f44c) Thanks [@miello](https://github.com/miello)! - [[PPLE-359] [API] Missing migration file](https://linear.app/snts/issue/PPLE-359/api-missing-migration-file)
+
+- [#96](https://github.com/PPLEThai/pple-today/pull/96) [`ca5323e`](https://github.com/PPLEThai/pple-today/commit/ca5323e773cf34cebb357972cd25a479f1c960a3) Thanks [@miello](https://github.com/miello)! - [[PPLE-358] [API] Allows type-only import from API](https://linear.app/snts/issue/PPLE-358/api-allows-type-only-import-from-api)
+
+- [#110](https://github.com/PPLEThai/pple-today/pull/110) [`856f614`](https://github.com/PPLEThai/pple-today/commit/856f614e924a8596fb634f0bd3c9c573d4155fd0) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-303] followed people UI integrate](https://linear.app/snts/issue/PPLE-303/followed-people-ui-and-integrate)
+
+- Updated dependencies [[`4717a0f`](https://github.com/PPLEThai/pple-today/commit/4717a0f2f34b63bd8d895ae6e62dbe80160662ce), [`8ec7aeb`](https://github.com/PPLEThai/pple-today/commit/8ec7aeb678d9db9b56c15d28ec7330b59bba53a3), [`15e37f5`](https://github.com/PPLEThai/pple-today/commit/15e37f528e06db7d5260afbc2079da5efe9f6644), [`9b20b56`](https://github.com/PPLEThai/pple-today/commit/9b20b561489992cdfd5dd3d7b8c213ea3b2ac352), [`0eba2a1`](https://github.com/PPLEThai/pple-today/commit/0eba2a10fb4c7e8677490cf8c11f7963a0a8f44c), [`ca5323e`](https://github.com/PPLEThai/pple-today/commit/ca5323e773cf34cebb357972cd25a479f1c960a3), [`eaff3af`](https://github.com/PPLEThai/pple-today/commit/eaff3af09e08670b7d04af60f365c673cfecc1e2)]:
+  - @pple-today/database@0.2.0
+  - @pple-today/api-common@0.2.0
+
 ## 0.4.0
 
 ### Minor Changes

@@ -1,5 +1,15 @@
 # @pple-today/api-client
 
+## 0.3.2
+
+### Patch Changes
+
+- [#95](https://github.com/PPLEThai/pple-today/pull/95) [`8ec7aeb`](https://github.com/PPLEThai/pple-today/commit/8ec7aeb678d9db9b56c15d28ec7330b59bba53a3) Thanks [@miello](https://github.com/miello)! - [[PPLE-357] [API] Lint script problem and profile image caching](https://linear.app/snts/issue/PPLE-357/api-lint-script-problem-and-profile-image-caching)
+
+- [#113](https://github.com/PPLEThai/pple-today/pull/113) [`a277f86`](https://github.com/PPLEThai/pple-today/commit/a277f86ffefc0d8da80b26b116337864f452b32c) Thanks [@miello](https://github.com/miello)! - [[PPLE-367] [API] Improve DX in fetch client interceptor](https://linear.app/snts/issue/PPLE-367/api-improve-dx-in-fetch-client-interceptor)
+
+- [#96](https://github.com/PPLEThai/pple-today/pull/96) [`ca5323e`](https://github.com/PPLEThai/pple-today/commit/ca5323e773cf34cebb357972cd25a479f1c960a3) Thanks [@miello](https://github.com/miello)! - [[PPLE-358] [API] Allows type-only import from API](https://linear.app/snts/issue/PPLE-358/api-allows-type-only-import-from-api)
+
 ## 0.3.1
 
 ### Patch Changes
