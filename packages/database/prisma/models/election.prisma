@@ -37,7 +37,7 @@ model Election {
     candidates  ElectionCandidate[]
     voters      ElectionEligibleVoter[]
     voteRecords ElectionVoteRecord[]
-    bollots     ElectionBallot[]
+    ballots     ElectionBallot[]
 
     @@index([name])
 }
