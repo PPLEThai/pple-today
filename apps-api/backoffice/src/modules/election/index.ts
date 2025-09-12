@@ -84,9 +84,9 @@ export const ElectionController = new Elysia({
         return mapErrorCodeToResponse(registerElection.error, status)
       }
 
-      return {
+      return status(200, {
         message: 'Register election success',
-      }
+      })
     },
     {
       detail: {
