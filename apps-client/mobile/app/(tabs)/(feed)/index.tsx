@@ -556,15 +556,6 @@ function FeedContent(props: PagerScrollViewProps) {
     []
   )
   return (
-    <AnimatedFlashList
-      contentContainerStyle={{ paddingTop: headerHeight }}
-      ref={scrollElRef}
-      onScroll={scrollHandler}
-      data={Array.from({ length: 100 }, (_, i) => i)}
-      renderItem={({ item }) => <FeedCardSkeleton />}
-    />
-  )
-  return (
     <FlatListMemo
       // @ts-expect-error FlatListMemo ref type is wrong
       ref={scrollElRef}
@@ -581,6 +572,7 @@ function FeedContent(props: PagerScrollViewProps) {
   )
 }
 
+// TODO: animated flashlist
 const AnimatedFlashList = Animated.createAnimatedComponent(FlashList)
 
 // https://github.com/bluesky-social/social-app/blob/27c591f031fbe8b3a5837c4ef7082b2ce146a050/src/view/com/util/List.tsx#L19
