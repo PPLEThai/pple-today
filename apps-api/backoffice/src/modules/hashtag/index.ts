@@ -2,7 +2,7 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
-import { GetHashtagResponse } from './models'
+import { GetHashtagParams, GetHashtagResponse } from './models'
 import { HashtagServicePlugin } from './services'
 
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
@@ -25,6 +25,7 @@ export const HashtagController = new Elysia({
       return status(200, hashtag.value)
     },
     {
+      params: GetHashtagParams,
       response: {
         200: GetHashtagResponse,
         ...createErrorSchema(
