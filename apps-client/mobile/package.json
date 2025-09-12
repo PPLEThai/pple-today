@@ -89,7 +89,7 @@
     "@pple-today/project-config": "workspace:^",
     "@tanstack/eslint-plugin-query": "^5.81.2",
     "@types/react": "~19.1.0",
-    "@types/react-dom": "19.0.0",
+    "@types/react-dom": "19.1.0",
     "prettier-plugin-tailwindcss": "^0.5.11",
     "react-native-svg-transformer": "^1.5.1",
     "tailwindcss": "^3.4.17"
