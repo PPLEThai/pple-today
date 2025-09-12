@@ -85,7 +85,7 @@ const NumberFollowingSection = () => {
 const PeopleFollowingSection = () => {
   const followingPeopleQuery = reactQueryClient.useQuery('/profile/follow', {})
 
-  if (followingPeopleQuery.isLoading) {
+  if (followingPeopleQuery.isLoading || !followingPeopleQuery.data) {
     return (
       <View className="my-2 flex flex-col">
         <View className="px-4 items-start">
@@ -100,7 +100,7 @@ const PeopleFollowingSection = () => {
     )
   }
 
-  if (!followingPeopleQuery.data || followingPeopleQuery.data.length === 0)
+  if (followingPeopleQuery.data.length === 0)
     return (
       <View className="my-2 flex flex-col">
         <View className="px-4 items-start">
@@ -220,7 +220,7 @@ const PeopleFollowingSkeleton = () => {
 const TopicsFollowingSection = () => {
   const followingTopicsQuery = reactQueryClient.useQuery('/topics/follows', {})
 
-  if (followingTopicsQuery.isLoading) {
+  if (followingTopicsQuery.isLoading || !followingTopicsQuery.data) {
     return (
       <View className="my-2 flex flex-col">
         <View className="px-4 items-start">
@@ -235,7 +235,7 @@ const TopicsFollowingSection = () => {
     )
   }
 
-  if (!followingTopicsQuery.data || followingTopicsQuery.data.length === 0) {
+  if (followingTopicsQuery.data.length === 0) {
     return (
       <View className="my-2 flex flex-col">
         <View className="px-4 items-start">
