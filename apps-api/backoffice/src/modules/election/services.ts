@@ -1,8 +1,14 @@
-import { ElectionStatus, InternalErrorCode } from '@pple-today/api-common/dtos'
+import {
+  ElectionCandidate as ElectionCandidateDTO,
+  ElectionInfo,
+  ElectionStatus,
+  InternalErrorCode,
+} from '@pple-today/api-common/dtos'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import { err } from '@pple-today/api-common/utils'
 import {
   Election,
+  ElectionCandidate,
   ElectionEligibleBallot,
   ElectionEligibleVoter,
   ElectionType,
@@ -13,7 +19,7 @@ import dayjs from 'dayjs'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { GetElectionResponse } from './models'
+import { GetElectionResponse, ListElectionResponse } from './models'
 import { ElectionRepository, ElectionRepositoryPlugin } from './repostiory'
 
 export class ElectionService {
@@ -110,6 +116,44 @@ export class ElectionService {
     return voterType === 'ONLINE'
   }
 
+  private convertToElectionInfo(
+    election: Election & { voters: ElectionEligibleVoter[]; voteRecords: ElectionVoteRecord[] },
+    voterType: EligibleVoterType
+  ): ElectionInfo {
+    return {
+      id: election.id,
+      name: election.name,
+      description: election.description,
+      location: election.location,
+      type: election.type,
+      publishDate: election.publishDate,
+      openRegister: election.openRegister,
+      closeRegister: election.closeRegister,
+      openVoting: election.openVoting,
+      closeVoting: election.closeVoting,
+      startResult: election.startResult,
+      endResult: election.endResult,
+      createdAt: election.createdAt,
+      updatedAt: election.updatedAt,
+      status: this.getElectionStatus(election),
+      votePercentage: this.getVotePercentage(election.voters, election.voteRecords),
+      isRegistered: this.isHybridElectionVoterRegistered(voterType, election.type),
+    }
+  }
+
+  private convertToElectionCandidateDTO(candidate: ElectionCandidate): ElectionCandidateDTO {
+    return {
+      id: candidate.id,
+      electionId: candidate.electionId,
+      name: candidate.name,
+      description: candidate.description,
+      profileImage: candidate.profileImage,
+      number: candidate.number,
+      createdAt: candidate.createdAt,
+      updatedAt: candidate.updatedAt,
+    }
+  }
+
   async listMyEligibleElections(userId: string) {
     const eligibleVoters = await this.electionRepository.listMyEligibleVoters(userId)
     if (eligibleVoters.isErr()) {
@@ -118,27 +162,9 @@ export class ElectionService {
 
     const result = eligibleVoters.value
       .filter(({ election }) => this.isElectionActive(election))
-      .map(({ election, type: voterType }) => {
-        return {
-          id: election.id,
-          name: election.name,
-          description: election.description,
-          location: election.location,
-          type: election.type,
-          publishDate: election.publishDate,
-          openRegister: election.openRegister,
-          closeRegister: election.closeRegister,
-          openVoting: election.openVoting,
-          closeVoting: election.closeVoting,
-          startResult: election.startResult,
-          endResult: election.endResult,
-          createdAt: election.createdAt,
-          updatedAt: election.updatedAt,
-          status: this.getElectionStatus(election),
-          votePercentage: this.getVotePercentage(election.voters, election.voteRecords),
-          isRegistered: this.isHybridElectionVoterRegistered(voterType, election.type),
-        }
-      })
+      .map(({ election, type: voterType }) =>
+        this.convertToElectionInfo(election, voterType)
+      ) satisfies ListElectionResponse
 
     return ok(result)
   }
@@ -161,12 +187,14 @@ export class ElectionService {
       })
     }
 
-    const { voters, ...election } = eligibleVoter.value.election
+    const election = eligibleVoter.value.election
+    const electionInfo = this.convertToElectionInfo(election, eligibleVoter.value.type)
+    const candidates = election.candidates.map((candidate) =>
+      this.convertToElectionCandidateDTO(candidate)
+    )
     const result = {
-      ...election,
-      status: this.getElectionStatus(election),
-      votePercentage: this.getVotePercentage(voters),
-      isRegistered: this.isHybridElectionVoterRegistered(eligibleVoter.value.type, election.type),
+      ...electionInfo,
+      candidates,
     } satisfies GetElectionResponse
 
     return ok(result)
