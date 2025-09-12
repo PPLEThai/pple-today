@@ -18,7 +18,7 @@ export default function HashtagFeedPage() {
   const router = useRouter()
   const pathname = usePathname()
   const hashtagId = pathname.split('/').at(-1)
-  const hashtagQuery = reactQueryClient.useQuery('/topics/hashtag/:id', {
+  const hashtagQuery = reactQueryClient.useQuery('/hashtags/:id', {
     pathParams: { id: hashtagId! },
     enabled: !!hashtagId,
   })

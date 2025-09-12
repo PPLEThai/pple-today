@@ -5,7 +5,7 @@ import { HashTagInTopic, Topic, TopicStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { GetHashtagResponse, GetTopicsResponse } from './models'
+import { GetTopicsResponse } from './models'
 import { TopicRepository, TopicRepositoryPlugin } from './repository'
 
 export class TopicService {
@@ -121,28 +121,6 @@ export class TopicService {
           .filter(({ status }) => status === TopicStatus.PUBLISH),
       }))
       .filter(({ status }) => status === TopicStatus.PUBLISH)
-  }
-
-  async getHashtagById(hashtagId: string) {
-    const result = await this.topicRepository.getHashtagById(hashtagId)
-    if (result.isErr()) {
-      return mapRepositoryError(result.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.HASHTAG_NOT_FOUND,
-          message: `Hashtag not found`,
-        },
-      })
-    }
-    const obj: GetHashtagResponse = {
-      id: result.value.id,
-      name: result.value.name,
-      createdAt: result.value.createdAt,
-      topics: result.value.hashTagInTopics.map(({ topic }) => ({
-        id: topic.id,
-        name: topic.name,
-      })),
-    }
-    return ok(obj)
   }
 }
 

@@ -7,6 +7,7 @@ import { BannerController } from './banner'
 import { ElectionController } from './election'
 import { FacebookController } from './facebook'
 import { FeedController } from './feed'
+import { HashtagController } from './hashtag'
 import { PollsController } from './polls'
 import { ProfileController } from './profile'
 import { TopicController } from './topic'
@@ -22,3 +23,4 @@ export const ApplicationController = new Elysia()
   .use(AddressController)
   .use(TopicController)
   .use(ElectionController)
+  .use(HashtagController)
