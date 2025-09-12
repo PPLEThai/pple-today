@@ -44,7 +44,7 @@ const seedElections = async (userId: string) => {
     update: {},
   })
 
-  const data = [
+  const elections = [
     // online
     // no eligible voter
     {
@@ -175,6 +175,24 @@ const seedElections = async (userId: string) => {
           ],
         },
       },
+      candidates: {
+        createMany: {
+          data: [
+            {
+              id: 'candidate-1',
+              name: 'candidate-1',
+            },
+            {
+              id: 'candidate-2',
+              name: 'candidate-2',
+            },
+            {
+              id: 'candidate-3',
+              name: 'candidate-3',
+            },
+          ],
+        },
+      },
     },
     // hybrid
     // closed vote
@@ -236,18 +254,39 @@ const seedElections = async (userId: string) => {
     },
   ] satisfies Prisma.ElectionCreateInput[]
 
-  for (const d of data) {
-    await prisma.election.upsert({
-      where: { id: d.id },
-      create: d,
-      update: {
-        openRegister: d.openRegister,
-        closeRegister: d.closeRegister,
-        openVoting: d.openVoting,
-        closeVoting: d.closeRegister,
-        startResult: d.startResult,
-        endResult: d.endResult,
-      },
+  for (const election of elections) {
+    const fromCreate = election.voters?.create.id
+    const fromCreateMany = election.voters?.createMany?.data.map((voter) => voter.id) || []
+    const voterIds = [fromCreate, ...fromCreateMany].filter((id) => id !== undefined)
+
+    await prisma.$transaction(async (tx) => {
+      await tx.electionEligibleBallot.deleteMany({
+        where: {
+          voterId: {
+            in: voterIds,
+          },
+        },
+      })
+
+      await tx.electionEligibleVoter.deleteMany({
+        where: {
+          electionId: election.id,
+        },
+      })
+
+      await tx.electionCandidate.deleteMany({
+        where: {
+          electionId: election.id,
+        },
+      })
+
+      await tx.election.deleteMany({
+        where: {
+          id: election.id,
+        },
+      })
+
+      await tx.election.create({ data: election })
     })
   }
 }

@@ -1,4 +1,6 @@
+import { ElectionStatus, InternalErrorCode } from '@pple-today/api-common/dtos'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
+import { err } from '@pple-today/api-common/utils'
 import {
   Election,
   ElectionEligibleBallot,
@@ -9,7 +11,7 @@ import {
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { ElectionStatus } from './models'
+import { GetElectionResponse } from './models'
 import { ElectionRepository, ElectionRepositoryPlugin } from './repostiory'
 
 export class ElectionService {
@@ -125,6 +127,35 @@ export class ElectionService {
           isRegistered: this.isHybridElectionVoterRegistered(voterType, election.type),
         }
       })
+
+    return ok(result)
+  }
+
+  async getMyEligibleElection(userId: string, electionId: string) {
+    const eligibleVoter = await this.electionRepository.getMyEligibleVoter(userId, electionId)
+    if (eligibleVoter.isErr()) {
+      return mapRepositoryError(eligibleVoter.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id "${electionId}"`,
+        },
+      })
+    }
+
+    if (!this.isElectionActive(eligibleVoter.value.election)) {
+      return err({
+        code: InternalErrorCode.ELECTION_NOT_FOUND,
+        message: `Cannot found election id "${electionId}"`,
+      })
+    }
+
+    const { voters, ...election } = eligibleVoter.value.election
+    const result = {
+      ...election,
+      status: this.getElectionStatus(election),
+      votePercentage: this.getVotePercentage(voters),
+      isRegistered: this.isHybridElectionVoterRegistered(eligibleVoter.value.type, election.type),
+    } satisfies GetElectionResponse
 
     return ok(result)
   }
