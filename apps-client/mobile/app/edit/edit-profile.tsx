@@ -62,9 +62,6 @@ export default function EditProfilePage() {
             body: {
               contentType: (imagePickerAsset.mimeType || 'image/png') as ImageMimeType,
             },
-            headers: {
-              Authorization: `Bearer ${session.accessToken}`,
-            },
           })
 
           if (!getLink || !getLink.uploadUrl || !getLink.uploadFields) {

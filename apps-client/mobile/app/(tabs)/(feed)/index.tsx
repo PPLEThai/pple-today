@@ -56,7 +56,6 @@ import {
 import { environment } from '@app/env'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { useAuthMe } from '@app/libs/auth'
-import { getAuthSession } from '@app/libs/auth/session'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { useScrollContext } from '@app/libs/scroll-context'
 
@@ -470,10 +469,8 @@ function FeedContent(props: PagerScrollViewProps) {
   const feedInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/feed/me'),
     queryFn: async ({ pageParam }) => {
-      const session = await getAuthSession()
       const response = await fetchClient('/feed/me', {
         query: { page: pageParam, limit: LIMIT },
-        headers: session ? { Authorization: `Bearer ${session.accessToken}` } : {},
       })
       if (response.error) {
         throw response.error
