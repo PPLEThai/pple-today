@@ -9,7 +9,6 @@ import { err } from '@pple-today/api-common/utils'
 import {
   Election,
   ElectionCandidate,
-  ElectionEligibleBallot,
   ElectionEligibleVoter,
   ElectionType,
   ElectionVoteRecord,
@@ -26,17 +25,6 @@ export class ElectionService {
   constructor(private readonly electionRepository: ElectionRepository) {}
 
   private readonly SECONDS_IN_A_DAY = 60 * 60 * 24
-
-  private isElectionActive(election: Election): boolean {
-    switch (election.type) {
-      case 'ONSITE':
-        return this.isOnsiteElectionActive(election)
-      case 'ONLINE':
-        return this.isOnlineElectionActive(election)
-      case 'HYBRID':
-        return this.isHybridElectionActive(election)
-    }
-  }
 
   private isOnsiteElectionActive(election: Election): boolean {
     const now = new Date()
@@ -85,6 +73,21 @@ export class ElectionService {
     return isOpenRegister && !isPastAnnouncePeriod
   }
 
+  private isElectionActive(election: Election): boolean {
+    if (election.isCancelled) {
+      return false
+    }
+
+    switch (election.type) {
+      case 'ONSITE':
+        return this.isOnsiteElectionActive(election)
+      case 'ONLINE':
+        return this.isOnlineElectionActive(election)
+      case 'HYBRID':
+        return this.isHybridElectionActive(election)
+    }
+  }
+
   private getElectionStatus(election: Election): ElectionStatus {
     const now = new Date()
 
@@ -126,6 +129,8 @@ export class ElectionService {
       description: election.description,
       location: election.location,
       type: election.type,
+      isCancelled: election.isCancelled,
+      encryptionPublicKey: election.encryptionPublicKey,
       publishDate: election.publishDate,
       openRegister: election.openRegister,
       closeRegister: election.closeRegister,

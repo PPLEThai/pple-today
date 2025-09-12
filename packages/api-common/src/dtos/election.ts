@@ -15,6 +15,8 @@ export const ElectionInfo = t.Object({
   description: t.Nullable(t.String()),
   location: t.Nullable(t.String()),
   type: t.Enum(ElectionType),
+  isCancelled: t.Boolean(),
+  encryptionPublicKey: t.Nullable(t.String()),
 
   publishDate: t.Nullable(t.Date()),
   openRegister: t.Nullable(t.Date()),
