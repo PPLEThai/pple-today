@@ -1,5 +1,36 @@
 # @client/mobile
 
+## 0.5.0
+
+### Minor Changes
+
+- [#109](https://github.com/PPLEThai/pple-today/pull/109) [`6f86a7e`](https://github.com/PPLEThai/pple-today/commit/6f86a7e5b4f8d959cf5880e6a9d0f1f3c56a3213) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-250] Hashtag Detail UI](https://linear.app/snts/issue/PPLE-250/hashtag-detail-ui)
+  [[PPLE-251] Hashtag Detail Integrate](https://linear.app/snts/issue/PPLE-251/hashtag-detail-integrate)
+
+- [#105](https://github.com/PPLEThai/pple-today/pull/105) [`f628877`](https://github.com/PPLEThai/pple-today/commit/f62887776147b67ff799bf60b06aec6464f987ca) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-302] followed content UI integrate](https://linear.app/snts/issue/PPLE-302/followed-content-ui-and-integrate)
+
+- [#103](https://github.com/PPLEThai/pple-today/pull/103) [`65f8bf0`](https://github.com/PPLEThai/pple-today/commit/65f8bf07d27689b00661f8eba1c421c06a11105c) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-215] Announcement Detail Page](https://linear.app/snts/issue/PPLE-215/announcement-detail-page)
+
+- [#100](https://github.com/PPLEThai/pple-today/pull/100) [`b1d6363`](https://github.com/PPLEThai/pple-today/commit/b1d63633825dec8145450eae631d1a4a5e14e3f8) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-216] Announcement List Page](https://linear.app/snts/issue/PPLE-216/announcement-list-page)
+
+- [#114](https://github.com/PPLEThai/pple-today/pull/114) [`c6d9bbf`](https://github.com/PPLEThai/pple-today/commit/c6d9bbf7ae9c454fd6e6671353b41baa31fd034f) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-206] Official Page Header](https://linear.app/snts/issue/PPLE-206/official-page-header)
+
+### Patch Changes
+
+- [#99](https://github.com/PPLEThai/pple-today/pull/99) [`5e5883e`](https://github.com/PPLEThai/pple-today/commit/5e5883edf54a4d2ea062be07d5eeae95f255c63a) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-355] Update comment and connect facebook page](https://linear.app/snts/issue/PPLE-355/update-comment-and-connect-facebook-page)
+
+- [#113](https://github.com/PPLEThai/pple-today/pull/113) [`a277f86`](https://github.com/PPLEThai/pple-today/commit/a277f86ffefc0d8da80b26b116337864f452b32c) Thanks [@miello](https://github.com/miello)! - [[PPLE-367] [API] Improve DX in fetch client interceptor](https://linear.app/snts/issue/PPLE-367/api-improve-dx-in-fetch-client-interceptor)
+
+- [#96](https://github.com/PPLEThai/pple-today/pull/96) [`ca5323e`](https://github.com/PPLEThai/pple-today/commit/ca5323e773cf34cebb357972cd25a479f1c960a3) Thanks [@miello](https://github.com/miello)! - [[PPLE-358] [API] Allows type-only import from API](https://linear.app/snts/issue/PPLE-358/api-allows-type-only-import-from-api)
+
+- [#110](https://github.com/PPLEThai/pple-today/pull/110) [`856f614`](https://github.com/PPLEThai/pple-today/commit/856f614e924a8596fb634f0bd3c9c573d4155fd0) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-303] followed people UI integrate](https://linear.app/snts/issue/PPLE-303/followed-people-ui-and-integrate)
+
+- [#111](https://github.com/PPLEThai/pple-today/pull/111) [`68bf6a4`](https://github.com/PPLEThai/pple-today/commit/68bf6a4292c7159a9213eca71c3594deaf247a09) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-304] following topic management](https://linear.app/snts/issue/PPLE-304/followed-topic-ui-and-integrate)
+
+- Updated dependencies [[`8ec7aeb`](https://github.com/PPLEThai/pple-today/commit/8ec7aeb678d9db9b56c15d28ec7330b59bba53a3), [`b1d6363`](https://github.com/PPLEThai/pple-today/commit/b1d63633825dec8145450eae631d1a4a5e14e3f8), [`a277f86`](https://github.com/PPLEThai/pple-today/commit/a277f86ffefc0d8da80b26b116337864f452b32c), [`ca5323e`](https://github.com/PPLEThai/pple-today/commit/ca5323e773cf34cebb357972cd25a479f1c960a3)]:
+  - @pple-today/api-client@0.3.2
+  - @pple-today/ui@0.2.2
+
 ## 0.4.0
 
 ### Minor Changes

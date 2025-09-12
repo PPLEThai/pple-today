@@ -1,5 +1,11 @@
 # @pple-today/ui
 
+## 0.2.2
+
+### Patch Changes
+
+- [#100](https://github.com/PPLEThai/pple-today/pull/100) [`b1d6363`](https://github.com/PPLEThai/pple-today/commit/b1d63633825dec8145450eae631d1a4a5e14e3f8) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-216] Announcement List Page](https://linear.app/snts/issue/PPLE-216/announcement-list-page)
+
 ## 0.2.1
 
 ### Patch Changes
