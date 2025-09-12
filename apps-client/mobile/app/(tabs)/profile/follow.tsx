@@ -9,6 +9,7 @@ import { Skeleton } from '@pple-today/ui/skeleton'
 import { Text } from '@pple-today/ui/text'
 import { useQueryClient } from '@tanstack/react-query'
 import { Image } from 'expo-image'
+import { Link } from 'expo-router'
 import { CircleUserRoundIcon, Heart, MessageSquareHeartIcon } from 'lucide-react-native'
 
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
@@ -83,7 +84,7 @@ const NumberFollowingSection = () => {
 const PeopleFollowingSection = () => {
   const followingPeopleQuery = reactQueryClient.useQuery('/profile/follow', {})
 
-  if (followingPeopleQuery.isLoading || followingPeopleQuery.isFetching) {
+  if (followingPeopleQuery.isLoading) {
     return (
       <View className="my-2 flex flex-col">
         <View className="px-4 items-start">
@@ -226,7 +227,7 @@ const TopicsFollowingSection = () => {
     }))
   }, [followingTopicsQuery.data])
 
-  if (followingTopicsQuery.isLoading || followingTopicsQuery.isFetching) {
+  if (followingTopicsQuery.isLoading) {
     return (
       <View className="my-2 flex flex-col">
         <View className="px-4 items-start">
@@ -339,9 +340,11 @@ const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
         <Text className="font-anakotmai-medium text-base text-base-text-high">{topic.name}</Text>
         <View className="flex flex-row gap-2 mb-1 flex-wrap">
           {topic.hashtags.map((hashtag) => (
-            <Badge key={hashtag.id} variant="secondary">
-              <Text>#{hashtag.name}</Text>
-            </Badge>
+            <Link key={hashtag.id} href={`/(feed)/hashtag/${hashtag.id}`} asChild>
+              <Badge variant="secondary">
+                <Text>{hashtag.name}</Text>
+              </Badge>
+            </Link>
           ))}
         </View>
         <Button
