@@ -9,6 +9,8 @@ import {
   RegisterElectionBody,
   RegisterElectionParams,
   RegisterElectionResponse,
+  WithdrawBallotParams,
+  WithdrawBallotResponse,
 } from './models'
 import { ElectionServicePlugin } from './services'
 
@@ -103,6 +105,37 @@ export const ElectionController = new Elysia({
           InternalErrorCode.ELECTION_NOT_FOUND,
           InternalErrorCode.ELECTION_NOT_IN_REGISTER_PERIOD,
           InternalErrorCode.ELECTION_REGISTER_TO_INVALID_TYPE,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .delete(
+    '/:electionId/ballot',
+    async ({ user, params, status, electionService }) => {
+      const withdrawBallot = await electionService.withdrawBallot(user.id, params.electionId)
+      if (withdrawBallot.isErr()) {
+        return mapErrorCodeToResponse(withdrawBallot.error, status)
+      }
+
+      return status(200, {
+        message: 'Withdraw ballot success',
+      })
+    },
+    {
+      detail: {
+        summary: 'Withdraw ballot',
+        description: 'Withdraw ballot',
+      },
+      requiredLocalUser: true,
+      params: WithdrawBallotParams,
+      response: {
+        200: WithdrawBallotResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.ELECTION_WITHDRAW_TO_INVALID_TYPE,
+          InternalErrorCode.ELECTION_NOT_IN_VOTE_PERIOD,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
