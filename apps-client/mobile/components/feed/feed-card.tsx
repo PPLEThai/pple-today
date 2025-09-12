@@ -34,7 +34,7 @@ import { toast } from '@pple-today/ui/toast'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
 import { useQueryClient } from '@tanstack/react-query'
-import { useRouter } from 'expo-router'
+import { Link, useRouter } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
 import LottieView from 'lottie-react-native'
 import {
@@ -195,10 +195,11 @@ function PostCardContent(props: { feedItem: FeedItemPost }) {
       {props.feedItem.post.hashTags.length > 0 && (
         <View className="flex flex-row flex-wrap gap-1 px-4">
           {props.feedItem.post.hashTags.map((tag) => (
-            // TODO: link
-            <Badge variant="secondary" key={tag.id}>
-              <Text>{tag.name}</Text>
-            </Badge>
+            <Link href={`/(feed)/hashtag/${tag.id}`} key={tag.id} asChild>
+              <Badge variant="secondary">
+                <Text>{tag.name}</Text>
+              </Badge>
+            </Link>
           ))}
         </View>
       )}
@@ -910,10 +911,11 @@ const PostDetailContent = (props: { feedItem: FeedItemPost }) => {
       {props.feedItem.post.hashTags.length > 0 && (
         <View className="flex flex-row flex-wrap gap-1 px-4">
           {props.feedItem.post.hashTags.map((tag) => (
-            // TODO: link
-            <Badge variant="secondary" key={tag.id}>
-              <Text>{tag.name}</Text>
-            </Badge>
+            <Link href={`/(feed)/hashtag/${tag.id}`} key={tag.id} asChild>
+              <Badge variant="secondary">
+                <Text>{tag.name}</Text>
+              </Badge>
+            </Link>
           ))}
         </View>
       )}
