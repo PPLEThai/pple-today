@@ -12,6 +12,7 @@ import { Image } from 'expo-image'
 import { Link } from 'expo-router'
 import { CircleUserRoundIcon, Heart, MessageSquareHeartIcon } from 'lucide-react-native'
 
+import type { GetTopicsResponse } from '@api/backoffice/app'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { Header } from '@app/components/header-navigation'
 import { reactQueryClient } from '@app/libs/api-client'
@@ -219,14 +220,6 @@ const PeopleFollowingSkeleton = () => {
 const TopicsFollowingSection = () => {
   const followingTopicsQuery = reactQueryClient.useQuery('/topics/follows', {})
 
-  const hashtags = React.useMemo(() => {
-    if (!followingTopicsQuery.data) return []
-    return followingTopicsQuery.data.map((topic) => ({
-      id: topic.id,
-      name: topic.name,
-    }))
-  }, [followingTopicsQuery.data])
-
   if (followingTopicsQuery.isLoading) {
     return (
       <View className="my-2 flex flex-col">
@@ -267,7 +260,7 @@ const TopicsFollowingSection = () => {
             id={item.id}
             name={item.name}
             bannerImage={item.bannerImage ?? ''}
-            hashtags={hashtags}
+            hashtags={item.hashTags}
           />
         ))}
       </View>
@@ -275,11 +268,13 @@ const TopicsFollowingSection = () => {
   )
 }
 
+type HashtagList = GetTopicsResponse[number]['hashTags']
+
 interface TopicsFollowingItemProps {
   id: string
   name: string
   bannerImage: string
-  hashtags: { id: string; name: string }[]
+  hashtags: HashtagList
 }
 
 const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
@@ -333,12 +328,12 @@ const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
           uri: topic.bannerImage,
         }}
         contentFit="cover"
-        style={{ width: 80, height: 98, borderRadius: 12 }}
+        style={{ width: 80, height: '100%', borderRadius: 12 }}
         transition={300}
       />
       <View className="flex-1 flex flex-col gap-2">
         <Text className="font-anakotmai-medium text-base text-base-text-high">{topic.name}</Text>
-        <View className="flex flex-row gap-2 mb-1 flex-wrap">
+        <View className="flex flex-row gap-2 mb-0.5 flex-wrap min-h-5">
           {topic.hashtags.map((hashtag) => (
             <Link key={hashtag.id} href={`/(feed)/hashtag/${hashtag.id}`} asChild>
               <Badge variant="secondary">
