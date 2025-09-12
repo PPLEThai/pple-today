@@ -179,7 +179,6 @@ function BannerSection() {
     }
   }, [bannersQuery.error])
   if (banners.length === 0) return null
-  if (bannersQuery.error) return null
   return (
     <Slide
       count={banners.length}
