@@ -62,7 +62,7 @@ export class ElectionRepository {
     )
   }
 
-  async deleteMyBollot(voterId: string) {
+  async deleteMyBallot(voterId: string) {
     return fromRepositoryPromise(
       this.prismaService.electionEligibleBallot.delete({
         where: {

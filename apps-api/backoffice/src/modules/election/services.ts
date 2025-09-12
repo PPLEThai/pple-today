@@ -246,7 +246,7 @@ export class ElectionService {
     return ok()
   }
 
-  async withdrawBollot(userId: string, electionId: string) {
+  async withdrawBallot(userId: string, electionId: string) {
     const eligibleVoter = await this.electionRepository.getMyEligibleVoter(userId, electionId)
     if (eligibleVoter.isErr()) {
       return mapRepositoryError(eligibleVoter.error, {
@@ -276,9 +276,9 @@ export class ElectionService {
       })
     }
 
-    const deleteBollot = await this.electionRepository.deleteMyBollot(eligibleVoter.value.id)
-    if (deleteBollot.isErr()) {
-      return mapRepositoryError(deleteBollot.error)
+    const deleteBallot = await this.electionRepository.deleteMyBallot(eligibleVoter.value.id)
+    if (deleteBallot.isErr()) {
+      return mapRepositoryError(deleteBallot.error)
     }
 
     return ok()
