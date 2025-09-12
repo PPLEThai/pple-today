@@ -1,11 +1,11 @@
 import React from 'react'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { View } from 'react-native'
 
 import { Stack } from 'expo-router'
 
 export default function EditingLayout() {
   return (
-    <SafeAreaView className="flex-1" edges={['top', 'left', 'right', 'bottom']}>
+    <View className="flex-1 p-safe">
       <EditingProvider>
         <Stack
           screenOptions={{
@@ -18,7 +18,7 @@ export default function EditingLayout() {
           <Stack.Screen name="edit-address" />
         </Stack>
       </EditingProvider>
-    </SafeAreaView>
+    </View>
   )
 }
 
