@@ -235,7 +235,8 @@ export class ElectionService {
     }
 
     const updateVoterType = await this.electionRepository.updateEligibleVoterType(
-      eligibleVoter.value.id,
+      userId,
+      electionId,
       type
     )
     if (updateVoterType.isErr()) {
