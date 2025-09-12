@@ -1,38 +1,18 @@
-import { ElectionType } from '@pple-today/database/prisma'
+import { ElectionCandidate, ElectionInfo } from '@pple-today/api-common/dtos'
 import { Static, t } from 'elysia'
 
-export const ElectionStatus = t.Enum({
-  NOT_OPENED_VOTE: 'NOT_OPENED_VOTE',
-  OPEN_VOTE: 'OPEN_VOTE',
-  CLOSED_VOTE: 'CLOSED_VOTE',
-  RESULT_ANNOUNCE: 'RESULT_ANNOUNCE',
-})
-
-export type ElectionStatus = Static<typeof ElectionStatus>
-
-export const ListElectionResponse = t.Array(
-  t.Object({
-    id: t.String(),
-    name: t.String(),
-    description: t.Nullable(t.String()),
-    location: t.Nullable(t.String()),
-    type: t.Enum(ElectionType),
-
-    publishDate: t.Nullable(t.Date()),
-    openRegister: t.Nullable(t.Date()),
-    closeRegister: t.Nullable(t.Date()),
-    openVoting: t.Date(),
-    closeVoting: t.Date(),
-    startResult: t.Nullable(t.Date()),
-    endResult: t.Nullable(t.Date()),
-
-    createdAt: t.Date(),
-    updatedAt: t.Date(),
-
-    status: ElectionStatus,
-    votePercentage: t.Number(),
-    isRegistered: t.Nullable(t.Boolean()),
-  })
-)
-
+export const ListElectionResponse = t.Array(ElectionInfo)
 export type ListElectionResponse = Static<typeof ListElectionResponse>
+
+export const GetElectionParams = t.Object({
+  electionId: t.String(),
+})
+export type GetElectionParams = Static<typeof GetElectionParams>
+
+export const GetElectionResponse = t.Intersect([
+  ElectionInfo,
+  t.Object({
+    candidates: t.Array(ElectionCandidate),
+  }),
+])
+export type GetElectionResponse = Static<typeof GetElectionResponse>

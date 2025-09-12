@@ -111,18 +111,14 @@ export const mapErrorCodeToResponse = <
   throw (status as any)(code, { error })
 }
 
-export function err<E>(_err: E | Err<never, E>): Err<never, E> {
-  let errBody: any = _err
-
-  if (_err instanceof Err) {
-    errBody = _err.error
-  }
+export function err<E extends object>(_err: E | Err<never, E>): Err<never, E> {
+  const errBody = _err instanceof Err ? _err.error : _err
 
   if (!('stack' in errBody)) {
     Error.captureStackTrace(errBody, err)
   }
 
-  return defaultErr(errBody) as Err<never, E>
+  return defaultErr(errBody)
 }
 
 export const fromRepositoryPromise = async <T>(
