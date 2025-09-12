@@ -12,7 +12,6 @@ import { ArrowLeftIcon } from 'lucide-react-native'
 import { ApplicationApiSchema } from '@api/backoffice/app'
 import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
-import { getAuthSession } from '@app/libs/auth/session'
 
 export default function HashtagFeedPage() {
   const router = useRouter()
@@ -62,10 +61,8 @@ function HashtagFeed(props: { hashtagId: string; header?: React.ReactElement }) 
   const feedInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/feed/hashtag'),
     queryFn: async ({ pageParam }) => {
-      const session = await getAuthSession()
       const response = await fetchClient('/feed/hashtag', {
         query: { page: pageParam, limit: LIMIT, hashTagId: props.hashtagId },
-        headers: session ? { Authorization: `Bearer ${session.accessToken}` } : {},
       })
       if (response.error) {
         throw response.error
