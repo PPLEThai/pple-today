@@ -1,10 +1,11 @@
 import {
+  DeleteFileResponse,
   GenerateSignedPostPolicyV4Options,
   GetSignedUrlConfig,
   Storage,
 } from '@google-cloud/storage'
 import https from 'https'
-import { Err, fromPromise, Ok, ok } from 'neverthrow'
+import { Err, fromPromise, Ok, ok, Result } from 'neverthrow'
 import { Readable } from 'stream'
 
 import { InternalErrorCode } from '../dtos'
@@ -263,7 +264,15 @@ export class FileService {
     return ok(destination)
   }
 
-  async deleteFile(fileKey: string) {
+  async deleteFile(fileKey: string): Promise<
+    Result<
+      DeleteFileResponse,
+      {
+        code: 'FILE_DELETE_ERROR'
+        message: string
+      }
+    >
+  > {
     return fromPromise(this.bucket.file(fileKey).delete(), (err) => ({
       code: InternalErrorCode.FILE_DELETE_ERROR,
       message: (err as Error).message,

@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { Fragment } from 'react/jsx-runtime'
 import { FlatList, View } from 'react-native'
 
@@ -10,6 +10,7 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
 import { ArrowLeftIcon, MegaphoneIcon } from 'lucide-react-native'
 
+import type { GetAnnouncementsResponse } from '@api/backoffice/app'
 import { AnnouncementCard } from '@app/components/announcement'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 
@@ -61,8 +62,6 @@ function AnnouncementList() {
     },
     initialPageParam: 1,
     getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (!lastPage) return undefined
-      if (lastPage && lastPage.announcements.length === 0) return undefined
       if (lastPage.announcements.length < 5) {
         return undefined
       }
@@ -96,28 +95,43 @@ function AnnouncementList() {
       </View>
     ) : null // Reach end of feed
 
+  const router = useRouter()
+  const renderItem = useCallback(
+    ({
+      item: items,
+      index: pageIndex,
+    }: {
+      item: GetAnnouncementsResponse['announcements']
+      index: number
+    }) => {
+      return (
+        <Fragment key={pageIndex}>
+          {items.map((item) => (
+            <AnnouncementCard
+              className="w-full mt-3"
+              key={item.id}
+              onPress={() => router.navigate(`/(official)/announcement/${item.id}`)}
+              id={item.id}
+              feedId={item.id}
+              title={item.title}
+              date={item.createdAt.toString()}
+            />
+          ))}
+        </Fragment>
+      )
+    },
+    [router]
+  )
+
   return (
     <FlatList
       className="flex-1"
       contentContainerClassName="px-[12.5px] pt-1 pb-4"
       data={infiniteAnnouncementsQuery.data}
-      onEndReachedThreshold={0.5}
+      onEndReachedThreshold={0.8}
       onEndReached={onEndReached}
       ListFooterComponent={Footer}
-      renderItem={({ item: items, index: pageIndex }) => {
-        return (
-          <Fragment key={pageIndex}>
-            {items.map((item) => (
-              <AnnouncementCard
-                className="w-full mt-3"
-                key={item.id}
-                title={item.title}
-                date={item.createdAt.toString()}
-              />
-            ))}
-          </Fragment>
-        )
-      }}
+      renderItem={renderItem}
     />
   )
 }

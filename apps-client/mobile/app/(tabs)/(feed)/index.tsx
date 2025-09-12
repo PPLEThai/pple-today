@@ -41,7 +41,7 @@ import type { ApplicationApiSchema, GetBannersResponse } from '@api/backoffice/a
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AnnouncementCard } from '@app/components/announcement'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
-import { FeedPostCard, PostCardSkeleton } from '@app/components/feed/post-card'
+import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
 import {
   Pager,
   PagerContent,
@@ -516,7 +516,7 @@ function FeedContent(props: PagerScrollViewProps) {
 
   const Footer =
     feedInfiniteQuery.hasNextPage || feedInfiniteQuery.isLoading || feedInfiniteQuery.error ? (
-      <PostCardSkeleton />
+      <FeedCardSkeleton />
     ) : data.length === 1 && data[0].length === 0 ? (
       // Empty State
       <View className="flex flex-col items-center justify-center py-6">
@@ -537,18 +537,7 @@ function FeedContent(props: PagerScrollViewProps) {
       return (
         <>
           {items.map((item) => {
-            switch (item.type) {
-              case 'POST':
-                return <FeedPostCard key={item.id} feedItem={item} />
-              case 'POLL':
-                // TODO: poll feed card
-                return null
-              case 'ANNOUNCEMENT':
-                // expected no announcement
-                return null
-              default:
-                return exhaustiveGuard(item)
-            }
+            return <FeedCard key={item.id} feedItem={item} />
           })}
         </>
       )
@@ -649,6 +638,9 @@ function AnnouncementSection() {
           {announcementsQuery.data.announcements.map((announcement) => (
             <SlideItem key={announcement.id}>
               <AnnouncementCard
+                id={announcement.id}
+                onPress={() => router.navigate(`/(feed)/${announcement.id}`)}
+                feedId={announcement.id}
                 title={announcement.title}
                 date={announcement.createdAt.toString()}
               />

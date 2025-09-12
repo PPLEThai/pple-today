@@ -33,5 +33,6 @@ export const GetAnnouncementByIdResponse = t.Object({
   attachments: t.Array(t.String({ format: 'uri', description: 'Attachment URL' })),
   createdAt: t.Date(),
   updatedAt: t.Date(),
+  feedItemId: t.String(),
 })
 export type GetAnnouncementByIdResponse = Static<typeof GetAnnouncementByIdResponse>
