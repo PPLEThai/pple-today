@@ -1,9 +1,10 @@
 import React from 'react'
-import { View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
+import { Skeleton } from '@pple-today/ui/skeleton'
 import { Text } from '@pple-today/ui/text'
 import { CircleUserRoundIcon, Heart, MessageSquareHeartIcon } from 'lucide-react-native'
 
@@ -15,8 +16,10 @@ export default function FollowPage() {
   return (
     <View className="flex-1 flex-col">
       <Header icon={Heart} title="จัดการเนื้อหาที่ติดตาม" />
-      <NumberFollowingSection />
-      <PeopleFollowingSection />
+      <ScrollView>
+        <NumberFollowingSection />
+        <PeopleFollowingSection />
+      </ScrollView>
     </View>
   )
 }
@@ -77,7 +80,18 @@ const PeopleFollowingSection = () => {
   const followingPeopleQuery = reactQueryClient.useQuery('/profile/follow', {})
 
   if (followingPeopleQuery.isLoading) {
-    return <View className="my-2 flex flex-col"></View>
+    return (
+      <View className="my-2 flex flex-col">
+        <View className="px-4 items-start">
+          <Text className="text-base text-base-text-high font-anakotmai-medium">ผู้คน</Text>
+        </View>
+        <View className="mt-2 px-4 flex flex-col">
+          <PeopleFollowingSkeleton />
+          <PeopleFollowingSkeleton />
+          <PeopleFollowingSkeleton />
+        </View>
+      </View>
+    )
   }
 
   if (!followingPeopleQuery.data || followingPeopleQuery.data.length === 0)
@@ -174,6 +188,18 @@ const PeopleFollowingItem = (profile: PeopleFollowingItemProps) => {
       >
         <Text>{isFollowing ? 'กำลังติดตาม' : 'ติดตาม'} </Text>
       </Button>
+    </View>
+  )
+}
+
+const PeopleFollowingSkeleton = () => {
+  return (
+    <View className="flex flex-row justify-between items-center px-2 my-3 gap-2">
+      <View className="flex flex-row items-center gap-2 flex-1">
+        <Skeleton className="size-8 rounded-full" />
+        <Skeleton className="h-12 flex-1 w-44" />
+      </View>
+      <Skeleton className="h-9 w-24 px-3 rounded-lg" />
     </View>
   )
 }
