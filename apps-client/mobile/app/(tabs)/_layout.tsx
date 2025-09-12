@@ -40,7 +40,7 @@ export default function BottomTabsLayout() {
           },
           tabBarHideOnKeyboard: true,
         }}
-        initialRouteName="(feed)"
+        initialRouteName="(official)"
       >
         <Tabs.Screen
           name="(feed)"
