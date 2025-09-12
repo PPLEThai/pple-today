@@ -189,6 +189,9 @@ export class FeedRepository {
           createdAt: 'desc',
         },
         where: {
+          type: {
+            not: FeedItemType.ANNOUNCEMENT,
+          },
           OR: [
             {
               post: {
@@ -252,6 +255,9 @@ export class FeedRepository {
           createdAt: 'desc',
         },
         where: {
+          type: {
+            not: FeedItemType.ANNOUNCEMENT,
+          },
           OR: [
             {
               post: {
@@ -302,6 +308,11 @@ export class FeedRepository {
         orderBy: {
           createdAt: 'desc',
         },
+        where: {
+          type: {
+            not: FeedItemType.ANNOUNCEMENT,
+          },
+        },
         skip,
         take: limit,
         include: this.constructFeedItemInclude(userId),
@@ -335,6 +346,9 @@ export class FeedRepository {
         skip,
         take: query.limit,
         where: {
+          type: {
+            not: FeedItemType.ANNOUNCEMENT,
+          },
           authorId: userId,
           author: {
             role: {
