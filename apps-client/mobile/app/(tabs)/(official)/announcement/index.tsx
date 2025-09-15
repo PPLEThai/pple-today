@@ -115,6 +115,7 @@ function AnnouncementList() {
               feedId={item.id}
               title={item.title}
               date={item.createdAt.toString()}
+              type={item.type}
             />
           ))}
         </Fragment>

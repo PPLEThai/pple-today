@@ -27,7 +27,7 @@ import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/i
 import { Button } from '@pple-today/ui/button'
 import { FormControl, FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
-import { clsx } from '@pple-today/ui/lib/utils'
+import { clsx, cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 import { Textarea } from '@pple-today/ui/textarea'
 import { toast } from '@pple-today/ui/toast'
@@ -54,6 +54,7 @@ import type {
   FeedItemBaseContent,
   FeedItemPost,
 } from '@api/backoffice/app'
+import PPLEIcon from '@app/assets/pple-icon.svg'
 import { MoreOrLess } from '@app/components/more-or-less'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSessionQuery } from '@app/libs/auth'
@@ -924,14 +925,43 @@ const PostDetailContent = (props: { feedItem: FeedItemPost }) => {
 }
 
 const AnnouncementDetailContent = (props: { feedItem: FeedItemAnnouncement }) => {
+  const getLogo = (type: string) => {
+    switch (type) {
+      case 'OFFICIAL':
+        return {
+          logoBackground: 'bg-rose-800',
+          announcementText: 'ประกาศจากทางรัฐบาล',
+          Logo: <Icon icon={LandmarkIcon} size={16} className="text-base-bg-white" />,
+        }
+      case 'INTERNAL':
+        return {
+          logoBackground: 'bg-base-secondary-default',
+          announcementText: 'ประกาศสำหรับสมาชิกพรรค',
+          Logo: <PPLEIcon width={16} height={13.86} />,
+        }
+      default:
+        return {
+          logoBackground: 'bg-base-primary-medium',
+          announcementText: 'ประกาศจากทางพรรค',
+          Logo: <PPLEIcon width={16} height={13.86} color="white" />,
+        }
+    }
+  }
+
+  const { logoBackground, announcementText, Logo } = getLogo(props.feedItem.announcement.type)
+
   return (
     <View className="px-4 pb-0 pt-1 flex flex-col gap-3 bg-base-bg-white">
       <View className="flex flex-row items-center gap-2">
-        {/* TODO: Logo */}
-        <View className="rounded-full size-8 bg-rose-800 flex items-center justify-center">
-          <Icon icon={LandmarkIcon} size={16} className="text-base-bg-white" />
+        <View
+          className={cn(
+            'rounded-full size-8 bg-rose-800 flex items-center justify-center',
+            logoBackground
+          )}
+        >
+          {Logo}
         </View>
-        <H2 className="text-sm font-anakotmai-medium text-base-text-medium">ประกาศจากทางการ</H2>
+        <H2 className="text-sm font-anakotmai-medium text-base-text-medium">{announcementText}</H2>
       </View>
       <H1 className="text-lg font-anakotmai-medium text-base-text-high">
         {props.feedItem.announcement.title}
