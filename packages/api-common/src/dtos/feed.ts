@@ -1,4 +1,9 @@
-import { FeedItemReactionType, FeedItemType, PostAttachmentType } from '@pple-today/database/prisma'
+import {
+  AnnouncementType,
+  FeedItemReactionType,
+  FeedItemType,
+  PostAttachmentType,
+} from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 import { Author } from './user'
@@ -101,6 +106,7 @@ export const FeedItemAnnouncementContent = t.Object({
   }),
   announcement: t.Object({
     title: t.String({ description: 'The title of the announcement' }),
+    type: t.Enum(AnnouncementType, { description: 'The type of announcement' }),
     content: t.String({ description: 'The content of the announcement' }),
     attachments: t.Optional(t.Array(t.String({ description: 'The URL of the attachment' }))),
   }),

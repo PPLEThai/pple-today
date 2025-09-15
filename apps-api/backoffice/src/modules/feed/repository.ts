@@ -130,6 +130,7 @@ export class FeedRepository {
           announcement: {
             content: rawFeedItem.announcement.content ?? '',
             title: rawFeedItem.announcement.title,
+            type: rawFeedItem.announcement.type,
             attachments: rawFeedItem.announcement.attachments.map((attachment) =>
               this.fileService.getPublicFileUrl(attachment.filePath)
             ),

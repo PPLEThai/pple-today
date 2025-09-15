@@ -28,7 +28,7 @@ export class AnnouncementService {
         id: announcement.feedItemId,
         title: announcement.title,
         content: announcement.content ?? '',
-        backgroundColor: announcement.backgroundColor ?? '',
+        type: announcement.type,
         createdAt: announcement.feedItem.createdAt,
         updatedAt: announcement.feedItem.updatedAt,
       })),
