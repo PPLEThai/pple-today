@@ -115,6 +115,7 @@ const seedElections = async (userId: string) => {
       id: 'hybrid-open-vote',
       name: 'hybrid-open-vote',
       type: ElectionType.HYBRID,
+      encryptionPublicKey: 'mock-public-key',
       openRegister: addDays(dateNow, -2),
       closeRegister: addDays(dateNow, -1),
       openVoting: dateNow,
