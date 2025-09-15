@@ -17,11 +17,8 @@ export class ElectionRepository {
         include: {
           election: {
             include: {
-              voters: {
-                include: {
-                  ballot: true,
-                },
-              },
+              voters: true,
+              voteRecords: true,
             },
           },
         },
@@ -39,11 +36,8 @@ export class ElectionRepository {
         include: {
           election: {
             include: {
-              voters: {
-                include: {
-                  ballot: true,
-                },
-              },
+              voters: true,
+              voteRecords: true,
               candidates: true,
             },
           },
@@ -52,11 +46,14 @@ export class ElectionRepository {
     )
   }
 
-  async updateEligibleVoterType(voterId: string, type: EligibleVoterType) {
+  async updateEligibleVoterType(userId: string, electionId: string, type: EligibleVoterType) {
     return fromRepositoryPromise(
       this.prismaService.electionEligibleVoter.update({
         where: {
-          id: voterId,
+          electionId_userId: {
+            userId,
+            electionId,
+          },
         },
         data: {
           type,
@@ -65,12 +62,34 @@ export class ElectionRepository {
     )
   }
 
-  async deleteMyBallot(voterId: string) {
+  async deleteMyBallot(userId: string, electionId: string) {
     return fromRepositoryPromise(
-      this.prismaService.electionEligibleBallot.delete({
-        where: {
-          voterId,
-        },
+      this.prismaService.$transaction(async (tx) => {
+        const voteRecord = await tx.electionVoteRecord.findUniqueOrThrow({
+          where: {
+            electionId_userId: {
+              electionId,
+              userId,
+            },
+          },
+        })
+
+        await tx.electionVoteRecord.delete({
+          where: {
+            electionId_userId: {
+              userId,
+              electionId,
+            },
+          },
+        })
+
+        if (voteRecord.ballotId) {
+          await tx.electionBallot.delete({
+            where: {
+              id: voteRecord.ballotId,
+            },
+          })
+        }
       })
     )
   }
