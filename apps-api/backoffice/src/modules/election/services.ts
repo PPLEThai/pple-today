@@ -251,6 +251,15 @@ export class ElectionService {
     return ok()
   }
 
+  private isElectionCanVoteOnline(election: Election): boolean {
+    return election.type === 'HYBRID' || election.type === 'ONLINE'
+  }
+
+  private isElectionInVotePeriod(election: Election): boolean {
+    const now = new Date()
+    return now >= election.openVoting && now <= election.closeVoting
+  }
+
   async withdrawBallot(userId: string, electionId: string) {
     const eligibleVoter = await this.electionRepository.getMyEligibleVoter(userId, electionId)
     if (eligibleVoter.isErr()) {
@@ -264,17 +273,14 @@ export class ElectionService {
 
     const election = eligibleVoter.value.election
 
-    const canVoteOnline = election.type === 'HYBRID' || election.type === 'ONLINE'
-    if (!canVoteOnline) {
+    if (!this.isElectionCanVoteOnline(election)) {
       return err({
         code: InternalErrorCode.ELECTION_WITHDRAW_TO_INVALID_TYPE,
         message: `Can only withdraw to election with type ONLINE and HYBRID`,
       })
     }
 
-    const now = new Date()
-    const isInVotePeriod = now >= election.openVoting && now <= election.closeVoting
-    if (!isInVotePeriod) {
+    if (!this.isElectionInVotePeriod(election)) {
       return err({
         code: InternalErrorCode.ELECTION_NOT_IN_VOTE_PERIOD,
         message: `Cannot withdraw at this time. The vote period is from ${dayjs(election.openVoting).format()} to ${dayjs(election.closeVoting).format()}.`,
@@ -284,6 +290,58 @@ export class ElectionService {
     const deleteBallot = await this.electionRepository.deleteMyBallot(userId, electionId)
     if (deleteBallot.isErr()) {
       return mapRepositoryError(deleteBallot.error)
+    }
+
+    return ok()
+  }
+
+  async createBallot(
+    userId: string,
+    electionId: string,
+    encryptedBallot: string,
+    faceImagePath: string,
+    location: string
+  ) {
+    const eligibleVoter = await this.electionRepository.getMyEligibleVoter(userId, electionId)
+    if (eligibleVoter.isErr()) {
+      return mapRepositoryError(eligibleVoter.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id: ${electionId}`,
+        },
+      })
+    }
+
+    const election = eligibleVoter.value.election
+
+    if (!this.isElectionCanVoteOnline(election)) {
+      return err({
+        code: InternalErrorCode.ELECTION_VOTE_TO_INVALID_TYPE,
+        message: `Can only vote to election with type ONLINE and HYBRID`,
+      })
+    }
+
+    if (!this.isElectionInVotePeriod(election)) {
+      return err({
+        code: InternalErrorCode.ELECTION_NOT_IN_VOTE_PERIOD,
+        message: `Cannot vote at this time. The vote period is from ${dayjs(election.openVoting).format()} to ${dayjs(election.closeVoting).format()}.`,
+      })
+    }
+
+    const createBallot = await this.electionRepository.createMyBallot(
+      userId,
+      electionId,
+      encryptedBallot,
+      faceImagePath,
+      location
+    )
+    if (createBallot.isErr()) {
+      return mapRepositoryError(createBallot.error, {
+        UNIQUE_CONSTRAINT_FAILED: {
+          code: InternalErrorCode.ELECTION_ALREADY_VOTE,
+          message: `User have already voted to election id: ${electionId}`,
+        },
+      })
     }
 
     return ok()

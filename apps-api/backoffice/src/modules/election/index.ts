@@ -3,6 +3,9 @@ import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-commo
 import Elysia from 'elysia'
 
 import {
+  CreateBallotBody,
+  CreateBallotParams,
+  CreateBallotResponse,
   GetElectionParams,
   GetElectionResponse,
   ListElectionResponse,
@@ -105,6 +108,45 @@ export const ElectionController = new Elysia({
           InternalErrorCode.ELECTION_NOT_FOUND,
           InternalErrorCode.ELECTION_NOT_IN_REGISTER_PERIOD,
           InternalErrorCode.ELECTION_REGISTER_TO_INVALID_TYPE,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .post(
+    '/:electionId/ballot',
+    async ({ params, body, user, status, electionService }) => {
+      const createBallot = await electionService.createBallot(
+        user.id,
+        params.electionId,
+        body.encryptedBallot,
+        body.faceImage,
+        body.location
+      )
+      if (createBallot.isErr()) {
+        return mapErrorCodeToResponse(createBallot.error, status)
+      }
+
+      return status(200, {
+        message: 'Create Ballot success',
+      })
+    },
+    {
+      detail: {
+        summary: 'Create ballot',
+        description: 'Create ballot',
+      },
+      requiredLocalUser: true,
+      params: CreateBallotParams,
+      body: CreateBallotBody,
+      response: {
+        200: CreateBallotResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.ELECTION_VOTE_TO_INVALID_TYPE,
+          InternalErrorCode.ELECTION_NOT_IN_VOTE_PERIOD,
+          InternalErrorCode.ELECTION_ALREADY_VOTE,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

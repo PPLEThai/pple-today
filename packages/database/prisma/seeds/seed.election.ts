@@ -115,7 +115,17 @@ const seedElections = async (userId: string) => {
       id: 'hybrid-open-vote',
       name: 'hybrid-open-vote',
       type: ElectionType.HYBRID,
-      encryptionPublicKey: 'mock-public-key',
+      encryptionPublicKey: `
+      -----BEGIN PUBLIC KEY-----
+      MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAujb1XP88zHImW8EUO82h
+      ChtCeSpVAvboaukDmmZe/MqJVLrFP3APdncE0v015aS2W47AWZo+HOw04pG6lrku
+      VLVz4eh3dwphetzfddSj9mMHI6yPzQnzXvwnFP7loqoY25lw3lLpIhGoB19M+DgW
+      rnik4JKEAeB+XeqFG9apJ5+1tqeT35sW5KkS4Rvv7Y5xDn/S8FtNTnLQaUUcw2Jg
+      8aUz4GPOdGpbZpwyZYPU4KgU+akxJP/A1OPZv/Hx4MOCFdBkdgEJdr2J8zCqGpAg
+      aIrbvHKvFFf/CjGZ2AXFQ3FQYbjfYlCiYDMcnmb+EEo+XrPNvcPMp1cHHh4ooqQi
+      UQIDAQAB
+      -----END PUBLIC KEY-----
+      `,
       openRegister: addDays(dateNow, -2),
       closeRegister: addDays(dateNow, -1),
       openVoting: dateNow,

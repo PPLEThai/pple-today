@@ -28,10 +28,12 @@ export class ElectionRepository {
 
   async getMyEligibleVoter(userId: string, electionId: string) {
     return fromRepositoryPromise(
-      this.prismaService.electionEligibleVoter.findFirstOrThrow({
+      this.prismaService.electionEligibleVoter.findUniqueOrThrow({
         where: {
-          userId,
-          electionId,
+          electionId_userId: {
+            userId,
+            electionId,
+          },
         },
         include: {
           election: {
@@ -89,6 +91,40 @@ export class ElectionRepository {
               id: voteRecord.ballotId,
             },
           })
+        }
+      })
+    )
+  }
+
+  async createMyBallot(
+    userId: string,
+    electionId: string,
+    encryptedBallot: string,
+    faceImagePath: string,
+    location: string
+  ) {
+    return fromRepositoryPromise(
+      this.prismaService.$transaction(async (tx) => {
+        const ballot = await tx.electionBallot.create({
+          data: {
+            electionId,
+            encryptedBallot,
+          },
+        })
+
+        const voteRecord = await tx.electionVoteRecord.create({
+          data: {
+            electionId,
+            userId,
+            faceImagePath,
+            location,
+            ballotId: ballot.id,
+          },
+        })
+
+        return {
+          ballot,
+          voteRecord,
         }
       })
     )

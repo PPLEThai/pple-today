@@ -1,4 +1,4 @@
-import { ElectionCandidate, ElectionInfo } from '@pple-today/api-common/dtos'
+import { ElectionCandidate, ElectionInfo, FilePath } from '@pple-today/api-common/dtos'
 import { EligibleVoterType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
@@ -42,3 +42,20 @@ export const WithdrawBallotResponse = t.Object({
   message: t.String(),
 })
 export type WithdrawBallotResponse = Static<typeof WithdrawBallotResponse>
+
+export const CreateBallotParams = t.Object({
+  electionId: t.String(),
+})
+export type CreateBallotParams = Static<typeof CreateBallotParams>
+
+export const CreateBallotBody = t.Object({
+  faceImage: FilePath,
+  location: t.String(),
+  encryptedBallot: t.String(),
+})
+export type CreateBallotBody = Static<typeof CreateBallotBody>
+
+export const CreateBallotResponse = t.Object({
+  message: t.String(),
+})
+export type CreateBallotResponse = Static<typeof CreateBallotResponse>
