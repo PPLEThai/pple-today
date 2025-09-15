@@ -28,10 +28,6 @@ export const ElectionInfo = t.Object({
 
   createdAt: t.Date(),
   updatedAt: t.Date(),
-
-  status: ElectionStatus,
-  votePercentage: t.Number(),
-  isRegistered: t.Nullable(t.Boolean()),
 })
 export type ElectionInfo = Static<typeof ElectionInfo>
 

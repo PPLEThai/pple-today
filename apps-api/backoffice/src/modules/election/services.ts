@@ -1,6 +1,5 @@
 import {
   ElectionCandidate as ElectionCandidateDTO,
-  ElectionInfo,
   ElectionStatus,
   InternalErrorCode,
 } from '@pple-today/api-common/dtos'
@@ -18,7 +17,7 @@ import dayjs from 'dayjs'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { GetElectionResponse, ListElectionResponse } from './models'
+import { GetElectionResponse, ListElection, ListElectionResponse } from './models'
 import { ElectionRepository, ElectionRepositoryPlugin } from './repostiory'
 
 export class ElectionService {
@@ -119,10 +118,10 @@ export class ElectionService {
     return voterType === 'ONLINE'
   }
 
-  private convertToElectionInfo(
+  private convertToListElection(
     election: Election & { voters: ElectionEligibleVoter[]; voteRecords: ElectionVoteRecord[] },
     voterType: EligibleVoterType
-  ): ElectionInfo {
+  ): ListElection {
     return {
       id: election.id,
       name: election.name,
@@ -168,7 +167,7 @@ export class ElectionService {
     const result = eligibleVoters.value
       .filter(({ election }) => this.isElectionActive(election))
       .map(({ election, type: voterType }) =>
-        this.convertToElectionInfo(election, voterType)
+        this.convertToListElection(election, voterType)
       ) satisfies ListElectionResponse
 
     return ok(result)
@@ -193,12 +192,12 @@ export class ElectionService {
     }
 
     const election = eligibleVoter.value.election
-    const electionInfo = this.convertToElectionInfo(election, eligibleVoter.value.type)
+    const listElection = this.convertToListElection(election, eligibleVoter.value.type)
     const candidates = election.candidates.map((candidate) =>
       this.convertToElectionCandidateDTO(candidate)
     )
     const result = {
-      ...electionInfo,
+      ...listElection,
       candidates,
     } satisfies GetElectionResponse
 

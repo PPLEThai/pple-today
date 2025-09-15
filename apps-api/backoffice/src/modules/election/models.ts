@@ -1,8 +1,23 @@
-import { ElectionCandidate, ElectionInfo, FilePath } from '@pple-today/api-common/dtos'
+import {
+  ElectionCandidate,
+  ElectionInfo,
+  ElectionStatus,
+  FilePath,
+} from '@pple-today/api-common/dtos'
 import { EligibleVoterType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
-export const ListElectionResponse = t.Array(ElectionInfo)
+export const ListElection = t.Intersect([
+  ElectionInfo,
+  t.Object({
+    status: ElectionStatus,
+    votePercentage: t.Number(),
+    isRegistered: t.Nullable(t.Boolean()),
+  }),
+])
+export type ListElection = Static<typeof ListElection>
+
+export const ListElectionResponse = t.Array(ListElection)
 export type ListElectionResponse = Static<typeof ListElectionResponse>
 
 export const GetElectionParams = t.Object({
@@ -11,7 +26,7 @@ export const GetElectionParams = t.Object({
 export type GetElectionParams = Static<typeof GetElectionParams>
 
 export const GetElectionResponse = t.Intersect([
-  ElectionInfo,
+  ListElection,
   t.Object({
     candidates: t.Array(ElectionCandidate),
   }),
