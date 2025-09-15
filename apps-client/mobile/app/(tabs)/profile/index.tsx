@@ -107,7 +107,6 @@ const ProfileSetting = () => {
     setRefreshing(true)
     try {
       queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/auth/me') })
-      queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/announcements') })
       queryClient.invalidateQueries({
         queryKey: reactQueryClient.getQueryKey('/facebook/linked-page'),
       })
