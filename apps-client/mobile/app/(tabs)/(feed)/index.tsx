@@ -614,7 +614,7 @@ function AnnouncementSection() {
           />
           <H3 className="text-base-text-high font-anakotmai-medium text-2xl">ประกาศ</H3>
         </View>
-        <Button variant="ghost" onPress={() => router.navigate('/(official)/announcement')}>
+        <Button variant="ghost" onPress={() => router.navigate('/(feed)/announcement')}>
           <Text>ดูเพิ่มเติม</Text>
           <Icon icon={ArrowRightIcon} strokeWidth={2} />
         </Button>
