@@ -474,10 +474,6 @@ function FeedContent(props: PagerScrollViewProps) {
         setScrollViewTag(scrollViewTag)
       }, 50)
       // console.log('scrollViewTag:', scrollViewTag)
-      return () => {
-        console.log('Unmount', scrollViewTag)
-        setScrollViewTag(null)
-      }
     }
   }, [isFocused, scrollElRef, setScrollViewTag])
 
