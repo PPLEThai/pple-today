@@ -21,7 +21,6 @@ export const GetTopicsResponse = t.Array(
     ),
   })
 )
-
 export type GetTopicsResponse = typeof GetTopicsResponse.static
 
 export const FollowTopicParams = t.Object({

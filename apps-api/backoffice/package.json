@@ -31,6 +31,7 @@
     "@pple-today/database": "workspace:^",
     "@prisma/adapter-pg": "^6.15.0",
     "@sinclair/typebox": "^0.34.37",
+    "dayjs": "^1.11.13",
     "elysia": "^1.3.5",
     "jsonwebtoken": "^9.0.2",
     "neverthrow": "^8.2.0",

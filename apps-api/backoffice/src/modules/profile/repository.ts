@@ -139,7 +139,7 @@ export class ProfileRepository {
           id: userId,
         },
         select: {
-          followings: {
+          followers: {
             select: {
               followed: {
                 select: {

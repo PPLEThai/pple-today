@@ -12,7 +12,6 @@ import { EyeOffIcon } from 'lucide-react-native'
 import type { ApplicationApiSchema, GetFeedCommentResponse } from '@api/backoffice/app'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
-import { getAuthSession } from '@app/libs/auth/session'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 
 const LIMIT = 10
@@ -26,11 +25,9 @@ export function FeedCommentSection({
   const commentInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/feed/:id/comments', { pathParams: { id: feedId! } }),
     queryFn: async ({ pageParam }) => {
-      const session = await getAuthSession()
       const response = await fetchClient('/feed/:id/comments', {
         params: { id: feedId! },
         query: { cursor: pageParam, limit: LIMIT },
-        headers: session ? { Authorization: `Bearer ${session.accessToken}` } : {},
       })
       if (response.error) {
         throw response.error

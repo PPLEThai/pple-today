@@ -1,32 +1,30 @@
+import {
+  ElectionCandidate as ElectionCandidateDTO,
+  ElectionInfo,
+  ElectionStatus,
+  InternalErrorCode,
+} from '@pple-today/api-common/dtos'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
+import { err } from '@pple-today/api-common/utils'
 import {
   Election,
-  ElectionEligibleBallot,
+  ElectionCandidate,
   ElectionEligibleVoter,
   ElectionType,
+  ElectionVoteRecord,
   EligibleVoterType,
 } from '@pple-today/database/prisma'
+import dayjs from 'dayjs'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { ElectionStatus } from './models'
+import { GetElectionResponse, ListElectionResponse } from './models'
 import { ElectionRepository, ElectionRepositoryPlugin } from './repostiory'
 
 export class ElectionService {
   constructor(private readonly electionRepository: ElectionRepository) {}
 
   private readonly SECONDS_IN_A_DAY = 60 * 60 * 24
-
-  private isElectionActive(election: Election): boolean {
-    switch (election.type) {
-      case 'ONSITE':
-        return this.isOnsiteElectionActive(election)
-      case 'ONLINE':
-        return this.isOnlineElectionActive(election)
-      case 'HYBRID':
-        return this.isHybridElectionActive(election)
-    }
-  }
 
   private isOnsiteElectionActive(election: Election): boolean {
     const now = new Date()
@@ -75,6 +73,21 @@ export class ElectionService {
     return isOpenRegister && !isPastAnnouncePeriod
   }
 
+  private isElectionActive(election: Election): boolean {
+    if (election.isCancelled) {
+      return false
+    }
+
+    switch (election.type) {
+      case 'ONSITE':
+        return this.isOnsiteElectionActive(election)
+      case 'ONLINE':
+        return this.isOnlineElectionActive(election)
+      case 'HYBRID':
+        return this.isHybridElectionActive(election)
+    }
+  }
+
   private getElectionStatus(election: Election): ElectionStatus {
     const now = new Date()
 
@@ -90,12 +103,10 @@ export class ElectionService {
   }
 
   private getVotePercentage(
-    voters: (ElectionEligibleVoter & { ballot: ElectionEligibleBallot | null })[]
+    voters: ElectionEligibleVoter[],
+    voteRecords: ElectionVoteRecord[]
   ): number {
-    const totalVoters = voters.length
-    const totalVoted = voters.filter((voter) => !!voter.ballot).length
-
-    return 100 * (totalVoted / totalVoters)
+    return 100 * (voteRecords.length / voters.length)
   }
 
   private isHybridElectionVoterRegistered(
@@ -108,6 +119,46 @@ export class ElectionService {
     return voterType === 'ONLINE'
   }
 
+  private convertToElectionInfo(
+    election: Election & { voters: ElectionEligibleVoter[]; voteRecords: ElectionVoteRecord[] },
+    voterType: EligibleVoterType
+  ): ElectionInfo {
+    return {
+      id: election.id,
+      name: election.name,
+      description: election.description,
+      location: election.location,
+      type: election.type,
+      isCancelled: election.isCancelled,
+      encryptionPublicKey: election.encryptionPublicKey,
+      publishDate: election.publishDate,
+      openRegister: election.openRegister,
+      closeRegister: election.closeRegister,
+      openVoting: election.openVoting,
+      closeVoting: election.closeVoting,
+      startResult: election.startResult,
+      endResult: election.endResult,
+      createdAt: election.createdAt,
+      updatedAt: election.updatedAt,
+      status: this.getElectionStatus(election),
+      votePercentage: this.getVotePercentage(election.voters, election.voteRecords),
+      isRegistered: this.isHybridElectionVoterRegistered(voterType, election.type),
+    }
+  }
+
+  private convertToElectionCandidateDTO(candidate: ElectionCandidate): ElectionCandidateDTO {
+    return {
+      id: candidate.id,
+      electionId: candidate.electionId,
+      name: candidate.name,
+      description: candidate.description,
+      profileImage: candidate.profileImage,
+      number: candidate.number,
+      createdAt: candidate.createdAt,
+      updatedAt: candidate.updatedAt,
+    }
+  }
+
   async listMyEligibleElections(userId: string) {
     const eligibleVoters = await this.electionRepository.listMyEligibleVoters(userId)
     if (eligibleVoters.isErr()) {
@@ -116,17 +167,126 @@ export class ElectionService {
 
     const result = eligibleVoters.value
       .filter(({ election }) => this.isElectionActive(election))
-      .map(({ election, type: voterType }) => {
-        const { voters, ...rest } = election
-        return {
-          ...rest,
-          status: this.getElectionStatus(election),
-          votePercentage: this.getVotePercentage(voters),
-          isRegistered: this.isHybridElectionVoterRegistered(voterType, election.type),
-        }
-      })
+      .map(({ election, type: voterType }) =>
+        this.convertToElectionInfo(election, voterType)
+      ) satisfies ListElectionResponse
 
     return ok(result)
+  }
+
+  async getMyEligibleElection(userId: string, electionId: string) {
+    const eligibleVoter = await this.electionRepository.getMyEligibleVoter(userId, electionId)
+    if (eligibleVoter.isErr()) {
+      return mapRepositoryError(eligibleVoter.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id "${electionId}"`,
+        },
+      })
+    }
+
+    if (!this.isElectionActive(eligibleVoter.value.election)) {
+      return err({
+        code: InternalErrorCode.ELECTION_NOT_FOUND,
+        message: `Cannot found election id "${electionId}"`,
+      })
+    }
+
+    const election = eligibleVoter.value.election
+    const electionInfo = this.convertToElectionInfo(election, eligibleVoter.value.type)
+    const candidates = election.candidates.map((candidate) =>
+      this.convertToElectionCandidateDTO(candidate)
+    )
+    const result = {
+      ...electionInfo,
+      candidates,
+    } satisfies GetElectionResponse
+
+    return ok(result)
+  }
+
+  async registerEleciton(userId: string, electionId: string, type: EligibleVoterType) {
+    const eligibleVoter = await this.electionRepository.getMyEligibleVoter(userId, electionId)
+    if (eligibleVoter.isErr()) {
+      return mapRepositoryError(eligibleVoter.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id: ${electionId}`,
+        },
+      })
+    }
+
+    const election = eligibleVoter.value.election
+
+    const isHybirdElection = election.type === ElectionType.HYBRID
+    if (!isHybirdElection) {
+      return err({
+        code: InternalErrorCode.ELECTION_REGISTER_TO_INVALID_TYPE,
+        message: `Registration is allowed only for HYBRID elections.`,
+      })
+    }
+
+    const now = new Date()
+    const isInRegisterPeriod =
+      election.openRegister &&
+      election.closeRegister &&
+      now >= election.openRegister &&
+      now <= election.closeRegister
+    if (!isInRegisterPeriod) {
+      return err({
+        code: InternalErrorCode.ELECTION_NOT_IN_REGISTER_PERIOD,
+        message: `Cannot register at this time. The registration period is from ${dayjs(election.openRegister).format()} to ${dayjs(election.closeRegister).format()}.`,
+      })
+    }
+
+    const updateVoterType = await this.electionRepository.updateEligibleVoterType(
+      userId,
+      electionId,
+      type
+    )
+    if (updateVoterType.isErr()) {
+      return mapRepositoryError(updateVoterType.error)
+    }
+
+    return ok()
+  }
+
+  async withdrawBallot(userId: string, electionId: string) {
+    const eligibleVoter = await this.electionRepository.getMyEligibleVoter(userId, electionId)
+    if (eligibleVoter.isErr()) {
+      return mapRepositoryError(eligibleVoter.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id: ${electionId}`,
+        },
+      })
+    }
+
+    const election = eligibleVoter.value.election
+
+    const canVoteOnline = election.type === 'HYBRID' || election.type === 'ONLINE'
+    if (!canVoteOnline) {
+      return err({
+        code: InternalErrorCode.ELECTION_WITHDRAW_TO_INVALID_TYPE,
+        message: `Can only withdraw to election with type ONLINE and HYBRID`,
+      })
+    }
+
+    const now = new Date()
+    const isInVotePeriod = now >= election.openVoting && now <= election.closeVoting
+    if (!isInVotePeriod) {
+      return err({
+        code: InternalErrorCode.ELECTION_NOT_IN_VOTE_PERIOD,
+        message: `Cannot withdraw at this time. The vote period is from ${dayjs(election.openVoting).format()} to ${dayjs(election.closeVoting).format()}.`,
+      })
+    }
+
+    const deleteBallot = await this.electionRepository.deleteMyBallot(userId, electionId)
+    if (deleteBallot.isErr()) {
+      return mapRepositoryError(deleteBallot.error)
+    }
+
+    return ok()
   }
 }
 

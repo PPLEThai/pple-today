@@ -21,30 +21,7 @@ const seedElections = async (userId: string) => {
   // create mock user
   const userId1 = 'election-user-1'
   const userId2 = 'election-user-2'
-  await prisma.user.upsert({
-    where: {
-      id: userId1,
-    },
-    create: {
-      id: userId1,
-      name: userId1,
-      phoneNumber: userId1,
-    },
-    update: {},
-  })
-  await prisma.user.upsert({
-    where: {
-      id: userId2,
-    },
-    create: {
-      id: userId2,
-      name: userId2,
-      phoneNumber: userId2,
-    },
-    update: {},
-  })
-
-  const data = [
+  const elections = [
     // online
     // no eligible voter
     {
@@ -66,7 +43,6 @@ const seedElections = async (userId: string) => {
       closeVoting: addDays(dateNow, 3),
       voters: {
         create: {
-          id: 'onsite-not-publish-voter',
           userId: userId,
           type: EligibleVoterType.ONSITE,
         },
@@ -94,7 +70,6 @@ const seedElections = async (userId: string) => {
       closeVoting: addDays(dateNow, 4),
       voters: {
         create: {
-          id: 'hybrid-wait-register-voter',
           userId: userId,
           type: EligibleVoterType.ONSITE,
         },
@@ -112,7 +87,6 @@ const seedElections = async (userId: string) => {
       closeVoting: addDays(dateNow, 3),
       voters: {
         create: {
-          id: 'hybrid-open-register-voter',
           userId: userId,
           type: EligibleVoterType.ONSITE,
         },
@@ -130,7 +104,6 @@ const seedElections = async (userId: string) => {
       closeVoting: addDays(dateNow, 2),
       voters: {
         create: {
-          id: 'hybrid-close-register-voter',
           userId: userId,
           type: EligibleVoterType.ONLINE,
         },
@@ -148,31 +121,50 @@ const seedElections = async (userId: string) => {
       closeVoting: addDays(dateNow, 1),
       voters: {
         create: {
-          id: 'hybrid-open-vote-voter-1',
           userId: userId,
           type: EligibleVoterType.ONLINE,
-          ballot: {
-            create: {
-              id: 'hybrid-open-vote-voter-1-bollot',
-              encryptedBallot: 'mock-encrypted-bollot',
-              location: 'mock-location',
-              faceImageURL: 'mock-faceImageURL',
-            },
-          },
         },
         createMany: {
           data: [
             {
-              id: 'hybrid-open-vote-voter-2',
               userId: userId1,
               type: EligibleVoterType.ONLINE,
             },
             {
-              id: 'hybrid-open-vote-voter-3',
               userId: userId2,
               type: EligibleVoterType.ONLINE,
             },
           ],
+        },
+      },
+      candidates: {
+        createMany: {
+          data: [
+            {
+              id: 'candidate-1',
+              name: 'candidate-1',
+            },
+            {
+              id: 'candidate-2',
+              name: 'candidate-2',
+            },
+            {
+              id: 'candidate-3',
+              name: 'candidate-3',
+            },
+          ],
+        },
+      },
+      ballots: {
+        create: {
+          id: 'my-bollot',
+          encryptedBallot: 'Pickachu',
+          voteRecord: {
+            create: {
+              userId,
+              electionId: 'hybrid-open-vote',
+            },
+          },
         },
       },
     },
@@ -188,7 +180,6 @@ const seedElections = async (userId: string) => {
       closeVoting: addDays(dateNow, -1),
       voters: {
         create: {
-          id: 'hybrid-close-vote-voter',
           userId: userId,
           type: EligibleVoterType.ONLINE,
         },
@@ -208,7 +199,6 @@ const seedElections = async (userId: string) => {
       endResult: addDays(dateNow, 1),
       voters: {
         create: {
-          id: 'hybrid-result-annoucement',
           userId: userId,
           type: EligibleVoterType.ONLINE,
         },
@@ -228,7 +218,6 @@ const seedElections = async (userId: string) => {
       endResult: addDays(dateNow, -1),
       voters: {
         create: {
-          id: 'hybrid-close-result-announcement-voter',
           userId: userId,
           type: EligibleVoterType.ONLINE,
         },
@@ -236,20 +225,56 @@ const seedElections = async (userId: string) => {
     },
   ] satisfies Prisma.ElectionCreateInput[]
 
-  for (const d of data) {
-    await prisma.election.upsert({
-      where: { id: d.id },
-      create: d,
-      update: {
-        openRegister: d.openRegister,
-        closeRegister: d.closeRegister,
-        openVoting: d.openVoting,
-        closeVoting: d.closeRegister,
-        startResult: d.startResult,
-        endResult: d.endResult,
-      },
-    })
-  }
+  await prisma.$transaction(async (tx) => {
+    const userIds = [userId1, userId2]
+    for (const userId of userIds) {
+      await prisma.user.upsert({
+        where: {
+          id: userId,
+        },
+        create: {
+          id: userId,
+          name: userId,
+          phoneNumber: userId,
+        },
+        update: {},
+      })
+    }
+
+    for (const election of elections) {
+      await tx.electionBallot.deleteMany({
+        where: {
+          electionId: election.id,
+        },
+      })
+
+      await tx.electionVoteRecord.deleteMany({
+        where: {
+          electionId: election.id,
+        },
+      })
+
+      await tx.electionEligibleVoter.deleteMany({
+        where: {
+          electionId: election.id,
+        },
+      })
+
+      await tx.electionCandidate.deleteMany({
+        where: {
+          electionId: election.id,
+        },
+      })
+
+      await tx.election.deleteMany({
+        where: {
+          id: election.id,
+        },
+      })
+
+      await tx.election.create({ data: election })
+    }
+  })
 }
 
 process.stdin.setEncoding('utf8')

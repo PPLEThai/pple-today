@@ -59,6 +59,9 @@ importers:
       '@sinclair/typebox':
         specifier: ^0.34.37
         version: 0.34.37
+      dayjs:
+        specifier: ^1.11.13
+        version: 1.11.13
       elysia:
         specifier: ^1.3.5
         version: 1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2)

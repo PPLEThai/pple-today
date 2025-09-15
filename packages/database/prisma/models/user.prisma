@@ -40,7 +40,8 @@ model User {
 
     eventAttendants EventAttendant[]
 
-    electionEligibleVoters ElectionEligibleVoter[]
+    voters      ElectionEligibleVoter[]
+    voteRecords ElectionVoteRecord[]
 
     linkedPage FacebookPage?
 
