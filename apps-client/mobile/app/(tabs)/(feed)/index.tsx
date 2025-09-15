@@ -469,8 +469,15 @@ function FeedContent(props: PagerScrollViewProps) {
   React.useEffect(() => {
     if (isFocused && scrollElRef.current) {
       const scrollViewTag = findNodeHandle(scrollElRef.current)
-      setScrollViewTag(scrollViewTag)
+      // TODO: Find a better way to find scrollView in native code
+      setTimeout(() => {
+        setScrollViewTag(scrollViewTag)
+      }, 50)
       // console.log('scrollViewTag:', scrollViewTag)
+      return () => {
+        console.log('Unmount', scrollViewTag)
+        setScrollViewTag(null)
+      }
     }
   }, [isFocused, scrollElRef, setScrollViewTag])
 
