@@ -20,7 +20,6 @@ import { MessageCircleIcon, TriangleAlertIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
-import { getAuthSession } from '@app/libs/auth/session'
 import { ImageMimeType } from '@app/types/file'
 import { handleUploadImage } from '@app/utils/upload'
 
@@ -147,19 +146,11 @@ export function OnboardingAddress() {
 
     let profilePayload
     if (state.profileStepResult?.imagePickerAsset) {
-      const session = await getAuthSession()
-      if (!session) {
-        throw new Error('No auth session found')
-      }
-
       const { data: getLink } = await fetchClient('/profile/upload-url', {
         method: 'POST',
         body: {
           contentType: (state.profileStepResult.imagePickerAsset?.mimeType ||
             'image/png') as ImageMimeType,
-        },
-        headers: {
-          Authorization: `Bearer ${session.accessToken}`,
         },
       })
 

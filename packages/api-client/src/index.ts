@@ -31,12 +31,10 @@ export type {
 export const QUERY_KEY = '$'
 
 function createReactQueryClient<TSchema extends Record<string, any>>(
-  restClient: EdenFetch.Fn<TSchema> & {
-    interceptors: FetchClientInterceptors
-  }
+  restClient: EdenFetch.Fn<TSchema>
 ): ReactQueryClient<TSchema> {
   const makeRequest = async (method: any, path: any, payload: any) => {
-    const requestConfig: any = await restClient.interceptors.request({
+    const result = await restClient(path, {
       method,
       path,
       query: payload?.query ?? {},
@@ -45,9 +43,11 @@ function createReactQueryClient<TSchema extends Record<string, any>>(
       headers: payload?.headers ?? {},
     })
 
-    const resp = await restClient(path, requestConfig)
+    if (result.status >= 400) {
+      throw result.error
+    }
 
-    return restClient.interceptors.response(resp)
+    return result.data
   }
 
   function getKey(method: any, path: any, payload: any = {}): any {
@@ -97,20 +97,26 @@ export function createApiClient<T extends AnyElysia>(
   options?: EdenFetch.Config
 ): CreateReactQueryClientResult<T> {
   const fetchClient: any = edenFetch<T>(server, options)
-  // Default interceptor
-  fetchClient.interceptors = {
+
+  async function wrappedFetchClient(...params: Parameters<typeof edenFetch>) {
+    const path = params[0] as string
+    const requestConfig: any = await wrappedFetchClient.interceptors.request(params[1] as any)
+
+    const resp = await fetchClient(path, requestConfig)
+
+    return await wrappedFetchClient.interceptors.response(resp)
+  }
+
+  wrappedFetchClient.interceptors = {
     request: (config: RequestConfig) => {
       return config
     },
     response: (response: ResponseConfig) => {
-      if (response.status >= 400) {
-        throw response.error
-      }
-      return response.data
+      return response
     },
-  } satisfies FetchClientInterceptors
+  } as FetchClientInterceptors
 
-  const reactQueryClient: any = createReactQueryClient(fetchClient)
+  const reactQueryClient: any = createReactQueryClient(wrappedFetchClient as typeof fetchClient)
 
-  return { fetchClient, reactQueryClient }
+  return { fetchClient: wrappedFetchClient as any, reactQueryClient }
 }

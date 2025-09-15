@@ -65,10 +65,12 @@ export class ElectionRepository {
   async deleteMyBallot(userId: string, electionId: string) {
     return fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
-        const voteRecord = await tx.electionVoteRecord.findFirstOrThrow({
+        const voteRecord = await tx.electionVoteRecord.findUniqueOrThrow({
           where: {
-            electionId,
-            userId,
+            electionId_userId: {
+              electionId,
+              userId,
+            },
           },
         })
 

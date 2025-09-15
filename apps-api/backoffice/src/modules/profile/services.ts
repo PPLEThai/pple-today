@@ -115,7 +115,7 @@ export class ProfileService {
     }
 
     return ok(
-      result.value.followings.map((user) => ({
+      result.value.followers.map((user) => ({
         ...user.followed,
         address: user.followed.address ?? undefined,
         profileImage: user.followed.profileImage

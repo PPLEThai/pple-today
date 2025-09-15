@@ -15,13 +15,14 @@ enum ElectionResultType {
 }
 
 model Election {
-    id                  String       @id @default(cuid())
-    name                String
-    description         String?
-    location            String?
-    type                ElectionType
-    encryptionPublicKey String?
-    isCancelled         Boolean      @default(false)
+    id                        String       @id @default(cuid())
+    name                      String
+    description               String?
+    location                  String?
+    type                      ElectionType
+    encryptionPublicKey       String?
+    digitalSignaturePublicKey String?
+    isCancelled               Boolean      @default(false)
 
     publishDate   DateTime?
     openRegister  DateTime?
