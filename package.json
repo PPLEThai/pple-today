@@ -26,10 +26,5 @@
   "volta": {
     "node": "22.15.0",
     "pnpm": "9.9.0"
-  },
-  "pnpm": {
-    "patchedDependencies": {
-      "react-native-css-interop": "patches/react-native-css-interop.patch"
-    }
   }
 }
