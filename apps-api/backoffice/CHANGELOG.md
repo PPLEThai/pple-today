@@ -88,7 +88,6 @@
 - [#22](https://github.com/PPLEThai/pple-today/pull/22) [`fa2ea43`](https://github.com/PPLEThai/pple-today/commit/fa2ea43e765f43002a6074cb63c4b65e2e64928b) Thanks [@miello](https://github.com/miello)! - [PPLE-172] Redesign feed structure in database
 
 - [#19](https://github.com/PPLEThai/pple-today/pull/19) [`1f189ab`](https://github.com/PPLEThai/pple-today/commit/1f189abd417c91208bc646570f4b3d4d3b4971d2) Thanks [@rootEnginear](https://github.com/rootEnginear)! - - [PPLE-161] About Us API
-
   - Lock Node/PNPM versioning
   - Log user session
 
