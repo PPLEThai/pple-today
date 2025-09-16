@@ -5,12 +5,12 @@ import Elysia from 'elysia'
 import {
   GetSearchAnnouncementQuery,
   GetSearchAnnouncementResponse,
+  GetSearchFeedItemsQuery,
+  GetSearchFeedItemsResponse,
   GetSearchHashtagQuery,
   GetSearchHashtagResponse,
   GetSearchKeywordQuery,
   GetSearchKeywordResponse,
-  GetSearchPostsQuery,
-  GetSearchPostsResponse,
   GetSearchTopicsQuery,
   GetSearchTopicsResponse,
   GetSearchUsersQuery,
@@ -29,7 +29,6 @@ export const SearchController = new Elysia({
     '/keyword',
     async ({ query, status, searchService }) => {
       const result = await searchService.searchKeywords(query)
-
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
       return status(200, result.value)
@@ -49,10 +48,9 @@ export const SearchController = new Elysia({
   .group('/details', (app) =>
     app
       .get(
-        '/posts',
+        '/feeds',
         async ({ query, status, user, searchService }) => {
-          const result = await searchService.searchPosts({ ...query, userId: user?.id })
-
+          const result = await searchService.searchFeedItems({ ...query, userId: user?.id })
           if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
           return status(200, result.value)
@@ -60,13 +58,16 @@ export const SearchController = new Elysia({
         {
           fetchLocalUser: true,
           detail: {
-            summary: 'Search posts',
-            description: 'Search posts by search query',
+            summary: 'Search feed items',
+            description: 'Search feed items by search query',
           },
-          query: GetSearchPostsQuery,
+          query: GetSearchFeedItemsQuery,
           response: {
-            200: GetSearchPostsResponse,
-            ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+            200: GetSearchFeedItemsResponse,
+            ...createErrorSchema(
+              InternalErrorCode.INTERNAL_SERVER_ERROR,
+              InternalErrorCode.FEED_ITEM_NOT_FOUND
+            ),
           },
         }
       )

@@ -1,6 +1,6 @@
 import {
   Author,
-  FeedItemPost,
+  FeedItem,
   PublishedAnnouncement,
   SearchKeyword,
   SearchQuery,
@@ -14,11 +14,11 @@ export type GetSearchKeywordQuery = Static<typeof GetSearchKeywordQuery>
 export const GetSearchKeywordResponse = t.Array(SearchKeyword)
 export type GetSearchKeywordResponse = Static<typeof GetSearchKeywordResponse>
 
-export const GetSearchPostsQuery = SearchQuery
-export type GetSearchPostsQuery = Static<typeof GetSearchPostsQuery>
+export const GetSearchFeedItemsQuery = SearchQuery
+export type GetSearchFeedItemsQuery = Static<typeof GetSearchFeedItemsQuery>
 
-export const GetSearchPostsResponse = t.Array(FeedItemPost)
-export type GetSearchPostsResponse = Static<typeof GetSearchPostsResponse>
+export const GetSearchFeedItemsResponse = t.Array(FeedItem)
+export type GetSearchFeedItemsResponse = Static<typeof GetSearchFeedItemsResponse>
 
 export const GetSearchUsersQuery = SearchQuery
 export type GetSearchUsersQuery = Static<typeof GetSearchUsersQuery>

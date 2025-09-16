@@ -6,7 +6,6 @@ import { ok } from 'neverthrow'
 import {
   GetSearchAnnouncementResponse,
   GetSearchKeywordResponse,
-  GetSearchPostsResponse,
   GetSearchUsersResponse,
 } from './models'
 import { SearchRepository, SearchRepositoryPlugin } from './repository'
@@ -20,7 +19,7 @@ export class SearchService {
   ) {}
 
   async searchKeywords(query: { search: string }) {
-    const [userResult, topicResult] = await Promise.all([
+    const [userResult, topicResult, keywordResult] = await Promise.all([
       this.searchRepository.searchUsers({
         search: query.search,
         limit: 3,
@@ -29,10 +28,15 @@ export class SearchService {
         search: query.search,
         limit: 3,
       }),
+      this.searchRepository.getKeywords({
+        search: query.search,
+        limit: 4,
+      }),
     ])
 
     if (userResult.isErr()) return mapRepositoryError(userResult.error)
     if (topicResult.isErr()) return mapRepositoryError(topicResult.error)
+    if (keywordResult.isErr()) return mapRepositoryError(keywordResult.error)
 
     const response: GetSearchKeywordResponse = [
       ...userResult.value.map((user) => ({
@@ -48,52 +52,25 @@ export class SearchService {
         id: topic.id,
         name: topic.name,
       })),
+      ...keywordResult.value.map((keyword) => ({
+        type: 'QUERY' as const,
+        query: keyword,
+      })),
     ]
 
     return ok(response)
   }
 
-  async searchPosts(query: { search: string; userId?: string; limit?: number; cursor?: string }) {
-    const result = await this.searchRepository.searchPosts(query)
+  async searchFeedItems(query: {
+    search: string
+    userId?: string
+    limit?: number
+    cursor?: string
+  }) {
+    const result = await this.searchRepository.searchFeedItems(query)
     if (result.isErr()) return mapRepositoryError(result.error)
 
-    const response: GetSearchPostsResponse = result.value.map((post) => ({
-      author: {
-        id: post.feedItem.author.id,
-        name: post.feedItem.author.name,
-        profileImage: post.feedItem.author.profileImage
-          ? this.fileService.getPublicFileUrl(post.feedItem.author.profileImage)
-          : undefined,
-      },
-      commentCount: post.feedItem.numberOfComments,
-      createdAt: post.feedItem.createdAt,
-      id: post.feedItemId,
-      post: {
-        content: post.content ?? '',
-        attachments: post.attachments.map((image) => ({
-          id: image.id,
-          type: image.type,
-          width: image.width ?? undefined,
-          height: image.height ?? undefined,
-          thumbnailUrl: image.thumbnailPath
-            ? this.fileService.getPublicFileUrl(image.thumbnailPath)
-            : undefined,
-          url: this.fileService.getPublicFileUrl(image.url),
-        })),
-        hashTags: post.hashTags.map((h) => ({
-          id: h.hashTag.id,
-          name: h.hashTag.name,
-        })),
-      },
-      reactions: post.feedItem.reactionCounts.map((r) => ({
-        type: r.type,
-        count: r.count,
-      })),
-      type: 'POST' as const,
-      userReaction: post.feedItem.reactions[0]?.type,
-    }))
-
-    return ok(response)
+    return ok(result.value)
   }
 
   async searchAnnouncements(query: { search: string; limit?: number; cursor?: string }) {

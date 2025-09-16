@@ -20,7 +20,9 @@ export const SearchKeyword = t.Union([
 export type SearchKeyword = Static<typeof SearchKeyword>
 
 export const SearchQuery = t.Object({
-  search: t.String(),
+  search: t.String({
+    minLength: 1,
+  }),
   limit: t.Optional(t.Number()),
   cursor: t.Optional(t.String()),
 })
