@@ -162,7 +162,6 @@ Feel free to update this file :)
 - `FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD` is an App-Specific Password which you can generate here https://appleid.apple.com/account/manage
   - Please see https://stackoverflow.com/questions/74210927/fastlane-altool-error-unable-to-upload-archive-failed-to-get-authorization
 - `FASTLANE_SESSION` is session token for **temporary** auth method in our CI right now
-
   - Please see https://stackoverflow.com/questions/58097010/fastlane-doesnt-work-for-apple-id-with-two-factor-authentication-on-continuous
   - run `fastlane spaceauth -u <your_apple_username>`
   - copy and then single quote it in github variable like this `'---\n ...'`

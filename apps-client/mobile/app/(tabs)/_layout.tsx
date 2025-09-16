@@ -1,6 +1,7 @@
 // https://www.reactnativereusables.com/extras/material-top-tabs/
 
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Icon } from '@pple-today/ui/icon'
 import { clsx } from '@pple-today/ui/lib/utils'
@@ -25,7 +26,7 @@ cssInterop(Image, { className: 'style' })
 export default function BottomTabsLayout() {
   const insets = useSafeAreaInsets()
   return (
-    <SafeAreaView className="flex-1" edges={['top', 'left', 'right']}>
+    <View className="flex-1 pt-safe pl-safe pr-safe">
       <Tabs
         screenOptions={{
           headerShown: false,
@@ -95,7 +96,7 @@ export default function BottomTabsLayout() {
           }}
         />
       </Tabs>
-    </SafeAreaView>
+    </View>
   )
 }
 

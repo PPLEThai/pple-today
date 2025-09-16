@@ -1,13 +1,22 @@
 import * as React from 'react'
-import { findNodeHandle, FlatListComponent, Pressable, StyleSheet, View } from 'react-native'
+import {
+  findNodeHandle,
+  FlatList,
+  FlatListComponent,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native'
 import Animated, {
   FlatListPropsWithLayout,
   useAnimatedScrollHandler,
+  useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { LegendListRef } from '@legendapp/list'
 import { ExtractBodyResponse } from '@pple-today/api-client'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
@@ -19,6 +28,7 @@ import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/
 import { Text } from '@pple-today/ui/text'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H2, H3 } from '@pple-today/ui/typography'
+import { FlashList, FlashListProps, FlashListRef } from '@shopify/flash-list'
 import { useForm } from '@tanstack/react-form'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { Image } from 'expo-image'
@@ -224,11 +234,15 @@ function Banner({ banner }: { banner: GetBannersResponse[number] }) {
     scale.value = withTiming(1, { duration: 150 })
   }
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }))
   return (
     <SlideItem key={banner.id}>
       <Pressable onPressIn={fadeIn} onPressOut={fadeOut} onPress={onPress} disabled={disabled}>
         <Animated.View
-          style={{ opacity, transform: [{ scale }] }}
+          style={animatedStyle}
           className="bg-base-bg-light rounded-xl overflow-hidden"
         >
           <Image
@@ -420,9 +434,13 @@ const LIMIT = 10
 function FeedContent(props: PagerScrollViewProps) {
   const { headerHeight, isFocused, scrollElRef, setScrollViewTag } = props
   React.useEffect(() => {
-    if (isFocused && scrollElRef.current) {
-      const scrollViewTag = findNodeHandle(scrollElRef.current)
-      setScrollViewTag(scrollViewTag)
+    const scrollEl = scrollElRef.current as LegendListRef | null
+    if (isFocused && scrollEl) {
+      const scrollViewTag = findNodeHandle(scrollEl.getNativeScrollRef())
+      // TODO: Find a better way to find scrollView in native code
+      setTimeout(() => {
+        setScrollViewTag(scrollViewTag)
+      }, 50)
       // console.log('scrollViewTag:', scrollViewTag)
     }
   }, [isFocused, scrollElRef, setScrollViewTag])
@@ -463,18 +481,25 @@ function FeedContent(props: PagerScrollViewProps) {
   }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
 
   type GetMyFeedResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/me'>
-  const data = React.useMemo((): GetMyFeedResponse[] => {
+  const data = React.useMemo((): GetMyFeedResponse => {
     if (!feedInfiniteQuery.data) return []
-    return feedInfiniteQuery.data.pages
+    return feedInfiniteQuery.data.pages.flatMap((page) => page)
   }, [feedInfiniteQuery.data])
 
   const scrollContext = useScrollContext()
-  const scrollHandler = useAnimatedScrollHandler(scrollContext)
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event, ctx) => {
+      'worklet'
+      scrollContext?.onScroll?.(event, ctx)
+    },
+  })
 
   const Footer =
     feedInfiniteQuery.hasNextPage || feedInfiniteQuery.isLoading || feedInfiniteQuery.error ? (
       <FeedCardSkeleton />
-    ) : data.length === 1 && data[0].length === 0 ? (
+    ) : feedInfiniteQuery.data &&
+      feedInfiniteQuery.data.pages.length === 1 &&
+      feedInfiniteQuery.data.pages[0].length === 0 ? (
       // Empty State
       <View className="flex flex-col items-center justify-center py-6">
         <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีโพสต์</Text>
@@ -487,27 +512,25 @@ function FeedContent(props: PagerScrollViewProps) {
     )
 
   const renderFeedItem = React.useCallback(
-    ({ item: items }: { item: GetMyFeedResponse; index: number }) => {
-      if (!items) {
-        return null
-      }
-      return (
-        <>
-          {items.map((item) => {
-            return <FeedCard key={item.id} feedItem={item} />
-          })}
-        </>
-      )
+    ({ item }: { item: GetMyFeedResponse[number]; index: number }) => {
+      // return <FeedCardSkeleton />
+      return <FeedCard feedItem={item} />
     },
     []
   )
+  // const keyExtractor = React.useCallback((item: GetMyFeedResponse[number]) => item.id, [])
   return (
-    <FlatListMemo
-      // @ts-expect-error FlatListMemo ref type is wrong
+    <AnimatedFlatList
       ref={scrollElRef}
       onScroll={scrollHandler}
-      headerHeight={headerHeight}
+      showsVerticalScrollIndicator={false}
+      style={{ flex: 1 }}
+      contentContainerStyle={{ paddingTop: headerHeight }}
+      // contentOffset={{ x: 0, y: -headerHeight }}
+      // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
+      // automaticallyAdjustsScrollIndicatorInsets={false}
       data={data}
+      // keyExtractor={keyExtractor}
       contentContainerClassName="py-4 flex flex-col"
       ListHeaderComponent={<AnnouncementSection />}
       ListFooterComponent={Footer}
@@ -518,48 +541,42 @@ function FeedContent(props: PagerScrollViewProps) {
   )
 }
 
-// https://github.com/bluesky-social/social-app/blob/27c591f031fbe8b3a5837c4ef7082b2ce146a050/src/view/com/util/List.tsx#L19
-type FlatListMethods<ItemT = any> = FlatListComponent<ItemT, FlatListPropsWithLayout<ItemT>>
-type FlatListProps<ItemT = any> = FlatListPropsWithLayout<ItemT> & {
-  headerHeight?: number
-}
-// TODO: try flashlist
-let FlatListMemo = React.forwardRef<FlatListMethods, FlatListProps>(
-  function FlatListMemo(props, ref) {
-    const {
-      onScroll,
-      headerHeight,
-      data,
-      ListHeaderComponent,
-      ListFooterComponent,
-      onEndReached,
-      onEndReachedThreshold,
-      renderItem,
-      contentContainerClassName,
-    } = props
-    return (
-      <Animated.FlatList
-        // @ts-expect-error FlatListMemo ref type is wrong
-        ref={ref}
-        onScroll={onScroll}
-        showsVerticalScrollIndicator={false}
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingTop: headerHeight }}
-        // contentOffset={{ x: 0, y: -headerHeight }}
-        // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
-        // automaticallyAdjustsScrollIndicatorInsets={false}
-        data={data}
-        contentContainerClassName={contentContainerClassName}
-        ListHeaderComponent={ListHeaderComponent}
-        ListFooterComponent={ListFooterComponent}
-        onEndReachedThreshold={onEndReachedThreshold}
-        onEndReached={onEndReached}
-        renderItem={renderItem}
-      />
-    )
-  }
-)
-FlatListMemo = React.memo(FlatListMemo)
+// Ref: https://github.com/LegendApp/legend-list/blob/f515e6a7d85ec6b23df6ca0836be2a25f41ba476/src/integrations/reanimated.tsx#L55
+type TypedMemo = <T extends React.ComponentType<any>>(
+  Component: T,
+  propsAreEqual?: (
+    prevProps: Readonly<React.JSXElementConstructor<T>>,
+    nextProps: Readonly<React.JSXElementConstructor<T>>
+  ) => boolean
+) => T & { displayName?: string }
+const typedMemo = React.memo as TypedMemo
+
+type AnimatedFlashListDefinition = <ItemT>(
+  props: FlashListProps<ItemT> & { ref?: React.Ref<FlashListRef<ItemT>> }
+) => React.ReactElement | null
+const AnimatedFlashListComponent = Animated.createAnimatedComponent(
+  FlashList
+) as AnimatedFlashListDefinition
+export const AnimatedFlashList = typedMemo(
+  React.forwardRef(function AnimatedFlashList<ItemT>(
+    props: FlashListProps<ItemT>,
+    ref: React.Ref<FlashListRef<ItemT>>
+  ) {
+    return <AnimatedFlashListComponent ref={ref} {...props} />
+  })
+) as AnimatedFlashListDefinition
+
+type AnimatedFlatListDefinition = <ItemT>(
+  props: FlatListProps<ItemT> & { ref?: React.Ref<FlatListRef<ItemT>> }
+) => React.ReactElement | null
+type FlatListRef<ItemT = any> = FlatListComponent<ItemT, FlatListPropsWithLayout<ItemT>>
+type FlatListProps<ItemT = any> = FlatListPropsWithLayout<ItemT>
+const AnimatedFlatListComponent = Animated.createAnimatedComponent(FlatList)
+export const AnimatedFlatList = typedMemo(
+  React.forwardRef<FlatListRef, FlatListProps>(function AnimatedFlatList(props, ref) {
+    return <AnimatedFlatListComponent ref={ref} {...props} />
+  })
+) as AnimatedFlatListDefinition
 
 function AnnouncementSection() {
   const announcementsQuery = reactQueryClient.useQuery('/announcements', {
