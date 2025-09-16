@@ -100,7 +100,7 @@ export class AdminTopicRepository {
 
     const updateFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
-        const isSameBannerUrl = existingTopic.value.bannerImagePath === data.bannerImage
+        const isSameBannerUrl = existingTopic.value.bannerImagePath === data.bannerImagePath
         if (!isSameBannerUrl && existingTopic.value.bannerImagePath) {
           const moveResult = await fileTx.removeFile(
             existingTopic.value.bannerImagePath as FilePath
@@ -108,10 +108,10 @@ export class AdminTopicRepository {
           if (moveResult.isErr()) return moveResult
         }
 
-        let newBannerImage = data.bannerImage
+        let newBannerImage = data.bannerImagePath
 
-        if (data.bannerImage) {
-          const moveResult = await fileTx.bulkMoveToPublicFolder([data.bannerImage])
+        if (data.bannerImagePath) {
+          const moveResult = await fileTx.bulkMoveToPublicFolder([data.bannerImagePath])
           if (moveResult.isErr()) return moveResult
           newBannerImage = moveResult.value[0]
         }

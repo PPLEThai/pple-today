@@ -117,16 +117,6 @@ export const PutDraftAnnouncementBody = t.Object({
   title: t.Nullable(t.String({ description: 'The title of the announcement' })),
   content: t.Nullable(t.String({ description: 'The content of the announcement' })),
   type: t.Nullable(t.Enum(AnnouncementType, { description: 'The type of the announcement' })),
-  iconImage: t.Nullable(
-    t.String({ description: 'The icon image of the announcement', format: 'uri' })
-  ),
-  backgroundColor: t.Nullable(
-    t.String({
-      description: 'The background color of the announcement',
-      pattern: '^#([A-Fa-f0-9]{3,4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$',
-    })
-  ),
-
   topicIds: t.Array(t.String({ description: 'The ID of the announcement topic' })),
   attachmentFilePaths: t.Array(FilePath),
 })
