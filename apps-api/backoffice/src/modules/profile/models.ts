@@ -56,7 +56,7 @@ export const CompleteOnboardingProfileBody = t.Object({
   profile: t.Optional(
     t.Object({
       name: t.String({ description: 'The name of the user' }),
-      profileImage: t.Optional(FilePath),
+      profileImagePath: t.Optional(FilePath),
     })
   ),
   interestTopics: t.Optional(
@@ -112,7 +112,7 @@ export const GetFollowingUserResponse = t.Array(
 
 export const UpdateProfileBody = t.Object({
   name: t.Optional(t.String({ description: 'The name of the user' })),
-  profileImage: t.Optional(FilePath),
+  profileImagePath: t.Optional(FilePath),
   address: t.Optional(
     t.Object({
       province: t.String({ description: "Province or state of the user's address" }),

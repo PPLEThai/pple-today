@@ -29,8 +29,6 @@ export const GetAnnouncementsResponse = t.Array(
     t.Pick(DraftAnnouncement, [
       'id',
       'content',
-      'iconImage',
-      'backgroundColor',
       'createdAt',
       'updatedAt',
       'topics',
@@ -40,8 +38,6 @@ export const GetAnnouncementsResponse = t.Array(
     t.Pick(PublishedAnnouncement, [
       'id',
       'content',
-      'iconImage',
-      'backgroundColor',
       'createdAt',
       'updatedAt',
       'topics',
@@ -56,8 +52,6 @@ export const GetPublishedAnnouncementsResponse = t.Array(
   t.Pick(PublishedAnnouncement, [
     'id',
     'content',
-    'iconImage',
-    'backgroundColor',
     'createdAt',
     'updatedAt',
     'topics',
@@ -107,17 +101,7 @@ export const DeletePublishedAnnouncementResponse = t.Object({
 export type DeletePublishedAnnouncementResponse = Static<typeof DeletePublishedAnnouncementResponse>
 
 export const GetDraftAnnouncementsResponse = t.Array(
-  t.Pick(DraftAnnouncement, [
-    'id',
-    'content',
-    'iconImage',
-    'backgroundColor',
-    'createdAt',
-    'updatedAt',
-    'topics',
-    'title',
-    'type',
-  ])
+  t.Pick(DraftAnnouncement, ['id', 'content', 'createdAt', 'updatedAt', 'topics', 'title', 'type'])
 )
 export type GetDraftAnnouncementsResponse = Static<typeof GetDraftAnnouncementsResponse>
 

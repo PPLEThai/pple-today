@@ -165,7 +165,7 @@ export function OnboardingAddress() {
       )
       profilePayload = {
         name: state.profileStepResult?.name ?? '',
-        profileImage: getLink.fileKey ?? '',
+        profileImagePath: getLink.fileKey ?? '',
       }
     } else if (state.profileStepResult?.name) {
       profilePayload = {

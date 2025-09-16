@@ -548,12 +548,12 @@ export class FacebookRepository {
     facebookPageId: string,
     data: {
       facebookPageAccessToken: string
-      profilePictureUrl: string
+      profilePicturePath: string
       profilePictureCacheKey: string
       pageName: string
     }
   ) {
-    const { facebookPageAccessToken, profilePictureUrl, profilePictureCacheKey, pageName } = data
+    const { facebookPageAccessToken, profilePicturePath, profilePictureCacheKey, pageName } = data
 
     return await fromRepositoryPromise(
       this.prismaService.facebookPage.upsert({
@@ -563,7 +563,7 @@ export class FacebookRepository {
         create: {
           id: facebookPageId,
           name: pageName,
-          profilePictureUrl,
+          profilePicturePath,
           pageAccessToken: facebookPageAccessToken,
           manager: {
             connect: { id: userId },
@@ -572,7 +572,7 @@ export class FacebookRepository {
         },
         update: {
           name: pageName,
-          profilePictureUrl,
+          profilePicturePath,
           pageAccessToken: facebookPageAccessToken,
           manager: {
             connect: { id: userId },
@@ -617,7 +617,7 @@ export class FacebookRepository {
     return ok({
       id: linkedPage.value.id,
       name: linkedPage.value.name,
-      profilePictureUrl: linkedPage.value.profilePictureUrl,
+      profileImagePath: linkedPage.value.profilePicturePath,
       pageAccessToken: linkedPage.value.pageAccessToken,
     })
   }

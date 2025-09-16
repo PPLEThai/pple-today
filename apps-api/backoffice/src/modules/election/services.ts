@@ -4,6 +4,7 @@ import {
   ElectionStatus,
   InternalErrorCode,
 } from '@pple-today/api-common/dtos'
+import { FileService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import { err } from '@pple-today/api-common/utils'
 import {
@@ -21,8 +22,13 @@ import { ok } from 'neverthrow'
 import { GetElectionResponse, ListElectionResponse } from './models'
 import { ElectionRepository, ElectionRepositoryPlugin } from './repostiory'
 
+import { FileServicePlugin } from '../../plugins/file'
+
 export class ElectionService {
-  constructor(private readonly electionRepository: ElectionRepository) {}
+  constructor(
+    private readonly electionRepository: ElectionRepository,
+    private readonly fileService: FileService
+  ) {}
 
   private readonly SECONDS_IN_A_DAY = 60 * 60 * 24
 
@@ -152,7 +158,9 @@ export class ElectionService {
       electionId: candidate.electionId,
       name: candidate.name,
       description: candidate.description,
-      profileImage: candidate.profileImage,
+      profileImage: candidate.profileImagePath
+        ? this.fileService.getPublicFileUrl(candidate.profileImagePath)
+        : null,
       number: candidate.number,
       createdAt: candidate.createdAt,
       updatedAt: candidate.updatedAt,
@@ -291,7 +299,7 @@ export class ElectionService {
 }
 
 export const ElectionServicePlugin = new Elysia()
-  .use(ElectionRepositoryPlugin)
-  .decorate(({ electionRepository }) => ({
-    electionService: new ElectionService(electionRepository),
+  .use([ElectionRepositoryPlugin, FileServicePlugin])
+  .decorate(({ electionRepository, fileService }) => ({
+    electionService: new ElectionService(electionRepository, fileService),
   }))
