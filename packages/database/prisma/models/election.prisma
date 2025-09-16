@@ -44,12 +44,12 @@ model Election {
 }
 
 model ElectionCandidate {
-    id           String  @id @default(cuid())
-    electionId   String
-    name         String
-    description  String?
-    profileImage String?
-    number       Int?
+    id               String  @id @default(cuid())
+    electionId       String
+    name             String
+    description      String?
+    profileImagePath String?
+    number           Int?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
