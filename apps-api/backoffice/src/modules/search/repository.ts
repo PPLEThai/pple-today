@@ -74,6 +74,7 @@ export class SearchRepository {
         include: {
           feedItem: {
             include: {
+              author: true,
               announcement: {
                 include: {
                   attachments: true,

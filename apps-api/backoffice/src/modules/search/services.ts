@@ -6,6 +6,7 @@ import { ok } from 'neverthrow'
 import {
   GetSearchAnnouncementResponse,
   GetSearchKeywordResponse,
+  GetSearchPostsResponse,
   GetSearchUsersResponse,
 } from './models'
 import { SearchRepository, SearchRepositoryPlugin } from './repository'
@@ -56,7 +57,43 @@ export class SearchService {
     const result = await this.searchRepository.searchPosts(query)
     if (result.isErr()) return mapRepositoryError(result.error)
 
-    return ok(result.value)
+    const response: GetSearchPostsResponse = result.value.map((post) => ({
+      author: {
+        id: post.feedItem.author.id,
+        name: post.feedItem.author.name,
+        profileImage: post.feedItem.author.profileImage
+          ? this.fileService.getPublicFileUrl(post.feedItem.author.profileImage)
+          : undefined,
+      },
+      commentCount: post.feedItem.numberOfComments,
+      createdAt: post.feedItem.createdAt,
+      id: post.feedItemId,
+      post: {
+        content: post.content ?? '',
+        attachments: post.attachments.map((image) => ({
+          id: image.id,
+          type: image.type,
+          width: image.width ?? undefined,
+          height: image.height ?? undefined,
+          thumbnailUrl: image.thumbnailPath
+            ? this.fileService.getPublicFileUrl(image.thumbnailPath)
+            : undefined,
+          url: this.fileService.getPublicFileUrl(image.url),
+        })),
+        hashTags: post.hashTags.map((h) => ({
+          id: h.hashTag.id,
+          name: h.hashTag.name,
+        })),
+      },
+      reactions: post.feedItem.reactionCounts.map((r) => ({
+        type: r.type,
+        count: r.count,
+      })),
+      type: 'POST' as const,
+      userReaction: post.feedItem.reactions[0]?.type,
+    }))
+
+    return ok(response)
   }
 
   async searchAnnouncements(query: { search: string; limit?: number; cursor?: string }) {
