@@ -473,9 +473,9 @@ function FeedContent(props: PagerScrollViewProps) {
   }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
 
   type GetMyFeedResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/me'>
-  const data = React.useMemo((): GetMyFeedResponse[] => {
+  const data = React.useMemo((): GetMyFeedResponse => {
     if (!feedInfiniteQuery.data) return []
-    return feedInfiniteQuery.data.pages
+    return feedInfiniteQuery.data.pages.flatMap((page) => page)
   }, [feedInfiniteQuery.data])
 
   const scrollContext = useScrollContext()
@@ -489,7 +489,9 @@ function FeedContent(props: PagerScrollViewProps) {
   const Footer =
     feedInfiniteQuery.hasNextPage || feedInfiniteQuery.isLoading || feedInfiniteQuery.error ? (
       <FeedCardSkeleton />
-    ) : data.length === 1 && data[0].length === 0 ? (
+    ) : feedInfiniteQuery.data &&
+      feedInfiniteQuery.data.pages.length === 1 &&
+      feedInfiniteQuery.data.pages[0].length === 0 ? (
       // Empty State
       <View className="flex flex-col items-center justify-center py-6">
         <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีโพสต์</Text>
@@ -502,20 +504,13 @@ function FeedContent(props: PagerScrollViewProps) {
     )
 
   const renderFeedItem = React.useCallback(
-    ({ item: items }: { item: GetMyFeedResponse; index: number }) => {
-      if (!items) {
-        return null
-      }
-      return (
-        <>
-          {items.map((item) => {
-            return <FeedCard key={item.id} feedItem={item} />
-          })}
-        </>
-      )
+    ({ item }: { item: GetMyFeedResponse[number]; index: number }) => {
+      // return <FeedCardSkeleton />
+      return <FeedCard feedItem={item} />
     },
     []
   )
+  const keyExtractor = React.useCallback((item: GetMyFeedResponse[number]) => item.id, [])
   return (
     <AnimatedLegendList
       ref={scrollElRef}
@@ -527,6 +522,8 @@ function FeedContent(props: PagerScrollViewProps) {
       // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
       // automaticallyAdjustsScrollIndicatorInsets={false}
       data={data}
+      keyExtractor={keyExtractor}
+      recycleItems
       contentContainerClassName="py-4 flex flex-col"
       ListHeaderComponent={<AnnouncementSection />}
       ListFooterComponent={Footer}
