@@ -1,7 +1,6 @@
 import * as React from 'react'
-import { findNodeHandle, FlatListComponent, Pressable, StyleSheet, View } from 'react-native'
+import { findNodeHandle, Pressable, StyleSheet, View } from 'react-native'
 import Animated, {
-  FlatListPropsWithLayout,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
@@ -9,6 +8,8 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { LegendListRef } from '@legendapp/list'
+import { AnimatedLegendList } from '@legendapp/list/reanimated'
 import { ExtractBodyResponse } from '@pple-today/api-client'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
@@ -20,7 +21,6 @@ import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/
 import { Text } from '@pple-today/ui/text'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H2, H3 } from '@pple-today/ui/typography'
-import { FlashList } from '@shopify/flash-list'
 import { useForm } from '@tanstack/react-form'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { Image } from 'expo-image'
@@ -426,8 +426,9 @@ const LIMIT = 10
 function FeedContent(props: PagerScrollViewProps) {
   const { headerHeight, isFocused, scrollElRef, setScrollViewTag } = props
   React.useEffect(() => {
-    if (isFocused && scrollElRef.current) {
-      const scrollViewTag = findNodeHandle(scrollElRef.current)
+    const scrollEl = scrollElRef.current as LegendListRef | null
+    if (isFocused && scrollEl) {
+      const scrollViewTag = findNodeHandle(scrollEl.getNativeScrollRef())
       // TODO: Find a better way to find scrollView in native code
       setTimeout(() => {
         setScrollViewTag(scrollViewTag)
@@ -516,11 +517,15 @@ function FeedContent(props: PagerScrollViewProps) {
     []
   )
   return (
-    <FlatListMemo
-      // @ts-expect-error FlatListMemo ref type is wrong
+    <AnimatedLegendList
       ref={scrollElRef}
       onScroll={scrollHandler}
-      headerHeight={headerHeight}
+      showsVerticalScrollIndicator={false}
+      style={{ flex: 1 }}
+      contentContainerStyle={{ paddingTop: headerHeight }}
+      // contentOffset={{ x: 0, y: -headerHeight }}
+      // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
+      // automaticallyAdjustsScrollIndicatorInsets={false}
       data={data}
       contentContainerClassName="py-4 flex flex-col"
       ListHeaderComponent={<AnnouncementSection />}
@@ -531,52 +536,6 @@ function FeedContent(props: PagerScrollViewProps) {
     />
   )
 }
-
-// TODO: animated flashlist
-const AnimatedFlashList = Animated.createAnimatedComponent(FlashList)
-
-// https://github.com/bluesky-social/social-app/blob/27c591f031fbe8b3a5837c4ef7082b2ce146a050/src/view/com/util/List.tsx#L19
-type FlatListMethods<ItemT = any> = FlatListComponent<ItemT, FlatListPropsWithLayout<ItemT>>
-type FlatListProps<ItemT = any> = FlatListPropsWithLayout<ItemT> & {
-  headerHeight?: number
-}
-// TODO: try flashlist
-let FlatListMemo = React.forwardRef<FlatListMethods, FlatListProps>(
-  function FlatListMemo(props, ref) {
-    const {
-      onScroll,
-      headerHeight,
-      data,
-      ListHeaderComponent,
-      ListFooterComponent,
-      onEndReached,
-      onEndReachedThreshold,
-      renderItem,
-      contentContainerClassName,
-    } = props
-    return (
-      <Animated.FlatList
-        // @ts-expect-error FlatListMemo ref type is wrong
-        ref={ref}
-        onScroll={onScroll}
-        showsVerticalScrollIndicator={false}
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingTop: headerHeight }}
-        // contentOffset={{ x: 0, y: -headerHeight }}
-        // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
-        // automaticallyAdjustsScrollIndicatorInsets={false}
-        data={data}
-        contentContainerClassName={contentContainerClassName}
-        ListHeaderComponent={ListHeaderComponent}
-        ListFooterComponent={ListFooterComponent}
-        onEndReachedThreshold={onEndReachedThreshold}
-        onEndReached={onEndReached}
-        renderItem={renderItem}
-      />
-    )
-  }
-)
-FlatListMemo = React.memo(FlatListMemo)
 
 function AnnouncementSection() {
   const announcementsQuery = reactQueryClient.useQuery('/announcements', {

@@ -205,6 +205,9 @@ importers:
       '@gorhom/bottom-sheet':
         specifier: ^5.2.4
         version: 5.2.6(@types/react@19.1.10)(react-native-gesture-handler@2.28.0(react-native@0.81.4(@babel/core@7.28.4)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.10)(react@19.1.0))(react@19.1.0))(react-native-reanimated@4.1.0(@babel/core@7.28.4)(react-native-worklets@0.5.1(@babel/core@7.28.4)(react-native@0.81.4(@babel/core@7.28.4)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.10)(react@19.1.0))(react@19.1.0))(react-native@0.81.4(@babel/core@7.28.4)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.10)(react@19.1.0))(react@19.1.0))(react-native@0.81.4(@babel/core@7.28.4)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.10)(react@19.1.0))(react@19.1.0)
+      '@legendapp/list':
+        specifier: ^2.0.4
+        version: 2.0.4(react-native@0.81.4(@babel/core@7.28.4)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.10)(react@19.1.0))(react@19.1.0)
       '@pple-today/api-client':
         specifier: workspace:^
         version: link:../../packages/api-client
@@ -223,9 +226,6 @@ importers:
       '@react-navigation/native':
         specifier: ^7.1.17
         version: 7.1.17(react-native@0.81.4(@babel/core@7.28.4)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.10)(react@19.1.0))(react@19.1.0)
-      '@shopify/flash-list':
-        specifier: ^2.0.3
-        version: 2.0.3(@babel/runtime@7.27.1)(react-native@0.81.4(@babel/core@7.28.4)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.10)(react@19.1.0))(react@19.1.0)
       '@tanstack/react-form':
         specifier: ^1.14.1
         version: 1.14.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -2140,6 +2140,12 @@ packages:
   '@jridgewell/trace-mapping@0.3.29':
     resolution: {integrity: sha512-uw6guiW/gcAGPDhLmd77/6lW8QLeiV5RUTsAX46Db6oLhGaVj4lhnPwb184s1bkc8kdVg/+h988dro8GRDpmYQ==}
 
+  '@legendapp/list@2.0.4':
+    resolution: {integrity: sha512-ML/OWJFzQ8lwH8Yo7lQi0AB07AdcZ5tx92afClt3DBdEBzPK1dDA+s0wu12H0hAvc1G11QbEySVb93VveJArBw==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+
   '@manypkg/find-root@1.1.0':
     resolution: {integrity: sha512-mki5uBvhHzO8kYYix/WRy2WX8S3B5wdVSc9D6KcU5lQNglP2yt58/VfLuAK49glRXChosY8ap2oJ1qgma3GUVA==}
 
@@ -3384,13 +3390,6 @@ packages:
   '@scalar/types@0.1.7':
     resolution: {integrity: sha512-irIDYzTQG2KLvFbuTI8k2Pz/R4JR+zUUSykVTbEMatkzMmVFnn1VzNSMlODbadycwZunbnL2tA27AXed9URVjw==}
     engines: {node: '>=18'}
-
-  '@shopify/flash-list@2.0.3':
-    resolution: {integrity: sha512-jUlHuZFoPdqRCDvOqsb2YkTttRPyV8Tb/EjCx3gE2wjr4UTM+fE0Ltv9bwBg0K7yo/SxRNXaW7xu5utusRb0xA==}
-    peerDependencies:
-      '@babel/runtime': '*'
-      react: '*'
-      react-native: '*'
 
   '@sideway/address@4.1.5':
     resolution: {integrity: sha512-IqO/DUQHUkPeixNQ8n0JA6102hT9CmaljNTPmQ1u8MEhBo/R4Q8eKLN/vGZxuebwOroDB4cbpjheD4+/sKFK4Q==}
@@ -11759,6 +11758,12 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.0
 
+  '@legendapp/list@2.0.4(react-native@0.81.4(@babel/core@7.28.4)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.10)(react@19.1.0))(react@19.1.0)':
+    dependencies:
+      react: 19.1.0
+      react-native: 0.81.4(@babel/core@7.28.4)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.10)(react@19.1.0)
+      use-sync-external-store: 1.5.0(react@19.1.0)
+
   '@manypkg/find-root@1.1.0':
     dependencies:
       '@babel/runtime': 7.27.1
@@ -13445,13 +13450,6 @@ snapshots:
       nanoid: 5.1.5
       type-fest: 4.41.0
       zod: 3.24.4
-
-  '@shopify/flash-list@2.0.3(@babel/runtime@7.27.1)(react-native@0.81.4(@babel/core@7.28.4)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.10)(react@19.1.0))(react@19.1.0)':
-    dependencies:
-      '@babel/runtime': 7.27.1
-      react: 19.1.0
-      react-native: 0.81.4(@babel/core@7.28.4)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.10)(react@19.1.0)
-      tslib: 2.8.1
 
   '@sideway/address@4.1.5':
     dependencies:

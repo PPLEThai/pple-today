@@ -469,7 +469,7 @@ interface PagerContentProps {
 export interface PagerScrollViewProps {
   isFocused: boolean
   headerHeight: number
-  scrollElRef: AnimatedRef<FlatList>
+  scrollElRef: AnimatedRef<any>
   setScrollViewTag: (tag: number | null) => void
 }
 export function PagerContent({ children, index }: PagerContentProps) {
