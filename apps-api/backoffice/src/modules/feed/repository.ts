@@ -2,7 +2,7 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FeedItem, FeedItemBaseContent } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { FeedItemReactionType, FeedItemType, Prisma, UserRole } from '@pple-today/database/prisma'
+import { FeedItemReactionType, FeedItemType, Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { Ok, ok } from 'neverthrow'
 import { sumBy } from 'remeda'
@@ -337,8 +337,10 @@ export class FeedRepository {
         where: {
           authorId: userId,
           author: {
-            role: {
-              not: UserRole.OFFICIAL,
+            NOT: {
+              roles: {
+                has: 'official',
+              },
             },
           },
         },
