@@ -218,7 +218,7 @@ const ELECTION_ERROR_SCHEMA = {
   ELECTION_VOTE_TO_INVALID_TYPE: {
     status: 409,
   },
-  ELECTION_ALREADY_VOTE: {
+  ELECTION_USER_ALREADY_VOTE: {
     status: 409,
   },
 } satisfies InternalErrorSchemas

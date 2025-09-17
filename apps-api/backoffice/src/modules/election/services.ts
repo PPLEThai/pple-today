@@ -338,7 +338,7 @@ export class ElectionService {
     if (createBallot.isErr()) {
       return mapRepositoryError(createBallot.error, {
         UNIQUE_CONSTRAINT_FAILED: {
-          code: InternalErrorCode.ELECTION_ALREADY_VOTE,
+          code: InternalErrorCode.ELECTION_USER_ALREADY_VOTE,
           message: `User have already voted to election id: ${electionId}`,
         },
       })

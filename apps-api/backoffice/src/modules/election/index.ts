@@ -146,7 +146,7 @@ export const ElectionController = new Elysia({
           InternalErrorCode.ELECTION_NOT_FOUND,
           InternalErrorCode.ELECTION_VOTE_TO_INVALID_TYPE,
           InternalErrorCode.ELECTION_NOT_IN_VOTE_PERIOD,
-          InternalErrorCode.ELECTION_ALREADY_VOTE,
+          InternalErrorCode.ELECTION_USER_ALREADY_VOTE,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
