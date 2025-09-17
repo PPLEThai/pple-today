@@ -369,7 +369,7 @@ export function PagerTabBar({ children }: { children: React.ReactNode }) {
       horizontal
       showsHorizontalScrollIndicator={false}
       className="bg-base-bg-white w-full"
-      contentContainerClassName="px-4 border-b border-base-outline-default w-full"
+      contentContainerClassName="px-4 border-b border-base-outline-default"
       onLayout={(evt) => {
         const height = evt.nativeEvent.layout.height
         if (height > 0) {

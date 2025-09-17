@@ -1,5 +1,6 @@
 import * as React from 'react'
 import {
+  Dimensions,
   findNodeHandle,
   FlatListComponent,
   Platform,
@@ -23,9 +24,12 @@ import { BottomSheetModal, BottomSheetScrollView } from '@pple-today/ui/bottom-s
 import { Button } from '@pple-today/ui/button'
 import { FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
+import { cn } from '@pple-today/ui/lib/utils'
 import { Skeleton } from '@pple-today/ui/skeleton'
 import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
+import { toast } from '@pple-today/ui/toast'
+import { toggleTextVariants, toggleVariants } from '@pple-today/ui/toggle'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H2, H3 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
@@ -64,7 +68,7 @@ import {
 } from '@app/components/pager-with-header'
 import { environment } from '@app/env'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
-import { useAuthMe } from '@app/libs/auth'
+import { useAuthMe, useSessionQuery } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { useScrollContext } from '@app/libs/scroll-context'
 
@@ -87,18 +91,40 @@ export default function IndexLayout() {
           <SelectTopicButton />
           <PagerTabBarItem index={0}>สำหรับคุณ</PagerTabBarItem>
           <PagerTabBarItem index={1}>กำลังติดตาม</PagerTabBarItem>
-          {/* <PagerTabBarItem index={2}>กรุงเทพฯ</PagerTabBarItem> */}
+          <PagerTopicTabBarItems />
           <PagerTabBarItemIndicator />
         </PagerTabBar>
       </PagerHeader>
-      <PagerContentView>
-        {Array.from({ length: 2 }).map((_, index) => (
-          <View key={index} collapsable={false}>
-            <PagerContent index={index}>{(props) => <FeedContent {...props} />}</PagerContent>
-          </View>
-        ))}
-      </PagerContentView>
+      <PagerContents />
     </Pager>
+  )
+}
+
+function PagerContents() {
+  const sessionQuery = useSessionQuery()
+  const followTopicsQuery = reactQueryClient.useQuery(
+    '/topics/follows',
+    {},
+    { enabled: !!sessionQuery.data }
+  )
+  return (
+    <PagerContentView>
+      <View key={0}>
+        <PagerContent index={0}>{(props) => <FeedContent {...props} />}</PagerContent>
+      </View>
+      <View key={1}>
+        <PagerContent index={1}>{(props) => <FeedContent {...props} />}</PagerContent>
+      </View>
+      {followTopicsQuery.data
+        ? followTopicsQuery.data.map((topic, index) => (
+            <View key={index + 2}>
+              <PagerContent index={index + 2}>
+                {(props) => <FeedTopicContent {...props} topicId={topic.id} />}
+              </PagerContent>
+            </View>
+          ))
+        : null}
+    </PagerContentView>
   )
 }
 
@@ -312,17 +338,35 @@ function ElectionCard() {
   )
 }
 
+function PagerTopicTabBarItems() {
+  const sessionQuery = useSessionQuery()
+  const followTopicsQuery = reactQueryClient.useQuery(
+    '/topics/follows',
+    {},
+    { enabled: !!sessionQuery.data }
+  )
+  return followTopicsQuery.data?.map((topic, index) => (
+    <PagerTabBarItem index={2 + index} key={2 + index}>
+      {topic.name}
+    </PagerTabBarItem>
+  ))
+}
+
 function SelectTopicButton() {
   const bottomSheetModalRef = React.useRef<BottomSheetModal>(null)
+  const router = useRouter()
+  const sessionQuery = useSessionQuery()
   const onOpen = () => {
+    if (!sessionQuery.data) {
+      router.navigate('/auth')
+      return
+    }
     bottomSheetModalRef.current?.present()
   }
   const onClose = () => {
     bottomSheetModalRef.current?.dismiss()
   }
   const insets = useSafeAreaInsets()
-
-  const snapPoints = React.useMemo(() => ['25%', '50%', '90%'], [])
   return (
     <>
       <Button
@@ -353,20 +397,39 @@ function SelectTopicButton() {
 }
 
 const formSchema = z.object({
-  topics: z.array(z.string()),
+  topicId: z.string().min(1, 'กรุณาเลือกหัวข้อ 1 หัวข้อ'),
 })
 
 const SelectTopicForm = (props: { onClose: () => void }) => {
-  const getTopicQuery = reactQueryClient.useQuery('/topics', {})
+  const listTopicQuery = reactQueryClient.useQuery('/topics/list', {})
+  const followTopicMutation = reactQueryClient.useMutation('post', '/topics/:topicId/follow', {})
+  const queryClient = useQueryClient()
   const form = useForm({
     defaultValues: {
-      topics: [] as string[],
+      topicId: '',
     },
     validators: {
       onSubmit: formSchema,
     },
-    onSubmit: async () => {
-      props.onClose()
+    onSubmit: async ({ value }) => {
+      followTopicMutation.mutateAsync(
+        { pathParams: { topicId: value.topicId } },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({
+              queryKey: reactQueryClient.getQueryKey('/topics/follows'),
+            })
+            queryClient.invalidateQueries({
+              queryKey: reactQueryClient.getQueryKey('/topics/list'),
+            })
+            props.onClose()
+          },
+          onError: (error) => {
+            console.error('Follow topic error:', error)
+            toast.error({ text1: 'เกิดข้อผิดพลาดบางอย่าง' })
+          },
+        }
+      )
     },
   })
   const onSkip = () => {
@@ -381,32 +444,50 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
             เลือก 1 หัวข้อสำหรับเพิ่มลงบนหน้าแรก
           </Text>
         </View>
-        <form.Field name="topics">
+        <form.Field name="topicId">
           {(field) => (
             <FormItem field={field} className="p-4">
               <FormLabel style={[StyleSheet.absoluteFill, { opacity: 0, pointerEvents: 'none' }]}>
                 ความคิดเห็น
               </FormLabel>
               <ToggleGroup
-                type="multiple"
+                type="single"
                 value={field.state.value}
-                onValueChange={field.handleChange}
+                onValueChange={(value) => {
+                  field.handleChange(value!)
+                }}
                 className="bg-base-bg-light rounded-lg border border-base-outline-default flex flex-row flex-wrap gap-2 justify-start p-2"
               >
-                {getTopicQuery.isLoading || !getTopicQuery.data ? (
+                {listTopicQuery.isLoading || !listTopicQuery.data ? (
                   <TopicSkeleton />
-                ) : getTopicQuery.data.length === 0 ? (
+                ) : listTopicQuery.data.length === 0 ? (
                   <View className="w-full items-center justify-center py-14">
                     <Text className="text-base-text-placeholder font-anakotmai-medium">
                       ยังไม่มีหัวข้อ
                     </Text>
                   </View>
                 ) : (
-                  getTopicQuery.data?.map((tag) => (
-                    <ToggleGroupItem key={tag.id} value={tag.id} variant="outline">
-                      <Text>{tag.name}</Text>
-                    </ToggleGroupItem>
-                  ))
+                  listTopicQuery.data?.map((tag) => {
+                    if (tag.followed)
+                      return (
+                        <View
+                          key={tag.id}
+                          className={cn(
+                            toggleVariants(),
+                            'bg-base-primary-default active:bg-base-primary-medium web:hover:bg-base-primary-medium border-base-primary-default'
+                          )}
+                        >
+                          <Text className={cn(toggleTextVariants(), 'text-base-text-invert')}>
+                            {tag.name}
+                          </Text>
+                        </View>
+                      )
+                    return (
+                      <ToggleGroupItem key={tag.id} value={tag.id} variant="outline">
+                        <Text>{tag.name}</Text>
+                      </ToggleGroupItem>
+                    )
+                  })
                 )}
               </ToggleGroup>
               <FormMessage />
@@ -417,12 +498,15 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
       <View className="flex flex-col gap-2 px-4 pt-2 bg-base-bg-white">
         <form.Subscribe selector={(state) => [state.isSubmitting]}>
           {([isSubmitting]) => (
-            <Button onPress={form.handleSubmit} disabled={isSubmitting}>
+            <Button
+              onPress={form.handleSubmit}
+              disabled={isSubmitting || followTopicMutation.isPending}
+            >
               <Text>ตกลง</Text>
             </Button>
           )}
         </form.Subscribe>
-        <Button variant="ghost" onPress={onSkip}>
+        <Button variant="ghost" onPress={onSkip} disabled={followTopicMutation.isPending}>
           <Text>ยกเลิก</Text>
         </Button>
       </View>
@@ -554,6 +638,8 @@ function FeedContent(props: PagerScrollViewProps) {
     },
     []
   )
+  // TODO: find the right height for minHeight
+  const minHeight = Dimensions.get('window').height + headerHeight
   return (
     <FlatListMemo
       // @ts-expect-error FlatListMemo ref type is wrong
@@ -570,7 +656,142 @@ function FeedContent(props: PagerScrollViewProps) {
       headerHeight={headerHeight}
       data={data}
       contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
+      contentContainerStyle={{ minHeight }}
       ListHeaderComponent={<AnnouncementSection />}
+      ListFooterComponent={Footer}
+      onEndReachedThreshold={1}
+      onEndReached={onEndReached}
+      renderItem={renderFeedItem}
+    />
+  )
+}
+
+interface FeedTopicContentProps extends PagerScrollViewProps {
+  topicId: string
+}
+
+function FeedTopicContent(props: FeedTopicContentProps) {
+  const { headerHeight, isFocused, scrollElRef, setScrollViewTag, topicId } = props
+  React.useEffect(() => {
+    if (isFocused && scrollElRef.current) {
+      const scrollViewTag = findNodeHandle(scrollElRef.current)
+      setScrollViewTag(scrollViewTag)
+      // console.log('scrollViewTag:', scrollViewTag)
+    }
+  }, [isFocused, scrollElRef, setScrollViewTag])
+
+  const feedInfiniteQuery = useInfiniteQuery({
+    queryKey: reactQueryClient.getQueryKey('/feed/topic', { query: { topicId } }),
+    queryFn: async ({ pageParam }) => {
+      const response = await fetchClient('/feed/topic', {
+        query: { page: pageParam, limit: LIMIT, topicId },
+      })
+      if (response.error) {
+        throw response.error
+      }
+      return response.data
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, _, lastPageParam) => {
+      if (lastPage && lastPage.length === 0) {
+        return undefined
+      }
+      if (lastPage.length < LIMIT) {
+        return undefined
+      }
+      return lastPageParam + 1
+    },
+  })
+  React.useEffect(() => {
+    if (feedInfiniteQuery.error) {
+      console.error('Error fetching feed:', JSON.stringify(feedInfiniteQuery.error))
+    }
+  }, [feedInfiniteQuery.error])
+
+  const onEndReached = React.useCallback(() => {
+    if (!feedInfiniteQuery.isFetching && feedInfiniteQuery.hasNextPage) {
+      feedInfiniteQuery.fetchNextPage()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
+
+  type GetMyFeedResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/me'>
+  const data = React.useMemo((): GetMyFeedResponse[] => {
+    if (!feedInfiniteQuery.data) return []
+    return feedInfiniteQuery.data.pages
+  }, [feedInfiniteQuery.data])
+
+  const scrollContext = useScrollContext()
+  const scrollHandler = useAnimatedScrollHandler(scrollContext)
+
+  const [refreshing, setRefreshing] = React.useState(false)
+  const queryClient = useQueryClient()
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true)
+    try {
+      await Promise.all([
+        queryClient.resetQueries({
+          queryKey: reactQueryClient.getQueryKey('/feed/topic', { query: { topicId } }),
+        }),
+      ])
+      await feedInfiniteQuery.refetch()
+      setRefreshing(false)
+    } catch (error) {
+      console.error('Error refreshing feed:', error)
+      setRefreshing(false)
+    }
+  }, [feedInfiniteQuery, queryClient, topicId])
+
+  const Footer =
+    feedInfiniteQuery.hasNextPage || feedInfiniteQuery.isLoading || feedInfiniteQuery.error ? (
+      <FeedCardSkeleton />
+    ) : data.length === 1 && data[0].length === 0 ? (
+      // Empty State
+      <View className="flex flex-col items-center justify-center py-6">
+        <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีโพสต์</Text>
+      </View>
+    ) : (
+      // Reach end of feed
+      <View className="flex flex-col items-center justify-center py-6">
+        <Text className="text-base-text-medium font-anakotmai-medium">ไม่มีโพสต์เพิ่มเติม</Text>
+      </View>
+    )
+
+  const renderFeedItem = React.useCallback(
+    ({ item: items }: { item: GetMyFeedResponse; index: number }) => {
+      if (!items) {
+        return null
+      }
+      return (
+        <>
+          {items.map((item) => {
+            return <FeedCard key={item.id} feedItem={item} />
+          })}
+        </>
+      )
+    },
+    []
+  )
+
+  // TODO: find the right height for minHeight
+  const minHeight = Dimensions.get('window').height + headerHeight
+  return (
+    <FlatListMemo
+      // @ts-expect-error FlatListMemo ref type is wrong
+      ref={scrollElRef}
+      onScroll={scrollHandler}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          progressViewOffset={Platform.select({ ios: 0, android: headerHeight })}
+          colors={['#FF6A13']} // base-primary-default
+        />
+      }
+      headerHeight={headerHeight}
+      data={data}
+      contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
+      contentContainerStyle={{ minHeight }}
       ListFooterComponent={Footer}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
@@ -598,6 +819,7 @@ let FlatListMemo = React.forwardRef<FlatListMethods, FlatListProps>(
       renderItem,
       contentContainerClassName,
       refreshControl,
+      contentContainerStyle,
     } = props
     return (
       <Animated.FlatList
@@ -606,7 +828,7 @@ let FlatListMemo = React.forwardRef<FlatListMethods, FlatListProps>(
         onScroll={onScroll}
         showsVerticalScrollIndicator={false}
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingTop: headerHeight }}
+        contentContainerStyle={{ paddingTop: headerHeight, ...contentContainerStyle }}
         refreshControl={refreshControl}
         // contentOffset={{ x: 0, y: -headerHeight }}
         // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}

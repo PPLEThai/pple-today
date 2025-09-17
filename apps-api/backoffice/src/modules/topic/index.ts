@@ -6,6 +6,7 @@ import {
   FollowTopicParams,
   FollowTopicResponse,
   GetTopicsResponse,
+  ListTopicResponse,
   UnFollowTopicParams,
 } from './models'
 import { TopicServicePlugin } from './services'
@@ -38,6 +39,30 @@ export const TopicController = new Elysia({
       detail: {
         summary: 'Get all topics',
         description: 'Get all topics entries',
+      },
+    }
+  )
+  .get(
+    '/list',
+    async ({ user, topicService, status }) => {
+      const topics = await topicService.listTopic(user.id)
+      if (topics.isErr()) {
+        return mapErrorCodeToResponse(topics.error, status)
+      }
+      return status(200, topics.value)
+    },
+    {
+      requiredLocalUser: true,
+      response: {
+        200: ListTopicResponse,
+        ...createErrorSchema(
+          InternalErrorCode.INTERNAL_SERVER_ERROR,
+          InternalErrorCode.UNAUTHORIZED
+        ),
+      },
+      detail: {
+        summary: 'List topics with followed status',
+        description: 'List topics with followed status',
       },
     }
   )

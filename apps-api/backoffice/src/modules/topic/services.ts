@@ -6,7 +6,7 @@ import { HashTagInTopic, Topic, TopicStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { GetTopicsResponse } from './models'
+import { GetTopicsResponse, ListTopicResponse } from './models'
 import { TopicRepository, TopicRepositoryPlugin } from './repository'
 
 import { FileServicePlugin } from '../../plugins/file'
@@ -25,6 +25,19 @@ export class TopicService {
     }
 
     return ok(this.mapTopicsToTopicsResponse(topics.value))
+  }
+
+  async listTopic(userId: string) {
+    const topics = await this.topicRepository.listTopicWithFollowedStatus(userId)
+    if (topics.isErr()) {
+      return mapRepositoryError(topics.error)
+    }
+    const response: ListTopicResponse = topics.value.map((topic) => ({
+      id: topic.id,
+      name: topic.name,
+      followed: topic.followedTopics.length > 0,
+    }))
+    return ok(response)
   }
 
   async getFollowedTopics(userId: string) {
