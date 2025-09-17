@@ -47,7 +47,7 @@ import { z } from 'zod/v4'
 import type { ApplicationApiSchema, GetBannersResponse } from '@api/backoffice/app'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { UserAddressInfoSection } from '@app/components/address-info'
-import { AnnouncementCard } from '@app/components/announcement'
+import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/announcement'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
 import {
@@ -603,8 +603,42 @@ function AnnouncementSection() {
     query: { limit: 5 },
   })
   const router = useRouter()
+
+  if (announcementsQuery.isLoading) {
+    return (
+      <View className="flex flex-col">
+        <View className="flex flex-row pt-4 px-4 pb-3 justify-between">
+          <View className="flex flex-row items-center gap-2">
+            <Icon
+              icon={MegaphoneIcon}
+              className="color-base-primary-default"
+              width={32}
+              height={32}
+            />
+            <H3 className="text-base-text-high font-anakotmai-medium text-2xl">ประกาศ</H3>
+          </View>
+          <View className="min-h-10 bg-base-bg-default rounded-lg" />
+        </View>
+        <Slide count={3} itemWidth={320} gap={8} paddingHorizontal={16}>
+          <SlideScrollView>
+            <SlideItem>
+              <AnnouncementCardSkeleton />
+            </SlideItem>
+            <SlideItem>
+              <AnnouncementCardSkeleton />
+            </SlideItem>
+            <SlideItem>
+              <AnnouncementCardSkeleton />
+            </SlideItem>
+          </SlideScrollView>
+          <SlideIndicators />
+        </Slide>
+      </View>
+    )
+  }
+
   if (!announcementsQuery.data) return null
-  // TODO: loading state
+
   return (
     <View className="flex flex-col">
       <View className="flex flex-row pt-4 px-4 pb-3 justify-between">
@@ -617,7 +651,7 @@ function AnnouncementSection() {
           />
           <H3 className="text-base-text-high font-anakotmai-medium text-2xl">ประกาศ</H3>
         </View>
-        <Button variant="ghost" onPress={() => router.navigate('/(official)/announcement')}>
+        <Button variant="ghost" onPress={() => router.navigate('/(feed)/announcement')}>
           <Text>ดูเพิ่มเติม</Text>
           <Icon icon={ArrowRightIcon} strokeWidth={2} />
         </Button>
@@ -637,6 +671,7 @@ function AnnouncementSection() {
                 feedId={announcement.id}
                 title={announcement.title}
                 date={announcement.createdAt.toString()}
+                type={announcement.type}
               />
             </SlideItem>
           ))}
