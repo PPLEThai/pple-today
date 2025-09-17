@@ -5,8 +5,8 @@
 
 */
 -- AlterTable
-ALTER TABLE "User" DROP COLUMN "role",
+ALTER TABLE "public"."User" DROP COLUMN "role",
 ADD COLUMN     "roles" TEXT[] DEFAULT ARRAY[]::TEXT[];
 
 -- DropEnum
-DROP TYPE "UserRole";
+DROP TYPE "public"."UserRole";
