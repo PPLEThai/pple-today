@@ -2,7 +2,6 @@ import * as React from 'react'
 import {
   Dimensions,
   findNodeHandle,
-  FlatListComponent,
   Platform,
   Pressable,
   RefreshControl,
@@ -10,7 +9,6 @@ import {
   View,
 } from 'react-native'
 import Animated, {
-  FlatListPropsWithLayout,
   useAnimatedScrollHandler,
   useSharedValue,
   withTiming,
@@ -641,8 +639,7 @@ function FeedContent(props: PagerScrollViewProps) {
   // TODO: find the right height for minHeight
   const minHeight = Dimensions.get('window').height + headerHeight
   return (
-    <FlatListMemo
-      // @ts-expect-error FlatListMemo ref type is wrong
+    <Animated.FlatList
       ref={scrollElRef}
       onScroll={scrollHandler}
       refreshControl={
@@ -653,15 +650,17 @@ function FeedContent(props: PagerScrollViewProps) {
           colors={['#FF6A13']} // base-primary-default
         />
       }
-      headerHeight={headerHeight}
       data={data}
       contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
-      contentContainerStyle={{ minHeight }}
+      contentContainerStyle={{ paddingTop: headerHeight, minHeight }}
       ListHeaderComponent={<AnnouncementSection />}
       ListFooterComponent={Footer}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
       renderItem={renderFeedItem}
+      // contentOffset={{ x: 0, y: -headerHeight }}
+      // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
+      // automaticallyAdjustsScrollIndicatorInsets={false}
     />
   )
 }
@@ -776,8 +775,7 @@ function FeedTopicContent(props: FeedTopicContentProps) {
   // TODO: find the right height for minHeight
   const minHeight = Dimensions.get('window').height + headerHeight
   return (
-    <FlatListMemo
-      // @ts-expect-error FlatListMemo ref type is wrong
+    <Animated.FlatList
       ref={scrollElRef}
       onScroll={scrollHandler}
       refreshControl={
@@ -788,63 +786,18 @@ function FeedTopicContent(props: FeedTopicContentProps) {
           colors={['#FF6A13']} // base-primary-default
         />
       }
-      headerHeight={headerHeight}
       data={data}
       contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
-      contentContainerStyle={{ minHeight }}
+      contentContainerStyle={{ paddingTop: headerHeight, minHeight }}
       ListFooterComponent={Footer}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
       renderItem={renderFeedItem}
+      showsVerticalScrollIndicator={false}
+      style={{ flex: 1 }}
     />
   )
 }
-
-// https://github.com/bluesky-social/social-app/blob/27c591f031fbe8b3a5837c4ef7082b2ce146a050/src/view/com/util/List.tsx#L19
-type FlatListMethods<ItemT = any> = FlatListComponent<ItemT, FlatListPropsWithLayout<ItemT>>
-type FlatListProps<ItemT = any> = FlatListPropsWithLayout<ItemT> & {
-  headerHeight?: number
-}
-// TODO: try flashlist
-let FlatListMemo = React.forwardRef<FlatListMethods, FlatListProps>(
-  function FlatListMemo(props, ref) {
-    const {
-      onScroll,
-      headerHeight,
-      data,
-      ListHeaderComponent,
-      ListFooterComponent,
-      onEndReached,
-      onEndReachedThreshold,
-      renderItem,
-      contentContainerClassName,
-      refreshControl,
-      contentContainerStyle,
-    } = props
-    return (
-      <Animated.FlatList
-        // @ts-expect-error FlatListMemo ref type is wrong
-        ref={ref}
-        onScroll={onScroll}
-        showsVerticalScrollIndicator={false}
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingTop: headerHeight, ...contentContainerStyle }}
-        refreshControl={refreshControl}
-        // contentOffset={{ x: 0, y: -headerHeight }}
-        // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
-        // automaticallyAdjustsScrollIndicatorInsets={false}
-        data={data}
-        contentContainerClassName={contentContainerClassName}
-        ListHeaderComponent={ListHeaderComponent}
-        ListFooterComponent={ListFooterComponent}
-        onEndReachedThreshold={onEndReachedThreshold}
-        onEndReached={onEndReached}
-        renderItem={renderItem}
-      />
-    )
-  }
-)
-FlatListMemo = React.memo(FlatListMemo)
 
 function AnnouncementSection() {
   const announcementsQuery = reactQueryClient.useQuery('/announcements', {
