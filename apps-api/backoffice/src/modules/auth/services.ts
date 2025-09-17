@@ -35,7 +35,7 @@ export class AuthService {
       profileImage: user.value.profileImagePath
         ? this.fileService.getPublicFileUrl(user.value.profileImagePath)
         : undefined,
-      roles: user.value.roles,
+      roles: user.value.roles.map((r) => r.role),
     })
   }
 

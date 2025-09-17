@@ -1,10 +1,9 @@
 model User {
-    id               String   @id @default(cuid())
+    id               String  @id @default(cuid())
     name             String
-    phoneNumber      String   @unique
+    phoneNumber      String  @unique
     profileImagePath String?
-    point            Int      @default(0)
-    roles            String[] @default([])
+    point            Int     @default(0)
 
     responsibleArea String?
 
@@ -38,4 +37,14 @@ model User {
     feedItems     FeedItem[]
     feedReactions FeedItemReaction[]
     feedComments  FeedItemComment[]
+    roles         UserRole[]
+}
+
+model UserRole {
+    userId String
+    role   String
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@id([userId, role])
 }

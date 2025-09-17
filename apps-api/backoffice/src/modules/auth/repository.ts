@@ -1,7 +1,8 @@
 import { IntrospectAccessTokenResult } from '@pple-today/api-common/dtos'
 import { PrismaService } from '@pple-today/api-common/services'
-import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
+import { ok } from 'neverthrow'
 
 import { PrismaServicePlugin } from '../../plugins/prisma'
 
@@ -12,9 +13,21 @@ export class AuthRepository {
     return await fromRepositoryPromise(
       this.prismaService.user.findUniqueOrThrow({
         where: { id },
-        include: { address: true },
+        include: { address: true, roles: true },
       })
     )
+  }
+
+  async checkUserHasRole(userId: string, roles: string[]) {
+    const userRole = await fromRepositoryPromise(
+      this.prismaService.userRole.findMany({
+        where: { userId, role: { in: roles } },
+      })
+    )
+
+    if (userRole.isErr()) return err(userRole.error)
+
+    return ok(userRole.value.length > 0)
   }
 
   async createUser(data: IntrospectAccessTokenResult, roles: string[]) {
@@ -25,7 +38,12 @@ export class AuthRepository {
         data: {
           id: sub,
           name,
-          roles,
+          roles: {
+            connectOrCreate: roles.map((role) => ({
+              where: { userId_role: { userId: sub, role } },
+              create: { role },
+            })),
+          },
           phoneNumber: phone_number,
         },
       })

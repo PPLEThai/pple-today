@@ -2,6 +2,7 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { err, mapErrorCodeToResponse, mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
+import * as R from 'remeda'
 
 import { ConfigServicePlugin } from './config'
 
@@ -25,6 +26,22 @@ export class AuthGuard {
       return err({ code: InternalErrorCode.UNAUTHORIZED, message: 'User not authenticated' })
 
     return await introspectAccessToken(token, this.oidcConfig)
+  }
+
+  async checkUserHasRole(headers: Record<string, string | undefined>, roles: string[]) {
+    const user = await this.getCurrentUser(headers)
+
+    if (user.isErr()) return mapRepositoryError(user.error)
+
+    const intersectionRoles = R.intersection(
+      user.value.roles.map(({ role }) => role),
+      roles
+    )
+
+    return ok({
+      isAllowed: intersectionRoles.length > 0,
+      user: user.value,
+    })
   }
 
   async getCurrentUser(headers: Record<string, string | undefined>) {
@@ -75,20 +92,20 @@ export const AuthGuardPlugin = new Elysia({
     },
     requiredLocalRole: (allowedRoles: string[]) => ({
       async resolve({ status, headers, authGuard }) {
-        const user = await authGuard.getCurrentUser(headers)
+        const hasAllowedRoles = await authGuard.checkUserHasRole(headers, allowedRoles)
 
-        if (user.isErr()) {
-          return mapErrorCodeToResponse(user.error, status)
+        if (hasAllowedRoles.isErr()) {
+          return mapErrorCodeToResponse(hasAllowedRoles.error, status)
         }
 
-        if (!user.value.roles.some((role) => allowedRoles.includes(role))) {
+        if (!hasAllowedRoles.value.isAllowed) {
           return mapErrorCodeToResponse(
             { code: InternalErrorCode.FORBIDDEN, message: 'Forbidden' },
             status
           )
         }
 
-        return { user: user.value }
+        return { user: hasAllowedRoles.value.user }
       },
     }),
     fetchLocalUser: {
