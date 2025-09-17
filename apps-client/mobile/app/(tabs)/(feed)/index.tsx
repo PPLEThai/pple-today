@@ -358,7 +358,7 @@ function SelectTopicButton() {
   const sessionQuery = useSessionQuery()
   const onOpen = () => {
     if (!sessionQuery.data) {
-      router.navigate('/auth')
+      router.navigate('/profile')
       return
     }
     bottomSheetModalRef.current?.present()
