@@ -19,10 +19,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ExtractBodyResponse } from '@pple-today/api-client'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
-import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
+import { BottomSheetModal, BottomSheetScrollView } from '@pple-today/ui/bottom-sheet/index'
 import { Button } from '@pple-today/ui/button'
-import { FormControl, FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
+import { FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
+import { Skeleton } from '@pple-today/ui/skeleton'
 import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
@@ -320,6 +321,8 @@ function SelectTopicButton() {
     bottomSheetModalRef.current?.dismiss()
   }
   const insets = useSafeAreaInsets()
+
+  const snapPoints = React.useMemo(() => ['25%', '50%', '90%'], [])
   return (
     <>
       <Button
@@ -337,10 +340,13 @@ function SelectTopicButton() {
         />
       </Button>
 
-      <BottomSheetModal ref={bottomSheetModalRef} bottomInset={insets.bottom}>
-        <BottomSheetView>
-          <SelectTopicForm onClose={onClose} />
-        </BottomSheetView>
+      <BottomSheetModal
+        ref={bottomSheetModalRef}
+        bottomInset={insets.bottom}
+        enableDynamicSizing
+        maxDynamicContentSize={400}
+      >
+        <SelectTopicForm onClose={onClose} />
       </BottomSheetModal>
     </>
   )
@@ -351,6 +357,7 @@ const formSchema = z.object({
 })
 
 const SelectTopicForm = (props: { onClose: () => void }) => {
+  const getTopicQuery = reactQueryClient.useQuery('/topics', {})
   const form = useForm({
     defaultValues: {
       topics: [] as string[],
@@ -366,36 +373,48 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
     props.onClose()
   }
   return (
-    <View className="flex flex-col flex-1">
-      <View className="flex flex-col gap-1 p-4 pb-0">
-        <Text className="text-2xl font-anakotmai-bold">เลือกหัวข้อที่สนใจ</Text>
-        <Text className="text-sm font-anakotmai-light">เลือก 1 หัวข้อสำหรับเพิ่มลงบนหน้าแรก</Text>
-      </View>
-      <form.Field name="topics">
-        {(field) => (
-          <FormItem field={field} className="p-4">
-            <FormLabel style={[StyleSheet.absoluteFill, { opacity: 0, pointerEvents: 'none' }]}>
-              ความคิดเห็น
-            </FormLabel>
-            <FormControl>
+    <>
+      <BottomSheetScrollView>
+        <View className="flex flex-col gap-1 p-4 pb-0">
+          <Text className="text-2xl font-anakotmai-bold">เลือกหัวข้อที่สนใจ</Text>
+          <Text className="text-sm font-anakotmai-light text-base-text-medium">
+            เลือก 1 หัวข้อสำหรับเพิ่มลงบนหน้าแรก
+          </Text>
+        </View>
+        <form.Field name="topics">
+          {(field) => (
+            <FormItem field={field} className="p-4">
+              <FormLabel style={[StyleSheet.absoluteFill, { opacity: 0, pointerEvents: 'none' }]}>
+                ความคิดเห็น
+              </FormLabel>
               <ToggleGroup
                 type="multiple"
                 value={field.state.value}
                 onValueChange={field.handleChange}
-                className="flex flex-row gap-2 flex-wrap justify-start bg-base-bg-light p-2 rounded-lg border border-base-outline-default"
+                className="bg-base-bg-light rounded-lg border border-base-outline-default flex flex-row flex-wrap gap-2 justify-start p-2"
               >
-                {TAGS.map((tag) => (
-                  <ToggleGroupItem key={tag} value={tag} variant="outline">
-                    <Text>{tag}</Text>
-                  </ToggleGroupItem>
-                ))}
+                {getTopicQuery.isLoading || !getTopicQuery.data ? (
+                  <TopicSkeleton />
+                ) : getTopicQuery.data.length === 0 ? (
+                  <View className="w-full items-center justify-center py-14">
+                    <Text className="text-base-text-placeholder font-anakotmai-medium">
+                      ยังไม่มีหัวข้อ
+                    </Text>
+                  </View>
+                ) : (
+                  getTopicQuery.data?.map((tag) => (
+                    <ToggleGroupItem key={tag.id} value={tag.id} variant="outline">
+                      <Text>{tag.name}</Text>
+                    </ToggleGroupItem>
+                  ))
+                )}
               </ToggleGroup>
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      </form.Field>
-      <View className="flex flex-col gap-2 px-4">
+              <FormMessage />
+            </FormItem>
+          )}
+        </form.Field>
+      </BottomSheetScrollView>
+      <View className="flex flex-col gap-2 px-4 pt-2 bg-base-bg-white">
         <form.Subscribe selector={(state) => [state.isSubmitting]}>
           {([isSubmitting]) => (
             <Button onPress={form.handleSubmit} disabled={isSubmitting}>
@@ -407,22 +426,29 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
           <Text>ยกเลิก</Text>
         </Button>
       </View>
-    </View>
+    </>
   )
 }
 
-const TAGS = [
-  'การเมือง',
-  'สส',
-  'ไฟป่า',
-  'สว',
-  'เลือกตั้งนายก',
-  'เลือกตั้งท้องถิ่น',
-  'การศึกษา',
-  'เศรษฐกิจ',
-  'สังคม',
-  'สิ่งแวดล้อม',
-]
+const TopicSkeleton = () => {
+  return (
+    <>
+      <Skeleton className="rounded-full h-10 w-20" />
+      <Skeleton className="rounded-full h-10 w-16" />
+      <Skeleton className="rounded-full h-10 w-18" />
+      <Skeleton className="rounded-full h-10 w-16" />
+      <Skeleton className="rounded-full h-10 w-20" />
+      <Skeleton className="rounded-full h-10 w-24" />
+      <Skeleton className="rounded-full h-10 w-20" />
+      <Skeleton className="rounded-full h-10 w-24" />
+      <Skeleton className="rounded-full h-10 w-24" />
+      <Skeleton className="rounded-full h-10 w-20" />
+      <Skeleton className="rounded-full h-10 w-16" />
+      <Skeleton className="rounded-full h-10 w-18" />
+      <Skeleton className="rounded-full h-10 w-16" />
+    </>
+  )
+}
 
 const LIMIT = 10
 function FeedContent(props: PagerScrollViewProps) {
