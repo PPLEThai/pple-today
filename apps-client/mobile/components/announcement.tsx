@@ -4,53 +4,64 @@ import { View } from 'react-native'
 
 import { AnimatedBackgroundPressable } from '@pple-today/ui/animated-pressable'
 import { Badge } from '@pple-today/ui/badge'
+import { Icon } from '@pple-today/ui/icon'
 import { cn } from '@pple-today/ui/lib/utils'
 import { Skeleton } from '@pple-today/ui/skeleton'
 import { Text } from '@pple-today/ui/text'
 import dayjs from 'dayjs'
 import buddhistEra from 'dayjs/plugin/buddhistEra'
+import { LandmarkIcon } from 'lucide-react-native'
 
-import Auction from '@app/assets/auction.svg'
+import { GetAnnouncementsResponse } from '@api/backoffice/app'
 import PPLEIcon from '@app/assets/pple-icon.svg'
+import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 
 dayjs.extend(buddhistEra)
 dayjs.locale('th')
+
+type AnnouncementType = GetAnnouncementsResponse['announcements'][number]['type']
 
 interface AnnouncementCardProps {
   id: string
   feedId: string
   title: string
-  type: string
+  type: AnnouncementType
   hashtags?: string[] // no hashtags for now
   date: string
   className?: string
   onPress?: () => void
 }
+
 export function AnnouncementCard(props: AnnouncementCardProps) {
-  const getLogo = (type: string) => {
+  const getLogo = (type: AnnouncementType) => {
     switch (type) {
       case 'OFFICIAL':
         return {
+          borderColor: 'border-rose-700',
           background: 'bg-rose-500',
           logoBackground: 'bg-rose-800',
-          Logo: <Auction width={25.34} height={26.39} color="white" />,
+          Logo: <Icon icon={LandmarkIcon} size={24} color="white" />,
         }
       case 'PARTY_COMMUNICATE':
         return {
+          borderColor: 'border-base-primary-dark',
           background: 'bg-primary-500',
           logoBackground: 'bg-primary-800',
           Logo: <PPLEIcon width={24} height={20} color="white" />,
+        }
+      case 'INTERNAL':
+        return {
+          borderColor: 'border-base-outline-default',
+          background: 'bg-base-bg-white',
+          logoBackground: 'bg-base-secondary-default',
+          Logo: <PPLEIcon width={24} height={20} />,
         }
       default:
-        return {
-          background: 'bg-primary-500',
-          logoBackground: 'bg-primary-800',
-          Logo: <PPLEIcon width={24} height={20} color="white" />,
-        }
+        exhaustiveGuard(type)
     }
   }
 
-  const { logoBackground, background, Logo } = getLogo(props.type)
+  const { borderColor, logoBackground, background, Logo } = getLogo(props.type)
 
   return (
     <AnimatedBackgroundPressable
@@ -60,11 +71,11 @@ export function AnnouncementCard(props: AnnouncementCardProps) {
       )}
       onPress={props.onPress}
     >
-      {/* TODO: Logo */}
       <View
         className={cn(
-          'w-[80px] h-[80px] bg-primary-500 rounded-xl flex flex-row items-center justify-center',
-          background
+          'w-[80px] h-[80px] bg-primary-500 rounded-xl flex flex-row items-center justify-center border-2',
+          background,
+          borderColor
         )}
       >
         <View

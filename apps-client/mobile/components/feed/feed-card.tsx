@@ -924,6 +924,8 @@ const PostDetailContent = (props: { feedItem: FeedItemPost }) => {
   )
 }
 
+type AnnouncementType = GetAnnouncementResponse['announcement'][number]['type']
+
 const AnnouncementDetailContent = (props: { feedItem: FeedItemAnnouncement }) => {
   const getLogo = (type: string) => {
     switch (type) {
@@ -933,6 +935,12 @@ const AnnouncementDetailContent = (props: { feedItem: FeedItemAnnouncement }) =>
           announcementText: 'ประกาศจากทางรัฐบาล',
           Logo: <Icon icon={LandmarkIcon} size={16} className="text-base-bg-white" />,
         }
+      case 'PARTY_COMMUNICATE':
+        return {
+          logoBackground: 'bg-base-primary-medium',
+          announcementText: 'ประกาศจากทางพรรค',
+          Logo: <PPLEIcon width={16} height={13.86} color="white" />,
+        }
       case 'INTERNAL':
         return {
           logoBackground: 'bg-base-secondary-default',
@@ -940,11 +948,7 @@ const AnnouncementDetailContent = (props: { feedItem: FeedItemAnnouncement }) =>
           Logo: <PPLEIcon width={16} height={13.86} />,
         }
       default:
-        return {
-          logoBackground: 'bg-base-primary-medium',
-          announcementText: 'ประกาศจากทางพรรค',
-          Logo: <PPLEIcon width={16} height={13.86} color="white" />,
-        }
+        exhaustiveGuard(type)
     }
   }
 
