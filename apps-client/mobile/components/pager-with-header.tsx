@@ -24,6 +24,7 @@ import Animated, {
   runOnUI,
   scrollTo,
   SharedValue,
+  useAnimatedReaction,
   useAnimatedRef,
   useAnimatedStyle,
   useEvent,
@@ -263,7 +264,11 @@ export function PagerContentView({ children }: { children: React.ReactNode }) {
 }
 
 interface PagerTabBarContextValue {
+  indexToOffset: (index: number) => number
+  containerSize: SharedValue<number>
+  tabBarScrollElRef: AnimatedRef<ScrollView>
   dragProgress: SharedValue<number>
+  dragState: SharedValue<'idle' | 'settling' | 'dragging'>
   handlePageScroll: EventHandlerProcessed<object, never>
   tabListSize: SharedValue<number>
   tabItemLayouts: SharedValue<{ x: number; width: number }[]>
@@ -277,13 +282,45 @@ interface PagerTabBarProviderProps {
 }
 function PagerTabBarProvider({ children }: PagerTabBarProviderProps) {
   const { setCurrentPage, pagerViewRef, adjustScrollForOtherPages } = usePagerContext()
+
+  const containerSize = useSharedValue(0)
+  const tabListSize = useSharedValue(0)
+  const tabItemLayouts = useSharedValue<{ x: number; width: number }[]>([])
+  const onTabLayout = React.useCallback(
+    (i: number, layout: { x: number; width: number }) => {
+      'worklet'
+      tabItemLayouts.modify((tab) => {
+        tab[i] = layout
+        return tab
+      })
+    },
+    [tabItemLayouts]
+  )
+  const tabBarScrollElRef = useAnimatedRef<ScrollView>()
+  const indexToOffset = React.useCallback(
+    (index: number) => {
+      'worklet'
+      const itemsLength = tabItemLayouts.get().length
+      const containerWidth = containerSize.get()
+      const screenSize = tabListSize.get()
+      // assume equal width for each item
+      // https://github.com/bluesky-social/social-app/pull/6868/files
+      const scrollableWidth = screenSize - containerWidth + PADDING_X * 2
+      return (index / (itemsLength - 1)) * scrollableWidth
+    },
+    [tabItemLayouts, tabListSize, containerSize]
+  )
+
   const onTabPressed = React.useCallback(
     (index: number) => {
       pagerViewRef.current?.setPage(index)
       setCurrentPage(index)
       runOnUI(adjustScrollForOtherPages)('dragging')
+
+      const offset = indexToOffset(index)
+      runOnUI(scrollTo)(tabBarScrollElRef, offset, 0, true)
     },
-    [adjustScrollForOtherPages, pagerViewRef, setCurrentPage]
+    [adjustScrollForOtherPages, pagerViewRef, setCurrentPage, tabBarScrollElRef, indexToOffset]
   )
 
   const dragState = useSharedValue<'idle' | 'settling' | 'dragging'>('idle')
@@ -326,22 +363,14 @@ function PagerTabBarProvider({ children }: PagerTabBarProviderProps) {
     ]
   )
 
-  const tabListSize = useSharedValue(0)
-  const tabItemLayouts = useSharedValue<{ x: number; width: number }[]>([])
-  const onTabLayout = React.useCallback(
-    (i: number, layout: { x: number; width: number }) => {
-      'worklet'
-      tabItemLayouts.modify((tab) => {
-        tab[i] = layout
-        return tab
-      })
-    },
-    [tabItemLayouts]
-  )
   return (
     <PagerTabBarContext.Provider
       value={{
+        indexToOffset,
+        containerSize,
+        tabBarScrollElRef,
         dragProgress,
+        dragState,
         handlePageScroll,
         onTabLayout,
         onTabPressed,
@@ -361,17 +390,51 @@ const usePagerTabBarContext = () => {
   return context
 }
 
+const PADDING_X = 16
 export function PagerTabBar({ children }: { children: React.ReactNode }) {
-  const { tabListSize } = usePagerTabBarContext()
+  const { tabListSize, dragProgress, dragState, indexToOffset, containerSize, tabBarScrollElRef } =
+    usePagerTabBarContext()
   const { setTabBarHeight } = usePagerContext()
+  const progressToOffset = React.useCallback(
+    (progress: number) => {
+      'worklet'
+      return interpolate(
+        // 0...1, 1...2, 2...3 etc
+        progress,
+        [Math.floor(progress), Math.ceil(progress)],
+        [indexToOffset(Math.floor(progress)), indexToOffset(Math.ceil(progress))],
+        'clamp'
+      )
+    },
+    [indexToOffset]
+  )
+  // recenter to the current page when tabs change
+  useAnimatedReaction(
+    () => dragProgress.get(),
+    (nextProgress, prevProgress) => {
+      if (
+        nextProgress !== prevProgress &&
+        dragState.value !== 'idle'
+        // This is only OK to do when we're 100% sure we're synced.
+        // Otherwise, there would be a jump at the beginning of the swipe.
+        // syncScrollState.get() === 'synced'
+      ) {
+        const offset = progressToOffset(nextProgress)
+        scrollTo(tabBarScrollElRef, offset, 0, false)
+      }
+    }
+  )
   return (
     <ScrollView
       horizontal
+      ref={tabBarScrollElRef}
       showsHorizontalScrollIndicator={false}
       className="bg-base-bg-white w-full"
-      contentContainerClassName="px-4 border-b border-base-outline-default"
+      contentContainerClassName="border-b border-base-outline-default"
+      contentContainerStyle={{ paddingHorizontal: PADDING_X }}
       onLayout={(evt) => {
         const height = evt.nativeEvent.layout.height
+        containerSize.set(evt.nativeEvent.layout.width)
         if (height > 0) {
           // The rounding is necessary to prevent jumps on iOS
           setTabBarHeight(Math.round(height * 2) / 2)
