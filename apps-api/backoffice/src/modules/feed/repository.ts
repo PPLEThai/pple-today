@@ -339,7 +339,9 @@ export class FeedRepository {
           author: {
             NOT: {
               roles: {
-                has: 'official',
+                some: {
+                  role: 'official',
+                },
               },
             },
           },
