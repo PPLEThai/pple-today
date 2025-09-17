@@ -1,12 +1,22 @@
-import { ScrollView, View } from 'react-native'
+import { Pressable, ScrollView, View } from 'react-native'
 
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { Text } from '@pple-today/ui/text'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useRouter } from 'expo-router'
-import { ArrowRightIcon, LandmarkIcon, MegaphoneIcon } from 'lucide-react-native'
+import {
+  ArrowRightIcon,
+  CircleChevronRightIcon,
+  GlobeIcon,
+  InfoIcon,
+  LandmarkIcon,
+  MegaphoneIcon,
+} from 'lucide-react-native'
 
+import ContactMail from '@app/assets/contact-mail.svg'
+import Personal from '@app/assets/personal.svg'
+import PPLEIcon from '@app/assets/pple-icon.svg'
 import { UserAddressInfoSection } from '@app/components/address-info'
 import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/announcement'
 import { reactQueryClient } from '@app/libs/api-client'
@@ -34,7 +44,7 @@ export default function OfficialPage() {
         <UserAddressInfoSection className="pb-4 bg-base-bg-white" />
         <View className="gap-3 py-4">
           <AnnouncementSection />
-          <DemoSection />
+          <InformationSection />
           <DemoSection />
           <DemoSection />
         </View>
@@ -111,6 +121,89 @@ const AnnouncementSection = () => {
         </View>
       </View>
       <AnnouncementPreviewList />
+    </View>
+  )
+}
+
+const InformationSection = () => {
+  return (
+    <View className="px-4">
+      <View className="flex flex-row gap-2 items-center">
+        <View className="w-8 h-8 flex items-center justify-center">
+          <Icon icon={InfoIcon} size={32} className="text-base-primary-default" />
+        </View>
+        <H2 className="text-2xl font-anakotmai-medium text-base-text-high">ข้อมูลพรรคประชาชน</H2>
+      </View>
+      <View className="mt-4 gap-y-4">
+        <View className="flex flex-row gap-x-[12.5px]">
+          <Pressable className="flex-1 p-4 flex flex-col justify-between min-h-[163px] bg-base-bg-white rounded-2xl border border-base-outline-default">
+            <View className="flex justify-start flex-col flex-wrap">
+              <View className="flex flex-col mb-3 h-8 w-8 bg-base-secondary-default rounded-lg items-center justify-center">
+                <Personal width={24} height={24} color="white" />
+              </View>
+              <Text className="text-base font-anakotmai-medium w-full">บุคคลากรของพรรค</Text>
+            </View>
+            <View className="flex-1 justify-end items-end">
+              <Icon
+                icon={CircleChevronRightIcon}
+                size={28}
+                strokeWidth={1}
+                className="text-foreground"
+              />
+            </View>
+          </Pressable>
+          <Pressable className="flex-1 p-4 flex flex-col justify-between min-h-[163px] bg-base-bg-white rounded-2xl border border-base-outline-default">
+            <View className="flex justify-start flex-col flex-wrap">
+              <View className="flex flex-col mb-3 h-8 w-8 bg-base-primary-default rounded-lg items-center justify-center">
+                <PPLEIcon width={20} height={16} color="white" />
+              </View>
+              <Text className="text-base font-anakotmai-medium w-full">เกี่ยวกับพรรคประชาชน</Text>
+            </View>
+            <View className="flex-1 justify-end items-end">
+              <Icon
+                icon={CircleChevronRightIcon}
+                size={28}
+                strokeWidth={1}
+                className="text-foreground"
+              />
+            </View>
+          </Pressable>
+        </View>
+        <View className="flex flex-row gap-x-[12.5px]">
+          <Pressable className="flex-1 p-4 flex flex-col justify-between min-h-[163px] bg-base-bg-white rounded-2xl border border-base-outline-default">
+            <View className="flex justify-start flex-col flex-wrap">
+              <View className="flex flex-col mb-3 h-8 w-8 bg-violet-500 rounded-lg items-center justify-center">
+                <ContactMail width={24} height={24} color="white" />
+              </View>
+              <Text className="text-base font-anakotmai-medium w-full">ช่องทางการติดต่อ</Text>
+            </View>
+            <View className="flex-1 justify-end items-end">
+              <Icon
+                icon={CircleChevronRightIcon}
+                size={28}
+                strokeWidth={1}
+                className="text-foreground"
+              />
+            </View>
+          </Pressable>
+          <Pressable className="flex-1 p-4 flex flex-col justify-between min-h-[163px] bg-base-bg-white rounded-2xl border border-base-outline-default">
+            <View className="flex justify-start flex-col flex-wrap">
+              <View className="flex flex-col mb-3 h-8 w-8 bg-blue-500 rounded-lg items-center justify-center">
+                <Icon icon={GlobeIcon} size={22} color="white" />
+              </View>
+              <Text className="text-base font-anakotmai-medium w-full">เว็บไซต์ทางการ</Text>
+            </View>
+            <View className="flex-1 justify-end items-end">
+              <Icon
+                icon={CircleChevronRightIcon}
+                size={28}
+                strokeWidth={1}
+                className="text-foreground"
+              />
+            </View>
+          </Pressable>
+        </View>
+      </View>
     </View>
   )
 }
