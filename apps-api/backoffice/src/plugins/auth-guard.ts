@@ -33,10 +33,7 @@ export class AuthGuard {
 
     if (user.isErr()) return mapRepositoryError(user.error)
 
-    const intersectionRoles = R.intersection(
-      user.value.roles.map(({ role }) => role),
-      roles
-    )
+    const intersectionRoles = R.intersection(user.value.roles, roles)
 
     return ok({
       isAllowed: intersectionRoles.length > 0,
@@ -62,7 +59,10 @@ export class AuthGuard {
         },
       })
 
-    return ok(user.value)
+    return ok({
+      ...user.value,
+      roles: user.value.roles.map((r) => r.role),
+    })
   }
 }
 
