@@ -173,13 +173,14 @@ const ProfileSection = () => {
   const profileQuery = reactQueryClient.useQuery('/profile/me', {})
   const getRoleName = (roles: string[]) => {
     for (const role of roles) {
+      if (role.startsWith('pple-member:member')) return 'สมาชิกพรรค'
       switch (role) {
-        case 'mp':
+        case 'pple-ad:mp':
           return 'สมาชิกสส.พรรคประชาชน'
-        case 'hq':
+        case 'pple-ad:hq':
           return 'ส่วนกลาง'
-        case 'province':
-        case 'local':
+        case 'pple-ad:province':
+        case 'pple-ad:local':
           return 'คณะทำงาน'
       }
     }
