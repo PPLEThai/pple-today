@@ -19,7 +19,7 @@ import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import { GetElectionResponse, ListElectionResponse } from './models'
-import { ElectionRepository, ElectionRepositoryPlugin } from './repostiory'
+import { ElectionRepository, ElectionRepositoryPlugin } from './repository'
 
 export class ElectionService {
   constructor(private readonly electionRepository: ElectionRepository) {}
