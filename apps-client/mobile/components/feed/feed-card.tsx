@@ -53,6 +53,7 @@ import type {
   FeedItemAnnouncement,
   FeedItemBaseContent,
   FeedItemPost,
+  GetAnnouncementsResponse,
 } from '@api/backoffice/app'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { MoreOrLess } from '@app/components/more-or-less'
@@ -924,10 +925,10 @@ const PostDetailContent = (props: { feedItem: FeedItemPost }) => {
   )
 }
 
-type AnnouncementType = GetAnnouncementResponse['announcement'][number]['type']
+type AnnouncementType = GetAnnouncementsResponse['announcements'][number]['type']
 
 const AnnouncementDetailContent = (props: { feedItem: FeedItemAnnouncement }) => {
-  const getLogo = (type: string) => {
+  const getLogo = (type: AnnouncementType) => {
     switch (type) {
       case 'OFFICIAL':
         return {
