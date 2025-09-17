@@ -328,15 +328,15 @@ export class ElectionService {
       })
     }
 
-    const createBallot = await this.electionRepository.createMyBallot(
+    const createBallotResult = await this.electionRepository.createMyBallot(
       userId,
       electionId,
       encryptedBallot,
       faceImagePath,
       location
     )
-    if (createBallot.isErr()) {
-      return mapRepositoryError(createBallot.error, {
+    if (createBallotResult.isErr()) {
+      return mapRepositoryError(createBallotResult.error, {
         UNIQUE_CONSTRAINT_FAILED: {
           code: InternalErrorCode.ELECTION_USER_ALREADY_VOTE,
           message: `User have already voted to election id: ${electionId}`,

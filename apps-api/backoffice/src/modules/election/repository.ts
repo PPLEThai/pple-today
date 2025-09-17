@@ -104,28 +104,19 @@ export class ElectionRepository {
     location: string
   ) {
     return fromRepositoryPromise(
-      this.prismaService.$transaction(async (tx) => {
-        const ballot = await tx.electionBallot.create({
-          data: {
-            electionId,
-            encryptedBallot,
+      this.prismaService.electionBallot.create({
+        data: {
+          electionId,
+          encryptedBallot,
+          voteRecord: {
+            create: {
+              electionId,
+              userId,
+              faceImagePath,
+              location,
+            },
           },
-        })
-
-        const voteRecord = await tx.electionVoteRecord.create({
-          data: {
-            electionId,
-            userId,
-            faceImagePath,
-            location,
-            ballotId: ballot.id,
-          },
-        })
-
-        return {
-          ballot,
-          voteRecord,
-        }
+        },
       })
     )
   }
