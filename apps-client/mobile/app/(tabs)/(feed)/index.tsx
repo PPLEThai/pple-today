@@ -15,6 +15,7 @@ import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/i
 import { Button } from '@pple-today/ui/button'
 import { FormControl, FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
+import { Skeleton } from '@pple-today/ui/skeleton'
 import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
@@ -101,7 +102,7 @@ function MainHeader() {
     : { welcome: 'ยินดีต้อนรับสู่', title: 'PPLE Today' }
   return (
     <View className="w-full px-4 pt-4 pb-2 flex flex-row justify-between gap-2 bg-base-bg-white border-b border-base-outline-default ">
-      <View className="flex flex-row items-center gap-3">
+      <View className="flex flex-row items-center gap-3 flex-1">
         <Pressable
           className="w-10 h-10 flex flex-col items-center justify-center"
           onPress={() => {
@@ -114,19 +115,19 @@ function MainHeader() {
         >
           <PPLEIcon width={35} height={30} />
         </Pressable>
-        <View className="flex flex-col">
+        <View className="flex flex-col flex-1">
           {authMe.isLoading ? (
             <>
-              <View className="h-3 mt-1 bg-base-bg-default rounded-full w-[80px]" />
-              <View className="h-6 mt-2 bg-base-bg-default rounded-full w-[150px]" />
+              <Skeleton className="h-3 mt-1 rounded-full w-[80px]" />
+              <Skeleton className="h-6 mt-2 rounded-full w-[150px]" />
             </>
           ) : (
-            <>
+            <View className="flex-1 pr-4">
               <Text className="font-anakotmai-light text-xs">{headings.welcome}</Text>
-              <Text className="font-anakotmai-bold text-2xl text-base-primary-default">
+              <Text className="font-anakotmai-bold text-2xl text-base-primary-default line-clamp-1">
                 {headings.title}
               </Text>
-            </>
+            </View>
           )}
         </View>
       </View>

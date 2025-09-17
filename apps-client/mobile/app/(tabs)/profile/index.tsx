@@ -177,8 +177,8 @@ const ProfileSection = () => {
           <AvatarImage source={{ uri: profileQuery.data.profileImage }} />
           <AvatarPPLEFallback />
         </Avatar>
-        <View className="flex flex-col gap-2 items-start">
-          <Text className="text-base-text-high font-anakotmai-medium text-2xl">
+        <View className="flex flex-col gap-2 items-start flex-1">
+          <Text className="text-base-text-high font-anakotmai-medium text-2xl line-clamp-1">
             {profileQuery.data.name}
           </Text>
           <Badge>
@@ -189,7 +189,7 @@ const ProfileSection = () => {
     )
   return (
     <View className="flex flex-row justify-between items-center">
-      <View className="flex flex-row items-center gap-4">{Profile}</View>
+      <View className="flex flex-row items-center gap-4 flex-1">{Profile}</View>
       <Button
         size="icon"
         variant="outline"

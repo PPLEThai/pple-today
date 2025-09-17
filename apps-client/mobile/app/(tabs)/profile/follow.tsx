@@ -192,7 +192,7 @@ const PeopleFollowingItem = (profile: PeopleFollowingItemProps) => {
           />
           <AvatarPPLEFallback />
         </Avatar>
-        <Text className="font-noto-light flex-1">{profile.name}</Text>
+        <Text className="font-noto-light flex-1 line-clamp-1 mr-3">{profile.name}</Text>
       </View>
       <Button
         variant={isFollowing ? 'outline-primary' : 'primary'}
