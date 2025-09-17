@@ -30,7 +30,6 @@ export const GetAnnouncementByIdResponse = t.Object({
   id: t.String(),
   title: t.String(),
   content: t.String(),
-  backgroundColor: t.String(),
   attachments: t.Array(t.String({ format: 'uri', description: 'Attachment URL' })),
   createdAt: t.Date(),
   updatedAt: t.Date(),

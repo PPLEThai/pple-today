@@ -1,5 +1,13 @@
 import * as React from 'react'
-import { findNodeHandle, FlatListComponent, Pressable, StyleSheet, View } from 'react-native'
+import {
+  findNodeHandle,
+  FlatListComponent,
+  Platform,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  View,
+} from 'react-native'
 import Animated, {
   FlatListPropsWithLayout,
   useAnimatedScrollHandler,
@@ -20,7 +28,7 @@ import { Text } from '@pple-today/ui/text'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H2, H3 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import * as Linking from 'expo-linking'
 import { useRouter } from 'expo-router'
@@ -471,6 +479,25 @@ function FeedContent(props: PagerScrollViewProps) {
   const scrollContext = useScrollContext()
   const scrollHandler = useAnimatedScrollHandler(scrollContext)
 
+  const [refreshing, setRefreshing] = React.useState(false)
+  const queryClient = useQueryClient()
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true)
+    try {
+      queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/auth/me') })
+      queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/banners') })
+      await Promise.all([
+        queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/feed/me') }),
+        queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/announcements') }),
+      ])
+      await feedInfiniteQuery.refetch()
+      setRefreshing(false)
+    } catch (error) {
+      console.error('Error refreshing feed:', error)
+      setRefreshing(false)
+    }
+  }, [feedInfiniteQuery, queryClient])
+
   const Footer =
     feedInfiniteQuery.hasNextPage || feedInfiniteQuery.isLoading || feedInfiniteQuery.error ? (
       <FeedCardSkeleton />
@@ -506,9 +533,17 @@ function FeedContent(props: PagerScrollViewProps) {
       // @ts-expect-error FlatListMemo ref type is wrong
       ref={scrollElRef}
       onScroll={scrollHandler}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          progressViewOffset={Platform.select({ ios: 0, android: headerHeight })}
+          colors={['#FF6A13']} // base-primary-default
+        />
+      }
       headerHeight={headerHeight}
       data={data}
-      contentContainerClassName="py-4 flex flex-col"
+      contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
       ListHeaderComponent={<AnnouncementSection />}
       ListFooterComponent={Footer}
       onEndReachedThreshold={1}
@@ -536,6 +571,7 @@ let FlatListMemo = React.forwardRef<FlatListMethods, FlatListProps>(
       onEndReachedThreshold,
       renderItem,
       contentContainerClassName,
+      refreshControl,
     } = props
     return (
       <Animated.FlatList
@@ -545,6 +581,7 @@ let FlatListMemo = React.forwardRef<FlatListMethods, FlatListProps>(
         showsVerticalScrollIndicator={false}
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingTop: headerHeight }}
+        refreshControl={refreshControl}
         // contentOffset={{ x: 0, y: -headerHeight }}
         // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
         // automaticallyAdjustsScrollIndicatorInsets={false}

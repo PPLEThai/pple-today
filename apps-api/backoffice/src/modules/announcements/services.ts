@@ -58,7 +58,6 @@ export class AnnouncementService {
       id: announcementResult.value.feedItemId,
       title: announcementResult.value.title,
       content: announcementResult.value.content ?? '',
-      backgroundColor: announcementResult.value.backgroundColor ?? '',
       attachments: attachmentPublicUrls,
       createdAt: announcementResult.value.feedItem.createdAt,
       updatedAt: announcementResult.value.feedItem.updatedAt,

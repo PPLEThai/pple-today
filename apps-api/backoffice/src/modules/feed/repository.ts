@@ -82,8 +82,8 @@ export class FeedRepository {
       author: {
         id: rawFeedItem.author.id,
         name: rawFeedItem.author.name,
-        profileImage: rawFeedItem.author.profileImage
-          ? this.fileService.getPublicFileUrl(rawFeedItem.author.profileImage)
+        profileImage: rawFeedItem.author.profileImagePath
+          ? this.fileService.getPublicFileUrl(rawFeedItem.author.profileImagePath)
           : undefined,
         address: rawFeedItem.author.address ?? undefined,
       },
@@ -161,7 +161,7 @@ export class FeedRepository {
               thumbnailUrl: image.thumbnailPath
                 ? this.fileService.getPublicFileUrl(image.thumbnailPath)
                 : undefined,
-              url: this.fileService.getPublicFileUrl(image.url),
+              url: this.fileService.getPublicFileUrl(image.attachmentPath),
             })),
           },
         } satisfies GetFeedContentResponse)
@@ -477,7 +477,7 @@ export class FeedRepository {
                 select: {
                   id: true,
                   name: true,
-                  profileImage: true,
+                  profileImagePath: true,
                 },
               },
             },
@@ -545,7 +545,7 @@ export class FeedRepository {
             select: {
               id: true,
               name: true,
-              profileImage: true,
+              profileImagePath: true,
               address: {
                 select: {
                   province: true,
@@ -590,7 +590,7 @@ export class FeedRepository {
               select: {
                 id: true,
                 name: true,
-                profileImage: true,
+                profileImagePath: true,
               },
             },
           },
