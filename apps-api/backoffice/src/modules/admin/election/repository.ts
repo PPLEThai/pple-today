@@ -80,6 +80,14 @@ export class AdminElectionRepository {
       })
     )
   }
+
+  async deleteElectionById(electionId: string) {
+    return fromRepositoryPromise(
+      this.prismaService.election.delete({
+        where: { id: electionId },
+      })
+    )
+  }
 }
 
 export const AdminElectionRepositoryPlugin = new Elysia({ name: 'AdminElectionRepository' })

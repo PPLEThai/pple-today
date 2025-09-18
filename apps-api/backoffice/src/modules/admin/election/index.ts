@@ -4,6 +4,8 @@ import { UserRole } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import {
+  AdminDeleteElectionParams,
+  AdminDeleteElectionResponse,
   AdminGetElectionParams,
   AdminGetElectionResponse,
   AdminListElectionQuery,
@@ -94,6 +96,34 @@ export const AdminElectionController = new Elysia({
       body: AdminUpdateElectionBody,
       response: {
         200: AdminUpdateElectionResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.FORBIDDEN,
+          InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .delete(
+    '/:electionId',
+    async ({ params, status, adminElectionService }) => {
+      const result = await adminElectionService.deleteElection(params.electionId)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, {
+        message: 'Delete Election Successfully',
+      })
+    },
+    {
+      detail: {
+        summary: 'Delete Election',
+        description: 'Delete Election',
+      },
+      requiredLocalRole: [UserRole.OFFICIAL],
+      params: AdminDeleteElectionParams,
+      response: {
+        200: AdminDeleteElectionResponse,
         ...createErrorSchema(
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.FORBIDDEN,
