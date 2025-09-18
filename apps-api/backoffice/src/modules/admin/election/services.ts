@@ -17,6 +17,7 @@ import {
   AdminListElectionQuery,
   AdminListElectionResponse,
   AdminUpdateElectionBody,
+  AdminUpdateElectionCandidateBody,
 } from './models'
 import { AdminElectionRepository, AdminElectionRepositoryPlugin } from './repository'
 
@@ -187,6 +188,23 @@ export class AdminElectionService {
     }
 
     return ok(this.convertToCandidateDTO(createCandidateResult.value))
+  }
+
+  async updateElectionCandidate(candidateId: string, data: AdminUpdateElectionCandidateBody) {
+    const updateCandidateResult = await this.adminElectionRepository.updateElectionCandidate(
+      candidateId,
+      data
+    )
+    if (updateCandidateResult.isErr()) {
+      return mapRepositoryError(updateCandidateResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
+          message: `Not Found Election Candidate with id: ${candidateId}`,
+        },
+      })
+    }
+
+    return ok(this.convertToCandidateDTO(updateCandidateResult.value))
   }
 }
 

@@ -1,3 +1,4 @@
+import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService, FileTransactionService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { ElectionType, Prisma } from '@pple-today/database/prisma'
@@ -171,6 +172,68 @@ export class AdminElectionRepository {
     }
 
     return ok(createCandidateResult.value)
+  }
+
+  async updateElectionCandidate(candidateId: string, data: AdminCreateElectionCandidateBody) {
+    const candidateResult = await fromRepositoryPromise(
+      this.prismaService.electionCandidate.findUniqueOrThrow({
+        where: { id: candidateId },
+      })
+    )
+
+    if (candidateResult.isErr()) return err(candidateResult.error)
+
+    const candidate = candidateResult.value
+    let newProfileImage = data.profileImage
+    const oldProfileImage = candidate.profileImage
+    let fileTx: FileTransactionService | null = null
+
+    if (newProfileImage != oldProfileImage) {
+      const updateFileResult = await fromRepositoryPromise(
+        this.fileService.$transaction(async (tx) => {
+          if (oldProfileImage) {
+            const deleteOldFileResult = await tx.removeFile(oldProfileImage as FilePath)
+            if (deleteOldFileResult.isErr()) throw deleteOldFileResult.error
+          }
+
+          if (newProfileImage) {
+            const moveNewFileResult = await tx.bulkMoveToPublicFolder([newProfileImage])
+            if (moveNewFileResult.isErr()) throw moveNewFileResult.error
+
+            return moveNewFileResult.value[0]
+          }
+
+          return null
+        })
+      )
+      if (updateFileResult.isErr()) return err(updateFileResult.error)
+
+      newProfileImage = updateFileResult.value[0]
+      fileTx = updateFileResult.value[1]
+    }
+
+    const updateCandidateResult = await fromRepositoryPromise(
+      this.prismaService.electionCandidate.update({
+        where: { id: candidateId },
+        data: {
+          name: data.name,
+          description: data.description,
+          profileImage: newProfileImage,
+          number: data.number,
+        },
+      })
+    )
+
+    if (updateCandidateResult.isErr()) {
+      if (fileTx) {
+        const rollbackResult = await fileTx.rollback()
+        if (rollbackResult.isErr()) return err(rollbackResult.error)
+      }
+      console.log('gggg', updateCandidateResult)
+      return err(updateCandidateResult.error)
+    }
+
+    return ok(updateCandidateResult.value)
   }
 }
 

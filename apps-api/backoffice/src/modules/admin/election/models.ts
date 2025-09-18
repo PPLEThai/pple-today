@@ -123,3 +123,22 @@ export const AdminCreateElectionCandidateResponse = ElectionCandidate
 export type AdminCreateElectionCandidateResponse = Static<
   typeof AdminCreateElectionCandidateResponse
 >
+
+export const AdminUpdateElectionCandidateParams = t.Object({
+  electionId: t.String(),
+  candidateId: t.String(),
+})
+export type AdminUpdateElectionCandidateParams = Static<typeof AdminUpdateElectionCandidateParams>
+
+export const AdminUpdateElectionCandidateBody = t.Object({
+  name: t.String(),
+  description: t.Nullable(t.String()),
+  profileImage: t.Nullable(FilePath),
+  number: t.Nullable(t.Integer()),
+})
+export type AdminUpdateElectionCandidateBody = Static<typeof AdminUpdateElectionCandidateBody>
+
+export const AdminUpdateElectionCandidateResponse = ElectionCandidate
+export type AdminUpdateElectionCandidateResponse = Static<
+  typeof AdminUpdateElectionCandidateResponse
+>

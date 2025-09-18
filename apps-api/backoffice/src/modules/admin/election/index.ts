@@ -19,6 +19,7 @@ import {
   AdminListElectionQuery,
   AdminListElectionResponse,
   AdminUpdateElectionBody,
+  AdminUpdateElectionCandidateParams,
   AdminUpdateElectionParams,
   AdminUpdateElectionResponse,
 } from './models'
@@ -241,6 +242,35 @@ export const AdminElectionController = new Elysia({
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.FORBIDDEN,
           InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .put(
+    '/:electionId/candidates/:candidateId',
+    async ({ params, body, status, adminElectionService }) => {
+      const result = await adminElectionService.updateElectionCandidate(params.candidateId, body)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, result.value)
+    },
+    {
+      detail: {
+        summary: 'Update Election Candidate',
+        description: 'Update Election Candidate',
+      },
+      params: AdminUpdateElectionCandidateParams,
+      body: AdminCreateElectionCandidateBody,
+      response: {
+        200: AdminCreateElectionCandidateResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.FORBIDDEN,
+          InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
           InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.FILE_ROLLBACK_FAILED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
