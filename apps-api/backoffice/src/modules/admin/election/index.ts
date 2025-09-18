@@ -8,6 +8,9 @@ import {
   AdminGetElectionResponse,
   AdminListElectionQuery,
   AdminListElectionResponse,
+  AdminUpdateElectionBody,
+  AdminUpdateElectionParams,
+  AdminUpdateElectionResponse,
 } from './models'
 import { AdminElectionServicePlugin } from './services'
 
@@ -62,6 +65,35 @@ export const AdminElectionController = new Elysia({
       params: AdminGetElectionParams,
       response: {
         200: AdminGetElectionResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.FORBIDDEN,
+          InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .put(
+    '/:electionId',
+    async ({ params, body, status, adminElectionService }) => {
+      const result = await adminElectionService.updateElection(params.electionId, body)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, {
+        message: 'Update Election Successfully',
+      })
+    },
+    {
+      detail: {
+        summary: 'Update Election',
+        description: 'Update Election',
+      },
+      requiredLocalRole: [UserRole.OFFICIAL],
+      params: AdminUpdateElectionParams,
+      body: AdminUpdateElectionBody,
+      response: {
+        200: AdminUpdateElectionResponse,
         ...createErrorSchema(
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.FORBIDDEN,

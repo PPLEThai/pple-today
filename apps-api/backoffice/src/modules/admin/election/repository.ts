@@ -3,6 +3,8 @@ import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { ElectionType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
+import { AdminUpdateElectionBody } from './models'
+
 import { PrismaServicePlugin } from '../../../plugins/prisma'
 
 export class AdminElectionRepository {
@@ -53,6 +55,28 @@ export class AdminElectionRepository {
     return fromRepositoryPromise(
       this.prismaService.election.findUniqueOrThrow({
         where: { id: electionId },
+      })
+    )
+  }
+
+  async updateElection(electionId: string, data: AdminUpdateElectionBody) {
+    return fromRepositoryPromise(
+      this.prismaService.election.update({
+        where: { id: electionId },
+        data: {
+          name: data.name,
+          description: data.description,
+          location: data.location,
+          type: data.type,
+          isCancelled: data.isCancelled,
+          publishDate: data.publishDate,
+          openRegister: data.openRegister,
+          closeRegister: data.closeRegister,
+          openVoting: data.openVoting,
+          closeVoting: data.closeVoting,
+          startResult: data.startResult,
+          endResult: data.endResult,
+        },
       })
     )
   }
