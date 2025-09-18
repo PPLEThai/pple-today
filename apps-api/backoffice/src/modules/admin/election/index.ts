@@ -1,6 +1,5 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
-import { UserRole } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import {
@@ -40,7 +39,7 @@ export const AdminElectionController = new Elysia({
         summary: 'List Elections',
         description: 'List Elections',
       },
-      requiredLocalRole: [UserRole.OFFICIAL],
+      requiredLocalUser: true,
       query: AdminListElectionQuery,
       response: {
         200: AdminListElectionResponse,

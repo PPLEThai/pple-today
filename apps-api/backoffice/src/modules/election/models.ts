@@ -8,7 +8,7 @@ import {
 import { EligibleVoterType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
-export const ListElection = t.Intersect([
+export const ElectionWithCurrentStatus = t.Intersect([
   ElectionInfo,
   t.Object({
     status: ElectionStatus,
@@ -16,9 +16,9 @@ export const ListElection = t.Intersect([
     isRegistered: t.Nullable(t.Boolean()),
   }),
 ])
-export type ListElection = Static<typeof ListElection>
+export type ElectionWithCurrentStatus = Static<typeof ElectionWithCurrentStatus>
 
-export const ListElectionResponse = t.Array(ListElection)
+export const ListElectionResponse = t.Array(ElectionWithCurrentStatus)
 export type ListElectionResponse = Static<typeof ListElectionResponse>
 
 export const GetElectionParams = t.Object({
@@ -27,7 +27,7 @@ export const GetElectionParams = t.Object({
 export type GetElectionParams = Static<typeof GetElectionParams>
 
 export const GetElectionResponse = t.Intersect([
-  ListElection,
+  ElectionWithCurrentStatus,
   t.Object({
     candidates: t.Array(ElectionCandidate),
   }),
