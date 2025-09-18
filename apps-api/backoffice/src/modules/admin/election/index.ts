@@ -7,6 +7,9 @@ import {
   AdminCancelElectionResponse,
   AdminCreateCandidateProfileUploadURLBody,
   AdminCreateCandidateProfileUploadURLResponse,
+  AdminCreateElectionCandidateBody,
+  AdminCreateElectionCandidateParams,
+  AdminCreateElectionCandidateResponse,
   AdminDeleteElectionParams,
   AdminDeleteElectionResponse,
   AdminGetElectionParams,
@@ -212,6 +215,34 @@ export const AdminElectionController = new Elysia({
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.FILE_UNSUPPORTED_MIME_TYPE,
           InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .post(
+    '/:electionId/candidates',
+    async ({ params, body, status, adminElectionService }) => {
+      const result = await adminElectionService.createElectionCandidate(params.electionId, body)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, result.value)
+    },
+    {
+      detail: {
+        summary: 'Create Election Candidate',
+        description: 'Create Election Candidate',
+      },
+      params: AdminCreateElectionCandidateParams,
+      body: AdminCreateElectionCandidateBody,
+      response: {
+        200: AdminCreateElectionCandidateResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.FORBIDDEN,
+          InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

@@ -1,6 +1,7 @@
 import { createId } from '@paralleldrive/cuid2'
 import {
   ElectionCandidate,
+  ElectionCandidate as ElectionCandidateDTO,
   ElectionInfo,
   ImageFileMimeType,
   InternalErrorCode,
@@ -12,6 +13,7 @@ import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import {
+  AdminCreateElectionCandidateBody,
   AdminListElectionQuery,
   AdminListElectionResponse,
   AdminUpdateElectionBody,
@@ -44,6 +46,19 @@ export class AdminElectionService {
       endResult: election.endResult,
       createdAt: election.createdAt,
       updatedAt: election.updatedAt,
+    }
+  }
+
+  private convertToCandidateDTO(candidate: ElectionCandidate): ElectionCandidateDTO {
+    return {
+      id: candidate.id,
+      electionId: candidate.electionId,
+      name: candidate.name,
+      description: candidate.description,
+      profileImage: candidate.profileImage,
+      number: candidate.number,
+      createdAt: candidate.createdAt,
+      updatedAt: candidate.updatedAt,
     }
   }
 
@@ -137,18 +152,7 @@ export class AdminElectionService {
     const candidatesResult = await this.adminElectionRepository.listElectionCandidates(electionId)
     if (candidatesResult.isErr()) return mapRepositoryError(candidatesResult.error)
 
-    const candidates: ElectionCandidate[] = candidatesResult.value.map((candidate) => ({
-      id: candidate.id,
-      electionId: candidate.electionId,
-      name: candidate.name,
-      description: candidate.description,
-      profileImage: candidate.profileImage,
-      number: candidate.number,
-      createdAt: candidate.createdAt,
-      updatedAt: candidate.updatedAt,
-    }))
-
-    return ok(candidates)
+    return ok(candidatesResult.value.map((c) => this.convertToCandidateDTO(c)))
   }
 
   async createCandidateProfileUploadURL(contentType: ImageFileMimeType) {
@@ -166,6 +170,23 @@ export class AdminElectionService {
       uploadUrl: uploadURLResult.value.url,
       uploadFields: uploadURLResult.value.fields,
     })
+  }
+
+  async createElectionCandidate(electionId: string, data: AdminCreateElectionCandidateBody) {
+    const createCandidateResult = await this.adminElectionRepository.createElectionCandidate(
+      electionId,
+      data
+    )
+    if (createCandidateResult.isErr()) {
+      return mapRepositoryError(createCandidateResult.error, {
+        FOREIGN_KEY_CONSTRAINT_FAILED: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Not Found Election with id: ${electionId}`,
+        },
+      })
+    }
+
+    return ok(this.convertToCandidateDTO(createCandidateResult.value))
   }
 }
 

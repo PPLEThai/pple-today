@@ -105,3 +105,21 @@ export const AdminCreateCandidateProfileUploadURLResponse = t.Object({
 export type AdminCreateCandidateProfileUploadURLResponse = Static<
   typeof AdminCreateCandidateProfileUploadURLResponse
 >
+
+export const AdminCreateElectionCandidateParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminCreateElectionCandidateParams = Static<typeof AdminCreateElectionCandidateParams>
+
+export const AdminCreateElectionCandidateBody = t.Object({
+  name: t.String(),
+  description: t.Nullable(t.String()),
+  profileImage: t.Nullable(FilePath),
+  number: t.Nullable(t.Integer()),
+})
+export type AdminCreateElectionCandidateBody = Static<typeof AdminCreateElectionCandidateBody>
+
+export const AdminCreateElectionCandidateResponse = ElectionCandidate
+export type AdminCreateElectionCandidateResponse = Static<
+  typeof AdminCreateElectionCandidateResponse
+>

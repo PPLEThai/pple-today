@@ -1,14 +1,19 @@
-import { PrismaService } from '@pple-today/api-common/services'
-import { fromRepositoryPromise, mapRepositoryError } from '@pple-today/api-common/utils'
+import { FileService, FileTransactionService, PrismaService } from '@pple-today/api-common/services'
+import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { ElectionType, Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
+import { ok } from 'neverthrow'
 
-import { AdminUpdateElectionBody } from './models'
+import { AdminCreateElectionCandidateBody, AdminUpdateElectionBody } from './models'
 
+import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
 
 export class AdminElectionRepository {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly fileService: FileService
+  ) {}
 
   async listElections(input: {
     filter?: {
@@ -126,10 +131,51 @@ export class AdminElectionRepository {
       })
     )
   }
+
+  async createElectionCandidate(electionId: string, data: AdminCreateElectionCandidateBody) {
+    let profileImage = data.profileImage
+    let fileTx: FileTransactionService | null = null
+
+    if (profileImage) {
+      const moveFileResult = await fromRepositoryPromise(
+        this.fileService.$transaction(async (tx) => {
+          const moveFileResult = await tx.bulkMoveToPublicFolder([profileImage!])
+          if (moveFileResult.isErr()) throw moveFileResult.error
+
+          return ok(moveFileResult.value[0])
+        })
+      )
+      if (moveFileResult.isErr()) return err(moveFileResult.error)
+
+      profileImage = moveFileResult.value[0].value
+      fileTx = moveFileResult.value[1]
+    }
+
+    const createCandidateResult = await fromRepositoryPromise(
+      this.prismaService.electionCandidate.create({
+        data: {
+          electionId,
+          name: data.name,
+          description: data.description,
+          profileImage,
+          number: data.number,
+        },
+      })
+    )
+    if (createCandidateResult.isErr()) {
+      if (fileTx) {
+        const rollbackResult = await fileTx.rollback()
+        if (rollbackResult.isErr()) return err(rollbackResult.error)
+      }
+      return err(createCandidateResult.error)
+    }
+
+    return ok(createCandidateResult.value)
+  }
 }
 
 export const AdminElectionRepositoryPlugin = new Elysia({ name: 'AdminElectionRepository' })
-  .use(PrismaServicePlugin)
-  .decorate(({ prismaService }) => ({
-    adminElectionRepository: new AdminElectionRepository(prismaService),
+  .use([PrismaServicePlugin, FileServicePlugin])
+  .decorate(({ prismaService, fileService }) => ({
+    adminElectionRepository: new AdminElectionRepository(prismaService, fileService),
   }))
