@@ -19,7 +19,12 @@ const transformProvinceDetails = async (): Promise<{
     throw new Error('Failed to fetch province details')
   }
 
-  const data = await response.json()
+  const data: {
+    zipcode: number
+    province: string
+    amphoe: string
+    district: string
+  }[] = await response.json()
 
   const onlyProvince = data.map(({ province }) => province)
   const uniqueProvince = Array.from(new Set<string>(onlyProvince))

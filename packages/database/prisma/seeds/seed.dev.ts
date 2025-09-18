@@ -27,7 +27,12 @@ const transformProvinceDetails = async (): Promise<{
     throw new Error('Failed to fetch province details')
   }
 
-  const data = await response.json()
+  const data: {
+    zipcode: number
+    province: string
+    amphoe: string
+    district: string
+  }[] = await response.json()
 
   const onlyProvince = data.map(({ province }) => province)
   const uniqueProvince = Array.from(new Set<string>(onlyProvince))
@@ -287,7 +292,6 @@ const seedAnnouncements = async () => {
           title: 'Welcome to PPLE Today',
           content: 'This is the first announcement on PPLE Today.',
           type: AnnouncementType.OFFICIAL,
-          backgroundColor: '#FF5733',
           attachments: {
             create: [
               {
@@ -316,7 +320,6 @@ const seedAnnouncements = async () => {
           title: 'Welcome to PPLE Today',
           content: 'This is the second announcement on PPLE Today.',
           type: AnnouncementType.OFFICIAL,
-          backgroundColor: '#33FF57',
           attachments: {
             create: [
               {
@@ -345,7 +348,6 @@ const seedAnnouncements = async () => {
           title: 'Welcome to PPLE Today',
           content: 'This is the third announcement on PPLE Today.',
           type: AnnouncementType.OFFICIAL,
-          backgroundColor: '#5733FF',
           attachments: {
             create: [
               {
