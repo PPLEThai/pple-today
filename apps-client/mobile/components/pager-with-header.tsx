@@ -162,7 +162,7 @@ export function Pager({ children }: { children: React.ReactNode }) {
     >
       <PagerTabBarProvider>
         <ScrollContextProvider onScroll={onScrollWorklet}>
-          <View className="flex-1 bg-base-bg-default">
+          <View className="flex-1">
             {/* PanGestureRecognizer only works for one view so we have to move it up to the parent */}
             {Platform.OS === 'ios' ? (
               <ExpoScrollForwarderView scrollViewTag={scrollViewTag} style={{ flex: 1 }}>

@@ -7,12 +7,12 @@ enum UserRole {
 }
 
 model User {
-    id           String   @id @default(cuid())
-    name         String
-    phoneNumber  String   @unique
-    profileImage String?
-    point        Int      @default(0)
-    role         UserRole @default(USER)
+    id               String   @id @default(cuid())
+    name             String
+    phoneNumber      String   @unique
+    profileImagePath String?
+    point            Int      @default(0)
+    role             UserRole @default(USER)
 
     responsibleArea String?
 
@@ -37,8 +37,6 @@ model User {
     followings     UserFollowsUser[]  @relation("Follows")
     followers      UserFollowsUser[]  @relation("FollowedBy")
     followedTopics UserFollowsTopic[]
-
-    eventAttendants EventAttendant[]
 
     voters      ElectionEligibleVoter[]
     voteRecords ElectionVoteRecord[]

@@ -124,8 +124,6 @@ const FileTestRoute = () => {
             title: 'Test Announcement',
             content: 'This is a test announcement with an uploaded file.',
             attachmentFilePaths: [result.filePath as any],
-            backgroundColor: null,
-            iconImage: null,
             topicIds: [],
             type: 'OFFICIAL',
           },

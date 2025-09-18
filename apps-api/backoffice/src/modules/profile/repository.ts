@@ -145,7 +145,7 @@ export class ProfileRepository {
                 select: {
                   id: true,
                   name: true,
-                  profileImage: true,
+                  profileImagePath: true,
                   address: true,
                 },
               },
@@ -163,7 +163,7 @@ export class ProfileRepository {
 
     if (profileData.profile) {
       userData.name = profileData.profile.name
-      userData.profileImage = profileData.profile.profileImage
+      userData.profileImagePath = profileData.profile.profileImagePath
     }
 
     if (profileData.interestTopics) {
@@ -200,19 +200,21 @@ export class ProfileRepository {
 
     const moveFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (tx) => {
-        if (profileData.profileImage) {
-          if (existingUser.value.profileImage) {
+        if (profileData.profileImagePath) {
+          if (existingUser.value.profileImagePath) {
             const removeResult = await tx.bulkRemoveFile([
-              existingUser.value.profileImage as FilePath,
+              existingUser.value.profileImagePath as FilePath,
             ])
 
             if (removeResult.isErr()) return removeResult
           }
 
-          const moveResult = await tx.bulkMoveToPublicFolder([profileData.profileImage as FilePath])
+          const moveResult = await tx.bulkMoveToPublicFolder([
+            profileData.profileImagePath as FilePath,
+          ])
           if (moveResult.isErr()) return moveResult
 
-          profileData.profileImage = moveResult.value[0]
+          profileData.profileImagePath = moveResult.value[0]
 
           return moveResult.value[0]
         }

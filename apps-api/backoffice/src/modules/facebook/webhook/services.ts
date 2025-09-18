@@ -174,7 +174,14 @@ export class FacebookWebhookService {
     post: PagePost
   ): Pick<
     PostAttachment,
-    'description' | 'cacheKey' | 'order' | 'thumbnailPath' | 'type' | 'url' | 'width' | 'height'
+    | 'description'
+    | 'cacheKey'
+    | 'order'
+    | 'thumbnailPath'
+    | 'type'
+    | 'attachmentPath'
+    | 'width'
+    | 'height'
   >[] {
     return R.pipe(
       post.attachments?.data ?? [],
@@ -190,7 +197,7 @@ export class FacebookWebhookService {
                   width: subattachment.media.image.width,
                   height: subattachment.media.image.height,
                   thumbnailPath: subattachment.media.image.src,
-                  url: subattachment.media.source,
+                  attachmentPath: subattachment.media.source,
                   type: PostAttachmentType.VIDEO,
                   cacheKey: getFileName(subattachment.media.source),
                 }
@@ -201,7 +208,7 @@ export class FacebookWebhookService {
                   width: subattachment.media.image.width,
                   height: subattachment.media.image.height,
                   thumbnailPath: null,
-                  url: subattachment.media.image.src,
+                  attachmentPath: subattachment.media.image.src,
                   type: PostAttachmentType.IMAGE,
                   cacheKey: getFileName(subattachment.media.image.src),
                 }
@@ -221,7 +228,7 @@ export class FacebookWebhookService {
             description: attachment.description ?? null,
             width: attachment.media.image.width,
             height: attachment.media.image.height,
-            url: attachment.media.image.src,
+            attachmentPath: attachment.media.image.src,
             thumbnailPath: null,
             type: PostAttachmentType.IMAGE,
             cacheKey: getFileName(attachment.media.image.src),
@@ -234,7 +241,7 @@ export class FacebookWebhookService {
             width: attachment.media.image.width,
             height: attachment.media.image.height,
             thumbnailPath: attachment.media.image.src,
-            url: attachment.media.source,
+            attachmentPath: attachment.media.source,
             type: PostAttachmentType.VIDEO,
             order: idx + 1,
             cacheKey: getFileName(attachment.media.source),
