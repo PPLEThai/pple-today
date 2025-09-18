@@ -4,6 +4,8 @@ import { UserRole } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import {
+  AdminCancelElectionParams,
+  AdminCancelElectionResponse,
   AdminDeleteElectionParams,
   AdminDeleteElectionResponse,
   AdminGetElectionParams,
@@ -124,6 +126,34 @@ export const AdminElectionController = new Elysia({
       params: AdminDeleteElectionParams,
       response: {
         200: AdminDeleteElectionResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.FORBIDDEN,
+          InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .put(
+    '/:electionId/cancel',
+    async ({ params, status, adminElectionService }) => {
+      const result = await adminElectionService.cancelElection(params.electionId)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, {
+        message: 'Cancel Election Successfully',
+      })
+    },
+    {
+      detail: {
+        summary: 'Cancel Election',
+        description: 'Cancel Election',
+      },
+      requiredLocalRole: [UserRole.OFFICIAL],
+      params: AdminCancelElectionParams,
+      response: {
+        200: AdminCancelElectionResponse,
         ...createErrorSchema(
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.FORBIDDEN,

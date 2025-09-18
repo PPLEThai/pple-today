@@ -88,6 +88,32 @@ export class AdminElectionRepository {
       })
     )
   }
+
+  async cancelElectionById(electionId: string) {
+    return fromRepositoryPromise(
+      this.prismaService.$transaction(async (tx) => {
+        await Promise.all([
+          tx.electionBallot.deleteMany({
+            where: {
+              electionId,
+            },
+          }),
+          tx.electionVoteRecord.deleteMany({
+            where: {
+              electionId,
+            },
+          }),
+        ])
+
+        await tx.election.update({
+          where: { id: electionId },
+          data: {
+            isCancelled: true,
+          },
+        })
+      })
+    )
+  }
 }
 
 export const AdminElectionRepositoryPlugin = new Elysia({ name: 'AdminElectionRepository' })
