@@ -603,7 +603,9 @@ function FeedContent(props: PagerScrollViewProps) {
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/feed/me') }),
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/announcements') }),
     ])
-  }, [queryClient])
+    await feedInfiniteQuery.refetch()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryClient, feedInfiniteQuery.refetch])
 
   const renderFeedItem = React.useCallback(
     ({ item }: { item: GetMyFeedResponse[number]; index: number }) => {
@@ -694,7 +696,9 @@ function FeedTopicContent(props: FeedTopicContentProps) {
         queryKey: reactQueryClient.getQueryKey('/feed/topic', { query: { topicId } }),
       }),
     ])
-  }, [queryClient, topicId])
+    await feedInfiniteQuery.refetch()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryClient, topicId, feedInfiniteQuery.refetch])
 
   const renderFeedItem = React.useCallback(
     ({ item }: { item: GetMyFeedResponse[number]; index: number }) => {

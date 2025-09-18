@@ -50,12 +50,25 @@ function createReactQueryClient<TSchema extends Record<string, any>>(
     return result.data
   }
 
-  function getKey(method: any, path: any, payload: any = {}): any {
+  function getKey(
+    method: any,
+    path: any,
+    payload: { pathParams?: any; query?: any; headers?: any } = {}
+  ): any {
+    if (
+      payload?.pathParams === undefined &&
+      payload?.query === undefined &&
+      payload?.headers === undefined
+    ) {
+      return [QUERY_KEY, method, path]
+    }
+    if (payload?.query === undefined && payload?.headers === undefined) {
+      return [QUERY_KEY, method, path, payload?.pathParams]
+    }
+    if (payload?.headers === undefined) {
+      return [QUERY_KEY, method, path, payload?.pathParams, payload?.query]
+    }
     return [QUERY_KEY, method, path, payload?.pathParams, payload?.query, payload?.headers]
-  }
-
-  function getQueryKey(path: any, payload: any = {}): any {
-    return [QUERY_KEY, 'get', path, payload?.pathParams, payload?.query, payload?.headers]
   }
 
   return {
@@ -87,8 +100,8 @@ function createReactQueryClient<TSchema extends Record<string, any>>(
         ...options,
       } as UseMutationOptions<any, any, any, any>
     },
-    getKey,
-    getQueryKey,
+    getKey: getKey,
+    getQueryKey: (...args) => getKey('get', ...args),
   }
 }
 
