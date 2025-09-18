@@ -394,8 +394,8 @@ function SelectTopicButton() {
       <BottomSheetModal
         ref={bottomSheetModalRef}
         bottomInset={insets.bottom}
+        topInset={insets.top}
         enableDynamicSizing
-        maxDynamicContentSize={400}
       >
         <SelectTopicForm onClose={onClose} />
       </BottomSheetModal>
@@ -443,66 +443,65 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
     props.onClose()
   }
   return (
-    <>
-      <BottomSheetScrollView>
-        <View className="flex flex-col gap-1 p-4 pb-0">
-          <Text className="text-2xl font-anakotmai-bold">เลือกหัวข้อที่สนใจ</Text>
-          <Text className="text-sm font-anakotmai-light text-base-text-medium">
-            เลือก 1 หัวข้อสำหรับเพิ่มลงบนหน้าแรก
-          </Text>
-        </View>
-        <form.Field name="topicId">
-          {(field) => (
-            <FormItem field={field} className="p-4">
-              <FormLabel style={[StyleSheet.absoluteFill, { opacity: 0, pointerEvents: 'none' }]}>
-                ความคิดเห็น
-              </FormLabel>
-              <ToggleGroup
-                type="single"
-                value={field.state.value}
-                onValueChange={(value) => {
-                  field.handleChange(value!)
-                }}
-                className="bg-base-bg-light rounded-lg border border-base-outline-default flex flex-row flex-wrap gap-2 justify-start p-2"
-              >
-                {listTopicQuery.isLoading || !listTopicQuery.data ? (
-                  <TopicSkeleton />
-                ) : listTopicQuery.data.length === 0 ? (
-                  <View className="w-full items-center justify-center py-14">
-                    <Text className="text-base-text-placeholder font-anakotmai-medium">
-                      ยังไม่มีหัวข้อ
-                    </Text>
-                  </View>
-                ) : (
-                  listTopicQuery.data?.map((tag) => {
-                    if (tag.followed)
-                      return (
-                        <View
-                          key={tag.id}
-                          className={cn(
-                            toggleVariants(),
-                            'bg-base-primary-default active:bg-base-primary-medium web:hover:bg-base-primary-medium border-base-primary-default'
-                          )}
-                        >
-                          <Text className={cn(toggleTextVariants(), 'text-base-text-invert')}>
-                            {tag.name}
-                          </Text>
-                        </View>
-                      )
+    <BottomSheetScrollView>
+      <View className="flex flex-col gap-1 p-4 pb-0">
+        <Text className="text-2xl font-anakotmai-bold">เลือกหัวข้อที่สนใจ</Text>
+        <Text className="text-sm font-anakotmai-light text-base-text-medium">
+          เลือก 1 หัวข้อสำหรับเพิ่มลงบนหน้าแรก
+        </Text>
+      </View>
+      <form.Field name="topicId">
+        {(field) => (
+          <FormItem field={field} className="p-4">
+            <FormLabel style={[StyleSheet.absoluteFill, { opacity: 0, pointerEvents: 'none' }]}>
+              ความคิดเห็น
+            </FormLabel>
+            <ToggleGroup
+              type="single"
+              value={field.state.value}
+              onValueChange={(value) => {
+                field.handleChange(value!)
+              }}
+              className="bg-base-bg-light rounded-lg border border-base-outline-default flex flex-row flex-wrap gap-2 justify-start p-2"
+            >
+              {listTopicQuery.isLoading || !listTopicQuery.data ? (
+                <TopicSkeleton />
+              ) : listTopicQuery.data.length === 0 ? (
+                <View className="w-full items-center justify-center py-14">
+                  <Text className="text-base-text-placeholder font-anakotmai-medium">
+                    ยังไม่มีหัวข้อ
+                  </Text>
+                </View>
+              ) : (
+                listTopicQuery.data?.map((tag) => {
+                  if (tag.followed)
                     return (
-                      <ToggleGroupItem key={tag.id} value={tag.id} variant="outline">
-                        <Text>{tag.name}</Text>
-                      </ToggleGroupItem>
+                      <View
+                        key={tag.id}
+                        className={cn(
+                          toggleVariants(),
+                          'bg-base-primary-default active:bg-base-primary-medium web:hover:bg-base-primary-medium border-base-primary-default'
+                        )}
+                      >
+                        <Text className={cn(toggleTextVariants(), 'text-base-text-invert')}>
+                          {tag.name}
+                        </Text>
+                      </View>
                     )
-                  })
-                )}
-              </ToggleGroup>
-              <FormMessage />
-            </FormItem>
-          )}
-        </form.Field>
-      </BottomSheetScrollView>
-      <View className="flex flex-col gap-2 px-4 pt-2 bg-base-bg-white">
+                  return (
+                    <ToggleGroupItem key={tag.id} value={tag.id} variant="outline">
+                      <Text>{tag.name}</Text>
+                    </ToggleGroupItem>
+                  )
+                })
+              )}
+            </ToggleGroup>
+            <FormMessage />
+          </FormItem>
+        )}
+      </form.Field>
+      {/* TODO: make sticky and set max height, might use BottomSheetFooter */}
+      <View className="flex flex-col gap-2 px-4 py-2 bg-base-bg-white">
         <form.Subscribe selector={(state) => [state.isSubmitting]}>
           {([isSubmitting]) => (
             <Button
@@ -517,7 +516,7 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
           <Text>ยกเลิก</Text>
         </Button>
       </View>
-    </>
+    </BottomSheetScrollView>
   )
 }
 
@@ -599,6 +598,7 @@ function FeedContent(props: PagerScrollViewProps) {
   const onRefresh = React.useCallback(async () => {
     queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/auth/me') })
     queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/banners') })
+    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/topics/list') })
     await Promise.all([
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/feed/me') }),
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/announcements') }),
