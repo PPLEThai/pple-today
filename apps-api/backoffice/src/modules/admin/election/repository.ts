@@ -1,6 +1,6 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { ElectionType } from '@pple-today/database/prisma'
+import { ElectionType, Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import { PrismaServicePlugin } from '../../../plugins/prisma'
@@ -22,24 +22,28 @@ export class AdminElectionRepository {
     const { page, limit } = input.pagination
     const skip = Math.max((page - 1) * limit, 0)
 
+    const filter: Prisma.ElectionWhereInput = {
+      name: {
+        contains: input.filter?.name,
+        mode: 'insensitive',
+      },
+      type: input.filter?.type,
+      isCancelled: input.filter?.isCancelled,
+    }
+
     return fromRepositoryPromise(async () => {
       const [data, count] = await Promise.all([
         this.prismaService.election.findMany({
-          where: {
-            name: {
-              contains: input.filter?.name,
-              mode: 'insensitive',
-            },
-            type: input.filter?.type,
-            isCancelled: input.filter?.isCancelled,
-          },
+          where: filter,
           orderBy: {
             updatedAt: 'desc',
           },
           take: limit,
           skip,
         }),
-        this.prismaService.election.count(),
+        this.prismaService.election.count({
+          where: filter,
+        }),
       ])
 
       return {
