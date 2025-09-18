@@ -64,7 +64,7 @@ export const AdminElectionController = new Elysia({
         summary: 'Get Election Detail',
         description: 'Get Election Detail',
       },
-      requiredLocalRole: [UserRole.OFFICIAL],
+      requiredLocalUser: true,
       params: AdminGetElectionParams,
       response: {
         200: AdminGetElectionResponse,
@@ -92,7 +92,7 @@ export const AdminElectionController = new Elysia({
         summary: 'Update Election',
         description: 'Update Election',
       },
-      requiredLocalRole: [UserRole.OFFICIAL],
+      requiredLocalUser: true,
       params: AdminUpdateElectionParams,
       body: AdminUpdateElectionBody,
       response: {
@@ -121,7 +121,7 @@ export const AdminElectionController = new Elysia({
         summary: 'Delete Election',
         description: 'Delete Election',
       },
-      requiredLocalRole: [UserRole.OFFICIAL],
+      requiredLocalUser: true,
       params: AdminDeleteElectionParams,
       response: {
         200: AdminDeleteElectionResponse,
@@ -149,7 +149,7 @@ export const AdminElectionController = new Elysia({
         summary: 'Cancel Election',
         description: 'Cancel Election',
       },
-      requiredLocalRole: [UserRole.OFFICIAL],
+      requiredLocalUser: true,
       params: AdminCancelElectionParams,
       response: {
         200: AdminCancelElectionResponse,
