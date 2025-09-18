@@ -215,6 +215,12 @@ const ELECTION_ERROR_SCHEMA = {
   ELECTION_NOT_IN_VOTE_PERIOD: {
     status: 409,
   },
+  ELECTION_VOTE_TO_INVALID_TYPE: {
+    status: 409,
+  },
+  ELECTION_USER_ALREADY_VOTE: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 export const InternalErrorCodeSchemas = {
