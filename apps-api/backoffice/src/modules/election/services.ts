@@ -8,8 +8,7 @@ import {
   InternalErrorCode,
 } from '@pple-today/api-common/dtos'
 import { FileService } from '@pple-today/api-common/services'
-import { mapRepositoryError } from '@pple-today/api-common/utils'
-import { err } from '@pple-today/api-common/utils'
+import { err, mapRepositoryError } from '@pple-today/api-common/utils'
 import {
   Election,
   ElectionCandidate,
