@@ -241,8 +241,8 @@ export function OnboardingAddress() {
       )}
       {openForm && (
         <>
-          <View className="gap-2 px-6 pb-6 pt-4">
-            <ScrollView contentContainerClassName="gap-2">
+          <View className="gap-2 px-6 pb-6 pt-4 flex-1">
+            <ScrollView contentContainerClassName="gap-2 h-full">
               <form.Field
                 name="province"
                 listeners={{

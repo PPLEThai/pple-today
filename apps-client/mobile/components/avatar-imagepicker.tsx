@@ -33,7 +33,7 @@ export function AvatarImagePicker({
       mediaTypes: ['images'],
       aspect: [1, 1],
       allowsEditing: true,
-      quality: 1,
+      quality: 0.4,
       base64: true,
     })
     if (result.canceled) {
