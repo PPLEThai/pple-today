@@ -247,7 +247,7 @@ export class SearchRepository {
         select: {
           id: true,
           name: true,
-          profileImage: true,
+          profileImagePath: true,
         },
       })
     )

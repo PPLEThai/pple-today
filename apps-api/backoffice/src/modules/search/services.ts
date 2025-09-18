@@ -43,8 +43,8 @@ export class SearchService {
         type: 'USER' as const,
         id: user.id,
         name: user.name,
-        profileImageUrl: user.profileImage
-          ? this.fileService.getPublicFileUrl(user.profileImage)
+        profileImage: user.profileImagePath
+          ? this.fileService.getPublicFileUrl(user.profileImagePath)
           : undefined,
       })),
       ...topicResult.value.map((topic) => ({
@@ -115,8 +115,8 @@ export class SearchService {
 
     const response: GetSearchUsersResponse = users.value.map((user) => ({
       ...user,
-      profileImage: user.profileImage
-        ? this.fileService.getPublicFileUrl(user.profileImage)
+      profileImage: user.profileImagePath
+        ? this.fileService.getPublicFileUrl(user.profileImagePath)
         : undefined,
     }))
 

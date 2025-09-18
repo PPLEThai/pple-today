@@ -5,7 +5,7 @@ export const SearchKeyword = t.Union([
     type: t.Literal('USER'),
     id: t.String(),
     name: t.String(),
-    profileImageUrl: t.Optional(t.String()),
+    profileImage: t.Optional(t.String()),
   }),
   t.Object({
     type: t.Literal('TOPIC'),
