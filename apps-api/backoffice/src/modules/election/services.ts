@@ -22,7 +22,7 @@ import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import { GetElectionResponse, ListElection, ListElectionResponse } from './models'
-import { ElectionRepository, ElectionRepositoryPlugin } from './repostiory'
+import { ElectionRepository, ElectionRepositoryPlugin } from './repository'
 
 import { FileServicePlugin } from '../../plugins/file'
 
