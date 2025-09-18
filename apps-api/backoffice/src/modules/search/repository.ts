@@ -59,7 +59,7 @@ export class SearchRepository {
         R.flatMap((fi) =>
           R.pipe(
             fi.post?.content ?? fi.poll?.description ?? '',
-            R.split(/\s|\n/g),
+            R.split(/\s/g),
             R.filter((word) => word.toLowerCase().includes(query.search.toLowerCase()))
           )
         ),
