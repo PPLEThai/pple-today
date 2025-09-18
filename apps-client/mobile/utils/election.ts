@@ -7,7 +7,11 @@ export function encryptBallot(candidateId: string, publicKey: string): string {
       padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
       oaepHash: 'sha256',
     },
-    Buffer.from(candidateId)
+    Buffer.from(
+      JSON.stringify({
+        candidateId,
+      })
+    )
   )
   return encrypted.toString('base64')
 }

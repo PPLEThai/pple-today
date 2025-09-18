@@ -6,6 +6,8 @@ import {
   CreateBallotBody,
   CreateBallotParams,
   CreateBallotResponse,
+  CreateFaceImageUploadURLBody,
+  CreateFaceImageUploadURLResponse,
   GetElectionParams,
   GetElectionResponse,
   ListElectionResponse,
@@ -114,15 +116,39 @@ export const ElectionController = new Elysia({
     }
   )
   .post(
+    '/upload-url',
+    async ({ body, status, electionService }) => {
+      const result = await electionService.createFaceImageUploadURL(body.contentType)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, result.value)
+    },
+    {
+      detail: {
+        summary: 'Get Face Image Upload URL',
+        description: 'Fetch the signed URL to upload face image picture',
+      },
+      requiredLocalUser: true,
+      body: CreateFaceImageUploadURLBody,
+      response: {
+        200: CreateFaceImageUploadURLResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.FILE_UNSUPPORTED_MIME_TYPE,
+          InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .post(
     '/:electionId/ballot',
     async ({ params, body, user, status, electionService }) => {
-      const createBallot = await electionService.createBallot(
-        user.id,
-        params.electionId,
-        body.encryptedBallot,
-        body.faceImage,
-        body.location
-      )
+      const createBallot = await electionService.createBallot({
+        userId: user.id,
+        ...params,
+        ...body,
+      })
       if (createBallot.isErr()) {
         return mapErrorCodeToResponse(createBallot.error, status)
       }
@@ -146,7 +172,9 @@ export const ElectionController = new Elysia({
           InternalErrorCode.ELECTION_NOT_FOUND,
           InternalErrorCode.ELECTION_VOTE_TO_INVALID_TYPE,
           InternalErrorCode.ELECTION_NOT_IN_VOTE_PERIOD,
-          InternalErrorCode.ELECTION_ALREADY_VOTE,
+          InternalErrorCode.ELECTION_USER_ALREADY_VOTE,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

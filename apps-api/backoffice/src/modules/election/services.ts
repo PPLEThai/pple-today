@@ -1,8 +1,12 @@
+import { createId } from '@paralleldrive/cuid2'
 import {
   ElectionCandidate as ElectionCandidateDTO,
   ElectionStatus,
+  FileMimeType,
+  FilePath,
   InternalErrorCode,
 } from '@pple-today/api-common/dtos'
+import { FileService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import { err } from '@pple-today/api-common/utils'
 import {
@@ -20,8 +24,13 @@ import { ok } from 'neverthrow'
 import { GetElectionResponse, ListElection, ListElectionResponse } from './models'
 import { ElectionRepository, ElectionRepositoryPlugin } from './repostiory'
 
+import { FileServicePlugin } from '../../plugins/file'
+
 export class ElectionService {
-  constructor(private readonly electionRepository: ElectionRepository) {}
+  constructor(
+    private readonly electionRepository: ElectionRepository,
+    private readonly fileService: FileService
+  ) {}
 
   private readonly SECONDS_IN_A_DAY = 60 * 60 * 24
 
@@ -294,13 +303,14 @@ export class ElectionService {
     return ok()
   }
 
-  async createBallot(
-    userId: string,
-    electionId: string,
-    encryptedBallot: string,
-    faceImagePath: string,
+  async createBallot(input: {
+    userId: string
+    electionId: string
+    encryptedBallot: string
+    faceImagePath: FilePath
     location: string
-  ) {
+  }) {
+    const { userId, electionId, encryptedBallot, faceImagePath, location } = input
     const eligibleVoter = await this.electionRepository.getMyEligibleVoter(userId, electionId)
     if (eligibleVoter.isErr()) {
       return mapRepositoryError(eligibleVoter.error, {
@@ -327,17 +337,17 @@ export class ElectionService {
       })
     }
 
-    const createBallot = await this.electionRepository.createMyBallot(
+    const createBallotResult = await this.electionRepository.createMyBallot({
       userId,
       electionId,
       encryptedBallot,
       faceImagePath,
-      location
-    )
-    if (createBallot.isErr()) {
-      return mapRepositoryError(createBallot.error, {
+      location,
+    })
+    if (createBallotResult.isErr()) {
+      return mapRepositoryError(createBallotResult.error, {
         UNIQUE_CONSTRAINT_FAILED: {
-          code: InternalErrorCode.ELECTION_ALREADY_VOTE,
+          code: InternalErrorCode.ELECTION_USER_ALREADY_VOTE,
           message: `User have already voted to election id: ${electionId}`,
         },
       })
@@ -345,10 +355,32 @@ export class ElectionService {
 
     return ok()
   }
+
+  async createFaceImageUploadURL(contentType: FileMimeType) {
+    const fileKeyResult = this.fileService.getFilePathFromMimeType(
+      `temp/bollots/face-image-${createId()}`,
+      contentType
+    )
+
+    if (fileKeyResult.isErr()) return err(fileKeyResult.error)
+
+    const fileKey = fileKeyResult.value
+    const uploadUrl = await this.fileService.createUploadSignedUrl(fileKey, {
+      contentType,
+    })
+
+    if (uploadUrl.isErr()) return err(uploadUrl.error)
+
+    return ok({
+      fileKey,
+      uploadFields: uploadUrl.value.fields,
+      uploadUrl: uploadUrl.value.url,
+    })
+  }
 }
 
 export const ElectionServicePlugin = new Elysia()
-  .use(ElectionRepositoryPlugin)
-  .decorate(({ electionRepository }) => ({
-    electionService: new ElectionService(electionRepository),
+  .use([ElectionRepositoryPlugin, FileServicePlugin])
+  .decorate(({ electionRepository, fileService }) => ({
+    electionService: new ElectionService(electionRepository, fileService),
   }))

@@ -1,12 +1,18 @@
-import { PrismaService } from '@pple-today/api-common/services'
-import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { FilePath } from '@pple-today/api-common/dtos'
+import { FileService, PrismaService } from '@pple-today/api-common/services'
+import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { EligibleVoterType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
+import { ok } from 'neverthrow'
 
+import { FileServicePlugin } from '../../plugins/file'
 import { PrismaServicePlugin } from '../../plugins/prisma'
 
 export class ElectionRepository {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly fileService: FileService
+  ) {}
 
   async listMyEligibleVoters(userId: string) {
     return fromRepositoryPromise(
@@ -96,43 +102,59 @@ export class ElectionRepository {
     )
   }
 
-  async createMyBallot(
-    userId: string,
-    electionId: string,
-    encryptedBallot: string,
-    faceImagePath: string,
+  async createMyBallot(input: {
+    userId: string
+    electionId: string
+    encryptedBallot: string
+    faceImagePath: FilePath
     location: string
-  ) {
-    return fromRepositoryPromise(
-      this.prismaService.$transaction(async (tx) => {
-        const ballot = await tx.electionBallot.create({
-          data: {
-            electionId,
-            encryptedBallot,
-          },
-        })
+  }) {
+    const { userId, electionId, encryptedBallot, faceImagePath, location } = input
 
-        const voteRecord = await tx.electionVoteRecord.create({
-          data: {
-            electionId,
-            userId,
-            faceImagePath,
-            location,
-            ballotId: ballot.id,
-          },
-        })
+    const moveFileResult = await fromRepositoryPromise(
+      this.fileService.$transaction(async (tx) => {
+        const moveFileResult = await tx.bulkMoveToPrivateFolder([faceImagePath])
+        if (moveFileResult.isErr()) throw moveFileResult.error
 
-        return {
-          ballot,
-          voteRecord,
-        }
+        return moveFileResult.value[0]
       })
     )
+    if (moveFileResult.isErr()) return err(moveFileResult.error)
+
+    const [newFaceImagePath, fileTx] = moveFileResult.value
+
+    const createBollotResult = await fromRepositoryPromise(
+      this.prismaService.electionBallot.create({
+        data: {
+          electionId,
+          encryptedBallot,
+          voteRecord: {
+            create: {
+              electionId,
+              userId,
+              faceImagePath: newFaceImagePath,
+              location,
+            },
+          },
+        },
+      })
+    )
+
+    console.log('createBollotResult', createBollotResult)
+    if (createBollotResult.isErr()) {
+      const rollbackResult = await fileTx.rollback()
+      if (rollbackResult.isErr()) return err(rollbackResult.error)
+      return err(createBollotResult.error)
+    }
+
+    console.log(createBollotResult.value)
+
+    return ok(createBollotResult.value)
   }
 }
 
 export const ElectionRepositoryPlugin = new Elysia()
-  .use(PrismaServicePlugin)
-  .decorate(({ prismaService }) => ({
-    electionRepository: new ElectionRepository(prismaService),
+  .use([PrismaServicePlugin, FileServicePlugin])
+  .decorate(({ prismaService, fileService }) => ({
+    electionRepository: new ElectionRepository(prismaService, fileService),
   }))
