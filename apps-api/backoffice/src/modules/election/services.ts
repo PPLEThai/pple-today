@@ -360,7 +360,7 @@ export class ElectionService {
 
   async createFaceImageUploadURL(contentType: FileMimeType) {
     const fileKeyResult = this.fileService.getFilePathFromMimeType(
-      `temp/bollots/face-image-${createId()}`,
+      `temp/ballots/face-image-${createId()}`,
       contentType
     )
 
