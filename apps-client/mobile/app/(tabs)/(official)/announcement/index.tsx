@@ -110,11 +110,12 @@ function AnnouncementList() {
             <AnnouncementCard
               className="w-full mt-3"
               key={item.id}
-              onPress={() => router.navigate(`/(official)/announcement/${item.id}`)}
+              onPress={() => router.navigate(`./announcement/${item.id}`)}
               id={item.id}
               feedId={item.id}
               title={item.title}
               date={item.createdAt.toString()}
+              type={item.type}
             />
           ))}
         </Fragment>

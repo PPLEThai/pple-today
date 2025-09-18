@@ -1,3 +1,4 @@
+import { AnnouncementType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const GetAnnouncementsQuery = t.Object({
@@ -12,6 +13,7 @@ export const GetAnnouncementsResponse = t.Object({
       id: t.String({ description: 'The ID of the announcement' }),
       title: t.String({ description: 'The title of the announcement' }),
       content: t.String({ description: 'The content of the announcement' }),
+      type: t.Enum(AnnouncementType, { description: 'The type of the announcement' }),
       createdAt: t.Date({ description: 'Creation date of the announcement' }),
       updatedAt: t.Date({ description: 'Last update date of the announcement' }),
     })

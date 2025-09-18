@@ -131,7 +131,7 @@ export default function EditAddressPage() {
         </Text>
       </View>
       <View className="px-6 pb-6 pt-4">
-        <ScrollView contentContainerClassName="gap-2">
+        <ScrollView contentContainerClassName="gap-2 h-full">
           <form.Field
             name="province"
             listeners={{
