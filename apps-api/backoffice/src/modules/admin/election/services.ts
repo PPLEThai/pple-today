@@ -206,6 +206,19 @@ export class AdminElectionService {
 
     return ok(this.convertToCandidateDTO(updateCandidateResult.value))
   }
+
+  async deleteElectionCandidate(candidateId: string) {
+    const deleteResult = await this.adminElectionRepository.deleteElectionCandidate(candidateId)
+    if (deleteResult.isErr()) {
+      return mapRepositoryError(deleteResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
+          message: `Cannot Found Election Candidate id: ${candidateId}`,
+        },
+      })
+    }
+    return ok()
+  }
 }
 
 export const AdminElectionServicePlugin = new Elysia({ name: 'AdminElectionService' })

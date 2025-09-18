@@ -10,6 +10,8 @@ import {
   AdminCreateElectionCandidateBody,
   AdminCreateElectionCandidateParams,
   AdminCreateElectionCandidateResponse,
+  AdminDeleteElectionCandidateParams,
+  AdminDeleteElectionCandidateResponse,
   AdminDeleteElectionParams,
   AdminDeleteElectionResponse,
   AdminGetElectionParams,
@@ -266,6 +268,34 @@ export const AdminElectionController = new Elysia({
       body: AdminCreateElectionCandidateBody,
       response: {
         200: AdminCreateElectionCandidateResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.FORBIDDEN,
+          InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .delete(
+    '/:electionId/candidates/:candidateId',
+    async ({ params, status, adminElectionService }) => {
+      const result = await adminElectionService.deleteElectionCandidate(params.candidateId)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, { message: 'Delete Election Candidate Successfully' })
+    },
+    {
+      detail: {
+        summary: 'Delete Election Candidate',
+        description: 'Delete Election Candidate',
+      },
+      params: AdminDeleteElectionCandidateParams,
+      response: {
+        200: AdminDeleteElectionCandidateResponse,
         ...createErrorSchema(
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.FORBIDDEN,

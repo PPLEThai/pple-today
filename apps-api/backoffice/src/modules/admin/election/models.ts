@@ -142,3 +142,16 @@ export const AdminUpdateElectionCandidateResponse = ElectionCandidate
 export type AdminUpdateElectionCandidateResponse = Static<
   typeof AdminUpdateElectionCandidateResponse
 >
+
+export const AdminDeleteElectionCandidateParams = t.Object({
+  electionId: t.String(),
+  candidateId: t.String(),
+})
+export type AdminDeleteElectionCandidateParams = Static<typeof AdminDeleteElectionCandidateParams>
+
+export const AdminDeleteElectionCandidateResponse = t.Object({
+  message: t.String(),
+})
+export type AdminDeleteElectionCandidateResponse = Static<
+  typeof AdminDeleteElectionCandidateResponse
+>

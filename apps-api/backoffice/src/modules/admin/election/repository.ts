@@ -180,7 +180,6 @@ export class AdminElectionRepository {
         where: { id: candidateId },
       })
     )
-
     if (candidateResult.isErr()) return err(candidateResult.error)
 
     const candidate = candidateResult.value
@@ -234,6 +233,22 @@ export class AdminElectionRepository {
     }
 
     return ok(updateCandidateResult.value)
+  }
+
+  async deleteElectionCandidate(candidateId: string) {
+    return fromRepositoryPromise(
+      this.prismaService.$transaction(async (tx) => {
+        const candidate = await tx.electionCandidate.delete({
+          where: { id: candidateId },
+        })
+
+        const oldProfileImage = candidate.profileImage
+        if (oldProfileImage) {
+          const deleteImageResult = await this.fileService.deleteFile(oldProfileImage as FilePath)
+          if (deleteImageResult.isErr()) throw deleteImageResult.error
+        }
+      })
+    )
   }
 }
 
