@@ -5,6 +5,8 @@ import Elysia from 'elysia'
 import {
   AdminCancelElectionParams,
   AdminCancelElectionResponse,
+  AdminCreateCandidateProfileUploadURLBody,
+  AdminCreateCandidateProfileUploadURLResponse,
   AdminDeleteElectionParams,
   AdminDeleteElectionResponse,
   AdminGetElectionParams,
@@ -184,6 +186,32 @@ export const AdminElectionController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.FORBIDDEN,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .post(
+    '/upload-url',
+    async ({ body, status, adminElectionService }) => {
+      const result = await adminElectionService.createCandidateProfileUploadURL(body.contentType)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, result.value)
+    },
+    {
+      detail: {
+        summary: 'Get Candidate Profile Upload URL',
+        description: 'Fetch the signed URL to upload candidate profile',
+      },
+      requiredLocalUser: true,
+      body: AdminCreateCandidateProfileUploadURLBody,
+      response: {
+        200: AdminCreateCandidateProfileUploadURLResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.FILE_UNSUPPORTED_MIME_TYPE,
+          InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

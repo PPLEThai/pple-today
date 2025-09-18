@@ -1,5 +1,12 @@
-import { ElectionCandidate, ElectionInfo, InternalErrorCode } from '@pple-today/api-common/dtos'
-import { mapRepositoryError } from '@pple-today/api-common/utils'
+import { createId } from '@paralleldrive/cuid2'
+import {
+  ElectionCandidate,
+  ElectionInfo,
+  ImageFileMimeType,
+  InternalErrorCode,
+} from '@pple-today/api-common/dtos'
+import { FileService } from '@pple-today/api-common/services'
+import { err, mapRepositoryError } from '@pple-today/api-common/utils'
 import { Election } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
@@ -11,8 +18,13 @@ import {
 } from './models'
 import { AdminElectionRepository, AdminElectionRepositoryPlugin } from './repository'
 
+import { FileServicePlugin } from '../../../plugins/file'
+
 export class AdminElectionService {
-  constructor(private readonly adminElectionRepository: AdminElectionRepository) {}
+  constructor(
+    private readonly adminElectionRepository: AdminElectionRepository,
+    private readonly fileService: FileService
+  ) {}
 
   private convertToElectionInfo(election: Election): ElectionInfo {
     return {
@@ -138,10 +150,27 @@ export class AdminElectionService {
 
     return ok(candidates)
   }
+
+  async createCandidateProfileUploadURL(contentType: ImageFileMimeType) {
+    const fileKeyResult = this.fileService.getFilePathFromMimeType(
+      `temp/electionCandidates/${createId()}`,
+      contentType
+    )
+    if (fileKeyResult.isErr()) return err(fileKeyResult.error)
+
+    const uploadURLResult = await this.fileService.createUploadSignedUrl(fileKeyResult.value)
+    if (uploadURLResult.isErr()) return err(uploadURLResult.error)
+
+    return ok({
+      fileKey: fileKeyResult.value,
+      uploadUrl: uploadURLResult.value.url,
+      uploadFields: uploadURLResult.value.fields,
+    })
+  }
 }
 
 export const AdminElectionServicePlugin = new Elysia({ name: 'AdminElectionService' })
-  .use(AdminElectionRepositoryPlugin)
-  .decorate(({ adminElectionRepository }) => ({
-    adminElectionService: new AdminElectionService(adminElectionRepository),
+  .use([AdminElectionRepositoryPlugin, FileServicePlugin])
+  .decorate(({ adminElectionRepository, fileService }) => ({
+    adminElectionService: new AdminElectionService(adminElectionRepository, fileService),
   }))

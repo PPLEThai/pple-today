@@ -1,6 +1,8 @@
 import {
   ElectionCandidate,
   ElectionInfo,
+  FilePath,
+  ImageFileMimeType,
   ListQuery,
   PaginationMetadataResponse,
 } from '@pple-today/api-common/dtos'
@@ -85,3 +87,21 @@ export type AdminListElectionCandidatesParams = Static<typeof AdminListElectionC
 
 export const AdminListElectionCandidatesResponse = t.Array(ElectionCandidate)
 export type AdminListElectionCandidatesResponse = Static<typeof AdminListElectionCandidatesResponse>
+
+export const AdminCreateCandidateProfileUploadURLBody = t.Object({
+  contentType: ImageFileMimeType,
+})
+export type AdminCreateCandidateProfileUploadURLBody = Static<
+  typeof AdminCreateCandidateProfileUploadURLBody
+>
+
+export const AdminCreateCandidateProfileUploadURLResponse = t.Object({
+  fileKey: FilePath,
+  uploadUrl: t.String({ description: 'The signed URL to upload the file' }),
+  uploadFields: t.Record(t.String(), t.String(), {
+    description: 'The fields required for the upload',
+  }),
+})
+export type AdminCreateCandidateProfileUploadURLResponse = Static<
+  typeof AdminCreateCandidateProfileUploadURLResponse
+>
