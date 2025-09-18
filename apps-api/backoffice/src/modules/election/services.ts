@@ -21,7 +21,7 @@ import dayjs from 'dayjs'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { GetElectionResponse, ListElection, ListElectionResponse } from './models'
+import { ElectionWithCurrentStatus, GetElectionResponse, ListElectionResponse } from './models'
 import { ElectionRepository, ElectionRepositoryPlugin } from './repository'
 
 import { FileServicePlugin } from '../../plugins/file'
@@ -130,7 +130,7 @@ export class ElectionService {
   private convertToListElection(
     election: Election & { voters: ElectionEligibleVoter[]; voteRecords: ElectionVoteRecord[] },
     voterType: EligibleVoterType
-  ): ListElection {
+  ): ElectionWithCurrentStatus {
     return {
       id: election.id,
       name: election.name,
