@@ -1,17 +1,25 @@
-import { Pressable, ScrollView, View } from 'react-native'
+import React from 'react'
+import { Pressable, PressableProps, ScrollView, View } from 'react-native'
+import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { Text } from '@pple-today/ui/text'
-import { H1, H2 } from '@pple-today/ui/typography'
+import { H1, H2, H3 } from '@pple-today/ui/typography'
+import * as Linking from 'expo-linking'
 import { useRouter } from 'expo-router'
+import * as WebBrowser from 'expo-web-browser'
 import {
   ArrowRightIcon,
   CircleChevronRightIcon,
   GlobeIcon,
   InfoIcon,
   LandmarkIcon,
+  MailIcon,
   MegaphoneIcon,
+  PhoneIcon,
 } from 'lucide-react-native'
 
 import ContactMail from '@app/assets/contact-mail.svg'
@@ -126,6 +134,13 @@ const AnnouncementSection = () => {
 }
 
 const InformationSection = () => {
+  const bottomSheetModalRef = React.useRef<BottomSheetModal>(null)
+  const onOpen = () => {
+    bottomSheetModalRef.current?.present()
+  }
+
+  const insets = useSafeAreaInsets()
+
   return (
     <View className="px-4">
       <View className="flex flex-row gap-2 items-center">
@@ -136,7 +151,9 @@ const InformationSection = () => {
       </View>
       <View className="mt-4 gap-y-4">
         <View className="flex flex-row gap-x-[12.5px]">
-          <Pressable className="flex-1 p-4 flex flex-col justify-between min-h-[163px] bg-base-bg-white rounded-2xl border border-base-outline-default">
+          <InfoItem
+            onPress={() => WebBrowser.openBrowserAsync('https://peoplesparty.or.th/person/')}
+          >
             <View className="flex justify-start flex-col flex-wrap">
               <View className="flex flex-col mb-3 h-8 w-8 bg-base-secondary-default rounded-lg items-center justify-center">
                 <Personal width={24} height={24} color="white" />
@@ -151,8 +168,10 @@ const InformationSection = () => {
                 className="text-foreground"
               />
             </View>
-          </Pressable>
-          <Pressable className="flex-1 p-4 flex flex-col justify-between min-h-[163px] bg-base-bg-white rounded-2xl border border-base-outline-default">
+          </InfoItem>
+          <InfoItem
+            onPress={() => WebBrowser.openBrowserAsync('https://peoplesparty.or.th/about/')}
+          >
             <View className="flex justify-start flex-col flex-wrap">
               <View className="flex flex-col mb-3 h-8 w-8 bg-base-primary-default rounded-lg items-center justify-center">
                 <PPLEIcon width={20} height={16} color="white" />
@@ -167,10 +186,10 @@ const InformationSection = () => {
                 className="text-foreground"
               />
             </View>
-          </Pressable>
+          </InfoItem>
         </View>
         <View className="flex flex-row gap-x-[12.5px]">
-          <Pressable className="flex-1 p-4 flex flex-col justify-between min-h-[163px] bg-base-bg-white rounded-2xl border border-base-outline-default">
+          <InfoItem onPress={onOpen}>
             <View className="flex justify-start flex-col flex-wrap">
               <View className="flex flex-col mb-3 h-8 w-8 bg-violet-500 rounded-lg items-center justify-center">
                 <ContactMail width={24} height={24} color="white" />
@@ -185,8 +204,83 @@ const InformationSection = () => {
                 className="text-foreground"
               />
             </View>
-          </Pressable>
-          <Pressable className="flex-1 p-4 flex flex-col justify-between min-h-[163px] bg-base-bg-white rounded-2xl border border-base-outline-default">
+            <BottomSheetModal ref={bottomSheetModalRef} bottomInset={insets.bottom}>
+              <BottomSheetView>
+                <View className="p-4 pb-0">
+                  <H3>ช่องทางการติดต่อ</H3>
+                </View>
+                <View className="p-4">
+                  <View className="w-full rounded-lg border border-base-outline-default p-4 bg-base-bg-default">
+                    <View className="gap-4">
+                      <View className="gap-2">
+                        <View className="flex flex-row justify-start items-center gap-1">
+                          <Icon
+                            icon={LandmarkIcon}
+                            size={16}
+                            strokeWidth={1}
+                            className="text-base-primary-default"
+                          />
+                          <Text className="text-base-text-high font-noto-medium">สำนักงานใหญ่</Text>
+                        </View>
+                        <View className="gap-0.5">
+                          <Text className="font-noto-light">เลขที่ 167 อาคารอนาคตใหม่ ชั้น 4</Text>
+                          <Text className="font-noto-light">
+                            รามคำแหง 42 แขวงหัวหมาก เขต บางกะปิ
+                          </Text>
+                          <Text className="font-noto-light">กรุงเทพมหานคร 10240</Text>
+                        </View>
+                      </View>
+                      <View className="gap-2">
+                        <View className="flex flex-row justify-start items-center gap-1">
+                          <Icon
+                            icon={PhoneIcon}
+                            size={16}
+                            strokeWidth={1}
+                            className="text-base-primary-default"
+                          />
+                          <Text className="text-base-text-high font-noto-medium">เบอร์โทร</Text>
+                        </View>
+                        <Text className="font-noto-light items-baseline">
+                          <Text
+                            onPress={() => Linking.openURL('tel:+6628215874')}
+                            className="underline font-noto-light"
+                          >
+                            02-821-5874
+                          </Text>{' '}
+                          (จันทร์-ศุกร์ 10:00-18:00 น.)
+                        </Text>
+                      </View>
+                      <View className="gap-2">
+                        <View className="flex flex-row justify-start items-center gap-1">
+                          <Icon
+                            icon={MailIcon}
+                            size={16}
+                            strokeWidth={1}
+                            className="text-base-primary-default"
+                          />
+                          <Text className="text-base-text-high font-noto-medium">อีเมล</Text>
+                        </View>
+                        <View className="gap-0.5 mb-10">
+                          <Text
+                            className="font-noto-light underline"
+                            onPress={() =>
+                              Linking.openURL('mailto:office@peoplespartythailand.org')
+                            }
+                          >
+                            office@peoplespartythailand.org
+                          </Text>
+                          <Text className="font-noto-light">PeoplesPartyThailand</Text>
+                          <Text className="font-noto-light">@PPLEThailand</Text>
+                          <Text className="font-noto-light">พรรคประชาชน - People&apos;s Party</Text>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              </BottomSheetView>
+            </BottomSheetModal>
+          </InfoItem>
+          <InfoItem onPress={() => WebBrowser.openBrowserAsync('https://peoplesparty.or.th/')}>
             <View className="flex justify-start flex-col flex-wrap">
               <View className="flex flex-col mb-3 h-8 w-8 bg-blue-500 rounded-lg items-center justify-center">
                 <Icon icon={GlobeIcon} size={22} color="white" />
@@ -201,9 +295,33 @@ const InformationSection = () => {
                 className="text-foreground"
               />
             </View>
-          </Pressable>
+          </InfoItem>
         </View>
       </View>
     </View>
+  )
+}
+
+interface InfoItemProps extends PressableProps {
+  children: React.ReactNode
+}
+
+const InfoItem = ({ children, ...props }: InfoItemProps) => {
+  const opacity = useSharedValue(1)
+  const onPressIn = () => {
+    opacity.value = withTiming(0.5, { duration: 150 })
+  }
+  const onPressOut = () => {
+    opacity.value = withTiming(1, { duration: 150 })
+  }
+  return (
+    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} {...props} className="flex-1">
+      <Animated.View
+        style={{ opacity }}
+        className="p-4 flex flex-col justify-between min-h-[163px] bg-base-bg-white rounded-2xl border border-base-outline-default"
+      >
+        {children}
+      </Animated.View>
+    </Pressable>
   )
 }
