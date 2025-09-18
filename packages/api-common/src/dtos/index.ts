@@ -1,6 +1,7 @@
 export * from './announcement'
 export * from './auth'
 export * from './banner'
+export * from './election'
 export * from './error'
 export * from './facebook'
 export * from './feed'

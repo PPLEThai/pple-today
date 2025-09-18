@@ -1,5 +1,5 @@
 import React from 'react'
-import { Linking, Platform, Pressable, PressableProps, View } from 'react-native'
+import { Linking, Platform, Pressable, PressableProps, RefreshControl, View } from 'react-native'
 import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import { ScrollView } from 'react-native-gesture-handler'
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
@@ -101,8 +101,35 @@ const Login = () => {
 }
 
 const ProfileSetting = () => {
+  const [refreshing, setRefreshing] = React.useState(false)
+  const queryClient = useQueryClient()
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true)
+    try {
+      queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/auth/me') })
+      queryClient.invalidateQueries({
+        queryKey: reactQueryClient.getQueryKey('/facebook/linked-page'),
+      })
+      await queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/profile/me') })
+      setRefreshing(false)
+    } catch (error) {
+      console.error('Error refreshing feed:', error)
+      setRefreshing(false)
+    }
+  }, [queryClient])
+
   return (
-    <ScrollView className="flex-1" contentContainerClassName="flex-grow">
+    <ScrollView
+      className="flex-1"
+      contentContainerClassName="flex-grow"
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          colors={['#FF6A13']} // base-primary-default
+        />
+      }
+    >
       <View className="bg-base-bg-white flex flex-col">
         <HeaderSection />
         <View className="p-4 flex flex-col gap-3">
@@ -177,8 +204,8 @@ const ProfileSection = () => {
           <AvatarImage source={{ uri: profileQuery.data.profileImage }} />
           <AvatarPPLEFallback />
         </Avatar>
-        <View className="flex flex-col gap-2 items-start">
-          <Text className="text-base-text-high font-anakotmai-medium text-2xl">
+        <View className="flex flex-col gap-2 items-start flex-1">
+          <Text className="text-base-text-high font-anakotmai-medium text-2xl line-clamp-1">
             {profileQuery.data.name}
           </Text>
           <Badge>
@@ -189,13 +216,12 @@ const ProfileSection = () => {
     )
   return (
     <View className="flex flex-row justify-between items-center">
-      <View className="flex flex-row items-center gap-4">{Profile}</View>
+      <View className="flex flex-row items-center gap-4 flex-1">{Profile}</View>
       <Button
         size="icon"
         variant="outline"
         className="border-base-outline-default"
         onPress={(e) => {
-          e.preventDefault()
           router.push('/edit/edit-profile')
         }}
       >
@@ -487,6 +513,7 @@ function UnlinkFacebookPageDialog() {
 }
 
 const FollowingSection = () => {
+  const router = useRouter()
   const profileQuery = reactQueryClient.useQuery('/profile/me', {})
   return (
     <View className="flex flex-col gap-3 border border-base-outline-default rounded-xl py-3 px-4 bg-base-bg-white">
@@ -495,7 +522,14 @@ const FollowingSection = () => {
           <Icon icon={HeartIcon} className="text-base-primary-default" size={32} />
           <H2 className="text-xl text-base-text-high font-anakotmai-medium">เนื้อหาที่ติดตาม</H2>
         </View>
-        <Button variant="ghost" size="icon" className="size-9">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="size-9"
+          onPress={() => {
+            router.push('/profile/follow')
+          }}
+        >
           <Icon icon={PencilIcon} strokeWidth={1} size={20} className="text-base-text-high" />
         </Button>
       </View>

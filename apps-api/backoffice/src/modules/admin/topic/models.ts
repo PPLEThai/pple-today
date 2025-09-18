@@ -31,7 +31,7 @@ export const UpdateTopicParams = t.Object({
 export const UpdateTopicBody = t.Object({
   name: t.String({ description: 'The name of the topic' }),
   description: t.Nullable(t.String({ description: 'The description of the topic' })),
-  bannerImage: t.Nullable(FilePath),
+  bannerImagePath: t.Nullable(FilePath),
   status: t.Enum(TopicStatus),
   hashtagIds: t.Array(t.String({ description: 'The ID of the hashtag' })),
 })

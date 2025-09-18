@@ -11,10 +11,8 @@ model Announcement {
     content    String?
     type       AnnouncementType
 
-    iconImage       String?
-    backgroundColor String?
-    topics          AnnouncementTopic[]
-    attachments     AnnouncementFile[]
+    topics      AnnouncementTopic[]
+    attachments AnnouncementFile[]
 
     feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
 }
@@ -51,10 +49,8 @@ model AnnouncementDraft {
     content String?
     type    AnnouncementType?
 
-    iconImage       String?
-    backgroundColor String?
-    topics          AnnouncementTopicDraft[]
-    attachments     AnnouncementFileDraft[]
+    topics      AnnouncementTopicDraft[]
+    attachments AnnouncementFileDraft[]
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

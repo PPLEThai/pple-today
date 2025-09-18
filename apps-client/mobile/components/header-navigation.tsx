@@ -9,10 +9,10 @@ import { ArrowLeftIcon, LucideIcon } from 'lucide-react-native'
 interface HeaderProps {
   icon: LucideIcon
   title: string
-  extraFunc?: () => void
+  onBack?: () => void
 }
 
-export function HeaderWithNoDescription(props: HeaderProps) {
+export function Header(props: HeaderProps) {
   const router = useRouter()
 
   return (
@@ -22,7 +22,7 @@ export function HeaderWithNoDescription(props: HeaderProps) {
         size="icon"
         onPress={() => {
           router.back()
-          props.extraFunc?.()
+          props.onBack?.()
         }}
         aria-label="กลับ"
       >

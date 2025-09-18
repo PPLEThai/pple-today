@@ -132,8 +132,8 @@ export class FeedService {
             author: {
               id: comment.user.id,
               name: comment.user.name,
-              profileImage: comment.user.profileImage
-                ? this.fileService.getPublicFileUrl(comment.user.profileImage)
+              profileImage: comment.user.profileImagePath
+                ? this.fileService.getPublicFileUrl(comment.user.profileImagePath)
                 : undefined,
             },
           }) satisfies FeedItemComment
@@ -182,7 +182,19 @@ export class FeedService {
     return ok({
       ...result.value,
       comment: result.value.comment
-        ? { ...result.value.comment, author: result.value.comment.user }
+        ? {
+            id: result.value.comment.id,
+            content: result.value.comment.content,
+            createdAt: result.value.comment.createdAt,
+            isPrivate: result.value.comment.isPrivate,
+            author: {
+              id: result.value.comment.user.id,
+              name: result.value.comment.user.name,
+              profileImage: result.value.comment.user.profileImagePath
+                ? this.fileService.getPublicFileUrl(result.value.comment.user.profileImagePath)
+                : undefined, // this should be null
+            },
+          }
         : null,
     })
   }
@@ -221,7 +233,19 @@ export class FeedService {
       })
     }
 
-    return ok({ ...result.value, author: result.value.user })
+    return ok({
+      id: result.value.id,
+      content: result.value.content,
+      createdAt: result.value.createdAt,
+      isPrivate: result.value.isPrivate,
+      author: {
+        id: result.value.user.id,
+        name: result.value.user.name,
+        profileImage: result.value.user.profileImagePath
+          ? this.fileService.getPublicFileUrl(result.value.user.profileImagePath)
+          : undefined, // this should be null
+      },
+    })
   }
 
   async updateFeedComment(postId: string, commentId: string, userId: string, content: string) {

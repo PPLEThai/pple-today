@@ -64,8 +64,8 @@ export class ProfileService {
     return ok({
       ...user.value,
       address: user.value.address ?? undefined,
-      profileImage: user.value.profileImage
-        ? this.fileService.getPublicFileUrl(user.value.profileImage)
+      profileImage: user.value.profileImagePath
+        ? this.fileService.getPublicFileUrl(user.value.profileImagePath)
         : undefined,
     })
   }
@@ -115,11 +115,11 @@ export class ProfileService {
     }
 
     return ok(
-      result.value.followings.map((user) => ({
+      result.value.followers.map((user) => ({
         ...user.followed,
         address: user.followed.address ?? undefined,
-        profileImage: user.followed.profileImage
-          ? this.fileService.getPublicFileUrl(user.followed.profileImage)
+        profileImage: user.followed.profileImagePath
+          ? this.fileService.getPublicFileUrl(user.followed.profileImagePath)
           : undefined,
       }))
     )
@@ -128,7 +128,7 @@ export class ProfileService {
   async updateProfile(userId: string, userData: UpdateProfileBody) {
     const result = await this.profileRepository.updateUserProfile(userId, {
       name: userData.name,
-      profileImage: userData.profileImage,
+      profileImagePath: userData.profileImagePath,
       address: userData.address
         ? {
             connect: {
@@ -159,8 +159,8 @@ export class ProfileService {
     return ok({
       ...result.value,
       address: result.value.address ?? undefined,
-      profileImage: result.value.profileImage
-        ? this.fileService.getPublicFileUrl(result.value.profileImage)
+      profileImage: result.value.profileImagePath
+        ? this.fileService.getPublicFileUrl(result.value.profileImagePath)
         : undefined,
     })
   }
@@ -201,8 +201,8 @@ export class ProfileService {
     return ok({
       ...result.value,
       address: result.value.address ?? undefined,
-      profileImage: result.value.profileImage
-        ? this.fileService.getPublicFileUrl(result.value.profileImage)
+      profileImage: result.value.profileImagePath
+        ? this.fileService.getPublicFileUrl(result.value.profileImagePath)
         : undefined,
     })
   }

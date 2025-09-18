@@ -142,9 +142,7 @@ export const useAuthMe = () => {
       if (!session) {
         return null
       }
-      const authMeResult = await fetchClient('/auth/me', {
-        headers: { Authorization: `Bearer ${session.accessToken}` },
-      })
+      const authMeResult = await fetchClient('/auth/me', {})
       if (authMeResult.error) {
         throw authMeResult.error
       }

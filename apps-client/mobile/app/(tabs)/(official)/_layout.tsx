@@ -2,9 +2,13 @@ import { Stack } from 'expo-router'
 
 export default function FeedLayout() {
   return (
-    <Stack initialRouteName="announcement">
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen name="announcement" options={{ headerShown: false }} />
+    <Stack
+      initialRouteName="index"
+      screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
+    >
+      <Stack.Screen name="index" />
+      <Stack.Screen name="announcement/index" />
+      <Stack.Screen name="announcement/[feedId]" />
     </Stack>
   )
 }

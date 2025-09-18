@@ -27,63 +27,48 @@ import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/i
 import { Button } from '@pple-today/ui/button'
 import { FormControl, FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
-import { clsx } from '@pple-today/ui/lib/utils'
+import { clsx, cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 import { Textarea } from '@pple-today/ui/textarea'
 import { toast } from '@pple-today/ui/toast'
+import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
 import { useQueryClient } from '@tanstack/react-query'
-import { useRouter } from 'expo-router'
+import { Link, useRouter } from 'expo-router'
+import * as WebBrowser from 'expo-web-browser'
 import LottieView from 'lottie-react-native'
 import {
+  FileTextIcon,
   HeartCrackIcon,
   HeartHandshakeIcon,
+  LandmarkIcon,
   MessageCircleIcon,
   SendIcon,
   TriangleAlertIcon,
 } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import type { GetFeedContentResponse } from '@api/backoffice/app'
+import type {
+  FeedItem,
+  FeedItemAnnouncement,
+  FeedItemBaseContent,
+  FeedItemPost,
+  GetAnnouncementsResponse,
+} from '@api/backoffice/app'
+import PPLEIcon from '@app/assets/pple-icon.svg'
 import { MoreOrLess } from '@app/components/more-or-less'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSessionQuery } from '@app/libs/auth'
+import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 
-import { Lightbox, PostCardAttachment } from './lightbox'
+import { Lightbox } from './lightbox'
 
 import { AvatarPPLEFallback } from '../avatar-pple-fallback'
 
 type UserReaction = 'UP_VOTE' | 'DOWN_VOTE' | null
-interface PostItem {
-  content: string
-  hashTags: {
-    id: string
-    name: string
-  }[]
-  attachments?: PostCardAttachment[]
-}
 
-interface FeedPostItem {
-  id: string
-  author: {
-    id: string
-    name: string
-    address?: {
-      province: string
-      district: string
-    }
-    profileImage?: string
-  }
-  createdAt: Date
-  reactions: { type: 'UP_VOTE' | 'DOWN_VOTE'; count: number }[]
-  commentCount: number
-  post: PostItem
-
-  userReaction: UserReaction
-}
-
-export const FeedPostCard = React.memo(function FeedPostCard(props: { feedItem: FeedPostItem }) {
+export const FeedCard = React.memo(function FeedCard(props: { feedItem: FeedItem }) {
   const router = useRouter()
   const navigateToDetailPage = React.useCallback(() => {
     router.navigate(`/(feed)/${props.feedItem.id}`)
@@ -95,7 +80,7 @@ export const FeedPostCard = React.memo(function FeedPostCard(props: { feedItem: 
     // TODO: fix type
     { initialData: props.feedItem as any, enabled: false }
   )
-  const feedContent = feedContentQuery.data as FeedPostItem
+  const feedContent = feedContentQuery.data as FeedItem
   return (
     <View className="flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl overflow-hidden mt-4 mx-4">
       <AnimatedBackgroundPressable
@@ -129,47 +114,9 @@ export const FeedPostCard = React.memo(function FeedPostCard(props: { feedItem: 
           />
         </Button> */}
       </AnimatedBackgroundPressable>
-      <View className="flex flex-col gap-3">
-        {feedContent.post.attachments && feedContent.post.attachments.length > 0 && (
-          <Lightbox attachments={feedContent.post.attachments} />
-        )}
-        {feedContent.post.content && (
-          <AnimatedBackgroundPressable className="px-4" onPress={navigateToDetailPage}>
-            <MoreOrLess
-              numberOfLines={3}
-              moreText="อ่านเพิ่มเติม"
-              lessText="แสดงน้อยลง"
-              animated
-              textComponent={TextPost}
-              buttonComponent={ButtonTextPost}
-            >
-              {feedContent.post.content}
-            </MoreOrLess>
-          </AnimatedBackgroundPressable>
-        )}
-        {feedContent.post.hashTags.length > 0 && (
-          <View className="flex flex-row flex-wrap gap-1 px-4">
-            {feedContent.post.hashTags.map((tag) => (
-              // TODO: link
-              <Badge variant="secondary" key={tag.id}>
-                <Text>{tag.name}</Text>
-              </Badge>
-            ))}
-          </View>
-        )}
-      </View>
-      <AnimatedBackgroundPressable
-        className="flex flex-row justify-between items-center px-4 py-3"
-        onPress={navigateToDetailPage}
-      >
-        <FeedReactionHook feedId={feedContent.id} />
-        <UpvoteReactionCount feedId={feedContent.id} />
-        {feedContent.commentCount > 0 && (
-          <Text className="text-xs font-anakotmai-light text-base-text-medium">
-            {feedContent.commentCount} ความคิดเห็น
-          </Text>
-        )}
-      </AnimatedBackgroundPressable>
+      <FeedCardContent feedItem={feedContent} />
+      <FeedReactionHook feedId={feedContent.id} data={feedContent} />
+      <FeedReactionSection feedItem={feedContent} />
       <View className="flex flex-col">
         <View className="px-4">
           <View className="border-b border-base-outline-default" />
@@ -186,7 +133,83 @@ export const FeedPostCard = React.memo(function FeedPostCard(props: { feedItem: 
   )
 })
 
-export const PostCardSkeleton = (props: ViewProps) => {
+function FeedReactionSection(props: { feedItem: FeedItem }) {
+  const router = useRouter()
+  const navigateToDetailPage = React.useCallback(() => {
+    router.navigate(`/(feed)/${props.feedItem.id}`)
+  }, [router, props.feedItem.id])
+  const { upvoteCount } = useFeedReactionValue(props.feedItem.id)
+  if (upvoteCount === 0 && props.feedItem.commentCount === 0) return <View className="h-3" />
+  return (
+    <AnimatedBackgroundPressable
+      className="flex flex-row justify-between items-center px-4 py-3"
+      onPress={navigateToDetailPage}
+    >
+      <UpvoteReactionCount feedId={props.feedItem.id} />
+      {props.feedItem.commentCount > 0 && (
+        <Text className="text-xs font-anakotmai-light text-base-text-medium">
+          {props.feedItem.commentCount} ความคิดเห็น
+        </Text>
+      )}
+    </AnimatedBackgroundPressable>
+  )
+}
+
+function FeedCardContent(props: { feedItem: FeedItem }) {
+  switch (props.feedItem.type) {
+    case 'POST':
+      return <PostCardContent key={props.feedItem.id} feedItem={props.feedItem} />
+    case 'POLL':
+      // TODO
+      return null
+    case 'ANNOUNCEMENT':
+      // expected no announcement
+      return null
+    default:
+      exhaustiveGuard(props.feedItem)
+  }
+}
+
+function PostCardContent(props: { feedItem: FeedItemPost }) {
+  const router = useRouter()
+  const navigateToDetailPage = React.useCallback(() => {
+    router.navigate(`/(feed)/${props.feedItem.id}`)
+  }, [router, props.feedItem.id])
+  return (
+    <View className="flex flex-col gap-3">
+      {props.feedItem.post.attachments && props.feedItem.post.attachments.length > 0 && (
+        <Lightbox attachments={props.feedItem.post.attachments} />
+      )}
+      {props.feedItem.post.content && (
+        <AnimatedBackgroundPressable className="px-4" onPress={navigateToDetailPage}>
+          <MoreOrLess
+            numberOfLines={3}
+            moreText="อ่านเพิ่มเติม"
+            lessText="แสดงน้อยลง"
+            animated
+            textComponent={TextPost}
+            buttonComponent={ButtonTextPost}
+          >
+            {props.feedItem.post.content}
+          </MoreOrLess>
+        </AnimatedBackgroundPressable>
+      )}
+      {props.feedItem.post.hashTags.length > 0 && (
+        <View className="flex flex-row flex-wrap gap-1 px-4">
+          {props.feedItem.post.hashTags.map((tag) => (
+            <Link href={`/(feed)/hashtag/${tag.id}`} key={tag.id} asChild>
+              <Badge variant="secondary">
+                <Text>{tag.name}</Text>
+              </Badge>
+            </Link>
+          ))}
+        </View>
+      )}
+    </View>
+  )
+}
+
+export const FeedCardSkeleton = (props: ViewProps) => {
   return (
     <View
       className="flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl mt-4 mx-4"
@@ -196,8 +219,8 @@ export const PostCardSkeleton = (props: ViewProps) => {
         <View className="flex flex-row items-center">
           <View className="w-8 h-8 rounded-full bg-base-bg-default flex items-center justify-center mr-3 overflow-hidden" />
           <View className="flex flex-col py-1 gap-2">
-            <View className="rounded-md bg-base-bg-default h-[12px] w-[160px]" />
-            <View className="rounded-md bg-base-bg-default h-[12px] w-[100px]" />
+            <View className="rounded-full bg-base-bg-default h-[12px] w-[160px]" />
+            <View className="rounded-full bg-base-bg-default h-[12px] w-[100px]" />
           </View>
         </View>
       </View>
@@ -205,8 +228,8 @@ export const PostCardSkeleton = (props: ViewProps) => {
         <View className="rounded-lg bg-base-bg-default w-full aspect-[2/1]" />
       </View>
       <View className="flex flex-row justify-between items-center px-4 pb-3">
-        <View className="rounded-md bg-base-bg-default h-[20px] w-[100px]" />
-        <View className="rounded-md bg-base-bg-default h-[20px] w-[100px]" />
+        <View className="rounded-full bg-base-bg-default h-[20px] w-[100px]" />
+        <View className="rounded-full bg-base-bg-default h-[20px] w-[100px]" />
       </View>
       <View className="flex flex-col">
         <View className="px-4">
@@ -214,10 +237,10 @@ export const PostCardSkeleton = (props: ViewProps) => {
         </View>
         <View className="flex flex-row justify-between gap-2 px-3 pb-3 pt-3">
           <View className="flex flex-row gap-2">
-            <View className="rounded-md bg-base-bg-default h-[32px] w-[100px]" />
-            <View className="rounded-md bg-base-bg-default h-[32px] w-[100px]" />
+            <View className="rounded-full bg-base-bg-default h-6 mt-2 w-[100px]" />
+            <View className="rounded-full bg-base-bg-default h-6 mt-2 w-[100px]" />
           </View>
-          <View className="rounded-md bg-base-bg-default h-[32px] w-[100px]" />
+          <View className="rounded-full bg-base-bg-default h-6 mt-2 w-[100px]" />
         </View>
       </View>
     </View>
@@ -298,7 +321,8 @@ function getNewReactionCount(
   return { upvoteCount, downvoteCount }
 }
 
-function getFeedReaction(data: GetFeedContentResponse): FeedReaction {
+type FeedReactionData = Pick<FeedItemBaseContent, 'reactions' | 'userReaction'>
+function getFeedReaction(data: FeedReactionData): FeedReaction {
   const reactions = data.reactions
   const upvoteCount = reactions.find((r) => r.type === 'UP_VOTE')?.count ?? 0
   const downvoteCount = reactions.find((r) => r.type === 'DOWN_VOTE')?.count ?? 0
@@ -306,23 +330,16 @@ function getFeedReaction(data: GetFeedContentResponse): FeedReaction {
   return { upvoteCount, downvoteCount, userReaction }
 }
 
-function FeedReactionHook({ feedId }: { feedId: string }) {
-  const feedContentQuery = reactQueryClient.useQuery('/feed/:id', {
-    pathParams: { id: feedId },
-  })
-  // TODO: make sure that this initialData run before render
+function FeedReactionHook({ feedId, data }: { feedId: string; data: FeedReactionData }) {
   useFeedReactionQuery({
     variables: { feedId },
-    initialData: () => getFeedReaction(feedContentQuery.data!),
+    initialData: () => getFeedReaction(data),
   })
   const queryClient = useQueryClient()
   React.useEffect(() => {
-    if (!feedContentQuery.data) return
-    queryClient.setQueryData(
-      useFeedReactionQuery.getKey({ feedId }),
-      getFeedReaction(feedContentQuery.data)
-    )
-  }, [feedContentQuery.data, queryClient, feedId])
+    if (!data) return
+    queryClient.setQueryData(useFeedReactionQuery.getKey({ feedId }), getFeedReaction(data))
+  }, [data, queryClient, feedId])
   return null
 }
 
@@ -331,6 +348,7 @@ interface UpvoteReactionCountProps {
 }
 function UpvoteReactionCount(props: UpvoteReactionCountProps) {
   const { upvoteCount } = useFeedReactionValue(props.feedId)
+  if (upvoteCount === 0) return <View />
   return (
     <View className="flex flex-row gap-1 items-center">
       <Icon
@@ -786,54 +804,13 @@ function CommentForm(props: CommentFormProps) {
   )
 }
 
-export const PostContent = (props: { feedItem: FeedPostItem }) => {
+export const FeedDetail = (props: { feedItem: FeedItem }) => {
   return (
     <View className="flex flex-col bg-base-bg-white">
-      <View className="px-4 pt-1 pb-3 flex flex-row items-center justify-between">
-        <View className="flex flex-row items-center">
-          <Avatar alt={props.feedItem.author.name} className="w-8 h-8 mr-3">
-            <AvatarImage source={{ uri: props.feedItem.author.profileImage }} />
-            <AvatarPPLEFallback />
-          </Avatar>
-          <View className="flex flex-col">
-            <Text className="text-base-text-medium font-anakotmai-medium text-sm">
-              {props.feedItem.author.name}
-            </Text>
-            <Text className="text-base-text-medium font-anakotmai-light text-sm">
-              {props.feedItem.author.address ? `${props.feedItem.author.address.province} | ` : ''}
-              {formatDateInterval(props.feedItem.createdAt.toString())}
-            </Text>
-          </View>
-        </View>
-      </View>
-      <View className="flex flex-col gap-3 pb-3">
-        {props.feedItem.post.attachments && props.feedItem.post.attachments.length > 0 && (
-          <Lightbox attachments={props.feedItem.post.attachments} />
-        )}
-        {props.feedItem.post.content && (
-          <View className="px-4">
-            <TextPost>{props.feedItem.post.content}</TextPost>
-          </View>
-        )}
-        {props.feedItem.post.hashTags.length > 0 && (
-          <View className="flex flex-row flex-wrap gap-1 px-4">
-            {props.feedItem.post.hashTags.map((tag) => (
-              // TODO: link
-              <Badge variant="secondary" key={tag.id}>
-                <Text>{tag.name}</Text>
-              </Badge>
-            ))}
-          </View>
-        )}
-      </View>
-      <View className="flex flex-row justify-between items-center px-4 pb-3">
-        <UpvoteReactionCount feedId={props.feedItem.id} />
-        {props.feedItem.commentCount > 0 && (
-          <Text className="text-xs font-anakotmai-light text-base-text-medium">
-            {props.feedItem.commentCount} ความคิดเห็น
-          </Text>
-        )}
-      </View>
+      <FeedDetailAuthorSection feedItem={props.feedItem} />
+      <FeedDetailContent feedItem={props.feedItem} />
+      <FeedReactionHook feedId={props.feedItem.id} data={props.feedItem} />
+      <FeedReactionSection feedItem={props.feedItem} />
       <View className="flex flex-col">
         <View className="px-4">
           <View className="border-b border-base-outline-default" />
@@ -846,6 +823,169 @@ export const PostContent = (props: { feedItem: FeedPostItem }) => {
           <CommentButton feedId={props.feedItem.id} />
         </View>
       </View>
+    </View>
+  )
+}
+
+export const FeedDetailSkeleton = () => {
+  return (
+    <View className="flex flex-col bg-base-bg-white">
+      <View className="px-4 pb-3 flex flex-row items-center justify-between">
+        <View className="flex flex-row items-center">
+          <View className="w-8 h-8 rounded-full bg-base-bg-default flex items-center justify-center mr-3 overflow-hidden" />
+          <View className="flex flex-col py-1 gap-2">
+            <View className="rounded-full bg-base-bg-default h-[12px] w-[160px]" />
+            <View className="rounded-full bg-base-bg-default h-[12px] w-[100px]" />
+          </View>
+        </View>
+      </View>
+      <View className="px-4 pb-3">
+        <View className="rounded-lg bg-base-bg-default w-full aspect-[2/1]" />
+      </View>
+      <View className="flex flex-row justify-between items-center px-4 pb-3">
+        <View className="rounded-full bg-base-bg-default h-[20px] w-[100px]" />
+        <View className="rounded-full bg-base-bg-default h-[20px] w-[100px]" />
+      </View>
+      <View className="flex flex-col">
+        <View className="px-4">
+          <View className="border-b border-base-outline-default" />
+        </View>
+        <View className="flex flex-row justify-between gap-2 px-3 pb-3 pt-3">
+          <View className="flex flex-row gap-2">
+            <View className="rounded-full bg-base-bg-default h-6 mt-2 w-[100px]" />
+            <View className="rounded-full bg-base-bg-default h-6 mt-2 w-[100px]" />
+          </View>
+          <View className="rounded-full bg-base-bg-default h-6 mt-2 w-[100px]" />
+        </View>
+      </View>
+    </View>
+  )
+}
+
+const FeedDetailAuthorSection = (props: { feedItem: FeedItem }) => {
+  if (props.feedItem.type === 'ANNOUNCEMENT') return null
+  return (
+    <View className="px-4 pt-1 pb-3 flex flex-row items-center justify-between">
+      <View className="flex flex-row items-center">
+        <Avatar alt={props.feedItem.author.name} className="w-8 h-8 mr-3">
+          <AvatarImage source={{ uri: props.feedItem.author.profileImage }} />
+          <AvatarPPLEFallback />
+        </Avatar>
+        <View className="flex flex-col">
+          <Text className="text-base-text-medium font-anakotmai-medium text-sm">
+            {props.feedItem.author.name}
+          </Text>
+          <Text className="text-base-text-medium font-anakotmai-light text-sm">
+            {props.feedItem.author.address ? `${props.feedItem.author.address.province} | ` : ''}
+            {formatDateInterval(props.feedItem.createdAt.toString())}
+          </Text>
+        </View>
+      </View>
+    </View>
+  )
+}
+
+const FeedDetailContent = (props: { feedItem: FeedItem }) => {
+  switch (props.feedItem.type) {
+    case 'POST':
+      return <PostDetailContent feedItem={props.feedItem} />
+    case 'POLL':
+      // TODO
+      return null
+    case 'ANNOUNCEMENT':
+      return <AnnouncementDetailContent feedItem={props.feedItem} />
+    default:
+      exhaustiveGuard(props.feedItem)
+  }
+}
+
+const PostDetailContent = (props: { feedItem: FeedItemPost }) => {
+  return (
+    <View className="flex flex-col gap-3 pb-3">
+      {props.feedItem.post.attachments && props.feedItem.post.attachments.length > 0 && (
+        <Lightbox attachments={props.feedItem.post.attachments} />
+      )}
+      {props.feedItem.post.content && (
+        <View className="px-4">
+          <TextPost>{props.feedItem.post.content}</TextPost>
+        </View>
+      )}
+      {props.feedItem.post.hashTags.length > 0 && (
+        <View className="flex flex-row flex-wrap gap-1 px-4">
+          {props.feedItem.post.hashTags.map((tag) => (
+            <Link href={`/(feed)/hashtag/${tag.id}`} key={tag.id} asChild>
+              <Badge variant="secondary">
+                <Text>{tag.name}</Text>
+              </Badge>
+            </Link>
+          ))}
+        </View>
+      )}
+    </View>
+  )
+}
+
+type AnnouncementType = GetAnnouncementsResponse['announcements'][number]['type']
+
+const AnnouncementDetailContent = (props: { feedItem: FeedItemAnnouncement }) => {
+  const getLogo = (type: AnnouncementType) => {
+    switch (type) {
+      case 'OFFICIAL':
+        return {
+          logoBackground: 'bg-rose-800',
+          announcementText: 'ประกาศจากทางรัฐบาล',
+          Logo: <Icon icon={LandmarkIcon} size={16} className="text-base-bg-white" />,
+        }
+      case 'PARTY_COMMUNICATE':
+        return {
+          logoBackground: 'bg-base-primary-medium',
+          announcementText: 'ประกาศจากทางพรรค',
+          Logo: <PPLEIcon width={16} height={13.86} color="white" />,
+        }
+      case 'INTERNAL':
+        return {
+          logoBackground: 'bg-base-secondary-default',
+          announcementText: 'ประกาศสำหรับสมาชิกพรรค',
+          Logo: <PPLEIcon width={16} height={13.86} />,
+        }
+      default:
+        exhaustiveGuard(type)
+    }
+  }
+
+  const { logoBackground, announcementText, Logo } = getLogo(props.feedItem.announcement.type)
+
+  return (
+    <View className="px-4 pb-0 pt-1 flex flex-col gap-3 bg-base-bg-white">
+      <View className="flex flex-row items-center gap-2">
+        <View
+          className={cn(
+            'rounded-full size-8 bg-rose-800 flex items-center justify-center',
+            logoBackground
+          )}
+        >
+          {Logo}
+        </View>
+        <H2 className="text-sm font-anakotmai-medium text-base-text-medium">{announcementText}</H2>
+      </View>
+      <H1 className="text-lg font-anakotmai-medium text-base-text-high">
+        {props.feedItem.announcement.title}
+      </H1>
+      <Text className="text-base font-noto-light text-base-text-high">
+        {props.feedItem.announcement.content}
+      </Text>
+      {props.feedItem.announcement.attachments?.map((url) => (
+        <Button
+          key={url}
+          className="self-start"
+          onPress={() => {
+            WebBrowser.openBrowserAsync(url)
+          }}
+        >
+          <Icon icon={FileTextIcon} />
+          <Text>ดูเอกสาร</Text>
+        </Button>
+      ))}
     </View>
   )
 }
