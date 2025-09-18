@@ -17,5 +17,12 @@ export const AdminListElectionResponse = t.Intersect([
     data: t.Array(ElectionInfo),
   }),
 ])
-
 export type AdminListElectionResponse = Static<typeof AdminListElectionResponse>
+
+export const AdminGetElectionParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminGetElectionParams = Static<typeof AdminGetElectionParams>
+
+export const AdminGetElectionResponse = ElectionInfo
+export type AdminGetElectionResponse = Static<typeof AdminGetElectionResponse>

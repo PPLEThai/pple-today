@@ -48,6 +48,14 @@ export class AdminElectionRepository {
       }
     })
   }
+
+  async getElectionById(electionId: string) {
+    return fromRepositoryPromise(
+      this.prismaService.election.findUniqueOrThrow({
+        where: { id: electionId },
+      })
+    )
+  }
 }
 
 export const AdminElectionRepositoryPlugin = new Elysia({ name: 'AdminElectionRepository' })
