@@ -68,7 +68,7 @@ export const CreateBallotParams = t.Object({
 export type CreateBallotParams = Static<typeof CreateBallotParams>
 
 export const CreateBallotBody = t.Object({
-  faceImage: FilePath,
+  faceImagePath: FilePath,
   location: t.String(),
   encryptedBallot: t.String(),
 })

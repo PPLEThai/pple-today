@@ -4,6 +4,7 @@ import {
   ElectionInfo,
   ElectionStatus,
   FileMimeType,
+  FilePath,
   InternalErrorCode,
 } from '@pple-today/api-common/dtos'
 import { FileService } from '@pple-today/api-common/services'
@@ -303,13 +304,14 @@ export class ElectionService {
     return ok()
   }
 
-  async createBallot(
-    userId: string,
-    electionId: string,
-    encryptedBallot: string,
-    faceImagePath: string,
+  async createBallot(input: {
+    userId: string
+    electionId: string
+    encryptedBallot: string
+    faceImagePath: FilePath
     location: string
-  ) {
+  }) {
+    const { userId, electionId, encryptedBallot, faceImagePath, location } = input
     const eligibleVoter = await this.electionRepository.getMyEligibleVoter(userId, electionId)
     if (eligibleVoter.isErr()) {
       return mapRepositoryError(eligibleVoter.error, {
@@ -336,13 +338,13 @@ export class ElectionService {
       })
     }
 
-    const createBallotResult = await this.electionRepository.createMyBallot(
+    const createBallotResult = await this.electionRepository.createMyBallot({
       userId,
       electionId,
       encryptedBallot,
       faceImagePath,
-      location
-    )
+      location,
+    })
     if (createBallotResult.isErr()) {
       return mapRepositoryError(createBallotResult.error, {
         UNIQUE_CONSTRAINT_FAILED: {

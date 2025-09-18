@@ -144,13 +144,11 @@ export const ElectionController = new Elysia({
   .post(
     '/:electionId/ballot',
     async ({ params, body, user, status, electionService }) => {
-      const createBallot = await electionService.createBallot(
-        user.id,
-        params.electionId,
-        body.encryptedBallot,
-        body.faceImage,
-        body.location
-      )
+      const createBallot = await electionService.createBallot({
+        userId: user.id,
+        ...params,
+        ...body,
+      })
       if (createBallot.isErr()) {
         return mapErrorCodeToResponse(createBallot.error, status)
       }
@@ -175,6 +173,8 @@ export const ElectionController = new Elysia({
           InternalErrorCode.ELECTION_VOTE_TO_INVALID_TYPE,
           InternalErrorCode.ELECTION_NOT_IN_VOTE_PERIOD,
           InternalErrorCode.ELECTION_USER_ALREADY_VOTE,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
