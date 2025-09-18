@@ -6,6 +6,8 @@ import {
   CreateBallotBody,
   CreateBallotParams,
   CreateBallotResponse,
+  CreateFaceImageUploadURLBody,
+  CreateFaceImageUploadURLResponse,
   GetElectionParams,
   GetElectionResponse,
   ListElectionResponse,
@@ -108,6 +110,32 @@ export const ElectionController = new Elysia({
           InternalErrorCode.ELECTION_NOT_FOUND,
           InternalErrorCode.ELECTION_NOT_IN_REGISTER_PERIOD,
           InternalErrorCode.ELECTION_REGISTER_TO_INVALID_TYPE,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .post(
+    '/upload-url',
+    async ({ body, status, electionService }) => {
+      const result = await electionService.createFaceImageUploadURL(body.contentType)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, result.value)
+    },
+    {
+      detail: {
+        summary: 'Get Face Image Upload URL',
+        description: 'Fetch the signed URL to upload face image picture',
+      },
+      requiredLocalUser: true,
+      body: CreateFaceImageUploadURLBody,
+      response: {
+        200: CreateFaceImageUploadURLResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.FILE_UNSUPPORTED_MIME_TYPE,
+          InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

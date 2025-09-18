@@ -1,9 +1,12 @@
+import { createId } from '@paralleldrive/cuid2'
 import {
   ElectionCandidate as ElectionCandidateDTO,
   ElectionInfo,
   ElectionStatus,
+  FileMimeType,
   InternalErrorCode,
 } from '@pple-today/api-common/dtos'
+import { FileService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import { err } from '@pple-today/api-common/utils'
 import {
@@ -21,8 +24,13 @@ import { ok } from 'neverthrow'
 import { GetElectionResponse, ListElectionResponse } from './models'
 import { ElectionRepository, ElectionRepositoryPlugin } from './repository'
 
+import { FileServicePlugin } from '../../plugins/file'
+
 export class ElectionService {
-  constructor(private readonly electionRepository: ElectionRepository) {}
+  constructor(
+    private readonly electionRepository: ElectionRepository,
+    private readonly fileService: FileService
+  ) {}
 
   private readonly SECONDS_IN_A_DAY = 60 * 60 * 24
 
@@ -346,10 +354,32 @@ export class ElectionService {
 
     return ok()
   }
+
+  async createFaceImageUploadURL(contentType: FileMimeType) {
+    const fileKeyResult = this.fileService.getFilePathFromMimeType(
+      `temp/bollots/face-image-${createId()}`,
+      contentType
+    )
+
+    if (fileKeyResult.isErr()) return err(fileKeyResult.error)
+
+    const fileKey = fileKeyResult.value
+    const uploadUrl = await this.fileService.createUploadSignedUrl(fileKey, {
+      contentType,
+    })
+
+    if (uploadUrl.isErr()) return err(uploadUrl.error)
+
+    return ok({
+      fileKey,
+      uploadFields: uploadUrl.value.fields,
+      uploadUrl: uploadUrl.value.url,
+    })
+  }
 }
 
 export const ElectionServicePlugin = new Elysia()
-  .use(ElectionRepositoryPlugin)
-  .decorate(({ electionRepository }) => ({
-    electionService: new ElectionService(electionRepository),
+  .use([ElectionRepositoryPlugin, FileServicePlugin])
+  .decorate(({ electionRepository, fileService }) => ({
+    electionService: new ElectionService(electionRepository, fileService),
   }))
