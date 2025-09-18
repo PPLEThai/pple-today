@@ -31,7 +31,12 @@ import { toggleTextVariants, toggleVariants } from '@pple-today/ui/toggle'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H2, H3 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
-import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  InfiniteData,
+  useInfiniteQuery,
+  UseInfiniteQueryResult,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import * as Linking from 'expo-linking'
 import { useRouter } from 'expo-router'
@@ -47,7 +52,11 @@ import {
 } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import type { ApplicationApiSchema, GetBannersResponse } from '@api/backoffice/app'
+import type {
+  ApplicationApiSchema,
+  GetBannersResponse,
+  GetMyFeedResponse,
+} from '@api/backoffice/app'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { UserAddressInfoSection } from '@app/components/address-info'
 import { AnnouncementCard } from '@app/components/announcement'
@@ -578,89 +587,44 @@ function FeedContent(props: PagerScrollViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
 
-  type GetMyFeedResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/me'>
-  const data = React.useMemo((): GetMyFeedResponse[] => {
+  const data = React.useMemo((): GetMyFeedResponse => {
     if (!feedInfiniteQuery.data) return []
-    return feedInfiniteQuery.data.pages
+    return feedInfiniteQuery.data.pages.flatMap((page) => page)
   }, [feedInfiniteQuery.data])
 
   const scrollContext = useScrollContext()
   const scrollHandler = useAnimatedScrollHandler(scrollContext)
 
-  const [refreshing, setRefreshing] = React.useState(false)
   const queryClient = useQueryClient()
   const onRefresh = React.useCallback(async () => {
-    setRefreshing(true)
-    try {
-      queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/auth/me') })
-      queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/banners') })
-      await Promise.all([
-        queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/feed/me') }),
-        queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/announcements') }),
-      ])
-      await feedInfiniteQuery.refetch()
-      setRefreshing(false)
-    } catch (error) {
-      console.error('Error refreshing feed:', error)
-      setRefreshing(false)
-    }
-  }, [feedInfiniteQuery, queryClient])
-
-  const Footer =
-    feedInfiniteQuery.hasNextPage || feedInfiniteQuery.isLoading || feedInfiniteQuery.error ? (
-      <FeedCardSkeleton />
-    ) : data.length === 1 && data[0].length === 0 ? (
-      // Empty State
-      <View className="flex flex-col items-center justify-center py-6">
-        <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีโพสต์</Text>
-      </View>
-    ) : (
-      // Reach end of feed
-      <View className="flex flex-col items-center justify-center py-6">
-        <Text className="text-base-text-medium font-anakotmai-medium">ไม่มีโพสต์เพิ่มเติม</Text>
-      </View>
-    )
+    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/auth/me') })
+    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/banners') })
+    await Promise.all([
+      queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/feed/me') }),
+      queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/announcements') }),
+    ])
+  }, [queryClient])
 
   const renderFeedItem = React.useCallback(
-    ({ item: items }: { item: GetMyFeedResponse; index: number }) => {
-      if (!items) {
-        return null
-      }
-      return (
-        <>
-          {items.map((item) => {
-            return <FeedCard key={item.id} feedItem={item} />
-          })}
-        </>
-      )
+    ({ item }: { item: GetMyFeedResponse[number]; index: number }) => {
+      return <FeedCard key={item.id} feedItem={item} />
     },
     []
   )
-  // TODO: find the right height for minHeight
-  const minHeight = Dimensions.get('window').height + headerHeight
   return (
     <Animated.FlatList
       ref={scrollElRef}
       onScroll={scrollHandler}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          progressViewOffset={Platform.select({ ios: 0, android: headerHeight })}
-          colors={['#FF6A13']} // base-primary-default
-        />
-      }
+      refreshControl={<FeedRefreshControl headerHeight={headerHeight} onRefresh={onRefresh} />}
       data={data}
+      className="flex-1"
       contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
-      contentContainerStyle={{ paddingTop: headerHeight, minHeight }}
+      contentContainerStyle={{ paddingTop: headerHeight }}
       ListHeaderComponent={<AnnouncementSection />}
-      ListFooterComponent={Footer}
+      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} />}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
       renderItem={renderFeedItem}
-      // contentOffset={{ x: 0, y: -headerHeight }}
-      // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
-      // automaticallyAdjustsScrollIndicatorInsets={false}
     />
   )
 }
@@ -715,87 +679,102 @@ function FeedTopicContent(props: FeedTopicContentProps) {
   }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
 
   type GetMyFeedResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/me'>
-  const data = React.useMemo((): GetMyFeedResponse[] => {
+  const data = React.useMemo((): GetMyFeedResponse => {
     if (!feedInfiniteQuery.data) return []
-    return feedInfiniteQuery.data.pages
+    return feedInfiniteQuery.data.pages.flatMap((page) => page)
   }, [feedInfiniteQuery.data])
 
   const scrollContext = useScrollContext()
   const scrollHandler = useAnimatedScrollHandler(scrollContext)
 
-  const [refreshing, setRefreshing] = React.useState(false)
   const queryClient = useQueryClient()
   const onRefresh = React.useCallback(async () => {
-    setRefreshing(true)
-    try {
-      await Promise.all([
-        queryClient.resetQueries({
-          queryKey: reactQueryClient.getQueryKey('/feed/topic', { query: { topicId } }),
-        }),
-      ])
-      await feedInfiniteQuery.refetch()
-      setRefreshing(false)
-    } catch (error) {
-      console.error('Error refreshing feed:', error)
-      setRefreshing(false)
-    }
-  }, [feedInfiniteQuery, queryClient, topicId])
-
-  const Footer =
-    feedInfiniteQuery.hasNextPage || feedInfiniteQuery.isLoading || feedInfiniteQuery.error ? (
-      <FeedCardSkeleton />
-    ) : data.length === 1 && data[0].length === 0 ? (
-      // Empty State
-      <View className="flex flex-col items-center justify-center py-6">
-        <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีโพสต์</Text>
-      </View>
-    ) : (
-      // Reach end of feed
-      <View className="flex flex-col items-center justify-center py-6">
-        <Text className="text-base-text-medium font-anakotmai-medium">ไม่มีโพสต์เพิ่มเติม</Text>
-      </View>
-    )
+    await Promise.all([
+      queryClient.resetQueries({
+        queryKey: reactQueryClient.getQueryKey('/feed/topic', { query: { topicId } }),
+      }),
+    ])
+  }, [queryClient, topicId])
 
   const renderFeedItem = React.useCallback(
-    ({ item: items }: { item: GetMyFeedResponse; index: number }) => {
-      if (!items) {
-        return null
-      }
-      return (
-        <>
-          {items.map((item) => {
-            return <FeedCard key={item.id} feedItem={item} />
-          })}
-        </>
-      )
+    ({ item }: { item: GetMyFeedResponse[number]; index: number }) => {
+      return <FeedCard key={item.id} feedItem={item} />
     },
     []
   )
 
-  // TODO: find the right height for minHeight
-  const minHeight = Dimensions.get('window').height + headerHeight
   return (
     <Animated.FlatList
       ref={scrollElRef}
       onScroll={scrollHandler}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          progressViewOffset={Platform.select({ ios: 0, android: headerHeight })}
-          colors={['#FF6A13']} // base-primary-default
-        />
-      }
+      refreshControl={<FeedRefreshControl headerHeight={headerHeight} onRefresh={onRefresh} />}
       data={data}
+      className="flex-1"
       contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
-      contentContainerStyle={{ paddingTop: headerHeight, minHeight }}
-      ListFooterComponent={Footer}
+      contentContainerStyle={{ paddingTop: headerHeight }}
+      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} />}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
       renderItem={renderFeedItem}
       showsVerticalScrollIndicator={false}
-      style={{ flex: 1 }}
     />
+  )
+}
+
+interface FeedRefreshControlProps {
+  headerHeight: number
+  onRefresh: () => void
+}
+// TODO: make RefreshControl appear on top of the header so that we dont need the headerHeight offset on Android
+function FeedRefreshControl({
+  headerHeight,
+  onRefresh: onRefreshProp,
+  ...rest
+}: FeedRefreshControlProps) {
+  const [refreshing, setRefreshing] = React.useState(false)
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true)
+    await onRefreshProp()
+    setRefreshing(false)
+  }, [onRefreshProp])
+  return (
+    <RefreshControl
+      refreshing={refreshing}
+      onRefresh={onRefresh}
+      progressViewOffset={Platform.select({ ios: 0, android: headerHeight })}
+      colors={['#FF6A13']} // base-primary-default
+      {...rest} // make sure overridden styles (from RN) are passed down
+    />
+  )
+}
+
+interface FeedFooterProps {
+  queryResult: UseInfiniteQueryResult<InfiniteData<unknown[]>>
+}
+function FeedFooter({ queryResult }: FeedFooterProps) {
+  const minHeight = Dimensions.get('window').height
+  if (queryResult.hasNextPage || queryResult.isLoading || queryResult.error) {
+    return <FeedCardSkeleton />
+  }
+  if (
+    queryResult.data &&
+    queryResult.data.pages.length === 1 &&
+    queryResult.data.pages[0].length === 0
+  ) {
+    // Empty State
+    return (
+      <View style={{ minHeight }}>
+        <View className="flex flex-col items-center justify-center py-6">
+          <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีโพสต์</Text>
+        </View>
+      </View>
+    )
+  }
+  // Reach end of feed
+  return (
+    <View className="flex flex-col items-center justify-center py-6">
+      <Text className="text-base-text-medium font-anakotmai-medium">ไม่มีโพสต์เพิ่มเติม</Text>
+    </View>
   )
 }
 
