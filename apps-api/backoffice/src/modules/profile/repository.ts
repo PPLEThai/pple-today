@@ -67,6 +67,11 @@ export class ProfileRepository {
         where: { id },
         include: {
           address: true,
+          roles: {
+            select: {
+              role: true,
+            },
+          },
         },
       })
     )

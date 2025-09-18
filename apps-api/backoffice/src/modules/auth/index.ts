@@ -1,6 +1,5 @@
-import { InternalErrorCode, PPLERole } from '@pple-today/api-common/dtos'
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
-import { UserRole } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import { GetAuthMeResponse, RegisterUserResponse } from './models'
@@ -16,27 +15,7 @@ export const AuthController = new Elysia({
   .post(
     '/register',
     async ({ oidcUser, status, authService }) => {
-      let role: UserRole
-      switch (oidcUser.pple_roles[0]) {
-        case PPLERole.MP:
-          role = UserRole.REPRESENTATIVE
-          break
-        case PPLERole.PROVINCE:
-        case PPLERole.CANDIDATE:
-        case PPLERole.LOCAL:
-        case PPLERole.MPASSISTANT:
-        case PPLERole.TTO:
-        case PPLERole.HQ:
-          role = UserRole.STAFF
-          break
-        case PPLERole.FOUNDATION:
-          role = UserRole.STAFF
-          break
-        default:
-          role = UserRole.USER
-      }
-
-      const result = await authService.registerUser(oidcUser, role)
+      const result = await authService.registerUser(oidcUser, oidcUser.pple_roles)
 
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
