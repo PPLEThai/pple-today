@@ -1,4 +1,9 @@
-import { ElectionInfo, ListQuery, PaginationMetadataResponse } from '@pple-today/api-common/dtos'
+import {
+  ElectionCandidate,
+  ElectionInfo,
+  ListQuery,
+  PaginationMetadataResponse,
+} from '@pple-today/api-common/dtos'
 import { ElectionType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
@@ -72,3 +77,11 @@ export const AdminCancelElectionResponse = t.Object({
   message: t.String(),
 })
 export type AdminCancelElectionResponse = Static<typeof AdminCancelElectionResponse>
+
+export const AdminListElectionCandidatesParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminListElectionCandidatesParams = Static<typeof AdminListElectionCandidatesParams>
+
+export const AdminListElectionCandidatesResponse = t.Array(ElectionCandidate)
+export type AdminListElectionCandidatesResponse = Static<typeof AdminListElectionCandidatesResponse>

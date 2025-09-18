@@ -9,6 +9,8 @@ import {
   AdminDeleteElectionResponse,
   AdminGetElectionParams,
   AdminGetElectionResponse,
+  AdminListElectionCandidatesParams,
+  AdminListElectionCandidatesResponse,
   AdminListElectionQuery,
   AdminListElectionResponse,
   AdminUpdateElectionBody,
@@ -157,6 +159,31 @@ export const AdminElectionController = new Elysia({
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.FORBIDDEN,
           InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .get(
+    '/:electionId/candidates',
+    async ({ params, status, adminElectionService }) => {
+      const result = await adminElectionService.listElectionCandidates(params.electionId)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, result.value)
+    },
+    {
+      detail: {
+        summary: 'Get Election Candidates',
+        description: 'Get Election Candidates',
+      },
+      requiredLocalUser: true,
+      params: AdminListElectionCandidatesParams,
+      response: {
+        200: AdminListElectionCandidatesResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.FORBIDDEN,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

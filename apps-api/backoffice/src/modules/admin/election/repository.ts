@@ -1,5 +1,5 @@
 import { PrismaService } from '@pple-today/api-common/services'
-import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { fromRepositoryPromise, mapRepositoryError } from '@pple-today/api-common/utils'
 import { ElectionType, Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
@@ -115,6 +115,14 @@ export class AdminElectionRepository {
             isCancelled: true,
           },
         })
+      })
+    )
+  }
+
+  async listElectionCandidates(electionId: string) {
+    return fromRepositoryPromise(
+      this.prismaService.electionCandidate.findMany({
+        where: { electionId },
       })
     )
   }

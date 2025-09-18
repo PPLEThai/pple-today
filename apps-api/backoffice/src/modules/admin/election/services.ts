@@ -1,4 +1,4 @@
-import { ElectionInfo, InternalErrorCode } from '@pple-today/api-common/dtos'
+import { ElectionCandidate, ElectionInfo, InternalErrorCode } from '@pple-today/api-common/dtos'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import { Election } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
@@ -119,6 +119,24 @@ export class AdminElectionService {
       })
     }
     return ok()
+  }
+
+  async listElectionCandidates(electionId: string) {
+    const candidatesResult = await this.adminElectionRepository.listElectionCandidates(electionId)
+    if (candidatesResult.isErr()) return mapRepositoryError(candidatesResult.error)
+
+    const candidates: ElectionCandidate[] = candidatesResult.value.map((candidate) => ({
+      id: candidate.id,
+      electionId: candidate.electionId,
+      name: candidate.name,
+      description: candidate.description,
+      profileImage: candidate.profileImage,
+      number: candidate.number,
+      createdAt: candidate.createdAt,
+      updatedAt: candidate.updatedAt,
+    }))
+
+    return ok(candidates)
   }
 }
 
