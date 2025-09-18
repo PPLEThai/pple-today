@@ -50,13 +50,15 @@ export class AdminTopicService {
       filePath: FilePath
     } | null = null
 
-    if (result.value.bannerImage) {
-      const getSignedUrlResult = await this.fileService.getFileSignedUrl(result.value.bannerImage)
+    if (result.value.bannerImagePath) {
+      const getSignedUrlResult = await this.fileService.getFileSignedUrl(
+        result.value.bannerImagePath
+      )
       if (getSignedUrlResult.isErr()) return err(getSignedUrlResult.error)
 
       bannerImageRes = {
         url: getSignedUrlResult.value,
-        filePath: result.value.bannerImage as FilePath,
+        filePath: result.value.bannerImagePath as FilePath,
       }
     }
 

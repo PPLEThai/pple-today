@@ -160,7 +160,9 @@ export class ElectionService {
       electionId: candidate.electionId,
       name: candidate.name,
       description: candidate.description,
-      profileImage: candidate.profileImage,
+      profileImage: candidate.profileImage
+        ? this.fileService.getPublicFileUrl(candidate.profileImage)
+        : null,
       number: candidate.number,
       createdAt: candidate.createdAt,
       updatedAt: candidate.updatedAt,

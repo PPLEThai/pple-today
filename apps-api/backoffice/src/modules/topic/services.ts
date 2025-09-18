@@ -1,5 +1,6 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { HashTag } from '@pple-today/api-common/dtos'
+import { FileService } from '@pple-today/api-common/services'
 import { err, mapRepositoryError } from '@pple-today/api-common/utils'
 import { HashTagInTopic, Topic, TopicStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
@@ -8,8 +9,13 @@ import { ok } from 'neverthrow'
 import { GetTopicsResponse } from './models'
 import { TopicRepository, TopicRepositoryPlugin } from './repository'
 
+import { FileServicePlugin } from '../../plugins/file'
+
 export class TopicService {
-  constructor(private readonly topicRepository: TopicRepository) {}
+  constructor(
+    private readonly topicRepository: TopicRepository,
+    private readonly fileService: FileService
+  ) {}
 
   async getTopics() {
     const topics = await this.topicRepository.getTopics()
@@ -106,7 +112,9 @@ export class TopicService {
         id: topic.id,
         name: topic.name,
         description: topic.description,
-        bannerImage: topic.bannerImage,
+        bannerImage: topic.bannerImagePath
+          ? this.fileService.getPublicFileUrl(topic.bannerImagePath)
+          : null,
         status: topic.status,
         createdAt: topic.createdAt,
         updatedAt: topic.updatedAt,
@@ -125,7 +133,7 @@ export class TopicService {
 }
 
 export const TopicServicePlugin = new Elysia({ name: 'TopicService' })
-  .use(TopicRepositoryPlugin)
-  .decorate(({ topicRepository }) => ({
-    topicService: new TopicService(topicRepository),
+  .use([TopicRepositoryPlugin, FileServicePlugin])
+  .decorate(({ topicRepository, fileService }) => ({
+    topicService: new TopicService(topicRepository, fileService),
   }))

@@ -10,6 +10,7 @@ import { FeedController } from './feed'
 import { HashtagController } from './hashtag'
 import { PollsController } from './polls'
 import { ProfileController } from './profile'
+import { SearchController } from './search'
 import { TopicController } from './topic'
 
 export const ApplicationController = new Elysia()
@@ -24,3 +25,4 @@ export const ApplicationController = new Elysia()
   .use(TopicController)
   .use(ElectionController)
   .use(HashtagController)
+  .use(SearchController)

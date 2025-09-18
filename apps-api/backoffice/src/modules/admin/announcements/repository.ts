@@ -43,8 +43,6 @@ export class AdminAnnouncementRepository {
             title: true,
             content: true,
             type: true,
-            iconImage: true,
-            backgroundColor: true,
             createdAt: true,
             updatedAt: true,
             topics: {
@@ -65,8 +63,6 @@ export class AdminAnnouncementRepository {
             title: true,
             content: true,
             type: true,
-            iconImage: true,
-            backgroundColor: true,
             topics: {
               select: {
                 topic: {
@@ -117,8 +113,6 @@ export class AdminAnnouncementRepository {
           title: true,
           content: true,
           type: true,
-          iconImage: true,
-          backgroundColor: true,
           topics: {
             select: {
               topic: {
@@ -171,8 +165,6 @@ export class AdminAnnouncementRepository {
             title: true,
             content: true,
             type: true,
-            iconImage: true,
-            backgroundColor: true,
             topics: {
               select: {
                 topic: {
@@ -259,8 +251,6 @@ export class AdminAnnouncementRepository {
           title: data.title,
           content: data.content,
           type: data.type,
-          iconImage: data.iconImage,
-          backgroundColor: data.backgroundColor,
           topics: {
             deleteMany: {},
             createMany: {
@@ -323,8 +313,6 @@ export class AdminAnnouncementRepository {
             title: true,
             content: true,
             type: true,
-            iconImage: true,
-            backgroundColor: true,
             topics: { select: { topicId: true } },
             attachments: { select: { filePath: true } },
           },
@@ -337,8 +325,6 @@ export class AdminAnnouncementRepository {
             title: announcement.title,
             content: announcement.content,
             type: announcement.type,
-            iconImage: announcement.iconImage,
-            backgroundColor: announcement.backgroundColor,
             topics: { createMany: { data: announcement.topics } },
             attachments: {
               createMany: { data: privateFile.map((file) => ({ filePath: file })) },
@@ -433,8 +419,6 @@ export class AdminAnnouncementRepository {
           title: true,
           content: true,
           type: true,
-          iconImage: true,
-          backgroundColor: true,
           createdAt: true,
           updatedAt: true,
           topics: {
@@ -477,8 +461,6 @@ export class AdminAnnouncementRepository {
           title: true,
           content: true,
           type: true,
-          iconImage: true,
-          backgroundColor: true,
           createdAt: true,
           updatedAt: true,
           topics: {
@@ -549,8 +531,6 @@ export class AdminAnnouncementRepository {
           title: data.title,
           content: data.content,
           type: data.type,
-          iconImage: data.iconImage,
-          backgroundColor: data.backgroundColor,
           topics: {
             deleteMany: {},
             createMany: {
@@ -619,8 +599,6 @@ export class AdminAnnouncementRepository {
                 title: draftAnnouncement.title!,
                 content: draftAnnouncement.content,
                 type: draftAnnouncement.type!,
-                iconImage: draftAnnouncement.iconImage,
-                backgroundColor: draftAnnouncement.backgroundColor,
                 topics: {
                   createMany: {
                     data: draftAnnouncement.topics.map(({ topicId }) => ({ topicId })),
