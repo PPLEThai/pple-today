@@ -62,6 +62,7 @@ import { UserAddressInfoSection } from '@app/components/address-info'
 import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/announcement'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
+import { PeopleSuggestion } from '@app/components/feed/people-card'
 import {
   Pager,
   PagerContent,
@@ -622,7 +623,12 @@ function FeedContent(props: PagerScrollViewProps) {
       className="flex-1"
       contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
       contentContainerStyle={{ paddingTop: headerHeight }}
-      ListHeaderComponent={<AnnouncementSection />}
+      ListHeaderComponent={
+        <View className="flex flex-col gap-4">
+          <AnnouncementSection />
+          <PeopleSuggestion />
+        </View>
+      }
       ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} />}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
