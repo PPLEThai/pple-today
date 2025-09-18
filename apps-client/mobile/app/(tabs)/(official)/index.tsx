@@ -242,7 +242,7 @@ const InformationSection = () => {
                         </View>
                         <Text className="font-noto-light items-baseline">
                           <Text
-                            onPress={() => Linking.openURL('tel:+6628215874')}
+                            onPress={() => Linking.openURL('tel:028215874')}
                             className="underline font-noto-light"
                           >
                             02-821-5874
