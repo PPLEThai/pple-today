@@ -7,9 +7,10 @@ export default function FeedLayout() {
       screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
     >
       <Stack.Screen name="index" />
-      <Stack.Screen name="[feedId]" />
       <Stack.Screen name="hashtag/[hashtagId]" />
       <Stack.Screen name="announcement/index" />
+      <Stack.Screen name="people-suggestion" />
+      <Stack.Screen name="[feedId]" />
     </Stack>
   )
 }
