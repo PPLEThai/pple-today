@@ -1,4 +1,4 @@
-import { ElectionType } from '@pple-today/database/prisma'
+import { ElectionMode, ElectionType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const ElectionStatus = t.Enum({
@@ -15,6 +15,7 @@ export const ElectionInfo = t.Object({
   description: t.Nullable(t.String()),
   location: t.Nullable(t.String()),
   type: t.Enum(ElectionType),
+  mode: t.Enum(ElectionMode),
   isCancelled: t.Boolean(),
   encryptionPublicKey: t.Nullable(t.String()),
 

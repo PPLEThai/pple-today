@@ -14,12 +14,18 @@ enum ElectionResultType {
     ONLINE
 }
 
+enum ElectionMode {
+    SECURE
+    FLEXIBLE
+}
+
 model Election {
     id                        String       @id @default(cuid())
     name                      String
     description               String?
     location                  String?
     type                      ElectionType
+    mode                      ElectionMode @default(SECURE)
     encryptionPublicKey       String?
     digitalSignaturePublicKey String?
     isCancelled               Boolean      @default(false)
