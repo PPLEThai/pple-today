@@ -5,22 +5,21 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createErrorSchema, err, tApiError } from './error'
 
 import { InternalErrorCode, InternalErrorCodeSchemas } from '../dtos'
+beforeAll(() => {
+  ;(InternalErrorCodeSchemas as any).TEST_DATA = {
+    status: 400,
+    data: t.Object({
+      testField: t.String(),
+    }),
+  }
+})
+
+afterAll(() => {
+  delete (InternalErrorCodeSchemas as any).TEST_DATA
+})
 
 describe('Error utility', () => {
   describe('tApiError', () => {
-    beforeAll(() => {
-      ;(InternalErrorCodeSchemas as any).TEST_DATA = {
-        status: 400,
-        data: t.Object({
-          testField: t.String(),
-        }),
-      }
-    })
-
-    afterAll(() => {
-      delete (InternalErrorCodeSchemas as any).TEST_DATA
-    })
-
     it('should create a valid API error schema', () => {
       const error = tApiError(InternalErrorCode.BAD_REQUEST)
       expect(error).toEqual(
@@ -47,19 +46,6 @@ describe('Error utility', () => {
   })
 
   describe('tApiErrorResponse', () => {
-    beforeAll(() => {
-      ;(InternalErrorCodeSchemas as any).TEST_DATA = {
-        status: 400,
-        data: t.Object({
-          testField: t.String(),
-        }),
-      }
-    })
-
-    afterAll(() => {
-      delete (InternalErrorCodeSchemas as any).TEST_DATA
-    })
-
     it('should create a valid API error response schema', () => {
       const errorResponse = createErrorSchema(InternalErrorCode.BAD_REQUEST)
       expect(errorResponse).toEqual({
