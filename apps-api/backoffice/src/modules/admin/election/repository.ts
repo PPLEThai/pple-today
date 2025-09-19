@@ -89,7 +89,7 @@ export class AdminElectionRepository {
     const deleteImageResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (tx) => {
         const deleteImageResult = await tx.bulkRemoveFile(faceImagePaths as FilePath[])
-        if (deleteImageResult.isErr()) throw deleteImageResult.error
+        if (deleteImageResult.isErr()) return err(deleteImageResult.error)
       })
     )
     if (deleteImageResult.isErr()) return err(deleteImageResult.error)
@@ -140,7 +140,7 @@ export class AdminElectionRepository {
         if (!profileImage) return null
 
         const moveFileResult = await tx.bulkMoveToPublicFolder([profileImage])
-        if (moveFileResult.isErr()) throw moveFileResult.error
+        if (moveFileResult.isErr()) return err(moveFileResult.error)
 
         return moveFileResult.value[0]
       })
@@ -193,12 +193,12 @@ export class AdminElectionRepository {
 
         if (oldProfileImage) {
           const deleteOldFileResult = await tx.removeFile(oldProfileImage as FilePath)
-          if (deleteOldFileResult.isErr()) throw deleteOldFileResult.error
+          if (deleteOldFileResult.isErr()) return err(deleteOldFileResult.error)
         }
 
         if (newProfileImage) {
           const moveNewFileResult = await tx.bulkMoveToPublicFolder([newProfileImage])
-          if (moveNewFileResult.isErr()) throw moveNewFileResult.error
+          if (moveNewFileResult.isErr()) return err(moveNewFileResult.error)
           return moveNewFileResult.value[0]
         }
 
@@ -243,7 +243,7 @@ export class AdminElectionRepository {
         const profileImage = candidateResult.value.profileImagePath
         if (!profileImage) return
         const deleteProfileImage = await tx.removeFile(profileImage as FilePath)
-        if (deleteProfileImage.isErr()) throw deleteProfileImage.error
+        if (deleteProfileImage.isErr()) return err(deleteProfileImage.error)
       })
     )
     if (deleteProfileImageResult.isErr()) return err(deleteProfileImageResult.error)
