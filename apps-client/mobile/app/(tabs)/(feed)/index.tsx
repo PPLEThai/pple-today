@@ -63,6 +63,7 @@ import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/anno
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
 import { PeopleSuggestion } from '@app/components/feed/people-card'
+import { TopicSuggestion } from '@app/components/feed/topic-card'
 import {
   Pager,
   PagerContent,
@@ -223,6 +224,7 @@ function BannerSection() {
   if (banners.length === 0) return null
   return (
     <Slide
+      isLoading={bannersQuery.isLoading}
       count={banners.length}
       itemWidth={320}
       gap={8}
@@ -624,10 +626,11 @@ function FeedContent(props: PagerScrollViewProps) {
       contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
       contentContainerStyle={{ paddingTop: headerHeight }}
       ListHeaderComponent={
-        <View className="flex flex-col gap-4">
+        <>
+          <TopicSuggestion />
           <AnnouncementSection />
           <PeopleSuggestion />
-        </View>
+        </>
       }
       ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} />}
       onEndReachedThreshold={1}
@@ -828,7 +831,7 @@ function AnnouncementSection() {
   }
 
   if (!announcementsQuery.data) return null
-
+  const announcements = announcementsQuery.data.announcements
   return (
     <View className="flex flex-col">
       <View className="flex flex-row pt-4 px-4 pb-3 justify-between">
@@ -846,14 +849,9 @@ function AnnouncementSection() {
           <Icon icon={ArrowRightIcon} strokeWidth={2} />
         </Button>
       </View>
-      <Slide
-        count={announcementsQuery.data.announcements.length}
-        itemWidth={320}
-        gap={8}
-        paddingHorizontal={16}
-      >
+      <Slide count={announcements.length} itemWidth={320} gap={8} paddingHorizontal={16}>
         <SlideScrollView>
-          {announcementsQuery.data.announcements.map((announcement) => (
+          {announcements.map((announcement) => (
             <SlideItem key={announcement.id}>
               <AnnouncementCard
                 id={announcement.id}

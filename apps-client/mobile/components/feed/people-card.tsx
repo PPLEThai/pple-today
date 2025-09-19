@@ -81,7 +81,7 @@ export function PeopleSuggestion() {
   const router = useRouter()
   return (
     <View className="flex flex-col gap-4">
-      <View className="flex flex-row justify-between items-center px-4">
+      <View className="flex flex-row justify-between items-center px-4 pt-4">
         <View className="flex flex-row items-center gap-2">
           <Icon icon={UserRoundPlusIcon} size={32} className="text-base-primary-default" />
           <H2 className="text-2xl font-anakotmai-medium text-base-text-high">แนะนำให้ติดตาม</H2>
