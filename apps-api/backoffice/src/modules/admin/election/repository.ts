@@ -1,14 +1,18 @@
-import { PrismaService } from '@pple-today/api-common/services'
+import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { ElectionType, Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import { AdminUpdateElectionBody } from './models'
 
+import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
 
 export class AdminElectionRepository {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly fileService: FileService
+  ) {}
 
   async listElections(input: {
     filter?: {
@@ -96,6 +100,12 @@ export class AdminElectionRepository {
   async cancelElectionById(electionId: string) {
     return fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
+        const deletedVoteRecords = await tx.electionVoteRecord.findMany({
+          where: {
+            electionId,
+          },
+        })
+
         await Promise.all([
           tx.electionBallot.deleteMany({
             where: {
@@ -114,13 +124,20 @@ export class AdminElectionRepository {
             },
           }),
         ])
+
+        const faceImagePaths = deletedVoteRecords
+          .map((record) => record.faceImagePath)
+          .filter((path) => path !== null)
+
+        const deleteImageResult = await this.fileService.bulkDeleteFile(faceImagePaths)
+        if (deleteImageResult.isErr()) throw deleteImageResult.error
       })
     )
   }
 }
 
 export const AdminElectionRepositoryPlugin = new Elysia({ name: 'AdminElectionRepository' })
-  .use(PrismaServicePlugin)
-  .decorate(({ prismaService }) => ({
-    adminElectionRepository: new AdminElectionRepository(prismaService),
+  .use([PrismaServicePlugin, FileServicePlugin])
+  .decorate(({ prismaService, fileService }) => ({
+    adminElectionRepository: new AdminElectionRepository(prismaService, fileService),
   }))
