@@ -235,6 +235,7 @@ export const AdminElectionController = new Elysia({
         summary: 'Delete Election Candidate',
         description: 'Delete Election Candidate',
       },
+      requiredLocalUser: true,
       params: AdminDeleteElectionCandidateParams,
       response: {
         200: AdminDeleteElectionCandidateResponse,

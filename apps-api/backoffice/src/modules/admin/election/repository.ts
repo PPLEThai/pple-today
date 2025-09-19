@@ -231,19 +231,37 @@ export class AdminElectionRepository {
   }
 
   async deleteElectionCandidate(candidateId: string) {
-    return fromRepositoryPromise(
-      this.prismaService.$transaction(async (tx) => {
-        const candidate = await tx.electionCandidate.delete({
-          where: { id: candidateId },
-        })
-
-        const oldProfileImage = candidate.profileImagePath
-        if (oldProfileImage) {
-          const deleteImageResult = await this.fileService.deleteFile(oldProfileImage as FilePath)
-          if (deleteImageResult.isErr()) throw deleteImageResult.error
-        }
+    const candidateResult = await fromRepositoryPromise(
+      this.prismaService.electionCandidate.findUniqueOrThrow({
+        where: { id: candidateId },
       })
     )
+    if (candidateResult.isErr()) return err(candidateResult.error)
+
+    const deleteProfileImageResult = await fromRepositoryPromise(
+      this.fileService.$transaction(async (tx) => {
+        const profileImage = candidateResult.value.profileImagePath
+        if (!profileImage) return
+        const deleteProfileImage = await tx.removeFile(profileImage as FilePath)
+        if (deleteProfileImage.isErr()) throw deleteProfileImage.error
+      })
+    )
+    if (deleteProfileImageResult.isErr()) return err(deleteProfileImageResult.error)
+
+    const [_, fileTx] = deleteProfileImageResult.value
+
+    const deleteResult = await fromRepositoryPromise(
+      this.prismaService.electionCandidate.delete({
+        where: { id: candidateId },
+      })
+    )
+    if (deleteResult.isErr()) {
+      const rollbackResult = await fileTx.rollback()
+      if (rollbackResult.isErr()) return err(rollbackResult.error)
+      return err(deleteResult.error)
+    }
+
+    return ok()
   }
 }
 
