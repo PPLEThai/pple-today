@@ -58,7 +58,7 @@ jobs:
         run: pnpm turbo codegen
 
       - name: Run Type Check and Format Check
-        run: pnpm turbo typecheck format:check lint ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}
+        run: pnpm turbo test typecheck format:check lint ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}
 
       - name: Setup Prebuild Environment
         working-directory: apps-client/mobile
