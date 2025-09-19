@@ -1,4 +1,5 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { FileService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import { FeedItemType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
@@ -7,8 +8,13 @@ import { err, ok } from 'neverthrow'
 import { ListPollsResponse } from './models'
 import { PollsRepository, PollsRepositoryPlugin } from './repository'
 
+import { FileServicePlugin } from '../../plugins/file'
+
 export class PollsService {
-  constructor(private readonly pollsRepository: PollsRepository) {}
+  constructor(
+    private readonly pollsRepository: PollsRepository,
+    private readonly fileService: FileService
+  ) {}
 
   async getPolls(userId?: string, query?: { page?: number; limit?: number }) {
     const polls = await this.pollsRepository.getPolls({
@@ -28,7 +34,9 @@ export class PollsService {
           author: {
             id: item.author.id,
             name: item.author.name,
-            profileImage: item.author.profileImage ?? undefined,
+            profileImage: item.author.profileImagePath
+              ? this.fileService.getPublicFileUrl(item.author.profileImagePath)
+              : undefined,
             province: item.author.district ?? '',
           },
           userReaction: item.reactions?.[0]?.type,
@@ -141,7 +149,7 @@ export class PollsService {
 export const PollsServicePlugin = new Elysia({
   name: 'PollsService',
 })
-  .use(PollsRepositoryPlugin)
-  .decorate(({ pollsRepository }) => ({
-    pollsService: new PollsService(pollsRepository),
+  .use([PollsRepositoryPlugin, FileServicePlugin])
+  .decorate(({ pollsRepository, fileService }) => ({
+    pollsService: new PollsService(pollsRepository, fileService),
   }))

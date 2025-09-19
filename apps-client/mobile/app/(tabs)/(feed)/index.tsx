@@ -1,5 +1,13 @@
 import * as React from 'react'
-import { findNodeHandle, FlatListComponent, Pressable, StyleSheet, View } from 'react-native'
+import {
+  findNodeHandle,
+  FlatListComponent,
+  Platform,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  View,
+} from 'react-native'
 import Animated, {
   FlatListPropsWithLayout,
   useAnimatedScrollHandler,
@@ -15,12 +23,13 @@ import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/i
 import { Button } from '@pple-today/ui/button'
 import { FormControl, FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
+import { Skeleton } from '@pple-today/ui/skeleton'
 import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H2, H3 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import * as Linking from 'expo-linking'
 import { useRouter } from 'expo-router'
@@ -39,7 +48,7 @@ import { z } from 'zod/v4'
 import type { ApplicationApiSchema, GetBannersResponse } from '@api/backoffice/app'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { UserAddressInfoSection } from '@app/components/address-info'
-import { AnnouncementCard } from '@app/components/announcement'
+import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/announcement'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
 import {
@@ -101,7 +110,7 @@ function MainHeader() {
     : { welcome: 'ยินดีต้อนรับสู่', title: 'PPLE Today' }
   return (
     <View className="w-full px-4 pt-4 pb-2 flex flex-row justify-between gap-2 bg-base-bg-white border-b border-base-outline-default ">
-      <View className="flex flex-row items-center gap-3">
+      <View className="flex flex-row items-center gap-3 flex-1">
         <Pressable
           className="w-10 h-10 flex flex-col items-center justify-center"
           onPress={() => {
@@ -114,19 +123,19 @@ function MainHeader() {
         >
           <PPLEIcon width={35} height={30} />
         </Pressable>
-        <View className="flex flex-col">
+        <View className="flex flex-col flex-1">
           {authMe.isLoading ? (
             <>
-              <View className="h-3 mt-1 bg-base-bg-default rounded-full w-[80px]" />
-              <View className="h-6 mt-2 bg-base-bg-default rounded-full w-[150px]" />
+              <Skeleton className="h-3 mt-1 rounded-full w-[80px]" />
+              <Skeleton className="h-6 mt-2 rounded-full w-[150px]" />
             </>
           ) : (
-            <>
+            <View className="flex-1 pr-4">
               <Text className="font-anakotmai-light text-xs">{headings.welcome}</Text>
-              <Text className="font-anakotmai-bold text-2xl text-base-primary-default">
+              <Text className="font-anakotmai-bold text-2xl text-base-primary-default line-clamp-1">
                 {headings.title}
               </Text>
-            </>
+            </View>
           )}
         </View>
       </View>
@@ -471,6 +480,25 @@ function FeedContent(props: PagerScrollViewProps) {
   const scrollContext = useScrollContext()
   const scrollHandler = useAnimatedScrollHandler(scrollContext)
 
+  const [refreshing, setRefreshing] = React.useState(false)
+  const queryClient = useQueryClient()
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true)
+    try {
+      queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/auth/me') })
+      queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/banners') })
+      await Promise.all([
+        queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/feed/me') }),
+        queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/announcements') }),
+      ])
+      await feedInfiniteQuery.refetch()
+      setRefreshing(false)
+    } catch (error) {
+      console.error('Error refreshing feed:', error)
+      setRefreshing(false)
+    }
+  }, [feedInfiniteQuery, queryClient])
+
   const Footer =
     feedInfiniteQuery.hasNextPage || feedInfiniteQuery.isLoading || feedInfiniteQuery.error ? (
       <FeedCardSkeleton />
@@ -506,9 +534,17 @@ function FeedContent(props: PagerScrollViewProps) {
       // @ts-expect-error FlatListMemo ref type is wrong
       ref={scrollElRef}
       onScroll={scrollHandler}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          progressViewOffset={Platform.select({ ios: 0, android: headerHeight })}
+          colors={['#FF6A13']} // base-primary-default
+        />
+      }
       headerHeight={headerHeight}
       data={data}
-      contentContainerClassName="py-4 flex flex-col"
+      contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
       ListHeaderComponent={<AnnouncementSection />}
       ListFooterComponent={Footer}
       onEndReachedThreshold={1}
@@ -536,6 +572,7 @@ let FlatListMemo = React.forwardRef<FlatListMethods, FlatListProps>(
       onEndReachedThreshold,
       renderItem,
       contentContainerClassName,
+      refreshControl,
     } = props
     return (
       <Animated.FlatList
@@ -545,6 +582,7 @@ let FlatListMemo = React.forwardRef<FlatListMethods, FlatListProps>(
         showsVerticalScrollIndicator={false}
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingTop: headerHeight }}
+        refreshControl={refreshControl}
         // contentOffset={{ x: 0, y: -headerHeight }}
         // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
         // automaticallyAdjustsScrollIndicatorInsets={false}
@@ -566,8 +604,42 @@ function AnnouncementSection() {
     query: { limit: 5 },
   })
   const router = useRouter()
+
+  if (announcementsQuery.isLoading) {
+    return (
+      <View className="flex flex-col">
+        <View className="flex flex-row pt-4 px-4 pb-3 justify-between">
+          <View className="flex flex-row items-center gap-2">
+            <Icon
+              icon={MegaphoneIcon}
+              className="color-base-primary-default"
+              width={32}
+              height={32}
+            />
+            <H3 className="text-base-text-high font-anakotmai-medium text-2xl">ประกาศ</H3>
+          </View>
+          <View className="min-h-10 bg-base-bg-default rounded-lg" />
+        </View>
+        <Slide count={3} itemWidth={320} gap={8} paddingHorizontal={16}>
+          <SlideScrollView>
+            <SlideItem>
+              <AnnouncementCardSkeleton />
+            </SlideItem>
+            <SlideItem>
+              <AnnouncementCardSkeleton />
+            </SlideItem>
+            <SlideItem>
+              <AnnouncementCardSkeleton />
+            </SlideItem>
+          </SlideScrollView>
+          <SlideIndicators />
+        </Slide>
+      </View>
+    )
+  }
+
   if (!announcementsQuery.data) return null
-  // TODO: loading state
+
   return (
     <View className="flex flex-col">
       <View className="flex flex-row pt-4 px-4 pb-3 justify-between">
@@ -580,7 +652,7 @@ function AnnouncementSection() {
           />
           <H3 className="text-base-text-high font-anakotmai-medium text-2xl">ประกาศ</H3>
         </View>
-        <Button variant="ghost" onPress={() => router.navigate('/(official)/announcement')}>
+        <Button variant="ghost" onPress={() => router.navigate('/(feed)/announcement')}>
           <Text>ดูเพิ่มเติม</Text>
           <Icon icon={ArrowRightIcon} strokeWidth={2} />
         </Button>
@@ -600,6 +672,7 @@ function AnnouncementSection() {
                 feedId={announcement.id}
                 title={announcement.title}
                 date={announcement.createdAt.toString()}
+                type={announcement.type}
               />
             </SlideItem>
           ))}

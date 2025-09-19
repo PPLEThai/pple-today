@@ -5,7 +5,7 @@ import { ElectionType, Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { AdminCreateElectionCandidateBody, AdminUpdateElectionBody } from './models'
+import { AdminCreateElectionCandidateBody } from './models'
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
@@ -69,39 +69,15 @@ export class AdminElectionRepository {
     )
   }
 
-  async updateElection(electionId: string, data: AdminUpdateElectionBody) {
-    return fromRepositoryPromise(
-      this.prismaService.election.update({
-        where: { id: electionId },
-        data: {
-          name: data.name,
-          description: data.description,
-          location: data.location,
-          type: data.type,
-          isCancelled: data.isCancelled,
-          publishDate: data.publishDate,
-          openRegister: data.openRegister,
-          closeRegister: data.closeRegister,
-          openVoting: data.openVoting,
-          closeVoting: data.closeVoting,
-          startResult: data.startResult,
-          endResult: data.endResult,
-        },
-      })
-    )
-  }
-
-  async deleteElectionById(electionId: string) {
-    return fromRepositoryPromise(
-      this.prismaService.election.delete({
-        where: { id: electionId },
-      })
-    )
-  }
-
   async cancelElectionById(electionId: string) {
     return fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
+        const deletedVoteRecords = await tx.electionVoteRecord.findMany({
+          where: {
+            electionId,
+          },
+        })
+
         await Promise.all([
           tx.electionBallot.deleteMany({
             where: {
@@ -113,14 +89,20 @@ export class AdminElectionRepository {
               electionId,
             },
           }),
+          tx.election.update({
+            where: { id: electionId },
+            data: {
+              isCancelled: true,
+            },
+          }),
         ])
 
-        await tx.election.update({
-          where: { id: electionId },
-          data: {
-            isCancelled: true,
-          },
-        })
+        const faceImagePaths = deletedVoteRecords
+          .map((record) => record.faceImagePath)
+          .filter((path) => path !== null)
+
+        const deleteImageResult = await this.fileService.bulkDeleteFile(faceImagePaths)
+        if (deleteImageResult.isErr()) throw deleteImageResult.error
       })
     )
   }

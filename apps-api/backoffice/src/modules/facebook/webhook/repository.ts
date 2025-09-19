@@ -24,14 +24,21 @@ export class FacebookWebhookRepository {
     existingAttachments: PostAttachment[],
     newAttachments: Pick<
       PostAttachment,
-      'description' | 'cacheKey' | 'order' | 'thumbnailPath' | 'type' | 'url' | 'width' | 'height'
+      | 'description'
+      | 'cacheKey'
+      | 'order'
+      | 'thumbnailPath'
+      | 'type'
+      | 'attachmentPath'
+      | 'width'
+      | 'height'
     >[]
   ) {
     const requiredDelete = R.pipe(
       existingAttachments,
       R.filter((ea) => !newAttachments.find((a) => ea.cacheKey === a.cacheKey)),
       R.flatMap((ea) => [
-        ea.url as FilePath,
+        ea.attachmentPath as FilePath,
         ...(ea.thumbnailPath ? [ea.thumbnailPath as FilePath] : []),
       ])
     )
@@ -60,10 +67,13 @@ export class FacebookWebhookRepository {
               })
             }
 
-            const fileName = getFileName(attachment.url)
+            const fileName = getFileName(attachment.attachmentPath)
             const newFilename: FilePath = `temp/facebook/${pageId}/${createId()}-${fileName}`
 
-            const uploadResult = await fileTx.uploadFileFromUrl(attachment.url, newFilename)
+            const uploadResult = await fileTx.uploadFileFromUrl(
+              attachment.attachmentPath,
+              newFilename
+            )
             if (uploadResult.isErr()) {
               return uploadResult
             }
@@ -100,7 +110,7 @@ export class FacebookWebhookRepository {
               thumbnailPath: thumbnailPath,
               description: attachment.description,
               order: idx + 1,
-              url: moveToPublicFolderResult.value[0],
+              attachmentPath: moveToPublicFolderResult.value[0],
               type: attachment.type,
               cacheKey: fileName,
             })
@@ -144,7 +154,14 @@ export class FacebookWebhookRepository {
     postId: string
     attachments?: Pick<
       PostAttachment,
-      'description' | 'cacheKey' | 'order' | 'thumbnailPath' | 'type' | 'url' | 'width' | 'height'
+      | 'description'
+      | 'cacheKey'
+      | 'order'
+      | 'thumbnailPath'
+      | 'type'
+      | 'attachmentPath'
+      | 'width'
+      | 'height'
     >[]
     hashTags?: string[]
   }) {
@@ -174,7 +191,7 @@ export class FacebookWebhookRepository {
                 data.attachments !== undefined
                   ? {
                       create: data.attachments.map((attachment) => ({
-                        url: attachment.url,
+                        attachmentPath: attachment.attachmentPath,
                         type: attachment.type,
                         order: attachment.order,
                         width: attachment.width,
@@ -211,7 +228,14 @@ export class FacebookWebhookRepository {
     content?: string
     attachments?: Pick<
       PostAttachment,
-      'description' | 'cacheKey' | 'order' | 'thumbnailPath' | 'type' | 'url' | 'width' | 'height'
+      | 'description'
+      | 'cacheKey'
+      | 'order'
+      | 'thumbnailPath'
+      | 'type'
+      | 'attachmentPath'
+      | 'width'
+      | 'height'
     >[]
     hashTags?: string[]
   }) {
@@ -228,7 +252,7 @@ export class FacebookWebhookRepository {
                   deleteMany: {},
                   create:
                     data.attachments.map((attachment) => ({
-                      url: attachment.url,
+                      attachmentPath: attachment.attachmentPath,
                       type: attachment.type,
                       order: attachment.order,
                       width: attachment.width,
@@ -276,7 +300,7 @@ export class FacebookWebhookRepository {
     const deleteFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
         const bulkDeleteResult = await fileTx.bulkRemoveFile(
-          existingPost.value?.attachments.map((a) => a.url as FilePath) ?? []
+          existingPost.value?.attachments.map((a) => a.attachmentPath as FilePath) ?? []
         )
 
         if (bulkDeleteResult.isErr()) return bulkDeleteResult
@@ -313,7 +337,7 @@ export class FacebookWebhookRepository {
   async addNewAttachments(
     facebookPostId: string,
     links: {
-      url: string
+      attachmentPath: string
       type: PostAttachmentType
       cacheKey: string
     }[]
@@ -330,13 +354,13 @@ export class FacebookWebhookRepository {
                 cacheKey: link.cacheKey,
               },
               create: {
-                url: link.url,
+                attachmentPath: link.attachmentPath,
                 type: link.type,
                 order: idx + 1,
                 cacheKey: link.cacheKey,
               },
               update: {
-                url: link.url,
+                attachmentPath: link.attachmentPath,
                 type: link.type,
                 order: idx + 1,
                 cacheKey: link.cacheKey,

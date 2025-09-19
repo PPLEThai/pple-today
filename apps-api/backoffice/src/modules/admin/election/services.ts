@@ -16,7 +16,6 @@ import {
   AdminCreateElectionCandidateBody,
   AdminListElectionQuery,
   AdminListElectionResponse,
-  AdminUpdateElectionBody,
   AdminUpdateElectionCandidateBody,
 } from './models'
 import { AdminElectionRepository, AdminElectionRepositoryPlugin } from './repository'
@@ -108,32 +107,6 @@ export class AdminElectionService {
     }
 
     return ok(this.convertToElectionInfo(getElectionResult.value))
-  }
-
-  async updateElection(electionId: string, data: AdminUpdateElectionBody) {
-    const updateElectionResult = await this.adminElectionRepository.updateElection(electionId, data)
-    if (updateElectionResult.isErr()) {
-      return mapRepositoryError(updateElectionResult.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.ELECTION_NOT_FOUND,
-          message: `Not Found Election with id: ${electionId}`,
-        },
-      })
-    }
-    return ok()
-  }
-
-  async deleteElection(electionId: string) {
-    const deleteResult = await this.adminElectionRepository.deleteElectionById(electionId)
-    if (deleteResult.isErr()) {
-      return mapRepositoryError(deleteResult.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.ELECTION_NOT_FOUND,
-          message: `Cannot Found Election: ${electionId}`,
-        },
-      })
-    }
-    return ok()
   }
 
   async cancelElection(electionId: string) {

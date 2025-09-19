@@ -7,8 +7,7 @@ import {
   InternalErrorCode,
 } from '@pple-today/api-common/dtos'
 import { FileService } from '@pple-today/api-common/services'
-import { mapRepositoryError } from '@pple-today/api-common/utils'
-import { err } from '@pple-today/api-common/utils'
+import { err, mapRepositoryError } from '@pple-today/api-common/utils'
 import {
   Election,
   ElectionCandidate,
@@ -160,7 +159,9 @@ export class ElectionService {
       electionId: candidate.electionId,
       name: candidate.name,
       description: candidate.description,
-      profileImage: candidate.profileImage,
+      profileImagePath: candidate.profileImagePath
+        ? this.fileService.getPublicFileUrl(candidate.profileImagePath)
+        : null,
       number: candidate.number,
       createdAt: candidate.createdAt,
       updatedAt: candidate.updatedAt,
@@ -358,7 +359,7 @@ export class ElectionService {
 
   async createFaceImageUploadURL(contentType: FileMimeType) {
     const fileKeyResult = this.fileService.getFilePathFromMimeType(
-      `temp/bollots/face-image-${createId()}`,
+      `temp/ballots/face-image-${createId()}`,
       contentType
     )
 
