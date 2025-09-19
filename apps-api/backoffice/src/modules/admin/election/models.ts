@@ -53,16 +53,6 @@ export const AdminUpdateElectionResponse = t.Object({
 })
 export type AdminUpdateElectionResponse = Static<typeof AdminUpdateElectionResponse>
 
-export const AdminDeleteElectionParams = t.Object({
-  electionId: t.String(),
-})
-export type AdminDeleteElectionParams = Static<typeof AdminDeleteElectionParams>
-
-export const AdminDeleteElectionResponse = t.Object({
-  message: t.String(),
-})
-export type AdminDeleteElectionResponse = Static<typeof AdminDeleteElectionResponse>
-
 export const AdminCancelElectionParams = t.Object({
   electionId: t.String(),
 })

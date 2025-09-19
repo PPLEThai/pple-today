@@ -95,19 +95,6 @@ export class AdminElectionService {
     return ok()
   }
 
-  async deleteElection(electionId: string) {
-    const deleteResult = await this.adminElectionRepository.deleteElectionById(electionId)
-    if (deleteResult.isErr()) {
-      return mapRepositoryError(deleteResult.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.ELECTION_NOT_FOUND,
-          message: `Cannot Found Election: ${electionId}`,
-        },
-      })
-    }
-    return ok()
-  }
-
   async cancelElection(electionId: string) {
     const cancelResult = await this.adminElectionRepository.cancelElectionById(electionId)
     if (cancelResult.isErr()) {
