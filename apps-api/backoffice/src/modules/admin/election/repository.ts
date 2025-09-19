@@ -1,5 +1,5 @@
 import { FilePath } from '@pple-today/api-common/dtos'
-import { FileService, FileTransactionService, PrismaService } from '@pple-today/api-common/services'
+import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { ElectionType, Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
@@ -116,23 +116,20 @@ export class AdminElectionRepository {
   }
 
   async createElectionCandidate(electionId: string, data: AdminCreateElectionCandidateBody) {
-    let profileImagePath = data.profileImagePath
-    let fileTx: FileTransactionService | null = null
+    const moveFileResult = await fromRepositoryPromise(
+      this.fileService.$transaction(async (tx) => {
+        const profileImage = data.profileImagePath
+        if (!profileImage) return null
 
-    if (profileImagePath) {
-      const moveFileResult = await fromRepositoryPromise(
-        this.fileService.$transaction(async (tx) => {
-          const moveFileResult = await tx.bulkMoveToPublicFolder([profileImagePath!])
-          if (moveFileResult.isErr()) throw moveFileResult.error
+        const moveFileResult = await tx.bulkMoveToPublicFolder([profileImage])
+        if (moveFileResult.isErr()) throw moveFileResult.error
 
-          return ok(moveFileResult.value[0])
-        })
-      )
-      if (moveFileResult.isErr()) return err(moveFileResult.error)
+        return moveFileResult.value[0]
+      })
+    )
+    if (moveFileResult.isErr()) return err(moveFileResult.error)
 
-      profileImagePath = moveFileResult.value[0].value
-      fileTx = moveFileResult.value[1]
-    }
+    const [newProfileImagePath, fileTx] = moveFileResult.value
 
     const createCandidateResult = await fromRepositoryPromise(
       this.prismaService.electionCandidate.create({
@@ -140,16 +137,14 @@ export class AdminElectionRepository {
           electionId,
           name: data.name,
           description: data.description,
-          profileImagePath,
+          profileImagePath: newProfileImagePath,
           number: data.number,
         },
       })
     )
     if (createCandidateResult.isErr()) {
-      if (fileTx) {
-        const rollbackResult = await fileTx.rollback()
-        if (rollbackResult.isErr()) return err(rollbackResult.error)
-      }
+      const rollbackResult = await fileTx.rollback()
+      if (rollbackResult.isErr()) return err(rollbackResult.error)
       return err(createCandidateResult.error)
     }
 
@@ -164,34 +159,30 @@ export class AdminElectionRepository {
     )
     if (candidateResult.isErr()) return err(candidateResult.error)
 
-    const candidate = candidateResult.value
-    let newProfileImage = data.profileImagePath
-    const oldProfileImage = candidate.profileImagePath
-    let fileTx: FileTransactionService | null = null
+    const moveFileResult = await fromRepositoryPromise(
+      this.fileService.$transaction(async (tx) => {
+        const newProfileImage = data.profileImagePath
+        const oldProfileImage = candidateResult.value.profileImagePath
 
-    if (newProfileImage != oldProfileImage) {
-      const updateFileResult = await fromRepositoryPromise(
-        this.fileService.$transaction(async (tx) => {
-          if (oldProfileImage) {
-            const deleteOldFileResult = await tx.removeFile(oldProfileImage as FilePath)
-            if (deleteOldFileResult.isErr()) throw deleteOldFileResult.error
-          }
+        if (newProfileImage == oldProfileImage) return
 
-          if (newProfileImage) {
-            const moveNewFileResult = await tx.bulkMoveToPublicFolder([newProfileImage])
-            if (moveNewFileResult.isErr()) throw moveNewFileResult.error
+        if (oldProfileImage) {
+          const deleteOldFileResult = await tx.removeFile(oldProfileImage as FilePath)
+          if (deleteOldFileResult.isErr()) throw deleteOldFileResult.error
+        }
 
-            return moveNewFileResult.value[0]
-          }
+        if (newProfileImage) {
+          const moveNewFileResult = await tx.bulkMoveToPublicFolder([newProfileImage])
+          if (moveNewFileResult.isErr()) throw moveNewFileResult.error
+          return moveNewFileResult.value[0]
+        }
 
-          return null
-        })
-      )
-      if (updateFileResult.isErr()) return err(updateFileResult.error)
+        return null
+      })
+    )
+    if (moveFileResult.isErr()) return err(moveFileResult.error)
 
-      newProfileImage = updateFileResult.value[0]
-      fileTx = updateFileResult.value[1]
-    }
+    const [newProfileImage, fileTx] = moveFileResult.value
 
     const updateCandidateResult = await fromRepositoryPromise(
       this.prismaService.electionCandidate.update({
@@ -206,10 +197,8 @@ export class AdminElectionRepository {
     )
 
     if (updateCandidateResult.isErr()) {
-      if (fileTx) {
-        const rollbackResult = await fileTx.rollback()
-        if (rollbackResult.isErr()) return err(rollbackResult.error)
-      }
+      const rollbackResult = await fileTx.rollback()
+      if (rollbackResult.isErr()) return err(rollbackResult.error)
       return err(updateCandidateResult.error)
     }
 
