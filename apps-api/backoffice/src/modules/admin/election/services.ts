@@ -4,11 +4,7 @@ import { Election } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import {
-  AdminListElectionQuery,
-  AdminListElectionResponse,
-  AdminUpdateElectionBody,
-} from './models'
+import { AdminListElectionQuery, AdminListElectionResponse } from './models'
 import { AdminElectionRepository, AdminElectionRepositoryPlugin } from './repository'
 
 export class AdminElectionService {
@@ -80,19 +76,6 @@ export class AdminElectionService {
     }
 
     return ok(this.convertToElectionInfo(getElectionResult.value))
-  }
-
-  async updateElection(electionId: string, data: AdminUpdateElectionBody) {
-    const updateElectionResult = await this.adminElectionRepository.updateElection(electionId, data)
-    if (updateElectionResult.isErr()) {
-      return mapRepositoryError(updateElectionResult.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.ELECTION_NOT_FOUND,
-          message: `Not Found Election with id: ${electionId}`,
-        },
-      })
-    }
-    return ok()
   }
 
   async cancelElection(electionId: string) {

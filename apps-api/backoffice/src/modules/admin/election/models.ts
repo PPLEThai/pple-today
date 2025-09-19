@@ -27,32 +27,6 @@ export type AdminGetElectionParams = Static<typeof AdminGetElectionParams>
 export const AdminGetElectionResponse = ElectionInfo
 export type AdminGetElectionResponse = Static<typeof AdminGetElectionResponse>
 
-export const AdminUpdateElectionParams = t.Object({
-  electionId: t.String(),
-})
-export type AdminUpdateElectionParams = Static<typeof AdminUpdateElectionParams>
-
-export const AdminUpdateElectionBody = t.Object({
-  name: t.String(),
-  description: t.Nullable(t.String()),
-  location: t.Nullable(t.String()),
-  type: t.Enum(ElectionType),
-  isCancelled: t.Boolean(),
-  publishDate: t.Nullable(t.Date()),
-  openRegister: t.Nullable(t.Date()),
-  closeRegister: t.Nullable(t.Date()),
-  openVoting: t.Date(),
-  closeVoting: t.Date(),
-  startResult: t.Nullable(t.Date()),
-  endResult: t.Nullable(t.Date()),
-})
-export type AdminUpdateElectionBody = Static<typeof AdminUpdateElectionBody>
-
-export const AdminUpdateElectionResponse = t.Object({
-  message: t.String(),
-})
-export type AdminUpdateElectionResponse = Static<typeof AdminUpdateElectionResponse>
-
 export const AdminCancelElectionParams = t.Object({
   electionId: t.String(),
 })
