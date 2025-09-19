@@ -14,6 +14,11 @@ export default function FeedDetailPage() {
   const router = useRouter()
   const pathname = usePathname()
   const feedId = pathname.split('/').at(-1)
+  useEffect(() => {
+    if (!feedId) {
+      router.dismissTo('/')
+    }
+  }, [feedId, router])
   const feedContentQuery = reactQueryClient.useQuery('/feed/:id', {
     pathParams: { id: feedId! },
     enabled: !!feedId,
@@ -21,7 +26,7 @@ export default function FeedDetailPage() {
   useEffect(() => {
     if (feedContentQuery.error) {
       console.error('Error fetching feed content:', JSON.stringify(feedContentQuery.error))
-      router.replace('/(feed)') // Redirect to feed list on error
+      router.dismissTo('/') // Redirect to feed list on error
     }
   }, [feedContentQuery.error, router])
   if (!feedId) {

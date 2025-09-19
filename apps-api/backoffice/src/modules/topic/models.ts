@@ -1,26 +1,30 @@
 import { HashTagStatus, TopicStatus } from '@pple-today/database/prisma'
 import { t } from 'elysia'
 
-export const GetTopicsResponse = t.Array(
-  t.Object({
-    id: t.String(),
-    name: t.String(),
-    description: t.Nullable(t.String()),
-    bannerImage: t.Nullable(t.String()),
-    status: t.Enum(TopicStatus),
-    createdAt: t.Date(),
-    updatedAt: t.Date(),
-    hashTags: t.Array(
-      t.Object({
-        id: t.String(),
-        name: t.String(),
-        status: t.Enum(HashTagStatus),
-        createdAt: t.Date(),
-        updatedAt: t.Date(),
-      })
-    ),
-  })
-)
+export const GetTopicResponse = t.Object({
+  id: t.String(),
+  name: t.String(),
+  description: t.Nullable(t.String()),
+  bannerImage: t.Nullable(t.String()),
+  status: t.Enum(TopicStatus),
+  createdAt: t.Date(),
+  updatedAt: t.Date(),
+  hashTags: t.Array(
+    t.Object({
+      id: t.String(),
+      name: t.String(),
+      status: t.Enum(HashTagStatus),
+      createdAt: t.Date(),
+      updatedAt: t.Date(),
+    })
+  ),
+})
+export type GetTopicResponse = typeof GetTopicResponse.static
+
+export const GetTopicParams = t.Object({ id: t.String() })
+export type GetTopicParams = typeof GetTopicParams.static
+
+export const GetTopicsResponse = t.Array(GetTopicResponse)
 export type GetTopicsResponse = typeof GetTopicsResponse.static
 
 export const ListTopicResponse = t.Array(

@@ -22,9 +22,14 @@ export default function HashtagFeedPage() {
     enabled: !!hashtagId,
   })
   useEffect(() => {
+    if (!hashtagId) {
+      router.dismissTo('/')
+    }
+  }, [hashtagId, router])
+  useEffect(() => {
     if (hashtagQuery.error) {
       console.error('Error fetching hashtag content:', JSON.stringify(hashtagQuery.error))
-      router.replace('/(feed)') // Redirect to feed list on error
+      router.dismissTo('/') // Redirect to feed list on error
     }
   }, [hashtagQuery.error, router])
   if (!hashtagId) {

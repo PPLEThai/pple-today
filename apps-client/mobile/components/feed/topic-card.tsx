@@ -157,7 +157,7 @@ export function TopicSuggestion() {
           <Icon icon={MessageSquareHeartIcon} size={32} className="text-base-primary-default" />
           <H3 className="text-base-text-high font-anakotmai-medium text-2xl">หัวข้อน่าสนใจ</H3>
         </View>
-        <Link asChild href="/(feed)/topic-suggestion">
+        <Link asChild href="/(feed)/topic/suggestion">
           <Button variant="ghost">
             <Text>ดูทั้งหมด</Text>
             <Icon icon={ArrowRightIcon} />
