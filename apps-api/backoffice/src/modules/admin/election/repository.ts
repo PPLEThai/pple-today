@@ -16,6 +16,12 @@ export class AdminElectionRepository {
     private readonly fileService: FileService
   ) {}
 
+  private resultTypesMap = {
+    [ElectionType.ONSITE]: [ElectionResultType.ONSITE],
+    [ElectionType.ONLINE]: [ElectionResultType.ONLINE],
+    [ElectionType.HYBRID]: [ElectionResultType.ONSITE, ElectionResultType.ONLINE],
+  } as const
+
   async listElections(input: {
     filter?: {
       name?: string
@@ -148,12 +154,7 @@ export class AdminElectionRepository {
         where: { id: electionId },
       })
 
-      const resultTypesMap = {
-        [ElectionType.ONSITE]: [ElectionResultType.ONSITE],
-        [ElectionType.ONLINE]: [ElectionResultType.ONLINE],
-        [ElectionType.HYBRID]: [ElectionResultType.ONSITE, ElectionResultType.ONLINE],
-      }
-      const results = resultTypesMap[election.type].map((type) => ({ type, count: 0 }))
+      const results = this.resultTypesMap[election.type].map((type) => ({ type, count: 0 }))
 
       return this.prismaService.electionCandidate.create({
         data: {
