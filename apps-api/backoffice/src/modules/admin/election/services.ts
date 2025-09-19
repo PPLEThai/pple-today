@@ -1,4 +1,4 @@
-import { ElectionInfo } from '@pple-today/api-common/dtos'
+import { ElectionInfo, InternalErrorCode } from '@pple-today/api-common/dtos'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import { Election } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
@@ -62,6 +62,33 @@ export class AdminElectionService {
     } satisfies AdminListElectionResponse
 
     return ok(result)
+  }
+
+  async getElection(electionId: string) {
+    const getElectionResult = await this.adminElectionRepository.getElectionById(electionId)
+    if (getElectionResult.isErr()) {
+      return mapRepositoryError(getElectionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Not Found Election with id: ${electionId}`,
+        },
+      })
+    }
+
+    return ok(this.convertToElectionInfo(getElectionResult.value))
+  }
+
+  async cancelElection(electionId: string) {
+    const cancelResult = await this.adminElectionRepository.cancelElectionById(electionId)
+    if (cancelResult.isErr()) {
+      return mapRepositoryError(cancelResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot Found Election id: ${electionId}`,
+        },
+      })
+    }
+    return ok()
   }
 }
 
