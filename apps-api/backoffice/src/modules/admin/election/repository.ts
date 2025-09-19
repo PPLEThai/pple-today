@@ -98,7 +98,7 @@ export class AdminElectionRepository {
           },
         })
 
-        tx.election.delete({
+        await tx.election.delete({
           where: { id: electionId },
         })
 
