@@ -831,7 +831,7 @@ function AnnouncementSection() {
   }
 
   if (!announcementsQuery.data) return null
-
+  const announcements = announcementsQuery.data.announcements
   return (
     <View className="flex flex-col">
       <View className="flex flex-row pt-4 px-4 pb-3 justify-between">
@@ -849,14 +849,9 @@ function AnnouncementSection() {
           <Icon icon={ArrowRightIcon} strokeWidth={2} />
         </Button>
       </View>
-      <Slide
-        count={announcementsQuery.data.announcements.length}
-        itemWidth={320}
-        gap={8}
-        paddingHorizontal={16}
-      >
+      <Slide count={announcements.length} itemWidth={320} gap={8} paddingHorizontal={16}>
         <SlideScrollView>
-          {announcementsQuery.data.announcements.map((announcement) => (
+          {announcements.map((announcement) => (
             <SlideItem key={announcement.id}>
               <AnnouncementCard
                 id={announcement.id}

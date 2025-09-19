@@ -118,7 +118,7 @@ export function SlideIndicator({ index }: { index: number }) {
         ? '#F1F5F9'
         : interpolateColor(scroll.value, snapRange, colorRange),
     }
-  }, [isLoading])
+  })
   return <Animated.View style={animatedStyle} className="h-1.5 rounded-full" />
 }
 
