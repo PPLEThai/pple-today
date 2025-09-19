@@ -169,7 +169,7 @@ export const AdminElectionController = new Elysia({
       const result = await adminElectionService.createElectionCandidate(params.electionId, body)
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
-      return status(200, result.value)
+      return status(201, result.value)
     },
     {
       detail: {
@@ -180,7 +180,7 @@ export const AdminElectionController = new Elysia({
       params: AdminCreateElectionCandidateParams,
       body: AdminCreateElectionCandidateBody,
       response: {
-        200: AdminCreateElectionCandidateResponse,
+        201: AdminCreateElectionCandidateResponse,
         ...createErrorSchema(
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.FORBIDDEN,
