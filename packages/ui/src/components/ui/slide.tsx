@@ -22,6 +22,7 @@ interface SlideContextValue {
   scrollViewWidth: number
   setScrollViewWidth: React.Dispatch<React.SetStateAction<number>>
   paddingHorizontal: number
+  isLoading: boolean
 }
 const SlideContext = React.createContext<SlideContextValue | null>(null)
 const SlideProvider = SlideContext.Provider
@@ -39,6 +40,7 @@ export function Slide({
   children,
   paddingHorizontal,
   className,
+  isLoading = false,
 }: {
   gap: number
   count: number
@@ -46,6 +48,7 @@ export function Slide({
   children: React.ReactNode
   paddingHorizontal: number
   className?: string
+  isLoading?: boolean
 }) {
   const [currentPage, setCurrentPage] = React.useState(0)
   const [scrollViewWidth, setScrollViewWidth] = React.useState(0)
@@ -62,6 +65,7 @@ export function Slide({
         scrollViewWidth,
         setScrollViewWidth,
         paddingHorizontal,
+        isLoading,
       }}
     >
       <View className={cn('w-full flex flex-col gap-4', className)}>{children}</View>
@@ -73,6 +77,9 @@ export function SlideIndicators() {
   const { count } = useSlideContext()
   // TODO: calculate number of indicators based on the number of items and width of the carousel
   // number of indicators might not equal the number of images since in large screen it might show more than one item
+  if (count <= 1) {
+    return null
+  }
   return (
     <View className="flex flex-row items-center justify-center gap-1">
       {Array.from({ length: count }).map((_, index) => (
@@ -83,7 +90,8 @@ export function SlideIndicators() {
 }
 
 export function SlideIndicator({ index }: { index: number }) {
-  const { scroll, itemWidth, count, scrollViewWidth, gap, paddingHorizontal } = useSlideContext()
+  const { scroll, itemWidth, count, scrollViewWidth, gap, paddingHorizontal, isLoading } =
+    useSlideContext()
   const animatedStyle = useAnimatedStyle(() => {
     const itemWidthWithGap = itemWidth + gap
     const getSnapPoint = (i: number) => {
@@ -106,9 +114,11 @@ export function SlideIndicator({ index }: { index: number }) {
     }
     return {
       width: interpolate(scroll.value, snapRange, widthRange, 'clamp'),
-      backgroundColor: interpolateColor(scroll.value, snapRange, colorRange),
+      backgroundColor: isLoading
+        ? '#F1F5F9'
+        : interpolateColor(scroll.value, snapRange, colorRange),
     }
-  })
+  }, [isLoading])
   return <Animated.View style={animatedStyle} className="h-1.5 rounded-full" />
 }
 

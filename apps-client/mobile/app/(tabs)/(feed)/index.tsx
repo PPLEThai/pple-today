@@ -63,6 +63,7 @@ import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/anno
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
 import { PeopleSuggestion } from '@app/components/feed/people-card'
+import { TopicSuggestion } from '@app/components/feed/topic-card'
 import {
   Pager,
   PagerContent,
@@ -223,6 +224,7 @@ function BannerSection() {
   if (banners.length === 0) return null
   return (
     <Slide
+      isLoading={bannersQuery.isLoading}
       count={banners.length}
       itemWidth={320}
       gap={8}
@@ -624,10 +626,11 @@ function FeedContent(props: PagerScrollViewProps) {
       contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
       contentContainerStyle={{ paddingTop: headerHeight }}
       ListHeaderComponent={
-        <View className="flex flex-col gap-4">
+        <>
+          <TopicSuggestion />
           <AnnouncementSection />
           <PeopleSuggestion />
-        </View>
+        </>
       }
       ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} />}
       onEndReachedThreshold={1}
