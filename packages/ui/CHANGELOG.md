@@ -1,5 +1,15 @@
 # @pple-today/ui
 
+## 0.2.2
+
+### Patch Changes
+
+- [#100](https://github.com/PPLEThai/pple-today/pull/100) [`b1d6363`](https://github.com/PPLEThai/pple-today/commit/b1d63633825dec8145450eae631d1a4a5e14e3f8) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-216] Announcement List Page](https://linear.app/snts/issue/PPLE-216/announcement-list-page)
+
+- [#123](https://github.com/PPLEThai/pple-today/pull/123) [`8df4e1e`](https://github.com/PPLEThai/pple-today/commit/8df4e1e17847d8023dec7827f8042314bf279ae9) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-222] Feed Filter with Topics](https://linear.app/snts/issue/PPLE-222/feed-filter-with-topics)
+
+- [#129](https://github.com/PPLEThai/pple-today/pull/129) [`523fcd3`](https://github.com/PPLEThai/pple-today/commit/523fcd35b3ae343362b27583932000df6f074e51) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-232] Topic Suggestion UI](https://linear.app/snts/issue/PPLE-232/topic-suggestion-ui)
+
 ## 0.2.1
 
 ### Patch Changes
