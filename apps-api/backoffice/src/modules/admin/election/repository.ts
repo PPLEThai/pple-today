@@ -189,7 +189,7 @@ export class AdminElectionRepository {
         const newProfileImage = data.profileImagePath
         const oldProfileImage = candidateResult.value.profileImagePath
 
-        if (newProfileImage == oldProfileImage) return
+        if (newProfileImage === oldProfileImage) return
 
         if (oldProfileImage) {
           const deleteOldFileResult = await tx.removeFile(oldProfileImage as FilePath)
