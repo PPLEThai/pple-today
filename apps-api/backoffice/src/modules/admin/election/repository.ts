@@ -107,14 +107,13 @@ export class AdminElectionRepository {
               electionId,
             },
           }),
+          tx.election.update({
+            where: { id: electionId },
+            data: {
+              isCancelled: true,
+            },
+          }),
         ])
-
-        await tx.election.update({
-          where: { id: electionId },
-          data: {
-            isCancelled: true,
-          },
-        })
       })
     )
   }
