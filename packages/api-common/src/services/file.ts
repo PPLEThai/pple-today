@@ -359,12 +359,21 @@ export class FileService {
     const fileTransaction = new FileTransactionService(this)
 
     try {
-      return [await cb(fileTransaction), fileTransaction] as any
+      const result = await cb(fileTransaction)
+
+      // NOTE: If the result is an Err which parts of our expected errors, rethrow it to trigger the rollback
+      if (result instanceof Err) {
+        throw result
+      }
+
+      return [result, fileTransaction] as any
     } catch (err) {
+      const errorBody = err instanceof Err ? err.error : err
       this.loggerService.warn({
         message: 'File transaction failed, rolling back changes',
-        context: { err },
+        context: { err: errorBody },
       })
+
       const rollbackResult = await fileTransaction.rollback()
       if (rollbackResult.isErr()) return rollbackResult as any
       throw err
