@@ -1,6 +1,5 @@
 import { createId } from '@paralleldrive/cuid2'
 import {
-  ElectionCandidate,
   ElectionCandidate as ElectionCandidateDTO,
   ElectionInfo,
   ImageFileMimeType,
@@ -8,7 +7,7 @@ import {
 } from '@pple-today/api-common/dtos'
 import { FileService } from '@pple-today/api-common/services'
 import { err, mapRepositoryError } from '@pple-today/api-common/utils'
-import { Election } from '@pple-today/database/prisma'
+import { Election, ElectionCandidate } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
