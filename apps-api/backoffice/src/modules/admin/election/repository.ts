@@ -116,13 +116,13 @@ export class AdminElectionRepository {
   }
 
   async createElectionCandidate(electionId: string, data: AdminCreateElectionCandidateBody) {
-    let profileImage = data.profileImage
+    let profileImagePath = data.profileImagePath
     let fileTx: FileTransactionService | null = null
 
-    if (profileImage) {
+    if (profileImagePath) {
       const moveFileResult = await fromRepositoryPromise(
         this.fileService.$transaction(async (tx) => {
-          const moveFileResult = await tx.bulkMoveToPublicFolder([profileImage!])
+          const moveFileResult = await tx.bulkMoveToPublicFolder([profileImagePath!])
           if (moveFileResult.isErr()) throw moveFileResult.error
 
           return ok(moveFileResult.value[0])
@@ -130,7 +130,7 @@ export class AdminElectionRepository {
       )
       if (moveFileResult.isErr()) return err(moveFileResult.error)
 
-      profileImage = moveFileResult.value[0].value
+      profileImagePath = moveFileResult.value[0].value
       fileTx = moveFileResult.value[1]
     }
 
@@ -140,7 +140,7 @@ export class AdminElectionRepository {
           electionId,
           name: data.name,
           description: data.description,
-          profileImage,
+          profileImagePath,
           number: data.number,
         },
       })
@@ -165,8 +165,8 @@ export class AdminElectionRepository {
     if (candidateResult.isErr()) return err(candidateResult.error)
 
     const candidate = candidateResult.value
-    let newProfileImage = data.profileImage
-    const oldProfileImage = candidate.profileImage
+    let newProfileImage = data.profileImagePath
+    const oldProfileImage = candidate.profileImagePath
     let fileTx: FileTransactionService | null = null
 
     if (newProfileImage != oldProfileImage) {
@@ -199,7 +199,7 @@ export class AdminElectionRepository {
         data: {
           name: data.name,
           description: data.description,
-          profileImage: newProfileImage,
+          profileImagePath: newProfileImage,
           number: data.number,
         },
       })
@@ -210,7 +210,6 @@ export class AdminElectionRepository {
         const rollbackResult = await fileTx.rollback()
         if (rollbackResult.isErr()) return err(rollbackResult.error)
       }
-      console.log('gggg', updateCandidateResult)
       return err(updateCandidateResult.error)
     }
 
@@ -224,7 +223,7 @@ export class AdminElectionRepository {
           where: { id: candidateId },
         })
 
-        const oldProfileImage = candidate.profileImage
+        const oldProfileImage = candidate.profileImagePath
         if (oldProfileImage) {
           const deleteImageResult = await this.fileService.deleteFile(oldProfileImage as FilePath)
           if (deleteImageResult.isErr()) throw deleteImageResult.error

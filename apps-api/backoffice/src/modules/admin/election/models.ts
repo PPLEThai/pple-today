@@ -78,7 +78,7 @@ export type AdminCreateElectionCandidateParams = Static<typeof AdminCreateElecti
 export const AdminCreateElectionCandidateBody = t.Object({
   name: t.String(),
   description: t.Nullable(t.String()),
-  profileImage: t.Nullable(FilePath),
+  profileImagePath: t.Nullable(FilePath),
   number: t.Nullable(t.Integer()),
 })
 export type AdminCreateElectionCandidateBody = Static<typeof AdminCreateElectionCandidateBody>
@@ -97,7 +97,7 @@ export type AdminUpdateElectionCandidateParams = Static<typeof AdminUpdateElecti
 export const AdminUpdateElectionCandidateBody = t.Object({
   name: t.String(),
   description: t.Nullable(t.String()),
-  profileImage: t.Nullable(FilePath),
+  profileImagePath: t.Nullable(FilePath),
   number: t.Nullable(t.Integer()),
 })
 export type AdminUpdateElectionCandidateBody = Static<typeof AdminUpdateElectionCandidateBody>
