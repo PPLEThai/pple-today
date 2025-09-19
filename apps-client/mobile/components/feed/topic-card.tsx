@@ -9,7 +9,7 @@ import { Slide, SlideIndicators, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { H3 } from '@pple-today/ui/typography'
 import { Image } from 'expo-image'
-import { useRouter } from 'expo-router'
+import { Link, useRouter } from 'expo-router'
 import { ArrowRightIcon, MessageSquareHeartIcon } from 'lucide-react-native'
 
 import { LinearGradient } from '@app/components/linear-gradient'
@@ -157,10 +157,12 @@ export function TopicSuggestion() {
           <Icon icon={MessageSquareHeartIcon} size={32} className="text-base-primary-default" />
           <H3 className="text-base-text-high font-anakotmai-medium text-2xl">หัวข้อน่าสนใจ</H3>
         </View>
-        <Button variant="ghost">
-          <Text>ดูทั้งหมด</Text>
-          <Icon icon={ArrowRightIcon} />
-        </Button>
+        <Link asChild href="/(feed)/topic-suggestion">
+          <Button variant="ghost">
+            <Text>ดูทั้งหมด</Text>
+            <Icon icon={ArrowRightIcon} />
+          </Button>
+        </Link>
       </View>
       <Slide
         count={topics.length}
