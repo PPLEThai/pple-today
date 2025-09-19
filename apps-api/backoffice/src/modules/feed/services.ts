@@ -132,8 +132,8 @@ export class FeedService {
             author: {
               id: comment.user.id,
               name: comment.user.name,
-              profileImage: comment.user.profileImage
-                ? this.fileService.getPublicFileUrl(comment.user.profileImage)
+              profileImage: comment.user.profileImagePath
+                ? this.fileService.getPublicFileUrl(comment.user.profileImagePath)
                 : undefined,
             },
           }) satisfies FeedItemComment
@@ -190,8 +190,8 @@ export class FeedService {
             author: {
               id: result.value.comment.user.id,
               name: result.value.comment.user.name,
-              profileImage: result.value.comment.user.profileImage
-                ? this.fileService.getPublicFileUrl(result.value.comment.user.profileImage)
+              profileImage: result.value.comment.user.profileImagePath
+                ? this.fileService.getPublicFileUrl(result.value.comment.user.profileImagePath)
                 : undefined, // this should be null
             },
           }
@@ -241,8 +241,8 @@ export class FeedService {
       author: {
         id: result.value.user.id,
         name: result.value.user.name,
-        profileImage: result.value.user.profileImage
-          ? this.fileService.getPublicFileUrl(result.value.user.profileImage)
+        profileImage: result.value.user.profileImagePath
+          ? this.fileService.getPublicFileUrl(result.value.user.profileImagePath)
           : undefined, // this should be null
       },
     })

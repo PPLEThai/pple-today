@@ -99,7 +99,7 @@ export class FacebookService {
     }
 
     const publicProfilePictureUrl = this.fileService.getPublicFileUrl(
-      linkedPageResult.value.profilePictureUrl
+      linkedPageResult.value.profileImagePath
     )
 
     return ok({
@@ -147,10 +147,10 @@ export class FacebookService {
       return mapRepositoryError(pageAccessToken.error)
     }
 
-    let profilePictureUrl = existingPage.value?.profilePictureUrl
+    let profilePicturePath = existingPage.value?.profilePicturePath
 
     if (
-      !profilePictureUrl ||
+      !profilePicturePath ||
       pageDetails.value.picture.data.cache_key !== existingPage.value?.profilePictureCacheKey
     ) {
       const uploadResult = await this.fileService.uploadProfilePagePicture(
@@ -162,7 +162,7 @@ export class FacebookService {
         return err(uploadResult.error)
       }
 
-      profilePictureUrl = uploadResult.value
+      profilePicturePath = uploadResult.value
     }
 
     const linkedPage = await this.facebookRepository.linkFacebookPageToUser(
@@ -170,7 +170,7 @@ export class FacebookService {
       facebookPageId,
       {
         facebookPageAccessToken: pageAccessToken.value.accessToken,
-        profilePictureUrl,
+        profilePicturePath,
         profilePictureCacheKey: pageDetails.value.picture.data.cache_key,
         pageName: pageDetails.value.name,
       }
