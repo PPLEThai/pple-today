@@ -1,0 +1,14 @@
+diff --git a/src/utils.tsx b/src/utils.tsx
+index b2b9c8a10f3f5fe142109c078ff6802335fc38b0..7fa6d6c02fbcbafec51be6a2e959ef7cfb07f34c 100644
+--- a/src/utils.tsx
++++ b/src/utils.tsx
+@@ -3,6 +3,9 @@ import { StyleSheet, View } from 'react-native';
+ 
+ export const childrenWithOverriddenStyle = (children?: ReactNode) => {
+   return Children.map(children, (child) => {
++    if (!React.isValidElement(child)) {
++      return child;
++    }
+     const element = child as React.ReactElement<any>;
+     return (
+       // Add a wrapper to ensure layout is calculated correctly

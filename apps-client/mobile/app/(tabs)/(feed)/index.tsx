@@ -1,7 +1,7 @@
 import * as React from 'react'
 import {
+  Dimensions,
   findNodeHandle,
-  FlatListComponent,
   Platform,
   Pressable,
   RefreshControl,
@@ -9,7 +9,6 @@ import {
   View,
 } from 'react-native'
 import Animated, {
-  FlatListPropsWithLayout,
   useAnimatedScrollHandler,
   useSharedValue,
   withTiming,
@@ -19,17 +18,25 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ExtractBodyResponse } from '@pple-today/api-client'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
-import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
+import { BottomSheetModal, BottomSheetScrollView } from '@pple-today/ui/bottom-sheet/index'
 import { Button } from '@pple-today/ui/button'
-import { FormControl, FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
+import { FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
+import { cn } from '@pple-today/ui/lib/utils'
 import { Skeleton } from '@pple-today/ui/skeleton'
 import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
+import { toast } from '@pple-today/ui/toast'
+import { toggleTextVariants, toggleVariants } from '@pple-today/ui/toggle'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H2, H3 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
-import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  InfiniteData,
+  useInfiniteQuery,
+  UseInfiniteQueryResult,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import * as Linking from 'expo-linking'
 import { useRouter } from 'expo-router'
@@ -45,7 +52,11 @@ import {
 } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import type { ApplicationApiSchema, GetBannersResponse } from '@api/backoffice/app'
+import type {
+  ApplicationApiSchema,
+  GetBannersResponse,
+  GetMyFeedResponse,
+} from '@api/backoffice/app'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { UserAddressInfoSection } from '@app/components/address-info'
 import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/announcement'
@@ -64,7 +75,7 @@ import {
 } from '@app/components/pager-with-header'
 import { environment } from '@app/env'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
-import { useAuthMe } from '@app/libs/auth'
+import { useAuthMe, useSessionQuery } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { useScrollContext } from '@app/libs/scroll-context'
 
@@ -87,18 +98,40 @@ export default function IndexLayout() {
           <SelectTopicButton />
           <PagerTabBarItem index={0}>สำหรับคุณ</PagerTabBarItem>
           <PagerTabBarItem index={1}>กำลังติดตาม</PagerTabBarItem>
-          {/* <PagerTabBarItem index={2}>กรุงเทพฯ</PagerTabBarItem> */}
+          <PagerTopicTabBarItems />
           <PagerTabBarItemIndicator />
         </PagerTabBar>
       </PagerHeader>
-      <PagerContentView>
-        {Array.from({ length: 2 }).map((_, index) => (
-          <View key={index} collapsable={false}>
-            <PagerContent index={index}>{(props) => <FeedContent {...props} />}</PagerContent>
-          </View>
-        ))}
-      </PagerContentView>
+      <PagerContents />
     </Pager>
+  )
+}
+
+function PagerContents() {
+  const sessionQuery = useSessionQuery()
+  const followTopicsQuery = reactQueryClient.useQuery(
+    '/topics/follows',
+    {},
+    { enabled: !!sessionQuery.data }
+  )
+  return (
+    <PagerContentView>
+      <View key={0}>
+        <PagerContent index={0}>{(props) => <FeedContent {...props} />}</PagerContent>
+      </View>
+      <View key={1}>
+        <PagerContent index={1}>{(props) => <FeedContent {...props} />}</PagerContent>
+      </View>
+      {followTopicsQuery.data
+        ? followTopicsQuery.data.map((topic, index) => (
+            <View key={index + 2}>
+              <PagerContent index={index + 2}>
+                {(props) => <FeedTopicContent {...props} topicId={topic.id} />}
+              </PagerContent>
+            </View>
+          ))
+        : null}
+    </PagerContentView>
   )
 }
 
@@ -312,9 +345,29 @@ function ElectionCard() {
   )
 }
 
+function PagerTopicTabBarItems() {
+  const sessionQuery = useSessionQuery()
+  const followTopicsQuery = reactQueryClient.useQuery(
+    '/topics/follows',
+    {},
+    { enabled: !!sessionQuery.data }
+  )
+  return followTopicsQuery.data?.map((topic, index) => (
+    <PagerTabBarItem index={2 + index} key={2 + index}>
+      {topic.name}
+    </PagerTabBarItem>
+  ))
+}
+
 function SelectTopicButton() {
   const bottomSheetModalRef = React.useRef<BottomSheetModal>(null)
+  const router = useRouter()
+  const sessionQuery = useSessionQuery()
   const onOpen = () => {
+    if (!sessionQuery.data) {
+      router.navigate('/profile')
+      return
+    }
     bottomSheetModalRef.current?.present()
   }
   const onClose = () => {
@@ -338,92 +391,154 @@ function SelectTopicButton() {
         />
       </Button>
 
-      <BottomSheetModal ref={bottomSheetModalRef} bottomInset={insets.bottom}>
-        <BottomSheetView>
-          <SelectTopicForm onClose={onClose} />
-        </BottomSheetView>
+      <BottomSheetModal
+        ref={bottomSheetModalRef}
+        bottomInset={insets.bottom}
+        topInset={insets.top}
+        enableDynamicSizing
+      >
+        <SelectTopicForm onClose={onClose} />
       </BottomSheetModal>
     </>
   )
 }
 
 const formSchema = z.object({
-  topics: z.array(z.string()),
+  topicId: z.string().min(1, 'กรุณาเลือกหัวข้อ 1 หัวข้อ'),
 })
 
 const SelectTopicForm = (props: { onClose: () => void }) => {
+  const listTopicQuery = reactQueryClient.useQuery('/topics/list', {})
+  const followTopicMutation = reactQueryClient.useMutation('post', '/topics/:topicId/follow', {})
+  const queryClient = useQueryClient()
   const form = useForm({
     defaultValues: {
-      topics: [] as string[],
+      topicId: '',
     },
     validators: {
       onSubmit: formSchema,
     },
-    onSubmit: async () => {
-      props.onClose()
+    onSubmit: async ({ value }) => {
+      followTopicMutation.mutateAsync(
+        { pathParams: { topicId: value.topicId } },
+        {
+          onSuccess: () => {
+            queryClient.invalidateQueries({
+              queryKey: reactQueryClient.getQueryKey('/topics/follows'),
+            })
+            queryClient.invalidateQueries({
+              queryKey: reactQueryClient.getQueryKey('/topics/list'),
+            })
+            props.onClose()
+          },
+          onError: (error) => {
+            console.error('Follow topic error:', error)
+            toast.error({ text1: 'เกิดข้อผิดพลาดบางอย่าง' })
+          },
+        }
+      )
     },
   })
   const onSkip = () => {
     props.onClose()
   }
   return (
-    <View className="flex flex-col flex-1">
+    <BottomSheetScrollView>
       <View className="flex flex-col gap-1 p-4 pb-0">
         <Text className="text-2xl font-anakotmai-bold">เลือกหัวข้อที่สนใจ</Text>
-        <Text className="text-sm font-anakotmai-light">เลือก 1 หัวข้อสำหรับเพิ่มลงบนหน้าแรก</Text>
+        <Text className="text-sm font-anakotmai-light text-base-text-medium">
+          เลือก 1 หัวข้อสำหรับเพิ่มลงบนหน้าแรก
+        </Text>
       </View>
-      <form.Field name="topics">
+      <form.Field name="topicId">
         {(field) => (
           <FormItem field={field} className="p-4">
             <FormLabel style={[StyleSheet.absoluteFill, { opacity: 0, pointerEvents: 'none' }]}>
               ความคิดเห็น
             </FormLabel>
-            <FormControl>
-              <ToggleGroup
-                type="multiple"
-                value={field.state.value}
-                onValueChange={field.handleChange}
-                className="flex flex-row gap-2 flex-wrap justify-start bg-base-bg-light p-2 rounded-lg border border-base-outline-default"
-              >
-                {TAGS.map((tag) => (
-                  <ToggleGroupItem key={tag} value={tag} variant="outline">
-                    <Text>{tag}</Text>
-                  </ToggleGroupItem>
-                ))}
-              </ToggleGroup>
-            </FormControl>
+            <ToggleGroup
+              type="single"
+              value={field.state.value}
+              onValueChange={(value) => {
+                field.handleChange(value!)
+              }}
+              className="bg-base-bg-light rounded-lg border border-base-outline-default flex flex-row flex-wrap gap-2 justify-start p-2"
+            >
+              {listTopicQuery.isLoading || !listTopicQuery.data ? (
+                <TopicSkeleton />
+              ) : listTopicQuery.data.length === 0 ? (
+                <View className="w-full items-center justify-center py-14">
+                  <Text className="text-base-text-placeholder font-anakotmai-medium">
+                    ยังไม่มีหัวข้อ
+                  </Text>
+                </View>
+              ) : (
+                listTopicQuery.data?.map((tag) => {
+                  if (tag.followed)
+                    return (
+                      <View
+                        key={tag.id}
+                        className={cn(
+                          toggleVariants(),
+                          'bg-base-primary-default active:bg-base-primary-medium web:hover:bg-base-primary-medium border-base-primary-default'
+                        )}
+                      >
+                        <Text className={cn(toggleTextVariants(), 'text-base-text-invert')}>
+                          {tag.name}
+                        </Text>
+                      </View>
+                    )
+                  return (
+                    <ToggleGroupItem key={tag.id} value={tag.id} variant="outline">
+                      <Text>{tag.name}</Text>
+                    </ToggleGroupItem>
+                  )
+                })
+              )}
+            </ToggleGroup>
             <FormMessage />
           </FormItem>
         )}
       </form.Field>
-      <View className="flex flex-col gap-2 px-4">
+      {/* TODO: make sticky and set max height, might use BottomSheetFooter */}
+      <View className="flex flex-col gap-2 px-4 py-2 bg-base-bg-white">
         <form.Subscribe selector={(state) => [state.isSubmitting]}>
           {([isSubmitting]) => (
-            <Button onPress={form.handleSubmit} disabled={isSubmitting}>
+            <Button
+              onPress={form.handleSubmit}
+              disabled={isSubmitting || followTopicMutation.isPending}
+            >
               <Text>ตกลง</Text>
             </Button>
           )}
         </form.Subscribe>
-        <Button variant="ghost" onPress={onSkip}>
+        <Button variant="ghost" onPress={onSkip} disabled={followTopicMutation.isPending}>
           <Text>ยกเลิก</Text>
         </Button>
       </View>
-    </View>
+    </BottomSheetScrollView>
   )
 }
 
-const TAGS = [
-  'การเมือง',
-  'สส',
-  'ไฟป่า',
-  'สว',
-  'เลือกตั้งนายก',
-  'เลือกตั้งท้องถิ่น',
-  'การศึกษา',
-  'เศรษฐกิจ',
-  'สังคม',
-  'สิ่งแวดล้อม',
-]
+const TopicSkeleton = () => {
+  return (
+    <>
+      <Skeleton className="rounded-full h-10 w-20" />
+      <Skeleton className="rounded-full h-10 w-16" />
+      <Skeleton className="rounded-full h-10 w-18" />
+      <Skeleton className="rounded-full h-10 w-16" />
+      <Skeleton className="rounded-full h-10 w-20" />
+      <Skeleton className="rounded-full h-10 w-24" />
+      <Skeleton className="rounded-full h-10 w-20" />
+      <Skeleton className="rounded-full h-10 w-24" />
+      <Skeleton className="rounded-full h-10 w-24" />
+      <Skeleton className="rounded-full h-10 w-20" />
+      <Skeleton className="rounded-full h-10 w-16" />
+      <Skeleton className="rounded-full h-10 w-18" />
+      <Skeleton className="rounded-full h-10 w-16" />
+    </>
+  )
+}
 
 const LIMIT = 10
 function FeedContent(props: PagerScrollViewProps) {
@@ -471,82 +586,44 @@ function FeedContent(props: PagerScrollViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
 
-  type GetMyFeedResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/me'>
-  const data = React.useMemo((): GetMyFeedResponse[] => {
+  const data = React.useMemo((): GetMyFeedResponse => {
     if (!feedInfiniteQuery.data) return []
-    return feedInfiniteQuery.data.pages
+    return feedInfiniteQuery.data.pages.flatMap((page) => page)
   }, [feedInfiniteQuery.data])
 
   const scrollContext = useScrollContext()
   const scrollHandler = useAnimatedScrollHandler(scrollContext)
 
-  const [refreshing, setRefreshing] = React.useState(false)
   const queryClient = useQueryClient()
   const onRefresh = React.useCallback(async () => {
-    setRefreshing(true)
-    try {
-      queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/auth/me') })
-      queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/banners') })
-      await Promise.all([
-        queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/feed/me') }),
-        queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/announcements') }),
-      ])
-      await feedInfiniteQuery.refetch()
-      setRefreshing(false)
-    } catch (error) {
-      console.error('Error refreshing feed:', error)
-      setRefreshing(false)
-    }
-  }, [feedInfiniteQuery, queryClient])
-
-  const Footer =
-    feedInfiniteQuery.hasNextPage || feedInfiniteQuery.isLoading || feedInfiniteQuery.error ? (
-      <FeedCardSkeleton />
-    ) : data.length === 1 && data[0].length === 0 ? (
-      // Empty State
-      <View className="flex flex-col items-center justify-center py-6">
-        <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีโพสต์</Text>
-      </View>
-    ) : (
-      // Reach end of feed
-      <View className="flex flex-col items-center justify-center py-6">
-        <Text className="text-base-text-medium font-anakotmai-medium">ไม่มีโพสต์เพิ่มเติม</Text>
-      </View>
-    )
+    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/auth/me') })
+    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/banners') })
+    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/topics/list') })
+    await Promise.all([
+      queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/feed/me') }),
+      queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/announcements') }),
+    ])
+    await feedInfiniteQuery.refetch()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryClient, feedInfiniteQuery.refetch])
 
   const renderFeedItem = React.useCallback(
-    ({ item: items }: { item: GetMyFeedResponse; index: number }) => {
-      if (!items) {
-        return null
-      }
-      return (
-        <>
-          {items.map((item) => {
-            return <FeedCard key={item.id} feedItem={item} />
-          })}
-        </>
-      )
+    ({ item }: { item: GetMyFeedResponse[number]; index: number }) => {
+      return <FeedCard key={item.id} feedItem={item} />
     },
     []
   )
   return (
-    <FlatListMemo
-      // @ts-expect-error FlatListMemo ref type is wrong
+    <Animated.FlatList
       ref={scrollElRef}
       onScroll={scrollHandler}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          progressViewOffset={Platform.select({ ios: 0, android: headerHeight })}
-          colors={['#FF6A13']} // base-primary-default
-        />
-      }
-      headerHeight={headerHeight}
+      refreshControl={<FeedRefreshControl headerHeight={headerHeight} onRefresh={onRefresh} />}
       data={data}
+      className="flex-1"
       contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
+      contentContainerStyle={{ paddingTop: headerHeight }}
       ListHeaderComponent={<AnnouncementSection />}
-      ListFooterComponent={Footer}
+      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} />}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
       renderItem={renderFeedItem}
@@ -554,50 +631,156 @@ function FeedContent(props: PagerScrollViewProps) {
   )
 }
 
-// https://github.com/bluesky-social/social-app/blob/27c591f031fbe8b3a5837c4ef7082b2ce146a050/src/view/com/util/List.tsx#L19
-type FlatListMethods<ItemT = any> = FlatListComponent<ItemT, FlatListPropsWithLayout<ItemT>>
-type FlatListProps<ItemT = any> = FlatListPropsWithLayout<ItemT> & {
-  headerHeight?: number
+interface FeedTopicContentProps extends PagerScrollViewProps {
+  topicId: string
 }
-// TODO: try flashlist
-let FlatListMemo = React.forwardRef<FlatListMethods, FlatListProps>(
-  function FlatListMemo(props, ref) {
-    const {
-      onScroll,
-      headerHeight,
-      data,
-      ListHeaderComponent,
-      ListFooterComponent,
-      onEndReached,
-      onEndReachedThreshold,
-      renderItem,
-      contentContainerClassName,
-      refreshControl,
-    } = props
+
+function FeedTopicContent(props: FeedTopicContentProps) {
+  const { headerHeight, isFocused, scrollElRef, setScrollViewTag, topicId } = props
+  React.useEffect(() => {
+    if (isFocused && scrollElRef.current) {
+      const scrollViewTag = findNodeHandle(scrollElRef.current)
+      setScrollViewTag(scrollViewTag)
+      // console.log('scrollViewTag:', scrollViewTag)
+    }
+  }, [isFocused, scrollElRef, setScrollViewTag])
+
+  const feedInfiniteQuery = useInfiniteQuery({
+    queryKey: reactQueryClient.getQueryKey('/feed/topic', { query: { topicId } }),
+    queryFn: async ({ pageParam }) => {
+      const response = await fetchClient('/feed/topic', {
+        query: { page: pageParam, limit: LIMIT, topicId },
+      })
+      if (response.error) {
+        throw response.error
+      }
+      return response.data
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, _, lastPageParam) => {
+      if (lastPage && lastPage.length === 0) {
+        return undefined
+      }
+      if (lastPage.length < LIMIT) {
+        return undefined
+      }
+      return lastPageParam + 1
+    },
+  })
+  React.useEffect(() => {
+    if (feedInfiniteQuery.error) {
+      console.error('Error fetching feed:', JSON.stringify(feedInfiniteQuery.error))
+    }
+  }, [feedInfiniteQuery.error])
+
+  const onEndReached = React.useCallback(() => {
+    if (!feedInfiniteQuery.isFetching && feedInfiniteQuery.hasNextPage) {
+      feedInfiniteQuery.fetchNextPage()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
+
+  type GetMyFeedResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/me'>
+  const data = React.useMemo((): GetMyFeedResponse => {
+    if (!feedInfiniteQuery.data) return []
+    return feedInfiniteQuery.data.pages.flatMap((page) => page)
+  }, [feedInfiniteQuery.data])
+
+  const scrollContext = useScrollContext()
+  const scrollHandler = useAnimatedScrollHandler(scrollContext)
+
+  const queryClient = useQueryClient()
+  const onRefresh = React.useCallback(async () => {
+    await Promise.all([
+      queryClient.resetQueries({
+        queryKey: reactQueryClient.getQueryKey('/feed/topic', { query: { topicId } }),
+      }),
+    ])
+    await feedInfiniteQuery.refetch()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryClient, topicId, feedInfiniteQuery.refetch])
+
+  const renderFeedItem = React.useCallback(
+    ({ item }: { item: GetMyFeedResponse[number]; index: number }) => {
+      return <FeedCard key={item.id} feedItem={item} />
+    },
+    []
+  )
+
+  return (
+    <Animated.FlatList
+      ref={scrollElRef}
+      onScroll={scrollHandler}
+      refreshControl={<FeedRefreshControl headerHeight={headerHeight} onRefresh={onRefresh} />}
+      data={data}
+      className="flex-1"
+      contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
+      contentContainerStyle={{ paddingTop: headerHeight }}
+      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} />}
+      onEndReachedThreshold={1}
+      onEndReached={onEndReached}
+      renderItem={renderFeedItem}
+      showsVerticalScrollIndicator={false}
+    />
+  )
+}
+
+interface FeedRefreshControlProps {
+  headerHeight: number
+  onRefresh: () => void
+}
+// TODO: make RefreshControl appear on top of the header so that we dont need the headerHeight offset on Android
+function FeedRefreshControl({
+  headerHeight,
+  onRefresh: onRefreshProp,
+  ...rest
+}: FeedRefreshControlProps) {
+  const [refreshing, setRefreshing] = React.useState(false)
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true)
+    await onRefreshProp()
+    setRefreshing(false)
+  }, [onRefreshProp])
+  return (
+    <RefreshControl
+      refreshing={refreshing}
+      onRefresh={onRefresh}
+      progressViewOffset={Platform.select({ ios: 0, android: headerHeight })}
+      colors={['#FF6A13']} // base-primary-default
+      {...rest} // make sure overridden styles (from RN) are passed down
+    />
+  )
+}
+
+interface FeedFooterProps {
+  queryResult: UseInfiniteQueryResult<InfiniteData<unknown[]>>
+}
+function FeedFooter({ queryResult }: FeedFooterProps) {
+  const minHeight = Dimensions.get('window').height
+  if (queryResult.hasNextPage || queryResult.isLoading || queryResult.error) {
+    return <FeedCardSkeleton />
+  }
+  if (
+    queryResult.data &&
+    queryResult.data.pages.length === 1 &&
+    queryResult.data.pages[0].length === 0
+  ) {
+    // Empty State
     return (
-      <Animated.FlatList
-        // @ts-expect-error FlatListMemo ref type is wrong
-        ref={ref}
-        onScroll={onScroll}
-        showsVerticalScrollIndicator={false}
-        style={{ flex: 1 }}
-        contentContainerStyle={{ paddingTop: headerHeight }}
-        refreshControl={refreshControl}
-        // contentOffset={{ x: 0, y: -headerHeight }}
-        // scrollIndicatorInsets={{ top: headerHeight, right: 1 }}
-        // automaticallyAdjustsScrollIndicatorInsets={false}
-        data={data}
-        contentContainerClassName={contentContainerClassName}
-        ListHeaderComponent={ListHeaderComponent}
-        ListFooterComponent={ListFooterComponent}
-        onEndReachedThreshold={onEndReachedThreshold}
-        onEndReached={onEndReached}
-        renderItem={renderItem}
-      />
+      <View style={{ minHeight }}>
+        <View className="flex flex-col items-center justify-center py-6">
+          <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีโพสต์</Text>
+        </View>
+      </View>
     )
   }
-)
-FlatListMemo = React.memo(FlatListMemo)
+  // Reach end of feed
+  return (
+    <View className="flex flex-col items-center justify-center py-6">
+      <Text className="text-base-text-medium font-anakotmai-medium">ไม่มีโพสต์เพิ่มเติม</Text>
+    </View>
+  )
+}
 
 function AnnouncementSection() {
   const announcementsQuery = reactQueryClient.useQuery('/announcements', {

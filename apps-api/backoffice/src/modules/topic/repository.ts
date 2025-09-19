@@ -30,12 +30,27 @@ export class TopicRepository {
     )
   }
 
+  async listTopicWithFollowedStatus(userId: string) {
+    return fromRepositoryPromise(
+      this.prismaService.topic.findMany({
+        where: { status: 'PUBLISH' },
+        orderBy: { updatedAt: 'desc' },
+        select: {
+          id: true,
+          name: true,
+          followedTopics: { where: { userId }, select: { userId: true } },
+        },
+      })
+    )
+  }
+
   async getUserFollowedTopics(userId: string) {
     return fromRepositoryPromise(
       this.prismaService.userFollowsTopic.findMany({
         where: {
           userId: { equals: userId },
         },
+        orderBy: { createdAt: 'asc' },
         include: {
           topic: {
             include: {

@@ -23,6 +23,15 @@ export const GetTopicsResponse = t.Array(
 )
 export type GetTopicsResponse = typeof GetTopicsResponse.static
 
+export const ListTopicResponse = t.Array(
+  t.Object({
+    id: t.String(),
+    name: t.String(),
+    followed: t.Boolean(),
+  })
+)
+export type ListTopicResponse = typeof ListTopicResponse.static
+
 export const FollowTopicParams = t.Object({
   topicId: t.String(),
 })

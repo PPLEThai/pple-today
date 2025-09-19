@@ -8,6 +8,9 @@ patchedDependencies:
   expo-module-scripts:
     hash: fit3veqcxf7tuz7nxylejwaxay
     path: patches/expo-module-scripts.patch
+  react-native-pager-view:
+    hash: rp3wn5d4p62k3reyprd7s5dt6e
+    path: patches/react-native-pager-view.patch
 
 importers:
 
@@ -224,7 +227,7 @@ importers:
         version: 2.4.1(@react-navigation/native@7.1.8(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-safe-area-context@5.4.0(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       '@react-navigation/material-top-tabs':
         specifier: ^7.3.2
-        version: 7.3.2(@react-navigation/native@7.1.8(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-pager-view@6.8.1(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-safe-area-context@5.4.0(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
+        version: 7.3.2(@react-navigation/native@7.1.8(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-pager-view@6.8.1(patch_hash=rp3wn5d4p62k3reyprd7s5dt6e)(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-safe-area-context@5.4.0(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       '@react-navigation/native':
         specifier: ^7.1.6
         version: 7.1.8(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
@@ -329,7 +332,7 @@ importers:
         version: 0.2.2(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       react-native-pager-view:
         specifier: 6.8.1
-        version: 6.8.1(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
+        version: 6.8.1(patch_hash=rp3wn5d4p62k3reyprd7s5dt6e)(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       react-native-react-query-devtools:
         specifier: ^1.5.0
         version: 1.5.0(@tanstack/react-query@5.81.5(react@19.0.0))(react-native-svg@15.12.0(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
@@ -347,7 +350,7 @@ importers:
         version: 15.12.0(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       react-native-tab-view:
         specifier: ^4.1.2
-        version: 4.1.2(react-native-pager-view@6.8.1(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
+        version: 4.1.2(react-native-pager-view@6.8.1(patch_hash=rp3wn5d4p62k3reyprd7s5dt6e)(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       react-native-web:
         specifier: ~0.20.0
         version: 0.20.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -3603,6 +3606,9 @@ packages:
     engines: {node: '>=14'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
 
   '@svgr/core@8.1.0':
     resolution: {integrity: sha512-8QqtOQT5ACVlmsvKOJNEaWmRPmcojMOzCz4Hs2BGG/toAp/K38LcsMRyLp349glq5AzJbCEeimEoxaX6v/fLrA==}
@@ -12294,7 +12300,7 @@ snapshots:
     dependencies:
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 24.3.1
+      '@types/node': 22.15.3
       '@types/yargs': 15.0.19
       chalk: 4.1.2
     optional: true
@@ -13550,16 +13556,16 @@ snapshots:
       use-latest-callback: 0.2.4(react@19.0.0)
       use-sync-external-store: 1.5.0(react@19.0.0)
 
-  '@react-navigation/material-top-tabs@7.3.2(@react-navigation/native@7.1.8(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-pager-view@6.8.1(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-safe-area-context@5.4.0(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)':
+  '@react-navigation/material-top-tabs@7.3.2(@react-navigation/native@7.1.8(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-pager-view@6.8.1(patch_hash=rp3wn5d4p62k3reyprd7s5dt6e)(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-safe-area-context@5.4.0(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)':
     dependencies:
       '@react-navigation/elements': 2.5.2(@react-navigation/native@7.1.8(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-safe-area-context@5.4.0(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       '@react-navigation/native': 7.1.8(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       color: 4.2.3
       react: 19.0.0
       react-native: 0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0)
-      react-native-pager-view: 6.8.1(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
+      react-native-pager-view: 6.8.1(patch_hash=rp3wn5d4p62k3reyprd7s5dt6e)(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       react-native-safe-area-context: 5.4.0(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
-      react-native-tab-view: 4.1.2(react-native-pager-view@6.8.1(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
+      react-native-tab-view: 4.1.2(react-native-pager-view@6.8.1(patch_hash=rp3wn5d4p62k3reyprd7s5dt6e)(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
     transitivePeerDependencies:
       - '@react-native-masked-view/masked-view'
 
@@ -14214,7 +14220,6 @@ snapshots:
 
   '@svgr/babel-preset@8.1.0(@babel/core@7.27.1)':
     dependencies:
-      '@babel/core': 7.27.1
       '@svgr/babel-plugin-add-jsx-attribute': 8.0.0(@babel/core@7.27.1)
       '@svgr/babel-plugin-remove-jsx-attribute': 8.0.0(@babel/core@7.27.1)
       '@svgr/babel-plugin-remove-jsx-empty-expression': 8.0.0(@babel/core@7.27.1)
@@ -14223,6 +14228,8 @@ snapshots:
       '@svgr/babel-plugin-svg-em-dimensions': 8.0.0(@babel/core@7.27.1)
       '@svgr/babel-plugin-transform-react-native-svg': 8.1.0(@babel/core@7.27.1)
       '@svgr/babel-plugin-transform-svg-component': 8.0.0(@babel/core@7.27.1)
+    optionalDependencies:
+      '@babel/core': 7.27.1
 
   '@svgr/core@8.1.0(typescript@5.8.3)':
     dependencies:
@@ -19842,7 +19849,7 @@ snapshots:
       react: 19.0.0
       react-native: 0.79.4(@babel/core@7.28.4)(@react-native-community/cli@18.0.0(typescript@5.8.2))(@types/react@19.0.14)(react@19.0.0)
 
-  react-native-pager-view@6.8.1(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0):
+  react-native-pager-view@6.8.1(patch_hash=rp3wn5d4p62k3reyprd7s5dt6e)(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0):
     dependencies:
       react: 19.0.0
       react-native: 0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0)
@@ -19941,11 +19948,11 @@ snapshots:
       react-native: 0.79.4(@babel/core@7.28.4)(@react-native-community/cli@18.0.0(typescript@5.8.2))(@types/react@19.0.14)(react@19.0.0)
       warn-once: 0.1.1
 
-  react-native-tab-view@4.1.2(react-native-pager-view@6.8.1(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0):
+  react-native-tab-view@4.1.2(react-native-pager-view@6.8.1(patch_hash=rp3wn5d4p62k3reyprd7s5dt6e)(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0):
     dependencies:
       react: 19.0.0
       react-native: 0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0)
-      react-native-pager-view: 6.8.1(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
+      react-native-pager-view: 6.8.1(patch_hash=rp3wn5d4p62k3reyprd7s5dt6e)(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       use-latest-callback: 0.2.4(react@19.0.0)
 
   react-native-toast-message@2.3.3(react-native@0.79.4(@babel/core@7.28.4)(@react-native-community/cli@18.0.0(typescript@5.8.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0):
