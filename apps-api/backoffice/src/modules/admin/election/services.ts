@@ -35,6 +35,7 @@ export class AdminElectionService {
       description: election.description,
       location: election.location,
       type: election.type,
+      mode: election.mode,
       isCancelled: election.isCancelled,
       encryptionPublicKey: election.encryptionPublicKey,
       publishDate: election.publishDate,
