@@ -70,14 +70,28 @@ export class AdminElectionRepository {
   }
 
   async cancelElectionById(electionId: string) {
-    return fromRepositoryPromise(
-      this.prismaService.$transaction(async (tx) => {
-        const deletedVoteRecords = await tx.electionVoteRecord.findMany({
-          where: {
-            electionId,
-          },
-        })
+    const deletedVoteRecords = await this.prismaService.electionVoteRecord.findMany({
+      where: {
+        electionId,
+      },
+    })
 
+    const faceImagePaths = deletedVoteRecords
+      .map((record) => record.faceImagePath)
+      .filter((path) => path !== null)
+
+    const deleteImageResult = await fromRepositoryPromise(
+      this.fileService.$transaction(async (tx) => {
+        const deleteImageResult = await tx.bulkRemoveFile(faceImagePaths as FilePath[])
+        if (deleteImageResult.isErr()) throw deleteImageResult.error
+      })
+    )
+    if (deleteImageResult.isErr()) return err(deleteImageResult.error)
+
+    const [_, fileTx] = deleteImageResult.value
+
+    const cancelResult = await fromRepositoryPromise(
+      this.prismaService.$transaction(async (tx) => {
         await Promise.all([
           tx.electionBallot.deleteMany({
             where: {
@@ -91,20 +105,18 @@ export class AdminElectionRepository {
           }),
           tx.election.update({
             where: { id: electionId },
-            data: {
-              isCancelled: true,
-            },
+            data: { isCancelled: true },
           }),
         ])
-
-        const faceImagePaths = deletedVoteRecords
-          .map((record) => record.faceImagePath)
-          .filter((path) => path !== null)
-
-        const deleteImageResult = await this.fileService.bulkDeleteFile(faceImagePaths)
-        if (deleteImageResult.isErr()) throw deleteImageResult.error
       })
     )
+    if (cancelResult.isErr()) {
+      const rollbackImageResult = await fileTx.rollback()
+      if (rollbackImageResult.isErr()) return err(rollbackImageResult.error)
+      return err(cancelResult.error)
+    }
+
+    return ok()
   }
 
   async listElectionCandidates(electionId: string) {
