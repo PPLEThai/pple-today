@@ -91,8 +91,23 @@ export class AdminElectionRepository {
 
   async deleteElectionById(electionId: string) {
     return fromRepositoryPromise(
-      this.prismaService.election.delete({
-        where: { id: electionId },
+      this.prismaService.$transaction(async (tx) => {
+        const deletedVoteRecords = await tx.electionVoteRecord.findMany({
+          where: {
+            electionId,
+          },
+        })
+
+        tx.election.delete({
+          where: { id: electionId },
+        })
+
+        const faceImagePaths = deletedVoteRecords
+          .map((record) => record.faceImagePath)
+          .filter((path) => path !== null)
+
+        const deleteImageResult = await this.fileService.bulkDeleteFile(faceImagePaths)
+        if (deleteImageResult.isErr()) throw deleteImageResult.error
       })
     )
   }
