@@ -388,6 +388,9 @@ importers:
       tailwindcss:
         specifier: ^3.4.17
         version: 3.4.17
+      tsx:
+        specifier: ^4.20.3
+        version: 4.20.3
 
   examples/mini-app/api:
     dependencies:
@@ -12294,7 +12297,7 @@ snapshots:
     dependencies:
       '@types/istanbul-lib-coverage': 2.0.6
       '@types/istanbul-reports': 3.0.4
-      '@types/node': 24.3.1
+      '@types/node': 22.15.3
       '@types/yargs': 15.0.19
       chalk: 4.1.2
     optional: true
