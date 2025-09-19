@@ -174,6 +174,7 @@ export const AdminElectionController = new Elysia({
         summary: 'Create Election Candidate',
         description: 'Create Election Candidate',
       },
+      requiredLocalUser: true,
       params: AdminCreateElectionCandidateParams,
       body: AdminCreateElectionCandidateBody,
       response: {
@@ -202,6 +203,7 @@ export const AdminElectionController = new Elysia({
         summary: 'Update Election Candidate',
         description: 'Update Election Candidate',
       },
+      requiredLocalUser: true,
       params: AdminUpdateElectionCandidateParams,
       body: AdminCreateElectionCandidateBody,
       response: {
