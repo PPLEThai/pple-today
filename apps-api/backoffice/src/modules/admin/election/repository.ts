@@ -1,12 +1,12 @@
+import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { ElectionType, Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
+import { ok } from 'neverthrow'
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
-import { FilePath } from '@pple-today/api-common/dtos'
-import { ok } from 'neverthrow'
 
 export class AdminElectionRepository {
   constructor(
