@@ -1,7 +1,7 @@
 import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { ElectionType, Prisma } from '@pple-today/database/prisma'
+import { ElectionResultType, ElectionType, Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -131,17 +131,29 @@ export class AdminElectionRepository {
 
     const [newProfileImagePath, fileTx] = moveFileResult.value
 
-    const createCandidateResult = await fromRepositoryPromise(
-      this.prismaService.electionCandidate.create({
+    const createCandidateResult = await fromRepositoryPromise(async () => {
+      const election = await this.prismaService.election.findUniqueOrThrow({
+        where: { id: electionId },
+      })
+
+      const resultTypesMap = {
+        [ElectionType.ONSITE]: [ElectionResultType.ONSITE],
+        [ElectionType.ONLINE]: [ElectionResultType.ONLINE],
+        [ElectionType.HYBRID]: [ElectionResultType.ONSITE, ElectionResultType.ONLINE],
+      }
+      const results = resultTypesMap[election.type].map((type) => ({ type, count: 0 }))
+
+      return this.prismaService.electionCandidate.create({
         data: {
           electionId,
           name: data.name,
           description: data.description,
           profileImagePath: newProfileImagePath,
           number: data.number,
+          results: { createMany: { data: results } },
         },
       })
-    )
+    })
     if (createCandidateResult.isErr()) {
       const rollbackResult = await fileTx.rollback()
       if (rollbackResult.isErr()) return err(rollbackResult.error)
