@@ -16,7 +16,7 @@ class FileObject {
     return Promise.resolve()
   }
 
-  async move(destination: FileObject) {
+  async move(_: FileObject) {
     return Promise.resolve()
   }
 
@@ -28,7 +28,7 @@ class FileObject {
     return Promise.resolve()
   }
 
-  generateSignedPostPolicyV4(options: any): Promise<
+  generateSignedPostPolicyV4(_: any): Promise<
     [
       {
         url: string
@@ -51,7 +51,7 @@ class FileObject {
     ])
   }
 
-  getSignedUrl(options: any): Promise<string> {
+  getSignedUrl(_: any): Promise<string> {
     return Promise.resolve(
       `https://storage.googleapis.com/fake-bucket/${encodeURIComponent(this.path)}`
     )
@@ -71,7 +71,7 @@ class Bucket {
 }
 
 class Storage {
-  constructor(config: any) {}
+  constructor(_: any) {}
 
   bucket(name: string) {
     return new Bucket(name)
