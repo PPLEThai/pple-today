@@ -209,7 +209,7 @@ export class FileService {
     if (signedUrlWithError.length > 0) {
       return err({
         code: InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
-        message: 'Failed to create signed URLs',
+        message: 'Failed to get one or more signed URLs',
       })
     }
 
@@ -248,23 +248,7 @@ export class FileService {
     return this.bucket.file(fileKey).publicUrl()
   }
 
-  async uploadProfilePagePicture(url: string, pageId: string) {
-    const destination = `public/pages/profile-picture-${pageId}.jpg`
-    const result = await this.uploadFileFromUrl(url, destination)
-
-    if (result.isErr()) {
-      return result
-    }
-
-    const markAsPublicResult = await this.markAsPublic(destination)
-    if (markAsPublicResult.isErr()) {
-      return markAsPublicResult
-    }
-
-    return ok(destination)
-  }
-
-  async deleteFile(fileKey: string): Promise<
+  async removeFile(fileKey: string): Promise<
     Result<
       DeleteFileResponse,
       {
@@ -442,7 +426,10 @@ export class FileTransactionService {
   private async bulkMoveToFolder(fileKeys: FilePath[], prefixFolder: string) {
     const newFileKeys: FilePath[] = []
     for (const fileKey of fileKeys) {
-      if (fileKey.startsWith(prefixFolder)) continue
+      if (fileKey.startsWith(prefixFolder)) {
+        newFileKeys.push(fileKey)
+        continue
+      }
 
       const newFileKey = (prefixFolder + getFilePath(fileKey)) as FilePath
       const result = await this.moveFile(fileKey, newFileKey)
@@ -507,12 +494,12 @@ export class FileTransactionService {
     return await this.bulkMoveToFolder(fileKeys, this.fileService.prefixPrivateFolder)
   }
 
-  async bulkRemoveFile(fileKeys: FilePath[]) {
+  async bulkDeleteFile(fileKeys: FilePath[]) {
     return await this.bulkMoveToFolder(fileKeys, this.fileService.prefixDeletedFolder)
   }
 
-  async removeFile(fileKey: FilePath) {
-    return await this.bulkRemoveFile([fileKey])
+  async deleteFile(fileKey: FilePath) {
+    return await this.bulkDeleteFile([fileKey])
   }
 
   async rollback() {
@@ -566,7 +553,7 @@ export class FileTransactionService {
 
           break
         case 'UPLOAD':
-          result = await this.fileService.deleteFile(entry.target)
+          result = await this.fileService.removeFile(entry.target)
 
           if (result.isErr()) {
             this.transaction.push(entry)
