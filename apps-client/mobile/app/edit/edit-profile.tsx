@@ -24,7 +24,7 @@ import { handleUploadImage } from '@app/utils/upload'
 
 const formSchema = z.object({
   name: z.string().min(1, 'กรุณาใส่ชื่อของคุณ'),
-  profileImage: z.string(),
+  profileImagePath: z.string(),
 })
 
 export default function EditProfilePage() {
@@ -41,7 +41,7 @@ export default function EditProfilePage() {
   const form = useForm({
     defaultValues: {
       name: profileQuery.data?.name,
-      profileImage: profileQuery.data?.profileImage || '',
+      profileImagePath: profileQuery.data?.profileImage || '',
     },
     validators: {
       onSubmit: formSchema,
@@ -69,7 +69,7 @@ export default function EditProfilePage() {
           }
 
           await handleUploadImage(imagePickerAsset, getLink.uploadUrl, getLink.uploadFields)
-          updateProfilePayload.profileImage = getLink.fileKey
+          updateProfilePayload.profileImagePath = getLink.fileKey
         } catch (error) {
           console.error('Image upload failed:', error)
           throw error
@@ -121,7 +121,7 @@ export default function EditProfilePage() {
       />
       <ScrollView className="p-4">
         <View className="py-6 gap-10">
-          <form.Field name="profileImage">
+          <form.Field name="profileImagePath">
             {(field) => (
               <FormItem field={field}>
                 <FormControl>

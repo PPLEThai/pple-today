@@ -133,9 +133,6 @@ export function OnboardingAddress() {
     setOpenForm(true)
   }, [])
 
-  const handleOnSubmit = React.useCallback(() => {
-    form.handleSubmit()
-  }, [form])
   const completeOnboardingMutation = reactQueryClient.useMutation('post', '/profile/on-boarding')
 
   const handleEndOnboarding = React.useCallback(async () => {
@@ -388,7 +385,7 @@ export function OnboardingAddress() {
               {([isSubmitting, isFormValid, isTouched]) => (
                 <Button
                   disabled={isSubmitting || !isFormValid || !isTouched}
-                  onPress={handleOnSubmit}
+                  onPress={form.handleSubmit}
                 >
                   <Text>บันทึก</Text>
                 </Button>
