@@ -158,7 +158,7 @@ const InformationSection = () => {
               <View className="flex flex-col mb-3 h-8 w-8 bg-base-secondary-default rounded-lg items-center justify-center">
                 <Personal width={24} height={24} color="white" />
               </View>
-              <Text className="text-base font-anakotmai-medium w-full">บุคคลากรของพรรค</Text>
+              <Text className="text-base font-anakotmai-medium w-full">บุคลากรของพรรค</Text>
             </View>
             <View className="flex-1 justify-end items-end">
               <Icon
