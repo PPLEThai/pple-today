@@ -194,6 +194,7 @@ const BadgeSection = () => {
         <Badge variant="secondary">Secondary</Badge>
         <Badge variant="destructive">Destructive</Badge>
         <Badge variant="outline">Outline</Badge>
+        <Badge variant="success">Success</Badge>
       </div>
       <div className="flex w-full flex-wrap gap-2">
         <Badge variant="secondary" className="bg-blue-500 text-white dark:bg-blue-600">
