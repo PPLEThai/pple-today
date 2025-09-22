@@ -6,7 +6,7 @@ import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { Text } from '@pple-today/ui/text'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { usePathname, useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeftIcon } from 'lucide-react-native'
 
 import { ApplicationApiSchema } from '@api/backoffice/app'
@@ -16,8 +16,8 @@ import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 
 export default function HashtagFeedPage() {
   const router = useRouter()
-  const pathname = usePathname()
-  const hashtagId = pathname.split('/').at(-1)
+  const params = useLocalSearchParams()
+  const hashtagId = params.hashtagId as string
   const hashtagQuery = reactQueryClient.useQuery('/hashtags/:id', {
     pathParams: { id: hashtagId! },
     enabled: !!hashtagId,

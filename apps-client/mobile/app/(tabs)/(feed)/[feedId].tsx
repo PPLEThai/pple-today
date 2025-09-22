@@ -3,7 +3,7 @@ import { View } from 'react-native'
 
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
-import { usePathname, useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeftIcon } from 'lucide-react-native'
 
 import { FeedCommentSection } from '@app/components/feed/comment-section'
@@ -12,8 +12,8 @@ import { reactQueryClient } from '@app/libs/api-client'
 
 export default function FeedDetailPage() {
   const router = useRouter()
-  const pathname = usePathname()
-  const feedId = pathname.split('/').at(-1)
+  const params = useLocalSearchParams()
+  const feedId = params.feedId as string
   useEffect(() => {
     if (!feedId) {
       router.dismissTo('/')

@@ -16,7 +16,7 @@ import { Text } from '@pple-today/ui/text'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { Image } from 'expo-image'
-import { Link, usePathname, useRouter } from 'expo-router'
+import { Link, useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeftIcon, HashIcon, InfoIcon } from 'lucide-react-native'
 
 import { GetTopicFeedResponse, GetTopicsResponse } from '@api/backoffice/app'
@@ -27,9 +27,8 @@ import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 const LIMIT = 10
 export default function TopicDetailPage() {
   const router = useRouter()
-  // TODO: fix use local params instead of pathname (too much reactive)
-  const pathname = usePathname()
-  const topicId = pathname.split('/').at(-1)
+  const params = useLocalSearchParams()
+  const topicId = params.topicId as string
   useEffect(() => {
     if (!topicId) {
       router.dismissTo('/')
