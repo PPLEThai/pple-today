@@ -69,31 +69,38 @@ import { useAuthMe, useSessionQuery } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { useScrollContext } from '@app/libs/scroll-context'
 
-export default function IndexLayout() {
+export default function FeedPage() {
+  const insets = useSafeAreaInsets()
   return (
-    <Pager>
-      <PagerHeader>
-        <PagerHeaderOnly>
-          <MainHeader />
-          <View className="flex flex-col w-full bg-base-bg-white">
-            <BannerSection />
-            {/* <EventSection /> */}
-            <UserAddressInfoSection />
-          </View>
-          <View className="px-4 bg-base-bg-white flex flex-row items-start ">
-            <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
-          </View>
-        </PagerHeaderOnly>
-        <PagerTabBar>
-          <SelectTopicButton />
-          <PagerTabBarItem index={0}>สำหรับคุณ</PagerTabBarItem>
-          <PagerTabBarItem index={1}>กำลังติดตาม</PagerTabBarItem>
-          <PagerTopicTabBarItems />
-          <PagerTabBarItemIndicator />
-        </PagerTabBar>
-      </PagerHeader>
-      <PagerContents />
-    </Pager>
+    <View className="flex-1 pt-safe">
+      <View
+        className="absolute top-0 left-0 right-0 bg-base-bg-white z-10"
+        style={{ height: insets.top }}
+      />
+      <Pager>
+        <PagerHeader>
+          <PagerHeaderOnly>
+            <MainHeader />
+            <View className="flex flex-col w-full bg-base-bg-white">
+              <BannerSection />
+              {/* <EventSection /> */}
+              <UserAddressInfoSection />
+            </View>
+            <View className="px-4 bg-base-bg-white flex flex-row items-start ">
+              <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
+            </View>
+          </PagerHeaderOnly>
+          <PagerTabBar>
+            <SelectTopicButton />
+            <PagerTabBarItem index={0}>สำหรับคุณ</PagerTabBarItem>
+            <PagerTabBarItem index={1}>กำลังติดตาม</PagerTabBarItem>
+            <PagerTopicTabBarItems />
+            <PagerTabBarItemIndicator />
+          </PagerTabBar>
+        </PagerHeader>
+        <PagerContents />
+      </Pager>
+    </View>
   )
 }
 

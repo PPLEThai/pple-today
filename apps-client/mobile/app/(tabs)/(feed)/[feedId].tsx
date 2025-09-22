@@ -34,7 +34,7 @@ export default function FeedDetailPage() {
   }
   return (
     <View className="flex-1 flex-col bg-base-bg-default">
-      <View className="pt-4 pb-2 px-4 bg-base-bg-white">
+      <View className="pt-safe-offset-4 pb-2 px-4 bg-base-bg-white">
         <Button
           variant="outline-primary"
           size="icon"

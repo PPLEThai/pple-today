@@ -74,7 +74,7 @@ const Login = () => {
   const discoveryQuery = useDiscoveryQuery()
   const loginMutation = useLoginMutation()
   return (
-    <View className="flex flex-col flex-1 items-center justify-center gap-10 bg-base-bg-light">
+    <View className="pt-safe flex flex-col flex-1 items-center justify-center gap-10 bg-base-bg-light">
       <View className="flex flex-col items-center gap-2">
         <View className="w-[100px] h-[100px] flex flex-col items-center justify-center">
           <PPLEIcon />
@@ -120,7 +120,7 @@ const ProfileSetting = () => {
 
   return (
     <ScrollView
-      className="flex-1"
+      className="pt-safe flex-1"
       contentContainerClassName="flex-grow"
       refreshControl={
         <RefreshControl

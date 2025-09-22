@@ -15,7 +15,7 @@ export default function OfficialPage() {
   return (
     <View className="flex-1 flex-col bg-base-bg-default">
       <ScrollView>
-        <View className="flex flex-col p-4 bg-base-bg-white">
+        <View className="flex flex-col p-4 pt-safe-offset-4 bg-base-bg-white">
           <View className="flex flex-row gap-2 items-center">
             <Icon
               icon={LandmarkIcon}

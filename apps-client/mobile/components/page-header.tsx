@@ -18,7 +18,7 @@ export function PageHeader(props: HeaderProps) {
   const router = useRouter()
 
   return (
-    <View className="p-4 flex flex-row justify-between items-center bg-base-bg-white">
+    <View className="p-4 pt-safe-offset-4 flex flex-row justify-between items-center bg-base-bg-white">
       <Button
         variant="outline-primary"
         size="icon"

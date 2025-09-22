@@ -1,3 +1,5 @@
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+
 import { Text } from '@pple-today/ui/text'
 import type {
   MaterialTopTabNavigationEventMap,
@@ -24,10 +26,12 @@ const MaterialTopTabs = withLayoutContext<
  */
 
 export default function MaterialTopTabsLayout() {
+  const insets = useSafeAreaInsets()
   return (
     <KeyboardAvoidingViewLayout>
       <MaterialTopTabs
         initialRouteName="playground"
+        style={{ paddingTop: insets.top }}
         screenOptions={{
           tabBarLabel: (props) => {
             return (

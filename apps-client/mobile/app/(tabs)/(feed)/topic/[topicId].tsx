@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import { FlatList, ScrollView, View } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
@@ -16,6 +17,7 @@ import { Text } from '@pple-today/ui/text'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { Image } from 'expo-image'
+import { LinearGradient } from 'expo-linear-gradient'
 import { Link, useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeftIcon, HashIcon, InfoIcon } from 'lucide-react-native'
 
@@ -87,6 +89,8 @@ export default function TopicDetailPage() {
     []
   )
 
+  const insets = useSafeAreaInsets()
+
   if (!topicId) {
     return null
   }
@@ -98,7 +102,12 @@ export default function TopicDetailPage() {
   return (
     <View className="flex-1 flex flex-col bg-base-bg-default">
       {/* TODO: bleed top safe area */}
-      <View className="bg-black">
+      <View className="bg-gray-500 pt-safe">
+        <LinearGradient
+          colors={['rgba(0,0,0,1)', 'rgba(0,0,0,0)']}
+          className="absolute top-0 left-0 right-0"
+          style={{ height: insets.top }}
+        />
         {topic.bannerImage && (
           <Image
             source={{ uri: topic.bannerImage }}

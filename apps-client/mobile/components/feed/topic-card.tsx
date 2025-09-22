@@ -73,11 +73,14 @@ export function TopicCard(props: TopicCardProps) {
           </Text>
           {props.topic.hashtags.length > 0 && (
             <View className="flex flex-row gap-1 flex-wrap">
-              <Badge variant="outline" className="border-base-primary-default">
+              <Badge variant="outline" className="border-base-primary-default pointer-events-none">
                 <Text className="text-base-text-invert">{props.topic.hashtags[0].name}</Text>
               </Badge>
               {props.topic.hashtags.length > 1 && (
-                <Badge variant="outline" className="border-base-primary-default">
+                <Badge
+                  variant="outline"
+                  className="border-base-primary-default pointer-events-none"
+                >
                   <Text className="text-base-text-invert">
                     + {props.topic.hashtags.length - 1} แฮชแท็ก
                   </Text>
