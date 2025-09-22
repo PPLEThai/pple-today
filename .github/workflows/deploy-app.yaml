@@ -115,6 +115,7 @@ jobs:
     with:
       packages: ${{ needs.get-affected-apps.outputs.packages }}
       docker_registry: ghcr.io
+      environment: ${{ github.event.inputs.environment }}
     secrets:
       OVPN_CONFIG: ${{ secrets.OVPN_CONFIG }}
       OVPN_USERNAME: ${{ secrets.OVPN_USERNAME }}
@@ -123,7 +124,7 @@ jobs:
       SSH_HOST: ${{ secrets.SSH_HOST }}
       SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-      WEB_CLIENT_ENV: ${{ secrets.WEB_CLIENT_ENV }}
+      WEB_CLIENT_ENV: ${{ secrets[format('WEB_CLIENT_ENV_{0}', github.event.inputs.environment)] }}
 
   migrate-database:
     name: Migrate Database
@@ -138,6 +139,5 @@ jobs:
       SSH_HOST: ${{ secrets.SSH_HOST }}
       SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
-      DATABASE_HOST_PORT: ${{ secrets.DATABASE_HOST_PORT }}
+      DATABASE_URL: ${{ secrets[format('DATABASE_URL_{0}', inputs.environment)] }}
+      DATABASE_HOST: ${{ secrets[format('DATABASE_HOST_{0}', inputs.environment)] }}
