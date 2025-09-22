@@ -18,7 +18,7 @@ const buttonVariants = cva(
         outline:
           'border border-base-outline-dark bg-background web:hover:bg-accent web:hover:text-accent-foreground active:bg-base-bg-default',
         'outline-primary':
-          'border border-base-primary-default bg-background web:hover:bg-accent web:hover:text-accent-foreground active:bg-base-bg-default',
+          'border border-base-primary-default web:hover:bg-accent web:hover:text-accent-foreground active:bg-base-primary-light/10',
         ghost: 'web:hover:bg-accent web:hover:text-accent-foreground active:bg-base-bg-default',
         destructive: 'bg-destructive web:hover:opacity-90 active:opacity-90',
         link: 'web:underline-offset-4 web:hover:underline web:focus:underline',

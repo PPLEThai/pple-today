@@ -631,6 +631,7 @@ function FeedContent(props: PagerScrollViewProps) {
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
       renderItem={renderFeedItem}
+      showsVerticalScrollIndicator={false}
     />
   )
 }

@@ -1,5 +1,12 @@
 import React, { useEffect } from 'react'
-import { FlatList, ScrollView, View } from 'react-native'
+import { ScrollView, View } from 'react-native'
+import Animated, {
+  runOnJS,
+  useAnimatedReaction,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Badge } from '@pple-today/ui/badge'
@@ -19,7 +26,7 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Link, useLocalSearchParams, useRouter } from 'expo-router'
-import { ArrowLeftIcon, HashIcon, InfoIcon } from 'lucide-react-native'
+import { ArrowLeftIcon, CheckIcon, HashIcon, InfoIcon, PlusIcon } from 'lucide-react-native'
 
 import { GetTopicFeedResponse, GetTopicsResponse } from '@api/backoffice/app'
 import { FeedFooter } from '@app/components/feed'
@@ -93,6 +100,67 @@ export default function TopicDetailPage() {
   const insets = useSafeAreaInsets()
   useLightStatusBar()
 
+  const scrollY = useSharedValue(0)
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y
+    },
+  })
+  const [headerStickyHeight, setHeaderStickyHeight] = React.useState(72 + insets.top)
+  const [headerCollapsableHeight, setHeaderCollapsableHeight] = React.useState(96)
+
+  const headerHeight = headerStickyHeight + headerCollapsableHeight
+  const imageStyle = useAnimatedStyle(() => {
+    return {
+      height: Math.max(headerHeight - scrollY.value, headerHeight - headerCollapsableHeight),
+    }
+  })
+  const headerCollapsableStyle = useAnimatedStyle(() => {
+    return {
+      top: Math.min(0, -scrollY.value) + headerStickyHeight,
+      opacity: Math.max(0, 1 - (2 * scrollY.value) / headerCollapsableHeight),
+    }
+  })
+  const linearGradientStyle = useAnimatedStyle(() => {
+    return {
+      height: Math.max(headerHeight - scrollY.value, headerStickyHeight) - insets.top,
+    }
+  })
+  const [collapsing, setCollapsing] = React.useState(false)
+  useAnimatedReaction(
+    () => scrollY.value,
+    () => {
+      if (scrollY.value > 0) {
+        runOnJS(setCollapsing)(true)
+      } else {
+        runOnJS(setCollapsing)(false)
+      }
+    }
+  )
+
+  const [isFollowing, setIsFollowing] = React.useState(false) // TODO: initialize from API
+  const followMutation = reactQueryClient.useMutation('post', '/topics/:topicId/follow', {})
+  const unfollowMutation = reactQueryClient.useMutation('delete', '/topics/:topicId/follow', {})
+  const toggleFollow = async () => {
+    setIsFollowing(!isFollowing) // optimistic update
+    if (isFollowing) {
+      await unfollowMutation.mutateAsync({ pathParams: { topicId: topicId } })
+    } else {
+      await followMutation.mutateAsync({ pathParams: { topicId: topicId } })
+    }
+  }
+
+  const headerTitleHeight = 40
+  const headerTitleStyle = useAnimatedStyle(() => {
+    return {
+      top: Math.max(headerStickyHeight / 2 + insets.top - scrollY.value, 0),
+      opacity: Math.min(
+        1,
+        Math.max(0, (scrollY.value - headerCollapsableHeight / 2) / headerTitleHeight)
+      ),
+    }
+  })
+
   if (!topicId) {
     return null
   }
@@ -101,88 +169,128 @@ export default function TopicDetailPage() {
   }
   const topic = topicQuery.data
 
+  const ListHeaderComponent = (
+    <View className="flex flex-col gap-3">
+      <View className="rounded-2xl border border-base-outline-default bg-base-bg-white flex flex-col gap-2 p-3">
+        <View className="flex flex-row items-center gap-2">
+          <Icon icon={InfoIcon} size={24} className="text-base-primary-default" />
+          <H2 className="text-base text-base-text-high font-anakotmai-medium">เกี่ยวกับหัวข้อ</H2>
+        </View>
+        <Text className="text-sm text-base-text-medium font-noto-medium">{topic.description}</Text>
+      </View>
+      {topic.hashTags.length > 0 && (
+        <View className="rounded-2xl border border-base-outline-default bg-base-bg-white flex flex-col gap-2 p-3">
+          <View className="flex flex-row items-center gap-2">
+            <Icon icon={HashIcon} size={24} className="text-base-primary-default" />
+            <H2 className="text-base text-base-text-high font-anakotmai-medium">ที่เกี่ยวข้อง</H2>
+          </View>
+          <View className="flex flex-row flex-wrap gap-2">
+            {topic.hashTags.slice(0, 4).map((tag) => (
+              <Link href={`/(feed)/hashtag/${tag.id}`} key={tag.id} asChild>
+                <Badge variant="outline" className="px-4 py-1.5">
+                  <Text className="text-sm text-base-text-high font-anakotmai-medium">
+                    {tag.name}
+                  </Text>
+                </Badge>
+              </Link>
+            ))}
+            {topic.hashTags.length > 4 && <MoreHashtagDialog hashTags={topic.hashTags} />}
+          </View>
+        </View>
+      )}
+    </View>
+  )
+
   return (
     <View className="flex-1 flex flex-col bg-base-bg-default">
-      {/* TODO: bleed top safe area */}
-      <View className="bg-gray-500 pt-safe">
+      <View
+        className="pt-safe z-10"
+        onLayout={(e) => setHeaderStickyHeight(e.nativeEvent.layout.height)}
+      >
+        <AnimatedImage
+          className="absolute top-0 bottom-0 left-0 right-0 bg-gray-500 overflow-hidden"
+          source={{ uri: 'https://picsum.photos/800/200' }}
+          style={imageStyle}
+        />
+        {/* TODO: link */}
+        {/* {topic.bannerImage && (
+          <Image
+            source={{ uri: topic.bannerImage }}
+            className="absolute top-0 bottom-0 left-0 right-0 bg-gray-500"
+          />
+        )} */}
         <LinearGradient
           colors={['rgba(0,0,0,1)', 'rgba(0,0,0,0)']}
           className="absolute top-0 left-0 right-0"
           style={{ height: insets.top }}
         />
-        {topic.bannerImage && (
-          <Image
-            source={{ uri: topic.bannerImage }}
-            className="absolute top-0 bottom-0 left-0 right-0"
-          />
-        )}
-        <View className="flex flex-col p-4 gap-4">
+        <AnimatedLinearGradient
+          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,1)']}
+          className="absolute top-safe left-0 right-0"
+          style={linearGradientStyle}
+        />
+        <View className="p-4 flex flex-row gap-2">
           <Button
             variant="outline-primary"
             size="icon"
             onPress={() => router.back()}
             aria-label="กลับ"
-            className="bg-transparent active:bg-white/10"
           >
             <Icon icon={ArrowLeftIcon} size={24} />
           </Button>
-          {/* TODO: Animation when scroll */}
-          <View className="flex flex-col gap-2">
-            <H1 className="text-3xl font-anakotmai-bold text-base-text-invert">{topic.name}</H1>
-            <Button size="sm">
-              <Text>ติดตาม</Text>
-            </Button>
+          <View className="flex-1">
+            <Animated.View
+              className="flex flex-row justify-end items-center gap-3 absolute left-0 right-0"
+              style={headerTitleStyle}
+            >
+              <H1 className="text-2xl font-anakotmai-bold text-base-text-invert">{topic.name}</H1>
+              <Button
+                size="icon"
+                variant={isFollowing ? 'outline-primary' : 'primary'}
+                onPress={toggleFollow}
+                aria-label="ติดตาม"
+              >
+                <Icon icon={isFollowing ? CheckIcon : PlusIcon} size={20} />
+              </Button>
+            </Animated.View>
           </View>
         </View>
+        <Animated.View
+          className="flex flex-col px-4 pb-4 gap-2 absolute left-0 right-0"
+          pointerEvents={collapsing ? 'none' : 'auto'}
+          style={headerCollapsableStyle}
+          onLayout={(e) => setHeaderCollapsableHeight(e.nativeEvent.layout.height)}
+        >
+          <H1 className="text-3xl font-anakotmai-bold text-base-text-invert line-clamp-1">
+            {topic.name}
+          </H1>
+          <Button
+            size="sm"
+            variant={isFollowing ? 'outline-primary' : 'primary'}
+            onPress={toggleFollow}
+          >
+            <Text>{isFollowing ? 'ติดตามแล้ว' : 'ติดตาม'}</Text>
+          </Button>
+        </Animated.View>
       </View>
-      <FlatList
+      <Animated.FlatList
+        onScroll={scrollHandler}
         data={data}
         contentContainerClassName="bg-base-bg-default py-4 px-3"
-        ListHeaderComponent={
-          <View className="flex flex-col gap-3">
-            <View className="rounded-2xl border border-base-outline-default bg-base-bg-white flex flex-col gap-2 p-3">
-              <View className="flex flex-row items-center gap-2">
-                <Icon icon={InfoIcon} size={24} className="text-base-primary-default" />
-                <H2 className="text-base text-base-text-high font-anakotmai-medium">
-                  เกี่ยวกับหัวข้อ
-                </H2>
-              </View>
-              <Text className="text-sm text-base-text-medium font-noto-medium">
-                {topic.description}
-              </Text>
-            </View>
-            {topic.hashTags.length > 0 && (
-              <View className="rounded-2xl border border-base-outline-default bg-base-bg-white flex flex-col gap-2 p-3">
-                <View className="flex flex-row items-center gap-2">
-                  <Icon icon={HashIcon} size={24} className="text-base-primary-default" />
-                  <H2 className="text-base text-base-text-high font-anakotmai-medium">
-                    ที่เกี่ยวข้อง
-                  </H2>
-                </View>
-                <View className="flex flex-row flex-wrap gap-2">
-                  {topic.hashTags.slice(0, 4).map((tag) => (
-                    <Link href={`/(feed)/hashtag/${tag.id}`} key={tag.id} asChild>
-                      <Badge variant="outline" className="px-4 py-1.5">
-                        <Text className="text-sm text-base-text-high font-anakotmai-medium">
-                          {tag.name}
-                        </Text>
-                      </Badge>
-                    </Link>
-                  ))}
-                  {topic.hashTags.length > 4 && <MoreHashtagDialog hashTags={topic.hashTags} />}
-                </View>
-              </View>
-            )}
-          </View>
-        }
+        style={{ paddingTop: headerCollapsableHeight }}
+        ListHeaderComponent={ListHeaderComponent}
         renderItem={renderFeedItem}
         ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} />}
         onEndReached={onEndReached}
         onEndReachedThreshold={1}
+        showsVerticalScrollIndicator={false}
       />
     </View>
   )
 }
+
+const AnimatedImage = Animated.createAnimatedComponent(Image)
+const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient)
 
 interface MoreHashtagDialogProps {
   hashTags: GetTopicsResponse[number]['hashTags']
