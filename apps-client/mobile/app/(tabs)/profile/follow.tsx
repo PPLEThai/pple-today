@@ -356,7 +356,7 @@ const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
               <Text>{hashtags.length > 1 ? `#อื่น ๆ (${hashtags.length - 1})` : ''}</Text>
             </Badge>
           </DialogTrigger>
-          <DialogContent className="w-[90vw] max-h-[70vh] p-4 pt-6 mx-4">
+          <DialogContent className="w-[90vw] max-h-[70vh] p-4 pt-6 mx-4 flex flex-col">
             <DialogHeader>
               <DialogTitle className="w-full text-xl text-start font-anakotmai-medium text-base-primary-default">
                 # ที่เกี่ยวข้อง
@@ -365,21 +365,22 @@ const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
                 แฮชแท็กที่เกี่ยวข้องกับหัวข้อนี้
               </DialogDescription>
             </DialogHeader>
-            <View className=" border border-base-outline-default bg-base-bg-light rounded-lg flex flex-row w-full">
-              <ScrollView contentContainerClassName="min-h-[144px] w-full flex flex-row gap-2 flex-wrap m-2">
-                {hashtags.map((hashtag) => (
-                  <DialogClose key={hashtag.id} asChild>
-                    <Button
-                      className="rounded-full border border-base-outline-default py-1.5 h-8 bg-base-bg-light"
-                      variant="secondary"
-                      onPress={() => router.navigate(`/(feed)/hashtag/${hashtag.id}`)}
-                    >
-                      <Text className="text-sm font-anakotmai-medium">{hashtag.name}</Text>
-                    </Button>
-                  </DialogClose>
-                ))}
-              </ScrollView>
-            </View>
+            <ScrollView
+              className="border border-base-outline-default bg-base-bg-light rounded-lg"
+              contentContainerClassName="w-full flex flex-row gap-2 flex-wrap m-2 min-h-[144px]"
+            >
+              {hashtags.map((hashtag) => (
+                <DialogClose key={hashtag.id} asChild>
+                  <Button
+                    className="rounded-full border border-base-outline-default py-1.5 h-8 bg-base-bg-light"
+                    variant="secondary"
+                    onPress={() => router.navigate(`/(feed)/hashtag/${hashtag.id}`)}
+                  >
+                    <Text className="text-sm font-anakotmai-medium">{hashtag.name}</Text>
+                  </Button>
+                </DialogClose>
+              ))}
+            </ScrollView>
           </DialogContent>
         </Dialog>
       </>
