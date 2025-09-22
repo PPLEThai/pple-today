@@ -153,9 +153,9 @@ export class FacebookService {
       !profilePicturePath ||
       pageDetails.value.picture.data.cache_key !== existingPage.value?.profilePictureCacheKey
     ) {
-      const uploadResult = await this.fileService.uploadProfilePagePicture(
+      const uploadResult = await this.fileService.uploadFileFromUrl(
         pageDetails.value.picture.data.url,
-        facebookPageId
+        `public/pages/profile-picture-${facebookPageId}.jpg`
       )
 
       if (uploadResult.isErr()) {
