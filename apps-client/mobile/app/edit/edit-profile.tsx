@@ -2,7 +2,7 @@ import React from 'react'
 import { ScrollView, View } from 'react-native'
 
 import { Button } from '@pple-today/ui/button'
-import { FormControl, FormItem, FormLabel } from '@pple-today/ui/form'
+import { FormControl, FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
 import { Input } from '@pple-today/ui/input'
 import { Text } from '@pple-today/ui/text'
 import { toast } from '@pple-today/ui/toast'
@@ -145,6 +145,7 @@ export default function EditProfilePage() {
                     onChangeText={field.handleChange}
                   />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           </form.Field>
