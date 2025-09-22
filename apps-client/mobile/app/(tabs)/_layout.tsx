@@ -26,7 +26,7 @@ cssInterop(Image, { className: 'style' })
 export default function BottomTabsLayout() {
   const insets = useSafeAreaInsets()
   return (
-    <View className="flex-1 pb-safe pl-safe pr-safe">
+    <View className="flex-1 px-safe">
       <Tabs
         screenOptions={{
           headerShown: false,

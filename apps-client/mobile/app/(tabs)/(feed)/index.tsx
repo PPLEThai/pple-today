@@ -86,7 +86,7 @@ export default function FeedPage() {
               {/* <EventSection /> */}
               <UserAddressInfoSection />
             </View>
-            <View className="px-4 bg-base-bg-white flex flex-row items-start ">
+            <View className="px-4 bg-base-bg-white flex flex-row items-start">
               <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
             </View>
           </PagerHeaderOnly>
