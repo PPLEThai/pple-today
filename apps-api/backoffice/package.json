@@ -14,7 +14,7 @@
   "scripts": {
     "dev": "tsx watch --include \"node_modules/@pple-today/api-common/**/src\" --include \"node_modules/@pple-today/database/__generated__\" src/index.ts",
     "build": "rimraf ./build && tsx build.ts",
-    "test": "vitest",
+    "test": "vitest --run",
     "test:cov": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx",

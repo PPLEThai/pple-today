@@ -23,6 +23,10 @@
       "dependsOn": ["^codegen"],
       "outputs": ["__generated__/**", ".react-router/**"]
     },
+    "test": {
+      "dependsOn": ["codegen"],
+      "outputs": []
+    },
     "dev": {
       "cache": false,
       "persistent": true
