@@ -858,6 +858,12 @@ describe('File service', async () => {
           message: 'An unknown error occurred',
           originalError: new Error('Some error'),
         })
+        expect(loggerService.warn).toBeCalledWith({
+          message: 'File transaction failed, rolling back changes',
+          context: {
+            err: new Error('Some error'),
+          },
+        })
 
         // 6 + 6 for move to public and private folder
         // 6 for move rollback from private folder
@@ -920,6 +926,16 @@ describe('File service', async () => {
         expect(txResult._unsafeUnwrapErr()).toEqual({
           code: 'SOME_ERROR_CODE',
           message: 'Some error',
+        })
+
+        expect(loggerService.warn).toBeCalledWith({
+          message: 'File transaction failed, rolling back changes',
+          context: {
+            err: {
+              code: 'SOME_ERROR_CODE',
+              message: 'Some error',
+            },
+          },
         })
 
         // 6 + 6 for move to public and private folder
@@ -1007,6 +1023,16 @@ describe('File service', async () => {
               return tx.bulkMoveToPublicFolder(['temp/folder/file1.txt'])
             })
           )
+
+          expect(loggerService.warn).toBeCalledWith({
+            message: 'File transaction failed, rolling back changes',
+            context: {
+              err: {
+                code: InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
+                message: 'Failed to make file public',
+              },
+            },
+          })
 
           expect(txResult.isErr()).toBe(true)
           expect(txResult._unsafeUnwrapErr()).toEqual({
