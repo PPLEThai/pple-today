@@ -356,17 +356,17 @@ const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
               <Text>{hashtags.length > 1 ? `#อื่น ๆ (${hashtags.length - 1})` : ''}</Text>
             </Badge>
           </DialogTrigger>
-          <DialogContent className="max-w-[100vw] max-h-[80vh] p-4 pt-6 mx-4">
+          <DialogContent className="w-[90vw] max-h-[70vh] p-4 pt-6 mx-4">
             <DialogHeader>
               <DialogTitle className="w-full text-xl text-start font-anakotmai-medium text-base-primary-default">
                 # ที่เกี่ยวข้อง
               </DialogTitle>
-              <DialogDescription className="w-full  text-start text-sm font-anakotmai-light leading-tight text-base-text-medium">
+              <DialogDescription className="w-full text-start text-sm font-anakotmai-light leading-tight text-base-text-medium">
                 แฮชแท็กที่เกี่ยวข้องกับหัวข้อนี้
               </DialogDescription>
             </DialogHeader>
-            <View className="max-h-[60vh] min-h-[144px] min-w-[311px] border border-base-outline-default bg-base-bg-light rounded-lg">
-              <ScrollView contentContainerClassName="flex flex-row gap-2 flex-wrap m-2">
+            <View className=" border border-base-outline-default bg-base-bg-light rounded-lg flex flex-row w-full">
+              <ScrollView contentContainerClassName="min-h-[144px] w-full flex flex-row gap-2 flex-wrap m-2">
                 {hashtags.map((hashtag) => (
                   <DialogClose key={hashtag.id} asChild>
                     <Button
