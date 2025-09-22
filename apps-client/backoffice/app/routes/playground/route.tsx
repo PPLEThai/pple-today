@@ -23,6 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@pple-today/web-ui/card'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@pple-today/web-ui/collapsible'
 import { ComboBox } from '@pple-today/web-ui/combobox'
 import {
   Command,
@@ -79,6 +80,22 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@pple-today/web-ui/sheet'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarProvider,
+} from '@pple-today/web-ui/sidebar'
 import { Switch } from '@pple-today/web-ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@pple-today/web-ui/tooltip'
 import { Typography } from '@pple-today/web-ui/typography'
@@ -86,7 +103,11 @@ import {
   BadgeCheckIcon,
   Calculator,
   Calendar,
+  ChevronUp,
   CreditCard,
+  Facebook,
+  Newspaper,
+  PieChart,
   Settings,
   Smile,
   User,
@@ -683,6 +704,109 @@ const TooltipSection = () => {
   )
 }
 
+const SidebarSection = () => {
+  return (
+    <section className="w-full">
+      <SidebarProvider>
+        <Sidebar collapsible="none">
+          <SidebarHeader>Header</SidebarHeader>
+          <SidebarContent>
+            <SidebarGroup>
+              <SidebarGroupLabel>จัดการเนื้อหา</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a href="#">
+                        <PieChart />
+                        <span>Dashboard</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <Collapsible defaultOpen className="group/collapsible">
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton>
+                          <Newspaper />
+                          <span>Feed</span>
+                          <ChevronUp className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton isActive asChild>
+                              <a href="#">Hashtag</a>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild>
+                              <a href="#">Topic</a>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild>
+                              <a href="#">Announcement</a>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild>
+                              <a href="#">Post</a>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                          <SidebarMenuSubItem>
+                            <SidebarMenuSubButton asChild>
+                              <a href="#">Banner</a>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a href="#">
+                        <Facebook />
+                        <span>เพจเฟสบุ๊ค</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+          <SidebarFooter>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <SidebarMenuButton>
+                      <User /> Username
+                      <ChevronUp className="ml-auto" />
+                    </SidebarMenuButton>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width]">
+                    <DropdownMenuItem>
+                      <span>Account</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <span>Billing</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <span>Sign out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarFooter>
+        </Sidebar>
+        <div>:3</div>
+      </SidebarProvider>
+    </section>
+  )
+}
+
 const PlaygroundPage = () => {
   return (
     <div className="p-5 space-y-6">
@@ -723,6 +847,8 @@ const PlaygroundPage = () => {
       <PopoverSection />
       <hr className="border border-secondary-100" />
       <BadgeSection />
+      <hr className="border border-secondary-100" />
+      <SidebarSection />
     </div>
   )
 }
