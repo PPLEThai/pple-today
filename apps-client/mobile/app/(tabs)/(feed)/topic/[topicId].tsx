@@ -23,6 +23,7 @@ import { reactQueryClient } from '@app/libs/api-client'
 
 export default function TopicDetailPage() {
   const router = useRouter()
+  // TODO: fix use local params instead of pathname (too much reactive)
   const pathname = usePathname()
   const topicId = pathname.split('/').at(-1)
   useEffect(() => {
@@ -137,13 +138,17 @@ function MoreHashtagDialog({ hashTags }: MoreHashtagDialogProps) {
         </Badge>
       </DialogTrigger>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle># ที่เกี่ยวข้อง</DialogTitle>
-          <DialogDescription>แฮชแท็กที่เกี่ยวข้องกับหัวข้อนี้</DialogDescription>
+        <DialogHeader className="items-start gap-1">
+          <DialogTitle className="text-xl font-anakotmai-medium text-base-primary-default">
+            # ที่เกี่ยวข้อง
+          </DialogTitle>
+          <DialogDescription className="text-sm text-base-text-medium font-anakotmai-light">
+            แฮชแท็กที่เกี่ยวข้องกับหัวข้อนี้
+          </DialogDescription>
         </DialogHeader>
         <ScrollView
           contentContainerClassName="flex flex-row p-2 flex-wrap gap-2"
-          className="border border-base-outline-default rounded-xl max-h-96 bg-base-bg-light"
+          className="border border-base-outline-default rounded-xl bg-base-bg-light max-h-80"
         >
           {hashTags.map((tag) => (
             <Link
