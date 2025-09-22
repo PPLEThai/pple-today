@@ -10,7 +10,8 @@ import { usePathname, useRouter } from 'expo-router'
 import { ArrowLeftIcon } from 'lucide-react-native'
 
 import { ApplicationApiSchema } from '@api/backoffice/app'
-import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
+import { FeedFooter } from '@app/components/feed'
+import { FeedCard } from '@app/components/feed/feed-card'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 
 export default function HashtagFeedPage() {
@@ -99,38 +100,14 @@ function HashtagFeed(props: { hashtagId: string; header?: React.ReactElement }) 
   }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
 
   type GetHashtagFeedResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/hashtag'>
-  const data = React.useMemo((): GetHashtagFeedResponse[] => {
+  const data = React.useMemo((): GetHashtagFeedResponse => {
     if (!feedInfiniteQuery.data) return []
-    return feedInfiniteQuery.data.pages
+    return feedInfiniteQuery.data.pages.flatMap((page) => page)
   }, [feedInfiniteQuery.data])
 
-  const Footer =
-    feedInfiniteQuery.hasNextPage || feedInfiniteQuery.isLoading || feedInfiniteQuery.error ? (
-      <FeedCardSkeleton />
-    ) : data.length === 1 && data[0].length === 0 ? (
-      // Empty State
-      <View className="flex flex-col items-center justify-center py-6">
-        <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีโพสต์</Text>
-      </View>
-    ) : (
-      // Reach end of feed
-      <View className="flex flex-col items-center justify-center py-6">
-        <Text className="text-base-text-medium font-anakotmai-medium">ไม่มีโพสต์เพิ่มเติม</Text>
-      </View>
-    )
-
   const renderFeedItem = React.useCallback(
-    ({ item: items }: { item: GetHashtagFeedResponse; index: number }) => {
-      if (!items) {
-        return null
-      }
-      return (
-        <>
-          {items.map((item) => {
-            return <FeedCard key={item.id} feedItem={item} />
-          })}
-        </>
-      )
+    ({ item }: { item: GetHashtagFeedResponse[number]; index: number }) => {
+      return <FeedCard key={item.id} feedItem={item} />
     },
     []
   )
@@ -142,7 +119,7 @@ function HashtagFeed(props: { hashtagId: string; header?: React.ReactElement }) 
       contentContainerClassName="flex flex-col"
       ListHeaderComponent={props.header}
       // ListHeaderComponent={<AnnouncementSection />}
-      ListFooterComponent={Footer}
+      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} />}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
       renderItem={renderFeedItem}

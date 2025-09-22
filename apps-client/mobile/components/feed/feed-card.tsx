@@ -248,10 +248,10 @@ export const FeedCardSkeleton = (props: ViewProps) => {
 }
 
 function TextPost(props: TextProps) {
-  return <Text {...props} className="text-base-text-high font-noto-light text-base" />
+  return <Text {...props} className="text-base-text-high font-noto-light text-sm" />
 }
 function ButtonTextPost(props: TextProps) {
-  return <Text {...props} className="text-base-primary-default font-noto-light text-base" />
+  return <Text {...props} className="text-base-primary-default font-noto-light text-sm" />
 }
 
 interface FeedReaction {

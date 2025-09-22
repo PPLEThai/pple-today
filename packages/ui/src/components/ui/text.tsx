@@ -2,7 +2,8 @@ import * as React from 'react'
 import { Text as RNText } from 'react-native'
 
 import * as Slot from '@rn-primitives/slot'
-import { twMerge } from 'tailwind-merge'
+
+import { cn } from '../../lib/utils'
 
 const TextClassContext = React.createContext<string | undefined>(undefined)
 
@@ -18,7 +19,7 @@ function Text({
   const Component = asChild ? Slot.Text : RNText
   return (
     <Component
-      className={twMerge(
+      className={cn(
         'text-base text-foreground web:select-text font-noto-medium',
         textClass,
         className
