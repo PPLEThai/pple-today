@@ -394,6 +394,9 @@ importers:
       tailwindcss:
         specifier: ^3.4.17
         version: 3.4.17
+      tsx:
+        specifier: ^4.20.3
+        version: 4.20.3
 
   examples/mini-app/api:
     dependencies:
