@@ -161,12 +161,12 @@ export function OnboardingAddress() {
         getLink.uploadFields
       )
       profilePayload = {
-        name: state.profileStepResult?.name ?? '',
+        name: state.profileStepResult?.name.trim() ?? '',
         profileImagePath: getLink.fileKey ?? '',
       }
     } else if (state.profileStepResult?.name) {
       profilePayload = {
-        name: state.profileStepResult?.name ?? '',
+        name: state.profileStepResult?.name.trim() ?? '',
       }
     }
 
