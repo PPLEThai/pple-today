@@ -21,8 +21,8 @@ import * as Clipboard from 'expo-clipboard'
 import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
-import { StatusBar } from 'expo-status-bar'
 
+import { StatusBarProvider } from '@app/context/status-bar'
 import { environment } from '@app/env'
 import { AuthLifeCycleHook } from '@app/libs/auth'
 
@@ -48,24 +48,26 @@ export default function RootLayout() {
     <>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <ColorSchemeProvider>
-            <FontProvider>
-              <GestureHandlerRootView>
-                <BottomSheetModalProvider>
-                  <Stack
-                    initialRouteName="(tabs)"
-                    screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
-                  >
-                    <Stack.Screen name="(tabs)" />
-                    <Stack.Screen name="loading" />
-                    <Stack.Screen name="onboarding" />
-                    <Stack.Screen name="edit" />
-                  </Stack>
-                  <Toaster />
-                </BottomSheetModalProvider>
-              </GestureHandlerRootView>
-            </FontProvider>
-          </ColorSchemeProvider>
+          <StatusBarProvider>
+            <ColorSchemeProvider>
+              <FontProvider>
+                <GestureHandlerRootView>
+                  <BottomSheetModalProvider>
+                    <Stack
+                      initialRouteName="(tabs)"
+                      screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
+                    >
+                      <Stack.Screen name="(tabs)" />
+                      <Stack.Screen name="loading" />
+                      <Stack.Screen name="onboarding" />
+                      <Stack.Screen name="edit" />
+                    </Stack>
+                    <Toaster />
+                  </BottomSheetModalProvider>
+                </GestureHandlerRootView>
+              </FontProvider>
+            </ColorSchemeProvider>
+          </StatusBarProvider>
           {(environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'development' ||
             environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'local') && (
             <DevToolsBubble onCopy={onCopy} queryClient={queryClient} />
@@ -137,10 +139,7 @@ function ColorSchemeProvider({ children }: { children: React.ReactNode }) {
   // }
 
   return (
-    <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-      <StatusBar style={isDarkColorScheme ? 'light' : 'dark'} />
-      {children}
-    </ThemeProvider>
+    <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>{children}</ThemeProvider>
   )
 }
 

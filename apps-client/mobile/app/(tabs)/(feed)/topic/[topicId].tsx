@@ -24,6 +24,7 @@ import { ArrowLeftIcon, HashIcon, InfoIcon } from 'lucide-react-native'
 import { GetTopicFeedResponse, GetTopicsResponse } from '@api/backoffice/app'
 import { FeedFooter } from '@app/components/feed'
 import { FeedCard } from '@app/components/feed/feed-card'
+import { useLightStatusBar } from '@app/context/status-bar'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 
 const LIMIT = 10
@@ -90,6 +91,7 @@ export default function TopicDetailPage() {
   )
 
   const insets = useSafeAreaInsets()
+  useLightStatusBar()
 
   if (!topicId) {
     return null
