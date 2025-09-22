@@ -68,7 +68,10 @@ import { AvatarPPLEFallback } from '../avatar-pple-fallback'
 
 type UserReaction = 'UP_VOTE' | 'DOWN_VOTE' | null
 
-export const FeedCard = React.memo(function FeedCard(props: { feedItem: FeedItem }) {
+export const FeedCard = React.memo(function FeedCard(props: {
+  feedItem: FeedItem
+  className?: string
+}) {
   const router = useRouter()
   const navigateToDetailPage = React.useCallback(() => {
     router.navigate(`/(feed)/${props.feedItem.id}`)
@@ -82,7 +85,12 @@ export const FeedCard = React.memo(function FeedCard(props: { feedItem: FeedItem
   )
   const feedContent = feedContentQuery.data as FeedItem
   return (
-    <View className="flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl overflow-hidden mt-4 mx-4">
+    <View
+      className={cn(
+        'flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl overflow-hidden mt-4 mx-4',
+        props.className
+      )}
+    >
       <AnimatedBackgroundPressable
         className="px-4 pt-4 pb-3 flex flex-row items-center justify-between"
         onPress={navigateToDetailPage}

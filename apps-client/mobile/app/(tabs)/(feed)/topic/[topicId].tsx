@@ -14,13 +14,17 @@ import {
 import { Icon } from '@pple-today/ui/icon'
 import { Text } from '@pple-today/ui/text'
 import { H1, H2 } from '@pple-today/ui/typography'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import { Link, usePathname, useRouter } from 'expo-router'
 import { ArrowLeftIcon, HashIcon, InfoIcon } from 'lucide-react-native'
 
-import { GetTopicsResponse } from '@api/backoffice/app'
-import { reactQueryClient } from '@app/libs/api-client'
+import { GetTopicFeedResponse, GetTopicsResponse } from '@api/backoffice/app'
+import { FeedFooter } from '@app/components/feed'
+import { FeedCard } from '@app/components/feed/feed-card'
+import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 
+const LIMIT = 10
 export default function TopicDetailPage() {
   const router = useRouter()
   // TODO: fix use local params instead of pathname (too much reactive)
@@ -35,6 +39,55 @@ export default function TopicDetailPage() {
     pathParams: { id: topicId! },
     enabled: !!topicId,
   })
+
+  const feedInfiniteQuery = useInfiniteQuery({
+    queryKey: reactQueryClient.getQueryKey('/feed/topic'),
+    queryFn: async ({ pageParam }) => {
+      const response = await fetchClient('/feed/topic', {
+        query: { page: pageParam, limit: LIMIT, topicId: topicId! },
+      })
+      if (response.error) {
+        throw response.error
+      }
+      return response.data
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, _, lastPageParam) => {
+      if (lastPage && lastPage.length === 0) {
+        return undefined
+      }
+      if (lastPage.length < LIMIT) {
+        return undefined
+      }
+      return lastPageParam + 1
+    },
+    enabled: !!topicId,
+  })
+  React.useEffect(() => {
+    if (feedInfiniteQuery.error) {
+      console.error('Error fetching feed:', JSON.stringify(feedInfiniteQuery.error))
+    }
+  }, [feedInfiniteQuery.error])
+
+  const onEndReached = React.useCallback(() => {
+    if (!feedInfiniteQuery.isFetching && feedInfiniteQuery.hasNextPage) {
+      feedInfiniteQuery.fetchNextPage()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
+
+  const data = React.useMemo((): GetTopicFeedResponse => {
+    if (!feedInfiniteQuery.data) return []
+    return feedInfiniteQuery.data.pages.flatMap((page) => page)
+  }, [feedInfiniteQuery.data])
+
+  const renderFeedItem = React.useCallback(
+    ({ item }: { item: GetTopicFeedResponse[number]; index: number }) => {
+      return <FeedCard key={item.id} feedItem={item} className="mx-0" />
+    },
+    []
+  )
+
   if (!topicId) {
     return null
   }
@@ -42,6 +95,7 @@ export default function TopicDetailPage() {
     return null
   }
   const topic = topicQuery.data
+
   return (
     <View className="flex-1 flex flex-col bg-base-bg-default">
       {/* TODO: bleed top safe area */}
@@ -72,7 +126,7 @@ export default function TopicDetailPage() {
         </View>
       </View>
       <FlatList
-        data={[]}
+        data={data}
         contentContainerClassName="bg-base-bg-default py-4 px-3"
         ListHeaderComponent={
           <View className="flex flex-col gap-3">
@@ -111,13 +165,10 @@ export default function TopicDetailPage() {
             )}
           </View>
         }
-        renderItem={() => null}
-        // renderItem={({ item }) => (
-        //   <View className="p-4 border-b border-base-border">
-        //     <H1 className="text-xl font-anakotmai-bold text-base-text">{item.title}</H1>
-        //     <Text className="text-base-text">{item.content}</Text>
-        //   </View>
-        // )}
+        renderItem={renderFeedItem}
+        ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} />}
+        onEndReached={onEndReached}
+        onEndReachedThreshold={1}
       />
     </View>
   )
