@@ -165,7 +165,11 @@ export default function TopicDetailPage() {
     return null
   }
   if (!topicQuery.data) {
-    return null
+    return (
+      <View className="flex-1 flex flex-col bg-base-bg-default">
+        <View className="absolute top-0 bottom-0 left-0 right-0 bg-gray-800 h-[184px]" />
+      </View>
+    )
   }
   const topic = topicQuery.data
 
@@ -207,10 +211,15 @@ export default function TopicDetailPage() {
         className="pt-safe z-10"
         onLayout={(e) => setHeaderStickyHeight(e.nativeEvent.layout.height)}
       >
-        {topic.bannerImage && (
+        {topic.bannerImage ? (
           <AnimatedImage
-            className="absolute top-0 bottom-0 left-0 right-0 bg-gray-500 overflow-hidden"
+            className="absolute top-0 bottom-0 left-0 right-0 bg-gray-800 overflow-hidden"
             source={{ uri: topic.bannerImage }}
+            style={imageStyle}
+          />
+        ) : (
+          <Animated.View
+            className="absolute top-0 bottom-0 left-0 right-0 bg-gray-800"
             style={imageStyle}
           />
         )}
