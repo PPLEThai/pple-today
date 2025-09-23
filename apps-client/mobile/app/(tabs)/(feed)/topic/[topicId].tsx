@@ -207,18 +207,13 @@ export default function TopicDetailPage() {
         className="pt-safe z-10"
         onLayout={(e) => setHeaderStickyHeight(e.nativeEvent.layout.height)}
       >
+        {/* {topic.bannerImage && ( */}
         <AnimatedImage
           className="absolute top-0 bottom-0 left-0 right-0 bg-gray-500 overflow-hidden"
           source={{ uri: 'https://picsum.photos/800/200' }}
           style={imageStyle}
         />
-        {/* TODO: link */}
-        {/* {topic.bannerImage && (
-          <Image
-            source={{ uri: topic.bannerImage }}
-            className="absolute top-0 bottom-0 left-0 right-0 bg-gray-500"
-          />
-        )} */}
+        {/* )} */}
         <LinearGradient
           colors={['rgba(0,0,0,1)', 'rgba(0,0,0,0)']}
           className="absolute top-0 left-0 right-0"
@@ -277,7 +272,7 @@ export default function TopicDetailPage() {
         onScroll={scrollHandler}
         data={data}
         contentContainerClassName="bg-base-bg-default py-4 px-3"
-        style={{ paddingTop: headerCollapsableHeight }}
+        contentContainerStyle={{ paddingTop: headerCollapsableHeight + 16 }}
         ListHeaderComponent={ListHeaderComponent}
         renderItem={renderFeedItem}
         ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} />}
