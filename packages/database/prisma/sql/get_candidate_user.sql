@@ -23,13 +23,13 @@ WITH
   final_candidate_score AS (
     SELECT 
       other_candidate_user.user_id, 
-      (other_candidate_user.score::DOUBLE PRECISION + RANDOM() / 10) AS score
+      other_candidate_user.score
     FROM 
       other_candidate_user
     UNION ALL
     SELECT 
       candidate_user.user_id, 
-      candidate_user.score 
+      (candidate_user.score::DOUBLE PRECISION + RANDOM() / 10) AS score
     FROM 
       candidate_user
     ORDER BY score DESC
@@ -40,14 +40,9 @@ SELECT
   u."id",
   u."name",
   u."profileImagePath",
-  u."province",
-  u."district",
-  u."subDistrict",
-  u."postalCode",
   u."responsibleArea"
 FROM 
   final_candidate_score
   INNER JOIN "User" u ON final_candidate_score.user_id = u.id
-  INNER JOIN "Address" address ON u."province" = address."province" AND u.district = address.district AND u."subDistrict" = address."subDistrict" AND u."postalCode" = address."postalCode";
   
 
