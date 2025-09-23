@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useRef } from 'react'
 
+import { usePathname } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 
 interface StatusBarContextValue {
@@ -32,10 +33,16 @@ function useStatusBar() {
 
 export function useLightStatusBar() {
   const { setStatusBarColor } = useStatusBar()
+  const pathname = usePathname()
+  const firstPathname = useRef(pathname)
   useEffect(() => {
-    setStatusBarColor('light')
+    if (firstPathname.current === pathname) {
+      setStatusBarColor('light')
+    } else {
+      setStatusBarColor('dark')
+    }
     return () => {
       setStatusBarColor('dark')
     }
-  }, [setStatusBarColor])
+  }, [pathname, setStatusBarColor])
 }
