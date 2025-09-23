@@ -28,7 +28,7 @@ const toggleVariants = cva(
   }
 )
 
-const toggleTextVariants = cva('text-sm native:text-base text-foreground font-anakotmai-medium', {
+const toggleTextVariants = cva('text-sm native:text-base text-foreground font-heading-semibold', {
   variants: {
     variant: {
       default: '',

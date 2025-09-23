@@ -157,8 +157,8 @@ function MainHeader() {
             </>
           ) : (
             <View className="flex-1 pr-4">
-              <Text className="font-anakotmai-light text-xs">{headings.welcome}</Text>
-              <Text className="font-anakotmai-bold text-2xl text-base-primary-default line-clamp-1">
+              <Text className="font-heading-regular text-xs">{headings.welcome}</Text>
+              <Text className="font-heading-bold text-2xl text-base-primary-default line-clamp-1">
                 {headings.title}
               </Text>
             </View>
@@ -289,7 +289,7 @@ function EventSection() {
     <View className="flex flex-col items-center justify-center gap-2 px-4 pb-4 ">
       <View className="flex flex-row gap-2 justify-start items-center w-full ">
         <Icon icon={RadioTowerIcon} size={20} className="text-base-primary-default" />
-        <H2 className="text-xl font-anakotmai-bold text-base-text-high">อิเวนต์ตอนนี้</H2>
+        <H2 className="text-xl font-heading-bold text-base-text-high">อิเวนต์ตอนนี้</H2>
       </View>
       <ElectionCard />
     </View>
@@ -303,23 +303,23 @@ function ElectionCard() {
         <Badge variant="secondary">
           <Text>เลือกตั้งในสถานที่</Text>
         </Badge>
-        <H3 className="text-base-text-invert font-anakotmai-bold text-lg ">
+        <H3 className="text-base-text-invert font-heading-bold text-lg ">
           เลือกตั้งตัวแทนสมาชิกพรรคประจำ อ.เมือง จ.ระยอง
         </H3>
         <View className="flex flex-col gap-1 ">
           <View className="flex flex-row gap-1 items-center">
             <Icon icon={ClockIcon} size={16} className="text-base-text-invert" />
-            <Text className="text-sm text-base-text-invert font-anakotmai-light">
+            <Text className="text-sm text-base-text-invert font-heading-regular">
               เวลาที่เหลือ:
             </Text>
-            <Text className="text-sm text-base-primary-default font-anakotmai-medium">
+            <Text className="text-sm text-base-primary-default font-heading-semibold">
               7:46:36 ชั่วโมง
             </Text>
           </View>
           <View className="flex flex-row gap-1 items-center">
             <Icon icon={MapPinIcon} size={16} className="text-base-text-invert" />
-            <Text className="text-sm text-base-text-invert font-anakotmai-light">สถานที่:</Text>
-            <Text className="text-sm text-base-text-invert font-anakotmai-medium">
+            <Text className="text-sm text-base-text-invert font-heading-regular">สถานที่:</Text>
+            <Text className="text-sm text-base-text-invert font-heading-semibold">
               อาคารอเนกประสงชุมชนสองพี่น้อง 1,2,3
             </Text>
           </View>
@@ -439,8 +439,8 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
   return (
     <BottomSheetScrollView>
       <View className="flex flex-col gap-1 p-4 pb-0">
-        <Text className="text-2xl font-anakotmai-bold">เลือกหัวข้อที่สนใจ</Text>
-        <Text className="text-sm font-anakotmai-light text-base-text-medium">
+        <Text className="text-2xl font-heading-bold">เลือกหัวข้อที่สนใจ</Text>
+        <Text className="text-sm font-heading-regular text-base-text-medium">
           เลือก 1 หัวข้อสำหรับเพิ่มลงบนหน้าแรก
         </Text>
       </View>
@@ -462,7 +462,7 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
                 <TopicSkeleton />
               ) : listTopicQuery.data.length === 0 ? (
                 <View className="w-full items-center justify-center py-14">
-                  <Text className="text-base-text-placeholder font-anakotmai-medium">
+                  <Text className="text-base-text-placeholder font-heading-semibold">
                     ยังไม่มีหัวข้อ
                   </Text>
                 </View>
@@ -743,7 +743,7 @@ function AnnouncementSection() {
               width={32}
               height={32}
             />
-            <H3 className="text-base-text-high font-anakotmai-medium text-2xl">ประกาศ</H3>
+            <H3 className="text-base-text-high font-heading-semibold text-2xl">ประกาศ</H3>
           </View>
           <View className="min-h-10 bg-base-bg-default rounded-lg" />
         </View>
@@ -777,7 +777,7 @@ function AnnouncementSection() {
             width={32}
             height={32}
           />
-          <H3 className="text-base-text-high font-anakotmai-medium text-2xl">ประกาศ</H3>
+          <H3 className="text-base-text-high font-heading-semibold text-2xl">ประกาศ</H3>
         </View>
         <Button variant="ghost" onPress={() => router.navigate('/(feed)/announcement')}>
           <Text>ดูเพิ่มเติม</Text>

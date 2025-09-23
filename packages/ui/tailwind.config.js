@@ -132,6 +132,42 @@ export default {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
       },
+      fontSize: {
+        // line height must be atleast 1.5 times font size otherwise thai font will be cut off
+        // default: https://github.com/tailwindlabs/tailwindcss/blob/ba55a445cd82eda384af91d8846c5fdb889fdfcd/stubs/config.full.js#L324
+        xs: [
+          '0.75rem', // 12px
+          { lineHeight: '1.125rem' }, // 18px
+        ],
+        sm: [
+          '0.875rem', // 14px
+          { lineHeight: '1.375rem' }, // 22px
+        ],
+        base: [
+          '1rem', // 16px
+          { lineHeight: '1.5rem' }, // 24px
+        ],
+        lg: [
+          '1.125rem', // 18px
+          { lineHeight: '1.75rem' }, // 28px
+        ],
+        xl: [
+          '1.25rem', // 20px
+          { lineHeight: '2rem' }, // 32px
+        ],
+        '2xl': [
+          '1.5rem', // 24px
+          { lineHeight: '2.25rem' }, // 36px
+        ],
+        '3xl': [
+          '1.875rem', // 30px
+          { lineHeight: '3rem' }, // 48px
+        ],
+        '4xl': [
+          '2.25rem', // 36px
+          { lineHeight: '3.5rem' }, // 54px
+        ],
+      },
       fontFamily: {
         'inter-light': platformSelect({
           android: 'Inter_300Light',
@@ -148,32 +184,32 @@ export default {
           ios: 'Inter-Bold',
           default: ['Inter-Bold', 'sans-serif'],
         }),
-        'anakotmai-light': platformSelect({
-          android: 'Anakotmai_300Light',
-          ios: 'Anakotmai-Light',
-          default: ['Anakotmai-Light', 'sans-serif'],
+        'heading-regular': platformSelect({
+          android: 'NotoSansThai_400Regular',
+          ios: 'NotoSansThai-Regular',
+          default: ['NotoSansThai-Regular', 'sans-serif'],
         }),
-        'anakotmai-medium': platformSelect({
-          android: 'Anakotmai_500Medium',
-          ios: 'Anakotmai-Medium',
-          default: ['Anakotmai-Medium', 'sans-serif'],
+        'heading-semibold': platformSelect({
+          android: 'NotoSansThai_600SemiBold',
+          ios: 'NotoSansThai-SemiBold',
+          default: ['NotoSansThai-SemiBold', 'sans-serif'],
         }),
-        'anakotmai-bold': platformSelect({
-          android: 'Anakotmai_700Bold',
-          ios: 'Anakotmai-Bold',
-          default: ['Anakotmai-Bold', 'sans-serif'],
+        'heading-bold': platformSelect({
+          android: 'NotoSansThai_700Bold',
+          ios: 'NotoSansThai-Bold',
+          default: ['NotoSansThai-Bold', 'sans-serif'],
         }),
-        'noto-light': platformSelect({
-          android: 'NotoSansThaiLooped_300Light',
-          ios: 'NotoSansThaiLooped-Light',
-          default: ['NotoSansThaiLooped-Light', 'sans-serif'],
+        'body-regular': platformSelect({
+          android: 'NotoSansThaiLooped_400Regular',
+          ios: 'NotoSansThaiLooped-Regular',
+          default: ['NotoSansThaiLooped-Regular', 'sans-serif'],
         }),
-        'noto-medium': platformSelect({
-          android: 'NotoSansThaiLooped_500Medium',
-          ios: 'NotoSansThaiLooped-Medium',
-          default: ['NotoSansThaiLooped-Medium', 'sans-serif'],
+        'body-semibold': platformSelect({
+          android: 'NotoSansThaiLooped_600SemiBold',
+          ios: 'NotoSansThaiLooped-SemiBold',
+          default: ['NotoSansThaiLooped-SemiBold', 'sans-serif'],
         }),
-        'noto-bold': platformSelect({
+        'body-bold': platformSelect({
           android: 'NotoSansThaiLooped_700Bold',
           ios: 'NotoSansThaiLooped-Bold',
           default: ['NotoSansThaiLooped-Bold', 'sans-serif'],

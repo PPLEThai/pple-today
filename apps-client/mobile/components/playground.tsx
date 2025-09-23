@@ -68,15 +68,37 @@ export function Playground() {
         <View className="flex flex-col gap-2">
           <H2 className="font-inter-bold">Font</H2>
           <View className="flex flex-col gap-1">
-            <Text style={{ fontFamily: 'Inter_300Light' }}>Inter</Text>
-            <Text style={{ fontFamily: 'Inter_500Medium' }}>Inter</Text>
+            <Text style={{ fontFamily: 'Inter_400Regular' }}>Inter</Text>
+            <Text style={{ fontFamily: 'Inter_600SemiBold' }}>Inter</Text>
             <Text style={{ fontFamily: 'Inter_700Bold' }}>Inter</Text>
-            <Text className="font-anakotmai-light">Anakotmai</Text>
-            <Text className="font-anakotmai-medium">Anakotmai</Text>
-            <Text className="font-anakotmai-bold">Anakotmai</Text>
-            <Text className="font-noto-light">NotoSansThaiLooped</Text>
-            <Text className="font-noto-medium">NotoSansThaiLooped</Text>
-            <Text className="font-noto-bold">NotoSansThaiLooped</Text>
+            <Text className="font-heading-regular">Heading</Text>
+            <Text className="font-heading-semibold">Heading</Text>
+            <Text className="font-heading-bold">Heading</Text>
+            <Text className="font-body-regular">Body</Text>
+            <Text className="font-body-semibold">Body</Text>
+            <Text className="font-body-bold">Body</Text>
+          </View>
+        </View>
+        <View className="flex flex-col gap-2">
+          <H2 className="font-inter-bold">Typography</H2>
+          <View className="flex flex-col gap-1">
+            <Text className="font-heading-semibold text-4xl">4xl-Heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-3xl">3xl-Heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-2xl">2xl-Heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-xl">xl-Heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-lg">lg-Heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-base">base-Heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-sm">sm-Heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-xs">xs-Heading ไม่รู้ไม่ชี้</Text>
+
+            <Text className="font-body-regular text-4xl">4xl-Body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-regular text-3xl">3xl-Body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-regular text-2xl">2xl-Body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-regular text-xl">xl-Body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-regular text-lg">lg-Body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-regular text-base">base-Body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-regular text-sm">sm-Body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-regular text-xs">xs-Body ไม่รู้ไม่ชี้</Text>
           </View>
         </View>
         <View className="flex flex-col gap-2">
@@ -525,10 +547,10 @@ function MoreOrLessExample() {
 }
 
 function TextPost(props: TextProps) {
-  return <Text {...props} className="text-base-text-high font-noto-light text-base" />
+  return <Text {...props} className="text-base-text-high font-body-regular text-base" />
 }
 function ButtonTextPost(props: TextProps) {
-  return <Text {...props} className="text-base-primary-default font-noto-light text-base" />
+  return <Text {...props} className="text-base-primary-default font-body-regular text-base" />
 }
 
 const images = [require('@app/assets/post-1.png'), require('@app/assets/banner-2.png')]

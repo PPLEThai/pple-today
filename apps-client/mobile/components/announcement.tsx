@@ -88,7 +88,7 @@ export function AnnouncementCard(props: AnnouncementCardProps) {
         </View>
       </View>
       <View className="flex flex-col justify-between flex-1">
-        <Text className="text-base-text-high font-anakotmai-medium text-sm line-clamp-3 flex-1">
+        <Text className="text-base-text-high font-heading-semibold text-sm line-clamp-3 flex-1">
           {props.title}
         </Text>
         <View className="flex flex-row gap-1 justify-between items-center">
@@ -99,7 +99,7 @@ export function AnnouncementCard(props: AnnouncementCardProps) {
               </Badge>
             ))}
           </View>
-          <Text className="font-anakotmai-light text-xs text-base-text-medium">
+          <Text className="font-heading-regular text-xs text-base-text-medium">
             {dayjs(props.date).format('DD MMM BB')}
           </Text>
         </View>

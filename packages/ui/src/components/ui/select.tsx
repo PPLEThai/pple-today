@@ -27,7 +27,7 @@ const SelectValue = ({
   return (
     <SelectPrimitive.Value
       ref={ref}
-      className={cn('text-sm font-anakotmai-light text-foreground', className)}
+      className={cn('text-sm font-heading-regular text-foreground', className)}
       {...props}
     >
       {children}
@@ -154,7 +154,7 @@ function SelectLabel({
   return (
     <SelectPrimitive.Label
       className={cn(
-        'py-1.5 pl-10 pr-2 text-popover-foreground text-sm font-anakotmai-medium',
+        'py-1.5 pl-10 pr-2 text-popover-foreground text-sm font-heading-semibold',
         className
       )}
       {...props}
@@ -184,7 +184,7 @@ function SelectItem({
           <Check size={16} className="text-popover-foreground" />
         </SelectPrimitive.ItemIndicator>
       </View>
-      <SelectPrimitive.ItemText className="text-sm font-anakotmai-light text-popover-foreground web:group-focus:text-accent-foreground" />
+      <SelectPrimitive.ItemText className="text-sm font-heading-regular text-popover-foreground web:group-focus:text-accent-foreground" />
     </SelectPrimitive.Item>
   )
 }

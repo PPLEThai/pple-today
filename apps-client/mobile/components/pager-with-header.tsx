@@ -626,12 +626,12 @@ export function PagerTabBarItem({
       onPress={handlePress}
       {...props}
     >
-      <Text className="px-4 pt-2 pb-2.5 text-sm font-anakotmai-medium relative text-base-text-placeholder">
+      <Text className="px-4 pt-2 pb-2.5 text-sm font-heading-semibold relative text-base-text-placeholder">
         {children}
       </Text>
       <Animated.Text
         style={activeStyle}
-        className="px-4 pt-2 pb-2.5 text-sm font-anakotmai-medium text-base-primary-default absolute left-0 top-0 bottom-0 right-0"
+        className="px-4 pt-2 pb-2.5 text-sm font-heading-semibold text-base-primary-default absolute left-0 top-0 bottom-0 right-0"
         aria-hidden
       >
         {children}

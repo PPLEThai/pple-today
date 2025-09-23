@@ -25,8 +25,9 @@
     "fastlane:ios": "pnpm prebuild:ios && pnpm fastlane:setup && cd ios && fastlane beta"
   },
   "dependencies": {
-    "@expo-google-fonts/inter": "^0.4.1",
-    "@expo-google-fonts/noto-sans-thai-looped": "^0.4.1",
+    "@expo-google-fonts/inter": "^0.4.2",
+    "@expo-google-fonts/noto-sans-thai": "^0.4.2",
+    "@expo-google-fonts/noto-sans-thai-looped": "^0.4.2",
     "@expo/vector-icons": "^14.1.0",
     "@gorhom/bottom-sheet": "^5.1.6",
     "@pple-today/api-client": "workspace:^",

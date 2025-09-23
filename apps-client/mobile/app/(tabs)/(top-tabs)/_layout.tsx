@@ -36,7 +36,7 @@ export default function MaterialTopTabsLayout() {
           tabBarLabel: (props) => {
             return (
               <Text
-                className="text-sm font-anakotmai-medium"
+                className="text-sm font-heading-semibold"
                 {...props}
                 style={{ color: props.color }}
               >

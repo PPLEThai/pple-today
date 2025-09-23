@@ -17,7 +17,7 @@ function H1({ className, asChild = false, ...props }: TypographyProps) {
       role="heading"
       aria-level="1"
       className={cn(
-        'web:scroll-m-20 text-4xl text-foreground lg:text-5xl web:select-text font-anakotmai-bold',
+        'web:scroll-m-20 text-4xl text-foreground lg:text-5xl web:select-text font-heading-bold',
         className
       )}
       {...props}
@@ -32,7 +32,7 @@ function H2({ className, asChild = false, ...props }: TypographyProps) {
       role="heading"
       aria-level="2"
       className={cn(
-        'web:scroll-m-20 text-3xl text-foreground web:select-text font-anakotmai-bold',
+        'web:scroll-m-20 text-3xl text-foreground web:select-text font-heading-bold',
         className
       )}
       {...props}
@@ -47,7 +47,7 @@ function H3({ className, asChild = false, ...props }: TypographyProps) {
       role="heading"
       aria-level="3"
       className={cn(
-        'web:scroll-m-20 text-2xl text-foreground web:select-text font-anakotmai-bold',
+        'web:scroll-m-20 text-2xl text-foreground web:select-text font-heading-bold',
         className
       )}
       {...props}
@@ -62,7 +62,7 @@ function H4({ className, asChild = false, ...props }: TypographyProps) {
       role="heading"
       aria-level="4"
       className={cn(
-        'web:scroll-m-20 text-xl text-foreground tracking-tight web:select-text font-anakotmai-bold',
+        'web:scroll-m-20 text-xl text-foreground tracking-tight web:select-text font-heading-bold',
         className
       )}
       {...props}
@@ -74,7 +74,7 @@ function P({ className, asChild = false, ...props }: TypographyProps) {
   const Component = asChild ? Slot.Text : RNText
   return (
     <Component
-      className={cn('text-base text-foreground web:select-text font-noto-medium', className)}
+      className={cn('text-base text-foreground web:select-text font-body-semibold', className)}
       {...props}
     />
   )
@@ -87,7 +87,7 @@ function BlockQuote({ className, asChild = false, ...props }: TypographyProps) {
       // @ts-expect-error - role of blockquote renders blockquote element on the web
       role={Platform.OS === 'web' ? 'blockquote' : undefined}
       className={cn(
-        'mt-6 native:mt-4 border-l-2 border-border pl-6 native:pl-3 text-base text-foreground italic web:select-text font-noto-medium',
+        'mt-6 native:mt-4 border-l-2 border-border pl-6 native:pl-3 text-base text-foreground italic web:select-text font-body-semibold',
         className
       )}
       {...props}

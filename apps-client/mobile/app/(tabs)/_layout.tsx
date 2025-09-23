@@ -121,8 +121,8 @@ function TabBarLabel(props: {
       className={clsx(
         'text-xs',
         props.focused
-          ? 'font-anakotmai-medium text-base-primary-default'
-          : 'font-anakotmai-light text-base-text-high'
+          ? 'font-heading-semibold text-base-primary-default'
+          : 'font-heading-regular text-base-text-high'
       )}
     >
       {props.children}

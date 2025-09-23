@@ -23,11 +23,11 @@ export default function OfficialPage() {
               strokeWidth={2}
               className="text-base-primary-default"
             />
-            <H1 className="text-3xl font-anakotmai-medium text-base-primary-default mt-2">
+            <H1 className="text-3xl font-heading-semibold text-base-primary-default mt-2">
               ทางการ
             </H1>
           </View>
-          <Text className="font-anakotmai-light text-base-text-medium">
+          <Text className="font-heading-regular text-base-text-medium">
             ข้อมูลข่าวสารจากพรรคประชาชน
           </Text>
         </View>
@@ -50,7 +50,7 @@ const DemoSection = () => {
         <View className="w-8 h-8 flex items-center justify-center">
           <Icon icon={MegaphoneIcon} size={32} className="text-base-primary-default" />
         </View>
-        <H2 className="text-2xl font-anakotmai-medium text-base-text-high">ประกาศ</H2>
+        <H2 className="text-2xl font-heading-semibold text-base-text-high">ประกาศ</H2>
       </View>
       <View className="h-48 bg-base-bg-white rounded-xl border border-base-outline-default mt-2 p-4"></View>
     </View>
@@ -99,7 +99,7 @@ const AnnouncementSection = () => {
       <View className="flex flex-row justify-between items-center">
         <View className="flex flex-row gap-2 items-center">
           <Icon icon={MegaphoneIcon} size={32} className="text-base-primary-default" />
-          <H2 className="text-2xl font-anakotmai-medium text-base-text-high">ประกาศ</H2>
+          <H2 className="text-2xl font-heading-semibold text-base-text-high">ประกาศ</H2>
         </View>
         <View className="min-h-10">
           {data.length > 0 && (

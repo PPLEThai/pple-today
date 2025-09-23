@@ -96,10 +96,10 @@ export const FeedCard = React.memo(function FeedCard(props: {
           </Avatar>
           <View className="flex flex-col">
             {/* TODO: link */}
-            <Text className="text-base-text-medium font-anakotmai-medium text-sm">
+            <Text className="text-base-text-medium font-heading-semibold text-sm">
               {feedContent.author.name}
             </Text>
-            <Text className="text-base-text-medium font-anakotmai-light text-sm">
+            <Text className="text-base-text-medium font-heading-regular text-sm">
               {feedContent.author.address ? `${feedContent.author.address.province} | ` : ''}
               {formatDateInterval(feedContent.createdAt.toString())}
             </Text>
@@ -148,7 +148,7 @@ function FeedReactionSection(props: { feedItem: FeedItem }) {
     >
       <UpvoteReactionCount feedId={props.feedItem.id} />
       {props.feedItem.commentCount > 0 && (
-        <Text className="text-xs font-anakotmai-light text-base-text-medium">
+        <Text className="text-xs font-heading-regular text-base-text-medium">
           {props.feedItem.commentCount} ความคิดเห็น
         </Text>
       )}
@@ -251,10 +251,10 @@ export const FeedCardSkeleton = ({ className }: { className?: string }) => {
 }
 
 function TextPost(props: TextProps) {
-  return <Text {...props} className="text-base-text-high font-noto-light text-sm" />
+  return <Text {...props} className="text-base-text-high font-body-regular text-sm" />
 }
 function ButtonTextPost(props: TextProps) {
-  return <Text {...props} className="text-base-primary-default font-noto-light text-sm" />
+  return <Text {...props} className="text-base-primary-default font-body-regular text-sm" />
 }
 
 interface FeedReaction {
@@ -360,7 +360,7 @@ function UpvoteReactionCount(props: UpvoteReactionCountProps) {
         className="fill-base-primary-medium text-white"
         strokeWidth={1}
       />
-      <Text className="text-xs font-anakotmai-light text-base-text-medium">{upvoteCount}</Text>
+      <Text className="text-xs font-heading-regular text-base-text-medium">{upvoteCount}</Text>
     </View>
   )
 }
@@ -476,7 +476,7 @@ function UpvoteButton(props: UpvoteButtonProps) {
           style={{ width: 100, height: 100 }}
         />
       </View>
-      <Text className="text-sm font-anakotmai-light text-base-text-high">เห็นด้วย</Text>
+      <Text className="text-sm font-heading-regular text-base-text-high">เห็นด้วย</Text>
     </AnimatedButton>
   )
 }
@@ -535,7 +535,7 @@ function DownvoteButton(props: { feedId: string }) {
               : 'text-base-text-high'
           )}
         />
-        <Text className="text-sm font-anakotmai-light text-base-text-high">ไม่เห็นด้วย</Text>
+        <Text className="text-sm font-heading-regular text-base-text-high">ไม่เห็นด้วย</Text>
       </AnimatedButton>
       <BottomSheetModal
         ref={bottomSheetModalRef}
@@ -625,8 +625,8 @@ function DownvoteCommentForm(props: DownvoteCommentFormProps) {
   return (
     <View className="flex flex-col flex-1">
       <View className="flex flex-col gap-1 p-4 pb-0">
-        <Text className="text-2xl font-anakotmai-bold">ข้อเสนอแนะ</Text>
-        <Text className="text-sm font-anakotmai-light">
+        <Text className="text-2xl font-heading-bold">ข้อเสนอแนะ</Text>
+        <Text className="text-sm font-heading-regular">
           {
             'บอกพวกเราทีว่าเหตุใดคุณถึงไม่เห็นด้วย\nความคิดเห็นของคุณจะถูกแสดงเป็นความคิดเห็นส่วนตัว'
           }
@@ -690,7 +690,7 @@ function CommentButton(props: { feedId: string }) {
     <>
       <AnimatedButton onPress={onPress}>
         <Icon icon={MessageCircleIcon} size={20} strokeWidth={1} className="text-base-text-high" />
-        <Text className="text-sm font-anakotmai-light text-base-text-high">ความคิดเห็น</Text>
+        <Text className="text-sm font-heading-regular text-base-text-high">ความคิดเห็น</Text>
       </AnimatedButton>
       <BottomSheetModal
         ref={bottomSheetModalRef}
@@ -875,10 +875,10 @@ const FeedDetailAuthorSection = (props: { feedItem: FeedItem }) => {
           <AvatarPPLEFallback />
         </Avatar>
         <View className="flex flex-col">
-          <Text className="text-base-text-medium font-anakotmai-medium text-sm">
+          <Text className="text-base-text-medium font-heading-semibold text-sm">
             {props.feedItem.author.name}
           </Text>
-          <Text className="text-base-text-medium font-anakotmai-light text-sm">
+          <Text className="text-base-text-medium font-heading-regular text-sm">
             {props.feedItem.author.address ? `${props.feedItem.author.address.province} | ` : ''}
             {formatDateInterval(props.feedItem.createdAt.toString())}
           </Text>
@@ -969,12 +969,12 @@ const AnnouncementDetailContent = (props: { feedItem: FeedItemAnnouncement }) =>
         >
           {Logo}
         </View>
-        <H2 className="text-sm font-anakotmai-medium text-base-text-medium">{announcementText}</H2>
+        <H2 className="text-sm font-heading-semibold text-base-text-medium">{announcementText}</H2>
       </View>
-      <H1 className="text-lg font-anakotmai-medium text-base-text-high">
+      <H1 className="text-lg font-heading-semibold text-base-text-high">
         {props.feedItem.announcement.title}
       </H1>
-      <Text className="text-base font-noto-light text-base-text-high">
+      <Text className="text-base font-body-regular text-base-text-high">
         {props.feedItem.announcement.content}
       </Text>
       {props.feedItem.announcement.attachments?.map((url) => (

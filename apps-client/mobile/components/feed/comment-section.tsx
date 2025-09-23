@@ -78,7 +78,7 @@ export function FeedCommentSection({
     ) : data.length === 1 && data[0].length === 0 ? (
       // Empty State
       <View className="flex flex-col items-center justify-center py-6">
-        <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีความคิดเห็น</Text>
+        <Text className="text-base-text-medium font-heading-semibold">ยังไม่มีความคิดเห็น</Text>
       </View>
     ) : null // Reach end of feed
 
@@ -127,16 +127,16 @@ function FeedComment({ item }: { item: GetFeedCommentResponse[number] }) {
           )}
         >
           <View className="flex flex-row justify-between gap-2 items-center">
-            <Text className="font-anakotmai-medium text-base-text-high text-xs">
+            <Text className="font-heading-semibold text-base-text-high text-xs">
               {item.author.name}
             </Text>
             {item.isPrivate && (
               <Icon icon={EyeOffIcon} size={16} className="text-base-secondary-light" />
             )}
           </View>
-          <Text className="font-noto-light text-base-text-high text-sm">{item.content}</Text>
+          <Text className="font-body-regular text-base-text-high text-sm">{item.content}</Text>
         </View>
-        <Text className="font-anakotmai-light text-base-text-medium text-xs">
+        <Text className="font-heading-regular text-base-text-medium text-xs">
           {formatDateInterval(item.createdAt.toString())}
         </Text>
       </View>

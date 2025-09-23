@@ -65,10 +65,10 @@ export function TopicCard(props: TopicCardProps) {
       />
       <View className="absolute bottom-0 left-0 right-0 p-3 flex flex-col gap-3">
         <View className="flex flex-col gap-1">
-          <H3 className="text-base-text-invert text-xl font-anakotmai-bold line-clamp-2">
+          <H3 className="text-base-text-invert text-xl font-heading-bold line-clamp-2">
             {props.topic.name}
           </H3>
-          <Text className="text-base-text-invert text-xs font-anakotmai-light line-clamp-4">
+          <Text className="text-base-text-invert text-xs font-heading-regular line-clamp-4">
             {props.topic.description}
           </Text>
           {props.topic.hashtags.length > 0 && (
@@ -158,7 +158,7 @@ export function TopicSuggestion() {
       <View className="px-4 pt-4 flex flex-row justify-between items-center">
         <View className="flex flex-row items-center gap-2">
           <Icon icon={MessageSquareHeartIcon} size={32} className="text-base-primary-default" />
-          <H3 className="text-base-text-high font-anakotmai-medium text-2xl">หัวข้อน่าสนใจ</H3>
+          <H3 className="text-base-text-high font-heading-semibold text-2xl">หัวข้อน่าสนใจ</H3>
         </View>
         <Link asChild href="/(feed)/topic/suggestion">
           <Button variant="ghost">

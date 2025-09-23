@@ -20,7 +20,7 @@ function Text({
   return (
     <Component
       className={cn(
-        'text-base text-foreground web:select-text font-noto-medium',
+        'text-base text-foreground web:select-text font-body-semibold',
         textClass,
         className
       )}

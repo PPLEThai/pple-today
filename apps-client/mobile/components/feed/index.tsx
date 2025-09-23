@@ -51,7 +51,7 @@ export function FeedFooter({ queryResult, className }: FeedFooterProps) {
     return (
       <View style={{ minHeight }}>
         <View className="flex flex-col items-center justify-center py-6">
-          <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีโพสต์</Text>
+          <Text className="text-base-text-medium font-heading-semibold">ยังไม่มีโพสต์</Text>
         </View>
       </View>
     )
@@ -59,7 +59,7 @@ export function FeedFooter({ queryResult, className }: FeedFooterProps) {
   // Reach end of feed
   return (
     <View className="flex flex-col items-center justify-center py-6">
-      <Text className="text-base-text-medium font-anakotmai-medium">ไม่มีโพสต์เพิ่มเติม</Text>
+      <Text className="text-base-text-medium font-heading-semibold">ไม่มีโพสต์เพิ่มเติม</Text>
     </View>
   )
 }
