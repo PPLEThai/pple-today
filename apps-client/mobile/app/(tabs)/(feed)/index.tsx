@@ -63,6 +63,7 @@ import {
   PagerTabBarItem,
   PagerTabBarItemIndicator,
 } from '@app/components/pager-with-header'
+import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { environment } from '@app/env'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { useAuthMe, useSessionQuery } from '@app/libs/auth'
@@ -70,13 +71,8 @@ import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { useScrollContext } from '@app/libs/scroll-context'
 
 export default function FeedPage() {
-  const insets = useSafeAreaInsets()
   return (
-    <View className="flex-1 pt-safe">
-      <View
-        className="absolute top-0 left-0 right-0 bg-base-bg-white z-10"
-        style={{ height: insets.top }}
-      />
+    <SafeAreaLayout>
       <Pager>
         <PagerHeader>
           <PagerHeaderOnly>
@@ -100,7 +96,7 @@ export default function FeedPage() {
         </PagerHeader>
         <PagerContents />
       </Pager>
-    </View>
+    </SafeAreaLayout>
   )
 }
 

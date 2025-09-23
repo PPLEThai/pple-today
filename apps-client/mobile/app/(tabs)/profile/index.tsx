@@ -48,6 +48,7 @@ import type { GetMyProfileResponse, GetUserParticipationResponse } from '@api/ba
 import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
+import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { environment } from '@app/env'
 import { reactQueryClient } from '@app/libs/api-client'
 import {
@@ -74,29 +75,31 @@ const Login = () => {
   const discoveryQuery = useDiscoveryQuery()
   const loginMutation = useLoginMutation()
   return (
-    <View className="pt-safe flex flex-col flex-1 items-center justify-center gap-10 bg-base-bg-light">
-      <View className="flex flex-col items-center gap-2">
-        <View className="w-[100px] h-[100px] flex flex-col items-center justify-center">
-          <PPLEIcon />
+    <SafeAreaLayout>
+      <View className="flex flex-col flex-1 items-center justify-center gap-10 bg-base-bg-light">
+        <View className="flex flex-col items-center gap-2">
+          <View className="w-[100px] h-[100px] flex flex-col items-center justify-center">
+            <PPLEIcon />
+          </View>
+          <H1 className="text-2xl">พรรคประชาชน</H1>
         </View>
-        <H1 className="text-2xl">พรรคประชาชน</H1>
+        <View className="flex flex-col gap-4 max-w-[279px] w-full">
+          <Button
+            onPress={() => loginMutation.mutate({ discovery: discoveryQuery.data! })}
+            disabled={!discoveryQuery.data || loginMutation.isPending}
+          >
+            <Text>เข้าสู่ระบบ</Text>
+          </Button>
+          <Button
+            variant="outline"
+            onPress={() => loginMutation.mutate({ discovery: discoveryQuery.data! })}
+            disabled={!discoveryQuery.data || loginMutation.isPending}
+          >
+            <Text>สมัครสมาชิก</Text>
+          </Button>
+        </View>
       </View>
-      <View className="flex flex-col gap-4 max-w-[279px] w-full">
-        <Button
-          onPress={() => loginMutation.mutate({ discovery: discoveryQuery.data! })}
-          disabled={!discoveryQuery.data || loginMutation.isPending}
-        >
-          <Text>เข้าสู่ระบบ</Text>
-        </Button>
-        <Button
-          variant="outline"
-          onPress={() => loginMutation.mutate({ discovery: discoveryQuery.data! })}
-          disabled={!discoveryQuery.data || loginMutation.isPending}
-        >
-          <Text>สมัครสมาชิก</Text>
-        </Button>
-      </View>
-    </View>
+    </SafeAreaLayout>
   )
 }
 
@@ -119,34 +122,36 @@ const ProfileSetting = () => {
   }, [queryClient])
 
   return (
-    <ScrollView
-      className="pt-safe flex-1"
-      contentContainerClassName="flex-grow"
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          colors={['#FF6A13']} // base-primary-default
-        />
-      }
-    >
-      <View className="bg-base-bg-white flex flex-col">
-        <HeaderSection />
-        <View className="p-4 flex flex-col gap-3">
-          <ProfileSection />
-          {/* <AchievementSection /> */}
-          <AddressSection />
-          <PointSection />
+    <SafeAreaLayout>
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="flex-grow"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#FF6A13']} // base-primary-default
+          />
+        }
+      >
+        <View className="bg-base-bg-white flex flex-col">
+          <HeaderSection />
+          <View className="p-4 flex flex-col gap-3">
+            <ProfileSection />
+            {/* <AchievementSection /> */}
+            <AddressSection />
+            <PointSection />
+          </View>
         </View>
-      </View>
-      <View className="bg-base-bg-light flex-1 flex flex-col gap-3 px-4 py-2.5">
-        <FacebookPageSection />
-        <FollowingSection />
-        <ParticipationSection />
-        {/* <ActivitySection /> */}
-        <SettingSection />
-      </View>
-    </ScrollView>
+        <View className="bg-base-bg-light flex-1 flex flex-col gap-3 px-4 py-2.5">
+          <FacebookPageSection />
+          <FollowingSection />
+          <ParticipationSection />
+          {/* <ActivitySection /> */}
+          <SettingSection />
+        </View>
+      </ScrollView>
+    </SafeAreaLayout>
   )
 }
 
