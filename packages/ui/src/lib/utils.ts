@@ -1,2 +1,17 @@
 export { clsx } from 'clsx'
-export { twMerge as cn } from 'tailwind-merge'
+import { extendTailwindMerge } from 'tailwind-merge'
+
+export const cn = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      'font-family': [
+        'font-body-regular',
+        'font-body-semibold',
+        'font-body-bold',
+        'font-heading-regular',
+        'font-heading-semibold',
+        'font-heading-bold',
+      ],
+    },
+  },
+})
