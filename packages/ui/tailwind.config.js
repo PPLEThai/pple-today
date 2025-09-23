@@ -225,27 +225,10 @@ export default {
     plugin(({ matchUtilities, theme }) => {
       matchUtilities(
         {
-          text: (value, { modifier }) => {
-            let [fontSize, options] = Array.isArray(value) ? value : [value]
-
-            if (modifier) {
-              return {
-                'font-size': fontSize,
-                'line-height': modifier,
-              }
-            }
-
-            let { lineHeight, letterSpacing, fontWeight, marginTop, paddingTop } = isPlainObject(
-              options
-            )
-              ? options
-              : { lineHeight: options }
-
+          text: (value) => {
+            let [_fontSize, options] = Array.isArray(value) ? value : [value]
+            let { marginTop, paddingTop } = isPlainObject(options) ? options : {}
             return {
-              'font-size': fontSize,
-              ...(lineHeight === undefined ? {} : { 'line-height': lineHeight }),
-              ...(letterSpacing === undefined ? {} : { 'letter-spacing': letterSpacing }),
-              ...(fontWeight === undefined ? {} : { 'font-weight': fontWeight }),
               ...(marginTop === undefined ? {} : { 'margin-top': marginTop }),
               ...(paddingTop === undefined ? {} : { 'padding-top': paddingTop }),
             }
@@ -253,7 +236,6 @@ export default {
         },
         {
           values: theme('fontSize'),
-          modifiers: theme('lineHeight'),
           type: ['absolute-size', 'relative-size', 'length', 'percentage'],
         }
       )
