@@ -13,7 +13,7 @@ export default function NotFound() {
     <View className="flex-1 bg-base-bg-light flex flex-col justify-center items-center">
       <Icon icon={TriangleAlertIcon} className="text-base-text-placeholder" size={60} />
       <H1 className="text-2xl font-anakotmai-medium py-4 text-base-text-medium">ไม่พบเนื้อหา</H1>
-      <Button onPress={() => router.replace('/')}>
+      <Button onPress={() => router.dismissTo('/')}>
         <Text>กลับสู่หน้าหลัก</Text>
       </Button>
     </View>

@@ -1,13 +1,5 @@
 import * as React from 'react'
-import {
-  Dimensions,
-  findNodeHandle,
-  Platform,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  View,
-} from 'react-native'
+import { findNodeHandle, Pressable, StyleSheet, View } from 'react-native'
 import Animated, {
   useAnimatedScrollHandler,
   useSharedValue,
@@ -31,12 +23,7 @@ import { toggleTextVariants, toggleVariants } from '@pple-today/ui/toggle'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H2, H3 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
-import {
-  InfiniteData,
-  useInfiniteQuery,
-  UseInfiniteQueryResult,
-  useQueryClient,
-} from '@tanstack/react-query'
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import * as Linking from 'expo-linking'
 import { useRouter } from 'expo-router'
@@ -61,7 +48,8 @@ import PPLEIcon from '@app/assets/pple-icon.svg'
 import { UserAddressInfoSection } from '@app/components/address-info'
 import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/announcement'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
-import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
+import { FeedFooter, FeedRefreshControl } from '@app/components/feed'
+import { FeedCard } from '@app/components/feed/feed-card'
 import { PeopleSuggestion } from '@app/components/feed/people-card'
 import { TopicSuggestion } from '@app/components/feed/topic-card'
 import {
@@ -75,37 +63,40 @@ import {
   PagerTabBarItem,
   PagerTabBarItemIndicator,
 } from '@app/components/pager-with-header'
+import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { environment } from '@app/env'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { useAuthMe, useSessionQuery } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { useScrollContext } from '@app/libs/scroll-context'
 
-export default function IndexLayout() {
+export default function FeedPage() {
   return (
-    <Pager>
-      <PagerHeader>
-        <PagerHeaderOnly>
-          <MainHeader />
-          <View className="flex flex-col w-full bg-base-bg-white">
-            <BannerSection />
-            {/* <EventSection /> */}
-            <UserAddressInfoSection />
-          </View>
-          <View className="px-4 bg-base-bg-white flex flex-row items-start ">
-            <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
-          </View>
-        </PagerHeaderOnly>
-        <PagerTabBar>
-          <SelectTopicButton />
-          <PagerTabBarItem index={0}>สำหรับคุณ</PagerTabBarItem>
-          <PagerTabBarItem index={1}>กำลังติดตาม</PagerTabBarItem>
-          <PagerTopicTabBarItems />
-          <PagerTabBarItemIndicator />
-        </PagerTabBar>
-      </PagerHeader>
-      <PagerContents />
-    </Pager>
+    <SafeAreaLayout>
+      <Pager>
+        <PagerHeader>
+          <PagerHeaderOnly>
+            <MainHeader />
+            <View className="flex flex-col w-full bg-base-bg-white">
+              <BannerSection />
+              {/* <EventSection /> */}
+              <UserAddressInfoSection />
+            </View>
+            <View className="px-4 bg-base-bg-white flex flex-row items-start">
+              <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
+            </View>
+          </PagerHeaderOnly>
+          <PagerTabBar>
+            <SelectTopicButton />
+            <PagerTabBarItem index={0}>สำหรับคุณ</PagerTabBarItem>
+            <PagerTabBarItem index={1}>กำลังติดตาม</PagerTabBarItem>
+            <PagerTopicTabBarItems />
+            <PagerTabBarItemIndicator />
+          </PagerTabBar>
+        </PagerHeader>
+        <PagerContents />
+      </Pager>
+    </SafeAreaLayout>
   )
 }
 
@@ -612,7 +603,7 @@ function FeedContent(props: PagerScrollViewProps) {
 
   const renderFeedItem = React.useCallback(
     ({ item }: { item: GetMyFeedResponse[number]; index: number }) => {
-      return <FeedCard key={item.id} feedItem={item} />
+      return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-4" />
     },
     []
   )
@@ -632,10 +623,11 @@ function FeedContent(props: PagerScrollViewProps) {
           <PeopleSuggestion />
         </>
       }
-      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} />}
+      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} className="mt-4 mx-4" />}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
       renderItem={renderFeedItem}
+      showsVerticalScrollIndicator={false}
     />
   )
 }
@@ -711,7 +703,7 @@ function FeedTopicContent(props: FeedTopicContentProps) {
 
   const renderFeedItem = React.useCallback(
     ({ item }: { item: GetMyFeedResponse[number]; index: number }) => {
-      return <FeedCard key={item.id} feedItem={item} />
+      return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-4" />
     },
     []
   )
@@ -725,69 +717,12 @@ function FeedTopicContent(props: FeedTopicContentProps) {
       className="flex-1"
       contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
       contentContainerStyle={{ paddingTop: headerHeight }}
-      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} />}
+      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} className="mt-4 mx-4" />}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
       renderItem={renderFeedItem}
       showsVerticalScrollIndicator={false}
     />
-  )
-}
-
-interface FeedRefreshControlProps {
-  headerHeight: number
-  onRefresh: () => void
-}
-// TODO: make RefreshControl appear on top of the header so that we dont need the headerHeight offset on Android
-function FeedRefreshControl({
-  headerHeight,
-  onRefresh: onRefreshProp,
-  ...rest
-}: FeedRefreshControlProps) {
-  const [refreshing, setRefreshing] = React.useState(false)
-  const onRefresh = React.useCallback(async () => {
-    setRefreshing(true)
-    await onRefreshProp()
-    setRefreshing(false)
-  }, [onRefreshProp])
-  return (
-    <RefreshControl
-      refreshing={refreshing}
-      onRefresh={onRefresh}
-      progressViewOffset={Platform.select({ ios: 0, android: headerHeight })}
-      colors={['#FF6A13']} // base-primary-default
-      {...rest} // make sure overridden styles (from RN) are passed down
-    />
-  )
-}
-
-interface FeedFooterProps {
-  queryResult: UseInfiniteQueryResult<InfiniteData<unknown[]>>
-}
-function FeedFooter({ queryResult }: FeedFooterProps) {
-  const minHeight = Dimensions.get('window').height
-  if (queryResult.hasNextPage || queryResult.isLoading || queryResult.error) {
-    return <FeedCardSkeleton />
-  }
-  if (
-    queryResult.data &&
-    queryResult.data.pages.length === 1 &&
-    queryResult.data.pages[0].length === 0
-  ) {
-    // Empty State
-    return (
-      <View style={{ minHeight }}>
-        <View className="flex flex-col items-center justify-center py-6">
-          <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีโพสต์</Text>
-        </View>
-      </View>
-    )
-  }
-  // Reach end of feed
-  return (
-    <View className="flex flex-col items-center justify-center py-6">
-      <Text className="text-base-text-medium font-anakotmai-medium">ไม่มีโพสต์เพิ่มเติม</Text>
-    </View>
   )
 }
 

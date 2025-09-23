@@ -5,6 +5,8 @@ import Elysia from 'elysia'
 import {
   FollowTopicParams,
   FollowTopicResponse,
+  GetTopicParams,
+  GetTopicResponse,
   GetTopicsResponse,
   ListTopicResponse,
   UnFollowTopicParams,
@@ -39,6 +41,30 @@ export const TopicController = new Elysia({
       detail: {
         summary: 'Get all topics',
         description: 'Get all topics entries',
+      },
+    }
+  )
+  .get(
+    '/:id',
+    async ({ topicService, status, params }) => {
+      const topic = await topicService.getTopicById(params.id)
+
+      if (topic.isErr()) {
+        return mapErrorCodeToResponse(topic.error, status)
+      }
+
+      return status(200, topic.value)
+    },
+    {
+      params: GetTopicParams,
+      response: {
+        200: GetTopicResponse,
+        ...createErrorSchema(InternalErrorCode.TOPIC_NOT_FOUND),
+        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+      detail: {
+        summary: 'Get topic by id',
+        description: 'Get topic details by id',
       },
     }
   )

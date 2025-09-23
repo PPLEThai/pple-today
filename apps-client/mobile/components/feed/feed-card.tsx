@@ -1,12 +1,5 @@
 import * as React from 'react'
-import {
-  GestureResponderEvent,
-  Platform,
-  PressableProps,
-  StyleSheet,
-  View,
-  ViewProps,
-} from 'react-native'
+import { GestureResponderEvent, Platform, PressableProps, StyleSheet, View } from 'react-native'
 import Animated, {
   interpolate,
   useAnimatedStyle,
@@ -68,7 +61,10 @@ import { AvatarPPLEFallback } from '../avatar-pple-fallback'
 
 type UserReaction = 'UP_VOTE' | 'DOWN_VOTE' | null
 
-export const FeedCard = React.memo(function FeedCard(props: { feedItem: FeedItem }) {
+export const FeedCard = React.memo(function FeedCard(props: {
+  feedItem: FeedItem
+  className?: string
+}) {
   const router = useRouter()
   const navigateToDetailPage = React.useCallback(() => {
     router.navigate(`/(feed)/${props.feedItem.id}`)
@@ -82,7 +78,12 @@ export const FeedCard = React.memo(function FeedCard(props: { feedItem: FeedItem
   )
   const feedContent = feedContentQuery.data as FeedItem
   return (
-    <View className="flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl overflow-hidden mt-4 mx-4">
+    <View
+      className={cn(
+        'flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl overflow-hidden',
+        props.className
+      )}
+    >
       <AnimatedBackgroundPressable
         className="px-4 pt-4 pb-3 flex flex-row items-center justify-between"
         onPress={navigateToDetailPage}
@@ -209,11 +210,13 @@ function PostCardContent(props: { feedItem: FeedItemPost }) {
   )
 }
 
-export const FeedCardSkeleton = (props: ViewProps) => {
+export const FeedCardSkeleton = ({ className }: { className?: string }) => {
   return (
     <View
-      className="flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl mt-4 mx-4"
-      {...props}
+      className={cn(
+        'flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl',
+        className
+      )}
     >
       <View className="px-4 pt-4 pb-3 flex flex-row items-center justify-between">
         <View className="flex flex-row items-center">
@@ -248,10 +251,10 @@ export const FeedCardSkeleton = (props: ViewProps) => {
 }
 
 function TextPost(props: TextProps) {
-  return <Text {...props} className="text-base-text-high font-noto-light text-base" />
+  return <Text {...props} className="text-base-text-high font-noto-light text-sm" />
 }
 function ButtonTextPost(props: TextProps) {
-  return <Text {...props} className="text-base-primary-default font-noto-light text-base" />
+  return <Text {...props} className="text-base-primary-default font-noto-light text-sm" />
 }
 
 interface FeedReaction {

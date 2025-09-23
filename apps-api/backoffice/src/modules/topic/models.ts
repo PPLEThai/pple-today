@@ -1,27 +1,31 @@
 import { HashTagStatus, TopicStatus } from '@pple-today/database/prisma'
-import { t } from 'elysia'
+import { Static, t } from 'elysia'
 
-export const GetTopicsResponse = t.Array(
-  t.Object({
-    id: t.String(),
-    name: t.String(),
-    description: t.Nullable(t.String()),
-    bannerImage: t.Nullable(t.String()),
-    status: t.Enum(TopicStatus),
-    createdAt: t.Date(),
-    updatedAt: t.Date(),
-    hashTags: t.Array(
-      t.Object({
-        id: t.String(),
-        name: t.String(),
-        status: t.Enum(HashTagStatus),
-        createdAt: t.Date(),
-        updatedAt: t.Date(),
-      })
-    ),
-  })
-)
-export type GetTopicsResponse = typeof GetTopicsResponse.static
+export const GetTopicResponse = t.Object({
+  id: t.String(),
+  name: t.String(),
+  description: t.Nullable(t.String()),
+  bannerImage: t.Nullable(t.String()),
+  status: t.Enum(TopicStatus),
+  createdAt: t.Date(),
+  updatedAt: t.Date(),
+  hashTags: t.Array(
+    t.Object({
+      id: t.String(),
+      name: t.String(),
+      status: t.Enum(HashTagStatus),
+      createdAt: t.Date(),
+      updatedAt: t.Date(),
+    })
+  ),
+})
+export type GetTopicResponse = Static<typeof GetTopicResponse>
+
+export const GetTopicParams = t.Object({ id: t.String() })
+export type GetTopicParams = Static<typeof GetTopicParams>
+
+export const GetTopicsResponse = t.Array(GetTopicResponse)
+export type GetTopicsResponse = Static<typeof GetTopicsResponse>
 
 export const ListTopicResponse = t.Array(
   t.Object({
@@ -30,7 +34,7 @@ export const ListTopicResponse = t.Array(
     followed: t.Boolean(),
   })
 )
-export type ListTopicResponse = typeof ListTopicResponse.static
+export type ListTopicResponse = Static<typeof ListTopicResponse>
 
 export const FollowTopicParams = t.Object({
   topicId: t.String(),

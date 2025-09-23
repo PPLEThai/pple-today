@@ -19,7 +19,7 @@ import { reactQueryClient } from '@app/libs/api-client'
 
 export default function FollowPage() {
   return (
-    <View className="flex-1 flex-col">
+    <View className="pt-safe flex-1 flex-col">
       <Header icon={Heart} title="จัดการเนื้อหาที่ติดตาม" />
       <ScrollView>
         <NumberFollowingSection />

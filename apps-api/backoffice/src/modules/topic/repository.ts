@@ -1,5 +1,6 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { HashTagStatus, TopicStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import { PrismaServicePlugin } from '../../plugins/prisma'
@@ -11,6 +12,15 @@ export class TopicRepository {
       this.prismaService.topic.findFirstOrThrow({
         where: {
           id: topicId,
+          status: HashTagStatus.PUBLISH,
+        },
+        include: {
+          hashTagInTopics: {
+            where: { hashTag: { status: HashTagStatus.PUBLISH } },
+            include: {
+              hashTag: true,
+            },
+          },
         },
       })
     )
@@ -19,8 +29,10 @@ export class TopicRepository {
   async getTopics() {
     return fromRepositoryPromise(
       this.prismaService.topic.findMany({
+        where: { status: TopicStatus.PUBLISH },
         include: {
           hashTagInTopics: {
+            where: { hashTag: { status: HashTagStatus.PUBLISH } },
             include: {
               hashTag: true,
             },

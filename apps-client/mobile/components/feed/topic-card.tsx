@@ -73,11 +73,14 @@ export function TopicCard(props: TopicCardProps) {
           </Text>
           {props.topic.hashtags.length > 0 && (
             <View className="flex flex-row gap-1 flex-wrap">
-              <Badge variant="outline" className="border-base-primary-default">
+              <Badge variant="outline" className="border-base-primary-default pointer-events-none">
                 <Text className="text-base-text-invert">{props.topic.hashtags[0].name}</Text>
               </Badge>
               {props.topic.hashtags.length > 1 && (
-                <Badge variant="outline" className="border-base-primary-default">
+                <Badge
+                  variant="outline"
+                  className="border-base-primary-default pointer-events-none"
+                >
                   <Text className="text-base-text-invert">
                     + {props.topic.hashtags.length - 1} แฮชแท็ก
                   </Text>
@@ -157,7 +160,7 @@ export function TopicSuggestion() {
           <Icon icon={MessageSquareHeartIcon} size={32} className="text-base-primary-default" />
           <H3 className="text-base-text-high font-anakotmai-medium text-2xl">หัวข้อน่าสนใจ</H3>
         </View>
-        <Link asChild href="/(feed)/topic-suggestion">
+        <Link asChild href="/(feed)/topic/suggestion">
           <Button variant="ghost">
             <Text>ดูทั้งหมด</Text>
             <Icon icon={ArrowRightIcon} />
