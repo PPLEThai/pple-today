@@ -35,11 +35,12 @@ export function FeedRefreshControl({
 
 interface FeedFooterProps {
   queryResult: UseInfiniteQueryResult<InfiniteData<unknown[]>>
+  className?: string
 }
-export function FeedFooter({ queryResult }: FeedFooterProps) {
+export function FeedFooter({ queryResult, className }: FeedFooterProps) {
   const minHeight = Dimensions.get('window').height
   if (queryResult.hasNextPage || queryResult.isLoading || queryResult.error) {
-    return <FeedCardSkeleton />
+    return <FeedCardSkeleton className={className} />
   }
   if (
     queryResult.data &&

@@ -1,12 +1,5 @@
 import * as React from 'react'
-import {
-  GestureResponderEvent,
-  Platform,
-  PressableProps,
-  StyleSheet,
-  View,
-  ViewProps,
-} from 'react-native'
+import { GestureResponderEvent, Platform, PressableProps, StyleSheet, View } from 'react-native'
 import Animated, {
   interpolate,
   useAnimatedStyle,
@@ -87,7 +80,7 @@ export const FeedCard = React.memo(function FeedCard(props: {
   return (
     <View
       className={cn(
-        'flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl overflow-hidden mt-4 mx-4',
+        'flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl overflow-hidden',
         props.className
       )}
     >
@@ -217,11 +210,13 @@ function PostCardContent(props: { feedItem: FeedItemPost }) {
   )
 }
 
-export const FeedCardSkeleton = (props: ViewProps) => {
+export const FeedCardSkeleton = ({ className }: { className?: string }) => {
   return (
     <View
-      className="flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl mt-4 mx-4"
-      {...props}
+      className={cn(
+        'flex flex-col bg-base-bg-white border border-base-outline-default rounded-2xl',
+        className
+      )}
     >
       <View className="px-4 pt-4 pb-3 flex flex-row items-center justify-between">
         <View className="flex flex-row items-center">

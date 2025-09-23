@@ -92,7 +92,7 @@ export default function TopicDetailPage() {
 
   const renderFeedItem = React.useCallback(
     ({ item }: { item: GetTopicFeedResponse[number]; index: number }) => {
-      return <FeedCard key={item.id} feedItem={item} className="mx-0" />
+      return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-3" />
     },
     []
   )
@@ -174,7 +174,7 @@ export default function TopicDetailPage() {
   const topic = topicQuery.data
 
   const ListHeaderComponent = (
-    <View className="flex flex-col gap-3">
+    <View className="flex flex-col gap-3 px-3">
       <View className="rounded-2xl border border-base-outline-default bg-base-bg-white flex flex-col gap-2 p-3">
         <View className="flex flex-row items-center gap-2">
           <Icon icon={InfoIcon} size={24} className="text-base-primary-default" />
@@ -280,11 +280,11 @@ export default function TopicDetailPage() {
       <Animated.FlatList
         onScroll={scrollHandler}
         data={data}
-        contentContainerClassName="bg-base-bg-default py-4 px-3"
+        contentContainerClassName="bg-base-bg-default py-4"
         contentContainerStyle={{ paddingTop: headerCollapsableHeight + 16 }}
         ListHeaderComponent={ListHeaderComponent}
         renderItem={renderFeedItem}
-        ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} />}
+        ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} className="mt-4 mx-3" />}
         onEndReached={onEndReached}
         onEndReachedThreshold={1}
         showsVerticalScrollIndicator={false}

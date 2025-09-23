@@ -607,7 +607,7 @@ function FeedContent(props: PagerScrollViewProps) {
 
   const renderFeedItem = React.useCallback(
     ({ item }: { item: GetMyFeedResponse[number]; index: number }) => {
-      return <FeedCard key={item.id} feedItem={item} />
+      return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-4" />
     },
     []
   )
@@ -627,7 +627,7 @@ function FeedContent(props: PagerScrollViewProps) {
           <PeopleSuggestion />
         </>
       }
-      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} />}
+      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} className="mt-4 mx-4" />}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
       renderItem={renderFeedItem}
@@ -707,7 +707,7 @@ function FeedTopicContent(props: FeedTopicContentProps) {
 
   const renderFeedItem = React.useCallback(
     ({ item }: { item: GetMyFeedResponse[number]; index: number }) => {
-      return <FeedCard key={item.id} feedItem={item} />
+      return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-4" />
     },
     []
   )
@@ -721,7 +721,7 @@ function FeedTopicContent(props: FeedTopicContentProps) {
       className="flex-1"
       contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
       contentContainerStyle={{ paddingTop: headerHeight }}
-      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} />}
+      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} className="mt-4 mx-4" />}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
       renderItem={renderFeedItem}

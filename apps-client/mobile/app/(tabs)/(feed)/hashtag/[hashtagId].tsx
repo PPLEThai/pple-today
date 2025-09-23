@@ -107,7 +107,7 @@ function HashtagFeed(props: { hashtagId: string; header?: React.ReactElement }) 
 
   const renderFeedItem = React.useCallback(
     ({ item }: { item: GetHashtagFeedResponse[number]; index: number }) => {
-      return <FeedCard key={item.id} feedItem={item} />
+      return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-4" />
     },
     []
   )
@@ -119,7 +119,7 @@ function HashtagFeed(props: { hashtagId: string; header?: React.ReactElement }) 
       contentContainerClassName="flex flex-col"
       ListHeaderComponent={props.header}
       // ListHeaderComponent={<AnnouncementSection />}
-      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} />}
+      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} className="mt-4 mx-4" />}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
       renderItem={renderFeedItem}
