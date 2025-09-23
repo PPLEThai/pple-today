@@ -28,7 +28,7 @@ export const ProfileController = new Elysia({
 })
   .use([AuthGuardPlugin, ProfileServicePlugin])
   .get(
-    '/suggestion',
+    '/recommend',
     async ({ user, profileService, status }) => {
       const result = await profileService.getUserRecommendation(user.id)
 

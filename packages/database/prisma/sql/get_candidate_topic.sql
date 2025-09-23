@@ -40,9 +40,11 @@ SELECT
   t."name",
   t."description",
   t."bannerImagePath",
-  ARRAY_AGG(htt."hashTagId") AS "hashTagIds"
+  json_agg(json_build_object('id', ht.id, 'name', ht.name)) AS "hashTags"
 FROM 
   final_candidate_score
   INNER JOIN "Topic" t ON final_candidate_score.topic_id = t.id
   INNER JOIN "HashTagInTopic" htt ON t.id = htt."topicId"
+  LEFT JOIN "HashTag" ht ON htt."hashTagId" = ht.id
+WHERE ht."status" = 'PUBLISH'
 GROUP BY t.id;
