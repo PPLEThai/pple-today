@@ -1,7 +1,7 @@
 import nativewindPreset from 'nativewind/preset'
 import { hairlineWidth, platformSelect } from 'nativewind/theme'
+import plugin from 'tailwindcss/plugin'
 import tailwindcssAnimation from 'tailwindcss-animate'
-
 /** @type {import('tailwindcss').Config} */
 export default {
   darkMode: 'class',
@@ -133,39 +133,41 @@ export default {
         'accordion-up': 'accordion-up 0.2s ease-out',
       },
       fontSize: {
-        // line height must be atleast 1.5 times font size otherwise thai font will be cut off
+        // height must be atleast 1.5 times font size otherwise thai font will be cut off
+        // https://github.com/facebook/react-native/issues/29507#issuecomment-665147452
+        // workaround for this make padding/margin top cannot be applied to text
         // default: https://github.com/tailwindlabs/tailwindcss/blob/ba55a445cd82eda384af91d8846c5fdb889fdfcd/stubs/config.full.js#L324
         xs: [
           '0.75rem', // 12px
-          { lineHeight: '1.125rem' }, // 18px
+          { lineHeight: '1rem', marginTop: '-0.125rem', paddingTop: '0.125rem' }, // 16, 18px
         ],
         sm: [
           '0.875rem', // 14px
-          { lineHeight: '1.375rem' }, // 22px
+          { lineHeight: '1.25rem', marginTop: '-0.125rem', paddingTop: '0.125rem' }, // 20, 22px
         ],
         base: [
           '1rem', // 16px
-          { lineHeight: '1.5rem' }, // 24px
+          { lineHeight: '1.5rem', marginTop: '0', paddingTop: '0' }, // 24px
         ],
         lg: [
           '1.125rem', // 18px
-          { lineHeight: '1.75rem' }, // 28px
+          { lineHeight: '1.75rem', marginTop: '0', paddingTop: '0' }, // 28px
         ],
         xl: [
           '1.25rem', // 20px
-          { lineHeight: '2rem' }, // 32px
+          { lineHeight: '1.75rem', marginTop: '-0.25rem', paddingTop: '0.25rem' }, // 28, 32px
         ],
         '2xl': [
           '1.5rem', // 24px
-          { lineHeight: '2.25rem' }, // 36px
+          { lineHeight: '2rem', marginTop: '-0.25rem', paddingTop: '0.25rem' }, // 32, 36px
         ],
         '3xl': [
           '1.875rem', // 30px
-          { lineHeight: '3rem' }, // 48px
+          { lineHeight: '2.25rem', marginTop: '-0.75rem', paddingTop: '0.75rem' }, // 36, 48px
         ],
         '4xl': [
           '2.25rem', // 36px
-          { lineHeight: '3.5rem' }, // 54px
+          { lineHeight: '2.5rem', marginTop: '-0.875rem', paddingTop: '0.875rem' }, // 40, 54px
         ],
       },
       fontFamily: {
@@ -217,5 +219,61 @@ export default {
       },
     },
   },
-  plugins: [tailwindcssAnimation],
+  plugins: [
+    tailwindcssAnimation,
+    // https://github.com/tailwindlabs/tailwindcss/blob/ba55a445cd82eda384af91d8846c5fdb889fdfcd/src/corePlugins.js#L2105
+    plugin(({ matchUtilities, theme }) => {
+      matchUtilities(
+        {
+          text: (value, { modifier }) => {
+            let [fontSize, options] = Array.isArray(value) ? value : [value]
+
+            if (modifier) {
+              return {
+                'font-size': fontSize,
+                'line-height': modifier,
+              }
+            }
+
+            let { lineHeight, letterSpacing, fontWeight, marginTop, paddingTop } = isPlainObject(
+              options
+            )
+              ? options
+              : { lineHeight: options }
+
+            return {
+              'font-size': fontSize,
+              ...(lineHeight === undefined ? {} : { 'line-height': lineHeight }),
+              ...(letterSpacing === undefined ? {} : { 'letter-spacing': letterSpacing }),
+              ...(fontWeight === undefined ? {} : { 'font-weight': fontWeight }),
+              ...(marginTop === undefined ? {} : { 'margin-top': marginTop }),
+              ...(paddingTop === undefined ? {} : { 'padding-top': paddingTop }),
+            }
+          },
+        },
+        {
+          values: theme('fontSize'),
+          modifiers: theme('lineHeight'),
+          type: ['absolute-size', 'relative-size', 'length', 'percentage'],
+        }
+      )
+    }),
+  ],
 }
+// https://github.com/tailwindlabs/tailwindcss/blob/c6e0a55d3681c854328b5b7e08324353ba5e0430/packages/tailwindcss/src/compat/config/deep-merge.ts#L1
+function isPlainObject(value) {
+  if (Object.prototype.toString.call(value) !== '[object Object]') {
+    return false
+  }
+
+  const prototype = Object.getPrototypeOf(value)
+  return prototype === null || Object.getPrototypeOf(prototype) === null
+}
+// function isPlainObject<T>(value: T): value is T & Record<keyof T, unknown> {
+//   if (Object.prototype.toString.call(value) !== '[object Object]') {
+//     return false
+//   }
+
+//   const prototype = Object.getPrototypeOf(value)
+//   return prototype === null || Object.getPrototypeOf(prototype) === null
+// }

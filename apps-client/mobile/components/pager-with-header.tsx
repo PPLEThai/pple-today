@@ -620,22 +620,24 @@ export function PagerTabBarItem({
   }
   return (
     <Pressable
-      className="h-10"
+      className="h-10 pt-2 pb-2.5 px-4"
       accessibilityRole="tab"
       onLayout={handleLayout}
       onPress={handlePress}
       {...props}
     >
-      <Text className="px-4 pt-2 pb-2.5 text-sm font-heading-semibold relative text-base-text-placeholder">
-        {children}
-      </Text>
-      <Animated.Text
-        style={activeStyle}
-        className="px-4 pt-2 pb-2.5 text-sm font-heading-semibold text-base-primary-default absolute left-0 top-0 bottom-0 right-0"
-        aria-hidden
-      >
-        {children}
-      </Animated.Text>
+      <View>
+        <Text className="text-sm font-heading-semibold relative text-base-text-placeholder">
+          {children}
+        </Text>
+        <Animated.Text
+          style={activeStyle}
+          className="text-sm font-heading-semibold text-base-primary-default absolute left-0 top-0 bottom-0 right-0"
+          aria-hidden
+        >
+          {children}
+        </Animated.Text>
+      </View>
     </Pressable>
   )
 }

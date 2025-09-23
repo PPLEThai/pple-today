@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Platform, Pressable, ScrollView, TextProps, View } from 'react-native'
+import { Platform, Pressable, ScrollView, Text as RNText, TextProps, View } from 'react-native'
 import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import ImageView from 'react-native-image-viewing'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -82,6 +82,21 @@ export function Playground() {
         <View className="flex flex-col gap-2">
           <H2 className="font-inter-bold">Typography</H2>
           <View className="flex flex-col gap-1">
+            <View className="flex flex-row gap-2 items-center">
+              <RNText
+                style={{
+                  fontFamily: 'NotoSansThai_400Regular',
+                  fontSize: 24,
+                  backgroundColor: '#f0f',
+                  lineHeight: 32,
+                  paddingTop: 4,
+                  marginTop: -4,
+                }}
+              >
+                4xl-Heading ไม่รู้ไม่ชี้
+              </RNText>
+              <Icon icon={InfoIcon} size={32} />
+            </View>
             <Text className="font-heading-semibold text-4xl">4xl-Heading ไม่รู้ไม่ชี้</Text>
             <Text className="font-heading-semibold text-3xl">3xl-Heading ไม่รู้ไม่ชี้</Text>
             <Text className="font-heading-semibold text-2xl">2xl-Heading ไม่รู้ไม่ชี้</Text>
