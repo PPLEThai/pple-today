@@ -94,7 +94,7 @@ export function PeopleSuggestion() {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerClassName="gap-4 px-4"
+        contentContainerClassName="gap-2 px-4"
       >
         {Array.from({ length: 5 }).map((_, i) => (
           <PeopleCard

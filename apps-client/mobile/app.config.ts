@@ -1,3 +1,5 @@
+import 'tsx/cjs'
+
 import { version } from './package.json'
 
 // TODO: update config when production release https://docs.expo.dev/versions/latest/config/app/
@@ -100,6 +102,7 @@ export default {
           photosPermission: 'The app accesses your photos to let you set up your profile image.',
         },
       ],
+      ['./plugins/withAndroidPlugin'],
     ],
     experiments: {
       typedRoutes: true,

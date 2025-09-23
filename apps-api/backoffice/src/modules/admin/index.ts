@@ -2,6 +2,7 @@ import Elysia from 'elysia'
 
 import { AdminAnnouncementsController } from './announcements'
 import { AdminBannerController } from './banner'
+import { AdminElectionController } from './election'
 import { AdminFileController } from './file'
 import { AdminHashtagController } from './hashtag'
 import { AdminPollsController } from './poll'
@@ -16,3 +17,4 @@ export const AdminController = new Elysia({
   .use(AdminAnnouncementsController)
   .use(AdminHashtagController)
   .use(AdminTopicController)
+  .use(AdminElectionController)

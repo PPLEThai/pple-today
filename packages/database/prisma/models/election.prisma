@@ -54,7 +54,7 @@ model ElectionCandidate {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    election Election @relation(fields: [electionId], references: [id])
+    election Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
 
     results ElectionResult[]
 
@@ -69,8 +69,8 @@ model ElectionEligibleVoter {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    election Election @relation(fields: [electionId], references: [id])
-    user     User     @relation(fields: [userId], references: [id])
+    election Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+    user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@id([electionId, userId])
     @@index(userId)
@@ -85,9 +85,9 @@ model ElectionVoteRecord {
     createdAt     DateTime @default(now())
     updatedAt     DateTime @updatedAt
 
-    election Election        @relation(fields: [electionId], references: [id])
-    user     User            @relation(fields: [userId], references: [id])
-    ballot   ElectionBallot? @relation(fields: [ballotId], references: [id])
+    election Election        @relation(fields: [electionId], references: [id], onDelete: Cascade)
+    user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    ballot   ElectionBallot? @relation(fields: [ballotId], references: [id], onDelete: SetNull)
 
     @@id([electionId, userId])
     @@index(userId)
@@ -100,7 +100,7 @@ model ElectionBallot {
     createdAt       DateTime @default(now())
     updatedAt       DateTime @updatedAt
 
-    election   Election            @relation(fields: [electionId], references: [id])
+    election   Election            @relation(fields: [electionId], references: [id], onDelete: Cascade)
     voteRecord ElectionVoteRecord?
 
     @@index(electionId)
@@ -115,7 +115,7 @@ model ElectionResult {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    candidate ElectionCandidate @relation(fields: [candidateId], references: [id])
+    candidate ElectionCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 
     @@unique([candidateId, type])
 }
