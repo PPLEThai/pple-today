@@ -17,7 +17,7 @@ BEGIN
         FROM current_follows_topic AS uft0
         INNER JOIN "UserFollowsTopic" AS uft1 ON uft0."topicId" = uft1."topicId"
         WHERE uft1."userId" != _id
-      )
+      ),
       one_hop_user_follows AS (
         SELECT
           uft2."topicId",
