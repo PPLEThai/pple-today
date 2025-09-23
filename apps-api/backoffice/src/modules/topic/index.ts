@@ -63,8 +63,8 @@ export const TopicController = new Elysia({
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
       },
       detail: {
-        summary: 'Get all topics',
-        description: 'Get all topics entries',
+        summary: 'Get topic by id',
+        description: 'Get topic details by id',
       },
     }
   )
