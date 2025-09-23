@@ -429,8 +429,7 @@ export function PagerTabBar({ children }: { children: React.ReactNode }) {
       horizontal
       ref={tabBarScrollElRef}
       showsHorizontalScrollIndicator={false}
-      className="bg-base-bg-white w-full"
-      contentContainerClassName="border-b border-base-outline-default"
+      className="bg-base-bg-white w-full border-b border-base-outline-default"
       contentContainerStyle={{ paddingHorizontal: PADDING_X }}
       onLayout={(evt) => {
         const height = evt.nativeEvent.layout.height
