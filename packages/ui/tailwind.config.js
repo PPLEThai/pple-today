@@ -247,11 +247,3 @@ function isPlainObject(value) {
   const prototype = Object.getPrototypeOf(value)
   return prototype === null || Object.getPrototypeOf(prototype) === null
 }
-// function isPlainObject<T>(value: T): value is T & Record<keyof T, unknown> {
-//   if (Object.prototype.toString.call(value) !== '[object Object]') {
-//     return false
-//   }
-
-//   const prototype = Object.getPrototypeOf(value)
-//   return prototype === null || Object.getPrototypeOf(prototype) === null
-// }
