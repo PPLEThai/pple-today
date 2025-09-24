@@ -92,30 +92,27 @@ export function Playground() {
                   marginTop: -4,
                 }}
                 className="bg-red-100/50"
-                onLayout={(e) => console.log(e.nativeEvent.layout.height)}
+                // onLayout={(e) => console.log(e.nativeEvent.layout.height)}
               >
                 ไม่รู้ไม่ชี้
               </RNText>
               <Icon icon={InfoIcon} size={32} className="bg-red-100/50" />
             </View>
 
-            <Text className="font-heading-semibold text-4xl">4xl-Heading ไม่รู้ไม่ชี้</Text>
-            <Text className="font-heading-semibold text-3xl">3xl-Heading ไม่รู้ไม่ชี้</Text>
-            <Text className="font-heading-semibold text-2xl">2xl-Heading ไม่รู้ไม่ชี้</Text>
-            <Text className="font-heading-semibold text-xl">xl-Heading ไม่รู้ไม่ชี้</Text>
-            <Text className="font-heading-semibold text-lg">lg-Heading ไม่รู้ไม่ชี้</Text>
-            <Text className="font-heading-semibold text-base">base-Heading ไม่รู้ไม่ชี้</Text>
-            <Text className="font-heading-semibold text-sm">sm-Heading ไม่รู้ไม่ชี้</Text>
-            <Text className="font-heading-semibold text-xs">xs-Heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-4xl">4xl-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-3xl">3xl-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-2xl">2xl-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-xl">xl-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-lg">lg-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-base">base-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-sm">sm-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-xs">xs-heading ไม่รู้ไม่ชี้</Text>
 
-            <Text className="font-body-light text-4xl">4xl-Body ไม่รู้ไม่ชี้</Text>
-            <Text className="font-body-light text-3xl">3xl-Body ไม่รู้ไม่ชี้</Text>
-            <Text className="font-body-light text-2xl">2xl-Body ไม่รู้ไม่ชี้</Text>
-            <Text className="font-body-light text-xl">xl-Body ไม่รู้ไม่ชี้</Text>
-            <Text className="font-body-light text-lg">lg-Body ไม่รู้ไม่ชี้</Text>
-            <Text className="font-body-light text-base">base-Body ไม่รู้ไม่ชี้</Text>
-            <Text className="font-body-light text-sm">sm-Body ไม่รู้ไม่ชี้</Text>
-            <Text className="font-body-light text-xs">xs-Body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-xl">xl-body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-lg">lg-body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-base">base-body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-sm">sm-body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-xs">xs-body ไม่รู้ไม่ชี้</Text>
           </View>
         </View>
         <View className="flex flex-col gap-2">
