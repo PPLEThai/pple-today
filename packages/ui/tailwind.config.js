@@ -135,7 +135,8 @@ export default {
       fontSize: {
         // height must be atleast 1.5 times font size otherwise thai font will be cut off
         // https://github.com/facebook/react-native/issues/29507#issuecomment-665147452
-        // workaround for this make padding/margin top cannot be applied to text
+        // workaround for this is to add padding/margin top
+        // but a catch is that we cant directly apply margin/padding top to Text component
         // default: https://github.com/tailwindlabs/tailwindcss/blob/ba55a445cd82eda384af91d8846c5fdb889fdfcd/stubs/config.full.js#L324
         xs: [
           '0.75rem', // 12px
@@ -147,11 +148,11 @@ export default {
         ],
         base: [
           '1rem', // 16px
-          { lineHeight: '1.5rem', marginTop: '0', paddingTop: '0' }, // 24px
+          { lineHeight: '1.5rem' }, // 24px
         ],
         lg: [
           '1.125rem', // 18px
-          { lineHeight: '1.75rem', marginTop: '0', paddingTop: '0' }, // 28px
+          { lineHeight: '1.75rem' }, // 28px
         ],
         xl: [
           '1.25rem', // 20px
@@ -201,20 +202,15 @@ export default {
           ios: 'NotoSansThai-Bold',
           default: ['NotoSansThai-Bold', 'sans-serif'],
         }),
-        'body-regular': platformSelect({
-          android: 'NotoSansThaiLooped_400Regular',
-          ios: 'NotoSansThaiLooped-Regular',
-          default: ['NotoSansThaiLooped-Regular', 'sans-serif'],
+        'body-light': platformSelect({
+          android: 'NotoSansThaiLooped_300Light',
+          ios: 'NotoSansThaiLooped-Light',
+          default: ['NotoSansThaiLooped-Light', 'sans-serif'],
         }),
-        'body-semibold': platformSelect({
-          android: 'NotoSansThaiLooped_600SemiBold',
-          ios: 'NotoSansThaiLooped-SemiBold',
-          default: ['NotoSansThaiLooped-SemiBold', 'sans-serif'],
-        }),
-        'body-bold': platformSelect({
-          android: 'NotoSansThaiLooped_700Bold',
-          ios: 'NotoSansThaiLooped-Bold',
-          default: ['NotoSansThaiLooped-Bold', 'sans-serif'],
+        'body-medium': platformSelect({
+          android: 'NotoSansThaiLooped_500Medium',
+          ios: 'NotoSansThaiLooped-Medium',
+          default: ['NotoSansThaiLooped-Medium', 'sans-serif'],
         }),
       },
     },

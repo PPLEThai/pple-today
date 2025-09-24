@@ -74,7 +74,7 @@ function P({ className, asChild = false, ...props }: TypographyProps) {
   const Component = asChild ? Slot.Text : RNText
   return (
     <Component
-      className={cn('text-base text-foreground web:select-text font-body-semibold', className)}
+      className={cn('text-base text-foreground web:select-text font-body-medium', className)}
       {...props}
     />
   )
@@ -87,7 +87,7 @@ function BlockQuote({ className, asChild = false, ...props }: TypographyProps) {
       // @ts-expect-error - role of blockquote renders blockquote element on the web
       role={Platform.OS === 'web' ? 'blockquote' : undefined}
       className={cn(
-        'mt-6 native:mt-4 border-l-2 border-border pl-6 native:pl-3 text-base text-foreground italic web:select-text font-body-semibold',
+        'mt-6 native:mt-4 border-l-2 border-border pl-6 native:pl-3 text-base text-foreground italic web:select-text font-body-medium',
         className
       )}
       {...props}

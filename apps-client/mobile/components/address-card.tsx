@@ -27,12 +27,12 @@ export function AddressCard({
         </View>
         <View className="pb-2">
           <View>
-            <Text className="font-body-regular line-clamp-1">
+            <Text className="font-body-light line-clamp-1">
               {address.province === 'กรุงเทพมหานคร' ? 'แขวง' : 'ต.'}
               {address.subDistrict} {address.province === 'กรุงเทพมหานคร' ? 'เขต' : 'อ.'}
               {address.district}
             </Text>
-            <Text className="font-body-regular line-clamp-1">
+            <Text className="font-body-light line-clamp-1">
               จ.{address.province} {address.postalCode}
             </Text>
           </View>

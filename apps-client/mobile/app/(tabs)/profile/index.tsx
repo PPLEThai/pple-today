@@ -294,9 +294,9 @@ const PointSection = () => {
       <View className="flex flex-col">
         <View className="flex flex-row gap-1 items-center">
           <PPLEIcon width={16} height={16} color="white" />
-          <H2 className="text-base-text-invert text-sm h-5 font-heading-bold">PPLE Points</H2>
+          <H2 className="text-base-text-invert text-sm font-heading-bold">PPLE Points</H2>
         </View>
-        <Text className="text-base-text-invert text-3xl font-heading-bold">
+        <Text className="text-base-text-invert text-3xl font-heading-bold h-9">
           {profileQuery.data ? profileQuery.data.point.toLocaleString() : ''}
         </Text>
       </View>

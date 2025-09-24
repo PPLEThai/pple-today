@@ -220,18 +220,14 @@ const InformationSection = () => {
                             strokeWidth={1}
                             className="text-base-primary-default"
                           />
-                          <Text className="text-base-text-high font-body-semibold">
-                            สำนักงานใหญ่
-                          </Text>
+                          <Text className="text-base-text-high font-body-medium">สำนักงานใหญ่</Text>
                         </View>
                         <View className="gap-0.5">
-                          <Text className="font-body-regular">
-                            เลขที่ 167 อาคารอนาคตใหม่ ชั้น 4
-                          </Text>
-                          <Text className="font-body-regular">
+                          <Text className="font-body-light">เลขที่ 167 อาคารอนาคตใหม่ ชั้น 4</Text>
+                          <Text className="font-body-light">
                             รามคำแหง 42 แขวงหัวหมาก เขต บางกะปิ
                           </Text>
-                          <Text className="font-body-regular">กรุงเทพมหานคร 10240</Text>
+                          <Text className="font-body-light">กรุงเทพมหานคร 10240</Text>
                         </View>
                       </View>
                       <View className="gap-2">
@@ -242,12 +238,12 @@ const InformationSection = () => {
                             strokeWidth={1}
                             className="text-base-primary-default"
                           />
-                          <Text className="text-base-text-high font-body-semibold">เบอร์โทร</Text>
+                          <Text className="text-base-text-high font-body-medium">เบอร์โทร</Text>
                         </View>
-                        <Text className="font-body-regular items-baseline">
+                        <Text className="font-body-light items-baseline">
                           <Text
                             onPress={() => Linking.openURL('tel:028215874')}
-                            className="underline font-body-regular"
+                            className="underline font-body-light"
                           >
                             02-821-5874
                           </Text>{' '}
@@ -262,22 +258,20 @@ const InformationSection = () => {
                             strokeWidth={1}
                             className="text-base-primary-default"
                           />
-                          <Text className="text-base-text-high font-body-semibold">อีเมล</Text>
+                          <Text className="text-base-text-high font-body-medium">อีเมล</Text>
                         </View>
                         <View className="gap-0.5 mb-10">
                           <Text
-                            className="font-body-regular underline"
+                            className="font-body-light underline"
                             onPress={() =>
                               Linking.openURL('mailto:office@peoplespartythailand.org')
                             }
                           >
                             office@peoplespartythailand.org
                           </Text>
-                          <Text className="font-body-regular">PeoplesPartyThailand</Text>
-                          <Text className="font-body-regular">@PPLEThailand</Text>
-                          <Text className="font-body-regular">
-                            พรรคประชาชน - People&apos;s Party
-                          </Text>
+                          <Text className="font-body-light">PeoplesPartyThailand</Text>
+                          <Text className="font-body-light">@PPLEThailand</Text>
+                          <Text className="font-body-light">พรรคประชาชน - People&apos;s Party</Text>
                         </View>
                       </View>
                     </View>

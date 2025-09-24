@@ -134,7 +134,7 @@ function FeedComment({ item }: { item: GetFeedCommentResponse[number] }) {
               <Icon icon={EyeOffIcon} size={16} className="text-base-secondary-light" />
             )}
           </View>
-          <Text className="font-body-regular text-base-text-high text-sm">{item.content}</Text>
+          <Text className="font-body-light text-base-text-high text-sm">{item.content}</Text>
         </View>
         <Text className="font-heading-regular text-base-text-medium text-xs">
           {formatDateInterval(item.createdAt.toString())}

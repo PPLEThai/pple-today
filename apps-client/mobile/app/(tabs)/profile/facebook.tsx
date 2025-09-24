@@ -170,7 +170,7 @@ const FacebookPageRadioItem = React.memo(function FacebookRadioItem({
         <AvatarPPLEFallback />
       </Avatar>
       <View className="flex flex-col">
-        <Text className="text-sm text-base-text-high font-body-semibold">{props.name}</Text>
+        <Text className="text-sm text-base-text-high font-body-medium">{props.name}</Text>
         {!props.available && (
           <Text className="text-sm text-base-text-medium font-heading-regular">
             เพจนี้ได้มีการเชื่อมต่อกับ PPLE Today แล้ว

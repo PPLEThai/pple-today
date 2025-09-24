@@ -74,29 +74,31 @@ export function Playground() {
             <Text className="font-heading-regular">Heading</Text>
             <Text className="font-heading-semibold">Heading</Text>
             <Text className="font-heading-bold">Heading</Text>
-            <Text className="font-body-regular">Body</Text>
-            <Text className="font-body-semibold">Body</Text>
-            <Text className="font-body-bold">Body</Text>
+            <Text className="font-body-light">Body</Text>
+            <Text className="font-body-medium">Body</Text>
           </View>
         </View>
         <View className="flex flex-col gap-2">
           <H2 className="font-inter-bold">Typography</H2>
           <View className="flex flex-col gap-1">
-            <View className="flex flex-row gap-2 items-center">
+            <View className="flex flex-row gap-2 items-center my-4 bg-blue-50 self-start">
               <RNText
                 style={{
                   fontFamily: 'NotoSansThai_400Regular',
                   fontSize: 24,
-                  backgroundColor: '#f0f',
+                  // comment lineHeight and marginTop/paddingTop to see original sizing
                   lineHeight: 32,
                   paddingTop: 4,
                   marginTop: -4,
                 }}
+                className="bg-red-100/50"
+                onLayout={(e) => console.log(e.nativeEvent.layout.height)}
               >
-                4xl-Heading ไม่รู้ไม่ชี้
+                ไม่รู้ไม่ชี้
               </RNText>
-              <Icon icon={InfoIcon} size={32} />
+              <Icon icon={InfoIcon} size={32} className="bg-red-100/50" />
             </View>
+
             <Text className="font-heading-semibold text-4xl">4xl-Heading ไม่รู้ไม่ชี้</Text>
             <Text className="font-heading-semibold text-3xl">3xl-Heading ไม่รู้ไม่ชี้</Text>
             <Text className="font-heading-semibold text-2xl">2xl-Heading ไม่รู้ไม่ชี้</Text>
@@ -106,14 +108,14 @@ export function Playground() {
             <Text className="font-heading-semibold text-sm">sm-Heading ไม่รู้ไม่ชี้</Text>
             <Text className="font-heading-semibold text-xs">xs-Heading ไม่รู้ไม่ชี้</Text>
 
-            <Text className="font-body-regular text-4xl">4xl-Body ไม่รู้ไม่ชี้</Text>
-            <Text className="font-body-regular text-3xl">3xl-Body ไม่รู้ไม่ชี้</Text>
-            <Text className="font-body-regular text-2xl">2xl-Body ไม่รู้ไม่ชี้</Text>
-            <Text className="font-body-regular text-xl">xl-Body ไม่รู้ไม่ชี้</Text>
-            <Text className="font-body-regular text-lg">lg-Body ไม่รู้ไม่ชี้</Text>
-            <Text className="font-body-regular text-base">base-Body ไม่รู้ไม่ชี้</Text>
-            <Text className="font-body-regular text-sm">sm-Body ไม่รู้ไม่ชี้</Text>
-            <Text className="font-body-regular text-xs">xs-Body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-4xl">4xl-Body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-3xl">3xl-Body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-2xl">2xl-Body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-xl">xl-Body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-lg">lg-Body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-base">base-Body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-sm">sm-Body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-xs">xs-Body ไม่รู้ไม่ชี้</Text>
           </View>
         </View>
         <View className="flex flex-col gap-2">
@@ -562,10 +564,10 @@ function MoreOrLessExample() {
 }
 
 function TextPost(props: TextProps) {
-  return <Text {...props} className="text-base-text-high font-body-regular text-base" />
+  return <Text {...props} className="text-base-text-high font-body-light text-base" />
 }
 function ButtonTextPost(props: TextProps) {
-  return <Text {...props} className="text-base-primary-default font-body-regular text-base" />
+  return <Text {...props} className="text-base-primary-default font-body-light text-base" />
 }
 
 const images = [require('@app/assets/post-1.png'), require('@app/assets/banner-2.png')]

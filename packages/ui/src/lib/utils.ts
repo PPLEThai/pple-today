@@ -5,8 +5,8 @@ export const cn = extendTailwindMerge({
   extend: {
     classGroups: {
       'font-family': [
-        'font-body-regular',
-        'font-body-semibold',
+        'font-body-light',
+        'font-body-medium',
         'font-body-bold',
         'font-heading-regular',
         'font-heading-semibold',

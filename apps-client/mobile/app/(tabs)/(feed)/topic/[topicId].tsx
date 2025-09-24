@@ -180,9 +180,7 @@ export default function TopicDetailPage() {
           <Icon icon={InfoIcon} size={24} className="text-base-primary-default" />
           <H2 className="text-base text-base-text-high font-heading-semibold">เกี่ยวกับหัวข้อ</H2>
         </View>
-        <Text className="text-sm text-base-text-medium font-body-semibold">
-          {topic.description}
-        </Text>
+        <Text className="text-sm text-base-text-medium font-body-medium">{topic.description}</Text>
       </View>
       {topic.hashTags.length > 0 && (
         <View className="rounded-2xl border border-base-outline-default bg-base-bg-white flex flex-col gap-2 p-3">

@@ -12,9 +12,8 @@ import {
   NotoSansThai_700Bold,
 } from '@expo-google-fonts/noto-sans-thai'
 import {
-  NotoSansThaiLooped_400Regular,
-  NotoSansThaiLooped_600SemiBold,
-  NotoSansThaiLooped_700Bold,
+  NotoSansThaiLooped_300Light,
+  NotoSansThaiLooped_500Medium,
 } from '@expo-google-fonts/noto-sans-thai-looped'
 import { BottomSheetModalProvider } from '@pple-today/ui/bottom-sheet/index'
 import { NAV_THEME } from '@pple-today/ui/lib/constants'
@@ -102,12 +101,8 @@ function FontProvider({ children }: { children: React.ReactNode }) {
     NotoSansThai_400Regular,
     NotoSansThai_600SemiBold,
     NotoSansThai_700Bold,
-    NotoSansThaiLooped_400Regular,
-    NotoSansThaiLooped_600SemiBold,
-    NotoSansThaiLooped_700Bold,
-    // Anakotmai_300Light: require('../assets/fonts/Anakotmai-Light.otf'),
-    // Anakotmai_500Medium: require('../assets/fonts/Anakotmai-Medium.otf'),
-    // Anakotmai_700Bold: require('../assets/fonts/Anakotmai-Bold.otf'),
+    NotoSansThaiLooped_300Light,
+    NotoSansThaiLooped_500Medium,
   })
   React.useEffect(() => {
     if (fontLoaded || fontError) {

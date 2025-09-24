@@ -251,10 +251,10 @@ export const FeedCardSkeleton = ({ className }: { className?: string }) => {
 }
 
 function TextPost(props: TextProps) {
-  return <Text {...props} className="text-base-text-high font-body-regular text-sm" />
+  return <Text {...props} className="text-base-text-high font-body-light text-sm" />
 }
 function ButtonTextPost(props: TextProps) {
-  return <Text {...props} className="text-base-primary-default font-body-regular text-sm" />
+  return <Text {...props} className="text-base-primary-default font-body-light text-sm" />
 }
 
 interface FeedReaction {
@@ -974,7 +974,7 @@ const AnnouncementDetailContent = (props: { feedItem: FeedItemAnnouncement }) =>
       <H1 className="text-lg font-heading-semibold text-base-text-high">
         {props.feedItem.announcement.title}
       </H1>
-      <Text className="text-base font-body-regular text-base-text-high">
+      <Text className="text-base font-body-light text-base-text-high">
         {props.feedItem.announcement.content}
       </Text>
       {props.feedItem.announcement.attachments?.map((url) => (
