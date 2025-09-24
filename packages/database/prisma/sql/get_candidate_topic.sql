@@ -32,20 +32,11 @@ WITH
       (candidate_topic.score::DOUBLE PRECISION + RANDOM() / 10) AS score
     FROM 
       candidate_topic
-    ORDER BY score DESC
-    LIMIT 10
   )
 
 SELECT
-  t."id",
-  t."name",
-  t."description",
-  t."bannerImagePath",
-  ht."id" AS "hashTagId",
-  ht."name" AS "hashTagName"
+  final_candidate_score."topic_id"
 FROM 
   final_candidate_score
-  INNER JOIN "Topic" t ON final_candidate_score.topic_id = t.id
-  LEFT JOIN "HashTagInTopic" htt ON t.id = htt."topicId"
-  LEFT JOIN "HashTag" ht ON htt."hashTagId" = ht.id
-WHERE ht."status" = 'PUBLISH' OR ht."status" IS NULL;
+ORDER BY final_candidate_score."score"
+LIMIT 10;

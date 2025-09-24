@@ -12,34 +12,44 @@ export class TopicRepository {
 
   async getTopicRecommendation(userId: string) {
     return fromRepositoryPromise(async () => {
-      const candidateTopic = await this.prismaService.$queryRawTyped(get_candidate_topic(userId))
+      const candidateTopicIds = await this.prismaService.$queryRawTyped(get_candidate_topic(userId))
 
-      return R.pipe(
-        candidateTopic,
-        R.groupBy((ct) => ct.id),
-        R.values(),
-        R.map((grouped) => {
-          const { id, name, description, bannerImagePath } = grouped[0]
-          return {
-            id,
-            name,
-            description,
-            bannerImagePath,
-            hashTags: R.pipe(
-              grouped,
-              R.map(
-                (ct) =>
-                  ct.hashTagId &&
-                  ct.hashTagName && {
-                    id: ct.hashTagId,
-                    name: ct.hashTagName,
-                  }
-              ),
-              R.filter((ht) => !!ht)
+      const candidateTopic = await this.prismaService.topic.findMany({
+        where: {
+          id: {
+            in: R.pipe(
+              candidateTopicIds,
+              R.map(R.prop('topic_id')),
+              R.filter((id) => id !== null)
             ),
-          }
-        })
-      )
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          bannerImagePath: true,
+          hashTagInTopics: {
+            where: { hashTag: { status: HashTagStatus.PUBLISH } },
+            include: {
+              hashTag: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      })
+
+      return candidateTopic.map((topic) => ({
+        ...topic,
+        hashTags: topic.hashTagInTopics.map((htt) => ({
+          id: htt.hashTag.id,
+          name: htt.hashTag.name,
+        })),
+      }))
     })
   }
 
