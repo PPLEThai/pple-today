@@ -14,7 +14,16 @@ export default function PeopleSuggestion() {
   const userSuggestionQuery = reactQueryClient.useQuery(
     '/profile/recommend',
     {},
-    { enabled: !!session }
+    {
+      enabled: !!session,
+      select: (data) => {
+        // add a placeholder item if the length is odd to make the grid even
+        if (data.length % 2 === 1) {
+          return [...data, { id: null }]
+        }
+        return data
+      },
+    }
   )
   const router = useRouter()
   useEffect(() => {
@@ -34,7 +43,12 @@ export default function PeopleSuggestion() {
         showsVerticalScrollIndicator={false}
         data={userSuggestionQuery.data ?? []}
         numColumns={2}
-        renderItem={({ item }) => <UserCard user={item} className="flex-1 mx-1" />}
+        renderItem={({ item }) => {
+          if (item.id === null) {
+            return <View className="flex-1 mx-1" />
+          }
+          return <UserCard user={item} className="flex-1 mx-1" />
+        }}
       />
     </View>
   )
