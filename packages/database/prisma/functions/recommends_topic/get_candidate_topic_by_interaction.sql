@@ -1,6 +1,6 @@
 CREATE OR REPLACE FUNCTION public.get_candidate_topic_by_interaction(_id text)
-  RETURNS TABLE(topic_id text, score numeric)
-  LANGUAGE plpgsql
+ RETURNS TABLE(topic_id text, score numeric)
+ LANGUAGE plpgsql
 AS $function$
 BEGIN
   RETURN QUERY
@@ -40,15 +40,17 @@ BEGIN
         INNER JOIN "AnnouncementTopic" ant ON ant."announcementId" = latest_user_interaction."feed_item_id"
         LEFT JOIN current_user_follows uft ON uft."topic_id" = ant."topicId"
       WHERE uft."topic_id" IS NULL
+      GROUP BY ant."topicId"
       UNION ALL
       SELECT 
-        uft."topic_id" AS topic_id,
+        poll."topicId" AS topic_id,
         SUM(latest_user_interaction.score) AS score
       FROM
         latest_user_interaction
         INNER JOIN "PollTopic" poll ON poll."pollId" = latest_user_interaction."feed_item_id"
         LEFT JOIN current_user_follows uft ON uft."topic_id" = poll."topicId"
       WHERE uft."topic_id" IS NULL
+      GROUP BY poll."topicId"
     ),
     indirect_topic_from_interaction AS (
       SELECT
@@ -88,4 +90,4 @@ BEGIN
   LIMIT 10;
 
 END;
-$function$;
+$function$

@@ -1,50 +1,53 @@
-CREATE OR REPLACE FUNCTION public.get_candidate_topic_by_follower(_id text)
+CREATE OR REPLACE FUNCTION public.get_candidate_topic_by_similar_hashtag(_id text)
   RETURNS TABLE(topic_id text, score numeric)
   LANGUAGE plpgsql
 AS $function$
 BEGIN
     RETURN QUERY
-    WITH
-      current_follows_topic AS (
+    WITH 
+      current_topic_follows AS (
         SELECT
-          uft."topicId"
+          uft."topicId" AS topic_id
         FROM "UserFollowsTopic" uft
         WHERE uft."userId" = _id
       ),
-      other_user_following AS (
+      current_related_hashtag AS (
         SELECT
-          uft1."userId"
-        FROM current_follows_topic AS uft0
-        INNER JOIN "UserFollowsTopic" AS uft1 ON uft0."topicId" = uft1."topicId"
-        WHERE uft1."userId" != _id
+          ht."id", 
+          COUNT(*) AS number_of_hashtag
+        FROM 
+          current_topic_follows AS ctf
+          INNER JOIN "HashTagInTopic" hitt ON hitt."topicId" = ctf."topic_id"
+          INNER JOIN "HashTag" ht ON ht."id" = hitt."hashTagId"
+        GROUP BY ht."id"
       ),
-      one_hop_user_follows AS (
+      topic_from_hashtag AS (
         SELECT
-          uft2."topicId",
-          COUNT(*) AS score
-        FROM other_user_following AS uft0
-        INNER JOIN "UserFollowsTopic" AS uft2 ON uft0."userId" = uft2."userId"
-        LEFT JOIN current_follows_topic ON uft2."topicId" = current_follows_topic."topicId"
-        WHERE current_follows_topic."topicId" IS NULL
-        GROUP BY uft2."topicId"
+          hitt."topicId" AS topic_id, 
+          SUM(current_related_hashtag.number_of_hashtag) AS score
+        FROM 
+          current_related_hashtag
+          INNER JOIN "HashTagInTopic" hitt ON hitt."hashTagId" = current_related_hashtag."id"
+          LEFT JOIN current_topic_follows ctf ON ctf."topic_id" = hitt."topicId"
+        WHERE ctf."topic_id" IS NULL
+        GROUP BY hitt."topicId"
       )
 
     SELECT
-      one_hop_user_follows.topicId AS topic_id,
-      one_hop_user_follows.score AS score
+      topic_from_hashtag.topic_id,
+      topic_from_hashtag.score
     FROM 
-      one_hop_user_follows
-      INNER JOIN "Topic" t ON one_hop_user_follows.topic_id = t."id"
+      topic_from_hashtag
+      INNER JOIN "Topic" t ON topic_from_hashtag.topic_id = t."id"
     WHERE t."status" = 'PUBLISH'
-    ORDER BY score DESC
+    ORDER BY topic_from_hashtag.score DESC
     LIMIT 10;
-
 END;
 $function$;
 
 CREATE OR REPLACE FUNCTION public.get_candidate_topic_by_interaction(_id text)
-  RETURNS TABLE(topic_id text, score numeric)
-  LANGUAGE plpgsql
+ RETURNS TABLE(topic_id text, score numeric)
+ LANGUAGE plpgsql
 AS $function$
 BEGIN
   RETURN QUERY
@@ -84,15 +87,17 @@ BEGIN
         INNER JOIN "AnnouncementTopic" ant ON ant."announcementId" = latest_user_interaction."feed_item_id"
         LEFT JOIN current_user_follows uft ON uft."topic_id" = ant."topicId"
       WHERE uft."topic_id" IS NULL
+      GROUP BY ant."topicId"
       UNION ALL
       SELECT 
-        uft."topic_id" AS topic_id,
+        poll."topicId" AS topic_id,
         SUM(latest_user_interaction.score) AS score
       FROM
         latest_user_interaction
         INNER JOIN "PollTopic" poll ON poll."pollId" = latest_user_interaction."feed_item_id"
         LEFT JOIN current_user_follows uft ON uft."topic_id" = poll."topicId"
       WHERE uft."topic_id" IS NULL
+      GROUP BY poll."topicId"
     ),
     indirect_topic_from_interaction AS (
       SELECT
@@ -134,50 +139,46 @@ BEGIN
 END;
 $function$;
 
-CREATE OR REPLACE FUNCTION public.get_candidate_topic_by_similar_hashtag(_id text)
-  RETURNS TABLE(topic_id text, score numeric)
-  LANGUAGE plpgsql
+CREATE OR REPLACE FUNCTION public.get_candidate_topic_by_follower(_id text)
+ RETURNS TABLE(topic_id text, score numeric)
+ LANGUAGE plpgsql
 AS $function$
 BEGIN
     RETURN QUERY
-    WITH 
-      current_topic_follows AS (
+    WITH
+      current_follows_topic AS (
         SELECT
-          uft."topicId" AS topic_id
+          uft."topicId"
         FROM "UserFollowsTopic" uft
         WHERE uft."userId" = _id
       ),
-      current_related_hashtag AS (
+      other_user_following AS (
         SELECT
-          ht."id", 
-          COUNT(*) AS number_of_hashtag
-        FROM 
-          current_topic_follows AS ctf
-          INNER JOIN "HashTagInTopic" hitt ON hitt."topicId" = ctf."topic_id"
-          INNER JOIN "HashTag" ht ON ht."id" = hitt."hashTagId"
-        WHERE ctf."userId" = _id
-        GROUP BY ht."id"
+          uft1."userId"
+        FROM current_follows_topic AS uft0
+        INNER JOIN "UserFollowsTopic" AS uft1 ON uft0."topicId" = uft1."topicId"
+        WHERE uft1."userId" != _id
       ),
-      topic_from_hashtag AS (
+      one_hop_user_follows AS (
         SELECT
-          hitt."topicId" AS topic_id, 
-          SUM(current_related_hashtag.number_of_hashtag) AS score
-        FROM 
-          current_related_hashtag
-          INNER JOIN "HashTagInTopic" hitt ON hitt."hashTagId" = current_related_hashtag."id"
-          LEFT JOIN current_topic_follows ctf ON ctf."topic_id" = hitt."topicId"
-        WHERE ctf."topic_id" IS NULL
-        GROUP BY hitt."topicId"
+          uft2."topicId" AS topic_id,
+          COUNT(*) AS score
+        FROM other_user_following AS uft0
+        INNER JOIN "UserFollowsTopic" AS uft2 ON uft0."userId" = uft2."userId"
+        LEFT JOIN current_follows_topic ON uft2."topicId" = current_follows_topic."topicId"
+        WHERE current_follows_topic."topicId" IS NULL
+        GROUP BY uft2."topicId"
       )
 
     SELECT
-      topic_from_hashtag.topic_id,
-      topic_from_hashtag.score
+      one_hop_user_follows.topic_id::TEXT,
+      one_hop_user_follows.score::NUMERIC
     FROM 
-      topic_from_hashtag
-      INNER JOIN "Topic" t ON topic_from_hashtag.topic_id = t."id"
+      one_hop_user_follows
+      INNER JOIN "Topic" t ON one_hop_user_follows.topic_id = t."id"
     WHERE t."status" = 'PUBLISH'
-    ORDER BY topic_from_hashtag.score DESC
+    ORDER BY score DESC
     LIMIT 10;
+
 END;
 $function$;

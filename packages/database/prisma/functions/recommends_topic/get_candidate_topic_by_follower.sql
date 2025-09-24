@@ -1,6 +1,6 @@
 CREATE OR REPLACE FUNCTION public.get_candidate_topic_by_follower(_id text)
-  RETURNS TABLE(topic_id text, score numeric)
-  LANGUAGE plpgsql
+ RETURNS TABLE(topic_id text, score numeric)
+ LANGUAGE plpgsql
 AS $function$
 BEGIN
     RETURN QUERY
@@ -20,7 +20,7 @@ BEGIN
       ),
       one_hop_user_follows AS (
         SELECT
-          uft2."topicId",
+          uft2."topicId" AS topic_id,
           COUNT(*) AS score
         FROM other_user_following AS uft0
         INNER JOIN "UserFollowsTopic" AS uft2 ON uft0."userId" = uft2."userId"
@@ -30,8 +30,8 @@ BEGIN
       )
 
     SELECT
-      one_hop_user_follows.topicId AS topic_id,
-      one_hop_user_follows.score AS score
+      one_hop_user_follows.topic_id::TEXT,
+      one_hop_user_follows.score::NUMERIC
     FROM 
       one_hop_user_follows
       INNER JOIN "Topic" t ON one_hop_user_follows.topic_id = t."id"

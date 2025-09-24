@@ -19,7 +19,6 @@ BEGIN
           current_topic_follows AS ctf
           INNER JOIN "HashTagInTopic" hitt ON hitt."topicId" = ctf."topic_id"
           INNER JOIN "HashTag" ht ON ht."id" = hitt."hashTagId"
-        WHERE ctf."userId" = _id
         GROUP BY ht."id"
       ),
       topic_from_hashtag AS (
