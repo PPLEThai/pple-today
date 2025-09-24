@@ -620,7 +620,7 @@ export function PagerTabBarItem({
   }
   return (
     <Pressable
-      className="h-10 pt-2 pb-2.5 px-4"
+      className="h-10 pt-2 pb-2 px-4 justify-center"
       accessibilityRole="tab"
       onLayout={handleLayout}
       onPress={handlePress}
