@@ -110,7 +110,7 @@ export function UserSuggestion() {
           <Icon icon={UserRoundPlusIcon} size={32} className="text-base-primary-default" />
           <H2 className="text-2xl font-heading-semibold text-base-text-high">แนะนำให้ติดตาม</H2>
         </View>
-        <Button variant="ghost" onPress={() => router.navigate('/(feed)/people-suggestion')}>
+        <Button variant="ghost" onPress={() => router.navigate('/(feed)/user-suggestion')}>
           <Text>ดูเพิ่มเติม</Text>
           <Icon icon={ArrowRightIcon} size={16} />
         </Button>
