@@ -8,11 +8,6 @@ export const get_candidate_topic: (text: string) => $runtime.TypedSql<get_candid
 export namespace get_candidate_topic {
   export type Parameters = [text: string]
   export type Result = {
-    id: string
-    name: string
-    description: string | null
-    bannerImagePath: string | null
-    hashTagId: string | null
-    hashTagName: string | null
+    topic_id: string | null
   }
 }

@@ -31,17 +31,13 @@ WITH
     SELECT 
       candidate_user.user_id, 
       (candidate_user.score::DOUBLE PRECISION + RANDOM() / 10) AS score
-    FROM 
+    FROM
       candidate_user
-    ORDER BY score DESC
-    LIMIT 10
   )
 
 SELECT 
-  u."id",
-  u."name",
-  u."profileImagePath",
-  u."responsibleArea"
+  final_candidate_score."user_id"
 FROM 
   final_candidate_score
-  INNER JOIN "User" u ON final_candidate_score.user_id = u.id
+ORDER BY final_candidate_score."score" DESC
+LIMIT 10;

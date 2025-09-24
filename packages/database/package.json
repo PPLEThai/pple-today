@@ -26,6 +26,7 @@
     "db:migrate": "prisma migrate dev",
     "db:dev:seed": "tsx prisma/seeds/seed.dev.ts",
     "db:election:seed": "tsx prisma/seeds/seed.election.ts",
+    "db:recommend:seed": "tsx prisma/seeds/seed.recommend.ts",
     "db:prod:seed": "tsx prisma/seeds/seed.prod.ts",
     "db:reset": "prisma migrate reset",
     "typecheck": "tsc --noEmit",
