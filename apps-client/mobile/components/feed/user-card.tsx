@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { ScrollView, View } from 'react-native'
 
 import { AnimatedBackgroundPressable } from '@pple-today/ui/animated-pressable'
@@ -12,6 +12,7 @@ import { H2 } from '@pple-today/ui/typography'
 import { useRouter } from 'expo-router'
 import { ArrowRightIcon, UserRoundPlusIcon } from 'lucide-react-native'
 
+import { GetUserRecommendationResponse } from '@api/backoffice/app'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
 
@@ -88,7 +89,7 @@ export function UserSuggestion() {
     '/profile/recommend',
     {},
     {
-      select: (data) => data.slice(0, 5), // limit to 5 suggestions
+      select: useCallback((data: GetUserRecommendationResponse) => data.slice(0, 5), []), // limit to 5 suggestions
       enabled: !!session,
     }
   )

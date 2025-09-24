@@ -1,28 +1,29 @@
-import { useEffect } from 'react'
+import { useCallback, useEffect } from 'react'
 import { FlatList, View } from 'react-native'
 
 import { useRouter } from 'expo-router'
 import { UserRoundPlusIcon } from 'lucide-react-native'
 
+import { GetUserRecommendationResponse } from '@api/backoffice/app'
 import { UserCard } from '@app/components/feed/user-card'
 import { PageHeader } from '@app/components/page-header'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
 
-export default function PeopleSuggestion() {
+export default function UserSuggestion() {
   const session = useSession()
   const userSuggestionQuery = reactQueryClient.useQuery(
     '/profile/recommend',
     {},
     {
       enabled: !!session,
-      select: (data) => {
+      select: useCallback((data: GetUserRecommendationResponse) => {
         // add a placeholder item if the length is odd to make the grid even
         if (data.length % 2 === 1) {
           return [...data, { id: null }]
         }
         return data
-      },
+      }, []),
     }
   )
   const router = useRouter()

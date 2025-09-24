@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { Pressable, View } from 'react-native'
 
 import { Badge } from '@pple-today/ui/badge'
@@ -12,6 +12,7 @@ import { Image } from 'expo-image'
 import { Link, useRouter } from 'expo-router'
 import { ArrowRightIcon, MessageSquareHeartIcon } from 'lucide-react-native'
 
+import { GetTopicRecommendationResponse } from '@api/backoffice/app'
 import { LinearGradient } from '@app/components/linear-gradient'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
@@ -114,7 +115,7 @@ export function TopicSuggestion() {
     '/topics/recommend',
     {},
     {
-      select: (data) => data.slice(0, 5), // limit to 5 suggestions
+      select: useCallback((data: GetTopicRecommendationResponse) => data.slice(0, 5), []), // limit to 5 suggestions
       enabled: !!session,
     }
   )
