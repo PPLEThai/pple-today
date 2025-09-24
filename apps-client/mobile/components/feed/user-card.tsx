@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router'
 import { ArrowRightIcon, UserRoundPlusIcon } from 'lucide-react-native'
 
 import { reactQueryClient } from '@app/libs/api-client'
-import { useSessionQuery } from '@app/libs/auth'
+import { useSession } from '@app/libs/auth'
 
 import { AvatarPPLEFallback } from '../avatar-pple-fallback'
 
@@ -83,16 +83,16 @@ export function UserCard(props: UserCardProps) {
 
 export function UserSuggestion() {
   const router = useRouter()
-  const sessionQuery = useSessionQuery()
+  const session = useSession()
   const userSuggestionQuery = reactQueryClient.useQuery(
     '/profile/recommend',
     {},
     {
       select: (data) => data.slice(0, 5), // limit to 5 suggestions
-      enabled: !!sessionQuery.data,
+      enabled: !!session,
     }
   )
-  if (!sessionQuery.data) {
+  if (!session) {
     return null
   }
   return (

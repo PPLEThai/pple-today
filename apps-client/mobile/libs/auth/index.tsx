@@ -31,7 +31,7 @@ import { z } from 'zod/v4'
 
 import { environment } from '@app/env'
 
-import { AuthSession, getAuthSession, setAuthSession } from './session'
+import { AuthSession, getAuthSession, getAuthSessionAsync, setAuthSession } from './session'
 
 import { fetchClient, reactQueryClient } from '../api-client'
 import { getBrowserPackage } from '../get-browser-package'
@@ -55,9 +55,15 @@ export const useDiscoveryQuery = createQuery({
   },
 })
 
+export function useSession(): AuthSession | null {
+  const sessionQuery = useSessionQuery()
+  return sessionQuery.data!
+}
+
 export const useSessionQuery = createQuery({
   queryKey: ['session'],
-  fetcher: getAuthSession,
+  fetcher: getAuthSessionAsync,
+  initialData: getAuthSession,
 })
 
 const useSetSessionMutation = createMutation({
@@ -76,8 +82,8 @@ export const useSessionMutation = () => {
       }
     },
     onSuccess: () => {
-      queryClient.refetchQueries({ queryKey: useSessionQuery.getKey() })
-      queryClient.refetchQueries({ queryKey: useUserQuery.getKey() })
+      queryClient.invalidateQueries({ queryKey: useSessionQuery.getKey() })
+      queryClient.invalidateQueries({ queryKey: useUserQuery.getKey() })
     },
   })
 }
@@ -138,7 +144,7 @@ export const useAuthMe = () => {
   return useQuery({
     queryKey: reactQueryClient.getQueryKey('/auth/me'),
     queryFn: async () => {
-      const session = await getAuthSession()
+      const session = await getAuthSessionAsync()
       if (!session) {
         return null
       }
@@ -208,17 +214,15 @@ export const AuthLifeCycleHook = () => {
     // incase the session's access token is expired
     if (userQuery.error?.error === 'access_denied') {
       console.log('Error fetching user info:', userQuery.error)
+      sessionMutation.mutate(null)
       setDialogOpen(true)
       return
     }
     if (userQuery.error) {
       console.error('Error fetching user info:', userQuery.error)
     }
-  }, [userQuery.error])
+  }, [userQuery.error, sessionMutation])
 
-  // TODO: make these queries run in background with low priority after logging in
-  useAuthMe()
-  reactQueryClient.useQuery('/profile/me', {}, { enabled: !!userQuery.data })
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogContent>

@@ -66,12 +66,11 @@ import {
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { environment } from '@app/env'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
-import { useAuthMe, useSessionQuery } from '@app/libs/auth'
+import { useAuthMe, useSession } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { useScrollContext } from '@app/libs/scroll-context'
 
 export default function FeedPage() {
-  const sessionQuery = useSessionQuery()
   return (
     <SafeAreaLayout>
       <Pager>
@@ -90,7 +89,6 @@ export default function FeedPage() {
           <PagerTabBar>
             <SelectTopicButton />
             <PagerTabBarItem index={0}>สำหรับคุณ</PagerTabBarItem>
-            {sessionQuery.data && <PagerTabBarItem index={1}>กำลังติดตาม</PagerTabBarItem>}
             <PagerTopicTabBarItems />
             <PagerTabBarItemIndicator />
           </PagerTabBar>
@@ -102,18 +100,14 @@ export default function FeedPage() {
 }
 
 function PagerContents() {
-  const sessionQuery = useSessionQuery()
-  const followTopicsQuery = reactQueryClient.useQuery(
-    '/topics/follows',
-    {},
-    { enabled: !!sessionQuery.data }
-  )
+  const session = useSession()
+  const followTopicsQuery = reactQueryClient.useQuery('/topics/follows', {}, { enabled: !!session })
   return (
     <PagerContentView>
       <View key={0}>
         <PagerContent index={0}>{(props) => <FeedContent {...props} />}</PagerContent>
       </View>
-      {sessionQuery.data && (
+      {session && (
         <View key={1}>
           <PagerContent index={1}>{(props) => <FeedContent {...props} />}</PagerContent>
         </View>
@@ -343,25 +337,26 @@ function ElectionCard() {
 }
 
 function PagerTopicTabBarItems() {
-  const sessionQuery = useSessionQuery()
-  const followTopicsQuery = reactQueryClient.useQuery(
-    '/topics/follows',
-    {},
-    { enabled: !!sessionQuery.data }
+  const session = useSession()
+  const followTopicsQuery = reactQueryClient.useQuery('/topics/follows', {}, { enabled: !!session })
+  return (
+    <>
+      {session && <PagerTabBarItem index={1}>กำลังติดตาม</PagerTabBarItem>}
+      {followTopicsQuery.data?.map((topic, index) => (
+        <PagerTabBarItem index={2 + index} key={2 + index}>
+          {topic.name}
+        </PagerTabBarItem>
+      ))}
+    </>
   )
-  return followTopicsQuery.data?.map((topic, index) => (
-    <PagerTabBarItem index={2 + index} key={2 + index}>
-      {topic.name}
-    </PagerTabBarItem>
-  ))
 }
 
 function SelectTopicButton() {
   const bottomSheetModalRef = React.useRef<BottomSheetModal>(null)
   const router = useRouter()
-  const sessionQuery = useSessionQuery()
+  const session = useSession()
   const onOpen = () => {
-    if (!sessionQuery.data) {
+    if (!session) {
       router.navigate('/profile')
       return
     }

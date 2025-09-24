@@ -51,7 +51,7 @@ import type {
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { MoreOrLess } from '@app/components/more-or-less'
 import { reactQueryClient } from '@app/libs/api-client'
-import { useSessionQuery } from '@app/libs/auth'
+import { useSession } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 
@@ -431,9 +431,9 @@ function UpvoteButton(props: UpvoteButtonProps) {
   const createReactionQuery = reactQueryClient.useMutation('put', '/feed/:id/reaction')
   const deleteReactionQuery = reactQueryClient.useMutation('delete', '/feed/:id/reaction')
   const router = useRouter()
-  const sessionQuery = useSessionQuery()
+  const session = useSession()
   const onPress = () => {
-    if (!sessionQuery.data) {
+    if (!session) {
       return router.push('/profile')
     }
     const newUserReaction = userReaction === 'UP_VOTE' ? null : 'UP_VOTE'
@@ -503,9 +503,9 @@ function DownvoteButton(props: { feedId: string }) {
   const deleteReactionQuery = reactQueryClient.useMutation('delete', '/feed/:id/reaction')
 
   const router = useRouter()
-  const sessionQuery = useSessionQuery()
+  const session = useSession()
   const onPress = () => {
-    if (!sessionQuery.data) {
+    if (!session) {
       return router.push('/profile')
     }
     const newUserReaction = userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE'
@@ -679,9 +679,9 @@ function CommentButton(props: { feedId: string }) {
   const insets = useSafeAreaInsets()
 
   const router = useRouter()
-  const sessionQuery = useSessionQuery()
+  const session = useSession()
   const onPress = () => {
-    if (!sessionQuery.data) {
+    if (!session) {
       return router.push('/profile')
     }
     onOpen()
