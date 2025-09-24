@@ -50,8 +50,8 @@ import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/anno
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { FeedFooter, FeedRefreshControl } from '@app/components/feed'
 import { FeedCard } from '@app/components/feed/feed-card'
-import { PeopleSuggestion } from '@app/components/feed/people-card'
 import { TopicSuggestion } from '@app/components/feed/topic-card'
+import { UserSuggestion } from '@app/components/feed/user-card'
 import {
   Pager,
   PagerContent,
@@ -71,6 +71,7 @@ import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { useScrollContext } from '@app/libs/scroll-context'
 
 export default function FeedPage() {
+  const sessionQuery = useSessionQuery()
   return (
     <SafeAreaLayout>
       <Pager>
@@ -89,7 +90,7 @@ export default function FeedPage() {
           <PagerTabBar>
             <SelectTopicButton />
             <PagerTabBarItem index={0}>สำหรับคุณ</PagerTabBarItem>
-            <PagerTabBarItem index={1}>กำลังติดตาม</PagerTabBarItem>
+            {sessionQuery.data && <PagerTabBarItem index={1}>กำลังติดตาม</PagerTabBarItem>}
             <PagerTopicTabBarItems />
             <PagerTabBarItemIndicator />
           </PagerTabBar>
@@ -112,9 +113,11 @@ function PagerContents() {
       <View key={0}>
         <PagerContent index={0}>{(props) => <FeedContent {...props} />}</PagerContent>
       </View>
-      <View key={1}>
-        <PagerContent index={1}>{(props) => <FeedContent {...props} />}</PagerContent>
-      </View>
+      {sessionQuery.data && (
+        <View key={1}>
+          <PagerContent index={1}>{(props) => <FeedContent {...props} />}</PagerContent>
+        </View>
+      )}
       {followTopicsQuery.data
         ? followTopicsQuery.data.map((topic, index) => (
             <View key={index + 2}>
@@ -610,7 +613,7 @@ function FeedContent(props: PagerScrollViewProps) {
     if (item.type === 'SUGGESTION') {
       return (
         <>
-          <PeopleSuggestion />
+          <UserSuggestion />
           <TopicSuggestion />
         </>
       )

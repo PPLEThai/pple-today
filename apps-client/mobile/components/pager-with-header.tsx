@@ -462,10 +462,6 @@ export function PagerTabBarItemIndicator() {
     if (tabItems.length === 0) {
       return { opacity: 0, transform: [{ scaleX: 0 }] }
     }
-    // interpolate requires at least 2 items to work properly
-    if (tabItems.length === 1) {
-      return { opacity: 1, transform: [{ scaleX: 1 }] }
-    }
     function getScaleX(index: number) {
       'worklet'
       const itemWidth = tabItems[index].width
@@ -477,8 +473,10 @@ export function PagerTabBarItemIndicator() {
       const itemWidth = tabItems[index].width
       return itemX + itemWidth / 2 - tabListSize.get() / 2
     }
-    // const scaleX = getScaleX(currentPage)
-    // const translateX = getTranslateX(currentPage)
+    // interpolate requires at least 2 items to work properly
+    if (tabItems.length === 1) {
+      return { opacity: 1, transform: [{ translateX: getTranslateX(0) }, { scaleX: getScaleX(0) }] }
+    }
     return {
       opacity: 1,
       transform: [

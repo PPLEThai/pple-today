@@ -2,7 +2,7 @@ import { FlatList, View } from 'react-native'
 
 import { UserRoundPlusIcon } from 'lucide-react-native'
 
-import { PeopleCard } from '@app/components/feed/people-card'
+import { UserCard } from '@app/components/feed/user-card'
 import { PageHeader } from '@app/components/page-header'
 
 export default function PeopleSuggestion() {
@@ -24,7 +24,7 @@ export default function PeopleSuggestion() {
           address: { province: 'กรุงเทพมหานคร' },
         }))}
         numColumns={2}
-        renderItem={({ item }) => <PeopleCard user={item} className="flex-1 mx-1" />}
+        renderItem={({ item }) => <UserCard user={item} className="flex-1 mx-1" />}
       />
     </View>
   )

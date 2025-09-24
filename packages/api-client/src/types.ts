@@ -197,7 +197,7 @@ export interface ReactQueryClient<
   >(
     path: TPath,
     payload: TPayload,
-    options?: Omit<UseQueryOptions<TSuccess, TError, TPayload>, 'queryKey'>
+    options?: Omit<UseQueryOptions<TSuccess, TError, TSuccess>, 'queryKey'>
   ) => UseQueryResult<TSuccess, TError>
   useMutation: <
     const TMethod extends Extract<TAvailableMethod, MutationMethod>,
