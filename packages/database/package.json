@@ -21,7 +21,8 @@
     }
   },
   "scripts": {
-    "codegen": "prisma generate --sql",
+    "codegen": "prisma generate",
+    "codegen:sql": "prisma generate --sql",
     "db:migrate": "prisma migrate dev",
     "db:dev:seed": "tsx prisma/seeds/seed.dev.ts",
     "db:election:seed": "tsx prisma/seeds/seed.election.ts",
