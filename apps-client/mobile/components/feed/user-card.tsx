@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect } from 'react'
 import { ScrollView, View } from 'react-native'
+import { createQuery } from 'react-query-kit'
 
+import { QUERY_KEY } from '@pple-today/api-client'
 import { AnimatedBackgroundPressable } from '@pple-today/ui/animated-pressable'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Button } from '@pple-today/ui/button'
@@ -9,6 +11,7 @@ import { cn } from '@pple-today/ui/lib/utils'
 import { Skeleton } from '@pple-today/ui/skeleton'
 import { Text } from '@pple-today/ui/text'
 import { H2 } from '@pple-today/ui/typography'
+import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
 import { ArrowRightIcon, UserRoundPlusIcon } from 'lucide-react-native'
 
@@ -34,7 +37,10 @@ interface UserCardProps {
 }
 
 export function UserCard(props: UserCardProps) {
-  const [isFollowing, setIsFollowing] = React.useState(props.user.followed ?? false)
+  const [isFollowing, setIsFollowing] = useUserFollowState(
+    props.user.id,
+    props.user.followed ?? false
+  )
   const followMutation = reactQueryClient.useMutation('post', '/profile/:id/follow', {})
   const unfollowMutation = reactQueryClient.useMutation('delete', '/profile/:id/follow', {})
   const toggleFollow = async () => {
@@ -80,6 +86,28 @@ export function UserCard(props: UserCardProps) {
       </Button>
     </AnimatedBackgroundPressable>
   )
+}
+
+const useUserFollowQuery = createQuery({
+  queryKey: [QUERY_KEY, 'user-follow'],
+  fetcher: (_: { userId: string }): boolean => {
+    throw new Error('userFollowQuery should not be enabled')
+  },
+  enabled: false,
+})
+export function useUserFollowState(userId: string, initialData: boolean) {
+  const userFollowQuery = useUserFollowQuery({
+    variables: { userId },
+    initialData: initialData,
+  })
+  const queryClient = useQueryClient()
+  const setUserFollowState = useCallback(
+    (data: boolean) => {
+      queryClient.setQueryData(useUserFollowQuery.getKey({ userId }), data)
+    },
+    [queryClient, userId]
+  )
+  return [userFollowQuery.data, setUserFollowState] as const
 }
 
 export function UserSuggestion() {

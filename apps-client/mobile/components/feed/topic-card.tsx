@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect } from 'react'
 import { Pressable, View } from 'react-native'
+import { createQuery } from 'react-query-kit'
 
+import { QUERY_KEY } from '@pple-today/api-client'
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
@@ -8,6 +10,7 @@ import { cn } from '@pple-today/ui/lib/utils'
 import { Slide, SlideIndicators, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { H3 } from '@pple-today/ui/typography'
+import { useQueryClient } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import { Link, useRouter } from 'expo-router'
 import { ArrowRightIcon, MessageSquareHeartIcon } from 'lucide-react-native'
@@ -31,8 +34,12 @@ interface TopicCardProps {
   }
   className?: string
 }
+
 export function TopicCard(props: TopicCardProps) {
-  const [isFollowing, setIsFollowing] = React.useState(props.topic.followed ?? false)
+  const [isFollowing, setIsFollowing] = useTopicFollowState(
+    props.topic.id,
+    props.topic.followed ?? false
+  )
   const followMutation = reactQueryClient.useMutation('post', '/topics/:topicId/follow', {})
   const unfollowMutation = reactQueryClient.useMutation('delete', '/topics/:topicId/follow', {})
   const toggleFollow = async () => {
@@ -107,6 +114,28 @@ export function TopicCard(props: TopicCardProps) {
       </View>
     </Pressable>
   )
+}
+
+const useTopicFollowQuery = createQuery({
+  queryKey: [QUERY_KEY, 'topic-follow'],
+  fetcher: (_: { topicId: string }): boolean => {
+    throw new Error('topicFollowQuery should not be enabled')
+  },
+  enabled: false,
+})
+export function useTopicFollowState(topicId: string, initialData: boolean) {
+  const topicFollowQuery = useTopicFollowQuery({
+    variables: { topicId },
+    initialData: initialData,
+  })
+  const queryClient = useQueryClient()
+  const setTopicFollowState = useCallback(
+    (data: boolean) => {
+      queryClient.setQueryData(useTopicFollowQuery.getKey({ topicId }), data)
+    },
+    [queryClient, topicId]
+  )
+  return [topicFollowQuery.data, setTopicFollowState] as const
 }
 
 export function TopicSuggestion() {

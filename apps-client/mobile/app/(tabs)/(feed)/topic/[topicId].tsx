@@ -31,6 +31,7 @@ import { ArrowLeftIcon, CheckIcon, HashIcon, InfoIcon, PlusIcon } from 'lucide-r
 import { GetTopicFeedResponse, GetTopicsResponse } from '@api/backoffice/app'
 import { FeedFooter } from '@app/components/feed'
 import { FeedCard } from '@app/components/feed/feed-card'
+import { useTopicFollowState } from '@app/components/feed/topic-card'
 import { useLightStatusBar } from '@app/context/status-bar'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 
@@ -138,7 +139,8 @@ export default function TopicDetailPage() {
     }
   )
 
-  const [isFollowing, setIsFollowing] = React.useState(false) // TODO: initialize from API
+  const [isFollowing, setIsFollowing] = useTopicFollowState(topicId!, false) // TODO: initialize from API
+
   const followMutation = reactQueryClient.useMutation('post', '/topics/:topicId/follow', {})
   const unfollowMutation = reactQueryClient.useMutation('delete', '/topics/:topicId/follow', {})
   const toggleFollow = async () => {
