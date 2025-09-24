@@ -16,7 +16,8 @@ WITH
       "User" u
       LEFT JOIN candidate_user cu ON u.id = cu.user_id
     WHERE 
-      cu.user_id IS NULL
+      cu.user_id IS NULL AND u."id" != $1
+    ORDER BY score DESC
     LIMIT 10
   ),
 
@@ -44,5 +45,3 @@ SELECT
 FROM 
   final_candidate_score
   INNER JOIN "User" u ON final_candidate_score.user_id = u.id
-  
-
