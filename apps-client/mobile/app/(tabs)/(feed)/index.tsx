@@ -545,14 +545,19 @@ function FeedContent(props: PagerScrollViewProps) {
     }
   }, [isFocused, scrollElRef, setScrollViewTag])
 
+  type MyFeedItem = GetMyFeedResponse[number] | { type: 'SUGGESTION' }
   const feedInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/feed/me'),
-    queryFn: async ({ pageParam }) => {
+    queryFn: async ({ pageParam }): Promise<MyFeedItem[]> => {
       const response = await fetchClient('/feed/me', {
         query: { page: pageParam, limit: LIMIT },
       })
       if (response.error) {
         throw response.error
+      }
+      if (pageParam === 1) {
+        // insert suggestion after first 2 posts
+        return [...response.data.slice(0, 2), { type: 'SUGGESTION' }, ...response.data.slice(2)]
       }
       return response.data
     },
@@ -580,7 +585,7 @@ function FeedContent(props: PagerScrollViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
 
-  const data = React.useMemo((): GetMyFeedResponse => {
+  const data = React.useMemo((): MyFeedItem[] => {
     if (!feedInfiniteQuery.data) return []
     return feedInfiniteQuery.data.pages.flatMap((page) => page)
   }, [feedInfiniteQuery.data])
@@ -601,12 +606,18 @@ function FeedContent(props: PagerScrollViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryClient, feedInfiniteQuery.refetch])
 
-  const renderFeedItem = React.useCallback(
-    ({ item }: { item: GetMyFeedResponse[number]; index: number }) => {
-      return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-4" />
-    },
-    []
-  )
+  const renderFeedItem = React.useCallback(({ item }: { item: MyFeedItem; index: number }) => {
+    if (item.type === 'SUGGESTION') {
+      return (
+        <>
+          <PeopleSuggestion />
+          <TopicSuggestion />
+        </>
+      )
+    }
+    return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-4" />
+  }, [])
+
   return (
     <Animated.FlatList
       ref={scrollElRef}
@@ -616,13 +627,7 @@ function FeedContent(props: PagerScrollViewProps) {
       className="flex-1"
       contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
       contentContainerStyle={{ paddingTop: headerHeight }}
-      ListHeaderComponent={
-        <>
-          <TopicSuggestion />
-          <AnnouncementSection />
-          <PeopleSuggestion />
-        </>
-      }
+      ListHeaderComponent={<AnnouncementSection />}
       ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} className="mt-4 mx-4" />}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
