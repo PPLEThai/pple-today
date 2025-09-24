@@ -1,12 +1,48 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { HashTagStatus, TopicStatus } from '@pple-today/database/prisma'
+import { get_candidate_topic } from '@pple-today/database/prisma/sql'
 import Elysia from 'elysia'
+import * as R from 'remeda'
 
 import { PrismaServicePlugin } from '../../plugins/prisma'
 
 export class TopicRepository {
   constructor(private readonly prismaService: PrismaService) {}
+
+  async getTopicRecommendation(userId: string) {
+    return fromRepositoryPromise(async () => {
+      const candidateTopic = await this.prismaService.$queryRawTyped(get_candidate_topic(userId))
+
+      return R.pipe(
+        candidateTopic,
+        R.groupBy((ct) => ct.id),
+        R.values(),
+        R.map((grouped) => {
+          const { id, name, description, bannerImagePath } = grouped[0]
+          return {
+            id,
+            name,
+            description,
+            bannerImagePath,
+            hashTags: R.pipe(
+              grouped,
+              R.map(
+                (ct) =>
+                  ct.hashTagId &&
+                  ct.hashTagName && {
+                    id: ct.hashTagId,
+                    name: ct.hashTagName,
+                  }
+              ),
+              R.filter((ht) => !!ht)
+            ),
+          }
+        })
+      )
+    })
+  }
+
   async getTopicById(topicId: string) {
     return fromRepositoryPromise(
       this.prismaService.topic.findFirstOrThrow({

@@ -2,6 +2,7 @@ import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { Prisma } from '@pple-today/database/prisma'
+import { get_candidate_user } from '@pple-today/database/prisma/sql'
 import Elysia from 'elysia'
 
 import { CompleteOnboardingProfileBody } from './models'
@@ -14,6 +15,12 @@ export class ProfileRepository {
     private prismaService: PrismaService,
     private fileService: FileService
   ) {}
+
+  async getUserRecommendation(userId: string) {
+    return await fromRepositoryPromise(
+      this.prismaService.$queryRawTyped(get_candidate_user(userId))
+    )
+  }
 
   async getUserParticipation(userId: string) {
     return await fromRepositoryPromise(

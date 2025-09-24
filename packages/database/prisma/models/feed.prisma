@@ -43,6 +43,8 @@ model FeedItemReaction {
   feedItem FeedItem @relation(fields: [feedItemId], references: [id])
 
   @@id([userId, feedItemId])
+  @@index([feedItemId])
+  @@index([userId])
 }
 
 model FeedItemReactionCount {
@@ -73,4 +75,7 @@ model FeedItemComment {
 
   user     User     @relation(fields: [userId], references: [id])
   feedItem FeedItem @relation(fields: [feedItemId], references: [id])
+
+  @@index([feedItemId])
+  @@index([userId])
 }

@@ -2,6 +2,17 @@ import { FilePath, ImageFileMimeType, UserParticipation } from '@pple-today/api-
 import { UserRole } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
+export const GetUserRecommendationResponse = t.Array(
+  t.Object({
+    id: t.String({ description: 'The ID of the user' }),
+    name: t.String({ description: 'The name of the user' }),
+    profileImage: t.Optional(
+      t.String({ description: 'The URL of the profile image', format: 'uri' })
+    ),
+  })
+)
+export type GetUserRecommendationResponse = Static<typeof GetUserRecommendationResponse>
+
 // TODO: Add election
 export const GetUserParticipationResponse = t.Array(UserParticipation)
 export type GetUserParticipationResponse = Static<typeof GetUserParticipationResponse>

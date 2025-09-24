@@ -49,4 +49,6 @@ model HashTagInTopic {
     hashTag HashTag @relation(fields: [hashTagId], references: [id])
 
     @@id([topicId, hashTagId])
+    @@index([hashTagId])
+    @@index([topicId])
 }
