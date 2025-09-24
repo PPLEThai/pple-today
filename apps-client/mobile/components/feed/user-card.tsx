@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { ScrollView, View } from 'react-native'
 
 import { AnimatedBackgroundPressable } from '@pple-today/ui/animated-pressable'
@@ -92,7 +92,15 @@ export function UserSuggestion() {
       enabled: !!session,
     }
   )
+  useEffect(() => {
+    if (userSuggestionQuery.error) {
+      console.error('Fetching User Suggestion failed: ', JSON.stringify(userSuggestionQuery.error))
+    }
+  }, [userSuggestionQuery.error])
   if (!session) {
+    return null
+  }
+  if (!userSuggestionQuery.data) {
     return null
   }
   return (
@@ -112,17 +120,9 @@ export function UserSuggestion() {
         showsHorizontalScrollIndicator={false}
         contentContainerClassName="gap-2 px-4"
       >
-        {userSuggestionQuery.data ? (
-          userSuggestionQuery.data.map((user, i) => (
-            <UserCard key={i} user={user} className="w-[164px]" />
-          ))
-        ) : (
-          <>
-            <UserCardSkeleton />
-            <UserCardSkeleton />
-            <UserCardSkeleton />
-          </>
-        )}
+        {userSuggestionQuery.data.map((user, i) => (
+          <UserCard key={i} user={user} className="w-[164px]" />
+        ))}
       </ScrollView>
     </View>
   )

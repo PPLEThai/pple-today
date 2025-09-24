@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Pressable, View } from 'react-native'
 
 import { Badge } from '@pple-today/ui/badge'
@@ -14,23 +14,24 @@ import { ArrowRightIcon, MessageSquareHeartIcon } from 'lucide-react-native'
 
 import { LinearGradient } from '@app/components/linear-gradient'
 import { reactQueryClient } from '@app/libs/api-client'
+import { useSession } from '@app/libs/auth'
 
 interface TopicCardProps {
   topic: {
     id: string
     name: string
-    description: string
-    imageUrl: string
-    hashtags: {
+    description: string | null
+    bannerImage: string | null
+    hashTags: {
       id: string
       name: string
     }[]
-    followed: boolean
+    followed?: boolean
   }
   className?: string
 }
 export function TopicCard(props: TopicCardProps) {
-  const [isFollowing, setIsFollowing] = React.useState(props.topic.followed)
+  const [isFollowing, setIsFollowing] = React.useState(props.topic.followed ?? false)
   const followMutation = reactQueryClient.useMutation('post', '/topics/:topicId/follow', {})
   const unfollowMutation = reactQueryClient.useMutation('delete', '/topics/:topicId/follow', {})
   const toggleFollow = async () => {
@@ -50,10 +51,14 @@ export function TopicCard(props: TopicCardProps) {
       )}
       onPress={() => router.navigate(`/topic/${props.topic.id}`)}
     >
-      <Image
-        source={{ uri: props.topic.imageUrl }}
-        className="absolute top-0 left-0 right-0 bottom-0"
-      />
+      {props.topic.bannerImage ? (
+        <Image
+          source={{ uri: props.topic.bannerImage }}
+          className="absolute top-0 left-0 right-0 bottom-0"
+        />
+      ) : (
+        <View className="absolute top-0 left-0 right-0 bottom-0 bg-gray-800" />
+      )}
       <LinearGradient
         colors={['rgba(0,0,0,0.45)', 'transparent']}
         className="absolute top-0 left-0 right-0 h-[40px]"
@@ -68,21 +73,23 @@ export function TopicCard(props: TopicCardProps) {
           <H3 className="text-base-text-invert text-xl font-heading-bold line-clamp-2">
             {props.topic.name}
           </H3>
-          <Text className="text-base-text-invert text-xs font-heading-regular line-clamp-4">
-            {props.topic.description}
-          </Text>
-          {props.topic.hashtags.length > 0 && (
+          {props.topic.description && (
+            <Text className="text-base-text-invert text-xs font-heading-regular line-clamp-4">
+              {props.topic.description}
+            </Text>
+          )}
+          {props.topic.hashTags.length > 0 && (
             <View className="flex flex-row gap-1 flex-wrap">
               <Badge variant="outline" className="border-base-primary-default pointer-events-none">
-                <Text className="text-base-text-invert">{props.topic.hashtags[0].name}</Text>
+                <Text className="text-base-text-invert">{props.topic.hashTags[0].name}</Text>
               </Badge>
-              {props.topic.hashtags.length > 1 && (
+              {props.topic.hashTags.length > 1 && (
                 <Badge
                   variant="outline"
                   className="border-base-primary-default pointer-events-none"
                 >
                   <Text className="text-base-text-invert">
-                    + {props.topic.hashtags.length - 1} แฮชแท็ก
+                    + {props.topic.hashTags.length - 1} แฮชแท็ก
                   </Text>
                 </Badge>
               )}
@@ -101,58 +108,30 @@ export function TopicCard(props: TopicCardProps) {
   )
 }
 
-const topics: TopicCardProps['topic'][] = [
-  {
-    id: '1',
-    name: 'ลุยพื้นที่',
-    description:
-      '“ส้มสู้ไฟ” คือโครงการพรรคประชาชน ร่วมแก้ไฟป่า-ฝุ่น PM2.5 ภาคเหนือ เน้นแนวกันไฟ หนุนอาสา และขับเคลื่อน นโยบายสิ่งแวดล้อม',
-    imageUrl: 'https://picsum.photos/200',
-    followed: false,
-    hashtags: [
-      { id: '1', name: '#ส้มสู้ไฟ' },
-      { id: '2', name: '#ไฟป่า' },
-    ],
-  },
-  {
-    id: '2',
-    name: 'ลุยพื้นที่',
-    description:
-      '“ส้มสู้ไฟ” คือโครงการพรรคประชาชน ร่วมแก้ไฟป่า-ฝุ่น PM2.5 ภาคเหนือ เน้นแนวกันไฟ หนุนอาสา และขับเคลื่อน นโยบายสิ่งแวดล้อม',
-    imageUrl: 'https://picsum.photos/200',
-    followed: false,
-    hashtags: [
-      { id: '1', name: '#ส้มสู้ไฟ' },
-      { id: '2', name: '#ไฟป่า' },
-    ],
-  },
-  {
-    id: '3',
-    name: 'ลุยพื้นที่',
-    description:
-      '“ส้มสู้ไฟ” คือโครงการพรรคประชาชน ร่วมแก้ไฟป่า-ฝุ่น PM2.5 ภาคเหนือ เน้นแนวกันไฟ หนุนอาสา และขับเคลื่อน นโยบายสิ่งแวดล้อม',
-    imageUrl: 'https://picsum.photos/200',
-    followed: false,
-    hashtags: [
-      { id: '1', name: '#ส้มสู้ไฟ' },
-      { id: '2', name: '#ไฟป่า' },
-    ],
-  },
-  {
-    id: '4',
-    name: 'ลุยพื้นที่',
-    description:
-      '“ส้มสู้ไฟ” คือโครงการพรรคประชาชน ร่วมแก้ไฟป่า-ฝุ่น PM2.5 ภาคเหนือ เน้นแนวกันไฟ หนุนอาสา และขับเคลื่อน นโยบายสิ่งแวดล้อม',
-    imageUrl: 'https://picsum.photos/200',
-    followed: false,
-    hashtags: [
-      { id: '1', name: '#ส้มสู้ไฟ' },
-      { id: '2', name: '#ไฟป่า' },
-    ],
-  },
-]
-
 export function TopicSuggestion() {
+  const session = useSession()
+  const topicSuggestionQuery = reactQueryClient.useQuery(
+    '/topics/recommend',
+    {},
+    {
+      select: (data) => data.slice(0, 5), // limit to 5 suggestions
+      enabled: !!session,
+    }
+  )
+  useEffect(() => {
+    if (topicSuggestionQuery.error) {
+      console.error(
+        'Fetching Topic Suggestion failed: ',
+        JSON.stringify(topicSuggestionQuery.error)
+      )
+    }
+  }, [topicSuggestionQuery.error])
+  if (!session) {
+    return null
+  }
+  if (!topicSuggestionQuery.data) {
+    return null
+  }
   return (
     <View>
       <View className="px-4 pt-4 flex flex-row justify-between items-center">
@@ -168,14 +147,14 @@ export function TopicSuggestion() {
         </Link>
       </View>
       <Slide
-        count={topics.length}
+        count={topicSuggestionQuery.data.length}
         itemWidth={240}
         gap={8}
         paddingHorizontal={16}
         className="w-full pt-2 py-4"
       >
         <SlideScrollView>
-          {topics.map((topic) => (
+          {topicSuggestionQuery.data.map((topic) => (
             <TopicCard key={topic.id} topic={topic} />
           ))}
         </SlideScrollView>
