@@ -16,6 +16,7 @@ WITH
       LEFT JOIN candidate_topic ct ON t.id = ct.topic_id
     WHERE 
       ct.topic_id IS NULL
+    ORDER BY score DESC
     LIMIT 10
   ),
 
@@ -45,6 +46,6 @@ SELECT
 FROM 
   final_candidate_score
   INNER JOIN "Topic" t ON final_candidate_score.topic_id = t.id
-  INNER JOIN "HashTagInTopic" htt ON t.id = htt."topicId"
+  LEFT JOIN "HashTagInTopic" htt ON t.id = htt."topicId"
   LEFT JOIN "HashTag" ht ON htt."hashTagId" = ht.id
-WHERE ht."status" = 'PUBLISH'
+WHERE ht."status" = 'PUBLISH' OR ht."status" IS NULL;

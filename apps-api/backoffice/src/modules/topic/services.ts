@@ -32,11 +32,7 @@ export class TopicService {
         bannerImage: topic.bannerImagePath
           ? this.fileService.getPublicFileUrl(topic.bannerImagePath)
           : null,
-        hashTags:
-          (topic.hashTags as Array<{ id: string; name: string }>)?.map((hashTag) => ({
-            id: hashTag.id,
-            name: hashTag.name,
-          })) ?? [],
+        hashTags: topic.hashTags,
       }))
     )
   }
