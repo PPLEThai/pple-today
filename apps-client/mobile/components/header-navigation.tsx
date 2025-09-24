@@ -30,7 +30,7 @@ export function Header(props: HeaderProps) {
       </Button>
       <View className="inline-flex flex-row justify-center gap-2 items-center">
         <Icon icon={props.icon} size={32} className="text-base-primary-default align-middle" />
-        <H1 className="font-anakotmai-medium text-2xl text-base-text-high">{props.title}</H1>
+        <H1 className="font-heading-semibold text-2xl text-base-text-high">{props.title}</H1>
       </View>
     </View>
   )

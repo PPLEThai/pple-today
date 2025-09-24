@@ -178,21 +178,21 @@ export default function TopicDetailPage() {
       <View className="rounded-2xl border border-base-outline-default bg-base-bg-white flex flex-col gap-2 p-3">
         <View className="flex flex-row items-center gap-2">
           <Icon icon={InfoIcon} size={24} className="text-base-primary-default" />
-          <H2 className="text-base text-base-text-high font-anakotmai-medium">เกี่ยวกับหัวข้อ</H2>
+          <H2 className="text-base text-base-text-high font-heading-semibold">เกี่ยวกับหัวข้อ</H2>
         </View>
-        <Text className="text-sm text-base-text-medium font-noto-medium">{topic.description}</Text>
+        <Text className="text-sm text-base-text-medium font-body-medium">{topic.description}</Text>
       </View>
       {topic.hashTags.length > 0 && (
         <View className="rounded-2xl border border-base-outline-default bg-base-bg-white flex flex-col gap-2 p-3">
           <View className="flex flex-row items-center gap-2">
             <Icon icon={HashIcon} size={24} className="text-base-primary-default" />
-            <H2 className="text-base text-base-text-high font-anakotmai-medium">ที่เกี่ยวข้อง</H2>
+            <H2 className="text-base text-base-text-high font-heading-semibold">ที่เกี่ยวข้อง</H2>
           </View>
           <View className="flex flex-row flex-wrap gap-2">
             {topic.hashTags.slice(0, 4).map((tag) => (
               <Link href={`/(feed)/hashtag/${tag.id}`} key={tag.id} asChild>
                 <Badge variant="outline" className="px-4 py-1.5">
-                  <Text className="text-sm text-base-text-high font-anakotmai-medium">
+                  <Text className="text-sm text-base-text-high font-heading-semibold">
                     {tag.name}
                   </Text>
                 </Badge>
@@ -247,7 +247,7 @@ export default function TopicDetailPage() {
               className="flex flex-row justify-end items-center gap-3 absolute left-0 right-0"
               style={headerTitleStyle}
             >
-              <H1 className="text-2xl font-anakotmai-bold text-base-text-invert">{topic.name}</H1>
+              <H1 className="text-2xl font-heading-bold text-base-text-invert">{topic.name}</H1>
               <Button
                 size="icon"
                 variant={isFollowing ? 'outline-primary' : 'primary'}
@@ -265,7 +265,7 @@ export default function TopicDetailPage() {
           style={headerCollapsableStyle}
           onLayout={(e) => setHeaderCollapsableHeight(e.nativeEvent.layout.height)}
         >
-          <H1 className="text-3xl font-anakotmai-bold text-base-text-invert line-clamp-1">
+          <H1 className="text-3xl font-heading-bold text-base-text-invert line-clamp-1">
             {topic.name}
           </H1>
           <Button
@@ -305,17 +305,17 @@ function MoreHashtagDialog({ hashTags }: MoreHashtagDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Badge variant="outline" className="px-4 py-1.5">
-          <Text className="text-sm text-base-text-high font-anakotmai-medium">
+          <Text className="text-sm text-base-text-high font-heading-semibold">
             ดูเพิ่มเติม ({hashTags.length - 4})
           </Text>
         </Badge>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader className="items-start gap-1">
-          <DialogTitle className="text-xl font-anakotmai-medium text-base-primary-default">
+          <DialogTitle className="text-xl font-heading-semibold text-base-primary-default">
             # ที่เกี่ยวข้อง
           </DialogTitle>
-          <DialogDescription className="text-sm text-base-text-medium font-anakotmai-light">
+          <DialogDescription className="text-sm text-base-text-medium font-heading-regular">
             แฮชแท็กที่เกี่ยวข้องกับหัวข้อนี้
           </DialogDescription>
         </DialogHeader>
@@ -331,7 +331,7 @@ function MoreHashtagDialog({ hashTags }: MoreHashtagDialogProps) {
               onPress={() => setOpen(false)}
             >
               <Badge variant="outline" className="px-4 py-1.5">
-                <Text className="text-sm text-base-text-high font-anakotmai-medium">
+                <Text className="text-sm text-base-text-high font-heading-semibold">
                   {tag.name}
                 </Text>
               </Badge>

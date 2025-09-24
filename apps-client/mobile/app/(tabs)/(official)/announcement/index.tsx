@@ -70,7 +70,7 @@ function AnnouncementList() {
     ) : data.length === 1 && data[0].length === 0 ? (
       // Empty State
       <View className="flex flex-col items-center justify-center py-6">
-        <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีประกาศ</Text>
+        <Text className="text-base-text-medium font-heading-semibold">ยังไม่มีประกาศ</Text>
       </View>
     ) : null // Reach end of feed
 

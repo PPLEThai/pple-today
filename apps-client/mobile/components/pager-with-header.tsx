@@ -425,31 +425,33 @@ export function PagerTabBar({ children }: { children: React.ReactNode }) {
     }
   )
   return (
-    <ScrollView
-      horizontal
-      ref={tabBarScrollElRef}
-      showsHorizontalScrollIndicator={false}
-      className="bg-base-bg-white w-full border-b border-base-outline-default"
-      contentContainerStyle={{ paddingHorizontal: PADDING_X }}
-      onLayout={(evt) => {
-        const height = evt.nativeEvent.layout.height
-        containerSize.set(evt.nativeEvent.layout.width)
-        if (height > 0) {
-          // The rounding is necessary to prevent jumps on iOS
-          setTabBarHeight(Math.round(height * 2) / 2)
-        }
-      }}
-    >
-      <View
-        accessibilityRole="tablist"
-        className="flex flex-row"
-        onLayout={(e) => {
-          tabListSize.set(e.nativeEvent.layout.width)
+    <View className="border-b border-base-outline-default bg-base-bg-white">
+      <ScrollView
+        horizontal
+        ref={tabBarScrollElRef}
+        showsHorizontalScrollIndicator={false}
+        className="w-full -mb-px"
+        contentContainerStyle={{ paddingHorizontal: PADDING_X }}
+        onLayout={(evt) => {
+          const height = evt.nativeEvent.layout.height
+          containerSize.set(evt.nativeEvent.layout.width)
+          if (height > 0) {
+            // The rounding is necessary to prevent jumps on iOS
+            setTabBarHeight(Math.round(height * 2) / 2)
+          }
         }}
       >
-        {children}
-      </View>
-    </ScrollView>
+        <View
+          accessibilityRole="tablist"
+          className="flex flex-row"
+          onLayout={(e) => {
+            tabListSize.set(e.nativeEvent.layout.width)
+          }}
+        >
+          {children}
+        </View>
+      </ScrollView>
+    </View>
   )
 }
 
@@ -511,7 +513,7 @@ export function PagerTabBarItemIndicator() {
   })
   return (
     <Animated.View
-      className="absolute -bottom-px left-0 right-0 border-b-2 border-base-primary-default "
+      className="absolute bottom-0 left-0 right-0 border-b-2 border-base-primary-default "
       style={indicatorStyle}
     />
   )
@@ -620,22 +622,24 @@ export function PagerTabBarItem({
   }
   return (
     <Pressable
-      className="h-10"
+      className="h-10 pt-2 pb-2 px-4 justify-center"
       accessibilityRole="tab"
       onLayout={handleLayout}
       onPress={handlePress}
       {...props}
     >
-      <Text className="px-4 pt-2 pb-2.5 text-sm font-anakotmai-medium relative text-base-text-placeholder">
-        {children}
-      </Text>
-      <Animated.Text
-        style={activeStyle}
-        className="px-4 pt-2 pb-2.5 text-sm font-anakotmai-medium text-base-primary-default absolute left-0 top-0 bottom-0 right-0"
-        aria-hidden
-      >
-        {children}
-      </Animated.Text>
+      <View>
+        <Text className="text-sm font-heading-semibold relative text-base-text-placeholder">
+          {children}
+        </Text>
+        <Animated.Text
+          style={activeStyle}
+          className="text-sm font-heading-semibold text-base-primary-default absolute left-0 top-0 bottom-0 right-0"
+          aria-hidden
+        >
+          {children}
+        </Animated.Text>
+      </View>
     </Pressable>
   )
 }

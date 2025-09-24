@@ -24,12 +24,12 @@ export function UserAddressInfoSection(props: UserInfoAddressSectionProps) {
       <View className="flex flex-col items-start">
         <View className="flex flex-row items-center gap-2">
           <Icon icon={MapPinnedIcon} size={16} className="text-base-primary-medium" />
-          <H2 className="text-xs text-base-text-high font-anakotmai-light">พื้นที่ของคุณ</H2>
+          <H2 className="text-xs text-base-text-high font-heading-regular">พื้นที่ของคุณ</H2>
         </View>
-        <Text className="text-lg text-base-primary-default font-anakotmai-bold">
+        <Text className="text-lg text-base-primary-default font-heading-bold">
           {authMeQuery.data.address.subDistrict}, {authMeQuery.data.address.district}
         </Text>
-        <Text className="text-sm text-base-text-high font-anakotmai-light">
+        <Text className="text-sm text-base-text-high font-heading-regular">
           {authMeQuery.data.address.province}
         </Text>
       </View>
@@ -43,7 +43,7 @@ export function UserAddressInfoSection(props: UserInfoAddressSectionProps) {
             strokeWidth={1}
           />
         </View>
-        <Text className="text-sm text-base-text-high font-anakotmai-medium">
+        <Text className="text-sm text-base-text-high font-heading-semibold">
           ดูข้อมูล{'\n'}
           สส. ของคุณ
         </Text>
