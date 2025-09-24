@@ -27,7 +27,7 @@ const SelectValue = ({
   return (
     <SelectPrimitive.Value
       ref={ref}
-      className={cn('text-sm font-heading-regular text-foreground', className)}
+      className={cn('text-[0.875rem] font-heading-regular text-foreground', className)}
       {...props}
     >
       {children}

@@ -12,6 +12,16 @@ export const cn = extendTailwindMerge({
         'font-heading-semibold',
         'font-heading-bold',
       ],
+      'text-color': [
+        'text-foreground',
+        'text-muted-foreground',
+        'text-popover-foreground',
+        'text-base-primary-default',
+        'text-base-text-high',
+        'text-base-text-medium',
+        'text-base-text-placeholder',
+        'text-base-text-invert',
+      ],
     },
   },
 })
