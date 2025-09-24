@@ -41,9 +41,7 @@ export default function OfficialPage() {
               strokeWidth={2}
               className="text-base-primary-default"
             />
-            <H1 className="text-3xl font-heading-semibold text-base-primary-default mt-2">
-              ทางการ
-            </H1>
+            <H1 className="text-3xl font-heading-semibold text-base-primary-default">ทางการ</H1>
           </View>
           <Text className="font-heading-regular text-base-text-medium">
             ข้อมูลข่าวสารจากพรรคประชาชน

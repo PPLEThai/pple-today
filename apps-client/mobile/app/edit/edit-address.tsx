@@ -125,7 +125,7 @@ export default function EditAddressPage() {
     <>
       <Header icon={MapPin} title="แก้ไขข้อมูลที่อยู่" />
       <View className="flex flex-col pt-1 px-6 gap-1 justify-between">
-        <H2 className="text-base-primary-default pt-3 font-heading-semibold">ข้อมูลที่อยู่</H2>
+        <H2 className="text-base-primary-default font-heading-semibold">ข้อมูลที่อยู่</H2>
         <Text className="font-heading-semibold text-base-text-medium">
           กรอกที่อยู่ เพื่อให้เราแนะนำข่าวสารที่ตรงกับพื้นที่ และความสนใจของคุณ
         </Text>

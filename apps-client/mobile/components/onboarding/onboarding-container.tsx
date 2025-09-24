@@ -60,8 +60,8 @@ function OnboardingHeader({ step }: { step: number }) {
   const { title, description } = getHeaderContent()
 
   return (
-    <View className="flex flex-col pt-1 px-6 gap-1">
-      <H2 className="text-base-primary-default pt-3 font-heading-semibold">{title}</H2>
+    <View className="flex flex-col pt-4 px-6 gap-1">
+      <H2 className="text-base-primary-default font-heading-semibold">{title}</H2>
       <Text className="font-heading-semibold text-base-text-medium">{description}</Text>
     </View>
   )
