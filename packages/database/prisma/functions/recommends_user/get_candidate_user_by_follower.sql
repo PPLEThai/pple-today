@@ -17,21 +17,21 @@ WITH
             uf1."followedId" AS user_id
         FROM current_user_follows AS uf0
         INNER JOIN "UserFollowsUser" AS uf1 ON uf0."followedId" = uf1."followerId"
-        WHERE uf1."followedId" != _id
+        WHERE uf1."followedId" <> _id
     ),
     common_followed AS (
         SELECT
             uf1."followerId" AS user_id
         FROM current_user_follows AS uf0
         INNER JOIN "UserFollowsUser" AS uf1 ON uf0."followedId" = uf1."followedId"
-        WHERE uf1."followedId" != _id
+        WHERE uf1."followedId" <> _id
     ),
     common_followed_one_hop AS (
         SELECT
             uf."followedId" AS user_id
         FROM common_followed AS cf
         INNER JOIN "UserFollowsUser" AS uf ON cf."user_id" = uf."followerId"
-        WHERE uf."followedId" != _id
+        WHERE uf."followedId" <> _id
     ),
     candidate_user AS (
         SELECT * FROM common_followed_one_hop 

@@ -38,8 +38,7 @@ BEGIN
       topic_from_hashtag.score
     FROM 
       topic_from_hashtag
-      INNER JOIN "Topic" t ON topic_from_hashtag.topic_id = t."id"
-    WHERE t."status" = 'PUBLISH'
+      INNER JOIN "Topic" t ON topic_from_hashtag.topic_id = t."id" AND t."status" = 'PUBLISH'
     ORDER BY topic_from_hashtag.score DESC
     LIMIT 10;
 END;
