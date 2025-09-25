@@ -14,5 +14,4 @@ export namespace $DbEnums {
   type PostAttachmentType = "IMAGE" | "VIDEO" | "AUDIO"
   type HashTagStatus = "PUBLISH" | "SUSPEND"
   type TopicStatus = "PUBLISH" | "DRAFT"
-  type UserRole = "USER" | "REPRESENTATIVE" | "MEMBER" | "STAFF" | "OFFICIAL"
 }

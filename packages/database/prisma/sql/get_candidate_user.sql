@@ -8,13 +8,28 @@ WITH
       SELECT * FROM get_candidate_user_by_topic($1)
   ),
 
+  excluded_users AS (
+  	SELECT
+  		ufu."followedId" AS user_id
+  	FROM
+  		"UserFollowsUser" ufu
+  	WHERE 
+  		ufu."followerId" = $1
+  	UNION ALL
+  	SELECT
+  		DISTINCT candidate_user.user_id
+  	FROM 
+  		candidate_user
+  ),
+
   other_users AS (
   	SELECT
   		*
   	FROM
   		"User" u
+  		LEFT JOIN excluded_users e ON e.user_id = u."id"
   	WHERE
-  		u."id" <> $1
+  		e.user_id IS NULL AND u.id <> $1
   ),
 
   other_candidate_user AS (
