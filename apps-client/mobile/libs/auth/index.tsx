@@ -199,7 +199,8 @@ export const AuthLifeCycleHook = () => {
       console.error('Error fetching session:', JSON.stringify(sessionQuery.error))
       sessionMutation.mutate(null)
     }
-  }, [sessionQuery.error, sessionMutation])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionQuery.error])
 
   const userQuery = useUserQuery({
     variables: {
@@ -221,7 +222,8 @@ export const AuthLifeCycleHook = () => {
     if (userQuery.error) {
       console.error('Error fetching user info:', userQuery.error)
     }
-  }, [userQuery.error, sessionMutation])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userQuery.error])
 
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
