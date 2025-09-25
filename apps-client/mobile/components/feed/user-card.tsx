@@ -1,35 +1,45 @@
-import React from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { ScrollView, View } from 'react-native'
+import { createQuery } from 'react-query-kit'
 
+import { QUERY_KEY } from '@pple-today/api-client'
 import { AnimatedBackgroundPressable } from '@pple-today/ui/animated-pressable'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { cn } from '@pple-today/ui/lib/utils'
+import { Skeleton } from '@pple-today/ui/skeleton'
 import { Text } from '@pple-today/ui/text'
 import { H2 } from '@pple-today/ui/typography'
+import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
 import { ArrowRightIcon, UserRoundPlusIcon } from 'lucide-react-native'
 
+import { GetUserRecommendationResponse } from '@api/backoffice/app'
 import { reactQueryClient } from '@app/libs/api-client'
+import { useSession } from '@app/libs/auth'
 
 import { AvatarPPLEFallback } from '../avatar-pple-fallback'
 
-interface PeopleCardProps {
+interface UserCardProps {
   className?: string
   user: {
     id: string
     name: string
-    avatarUrl?: string
-    address?: {
+    profileImage: string | null
+    address: {
       province: string
-    }
-    followed: boolean
+      district: string
+    } | null
+    followed?: boolean
   }
 }
 
-export function PeopleCard(props: PeopleCardProps) {
-  const [isFollowing, setIsFollowing] = React.useState(props.user.followed)
+export function UserCard(props: UserCardProps) {
+  const [isFollowing, setIsFollowing] = useUserFollowState(
+    props.user.id,
+    props.user.followed ?? false
+  )
   const followMutation = reactQueryClient.useMutation('post', '/profile/:id/follow', {})
   const unfollowMutation = reactQueryClient.useMutation('delete', '/profile/:id/follow', {})
   const toggleFollow = async () => {
@@ -51,7 +61,7 @@ export function PeopleCard(props: PeopleCardProps) {
       )}
     >
       <Avatar alt={props.user.name} className="w-14 h-14">
-        <AvatarImage source={{ uri: props.user.avatarUrl }} />
+        {props.user.profileImage && <AvatarImage source={{ uri: props.user.profileImage }} />}
         <AvatarPPLEFallback />
       </Avatar>
       <View className="flex-1">
@@ -77,8 +87,50 @@ export function PeopleCard(props: PeopleCardProps) {
   )
 }
 
-export function PeopleSuggestion() {
+const useUserFollowQuery = createQuery({
+  queryKey: [QUERY_KEY, 'user-follow'],
+  fetcher: (_: { userId: string }): boolean => {
+    throw new Error('userFollowQuery should not be enabled')
+  },
+  enabled: false,
+})
+export function useUserFollowState(userId: string, initialData: boolean) {
+  const userFollowQuery = useUserFollowQuery({
+    variables: { userId },
+    initialData: initialData,
+  })
+  const queryClient = useQueryClient()
+  const setUserFollowState = useCallback(
+    (data: boolean) => {
+      queryClient.setQueryData(useUserFollowQuery.getKey({ userId }), data)
+    },
+    [queryClient, userId]
+  )
+  return [userFollowQuery.data, setUserFollowState] as const
+}
+
+export function UserSuggestion() {
   const router = useRouter()
+  const session = useSession()
+  const userSuggestionQuery = reactQueryClient.useQuery(
+    '/profile/recommend',
+    {},
+    {
+      select: useCallback((data: GetUserRecommendationResponse) => data.slice(0, 5), []), // limit to 5 suggestions
+      enabled: !!session,
+    }
+  )
+  useEffect(() => {
+    if (userSuggestionQuery.error) {
+      console.error('Fetching User Suggestion failed: ', JSON.stringify(userSuggestionQuery.error))
+    }
+  }, [userSuggestionQuery.error])
+  if (!session) {
+    return null
+  }
+  if (!userSuggestionQuery.data) {
+    return null
+  }
   return (
     <View className="flex flex-col gap-4">
       <View className="flex flex-row justify-between items-center px-4 pt-4">
@@ -86,7 +138,7 @@ export function PeopleSuggestion() {
           <Icon icon={UserRoundPlusIcon} size={32} className="text-base-primary-default" />
           <H2 className="text-2xl font-heading-semibold text-base-text-high">แนะนำให้ติดตาม</H2>
         </View>
-        <Button variant="ghost" onPress={() => router.navigate('/(feed)/people-suggestion')}>
+        <Button variant="ghost" onPress={() => router.navigate('/(feed)/user-suggestion')}>
           <Text>ดูเพิ่มเติม</Text>
           <Icon icon={ArrowRightIcon} size={16} />
         </Button>
@@ -96,21 +148,14 @@ export function PeopleSuggestion() {
         showsHorizontalScrollIndicator={false}
         contentContainerClassName="gap-2 px-4"
       >
-        {Array.from({ length: 5 }).map((_, i) => (
-          <PeopleCard
-            key={i}
-            user={{
-              id: '1',
-              name: 'ศิริโรจน์ ธนิกกุล - Sirirot Thanikkun ศิริโรจน์ ธนิกกุล - Sirirot Thanikkun',
-              followed: false,
-              address: { province: 'กรุงเทพมหานคร' },
-              avatarUrl:
-                'https://pbs.twimg.com/profile_images/1782428433898708992/1voyv4_A_400x400.jpg',
-            }}
-            className="w-[164px]"
-          />
+        {userSuggestionQuery.data.map((user, i) => (
+          <UserCard key={i} user={user} className="w-[164px]" />
         ))}
       </ScrollView>
     </View>
   )
+}
+
+export function UserCardSkeleton() {
+  return <Skeleton className="rounded-2xl w-[164px] h-[208px] border border-base-outline-default" />
 }
