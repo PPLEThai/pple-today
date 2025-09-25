@@ -5,11 +5,15 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { DevToolsBubble } from 'react-native-react-query-devtools'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 
-import { Inter_300Light, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter'
+import { Inter_400Regular, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter'
+import {
+  NotoSansThai_400Regular,
+  NotoSansThai_600SemiBold,
+  NotoSansThai_700Bold,
+} from '@expo-google-fonts/noto-sans-thai'
 import {
   NotoSansThaiLooped_300Light,
   NotoSansThaiLooped_500Medium,
-  NotoSansThaiLooped_700Bold,
 } from '@expo-google-fonts/noto-sans-thai-looped'
 import { BottomSheetModalProvider } from '@pple-today/ui/bottom-sheet/index'
 import { NAV_THEME } from '@pple-today/ui/lib/constants'
@@ -91,15 +95,14 @@ const onCopy = async (text: string) => {
 
 function FontProvider({ children }: { children: React.ReactNode }) {
   const [fontLoaded, fontError] = useFonts({
-    Inter_300Light,
-    Inter_500Medium,
+    Inter_400Regular,
+    Inter_600SemiBold,
     Inter_700Bold,
+    NotoSansThai_400Regular,
+    NotoSansThai_600SemiBold,
+    NotoSansThai_700Bold,
     NotoSansThaiLooped_300Light,
     NotoSansThaiLooped_500Medium,
-    NotoSansThaiLooped_700Bold,
-    Anakotmai_300Light: require('../assets/fonts/Anakotmai-Light.otf'),
-    Anakotmai_500Medium: require('../assets/fonts/Anakotmai-Medium.otf'),
-    Anakotmai_700Bold: require('../assets/fonts/Anakotmai-Bold.otf'),
   })
   React.useEffect(() => {
     if (fontLoaded || fontError) {

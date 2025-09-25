@@ -52,7 +52,7 @@ export default function HashtagFeedPage() {
         hashtagId={hashtagId}
         header={
           <View className="pt-2 pb-3 px-4 bg-base-bg-white">
-            <Text className="text-3xl text-base-text-high font-anakotmai-bold">
+            <Text className="text-3xl text-base-text-high font-heading-bold">
               {hashtagQuery.isLoading || !hashtagQuery.data ? '...' : `${hashtagQuery.data.name}`}
             </Text>
           </View>

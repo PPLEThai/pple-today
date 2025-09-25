@@ -41,11 +41,9 @@ export default function OfficialPage() {
               strokeWidth={2}
               className="text-base-primary-default"
             />
-            <H1 className="text-3xl font-anakotmai-medium text-base-primary-default mt-2">
-              ทางการ
-            </H1>
+            <H1 className="text-3xl font-heading-semibold text-base-primary-default">ทางการ</H1>
           </View>
-          <Text className="font-anakotmai-light text-base-text-medium">
+          <Text className="font-heading-regular text-base-text-medium">
             ข้อมูลข่าวสารจากพรรคประชาชน
           </Text>
         </View>
@@ -68,7 +66,7 @@ const DemoSection = () => {
         <View className="w-8 h-8 flex items-center justify-center">
           <Icon icon={MegaphoneIcon} size={32} className="text-base-primary-default" />
         </View>
-        <H2 className="text-2xl font-anakotmai-medium text-base-text-high">ประกาศ</H2>
+        <H2 className="text-2xl font-heading-semibold text-base-text-high">ประกาศ</H2>
       </View>
       <View className="h-48 bg-base-bg-white rounded-xl border border-base-outline-default mt-2 p-4"></View>
     </View>
@@ -117,7 +115,7 @@ const AnnouncementSection = () => {
       <View className="flex flex-row justify-between items-center">
         <View className="flex flex-row gap-2 items-center">
           <Icon icon={MegaphoneIcon} size={32} className="text-base-primary-default" />
-          <H2 className="text-2xl font-anakotmai-medium text-base-text-high">ประกาศ</H2>
+          <H2 className="text-2xl font-heading-semibold text-base-text-high">ประกาศ</H2>
         </View>
         <View className="min-h-10">
           {data.length > 0 && (
@@ -147,7 +145,7 @@ const InformationSection = () => {
         <View className="w-8 h-8 flex items-center justify-center">
           <Icon icon={InfoIcon} size={32} className="text-base-primary-default" />
         </View>
-        <H2 className="text-2xl font-anakotmai-medium text-base-text-high">ข้อมูลพรรคประชาชน</H2>
+        <H2 className="text-2xl font-heading-semibold text-base-text-high">ข้อมูลพรรคประชาชน</H2>
       </View>
       <View className="mt-4 gap-y-4">
         <View className="flex flex-row gap-x-[12.5px]">
@@ -158,7 +156,7 @@ const InformationSection = () => {
               <View className="flex flex-col mb-3 h-8 w-8 bg-base-secondary-default rounded-lg items-center justify-center">
                 <Personal width={24} height={24} color="white" />
               </View>
-              <Text className="text-base font-anakotmai-medium w-full">บุคลากรของพรรค</Text>
+              <Text className="text-base font-heading-semibold w-full">บุคลากรของพรรค</Text>
             </View>
             <View className="flex-1 justify-end items-end">
               <Icon
@@ -176,7 +174,7 @@ const InformationSection = () => {
               <View className="flex flex-col mb-3 h-8 w-8 bg-base-primary-default rounded-lg items-center justify-center">
                 <PPLEIcon width={20} height={16} color="white" />
               </View>
-              <Text className="text-base font-anakotmai-medium w-full">เกี่ยวกับพรรคประชาชน</Text>
+              <Text className="text-base font-heading-semibold w-full">เกี่ยวกับพรรคประชาชน</Text>
             </View>
             <View className="flex-1 justify-end items-end">
               <Icon
@@ -194,7 +192,7 @@ const InformationSection = () => {
               <View className="flex flex-col mb-3 h-8 w-8 bg-violet-500 rounded-lg items-center justify-center">
                 <ContactMail width={24} height={24} color="white" />
               </View>
-              <Text className="text-base font-anakotmai-medium w-full">ช่องทางการติดต่อ</Text>
+              <Text className="text-base font-heading-semibold w-full">ช่องทางการติดต่อ</Text>
             </View>
             <View className="flex-1 justify-end items-end">
               <Icon
@@ -220,14 +218,14 @@ const InformationSection = () => {
                             strokeWidth={1}
                             className="text-base-primary-default"
                           />
-                          <Text className="text-base-text-high font-noto-medium">สำนักงานใหญ่</Text>
+                          <Text className="text-base-text-high font-body-medium">สำนักงานใหญ่</Text>
                         </View>
                         <View className="gap-0.5">
-                          <Text className="font-noto-light">เลขที่ 167 อาคารอนาคตใหม่ ชั้น 4</Text>
-                          <Text className="font-noto-light">
+                          <Text className="font-body-light">เลขที่ 167 อาคารอนาคตใหม่ ชั้น 4</Text>
+                          <Text className="font-body-light">
                             รามคำแหง 42 แขวงหัวหมาก เขต บางกะปิ
                           </Text>
-                          <Text className="font-noto-light">กรุงเทพมหานคร 10240</Text>
+                          <Text className="font-body-light">กรุงเทพมหานคร 10240</Text>
                         </View>
                       </View>
                       <View className="gap-2">
@@ -238,12 +236,12 @@ const InformationSection = () => {
                             strokeWidth={1}
                             className="text-base-primary-default"
                           />
-                          <Text className="text-base-text-high font-noto-medium">เบอร์โทร</Text>
+                          <Text className="text-base-text-high font-body-medium">เบอร์โทร</Text>
                         </View>
-                        <Text className="font-noto-light items-baseline">
+                        <Text className="font-body-light items-baseline">
                           <Text
                             onPress={() => Linking.openURL('tel:028215874')}
-                            className="underline font-noto-light"
+                            className="underline font-body-light"
                           >
                             02-821-5874
                           </Text>{' '}
@@ -258,20 +256,20 @@ const InformationSection = () => {
                             strokeWidth={1}
                             className="text-base-primary-default"
                           />
-                          <Text className="text-base-text-high font-noto-medium">อีเมล</Text>
+                          <Text className="text-base-text-high font-body-medium">อีเมล</Text>
                         </View>
                         <View className="gap-0.5 mb-10">
                           <Text
-                            className="font-noto-light underline"
+                            className="font-body-light underline"
                             onPress={() =>
                               Linking.openURL('mailto:office@peoplespartythailand.org')
                             }
                           >
                             office@peoplespartythailand.org
                           </Text>
-                          <Text className="font-noto-light">PeoplesPartyThailand</Text>
-                          <Text className="font-noto-light">@PPLEThailand</Text>
-                          <Text className="font-noto-light">พรรคประชาชน - People&apos;s Party</Text>
+                          <Text className="font-body-light">PeoplesPartyThailand</Text>
+                          <Text className="font-body-light">@PPLEThailand</Text>
+                          <Text className="font-body-light">พรรคประชาชน - People&apos;s Party</Text>
                         </View>
                       </View>
                     </View>
@@ -285,7 +283,7 @@ const InformationSection = () => {
               <View className="flex flex-col mb-3 h-8 w-8 bg-blue-500 rounded-lg items-center justify-center">
                 <Icon icon={GlobeIcon} size={22} color="white" />
               </View>
-              <Text className="text-base font-anakotmai-medium w-full">เว็บไซต์ทางการ</Text>
+              <Text className="text-base font-heading-semibold w-full">เว็บไซต์ทางการ</Text>
             </View>
             <View className="flex-1 justify-end items-end">
               <Icon

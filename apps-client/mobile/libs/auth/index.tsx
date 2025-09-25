@@ -224,7 +224,7 @@ export const AuthLifeCycleHook = () => {
       <DialogContent>
         <DialogHeader>
           <Icon icon={TriangleAlertIcon} size={40} strokeWidth={1} />
-          <DialogTitle className="text-2xl font-anakotmai-medium">
+          <DialogTitle className="text-2xl font-heading-semibold">
             กรุณาเข้าสู่ระบบอีกครั้ง
           </DialogTitle>
         </DialogHeader>
