@@ -37,6 +37,12 @@ export class ProfileService {
       profileImage: user.profileImagePath
         ? this.fileService.getPublicFileUrl(user.profileImagePath)
         : undefined,
+      address: user.address
+        ? {
+            province: user.address.province,
+            district: user.address.district,
+          }
+        : undefined,
     }))
 
     return ok(users)

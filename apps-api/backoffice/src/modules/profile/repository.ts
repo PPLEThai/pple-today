@@ -19,13 +19,13 @@ export class ProfileRepository {
 
   async getUserRecommendation(userId: string) {
     return await fromRepositoryPromise(async () => {
-      const candidateUserId = await this.prismaService.$queryRawTyped(get_candidate_user(userId))
+      const candidateUserIds = await this.prismaService.$queryRawTyped(get_candidate_user(userId))
 
       const candidateUser = await this.prismaService.user.findMany({
         where: {
           id: {
             in: R.pipe(
-              candidateUserId,
+              candidateUserIds,
               R.map(R.prop('user_id')),
               R.filter((id) => id !== null)
             ),

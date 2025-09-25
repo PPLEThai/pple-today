@@ -4,11 +4,18 @@ import { Static, t } from 'elysia'
 
 export const GetUserRecommendationResponse = t.Array(
   t.Object({
-    id: t.String({ description: 'The ID of the user' }),
-    name: t.String({ description: 'The name of the user' }),
-    profileImage: t.Optional(
-      t.String({ description: 'The URL of the profile image', format: 'uri' })
+    id: t.String({ description: 'The ID of the author' }),
+    name: t.String({ description: 'The name of the author' }),
+    address: t.Optional(
+      t.Object(
+        {
+          province: t.String({ description: 'The province of the author' }),
+          district: t.String({ description: 'The district of the author' }),
+        },
+        { description: 'The address of the author' }
+      )
     ),
+    profileImage: t.Optional(t.String({ description: 'The profile image URL of the author' })),
   })
 )
 export type GetUserRecommendationResponse = Static<typeof GetUserRecommendationResponse>
