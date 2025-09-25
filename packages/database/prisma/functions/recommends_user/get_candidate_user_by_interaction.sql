@@ -43,9 +43,7 @@ WITH
         FROM
             post_details
             INNER JOIN latest_user_interaction ON post_details.id = latest_user_interaction.feed_item_id
-            INNER JOIN "HashTag" ON post_details.hashtag = "HashTag".id
-        WHERE
-            "HashTag".status = 'PUBLISH'
+            INNER JOIN "HashTag" ON post_details.hashtag = "HashTag".id AND "HashTag".status = 'PUBLISH'
     ),
     author_from_hashtag AS (
         SELECT post_details.author_id, SUM(
@@ -64,7 +62,8 @@ FROM
   author_from_hashtag
   LEFT JOIN current_user_follows ON author_from_hashtag.author_id = current_user_follows.followed_id
 WHERE
-  author_from_hashtag.author_id != _id
+  current_user_follows.followed_id IS NULL
+  AND author_from_hashtag.author_id <> _id
 ORDER BY author_from_hashtag.score DESC
 LIMIT 10;
 END;
