@@ -40,12 +40,7 @@ export class ProfileRepository {
         },
       })
 
-      return candidateUser.map((user) => ({
-        ...user,
-        profileImagePath: user.profileImagePath
-          ? this.fileService.getPublicFileUrl(user.profileImagePath)
-          : null,
-      }))
+      return candidateUser
     })
   }
 
