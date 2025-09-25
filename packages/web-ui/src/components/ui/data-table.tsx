@@ -27,12 +27,12 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
   })
 
   return (
-    <>
-      <div className="overflow-hidden rounded-md border">
+    <div className="w-full">
+      <div className="overflow-hidden rounded-lg border">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
+              <TableRow key={headerGroup.id} className="bg-base-bg-light">
                 {headerGroup.headers.map((header) => {
                   return (
                     <TableHead key={header.id}>
@@ -58,7 +58,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell colSpan={columns.length} className="text-center">
                   No results.
                 </TableCell>
               </TableRow>
@@ -66,21 +66,17 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
           </TableBody>
         </Table>
       </div>
-      <div className="flex items-center justify-between px-2">
-        <div className="text-muted-foreground flex-1 text-sm">
-          {table.getFilteredSelectedRowModel().rows.length} of{' '}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
+      <div className="flex items-center justify-end mt-4">
         <div className="flex items-center space-x-6 lg:space-x-8">
           <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Rows per page</p>
+            <p className="text-sm font-medium text-base-text-high">Rows per page</p>
             <Select
               value={`${table.getState().pagination.pageSize}`}
               onValueChange={(value) => {
                 table.setPageSize(Number(value))
               }}
             >
-              <SelectTrigger className="h-8 w-[70px]">
+              <SelectTrigger className="h-9 w-[72px]">
                 <SelectValue placeholder={table.getState().pagination.pageSize} />
               </SelectTrigger>
               <SelectContent side="top">
@@ -92,7 +88,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
               </SelectContent>
             </Select>
           </div>
-          <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+          <div className="flex items-center justify-center text-sm font-medium text-base-text-high">
             Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
           </div>
           <div className="flex items-center space-x-2">
@@ -104,7 +100,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
               disabled={!table.getCanPreviousPage()}
             >
               <span className="sr-only">Go to first page</span>
-              <ChevronsLeft />
+              <ChevronsLeft className="size-4" />
             </Button>
             <Button
               variant="outline"
@@ -114,7 +110,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
               disabled={!table.getCanPreviousPage()}
             >
               <span className="sr-only">Go to previous page</span>
-              <ChevronLeft />
+              <ChevronLeft className="size-4" />
             </Button>
             <Button
               variant="outline"
@@ -124,7 +120,7 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
               disabled={!table.getCanNextPage()}
             >
               <span className="sr-only">Go to next page</span>
-              <ChevronRight />
+              <ChevronRight className="size-4" />
             </Button>
             <Button
               variant="outline"
@@ -134,11 +130,11 @@ export function DataTable<TData, TValue>({ columns, data }: DataTableProps<TData
               disabled={!table.getCanNextPage()}
             >
               <span className="sr-only">Go to last page</span>
-              <ChevronsRight />
+              <ChevronsRight className="size-4" />
             </Button>
           </div>
         </div>
       </div>
-    </>
+    </div>
   )
 }
