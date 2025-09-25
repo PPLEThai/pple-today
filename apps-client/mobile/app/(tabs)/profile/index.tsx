@@ -194,6 +194,8 @@ const ProfileSection = () => {
           return 'ผู้ช่วย สส.'
         case 'pple-ad:candidate':
           return 'ผู้สมัคร สส.'
+        case 'pple-ad:tto':
+          return 'ตทอ.'
         case 'official':
           return 'Official'
       }
