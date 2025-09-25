@@ -126,6 +126,7 @@ export const useUserQuery = createQuery<
     return userInfoResult.data
   },
   initialData: null,
+  retry: false,
 })
 
 export const useUser = () => {
