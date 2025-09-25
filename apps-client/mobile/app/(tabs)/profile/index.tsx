@@ -51,7 +51,13 @@ import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { environment } from '@app/env'
 import { reactQueryClient } from '@app/libs/api-client'
-import { useDiscoveryQuery, useLoginMutation, useLogoutMutation, useSession } from '@app/libs/auth'
+import {
+  useAuthMe,
+  useDiscoveryQuery,
+  useLoginMutation,
+  useLogoutMutation,
+  useSession,
+} from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 
@@ -321,6 +327,11 @@ const PointSection = () => {
 
 const FacebookPageSection = () => {
   const linkedPageQuery = reactQueryClient.useQuery('/facebook/linked-page', {})
+  const authMe = useAuthMe()
+  const user = authMe.data
+  if (!user || !(user.roles.includes('pple-ad:hq') || user.roles.includes('pple-ad:mp'))) {
+    return null
+  }
   return (
     <View className="flex flex-col gap-3 border border-base-outline-default rounded-xl py-3 px-4 bg-base-bg-white">
       <View className="flex flex-row items-center pb-2.5 gap-2 border-b border-base-outline-default">
