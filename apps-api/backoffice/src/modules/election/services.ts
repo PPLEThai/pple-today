@@ -1,12 +1,13 @@
+import { createId } from '@paralleldrive/cuid2'
 import {
   ElectionCandidate as ElectionCandidateDTO,
-  ElectionInfo,
   ElectionStatus,
+  FileMimeType,
+  FilePath,
   InternalErrorCode,
 } from '@pple-today/api-common/dtos'
 import { FileService } from '@pple-today/api-common/services'
-import { mapRepositoryError } from '@pple-today/api-common/utils'
-import { err } from '@pple-today/api-common/utils'
+import { err, mapRepositoryError } from '@pple-today/api-common/utils'
 import {
   Election,
   ElectionCandidate,
@@ -19,8 +20,8 @@ import dayjs from 'dayjs'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { GetElectionResponse, ListElectionResponse } from './models'
-import { ElectionRepository, ElectionRepositoryPlugin } from './repostiory'
+import { ElectionWithCurrentStatus, GetElectionResponse, ListElectionResponse } from './models'
+import { ElectionRepository, ElectionRepositoryPlugin } from './repository'
 
 import { FileServicePlugin } from '../../plugins/file'
 
@@ -125,10 +126,10 @@ export class ElectionService {
     return voterType === 'ONLINE'
   }
 
-  private convertToElectionInfo(
+  private convertToListElection(
     election: Election & { voters: ElectionEligibleVoter[]; voteRecords: ElectionVoteRecord[] },
     voterType: EligibleVoterType
-  ): ElectionInfo {
+  ): ElectionWithCurrentStatus {
     return {
       id: election.id,
       name: election.name,
@@ -158,7 +159,7 @@ export class ElectionService {
       electionId: candidate.electionId,
       name: candidate.name,
       description: candidate.description,
-      profileImage: candidate.profileImagePath
+      profileImagePath: candidate.profileImagePath
         ? this.fileService.getPublicFileUrl(candidate.profileImagePath)
         : null,
       number: candidate.number,
@@ -176,7 +177,7 @@ export class ElectionService {
     const result = eligibleVoters.value
       .filter(({ election }) => this.isElectionActive(election))
       .map(({ election, type: voterType }) =>
-        this.convertToElectionInfo(election, voterType)
+        this.convertToListElection(election, voterType)
       ) satisfies ListElectionResponse
 
     return ok(result)
@@ -201,12 +202,12 @@ export class ElectionService {
     }
 
     const election = eligibleVoter.value.election
-    const electionInfo = this.convertToElectionInfo(election, eligibleVoter.value.type)
+    const listElection = this.convertToListElection(election, eligibleVoter.value.type)
     const candidates = election.candidates.map((candidate) =>
       this.convertToElectionCandidateDTO(candidate)
     )
     const result = {
-      ...electionInfo,
+      ...listElection,
       candidates,
     } satisfies GetElectionResponse
 
@@ -259,6 +260,15 @@ export class ElectionService {
     return ok()
   }
 
+  private isElectionCanVoteOnline(election: Election): boolean {
+    return election.type === 'HYBRID' || election.type === 'ONLINE'
+  }
+
+  private isElectionInVotePeriod(election: Election): boolean {
+    const now = new Date()
+    return now >= election.openVoting && now <= election.closeVoting
+  }
+
   async withdrawBallot(userId: string, electionId: string) {
     const eligibleVoter = await this.electionRepository.getMyEligibleVoter(userId, electionId)
     if (eligibleVoter.isErr()) {
@@ -272,17 +282,14 @@ export class ElectionService {
 
     const election = eligibleVoter.value.election
 
-    const canVoteOnline = election.type === 'HYBRID' || election.type === 'ONLINE'
-    if (!canVoteOnline) {
+    if (!this.isElectionCanVoteOnline(election)) {
       return err({
         code: InternalErrorCode.ELECTION_WITHDRAW_TO_INVALID_TYPE,
         message: `Can only withdraw to election with type ONLINE and HYBRID`,
       })
     }
 
-    const now = new Date()
-    const isInVotePeriod = now >= election.openVoting && now <= election.closeVoting
-    if (!isInVotePeriod) {
+    if (!this.isElectionInVotePeriod(election)) {
       return err({
         code: InternalErrorCode.ELECTION_NOT_IN_VOTE_PERIOD,
         message: `Cannot withdraw at this time. The vote period is from ${dayjs(election.openVoting).format()} to ${dayjs(election.closeVoting).format()}.`,
@@ -295,6 +302,81 @@ export class ElectionService {
     }
 
     return ok()
+  }
+
+  async createBallot(input: {
+    userId: string
+    electionId: string
+    encryptedBallot: string
+    faceImagePath: FilePath
+    location: string
+  }) {
+    const { userId, electionId, encryptedBallot, faceImagePath, location } = input
+    const eligibleVoter = await this.electionRepository.getMyEligibleVoter(userId, electionId)
+    if (eligibleVoter.isErr()) {
+      return mapRepositoryError(eligibleVoter.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id: ${electionId}`,
+        },
+      })
+    }
+
+    const election = eligibleVoter.value.election
+
+    if (!this.isElectionCanVoteOnline(election)) {
+      return err({
+        code: InternalErrorCode.ELECTION_VOTE_TO_INVALID_TYPE,
+        message: `Can only vote to election with type ONLINE and HYBRID`,
+      })
+    }
+
+    if (!this.isElectionInVotePeriod(election)) {
+      return err({
+        code: InternalErrorCode.ELECTION_NOT_IN_VOTE_PERIOD,
+        message: `Cannot vote at this time. The vote period is from ${dayjs(election.openVoting).format()} to ${dayjs(election.closeVoting).format()}.`,
+      })
+    }
+
+    const createBallotResult = await this.electionRepository.createMyBallot({
+      userId,
+      electionId,
+      encryptedBallot,
+      faceImagePath,
+      location,
+    })
+    if (createBallotResult.isErr()) {
+      return mapRepositoryError(createBallotResult.error, {
+        UNIQUE_CONSTRAINT_FAILED: {
+          code: InternalErrorCode.ELECTION_USER_ALREADY_VOTE,
+          message: `User have already voted to election id: ${electionId}`,
+        },
+      })
+    }
+
+    return ok()
+  }
+
+  async createFaceImageUploadURL(contentType: FileMimeType) {
+    const fileKeyResult = this.fileService.getFilePathFromMimeType(
+      `temp/ballots/face-image-${createId()}`,
+      contentType
+    )
+
+    if (fileKeyResult.isErr()) return err(fileKeyResult.error)
+
+    const fileKey = fileKeyResult.value
+    const uploadUrl = await this.fileService.createUploadSignedUrl(fileKey, {
+      contentType,
+    })
+
+    if (uploadUrl.isErr()) return err(uploadUrl.error)
+
+    return ok({
+      fileKey,
+      uploadFields: uploadUrl.value.fields,
+      uploadUrl: uploadUrl.value.url,
+    })
   }
 }
 

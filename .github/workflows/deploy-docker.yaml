@@ -11,6 +11,10 @@ on:
         type: string
         description: Docker registry URL
         required: true
+      environment:
+        type: string
+        description: Deployment environment
+        required: true
     secrets:
       OVPN_CONFIG:
         description: OpenVPN configuration file
@@ -127,7 +131,7 @@ jobs:
           script: |
             #!/usr/bin/env sh
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ${{ inputs.docker_registry }} -u ${{ github.actor }} --password-stdin
-            cd ~/app
+            cd ~/app/${{ inputs.environment }}
 
             echo '${{ inputs.packages }}' | jq -c '.[]' | while read package
             do

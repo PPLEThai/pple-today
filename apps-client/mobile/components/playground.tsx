@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Platform, Pressable, ScrollView, TextProps, View } from 'react-native'
+import { Platform, Pressable, ScrollView, Text as RNText, TextProps, View } from 'react-native'
 import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import ImageView from 'react-native-image-viewing'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -68,15 +68,51 @@ export function Playground() {
         <View className="flex flex-col gap-2">
           <H2 className="font-inter-bold">Font</H2>
           <View className="flex flex-col gap-1">
-            <Text style={{ fontFamily: 'Inter_300Light' }}>Inter</Text>
-            <Text style={{ fontFamily: 'Inter_500Medium' }}>Inter</Text>
+            <Text style={{ fontFamily: 'Inter_400Regular' }}>Inter</Text>
+            <Text style={{ fontFamily: 'Inter_600SemiBold' }}>Inter</Text>
             <Text style={{ fontFamily: 'Inter_700Bold' }}>Inter</Text>
-            <Text className="font-anakotmai-light">Anakotmai</Text>
-            <Text className="font-anakotmai-medium">Anakotmai</Text>
-            <Text className="font-anakotmai-bold">Anakotmai</Text>
-            <Text className="font-noto-light">NotoSansThaiLooped</Text>
-            <Text className="font-noto-medium">NotoSansThaiLooped</Text>
-            <Text className="font-noto-bold">NotoSansThaiLooped</Text>
+            <Text className="font-heading-regular">Heading</Text>
+            <Text className="font-heading-semibold">Heading</Text>
+            <Text className="font-heading-bold">Heading</Text>
+            <Text className="font-body-light">Body</Text>
+            <Text className="font-body-medium">Body</Text>
+          </View>
+        </View>
+        <View className="flex flex-col gap-2">
+          <H2 className="font-inter-bold">Typography</H2>
+          <View className="flex flex-col gap-1">
+            <View className="flex flex-row gap-2 items-center my-4 bg-blue-50 self-start">
+              <RNText
+                style={{
+                  fontFamily: 'NotoSansThai_400Regular',
+                  fontSize: 24,
+                  // comment lineHeight and marginTop/paddingTop to see original sizing
+                  lineHeight: 32,
+                  paddingTop: 4,
+                  marginTop: -4,
+                }}
+                className="bg-red-100/50"
+                // onLayout={(e) => console.log(e.nativeEvent.layout.height)}
+              >
+                ไม่รู้ไม่ชี้
+              </RNText>
+              <Icon icon={InfoIcon} size={32} className="bg-red-100/50" />
+            </View>
+
+            <Text className="font-heading-semibold text-4xl">4xl-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-3xl">3xl-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-2xl">2xl-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-xl">xl-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-lg">lg-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-base">base-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-sm">sm-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-xs">xs-heading ไม่รู้ไม่ชี้</Text>
+
+            <Text className="font-body-light text-xl">xl-body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-lg">lg-body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-base">base-body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-sm">sm-body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-xs">xs-body ไม่รู้ไม่ชี้</Text>
           </View>
         </View>
         <View className="flex flex-col gap-2">
@@ -525,10 +561,10 @@ function MoreOrLessExample() {
 }
 
 function TextPost(props: TextProps) {
-  return <Text {...props} className="text-base-text-high font-noto-light text-base" />
+  return <Text {...props} className="text-base-text-high font-body-light text-base" />
 }
 function ButtonTextPost(props: TextProps) {
-  return <Text {...props} className="text-base-primary-default font-noto-light text-base" />
+  return <Text {...props} className="text-base-primary-default font-body-light text-base" />
 }
 
 const images = [require('@app/assets/post-1.png'), require('@app/assets/banner-2.png')]

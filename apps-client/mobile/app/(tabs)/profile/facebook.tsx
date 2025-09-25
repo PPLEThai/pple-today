@@ -51,7 +51,7 @@ export default function FacebookListPage() {
   const linkPageMutation = reactQueryClient.useMutation('post', '/facebook/linked-page')
   const [value, setValue] = useState('')
   return (
-    <View className="flex-1 flex-col">
+    <View className="pt-safe flex-1 flex-col">
       <View className="p-4 flex flex-row justify-between items-center border-b border-base-outline-default">
         <Button
           variant="outline-primary"
@@ -63,7 +63,7 @@ export default function FacebookListPage() {
         </Button>
         <View className="flex flex-row gap-2">
           <FacebookIcon size={32} />
-          <H1 className="font-anakotmai-bold text-2xl text-base-text-high">จัดการเพจที่ดูแล</H1>
+          <H1 className="font-heading-bold text-2xl text-base-text-high">จัดการเพจที่ดูแล</H1>
         </View>
       </View>
       <RadioGroupPrimitive.Root
@@ -170,9 +170,9 @@ const FacebookPageRadioItem = React.memo(function FacebookRadioItem({
         <AvatarPPLEFallback />
       </Avatar>
       <View className="flex flex-col">
-        <Text className="text-sm text-base-text-high font-noto-medium">{props.name}</Text>
+        <Text className="text-sm text-base-text-high font-body-medium">{props.name}</Text>
         {!props.available && (
-          <Text className="text-sm text-base-text-medium font-anakotmai-light">
+          <Text className="text-sm text-base-text-medium font-heading-regular">
             เพจนี้ได้มีการเชื่อมต่อกับ PPLE Today แล้ว
           </Text>
         )}

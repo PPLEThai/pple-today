@@ -24,11 +24,11 @@ import {
   makeRedirectUri,
   ResponseType,
 } from 'expo-auth-session'
+import Constants from 'expo-constants'
 import { useRouter } from 'expo-router'
 import { TriangleAlertIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import appConfig from '@app/app.config'
 import { environment } from '@app/env'
 
 import { AuthSession, getAuthSession, setAuthSession } from './session'
@@ -43,7 +43,7 @@ const authRequest: AuthRequest = new AuthRequest({
   scopes: ['openid', 'profile', 'phone'],
   codeChallengeMethod: CodeChallengeMethod.S256,
   redirectUri: makeRedirectUri({
-    native: `${appConfig.expo.scheme}:///loading`,
+    native: `${Constants.expoConfig?.scheme}:///loading`,
   }),
 })
 
@@ -224,7 +224,7 @@ export const AuthLifeCycleHook = () => {
       <DialogContent>
         <DialogHeader>
           <Icon icon={TriangleAlertIcon} size={40} strokeWidth={1} />
-          <DialogTitle className="text-2xl font-anakotmai-medium">
+          <DialogTitle className="text-2xl font-heading-semibold">
             กรุณาเข้าสู่ระบบอีกครั้ง
           </DialogTitle>
         </DialogHeader>

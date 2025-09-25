@@ -22,6 +22,7 @@ export class AnnouncementRepository {
           feedItemId: true,
           title: true,
           content: true,
+          type: true,
           attachments: true,
           feedItem: {
             select: {

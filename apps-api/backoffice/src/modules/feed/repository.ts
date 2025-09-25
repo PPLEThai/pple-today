@@ -18,7 +18,7 @@ export class FeedRepository {
     private fileService: FileService
   ) {}
 
-  private readonly constructFeedItemInclude = (userId?: string) =>
+  public constructFeedItemInclude = (userId?: string) =>
     ({
       author: {
         include: {
@@ -68,7 +68,7 @@ export class FeedRepository {
       },
     }) satisfies Prisma.FeedItemInclude
 
-  private transformToFeedItem(
+  public transformToFeedItem(
     rawFeedItem: Prisma.FeedItemGetPayload<{
       include: ReturnType<typeof FeedRepository.prototype.constructFeedItemInclude>
     }>
@@ -130,6 +130,7 @@ export class FeedRepository {
           announcement: {
             content: rawFeedItem.announcement.content ?? '',
             title: rawFeedItem.announcement.title,
+            type: rawFeedItem.announcement.type,
             attachments: rawFeedItem.announcement.attachments.map((attachment) =>
               this.fileService.getPublicFileUrl(attachment.filePath)
             ),

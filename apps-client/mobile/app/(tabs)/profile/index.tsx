@@ -48,6 +48,7 @@ import type { GetUserParticipationResponse } from '@api/backoffice/app'
 import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
+import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { environment } from '@app/env'
 import { reactQueryClient } from '@app/libs/api-client'
 import {
@@ -72,29 +73,31 @@ const Login = () => {
   const discoveryQuery = useDiscoveryQuery()
   const loginMutation = useLoginMutation()
   return (
-    <View className="flex flex-col flex-1 items-center justify-center gap-10 bg-base-bg-light">
-      <View className="flex flex-col items-center gap-2">
-        <View className="w-[100px] h-[100px] flex flex-col items-center justify-center">
-          <PPLEIcon />
+    <SafeAreaLayout>
+      <View className="flex flex-col flex-1 items-center justify-center gap-10 bg-base-bg-light">
+        <View className="flex flex-col items-center gap-2">
+          <View className="w-[100px] h-[100px] flex flex-col items-center justify-center">
+            <PPLEIcon />
+          </View>
+          <H1 className="text-2xl">พรรคประชาชน</H1>
         </View>
-        <H1 className="text-2xl">พรรคประชาชน</H1>
+        <View className="flex flex-col gap-4 max-w-[279px] w-full">
+          <Button
+            onPress={() => loginMutation.mutate({ discovery: discoveryQuery.data! })}
+            disabled={!discoveryQuery.data || loginMutation.isPending}
+          >
+            <Text>เข้าสู่ระบบ</Text>
+          </Button>
+          <Button
+            variant="outline"
+            onPress={() => loginMutation.mutate({ discovery: discoveryQuery.data! })}
+            disabled={!discoveryQuery.data || loginMutation.isPending}
+          >
+            <Text>สมัครสมาชิก</Text>
+          </Button>
+        </View>
       </View>
-      <View className="flex flex-col gap-4 max-w-[279px] w-full">
-        <Button
-          onPress={() => loginMutation.mutate({ discovery: discoveryQuery.data! })}
-          disabled={!discoveryQuery.data || loginMutation.isPending}
-        >
-          <Text>เข้าสู่ระบบ</Text>
-        </Button>
-        <Button
-          variant="outline"
-          onPress={() => loginMutation.mutate({ discovery: discoveryQuery.data! })}
-          disabled={!discoveryQuery.data || loginMutation.isPending}
-        >
-          <Text>สมัครสมาชิก</Text>
-        </Button>
-      </View>
-    </View>
+    </SafeAreaLayout>
   )
 }
 
@@ -117,34 +120,36 @@ const ProfileSetting = () => {
   }, [queryClient])
 
   return (
-    <ScrollView
-      className="flex-1"
-      contentContainerClassName="flex-grow"
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={onRefresh}
-          colors={['#FF6A13']} // base-primary-default
-        />
-      }
-    >
-      <View className="bg-base-bg-white flex flex-col">
-        <HeaderSection />
-        <View className="p-4 flex flex-col gap-3">
-          <ProfileSection />
-          {/* <AchievementSection /> */}
-          <AddressSection />
-          <PointSection />
+    <SafeAreaLayout>
+      <ScrollView
+        className="flex-1"
+        contentContainerClassName="flex-grow"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#FF6A13']} // base-primary-default
+          />
+        }
+      >
+        <View className="bg-base-bg-white flex flex-col">
+          <HeaderSection />
+          <View className="p-4 flex flex-col gap-3">
+            <ProfileSection />
+            {/* <AchievementSection /> */}
+            <AddressSection />
+            <PointSection />
+          </View>
         </View>
-      </View>
-      <View className="bg-base-bg-light flex-1 flex flex-col gap-3 px-4 py-2.5">
-        <FacebookPageSection />
-        <FollowingSection />
-        <ParticipationSection />
-        {/* <ActivitySection /> */}
-        <SettingSection />
-      </View>
-    </ScrollView>
+        <View className="bg-base-bg-light flex-1 flex flex-col gap-3 px-4 py-2.5">
+          <FacebookPageSection />
+          <FollowingSection />
+          <ParticipationSection />
+          {/* <ActivitySection /> */}
+          <SettingSection />
+        </View>
+      </ScrollView>
+    </SafeAreaLayout>
   )
 }
 
@@ -158,11 +163,11 @@ const HeaderSection = () => {
           className="text-base-primary-default"
           strokeWidth={2}
         />
-        <H1 className="text-3xl leading-normal text-base-primary-default font-anakotmai-medium">
+        <H1 className="text-3xl leading-normal text-base-primary-default font-heading-semibold">
           โปรไฟล์
         </H1>
       </View>
-      <Text className="text-base text-base-text-medium font-anakotmai-light">
+      <Text className="text-base text-base-text-medium font-heading-regular">
         จัดการโปรไฟล์ของคุณ
       </Text>
     </View>
@@ -202,8 +207,8 @@ const ProfileSection = () => {
           <AvatarImage source={{ uri: profileQuery.data.profileImage }} />
           <AvatarPPLEFallback />
         </Avatar>
-        <View className="flex flex-col gap-2 items-start">
-          <Text className="text-base-text-high font-anakotmai-medium text-2xl">
+        <View className="flex flex-col gap-2 items-start flex-1">
+          <Text className="text-base-text-high font-heading-semibold text-2xl line-clamp-1">
             {profileQuery.data.name}
           </Text>
           <Badge>
@@ -214,7 +219,7 @@ const ProfileSection = () => {
     )
   return (
     <View className="flex flex-row justify-between items-center">
-      <View className="flex flex-row items-center gap-4">{Profile}</View>
+      <View className="flex flex-row items-center gap-4 flex-1">{Profile}</View>
       <Button
         size="icon"
         variant="outline"
@@ -233,7 +238,7 @@ const AchievementSection = () => {
     <View className="rounded-xl border border-base-outline-default px-4 py-2 flex flex-col gap-2">
       <View className="flex flex-row gap-2 items-center">
         <Icon icon={TrophyIcon} className="text-base-primary-default" size={24} />
-        <H2 className="text-sm text-base-text-high font-anakotmai-medium">ความสำเร็จของคุณ</H2>
+        <H2 className="text-sm text-base-text-high font-heading-semibold">ความสำเร็จของคุณ</H2>
       </View>
       <View className="flex flex-row gap-2 flex-wrap">
         {['Top Donate', 'ประชาชนยอดเยี่ยม', 'ผู้ออกความเห็น', 'นักวิจารณ์', 'Content Master'].map(
@@ -261,10 +266,10 @@ const AddressSection = () => {
       </>
     ) : (
       <>
-        <Text className="text-lg font-anakotmai-bold text-base-primary-default">
+        <Text className="text-lg font-heading-bold text-base-primary-default">
           {profileQuery.data.address!.subDistrict}, {profileQuery.data.address!.district}
         </Text>
-        <Text className="text-sm text-base-text-high font-anakotmai-light">
+        <Text className="text-sm text-base-text-high font-heading-regular">
           {profileQuery.data.address!.province}
         </Text>
       </>
@@ -273,7 +278,7 @@ const AddressSection = () => {
     <View className="rounded-xl border border-base-outline-default px-4 py-2 flex flex-row gap-2">
       <View className="flex flex-row gap-2 items-center">
         <Icon icon={MapPinnedIcon} className="text-base-primary-default" size={24} />
-        <H2 className="text-sm text-base-text-high font-anakotmai-medium">พื้นที่ของคุณ</H2>
+        <H2 className="text-sm text-base-text-high font-heading-semibold">พื้นที่ของคุณ</H2>
       </View>
       <View className="flex flex-col flex-1 items-end">{Address}</View>
     </View>
@@ -287,11 +292,13 @@ const PointSection = () => {
       <View className="flex flex-col">
         <View className="flex flex-row gap-1 items-center">
           <PPLEIcon width={16} height={16} color="white" />
-          <H2 className="text-base-text-invert text-sm font-anakotmai-bold">PPLE Points</H2>
+          <H2 className="text-base-text-invert text-sm font-heading-bold">PPLE Points</H2>
         </View>
-        <Text className="text-base-text-invert text-3xl font-anakotmai-bold">
-          {profileQuery.data ? profileQuery.data.point.toLocaleString() : ''}
-        </Text>
+        <View className="h-9 justify-center">
+          <Text className="text-base-text-invert text-3xl font-heading-bold h-9">
+            {profileQuery.data ? profileQuery.data.point.toLocaleString() : ''}
+          </Text>
+        </View>
       </View>
       {/* TODO: active style */}
       <Button
@@ -312,7 +319,7 @@ const FacebookPageSection = () => {
     <View className="flex flex-col gap-3 border border-base-outline-default rounded-xl py-3 px-4 bg-base-bg-white">
       <View className="flex flex-row items-center pb-2.5 gap-2 border-b border-base-outline-default">
         <FacebookIcon size={32} />
-        <H2 className="text-xl text-base-text-high font-anakotmai-medium flex-1">
+        <H2 className="text-xl text-base-text-high font-heading-semibold flex-1">
           เพจ Facebook ที่ดูแล
         </H2>
         {linkedPageQuery.data?.linkedFacebookPage ? (
@@ -331,7 +338,7 @@ const FacebookPageSection = () => {
             />
             <AvatarFallback />
           </Avatar>
-          <Text className="text-base-text-medium text-sm font-anakotmai-medium flex-1 line-clamp-2">
+          <Text className="text-base-text-medium text-sm font-heading-semibold flex-1 line-clamp-2">
             {linkedPageQuery.data.linkedFacebookPage.name}
           </Text>
           {/* TODO: linked page status */}
@@ -518,7 +525,7 @@ const FollowingSection = () => {
       <View className="flex flex-row items-center justify-between pb-2 border-b border-base-outline-default">
         <View className="flex flex-row gap-2 items-center">
           <Icon icon={HeartIcon} className="text-base-primary-default" size={32} />
-          <H2 className="text-xl text-base-text-high font-anakotmai-medium">เนื้อหาที่ติดตาม</H2>
+          <H2 className="text-xl text-base-text-high font-heading-semibold">เนื้อหาที่ติดตาม</H2>
         </View>
         <Button
           variant="ghost"
@@ -539,13 +546,13 @@ const FollowingSection = () => {
             size={24}
             strokeWidth={1}
           />
-          <Text className="text-base text-base-text-high font-anakotmai-medium">หัวข้อ</Text>
+          <Text className="text-base text-base-text-high font-heading-semibold">หัวข้อ</Text>
         </View>
-        <Text className="text-base text-base-text-high font-anakotmai-light">
+        <Text className="text-base text-base-text-high font-heading-regular">
           {profileQuery.isLoading || !profileQuery.data ? (
             <View className="rounded-full bg-base-bg-default mt-2 h-4" />
           ) : (
-            <Text className="text-base text-base-primary-medium font-anakotmai-medium">
+            <Text className="text-base text-base-primary-medium font-heading-semibold">
               {profileQuery.data.numberOfFollowingTopics}
             </Text>
           )}{' '}
@@ -560,13 +567,13 @@ const FollowingSection = () => {
             size={24}
             strokeWidth={1}
           />
-          <Text className="text-base text-base-text-high font-anakotmai-medium">ผู้คน</Text>
+          <Text className="text-base text-base-text-high font-heading-semibold">ผู้คน</Text>
         </View>
-        <Text className="text-base text-base-text-high font-anakotmai-light">
+        <Text className="text-base text-base-text-high font-heading-regular">
           {profileQuery.isLoading || !profileQuery.data ? (
             <View className="rounded-full bg-base-bg-default mt-2 h-4" />
           ) : (
-            <Text className="text-base text-base-primary-medium font-anakotmai-medium">
+            <Text className="text-base text-base-primary-medium font-heading-semibold">
               {profileQuery.data.numberOfFollowing}
             </Text>
           )}{' '}
@@ -590,7 +597,7 @@ const ParticipationSection = () => {
       <View className="flex flex-row items-center justify-between pb-2 border-b border-base-outline-default">
         <View className="flex flex-row gap-2 items-center">
           <Icon icon={HandIcon} className="text-base-primary-default" size={32} />
-          <H2 className="text-xl text-base-text-high font-anakotmai-medium">การเข้าร่วมของฉัน</H2>
+          <H2 className="text-xl text-base-text-high font-heading-semibold">การเข้าร่วมของฉัน</H2>
         </View>
       </View>
       {participationQuery.data.map((participation) => (
@@ -617,10 +624,10 @@ const Participation = ({
               strokeWidth={2}
             />
             <View className="flex flex-col gap-1 flex-1">
-              <Text className="text-sm text-base-text-high font-anakotmai-medium line-clamp-2">
+              <Text className="text-sm text-base-text-high font-heading-semibold line-clamp-2">
                 {participation.title}
               </Text>
-              <Text className="text-xs text-base-text-high font-anakotmai-light">
+              <Text className="text-xs text-base-text-high font-heading-regular">
                 {formatDateInterval(participation.createdAt.toString())}
               </Text>
             </View>
@@ -641,7 +648,7 @@ const Participation = ({
     //       <View className="flex flex-row gap-3 items-center flex-1">
     //         <Icon icon={VoteIcon} className="text-base-primary-default" size={32} strokeWidth={2} />
     //         <View className="flex flex-col gap-1 flex-1">
-    //           <Text className="text-sm text-base-text-high font-anakotmai-medium line-clamp-2">
+    //           <Text className="text-sm text-base-text-high font-heading-semibold line-clamp-2">
     //             เลือกตั้ง อบจ. ระยอง
     //           </Text>
     //           <View className="flex flex-row gap-1 flex-wrap">
@@ -652,7 +659,7 @@ const Participation = ({
     //               <Text>ประกาศผล</Text>
     //             </Badge>
     //           </View>
-    //           <Text className="text-xs text-base-text-high font-anakotmai-light">
+    //           <Text className="text-xs text-base-text-high font-heading-regular">
     //             2 สัปดาห์ที่แล้ว
     //           </Text>
     //         </View>
@@ -678,7 +685,7 @@ const ActivitySection = () => {
       <View className="flex flex-row items-center justify-between pb-2 border-b border-base-outline-default">
         <View className="flex flex-row gap-2 items-center">
           <Icon icon={TicketIcon} className="text-base-primary-default" size={32} />
-          <H2 className="text-xl text-base-text-high font-anakotmai-medium">กิจกรรมของฉัน</H2>
+          <H2 className="text-xl text-base-text-high font-heading-semibold">กิจกรรมของฉัน</H2>
         </View>
       </View>
       <View className="flex flex-row items-center gap-1">
@@ -686,7 +693,7 @@ const ActivitySection = () => {
           {/* TODO: image */}
           <View className="rounded-lg size-12 bg-slate-500" />
           <View className="flex flex-col gap-1 flex-1">
-            <Text className="text-sm text-base-text-high font-anakotmai-medium line-clamp-2">
+            <Text className="text-sm text-base-text-high font-heading-semibold line-clamp-2">
               Knowledge Center ครั้งที่ 1 – “เอาชีวิตรอดอย่างโปร ปฐมพยาบาล
             </Text>
             <View className="flex flex-row gap-1 items-center">
@@ -696,7 +703,7 @@ const ActivitySection = () => {
                 strokeWidth={1.5}
                 size={12}
               />
-              <Text className="text-xs text-base-primary-default font-anakotmai-light">
+              <Text className="text-xs text-base-primary-default font-heading-regular">
                 อ, 20 พ.ค. - 22 พ.ค. 68
               </Text>
             </View>
@@ -721,10 +728,10 @@ const SettingSection = () => {
 
   return (
     <View className="flex flex-col gap-2">
-      <H2 className="text-base text-base-text-high font-anakotmai-medium">ตั้งค่า</H2>
+      <H2 className="text-base text-base-text-high font-heading-semibold">ตั้งค่า</H2>
       {/* <SettingItem>
         <Icon icon={BellIcon} className="text-base-primary-default" strokeWidth={1} size={24} />
-        <Text className="text-base text-base-text-high font-anakotmai-light">การแจ้งเตือน</Text>
+        <Text className="text-base text-base-text-high font-heading-regular">การแจ้งเตือน</Text>
       </SettingItem> */}
       {/* TODO: dismiss button inside webview */}
       <SettingItem
@@ -738,7 +745,7 @@ const SettingSection = () => {
           strokeWidth={1}
           size={24}
         />
-        <Text className="text-base text-base-text-high font-anakotmai-light">
+        <Text className="text-base text-base-text-high font-heading-regular">
           ข้อกำหนดและเงื่อนไข
         </Text>
       </SettingItem>
@@ -754,7 +761,7 @@ const SettingSection = () => {
           strokeWidth={1}
           size={24}
         />
-        <Text className="text-base text-base-text-high font-anakotmai-light">ออกจากระบบ</Text>
+        <Text className="text-base text-base-text-high font-heading-regular">ออกจากระบบ</Text>
       </SettingItem>
     </View>
   )

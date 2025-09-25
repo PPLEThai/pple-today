@@ -6,25 +6,31 @@ import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { Text } from '@pple-today/ui/text'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { usePathname, useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeftIcon } from 'lucide-react-native'
 
 import { ApplicationApiSchema } from '@api/backoffice/app'
-import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
+import { FeedFooter } from '@app/components/feed'
+import { FeedCard } from '@app/components/feed/feed-card'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 
 export default function HashtagFeedPage() {
   const router = useRouter()
-  const pathname = usePathname()
-  const hashtagId = pathname.split('/').at(-1)
+  const params = useLocalSearchParams()
+  const hashtagId = params.hashtagId as string
   const hashtagQuery = reactQueryClient.useQuery('/hashtags/:id', {
     pathParams: { id: hashtagId! },
     enabled: !!hashtagId,
   })
   useEffect(() => {
+    if (!hashtagId) {
+      router.dismissTo('/')
+    }
+  }, [hashtagId, router])
+  useEffect(() => {
     if (hashtagQuery.error) {
       console.error('Error fetching hashtag content:', JSON.stringify(hashtagQuery.error))
-      router.replace('/(feed)') // Redirect to feed list on error
+      router.dismissTo('/') // Redirect to feed list on error
     }
   }, [hashtagQuery.error, router])
   if (!hashtagId) {
@@ -32,7 +38,7 @@ export default function HashtagFeedPage() {
   }
   return (
     <View className="flex-1 flex-col bg-base-bg-default">
-      <View className="pt-4 pb-2 px-4 bg-base-bg-white">
+      <View className="pt-safe-offset-4 pb-2 px-4 bg-base-bg-white">
         <Button
           variant="outline-primary"
           size="icon"
@@ -46,7 +52,7 @@ export default function HashtagFeedPage() {
         hashtagId={hashtagId}
         header={
           <View className="pt-2 pb-3 px-4 bg-base-bg-white">
-            <Text className="text-3xl text-base-text-high font-anakotmai-bold">
+            <Text className="text-3xl text-base-text-high font-heading-bold">
               {hashtagQuery.isLoading || !hashtagQuery.data ? '...' : `${hashtagQuery.data.name}`}
             </Text>
           </View>
@@ -94,38 +100,14 @@ function HashtagFeed(props: { hashtagId: string; header?: React.ReactElement }) 
   }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
 
   type GetHashtagFeedResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/hashtag'>
-  const data = React.useMemo((): GetHashtagFeedResponse[] => {
+  const data = React.useMemo((): GetHashtagFeedResponse => {
     if (!feedInfiniteQuery.data) return []
-    return feedInfiniteQuery.data.pages
+    return feedInfiniteQuery.data.pages.flatMap((page) => page)
   }, [feedInfiniteQuery.data])
 
-  const Footer =
-    feedInfiniteQuery.hasNextPage || feedInfiniteQuery.isLoading || feedInfiniteQuery.error ? (
-      <FeedCardSkeleton />
-    ) : data.length === 1 && data[0].length === 0 ? (
-      // Empty State
-      <View className="flex flex-col items-center justify-center py-6">
-        <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีโพสต์</Text>
-      </View>
-    ) : (
-      // Reach end of feed
-      <View className="flex flex-col items-center justify-center py-6">
-        <Text className="text-base-text-medium font-anakotmai-medium">ไม่มีโพสต์เพิ่มเติม</Text>
-      </View>
-    )
-
   const renderFeedItem = React.useCallback(
-    ({ item: items }: { item: GetHashtagFeedResponse; index: number }) => {
-      if (!items) {
-        return null
-      }
-      return (
-        <>
-          {items.map((item) => {
-            return <FeedCard key={item.id} feedItem={item} />
-          })}
-        </>
-      )
+    ({ item }: { item: GetHashtagFeedResponse[number]; index: number }) => {
+      return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-4" />
     },
     []
   )
@@ -137,7 +119,7 @@ function HashtagFeed(props: { hashtagId: string; header?: React.ReactElement }) 
       contentContainerClassName="flex flex-col"
       ListHeaderComponent={props.header}
       // ListHeaderComponent={<AnnouncementSection />}
-      ListFooterComponent={Footer}
+      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} className="mt-4 mx-4" />}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
       renderItem={renderFeedItem}

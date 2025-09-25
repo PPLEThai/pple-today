@@ -28,6 +28,8 @@ model AnnouncementTopic {
     topic        Topic        @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
     @@id([announcementId, topicId])
+    @@index([topicId])
+    @@index([announcementId])
 }
 
 model AnnouncementFile {

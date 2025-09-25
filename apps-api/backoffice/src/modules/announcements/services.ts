@@ -28,6 +28,7 @@ export class AnnouncementService {
         id: announcement.feedItemId,
         title: announcement.title,
         content: announcement.content ?? '',
+        type: announcement.type,
         createdAt: announcement.feedItem.createdAt,
         updatedAt: announcement.feedItem.updatedAt,
       })),

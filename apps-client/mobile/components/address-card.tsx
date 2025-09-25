@@ -23,16 +23,16 @@ export function AddressCard({
     return (
       <View className="p-4 bg-base-bg-default rounded-xl gap-2">
         <View>
-          <Text className="font-anakotmai-medium">ที่อยู่ของคุณ</Text>
+          <Text className="font-heading-semibold">ที่อยู่ของคุณ</Text>
         </View>
         <View className="pb-2">
           <View>
-            <Text className="font-noto-light line-clamp-1">
+            <Text className="font-body-light line-clamp-1">
               {address.province === 'กรุงเทพมหานคร' ? 'แขวง' : 'ต.'}
               {address.subDistrict} {address.province === 'กรุงเทพมหานคร' ? 'เขต' : 'อ.'}
               {address.district}
             </Text>
-            <Text className="font-noto-light line-clamp-1">
+            <Text className="font-body-light line-clamp-1">
               จ.{address.province} {address.postalCode}
             </Text>
           </View>
@@ -48,7 +48,7 @@ export function AddressCard({
   return (
     <View className="p-4 bg-base-bg-default rounded-xl">
       <View className="pb-4">
-        <Text className="font-anakotmai-medium">ที่อยู่ของคุณ</Text>
+        <Text className="font-heading-semibold">ที่อยู่ของคุณ</Text>
       </View>
       <Button onPress={handleOpenForm}>
         <Icon icon={PlusIcon} />
