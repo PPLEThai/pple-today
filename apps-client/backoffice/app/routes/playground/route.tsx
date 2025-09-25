@@ -35,6 +35,7 @@ import {
   CommandSeparator,
   CommandShortcut,
 } from '@pple-today/web-ui/command'
+import { DataTable } from '@pple-today/web-ui/data-table'
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@pple-today/web-ui/dialog'
 import {
   DropdownMenu,
@@ -99,6 +100,7 @@ import {
 import { Switch } from '@pple-today/web-ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@pple-today/web-ui/tooltip'
 import { Typography } from '@pple-today/web-ui/typography'
+import { ColumnDef } from '@tanstack/react-table'
 import {
   BadgeCheckIcon,
   Calculator,
@@ -113,6 +115,8 @@ import {
   User,
 } from 'lucide-react'
 import z from 'zod'
+
+import { GetHashtagsResponse } from '@api/backoffice/admin'
 
 const ColorPaletteSection = () => {
   return (
@@ -808,6 +812,98 @@ const SidebarSection = () => {
   )
 }
 
+const TableSection = () => {
+  const EXAMPLE_HASHTAG_COLUMNS: ColumnDef<GetHashtagsResponse[number]>[] = [
+    { accessorKey: 'id', header: 'ID' },
+    { accessorKey: 'status', header: 'สถานะ' },
+    { accessorKey: 'name', header: 'ชื่อ Hashtag' },
+  ]
+
+  const EXAMPLE_DATE = new Date()
+
+  const EXAMPLE_DATA: GetHashtagsResponse = [
+    {
+      id: '0',
+      status: 'PUBLISH',
+      name: 'ชัยชนะ',
+      createdAt: EXAMPLE_DATE,
+      updatedAt: EXAMPLE_DATE,
+    },
+    {
+      id: '1',
+      status: 'SUSPEND',
+      name: 'การเมืองเพื่อประชาชน',
+      createdAt: EXAMPLE_DATE,
+      updatedAt: EXAMPLE_DATE,
+    },
+    {
+      id: '2',
+      status: 'PUBLISH',
+      name: 'เสียงของประชาชน',
+      createdAt: EXAMPLE_DATE,
+      updatedAt: EXAMPLE_DATE,
+    },
+    {
+      id: '3',
+      status: 'PUBLISH',
+      name: 'พลังประชาชน',
+      createdAt: EXAMPLE_DATE,
+      updatedAt: EXAMPLE_DATE,
+    },
+    {
+      id: '4',
+      status: 'PUBLISH',
+      name: 'เราต้องการการเปลี่ยนแปลง',
+      createdAt: EXAMPLE_DATE,
+      updatedAt: EXAMPLE_DATE,
+    },
+    {
+      id: '5',
+      status: 'PUBLISH',
+      name: 'อนาคตที่ดีสำหรับเด็ก',
+      createdAt: EXAMPLE_DATE,
+      updatedAt: EXAMPLE_DATE,
+    },
+    {
+      id: '6',
+      status: 'PUBLISH',
+      name: 'ความยุติธรรมทางสังคม',
+      createdAt: EXAMPLE_DATE,
+      updatedAt: EXAMPLE_DATE,
+    },
+    {
+      id: '7',
+      status: 'SUSPEND',
+      name: 'เสียงที่ไม่ถูกได้ยิน',
+      createdAt: EXAMPLE_DATE,
+      updatedAt: EXAMPLE_DATE,
+    },
+    {
+      id: '8',
+      status: 'SUSPEND',
+      name: 'สร้างสรรค์ประชาธิปไตย',
+      createdAt: EXAMPLE_DATE,
+      updatedAt: EXAMPLE_DATE,
+    },
+    {
+      id: '9',
+      status: 'SUSPEND',
+      name: 'การมีส่วนร่วมของทุกคน',
+      createdAt: EXAMPLE_DATE,
+      updatedAt: EXAMPLE_DATE,
+    },
+  ]
+
+  return (
+    <div className="flex flex-col space-y-2">
+      <Typography className="text-left" variant="h2">
+        DataTable
+      </Typography>
+      <DataTable columns={EXAMPLE_HASHTAG_COLUMNS} data={EXAMPLE_DATA} />
+    </div>
+  )
+}
+
 const PlaygroundPage = () => {
   return (
     <div className="p-5 space-y-6">
@@ -850,6 +946,8 @@ const PlaygroundPage = () => {
       <BadgeSection />
       <hr className="border border-secondary-100" />
       <SidebarSection />
+      <hr className="border border-secondary-100" />
+      <TableSection />
     </div>
   )
 }
