@@ -100,7 +100,7 @@ export const FacebookController = new Elysia({
           return status(200, availableStatus.value)
         },
         {
-          requiredLocalUser: true,
+          requiredLocalRole: ['pple-ad:mp', 'pple-ad:hq'],
           query: GetLinkedPageAvailableStatusQuery,
           response: {
             200: GetLinkedPageAvailableStatusResponse,
