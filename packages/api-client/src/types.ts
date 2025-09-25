@@ -226,11 +226,12 @@ export interface ReactQueryClient<
       TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
     const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
     const TError extends EdenError<TResponse> = EdenError<TResponse>,
+    TData = TSuccess,
   >(
     path: TPath,
     payload: TPayload,
-    options?: Omit<UseQueryOptions<TSuccess, TError, TPayload>, 'queryKey'>
-  ) => UseQueryOptions<TSuccess, TError, TPayload>
+    options?: Omit<UseQueryOptions<TSuccess, TError, TData>, 'queryKey'>
+  ) => UseQueryOptions<TSuccess, TError, TData>
   mutationOptions: <
     const TMethod extends Extract<TAvailableMethod, MutationMethod>,
     const TPath extends keyof TGroupedPathByMethod[TMethod],
