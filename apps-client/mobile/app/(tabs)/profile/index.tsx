@@ -51,18 +51,13 @@ import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { environment } from '@app/env'
 import { reactQueryClient } from '@app/libs/api-client'
-import {
-  useDiscoveryQuery,
-  useLoginMutation,
-  useLogoutMutation,
-  useSessionQuery,
-} from '@app/libs/auth'
+import { useDiscoveryQuery, useLoginMutation, useLogoutMutation, useSession } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 
 export default function Index() {
-  const sessionQuery = useSessionQuery()
-  if (sessionQuery.data) {
+  const session = useSession()
+  if (session) {
     // User is already logged in
     return <ProfileSetting />
   }
@@ -734,7 +729,7 @@ const ActivitySection = () => {
 }
 const SettingSection = () => {
   const discoveryQuery = useDiscoveryQuery()
-  const sessionQuery = useSessionQuery()
+  const session = useSession()
   const logoutMutation = useLogoutMutation()
 
   return (
@@ -762,9 +757,9 @@ const SettingSection = () => {
       </SettingItem>
       <SettingItem
         onPress={() =>
-          logoutMutation.mutate({ session: sessionQuery.data!, discovery: discoveryQuery.data! })
+          logoutMutation.mutate({ session: session!, discovery: discoveryQuery.data! })
         }
-        disabled={!sessionQuery.data || !discoveryQuery.data || logoutMutation.isPending}
+        disabled={!session || !discoveryQuery.data || logoutMutation.isPending}
       >
         <Icon
           icon={ArrowLeftToLineIcon}

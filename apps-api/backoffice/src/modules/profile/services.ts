@@ -36,13 +36,13 @@ export class ProfileService {
       name: user.name,
       profileImage: user.profileImagePath
         ? this.fileService.getPublicFileUrl(user.profileImagePath)
-        : undefined,
+        : null,
       address: user.address
         ? {
             province: user.address.province,
             district: user.address.district,
           }
-        : undefined,
+        : null,
     }))
 
     return ok(users)

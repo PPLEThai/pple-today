@@ -50,8 +50,8 @@ import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/anno
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { FeedFooter, FeedRefreshControl } from '@app/components/feed'
 import { FeedCard } from '@app/components/feed/feed-card'
-import { PeopleSuggestion } from '@app/components/feed/people-card'
 import { TopicSuggestion } from '@app/components/feed/topic-card'
+import { UserSuggestion } from '@app/components/feed/user-card'
 import {
   Pager,
   PagerContent,
@@ -66,7 +66,7 @@ import {
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { environment } from '@app/env'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
-import { useAuthMe, useSessionQuery } from '@app/libs/auth'
+import { useAuthMe, useSession } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { useScrollContext } from '@app/libs/scroll-context'
 
@@ -89,7 +89,6 @@ export default function FeedPage() {
           <PagerTabBar>
             <SelectTopicButton />
             <PagerTabBarItem index={0}>สำหรับคุณ</PagerTabBarItem>
-            <PagerTabBarItem index={1}>กำลังติดตาม</PagerTabBarItem>
             <PagerTopicTabBarItems />
             <PagerTabBarItemIndicator />
           </PagerTabBar>
@@ -101,20 +100,18 @@ export default function FeedPage() {
 }
 
 function PagerContents() {
-  const sessionQuery = useSessionQuery()
-  const followTopicsQuery = reactQueryClient.useQuery(
-    '/topics/follows',
-    {},
-    { enabled: !!sessionQuery.data }
-  )
+  const session = useSession()
+  const followTopicsQuery = reactQueryClient.useQuery('/topics/follows', {}, { enabled: !!session })
   return (
     <PagerContentView>
       <View key={0}>
         <PagerContent index={0}>{(props) => <FeedContent {...props} />}</PagerContent>
       </View>
-      <View key={1}>
-        <PagerContent index={1}>{(props) => <FeedContent {...props} />}</PagerContent>
-      </View>
+      {session && (
+        <View key={1}>
+          <PagerContent index={1}>{(props) => <FeedContent {...props} />}</PagerContent>
+        </View>
+      )}
       {followTopicsQuery.data
         ? followTopicsQuery.data.map((topic, index) => (
             <View key={index + 2}>
@@ -340,25 +337,26 @@ function ElectionCard() {
 }
 
 function PagerTopicTabBarItems() {
-  const sessionQuery = useSessionQuery()
-  const followTopicsQuery = reactQueryClient.useQuery(
-    '/topics/follows',
-    {},
-    { enabled: !!sessionQuery.data }
+  const session = useSession()
+  const followTopicsQuery = reactQueryClient.useQuery('/topics/follows', {}, { enabled: !!session })
+  return (
+    <>
+      {session && <PagerTabBarItem index={1}>กำลังติดตาม</PagerTabBarItem>}
+      {followTopicsQuery.data?.map((topic, index) => (
+        <PagerTabBarItem index={2 + index} key={2 + index}>
+          {topic.name}
+        </PagerTabBarItem>
+      ))}
+    </>
   )
-  return followTopicsQuery.data?.map((topic, index) => (
-    <PagerTabBarItem index={2 + index} key={2 + index}>
-      {topic.name}
-    </PagerTabBarItem>
-  ))
 }
 
 function SelectTopicButton() {
   const bottomSheetModalRef = React.useRef<BottomSheetModal>(null)
   const router = useRouter()
-  const sessionQuery = useSessionQuery()
+  const session = useSession()
   const onOpen = () => {
-    if (!sessionQuery.data) {
+    if (!session) {
       router.navigate('/profile')
       return
     }
@@ -545,14 +543,19 @@ function FeedContent(props: PagerScrollViewProps) {
     }
   }, [isFocused, scrollElRef, setScrollViewTag])
 
+  type MyFeedItem = GetMyFeedResponse[number] | { type: 'SUGGESTION' }
   const feedInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/feed/me'),
-    queryFn: async ({ pageParam }) => {
+    queryFn: async ({ pageParam }): Promise<MyFeedItem[]> => {
       const response = await fetchClient('/feed/me', {
         query: { page: pageParam, limit: LIMIT },
       })
       if (response.error) {
         throw response.error
+      }
+      if (pageParam === 1) {
+        // insert suggestion after first 2 posts
+        return [...response.data.slice(0, 2), { type: 'SUGGESTION' }, ...response.data.slice(2)]
       }
       return response.data
     },
@@ -580,7 +583,7 @@ function FeedContent(props: PagerScrollViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
 
-  const data = React.useMemo((): GetMyFeedResponse => {
+  const data = React.useMemo((): MyFeedItem[] => {
     if (!feedInfiniteQuery.data) return []
     return feedInfiniteQuery.data.pages.flatMap((page) => page)
   }, [feedInfiniteQuery.data])
@@ -593,6 +596,8 @@ function FeedContent(props: PagerScrollViewProps) {
     queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/auth/me') })
     queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/banners') })
     queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/topics/list') })
+    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/topics/recommend') })
+    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/profile/recommend') })
     await Promise.all([
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/feed/me') }),
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/announcements') }),
@@ -601,12 +606,18 @@ function FeedContent(props: PagerScrollViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryClient, feedInfiniteQuery.refetch])
 
-  const renderFeedItem = React.useCallback(
-    ({ item }: { item: GetMyFeedResponse[number]; index: number }) => {
-      return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-4" />
-    },
-    []
-  )
+  const renderFeedItem = React.useCallback(({ item }: { item: MyFeedItem; index: number }) => {
+    if (item.type === 'SUGGESTION') {
+      return (
+        <>
+          <UserSuggestion />
+          <TopicSuggestion />
+        </>
+      )
+    }
+    return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-4" />
+  }, [])
+
   return (
     <Animated.FlatList
       ref={scrollElRef}
@@ -616,13 +627,7 @@ function FeedContent(props: PagerScrollViewProps) {
       className="flex-1"
       contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
       contentContainerStyle={{ paddingTop: headerHeight }}
-      ListHeaderComponent={
-        <>
-          <TopicSuggestion />
-          <AnnouncementSection />
-          <PeopleSuggestion />
-        </>
-      }
+      ListHeaderComponent={<AnnouncementSection />}
       ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} className="mt-4 mx-4" />}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}

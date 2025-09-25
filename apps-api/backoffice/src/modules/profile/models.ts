@@ -5,7 +5,7 @@ export const GetUserRecommendationResponse = t.Array(
   t.Object({
     id: t.String({ description: 'The ID of the author' }),
     name: t.String({ description: 'The name of the author' }),
-    address: t.Optional(
+    address: t.Nullable(
       t.Object(
         {
           province: t.String({ description: 'The province of the author' }),
@@ -14,7 +14,7 @@ export const GetUserRecommendationResponse = t.Array(
         { description: 'The address of the author' }
       )
     ),
-    profileImage: t.Optional(t.String({ description: 'The profile image URL of the author' })),
+    profileImage: t.Nullable(t.String({ description: 'The profile image URL of the author' })),
   })
 )
 export type GetUserRecommendationResponse = Static<typeof GetUserRecommendationResponse>
