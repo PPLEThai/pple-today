@@ -44,7 +44,7 @@ import {
   TrophyIcon,
 } from 'lucide-react-native'
 
-import type { GetMyProfileResponse, GetUserParticipationResponse } from '@api/backoffice/app'
+import type { GetUserParticipationResponse } from '@api/backoffice/app'
 import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
@@ -54,8 +54,6 @@ import { reactQueryClient } from '@app/libs/api-client'
 import { useDiscoveryQuery, useLoginMutation, useLogoutMutation, useSession } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
-
-type UserRole = GetMyProfileResponse['role']
 
 export default function Index() {
   const session = useSession()
@@ -173,21 +171,29 @@ const HeaderSection = () => {
 const ProfileSection = () => {
   const router = useRouter()
   const profileQuery = reactQueryClient.useQuery('/profile/me', {})
-  const getRoleName = (role: UserRole) => {
-    switch (role) {
-      case 'REPRESENTATIVE':
-        return 'สมาชิกสส.พรรคประชาชน'
-      case 'USER':
-        return 'ประชาชน'
-      case 'STAFF':
-        return 'สมาชิกพรรค'
-      case 'OFFICIAL':
-        return 'คณะทำงาน'
-      case 'MEMBER':
-        return 'สมาชิกพรรค'
-      default:
-        exhaustiveGuard(role)
+  const getRoleName = (roles: string[]) => {
+    for (const role of roles) {
+      switch (role) {
+        case 'pple-ad:mp':
+          return 'สส.'
+        case 'pple-ad:hq':
+          return 'ส่วนกลาง'
+        case 'pple-ad:province':
+          return 'ทีมจังหวัด'
+        case 'pple-ad:foundation':
+          return 'มูลนิธิ'
+        case 'pple-ad:local':
+          return 'ทีมท้องถิ่น'
+        case 'pple-ad:mpassistant':
+          return 'ผู้ช่วย สส.'
+        case 'pple-ad:tto':
+          return 'ตทอ.'
+        case 'official':
+          return 'Official'
+      }
     }
+
+    return 'ประชาชน'
   }
   const Profile =
     profileQuery.isLoading || !profileQuery.data ? (
@@ -209,7 +215,7 @@ const ProfileSection = () => {
             {profileQuery.data.name}
           </Text>
           <Badge>
-            <Text>{getRoleName(profileQuery.data.role)}</Text>
+            <Text>{getRoleName(profileQuery.data.roles)}</Text>
           </Badge>
         </View>
       </>
