@@ -1,3 +1,5 @@
+DROP FUNCTION get_candidate_user_by_follower (text);
+
 CREATE OR REPLACE FUNCTION public.get_candidate_user_by_follower(_id text)
   RETURNS TABLE(user_id text, score numeric)
   LANGUAGE plpgsql
@@ -52,4 +54,4 @@ GROUP BY candidate_user.user_id
 ORDER BY score DESC
 LIMIT 10;
 END;
-$function$
+$function$;
