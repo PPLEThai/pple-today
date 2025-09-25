@@ -181,12 +181,21 @@ const ProfileSection = () => {
       if (role.startsWith('pple-member:member')) return 'สมาชิกพรรค'
       switch (role) {
         case 'pple-ad:mp':
-          return 'สมาชิกสส.พรรคประชาชน'
+          return 'สส.'
         case 'pple-ad:hq':
           return 'ส่วนกลาง'
         case 'pple-ad:province':
+          return 'ทีมจังหวัด'
+        case 'pple-ad:foundation':
+          return 'มูลนิธิ'
         case 'pple-ad:local':
-          return 'คณะทำงาน'
+          return 'ทีมท้องถิ่น'
+        case 'pple-ad:mpassistant':
+          return 'ผู้ช่วย สส.'
+        case 'pple-ad:candidate':
+          return 'ผู้สมัคร สส.'
+        case 'official':
+          return 'Official'
       }
     }
 
