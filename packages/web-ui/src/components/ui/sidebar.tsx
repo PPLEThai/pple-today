@@ -158,7 +158,7 @@ function Sidebar({
       <div
         data-slot="sidebar"
         className={cn(
-          'bg-sidebar text-sidebar-foreground flex w-[--sidebar-width] flex-col',
+          'bg-base-bg-default text-base-text-high flex w-[--sidebar-width] flex-col border-r border-r-sidebar-border',
           className
         )}
         {...props}
@@ -352,7 +352,7 @@ function SidebarContent({ className, ...props }: React.ComponentProps<'div'>) {
       data-slot="sidebar-content"
       data-sidebar="content"
       className={cn(
-        'flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden',
+        'flex min-h-0 flex-1 flex-col overflow-auto group-data-[collapsible=icon]:overflow-hidden',
         className
       )}
       {...props}
@@ -431,7 +431,7 @@ function SidebarMenu({ className, ...props }: React.ComponentProps<'ul'>) {
     <ul
       data-slot="sidebar-menu"
       data-sidebar="menu"
-      className={cn('flex w-full min-w-0 flex-col gap-1', className)}
+      className={cn('flex w-full min-w-0 flex-col', className)}
       {...props}
     />
   )
@@ -449,11 +449,12 @@ function SidebarMenuItem({ className, ...props }: React.ComponentProps<'li'>) {
 }
 
 const sidebarMenuButtonVariants = cva(
-  'peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-hidden ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0',
+  'peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-sm px-2 py-1.5 text-left text-sm outline-hidden ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 group-data-[collapsible=icon]:!p-2 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0',
   {
     variants: {
       variant: {
-        default: 'hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+        default:
+          'hover:bg-base-bg-medium hover:text-base-text-high active:bg-base-bg-medium active:text-base-text-high data-[state=open]:hover:bg-base-bg-medium data-[state=open]:hover:text-base-text-high data-[active=true]:bg-base-primary-extra-light data-[active=true]:text-base-primary-default data-[active=true]:border data-[active=true]:border-base-primary-default',
         outline:
           'bg-background shadow-[0_0_0_1px_var(--sidebar-border)] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_var(--sidebar-accent)]',
       },
@@ -610,7 +611,7 @@ function SidebarMenuSub({ className, ...props }: React.ComponentProps<'ul'>) {
       data-slot="sidebar-menu-sub"
       data-sidebar="menu-sub"
       className={cn(
-        'border-sidebar-border mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l px-2.5 py-0.5',
+        'border-sidebar-border mx-3.5 flex min-w-0 translate-x-px flex-col border-l px-2.5 py-0.5',
         'group-data-[collapsible=icon]:hidden',
         className
       )}
@@ -650,8 +651,8 @@ function SidebarMenuSubButton({
       data-size={size}
       data-active={isActive}
       className={cn(
-        'text-sidebar-foreground ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground active:bg-sidebar-accent active:text-sidebar-accent-foreground [&>svg]:text-sidebar-accent-foreground flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 outline-hidden focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0',
-        'data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground',
+        'font-light text-base-text-high ring-sidebar-ring hover:bg-base-bg-medium hover:text-base-text-high active:bg-base-bg-medium active:text-base-text-high [&>svg]:text-base-text-high flex h-8 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-sm px-2 outline-hidden focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0',
+        'data-[active=true]:bg-base-primary-extra-light data-[active=true]:text-base-primary-default data-[active=true]:border data-[active=true]:border-base-primary-default',
         size === 'sm' && 'text-xs',
         size === 'md' && 'text-sm',
         'group-data-[collapsible=icon]:hidden',

@@ -779,6 +779,29 @@ const SidebarSection = () => {
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
+            <SidebarGroup>
+              <SidebarGroupLabel>จัดการผู้ใช้งาน</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a href="#">
+                        <PieChart />
+                        <span>คะแนน</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <a href="#">
+                        <Facebook />
+                        <span>ผู้ใช้งาน</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
           </SidebarContent>
           <SidebarFooter>
             <SidebarMenu>
