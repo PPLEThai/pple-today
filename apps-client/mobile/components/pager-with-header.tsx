@@ -511,7 +511,7 @@ export function PagerTabBarItemIndicator() {
   })
   return (
     <Animated.View
-      className="absolute bottom-0 left-0 right-0 border-b-2 border-base-primary-default "
+      className="absolute bottom-0 left-0 right-0 border-b-2 border-base-primary-default opacity-0"
       style={indicatorStyle}
     />
   )

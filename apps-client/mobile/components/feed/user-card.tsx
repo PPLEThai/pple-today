@@ -26,12 +26,11 @@ interface UserCardProps {
   user: {
     id: string
     name: string
-    profileImage?: string
-    // TODO: required and nullable
-    address?: {
+    profileImage: string | null
+    address: {
       province: string
-    }
-    // TODO: required
+      district: string
+    } | null
     followed?: boolean
   }
 }
@@ -62,7 +61,7 @@ export function UserCard(props: UserCardProps) {
       )}
     >
       <Avatar alt={props.user.name} className="w-14 h-14">
-        <AvatarImage source={{ uri: props.user.profileImage }} />
+        {props.user.profileImage && <AvatarImage source={{ uri: props.user.profileImage }} />}
         <AvatarPPLEFallback />
       </Avatar>
       <View className="flex-1">
