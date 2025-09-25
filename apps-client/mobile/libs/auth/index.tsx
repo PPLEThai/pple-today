@@ -12,7 +12,7 @@ import {
 } from '@pple-today/ui/dialog'
 import { Icon } from '@pple-today/ui/icon'
 import { Text } from '@pple-today/ui/text'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   AuthRequest,
   AuthSessionResult,
@@ -142,20 +142,8 @@ export const useUser = () => {
 }
 
 export const useAuthMe = () => {
-  return useQuery({
-    queryKey: reactQueryClient.getQueryKey('/auth/me'),
-    queryFn: async () => {
-      const session = await getAuthSessionAsync()
-      if (!session) {
-        return null
-      }
-      const authMeResult = await fetchClient('/auth/me', {})
-      if (authMeResult.error) {
-        throw authMeResult.error
-      }
-      return authMeResult.data
-    },
-  })
+  const session = useSession()
+  return reactQueryClient.useQuery('/auth/me', {}, { enabled: !!session })
 }
 
 export const codeExchange = async ({
