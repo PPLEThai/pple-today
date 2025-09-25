@@ -17,6 +17,26 @@ export class TopicService {
     private readonly fileService: FileService
   ) {}
 
+  async getTopicRecommendation(userId: string) {
+    const topics = await this.topicRepository.getTopicRecommendation(userId)
+
+    if (topics.isErr()) {
+      return mapRepositoryError(topics.error)
+    }
+
+    return ok(
+      topics.value.map((topic) => ({
+        id: topic.id,
+        name: topic.name,
+        description: topic.description,
+        bannerImage: topic.bannerImagePath
+          ? this.fileService.getPublicFileUrl(topic.bannerImagePath)
+          : null,
+        hashTags: topic.hashTags,
+      }))
+    )
+  }
+
   async getTopics() {
     const topics = await this.topicRepository.getTopics()
 

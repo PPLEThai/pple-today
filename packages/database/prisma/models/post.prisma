@@ -47,4 +47,6 @@ model PostHashTag {
     post    Post    @relation(fields: [postId], references: [feedItemId], onDelete: Cascade)
 
     @@id([postId, hashTagId])
+    @@index([postId])
+    @@index([hashTagId])
 }

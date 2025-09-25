@@ -6,6 +6,7 @@ import {
   FollowTopicParams,
   FollowTopicResponse,
   GetTopicParams,
+  GetTopicRecommendationResponse,
   GetTopicResponse,
   GetTopicsResponse,
   ListTopicResponse,
@@ -65,6 +66,32 @@ export const TopicController = new Elysia({
       detail: {
         summary: 'Get topic by id',
         description: 'Get topic details by id',
+      },
+    }
+  )
+  .get(
+    '/recommend',
+    async ({ user, topicService, status }) => {
+      const result = await topicService.getTopicRecommendation(user.id)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      response: {
+        200: GetTopicRecommendationResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get recommended topics',
+        description: "Fetch the authenticated user's recommended topics",
       },
     }
   )
