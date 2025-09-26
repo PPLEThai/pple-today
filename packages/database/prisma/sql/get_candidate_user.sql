@@ -20,6 +20,9 @@ WITH
   		DISTINCT candidate_user.user_id
   	FROM 
   		candidate_user
+    UNION ALL
+    SELECT
+      $1 AS user_id
   ),
 
   other_users AS (
@@ -29,7 +32,7 @@ WITH
   		"User" u
   		LEFT JOIN excluded_users e ON e.user_id = u."id"
   	WHERE
-  		e.user_id IS NULL AND u.id <> $1
+  		e.user_id IS NULL
   ),
 
   other_candidate_user AS (
