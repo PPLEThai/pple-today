@@ -4,12 +4,21 @@ import { ScrollView, View } from 'react-native'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@pple-today/ui/dialog'
 import { Icon } from '@pple-today/ui/icon'
 import { Skeleton } from '@pple-today/ui/skeleton'
 import { Text } from '@pple-today/ui/text'
 import { useQueryClient } from '@tanstack/react-query'
 import { Image } from 'expo-image'
-import { Link } from 'expo-router'
+import { Link, useRouter } from 'expo-router'
 import { CircleUserRoundIcon, Heart, MessageSquareHeartIcon } from 'lucide-react-native'
 
 import type { GetTopicsResponse } from '@api/backoffice/app'
@@ -279,6 +288,7 @@ interface TopicsFollowingItemProps {
 
 const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
   const queryClient = useQueryClient()
+  const router = useRouter()
   const [isFollowing, setIsFollowing] = React.useState(true)
 
   const followTopicMutation = reactQueryClient.useMutation('post', '/topics/:topicId/follow', {})
@@ -321,6 +331,62 @@ const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
     }
   }
 
+  const renderHashtags = (hashtags: HashtagList) => {
+    if (hashtags.length === 0) return null
+    if (hashtags.length === 1) {
+      return (
+        <Link href={`/(feed)/hashtag/${hashtags[0].id}`} asChild>
+          <Badge variant="secondary">
+            <Text>{hashtags[0].name}</Text>
+          </Badge>
+        </Link>
+      )
+    }
+
+    return (
+      <>
+        <Link href={`/(feed)/hashtag/${hashtags[0].id}`} asChild>
+          <Badge variant="secondary">
+            <Text>{hashtags[0].name}</Text>
+          </Badge>
+        </Link>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Badge variant="secondary">
+              <Text>{hashtags.length > 1 ? `#อื่น ๆ (${hashtags.length - 1})` : ''}</Text>
+            </Badge>
+          </DialogTrigger>
+          <DialogContent className="w-[90vw] max-h-[70vh] p-4 pt-6 mx-4 flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="w-full text-xl text-start font-anakotmai-medium text-base-primary-default">
+                # ที่เกี่ยวข้อง
+              </DialogTitle>
+              <DialogDescription className="w-full text-start text-sm font-anakotmai-light leading-tight text-base-text-medium">
+                แฮชแท็กที่เกี่ยวข้องกับหัวข้อนี้
+              </DialogDescription>
+            </DialogHeader>
+            <ScrollView
+              className="border border-base-outline-default bg-base-bg-light rounded-lg"
+              contentContainerClassName="w-full flex flex-row gap-2 flex-wrap m-2 min-h-[144px]"
+            >
+              {hashtags.map((hashtag) => (
+                <DialogClose key={hashtag.id} asChild>
+                  <Button
+                    className="rounded-full border border-base-outline-default py-1.5 h-8 bg-base-bg-light"
+                    variant="secondary"
+                    onPress={() => router.navigate(`/(feed)/hashtag/${hashtag.id}`)}
+                  >
+                    <Text className="text-sm font-anakotmai-medium">{hashtag.name}</Text>
+                  </Button>
+                </DialogClose>
+              ))}
+            </ScrollView>
+          </DialogContent>
+        </Dialog>
+      </>
+    )
+  }
+
   return (
     <View className="items-center px-4 my-2 gap-4 flex flex-row">
       <Image
@@ -334,13 +400,7 @@ const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
       <View className="flex-1 flex flex-col gap-2">
         <Text className="font-heading-semibold text-base text-base-text-high">{topic.name}</Text>
         <View className="flex flex-row gap-2 mb-0.5 flex-wrap min-h-5">
-          {topic.hashtags.map((hashtag) => (
-            <Link key={hashtag.id} href={`/(feed)/hashtag/${hashtag.id}`} asChild>
-              <Badge variant="secondary">
-                <Text>{hashtag.name}</Text>
-              </Badge>
-            </Link>
-          ))}
+          {renderHashtags(topic.hashtags)}
         </View>
         <Button
           variant={isFollowing ? 'outline-primary' : 'primary'}
