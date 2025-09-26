@@ -158,7 +158,7 @@ function Sidebar({
       <div
         data-slot="sidebar"
         className={cn(
-          'bg-base-bg-default text-base-text-high flex w-[--sidebar-width] flex-col border-r border-r-sidebar-border',
+          'bg-base-bg-default text-base-text-high flex w-[--sidebar-width] flex-col border-r border-r-sidebar-border h-svh top-0 sticky',
           className
         )}
         {...props}
@@ -454,7 +454,7 @@ const sidebarMenuButtonVariants = cva(
     variants: {
       variant: {
         default:
-          'hover:bg-base-bg-medium hover:text-base-text-high active:bg-base-bg-medium active:text-base-text-high data-[state=open]:hover:bg-base-bg-medium data-[state=open]:hover:text-base-text-high data-[active=true]:bg-base-primary-extra-light data-[active=true]:text-base-primary-default data-[active=true]:border data-[active=true]:border-base-primary-default',
+          'hover:bg-base-bg-medium hover:text-base-text-high active:bg-base-bg-medium active:text-base-text-high data-[state=open]:hover:bg-base-bg-medium data-[state=open]:hover:text-base-text-high data-[active=true]:bg-base-primary-extra-light data-[active=true]:font-medium data-[active=true]:text-base-primary-default data-[active=true]:border data-[active=true]:border-base-primary-default [&.active]:bg-base-primary-extra-light [&.active]:font-medium [&.active]:text-base-primary-default [&.active]:border [&.active]:border-base-primary-default',
         outline:
           'bg-background shadow-[0_0_0_1px_var(--sidebar-border)] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_var(--sidebar-accent)]',
       },
@@ -653,6 +653,7 @@ function SidebarMenuSubButton({
       className={cn(
         'font-light text-base-text-high ring-sidebar-ring hover:bg-base-bg-medium hover:text-base-text-high active:bg-base-bg-medium active:text-base-text-high [&>svg]:text-base-text-high flex h-8 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded px-2 outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0',
         'data-[active=true]:bg-base-primary-extra-light data-[active=true]:text-base-primary-default data-[active=true]:border data-[active=true]:border-base-primary-default',
+        '[&.active]:bg-base-primary-extra-light [&.active]:text-base-primary-default [&.active]:border [&.active]:border-base-primary-default',
         size === 'sm' && 'text-xs',
         size === 'md' && 'text-sm',
         'group-data-[collapsible=icon]:hidden',
