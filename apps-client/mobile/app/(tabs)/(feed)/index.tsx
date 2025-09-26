@@ -772,6 +772,7 @@ function AnnouncementSection() {
 
   if (!announcementsQuery.data) return null
   const announcements = announcementsQuery.data.announcements
+  if (announcements.length === 0) return null
   return (
     <View className="flex flex-col">
       <View className="flex flex-row pt-4 px-4 pb-3 justify-between">
