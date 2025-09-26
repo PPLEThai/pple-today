@@ -593,11 +593,7 @@ function FeedContent(props: PagerScrollViewProps) {
 
   const queryClient = useQueryClient()
   const onRefresh = React.useCallback(async () => {
-    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/auth/me') })
-    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/banners') })
-    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/topics/list') })
-    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/topics/recommend') })
-    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/profile/recommend') })
+    queryClient.invalidateQueries({ queryKey: reactQueryClient.getKey('get') })
     await Promise.all([
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/feed/me') }),
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/announcements') }),
