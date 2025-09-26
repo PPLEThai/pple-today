@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 0.5.2
+
+### Patch Changes
+
+- [#149](https://github.com/PPLEThai/pple-today/pull/149) [`6c67072`](https://github.com/PPLEThai/pple-today/commit/6c67072b7e93940058421e56647a0095d2241ecb) Thanks [@Anon-136](https://github.com/Anon-136)! - fix: invalidate every use query get request on refresh
+
 ## 0.5.1
 
 ### Patch Changes
