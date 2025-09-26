@@ -1,5 +1,13 @@
 # @client/mobile
 
+## 0.5.1
+
+### Patch Changes
+
+- [#145](https://github.com/PPLEThai/pple-today/pull/145) [`4482483`](https://github.com/PPLEThai/pple-today/commit/44824836524a212d0eccbf9fa0378a90367d33b1) Thanks [@Anon-136](https://github.com/Anon-136)! - fix: hide announcment when there is no length is 0
+
+- [#147](https://github.com/PPLEThai/pple-today/pull/147) [`2e748ce`](https://github.com/PPLEThai/pple-today/commit/2e748cee135871d9e258bba1d038b88102ce9912) Thanks [@Anon-136](https://github.com/Anon-136)! - fix: fix follow suggestion empty state and follow button state
+
 ## 0.5.0
 
 ### Minor Changes
