@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 0.5.1
+
+### Patch Changes
+
+- [#148](https://github.com/PPLEThai/pple-today/pull/148) [`b57f296`](https://github.com/PPLEThai/pple-today/commit/b57f296c44e51b8abc50c167f24bdb3bff5c8088) Thanks [@miello](https://github.com/miello)! - [[PPLE-391] [API] Fix register that should update role and id](https://linear.app/snts/issue/PPLE-391/api-fix-register-that-should-update-role-and-id)
+
 ## 0.5.0
 
 ### Minor Changes
