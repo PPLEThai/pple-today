@@ -16,13 +16,14 @@ import {
 import { Icon } from '@pple-today/ui/icon'
 import { Skeleton } from '@pple-today/ui/skeleton'
 import { Text } from '@pple-today/ui/text'
-import { useQueryClient } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import { Link, useRouter } from 'expo-router'
 import { CircleUserRoundIcon, Heart, MessageSquareHeartIcon } from 'lucide-react-native'
 
 import type { GetTopicsResponse } from '@api/backoffice/app'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
+import { useTopicFollowState } from '@app/components/feed/topic-card'
+import { useUserFollowState } from '@app/components/feed/user-card'
 import { Header } from '@app/components/header-navigation'
 import { reactQueryClient } from '@app/libs/api-client'
 
@@ -151,42 +152,18 @@ interface PeopleFollowingItemProps {
 }
 
 const PeopleFollowingItem = (profile: PeopleFollowingItemProps) => {
-  const queryClient = useQueryClient()
-  const [isFollowing, setIsFollowing] = React.useState(true)
+  const [isFollowing, setIsFollowing] = useUserFollowState(profile.id, true)
 
   const followMutation = reactQueryClient.useMutation('post', '/profile/:id/follow', {})
   const unfollowMutation = reactQueryClient.useMutation('delete', '/profile/:id/follow', {})
 
   const toggleFollow = async () => {
+    setIsFollowing(!isFollowing) // optimistic update
     if (isFollowing) {
-      await unfollowMutation.mutateAsync(
-        {
-          pathParams: { id: profile.id },
-        },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({
-              queryKey: reactQueryClient.getQueryKey('/profile/me'),
-            })
-            setIsFollowing(!isFollowing)
-          },
-        }
-      )
+      await unfollowMutation.mutateAsync({ pathParams: { id: profile.id } })
       return
     } else {
-      await followMutation.mutateAsync(
-        {
-          pathParams: { id: profile.id },
-        },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({
-              queryKey: reactQueryClient.getQueryKey('/profile/me'),
-            })
-            setIsFollowing(!isFollowing)
-          },
-        }
-      )
+      await followMutation.mutateAsync({ pathParams: { id: profile.id } })
     }
   }
 
@@ -287,9 +264,8 @@ interface TopicsFollowingItemProps {
 }
 
 const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
-  const queryClient = useQueryClient()
   const router = useRouter()
-  const [isFollowing, setIsFollowing] = React.useState(true)
+  const [isFollowing, setIsFollowing] = useTopicFollowState(topic.id, true)
 
   const followTopicMutation = reactQueryClient.useMutation('post', '/topics/:topicId/follow', {})
   const unfollowTopicMutation = reactQueryClient.useMutation(
@@ -299,35 +275,11 @@ const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
   )
 
   const toggleFollow = async () => {
+    setIsFollowing(!isFollowing) // optimistic update
     if (isFollowing) {
-      await unfollowTopicMutation.mutateAsync(
-        {
-          pathParams: { topicId: topic.id },
-        },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({
-              queryKey: reactQueryClient.getQueryKey('/profile/me'),
-            })
-            setIsFollowing(!isFollowing)
-          },
-        }
-      )
-      return
+      await unfollowTopicMutation.mutateAsync({ pathParams: { topicId: topic.id } })
     } else {
-      await followTopicMutation.mutateAsync(
-        {
-          pathParams: { topicId: topic.id },
-        },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({
-              queryKey: reactQueryClient.getQueryKey('/profile/me'),
-            })
-            setIsFollowing(!isFollowing)
-          },
-        }
-      )
+      await followTopicMutation.mutateAsync({ pathParams: { topicId: topic.id } })
     }
   }
 
@@ -396,6 +348,7 @@ const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
         contentFit="cover"
         style={{ width: 80, height: '100%', borderRadius: 12 }}
         transition={300}
+        className="bg-base-bg-default"
       />
       <View className="flex-1 flex flex-col gap-2">
         <Text className="font-heading-semibold text-base text-base-text-high">{topic.name}</Text>

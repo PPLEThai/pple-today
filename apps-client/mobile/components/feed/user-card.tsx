@@ -128,7 +128,7 @@ export function UserSuggestion() {
   if (!session) {
     return null
   }
-  if (!userSuggestionQuery.data) {
+  if (!userSuggestionQuery.data || userSuggestionQuery.data.length === 0) {
     return null
   }
   return (

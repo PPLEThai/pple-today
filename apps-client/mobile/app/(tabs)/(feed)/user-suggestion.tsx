@@ -24,6 +24,7 @@ export default function UserSuggestion() {
         }
         return data
       }, []),
+      refetchOnMount: false,
     }
   )
   const router = useRouter()
