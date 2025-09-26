@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router'
 
+import { Button } from '@pple-today/web-ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@pple-today/web-ui/collapsible'
 import {
   DropdownMenu,
@@ -23,13 +24,21 @@ import {
   SidebarMenuSubItem,
   SidebarProvider,
 } from '@pple-today/web-ui/sidebar'
-import { ChevronUp, Facebook, Newspaper, PieChart, User2 } from 'lucide-react'
+import { ChevronsUpDownIcon, ChevronUp, Facebook, Newspaper, PieChart } from 'lucide-react'
+
+import { SidebarUser } from './SidebarUser'
 
 export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
   return (
     <SidebarProvider>
       <Sidebar collapsible="none">
-        <SidebarHeader>Header</SidebarHeader>
+        <SidebarHeader>
+          <SidebarUser
+            src="https://picsum.photos/id/64/64"
+            title="PPLE Today"
+            subtitle="Web Admin"
+          />
+        </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
             <SidebarGroupLabel>จัดการเนื้อหา</SidebarGroupLabel>
@@ -145,25 +154,29 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
         <SidebarFooter>
           <SidebarMenu>
             <SidebarMenuItem>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton>
-                    <User2 /> Username
-                    <ChevronUp className="ml-auto" />
-                  </SidebarMenuButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width]">
-                  <DropdownMenuItem>
-                    <span>Account</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <span>Billing</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <span>Sign out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <SidebarUser
+                src="https://picsum.photos/id/64/64"
+                title="PPLE Admin"
+                subtitle="pple_admin@pple.com"
+              >
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      className="p-0 size-8 hover:bg-base-bg-medium text-base-text-high group-active:text-base-text-high"
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Open user menu"
+                    >
+                      <ChevronsUpDownIcon className="shrink-0 size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent side="top" align="end">
+                    <DropdownMenuItem>
+                      <span>Sign out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </SidebarUser>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarFooter>
