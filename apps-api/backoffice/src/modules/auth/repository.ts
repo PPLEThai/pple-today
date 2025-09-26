@@ -21,8 +21,19 @@ export class AuthRepository {
     const { sub, name, phone_number } = data
 
     return await fromRepositoryPromise(
-      this.prismaService.user.create({
-        data: {
+      this.prismaService.user.upsert({
+        where: { phoneNumber: phone_number },
+        update: {
+          id: sub,
+          roles: {
+            deleteMany: {},
+            connectOrCreate: roles.map((role) => ({
+              where: { userId_role: { userId: sub, role } },
+              create: { role },
+            })),
+          },
+        },
+        create: {
           id: sub,
           name,
           roles: {
