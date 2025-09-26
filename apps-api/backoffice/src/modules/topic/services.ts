@@ -17,6 +17,26 @@ export class TopicService {
     private readonly fileService: FileService
   ) {}
 
+  async getTopicRecommendation(userId: string) {
+    const topics = await this.topicRepository.getTopicRecommendation(userId)
+
+    if (topics.isErr()) {
+      return mapRepositoryError(topics.error)
+    }
+
+    return ok(
+      topics.value.map((topic) => ({
+        id: topic.id,
+        name: topic.name,
+        description: topic.description,
+        bannerImage: topic.bannerImagePath
+          ? this.fileService.getPublicFileUrl(topic.bannerImagePath)
+          : null,
+        hashTags: topic.hashTags,
+      }))
+    )
+  }
+
   async getTopics() {
     const topics = await this.topicRepository.getTopics()
 
@@ -25,6 +45,20 @@ export class TopicService {
     }
 
     return ok(this.mapTopicsToTopicsResponse(topics.value))
+  }
+
+  async getTopicById(topicId: string) {
+    const topic = await this.topicRepository.getTopicById(topicId)
+
+    if (topic.isErr()) {
+      return mapRepositoryError(topic.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.TOPIC_NOT_FOUND,
+          message: `Topic not found`,
+        },
+      })
+    }
+    return ok(this.mapTopicToTopicResponse(topic.value))
   }
 
   async listTopic(userId: string) {
@@ -113,6 +147,33 @@ export class TopicService {
     return ok()
   }
 
+  private mapTopicToTopicResponse(
+    topic: Topic & {
+      hashTagInTopics: (HashTagInTopic & {
+        hashTag: HashTag
+      })[]
+    }
+  ) {
+    return {
+      id: topic.id,
+      name: topic.name,
+      description: topic.description,
+      bannerImage: topic.bannerImagePath
+        ? this.fileService.getPublicFileUrl(topic.bannerImagePath)
+        : null,
+      status: topic.status,
+      createdAt: topic.createdAt,
+      updatedAt: topic.updatedAt,
+      hashTags: topic.hashTagInTopics.map(({ hashTag }) => ({
+        id: hashTag.id,
+        name: hashTag.name,
+        status: hashTag.status,
+        createdAt: hashTag.createdAt,
+        updatedAt: hashTag.updatedAt,
+      })),
+    }
+  }
+
   private mapTopicsToTopicsResponse(
     topics: (Topic & {
       hashTagInTopics: (HashTagInTopic & {
@@ -120,28 +181,7 @@ export class TopicService {
       })[]
     })[]
   ): GetTopicsResponse {
-    return topics
-      .map((topic) => ({
-        id: topic.id,
-        name: topic.name,
-        description: topic.description,
-        bannerImage: topic.bannerImagePath
-          ? this.fileService.getPublicFileUrl(topic.bannerImagePath)
-          : null,
-        status: topic.status,
-        createdAt: topic.createdAt,
-        updatedAt: topic.updatedAt,
-        hashTags: topic.hashTagInTopics
-          .map(({ hashTag }) => ({
-            id: hashTag.id,
-            name: hashTag.name,
-            status: hashTag.status,
-            createdAt: hashTag.createdAt,
-            updatedAt: hashTag.updatedAt,
-          }))
-          .filter(({ status }) => status === TopicStatus.PUBLISH),
-      }))
-      .filter(({ status }) => status === TopicStatus.PUBLISH)
+    return topics.map(this.mapTopicToTopicResponse)
   }
 }
 

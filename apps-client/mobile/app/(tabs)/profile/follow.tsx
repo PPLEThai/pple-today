@@ -28,7 +28,7 @@ import { reactQueryClient } from '@app/libs/api-client'
 
 export default function FollowPage() {
   return (
-    <View className="flex-1 flex-col">
+    <View className="pt-safe flex-1 flex-col">
       <Header icon={Heart} title="จัดการเนื้อหาที่ติดตาม" />
       <ScrollView>
         <NumberFollowingSection />
@@ -52,14 +52,14 @@ const NumberFollowingSection = () => {
             size={24}
             strokeWidth={1}
           />
-          <Text className="text-base text-base-text-high font-anakotmai-medium">หัวข้อ</Text>
+          <Text className="text-base text-base-text-high font-heading-semibold">หัวข้อ</Text>
         </View>
 
-        <Text className="text-base text-base-text-high font-anakotmai-light">
+        <Text className="text-base text-base-text-high font-heading-regular">
           {profileQuery.isLoading || !profileQuery.data ? (
             <View className="rounded-full bg-base-bg-default mt-2 h-4" />
           ) : (
-            <Text className="text-base text-base-primary-medium font-anakotmai-medium">
+            <Text className="text-base text-base-primary-medium font-heading-semibold">
               {profileQuery.data.numberOfFollowingTopics}
             </Text>
           )}{' '}
@@ -74,13 +74,13 @@ const NumberFollowingSection = () => {
             size={24}
             strokeWidth={1}
           />
-          <Text className="text-base text-base-text-high font-anakotmai-medium">ผู้คน</Text>
+          <Text className="text-base text-base-text-high font-heading-semibold">ผู้คน</Text>
         </View>
-        <Text className="text-base text-base-text-high font-anakotmai-light">
+        <Text className="text-base text-base-text-high font-heading-regular">
           {profileQuery.isLoading || !profileQuery.data ? (
             <View className="rounded-full bg-base-bg-default mt-2 h-4" />
           ) : (
-            <Text className="text-base text-base-primary-medium font-anakotmai-medium">
+            <Text className="text-base text-base-primary-medium font-heading-semibold">
               {profileQuery.data.numberOfFollowing}
             </Text>
           )}{' '}
@@ -98,7 +98,7 @@ const PeopleFollowingSection = () => {
     return (
       <View className="my-2 flex flex-col">
         <View className="px-4 items-start">
-          <Text className="text-base text-base-text-high font-anakotmai-medium">ผู้คน</Text>
+          <Text className="text-base text-base-text-high font-heading-semibold">ผู้คน</Text>
         </View>
         <View className="mt-2 px-4 flex flex-col">
           <PeopleFollowingSkeleton />
@@ -113,10 +113,10 @@ const PeopleFollowingSection = () => {
     return (
       <View className="my-2 flex flex-col">
         <View className="px-4 items-start">
-          <Text className="text-base text-base-text-high font-anakotmai-medium">ผู้คน</Text>
+          <Text className="text-base text-base-text-high font-heading-semibold">ผู้คน</Text>
         </View>
         <View className="mt-2 p-4 flex flex-col">
-          <Text className="font-anakotmai-light text-center">คุณยังไม่ได้ติดตามใคร</Text>
+          <Text className="font-heading-regular text-center">คุณยังไม่ได้ติดตามใคร</Text>
         </View>
       </View>
     )
@@ -125,7 +125,7 @@ const PeopleFollowingSection = () => {
     <>
       <View className="my-2 flex flex-col">
         <View className="px-4 items-start">
-          <Text className="text-base text-base-text-high font-anakotmai-medium">ผู้คน</Text>
+          <Text className="text-base text-base-text-high font-heading-semibold">ผู้คน</Text>
         </View>
         <View className="mt-2 px-4 flex flex-col">
           {followingPeopleQuery.data.map((item) => (
@@ -201,7 +201,7 @@ const PeopleFollowingItem = (profile: PeopleFollowingItemProps) => {
           />
           <AvatarPPLEFallback />
         </Avatar>
-        <Text className="font-noto-light flex-1 line-clamp-1 mr-3">{profile.name}</Text>
+        <Text className="font-body-light flex-1 line-clamp-1 mr-3">{profile.name}</Text>
       </View>
       <Button
         variant={isFollowing ? 'outline-primary' : 'primary'}
@@ -233,7 +233,7 @@ const TopicsFollowingSection = () => {
     return (
       <View className="my-2 flex flex-col">
         <View className="px-4 items-start">
-          <Text className="text-base text-base-text-high font-anakotmai-medium">หัวข้อ</Text>
+          <Text className="text-base text-base-text-high font-heading-semibold">หัวข้อ</Text>
         </View>
         <View className="flex flex-col">
           <TopicsFollowingSkeleton />
@@ -248,10 +248,10 @@ const TopicsFollowingSection = () => {
     return (
       <View className="my-2 flex flex-col">
         <View className="px-4 items-start">
-          <Text className="text-base text-base-text-high font-anakotmai-medium">หัวข้อ</Text>
+          <Text className="text-base text-base-text-high font-heading-semibold">หัวข้อ</Text>
         </View>
         <View className="mt-2 p-4 flex flex-col">
-          <Text className="font-anakotmai-light text-center">คุณยังไม่ได้ติดตามหัวข้อใดๆ</Text>
+          <Text className="font-heading-regular text-center">คุณยังไม่ได้ติดตามหัวข้อใดๆ</Text>
         </View>
       </View>
     )
@@ -260,7 +260,7 @@ const TopicsFollowingSection = () => {
   return (
     <View className="my-2 flex flex-col">
       <View className="px-4 items-start">
-        <Text className="text-base text-base-text-high font-anakotmai-medium">หัวข้อ</Text>
+        <Text className="text-base text-base-text-high font-heading-semibold">หัวข้อ</Text>
       </View>
       <View className="flex flex-col">
         {followingTopicsQuery.data.map((item) => (
@@ -398,7 +398,7 @@ const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
         transition={300}
       />
       <View className="flex-1 flex flex-col gap-2">
-        <Text className="font-anakotmai-medium text-base text-base-text-high">{topic.name}</Text>
+        <Text className="font-heading-semibold text-base text-base-text-high">{topic.name}</Text>
         <View className="flex flex-row gap-2 mb-0.5 flex-wrap min-h-5">
           {renderHashtags(topic.hashtags)}
         </View>

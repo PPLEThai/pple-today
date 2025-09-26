@@ -202,11 +202,14 @@ importers:
   apps-client/mobile:
     dependencies:
       '@expo-google-fonts/inter':
-        specifier: ^0.4.1
-        version: 0.4.1
+        specifier: ^0.4.2
+        version: 0.4.2
+      '@expo-google-fonts/noto-sans-thai':
+        specifier: ^0.4.2
+        version: 0.4.2
       '@expo-google-fonts/noto-sans-thai-looped':
-        specifier: ^0.4.1
-        version: 0.4.1
+        specifier: ^0.4.2
+        version: 0.4.2
       '@expo/vector-icons':
         specifier: ^14.1.0
         version: 14.1.0(expo-font@13.3.2(expo@53.0.18(@babel/core@7.27.1)(@expo/metro-runtime@5.0.4(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0)))(react-native-webview@13.13.5(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
@@ -394,6 +397,9 @@ importers:
       tailwindcss:
         specifier: ^3.4.17
         version: 3.4.17
+      tsx:
+        specifier: ^4.20.3
+        version: 4.20.3
 
   examples/mini-app/api:
     dependencies:
@@ -1880,11 +1886,14 @@ packages:
     resolution: {integrity: sha512-ZAoA40rNMPwSm+AeHpCq8STiNAwzWLJuP8Xv4CHIc9wv/PSuExjMrmjfYNj682vW0OOiZ1HKxzvjQr9XZIisQA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@expo-google-fonts/inter@0.4.1':
-    resolution: {integrity: sha512-ypL+XokTHEG+ie/nxNj/mS38afMrY4Li4oKvTJf9k9XvH7I21qfTGCsDtlZ6nIUWEAy1odoUZISdXT1nfMh4kA==}
+  '@expo-google-fonts/inter@0.4.2':
+    resolution: {integrity: sha512-syfiImMaDmq7cFi0of+waE2M4uSCyd16zgyWxdPOY7fN2VBmSLKEzkfbZgeOjJq61kSqPBNNtXjggiQiSD6gMQ==}
 
-  '@expo-google-fonts/noto-sans-thai-looped@0.4.1':
-    resolution: {integrity: sha512-26MikSI63qC/4bCdglhZ+MgySzI2FYh0Uek43XmLzWIYYmaJLdq+7ujbGo+jlhjq46FnvuBtpqUv1irLZhRYVw==}
+  '@expo-google-fonts/noto-sans-thai-looped@0.4.2':
+    resolution: {integrity: sha512-KA8ypgtqCpg3fBxVzQau9Us8KnxAWcVpgIT/uv5TSQpQoBILeofOIf/T0ygfTAqsah2PTKL2M5cWnLD0j+YQQQ==}
+
+  '@expo-google-fonts/noto-sans-thai@0.4.2':
+    resolution: {integrity: sha512-PGBBBDGfJJ/5y2hNweLBZWD4YmVT4uOO4chsOPXyl0TktaBJamDKVKv/WbGiDTeBGdkegLiytsWo+lhnkHP5qA==}
 
   '@expo/cli@0.24.19':
     resolution: {integrity: sha512-t32X2x7BYbBs1z2fTlOSthmDM1jxW1xaee9//ZOS0g+E6u/WWmRvMtzahQLCXE6mcMIVoNpAWUA3umvpMRa0Mg==}
@@ -11725,9 +11734,11 @@ snapshots:
       '@eslint/core': 0.13.0
       levn: 0.4.1
 
-  '@expo-google-fonts/inter@0.4.1': {}
+  '@expo-google-fonts/inter@0.4.2': {}
 
-  '@expo-google-fonts/noto-sans-thai-looped@0.4.1': {}
+  '@expo-google-fonts/noto-sans-thai-looped@0.4.2': {}
+
+  '@expo-google-fonts/noto-sans-thai@0.4.2': {}
 
   '@expo/cli@0.24.19':
     dependencies:

@@ -18,7 +18,7 @@ import { AddressCard } from '@app/components/address-card'
 import { AvatarImagePicker } from '@app/components/avatar-imagepicker'
 import { Header } from '@app/components/header-navigation'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
-import { getAuthSession } from '@app/libs/auth/session'
+import { getAuthSessionAsync } from '@app/libs/auth/session'
 import { ImageMimeType } from '@app/types/file'
 import { handleUploadImage } from '@app/utils/upload'
 
@@ -52,7 +52,7 @@ export default function EditProfilePage() {
       // Handle image update
       if (imagePickerAsset) {
         try {
-          const session = await getAuthSession()
+          const session = await getAuthSessionAsync()
           if (!session) {
             throw new Error('No auth session found')
           }

@@ -1,13 +1,5 @@
 import * as React from 'react'
-import {
-  Dimensions,
-  findNodeHandle,
-  Platform,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  View,
-} from 'react-native'
+import { findNodeHandle, Pressable, StyleSheet, View } from 'react-native'
 import Animated, {
   useAnimatedScrollHandler,
   useSharedValue,
@@ -31,12 +23,7 @@ import { toggleTextVariants, toggleVariants } from '@pple-today/ui/toggle'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H2, H3 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
-import {
-  InfiniteData,
-  useInfiniteQuery,
-  UseInfiniteQueryResult,
-  useQueryClient,
-} from '@tanstack/react-query'
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import * as Linking from 'expo-linking'
 import { useRouter } from 'expo-router'
@@ -61,9 +48,10 @@ import PPLEIcon from '@app/assets/pple-icon.svg'
 import { UserAddressInfoSection } from '@app/components/address-info'
 import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/announcement'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
-import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
-import { PeopleSuggestion } from '@app/components/feed/people-card'
+import { FeedFooter, FeedRefreshControl } from '@app/components/feed'
+import { FeedCard } from '@app/components/feed/feed-card'
 import { TopicSuggestion } from '@app/components/feed/topic-card'
+import { UserSuggestion } from '@app/components/feed/user-card'
 import {
   Pager,
   PagerContent,
@@ -75,55 +63,55 @@ import {
   PagerTabBarItem,
   PagerTabBarItemIndicator,
 } from '@app/components/pager-with-header'
+import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { environment } from '@app/env'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
-import { useAuthMe, useSessionQuery } from '@app/libs/auth'
+import { useAuthMe, useSession } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { useScrollContext } from '@app/libs/scroll-context'
 
-export default function IndexLayout() {
+export default function FeedPage() {
   return (
-    <Pager>
-      <PagerHeader>
-        <PagerHeaderOnly>
-          <MainHeader />
-          <View className="flex flex-col w-full bg-base-bg-white">
-            <BannerSection />
-            {/* <EventSection /> */}
-            <UserAddressInfoSection />
-          </View>
-          <View className="px-4 bg-base-bg-white flex flex-row items-start ">
-            <H2 className="text-3xl pt-6">ประชาชนวันนี้</H2>
-          </View>
-        </PagerHeaderOnly>
-        <PagerTabBar>
-          <SelectTopicButton />
-          <PagerTabBarItem index={0}>สำหรับคุณ</PagerTabBarItem>
-          <PagerTabBarItem index={1}>กำลังติดตาม</PagerTabBarItem>
-          <PagerTopicTabBarItems />
-          <PagerTabBarItemIndicator />
-        </PagerTabBar>
-      </PagerHeader>
-      <PagerContents />
-    </Pager>
+    <SafeAreaLayout>
+      <Pager>
+        <PagerHeader>
+          <PagerHeaderOnly>
+            <MainHeader />
+            <View className="flex flex-col w-full bg-base-bg-white">
+              <BannerSection />
+              {/* <EventSection /> */}
+              <UserAddressInfoSection />
+            </View>
+            <View className="px-4 bg-base-bg-white flex flex-row items-start pt-6">
+              <H2 className="text-3xl">ประชาชนวันนี้</H2>
+            </View>
+          </PagerHeaderOnly>
+          <PagerTabBar>
+            <SelectTopicButton />
+            <PagerTabBarItem index={0}>สำหรับคุณ</PagerTabBarItem>
+            <PagerTopicTabBarItems />
+            <PagerTabBarItemIndicator />
+          </PagerTabBar>
+        </PagerHeader>
+        <PagerContents />
+      </Pager>
+    </SafeAreaLayout>
   )
 }
 
 function PagerContents() {
-  const sessionQuery = useSessionQuery()
-  const followTopicsQuery = reactQueryClient.useQuery(
-    '/topics/follows',
-    {},
-    { enabled: !!sessionQuery.data }
-  )
+  const session = useSession()
+  const followTopicsQuery = reactQueryClient.useQuery('/topics/follows', {}, { enabled: !!session })
   return (
     <PagerContentView>
       <View key={0}>
         <PagerContent index={0}>{(props) => <FeedContent {...props} />}</PagerContent>
       </View>
-      <View key={1}>
-        <PagerContent index={1}>{(props) => <FeedContent {...props} />}</PagerContent>
-      </View>
+      {session && (
+        <View key={1}>
+          <PagerContent index={1}>{(props) => <FeedContent {...props} />}</PagerContent>
+        </View>
+      )}
       {followTopicsQuery.data
         ? followTopicsQuery.data.map((topic, index) => (
             <View key={index + 2}>
@@ -166,8 +154,8 @@ function MainHeader() {
             </>
           ) : (
             <View className="flex-1 pr-4">
-              <Text className="font-anakotmai-light text-xs">{headings.welcome}</Text>
-              <Text className="font-anakotmai-bold text-2xl text-base-primary-default line-clamp-1">
+              <Text className="font-heading-regular text-xs">{headings.welcome}</Text>
+              <Text className="font-heading-bold text-2xl text-base-primary-default line-clamp-1">
                 {headings.title}
               </Text>
             </View>
@@ -298,7 +286,7 @@ function EventSection() {
     <View className="flex flex-col items-center justify-center gap-2 px-4 pb-4 ">
       <View className="flex flex-row gap-2 justify-start items-center w-full ">
         <Icon icon={RadioTowerIcon} size={20} className="text-base-primary-default" />
-        <H2 className="text-xl font-anakotmai-bold text-base-text-high">อิเวนต์ตอนนี้</H2>
+        <H2 className="text-xl font-heading-bold text-base-text-high">อิเวนต์ตอนนี้</H2>
       </View>
       <ElectionCard />
     </View>
@@ -312,23 +300,23 @@ function ElectionCard() {
         <Badge variant="secondary">
           <Text>เลือกตั้งในสถานที่</Text>
         </Badge>
-        <H3 className="text-base-text-invert font-anakotmai-bold text-lg ">
+        <H3 className="text-base-text-invert font-heading-bold text-lg ">
           เลือกตั้งตัวแทนสมาชิกพรรคประจำ อ.เมือง จ.ระยอง
         </H3>
         <View className="flex flex-col gap-1 ">
           <View className="flex flex-row gap-1 items-center">
             <Icon icon={ClockIcon} size={16} className="text-base-text-invert" />
-            <Text className="text-sm text-base-text-invert font-anakotmai-light">
+            <Text className="text-sm text-base-text-invert font-heading-regular">
               เวลาที่เหลือ:
             </Text>
-            <Text className="text-sm text-base-primary-default font-anakotmai-medium">
+            <Text className="text-sm text-base-primary-default font-heading-semibold">
               7:46:36 ชั่วโมง
             </Text>
           </View>
           <View className="flex flex-row gap-1 items-center">
             <Icon icon={MapPinIcon} size={16} className="text-base-text-invert" />
-            <Text className="text-sm text-base-text-invert font-anakotmai-light">สถานที่:</Text>
-            <Text className="text-sm text-base-text-invert font-anakotmai-medium">
+            <Text className="text-sm text-base-text-invert font-heading-regular">สถานที่:</Text>
+            <Text className="text-sm text-base-text-invert font-heading-semibold">
               อาคารอเนกประสงชุมชนสองพี่น้อง 1,2,3
             </Text>
           </View>
@@ -349,25 +337,26 @@ function ElectionCard() {
 }
 
 function PagerTopicTabBarItems() {
-  const sessionQuery = useSessionQuery()
-  const followTopicsQuery = reactQueryClient.useQuery(
-    '/topics/follows',
-    {},
-    { enabled: !!sessionQuery.data }
+  const session = useSession()
+  const followTopicsQuery = reactQueryClient.useQuery('/topics/follows', {}, { enabled: !!session })
+  return (
+    <>
+      {session && <PagerTabBarItem index={1}>กำลังติดตาม</PagerTabBarItem>}
+      {followTopicsQuery.data?.map((topic, index) => (
+        <PagerTabBarItem index={2 + index} key={2 + index}>
+          {topic.name}
+        </PagerTabBarItem>
+      ))}
+    </>
   )
-  return followTopicsQuery.data?.map((topic, index) => (
-    <PagerTabBarItem index={2 + index} key={2 + index}>
-      {topic.name}
-    </PagerTabBarItem>
-  ))
 }
 
 function SelectTopicButton() {
   const bottomSheetModalRef = React.useRef<BottomSheetModal>(null)
   const router = useRouter()
-  const sessionQuery = useSessionQuery()
+  const session = useSession()
   const onOpen = () => {
-    if (!sessionQuery.data) {
+    if (!session) {
       router.navigate('/profile')
       return
     }
@@ -448,8 +437,8 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
   return (
     <BottomSheetScrollView>
       <View className="flex flex-col gap-1 p-4 pb-0">
-        <Text className="text-2xl font-anakotmai-bold">เลือกหัวข้อที่สนใจ</Text>
-        <Text className="text-sm font-anakotmai-light text-base-text-medium">
+        <Text className="text-2xl font-heading-bold">เลือกหัวข้อที่สนใจ</Text>
+        <Text className="text-sm font-heading-regular text-base-text-medium">
           เลือก 1 หัวข้อสำหรับเพิ่มลงบนหน้าแรก
         </Text>
       </View>
@@ -471,7 +460,7 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
                 <TopicSkeleton />
               ) : listTopicQuery.data.length === 0 ? (
                 <View className="w-full items-center justify-center py-14">
-                  <Text className="text-base-text-placeholder font-anakotmai-medium">
+                  <Text className="text-base-text-placeholder font-heading-semibold">
                     ยังไม่มีหัวข้อ
                   </Text>
                 </View>
@@ -554,14 +543,19 @@ function FeedContent(props: PagerScrollViewProps) {
     }
   }, [isFocused, scrollElRef, setScrollViewTag])
 
+  type MyFeedItem = GetMyFeedResponse[number] | { type: 'SUGGESTION' }
   const feedInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/feed/me'),
-    queryFn: async ({ pageParam }) => {
+    queryFn: async ({ pageParam }): Promise<MyFeedItem[]> => {
       const response = await fetchClient('/feed/me', {
         query: { page: pageParam, limit: LIMIT },
       })
       if (response.error) {
         throw response.error
+      }
+      if (pageParam === 1) {
+        // insert suggestion after first 2 posts
+        return [...response.data.slice(0, 2), { type: 'SUGGESTION' }, ...response.data.slice(2)]
       }
       return response.data
     },
@@ -589,7 +583,7 @@ function FeedContent(props: PagerScrollViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
 
-  const data = React.useMemo((): GetMyFeedResponse => {
+  const data = React.useMemo((): MyFeedItem[] => {
     if (!feedInfiniteQuery.data) return []
     return feedInfiniteQuery.data.pages.flatMap((page) => page)
   }, [feedInfiniteQuery.data])
@@ -602,6 +596,8 @@ function FeedContent(props: PagerScrollViewProps) {
     queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/auth/me') })
     queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/banners') })
     queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/topics/list') })
+    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/topics/recommend') })
+    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/profile/recommend') })
     await Promise.all([
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/feed/me') }),
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/announcements') }),
@@ -610,12 +606,18 @@ function FeedContent(props: PagerScrollViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queryClient, feedInfiniteQuery.refetch])
 
-  const renderFeedItem = React.useCallback(
-    ({ item }: { item: GetMyFeedResponse[number]; index: number }) => {
-      return <FeedCard key={item.id} feedItem={item} />
-    },
-    []
-  )
+  const renderFeedItem = React.useCallback(({ item }: { item: MyFeedItem; index: number }) => {
+    if (item.type === 'SUGGESTION') {
+      return (
+        <>
+          <UserSuggestion />
+          <TopicSuggestion />
+        </>
+      )
+    }
+    return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-4" />
+  }, [])
+
   return (
     <Animated.FlatList
       ref={scrollElRef}
@@ -625,17 +627,12 @@ function FeedContent(props: PagerScrollViewProps) {
       className="flex-1"
       contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
       contentContainerStyle={{ paddingTop: headerHeight }}
-      ListHeaderComponent={
-        <>
-          <TopicSuggestion />
-          <AnnouncementSection />
-          <PeopleSuggestion />
-        </>
-      }
-      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} />}
+      ListHeaderComponent={<AnnouncementSection />}
+      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} className="mt-4 mx-4" />}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
       renderItem={renderFeedItem}
+      showsVerticalScrollIndicator={false}
     />
   )
 }
@@ -711,7 +708,7 @@ function FeedTopicContent(props: FeedTopicContentProps) {
 
   const renderFeedItem = React.useCallback(
     ({ item }: { item: GetMyFeedResponse[number]; index: number }) => {
-      return <FeedCard key={item.id} feedItem={item} />
+      return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-4" />
     },
     []
   )
@@ -725,69 +722,12 @@ function FeedTopicContent(props: FeedTopicContentProps) {
       className="flex-1"
       contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
       contentContainerStyle={{ paddingTop: headerHeight }}
-      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} />}
+      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} className="mt-4 mx-4" />}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
       renderItem={renderFeedItem}
       showsVerticalScrollIndicator={false}
     />
-  )
-}
-
-interface FeedRefreshControlProps {
-  headerHeight: number
-  onRefresh: () => void
-}
-// TODO: make RefreshControl appear on top of the header so that we dont need the headerHeight offset on Android
-function FeedRefreshControl({
-  headerHeight,
-  onRefresh: onRefreshProp,
-  ...rest
-}: FeedRefreshControlProps) {
-  const [refreshing, setRefreshing] = React.useState(false)
-  const onRefresh = React.useCallback(async () => {
-    setRefreshing(true)
-    await onRefreshProp()
-    setRefreshing(false)
-  }, [onRefreshProp])
-  return (
-    <RefreshControl
-      refreshing={refreshing}
-      onRefresh={onRefresh}
-      progressViewOffset={Platform.select({ ios: 0, android: headerHeight })}
-      colors={['#FF6A13']} // base-primary-default
-      {...rest} // make sure overridden styles (from RN) are passed down
-    />
-  )
-}
-
-interface FeedFooterProps {
-  queryResult: UseInfiniteQueryResult<InfiniteData<unknown[]>>
-}
-function FeedFooter({ queryResult }: FeedFooterProps) {
-  const minHeight = Dimensions.get('window').height
-  if (queryResult.hasNextPage || queryResult.isLoading || queryResult.error) {
-    return <FeedCardSkeleton />
-  }
-  if (
-    queryResult.data &&
-    queryResult.data.pages.length === 1 &&
-    queryResult.data.pages[0].length === 0
-  ) {
-    // Empty State
-    return (
-      <View style={{ minHeight }}>
-        <View className="flex flex-col items-center justify-center py-6">
-          <Text className="text-base-text-medium font-anakotmai-medium">ยังไม่มีโพสต์</Text>
-        </View>
-      </View>
-    )
-  }
-  // Reach end of feed
-  return (
-    <View className="flex flex-col items-center justify-center py-6">
-      <Text className="text-base-text-medium font-anakotmai-medium">ไม่มีโพสต์เพิ่มเติม</Text>
-    </View>
   )
 }
 
@@ -808,7 +748,7 @@ function AnnouncementSection() {
               width={32}
               height={32}
             />
-            <H3 className="text-base-text-high font-anakotmai-medium text-2xl">ประกาศ</H3>
+            <H3 className="text-base-text-high font-heading-semibold text-2xl">ประกาศ</H3>
           </View>
           <View className="min-h-10 bg-base-bg-default rounded-lg" />
         </View>
@@ -842,7 +782,7 @@ function AnnouncementSection() {
             width={32}
             height={32}
           />
-          <H3 className="text-base-text-high font-anakotmai-medium text-2xl">ประกาศ</H3>
+          <H3 className="text-base-text-high font-heading-semibold text-2xl">ประกาศ</H3>
         </View>
         <Button variant="ghost" onPress={() => router.navigate('/(feed)/announcement')}>
           <Text>ดูเพิ่มเติม</Text>

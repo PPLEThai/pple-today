@@ -63,8 +63,6 @@ export const FormMessage = (props: { className?: string }) => {
   const errors = useStore(field.store, (state) => state.meta.errors)
   if (errors.length === 0) return null
   return (
-    <Text className={cn('text-sm text-destructive -mt-1', props.className)}>
-      {errors[0].message}
-    </Text>
+    <Text className={cn('text-sm text-destructive', props.className)}>{errors[0].message}</Text>
   )
 }

@@ -7,7 +7,6 @@ import {
   PollType,
   PrismaClient,
   TopicStatus,
-  UserRole,
 } from '../../__generated__/prisma'
 
 const transformProvinceDetails = async (): Promise<{
@@ -149,13 +148,23 @@ const seedOfficialUser = async () => {
     update: {
       name: `พรรคประชาชน - People's Party`,
       phoneNumber: '+0000000000',
-      role: UserRole.OFFICIAL,
+      roles: {
+        connectOrCreate: {
+          where: { userId_role: { userId: OFFICIAL_USER_ID, role: 'official' } },
+          create: { role: 'official' },
+        },
+      },
     },
     create: {
       id: OFFICIAL_USER_ID,
       name: `พรรคประชาชน - People's Party`,
       phoneNumber: '+0000000000',
-      role: UserRole.OFFICIAL,
+      roles: {
+        connectOrCreate: {
+          where: { userId_role: { userId: OFFICIAL_USER_ID, role: 'official' } },
+          create: { role: 'official' },
+        },
+      },
     },
   })
   console.log('Seeded official user successfully.')
@@ -165,16 +174,35 @@ const seedTopics = async (provinces: any[]) => {
   await prisma.$transaction(async (tx) => {
     for (const province of provinces) {
       await tx.topic.upsert({
-        where: { id: `${province}` },
+        where: { name: province },
         update: {},
         create: {
-          id: `${province}`,
           name: province,
           description: `ข่าวเกี่ยวกับจังหวัด${province}`,
           status: TopicStatus.PUBLISH,
         },
       })
     }
+  })
+  await prisma.topic.upsert({
+    where: { id: 'topic-1' },
+    update: {},
+    create: {
+      id: 'topic-1',
+      name: 'Education',
+      description: 'All about education',
+      status: TopicStatus.PUBLISH,
+    },
+  })
+  await prisma.topic.upsert({
+    where: { id: 'topic-2' },
+    update: {},
+    create: {
+      id: 'topic-2',
+      name: 'Economy',
+      description: 'All about economy',
+      status: TopicStatus.PUBLISH,
+    },
   })
   console.log('Seeded topics successfully.')
 }

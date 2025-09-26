@@ -9,8 +9,9 @@ export default function FeedLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="hashtag/[hashtagId]" />
       <Stack.Screen name="announcement/index" />
-      <Stack.Screen name="people-suggestion" />
-      <Stack.Screen name="topic-suggestion" />
+      <Stack.Screen name="user-suggestion" />
+      <Stack.Screen name="topic/[topicId]" />
+      <Stack.Screen name="topic/suggestion" />
       <Stack.Screen name="[feedId]" />
     </Stack>
   )

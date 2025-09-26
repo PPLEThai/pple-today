@@ -1,16 +1,72 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { HashTagStatus, TopicStatus } from '@pple-today/database/prisma'
+import { get_candidate_topic } from '@pple-today/database/prisma/sql'
 import Elysia from 'elysia'
+import * as R from 'remeda'
 
 import { PrismaServicePlugin } from '../../plugins/prisma'
 
 export class TopicRepository {
   constructor(private readonly prismaService: PrismaService) {}
+
+  async getTopicRecommendation(userId: string) {
+    return fromRepositoryPromise(async () => {
+      const candidateTopicIds = await this.prismaService.$queryRawTyped(get_candidate_topic(userId))
+
+      const candidateTopic = await this.prismaService.topic.findMany({
+        where: {
+          id: {
+            in: R.pipe(
+              candidateTopicIds,
+              R.map(R.prop('topic_id')),
+              R.filter((id) => id !== null)
+            ),
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          bannerImagePath: true,
+          hashTagInTopics: {
+            where: { hashTag: { status: HashTagStatus.PUBLISH } },
+            include: {
+              hashTag: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      })
+
+      return candidateTopic.map((topic) => ({
+        ...topic,
+        hashTags: topic.hashTagInTopics.map((htt) => ({
+          id: htt.hashTag.id,
+          name: htt.hashTag.name,
+        })),
+      }))
+    })
+  }
+
   async getTopicById(topicId: string) {
     return fromRepositoryPromise(
       this.prismaService.topic.findFirstOrThrow({
         where: {
           id: topicId,
+          status: HashTagStatus.PUBLISH,
+        },
+        include: {
+          hashTagInTopics: {
+            where: { hashTag: { status: HashTagStatus.PUBLISH } },
+            include: {
+              hashTag: true,
+            },
+          },
         },
       })
     )
@@ -19,8 +75,10 @@ export class TopicRepository {
   async getTopics() {
     return fromRepositoryPromise(
       this.prismaService.topic.findMany({
+        where: { status: TopicStatus.PUBLISH },
         include: {
           hashTagInTopics: {
+            where: { hashTag: { status: HashTagStatus.PUBLISH } },
             include: {
               hashTag: true,
             },

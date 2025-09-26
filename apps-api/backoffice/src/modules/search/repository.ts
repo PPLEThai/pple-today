@@ -1,7 +1,7 @@
 import { FeedItem } from '@pple-today/api-common/dtos'
 import { PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { HashTagStatus, TopicStatus, UserRole } from '@pple-today/database/prisma'
+import { HashTagStatus, TopicStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { Ok, ok } from 'neverthrow'
 import * as R from 'remeda'
@@ -229,8 +229,10 @@ export class SearchRepository {
             startsWith: query.search,
             mode: 'insensitive',
           },
-          role: {
-            not: UserRole.OFFICIAL,
+          roles: {
+            none: {
+              role: 'official',
+            },
           },
         },
         take: query.limit ?? 3,

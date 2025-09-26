@@ -9,6 +9,7 @@ import * as R from 'remeda'
 import {
   CompleteOnboardingProfileBody,
   GetUserParticipationResponse,
+  GetUserRecommendationResponse,
   UpdateProfileBody,
 } from './models'
 import { ProfileRepository, ProfileRepositoryPlugin } from './repository'
@@ -22,6 +23,30 @@ export class ProfileService {
     private authRepository: AuthRepository,
     private fileService: FileService
   ) {}
+
+  async getUserRecommendation(userId: string) {
+    const result = await this.profileRepository.getUserRecommendation(userId)
+
+    if (result.isErr()) {
+      return mapRepositoryError(result.error)
+    }
+
+    const users: GetUserRecommendationResponse = result.value.map((user) => ({
+      id: user.id,
+      name: user.name,
+      profileImage: user.profileImagePath
+        ? this.fileService.getPublicFileUrl(user.profileImagePath)
+        : null,
+      address: user.address
+        ? {
+            province: user.address.province,
+            district: user.address.district,
+          }
+        : null,
+    }))
+
+    return ok(users)
+  }
 
   // TODO: Add election to recent activity or formulate new table for activity
   async getUserParticipation(userId: string) {
@@ -67,6 +92,7 @@ export class ProfileService {
       profileImage: user.value.profileImagePath
         ? this.fileService.getPublicFileUrl(user.value.profileImagePath)
         : undefined,
+      roles: user.value.roles.map((r) => r.role),
     })
   }
 

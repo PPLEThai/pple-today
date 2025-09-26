@@ -18,7 +18,7 @@ export function PageHeader(props: HeaderProps) {
   const router = useRouter()
 
   return (
-    <View className="p-4 flex flex-row justify-between items-center bg-base-bg-white">
+    <View className="p-4 pt-safe-offset-4 flex flex-row justify-between items-center bg-base-bg-white">
       <Button
         variant="outline-primary"
         size="icon"
@@ -32,12 +32,12 @@ export function PageHeader(props: HeaderProps) {
       <View className="flex flex-col gap-1 items-end">
         <View className="inline-flex flex-row justify-center gap-2 items-center">
           <Icon icon={props.icon} size={32} className="text-base-primary-default align-middle" />
-          <H1 className="font-anakotmai-medium text-3xl text-base-primary-default">
+          <H1 className="font-heading-semibold text-3xl text-base-primary-default">
             {props.title}
           </H1>
         </View>
         {props.subtitle && (
-          <Text className="text-base-text-medium text-base font-anakotmai-light">
+          <Text className="text-base-text-medium text-base font-heading-regular">
             {props.subtitle}
           </Text>
         )}
