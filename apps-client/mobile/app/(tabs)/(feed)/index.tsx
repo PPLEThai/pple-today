@@ -731,9 +731,6 @@ function AnnouncementSection() {
   const announcementsQuery = reactQueryClient.useQuery('/announcements', {
     query: { limit: 5 },
   })
-  React.useEffect(() => {
-    console.log('Announcement Query Error', announcementsQuery.data)
-  }, [announcementsQuery.data])
   const router = useRouter()
 
   if (announcementsQuery.isLoading) {
