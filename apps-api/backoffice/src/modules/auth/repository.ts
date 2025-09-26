@@ -22,7 +22,7 @@ export class AuthRepository {
 
     return await fromRepositoryPromise(
       this.prismaService.user.upsert({
-        where: { phoneNumber: phone_number || '' },
+        where: { phoneNumber: phone_number },
         update: {
           id: sub,
           roles: {
