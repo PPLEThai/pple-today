@@ -593,11 +593,7 @@ function FeedContent(props: PagerScrollViewProps) {
 
   const queryClient = useQueryClient()
   const onRefresh = React.useCallback(async () => {
-    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/auth/me') })
-    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/banners') })
-    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/topics/list') })
-    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/topics/recommend') })
-    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/profile/recommend') })
+    queryClient.invalidateQueries({ queryKey: reactQueryClient.getKey('get') })
     await Promise.all([
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/feed/me') }),
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/announcements') }),
@@ -735,6 +731,9 @@ function AnnouncementSection() {
   const announcementsQuery = reactQueryClient.useQuery('/announcements', {
     query: { limit: 5 },
   })
+  React.useEffect(() => {
+    console.log('Announcement Query Error', announcementsQuery.data)
+  }, [announcementsQuery.data])
   const router = useRouter()
 
   if (announcementsQuery.isLoading) {
