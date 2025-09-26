@@ -39,11 +39,14 @@ import { Link, useRouter } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
 import LottieView from 'lottie-react-native'
 import {
+  ChevronRightIcon,
+  Clock3Icon,
   FileTextIcon,
   HeartCrackIcon,
   HeartHandshakeIcon,
   LandmarkIcon,
   MessageCircleIcon,
+  MessageCircleQuestionIcon,
   SendIcon,
   TriangleAlertIcon,
 } from 'lucide-react-native'
@@ -58,10 +61,12 @@ import type {
 } from '@api/backoffice/app'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { MoreOrLess } from '@app/components/more-or-less'
+import { PollOption } from '@app/components/poll-option'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
+import { useCountdownTimer } from '@app/libs/use-countdown'
 
 import { Lightbox } from './lightbox'
 
@@ -182,7 +187,7 @@ function FeedCardContent(props: { feedItem: FeedItem }) {
       return <PostCardContent key={props.feedItem.id} feedItem={props.feedItem} />
     case 'POLL':
       // TODO
-      return null
+      return <PollCardContent />
     case 'ANNOUNCEMENT':
       // expected no announcement
       return null
@@ -226,6 +231,85 @@ function PostCardContent(props: { feedItem: FeedItemPost }) {
           ))}
         </View>
       )}
+    </View>
+  )
+}
+
+function PollCardContent() {
+  const router = useRouter()
+
+  const [days, hours, minutes, seconds] = useCountdownTimer(new Date('2025-09-30T18:50:14.665Z'))
+
+  return (
+    <View className="gap-3">
+      <View className="py-[13px] px-2 gap-4 flex flex-col bg-base-bg-default rounded-xl mx-2">
+        <View className="gap-1 flex flex-col">
+          <View className="w-full flex flex-row items-center gap-2">
+            <Icon
+              icon={MessageCircleQuestionIcon}
+              size={32}
+              className="text-base-primary-default"
+              strokeWidth={2}
+            />
+            <Text className="font-body-medium flex-1">
+              คุณคิดว่าปัญหาที่สำคัญที่สุดของประเทศไทยคืออะไร?
+            </Text>
+          </View>
+          <View className="flex flex-row items-center justify-between">
+            <View className="flex flex-row items-center">
+              <Icon
+                icon={Clock3Icon}
+                size={16}
+                className="text-base-text-medium mr-1"
+                strokeWidth={1}
+              />
+              <Text className="text-base-text-medium font-heading-regular text-sm items-center mt-2">
+                เวลาที่เหลือ:{' '}
+                <Text className="text-base-primary-default font-heading-bold">
+                  {`${days}:${hours}:${minutes}:${seconds}`}
+                </Text>
+              </Text>
+            </View>
+            <View>
+              <Badge>
+                <Text>โพลที่โหวตได้</Text>
+              </Badge>
+            </View>
+          </View>
+        </View>
+        <View className="gap-2">
+          <PollOption option="ปัญหาความไม่เท่าเทียมทางเศรษฐกิจที่โคตรยาวยาวยาวยาวยาวยาวยาว" />
+          <PollOption
+            option="ปัญหาความไม่เท่าเทียมทางเศรษฐกิจที่โคตรยาวยาวยาวยาวยาวยาวยาว"
+            selected
+          />
+          <PollOption option="ปัญหา" selected />
+          <PollOption option="ปัญหาความไม่เท่าเทียมทางเศรษฐกิจ" />
+          <Button
+            variant="secondary"
+            className="w-full text-start border-2 border-base-outline-default flex flex-row justify-between items-center bg-base-bg-white font-body-medium h-11"
+            onPress={() => {
+              router.navigate(`/(feed)/poll-1`)
+            }}
+          >
+            <Text className="font-body-light text-base-text-medium text-sm">
+              ดูเพิ่มเติม (อีก 3 ตัวเลือก)
+            </Text>
+            <Icon icon={ChevronRightIcon} size={24} strokeWidth={1} />
+          </Button>
+        </View>
+      </View>
+      <View className="gap-1 flex flex-row mx-2">
+        <Badge variant={'secondary'}>
+          <Text>#pridemonth2025</Text>
+        </Badge>
+        <Badge variant={'secondary'}>
+          <Text>#ร่างกฎหมาย68</Text>
+        </Badge>
+        <Badge variant={'secondary'}>
+          <Text>#อื่น ๆ (5)</Text>
+        </Badge>
+      </View>
     </View>
   )
 }
@@ -919,8 +1003,7 @@ const FeedDetailContent = (props: { feedItem: FeedItem }) => {
     case 'POST':
       return <PostDetailContent feedItem={props.feedItem} />
     case 'POLL':
-      // TODO
-      return null
+      return <PollDetailContent />
     case 'ANNOUNCEMENT':
       return <AnnouncementDetailContent feedItem={props.feedItem} />
     default:
@@ -950,6 +1033,71 @@ const PostDetailContent = (props: { feedItem: FeedItemPost }) => {
           ))}
         </View>
       )}
+    </View>
+  )
+}
+
+const PollDetailContent = () => {
+  const [days, hours, minutes, seconds] = useCountdownTimer(new Date('2025-09-30T18:50:14.665Z'))
+
+  return (
+    <View className="gap-3">
+      <View className="py-[13px] px-2 gap-4 flex flex-col bg-base-bg-default rounded-xl mx-4">
+        <View className="gap-1 flex flex-col">
+          <View className="w-full flex flex-row items-center gap-2">
+            <Icon
+              icon={MessageCircleQuestionIcon}
+              size={32}
+              className="text-base-primary-default"
+              strokeWidth={2}
+            />
+            <Text className="font-body-medium flex-1">
+              คุณคิดว่าปัญหาที่สำคัญที่สุดของประเทศไทยคืออะไร?
+            </Text>
+          </View>
+          <View className="flex flex-row items-center justify-between">
+            <View className="flex flex-row items-center">
+              <Icon
+                icon={Clock3Icon}
+                size={16}
+                className="text-base-text-medium mr-1"
+                strokeWidth={1}
+              />
+              <Text className="text-base-text-medium font-heading-regular text-sm items-center mt-2">
+                เวลาที่เหลือ:{' '}
+                <Text className="text-base-primary-default font-heading-bold">
+                  {`${days}:${hours}:${minutes}:${seconds}`}
+                </Text>
+              </Text>
+            </View>
+            <View>
+              <Badge>
+                <Text>โพลที่โหวตได้</Text>
+              </Badge>
+            </View>
+          </View>
+        </View>
+        <View className="gap-2">
+          <PollOption option="ปัญหาความไม่เท่าเทียมทางเศรษฐกิจที่โคตรยาวยาวยาวยาวยาวยาวยาว" />
+          <PollOption
+            option="ปัญหาความไม่เท่าเทียมทางเศรษฐกิจที่โคตรยาวยาวยาวยาวยาวยาวยาว"
+            selected
+          />
+          <PollOption option="ปัญหา" selected />
+          <PollOption option="ปัญหาความไม่เท่าเทียมทางเศรษฐกิจ" />
+        </View>
+      </View>
+      <View className="gap-1 flex flex-row mx-4">
+        <Badge variant={'secondary'}>
+          <Text>#pridemonth2025</Text>
+        </Badge>
+        <Badge variant={'secondary'}>
+          <Text>#ร่างกฎหมาย68</Text>
+        </Badge>
+        <Badge variant={'secondary'}>
+          <Text>#อื่น ๆ (5)</Text>
+        </Badge>
+      </View>
     </View>
   )
 }
