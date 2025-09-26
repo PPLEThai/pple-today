@@ -159,7 +159,7 @@ export function TopicSuggestion() {
   if (!session) {
     return null
   }
-  if (!topicSuggestionQuery.data) {
+  if (!topicSuggestionQuery.data || topicSuggestionQuery.data.length === 0) {
     return null
   }
   return (

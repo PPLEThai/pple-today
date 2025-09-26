@@ -14,7 +14,7 @@ export default function TopicSuggestionPage() {
   const topicSuggestionQuery = reactQueryClient.useQuery(
     '/topics/recommend',
     {},
-    { enabled: !!session }
+    { enabled: !!session, refetchOnMount: false }
   )
   const router = useRouter()
   useEffect(() => {
