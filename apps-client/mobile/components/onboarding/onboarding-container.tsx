@@ -26,7 +26,7 @@ export function OnboardingContainer({ children }: { children: React.ReactNode })
           <Icon icon={ArrowLeftIcon} size={24} strokeWidth={1} className="text-base-text-high" />
         </Button>
         <Progress value={34 * state.activeStepIndex} max={100} className="flex-1" />
-        <Text className="text-base-text-medium px-2 font-anakotmai-medium">
+        <Text className="text-base-text-medium px-2 font-heading-semibold">
           {state.activeStepIndex}/{state.totalSteps}
         </Text>
       </View>
@@ -60,9 +60,9 @@ function OnboardingHeader({ step }: { step: number }) {
   const { title, description } = getHeaderContent()
 
   return (
-    <View className="flex flex-col pt-1 px-6 gap-1">
-      <H2 className="text-base-primary-default pt-3 font-anakotmai-medium">{title}</H2>
-      <Text className="font-anakotmai-medium text-base-text-medium">{description}</Text>
+    <View className="flex flex-col pt-4 px-6 gap-1">
+      <H2 className="text-base-primary-default font-heading-semibold">{title}</H2>
+      <Text className="font-heading-semibold text-base-text-medium">{description}</Text>
     </View>
   )
 }

@@ -1,5 +1,6 @@
 import { edenFetch } from '@elysiajs/eden'
 import {
+  QueryKey,
   useMutation,
   type UseMutationOptions,
   type UseMutationResult,
@@ -50,12 +51,23 @@ function createReactQueryClient<TSchema extends Record<string, any>>(
     return result.data
   }
 
-  function getKey(method: any, path: any, payload: any = {}): any {
-    return [QUERY_KEY, method, path, payload?.pathParams, payload?.query, payload?.headers]
-  }
-
-  function getQueryKey(path: any, payload: any = {}): any {
-    return [QUERY_KEY, 'get', path, payload?.pathParams, payload?.query, payload?.headers]
+  function getKey(
+    method: any,
+    path: any,
+    payload: { pathParams?: any; query?: any; headers?: any } = {}
+  ): any {
+    const { pathParams, query, headers } = payload
+    const key: QueryKey = [QUERY_KEY, method, path, pathParams, query, headers]
+    if (pathParams === undefined && query === undefined && headers === undefined) {
+      return key.slice(0, 3)
+    }
+    if (query === undefined && headers === undefined) {
+      return key.slice(0, 4)
+    }
+    if (headers === undefined) {
+      return key.slice(0, 5)
+    }
+    return key
   }
 
   return {
@@ -87,8 +99,8 @@ function createReactQueryClient<TSchema extends Record<string, any>>(
         ...options,
       } as UseMutationOptions<any, any, any, any>
     },
-    getKey,
-    getQueryKey,
+    getKey: getKey,
+    getQueryKey: (...args) => getKey('get', ...args),
   }
 }
 

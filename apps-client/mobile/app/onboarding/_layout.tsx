@@ -1,4 +1,4 @@
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { View } from 'react-native'
 
 import { Slot } from 'expo-router'
 
@@ -6,10 +6,10 @@ import { OnboardingProvider } from '@app/components/onboarding/onboarding-contex
 
 export default function OnboardingLayout() {
   return (
-    <SafeAreaView className="flex-1" edges={['top', 'left', 'right', 'bottom']}>
+    <View className="p-safe flex-1">
       <OnboardingProvider>
         <Slot />
       </OnboardingProvider>
-    </SafeAreaView>
+    </View>
   )
 }

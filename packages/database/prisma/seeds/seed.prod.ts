@@ -100,10 +100,9 @@ const seedTopics = async (provinces: string[]) => {
   await prisma.$transaction(async (tx) => {
     for (const province of provinces) {
       await tx.topic.upsert({
-        where: { id: `${province}` },
+        where: { name: province },
         update: {},
         create: {
-          id: `${province}`,
           name: province,
           description: `ข่าวเกี่ยวกับจังหวัด${province}`,
           status: TopicStatus.PUBLISH,

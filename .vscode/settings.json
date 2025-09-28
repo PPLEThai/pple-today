@@ -17,5 +17,9 @@
   "eslint.useFlatConfig": true,
   "[prisma]": {
     "editor.defaultFormatter": "Prisma.prisma"
+  },
+  "[sql]": {
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "cweijan.vscode-postgresql-client2"
   }
 }

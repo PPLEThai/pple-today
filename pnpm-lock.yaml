@@ -8,6 +8,9 @@ patchedDependencies:
   expo-module-scripts:
     hash: fit3veqcxf7tuz7nxylejwaxay
     path: patches/expo-module-scripts.patch
+  react-native-pager-view:
+    hash: rp3wn5d4p62k3reyprd7s5dt6e
+    path: patches/react-native-pager-view.patch
 
 importers:
 
@@ -199,11 +202,14 @@ importers:
   apps-client/mobile:
     dependencies:
       '@expo-google-fonts/inter':
-        specifier: ^0.4.1
-        version: 0.4.1
+        specifier: ^0.4.2
+        version: 0.4.2
+      '@expo-google-fonts/noto-sans-thai':
+        specifier: ^0.4.2
+        version: 0.4.2
       '@expo-google-fonts/noto-sans-thai-looped':
-        specifier: ^0.4.1
-        version: 0.4.1
+        specifier: ^0.4.2
+        version: 0.4.2
       '@expo/vector-icons':
         specifier: ^14.1.0
         version: 14.1.0(expo-font@13.3.2(expo@53.0.18(@babel/core@7.27.1)(@expo/metro-runtime@5.0.4(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0)))(react-native-webview@13.13.5(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
@@ -224,7 +230,7 @@ importers:
         version: 2.4.1(@react-navigation/native@7.1.8(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-safe-area-context@5.4.0(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       '@react-navigation/material-top-tabs':
         specifier: ^7.3.2
-        version: 7.3.2(@react-navigation/native@7.1.8(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-pager-view@6.8.1(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-safe-area-context@5.4.0(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
+        version: 7.3.2(@react-navigation/native@7.1.8(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-pager-view@6.8.1(patch_hash=rp3wn5d4p62k3reyprd7s5dt6e)(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-safe-area-context@5.4.0(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       '@react-navigation/native':
         specifier: ^7.1.6
         version: 7.1.8(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
@@ -267,6 +273,9 @@ importers:
       expo-image-picker:
         specifier: ~16.1.4
         version: 16.1.4(expo@53.0.18(@babel/core@7.27.1)(@expo/metro-runtime@5.0.4(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0)))(react-native-webview@13.13.5(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))
+      expo-linear-gradient:
+        specifier: ^15.0.7
+        version: 15.0.7(expo@53.0.18(@babel/core@7.27.1)(@expo/metro-runtime@5.0.4(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0)))(react-native-webview@13.13.5(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       expo-linking:
         specifier: ~7.1.4
         version: 7.1.7(expo@53.0.18(@babel/core@7.27.1)(@expo/metro-runtime@5.0.4(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0)))(react-native-webview@13.13.5(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
@@ -329,7 +338,7 @@ importers:
         version: 0.2.2(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       react-native-pager-view:
         specifier: 6.8.1
-        version: 6.8.1(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
+        version: 6.8.1(patch_hash=rp3wn5d4p62k3reyprd7s5dt6e)(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       react-native-react-query-devtools:
         specifier: ^1.5.0
         version: 1.5.0(@tanstack/react-query@5.81.5(react@19.0.0))(react-native-svg@15.12.0(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
@@ -347,7 +356,7 @@ importers:
         version: 15.12.0(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       react-native-tab-view:
         specifier: ^4.1.2
-        version: 4.1.2(react-native-pager-view@6.8.1(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
+        version: 4.1.2(react-native-pager-view@6.8.1(patch_hash=rp3wn5d4p62k3reyprd7s5dt6e)(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       react-native-web:
         specifier: ~0.20.0
         version: 0.20.0(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -388,6 +397,9 @@ importers:
       tailwindcss:
         specifier: ^3.4.17
         version: 3.4.17
+      tsx:
+        specifier: ^4.20.3
+        version: 4.20.3
 
   examples/mini-app/api:
     dependencies:
@@ -1877,11 +1889,14 @@ packages:
     resolution: {integrity: sha512-ZAoA40rNMPwSm+AeHpCq8STiNAwzWLJuP8Xv4CHIc9wv/PSuExjMrmjfYNj682vW0OOiZ1HKxzvjQr9XZIisQA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@expo-google-fonts/inter@0.4.1':
-    resolution: {integrity: sha512-ypL+XokTHEG+ie/nxNj/mS38afMrY4Li4oKvTJf9k9XvH7I21qfTGCsDtlZ6nIUWEAy1odoUZISdXT1nfMh4kA==}
+  '@expo-google-fonts/inter@0.4.2':
+    resolution: {integrity: sha512-syfiImMaDmq7cFi0of+waE2M4uSCyd16zgyWxdPOY7fN2VBmSLKEzkfbZgeOjJq61kSqPBNNtXjggiQiSD6gMQ==}
 
-  '@expo-google-fonts/noto-sans-thai-looped@0.4.1':
-    resolution: {integrity: sha512-26MikSI63qC/4bCdglhZ+MgySzI2FYh0Uek43XmLzWIYYmaJLdq+7ujbGo+jlhjq46FnvuBtpqUv1irLZhRYVw==}
+  '@expo-google-fonts/noto-sans-thai-looped@0.4.2':
+    resolution: {integrity: sha512-KA8ypgtqCpg3fBxVzQau9Us8KnxAWcVpgIT/uv5TSQpQoBILeofOIf/T0ygfTAqsah2PTKL2M5cWnLD0j+YQQQ==}
+
+  '@expo-google-fonts/noto-sans-thai@0.4.2':
+    resolution: {integrity: sha512-PGBBBDGfJJ/5y2hNweLBZWD4YmVT4uOO4chsOPXyl0TktaBJamDKVKv/WbGiDTeBGdkegLiytsWo+lhnkHP5qA==}
 
   '@expo/cli@0.24.19':
     resolution: {integrity: sha512-t32X2x7BYbBs1z2fTlOSthmDM1jxW1xaee9//ZOS0g+E6u/WWmRvMtzahQLCXE6mcMIVoNpAWUA3umvpMRa0Mg==}
@@ -3606,6 +3621,9 @@ packages:
     engines: {node: '>=14'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
 
   '@svgr/core@8.1.0':
     resolution: {integrity: sha512-8QqtOQT5ACVlmsvKOJNEaWmRPmcojMOzCz4Hs2BGG/toAp/K38LcsMRyLp349glq5AzJbCEeimEoxaX6v/fLrA==}
@@ -5716,6 +5734,13 @@ packages:
     peerDependencies:
       expo: '*'
       react: '*'
+
+  expo-linear-gradient@15.0.7:
+    resolution: {integrity: sha512-yF+y+9Shpr/OQFfy/wglB/0bykFMbwHBTuMRa5Of/r2P1wbkcacx8rg0JsUWkXH/rn2i2iWdubyqlxSJa3ggZA==}
+    peerDependencies:
+      expo: '*'
+      react: '*'
+      react-native: '*'
 
   expo-linking@7.1.7:
     resolution: {integrity: sha512-ZJaH1RIch2G/M3hx2QJdlrKbYFUTOjVVW4g39hfxrE5bPX9xhZUYXqxqQtzMNl1ylAevw9JkgEfWbBWddbZ3UA==}
@@ -11712,9 +11737,11 @@ snapshots:
       '@eslint/core': 0.13.0
       levn: 0.4.1
 
-  '@expo-google-fonts/inter@0.4.1': {}
+  '@expo-google-fonts/inter@0.4.2': {}
 
-  '@expo-google-fonts/noto-sans-thai-looped@0.4.1': {}
+  '@expo-google-fonts/noto-sans-thai-looped@0.4.2': {}
+
+  '@expo-google-fonts/noto-sans-thai@0.4.2': {}
 
   '@expo/cli@0.24.19':
     dependencies:
@@ -13553,16 +13580,16 @@ snapshots:
       use-latest-callback: 0.2.4(react@19.0.0)
       use-sync-external-store: 1.5.0(react@19.0.0)
 
-  '@react-navigation/material-top-tabs@7.3.2(@react-navigation/native@7.1.8(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-pager-view@6.8.1(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-safe-area-context@5.4.0(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)':
+  '@react-navigation/material-top-tabs@7.3.2(@react-navigation/native@7.1.8(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-pager-view@6.8.1(patch_hash=rp3wn5d4p62k3reyprd7s5dt6e)(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-safe-area-context@5.4.0(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)':
     dependencies:
       '@react-navigation/elements': 2.5.2(@react-navigation/native@7.1.8(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-safe-area-context@5.4.0(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       '@react-navigation/native': 7.1.8(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       color: 4.2.3
       react: 19.0.0
       react-native: 0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0)
-      react-native-pager-view: 6.8.1(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
+      react-native-pager-view: 6.8.1(patch_hash=rp3wn5d4p62k3reyprd7s5dt6e)(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       react-native-safe-area-context: 5.4.0(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
-      react-native-tab-view: 4.1.2(react-native-pager-view@6.8.1(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
+      react-native-tab-view: 4.1.2(react-native-pager-view@6.8.1(patch_hash=rp3wn5d4p62k3reyprd7s5dt6e)(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
     transitivePeerDependencies:
       - '@react-native-masked-view/masked-view'
 
@@ -14217,7 +14244,6 @@ snapshots:
 
   '@svgr/babel-preset@8.1.0(@babel/core@7.27.1)':
     dependencies:
-      '@babel/core': 7.27.1
       '@svgr/babel-plugin-add-jsx-attribute': 8.0.0(@babel/core@7.27.1)
       '@svgr/babel-plugin-remove-jsx-attribute': 8.0.0(@babel/core@7.27.1)
       '@svgr/babel-plugin-remove-jsx-empty-expression': 8.0.0(@babel/core@7.27.1)
@@ -14226,6 +14252,8 @@ snapshots:
       '@svgr/babel-plugin-svg-em-dimensions': 8.0.0(@babel/core@7.27.1)
       '@svgr/babel-plugin-transform-react-native-svg': 8.1.0(@babel/core@7.27.1)
       '@svgr/babel-plugin-transform-svg-component': 8.0.0(@babel/core@7.27.1)
+    optionalDependencies:
+      '@babel/core': 7.27.1
 
   '@svgr/core@8.1.0(typescript@5.8.3)':
     dependencies:
@@ -16854,6 +16882,12 @@ snapshots:
     dependencies:
       expo: 53.0.18(@babel/core@7.28.4)(@expo/metro-runtime@5.0.4(react-native@0.79.4(@babel/core@7.28.4)(@react-native-community/cli@18.0.0(typescript@5.8.2))(@types/react@19.0.14)(react@19.0.0)))(react-native-webview@13.13.5(react-native@0.79.4(@babel/core@7.28.4)(@react-native-community/cli@18.0.0(typescript@5.8.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.28.4)(@react-native-community/cli@18.0.0(typescript@5.8.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       react: 19.0.0
+
+  expo-linear-gradient@15.0.7(expo@53.0.18(@babel/core@7.27.1)(@expo/metro-runtime@5.0.4(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0)))(react-native-webview@13.13.5(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0):
+    dependencies:
+      expo: 53.0.18(@babel/core@7.27.1)(@expo/metro-runtime@5.0.4(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0)))(react-native-webview@13.13.5(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
+      react: 19.0.0
+      react-native: 0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0)
 
   expo-linking@7.1.7(expo@53.0.18(@babel/core@7.27.1)(@expo/metro-runtime@5.0.4(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0)))(react-native-webview@13.13.5(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0):
     dependencies:
@@ -19853,7 +19887,7 @@ snapshots:
       react: 19.0.0
       react-native: 0.79.4(@babel/core@7.28.4)(@react-native-community/cli@18.0.0(typescript@5.8.2))(@types/react@19.0.14)(react@19.0.0)
 
-  react-native-pager-view@6.8.1(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0):
+  react-native-pager-view@6.8.1(patch_hash=rp3wn5d4p62k3reyprd7s5dt6e)(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0):
     dependencies:
       react: 19.0.0
       react-native: 0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0)
@@ -19952,11 +19986,11 @@ snapshots:
       react-native: 0.79.4(@babel/core@7.28.4)(@react-native-community/cli@18.0.0(typescript@5.8.2))(@types/react@19.0.14)(react@19.0.0)
       warn-once: 0.1.1
 
-  react-native-tab-view@4.1.2(react-native-pager-view@6.8.1(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0):
+  react-native-tab-view@4.1.2(react-native-pager-view@6.8.1(patch_hash=rp3wn5d4p62k3reyprd7s5dt6e)(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0):
     dependencies:
       react: 19.0.0
       react-native: 0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0)
-      react-native-pager-view: 6.8.1(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
+      react-native-pager-view: 6.8.1(patch_hash=rp3wn5d4p62k3reyprd7s5dt6e)(react-native@0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)
       use-latest-callback: 0.2.4(react@19.0.0)
 
   react-native-toast-message@2.3.3(react-native@0.79.4(@babel/core@7.28.4)(@react-native-community/cli@18.0.0(typescript@5.8.2))(@types/react@19.0.14)(react@19.0.0))(react@19.0.0):

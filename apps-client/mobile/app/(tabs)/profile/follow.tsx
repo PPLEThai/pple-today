@@ -4,22 +4,32 @@ import { ScrollView, View } from 'react-native'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@pple-today/ui/dialog'
 import { Icon } from '@pple-today/ui/icon'
 import { Skeleton } from '@pple-today/ui/skeleton'
 import { Text } from '@pple-today/ui/text'
-import { useQueryClient } from '@tanstack/react-query'
 import { Image } from 'expo-image'
-import { Link } from 'expo-router'
+import { Link, useRouter } from 'expo-router'
 import { CircleUserRoundIcon, Heart, MessageSquareHeartIcon } from 'lucide-react-native'
 
 import type { GetTopicsResponse } from '@api/backoffice/app'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
+import { useTopicFollowState } from '@app/components/feed/topic-card'
+import { useUserFollowState } from '@app/components/feed/user-card'
 import { Header } from '@app/components/header-navigation'
 import { reactQueryClient } from '@app/libs/api-client'
 
 export default function FollowPage() {
   return (
-    <View className="flex-1 flex-col">
+    <View className="pt-safe flex-1 flex-col">
       <Header icon={Heart} title="จัดการเนื้อหาที่ติดตาม" />
       <ScrollView>
         <NumberFollowingSection />
@@ -43,14 +53,14 @@ const NumberFollowingSection = () => {
             size={24}
             strokeWidth={1}
           />
-          <Text className="text-base text-base-text-high font-anakotmai-medium">หัวข้อ</Text>
+          <Text className="text-base text-base-text-high font-heading-semibold">หัวข้อ</Text>
         </View>
 
-        <Text className="text-base text-base-text-high font-anakotmai-light">
+        <Text className="text-base text-base-text-high font-heading-regular">
           {profileQuery.isLoading || !profileQuery.data ? (
             <View className="rounded-full bg-base-bg-default mt-2 h-4" />
           ) : (
-            <Text className="text-base text-base-primary-medium font-anakotmai-medium">
+            <Text className="text-base text-base-primary-medium font-heading-semibold">
               {profileQuery.data.numberOfFollowingTopics}
             </Text>
           )}{' '}
@@ -65,13 +75,13 @@ const NumberFollowingSection = () => {
             size={24}
             strokeWidth={1}
           />
-          <Text className="text-base text-base-text-high font-anakotmai-medium">ผู้คน</Text>
+          <Text className="text-base text-base-text-high font-heading-semibold">ผู้คน</Text>
         </View>
-        <Text className="text-base text-base-text-high font-anakotmai-light">
+        <Text className="text-base text-base-text-high font-heading-regular">
           {profileQuery.isLoading || !profileQuery.data ? (
             <View className="rounded-full bg-base-bg-default mt-2 h-4" />
           ) : (
-            <Text className="text-base text-base-primary-medium font-anakotmai-medium">
+            <Text className="text-base text-base-primary-medium font-heading-semibold">
               {profileQuery.data.numberOfFollowing}
             </Text>
           )}{' '}
@@ -89,7 +99,7 @@ const PeopleFollowingSection = () => {
     return (
       <View className="my-2 flex flex-col">
         <View className="px-4 items-start">
-          <Text className="text-base text-base-text-high font-anakotmai-medium">ผู้คน</Text>
+          <Text className="text-base text-base-text-high font-heading-semibold">ผู้คน</Text>
         </View>
         <View className="mt-2 px-4 flex flex-col">
           <PeopleFollowingSkeleton />
@@ -104,10 +114,10 @@ const PeopleFollowingSection = () => {
     return (
       <View className="my-2 flex flex-col">
         <View className="px-4 items-start">
-          <Text className="text-base text-base-text-high font-anakotmai-medium">ผู้คน</Text>
+          <Text className="text-base text-base-text-high font-heading-semibold">ผู้คน</Text>
         </View>
         <View className="mt-2 p-4 flex flex-col">
-          <Text className="font-anakotmai-light text-center">คุณยังไม่ได้ติดตามใคร</Text>
+          <Text className="font-heading-regular text-center">คุณยังไม่ได้ติดตามใคร</Text>
         </View>
       </View>
     )
@@ -116,7 +126,7 @@ const PeopleFollowingSection = () => {
     <>
       <View className="my-2 flex flex-col">
         <View className="px-4 items-start">
-          <Text className="text-base text-base-text-high font-anakotmai-medium">ผู้คน</Text>
+          <Text className="text-base text-base-text-high font-heading-semibold">ผู้คน</Text>
         </View>
         <View className="mt-2 px-4 flex flex-col">
           {followingPeopleQuery.data.map((item) => (
@@ -142,42 +152,18 @@ interface PeopleFollowingItemProps {
 }
 
 const PeopleFollowingItem = (profile: PeopleFollowingItemProps) => {
-  const queryClient = useQueryClient()
-  const [isFollowing, setIsFollowing] = React.useState(true)
+  const [isFollowing, setIsFollowing] = useUserFollowState(profile.id, true)
 
   const followMutation = reactQueryClient.useMutation('post', '/profile/:id/follow', {})
   const unfollowMutation = reactQueryClient.useMutation('delete', '/profile/:id/follow', {})
 
   const toggleFollow = async () => {
+    setIsFollowing(!isFollowing) // optimistic update
     if (isFollowing) {
-      await unfollowMutation.mutateAsync(
-        {
-          pathParams: { id: profile.id },
-        },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({
-              queryKey: reactQueryClient.getQueryKey('/profile/me'),
-            })
-            setIsFollowing(!isFollowing)
-          },
-        }
-      )
+      await unfollowMutation.mutateAsync({ pathParams: { id: profile.id } })
       return
     } else {
-      await followMutation.mutateAsync(
-        {
-          pathParams: { id: profile.id },
-        },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({
-              queryKey: reactQueryClient.getQueryKey('/profile/me'),
-            })
-            setIsFollowing(!isFollowing)
-          },
-        }
-      )
+      await followMutation.mutateAsync({ pathParams: { id: profile.id } })
     }
   }
 
@@ -192,7 +178,7 @@ const PeopleFollowingItem = (profile: PeopleFollowingItemProps) => {
           />
           <AvatarPPLEFallback />
         </Avatar>
-        <Text className="font-noto-light flex-1 line-clamp-1 mr-3">{profile.name}</Text>
+        <Text className="font-body-light flex-1 line-clamp-1 mr-3">{profile.name}</Text>
       </View>
       <Button
         variant={isFollowing ? 'outline-primary' : 'primary'}
@@ -224,7 +210,7 @@ const TopicsFollowingSection = () => {
     return (
       <View className="my-2 flex flex-col">
         <View className="px-4 items-start">
-          <Text className="text-base text-base-text-high font-anakotmai-medium">หัวข้อ</Text>
+          <Text className="text-base text-base-text-high font-heading-semibold">หัวข้อ</Text>
         </View>
         <View className="flex flex-col">
           <TopicsFollowingSkeleton />
@@ -239,10 +225,10 @@ const TopicsFollowingSection = () => {
     return (
       <View className="my-2 flex flex-col">
         <View className="px-4 items-start">
-          <Text className="text-base text-base-text-high font-anakotmai-medium">หัวข้อ</Text>
+          <Text className="text-base text-base-text-high font-heading-semibold">หัวข้อ</Text>
         </View>
         <View className="mt-2 p-4 flex flex-col">
-          <Text className="font-anakotmai-light text-center">คุณยังไม่ได้ติดตามหัวข้อใดๆ</Text>
+          <Text className="font-heading-regular text-center">คุณยังไม่ได้ติดตามหัวข้อใดๆ</Text>
         </View>
       </View>
     )
@@ -251,7 +237,7 @@ const TopicsFollowingSection = () => {
   return (
     <View className="my-2 flex flex-col">
       <View className="px-4 items-start">
-        <Text className="text-base text-base-text-high font-anakotmai-medium">หัวข้อ</Text>
+        <Text className="text-base text-base-text-high font-heading-semibold">หัวข้อ</Text>
       </View>
       <View className="flex flex-col">
         {followingTopicsQuery.data.map((item) => (
@@ -278,8 +264,8 @@ interface TopicsFollowingItemProps {
 }
 
 const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
-  const queryClient = useQueryClient()
-  const [isFollowing, setIsFollowing] = React.useState(true)
+  const router = useRouter()
+  const [isFollowing, setIsFollowing] = useTopicFollowState(topic.id, true)
 
   const followTopicMutation = reactQueryClient.useMutation('post', '/topics/:topicId/follow', {})
   const unfollowTopicMutation = reactQueryClient.useMutation(
@@ -289,36 +275,68 @@ const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
   )
 
   const toggleFollow = async () => {
+    setIsFollowing(!isFollowing) // optimistic update
     if (isFollowing) {
-      await unfollowTopicMutation.mutateAsync(
-        {
-          pathParams: { topicId: topic.id },
-        },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({
-              queryKey: reactQueryClient.getQueryKey('/profile/me'),
-            })
-            setIsFollowing(!isFollowing)
-          },
-        }
-      )
-      return
+      await unfollowTopicMutation.mutateAsync({ pathParams: { topicId: topic.id } })
     } else {
-      await followTopicMutation.mutateAsync(
-        {
-          pathParams: { topicId: topic.id },
-        },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({
-              queryKey: reactQueryClient.getQueryKey('/profile/me'),
-            })
-            setIsFollowing(!isFollowing)
-          },
-        }
+      await followTopicMutation.mutateAsync({ pathParams: { topicId: topic.id } })
+    }
+  }
+
+  const renderHashtags = (hashtags: HashtagList) => {
+    if (hashtags.length === 0) return null
+    if (hashtags.length === 1) {
+      return (
+        <Link href={`/(feed)/hashtag/${hashtags[0].id}`} asChild>
+          <Badge variant="secondary">
+            <Text>{hashtags[0].name}</Text>
+          </Badge>
+        </Link>
       )
     }
+
+    return (
+      <>
+        <Link href={`/(feed)/hashtag/${hashtags[0].id}`} asChild>
+          <Badge variant="secondary">
+            <Text>{hashtags[0].name}</Text>
+          </Badge>
+        </Link>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Badge variant="secondary">
+              <Text>{hashtags.length > 1 ? `#อื่น ๆ (${hashtags.length - 1})` : ''}</Text>
+            </Badge>
+          </DialogTrigger>
+          <DialogContent className="w-[90vw] max-h-[70vh] p-4 pt-6 mx-4 flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="w-full text-xl text-start font-anakotmai-medium text-base-primary-default">
+                # ที่เกี่ยวข้อง
+              </DialogTitle>
+              <DialogDescription className="w-full text-start text-sm font-anakotmai-light leading-tight text-base-text-medium">
+                แฮชแท็กที่เกี่ยวข้องกับหัวข้อนี้
+              </DialogDescription>
+            </DialogHeader>
+            <ScrollView
+              className="border border-base-outline-default bg-base-bg-light rounded-lg"
+              contentContainerClassName="w-full flex flex-row gap-2 flex-wrap m-2 min-h-[144px]"
+            >
+              {hashtags.map((hashtag) => (
+                <DialogClose key={hashtag.id} asChild>
+                  <Button
+                    className="rounded-full border border-base-outline-default py-1.5 h-8 bg-base-bg-light"
+                    variant="secondary"
+                    onPress={() => router.navigate(`/(feed)/hashtag/${hashtag.id}`)}
+                  >
+                    <Text className="text-sm font-anakotmai-medium">{hashtag.name}</Text>
+                  </Button>
+                </DialogClose>
+              ))}
+            </ScrollView>
+          </DialogContent>
+        </Dialog>
+      </>
+    )
   }
 
   return (
@@ -330,17 +348,12 @@ const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
         contentFit="cover"
         style={{ width: 80, height: '100%', borderRadius: 12 }}
         transition={300}
+        className="bg-base-bg-default"
       />
       <View className="flex-1 flex flex-col gap-2">
-        <Text className="font-anakotmai-medium text-base text-base-text-high">{topic.name}</Text>
+        <Text className="font-heading-semibold text-base text-base-text-high">{topic.name}</Text>
         <View className="flex flex-row gap-2 mb-0.5 flex-wrap min-h-5">
-          {topic.hashtags.map((hashtag) => (
-            <Link key={hashtag.id} href={`/(feed)/hashtag/${hashtag.id}`} asChild>
-              <Badge variant="secondary">
-                <Text>{hashtag.name}</Text>
-              </Badge>
-            </Link>
-          ))}
+          {renderHashtags(topic.hashtags)}
         </View>
         <Button
           variant={isFollowing ? 'outline-primary' : 'primary'}

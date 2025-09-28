@@ -1,8 +1,8 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { err, mapErrorCodeToResponse, mapRepositoryError } from '@pple-today/api-common/utils'
-import { UserRole } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
+import * as R from 'remeda'
 
 import { ConfigServicePlugin } from './config'
 
@@ -28,6 +28,19 @@ export class AuthGuard {
     return await introspectAccessToken(token, this.oidcConfig)
   }
 
+  async checkUserHasRole(headers: Record<string, string | undefined>, roles: string[]) {
+    const user = await this.getCurrentUser(headers)
+
+    if (user.isErr()) return mapRepositoryError(user.error)
+
+    const intersectionRoles = R.intersection(user.value.roles, roles)
+
+    return ok({
+      isAllowed: intersectionRoles.length > 0,
+      user: user.value,
+    })
+  }
+
   async getCurrentUser(headers: Record<string, string | undefined>) {
     const oidcUserResult = await this.getOIDCUser(headers)
     if (oidcUserResult.isErr()) return err(oidcUserResult.error)
@@ -46,7 +59,10 @@ export class AuthGuard {
         },
       })
 
-    return ok(user.value)
+    return ok({
+      ...user.value,
+      roles: user.value.roles.map((r) => r.role),
+    })
   }
 }
 
@@ -74,22 +90,22 @@ export const AuthGuardPlugin = new Elysia({
         return { oidcUser: oidcUserResult.value }
       },
     },
-    requiredLocalRole: (allowedRole: UserRole[]) => ({
+    requiredLocalRole: (allowedRoles: string[]) => ({
       async resolve({ status, headers, authGuard }) {
-        const user = await authGuard.getCurrentUser(headers)
+        const hasAllowedRoles = await authGuard.checkUserHasRole(headers, allowedRoles)
 
-        if (user.isErr()) {
-          return mapErrorCodeToResponse(user.error, status)
+        if (hasAllowedRoles.isErr()) {
+          return mapErrorCodeToResponse(hasAllowedRoles.error, status)
         }
 
-        if (!allowedRole.includes(user.value.role)) {
+        if (!hasAllowedRoles.value.isAllowed) {
           return mapErrorCodeToResponse(
             { code: InternalErrorCode.FORBIDDEN, message: 'Forbidden' },
             status
           )
         }
 
-        return { user: user.value }
+        return { user: hasAllowedRoles.value.user }
       },
     }),
     fetchLocalUser: {

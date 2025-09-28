@@ -1,4 +1,4 @@
-import { getItemAsync, setItemAsync } from 'expo-secure-store'
+import { getItem, getItemAsync, setItemAsync } from 'expo-secure-store'
 import { z } from 'zod/v4'
 
 export const AUTH_SESSION_STORAGE_KEY = 'authSession'
@@ -22,7 +22,13 @@ export function parseAuthSession(json: string | null): AuthSession | null {
   return result.data
 }
 
-export async function getAuthSession(): Promise<AuthSession | null> {
+export function getAuthSession(): AuthSession | null {
+  const session = getItem(AUTH_SESSION_STORAGE_KEY)
+  return parseAuthSession(session)
+}
+
+// TODO: add cache layer for getAuthSessionAsync
+export async function getAuthSessionAsync(): Promise<AuthSession | null> {
   const session = await getItemAsync(AUTH_SESSION_STORAGE_KEY)
   return parseAuthSession(session)
 }
