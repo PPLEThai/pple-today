@@ -57,8 +57,11 @@ jobs:
       - name: Run script generate
         run: pnpm turbo codegen
 
-      - name: Run Type Check, Format Check and Test
-        run: pnpm turbo test typecheck format:check lint ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}
+      - name: Run Test
+        run: pnpm turbo test ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}
+
+      - name: Run Type Check, Format Check
+        run: pnpm turbo typecheck format:check lint ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}
 
       - name: Setup Prebuild Environment
         working-directory: apps-client/mobile
