@@ -5,10 +5,11 @@ import { Static, t } from 'elysia'
 export const GetHashtagsQuery = t.Object({
   limit: t.Optional(t.Number({ default: 10 })),
   page: t.Optional(t.Number({ default: 1 })),
+  search: t.Optional(t.String()),
 })
 export type GetHashtagsQuery = Static<typeof GetHashtagsQuery>
 
-export const GetHashtagsResponse = t.Array(HashTag)
+export const GetHashtagsResponse = t.Object({ data: t.Array(HashTag), count: t.Number() })
 export type GetHashtagsResponse = Static<typeof GetHashtagsResponse>
 
 export const GetHashtagByIdParams = t.Object({
@@ -32,6 +33,7 @@ export type CreateHashtagResponse = Static<typeof CreateHashtagResponse>
 export const UpdateHashtagParams = t.Object({
   hashtagId: t.String({ description: 'The ID of the hashtag' }),
 })
+export type UpdateHashtagParams = Static<typeof UpdateHashtagParams>
 
 export const UpdateHashtagBody = t.Object({
   name: t.String({ description: 'The name of the hashtag' }),
