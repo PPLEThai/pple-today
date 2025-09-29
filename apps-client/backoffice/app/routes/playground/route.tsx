@@ -116,8 +116,6 @@ import {
 } from 'lucide-react'
 import z from 'zod'
 
-import { GetHashtagsResponse } from '@api/backoffice/admin'
-
 const ColorPaletteSection = () => {
   return (
     <section className="space-y-4">
@@ -836,84 +834,68 @@ const SidebarSection = () => {
 }
 
 const TableSection = () => {
-  const EXAMPLE_HASHTAG_COLUMNS: ColumnDef<GetHashtagsResponse[number]>[] = [
+  interface ExampleData {
+    id: string
+    status: 'PUBLISH' | 'SUSPEND'
+    name: string
+  }
+
+  const EXAMPLE_HASHTAG_COLUMNS: ColumnDef<ExampleData>[] = [
     { accessorKey: 'id', header: 'ID' },
     { accessorKey: 'status', header: 'สถานะ' },
     { accessorKey: 'name', header: 'ชื่อ Hashtag' },
   ]
 
-  const EXAMPLE_DATE = new Date()
-
-  const EXAMPLE_DATA: GetHashtagsResponse = [
+  const EXAMPLE_DATA: ExampleData[] = [
     {
       id: '0',
       status: 'PUBLISH',
       name: 'ชัยชนะ',
-      createdAt: EXAMPLE_DATE,
-      updatedAt: EXAMPLE_DATE,
     },
     {
       id: '1',
       status: 'SUSPEND',
       name: 'การเมืองเพื่อประชาชน',
-      createdAt: EXAMPLE_DATE,
-      updatedAt: EXAMPLE_DATE,
     },
     {
       id: '2',
       status: 'PUBLISH',
       name: 'เสียงของประชาชน',
-      createdAt: EXAMPLE_DATE,
-      updatedAt: EXAMPLE_DATE,
     },
     {
       id: '3',
       status: 'PUBLISH',
       name: 'พลังประชาชน',
-      createdAt: EXAMPLE_DATE,
-      updatedAt: EXAMPLE_DATE,
     },
     {
       id: '4',
       status: 'PUBLISH',
       name: 'เราต้องการการเปลี่ยนแปลง',
-      createdAt: EXAMPLE_DATE,
-      updatedAt: EXAMPLE_DATE,
     },
     {
       id: '5',
       status: 'PUBLISH',
       name: 'อนาคตที่ดีสำหรับเด็ก',
-      createdAt: EXAMPLE_DATE,
-      updatedAt: EXAMPLE_DATE,
     },
     {
       id: '6',
       status: 'PUBLISH',
       name: 'ความยุติธรรมทางสังคม',
-      createdAt: EXAMPLE_DATE,
-      updatedAt: EXAMPLE_DATE,
     },
     {
       id: '7',
       status: 'SUSPEND',
       name: 'เสียงที่ไม่ถูกได้ยิน',
-      createdAt: EXAMPLE_DATE,
-      updatedAt: EXAMPLE_DATE,
     },
     {
       id: '8',
       status: 'SUSPEND',
       name: 'สร้างสรรค์ประชาธิปไตย',
-      createdAt: EXAMPLE_DATE,
-      updatedAt: EXAMPLE_DATE,
     },
     {
       id: '9',
       status: 'SUSPEND',
       name: 'การมีส่วนร่วมของทุกคน',
-      createdAt: EXAMPLE_DATE,
-      updatedAt: EXAMPLE_DATE,
     },
   ]
 
