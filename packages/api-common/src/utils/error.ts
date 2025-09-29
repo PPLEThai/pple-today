@@ -124,12 +124,7 @@ export function err<E extends object>(_err: E | Err<never, E>): Err<never, E> {
 export const fromRepositoryPromise = async <T>(
   promise: Promise<T> | (() => Promise<T>)
 ): Promise<Result<WithoutErr<T>, RawPrismaError | ExtractExplicitErr<T>>> => {
-  let promiseEntry
-  if (typeof promise === 'function') {
-    promiseEntry = promise()
-  } else {
-    promiseEntry = promise
-  }
+  const promiseEntry = typeof promise === 'function' ? promise() : promise
 
   try {
     const result = await promiseEntry

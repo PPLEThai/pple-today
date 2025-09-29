@@ -102,7 +102,7 @@ export class AdminTopicRepository {
       this.fileService.$transaction(async (fileTx) => {
         const isSameBannerUrl = existingTopic.value.bannerImagePath === data.bannerImagePath
         if (!isSameBannerUrl && existingTopic.value.bannerImagePath) {
-          const moveResult = await fileTx.removeFile(
+          const moveResult = await fileTx.deleteFile(
             existingTopic.value.bannerImagePath as FilePath
           )
           if (moveResult.isErr()) return moveResult
@@ -169,7 +169,7 @@ export class AdminTopicRepository {
     const deleteFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
         if (!existingTopic.value.bannerImagePath) return
-        const txDeleteResult = await fileTx.removeFile(
+        const txDeleteResult = await fileTx.deleteFile(
           existingTopic.value.bannerImagePath as FilePath
         )
         if (txDeleteResult.isErr()) return txDeleteResult
