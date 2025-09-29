@@ -30,6 +30,7 @@ export const AdminHashtagController = new Elysia({
       const pagingQuery = {
         limit: query.limit ?? 10,
         page: query.page ?? 1,
+        search: query.search,
       }
 
       const result = await adminHashtagService.getHashtags(pagingQuery)

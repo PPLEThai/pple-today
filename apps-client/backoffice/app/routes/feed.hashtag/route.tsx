@@ -1,0 +1,40 @@
+import { NavLink } from 'react-router'
+
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@pple-today/web-ui/breadcrumb'
+import { Typography } from '@pple-today/web-ui/typography'
+
+import { Data } from './data'
+
+export function meta() {
+  return [{ title: 'Hashtag' }, { name: 'description', content: 'Welcome to React Router!' }]
+}
+
+export default function HashtagPage() {
+  return (
+    <div className="px-6 space-y-2">
+      <Breadcrumb className="pt-4 pb-2">
+        <BreadcrumbList>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <NavLink to="/feed">Feed</NavLink>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Hashtag</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+      <Typography variant="h1">จัดการแฮชแท็ก</Typography>
+      <Data />
+    </div>
+  )
+}

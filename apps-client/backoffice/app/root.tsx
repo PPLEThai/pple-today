@@ -3,7 +3,6 @@ import './app.css'
 import { isRouteErrorResponse, Links, Meta, Outlet, Scripts, ScrollRestoration } from 'react-router'
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { AppSidebar } from 'components/AppSidebar'
 
 import type { Route } from './+types/root'
 
@@ -25,9 +24,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <QueryClientProvider client={queryClient}>
-          <AppSidebar>{children}</AppSidebar>
-        </QueryClientProvider>
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
         <ScrollRestoration />
         <Scripts />
       </body>
