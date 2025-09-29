@@ -27,7 +27,7 @@ export class AdminAuthGuard {
     const introspectionResult = await introspectAccessToken(token, this.oidcConfig)
 
     if (introspectionResult.isErr()) return err(introspectionResult.error)
-    if (introspectionResult.value.pple_roles.includes('today-cms:admin')) {
+    if (!introspectionResult.value.pple_roles.includes('today-cms:admin')) {
       return err({
         code: InternalErrorCode.FORBIDDEN,
         message: 'Required admin role to access this resource',
