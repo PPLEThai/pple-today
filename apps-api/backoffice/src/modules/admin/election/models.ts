@@ -1,5 +1,6 @@
 import {
   ElectionCandidate,
+  ElectionElgibleVoter,
   ElectionInfo,
   FilePath,
   ImageFileMimeType,
@@ -118,4 +119,14 @@ export const AdminDeleteElectionCandidateResponse = t.Object({
 })
 export type AdminDeleteElectionCandidateResponse = Static<
   typeof AdminDeleteElectionCandidateResponse
+>
+
+export const AdminListElectionElgibleVoterParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminListElectionElgibleVoterParams = Static<typeof AdminListElectionElgibleVoterParams>
+
+export const AdminListElectionElgibleVoterResponse = t.Array(ElectionElgibleVoter)
+export type AdminListElectionElgibleVoterResponse = Static<
+  typeof AdminListElectionElgibleVoterResponse
 >

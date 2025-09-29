@@ -192,6 +192,22 @@ export class AdminElectionService {
     }
     return ok()
   }
+
+  async listElectionEligibleVoters(electionId: string) {
+    const voterResult = await this.adminElectionRepository.listElectionEligibleVoters(electionId)
+    if (voterResult.isErr()) {
+      return mapRepositoryError(voterResult.error)
+    }
+
+    return ok(
+      voterResult.value.map((voter) => ({
+        id: voter.user.id,
+        name: voter.user.name,
+        phoneNumber: voter.user.phoneNumber,
+        profileImagePath: voter.user.profileImagePath,
+      }))
+    )
+  }
 }
 
 export const AdminElectionServicePlugin = new Elysia({ name: 'AdminElectionService' })

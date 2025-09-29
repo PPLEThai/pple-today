@@ -263,6 +263,19 @@ export class AdminElectionRepository {
 
     return ok()
   }
+
+  async listElectionEligibleVoters(electionId: string) {
+    return fromRepositoryPromise(
+      this.prismaService.electionEligibleVoter.findMany({
+        where: {
+          electionId,
+        },
+        include: {
+          user: true,
+        },
+      })
+    )
+  }
 }
 
 export const AdminElectionRepositoryPlugin = new Elysia({ name: 'AdminElectionRepository' })

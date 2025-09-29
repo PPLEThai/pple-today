@@ -16,6 +16,8 @@ import {
   AdminGetElectionResponse,
   AdminListElectionCandidatesParams,
   AdminListElectionCandidatesResponse,
+  AdminListElectionElgibleVoterParams,
+  AdminListElectionElgibleVoterResponse,
   AdminListElectionQuery,
   AdminListElectionResponse,
   AdminUpdateElectionCandidateParams,
@@ -262,4 +264,32 @@ export const AdminElectionController = new Elysia({
           },
         }
       )
+  )
+  .group('/:electionId/eligible-voters', (app) =>
+    app.get(
+      '',
+      async ({ params, adminElectionService, status }) => {
+        const result = await adminElectionService.listElectionEligibleVoters(params.electionId)
+        if (result.isErr()) {
+          return mapErrorCodeToResponse(result.error, status)
+        }
+
+        return status(200, result.value)
+      },
+      {
+        detail: {
+          summary: 'List elgible voters',
+          description: 'List elgible voters',
+        },
+        requiredLocalUser: true,
+        params: AdminListElectionElgibleVoterParams,
+        response: {
+          200: AdminListElectionElgibleVoterResponse,
+          ...createErrorSchema(
+            InternalErrorCode.UNAUTHORIZED,
+            InternalErrorCode.INTERNAL_SERVER_ERROR
+          ),
+        },
+      }
+    )
   )
