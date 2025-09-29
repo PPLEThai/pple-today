@@ -190,6 +190,9 @@ export class FeedRepository {
           createdAt: 'desc',
         },
         where: {
+          type: {
+            not: FeedItemType.ANNOUNCEMENT,
+          },
           OR: [
             {
               post: {
@@ -279,6 +282,9 @@ export class FeedRepository {
               },
             },
           ],
+          type: {
+            not: FeedItemType.ANNOUNCEMENT,
+          },
         },
         include: this.constructFeedItemInclude(userId),
       })
@@ -300,6 +306,11 @@ export class FeedRepository {
     const skip = Math.max((page - 1) * limit, 0)
     const rawFeedItems = await fromRepositoryPromise(
       this.prismaService.feedItem.findMany({
+        where: {
+          type: {
+            not: FeedItemType.ANNOUNCEMENT,
+          },
+        },
         orderBy: {
           createdAt: 'desc',
         },
@@ -337,6 +348,9 @@ export class FeedRepository {
         take: query.limit,
         where: {
           authorId: userId,
+          type: {
+            not: FeedItemType.ANNOUNCEMENT,
+          },
           type: {
             not: FeedItemType.ANNOUNCEMENT,
           },
