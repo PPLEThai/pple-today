@@ -1,5 +1,5 @@
 CREATE OR REPLACE FUNCTION public.get_candidate_feed_item_by_interaction(_id text)
- RETURNS TABLE(topic_id text, score numeric)
+ RETURNS TABLE(feed_item_id text, score numeric)
  LANGUAGE plpgsql
 AS $function$
 BEGIN
@@ -31,15 +31,15 @@ BEGIN
     
     hashtag_from_post AS (
       SELECT
-        htip."hashTagId" AS hashtag_id,
+        pht."hashTagId" AS hashtag_id,
         SUM(afii.score) AS score
       FROM
         all_feed_item_interaction afii
-        INNER JOIN "HashTagInPost" htip ON htip."postId" = afii.feed_item_id
-        INNER JOIN "HashTag" ht ON ht."id" = htip."hashTagId" AND ht."status" = 'PUBLISH'
+        INNER JOIN "PostHashTag" pht ON pht."postId" = afii.feed_item_id
+        INNER JOIN "HashTag" ht ON ht."id" = pht."hashTagId" AND ht."status" = 'PUBLISH'
       GROUP BY
-        htip."hashTagId"
-    )
+        pht."hashTagId"
+    ),
 
     hashtag_from_poll AS (
       SELECT
@@ -47,12 +47,12 @@ BEGIN
         SUM(afii.score) AS score 
       FROM
         all_feed_item_interaction afii
-        INNER JOIN "PollTopic" htp ON htp."pollId" = afii."id"
+        INNER JOIN "PollTopic" htp ON htp."pollId" = afii.feed_item_id
         INNER JOIN "Topic" t ON t."id" = htp."topicId" AND t."status" = 'PUBLISH'
         INNER JOIN "HashTagInTopic" htit ON htit."topicId" = t."id"
         INNER JOIN "HashTag" ht ON ht."id" = htit."hashTagId" AND ht."status" = 'PUBLISH'
       GROUP BY
-        t."id"
+        ht."id"
     ),
     
     all_possible_interested_hashtag AS (
@@ -88,20 +88,22 @@ BEGIN
         "Poll" p
         INNER JOIN "PollTopic" pt ON pt."pollId" = p."feedItemId"
         INNER JOIN all_possible_interest_topic apit ON apit.topic_id = pt."topicId"
+        INNER JOIN "Topic" t ON t."id" = apit."topic_id" AND t."status" = 'PUBLISH'
       GROUP BY
         p."feedItemId"
     ),
 
     candidate_post AS (
       SELECT
-        p."id" AS feed_item_id,
-        SUM(apit.score) AS score
+        p."feedItemId" AS feed_item_id,
+        SUM(apih.score) AS score
       FROM
         "Post" p
-        INNER JOIN "PostHashTag" fi ON fi."id" = p."feedItemId"
-        INNER JOIN "HashTag" ht ON ht."postId" = fi."hashTagId" AND ht."status" = 'PUBLISH'
+        INNER JOIN "PostHashTag" fi ON fi."postId" = p."feedItemId"
+        INNER JOIN all_possible_interested_hashtag apih ON apih."hashtag_id" = fi."hashTagId"
+        INNER JOIN "HashTag" ht ON ht."id" = apih."hashtag_id" AND ht."status" = 'PUBLISH'
       GROUP BY
-        p."id"
+        p."feedItemId"
     ),
 
     final_candidate_score AS (
@@ -128,10 +130,10 @@ BEGIN
     )
 
   SELECT
-    final_candidate_score.feed_item_id AS topic_id,
-    (final_candidate_score.score + RANDOM()) AS score
+    final_candidate_score_with_decay.feed_item_id,
+    (final_candidate_score_with_decay.score + RANDOM())::NUMERIC AS score
   FROM
-    final_candidate_score
+    final_candidate_score_with_decay
   ORDER BY score DESC
   LIMIT 1000;
 

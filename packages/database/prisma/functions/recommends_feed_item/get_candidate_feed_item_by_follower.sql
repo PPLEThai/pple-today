@@ -1,10 +1,10 @@
-CREATE OR REPLACE FUNCTION public.get_candidate_topic_by_follower(_id text)
- RETURNS TABLE(topic_id text, score numeric)
+CREATE OR REPLACE FUNCTION public.get_candidate_feed_item_by_follower(_id text)
+ RETURNS TABLE(feed_item_id text, score numeric)
  LANGUAGE plpgsql
 AS $function$
 BEGIN
     RETURN QUERY
-    WITH (
+    WITH
       candidate_user AS (
         SELECT * FROM get_candidate_user_by_follower(_id)
         UNION ALL
@@ -16,7 +16,7 @@ BEGIN
       all_possible_interested_user AS (
         SELECT
           cu.user_id,
-          candidate_user.score
+          cu.score
         FROM 
           candidate_user cu
         UNION ALL
@@ -37,15 +37,14 @@ BEGIN
           "FeedItem" fi
           INNER JOIN all_possible_interested_user apiu ON apiu.user_id = fi."authorId"
         ORDER BY
-          cfi.score DESC
-        LIMIT 1000;
+          apiu.score DESC
+        LIMIT 1000
       )
-    )
 
     SELECT
-      cfi.feed_item_id AS topic_id,
-      (cfi.score + RANDOM()) AS score
+      cfi.feed_item_id,
+      (cfi.score + RANDOM())::NUMERIC AS score
     FROM
-      candidate_feed_item cfi
+      candidate_feed_item cfi;
 END;
 $function$
