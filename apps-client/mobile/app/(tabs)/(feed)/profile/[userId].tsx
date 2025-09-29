@@ -1,1 +1,1 @@
-export { default } from '@app/app/(tabs)/profile/[userId]'
+export { default } from '../../profile/users/[userId]'

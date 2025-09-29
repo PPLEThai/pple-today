@@ -1,5 +1,4 @@
-import React from 'react'
-import { ScrollView, View } from 'react-native'
+import { Pressable, ScrollView, View } from 'react-native'
 
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
@@ -93,6 +92,7 @@ const NumberFollowingSection = () => {
 }
 
 const PeopleFollowingSection = () => {
+  const router = useRouter()
   const followingPeopleQuery = reactQueryClient.useQuery('/profile/follow', {})
 
   if (followingPeopleQuery.isLoading || !followingPeopleQuery.data) {
@@ -135,7 +135,9 @@ const PeopleFollowingSection = () => {
               id={item.id}
               profileImage={item.profileImage ?? ''}
               name={item.name}
-              onPress={() => {}}
+              onPress={() => {
+                router.navigate(`/(tabs)/profile/users/${item.id}`)
+              }}
             />
           ))}
         </View>
@@ -158,7 +160,8 @@ const PeopleFollowingItem = (profile: PeopleFollowingItemProps) => {
   const unfollowMutation = reactQueryClient.useMutation('delete', '/profile/:id/follow', {})
 
   const toggleFollow = async () => {
-    setIsFollowing(!isFollowing) // optimistic update
+    // optimistic update
+    setIsFollowing(!isFollowing)
     if (isFollowing) {
       await unfollowMutation.mutateAsync({ pathParams: { id: profile.id } })
       return
@@ -168,7 +171,10 @@ const PeopleFollowingItem = (profile: PeopleFollowingItemProps) => {
   }
 
   return (
-    <View className="flex flex-row justify-between items-center px-2 my-3">
+    <Pressable
+      className="flex flex-row justify-between items-center px-2 my-3"
+      onPress={profile.onPress}
+    >
       <View className="flex flex-row items-center gap-2 flex-1">
         <Avatar className="size-8" alt={profile.name}>
           <AvatarImage
@@ -187,7 +193,7 @@ const PeopleFollowingItem = (profile: PeopleFollowingItemProps) => {
       >
         <Text>{isFollowing ? 'กำลังติดตาม' : 'ติดตาม'} </Text>
       </Button>
-    </View>
+    </Pressable>
   )
 }
 
