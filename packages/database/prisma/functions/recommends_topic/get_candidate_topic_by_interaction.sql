@@ -26,10 +26,11 @@ BEGIN
         UNION ALL
         SELECT 
           "FeedItemComment"."feedItemId" AS feed_item_id, 
-          1 AS score
+          COUNT(*) AS score
         FROM "FeedItemComment"
         WHERE
             "FeedItemComment"."userId" = _id
+        GROUP BY "FeedItemComment"."feedItemId"
     ),
     direct_topic_from_interaction AS (
       SELECT 

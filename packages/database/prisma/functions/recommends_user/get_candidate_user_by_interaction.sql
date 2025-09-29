@@ -33,10 +33,13 @@ WITH
         WHERE
             "FeedItemReaction"."userId" = _id
         UNION ALL
-        SELECT "FeedItemComment"."feedItemId" AS feed_item_id, 1 AS score
+        SELECT 
+          "FeedItemComment"."feedItemId" AS feed_item_id, 
+          COUNT(*) AS score
         FROM "FeedItemComment"
         WHERE
             "FeedItemComment"."userId" = _id
+        GROUP BY "FeedItemComment"."feedItemId"
     ),
     hashtag_in_post AS (
         SELECT "HashTag".id, latest_user_interaction.score
