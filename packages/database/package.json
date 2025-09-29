@@ -25,6 +25,7 @@
     "codegen:sql": "prisma generate --sql",
     "db:migrate": "prisma migrate dev",
     "db:dev:seed": "tsx prisma/seeds/seed.dev.ts",
+    "db:migrate:function": "python3 prisma/functions/generate_function_migration.py && prisma migrate dev",
     "db:election:seed": "tsx prisma/seeds/seed.election.ts",
     "db:recommend:seed": "tsx prisma/seeds/seed.recommend.ts",
     "db:prod:seed": "tsx prisma/seeds/seed.prod.ts",
