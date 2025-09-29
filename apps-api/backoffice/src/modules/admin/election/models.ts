@@ -144,6 +144,76 @@ export const ElectionEligibleVoterIdentifier = {
 } as const
 export type ElectionEligibleVoterIdentifier = typeof ElectionEligibleVoterIdentifier
 
+export const AdminCreateElectionEligibleVoterParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminCreateElectionEligibleVoterParams = Static<
+  typeof AdminCreateElectionEligibleVoterParams
+>
+
+export const AdminCreateElectionEligibleVoterByUserIdBody = t.Object({
+  identifier: t.Literal(ElectionEligibleVoterIdentifier.USER_ID),
+  userId: t.String(),
+})
+export type AdminCreateElectionEligibleVoterByUserIdBody = Static<
+  typeof AdminCreateElectionEligibleVoterByUserIdBody
+>
+
+export const AdminCreateElectionEligibleVoterByPhoneNumberBody = t.Object({
+  identifier: t.Literal(ElectionEligibleVoterIdentifier.PHONE_NUMBER),
+  phoneNumber: t.String(),
+})
+export type AdminCreateElectionEligibleVoterByPhoneNumberBody = Static<
+  typeof AdminCreateElectionEligibleVoterByPhoneNumberBody
+>
+
+export const AdminCreateElectionEligibleVoterBody = t.Union([
+  AdminCreateElectionEligibleVoterByPhoneNumberBody,
+  AdminCreateElectionEligibleVoterByUserIdBody,
+])
+
+export const AdminCreateElectionEligibleVoterResponse = t.Object({
+  message: t.String(),
+})
+export type AdminCreateElectionEligibleVoterResponse = Static<
+  typeof AdminCreateElectionEligibleVoterResponse
+>
+
+export const AdminBulkCreateElectionEligibleVoterParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminBulkCreateElectionEligibleVoterParams = Static<
+  typeof AdminBulkCreateElectionEligibleVoterParams
+>
+
+export const AdminBulkCreateElectionEligibleVoterByUserIdsBody = t.Object({
+  identifier: t.Literal(ElectionEligibleVoterIdentifier.USER_ID),
+  userIds: t.Array(t.String()),
+})
+export type AdminBulkCreateElectionEligibleVoterByUserIdsBody = Static<
+  typeof AdminBulkCreateElectionEligibleVoterByUserIdsBody
+>
+
+export const AdminBulkCreateElectionEligibleVoterByPhoneNumbersBody = t.Object({
+  identifier: t.Literal(ElectionEligibleVoterIdentifier.PHONE_NUMBER),
+  phoneNumbers: t.Array(t.String()),
+})
+export type AdminBulkCreateElectionEligibleVoterByPhoneNumbersBody = Static<
+  typeof AdminBulkCreateElectionEligibleVoterByPhoneNumbersBody
+>
+
+export const AdminBulkCreateElectionEligibleVoterBody = t.Union([
+  AdminBulkCreateElectionEligibleVoterByPhoneNumbersBody,
+  AdminBulkCreateElectionEligibleVoterByUserIdsBody,
+])
+
+export const AdminBulkCreateElectionEligibleVoterResponse = t.Object({
+  message: t.String(),
+})
+export type AdminBulkCreateElectionEligibleVoterResponse = Static<
+  typeof AdminBulkCreateElectionEligibleVoterResponse
+>
+
 export const AdminDeleteElectionEligibleVoterByUserIdsBody = t.Object({
   identifier: t.Literal(ElectionEligibleVoterIdentifier.USER_ID),
   userIds: t.Array(t.String()),

@@ -1,7 +1,12 @@
 import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { ElectionResultType, ElectionType, Prisma } from '@pple-today/database/prisma'
+import {
+  ElectionResultType,
+  ElectionType,
+  EligibleVoterType,
+  Prisma,
+} from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -273,6 +278,68 @@ export class AdminElectionRepository {
         include: {
           user: true,
         },
+      })
+    )
+  }
+
+  async filterExistUserIds(userIds: string[]) {
+    return fromRepositoryPromise(async () => {
+      const existUserIds = await this.prismaService.user.findMany({
+        where: {
+          id: {
+            in: userIds,
+          },
+        },
+        select: {
+          id: true,
+        },
+      })
+
+      const existUserIdsSet = new Set(existUserIds.map(({ id }) => id))
+      return userIds.filter((userId) => !existUserIdsSet.has(userId))
+    })
+  }
+
+  async listUserIdsFromPhoneNumbers(phoneNumbers: string[]) {
+    return fromRepositoryPromise(async () => {
+      const users = await this.prismaService.user.findMany({
+        where: {
+          phoneNumber: {
+            in: phoneNumbers,
+          },
+        },
+        select: {
+          id: true,
+          phoneNumber: true,
+        },
+      })
+
+      const existPhoneNumberSet = new Set(users.map(({ phoneNumber }) => phoneNumber))
+      const nonExistPhoneNumbers = phoneNumbers.filter(
+        (phoneNumber) => !existPhoneNumberSet.has(phoneNumber)
+      )
+      const userIds = users.map(({ id }) => id)
+
+      return {
+        userIds,
+        nonExistPhoneNumbers,
+      }
+    })
+  }
+
+  async bulkCreateElectionElgibleVoterByUserIds(
+    electionId: string,
+    voterType: EligibleVoterType,
+    userIds: string[]
+  ) {
+    return fromRepositoryPromise(
+      this.prismaService.electionEligibleVoter.createManyAndReturn({
+        data: userIds.map((userId) => ({
+          userId,
+          electionId,
+          type: voterType,
+        })),
+        skipDuplicates: true,
       })
     )
   }

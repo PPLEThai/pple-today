@@ -10,6 +10,9 @@ import {
   AdminCreateElectionCandidateBody,
   AdminCreateElectionCandidateParams,
   AdminCreateElectionCandidateResponse,
+  AdminCreateElectionEligibleVoterBody,
+  AdminCreateElectionEligibleVoterParams,
+  AdminCreateElectionEligibleVoterResponse,
   AdminDeleteElectionCandidateParams,
   AdminDeleteElectionCandidateResponse,
   AdminDeleteElectionEligibleVoterBody,
@@ -291,6 +294,53 @@ export const AdminElectionController = new Elysia({
             200: AdminListElectionElgibleVoterResponse,
             ...createErrorSchema(
               InternalErrorCode.UNAUTHORIZED,
+              InternalErrorCode.INTERNAL_SERVER_ERROR
+            ),
+          },
+        }
+      )
+      .post(
+        '',
+        async ({ params, body, status, adminElectionService }) => {
+          const voters =
+            body.identifier === 'USER_ID'
+              ? {
+                  identifier: body.identifier,
+                  userIds: [body.userId],
+                }
+              : {
+                  identifier: body.identifier,
+                  phoneNumbers: [body.phoneNumber],
+                }
+
+          const result = await adminElectionService.bulkCreateElectionEligibleVoters(
+            params.electionId,
+            voters
+          )
+          if (result.isErr()) {
+            return mapErrorCodeToResponse(result.error, status)
+          }
+
+          return status(201, {
+            message: 'Create election eligible voter successful',
+          })
+        },
+        {
+          detail: {
+            summary: 'Create election eligible voter',
+            description: 'Create election eligible voter with userId or phoneNumber',
+          },
+          requiredLocalUser: true,
+          params: AdminCreateElectionEligibleVoterParams,
+          body: AdminCreateElectionEligibleVoterBody,
+          response: {
+            201: AdminCreateElectionEligibleVoterResponse,
+            ...createErrorSchema(
+              InternalErrorCode.UNAUTHORIZED,
+              InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.USER_NOT_FOUND,
+              InternalErrorCode.ELECTION_INVALID_ELIGIBLE_VOTER_IDENTIFIER,
+              InternalErrorCode.ELECTION_ALREADY_PUBLISH,
               InternalErrorCode.INTERNAL_SERVER_ERROR
             ),
           },
