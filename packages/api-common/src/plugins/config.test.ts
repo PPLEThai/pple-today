@@ -55,7 +55,7 @@ describe('Config Plugin', async () => {
       }).toThrow()
     })
 
-    it('should return default values for missing environment variables', () => {
+    it('should return undefined for missing environment variables', () => {
       const configService = new ConfigService({
         schema: t.Object({
           TEST: t.String({ default: 'default_value' }),
