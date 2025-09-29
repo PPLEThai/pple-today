@@ -16,13 +16,13 @@ import {
 } from './models'
 import { AdminTopicServicePlugin } from './services'
 
-import { AuthGuardPlugin } from '../../../plugins/auth-guard'
+import { AdminAuthGuardPlugin } from '../../../plugins/admin-auth-guard'
 
 export const AdminTopicController = new Elysia({
   prefix: '/topics',
   tags: ['Admin Topics'],
 })
-  .use([AuthGuardPlugin, AdminTopicServicePlugin])
+  .use([AdminAuthGuardPlugin, AdminTopicServicePlugin])
   .get(
     '/',
     async ({ query, status, adminTopicService }) => {

@@ -5,10 +5,10 @@ import Elysia from 'elysia'
 import { CreateUploadSignedUrlBody, CreateUploadSignedUrlResponse } from './models'
 import { AdminFileServicePlugin } from './services'
 
-import { AuthGuardPlugin } from '../../../plugins/auth-guard'
+import { AdminAuthGuardPlugin } from '../../../plugins/admin-auth-guard'
 
 export const AdminFileController = new Elysia({ prefix: '/file', tags: ['Admin File'] })
-  .use([AdminFileServicePlugin, AuthGuardPlugin])
+  .use([AdminFileServicePlugin, AdminAuthGuardPlugin])
   .post(
     '/upload-url',
     async ({ fileService, status, body }) => {

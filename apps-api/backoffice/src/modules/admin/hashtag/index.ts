@@ -17,13 +17,13 @@ import {
 } from './models'
 import { AdminHashtagServicePlugin } from './services'
 
-import { AuthGuardPlugin } from '../../../plugins/auth-guard'
+import { AdminAuthGuardPlugin } from '../../../plugins/admin-auth-guard'
 
 export const AdminHashtagController = new Elysia({
   prefix: '/hashtags',
   tags: ['Admin Hashtags'],
 })
-  .use([AuthGuardPlugin, AdminHashtagServicePlugin])
+  .use([AdminAuthGuardPlugin, AdminHashtagServicePlugin])
   .get(
     '/',
     async ({ query, status, adminHashtagService }) => {
