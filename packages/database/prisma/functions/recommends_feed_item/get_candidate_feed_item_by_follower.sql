@@ -32,10 +32,13 @@ BEGIN
       candidate_feed_item AS (
         SELECT
           fi."id" AS feed_item_id,
-          apiu.score
+          apiu.score * EXP(-LEAST(extract(EPOCH FROM (NOW() - fi."createdAt")) / 86400, 30)) AS score
         FROM
           "FeedItem" fi
           INNER JOIN all_possible_interested_user apiu ON apiu.user_id = fi."authorId"
+        ORDER BY
+          cfi.score DESC
+        LIMIT 1000;
       )
     )
 
@@ -44,8 +47,5 @@ BEGIN
       (cfi.score + RANDOM()) AS score
     FROM
       candidate_feed_item cfi
-    ORDER BY
-      cfi.score DESC
-    LIMIT 100;
 END;
 $function$

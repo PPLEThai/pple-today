@@ -31,12 +31,13 @@ BEGIN
 
       candidate_feed_item_poll AS (
         SELECT
-          p."id" AS feed_item_id,
-          apit.score
+          pt."pollId" AS feed_item_id,
+          SUM(apit.score) AS score
         FROM
-          "Poll" p
-          INNER JOIN all_possible_interested_topic apit ON apit.topic_id = fi."topicId" AND fi."type" = 'POLL'
-        
+          "PollTopic" pt
+          INNER JOIN all_possible_interested_topic apit ON apit.topic_id = pt."topicId"
+        GROUP BY 
+          pt."pollId"
       ),
 
       all_possible_interested_hashtag AS (
@@ -53,16 +54,16 @@ BEGIN
 
       candidate_feed_item_post AS (
         SELECT
-          fi."id" AS feed_item_id,
+          pht."postId" AS feed_item_id,
           SUM(apih.score) AS score
         FROM
-          all_possible_interested_hashtag apih
-          INNER JOIN "HashTagInPost" htip ON htip."hashTagId" = apih.hashtag_id
+          "PostHashtag" pht
+          INNER JOIN all_possible_interested_hashtag apih ON apih.hashtag_id = pht."hashTagId"
         GROUP BY 
-          fi."id"
+          pht."postId"
       ),
 
-      final_candidate_score_with_random AS (
+      final_candidate_score AS (
         SELECT
           cfp.feed_item_id,
           cfp.score
@@ -74,16 +75,25 @@ BEGIN
           cfp.score
         FROM
           candidate_feed_item_post cfp
+      ),
+
+      final_candidate_score_with_decay AS (
+        SELECT
+          final_candidate_score.feed_item_id,
+          (final_candidate_score.score * EXP(LEAST(EXTRACT(EPOCH FROM (NOW() - fi."createdAt")) / 3600), 30)) AS score
+        FROM
+          final_candidate_score
+          INNER JOIN "FeedItem" fi ON fi."id" = final_candidate_score.feed_item_id
       )
     )
 
     SELECT
-      final_candidate_score_with_random.feed_item_id,
-      (final_candidate_score_with_random.score + RANDOM()) AS score
+      final_candidate_score_with_decay.feed_item_id,
+      (final_candidate_score_with_decay.score + RANDOM()) AS score
     FROM
-      final_candidate_score_with_random;
+      final_candidate_score_with_decay;
     ORDER BY
-      final_candidate_score_with_random.score DESC
-    LIMIT 100
+      final_candidate_score_with_decay.score DESC
+    LIMIT 1000
 END;
 $function$
