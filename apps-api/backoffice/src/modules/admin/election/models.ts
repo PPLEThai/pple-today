@@ -130,3 +130,47 @@ export const AdminListElectionElgibleVoterResponse = t.Array(ElectionElgibleVote
 export type AdminListElectionElgibleVoterResponse = Static<
   typeof AdminListElectionElgibleVoterResponse
 >
+
+export const AdminDeleteElectionEligibleVoterParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminDeleteElectionEligibleVoterParams = Static<
+  typeof AdminDeleteElectionEligibleVoterParams
+>
+
+export const ElectionEligibleVoterIdentifier = {
+  USER_ID: 'USER_ID',
+  PHONE_NUMBER: 'PHONE_NUMBER',
+} as const
+export type ElectionEligibleVoterIdentifier = typeof ElectionEligibleVoterIdentifier
+
+export const AdminDeleteElectionEligibleVoterByUserIdsBody = t.Object({
+  identifier: t.Literal(ElectionEligibleVoterIdentifier.USER_ID),
+  userIds: t.Array(t.String()),
+})
+export type AdminDeleteElectionEligibleVoterByUserIdsBody = Static<
+  typeof AdminDeleteElectionEligibleVoterByUserIdsBody
+>
+
+export const AdminDeleteElectionEligibleVoterByPhoneNumbersBody = t.Object({
+  identifier: t.Literal(ElectionEligibleVoterIdentifier.PHONE_NUMBER),
+  phoneNumbers: t.Array(t.String()),
+})
+export type AdminDeleteElectionEligibleVoterByPhoneNumbersBody = Static<
+  typeof AdminDeleteElectionEligibleVoterByPhoneNumbersBody
+>
+
+export const AdminDeleteElectionEligibleVoterBody = t.Union([
+  AdminDeleteElectionEligibleVoterByPhoneNumbersBody,
+  AdminDeleteElectionEligibleVoterByUserIdsBody,
+])
+export type AdminDeleteElectionEligibleVoterBody = Static<
+  typeof AdminDeleteElectionEligibleVoterBody
+>
+
+export const AdminDeleteElectionEligibleVoterResponse = t.Object({
+  message: t.String(),
+})
+export type AdminDeleteElectionEligibleVoterResponse = Static<
+  typeof AdminDeleteElectionEligibleVoterResponse
+>

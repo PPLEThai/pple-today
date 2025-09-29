@@ -16,6 +16,7 @@ import {
   AdminListElectionQuery,
   AdminListElectionResponse,
   AdminUpdateElectionCandidateBody,
+  ElectionEligibleVoterIdentifier,
 } from './models'
 import { AdminElectionRepository, AdminElectionRepositoryPlugin } from './repository'
 
@@ -207,6 +208,63 @@ export class AdminElectionService {
         profileImagePath: voter.user.profileImagePath,
       }))
     )
+  }
+
+  async deleteElectionEligibleVoters(
+    electionId: string,
+    voters:
+      | { identifier: 'USER_ID'; userIds: string[] }
+      | { identifier: 'PHONE_NUMBER'; phoneNumbers: string[] }
+  ) {
+    const electionResult = await this.adminElectionRepository.getElectionById(electionId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot Found Election id: ${electionId}`,
+        },
+      })
+    }
+
+    const now = new Date()
+    const election = electionResult.value
+    const publishDate = (
+      election.type == 'HYBRID' ? election.openRegister : election.publishDate
+    ) as Date
+    const isBeforePublish = now < publishDate
+    if (!isBeforePublish) {
+      return err({
+        code: InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+        message: `Cannot Delete Voters of published election`,
+      })
+    }
+
+    let result
+    switch (voters.identifier) {
+      case ElectionEligibleVoterIdentifier.USER_ID:
+        result = await this.adminElectionRepository.bulkDeleteElectionElgibleVoterByUserIds(
+          electionId,
+          voters.userIds
+        )
+        break
+      case ElectionEligibleVoterIdentifier.PHONE_NUMBER:
+        result = await this.adminElectionRepository.bulkDeleteElectionElgibleVoterByPhoneNumber(
+          electionId,
+          voters.phoneNumbers
+        )
+        break
+      default:
+        return err({
+          code: InternalErrorCode.ELECTION_INVALID_ELIGIBLE_VOTER_IDENTIFIER,
+          message: 'Invalid voter identifier ',
+        })
+    }
+
+    if (result.isErr()) {
+      return mapRepositoryError(result.error)
+    }
+
+    return ok()
   }
 }
 

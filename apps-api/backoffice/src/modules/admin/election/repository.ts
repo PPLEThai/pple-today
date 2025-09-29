@@ -276,6 +276,34 @@ export class AdminElectionRepository {
       })
     )
   }
+
+  async bulkDeleteElectionElgibleVoterByUserIds(electionId: string, userIds: string[]) {
+    return fromRepositoryPromise(
+      this.prismaService.electionEligibleVoter.deleteMany({
+        where: {
+          electionId,
+          userId: {
+            in: userIds,
+          },
+        },
+      })
+    )
+  }
+
+  async bulkDeleteElectionElgibleVoterByPhoneNumber(electionId: string, phoneNumbers: string[]) {
+    return fromRepositoryPromise(
+      this.prismaService.electionEligibleVoter.deleteMany({
+        where: {
+          electionId,
+          user: {
+            phoneNumber: {
+              in: phoneNumbers,
+            },
+          },
+        },
+      })
+    )
+  }
 }
 
 export const AdminElectionRepositoryPlugin = new Elysia({ name: 'AdminElectionRepository' })

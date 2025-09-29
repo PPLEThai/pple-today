@@ -12,6 +12,9 @@ import {
   AdminCreateElectionCandidateResponse,
   AdminDeleteElectionCandidateParams,
   AdminDeleteElectionCandidateResponse,
+  AdminDeleteElectionEligibleVoterBody,
+  AdminDeleteElectionEligibleVoterParams,
+  AdminDeleteElectionEligibleVoterResponse,
   AdminGetElectionParams,
   AdminGetElectionResponse,
   AdminListElectionCandidatesParams,
@@ -266,30 +269,67 @@ export const AdminElectionController = new Elysia({
       )
   )
   .group('/:electionId/eligible-voters', (app) =>
-    app.get(
-      '',
-      async ({ params, adminElectionService, status }) => {
-        const result = await adminElectionService.listElectionEligibleVoters(params.electionId)
-        if (result.isErr()) {
-          return mapErrorCodeToResponse(result.error, status)
-        }
+    app
+      .get(
+        '',
+        async ({ params, adminElectionService, status }) => {
+          const result = await adminElectionService.listElectionEligibleVoters(params.electionId)
+          if (result.isErr()) {
+            return mapErrorCodeToResponse(result.error, status)
+          }
 
-        return status(200, result.value)
-      },
-      {
-        detail: {
-          summary: 'List elgible voters',
-          description: 'List elgible voters',
+          return status(200, result.value)
         },
-        requiredLocalUser: true,
-        params: AdminListElectionElgibleVoterParams,
-        response: {
-          200: AdminListElectionElgibleVoterResponse,
-          ...createErrorSchema(
-            InternalErrorCode.UNAUTHORIZED,
-            InternalErrorCode.INTERNAL_SERVER_ERROR
-          ),
+        {
+          detail: {
+            summary: 'List elgible voters',
+            description: 'List elgible voters',
+          },
+          requiredLocalUser: true,
+          params: AdminListElectionElgibleVoterParams,
+          response: {
+            200: AdminListElectionElgibleVoterResponse,
+            ...createErrorSchema(
+              InternalErrorCode.UNAUTHORIZED,
+              InternalErrorCode.INTERNAL_SERVER_ERROR
+            ),
+          },
+        }
+      )
+      .put(
+        '/bulk-delete',
+        async ({ params, body, status, adminElectionService }) => {
+          const result = await adminElectionService.deleteElectionEligibleVoters(
+            params.electionId,
+            body
+          )
+          if (result.isErr()) {
+            return mapErrorCodeToResponse(result.error, status)
+          }
+
+          return status(200, {
+            message: 'Delete Successful',
+          })
         },
-      }
-    )
+        {
+          detail: {
+            summary: 'Bulk Delete Eligible voters',
+            description: 'Bulk Delete Eligible voters with userIds or phoneNumbers',
+          },
+          requiredLocalUser: true,
+          params: AdminDeleteElectionEligibleVoterParams,
+          body: AdminDeleteElectionEligibleVoterBody,
+          response: {
+            200: AdminDeleteElectionEligibleVoterResponse,
+            ...createErrorSchema(
+              InternalErrorCode.UNAUTHORIZED,
+              InternalErrorCode.BAD_REQUEST,
+              InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+              InternalErrorCode.ELECTION_INVALID_ELIGIBLE_VOTER_IDENTIFIER,
+              InternalErrorCode.INTERNAL_SERVER_ERROR
+            ),
+          },
+        }
+      )
   )
