@@ -51,8 +51,6 @@ export default function OfficialPage() {
         <View className="gap-3 py-4">
           <AnnouncementSection />
           <InformationSection />
-          <DemoSection />
-          <DemoSection />
         </View>
       </ScrollView>
     </View>
@@ -80,6 +78,10 @@ const AnnouncementSection = () => {
   })
 
   const data = announcementsQuery.data?.announcements || []
+
+  if (data.length === 0) {
+    return null
+  }
 
   const AnnouncementPreviewList = () => {
     if (announcementsQuery.isLoading) {
