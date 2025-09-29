@@ -3,6 +3,9 @@ import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-commo
 import Elysia from 'elysia'
 
 import {
+  AdminBulkCreateElectionEligibleVoterBody,
+  AdminBulkCreateElectionEligibleVoterParams,
+  AdminBulkCreateElectionEligibleVoterResponse,
   AdminCancelElectionParams,
   AdminCancelElectionResponse,
   AdminCreateCandidateProfileUploadURLBody,
@@ -335,6 +338,42 @@ export const AdminElectionController = new Elysia({
           body: AdminCreateElectionEligibleVoterBody,
           response: {
             201: AdminCreateElectionEligibleVoterResponse,
+            ...createErrorSchema(
+              InternalErrorCode.UNAUTHORIZED,
+              InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.USER_NOT_FOUND,
+              InternalErrorCode.ELECTION_INVALID_ELIGIBLE_VOTER_IDENTIFIER,
+              InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+              InternalErrorCode.INTERNAL_SERVER_ERROR
+            ),
+          },
+        }
+      )
+      .post(
+        '/bulk-create',
+        async ({ params, body, status, adminElectionService }) => {
+          const result = await adminElectionService.bulkCreateElectionEligibleVoters(
+            params.electionId,
+            body
+          )
+          if (result.isErr()) {
+            return mapErrorCodeToResponse(result.error, status)
+          }
+
+          return status(201, {
+            message: 'Bulk create election eligible voters successful',
+          })
+        },
+        {
+          detail: {
+            summary: 'Bulk create election eligible voter',
+            description: 'Bulk create election eligible voter with userIds or phoneNumbers',
+          },
+          requiredLocalUser: true,
+          params: AdminBulkCreateElectionEligibleVoterParams,
+          body: AdminBulkCreateElectionEligibleVoterBody,
+          response: {
+            201: AdminBulkCreateElectionEligibleVoterResponse,
             ...createErrorSchema(
               InternalErrorCode.UNAUTHORIZED,
               InternalErrorCode.ELECTION_NOT_FOUND,
