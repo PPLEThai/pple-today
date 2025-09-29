@@ -6,9 +6,6 @@
     "./global.css": "./global.css",
     "./tailwind.config.js": "./tailwind.config.js"
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
