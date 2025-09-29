@@ -8,13 +8,13 @@ import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { Skeleton } from '@pple-today/ui/skeleton'
 import { Text } from '@pple-today/ui/text'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeftIcon, UserIcon } from 'lucide-react-native'
 
 import { GetFeedItemsByUserIdResponse } from '@api/backoffice/app'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
-import { FeedFooter } from '@app/components/feed'
+import { FeedFooter, FeedRefreshControl } from '@app/components/feed'
 import { FeedCard } from '@app/components/feed/feed-card'
 import { useUserFollowState } from '@app/components/feed/user-card'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
@@ -24,6 +24,7 @@ const LIMIT = 10
 export default function ProfilePage() {
   const router = useRouter()
   const params = useLocalSearchParams()
+  const queryClient = useQueryClient()
   const userId = params.userId as string
   React.useEffect(() => {
     if (!userId) {
@@ -92,6 +93,20 @@ export default function ProfilePage() {
     userFeedInfiniteQuery.hasNextPage,
     userFeedInfiniteQuery.fetchNextPage,
   ])
+
+  const onRefresh = React.useCallback(async () => {
+    await Promise.resolve([
+      queryClient.resetQueries({
+        queryKey: reactQueryClient.getQueryKey('/profile/:id', { pathParams: { id: userId! } }),
+      }),
+      queryClient.resetQueries({
+        queryKey: reactQueryClient.getQueryKey('/feed/users/:id', { pathParams: { id: userId! } }),
+      }),
+    ])
+    await userFeedInfiniteQuery.refetch()
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryClient, userFeedInfiniteQuery.refetch])
 
   const renderFeedItem = React.useCallback(
     ({ item }: { item: GetFeedItemsByUserIdResponse[number]; index: number }) => {
@@ -175,6 +190,7 @@ export default function ProfilePage() {
       </View>
       <Animated.FlatList
         onScroll={scrollHandler}
+        refreshControl={<FeedRefreshControl headerHeight={16} onRefresh={onRefresh} />}
         data={data}
         contentContainerClassName="bg-base-bg-default"
         renderItem={renderFeedItem}
