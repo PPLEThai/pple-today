@@ -20,13 +20,14 @@ import {
 } from './models'
 import { AdminAnnouncementServicePlugin } from './services'
 
+import { AdminAuthGuardPlugin } from '../../../plugins/admin-auth-guard'
 import { AuthGuardPlugin } from '../../../plugins/auth-guard'
 
 const AdminDraftAnnouncementsController = new Elysia({
   prefix: '/draft',
   tags: ['Admin Draft Announcements'],
 })
-  .use([AuthGuardPlugin, AdminAnnouncementServicePlugin])
+  .use([AdminAuthGuardPlugin, AdminAnnouncementServicePlugin])
   .get(
     '/:announcementId',
     async ({ params, status, adminAnnouncementService }) => {
