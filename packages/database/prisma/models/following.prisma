@@ -8,6 +8,8 @@ model UserFollowsUser {
     follower User @relation(name: "FollowedBy", fields: [followerId], references: [id])
 
     @@id([followedId, followerId])
+    @@index([followerId])
+    @@index([followedId])
 }
 
 model UserFollowsTopic {
@@ -20,4 +22,6 @@ model UserFollowsTopic {
     topic Topic @relation(fields: [topicId], references: [id])
 
     @@id([userId, topicId])
+    @@index([userId])
+    @@index([topicId])
 }

@@ -131,8 +131,6 @@ export class AdminAnnouncementService {
       title: draft.title,
       content: draft.content,
       type: draft.type,
-      iconImage: draft.iconImage,
-      backgroundColor: draft.backgroundColor,
       topics: draft.topics,
       attachments: draft.attachments.map((filePath) => ({
         url: this.fileService.getPublicFileUrl(filePath),

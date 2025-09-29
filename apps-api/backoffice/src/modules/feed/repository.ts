@@ -2,7 +2,7 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FeedItem, FeedItemBaseContent } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { FeedItemReactionType, FeedItemType, Prisma, UserRole } from '@pple-today/database/prisma'
+import { FeedItemReactionType, FeedItemType, Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { Ok, ok } from 'neverthrow'
 import { sumBy } from 'remeda'
@@ -18,7 +18,7 @@ export class FeedRepository {
     private fileService: FileService
   ) {}
 
-  private readonly constructFeedItemInclude = (userId?: string) =>
+  public constructFeedItemInclude = (userId?: string) =>
     ({
       author: {
         include: {
@@ -68,7 +68,7 @@ export class FeedRepository {
       },
     }) satisfies Prisma.FeedItemInclude
 
-  private transformToFeedItem(
+  public transformToFeedItem(
     rawFeedItem: Prisma.FeedItemGetPayload<{
       include: ReturnType<typeof FeedRepository.prototype.constructFeedItemInclude>
     }>
@@ -82,8 +82,8 @@ export class FeedRepository {
       author: {
         id: rawFeedItem.author.id,
         name: rawFeedItem.author.name,
-        profileImage: rawFeedItem.author.profileImage
-          ? this.fileService.getPublicFileUrl(rawFeedItem.author.profileImage)
+        profileImage: rawFeedItem.author.profileImagePath
+          ? this.fileService.getPublicFileUrl(rawFeedItem.author.profileImagePath)
           : undefined,
         address: rawFeedItem.author.address ?? undefined,
       },
@@ -130,6 +130,7 @@ export class FeedRepository {
           announcement: {
             content: rawFeedItem.announcement.content ?? '',
             title: rawFeedItem.announcement.title,
+            type: rawFeedItem.announcement.type,
             attachments: rawFeedItem.announcement.attachments.map((attachment) =>
               this.fileService.getPublicFileUrl(attachment.filePath)
             ),
@@ -160,7 +161,7 @@ export class FeedRepository {
               thumbnailUrl: image.thumbnailPath
                 ? this.fileService.getPublicFileUrl(image.thumbnailPath)
                 : undefined,
-              url: this.fileService.getPublicFileUrl(image.url),
+              url: this.fileService.getPublicFileUrl(image.attachmentPath),
             })),
           },
         } satisfies GetFeedContentResponse)
@@ -337,8 +338,12 @@ export class FeedRepository {
         where: {
           authorId: userId,
           author: {
-            role: {
-              not: UserRole.OFFICIAL,
+            NOT: {
+              roles: {
+                some: {
+                  role: 'official',
+                },
+              },
             },
           },
         },
@@ -476,7 +481,7 @@ export class FeedRepository {
                 select: {
                   id: true,
                   name: true,
-                  profileImage: true,
+                  profileImagePath: true,
                 },
               },
             },
@@ -544,7 +549,7 @@ export class FeedRepository {
             select: {
               id: true,
               name: true,
-              profileImage: true,
+              profileImagePath: true,
               address: {
                 select: {
                   province: true,
@@ -589,7 +594,7 @@ export class FeedRepository {
               select: {
                 id: true,
                 name: true,
-                profileImage: true,
+                profileImagePath: true,
               },
             },
           },

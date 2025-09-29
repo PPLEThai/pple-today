@@ -5,6 +5,7 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
+    "test": "turbo run test",
     "format": "turbo run format",
     "format:check": "turbo run format:check",
     "typecheck": "turbo run typecheck",
@@ -29,7 +30,8 @@
   },
   "pnpm": {
     "patchedDependencies": {
-      "expo-module-scripts": "patches/expo-module-scripts.patch"
+      "expo-module-scripts": "patches/expo-module-scripts.patch",
+      "react-native-pager-view": "patches/react-native-pager-view.patch"
     }
   }
 }

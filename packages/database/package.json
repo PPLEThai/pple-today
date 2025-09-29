@@ -1,6 +1,6 @@
 {
   "name": "@pple-today/database",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -13,13 +13,21 @@
     "./prisma/runtime/client": {
       "types": "./__generated__/prisma/runtime/client.d.ts",
       "import": "./__generated__/prisma/runtime/client.js"
+    },
+    "./prisma/sql": {
+      "types": "./__generated__/prisma/sql/index.d.ts",
+      "import": "./__generated__/prisma/sql/index.js",
+      "require": "./__generated__/prisma/index-browser.js"
     }
   },
   "scripts": {
     "codegen": "prisma generate",
+    "codegen:sql": "prisma generate --sql",
     "db:migrate": "prisma migrate dev",
-    "db:dev:seed": "tsx prisma/seed.dev.ts",
-    "db:prod:seed": "tsx prisma/seed.prod.ts",
+    "db:dev:seed": "tsx prisma/seeds/seed.dev.ts",
+    "db:election:seed": "tsx prisma/seeds/seed.election.ts",
+    "db:recommend:seed": "tsx prisma/seeds/seed.recommend.ts",
+    "db:prod:seed": "tsx prisma/seeds/seed.prod.ts",
     "db:reset": "prisma migrate reset",
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --check .",

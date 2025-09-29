@@ -52,7 +52,7 @@ export class AdminTopicRepository {
           id: true,
           name: true,
           description: true,
-          bannerImage: true,
+          bannerImagePath: true,
           status: true,
           createdAt: true,
           updatedAt: true,
@@ -82,7 +82,7 @@ export class AdminTopicRepository {
         data: {
           name: '',
           description: null,
-          bannerImage: null,
+          bannerImagePath: null,
         },
       })
     )
@@ -92,7 +92,7 @@ export class AdminTopicRepository {
     const existingTopic = await fromRepositoryPromise(
       this.prismaService.topic.findUniqueOrThrow({
         where: { id: topicId },
-        select: { bannerImage: true },
+        select: { bannerImagePath: true },
       })
     )
 
@@ -100,16 +100,18 @@ export class AdminTopicRepository {
 
     const updateFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
-        const isSameBannerUrl = existingTopic.value.bannerImage === data.bannerImage
-        if (!isSameBannerUrl && existingTopic.value.bannerImage) {
-          const moveResult = await fileTx.removeFile(existingTopic.value.bannerImage as FilePath)
+        const isSameBannerUrl = existingTopic.value.bannerImagePath === data.bannerImagePath
+        if (!isSameBannerUrl && existingTopic.value.bannerImagePath) {
+          const moveResult = await fileTx.deleteFile(
+            existingTopic.value.bannerImagePath as FilePath
+          )
           if (moveResult.isErr()) return moveResult
         }
 
-        let newBannerImage = data.bannerImage
+        let newBannerImage = data.bannerImagePath
 
-        if (data.bannerImage) {
-          const moveResult = await fileTx.bulkMoveToPublicFolder([data.bannerImage])
+        if (data.bannerImagePath) {
+          const moveResult = await fileTx.bulkMoveToPublicFolder([data.bannerImagePath])
           if (moveResult.isErr()) return moveResult
           newBannerImage = moveResult.value[0]
         }
@@ -129,7 +131,7 @@ export class AdminTopicRepository {
         data: {
           name: data.name,
           description: data.description,
-          bannerImage: newBannerImage,
+          bannerImagePath: newBannerImage,
           status: data.status,
           hashTagInTopics: {
             deleteMany: {},
@@ -156,7 +158,7 @@ export class AdminTopicRepository {
     const existingTopic = await fromRepositoryPromise(
       this.prismaService.topic.findUniqueOrThrow({
         where: { id: topicId },
-        select: { bannerImage: true },
+        select: { bannerImagePath: true },
       })
     )
 
@@ -166,8 +168,10 @@ export class AdminTopicRepository {
 
     const deleteFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
-        if (!existingTopic.value.bannerImage) return
-        const txDeleteResult = await fileTx.removeFile(existingTopic.value.bannerImage as FilePath)
+        if (!existingTopic.value.bannerImagePath) return
+        const txDeleteResult = await fileTx.deleteFile(
+          existingTopic.value.bannerImagePath as FilePath
+        )
         if (txDeleteResult.isErr()) return txDeleteResult
       })
     )

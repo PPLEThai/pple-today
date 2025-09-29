@@ -5,11 +5,15 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { DevToolsBubble } from 'react-native-react-query-devtools'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 
-import { Inter_300Light, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter'
+import { Inter_400Regular, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter'
+import {
+  NotoSansThai_400Regular,
+  NotoSansThai_600SemiBold,
+  NotoSansThai_700Bold,
+} from '@expo-google-fonts/noto-sans-thai'
 import {
   NotoSansThaiLooped_300Light,
   NotoSansThaiLooped_500Medium,
-  NotoSansThaiLooped_700Bold,
 } from '@expo-google-fonts/noto-sans-thai-looped'
 import { BottomSheetModalProvider } from '@pple-today/ui/bottom-sheet/index'
 import { NAV_THEME } from '@pple-today/ui/lib/constants'
@@ -21,8 +25,8 @@ import * as Clipboard from 'expo-clipboard'
 import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
-import { StatusBar } from 'expo-status-bar'
 
+import { StatusBarProvider } from '@app/context/status-bar'
 import { environment } from '@app/env'
 import { AuthLifeCycleHook } from '@app/libs/auth'
 
@@ -48,21 +52,26 @@ export default function RootLayout() {
     <>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
-          <ColorSchemeProvider>
-            <FontProvider>
-              <GestureHandlerRootView>
-                <BottomSheetModalProvider>
-                  <Stack initialRouteName="(tabs)">
-                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                    <Stack.Screen name="loading" options={{ headerShown: false }} />
-                    <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-                    <Stack.Screen name="edit" options={{ headerShown: false }} />
-                  </Stack>
-                  <Toaster />
-                </BottomSheetModalProvider>
-              </GestureHandlerRootView>
-            </FontProvider>
-          </ColorSchemeProvider>
+          <StatusBarProvider>
+            <ColorSchemeProvider>
+              <FontProvider>
+                <GestureHandlerRootView>
+                  <BottomSheetModalProvider>
+                    <Stack
+                      initialRouteName="(tabs)"
+                      screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
+                    >
+                      <Stack.Screen name="(tabs)" />
+                      <Stack.Screen name="loading" />
+                      <Stack.Screen name="onboarding" />
+                      <Stack.Screen name="edit" />
+                    </Stack>
+                    <Toaster />
+                  </BottomSheetModalProvider>
+                </GestureHandlerRootView>
+              </FontProvider>
+            </ColorSchemeProvider>
+          </StatusBarProvider>
           {(environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'development' ||
             environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'local') && (
             <DevToolsBubble onCopy={onCopy} queryClient={queryClient} />
@@ -86,15 +95,14 @@ const onCopy = async (text: string) => {
 
 function FontProvider({ children }: { children: React.ReactNode }) {
   const [fontLoaded, fontError] = useFonts({
-    Inter_300Light,
-    Inter_500Medium,
+    Inter_400Regular,
+    Inter_600SemiBold,
     Inter_700Bold,
+    NotoSansThai_400Regular,
+    NotoSansThai_600SemiBold,
+    NotoSansThai_700Bold,
     NotoSansThaiLooped_300Light,
     NotoSansThaiLooped_500Medium,
-    NotoSansThaiLooped_700Bold,
-    Anakotmai_300Light: require('../assets/fonts/Anakotmai-Light.otf'),
-    Anakotmai_500Medium: require('../assets/fonts/Anakotmai-Medium.otf'),
-    Anakotmai_700Bold: require('../assets/fonts/Anakotmai-Bold.otf'),
   })
   React.useEffect(() => {
     if (fontLoaded || fontError) {
@@ -134,10 +142,7 @@ function ColorSchemeProvider({ children }: { children: React.ReactNode }) {
   // }
 
   return (
-    <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>
-      <StatusBar style={isDarkColorScheme ? 'light' : 'dark'} />
-      {children}
-    </ThemeProvider>
+    <ThemeProvider value={isDarkColorScheme ? DARK_THEME : LIGHT_THEME}>{children}</ThemeProvider>
   )
 }
 

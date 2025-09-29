@@ -55,6 +55,8 @@ model PollTopic {
     topic Topic @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
     @@id([pollId, topicId])
+    @@index([topicId])
+    @@index([pollId])
 }
 
 // Draft models for Poll and PollOption

@@ -1,6 +1,23 @@
 import { FilePath, ImageFileMimeType, UserParticipation } from '@pple-today/api-common/dtos'
-import { UserRole } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
+
+export const GetUserRecommendationResponse = t.Array(
+  t.Object({
+    id: t.String({ description: 'The ID of the author' }),
+    name: t.String({ description: 'The name of the author' }),
+    address: t.Nullable(
+      t.Object(
+        {
+          province: t.String({ description: 'The province of the author' }),
+          district: t.String({ description: 'The district of the author' }),
+        },
+        { description: 'The address of the author' }
+      )
+    ),
+    profileImage: t.Nullable(t.String({ description: 'The profile image URL of the author' })),
+  })
+)
+export type GetUserRecommendationResponse = Static<typeof GetUserRecommendationResponse>
 
 // TODO: Add election
 export const GetUserParticipationResponse = t.Array(UserParticipation)
@@ -12,7 +29,7 @@ export const GetMyProfileResponse = t.Object({
   profileImage: t.Optional(
     t.String({ description: 'The URL of the profile image', format: 'uri' })
   ),
-  role: t.Enum(UserRole, { description: 'The role of the user' }),
+  roles: t.Array(t.String({ description: 'The role of the user' })),
   numberOfFollowing: t.Number({ description: 'Number of users the user is following' }),
   point: t.Number({ description: 'Points earned by the user' }),
   numberOfFollowingTopics: t.Number({ description: 'Number of topics the user is following' }),
@@ -34,7 +51,7 @@ export const GetProfileByIdParams = t.Object({
 
 export const GetProfileByIdResponse = t.Object({
   id: t.String({ description: 'The ID of the user' }),
-  role: t.Enum(UserRole, { description: 'The role of the user' }),
+  roles: t.Array(t.String({ description: 'The role of the user' })),
   name: t.String({ description: 'The name of the user' }),
   profileImage: t.Optional(
     t.String({ description: 'The URL of the profile image', format: 'uri' })
@@ -56,7 +73,7 @@ export const CompleteOnboardingProfileBody = t.Object({
   profile: t.Optional(
     t.Object({
       name: t.String({ description: 'The name of the user' }),
-      profileImage: t.Optional(FilePath),
+      profileImagePath: t.Optional(FilePath),
     })
   ),
   interestTopics: t.Optional(
@@ -112,7 +129,7 @@ export const GetFollowingUserResponse = t.Array(
 
 export const UpdateProfileBody = t.Object({
   name: t.Optional(t.String({ description: 'The name of the user' })),
-  profileImage: t.Optional(FilePath),
+  profileImagePath: t.Optional(FilePath),
   address: t.Optional(
     t.Object({
       province: t.String({ description: "Province or state of the user's address" }),

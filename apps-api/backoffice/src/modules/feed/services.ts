@@ -1,7 +1,7 @@
-import { InternalErrorCode } from '@pple-today/api-common/dtos'
-import { PostComment, PostReactionType } from '@pple-today/api-common/dtos'
+import { FeedItemComment, InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FileService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
+import { FeedItemReactionType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -132,12 +132,11 @@ export class FeedService {
             author: {
               id: comment.user.id,
               name: comment.user.name,
-              address: comment.user.address ?? undefined,
-              profileImage: comment.user.profileImage
-                ? this.fileService.getPublicFileUrl(comment.user.profileImage)
+              profileImage: comment.user.profileImagePath
+                ? this.fileService.getPublicFileUrl(comment.user.profileImagePath)
                 : undefined,
             },
-          }) satisfies PostComment
+          }) satisfies FeedItemComment
       )
     )
   }
@@ -161,7 +160,7 @@ export class FeedService {
   }
 
   async upsertFeedReaction(feedItemId: string, userId: string, data: CreateFeedReactionBody) {
-    const comment = data.type === PostReactionType.DOWN_VOTE ? data.comment : undefined
+    const comment = data.type === FeedItemReactionType.DOWN_VOTE ? data.comment : undefined
     const result = await this.feedRepository.upsertFeedItemReaction({
       feedItemId,
       userId,
@@ -183,7 +182,19 @@ export class FeedService {
     return ok({
       ...result.value,
       comment: result.value.comment
-        ? { ...result.value.comment, author: result.value.comment.user }
+        ? {
+            id: result.value.comment.id,
+            content: result.value.comment.content,
+            createdAt: result.value.comment.createdAt,
+            isPrivate: result.value.comment.isPrivate,
+            author: {
+              id: result.value.comment.user.id,
+              name: result.value.comment.user.name,
+              profileImage: result.value.comment.user.profileImagePath
+                ? this.fileService.getPublicFileUrl(result.value.comment.user.profileImagePath)
+                : undefined, // this should be null
+            },
+          }
         : null,
     })
   }
@@ -222,7 +233,19 @@ export class FeedService {
       })
     }
 
-    return ok({ ...result.value, author: result.value.user })
+    return ok({
+      id: result.value.id,
+      content: result.value.content,
+      createdAt: result.value.createdAt,
+      isPrivate: result.value.isPrivate,
+      author: {
+        id: result.value.user.id,
+        name: result.value.user.name,
+        profileImage: result.value.user.profileImagePath
+          ? this.fileService.getPublicFileUrl(result.value.user.profileImagePath)
+          : undefined, // this should be null
+      },
+    })
   }
 
   async updateFeedComment(postId: string, commentId: string, userId: string, content: string) {

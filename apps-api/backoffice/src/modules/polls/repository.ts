@@ -22,8 +22,8 @@ export class PollsRepository {
           select: {
             id: true,
             name: true,
-            profileImage: true,
-            role: true,
+            profileImagePath: true,
+            roles: true,
             district: true,
           },
         },

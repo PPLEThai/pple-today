@@ -38,10 +38,10 @@ function ToastBody(props: ToastConfigParams<ToastAdditionalProps>) {
       ) : null}
       <View className="flex flex-col gap-1">
         {props.text1 && (
-          <Text className="text-sm text-white font-anakotmai-medium">{props.text1}</Text>
+          <Text className="text-sm text-white font-heading-semibold">{props.text1}</Text>
         )}
         {props.text2 && (
-          <Text className="text-sm text-white font-anakotmai-light">{props.text2}</Text>
+          <Text className="text-sm text-white font-heading-regular">{props.text2}</Text>
         )}
       </View>
       {props.props.action === null ? null : typeof props.props.action === 'function' ? (

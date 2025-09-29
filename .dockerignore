@@ -39,7 +39,8 @@ yarn-error.log*
 # Artifacts
 **/dist
 **/data
-**/__generated__
+**/__generated__/prisma/runtime
+**/__generated__/prisma/*.*
 **/work
 *.zip
 

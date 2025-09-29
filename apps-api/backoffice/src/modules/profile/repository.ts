@@ -2,7 +2,9 @@ import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { Prisma } from '@pple-today/database/prisma'
+import { get_candidate_user } from '@pple-today/database/prisma/sql'
 import Elysia from 'elysia'
+import * as R from 'remeda'
 
 import { CompleteOnboardingProfileBody } from './models'
 
@@ -14,6 +16,33 @@ export class ProfileRepository {
     private prismaService: PrismaService,
     private fileService: FileService
   ) {}
+
+  async getUserRecommendation(userId: string) {
+    return await fromRepositoryPromise(async () => {
+      const candidateUserIds = await this.prismaService.$queryRawTyped(get_candidate_user(userId))
+
+      const candidateUser = await this.prismaService.user.findMany({
+        where: {
+          id: {
+            in: R.pipe(
+              candidateUserIds,
+              R.map(R.prop('user_id')),
+              R.filter((id) => id !== null)
+            ),
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+          profileImagePath: true,
+          responsibleArea: true,
+          address: true,
+        },
+      })
+
+      return candidateUser
+    })
+  }
 
   async getUserParticipation(userId: string) {
     return await fromRepositoryPromise(
@@ -67,6 +96,11 @@ export class ProfileRepository {
         where: { id },
         include: {
           address: true,
+          roles: {
+            select: {
+              role: true,
+            },
+          },
         },
       })
     )
@@ -139,13 +173,13 @@ export class ProfileRepository {
           id: userId,
         },
         select: {
-          followings: {
+          followers: {
             select: {
               followed: {
                 select: {
                   id: true,
                   name: true,
-                  profileImage: true,
+                  profileImagePath: true,
                   address: true,
                 },
               },
@@ -163,7 +197,7 @@ export class ProfileRepository {
 
     if (profileData.profile) {
       userData.name = profileData.profile.name
-      userData.profileImage = profileData.profile.profileImage
+      userData.profileImagePath = profileData.profile.profileImagePath
     }
 
     if (profileData.interestTopics) {
@@ -175,6 +209,7 @@ export class ProfileRepository {
             })) || [],
         },
       }
+      userData.numberOfFollowingTopics = profileData.interestTopics.length
     }
 
     if (profileData.address) {
@@ -199,17 +234,21 @@ export class ProfileRepository {
 
     const moveFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (tx) => {
-        if (existingUser.value.profileImage) {
-          const removeResult = await tx.bulkRemoveFile([
-            existingUser.value.profileImage as FilePath,
+        if (profileData.profileImagePath) {
+          if (existingUser.value.profileImagePath) {
+            const removeResult = await tx.bulkDeleteFile([
+              existingUser.value.profileImagePath as FilePath,
+            ])
+
+            if (removeResult.isErr()) return removeResult
+          }
+
+          const moveResult = await tx.bulkMoveToPublicFolder([
+            profileData.profileImagePath as FilePath,
           ])
-
-          if (removeResult.isErr()) return removeResult
-        }
-
-        if (profileData.profileImage) {
-          const moveResult = await tx.bulkMoveToPublicFolder([profileData.profileImage as FilePath])
           if (moveResult.isErr()) return moveResult
+
+          profileData.profileImagePath = moveResult.value[0]
 
           return moveResult.value[0]
         }
@@ -220,8 +259,7 @@ export class ProfileRepository {
 
     if (moveFileResult.isErr()) return err(moveFileResult.error)
 
-    const [publicFile, fileTx] = moveFileResult.value
-    profileData.profileImage = publicFile
+    const [_, fileTx] = moveFileResult.value
 
     const updateResult = await fromRepositoryPromise(
       this.prismaService.user.update({

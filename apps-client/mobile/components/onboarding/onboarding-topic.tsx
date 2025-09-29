@@ -11,7 +11,7 @@ import { z } from 'zod/v4'
 
 import { reactQueryClient } from '@app/libs/api-client'
 
-import { useOnboardingContext } from '../../contexts/onboarding-context'
+import { useOnboardingContext } from './onboarding-context'
 
 const formSchema = z.object({
   topics: z.array(z.string()).min(3, 'กรุณาเลือกอย่างน้อย 3 หัวข้อที่สนใจ'),
@@ -23,7 +23,7 @@ export function OnboardingTopic() {
     state.topicStepResult?.topics ?? []
   )
 
-  const getTopicQuery = reactQueryClient.useQuery('/topics', {})
+  const listTopicQuery = reactQueryClient.useQuery('/topics/list', {})
 
   const form = useForm({
     defaultValues: {
@@ -62,10 +62,10 @@ export function OnboardingTopic() {
                   onValueChange={setInterestedTopics}
                   className="flex flex-row gap-2 flex-wrap justify-start"
                 >
-                  {getTopicQuery.isLoading ? (
+                  {listTopicQuery.isLoading ? (
                     <TopicSkeleton />
-                  ) : getTopicQuery.data ? (
-                    getTopicQuery.data.map((tag) => (
+                  ) : listTopicQuery.data ? (
+                    listTopicQuery.data.map((tag) => (
                       <ToggleGroupItem key={tag.id} value={tag.id} variant="outline">
                         <Text>{tag.name}</Text>
                       </ToggleGroupItem>

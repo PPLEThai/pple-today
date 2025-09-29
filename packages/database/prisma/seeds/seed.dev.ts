@@ -1,0 +1,417 @@
+import { PrismaPg } from '@prisma/adapter-pg'
+
+import {
+  AnnouncementType,
+  BannerNavigationType,
+  FeedItemType,
+  PollType,
+  PrismaClient,
+  TopicStatus,
+} from '../../__generated__/prisma'
+
+const transformProvinceDetails = async (): Promise<{
+  provinces: string[]
+  address: {
+    postalCode: string
+    province: string
+    district: string
+    subDistrict: string
+  }[]
+}> => {
+  const response = await fetch(
+    'https://raw.githubusercontent.com/earthchie/jquery.Thailand.js/refs/heads/master/jquery.Thailand.js/database/raw_database/raw_database.json'
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch province details')
+  }
+
+  const data: {
+    zipcode: number
+    province: string
+    amphoe: string
+    district: string
+  }[] = await response.json()
+
+  const onlyProvince = data.map(({ province }) => province)
+  const uniqueProvince = Array.from(new Set<string>(onlyProvince))
+
+  return {
+    provinces: uniqueProvince,
+    address: data.map(({ zipcode, amphoe, province, district }) => ({
+      postalCode: zipcode.toString(),
+      province,
+      district: amphoe,
+      subDistrict: district,
+    })),
+  }
+}
+
+const connectionString = `${process.env.DATABASE_URL}`
+
+const adapter = new PrismaPg({ connectionString })
+const prisma = new PrismaClient({
+  adapter,
+})
+
+const OFFICIAL_USER_ID = 'pple-official-user'
+
+const seedAddresses = async (
+  addresses: {
+    postalCode: string
+    province: string
+    district: string
+    subDistrict: string
+  }[]
+) => {
+  for (const { province, district, subDistrict, postalCode } of addresses) {
+    await prisma.address.upsert({
+      where: {
+        province_district_subDistrict_postalCode: {
+          province,
+          district,
+          subDistrict,
+          postalCode,
+        },
+      },
+      create: {
+        province,
+        district,
+        subDistrict,
+        postalCode,
+      },
+      update: {
+        province,
+        district,
+        subDistrict,
+        postalCode,
+      },
+    })
+  }
+
+  console.log('Seeded address successfully.')
+}
+
+const seedBanners = async () => {
+  const externalBrowser = {
+    destination: `https://example.com/banner`,
+    navigation: 'EXTERNAL_BROWSER',
+  } as const
+  const inAppBrowser = {
+    destination: `/feed/id`,
+    navigation: 'IN_APP_NAVIGATION',
+  } as const
+  const miniApp = {
+    destination: 'https://example.com/mini-app',
+    navigation: 'MINI_APP',
+  } as const
+  for (let i = 1; i <= 5; ++i) {
+    let navigationDetails: { destination: string; navigation: BannerNavigationType }
+    switch (i % 3) {
+      case 0:
+        navigationDetails = externalBrowser
+        break
+      case 1:
+        navigationDetails = inAppBrowser
+        break
+      default:
+        navigationDetails = miniApp
+        break
+    }
+
+    await prisma.banner.upsert({
+      where: {
+        id: `banner-${i}`,
+      },
+      create: {
+        id: `banner-${i}`,
+        imageFilePath: `local/test/banner-${i}.png`,
+        status: 'PUBLISH',
+        order: i,
+        ...navigationDetails,
+      },
+      update: {
+        id: `banner-${i}`,
+        imageFilePath: `local/test/banner-${i}.png`,
+        status: 'PUBLISH',
+        order: i,
+        ...navigationDetails,
+      },
+    })
+  }
+  console.log('Seeded banners successfully.')
+}
+
+const seedOfficialUser = async () => {
+  await prisma.user.upsert({
+    where: { id: OFFICIAL_USER_ID },
+    update: {
+      name: `พรรคประชาชน - People's Party`,
+      phoneNumber: '+0000000000',
+      roles: {
+        connectOrCreate: {
+          where: { userId_role: { userId: OFFICIAL_USER_ID, role: 'official' } },
+          create: { role: 'official' },
+        },
+      },
+    },
+    create: {
+      id: OFFICIAL_USER_ID,
+      name: `พรรคประชาชน - People's Party`,
+      phoneNumber: '+0000000000',
+      roles: {
+        connectOrCreate: {
+          where: { userId_role: { userId: OFFICIAL_USER_ID, role: 'official' } },
+          create: { role: 'official' },
+        },
+      },
+    },
+  })
+  console.log('Seeded official user successfully.')
+}
+
+const seedTopics = async (provinces: any[]) => {
+  await prisma.$transaction(async (tx) => {
+    for (const province of provinces) {
+      await tx.topic.upsert({
+        where: { name: province },
+        update: {},
+        create: {
+          name: province,
+          description: `ข่าวเกี่ยวกับจังหวัด${province}`,
+          status: TopicStatus.PUBLISH,
+        },
+      })
+    }
+  })
+  await prisma.topic.upsert({
+    where: { id: 'topic-1' },
+    update: {},
+    create: {
+      id: 'topic-1',
+      name: 'Education',
+      description: 'All about education',
+      status: TopicStatus.PUBLISH,
+    },
+  })
+  await prisma.topic.upsert({
+    where: { id: 'topic-2' },
+    update: {},
+    create: {
+      id: 'topic-2',
+      name: 'Economy',
+      description: 'All about economy',
+      status: TopicStatus.PUBLISH,
+    },
+  })
+  console.log('Seeded topics successfully.')
+}
+
+const seedDraftPolls = async () => {
+  await prisma.pollDraft.upsert({
+    where: { id: 'draft-poll-1' },
+    update: {},
+    create: {
+      id: 'draft-poll-1',
+      title: 'Draft Poll 1',
+      description: 'This is a draft poll.',
+      options: {
+        create: [
+          { id: 'draft-option-1', title: 'Option 1' },
+          { id: 'draft-option-2', title: 'Option 2' },
+          { id: 'draft-option-3', title: 'Option 3' },
+          { id: 'draft-option-4', title: 'Option 4' },
+        ],
+      },
+      type: PollType.SINGLE_CHOICE,
+      topics: {
+        create: [
+          { topic: { connect: { id: 'topic-1' } } },
+          { topic: { connect: { id: 'topic-2' } } },
+        ],
+      },
+    },
+  })
+  console.log('Seeded draft polls successfully.')
+}
+
+const seedHashtags = async () => {
+  await prisma.hashTag.upsert({
+    where: { id: 'hashtag-1' },
+    update: {},
+    create: {
+      id: 'hashtag-1',
+      name: '#PPLEToday',
+      status: 'PUBLISH',
+    },
+  })
+  await prisma.hashTag.upsert({
+    where: { id: 'hashtag-2' },
+    update: {},
+    create: {
+      id: 'hashtag-2',
+      name: '#Announcements',
+      status: 'PUBLISH',
+    },
+  })
+  await prisma.hashTag.upsert({
+    where: { id: 'hashtag-3' },
+    update: {},
+    create: {
+      id: 'hashtag-3',
+      name: '#Polls',
+      status: 'PUBLISH',
+    },
+  })
+  console.log('Seeded hashtags successfully.')
+}
+
+const seedPolls = async () => {
+  for (let i = 0; i < 20; ++i) {
+    await prisma.feedItem.upsert({
+      where: { id: `poll-${i + 1}` },
+      update: {},
+      create: {
+        id: `poll-${i + 1}`,
+        author: {
+          connect: { id: OFFICIAL_USER_ID },
+        },
+        type: FeedItemType.POLL,
+        poll: {
+          create: {
+            title: `Poll ${i + 1}`,
+            description: `This is the ${i + 1}nth poll.`,
+            options: {
+              create: [
+                { title: 'Option 1' },
+                { title: 'Option 2' },
+                { title: 'Option 3' },
+                { title: 'Option 4' },
+              ],
+            },
+            type: PollType.SINGLE_CHOICE,
+            endAt: new Date(Date.now() + (i - 10) * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000),
+            topics: {
+              create: [
+                { topic: { connect: { id: 'topic-1' } } },
+                { topic: { connect: { id: 'topic-2' } } },
+              ],
+            },
+          },
+        },
+      },
+    })
+  }
+  console.log('Seeded polls successfully.')
+}
+
+const seedAnnouncements = async () => {
+  await prisma.feedItem.upsert({
+    where: { id: 'announcement-1' },
+    update: {},
+    create: {
+      id: 'announcement-1',
+      type: FeedItemType.ANNOUNCEMENT,
+      author: {
+        connect: { id: OFFICIAL_USER_ID },
+      },
+      announcement: {
+        create: {
+          title: 'Welcome to PPLE Today',
+          content: 'This is the first announcement on PPLE Today.',
+          type: AnnouncementType.OFFICIAL,
+          attachments: {
+            create: [
+              {
+                filePath: 'https://picsum.photos/300?random=0',
+              },
+              {
+                filePath: 'https://picsum.photos/300?random=1',
+              },
+            ],
+          },
+        },
+      },
+    },
+  })
+  await prisma.feedItem.upsert({
+    where: { id: 'announcement-2' },
+    update: {},
+    create: {
+      id: 'announcement-2',
+      type: FeedItemType.ANNOUNCEMENT,
+      author: {
+        connect: { id: OFFICIAL_USER_ID },
+      },
+      announcement: {
+        create: {
+          title: 'Welcome to PPLE Today',
+          content: 'This is the second announcement on PPLE Today.',
+          type: AnnouncementType.OFFICIAL,
+          attachments: {
+            create: [
+              {
+                filePath: 'https://picsum.photos/300?random=4',
+              },
+              {
+                filePath: 'https://picsum.photos/300?random=5',
+              },
+            ],
+          },
+        },
+      },
+    },
+  })
+  await prisma.feedItem.upsert({
+    where: { id: 'announcement-3' },
+    update: {},
+    create: {
+      id: 'announcement-3',
+      type: FeedItemType.ANNOUNCEMENT,
+      author: {
+        connect: { id: OFFICIAL_USER_ID },
+      },
+      announcement: {
+        create: {
+          title: 'Welcome to PPLE Today',
+          content: 'This is the third announcement on PPLE Today.',
+          type: AnnouncementType.OFFICIAL,
+          attachments: {
+            create: [
+              {
+                filePath: 'https://picsum.photos/300?random=2',
+              },
+              {
+                filePath: 'https://picsum.photos/300?random=3',
+              },
+            ],
+          },
+        },
+      },
+    },
+  })
+  console.log('Seeded announcements successfully.')
+}
+
+async function main() {
+  const { address, provinces } = await transformProvinceDetails()
+
+  await seedAddresses(address)
+  await seedHashtags()
+  await seedOfficialUser()
+  await seedTopics(provinces)
+  await seedDraftPolls()
+  await seedPolls()
+  await seedAnnouncements()
+  await seedBanners()
+}
+
+main()
+  .then(() => {
+    console.log('Seeding completed successfully.')
+    return prisma.$disconnect()
+  })
+  .catch((error) => {
+    console.error('Error during seeding:', error)
+    return prisma.$disconnect()
+  })

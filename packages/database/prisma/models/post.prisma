@@ -19,10 +19,10 @@ model PostAttachment {
     id     String @id @default(cuid())
     postId String
 
-    url      String
-    type     PostAttachmentType
-    cacheKey String             @unique
-    order    Int
+    attachmentPath String
+    type           PostAttachmentType
+    cacheKey       String             @unique
+    order          Int
 
     description   String?
     thumbnailPath String?
@@ -47,4 +47,6 @@ model PostHashTag {
     post    Post    @relation(fields: [postId], references: [feedItemId], onDelete: Cascade)
 
     @@id([postId, hashTagId])
+    @@index([postId])
+    @@index([hashTagId])
 }

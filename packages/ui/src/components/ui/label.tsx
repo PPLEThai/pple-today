@@ -24,7 +24,7 @@ function Label({
     >
       <LabelPrimitive.Text
         className={cn(
-          'text-sm text-foreground native:text-base font-anakotmai-medium web:peer-disabled:cursor-not-allowed web:peer-disabled:opacity-70',
+          'text-sm text-foreground native:text-base font-heading-semibold web:peer-disabled:cursor-not-allowed web:peer-disabled:opacity-70',
           className
         )}
         {...props}

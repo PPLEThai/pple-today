@@ -12,7 +12,7 @@ import {
 } from '@pple-today/ui/dialog'
 import { Icon } from '@pple-today/ui/icon'
 import { Text } from '@pple-today/ui/text'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   AuthRequest,
   AuthSessionResult,
@@ -24,14 +24,14 @@ import {
   makeRedirectUri,
   ResponseType,
 } from 'expo-auth-session'
+import Constants from 'expo-constants'
 import { useRouter } from 'expo-router'
 import { TriangleAlertIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import appConfig from '@app/app.config'
 import { environment } from '@app/env'
 
-import { AuthSession, getAuthSession, setAuthSession } from './session'
+import { AuthSession, getAuthSession, getAuthSessionAsync, setAuthSession } from './session'
 
 import { fetchClient, reactQueryClient } from '../api-client'
 import { getBrowserPackage } from '../get-browser-package'
@@ -43,7 +43,7 @@ const authRequest: AuthRequest = new AuthRequest({
   scopes: ['openid', 'profile', 'phone'],
   codeChallengeMethod: CodeChallengeMethod.S256,
   redirectUri: makeRedirectUri({
-    native: `${appConfig.expo.scheme}:///loading`,
+    native: `${Constants.expoConfig?.scheme}:///loading`,
   }),
 })
 
@@ -55,9 +55,15 @@ export const useDiscoveryQuery = createQuery({
   },
 })
 
+export function useSession(): AuthSession | null {
+  const sessionQuery = useSessionQuery()
+  return sessionQuery.data!
+}
+
 export const useSessionQuery = createQuery({
   queryKey: ['session'],
-  fetcher: getAuthSession,
+  fetcher: getAuthSessionAsync,
+  initialData: getAuthSession,
 })
 
 const useSetSessionMutation = createMutation({
@@ -76,8 +82,8 @@ export const useSessionMutation = () => {
       }
     },
     onSuccess: () => {
-      queryClient.refetchQueries({ queryKey: useSessionQuery.getKey() })
-      queryClient.refetchQueries({ queryKey: useUserQuery.getKey() })
+      queryClient.invalidateQueries({ queryKey: useSessionQuery.getKey() })
+      queryClient.invalidateQueries({ queryKey: useUserQuery.getKey() })
     },
   })
 }
@@ -120,6 +126,7 @@ export const useUserQuery = createQuery<
     return userInfoResult.data
   },
   initialData: null,
+  retry: false,
 })
 
 export const useUser = () => {
@@ -135,22 +142,8 @@ export const useUser = () => {
 }
 
 export const useAuthMe = () => {
-  return useQuery({
-    queryKey: reactQueryClient.getQueryKey('/auth/me'),
-    queryFn: async () => {
-      const session = await getAuthSession()
-      if (!session) {
-        return null
-      }
-      const authMeResult = await fetchClient('/auth/me', {
-        headers: { Authorization: `Bearer ${session.accessToken}` },
-      })
-      if (authMeResult.error) {
-        throw authMeResult.error
-      }
-      return authMeResult.data
-    },
-  })
+  const session = useSession()
+  return reactQueryClient.useQuery('/auth/me', {}, { enabled: !!session })
 }
 
 export const codeExchange = async ({
@@ -195,7 +188,8 @@ export const AuthLifeCycleHook = () => {
       console.error('Error fetching session:', JSON.stringify(sessionQuery.error))
       sessionMutation.mutate(null)
     }
-  }, [sessionQuery.error, sessionMutation])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionQuery.error])
 
   const userQuery = useUserQuery({
     variables: {
@@ -210,23 +204,22 @@ export const AuthLifeCycleHook = () => {
     // incase the session's access token is expired
     if (userQuery.error?.error === 'access_denied') {
       console.log('Error fetching user info:', userQuery.error)
+      sessionMutation.mutate(null)
       setDialogOpen(true)
       return
     }
     if (userQuery.error) {
       console.error('Error fetching user info:', userQuery.error)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userQuery.error])
 
-  // TODO: make these queries run in background with low priority after logging in
-  useAuthMe()
-  reactQueryClient.useQuery('/profile/me', {}, { enabled: !!userQuery.data })
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogContent>
         <DialogHeader>
           <Icon icon={TriangleAlertIcon} size={40} strokeWidth={1} />
-          <DialogTitle className="text-2xl font-anakotmai-medium">
+          <DialogTitle className="text-2xl font-heading-semibold">
             กรุณาเข้าสู่ระบบอีกครั้ง
           </DialogTitle>
         </DialogHeader>

@@ -1,18 +1,9 @@
-enum UserRole {
-    USER
-    REPRESENTATIVE
-    MEMBER
-    STAFF
-    OFFICIAL
-}
-
 model User {
-    id           String   @id @default(cuid())
-    name         String
-    phoneNumber  String   @unique
-    profileImage String?
-    point        Int      @default(0)
-    role         UserRole @default(USER)
+    id               String  @id @default(cuid())
+    name             String
+    phoneNumber      String  @unique
+    profileImagePath String?
+    point            Int     @default(0)
 
     responsibleArea String?
 
@@ -38,13 +29,22 @@ model User {
     followers      UserFollowsUser[]  @relation("FollowedBy")
     followedTopics UserFollowsTopic[]
 
-    eventAttendants EventAttendant[]
-
-    electionEligibleVoters ElectionEligibleVoter[]
+    voters      ElectionEligibleVoter[]
+    voteRecords ElectionVoteRecord[]
 
     linkedPage FacebookPage?
 
     feedItems     FeedItem[]
     feedReactions FeedItemReaction[]
     feedComments  FeedItemComment[]
+    roles         UserRole[]
+}
+
+model UserRole {
+    userId String
+    role   String
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@id([userId, role])
 }

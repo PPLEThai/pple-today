@@ -14,12 +14,21 @@ enum ElectionResultType {
     ONLINE
 }
 
+enum ElectionMode {
+    SECURE
+    FLEXIBLE
+}
+
 model Election {
-    id          String       @id @default(cuid())
-    name        String
-    description String?
-    location    String?
-    type        ElectionType
+    id                        String       @id @default(cuid())
+    name                      String
+    description               String?
+    location                  String?
+    type                      ElectionType
+    mode                      ElectionMode @default(SECURE)
+    encryptionPublicKey       String?
+    digitalSignaturePublicKey String?
+    isCancelled               Boolean      @default(false)
 
     publishDate   DateTime?
     openRegister  DateTime?
@@ -32,56 +41,75 @@ model Election {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    candidates ElectionCandidate[]
-    voters     ElectionEligibleVoter[]
+    candidates  ElectionCandidate[]
+    voters      ElectionEligibleVoter[]
+    voteRecords ElectionVoteRecord[]
+    ballots     ElectionBallot[]
 
     @@index([name])
 }
 
 model ElectionCandidate {
-    id           String  @id @default(cuid())
-    electionId   String
-    name         String
-    description  String?
-    profileImage String?
-    number       Int?
+    id               String  @id @default(cuid())
+    electionId       String
+    name             String
+    description      String?
+    profileImagePath String?
+    number           Int?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    election Election @relation(fields: [electionId], references: [id])
+    election Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
 
     results ElectionResult[]
+
+    @@index(electionId)
 }
 
 model ElectionEligibleVoter {
-    id         String             @id @default(cuid())
     electionId String
     userId     String
-    type       EligibleVoterType?
+    type       EligibleVoterType
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    election Election @relation(fields: [electionId], references: [id])
-    user     User     @relation(fields: [userId], references: [id])
+    election Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+    user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    ElectionEligibleBallot ElectionEligibleBallot[]
-
-    @@index([userId])
+    @@id([electionId, userId])
+    @@index(userId)
 }
 
-model ElectionEligibleBallot {
-    id              String @id @default(cuid())
-    voterId         String @unique
+model ElectionVoteRecord {
+    electionId    String
+    userId        String
+    ballotId      String?  @unique
+    location      String?
+    faceImagePath String?
+    createdAt     DateTime @default(now())
+    updatedAt     DateTime @updatedAt
+
+    election Election        @relation(fields: [electionId], references: [id], onDelete: Cascade)
+    user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+    ballot   ElectionBallot? @relation(fields: [ballotId], references: [id], onDelete: SetNull)
+
+    @@id([electionId, userId])
+    @@index(userId)
+}
+
+model ElectionBallot {
+    id              String   @id @default(cuid())
+    electionId      String
     encryptedBallot String
-    location        String
-    faceImageURL    String
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    election   Election            @relation(fields: [electionId], references: [id], onDelete: Cascade)
+    voteRecord ElectionVoteRecord?
 
-    voter ElectionEligibleVoter @relation(fields: [voterId], references: [id])
+    @@index(electionId)
 }
 
 model ElectionResult {
@@ -93,7 +121,7 @@ model ElectionResult {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    candidate ElectionCandidate @relation(fields: [candidateId], references: [id])
+    candidate ElectionCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 
     @@unique([candidateId, type])
 }

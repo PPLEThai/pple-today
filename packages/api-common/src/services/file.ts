@@ -1,10 +1,11 @@
 import {
+  DeleteFileResponse,
   GenerateSignedPostPolicyV4Options,
   GetSignedUrlConfig,
   Storage,
 } from '@google-cloud/storage'
 import https from 'https'
-import { Err, fromPromise, Ok, ok } from 'neverthrow'
+import { Err, fromPromise, Ok, ok, Result } from 'neverthrow'
 import { Readable } from 'stream'
 
 import { InternalErrorCode } from '../dtos'
@@ -208,7 +209,7 @@ export class FileService {
     if (signedUrlWithError.length > 0) {
       return err({
         code: InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
-        message: 'Failed to create signed URLs',
+        message: 'Failed to get one or more signed URLs',
       })
     }
 
@@ -247,23 +248,15 @@ export class FileService {
     return this.bucket.file(fileKey).publicUrl()
   }
 
-  async uploadProfilePagePicture(url: string, pageId: string) {
-    const destination = `public/pages/profile-picture-${pageId}.jpg`
-    const result = await this.uploadFileFromUrl(url, destination)
-
-    if (result.isErr()) {
-      return result
-    }
-
-    const markAsPublicResult = await this.markAsPublic(destination)
-    if (markAsPublicResult.isErr()) {
-      return markAsPublicResult
-    }
-
-    return ok(destination)
-  }
-
-  async deleteFile(fileKey: string) {
+  async removeFile(fileKey: string): Promise<
+    Result<
+      DeleteFileResponse,
+      {
+        code: 'FILE_DELETE_ERROR'
+        message: string
+      }
+    >
+  > {
     return fromPromise(this.bucket.file(fileKey).delete(), (err) => ({
       code: InternalErrorCode.FILE_DELETE_ERROR,
       message: (err as Error).message,
@@ -350,12 +343,21 @@ export class FileService {
     const fileTransaction = new FileTransactionService(this)
 
     try {
-      return [await cb(fileTransaction), fileTransaction] as any
+      const result = await cb(fileTransaction)
+
+      // NOTE: If the result is an Err which parts of our expected errors, rethrow it to trigger the rollback
+      if (result instanceof Err) {
+        throw result
+      }
+
+      return [result, fileTransaction] as any
     } catch (err) {
+      const errorBody = err instanceof Err ? err.error : err
       this.loggerService.warn({
         message: 'File transaction failed, rolling back changes',
-        context: { err },
+        context: { err: errorBody },
       })
+
       const rollbackResult = await fileTransaction.rollback()
       if (rollbackResult.isErr()) return rollbackResult as any
       throw err
@@ -424,7 +426,10 @@ export class FileTransactionService {
   private async bulkMoveToFolder(fileKeys: FilePath[], prefixFolder: string) {
     const newFileKeys: FilePath[] = []
     for (const fileKey of fileKeys) {
-      if (fileKey.startsWith(prefixFolder)) continue
+      if (fileKey.startsWith(prefixFolder)) {
+        newFileKeys.push(fileKey)
+        continue
+      }
 
       const newFileKey = (prefixFolder + getFilePath(fileKey)) as FilePath
       const result = await this.moveFile(fileKey, newFileKey)
@@ -489,12 +494,12 @@ export class FileTransactionService {
     return await this.bulkMoveToFolder(fileKeys, this.fileService.prefixPrivateFolder)
   }
 
-  async bulkRemoveFile(fileKeys: FilePath[]) {
+  async bulkDeleteFile(fileKeys: FilePath[]) {
     return await this.bulkMoveToFolder(fileKeys, this.fileService.prefixDeletedFolder)
   }
 
-  async removeFile(fileKey: FilePath) {
-    return await this.bulkRemoveFile([fileKey])
+  async deleteFile(fileKey: FilePath) {
+    return await this.bulkDeleteFile([fileKey])
   }
 
   async rollback() {
@@ -548,7 +553,7 @@ export class FileTransactionService {
 
           break
         case 'UPLOAD':
-          result = await this.fileService.deleteFile(entry.target)
+          result = await this.fileService.removeFile(entry.target)
 
           if (result.isErr()) {
             this.transaction.push(entry)

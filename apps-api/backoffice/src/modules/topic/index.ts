@@ -5,10 +5,14 @@ import Elysia from 'elysia'
 import {
   FollowTopicParams,
   FollowTopicResponse,
+  GetTopicParams,
+  GetTopicRecommendationResponse,
+  GetTopicResponse,
   GetTopicsResponse,
+  ListTopicResponse,
   UnFollowTopicParams,
 } from './models'
-import { TopicServicePlugin } from './service'
+import { TopicServicePlugin } from './services'
 
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
 import { UnfollowUserResponse } from '../profile/models'
@@ -38,6 +42,80 @@ export const TopicController = new Elysia({
       detail: {
         summary: 'Get all topics',
         description: 'Get all topics entries',
+      },
+    }
+  )
+  .get(
+    '/:id',
+    async ({ topicService, status, params }) => {
+      const topic = await topicService.getTopicById(params.id)
+
+      if (topic.isErr()) {
+        return mapErrorCodeToResponse(topic.error, status)
+      }
+
+      return status(200, topic.value)
+    },
+    {
+      params: GetTopicParams,
+      response: {
+        200: GetTopicResponse,
+        ...createErrorSchema(InternalErrorCode.TOPIC_NOT_FOUND),
+        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+      detail: {
+        summary: 'Get topic by id',
+        description: 'Get topic details by id',
+      },
+    }
+  )
+  .get(
+    '/recommend',
+    async ({ user, topicService, status }) => {
+      const result = await topicService.getTopicRecommendation(user.id)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      response: {
+        200: GetTopicRecommendationResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get recommended topics',
+        description: "Fetch the authenticated user's recommended topics",
+      },
+    }
+  )
+  .get(
+    '/list',
+    async ({ user, topicService, status }) => {
+      const topics = await topicService.listTopic(user.id)
+      if (topics.isErr()) {
+        return mapErrorCodeToResponse(topics.error, status)
+      }
+      return status(200, topics.value)
+    },
+    {
+      requiredLocalUser: true,
+      response: {
+        200: ListTopicResponse,
+        ...createErrorSchema(
+          InternalErrorCode.INTERNAL_SERVER_ERROR,
+          InternalErrorCode.UNAUTHORIZED
+        ),
+      },
+      detail: {
+        summary: 'List topics with followed status',
+        description: 'List topics with followed status',
       },
     }
   )

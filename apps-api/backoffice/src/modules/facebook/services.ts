@@ -1,5 +1,5 @@
-import { InternalErrorCode } from '@pple-today/api-common/dtos'
-import { FileService } from '@pple-today/api-common/services'
+import { FilePath, InternalErrorCode } from '@pple-today/api-common/dtos'
+import { FileService, FileTransactionService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
@@ -99,7 +99,7 @@ export class FacebookService {
     }
 
     const publicProfilePictureUrl = this.fileService.getPublicFileUrl(
-      linkedPageResult.value.profilePictureUrl
+      linkedPageResult.value.profileImagePath
     )
 
     return ok({
@@ -147,22 +147,24 @@ export class FacebookService {
       return mapRepositoryError(pageAccessToken.error)
     }
 
-    let profilePictureUrl = existingPage.value?.profilePictureUrl
+    let profilePicturePath = existingPage.value?.profilePicturePath
+    let txFile: FileTransactionService | null = null
 
     if (
-      !profilePictureUrl ||
+      !profilePicturePath ||
       pageDetails.value.picture.data.cache_key !== existingPage.value?.profilePictureCacheKey
     ) {
-      const uploadResult = await this.fileService.uploadProfilePagePicture(
+      const uploadResult = await this.facebookRepository.handleUploadedProfilePicture(
         pageDetails.value.picture.data.url,
-        facebookPageId
+        `temp/pages/profile-picture-${facebookPageId}.jpg` as FilePath
       )
 
       if (uploadResult.isErr()) {
-        return err(uploadResult.error)
+        return mapRepositoryError(uploadResult.error)
       }
 
-      profilePictureUrl = uploadResult.value
+      profilePicturePath = uploadResult.value[0]
+      txFile = uploadResult.value[1]
     }
 
     const linkedPage = await this.facebookRepository.linkFacebookPageToUser(
@@ -170,13 +172,17 @@ export class FacebookService {
       facebookPageId,
       {
         facebookPageAccessToken: pageAccessToken.value.accessToken,
-        profilePictureUrl,
+        profilePicturePath,
         profilePictureCacheKey: pageDetails.value.picture.data.cache_key,
         pageName: pageDetails.value.name,
       }
     )
 
     if (linkedPage.isErr()) {
+      if (txFile) {
+        const rollbackResult = await txFile.rollback()
+        if (rollbackResult.isErr()) return mapRepositoryError(rollbackResult.error)
+      }
       return mapRepositoryError(linkedPage.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.USER_NOT_FOUND,
@@ -192,6 +198,10 @@ export class FacebookService {
     )
 
     if (subscribeResult.isErr()) {
+      if (txFile) {
+        const rollbackResult = await txFile.rollback()
+        if (rollbackResult.isErr()) return mapRepositoryError(rollbackResult.error)
+      }
       return mapRepositoryError(subscribeResult.error)
     }
 
