@@ -213,7 +213,7 @@ export class AdminElectionService {
         id: voter.user.id,
         name: voter.user.name,
         phoneNumber: voter.user.phoneNumber,
-        profileImagePath: voter.user.profileImagePath,
+        profileImage: voter.user.profileImagePath,
       }))
     )
   }
@@ -244,13 +244,13 @@ export class AdminElectionService {
     let result
     switch (voters.identifier) {
       case ElectionEligibleVoterIdentifier.USER_ID:
-        result = await this.adminElectionRepository.bulkDeleteElectionElgibleVoterByUserIds(
+        result = await this.adminElectionRepository.bulkDeleteElectionEligibleVoterByUserIds(
           electionId,
           voters.userIds
         )
         break
       case ElectionEligibleVoterIdentifier.PHONE_NUMBER:
-        result = await this.adminElectionRepository.bulkDeleteElectionElgibleVoterByPhoneNumber(
+        result = await this.adminElectionRepository.bulkDeleteElectionEligibleVoterByPhoneNumber(
           electionId,
           voters.phoneNumbers
         )
@@ -339,7 +339,7 @@ export class AdminElectionService {
     }
 
     const bulkCreateEligibleVotersResult =
-      await this.adminElectionRepository.bulkCreateElectionElgibleVoterByUserIds(
+      await this.adminElectionRepository.bulkCreateElectionEligibleVoterByUserIds(
         electionId,
         voterType,
         userIds

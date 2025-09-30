@@ -327,7 +327,7 @@ export class AdminElectionRepository {
     })
   }
 
-  async bulkCreateElectionElgibleVoterByUserIds(
+  async bulkCreateElectionEligibleVoterByUserIds(
     electionId: string,
     voterType: EligibleVoterType,
     userIds: string[]
@@ -344,7 +344,7 @@ export class AdminElectionRepository {
     )
   }
 
-  async bulkDeleteElectionElgibleVoterByUserIds(electionId: string, userIds: string[]) {
+  async bulkDeleteElectionEligibleVoterByUserIds(electionId: string, userIds: string[]) {
     return fromRepositoryPromise(
       this.prismaService.electionEligibleVoter.deleteMany({
         where: {
@@ -357,7 +357,7 @@ export class AdminElectionRepository {
     )
   }
 
-  async bulkDeleteElectionElgibleVoterByPhoneNumber(electionId: string, phoneNumbers: string[]) {
+  async bulkDeleteElectionEligibleVoterByPhoneNumber(electionId: string, phoneNumbers: string[]) {
     return fromRepositoryPromise(
       this.prismaService.electionEligibleVoter.deleteMany({
         where: {

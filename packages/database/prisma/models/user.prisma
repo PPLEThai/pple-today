@@ -38,8 +38,6 @@ model User {
     feedReactions FeedItemReaction[]
     feedComments  FeedItemComment[]
     roles         UserRole[]
-
-    @@index(phoneNumber)
 }
 
 model UserRole {

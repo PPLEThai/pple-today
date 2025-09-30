@@ -25,8 +25,8 @@ import {
   AdminGetElectionResponse,
   AdminListElectionCandidatesParams,
   AdminListElectionCandidatesResponse,
-  AdminListElectionElgibleVoterParams,
-  AdminListElectionElgibleVoterResponse,
+  AdminListElectionEligibleVoterParams,
+  AdminListElectionEligibleVoterResponse,
   AdminListElectionQuery,
   AdminListElectionResponse,
   AdminUpdateElectionCandidateParams,
@@ -127,7 +127,7 @@ export const AdminElectionController = new Elysia({
   .group('/:electionId/candidates', (app) =>
     app
       .get(
-        '',
+        '/',
         async ({ params, status, adminElectionService }) => {
           const result = await adminElectionService.listElectionCandidates(params.electionId)
           if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
@@ -180,7 +180,7 @@ export const AdminElectionController = new Elysia({
         }
       )
       .post(
-        '',
+        '/',
         async ({ params, body, status, adminElectionService }) => {
           const result = await adminElectionService.createElectionCandidate(params.electionId, body)
           if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
@@ -277,7 +277,7 @@ export const AdminElectionController = new Elysia({
   .group('/:electionId/eligible-voters', (app) =>
     app
       .get(
-        '',
+        '/',
         async ({ params, adminElectionService, status }) => {
           const result = await adminElectionService.listElectionEligibleVoters(params.electionId)
           if (result.isErr()) {
@@ -288,13 +288,13 @@ export const AdminElectionController = new Elysia({
         },
         {
           detail: {
-            summary: 'List elgible voters',
-            description: 'List elgible voters',
+            summary: 'List eligible voters',
+            description: 'List eligible voters',
           },
           requiredLocalUser: true,
-          params: AdminListElectionElgibleVoterParams,
+          params: AdminListElectionEligibleVoterParams,
           response: {
-            200: AdminListElectionElgibleVoterResponse,
+            200: AdminListElectionEligibleVoterResponse,
             ...createErrorSchema(
               InternalErrorCode.UNAUTHORIZED,
               InternalErrorCode.INTERNAL_SERVER_ERROR
@@ -303,7 +303,7 @@ export const AdminElectionController = new Elysia({
         }
       )
       .post(
-        '',
+        '/',
         async ({ params, body, status, adminElectionService }) => {
           const voters =
             body.identifier === 'USER_ID'

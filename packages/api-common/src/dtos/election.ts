@@ -44,10 +44,10 @@ export const ElectionCandidate = t.Object({
 })
 export type ElectionCandidate = Static<typeof ElectionCandidate>
 
-export const ElectionElgibleVoter = t.Object({
+export const ElectionEligibleVoter = t.Object({
   id: t.String(),
   name: t.String(),
   phoneNumber: t.String(),
-  profileImagePath: t.Nullable(t.String()),
+  profileImage: t.Nullable(t.String({ format: 'uri' })),
 })
-export type ElectionElgibleVoter = Static<typeof ElectionElgibleVoter>
+export type ElectionEligibleVoter = Static<typeof ElectionEligibleVoter>
