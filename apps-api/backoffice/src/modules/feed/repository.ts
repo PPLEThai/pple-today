@@ -3,8 +3,11 @@ import { FeedItem, FeedItemBaseContent } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { FeedItemReactionType, FeedItemType, Prisma } from '@pple-today/database/prisma'
+import { get_candidate_feed_item } from '@pple-today/database/prisma/sql'
+import dayjs from 'dayjs'
 import Elysia from 'elysia'
 import { Ok, ok } from 'neverthrow'
+import * as R from 'remeda'
 import { sumBy } from 'remeda'
 
 import { GetFeedContentResponse } from './models'
@@ -302,23 +305,126 @@ export class FeedRepository {
     return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
   }
 
-  async listFeedItems({ userId, page, limit }: { userId?: string; page: number; limit: number }) {
-    const skip = Math.max((page - 1) * limit, 0)
-    const rawFeedItems = await fromRepositoryPromise(
-      this.prismaService.feedItem.findMany({
-        where: {
-          type: {
-            not: FeedItemType.ANNOUNCEMENT,
+  async listFeedItems({
+    userId,
+    cursor,
+    limit,
+  }: {
+    userId?: string
+    cursor?: string
+    limit: number
+  }) {
+    const rawFeedItems = await fromRepositoryPromise(async () => {
+      if (!userId) {
+        return await this.prismaService.feedItem.findMany({
+          where: {
+            type: {
+              not: FeedItemType.ANNOUNCEMENT,
+            },
+          },
+          orderBy: [
+            {
+              createdAt: 'desc',
+            },
+            {
+              id: 'desc',
+            },
+          ],
+          skip: cursor ? 1 : 0,
+          cursor: cursor
+            ? {
+                id: cursor,
+              }
+            : undefined,
+          take: limit,
+          include: this.constructFeedItemInclude(userId),
+        })
+      }
+
+      const feedItemScore = await this.prismaService.feedItemScore.findMany({
+        where: { userId, expiresAt: { gt: new Date() } },
+        select: {
+          feedItem: {
+            include: this.constructFeedItemInclude(userId),
           },
         },
-        orderBy: {
-          createdAt: 'desc',
-        },
-        skip,
+        orderBy: [
+          {
+            score: 'desc',
+          },
+          {
+            feedItemId: 'desc',
+          },
+        ],
         take: limit,
-        include: this.constructFeedItemInclude(userId),
+        cursor: cursor
+          ? {
+              userId_feedItemId: {
+                userId,
+                feedItemId: cursor,
+              },
+            }
+          : undefined,
       })
-    )
+
+      const remainingSlots = limit - feedItemScore.length
+
+      if (remainingSlots > 0) {
+        const candidateFeedItem = await this.prismaService.$queryRawTyped(
+          get_candidate_feed_item(userId)
+        )
+
+        const candidateFeedItemIds = R.pipe(
+          candidateFeedItem,
+          R.map((item) => ({
+            userId: userId,
+            feedItemId: item.feed_item_id!,
+            score: item.score!,
+            expiresAt: dayjs().add(1, 'hour').toDate(),
+          })),
+          R.filter((item) => item.feedItemId !== null && item.score !== null)
+        )
+
+        await this.prismaService.user.update({
+          where: { id: userId },
+          data: {
+            feedItemScores: { deleteMany: {}, createMany: { data: candidateFeedItemIds } },
+          },
+        })
+
+        const additionalFeedItems = await this.prismaService.feedItemScore.findMany({
+          where: {
+            userId,
+            expiresAt: { gt: new Date() },
+          },
+          select: {
+            feedItem: {
+              include: this.constructFeedItemInclude(userId),
+            },
+          },
+          orderBy: [
+            {
+              score: 'desc',
+            },
+            {
+              feedItemId: 'desc',
+            },
+          ],
+          take: remainingSlots,
+        })
+
+        return R.pipe(
+          feedItemScore,
+          R.map((item) => item.feedItem),
+          R.concat(additionalFeedItems.map((item) => item.feedItem))
+        )
+      }
+
+      return R.pipe(
+        feedItemScore,
+        R.map((item) => item.feedItem)
+      )
+    })
 
     if (rawFeedItems.isErr()) return err(rawFeedItems.error)
 
@@ -407,26 +513,35 @@ export class FeedRepository {
         },
         include: this.constructFeedItemInclude(userId),
         where: {
-          author: {
-            followers: {
-              some: {
-                followerId: userId,
+          OR: [
+            {
+              author: {
+                followers: {
+                  some: {
+                    followerId: userId,
+                  },
+                },
+              },
+              type: {
+                not: FeedItemType.ANNOUNCEMENT,
               },
             },
-          },
-          poll: {
-            topics: {
-              some: {
-                topic: {
-                  followedTopics: {
-                    some: {
-                      userId,
+            {
+              poll: {
+                topics: {
+                  some: {
+                    topic: {
+                      followedTopics: {
+                        some: {
+                          userId,
+                        },
+                      },
                     },
                   },
                 },
               },
             },
-          },
+          ],
         },
       })
     )

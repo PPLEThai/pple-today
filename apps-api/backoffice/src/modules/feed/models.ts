@@ -97,7 +97,7 @@ export const DeleteFeedCommentResponse = t.Object({
 export type DeleteFeedCommentParams = Static<typeof DeleteFeedCommentParams>
 export type DeleteFeedCommentResponse = Static<typeof DeleteFeedCommentResponse>
 
-export const GetMyFeedQuery = PaginationQuery
+export const GetMyFeedQuery = CursorPaginationQuery
 export type GetMyFeedQuery = Static<typeof GetMyFeedQuery>
 
 export const GetMyFeedResponse = t.Array(FeedItem)

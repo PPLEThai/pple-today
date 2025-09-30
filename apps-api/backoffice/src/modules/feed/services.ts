@@ -16,11 +16,10 @@ export class FeedService {
     private readonly fileService: FileService
   ) {}
 
-  async getMyFeed(userId?: string, query?: { page?: number; limit?: number }) {
-    // TODO: Use recommendation from dedicated recommendation service
+  async getMyFeed(userId?: string, query?: { cursor?: string; limit?: number }) {
     const feedItems = await this.feedRepository.listFeedItems({
       userId,
-      page: query?.page ?? 1,
+      cursor: query?.cursor,
       limit: query?.limit ?? 10,
     })
 

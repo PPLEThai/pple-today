@@ -9,5 +9,6 @@ export namespace get_candidate_feed_item {
   export type Parameters = [text: string]
   export type Result = {
     feed_item_id: string | null
+    score: number | null
   }
 }

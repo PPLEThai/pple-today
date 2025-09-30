@@ -36,4 +36,4 @@ WITH
         LIMIT 1000
     )
 
-SELECT final_candidate_score."feed_item_id" FROM final_candidate_score;
+SELECT final_candidate_score."feed_item_id", final_candidate_score."score" FROM final_candidate_score;
