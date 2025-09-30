@@ -357,6 +357,7 @@ export class FeedRepository {
           },
         ],
         take: limit,
+        skip: cursor ? 1 : 0,
         cursor: cursor
           ? {
               userId_feedItemId: {
@@ -377,7 +378,6 @@ export class FeedRepository {
         const candidateFeedItemIds = R.pipe(
           candidateFeedItem,
           R.map((item) => ({
-            userId: userId,
             feedItemId: item.feed_item_id!,
             score: item.score!,
             expiresAt: dayjs().add(1, 'hour').toDate(),
@@ -454,9 +454,6 @@ export class FeedRepository {
         take: query.limit,
         where: {
           authorId: userId,
-          type: {
-            not: FeedItemType.ANNOUNCEMENT,
-          },
           type: {
             not: FeedItemType.ANNOUNCEMENT,
           },

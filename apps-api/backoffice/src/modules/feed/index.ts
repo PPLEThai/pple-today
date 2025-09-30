@@ -98,8 +98,9 @@ export const FeedController = new Elysia({
         ),
       },
       detail: {
-        summary: 'Get feed for current user (Deprecated)',
-        description: 'This endpoint is deprecated. Please use /feed/me instead.',
+        summary: 'Get feed according to following',
+        description:
+          'Fetch feed items for the currently authenticated user based on the users they follow',
       },
     }
   )
