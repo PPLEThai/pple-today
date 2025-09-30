@@ -2,8 +2,7 @@ import {
   CursorPaginationQuery,
   FeedItem,
   FeedItemComment,
-  ListQuery,
-  PaginationQuery,
+  ListCursorQuery,
 } from '@pple-today/api-common/dtos'
 import { FeedItemReactionType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
@@ -109,7 +108,7 @@ export type GetFollowingFeedQuery = Static<typeof GetFollowingFeedQuery>
 export const GetFollowingFeedResponse = t.Array(FeedItem)
 export type GetFollowingFeedResponse = Static<typeof GetFollowingFeedResponse>
 
-export const GetTopicFeedQuery = ListQuery(
+export const GetTopicFeedQuery = ListCursorQuery(
   t.Object({
     topicId: t.String({
       description: 'The ID of the topic to fetch feed items for',
@@ -121,7 +120,7 @@ export type GetTopicFeedQuery = Static<typeof GetTopicFeedQuery>
 export const GetTopicFeedResponse = t.Array(FeedItem)
 export type GetTopicFeedResponse = Static<typeof GetTopicFeedResponse>
 
-export const GetHashTagFeedQuery = ListQuery(
+export const GetHashTagFeedQuery = ListCursorQuery(
   t.Object({
     hashTagId: t.String({
       description: 'The hashtag to fetch feed items for',
@@ -138,7 +137,7 @@ export const GetFeedItemsByUserIdParams = t.Object({
 })
 export type GetFeedItemsByUserIdParams = Static<typeof GetFeedItemsByUserIdParams>
 
-export const GetFeedItemsByUserIdQuery = PaginationQuery
+export const GetFeedItemsByUserIdQuery = CursorPaginationQuery
 export type GetFeedItemsByUserIdQuery = Static<typeof GetFeedItemsByUserIdQuery>
 
 export const GetFeedItemsByUserIdResponse = t.Array(FeedItem)

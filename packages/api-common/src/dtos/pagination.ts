@@ -27,3 +27,7 @@ export type CursorPaginationQuery = Static<typeof CursorPaginationQuery>
 export const ListQuery = <T extends TSchema>(baseQuery: T) => {
   return t.Composite([baseQuery, PaginationQuery])
 }
+
+export const ListCursorQuery = <T extends TSchema>(baseQuery: T) => {
+  return t.Composite([baseQuery, CursorPaginationQuery])
+}

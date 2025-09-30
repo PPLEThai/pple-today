@@ -176,19 +176,23 @@ export class FeedRepository {
   async listTopicFeedItems({
     userId,
     topicId,
-    page,
+    cursor,
     limit,
   }: {
     userId?: string
     topicId: string
-    page: number
+    cursor?: string
     limit: number
   }) {
-    const skip = Math.max((page - 1) * limit, 0)
     const rawFeedItems = await fromRepositoryPromise(
       this.prismaService.feedItem.findMany({
         take: limit,
-        skip,
+        skip: cursor ? 1 : 0,
+        cursor: cursor
+          ? {
+              id: cursor,
+            }
+          : undefined,
         orderBy: {
           createdAt: 'desc',
         },
@@ -242,19 +246,23 @@ export class FeedRepository {
   async listHashTagFeedItems({
     userId,
     hashTagId,
-    page,
+    cursor,
     limit,
   }: {
     userId?: string
     hashTagId: string
-    page: number
+    cursor?: string
     limit: number
   }) {
-    const skip = Math.max((page - 1) * limit, 0)
     const rawFeedItems = await fromRepositoryPromise(
       this.prismaService.feedItem.findMany({
         take: limit,
-        skip,
+        skip: cursor ? 1 : 0,
+        cursor: cursor
+          ? {
+              id: cursor,
+            }
+          : undefined,
         orderBy: {
           createdAt: 'desc',
         },
@@ -322,14 +330,10 @@ export class FeedRepository {
               not: FeedItemType.ANNOUNCEMENT,
             },
           },
-          orderBy: [
-            {
-              createdAt: 'desc',
-            },
-            {
-              id: 'desc',
-            },
-          ],
+          orderBy: {
+            createdAt: 'desc',
+          },
+
           skip: cursor ? 1 : 0,
           cursor: cursor
             ? {
@@ -438,8 +442,10 @@ export class FeedRepository {
     return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
   }
 
-  async listFeedItemsByUserId(userId: string | undefined, query: { page: number; limit: number }) {
-    const skip = Math.max((query.page - 1) * query.limit, 0)
+  async listFeedItemsByUserId(
+    userId: string | undefined,
+    query: { cursor?: string; limit: number }
+  ) {
     const rawFeedItems = await fromRepositoryPromise(async () => {
       await this.prismaService.user.findUniqueOrThrow({
         where: { id: userId },
@@ -450,8 +456,9 @@ export class FeedRepository {
         orderBy: {
           createdAt: 'desc',
         },
-        skip,
+        skip: query.cursor ? 1 : 0,
         take: query.limit,
+        cursor: query.cursor ? { id: query.cursor } : undefined,
         where: {
           authorId: userId,
           type: {

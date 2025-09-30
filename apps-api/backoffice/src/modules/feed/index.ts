@@ -108,7 +108,7 @@ export const FeedController = new Elysia({
     '/topic',
     async ({ query, user, status, feedService }) => {
       const feedResult = await feedService.getTopicFeed(query.topicId, user?.id, {
-        page: query?.page,
+        cursor: query?.cursor,
         limit: query?.limit,
       })
 
@@ -139,7 +139,7 @@ export const FeedController = new Elysia({
     '/hashtag',
     async ({ query, user, status, feedService }) => {
       const feedResult = await feedService.getHashTagFeed(query.hashTagId, user?.id, {
-        page: query.page,
+        cursor: query.cursor,
         limit: query.limit,
       })
 
@@ -170,7 +170,7 @@ export const FeedController = new Elysia({
     '/users/:id',
     async ({ feedService, query, params, status }) => {
       const result = await feedService.getFeedByUserId(params.id, {
-        page: query?.page,
+        cursor: query?.cursor,
         limit: query?.limit,
       })
 
@@ -230,8 +230,8 @@ export const FeedController = new Elysia({
     async ({ params, query, status, user, feedService }) => {
       const result = await feedService.getFeedComments(params.id, {
         userId: user?.id,
-        limit: query.limit,
         cursor: query.cursor,
+        limit: query.limit,
       })
 
       if (result.isErr()) {

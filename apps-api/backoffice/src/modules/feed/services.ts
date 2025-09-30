@@ -48,7 +48,11 @@ export class FeedService {
     return ok(followingFeed.value)
   }
 
-  async getTopicFeed(topicId: string, userId?: string, query?: { page?: number; limit?: number }) {
+  async getTopicFeed(
+    topicId: string,
+    userId?: string,
+    query?: { cursor?: string; limit?: number }
+  ) {
     const topicExists = await this.feedRepository.checkTopicExists(topicId)
 
     if (topicExists.isErr()) {
@@ -60,11 +64,10 @@ export class FeedService {
       })
     }
 
-    // TODO: Use recommendation from dedicated recommendation service
     const feedItems = await this.feedRepository.listTopicFeedItems({
       userId,
       topicId,
-      page: query?.page ?? 1,
+      cursor: query?.cursor,
       limit: query?.limit ?? 10,
     })
 
@@ -78,7 +81,7 @@ export class FeedService {
   async getHashTagFeed(
     hashTagId: string,
     userId?: string,
-    query?: { page?: number; limit?: number }
+    query?: { cursor?: string; limit?: number }
   ) {
     const hashTagExists = await this.feedRepository.checkHashTagExists(hashTagId)
 
@@ -91,11 +94,10 @@ export class FeedService {
       })
     }
 
-    // TODO: Use recommendation from dedicated recommendation service
     const feedItems = await this.feedRepository.listHashTagFeedItems({
       userId,
       hashTagId,
-      page: query?.page ?? 1,
+      cursor: query?.cursor,
       limit: query?.limit ?? 10,
     })
 
@@ -158,9 +160,9 @@ export class FeedService {
     )
   }
 
-  async getFeedByUserId(userId?: string, query?: { page?: number; limit?: number }) {
+  async getFeedByUserId(userId?: string, query?: { cursor?: string; limit?: number }) {
     const feedItems = await this.feedRepository.listFeedItemsByUserId(userId, {
-      page: query?.page ?? 1,
+      cursor: query?.cursor,
       limit: query?.limit ?? 10,
     })
 
