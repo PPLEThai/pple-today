@@ -80,7 +80,7 @@ BEGIN
       final_candidate_score_with_decay AS (
         SELECT
           final_candidate_score.feed_item_id,
-          (final_candidate_score.score * EXP(LEAST(EXTRACT(EPOCH FROM (NOW() - fi."createdAt")) / 3600, 30))) AS score
+          ((final_candidate_score.score + RANDOM() / 100) * EXP(LEAST(EXTRACT(EPOCH FROM (NOW() - fi."createdAt")) / 3600, 30))) AS score
         FROM
           final_candidate_score
           INNER JOIN "FeedItem" fi ON fi."id" = final_candidate_score.feed_item_id
@@ -89,7 +89,7 @@ BEGIN
 
     SELECT
       final_candidate_score_with_decay.feed_item_id,
-      (final_candidate_score_with_decay.score + RANDOM())::NUMERIC AS score
+      final_candidate_score_with_decay.score::NUMERIC AS score
     FROM
       final_candidate_score_with_decay
     ORDER BY
