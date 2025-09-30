@@ -19,7 +19,7 @@ WITH
             candidate_feed_item.feed_item_id
     ),
     other_feed_items AS (
-        SELECT fi.id AS feed_item_id, RANDOM () AS score
+        SELECT fi.id AS feed_item_id, RANDOM () * EXP(-LEAST(extract(EPOCH FROM (NOW() - fi."createdAt")) / 86400, 30)) AS score
         FROM
             "FeedItem" fi
             LEFT JOIN aggregated_feed_items afi ON afi.feed_item_id = fi.id
