@@ -193,9 +193,14 @@ export class FeedRepository {
               id: cursor,
             }
           : undefined,
-        orderBy: {
-          createdAt: 'desc',
-        },
+        orderBy: [
+          {
+            createdAt: 'desc',
+          },
+          {
+            id: 'desc',
+          },
+        ],
         where: {
           type: {
             not: FeedItemType.ANNOUNCEMENT,
@@ -263,9 +268,14 @@ export class FeedRepository {
               id: cursor,
             }
           : undefined,
-        orderBy: {
-          createdAt: 'desc',
-        },
+        orderBy: [
+          {
+            createdAt: 'desc',
+          },
+          {
+            id: 'desc',
+          },
+        ],
         where: {
           OR: [
             {
@@ -330,10 +340,14 @@ export class FeedRepository {
               not: FeedItemType.ANNOUNCEMENT,
             },
           },
-          orderBy: {
-            createdAt: 'desc',
-          },
-
+          orderBy: [
+            {
+              createdAt: 'desc',
+            },
+            {
+              id: 'desc',
+            },
+          ],
           skip: cursor ? 1 : 0,
           cursor: cursor
             ? {
@@ -345,36 +359,12 @@ export class FeedRepository {
         })
       }
 
-      const feedItemScore = await this.prismaService.feedItemScore.findMany({
+      const isExistingCache = await this.prismaService.feedItemScore.findFirst({
         where: { userId, expiresAt: { gt: new Date() } },
-        select: {
-          feedItem: {
-            include: this.constructFeedItemInclude(userId),
-          },
-        },
-        orderBy: [
-          {
-            score: 'desc',
-          },
-          {
-            feedItemId: 'desc',
-          },
-        ],
-        take: limit,
-        skip: cursor ? 1 : 0,
-        cursor: cursor
-          ? {
-              userId_feedItemId: {
-                userId,
-                feedItemId: cursor,
-              },
-            }
-          : undefined,
+        select: { feedItemId: true },
       })
 
-      const remainingSlots = limit - feedItemScore.length
-
-      if (remainingSlots > 0) {
+      if (!isExistingCache) {
         const candidateFeedItem = await this.prismaService.$queryRawTyped(
           get_candidate_feed_item(userId)
         )
@@ -395,34 +385,35 @@ export class FeedRepository {
             feedItemScores: { deleteMany: {}, createMany: { data: candidateFeedItemIds } },
           },
         })
-
-        const additionalFeedItems = await this.prismaService.feedItemScore.findMany({
-          where: {
-            userId,
-            expiresAt: { gt: new Date() },
-          },
-          select: {
-            feedItem: {
-              include: this.constructFeedItemInclude(userId),
-            },
-          },
-          orderBy: [
-            {
-              score: 'desc',
-            },
-            {
-              feedItemId: 'desc',
-            },
-          ],
-          take: remainingSlots,
-        })
-
-        return R.pipe(
-          feedItemScore,
-          R.map((item) => item.feedItem),
-          R.concat(additionalFeedItems.map((item) => item.feedItem))
-        )
       }
+
+      const feedItemScore = await this.prismaService.feedItemScore.findMany({
+        where: { userId, expiresAt: { gt: new Date() } },
+        select: {
+          feedItem: {
+            include: this.constructFeedItemInclude(userId),
+          },
+        },
+        orderBy: [
+          {
+            score: 'desc',
+          },
+          {
+            userId: 'desc',
+            feedItemId: 'desc',
+          },
+        ],
+        take: limit,
+        skip: cursor ? 1 : 0,
+        cursor: cursor
+          ? {
+              userId_feedItemId: {
+                userId,
+                feedItemId: cursor,
+              },
+            }
+          : undefined,
+      })
 
       return R.pipe(
         feedItemScore,
@@ -453,9 +444,14 @@ export class FeedRepository {
       })
 
       return await this.prismaService.feedItem.findMany({
-        orderBy: {
-          createdAt: 'desc',
-        },
+        orderBy: [
+          {
+            createdAt: 'desc',
+          },
+          {
+            id: 'desc',
+          },
+        ],
         skip: query.cursor ? 1 : 0,
         take: query.limit,
         cursor: query.cursor ? { id: query.cursor } : undefined,
@@ -512,9 +508,14 @@ export class FeedRepository {
               id: cursor,
             }
           : undefined,
-        orderBy: {
-          createdAt: 'desc',
-        },
+        orderBy: [
+          {
+            createdAt: 'desc',
+          },
+          {
+            id: 'desc',
+          },
+        ],
         include: this.constructFeedItemInclude(userId),
         where: {
           OR: [
@@ -722,9 +723,14 @@ export class FeedRepository {
               id: query.cursor,
             }
           : undefined,
-        orderBy: {
-          createdAt: 'desc',
-        },
+        orderBy: [
+          {
+            createdAt: 'desc',
+          },
+          {
+            id: 'desc',
+          },
+        ],
         where: {
           feedItemId,
           OR: [{ isPrivate: false }, { userId: query.userId }],
