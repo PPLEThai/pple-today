@@ -21,6 +21,8 @@ import {
   GetFeedItemsByUserIdParams,
   GetFeedItemsByUserIdQuery,
   GetFeedItemsByUserIdResponse,
+  GetFollowingFeedQuery,
+  GetFollowingFeedResponse,
   GetHashTagFeedQuery,
   GetHashTagFeedResponse,
   GetMyFeedQuery,
@@ -67,6 +69,37 @@ export const FeedController = new Elysia({
       detail: {
         summary: 'Get feed for current user',
         description: 'Fetch feed items for the currently authenticated user',
+      },
+    }
+  )
+  .get(
+    '/following',
+    async ({ query, status, feedService, user }) => {
+      const feedResult = await feedService.getFollowingFeed(user.id, {
+        cursor: query?.cursor,
+        limit: query?.limit,
+      })
+
+      if (feedResult.isErr()) {
+        return mapErrorCodeToResponse(feedResult.error, status)
+      }
+
+      return status(200, feedResult.value)
+    },
+    {
+      requiredLocalUser: true,
+      query: GetFollowingFeedQuery,
+      response: {
+        200: GetFollowingFeedResponse,
+        ...createErrorSchema(
+          InternalErrorCode.FEED_ITEM_NOT_FOUND,
+          InternalErrorCode.USER_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get feed for current user (Deprecated)',
+        description: 'This endpoint is deprecated. Please use /feed/me instead.',
       },
     }
   )

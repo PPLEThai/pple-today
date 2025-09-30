@@ -383,6 +383,66 @@ export class FeedRepository {
     return this.transformToFeedItem(rawFeedItem.value)
   }
 
+  async listFollowingFeedItems(
+    userId: string,
+    {
+      cursor,
+      limit,
+    }: {
+      cursor?: string
+      limit: number
+    }
+  ) {
+    const rawFeedItems = await fromRepositoryPromise(
+      this.prismaService.feedItem.findMany({
+        take: limit,
+        skip: cursor ? 1 : 0,
+        cursor: cursor
+          ? {
+              id: cursor,
+            }
+          : undefined,
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: this.constructFeedItemInclude(userId),
+        where: {
+          author: {
+            followers: {
+              some: {
+                followerId: userId,
+              },
+            },
+          },
+          poll: {
+            topics: {
+              some: {
+                topic: {
+                  followedTopics: {
+                    some: {
+                      userId,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      })
+    )
+
+    if (rawFeedItems.isErr()) return err(rawFeedItems.error)
+
+    const feedItems = rawFeedItems.value.map((item) => this.transformToFeedItem(item))
+    const feedItemErr = feedItems.find((item) => item.isErr())
+
+    if (feedItemErr) {
+      return err(feedItemErr.error)
+    }
+
+    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
+  }
+
   async getFeedItemReactionByUserId({
     feedItemId,
     userId,

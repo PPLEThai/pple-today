@@ -1,4 +1,10 @@
-import { FeedItem, FeedItemComment, ListQuery, PaginationQuery } from '@pple-today/api-common/dtos'
+import {
+  CursorPaginationQuery,
+  FeedItem,
+  FeedItemComment,
+  ListQuery,
+  PaginationQuery,
+} from '@pple-today/api-common/dtos'
 import { FeedItemReactionType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
@@ -13,14 +19,7 @@ export type GetFeedContentResponse = Static<typeof GetFeedContentResponse>
 export const GetFeedCommentParams = t.Object({
   id: t.String({ description: 'The ID of the feed' }),
 })
-export const GetFeedCommentQuery = t.Object({
-  cursor: t.Optional(
-    t.String({
-      description: 'The cursor for pagination which should be last comment ID of previous page',
-    })
-  ),
-  limit: t.Optional(t.Number({ description: 'The number of comments per page', default: 10 })),
-})
+export const GetFeedCommentQuery = CursorPaginationQuery
 export const GetFeedCommentResponse = t.Array(FeedItemComment)
 
 export type GetFeedCommentParams = Static<typeof GetFeedCommentParams>
@@ -103,6 +102,12 @@ export type GetMyFeedQuery = Static<typeof GetMyFeedQuery>
 
 export const GetMyFeedResponse = t.Array(FeedItem)
 export type GetMyFeedResponse = Static<typeof GetMyFeedResponse>
+
+export const GetFollowingFeedQuery = CursorPaginationQuery
+export type GetFollowingFeedQuery = Static<typeof GetFollowingFeedQuery>
+
+export const GetFollowingFeedResponse = t.Array(FeedItem)
+export type GetFollowingFeedResponse = Static<typeof GetFollowingFeedResponse>
 
 export const GetTopicFeedQuery = ListQuery(
   t.Object({

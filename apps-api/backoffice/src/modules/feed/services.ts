@@ -31,6 +31,24 @@ export class FeedService {
     return ok(feedItems.value)
   }
 
+  async getFollowingFeed(userId: string, query?: { cursor?: string; limit?: number }) {
+    const followingFeed = await this.feedRepository.listFollowingFeedItems(userId, {
+      cursor: query?.cursor,
+      limit: query?.limit ?? 10,
+    })
+
+    if (followingFeed.isErr()) {
+      return mapRepositoryError(followingFeed.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.USER_NOT_FOUND,
+          message: 'User not found',
+        },
+      })
+    }
+
+    return ok(followingFeed.value)
+  }
+
   async getTopicFeed(topicId: string, userId?: string, query?: { page?: number; limit?: number }) {
     const topicExists = await this.feedRepository.checkTopicExists(topicId)
 
