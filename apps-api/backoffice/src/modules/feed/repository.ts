@@ -337,14 +337,8 @@ export class FeedRepository {
         take: query.limit,
         where: {
           authorId: userId,
-          author: {
-            NOT: {
-              roles: {
-                some: {
-                  role: 'official',
-                },
-              },
-            },
+          type: {
+            not: FeedItemType.ANNOUNCEMENT,
           },
         },
         include: this.constructFeedItemInclude(userId),
