@@ -213,7 +213,9 @@ export class AdminElectionService {
         id: voter.user.id,
         name: voter.user.name,
         phoneNumber: voter.user.phoneNumber,
-        profileImage: voter.user.profileImagePath,
+        profileImage:
+          voter.user.profileImagePath &&
+          this.fileService.getPublicFileUrl(voter.user.profileImagePath),
       }))
     )
   }
