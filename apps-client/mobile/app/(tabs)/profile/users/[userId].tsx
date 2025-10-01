@@ -146,15 +146,12 @@ export default function ProfilePage() {
         {userDetailsQuery.isLoading ? (
           <ProfileSectionSkeleton />
         ) : !userDetailsQuery.data ? null : (
-          // Profile Section
           <View className="w-full flex flex-col">
             <View className="flex flex-row items-center gap-4 px-4 pb-4">
-              {/* Avatar */}
               <Avatar alt={userDetailsQuery.data.name} className="w-16 h-16">
                 <AvatarImage source={{ uri: userDetailsQuery.data.profileImage }} />
                 <AvatarPPLEFallback />
               </Avatar>
-              {/* Name and Location */}
               <View className="flex-1 gap-2">
                 <Text className="text-base-text-default text-2xl font-heading-semibold">
                   {userDetailsQuery.data.name}
