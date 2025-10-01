@@ -1,5 +1,6 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import { CreateHashtagBody, UpdateHashtagBody } from './models'
@@ -10,7 +11,7 @@ export class AdminHashtagRepository {
   constructor(private prismaService: PrismaService) {}
 
   async getHashtags(
-    query: { limit: number; page: number } = {
+    query: { limit: number; page: number; search?: string } = {
       limit: 10,
       page: 1,
     }
@@ -18,22 +19,44 @@ export class AdminHashtagRepository {
     const { limit, page } = query
     const skip = Math.max((page - 1) * limit, 0)
 
-    return fromRepositoryPromise(
-      this.prismaService.hashTag.findMany({
-        select: {
-          id: true,
-          name: true,
-          status: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-        take: limit,
-        skip,
-        orderBy: {
-          createdAt: 'desc',
-        },
-      })
-    )
+    return fromRepositoryPromise(async () => {
+      const [data, count] = await Promise.all([
+        this.prismaService.hashTag.findMany({
+          select: {
+            id: true,
+            name: true,
+            status: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+          take: limit,
+          skip,
+          orderBy: {
+            createdAt: 'desc',
+          },
+          ...(query.search && {
+            where: {
+              name: {
+                contains: query.search,
+                mode: 'insensitive',
+              },
+            },
+          }),
+        }),
+        this.prismaService.hashTag.count({
+          ...(query.search && {
+            where: {
+              name: {
+                contains: query.search,
+                mode: 'insensitive',
+              },
+            },
+          }),
+        }),
+      ])
+
+      return { data, count }
+    })
   }
 
   async getHashtagById(hashtagId: string) {
@@ -67,8 +90,8 @@ export class AdminHashtagRepository {
       this.prismaService.hashTag.update({
         where: { id: hashtagId },
         data: {
-          name: data.name,
-          status: data.status,
+          name: data.name ?? Prisma.skip,
+          status: data.status ?? Prisma.skip,
         },
       })
     )

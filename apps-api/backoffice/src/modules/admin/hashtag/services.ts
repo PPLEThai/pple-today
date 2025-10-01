@@ -18,7 +18,7 @@ export class AdminHashtagService {
   constructor(private adminHashtagRepository: AdminHashtagRepository) {}
 
   async getHashtags(
-    query: { limit: number; page: number } = {
+    query: { limit: number; page: number; search?: string } = {
       limit: 10,
       page: 1,
     }

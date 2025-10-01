@@ -30,6 +30,7 @@ export const AdminHashtagController = new Elysia({
       const pagingQuery = {
         limit: query.limit ?? 10,
         page: query.page ?? 1,
+        search: query.search,
       }
 
       const result = await adminHashtagService.getHashtags(pagingQuery)
@@ -105,7 +106,7 @@ export const AdminHashtagController = new Elysia({
       },
     }
   )
-  .put(
+  .patch(
     '/:hashtagId',
     async ({ params, body, status, adminHashtagService }) => {
       const result = await adminHashtagService.updateHashtagById(params.hashtagId, body)

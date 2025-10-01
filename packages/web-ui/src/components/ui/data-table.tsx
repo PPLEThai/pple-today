@@ -30,7 +30,8 @@ interface DataTableProps<TData> {
   }[keyof TData][]
   data: TData[]
   count?: number
-  isLoading?: boolean
+  isQuerying?: boolean
+  isMutating?: boolean
 
   queryLimit?: number
   setQueryLimit?: React.Dispatch<React.SetStateAction<number>>
@@ -44,7 +45,8 @@ export function DataTable<TData>({
   columns,
   data,
   count,
-  isLoading,
+  isQuerying,
+  isMutating,
 
   queryLimit,
   setQueryLimit,
@@ -65,6 +67,10 @@ export function DataTable<TData>({
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
     manualFiltering: true,
+    defaultColumn: {
+      size: -1,
+      minSize: 32,
+    },
   })
 
   return (
@@ -99,8 +105,12 @@ export function DataTable<TData>({
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id} className="bg-base-bg-light">
                   {headerGroup.headers.map((header) => {
+                    const headerSize = header.getSize()
                     return (
-                      <TableHead key={header.id}>
+                      <TableHead
+                        key={header.id}
+                        style={{ width: headerSize <= 32 ? undefined : `${headerSize}px` }}
+                      >
                         {header.isPlaceholder
                           ? null
                           : flexRender(header.column.columnDef.header, header.getContext())}
@@ -111,7 +121,7 @@ export function DataTable<TData>({
               ))}
             </TableHeader>
             <TableBody>
-              {isLoading === true ? (
+              {isQuerying === true ? (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="text-center h-[168px]">
                     Loading...
@@ -137,8 +147,18 @@ export function DataTable<TData>({
             </TableBody>
           </Table>
         </div>
-        {(hasPageLimiter || hasPaginator) && (
-          <div className="flex items-center justify-end mt-4">
+        <div className="flex items-center justify-between mt-4">
+          <div className="text-base-text-medium flex-1 min-w-0 text-sm truncate font-light">
+            <span>
+              {isQuerying
+                ? 'Querying Data...'
+                : count !== undefined
+                  ? `Showing ${data.length} of ${count} records`
+                  : `Showing ${data.length} records`}{' '}
+            </span>
+            {isMutating && <span>(Saving changes...)</span>}
+          </div>
+          {(hasPageLimiter || hasPaginator) && (
             <div className="flex items-center space-x-6 lg:space-x-8">
               {hasPageLimiter && (
                 <div className="flex items-center space-x-2">
@@ -212,8 +232,8 @@ export function DataTable<TData>({
                 </>
               )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </>
   )
