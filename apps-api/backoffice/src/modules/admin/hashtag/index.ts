@@ -106,7 +106,7 @@ export const AdminHashtagController = new Elysia({
       },
     }
   )
-  .put(
+  .patch(
     '/:hashtagId',
     async ({ params, body, status, adminHashtagService }) => {
       const result = await adminHashtagService.updateHashtagById(params.hashtagId, body)

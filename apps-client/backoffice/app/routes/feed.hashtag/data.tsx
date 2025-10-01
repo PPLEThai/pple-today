@@ -34,10 +34,13 @@ export const Data = () => {
       placeholderData: keepPreviousData,
     }
   )
-  const mutation = reactQueryClient.useMutation('put', '/admin/hashtags/:hashtagId')
+  const mutation = reactQueryClient.useMutation('patch', '/admin/hashtags/:hashtagId')
 
   const setHashtagStatus = useCallback(
-    ({ name, status }: UpdateHashtagBody, { hashtagId }: UpdateHashtagParams) => {
+    (
+      { status }: { status: NonNullable<UpdateHashtagBody['status']> },
+      { hashtagId }: UpdateHashtagParams
+    ) => {
       if (mutation.isPending) return
 
       mutation.mutateAsync(
@@ -46,7 +49,6 @@ export const Data = () => {
             hashtagId,
           },
           body: {
-            name,
             status,
           },
         },
@@ -81,6 +83,9 @@ export const Data = () => {
       columnHelper.accessor('id', {
         header: () => <div className="pl-2">ID</div>,
         cell: (info) => <TableCopyId id={info.getValue()} />,
+        size: 64,
+        minSize: 64,
+        maxSize: 64,
       }),
       columnHelper.accessor('status', {
         header: 'สถานะ',
@@ -89,6 +94,9 @@ export const Data = () => {
           if (status === 'PUBLISH') return <Badge variant="success">เปิดใช้งาน</Badge>
           return <Badge variant="destructive">ระงับการใช้งาน</Badge>
         },
+        size: 126,
+        minSize: 126,
+        maxSize: 126,
       }),
       columnHelper.accessor('name', {
         header: 'ชื่อ Hashtag',
@@ -98,21 +106,20 @@ export const Data = () => {
         header: 'เปิดใช้งาน',
         cell: ({ row }) => {
           const id = row.getValue<GetHashtagsResponse['data'][number]['id']>('id')
-          const name = row.getValue<GetHashtagsResponse['data'][number]['name']>('name')
           const status = row.getValue<GetHashtagsResponse['data'][number]['status']>('status')
           return (
             <Switch
               isPending={mutation.isPending && mutation.variables?.pathParams.hashtagId === id}
               checked={status === 'PUBLISH'}
               onCheckedChange={(checked: boolean) => {
-                setHashtagStatus(
-                  { name, status: checked ? 'PUBLISH' : 'SUSPEND' },
-                  { hashtagId: id }
-                )
+                setHashtagStatus({ status: checked ? 'PUBLISH' : 'SUSPEND' }, { hashtagId: id })
               }}
             />
           )
         },
+        size: 91,
+        minSize: 91,
+        maxSize: 91,
       }),
     ],
     [mutation.isPending, mutation.variables?.pathParams.hashtagId, setHashtagStatus]
