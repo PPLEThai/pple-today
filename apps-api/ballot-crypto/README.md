@@ -26,7 +26,7 @@ PPLE Today Ballot Crypto API
    cp .env.example .env
    ```
 
-5. Start the application
+3. Start the application
 
    ```bash
    pnpm dev
