@@ -18,7 +18,7 @@ export function meta() {
 
 export default function HashtagPage() {
   return (
-    <div className="px-6 space-y-2">
+    <div className="px-6 pb-6 space-y-2">
       <Breadcrumb className="pt-4 pb-2">
         <BreadcrumbList>
           <BreadcrumbSeparator />
