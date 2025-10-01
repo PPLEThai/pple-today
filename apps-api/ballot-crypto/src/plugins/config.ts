@@ -25,6 +25,12 @@ export const envSchema = t.Object({
   GCP_PRIVATE_KEY: t.String({
     description: 'Google Cloud Private Key',
   }),
+  GCP_LOCATION: t.String({
+    description: 'Google Cloud Location',
+  }),
+  GCP_KEY_RING: t.String({
+    description: 'Google Cloud Key Ring',
+  }),
 })
 
 export const ConfigServicePlugin = createConfigServicePlugin({
