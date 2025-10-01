@@ -87,6 +87,9 @@ export const Data = () => {
         minSize: 64,
         maxSize: 64,
       }),
+      columnHelper.accessor('name', {
+        header: 'ชื่อ Hashtag',
+      }),
       columnHelper.accessor('status', {
         header: 'สถานะ',
         cell: (info) => {
@@ -97,9 +100,6 @@ export const Data = () => {
         size: 126,
         minSize: 126,
         maxSize: 126,
-      }),
-      columnHelper.accessor('name', {
-        header: 'ชื่อ Hashtag',
       }),
       columnHelper.display({
         id: 'enabled',
@@ -117,9 +117,9 @@ export const Data = () => {
             />
           )
         },
-        size: 91,
-        minSize: 91,
-        maxSize: 91,
+        size: 115,
+        minSize: 115,
+        maxSize: 115,
       }),
     ],
     [mutation.isPending, mutation.variables?.pathParams.hashtagId, setHashtagStatus]
@@ -130,7 +130,8 @@ export const Data = () => {
       columns={columns}
       data={query.data?.data ?? []}
       count={query.data?.count ?? 0}
-      isLoading={query.isLoading}
+      isQuerying={query.isLoading}
+      isMutating={mutation.isPending}
       queryLimit={queryLimit}
       setQueryLimit={setQueryLimit}
       queryPage={queryPage}
