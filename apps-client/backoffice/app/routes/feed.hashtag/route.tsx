@@ -13,7 +13,7 @@ import { Typography } from '@pple-today/web-ui/typography'
 import { Data } from './data'
 
 export function meta() {
-  return [{ title: 'Hashtag' }, { name: 'description', content: 'Welcome to React Router!' }]
+  return [{ title: 'Hashtag' }]
 }
 
 export default function HashtagPage() {

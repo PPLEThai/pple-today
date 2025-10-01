@@ -35,11 +35,13 @@ export const UpdateHashtagParams = t.Object({
 })
 export type UpdateHashtagParams = Static<typeof UpdateHashtagParams>
 
-export const UpdateHashtagBody = t.Object({
-  name: t.String({ description: 'The name of the hashtag' }),
-  status: t.Enum(HashTagStatus),
-})
-export type UpdateHashtagBody = Static<typeof CreateHashtagBody>
+export const UpdateHashtagBody = t.Partial(
+  t.Object({
+    name: t.String({ description: 'The name of the hashtag' }),
+    status: t.Enum(HashTagStatus),
+  })
+)
+export type UpdateHashtagBody = Static<typeof UpdateHashtagBody>
 
 export const UpdateHashtagResponse = t.Object({
   message: t.String({ description: 'Success message' }),

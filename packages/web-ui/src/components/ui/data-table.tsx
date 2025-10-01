@@ -65,6 +65,10 @@ export function DataTable<TData>({
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
     manualFiltering: true,
+    defaultColumn: {
+      size: -1,
+      minSize: 32,
+    },
   })
 
   return (
@@ -99,8 +103,12 @@ export function DataTable<TData>({
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id} className="bg-base-bg-light">
                   {headerGroup.headers.map((header) => {
+                    const headerSize = header.getSize()
                     return (
-                      <TableHead key={header.id}>
+                      <TableHead
+                        key={header.id}
+                        style={{ width: headerSize <= 32 ? undefined : `${headerSize}px` }}
+                      >
                         {header.isPlaceholder
                           ? null
                           : flexRender(header.column.columnDef.header, header.getContext())}
