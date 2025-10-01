@@ -10,7 +10,6 @@ import Elysia, { AnyElysia } from 'elysia'
 import * as R from 'remeda'
 
 import { ApplicationController } from './modules'
-import { AdminController } from './modules/admin'
 import { VersionController } from './modules/version'
 import { ConfigServicePlugin } from './plugins/config'
 
@@ -68,7 +67,7 @@ let app = new Elysia({ adapter: node() })
     ConfigServicePlugin,
     cors(),
   ])
-  .use([ApplicationController, AdminController, VersionController])
+  .use([ApplicationController, VersionController])
 
 if (process.env.ENABLE_SWAGGER === 'true') {
   const getTagsFromController = (controller: AnyElysia) =>
@@ -84,10 +83,6 @@ if (process.env.ENABLE_SWAGGER === 'true') {
   const TAG_GROUPS: any = {
     'x-tagGroups': [
       {
-        name: 'Admin',
-        tags: getTagsFromController(AdminController),
-      },
-      {
         name: 'Application',
         tags: getTagsFromController(ApplicationController),
       },
@@ -101,39 +96,10 @@ if (process.env.ENABLE_SWAGGER === 'true') {
   const swaggerPlugin = swagger({
     documentation: {
       info: {
-        title: 'PPLE Today API',
+        title: 'Ballot Crypto API',
         version: packageJson.version,
       },
       ...TAG_GROUPS,
-      components: {
-        securitySchemes: {
-          accessToken: {
-            type: 'http',
-            scheme: 'bearer',
-            bearerFormat: 'JWT',
-            description: 'Bearer Token',
-          },
-          _developmentLogin: {
-            type: 'oauth2',
-            flows: {
-              authorizationCode: {
-                authorizationUrl: `${configService.get('DEVELOPMENT_OIDC_URL')}/oauth/v2/authorize`,
-                tokenUrl: `${configService.get('DEVELOPMENT_OIDC_URL')}/oauth/v2/token`,
-                scopes: {
-                  openid: 'OpenID scope',
-                  profile: 'Profile scope',
-                  phone: 'Phone scope',
-                },
-                'x-scalar-client-id': configService.get('DEVELOPMENT_OIDC_CLIENT_ID'),
-                'x-usePkce': 'SHA-256',
-                selectedScopes: ['openid', 'profile', 'phone'],
-              } as any,
-            },
-            description: 'Development login for testing purposes',
-          },
-        },
-      },
-      security: [{ _developmentLogin: [] }],
     },
   })
 
