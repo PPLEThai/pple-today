@@ -400,6 +400,8 @@ export class FeedRepository {
           },
           {
             userId: 'desc',
+          },
+          {
             feedItemId: 'desc',
           },
         ],

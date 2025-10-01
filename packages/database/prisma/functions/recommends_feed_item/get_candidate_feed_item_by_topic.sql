@@ -6,11 +6,11 @@ BEGIN
     RETURN QUERY
     WITH 
       candidate_topic AS (
-        SELECT * FROM get_candidate_topic_by_follower('338086133000830978')
+        SELECT * FROM get_candidate_topic_by_follower(_id)
         UNION ALL
-        SELECT * FROM get_candidate_topic_by_interaction('338086133000830978')
+        SELECT * FROM get_candidate_topic_by_interaction(_id)
         UNION ALL
-        SELECT * FROM get_candidate_topic_by_similar_hashtag('338086133000830978')
+        SELECT * FROM get_candidate_topic_by_similar_hashtag(_id)
       ),
 
       all_possible_interested_topic AS (
@@ -26,7 +26,7 @@ BEGIN
         FROM
           "UserFollowsTopic" uft
         WHERE 
-          uft."userId" = '338086133000830978'
+          uft."userId" = _id
       ),
 
       candidate_feed_item_poll AS (
