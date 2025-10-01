@@ -258,6 +258,13 @@ const seedFeedItems = async () => {
 
 const seedFeedItemReactions = async () => {
   const feedItemReactionInputs: Prisma.FeedItemReactionCreateManyInput[] = []
+  const numberOfReactionsMapping = {} as Record<
+    string,
+    {
+      UP_VOTE: number
+      DOWN_VOTE: number
+    }
+  >
 
   for (let i = 0; i < NUMBER_OF_FEED_ITEMS_WITH_REACTIONS; i++) {
     for (let j = 0; j < NUMBER_OF_REACTIONS_PER_USER; j++) {
@@ -266,6 +273,10 @@ const seedFeedItemReactions = async () => {
         feedItemId: `feeditem-${i + 1}`,
         type: 'UP_VOTE',
       })
+      numberOfReactionsMapping[`feeditem-${i + 1}`] = numberOfReactionsMapping[
+        `feeditem-${i + 1}`
+      ] || { UP_VOTE: 0, DOWN_VOTE: 0 }
+      numberOfReactionsMapping[`feeditem-${i + 1}`].UP_VOTE++
     }
   }
 
@@ -274,11 +285,31 @@ const seedFeedItemReactions = async () => {
     skipDuplicates: true,
   })
 
+  await Promise.all(
+    Object.entries(numberOfReactionsMapping).map(([feedItemId, reactionCounts]) =>
+      prisma.feedItem.update({
+        where: { id: feedItemId },
+        data: {
+          reactionCounts: {
+            createMany: {
+              data: [
+                { type: 'UP_VOTE', count: reactionCounts.UP_VOTE },
+                { type: 'DOWN_VOTE', count: reactionCounts.DOWN_VOTE },
+              ],
+              skipDuplicates: true,
+            },
+          },
+        },
+      })
+    )
+  )
+
   console.log(`Seeded reactions on ${NUMBER_OF_FEED_ITEMS_WITH_REACTIONS} feed items`)
 }
 
 const seedFeedItemComments = async () => {
   const feedItemCommentInputs: Prisma.FeedItemCommentCreateManyInput[] = []
+  const numberOfCommentsMapping = {} as Record<string, number>
   for (let i = 0; i < NUMBER_OF_FEED_ITEMS_WITH_COMMENTS; i++) {
     for (let j = 0; j < NUMBER_OF_COMMENTS_PER_USER; j++) {
       feedItemCommentInputs.push({
@@ -286,6 +317,8 @@ const seedFeedItemComments = async () => {
         feedItemId: `feeditem-${i + 1}`,
         content: `This is comment ${j + 1} on feed item ${i + 1}`,
       })
+      numberOfCommentsMapping[`feeditem-${i + 1}`] =
+        (numberOfCommentsMapping[`feeditem-${i + 1}`] || 0) + 1
     }
   }
 
@@ -293,6 +326,14 @@ const seedFeedItemComments = async () => {
     data: feedItemCommentInputs,
     skipDuplicates: true,
   })
+  await Promise.all(
+    Object.entries(numberOfCommentsMapping).map(([feedItemId, numberOfComments]) =>
+      prisma.feedItem.update({
+        where: { id: feedItemId },
+        data: { numberOfComments },
+      })
+    )
+  )
 
   console.log(`Seeded comments on ${NUMBER_OF_FEED_ITEMS_WITH_COMMENTS} feed items`)
 }

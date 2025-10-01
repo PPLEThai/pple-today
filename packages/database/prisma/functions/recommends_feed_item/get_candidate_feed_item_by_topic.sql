@@ -63,7 +63,7 @@ BEGIN
           pht."postId"
       ),
 
-      final_candidate_score AS (
+      candidate_score AS (
         SELECT
           cfp.feed_item_id,
           cfp.score
@@ -77,13 +77,31 @@ BEGIN
           candidate_feed_item_post cfp
       ),
 
+      candidate_score_interaction AS (
+        SELECT
+          cs.feed_item_id,
+          SUM(
+            COALESCE(firc.count, 0) * CASE
+              WHEN firc."type" = 'UP_VOTE' THEN 3
+              WHEN firc."type" = 'DOWN_VOTE' THEN 1
+              ELSE 0
+            END
+          ) + fi."numberOfComments" * 2 AS score
+        FROM
+          candidate_score cs
+          INNER JOIN "FeedItem" fi ON fi."id" = cs.feed_item_id
+          LEFT JOIN "FeedItemReactionCount" firc ON firc."feedItemId" = cs.feed_item_id
+        GROUP BY
+          cs.feed_item_id, fi."id"
+      ),
+
       final_candidate_score_with_decay AS (
         SELECT
-          final_candidate_score.feed_item_id,
-          ((final_candidate_score.score + RANDOM() / 100) * EXP(LEAST(EXTRACT(EPOCH FROM (NOW() - fi."createdAt")) / 86400, 30))) AS score
+          candidate_score.feed_item_id,
+          ((candidate_score.score + csi.score + RANDOM() / 100) * EXP(-LEAST(EXTRACT(EPOCH FROM (NOW() - fi."createdAt")) / 86400, 30))) AS score
         FROM
-          final_candidate_score
-          INNER JOIN "FeedItem" fi ON fi."id" = final_candidate_score.feed_item_id
+          candidate_score
+          INNER JOIN candidate_score_interaction csi ON csi.feed_item_id = candidate_score.feed_item_id
       )
 
 
