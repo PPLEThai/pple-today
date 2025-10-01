@@ -7,7 +7,7 @@ import {
 } from '@pple-today/api-common/dtos'
 import { FileService } from '@pple-today/api-common/services'
 import { err, mapRepositoryError } from '@pple-today/api-common/utils'
-import { Election, ElectionCandidate } from '@pple-today/database/prisma'
+import { Election, ElectionCandidate, EligibleVoterType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -16,6 +16,7 @@ import {
   AdminListElectionQuery,
   AdminListElectionResponse,
   AdminUpdateElectionCandidateBody,
+  ElectionEligibleVoterIdentifier,
 } from './models'
 import { AdminElectionRepository, AdminElectionRepositoryPlugin } from './repository'
 
@@ -180,6 +181,14 @@ export class AdminElectionService {
     return ok(this.convertToCandidateDTO(updateCandidateResult.value))
   }
 
+  private isElectionPublished(election: Election): boolean {
+    const now = new Date()
+    const publishDate = (
+      election.type === 'HYBRID' ? election.openRegister : election.publishDate
+    ) as Date
+    return now >= publishDate
+  }
+
   async deleteElectionCandidate(candidateId: string) {
     const deleteResult = await this.adminElectionRepository.deleteElectionCandidate(candidateId)
     if (deleteResult.isErr()) {
@@ -190,6 +199,156 @@ export class AdminElectionService {
         },
       })
     }
+    return ok()
+  }
+
+  async listElectionEligibleVoters(electionId: string) {
+    const voterResult = await this.adminElectionRepository.listElectionEligibleVoters(electionId)
+    if (voterResult.isErr()) {
+      return mapRepositoryError(voterResult.error)
+    }
+
+    return ok(
+      voterResult.value.map((voter) => ({
+        id: voter.user.id,
+        name: voter.user.name,
+        phoneNumber: voter.user.phoneNumber,
+        profileImage:
+          voter.user.profileImagePath &&
+          this.fileService.getPublicFileUrl(voter.user.profileImagePath),
+      }))
+    )
+  }
+
+  async deleteElectionEligibleVoters(
+    electionId: string,
+    voters:
+      | { identifier: 'USER_ID'; userIds: string[] }
+      | { identifier: 'PHONE_NUMBER'; phoneNumbers: string[] }
+  ) {
+    const electionResult = await this.adminElectionRepository.getElectionById(electionId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id: ${electionId}`,
+        },
+      })
+    }
+
+    if (this.isElectionPublished(electionResult.value)) {
+      return err({
+        code: InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+        message: `Cannot Delete Voters of published election`,
+      })
+    }
+
+    let result
+    switch (voters.identifier) {
+      case ElectionEligibleVoterIdentifier.USER_ID:
+        result = await this.adminElectionRepository.bulkDeleteElectionEligibleVoterByUserIds(
+          electionId,
+          voters.userIds
+        )
+        break
+      case ElectionEligibleVoterIdentifier.PHONE_NUMBER:
+        result = await this.adminElectionRepository.bulkDeleteElectionEligibleVoterByPhoneNumber(
+          electionId,
+          voters.phoneNumbers
+        )
+        break
+      default:
+        return err({
+          code: InternalErrorCode.ELECTION_INVALID_ELIGIBLE_VOTER_IDENTIFIER,
+          message: 'Invalid voter identifier',
+        })
+    }
+
+    if (result.isErr()) {
+      return mapRepositoryError(result.error)
+    }
+
+    return ok()
+  }
+
+  async bulkCreateElectionEligibleVoters(
+    electionId: string,
+    voters:
+      | { identifier: 'USER_ID'; userIds: string[] }
+      | { identifier: 'PHONE_NUMBER'; phoneNumbers: string[] }
+  ) {
+    const electionResult = await this.adminElectionRepository.getElectionById(electionId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id: ${electionId}`,
+        },
+      })
+    }
+
+    if (this.isElectionPublished(electionResult.value)) {
+      return err({
+        code: InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+        message: `Cannot add voters to published election`,
+      })
+    }
+
+    const voterType =
+      electionResult.value.type === 'ONLINE' ? EligibleVoterType.ONLINE : EligibleVoterType.ONSITE
+
+    const userIds: string[] = []
+
+    switch (voters.identifier) {
+      case 'USER_ID': {
+        const nonExistUserIdsResult = await this.adminElectionRepository.filterExistUserIds(
+          voters.userIds
+        )
+        if (nonExistUserIdsResult.isErr()) return mapRepositoryError(nonExistUserIdsResult.error)
+        if (nonExistUserIdsResult.value.length !== 0) {
+          return err({
+            code: InternalErrorCode.USER_NOT_FOUND,
+            message: `userIds: ${nonExistUserIdsResult.value} not exist`,
+          })
+        }
+        userIds.push(...voters.userIds)
+        break
+      }
+      case 'PHONE_NUMBER': {
+        const result = await this.adminElectionRepository.listUserIdsFromPhoneNumbers(
+          voters.phoneNumbers
+        )
+        if (result.isErr()) return mapRepositoryError(result.error)
+
+        const { userIds: existUserIds, nonExistPhoneNumbers } = result.value
+
+        if (nonExistPhoneNumbers.length !== 0) {
+          return err({
+            code: InternalErrorCode.USER_NOT_FOUND,
+            message: `phoneNumbers: ${nonExistPhoneNumbers} not exist`,
+          })
+        }
+
+        userIds.push(...existUserIds)
+        break
+      }
+      default: {
+        return err({
+          code: InternalErrorCode.ELECTION_INVALID_ELIGIBLE_VOTER_IDENTIFIER,
+          message: 'Invalid voter identifier',
+        })
+      }
+    }
+
+    const bulkCreateEligibleVotersResult =
+      await this.adminElectionRepository.bulkCreateElectionEligibleVoterByUserIds(
+        electionId,
+        voterType,
+        userIds
+      )
+    if (bulkCreateEligibleVotersResult.isErr())
+      return mapRepositoryError(bulkCreateEligibleVotersResult.error)
+
     return ok()
   }
 }
