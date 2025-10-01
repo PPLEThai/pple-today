@@ -20,8 +20,9 @@
   "dependencies": {
     "@elysiajs/node": "^1.3.0",
     "@elysiajs/swagger": "^1.3.1",
-    "elysia": "^1.3.5",
-    "@pple-today/api-common": "workspace:^"
+    "@google-cloud/kms": "^5.2.0",
+    "@pple-today/api-common": "workspace:^",
+    "elysia": "^1.3.5"
   },
   "devDependencies": {
     "@pple-today/project-config": "workspace:^",
