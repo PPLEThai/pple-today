@@ -29,12 +29,5 @@ export function useCountdownTimer(initialDate: Date) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const format = (num: number) => String(num).padStart(2, '0')
-
-  return [
-    format(timeLeft.days),
-    format(timeLeft.hours),
-    format(timeLeft.minutes),
-    format(timeLeft.seconds),
-  ] as const
+  return [timeLeft.days, timeLeft.hours, timeLeft.minutes, timeLeft.seconds] as const
 }

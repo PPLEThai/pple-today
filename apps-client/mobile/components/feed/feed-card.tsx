@@ -238,7 +238,24 @@ function PostCardContent(props: { feedItem: FeedItemPost }) {
 function PollCardContent() {
   const router = useRouter()
 
-  const [days, hours, minutes, seconds] = useCountdownTimer(new Date('2025-09-30T18:50:14.665Z'))
+  const [days, hours, minutes, seconds] = useCountdownTimer(new Date('2025-09-29T18:50:14.665Z'))
+
+  const renderCountDown = () => {
+    if (days > 0) {
+      return `${String(days).padStart(2, '0')} วัน`
+    }
+    if (hours > 0) {
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')} ชั่วโมง`
+    }
+    if (minutes > 0) {
+      return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')} นาที`
+    }
+    if (seconds > 0) {
+      return `${String(seconds).padStart(2, '0')} วินาที`
+    }
+
+    return 'หมดเวลาแล้ว'
+  }
 
   return (
     <View className="gap-3">
@@ -266,7 +283,7 @@ function PollCardContent() {
               <Text className="text-base-text-medium font-heading-regular text-sm items-center mt-2">
                 เวลาที่เหลือ:{' '}
                 <Text className="text-base-primary-default font-heading-bold">
-                  {`${days}:${hours}:${minutes}:${seconds}`}
+                  {renderCountDown()}
                 </Text>
               </Text>
             </View>
@@ -284,10 +301,10 @@ function PollCardContent() {
             selected
           />
           <PollOption option="ปัญหา" selected />
-          <PollOption option="ปัญหาความไม่เท่าเทียมทางเศรษฐกิจ" />
+          <PollOption option="ปัญหาความไม่เท่าเทียมทางเศรษฐกิจ" showResult />
           <Button
             variant="secondary"
-            className="w-full text-start border-2 border-base-outline-default flex flex-row justify-between items-center bg-base-bg-white font-body-medium h-11"
+            className="w-full text-start border-2 border-base-outline-default flex flex-row justify-between items-center bg-base-bg-white font-body-medium h-11 rounded-2xl"
             onPress={() => {
               router.navigate(`/(feed)/poll-1`)
             }}
@@ -1040,6 +1057,19 @@ const PostDetailContent = (props: { feedItem: FeedItemPost }) => {
 const PollDetailContent = () => {
   const [days, hours, minutes, seconds] = useCountdownTimer(new Date('2025-09-30T18:50:14.665Z'))
 
+  const renderCountDown = () => {
+    if (days > 0) {
+      return `${String(days).padStart(2, '0')} วัน`
+    }
+    if (hours > 0) {
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')} ชั่วโมง`
+    }
+    if (minutes > 0) {
+      return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')} นาที`
+    }
+    return `${String(seconds).padStart(2, '0')} วินาที`
+  }
+
   return (
     <View className="gap-3">
       <View className="py-[13px] px-2 gap-4 flex flex-col bg-base-bg-default rounded-xl mx-4">
@@ -1066,7 +1096,7 @@ const PollDetailContent = () => {
               <Text className="text-base-text-medium font-heading-regular text-sm items-center mt-2">
                 เวลาที่เหลือ:{' '}
                 <Text className="text-base-primary-default font-heading-bold">
-                  {`${days}:${hours}:${minutes}:${seconds}`}
+                  {renderCountDown()}
                 </Text>
               </Text>
             </View>
