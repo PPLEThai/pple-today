@@ -20,11 +20,14 @@ import {
 import { cssInterop } from 'nativewind'
 
 import PPLEIconBlack from '@app/assets/pple-icon-black.svg'
+import { useSession } from '@app/libs/auth'
 
 cssInterop(Image, { className: 'style' })
 
 export default function BottomTabsLayout() {
   const insets = useSafeAreaInsets()
+  const session = useSession()
+
   return (
     <View className="flex-1 px-safe">
       <Tabs
@@ -58,7 +61,7 @@ export default function BottomTabsLayout() {
             title: 'ค้นหา',
             tabBarIcon: (props) => <TabBarIcon {...props} icon={SearchIcon} />,
             tabBarLabel: TabBarLabel,
-            tabBarButton: TabBarButton,
+            ...(session ? { tabBarButton: TabBarButton } : { href: null }),
           }}
         />
         <Tabs.Screen
