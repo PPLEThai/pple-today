@@ -4,8 +4,8 @@ enum HashTagStatus {
 }
 
 enum TopicStatus {
-    PUBLISH
-    DRAFT
+    PUBLISHED
+    SUSPENDED
 }
 
 model HashTag {
@@ -26,16 +26,14 @@ model Topic {
     name            String      @unique
     description     String?
     bannerImagePath String?
-    status          TopicStatus @default(DRAFT)
+    status          TopicStatus @default(SUSPENDED)
     createdAt       DateTime    @default(now())
     updatedAt       DateTime    @updatedAt
 
-    hashTagInTopics         HashTagInTopic[]
-    followedTopics          UserFollowsTopic[]
-    pollTopics              PollTopic[]
-    pollDraftTopics         PollTopicDraft[]
-    announcementTopics      AnnouncementTopic[]
-    announcementDraftTopics AnnouncementTopicDraft[]
+    hashTagInTopics    HashTagInTopic[]
+    followedTopics     UserFollowsTopic[]
+    pollTopics         PollTopic[]
+    announcementTopics AnnouncementTopic[]
 
     @@index([name])
 }

@@ -1,3 +1,8 @@
+enum UserStatus {
+    ACTIVE
+    SUSPENDED
+}
+
 model User {
     id               String  @id @default(cuid())
     name             String
@@ -10,7 +15,8 @@ model User {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    onBoardingCompleted Boolean @default(false)
+    onBoardingCompleted Boolean    @default(false)
+    status              UserStatus @default(ACTIVE)
 
     numberOfPosts           Int @default(0)
     numberOfFollowers       Int @default(0)

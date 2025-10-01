@@ -1,6 +1,7 @@
 enum BannerStatusType {
-  PUBLISH
   DRAFT
+  PUBLISHED
+  ARCHIVED
 }
 
 enum BannerNavigationType {
@@ -17,6 +18,9 @@ model Banner {
   navigation  BannerNavigationType
   destination String
   order       Int                  @unique @default(0)
+
+  startAt DateTime
+  endAt   DateTime
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
