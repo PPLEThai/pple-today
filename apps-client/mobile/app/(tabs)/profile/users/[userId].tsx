@@ -98,14 +98,33 @@ export default function ProfilePage() {
   ])
 
   const onRefresh = React.useCallback(async () => {
-    await Promise.resolve([
-      queryClient.resetQueries({
-        queryKey: reactQueryClient.getQueryKey('/profile/:id', { pathParams: { id: userId! } }),
-      }),
-      queryClient.resetQueries({
-        queryKey: reactQueryClient.getQueryKey('/feed/users/:id', { pathParams: { id: userId! } }),
-      }),
-    ])
+    if (userDetailsQuery.data?.roles[0] === 'official') {
+      await Promise.resolve([
+        queryClient.resetQueries({
+          queryKey: reactQueryClient.getQueryKey('/profile/:id', { pathParams: { id: userId! } }),
+        }),
+        queryClient.resetQueries({
+          queryKey: reactQueryClient.getQueryKey('/feed/users/:id', {
+            pathParams: { id: userId! },
+          }),
+        }),
+        queryClient.resetQueries({
+          queryKey: reactQueryClient.getQueryKey('/announcements'),
+        }),
+      ])
+    } else {
+      await Promise.resolve([
+        queryClient.resetQueries({
+          queryKey: reactQueryClient.getQueryKey('/profile/:id', { pathParams: { id: userId! } }),
+        }),
+        queryClient.resetQueries({
+          queryKey: reactQueryClient.getQueryKey('/feed/users/:id', {
+            pathParams: { id: userId! },
+          }),
+        }),
+      ])
+    }
+
     await userFeedInfiniteQuery.refetch()
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -187,20 +206,36 @@ export default function ProfilePage() {
           </View>
         )}
       </View>
-      {userDetailsQuery.data?.roles[0] === 'official' && <AnnouncementSection />}
-      <Animated.FlatList
-        onScroll={scrollHandler}
-        refreshControl={<FeedRefreshControl headerHeight={16} onRefresh={onRefresh} />}
-        data={data}
-        contentContainerClassName="bg-base-bg-default"
-        renderItem={renderFeedItem}
-        ListFooterComponent={
-          <FeedFooter queryResult={userFeedInfiniteQuery} className="mt-4 mx-3" />
-        }
-        onEndReached={onEndReached}
-        onEndReachedThreshold={1}
-        showsVerticalScrollIndicator={false}
-      />
+      {userDetailsQuery.data?.roles[0] === 'official' ? (
+        <Animated.FlatList
+          onScroll={scrollHandler}
+          refreshControl={<FeedRefreshControl headerHeight={16} onRefresh={onRefresh} />}
+          data={data}
+          contentContainerClassName="bg-base-bg-default"
+          renderItem={renderFeedItem}
+          ListHeaderComponent={<AnnouncementSection />}
+          ListFooterComponent={
+            <FeedFooter queryResult={userFeedInfiniteQuery} className="mt-4 mx-3" />
+          }
+          onEndReached={onEndReached}
+          onEndReachedThreshold={1}
+          showsVerticalScrollIndicator={false}
+        />
+      ) : (
+        <Animated.FlatList
+          onScroll={scrollHandler}
+          refreshControl={<FeedRefreshControl headerHeight={16} onRefresh={onRefresh} />}
+          data={data}
+          contentContainerClassName="bg-base-bg-default"
+          renderItem={renderFeedItem}
+          ListFooterComponent={
+            <FeedFooter queryResult={userFeedInfiniteQuery} className="mt-4 mx-3" />
+          }
+          onEndReached={onEndReached}
+          onEndReachedThreshold={1}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </View>
   )
 }
