@@ -3,7 +3,11 @@
   "version": "0.0.0",
   "description": "",
   "scripts": {
-    "dev": "tsx watch --include \"node_modules/@pple-today/api-common/**/src\"  src/index.ts"
+    "dev": "tsx watch --include \"node_modules/@pple-today/api-common/**/src\"  src/index.ts",
+    "build": "rimraf ./build && tsx build.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx",
+    "format:check": "prettier --check ."
   },
   "packageManager": "pnpm@9.9.0",
   "engines": {
