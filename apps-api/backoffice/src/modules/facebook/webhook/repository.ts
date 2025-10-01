@@ -45,7 +45,7 @@ export class FacebookWebhookRepository {
 
     return await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
-        const deleteResult = await fileTx.bulkRemoveFile(requiredDelete)
+        const deleteResult = await fileTx.bulkDeleteFile(requiredDelete)
 
         if (deleteResult.isErr()) {
           return deleteResult
@@ -299,7 +299,7 @@ export class FacebookWebhookRepository {
 
     const deleteFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
-        const bulkDeleteResult = await fileTx.bulkRemoveFile(
+        const bulkDeleteResult = await fileTx.bulkDeleteFile(
           existingPost.value?.attachments.map((a) => a.attachmentPath as FilePath) ?? []
         )
 

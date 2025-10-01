@@ -22,14 +22,13 @@ import {
 } from './models'
 import { AdminElectionServicePlugin } from './services'
 
-import { AuthGuardPlugin } from '../../../plugins/auth-guard'
+import { AdminAuthGuardPlugin } from '../../../plugins/admin-auth-guard'
 
 export const AdminElectionController = new Elysia({
   prefix: '/elections',
   tags: ['Admin Elections'],
 })
-  .use(AuthGuardPlugin)
-  .use(AdminElectionServicePlugin)
+  .use([AdminAuthGuardPlugin, AdminElectionServicePlugin])
   .get(
     '/',
     async ({ query, status, adminElectionService }) => {

@@ -1,4 +1,4 @@
-import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { FilePath, InternalErrorCode } from '@pple-today/api-common/dtos'
 import {
   AccessTokenResponse,
   ErrorBody,
@@ -620,6 +620,26 @@ export class FacebookRepository {
       profileImagePath: linkedPage.value.profilePicturePath,
       pageAccessToken: linkedPage.value.pageAccessToken,
     })
+  }
+
+  async handleUploadedProfilePicture(fileUrl: string, fileName: FilePath) {
+    const uploadResult = await fromRepositoryPromise(
+      this.fileService.$transaction(async (tx) => {
+        const uploadFileResult = await tx.uploadFileFromUrl(fileUrl, fileName)
+        if (uploadFileResult.isErr()) return err(uploadFileResult.error)
+
+        const newFileName = await tx.bulkMoveToPublicFolder([fileName])
+        if (newFileName.isErr()) return err(newFileName.error)
+
+        return newFileName.value[0]
+      })
+    )
+
+    if (uploadResult.isErr()) {
+      return err(uploadResult.error)
+    }
+
+    return ok(uploadResult.value)
   }
 }
 

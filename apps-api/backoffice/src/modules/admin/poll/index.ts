@@ -20,13 +20,14 @@ import {
 } from './models'
 import { AdminPollServicePlugin } from './services'
 
+import { AdminAuthGuardPlugin } from '../../../plugins/admin-auth-guard'
 import { AuthGuardPlugin } from '../../../plugins/auth-guard'
 
 const AdminDraftPollsController = new Elysia({
   prefix: '/draft',
   tags: ['Admin Draft Polls'],
 })
-  .use([AuthGuardPlugin, AdminPollServicePlugin])
+  .use([AdminAuthGuardPlugin, AdminPollServicePlugin])
   .get(
     '/:pollId',
     async ({ params, status, adminPollService }) => {

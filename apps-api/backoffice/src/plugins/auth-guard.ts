@@ -61,7 +61,7 @@ export class AuthGuard {
 
     return ok({
       ...user.value,
-      roles: user.value.roles.map((r) => r.role),
+      roles: oidcUserResult.value.pple_roles,
     })
   }
 }

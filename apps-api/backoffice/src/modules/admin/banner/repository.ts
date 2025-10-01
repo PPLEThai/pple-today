@@ -100,7 +100,7 @@ export class AdminBannerRepository {
     const updateFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
         if (existingBanner.value.imageFilePath !== data.imageFilePath) {
-          const deleteResult = await fileTx.removeFile(
+          const deleteResult = await fileTx.deleteFile(
             existingBanner.value.imageFilePath as FilePath
           )
           if (deleteResult.isErr()) return deleteResult
@@ -151,7 +151,7 @@ export class AdminBannerRepository {
 
     const deleteFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
-        const deleteResult = await fileTx.removeFile(existingBanner.value.imageFilePath as FilePath)
+        const deleteResult = await fileTx.deleteFile(existingBanner.value.imageFilePath as FilePath)
         if (deleteResult.isErr()) return deleteResult
 
         return deleteResult.value
