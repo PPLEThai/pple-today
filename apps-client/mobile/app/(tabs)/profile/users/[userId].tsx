@@ -7,12 +7,15 @@ import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { Skeleton } from '@pple-today/ui/skeleton'
+import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
+import { H3 } from '@pple-today/ui/typography'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { ArrowLeftIcon, UserIcon } from 'lucide-react-native'
+import { ArrowLeftIcon, ArrowRightIcon, MegaphoneIcon, UserIcon } from 'lucide-react-native'
 
 import { GetFeedItemsByUserIdResponse } from '@api/backoffice/app'
+import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/announcement'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { FeedFooter, FeedRefreshControl } from '@app/components/feed'
 import { FeedCard } from '@app/components/feed/feed-card'
@@ -176,7 +179,6 @@ export default function ProfilePage() {
                 </View>
               </View>
             </View>
-            {/* Following Button */}
             <Button
               variant={isFollowing ? 'outline-primary' : 'primary'}
               size="sm"
@@ -188,6 +190,7 @@ export default function ProfilePage() {
           </View>
         )}
       </View>
+      {userDetailsQuery.data?.roles[0] === 'official' && <AnnouncementSection />}
       <Animated.FlatList
         onScroll={scrollHandler}
         refreshControl={<FeedRefreshControl headerHeight={16} onRefresh={onRefresh} />}
@@ -201,6 +204,86 @@ export default function ProfilePage() {
         onEndReachedThreshold={1}
         showsVerticalScrollIndicator={false}
       />
+    </View>
+  )
+}
+
+function AnnouncementSection() {
+  const announcementsQuery = reactQueryClient.useQuery('/announcements', {
+    query: { limit: 5 },
+  })
+  const router = useRouter()
+
+  if (announcementsQuery.isLoading) {
+    return (
+      <View className="flex flex-col">
+        <View className="flex flex-row pt-4 px-4 pb-3 justify-between">
+          <View className="flex flex-row items-center gap-2">
+            <Icon
+              icon={MegaphoneIcon}
+              className="color-base-primary-default"
+              width={32}
+              height={32}
+            />
+            <H3 className="text-base-text-high font-heading-semibold text-2xl">ประกาศ</H3>
+          </View>
+          <View className="min-h-10 bg-base-bg-default rounded-lg" />
+        </View>
+        <Slide count={3} itemWidth={320} gap={8} paddingHorizontal={16}>
+          <SlideScrollView>
+            <SlideItem>
+              <AnnouncementCardSkeleton />
+            </SlideItem>
+            <SlideItem>
+              <AnnouncementCardSkeleton />
+            </SlideItem>
+            <SlideItem>
+              <AnnouncementCardSkeleton />
+            </SlideItem>
+          </SlideScrollView>
+          <SlideIndicators />
+        </Slide>
+      </View>
+    )
+  }
+
+  if (!announcementsQuery.data) return null
+  const announcements = announcementsQuery.data.announcements
+  if (announcements.length === 0) return null
+  return (
+    <View className="flex flex-col">
+      <View className="flex flex-row pt-4 px-4 pb-3 justify-between">
+        <View className="flex flex-row items-center gap-2">
+          <Icon
+            icon={MegaphoneIcon}
+            className="color-base-primary-default"
+            width={32}
+            height={32}
+          />
+          <H3 className="text-base-text-high font-heading-semibold text-2xl">ประกาศ</H3>
+        </View>
+        <Button variant="ghost" onPress={() => router.navigate('/(feed)/announcement')}>
+          <Text>ดูเพิ่มเติม</Text>
+          <Icon icon={ArrowRightIcon} strokeWidth={2} />
+        </Button>
+      </View>
+      <Slide count={announcements.length} itemWidth={320} gap={8} paddingHorizontal={16}>
+        <SlideScrollView>
+          {announcements.map((announcement) => (
+            <SlideItem key={announcement.id}>
+              <AnnouncementCard
+                id={announcement.id}
+                onPress={() => router.navigate(`/(feed)/${announcement.id}`)}
+                feedId={announcement.id}
+                title={announcement.title}
+                date={announcement.createdAt.toString()}
+                type={announcement.type}
+              />
+            </SlideItem>
+          ))}
+        </SlideScrollView>
+        <SlideIndicators />
+      </Slide>
     </View>
   )
 }
