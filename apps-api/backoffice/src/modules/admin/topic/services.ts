@@ -25,7 +25,7 @@ export class AdminTopicService {
   ) {}
 
   async getTopics(
-    query: { limit: number; page: number } = {
+    query: { limit: number; page: number; search?: string } = {
       limit: 10,
       page: 1,
     }

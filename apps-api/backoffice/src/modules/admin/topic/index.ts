@@ -29,6 +29,7 @@ export const AdminTopicController = new Elysia({
       const pagingQuery = {
         limit: query.limit ?? 10,
         page: query.page ?? 1,
+        search: query.search,
       }
 
       const result = await adminTopicService.getTopics(pagingQuery)
@@ -104,7 +105,7 @@ export const AdminTopicController = new Elysia({
       },
     }
   )
-  .put(
+  .patch(
     '/:topicId',
     async ({ params, body, status, adminTopicService }) => {
       const result = await adminTopicService.updateTopicById(params.topicId, body)

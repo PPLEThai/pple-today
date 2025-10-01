@@ -2,6 +2,7 @@ import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err } from '@pple-today/api-common/utils'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -17,7 +18,7 @@ export class AdminTopicRepository {
   ) {}
 
   async getTopics(
-    query: { limit: number; page: number } = {
+    query: { limit: number; page: number; search?: string } = {
       limit: 10,
       page: 1,
     }
@@ -25,23 +26,45 @@ export class AdminTopicRepository {
     const { limit, page } = query
     const skip = Math.max((page - 1) * limit, 0)
 
-    return fromRepositoryPromise(
-      this.prismaService.topic.findMany({
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          status: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-        take: limit,
-        skip,
-        orderBy: {
-          createdAt: 'desc',
-        },
-      })
-    )
+    return fromRepositoryPromise(async () => {
+      const [data, count] = await Promise.all([
+        this.prismaService.topic.findMany({
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            status: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+          take: limit,
+          skip,
+          orderBy: {
+            createdAt: 'desc',
+          },
+          ...(query.search && {
+            where: {
+              name: {
+                contains: query.search,
+                mode: 'insensitive',
+              },
+            },
+          }),
+        }),
+        this.prismaService.topic.count({
+          ...(query.search && {
+            where: {
+              name: {
+                contains: query.search,
+                mode: 'insensitive',
+              },
+            },
+          }),
+        }),
+      ])
+
+      return { data, count }
+    })
   }
 
   async getTopicById(topicId: string) {
@@ -129,18 +152,20 @@ export class AdminTopicRepository {
       this.prismaService.topic.update({
         where: { id: topicId },
         data: {
-          name: data.name,
-          description: data.description,
-          bannerImagePath: newBannerImage,
-          status: data.status,
-          hashTagInTopics: {
-            deleteMany: {},
-            createMany: {
-              data: data.hashtagIds.map((hashtagId) => ({
-                hashTagId: hashtagId,
-              })),
-            },
-          },
+          name: data.name ?? Prisma.skip,
+          description: data.description ?? Prisma.skip,
+          bannerImagePath: newBannerImage ?? Prisma.skip,
+          status: data.status ?? Prisma.skip,
+          hashTagInTopics: data.hashtagIds
+            ? {
+                deleteMany: {},
+                createMany: {
+                  data: data.hashtagIds.map((hashtagId) => ({
+                    hashTagId: hashtagId,
+                  })),
+                },
+              }
+            : Prisma.skip,
         },
       })
     )
