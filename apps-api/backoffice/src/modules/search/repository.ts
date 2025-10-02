@@ -137,10 +137,42 @@ export class SearchRepository {
               },
             },
             {
+              post: {
+                hashTags: query.search.startsWith('#')
+                  ? {
+                      some: {
+                        hashTag: {
+                          status: HashTagStatus.PUBLISH,
+                          name: {
+                            startsWith: query.search.slice(1),
+                            mode: 'insensitive',
+                          },
+                        },
+                      },
+                    }
+                  : undefined,
+              },
+            },
+            {
               poll: {
                 description: {
                   contains: query.search,
                   mode: 'insensitive',
+                },
+              },
+            },
+            {
+              poll: {
+                topics: {
+                  some: {
+                    topic: {
+                      status: TopicStatus.PUBLISH,
+                      name: {
+                        startsWith: query.search,
+                        mode: 'insensitive',
+                      },
+                    },
+                  },
                 },
               },
             },
@@ -171,10 +203,6 @@ export class SearchRepository {
   }
 
   async searchHashtags(query: { search: string; limit?: number; cursor?: string }) {
-    if (query.search[0] !== '#') {
-      return ok([])
-    }
-
     return await fromRepositoryPromise(
       this.prismaService.hashTag.findMany({
         where: {
@@ -204,6 +232,19 @@ export class SearchRepository {
             mode: 'insensitive',
           },
           status: TopicStatus.PUBLISH,
+          hashTagInTopics: query.search.startsWith('#')
+            ? {
+                some: {
+                  hashTag: {
+                    name: {
+                      startsWith: query.search,
+                      mode: 'insensitive',
+                    },
+                    status: HashTagStatus.PUBLISH,
+                  },
+                },
+              }
+            : undefined,
         },
         take: query.limit ?? 3,
         skip: query.cursor ? 1 : 0,
