@@ -18,7 +18,7 @@ model HashTag {
     hashTagInTopics HashTagInTopic[]
     postHashTags    PostHashTag[]
 
-    @@index([name])
+    @@index([status])
 }
 
 model Topic {
@@ -35,7 +35,7 @@ model Topic {
     pollTopics         PollTopic[]
     announcementTopics AnnouncementTopic[]
 
-    @@index([name])
+    @@index([status])
 }
 
 model HashTagInTopic {

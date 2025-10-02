@@ -23,6 +23,9 @@ model Announcement {
     attachments AnnouncementFile[]
 
     feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
+
+    @@index([status])
+    @@index([type])
 }
 
 model AnnouncementTopic {

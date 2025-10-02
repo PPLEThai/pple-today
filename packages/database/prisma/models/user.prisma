@@ -44,6 +44,8 @@ model User {
     feedReactions FeedItemReaction[]
     feedComments  FeedItemComment[]
     roles         UserRole[]
+
+    @@index([status])
 }
 
 model UserRole {

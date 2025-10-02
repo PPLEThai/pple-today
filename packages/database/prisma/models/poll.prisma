@@ -22,6 +22,8 @@ model Poll {
     options PollOption[]
 
     feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
+
+    @@index([status])
 }
 
 model PollOption {

@@ -21,6 +21,8 @@ model Post {
     hashTags    PostHashTag[]
 
     feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
+
+    @@index([status])
 }
 
 model PostAttachment {
