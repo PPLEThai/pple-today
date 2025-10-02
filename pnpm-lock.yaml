@@ -219,6 +219,9 @@ importers:
       '@pple-today/api-client':
         specifier: workspace:^
         version: link:../../packages/api-client
+      '@pple-today/database':
+        specifier: workspace:^
+        version: link:../../packages/database
       '@pple-today/ui':
         specifier: workspace:^
         version: link:../../packages/ui

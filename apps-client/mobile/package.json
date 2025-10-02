@@ -31,6 +31,7 @@
     "@expo/vector-icons": "^14.1.0",
     "@gorhom/bottom-sheet": "^5.1.6",
     "@pple-today/api-client": "workspace:^",
+    "@pple-today/database": "workspace:^",
     "@pple-today/ui": "workspace:^",
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/elements": "^2.3.8",

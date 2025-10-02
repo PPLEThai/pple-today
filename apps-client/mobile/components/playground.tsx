@@ -37,6 +37,7 @@ import { toast } from '@pple-today/ui/toast'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
+import dayjs from 'dayjs'
 import { useEvent } from 'expo'
 import { Image } from 'expo-image'
 import * as Linking from 'expo-linking'
@@ -48,11 +49,13 @@ import LottieView from 'lottie-react-native'
 import { InfoIcon, PlusIcon, SearchIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
+import { ElectionWithCurrentStatus } from '@api/backoffice/app'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useFacebookPagesQuery } from '@app/libs/facebook'
 
 import { AuthPlayground } from './auth-playground'
 import { AvatarPPLEFallback } from './avatar-pple-fallback'
+import { ElectionCard, ElectionStatusBadge } from './election/election-card'
 import { MoreOrLess } from './more-or-less'
 
 const AUTH_ACCESS_TOKEN_STORAGE_KEY = 'authAccessToken'
@@ -64,7 +67,7 @@ export function Playground() {
         <View className="flex flex-row items-center justify-between">
           <H1 className="font-inter-bold">Playground</H1>
         </View>
-        <FacebookSDKExample />
+        <ElectionCardExample />
         <View className="flex flex-col gap-2">
           <H2 className="font-inter-bold">Font</H2>
           <View className="flex flex-col gap-1">
@@ -301,6 +304,7 @@ export function Playground() {
         <VideoExample />
         <QueryExample />
         <AuthPlayground />
+        <FacebookSDKExample />
       </View>
     </ScrollView>
   )
@@ -881,6 +885,127 @@ function OnboardPlayground() {
         <Button onPress={() => router.push('/onboarding')}>
           <Text>Start Onboarding</Text>
         </Button>
+      </View>
+    </View>
+  )
+}
+
+const electionDetail: ElectionWithCurrentStatus = {
+  id: '1',
+  name: 'เลือกตั้งตัวแทนสมาชิกพรรคประจำ อ.เมือง จ.ระยอง',
+  description: 'เลือกตั้งตัวแทนสมาชิกพรรคประจำ อ.เมือง จ.ระยอง บลาบลาบลา',
+  location: 'อาคารอเนกประสงชุมชนสองพี่น้อง 1,2,3',
+  mode: 'SECURE',
+  isCancelled: false,
+  encryptionPublicKey: 'some-public-key',
+  type: 'ONLINE',
+  publishDate: dayjs(new Date()).subtract(2, 'day').toDate(),
+  openRegister: dayjs(new Date()).subtract(1, 'day').toDate(),
+  closeRegister: dayjs(new Date()).add(1, 'day').toDate(),
+  openVoting: dayjs(new Date()).add(2, 'day').toDate(),
+  closeVoting: dayjs(new Date()).add(3, 'day').toDate(),
+  startResult: dayjs(new Date()).add(4, 'day').toDate(),
+  endResult: dayjs(new Date()).add(5, 'day').toDate(),
+  createdAt: dayjs(new Date()).toDate(),
+  updatedAt: dayjs(new Date()).toDate(),
+  status: 'NOT_OPENED_VOTE',
+  votePercentage: 0,
+  isRegistered: false,
+  isVoted: false,
+}
+function ElectionCardExample() {
+  const elections: ElectionWithCurrentStatus[] = [
+    // NOT_OPENED_VOTE
+    {
+      ...electionDetail,
+      type: 'ONLINE',
+    },
+    {
+      ...electionDetail,
+      type: 'ONSITE',
+    },
+    // TODO: add canRegister when past publishDate but before openRegister
+    // {
+    //   ...electionDetail,
+    //   type: 'HYBRID',
+    //   canRegister: false,
+    // },
+    {
+      ...electionDetail,
+      type: 'HYBRID',
+    },
+    {
+      ...electionDetail,
+      type: 'HYBRID',
+      isRegistered: true,
+    },
+    // OPEN_VOTE
+    {
+      ...electionDetail,
+      type: 'ONLINE',
+      status: 'OPEN_VOTE',
+    },
+    {
+      ...electionDetail,
+      type: 'ONSITE',
+      status: 'OPEN_VOTE',
+    },
+    {
+      ...electionDetail,
+      type: 'HYBRID',
+      status: 'OPEN_VOTE',
+    },
+    {
+      ...electionDetail,
+      type: 'HYBRID',
+      status: 'OPEN_VOTE',
+      isVoted: true,
+      votePercentage: 45.84,
+    },
+    // CLOSED_VOTE
+    {
+      ...electionDetail,
+      type: 'ONLINE',
+      status: 'CLOSED_VOTE',
+    },
+    {
+      ...electionDetail,
+      type: 'ONSITE',
+      status: 'CLOSED_VOTE',
+    },
+    {
+      ...electionDetail,
+      type: 'HYBRID',
+      status: 'CLOSED_VOTE',
+    },
+    // RESULT_ANNOUNCE
+    {
+      ...electionDetail,
+      type: 'ONLINE',
+      status: 'RESULT_ANNOUNCE',
+    },
+    {
+      ...electionDetail,
+      type: 'ONSITE',
+      status: 'RESULT_ANNOUNCE',
+    },
+    {
+      ...electionDetail,
+      type: 'HYBRID',
+      status: 'RESULT_ANNOUNCE',
+    },
+  ]
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Election Card</H2>
+      {elections.map((election, index) => (
+        <ElectionCard key={index} election={election} />
+      ))}
+      <View className="flex flex-col gap-2 items-start">
+        <ElectionStatusBadge status="NOT_OPENED_VOTE" />
+        <ElectionStatusBadge status="OPEN_VOTE" />
+        <ElectionStatusBadge status="CLOSED_VOTE" />
+        <ElectionStatusBadge status="RESULT_ANNOUNCE" />
       </View>
     </View>
   )
