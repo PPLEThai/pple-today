@@ -8,7 +8,7 @@ import { KeyManagementPlugin, KeyManagementService } from '../../plugins/kms'
 export class KeyService {
   constructor(private keyManagementService: KeyManagementService) {}
 
-  async createElectionPublicKey(electionId: string) {
+  async createElectionEncryptionKey(electionId: string) {
     const createKeyResult = await fromRepositoryPromise(
       this.keyManagementService.createKey(electionId)
     )

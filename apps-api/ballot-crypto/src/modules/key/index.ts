@@ -13,7 +13,7 @@ export const KeyController = new Elysia({
   .post(
     '/',
     async ({ body, status, keyService }) => {
-      const result = await keyService.createElectionPublicKey(body.electionId)
+      const result = await keyService.createElectionEncryptionKey(body.electionId)
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
       return status(201, result.value)
