@@ -1,13 +1,19 @@
+import { useCallback } from 'react'
 import { View } from 'react-native'
+import { createQuery } from 'react-query-kit'
 
+import { QUERY_KEY } from '@pple-today/api-client'
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { Progress } from '@pple-today/ui/progress'
 import { Text } from '@pple-today/ui/text'
 import { H3 } from '@pple-today/ui/typography'
+import { useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
+import { Link } from 'expo-router'
 import {
+  AlarmClockCheckIcon,
   AlarmClockIcon,
   ArrowRightIcon,
   CalendarIcon,
@@ -98,11 +104,18 @@ function ElectionCardDetail(props: ElectionCardProps) {
         return (
           <>
             <ElectionOpenVotingDate election={props.election} />
-            {/* TODO */}
-            <Button size="sm" className="self-stretch mt-2">
-              <Icon icon={AlarmClockIcon} size={16} />
-              <Text>แจ้งเตือน</Text>
-            </Button>
+            <ElectionNotification electionId={props.election.id}>
+              {({ isEnabled, setIsEnabled }) => (
+                <Button
+                  size="sm"
+                  className="self-stretch mt-2"
+                  onPress={() => setIsEnabled(!isEnabled)}
+                >
+                  <Icon icon={isEnabled ? AlarmClockCheckIcon : AlarmClockIcon} size={16} />
+                  <Text>{isEnabled ? 'ตั้งแจ้งเตือนแล้ว' : 'แจ้งเตือน'}</Text>
+                </Button>
+              )}
+            </ElectionNotification>
           </>
         )
       }
@@ -117,10 +130,14 @@ function ElectionCardDetail(props: ElectionCardProps) {
                 <Icon icon={MapPinnedIcon} size={16} />
                 <Text>ดูสถานที่</Text>
               </Button>
-              <Button size="sm" className="flex-1">
-                <Icon icon={AlarmClockIcon} size={16} />
-                <Text>แจ้งเตือน</Text>
-              </Button>
+              <ElectionNotification electionId={props.election.id}>
+                {({ isEnabled, setIsEnabled }) => (
+                  <Button size="sm" className="flex-1" onPress={() => setIsEnabled(!isEnabled)}>
+                    <Icon icon={isEnabled ? AlarmClockCheckIcon : AlarmClockIcon} size={16} />
+                    <Text>{isEnabled ? 'ตั้งแจ้งเตือนแล้ว' : 'แจ้งเตือน'}</Text>
+                  </Button>
+                )}
+              </ElectionNotification>
             </View>
           </>
         )
@@ -140,10 +157,19 @@ function ElectionCardDetail(props: ElectionCardProps) {
                 </Text>
               </View>
               <View className="self-stretch mt-2 flex flex-row gap-2.5">
+                <ElectionNotification electionId={props.election.id}>
+                  {({ isEnabled, setIsEnabled }) => (
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      className="h-9 w-9"
+                      onPress={() => setIsEnabled(!isEnabled)}
+                    >
+                      <Icon icon={isEnabled ? AlarmClockCheckIcon : AlarmClockIcon} size={16} />
+                    </Button>
+                  )}
+                </ElectionNotification>
                 {/* TODO */}
-                <Button size="icon" variant="secondary" className="h-9 w-9">
-                  <Icon icon={AlarmClockIcon} size={16} />
-                </Button>
                 <Button size="sm" className="flex-1">
                   <Icon icon={UserRoundCheckIcon} size={16} />
                   <Text>ลงทะเบียนเลือกตั้งออนไลน์</Text>
@@ -166,10 +192,14 @@ function ElectionCardDetail(props: ElectionCardProps) {
                 <Icon icon={MapPinnedIcon} size={16} />
                 <Text>ดูสถานที่</Text>
               </Button>
-              <Button size="sm" className="flex-1">
-                <Icon icon={AlarmClockIcon} size={16} />
-                <Text>แจ้งเตือน</Text>
-              </Button>
+              <ElectionNotification electionId={props.election.id}>
+                {({ isEnabled, setIsEnabled }) => (
+                  <Button size="sm" className="flex-1" onPress={() => setIsEnabled(!isEnabled)}>
+                    <Icon icon={isEnabled ? AlarmClockCheckIcon : AlarmClockIcon} size={16} />
+                    <Text>{isEnabled ? 'ตั้งแจ้งเตือนแล้ว' : 'แจ้งเตือน'}</Text>
+                  </Button>
+                )}
+              </ElectionNotification>
             </View>
           </>
         )
@@ -217,10 +247,12 @@ function ElectionCardDetail(props: ElectionCardProps) {
       )
     case 'RESULT_ANNOUNCE':
       return (
-        <Button className="self-stretch mt-2" size="sm">
-          <Text>ดูผลการเลือกตั้ง</Text>
-          <Icon icon={ArrowRightIcon} size={16} />
-        </Button>
+        <Link href={`/election/${props.election.id}`} asChild>
+          <Button className="self-stretch mt-2" size="sm">
+            <Text>ดูผลการเลือกตั้ง</Text>
+            <Icon icon={ArrowRightIcon} size={16} />
+          </Button>
+        </Link>
       )
     default:
       exhaustiveGuard(props.election.status)
@@ -281,12 +313,55 @@ function ElectionPercentageActions(props: ElectionCardProps) {
         <Text className="text-sm text-base-text-invert font-heading-regular">
           ใช้สิทธิ์แล้ว: {Math.floor(props.election.votePercentage)}%
         </Text>
-        {/* TODO */}
-        <Button size="sm" className="flex-1">
-          <Text>{props.election.isVoted ? 'ลงคะแนนใหม่' : 'ไปเลือกตั้ง'}</Text>
-          <Icon icon={ArrowRightIcon} size={16} />
-        </Button>
+        <Link href={`/election/${props.election.id}`} asChild>
+          <Button size="sm" className="flex-1">
+            <Text>{props.election.isVoted ? 'ลงคะแนนใหม่' : 'ไปเลือกตั้ง'}</Text>
+            <Icon icon={ArrowRightIcon} size={16} />
+          </Button>
+        </Link>
       </View>
     </>
   )
+}
+
+const useElectionNotificationQuery = createQuery({
+  queryKey: [QUERY_KEY, 'electionNotification'],
+  fetcher: (_: { electionId: string }): boolean => {
+    throw new Error('ElectionNotificationQuery should not be enabled')
+  },
+  enabled: false,
+  initialData: false,
+})
+export function useElectionNotificationState(electionId: string, initialData: boolean) {
+  const electionNotificationQuery = useElectionNotificationQuery({
+    variables: { electionId },
+    initialData: initialData,
+  })
+  const queryClient = useQueryClient()
+  const setElectionNotificationState = useCallback(
+    (data: boolean) => {
+      queryClient.setQueryData(useElectionNotificationQuery.getKey({ electionId }), data)
+    },
+    [queryClient, electionId]
+  )
+  return [electionNotificationQuery.data, setElectionNotificationState] as const
+}
+interface ElectionNotificationProps {
+  electionId: string
+  // TODO
+  initialData?: boolean
+  children: ({
+    isEnabled,
+    setIsEnabled,
+  }: {
+    isEnabled: boolean
+    setIsEnabled: (value: boolean) => void
+  }) => React.ReactNode
+}
+function ElectionNotification(props: ElectionNotificationProps) {
+  const [isEnabled, setIsEnabled] = useElectionNotificationState(
+    props.electionId,
+    props.initialData ?? false
+  )
+  return props.children({ isEnabled, setIsEnabled })
 }
