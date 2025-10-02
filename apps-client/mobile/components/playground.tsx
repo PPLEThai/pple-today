@@ -895,6 +895,7 @@ const electionDetail: ElectionWithCurrentStatus = {
   name: 'เลือกตั้งตัวแทนสมาชิกพรรคประจำ อ.เมือง จ.ระยอง',
   description: 'เลือกตั้งตัวแทนสมาชิกพรรคประจำ อ.เมือง จ.ระยอง บลาบลาบลา',
   location: 'อาคารอเนกประสงชุมชนสองพี่น้อง 1,2,3',
+  locationMapUrl: 'https://maps.app.goo.gl/3Da9VfiGFiHXeQKLA',
   mode: 'SECURE',
   isCancelled: false,
   encryptionPublicKey: 'some-public-key',

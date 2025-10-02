@@ -11,6 +11,7 @@ import { Text } from '@pple-today/ui/text'
 import { H3 } from '@pple-today/ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
+import * as Linking from 'expo-linking'
 import { Link } from 'expo-router'
 import {
   AlarmClockCheckIcon,
@@ -99,7 +100,7 @@ export function ElectionStatusBadge(props: { status: ElectionWithCurrentStatus['
 
 function ElectionCardDetail(props: ElectionCardProps) {
   switch (props.election.status) {
-    case 'NOT_OPENED_VOTE':
+    case 'NOT_OPENED_VOTE': {
       if (props.election.type === 'ONLINE') {
         return (
           <>
@@ -125,8 +126,12 @@ function ElectionCardDetail(props: ElectionCardProps) {
             <ElectionOpenVotingDate election={props.election} />
             <ElectionLocation election={props.election} />
             <View className="self-stretch mt-2 flex flex-row gap-2.5">
-              {/* TODO */}
-              <Button size="sm" variant="secondary" className="flex-1">
+              <Button
+                size="sm"
+                variant="secondary"
+                className="flex-1"
+                onPress={() => Linking.openURL(props.election.locationMapUrl!)}
+              >
                 <Icon icon={MapPinnedIcon} size={16} />
                 <Text>ดูสถานที่</Text>
               </Button>
@@ -187,8 +192,12 @@ function ElectionCardDetail(props: ElectionCardProps) {
               </Text>
             </Badge>
             <View className="self-stretch mt-2 flex flex-row gap-2.5">
-              {/* TODO */}
-              <Button size="sm" variant="secondary" className="flex-1">
+              <Button
+                size="sm"
+                variant="secondary"
+                className="flex-1"
+                onPress={() => Linking.openURL(props.election.locationMapUrl!)}
+              >
                 <Icon icon={MapPinnedIcon} size={16} />
                 <Text>ดูสถานที่</Text>
               </Button>
@@ -205,6 +214,7 @@ function ElectionCardDetail(props: ElectionCardProps) {
         )
       }
       break
+    }
     case 'OPEN_VOTE':
       if (props.election.type === 'ONLINE') {
         return (
@@ -219,8 +229,12 @@ function ElectionCardDetail(props: ElectionCardProps) {
           <>
             <ElectionTimeLeft election={props.election} />
             <ElectionLocation election={props.election} />
-            {/* TODO */}
-            <Button variant="secondary" size="sm" className="self-stretch mt-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              className="self-stretch mt-2"
+              onPress={() => Linking.openURL(props.election.locationMapUrl!)}
+            >
               <Icon icon={MapPinnedIcon} size={16} />
               <Text>ดูสถานที่</Text>
             </Button>
