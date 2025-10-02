@@ -14,7 +14,9 @@ model Poll {
     title       String
     description String?
     endAt       DateTime
-    type        PollType
+
+    type   PollType
+    status PollStatus @default(DRAFT)
 
     topics  PollTopic[]
     options PollOption[]
