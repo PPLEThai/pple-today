@@ -6,7 +6,12 @@ import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { GetAnnouncementResponse, GetAnnouncementsResponse, PutAnnouncementBody } from './models'
+import {
+  GetAnnouncementByIdResponse,
+  GetAnnouncementsResponse,
+  PostAnnouncementBody,
+  PutAnnouncementBody,
+} from './models'
 import { AdminAnnouncementRepository, AdminAnnouncementRepositoryPlugin } from './repository'
 
 import { FileServicePlugin } from '../../../plugins/file'
@@ -52,7 +57,15 @@ export class AdminAnnouncementService {
         url: attachmentUrls.value[index],
         filePath: filePath as FilePath,
       })),
-    } satisfies GetAnnouncementResponse)
+    } satisfies GetAnnouncementByIdResponse)
+  }
+
+  async createAnnouncement(data: PostAnnouncementBody) {
+    const createResult = await this.adminAnnouncementRepository.createAnnouncement(data)
+
+    if (createResult.isErr()) return mapRepositoryError(createResult.error)
+
+    return ok({ announcementId: createResult.value.id })
   }
 
   async updateAnnouncementById(announcementId: string, data: PutAnnouncementBody) {

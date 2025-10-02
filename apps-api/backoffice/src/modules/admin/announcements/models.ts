@@ -30,10 +30,10 @@ export const GetAnnouncementsResponse = t.Array(
 )
 export type GetAnnouncementsResponse = Static<typeof GetAnnouncementsResponse>
 
-export const GetAnnouncementParams = AnnouncementIdParams
-export type GetAnnouncementParams = Static<typeof GetAnnouncementParams>
+export const GetAnnouncementByIdParams = AnnouncementIdParams
+export type GetAnnouncementByIdParams = Static<typeof GetAnnouncementByIdParams>
 
-export const GetAnnouncementResponse = t.Pick(Announcement, [
+export const GetAnnouncementByIdResponse = t.Pick(Announcement, [
   'id',
   'content',
   'createdAt',
@@ -43,7 +43,21 @@ export const GetAnnouncementResponse = t.Pick(Announcement, [
   'type',
   'attachments',
 ])
-export type GetAnnouncementResponse = Static<typeof GetAnnouncementResponse>
+export type GetAnnouncementByIdResponse = Static<typeof GetAnnouncementByIdResponse>
+
+export const PostAnnouncementBody = t.Object({
+  title: t.String({ description: 'The title of the announcement' }),
+  content: t.String({ description: 'The content of the announcement' }),
+  type: t.Enum(AnnouncementType, { description: 'The type of the announcement' }),
+  topicIds: t.Array(t.String({ description: 'The ID of the announcement topic' })),
+  attachmentFilePaths: t.Array(FilePath),
+})
+
+export type PostAnnouncementBody = Static<typeof PostAnnouncementBody>
+export const PostAnnouncementResponse = t.Object({
+  announcementId: t.String({ description: 'The ID of the announcement' }),
+})
+export type PostAnnouncementResponse = Static<typeof PostAnnouncementResponse>
 
 export const PutAnnouncementParams = AnnouncementIdParams
 export type PutAnnouncementParams = Static<typeof PutAnnouncementParams>

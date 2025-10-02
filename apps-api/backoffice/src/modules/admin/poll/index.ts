@@ -3,13 +3,17 @@ import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-commo
 import Elysia from 'elysia'
 
 import {
-  DeletePublishedPollResponse,
-  GetPollResponse,
+  DeletePollParams,
+  DeletePollResponse,
+  GetPollByIdParams,
+  GetPollByIdResponse,
   GetPollsQuery,
   GetPollsResponse,
-  PollIdParams,
-  PutPublishedPollBody,
-  PutPublishedPollResponse,
+  PostPollBody,
+  PostPollResponse,
+  PutPollBody,
+  PutPollParams,
+  PutPollResponse,
 } from './models'
 import { AdminPollServicePlugin } from './services'
 
@@ -49,6 +53,32 @@ export const AdminPollsController = new Elysia({
       },
     }
   )
+  .post(
+    '/',
+    async ({ body, status, adminPollService }) => {
+      const result = await adminPollService.createPoll(body)
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(201, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      body: PostPollBody,
+      response: {
+        201: PostPollResponse,
+        ...createErrorSchema(
+          InternalErrorCode.POLL_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Create a new poll',
+        description: 'Create a new poll with the provided details',
+      },
+    }
+  )
   .get(
     '/:pollId',
     async ({ params, status, adminPollService }) => {
@@ -61,9 +91,9 @@ export const AdminPollsController = new Elysia({
     },
     {
       requiredLocalUser: true,
-      params: PollIdParams,
+      params: GetPollByIdParams,
       response: {
-        200: GetPollResponse,
+        200: GetPollByIdResponse,
         ...createErrorSchema(
           InternalErrorCode.POLL_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
@@ -87,10 +117,10 @@ export const AdminPollsController = new Elysia({
     },
     {
       requiredLocalUser: true,
-      params: PollIdParams,
-      body: PutPublishedPollBody,
+      params: PutPollParams,
+      body: PutPollBody,
       response: {
-        200: PutPublishedPollResponse,
+        200: PutPollResponse,
         ...createErrorSchema(
           InternalErrorCode.POLL_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
@@ -114,9 +144,9 @@ export const AdminPollsController = new Elysia({
     },
     {
       requiredLocalUser: true,
-      params: PollIdParams,
+      params: DeletePollParams,
       response: {
-        200: DeletePublishedPollResponse,
+        200: DeletePollResponse,
         ...createErrorSchema(
           InternalErrorCode.POLL_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR

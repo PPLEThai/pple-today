@@ -2,10 +2,11 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService, FileTransactionService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { FeedItemType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { PutAnnouncementBody } from './models'
+import { PostAnnouncementBody, PutAnnouncementBody } from './models'
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
@@ -134,6 +135,58 @@ export class AdminAnnouncementRepository {
         ...result,
       }
     })
+  }
+
+  async createAnnouncement(data: PostAnnouncementBody) {
+    const result = await fromRepositoryPromise(
+      this.fileService.$transaction(async (fileTx) => {
+        const movePublicResult = await fileTx.bulkMoveToPublicFolder(data.attachmentFilePaths)
+
+        if (movePublicResult.isErr()) {
+          return err({
+            code: InternalErrorCode.FILE_MOVE_ERROR,
+            message: 'Failed to move one or more files',
+          })
+        }
+
+        const newAttachmentFilePaths = movePublicResult.value
+
+        const createAnnouncementResult = await this.prismaService.feedItem.create({
+          select: {
+            id: true,
+          },
+          data: {
+            type: FeedItemType.POLL,
+            author: {
+              connect: { id: 'pple-official-user' },
+            },
+            announcement: {
+              create: {
+                title: data.title,
+                content: data.content,
+                type: data.type,
+                topics: {
+                  createMany: {
+                    data: data.topicIds.map((topicId) => ({ topicId })),
+                  },
+                },
+                attachments: {
+                  createMany: {
+                    data: newAttachmentFilePaths.map((filePath) => ({ filePath })),
+                  },
+                },
+              },
+            },
+          },
+        })
+
+        return createAnnouncementResult
+      })
+    )
+
+    if (result.isErr()) return err(result.error)
+
+    return ok(result.value[0])
   }
 
   async updateAnnouncementById(announcementId: string, data: PutAnnouncementBody) {

@@ -2,7 +2,7 @@ import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
-import { PutPublishedPollBody } from './models'
+import { PostPollBody, PutPollBody } from './models'
 
 import { PrismaServicePlugin } from '../../../plugins/prisma'
 
@@ -115,7 +115,47 @@ export class AdminPollRepository {
     })
   }
 
-  async updatePollById(feedItemId: string, data: PutPublishedPollBody) {
+  async createPoll(data: PostPollBody) {
+    return await fromRepositoryPromise(async () =>
+      this.prismaService.feedItem.create({
+        data: {
+          type: 'POLL',
+          author: {
+            connect: {
+              id: 'pple-official-user',
+            },
+          },
+          poll: {
+            create: {
+              title: data.title,
+              description: data.description,
+              endAt: data.endAt,
+              type: data.type,
+              topics: {
+                createMany: {
+                  data: data.topicIds.map((topicId) => ({
+                    topicId,
+                  })),
+                },
+              },
+              options: {
+                createMany: {
+                  data: data.optionTitles.map((optionTitle) => ({
+                    title: optionTitle,
+                  })),
+                },
+              },
+            },
+          },
+        },
+        select: {
+          id: true,
+        },
+      })
+    )
+  }
+
+  async updatePollById(feedItemId: string, data: PutPollBody) {
     return await fromRepositoryPromise(async () => {
       const answer = await this.prismaService.poll.findUniqueOrThrow({
         where: { feedItemId },

@@ -5,10 +5,12 @@ import Elysia from 'elysia'
 import {
   DeleteAnnouncementParams,
   DeleteAnnouncementResponse,
-  GetAnnouncementParams,
-  GetAnnouncementResponse,
+  GetAnnouncementByIdParams,
+  GetAnnouncementByIdResponse,
   GetAnnouncementsQuery,
   GetAnnouncementsResponse,
+  PostAnnouncementBody,
+  PostAnnouncementResponse,
   PutAnnouncementBody,
   PutAnnouncementParams,
   PutAnnouncementResponse,
@@ -51,6 +53,34 @@ export const AdminAnnouncementsController = new Elysia({
       },
     }
   )
+  .post(
+    '/',
+    async ({ body, status, adminAnnouncementService }) => {
+      const result = await adminAnnouncementService.createAnnouncement(body)
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(201, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      body: PostAnnouncementBody,
+      response: {
+        201: PostAnnouncementResponse,
+        ...createErrorSchema(
+          InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Create a new announcement',
+        description: 'Create a new announcement with the provided details',
+      },
+    }
+  )
   .get(
     '/:announcementId',
     async ({ params, status, adminAnnouncementService }) => {
@@ -63,9 +93,9 @@ export const AdminAnnouncementsController = new Elysia({
     },
     {
       requiredLocalUser: true,
-      params: GetAnnouncementParams,
+      params: GetAnnouncementByIdParams,
       response: {
-        200: GetAnnouncementResponse,
+        200: GetAnnouncementByIdResponse,
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
           InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,

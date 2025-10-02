@@ -22,7 +22,6 @@ export type GetBannerByIdResponse = Static<typeof GetBannerByIdResponse>
 // POST /admin/banners
 export const CreateBannerBody = t.Object({
   imageFilePath: FilePath,
-  status: t.Enum(BannerStatusType, { description: 'Publish status of the banner item' }),
   navigation: t.Enum(BannerNavigationType, {
     description: 'How the app should navigate when the item is tapped',
   }),
