@@ -28,8 +28,11 @@ export const envSchema = t.Object({
   GCP_LOCATION: t.String({
     description: 'Google Cloud Location',
   }),
-  GCP_KEY_RING: t.String({
-    description: 'Google Cloud Key Ring',
+  GCP_ENCRYPTION_KEY_RING: t.String({
+    description: 'Google Cloud Encryption Key Ring',
+  }),
+  GCP_SIGNING_KEY_RING: t.String({
+    description: 'Google Cloud Signing Key Ring',
   }),
 })
 

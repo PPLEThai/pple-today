@@ -6,6 +6,7 @@ export const CreateKeyBody = t.Object({
 export type CreateKeyBody = Static<typeof CreateKeyBody>
 
 export const CreateKeyResponse = t.Object({
-  publicKey: t.String(),
+  encryptionPublicKey: t.String(),
+  signingPublicKey: t.String(),
 })
 export type CreateKeyResponse = Static<typeof CreateKeyResponse>
