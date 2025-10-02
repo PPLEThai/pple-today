@@ -8,7 +8,7 @@ import { mapGoogleAPIError } from '../../utils/error'
 export class KeyService {
   constructor(private keyManagementService: KeyManagementService) {}
 
-  async createElectionEncryptionKey(electionId: string) {
+  async createElectionKeys(electionId: string) {
     const createKeyResults = await Promise.all([
       this.keyManagementService.createKeyAsymmetricDecrypt(electionId),
       this.keyManagementService.createKeyAsymmetricSign(electionId),
