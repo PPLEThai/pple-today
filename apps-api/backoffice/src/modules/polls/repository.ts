@@ -1,6 +1,6 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { FeedItemType, Prisma } from '@pple-today/database/prisma'
+import { FeedItemType, PollStatus, Prisma } from '@pple-today/database/prisma'
 import { Elysia } from 'elysia'
 
 import { PrismaServicePlugin } from '../../plugins/prisma'
@@ -56,7 +56,11 @@ export class PollsRepository {
       const polls = []
 
       // Fetch total poll count
-      const totalPollCount = await this.prismaService.poll.count()
+      const totalPollCount = await this.prismaService.poll.count({
+        where: {
+          status: PollStatus.PUBLISHED,
+        },
+      })
 
       // If skip is greater than total count, return empty array
       if (totalPollCount <= skip) {
@@ -68,6 +72,7 @@ export class PollsRepository {
         where: {
           type: FeedItemType.POLL,
           poll: {
+            status: PollStatus.PUBLISHED,
             endAt: {
               gte: new Date(),
             },
@@ -81,6 +86,7 @@ export class PollsRepository {
           where: {
             type: FeedItemType.POLL,
             poll: {
+              status: PollStatus.PUBLISHED,
               endAt: {
                 gte: new Date(),
               },
@@ -105,6 +111,7 @@ export class PollsRepository {
           where: {
             type: FeedItemType.POLL,
             poll: {
+              status: PollStatus.PUBLISHED,
               endAt: {
                 lt: new Date(),
               },

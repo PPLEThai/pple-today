@@ -142,16 +142,16 @@ describe('Error utility', () => {
         },
         {
           input: [
-            InternalErrorCode.TOPIC_CANNOT_FOLLOW_DRAFT,
+            InternalErrorCode.TOPIC_CANNOT_FOLLOW_SUSPENDED,
             InternalErrorCode.TOPIC_ALREADY_FOLLOWED,
-            InternalErrorCode.TOPIC_CANNOT_FOLLOW_DRAFT,
+            InternalErrorCode.TOPIC_CANNOT_FOLLOW_SUSPENDED,
           ],
           output: {
             409: t.Object({
               error: t.Union([
-                tApiError(InternalErrorCode.TOPIC_CANNOT_FOLLOW_DRAFT),
+                tApiError(InternalErrorCode.TOPIC_CANNOT_FOLLOW_SUSPENDED),
                 tApiError(InternalErrorCode.TOPIC_ALREADY_FOLLOWED),
-                tApiError(InternalErrorCode.TOPIC_CANNOT_FOLLOW_DRAFT),
+                tApiError(InternalErrorCode.TOPIC_CANNOT_FOLLOW_SUSPENDED),
               ]),
             }),
           },

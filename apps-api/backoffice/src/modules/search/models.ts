@@ -1,7 +1,7 @@
 import {
+  Announcement,
   Author,
   FeedItem,
-  PublishedAnnouncement,
   SearchKeyword,
   SearchQuery,
   Topic,
@@ -36,7 +36,7 @@ export const GetSearchAnnouncementQuery = SearchQuery
 export type GetSearchAnnouncementQuery = Static<typeof GetSearchAnnouncementQuery>
 
 export const GetSearchAnnouncementResponse = t.Array(
-  t.Pick(PublishedAnnouncement, ['id', 'title', 'type', 'topics'])
+  t.Pick(Announcement, ['id', 'title', 'type', 'topics'])
 )
 export type GetSearchAnnouncementResponse = Static<typeof GetSearchAnnouncementResponse>
 

@@ -35,6 +35,8 @@ export class AdminBannerRepository {
     navigation: BannerNavigationType
     destination: string
     status: BannerStatusType
+    startAt: Date
+    endAt: Date
   }) {
     const moveFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
@@ -62,6 +64,8 @@ export class AdminBannerRepository {
             destination: data.destination,
             status: data.status, // Default value
             order: lastBanner ? lastBanner.order + 1 : 1,
+            startAt: data.startAt,
+            endAt: data.endAt,
           },
           select: {
             id: true,

@@ -1,7 +1,7 @@
 import { PollType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
-export const PublishedPoll = t.Object({
+export const Poll = t.Object({
   id: t.String({ description: 'The ID of the poll' }),
 
   title: t.String({ description: 'The title of the poll' }),
@@ -12,16 +12,7 @@ export const PublishedPoll = t.Object({
   createdAt: t.Date({ description: 'The creation date of the poll' }),
   updatedAt: t.Date({ description: 'The update date of the poll' }),
 })
-export type PublishedPoll = Static<typeof PublishedPoll>
-
-export const DraftPoll = t.Composite([
-  t.Pick(PublishedPoll, ['id', 'description', 'type', 'createdAt', 'updatedAt']),
-  t.Object({
-    title: t.Nullable(t.String({ description: 'The title of the poll' })),
-    endAt: t.Nullable(t.Date({ description: 'The end date of the poll' })),
-  }),
-])
-export type DraftPoll = Static<typeof DraftPoll>
+export type Poll = Static<typeof Poll>
 
 export const PollDetails = t.Object({
   options: t.Array(

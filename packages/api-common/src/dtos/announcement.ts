@@ -4,7 +4,7 @@ import { Static, t } from 'elysia'
 import { FilePath } from './file'
 import { Topic } from './topic'
 
-export const PublishedAnnouncement = t.Object({
+export const Announcement = t.Object({
   id: t.String({ description: 'The ID of the announcement' }),
   title: t.String({ description: 'The title of the announcement' }),
   content: t.Nullable(t.String({ description: 'The content of the announcement' })),
@@ -19,20 +19,4 @@ export const PublishedAnnouncement = t.Object({
     })
   ),
 })
-export type PublishedAnnouncement = Static<typeof PublishedAnnouncement>
-
-export const DraftAnnouncement = t.Composite([
-  t.Pick(PublishedAnnouncement, [
-    'id',
-    'content',
-    'createdAt',
-    'updatedAt',
-    'topics',
-    'attachments',
-  ]),
-  t.Object({
-    title: t.Nullable(t.String({ description: 'The title of the announcement' })),
-    type: t.Nullable(t.Enum(AnnouncementType, { description: 'The type of the announcement' })),
-  }),
-])
-export type DraftAnnouncement = Static<typeof DraftAnnouncement>
+export type Announcement = Static<typeof Announcement>

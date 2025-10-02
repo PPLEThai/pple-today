@@ -56,7 +56,6 @@ export class AdminHashtagRepository {
       this.prismaService.hashTag.create({
         data: {
           name: data.name,
-          status: data.status,
         },
       })
     )
