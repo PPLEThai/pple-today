@@ -48,8 +48,8 @@ export const AdminPollsController = new Elysia({
         ),
       },
       detail: {
-        summary: 'Get polls by type',
-        description: 'Fetch polls by type',
+        summary: 'Get list of polls',
+        description: 'Fetch a list of polls',
       },
     }
   )

@@ -6,6 +6,7 @@ import {
   BannerStatusType,
   FeedItemType,
   HashTagStatus,
+  PollStatus,
   PollType,
   PrismaClient,
   TopicStatus,
@@ -266,6 +267,7 @@ const seedPolls = async () => {
               ],
             },
             type: PollType.SINGLE_CHOICE,
+            status: PollStatus.PUBLISHED,
             endAt: new Date(Date.now() + (i - 10) * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000),
             topics: {
               create: [

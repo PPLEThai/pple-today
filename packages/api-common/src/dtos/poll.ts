@@ -1,4 +1,4 @@
-import { PollType } from '@pple-today/database/prisma'
+import { PollStatus, PollType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const Poll = t.Object({
@@ -7,6 +7,7 @@ export const Poll = t.Object({
   title: t.String({ description: 'The title of the poll' }),
   description: t.Nullable(t.String({ description: 'The description of the poll' })),
   endAt: t.Date({ description: 'The end date of the poll' }),
+  status: t.Enum(PollStatus),
   type: t.Enum(PollType),
 
   createdAt: t.Date({ description: 'The creation date of the poll' }),

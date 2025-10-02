@@ -25,6 +25,7 @@ export class AdminPollRepository {
             feedItemId: true,
             title: true,
             description: true,
+            status: true,
             endAt: true,
             type: true,
             feedItem: {
@@ -65,6 +66,7 @@ export class AdminPollRepository {
           feedItemId: true,
           title: true,
           description: true,
+          status: true,
           endAt: true,
           type: true,
           feedItem: {

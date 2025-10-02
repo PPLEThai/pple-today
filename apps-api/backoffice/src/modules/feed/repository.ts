@@ -341,6 +341,15 @@ export class FeedRepository {
         skip,
         take: limit,
         include: this.constructFeedItemInclude(userId),
+        where: {
+          OR: [
+            { post: { status: PostStatus.PUBLISHED } },
+            { poll: { status: PollStatus.PUBLISHED } },
+            {
+              announcement: { status: AnnouncementStatus.PUBLISHED },
+            },
+          ],
+        },
       })
     )
 

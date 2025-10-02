@@ -49,6 +49,7 @@ export class AdminAnnouncementRepository {
           feedItemId: true,
           title: true,
           content: true,
+          status: true,
           type: true,
           topics: {
             select: {
@@ -100,6 +101,7 @@ export class AdminAnnouncementRepository {
           select: {
             feedItemId: true,
             title: true,
+            status: true,
             content: true,
             type: true,
             topics: {

@@ -26,7 +26,16 @@ export const GetAnnouncementsQuery = t.Object({
 export type GetAnnouncementsQuery = Static<typeof GetAnnouncementsQuery>
 
 export const GetAnnouncementsResponse = t.Array(
-  t.Pick(Announcement, ['id', 'content', 'createdAt', 'updatedAt', 'topics', 'title', 'type'])
+  t.Pick(Announcement, [
+    'id',
+    'content',
+    'createdAt',
+    'updatedAt',
+    'topics',
+    'title',
+    'type',
+    'status',
+  ])
 )
 export type GetAnnouncementsResponse = Static<typeof GetAnnouncementsResponse>
 
@@ -35,6 +44,7 @@ export type GetAnnouncementByIdParams = Static<typeof GetAnnouncementByIdParams>
 
 export const GetAnnouncementByIdResponse = t.Pick(Announcement, [
   'id',
+  'status',
   'content',
   'createdAt',
   'updatedAt',
