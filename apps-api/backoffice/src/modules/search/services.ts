@@ -19,13 +19,17 @@ export class SearchService {
   ) {}
 
   async searchKeywords(query: { search: string }) {
-    const [userResult, topicResult, keywordResult] = await Promise.all([
+    const [userResult, topicResult, hashtagResult, keywordResult] = await Promise.all([
       this.searchRepository.searchUsers({
         search: query.search,
         limit: 3,
       }),
       this.searchRepository.searchTopics({
         search: query.search,
+        limit: 3,
+      }),
+      this.searchRepository.searchHashtags({
+        search: `#${query.search.replace(/^#/, '')}`,
         limit: 3,
       }),
       this.searchRepository.getKeywords({
@@ -37,6 +41,7 @@ export class SearchService {
     if (userResult.isErr()) return mapRepositoryError(userResult.error)
     if (topicResult.isErr()) return mapRepositoryError(topicResult.error)
     if (keywordResult.isErr()) return mapRepositoryError(keywordResult.error)
+    if (hashtagResult.isErr()) return mapRepositoryError(hashtagResult.error)
 
     const response: GetSearchKeywordResponse = [
       ...userResult.value.map((user) => ({
@@ -45,12 +50,20 @@ export class SearchService {
         name: user.name,
         profileImage: user.profileImagePath
           ? this.fileService.getPublicFileUrl(user.profileImagePath)
-          : undefined,
+          : null,
       })),
       ...topicResult.value.map((topic) => ({
         type: 'TOPIC' as const,
         id: topic.id,
         name: topic.name,
+        bannerImage: topic.bannerImagePath
+          ? this.fileService.getPublicFileUrl(topic.bannerImagePath)
+          : null,
+      })),
+      ...hashtagResult.value.map((hashtag) => ({
+        type: 'HASHTAG' as const,
+        id: hashtag.id,
+        name: hashtag.name,
       })),
       ...keywordResult.value.map((keyword) => ({
         type: 'QUERY' as const,
@@ -95,7 +108,19 @@ export class SearchService {
 
     if (result.isErr()) return mapRepositoryError(result.error)
 
-    return ok(result.value)
+    return ok(
+      result.value.map((topic) => ({
+        id: topic.id,
+        name: topic.name,
+        bannerImage: topic.bannerImagePath
+          ? this.fileService.getPublicFileUrl(topic.bannerImagePath)
+          : null,
+        hashtags: topic.hashTagInTopics.map(({ hashTag }) => ({
+          id: hashTag.id,
+          name: hashTag.name,
+        })),
+      }))
+    )
   }
 
   async searchHashtags(query: { search: string; limit?: number; cursor?: string }) {

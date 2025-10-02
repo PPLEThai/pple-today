@@ -216,6 +216,12 @@ export class SearchRepository {
         select: {
           id: true,
           name: true,
+          bannerImagePath: true,
+          hashTagInTopics: {
+            include: {
+              hashTag: true,
+            },
+          },
         },
       })
     )
