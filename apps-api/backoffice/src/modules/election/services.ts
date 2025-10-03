@@ -33,7 +33,11 @@ export class ElectionService {
 
   private readonly SECONDS_IN_A_DAY = 60 * 60 * 24
 
-  private isOnsiteElectionActive(election: Election): boolean {
+  private isElectionActive(election: Election): boolean {
+    if (election.isCancelled) {
+      return false
+    }
+
     const now = new Date()
 
     const isPublished = election.publishDate && now >= election.publishDate
@@ -60,39 +64,6 @@ export class ElectionService {
     }
 
     return true
-  }
-
-  private isOnlineElectionActive(election: Election): boolean {
-    const now = new Date()
-
-    const isPublished = Boolean(election.publishDate && now >= election.publishDate)
-    const isPastAnnouncePeriod = Boolean(election.endResult && now > election.endResult)
-
-    return isPublished && !isPastAnnouncePeriod
-  }
-
-  private isHybridElectionActive(election: Election): boolean {
-    const now = new Date()
-
-    const isPublished = Boolean(election.publishDate && now >= election.publishDate)
-    const isPastAnnouncePeriod = Boolean(election.endResult && now > election.endResult)
-
-    return isPublished && !isPastAnnouncePeriod
-  }
-
-  private isElectionActive(election: Election): boolean {
-    if (election.isCancelled) {
-      return false
-    }
-
-    switch (election.type) {
-      case 'ONSITE':
-        return this.isOnsiteElectionActive(election)
-      case 'ONLINE':
-        return this.isOnlineElectionActive(election)
-      case 'HYBRID':
-        return this.isHybridElectionActive(election)
-    }
   }
 
   private getElectionStatus(election: Election): ElectionStatus {
