@@ -12,6 +12,7 @@ export default function FeedLayout() {
       <Stack.Screen name="user-suggestion" />
       <Stack.Screen name="topic/[topicId]" />
       <Stack.Screen name="topic/suggestion" />
+      <Stack.Screen name="profile/[userId]" />
       <Stack.Screen name="[feedId]" />
     </Stack>
   )
