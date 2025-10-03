@@ -34,7 +34,7 @@ export type FeedItemReaction = Static<typeof FeedItemReaction>
 
 export const FeedItemBaseContent = t.Object({
   id: t.String({ description: 'The ID of the feed item' }),
-  createdAt: t.Date({ description: 'The creation date of the feed item' }),
+  publishedAt: t.Date({ description: 'The published date of the feed item' }),
   commentCount: t.Number({ description: 'The number of comments on the feed item' }),
   userReaction: t.Nullable(t.Enum(FeedItemReactionType)),
   reactions: t.Array(FeedItemReaction),

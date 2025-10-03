@@ -5,7 +5,12 @@ import { PrismaService } from '@pple-today/api-common/services'
 import { FileService } from '@pple-today/api-common/services'
 import { err, getFileName } from '@pple-today/api-common/utils'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { FeedItemType, PostAttachment, PostAttachmentType } from '@pple-today/database/prisma'
+import {
+  FeedItemType,
+  PostAttachment,
+  PostAttachmentType,
+  PostStatus,
+} from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 import * as R from 'remeda'
@@ -178,6 +183,7 @@ export class FacebookWebhookRepository {
       return await this.prismaService.feedItem.create({
         data: {
           type: FeedItemType.POST,
+          publishedAt: new Date(),
           author: {
             connect: {
               id: pageManager.managerId!,
@@ -187,6 +193,7 @@ export class FacebookWebhookRepository {
             create: {
               facebookPostId: data.postId,
               content: data.content,
+              status: PostStatus.PUBLISHED,
               attachments:
                 data.attachments !== undefined
                   ? {

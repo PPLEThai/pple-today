@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 
+import { FilePath } from '@api/backoffice/admin'
+
 import { userManager } from '~/config/oidc'
 import { reactQueryClient } from '~/libs/api-client'
 
@@ -96,8 +98,9 @@ const BannerTestRoute = () => {
           body: {
             destination: 'https://google.com',
             navigation: 'EXTERNAL_BROWSER',
-            imageFilePath: result.filePath as any,
-            status: 'PUBLISH',
+            imageFilePath: result.filePath as FilePath,
+            startAt: new Date(),
+            endAt: new Date(Date.now() + 86400000),
           },
           headers: {
             Authorization: `Bearer ${user.access_token}`,

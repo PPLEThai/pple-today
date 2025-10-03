@@ -39,16 +39,23 @@ WITH
         SELECT * FROM one_hop_follows 
             UNION ALL 
         SELECT * FROM common_followed
+    ),
+    filtered_candidate_user AS (
+        SELECT 
+          cu.user_id
+        FROM 
+          candidate_user cu
+          INNER JOIN "User" u ON cu.user_id = u.id AND u."status" = 'ACTIVE'
     )
 
 SELECT
-    candidate_user.user_id::TEXT,
+    filtered_candidate_user.user_id::TEXT,
     COUNT(*)::NUMERIC AS score
 FROM 
-    candidate_user
-    LEFT JOIN current_user_follows ON candidate_user.user_id = current_user_follows."followedId"
+    filtered_candidate_user
+    LEFT JOIN current_user_follows ON filtered_candidate_user.user_id = current_user_follows."followedId"
 WHERE current_user_follows."followedId" IS NULL
-GROUP BY candidate_user.user_id
+GROUP BY filtered_candidate_user.user_id
 ORDER BY score DESC
 LIMIT 10;
 END;

@@ -169,7 +169,7 @@ export const TopicController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR,
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.TOPIC_NOT_FOUND,
-          InternalErrorCode.TOPIC_CANNOT_FOLLOW_DRAFT,
+          InternalErrorCode.TOPIC_CANNOT_FOLLOW_SUSPENDED,
           InternalErrorCode.TOPIC_ALREADY_FOLLOWED
         ),
       },

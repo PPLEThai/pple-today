@@ -13,8 +13,9 @@ model FeedItem {
   id   String       @id @default(cuid())
   type FeedItemType
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
 
   numberOfComments Int @default(0)
 

@@ -29,8 +29,7 @@ export class AnnouncementService {
         title: announcement.title,
         content: announcement.content ?? '',
         type: announcement.type,
-        createdAt: announcement.feedItem.createdAt,
-        updatedAt: announcement.feedItem.updatedAt,
+        publishedAt: announcement.feedItem.publishedAt!,
       })),
     } satisfies GetAnnouncementsResponse)
   }
@@ -59,8 +58,8 @@ export class AnnouncementService {
       title: announcementResult.value.title,
       content: announcementResult.value.content ?? '',
       attachments: attachmentPublicUrls,
-      createdAt: announcementResult.value.feedItem.createdAt,
-      updatedAt: announcementResult.value.feedItem.updatedAt,
+      type: announcementResult.value.type,
+      publishedAt: announcementResult.value.feedItem.publishedAt!,
       feedItemId: announcementResult.value.feedItemId,
     } satisfies GetAnnouncementByIdResponse)
   }
