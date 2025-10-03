@@ -33,13 +33,7 @@ export class ElectionService {
 
   private readonly SECONDS_IN_A_DAY = 60 * 60 * 24
 
-  private isElectionActive(election: Election): boolean {
-    if (election.isCancelled) {
-      return false
-    }
-
-    const now = new Date()
-
+  private isElectionInTimelinePeriod(election: Election, now: Date): boolean {
     const isPublished = election.publishDate && now >= election.publishDate
     if (!isPublished) {
       return false
@@ -64,6 +58,14 @@ export class ElectionService {
     }
 
     return true
+  }
+
+  private isShowElectionInOfficialPage(election: Election, now: Date): boolean {
+    if (election.isCancelled) {
+      return false
+    }
+
+    return this.isElectionInTimelinePeriod(election, now)
   }
 
   private getElectionStatus(election: Election): ElectionStatus {
@@ -142,14 +144,31 @@ export class ElectionService {
     }
   }
 
-  async listMyEligibleElections(userId: string) {
+  async listOfficialPageElections(userId: string) {
     const eligibleVoters = await this.electionRepository.listMyEligibleVoters(userId)
     if (eligibleVoters.isErr()) {
       return mapRepositoryError(eligibleVoters.error)
     }
 
+    const now = new Date()
     const result = eligibleVoters.value
-      .filter(({ election }) => this.isElectionActive(election))
+      .filter(({ election }) => this.isShowElectionInOfficialPage(election, now))
+      .map(({ election, type: voterType }) =>
+        this.convertToListElection(election, voterType)
+      ) satisfies ListElectionResponse
+
+    return ok(result)
+  }
+
+  async listProfilePageElections(userId: string) {
+    const eligibleVoters = await this.electionRepository.listMyEligibleVoters(userId)
+    if (eligibleVoters.isErr()) {
+      return mapRepositoryError(eligibleVoters.error)
+    }
+
+    const now = new Date()
+    const result = eligibleVoters.value
+      .filter(({ election }) => this.isElectionInTimelinePeriod(election, now))
       .map(({ election, type: voterType }) =>
         this.convertToListElection(election, voterType)
       ) satisfies ListElectionResponse
@@ -168,7 +187,7 @@ export class ElectionService {
       })
     }
 
-    if (!this.isElectionActive(eligibleVoter.value.election)) {
+    if (!this.isElectionInTimelinePeriod(eligibleVoter.value.election, new Date())) {
       return err({
         code: InternalErrorCode.ELECTION_NOT_FOUND,
         message: `Cannot found election id "${electionId}"`,

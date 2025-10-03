@@ -30,7 +30,7 @@ export const ElectionController = new Elysia({
   .get(
     '/',
     async ({ user, electionService, status }) => {
-      const elections = await electionService.listMyEligibleElections(user.id)
+      const elections = await electionService.listOfficialPageElections(user.id)
       if (elections.isErr()) {
         return mapErrorCodeToResponse(elections.error, status)
       }
@@ -39,8 +39,8 @@ export const ElectionController = new Elysia({
     },
     {
       detail: {
-        summary: 'List elections based on user',
-        description: 'List elections based on user',
+        summary: 'List elections for official page',
+        description: 'List elections for official page',
       },
       requiredLocalUser: true,
       response: {

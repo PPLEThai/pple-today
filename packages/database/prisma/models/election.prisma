@@ -20,16 +20,18 @@ enum ElectionMode {
 }
 
 model Election {
-    id                        String       @id @default(cuid())
-    name                      String
-    description               String?
-    location                  String?
-    locationMapUrl            String?
-    type                      ElectionType
-    mode                      ElectionMode @default(SECURE)
+    id             String  @id @default(cuid())
+    name           String
+    description    String?
+    location       String?
+    locationMapUrl String?
+
+    isCancelled Boolean      @default(false)
+    type        ElectionType
+    mode        ElectionMode @default(SECURE)
+
     encryptionPublicKey       String?
     digitalSignaturePublicKey String?
-    isCancelled               Boolean      @default(false)
 
     publishDate   DateTime?
     openRegister  DateTime?
