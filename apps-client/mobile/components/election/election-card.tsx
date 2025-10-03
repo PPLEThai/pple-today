@@ -1,18 +1,19 @@
 import { useCallback, useEffect, useState } from 'react'
-import { View } from 'react-native'
+import { Pressable, PressableProps, View } from 'react-native'
 import { createQuery } from 'react-query-kit'
 
 import { QUERY_KEY } from '@pple-today/api-client'
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
+import { cn } from '@pple-today/ui/lib/utils'
 import { Progress } from '@pple-today/ui/progress'
 import { Text } from '@pple-today/ui/text'
 import { H3 } from '@pple-today/ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import * as Linking from 'expo-linking'
-import { Link } from 'expo-router'
+import { Link, useRouter } from 'expo-router'
 import {
   AlarmClockCheckIcon,
   AlarmClockIcon,
@@ -28,29 +29,40 @@ import { ElectionWithCurrentStatus } from '@api/backoffice/app'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 
-interface ElectionCardProps {
+interface ElectionCardProps extends PressableProps {
   election: ElectionWithCurrentStatus
 }
-export function ElectionCard(props: ElectionCardProps) {
+export function ElectionCard({ election, className, ...props }: ElectionCardProps) {
+  const router = useRouter()
   return (
-    <View className="w-full bg-base-secondary-default rounded-2xl flex flex-col items-start gap-2 p-4 overflow-hidden">
-      <Icon
-        icon={PPLEIcon}
-        width={239}
-        height={239}
-        className="absolute -right-10 top-0 text-base-primary-default opacity-40"
-      />
-      <View className="flex flex-row justify-between w-full">
-        <Badge variant="secondary">
-          <Text>{getElectionTypeLabel(props.election.type)}</Text>
-        </Badge>
-        <ElectionStatusBadge status={props.election.status} />
+    <Pressable
+      className={cn(
+        'w-full bg-base-secondary-default rounded-2xl flex flex-col justify-between gap-2 p-4 overflow-hidden',
+        className
+      )}
+      onPress={() => router.push(`/election/${election.id}`)}
+      {...props}
+    >
+      <View className="flex flex-col gap-2">
+        <Icon
+          icon={PPLEIcon}
+          width={239}
+          height={239}
+          className="absolute -right-10 top-0 text-base-primary-default opacity-40"
+        />
+        <View className="flex flex-row justify-between w-full">
+          <Badge variant="secondary">
+            <Text>{getElectionTypeLabel(election.type)}</Text>
+          </Badge>
+          <ElectionStatusBadge status={election.status} />
+        </View>
+        <H3 className="text-base-text-invert font-heading-bold text-xl line-clamp-2 self-start">
+          {election.name}
+        </H3>
+        <ElectionCardDetail election={election} />
       </View>
-      <H3 className="text-base-text-invert font-heading-bold text-xl line-clamp-2">
-        {props.election.name}
-      </H3>
-      <ElectionCardDetail election={props.election} />
-    </View>
+      <ElectionCardFooter election={election} />
+    </Pressable>
   )
 }
 
@@ -102,48 +114,13 @@ function ElectionCardDetail(props: ElectionCardProps) {
   switch (props.election.status) {
     case 'NOT_OPENED_VOTE': {
       if (props.election.type === 'ONLINE') {
-        return (
-          <>
-            <ElectionOpenVotingDate election={props.election} />
-            <ElectionNotification electionId={props.election.id}>
-              {({ isEnabled, setIsEnabled }) => (
-                <Button
-                  size="sm"
-                  className="self-stretch mt-2"
-                  onPress={() => setIsEnabled(!isEnabled)}
-                >
-                  <Icon icon={isEnabled ? AlarmClockCheckIcon : AlarmClockIcon} size={16} />
-                  <Text>{isEnabled ? 'ตั้งแจ้งเตือนแล้ว' : 'แจ้งเตือน'}</Text>
-                </Button>
-              )}
-            </ElectionNotification>
-          </>
-        )
+        return <ElectionOpenVotingDate election={props.election} />
       }
       if (props.election.type === 'ONSITE') {
         return (
           <>
             <ElectionOpenVotingDate election={props.election} />
             <ElectionLocation election={props.election} />
-            <View className="self-stretch mt-2 flex flex-row gap-2.5">
-              <Button
-                size="sm"
-                variant="secondary"
-                className="flex-1"
-                onPress={() => Linking.openURL(props.election.locationMapUrl!)}
-              >
-                <Icon icon={MapPinnedIcon} size={16} />
-                <Text>ดูสถานที่</Text>
-              </Button>
-              <ElectionNotification electionId={props.election.id}>
-                {({ isEnabled, setIsEnabled }) => (
-                  <Button size="sm" className="flex-1" onPress={() => setIsEnabled(!isEnabled)}>
-                    <Icon icon={isEnabled ? AlarmClockCheckIcon : AlarmClockIcon} size={16} />
-                    <Text>{isEnabled ? 'ตั้งแจ้งเตือนแล้ว' : 'แจ้งเตือน'}</Text>
-                  </Button>
-                )}
-              </ElectionNotification>
-            </View>
           </>
         )
       }
@@ -161,25 +138,6 @@ function ElectionCardDetail(props: ElectionCardProps) {
                   </Text>
                 </Text>
               </View>
-              <View className="self-stretch mt-2 flex flex-row gap-2.5">
-                <ElectionNotification electionId={props.election.id}>
-                  {({ isEnabled, setIsEnabled }) => (
-                    <Button
-                      size="icon"
-                      variant="secondary"
-                      className="h-9 w-9"
-                      onPress={() => setIsEnabled(!isEnabled)}
-                    >
-                      <Icon icon={isEnabled ? AlarmClockCheckIcon : AlarmClockIcon} size={16} />
-                    </Button>
-                  )}
-                </ElectionNotification>
-                {/* TODO */}
-                <Button size="sm" className="flex-1">
-                  <Icon icon={UserRoundCheckIcon} size={16} />
-                  <Text>ลงทะเบียนเลือกตั้งออนไลน์</Text>
-                </Button>
-              </View>
             </>
           )
         }
@@ -191,25 +149,6 @@ function ElectionCardDetail(props: ElectionCardProps) {
                 หมดเวลาลงทะเบียนแล้ว คุณมีสิทธิ์เลือกตั้งในสถานที่
               </Text>
             </Badge>
-            <View className="self-stretch mt-2 flex flex-row gap-2.5">
-              <Button
-                size="sm"
-                variant="secondary"
-                className="flex-1"
-                onPress={() => Linking.openURL(props.election.locationMapUrl!)}
-              >
-                <Icon icon={MapPinnedIcon} size={16} />
-                <Text>ดูสถานที่</Text>
-              </Button>
-              <ElectionNotification electionId={props.election.id}>
-                {({ isEnabled, setIsEnabled }) => (
-                  <Button size="sm" className="flex-1" onPress={() => setIsEnabled(!isEnabled)}>
-                    <Icon icon={isEnabled ? AlarmClockCheckIcon : AlarmClockIcon} size={16} />
-                    <Text>{isEnabled ? 'ตั้งแจ้งเตือนแล้ว' : 'แจ้งเตือน'}</Text>
-                  </Button>
-                )}
-              </ElectionNotification>
-            </View>
           </>
         )
       }
@@ -220,7 +159,7 @@ function ElectionCardDetail(props: ElectionCardProps) {
         return (
           <>
             <ElectionTimeLeft election={props.election} />
-            <ElectionPercentageActions election={props.election} />
+            <Progress value={props.election.votePercentage} />
           </>
         )
       }
@@ -229,15 +168,6 @@ function ElectionCardDetail(props: ElectionCardProps) {
           <>
             <ElectionTimeLeft election={props.election} />
             <ElectionLocation election={props.election} />
-            <Button
-              variant="secondary"
-              size="sm"
-              className="self-stretch mt-2"
-              onPress={() => Linking.openURL(props.election.locationMapUrl!)}
-            >
-              <Icon icon={MapPinnedIcon} size={16} />
-              <Text>ดูสถานที่</Text>
-            </Button>
           </>
         )
       }
@@ -245,7 +175,7 @@ function ElectionCardDetail(props: ElectionCardProps) {
         return (
           <>
             <ElectionTimeLeft election={props.election} />
-            <ElectionPercentageActions election={props.election} />
+            <Progress value={props.election.votePercentage} />
           </>
         )
       }
@@ -260,18 +190,12 @@ function ElectionCardDetail(props: ElectionCardProps) {
         </View>
       )
     case 'RESULT_ANNOUNCE':
-      return (
-        <Link href={`/election/${props.election.id}`} asChild>
-          <Button className="self-stretch mt-2" size="sm">
-            <Text>ดูผลการเลือกตั้ง</Text>
-            <Icon icon={ArrowRightIcon} size={16} />
-          </Button>
-        </Link>
-      )
+      return null
     default:
       exhaustiveGuard(props.election.status)
   }
 }
+
 function ElectionOpenVotingDate(props: ElectionCardProps) {
   return (
     <View className="flex flex-row gap-1 items-center">
@@ -334,22 +258,144 @@ function CountdownTimer(props: { targetTime: Date }) {
   )
 }
 
+function ElectionCardFooter(props: ElectionCardProps) {
+  switch (props.election.status) {
+    case 'NOT_OPENED_VOTE': {
+      if (props.election.type === 'ONLINE') {
+        return (
+          <ElectionNotification electionId={props.election.id}>
+            {({ isEnabled, setIsEnabled }) => (
+              <Button size="sm" className="w-full mt-2" onPress={() => setIsEnabled(!isEnabled)}>
+                <Icon icon={isEnabled ? AlarmClockCheckIcon : AlarmClockIcon} size={16} />
+                <Text>{isEnabled ? 'ตั้งแจ้งเตือนแล้ว' : 'แจ้งเตือน'}</Text>
+              </Button>
+            )}
+          </ElectionNotification>
+        )
+      }
+      if (props.election.type === 'ONSITE') {
+        return (
+          <View className="flex flex-row pt-2 gap-2.5">
+            <Button
+              size="sm"
+              variant="secondary"
+              className="flex-1"
+              onPress={() => Linking.openURL(props.election.locationMapUrl!)}
+            >
+              <Icon icon={MapPinnedIcon} size={16} />
+              <Text>ดูสถานที่</Text>
+            </Button>
+            <ElectionNotification electionId={props.election.id}>
+              {({ isEnabled, setIsEnabled }) => (
+                <Button size="sm" className="flex-1" onPress={() => setIsEnabled(!isEnabled)}>
+                  <Icon icon={isEnabled ? AlarmClockCheckIcon : AlarmClockIcon} size={16} />
+                  <Text>{isEnabled ? 'ตั้งแจ้งเตือนแล้ว' : 'แจ้งเตือน'}</Text>
+                </Button>
+              )}
+            </ElectionNotification>
+          </View>
+        )
+      }
+      if (props.election.type === 'HYBRID') {
+        if (!props.election.isRegistered) {
+          return (
+            <View className="flex flex-row pt-2 gap-2.5">
+              <ElectionNotification electionId={props.election.id}>
+                {({ isEnabled, setIsEnabled }) => (
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="h-9 w-9"
+                    onPress={() => setIsEnabled(!isEnabled)}
+                  >
+                    <Icon icon={isEnabled ? AlarmClockCheckIcon : AlarmClockIcon} size={16} />
+                  </Button>
+                )}
+              </ElectionNotification>
+              {/* TODO */}
+              <Button size="sm" className="flex-1">
+                <Icon icon={UserRoundCheckIcon} size={16} />
+                <Text>ลงทะเบียนเลือกตั้งออนไลน์</Text>
+              </Button>
+            </View>
+          )
+        }
+        return (
+          <View className="flex flex-row pt-2 gap-2.5">
+            <Button
+              size="sm"
+              variant="secondary"
+              className="flex-1"
+              onPress={() => Linking.openURL(props.election.locationMapUrl!)}
+            >
+              <Icon icon={MapPinnedIcon} size={16} />
+              <Text>ดูสถานที่</Text>
+            </Button>
+            <ElectionNotification electionId={props.election.id}>
+              {({ isEnabled, setIsEnabled }) => (
+                <Button size="sm" className="flex-1" onPress={() => setIsEnabled(!isEnabled)}>
+                  <Icon icon={isEnabled ? AlarmClockCheckIcon : AlarmClockIcon} size={16} />
+                  <Text>{isEnabled ? 'ตั้งแจ้งเตือนแล้ว' : 'แจ้งเตือน'}</Text>
+                </Button>
+              )}
+            </ElectionNotification>
+          </View>
+        )
+      }
+      break
+    }
+    case 'OPEN_VOTE':
+      if (props.election.type === 'ONLINE') {
+        return <ElectionPercentageActions election={props.election} />
+      }
+      if (props.election.type === 'ONSITE') {
+        return (
+          <Button
+            variant="secondary"
+            size="sm"
+            className="w-full mt-2"
+            onPress={() => Linking.openURL(props.election.locationMapUrl!)}
+          >
+            <Icon icon={MapPinnedIcon} size={16} />
+            <Text>ดูสถานที่</Text>
+          </Button>
+        )
+      }
+      if (props.election.type === 'HYBRID') {
+        return <ElectionPercentageActions election={props.election} />
+      }
+      break
+    case 'CLOSED_VOTE':
+      return null
+    case 'RESULT_ANNOUNCE':
+      return (
+        <View className="flex flex-row pt-2 gap-2.5">
+          <Link href={`/election/${props.election.id}`} asChild>
+            <Button className="w-full" size="sm">
+              <Text>ดูผลการเลือกตั้ง</Text>
+              <Icon icon={ArrowRightIcon} size={16} />
+            </Button>
+          </Link>
+        </View>
+      )
+    default:
+      exhaustiveGuard(props.election.status)
+  }
+}
+
 function ElectionPercentageActions(props: ElectionCardProps) {
   return (
-    <>
-      <Progress value={props.election.votePercentage} />
-      <View className="self-stretch mt-2 flex flex-row gap-2.5">
-        <Text className="text-sm text-base-text-invert font-heading-regular">
-          ใช้สิทธิ์แล้ว: {Math.floor(props.election.votePercentage)}%
-        </Text>
-        <Link href={`/election/${props.election.id}`} asChild>
-          <Button size="sm" className="flex-1">
-            <Text>{props.election.isVoted ? 'ลงคะแนนใหม่' : 'ไปเลือกตั้ง'}</Text>
-            <Icon icon={ArrowRightIcon} size={16} />
-          </Button>
-        </Link>
-      </View>
-    </>
+    <View className="flex flex-row pt-2 gap-2.5">
+      <Text className="text-sm text-base-text-invert font-heading-regular">
+        ใช้สิทธิ์แล้ว: {Math.floor(props.election.votePercentage)}%
+      </Text>
+      <Link href={`/election/${props.election.id}`} asChild>
+        <Button size="sm" className="flex-1">
+          <Text>{props.election.isVoted ? 'ลงคะแนนใหม่' : 'ไปเลือกตั้ง'}</Text>
+          <Icon icon={ArrowRightIcon} size={16} />
+        </Button>
+      </Link>
+    </View>
   )
 }
 

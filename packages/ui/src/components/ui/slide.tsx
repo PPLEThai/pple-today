@@ -34,31 +34,33 @@ const useSlideContext = () => {
   return context
 }
 export function Slide({
-  gap,
+  gap = 0,
   count,
-  itemWidth,
+  itemWidth = 'container',
   children,
-  paddingHorizontal,
+  paddingHorizontal = 0,
   className,
   isLoading = false,
 }: {
-  gap: number
+  gap?: number
   count: number
-  itemWidth: number
+  itemWidth?: number | 'container'
   children: React.ReactNode
-  paddingHorizontal: number
+  paddingHorizontal?: number
   className?: string
   isLoading?: boolean
 }) {
   const [currentPage, setCurrentPage] = React.useState(0)
   const [scrollViewWidth, setScrollViewWidth] = React.useState(0)
   const scroll = useSharedValue(0)
+  const itemWidthValue =
+    itemWidth === 'container' ? scrollViewWidth - paddingHorizontal * 2 : itemWidth
   return (
     <SlideProvider
       value={{
         gap,
         count,
-        itemWidth,
+        itemWidth: itemWidthValue,
         currentPage,
         setCurrentPage,
         scroll,

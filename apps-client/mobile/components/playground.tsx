@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@pple-today/ui/select'
+import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { Textarea } from '@pple-today/ui/textarea'
 import { toast } from '@pple-today/ui/toast'
@@ -67,7 +68,6 @@ export function Playground() {
         <View className="flex flex-row items-center justify-between">
           <H1 className="font-inter-bold">Playground</H1>
         </View>
-        <ElectionCardExample />
         <View className="flex flex-col gap-2">
           <H2 className="font-inter-bold">Font</H2>
           <View className="flex flex-col gap-1">
@@ -304,6 +304,7 @@ export function Playground() {
         <VideoExample />
         <QueryExample />
         <AuthPlayground />
+        <ElectionCardExample />
         <FacebookSDKExample />
       </View>
     </ScrollView>
@@ -999,10 +1000,17 @@ function ElectionCardExample() {
   return (
     <View className="flex flex-col gap-2">
       <H2 className="font-inter-bold">Election Card</H2>
-      {elections.map((election, index) => (
-        <ElectionCard key={index} election={election} />
-      ))}
-      <View className="flex flex-col gap-2 items-start">
+      <Slide count={elections.length} itemWidth="container" gap={8}>
+        <SlideScrollView>
+          {elections.map((election, index) => (
+            <SlideItem key={index} className="flex flex-row items-stretch">
+              <ElectionCard election={election} />
+            </SlideItem>
+          ))}
+        </SlideScrollView>
+        <SlideIndicators />
+      </Slide>
+      <View className="flex flex-row gap-2 items-start">
         <ElectionStatusBadge status="NOT_OPENED_VOTE" />
         <ElectionStatusBadge status="OPEN_VOTE" />
         <ElectionStatusBadge status="CLOSED_VOTE" />
