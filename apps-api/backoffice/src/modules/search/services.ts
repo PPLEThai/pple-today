@@ -29,7 +29,7 @@ export class SearchService {
         limit: 3,
       }),
       this.searchRepository.searchHashtags({
-        search: `#${query.search.replace(/^#/, '')}`,
+        search: query.search,
         limit: 3,
       }),
       this.searchRepository.getKeywords({
@@ -124,10 +124,6 @@ export class SearchService {
   }
 
   async searchHashtags(query: { search: string; limit?: number; cursor?: string }) {
-    if (query.search[0] !== '#') {
-      return ok([])
-    }
-
     const result = await this.searchRepository.searchHashtags(query)
     if (result.isErr()) return mapRepositoryError(result.error)
 
