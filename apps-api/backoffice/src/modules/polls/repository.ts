@@ -74,7 +74,7 @@ export class PollsRepository {
           poll: {
             status: PollStatus.PUBLISHED,
             endAt: {
-              gte: new Date(),
+              gt: new Date(),
             },
           },
         },
@@ -88,7 +88,7 @@ export class PollsRepository {
             poll: {
               status: PollStatus.PUBLISHED,
               endAt: {
-                gte: new Date(),
+                gt: new Date(),
               },
             },
           },
@@ -113,7 +113,7 @@ export class PollsRepository {
             poll: {
               status: PollStatus.PUBLISHED,
               endAt: {
-                lt: new Date(),
+                lte: new Date(),
               },
             },
           },
@@ -134,7 +134,10 @@ export class PollsRepository {
     return fromRepositoryPromise(async () => {
       const existingVote = await this.prismaService.poll.findFirstOrThrow({
         where: {
-          feedItemId: pollId,
+          feedItem: {
+            id: pollId,
+          },
+          status: PollStatus.PUBLISHED,
         },
         select: {
           type: true,
@@ -174,6 +177,10 @@ export class PollsRepository {
           id: optionId,
           poll: {
             feedItemId: pollId,
+            status: PollStatus.PUBLISHED,
+            endAt: {
+              gt: new Date(),
+            },
           },
         },
         data: {
@@ -199,7 +206,13 @@ export class PollsRepository {
       this.prismaService.pollOption.update({
         where: {
           id: optionId,
-          pollId,
+          poll: {
+            feedItemId: pollId,
+            status: PollStatus.PUBLISHED,
+            endAt: {
+              gt: new Date(),
+            },
+          },
         },
         data: {
           votes: {

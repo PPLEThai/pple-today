@@ -98,10 +98,10 @@ export class FeedRepository {
   ) {
     const feedItemBaseContent: FeedItemBaseContent = {
       id: rawFeedItem.id,
-      createdAt: rawFeedItem.createdAt,
       commentCount: rawFeedItem.numberOfComments,
       userReaction: rawFeedItem.reactions?.[0]?.type ?? null,
       reactions: rawFeedItem.reactionCounts,
+      publishedAt: rawFeedItem.publishedAt!,
       author: {
         id: rawFeedItem.author.id,
         name: rawFeedItem.author.name,

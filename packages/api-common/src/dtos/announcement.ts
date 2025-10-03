@@ -10,8 +10,9 @@ export const Announcement = t.Object({
   content: t.Nullable(t.String({ description: 'The content of the announcement' })),
   type: t.Enum(AnnouncementType, { description: 'The type of the announcement' }),
   createdAt: t.Date({ description: 'Creation date of the announcement' }),
-  status: t.Enum(AnnouncementStatus),
   updatedAt: t.Date({ description: 'Last update date of the announcement' }),
+  publishedAt: t.Nullable(t.Date({ description: 'Publication date of the announcement' })),
+  status: t.Enum(AnnouncementStatus),
   topics: t.Array(t.Pick(Topic, ['id', 'name'])),
   attachments: t.Array(
     t.Object({

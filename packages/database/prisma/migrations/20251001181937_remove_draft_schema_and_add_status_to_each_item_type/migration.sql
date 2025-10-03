@@ -107,17 +107,31 @@ ALTER TABLE "public"."PollTopicDraft" DROP CONSTRAINT "PollTopicDraft_pollDraftI
 ALTER TABLE "public"."PollTopicDraft" DROP CONSTRAINT "PollTopicDraft_topicId_fkey";
 
 -- AlterTable
-ALTER TABLE "public"."Announcement" ADD COLUMN     "status" "public"."AnnouncementStatus" NOT NULL DEFAULT 'DRAFT';
+ALTER TABLE "public"."Announcement" ADD COLUMN     "status" "public"."AnnouncementStatus" NOT NULL DEFAULT 'PUBLISHED';
+
+ALTER TABLE "public"."Announcement" ALTER COLUMN "status" SET DEFAULT 'DRAFT';
 
 -- AlterTable
-ALTER TABLE "public"."Banner" ADD COLUMN     "endAt" TIMESTAMP(3) NOT NULL,
-ADD COLUMN     "startAt" TIMESTAMP(3) NOT NULL;
+ALTER TABLE "public"."Banner" ADD COLUMN     "endAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN "startAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE "public"."Banner" ALTER COLUMN "endAt" DROP DEFAULT;
+
+ALTER TABLE "public"."Banner" ALTER COLUMN "startAt" DROP DEFAULT;
 
 -- AlterTable
 ALTER TABLE "public"."FacebookPage" ADD COLUMN     "linkedStatus" "public"."FacebookPageLinkedStatus" NOT NULL DEFAULT 'PENDING';
 
+UPDATE "public"."FacebookPage" SET "linkedStatus" = 'APPROVED' WHERE "isSubscribed" = true;
+
+UPDATE "public"."FacebookPage" SET "linkedStatus" = 'UNLINKED' WHERE "isSubscribed" = false AND "managerId" IS NULL;
+
+UPDATE "public"."FacebookPage" SET "linkedStatus" = 'PENDING' WHERE "isSubscribed" = false AND "managerId" IS NOT NULL;
+
 -- AlterTable
 ALTER TABLE "public"."FeedItem" ADD COLUMN     "publishedAt" TIMESTAMP(3);
+
+UPDATE "public"."FeedItem" SET "publishedAt" = "createdAt";
 
 -- AlterTable
 ALTER TABLE "public"."Post" ADD COLUMN     "deletedAt" TIMESTAMP(3),

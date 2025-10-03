@@ -28,13 +28,15 @@ export type GetAnnouncementsQuery = Static<typeof GetAnnouncementsQuery>
 export const GetAnnouncementsResponse = t.Array(
   t.Pick(Announcement, [
     'id',
+    'status',
     'content',
     'createdAt',
     'updatedAt',
     'topics',
     'title',
     'type',
-    'status',
+    'attachments',
+    'publishedAt',
   ])
 )
 export type GetAnnouncementsResponse = Static<typeof GetAnnouncementsResponse>
@@ -52,6 +54,7 @@ export const GetAnnouncementByIdResponse = t.Pick(Announcement, [
   'title',
   'type',
   'attachments',
+  'publishedAt',
 ])
 export type GetAnnouncementByIdResponse = Static<typeof GetAnnouncementByIdResponse>
 

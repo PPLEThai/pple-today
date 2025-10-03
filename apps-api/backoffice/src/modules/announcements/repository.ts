@@ -32,6 +32,7 @@ export class AnnouncementRepository {
             select: {
               createdAt: true,
               updatedAt: true,
+              publishedAt: true,
             },
           },
         },
@@ -56,6 +57,7 @@ export class AnnouncementRepository {
             select: {
               createdAt: true,
               updatedAt: true,
+              publishedAt: true,
             },
           },
         },

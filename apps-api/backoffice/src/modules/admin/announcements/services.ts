@@ -31,7 +31,13 @@ export class AdminAnnouncementService {
     const result = await this.adminAnnouncementRepository.getAnnouncements(query)
     if (result.isErr()) return mapRepositoryError(result.error)
 
-    const value: GetAnnouncementsResponse = result.value
+    const value: GetAnnouncementsResponse = result.value.map((announcement) => ({
+      ...announcement,
+      attachments: announcement.attachments.map((filePath) => ({
+        filePath: filePath as FilePath,
+        url: this.fileService.getPublicFileUrl(filePath),
+      })),
+    }))
 
     return ok(value)
   }

@@ -70,6 +70,7 @@ export class AdminAnnouncementRepository {
             select: {
               createdAt: true,
               updatedAt: true,
+              publishedAt: true,
             },
           },
         },
@@ -88,6 +89,7 @@ export class AdminAnnouncementRepository {
         attachments: attachments.map((attachment) => attachment.filePath),
         createdAt: feedItem.createdAt,
         updatedAt: feedItem.updatedAt,
+        publishedAt: feedItem.publishedAt,
         ...item,
       }))
     })
@@ -123,6 +125,7 @@ export class AdminAnnouncementRepository {
               select: {
                 createdAt: true,
                 updatedAt: true,
+                publishedAt: true,
               },
             },
           },
@@ -134,6 +137,7 @@ export class AdminAnnouncementRepository {
         attachments: attachments.map((attachment) => attachment.filePath),
         createdAt: feedItem.createdAt,
         updatedAt: feedItem.updatedAt,
+        publishedAt: feedItem.publishedAt,
         ...result,
       }
     })
