@@ -56,7 +56,7 @@ export default function BottomTabsLayout() {
           }}
         />
         <Tabs.Screen
-          name="search"
+          name="(search)"
           options={{
             title: 'ค้นหา',
             tabBarIcon: (props) => <TabBarIcon {...props} icon={SearchIcon} />,
