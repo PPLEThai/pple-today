@@ -1,5 +1,23 @@
 # @pple-today/database
 
+## 0.3.0
+
+### Minor Changes
+
+- [#152](https://github.com/PPLEThai/pple-today/pull/152) [`6427bad`](https://github.com/PPLEThai/pple-today/commit/6427bade1f139634a8ed325ef75b497259370d85) Thanks [@miello](https://github.com/miello)! - [[PPLE-394] [API] CMS Auth](https://linear.app/snts/issue/PPLE-394/api-cms-auth)
+
+- [#132](https://github.com/PPLEThai/pple-today/pull/132) [`4e5ac39`](https://github.com/PPLEThai/pple-today/commit/4e5ac39e21570bee8c91615e89113fce4fc31ea3) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-384] [MODEL] Update Election Model Design](https://linear.app/snts/issue/PPLE-384/model-update-election-model-design)
+
+- [#162](https://github.com/PPLEThai/pple-today/pull/162) [`d32d324`](https://github.com/PPLEThai/pple-today/commit/d32d324e2592174922635bb6e67f5cca32f8eeff) Thanks [@miello](https://github.com/miello)! - [[PPLE-408] [API] CMS api revamp](https://linear.app/snts/issue/PPLE-408/api-cms-api-revamp)
+
+### Patch Changes
+
+- [#156](https://github.com/PPLEThai/pple-today/pull/156) [`3c33f55`](https://github.com/PPLEThai/pple-today/commit/3c33f550aec0cd09d2d1c73b312c36ac8fa9b275) Thanks [@miello](https://github.com/miello)! - [[PPLE-404] [API] Rollback register logic and add official user to default following](https://linear.app/snts/issue/PPLE-404/api-rollback-register-logic-and-add-official-user-to-default-following)
+
+- [#163](https://github.com/PPLEThai/pple-today/pull/163) [`b4cb326`](https://github.com/PPLEThai/pple-today/commit/b4cb326c36c4a0d59f9c1ca146a83fbba486f505) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-208] Election Card UI](https://linear.app/snts/issue/PPLE-208/election-card-ui)
+
+- [#153](https://github.com/PPLEThai/pple-today/pull/153) [`638460d`](https://github.com/PPLEThai/pple-today/commit/638460dd1680ef218a2fe7af6721d60b360f2872) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-318] [API] Election Eligible Users Management Endpoint](https://linear.app/snts/issue/PPLE-318/api-election-eligible-users-management-endpoint)
+
 ## 0.2.0
 
 ### Minor Changes

@@ -1,5 +1,11 @@
 # @client/backoffice
 
+## 0.3.0
+
+### Minor Changes
+
+- [#162](https://github.com/PPLEThai/pple-today/pull/162) [`d32d324`](https://github.com/PPLEThai/pple-today/commit/d32d324e2592174922635bb6e67f5cca32f8eeff) Thanks [@miello](https://github.com/miello)! - [[PPLE-408] [API] CMS api revamp](https://linear.app/snts/issue/PPLE-408/api-cms-api-revamp)
+
 ## 0.2.2
 
 ### Patch Changes

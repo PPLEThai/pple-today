@@ -1,5 +1,16 @@
 # @client/mobile
 
+## 0.6.0
+
+### Minor Changes
+
+- [#163](https://github.com/PPLEThai/pple-today/pull/163) [`b4cb326`](https://github.com/PPLEThai/pple-today/commit/b4cb326c36c4a0d59f9c1ca146a83fbba486f505) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-208] Election Card UI](https://linear.app/snts/issue/PPLE-208/election-card-ui)
+
+### Patch Changes
+
+- Updated dependencies [[`b4cb326`](https://github.com/PPLEThai/pple-today/commit/b4cb326c36c4a0d59f9c1ca146a83fbba486f505)]:
+  - @pple-today/ui@0.2.3
+
 ## 0.5.2
 
 ### Patch Changes

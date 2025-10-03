@@ -1,5 +1,26 @@
 # @pple-today/api-common
 
+## 0.3.0
+
+### Minor Changes
+
+- [#162](https://github.com/PPLEThai/pple-today/pull/162) [`d32d324`](https://github.com/PPLEThai/pple-today/commit/d32d324e2592174922635bb6e67f5cca32f8eeff) Thanks [@miello](https://github.com/miello)! - [[PPLE-408] [API] CMS api revamp](https://linear.app/snts/issue/PPLE-408/api-cms-api-revamp)
+
+### Patch Changes
+
+- [#158](https://github.com/PPLEThai/pple-today/pull/158) [`dc3e388`](https://github.com/PPLEThai/pple-today/commit/dc3e388bbc439dceeadd6e042155ad198687047f) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-403] [API] Setup counting service](https://linear.app/snts/issue/PPLE-403/api-setup-counting-service)
+
+- [#131](https://github.com/PPLEThai/pple-today/pull/131) [`2f0eb4c`](https://github.com/PPLEThai/pple-today/commit/2f0eb4c64cf03b225bd9e088d08338d0e52a7d86) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-319] [API] election candidate management endpoint](https://linear.app/snts/issue/PPLE-319/api-election-candidate-management-endpoint)
+
+- [#163](https://github.com/PPLEThai/pple-today/pull/163) [`b4cb326`](https://github.com/PPLEThai/pple-today/commit/b4cb326c36c4a0d59f9c1ca146a83fbba486f505) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-208] Election Card UI](https://linear.app/snts/issue/PPLE-208/election-card-ui)
+
+- [#153](https://github.com/PPLEThai/pple-today/pull/153) [`638460d`](https://github.com/PPLEThai/pple-today/commit/638460dd1680ef218a2fe7af6721d60b360f2872) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-318] [API] Election Eligible Users Management Endpoint](https://linear.app/snts/issue/PPLE-318/api-election-eligible-users-management-endpoint)
+
+- [#135](https://github.com/PPLEThai/pple-today/pull/135) [`0589541`](https://github.com/PPLEThai/pple-today/commit/058954124c58938b8563d9976234c768eead75a7) Thanks [@miello](https://github.com/miello)! - [[PPLE-385] [API] Fix wrong logic when handle file transaction](https://linear.app/snts/issue/PPLE-385/api-fix-wrong-logic-when-handle-file-transaction)
+
+- Updated dependencies [[`3c33f55`](https://github.com/PPLEThai/pple-today/commit/3c33f550aec0cd09d2d1c73b312c36ac8fa9b275), [`6427bad`](https://github.com/PPLEThai/pple-today/commit/6427bade1f139634a8ed325ef75b497259370d85), [`4e5ac39`](https://github.com/PPLEThai/pple-today/commit/4e5ac39e21570bee8c91615e89113fce4fc31ea3), [`b4cb326`](https://github.com/PPLEThai/pple-today/commit/b4cb326c36c4a0d59f9c1ca146a83fbba486f505), [`638460d`](https://github.com/PPLEThai/pple-today/commit/638460dd1680ef218a2fe7af6721d60b360f2872), [`d32d324`](https://github.com/PPLEThai/pple-today/commit/d32d324e2592174922635bb6e67f5cca32f8eeff)]:
+  - @pple-today/database@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes
