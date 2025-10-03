@@ -32,6 +32,7 @@ export class AdminPollRepository {
               select: {
                 createdAt: true,
                 updatedAt: true,
+                publishedAt: true,
               },
             },
           },
@@ -47,6 +48,7 @@ export class AdminPollRepository {
         id: feedItemId,
         createdAt: feedItem.createdAt,
         updatedAt: feedItem.updatedAt,
+        publishedAt: feedItem.publishedAt,
         ...item,
       }))
     )
@@ -73,6 +75,7 @@ export class AdminPollRepository {
             select: {
               createdAt: true,
               updatedAt: true,
+              publishedAt: true,
             },
           },
           options: {
@@ -103,6 +106,7 @@ export class AdminPollRepository {
         id,
         createdAt: feedItem.createdAt,
         updatedAt: feedItem.updatedAt,
+        publishedAt: feedItem.publishedAt,
         options: options.map((option) => ({
           title: option.title,
           votes: option.votes,

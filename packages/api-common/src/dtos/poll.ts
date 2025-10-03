@@ -12,7 +12,7 @@ export const Poll = t.Object({
 
   createdAt: t.Date({ description: 'The creation date of the poll' }),
   updatedAt: t.Date({ description: 'The update date of the poll' }),
-  publishedAt: t.Optional(t.Date({ description: 'The publication date of the poll' })),
+  publishedAt: t.Nullable(t.Date({ description: 'The publication date of the poll' })),
 })
 export type Poll = Static<typeof Poll>
 
