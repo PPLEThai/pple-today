@@ -137,10 +137,42 @@ export class SearchRepository {
               },
             },
             {
+              post: {
+                hashTags: {
+                  some: {
+                    hashTag: {
+                      status: HashTagStatus.PUBLISH,
+                      name: {
+                        startsWith: query.search.startsWith('#')
+                          ? query.search
+                          : `#${query.search}`,
+                        mode: 'insensitive',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            {
               poll: {
                 description: {
                   contains: query.search,
                   mode: 'insensitive',
+                },
+              },
+            },
+            {
+              poll: {
+                topics: {
+                  some: {
+                    topic: {
+                      status: TopicStatus.PUBLISH,
+                      name: {
+                        startsWith: query.search,
+                        mode: 'insensitive',
+                      },
+                    },
+                  },
                 },
               },
             },
@@ -171,16 +203,12 @@ export class SearchRepository {
   }
 
   async searchHashtags(query: { search: string; limit?: number; cursor?: string }) {
-    if (query.search[0] !== '#') {
-      return ok([])
-    }
-
     return await fromRepositoryPromise(
       this.prismaService.hashTag.findMany({
         where: {
           status: HashTagStatus.PUBLISH,
           name: {
-            startsWith: query.search,
+            startsWith: query.search.startsWith('#') ? query.search : `#${query.search}`,
             mode: 'insensitive',
           },
         },
@@ -204,6 +232,17 @@ export class SearchRepository {
             mode: 'insensitive',
           },
           status: TopicStatus.PUBLISH,
+          hashTagInTopics: {
+            some: {
+              hashTag: {
+                name: {
+                  startsWith: query.search.startsWith('#') ? query.search : `#${query.search}`,
+                  mode: 'insensitive',
+                },
+                status: HashTagStatus.PUBLISH,
+              },
+            },
+          },
         },
         take: query.limit ?? 3,
         skip: query.cursor ? 1 : 0,
@@ -216,6 +255,12 @@ export class SearchRepository {
         select: {
           id: true,
           name: true,
+          bannerImagePath: true,
+          hashTagInTopics: {
+            include: {
+              hashTag: true,
+            },
+          },
         },
       })
     )
