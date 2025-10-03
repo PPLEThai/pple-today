@@ -24,6 +24,7 @@ model Election {
     name                      String
     description               String?
     location                  String?
+    locationMapUrl            String?
     type                      ElectionType
     mode                      ElectionMode @default(SECURE)
     encryptionPublicKey       String?

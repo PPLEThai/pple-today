@@ -1,5 +1,3 @@
-import 'dayjs/locale/th'
-
 import { View } from 'react-native'
 
 import { AnimatedBackgroundPressable } from '@pple-today/ui/animated-pressable'
@@ -9,15 +7,11 @@ import { cn } from '@pple-today/ui/lib/utils'
 import { Skeleton } from '@pple-today/ui/skeleton'
 import { Text } from '@pple-today/ui/text'
 import dayjs from 'dayjs'
-import buddhistEra from 'dayjs/plugin/buddhistEra'
 import { LandmarkIcon } from 'lucide-react-native'
 
 import { GetAnnouncementsResponse } from '@api/backoffice/app'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
-
-dayjs.extend(buddhistEra)
-dayjs.locale('th')
 
 type AnnouncementType = GetAnnouncementsResponse['announcements'][number]['type']
 

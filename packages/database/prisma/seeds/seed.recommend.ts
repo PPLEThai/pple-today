@@ -45,8 +45,8 @@ const seedUsers = async () => {
   })
   await prisma.user.create({
     data: {
-      id: `official-user`,
-      name: `official-user@example.com`,
+      id: `pple-official-user`,
+      name: `pple-official-user@example.com`,
       phoneNumber: Crypto.randomUUID().slice(0, 15),
     },
   })
@@ -166,7 +166,7 @@ const seedFeedItems = async () => {
           await prisma.feedItem.create({
             data: {
               id: `feeditem-${i * NUMBER_OF_FEED_ITEMS_PER_USER + j + 1}`,
-              authorId: `official-user`,
+              authorId: `pple-official-user`,
               type: 'POLL',
               poll: {
                 create: {
@@ -193,7 +193,7 @@ const seedFeedItems = async () => {
           await prisma.feedItem.create({
             data: {
               id: `feeditem-${i * NUMBER_OF_FEED_ITEMS_PER_USER + j + 1}`,
-              authorId: `official-user`,
+              authorId: `pple-official-user`,
               type: 'ANNOUNCEMENT',
               announcement: {
                 create: {

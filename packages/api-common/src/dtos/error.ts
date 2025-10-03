@@ -224,6 +224,12 @@ const ELECTION_ERROR_SCHEMA = {
   ELECTION_CANDIDATE_NOT_FOUND: {
     status: 404,
   },
+  ELECTION_INVALID_ELIGIBLE_VOTER_IDENTIFIER: {
+    status: 409,
+  },
+  ELECTION_ALREADY_PUBLISH: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 export const InternalErrorCodeSchemas = {

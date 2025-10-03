@@ -14,6 +14,7 @@ export const ElectionWithCurrentStatus = t.Intersect([
     status: ElectionStatus,
     votePercentage: t.Number(),
     isRegistered: t.Nullable(t.Boolean()),
+    isVoted: t.Boolean(),
   }),
 ])
 export type ElectionWithCurrentStatus = Static<typeof ElectionWithCurrentStatus>

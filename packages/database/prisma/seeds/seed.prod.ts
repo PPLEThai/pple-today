@@ -47,7 +47,7 @@ const prisma = new PrismaClient({
   adapter,
 })
 
-const OFFICIAL_USER_ID = 'pple-official-page'
+const OFFICIAL_USER_ID = 'pple-official-user'
 
 const seedAddresses = async (addresses: any) => {
   for (const { province, district, subDistrict, postalCode } of addresses) {
