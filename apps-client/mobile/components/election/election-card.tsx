@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { View } from 'react-native'
 import { createQuery } from 'react-query-kit'
 
@@ -299,26 +299,41 @@ function ElectionLocation(props: ElectionCardProps) {
   )
 }
 function ElectionTimeLeft(props: ElectionCardProps) {
-  const seconds = dayjs(props.election.closeVoting).diff(dayjs(), 'second')
   return (
     <View className="flex flex-row gap-1 items-center">
       <Icon icon={ClockIcon} size={16} className="text-base-text-invert" />
       <Text className="text-sm text-base-text-invert font-heading-regular">
-        เวลาที่เหลือ:{' '}
-        <Text className="text-sm text-base-primary-default font-body-medium">
-          {dayjs
-            .duration({
-              hours: Math.max(Math.floor(seconds / 3600), 0),
-              minutes: Math.max(Math.floor((seconds % 3600) / 60), 0),
-              seconds: Math.max(seconds % 60, 0),
-            })
-            .format('HH:mm:ss')}{' '}
-          ชั่วโมง
-        </Text>
+        เวลาที่เหลือ: <CountdownTimer targetTime={props.election.closeVoting} />
       </Text>
     </View>
   )
 }
+function CountdownTimer(props: { targetTime: Date }) {
+  const [secondsLeft, setSecondsLeft] = useState(0)
+  useEffect(() => {
+    const targetTime = dayjs(props.targetTime)
+    const interval = setInterval(() => {
+      const seconds = targetTime.diff(dayjs(), 'second')
+      setSecondsLeft(seconds >= 0 ? seconds : 0)
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [props.targetTime])
+
+  return (
+    <Text className="text-sm text-base-primary-default font-body-medium">
+      {dayjs
+        .duration({
+          hours: Math.max(Math.floor(secondsLeft / 3600), 0),
+          minutes: Math.max(Math.floor((secondsLeft % 3600) / 60), 0),
+          seconds: Math.max(secondsLeft % 60, 0),
+        })
+        .format('HH:mm:ss')}{' '}
+      ชั่วโมง
+    </Text>
+  )
+}
+
 function ElectionPercentageActions(props: ElectionCardProps) {
   return (
     <>
