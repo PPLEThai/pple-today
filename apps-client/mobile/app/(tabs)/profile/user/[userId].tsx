@@ -146,12 +146,60 @@ export default function ProfilePage() {
 
   const data = React.useMemo((): GetFeedItemsByUserIdResponse => {
     if (!userFeedInfiniteQuery.data) return []
-    return userFeedInfiniteQuery.data.pages.flatMap((page) => page)
+    return userFeedInfiniteQuery.data.pages.flat()
   }, [userFeedInfiniteQuery.data])
 
+  const renderProfileSection = () => {
+    if (userDetailsQuery.isLoading || !userDetailsQuery.data) {
+      return <ProfileSectionSkeleton />
+    }
+
+    return (
+      <View className="w-full flex flex-col bg-base-bg-white">
+        <View className="flex flex-row items-center gap-4 px-4 pb-4">
+          <Avatar alt={userDetailsQuery.data.name} className="w-16 h-16">
+            <AvatarImage source={{ uri: userDetailsQuery.data.profileImage }} />
+            <AvatarPPLEFallback />
+          </Avatar>
+          <View className="flex-1 gap-2">
+            <Text className="text-base-text-default text-2xl font-heading-semibold">
+              {userDetailsQuery.data.name}
+            </Text>
+            <View className="flex flex-row items-center gap-3">
+              <Badge>
+                <Text className="text-xs font-heading-semibold">
+                  {userDetailsQuery.data.roles[0] || 'สมาชิก'}
+                </Text>
+              </Badge>
+              <View className="flex flex-row gap-0.5 items-center">
+                <Icon
+                  icon={UserIcon}
+                  size={20}
+                  className="text-base-primary-default"
+                  strokeWidth={1.5}
+                />
+                <Text className="text-sm font-heading-semibold text-base-text-medium">
+                  {renderCount(userDetailsQuery.data.numberOfFollowers)} คน
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+        <Button
+          variant={isFollowing ? 'outline-primary' : 'primary'}
+          size="sm"
+          onPress={toggleFollow}
+          className="mx-4 mb-4"
+        >
+          <Text>{isFollowing ? 'กำลังติดตาม' : 'ติดตาม'} </Text>
+        </Button>
+      </View>
+    )
+  }
+
   return (
-    <View className="flex-1 flex-col bg-base-bg-default">
-      <View className="bg-base-bg-white">
+    <View className="flex-1 flex-col bg-base-bg-white">
+      <View>
         <View className="pt-safe-offset-4 px-4 pb-4">
           <Button
             variant="outline-primary"
@@ -162,80 +210,26 @@ export default function ProfilePage() {
             <Icon icon={ArrowLeftIcon} size={24} />
           </Button>
         </View>
-        {userDetailsQuery.isLoading ? (
-          <ProfileSectionSkeleton />
-        ) : !userDetailsQuery.data ? null : (
-          <View className="w-full flex flex-col">
-            <View className="flex flex-row items-center gap-4 px-4 pb-4">
-              <Avatar alt={userDetailsQuery.data.name} className="w-16 h-16">
-                <AvatarImage source={{ uri: userDetailsQuery.data.profileImage }} />
-                <AvatarPPLEFallback />
-              </Avatar>
-              <View className="flex-1 gap-2">
-                <Text className="text-base-text-default text-2xl font-heading-semibold">
-                  {userDetailsQuery.data.name}
-                </Text>
-                <View className="flex flex-row items-center gap-3">
-                  <Badge>
-                    <Text className="text-xs font-heading-semibold">
-                      {userDetailsQuery.data.roles[0] || 'สมาชิก'}
-                    </Text>
-                  </Badge>
-                  <View className="flex flex-row gap-0.5 items-center">
-                    <Icon
-                      icon={UserIcon}
-                      size={20}
-                      className="text-base-primary-default"
-                      strokeWidth={1.5}
-                    />
-                    <Text className="text-sm font-heading-semibold text-base-text-medium">
-                      {renderCount(userDetailsQuery.data.numberOfFollowers)} คน
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </View>
-            <Button
-              variant={isFollowing ? 'outline-primary' : 'primary'}
-              size="sm"
-              onPress={toggleFollow}
-              className="mx-4 mb-4"
-            >
-              <Text>{isFollowing ? 'กำลังติดตาม' : 'ติดตาม'} </Text>
-            </Button>
-          </View>
-        )}
       </View>
-      {userDetailsQuery.data?.roles[0] === 'official' ? (
-        <Animated.FlatList
-          onScroll={scrollHandler}
-          refreshControl={<FeedRefreshControl headerHeight={16} onRefresh={onRefresh} />}
-          data={data}
-          contentContainerClassName="bg-base-bg-default"
-          renderItem={renderFeedItem}
-          ListHeaderComponent={<AnnouncementSection />}
-          ListFooterComponent={
-            <FeedFooter queryResult={userFeedInfiniteQuery} className="mt-4 mx-3" />
-          }
-          onEndReached={onEndReached}
-          onEndReachedThreshold={1}
-          showsVerticalScrollIndicator={false}
-        />
-      ) : (
-        <Animated.FlatList
-          onScroll={scrollHandler}
-          refreshControl={<FeedRefreshControl headerHeight={16} onRefresh={onRefresh} />}
-          data={data}
-          contentContainerClassName="bg-base-bg-default"
-          renderItem={renderFeedItem}
-          ListFooterComponent={
-            <FeedFooter queryResult={userFeedInfiniteQuery} className="mt-4 mx-3" />
-          }
-          onEndReached={onEndReached}
-          onEndReachedThreshold={1}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
+      <Animated.FlatList
+        onScroll={scrollHandler}
+        refreshControl={<FeedRefreshControl headerHeight={16} onRefresh={onRefresh} />}
+        data={data}
+        contentContainerClassName="bg-base-bg-default"
+        renderItem={renderFeedItem}
+        ListHeaderComponent={
+          <>
+            {renderProfileSection()}
+            {userDetailsQuery.data?.roles[0] === 'official' ? <AnnouncementSection /> : undefined}
+          </>
+        }
+        ListFooterComponent={
+          <FeedFooter queryResult={userFeedInfiniteQuery} className="mt-4 mx-3" />
+        }
+        onEndReached={onEndReached}
+        onEndReachedThreshold={1}
+        showsVerticalScrollIndicator={false}
+      />
     </View>
   )
 }
@@ -322,7 +316,7 @@ function AnnouncementSection() {
 
 const ProfileSectionSkeleton = () => {
   return (
-    <View className="w-full flex flex-col">
+    <View className="w-full flex flex-col bg-base-bg-white">
       <View className="flex flex-row items-center gap-4 px-4 pb-4">
         {/* Avatar */}
         <Skeleton className="h-16 w-16 rounded-full" />

@@ -1,1 +1,1 @@
-export { default } from '../../profile/users/[userId]'
+export { default } from '../../profile/user/[userId]'
