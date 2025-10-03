@@ -39,6 +39,7 @@ import PPLEIcon from '@app/assets/pple-icon.svg'
 import { UserAddressInfoSection } from '@app/components/address-info'
 import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/announcement'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
+import { ElectionCard } from '@app/components/election/election-card'
 import { FeedFooter, FeedRefreshControl } from '@app/components/feed'
 import { FeedCard } from '@app/components/feed/feed-card'
 import { TopicSuggestion } from '@app/components/feed/topic-card'
@@ -70,7 +71,7 @@ export default function FeedPage() {
             <MainHeader />
             <View className="flex flex-col w-full bg-base-bg-white">
               <BannerSection />
-              {/* <EventSection /> */}
+              <EventSection />
               <UserAddressInfoSection />
             </View>
             <View className="px-4 bg-base-bg-white flex flex-row items-start pt-6">
@@ -273,13 +274,34 @@ function Banner({ banner }: { banner: GetBannersResponse[number] }) {
 //   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj['
 
 function EventSection() {
+  const session = useSession()
+  const electionsQuery = reactQueryClient.useQuery('/elections', {}, { enabled: !!session })
+  const elections = electionsQuery.data || []
+  if (elections.length === 0) {
+    return null
+  }
   return (
-    <View className="flex flex-col items-center justify-center gap-2 px-4 pb-4 ">
-      <View className="flex flex-row gap-2 justify-start items-center w-full ">
+    <View className="flex flex-col items-center justify-center gap-2 pb-4">
+      <View className="flex flex-row gap-2 justify-start items-center w-full px-4">
         <Icon icon={RadioTowerIcon} size={20} className="text-base-primary-default" />
         <H2 className="text-xl font-heading-bold text-base-text-high">อิเวนต์ตอนนี้</H2>
       </View>
-      {/* <ElectionCard /> */}
+      <Slide
+        isLoading={electionsQuery.isLoading}
+        count={elections.length}
+        itemWidth="container"
+        gap={8}
+        paddingHorizontal={16}
+      >
+        <SlideScrollView>
+          {elections.map((election) => (
+            <SlideItem key={election.id} className="flex flex-row items-stretch">
+              <ElectionCard election={election} />
+            </SlideItem>
+          ))}
+        </SlideScrollView>
+        <SlideIndicators />
+      </Slide>
     </View>
   )
 }

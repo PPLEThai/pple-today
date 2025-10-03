@@ -32,6 +32,7 @@ import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/anno
 import { ElectionCard } from '@app/components/election/election-card'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { reactQueryClient } from '@app/libs/api-client'
+import { useSession } from '@app/libs/auth'
 
 export default function OfficialPage() {
   return (
@@ -77,7 +78,8 @@ const DemoSection = () => {
 }
 
 const ElectionSection = () => {
-  const electionsQuery = reactQueryClient.useQuery('/elections', {})
+  const session = useSession()
+  const electionsQuery = reactQueryClient.useQuery('/elections', {}, { enabled: !!session })
   const elections = electionsQuery.data || []
   if (elections.length === 0) {
     return null
