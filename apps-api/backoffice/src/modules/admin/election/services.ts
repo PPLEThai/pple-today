@@ -28,6 +28,26 @@ export class AdminElectionService {
     private readonly fileService: FileService
   ) {}
 
+  private checkIsElectionAllowedToModified(election: Election, now: Date) {
+    const isPublished = !!election.publishDate && now >= election.publishDate
+    if (isPublished) {
+      return err({
+        code: InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+        message: `Election is already published`,
+      })
+    }
+
+    const isCancelled = election.isCancelled
+    if (isCancelled) {
+      return err({
+        code: InternalErrorCode.ELECTION_IS_CANNCELLED,
+        message: `Election is cancelled`,
+      })
+    }
+
+    return ok()
+  }
+
   private convertToElectionInfo(election: Election): ElectionInfo {
     return {
       id: election.id,
@@ -149,6 +169,19 @@ export class AdminElectionService {
   }
 
   async createElectionCandidate(electionId: string, data: AdminCreateElectionCandidateBody) {
+    const electionResult = await this.adminElectionRepository.getElectionById(electionId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Election id ${electionId} not found`,
+        },
+      })
+    }
+
+    const checkResult = this.checkIsElectionAllowedToModified(electionResult.value, new Date())
+    if (checkResult.isErr()) return err(checkResult.error)
+
     const createCandidateResult = await this.adminElectionRepository.createElectionCandidate(
       electionId,
       data
@@ -166,6 +199,19 @@ export class AdminElectionService {
   }
 
   async updateElectionCandidate(candidateId: string, data: AdminUpdateElectionCandidateBody) {
+    const electionResult = await this.adminElectionRepository.getElectionByCandidateId(candidateId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
+          message: `Candidate id ${candidateId} not found`,
+        },
+      })
+    }
+
+    const checkResult = this.checkIsElectionAllowedToModified(electionResult.value, new Date())
+    if (checkResult.isErr()) return err(checkResult.error)
+
     const updateCandidateResult = await this.adminElectionRepository.updateElectionCandidate(
       candidateId,
       data
@@ -182,15 +228,20 @@ export class AdminElectionService {
     return ok(this.convertToCandidateDTO(updateCandidateResult.value))
   }
 
-  private isElectionPublished(election: Election): boolean {
-    const now = new Date()
-    const publishDate = (
-      election.type === 'HYBRID' ? election.openRegister : election.publishDate
-    ) as Date
-    return now >= publishDate
-  }
-
   async deleteElectionCandidate(candidateId: string) {
+    const electionResult = await this.adminElectionRepository.getElectionByCandidateId(candidateId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
+          message: `Candidate id ${candidateId} not found`,
+        },
+      })
+    }
+
+    const checkResult = this.checkIsElectionAllowedToModified(electionResult.value, new Date())
+    if (checkResult.isErr()) return err(checkResult.error)
+
     const deleteResult = await this.adminElectionRepository.deleteElectionCandidate(candidateId)
     if (deleteResult.isErr()) {
       return mapRepositoryError(deleteResult.error, {
@@ -200,6 +251,7 @@ export class AdminElectionService {
         },
       })
     }
+
     return ok()
   }
 
@@ -237,12 +289,8 @@ export class AdminElectionService {
       })
     }
 
-    if (this.isElectionPublished(electionResult.value)) {
-      return err({
-        code: InternalErrorCode.ELECTION_ALREADY_PUBLISH,
-        message: `Cannot Delete Voters of published election`,
-      })
-    }
+    const checkResult = this.checkIsElectionAllowedToModified(electionResult.value, new Date())
+    if (checkResult.isErr()) return err(checkResult.error)
 
     let result
     switch (voters.identifier) {
@@ -288,12 +336,8 @@ export class AdminElectionService {
       })
     }
 
-    if (this.isElectionPublished(electionResult.value)) {
-      return err({
-        code: InternalErrorCode.ELECTION_ALREADY_PUBLISH,
-        message: `Cannot add voters to published election`,
-      })
-    }
+    const checkResult = this.checkIsElectionAllowedToModified(electionResult.value, new Date())
+    if (checkResult.isErr()) return err(checkResult.error)
 
     const voterType =
       electionResult.value.type === 'ONLINE' ? EligibleVoterType.ONLINE : EligibleVoterType.ONSITE

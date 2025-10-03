@@ -230,6 +230,9 @@ const ELECTION_ERROR_SCHEMA = {
   ELECTION_ALREADY_PUBLISH: {
     status: 409,
   },
+  ELECTION_IS_CANNCELLED: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 export const KEY_ERROR_SCHEMA = {

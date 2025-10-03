@@ -80,6 +80,20 @@ export class AdminElectionRepository {
     )
   }
 
+  async getElectionByCandidateId(candidateId: string) {
+    return fromRepositoryPromise(async () => {
+      const candidate = await this.prismaService.electionCandidate.findUniqueOrThrow({
+        where: {
+          id: candidateId,
+        },
+        select: {
+          election: true,
+        },
+      })
+      return candidate.election
+    })
+  }
+
   async cancelElectionById(electionId: string) {
     const deletedVoteRecords = await this.prismaService.electionVoteRecord.findMany({
       where: {

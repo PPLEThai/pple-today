@@ -200,6 +200,8 @@ export const AdminElectionController = new Elysia({
               InternalErrorCode.UNAUTHORIZED,
               InternalErrorCode.FORBIDDEN,
               InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+              InternalErrorCode.ELECTION_IS_CANNCELLED,
               InternalErrorCode.FILE_MOVE_ERROR,
               InternalErrorCode.FILE_ROLLBACK_FAILED,
               InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
