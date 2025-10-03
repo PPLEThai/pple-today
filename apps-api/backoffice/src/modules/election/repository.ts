@@ -23,8 +23,10 @@ export class ElectionRepository {
         include: {
           election: {
             include: {
-              voters: true,
-              voteRecords: true,
+              _count: {
+                select: { voters: true, voteRecords: true },
+              },
+              voters: { where: { userId }, select: { userId: true }, take: 1 },
             },
           },
         },
@@ -44,8 +46,10 @@ export class ElectionRepository {
         include: {
           election: {
             include: {
-              voters: true,
-              voteRecords: true,
+              _count: {
+                select: { voters: true, voteRecords: true },
+              },
+              voters: { where: { userId }, select: { userId: true }, take: 1 },
               candidates: true,
             },
           },
@@ -140,14 +144,11 @@ export class ElectionRepository {
       })
     )
 
-    console.log('createBollotResult', createBollotResult)
     if (createBollotResult.isErr()) {
       const rollbackResult = await fileTx.rollback()
       if (rollbackResult.isErr()) return err(rollbackResult.error)
       return err(createBollotResult.error)
     }
-
-    console.log(createBollotResult.value)
 
     return ok(createBollotResult.value)
   }
