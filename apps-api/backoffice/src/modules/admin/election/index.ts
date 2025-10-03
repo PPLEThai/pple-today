@@ -235,6 +235,8 @@ export const AdminElectionController = new Elysia({
               InternalErrorCode.UNAUTHORIZED,
               InternalErrorCode.FORBIDDEN,
               InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+              InternalErrorCode.ELECTION_IS_CANNCELLED,
               InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
               InternalErrorCode.FILE_MOVE_ERROR,
               InternalErrorCode.FILE_ROLLBACK_FAILED,
@@ -265,6 +267,8 @@ export const AdminElectionController = new Elysia({
               InternalErrorCode.UNAUTHORIZED,
               InternalErrorCode.FORBIDDEN,
               InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+              InternalErrorCode.ELECTION_IS_CANNCELLED,
               InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
               InternalErrorCode.FILE_MOVE_ERROR,
               InternalErrorCode.FILE_ROLLBACK_FAILED,
@@ -342,9 +346,10 @@ export const AdminElectionController = new Elysia({
             ...createErrorSchema(
               InternalErrorCode.UNAUTHORIZED,
               InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+              InternalErrorCode.ELECTION_IS_CANNCELLED,
               InternalErrorCode.USER_NOT_FOUND,
               InternalErrorCode.ELECTION_INVALID_ELIGIBLE_VOTER_IDENTIFIER,
-              InternalErrorCode.ELECTION_ALREADY_PUBLISH,
               InternalErrorCode.INTERNAL_SERVER_ERROR
             ),
           },
@@ -379,6 +384,7 @@ export const AdminElectionController = new Elysia({
               InternalErrorCode.UNAUTHORIZED,
               InternalErrorCode.ELECTION_NOT_FOUND,
               InternalErrorCode.USER_NOT_FOUND,
+              InternalErrorCode.ELECTION_IS_CANNCELLED,
               InternalErrorCode.ELECTION_INVALID_ELIGIBLE_VOTER_IDENTIFIER,
               InternalErrorCode.ELECTION_ALREADY_PUBLISH,
               InternalErrorCode.INTERNAL_SERVER_ERROR
@@ -416,6 +422,7 @@ export const AdminElectionController = new Elysia({
               InternalErrorCode.BAD_REQUEST,
               InternalErrorCode.ELECTION_NOT_FOUND,
               InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+              InternalErrorCode.ELECTION_IS_CANNCELLED,
               InternalErrorCode.ELECTION_INVALID_ELIGIBLE_VOTER_IDENTIFIER,
               InternalErrorCode.INTERNAL_SERVER_ERROR
             ),
