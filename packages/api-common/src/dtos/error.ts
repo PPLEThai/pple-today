@@ -188,7 +188,7 @@ const TOPIC_ERROR_SCHEMA = {
   TOPIC_INVALID_INPUT: {
     status: 400,
   },
-  TOPIC_CANNOT_FOLLOW_DRAFT: {
+  TOPIC_CANNOT_FOLLOW_SUSPENDED: {
     status: 409,
   },
   TOPIC_ALREADY_FOLLOWED: {
@@ -223,6 +223,12 @@ const ELECTION_ERROR_SCHEMA = {
   },
   ELECTION_CANDIDATE_NOT_FOUND: {
     status: 404,
+  },
+  ELECTION_INVALID_ELIGIBLE_VOTER_IDENTIFIER: {
+    status: 409,
+  },
+  ELECTION_ALREADY_PUBLISH: {
+    status: 409,
   },
 } satisfies InternalErrorSchemas
 

@@ -47,7 +47,7 @@ const prisma = new PrismaClient({
   adapter,
 })
 
-const OFFICIAL_USER_ID = 'pple-official-page'
+const OFFICIAL_USER_ID = 'pple-official-user'
 
 const seedAddresses = async (addresses: any) => {
   for (const { province, district, subDistrict, postalCode } of addresses) {
@@ -115,7 +115,7 @@ const seedTopics = async (provinces: string[]) => {
         create: {
           name: province,
           description: `ข่าวเกี่ยวกับจังหวัด${province}`,
-          status: TopicStatus.PUBLISH,
+          status: TopicStatus.PUBLISHED,
         },
       })
     }

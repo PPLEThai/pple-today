@@ -35,7 +35,7 @@ WITH
 			"Topic" t
 			LEFT JOIN excluded_topic et ON t.id = et.topic_id
 		WHERE
-			et.topic_id IS NULL
+			et.topic_id IS NULL AND t."status" = 'PUBLISHED'
 		ORDER BY
 			RANDOM() DESC
 		LIMIT
