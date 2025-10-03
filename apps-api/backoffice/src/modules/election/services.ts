@@ -11,9 +11,7 @@ import { err, mapRepositoryError } from '@pple-today/api-common/utils'
 import {
   Election,
   ElectionCandidate,
-  ElectionEligibleVoter,
   ElectionType,
-  ElectionVoteRecord,
   EligibleVoterType,
 } from '@pple-today/database/prisma'
 import dayjs from 'dayjs'
@@ -109,13 +107,6 @@ export class ElectionService {
     }
   }
 
-  private getVotePercentage(
-    voters: ElectionEligibleVoter[],
-    voteRecords: ElectionVoteRecord[]
-  ): number {
-    return 100 * (voteRecords.length / voters.length)
-  }
-
   private isHybridElectionVoterRegistered(
     voterType: EligibleVoterType,
     electionType: ElectionType
@@ -127,9 +118,11 @@ export class ElectionService {
   }
 
   private convertToListElection(
-    election: Election & { voters: ElectionEligibleVoter[]; voteRecords: ElectionVoteRecord[] },
-    voterType: EligibleVoterType,
-    userId: string
+    election: Election & {
+      voters: { userId: string }[]
+      _count: { voters: number; voteRecords: number }
+    },
+    voterType: EligibleVoterType
   ): ElectionWithCurrentStatus {
     return {
       id: election.id,
@@ -151,9 +144,9 @@ export class ElectionService {
       createdAt: election.createdAt,
       updatedAt: election.updatedAt,
       status: this.getElectionStatus(election),
-      votePercentage: this.getVotePercentage(election.voters, election.voteRecords),
+      votePercentage: 100 * (election._count.voteRecords / election._count.voters),
       isRegistered: this.isHybridElectionVoterRegistered(voterType, election.type),
-      isVoted: election.voteRecords.some((record) => record.userId === userId),
+      isVoted: election.voters.length > 0,
     }
   }
 
@@ -181,7 +174,7 @@ export class ElectionService {
     const result = eligibleVoters.value
       .filter(({ election }) => this.isElectionActive(election))
       .map(({ election, type: voterType }) =>
-        this.convertToListElection(election, voterType, userId)
+        this.convertToListElection(election, voterType)
       ) satisfies ListElectionResponse
 
     return ok(result)
@@ -206,7 +199,7 @@ export class ElectionService {
     }
 
     const election = eligibleVoter.value.election
-    const listElection = this.convertToListElection(election, eligibleVoter.value.type, userId)
+    const listElection = this.convertToListElection(election, eligibleVoter.value.type)
     const candidates = election.candidates.map((candidate) =>
       this.convertToElectionCandidateDTO(candidate)
     )
