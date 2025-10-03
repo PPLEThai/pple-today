@@ -128,7 +128,8 @@ export class ElectionService {
 
   private convertToListElection(
     election: Election & { voters: ElectionEligibleVoter[]; voteRecords: ElectionVoteRecord[] },
-    voterType: EligibleVoterType
+    voterType: EligibleVoterType,
+    userId: string
   ): ElectionWithCurrentStatus {
     return {
       id: election.id,
@@ -152,7 +153,7 @@ export class ElectionService {
       status: this.getElectionStatus(election),
       votePercentage: this.getVotePercentage(election.voters, election.voteRecords),
       isRegistered: this.isHybridElectionVoterRegistered(voterType, election.type),
-      isVoted: election.voteRecords.length > 0,
+      isVoted: election.voteRecords.some((record) => record.userId === userId),
     }
   }
 
@@ -180,7 +181,7 @@ export class ElectionService {
     const result = eligibleVoters.value
       .filter(({ election }) => this.isElectionActive(election))
       .map(({ election, type: voterType }) =>
-        this.convertToListElection(election, voterType)
+        this.convertToListElection(election, voterType, userId)
       ) satisfies ListElectionResponse
 
     return ok(result)
@@ -205,7 +206,7 @@ export class ElectionService {
     }
 
     const election = eligibleVoter.value.election
-    const listElection = this.convertToListElection(election, eligibleVoter.value.type)
+    const listElection = this.convertToListElection(election, eligibleVoter.value.type, userId)
     const candidates = election.candidates.map((candidate) =>
       this.convertToElectionCandidateDTO(candidate)
     )
