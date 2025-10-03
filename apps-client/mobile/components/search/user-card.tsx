@@ -1,6 +1,8 @@
-import { Text, View } from 'react-native'
+import { View } from 'react-native'
 
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
+import { Text } from '@pple-today/ui/text'
+import { useRouter } from 'expo-router'
 
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 
@@ -13,8 +15,10 @@ interface UserSearchCardProps {
 }
 
 export function UserSearchCard(props: UserSearchCardProps) {
+  const router = useRouter()
+
   return (
-    <SearchCard href={''}>
+    <SearchCard onPress={() => router.navigate(`/(feed)/profile/users/${props.id}`)}>
       <View className="flex flex-row items-center gap-2 px-4 py-3">
         <Avatar className="w-8 h-8" alt={props.name}>
           <AvatarImage

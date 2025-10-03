@@ -15,17 +15,23 @@ import { TopicSearchCard } from '@app/components/search/topic-card'
 import { UserSearchCard } from '@app/components/search/user-card'
 import { reactQueryClient } from '@app/libs/api-client'
 
+import { useSearchingContext } from './_layout'
+
 export default function SearchPage() {
   const router = useRouter()
-  const [searchQuery, setSearchQuery] = React.useState('')
+  const { state, dispatch } = useSearchingContext()
   const searchForm = useForm({
     defaultValues: {
-      query: '',
+      query: state.searchQuery,
     },
-    onSubmit: () => {
+    onSubmit: ({ value, formApi }) => {
+      if (!value.query) return
+
+      formApi.setFieldValue('query', value.query)
+      dispatch({ type: 'updateQuery', query: value.query })
       router.navigate({
         pathname: '/result',
-        params: { query: searchQuery },
+        params: { query: value.query },
       })
     },
   })
@@ -33,10 +39,10 @@ export default function SearchPage() {
   const keywordQuery = reactQueryClient.useQuery(
     '/search/keyword',
     {
-      query: { search: searchQuery },
+      query: { search: state.searchQuery },
     },
     {
-      enabled: !!searchQuery,
+      enabled: !!state.searchQuery,
     }
   )
 
@@ -81,7 +87,7 @@ export default function SearchPage() {
     <Pressable onPress={Keyboard.dismiss} className="flex-1">
       <SafeAreaLayout>
         <View className="flex flex-col">
-          <View className="p-4 pb-2 gap-3">
+          <View className="p-4 gap-3">
             {/* Search Header */}
             <View className="flex flex-row items-center gap-2">
               <Icon icon={SearchIcon} size={32} className="text-base-primary-default" />
@@ -94,9 +100,9 @@ export default function SearchPage() {
               <searchForm.Field
                 name="query"
                 listeners={{
-                  onChangeDebounceMs: 500,
+                  onChangeDebounceMs: 300,
                   onChange: ({ value }) => {
-                    setSearchQuery(value)
+                    dispatch({ type: 'updateQuery', query: value })
                   },
                 }}
               >

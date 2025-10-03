@@ -12,7 +12,7 @@ import { Text } from '@pple-today/ui/text'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
 import { InfiniteData, useInfiniteQuery, UseInfiniteQueryResult } from '@tanstack/react-query'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
 import { ArrowLeftIcon, SearchIcon } from 'lucide-react-native'
 
 import { GetTopicFeedResponse } from '@api/backoffice/app'
@@ -24,14 +24,15 @@ import { TopicSearchBigCard } from '@app/components/search/topic-card'
 import { UserSearchCard } from '@app/components/search/user-card'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 
+import { useSearchingContext } from './_layout'
+
 const LIMIT = 10
 export default function SearchResultPage() {
-  const searchQuery = useLocalSearchParams()
   const router = useRouter()
-  const [reSearchQuery, setReSearchQuery] = React.useState<string>(searchQuery.query as string)
+  const { state, dispatch } = useSearchingContext()
   const searchForm = useForm({
     defaultValues: {
-      query: reSearchQuery,
+      query: state.searchQuery,
     },
   })
 
@@ -59,9 +60,9 @@ export default function SearchResultPage() {
               <searchForm.Field
                 name="query"
                 listeners={{
-                  onChangeDebounceMs: 500,
+                  onChangeDebounceMs: 300,
                   onChange: ({ value }) => {
-                    setReSearchQuery(value)
+                    dispatch({ type: 'updateQuery', query: value })
                   },
                 }}
               >
@@ -86,7 +87,7 @@ export default function SearchResultPage() {
             </View>
           </View>
         </View>
-        <SearchResult query={reSearchQuery} />
+        <SearchResult query={state.searchQuery} />
       </SafeAreaLayout>
     </Pressable>
   )

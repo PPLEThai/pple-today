@@ -4,6 +4,7 @@ import { Badge } from '@pple-today/ui/badge'
 import { Icon } from '@pple-today/ui/icon'
 import { Text } from '@pple-today/ui/text'
 import { Image } from 'expo-image'
+import { useRouter } from 'expo-router'
 import { MessageSquareHeartIcon } from 'lucide-react-native'
 
 import type { GetTopicsResponse } from '@api/backoffice/app'
@@ -16,8 +17,9 @@ interface TopicSearchCardProps {
 }
 
 export function TopicSearchCard(props: TopicSearchCardProps) {
+  const router = useRouter()
   return (
-    <SearchCard href={`(feed)/topic/${props.id}`}>
+    <SearchCard onPress={() => router.navigate(`/(feed)/topic/${props.id}`)}>
       <View className="flex flex-row items-center gap-2 px-4 py-3">
         <View className="h-7 w-7 items-center justify-center">
           <Icon icon={MessageSquareHeartIcon} size={20} className="text-base-primary-default" />
@@ -39,6 +41,8 @@ interface TopicSearchBigCardProps {
 }
 
 export function TopicSearchBigCard(props: TopicSearchBigCardProps) {
+  const router = useRouter()
+
   const renderHashtags = (hashtags: HashtagList) => {
     if (hashtags.length === 0) return null
     if (hashtags.length === 1) {
@@ -62,7 +66,7 @@ export function TopicSearchBigCard(props: TopicSearchBigCardProps) {
   }
 
   return (
-    <SearchCard href={`(feed)/topic/${props.id}`}>
+    <SearchCard onPress={() => router.navigate(`/(feed)/topic/${props.id}`)}>
       <View className="flex flex-row items-center gap-4 px-4 py-3">
         <Image
           source={{
