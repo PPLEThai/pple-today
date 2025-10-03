@@ -138,19 +138,19 @@ export class SearchRepository {
             },
             {
               post: {
-                hashTags: query.search.startsWith('#')
-                  ? {
-                      some: {
-                        hashTag: {
-                          status: HashTagStatus.PUBLISH,
-                          name: {
-                            startsWith: query.search.slice(1),
-                            mode: 'insensitive',
-                          },
-                        },
+                hashTags: {
+                  some: {
+                    hashTag: {
+                      status: HashTagStatus.PUBLISH,
+                      name: {
+                        startsWith: query.search.startsWith('#')
+                          ? query.search
+                          : `#${query.search}`,
+                        mode: 'insensitive',
                       },
-                    }
-                  : undefined,
+                    },
+                  },
+                },
               },
             },
             {
@@ -208,7 +208,7 @@ export class SearchRepository {
         where: {
           status: HashTagStatus.PUBLISH,
           name: {
-            startsWith: query.search,
+            startsWith: query.search.startsWith('#') ? query.search : `#${query.search}`,
             mode: 'insensitive',
           },
         },
@@ -232,19 +232,17 @@ export class SearchRepository {
             mode: 'insensitive',
           },
           status: TopicStatus.PUBLISH,
-          hashTagInTopics: query.search.startsWith('#')
-            ? {
-                some: {
-                  hashTag: {
-                    name: {
-                      startsWith: query.search,
-                      mode: 'insensitive',
-                    },
-                    status: HashTagStatus.PUBLISH,
-                  },
+          hashTagInTopics: {
+            some: {
+              hashTag: {
+                name: {
+                  startsWith: query.search.startsWith('#') ? query.search : `#${query.search}`,
+                  mode: 'insensitive',
                 },
-              }
-            : undefined,
+                status: HashTagStatus.PUBLISH,
+              },
+            },
+          },
         },
         take: query.limit ?? 3,
         skip: query.cursor ? 1 : 0,
