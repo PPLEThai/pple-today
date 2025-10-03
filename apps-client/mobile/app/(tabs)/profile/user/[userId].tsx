@@ -302,7 +302,7 @@ function AnnouncementSection() {
                 onPress={() => router.navigate(`/(feed)/${announcement.id}`)}
                 feedId={announcement.id}
                 title={announcement.title}
-                date={announcement.createdAt.toString()}
+                date={announcement.publishedAt.toString()}
                 type={announcement.type}
               />
             </SlideItem>
