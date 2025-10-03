@@ -169,6 +169,8 @@ export const FacebookController = new Elysia({
               InternalErrorCode.FACEBOOK_PAGE_ALREADY_LINKED,
               InternalErrorCode.FILE_UPLOAD_ERROR,
               InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
+              InternalErrorCode.FILE_MOVE_ERROR,
+              InternalErrorCode.FILE_ROLLBACK_FAILED,
               InternalErrorCode.USER_NOT_FOUND
             ),
           },

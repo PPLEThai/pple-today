@@ -1,4 +1,5 @@
 import '../global.css'
+import 'dayjs/locale/th'
 
 import * as React from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
@@ -7,13 +8,18 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 
 import { Inter_400Regular, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter'
 import {
+  NotoSansThai_300Light,
   NotoSansThai_400Regular,
+  NotoSansThai_500Medium,
   NotoSansThai_600SemiBold,
   NotoSansThai_700Bold,
 } from '@expo-google-fonts/noto-sans-thai'
 import {
   NotoSansThaiLooped_300Light,
+  NotoSansThaiLooped_400Regular,
   NotoSansThaiLooped_500Medium,
+  NotoSansThaiLooped_600SemiBold,
+  NotoSansThaiLooped_700Bold,
 } from '@expo-google-fonts/noto-sans-thai-looped'
 import { BottomSheetModalProvider } from '@pple-today/ui/bottom-sheet/index'
 import { NAV_THEME } from '@pple-today/ui/lib/constants'
@@ -21,6 +27,9 @@ import { PortalHost } from '@pple-today/ui/portal'
 import { Toaster } from '@pple-today/ui/toast'
 import { DarkTheme, DefaultTheme, Theme, ThemeProvider } from '@react-navigation/native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import dayjs from 'dayjs'
+import buddhistEra from 'dayjs/plugin/buddhistEra'
+import duration from 'dayjs/plugin/duration'
 import * as Clipboard from 'expo-clipboard'
 import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
@@ -29,6 +38,10 @@ import * as SplashScreen from 'expo-splash-screen'
 import { StatusBarProvider } from '@app/context/status-bar'
 import { environment } from '@app/env'
 import { AuthLifeCycleHook } from '@app/libs/auth'
+
+dayjs.extend(buddhistEra)
+dayjs.extend(duration)
+dayjs.locale('th')
 
 SplashScreen.preventAutoHideAsync()
 
@@ -98,11 +111,16 @@ function FontProvider({ children }: { children: React.ReactNode }) {
     Inter_400Regular,
     Inter_600SemiBold,
     Inter_700Bold,
+    NotoSansThai_300Light,
     NotoSansThai_400Regular,
+    NotoSansThai_500Medium,
     NotoSansThai_600SemiBold,
     NotoSansThai_700Bold,
     NotoSansThaiLooped_300Light,
+    NotoSansThaiLooped_400Regular,
     NotoSansThaiLooped_500Medium,
+    NotoSansThaiLooped_600SemiBold,
+    NotoSansThaiLooped_700Bold,
   })
   React.useEffect(() => {
     if (fontLoaded || fontError) {

@@ -93,7 +93,7 @@ export class AdminElectionRepository {
 
     const deleteImageResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (tx) => {
-        const deleteImageResult = await tx.bulkRemoveFile(faceImagePaths as FilePath[])
+        const deleteImageResult = await tx.bulkDeleteFile(faceImagePaths as FilePath[])
         if (deleteImageResult.isErr()) return err(deleteImageResult.error)
       })
     )
@@ -197,7 +197,7 @@ export class AdminElectionRepository {
         if (newProfileImage === oldProfileImage) return
 
         if (oldProfileImage) {
-          const deleteOldFileResult = await tx.removeFile(oldProfileImage as FilePath)
+          const deleteOldFileResult = await tx.deleteFile(oldProfileImage as FilePath)
           if (deleteOldFileResult.isErr()) return err(deleteOldFileResult.error)
         }
 
@@ -247,7 +247,7 @@ export class AdminElectionRepository {
       this.fileService.$transaction(async (tx) => {
         const profileImage = candidateResult.value.profileImagePath
         if (!profileImage) return
-        const deleteProfileImage = await tx.removeFile(profileImage as FilePath)
+        const deleteProfileImage = await tx.deleteFile(profileImage as FilePath)
         if (deleteProfileImage.isErr()) return err(deleteProfileImage.error)
       })
     )

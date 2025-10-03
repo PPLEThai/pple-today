@@ -1,0 +1,35 @@
+enum AuditLogAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+enum EntityType {
+  POST
+  POLL
+  ANNOUNCEMENT
+  HASHTAG
+  TOPIC
+  BANNER
+  ELECTION
+  FACEBOOK_PAGE
+  USER
+}
+
+model AuditLog {
+  id String @id @default(cuid())
+
+  action   AuditLogAction
+  entity   EntityType
+  entityId String
+
+  changes Json?
+
+  performedById String
+  performedBy   AdminUser @relation(fields: [performedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([entityId])
+}

@@ -1,6 +1,6 @@
 import { PrismaPg } from '@prisma/adapter-pg'
 
-import { PrismaClient, TopicStatus, UserRole } from '../../__generated__/prisma'
+import { PrismaClient, TopicStatus } from '../../__generated__/prisma'
 
 const transformProvinceDetails = async (): Promise<{
   province: string[]
@@ -47,7 +47,7 @@ const prisma = new PrismaClient({
   adapter,
 })
 
-const OFFICIAL_USER_ID = 'pple-official-page'
+const OFFICIAL_USER_ID = 'pple-official-user'
 
 const seedAddresses = async (addresses: any) => {
   for (const { province, district, subDistrict, postalCode } of addresses) {
@@ -84,13 +84,23 @@ const seedOfficialUser = async () => {
     update: {
       name: `พรรคประชาชน - People's Party`,
       phoneNumber: '+0000000000',
-      role: UserRole.OFFICIAL,
+      roles: {
+        connectOrCreate: {
+          where: { userId_role: { userId: OFFICIAL_USER_ID, role: 'official' } },
+          create: { role: 'official' },
+        },
+      },
     },
     create: {
       id: OFFICIAL_USER_ID,
       name: `พรรคประชาชน - People's Party`,
       phoneNumber: '+0000000000',
-      role: UserRole.OFFICIAL,
+      roles: {
+        connectOrCreate: {
+          where: { userId_role: { userId: OFFICIAL_USER_ID, role: 'official' } },
+          create: { role: 'official' },
+        },
+      },
     },
   })
   console.log('Seeded official user successfully.')

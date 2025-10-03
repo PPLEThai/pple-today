@@ -1,5 +1,5 @@
-import { InternalErrorCode } from '@pple-today/api-common/dtos'
-import { FileService } from '@pple-today/api-common/services'
+import { FilePath, InternalErrorCode } from '@pple-today/api-common/dtos'
+import { FileService, FileTransactionService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
@@ -148,21 +148,23 @@ export class FacebookService {
     }
 
     let profilePicturePath = existingPage.value?.profilePicturePath
+    let txFile: FileTransactionService | null = null
 
     if (
       !profilePicturePath ||
       pageDetails.value.picture.data.cache_key !== existingPage.value?.profilePictureCacheKey
     ) {
-      const uploadResult = await this.fileService.uploadProfilePagePicture(
+      const uploadResult = await this.facebookRepository.handleUploadedProfilePicture(
         pageDetails.value.picture.data.url,
-        facebookPageId
+        `temp/pages/profile-picture-${facebookPageId}.jpg` as FilePath
       )
 
       if (uploadResult.isErr()) {
-        return err(uploadResult.error)
+        return mapRepositoryError(uploadResult.error)
       }
 
-      profilePicturePath = uploadResult.value
+      profilePicturePath = uploadResult.value[0]
+      txFile = uploadResult.value[1]
     }
 
     const linkedPage = await this.facebookRepository.linkFacebookPageToUser(
@@ -177,6 +179,10 @@ export class FacebookService {
     )
 
     if (linkedPage.isErr()) {
+      if (txFile) {
+        const rollbackResult = await txFile.rollback()
+        if (rollbackResult.isErr()) return mapRepositoryError(rollbackResult.error)
+      }
       return mapRepositoryError(linkedPage.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.USER_NOT_FOUND,
@@ -192,6 +198,10 @@ export class FacebookService {
     )
 
     if (subscribeResult.isErr()) {
+      if (txFile) {
+        const rollbackResult = await txFile.rollback()
+        if (rollbackResult.isErr()) return mapRepositoryError(rollbackResult.error)
+      }
       return mapRepositoryError(subscribeResult.error)
     }
 

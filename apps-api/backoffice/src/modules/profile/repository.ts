@@ -236,7 +236,7 @@ export class ProfileRepository {
       this.fileService.$transaction(async (tx) => {
         if (profileData.profileImagePath) {
           if (existingUser.value.profileImagePath) {
-            const removeResult = await tx.bulkRemoveFile([
+            const removeResult = await tx.bulkDeleteFile([
               existingUser.value.profileImagePath as FilePath,
             ])
 
