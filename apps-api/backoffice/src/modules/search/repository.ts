@@ -230,8 +230,10 @@ export class SearchRepository {
             mode: 'insensitive',
           },
           roles: {
-            none: {
-              role: 'official',
+            some: {
+              role: {
+                in: ['pple-ad:mp', 'pple-ad:hq'],
+              },
             },
           },
         },
