@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
+import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { H1, H2, H3 } from '@pple-today/ui/typography'
 import * as Linking from 'expo-linking'
@@ -20,6 +21,7 @@ import {
   MailIcon,
   MegaphoneIcon,
   PhoneIcon,
+  VoteIcon,
 } from 'lucide-react-native'
 
 import ContactMail from '@app/assets/contact-mail.svg'
@@ -27,13 +29,15 @@ import Personal from '@app/assets/personal.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { UserAddressInfoSection } from '@app/components/address-info'
 import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/announcement'
+import { ElectionCard } from '@app/components/election/election-card'
+import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { reactQueryClient } from '@app/libs/api-client'
 
 export default function OfficialPage() {
   return (
-    <View className="flex-1 flex-col bg-base-bg-default">
-      <ScrollView>
-        <View className="flex flex-col p-4 pt-safe-offset-4 bg-base-bg-white">
+    <SafeAreaLayout>
+      <ScrollView className="flex-1 bg-base-bg-default">
+        <View className="flex flex-col p-4 bg-base-bg-white">
           <View className="flex flex-row gap-2 items-center">
             <Icon
               icon={LandmarkIcon}
@@ -49,10 +53,44 @@ export default function OfficialPage() {
         </View>
         <UserAddressInfoSection className="pb-4 bg-base-bg-white" />
         <View className="gap-3 py-4">
+          <ElectionSection />
           <AnnouncementSection />
           <InformationSection />
         </View>
       </ScrollView>
+    </SafeAreaLayout>
+  )
+}
+
+const ElectionSection = () => {
+  const electionsQuery = reactQueryClient.useQuery('/elections', {})
+  const elections = electionsQuery.data || []
+  if (elections.length === 0) {
+    return null
+  }
+  return (
+    <View className="flex flex-col">
+      <View className="px-4 flex flex-row gap-2 items-center">
+        <Icon icon={VoteIcon} size={32} className="text-base-primary-default" />
+        <H2 className="text-2xl font-heading-semibold text-base-text-high">เลือกตั้ง</H2>
+      </View>
+      <Slide
+        isLoading={electionsQuery.isLoading}
+        count={elections.length}
+        itemWidth="container"
+        gap={8}
+        paddingHorizontal={16}
+        className="mt-2"
+      >
+        <SlideScrollView>
+          {elections.map((election) => (
+            <SlideItem key={election.id} className="flex flex-row items-stretch">
+              <ElectionCard election={election} />
+            </SlideItem>
+          ))}
+        </SlideScrollView>
+        <SlideIndicators />
+      </Slide>
     </View>
   )
 }
