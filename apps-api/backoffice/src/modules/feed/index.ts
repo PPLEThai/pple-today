@@ -1,5 +1,6 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
+import { UserStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import {
@@ -221,6 +222,16 @@ export const FeedController = new Elysia({
   .put(
     '/:id/reaction',
     async ({ params, body, user, status, feedService }) => {
+      if (user.status !== UserStatus.ACTIVE) {
+        return mapErrorCodeToResponse(
+          {
+            code: InternalErrorCode.FORBIDDEN,
+            message: 'You are not allowed to perform this action',
+          },
+          status
+        )
+      }
+
       const result = await feedService.upsertFeedReaction(params.id, user.id, body)
 
       if (result.isErr()) {
@@ -230,12 +241,15 @@ export const FeedController = new Elysia({
       return result.value
     },
     {
-      requiredLocalUser: true,
+      requiredLocalUserPrecondition: {
+        isActive: true,
+      },
       params: CreateFeedReactionParams,
       body: CreateFeedReactionBody,
       response: {
         201: CreateFeedReactionResponse,
         ...createErrorSchema(
+          InternalErrorCode.FORBIDDEN,
           InternalErrorCode.FEED_ITEM_NOT_FOUND,
           InternalErrorCode.FEED_ITEM_REACTION_ALREADY_EXISTS,
           InternalErrorCode.INTERNAL_SERVER_ERROR
@@ -250,6 +264,16 @@ export const FeedController = new Elysia({
   .delete(
     '/:id/reaction',
     async ({ params, status, user, feedService }) => {
+      if (user.status !== UserStatus.ACTIVE) {
+        return mapErrorCodeToResponse(
+          {
+            code: InternalErrorCode.FORBIDDEN,
+            message: 'You are not allowed to perform this action',
+          },
+          status
+        )
+      }
+
       const result = await feedService.deleteFeedReaction(params.id, user.id)
 
       if (result.isErr()) {
@@ -259,11 +283,14 @@ export const FeedController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredLocalUser: true,
+      requiredLocalUserPrecondition: {
+        isActive: true,
+      },
       params: DeleteFeedReactionParams,
       response: {
         200: DeleteFeedReactionResponse,
         ...createErrorSchema(
+          InternalErrorCode.FORBIDDEN,
           InternalErrorCode.FEED_ITEM_REACTION_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
@@ -286,12 +313,15 @@ export const FeedController = new Elysia({
       return result.value
     },
     {
-      requiredLocalUser: true,
+      requiredLocalUserPrecondition: {
+        isActive: true,
+      },
       params: CreateFeedCommentParams,
       body: CreateFeedCommentBody,
       response: {
         201: CreateFeedCommentResponse,
         ...createErrorSchema(
+          InternalErrorCode.FORBIDDEN,
           InternalErrorCode.FEED_ITEM_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),

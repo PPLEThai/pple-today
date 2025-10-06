@@ -139,6 +139,10 @@ export class PollsService {
           code: InternalErrorCode.POLL_NOT_FOUND,
           message: 'Poll not found',
         },
+        MODEL_NOT_CONNECT: {
+          code: InternalErrorCode.POLL_VOTE_NOT_FOUND,
+          message: 'Poll option not found',
+        },
       })
     }
 
