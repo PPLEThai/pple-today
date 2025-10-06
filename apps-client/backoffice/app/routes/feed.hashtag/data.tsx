@@ -94,7 +94,7 @@ export const Data = () => {
         header: 'สถานะ',
         cell: (info) => {
           const status = info.getValue()
-          if (status === 'PUBLISH') return <Badge variant="success">เปิดใช้งาน</Badge>
+          if (status === 'PUBLISHED') return <Badge variant="success">เปิดใช้งาน</Badge>
           return <Badge variant="destructive">ระงับการใช้งาน</Badge>
         },
         size: 126,
@@ -110,9 +110,9 @@ export const Data = () => {
           return (
             <Switch
               isPending={mutation.isPending && mutation.variables?.pathParams.hashtagId === id}
-              checked={status === 'PUBLISH'}
+              checked={status === 'PUBLISHED'}
               onCheckedChange={(checked: boolean) => {
-                setHashtagStatus({ status: checked ? 'PUBLISH' : 'SUSPEND' }, { hashtagId: id })
+                setHashtagStatus({ status: checked ? 'PUBLISHED' : 'SUSPENDED' }, { hashtagId: id })
               }}
             />
           )
