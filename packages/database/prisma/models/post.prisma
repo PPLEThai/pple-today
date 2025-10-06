@@ -1,18 +1,28 @@
 enum PostAttachmentType {
     IMAGE
     VIDEO
-    AUDIO
+}
+
+enum PostStatus {
+    PUBLISHED
+    HIDDEN
+    DELETED
 }
 
 model Post {
     feedItemId     String @id
     facebookPostId String @unique
 
+    status    PostStatus @default(PUBLISHED)
+    deletedAt DateTime?
+
     content     String?
     attachments PostAttachment[]
     hashTags    PostHashTag[]
 
     feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
+
+    @@index([status])
 }
 
 model PostAttachment {

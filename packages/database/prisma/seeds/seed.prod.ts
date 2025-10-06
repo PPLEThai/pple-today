@@ -115,7 +115,7 @@ const seedTopics = async (provinces: string[]) => {
         create: {
           name: province,
           description: `ข่าวเกี่ยวกับจังหวัด${province}`,
-          status: TopicStatus.PUBLISH,
+          status: TopicStatus.PUBLISHED,
         },
       })
     }

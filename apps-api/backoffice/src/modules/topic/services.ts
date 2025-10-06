@@ -98,11 +98,11 @@ export class TopicService {
       })
     }
 
-    // cannot follow draft topic
-    if (topic.value?.status == TopicStatus.DRAFT) {
+    // cannot follow suspended topic
+    if (topic.value?.status == TopicStatus.SUSPENDED) {
       return err({
-        code: InternalErrorCode.TOPIC_CANNOT_FOLLOW_DRAFT,
-        message: `Cannot follow topic with status '${TopicStatus.DRAFT}'`,
+        code: InternalErrorCode.TOPIC_CANNOT_FOLLOW_SUSPENDED,
+        message: `Cannot follow topic with status SUSPENDED`,
       })
     }
 
@@ -161,13 +161,11 @@ export class TopicService {
       bannerImage: topic.bannerImagePath
         ? this.fileService.getPublicFileUrl(topic.bannerImagePath)
         : null,
-      status: topic.status,
       createdAt: topic.createdAt,
       updatedAt: topic.updatedAt,
       hashTags: topic.hashTagInTopics.map(({ hashTag }) => ({
         id: hashTag.id,
         name: hashTag.name,
-        status: hashTag.status,
         createdAt: hashTag.createdAt,
         updatedAt: hashTag.updatedAt,
       })),
