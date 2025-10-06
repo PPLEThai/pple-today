@@ -27,6 +27,7 @@ import {
 
 import { ElectionWithCurrentStatus } from '@api/backoffice/app'
 import PPLEIcon from '@app/assets/pple-icon.svg'
+import { reactQueryClient } from '@app/libs/api-client'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 
 interface ElectionCardProps extends PressableProps {
@@ -312,11 +313,7 @@ function ElectionCardFooter(props: ElectionCardProps) {
                   </Button>
                 )}
               </ElectionNotification>
-              {/* TODO */}
-              <Button size="sm" className="flex-1">
-                <Icon icon={UserRoundCheckIcon} size={16} />
-                <Text>ลงทะเบียนเลือกตั้งออนไลน์</Text>
-              </Button>
+              <ElectionRegisterButton election={props.election} />
             </View>
           )
         }
@@ -439,4 +436,38 @@ function ElectionNotification(props: ElectionNotificationProps) {
     props.initialData ?? false
   )
   return props.children({ isEnabled, setIsEnabled })
+}
+
+function ElectionRegisterButton(props: ElectionCardProps) {
+  const electionRegisterMutation = reactQueryClient.useMutation(
+    'post',
+    '/elections/:electionId/register',
+    {}
+  )
+  const [isRegistered, setIsRegistered] = useState(props.election.isRegistered)
+  return (
+    <Button
+      size="sm"
+      className="flex-1"
+      onPress={() => {
+        if (isRegistered) return
+        setIsRegistered(true)
+        electionRegisterMutation.mutateAsync(
+          {
+            pathParams: { electionId: props.election.id },
+            body: { type: 'ONLINE' },
+          },
+          {
+            onError: (error) => {
+              console.error('Election register error', JSON.stringify(error))
+              setIsRegistered(false)
+            },
+          }
+        )
+      }}
+    >
+      <Icon icon={UserRoundCheckIcon} size={16} />
+      <Text>{isRegistered ? 'ลงทะเบียนแล้ว' : 'ลงทะเบียนเลือกตั้งออนไลน์'}</Text>
+    </Button>
+  )
 }
