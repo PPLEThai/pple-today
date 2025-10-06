@@ -119,6 +119,11 @@ export class SearchRepository {
         },
         select: {
           feedItemId: true,
+          feedItem: {
+            select: {
+              publishedAt: true,
+            },
+          },
           title: true,
           type: true,
           topics: {

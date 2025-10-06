@@ -94,10 +94,7 @@ export class SearchService {
       id: announcement.feedItemId,
       title: announcement.title,
       type: announcement.type,
-      topics: announcement.topics.map((t) => ({
-        id: t.topic.id,
-        name: t.topic.name,
-      })),
+      publishedAt: announcement.feedItem.publishedAt!,
     }))
 
     return ok(response)

@@ -43,7 +43,10 @@ export const GetSearchAnnouncementQuery = SearchQuery
 export type GetSearchAnnouncementQuery = Static<typeof GetSearchAnnouncementQuery>
 
 export const GetSearchAnnouncementResponse = t.Array(
-  t.Pick(Announcement, ['id', 'title', 'type', 'topics'])
+  t.Composite([
+    t.Pick(Announcement, ['id', 'title', 'type']),
+    t.Required(t.Pick(Announcement, ['publishedAt'])),
+  ])
 )
 export type GetSearchAnnouncementResponse = Static<typeof GetSearchAnnouncementResponse>
 
