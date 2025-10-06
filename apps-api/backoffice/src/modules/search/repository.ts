@@ -255,21 +255,27 @@ export class SearchRepository {
     return await fromRepositoryPromise(
       this.prismaService.topic.findMany({
         where: {
-          name: {
-            startsWith: query.search,
-            mode: 'insensitive',
-          },
-          hashTagInTopics: {
-            some: {
-              hashTag: {
-                name: {
-                  startsWith: query.search.startsWith('#') ? query.search : `#${query.search}`,
-                  mode: 'insensitive',
-                },
-                status: HashTagStatus.PUBLISHED,
+          OR: [
+            {
+              name: {
+                startsWith: query.search,
+                mode: 'insensitive',
               },
             },
-          },
+            {
+              hashTagInTopics: {
+                some: {
+                  hashTag: {
+                    name: {
+                      startsWith: query.search.startsWith('#') ? query.search : `#${query.search}`,
+                      mode: 'insensitive',
+                    },
+                    status: HashTagStatus.PUBLISHED,
+                  },
+                },
+              },
+            },
+          ],
           status: TopicStatus.PUBLISHED,
         },
         take: query.limit ?? 3,
