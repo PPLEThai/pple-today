@@ -26,9 +26,27 @@ import {
 } from '@pple-today/web-ui/sidebar'
 import { ChevronsUpDownIcon, ChevronUp, Facebook, Newspaper, PieChart } from 'lucide-react'
 
+import { GetAuthMeResponse } from '@api/backoffice/admin'
+
+import { userManager } from '~/config/oidc'
+
 import { SidebarUser } from './SidebarUser'
 
-export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
+const logout = () => {
+  Promise.all([userManager.revokeTokens(), userManager.removeUser()])
+    .then(() => window.location.reload())
+    .catch((err) => {
+      console.log(err)
+    })
+}
+
+export const AppSidebar = ({
+  authMe,
+  children,
+}: {
+  authMe: GetAuthMeResponse
+  children: React.ReactNode
+}) => {
   return (
     <SidebarProvider>
       <Sidebar collapsible="none">
@@ -156,7 +174,7 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
             <SidebarMenuItem>
               <SidebarUser
                 src="https://picsum.photos/id/64/64"
-                title="PPLE Admin"
+                title={authMe.name ?? 'undefined'}
                 subtitle="pple_admin@pple.com"
               >
                 <DropdownMenu>
@@ -171,7 +189,7 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent side="top" align="end">
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={logout}>
                       <span>Sign out</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
