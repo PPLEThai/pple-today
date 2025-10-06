@@ -3,18 +3,27 @@ enum PollType {
     MULTIPLE_CHOICE
 }
 
-// Published models for Poll and PollOption
+enum PollStatus {
+    DRAFT
+    PUBLISHED
+    ARCHIVED
+}
+
 model Poll {
     feedItemId  String   @id
     title       String
     description String?
     endAt       DateTime
-    type        PollType
+
+    type   PollType
+    status PollStatus @default(DRAFT)
 
     topics  PollTopic[]
     options PollOption[]
 
     feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
+
+    @@index([status])
 }
 
 model PollOption {
@@ -57,45 +66,4 @@ model PollTopic {
     @@id([pollId, topicId])
     @@index([topicId])
     @@index([pollId])
-}
-
-// Draft models for Poll and PollOption
-model PollDraft {
-    id          String    @id @default(cuid())
-    title       String?
-    description String?
-    endAt       DateTime?
-    type        PollType
-
-    topics  PollTopicDraft[]
-    options PollOptionDraft[]
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-}
-
-model PollOptionDraft {
-    id        String   @id @default(cuid())
-    title     String
-    votes     Int      @default(0)
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    pollDraftId String
-    pollDraft   PollDraft @relation(fields: [pollDraftId], references: [id], onDelete: Cascade)
-
-    @@index([pollDraftId])
-}
-
-model PollTopicDraft {
-    pollDraftId String
-    topicId     String
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    pollDraft PollDraft @relation(fields: [pollDraftId], references: [id], onDelete: Cascade)
-    topic     Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
-
-    @@id([pollDraftId, topicId])
 }

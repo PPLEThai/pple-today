@@ -1,5 +1,6 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { HashTagStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import { PrismaServicePlugin } from '../../plugins/prisma'
@@ -11,7 +12,7 @@ export class HashtagRepository {
       this.prismaService.hashTag.findFirstOrThrow({
         where: {
           id: hashtagId,
-          status: 'PUBLISH',
+          status: HashTagStatus.PUBLISHED,
         },
         select: {
           id: true,

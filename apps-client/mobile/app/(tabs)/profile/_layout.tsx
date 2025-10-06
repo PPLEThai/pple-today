@@ -9,7 +9,7 @@ export default function Layout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="facebook" />
       <Stack.Screen name="follow" />
-      <Stack.Screen name="users/[userId]" />
+      <Stack.Screen name="user/[userId]" />
     </Stack>
   )
 }

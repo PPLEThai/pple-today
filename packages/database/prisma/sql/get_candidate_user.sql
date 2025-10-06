@@ -32,7 +32,7 @@ WITH
   		"User" u
   		LEFT JOIN excluded_users e ON e.user_id = u."id"
   	WHERE
-  		e.user_id IS NULL
+  		e.user_id IS NULL AND u."status" = 'ACTIVE'
   ),
 
   other_candidate_user AS (

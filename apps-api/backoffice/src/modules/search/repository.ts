@@ -178,7 +178,7 @@ export class SearchRepository {
     return await fromRepositoryPromise(
       this.prismaService.hashTag.findMany({
         where: {
-          status: HashTagStatus.PUBLISH,
+          status: HashTagStatus.PUBLISHED,
           name: {
             startsWith: query.search,
             mode: 'insensitive',
@@ -203,7 +203,7 @@ export class SearchRepository {
             startsWith: query.search,
             mode: 'insensitive',
           },
-          status: TopicStatus.PUBLISH,
+          status: TopicStatus.PUBLISHED,
         },
         take: query.limit ?? 3,
         skip: query.cursor ? 1 : 0,

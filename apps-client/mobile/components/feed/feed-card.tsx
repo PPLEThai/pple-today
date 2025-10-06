@@ -102,7 +102,7 @@ export const FeedCard = React.memo(function FeedCard(props: {
             </Text>
             <Text className="text-base-text-medium font-heading-regular text-sm">
               {feedContent.author.address ? `${feedContent.author.address.province} | ` : ''}
-              {formatDateInterval(feedContent.createdAt.toString())}
+              {formatDateInterval(feedContent.publishedAt.toString())}
             </Text>
           </View>
         </View>
@@ -881,7 +881,7 @@ const FeedDetailAuthorSection = (props: { feedItem: FeedItem }) => {
           </Text>
           <Text className="text-base-text-medium font-heading-regular text-sm">
             {props.feedItem.author.address ? `${props.feedItem.author.address.province} | ` : ''}
-            {formatDateInterval(props.feedItem.createdAt.toString())}
+            {formatDateInterval(props.feedItem.publishedAt.toString())}
           </Text>
         </View>
       </View>
