@@ -3,28 +3,13 @@ import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import {
-  GetDraftPollResponse,
-  GetDraftPollsResponse,
-  GetPollsResponse,
-  GetPublishedPollResponse,
-  GetPublishedPollsResponse,
-  PutDraftPollBody,
-  PutPublishedPollBody,
-} from './models'
+import { GetPollByIdResponse, GetPollsResponse, PostPollBody, PutPollBody } from './models'
 import { AdminPollRepository, AdminPollRepositoryPlugin } from './repository'
 
 export class AdminPollService {
   constructor(private adminPollRepository: AdminPollRepository) {}
 
-  async getPolls() {
-    const result = await this.adminPollRepository.getAllPolls()
-    if (result.isErr()) return mapRepositoryError(result.error, {})
-
-    return ok(result.value satisfies GetPollsResponse)
-  }
-
-  async getPublishedPolls(
+  async getPolls(
     query: { limit: number; page: number } = {
       limit: 10,
       page: 1,
@@ -33,7 +18,7 @@ export class AdminPollService {
     const result = await this.adminPollRepository.getPolls(query)
     if (result.isErr()) return mapRepositoryError(result.error, {})
 
-    return ok(result.value satisfies GetPublishedPollsResponse)
+    return ok(result.value satisfies GetPollsResponse)
   }
 
   async getPollById(pollId: string) {
@@ -45,10 +30,17 @@ export class AdminPollService {
         },
       })
 
-    return ok(result.value satisfies GetPublishedPollResponse)
+    return ok(result.value satisfies GetPollByIdResponse)
   }
 
-  async updatePollById(pollId: string, data: PutPublishedPollBody) {
+  async createPoll(data: PostPollBody) {
+    const result = await this.adminPollRepository.createPoll(data)
+    if (result.isErr()) return mapRepositoryError(result.error)
+
+    return ok({ id: result.value.id })
+  }
+
+  async updatePollById(pollId: string, data: PutPollBody) {
     const result = await this.adminPollRepository.updatePollById(pollId, data)
     if (result.isErr())
       return mapRepositoryError(result.error, {
@@ -58,18 +50,6 @@ export class AdminPollService {
       })
 
     return ok({ message: `Poll "${result.value.feedItemId}" updated.` })
-  }
-
-  async unpublishPollById(pollId: string) {
-    const result = await this.adminPollRepository.unpublishPollById(pollId)
-    if (result.isErr())
-      return mapRepositoryError(result.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.POLL_NOT_FOUND,
-        },
-      })
-
-    return ok({ message: `Poll "${result.value.id}" unpublished.` })
   }
 
   async deletePollById(pollId: string) {
@@ -82,73 +62,6 @@ export class AdminPollService {
       })
 
     return ok({ message: `Poll "${result.value.id}" deleted.` })
-  }
-
-  async getDraftPolls(
-    query: { limit: number; page: number } = {
-      limit: 10,
-      page: 1,
-    }
-  ) {
-    const result = await this.adminPollRepository.getDraftPolls(query)
-    if (result.isErr()) return mapRepositoryError(result.error, {})
-
-    return ok(result.value satisfies GetDraftPollsResponse)
-  }
-
-  async getDraftPollById(pollId: string) {
-    const result = await this.adminPollRepository.getDraftPollById(pollId)
-    if (result.isErr())
-      return mapRepositoryError(result.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.POLL_NOT_FOUND,
-        },
-      })
-
-    return ok(result.value satisfies GetDraftPollResponse)
-  }
-
-  async createEmptyDraftPoll() {
-    const result = await this.adminPollRepository.createEmptyDraftPoll()
-    if (result.isErr()) return mapRepositoryError(result.error, {})
-
-    return ok({ pollId: result.value.id })
-  }
-
-  async updateDraftPollById(pollId: string, data: PutDraftPollBody) {
-    const result = await this.adminPollRepository.updateDraftPollById(pollId, data)
-    if (result.isErr())
-      return mapRepositoryError(result.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.POLL_NOT_FOUND,
-        },
-      })
-
-    return ok({ message: `Draft Poll "${result.value.id}" updated.` })
-  }
-
-  async publishDraftPollById(pollId: string, authorId: string) {
-    const result = await this.adminPollRepository.publishDraftPollById(pollId, authorId)
-    if (result.isErr())
-      return mapRepositoryError(result.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.POLL_NOT_FOUND,
-        },
-      })
-
-    return ok({ message: `Draft Poll "${result.value.id}" published.` })
-  }
-
-  async deleteDraftPoll(pollId: string) {
-    const result = await this.adminPollRepository.deleteDraftPollById(pollId)
-    if (result.isErr())
-      return mapRepositoryError(result.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.POLL_NOT_FOUND,
-        },
-      })
-
-    return ok({ message: `Draft Poll "${result.value.id}" deleted.` })
   }
 }
 

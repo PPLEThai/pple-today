@@ -1,3 +1,10 @@
+enum FacebookPageLinkedStatus {
+  PENDING
+  UNLINKED
+  APPROVED
+  REJECTED
+}
+
 model FacebookPage {
   id                     String @id
   name                   String
@@ -6,6 +13,8 @@ model FacebookPage {
 
   isSubscribed    Boolean @default(false)
   pageAccessToken String
+
+  linkedStatus FacebookPageLinkedStatus @default(PENDING)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

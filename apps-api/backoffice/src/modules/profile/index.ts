@@ -298,11 +298,14 @@ export const ProfileController = new Elysia({
       })
     },
     {
-      requiredLocalUser: true,
+      requiredLocalUserPrecondition: {
+        isActive: true,
+      },
       params: FollowUserParams,
       response: {
         200: FollowUserResponse,
         ...createErrorSchema(
+          InternalErrorCode.FORBIDDEN,
           InternalErrorCode.USER_ALREADY_FOLLOWS,
           InternalErrorCode.USER_NOT_FOUND,
           InternalErrorCode.USER_INVALID_INPUT,
@@ -329,11 +332,14 @@ export const ProfileController = new Elysia({
       })
     },
     {
-      requiredLocalUser: true,
+      requiredLocalUserPrecondition: {
+        isActive: true,
+      },
       params: FollowUserParams,
       response: {
         200: FollowUserResponse,
         ...createErrorSchema(
+          InternalErrorCode.FORBIDDEN,
           InternalErrorCode.USER_NOT_FOLLOWS,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),

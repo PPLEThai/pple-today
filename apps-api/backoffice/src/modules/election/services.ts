@@ -11,9 +11,7 @@ import { err, mapRepositoryError } from '@pple-today/api-common/utils'
 import {
   Election,
   ElectionCandidate,
-  ElectionEligibleVoter,
   ElectionType,
-  ElectionVoteRecord,
   EligibleVoterType,
 } from '@pple-today/database/prisma'
 import dayjs from 'dayjs'
@@ -36,7 +34,7 @@ export class ElectionService {
   private isOnsiteElectionActive(election: Election): boolean {
     const now = new Date()
 
-    const isPublished = election.publishDate && now > election.publishDate
+    const isPublished = election.publishDate && now >= election.publishDate
     if (!isPublished) {
       return false
     }
@@ -44,7 +42,7 @@ export class ElectionService {
     const { startResult, endResult, closeVoting } = election
     const isResultAnnounced = startResult && endResult
 
-    if (isResultAnnounced && endResult) {
+    if (isResultAnnounced) {
       const isPastAnnouncePeriod = now > endResult
       if (isPastAnnouncePeriod) {
         return false
@@ -74,10 +72,10 @@ export class ElectionService {
   private isHybridElectionActive(election: Election): boolean {
     const now = new Date()
 
-    const isOpenRegister = Boolean(election.openRegister && now >= election.openRegister)
+    const isPublished = Boolean(election.publishDate && now >= election.publishDate)
     const isPastAnnouncePeriod = Boolean(election.endResult && now > election.endResult)
 
-    return isOpenRegister && !isPastAnnouncePeriod
+    return isPublished && !isPastAnnouncePeriod
   }
 
   private isElectionActive(election: Election): boolean {
@@ -109,13 +107,6 @@ export class ElectionService {
     }
   }
 
-  private getVotePercentage(
-    voters: ElectionEligibleVoter[],
-    voteRecords: ElectionVoteRecord[]
-  ): number {
-    return 100 * (voteRecords.length / voters.length)
-  }
-
   private isHybridElectionVoterRegistered(
     voterType: EligibleVoterType,
     electionType: ElectionType
@@ -127,7 +118,10 @@ export class ElectionService {
   }
 
   private convertToListElection(
-    election: Election & { voters: ElectionEligibleVoter[]; voteRecords: ElectionVoteRecord[] },
+    election: Election & {
+      voters: { userId: string }[]
+      _count: { voters: number; voteRecords: number }
+    },
     voterType: EligibleVoterType
   ): ElectionWithCurrentStatus {
     return {
@@ -135,6 +129,7 @@ export class ElectionService {
       name: election.name,
       description: election.description,
       location: election.location,
+      locationMapUrl: election.locationMapUrl,
       type: election.type,
       mode: election.mode,
       isCancelled: election.isCancelled,
@@ -149,8 +144,9 @@ export class ElectionService {
       createdAt: election.createdAt,
       updatedAt: election.updatedAt,
       status: this.getElectionStatus(election),
-      votePercentage: this.getVotePercentage(election.voters, election.voteRecords),
+      votePercentage: 100 * (election._count.voteRecords / election._count.voters),
       isRegistered: this.isHybridElectionVoterRegistered(voterType, election.type),
+      isVoted: election.voters.length > 0,
     }
   }
 

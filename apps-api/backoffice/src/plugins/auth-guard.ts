@@ -1,5 +1,6 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { err, mapErrorCodeToResponse, mapRepositoryError } from '@pple-today/api-common/utils'
+import { UserStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 import * as R from 'remeda'
@@ -28,17 +29,34 @@ export class AuthGuard {
     return await introspectAccessToken(token, this.oidcConfig)
   }
 
-  async checkUserHasRole(headers: Record<string, string | undefined>, roles: string[]) {
+  async checkUserPrecondition(
+    headers: Record<string, string | undefined>,
+    conditions: { allowedRoles?: string[]; isActive?: boolean }
+  ) {
     const user = await this.getCurrentUser(headers)
 
     if (user.isErr()) return mapRepositoryError(user.error)
 
-    const intersectionRoles = R.intersection(user.value.roles, roles)
+    if (conditions.allowedRoles) {
+      const intersectionRoles = R.intersection(user.value.roles, conditions.allowedRoles)
+      if (intersectionRoles.length === 0) {
+        return err({
+          code: InternalErrorCode.FORBIDDEN,
+          message: 'You are not allowed to perform this action',
+        })
+      }
+    }
 
-    return ok({
-      isAllowed: intersectionRoles.length > 0,
-      user: user.value,
-    })
+    if (conditions.isActive) {
+      if (user.value.status !== UserStatus.ACTIVE) {
+        return err({
+          code: InternalErrorCode.FORBIDDEN,
+          message: 'You are not allowed to perform this action',
+        })
+      }
+    }
+
+    return ok(user.value)
   }
 
   async getCurrentUser(headers: Record<string, string | undefined>) {
@@ -90,22 +108,18 @@ export const AuthGuardPlugin = new Elysia({
         return { oidcUser: oidcUserResult.value }
       },
     },
-    requiredLocalRole: (allowedRoles: string[]) => ({
+    requiredLocalUserPrecondition: (conditions: {
+      allowedRoles?: string[]
+      isActive?: boolean
+    }) => ({
       async resolve({ status, headers, authGuard }) {
-        const hasAllowedRoles = await authGuard.checkUserHasRole(headers, allowedRoles)
+        const checkResult = await authGuard.checkUserPrecondition(headers, conditions)
 
-        if (hasAllowedRoles.isErr()) {
-          return mapErrorCodeToResponse(hasAllowedRoles.error, status)
+        if (checkResult.isErr()) {
+          return mapErrorCodeToResponse(checkResult.error, status)
         }
 
-        if (!hasAllowedRoles.value.isAllowed) {
-          return mapErrorCodeToResponse(
-            { code: InternalErrorCode.FORBIDDEN, message: 'Forbidden' },
-            status
-          )
-        }
-
-        return { user: hasAllowedRoles.value.user }
+        return { user: checkResult.value }
       },
     }),
     fetchLocalUser: {

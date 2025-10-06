@@ -105,7 +105,7 @@ export const AdminBannerController = new Elysia({
       },
     }
   )
-  .put(
+  .patch(
     '/:id',
     async ({ params, body, adminBannerService, status }) => {
       const result = await adminBannerService.updateBannerById(params.id, body)
