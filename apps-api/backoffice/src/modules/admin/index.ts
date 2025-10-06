@@ -1,6 +1,7 @@
 import Elysia from 'elysia'
 
 import { AdminAnnouncementsController } from './announcements'
+import { AdminAuthController } from './auth'
 import { AdminBannerController } from './banner'
 import { AdminElectionController } from './election'
 import { AdminFileController } from './file'
@@ -11,6 +12,7 @@ import { AdminTopicController } from './topic'
 export const AdminController = new Elysia({
   prefix: '/admin',
 })
+  .use(AdminAuthController)
   .use(AdminPollsController)
   .use(AdminFileController)
   .use(AdminBannerController)

@@ -1,3 +1,8 @@
+enum UserStatus {
+    ACTIVE
+    SUSPENDED
+}
+
 model User {
     id               String  @id @default(cuid())
     name             String
@@ -10,7 +15,8 @@ model User {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    onBoardingCompleted Boolean @default(false)
+    onBoardingCompleted Boolean    @default(false)
+    status              UserStatus @default(ACTIVE)
 
     numberOfPosts           Int @default(0)
     numberOfFollowers       Int @default(0)
@@ -38,6 +44,8 @@ model User {
     feedReactions FeedItemReaction[]
     feedComments  FeedItemComment[]
     roles         UserRole[]
+
+    @@index([status])
 }
 
 model UserRole {
@@ -47,4 +55,14 @@ model UserRole {
     user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@id([userId, role])
+}
+
+model AdminUser {
+    id   String @id @default(cuid())
+    name String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    auditLogs AuditLog[]
 }

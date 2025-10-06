@@ -14,6 +14,7 @@ export const ElectionInfo = t.Object({
   name: t.String(),
   description: t.Nullable(t.String()),
   location: t.Nullable(t.String()),
+  locationMapUrl: t.Nullable(t.String()),
   type: t.Enum(ElectionType),
   mode: t.Enum(ElectionMode),
   isCancelled: t.Boolean(),
@@ -43,3 +44,11 @@ export const ElectionCandidate = t.Object({
   updatedAt: t.Date(),
 })
 export type ElectionCandidate = Static<typeof ElectionCandidate>
+
+export const ElectionEligibleVoter = t.Object({
+  id: t.String(),
+  name: t.String(),
+  phoneNumber: t.String(),
+  profileImage: t.Nullable(t.String({ format: 'uri' })),
+})
+export type ElectionEligibleVoter = Static<typeof ElectionEligibleVoter>

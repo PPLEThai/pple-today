@@ -73,10 +73,20 @@ export default {
           ios: 'Inter-Bold',
           default: ['Inter-Bold', 'sans-serif'],
         }),
+        'heading-light': platformSelect({
+          android: 'NotoSansThai_300Light',
+          ios: 'NotoSansThai-Light',
+          default: ['NotoSansThai-Light', 'sans-serif'],
+        }),
         'heading-regular': platformSelect({
           android: 'NotoSansThai_400Regular',
           ios: 'NotoSansThai-Regular',
           default: ['NotoSansThai-Regular', 'sans-serif'],
+        }),
+        'heading-medium': platformSelect({
+          android: 'NotoSansThai_500Medium',
+          ios: 'NotoSansThai-Medium',
+          default: ['NotoSansThai-Medium', 'sans-serif'],
         }),
         'heading-semibold': platformSelect({
           android: 'NotoSansThai_600SemiBold',
@@ -93,10 +103,25 @@ export default {
           ios: 'NotoSansThaiLooped-Light',
           default: ['NotoSansThaiLooped-Light', 'sans-serif'],
         }),
+        'body-regular': platformSelect({
+          android: 'NotoSansThaiLooped_400Regular',
+          ios: 'NotoSansThaiLooped-Regular',
+          default: ['NotoSansThaiLooped-Regular', 'sans-serif'],
+        }),
         'body-medium': platformSelect({
           android: 'NotoSansThaiLooped_500Medium',
           ios: 'NotoSansThaiLooped-Medium',
           default: ['NotoSansThaiLooped-Medium', 'sans-serif'],
+        }),
+        'body-semibold': platformSelect({
+          android: 'NotoSansThaiLooped_600SemiBold',
+          ios: 'NotoSansThaiLooped-SemiBold',
+          default: ['NotoSansThaiLooped-SemiBold', 'sans-serif'],
+        }),
+        'body-bold': platformSelect({
+          android: 'NotoSansThaiLooped_700Bold',
+          ios: 'NotoSansThaiLooped-Bold',
+          default: ['NotoSansThaiLooped-Bold', 'sans-serif'],
         }),
       },
     },

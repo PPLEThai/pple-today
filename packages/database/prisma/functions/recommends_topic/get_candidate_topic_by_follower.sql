@@ -22,9 +22,11 @@ BEGIN
         SELECT
           uft2."topicId" AS topic_id,
           COUNT(*) AS score
-        FROM other_user_following AS uft0
-        INNER JOIN "UserFollowsTopic" AS uft2 ON uft0."userId" = uft2."userId"
-        LEFT JOIN current_follows_topic ON uft2."topicId" = current_follows_topic."topicId"
+        FROM 
+          other_user_following AS uft0
+          INNER JOIN "UserFollowsTopic" AS uft2 ON uft0."userId" = uft2."userId"
+          INNER JOIN "Topic" t ON uft2."topicId" = t."id" AND t."status" = 'PUBLISHED'
+          LEFT JOIN current_follows_topic ON uft2."topicId" = current_follows_topic."topicId"
         WHERE current_follows_topic."topicId" IS NULL
         GROUP BY uft2."topicId"
       )
@@ -34,8 +36,6 @@ BEGIN
       one_hop_user_follows.score::NUMERIC
     FROM 
       one_hop_user_follows
-      INNER JOIN "Topic" t ON one_hop_user_follows.topic_id = t."id"
-    WHERE t."status" = 'PUBLISH'
     ORDER BY score DESC
     LIMIT 10;
 

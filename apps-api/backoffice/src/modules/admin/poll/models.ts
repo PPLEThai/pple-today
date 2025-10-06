@@ -1,6 +1,11 @@
-import { DraftPoll, PollDetails, PublishedPoll } from '@pple-today/api-common/dtos'
+import { Poll, PollDetails } from '@pple-today/api-common/dtos'
 import { PollType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
+
+export const PollIdParams = t.Object({
+  pollId: t.String({ description: 'The ID of the draft poll' }),
+})
+export type PollIdParams = Static<typeof PollIdParams>
 
 export const GetPollsQuery = t.Object({
   type: t.Optional(
@@ -19,57 +24,35 @@ export const GetPollsQuery = t.Object({
 })
 export type GetPollsQuery = Static<typeof GetPollsQuery>
 
-export const GetPollsResponse = t.Array(t.Union([PublishedPoll, DraftPoll]))
+export const GetPollsResponse = t.Array(Poll)
 export type GetPollsResponse = Static<typeof GetPollsResponse>
 
-export const PollIdParams = t.Object({
-  pollId: t.String({ description: 'The ID of the draft poll' }),
-})
+export const GetPollByIdParams = PollIdParams
+export type GetPollByIdParams = Static<typeof GetPollByIdParams>
 
-export const GetPublishedPollsResponse = t.Array(PublishedPoll)
-export type GetPublishedPollsResponse = Static<typeof GetPublishedPollsResponse>
+export const GetPollByIdResponse = t.Composite([Poll, PollDetails])
+export type GetPollByIdResponse = Static<typeof GetPollByIdResponse>
 
-export const GetDraftPollsResponse = t.Array(DraftPoll)
-export type GetDraftPollsResponse = Static<typeof GetDraftPollsResponse>
-
-export const GetPublishedPollResponse = t.Composite([PublishedPoll, PollDetails])
-export type GetPublishedPollResponse = Static<typeof GetPublishedPollResponse>
-
-export const GetDraftPollResponse = t.Composite([DraftPoll, PollDetails])
-export type GetDraftPollResponse = Static<typeof GetDraftPollResponse>
-
-export const PostDraftPollResponse = t.Object({
-  pollId: t.String({ description: 'The ID of the draft poll' }),
-})
-export type PostDraftPollResponse = Static<typeof PostDraftPollResponse>
-
-export const PutDraftPollBody = t.Object({
-  title: t.Nullable(t.String({ description: 'The title of the poll' })),
-  description: t.Nullable(t.String({ description: 'The description of the poll' })),
-  endAt: t.Nullable(t.Date({ description: 'The end date of the poll' })),
+export const PostPollBody = t.Object({
+  title: t.String({ description: 'The title of the poll' }),
+  description: t.String({ description: 'The description of the poll' }),
+  endAt: t.Date({ description: 'The end date of the poll' }),
   type: t.Enum(PollType),
 
   optionTitles: t.Array(t.String({ description: 'The title of the poll option' })),
   topicIds: t.Array(t.String({ description: 'The ID of the poll topic' })),
 })
-export type PutDraftPollBody = Static<typeof PutDraftPollBody>
+export type PostPollBody = Static<typeof PostPollBody>
 
-export const PutDraftPollResponse = t.Object({
-  message: t.String({ description: 'Success message' }),
+export const PostPollResponse = t.Object({
+  id: t.String({ description: 'The ID of the created poll' }),
 })
-export type PutDraftPollResponse = Static<typeof PutDraftPollResponse>
+export type PostPollResponse = Static<typeof PostPollResponse>
 
-export const DraftPollPublishedResponse = t.Object({
-  message: t.String({ description: 'Success message' }),
-})
-export type DraftPollPublishedResponse = Static<typeof DraftPollPublishedResponse>
+export const PutPollParams = PollIdParams
+export type PutPollParams = Static<typeof PutPollParams>
 
-export const DeleteDraftPollResponse = t.Object({
-  message: t.String({ description: 'Success message' }),
-})
-export type DeleteDraftPollResponse = Static<typeof DeleteDraftPollResponse>
-
-export const PutPublishedPollBody = t.Object({
+export const PutPollBody = t.Object({
   title: t.String({ description: 'The title of the poll' }),
   description: t.Nullable(t.String({ description: 'The description of the poll' })),
   endAt: t.Date({ description: 'The end date of the poll' }),
@@ -78,19 +61,17 @@ export const PutPublishedPollBody = t.Object({
   optionTitles: t.Array(t.String({ description: 'The title of the poll option' })),
   topicIds: t.Array(t.String({ description: 'The ID of the poll topic' })),
 })
-export type PutPublishedPollBody = Static<typeof PutPublishedPollBody>
+export type PutPollBody = Static<typeof PutPollBody>
 
-export const PutPublishedPollResponse = t.Object({
+export const PutPollResponse = t.Object({
   message: t.String({ description: 'Success message' }),
 })
-export type PutPublishedPollResponse = Static<typeof PutPublishedPollResponse>
+export type PutPollResponse = Static<typeof PutPollResponse>
 
-export const PublishedPollUnpublishedResponse = t.Object({
+export const DeletePollParams = PollIdParams
+export type DeletePollParams = Static<typeof DeletePollParams>
+
+export const DeletePollResponse = t.Object({
   message: t.String({ description: 'Success message' }),
 })
-export type PublishedPollUnpublishedResponse = Static<typeof PublishedPollUnpublishedResponse>
-
-export const DeletePublishedPollResponse = t.Object({
-  message: t.String({ description: 'Success message' }),
-})
-export type DeletePublishedPollResponse = Static<typeof DeletePublishedPollResponse>
+export type DeletePollResponse = Static<typeof DeletePollResponse>

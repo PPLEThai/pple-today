@@ -15,6 +15,7 @@ export type GetHashtagsResponse = Static<typeof GetHashtagsResponse>
 export const GetHashtagByIdParams = t.Object({
   hashtagId: t.String({ description: 'The ID of the hashtag' }),
 })
+export type GetHashtagByIdParams = Static<typeof GetHashtagByIdParams>
 
 export const GetHashtagByIdResponse = HashTag
 export type GetHashtagByIdResponse = Static<typeof GetHashtagByIdResponse>
@@ -51,6 +52,7 @@ export type UpdateHashtagResponse = Static<typeof UpdateHashtagResponse>
 export const DeleteHashtagParams = t.Object({
   hashtagId: t.String({ description: 'The ID of the hashtag' }),
 })
+export type DeleteHashtagParams = Static<typeof DeleteHashtagParams>
 
 export const DeleteHashtagResponse = t.Object({
   message: t.String({ description: 'Success message' }),

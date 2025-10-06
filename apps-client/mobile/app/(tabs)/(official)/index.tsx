@@ -102,7 +102,7 @@ const AnnouncementSection = () => {
             id={item.id}
             feedId={item.id}
             title={item.title}
-            date={item.createdAt.toString()}
+            date={item.publishedAt.toString()}
             type={item.type}
           />
         ))}

@@ -14,8 +14,7 @@ export const GetAnnouncementsResponse = t.Object({
       title: t.String({ description: 'The title of the announcement' }),
       content: t.String({ description: 'The content of the announcement' }),
       type: t.Enum(AnnouncementType, { description: 'The type of the announcement' }),
-      createdAt: t.Date({ description: 'Creation date of the announcement' }),
-      updatedAt: t.Date({ description: 'Last update date of the announcement' }),
+      publishedAt: t.Date({ description: 'Publication date of the announcement' }),
     })
   ),
 })
@@ -30,9 +29,9 @@ export const GetAnnouncementByIdResponse = t.Object({
   id: t.String(),
   title: t.String(),
   content: t.String(),
+  type: t.Enum(AnnouncementType, { description: 'The type of the announcement' }),
   attachments: t.Array(t.String({ format: 'uri', description: 'Attachment URL' })),
-  createdAt: t.Date(),
-  updatedAt: t.Date(),
   feedItemId: t.String(),
+  publishedAt: t.Date(),
 })
 export type GetAnnouncementByIdResponse = Static<typeof GetAnnouncementByIdResponse>
