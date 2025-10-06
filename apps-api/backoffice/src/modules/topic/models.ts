@@ -1,4 +1,3 @@
-import { HashTagStatus, TopicStatus } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const GetTopicRecommendationResponse = t.Array(
@@ -22,14 +21,12 @@ export const GetTopicResponse = t.Object({
   name: t.String(),
   description: t.Nullable(t.String()),
   bannerImage: t.Nullable(t.String()),
-  status: t.Enum(TopicStatus),
   createdAt: t.Date(),
   updatedAt: t.Date(),
   hashTags: t.Array(
     t.Object({
       id: t.String(),
       name: t.String(),
-      status: t.Enum(HashTagStatus),
       createdAt: t.Date(),
       updatedAt: t.Date(),
     })

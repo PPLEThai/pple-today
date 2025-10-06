@@ -3,7 +3,15 @@ import * as Crypto from 'node:crypto'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { AsyncBatcher } from '@tanstack/pacer'
 
-import { Prisma, PrismaClient } from '../../__generated__/prisma'
+import {
+  AnnouncementStatus,
+  HashTagStatus,
+  PollStatus,
+  PostStatus,
+  Prisma,
+  PrismaClient,
+  TopicStatus,
+} from '../../__generated__/prisma'
 
 const connectionString = `${process.env.DATABASE_URL}`
 
@@ -58,7 +66,7 @@ const seedHashTags = async () => {
     data.push({
       id: `hashtag-${i + 1}`,
       name: `hashtag${i + 1}`,
-      status: 'PUBLISH' as const,
+      status: HashTagStatus.PUBLISHED,
     })
   }
   await prisma.hashTag.createMany({
@@ -99,7 +107,7 @@ const seedTopics = async () => {
             },
           })),
         },
-        status: 'PUBLISH',
+        status: TopicStatus.PUBLISHED,
       },
     })
   }
@@ -166,10 +174,12 @@ const seedFeedItems = async () => {
               id: `feeditem-${i * NUMBER_OF_FEED_ITEMS_PER_USER + j + 1}`,
               authorId: `author-${((i + j) % NUMBER_OF_AUTHORS) + 1}`,
               type: 'POST',
+              publishedAt: new Date(),
               post: {
                 create: {
                   facebookPostId: Crypto.randomUUID(),
                   content: `This is feed item ${i * NUMBER_OF_FEED_ITEMS_PER_USER + j + 1} content`,
+                  status: PostStatus.PUBLISHED,
                   hashTags: {
                     create: Array.from({ length: NUMBER_OF_HASHTAGS_PER_POST }).map((_, k) => ({
                       hashTag: {
@@ -191,12 +201,14 @@ const seedFeedItems = async () => {
               id: `feeditem-${i * NUMBER_OF_FEED_ITEMS_PER_USER + j + 1}`,
               authorId: `pple-official-user`,
               type: 'POLL',
+              publishedAt: new Date(),
               poll: {
                 create: {
                   type: 'SINGLE_CHOICE',
                   title: `This is feed item ${i * NUMBER_OF_FEED_ITEMS_PER_USER + j + 1} title`,
                   description: `This is feed item ${i * NUMBER_OF_FEED_ITEMS_PER_USER + j + 1} content`,
                   endAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                  status: PollStatus.PUBLISHED,
                   topics: {
                     create: Array.from({ length: NUMBER_OF_TOPICS_PER_FEED_ITEM }).map((_, k) => ({
                       topic: {
@@ -218,11 +230,13 @@ const seedFeedItems = async () => {
               id: `feeditem-${i * NUMBER_OF_FEED_ITEMS_PER_USER + j + 1}`,
               authorId: `pple-official-user`,
               type: 'ANNOUNCEMENT',
+              publishedAt: new Date(),
               announcement: {
                 create: {
                   type: 'OFFICIAL',
                   title: `This is feed item ${i * NUMBER_OF_FEED_ITEMS_PER_USER + j + 1} title`,
                   content: `This is feed item ${i * NUMBER_OF_FEED_ITEMS_PER_USER + j + 1} content`,
+                  status: AnnouncementStatus.PUBLISHED,
                   topics: {
                     create: Array.from({ length: NUMBER_OF_TOPICS_PER_FEED_ITEM }).map((_, k) => ({
                       topic: {

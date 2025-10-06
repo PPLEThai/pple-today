@@ -2,7 +2,16 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FeedItem, FeedItemBaseContent } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { FeedItemReactionType, FeedItemType, Prisma } from '@pple-today/database/prisma'
+import {
+  AnnouncementStatus,
+  FeedItemReactionType,
+  FeedItemType,
+  HashTagStatus,
+  PollStatus,
+  PostStatus,
+  Prisma,
+  TopicStatus,
+} from '@pple-today/database/prisma'
 import { get_candidate_feed_item } from '@pple-today/database/prisma/sql'
 import dayjs from 'dayjs'
 import Elysia from 'elysia'
@@ -21,6 +30,26 @@ export class FeedRepository {
     private fileService: FileService
   ) {}
 
+  private ensureFeedItemExists = async (feedItemId: string, tx?: Prisma.TransactionClient) => {
+    const queryStm = {
+      where: {
+        id: feedItemId,
+        publishedAt: {
+          not: null,
+        },
+        OR: [
+          { post: { status: PostStatus.PUBLISHED } },
+          { poll: { status: PollStatus.PUBLISHED } },
+          {
+            announcement: { status: AnnouncementStatus.PUBLISHED },
+          },
+        ],
+      },
+    }
+    if (tx) await tx.feedItem.findUniqueOrThrow(queryStm)
+    else await this.prismaService.feedItem.findUniqueOrThrow(queryStm)
+  }
+
   public constructFeedItemInclude = (userId?: string) =>
     ({
       author: {
@@ -34,6 +63,9 @@ export class FeedRepository {
         },
       },
       announcement: {
+        where: {
+          status: AnnouncementStatus.PUBLISHED,
+        },
         include: {
           attachments: true,
         },
@@ -58,12 +90,23 @@ export class FeedRepository {
             },
           },
         },
+        where: {
+          status: PollStatus.PUBLISHED,
+        },
       },
       post: {
+        where: {
+          status: PostStatus.PUBLISHED,
+        },
         include: {
           hashTags: {
             include: {
               hashTag: true,
+            },
+            where: {
+              hashTag: {
+                status: HashTagStatus.PUBLISHED,
+              },
             },
           },
           attachments: true,
@@ -78,10 +121,10 @@ export class FeedRepository {
   ) {
     const feedItemBaseContent: FeedItemBaseContent = {
       id: rawFeedItem.id,
-      createdAt: rawFeedItem.createdAt,
       commentCount: rawFeedItem.numberOfComments,
       userReaction: rawFeedItem.reactions?.[0]?.type ?? null,
       reactions: rawFeedItem.reactionCounts,
+      publishedAt: rawFeedItem.publishedAt!,
       author: {
         id: rawFeedItem.author.id,
         name: rawFeedItem.author.name,
@@ -205,6 +248,9 @@ export class FeedRepository {
           type: {
             not: FeedItemType.ANNOUNCEMENT,
           },
+          publishedAt: {
+            not: null,
+          },
           OR: [
             {
               post: {
@@ -216,18 +262,24 @@ export class FeedRepository {
                           topicId,
                         },
                       },
+                      status: HashTagStatus.PUBLISHED,
                     },
                   },
                 },
+                status: PostStatus.PUBLISHED,
               },
             },
             {
               poll: {
                 topics: {
                   some: {
-                    topicId,
+                    topic: {
+                      id: topicId,
+                      status: TopicStatus.PUBLISHED,
+                    },
                   },
                 },
+                status: PollStatus.PUBLISHED,
               },
             },
           ],
@@ -277,14 +329,21 @@ export class FeedRepository {
           },
         ],
         where: {
+          publishedAt: {
+            not: null,
+          },
           OR: [
             {
               post: {
                 hashTags: {
                   some: {
-                    hashTagId,
+                    hashTag: {
+                      id: hashTagId,
+                      status: HashTagStatus.PUBLISHED,
+                    },
                   },
                 },
+                status: PostStatus.PUBLISHED,
               },
             },
             {
@@ -297,9 +356,11 @@ export class FeedRepository {
                           hashTagId,
                         },
                       },
+                      status: TopicStatus.PUBLISHED,
                     },
                   },
                 },
+                status: PollStatus.PUBLISHED,
               },
             },
           ],
@@ -388,7 +449,22 @@ export class FeedRepository {
       }
 
       const feedItemScore = await this.prismaService.feedItemScore.findMany({
-        where: { userId, expiresAt: { gt: new Date() } },
+        where: {
+          userId,
+          expiresAt: { gt: new Date() },
+          feedItem: {
+            publishedAt: {
+              not: null,
+            },
+            OR: [
+              { post: { status: PostStatus.PUBLISHED } },
+              { poll: { status: PollStatus.PUBLISHED } },
+              {
+                announcement: { status: AnnouncementStatus.PUBLISHED },
+              },
+            ],
+          },
+        },
         select: {
           feedItem: {
             include: this.constructFeedItemInclude(userId),
@@ -459,9 +535,16 @@ export class FeedRepository {
         cursor: query.cursor ? { id: query.cursor } : undefined,
         where: {
           authorId: userId,
+          publishedAt: {
+            not: null,
+          },
           type: {
             not: FeedItemType.ANNOUNCEMENT,
           },
+          OR: [
+            { post: { status: PostStatus.PUBLISHED } },
+            { poll: { status: PollStatus.PUBLISHED } },
+          ],
         },
         include: this.constructFeedItemInclude(userId),
       })
@@ -482,7 +565,19 @@ export class FeedRepository {
   async getFeedItemById(feedItemId: string, userId?: string) {
     const rawFeedItem = await fromRepositoryPromise(
       this.prismaService.feedItem.findUniqueOrThrow({
-        where: { id: feedItemId },
+        where: {
+          id: feedItemId,
+          publishedAt: {
+            not: null,
+          },
+          OR: [
+            { post: { status: PostStatus.PUBLISHED } },
+            { poll: { status: PollStatus.PUBLISHED } },
+            {
+              announcement: { status: AnnouncementStatus.PUBLISHED },
+            },
+          ],
+        },
         include: this.constructFeedItemInclude(userId),
       })
     )
@@ -572,8 +667,10 @@ export class FeedRepository {
     feedItemId: string
     userId: string
   }) {
-    return await fromRepositoryPromise(
-      this.prismaService.feedItemReaction.findUnique({
+    return await fromRepositoryPromise(async () => {
+      await this.ensureFeedItemExists(feedItemId)
+
+      return await this.prismaService.feedItemReaction.findUnique({
         where: {
           userId_feedItemId: {
             userId,
@@ -584,7 +681,7 @@ export class FeedRepository {
           type: true,
         },
       })
-    )
+    })
   }
 
   async upsertFeedItemReaction({
@@ -600,6 +697,8 @@ export class FeedRepository {
   }) {
     return await fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
+        await this.ensureFeedItemExists(feedItemId, tx)
+
         const existingFeedItemReaction = await tx.feedItemReaction.findUnique({
           where: {
             userId_feedItemId: {
@@ -694,6 +793,8 @@ export class FeedRepository {
   async deleteFeedItemReaction({ feedItemId, userId }: { feedItemId: string; userId: string }) {
     return await fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
+        await this.ensureFeedItemExists(feedItemId, tx)
+
         const reaction = await tx.feedItemReaction.delete({
           where: {
             userId_feedItemId: {
@@ -735,6 +836,18 @@ export class FeedRepository {
         ],
         where: {
           feedItemId,
+          feedItem: {
+            publishedAt: {
+              not: null,
+            },
+            OR: [
+              { post: { status: PostStatus.PUBLISHED } },
+              { poll: { status: PollStatus.PUBLISHED } },
+              {
+                announcement: { status: AnnouncementStatus.PUBLISHED },
+              },
+            ],
+          },
           OR: [{ isPrivate: false }, { userId: query.userId }],
         },
         select: {
@@ -772,35 +885,39 @@ export class FeedRepository {
     isPrivate: boolean
   }) {
     const result = await fromRepositoryPromise(
-      this.prismaService.$transaction([
-        this.prismaService.feedItemComment.create({
-          data: {
-            feedItemId,
-            userId,
-            content,
-            isPrivate,
-          },
-          select: {
-            id: true,
-            content: true,
-            isPrivate: true,
-            createdAt: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-                profileImagePath: true,
+      this.prismaService.$transaction(async (tx) => {
+        await this.ensureFeedItemExists(feedItemId, tx)
+
+        return await Promise.all([
+          tx.feedItemComment.create({
+            data: {
+              feedItemId,
+              userId,
+              content,
+              isPrivate,
+            },
+            select: {
+              id: true,
+              content: true,
+              isPrivate: true,
+              createdAt: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  profileImagePath: true,
+                },
               },
             },
-          },
-        }),
-        this.prismaService.feedItem.update({
-          where: { id: feedItemId },
-          data: {
-            numberOfComments: { increment: 1 },
-          },
-        }),
-      ])
+          }),
+          tx.feedItem.update({
+            where: { id: feedItemId },
+            data: {
+              numberOfComments: { increment: 1 },
+            },
+          }),
+        ])
+      })
     )
 
     if (result.isErr()) {
@@ -822,15 +939,19 @@ export class FeedRepository {
     content: string
   }) {
     return await fromRepositoryPromise(
-      this.prismaService.feedItemComment.updateMany({
-        where: {
-          id: commentId,
-          feedItemId,
-          userId,
-        },
-        data: {
-          content,
-        },
+      this.prismaService.$transaction(async (tx) => {
+        await this.ensureFeedItemExists(feedItemId, tx)
+
+        return await tx.feedItemComment.update({
+          where: {
+            id: commentId,
+            feedItemId,
+            userId,
+          },
+          data: {
+            content,
+          },
+        })
       })
     )
   }
@@ -845,12 +966,18 @@ export class FeedRepository {
     feedItemId: string
   }) {
     return await fromRepositoryPromise(
-      this.prismaService.feedItemComment.deleteMany({
-        where: {
-          id: commentId,
-          userId,
-          feedItemId,
-        },
+      this.prismaService.$transaction(async (tx) => {
+        await this.ensureFeedItemExists(feedItemId, tx)
+
+        return await this.prismaService.feedItemComment.delete({
+          where: {
+            id: commentId,
+            userId,
+            feedItem: {
+              id: feedItemId,
+            },
+          },
+        })
       })
     )
   }
@@ -858,7 +985,7 @@ export class FeedRepository {
   async checkTopicExists(topicId: string) {
     return await fromRepositoryPromise(
       this.prismaService.topic.findUniqueOrThrow({
-        where: { id: topicId },
+        where: { id: topicId, status: TopicStatus.PUBLISHED },
       })
     )
   }
@@ -866,7 +993,7 @@ export class FeedRepository {
   async checkHashTagExists(hashTagId: string) {
     return await fromRepositoryPromise(
       this.prismaService.hashTag.findUniqueOrThrow({
-        where: { id: hashTagId },
+        where: { id: hashTagId, status: HashTagStatus.PUBLISHED },
       })
     )
   }
