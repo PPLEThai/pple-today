@@ -61,6 +61,7 @@ import {
 } from '@pple-today/web-ui/form'
 import { Input } from '@pple-today/web-ui/input'
 import { Label } from '@pple-today/web-ui/label'
+import { MultiSelect } from '@pple-today/web-ui/multi-select'
 import { Popover, PopoverContent, PopoverTrigger } from '@pple-today/web-ui/popover'
 import {
   Select,
@@ -909,6 +910,23 @@ const TableSection = () => {
   )
 }
 
+const MultiSelectSection = () => {
+  const options = [
+    { value: 'react', label: 'React' },
+    { value: 'vue', label: 'Vue.js' },
+    { value: 'angular', label: 'Angular' },
+  ]
+
+  return (
+    <div className="flex flex-col space-y-2">
+      <Typography className="text-left" variant="h2">
+        Multi-Select
+      </Typography>
+      <MultiSelect options={options} onValueChange={() => {}} />
+    </div>
+  )
+}
+
 const PlaygroundPage = () => {
   return (
     <div className="p-5 space-y-6">
@@ -953,6 +971,8 @@ const PlaygroundPage = () => {
       <SidebarSection />
       <hr className="border border-secondary-100" />
       <TableSection />
+      <hr className="border border-secondary-100" />
+      <MultiSelectSection />
     </div>
   )
 }
