@@ -1,11 +1,14 @@
 'use client'
 
+import { ReactNode } from 'react'
+
 import { ColumnDef, flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Search } from 'lucide-react'
 
 import { Button } from './button'
 import { Input } from './input'
 import { Label } from './label'
+import { MultiSelect } from './multi-select'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table'
 
@@ -22,6 +25,8 @@ interface EnumFilter {
   key: string
   label: string
   options: { value: string; label: string }[]
+  state: string[]
+  setState: React.Dispatch<React.SetStateAction<string[]>>
 }
 
 interface DataTableProps<TData> {
@@ -30,7 +35,8 @@ interface DataTableProps<TData> {
   }[keyof TData][]
   data: TData[]
   count?: number
-  isLoading?: boolean
+  isQuerying?: boolean
+  isMutating?: boolean
 
   queryLimit?: number
   setQueryLimit?: React.Dispatch<React.SetStateAction<number>>
@@ -38,13 +44,15 @@ interface DataTableProps<TData> {
   setQueryPage?: React.Dispatch<React.SetStateAction<number>>
 
   filter?: (TextFilter | EnumFilter)[]
+  filterExtension?: ReactNode
 }
 
 export function DataTable<TData>({
   columns,
   data,
   count,
-  isLoading,
+  isQuerying,
+  isMutating,
 
   queryLimit,
   setQueryLimit,
@@ -52,6 +60,7 @@ export function DataTable<TData>({
   setQueryPage,
 
   filter = [],
+  filterExtension,
 }: DataTableProps<TData>) {
   const hasPageLimiter = queryLimit !== undefined && setQueryLimit !== undefined
   const hasPaginator = queryPage !== undefined && setQueryPage !== undefined
@@ -65,18 +74,30 @@ export function DataTable<TData>({
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
     manualFiltering: true,
+    defaultColumn: {
+      size: -1,
+      minSize: 32,
+    },
   })
 
   return (
     <>
-      {filter &&
-        filter.length > 0 &&
-        filter.map((item) => {
-          /* TODO - Impl enum filter */
-          if (item.type === 'enum') return null
-          return (
-            <div key={item.key} className="flex items-center gap-3">
-              <div className="relative">
+      {filter && filter.length > 0 && (
+        <div className="flex items-center gap-3">
+          {filter.map((item) => {
+            if (item.type === 'enum')
+              return (
+                <div key={item.key} className="relative max-w-96">
+                  <MultiSelect
+                    options={item.options}
+                    defaultValue={item.state}
+                    onValueChange={item.setState}
+                    placeholder={item.label}
+                  />
+                </div>
+              )
+            return (
+              <div key={item.key} className="relative">
                 <Label className="sr-only" htmlFor="search">
                   {item.label}
                 </Label>
@@ -89,9 +110,11 @@ export function DataTable<TData>({
                 />
                 <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-base-text-high select-none" />
               </div>
-            </div>
-          )
-        })}
+            )
+          })}
+          {filterExtension && <div className="ml-auto">{filterExtension}</div>}
+        </div>
+      )}
       <div className="w-full">
         <div className="overflow-hidden rounded-lg border">
           <Table>
@@ -99,8 +122,12 @@ export function DataTable<TData>({
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id} className="bg-base-bg-light">
                   {headerGroup.headers.map((header) => {
+                    const headerSize = header.getSize()
                     return (
-                      <TableHead key={header.id}>
+                      <TableHead
+                        key={header.id}
+                        style={{ width: headerSize <= 32 ? undefined : `${headerSize}px` }}
+                      >
                         {header.isPlaceholder
                           ? null
                           : flexRender(header.column.columnDef.header, header.getContext())}
@@ -111,7 +138,7 @@ export function DataTable<TData>({
               ))}
             </TableHeader>
             <TableBody>
-              {isLoading === true ? (
+              {isQuerying === true ? (
                 <TableRow>
                   <TableCell colSpan={columns.length} className="text-center h-[168px]">
                     Loading...
@@ -137,8 +164,18 @@ export function DataTable<TData>({
             </TableBody>
           </Table>
         </div>
-        {(hasPageLimiter || hasPaginator) && (
-          <div className="flex items-center justify-end mt-4">
+        <div className="flex items-center justify-between mt-4">
+          <div className="text-base-text-medium flex-1 min-w-0 text-sm truncate font-light">
+            <span>
+              {isQuerying
+                ? 'Querying Data...'
+                : count !== undefined
+                  ? `Showing ${data.length} of ${count} records`
+                  : `Showing ${data.length} records`}{' '}
+            </span>
+            {isMutating && <span>(Saving changes...)</span>}
+          </div>
+          {(hasPageLimiter || hasPaginator) && (
             <div className="flex items-center space-x-6 lg:space-x-8">
               {hasPageLimiter && (
                 <div className="flex items-center space-x-2">
@@ -212,8 +249,8 @@ export function DataTable<TData>({
                 </>
               )}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </>
   )
