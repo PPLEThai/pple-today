@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Pressable, PressableProps, View } from 'react-native'
+import { Pressable, PressableProps, View, ViewProps } from 'react-native'
 import { createQuery } from 'react-query-kit'
 
 import { QUERY_KEY } from '@pple-today/api-client'
@@ -51,9 +51,7 @@ export function ElectionCard({ election, className, ...props }: ElectionCardProp
           className="absolute -right-10 top-0 text-base-primary-default opacity-40"
         />
         <View className="flex flex-row justify-between w-full">
-          <Badge variant="secondary">
-            <Text>{getElectionTypeLabel(election.type)}</Text>
-          </Badge>
+          <ElectionTypeBadge type={election.type} />
           <ElectionStatusBadge status={election.status} />
         </View>
         <H3 className="text-base-text-invert font-heading-bold text-xl line-clamp-2 self-start">
@@ -66,7 +64,14 @@ export function ElectionCard({ election, className, ...props }: ElectionCardProp
   )
 }
 
-function getElectionTypeLabel(type: ElectionWithCurrentStatus['type']) {
+export function ElectionTypeBadge(props: { type: ElectionWithCurrentStatus['type'] }) {
+  return (
+    <Badge variant="secondary">
+      <Text>{getElectionTypeLabel(props.type)}</Text>
+    </Badge>
+  )
+}
+export function getElectionTypeLabel(type: ElectionWithCurrentStatus['type']) {
   switch (type) {
     case 'ONLINE':
       return 'เลือกตั้งออนไลน์'
@@ -232,7 +237,7 @@ function ElectionTimeLeft(props: ElectionCardProps) {
     </View>
   )
 }
-function CountdownTimer(props: { targetTime: Date }) {
+export function CountdownTimer(props: { targetTime: Date }) {
   const [secondsLeft, setSecondsLeft] = useState(0)
   useEffect(() => {
     const targetTime = dayjs(props.targetTime)
@@ -370,7 +375,7 @@ function ElectionCardFooter(props: ElectionCardProps) {
     case 'RESULT_ANNOUNCE':
       return (
         <View className="flex flex-row pt-2 gap-2.5">
-          <Link href={`/election/${props.election.id}`} asChild>
+          <Link href={`./election/${props.election.id}`} asChild>
             <Button className="w-full" size="sm">
               <Text>ดูผลการเลือกตั้ง</Text>
               <Icon icon={ArrowRightIcon} size={16} />
@@ -389,7 +394,7 @@ function ElectionPercentageActions(props: ElectionCardProps) {
       <Text className="text-sm text-base-text-invert font-heading-regular">
         ใช้สิทธิ์แล้ว: {Math.floor(props.election.votePercentage)}%
       </Text>
-      <Link href={`/election/${props.election.id}`} asChild>
+      <Link href={`./election/${props.election.id}`} asChild>
         <Button size="sm" className="flex-1">
           <Text>{props.election.isVoted ? 'ลงคะแนนใหม่' : 'ไปเลือกตั้ง'}</Text>
           <Icon icon={ArrowRightIcon} size={16} />
@@ -407,7 +412,7 @@ const useElectionNotificationQuery = createQuery({
   enabled: false,
   initialData: false,
 })
-export function useElectionNotificationState(electionId: string, initialData: boolean) {
+function useElectionNotificationState(electionId: string, initialData: boolean) {
   const electionNotificationQuery = useElectionNotificationQuery({
     variables: { electionId },
     initialData: initialData,
@@ -433,10 +438,127 @@ interface ElectionNotificationProps {
     setIsEnabled: (value: boolean) => void
   }) => React.ReactNode
 }
-function ElectionNotification(props: ElectionNotificationProps) {
+export function ElectionNotification(props: ElectionNotificationProps) {
   const [isEnabled, setIsEnabled] = useElectionNotificationState(
     props.electionId,
     props.initialData ?? false
   )
   return props.children({ isEnabled, setIsEnabled })
+}
+
+interface ElectionDetailCardProps extends ViewProps {
+  election: ElectionWithCurrentStatus
+}
+export function ElectionDetailCard({ election, className, ...props }: ElectionDetailCardProps) {
+  return (
+    <View
+      className={cn(
+        'w-full bg-base-secondary-default rounded-2xl flex flex-col justify-between gap-2 p-4 overflow-hidden',
+        className
+      )}
+      {...props}
+    >
+      <View className="flex flex-col gap-2">
+        <Icon
+          icon={PPLEIcon}
+          width={239}
+          height={239}
+          className="absolute -right-10 top-0 text-base-primary-default opacity-40"
+        />
+        <View className="flex flex-row justify-between w-full">
+          <ElectionTypeBadge type={election.type} />
+          <ElectionStatusBadge status={election.status} />
+        </View>
+        <ElectionDetailCardDetail election={election} />
+      </View>
+    </View>
+  )
+}
+
+function ElectionDetailCardDetail(props: ElectionDetailCardProps) {
+  switch (props.election.status) {
+    case 'NOT_OPENED_VOTE': {
+      if (props.election.type === 'ONLINE') {
+        return <ElectionOpenVotingDate election={props.election} />
+      }
+      if (props.election.type === 'ONSITE') {
+        return <ElectionOpenVotingDate election={props.election} />
+      }
+      if (props.election.type === 'HYBRID') {
+        if (!props.election.isRegistered) {
+          return (
+            <>
+              <ElectionOpenVotingDate election={props.election} />
+              <View className="flex flex-row gap-1 items-center">
+                <Icon icon={ClockIcon} size={16} className="text-base-text-invert" />
+                <Text className="text-sm text-base-text-invert font-heading-regular">
+                  เปิดลงทะเบียนถึง:{' '}
+                  <Text className="text-sm text-base-primary-default font-body-medium">
+                    {dayjs(props.election.openRegister).format('D MMM BBBB เวลา HH:mm')}
+                  </Text>
+                </Text>
+              </View>
+            </>
+          )
+        }
+        return (
+          <>
+            <ElectionOpenVotingDate election={props.election} />
+            <Badge variant="outline" className="self-stretch">
+              <Text className="text-base-text-invert">
+                หมดเวลาลงทะเบียนแล้ว คุณมีสิทธิ์เลือกตั้งในสถานที่
+              </Text>
+            </Badge>
+          </>
+        )
+      }
+      break
+    }
+    case 'OPEN_VOTE':
+      if (props.election.type === 'ONLINE') {
+        return (
+          <>
+            <ElectionTimeLeft election={props.election} />
+            <Progress value={props.election.votePercentage} />
+            <ElectionPercentage election={props.election} />
+          </>
+        )
+      }
+      if (props.election.type === 'ONSITE') {
+        return <ElectionTimeLeft election={props.election} />
+      }
+      if (props.election.type === 'HYBRID') {
+        return (
+          <>
+            <ElectionTimeLeft election={props.election} />
+            <Progress value={props.election.votePercentage} />
+            <ElectionPercentage election={props.election} />
+          </>
+        )
+      }
+      break
+    case 'CLOSED_VOTE':
+      return (
+        <View className="flex flex-row gap-1 items-center">
+          <Icon icon={ClockIcon} size={16} className="text-base-text-invert" />
+          <Text className="text-sm text-base-text-invert font-heading-regular">
+            รอประกาศผลเลือกตั้ง
+          </Text>
+        </View>
+      )
+    case 'RESULT_ANNOUNCE':
+      return null
+    default:
+      exhaustiveGuard(props.election.status)
+  }
+}
+
+function ElectionPercentage(props: ElectionDetailCardProps) {
+  return (
+    <View className="flex flex-row pt-2 gap-2.5">
+      <Text className="text-sm text-base-text-invert font-heading-regular">
+        ใช้สิทธิ์แล้ว: {Math.floor(props.election.votePercentage)}%
+      </Text>
+    </View>
+  )
 }

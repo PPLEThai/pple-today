@@ -56,7 +56,7 @@ import { useFacebookPagesQuery } from '@app/libs/facebook'
 
 import { AuthPlayground } from './auth-playground'
 import { AvatarPPLEFallback } from './avatar-pple-fallback'
-import { ElectionCard, ElectionStatusBadge } from './election/election-card'
+import { ElectionCard, ElectionDetailCard, ElectionStatusBadge } from './election/election-card'
 import { MoreOrLess } from './more-or-less'
 
 const AUTH_ACCESS_TOKEN_STORAGE_KEY = 'authAccessToken'
@@ -1005,6 +1005,16 @@ function ElectionCardExample() {
           {elections.map((election, index) => (
             <SlideItem key={index} className="flex flex-row items-stretch">
               <ElectionCard election={election} />
+            </SlideItem>
+          ))}
+        </SlideScrollView>
+        <SlideIndicators />
+      </Slide>
+      <Slide count={elections.length} itemWidth="container" gap={8}>
+        <SlideScrollView>
+          {elections.map((election, index) => (
+            <SlideItem key={index} className="flex flex-row items-stretch">
+              <ElectionDetailCard election={election} />
             </SlideItem>
           ))}
         </SlideScrollView>
