@@ -58,11 +58,14 @@ export const PollsController = new Elysia({
       return status(201, { message: 'Vote created successfully' })
     },
     {
-      requiredLocalUser: true,
+      requiredLocalUserPrecondition: {
+        isActive: true,
+      },
       params: CreatePollVoteParams,
       response: {
         201: CreatePollVoteResponse,
         ...createErrorSchema(
+          InternalErrorCode.FORBIDDEN,
           InternalErrorCode.POLL_NOT_FOUND,
           InternalErrorCode.POLL_OPTION_NOT_FOUND,
           InternalErrorCode.POLL_ALREADY_ENDED,
@@ -88,12 +91,16 @@ export const PollsController = new Elysia({
       return status(200, { message: 'Vote deleted successfully' })
     },
     {
-      requiredLocalUser: true,
+      requiredLocalUserPrecondition: {
+        isActive: true,
+      },
       params: DeletePollVoteParams,
       response: {
         200: DeletePollVoteResponse,
         ...createErrorSchema(
+          InternalErrorCode.FORBIDDEN,
           InternalErrorCode.POLL_NOT_FOUND,
+          InternalErrorCode.POLL_VOTE_NOT_FOUND,
           InternalErrorCode.POLL_ALREADY_ENDED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),

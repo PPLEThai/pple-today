@@ -13,6 +13,7 @@ import { PrismaService } from '@pple-today/api-common/services'
 import { FileService } from '@pple-today/api-common/services'
 import { err } from '@pple-today/api-common/utils'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { FacebookPageLinkedStatus } from '@pple-today/database/prisma'
 import { TAnySchema } from '@sinclair/typebox'
 import { Check } from '@sinclair/typebox/value'
 import { createHmac } from 'crypto'
@@ -476,6 +477,7 @@ export class FacebookRepository {
           id: facebookPageId,
           name: pageName,
           profilePicturePath,
+          linkedStatus: FacebookPageLinkedStatus.PENDING,
           pageAccessToken: facebookPageAccessToken,
           manager: {
             connect: { id: userId },
@@ -485,6 +487,7 @@ export class FacebookRepository {
         update: {
           name: pageName,
           profilePicturePath,
+          linkedStatus: FacebookPageLinkedStatus.PENDING,
           pageAccessToken: facebookPageAccessToken,
           manager: {
             connect: { id: userId },

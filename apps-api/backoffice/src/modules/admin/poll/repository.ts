@@ -1,13 +1,44 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { PrismaService } from '@pple-today/api-common/services'
-import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
+import { ok } from 'neverthrow'
 
 import { PostPollBody, PutPollBody } from './models'
 
 import { PrismaServicePlugin } from '../../../plugins/prisma'
 
 export class AdminPollRepository {
+  private OFFICIAL_USER_ID: string | null = null
+
   constructor(private prismaService: PrismaService) {}
+
+  private async lookupOfficialUserId() {
+    if (this.OFFICIAL_USER_ID) {
+      return ok(this.OFFICIAL_USER_ID)
+    }
+
+    const findOfficialResult = await fromRepositoryPromise(
+      this.prismaService.user.findFirst({
+        where: { roles: { every: { role: 'official' } } },
+        select: { id: true },
+      })
+    )
+
+    if (findOfficialResult.isErr()) {
+      return err(findOfficialResult.error)
+    }
+
+    if (!findOfficialResult.value) {
+      return err({
+        message: 'Official user not found',
+        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+      })
+    }
+
+    this.OFFICIAL_USER_ID = findOfficialResult.value.id
+    return ok(this.OFFICIAL_USER_ID)
+  }
 
   async getPolls(
     query: { limit: number; page: number } = {
@@ -122,13 +153,17 @@ export class AdminPollRepository {
   }
 
   async createPoll(data: PostPollBody) {
+    const officialUserId = await this.lookupOfficialUserId()
+
+    if (officialUserId.isErr()) return err(officialUserId.error)
+
     return await fromRepositoryPromise(async () =>
       this.prismaService.feedItem.create({
         data: {
           type: 'POLL',
           author: {
             connect: {
-              id: 'pple-official-user',
+              id: officialUserId.value,
             },
           },
           poll: {

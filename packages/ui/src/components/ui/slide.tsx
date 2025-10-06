@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { NativeScrollEvent, ScrollView, View } from 'react-native'
+import { Dimensions, NativeScrollEvent, ScrollView, View } from 'react-native'
 import Animated, {
   interpolate,
   interpolateColor,
@@ -51,7 +51,7 @@ export function Slide({
   isLoading?: boolean
 }) {
   const [currentPage, setCurrentPage] = React.useState(0)
-  const [scrollViewWidth, setScrollViewWidth] = React.useState(0)
+  const [scrollViewWidth, setScrollViewWidth] = React.useState(Dimensions.get('window').width)
   const scroll = useSharedValue(0)
   const itemWidthValue =
     itemWidth === 'container' ? scrollViewWidth - paddingHorizontal * 2 : itemWidth
