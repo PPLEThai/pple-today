@@ -11,7 +11,6 @@ import {
   PostStatus,
   Prisma,
   TopicStatus,
-  UserStatus,
 } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { Ok, ok } from 'neverthrow'
@@ -739,9 +738,6 @@ export class FeedRepository {
             id: commentId,
             feedItemId,
             userId,
-            user: {
-              status: UserStatus.ACTIVE,
-            },
           },
           data: {
             content,
@@ -770,9 +766,6 @@ export class FeedRepository {
             userId,
             feedItem: {
               id: feedItemId,
-            },
-            user: {
-              status: UserStatus.ACTIVE,
             },
           },
         })

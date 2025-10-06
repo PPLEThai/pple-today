@@ -1,6 +1,5 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
-import { UserStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import {
@@ -222,16 +221,6 @@ export const FeedController = new Elysia({
   .put(
     '/:id/reaction',
     async ({ params, body, user, status, feedService }) => {
-      if (user.status !== UserStatus.ACTIVE) {
-        return mapErrorCodeToResponse(
-          {
-            code: InternalErrorCode.FORBIDDEN,
-            message: 'You are not allowed to perform this action',
-          },
-          status
-        )
-      }
-
       const result = await feedService.upsertFeedReaction(params.id, user.id, body)
 
       if (result.isErr()) {
@@ -264,16 +253,6 @@ export const FeedController = new Elysia({
   .delete(
     '/:id/reaction',
     async ({ params, status, user, feedService }) => {
-      if (user.status !== UserStatus.ACTIVE) {
-        return mapErrorCodeToResponse(
-          {
-            code: InternalErrorCode.FORBIDDEN,
-            message: 'You are not allowed to perform this action',
-          },
-          status
-        )
-      }
-
       const result = await feedService.deleteFeedReaction(params.id, user.id)
 
       if (result.isErr()) {

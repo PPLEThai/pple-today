@@ -1,6 +1,6 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { FeedItemType, PollStatus, Prisma, UserStatus } from '@pple-today/database/prisma'
+import { FeedItemType, PollStatus, Prisma } from '@pple-today/database/prisma'
 import { Elysia } from 'elysia'
 
 import { PrismaServicePlugin } from '../../plugins/prisma'
@@ -209,7 +209,6 @@ export class PollsRepository {
               user: {
                 connect: {
                   id: userId,
-                  status: UserStatus.ACTIVE,
                 },
               },
             },
@@ -246,9 +245,6 @@ export class PollsRepository {
               userId_optionId: {
                 userId,
                 optionId,
-              },
-              user: {
-                status: UserStatus.ACTIVE,
               },
             },
           },

@@ -1,6 +1,7 @@
 import { PrismaPg } from '@prisma/adapter-pg'
 
 import {
+  AnnouncementStatus,
   AnnouncementType,
   BannerNavigationType,
   BannerStatusType,
@@ -270,7 +271,6 @@ const seedPolls = async () => {
             type: PollType.SINGLE_CHOICE,
             status: PollStatus.PUBLISHED,
             endAt: new Date(Date.now() + (i - 10) * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000),
-
             topics: {
               create: [
                 { topic: { connect: { id: 'topic-1' } } },
@@ -296,6 +296,7 @@ const seedPolls = async () => {
           endAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
           title: 'Draft Poll 1',
           description: 'This is a draft poll.',
+          status: PollStatus.DRAFT,
           options: {
             create: [
               { id: 'draft-option-1', title: 'Option 1' },
@@ -335,6 +336,7 @@ const seedAnnouncements = async () => {
           title: 'Welcome to PPLE Today',
           content: 'This is the first announcement on PPLE Today.',
           type: AnnouncementType.OFFICIAL,
+          status: AnnouncementStatus.PUBLISHED,
           attachments: {
             create: [
               {
@@ -364,6 +366,7 @@ const seedAnnouncements = async () => {
           title: 'Welcome to PPLE Today',
           content: 'This is the second announcement on PPLE Today.',
           type: AnnouncementType.OFFICIAL,
+          status: AnnouncementStatus.PUBLISHED,
           attachments: {
             create: [
               {
@@ -393,6 +396,7 @@ const seedAnnouncements = async () => {
           title: 'Welcome to PPLE Today',
           content: 'This is the third announcement on PPLE Today.',
           type: AnnouncementType.OFFICIAL,
+          status: AnnouncementStatus.PUBLISHED,
           attachments: {
             create: [
               {
