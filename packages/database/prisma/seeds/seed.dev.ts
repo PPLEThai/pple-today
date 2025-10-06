@@ -253,6 +253,7 @@ const seedPolls = async () => {
         author: {
           connect: { id: OFFICIAL_USER_ID },
         },
+        publishedAt: new Date(),
         type: FeedItemType.POLL,
         poll: {
           create: {
@@ -269,6 +270,7 @@ const seedPolls = async () => {
             type: PollType.SINGLE_CHOICE,
             status: PollStatus.PUBLISHED,
             endAt: new Date(Date.now() + (i - 10) * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000),
+
             topics: {
               create: [
                 { topic: { connect: { id: 'topic-1' } } },
@@ -327,6 +329,7 @@ const seedAnnouncements = async () => {
       author: {
         connect: { id: OFFICIAL_USER_ID },
       },
+      publishedAt: new Date(),
       announcement: {
         create: {
           title: 'Welcome to PPLE Today',
@@ -355,6 +358,7 @@ const seedAnnouncements = async () => {
       author: {
         connect: { id: OFFICIAL_USER_ID },
       },
+      publishedAt: new Date(),
       announcement: {
         create: {
           title: 'Welcome to PPLE Today',
@@ -383,6 +387,7 @@ const seedAnnouncements = async () => {
       author: {
         connect: { id: OFFICIAL_USER_ID },
       },
+      publishedAt: new Date(),
       announcement: {
         create: {
           title: 'Welcome to PPLE Today',

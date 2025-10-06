@@ -143,6 +143,7 @@ const seedFeedItems = async () => {
               id: `feeditem-${i * NUMBER_OF_FEED_ITEMS_PER_USER + j + 1}`,
               authorId: `author-${((i + j) % NUMBER_OF_AUTHORS) + 1}`,
               type: 'POST',
+              publishedAt: new Date(),
               post: {
                 create: {
                   facebookPostId: Crypto.randomUUID(),
@@ -168,6 +169,7 @@ const seedFeedItems = async () => {
               id: `feeditem-${i * NUMBER_OF_FEED_ITEMS_PER_USER + j + 1}`,
               authorId: `pple-official-user`,
               type: 'POLL',
+              publishedAt: new Date(),
               poll: {
                 create: {
                   type: 'SINGLE_CHOICE',
@@ -195,6 +197,7 @@ const seedFeedItems = async () => {
               id: `feeditem-${i * NUMBER_OF_FEED_ITEMS_PER_USER + j + 1}`,
               authorId: `pple-official-user`,
               type: 'ANNOUNCEMENT',
+              publishedAt: new Date(),
               announcement: {
                 create: {
                   type: 'OFFICIAL',

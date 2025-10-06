@@ -40,7 +40,7 @@ export class PollsService {
             province: item.author.district ?? '',
           },
           publishedAt: item.publishedAt!,
-          userReaction: item.reactions?.[0]?.type,
+          userReaction: item.reactions?.[0]?.type ?? null,
           commentCount: item.numberOfComments,
           reactions: item.reactionCounts.map((reaction) => ({
             type: reaction.type,

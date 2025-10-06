@@ -21,6 +21,7 @@ export class AnnouncementRepository {
       this.prismaService.announcement.findMany({
         where: {
           status: AnnouncementStatus.PUBLISHED,
+          feedItem: { publishedAt: { not: null } },
         },
         select: {
           feedItemId: true,
@@ -50,7 +51,11 @@ export class AnnouncementRepository {
   async getAnnouncementById(id: string) {
     return await fromRepositoryPromise(
       this.prismaService.announcement.findUnique({
-        where: { feedItemId: id, status: AnnouncementStatus.PUBLISHED },
+        where: {
+          feedItemId: id,
+          status: AnnouncementStatus.PUBLISHED,
+          feedItem: { publishedAt: { not: null } },
+        },
         include: {
           attachments: true,
           feedItem: {

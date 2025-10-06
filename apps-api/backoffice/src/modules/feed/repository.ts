@@ -11,6 +11,7 @@ import {
   PostStatus,
   Prisma,
   TopicStatus,
+  UserStatus,
 } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { Ok, ok } from 'neverthrow'
@@ -26,6 +27,26 @@ export class FeedRepository {
     private prismaService: PrismaService,
     private fileService: FileService
   ) {}
+
+  private ensureFeedItemExists = async (feedItemId: string, tx?: Prisma.TransactionClient) => {
+    const queryStm = {
+      where: {
+        id: feedItemId,
+        publishedAt: {
+          not: null,
+        },
+        OR: [
+          { post: { status: PostStatus.PUBLISHED } },
+          { poll: { status: PollStatus.PUBLISHED } },
+          {
+            announcement: { status: AnnouncementStatus.PUBLISHED },
+          },
+        ],
+      },
+    }
+    if (tx) await tx.feedItem.findUniqueOrThrow(queryStm)
+    else await this.prismaService.feedItem.findUniqueOrThrow(queryStm)
+  }
 
   public constructFeedItemInclude = (userId?: string) =>
     ({
@@ -213,6 +234,9 @@ export class FeedRepository {
           createdAt: 'desc',
         },
         where: {
+          publishedAt: {
+            not: null,
+          },
           OR: [
             {
               post: {
@@ -282,6 +306,9 @@ export class FeedRepository {
           createdAt: 'desc',
         },
         where: {
+          publishedAt: {
+            not: null,
+          },
           OR: [
             {
               post: {
@@ -342,6 +369,9 @@ export class FeedRepository {
         take: limit,
         include: this.constructFeedItemInclude(userId),
         where: {
+          publishedAt: {
+            not: null,
+          },
           OR: [
             { post: { status: PostStatus.PUBLISHED } },
             { poll: { status: PollStatus.PUBLISHED } },
@@ -367,13 +397,8 @@ export class FeedRepository {
 
   async listFeedItemsByUserId(userId: string | undefined, query: { page: number; limit: number }) {
     const skip = Math.max((query.page - 1) * query.limit, 0)
-    const rawFeedItems = await fromRepositoryPromise(async () => {
-      await this.prismaService.user.findUniqueOrThrow({
-        where: { id: userId },
-        select: { id: true },
-      })
-
-      return await this.prismaService.feedItem.findMany({
+    const rawFeedItems = await fromRepositoryPromise(
+      this.prismaService.feedItem.findMany({
         orderBy: {
           createdAt: 'desc',
         },
@@ -381,13 +406,20 @@ export class FeedRepository {
         take: query.limit,
         where: {
           authorId: userId,
+          publishedAt: {
+            not: null,
+          },
           type: {
             not: FeedItemType.ANNOUNCEMENT,
           },
+          OR: [
+            { post: { status: PostStatus.PUBLISHED } },
+            { poll: { status: PollStatus.PUBLISHED } },
+          ],
         },
         include: this.constructFeedItemInclude(userId),
       })
-    })
+    )
 
     if (rawFeedItems.isErr()) return err(rawFeedItems.error)
 
@@ -404,7 +436,19 @@ export class FeedRepository {
   async getFeedItemById(feedItemId: string, userId?: string) {
     const rawFeedItem = await fromRepositoryPromise(
       this.prismaService.feedItem.findUniqueOrThrow({
-        where: { id: feedItemId },
+        where: {
+          id: feedItemId,
+          publishedAt: {
+            not: null,
+          },
+          OR: [
+            { post: { status: PostStatus.PUBLISHED } },
+            { poll: { status: PollStatus.PUBLISHED } },
+            {
+              announcement: { status: AnnouncementStatus.PUBLISHED },
+            },
+          ],
+        },
         include: this.constructFeedItemInclude(userId),
       })
     )
@@ -420,8 +464,10 @@ export class FeedRepository {
     feedItemId: string
     userId: string
   }) {
-    return await fromRepositoryPromise(
-      this.prismaService.feedItemReaction.findUnique({
+    return await fromRepositoryPromise(async () => {
+      await this.ensureFeedItemExists(feedItemId)
+
+      return await this.prismaService.feedItemReaction.findUnique({
         where: {
           userId_feedItemId: {
             userId,
@@ -432,7 +478,7 @@ export class FeedRepository {
           type: true,
         },
       })
-    )
+    })
   }
 
   async upsertFeedItemReaction({
@@ -448,6 +494,8 @@ export class FeedRepository {
   }) {
     return await fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
+        await this.ensureFeedItemExists(feedItemId, tx)
+
         const existingFeedItemReaction = await tx.feedItemReaction.findUnique({
           where: {
             userId_feedItemId: {
@@ -542,6 +590,8 @@ export class FeedRepository {
   async deleteFeedItemReaction({ feedItemId, userId }: { feedItemId: string; userId: string }) {
     return await fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
+        await this.ensureFeedItemExists(feedItemId, tx)
+
         const reaction = await tx.feedItemReaction.delete({
           where: {
             userId_feedItemId: {
@@ -579,6 +629,9 @@ export class FeedRepository {
         where: {
           feedItemId,
           feedItem: {
+            publishedAt: {
+              not: null,
+            },
             OR: [
               { post: { status: PostStatus.PUBLISHED } },
               { poll: { status: PollStatus.PUBLISHED } },
@@ -624,47 +677,39 @@ export class FeedRepository {
     isPrivate: boolean
   }) {
     const result = await fromRepositoryPromise(
-      this.prismaService.$transaction([
-        this.prismaService.feedItemComment.create({
-          data: {
-            feedItemId,
-            userId,
-            content,
-            isPrivate,
-          },
-          select: {
-            id: true,
-            content: true,
-            isPrivate: true,
-            createdAt: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-                profileImagePath: true,
+      this.prismaService.$transaction(async (tx) => {
+        await this.ensureFeedItemExists(feedItemId, tx)
+
+        return await Promise.all([
+          tx.feedItemComment.create({
+            data: {
+              feedItemId,
+              userId,
+              content,
+              isPrivate,
+            },
+            select: {
+              id: true,
+              content: true,
+              isPrivate: true,
+              createdAt: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  profileImagePath: true,
+                },
               },
             },
-          },
-        }),
-        this.prismaService.feedItem.findUniqueOrThrow({
-          where: {
-            id: feedItemId,
-            OR: [
-              { post: { status: PostStatus.PUBLISHED } },
-              { poll: { status: PollStatus.PUBLISHED } },
-              {
-                announcement: { status: AnnouncementStatus.PUBLISHED },
-              },
-            ],
-          },
-        }),
-        this.prismaService.feedItem.update({
-          where: { id: feedItemId },
-          data: {
-            numberOfComments: { increment: 1 },
-          },
-        }),
-      ])
+          }),
+          tx.feedItem.update({
+            where: { id: feedItemId },
+            data: {
+              numberOfComments: { increment: 1 },
+            },
+          }),
+        ])
+      })
     )
 
     if (result.isErr()) {
@@ -686,15 +731,22 @@ export class FeedRepository {
     content: string
   }) {
     return await fromRepositoryPromise(
-      this.prismaService.feedItemComment.updateMany({
-        where: {
-          id: commentId,
-          feedItemId,
-          userId,
-        },
-        data: {
-          content,
-        },
+      this.prismaService.$transaction(async (tx) => {
+        await this.ensureFeedItemExists(feedItemId, tx)
+
+        return await tx.feedItemComment.update({
+          where: {
+            id: commentId,
+            feedItemId,
+            userId,
+            user: {
+              status: UserStatus.ACTIVE,
+            },
+          },
+          data: {
+            content,
+          },
+        })
       })
     )
   }
@@ -709,21 +761,21 @@ export class FeedRepository {
     feedItemId: string
   }) {
     return await fromRepositoryPromise(
-      this.prismaService.feedItemComment.deleteMany({
-        where: {
-          id: commentId,
-          userId,
-          feedItem: {
-            id: feedItemId,
-            OR: [
-              { post: { status: PostStatus.PUBLISHED } },
-              { poll: { status: PollStatus.PUBLISHED } },
-              {
-                announcement: { status: AnnouncementStatus.PUBLISHED },
-              },
-            ],
+      this.prismaService.$transaction(async (tx) => {
+        await this.ensureFeedItemExists(feedItemId, tx)
+
+        return await this.prismaService.feedItemComment.delete({
+          where: {
+            id: commentId,
+            userId,
+            feedItem: {
+              id: feedItemId,
+            },
+            user: {
+              status: UserStatus.ACTIVE,
+            },
           },
-        },
+        })
       })
     )
   }
