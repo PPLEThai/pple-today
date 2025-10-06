@@ -3,7 +3,10 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import {
   AnnouncementType,
   BannerNavigationType,
+  BannerStatusType,
   FeedItemType,
+  HashTagStatus,
+  PollStatus,
   PollType,
   PrismaClient,
   TopicStatus,
@@ -126,14 +129,16 @@ const seedBanners = async () => {
       create: {
         id: `banner-${i}`,
         imageFilePath: `local/test/banner-${i}.png`,
-        status: 'PUBLISH',
+        status: BannerStatusType.PUBLISHED,
         order: i,
+        startAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
+        endAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
         ...navigationDetails,
       },
       update: {
         id: `banner-${i}`,
         imageFilePath: `local/test/banner-${i}.png`,
-        status: 'PUBLISH',
+        status: BannerStatusType.PUBLISHED,
         order: i,
         ...navigationDetails,
       },
@@ -179,7 +184,7 @@ const seedTopics = async (provinces: any[]) => {
         create: {
           name: province,
           description: `ข่าวเกี่ยวกับจังหวัด${province}`,
-          status: TopicStatus.PUBLISH,
+          status: TopicStatus.PUBLISHED,
         },
       })
     }
@@ -191,7 +196,7 @@ const seedTopics = async (provinces: any[]) => {
       id: 'topic-1',
       name: 'Education',
       description: 'All about education',
-      status: TopicStatus.PUBLISH,
+      status: TopicStatus.PUBLISHED,
     },
   })
   await prisma.topic.upsert({
@@ -201,38 +206,10 @@ const seedTopics = async (provinces: any[]) => {
       id: 'topic-2',
       name: 'Economy',
       description: 'All about economy',
-      status: TopicStatus.PUBLISH,
+      status: TopicStatus.PUBLISHED,
     },
   })
   console.log('Seeded topics successfully.')
-}
-
-const seedDraftPolls = async () => {
-  await prisma.pollDraft.upsert({
-    where: { id: 'draft-poll-1' },
-    update: {},
-    create: {
-      id: 'draft-poll-1',
-      title: 'Draft Poll 1',
-      description: 'This is a draft poll.',
-      options: {
-        create: [
-          { id: 'draft-option-1', title: 'Option 1' },
-          { id: 'draft-option-2', title: 'Option 2' },
-          { id: 'draft-option-3', title: 'Option 3' },
-          { id: 'draft-option-4', title: 'Option 4' },
-        ],
-      },
-      type: PollType.SINGLE_CHOICE,
-      topics: {
-        create: [
-          { topic: { connect: { id: 'topic-1' } } },
-          { topic: { connect: { id: 'topic-2' } } },
-        ],
-      },
-    },
-  })
-  console.log('Seeded draft polls successfully.')
 }
 
 const seedHashtags = async () => {
@@ -242,7 +219,7 @@ const seedHashtags = async () => {
     create: {
       id: 'hashtag-1',
       name: '#PPLEToday',
-      status: 'PUBLISH',
+      status: HashTagStatus.PUBLISHED,
     },
   })
   await prisma.hashTag.upsert({
@@ -251,7 +228,7 @@ const seedHashtags = async () => {
     create: {
       id: 'hashtag-2',
       name: '#Announcements',
-      status: 'PUBLISH',
+      status: HashTagStatus.PUBLISHED,
     },
   })
   await prisma.hashTag.upsert({
@@ -260,7 +237,7 @@ const seedHashtags = async () => {
     create: {
       id: 'hashtag-3',
       name: '#Polls',
-      status: 'PUBLISH',
+      status: HashTagStatus.PUBLISHED,
     },
   })
   console.log('Seeded hashtags successfully.')
@@ -290,6 +267,7 @@ const seedPolls = async () => {
               ],
             },
             type: PollType.SINGLE_CHOICE,
+            status: PollStatus.PUBLISHED,
             endAt: new Date(Date.now() + (i - 10) * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000),
             topics: {
               create: [
@@ -302,6 +280,40 @@ const seedPolls = async () => {
       },
     })
   }
+
+  await prisma.feedItem.upsert({
+    where: { id: 'draft-poll-1' },
+    update: {},
+    create: {
+      type: FeedItemType.POLL,
+      author: {
+        connect: { id: OFFICIAL_USER_ID },
+      },
+      poll: {
+        create: {
+          endAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          title: 'Draft Poll 1',
+          description: 'This is a draft poll.',
+          options: {
+            create: [
+              { id: 'draft-option-1', title: 'Option 1' },
+              { id: 'draft-option-2', title: 'Option 2' },
+              { id: 'draft-option-3', title: 'Option 3' },
+              { id: 'draft-option-4', title: 'Option 4' },
+            ],
+          },
+          type: PollType.SINGLE_CHOICE,
+          topics: {
+            create: [
+              { topic: { connect: { id: 'topic-1' } } },
+              { topic: { connect: { id: 'topic-2' } } },
+            ],
+          },
+        },
+      },
+    },
+  })
+  console.log('Seeded draft polls successfully.')
   console.log('Seeded polls successfully.')
 }
 
@@ -400,7 +412,6 @@ async function main() {
   await seedHashtags()
   await seedOfficialUser()
   await seedTopics(provinces)
-  await seedDraftPolls()
   await seedPolls()
   await seedAnnouncements()
   await seedBanners()

@@ -2,7 +2,16 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FeedItem, FeedItemBaseContent } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { FeedItemReactionType, FeedItemType, Prisma } from '@pple-today/database/prisma'
+import {
+  AnnouncementStatus,
+  FeedItemReactionType,
+  FeedItemType,
+  HashTagStatus,
+  PollStatus,
+  PostStatus,
+  Prisma,
+  TopicStatus,
+} from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { Ok, ok } from 'neverthrow'
 import { sumBy } from 'remeda'
@@ -31,6 +40,9 @@ export class FeedRepository {
         },
       },
       announcement: {
+        where: {
+          status: AnnouncementStatus.PUBLISHED,
+        },
         include: {
           attachments: true,
         },
@@ -55,12 +67,23 @@ export class FeedRepository {
             },
           },
         },
+        where: {
+          status: PollStatus.PUBLISHED,
+        },
       },
       post: {
+        where: {
+          status: PostStatus.PUBLISHED,
+        },
         include: {
           hashTags: {
             include: {
               hashTag: true,
+            },
+            where: {
+              hashTag: {
+                status: HashTagStatus.PUBLISHED,
+              },
             },
           },
           attachments: true,
@@ -75,10 +98,10 @@ export class FeedRepository {
   ) {
     const feedItemBaseContent: FeedItemBaseContent = {
       id: rawFeedItem.id,
-      createdAt: rawFeedItem.createdAt,
       commentCount: rawFeedItem.numberOfComments,
       userReaction: rawFeedItem.reactions?.[0]?.type ?? null,
       reactions: rawFeedItem.reactionCounts,
+      publishedAt: rawFeedItem.publishedAt!,
       author: {
         id: rawFeedItem.author.id,
         name: rawFeedItem.author.name,
@@ -201,18 +224,24 @@ export class FeedRepository {
                           topicId,
                         },
                       },
+                      status: HashTagStatus.PUBLISHED,
                     },
                   },
                 },
+                status: PostStatus.PUBLISHED,
               },
             },
             {
               poll: {
                 topics: {
                   some: {
-                    topicId,
+                    topic: {
+                      id: topicId,
+                      status: TopicStatus.PUBLISHED,
+                    },
                   },
                 },
+                status: PollStatus.PUBLISHED,
               },
             },
           ],
@@ -258,9 +287,13 @@ export class FeedRepository {
               post: {
                 hashTags: {
                   some: {
-                    hashTagId,
+                    hashTag: {
+                      id: hashTagId,
+                      status: HashTagStatus.PUBLISHED,
+                    },
                   },
                 },
+                status: PostStatus.PUBLISHED,
               },
             },
             {
@@ -273,9 +306,11 @@ export class FeedRepository {
                           hashTagId,
                         },
                       },
+                      status: TopicStatus.PUBLISHED,
                     },
                   },
                 },
+                status: PollStatus.PUBLISHED,
               },
             },
           ],
@@ -306,6 +341,15 @@ export class FeedRepository {
         skip,
         take: limit,
         include: this.constructFeedItemInclude(userId),
+        where: {
+          OR: [
+            { post: { status: PostStatus.PUBLISHED } },
+            { poll: { status: PollStatus.PUBLISHED } },
+            {
+              announcement: { status: AnnouncementStatus.PUBLISHED },
+            },
+          ],
+        },
       })
     )
 
@@ -534,6 +578,15 @@ export class FeedRepository {
         },
         where: {
           feedItemId,
+          feedItem: {
+            OR: [
+              { post: { status: PostStatus.PUBLISHED } },
+              { poll: { status: PollStatus.PUBLISHED } },
+              {
+                announcement: { status: AnnouncementStatus.PUBLISHED },
+              },
+            ],
+          },
           OR: [{ isPrivate: false }, { userId: query.userId }],
         },
         select: {
@@ -593,6 +646,18 @@ export class FeedRepository {
             },
           },
         }),
+        this.prismaService.feedItem.findUniqueOrThrow({
+          where: {
+            id: feedItemId,
+            OR: [
+              { post: { status: PostStatus.PUBLISHED } },
+              { poll: { status: PollStatus.PUBLISHED } },
+              {
+                announcement: { status: AnnouncementStatus.PUBLISHED },
+              },
+            ],
+          },
+        }),
         this.prismaService.feedItem.update({
           where: { id: feedItemId },
           data: {
@@ -648,7 +713,16 @@ export class FeedRepository {
         where: {
           id: commentId,
           userId,
-          feedItemId,
+          feedItem: {
+            id: feedItemId,
+            OR: [
+              { post: { status: PostStatus.PUBLISHED } },
+              { poll: { status: PollStatus.PUBLISHED } },
+              {
+                announcement: { status: AnnouncementStatus.PUBLISHED },
+              },
+            ],
+          },
         },
       })
     )
@@ -657,7 +731,7 @@ export class FeedRepository {
   async checkTopicExists(topicId: string) {
     return await fromRepositoryPromise(
       this.prismaService.topic.findUniqueOrThrow({
-        where: { id: topicId },
+        where: { id: topicId, status: TopicStatus.PUBLISHED },
       })
     )
   }
@@ -665,7 +739,7 @@ export class FeedRepository {
   async checkHashTagExists(hashTagId: string) {
     return await fromRepositoryPromise(
       this.prismaService.hashTag.findUniqueOrThrow({
-        where: { id: hashTagId },
+        where: { id: hashTagId, status: HashTagStatus.PUBLISHED },
       })
     )
   }

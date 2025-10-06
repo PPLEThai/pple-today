@@ -57,20 +57,6 @@ export default function OfficialPage() {
   )
 }
 
-const DemoSection = () => {
-  return (
-    <View className="px-4">
-      <View className="flex flex-row gap-2 items-center">
-        <View className="w-8 h-8 flex items-center justify-center">
-          <Icon icon={MegaphoneIcon} size={32} className="text-base-primary-default" />
-        </View>
-        <H2 className="text-2xl font-heading-semibold text-base-text-high">ประกาศ</H2>
-      </View>
-      <View className="h-48 bg-base-bg-white rounded-xl border border-base-outline-default mt-2 p-4"></View>
-    </View>
-  )
-}
-
 const AnnouncementSection = () => {
   const router = useRouter()
   const announcementsQuery = reactQueryClient.useQuery('/announcements', {
@@ -104,7 +90,7 @@ const AnnouncementSection = () => {
             id={item.id}
             feedId={item.id}
             title={item.title}
-            date={item.createdAt.toString()}
+            date={item.publishedAt.toString()}
             type={item.type}
           />
         ))}

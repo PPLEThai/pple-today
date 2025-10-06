@@ -3,8 +3,8 @@ CREATE OR REPLACE FUNCTION public.get_candidate_user_by_interaction(_id text)
   LANGUAGE plpgsql
 AS $function$
 BEGIN
-   RETURN QUERY
-WITH
+  RETURN QUERY
+  WITH
     current_user_follows AS (
         SELECT
             ufu."followerId" AS follower_id,
@@ -19,31 +19,36 @@ WITH
           fi."authorId" AS author_id
         FROM 
           "PostHashTag" pht
+          INNER JOIN "Post" post ON post."feedItemId" = pht."postId" AND post."status" = 'PUBLISHED'
           INNER JOIN "FeedItem" fi ON fi."id" = pht."postId"
     ),
     latest_user_interaction AS (
         SELECT 
             "FeedItemReaction"."feedItemId" AS feed_item_id, 
-            CASE
-                WHEN "FeedItemReaction"."type" = 'UP_VOTE' THEN 3
-                WHEN "FeedItemReaction"."type" = 'DOWN_VOTE' THEN 1
-                ELSE 0
-            END AS score
+            SUM(
+	            CASE
+	                WHEN "FeedItemReaction"."type" = 'UP_VOTE' THEN 3
+	                WHEN "FeedItemReaction"."type" = 'DOWN_VOTE' THEN 1
+	                ELSE 0
+	            END
+            ) AS score
         FROM "FeedItemReaction"
         WHERE
             "FeedItemReaction"."userId" = _id
+        GROUP BY feed_item_id
         UNION ALL
-        SELECT "FeedItemComment"."feedItemId" AS feed_item_id, 1 AS score
+        SELECT "FeedItemComment"."feedItemId" AS feed_item_id, COUNT(*) AS score
         FROM "FeedItemComment"
         WHERE
             "FeedItemComment"."userId" = _id
+        GROUP BY feed_item_id
     ),
     hashtag_in_post AS (
         SELECT "HashTag".id, latest_user_interaction.score
         FROM
             post_details
+            INNER JOIN "HashTag" ON "HashTag".id = post_details.hashtag AND "HashTag"."status" = 'PUBLISHED'
             INNER JOIN latest_user_interaction ON post_details.id = latest_user_interaction.feed_item_id
-            INNER JOIN "HashTag" ON post_details.hashtag = "HashTag".id AND "HashTag".status = 'PUBLISH'
     ),
     author_from_hashtag AS (
         SELECT post_details.author_id, SUM(
