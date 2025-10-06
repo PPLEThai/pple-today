@@ -77,6 +77,9 @@ export class PollsRepository {
               gt: new Date(),
             },
           },
+          publishedAt: {
+            not: null,
+          },
         },
       })
 
@@ -90,6 +93,9 @@ export class PollsRepository {
               endAt: {
                 gt: new Date(),
               },
+            },
+            publishedAt: {
+              not: null,
             },
           },
           take: limit,
@@ -110,6 +116,9 @@ export class PollsRepository {
         const endedPolls = await this.prismaService.feedItem.findMany({
           where: {
             type: FeedItemType.POLL,
+            publishedAt: {
+              not: null,
+            },
             poll: {
               status: PollStatus.PUBLISHED,
               endAt: {
@@ -136,6 +145,9 @@ export class PollsRepository {
         where: {
           feedItem: {
             id: pollId,
+            publishedAt: {
+              not: null,
+            },
           },
           status: PollStatus.PUBLISHED,
         },
@@ -181,6 +193,11 @@ export class PollsRepository {
             endAt: {
               gt: new Date(),
             },
+            feedItem: {
+              publishedAt: {
+                not: null,
+              },
+            },
           },
         },
         data: {
@@ -211,6 +228,11 @@ export class PollsRepository {
             status: PollStatus.PUBLISHED,
             endAt: {
               gt: new Date(),
+            },
+            feedItem: {
+              publishedAt: {
+                not: null,
+              },
             },
           },
         },

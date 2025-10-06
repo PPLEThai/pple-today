@@ -1,7 +1,7 @@
 import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { Prisma } from '@pple-today/database/prisma'
+import { Prisma, UserStatus } from '@pple-today/database/prisma'
 import { get_candidate_user } from '@pple-today/database/prisma/sql'
 import Elysia from 'elysia'
 import * as R from 'remeda'
@@ -116,7 +116,7 @@ export class ProfileRepository {
           },
         }),
         this.prismaService.user.update({
-          where: { id: followedUserId },
+          where: { id: followedUserId, status: UserStatus.ACTIVE },
           data: {
             numberOfFollowers: {
               increment: 1,
@@ -124,7 +124,7 @@ export class ProfileRepository {
           },
         }),
         this.prismaService.user.update({
-          where: { id: userId },
+          where: { id: userId, status: UserStatus.ACTIVE },
           data: {
             numberOfFollowing: {
               increment: 1,
@@ -143,6 +143,12 @@ export class ProfileRepository {
             followedId_followerId: {
               followedId: followedUserId,
               followerId: userId,
+            },
+            followed: {
+              status: UserStatus.ACTIVE,
+            },
+            follower: {
+              status: UserStatus.ACTIVE,
             },
           },
         }),

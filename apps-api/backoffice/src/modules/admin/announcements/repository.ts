@@ -12,10 +12,40 @@ import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
 
 export class AdminAnnouncementRepository {
+  private OFFICIAL_USER_ID: string | null = null
+
   constructor(
     private readonly prismaService: PrismaService,
     private readonly fileService: FileService
   ) {}
+
+  // TODO: Refactor to common service
+  private async lookupOfficialUserId() {
+    if (this.OFFICIAL_USER_ID) {
+      return ok(this.OFFICIAL_USER_ID)
+    }
+
+    const findOfficialResult = await fromRepositoryPromise(
+      this.prismaService.user.findFirst({
+        where: { roles: { every: { role: 'official' } } },
+        select: { id: true },
+      })
+    )
+
+    if (findOfficialResult.isErr()) {
+      return err(findOfficialResult.error)
+    }
+
+    if (!findOfficialResult.value) {
+      return err({
+        message: 'Official user not found',
+        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+      })
+    }
+
+    this.OFFICIAL_USER_ID = findOfficialResult.value.id
+    return ok(this.OFFICIAL_USER_ID)
+  }
 
   private async cleanUpUnusedAttachment(
     fileTx: FileTransactionService,
@@ -144,6 +174,10 @@ export class AdminAnnouncementRepository {
   }
 
   async createAnnouncement(data: PostAnnouncementBody) {
+    const officialUserId = await this.lookupOfficialUserId()
+
+    if (officialUserId.isErr()) return err(officialUserId.error)
+
     const result = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
         const movePublicResult = await fileTx.bulkMoveToPublicFolder(data.attachmentFilePaths)
@@ -164,7 +198,7 @@ export class AdminAnnouncementRepository {
           data: {
             type: FeedItemType.POLL,
             author: {
-              connect: { id: 'pple-official-user' },
+              connect: { id: officialUserId.value },
             },
             announcement: {
               create: {

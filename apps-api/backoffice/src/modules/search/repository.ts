@@ -1,7 +1,14 @@
 import { FeedItem } from '@pple-today/api-common/dtos'
 import { PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { HashTagStatus, TopicStatus } from '@pple-today/database/prisma'
+import {
+  AnnouncementStatus,
+  HashTagStatus,
+  PollStatus,
+  PostStatus,
+  TopicStatus,
+  UserStatus,
+} from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { Ok, ok } from 'neverthrow'
 import * as R from 'remeda'
@@ -20,6 +27,9 @@ export class SearchRepository {
     return await fromRepositoryPromise(async () => {
       const feedItemCandidates = await this.prismaService.feedItem.findMany({
         where: {
+          publishedAt: {
+            not: null,
+          },
           OR: [
             {
               post: {
@@ -27,6 +37,7 @@ export class SearchRepository {
                   contains: query.search,
                   mode: 'insensitive',
                 },
+                status: PostStatus.PUBLISHED,
               },
             },
             {
@@ -35,6 +46,7 @@ export class SearchRepository {
                   contains: query.search,
                   mode: 'insensitive',
                 },
+                status: PollStatus.PUBLISHED,
               },
             },
           ],
@@ -76,6 +88,12 @@ export class SearchRepository {
     return await fromRepositoryPromise(
       this.prismaService.announcement.findMany({
         where: {
+          status: AnnouncementStatus.PUBLISHED,
+          feedItem: {
+            publishedAt: {
+              not: null,
+            },
+          },
           OR: [
             {
               title: {
@@ -127,6 +145,9 @@ export class SearchRepository {
     const rawFeedItems = await fromRepositoryPromise(
       this.prismaService.feedItem.findMany({
         where: {
+          publishedAt: {
+            not: null,
+          },
           OR: [
             {
               post: {
@@ -134,6 +155,7 @@ export class SearchRepository {
                   contains: query.search,
                   mode: 'insensitive',
                 },
+                status: PostStatus.PUBLISHED,
               },
             },
             {
@@ -142,6 +164,7 @@ export class SearchRepository {
                   contains: query.search,
                   mode: 'insensitive',
                 },
+                status: PollStatus.PUBLISHED,
               },
             },
           ],
@@ -230,10 +253,13 @@ export class SearchRepository {
             mode: 'insensitive',
           },
           roles: {
-            none: {
-              role: 'official',
+            some: {
+              role: {
+                in: ['pple-ad:hq', 'pple-ad:mp'],
+              },
             },
           },
+          status: UserStatus.ACTIVE,
         },
         take: query.limit ?? 3,
         skip: query.cursor ? 1 : 0,
