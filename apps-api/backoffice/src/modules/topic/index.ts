@@ -161,15 +161,18 @@ export const TopicController = new Elysia({
       })
     },
     {
-      requiredLocalUser: true,
+      requiredLocalUserPrecondition: {
+        isActive: true,
+      },
       params: FollowTopicParams,
       response: {
         200: FollowTopicResponse,
         ...createErrorSchema(
+          InternalErrorCode.FORBIDDEN,
           InternalErrorCode.INTERNAL_SERVER_ERROR,
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.TOPIC_NOT_FOUND,
-          InternalErrorCode.TOPIC_CANNOT_FOLLOW_DRAFT,
+          InternalErrorCode.TOPIC_CANNOT_FOLLOW_SUSPENDED,
           InternalErrorCode.TOPIC_ALREADY_FOLLOWED
         ),
       },
@@ -196,11 +199,14 @@ export const TopicController = new Elysia({
       })
     },
     {
-      requiredLocalUser: true,
+      requiredLocalUserPrecondition: {
+        isActive: true,
+      },
       params: UnFollowTopicParams,
       response: {
         200: UnfollowUserResponse,
         ...createErrorSchema(
+          InternalErrorCode.FORBIDDEN,
           InternalErrorCode.INTERNAL_SERVER_ERROR,
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.TOPIC_NOT_FOUND,

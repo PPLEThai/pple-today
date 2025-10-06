@@ -34,6 +34,7 @@ export class AdminElectionService {
       name: election.name,
       description: election.description,
       location: election.location,
+      locationMapUrl: election.locationMapUrl,
       type: election.type,
       mode: election.mode,
       isCancelled: election.isCancelled,

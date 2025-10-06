@@ -12,7 +12,7 @@ export class BannerRepository {
     return fromRepositoryPromise(
       this.prismaService.banner.findMany({
         where: {
-          status: BannerStatusType.PUBLISH,
+          status: BannerStatusType.PUBLISHED,
         },
         orderBy: {
           order: 'asc',

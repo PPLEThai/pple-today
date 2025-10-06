@@ -9,7 +9,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { ExtractBodyResponse } from '@pple-today/api-client'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
-import { Badge } from '@pple-today/ui/badge'
 import { BottomSheetModal, BottomSheetScrollView } from '@pple-today/ui/bottom-sheet/index'
 import { Button } from '@pple-today/ui/button'
 import { FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
@@ -28,15 +27,7 @@ import { Image } from 'expo-image'
 import * as Linking from 'expo-linking'
 import { useRouter } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
-import {
-  ArrowRightIcon,
-  CirclePlusIcon,
-  ClockIcon,
-  MapPinIcon,
-  MapPinnedIcon,
-  MegaphoneIcon,
-  RadioTowerIcon,
-} from 'lucide-react-native'
+import { ArrowRightIcon, CirclePlusIcon, MegaphoneIcon, RadioTowerIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
 import type {
@@ -288,50 +279,7 @@ function EventSection() {
         <Icon icon={RadioTowerIcon} size={20} className="text-base-primary-default" />
         <H2 className="text-xl font-heading-bold text-base-text-high">อิเวนต์ตอนนี้</H2>
       </View>
-      <ElectionCard />
-    </View>
-  )
-}
-
-function ElectionCard() {
-  return (
-    <View className="w-full bg-base-secondary-default rounded-2xl flex flex-col gap-4 p-4 ">
-      <View className="flex flex-col items-start gap-2">
-        <Badge variant="secondary">
-          <Text>เลือกตั้งในสถานที่</Text>
-        </Badge>
-        <H3 className="text-base-text-invert font-heading-bold text-lg ">
-          เลือกตั้งตัวแทนสมาชิกพรรคประจำ อ.เมือง จ.ระยอง
-        </H3>
-        <View className="flex flex-col gap-1 ">
-          <View className="flex flex-row gap-1 items-center">
-            <Icon icon={ClockIcon} size={16} className="text-base-text-invert" />
-            <Text className="text-sm text-base-text-invert font-heading-regular">
-              เวลาที่เหลือ:
-            </Text>
-            <Text className="text-sm text-base-primary-default font-heading-semibold">
-              7:46:36 ชั่วโมง
-            </Text>
-          </View>
-          <View className="flex flex-row gap-1 items-center">
-            <Icon icon={MapPinIcon} size={16} className="text-base-text-invert" />
-            <Text className="text-sm text-base-text-invert font-heading-regular">สถานที่:</Text>
-            <Text className="text-sm text-base-text-invert font-heading-semibold">
-              อาคารอเนกประสงชุมชนสองพี่น้อง 1,2,3
-            </Text>
-          </View>
-        </View>
-        <View className="flex flex-row gap-2.5">
-          <Button className="flex-1" variant="secondary">
-            <Icon icon={MapPinnedIcon} />
-            <Text>ดูสถานที่</Text>
-          </Button>
-          <Button className="flex-1" variant="primary">
-            <Text>ตรวจสอบสิทธิ์</Text>
-            <Icon icon={ArrowRightIcon} />
-          </Button>
-        </View>
-      </View>
+      {/* <ElectionCard /> */}
     </View>
   )
 }
@@ -795,7 +743,7 @@ function AnnouncementSection() {
                 onPress={() => router.navigate(`/(feed)/${announcement.id}`)}
                 feedId={announcement.id}
                 title={announcement.title}
-                date={announcement.createdAt.toString()}
+                date={announcement.publishedAt.toString()}
                 type={announcement.type}
               />
             </SlideItem>
