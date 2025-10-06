@@ -18,13 +18,13 @@ import {
 } from './models'
 import { AdminBannerServicePlugin } from './services'
 
-import { AuthGuardPlugin } from '../../../plugins/auth-guard'
+import { AdminAuthGuardPlugin } from '../../../plugins/admin-auth-guard'
 
 export const AdminBannerController = new Elysia({
   prefix: '/banners',
   tags: ['Admin Banner'],
 })
-  .use([AdminBannerServicePlugin, AuthGuardPlugin])
+  .use([AdminBannerServicePlugin, AdminAuthGuardPlugin])
   .get(
     '/',
     async ({ adminBannerService, status }) => {
@@ -105,7 +105,7 @@ export const AdminBannerController = new Elysia({
       },
     }
   )
-  .put(
+  .patch(
     '/:id',
     async ({ params, body, adminBannerService, status }) => {
       const result = await adminBannerService.updateBannerById(params.id, body)

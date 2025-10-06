@@ -30,7 +30,7 @@ export class TopicRepository {
           description: true,
           bannerImagePath: true,
           hashTagInTopics: {
-            where: { hashTag: { status: HashTagStatus.PUBLISH } },
+            where: { hashTag: { status: HashTagStatus.PUBLISHED } },
             include: {
               hashTag: {
                 select: {
@@ -58,11 +58,11 @@ export class TopicRepository {
       this.prismaService.topic.findFirstOrThrow({
         where: {
           id: topicId,
-          status: HashTagStatus.PUBLISH,
+          status: TopicStatus.PUBLISHED,
         },
         include: {
           hashTagInTopics: {
-            where: { hashTag: { status: HashTagStatus.PUBLISH } },
+            where: { hashTag: { status: HashTagStatus.PUBLISHED } },
             include: {
               hashTag: true,
             },
@@ -75,10 +75,10 @@ export class TopicRepository {
   async getTopics() {
     return fromRepositoryPromise(
       this.prismaService.topic.findMany({
-        where: { status: TopicStatus.PUBLISH },
+        where: { status: TopicStatus.PUBLISHED },
         include: {
           hashTagInTopics: {
-            where: { hashTag: { status: HashTagStatus.PUBLISH } },
+            where: { hashTag: { status: HashTagStatus.PUBLISHED } },
             include: {
               hashTag: true,
             },
@@ -91,7 +91,7 @@ export class TopicRepository {
   async listTopicWithFollowedStatus(userId: string) {
     return fromRepositoryPromise(
       this.prismaService.topic.findMany({
-        where: { status: 'PUBLISH' },
+        where: { status: TopicStatus.PUBLISHED },
         orderBy: { updatedAt: 'desc' },
         select: {
           id: true,

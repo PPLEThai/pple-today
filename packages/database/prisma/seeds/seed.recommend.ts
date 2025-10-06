@@ -2,7 +2,7 @@ import * as Crypto from 'node:crypto'
 
 import { PrismaPg } from '@prisma/adapter-pg'
 
-import { PrismaClient } from '../../__generated__/prisma'
+import { HashTagStatus, PrismaClient, TopicStatus } from '../../__generated__/prisma'
 
 const connectionString = `${process.env.DATABASE_URL}`
 
@@ -45,8 +45,8 @@ const seedUsers = async () => {
   })
   await prisma.user.create({
     data: {
-      id: `official-user`,
-      name: `official-user@example.com`,
+      id: `pple-official-user`,
+      name: `pple-official-user@example.com`,
       phoneNumber: Crypto.randomUUID().slice(0, 15),
     },
   })
@@ -60,7 +60,7 @@ const seedHashTags = async () => {
     data.push({
       id: `hashtag-${i + 1}`,
       name: `hashtag${i + 1}`,
-      status: 'PUBLISH' as const,
+      status: HashTagStatus.PUBLISHED,
     })
   }
   await prisma.hashTag.createMany({
@@ -91,7 +91,7 @@ const seedTopics = async () => {
             },
           })),
         },
-        status: 'PUBLISH',
+        status: TopicStatus.PUBLISHED,
       },
     })
   }
@@ -166,7 +166,7 @@ const seedFeedItems = async () => {
           await prisma.feedItem.create({
             data: {
               id: `feeditem-${i * NUMBER_OF_FEED_ITEMS_PER_USER + j + 1}`,
-              authorId: `official-user`,
+              authorId: `pple-official-user`,
               type: 'POLL',
               poll: {
                 create: {
@@ -193,7 +193,7 @@ const seedFeedItems = async () => {
           await prisma.feedItem.create({
             data: {
               id: `feeditem-${i * NUMBER_OF_FEED_ITEMS_PER_USER + j + 1}`,
-              authorId: `official-user`,
+              authorId: `pple-official-user`,
               type: 'ANNOUNCEMENT',
               announcement: {
                 create: {

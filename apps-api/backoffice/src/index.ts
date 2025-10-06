@@ -1,7 +1,11 @@
 import { cors } from '@elysiajs/cors'
 import node from '@elysiajs/node'
 import { swagger } from '@elysiajs/swagger'
-import { loggerBuilder, RequestIdPlugin } from '@pple-today/api-common/plugins'
+import {
+  GlobalExceptionPlugin,
+  loggerBuilder,
+  RequestIdPlugin,
+} from '@pple-today/api-common/plugins'
 import Elysia, { AnyElysia } from 'elysia'
 import * as R from 'remeda'
 
@@ -9,7 +13,6 @@ import { ApplicationController } from './modules'
 import { AdminController } from './modules/admin'
 import { VersionController } from './modules/version'
 import { ConfigServicePlugin } from './plugins/config'
-import { GlobalExceptionPlugin } from './plugins/global-exception'
 
 import packageJson from '../package.json'
 
