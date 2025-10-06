@@ -163,7 +163,7 @@ export class SearchRepository {
                 hashTags: {
                   some: {
                     hashTag: {
-                      status: HashTagStatus.PUBLISH,
+                      status: HashTagStatus.PUBLISHED,
                       name: {
                         startsWith: query.search.startsWith('#')
                           ? query.search
@@ -189,7 +189,7 @@ export class SearchRepository {
                 topics: {
                   some: {
                     topic: {
-                      status: TopicStatus.PUBLISH,
+                      status: TopicStatus.PUBLISHED,
                       name: {
                         startsWith: query.search,
                         mode: 'insensitive',
@@ -261,7 +261,7 @@ export class SearchRepository {
                   startsWith: query.search.startsWith('#') ? query.search : `#${query.search}`,
                   mode: 'insensitive',
                 },
-                status: HashTagStatus.PUBLISH,
+                status: HashTagStatus.PUBLISHED,
               },
             },
           },
