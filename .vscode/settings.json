@@ -9,6 +9,7 @@
     "(?:headClassName|headContainerClassName|cellClassName):\\s*?[\"'`]([^\"'`]*).*?[\"'`]",
     ["(?:classNames)=\\s*(?:\"|'|{`|{{)([^)]*)([^(?:\"|'|`}||}})]*)", "[\"'`]([^\"'`]*).*?[\"'`]"]
   ],
+  "tailwindCSS.classFunctions": ["cva", "cn"],
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
     "source.organizeImports": "never"
