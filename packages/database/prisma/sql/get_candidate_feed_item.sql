@@ -49,8 +49,8 @@ WITH
         SELECT other_feed_items.feed_item_id, other_feed_items.score
         FROM other_feed_items
         UNION ALL
-        SELECT candidate_feed_item.feed_item_id, candidate_feed_item.score
-        FROM candidate_feed_item
+        SELECT aggregated_feed_items.feed_item_id, aggregated_feed_items.score
+        FROM aggregated_feed_items
         ORDER BY score DESC
         LIMIT 1000
     )
