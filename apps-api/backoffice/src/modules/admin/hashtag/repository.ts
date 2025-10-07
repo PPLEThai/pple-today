@@ -54,7 +54,7 @@ export class AdminHashtagRepository {
         }),
       ])
 
-      return { data, count }
+      return { data, meta: { count } }
     })
   }
 
