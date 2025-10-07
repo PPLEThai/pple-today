@@ -257,7 +257,7 @@ export class FeedRepository {
           : undefined,
         orderBy: [
           {
-            createdAt: 'desc',
+            publishedAt: 'desc',
           },
           {
             id: 'desc',
@@ -351,7 +351,7 @@ export class FeedRepository {
           : undefined,
         orderBy: [
           {
-            createdAt: 'desc',
+            publishedAt: 'desc',
           },
           {
             id: 'desc',
@@ -442,7 +442,7 @@ export class FeedRepository {
           },
           orderBy: [
             {
-              createdAt: 'desc',
+              publishedAt: 'desc',
             },
             {
               id: 'desc',
@@ -573,7 +573,7 @@ export class FeedRepository {
       return await this.prismaService.feedItem.findMany({
         orderBy: [
           {
-            createdAt: 'desc',
+            publishedAt: 'desc',
           },
           {
             id: 'desc',
@@ -666,7 +666,7 @@ export class FeedRepository {
           : undefined,
         orderBy: [
           {
-            createdAt: 'desc',
+            publishedAt: 'desc',
           },
           {
             id: 'desc',
