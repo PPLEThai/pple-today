@@ -295,8 +295,8 @@ function EventSection() {
       >
         <SlideScrollView>
           {elections.map((election) => (
-            <SlideItem key={election.id} className="flex flex-row items-stretch">
-              <ElectionCard election={election} />
+            <SlideItem key={election.id}>
+              <ElectionCard election={election} className="flex-1" />
             </SlideItem>
           ))}
         </SlideScrollView>

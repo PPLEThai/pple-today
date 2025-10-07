@@ -19,6 +19,7 @@ import {
   AlarmClockIcon,
   ArrowRightIcon,
   CalendarIcon,
+  CircleAlertIcon,
   ClockIcon,
   MapPinIcon,
   MapPinnedIcon,
@@ -36,34 +37,37 @@ interface ElectionCardProps extends PressableProps {
 export function ElectionCard({ election, className, ...props }: ElectionCardProps) {
   const router = useRouter()
   return (
-    <Pressable
-      className={cn(
-        'w-full bg-base-secondary-default rounded-2xl flex flex-col justify-between gap-2 p-4 overflow-hidden',
-        className
-      )}
-      onPress={() => router.push(`/election/${election.id}`)}
-      {...props}
-    >
-      <View className="flex flex-col gap-2">
-        <Icon
-          icon={PPLEIcon}
-          width={239}
-          height={239}
-          className="absolute -right-10 top-0 text-base-primary-default opacity-40"
-        />
-        <View className="flex flex-row justify-between w-full">
-          <Badge variant="secondary">
-            <Text>{getElectionTypeLabel(election.type)}</Text>
-          </Badge>
-          <ElectionStatusBadge status={election.status} />
+    <>
+      <Pressable
+        className={cn(
+          'w-full bg-base-secondary-default rounded-2xl flex flex-col justify-between gap-2 p-4 overflow-hidden',
+          className
+        )}
+        onPress={() => router.push(`/election/${election.id}`)}
+        {...props}
+      >
+        <View className="flex flex-col gap-2">
+          <Icon
+            icon={PPLEIcon}
+            width={239}
+            height={239}
+            className="absolute -right-10 top-0 text-base-primary-default opacity-40"
+          />
+          <View className="flex flex-row justify-between w-full">
+            <Badge variant="secondary">
+              <Text>{getElectionTypeLabel(election.type)}</Text>
+            </Badge>
+            <ElectionStatusBadge status={election.status} />
+          </View>
+          <H3 className="text-base-text-invert font-heading-bold text-xl line-clamp-2 self-start">
+            {election.name}
+          </H3>
+          <ElectionCardDetail election={election} />
         </View>
-        <H3 className="text-base-text-invert font-heading-bold text-xl line-clamp-2 self-start">
-          {election.name}
-        </H3>
-        <ElectionCardDetail election={election} />
-      </View>
-      <ElectionCardFooter election={election} />
-    </Pressable>
+        <ElectionCardFooter election={election} />
+      </Pressable>
+      <ElectionRegisterWarning election={election} />
+    </>
   )
 }
 
@@ -505,5 +509,24 @@ function ElectionRegisterButton(props: ElectionCardProps) {
       <Icon icon={UserRoundCheckIcon} size={16} />
       <Text>{isRegistered ? 'ลงทะเบียนแล้ว' : 'ลงทะเบียนเลือกตั้งออนไลน์'}</Text>
     </Button>
+  )
+}
+
+function ElectionRegisterWarning(props: ElectionCardProps) {
+  if (
+    props.election.type !== 'HYBRID' ||
+    props.election.status !== 'NOT_OPENED_VOTE' ||
+    dayjs().isBefore(props.election.closeRegister) ||
+    props.election.isRegistered
+  ) {
+    return null
+  }
+  return (
+    <View className="rounded-2xl p-2 flex flex-row gap-2 bg-base-bg-white border border-base-outline-default mt-2">
+      <Icon icon={CircleAlertIcon} size={24} className="text-base-primary-default" />
+      <Text className="text-xs text-base-text-medium font-heading-regular">
+        {'หากไม่ลงทะเบียนเลือกตั้งภายในเวลาที่กำหนดระบบจะจัดให้\nคุณเลือกตั้งในสถานที่โดยอัตโนมัติ'}
+      </Text>
+    </View>
   )
 }
