@@ -139,7 +139,7 @@ export const Data = () => {
         maxSize: 72,
       }),
     ],
-    [mutation.isPending, mutation.variables?.pathParams.hashtagId, setHashtagStatus]
+    [mutation.isPending, setHashtagStatus]
   )
 
   return (
