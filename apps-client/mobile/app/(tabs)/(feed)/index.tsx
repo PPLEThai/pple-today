@@ -7,7 +7,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-import { ExtractBodyResponse, QUERY_KEY_SYMBOL } from '@pple-today/api-client'
+import { ExtractBodyResponse } from '@pple-today/api-client'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { BottomSheetModal, BottomSheetScrollView } from '@pple-today/ui/bottom-sheet/index'
 import { Button } from '@pple-today/ui/button'
@@ -564,11 +564,7 @@ function FeedContent(props: PagerScrollViewProps) {
   const queryClient = useQueryClient()
   const onRefresh = React.useCallback(async () => {
     // invalidate all 'get' queries
-    queryClient.invalidateQueries({
-      predicate: (query) => {
-        return query.queryKey[0] === QUERY_KEY_SYMBOL
-      },
-    })
+    queryClient.invalidateQueries({ queryKey: reactQueryClient.getKey('get') })
     await Promise.all([
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/feed/me') }),
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/announcements') }),
