@@ -145,11 +145,13 @@ function ElectionCardDetail(props: ElectionCardProps) {
         return (
           <>
             <ElectionOpenVotingDate election={props.election} />
-            <Badge variant="outline" className="self-stretch">
-              <Text className="text-base-text-invert">
-                หมดเวลาลงทะเบียนแล้ว คุณมีสิทธิ์เลือกตั้งในสถานที่
-              </Text>
-            </Badge>
+            {!props.election.isRegistered && (
+              <Badge variant="outline" className="self-stretch">
+                <Text className="text-base-text-invert">
+                  หมดเวลาลงทะเบียนแล้ว คุณมีสิทธิ์เลือกตั้งในสถานที่
+                </Text>
+              </Badge>
+            )}
           </>
         )
       }
