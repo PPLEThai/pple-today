@@ -36,7 +36,8 @@ BEGIN
       FROM
         all_feed_item_interaction afii
         INNER JOIN "PostHashTag" pht ON pht."postId" = afii.feed_item_id
-        INNER JOIN "HashTag" ht ON ht."id" = pht."hashTagId" AND ht."status" = 'PUBLISH'
+        INNER JOIN "HashTag" ht ON ht."id" = pht."hashTagId"
+      WHERE ht."status" = 'PUBLISHED'
       GROUP BY
         pht."hashTagId"
     ),
@@ -48,9 +49,10 @@ BEGIN
       FROM
         all_feed_item_interaction afii
         INNER JOIN "PollTopic" htp ON htp."pollId" = afii.feed_item_id
-        INNER JOIN "Topic" t ON t."id" = htp."topicId" AND t."status" = 'PUBLISH'
+        INNER JOIN "Topic" t ON t."id" = htp."topicId"
         INNER JOIN "HashTagInTopic" htit ON htit."topicId" = t."id"
-        INNER JOIN "HashTag" ht ON ht."id" = htit."hashTagId" AND ht."status" = 'PUBLISH'
+        INNER JOIN "HashTag" ht ON ht."id" = htit."hashTagId"
+      WHERE ht."status" = 'PUBLISHED' AND t."status" = 'PUBLISHED'
       GROUP BY
         ht."id"
     ),
@@ -88,7 +90,8 @@ BEGIN
         "Poll" p
         INNER JOIN "PollTopic" pt ON pt."pollId" = p."feedItemId"
         INNER JOIN all_possible_interest_topic apit ON apit.topic_id = pt."topicId"
-        INNER JOIN "Topic" t ON t."id" = apit."topic_id" AND t."status" = 'PUBLISH'
+        INNER JOIN "Topic" t ON t."id" = apit."topic_id"
+      WHERE p."status" = 'PUBLISHED' AND t."status" = 'PUBLISHED'
       GROUP BY
         p."feedItemId"
     ),
@@ -101,7 +104,8 @@ BEGIN
         "Post" p
         INNER JOIN "PostHashTag" fi ON fi."postId" = p."feedItemId"
         INNER JOIN all_possible_interested_hashtag apih ON apih."hashtag_id" = fi."hashTagId"
-        INNER JOIN "HashTag" ht ON ht."id" = apih."hashtag_id" AND ht."status" = 'PUBLISH'
+        INNER JOIN "HashTag" ht ON ht."id" = apih."hashtag_id"
+      WHERE p."status" = 'PUBLISHED' AND ht."status" = 'PUBLISHED'
       GROUP BY
         p."feedItemId"
     ),
@@ -140,6 +144,7 @@ BEGIN
         candidate_score cs
         INNER JOIN "FeedItem" fi ON fi."id" = cs.feed_item_id
         LEFT JOIN "FeedItemReactionCount" firc ON firc."feedItemId" = cs.feed_item_id
+      WHERE fi."publishedAt" IS NOT NULL
       GROUP BY
         cs."score", fi."id", cs."feed_item_id"
     )

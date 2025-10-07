@@ -18,11 +18,30 @@ WITH
         GROUP BY
             candidate_feed_item.feed_item_id
     ),
+    published_feed_items AS (
+      SELECT 
+        fi."id" AS id,
+        fi."publishedAt" AS published_at
+      FROM
+        "Poll" p
+        INNER JOIN "FeedItem" fi ON fi."id" = p."feedItemId"
+      WHERE p."status" = 'PUBLISHED' AND fi."publishedAt" IS NOT NULL
+      UNION ALL
+      SELECT
+        fi."id" AS id,
+        fi."publishedAt" AS published_at
+      FROM
+        "Post" p
+        INNER JOIN "FeedItem" fi ON fi."id" = p."feedItemId"
+      WHERE p."status" = 'PUBLISHED' AND fi."publishedAt" IS NOT NULL
+    ),
     other_feed_items AS (
-        SELECT fi.id AS feed_item_id, (RANDOM () / 100) * EXP(-LEAST(extract(EPOCH FROM (NOW() - fi."createdAt")) / 86400, 30)) AS score
+        SELECT 
+            pfi.id AS feed_item_id, 
+            (RANDOM () / 100) * EXP(-LEAST(extract(EPOCH FROM (NOW() - pfi.published_at)) / 86400, 30)) AS score
         FROM
-            "FeedItem" fi
-            LEFT JOIN aggregated_feed_items afi ON afi.feed_item_id = fi.id
+            published_feed_items pfi
+            LEFT JOIN aggregated_feed_items afi ON afi.feed_item_id = pfi.id
         WHERE
             afi.feed_item_id IS NULL
     ),
@@ -36,4 +55,8 @@ WITH
         LIMIT 1000
     )
 
-SELECT final_candidate_score."feed_item_id", final_candidate_score."score" FROM final_candidate_score;
+SELECT 
+    final_candidate_score."feed_item_id", 
+    final_candidate_score."score" 
+FROM 
+    final_candidate_score;

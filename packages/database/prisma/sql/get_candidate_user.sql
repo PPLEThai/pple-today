@@ -52,12 +52,18 @@ WITH
       other_candidate_user.score
     FROM 
       other_candidate_user
+      INNER JOIN "User" u ON other_candidate_user.user_id = u.id
+    WHERE 
+      u."status" = 'ACTIVE'
     UNION ALL
     SELECT 
       candidate_user.user_id,
       candidate_user.score
     FROM
       candidate_user
+      INNER JOIN "User" u ON candidate_user.user_id = u.id
+    WHERE 
+      u."status" = 'ACTIVE'
   ),
 
   final_candidate_score AS (

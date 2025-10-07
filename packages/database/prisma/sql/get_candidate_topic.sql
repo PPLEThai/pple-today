@@ -35,7 +35,7 @@ WITH
 			"Topic" t
 			LEFT JOIN excluded_topic et ON t.id = et.topic_id
 		WHERE
-			et.topic_id IS NULL AND t."status" = 'PUBLISHED'
+			et.topic_id IS NULL
 		ORDER BY
 			RANDOM() DESC
 		LIMIT
@@ -43,16 +43,20 @@ WITH
 	),
 	final_candidate_score AS (
 		SELECT
-			other_candidate_topic.topic_id,
+			ct.topic_id,
 			0 AS score
 		FROM
-			other_candidate_topic
+			other_candidate_topic ct
+			INNER JOIN "Topic" t ON t."id" = ct.topic_id
+		WHERE t."status" = 'PUBLISHED'
 		UNION ALL
 		SELECT
-			candidate_topic.topic_id,
-			candidate_topic.score
+			ct.topic_id,
+			ct.score
 		FROM
-			candidate_topic
+			candidate_topic ct
+			INNER JOIN "Topic" t ON t."id" = ct.topic_id
+		WHERE t."status" = 'PUBLISHED'
 	),
 	final_candidate_score_with_random AS (
 		SELECT
@@ -67,6 +71,7 @@ WITH
 		LIMIT
 			10
 	)
+
 SELECT
 	final_candidate_score_with_random."topic_id"
 FROM
