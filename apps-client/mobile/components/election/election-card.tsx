@@ -449,7 +449,11 @@ function ElectionRegisterButton(props: ElectionCardProps) {
     <Button
       size="sm"
       className="flex-1"
-      disabled={isRegistered || electionRegisterMutation.isPending}
+      disabled={
+        isRegistered ||
+        electionRegisterMutation.isPending ||
+        dayjs().isBefore(props.election.openRegister)
+      }
       onPress={() => {
         if (isRegistered) return
         setIsRegistered(true)
