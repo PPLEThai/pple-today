@@ -1,6 +1,6 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { HashTagStatus, TopicStatus } from '@pple-today/database/prisma'
+import { HashTagStatus, Prisma, TopicStatus } from '@pple-today/database/prisma'
 import { get_candidate_topic } from '@pple-today/database/prisma/sql'
 import Elysia from 'elysia'
 import * as R from 'remeda'
@@ -9,6 +9,15 @@ import { PrismaServicePlugin } from '../../plugins/prisma'
 
 export class TopicRepository {
   constructor(private readonly prismaService: PrismaService) {}
+
+  private ensureTopicExists = async (topicId: string, tx: Prisma.TransactionClient) => {
+    await tx.topic.findUniqueOrThrow({
+      where: {
+        id: topicId,
+        status: TopicStatus.PUBLISHED,
+      },
+    })
+  }
 
   async getTopicRecommendation(userId: string) {
     return fromRepositoryPromise(async () => {
@@ -23,6 +32,7 @@ export class TopicRepository {
               R.filter((id) => id !== null)
             ),
           },
+          status: TopicStatus.PUBLISHED,
         },
         select: {
           id: true,
@@ -106,7 +116,8 @@ export class TopicRepository {
     return fromRepositoryPromise(
       this.prismaService.userFollowsTopic.findMany({
         where: {
-          userId: { equals: userId },
+          userId,
+          topic: { status: TopicStatus.PUBLISHED },
         },
         orderBy: { createdAt: 'asc' },
         include: {
@@ -126,43 +137,51 @@ export class TopicRepository {
 
   async createUserFollowTopic(userId: string, topicId: string) {
     return fromRepositoryPromise(
-      this.prismaService.user.update({
-        where: {
-          id: userId,
-        },
-        data: {
-          followedTopics: {
-            create: {
-              topicId,
+      this.prismaService.$transaction(async (tx) => {
+        await this.ensureTopicExists(topicId, tx)
+
+        return await this.prismaService.user.update({
+          where: {
+            id: userId,
+          },
+          data: {
+            followedTopics: {
+              create: {
+                topicId,
+              },
+            },
+            numberOfFollowingTopics: {
+              increment: 1,
             },
           },
-          numberOfFollowingTopics: {
-            increment: 1,
-          },
-        },
+        })
       })
     )
   }
 
   async deleteUserFollowTopic(userId: string, topicId: string) {
     return fromRepositoryPromise(
-      this.prismaService.user.update({
-        where: {
-          id: userId,
-        },
-        data: {
-          followedTopics: {
-            delete: {
-              userId_topicId: {
-                userId,
-                topicId,
+      this.prismaService.$transaction(async (tx) => {
+        await this.ensureTopicExists(topicId, tx)
+
+        return await this.prismaService.user.update({
+          where: {
+            id: userId,
+          },
+          data: {
+            followedTopics: {
+              delete: {
+                userId_topicId: {
+                  userId,
+                  topicId,
+                },
               },
             },
+            numberOfFollowingTopics: {
+              decrement: 1,
+            },
           },
-          numberOfFollowingTopics: {
-            decrement: 1,
-          },
-        },
+        })
       })
     )
   }

@@ -1,6 +1,7 @@
 import { PrismaPg } from '@prisma/adapter-pg'
 
 import {
+  AnnouncementStatus,
   AnnouncementType,
   BannerNavigationType,
   BannerStatusType,
@@ -253,6 +254,7 @@ const seedPolls = async () => {
         author: {
           connect: { id: OFFICIAL_USER_ID },
         },
+        publishedAt: new Date(),
         type: FeedItemType.POLL,
         poll: {
           create: {
@@ -294,6 +296,7 @@ const seedPolls = async () => {
           endAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
           title: 'Draft Poll 1',
           description: 'This is a draft poll.',
+          status: PollStatus.DRAFT,
           options: {
             create: [
               { id: 'draft-option-1', title: 'Option 1' },
@@ -327,11 +330,13 @@ const seedAnnouncements = async () => {
       author: {
         connect: { id: OFFICIAL_USER_ID },
       },
+      publishedAt: new Date(),
       announcement: {
         create: {
           title: 'Welcome to PPLE Today',
           content: 'This is the first announcement on PPLE Today.',
           type: AnnouncementType.OFFICIAL,
+          status: AnnouncementStatus.PUBLISHED,
           attachments: {
             create: [
               {
@@ -355,11 +360,13 @@ const seedAnnouncements = async () => {
       author: {
         connect: { id: OFFICIAL_USER_ID },
       },
+      publishedAt: new Date(),
       announcement: {
         create: {
           title: 'Welcome to PPLE Today',
           content: 'This is the second announcement on PPLE Today.',
           type: AnnouncementType.OFFICIAL,
+          status: AnnouncementStatus.PUBLISHED,
           attachments: {
             create: [
               {
@@ -383,11 +390,13 @@ const seedAnnouncements = async () => {
       author: {
         connect: { id: OFFICIAL_USER_ID },
       },
+      publishedAt: new Date(),
       announcement: {
         create: {
           title: 'Welcome to PPLE Today',
           content: 'This is the third announcement on PPLE Today.',
           type: AnnouncementType.OFFICIAL,
+          status: AnnouncementStatus.PUBLISHED,
           attachments: {
             create: [
               {
