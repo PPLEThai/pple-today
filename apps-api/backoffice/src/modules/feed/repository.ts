@@ -30,6 +30,25 @@ export class FeedRepository {
     private fileService: FileService
   ) {}
 
+  private constructResultWithMeta<T extends { id: string }>(
+    data: T[],
+    config: {
+      needShuffle?: boolean
+      limit: number
+      cursor?: string
+    }
+  ) {
+    return {
+      items: config.needShuffle ? R.shuffle(data) : data,
+      meta: {
+        cursor: {
+          next: data.length === config.limit ? data[config.limit - 1].id : null,
+          previous: config.cursor || null,
+        },
+      },
+    }
+  }
+
   private ensureFeedItemExists = async (feedItemId: string, tx?: Prisma.TransactionClient) => {
     const queryStm = {
       where: {
@@ -297,7 +316,17 @@ export class FeedRepository {
       return err(feedItemErr.error)
     }
 
-    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
+    const transformedFeedItems = feedItems.map(
+      (feedItem) => (feedItem as Ok<FeedItem, never>).value
+    )
+
+    return ok(
+      this.constructResultWithMeta(transformedFeedItems, {
+        needShuffle: false,
+        limit,
+        cursor,
+      })
+    )
   }
 
   async listHashTagFeedItems({
@@ -381,7 +410,17 @@ export class FeedRepository {
       return err(feedItemErr.error)
     }
 
-    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
+    const transformedFeedItems = feedItems.map(
+      (feedItem) => (feedItem as Ok<FeedItem, never>).value
+    )
+
+    return ok(
+      this.constructResultWithMeta(transformedFeedItems, {
+        needShuffle: false,
+        limit,
+        cursor,
+      })
+    )
   }
 
   async listFeedItems({
@@ -508,7 +547,17 @@ export class FeedRepository {
       return err(feedItemErr.error)
     }
 
-    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
+    const transformedFeedItems = feedItems.map(
+      (feedItem) => (feedItem as Ok<FeedItem, never>).value
+    )
+
+    return ok(
+      this.constructResultWithMeta(transformedFeedItems, {
+        needShuffle: true,
+        limit,
+        cursor,
+      })
+    )
   }
 
   async listFeedItemsByUserId(
@@ -559,7 +608,17 @@ export class FeedRepository {
       return err(feedItemErr.error)
     }
 
-    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
+    const transformedFeedItems = feedItems.map(
+      (feedItem) => (feedItem as Ok<FeedItem, never>).value
+    )
+
+    return ok(
+      this.constructResultWithMeta(transformedFeedItems, {
+        needShuffle: false,
+        limit: query.limit,
+        cursor: query.cursor,
+      })
+    )
   }
 
   async getFeedItemById(feedItemId: string, userId?: string) {
@@ -657,7 +716,17 @@ export class FeedRepository {
       return err(feedItemErr.error)
     }
 
-    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
+    const transformedFeedItems = feedItems.map(
+      (feedItem) => (feedItem as Ok<FeedItem, never>).value
+    )
+
+    return ok(
+      this.constructResultWithMeta(transformedFeedItems, {
+        needShuffle: false,
+        limit,
+        cursor,
+      })
+    )
   }
 
   async getFeedItemReactionByUserId({

@@ -3,6 +3,7 @@ import {
   FeedItem,
   FeedItemComment,
   ListCursorQuery,
+  ListCursorResponse,
 } from '@pple-today/api-common/dtos'
 import { FeedItemReactionType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
@@ -99,13 +100,13 @@ export type DeleteFeedCommentResponse = Static<typeof DeleteFeedCommentResponse>
 export const GetMyFeedQuery = CursorPaginationQuery
 export type GetMyFeedQuery = Static<typeof GetMyFeedQuery>
 
-export const GetMyFeedResponse = t.Array(FeedItem)
+export const GetMyFeedResponse = ListCursorResponse(FeedItem)
 export type GetMyFeedResponse = Static<typeof GetMyFeedResponse>
 
 export const GetFollowingFeedQuery = CursorPaginationQuery
 export type GetFollowingFeedQuery = Static<typeof GetFollowingFeedQuery>
 
-export const GetFollowingFeedResponse = t.Array(FeedItem)
+export const GetFollowingFeedResponse = ListCursorResponse(FeedItem)
 export type GetFollowingFeedResponse = Static<typeof GetFollowingFeedResponse>
 
 export const GetTopicFeedQuery = ListCursorQuery(
@@ -117,7 +118,7 @@ export const GetTopicFeedQuery = ListCursorQuery(
 )
 export type GetTopicFeedQuery = Static<typeof GetTopicFeedQuery>
 
-export const GetTopicFeedResponse = t.Array(FeedItem)
+export const GetTopicFeedResponse = ListCursorResponse(FeedItem)
 export type GetTopicFeedResponse = Static<typeof GetTopicFeedResponse>
 
 export const GetHashTagFeedQuery = ListCursorQuery(
@@ -129,7 +130,7 @@ export const GetHashTagFeedQuery = ListCursorQuery(
 )
 export type GetHashTagFeedQuery = Static<typeof GetHashTagFeedQuery>
 
-export const GetHashTagFeedResponse = t.Array(FeedItem)
+export const GetHashTagFeedResponse = ListCursorResponse(FeedItem)
 export type GetHashTagFeedResponse = Static<typeof GetHashTagFeedResponse>
 
 export const GetFeedItemsByUserIdParams = t.Object({
@@ -140,5 +141,5 @@ export type GetFeedItemsByUserIdParams = Static<typeof GetFeedItemsByUserIdParam
 export const GetFeedItemsByUserIdQuery = CursorPaginationQuery
 export type GetFeedItemsByUserIdQuery = Static<typeof GetFeedItemsByUserIdQuery>
 
-export const GetFeedItemsByUserIdResponse = t.Array(FeedItem)
+export const GetFeedItemsByUserIdResponse = ListCursorResponse(FeedItem)
 export type GetFeedItemsByUserIdResponse = Static<typeof GetFeedItemsByUserIdResponse>

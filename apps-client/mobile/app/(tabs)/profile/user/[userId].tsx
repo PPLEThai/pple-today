@@ -62,22 +62,19 @@ export default function ProfilePage() {
     queryFn: async ({ pageParam }) => {
       const response = await fetchClient('/feed/users/:id', {
         params: { id: userId! },
-        query: { page: pageParam, limit: LIMIT },
+        query: { cursor: pageParam, limit: LIMIT },
       })
       if (response.error) {
         throw response.error
       }
       return response.data
     },
-    initialPageParam: 1,
+    initialPageParam: '',
     getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage && lastPage.length === 0) {
+      if (lastPage && !lastPage.meta.cursor.next) {
         return undefined
       }
-      if (lastPage.length < LIMIT) {
-        return undefined
-      }
-      return lastPageParam + 1
+      return lastPage.meta.cursor.next
     },
     enabled: !!userId,
   })
@@ -132,15 +129,15 @@ export default function ProfilePage() {
   }, [queryClient, userFeedInfiniteQuery.refetch])
 
   const renderFeedItem = React.useCallback(
-    ({ item }: { item: GetFeedItemsByUserIdResponse[number]; index: number }) => {
+    ({ item }: { item: GetFeedItemsByUserIdResponse['items'][number]; index: number }) => {
       return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-3" />
     },
     []
   )
 
-  const data = React.useMemo((): GetFeedItemsByUserIdResponse => {
+  const data = React.useMemo((): GetFeedItemsByUserIdResponse['items'] => {
     if (!userFeedInfiniteQuery.data) return []
-    return userFeedInfiniteQuery.data.pages.flat()
+    return userFeedInfiniteQuery.data.pages.flatMap((page) => page.items)
   }, [userFeedInfiniteQuery.data])
 
   const renderProfileSection = () => {

@@ -31,3 +31,24 @@ export const ListQuery = <T extends TSchema>(baseQuery: T) => {
 export const ListCursorQuery = <T extends TSchema>(baseQuery: T) => {
   return t.Composite([baseQuery, CursorPaginationQuery])
 }
+
+export const ListCursorResponse = <T extends TSchema>(itemSchema: T) => {
+  return t.Object({
+    items: t.Array(itemSchema),
+    meta: t.Object({
+      cursor: t.Object({
+        next: t.Nullable(
+          t.String({
+            description: 'The cursor for the next page which is the last item ID of current page',
+          })
+        ),
+        previous: t.Nullable(
+          t.String({
+            description:
+              'The cursor for the previous page which is the first item ID of current page',
+          })
+        ),
+      }),
+    }),
+  })
+}

@@ -68,22 +68,19 @@ function HashtagFeed(props: { hashtagId: string; header?: React.ReactElement }) 
     queryKey: reactQueryClient.getQueryKey('/feed/hashtag'),
     queryFn: async ({ pageParam }) => {
       const response = await fetchClient('/feed/hashtag', {
-        query: { page: pageParam, limit: LIMIT, hashTagId: props.hashtagId },
+        query: { cursor: pageParam || undefined, limit: LIMIT, hashTagId: props.hashtagId },
       })
       if (response.error) {
         throw response.error
       }
       return response.data
     },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage && lastPage.length === 0) {
+    initialPageParam: '',
+    getNextPageParam: (lastPage) => {
+      if (lastPage && !lastPage.meta.cursor.next) {
         return undefined
       }
-      if (lastPage.length < LIMIT) {
-        return undefined
-      }
-      return lastPageParam + 1
+      return lastPage.meta.cursor.next
     },
   })
   React.useEffect(() => {
@@ -100,13 +97,13 @@ function HashtagFeed(props: { hashtagId: string; header?: React.ReactElement }) 
   }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
 
   type GetHashtagFeedResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/hashtag'>
-  const data = React.useMemo((): GetHashtagFeedResponse => {
+  const data = React.useMemo((): GetHashtagFeedResponse['items'] => {
     if (!feedInfiniteQuery.data) return []
-    return feedInfiniteQuery.data.pages.flatMap((page) => page)
+    return feedInfiniteQuery.data.pages.flatMap((page) => page.items)
   }, [feedInfiniteQuery.data])
 
   const renderFeedItem = React.useCallback(
-    ({ item }: { item: GetHashtagFeedResponse[number]; index: number }) => {
+    ({ item }: { item: GetHashtagFeedResponse['items'][number]; index: number }) => {
       return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-4" />
     },
     []

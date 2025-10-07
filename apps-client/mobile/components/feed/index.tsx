@@ -34,7 +34,12 @@ export function FeedRefreshControl({
 }
 
 interface FeedFooterProps {
-  queryResult: UseInfiniteQueryResult<InfiniteData<unknown[]>>
+  queryResult: UseInfiniteQueryResult<
+    InfiniteData<{
+      items: unknown[]
+      meta: { cursor: { next: string | null } }
+    }>
+  >
   className?: string
 }
 export function FeedFooter({ queryResult, className }: FeedFooterProps) {
@@ -45,7 +50,7 @@ export function FeedFooter({ queryResult, className }: FeedFooterProps) {
   if (
     queryResult.data &&
     queryResult.data.pages.length === 1 &&
-    queryResult.data.pages[0].length === 0
+    queryResult.data.pages[0].items.length === 0
   ) {
     // Empty State
     return (

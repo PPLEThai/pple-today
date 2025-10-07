@@ -491,31 +491,39 @@ function FeedContent(props: PagerScrollViewProps) {
     }
   }, [isFocused, scrollElRef, setScrollViewTag])
 
-  type MyFeedItem = GetMyFeedResponse[number] | { type: 'SUGGESTION' }
+  type MyFeedItem = GetMyFeedResponse['items'][number] | { type: 'SUGGESTION' }
   const feedInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/feed/me'),
-    queryFn: async ({ pageParam }): Promise<MyFeedItem[]> => {
+    queryFn: async ({
+      pageParam,
+    }): Promise<{
+      items: MyFeedItem[]
+      meta: { cursor: { next: string | null; previous: string | null } }
+    }> => {
       const response = await fetchClient('/feed/me', {
-        query: { page: pageParam, limit: LIMIT },
+        query: { cursor: pageParam || undefined, limit: LIMIT },
       })
       if (response.error) {
         throw response.error
       }
-      if (pageParam === 1) {
+      if (pageParam === '') {
         // insert suggestion after first 2 posts
-        return [...response.data.slice(0, 2), { type: 'SUGGESTION' }, ...response.data.slice(2)]
+        const newItems: MyFeedItem[] = [...response.data.items]
+        newItems.splice(2, 0, { type: 'SUGGESTION' })
+
+        return {
+          items: newItems,
+          meta: response.data.meta,
+        }
       }
       return response.data
     },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage && lastPage.length === 0) {
+    initialPageParam: '',
+    getNextPageParam: (lastPage) => {
+      if (lastPage && lastPage.meta.cursor.next === null) {
         return undefined
       }
-      if (lastPage.length < LIMIT) {
-        return undefined
-      }
-      return lastPageParam + 1
+      return lastPage.meta.cursor.next
     },
   })
   React.useEffect(() => {
@@ -533,7 +541,7 @@ function FeedContent(props: PagerScrollViewProps) {
 
   const data = React.useMemo((): MyFeedItem[] => {
     if (!feedInfiniteQuery.data) return []
-    return feedInfiniteQuery.data.pages.flatMap((page) => page)
+    return feedInfiniteQuery.data.pages.flatMap((page) => page.items)
   }, [feedInfiniteQuery.data])
 
   const scrollContext = useScrollContext()
@@ -599,22 +607,19 @@ function FeedTopicContent(props: FeedTopicContentProps) {
     queryKey: reactQueryClient.getQueryKey('/feed/topic', { query: { topicId } }),
     queryFn: async ({ pageParam }) => {
       const response = await fetchClient('/feed/topic', {
-        query: { page: pageParam, limit: LIMIT, topicId },
+        query: { cursor: pageParam || undefined, limit: LIMIT, topicId },
       })
       if (response.error) {
         throw response.error
       }
       return response.data
     },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage && lastPage.length === 0) {
+    initialPageParam: '',
+    getNextPageParam: (lastPage) => {
+      if (lastPage && lastPage.meta.cursor.next === null) {
         return undefined
       }
-      if (lastPage.length < LIMIT) {
-        return undefined
-      }
-      return lastPageParam + 1
+      return lastPage.meta.cursor.next
     },
   })
   React.useEffect(() => {
@@ -631,9 +636,9 @@ function FeedTopicContent(props: FeedTopicContentProps) {
   }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
 
   type GetMyFeedResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/me'>
-  const data = React.useMemo((): GetMyFeedResponse => {
+  const data = React.useMemo((): GetMyFeedResponse['items'] => {
     if (!feedInfiniteQuery.data) return []
-    return feedInfiniteQuery.data.pages.flatMap((page) => page)
+    return feedInfiniteQuery.data.pages.flatMap((page) => page.items)
   }, [feedInfiniteQuery.data])
 
   const scrollContext = useScrollContext()
@@ -651,7 +656,7 @@ function FeedTopicContent(props: FeedTopicContentProps) {
   }, [queryClient, topicId, feedInfiniteQuery.refetch])
 
   const renderFeedItem = React.useCallback(
-    ({ item }: { item: GetMyFeedResponse[number]; index: number }) => {
+    ({ item }: { item: GetMyFeedResponse['items'][number]; index: number }) => {
       return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-4" />
     },
     []
