@@ -8,7 +8,7 @@ import { Text } from '@pple-today/ui/text'
 import { H1, H2 } from '@pple-today/ui/typography'
 import dayjs from 'dayjs'
 import * as Linking from 'expo-linking'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { Link, useLocalSearchParams, useRouter } from 'expo-router'
 import {
   ArrowLeftIcon,
   CalendarIcon,
@@ -48,6 +48,7 @@ export default function ElectionDetailPage() {
     return null
   }
   if (electionQuery.isLoading || !electionQuery.data) {
+    // TODO: skeleton
     return null
   }
   const election = electionQuery.data
@@ -95,62 +96,55 @@ export default function ElectionDetailPage() {
     },
   ]
   return (
-    <SafeAreaLayout>
-      <View className="flex-1 flex-col bg-base-bg-white">
-        <View className="pt-4 pb-2 px-4 bg-base-bg-white">
-          <Button
-            variant="outline-primary"
-            size="icon"
-            onPress={() => router.back()}
-            aria-label="Go back"
-          >
-            <Icon icon={ArrowLeftIcon} size={24} />
-          </Button>
-        </View>
-        <ScrollView contentContainerClassName="flex flex-col gap-3 px-4">
-          <H1 className="text-xl font-heading-semibold text-base-text-high">{election.name}</H1>
-          <View className="flex flex-row gap-1 items-center">
-            <Icon
-              icon={CalendarIcon}
-              className="text-base-primary-default"
-              size={16}
-              strokeWidth={1.5}
-            />
-            <Text className="text-xs text-base-primary-default font-heading-semibold">
-              {dayjs(election.openVoting).format('D MMM BBBB เวลา HH:mm')}
-            </Text>
-          </View>
-          {(election.type === 'ONSITE' || election.type === 'HYBRID') && (
-            <Pressable
-              className="flex flex-row gap-1 items-center"
-              onPress={() => {
-                if (election.locationMapUrl) {
-                  Linking.openURL(election.locationMapUrl!)
-                }
-              }}
-            >
-              <Icon
-                icon={MapPinIcon}
-                className="text-base-text-medium"
-                size={12}
-                strokeWidth={1.5}
-              />
-              <Text className="text-xs text-base-text-medium font-heading-semibold">
-                {election.location}
-              </Text>
-            </Pressable>
-          )}
-          <ElectionDetailCard election={election} />
-          {election.description && (
-            <Text className="text-base font-body-regular text-base-text-high">
-              {election.description}
-            </Text>
-          )}
-          <ElectionCandidateList election={election} />
-          <ElectionResult election={election} />
-        </ScrollView>
-        <ElectionAction election={election} />
+    <SafeAreaLayout className="flex-1 flex-col bg-base-bg-white">
+      <View className="pt-4 pb-2 px-4 bg-base-bg-white">
+        <Button
+          variant="outline-primary"
+          size="icon"
+          onPress={() => router.back()}
+          aria-label="Go back"
+        >
+          <Icon icon={ArrowLeftIcon} size={24} />
+        </Button>
       </View>
+      <ScrollView contentContainerClassName="flex flex-col gap-3 px-4">
+        <H1 className="text-xl font-heading-semibold text-base-text-high">{election.name}</H1>
+        <View className="flex flex-row gap-1 items-center">
+          <Icon
+            icon={CalendarIcon}
+            className="text-base-primary-default"
+            size={16}
+            strokeWidth={1.5}
+          />
+          <Text className="text-xs text-base-primary-default font-heading-semibold">
+            {dayjs(election.openVoting).format('D MMM BBBB เวลา HH:mm')}
+          </Text>
+        </View>
+        {(election.type === 'ONSITE' || election.type === 'HYBRID') && (
+          <Pressable
+            className="flex flex-row gap-1 items-center"
+            onPress={() => {
+              if (election.locationMapUrl) {
+                Linking.openURL(election.locationMapUrl!)
+              }
+            }}
+          >
+            <Icon icon={MapPinIcon} className="text-base-text-medium" size={12} strokeWidth={1.5} />
+            <Text className="text-xs text-base-text-medium font-heading-semibold">
+              {election.location}
+            </Text>
+          </Pressable>
+        )}
+        <ElectionDetailCard election={election} />
+        {election.description && (
+          <Text className="text-base font-body-regular text-base-text-high">
+            {election.description}
+          </Text>
+        )}
+        <ElectionCandidateList election={election} />
+        <ElectionResult election={election} />
+      </ScrollView>
+      <ElectionAction election={election} />
     </SafeAreaLayout>
   )
 }
@@ -162,11 +156,12 @@ function ElectionAction({ election }: { election: ElectionWithCurrentStatus }) {
   ) {
     return (
       <View className="p-4">
-        {/* TODO */}
-        <Button>
-          <Icon icon={VoteIcon} size={16} />
-          <Text>{election.isVoted ? 'ลงคะแนนใหม่' : 'ลงคะแนน'}</Text>
-        </Button>
+        <Link href={`/election/${election.id}/vote`} asChild>
+          <Button>
+            <Icon icon={VoteIcon} size={16} />
+            <Text>{election.isVoted ? 'ลงคะแนนใหม่' : 'ลงคะแนน'}</Text>
+          </Button>
+        </Link>
       </View>
     )
   }
