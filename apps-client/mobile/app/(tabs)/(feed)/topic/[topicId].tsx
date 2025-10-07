@@ -54,7 +54,7 @@ export default function TopicDetailPage() {
     queryKey: reactQueryClient.getQueryKey('/feed/topic'),
     queryFn: async ({ pageParam }) => {
       const response = await fetchClient('/feed/topic', {
-        query: { cursor: pageParam || undefined, limit: LIMIT, topicId: topicId! },
+        query: { cursor: pageParam, limit: LIMIT, topicId: topicId! },
       })
       if (response.error) {
         throw response.error

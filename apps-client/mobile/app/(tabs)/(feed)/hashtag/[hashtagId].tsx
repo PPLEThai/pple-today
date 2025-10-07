@@ -68,7 +68,7 @@ function HashtagFeed(props: { hashtagId: string; header?: React.ReactElement }) 
     queryKey: reactQueryClient.getQueryKey('/feed/hashtag'),
     queryFn: async ({ pageParam }) => {
       const response = await fetchClient('/feed/hashtag', {
-        query: { cursor: pageParam || undefined, limit: LIMIT, hashTagId: props.hashtagId },
+        query: { cursor: pageParam, limit: LIMIT, hashTagId: props.hashtagId },
       })
       if (response.error) {
         throw response.error

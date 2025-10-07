@@ -494,7 +494,7 @@ function FeedFollowingContent(props: PagerScrollViewProps) {
     queryKey: reactQueryClient.getQueryKey('/feed/following'),
     queryFn: async ({ pageParam }) => {
       const response = await fetchClient('/feed/following', {
-        query: { cursor: pageParam || undefined, limit: LIMIT },
+        query: { cursor: pageParam, limit: LIMIT },
       })
       if (response.error) {
         throw response.error
@@ -588,7 +588,7 @@ function FeedContent(props: PagerScrollViewProps) {
       meta: { cursor: { next: string | null; previous: string | null } }
     }> => {
       const response = await fetchClient('/feed/me', {
-        query: { cursor: pageParam || undefined, limit: LIMIT },
+        query: { cursor: pageParam, limit: LIMIT },
       })
       if (response.error) {
         throw response.error
@@ -694,7 +694,7 @@ function FeedTopicContent(props: FeedTopicContentProps) {
     queryKey: reactQueryClient.getQueryKey('/feed/topic', { query: { topicId } }),
     queryFn: async ({ pageParam }) => {
       const response = await fetchClient('/feed/topic', {
-        query: { cursor: pageParam || undefined, limit: LIMIT, topicId },
+        query: { cursor: pageParam, limit: LIMIT, topicId },
       })
       if (response.error) {
         throw response.error
