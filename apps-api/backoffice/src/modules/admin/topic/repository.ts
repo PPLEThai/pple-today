@@ -2,7 +2,6 @@ import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err } from '@pple-today/api-common/utils'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -36,6 +35,11 @@ export class AdminTopicRepository {
             status: true,
             createdAt: true,
             updatedAt: true,
+            _count: {
+              select: {
+                followedTopics: true,
+              },
+            },
           },
           take: limit,
           skip,
@@ -63,7 +67,13 @@ export class AdminTopicRepository {
         }),
       ])
 
-      return { data, count }
+      return {
+        data: data.map(({ _count, ...topicData }) => ({
+          ...topicData,
+          followedTopicsCount: _count.followedTopics,
+        })),
+        meta: { count },
+      }
     })
   }
 
@@ -152,20 +162,20 @@ export class AdminTopicRepository {
       this.prismaService.topic.update({
         where: { id: topicId },
         data: {
-          name: data.name ?? Prisma.skip,
-          description: data.description ?? Prisma.skip,
-          bannerImagePath: newBannerImage ?? Prisma.skip,
-          status: data.status ?? Prisma.skip,
-          hashTagInTopics: data.hashtagIds
-            ? {
-                deleteMany: {},
-                createMany: {
-                  data: data.hashtagIds.map((hashtagId) => ({
-                    hashTagId: hashtagId,
-                  })),
-                },
-              }
-            : Prisma.skip,
+          name: data.name,
+          description: data.description,
+          bannerImagePath: newBannerImage,
+          status: data.status,
+          ...(data.hashtagIds && {
+            hashTagInTopics: {
+              deleteMany: {},
+              createMany: {
+                data: data.hashtagIds.map((hashtagId) => ({
+                  hashTagId: hashtagId,
+                })),
+              },
+            },
+          }),
         },
       })
     )

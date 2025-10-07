@@ -6,11 +6,10 @@ import { NavLink } from 'react-router'
 import { Badge } from '@pple-today/web-ui/badge'
 import { Button } from '@pple-today/web-ui/button'
 import { DataTable } from '@pple-today/web-ui/data-table'
-import { Switch } from '@pple-today/web-ui/switch'
 import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
 import { createColumnHelper } from '@tanstack/react-table'
 import { TableCopyId } from 'components/TableCopyId'
-import { Pencil, Plus } from 'lucide-react'
+import { EyeOff, Megaphone, Pencil, Plus } from 'lucide-react'
 
 import { GetTopicsResponse, UpdateTopicBody, UpdateTopicParams } from '@api/backoffice/admin'
 
@@ -93,77 +92,81 @@ export const Data = () => {
       columnHelper.accessor('name', {
         header: 'ชื่อหัวข้อ',
       }),
-      // TODO - Follower
-      columnHelper.display({
+      columnHelper.accessor('followedTopicsCount', {
         header: 'ยอดผู้ติดตาม',
-        cell: () => {
-          const VALUE = 2400
-          return `${VALUE.toLocaleString('th', {
+        cell: (info) =>
+          `${info.getValue().toLocaleString('th', {
             notation: 'compact',
             compactDisplay: 'short',
-          })} คน`
-        },
-        size: 54,
-        minSize: 54,
+          })} คน`,
+        size: 110,
+        minSize: 110,
       }),
       columnHelper.accessor('status', {
         header: 'สถานะ',
         cell: (info) => {
           const status = info.getValue()
-          if (status === 'PUBLISH') return <Badge variant="success">เปิดใช้งาน</Badge>
-          return <Badge variant="outline">ร่าง</Badge>
+          if (status === 'PUBLISHED') return <Badge variant="success">เปิดใช้งาน</Badge>
+          return <Badge variant="destructive">ระงับการใช้งาน</Badge>
         },
         size: 101,
         minSize: 101,
-        maxSize: 101,
       }),
       columnHelper.display({
         id: 'manage',
         header: 'จัดการ',
         cell: ({ row }) => {
           const id = row.getValue<GetTopicsResponse['data'][number]['id']>('id')
-          return (
-            <Button variant="outline" size="icon" className="size-8" asChild>
-              <NavLink to={`/feed/topic/${id}`}>
-                <span className="sr-only">จัดการ</span>
-                <Pencil className="size-4" />
-              </NavLink>
-            </Button>
-          )
-        },
-        size: 72,
-        minSize: 72,
-        maxSize: 72,
-      }),
-      columnHelper.display({
-        id: 'enabled',
-        header: 'เปิดใช้งาน',
-        cell: ({ row }) => {
-          const id = row.getValue<GetTopicsResponse['data'][number]['id']>('id')
           const status = row.getValue<GetTopicsResponse['data'][number]['status']>('status')
+
           return (
-            <Switch
-              isPending={mutation.isPending && mutation.variables?.pathParams.topicId === id}
-              checked={status === 'PUBLISH'}
-              onCheckedChange={(checked: boolean) => {
-                setTopicStatus({ status: checked ? 'PUBLISH' : 'DRAFT' }, { topicId: id })
-              }}
-            />
+            <div className="flex gap-3">
+              {status === 'PUBLISHED' ? (
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="size-8"
+                  disabled={mutation.isPending}
+                  aria-busy={mutation.isPending}
+                  onClick={() => setTopicStatus({ status: 'SUSPENDED' }, { topicId: id })}
+                >
+                  <span className="sr-only">ระงับการใช้งาน</span>
+                  <EyeOff className="size-4" />
+                </Button>
+              ) : (
+                <Button
+                  size="icon"
+                  className="size-8"
+                  disabled={mutation.isPending}
+                  aria-busy={mutation.isPending}
+                  onClick={() => setTopicStatus({ status: 'PUBLISHED' }, { topicId: id })}
+                >
+                  <span className="sr-only">เปิดใช้งาน</span>
+                  <Megaphone className="size-4" />
+                </Button>
+              )}
+              <Button variant="outline" size="icon" className="size-8" asChild>
+                <NavLink to={`/feed/topic/${id}`}>
+                  <span className="sr-only">แก้ไข</span>
+                  <Pencil className="size-4" />
+                </NavLink>
+              </Button>
+            </div>
           )
         },
-        size: 115,
-        minSize: 115,
-        maxSize: 115,
+        size: 108,
+        minSize: 108,
+        maxSize: 108,
       }),
     ],
-    [mutation.isPending, mutation.variables?.pathParams.topicId, setTopicStatus]
+    [mutation.isPending, setTopicStatus]
   )
 
   return (
     <DataTable
       columns={columns}
       data={query.data?.data ?? []}
-      count={query.data?.count ?? 0}
+      count={query.data?.meta.count ?? 0}
       isQuerying={query.isLoading}
       isMutating={mutation.isPending}
       queryLimit={queryLimit}
