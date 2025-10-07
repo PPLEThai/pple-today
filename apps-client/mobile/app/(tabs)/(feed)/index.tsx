@@ -100,7 +100,7 @@ function PagerContents() {
       </View>
       {session && (
         <View key={1}>
-          <PagerContent index={1}>{(props) => <FeedContent {...props} />}</PagerContent>
+          <PagerContent index={1}>{(props) => <FeedFollowingContent {...props} />}</PagerContent>
         </View>
       )}
       {followTopicsQuery.data
@@ -477,6 +477,93 @@ const TopicSkeleton = () => {
       <Skeleton className="rounded-full h-10 w-18" />
       <Skeleton className="rounded-full h-10 w-16" />
     </>
+  )
+}
+
+function FeedFollowingContent(props: PagerScrollViewProps) {
+  const { headerHeight, isFocused, scrollElRef, setScrollViewTag } = props
+  React.useEffect(() => {
+    if (isFocused && scrollElRef.current) {
+      const scrollViewTag = findNodeHandle(scrollElRef.current)
+      setScrollViewTag(scrollViewTag)
+      // console.log('scrollViewTag:', scrollViewTag)
+    }
+  }, [isFocused, scrollElRef, setScrollViewTag])
+
+  const feedInfiniteQuery = useInfiniteQuery({
+    queryKey: reactQueryClient.getQueryKey('/feed/following'),
+    queryFn: async ({ pageParam }) => {
+      const response = await fetchClient('/feed/following', {
+        query: { cursor: pageParam || undefined, limit: LIMIT },
+      })
+      if (response.error) {
+        throw response.error
+      }
+      return response.data
+    },
+    initialPageParam: '',
+    getNextPageParam: (lastPage) => {
+      if (lastPage && lastPage.meta.cursor.next === null) {
+        return undefined
+      }
+      return lastPage.meta.cursor.next
+    },
+  })
+  React.useEffect(() => {
+    if (feedInfiniteQuery.error) {
+      console.error('Error fetching feed:', JSON.stringify(feedInfiniteQuery.error))
+    }
+  }, [feedInfiniteQuery.error])
+
+  const onEndReached = React.useCallback(() => {
+    if (!feedInfiniteQuery.isFetching && feedInfiniteQuery.hasNextPage) {
+      feedInfiniteQuery.fetchNextPage()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
+
+  type GetMyFeedResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/me'>
+  const data = React.useMemo((): GetMyFeedResponse['items'] => {
+    if (!feedInfiniteQuery.data) return []
+    return feedInfiniteQuery.data.pages.flatMap((page) => page.items)
+  }, [feedInfiniteQuery.data])
+
+  const scrollContext = useScrollContext()
+  const scrollHandler = useAnimatedScrollHandler(scrollContext)
+
+  const queryClient = useQueryClient()
+  const onRefresh = React.useCallback(async () => {
+    await Promise.all([
+      queryClient.resetQueries({
+        queryKey: reactQueryClient.getQueryKey('/feed/following'),
+      }),
+    ])
+    await feedInfiniteQuery.refetch()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryClient, feedInfiniteQuery.refetch])
+
+  const renderFeedItem = React.useCallback(
+    ({ item }: { item: GetMyFeedResponse['items'][number]; index: number }) => {
+      return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-4" />
+    },
+    []
+  )
+
+  return (
+    <Animated.FlatList
+      ref={scrollElRef}
+      onScroll={scrollHandler}
+      refreshControl={<FeedRefreshControl headerHeight={headerHeight} onRefresh={onRefresh} />}
+      data={data}
+      className="flex-1"
+      contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
+      contentContainerStyle={{ paddingTop: headerHeight }}
+      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} className="mt-4 mx-4" />}
+      onEndReachedThreshold={1}
+      onEndReached={onEndReached}
+      renderItem={renderFeedItem}
+      showsVerticalScrollIndicator={false}
+    />
   )
 }
 
