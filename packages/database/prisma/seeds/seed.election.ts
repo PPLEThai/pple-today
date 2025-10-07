@@ -105,6 +105,8 @@ const seedElections = async (userId: string) => {
       closeRegister: addDays(dateNow, -2),
       openVoting: addDays(dateNow, 1),
       closeVoting: addDays(dateNow, 2),
+      location: 'กรุงเทพมหานคร ประเทศไทย',
+      locationMapUrl: 'https://maps.google.com/?q=Bangkok,Thailand',
       voters: {
         create: {
           userId: userId,

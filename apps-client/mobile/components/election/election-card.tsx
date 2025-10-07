@@ -126,19 +126,19 @@ function ElectionCardDetail(props: ElectionCardProps) {
         )
       }
       if (props.election.type === 'HYBRID') {
-        if (!props.election.isRegistered) {
+        if (dayjs().isBefore(props.election.openRegister)) {
           return (
             <>
               <ElectionOpenVotingDate election={props.election} />
-              <View className="flex flex-row gap-1 items-center">
-                <Icon icon={ClockIcon} size={16} className="text-base-text-invert" />
-                <Text className="text-sm text-base-text-invert font-heading-regular">
-                  เปิดลงทะเบียนถึง:{' '}
-                  <Text className="text-sm text-base-primary-default font-body-medium">
-                    {dayjs(props.election.openRegister).format('D MMM BBBB เวลา HH:mm')}
-                  </Text>
-                </Text>
-              </View>
+              <ElectionOpenRegisterDate election={props.election} />
+            </>
+          )
+        }
+        if (dayjs().isBefore(props.election.closeRegister)) {
+          return (
+            <>
+              <ElectionOpenVotingDate election={props.election} />
+              <ElectionCloseRegisterDate election={props.election} />
             </>
           )
         }
@@ -146,11 +146,14 @@ function ElectionCardDetail(props: ElectionCardProps) {
           <>
             <ElectionOpenVotingDate election={props.election} />
             {!props.election.isRegistered && (
-              <Badge variant="outline" className="self-stretch">
-                <Text className="text-base-text-invert">
-                  หมดเวลาลงทะเบียนแล้ว คุณมีสิทธิ์เลือกตั้งในสถานที่
-                </Text>
-              </Badge>
+              <>
+                <ElectionLocation election={props.election} />
+                <Badge variant="outline" className="self-stretch">
+                  <Text className="text-base-text-invert">
+                    หมดเวลาลงทะเบียนแล้ว คุณมีสิทธิ์เลือกตั้งในสถานที่
+                  </Text>
+                </Badge>
+              </>
             )}
           </>
         )
@@ -199,6 +202,32 @@ function ElectionCardDetail(props: ElectionCardProps) {
   }
 }
 
+function ElectionOpenRegisterDate(props: ElectionCardProps) {
+  return (
+    <View className="flex flex-row gap-1 items-center">
+      <Icon icon={ClockIcon} size={16} className="text-base-text-invert" />
+      <Text className="text-sm text-base-text-invert font-heading-regular">
+        เปิดให้ลงทะเบียน:{' '}
+        <Text className="text-sm text-base-primary-default font-body-medium">
+          {dayjs(props.election.openRegister).format('D MMM BBBB เวลา HH:mm')}
+        </Text>
+      </Text>
+    </View>
+  )
+}
+function ElectionCloseRegisterDate(props: ElectionCardProps) {
+  return (
+    <View className="flex flex-row gap-1 items-center">
+      <Icon icon={ClockIcon} size={16} className="text-base-text-invert" />
+      <Text className="text-sm text-base-text-invert font-heading-regular">
+        เปิดลงทะเบียนถึง:{' '}
+        <Text className="text-sm text-base-primary-default font-body-medium">
+          {dayjs(props.election.closeRegister).format('D MMM BBBB เวลา HH:mm')}
+        </Text>
+      </Text>
+    </View>
+  )
+}
 function ElectionOpenVotingDate(props: ElectionCardProps) {
   return (
     <View className="flex flex-row gap-1 items-center">
@@ -300,7 +329,7 @@ function ElectionCardFooter(props: ElectionCardProps) {
         )
       }
       if (props.election.type === 'HYBRID') {
-        if (!props.election.isRegistered) {
+        if (dayjs().isBefore(props.election.closeRegister) || props.election.isRegistered) {
           return (
             <View className="flex flex-row pt-2 gap-2.5">
               <ElectionNotification electionId={props.election.id}>
