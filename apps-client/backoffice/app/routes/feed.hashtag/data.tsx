@@ -129,7 +129,7 @@ export const Data = () => {
     <DataTable
       columns={columns}
       data={query.data?.data ?? []}
-      count={query.data?.count ?? 0}
+      count={query.data?.meta.count ?? 0}
       isQuerying={query.isLoading}
       isMutating={mutation.isPending}
       queryLimit={queryLimit}

@@ -9,7 +9,12 @@ export const GetHashtagsQuery = t.Object({
 })
 export type GetHashtagsQuery = Static<typeof GetHashtagsQuery>
 
-export const GetHashtagsResponse = t.Object({ data: t.Array(HashTag), count: t.Number() })
+export const GetHashtagsResponse = t.Object({
+  data: t.Array(HashTag),
+  meta: t.Object({
+    count: t.Number(),
+  }),
+})
 export type GetHashtagsResponse = Static<typeof GetHashtagsResponse>
 
 export const GetHashtagByIdParams = t.Object({

@@ -1,6 +1,5 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import { CreateHashtagBody, UpdateHashtagBody } from './models'
@@ -89,8 +88,8 @@ export class AdminHashtagRepository {
       this.prismaService.hashTag.update({
         where: { id: hashtagId },
         data: {
-          name: data.name ?? Prisma.skip,
-          status: data.status ?? Prisma.skip,
+          name: data.name,
+          status: data.status,
         },
       })
     )
