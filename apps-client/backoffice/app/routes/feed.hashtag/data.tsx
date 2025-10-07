@@ -3,11 +3,12 @@
 import { useCallback, useMemo, useState } from 'react'
 
 import { Badge } from '@pple-today/web-ui/badge'
+import { Button } from '@pple-today/web-ui/button'
 import { DataTable } from '@pple-today/web-ui/data-table'
-import { Switch } from '@pple-today/web-ui/switch'
 import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
 import { createColumnHelper } from '@tanstack/react-table'
 import { TableCopyId } from 'components/TableCopyId'
+import { EyeOff, Megaphone } from 'lucide-react'
 
 import { GetHashtagsResponse, UpdateHashtagBody, UpdateHashtagParams } from '@api/backoffice/admin'
 
@@ -97,29 +98,45 @@ export const Data = () => {
           if (status === 'PUBLISHED') return <Badge variant="success">เปิดใช้งาน</Badge>
           return <Badge variant="destructive">ระงับการใช้งาน</Badge>
         },
-        size: 126,
-        minSize: 126,
+        size: 101,
+        minSize: 101,
         maxSize: 126,
       }),
       columnHelper.display({
-        id: 'enabled',
-        header: 'เปิดใช้งาน',
+        id: 'manage',
+        header: 'จัดการ',
         cell: ({ row }) => {
           const id = row.getValue<GetHashtagsResponse['data'][number]['id']>('id')
           const status = row.getValue<GetHashtagsResponse['data'][number]['status']>('status')
-          return (
-            <Switch
-              isPending={mutation.isPending && mutation.variables?.pathParams.hashtagId === id}
-              checked={status === 'PUBLISHED'}
-              onCheckedChange={(checked: boolean) => {
-                setHashtagStatus({ status: checked ? 'PUBLISHED' : 'SUSPENDED' }, { hashtagId: id })
-              }}
-            />
+
+          return status === 'PUBLISHED' ? (
+            <Button
+              variant="secondary"
+              size="icon"
+              className="size-8"
+              disabled={mutation.isPending}
+              aria-busy={mutation.isPending}
+              onClick={() => setHashtagStatus({ status: 'SUSPENDED' }, { hashtagId: id })}
+            >
+              <span className="sr-only">ระงับการใช้งาน</span>
+              <EyeOff className="size-4" />
+            </Button>
+          ) : (
+            <Button
+              size="icon"
+              className="size-8"
+              disabled={mutation.isPending}
+              aria-busy={mutation.isPending}
+              onClick={() => setHashtagStatus({ status: 'PUBLISHED' }, { hashtagId: id })}
+            >
+              <span className="sr-only">เปิดใช้งาน</span>
+              <Megaphone className="size-4" />
+            </Button>
           )
         },
-        size: 115,
-        minSize: 115,
-        maxSize: 115,
+        size: 72,
+        minSize: 72,
+        maxSize: 72,
       }),
     ],
     [mutation.isPending, mutation.variables?.pathParams.hashtagId, setHashtagStatus]
