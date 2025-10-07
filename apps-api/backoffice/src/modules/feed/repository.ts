@@ -674,6 +674,9 @@ export class FeedRepository {
         ],
         include: this.constructFeedItemInclude(userId),
         where: {
+          publishedAt: {
+            not: null,
+          },
           OR: [
             {
               author: {
@@ -683,12 +686,13 @@ export class FeedRepository {
                   },
                 },
               },
-              type: {
-                not: FeedItemType.ANNOUNCEMENT,
+              post: {
+                status: PostStatus.PUBLISHED,
               },
             },
             {
               poll: {
+                status: PollStatus.PUBLISHED,
                 topics: {
                   some: {
                     topic: {
