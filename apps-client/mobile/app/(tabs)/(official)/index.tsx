@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { Pressable, PressableProps, ScrollView, View } from 'react-native'
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -9,6 +9,7 @@ import { Icon } from '@pple-today/ui/icon'
 import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { H1, H2, H3 } from '@pple-today/ui/typography'
+import { useQueryClient } from '@tanstack/react-query'
 import * as Linking from 'expo-linking'
 import { useRouter } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
@@ -30,14 +31,29 @@ import PPLEIcon from '@app/assets/pple-icon.svg'
 import { UserAddressInfoSection } from '@app/components/address-info'
 import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/announcement'
 import { ElectionCard } from '@app/components/election/election-card'
+import { RefreshControl } from '@app/components/refresh-control'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
 
 export default function OfficialPage() {
+  const queryClient = useQueryClient()
+  const onRefresh = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: reactQueryClient.getQueryKey('/elections'),
+      }),
+      queryClient.resetQueries({
+        queryKey: reactQueryClient.getQueryKey('/announcements'),
+      }),
+    ])
+  }, [queryClient])
   return (
     <SafeAreaLayout>
-      <ScrollView className="flex-1 bg-base-bg-default">
+      <ScrollView
+        className="flex-1 bg-base-bg-default"
+        refreshControl={<RefreshControl onRefresh={onRefresh} />}
+      >
         <View className="flex flex-col p-4 bg-base-bg-white">
           <View className="flex flex-row gap-2 items-center">
             <Icon
@@ -103,14 +119,10 @@ const AnnouncementSection = () => {
     query: { limit: 3 },
   })
 
-  const data = announcementsQuery.data?.announcements || []
-
-  if (data.length === 0) {
-    return null
-  }
+  const data = announcementsQuery.data?.announcements
 
   const AnnouncementPreviewList = () => {
-    if (announcementsQuery.isLoading) {
+    if (announcementsQuery.isLoading || !data) {
       return (
         <View className="my-3 gap-3">
           <AnnouncementCardSkeleton className="w-full" />
@@ -146,7 +158,7 @@ const AnnouncementSection = () => {
           <H2 className="text-2xl font-heading-semibold text-base-text-high">ประกาศ</H2>
         </View>
         <View className="min-h-10">
-          {data.length > 0 && (
+          {data && data.length > 0 && (
             <Button variant="ghost" onPress={() => router.navigate('/(official)/announcement')}>
               <Text>ดูเพิ่มเติม</Text>
               <Icon icon={ArrowRightIcon} strokeWidth={2} />

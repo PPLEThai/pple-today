@@ -2,7 +2,7 @@ import React, { useCallback, useEffect } from 'react'
 import { Pressable, View } from 'react-native'
 import { createQuery } from 'react-query-kit'
 
-import { QUERY_KEY } from '@pple-today/api-client'
+import { QUERY_KEY_SYMBOL } from '@pple-today/api-client'
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
@@ -117,7 +117,7 @@ export function TopicCard(props: TopicCardProps) {
 }
 
 const useTopicFollowQuery = createQuery({
-  queryKey: [QUERY_KEY, 'topic-follow'],
+  queryKey: [QUERY_KEY_SYMBOL, 'topic-follow'],
   fetcher: (_: { topicId: string }): boolean => {
     throw new Error('topicFollowQuery should not be enabled')
   },

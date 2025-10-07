@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { Pressable, PressableProps, View } from 'react-native'
 import { createQuery } from 'react-query-kit'
 
-import { QUERY_KEY } from '@pple-today/api-client'
+import { QUERY_KEY_SYMBOL } from '@pple-today/api-client'
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
@@ -397,7 +397,7 @@ function ElectionPercentageActions(props: ElectionCardProps) {
 }
 
 const useElectionNotificationQuery = createQuery({
-  queryKey: [QUERY_KEY, 'electionNotification'],
+  queryKey: [QUERY_KEY_SYMBOL, 'electionNotification'],
   fetcher: (_: { electionId: string }): boolean => {
     throw new Error('ElectionNotificationQuery should not be enabled')
   },
