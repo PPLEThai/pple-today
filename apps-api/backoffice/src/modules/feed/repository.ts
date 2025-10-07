@@ -680,7 +680,7 @@ export class FeedRepository {
           OR: [
             {
               author: {
-                followers: {
+                followings: {
                   some: {
                     followerId: userId,
                   },
