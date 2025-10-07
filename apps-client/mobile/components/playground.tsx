@@ -42,6 +42,7 @@ import dayjs from 'dayjs'
 import { useEvent } from 'expo'
 import { Image } from 'expo-image'
 import * as Linking from 'expo-linking'
+import * as Location from 'expo-location'
 import { useRouter } from 'expo-router'
 import { getItemAsync } from 'expo-secure-store'
 import { useTrackingPermissions } from 'expo-tracking-transparency'
@@ -68,6 +69,7 @@ export function Playground() {
         <View className="flex flex-row items-center justify-between">
           <H1 className="font-inter-bold">Playground</H1>
         </View>
+        <LocationExample />
         <View className="flex flex-col gap-2">
           <H2 className="font-inter-bold">Font</H2>
           <View className="flex flex-col gap-1">
@@ -1026,6 +1028,31 @@ function ElectionCardExample() {
         <ElectionStatusBadge status="CLOSED_VOTE" />
         <ElectionStatusBadge status="RESULT_ANNOUNCE" />
       </View>
+    </View>
+  )
+}
+
+function LocationExample() {
+  const [status, requestPermission] = Location.useForegroundPermissions()
+  const [location, setLocation] = useState<Location.LocationObject | null>(null)
+  const getCurrentLocation = useCallback(async () => {
+    const { status } = await requestPermission()
+    if (status !== 'granted') {
+      toast.error({ text1: 'Permission to access location was denied' })
+      return
+    }
+    const location = await Location.getCurrentPositionAsync({})
+    setLocation(location)
+  }, [requestPermission])
+
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Location</H2>
+      <Text>Permission: {JSON.stringify(status, null, 2)}</Text>
+      <Text>Location: {JSON.stringify(location, null, 2)}</Text>
+      <Button onPress={getCurrentLocation}>
+        <Text>Get Current Location</Text>
+      </Button>
     </View>
   )
 }
