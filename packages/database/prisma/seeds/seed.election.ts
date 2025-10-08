@@ -160,14 +160,17 @@ const seedElections = async (userId: string) => {
             {
               id: 'candidate-1',
               name: 'candidate-1',
+              number: 1,
             },
             {
               id: 'candidate-2',
               name: 'candidate-2',
+              number: 2,
             },
             {
               id: 'candidate-3',
               name: 'candidate-3',
+              number: 3,
             },
           ],
         },
@@ -220,6 +223,27 @@ const seedElections = async (userId: string) => {
         create: {
           userId: userId,
           type: EligibleVoterType.ONLINE,
+        },
+      },
+      candidates: {
+        createMany: {
+          data: [
+            {
+              id: 'candidate-11',
+              name: 'candidate-11',
+              number: 11,
+            },
+            {
+              id: 'candidate-12',
+              name: 'candidate-12',
+              number: 12,
+            },
+            {
+              id: 'candidate-13',
+              name: 'candidate-13',
+              number: 13,
+            },
+          ],
         },
       },
     },
