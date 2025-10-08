@@ -23,6 +23,14 @@ export const GetTopicByIdParams = t.Object({
 export const GetTopicByIdResponse = DetailedTopic
 export type GetTopicByIdResponse = Static<typeof GetTopicByIdResponse>
 
+export const CreateTopicBody = t.Object({
+  name: t.String({ description: 'The name of the topic' }),
+  description: t.Nullable(t.String({ description: 'The description of the topic' })),
+  bannerImagePath: t.Nullable(FilePath),
+  hashtagIds: t.Array(t.String({ description: 'The ID of the hashtag' })),
+})
+export type CreateTopicBody = Static<typeof CreateTopicBody>
+
 export const CreateTopicResponse = t.Object({
   topicId: t.String({ description: 'The ID of the topic' }),
 })

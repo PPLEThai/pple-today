@@ -21,7 +21,7 @@ export function FeedTopicCard(props: TopicCardProps) {
     >
       {props.topic.bannerImage?.url && (
         <img
-          className="absolute top-0 left-0 right-0 bottom-0"
+          className="absolute top-0 left-0 size-full object-cover"
           src={props.topic.bannerImage.url}
           alt=""
         />

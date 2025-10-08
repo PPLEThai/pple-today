@@ -8,6 +8,7 @@ import { Button } from '@pple-today/web-ui/button'
 import { DataTable } from '@pple-today/web-ui/data-table'
 import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
 import { createColumnHelper } from '@tanstack/react-table'
+import { TopicCreate } from 'components/feed/TopicCreate'
 import { TableCopyId } from 'components/TableCopyId'
 import { EyeOff, Megaphone, Pencil, Plus } from 'lucide-react'
 
@@ -37,6 +38,17 @@ export const Data = () => {
     }
   )
   const mutation = reactQueryClient.useMutation('patch', '/admin/topics/:topicId')
+  const invalidateQuery = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: reactQueryClient.getQueryKey('/admin/topics', {
+        query: {
+          limit: queryLimit,
+          page: queryPage,
+          search: querySearch,
+        },
+      }),
+    })
+  }, [queryClient, queryLimit, queryPage, querySearch])
 
   const setTopicStatus = useCallback(
     (
@@ -188,12 +200,15 @@ export const Data = () => {
         },
       ]}
       filterExtension={
-        <Button asChild>
-          <NavLink to="/feed/topic/create">
-            <Plus />
-            สร้างหัวข้อ
-          </NavLink>
-        </Button>
+        <TopicCreate
+          trigger={
+            <Button>
+              <Plus />
+              สร้างหัวข้อ
+            </Button>
+          }
+          onSuccess={invalidateQuery}
+        />
       }
     />
   )

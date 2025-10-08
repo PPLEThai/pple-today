@@ -2,10 +2,11 @@ import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err } from '@pple-today/api-common/utils'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { TopicStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { UpdateTopicBody } from './models'
+import { CreateTopicBody, UpdateTopicBody } from './models'
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
@@ -116,13 +117,21 @@ export class AdminTopicRepository {
     })
   }
 
-  async createEmptyTopic() {
+  async createTopic(data: CreateTopicBody) {
     return await fromRepositoryPromise(
       this.prismaService.topic.create({
         data: {
-          name: '',
-          description: null,
-          bannerImagePath: null,
+          name: data.name,
+          description: data.description,
+          bannerImagePath: data.bannerImagePath,
+          status: TopicStatus.PUBLISHED,
+          hashTagInTopics: {
+            createMany: {
+              data: data.hashtagIds.map((hashtagId) => ({
+                hashTagId: hashtagId,
+              })),
+            },
+          },
         },
       })
     )

@@ -27,11 +27,7 @@ export const AdminHashtagController = new Elysia({
   .get(
     '/',
     async ({ query, status, adminHashtagService }) => {
-      const pagingQuery = {
-        limit: query.limit ?? 10,
-        page: query.page ?? 1,
-        search: query.search,
-      }
+      const pagingQuery = { limit: query.limit, page: query.page ?? 1, search: query.search }
 
       const result = await adminHashtagService.getHashtags(pagingQuery)
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)

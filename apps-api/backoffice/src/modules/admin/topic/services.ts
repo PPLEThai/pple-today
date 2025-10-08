@@ -7,6 +7,7 @@ import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import {
+  CreateTopicBody,
   CreateTopicResponse,
   DeleteTopicResponse,
   GetTopicByIdResponse,
@@ -68,8 +69,8 @@ export class AdminTopicService {
     } satisfies GetTopicByIdResponse)
   }
 
-  async createEmptyTopic() {
-    const result = await this.adminTopicRepository.createEmptyTopic()
+  async createTopic(data: CreateTopicBody) {
+    const result = await this.adminTopicRepository.createTopic(data)
     if (result.isErr())
       return mapRepositoryError(result.error, {
         INVALID_INPUT: {

@@ -3,6 +3,7 @@ import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-commo
 import Elysia from 'elysia'
 
 import {
+  CreateTopicBody,
   CreateTopicResponse,
   DeleteTopicParams,
   DeleteTopicResponse,
@@ -82,8 +83,8 @@ export const AdminTopicController = new Elysia({
   )
   .post(
     '/',
-    async ({ status, adminTopicService }) => {
-      const result = await adminTopicService.createEmptyTopic()
+    async ({ body, status, adminTopicService }) => {
+      const result = await adminTopicService.createTopic(body)
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
       }
@@ -92,6 +93,7 @@ export const AdminTopicController = new Elysia({
     },
     {
       requiredLocalUser: true,
+      body: CreateTopicBody,
       response: {
         201: CreateTopicResponse,
         ...createErrorSchema(
