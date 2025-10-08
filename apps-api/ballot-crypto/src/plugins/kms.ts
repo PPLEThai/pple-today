@@ -79,7 +79,7 @@ export class KeyManagementService {
     )
   }
 
-  async createKeyAsymmetricDecrypt(keyId: string) {
+  async createAsymmetricDecryptKey(keyId: string) {
     const key = {
       purpose: 'ASYMMETRIC_DECRYPT',
       versionTemplate: {
@@ -93,7 +93,7 @@ export class KeyManagementService {
     return ok()
   }
 
-  async createKeyAsymmetricSign(keyId: string) {
+  async createAsymmetricSignKey(keyId: string) {
     const key = {
       purpose: 'ASYMMETRIC_SIGN',
       versionTemplate: {
@@ -119,11 +119,11 @@ export class KeyManagementService {
     return fromGoogleAPIPromise(this.kmsClient.destroyCryptoKeyVersion({ name: version }))
   }
 
-  async destroyKeyAsymmetricDecrypt(keyId: string) {
+  async destroyAsymmetricDecryptKey(keyId: string) {
     return this.destroyKey(this.config.encryptionKeyRing, keyId)
   }
 
-  async destroyKeyAsymmetricSign(keyId: string) {
+  async destroyAsymmetricSignKey(keyId: string) {
     return this.destroyKey(this.config.signingKeyRing, keyId)
   }
 }

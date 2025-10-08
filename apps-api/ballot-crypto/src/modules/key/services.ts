@@ -9,13 +9,27 @@ export class KeyService {
   constructor(private keyManagementService: KeyManagementService) {}
 
   async createElectionKeys(electionId: string) {
-    const createKeyResults = await Promise.all([
-      this.keyManagementService.createKeyAsymmetricDecrypt(electionId),
-      this.keyManagementService.createKeyAsymmetricSign(electionId),
+    const createResults = await Promise.all([
+      this.keyManagementService.createAsymmetricDecryptKey(electionId),
+      this.keyManagementService.createAsymmetricSignKey(electionId),
     ])
-    const createKeyErrors = createKeyResults.filter((result) => result.isErr())
-    if (createKeyErrors.length !== 0) {
-      return mapGoogleAPIError(createKeyErrors[0].error, {
+
+    const createErr = createResults.find((result) => result.isErr())
+
+    if (createErr) {
+      const [decryptResult, signResult] = createResults
+
+      if (decryptResult.isOk()) {
+        const deleteResult = await this.keyManagementService.destroyAsymmetricDecryptKey(electionId)
+        if (deleteResult.isErr()) return mapGoogleAPIError(deleteResult.error)
+      }
+
+      if (signResult.isOk()) {
+        const deleteResult = await this.keyManagementService.destroyAsymmetricSignKey(electionId)
+        if (deleteResult.isErr()) return mapGoogleAPIError(deleteResult.error)
+      }
+
+      return mapGoogleAPIError(createErr.error, {
         ALREADY_EXISTS: {
           code: InternalErrorCode.KEY_ALREADY_EXIST,
           message: 'Key for this election exist',
@@ -23,28 +37,26 @@ export class KeyService {
       })
     }
 
-    const publicKeyResults = await Promise.all([
-      this.keyManagementService.getPublicKeyAsymmetricDecrypt(electionId),
-      this.keyManagementService.getPublicKeyAsymmetricSign(electionId),
-    ])
-    const publicKeyErrors = publicKeyResults.filter((result) => result.isErr())
-    if (publicKeyErrors.length === 0) {
-      const destroyKeyResults = await Promise.all([
-        this.keyManagementService.destroyKeyAsymmetricDecrypt(electionId),
-        this.keyManagementService.destroyKeyAsymmetricSign(electionId),
-      ])
-      const destroyKeyErrors = destroyKeyResults.filter((result) => result.isErr())
-      if (destroyKeyErrors.length !== 0) return mapGoogleAPIError(destroyKeyErrors[0].error)
+    return ok()
+  }
 
-      return mapGoogleAPIError(publicKeyErrors[0].error)
+  async destroyElectionKeys(electionId: string) {
+    const destroyKeyResults = await Promise.all([
+      this.keyManagementService.destroyAsymmetricDecryptKey(electionId),
+      this.keyManagementService.destroyAsymmetricSignKey(electionId),
+    ])
+
+    const destroyKeyErr = destroyKeyResults.find((result) => result.isErr())
+    if (destroyKeyErr) {
+      return mapGoogleAPIError(destroyKeyErr.error, {
+        NOT_FOUND: {
+          code: InternalErrorCode.KET_NOT_FOUND,
+          message: 'Key for this election not found',
+        },
+      })
     }
 
-    const publicKeyOks = publicKeyResults.filter((result) => result.isOk())
-
-    return ok({
-      encryptionPublicKey: publicKeyOks[0].value,
-      signingPublicKey: publicKeyOks[1].value,
-    })
+    return ok()
   }
 }
 

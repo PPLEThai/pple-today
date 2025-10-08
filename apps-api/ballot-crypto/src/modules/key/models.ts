@@ -5,8 +5,7 @@ export const CreateKeyBody = t.Object({
 })
 export type CreateKeyBody = Static<typeof CreateKeyBody>
 
-export const CreateKeyResponse = t.Object({
-  encryptionPublicKey: t.String(),
-  signingPublicKey: t.String(),
+export const DeleteKeyParams = t.Object({
+  electionId: t.String(),
 })
-export type CreateKeyResponse = Static<typeof CreateKeyResponse>
+export type DeleteKeyParams = Static<typeof DeleteKeyParams>

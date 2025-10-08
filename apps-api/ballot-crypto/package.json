@@ -3,6 +3,11 @@
   "version": "0.0.0",
   "type": "module",
   "description": "",
+  "exports": {
+    "./app": {
+      "types": "./src/app.types.ts"
+    }
+  },
   "scripts": {
     "dev": "tsx watch --include \"node_modules/@pple-today/api-common/**/src\"  src/index.ts",
     "build": "rimraf ./build && tsx build.ts",
