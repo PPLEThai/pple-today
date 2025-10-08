@@ -519,14 +519,6 @@ function ElectionDetailCardDetail(props: ElectionDetailCardProps) {
         </>
       )
     case 'CLOSED_VOTE':
-      return (
-        <View className="flex flex-row gap-1 items-center">
-          <Icon icon={ClockIcon} size={16} className="text-base-text-invert" />
-          <Text className="text-sm text-base-text-invert font-heading-regular">
-            รอประกาศผลเลือกตั้ง
-          </Text>
-        </View>
-      )
     case 'RESULT_ANNOUNCE':
       return null
     default:
