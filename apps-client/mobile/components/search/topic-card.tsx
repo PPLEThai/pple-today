@@ -7,7 +7,7 @@ import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
 import { MessageSquareHeartIcon } from 'lucide-react-native'
 
-import type { GetTopicsResponse } from '@api/backoffice/app'
+import { GetSearchTopicsResponse } from '@api/backoffice/app'
 
 import { SearchCard } from './search-card'
 
@@ -31,7 +31,7 @@ export function TopicSearchCard(props: TopicSearchCardProps) {
 }
 TopicSearchCard.displayName = 'TopicSearchCard'
 
-type HashtagList = GetTopicsResponse[number]['hashTags']
+type HashtagList = GetSearchTopicsResponse[number]['hashtags']
 
 interface TopicSearchBigCardProps {
   id: string

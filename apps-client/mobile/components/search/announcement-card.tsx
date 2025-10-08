@@ -8,7 +8,6 @@ type AnnouncementType = GetAnnouncementsResponse['announcements'][number]['type'
 
 interface AnnouncementCardProps {
   id: string
-  feedId: string
   title: string
   type: AnnouncementType
   date: string
@@ -18,7 +17,7 @@ export function AnnouncementSearchCard(props: AnnouncementCardProps) {
   return (
     <AnnouncementCard
       id={props.id}
-      feedId={props.feedId}
+      feedId={props.id}
       title={props.title}
       type={props.type}
       date={props.date}
