@@ -57,7 +57,7 @@ function createReactQueryClient<TSchema extends Record<string, any>>(
   ): any {
     const { pathParams, query, headers } = payload
     const key: unknown[] = [QUERY_KEY_SYMBOL, method, path, pathParams, query, headers]
-    while (key.length > 0 && key.at(-1) === undefined) {
+    while (key.length > 0 && key[key.length - 1] === undefined) {
       key.pop()
     }
     return key
