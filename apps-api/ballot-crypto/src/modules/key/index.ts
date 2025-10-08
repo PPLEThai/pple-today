@@ -16,7 +16,7 @@ export const KeyController = new Elysia({
       const result = await keyService.createElectionKeys(body.electionId)
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
-      return status(204)
+      return status(201)
     },
     {
       detail: {
@@ -25,7 +25,7 @@ export const KeyController = new Elysia({
       },
       body: CreateKeyBody,
       responses: {
-        204: {},
+        201: {},
         ...createErrorSchema(
           InternalErrorCode.INTERNAL_SERVER_ERROR,
           InternalErrorCode.KEY_ALREADY_EXIST,
