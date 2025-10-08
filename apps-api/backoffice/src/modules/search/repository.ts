@@ -119,6 +119,11 @@ export class SearchRepository {
         },
         select: {
           feedItemId: true,
+          feedItem: {
+            select: {
+              publishedAt: true,
+            },
+          },
           title: true,
           type: true,
           topics: {
@@ -159,12 +164,44 @@ export class SearchRepository {
               },
             },
             {
+              post: {
+                hashTags: {
+                  some: {
+                    hashTag: {
+                      status: HashTagStatus.PUBLISHED,
+                      name: {
+                        startsWith: query.search.startsWith('#')
+                          ? query.search
+                          : `#${query.search}`,
+                        mode: 'insensitive',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            {
               poll: {
                 description: {
                   contains: query.search,
                   mode: 'insensitive',
                 },
                 status: PollStatus.PUBLISHED,
+              },
+            },
+            {
+              poll: {
+                topics: {
+                  some: {
+                    topic: {
+                      status: TopicStatus.PUBLISHED,
+                      name: {
+                        startsWith: query.search,
+                        mode: 'insensitive',
+                      },
+                    },
+                  },
+                },
               },
             },
           ],
@@ -194,16 +231,12 @@ export class SearchRepository {
   }
 
   async searchHashtags(query: { search: string; limit?: number; cursor?: string }) {
-    if (query.search[0] !== '#') {
-      return ok([])
-    }
-
     return await fromRepositoryPromise(
       this.prismaService.hashTag.findMany({
         where: {
           status: HashTagStatus.PUBLISHED,
           name: {
-            startsWith: query.search,
+            startsWith: query.search.startsWith('#') ? query.search : `#${query.search}`,
             mode: 'insensitive',
           },
         },
@@ -222,10 +255,27 @@ export class SearchRepository {
     return await fromRepositoryPromise(
       this.prismaService.topic.findMany({
         where: {
-          name: {
-            startsWith: query.search,
-            mode: 'insensitive',
-          },
+          OR: [
+            {
+              name: {
+                startsWith: query.search,
+                mode: 'insensitive',
+              },
+            },
+            {
+              hashTagInTopics: {
+                some: {
+                  hashTag: {
+                    name: {
+                      startsWith: query.search.startsWith('#') ? query.search : `#${query.search}`,
+                      mode: 'insensitive',
+                    },
+                    status: HashTagStatus.PUBLISHED,
+                  },
+                },
+              },
+            },
+          ],
           status: TopicStatus.PUBLISHED,
         },
         take: query.limit ?? 3,
@@ -239,6 +289,12 @@ export class SearchRepository {
         select: {
           id: true,
           name: true,
+          bannerImagePath: true,
+          hashTagInTopics: {
+            include: {
+              hashTag: true,
+            },
+          },
         },
       })
     )
