@@ -136,7 +136,7 @@ const PeopleFollowingSection = () => {
               profileImage={item.profileImage ?? ''}
               name={item.name}
               onPress={() => {
-                router.navigate(`/(tabs)/profile/user/${item.id}`)
+                router.navigate(`/(tabs)/(profile)/user/${item.id}`)
               }}
             />
           ))}

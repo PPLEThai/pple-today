@@ -435,7 +435,7 @@ function UpvoteButton(props: UpvoteButtonProps) {
   const session = useSession()
   const onPress = () => {
     if (!session) {
-      return router.push('/profile')
+      return router.push('/(profile)')
     }
     const newUserReaction = userReaction === 'UP_VOTE' ? null : 'UP_VOTE'
     if (newUserReaction === 'UP_VOTE') {
@@ -507,7 +507,7 @@ function DownvoteButton(props: { feedId: string }) {
   const session = useSession()
   const onPress = () => {
     if (!session) {
-      return router.push('/profile')
+      return router.push('/(profile)')
     }
     const newUserReaction = userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE'
     if (newUserReaction === 'DOWN_VOTE') {
@@ -683,7 +683,7 @@ function CommentButton(props: { feedId: string }) {
   const session = useSession()
   const onPress = () => {
     if (!session) {
-      return router.push('/profile')
+      return router.push('/(profile)')
     }
     onOpen()
   }

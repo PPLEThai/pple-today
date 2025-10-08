@@ -165,7 +165,7 @@ function MainHeader() {
           aria-label="Profile Settings"
           className="overflow-hidden"
           onPress={() => {
-            router.navigate('/profile')
+            router.navigate('/(profile)')
           }}
         >
           <Avatar alt={authMe.data?.name ?? ''} className="size-full rounded-none">
@@ -328,7 +328,7 @@ function SelectTopicButton() {
   const session = useSession()
   const onOpen = () => {
     if (!session) {
-      router.navigate('/profile')
+      router.navigate('/(profile)')
       return
     }
     bottomSheetModalRef.current?.present()

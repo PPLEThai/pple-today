@@ -102,7 +102,7 @@ export default function EditProfilePage() {
               queryKey: reactQueryClient.getQueryKey('/profile/me'),
             })
             dispatch({ type: 'reset' })
-            router.replace('/(tabs)/profile')
+            router.replace('/(tabs)/(profile)')
           },
           onError: () => {
             toast.error({ text1: 'เกิดข้อผิดพลาดในการบันทึกโปรไฟล์', icon: TriangleAlertIcon })

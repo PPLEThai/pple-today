@@ -1,6 +1,6 @@
 import React from 'react'
 import { Keyboard, Pressable, View } from 'react-native'
-import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated'
+import Animated from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Button } from '@pple-today/ui/button'
@@ -43,7 +43,7 @@ export default function SearchResultPage() {
           {/* Search Header */}
           <View className="flex flex-row items-center gap-2">
             <Icon icon={SearchIcon} size={32} className="text-base-primary-default" />
-            <H1 className="text-lg font-semibold text-base-primary-default text-3xl font-heading-semibold">
+            <H1 className="font-semibold text-base-primary-default text-3xl font-heading-semibold">
               ผลการค้นหา
             </H1>
           </View>
@@ -122,115 +122,85 @@ const UserSearchSection = ({ query }: { query: string }) => {
 }
 
 const TopicSearchSection = ({ query }: { query: string }) => {
+  const topicSearchQuery = reactQueryClient.useQuery(
+    '/search/details/topics',
+    {
+      query: { search: query },
+    },
+    { enabled: !!query }
+  )
+
+  if (!topicSearchQuery.data || topicSearchQuery.data.length === 0) {
+    return null
+  }
   return (
     <View className="py-2 border-b border-base-outline-default bg-base-bg-white">
       <H2 className="text-base font-heading-semibold px-4">หัวข้อ</H2>
-      <TopicSearchBigCard
-        id="1"
-        name={'ภารกิจส้มสู้ไฟ'}
-        hashtags={[
-          {
-            id: '1',
-            name: '#pple-today-1',
-            status: 'PUBLISH',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        ]}
-      />
-      <TopicSearchBigCard
-        id="2"
-        name={'เดินหน้าประเทศไทย'}
-        hashtags={[
-          {
-            id: '1',
-            name: '#pple-today-1',
-            status: 'PUBLISH',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-          {
-            id: '2',
-            name: '#pple-today-1',
-            status: 'PUBLISH',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        ]}
-      />
-      <TopicSearchBigCard
-        id="3"
-        name={'หลบหนีเตาผิง'}
-        hashtags={[
-          {
-            id: '3',
-            name: '#pple-today-5',
-            status: 'PUBLISH',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-          {
-            id: '5',
-            name: '#pple-today-5',
-            status: 'PUBLISH',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-          {
-            id: '7',
-            name: '#pple-today-5',
-            status: 'PUBLISH',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        ]}
-      />
+      {topicSearchQuery.data.map((topic) => (
+        <TopicSearchBigCard
+          key={topic.id}
+          id={topic.id}
+          name={topic.name}
+          bannerImage={topic.bannerImage || undefined}
+          hashtags={topic.hashtags}
+        />
+      ))}
     </View>
   )
 }
 
 const HashtagSearchSection = ({ query }: { query: string }) => {
+  // confirmation of hashtag search to show navigation card
+  if (!query.startsWith('#')) {
+    return null
+  }
+
+  const hashtagSearchQuery = reactQueryClient.useQuery(
+    '/search/details/hashtags',
+    {
+      query: { search: query },
+    },
+    { enabled: !!query }
+  )
+
+  if (!hashtagSearchQuery.data || hashtagSearchQuery.data.length === 0) {
+    return null
+  }
+
   return (
     <View className="py-2 border-b border-base-outline-default bg-base-bg-white">
       <H2 className="text-base font-heading-semibold px-4"># แฮชแท็ก</H2>
-      <HashtagSearchCard id="1" name={'การเมือง'} />
-      <HashtagSearchCard id="1" name={'การปกครอง'} />
-      <HashtagSearchCard id="1" name={'การเมือง'} />
-      <HashtagSearchCard id="1" name={'การปกครอง'} />
+      {hashtagSearchQuery.data.map((hashtag) => (
+        <HashtagSearchCard key={hashtag.id} id={hashtag.id} name={hashtag.name} />
+      ))}
     </View>
   )
 }
 
 const AnnouncementSearchSection = ({ query }: { query: string }) => {
-  const mockAnnouncements = [
+  const announcementSearchQuery = reactQueryClient.useQuery(
+    '/search/details/announcements',
     {
-      id: '1',
-      feedId: 'feed-1',
-      title: 'การปิดปรับปรุงระบบ',
-      type: 'OFFICIAL' as 'OFFICIAL' | 'PARTY_COMMUNICATE' | 'INTERNAL',
-      date: new Date().toISOString(),
+      query: { search: query },
     },
-    {
-      id: '2',
-      feedId: 'feed-2',
-      title: 'การอัปเดตแอปพลิเคชัน',
-      type: 'PARTY_COMMUNICATE' as 'OFFICIAL' | 'PARTY_COMMUNICATE' | 'INTERNAL',
-      date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: '3',
-      feedId: 'feed-3',
-      title: 'ประกาศกิจกรรมพิเศษ',
-      type: 'INTERNAL' as 'OFFICIAL' | 'PARTY_COMMUNICATE' | 'INTERNAL',
-      date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-  ]
+    { enabled: !!query }
+  )
+
+  if (!announcementSearchQuery.data || announcementSearchQuery.data.length === 0) {
+    return null
+  }
 
   return (
     <View className="py-2 border-b border-base-outline-default bg-base-bg-white">
       <H2 className="text-base font-heading-semibold px-4">ประกาศ</H2>
-      {mockAnnouncements.map((announcement) => (
-        <AnnouncementSearchCard {...announcement} key={announcement.id} />
+      {announcementSearchQuery.data.map((announcement) => (
+        <AnnouncementSearchCard
+          key={announcement.id}
+          id={announcement.id}
+          title={announcement.title}
+          type={announcement.type}
+          date={announcement.publishedAt.toString()}
+        />
       ))}
     </View>
   )
@@ -279,7 +249,7 @@ const SearchResult = ({ query }: { query: string }) => {
 
   const data = React.useMemo((): GetTopicFeedResponse => {
     if (!feedInfiniteQuery.data) return []
-    return feedInfiniteQuery.data.pages.flatMap((page) => page)
+    return feedInfiniteQuery.data.pages.flat()
   }, [feedInfiniteQuery.data])
 
   const renderFeedItem = React.useCallback(
@@ -289,17 +259,9 @@ const SearchResult = ({ query }: { query: string }) => {
     []
   )
 
-  const scrollY = useSharedValue(0)
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (event) => {
-      scrollY.value = event.contentOffset.y
-    },
-  })
-
   return (
     <View className="border-b border-base-outline-default">
       <Animated.FlatList
-        onScroll={scrollHandler}
         data={data}
         contentContainerClassName="bg-base-bg-default"
         renderItem={renderFeedItem}

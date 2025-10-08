@@ -83,7 +83,7 @@ export default function BottomTabsLayout() {
           }}
         />
         <Tabs.Screen
-          name="profile"
+          name="(profile)"
           options={{
             title: 'ฉัน',
             tabBarIcon: (props) => <TabBarIcon {...props} icon={CircleUserRoundIcon} />,

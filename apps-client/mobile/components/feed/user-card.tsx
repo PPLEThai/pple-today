@@ -54,7 +54,7 @@ export function UserCard(props: UserCardProps) {
   const router = useRouter()
   return (
     <AnimatedBackgroundPressable
-      onPress={() => router.navigate(`./profile/${props.user.id}`)}
+      onPress={() => router.navigate(`./(profile)/${props.user.id}`)}
       className={cn(
         'flex flex-col items-center gap-3 bg-base-bg-white border border-base-outline-default rounded-2xl p-4 h-[208px]',
         props.className
