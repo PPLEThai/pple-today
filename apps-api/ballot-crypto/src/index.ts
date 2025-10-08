@@ -106,7 +106,20 @@ if (process.env.ENABLE_SWAGGER === 'true') {
   const response = swaggerPlugin.router.history[0].handler as unknown as Response
   const hooks = swaggerPlugin.router.history[0].hooks
 
-  app = app.use(swaggerPlugin).get('/swagger', () => response.clone(), hooks)
+  let body: string = ''
+
+  app = app.use(swaggerPlugin).get(
+    '/swagger',
+    async () => {
+      if (!body) body = await response.text()
+      return new Response(body, {
+        headers: {
+          'content-type': 'text/html; charset=utf8',
+        },
+      })
+    },
+    hooks
+  )
 }
 
 app.listen(process.env.PORT, () => {
