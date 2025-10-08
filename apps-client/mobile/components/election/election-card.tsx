@@ -170,7 +170,10 @@ function ElectionCardDetail(props: ElectionCardProps) {
       break
     }
     case 'OPEN_VOTE':
-      if (props.election.type === 'ONLINE') {
+      if (
+        props.election.type === 'ONLINE' ||
+        (props.election.type === 'HYBRID' && props.election.isRegistered)
+      ) {
         return (
           <>
             <ElectionTimeLeft election={props.election} />
@@ -178,23 +181,13 @@ function ElectionCardDetail(props: ElectionCardProps) {
           </>
         )
       }
-      if (props.election.type === 'ONSITE') {
-        return (
-          <>
-            <ElectionTimeLeft election={props.election} />
-            <ElectionLocation election={props.election} />
-          </>
-        )
-      }
-      if (props.election.type === 'HYBRID') {
-        return (
-          <>
-            <ElectionTimeLeft election={props.election} />
-            <Progress value={props.election.votePercentage} />
-          </>
-        )
-      }
-      break
+      return (
+        <>
+          <ElectionTimeLeft election={props.election} />
+          <ElectionLocation election={props.election} />
+        </>
+      )
+
     case 'CLOSED_VOTE':
       return (
         <View className="flex flex-row gap-1 items-center">
@@ -383,22 +376,22 @@ function ElectionCardFooter(props: ElectionCardProps) {
     }
     case 'OPEN_VOTE':
       if (
-        props.election.type === 'ONSITE' ||
-        (props.election.type === 'HYBRID' && !props.election.isRegistered)
+        props.election.type === 'ONLINE' ||
+        (props.election.type === 'HYBRID' && props.election.isRegistered)
       ) {
-        return (
-          <Button
-            variant="secondary"
-            size="sm"
-            className="w-full mt-2"
-            onPress={() => Linking.openURL(props.election.locationMapUrl!)}
-          >
-            <Icon icon={MapPinnedIcon} size={16} />
-            <Text>ดูสถานที่</Text>
-          </Button>
-        )
+        return <ElectionPercentageActions election={props.election} />
       }
-      return <ElectionPercentageActions election={props.election} />
+      return (
+        <Button
+          variant="secondary"
+          size="sm"
+          className="w-full mt-2"
+          onPress={() => Linking.openURL(props.election.locationMapUrl!)}
+        >
+          <Icon icon={MapPinnedIcon} size={16} />
+          <Text>ดูสถานที่</Text>
+        </Button>
+      )
     case 'CLOSED_VOTE':
       return null
     case 'RESULT_ANNOUNCE':
@@ -511,61 +504,66 @@ function ElectionDetailCardDetail(props: ElectionDetailCardProps) {
         return <ElectionOpenVotingDate election={props.election} />
       }
       if (props.election.type === 'ONSITE') {
-        return <ElectionOpenVotingDate election={props.election} />
+        return (
+          <>
+            <ElectionOpenVotingDate election={props.election} />
+            <ElectionLocation election={props.election} />
+          </>
+        )
       }
       if (props.election.type === 'HYBRID') {
-        if (!props.election.isRegistered) {
+        if (dayjs().isBefore(props.election.openRegister)) {
           return (
             <>
               <ElectionOpenVotingDate election={props.election} />
-              <View className="flex flex-row gap-1 items-center">
-                <Icon icon={ClockIcon} size={16} className="text-base-text-invert" />
-                <Text className="text-sm text-base-text-invert font-heading-regular">
-                  เปิดลงทะเบียนถึง:{' '}
-                  <Text className="text-sm text-base-primary-default font-body-medium">
-                    {dayjs(props.election.openRegister).format('D MMM BBBB เวลา HH:mm')}
-                  </Text>
-                </Text>
-              </View>
+              <ElectionOpenRegisterDate election={props.election} />
+            </>
+          )
+        }
+        if (dayjs().isBefore(props.election.closeRegister)) {
+          return (
+            <>
+              <ElectionOpenVotingDate election={props.election} />
+              <ElectionCloseRegisterDate election={props.election} />
             </>
           )
         }
         return (
           <>
             <ElectionOpenVotingDate election={props.election} />
-            <Badge variant="outline" className="self-stretch">
-              <Text className="text-base-text-invert">
-                หมดเวลาลงทะเบียนแล้ว คุณมีสิทธิ์เลือกตั้งในสถานที่
-              </Text>
-            </Badge>
+            {!props.election.isRegistered && (
+              <>
+                <ElectionLocation election={props.election} />
+                <Badge variant="outline" className="self-stretch">
+                  <Text className="text-base-text-invert">
+                    หมดเวลาลงทะเบียนแล้ว คุณมีสิทธิ์เลือกตั้งในสถานที่
+                  </Text>
+                </Badge>
+              </>
+            )}
           </>
         )
       }
       break
     }
     case 'OPEN_VOTE':
-      if (props.election.type === 'ONLINE') {
+      if (
+        props.election.type === 'ONLINE' ||
+        (props.election.type === 'HYBRID' && props.election.isRegistered)
+      ) {
         return (
           <>
             <ElectionTimeLeft election={props.election} />
-            <Progress value={props.election.votePercentage} />
             <ElectionPercentage election={props.election} />
           </>
         )
       }
-      if (props.election.type === 'ONSITE') {
-        return <ElectionTimeLeft election={props.election} />
-      }
-      if (props.election.type === 'HYBRID') {
-        return (
-          <>
-            <ElectionTimeLeft election={props.election} />
-            <Progress value={props.election.votePercentage} />
-            <ElectionPercentage election={props.election} />
-          </>
-        )
-      }
-      break
+      return (
+        <>
+          <ElectionTimeLeft election={props.election} />
+          <ElectionLocation election={props.election} />
+        </>
+      )
     case 'CLOSED_VOTE':
       return (
         <View className="flex flex-row gap-1 items-center">

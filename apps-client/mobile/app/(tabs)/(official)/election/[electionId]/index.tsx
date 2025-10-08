@@ -1,21 +1,14 @@
 import { useEffect } from 'react'
-import { Pressable, ScrollView, View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { Text } from '@pple-today/ui/text'
 import { H1, H2 } from '@pple-today/ui/typography'
-import dayjs from 'dayjs'
 import * as Linking from 'expo-linking'
 import { Link, useLocalSearchParams, useRouter } from 'expo-router'
-import {
-  ArrowLeftIcon,
-  CalendarIcon,
-  MapPinIcon,
-  MapPinnedIcon,
-  VoteIcon,
-} from 'lucide-react-native'
+import { ArrowLeftIcon, MapPinnedIcon, VoteIcon } from 'lucide-react-native'
 
 import { ElectionWithCurrentStatus, GetElectionResponse } from '@api/backoffice/app'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
@@ -109,32 +102,6 @@ export default function ElectionDetailPage() {
       </View>
       <ScrollView contentContainerClassName="flex flex-col gap-3 px-4">
         <H1 className="text-xl font-heading-semibold text-base-text-high">{election.name}</H1>
-        <View className="flex flex-row gap-1 items-center">
-          <Icon
-            icon={CalendarIcon}
-            className="text-base-primary-default"
-            size={16}
-            strokeWidth={1.5}
-          />
-          <Text className="text-xs text-base-primary-default font-heading-semibold">
-            {dayjs(election.openVoting).format('D MMM BBBB เวลา HH:mm')}
-          </Text>
-        </View>
-        {(election.type === 'ONSITE' || election.type === 'HYBRID') && (
-          <Pressable
-            className="flex flex-row gap-1 items-center"
-            onPress={() => {
-              if (election.locationMapUrl) {
-                Linking.openURL(election.locationMapUrl!)
-              }
-            }}
-          >
-            <Icon icon={MapPinIcon} className="text-base-text-medium" size={12} strokeWidth={1.5} />
-            <Text className="text-xs text-base-text-medium font-heading-semibold">
-              {election.location}
-            </Text>
-          </Pressable>
-        )}
         <ElectionDetailCard election={election} />
         {election.description && (
           <Text className="text-base font-body-regular text-base-text-high">
