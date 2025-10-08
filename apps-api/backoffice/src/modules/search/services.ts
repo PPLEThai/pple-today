@@ -102,6 +102,10 @@ export class SearchService {
         bannerImage: topic.bannerImagePath
           ? this.fileService.getPublicFileUrl(topic.bannerImagePath)
           : null,
+        hashtags: topic.hashTagInTopics.map(({ hashTag }) => ({
+          id: hashTag.id,
+          name: hashTag.name,
+        })),
       }))
     )
   }
