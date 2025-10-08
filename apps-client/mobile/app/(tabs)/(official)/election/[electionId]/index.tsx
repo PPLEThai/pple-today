@@ -127,7 +127,7 @@ function ElectionCandidateList({ election }: { election: GetElectionResponse }) 
         {election.candidates.map((candidate) => (
           <View key={candidate.id} className="py-3 px-1 flex flex-row gap-2 items-center">
             <View className="flex flex-col gap-1 items-center">
-              <Text className="text-xs font-heading-semibold text-base-primary-default -mb-2">
+              <Text className="text-xs font-heading-semibold text-base-primary-default -mb-1">
                 เบอร์
               </Text>
               <Text className="text-3xl font-heading-bold text-base-primary-default">
@@ -159,7 +159,7 @@ function ElectionResult({ election }: { election: GetElectionResponse }) {
         {election.candidates.map((candidate) => (
           <View key={candidate.id} className="py-3 px-1 flex flex-row gap-2 items-center">
             <View className="flex flex-col gap-1 items-center">
-              <Text className="text-xs font-heading-semibold text-base-primary-default -mb-2">
+              <Text className="text-xs font-heading-semibold text-base-primary-default -mb-1">
                 เบอร์
               </Text>
               <Text className="text-3xl font-heading-bold text-base-primary-default">
