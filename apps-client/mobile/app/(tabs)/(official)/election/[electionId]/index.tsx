@@ -41,26 +41,6 @@ export default function ElectionDetailPage() {
   if (!electionId) {
     return null
   }
-  if (electionQuery.isLoading || !electionQuery.data) {
-    return (
-      <SafeAreaLayout className="flex-1 flex-col bg-base-bg-white">
-        <View className="pt-4 pb-2 px-4 bg-base-bg-white">
-          <Button
-            variant="outline-primary"
-            size="icon"
-            onPress={() => router.back()}
-            aria-label="Go back"
-          >
-            <Icon icon={ArrowLeftIcon} size={24} />
-          </Button>
-        </View>
-        <View className="flex flex-col gap-3 px-4">
-          <Skeleton className="h-5 mt-2 w-1/2 rounded-2xl" />
-          <Skeleton className="h-40 w-full rounded-2xl" />
-        </View>
-      </SafeAreaLayout>
-    )
-  }
   const election = electionQuery.data
   return (
     <SafeAreaLayout className="flex-1 flex-col bg-base-bg-white">
@@ -74,18 +54,27 @@ export default function ElectionDetailPage() {
           <Icon icon={ArrowLeftIcon} size={24} />
         </Button>
       </View>
-      <ScrollView contentContainerClassName="flex flex-col gap-3 px-4">
-        <H1 className="text-xl font-heading-semibold text-base-text-high">{election.name}</H1>
-        <ElectionDetailCard election={election} />
-        {election.description && (
-          <Text className="text-base font-body-regular text-base-text-high">
-            {election.description}
-          </Text>
-        )}
-        <ElectionCandidateList election={election} />
-        <ElectionResult election={election} />
-      </ScrollView>
-      <ElectionAction election={election} />
+      {!election ? (
+        <View className="flex flex-col gap-3 px-4">
+          <Skeleton className="h-5 mt-2 w-1/2 rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
+        </View>
+      ) : (
+        <>
+          <ScrollView contentContainerClassName="flex flex-col gap-3 px-4">
+            <H1 className="text-xl font-heading-semibold text-base-text-high">{election.name}</H1>
+            <ElectionDetailCard election={election} />
+            {election.description && (
+              <Text className="text-base font-body-regular text-base-text-high">
+                {election.description}
+              </Text>
+            )}
+            <ElectionCandidateList election={election} />
+            <ElectionResult election={election} />
+          </ScrollView>
+          <ElectionAction election={election} />
+        </>
+      )}
     </SafeAreaLayout>
   )
 }
