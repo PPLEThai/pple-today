@@ -19,6 +19,7 @@ export type KeyManagementServiceConfig = {
 
 export class KeyManagementService {
   private kmsClient: KeyManagementServiceClient
+  private DESTROY_SCHEDULED_DURATION = 30 * 24 * 60 * 60
 
   constructor(private config: KeyManagementServiceConfig) {
     this.kmsClient = new KeyManagementServiceClient({
@@ -82,6 +83,9 @@ export class KeyManagementService {
   async createAsymmetricDecryptKey(keyId: string) {
     const key = {
       purpose: 'ASYMMETRIC_DECRYPT',
+      destroyScheduledDuration: {
+        seconds: this.DESTROY_SCHEDULED_DURATION,
+      },
       versionTemplate: {
         algorithm: 'RSA_DECRYPT_OAEP_2048_SHA256',
       },
