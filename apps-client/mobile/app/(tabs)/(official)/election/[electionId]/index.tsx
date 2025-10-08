@@ -4,6 +4,7 @@ import { ScrollView, View } from 'react-native'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
+import { Skeleton } from '@pple-today/ui/skeleton'
 import { Text } from '@pple-today/ui/text'
 import { H1, H2 } from '@pple-today/ui/typography'
 import * as Linking from 'expo-linking'
@@ -41,53 +42,26 @@ export default function ElectionDetailPage() {
     return null
   }
   if (electionQuery.isLoading || !electionQuery.data) {
-    // TODO: skeleton
-    return null
+    return (
+      <SafeAreaLayout className="flex-1 flex-col bg-base-bg-white">
+        <View className="pt-4 pb-2 px-4 bg-base-bg-white">
+          <Button
+            variant="outline-primary"
+            size="icon"
+            onPress={() => router.back()}
+            aria-label="Go back"
+          >
+            <Icon icon={ArrowLeftIcon} size={24} />
+          </Button>
+        </View>
+        <View className="flex flex-col gap-3 px-4">
+          <Skeleton className="h-5 mt-2 w-1/2 rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
+        </View>
+      </SafeAreaLayout>
+    )
   }
   const election = electionQuery.data
-  // TODO: remove
-  election.candidates = [
-    {
-      id: 'candidate-10',
-      number: 10,
-      name: 'นายปกรณ์ พิมพ์โคตร',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      description: 'นักศึกษาคณะวิศวกรรมศาสตร์ สาขาวิศวกรรมคอมพิวเตอร์ ปี 3',
-      electionId: election.id,
-      profileImagePath: null,
-    },
-    {
-      id: 'candidate-11',
-      number: 11,
-      name: 'นายปกรณ์ พิมพ์โคตร',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      description: 'นักศึกษาคณะวิศวกรรมศาสตร์ สาขาวิศวกรรมคอมพิวเตอร์ ปี 3',
-      electionId: election.id,
-      profileImagePath: null,
-    },
-    {
-      id: 'candidate-12',
-      number: 12,
-      name: 'นายปกรณ์ พิมพ์โคตร',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      description: 'นักศึกษาคณะวิศวกรรมศาสตร์ สาขาวิศวกรรมคอมพิวเตอร์ ปี 3',
-      electionId: election.id,
-      profileImagePath: null,
-    },
-    {
-      id: 'candidate-13',
-      number: 13,
-      name: 'นายปกรณ์ พิมพ์โคตร',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      description: 'นักศึกษาคณะวิศวกรรมศาสตร์ สาขาวิศวกรรมคอมพิวเตอร์ ปี 3',
-      electionId: election.id,
-      profileImagePath: null,
-    },
-  ]
   return (
     <SafeAreaLayout className="flex-1 flex-col bg-base-bg-white">
       <View className="pt-4 pb-2 px-4 bg-base-bg-white">
