@@ -17,11 +17,6 @@ export const SearchKeyword = t.Union([
     type: t.Literal('QUERY'),
     query: t.String(),
   }),
-  t.Object({
-    type: t.Literal('HASHTAG'),
-    id: t.String(),
-    name: t.String(),
-  }),
 ])
 export type SearchKeyword = Static<typeof SearchKeyword>
 
