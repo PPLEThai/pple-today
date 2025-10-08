@@ -562,7 +562,6 @@ function ElectionDetailCardDetail(props: ElectionDetailCardProps) {
       return (
         <>
           <ElectionTimeLeft election={props.election} />
-          <Progress value={props.election.votePercentage} />
           <ElectionLocation election={props.election} />
         </>
       )
