@@ -382,10 +382,10 @@ function ElectionCardFooter(props: ElectionCardProps) {
       break
     }
     case 'OPEN_VOTE':
-      if (props.election.type === 'ONLINE') {
-        return <ElectionPercentageActions election={props.election} />
-      }
-      if (props.election.type === 'ONSITE') {
+      if (
+        props.election.type === 'ONSITE' ||
+        (props.election.type === 'HYBRID' && !props.election.isRegistered)
+      ) {
         return (
           <Button
             variant="secondary"
@@ -398,10 +398,7 @@ function ElectionCardFooter(props: ElectionCardProps) {
           </Button>
         )
       }
-      if (props.election.type === 'HYBRID') {
-        return <ElectionPercentageActions election={props.election} />
-      }
-      break
+      return <ElectionPercentageActions election={props.election} />
     case 'CLOSED_VOTE':
       return null
     case 'RESULT_ANNOUNCE':
