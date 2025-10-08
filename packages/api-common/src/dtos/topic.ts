@@ -8,6 +8,7 @@ export const Topic = t.Object({
   name: t.String({ description: 'The name of the topic' }),
   description: t.Nullable(t.String({ description: 'The description of the topic' })),
   status: t.Enum(TopicStatus),
+  followedTopicsCount: t.Number({ description: 'The number of follower of the topic' }),
   createdAt: t.Date({ description: 'The creation date of the topic' }),
   updatedAt: t.Date({ description: 'The update date of the topic' }),
 })

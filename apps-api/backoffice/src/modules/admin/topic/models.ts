@@ -11,14 +11,7 @@ export const GetTopicsQuery = t.Object({
 export type GetTopicsQuery = Static<typeof GetTopicsQuery>
 
 export const GetTopicsResponse = t.Object({
-  data: t.Array(
-    t.Composite([
-      Topic,
-      t.Object({
-        followedTopicsCount: t.Number({ description: 'The number of follower of the topic' }),
-      }),
-    ])
-  ),
+  data: t.Array(Topic),
   meta: t.Object({ count: t.Number() }),
 })
 export type GetTopicsResponse = Static<typeof GetTopicsResponse>

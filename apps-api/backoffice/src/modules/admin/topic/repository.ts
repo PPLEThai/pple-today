@@ -79,32 +79,39 @@ export class AdminTopicRepository {
 
   async getTopicById(topicId: string) {
     return await fromRepositoryPromise(async () => {
-      const { hashTagInTopics, ...result } = await this.prismaService.topic.findUniqueOrThrow({
-        where: { id: topicId },
-        select: {
-          id: true,
-          name: true,
-          description: true,
-          bannerImagePath: true,
-          status: true,
-          createdAt: true,
-          updatedAt: true,
-          hashTagInTopics: {
-            select: {
-              hashTag: {
-                select: {
-                  id: true,
-                  name: true,
+      const { hashTagInTopics, _count, ...result } =
+        await this.prismaService.topic.findUniqueOrThrow({
+          where: { id: topicId },
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            bannerImagePath: true,
+            status: true,
+            createdAt: true,
+            updatedAt: true,
+            hashTagInTopics: {
+              select: {
+                hashTag: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
                 },
               },
             },
+            _count: {
+              select: {
+                followedTopics: true,
+              },
+            },
           },
-        },
-      })
+        })
 
       return {
         ...result,
         hashtags: hashTagInTopics.map((hashTagInTopic) => hashTagInTopic.hashTag),
+        followedTopicsCount: _count.followedTopics,
       }
     })
   }

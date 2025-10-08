@@ -91,6 +91,11 @@ export const Data = () => {
       }),
       columnHelper.accessor('name', {
         header: 'ชื่อหัวข้อ',
+        cell: (info) => (
+          <NavLink className="hover:underline" to={`/feed/topic/${info.row.getValue('id')}`}>
+            {info.getValue()}
+          </NavLink>
+        ),
       }),
       columnHelper.accessor('followedTopicsCount', {
         header: 'ยอดผู้ติดตาม',

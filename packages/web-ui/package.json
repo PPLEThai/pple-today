@@ -6,7 +6,8 @@
     "./*": "./src/components/ui/*.tsx",
     "./components/*": "./src/components/*.tsx",
     "./global.css": "./global.css",
-    "./tailwind.config.js": "./tailwind.config.js"
+    "./tailwind.config.js": "./tailwind.config.js",
+    "./utils": "./src/libs/utils.ts"
   },
   "scripts": {
     "lint": "eslint .",
