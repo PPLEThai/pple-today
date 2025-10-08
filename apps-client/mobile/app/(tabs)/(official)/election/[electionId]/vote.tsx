@@ -1,5 +1,5 @@
 import React, { createContext, useEffect } from 'react'
-import { ScrollView, View } from 'react-native'
+import { View } from 'react-native'
 
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
@@ -7,11 +7,14 @@ import { Progress } from '@pple-today/ui/progress'
 import { Text } from '@pple-today/ui/text'
 import { H1 } from '@pple-today/ui/typography'
 import { useQuery } from '@tanstack/react-query'
+import { Image } from 'expo-image'
+import * as ImagePicker from 'expo-image-picker'
 import * as Linking from 'expo-linking'
 import * as Location from 'expo-location'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { ArrowLeftIcon, TriangleAlertIcon } from 'lucide-react-native'
+import { ArrowLeftIcon, ArrowRightIcon, ScanFaceIcon, TriangleAlertIcon } from 'lucide-react-native'
 
+import FaceScan from '@app/assets/face-scan.svg'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { Spinner } from '@app/components/spinner'
 import { reactQueryClient } from '@app/libs/api-client'
@@ -46,7 +49,7 @@ interface ElectionLocation {
   longitude: number
 }
 interface ElectionFaceVerification {
-  faceImageFile: File
+  faceImageAsset: ImagePicker.ImagePickerAsset
 }
 
 interface ElectionState {
@@ -164,7 +167,7 @@ function ElectionLocationStep() {
     }
   }, [currentLocationQuery.data, dispatch])
   return (
-    <ScrollView className="px-4 pt-1">
+    <View className="px-4 pt-1 flex-1">
       <H1 className="text-lg font-heading-semibold text-base-text-high">ยืนยันตำแหน่งที่อยู่</H1>
       {currentLocationQuery.isLoading || permissionStatus === null ? (
         <View className="flex flex-col py-16 items-center">
@@ -178,37 +181,107 @@ function ElectionLocationStep() {
             strokeWidth={1.5}
             className="text-base-text-medium"
           />
-          <Text className="text-base-text-medium text-center font-body-medium">
+          <Text className="text-base-text-high text-center font-body-regular">
             {
               'เพื่อยืนยันว่าคุณอยู่ในพื้นที่ที่มีสิทธิ์ลงคะแนน\nกรุณาอนุญาตการเข้าถึงตำแหน่งที่ตั้งของอุปกรณ์'
             }
           </Text>
-          <Button
-            onPress={() => {
-              if (permissionStatus === null) {
-                return
-              }
-              if (permissionStatus.status === Location.PermissionStatus.GRANTED) {
-                return
-              }
-              if (!permissionStatus.canAskAgain) {
-                Linking.openSettings()
-                return
-              }
-              requestPermission()
-            }}
-          >
-            <Text>อนุญาต</Text>
-          </Button>
+          <View className="absolute bottom-0 left-0 right-0 px-4 py-2 bg-base-bg-white">
+            <Button
+              onPress={() => {
+                if (permissionStatus === null) {
+                  return
+                }
+                if (permissionStatus.status === Location.PermissionStatus.GRANTED) {
+                  return
+                }
+                if (!permissionStatus.canAskAgain) {
+                  Linking.openSettings()
+                  return
+                }
+                requestPermission()
+              }}
+            >
+              <Text>อนุญาต</Text>
+            </Button>
+          </View>
         </View>
       )}
-    </ScrollView>
+    </View>
   )
 }
 
 function ElectionFaceVerificationStep() {
-  const { state, dispatch } = useElection()
-  return <></>
+  const { dispatch } = useElection()
+  const [cameraPermission, requestCameraPermission] = ImagePicker.useCameraPermissions()
+  const [asset, setAsset] = React.useState<ImagePicker.ImagePickerAsset | null>(null)
+
+  return (
+    <View className="px-4 pt-1 gap-5 flex-1">
+      <H1 className="text-lg font-heading-semibold text-base-text-high">ถ่ายรูปเพื่อยืนยันตัวตน</H1>
+      {asset === null ? (
+        <>
+          <Icon icon={FaceScan} className="self-center" />
+          <Text className="text-base-text-high text-center font-body-regular">
+            โปรดถ่ายรูปใบหน้าเพื่อยืนยันตัวตน
+          </Text>
+        </>
+      ) : (
+        <Image source={{ uri: asset.uri }} className="w-full rounded-xl aspect-[3/4]" />
+      )}
+      <View className="absolute bottom-0 left-0 right-0 px-4 py-2 bg-base-bg-white">
+        {asset === null ? (
+          <Button
+            onPress={async () => {
+              if (cameraPermission === null) {
+                return
+              }
+              if (cameraPermission.status !== ImagePicker.PermissionStatus.GRANTED) {
+                if (!cameraPermission.canAskAgain) {
+                  Linking.openSettings()
+                  return
+                }
+                requestCameraPermission()
+                return
+              }
+              try {
+                const result = await ImagePicker.launchCameraAsync({
+                  // android: the behavior of this option may vary based on the camera app installed on the device.
+                  // https://docs.expo.dev/versions/latest/sdk/imagepicker/#imagepickeroptions
+                  cameraType: ImagePicker.CameraType.front,
+                })
+                if (result.canceled) {
+                  return
+                }
+                const asset = result.assets[0]
+                if (!asset) {
+                  return
+                }
+                setAsset(asset)
+              } catch (error) {
+                console.error('Error launching camera:', error)
+              }
+            }}
+          >
+            <Icon icon={ScanFaceIcon} />
+            <Text>ถ่ายรูปใบหน้า</Text>
+          </Button>
+        ) : (
+          <Button
+            onPress={() => {
+              dispatch({
+                type: 'setFaceVerification',
+                payload: { faceImageAsset: asset },
+              })
+            }}
+          >
+            <Icon icon={ArrowRightIcon} />
+            <Text>ถัดไป</Text>
+          </Button>
+        )}
+      </View>
+    </View>
+  )
 }
 
 function ElectionVoteStep() {
