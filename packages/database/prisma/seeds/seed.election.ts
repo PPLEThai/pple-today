@@ -225,6 +225,27 @@ const seedElections = async (userId: string) => {
           type: EligibleVoterType.ONLINE,
         },
       },
+      candidates: {
+        createMany: {
+          data: [
+            {
+              id: 'candidate-11',
+              name: 'candidate-11',
+              number: 11,
+            },
+            {
+              id: 'candidate-12',
+              name: 'candidate-12',
+              number: 12,
+            },
+            {
+              id: 'candidate-13',
+              name: 'candidate-13',
+              number: 13,
+            },
+          ],
+        },
+      },
     },
     // hybrid
     // close result announcement

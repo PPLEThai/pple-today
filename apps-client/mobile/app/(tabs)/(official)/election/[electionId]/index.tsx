@@ -172,7 +172,7 @@ function ElectionResult({ election }: { election: GetElectionResponse }) {
               )}
               <AvatarPPLEFallback />
             </Avatar>
-            <Text className="text-base font-body-regular text-base-text-high">
+            <Text className="text-base font-body-regular text-base-text-high flex-1">
               {candidate.name}
             </Text>
             {/* TODO: integrate result */}
