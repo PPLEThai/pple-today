@@ -64,7 +64,7 @@ export default function ElectionDetailPage() {
           <ScrollView contentContainerClassName="flex flex-col gap-3 px-4">
             <H1 className="text-xl font-heading-semibold text-base-text-high">{election.name}</H1>
             <ElectionDetailCard election={election} />
-            {election.description && (
+            {election.status !== 'RESULT_ANNOUNCE' && election.description && (
               <Text className="text-base font-body-regular text-base-text-high">
                 {election.description}
               </Text>
