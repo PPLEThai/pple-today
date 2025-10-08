@@ -515,8 +515,8 @@ function ElectionRegisterButton(props: ElectionCardProps) {
 function ElectionRegisterWarning(props: ElectionCardProps) {
   if (
     props.election.type !== 'HYBRID' ||
-    props.election.status !== 'NOT_OPENED_VOTE' ||
-    dayjs().isBefore(props.election.closeRegister) ||
+	dayjs().isAfter(props.election.closeRegister) ||
+    dayjs().isBefore(props.election.openRegister) ||
     props.election.isRegistered
   ) {
     return null
