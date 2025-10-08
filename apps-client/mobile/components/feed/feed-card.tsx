@@ -13,7 +13,7 @@ import { TextProps } from 'react-native-svg'
 import { createQuery } from 'react-query-kit'
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
-import { QUERY_KEY } from '@pple-today/api-client'
+import { QUERY_KEY_SYMBOL } from '@pple-today/api-client'
 import { AnimatedBackgroundPressable, AnimatedPressable } from '@pple-today/ui/animated-pressable'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
@@ -265,7 +265,7 @@ interface FeedReaction {
 }
 // create store using react query
 export const useFeedReactionQuery = createQuery({
-  queryKey: [QUERY_KEY, 'feed-reaction'],
+  queryKey: [QUERY_KEY_SYMBOL, 'feed-reaction'],
   fetcher: (_: { feedId: string }): FeedReaction => {
     throw new Error('PostReactionStore should not be enabled')
   },
