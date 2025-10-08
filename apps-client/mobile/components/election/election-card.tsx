@@ -43,7 +43,7 @@ export function ElectionCard({ election, className, ...props }: ElectionCardProp
           'w-full bg-base-secondary-default rounded-2xl flex flex-col justify-between gap-2 p-4 overflow-hidden',
           className
         )}
-        onPress={() => router.push(`/election/${election.id}`)}
+        onPress={() => router.navigate(`/election/${election.id}`)}
         {...props}
       >
         <View className="flex flex-col gap-2">
