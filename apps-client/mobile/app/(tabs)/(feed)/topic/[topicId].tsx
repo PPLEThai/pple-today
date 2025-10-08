@@ -63,7 +63,7 @@ export default function TopicDetailPage() {
     },
     initialPageParam: '',
     getNextPageParam: (lastPage) => {
-      if (lastPage && lastPage.meta.cursor.next === null) {
+      if (lastPage.meta.cursor.next === null) {
         return undefined
       }
       return lastPage.meta.cursor.next
