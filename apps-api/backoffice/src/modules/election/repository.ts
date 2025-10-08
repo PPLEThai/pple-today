@@ -140,14 +140,11 @@ export class ElectionRepository {
       })
     )
 
-    console.log('createBollotResult', createBollotResult)
     if (createBollotResult.isErr()) {
       const rollbackResult = await fileTx.rollback()
       if (rollbackResult.isErr()) return err(rollbackResult.error)
       return err(createBollotResult.error)
     }
-
-    console.log(createBollotResult.value)
 
     return ok(createBollotResult.value)
   }
