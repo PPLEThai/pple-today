@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Pressable, PressableProps, View, ViewProps } from 'react-native'
+import { View, ViewProps } from 'react-native'
 import { createQuery } from 'react-query-kit'
 
 import { QUERY_KEY_SYMBOL } from '@pple-today/api-client'
@@ -13,7 +13,7 @@ import { H3 } from '@pple-today/ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import * as Linking from 'expo-linking'
-import { Link, useRouter } from 'expo-router'
+import { Link } from 'expo-router'
 import {
   AlarmClockCheckIcon,
   AlarmClockIcon,
@@ -31,19 +31,17 @@ import PPLEIcon from '@app/assets/pple-icon.svg'
 import { reactQueryClient } from '@app/libs/api-client'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 
-interface ElectionCardProps extends PressableProps {
+interface ElectionCardProps extends ViewProps {
   election: ElectionWithCurrentStatus
 }
 export function ElectionCard({ election, className, ...props }: ElectionCardProps) {
-  const router = useRouter()
   return (
     <>
-      <Pressable
+      <View
         className={cn(
           'w-full bg-base-secondary-default rounded-2xl flex flex-col justify-between gap-2 p-4 overflow-hidden',
           className
         )}
-        onPress={() => router.navigate(`/election/${election.id}`)}
         {...props}
       >
         <View className="flex flex-col gap-2">
@@ -63,7 +61,7 @@ export function ElectionCard({ election, className, ...props }: ElectionCardProp
           <ElectionCardDetail election={election} />
         </View>
         <ElectionCardFooter election={election} />
-      </Pressable>
+      </View>
       <ElectionRegisterWarning election={election} />
     </>
   )
@@ -499,53 +497,8 @@ export function ElectionDetailCard({ election, className, ...props }: ElectionDe
 
 function ElectionDetailCardDetail(props: ElectionDetailCardProps) {
   switch (props.election.status) {
-    case 'NOT_OPENED_VOTE': {
-      if (props.election.type === 'ONLINE') {
-        return <ElectionOpenVotingDate election={props.election} />
-      }
-      if (props.election.type === 'ONSITE') {
-        return (
-          <>
-            <ElectionOpenVotingDate election={props.election} />
-            <ElectionLocation election={props.election} />
-          </>
-        )
-      }
-      if (props.election.type === 'HYBRID') {
-        if (dayjs().isBefore(props.election.openRegister)) {
-          return (
-            <>
-              <ElectionOpenVotingDate election={props.election} />
-              <ElectionOpenRegisterDate election={props.election} />
-            </>
-          )
-        }
-        if (dayjs().isBefore(props.election.closeRegister)) {
-          return (
-            <>
-              <ElectionOpenVotingDate election={props.election} />
-              <ElectionCloseRegisterDate election={props.election} />
-            </>
-          )
-        }
-        return (
-          <>
-            <ElectionOpenVotingDate election={props.election} />
-            {!props.election.isRegistered && (
-              <>
-                <ElectionLocation election={props.election} />
-                <Badge variant="outline" className="self-stretch">
-                  <Text className="text-base-text-invert">
-                    หมดเวลาลงทะเบียนแล้ว คุณมีสิทธิ์เลือกตั้งในสถานที่
-                  </Text>
-                </Badge>
-              </>
-            )}
-          </>
-        )
-      }
-      break
-    }
+    case 'NOT_OPENED_VOTE':
+      return null
     case 'OPEN_VOTE':
       if (
         props.election.type === 'ONLINE' ||
