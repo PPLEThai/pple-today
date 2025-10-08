@@ -98,7 +98,7 @@ const seedTopics = async () => {
         id: `topic-${i + 1}`,
         name: `topic${i + 1}`,
         description: `This is topic${i + 1} description`,
-        hashTagInTopics: {
+        hashTags: {
           create: Array.from({ length: NUMBER_OF_HASHTAGS_PER_TOPIC }).map((_, j) => ({
             hashTag: {
               connect: {
@@ -128,7 +128,7 @@ const seedUserFollowsUser = async () => {
     for (let j = 0; j < NUMBER_OF_FOLLOWED_AUTHORS_PER_USER; j++) {
       userFollowsUserCreateArgs.push({
         followerId: `user-${i + 1}`,
-        followedId: `author-${((i + j) % NUMBER_OF_AUTHORS) + 1}`,
+        followingId: `author-${((i + j) % NUMBER_OF_AUTHORS) + 1}`,
       })
     }
   }

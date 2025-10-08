@@ -78,7 +78,7 @@ export class PollsRepository {
             },
           },
           publishedAt: {
-            not: null,
+            lte: new Date(),
           },
         },
       })
@@ -95,7 +95,7 @@ export class PollsRepository {
               },
             },
             publishedAt: {
-              not: null,
+              lte: new Date(),
             },
           },
           take: limit,
@@ -117,7 +117,7 @@ export class PollsRepository {
           where: {
             type: FeedItemType.POLL,
             publishedAt: {
-              not: null,
+              lte: new Date(),
             },
             poll: {
               status: PollStatus.PUBLISHED,
@@ -146,7 +146,7 @@ export class PollsRepository {
           feedItem: {
             id: pollId,
             publishedAt: {
-              not: null,
+              lte: new Date(),
             },
           },
           status: PollStatus.PUBLISHED,
@@ -195,7 +195,7 @@ export class PollsRepository {
             },
             feedItem: {
               publishedAt: {
-                not: null,
+                lte: new Date(),
               },
             },
           },
@@ -231,7 +231,7 @@ export class PollsRepository {
             },
             feedItem: {
               publishedAt: {
-                not: null,
+                lte: new Date(),
               },
             },
           },

@@ -69,7 +69,7 @@ export class AuthRepository {
           numberOfFollowing: 1,
           followers: {
             create: {
-              followed: {
+              following: {
                 connect: { id: officialUserId.value },
               },
             },

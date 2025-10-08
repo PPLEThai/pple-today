@@ -70,8 +70,8 @@ export default function ProfilePage() {
       return response.data
     },
     initialPageParam: '',
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage && !lastPage.meta.cursor.next) {
+    getNextPageParam: (lastPage) => {
+      if (lastPage && lastPage.meta.cursor.next === null) {
         return undefined
       }
       return lastPage.meta.cursor.next

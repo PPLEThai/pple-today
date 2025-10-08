@@ -52,3 +52,12 @@ export const ListCursorResponse = <T extends TSchema>(itemSchema: T) => {
     }),
   })
 }
+export type ListCursorResponse<T> = {
+  items: T[]
+  meta: {
+    cursor: {
+      next: string | null
+      previous: string | null
+    }
+  }
+}

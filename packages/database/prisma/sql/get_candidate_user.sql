@@ -10,7 +10,7 @@ WITH
 
   excluded_users AS (
   	SELECT
-  		ufu."followedId" AS user_id
+  		ufu."followingId" AS user_id
   	FROM
   		"UserFollowsUser" ufu
   	WHERE 

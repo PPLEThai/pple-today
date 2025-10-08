@@ -21,7 +21,7 @@ export class AnnouncementRepository {
       this.prismaService.announcement.findMany({
         where: {
           status: AnnouncementStatus.PUBLISHED,
-          feedItem: { publishedAt: { not: null } },
+          feedItem: { publishedAt: { lte: new Date() } },
         },
         select: {
           feedItemId: true,
@@ -54,7 +54,7 @@ export class AnnouncementRepository {
         where: {
           feedItemId: id,
           status: AnnouncementStatus.PUBLISHED,
-          feedItem: { publishedAt: { not: null } },
+          feedItem: { publishedAt: { lte: new Date() } },
         },
         include: {
           attachments: true,

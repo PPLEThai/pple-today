@@ -34,6 +34,7 @@ import type {
   ApplicationApiSchema,
   GetBannersResponse,
   GetMyFeedResponse,
+  ListCursorResponse,
 } from '@api/backoffice/app'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { UserAddressInfoSection } from '@app/components/address-info'
@@ -581,12 +582,7 @@ function FeedContent(props: PagerScrollViewProps) {
   type MyFeedItem = GetMyFeedResponse['items'][number] | { type: 'SUGGESTION' }
   const feedInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/feed/me'),
-    queryFn: async ({
-      pageParam,
-    }): Promise<{
-      items: MyFeedItem[]
-      meta: { cursor: { next: string | null; previous: string | null } }
-    }> => {
+    queryFn: async ({ pageParam }): Promise<ListCursorResponse<MyFeedItem>> => {
       const response = await fetchClient('/feed/me', {
         query: { cursor: pageParam, limit: LIMIT },
       })

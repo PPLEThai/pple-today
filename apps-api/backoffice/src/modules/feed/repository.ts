@@ -54,7 +54,7 @@ export class FeedRepository {
       where: {
         id: feedItemId,
         publishedAt: {
-          not: null,
+          lte: new Date(),
         },
         OR: [
           { post: { status: PostStatus.PUBLISHED } },
@@ -268,7 +268,7 @@ export class FeedRepository {
             not: FeedItemType.ANNOUNCEMENT,
           },
           publishedAt: {
-            not: null,
+            lte: new Date(),
           },
           OR: [
             {
@@ -359,7 +359,7 @@ export class FeedRepository {
         ],
         where: {
           publishedAt: {
-            not: null,
+            lte: new Date(),
           },
           OR: [
             {
@@ -380,7 +380,7 @@ export class FeedRepository {
                 topics: {
                   some: {
                     topic: {
-                      hashTagInTopics: {
+                      hashTags: {
                         some: {
                           hashTagId,
                         },
@@ -439,6 +439,9 @@ export class FeedRepository {
             type: {
               not: FeedItemType.ANNOUNCEMENT,
             },
+            publishedAt: {
+              lte: new Date(),
+            },
           },
           orderBy: [
             {
@@ -459,24 +462,24 @@ export class FeedRepository {
         })
       }
 
-      const isExistingCache = await this.prismaService.feedItemScore.findFirst({
+      const existingFeedItemScore = await this.prismaService.feedItemScore.findFirst({
         where: { userId, expiresAt: { gt: new Date() } },
         select: { feedItemId: true },
       })
 
-      if (!isExistingCache) {
+      if (!existingFeedItemScore) {
         const candidateFeedItem = await this.prismaService.$queryRawTyped(
           get_candidate_feed_item(userId)
         )
 
         const candidateFeedItemIds = R.pipe(
           candidateFeedItem,
+          R.filter((item) => item.feed_item_id !== null && item.score !== null),
           R.map((item) => ({
             feedItemId: item.feed_item_id!,
             score: item.score!,
             expiresAt: dayjs().add(1, 'hour').toDate(),
-          })),
-          R.filter((item) => item.feedItemId !== null && item.score !== null)
+          }))
         )
 
         await this.prismaService.user.update({
@@ -493,7 +496,7 @@ export class FeedRepository {
           expiresAt: { gt: new Date() },
           feedItem: {
             publishedAt: {
-              not: null,
+              lte: new Date(),
             },
             OR: [
               { post: { status: PostStatus.PUBLISHED } },
@@ -585,7 +588,7 @@ export class FeedRepository {
         where: {
           authorId: userId,
           publishedAt: {
-            not: null,
+            lte: new Date(),
           },
           type: {
             not: FeedItemType.ANNOUNCEMENT,
@@ -627,7 +630,7 @@ export class FeedRepository {
         where: {
           id: feedItemId,
           publishedAt: {
-            not: null,
+            lte: new Date(),
           },
           OR: [
             { post: { status: PostStatus.PUBLISHED } },
@@ -675,12 +678,12 @@ export class FeedRepository {
         include: this.constructFeedItemInclude(userId),
         where: {
           publishedAt: {
-            not: null,
+            lte: new Date(),
           },
           OR: [
             {
               author: {
-                followings: {
+                followers: {
                   some: {
                     followerId: userId,
                   },
@@ -688,6 +691,23 @@ export class FeedRepository {
               },
               post: {
                 status: PostStatus.PUBLISHED,
+                hashTags: {
+                  some: {
+                    hashTag: {
+                      hashTagInTopics: {
+                        some: {
+                          topic: {
+                            followers: {
+                              some: {
+                                userId,
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
               },
             },
             {
@@ -696,7 +716,7 @@ export class FeedRepository {
                 topics: {
                   some: {
                     topic: {
-                      followedTopics: {
+                      followers: {
                         some: {
                           userId,
                         },
@@ -911,7 +931,7 @@ export class FeedRepository {
           feedItemId,
           feedItem: {
             publishedAt: {
-              not: null,
+              lte: new Date(),
             },
             OR: [
               { post: { status: PostStatus.PUBLISHED } },

@@ -28,7 +28,7 @@ export class SearchRepository {
       const feedItemCandidates = await this.prismaService.feedItem.findMany({
         where: {
           publishedAt: {
-            not: null,
+            lte: new Date(),
           },
           OR: [
             {
@@ -91,7 +91,7 @@ export class SearchRepository {
           status: AnnouncementStatus.PUBLISHED,
           feedItem: {
             publishedAt: {
-              not: null,
+              lte: new Date(),
             },
           },
           OR: [
@@ -146,7 +146,7 @@ export class SearchRepository {
       this.prismaService.feedItem.findMany({
         where: {
           publishedAt: {
-            not: null,
+            lte: new Date(),
           },
           OR: [
             {
@@ -232,7 +232,7 @@ export class SearchRepository {
         skip: query.cursor ? 1 : 0,
         cursor: query.cursor ? { id: query.cursor } : undefined,
         orderBy: {
-          followedTopics: {
+          followers: {
             _count: 'desc',
           },
         },

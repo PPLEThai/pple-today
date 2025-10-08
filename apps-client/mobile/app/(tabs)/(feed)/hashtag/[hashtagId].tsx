@@ -77,7 +77,7 @@ function HashtagFeed(props: { hashtagId: string; header?: React.ReactElement }) 
     },
     initialPageParam: '',
     getNextPageParam: (lastPage) => {
-      if (lastPage && !lastPage.meta.cursor.next) {
+      if (lastPage && lastPage.meta.cursor.next === null) {
         return undefined
       }
       return lastPage.meta.cursor.next

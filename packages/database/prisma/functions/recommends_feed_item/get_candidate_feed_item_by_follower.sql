@@ -43,12 +43,12 @@ BEGIN
         candidate_user cu
       UNION ALL
       SELECT
-        ufu."followedId" AS user_id,
+        ufu."followingId" AS user_id,
         1 AS score
       FROM
         "UserFollowsUser" ufu
       WHERE 
-        ufu."followerId" = _id
+        ufu."followingId" = _id
     ),
 
     candidate_feed_item AS (

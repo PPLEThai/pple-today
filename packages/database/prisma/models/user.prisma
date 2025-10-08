@@ -31,9 +31,9 @@ model User {
 
     pollAnswers PollAnswer[]
 
-    followings     UserFollowsUser[]  @relation("Follows")
-    followers      UserFollowsUser[]  @relation("FollowedBy")
-    followedTopics UserFollowsTopic[]
+    followings      UserFollowsUser[]  @relation("Following")
+    followers       UserFollowsUser[]  @relation("Follower")
+    followingTopics UserFollowsTopic[]
 
     voters      ElectionEligibleVoter[]
     voteRecords ElectionVoteRecord[]
