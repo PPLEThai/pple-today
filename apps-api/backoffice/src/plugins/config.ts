@@ -56,6 +56,10 @@ export const envSchema = t.Object({
   GCP_STORAGE_BUCKET_NAME: t.String({
     description: 'Google Cloud Storage Bucket Name',
   }),
+
+  BALLOT_CRYPTO_DOMAIN: t.String({
+    description: 'Domain of ballot crypto service',
+  }),
 })
 
 export const ConfigServicePlugin = createConfigServicePlugin({

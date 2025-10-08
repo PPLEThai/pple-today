@@ -83,6 +83,9 @@ importers:
         specifier: ^2.24.0
         version: 2.24.0
     devDependencies:
+      '@api/ballot-crypto':
+        specifier: workspace:^
+        version: link:../ballot-crypto
       '@pple-today/project-config':
         specifier: workspace:^
         version: link:../../packages/project-config
