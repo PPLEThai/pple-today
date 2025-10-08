@@ -7,8 +7,35 @@ import {
   ListQuery,
   PaginationMetadataResponse,
 } from '@pple-today/api-common/dtos'
-import { ElectionType } from '@pple-today/database/prisma'
+import { ElectionMode, ElectionType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
+
+export const AdminCreateElectionBody = t.Object({
+  name: t.String(),
+  description: t.Optional(t.Nullable(t.String())),
+  location: t.Optional(
+    t.Nullable(
+      t.String({ description: 'Address of the election, required if type is ONSITE or HYBRID' })
+    )
+  ),
+  locationMapUrl: t.Optional(
+    t.Nullable(
+      t.String({
+        description: 'Google Maps URL of the location, required if type is ONSITE or HYBRID',
+      })
+    )
+  ),
+  type: t.Enum(ElectionType),
+  mode: t.Enum(ElectionMode),
+  openRegister: t.Optional(t.Nullable(t.Date({ description: 'Required if type is HYBRID' }))),
+  closeRegister: t.Optional(t.Nullable(t.Date({ description: 'Required if type is HYBRID' }))),
+  openVoting: t.Date(),
+  closeVoting: t.Date(),
+})
+export type AdminCreateElectionBody = Static<typeof AdminCreateElectionBody>
+
+export const AdminCreateElectionResponse = ElectionInfo
+export type AdminCreateElectionResponse = Static<typeof AdminCreateElectionResponse>
 
 export const AdminListElectionQuery = ListQuery(
   t.Object({

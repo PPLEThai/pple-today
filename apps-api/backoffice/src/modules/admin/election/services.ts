@@ -12,6 +12,7 @@ import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import {
+  AdminCreateElectionBody,
   AdminCreateElectionCandidateBody,
   AdminListElectionQuery,
   AdminListElectionResponse,
@@ -20,12 +21,17 @@ import {
 } from './models'
 import { AdminElectionRepository, AdminElectionRepositoryPlugin } from './repository'
 
+import {
+  BallotCryptoService,
+  BallotCryptoServicePlugin,
+} from '../../../plugins/ballot-crypto-service'
 import { FileServicePlugin } from '../../../plugins/file'
 
 export class AdminElectionService {
   constructor(
     private readonly adminElectionRepository: AdminElectionRepository,
-    private readonly fileService: FileService
+    private readonly fileService: FileService,
+    private readonly ballotCryptoService: BallotCryptoService
   ) {}
 
   private checkIsElectionAllowedToModified(election: Election, now: Date) {
@@ -82,6 +88,41 @@ export class AdminElectionService {
       createdAt: candidate.createdAt,
       updatedAt: candidate.updatedAt,
     }
+  }
+
+  async createElection(input: AdminCreateElectionBody) {
+    if (input.type === 'HYBRID' && (!input.openRegister || !input.closeRegister)) {
+      return err({
+        code: InternalErrorCode.BAD_REQUEST,
+        message: 'Must specify openRegister and closeRegister for HYBRID election',
+      })
+    }
+
+    if (
+      (input.type === 'ONSITE' || input.type === 'HYBRID') &&
+      (!input.location || !input.locationMapUrl)
+    ) {
+      return err({
+        code: InternalErrorCode.BAD_REQUEST,
+        message: 'Must specify location and locationMapUrl for ONSITE or HYBRID election',
+      })
+    }
+
+    const electionId = createId()
+    const keysResult = await this.ballotCryptoService.createElectionKeys(electionId)
+    if (keysResult.isErr()) return err(keysResult.error)
+
+    const electionResult = await this.adminElectionRepository.createElection({
+      id: electionId,
+      ...input,
+    })
+    if (electionResult.isErr()) {
+      const deleteResult = await this.ballotCryptoService.destroyElectionKeys(electionId)
+      if (deleteResult.isErr()) return err(deleteResult.error)
+      return mapRepositoryError(electionResult.error)
+    }
+
+    return ok(this.convertToElectionInfo(electionResult.value))
   }
 
   async listElections(input: AdminListElectionQuery) {
@@ -399,7 +440,11 @@ export class AdminElectionService {
 }
 
 export const AdminElectionServicePlugin = new Elysia({ name: 'AdminElectionService' })
-  .use([AdminElectionRepositoryPlugin, FileServicePlugin])
-  .decorate(({ adminElectionRepository, fileService }) => ({
-    adminElectionService: new AdminElectionService(adminElectionRepository, fileService),
+  .use([AdminElectionRepositoryPlugin, FileServicePlugin, BallotCryptoServicePlugin])
+  .decorate(({ adminElectionRepository, fileService, ballotCryptoService }) => ({
+    adminElectionService: new AdminElectionService(
+      adminElectionRepository,
+      fileService,
+      ballotCryptoService
+    ),
   }))

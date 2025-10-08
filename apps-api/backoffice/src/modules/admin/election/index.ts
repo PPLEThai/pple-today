@@ -10,12 +10,14 @@ import {
   AdminCancelElectionResponse,
   AdminCreateCandidateProfileUploadURLBody,
   AdminCreateCandidateProfileUploadURLResponse,
+  AdminCreateElectionBody,
   AdminCreateElectionCandidateBody,
   AdminCreateElectionCandidateParams,
   AdminCreateElectionCandidateResponse,
   AdminCreateElectionEligibleVoterBody,
   AdminCreateElectionEligibleVoterParams,
   AdminCreateElectionEligibleVoterResponse,
+  AdminCreateElectionResponse,
   AdminDeleteElectionCandidateParams,
   AdminDeleteElectionCandidateResponse,
   AdminDeleteElectionEligibleVoterBody,
@@ -40,6 +42,32 @@ export const AdminElectionController = new Elysia({
   tags: ['Admin Elections'],
 })
   .use([AdminAuthGuardPlugin, AdminElectionServicePlugin])
+  .post(
+    '/',
+    async ({ body, status, adminElectionService }) => {
+      const result = await adminElectionService.createElection(body)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(201, result.value)
+    },
+    {
+      detail: {
+        summary: 'Create Election',
+        description: 'Create Election',
+      },
+      requiredLocalUser: true,
+      body: AdminCreateElectionBody,
+      response: {
+        201: AdminCreateElectionResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.FORBIDDEN,
+          InternalErrorCode.BAD_REQUEST,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
   .get(
     '/',
     async ({ query, status, adminElectionService }) => {

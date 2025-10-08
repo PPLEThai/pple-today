@@ -4,7 +4,7 @@ import { err } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { ApplicationApiSchema, CreateKeyResponse } from '@api/ballot-crypto/app'
+import { ApplicationApiSchema } from '@api/ballot-crypto/app'
 
 import { ConfigServicePlugin } from './config'
 
@@ -23,10 +23,24 @@ export class BallotCryptoService {
     if (response.status !== 201) {
       return err({
         code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-        message: 'Unexpected error occurs',
+        message: 'An unexpected error occurred',
       })
     }
-    return ok(response.data as CreateKeyResponse)
+
+    return ok()
+  }
+
+  async destroyElectionKeys(electionId: string) {
+    const response = await this.client.keys({ electionId }).delete()
+
+    if (response.status !== 204) {
+      return err({
+        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+        message: 'An unexpected error occurred',
+      })
+    }
+
+    return ok()
   }
 }
 
