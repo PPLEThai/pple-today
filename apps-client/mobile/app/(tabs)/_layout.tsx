@@ -55,15 +55,17 @@ export default function BottomTabsLayout() {
             tabBarButton: TabBarButton,
           }}
         />
-        <Tabs.Screen
-          name="(search)"
-          options={{
-            title: 'ค้นหา',
-            tabBarIcon: (props) => <TabBarIcon {...props} icon={SearchIcon} />,
-            tabBarLabel: TabBarLabel,
-            ...(session ? { tabBarButton: TabBarButton } : { href: null }),
-          }}
-        />
+        <Tabs.Protected guard={!!session}>
+          <Tabs.Screen
+            name="(search)"
+            options={{
+              title: 'ค้นหา',
+              tabBarIcon: (props) => <TabBarIcon {...props} icon={SearchIcon} />,
+              tabBarLabel: TabBarLabel,
+              ...(session ? { tabBarButton: TabBarButton } : { href: null }),
+            }}
+          />
+        </Tabs.Protected>
         <Tabs.Screen
           name="(official)"
           options={{
