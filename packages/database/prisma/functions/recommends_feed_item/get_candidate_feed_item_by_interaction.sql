@@ -123,39 +123,45 @@ BEGIN
       FROM
         candidate_post cpost
     ),
+
+    total_reaction_score AS (
+      SELECT
+        firc."feedItemId" AS feed_item_id,
+        SUM(
+          COALESCE(firc.count, 0) * 
+          CASE
+            WHEN firc."type" = 'UP_VOTE' THEN 3
+            WHEN firc."type" = 'DOWN_VOTE' THEN 1
+            ELSE 0
+          END
+        ) AS interaction_score
+      FROM
+        "FeedItemReactionCount" firc
+      GROUP BY firc."feedItemId"
+    ),
     
     final_candidate_score_with_decay AS (
       SELECT
         cs.feed_item_id,
         (
-          SUM(
-            COALESCE(firc.count, 0) * 
-            CASE
-              WHEN firc."type" = 'UP_VOTE' THEN 3
-              WHEN firc."type" = 'DOWN_VOTE' THEN 1
-              ELSE 0
-            END
-          ) + 
+          COALESCE(trc.interaction_score, 0) + 
           fi."numberOfComments" * 2 + 
           cs.score + 
           RANDOM() / 100
-        ) * EXP(-LEAST(EXTRACT(EPOCH FROM (NOW() - fi."createdAt")) / 86400, 30)) AS score
+        ) * EXP(-LEAST(EXTRACT(EPOCH FROM (NOW() - fi."publishedAt")) / 86400, 30)) AS score
       FROM
         candidate_score cs
         INNER JOIN "FeedItem" fi ON fi."id" = cs.feed_item_id
-        LEFT JOIN "FeedItemReactionCount" firc ON firc."feedItemId" = cs.feed_item_id
-      WHERE fi."publishedAt" IS NOT NULL
-      GROUP BY
-        cs."score", fi."id", cs."feed_item_id"
+        LEFT JOIN total_reaction_score trc ON trc.feed_item_id = cs.feed_item_id
+      WHERE fi."publishedAt" <= NOW()
+      ORDER BY score DESC
+      LIMIT 1000
     )
 
   SELECT
     final_candidate_score_with_decay.feed_item_id,
     final_candidate_score_with_decay.score::NUMERIC AS score
   FROM
-    final_candidate_score_with_decay
-  ORDER BY score DESC
-  LIMIT 1000;
-
+    final_candidate_score_with_decay;
 END;
 $function$

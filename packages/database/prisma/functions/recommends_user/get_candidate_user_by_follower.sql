@@ -40,23 +40,31 @@ WITH
             UNION ALL 
         SELECT * FROM common_followed
     ),
+    count_candidate_user as (
+    	select
+    		cu.user_id,
+    		COUNT(*) as score
+    	from 
+    		candidate_user cu
+    	group by cu.user_id
+    ),
     filtered_candidate_user AS (
         SELECT 
-          cu.user_id
+            ccu.user_id,
+            ccu.score
         FROM 
-          candidate_user cu
-          INNER JOIN "User" u ON cu.user_id = u.id AND u."status" = 'ACTIVE'
+            count_candidate_user ccu
+            INNER JOIN "User" u ON ccu.user_id = u.id
+            LEFT JOIN current_user_follows cuf ON ccu.user_id = cuf."followingId"
+        WHERE u."status" = 'ACTIVE' AND cuf."followingId" IS NULL
+        ORDER BY score DESC
+        LIMIT 10
     )
 
 SELECT
     filtered_candidate_user.user_id::TEXT,
-    COUNT(*)::NUMERIC AS score
+    filtered_candidate_user.score::NUMERIC
 FROM 
-    filtered_candidate_user
-    LEFT JOIN current_user_follows ON filtered_candidate_user.user_id = current_user_follows."followingId"
-WHERE current_user_follows."followingId" IS NULL
-GROUP BY filtered_candidate_user.user_id
-ORDER BY score DESC
-LIMIT 10;
+    filtered_candidate_user;
 END;
 $function$

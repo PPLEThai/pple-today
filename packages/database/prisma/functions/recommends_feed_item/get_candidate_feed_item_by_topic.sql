@@ -82,33 +82,38 @@ BEGIN
       WHERE p."status" = 'PUBLISHED'
     ),
 
-    candidate_score_interaction AS (
+    total_reaction_score AS (
       SELECT
-        cs.feed_item_id,
+        firc."feedItemId" AS feed_item_id,
         SUM(
-          COALESCE(firc.count, 0) * CASE
+          COALESCE(firc.count, 0) * 
+          CASE
             WHEN firc."type" = 'UP_VOTE' THEN 3
             WHEN firc."type" = 'DOWN_VOTE' THEN 1
             ELSE 0
           END
-        ) + fi."numberOfComments" * 2 AS score,
-        fi."publishedAt" AS published_at
+        ) AS interaction_score
       FROM
-        candidate_score cs
-        INNER JOIN "FeedItem" fi ON fi."id" = cs.feed_item_id
-        LEFT JOIN "FeedItemReactionCount" firc ON firc."feedItemId" = cs.feed_item_id
-      WHERE fi."publishedAt" IS NOT NULL
-      GROUP BY
-        cs.feed_item_id, fi."id"
+        "FeedItemReactionCount" firc
+      GROUP BY firc."feedItemId"
     ),
 
     final_candidate_score_with_decay AS (
       SELECT
-        candidate_score.feed_item_id,
-        ((candidate_score.score + csi.score + RANDOM() / 100) * EXP(-LEAST(EXTRACT(EPOCH FROM (NOW() - csi.published_at)) / 86400, 30))) AS score
+        cs.feed_item_id,
+        (
+          COALESCE(trc.interaction_score, 0) + 
+          fi."numberOfComments" * 2 +
+          cs.score + 
+          RANDOM() / 100
+        ) * EXP(-LEAST(EXTRACT(EPOCH FROM (NOW() - fi."publishedAt")) / 86400, 30)) AS score
       FROM
-        candidate_score
-        INNER JOIN candidate_score_interaction csi ON csi.feed_item_id = candidate_score.feed_item_id
+        candidate_score cs
+        INNER JOIN "FeedItem" fi ON fi."id" = cs.feed_item_id
+        LEFT JOIN total_reaction_score trc ON trc.feed_item_id = cs.feed_item_id
+      WHERE fi."publishedAt" <= NOW()
+      ORDER BY score DESC
+      LIMIT 1000
     )
 
   SELECT
@@ -116,8 +121,5 @@ BEGIN
     final_candidate_score_with_decay.score::NUMERIC AS score
   FROM
     final_candidate_score_with_decay
-  ORDER BY
-    final_candidate_score_with_decay.score DESC
-  LIMIT 1000;
 END;
 $function$
