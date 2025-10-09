@@ -1,10 +1,10 @@
 import {
   Announcement,
   Author,
+  DetailedTopic,
   FeedItem,
   SearchKeyword,
   SearchQuery,
-  Topic,
 } from '@pple-today/api-common/dtos'
 import { Static, t } from 'elysia'
 
@@ -29,15 +29,28 @@ export type GetSearchUsersResponse = Static<typeof GetSearchUsersResponse>
 export const GetSearchTopicsQuery = SearchQuery
 export type GetSearchTopicsQuery = Static<typeof GetSearchTopicsQuery>
 
-export const GetSearchTopicsResponse = t.Array(t.Pick(Topic, ['id', 'name']))
+export const GetSearchTopicsResponse = t.Array(
+  t.Composite([
+    t.Pick(DetailedTopic, ['id', 'name', 'hashtags']),
+    t.Object({
+      bannerImage: t.Nullable(t.String()),
+    }),
+  ])
+)
 export type GetSearchTopicsResponse = Static<typeof GetSearchTopicsResponse>
 
 export const GetSearchAnnouncementQuery = SearchQuery
 export type GetSearchAnnouncementQuery = Static<typeof GetSearchAnnouncementQuery>
 
 export const GetSearchAnnouncementResponse = t.Array(
-  t.Pick(Announcement, ['id', 'title', 'type', 'topics'])
+  t.Composite([
+    t.Pick(Announcement, ['id', 'title', 'type']),
+    t.Object({
+      publishedAt: t.Date(),
+    }),
+  ])
 )
+
 export type GetSearchAnnouncementResponse = Static<typeof GetSearchAnnouncementResponse>
 
 export const GetSearchHashtagQuery = SearchQuery

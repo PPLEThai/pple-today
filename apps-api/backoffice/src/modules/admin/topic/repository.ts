@@ -46,7 +46,7 @@ export class AdminTopicRepository {
 
   async getTopicById(topicId: string) {
     return await fromRepositoryPromise(async () => {
-      const { hashTagInTopics, ...result } = await this.prismaService.topic.findUniqueOrThrow({
+      const { hashTags, ...result } = await this.prismaService.topic.findUniqueOrThrow({
         where: { id: topicId },
         select: {
           id: true,
@@ -56,7 +56,7 @@ export class AdminTopicRepository {
           status: true,
           createdAt: true,
           updatedAt: true,
-          hashTagInTopics: {
+          hashTags: {
             select: {
               hashTag: {
                 select: {
@@ -71,7 +71,7 @@ export class AdminTopicRepository {
 
       return {
         ...result,
-        hashtags: hashTagInTopics.map((hashTagInTopic) => hashTagInTopic.hashTag),
+        hashtags: hashTags.map((hashtag) => hashtag.hashTag),
       }
     })
   }
@@ -133,7 +133,7 @@ export class AdminTopicRepository {
           description: data.description,
           bannerImagePath: newBannerImage,
           status: data.status,
-          hashTagInTopics: {
+          hashTags: {
             deleteMany: {},
             createMany: {
               data: data.hashtagIds.map((hashtagId) => ({

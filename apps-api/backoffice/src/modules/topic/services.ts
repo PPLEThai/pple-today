@@ -69,7 +69,7 @@ export class TopicService {
     const response: ListTopicResponse = topics.value.map((topic) => ({
       id: topic.id,
       name: topic.name,
-      followed: topic.followedTopics.length > 0,
+      followed: topic.followers.length > 0,
     }))
     return ok(response)
   }
@@ -149,7 +149,7 @@ export class TopicService {
 
   private mapTopicToTopicResponse(
     topic: Topic & {
-      hashTagInTopics: (HashTagInTopic & {
+      hashTags: (HashTagInTopic & {
         hashTag: HashTag
       })[]
     }
@@ -163,7 +163,7 @@ export class TopicService {
         : null,
       createdAt: topic.createdAt,
       updatedAt: topic.updatedAt,
-      hashTags: topic.hashTagInTopics.map(({ hashTag }) => ({
+      hashTags: topic.hashTags.map(({ hashTag }) => ({
         id: hashTag.id,
         name: hashTag.name,
         createdAt: hashTag.createdAt,
@@ -174,7 +174,7 @@ export class TopicService {
 
   private mapTopicsToTopicsResponse(
     topics: (Topic & {
-      hashTagInTopics: (HashTagInTopic & {
+      hashTags: (HashTagInTopic & {
         hashTag: HashTag
       })[]
     })[]
