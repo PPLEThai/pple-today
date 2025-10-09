@@ -12,8 +12,11 @@ import {
   Prisma,
   TopicStatus,
 } from '@pple-today/database/prisma'
+import { get_candidate_feed_item } from '@pple-today/database/prisma/sql'
+import dayjs from 'dayjs'
 import Elysia from 'elysia'
 import { Ok, ok } from 'neverthrow'
+import * as R from 'remeda'
 import { sumBy } from 'remeda'
 
 import { GetFeedContentResponse } from './models'
@@ -27,12 +30,31 @@ export class FeedRepository {
     private fileService: FileService
   ) {}
 
+  private constructResultWithMeta<T extends { id: string }>(
+    data: T[],
+    config: {
+      needShuffle?: boolean
+      limit: number
+      cursor?: string
+    }
+  ) {
+    return {
+      items: config.needShuffle ? R.shuffle(data) : data,
+      meta: {
+        cursor: {
+          next: data.length === config.limit ? data[config.limit - 1].id : null,
+          previous: config.cursor || null,
+        },
+      },
+    }
+  }
+
   private ensureFeedItemExists = async (feedItemId: string, tx?: Prisma.TransactionClient) => {
     const queryStm = {
       where: {
         id: feedItemId,
         publishedAt: {
-          not: null,
+          lte: new Date(),
         },
         OR: [
           { post: { status: PostStatus.PUBLISHED } },
@@ -216,25 +238,37 @@ export class FeedRepository {
   async listTopicFeedItems({
     userId,
     topicId,
-    page,
+    cursor,
     limit,
   }: {
     userId?: string
     topicId: string
-    page: number
+    cursor?: string
     limit: number
   }) {
-    const skip = Math.max((page - 1) * limit, 0)
     const rawFeedItems = await fromRepositoryPromise(
       this.prismaService.feedItem.findMany({
         take: limit,
-        skip,
-        orderBy: {
-          createdAt: 'desc',
-        },
+        skip: cursor ? 1 : 0,
+        cursor: cursor
+          ? {
+              id: cursor,
+            }
+          : undefined,
+        orderBy: [
+          {
+            publishedAt: 'desc',
+          },
+          {
+            id: 'desc',
+          },
+        ],
         where: {
+          type: {
+            not: FeedItemType.ANNOUNCEMENT,
+          },
           publishedAt: {
-            not: null,
+            lte: new Date(),
           },
           OR: [
             {
@@ -282,31 +316,50 @@ export class FeedRepository {
       return err(feedItemErr.error)
     }
 
-    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
+    const transformedFeedItems = feedItems.map(
+      (feedItem) => (feedItem as Ok<FeedItem, never>).value
+    )
+
+    return ok(
+      this.constructResultWithMeta(transformedFeedItems, {
+        needShuffle: false,
+        limit,
+        cursor,
+      })
+    )
   }
 
   async listHashTagFeedItems({
     userId,
     hashTagId,
-    page,
+    cursor,
     limit,
   }: {
     userId?: string
     hashTagId: string
-    page: number
+    cursor?: string
     limit: number
   }) {
-    const skip = Math.max((page - 1) * limit, 0)
     const rawFeedItems = await fromRepositoryPromise(
       this.prismaService.feedItem.findMany({
         take: limit,
-        skip,
-        orderBy: {
-          createdAt: 'desc',
-        },
+        skip: cursor ? 1 : 0,
+        cursor: cursor
+          ? {
+              id: cursor,
+            }
+          : undefined,
+        orderBy: [
+          {
+            publishedAt: 'desc',
+          },
+          {
+            id: 'desc',
+          },
+        ],
         where: {
           publishedAt: {
-            not: null,
+            lte: new Date(),
           },
           OR: [
             {
@@ -327,7 +380,7 @@ export class FeedRepository {
                 topics: {
                   some: {
                     topic: {
-                      hashTagInTopics: {
+                      hashTags: {
                         some: {
                           hashTagId,
                         },
@@ -340,6 +393,9 @@ export class FeedRepository {
               },
             },
           ],
+          type: {
+            not: FeedItemType.ANNOUNCEMENT,
+          },
         },
         include: this.constructFeedItemInclude(userId),
       })
@@ -354,33 +410,136 @@ export class FeedRepository {
       return err(feedItemErr.error)
     }
 
-    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
+    const transformedFeedItems = feedItems.map(
+      (feedItem) => (feedItem as Ok<FeedItem, never>).value
+    )
+
+    return ok(
+      this.constructResultWithMeta(transformedFeedItems, {
+        needShuffle: false,
+        limit,
+        cursor,
+      })
+    )
   }
 
-  async listFeedItems({ userId, page, limit }: { userId?: string; page: number; limit: number }) {
-    const skip = Math.max((page - 1) * limit, 0)
-    const rawFeedItems = await fromRepositoryPromise(
-      this.prismaService.feedItem.findMany({
-        orderBy: {
-          createdAt: 'desc',
-        },
-        skip,
-        take: limit,
-        include: this.constructFeedItemInclude(userId),
-        where: {
-          publishedAt: {
-            not: null,
+  async listFeedItems({
+    userId,
+    cursor,
+    limit,
+  }: {
+    userId?: string
+    cursor?: string
+    limit: number
+  }) {
+    const rawFeedItems = await fromRepositoryPromise(async () => {
+      if (!userId) {
+        return await this.prismaService.feedItem.findMany({
+          where: {
+            type: {
+              not: FeedItemType.ANNOUNCEMENT,
+            },
+            publishedAt: {
+              lte: new Date(),
+            },
           },
-          OR: [
-            { post: { status: PostStatus.PUBLISHED } },
-            { poll: { status: PollStatus.PUBLISHED } },
+          orderBy: [
             {
-              announcement: { status: AnnouncementStatus.PUBLISHED },
+              publishedAt: 'desc',
+            },
+            {
+              id: 'desc',
             },
           ],
-        },
+          skip: cursor ? 1 : 0,
+          cursor: cursor
+            ? {
+                id: cursor,
+              }
+            : undefined,
+          take: limit,
+          include: this.constructFeedItemInclude(userId),
+        })
+      }
+
+      const existingFeedItemScore = await this.prismaService.feedItemScore.findFirst({
+        where: { userId, expiresAt: { gt: new Date() } },
+        select: { feedItemId: true },
       })
-    )
+
+      if (!existingFeedItemScore) {
+        const candidateFeedItem = await this.prismaService.$queryRawTyped(
+          get_candidate_feed_item(userId)
+        )
+
+        const candidateFeedItemIds = R.pipe(
+          candidateFeedItem,
+          R.filter((item) => item.feed_item_id !== null && item.score !== null),
+          R.map((item) => ({
+            feedItemId: item.feed_item_id!,
+            score: item.score!,
+            expiresAt: dayjs().add(1, 'hour').toDate(),
+          }))
+        )
+
+        await this.prismaService.user.update({
+          where: { id: userId },
+          data: {
+            feedItemScores: { deleteMany: {}, createMany: { data: candidateFeedItemIds } },
+          },
+        })
+      }
+
+      const feedItemScore = await this.prismaService.feedItemScore.findMany({
+        where: {
+          userId,
+          expiresAt: { gt: new Date() },
+          feedItem: {
+            publishedAt: {
+              lte: new Date(),
+            },
+            OR: [
+              { post: { status: PostStatus.PUBLISHED } },
+              { poll: { status: PollStatus.PUBLISHED } },
+              {
+                announcement: { status: AnnouncementStatus.PUBLISHED },
+              },
+            ],
+          },
+        },
+        select: {
+          feedItem: {
+            include: this.constructFeedItemInclude(userId),
+          },
+        },
+        orderBy: [
+          {
+            score: 'desc',
+          },
+          {
+            userId: 'desc',
+          },
+          {
+            feedItemId: 'desc',
+          },
+        ],
+        take: limit,
+        skip: cursor ? 1 : 0,
+        cursor: cursor
+          ? {
+              userId_feedItemId: {
+                userId,
+                feedItemId: cursor,
+              },
+            }
+          : undefined,
+      })
+
+      return R.pipe(
+        feedItemScore,
+        R.map((item) => item.feedItem)
+      )
+    })
 
     if (rawFeedItems.isErr()) return err(rawFeedItems.error)
 
@@ -391,22 +550,45 @@ export class FeedRepository {
       return err(feedItemErr.error)
     }
 
-    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
+    const transformedFeedItems = feedItems.map(
+      (feedItem) => (feedItem as Ok<FeedItem, never>).value
+    )
+
+    return ok(
+      this.constructResultWithMeta(transformedFeedItems, {
+        needShuffle: true,
+        limit,
+        cursor,
+      })
+    )
   }
 
-  async listFeedItemsByUserId(userId: string | undefined, query: { page: number; limit: number }) {
-    const skip = Math.max((query.page - 1) * query.limit, 0)
-    const rawFeedItems = await fromRepositoryPromise(
-      this.prismaService.feedItem.findMany({
-        orderBy: {
-          createdAt: 'desc',
-        },
-        skip,
+  async listFeedItemsByUserId(
+    userId: string | undefined,
+    query: { cursor?: string; limit: number }
+  ) {
+    const rawFeedItems = await fromRepositoryPromise(async () => {
+      await this.prismaService.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { id: true },
+      })
+
+      return await this.prismaService.feedItem.findMany({
+        orderBy: [
+          {
+            publishedAt: 'desc',
+          },
+          {
+            id: 'desc',
+          },
+        ],
+        skip: query.cursor ? 1 : 0,
         take: query.limit,
+        cursor: query.cursor ? { id: query.cursor } : undefined,
         where: {
           authorId: userId,
           publishedAt: {
-            not: null,
+            lte: new Date(),
           },
           type: {
             not: FeedItemType.ANNOUNCEMENT,
@@ -418,7 +600,7 @@ export class FeedRepository {
         },
         include: this.constructFeedItemInclude(userId),
       })
-    )
+    })
 
     if (rawFeedItems.isErr()) return err(rawFeedItems.error)
 
@@ -429,7 +611,17 @@ export class FeedRepository {
       return err(feedItemErr.error)
     }
 
-    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
+    const transformedFeedItems = feedItems.map(
+      (feedItem) => (feedItem as Ok<FeedItem, never>).value
+    )
+
+    return ok(
+      this.constructResultWithMeta(transformedFeedItems, {
+        needShuffle: false,
+        limit: query.limit,
+        cursor: query.cursor,
+      })
+    )
   }
 
   async getFeedItemById(feedItemId: string, userId?: string) {
@@ -438,7 +630,7 @@ export class FeedRepository {
         where: {
           id: feedItemId,
           publishedAt: {
-            not: null,
+            lte: new Date(),
           },
           OR: [
             { post: { status: PostStatus.PUBLISHED } },
@@ -454,6 +646,111 @@ export class FeedRepository {
     if (rawFeedItem.isErr()) return err(rawFeedItem.error)
 
     return this.transformToFeedItem(rawFeedItem.value)
+  }
+
+  async listFollowingFeedItems(
+    userId: string,
+    {
+      cursor,
+      limit,
+    }: {
+      cursor?: string
+      limit: number
+    }
+  ) {
+    const rawFeedItems = await fromRepositoryPromise(
+      this.prismaService.feedItem.findMany({
+        take: limit,
+        skip: cursor ? 1 : 0,
+        cursor: cursor
+          ? {
+              id: cursor,
+            }
+          : undefined,
+        orderBy: [
+          {
+            publishedAt: 'desc',
+          },
+          {
+            id: 'desc',
+          },
+        ],
+        include: this.constructFeedItemInclude(userId),
+        where: {
+          publishedAt: {
+            lte: new Date(),
+          },
+          OR: [
+            {
+              author: {
+                followers: {
+                  some: {
+                    followerId: userId,
+                  },
+                },
+              },
+              post: {
+                status: PostStatus.PUBLISHED,
+                hashTags: {
+                  some: {
+                    hashTag: {
+                      hashTagInTopics: {
+                        some: {
+                          topic: {
+                            followers: {
+                              some: {
+                                userId,
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            {
+              poll: {
+                status: PollStatus.PUBLISHED,
+                topics: {
+                  some: {
+                    topic: {
+                      followers: {
+                        some: {
+                          userId,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      })
+    )
+
+    if (rawFeedItems.isErr()) return err(rawFeedItems.error)
+
+    const feedItems = rawFeedItems.value.map((item) => this.transformToFeedItem(item))
+    const feedItemErr = feedItems.find((item) => item.isErr())
+
+    if (feedItemErr) {
+      return err(feedItemErr.error)
+    }
+
+    const transformedFeedItems = feedItems.map(
+      (feedItem) => (feedItem as Ok<FeedItem, never>).value
+    )
+
+    return ok(
+      this.constructResultWithMeta(transformedFeedItems, {
+        needShuffle: false,
+        limit,
+        cursor,
+      })
+    )
   }
 
   async getFeedItemReactionByUserId({
@@ -622,14 +919,19 @@ export class FeedRepository {
               id: query.cursor,
             }
           : undefined,
-        orderBy: {
-          createdAt: 'desc',
-        },
+        orderBy: [
+          {
+            createdAt: 'desc',
+          },
+          {
+            id: 'desc',
+          },
+        ],
         where: {
           feedItemId,
           feedItem: {
             publishedAt: {
-              not: null,
+              lte: new Date(),
             },
             OR: [
               { post: { status: PostStatus.PUBLISHED } },

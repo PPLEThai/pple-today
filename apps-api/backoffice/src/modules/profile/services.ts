@@ -96,8 +96,8 @@ export class ProfileService {
     })
   }
 
-  async followUser(userId: string, followedUserId: string) {
-    const result = await this.profileRepository.followUser(userId, followedUserId)
+  async followUser(userId: string, followingUserId: string) {
+    const result = await this.profileRepository.followUser(userId, followingUserId)
 
     if (result.isErr())
       return mapRepositoryError(result.error, {
@@ -114,8 +114,8 @@ export class ProfileService {
     return ok()
   }
 
-  async unfollowUser(userId: string, followedUserId: string) {
-    const result = await this.profileRepository.unfollowUser(userId, followedUserId)
+  async unfollowUser(userId: string, followingUserId: string) {
+    const result = await this.profileRepository.unfollowUser(userId, followingUserId)
 
     if (result.isErr())
       return mapRepositoryError(result.error, {
@@ -142,10 +142,10 @@ export class ProfileService {
 
     return ok(
       result.value.followers.map((user) => ({
-        ...user.followed,
-        address: user.followed.address ?? undefined,
-        profileImage: user.followed.profileImagePath
-          ? this.fileService.getPublicFileUrl(user.followed.profileImagePath)
+        ...user.following,
+        address: user.following.address ?? undefined,
+        profileImage: user.following.profileImagePath
+          ? this.fileService.getPublicFileUrl(user.following.profileImagePath)
           : undefined,
       }))
     )

@@ -5,7 +5,7 @@ WITH
     current_user_follows AS (
         SELECT
             ufu."followerId" AS follower_id,
-            ufu."followedId" AS followed_id
+            ufu."followingId" AS following_Id
         FROM "UserFollowsUser" ufu
         WHERE ufu."followerId" = _id
     ),
@@ -53,9 +53,9 @@ SELECT
     afhf.number_of_hashtag AS score
 FROM 
   author_from_hashtag_filtered afhf
-  LEFT JOIN current_user_follows AS cuf ON afhf.author_id = cuf.followed_id
+  LEFT JOIN current_user_follows AS cuf ON afhf.author_id = cuf.following_Id
 WHERE
-  cuf.followed_id IS NULL
+  cuf.following_Id IS NULL
 ORDER BY score DESC
 LIMIT 10;
 END;
