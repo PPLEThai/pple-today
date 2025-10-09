@@ -1,7 +1,6 @@
 import React from 'react'
 import { Keyboard, Pressable, View } from 'react-native'
 import Animated from 'react-native-reanimated'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Button } from '@pple-today/ui/button'
 import { FormControl, FormItem } from '@pple-today/ui/form'
@@ -15,11 +14,17 @@ import { InfiniteData, useInfiniteQuery, UseInfiniteQueryResult } from '@tanstac
 import { useRouter } from 'expo-router'
 import { ArrowLeftIcon, SearchIcon } from 'lucide-react-native'
 
-import { GetTopicFeedResponse } from '@api/backoffice/app'
+import {
+  GetSearchAnnouncementResponse,
+  GetSearchTopicsResponse,
+  GetSearchUsersResponse,
+  GetTopicFeedResponse,
+} from '@api/backoffice/app'
 import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { AnnouncementSearchCard } from '@app/components/search/announcement-card'
 import { HashtagSearchCard } from '@app/components/search/hashtag-card'
+import { SearchNotEntered, SearchNotFound } from '@app/components/search/search-status'
 import { TopicSearchBigCard } from '@app/components/search/topic-card'
 import { UserSearchCard } from '@app/components/search/user-card'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
@@ -93,23 +98,19 @@ export default function SearchResultPage() {
   )
 }
 
-const UserSearchSection = ({ query }: { query: string }) => {
-  const userSearchQuery = reactQueryClient.useQuery(
-    '/search/details/users',
-    {
-      query: { search: query },
-    },
-    { enabled: !!query }
-  )
+interface UserSearchSectionProps {
+  data?: GetSearchUsersResponse
+}
 
-  if (!userSearchQuery.data || userSearchQuery.data.length === 0) {
+const UserSearchSection = ({ data }: UserSearchSectionProps) => {
+  if (!data || data.length === 0) {
     return null
   }
 
   return (
     <View className="py-2 border-b border-base-outline-default bg-base-bg-white">
       <H2 className="text-base font-heading-semibold px-4">ผู้คน</H2>
-      {userSearchQuery.data.map((user) => (
+      {data.map((user) => (
         <UserSearchCard
           key={user.id}
           id={user.id}
@@ -121,22 +122,17 @@ const UserSearchSection = ({ query }: { query: string }) => {
   )
 }
 
-const TopicSearchSection = ({ query }: { query: string }) => {
-  const topicSearchQuery = reactQueryClient.useQuery(
-    '/search/details/topics',
-    {
-      query: { search: query },
-    },
-    { enabled: !!query }
-  )
-
-  if (!topicSearchQuery.data || topicSearchQuery.data.length === 0) {
+interface TopicSearchSectionProps {
+  data?: GetSearchTopicsResponse
+}
+const TopicSearchSection = ({ data }: TopicSearchSectionProps) => {
+  if (!data || data.length === 0) {
     return null
   }
   return (
     <View className="py-2 border-b border-base-outline-default bg-base-bg-white">
       <H2 className="text-base font-heading-semibold px-4">หัวข้อ</H2>
-      {topicSearchQuery.data.map((topic) => (
+      {data.map((topic) => (
         <TopicSearchBigCard
           key={topic.id}
           id={topic.id}
@@ -149,51 +145,38 @@ const TopicSearchSection = ({ query }: { query: string }) => {
   )
 }
 
-const HashtagSearchSection = ({ query }: { query: string }) => {
-  // confirmation of hashtag search to show navigation card
-  if (!query.startsWith('#')) {
-    return null
-  }
+interface HashtagSearchSectionProps {
+  data?: GetSearchTopicsResponse[number]['hashtags']
+}
 
-  const hashtagSearchQuery = reactQueryClient.useQuery(
-    '/search/details/hashtags',
-    {
-      query: { search: query },
-    },
-    { enabled: !!query }
-  )
-
-  if (!hashtagSearchQuery.data || hashtagSearchQuery.data.length === 0) {
+const HashtagSearchSection = ({ data }: HashtagSearchSectionProps) => {
+  if (!data || data.length === 0) {
     return null
   }
 
   return (
     <View className="py-2 border-b border-base-outline-default bg-base-bg-white">
       <H2 className="text-base font-heading-semibold px-4"># แฮชแท็ก</H2>
-      {hashtagSearchQuery.data.map((hashtag) => (
+      {data.map((hashtag) => (
         <HashtagSearchCard key={hashtag.id} id={hashtag.id} name={hashtag.name} />
       ))}
     </View>
   )
 }
 
-const AnnouncementSearchSection = ({ query }: { query: string }) => {
-  const announcementSearchQuery = reactQueryClient.useQuery(
-    '/search/details/announcements',
-    {
-      query: { search: query },
-    },
-    { enabled: !!query }
-  )
+interface AnnouncementSearchSectionProps {
+  data?: GetSearchAnnouncementResponse
+}
 
-  if (!announcementSearchQuery.data || announcementSearchQuery.data.length === 0) {
+const AnnouncementSearchSection = ({ data }: AnnouncementSearchSectionProps) => {
+  if (!data || data.length === 0) {
     return null
   }
 
   return (
     <View className="py-2 border-b border-base-outline-default bg-base-bg-white">
       <H2 className="text-base font-heading-semibold px-4">ประกาศ</H2>
-      {announcementSearchQuery.data.map((announcement) => (
+      {data.map((announcement) => (
         <AnnouncementSearchCard
           key={announcement.id}
           id={announcement.id}
@@ -208,7 +191,34 @@ const AnnouncementSearchSection = ({ query }: { query: string }) => {
 
 const SearchResult = ({ query }: { query: string }) => {
   const feedQuery = query
-  const insets = useSafeAreaInsets()
+  const userSearchQuery = reactQueryClient.useQuery(
+    '/search/details/users',
+    {
+      query: { search: query },
+    },
+    { enabled: !!query }
+  )
+  const hashtagSearchQuery = reactQueryClient.useQuery(
+    '/search/details/hashtags',
+    {
+      query: { search: query },
+    },
+    { enabled: !!query && query.startsWith('#') }
+  )
+  const announcementSearchQuery = reactQueryClient.useQuery(
+    '/search/details/announcements',
+    {
+      query: { search: query },
+    },
+    { enabled: !!query }
+  )
+  const topicSearchQuery = reactQueryClient.useQuery(
+    '/search/details/topics',
+    {
+      query: { search: query },
+    },
+    { enabled: !!query }
+  )
   const feedInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/search/details/feeds', {
       query: { search: feedQuery },
@@ -247,77 +257,130 @@ const SearchResult = ({ query }: { query: string }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
 
-  const data = React.useMemo((): GetTopicFeedResponse => {
+  const feedData = React.useMemo((): GetTopicFeedResponse => {
     if (!feedInfiniteQuery.data) return []
     return feedInfiniteQuery.data.pages.flat()
   }, [feedInfiniteQuery.data])
 
   const renderFeedItem = React.useCallback(
     ({ item }: { item: GetTopicFeedResponse[number]; index: number }) => {
-      return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-3" />
+      return (
+        <View className="bg-base-bg-default">
+          <FeedCard key={item.id} feedItem={item} className="mb-4 mx-4" />
+        </View>
+      )
     },
     []
   )
 
+  const isLoading = React.useMemo(() => {
+    return (
+      userSearchQuery.isLoading ||
+      topicSearchQuery.isLoading ||
+      hashtagSearchQuery.isLoading ||
+      announcementSearchQuery.isLoading ||
+      feedInfiniteQuery.isLoading
+    )
+  }, [
+    userSearchQuery.isLoading,
+    topicSearchQuery.isLoading,
+    hashtagSearchQuery.isLoading,
+    announcementSearchQuery.isLoading,
+    feedInfiniteQuery.isLoading,
+  ])
+
+  if (isLoading) {
+    // TODO: Replace with spinner
+    return (
+      <Text className="font-heading-regular text-center w-full p-4 text-base-text-placeholder">
+        Loading
+      </Text>
+    )
+  }
+
+  if (query.trim().length === 0) {
+    return <SearchNotEntered />
+  }
+
+  if (
+    query.startsWith('#') &&
+    hashtagSearchQuery.data &&
+    announcementSearchQuery.data &&
+    topicSearchQuery.data &&
+    hashtagSearchQuery.data.length === 0 &&
+    topicSearchQuery.data.length === 0 &&
+    announcementSearchQuery.data.length === 0 &&
+    feedData.length === 0
+  ) {
+    return <SearchNotFound />
+  }
+
+  if (
+    userSearchQuery.data &&
+    topicSearchQuery.data &&
+    announcementSearchQuery.data &&
+    feedInfiniteQuery.data &&
+    userSearchQuery.data.length === 0 &&
+    topicSearchQuery.data.length === 0 &&
+    announcementSearchQuery.data.length === 0 &&
+    feedData.length === 0
+  ) {
+    return <SearchNotFound />
+  }
+
   return (
-    <View className="border-b border-base-outline-default">
-      <Animated.FlatList
-        data={data}
-        contentContainerClassName="bg-base-bg-default"
-        renderItem={renderFeedItem}
-        ListHeaderComponent={
-          <>
-            <View className="bg-base-white">
-              <UserSearchSection query={query} />
-              <HashtagSearchSection query={query} />
-              <TopicSearchSection query={query} />
-              <AnnouncementSearchSection query={query} />
-            </View>
-            <PostSearchSectionHeader queryResult={feedInfiniteQuery} />
-          </>
-        }
-        ListFooterComponent={
-          <>
-            <SearchResultFooter queryResult={feedInfiniteQuery} className="mt-4 mx-4" />
-            <View style={{ paddingBottom: insets.bottom + 128 }} />
-          </>
-        }
-        onEndReached={onEndReached}
-        onEndReachedThreshold={1}
-        showsVerticalScrollIndicator={false}
-      />
-    </View>
+    <Animated.FlatList
+      data={feedData}
+      renderItem={renderFeedItem}
+      ListHeaderComponent={
+        <>
+          <View className="bg-base-white">
+            <UserSearchSection data={userSearchQuery.data} />
+            <HashtagSearchSection data={hashtagSearchQuery.data} />
+            <TopicSearchSection data={topicSearchQuery.data} />
+            <AnnouncementSearchSection data={announcementSearchQuery.data} />
+          </View>
+          <FeedSearchSectionHeader queryResult={feedInfiniteQuery} />
+        </>
+      }
+      ListFooterComponent={
+        <FeedSearchSectionFooter queryResult={feedInfiniteQuery} className="mx-4 my-2" />
+      }
+      onEndReached={onEndReached}
+      onEndReachedThreshold={1}
+      showsVerticalScrollIndicator={false}
+    />
   )
 }
 
-interface PostSearchSectionHeaderProps {
+interface FeedSearchSectionProps {
   queryResult: UseInfiniteQueryResult<InfiniteData<unknown[]>>
   className?: string
 }
-export function PostSearchSectionHeader({ queryResult, className }: PostSearchSectionHeaderProps) {
+function FeedSearchSectionHeader({ queryResult, className }: FeedSearchSectionProps) {
   if (
-    queryResult.data &&
-    queryResult.data.pages.length === 1 &&
-    queryResult.data.pages[0].length === 0
+    queryResult.isLoading ||
+    (queryResult.data &&
+      queryResult.data.pages.length === 1 &&
+      queryResult.data.pages[0].length === 0)
   ) {
     return null
   }
 
   return (
-    <H2 className={cn('text-base font-heading-semibold px-4 pt-2 bg-base-bg-default', className)}>
+    <H2 className={cn('text-base font-heading-semibold px-4 py-2 bg-base-bg-default', className)}>
       โพสต์
     </H2>
   )
 }
 
-interface SearchResultFooterProps {
-  queryResult: UseInfiniteQueryResult<InfiniteData<unknown[]>>
-  className?: string
-}
-
-export function SearchResultFooter({ queryResult, className }: SearchResultFooterProps) {
+function FeedSearchSectionFooter({ queryResult, className }: FeedSearchSectionProps) {
   if (queryResult.hasNextPage || queryResult.isLoading || queryResult.error) {
-    return <FeedCardSkeleton className={className} />
+    return (
+      <View className="bg-base-bg-default">
+        <FeedCardSkeleton className={className} />
+      </View>
+    )
   }
   if (
     queryResult.data &&
@@ -329,7 +392,7 @@ export function SearchResultFooter({ queryResult, className }: SearchResultFoote
   }
   // Reach end of feed
   return (
-    <View className="flex flex-col items-center justify-center py-6">
+    <View className="flex flex-col items-center justify-center pb-4 bg-base-bg-default">
       <Text className="text-base-text-medium font-heading-semibold">ไม่มีโพสต์เพิ่มเติม</Text>
     </View>
   )
