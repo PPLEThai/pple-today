@@ -41,6 +41,7 @@ import { useForm } from '@tanstack/react-form'
 import dayjs from 'dayjs'
 import { useEvent } from 'expo'
 import { Image } from 'expo-image'
+import * as ImagePicker from 'expo-image-picker'
 import * as Linking from 'expo-linking'
 import * as Location from 'expo-location'
 import { useRouter } from 'expo-router'
@@ -69,7 +70,7 @@ export function Playground() {
         <View className="flex flex-row items-center justify-between">
           <H1 className="font-inter-bold">Playground</H1>
         </View>
-        <LocationExample />
+        <FrontCameraExample />
         <View className="flex flex-col gap-2">
           <H2 className="font-inter-bold">Font</H2>
           <View className="flex flex-col gap-1">
@@ -308,6 +309,7 @@ export function Playground() {
         <AuthPlayground />
         <ElectionCardExample />
         <FacebookSDKExample />
+        <LocationExample />
       </View>
     </ScrollView>
   )
@@ -1052,6 +1054,21 @@ function LocationExample() {
       <Text>Location: {JSON.stringify(location, null, 2)}</Text>
       <Button onPress={getCurrentLocation}>
         <Text>Get Current Location</Text>
+      </Button>
+    </View>
+  )
+}
+
+function FrontCameraExample() {
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Front Camera</H2>
+      <Button
+        onPress={() => {
+          ImagePicker.launchCameraAsync({ cameraType: ImagePicker.CameraType.front })
+        }}
+      >
+        <Text>Open Front Camera</Text>
       </Button>
     </View>
   )
