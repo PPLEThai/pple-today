@@ -5,8 +5,9 @@ import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { Progress } from '@pple-today/ui/progress'
 import { Text } from '@pple-today/ui/text'
+import { toast } from '@pple-today/ui/toast'
 import { H1 } from '@pple-today/ui/typography'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
 import * as Linking from 'expo-linking'
@@ -14,10 +15,13 @@ import * as Location from 'expo-location'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeftIcon, ArrowRightIcon, ScanFaceIcon, TriangleAlertIcon } from 'lucide-react-native'
 
+import { FilePath } from '@api/backoffice/app'
 import FaceScan from '@app/assets/face-scan.svg'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { Spinner } from '@app/components/spinner'
 import { reactQueryClient } from '@app/libs/api-client'
+import { ImageMimeType } from '@app/types/file'
+import { handleUploadImage } from '@app/utils/upload'
 
 export default function ElectionVotePage() {
   const router = useRouter()
@@ -49,7 +53,7 @@ interface ElectionLocation {
   longitude: number
 }
 interface ElectionFaceVerification {
-  faceImageAsset: ImagePicker.ImagePickerAsset
+  faceImagePath: FilePath
 }
 
 interface ElectionState {
@@ -215,6 +219,14 @@ function ElectionFaceVerificationStep() {
   const { dispatch } = useElection()
   const [cameraPermission, requestCameraPermission] = ImagePicker.useCameraPermissions()
   const [asset, setAsset] = React.useState<ImagePicker.ImagePickerAsset | null>(null)
+  const uploadUrlMutation = reactQueryClient.useMutation('post', '/elections/upload-url', {})
+  const uploadImageMutation = useMutation({
+    mutationFn: (variables: {
+      asset: ImagePicker.ImagePickerAsset
+      uploadUrl: string
+      uploadFields: Record<string, string>
+    }) => handleUploadImage(variables.asset, variables.uploadUrl, variables.uploadFields),
+  })
   return (
     <View className="px-4 pt-1 gap-5 flex-1">
       <H1 className="text-lg font-heading-semibold text-base-text-high">ถ่ายรูปเพื่อยืนยันตัวตน</H1>
@@ -247,6 +259,33 @@ function ElectionFaceVerificationStep() {
                     return
                   }
                   setAsset(asset)
+                  uploadUrlMutation.mutateAsync(
+                    { body: { contentType: (asset.mimeType || 'image/png') as ImageMimeType } },
+                    {
+                      onSuccess: async (data) => {
+                        try {
+                          await uploadImageMutation.mutateAsync({
+                            asset,
+                            uploadUrl: data.uploadUrl,
+                            uploadFields: data.uploadFields,
+                          })
+                        } catch (error) {
+                          console.error('Image upload failed:', error)
+                          toast.error({
+                            text1: 'เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ',
+                            icon: TriangleAlertIcon,
+                          })
+                        }
+                      },
+                      onError: (error) => {
+                        console.error('Error uploading image', error)
+                        toast.error({
+                          text1: 'เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ',
+                          icon: TriangleAlertIcon,
+                        })
+                      },
+                    }
+                  )
                 } catch (error) {
                   console.error('Error launching camera:', error)
                 }
@@ -274,10 +313,14 @@ function ElectionFaceVerificationStep() {
           </Button>
         ) : (
           <Button
+            disabled={uploadUrlMutation.isPending || uploadImageMutation.isPending}
             onPress={() => {
+              if (!uploadUrlMutation.data) {
+                return
+              }
               dispatch({
                 type: 'setFaceVerification',
-                payload: { faceImageAsset: asset },
+                payload: { faceImagePath: uploadUrlMutation.data.fileKey as FilePath },
               })
             }}
           >
