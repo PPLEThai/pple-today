@@ -372,8 +372,7 @@ function ElectionVoteStep({ election }: { election: GetElectionResponse }) {
             ? encryptBallot(selectedCandidateId, election.encryptionPublicKey)
             : selectedCandidateId,
           location: JSON.stringify(state.locationStepResult!),
-          // TODO
-          faceImagePath: state.faceVerificationStepResult!.faceImageAsset.uri!,
+          faceImagePath: state.faceVerificationStepResult!.faceImagePath,
         },
       },
       {
