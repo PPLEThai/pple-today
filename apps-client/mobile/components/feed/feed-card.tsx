@@ -788,7 +788,7 @@ function CommentForm(props: CommentFormProps) {
                 onChangeText={field.handleChange}
                 textAlignVertical="center"
               >
-                <BottomSheetTextInput />
+                <BottomSheetTextInput autoFocus />
               </Textarea>
             </FormControl>
             <FormMessage className="sr-only" />
