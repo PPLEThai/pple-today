@@ -263,26 +263,31 @@ function ElectionFaceVerificationStep() {
                     { body: { contentType: (asset.mimeType || 'image/png') as ImageMimeType } },
                     {
                       onSuccess: async (data) => {
-                        try {
-                          await uploadImageMutation.mutateAsync({
+                        uploadImageMutation.mutateAsync(
+                          {
                             asset,
                             uploadUrl: data.uploadUrl,
                             uploadFields: data.uploadFields,
-                          })
-                        } catch (error) {
-                          console.error('Image upload failed:', error)
-                          toast.error({
-                            text1: 'เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ',
-                            icon: TriangleAlertIcon,
-                          })
-                        }
+                          },
+                          {
+                            onError: (error) => {
+                              console.error('Error uploading image:', error)
+                              toast.error({
+                                text1: 'เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ',
+                                icon: TriangleAlertIcon,
+                              })
+                              setAsset(null)
+                            },
+                          }
+                        )
                       },
                       onError: (error) => {
-                        console.error('Error uploading image', error)
+                        console.error('Error getting upload url:', error)
                         toast.error({
                           text1: 'เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ',
                           icon: TriangleAlertIcon,
                         })
+                        setAsset(null)
                       },
                     }
                   )
