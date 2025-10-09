@@ -222,7 +222,7 @@ export class ElectionService {
     return ok(result)
   }
 
-  async registerEleciton(userId: string, electionId: string, type: EligibleVoterType) {
+  async registerElection(userId: string, electionId: string, type: EligibleVoterType) {
     const eligibleVoter = await this.electionRepository.getMyEligibleVoter(userId, electionId)
     if (eligibleVoter.isErr()) {
       return mapRepositoryError(eligibleVoter.error, {
