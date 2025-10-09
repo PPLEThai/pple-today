@@ -146,24 +146,32 @@ export const FeedCard = React.memo(function FeedCard(props: {
   )
 })
 
-function FeedReactionSection(props: { feedItem: FeedItem }) {
+function FeedReactionSection(props: { feedItem: FeedItem; disabledPress?: boolean }) {
   const router = useRouter()
   const navigateToDetailPage = React.useCallback(() => {
     router.navigate(`/(feed)/${props.feedItem.id}`)
   }, [router, props.feedItem.id])
   const { upvoteCount } = useFeedReactionValue(props.feedItem.id)
   if (upvoteCount === 0 && props.feedItem.commentCount === 0) return <View className="h-3" />
-  return (
-    <AnimatedBackgroundPressable
-      className="flex flex-row justify-between items-center px-4 py-3"
-      onPress={navigateToDetailPage}
-    >
+  const children = (
+    <>
       <UpvoteReactionCount feedId={props.feedItem.id} />
       {props.feedItem.commentCount > 0 && (
         <Text className="text-xs font-heading-regular text-base-text-medium">
           {props.feedItem.commentCount} ความคิดเห็น
         </Text>
       )}
+    </>
+  )
+  if (props.disabledPress) {
+    return <View className="flex flex-row justify-between items-center px-4 py-3">{children}</View>
+  }
+  return (
+    <AnimatedBackgroundPressable
+      className="flex flex-row justify-between items-center px-4 py-3"
+      onPress={navigateToDetailPage}
+    >
+      {children}
     </AnimatedBackgroundPressable>
   )
 }
@@ -825,7 +833,7 @@ export const FeedDetail = (props: { feedItem: FeedItem }) => {
       <FeedDetailAuthorSection feedItem={props.feedItem} />
       <FeedDetailContent feedItem={props.feedItem} />
       <FeedReactionHook feedId={props.feedItem.id} data={props.feedItem} />
-      <FeedReactionSection feedItem={props.feedItem} />
+      <FeedReactionSection feedItem={props.feedItem} disabledPress />
       <View className="flex flex-col">
         <View className="px-4">
           <View className="border-b border-base-outline-default" />
