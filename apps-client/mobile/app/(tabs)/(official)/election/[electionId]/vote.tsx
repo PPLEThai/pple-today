@@ -1,23 +1,38 @@
 import React, { createContext, useEffect } from 'react'
-import { View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 
+import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { Progress } from '@pple-today/ui/progress'
 import { Text } from '@pple-today/ui/text'
+import { toast } from '@pple-today/ui/toast'
 import { H1 } from '@pple-today/ui/typography'
 import { useQuery } from '@tanstack/react-query'
+import dayjs from 'dayjs'
 import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
 import * as Linking from 'expo-linking'
 import * as Location from 'expo-location'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { ArrowLeftIcon, ArrowRightIcon, ScanFaceIcon, TriangleAlertIcon } from 'lucide-react-native'
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  CalendarIcon,
+  CheckIcon,
+  ScanFaceIcon,
+  TriangleAlertIcon,
+  VoteIcon,
+} from 'lucide-react-native'
 
+import { GetElectionResponse } from '@api/backoffice/app'
 import FaceScan from '@app/assets/face-scan.svg'
+import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
+import { ElectionStatusBadge, ElectionTypeBadge } from '@app/components/election/election-card'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { Spinner } from '@app/components/spinner'
 import { reactQueryClient } from '@app/libs/api-client'
+import { encryptBallot } from '@app/utils/election'
 
 export default function ElectionVotePage() {
   const router = useRouter()
@@ -41,7 +56,7 @@ export default function ElectionVotePage() {
     // TODO: skeleton
     return null
   }
-  return <ElectionSteps />
+  return <ElectionSteps election={electionQuery.data} />
 }
 
 interface ElectionLocation {
@@ -107,7 +122,7 @@ export const useElection = () => {
   return context
 }
 
-export const ElectionSteps = () => {
+export const ElectionSteps = ({ election }: { election: GetElectionResponse }) => {
   const [state, dispatch] = React.useReducer(ElectionReducer, ElectionInitialState)
   return (
     <SafeAreaLayout className="bg-base-bg-white">
@@ -115,7 +130,7 @@ export const ElectionSteps = () => {
         <ElectionHeader />
         {state.step === 'location' && <ElectionLocationStep />}
         {state.step === 'faceVerification' && <ElectionFaceVerificationStep />}
-        {state.step === 'vote' && <ElectionVoteStep />}
+        {state.step === 'vote' && <ElectionVoteStep election={election} />}
       </ElectionContext.Provider>
     </SafeAreaLayout>
   )
@@ -290,7 +305,102 @@ function ElectionFaceVerificationStep() {
   )
 }
 
-function ElectionVoteStep() {
-  const { state, dispatch } = useElection()
-  return <></>
+function ElectionVoteStep({ election }: { election: GetElectionResponse }) {
+  const { state } = useElection()
+  const [selectedCandidateId, setSelectedCandidateId] = React.useState<string | null>(null)
+  const voteBallotMutation = reactQueryClient.useMutation(
+    'post',
+    '/elections/:electionId/ballot',
+    {}
+  )
+  const router = useRouter()
+  const submit = async () => {
+    if (!selectedCandidateId) {
+      return
+    }
+    voteBallotMutation.mutateAsync(
+      {
+        pathParams: { electionId: election.id },
+        body: {
+          encryptedBallot: election.encryptionPublicKey
+            ? encryptBallot(selectedCandidateId, election.encryptionPublicKey)
+            : selectedCandidateId,
+          location: JSON.stringify(state.locationStepResult!),
+          // TODO
+          faceImagePath: state.faceVerificationStepResult!.faceImageAsset.uri!,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast({ text1: 'ลงคะแนนเรียบร้อย' })
+          router.navigate(`/election/${election.id}`)
+        },
+        onError: (error) => {
+          console.error('Error submitting ballot:', error)
+          toast.error({ text1: 'เกิดข้อผิดพลาดในการลงคะแนน' })
+        },
+      }
+    )
+  }
+  return (
+    <>
+      <ScrollView contentContainerClassName="px-4 pt-1 gap-3" className="flex-1">
+        <H1 className="text-lg font-heading-semibold text-base-text-high">{election.name}</H1>
+        <View className="flex flex-row items-center gap-1">
+          <Icon icon={CalendarIcon} size={16} className="text-base-primary-default" />
+          <Text className="text-base-primary-default text-xs font-heading-semibold">
+            {dayjs(election.closeVoting).format('DD MMM BBBB เวลา HH:mm')}
+          </Text>
+        </View>
+        <View className="flex flex-row gap-2">
+          <ElectionTypeBadge type={election.type} />
+          <ElectionStatusBadge status={election.status} />
+        </View>
+        <View className="flex flex-col gap-3">
+          {election.candidates.map((candidate) => {
+            const isSelected = selectedCandidateId === candidate.id
+            return (
+              <View key={candidate.id} className="py-3 px-1 flex flex-row gap-2 items-center">
+                <View className="flex flex-col gap-1 items-center">
+                  <Text className="text-xs font-heading-semibold text-base-primary-default -mb-1">
+                    เบอร์
+                  </Text>
+                  <Text className="text-3xl font-heading-bold text-base-primary-default">
+                    {candidate.number}
+                  </Text>
+                </View>
+                <Avatar alt="Candidate Profile Image" className="size-10">
+                  {election.candidates[0].profileImagePath && (
+                    <AvatarImage source={{ uri: election.candidates[0].profileImagePath }} />
+                  )}
+                  <AvatarPPLEFallback />
+                </Avatar>
+                <Text className="text-base font-body-regular text-base-text-high flex-1">
+                  {candidate.name}
+                </Text>
+
+                <Button
+                  size="sm"
+                  className="w-16"
+                  variant={isSelected ? 'outline-primary' : 'primary'}
+                  onPress={() => {
+                    setSelectedCandidateId(candidate.id)
+                  }}
+                >
+                  {isSelected && <Icon icon={CheckIcon} />}
+                  <Text>เลือก</Text>
+                </Button>
+              </View>
+            )
+          })}
+        </View>
+      </ScrollView>
+      <View className="px-4 py-2 bg-base-bg-white">
+        <Button onPress={submit} disabled={!selectedCandidateId || voteBallotMutation.isPending}>
+          <Icon icon={VoteIcon} />
+          <Text>ยืนยันการลงคะแนน</Text>
+        </Button>
+      </View>
+    </>
+  )
 }
