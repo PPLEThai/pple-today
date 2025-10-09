@@ -1,6 +1,5 @@
 import { createId } from '@paralleldrive/cuid2'
 import {
-  ElectionCandidate as ElectionCandidateDTO,
   ElectionStatus,
   FileMimeType,
   FilePath,
@@ -18,7 +17,12 @@ import dayjs from 'dayjs'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { ElectionWithCurrentStatus, GetElectionResponse, ListElectionResponse } from './models'
+import {
+  ElectionCandidateWithVoteScore,
+  ElectionWithCurrentStatus,
+  GetElectionResponse,
+  ListElectionResponse,
+} from './models'
 import { ElectionRepository, ElectionRepositoryPlugin } from './repository'
 
 import { FileServicePlugin } from '../../plugins/file'
@@ -150,7 +154,9 @@ export class ElectionService {
     }
   }
 
-  private convertToElectionCandidateDTO(candidate: ElectionCandidate): ElectionCandidateDTO {
+  private convertToElectionCandidateWithVoteScore(
+    candidate: ElectionCandidate
+  ): ElectionCandidateWithVoteScore {
     return {
       id: candidate.id,
       electionId: candidate.electionId,
@@ -159,6 +165,7 @@ export class ElectionService {
       profileImagePath: candidate.profileImagePath
         ? this.fileService.getPublicFileUrl(candidate.profileImagePath)
         : null,
+      voteScorePercent: 25, // TODO: this is mock data
       number: candidate.number,
       createdAt: candidate.createdAt,
       updatedAt: candidate.updatedAt,
@@ -201,7 +208,7 @@ export class ElectionService {
     const election = eligibleVoter.value.election
     const listElection = this.convertToListElection(election, eligibleVoter.value.type)
     const candidates = election.candidates.map((candidate) =>
-      this.convertToElectionCandidateDTO(candidate)
+      this.convertToElectionCandidateWithVoteScore(candidate)
     )
     const result = {
       ...listElection,
