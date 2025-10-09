@@ -215,7 +215,6 @@ function ElectionFaceVerificationStep() {
   const { dispatch } = useElection()
   const [cameraPermission, requestCameraPermission] = ImagePicker.useCameraPermissions()
   const [asset, setAsset] = React.useState<ImagePicker.ImagePickerAsset | null>(null)
-
   return (
     <View className="px-4 pt-1 gap-5 flex-1">
       <H1 className="text-lg font-heading-semibold text-base-text-high">ถ่ายรูปเพื่อยืนยันตัวตน</H1>
@@ -233,6 +232,25 @@ function ElectionFaceVerificationStep() {
         {asset === null ? (
           <Button
             onPress={async () => {
+              async function openCamera() {
+                try {
+                  const result = await ImagePicker.launchCameraAsync({
+                    // android: the behavior of this option may vary based on the camera app installed on the device.
+                    // https://docs.expo.dev/versions/latest/sdk/imagepicker/#imagepickeroptions
+                    cameraType: ImagePicker.CameraType.front,
+                  })
+                  if (result.canceled) {
+                    return
+                  }
+                  const asset = result.assets[0]
+                  if (!asset) {
+                    return
+                  }
+                  setAsset(asset)
+                } catch (error) {
+                  console.error('Error launching camera:', error)
+                }
+              }
               if (cameraPermission === null) {
                 return
               }
@@ -241,26 +259,14 @@ function ElectionFaceVerificationStep() {
                   Linking.openSettings()
                   return
                 }
-                requestCameraPermission()
+                const { status } = await requestCameraPermission()
+                if (status === ImagePicker.PermissionStatus.GRANTED) {
+                  openCamera()
+                  return
+                }
                 return
               }
-              try {
-                const result = await ImagePicker.launchCameraAsync({
-                  // android: the behavior of this option may vary based on the camera app installed on the device.
-                  // https://docs.expo.dev/versions/latest/sdk/imagepicker/#imagepickeroptions
-                  cameraType: ImagePicker.CameraType.front,
-                })
-                if (result.canceled) {
-                  return
-                }
-                const asset = result.assets[0]
-                if (!asset) {
-                  return
-                }
-                setAsset(asset)
-              } catch (error) {
-                console.error('Error launching camera:', error)
-              }
+              openCamera()
             }}
           >
             <Icon icon={ScanFaceIcon} />
