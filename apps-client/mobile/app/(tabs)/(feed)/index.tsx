@@ -76,7 +76,7 @@ export default function FeedPage() {
               <UserAddressInfoSection className="pt-4" />
             </View>
             <View className="px-4 bg-base-bg-white flex flex-row items-start pt-6">
-              <H2 className="text-3xl">ประชาชนวันนี้</H2>
+              <H2 className="text-3xl font-heading-bold text-base-text-high">ประชาชนวันนี้</H2>
             </View>
           </PagerHeaderOnly>
           <PagerTabBar>
@@ -807,7 +807,7 @@ function AnnouncementSection() {
           </View>
           <View className="min-h-10 bg-base-bg-default rounded-lg" />
         </View>
-        <Slide count={3} itemWidth={320} gap={8} paddingHorizontal={16}>
+        <Slide count={3} itemWidth={320} gap={8} paddingHorizontal={16} isLoading>
           <SlideScrollView>
             <SlideItem>
               <AnnouncementCardSkeleton />

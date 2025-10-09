@@ -60,6 +60,7 @@ import {
 } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
+import { getRoleName } from '@app/utils/get-role-name'
 
 export default function Index() {
   const session = useSession()
@@ -177,30 +178,6 @@ const HeaderSection = () => {
 const ProfileSection = () => {
   const router = useRouter()
   const profileQuery = reactQueryClient.useQuery('/profile/me', {})
-  const getRoleName = (roles: string[]) => {
-    for (const role of roles) {
-      switch (role) {
-        case 'pple-ad:mp':
-          return 'สส.'
-        case 'pple-ad:hq':
-          return 'ส่วนกลาง'
-        case 'pple-ad:province':
-          return 'ทีมจังหวัด'
-        case 'pple-ad:foundation':
-          return 'มูลนิธิ'
-        case 'pple-ad:local':
-          return 'ทีมท้องถิ่น'
-        case 'pple-ad:mpassistant':
-          return 'ผู้ช่วย สส.'
-        case 'pple-ad:tto':
-          return 'ตทอ.'
-        case 'official':
-          return 'Official'
-      }
-    }
-
-    return 'ประชาชน'
-  }
   const Profile =
     profileQuery.isLoading || !profileQuery.data ? (
       <>
