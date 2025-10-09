@@ -275,7 +275,7 @@ export const login = async ({ discovery }: { discovery: DiscoveryDocument }) => 
       query: { role: 'USER' },
     })
     if (registerResponse.error?.status === 409) {
-      console.log('User already exists:', registerResponse.error)
+      console.log('User already exists:', JSON.stringify(registerResponse.error))
       return { tokenResponse, action: 'login' } as const
     }
     if (registerResponse.error) {
