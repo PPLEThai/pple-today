@@ -39,7 +39,7 @@ export class TopicRepository {
           name: true,
           description: true,
           bannerImagePath: true,
-          hashTagInTopics: {
+          hashTags: {
             where: { hashTag: { status: HashTagStatus.PUBLISHED } },
             include: {
               hashTag: {
@@ -55,7 +55,7 @@ export class TopicRepository {
 
       return candidateTopic.map((topic) => ({
         ...topic,
-        hashTags: topic.hashTagInTopics.map((htt) => ({
+        hashTags: topic.hashTags.map((htt) => ({
           id: htt.hashTag.id,
           name: htt.hashTag.name,
         })),
@@ -71,7 +71,7 @@ export class TopicRepository {
           status: TopicStatus.PUBLISHED,
         },
         include: {
-          hashTagInTopics: {
+          hashTags: {
             where: { hashTag: { status: HashTagStatus.PUBLISHED } },
             include: {
               hashTag: true,
@@ -87,7 +87,7 @@ export class TopicRepository {
       this.prismaService.topic.findMany({
         where: { status: TopicStatus.PUBLISHED },
         include: {
-          hashTagInTopics: {
+          hashTags: {
             where: { hashTag: { status: HashTagStatus.PUBLISHED } },
             include: {
               hashTag: true,
@@ -106,7 +106,7 @@ export class TopicRepository {
         select: {
           id: true,
           name: true,
-          followedTopics: { where: { userId }, select: { userId: true } },
+          followers: { where: { userId }, select: { userId: true } },
         },
       })
     )
@@ -123,7 +123,7 @@ export class TopicRepository {
         include: {
           topic: {
             include: {
-              hashTagInTopics: {
+              hashTags: {
                 include: {
                   hashTag: true,
                 },
@@ -145,7 +145,7 @@ export class TopicRepository {
             id: userId,
           },
           data: {
-            followedTopics: {
+            followingTopics: {
               create: {
                 topicId,
               },
@@ -169,7 +169,7 @@ export class TopicRepository {
             id: userId,
           },
           data: {
-            followedTopics: {
+            followingTopics: {
               delete: {
                 userId_topicId: {
                   userId,

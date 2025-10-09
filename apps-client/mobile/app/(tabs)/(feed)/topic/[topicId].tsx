@@ -54,22 +54,19 @@ export default function TopicDetailPage() {
     queryKey: reactQueryClient.getQueryKey('/feed/topic'),
     queryFn: async ({ pageParam }) => {
       const response = await fetchClient('/feed/topic', {
-        query: { page: pageParam, limit: LIMIT, topicId: topicId! },
+        query: { cursor: pageParam, limit: LIMIT, topicId: topicId! },
       })
       if (response.error) {
         throw response.error
       }
       return response.data
     },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage && lastPage.length === 0) {
+    initialPageParam: '',
+    getNextPageParam: (lastPage) => {
+      if (lastPage.meta.cursor.next === null) {
         return undefined
       }
-      if (lastPage.length < LIMIT) {
-        return undefined
-      }
-      return lastPageParam + 1
+      return lastPage.meta.cursor.next
     },
     enabled: !!topicId,
   })
@@ -86,13 +83,13 @@ export default function TopicDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
 
-  const data = React.useMemo((): GetTopicFeedResponse => {
+  const data = React.useMemo((): GetTopicFeedResponse['items'] => {
     if (!feedInfiniteQuery.data) return []
-    return feedInfiniteQuery.data.pages.flatMap((page) => page)
+    return feedInfiniteQuery.data.pages.flatMap((page) => page.items)
   }, [feedInfiniteQuery.data])
 
   const renderFeedItem = React.useCallback(
-    ({ item }: { item: GetTopicFeedResponse[number]; index: number }) => {
+    ({ item }: { item: GetTopicFeedResponse['items'][number]; index: number }) => {
       return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-3" />
     },
     []

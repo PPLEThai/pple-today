@@ -106,17 +106,17 @@ export class ProfileRepository {
     )
   }
 
-  async followUser(userId: string, followedUserId: string) {
+  async followUser(userId: string, followingUserId: string) {
     return await fromRepositoryPromise(
       this.prismaService.$transaction([
         this.prismaService.userFollowsUser.create({
           data: {
-            followedId: followedUserId,
+            followingId: followingUserId,
             followerId: userId,
           },
         }),
         this.prismaService.user.update({
-          where: { id: followedUserId, status: UserStatus.ACTIVE },
+          where: { id: followingUserId, status: UserStatus.ACTIVE },
           data: {
             numberOfFollowers: {
               increment: 1,
@@ -135,16 +135,16 @@ export class ProfileRepository {
     )
   }
 
-  async unfollowUser(userId: string, followedUserId: string) {
+  async unfollowUser(userId: string, followingUserId: string) {
     return await fromRepositoryPromise(
       this.prismaService.$transaction([
         this.prismaService.userFollowsUser.delete({
           where: {
-            followedId_followerId: {
-              followedId: followedUserId,
+            followingId_followerId: {
               followerId: userId,
+              followingId: followingUserId,
             },
-            followed: {
+            following: {
               status: UserStatus.ACTIVE,
             },
             follower: {
@@ -153,7 +153,7 @@ export class ProfileRepository {
           },
         }),
         this.prismaService.user.update({
-          where: { id: followedUserId },
+          where: { id: followingUserId },
           data: {
             numberOfFollowers: {
               decrement: 1,
@@ -181,7 +181,7 @@ export class ProfileRepository {
         select: {
           followers: {
             select: {
-              followed: {
+              following: {
                 select: {
                   id: true,
                   name: true,
@@ -207,7 +207,7 @@ export class ProfileRepository {
     }
 
     if (profileData.interestTopics) {
-      userData.followedTopics = {
+      userData.followingTopics = {
         createMany: {
           data:
             profileData.interestTopics.map((topic) => ({
