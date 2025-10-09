@@ -263,7 +263,7 @@ export class SearchRepository {
               },
             },
             {
-              hashTagInTopics: {
+              hashTags: {
                 some: {
                   hashTag: {
                     name: {
@@ -290,7 +290,7 @@ export class SearchRepository {
           id: true,
           name: true,
           bannerImagePath: true,
-          hashTagInTopics: {
+          hashTags: {
             include: {
               hashTag: true,
             },
