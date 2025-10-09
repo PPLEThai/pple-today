@@ -257,57 +257,6 @@ function ElectionFaceVerificationStep() {
         {asset === null ? (
           <Button
             onPress={async () => {
-              async function openCamera() {
-                try {
-                  const result = await ImagePicker.launchCameraAsync({
-                    // android: the behavior of this option may vary based on the camera app installed on the device.
-                    // https://docs.expo.dev/versions/latest/sdk/imagepicker/#imagepickeroptions
-                    cameraType: ImagePicker.CameraType.front,
-                  })
-                  if (result.canceled) {
-                    return
-                  }
-                  const asset = result.assets[0]
-                  if (!asset) {
-                    return
-                  }
-                  setAsset(asset)
-                  uploadUrlMutation.mutateAsync(
-                    { body: { contentType: (asset.mimeType || 'image/png') as ImageMimeType } },
-                    {
-                      onSuccess: async (data) => {
-                        uploadImageMutation.mutateAsync(
-                          {
-                            asset,
-                            uploadUrl: data.uploadUrl,
-                            uploadFields: data.uploadFields,
-                          },
-                          {
-                            onError: (error) => {
-                              console.error('Error uploading image:', error)
-                              toast.error({
-                                text1: 'เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ',
-                                icon: TriangleAlertIcon,
-                              })
-                              setAsset(null)
-                            },
-                          }
-                        )
-                      },
-                      onError: (error) => {
-                        console.error('Error getting upload url:', error)
-                        toast.error({
-                          text1: 'เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ',
-                          icon: TriangleAlertIcon,
-                        })
-                        setAsset(null)
-                      },
-                    }
-                  )
-                } catch (error) {
-                  console.error('Error launching camera:', error)
-                }
-              }
               if (cameraPermission === null) {
                 return
               }
@@ -317,13 +266,66 @@ function ElectionFaceVerificationStep() {
                   return
                 }
                 const { status } = await requestCameraPermission()
-                if (status === ImagePicker.PermissionStatus.GRANTED) {
-                  openCamera()
+                if (status !== ImagePicker.PermissionStatus.GRANTED) {
+                  console.log('Permission to access camera was denied')
                   return
                 }
-                return
               }
-              openCamera()
+              try {
+                const result = await ImagePicker.launchCameraAsync({
+                  // android: the behavior of this option may vary based on the camera app installed on the device.
+                  // https://docs.expo.dev/versions/latest/sdk/imagepicker/#imagepickeroptions
+                  cameraType: ImagePicker.CameraType.front,
+                })
+                if (result.canceled) {
+                  console.log('User cancelled image picker')
+                  return
+                }
+                const asset = result.assets[0]
+                if (!asset) {
+                  console.log('No asset returned')
+                  return
+                }
+                setAsset(asset)
+                uploadUrlMutation.mutateAsync(
+                  { body: { contentType: (asset.mimeType || 'image/png') as ImageMimeType } },
+                  {
+                    onSuccess: async (data) => {
+                      uploadImageMutation.mutateAsync(
+                        {
+                          asset,
+                          uploadUrl: data.uploadUrl,
+                          uploadFields: data.uploadFields,
+                        },
+                        {
+                          onError: (error) => {
+                            console.error('Error uploading image:', JSON.stringify(error))
+                            toast.error({
+                              text1: 'เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ',
+                              icon: TriangleAlertIcon,
+                            })
+                            setAsset(null)
+                          },
+                        }
+                      )
+                    },
+                    onError: (error) => {
+                      console.error('Error getting upload url:', JSON.stringify(error))
+                      toast.error({
+                        text1: 'เกิดข้อผิดพลาดในการอัปโหลดรูปภาพ',
+                        icon: TriangleAlertIcon,
+                      })
+                      setAsset(null)
+                    },
+                  }
+                )
+              } catch (error) {
+                console.error('Error launching camera:', JSON.stringify(error))
+                toast.error({
+                  text1: 'เกิดข้อผิดพลาดในการเปิดกล้อง',
+                  icon: TriangleAlertIcon,
+                })
+              }
             }}
           >
             <Icon icon={ScanFaceIcon} />
