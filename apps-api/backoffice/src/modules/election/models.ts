@@ -27,10 +27,18 @@ export const GetElectionParams = t.Object({
 })
 export type GetElectionParams = Static<typeof GetElectionParams>
 
+export const ElectionCandidateWithVoteScore = t.Composite([
+  ElectionCandidate,
+  t.Object({
+    voteScorePercent: t.Optional(t.Integer({ description: 'Percentage of vote score' })),
+  }),
+])
+export type ElectionCandidateWithVoteScore = Static<typeof ElectionCandidateWithVoteScore>
+
 export const GetElectionResponse = t.Intersect([
   ElectionWithCurrentStatus,
   t.Object({
-    candidates: t.Array(ElectionCandidate),
+    candidates: t.Array(ElectionCandidateWithVoteScore),
   }),
 ])
 export type GetElectionResponse = Static<typeof GetElectionResponse>
