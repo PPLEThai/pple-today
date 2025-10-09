@@ -102,6 +102,12 @@ export default {
           photosPermission: 'The app accesses your photos to let you set up your profile image.',
         },
       ],
+      [
+        'expo-location',
+        {
+          locationAlwaysAndWhenInUsePermission: 'Allow PPLE Today to use your location.',
+        },
+      ],
       ['./plugins/withAndroidPlugin'],
     ],
     experiments: {

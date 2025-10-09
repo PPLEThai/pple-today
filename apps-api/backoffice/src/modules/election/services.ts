@@ -123,7 +123,7 @@ export class ElectionService {
 
   private convertToListElection(
     election: Election & {
-      voters: { userId: string }[]
+      voteRecords: { userId: string }[]
       _count: { voters: number; voteRecords: number }
     },
     voterType: EligibleVoterType
@@ -150,7 +150,7 @@ export class ElectionService {
       status: this.getElectionStatus(election),
       votePercentage: 100 * (election._count.voteRecords / election._count.voters),
       isRegistered: this.isHybridElectionVoterRegistered(voterType, election.type),
-      isVoted: election.voters.length > 0,
+      isVoted: election.voteRecords.length > 0,
     }
   }
 
