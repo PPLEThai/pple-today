@@ -1,6 +1,6 @@
 import { PrismaPg } from '@prisma/adapter-pg'
 
-import { PrismaClient, TopicStatus } from '../../__generated__/prisma'
+import { PrismaClient, TopicStatus, UserStatus } from '../../__generated__/prisma'
 
 const transformProvinceDetails = async (): Promise<{
   province: string[]
@@ -84,6 +84,7 @@ const seedOfficialUser = async () => {
     update: {
       name: `พรรคประชาชน - People's Party`,
       phoneNumber: '+0000000000',
+      status: UserStatus.ACTIVE,
       roles: {
         connectOrCreate: {
           where: { userId_role: { userId: OFFICIAL_USER_ID, role: 'official' } },
@@ -95,6 +96,7 @@ const seedOfficialUser = async () => {
       id: OFFICIAL_USER_ID,
       name: `พรรคประชาชน - People's Party`,
       phoneNumber: '+0000000000',
+      status: UserStatus.ACTIVE,
       roles: {
         connectOrCreate: {
           where: { userId_role: { userId: OFFICIAL_USER_ID, role: 'official' } },
@@ -115,7 +117,7 @@ const seedTopics = async (provinces: string[]) => {
         create: {
           name: province,
           description: `ข่าวเกี่ยวกับจังหวัด${province}`,
-          status: TopicStatus.PUBLISH,
+          status: TopicStatus.PUBLISHED,
         },
       })
     }

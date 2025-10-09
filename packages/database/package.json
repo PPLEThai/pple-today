@@ -23,12 +23,13 @@
   "scripts": {
     "codegen": "prisma generate",
     "codegen:sql": "prisma generate --sql",
-    "db:migrate": "prisma migrate dev",
-    "db:dev:seed": "tsx prisma/seeds/seed.dev.ts",
-    "db:election:seed": "tsx prisma/seeds/seed.election.ts",
-    "db:recommend:seed": "tsx prisma/seeds/seed.recommend.ts",
-    "db:prod:seed": "tsx prisma/seeds/seed.prod.ts",
-    "db:reset": "prisma migrate reset",
+    "migrate": "prisma migrate dev",
+    "migrate:function": "python3 prisma/functions/generate_function_migration.py && prisma migrate dev",
+    "seed:dev": "tsx prisma/seeds/seed.dev.ts",
+    "seed:election": "tsx prisma/seeds/seed.election.ts",
+    "seed:recommend": "tsx prisma/seeds/seed.recommend.ts",
+    "seed:prod": "tsx prisma/seeds/seed.prod.ts",
+    "reset": "prisma migrate reset",
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --check .",
     "lint": "eslint . --ext .ts,.tsx"
@@ -39,6 +40,7 @@
   "devDependencies": {
     "@pple-today/project-config": "workspace:^",
     "@prisma/adapter-pg": "^6.15.0",
+    "@tanstack/pacer": "^0.15.4",
     "dotenv": "^17.0.1",
     "prisma": "^6.15.0"
   },

@@ -1,4 +1,10 @@
-import { FeedItem, FeedItemComment, ListQuery, PaginationQuery } from '@pple-today/api-common/dtos'
+import {
+  CursorPaginationQuery,
+  FeedItem,
+  FeedItemComment,
+  ListCursorQuery,
+  ListCursorResponse,
+} from '@pple-today/api-common/dtos'
 import { FeedItemReactionType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
@@ -13,14 +19,7 @@ export type GetFeedContentResponse = Static<typeof GetFeedContentResponse>
 export const GetFeedCommentParams = t.Object({
   id: t.String({ description: 'The ID of the feed' }),
 })
-export const GetFeedCommentQuery = t.Object({
-  cursor: t.Optional(
-    t.String({
-      description: 'The cursor for pagination which should be last comment ID of previous page',
-    })
-  ),
-  limit: t.Optional(t.Number({ description: 'The number of comments per page', default: 10 })),
-})
+export const GetFeedCommentQuery = CursorPaginationQuery
 export const GetFeedCommentResponse = t.Array(FeedItemComment)
 
 export type GetFeedCommentParams = Static<typeof GetFeedCommentParams>
@@ -98,13 +97,19 @@ export const DeleteFeedCommentResponse = t.Object({
 export type DeleteFeedCommentParams = Static<typeof DeleteFeedCommentParams>
 export type DeleteFeedCommentResponse = Static<typeof DeleteFeedCommentResponse>
 
-export const GetMyFeedQuery = PaginationQuery
+export const GetMyFeedQuery = CursorPaginationQuery
 export type GetMyFeedQuery = Static<typeof GetMyFeedQuery>
 
-export const GetMyFeedResponse = t.Array(FeedItem)
+export const GetMyFeedResponse = ListCursorResponse(FeedItem)
 export type GetMyFeedResponse = Static<typeof GetMyFeedResponse>
 
-export const GetTopicFeedQuery = ListQuery(
+export const GetFollowingFeedQuery = CursorPaginationQuery
+export type GetFollowingFeedQuery = Static<typeof GetFollowingFeedQuery>
+
+export const GetFollowingFeedResponse = ListCursorResponse(FeedItem)
+export type GetFollowingFeedResponse = Static<typeof GetFollowingFeedResponse>
+
+export const GetTopicFeedQuery = ListCursorQuery(
   t.Object({
     topicId: t.String({
       description: 'The ID of the topic to fetch feed items for',
@@ -113,10 +118,10 @@ export const GetTopicFeedQuery = ListQuery(
 )
 export type GetTopicFeedQuery = Static<typeof GetTopicFeedQuery>
 
-export const GetTopicFeedResponse = t.Array(FeedItem)
+export const GetTopicFeedResponse = ListCursorResponse(FeedItem)
 export type GetTopicFeedResponse = Static<typeof GetTopicFeedResponse>
 
-export const GetHashTagFeedQuery = ListQuery(
+export const GetHashTagFeedQuery = ListCursorQuery(
   t.Object({
     hashTagId: t.String({
       description: 'The hashtag to fetch feed items for',
@@ -125,7 +130,7 @@ export const GetHashTagFeedQuery = ListQuery(
 )
 export type GetHashTagFeedQuery = Static<typeof GetHashTagFeedQuery>
 
-export const GetHashTagFeedResponse = t.Array(FeedItem)
+export const GetHashTagFeedResponse = ListCursorResponse(FeedItem)
 export type GetHashTagFeedResponse = Static<typeof GetHashTagFeedResponse>
 
 export const GetFeedItemsByUserIdParams = t.Object({
@@ -133,8 +138,8 @@ export const GetFeedItemsByUserIdParams = t.Object({
 })
 export type GetFeedItemsByUserIdParams = Static<typeof GetFeedItemsByUserIdParams>
 
-export const GetFeedItemsByUserIdQuery = PaginationQuery
+export const GetFeedItemsByUserIdQuery = CursorPaginationQuery
 export type GetFeedItemsByUserIdQuery = Static<typeof GetFeedItemsByUserIdQuery>
 
-export const GetFeedItemsByUserIdResponse = t.Array(FeedItem)
+export const GetFeedItemsByUserIdResponse = ListCursorResponse(FeedItem)
 export type GetFeedItemsByUserIdResponse = Static<typeof GetFeedItemsByUserIdResponse>

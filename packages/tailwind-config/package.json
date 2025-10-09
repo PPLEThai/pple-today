@@ -1,0 +1,15 @@
+{
+  "name": "@pple-today/tailwind-config",
+  "version": "0.0.0",
+  "description": "",
+  "exports": {
+    "./global.css": "./global.css",
+    "./tailwind.config.js": "./tailwind.config.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}

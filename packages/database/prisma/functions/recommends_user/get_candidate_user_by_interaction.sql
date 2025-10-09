@@ -3,12 +3,12 @@ CREATE OR REPLACE FUNCTION public.get_candidate_user_by_interaction(_id text)
   LANGUAGE plpgsql
 AS $function$
 BEGIN
-   RETURN QUERY
-WITH
+  RETURN QUERY
+  WITH
     current_user_follows AS (
         SELECT
             ufu."followerId" AS follower_id,
-            ufu."followedId" AS followed_id
+            ufu."followingId" AS following_Id
         FROM "UserFollowsUser" ufu
         WHERE ufu."followerId" = _id
     ),
@@ -19,31 +19,36 @@ WITH
           fi."authorId" AS author_id
         FROM 
           "PostHashTag" pht
+          INNER JOIN "Post" post ON post."feedItemId" = pht."postId" AND post."status" = 'PUBLISHED'
           INNER JOIN "FeedItem" fi ON fi."id" = pht."postId"
     ),
     latest_user_interaction AS (
         SELECT 
             "FeedItemReaction"."feedItemId" AS feed_item_id, 
-            CASE
-                WHEN "FeedItemReaction"."type" = 'UP_VOTE' THEN 3
-                WHEN "FeedItemReaction"."type" = 'DOWN_VOTE' THEN 1
-                ELSE 0
-            END AS score
+            SUM(
+	            CASE
+	                WHEN "FeedItemReaction"."type" = 'UP_VOTE' THEN 3
+	                WHEN "FeedItemReaction"."type" = 'DOWN_VOTE' THEN 1
+	                ELSE 0
+	            END
+            ) AS score
         FROM "FeedItemReaction"
         WHERE
             "FeedItemReaction"."userId" = _id
+        GROUP BY feed_item_id
         UNION ALL
-        SELECT "FeedItemComment"."feedItemId" AS feed_item_id, 1 AS score
+        SELECT "FeedItemComment"."feedItemId" AS feed_item_id, COUNT(*) AS score
         FROM "FeedItemComment"
         WHERE
             "FeedItemComment"."userId" = _id
+        GROUP BY feed_item_id
     ),
     hashtag_in_post AS (
         SELECT "HashTag".id, latest_user_interaction.score
         FROM
             post_details
+            INNER JOIN "HashTag" ON "HashTag".id = post_details.hashtag AND "HashTag"."status" = 'PUBLISHED'
             INNER JOIN latest_user_interaction ON post_details.id = latest_user_interaction.feed_item_id
-            INNER JOIN "HashTag" ON post_details.hashtag = "HashTag".id AND "HashTag".status = 'PUBLISH'
     ),
     author_from_hashtag AS (
         SELECT post_details.author_id, SUM(
@@ -60,9 +65,9 @@ SELECT
   author_from_hashtag.author_id::TEXT AS user_id, author_from_hashtag.score::NUMERIC
 FROM 
   author_from_hashtag
-  LEFT JOIN current_user_follows ON author_from_hashtag.author_id = current_user_follows.followed_id
+  LEFT JOIN current_user_follows ON author_from_hashtag.author_id = current_user_follows.following_Id
 WHERE
-  current_user_follows.followed_id IS NULL
+  current_user_follows.following_Id IS NULL
   AND author_from_hashtag.author_id <> _id
 ORDER BY author_from_hashtag.score DESC
 LIMIT 10;

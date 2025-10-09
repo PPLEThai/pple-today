@@ -23,8 +23,8 @@ export class ElectionRepository {
         include: {
           election: {
             include: {
-              voters: true,
-              voteRecords: true,
+              _count: { select: { voters: true, voteRecords: true } },
+              voteRecords: { where: { userId }, select: { userId: true }, take: 1 },
             },
           },
         },
@@ -44,8 +44,8 @@ export class ElectionRepository {
         include: {
           election: {
             include: {
-              voters: true,
-              voteRecords: true,
+              _count: { select: { voters: true, voteRecords: true } },
+              voteRecords: { where: { userId }, select: { userId: true }, take: 1 },
               candidates: true,
             },
           },

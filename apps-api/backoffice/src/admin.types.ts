@@ -2,6 +2,7 @@ import { AdminController } from './modules/admin'
 
 export type * from './modules/address/models'
 export type * from './modules/admin/announcements/models'
+export type * from './modules/admin/auth/models'
 export type * from './modules/admin/banner/models'
 export type * from './modules/admin/file/models'
 export type * from './modules/admin/hashtag/models'

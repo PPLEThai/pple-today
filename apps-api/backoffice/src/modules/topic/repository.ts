@@ -1,6 +1,6 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { HashTagStatus, TopicStatus } from '@pple-today/database/prisma'
+import { HashTagStatus, Prisma, TopicStatus } from '@pple-today/database/prisma'
 import { get_candidate_topic } from '@pple-today/database/prisma/sql'
 import Elysia from 'elysia'
 import * as R from 'remeda'
@@ -9,6 +9,15 @@ import { PrismaServicePlugin } from '../../plugins/prisma'
 
 export class TopicRepository {
   constructor(private readonly prismaService: PrismaService) {}
+
+  private ensureTopicExists = async (topicId: string, tx: Prisma.TransactionClient) => {
+    await tx.topic.findUniqueOrThrow({
+      where: {
+        id: topicId,
+        status: TopicStatus.PUBLISHED,
+      },
+    })
+  }
 
   async getTopicRecommendation(userId: string) {
     return fromRepositoryPromise(async () => {
@@ -23,14 +32,15 @@ export class TopicRepository {
               R.filter((id) => id !== null)
             ),
           },
+          status: TopicStatus.PUBLISHED,
         },
         select: {
           id: true,
           name: true,
           description: true,
           bannerImagePath: true,
-          hashTagInTopics: {
-            where: { hashTag: { status: HashTagStatus.PUBLISH } },
+          hashTags: {
+            where: { hashTag: { status: HashTagStatus.PUBLISHED } },
             include: {
               hashTag: {
                 select: {
@@ -45,7 +55,7 @@ export class TopicRepository {
 
       return candidateTopic.map((topic) => ({
         ...topic,
-        hashTags: topic.hashTagInTopics.map((htt) => ({
+        hashTags: topic.hashTags.map((htt) => ({
           id: htt.hashTag.id,
           name: htt.hashTag.name,
         })),
@@ -58,11 +68,11 @@ export class TopicRepository {
       this.prismaService.topic.findFirstOrThrow({
         where: {
           id: topicId,
-          status: HashTagStatus.PUBLISH,
+          status: TopicStatus.PUBLISHED,
         },
         include: {
-          hashTagInTopics: {
-            where: { hashTag: { status: HashTagStatus.PUBLISH } },
+          hashTags: {
+            where: { hashTag: { status: HashTagStatus.PUBLISHED } },
             include: {
               hashTag: true,
             },
@@ -75,10 +85,10 @@ export class TopicRepository {
   async getTopics() {
     return fromRepositoryPromise(
       this.prismaService.topic.findMany({
-        where: { status: TopicStatus.PUBLISH },
+        where: { status: TopicStatus.PUBLISHED },
         include: {
-          hashTagInTopics: {
-            where: { hashTag: { status: HashTagStatus.PUBLISH } },
+          hashTags: {
+            where: { hashTag: { status: HashTagStatus.PUBLISHED } },
             include: {
               hashTag: true,
             },
@@ -91,12 +101,12 @@ export class TopicRepository {
   async listTopicWithFollowedStatus(userId: string) {
     return fromRepositoryPromise(
       this.prismaService.topic.findMany({
-        where: { status: 'PUBLISH' },
+        where: { status: TopicStatus.PUBLISHED },
         orderBy: { updatedAt: 'desc' },
         select: {
           id: true,
           name: true,
-          followedTopics: { where: { userId }, select: { userId: true } },
+          followers: { where: { userId }, select: { userId: true } },
         },
       })
     )
@@ -106,13 +116,14 @@ export class TopicRepository {
     return fromRepositoryPromise(
       this.prismaService.userFollowsTopic.findMany({
         where: {
-          userId: { equals: userId },
+          userId,
+          topic: { status: TopicStatus.PUBLISHED },
         },
         orderBy: { createdAt: 'asc' },
         include: {
           topic: {
             include: {
-              hashTagInTopics: {
+              hashTags: {
                 include: {
                   hashTag: true,
                 },
@@ -126,43 +137,51 @@ export class TopicRepository {
 
   async createUserFollowTopic(userId: string, topicId: string) {
     return fromRepositoryPromise(
-      this.prismaService.user.update({
-        where: {
-          id: userId,
-        },
-        data: {
-          followedTopics: {
-            create: {
-              topicId,
+      this.prismaService.$transaction(async (tx) => {
+        await this.ensureTopicExists(topicId, tx)
+
+        return await this.prismaService.user.update({
+          where: {
+            id: userId,
+          },
+          data: {
+            followingTopics: {
+              create: {
+                topicId,
+              },
+            },
+            numberOfFollowingTopics: {
+              increment: 1,
             },
           },
-          numberOfFollowingTopics: {
-            increment: 1,
-          },
-        },
+        })
       })
     )
   }
 
   async deleteUserFollowTopic(userId: string, topicId: string) {
     return fromRepositoryPromise(
-      this.prismaService.user.update({
-        where: {
-          id: userId,
-        },
-        data: {
-          followedTopics: {
-            delete: {
-              userId_topicId: {
-                userId,
-                topicId,
+      this.prismaService.$transaction(async (tx) => {
+        await this.ensureTopicExists(topicId, tx)
+
+        return await this.prismaService.user.update({
+          where: {
+            id: userId,
+          },
+          data: {
+            followingTopics: {
+              delete: {
+                userId_topicId: {
+                  userId,
+                  topicId,
+                },
               },
             },
+            numberOfFollowingTopics: {
+              decrement: 1,
+            },
           },
-          numberOfFollowingTopics: {
-            decrement: 1,
-          },
-        },
+        })
       })
     )
   }

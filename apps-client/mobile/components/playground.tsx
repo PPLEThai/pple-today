@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@pple-today/ui/select'
+import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { Textarea } from '@pple-today/ui/textarea'
 import { toast } from '@pple-today/ui/toast'
@@ -40,7 +41,9 @@ import { useForm } from '@tanstack/react-form'
 import dayjs from 'dayjs'
 import { useEvent } from 'expo'
 import { Image } from 'expo-image'
+import * as ImagePicker from 'expo-image-picker'
 import * as Linking from 'expo-linking'
+import * as Location from 'expo-location'
 import { useRouter } from 'expo-router'
 import { getItemAsync } from 'expo-secure-store'
 import { useTrackingPermissions } from 'expo-tracking-transparency'
@@ -55,7 +58,7 @@ import { useFacebookPagesQuery } from '@app/libs/facebook'
 
 import { AuthPlayground } from './auth-playground'
 import { AvatarPPLEFallback } from './avatar-pple-fallback'
-import { ElectionCard, ElectionStatusBadge } from './election/election-card'
+import { ElectionCard, ElectionDetailCard, ElectionStatusBadge } from './election/election-card'
 import { MoreOrLess } from './more-or-less'
 
 const AUTH_ACCESS_TOKEN_STORAGE_KEY = 'authAccessToken'
@@ -67,7 +70,7 @@ export function Playground() {
         <View className="flex flex-row items-center justify-between">
           <H1 className="font-inter-bold">Playground</H1>
         </View>
-        <ElectionCardExample />
+        <FrontCameraExample />
         <View className="flex flex-col gap-2">
           <H2 className="font-inter-bold">Font</H2>
           <View className="flex flex-col gap-1">
@@ -304,7 +307,9 @@ export function Playground() {
         <VideoExample />
         <QueryExample />
         <AuthPlayground />
+        <ElectionCardExample />
         <FacebookSDKExample />
+        <LocationExample />
       </View>
     </ScrollView>
   )
@@ -999,15 +1004,72 @@ function ElectionCardExample() {
   return (
     <View className="flex flex-col gap-2">
       <H2 className="font-inter-bold">Election Card</H2>
-      {elections.map((election, index) => (
-        <ElectionCard key={index} election={election} />
-      ))}
-      <View className="flex flex-col gap-2 items-start">
+      <Slide count={elections.length} itemWidth="container" gap={8}>
+        <SlideScrollView>
+          {elections.map((election, index) => (
+            <SlideItem key={index} className="flex flex-row items-stretch">
+              <ElectionCard election={election} />
+            </SlideItem>
+          ))}
+        </SlideScrollView>
+        <SlideIndicators />
+      </Slide>
+      <Slide count={elections.length} itemWidth="container" gap={8}>
+        <SlideScrollView>
+          {elections.map((election, index) => (
+            <SlideItem key={index} className="flex flex-row items-stretch">
+              <ElectionDetailCard election={election} />
+            </SlideItem>
+          ))}
+        </SlideScrollView>
+        <SlideIndicators />
+      </Slide>
+      <View className="flex flex-row gap-2 items-start">
         <ElectionStatusBadge status="NOT_OPENED_VOTE" />
         <ElectionStatusBadge status="OPEN_VOTE" />
         <ElectionStatusBadge status="CLOSED_VOTE" />
         <ElectionStatusBadge status="RESULT_ANNOUNCE" />
       </View>
+    </View>
+  )
+}
+
+function LocationExample() {
+  const [status, requestPermission] = Location.useForegroundPermissions()
+  const [location, setLocation] = useState<Location.LocationObject | null>(null)
+  const getCurrentLocation = useCallback(async () => {
+    const { status } = await requestPermission()
+    if (status !== 'granted') {
+      toast.error({ text1: 'Permission to access location was denied' })
+      return
+    }
+    const location = await Location.getCurrentPositionAsync({})
+    setLocation(location)
+  }, [requestPermission])
+
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Location</H2>
+      <Text>Permission: {JSON.stringify(status, null, 2)}</Text>
+      <Text>Location: {JSON.stringify(location, null, 2)}</Text>
+      <Button onPress={getCurrentLocation}>
+        <Text>Get Current Location</Text>
+      </Button>
+    </View>
+  )
+}
+
+function FrontCameraExample() {
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Front Camera</H2>
+      <Button
+        onPress={() => {
+          ImagePicker.launchCameraAsync({ cameraType: ImagePicker.CameraType.front })
+        }}
+      >
+        <Text>Open Front Camera</Text>
+      </Button>
     </View>
   )
 }

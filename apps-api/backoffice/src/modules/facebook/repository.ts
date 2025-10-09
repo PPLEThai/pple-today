@@ -13,6 +13,7 @@ import { PrismaService } from '@pple-today/api-common/services'
 import { FileService } from '@pple-today/api-common/services'
 import { err } from '@pple-today/api-common/utils'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { FacebookPageLinkedStatus } from '@pple-today/database/prisma'
 import { TAnySchema } from '@sinclair/typebox'
 import { Check } from '@sinclair/typebox/value'
 import { createHmac } from 'crypto'
@@ -302,94 +303,6 @@ export class FacebookRepository {
     )
   }
 
-  // TODO: implement the following methods when starting to sync posts
-  // async syncInitialPostsFromPage(userId: string, posts: PagePost[]) {
-  //   return await fromRepositoryPromise(
-  //     this.prismaService.$transaction(async (tx) => {
-  //       await Promise.all(
-  //         posts.map(async (post) => {
-  //           const existingPost = await tx.post.findUnique({
-  //             where: { facebookPostId: post.id },
-  //             include: {
-  //               images: true,
-  //               hashTags: {
-  //                 include: {
-  //                   hashTag: true,
-  //                 },
-  //               },
-  //             },
-  //           })
-
-  //           if (existingPost) {
-  //             await tx.post.update({
-  //               where: { feedItemId: existingPost.feedItemId },
-  //               data: {
-  //                 content: post.message,
-  //                 images: {
-  //                   deleteMany: {},
-  //                   create:
-  //                     post.attachments?.data.map((attachment, idx) => ({
-  //                       cacheKey: attachment.target.id,
-  //                       url: attachment.media.image.src,
-  //                       order: idx,
-  //                     })) ?? [],
-  //                 },
-  //                 hashTags: {
-  //                   deleteMany: {},
-  //                   create:
-  //                     post.message_tags?.map((tag) => ({
-  //                       hashTag: {
-  //                         connectOrCreate: {
-  //                           where: { name: tag.data.name },
-  //                           create: { name: tag.data.name },
-  //                         },
-  //                       },
-  //                     })) ?? [],
-  //                 },
-  //               },
-  //             })
-  //             return
-  //           }
-
-  //           await tx.feedItem.create({
-  //             data: {
-  //               author: {
-  //                 connect: { id: userId },
-  //               },
-  //               type: FeedItemType.POST,
-  //               post: {
-  //                 create: {
-  //                   facebookPostId: post.id,
-  //                   content: post.message,
-  //                   hashTags: {
-  //                     create:
-  //                       post.message_tags?.map((tag) => ({
-  //                         hashTag: {
-  //                           connectOrCreate: {
-  //                             where: { name: tag.data.name },
-  //                             create: { name: tag.data.name },
-  //                           },
-  //                         },
-  //                       })) ?? [],
-  //                   },
-  //                   images: {
-  //                     create:
-  //                       post.attachments?.data.map((attachment, idx) => ({
-  //                         cacheKey: attachment.target.id,
-  //                         url: attachment.media.image.src,
-  //                         order: idx,
-  //                       })) ?? [],
-  //                   },
-  //                 },
-  //               },
-  //             },
-  //           })
-  //         })
-  //       )
-  //     })
-  //   )
-  // }
-
   async getUserAccessToken(code: string, redirectUri: string) {
     const queryParams = new URLSearchParams({
       client_id: this.facebookConfig.appId,
@@ -564,6 +477,7 @@ export class FacebookRepository {
           id: facebookPageId,
           name: pageName,
           profilePicturePath,
+          linkedStatus: FacebookPageLinkedStatus.PENDING,
           pageAccessToken: facebookPageAccessToken,
           manager: {
             connect: { id: userId },
@@ -573,6 +487,7 @@ export class FacebookRepository {
         update: {
           name: pageName,
           profilePicturePath,
+          linkedStatus: FacebookPageLinkedStatus.PENDING,
           pageAccessToken: facebookPageAccessToken,
           manager: {
             connect: { id: userId },

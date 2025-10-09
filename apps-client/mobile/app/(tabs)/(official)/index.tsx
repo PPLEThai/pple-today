@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { Pressable, PressableProps, ScrollView, View } from 'react-native'
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -6,8 +6,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
+import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { H1, H2, H3 } from '@pple-today/ui/typography'
+import { useQueryClient } from '@tanstack/react-query'
 import * as Linking from 'expo-linking'
 import { useRouter } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
@@ -20,6 +22,7 @@ import {
   MailIcon,
   MegaphoneIcon,
   PhoneIcon,
+  VoteIcon,
 } from 'lucide-react-native'
 
 import ContactMail from '@app/assets/contact-mail.svg'
@@ -27,13 +30,31 @@ import Personal from '@app/assets/personal.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { UserAddressInfoSection } from '@app/components/address-info'
 import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/announcement'
+import { ElectionCard } from '@app/components/election/election-card'
+import { RefreshControl } from '@app/components/refresh-control'
+import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { reactQueryClient } from '@app/libs/api-client'
+import { useSession } from '@app/libs/auth'
 
 export default function OfficialPage() {
+  const queryClient = useQueryClient()
+  const onRefresh = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: reactQueryClient.getQueryKey('/elections'),
+      }),
+      queryClient.resetQueries({
+        queryKey: reactQueryClient.getQueryKey('/announcements'),
+      }),
+    ])
+  }, [queryClient])
   return (
-    <View className="flex-1 flex-col bg-base-bg-default">
-      <ScrollView>
-        <View className="flex flex-col p-4 pt-safe-offset-4 bg-base-bg-white">
+    <SafeAreaLayout>
+      <ScrollView
+        className="flex-1 bg-base-bg-default"
+        refreshControl={<RefreshControl onRefresh={onRefresh} />}
+      >
+        <View className="flex flex-col p-4 bg-base-bg-white">
           <View className="flex flex-row gap-2 items-center">
             <Icon
               icon={LandmarkIcon}
@@ -49,26 +70,45 @@ export default function OfficialPage() {
         </View>
         <UserAddressInfoSection className="pb-4 bg-base-bg-white" />
         <View className="gap-3 py-4">
+          <ElectionSection />
           <AnnouncementSection />
           <InformationSection />
-          <DemoSection />
-          <DemoSection />
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaLayout>
   )
 }
 
-const DemoSection = () => {
+const ElectionSection = () => {
+  const session = useSession()
+  const electionsQuery = reactQueryClient.useQuery('/elections', {}, { enabled: !!session })
+  const elections = electionsQuery.data || []
+  if (elections.length === 0) {
+    return null
+  }
   return (
-    <View className="px-4">
-      <View className="flex flex-row gap-2 items-center">
-        <View className="w-8 h-8 flex items-center justify-center">
-          <Icon icon={MegaphoneIcon} size={32} className="text-base-primary-default" />
-        </View>
-        <H2 className="text-2xl font-heading-semibold text-base-text-high">ประกาศ</H2>
+    <View className="flex flex-col">
+      <View className="px-4 flex flex-row gap-2 items-center">
+        <Icon icon={VoteIcon} size={32} className="text-base-primary-default" />
+        <H2 className="text-2xl font-heading-semibold text-base-text-high">เลือกตั้ง</H2>
       </View>
-      <View className="h-48 bg-base-bg-white rounded-xl border border-base-outline-default mt-2 p-4"></View>
+      <Slide
+        isLoading={electionsQuery.isLoading}
+        count={elections.length}
+        itemWidth="container"
+        gap={8}
+        paddingHorizontal={16}
+        className="mt-2"
+      >
+        <SlideScrollView>
+          {elections.map((election) => (
+            <SlideItem key={election.id}>
+              <ElectionCard election={election} className="flex-1" />
+            </SlideItem>
+          ))}
+        </SlideScrollView>
+        <SlideIndicators />
+      </Slide>
     </View>
   )
 }
@@ -79,10 +119,10 @@ const AnnouncementSection = () => {
     query: { limit: 3 },
   })
 
-  const data = announcementsQuery.data?.announcements || []
+  const data = announcementsQuery.data?.announcements
 
   const AnnouncementPreviewList = () => {
-    if (announcementsQuery.isLoading) {
+    if (announcementsQuery.isLoading || !data) {
       return (
         <View className="my-3 gap-3">
           <AnnouncementCardSkeleton className="w-full" />
@@ -102,7 +142,7 @@ const AnnouncementSection = () => {
             id={item.id}
             feedId={item.id}
             title={item.title}
-            date={item.createdAt.toString()}
+            date={item.publishedAt.toString()}
             type={item.type}
           />
         ))}
@@ -118,7 +158,7 @@ const AnnouncementSection = () => {
           <H2 className="text-2xl font-heading-semibold text-base-text-high">ประกาศ</H2>
         </View>
         <View className="min-h-10">
-          {data.length > 0 && (
+          {data && data.length > 0 && (
             <Button variant="ghost" onPress={() => router.navigate('/(official)/announcement')}>
               <Text>ดูเพิ่มเติม</Text>
               <Icon icon={ArrowRightIcon} strokeWidth={2} />

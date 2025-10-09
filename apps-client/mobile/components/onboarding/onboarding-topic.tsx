@@ -50,8 +50,8 @@ export function OnboardingTopic() {
   }, [dispatch])
 
   return (
-    <View className="flex-1 justify-between">
-      <ScrollView className="px-6 pt-4 pb-6">
+    <View className="flex-1 justify-between mt-4">
+      <ScrollView contentContainerClassName="px-6 pb-6">
         <form.Field name="topics">
           {(field) => (
             <FormItem field={field}>

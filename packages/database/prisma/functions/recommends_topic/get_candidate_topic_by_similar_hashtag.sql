@@ -3,43 +3,44 @@ CREATE OR REPLACE FUNCTION public.get_candidate_topic_by_similar_hashtag(_id tex
   LANGUAGE plpgsql
 AS $function$
 BEGIN
-    RETURN QUERY
-    WITH 
-      current_topic_follows AS (
-        SELECT
-          uft."topicId" AS topic_id
-        FROM "UserFollowsTopic" uft
-        WHERE uft."userId" = _id
-      ),
-      current_related_hashtag AS (
-        SELECT
-          ht."id", 
-          COUNT(*) AS number_of_hashtag
-        FROM 
-          current_topic_follows AS ctf
-          INNER JOIN "HashTagInTopic" hitt ON hitt."topicId" = ctf."topic_id"
-          INNER JOIN "HashTag" ht ON ht."id" = hitt."hashTagId"
-        GROUP BY ht."id"
-      ),
-      topic_from_hashtag AS (
-        SELECT
-          hitt."topicId" AS topic_id, 
-          SUM(current_related_hashtag.number_of_hashtag) AS score
-        FROM 
-          current_related_hashtag
-          INNER JOIN "HashTagInTopic" hitt ON hitt."hashTagId" = current_related_hashtag."id"
-          LEFT JOIN current_topic_follows ctf ON ctf."topic_id" = hitt."topicId"
-        WHERE ctf."topic_id" IS NULL
-        GROUP BY hitt."topicId"
-      )
+  RETURN QUERY
+  WITH 
+    current_topic_follows AS (
+      SELECT
+        uft."topicId" AS topic_id
+      FROM "UserFollowsTopic" uft
+      WHERE uft."userId" = _id
+    ),
+    current_related_hashtag AS (
+      SELECT
+        ht."id", 
+        COUNT(*) AS number_of_hashtag
+      FROM 
+        current_topic_follows AS ctf
+        INNER JOIN "HashTagInTopic" hitt ON hitt."topicId" = ctf."topic_id"
+        INNER JOIN "HashTag" ht ON ht."id" = hitt."hashTagId" AND ht."status" = 'PUBLISHED'
+      GROUP BY ht."id"
+    ),
+    topic_from_hashtag AS (
+      SELECT
+        hitt."topicId" AS topic_id, 
+        SUM(current_related_hashtag.number_of_hashtag) AS score
+      FROM 
+        current_related_hashtag
+        INNER JOIN "HashTagInTopic" hitt ON hitt."hashTagId" = current_related_hashtag."id"
+        INNER JOIN "Topic" t ON hitt."topicId" = t."id" AND t."status" = 'PUBLISHED'
+        LEFT JOIN current_topic_follows ctf ON ctf."topic_id" = hitt."topicId"
+      WHERE ctf."topic_id" IS NULL
+      GROUP BY hitt."topicId"
+    )
 
-    SELECT
-      topic_from_hashtag.topic_id,
-      topic_from_hashtag.score
-    FROM 
-      topic_from_hashtag
-      INNER JOIN "Topic" t ON topic_from_hashtag.topic_id = t."id" AND t."status" = 'PUBLISH'
-    ORDER BY topic_from_hashtag.score DESC
-    LIMIT 10;
+  SELECT
+    topic_from_hashtag.topic_id,
+    topic_from_hashtag.score
+  FROM 
+    topic_from_hashtag
+    INNER JOIN "Topic" t ON topic_from_hashtag.topic_id = t."id" AND t."status" = 'PUBLISHED'
+  ORDER BY topic_from_hashtag.score DESC
+  LIMIT 10;
 END;
 $function$

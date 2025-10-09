@@ -10,7 +10,7 @@ WITH
 
   excluded_users AS (
   	SELECT
-  		ufu."followedId" AS user_id
+  		ufu."followingId" AS user_id
   	FROM
   		"UserFollowsUser" ufu
   	WHERE 
@@ -32,7 +32,7 @@ WITH
   		"User" u
   		LEFT JOIN excluded_users e ON e.user_id = u."id"
   	WHERE
-  		e.user_id IS NULL
+  		e.user_id IS NULL AND u."status" = 'ACTIVE'
   ),
 
   other_candidate_user AS (
@@ -52,12 +52,18 @@ WITH
       other_candidate_user.score
     FROM 
       other_candidate_user
+      INNER JOIN "User" u ON other_candidate_user.user_id = u.id
+    WHERE 
+      u."status" = 'ACTIVE'
     UNION ALL
     SELECT 
       candidate_user.user_id,
       candidate_user.score
     FROM
       candidate_user
+      INNER JOIN "User" u ON candidate_user.user_id = u.id
+    WHERE 
+      u."status" = 'ACTIVE'
   ),
 
   final_candidate_score AS (

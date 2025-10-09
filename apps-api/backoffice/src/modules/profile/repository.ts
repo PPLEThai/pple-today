@@ -1,7 +1,7 @@
 import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { Prisma } from '@pple-today/database/prisma'
+import { Prisma, UserStatus } from '@pple-today/database/prisma'
 import { get_candidate_user } from '@pple-today/database/prisma/sql'
 import Elysia from 'elysia'
 import * as R from 'remeda'
@@ -106,17 +106,17 @@ export class ProfileRepository {
     )
   }
 
-  async followUser(userId: string, followedUserId: string) {
+  async followUser(userId: string, followingUserId: string) {
     return await fromRepositoryPromise(
       this.prismaService.$transaction([
         this.prismaService.userFollowsUser.create({
           data: {
-            followedId: followedUserId,
+            followingId: followingUserId,
             followerId: userId,
           },
         }),
         this.prismaService.user.update({
-          where: { id: followedUserId },
+          where: { id: followingUserId, status: UserStatus.ACTIVE },
           data: {
             numberOfFollowers: {
               increment: 1,
@@ -124,7 +124,7 @@ export class ProfileRepository {
           },
         }),
         this.prismaService.user.update({
-          where: { id: userId },
+          where: { id: userId, status: UserStatus.ACTIVE },
           data: {
             numberOfFollowing: {
               increment: 1,
@@ -135,19 +135,25 @@ export class ProfileRepository {
     )
   }
 
-  async unfollowUser(userId: string, followedUserId: string) {
+  async unfollowUser(userId: string, followingUserId: string) {
     return await fromRepositoryPromise(
       this.prismaService.$transaction([
         this.prismaService.userFollowsUser.delete({
           where: {
-            followedId_followerId: {
-              followedId: followedUserId,
+            followingId_followerId: {
               followerId: userId,
+              followingId: followingUserId,
+            },
+            following: {
+              status: UserStatus.ACTIVE,
+            },
+            follower: {
+              status: UserStatus.ACTIVE,
             },
           },
         }),
         this.prismaService.user.update({
-          where: { id: followedUserId },
+          where: { id: followingUserId },
           data: {
             numberOfFollowers: {
               decrement: 1,
@@ -175,7 +181,7 @@ export class ProfileRepository {
         select: {
           followers: {
             select: {
-              followed: {
+              following: {
                 select: {
                   id: true,
                   name: true,
@@ -201,7 +207,7 @@ export class ProfileRepository {
     }
 
     if (profileData.interestTopics) {
-      userData.followedTopics = {
+      userData.followingTopics = {
         createMany: {
           data:
             profileData.interestTopics.map((topic) => ({

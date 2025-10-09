@@ -39,14 +39,14 @@ export class PollsService {
               : undefined,
             province: item.author.district ?? '',
           },
-          userReaction: item.reactions?.[0]?.type,
+          publishedAt: item.publishedAt!,
+          userReaction: item.reactions?.[0]?.type ?? null,
           commentCount: item.numberOfComments,
           reactions: item.reactionCounts.map((reaction) => ({
             type: reaction.type,
             count: reaction.count,
           })),
           type: FeedItemType.POLL,
-          createdAt: item.createdAt,
           poll: {
             options:
               item.poll!.options.map((option) => ({
@@ -138,6 +138,10 @@ export class PollsService {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.POLL_NOT_FOUND,
           message: 'Poll not found',
+        },
+        MODEL_NOT_CONNECT: {
+          code: InternalErrorCode.POLL_VOTE_NOT_FOUND,
+          message: 'Poll option not found',
         },
       })
     }

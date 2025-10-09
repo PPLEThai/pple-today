@@ -1,15 +1,15 @@
 model UserFollowsUser {
-    followedId String
-    followerId String
-    createdAt  DateTime @default(now())
-    updatedAt  DateTime @updatedAt
+    followerId  String
+    followingId String
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt
 
-    followed User @relation(name: "Follows", fields: [followedId], references: [id])
-    follower User @relation(name: "FollowedBy", fields: [followerId], references: [id])
+    following User @relation(name: "Following", fields: [followingId], references: [id])
+    follower  User @relation(name: "Follower", fields: [followerId], references: [id])
 
-    @@id([followedId, followerId])
+    @@id([followingId, followerId])
     @@index([followerId])
-    @@index([followedId])
+    @@index([followingId])
 }
 
 model UserFollowsTopic {

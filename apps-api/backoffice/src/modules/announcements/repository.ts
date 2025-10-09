@@ -1,5 +1,6 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { AnnouncementStatus } from '@pple-today/database/prisma'
 import { Elysia } from 'elysia'
 
 import { PrismaServicePlugin } from '../../plugins/prisma'
@@ -18,6 +19,10 @@ export class AnnouncementRepository {
 
     return await fromRepositoryPromise(
       this.prismaService.announcement.findMany({
+        where: {
+          status: AnnouncementStatus.PUBLISHED,
+          feedItem: { publishedAt: { lte: new Date() } },
+        },
         select: {
           feedItemId: true,
           title: true,
@@ -28,6 +33,7 @@ export class AnnouncementRepository {
             select: {
               createdAt: true,
               updatedAt: true,
+              publishedAt: true,
             },
           },
         },
@@ -45,13 +51,18 @@ export class AnnouncementRepository {
   async getAnnouncementById(id: string) {
     return await fromRepositoryPromise(
       this.prismaService.announcement.findUnique({
-        where: { feedItemId: id },
+        where: {
+          feedItemId: id,
+          status: AnnouncementStatus.PUBLISHED,
+          feedItem: { publishedAt: { lte: new Date() } },
+        },
         include: {
           attachments: true,
           feedItem: {
             select: {
               createdAt: true,
               updatedAt: true,
+              publishedAt: true,
             },
           },
         },

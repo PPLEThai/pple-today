@@ -2,7 +2,7 @@ import React, { useCallback, useEffect } from 'react'
 import { ScrollView, View } from 'react-native'
 import { createQuery } from 'react-query-kit'
 
-import { QUERY_KEY } from '@pple-today/api-client'
+import { QUERY_KEY_SYMBOL } from '@pple-today/api-client'
 import { AnimatedBackgroundPressable } from '@pple-today/ui/animated-pressable'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Button } from '@pple-today/ui/button'
@@ -54,7 +54,7 @@ export function UserCard(props: UserCardProps) {
   const router = useRouter()
   return (
     <AnimatedBackgroundPressable
-      onPress={() => router.navigate(`/profile/${props.user.id}`)}
+      onPress={() => router.navigate(`./profile/${props.user.id}`)}
       className={cn(
         'flex flex-col items-center gap-3 bg-base-bg-white border border-base-outline-default rounded-2xl p-4 h-[208px]',
         props.className
@@ -88,7 +88,7 @@ export function UserCard(props: UserCardProps) {
 }
 
 const useUserFollowQuery = createQuery({
-  queryKey: [QUERY_KEY, 'user-follow'],
+  queryKey: [QUERY_KEY_SYMBOL, 'user-follow'],
   fetcher: (_: { userId: string }): boolean => {
     throw new Error('userFollowQuery should not be enabled')
   },

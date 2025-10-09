@@ -13,7 +13,7 @@ import { TextProps } from 'react-native-svg'
 import { createQuery } from 'react-query-kit'
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
-import { QUERY_KEY } from '@pple-today/api-client'
+import { QUERY_KEY_SYMBOL } from '@pple-today/api-client'
 import { AnimatedBackgroundPressable, AnimatedPressable } from '@pple-today/ui/animated-pressable'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
@@ -102,7 +102,7 @@ export const FeedCard = React.memo(function FeedCard(props: {
             </Text>
             <Text className="text-base-text-medium font-heading-regular text-sm">
               {feedContent.author.address ? `${feedContent.author.address.province} | ` : ''}
-              {formatDateInterval(feedContent.createdAt.toString())}
+              {formatDateInterval(feedContent.publishedAt.toString())}
             </Text>
           </View>
         </View>
@@ -265,7 +265,7 @@ interface FeedReaction {
 }
 // create store using react query
 export const useFeedReactionQuery = createQuery({
-  queryKey: [QUERY_KEY, 'feed-reaction'],
+  queryKey: [QUERY_KEY_SYMBOL, 'feed-reaction'],
   fetcher: (_: { feedId: string }): FeedReaction => {
     throw new Error('PostReactionStore should not be enabled')
   },
@@ -881,7 +881,7 @@ const FeedDetailAuthorSection = (props: { feedItem: FeedItem }) => {
           </Text>
           <Text className="text-base-text-medium font-heading-regular text-sm">
             {props.feedItem.author.address ? `${props.feedItem.author.address.province} | ` : ''}
-            {formatDateInterval(props.feedItem.createdAt.toString())}
+            {formatDateInterval(props.feedItem.publishedAt.toString())}
           </Text>
         </View>
       </View>

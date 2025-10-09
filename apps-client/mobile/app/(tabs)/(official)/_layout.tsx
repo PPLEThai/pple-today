@@ -9,6 +9,7 @@ export default function FeedLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="announcement/index" />
       <Stack.Screen name="announcement/[feedId]" />
+      <Stack.Screen name="election/[electionId]/index" />
     </Stack>
   )
 }

@@ -5,7 +5,7 @@ WITH
     current_user_follows AS (
         SELECT
             ufu."followerId" AS follower_id,
-            ufu."followedId" AS followed_id
+            ufu."followingId" AS following_Id
         FROM "UserFollowsUser" ufu
         WHERE ufu."followerId" = _id
     ),
@@ -20,8 +20,8 @@ WITH
         FROM
             current_topic_follows ctf
             INNER JOIN "HashTagInTopic" hit ON hit."topicId" = ctf."topic_id"
-            INNER JOIN "HashTag" ht ON ht."id" = hit."hashTagId" AND ht."status" = 'PUBLISH'
-            INNER JOIN "Topic" topic ON topic."id" = hit."topicId" AND topic."status" = 'PUBLISH'
+            INNER JOIN "HashTag" ht ON ht."id" = hit."hashTagId" AND ht."status" = 'PUBLISHED'
+            INNER JOIN "Topic" topic ON topic."id" = hit."topicId" AND topic."status" = 'PUBLISHED'
         GROUP BY
             hit."hashTagId"
     ),
@@ -31,6 +31,7 @@ WITH
         ) AS number_of_hashtag
         FROM
             "PostHashTag" pht
+            INNER JOIN "Post" post ON post."feedItemId" = pht."postId" AND post."status" = 'PUBLISHED'
             INNER JOIN "FeedItem" fi ON fi."id" = pht."postId"
             INNER JOIN hashtag_in_topic ON pht."hashTagId" = hashtag_in_topic."hashTagId"
         GROUP BY
@@ -42,8 +43,9 @@ WITH
         * 
       FROM 
         author_from_hashtag afh 
+        INNER JOIN "User" u ON afh.author_id = u.id
       WHERE 
-      	afh."author_id" <> _id
+      	afh."author_id" <> _id AND u."status" = 'ACTIVE'
     )
 
 SELECT
@@ -51,10 +53,9 @@ SELECT
     afhf.number_of_hashtag AS score
 FROM 
   author_from_hashtag_filtered afhf
-  LEFT JOIN current_user_follows AS cuf ON 
-  	afhf.author_id = cuf.followed_id
+  LEFT JOIN current_user_follows AS cuf ON afhf.author_id = cuf.following_Id
 WHERE
-  cuf.followed_id IS NULL
+  cuf.following_Id IS NULL
 ORDER BY score DESC
 LIMIT 10;
 END;

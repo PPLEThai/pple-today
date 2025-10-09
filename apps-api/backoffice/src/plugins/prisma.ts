@@ -6,7 +6,26 @@ import Elysia from 'elysia'
 import { ConfigServicePlugin } from './config'
 
 export const PrismaServicePlugin = new Elysia({ name: 'PrismaService' })
-  .use([ElysiaLoggerPlugin({ name: 'PrismaService' }), ConfigServicePlugin])
+  .use([ConfigServicePlugin])
+  .use((app) => {
+    const configService = app.decorator.configService
+
+    return app.use(
+      ElysiaLoggerPlugin({
+        name: 'PrismaService',
+        transport:
+          configService.get('APP_ENV') === 'development'
+            ? {
+                target: 'pino-pretty',
+                options: {
+                  colorize: true,
+                  translateTime: 'SYS:standard',
+                },
+              }
+            : undefined,
+      })
+    )
+  })
   .decorate(({ loggerService, configService }) => {
     const connectionString = configService.get('DATABASE_URL')
     const adapter = new PrismaPg({ connectionString })

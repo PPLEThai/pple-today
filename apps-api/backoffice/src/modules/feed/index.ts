@@ -9,8 +9,6 @@ import {
   CreateFeedReactionBody,
   CreateFeedReactionParams,
   CreateFeedReactionResponse,
-  DeleteFeedCommentParams,
-  DeleteFeedCommentResponse,
   DeleteFeedReactionParams,
   DeleteFeedReactionResponse,
   GetFeedCommentParams,
@@ -21,15 +19,14 @@ import {
   GetFeedItemsByUserIdParams,
   GetFeedItemsByUserIdQuery,
   GetFeedItemsByUserIdResponse,
+  GetFollowingFeedQuery,
+  GetFollowingFeedResponse,
   GetHashTagFeedQuery,
   GetHashTagFeedResponse,
   GetMyFeedQuery,
   GetMyFeedResponse,
   GetTopicFeedQuery,
   GetTopicFeedResponse,
-  UpdateFeedCommentBody,
-  UpdateFeedCommentParams,
-  UpdateFeedCommentResponse,
 } from './models'
 import { FeedServicePlugin } from './services'
 
@@ -44,7 +41,7 @@ export const FeedController = new Elysia({
     '/me',
     async ({ query, user, feedService, status }) => {
       const feedResult = await feedService.getMyFeed(user?.id, {
-        page: query?.page,
+        cursor: query?.cursor,
         limit: query?.limit,
       })
 
@@ -71,10 +68,42 @@ export const FeedController = new Elysia({
     }
   )
   .get(
+    '/following',
+    async ({ query, status, feedService, user }) => {
+      const feedResult = await feedService.getFollowingFeed(user.id, {
+        cursor: query?.cursor,
+        limit: query?.limit,
+      })
+
+      if (feedResult.isErr()) {
+        return mapErrorCodeToResponse(feedResult.error, status)
+      }
+
+      return status(200, feedResult.value)
+    },
+    {
+      requiredLocalUser: true,
+      query: GetFollowingFeedQuery,
+      response: {
+        200: GetFollowingFeedResponse,
+        ...createErrorSchema(
+          InternalErrorCode.FEED_ITEM_NOT_FOUND,
+          InternalErrorCode.USER_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get feed according to following',
+        description:
+          'Fetch feed items for the currently authenticated user based on the users they follow',
+      },
+    }
+  )
+  .get(
     '/topic',
     async ({ query, user, status, feedService }) => {
       const feedResult = await feedService.getTopicFeed(query.topicId, user?.id, {
-        page: query?.page,
+        cursor: query?.cursor,
         limit: query?.limit,
       })
 
@@ -105,7 +134,7 @@ export const FeedController = new Elysia({
     '/hashtag',
     async ({ query, user, status, feedService }) => {
       const feedResult = await feedService.getHashTagFeed(query.hashTagId, user?.id, {
-        page: query.page,
+        cursor: query.cursor,
         limit: query.limit,
       })
 
@@ -136,7 +165,7 @@ export const FeedController = new Elysia({
     '/users/:id',
     async ({ feedService, query, params, status }) => {
       const result = await feedService.getFeedByUserId(params.id, {
-        page: query?.page,
+        cursor: query?.cursor,
         limit: query?.limit,
       })
 
@@ -196,8 +225,8 @@ export const FeedController = new Elysia({
     async ({ params, query, status, user, feedService }) => {
       const result = await feedService.getFeedComments(params.id, {
         userId: user?.id,
-        limit: query.limit,
         cursor: query.cursor,
+        limit: query.limit,
       })
 
       if (result.isErr()) {
@@ -235,12 +264,15 @@ export const FeedController = new Elysia({
       return result.value
     },
     {
-      requiredLocalUser: true,
+      requiredLocalUserPrecondition: {
+        isActive: true,
+      },
       params: CreateFeedReactionParams,
       body: CreateFeedReactionBody,
       response: {
         201: CreateFeedReactionResponse,
         ...createErrorSchema(
+          InternalErrorCode.FORBIDDEN,
           InternalErrorCode.FEED_ITEM_NOT_FOUND,
           InternalErrorCode.FEED_ITEM_REACTION_ALREADY_EXISTS,
           InternalErrorCode.INTERNAL_SERVER_ERROR
@@ -264,11 +296,14 @@ export const FeedController = new Elysia({
       return status(200, result.value)
     },
     {
-      requiredLocalUser: true,
+      requiredLocalUserPrecondition: {
+        isActive: true,
+      },
       params: DeleteFeedReactionParams,
       response: {
         200: DeleteFeedReactionResponse,
         ...createErrorSchema(
+          InternalErrorCode.FORBIDDEN,
           InternalErrorCode.FEED_ITEM_REACTION_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
@@ -291,12 +326,15 @@ export const FeedController = new Elysia({
       return result.value
     },
     {
-      requiredLocalUser: true,
+      requiredLocalUserPrecondition: {
+        isActive: true,
+      },
       params: CreateFeedCommentParams,
       body: CreateFeedCommentBody,
       response: {
         201: CreateFeedCommentResponse,
         ...createErrorSchema(
+          InternalErrorCode.FORBIDDEN,
           InternalErrorCode.FEED_ITEM_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
@@ -307,63 +345,63 @@ export const FeedController = new Elysia({
       },
     }
   )
-  .put(
-    '/:id/comment/:commentId',
-    async ({ params, body, user, status, feedService }) => {
-      const result = await feedService.updateFeedComment(
-        params.id,
-        params.commentId,
-        user.id,
-        body.content
-      )
+// .put(
+//   '/:id/comment/:commentId',
+//   async ({ params, body, user, status, feedService }) => {
+//     const result = await feedService.updateFeedComment(
+//       params.id,
+//       params.commentId,
+//       user.id,
+//       body.content
+//     )
 
-      if (result.isErr()) {
-        return mapErrorCodeToResponse(result.error, status)
-      }
+//     if (result.isErr()) {
+//       return mapErrorCodeToResponse(result.error, status)
+//     }
 
-      return status(200, result.value)
-    },
-    {
-      requiredLocalUser: true,
-      params: UpdateFeedCommentParams,
-      body: UpdateFeedCommentBody,
-      response: {
-        200: UpdateFeedCommentResponse,
-        ...createErrorSchema(
-          InternalErrorCode.FEED_ITEM_COMMENT_NOT_FOUND,
-          InternalErrorCode.INTERNAL_SERVER_ERROR
-        ),
-      },
-      detail: {
-        summary: 'Update feed comment',
-        description: 'Update a comment on a feed item by its ID',
-      },
-    }
-  )
-  .delete(
-    '/:id/comment/:commentId',
-    async ({ params, user, status, feedService }) => {
-      const result = await feedService.deleteFeedComment(params.id, params.commentId, user.id)
+//     return status(200, result.value)
+//   },
+//   {
+//     requiredLocalUser: true,
+//     params: UpdateFeedCommentParams,
+//     body: UpdateFeedCommentBody,
+//     response: {
+//       200: UpdateFeedCommentResponse,
+//       ...createErrorSchema(
+//         InternalErrorCode.FEED_ITEM_COMMENT_NOT_FOUND,
+//         InternalErrorCode.INTERNAL_SERVER_ERROR
+//       ),
+//     },
+//     detail: {
+//       summary: 'Update feed comment',
+//       description: 'Update a comment on a feed item by its ID',
+//     },
+//   }
+// )
+// .delete(
+//   '/:id/comment/:commentId',
+//   async ({ params, user, status, feedService }) => {
+//     const result = await feedService.deleteFeedComment(params.id, params.commentId, user.id)
 
-      if (result.isErr()) {
-        return mapErrorCodeToResponse(result.error, status)
-      }
+//     if (result.isErr()) {
+//       return mapErrorCodeToResponse(result.error, status)
+//     }
 
-      return status(200, result.value)
-    },
-    {
-      requiredLocalUser: true,
-      params: DeleteFeedCommentParams,
-      response: {
-        200: DeleteFeedCommentResponse,
-        ...createErrorSchema(
-          InternalErrorCode.FEED_ITEM_COMMENT_NOT_FOUND,
-          InternalErrorCode.INTERNAL_SERVER_ERROR
-        ),
-      },
-      detail: {
-        summary: 'Delete feed comment',
-        description: 'Remove a comment from a feed item by its ID',
-      },
-    }
-  )
+//     return status(200, result.value)
+//   },
+//   {
+//     requiredLocalUser: true,
+//     params: DeleteFeedCommentParams,
+//     response: {
+//       200: DeleteFeedCommentResponse,
+//       ...createErrorSchema(
+//         InternalErrorCode.FEED_ITEM_COMMENT_NOT_FOUND,
+//         InternalErrorCode.INTERNAL_SERVER_ERROR
+//       ),
+//     },
+//     detail: {
+//       summary: 'Delete feed comment',
+//       description: 'Remove a comment from a feed item by its ID',
+//     },
+//   }
+// )

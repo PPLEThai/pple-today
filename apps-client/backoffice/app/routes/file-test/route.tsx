@@ -1,27 +1,20 @@
 import { useEffect, useState } from 'react'
 
+import { FilePath } from '@api/backoffice/admin'
+
 import { userManager } from '~/config/oidc'
 import { reactQueryClient } from '~/libs/api-client'
 
 const FileTestRoute = () => {
   const [announcementId, setAnnouncementId] = useState<string | null>(null)
-  const [publishAnnouncementId, setPublishAnnouncementId] = useState<string | null>(null)
   const [accessToken, setAccessToken] = useState<string | null>(null)
 
-  const createEmptyAnnouncementMutation = reactQueryClient.useMutation(
-    'post',
-    '/admin/announcements/draft'
-  )
+  const createAnnouncementMutation = reactQueryClient.useMutation('post', '/admin/announcements')
 
   const getFileUploadUrl = reactQueryClient.useMutation('post', '/admin/file/upload-url')
 
-  const updateDraftAnnouncement = reactQueryClient.useMutation(
-    'put',
-    '/admin/announcements/draft/:announcementId'
-  )
-
-  const getDraftAnnouncement = reactQueryClient.useQuery(
-    '/admin/announcements/draft/:announcementId',
+  const getAnnouncement = reactQueryClient.useQuery(
+    '/admin/announcements/:announcementId',
     {
       pathParams: {
         announcementId: announcementId ?? '',
@@ -33,26 +26,6 @@ const FileTestRoute = () => {
     {
       enabled: !!announcementId && !!accessToken,
     }
-  )
-
-  const getPublishedAnnouncement = reactQueryClient.useQuery(
-    '/admin/announcements/:announcementId',
-    {
-      pathParams: {
-        announcementId: publishAnnouncementId ?? '',
-      },
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    },
-    {
-      enabled: !!publishAnnouncementId && !!accessToken,
-    }
-  )
-
-  const publishAnnouncement = reactQueryClient.useMutation(
-    'post',
-    '/admin/announcements/draft/:announcementId/publish'
   )
 
   useEffect(() => {
@@ -108,66 +81,29 @@ const FileTestRoute = () => {
 
         await handleUploadFile(file, result.uploadUrl, result.uploadFields)
 
-        const announcement = await createEmptyAnnouncementMutation.mutateAsync({
+        const announcement = await createAnnouncementMutation.mutateAsync({
           headers: {
             Authorization: `Bearer ${user.access_token}`,
+          },
+          body: {
+            topicIds: [],
+            title: 'Temporary Announcement',
+            content: 'This is a temporary announcement.',
+            type: 'OFFICIAL',
+            attachmentFilePaths: [result.filePath as FilePath],
           },
         })
 
         setAnnouncementId(announcement.announcementId)
-
-        await updateDraftAnnouncement.mutateAsync({
-          pathParams: {
-            announcementId: announcement.announcementId,
-          },
-          body: {
-            title: 'Test Announcement',
-            content: 'This is a test announcement with an uploaded file.',
-            attachmentFilePaths: [result.filePath as any],
-            topicIds: [],
-            type: 'OFFICIAL',
-          },
-          headers: {
-            Authorization: `Bearer ${user.access_token}`,
-          },
-        })
       }}
     >
       <input name="file-upload" type="file" />
       <button type="submit" className="bg-primary-400 p-2 rounded-lg">
-        Select File
-      </button>
-      <button
-        type="button"
-        onClick={async () => {
-          const user = await userManager.getUser()
-
-          if (!user) return
-
-          await publishAnnouncement.mutateAsync({
-            pathParams: {
-              announcementId: announcementId ?? '',
-            },
-            headers: {
-              Authorization: `Bearer ${user.access_token}`,
-            },
-          })
-
-          setPublishAnnouncementId(announcementId)
-        }}
-        className="bg-red-400 p-2 rounded-lg"
-      >
-        Publish Draft Announcement
+        Create Announcement
       </button>
       <div>
-        <p>Draft Announcement:</p>
-        <span className="text-wrap break-all">{JSON.stringify(getDraftAnnouncement.data)}</span>
-      </div>
-      <div>
-        <p>Published Announcement:</p>
-        <span className="text-wrap w-full break-all">
-          {JSON.stringify(getPublishedAnnouncement.data)}
-        </span>
+        <p>Announcement:</p>
+        <span className="text-wrap w-full break-all">{JSON.stringify(getAnnouncement.data)}</span>
       </div>
     </form>
   )

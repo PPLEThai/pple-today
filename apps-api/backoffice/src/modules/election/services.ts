@@ -1,6 +1,5 @@
 import { createId } from '@paralleldrive/cuid2'
 import {
-  ElectionCandidate as ElectionCandidateDTO,
   ElectionStatus,
   FileMimeType,
   FilePath,
@@ -11,16 +10,19 @@ import { err, mapRepositoryError } from '@pple-today/api-common/utils'
 import {
   Election,
   ElectionCandidate,
-  ElectionEligibleVoter,
   ElectionType,
-  ElectionVoteRecord,
   EligibleVoterType,
 } from '@pple-today/database/prisma'
 import dayjs from 'dayjs'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { ElectionWithCurrentStatus, GetElectionResponse, ListElectionResponse } from './models'
+import {
+  ElectionCandidateWithVoteScore,
+  ElectionWithCurrentStatus,
+  GetElectionResponse,
+  ListElectionResponse,
+} from './models'
 import { ElectionRepository, ElectionRepositoryPlugin } from './repository'
 
 import { FileServicePlugin } from '../../plugins/file'
@@ -82,13 +84,6 @@ export class ElectionService {
     }
   }
 
-  private getVotePercentage(
-    voters: ElectionEligibleVoter[],
-    voteRecords: ElectionVoteRecord[]
-  ): number {
-    return 100 * (voteRecords.length / voters.length)
-  }
-
   private isHybridElectionVoterRegistered(
     voterType: EligibleVoterType,
     electionType: ElectionType
@@ -100,7 +95,10 @@ export class ElectionService {
   }
 
   private convertToListElection(
-    election: Election & { voters: ElectionEligibleVoter[]; voteRecords: ElectionVoteRecord[] },
+    election: Election & {
+      voteRecords: { userId: string }[]
+      _count: { voters: number; voteRecords: number }
+    },
     voterType: EligibleVoterType
   ): ElectionWithCurrentStatus {
     return {
@@ -123,13 +121,16 @@ export class ElectionService {
       createdAt: election.createdAt,
       updatedAt: election.updatedAt,
       status: this.getElectionStatus(election),
-      votePercentage: this.getVotePercentage(election.voters, election.voteRecords),
+      votePercentage: 100 * (election._count.voteRecords / election._count.voters),
       isRegistered: this.isHybridElectionVoterRegistered(voterType, election.type),
       isVoted: election.voteRecords.length > 0,
     }
   }
 
-  private convertToElectionCandidateDTO(candidate: ElectionCandidate): ElectionCandidateDTO {
+  private convertToElectionCandidateWithVoteScore(
+    candidate: ElectionCandidate,
+    isShowResult?: boolean // TODO: use for mock
+  ): ElectionCandidateWithVoteScore {
     return {
       id: candidate.id,
       electionId: candidate.electionId,
@@ -138,6 +139,7 @@ export class ElectionService {
       profileImagePath: candidate.profileImagePath
         ? this.fileService.getPublicFileUrl(candidate.profileImagePath)
         : null,
+      voteScorePercent: isShowResult ? Math.floor(Math.random() * 100) : undefined, // TODO: this is mock data
       number: candidate.number,
       createdAt: candidate.createdAt,
       updatedAt: candidate.updatedAt,
@@ -197,7 +199,10 @@ export class ElectionService {
     const election = eligibleVoter.value.election
     const listElection = this.convertToListElection(election, eligibleVoter.value.type)
     const candidates = election.candidates.map((candidate) =>
-      this.convertToElectionCandidateDTO(candidate)
+      this.convertToElectionCandidateWithVoteScore(
+        candidate,
+        listElection.status === 'RESULT_ANNOUNCE'
+      )
     )
     const result = {
       ...listElection,
@@ -207,7 +212,7 @@ export class ElectionService {
     return ok(result)
   }
 
-  async registerEleciton(userId: string, electionId: string, type: EligibleVoterType) {
+  async registerElection(userId: string, electionId: string, type: EligibleVoterType) {
     const eligibleVoter = await this.electionRepository.getMyEligibleVoter(userId, electionId)
     if (eligibleVoter.isErr()) {
       return mapRepositoryError(eligibleVoter.error, {

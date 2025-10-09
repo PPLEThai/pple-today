@@ -1,7 +1,14 @@
 import { FeedItem } from '@pple-today/api-common/dtos'
 import { PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { HashTagStatus, TopicStatus } from '@pple-today/database/prisma'
+import {
+  AnnouncementStatus,
+  HashTagStatus,
+  PollStatus,
+  PostStatus,
+  TopicStatus,
+  UserStatus,
+} from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { Ok, ok } from 'neverthrow'
 import * as R from 'remeda'
@@ -20,6 +27,9 @@ export class SearchRepository {
     return await fromRepositoryPromise(async () => {
       const feedItemCandidates = await this.prismaService.feedItem.findMany({
         where: {
+          publishedAt: {
+            lte: new Date(),
+          },
           OR: [
             {
               post: {
@@ -27,6 +37,7 @@ export class SearchRepository {
                   contains: query.search,
                   mode: 'insensitive',
                 },
+                status: PostStatus.PUBLISHED,
               },
             },
             {
@@ -35,6 +46,7 @@ export class SearchRepository {
                   contains: query.search,
                   mode: 'insensitive',
                 },
+                status: PollStatus.PUBLISHED,
               },
             },
           ],
@@ -76,6 +88,12 @@ export class SearchRepository {
     return await fromRepositoryPromise(
       this.prismaService.announcement.findMany({
         where: {
+          status: AnnouncementStatus.PUBLISHED,
+          feedItem: {
+            publishedAt: {
+              lte: new Date(),
+            },
+          },
           OR: [
             {
               title: {
@@ -101,6 +119,11 @@ export class SearchRepository {
         },
         select: {
           feedItemId: true,
+          feedItem: {
+            select: {
+              publishedAt: true,
+            },
+          },
           title: true,
           type: true,
           topics: {
@@ -127,12 +150,33 @@ export class SearchRepository {
     const rawFeedItems = await fromRepositoryPromise(
       this.prismaService.feedItem.findMany({
         where: {
+          publishedAt: {
+            lte: new Date(),
+          },
           OR: [
             {
               post: {
                 content: {
                   contains: query.search,
                   mode: 'insensitive',
+                },
+                status: PostStatus.PUBLISHED,
+              },
+            },
+            {
+              post: {
+                hashTags: {
+                  some: {
+                    hashTag: {
+                      status: HashTagStatus.PUBLISHED,
+                      name: {
+                        startsWith: query.search.startsWith('#')
+                          ? query.search
+                          : `#${query.search}`,
+                        mode: 'insensitive',
+                      },
+                    },
+                  },
                 },
               },
             },
@@ -141,6 +185,22 @@ export class SearchRepository {
                 description: {
                   contains: query.search,
                   mode: 'insensitive',
+                },
+                status: PollStatus.PUBLISHED,
+              },
+            },
+            {
+              poll: {
+                topics: {
+                  some: {
+                    topic: {
+                      status: TopicStatus.PUBLISHED,
+                      name: {
+                        startsWith: query.search,
+                        mode: 'insensitive',
+                      },
+                    },
+                  },
                 },
               },
             },
@@ -171,16 +231,12 @@ export class SearchRepository {
   }
 
   async searchHashtags(query: { search: string; limit?: number; cursor?: string }) {
-    if (query.search[0] !== '#') {
-      return ok([])
-    }
-
     return await fromRepositoryPromise(
       this.prismaService.hashTag.findMany({
         where: {
-          status: HashTagStatus.PUBLISH,
+          status: HashTagStatus.PUBLISHED,
           name: {
-            startsWith: query.search,
+            startsWith: query.search.startsWith('#') ? query.search : `#${query.search}`,
             mode: 'insensitive',
           },
         },
@@ -199,23 +255,46 @@ export class SearchRepository {
     return await fromRepositoryPromise(
       this.prismaService.topic.findMany({
         where: {
-          name: {
-            startsWith: query.search,
-            mode: 'insensitive',
-          },
-          status: TopicStatus.PUBLISH,
+          OR: [
+            {
+              name: {
+                startsWith: query.search,
+                mode: 'insensitive',
+              },
+            },
+            {
+              hashTags: {
+                some: {
+                  hashTag: {
+                    name: {
+                      startsWith: query.search.startsWith('#') ? query.search : `#${query.search}`,
+                      mode: 'insensitive',
+                    },
+                    status: HashTagStatus.PUBLISHED,
+                  },
+                },
+              },
+            },
+          ],
+          status: TopicStatus.PUBLISHED,
         },
         take: query.limit ?? 3,
         skip: query.cursor ? 1 : 0,
         cursor: query.cursor ? { id: query.cursor } : undefined,
         orderBy: {
-          followedTopics: {
+          followers: {
             _count: 'desc',
           },
         },
         select: {
           id: true,
           name: true,
+          bannerImagePath: true,
+          hashTags: {
+            include: {
+              hashTag: true,
+            },
+          },
         },
       })
     )
@@ -230,10 +309,13 @@ export class SearchRepository {
             mode: 'insensitive',
           },
           roles: {
-            none: {
-              role: 'official',
+            some: {
+              role: {
+                in: ['pple-ad:hq', 'pple-ad:mp'],
+              },
             },
           },
+          status: UserStatus.ACTIVE,
         },
         take: query.limit ?? 3,
         skip: query.cursor ? 1 : 0,

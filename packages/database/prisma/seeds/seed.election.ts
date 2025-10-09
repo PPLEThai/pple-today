@@ -64,7 +64,7 @@ const seedElections = async (userId: string) => {
       id: 'hybrid-wait-register',
       name: 'hybrid-wait-register',
       type: ElectionType.HYBRID,
-      publishDate: addDays(dateNow, -1),
+      publishDate: dateNow,
       openRegister: addDays(dateNow, 1),
       closeRegister: addDays(dateNow, 2),
       openVoting: addDays(dateNow, 3),
@@ -82,7 +82,7 @@ const seedElections = async (userId: string) => {
       id: 'hybrid-open-register-not-registed',
       name: 'hybrid-open-register',
       type: ElectionType.HYBRID,
-      publishDate: addDays(dateNow, -1),
+      publishDate: dateNow,
       openRegister: dateNow,
       closeRegister: addDays(dateNow, 1),
       openVoting: addDays(dateNow, 2),
@@ -100,11 +100,13 @@ const seedElections = async (userId: string) => {
       id: 'hybrid-close-register',
       name: 'hybrid-close-register',
       type: ElectionType.HYBRID,
-      publishDate: addDays(dateNow, -1),
+      publishDate: dateNow,
       openRegister: addDays(dateNow, -3),
       closeRegister: addDays(dateNow, -2),
       openVoting: addDays(dateNow, 1),
       closeVoting: addDays(dateNow, 2),
+      location: 'กรุงเทพมหานคร ประเทศไทย',
+      locationMapUrl: 'https://maps.google.com/?q=Bangkok,Thailand',
       voters: {
         create: {
           userId: userId,
@@ -129,7 +131,7 @@ const seedElections = async (userId: string) => {
       UQIDAQAB
       -----END PUBLIC KEY-----
       `,
-      publishDate: addDays(dateNow, -10),
+      publishDate: dateNow,
       openRegister: addDays(dateNow, -2),
       closeRegister: addDays(dateNow, -1),
       openVoting: dateNow,
@@ -158,14 +160,17 @@ const seedElections = async (userId: string) => {
             {
               id: 'candidate-1',
               name: 'candidate-1',
+              number: 1,
             },
             {
               id: 'candidate-2',
               name: 'candidate-2',
+              number: 2,
             },
             {
               id: 'candidate-3',
               name: 'candidate-3',
+              number: 3,
             },
           ],
         },
@@ -189,7 +194,7 @@ const seedElections = async (userId: string) => {
       id: 'hybrid-close-vote',
       name: 'hybrid-close-vote',
       type: ElectionType.HYBRID,
-      publishDate: addDays(dateNow, -10),
+      publishDate: dateNow,
       openRegister: addDays(dateNow, -4),
       closeRegister: addDays(dateNow, -3),
       openVoting: addDays(dateNow, -2),
@@ -207,7 +212,7 @@ const seedElections = async (userId: string) => {
       id: 'hybrid-result-announcement',
       name: 'hybrid-result-announcement',
       type: ElectionType.HYBRID,
-      publishDate: addDays(dateNow, -10),
+      publishDate: addDays(dateNow, -4),
       openRegister: addDays(dateNow, -4),
       closeRegister: addDays(dateNow, -3),
       openVoting: addDays(dateNow, -2),
@@ -220,6 +225,27 @@ const seedElections = async (userId: string) => {
           type: EligibleVoterType.ONLINE,
         },
       },
+      candidates: {
+        createMany: {
+          data: [
+            {
+              id: 'candidate-11',
+              name: 'candidate-11',
+              number: 11,
+            },
+            {
+              id: 'candidate-12',
+              name: 'candidate-12',
+              number: 12,
+            },
+            {
+              id: 'candidate-13',
+              name: 'candidate-13',
+              number: 13,
+            },
+          ],
+        },
+      },
     },
     // hybrid
     // close result announcement
@@ -227,7 +253,7 @@ const seedElections = async (userId: string) => {
       id: 'hybrid-close-result-announcement',
       name: 'hybrid-close-result-announcement',
       type: ElectionType.HYBRID,
-      publishDate: addDays(dateNow, -10),
+      publishDate: addDays(dateNow, -6),
       openRegister: addDays(dateNow, -6),
       closeRegister: addDays(dateNow, -5),
       openVoting: addDays(dateNow, -4),

@@ -1,3 +1,8 @@
+enum UserStatus {
+    ACTIVE
+    SUSPENDED
+}
+
 model User {
     id               String  @id @default(cuid())
     name             String
@@ -10,7 +15,8 @@ model User {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    onBoardingCompleted Boolean @default(false)
+    onBoardingCompleted Boolean    @default(false)
+    status              UserStatus @default(ACTIVE)
 
     numberOfPosts           Int @default(0)
     numberOfFollowers       Int @default(0)
@@ -25,19 +31,22 @@ model User {
 
     pollAnswers PollAnswer[]
 
-    followings     UserFollowsUser[]  @relation("Follows")
-    followers      UserFollowsUser[]  @relation("FollowedBy")
-    followedTopics UserFollowsTopic[]
+    followings      UserFollowsUser[]  @relation("Following")
+    followers       UserFollowsUser[]  @relation("Follower")
+    followingTopics UserFollowsTopic[]
 
     voters      ElectionEligibleVoter[]
     voteRecords ElectionVoteRecord[]
 
     linkedPage FacebookPage?
 
-    feedItems     FeedItem[]
-    feedReactions FeedItemReaction[]
-    feedComments  FeedItemComment[]
-    roles         UserRole[]
+    feedItems      FeedItem[]
+    feedReactions  FeedItemReaction[]
+    feedComments   FeedItemComment[]
+    roles          UserRole[]
+    feedItemScores FeedItemScore[]
+
+    @@index([status])
 }
 
 model UserRole {

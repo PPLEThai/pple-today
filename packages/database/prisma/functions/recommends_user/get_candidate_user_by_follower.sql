@@ -8,30 +8,30 @@ WITH
     current_user_follows AS (
         SELECT
             ufu."followerId",
-            ufu."followedId"
+            ufu."followingId"
         FROM "UserFollowsUser" ufu
         WHERE ufu."followerId" = _id
     ),
     one_hop_follows AS (
         SELECT
-            uf1."followedId" AS user_id
+            uf1."followingId" AS user_id
         FROM current_user_follows AS uf0
-        INNER JOIN "UserFollowsUser" AS uf1 ON uf0."followedId" = uf1."followerId"
-        WHERE uf1."followedId" <> uf0."followerId"
+        INNER JOIN "UserFollowsUser" AS uf1 ON uf0."followingId" = uf1."followerId"
+        WHERE uf1."followingId" <> uf0."followerId"
     ),
     common_followed AS (
         SELECT
             uf1."followerId" AS user_id
         FROM current_user_follows AS uf0
-        INNER JOIN "UserFollowsUser" AS uf1 ON uf0."followedId" = uf1."followedId"
+        INNER JOIN "UserFollowsUser" AS uf1 ON uf0."followingId" = uf1."followingId"
         WHERE uf1."followerId" <> _id
     ),
     common_followed_one_hop AS (
         SELECT
-            uf."followedId" AS user_id
+            uf."followingId" AS user_id
         FROM common_followed AS cf
         INNER JOIN "UserFollowsUser" AS uf ON cf."user_id" = uf."followerId"
-        WHERE uf."followedId" <> _id
+        WHERE uf."followingId" <> _id
     ),
     candidate_user AS (
         SELECT * FROM common_followed_one_hop 
@@ -39,16 +39,23 @@ WITH
         SELECT * FROM one_hop_follows 
             UNION ALL 
         SELECT * FROM common_followed
+    ),
+    filtered_candidate_user AS (
+        SELECT 
+          cu.user_id
+        FROM 
+          candidate_user cu
+          INNER JOIN "User" u ON cu.user_id = u.id AND u."status" = 'ACTIVE'
     )
 
 SELECT
-    candidate_user.user_id::TEXT,
+    filtered_candidate_user.user_id::TEXT,
     COUNT(*)::NUMERIC AS score
 FROM 
-    candidate_user
-    LEFT JOIN current_user_follows ON candidate_user.user_id = current_user_follows."followedId"
-WHERE current_user_follows."followedId" IS NULL
-GROUP BY candidate_user.user_id
+    filtered_candidate_user
+    LEFT JOIN current_user_follows ON filtered_candidate_user.user_id = current_user_follows."followingId"
+WHERE current_user_follows."followingId" IS NULL
+GROUP BY filtered_candidate_user.user_id
 ORDER BY score DESC
 LIMIT 10;
 END;
