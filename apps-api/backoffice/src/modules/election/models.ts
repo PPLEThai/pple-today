@@ -30,7 +30,7 @@ export type GetElectionParams = Static<typeof GetElectionParams>
 export const ElectionCandidateWithVoteScore = t.Composite([
   ElectionCandidate,
   t.Object({
-    voteScorePercent: t.Nullable(t.Integer({ description: 'Percentage of vote score' })),
+    voteScorePercent: t.Optional(t.Integer({ description: 'Percentage of vote score' })),
   }),
 ])
 export type ElectionCandidateWithVoteScore = Static<typeof ElectionCandidateWithVoteScore>
