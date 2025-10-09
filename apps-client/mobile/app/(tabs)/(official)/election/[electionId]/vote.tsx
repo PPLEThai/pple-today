@@ -8,7 +8,7 @@ import { Progress } from '@pple-today/ui/progress'
 import { Text } from '@pple-today/ui/text'
 import { toast } from '@pple-today/ui/toast'
 import { H1 } from '@pple-today/ui/typography'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
@@ -33,7 +33,6 @@ import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { Spinner } from '@app/components/spinner'
 import { reactQueryClient } from '@app/libs/api-client'
 import { ImageMimeType } from '@app/types/file'
-import { encryptBallot } from '@app/utils/election'
 import { handleUploadImage } from '@app/utils/upload'
 
 export default function ElectionVotePage() {
@@ -362,6 +361,7 @@ function ElectionVoteStep({ election }: { election: GetElectionResponse }) {
     {}
   )
   const router = useRouter()
+  const queryClient = useQueryClient()
   const submit = async () => {
     if (!selectedCandidateId) {
       return
@@ -370,9 +370,8 @@ function ElectionVoteStep({ election }: { election: GetElectionResponse }) {
       {
         pathParams: { electionId: election.id },
         body: {
-          encryptedBallot: election.encryptionPublicKey
-            ? encryptBallot(selectedCandidateId, election.encryptionPublicKey)
-            : selectedCandidateId,
+          // TODO: encrypt this with publicKey
+          encryptedBallot: selectedCandidateId,
           location: JSON.stringify(state.locationStepResult!),
           faceImagePath: state.faceVerificationStepResult!.faceImagePath,
         },
@@ -380,6 +379,14 @@ function ElectionVoteStep({ election }: { election: GetElectionResponse }) {
       {
         onSuccess: () => {
           toast({ text1: 'ลงคะแนนเรียบร้อย' })
+          queryClient.invalidateQueries({
+            queryKey: reactQueryClient.getQueryKey('/elections/:electionId', {
+              pathParams: { electionId: election.id },
+            }),
+          })
+          queryClient.invalidateQueries({
+            queryKey: reactQueryClient.getQueryKey('/elections'),
+          })
           router.navigate(`/election/${election.id}`)
         },
         onError: (error) => {
