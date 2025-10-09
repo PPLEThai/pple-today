@@ -8,7 +8,7 @@ BEGIN
     current_user_follows AS (
         SELECT
             ufu."followerId" AS follower_id,
-            ufu."followingId" AS following_Id
+            ufu."followingId" AS following_id
         FROM "UserFollowsUser" ufu
         WHERE ufu."followerId" = _id
     ),
@@ -65,9 +65,9 @@ SELECT
   author_from_hashtag.author_id::TEXT AS user_id, author_from_hashtag.score::NUMERIC
 FROM 
   author_from_hashtag
-  LEFT JOIN current_user_follows ON author_from_hashtag.author_id = current_user_follows.following_Id
+  LEFT JOIN current_user_follows ON author_from_hashtag.author_id = current_user_follows.following_id
 WHERE
-  current_user_follows.following_Id IS NULL
+  current_user_follows.following_id IS NULL
   AND author_from_hashtag.author_id <> _id
 ORDER BY author_from_hashtag.score DESC
 LIMIT 10;
