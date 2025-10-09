@@ -211,7 +211,7 @@ export class ElectionService {
     const candidates = election.candidates.map((candidate) =>
       this.convertToElectionCandidateWithVoteScore(
         candidate,
-        listElection.status == 'RESULT_ANNOUNCE'
+        listElection.status === 'RESULT_ANNOUNCE'
       )
     )
     const result = {
