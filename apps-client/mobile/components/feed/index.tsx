@@ -4,6 +4,7 @@ import { Dimensions, Platform, View } from 'react-native'
 import { Text } from '@pple-today/ui/text'
 import { InfiniteData, UseInfiniteQueryResult } from '@tanstack/react-query'
 
+import { ListCursorResponse } from '@api/backoffice/app'
 import { FeedCardSkeleton } from '@app/components/feed/feed-card'
 
 import { RefreshControl } from '../refresh-control'
@@ -23,7 +24,7 @@ export function FeedRefreshControl({ headerHeight, ...rest }: FeedRefreshControl
 }
 
 interface FeedFooterProps {
-  queryResult: UseInfiniteQueryResult<InfiniteData<unknown[]>>
+  queryResult: UseInfiniteQueryResult<InfiniteData<ListCursorResponse<unknown>>>
   className?: string
 }
 export function FeedFooter({ queryResult, className }: FeedFooterProps) {
@@ -34,7 +35,7 @@ export function FeedFooter({ queryResult, className }: FeedFooterProps) {
   if (
     queryResult.data &&
     queryResult.data.pages.length === 1 &&
-    queryResult.data.pages[0].length === 0
+    queryResult.data.pages[0].items.length === 0
   ) {
     // Empty State
     return (

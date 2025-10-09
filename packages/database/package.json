@@ -24,6 +24,7 @@
     "codegen": "prisma generate",
     "codegen:sql": "prisma generate --sql",
     "migrate": "prisma migrate dev",
+    "migrate:function": "python3 prisma/functions/generate_function_migration.py && prisma migrate dev",
     "seed:dev": "tsx prisma/seeds/seed.dev.ts",
     "seed:election": "tsx prisma/seeds/seed.election.ts",
     "seed:recommend": "tsx prisma/seeds/seed.recommend.ts",
@@ -39,6 +40,7 @@
   "devDependencies": {
     "@pple-today/project-config": "workspace:^",
     "@prisma/adapter-pg": "^6.15.0",
+    "@tanstack/pacer": "^0.15.4",
     "dotenv": "^17.0.1",
     "prisma": "^6.15.0"
   },

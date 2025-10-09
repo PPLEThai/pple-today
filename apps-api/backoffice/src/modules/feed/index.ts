@@ -19,6 +19,8 @@ import {
   GetFeedItemsByUserIdParams,
   GetFeedItemsByUserIdQuery,
   GetFeedItemsByUserIdResponse,
+  GetFollowingFeedQuery,
+  GetFollowingFeedResponse,
   GetHashTagFeedQuery,
   GetHashTagFeedResponse,
   GetMyFeedQuery,
@@ -39,7 +41,7 @@ export const FeedController = new Elysia({
     '/me',
     async ({ query, user, feedService, status }) => {
       const feedResult = await feedService.getMyFeed(user?.id, {
-        page: query?.page,
+        cursor: query?.cursor,
         limit: query?.limit,
       })
 
@@ -66,10 +68,42 @@ export const FeedController = new Elysia({
     }
   )
   .get(
+    '/following',
+    async ({ query, status, feedService, user }) => {
+      const feedResult = await feedService.getFollowingFeed(user.id, {
+        cursor: query?.cursor,
+        limit: query?.limit,
+      })
+
+      if (feedResult.isErr()) {
+        return mapErrorCodeToResponse(feedResult.error, status)
+      }
+
+      return status(200, feedResult.value)
+    },
+    {
+      requiredLocalUser: true,
+      query: GetFollowingFeedQuery,
+      response: {
+        200: GetFollowingFeedResponse,
+        ...createErrorSchema(
+          InternalErrorCode.FEED_ITEM_NOT_FOUND,
+          InternalErrorCode.USER_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get feed according to following',
+        description:
+          'Fetch feed items for the currently authenticated user based on the users they follow',
+      },
+    }
+  )
+  .get(
     '/topic',
     async ({ query, user, status, feedService }) => {
       const feedResult = await feedService.getTopicFeed(query.topicId, user?.id, {
-        page: query?.page,
+        cursor: query?.cursor,
         limit: query?.limit,
       })
 
@@ -100,7 +134,7 @@ export const FeedController = new Elysia({
     '/hashtag',
     async ({ query, user, status, feedService }) => {
       const feedResult = await feedService.getHashTagFeed(query.hashTagId, user?.id, {
-        page: query.page,
+        cursor: query.cursor,
         limit: query.limit,
       })
 
@@ -131,7 +165,7 @@ export const FeedController = new Elysia({
     '/users/:id',
     async ({ feedService, query, params, status }) => {
       const result = await feedService.getFeedByUserId(params.id, {
-        page: query?.page,
+        cursor: query?.cursor,
         limit: query?.limit,
       })
 
@@ -191,8 +225,8 @@ export const FeedController = new Elysia({
     async ({ params, query, status, user, feedService }) => {
       const result = await feedService.getFeedComments(params.id, {
         userId: user?.id,
-        limit: query.limit,
         cursor: query.cursor,
+        limit: query.limit,
       })
 
       if (result.isErr()) {

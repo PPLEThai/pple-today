@@ -45,12 +45,15 @@ export class SearchService {
         name: user.name,
         profileImage: user.profileImagePath
           ? this.fileService.getPublicFileUrl(user.profileImagePath)
-          : undefined,
+          : null,
       })),
       ...topicResult.value.map((topic) => ({
         type: 'TOPIC' as const,
         id: topic.id,
         name: topic.name,
+        bannerImage: topic.bannerImagePath
+          ? this.fileService.getPublicFileUrl(topic.bannerImagePath)
+          : null,
       })),
       ...keywordResult.value.map((keyword) => ({
         type: 'QUERY' as const,
@@ -81,10 +84,7 @@ export class SearchService {
       id: announcement.feedItemId,
       title: announcement.title,
       type: announcement.type,
-      topics: announcement.topics.map((t) => ({
-        id: t.topic.id,
-        name: t.topic.name,
-      })),
+      publishedAt: announcement.feedItem.publishedAt!,
     }))
 
     return ok(response)
@@ -95,14 +95,22 @@ export class SearchService {
 
     if (result.isErr()) return mapRepositoryError(result.error)
 
-    return ok(result.value)
+    return ok(
+      result.value.map((topic) => ({
+        id: topic.id,
+        name: topic.name,
+        bannerImage: topic.bannerImagePath
+          ? this.fileService.getPublicFileUrl(topic.bannerImagePath)
+          : null,
+        hashtags: topic.hashTags.map(({ hashTag }) => ({
+          id: hashTag.id,
+          name: hashTag.name,
+        })),
+      }))
+    )
   }
 
   async searchHashtags(query: { search: string; limit?: number; cursor?: string }) {
-    if (query.search[0] !== '#') {
-      return ok([])
-    }
-
     const result = await this.searchRepository.searchHashtags(query)
     if (result.isErr()) return mapRepositoryError(result.error)
 
