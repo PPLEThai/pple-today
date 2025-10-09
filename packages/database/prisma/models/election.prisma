@@ -19,6 +19,14 @@ enum ElectionMode {
     FLEXIBLE
 }
 
+enum ElectionKeysStatus {
+    NOT_CREATED
+    PENDING_CREATED
+    CREATED
+    FAILED_CREATED
+    DESTROY_SCHEDULED
+}
+
 model Election {
     id             String  @id @default(cuid())
     name           String
@@ -29,6 +37,10 @@ model Election {
     isCancelled Boolean      @default(false)
     type        ElectionType
     mode        ElectionMode @default(SECURE)
+
+    keysStatus                   ElectionKeysStatus @default(NOT_CREATED)
+    keysDestroyScheduledAt       DateTime?
+    keysDestroyScheduledDuration Int? // seconds
 
     encryptionPublicKey       String?
     digitalSignaturePublicKey String?
@@ -116,7 +128,6 @@ model ElectionBallot {
 }
 
 model ElectionResult {
-    id          String             @id @default(cuid())
     candidateId String
     type        ElectionResultType
     count       Int                @default(0)
@@ -126,5 +137,5 @@ model ElectionResult {
 
     candidate ElectionCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 
-    @@unique([candidateId, type])
+    @@id([candidateId, type])
 }
