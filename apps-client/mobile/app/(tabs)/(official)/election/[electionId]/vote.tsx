@@ -361,6 +361,11 @@ function ElectionVoteStep({ election }: { election: GetElectionResponse }) {
     '/elections/:electionId/ballot',
     {}
   )
+  const deleteBallotMutation = reactQueryClient.useMutation(
+    'delete',
+    '/elections/:electionId/ballot',
+    {}
+  )
   const router = useRouter()
   const queryClient = useQueryClient()
   const submit = async () => {
@@ -371,11 +376,23 @@ function ElectionVoteStep({ election }: { election: GetElectionResponse }) {
     if (!selectedCandidateId) {
       return
     }
+    if (election.isVoted) {
+      await deleteBallotMutation.mutateAsync(
+        { pathParams: { electionId: election.id } },
+        {
+          onError: (error) => {
+            console.error('Error deleting existing ballot:', JSON.stringify(error))
+            toast.error({ text1: 'เกิดข้อผิดพลาดในการลงคะแนนใหม่' })
+          },
+        }
+      )
+    }
+    const encryptedBallot = encryptBallot(selectedCandidateId, election.encryptionPublicKey)
     voteBallotMutation.mutateAsync(
       {
         pathParams: { electionId: election.id },
         body: {
-          encryptedBallot: encryptBallot(selectedCandidateId, election.encryptionPublicKey),
+          encryptedBallot: encryptedBallot,
           location: JSON.stringify(state.locationStepResult!),
           faceImagePath: state.faceVerificationStepResult!.faceImagePath,
         },
@@ -394,7 +411,7 @@ function ElectionVoteStep({ election }: { election: GetElectionResponse }) {
           router.navigate(`/election/${election.id}`)
         },
         onError: (error) => {
-          console.error('Error submitting ballot:', error)
+          console.error('Error submitting ballot:', JSON.stringify(error))
           toast.error({ text1: 'เกิดข้อผิดพลาดในการลงคะแนน' })
         },
       }
@@ -454,7 +471,12 @@ function ElectionVoteStep({ election }: { election: GetElectionResponse }) {
         </View>
       </ScrollView>
       <View className="px-4 py-2 bg-base-bg-white">
-        <Button onPress={submit} disabled={!selectedCandidateId || voteBallotMutation.isPending}>
+        <Button
+          onPress={submit}
+          disabled={
+            !selectedCandidateId || voteBallotMutation.isPending || deleteBallotMutation.isPending
+          }
+        >
           <Icon icon={VoteIcon} />
           <Text>ยืนยันการลงคะแนน</Text>
         </Button>

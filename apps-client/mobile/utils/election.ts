@@ -1,10 +1,8 @@
-import { Buffer } from 'buffer'
 import forge from 'node-forge'
 
 export function encryptBallot(candidateId: string, publicKeyBase64: string): string {
   // Parse the PEM public key
-  const rawPublicKey = Buffer.from(publicKeyBase64, 'base64').toString('utf-8')
-  const publicKey = forge.pki.publicKeyFromPem(rawPublicKey)
+  const publicKey = forge.pki.publicKeyFromPem(publicKeyBase64)
 
   // Encrypt with RSA-OAEP + SHA-256
   const encrypted = publicKey.encrypt(
