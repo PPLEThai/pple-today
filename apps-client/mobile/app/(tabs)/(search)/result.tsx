@@ -16,9 +16,9 @@ import { ArrowLeftIcon, SearchIcon } from 'lucide-react-native'
 
 import {
   GetSearchAnnouncementResponse,
+  GetSearchFeedItemsResponse,
   GetSearchTopicsResponse,
   GetSearchUsersResponse,
-  GetTopicFeedResponse,
 } from '@api/backoffice/app'
 import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
@@ -257,13 +257,13 @@ const SearchResult = ({ query }: { query: string }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
 
-  const feedData = React.useMemo((): GetTopicFeedResponse => {
+  const feedData = React.useMemo((): GetSearchFeedItemsResponse => {
     if (!feedInfiniteQuery.data) return []
     return feedInfiniteQuery.data.pages.flat()
   }, [feedInfiniteQuery.data])
 
   const renderFeedItem = React.useCallback(
-    ({ item }: { item: GetTopicFeedResponse[number]; index: number }) => {
+    ({ item }: { item: GetSearchFeedItemsResponse[number]; index: number }) => {
       return (
         <View className="bg-base-bg-default">
           <FeedCard key={item.id} feedItem={item} className="mb-4 mx-4" />
