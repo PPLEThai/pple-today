@@ -1,5 +1,16 @@
 # @client/mobile
 
+## 0.6.2
+
+### Patch Changes
+
+- [#180](https://github.com/PPLEThai/pple-today/pull/180) [`432dc51`](https://github.com/PPLEThai/pple-today/commit/432dc510239696f31873b2825bfe679c3629e4fb) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-438] Fix when comment keyboard is not appear](https://linear.app/snts/issue/PPLE-438/fix-when-comment-keyboard-is-not-appear)
+  [[PPLE-398] สส ของคุณชนขอบบน](https://linear.app/snts/issue/PPLE-398/สส-ของคุณชนขอบบน)
+  [[PPLE-424] Update Feed styles due to font change](https://linear.app/snts/issue/PPLE-424/update-feed-styles-due-to-font-change)
+  [[PPLE-425] Link to user when click on avatar](https://linear.app/snts/issue/PPLE-425/link-to-user-when-click-on-avatar)
+
+- [#189](https://github.com/PPLEThai/pple-today/pull/189) [`26f4a5b`](https://github.com/PPLEThai/pple-today/commit/26f4a5b6917ae7b65b4ff5c64cb78ba3af7f2309) Thanks [@Anon-136](https://github.com/Anon-136)! - fix: playground camera for test
+
 ## 0.6.1
 
 ### Patch Changes
