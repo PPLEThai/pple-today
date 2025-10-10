@@ -1,5 +1,31 @@
 # @pple-today/database
 
+## 0.3.0
+
+### Minor Changes
+
+- [#152](https://github.com/PPLEThai/pple-today/pull/152) [`6427bad`](https://github.com/PPLEThai/pple-today/commit/6427bade1f139634a8ed325ef75b497259370d85) Thanks [@miello](https://github.com/miello)! - [[PPLE-394] [API] CMS Auth](https://linear.app/snts/issue/PPLE-394/api-cms-auth)
+
+- [#132](https://github.com/PPLEThai/pple-today/pull/132) [`4e5ac39`](https://github.com/PPLEThai/pple-today/commit/4e5ac39e21570bee8c91615e89113fce4fc31ea3) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-384] [MODEL] Update Election Model Design](https://linear.app/snts/issue/PPLE-384/model-update-election-model-design)
+
+- [#162](https://github.com/PPLEThai/pple-today/pull/162) [`d32d324`](https://github.com/PPLEThai/pple-today/commit/d32d324e2592174922635bb6e67f5cca32f8eeff) Thanks [@miello](https://github.com/miello)! - [[PPLE-408] [API] CMS api revamp](https://linear.app/snts/issue/PPLE-408/api-cms-api-revamp)
+
+- [#160](https://github.com/PPLEThai/pple-today/pull/160) [`8ca4c1e`](https://github.com/PPLEThai/pple-today/commit/8ca4c1eea46e1e7faf3c27dba0e49825f2fbabf6) Thanks [@miello](https://github.com/miello)! - [[PPLE-374] [API] Filter announcement from feed item](https://linear.app/snts/issue/PPLE-374/api-filter-announcement-from-feed-item)
+  [[PPLE-88] Research about global and personalized recommendation system](https://linear.app/snts/issue/PPLE-88/research-about-global-and-personalized-recommendation-system)
+
+### Patch Changes
+
+- [#156](https://github.com/PPLEThai/pple-today/pull/156) [`3c33f55`](https://github.com/PPLEThai/pple-today/commit/3c33f550aec0cd09d2d1c73b312c36ac8fa9b275) Thanks [@miello](https://github.com/miello)! - [[PPLE-404] [API] Rollback register logic and add official user to default following](https://linear.app/snts/issue/PPLE-404/api-rollback-register-logic-and-add-official-user-to-default-following)
+
+- [#173](https://github.com/PPLEThai/pple-today/pull/173) [`804435c`](https://github.com/PPLEThai/pple-today/commit/804435cafa4a5a521345ec766ec8d2f10ebb0a0e) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-211] Election Detail Page UI](https://linear.app/snts/issue/PPLE-211/election-detail-page-ui)
+  [[PPLE-212] Election Detail Page Integrate](https://linear.app/snts/issue/PPLE-212/election-detail-page-integrate)
+
+- [#163](https://github.com/PPLEThai/pple-today/pull/163) [`b4cb326`](https://github.com/PPLEThai/pple-today/commit/b4cb326c36c4a0d59f9c1ca146a83fbba486f505) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-208] Election Card UI](https://linear.app/snts/issue/PPLE-208/election-card-ui)
+
+- [#153](https://github.com/PPLEThai/pple-today/pull/153) [`638460d`](https://github.com/PPLEThai/pple-today/commit/638460dd1680ef218a2fe7af6721d60b360f2872) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-318] [API] Election Eligible Users Management Endpoint](https://linear.app/snts/issue/PPLE-318/api-election-eligible-users-management-endpoint)
+
+- [#171](https://github.com/PPLEThai/pple-today/pull/171) [`4318b42`](https://github.com/PPLEThai/pple-today/commit/4318b4215646deed626776800d9add6f13cc1a2e) Thanks [@miello](https://github.com/miello)! - [[PPLE-428] [API] Fix filtering published entry that does not working](https://linear.app/snts/issue/PPLE-428/api-fix-filtering-published-entry-that-does-not-working)
+
 ## 0.2.0
 
 ### Minor Changes

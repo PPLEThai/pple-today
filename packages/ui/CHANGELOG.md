@@ -1,5 +1,22 @@
 # @pple-today/ui
 
+## 0.3.0
+
+### Minor Changes
+
+- [#101](https://github.com/PPLEThai/pple-today/pull/101) [`572e86c`](https://github.com/PPLEThai/pple-today/commit/572e86c9af4a114c9c676ddec46a27d9b3f33662) Thanks [@miello](https://github.com/miello)! - [[PPLE-307] [CMS] Design Components](https://linear.app/snts/issue/PPLE-307/cms-design-components)
+
+### Patch Changes
+
+- [#163](https://github.com/PPLEThai/pple-today/pull/163) [`b4cb326`](https://github.com/PPLEThai/pple-today/commit/b4cb326c36c4a0d59f9c1ca146a83fbba486f505) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-208] Election Card UI](https://linear.app/snts/issue/PPLE-208/election-card-ui)
+
+- [#165](https://github.com/PPLEThai/pple-today/pull/165) [`979986e`](https://github.com/PPLEThai/pple-today/commit/979986e2b65884852c50b249d170e69e6af28106) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-209] Election Card Integrate](https://linear.app/snts/issue/PPLE-209/election-card-integrate)
+
+- [#174](https://github.com/PPLEThai/pple-today/pull/174) [`08a950a`](https://github.com/PPLEThai/pple-today/commit/08a950ab76652461268a138db9b28de225e35937) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-410] Get User's Location for Voting](https://linear.app/snts/issue/PPLE-410/get-users-location-for-voting)
+
+- Updated dependencies [[`572e86c`](https://github.com/PPLEThai/pple-today/commit/572e86c9af4a114c9c676ddec46a27d9b3f33662)]:
+  - @pple-today/tailwind-config@0.1.0
+
 ## 0.2.2
 
 ### Patch Changes
