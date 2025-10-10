@@ -1,5 +1,11 @@
 # @pple-today/web-ui
 
+## 0.1.1
+
+### Patch Changes
+
+- [#182](https://github.com/PPLEThai/pple-today/pull/182) [`1053854`](https://github.com/PPLEThai/pple-today/commit/10538541f07642d2b53067b35bf21907245f63e2) Thanks [@miello](https://github.com/miello)! - [[PPLE-449] [Backoffice] Dependency problem in client backoffice](https://linear.app/snts/issue/PPLE-449/backoffice-dependency-problem-in-client-backoffice)
+
 ## 0.1.0
 
 ### Minor Changes

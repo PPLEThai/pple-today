@@ -1,5 +1,12 @@
 # @client/backoffice
 
+## 0.3.1
+
+### Patch Changes
+
+- Updated dependencies [[`1053854`](https://github.com/PPLEThai/pple-today/commit/10538541f07642d2b53067b35bf21907245f63e2)]:
+  - @pple-today/web-ui@0.1.1
+
 ## 0.3.0
 
 ### Minor Changes
