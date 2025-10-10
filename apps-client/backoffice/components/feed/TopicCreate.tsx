@@ -89,8 +89,6 @@ export const TopicCreate = (props: TopicCreateProps) => {
   const elFileInput = useRef<HTMLInputElement>(null)
 
   const onSubmit: SubmitHandler<CreateTopicFormSchema> = async ({ bannerImage, ...data }) => {
-    if (form.formState.isSubmitting) return
-
     console.log('getFileUploadUrl.mutateAsync')
     const result = await getFileUploadUrl.mutateAsync({
       body: {
@@ -234,7 +232,11 @@ export const TopicCreate = (props: TopicCreateProps) => {
               )}
             />
             <div className="flex flex-row-reverse gap-2 mt-2">
-              <Button type="submit" className="flex-1 min-w-0">
+              <Button
+                type="submit"
+                className="flex-1 min-w-0"
+                disabled={form.formState.isSubmitting}
+              >
                 {form.formState.isSubmitting ? 'กําลังบันทึก' : 'บันทึก'}
               </Button>
               <DialogTrigger asChild>
