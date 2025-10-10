@@ -1,11 +1,11 @@
 import forge from 'node-forge'
 
-export function encryptBallot(candidateId: string, publicKeyBase64: string): string {
+export function encryptBallot(candidateId: string, publicKey: string): string {
   // Parse the PEM public key
-  const publicKey = forge.pki.publicKeyFromPem(publicKeyBase64)
+  const publicKeyFromPem = forge.pki.publicKeyFromPem(publicKey)
 
   // Encrypt with RSA-OAEP + SHA-256
-  const encrypted = publicKey.encrypt(
+  const encrypted = publicKeyFromPem.encrypt(
     JSON.stringify({
       candidateId,
     }),
