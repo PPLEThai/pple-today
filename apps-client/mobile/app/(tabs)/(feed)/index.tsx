@@ -134,7 +134,7 @@ function MainHeader() {
               environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'development' ||
               environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'local'
             )
-              router.navigate('/(tabs)/(top-tabs)/playground')
+              router.navigate('/(top-tabs)/playground')
           }}
         >
           <PPLEIcon width={35} height={30} />

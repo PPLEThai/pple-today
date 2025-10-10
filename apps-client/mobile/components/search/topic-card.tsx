@@ -19,7 +19,7 @@ interface TopicSearchCardProps {
 export function TopicSearchCard(props: TopicSearchCardProps) {
   const router = useRouter()
   return (
-    <SearchCard onPress={() => router.navigate(`/(feed)/topic/${props.id}`)}>
+    <SearchCard onPress={() => router.navigate(`./topic/${props.id}`)}>
       <View className="flex flex-row items-center gap-2 px-4 py-3">
         <View className="h-7 w-7 items-center justify-center">
           <Icon icon={MessageSquareHeartIcon} size={20} className="text-base-primary-default" />
@@ -66,7 +66,7 @@ export function TopicSearchBigCard(props: TopicSearchBigCardProps) {
   }
 
   return (
-    <SearchCard onPress={() => router.navigate(`/(feed)/topic/${props.id}`)}>
+    <SearchCard onPress={() => router.navigate(`./topic/${props.id}`)}>
       <View className="flex flex-row items-center gap-4 px-4 py-3">
         <Image
           source={{

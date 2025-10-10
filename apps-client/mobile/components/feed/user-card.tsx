@@ -54,7 +54,7 @@ export function UserCard(props: UserCardProps) {
   const router = useRouter()
   return (
     <AnimatedBackgroundPressable
-      onPress={() => router.navigate(`./(profile)/${props.user.id}`)}
+      onPress={() => router.navigate(`./user/${props.user.id}`)}
       className={cn(
         'flex flex-col items-center gap-3 bg-base-bg-white border border-base-outline-default rounded-2xl p-4 h-[208px]',
         props.className
@@ -138,7 +138,7 @@ export function UserSuggestion() {
           <Icon icon={UserRoundPlusIcon} size={32} className="text-base-primary-default" />
           <H2 className="text-2xl font-heading-semibold text-base-text-high">แนะนำให้ติดตาม</H2>
         </View>
-        <Button variant="ghost" onPress={() => router.navigate('/(feed)/user-suggestion')}>
+        <Button variant="ghost" onPress={() => router.navigate('./user-suggestion')}>
           <Text>ดูเพิ่มเติม</Text>
           <Icon icon={ArrowRightIcon} size={16} />
         </Button>

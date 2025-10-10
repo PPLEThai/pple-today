@@ -1,5 +1,6 @@
 import { Pressable, ScrollView, View } from 'react-native'
 
+import { AnimatedBackgroundPressable } from '@pple-today/ui/animated-pressable'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
@@ -136,7 +137,7 @@ const PeopleFollowingSection = () => {
               profileImage={item.profileImage ?? ''}
               name={item.name}
               onPress={() => {
-                router.navigate(`/(tabs)/(profile)/user/${item.id}`)
+                router.navigate(`/user/${item.id}`)
               }}
             />
           ))}
@@ -293,7 +294,7 @@ const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
     if (hashtags.length === 0) return null
     if (hashtags.length === 1) {
       return (
-        <Link href={`/(feed)/hashtag/${hashtags[0].id}`} asChild>
+        <Link href={`/hashtag/${hashtags[0].id}`} asChild>
           <Badge variant="secondary">
             <Text>{hashtags[0].name}</Text>
           </Badge>
@@ -303,7 +304,7 @@ const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
 
     return (
       <>
-        <Link href={`/(feed)/hashtag/${hashtags[0].id}`} asChild>
+        <Link href={`/hashtag/${hashtags[0].id}`} asChild>
           <Badge variant="secondary">
             <Text>{hashtags[0].name}</Text>
           </Badge>
@@ -332,7 +333,7 @@ const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
                   <Button
                     className="rounded-full border border-base-outline-default py-1.5 h-8 bg-base-bg-light"
                     variant="secondary"
-                    onPress={() => router.navigate(`/(feed)/hashtag/${hashtag.id}`)}
+                    onPress={() => router.navigate(`/hashtag/${hashtag.id}`)}
                   >
                     <Text className="text-sm font-anakotmai-medium">{hashtag.name}</Text>
                   </Button>
@@ -346,7 +347,10 @@ const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
   }
 
   return (
-    <View className="items-center px-4 my-2 gap-4 flex flex-row">
+    <AnimatedBackgroundPressable
+      onPress={() => router.navigate(`/topic/${topic.id}`)}
+      className="items-center px-4 py-2 gap-4 flex flex-row"
+    >
       <Image
         source={{
           uri: topic.bannerImage,
@@ -369,7 +373,7 @@ const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
           <Text>{isFollowing ? 'กำลังติดตาม' : 'ติดตาม'} </Text>
         </Button>
       </View>
-    </View>
+    </AnimatedBackgroundPressable>
   )
 }
 

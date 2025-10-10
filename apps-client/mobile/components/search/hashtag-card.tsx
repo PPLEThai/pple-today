@@ -16,14 +16,16 @@ export function HashtagSearchCard(props: UserSearchCardProps) {
   return (
     <SearchCard
       onPress={() => {
-        router.navigate(`/(feed)/hashtag/${props.id}`)
+        router.navigate(`./hashtag/${props.id}`)
       }}
     >
       <View className="flex flex-row items-center gap-2 px-4 py-3">
         <View className="w-8 h-8 items-center justify-center bg-base-bg-light border border-base-outline-default rounded-full">
           <Icon icon={HashIcon} size={20} className="text-base-primary-default" />
         </View>
-        <Text className="font-body-light flex-1 line-clamp-1">{props.name}</Text>
+        <Text className="font-body-regular flex-1 line-clamp-1 text-base-text-high">
+          {props.name}
+        </Text>
       </View>
     </SearchCard>
   )
