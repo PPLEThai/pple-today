@@ -311,7 +311,7 @@ export class SearchRepository {
           roles: {
             some: {
               role: {
-                in: ['pple-ad:hq', 'pple-ad:mp'],
+                in: ['pple-ad:mp', 'pple-ad:hq'],
               },
             },
           },
