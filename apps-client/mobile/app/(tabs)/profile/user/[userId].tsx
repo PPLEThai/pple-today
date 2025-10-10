@@ -23,6 +23,7 @@ import { useUserFollowState } from '@app/components/feed/user-card'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { renderCount } from '@app/utils/count'
+import { getRoleName } from '@app/utils/get-role-name'
 
 const LIMIT = 10
 export default function ProfilePage() {
@@ -153,13 +154,13 @@ export default function ProfilePage() {
             <AvatarPPLEFallback />
           </Avatar>
           <View className="flex-1 gap-2">
-            <Text className="text-base-text-default text-2xl font-heading-semibold">
+            <Text className="text-base-text-high text-2xl font-heading-semibold">
               {userDetailsQuery.data.name}
             </Text>
             <View className="flex flex-row items-center gap-3">
               <Badge>
                 <Text className="text-xs font-heading-semibold">
-                  {userDetailsQuery.data.roles[0] || 'สมาชิก'}
+                  {getRoleName(userDetailsQuery.data.roles)}
                 </Text>
               </Badge>
               <View className="flex flex-row gap-0.5 items-center">

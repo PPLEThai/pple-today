@@ -1,5 +1,5 @@
 import React from 'react'
-import { FlatList, View } from 'react-native'
+import { FlatList, Pressable, View } from 'react-native'
 
 import { ExtractBodyResponse } from '@pple-today/api-client'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
@@ -7,6 +7,7 @@ import { Icon } from '@pple-today/ui/icon'
 import { clsx } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 import { useInfiniteQuery } from '@tanstack/react-query'
+import { Link } from 'expo-router'
 import { EyeOffIcon } from 'lucide-react-native'
 
 import type { ApplicationApiSchema, GetFeedCommentResponse } from '@api/backoffice/app'
@@ -112,11 +113,14 @@ export function FeedCommentSection({
 function FeedComment({ item }: { item: GetFeedCommentResponse[number] }) {
   return (
     <View className="flex flex-row gap-2 mt-3 mx-4">
-      {/* TODO: Link */}
-      <Avatar alt={item.author.name} className="w-8 h-8">
-        <AvatarImage source={{ uri: item.author.profileImage }} />
-        <AvatarPPLEFallback />
-      </Avatar>
+      <Link href={`/profile/user/${item.author.id}`} asChild>
+        <Pressable>
+          <Avatar alt={item.author.name} className="w-8 h-8">
+            <AvatarImage source={{ uri: item.author.profileImage }} />
+            <AvatarPPLEFallback />
+          </Avatar>
+        </Pressable>
+      </Link>
       <View className="flex flex-col gap-1">
         <View
           className={clsx(
@@ -127,14 +131,16 @@ function FeedComment({ item }: { item: GetFeedCommentResponse[number] }) {
           )}
         >
           <View className="flex flex-row justify-between gap-2 items-center">
-            <Text className="font-heading-semibold text-base-text-high text-xs">
-              {item.author.name}
-            </Text>
+            <Link href={`/profile/user/${item.author.id}`}>
+              <Text className="font-heading-semibold text-base-text-high text-xs">
+                {item.author.name}
+              </Text>
+            </Link>
             {item.isPrivate && (
               <Icon icon={EyeOffIcon} size={16} className="text-base-secondary-light" />
             )}
           </View>
-          <Text className="font-body-light text-base-text-high text-sm">{item.content}</Text>
+          <Text className="font-body-regular text-base-text-high text-sm">{item.content}</Text>
         </View>
         <Text className="font-heading-regular text-base-text-medium text-xs">
           {formatDateInterval(item.createdAt.toString())}
