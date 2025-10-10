@@ -1,6 +1,6 @@
 {
   "name": "@api/ballot-crypto",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "",
   "scripts": {
     "dev": "tsx watch --include \"node_modules/@pple-today/api-common/**/src\"  src/index.ts",
