@@ -98,6 +98,9 @@ export const AdminTopicController = new Elysia({
         201: CreateTopicResponse,
         ...createErrorSchema(
           InternalErrorCode.TOPIC_INVALID_INPUT,
+          InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

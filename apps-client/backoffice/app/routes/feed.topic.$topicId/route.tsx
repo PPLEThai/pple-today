@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { NavLink } from 'react-router'
 
 import { Badge } from '@pple-today/web-ui/badge'
@@ -11,8 +12,10 @@ import {
 } from '@pple-today/web-ui/breadcrumb'
 import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
+import { useQueryClient } from '@tanstack/react-query'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
 import { FeedTopicCard } from 'components/feed/FeedTopicCard'
+import { TopicEdit } from 'components/feed/TopicEdit'
 import { Calendar, Link, MessageSquareHeart, Pencil, Users } from 'lucide-react'
 
 import { reactQueryClient } from '~/libs/api-client'
@@ -22,9 +25,17 @@ import { Route } from '../feed.topic.$topicId/+types/route'
 export default function HashtagEditPage({ params }: Route.LoaderArgs) {
   const { topicId } = params
 
+  const queryClient = useQueryClient()
   const query = reactQueryClient.useQuery('/admin/topics/:topicId', {
     pathParams: { topicId },
   })
+  const invalidateQuery = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: reactQueryClient.getQueryKey('/admin/topics/:topicId', {
+        pathParams: { topicId },
+      }),
+    })
+  }, [queryClient, topicId])
 
   return (
     <div className="px-6 pb-6">
@@ -53,10 +64,18 @@ export default function HashtagEditPage({ params }: Route.LoaderArgs) {
       <div className="flex items-center gap-2 pb-3">
         <MessageSquareHeart className="stroke-base-primary-default" size={32} />
         <Typography variant="h2">รายละเอียดหัวข้อ</Typography>
-        <Button className="ml-auto gap-1">
-          <Pencil size={16} />
-          แก้ไขหัวข้อ
-        </Button>
+        {query.data && (
+          <TopicEdit
+            trigger={
+              <Button className="ml-auto gap-1">
+                <Pencil size={16} />
+                แก้ไขหัวข้อ
+              </Button>
+            }
+            onSuccess={invalidateQuery}
+            topic={query.data}
+          />
+        )}
       </div>
       {query.isLoading ? (
         <div className="flex items-center justify-center p-4 border border-base-outline-default rounded-xl h-40">

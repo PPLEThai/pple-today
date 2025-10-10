@@ -25,7 +25,7 @@ model Topic {
     id              String      @id @default(cuid())
     name            String      @unique
     description     String?
-    bannerImagePath String?
+    bannerImagePath String
     status          TopicStatus @default(SUSPENDED)
     createdAt       DateTime    @default(now())
     updatedAt       DateTime    @updatedAt

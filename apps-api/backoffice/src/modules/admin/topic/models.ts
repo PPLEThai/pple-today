@@ -26,7 +26,7 @@ export type GetTopicByIdResponse = Static<typeof GetTopicByIdResponse>
 export const CreateTopicBody = t.Object({
   name: t.String({ description: 'The name of the topic' }),
   description: t.Nullable(t.String({ description: 'The description of the topic' })),
-  bannerImagePath: t.Nullable(FilePath),
+  bannerImagePath: FilePath,
   hashtagIds: t.Array(t.String({ description: 'The ID of the hashtag' })),
 })
 export type CreateTopicBody = Static<typeof CreateTopicBody>
@@ -45,7 +45,7 @@ export const UpdateTopicBody = t.Partial(
   t.Object({
     name: t.String({ description: 'The name of the topic' }),
     description: t.Nullable(t.String({ description: 'The description of the topic' })),
-    bannerImagePath: t.Nullable(FilePath),
+    bannerImagePath: FilePath,
     status: t.Enum(TopicStatus),
     hashtagIds: t.Array(t.String({ description: 'The ID of the hashtag' })),
   })

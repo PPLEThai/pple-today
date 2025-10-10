@@ -118,12 +118,25 @@ export class AdminTopicRepository {
   }
 
   async createTopic(data: CreateTopicBody) {
-    return await fromRepositoryPromise(
+    const createFileResult = await fromRepositoryPromise(
+      this.fileService.$transaction(async (fileTx) => {
+        const moveResult = await fileTx.bulkMoveToPublicFolder([data.bannerImagePath])
+        if (moveResult.isErr()) return moveResult
+        return moveResult.value[0]
+      })
+    )
+
+    if (createFileResult.isErr()) {
+      return err(createFileResult.error)
+    }
+    const [bannerImagePath, fileTx] = createFileResult.value
+
+    const createResult = await fromRepositoryPromise(
       this.prismaService.topic.create({
         data: {
           name: data.name,
           description: data.description,
-          bannerImagePath: data.bannerImagePath,
+          bannerImagePath,
           status: TopicStatus.PUBLISHED,
           hashTagInTopics: {
             createMany: {
@@ -135,13 +148,21 @@ export class AdminTopicRepository {
         },
       })
     )
+
+    if (createResult.isErr()) {
+      const rollbackResult = await fileTx.rollback()
+      if (rollbackResult.isErr()) return err(rollbackResult.error)
+      return err(createResult.error)
+    }
+
+    return ok(createResult.value)
   }
 
   async updateTopicById(topicId: string, data: UpdateTopicBody) {
     const existingTopic = await fromRepositoryPromise(
       this.prismaService.topic.findUniqueOrThrow({
         where: { id: topicId },
-        select: { bannerImagePath: true },
+        select: { bannerImagePath: true, status: true },
       })
     )
 
@@ -149,30 +170,48 @@ export class AdminTopicRepository {
 
     const updateFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
+        // ถ้าไม่มีรูปใหม่ ให้ใช้รูปเดิม
+        if (!data.bannerImagePath) return existingTopic.value.bannerImagePath
+
         const isSameBannerUrl = existingTopic.value.bannerImagePath === data.bannerImagePath
-        if (!isSameBannerUrl && existingTopic.value.bannerImagePath) {
-          const moveResult = await fileTx.deleteFile(
-            existingTopic.value.bannerImagePath as FilePath
-          )
+        const isSameStatus = existingTopic.value.status === data.status
+
+        // ถ้า same ให้เช็คว่า status เปลี่ยนเปล่า
+        // เพราะถ้า status เปลี่ยน ต้องโยกรูปภาพไปให้ถูก folder
+        if (isSameBannerUrl) {
+          // ถ้าเป็นรูปเดิม สถานะเดิม ให้ใช้รูปเดิม
+          if (isSameStatus) return existingTopic.value.bannerImagePath
+
+          // รูปเดิม แต่คนละสถานะ ต้องย้ายรูปไปให้ถูกที่
+          const moveResult =
+            data.status === TopicStatus.PUBLISHED
+              ? await fileTx.bulkMoveToPublicFolder([data.bannerImagePath])
+              : await fileTx.bulkMoveToPrivateFolder([data.bannerImagePath])
           if (moveResult.isErr()) return moveResult
+          return moveResult.value[0]
         }
 
-        let newBannerImage = data.bannerImagePath
+        // ถ้าไม่ same แปลว่าเปลี่ยนรูป
+        // 1. ลบรูปเดิมก่อน
+        const deleteResult = await fileTx.deleteFile(
+          existingTopic.value.bannerImagePath as FilePath
+        )
+        if (deleteResult.isErr()) return deleteResult
 
-        if (data.bannerImagePath) {
-          const moveResult = await fileTx.bulkMoveToPublicFolder([data.bannerImagePath])
-          if (moveResult.isErr()) return moveResult
-          newBannerImage = moveResult.value[0]
-        }
-
-        return newBannerImage
+        // 2. โยกรูปใหม่ไป folder ตาม status
+        const moveResult =
+          data.status === TopicStatus.PUBLISHED
+            ? await fileTx.bulkMoveToPublicFolder([data.bannerImagePath])
+            : await fileTx.bulkMoveToPrivateFolder([data.bannerImagePath])
+        if (moveResult.isErr()) return moveResult
+        return moveResult.value[0]
       })
     )
 
     if (updateFileResult.isErr()) {
       return err(updateFileResult.error)
     }
-    const [newBannerImage, fileTx] = updateFileResult.value
+    const [bannerImagePath, fileTx] = updateFileResult.value
 
     const updateResult = await fromRepositoryPromise(
       this.prismaService.topic.update({
@@ -180,7 +219,7 @@ export class AdminTopicRepository {
         data: {
           name: data.name,
           description: data.description,
-          bannerImagePath: newBannerImage,
+          bannerImagePath,
           status: data.status,
           ...(data.hashtagIds && {
             hashTagInTopics: {
