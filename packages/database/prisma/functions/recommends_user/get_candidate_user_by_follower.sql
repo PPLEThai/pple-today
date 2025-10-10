@@ -1,6 +1,7 @@
 CREATE OR REPLACE FUNCTION public.get_candidate_user_by_follower(_id text)
   RETURNS TABLE(user_id text, score numeric)
   LANGUAGE plpgsql
+  PARALLEL SAFE
 AS $function$
 BEGIN
    RETURN QUERY

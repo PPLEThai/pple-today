@@ -1,6 +1,7 @@
 CREATE OR REPLACE FUNCTION public.get_candidate_feed_item_by_topic(_id text)
  RETURNS TABLE(feed_item_id text, score numeric)
  LANGUAGE plpgsql
+ PARALLEL SAFE
 AS $function$
 BEGIN
   RETURN QUERY

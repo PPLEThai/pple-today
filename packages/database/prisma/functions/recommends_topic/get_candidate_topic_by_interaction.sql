@@ -1,6 +1,7 @@
 CREATE OR REPLACE FUNCTION public.get_candidate_topic_by_interaction(_id text)
  RETURNS TABLE(topic_id text, score numeric)
  LANGUAGE plpgsql
+ PARALLEL SAFE
 AS $function$
 BEGIN
   RETURN QUERY
