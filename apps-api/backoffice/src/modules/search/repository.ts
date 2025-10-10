@@ -112,11 +112,16 @@ export class SearchRepository {
         take: query.limit ?? 3,
         skip: query.cursor ? 1 : 0,
         cursor: query.cursor ? { feedItemId: query.cursor } : undefined,
-        orderBy: {
-          feedItem: {
-            createdAt: 'desc',
+        orderBy: [
+          {
+            feedItem: {
+              createdAt: 'desc',
+            },
           },
-        },
+          {
+            feedItemId: 'desc',
+          },
+        ],
         select: {
           feedItemId: true,
           feedItem: {
@@ -209,9 +214,14 @@ export class SearchRepository {
         take: query.limit ?? 3,
         skip: query.cursor ? 1 : 0,
         cursor: query.cursor ? { id: query.cursor } : undefined,
-        orderBy: {
-          createdAt: 'desc',
-        },
+        orderBy: [
+          {
+            createdAt: 'desc',
+          },
+          {
+            id: 'desc',
+          },
+        ],
         include: this.feedRepository.constructFeedItemInclude(query.userId),
       })
     )
@@ -281,11 +291,16 @@ export class SearchRepository {
         take: query.limit ?? 3,
         skip: query.cursor ? 1 : 0,
         cursor: query.cursor ? { id: query.cursor } : undefined,
-        orderBy: {
-          followers: {
-            _count: 'desc',
+        orderBy: [
+          {
+            followers: {
+              _count: 'desc',
+            },
           },
-        },
+          {
+            id: 'desc',
+          },
+        ],
         select: {
           id: true,
           name: true,
@@ -326,6 +341,9 @@ export class SearchRepository {
           },
           {
             numberOfPosts: 'desc',
+          },
+          {
+            id: 'desc',
           },
         ],
         select: {

@@ -179,7 +179,7 @@ export class TopicService {
       })[]
     })[]
   ): GetTopicsResponse {
-    return topics.map(this.mapTopicToTopicResponse)
+    return topics.map((topic) => this.mapTopicToTopicResponse(topic))
   }
 }
 

@@ -190,7 +190,7 @@ export default function TopicDetailPage() {
           </View>
           <View className="flex flex-row flex-wrap gap-2">
             {topic.hashTags.slice(0, 4).map((tag) => (
-              <Link href={`/(feed)/hashtag/${tag.id}`} key={tag.id} asChild>
+              <Link href={`/hashtag/${tag.id}`} key={tag.id} asChild>
                 <Badge variant="outline" className="px-4 py-1.5">
                   <Text className="text-sm text-base-text-high font-heading-semibold">
                     {tag.name}
@@ -324,12 +324,7 @@ function MoreHashtagDialog({ hashTags }: MoreHashtagDialogProps) {
           className="border border-base-outline-default rounded-xl bg-base-bg-light max-h-80"
         >
           {hashTags.map((tag) => (
-            <Link
-              href={`/(feed)/hashtag/${tag.id}`}
-              key={tag.id}
-              asChild
-              onPress={() => setOpen(false)}
-            >
+            <Link href={`/hashtag/${tag.id}`} key={tag.id} asChild onPress={() => setOpen(false)}>
               <Badge variant="outline" className="px-4 py-1.5">
                 <Text className="text-sm text-base-text-high font-heading-semibold">
                   {tag.name}
