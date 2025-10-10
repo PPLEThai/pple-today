@@ -1,12 +1,5 @@
 import { edenFetch } from '@elysiajs/eden'
-import {
-  useMutation,
-  type UseMutationOptions,
-  type UseMutationResult,
-  useQuery,
-  type UseQueryOptions,
-  type UseQueryResult,
-} from '@tanstack/react-query'
+import { QueryClient, useMutation, type UseMutationResult, useQuery } from '@tanstack/react-query'
 import type { AnyElysia } from 'elysia'
 
 import type {
@@ -33,14 +26,17 @@ export const QUERY_KEY_SYMBOL = '$'
 function createReactQueryClient<TSchema extends Record<string, any>>(
   restClient: EdenFetch.Fn<TSchema>
 ): ReactQueryClient<TSchema> {
-  const makeRequest = async (method: any, path: any, payload: any) => {
-    const result = await restClient(path, {
-      method,
-      path,
-      query: payload?.query ?? {},
-      params: payload?.pathParams ?? {},
-      body: payload?.body ?? undefined,
-      headers: payload?.headers ?? {},
+  const makeRequest = async (
+    options: { method?: any; path?: any; pathParams?: any; query?: any; headers?: any } = {},
+    body?: any
+  ) => {
+    const result = await restClient(options.path, {
+      method: options.method,
+      path: options.path,
+      params: options.pathParams,
+      query: options.query,
+      headers: options.headers,
+      body: body,
     })
 
     if (result.status >= 400) {
@@ -51,12 +47,16 @@ function createReactQueryClient<TSchema extends Record<string, any>>(
   }
 
   function getKey(
-    method: any,
-    path: any,
-    payload: { pathParams?: any; query?: any; headers?: any } = {}
+    options: { method?: any; path?: any; pathParams?: any; query?: any; headers?: any } = {}
   ): any {
-    const { pathParams, query, headers } = payload
-    const key: unknown[] = [QUERY_KEY_SYMBOL, method, path, pathParams, query, headers]
+    const key: unknown[] = [
+      QUERY_KEY_SYMBOL,
+      options.method,
+      options.path,
+      options.pathParams,
+      options.query,
+      options.headers,
+    ]
     while (key.length > 0 && key[key.length - 1] === undefined) {
       key.pop()
     }
@@ -64,36 +64,30 @@ function createReactQueryClient<TSchema extends Record<string, any>>(
   }
 
   return {
-    useQuery: function (path: any, payload: any, options?: any) {
-      return useQuery({
-        queryKey: getKey('get', path, payload),
-        queryFn: () => makeRequest('get', path, payload),
-        ...options,
-      }) as UseQueryResult<any, any>
+    useQuery: function (
+      { path, pathParams, query, headers, ...rest }: any,
+      queryClient?: QueryClient
+    ) {
+      const options = { method: 'get', path, pathParams, query, headers }
+      return useQuery(
+        {
+          queryKey: getKey(options),
+          queryFn: () => makeRequest(options),
+          ...rest,
+        },
+        queryClient
+      )
     },
-    useMutation: function (method: any, path: any, options?: any) {
+    useMutation: function ({ method, path, pathParams, query, headers, ...mutationOptions }: any) {
+      const options = { method, path, pathParams, query, headers }
       return useMutation({
-        mutationKey: getKey(method, path),
-        mutationFn: (data) => makeRequest(method, path, data),
-        ...options,
+        mutationKey: getKey(options),
+        mutationFn: (body) => makeRequest(options, body),
+        ...mutationOptions,
       }) as UseMutationResult<any, any, any, any>
     },
-    queryOptions: function (path: any, payload: any, options?: any) {
-      return {
-        queryKey: getKey('get', path, payload),
-        queryFn: () => makeRequest('get', path, payload),
-        ...options,
-      } as UseQueryOptions<any, any, any>
-    },
-    mutationOptions: function (method: any, path: any, options?: any) {
-      return {
-        mutationKey: getKey(method, path),
-        mutationFn: (data) => makeRequest(method, path, data),
-        ...options,
-      } as UseMutationOptions<any, any, any, any>
-    },
     getKey,
-    getQueryKey: (...args) => getKey('get', ...args),
+    getQueryKey: (options) => getKey({ method: 'get', ...options }),
   }
 }
 

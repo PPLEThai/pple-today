@@ -139,8 +139,14 @@ export default function TopicDetailPage() {
   // Note: assume that user did not follow recommended topic
   const [isFollowing, setIsFollowing] = useTopicFollowState(topicId!, false)
 
-  const followMutation = reactQueryClient.useMutation('post', '/topics/:topicId/follow', {})
-  const unfollowMutation = reactQueryClient.useMutation('delete', '/topics/:topicId/follow', {})
+  const followMutation = reactQueryClient.useMutation({
+    method: 'post',
+    path: '/topics/:topicId/follow',
+  })
+  const unfollowMutation = reactQueryClient.useMutation({
+    method: 'delete',
+    path: '/topics/:topicId/follow',
+  })
   const toggleFollow = async () => {
     setIsFollowing(!isFollowing) // optimistic update
     if (isFollowing) {
