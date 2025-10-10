@@ -2,7 +2,11 @@ import type { EdenFetch } from '@elysiajs/eden/fetch'
 import type {
   dataTagErrorSymbol,
   dataTagSymbol,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  QueryClient,
   QueryKey,
+  UndefinedInitialDataOptions,
   UseMutationOptions,
   UseMutationResult,
   UseQueryOptions,
@@ -176,6 +180,42 @@ export type ExtractBodyResponse<
   >[TMethod][TPath] = GroupPathByMethod<GetEdenFetchSchema<TElysia>, TMethod>[TMethod][TPath],
 > = EdenResponse<TEndpoint>
 
+type QueryPathSchema<
+  TPathSchema extends Record<string, any>,
+  TAvailableMethod extends GetAvailableMethods<TPathSchema>,
+> = GroupPathByMethod<TPathSchema, TAvailableMethod>[Extract<TAvailableMethod, QueryMethod>]
+
+type QueryOptions<
+  TPathSchema extends Record<string, any>,
+  TAvailableMethod extends GetAvailableMethods<TPathSchema>,
+  TPath extends keyof QueryPathSchema<TPathSchema, TAvailableMethod>,
+> = {
+  path: TPath
+} & RestPayload<QueryPathSchema<TPathSchema, TAvailableMethod>[TPath]>
+
+type MutationPathSchema<
+  TPathSchema extends Record<string, any>,
+  TAvailableMethod extends GetAvailableMethods<TPathSchema>,
+  TMethod extends Extract<TAvailableMethod, MutationMethod>,
+> = GroupPathByMethod<TPathSchema, TAvailableMethod>[Extract<TAvailableMethod, TMethod>]
+
+type MutationOptions<
+  TPathSchema extends Record<string, any>,
+  TAvailableMethod extends GetAvailableMethods<TPathSchema>,
+  TMethod extends Extract<TAvailableMethod, MutationMethod> = Extract<
+    TAvailableMethod,
+    MutationMethod
+  >,
+  TPath extends keyof MutationPathSchema<
+    TPathSchema,
+    TAvailableMethod,
+    TMethod
+  > = keyof MutationPathSchema<TPathSchema, TAvailableMethod, TMethod>,
+> = {
+  method: TMethod
+  path: TPath
+}
+
 export interface ReactQueryClient<
   TPathSchema extends Record<string, any>,
   TAvailableMethod extends GetAvailableMethods<TPathSchema> = GetAvailableMethods<TPathSchema>,
@@ -184,70 +224,72 @@ export interface ReactQueryClient<
     TAvailableMethod
   >,
 > {
-  useQuery: <
-    const TMethod extends Extract<TAvailableMethod, QueryMethod>,
-    const TPath extends keyof TGroupedPathByMethod[TMethod],
-    const TPayload extends RestPayload<TGroupedPathByMethod[TMethod][TPath]> = RestPayload<
-      TGroupedPathByMethod[TMethod][TPath]
-    >,
-    const TResponse extends
-      TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
-    const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
-    const TError extends EdenError<TResponse> = EdenError<TResponse>,
-    TData = TSuccess,
-  >(
-    path: TPath,
-    payload: TPayload,
-    options?: Omit<UseQueryOptions<TSuccess, TError, TData>, 'queryKey'>
-  ) => UseQueryResult<TData, TError>
+  useQuery: {
+    <
+      TPath extends keyof QueryPathSchema<TPathSchema, TAvailableMethod>,
+      TQueryFnData = EdenResponse<QueryPathSchema<TPathSchema, TAvailableMethod>[TPath]>,
+      TError = EdenError<QueryPathSchema<TPathSchema, TAvailableMethod>[TPath]>,
+      TData = TQueryFnData,
+      TQueryKey extends QueryKey = QueryKey,
+    >(
+      options: Omit<
+        DefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>,
+        'queryKey' | 'queryFn'
+      > &
+        QueryOptions<TPathSchema, TAvailableMethod, TPath>,
+      queryClient?: QueryClient
+    ): DefinedUseQueryResult<NoInfer<TData>, TError>
+
+    <
+      TPath extends keyof QueryPathSchema<TPathSchema, TAvailableMethod>,
+      TQueryFnData = EdenResponse<QueryPathSchema<TPathSchema, TAvailableMethod>[TPath]>,
+      TError = EdenError<QueryPathSchema<TPathSchema, TAvailableMethod>[TPath]>,
+      TData = TQueryFnData,
+      TQueryKey extends QueryKey = QueryKey,
+    >(
+      options: Omit<
+        UndefinedInitialDataOptions<TQueryFnData, TError, TData, TQueryKey>,
+        'queryKey' | 'queryFn'
+      > &
+        QueryOptions<TPathSchema, TAvailableMethod, TPath>,
+      queryClient?: QueryClient
+    ): UseQueryResult<NoInfer<TData>, TError>
+
+    <
+      TPath extends keyof QueryPathSchema<TPathSchema, TAvailableMethod>,
+      TQueryFnData = EdenResponse<QueryPathSchema<TPathSchema, TAvailableMethod>[TPath]>,
+      TError = EdenError<QueryPathSchema<TPathSchema, TAvailableMethod>[TPath]>,
+      TData = TQueryFnData,
+      TQueryKey extends QueryKey = QueryKey,
+    >(
+      options: Omit<
+        UseQueryOptions<TQueryFnData, TError, TData, TQueryKey>,
+        'queryKey' | 'queryFn'
+      > &
+        QueryOptions<TPathSchema, TAvailableMethod, TPath>,
+      queryClient?: QueryClient
+    ): UseQueryResult<NoInfer<TData>, TError>
+  }
+
   useMutation: <
-    const TMethod extends Extract<TAvailableMethod, MutationMethod>,
-    const TPath extends keyof TGroupedPathByMethod[TMethod],
-    const TPayload extends RestPayload<TGroupedPathByMethod[TMethod][TPath]> = RestPayload<
-      TGroupedPathByMethod[TMethod][TPath]
-    >,
-    const TResponse extends
-      TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
-    const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
-    const TError extends EdenError<TResponse> = EdenError<TResponse>,
-    const TContext = unknown,
+    TMethod extends Extract<TAvailableMethod, MutationMethod>,
+    TPath extends keyof MutationPathSchema<TPathSchema, TAvailableMethod, TMethod>,
+    TData = EdenResponse<MutationPathSchema<TPathSchema, TAvailableMethod, TMethod>[TPath]>,
+    TError = EdenError<MutationPathSchema<TPathSchema, TAvailableMethod, TMethod>[TPath]>,
+    TVariables = RestPayload<MutationPathSchema<TPathSchema, TAvailableMethod, TMethod>[TPath]>,
+    TContext = unknown,
   >(
-    method: TMethod,
-    path: TPath,
-    options?: UseMutationOptions<TSuccess, TError, TPayload, TContext>
-  ) => UseMutationResult<TSuccess, TError, TPayload, TContext>
-  queryOptions: <
-    const TMethod extends Extract<TAvailableMethod, QueryMethod>,
-    const TPath extends keyof TGroupedPathByMethod[TMethod],
-    const TPayload extends RestPayload<TGroupedPathByMethod[TMethod][TPath]> = RestPayload<
-      TGroupedPathByMethod[TMethod][TPath]
-    >,
-    const TResponse extends
-      TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
-    const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
-    const TError extends EdenError<TResponse> = EdenError<TResponse>,
-    TData = TSuccess,
-  >(
-    path: TPath,
-    payload: TPayload,
-    options?: Omit<UseQueryOptions<TSuccess, TError, TData>, 'queryKey'>
-  ) => UseQueryOptions<TSuccess, TError, TData>
-  mutationOptions: <
-    const TMethod extends Extract<TAvailableMethod, MutationMethod>,
-    const TPath extends keyof TGroupedPathByMethod[TMethod],
-    const TPayload extends RestPayload<TGroupedPathByMethod[TMethod][TPath]> = RestPayload<
-      TGroupedPathByMethod[TMethod][TPath]
-    >,
-    const TResponse extends
-      TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
-    const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
-    const TError extends EdenError<TResponse> = EdenError<TResponse>,
-    const TContext = unknown,
-  >(
-    method: TMethod,
-    path: TPath,
-    options?: UseMutationOptions<TSuccess, TError, TPayload, TContext>
-  ) => UseMutationOptions<TSuccess, TError, TPayload, TContext>
+    options: Omit<
+      UseMutationOptions<TData, TError, TVariables, TContext>,
+      'mutationKey' | 'mutationFn'
+    > &
+      MutationOptions<TPathSchema, TAvailableMethod, TMethod, TPath>,
+    queryClient?: QueryClient
+  ) => UseMutationResult<TData, TError, TVariables, TContext>
+
+  // TODO: queryOptions
+  // TODO: mutationOptions
+
   getKey: <
     const TMethod extends TAvailableMethod,
     const TPath extends keyof TGroupedPathByMethod[TMethod],
@@ -257,15 +299,13 @@ export interface ReactQueryClient<
       TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
     const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
     const TError extends EdenError<TResponse> = EdenError<TResponse>,
-  >(
-    method?: TMethod,
-    path?: TPath,
-    payload?: {
-      pathParams?: GetPathParams<TSchema>
-      query?: GetQuery<TSchema>
-      headers?: GetHeaders<TSchema>
-    }
-  ) => QueryKey & {
+  >(options?: {
+    method?: TMethod
+    path?: TPath
+    pathParams?: GetPathParams<TSchema>
+    query?: GetQuery<TSchema>
+    headers?: GetHeaders<TSchema>
+  }) => QueryKey & {
     [dataTagSymbol]: TSuccess
     [dataTagErrorSymbol]: TError
   }
@@ -278,14 +318,12 @@ export interface ReactQueryClient<
       TGroupedPathByMethod[TMethod][TPath] = TGroupedPathByMethod[TMethod][TPath],
     const TSuccess extends EdenResponse<TResponse> = EdenResponse<TResponse>,
     const TError extends EdenError<TResponse> = EdenError<TResponse>,
-  >(
-    path: TPath,
-    payload?: {
-      pathParams?: GetPathParams<TSchema>
-      query?: GetQuery<TSchema>
-      headers?: GetHeaders<TSchema>
-    }
-  ) => QueryKey & {
+  >(options: {
+    path: TPath
+    pathParams?: GetPathParams<TSchema>
+    query?: GetQuery<TSchema>
+    headers?: GetHeaders<TSchema>
+  }) => QueryKey & {
     [dataTagSymbol]: TSuccess
     [dataTagErrorSymbol]: TError
   }

@@ -55,6 +55,7 @@ import type {
   FeedItemBaseContent,
   FeedItemPost,
   GetAnnouncementsResponse,
+  GetFeedContentResponse,
 } from '@api/backoffice/app'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { MoreOrLess } from '@app/components/more-or-less'
@@ -78,13 +79,14 @@ export const FeedCard = React.memo(function FeedCard(props: {
     router.navigate(`/(feed)/${props.feedItem.id}`)
   }, [router, props.feedItem.id])
   // cache initialData of feed item when navigating to detail page
-  const feedContentQuery = reactQueryClient.useQuery(
-    '/feed/:id',
-    { pathParams: { id: props.feedItem.id } },
-    // TODO: fix type
-    { initialData: props.feedItem as any, enabled: false }
-  )
-  const feedContent = feedContentQuery.data as FeedItem
+  // TODO: fix eden infering type issue
+  const feedContentQuery = reactQueryClient.useQuery<'/feed/:id', GetFeedContentResponse>({
+    path: '/feed/:id',
+    pathParams: { id: props.feedItem.id },
+    initialData: props.feedItem,
+    enabled: false,
+  })
+  const feedContent = feedContentQuery.data
   return (
     <View
       className={cn(
