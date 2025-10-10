@@ -1,5 +1,12 @@
 # @api/backoffice
 
+## 0.6.1
+
+### Patch Changes
+
+- Updated dependencies [[`c1832f9`](https://github.com/PPLEThai/pple-today/commit/c1832f9bc9a97765c8771144f7111bed3f27d730)]:
+  - @pple-today/api-common@0.3.1
+
 ## 0.6.0
 
 ### Minor Changes
