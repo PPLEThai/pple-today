@@ -109,7 +109,7 @@ export const Data = () => {
           </NavLink>
         ),
       }),
-      columnHelper.accessor('followedTopicsCount', {
+      columnHelper.accessor('followersCount', {
         header: 'ยอดผู้ติดตาม',
         cell: (info) =>
           `${info.getValue().toLocaleString('th', {

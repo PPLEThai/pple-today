@@ -108,6 +108,7 @@ const seedTopics = async () => {
           })),
         },
         status: TopicStatus.PUBLISHED,
+        bannerImagePath: '',
       },
     })
   }

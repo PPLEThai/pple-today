@@ -121,13 +121,13 @@ export default function HashtagEditPage({ params }: Route.LoaderArgs) {
                       </dd>
                     </div>
                   )}
-                  {query.data.followedTopicsCount !== undefined && (
+                  {query.data.followersCount !== undefined && (
                     <div className="flex gap-1">
                       <dt className="flex items-center gap-1">
                         <Users size={16} />
                         <span>ยอดผู้ติดตาม:</span>
                       </dt>
-                      <dd>{query.data.followedTopicsCount.toLocaleString('th')} คน</dd>
+                      <dd>{query.data.followersCount.toLocaleString('th')} คน</dd>
                     </div>
                   )}
                 </dl>

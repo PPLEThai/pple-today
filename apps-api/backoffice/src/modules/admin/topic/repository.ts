@@ -38,7 +38,7 @@ export class AdminTopicRepository {
             updatedAt: true,
             _count: {
               select: {
-                followedTopics: true,
+                followers: true,
               },
             },
           },
@@ -71,7 +71,7 @@ export class AdminTopicRepository {
       return {
         data: data.map(({ _count, ...topicData }) => ({
           ...topicData,
-          followedTopicsCount: _count.followedTopics,
+          followersCount: _count.followers,
         })),
         meta: { count },
       }
@@ -102,7 +102,7 @@ export class AdminTopicRepository {
           },
           _count: {
             select: {
-              followedTopics: true,
+              followers: true,
             },
           },
         },
@@ -111,7 +111,7 @@ export class AdminTopicRepository {
       return {
         ...result,
         hashtags: hashTags.map((hashtag) => hashtag.hashTag),
-        followedTopicsCount: _count.followedTopics,
+        followersCount: _count.followers,
       }
     })
   }
@@ -137,7 +137,7 @@ export class AdminTopicRepository {
           description: data.description,
           bannerImagePath,
           status: TopicStatus.PUBLISHED,
-          hashTagInTopics: {
+          hashTags: {
             createMany: {
               data: data.hashtagIds.map((hashtagId) => ({
                 hashTagId: hashtagId,
