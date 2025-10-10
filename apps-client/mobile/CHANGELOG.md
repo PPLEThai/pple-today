@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 0.6.1
+
+### Patch Changes
+
+- [#184](https://github.com/PPLEThai/pple-today/pull/184) [`631bb09`](https://github.com/PPLEThai/pple-today/commit/631bb0935488f53ee7119f4b1c6cb97070386c20) Thanks [@Anon-136](https://github.com/Anon-136)! - fix: add camera permision
+
 ## 0.6.0
 
 ### Minor Changes
