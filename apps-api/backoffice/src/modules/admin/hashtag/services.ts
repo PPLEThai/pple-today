@@ -17,12 +17,7 @@ import { AdminHashtagRepository, AdminHashtagRepositoryPlugin } from './reposito
 export class AdminHashtagService {
   constructor(private adminHashtagRepository: AdminHashtagRepository) {}
 
-  async getHashtags(
-    query: { limit: number; page: number; search?: string } = {
-      limit: 10,
-      page: 1,
-    }
-  ) {
+  async getHashtags(query: { limit?: number; page: number; search?: string } = { page: 1 }) {
     const result = await this.adminHashtagRepository.getHashtags(query)
     if (result.isErr()) return mapRepositoryError(result.error)
 

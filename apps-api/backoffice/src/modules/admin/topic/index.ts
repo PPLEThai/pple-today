@@ -3,6 +3,7 @@ import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-commo
 import Elysia from 'elysia'
 
 import {
+  CreateTopicBody,
   CreateTopicResponse,
   DeleteTopicParams,
   DeleteTopicResponse,
@@ -29,6 +30,7 @@ export const AdminTopicController = new Elysia({
       const pagingQuery = {
         limit: query.limit ?? 10,
         page: query.page ?? 1,
+        search: query.search,
       }
 
       const result = await adminTopicService.getTopics(pagingQuery)
@@ -81,8 +83,8 @@ export const AdminTopicController = new Elysia({
   )
   .post(
     '/',
-    async ({ status, adminTopicService }) => {
-      const result = await adminTopicService.createEmptyTopic()
+    async ({ body, status, adminTopicService }) => {
+      const result = await adminTopicService.createTopic(body)
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
       }
@@ -91,10 +93,14 @@ export const AdminTopicController = new Elysia({
     },
     {
       requiredLocalUser: true,
+      body: CreateTopicBody,
       response: {
         201: CreateTopicResponse,
         ...createErrorSchema(
           InternalErrorCode.TOPIC_INVALID_INPUT,
+          InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -104,7 +110,7 @@ export const AdminTopicController = new Elysia({
       },
     }
   )
-  .put(
+  .patch(
     '/:topicId',
     async ({ params, body, status, adminTopicService }) => {
       const result = await adminTopicService.updateTopicById(params.topicId, body)
