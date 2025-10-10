@@ -120,6 +120,6 @@ BEGIN
     final_candidate_score_with_decay.feed_item_id,
     final_candidate_score_with_decay.score::NUMERIC AS score
   FROM
-    final_candidate_score_with_decay
+    final_candidate_score_with_decay;
 END;
 $function$

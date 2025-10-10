@@ -56,6 +56,6 @@ SELECT
     afhf.author_id AS user_id,
     afhf.number_of_hashtag AS score
 FROM 
-  author_from_hashtag_filtered afhf
+  author_from_hashtag_filtered afhf;
 END;
 $function$

@@ -18,7 +18,8 @@ BEGIN
       FROM 
         current_topic_follows AS ctf
         INNER JOIN "HashTagInTopic" hitt ON hitt."topicId" = ctf."topic_id"
-        INNER JOIN "HashTag" ht ON ht."id" = hitt."hashTagId" AND ht."status" = 'PUBLISHED'
+        INNER JOIN "HashTag" ht ON ht."id" = hitt."hashTagId"
+      WHERE ht."status" = 'PUBLISHED'
       GROUP BY ht."id"
     ),
     topic_from_hashtag AS (
@@ -28,19 +29,18 @@ BEGIN
       FROM 
         current_related_hashtag
         INNER JOIN "HashTagInTopic" hitt ON hitt."hashTagId" = current_related_hashtag."id"
-        INNER JOIN "Topic" t ON hitt."topicId" = t."id" AND t."status" = 'PUBLISHED'
+        INNER JOIN "Topic" t ON hitt."topicId" = t."id"
         LEFT JOIN current_topic_follows ctf ON ctf."topic_id" = hitt."topicId"
-      WHERE ctf."topic_id" IS NULL
+      WHERE ctf."topic_id" IS null AND t."status" = 'PUBLISHED'
       GROUP BY hitt."topicId"
+      ORDER BY score DESC
+	    LIMIT 10
     )
 
   SELECT
     topic_from_hashtag.topic_id,
     topic_from_hashtag.score
   FROM 
-    topic_from_hashtag
-    INNER JOIN "Topic" t ON topic_from_hashtag.topic_id = t."id" AND t."status" = 'PUBLISHED'
-  ORDER BY topic_from_hashtag.score DESC
-  LIMIT 10;
+    topic_from_hashtag;
 END;
 $function$

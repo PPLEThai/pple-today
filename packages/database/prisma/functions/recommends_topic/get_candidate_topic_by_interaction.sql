@@ -39,10 +39,10 @@ BEGIN
         SUM(latest_user_interaction.score) AS score
       FROM 
         latest_user_interaction
-        INNER JOIN "Announcement" a ON a."feedItemId" = latest_user_interaction."feed_item_id" AND a."status" = 'PUBLISHED'
+        INNER JOIN "Announcement" a ON a."feedItemId" = latest_user_interaction."feed_item_id" 
         INNER JOIN "AnnouncementTopic" ant ON ant."announcementId" = latest_user_interaction."feed_item_id"
         LEFT JOIN current_user_follows uft ON uft."topic_id" = ant."topicId"
-      WHERE uft."topic_id" IS NULL
+      WHERE uft."topic_id" IS NULL AND a."status" = 'PUBLISHED'
       GROUP BY ant."topicId"
       UNION ALL
       SELECT 
@@ -50,10 +50,10 @@ BEGIN
         SUM(latest_user_interaction.score) AS score
       FROM
         latest_user_interaction
-        INNER JOIN "Poll" poll_item ON poll_item."feedItemId" = latest_user_interaction."feed_item_id" AND poll_item."status" = 'PUBLISHED'
+        INNER JOIN "Poll" poll_item ON poll_item."feedItemId" = latest_user_interaction."feed_item_id"
         INNER JOIN "PollTopic" poll ON poll."pollId" = latest_user_interaction."feed_item_id"
         LEFT JOIN current_user_follows uft ON uft."topic_id" = poll."topicId"
-      WHERE uft."topic_id" IS NULL
+      WHERE uft."topic_id" IS NULL AND poll_item."status" = 'PUBLISHED'
       GROUP BY poll."topicId"
     ),
     indirect_topic_from_interaction AS (
@@ -62,11 +62,11 @@ BEGIN
         SUM(latest_user_interaction.score) AS score
       FROM 
         latest_user_interaction
-        INNER JOIN "Post" post ON post."feedItemId" = latest_user_interaction."feed_item_id" AND post."status" = 'PUBLISHED'
+        INNER JOIN "Post" post ON post."feedItemId" = latest_user_interaction."feed_item_id"
         INNER JOIN "PostHashTag" pht ON pht."postId" = latest_user_interaction."feed_item_id"
         INNER JOIN "HashTagInTopic" hitt ON hitt."hashTagId" = pht."hashTagId"
         LEFT JOIN current_user_follows uft ON uft."topic_id" = hitt."topicId"
-      WHERE uft."topic_id" IS NULL
+      WHERE uft."topic_id" IS null AND post."status" = 'PUBLISHED'
       GROUP BY hitt."topicId"
     ),
     candidate_topic AS (
