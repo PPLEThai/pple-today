@@ -1,5 +1,36 @@
 # @client/mobile
 
+## 0.6.0
+
+### Minor Changes
+
+- [#173](https://github.com/PPLEThai/pple-today/pull/173) [`804435c`](https://github.com/PPLEThai/pple-today/commit/804435cafa4a5a521345ec766ec8d2f10ebb0a0e) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-211] Election Detail Page UI](https://linear.app/snts/issue/PPLE-211/election-detail-page-ui)
+  [[PPLE-212] Election Detail Page Integrate](https://linear.app/snts/issue/PPLE-212/election-detail-page-integrate)
+
+- [#166](https://github.com/PPLEThai/pple-today/pull/166) [`716ed59`](https://github.com/PPLEThai/pple-today/commit/716ed59316d43e0203e41417f2f8ffafe4866c7c) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-101] Election Card In Feed Integrate](https://linear.app/snts/issue/PPLE-101/election-card-in-feed-integrate)
+
+- [#154](https://github.com/PPLEThai/pple-today/pull/154) [`763a1a0`](https://github.com/PPLEThai/pple-today/commit/763a1a0dddd342cde1a38aab8fe0997650157d2e) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-333] User detail UI](https://linear.app/snts/issue/PPLE-333/user-detail-page-ui)
+
+  [[PPLE-334] User detail Integration](https://linear.app/snts/issue/PPLE-334/user-detail-integrate)
+
+  [[PPLE-399] 2 Announcement Section](https://linear.app/snts/issue/PPLE-399/2-announcement-section)
+
+- [#163](https://github.com/PPLEThai/pple-today/pull/163) [`b4cb326`](https://github.com/PPLEThai/pple-today/commit/b4cb326c36c4a0d59f9c1ca146a83fbba486f505) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-208] Election Card UI](https://linear.app/snts/issue/PPLE-208/election-card-ui)
+
+- [#179](https://github.com/PPLEThai/pple-today/pull/179) [`142fcc1`](https://github.com/PPLEThai/pple-today/commit/142fcc155f5c23de33816e9b3e80c915da976886) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-412] Vote Page](https://linear.app/snts/issue/PPLE-412/vote-page)
+  [[PPLE-413] Vote Page and Submit Integrate](https://linear.app/snts/issue/PPLE-413/vote-submit-integrate)
+
+- [#165](https://github.com/PPLEThai/pple-today/pull/165) [`979986e`](https://github.com/PPLEThai/pple-today/commit/979986e2b65884852c50b249d170e69e6af28106) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-209] Election Card Integrate](https://linear.app/snts/issue/PPLE-209/election-card-integrate)
+
+- [#175](https://github.com/PPLEThai/pple-today/pull/175) [`29233d9`](https://github.com/PPLEThai/pple-today/commit/29233d99508e57738adbf7d10bc5a473e7663f48) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-411] Get User's Image Face for Voting](https://linear.app/snts/issue/PPLE-411/get-users-image-face-for-voting)
+
+- [#174](https://github.com/PPLEThai/pple-today/pull/174) [`08a950a`](https://github.com/PPLEThai/pple-today/commit/08a950ab76652461268a138db9b28de225e35937) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-410] Get User's Location for Voting](https://linear.app/snts/issue/PPLE-410/get-users-location-for-voting)
+
+### Patch Changes
+
+- Updated dependencies [[`572e86c`](https://github.com/PPLEThai/pple-today/commit/572e86c9af4a114c9c676ddec46a27d9b3f33662), [`b4cb326`](https://github.com/PPLEThai/pple-today/commit/b4cb326c36c4a0d59f9c1ca146a83fbba486f505), [`979986e`](https://github.com/PPLEThai/pple-today/commit/979986e2b65884852c50b249d170e69e6af28106), [`08a950a`](https://github.com/PPLEThai/pple-today/commit/08a950ab76652461268a138db9b28de225e35937)]:
+  - @pple-today/ui@0.3.0
+
 ## 0.5.2
 
 ### Patch Changes
