@@ -33,6 +33,7 @@ import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { Spinner } from '@app/components/spinner'
 import { reactQueryClient } from '@app/libs/api-client'
 import { ImageMimeType } from '@app/types/file'
+import { encryptBallot } from '@app/utils/election'
 import { handleUploadImage } from '@app/utils/upload'
 
 export default function ElectionVotePage() {
@@ -363,6 +364,10 @@ function ElectionVoteStep({ election }: { election: GetElectionResponse }) {
   const router = useRouter()
   const queryClient = useQueryClient()
   const submit = async () => {
+    if (!election.encryptionPublicKey) {
+      toast.error({ text1: 'เกิดข้อผิดพลาดในการลงคะแนน' })
+      return
+    }
     if (!selectedCandidateId) {
       return
     }
@@ -370,8 +375,7 @@ function ElectionVoteStep({ election }: { election: GetElectionResponse }) {
       {
         pathParams: { electionId: election.id },
         body: {
-          // TODO: encrypt this with publicKey
-          encryptedBallot: selectedCandidateId,
+          encryptedBallot: encryptBallot(selectedCandidateId, election.encryptionPublicKey),
           location: JSON.stringify(state.locationStepResult!),
           faceImagePath: state.faceVerificationStepResult!.faceImagePath,
         },
