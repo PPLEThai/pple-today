@@ -1060,7 +1060,7 @@ function LocationExample() {
 }
 
 function FrontCameraExample() {
-  const [status, requestPermission] = Location.useForegroundPermissions()
+  const [status, requestPermission] = ImagePicker.useCameraPermissions()
   const [asset, setAsset] = useState<ImagePicker.ImagePickerAsset | null>(null)
   return (
     <View className="flex flex-col gap-2">
