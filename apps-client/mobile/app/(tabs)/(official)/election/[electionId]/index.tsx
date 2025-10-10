@@ -175,8 +175,9 @@ function ElectionResult({ election }: { election: GetElectionResponse }) {
             <Text className="text-base font-body-regular text-base-text-high flex-1">
               {candidate.name}
             </Text>
-            {/* TODO: integrate result */}
-            <Text className="text-base font-heading-bold text-base-primary-default">{0}%</Text>
+            <Text className="text-base font-heading-bold text-base-primary-default">
+              {candidate.voteScorePercent!}%
+            </Text>
           </View>
         ))}
       </View>
