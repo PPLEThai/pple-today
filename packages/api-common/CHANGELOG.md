@@ -1,5 +1,37 @@
 # @pple-today/api-common
 
+## 0.3.1
+
+### Patch Changes
+
+- [#186](https://github.com/PPLEThai/pple-today/pull/186) [`c1832f9`](https://github.com/PPLEThai/pple-today/commit/c1832f9bc9a97765c8771144f7111bed3f27d730) Thanks [@miello](https://github.com/miello)! - [[PPLE-450] [API] Remove file permission from transaction](https://linear.app/snts/issue/PPLE-450/api-remove-file-permission-from-transaction)
+
+## 0.3.0
+
+### Minor Changes
+
+- [#164](https://github.com/PPLEThai/pple-today/pull/164) [`3577cdd`](https://github.com/PPLEThai/pple-today/commit/3577cdd4a12285e69e82b44a5f0269f645da70bf) Thanks [@miello](https://github.com/miello)! - [[PPLE-420] [API] Add hashtag to search module too](https://linear.app/snts/issue/PPLE-420/api-add-hashtag-to-search-module-too)
+
+- [#162](https://github.com/PPLEThai/pple-today/pull/162) [`d32d324`](https://github.com/PPLEThai/pple-today/commit/d32d324e2592174922635bb6e67f5cca32f8eeff) Thanks [@miello](https://github.com/miello)! - [[PPLE-408] [API] CMS api revamp](https://linear.app/snts/issue/PPLE-408/api-cms-api-revamp)
+
+- [#160](https://github.com/PPLEThai/pple-today/pull/160) [`8ca4c1e`](https://github.com/PPLEThai/pple-today/commit/8ca4c1eea46e1e7faf3c27dba0e49825f2fbabf6) Thanks [@miello](https://github.com/miello)! - [[PPLE-374] [API] Filter announcement from feed item](https://linear.app/snts/issue/PPLE-374/api-filter-announcement-from-feed-item)
+  [[PPLE-88] Research about global and personalized recommendation system](https://linear.app/snts/issue/PPLE-88/research-about-global-and-personalized-recommendation-system)
+
+### Patch Changes
+
+- [#158](https://github.com/PPLEThai/pple-today/pull/158) [`dc3e388`](https://github.com/PPLEThai/pple-today/commit/dc3e388bbc439dceeadd6e042155ad198687047f) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-403] [API] Setup counting service](https://linear.app/snts/issue/PPLE-403/api-setup-counting-service)
+
+- [#131](https://github.com/PPLEThai/pple-today/pull/131) [`2f0eb4c`](https://github.com/PPLEThai/pple-today/commit/2f0eb4c64cf03b225bd9e088d08338d0e52a7d86) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-319] [API] election candidate management endpoint](https://linear.app/snts/issue/PPLE-319/api-election-candidate-management-endpoint)
+
+- [#163](https://github.com/PPLEThai/pple-today/pull/163) [`b4cb326`](https://github.com/PPLEThai/pple-today/commit/b4cb326c36c4a0d59f9c1ca146a83fbba486f505) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-208] Election Card UI](https://linear.app/snts/issue/PPLE-208/election-card-ui)
+
+- [#153](https://github.com/PPLEThai/pple-today/pull/153) [`638460d`](https://github.com/PPLEThai/pple-today/commit/638460dd1680ef218a2fe7af6721d60b360f2872) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-318] [API] Election Eligible Users Management Endpoint](https://linear.app/snts/issue/PPLE-318/api-election-eligible-users-management-endpoint)
+
+- [#135](https://github.com/PPLEThai/pple-today/pull/135) [`0589541`](https://github.com/PPLEThai/pple-today/commit/058954124c58938b8563d9976234c768eead75a7) Thanks [@miello](https://github.com/miello)! - [[PPLE-385] [API] Fix wrong logic when handle file transaction](https://linear.app/snts/issue/PPLE-385/api-fix-wrong-logic-when-handle-file-transaction)
+
+- Updated dependencies [[`3c33f55`](https://github.com/PPLEThai/pple-today/commit/3c33f550aec0cd09d2d1c73b312c36ac8fa9b275), [`804435c`](https://github.com/PPLEThai/pple-today/commit/804435cafa4a5a521345ec766ec8d2f10ebb0a0e), [`6427bad`](https://github.com/PPLEThai/pple-today/commit/6427bade1f139634a8ed325ef75b497259370d85), [`4e5ac39`](https://github.com/PPLEThai/pple-today/commit/4e5ac39e21570bee8c91615e89113fce4fc31ea3), [`b4cb326`](https://github.com/PPLEThai/pple-today/commit/b4cb326c36c4a0d59f9c1ca146a83fbba486f505), [`638460d`](https://github.com/PPLEThai/pple-today/commit/638460dd1680ef218a2fe7af6721d60b360f2872), [`4318b42`](https://github.com/PPLEThai/pple-today/commit/4318b4215646deed626776800d9add6f13cc1a2e), [`d32d324`](https://github.com/PPLEThai/pple-today/commit/d32d324e2592174922635bb6e67f5cca32f8eeff), [`8ca4c1e`](https://github.com/PPLEThai/pple-today/commit/8ca4c1eea46e1e7faf3c27dba0e49825f2fbabf6)]:
+  - @pple-today/database@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes

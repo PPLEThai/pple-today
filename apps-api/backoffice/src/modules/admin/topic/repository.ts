@@ -80,38 +80,37 @@ export class AdminTopicRepository {
 
   async getTopicById(topicId: string) {
     return await fromRepositoryPromise(async () => {
-      const { hashTagInTopics, _count, ...result } =
-        await this.prismaService.topic.findUniqueOrThrow({
-          where: { id: topicId },
-          select: {
-            id: true,
-            name: true,
-            description: true,
-            bannerImagePath: true,
-            status: true,
-            createdAt: true,
-            updatedAt: true,
-            hashTagInTopics: {
-              select: {
-                hashTag: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
+      const { hashTags, _count, ...result } = await this.prismaService.topic.findUniqueOrThrow({
+        where: { id: topicId },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          bannerImagePath: true,
+          status: true,
+          createdAt: true,
+          updatedAt: true,
+          hashTags: {
+            select: {
+              hashTag: {
+                select: {
+                  id: true,
+                  name: true,
                 },
               },
             },
-            _count: {
-              select: {
-                followedTopics: true,
-              },
+          },
+          _count: {
+            select: {
+              followedTopics: true,
             },
           },
-        })
+        },
+      })
 
       return {
         ...result,
-        hashtags: hashTagInTopics.map((hashTagInTopic) => hashTagInTopic.hashTag),
+        hashtags: hashTags.map((hashtag) => hashtag.hashTag),
         followedTopicsCount: _count.followedTopics,
       }
     })
@@ -222,7 +221,7 @@ export class AdminTopicRepository {
           bannerImagePath,
           status: data.status,
           ...(data.hashtagIds && {
-            hashTagInTopics: {
+            hashTags: {
               deleteMany: {},
               createMany: {
                 data: data.hashtagIds.map((hashtagId) => ({

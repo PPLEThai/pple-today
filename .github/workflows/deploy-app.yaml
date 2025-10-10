@@ -48,6 +48,12 @@ jobs:
       deploy-mobile-app: ${{ steps.affected-apps.outputs.deploy-mobile-app }}
       migrate-database: ${{ steps.affected-apps.outputs.migrate-database }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # fetch all history for tags
+          persist-credentials: false # avoid checking out the repository again
+
       - name: Get affected web application names
         id: affected-apps
         run: |

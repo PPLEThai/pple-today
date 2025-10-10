@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Pressable, PressableProps, View } from 'react-native'
+import { View, ViewProps } from 'react-native'
 import { createQuery } from 'react-query-kit'
 
-import { QUERY_KEY } from '@pple-today/api-client'
+import { QUERY_KEY_SYMBOL } from '@pple-today/api-client'
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
@@ -13,12 +13,13 @@ import { H3 } from '@pple-today/ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import * as Linking from 'expo-linking'
-import { Link, useRouter } from 'expo-router'
+import { Link } from 'expo-router'
 import {
   AlarmClockCheckIcon,
   AlarmClockIcon,
   ArrowRightIcon,
   CalendarIcon,
+  CircleAlertIcon,
   ClockIcon,
   MapPinIcon,
   MapPinnedIcon,
@@ -27,46 +28,53 @@ import {
 
 import { ElectionWithCurrentStatus } from '@api/backoffice/app'
 import PPLEIcon from '@app/assets/pple-icon.svg'
+import { reactQueryClient } from '@app/libs/api-client'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 
-interface ElectionCardProps extends PressableProps {
+interface ElectionCardProps extends ViewProps {
   election: ElectionWithCurrentStatus
 }
 export function ElectionCard({ election, className, ...props }: ElectionCardProps) {
-  const router = useRouter()
   return (
-    <Pressable
-      className={cn(
-        'w-full bg-base-secondary-default rounded-2xl flex flex-col justify-between gap-2 p-4 overflow-hidden',
-        className
-      )}
-      onPress={() => router.push(`/election/${election.id}`)}
-      {...props}
-    >
-      <View className="flex flex-col gap-2">
-        <Icon
-          icon={PPLEIcon}
-          width={239}
-          height={239}
-          className="absolute -right-10 top-0 text-base-primary-default opacity-40"
-        />
-        <View className="flex flex-row justify-between w-full">
-          <Badge variant="secondary">
-            <Text>{getElectionTypeLabel(election.type)}</Text>
-          </Badge>
-          <ElectionStatusBadge status={election.status} />
+    <>
+      <View
+        className={cn(
+          'w-full bg-base-secondary-default rounded-2xl flex flex-col justify-between gap-2 p-4 overflow-hidden',
+          className
+        )}
+        {...props}
+      >
+        <View className="flex flex-col gap-2">
+          <Icon
+            icon={PPLEIcon}
+            width={239}
+            height={239}
+            className="absolute -right-10 top-0 text-base-primary-default opacity-40"
+          />
+          <View className="flex flex-row justify-between w-full">
+            <ElectionTypeBadge type={election.type} />
+            <ElectionStatusBadge status={election.status} />
+          </View>
+          <H3 className="text-base-text-invert font-heading-bold text-xl line-clamp-2 self-start">
+            {election.name}
+          </H3>
+          <ElectionCardDetail election={election} />
         </View>
-        <H3 className="text-base-text-invert font-heading-bold text-xl line-clamp-2 self-start">
-          {election.name}
-        </H3>
-        <ElectionCardDetail election={election} />
+        <ElectionCardFooter election={election} />
       </View>
-      <ElectionCardFooter election={election} />
-    </Pressable>
+      <ElectionRegisterWarning election={election} />
+    </>
   )
 }
 
-function getElectionTypeLabel(type: ElectionWithCurrentStatus['type']) {
+export function ElectionTypeBadge(props: { type: ElectionWithCurrentStatus['type'] }) {
+  return (
+    <Badge variant="secondary">
+      <Text>{getElectionTypeLabel(props.type)}</Text>
+    </Badge>
+  )
+}
+export function getElectionTypeLabel(type: ElectionWithCurrentStatus['type']) {
   switch (type) {
     case 'ONLINE':
       return 'เลือกตั้งออนไลน์'
@@ -125,37 +133,45 @@ function ElectionCardDetail(props: ElectionCardProps) {
         )
       }
       if (props.election.type === 'HYBRID') {
-        if (!props.election.isRegistered) {
+        if (dayjs().isBefore(props.election.openRegister)) {
           return (
             <>
               <ElectionOpenVotingDate election={props.election} />
-              <View className="flex flex-row gap-1 items-center">
-                <Icon icon={ClockIcon} size={16} className="text-base-text-invert" />
-                <Text className="text-sm text-base-text-invert font-heading-regular">
-                  เปิดลงทะเบียนถึง:{' '}
-                  <Text className="text-sm text-base-primary-default font-body-medium">
-                    {dayjs(props.election.openRegister).format('D MMM BBBB เวลา HH:mm')}
-                  </Text>
-                </Text>
-              </View>
+              <ElectionOpenRegisterDate election={props.election} />
+            </>
+          )
+        }
+        if (dayjs().isBefore(props.election.closeRegister)) {
+          return (
+            <>
+              <ElectionOpenVotingDate election={props.election} />
+              <ElectionCloseRegisterDate election={props.election} />
             </>
           )
         }
         return (
           <>
             <ElectionOpenVotingDate election={props.election} />
-            <Badge variant="outline" className="self-stretch">
-              <Text className="text-base-text-invert">
-                หมดเวลาลงทะเบียนแล้ว คุณมีสิทธิ์เลือกตั้งในสถานที่
-              </Text>
-            </Badge>
+            {!props.election.isRegistered && (
+              <>
+                <ElectionLocation election={props.election} />
+                <Badge variant="outline" className="self-stretch">
+                  <Text className="text-base-text-invert">
+                    หมดเวลาลงทะเบียนแล้ว คุณมีสิทธิ์เลือกตั้งในสถานที่
+                  </Text>
+                </Badge>
+              </>
+            )}
           </>
         )
       }
       break
     }
     case 'OPEN_VOTE':
-      if (props.election.type === 'ONLINE') {
+      if (
+        props.election.type === 'ONLINE' ||
+        (props.election.type === 'HYBRID' && props.election.isRegistered)
+      ) {
         return (
           <>
             <ElectionTimeLeft election={props.election} />
@@ -163,23 +179,13 @@ function ElectionCardDetail(props: ElectionCardProps) {
           </>
         )
       }
-      if (props.election.type === 'ONSITE') {
-        return (
-          <>
-            <ElectionTimeLeft election={props.election} />
-            <ElectionLocation election={props.election} />
-          </>
-        )
-      }
-      if (props.election.type === 'HYBRID') {
-        return (
-          <>
-            <ElectionTimeLeft election={props.election} />
-            <Progress value={props.election.votePercentage} />
-          </>
-        )
-      }
-      break
+      return (
+        <>
+          <ElectionTimeLeft election={props.election} />
+          <ElectionLocation election={props.election} />
+        </>
+      )
+
     case 'CLOSED_VOTE':
       return (
         <View className="flex flex-row gap-1 items-center">
@@ -196,6 +202,32 @@ function ElectionCardDetail(props: ElectionCardProps) {
   }
 }
 
+function ElectionOpenRegisterDate(props: ElectionCardProps) {
+  return (
+    <View className="flex flex-row gap-1 items-center">
+      <Icon icon={ClockIcon} size={16} className="text-base-text-invert" />
+      <Text className="text-sm text-base-text-invert font-heading-regular">
+        เปิดให้ลงทะเบียน:{' '}
+        <Text className="text-sm text-base-primary-default font-body-medium">
+          {dayjs(props.election.openRegister).format('D MMM BBBB เวลา HH:mm')}
+        </Text>
+      </Text>
+    </View>
+  )
+}
+function ElectionCloseRegisterDate(props: ElectionCardProps) {
+  return (
+    <View className="flex flex-row gap-1 items-center">
+      <Icon icon={ClockIcon} size={16} className="text-base-text-invert" />
+      <Text className="text-sm text-base-text-invert font-heading-regular">
+        เปิดลงทะเบียนถึง:{' '}
+        <Text className="text-sm text-base-primary-default font-body-medium">
+          {dayjs(props.election.closeRegister).format('D MMM BBBB เวลา HH:mm')}
+        </Text>
+      </Text>
+    </View>
+  )
+}
 function ElectionOpenVotingDate(props: ElectionCardProps) {
   return (
     <View className="flex flex-row gap-1 items-center">
@@ -232,7 +264,7 @@ function ElectionTimeLeft(props: ElectionCardProps) {
     </View>
   )
 }
-function CountdownTimer(props: { targetTime: Date }) {
+export function CountdownTimer(props: { targetTime: Date }) {
   const [secondsLeft, setSecondsLeft] = useState(0)
   useEffect(() => {
     const targetTime = dayjs(props.targetTime)
@@ -297,7 +329,7 @@ function ElectionCardFooter(props: ElectionCardProps) {
         )
       }
       if (props.election.type === 'HYBRID') {
-        if (!props.election.isRegistered) {
+        if (dayjs().isBefore(props.election.closeRegister) || props.election.isRegistered) {
           return (
             <View className="flex flex-row pt-2 gap-2.5">
               <ElectionNotification electionId={props.election.id}>
@@ -312,11 +344,7 @@ function ElectionCardFooter(props: ElectionCardProps) {
                   </Button>
                 )}
               </ElectionNotification>
-              {/* TODO */}
-              <Button size="sm" className="flex-1">
-                <Icon icon={UserRoundCheckIcon} size={16} />
-                <Text>ลงทะเบียนเลือกตั้งออนไลน์</Text>
-              </Button>
+              <ElectionRegisterButton election={props.election} />
             </View>
           )
         }
@@ -345,32 +373,29 @@ function ElectionCardFooter(props: ElectionCardProps) {
       break
     }
     case 'OPEN_VOTE':
-      if (props.election.type === 'ONLINE') {
+      if (
+        props.election.type === 'ONLINE' ||
+        (props.election.type === 'HYBRID' && props.election.isRegistered)
+      ) {
         return <ElectionPercentageActions election={props.election} />
       }
-      if (props.election.type === 'ONSITE') {
-        return (
-          <Button
-            variant="secondary"
-            size="sm"
-            className="w-full mt-2"
-            onPress={() => Linking.openURL(props.election.locationMapUrl!)}
-          >
-            <Icon icon={MapPinnedIcon} size={16} />
-            <Text>ดูสถานที่</Text>
-          </Button>
-        )
-      }
-      if (props.election.type === 'HYBRID') {
-        return <ElectionPercentageActions election={props.election} />
-      }
-      break
+      return (
+        <Button
+          variant="secondary"
+          size="sm"
+          className="w-full mt-2"
+          onPress={() => Linking.openURL(props.election.locationMapUrl!)}
+        >
+          <Icon icon={MapPinnedIcon} size={16} />
+          <Text>ดูสถานที่</Text>
+        </Button>
+      )
     case 'CLOSED_VOTE':
       return null
     case 'RESULT_ANNOUNCE':
       return (
         <View className="flex flex-row pt-2 gap-2.5">
-          <Link href={`/election/${props.election.id}`} asChild>
+          <Link href={`./election/${props.election.id}`} asChild>
             <Button className="w-full" size="sm">
               <Text>ดูผลการเลือกตั้ง</Text>
               <Icon icon={ArrowRightIcon} size={16} />
@@ -389,7 +414,7 @@ function ElectionPercentageActions(props: ElectionCardProps) {
       <Text className="text-sm text-base-text-invert font-heading-regular">
         ใช้สิทธิ์แล้ว: {Math.floor(props.election.votePercentage)}%
       </Text>
-      <Link href={`/election/${props.election.id}`} asChild>
+      <Link href={`./election/${props.election.id}`} asChild>
         <Button size="sm" className="flex-1">
           <Text>{props.election.isVoted ? 'ลงคะแนนใหม่' : 'ไปเลือกตั้ง'}</Text>
           <Icon icon={ArrowRightIcon} size={16} />
@@ -400,14 +425,14 @@ function ElectionPercentageActions(props: ElectionCardProps) {
 }
 
 const useElectionNotificationQuery = createQuery({
-  queryKey: [QUERY_KEY, 'electionNotification'],
+  queryKey: [QUERY_KEY_SYMBOL, 'electionNotification'],
   fetcher: (_: { electionId: string }): boolean => {
     throw new Error('ElectionNotificationQuery should not be enabled')
   },
   enabled: false,
   initialData: false,
 })
-export function useElectionNotificationState(electionId: string, initialData: boolean) {
+function useElectionNotificationState(electionId: string, initialData: boolean) {
   const electionNotificationQuery = useElectionNotificationQuery({
     variables: { electionId },
     initialData: initialData,
@@ -433,10 +458,138 @@ interface ElectionNotificationProps {
     setIsEnabled: (value: boolean) => void
   }) => React.ReactNode
 }
-function ElectionNotification(props: ElectionNotificationProps) {
+export function ElectionNotification(props: ElectionNotificationProps) {
   const [isEnabled, setIsEnabled] = useElectionNotificationState(
     props.electionId,
     props.initialData ?? false
   )
   return props.children({ isEnabled, setIsEnabled })
+}
+
+interface ElectionDetailCardProps extends ViewProps {
+  election: ElectionWithCurrentStatus
+}
+export function ElectionDetailCard({ election, className, ...props }: ElectionDetailCardProps) {
+  return (
+    <View
+      className={cn(
+        'w-full bg-base-secondary-default rounded-2xl flex flex-col justify-between gap-2 p-4 overflow-hidden',
+        className
+      )}
+      {...props}
+    >
+      <View className="flex flex-col gap-2">
+        <Icon
+          icon={PPLEIcon}
+          width={239}
+          height={239}
+          className="absolute -right-10 top-0 text-base-primary-default opacity-40"
+        />
+        <View className="flex flex-row justify-between w-full">
+          <ElectionTypeBadge type={election.type} />
+          <ElectionStatusBadge status={election.status} />
+        </View>
+        <ElectionDetailCardDetail election={election} />
+      </View>
+    </View>
+  )
+}
+
+function ElectionDetailCardDetail(props: ElectionDetailCardProps) {
+  switch (props.election.status) {
+    case 'NOT_OPENED_VOTE':
+      return null
+    case 'OPEN_VOTE':
+      if (
+        props.election.type === 'ONLINE' ||
+        (props.election.type === 'HYBRID' && props.election.isRegistered)
+      ) {
+        return (
+          <>
+            <ElectionTimeLeft election={props.election} />
+            <Progress value={props.election.votePercentage} />
+            <ElectionPercentage election={props.election} />
+          </>
+        )
+      }
+      return (
+        <>
+          <ElectionTimeLeft election={props.election} />
+          <ElectionLocation election={props.election} />
+        </>
+      )
+    case 'CLOSED_VOTE':
+    case 'RESULT_ANNOUNCE':
+      return null
+    default:
+      exhaustiveGuard(props.election.status)
+  }
+}
+
+function ElectionPercentage(props: ElectionDetailCardProps) {
+  return (
+    <View className="flex flex-row pt-2 gap-2.5">
+      <Text className="text-sm text-base-text-invert font-heading-regular">
+        ใช้สิทธิ์แล้ว: {Math.floor(props.election.votePercentage)}%
+      </Text>
+    </View>
+  )
+}
+
+function ElectionRegisterButton(props: ElectionCardProps) {
+  const electionRegisterMutation = reactQueryClient.useMutation(
+    'post',
+    '/elections/:electionId/register',
+    {}
+  )
+  const [isRegistered, setIsRegistered] = useState(props.election.isRegistered)
+  return (
+    <Button
+      size="sm"
+      className="flex-1"
+      disabled={
+        isRegistered ||
+        electionRegisterMutation.isPending ||
+        dayjs().isBefore(props.election.openRegister)
+      }
+      onPress={() => {
+        if (isRegistered) return
+        setIsRegistered(true)
+        electionRegisterMutation.mutateAsync(
+          {
+            pathParams: { electionId: props.election.id },
+            body: { type: 'ONLINE' },
+          },
+          {
+            onError: (error) => {
+              console.error('Election register error', JSON.stringify(error))
+              setIsRegistered(false)
+            },
+          }
+        )
+      }}
+    >
+      <Icon icon={UserRoundCheckIcon} size={16} />
+      <Text>{isRegistered ? 'ลงทะเบียนแล้ว' : 'ลงทะเบียนเลือกตั้งออนไลน์'}</Text>
+    </Button>
+  )
+}
+
+function ElectionRegisterWarning(props: ElectionCardProps) {
+  if (
+    props.election.type !== 'HYBRID' ||
+    dayjs().isAfter(props.election.closeRegister) ||
+    dayjs().isBefore(props.election.openRegister) ||
+    props.election.isRegistered
+  ) {
+    return null
+  }
+  return (
+    <View className="rounded-2xl p-2 flex flex-row gap-2 bg-base-bg-white border border-base-outline-default mt-2">
+      <Icon icon={CircleAlertIcon} size={24} className="text-base-primary-default" />
+      <Text className="text-xs text-base-text-medium font-heading-regular">
+        {'หากไม่ลงทะเบียนเลือกตั้งภายในเวลาที่กำหนดระบบจะจัดให้\nคุณเลือกตั้งในสถานที่โดยอัตโนมัติ'}
+      </Text>
+    </View>
+  )
 }

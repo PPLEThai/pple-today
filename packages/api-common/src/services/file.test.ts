@@ -97,8 +97,6 @@ const loggerService = {
 
 const StorageBucketSpy = vi.spyOn(Storage.prototype, 'bucket')
 const BucketFileSpy = vi.spyOn(Bucket.prototype, 'file')
-const FileMakePublicSpy = vi.spyOn(FileObject.prototype, 'makePublic')
-const FileMakePrivateSpy = vi.spyOn(FileObject.prototype, 'makePrivate')
 const FileMoveSpy = vi.spyOn(FileObject.prototype, 'move')
 const FilePublicUrlSpy = vi.spyOn(FileObject.prototype, 'publicUrl')
 const FileDeleteSpy = vi.spyOn(FileObject.prototype, 'delete')
@@ -116,8 +114,6 @@ describe('File service', async () => {
     StorageConstructor.mockClear()
     StorageBucketSpy.mockClear()
     BucketFileSpy.mockClear()
-    FileMakePublicSpy.mockReset()
-    FileMakePrivateSpy.mockReset()
     FileMoveSpy.mockReset()
     FilePublicUrlSpy.mockReset()
     FileDeleteSpy.mockReset()
@@ -203,62 +199,6 @@ describe('File service', async () => {
       })
     })
 
-    describe('markAsPublic', () => {
-      it('should call makeAsPublic on the file object when markAsPublic is called', async () => {
-        const fileService = createFileService()
-        await fileService.markAsPublic('path/to/file.txt')
-
-        expect(BucketFileSpy).toHaveBeenCalledWith('path/to/file.txt')
-        expect(FileMakePublicSpy).toHaveBeenCalled()
-      })
-
-      it('should return correct error if makeAsPublic fails', async () => {
-        FileMakePublicSpy.mockImplementationOnce(async () => {
-          throw new Error('Failed to make file public')
-        })
-
-        const fileService = createFileService()
-        const result = await fileService.markAsPublic('path/to/file.txt')
-
-        expect(result.isErr()).toBe(true)
-        expect(result._unsafeUnwrapErr()).toEqual({
-          code: InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
-          message: 'Failed to make file public',
-        })
-
-        expect(BucketFileSpy).toHaveBeenCalledWith('path/to/file.txt')
-        expect(FileMakePublicSpy).toHaveBeenCalled()
-      })
-    })
-
-    describe('markAsPrivate', () => {
-      it('should call makeAsPrivate on the file object when markAsPrivate is called', async () => {
-        const fileService = createFileService()
-        await fileService.markAsPrivate('path/to/file.txt')
-
-        expect(BucketFileSpy).toHaveBeenCalledWith('path/to/file.txt')
-        expect(FileMakePrivateSpy).toHaveBeenCalled()
-      })
-
-      it('should return correct error if makeAsPrivate fails', async () => {
-        FileMakePrivateSpy.mockImplementationOnce(async () => {
-          throw new Error('Failed to make file private')
-        })
-
-        const fileService = createFileService()
-        const result = await fileService.markAsPrivate('path/to/file.txt')
-
-        expect(result.isErr()).toBe(true)
-        expect(result._unsafeUnwrapErr()).toEqual({
-          code: InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
-          message: 'Failed to make file private',
-        })
-
-        expect(BucketFileSpy).toHaveBeenCalledWith('path/to/file.txt')
-        expect(FileMakePrivateSpy).toHaveBeenCalled()
-      })
-    })
-
     describe('bulkMoveToPublicFolder', () => {
       it('should call markAsPublic with new path when bulkMoveToPublicFolder is called', async () => {
         const fileService = createFileService()
@@ -266,8 +206,6 @@ describe('File service', async () => {
 
         expect(BucketFileSpy).toHaveBeenCalledWith('public/folder/file1.txt')
         expect(BucketFileSpy).toHaveBeenCalledWith('public/folder/file2.txt')
-
-        expect(FileMakePublicSpy).toHaveBeenCalledTimes(2)
 
         expect(FileMoveSpy).toHaveBeenCalledTimes(2)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(1, new FileObject('public/folder/file1.txt'))
@@ -294,41 +232,9 @@ describe('File service', async () => {
         expect(BucketFileSpy).toHaveBeenCalledWith('public/folder/file1.txt')
         expect(BucketFileSpy).toHaveBeenCalledWith('public/folder/file2.txt')
 
-        expect(FileMakePublicSpy).toHaveBeenCalledTimes(0)
-
         expect(FileMoveSpy).toHaveBeenCalledTimes(2)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(1, new FileObject('public/folder/file1.txt'))
         expect(FileMoveSpy).toHaveBeenNthCalledWith(2, new FileObject('public/folder/file2.txt'))
-      })
-
-      it('should return correct error if markAsPublic fails', async () => {
-        FileMakePublicSpy.mockImplementation(async () => {
-          throw new Error('Failed to make file public')
-        })
-
-        const fileService = createFileService()
-        const result = await fileService.bulkMoveToPublicFolder([
-          'temp/folder/file1.txt',
-          'temp/folder/file2.txt',
-        ])
-
-        expect(result.isErr()).toBe(true)
-        expect(result._unsafeUnwrapErr()).toEqual({
-          code: InternalErrorCode.FILE_MOVE_ERROR,
-          message: 'Failed to move one or more files',
-        })
-
-        expect(BucketFileSpy).toHaveBeenCalledWith('public/folder/file1.txt')
-        expect(BucketFileSpy).toHaveBeenCalledWith('public/folder/file2.txt')
-
-        expect(FileMakePublicSpy).toHaveBeenCalledTimes(2)
-
-        // 2 for move to public folder, 2 for move rollback
-        expect(FileMoveSpy).toHaveBeenCalledTimes(4)
-        expect(FileMoveSpy).toHaveBeenNthCalledWith(1, new FileObject('public/folder/file1.txt'))
-        expect(FileMoveSpy).toHaveBeenNthCalledWith(2, new FileObject('public/folder/file2.txt'))
-        expect(FileMoveSpy).toHaveBeenNthCalledWith(3, new FileObject('temp/folder/file1.txt'))
-        expect(FileMoveSpy).toHaveBeenNthCalledWith(4, new FileObject('temp/folder/file2.txt'))
       })
     })
 
@@ -343,8 +249,6 @@ describe('File service', async () => {
         expect(BucketFileSpy).toHaveBeenCalledWith('private/folder/file1.txt')
         expect(BucketFileSpy).toHaveBeenCalledWith('private/folder/file2.txt')
 
-        expect(FileMakePrivateSpy).toHaveBeenCalledTimes(2)
-
         expect(FileMoveSpy).toHaveBeenCalledTimes(2)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(1, new FileObject('private/folder/file1.txt'))
         expect(FileMoveSpy).toHaveBeenNthCalledWith(2, new FileObject('private/folder/file2.txt'))
@@ -370,41 +274,9 @@ describe('File service', async () => {
         expect(BucketFileSpy).toHaveBeenCalledWith('private/folder/file1.txt')
         expect(BucketFileSpy).toHaveBeenCalledWith('private/folder/file2.txt')
 
-        expect(FileMakePublicSpy).toHaveBeenCalledTimes(0)
-
         expect(FileMoveSpy).toHaveBeenCalledTimes(2)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(1, new FileObject('private/folder/file1.txt'))
         expect(FileMoveSpy).toHaveBeenNthCalledWith(2, new FileObject('private/folder/file2.txt'))
-      })
-
-      it('should return correct error if markAsPrivate fails', async () => {
-        FileMakePrivateSpy.mockImplementation(async () => {
-          throw new Error('Failed to make file private')
-        })
-
-        const fileService = createFileService()
-        const result = await fileService.bulkMoveToPrivateFolder([
-          'temp/folder/file1.txt',
-          'temp/folder/file2.txt',
-        ])
-
-        expect(result.isErr()).toBe(true)
-        expect(result._unsafeUnwrapErr()).toEqual({
-          code: InternalErrorCode.FILE_MOVE_ERROR,
-          message: 'Failed to move one or more files',
-        })
-
-        expect(BucketFileSpy).toHaveBeenCalledWith('private/folder/file1.txt')
-        expect(BucketFileSpy).toHaveBeenCalledWith('private/folder/file2.txt')
-
-        expect(FileMakePrivateSpy).toHaveBeenCalledTimes(2)
-
-        // 2 for move to private folder, 2 for move rollback
-        expect(FileMoveSpy).toHaveBeenCalledTimes(4)
-        expect(FileMoveSpy).toHaveBeenNthCalledWith(1, new FileObject('private/folder/file1.txt'))
-        expect(FileMoveSpy).toHaveBeenNthCalledWith(2, new FileObject('private/folder/file2.txt'))
-        expect(FileMoveSpy).toHaveBeenNthCalledWith(3, new FileObject('temp/folder/file1.txt'))
-        expect(FileMoveSpy).toHaveBeenNthCalledWith(4, new FileObject('temp/folder/file2.txt'))
       })
     })
 
@@ -419,8 +291,6 @@ describe('File service', async () => {
         expect(FileMoveSpy).toHaveBeenCalledTimes(2)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(1, new FileObject('deleted/to/file1.txt'))
         expect(FileMoveSpy).toHaveBeenNthCalledWith(2, new FileObject('deleted/to/file2.txt'))
-
-        expect(FileMakePrivateSpy).toHaveBeenCalledTimes(2)
       })
 
       it('should return correct error if moveFile fails', async () => {
@@ -443,35 +313,6 @@ describe('File service', async () => {
         expect(FileMoveSpy).toHaveBeenCalledTimes(2)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(1, new FileObject('deleted/to/file1.txt'))
         expect(FileMoveSpy).toHaveBeenNthCalledWith(2, new FileObject('deleted/to/file2.txt'))
-
-        expect(FileMakePrivateSpy).toHaveBeenCalledTimes(0)
-      })
-
-      it('should return correct error if markAsPrivate fails', async () => {
-        FileMakePrivateSpy.mockImplementation(async () => {
-          throw new Error('Failed to make file private')
-        })
-
-        const fileService = createFileService()
-        const result = await fileService.bulkDeleteFile(['path/to/file1.txt', 'path/to/file2.txt'])
-
-        expect(result.isErr()).toBe(true)
-        expect(result._unsafeUnwrapErr()).toEqual({
-          code: InternalErrorCode.FILE_MOVE_ERROR,
-          message: 'Failed to move one or more files',
-        })
-
-        expect(BucketFileSpy).toHaveBeenCalledWith('deleted/to/file1.txt')
-        expect(BucketFileSpy).toHaveBeenCalledWith('deleted/to/file2.txt')
-
-        expect(FileMakePrivateSpy).toHaveBeenCalledTimes(2)
-
-        // 2 for move to deleted folder, 2 for move rollback
-        expect(FileMoveSpy).toHaveBeenCalledTimes(4)
-        expect(FileMoveSpy).toHaveBeenNthCalledWith(1, new FileObject('deleted/to/file1.txt'))
-        expect(FileMoveSpy).toHaveBeenNthCalledWith(2, new FileObject('deleted/to/file2.txt'))
-        expect(FileMoveSpy).toHaveBeenNthCalledWith(3, new FileObject('path/to/file1.txt'))
-        expect(FileMoveSpy).toHaveBeenNthCalledWith(4, new FileObject('path/to/file2.txt'))
       })
     })
 
@@ -641,8 +482,6 @@ describe('File service', async () => {
         expect(FileMoveSpy).toHaveBeenNthCalledWith(2, new FileObject('public/folder/file2.txt'))
         expect(FileMoveSpy).toHaveBeenNthCalledWith(3, new FileObject('public/folder/file3.txt'))
 
-        expect(FileMakePublicSpy).toHaveBeenCalledTimes(3)
-
         expect(txResult.isOk()).toBe(true)
 
         expect(txResult._unsafeUnwrap()).toEqual([
@@ -664,7 +503,6 @@ describe('File service', async () => {
         )
 
         expect(FileMoveSpy).toHaveBeenCalledTimes(0)
-        expect(FileMakePrivateSpy).toHaveBeenCalledTimes(0)
 
         expect(txResult.isOk()).toBe(true)
 
@@ -693,8 +531,6 @@ describe('File service', async () => {
         expect(FileMoveSpy).toHaveBeenNthCalledWith(2, new FileObject('private/folder/file2.txt'))
         expect(FileMoveSpy).toHaveBeenNthCalledWith(3, new FileObject('private/folder/file3.txt'))
 
-        expect(FileMakePrivateSpy).toHaveBeenCalledTimes(3)
-
         expect(txResult.isOk()).toBe(true)
 
         expect(txResult._unsafeUnwrap()).toEqual([
@@ -720,8 +556,6 @@ describe('File service', async () => {
         expect(FileMoveSpy).toHaveBeenNthCalledWith(2, new FileObject('private/folder/file2.txt'))
         expect(FileMoveSpy).toHaveBeenNthCalledWith(3, new FileObject('private/folder/file3.txt'))
 
-        expect(FileMakePrivateSpy).toHaveBeenCalledTimes(0)
-
         expect(txResult.isOk()).toBe(true)
 
         expect(txResult._unsafeUnwrap()).toEqual([
@@ -743,7 +577,6 @@ describe('File service', async () => {
         )
 
         expect(FileMoveSpy).toHaveBeenCalledTimes(0)
-        expect(FileMakePrivateSpy).toHaveBeenCalledTimes(0)
 
         expect(txResult.isOk()).toBe(true)
 
@@ -772,8 +605,6 @@ describe('File service', async () => {
         expect(FileMoveSpy).toHaveBeenNthCalledWith(2, new FileObject('deleted/folder/file2.txt'))
         expect(FileMoveSpy).toHaveBeenNthCalledWith(3, new FileObject('deleted/folder/file3.txt'))
 
-        expect(FileMakePrivateSpy).toHaveBeenCalledTimes(3)
-
         expect(txResult.isOk()).toBe(true)
 
         expect(txResult._unsafeUnwrap()).toEqual([
@@ -799,8 +630,6 @@ describe('File service', async () => {
         expect(FileMoveSpy).toHaveBeenNthCalledWith(2, new FileObject('deleted/folder/file2.txt'))
         expect(FileMoveSpy).toHaveBeenNthCalledWith(3, new FileObject('deleted/folder/file3.txt'))
 
-        expect(FileMakePrivateSpy).toHaveBeenCalledTimes(0)
-
         expect(txResult.isOk()).toBe(true)
 
         expect(txResult._unsafeUnwrap()).toEqual([
@@ -822,7 +651,6 @@ describe('File service', async () => {
         )
 
         expect(FileMoveSpy).toHaveBeenCalledTimes(0)
-        expect(FileMakePrivateSpy).toHaveBeenCalledTimes(0)
 
         expect(txResult.isOk()).toBe(true)
 
@@ -869,36 +697,22 @@ describe('File service', async () => {
         // 6 for move rollback from private folder
         // 6 for move rollback from public folder
         expect(FileMoveSpy).toHaveBeenCalledTimes(12)
-        expect(FileMakePublicSpy).toHaveBeenCalledTimes(6)
-        expect(FileMakePrivateSpy).toHaveBeenCalledTimes(6)
 
         // Normal Operations
         expect(FileMoveSpy).toHaveBeenNthCalledWith(1, new FileObject('public/folder/file1.txt'))
-        expect(FileMakePublicSpy).toHaveBeenNthCalledWith(1)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(2, new FileObject('public/folder/file2.txt'))
-        expect(FileMakePublicSpy).toHaveBeenNthCalledWith(2)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(3, new FileObject('public/folder/file3.txt'))
-        expect(FileMakePublicSpy).toHaveBeenNthCalledWith(3)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(4, new FileObject('private/folder/file4.txt'))
-        expect(FileMakePrivateSpy).toHaveBeenNthCalledWith(1)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(5, new FileObject('private/folder/file5.txt'))
-        expect(FileMakePrivateSpy).toHaveBeenNthCalledWith(2)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(6, new FileObject('private/folder/file6.txt'))
-        expect(FileMakePrivateSpy).toHaveBeenNthCalledWith(3)
 
         // Rollback Operations
         expect(FileMoveSpy).toHaveBeenNthCalledWith(7, new FileObject('public/folder/file6.txt'))
-        expect(FileMakePublicSpy).toHaveBeenNthCalledWith(4)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(8, new FileObject('public/folder/file5.txt'))
-        expect(FileMakePublicSpy).toHaveBeenNthCalledWith(5)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(9, new FileObject('public/folder/file4.txt'))
-        expect(FileMakePublicSpy).toHaveBeenNthCalledWith(6)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(10, new FileObject('temp/folder/file3.txt'))
-        expect(FileMakePrivateSpy).toHaveBeenNthCalledWith(4)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(11, new FileObject('temp/folder/file2.txt'))
-        expect(FileMakePrivateSpy).toHaveBeenNthCalledWith(5)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(12, new FileObject('temp/folder/file1.txt'))
-        expect(FileMakePrivateSpy).toHaveBeenNthCalledWith(6)
       })
 
       it('should be called with correct operation order when return neverthrow error', async () => {
@@ -942,36 +756,22 @@ describe('File service', async () => {
         // 6 for move rollback from private folder
         // 6 for move rollback from public folder
         expect(FileMoveSpy).toHaveBeenCalledTimes(12)
-        expect(FileMakePublicSpy).toHaveBeenCalledTimes(6)
-        expect(FileMakePrivateSpy).toHaveBeenCalledTimes(6)
 
         // Normal Operations
         expect(FileMoveSpy).toHaveBeenNthCalledWith(1, new FileObject('public/folder/file1.txt'))
-        expect(FileMakePublicSpy).toHaveBeenNthCalledWith(1)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(2, new FileObject('public/folder/file2.txt'))
-        expect(FileMakePublicSpy).toHaveBeenNthCalledWith(2)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(3, new FileObject('public/folder/file3.txt'))
-        expect(FileMakePublicSpy).toHaveBeenNthCalledWith(3)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(4, new FileObject('private/folder/file4.txt'))
-        expect(FileMakePrivateSpy).toHaveBeenNthCalledWith(1)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(5, new FileObject('private/folder/file5.txt'))
-        expect(FileMakePrivateSpy).toHaveBeenNthCalledWith(2)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(6, new FileObject('private/folder/file6.txt'))
-        expect(FileMakePrivateSpy).toHaveBeenNthCalledWith(3)
 
         // Rollback Operations
         expect(FileMoveSpy).toHaveBeenNthCalledWith(7, new FileObject('public/folder/file6.txt'))
-        expect(FileMakePublicSpy).toHaveBeenNthCalledWith(4)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(8, new FileObject('public/folder/file5.txt'))
-        expect(FileMakePublicSpy).toHaveBeenNthCalledWith(5)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(9, new FileObject('public/folder/file4.txt'))
-        expect(FileMakePublicSpy).toHaveBeenNthCalledWith(6)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(10, new FileObject('temp/folder/file3.txt'))
-        expect(FileMakePrivateSpy).toHaveBeenNthCalledWith(4)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(11, new FileObject('temp/folder/file2.txt'))
-        expect(FileMakePrivateSpy).toHaveBeenNthCalledWith(5)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(12, new FileObject('temp/folder/file1.txt'))
-        expect(FileMakePrivateSpy).toHaveBeenNthCalledWith(6)
       })
 
       it('should be called with correct operation order when manually rollback', async () => {
@@ -990,18 +790,12 @@ describe('File service', async () => {
         await txResult._unsafeUnwrap()[1].rollback()
 
         expect(FileMoveSpy).toHaveBeenCalledTimes(4)
-        expect(FileMakePublicSpy).toHaveBeenCalledTimes(2)
-        expect(FileMakePrivateSpy).toHaveBeenCalledTimes(2)
 
         expect(FileMoveSpy).toHaveBeenNthCalledWith(1, new FileObject('public/folder/file1.txt'))
-        expect(FileMakePublicSpy).toHaveBeenNthCalledWith(1)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(2, new FileObject('private/folder/file4.txt'))
-        expect(FileMakePrivateSpy).toHaveBeenNthCalledWith(1)
 
         expect(FileMoveSpy).toHaveBeenNthCalledWith(3, new FileObject('public/folder/file4.txt'))
-        expect(FileMakePublicSpy).toHaveBeenNthCalledWith(2)
         expect(FileMoveSpy).toHaveBeenNthCalledWith(4, new FileObject('temp/folder/file1.txt'))
-        expect(FileMakePrivateSpy).toHaveBeenNthCalledWith(2)
       })
 
       describe('should return error if rollback move fails', () => {
@@ -1013,26 +807,14 @@ describe('File service', async () => {
               throw new Error('Failed to move file')
             }
           })
-          FileMakePublicSpy.mockImplementation(async () => {
-            throw new Error('Failed to make file public')
-          })
 
           const fileService = createFileService()
           const txResult = await fromRepositoryPromise(
             fileService.$transaction(async (tx) => {
-              return tx.bulkMoveToPublicFolder(['temp/folder/file1.txt'])
+              await tx.bulkMoveToPublicFolder(['temp/folder/file1.txt'])
+              throw new Error('Some error')
             })
           )
-
-          expect(loggerService.warn).toBeCalledWith({
-            message: 'File transaction failed, rolling back changes',
-            context: {
-              err: {
-                code: InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
-                message: 'Failed to make file public',
-              },
-            },
-          })
 
           expect(txResult.isErr()).toBe(true)
           expect(txResult._unsafeUnwrapErr()).toEqual({
@@ -1043,9 +825,6 @@ describe('File service', async () => {
           expect(FileMoveSpy).toHaveBeenCalledTimes(2)
           expect(FileMoveSpy).toHaveBeenNthCalledWith(1, new FileObject('public/folder/file1.txt'))
           expect(FileMoveSpy).toHaveBeenNthCalledWith(2, new FileObject('temp/folder/file1.txt'))
-
-          expect(FileMakePublicSpy).toHaveBeenCalledTimes(1)
-          expect(FileMakePrivateSpy).toHaveBeenCalledTimes(0)
         })
       })
     })

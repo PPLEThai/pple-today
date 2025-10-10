@@ -34,11 +34,13 @@ import type {
   ApplicationApiSchema,
   GetBannersResponse,
   GetMyFeedResponse,
+  ListCursorResponse,
 } from '@api/backoffice/app'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { UserAddressInfoSection } from '@app/components/address-info'
 import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/announcement'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
+import { ElectionCard } from '@app/components/election/election-card'
 import { FeedFooter, FeedRefreshControl } from '@app/components/feed'
 import { FeedCard } from '@app/components/feed/feed-card'
 import { TopicSuggestion } from '@app/components/feed/topic-card'
@@ -70,7 +72,7 @@ export default function FeedPage() {
             <MainHeader />
             <View className="flex flex-col w-full bg-base-bg-white">
               <BannerSection />
-              {/* <EventSection /> */}
+              <EventSection />
               <UserAddressInfoSection />
             </View>
             <View className="px-4 bg-base-bg-white flex flex-row items-start pt-6">
@@ -100,7 +102,7 @@ function PagerContents() {
       </View>
       {session && (
         <View key={1}>
-          <PagerContent index={1}>{(props) => <FeedContent {...props} />}</PagerContent>
+          <PagerContent index={1}>{(props) => <FeedFollowingContent {...props} />}</PagerContent>
         </View>
       )}
       {followTopicsQuery.data
@@ -273,13 +275,34 @@ function Banner({ banner }: { banner: GetBannersResponse[number] }) {
 //   '|rF?hV%2WCj[ayj[a|j[az_NaeWBj@ayfRayfQfQM{M|azj[azf6fQfQfQIpWXofj[ayj[j[fQayWCoeoeaya}j[ayfQa{oLj?j[WVj[ayayj[fQoff7azayj[ayj[j[ayofayayayj[fQj[ayayj[ayfjj[j[ayjuayj['
 
 function EventSection() {
+  const session = useSession()
+  const electionsQuery = reactQueryClient.useQuery('/elections', {}, { enabled: !!session })
+  const elections = electionsQuery.data || []
+  if (elections.length === 0) {
+    return null
+  }
   return (
-    <View className="flex flex-col items-center justify-center gap-2 px-4 pb-4 ">
-      <View className="flex flex-row gap-2 justify-start items-center w-full ">
+    <View className="flex flex-col items-center justify-center gap-2 pb-4">
+      <View className="flex flex-row gap-2 justify-start items-center w-full px-4">
         <Icon icon={RadioTowerIcon} size={20} className="text-base-primary-default" />
         <H2 className="text-xl font-heading-bold text-base-text-high">อิเวนต์ตอนนี้</H2>
       </View>
-      {/* <ElectionCard /> */}
+      <Slide
+        isLoading={electionsQuery.isLoading}
+        count={elections.length}
+        itemWidth="container"
+        gap={8}
+        paddingHorizontal={16}
+      >
+        <SlideScrollView>
+          {elections.map((election) => (
+            <SlideItem key={election.id}>
+              <ElectionCard election={election} className="flex-1" />
+            </SlideItem>
+          ))}
+        </SlideScrollView>
+        <SlideIndicators />
+      </Slide>
     </View>
   )
 }
@@ -480,6 +503,93 @@ const TopicSkeleton = () => {
   )
 }
 
+function FeedFollowingContent(props: PagerScrollViewProps) {
+  const { headerHeight, isFocused, scrollElRef, setScrollViewTag } = props
+  React.useEffect(() => {
+    if (isFocused && scrollElRef.current) {
+      const scrollViewTag = findNodeHandle(scrollElRef.current)
+      setScrollViewTag(scrollViewTag)
+      // console.log('scrollViewTag:', scrollViewTag)
+    }
+  }, [isFocused, scrollElRef, setScrollViewTag])
+
+  const feedInfiniteQuery = useInfiniteQuery({
+    queryKey: reactQueryClient.getQueryKey('/feed/following'),
+    queryFn: async ({ pageParam }) => {
+      const response = await fetchClient('/feed/following', {
+        query: { cursor: pageParam, limit: LIMIT },
+      })
+      if (response.error) {
+        throw response.error
+      }
+      return response.data
+    },
+    initialPageParam: '',
+    getNextPageParam: (lastPage) => {
+      if (lastPage.meta.cursor.next === null) {
+        return undefined
+      }
+      return lastPage.meta.cursor.next
+    },
+  })
+  React.useEffect(() => {
+    if (feedInfiniteQuery.error) {
+      console.error('Error fetching feed:', JSON.stringify(feedInfiniteQuery.error))
+    }
+  }, [feedInfiniteQuery.error])
+
+  const onEndReached = React.useCallback(() => {
+    if (!feedInfiniteQuery.isFetching && feedInfiniteQuery.hasNextPage) {
+      feedInfiniteQuery.fetchNextPage()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
+
+  type GetMyFeedResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/me'>
+  const data = React.useMemo((): GetMyFeedResponse['items'] => {
+    if (!feedInfiniteQuery.data) return []
+    return feedInfiniteQuery.data.pages.flatMap((page) => page.items)
+  }, [feedInfiniteQuery.data])
+
+  const scrollContext = useScrollContext()
+  const scrollHandler = useAnimatedScrollHandler(scrollContext)
+
+  const queryClient = useQueryClient()
+  const onRefresh = React.useCallback(async () => {
+    await Promise.all([
+      queryClient.resetQueries({
+        queryKey: reactQueryClient.getQueryKey('/feed/following'),
+      }),
+    ])
+    await feedInfiniteQuery.refetch()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queryClient, feedInfiniteQuery.refetch])
+
+  const renderFeedItem = React.useCallback(
+    ({ item }: { item: GetMyFeedResponse['items'][number]; index: number }) => {
+      return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-4" />
+    },
+    []
+  )
+
+  return (
+    <Animated.FlatList
+      ref={scrollElRef}
+      onScroll={scrollHandler}
+      refreshControl={<FeedRefreshControl headerHeight={headerHeight} onRefresh={onRefresh} />}
+      data={data}
+      className="flex-1"
+      contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
+      contentContainerStyle={{ paddingTop: headerHeight }}
+      ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} className="mt-4 mx-4" />}
+      onEndReachedThreshold={1}
+      onEndReached={onEndReached}
+      renderItem={renderFeedItem}
+      showsVerticalScrollIndicator={false}
+    />
+  )
+}
+
 const LIMIT = 10
 function FeedContent(props: PagerScrollViewProps) {
   const { headerHeight, isFocused, scrollElRef, setScrollViewTag } = props
@@ -491,31 +601,34 @@ function FeedContent(props: PagerScrollViewProps) {
     }
   }, [isFocused, scrollElRef, setScrollViewTag])
 
-  type MyFeedItem = GetMyFeedResponse[number] | { type: 'SUGGESTION' }
+  type MyFeedItem = GetMyFeedResponse['items'][number] | { type: 'SUGGESTION' }
   const feedInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/feed/me'),
-    queryFn: async ({ pageParam }): Promise<MyFeedItem[]> => {
+    queryFn: async ({ pageParam }): Promise<ListCursorResponse<MyFeedItem>> => {
       const response = await fetchClient('/feed/me', {
-        query: { page: pageParam, limit: LIMIT },
+        query: { cursor: pageParam, limit: LIMIT },
       })
       if (response.error) {
         throw response.error
       }
-      if (pageParam === 1) {
+      if (pageParam === '') {
         // insert suggestion after first 2 posts
-        return [...response.data.slice(0, 2), { type: 'SUGGESTION' }, ...response.data.slice(2)]
+        const newItems: MyFeedItem[] = [...response.data.items]
+        newItems.splice(2, 0, { type: 'SUGGESTION' })
+
+        return {
+          items: newItems,
+          meta: response.data.meta,
+        }
       }
       return response.data
     },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage && lastPage.length === 0) {
+    initialPageParam: '',
+    getNextPageParam: (lastPage) => {
+      if (lastPage.meta.cursor.next === null) {
         return undefined
       }
-      if (lastPage.length < LIMIT) {
-        return undefined
-      }
-      return lastPageParam + 1
+      return lastPage.meta.cursor.next
     },
   })
   React.useEffect(() => {
@@ -533,7 +646,7 @@ function FeedContent(props: PagerScrollViewProps) {
 
   const data = React.useMemo((): MyFeedItem[] => {
     if (!feedInfiniteQuery.data) return []
-    return feedInfiniteQuery.data.pages.flatMap((page) => page)
+    return feedInfiniteQuery.data.pages.flatMap((page) => page.items)
   }, [feedInfiniteQuery.data])
 
   const scrollContext = useScrollContext()
@@ -541,6 +654,7 @@ function FeedContent(props: PagerScrollViewProps) {
 
   const queryClient = useQueryClient()
   const onRefresh = React.useCallback(async () => {
+    // invalidate all 'get' queries
     queryClient.invalidateQueries({ queryKey: reactQueryClient.getKey('get') })
     await Promise.all([
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/feed/me') }),
@@ -599,22 +713,19 @@ function FeedTopicContent(props: FeedTopicContentProps) {
     queryKey: reactQueryClient.getQueryKey('/feed/topic', { query: { topicId } }),
     queryFn: async ({ pageParam }) => {
       const response = await fetchClient('/feed/topic', {
-        query: { page: pageParam, limit: LIMIT, topicId },
+        query: { cursor: pageParam, limit: LIMIT, topicId },
       })
       if (response.error) {
         throw response.error
       }
       return response.data
     },
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, _, lastPageParam) => {
-      if (lastPage && lastPage.length === 0) {
+    initialPageParam: '',
+    getNextPageParam: (lastPage) => {
+      if (lastPage.meta.cursor.next === null) {
         return undefined
       }
-      if (lastPage.length < LIMIT) {
-        return undefined
-      }
-      return lastPageParam + 1
+      return lastPage.meta.cursor.next
     },
   })
   React.useEffect(() => {
@@ -631,9 +742,9 @@ function FeedTopicContent(props: FeedTopicContentProps) {
   }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
 
   type GetMyFeedResponse = ExtractBodyResponse<ApplicationApiSchema, 'get', '/feed/me'>
-  const data = React.useMemo((): GetMyFeedResponse => {
+  const data = React.useMemo((): GetMyFeedResponse['items'] => {
     if (!feedInfiniteQuery.data) return []
-    return feedInfiniteQuery.data.pages.flatMap((page) => page)
+    return feedInfiniteQuery.data.pages.flatMap((page) => page.items)
   }, [feedInfiniteQuery.data])
 
   const scrollContext = useScrollContext()
@@ -651,7 +762,7 @@ function FeedTopicContent(props: FeedTopicContentProps) {
   }, [queryClient, topicId, feedInfiniteQuery.refetch])
 
   const renderFeedItem = React.useCallback(
-    ({ item }: { item: GetMyFeedResponse[number]; index: number }) => {
+    ({ item }: { item: GetMyFeedResponse['items'][number]; index: number }) => {
       return <FeedCard key={item.id} feedItem={item} className="mt-4 mx-4" />
     },
     []

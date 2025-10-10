@@ -1,40 +1,30 @@
 import * as React from 'react'
-import { Dimensions, Platform, RefreshControl, View } from 'react-native'
+import { Dimensions, Platform, View } from 'react-native'
 
 import { Text } from '@pple-today/ui/text'
 import { InfiniteData, UseInfiniteQueryResult } from '@tanstack/react-query'
 
+import { ListCursorResponse } from '@api/backoffice/app'
 import { FeedCardSkeleton } from '@app/components/feed/feed-card'
+
+import { RefreshControl } from '../refresh-control'
 
 interface FeedRefreshControlProps {
   headerHeight: number
-  onRefresh: () => void
+  onRefresh: () => void | Promise<void>
 }
 // TODO: make RefreshControl appear on top of the header so that we dont need the headerHeight offset on Android
-export function FeedRefreshControl({
-  headerHeight,
-  onRefresh: onRefreshProp,
-  ...rest
-}: FeedRefreshControlProps) {
-  const [refreshing, setRefreshing] = React.useState(false)
-  const onRefresh = React.useCallback(async () => {
-    setRefreshing(true)
-    await onRefreshProp()
-    setRefreshing(false)
-  }, [onRefreshProp])
+export function FeedRefreshControl({ headerHeight, ...rest }: FeedRefreshControlProps) {
   return (
     <RefreshControl
-      refreshing={refreshing}
-      onRefresh={onRefresh}
+      {...rest}
       progressViewOffset={Platform.select({ ios: 0, android: headerHeight })}
-      colors={['#FF6A13']} // base-primary-default
-      {...rest} // make sure overridden styles (from RN) are passed down
     />
   )
 }
 
 interface FeedFooterProps {
-  queryResult: UseInfiniteQueryResult<InfiniteData<unknown[]>>
+  queryResult: UseInfiniteQueryResult<InfiniteData<ListCursorResponse<unknown>>>
   className?: string
 }
 export function FeedFooter({ queryResult, className }: FeedFooterProps) {
@@ -45,7 +35,7 @@ export function FeedFooter({ queryResult, className }: FeedFooterProps) {
   if (
     queryResult.data &&
     queryResult.data.pages.length === 1 &&
-    queryResult.data.pages[0].length === 0
+    queryResult.data.pages[0].items.length === 0
   ) {
     // Empty State
     return (

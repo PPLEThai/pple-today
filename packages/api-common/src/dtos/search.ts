@@ -5,12 +5,13 @@ export const SearchKeyword = t.Union([
     type: t.Literal('USER'),
     id: t.String(),
     name: t.String(),
-    profileImage: t.Optional(t.String()),
+    profileImage: t.Nullable(t.String()),
   }),
   t.Object({
     type: t.Literal('TOPIC'),
     id: t.String(),
     name: t.String(),
+    bannerImage: t.Nullable(t.String()),
   }),
   t.Object({
     type: t.Literal('QUERY'),
@@ -20,9 +21,14 @@ export const SearchKeyword = t.Union([
 export type SearchKeyword = Static<typeof SearchKeyword>
 
 export const SearchQuery = t.Object({
-  search: t.String({
-    minLength: 1,
-  }),
+  search: t
+    .Transform(
+      t.String({
+        minLength: 1,
+      })
+    )
+    .Decode((value) => decodeURIComponent(value.trim()))
+    .Encode((value) => encodeURIComponent(value.trim())),
   limit: t.Optional(t.Number()),
   cursor: t.Optional(t.String()),
 })

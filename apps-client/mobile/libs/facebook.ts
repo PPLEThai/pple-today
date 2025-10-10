@@ -1,9 +1,9 @@
 import { createQuery } from 'react-query-kit'
 
-import { QUERY_KEY } from '@pple-today/api-client'
+import { QUERY_KEY_SYMBOL } from '@pple-today/api-client'
 
 export const useFacebookPagesQuery = createQuery({
-  queryKey: [QUERY_KEY, 'facebookPages'],
+  queryKey: [QUERY_KEY_SYMBOL, 'facebookPages'],
   fetcher: async (variables: { facebookAccessToken: string }): Promise<FacebookPageData[]> => {
     // Note that we limit the page size at 100
     const response = await fetch(
