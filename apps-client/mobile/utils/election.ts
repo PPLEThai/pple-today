@@ -1,17 +1,21 @@
-import crypto from 'crypto'
+import forge from 'node-forge'
 
 export function encryptBallot(candidateId: string, publicKey: string): string {
-  const encrypted = crypto.publicEncrypt(
+  // Parse the PEM public key
+  const publicKeyFromPem = forge.pki.publicKeyFromPem(publicKey)
+
+  // Encrypt with RSA-OAEP + SHA-256
+  const encrypted = publicKeyFromPem.encrypt(
+    JSON.stringify({
+      candidateId,
+    }),
+    'RSA-OAEP',
     {
-      key: publicKey,
-      padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-      oaepHash: 'sha256',
-    },
-    Buffer.from(
-      JSON.stringify({
-        candidateId,
-      })
-    )
+      md: forge.md.sha256.create(),
+      mgf1: forge.mgf.mgf1.create(forge.md.sha256.create()),
+    }
   )
-  return encrypted.toString('base64')
+
+  // Return Base64 string
+  return forge.util.encode64(encrypted)
 }
