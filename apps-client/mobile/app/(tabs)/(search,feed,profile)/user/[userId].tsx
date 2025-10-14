@@ -154,7 +154,7 @@ export default function ProfilePage() {
             <AvatarPPLEFallback />
           </Avatar>
           <View className="flex-1 gap-2">
-            <Text className="text-base-text-high text-2xl font-heading-semibold">
+            <Text className="text-base-text-high text-2xl font-heading-semibold line-clamp-2">
               {userDetailsQuery.data.name}
             </Text>
             <View className="flex flex-row items-center gap-3">

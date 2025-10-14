@@ -75,7 +75,7 @@ export const FeedCard = React.memo(function FeedCard(props: {
 }) {
   const router = useRouter()
   const navigateToDetailPage = React.useCallback(() => {
-    router.navigate(`/(feed)/${props.feedItem.id}`)
+    router.navigate(`/${props.feedItem.id}`)
   }, [router, props.feedItem.id])
   // cache initialData of feed item when navigating to detail page
   const feedContentQuery = reactQueryClient.useQuery(
@@ -454,7 +454,7 @@ function UpvoteButton(props: UpvoteButtonProps) {
   const session = useSession()
   const onPress = () => {
     if (!session) {
-      return router.push('/profile')
+      return router.push('/(profile)')
     }
     const newUserReaction = userReaction === 'UP_VOTE' ? null : 'UP_VOTE'
     if (newUserReaction === 'UP_VOTE') {
@@ -526,7 +526,7 @@ function DownvoteButton(props: { feedId: string }) {
   const session = useSession()
   const onPress = () => {
     if (!session) {
-      return router.push('/profile')
+      return router.push('/(profile)')
     }
     const newUserReaction = userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE'
     if (newUserReaction === 'DOWN_VOTE') {
@@ -702,7 +702,7 @@ function CommentButton(props: { feedId: string }) {
   const session = useSession()
   const onPress = () => {
     if (!session) {
-      return router.push('/profile')
+      return router.push('/(profile)')
     }
     onOpen()
   }
