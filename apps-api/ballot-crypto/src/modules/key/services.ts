@@ -6,6 +6,9 @@ import { KeyManagementPlugin, KeyManagementService } from '../../plugins/kms'
 import { mapGoogleAPIError } from '../../utils/error'
 
 export class KeyService {
+  private MAX_RETRY = 5
+  private DELAY = 1
+
   constructor(private keyManagementService: KeyManagementService) {}
 
   async createElectionKeys(electionId: string) {
@@ -57,6 +60,23 @@ export class KeyService {
     }
 
     return ok()
+  }
+
+  async updateElectionKeyStatus(electionId: string) {
+    let encryptKey: string
+    let signingKey: string
+
+    for (let i = 0; i < this.MAX_RETRY; i++) {
+      const [encryptResult, signinResult] = await Promise.all([
+        this.keyManagementService.getPublicKeyAsymmetricDecrypt(electionId),
+        this.keyManagementService.getPublicKeyAsymmetricSign(electionId),
+      ])
+
+      if (encryptResult.isOk() && signinResult.isOk()) {
+        encryptKey = encryptResult.value
+        signingKey = signinResult.value
+      }
+    }
   }
 }
 

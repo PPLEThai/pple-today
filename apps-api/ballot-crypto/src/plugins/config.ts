@@ -34,6 +34,16 @@ export const envSchema = t.Object({
   GCP_SIGNING_KEY_RING: t.String({
     description: 'Google Cloud Signing Key Ring',
   }),
+
+  BACKOFFICE_DOMAIN: t.String({
+    description: 'Domain of ballot crypto service',
+  }),
+  BALLOT_CRYPTO_TO_BACKOFFICE_KEY: t.String({
+    description: 'API key for authenticate ballot crypto',
+  }),
+  BACKOFFICE_TO_BALLOT_CRYPTO_KEY: t.String({
+    description: 'API key for authenticate backoffice',
+  }),
 })
 
 export const ConfigServicePlugin = createConfigServicePlugin({
