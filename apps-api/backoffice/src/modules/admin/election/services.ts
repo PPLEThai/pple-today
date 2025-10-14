@@ -21,10 +21,7 @@ import {
 } from './models'
 import { AdminElectionRepository, AdminElectionRepositoryPlugin } from './repository'
 
-import {
-  BallotCryptoService,
-  BallotCryptoServicePlugin,
-} from '../../../plugins/ballot-crypto-service'
+import { BallotCryptoService, BallotCryptoServicePlugin } from '../../../plugins/ballot-crypto'
 import { FileServicePlugin } from '../../../plugins/file'
 
 export class AdminElectionService {
