@@ -1,5 +1,11 @@
 # @pple-today/api-common
 
+## 0.3.1
+
+### Patch Changes
+
+- [#186](https://github.com/PPLEThai/pple-today/pull/186) [`c1832f9`](https://github.com/PPLEThai/pple-today/commit/c1832f9bc9a97765c8771144f7111bed3f27d730) Thanks [@miello](https://github.com/miello)! - [[PPLE-450] [API] Remove file permission from transaction](https://linear.app/snts/issue/PPLE-450/api-remove-file-permission-from-transaction)
+
 ## 0.3.0
 
 ### Minor Changes

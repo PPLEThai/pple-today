@@ -73,10 +73,10 @@ export default function FeedPage() {
             <View className="flex flex-col w-full bg-base-bg-white">
               <BannerSection />
               <EventSection />
-              <UserAddressInfoSection />
+              <UserAddressInfoSection className="pt-4" />
             </View>
             <View className="px-4 bg-base-bg-white flex flex-row items-start pt-6">
-              <H2 className="text-3xl">ประชาชนวันนี้</H2>
+              <H2 className="text-3xl font-heading-bold text-base-text-high">ประชาชนวันนี้</H2>
             </View>
           </PagerHeaderOnly>
           <PagerTabBar>
@@ -210,7 +210,7 @@ function BannerSection() {
       itemWidth={320}
       gap={8}
       paddingHorizontal={16}
-      className="w-full pt-2 py-4"
+      className="w-full pt-2"
     >
       <SlideScrollView>
         {banners.map((banner) => (
@@ -282,9 +282,9 @@ function EventSection() {
     return null
   }
   return (
-    <View className="flex flex-col items-center justify-center gap-2 pb-4">
+    <View className="flex flex-col items-center justify-center gap-2 pt-4">
       <View className="flex flex-row gap-2 justify-start items-center w-full px-4">
-        <Icon icon={RadioTowerIcon} size={20} className="text-base-primary-default" />
+        <Icon icon={RadioTowerIcon} size={24} className="text-base-primary-default" />
         <H2 className="text-xl font-heading-bold text-base-text-high">อิเวนต์ตอนนี้</H2>
       </View>
       <Slide
@@ -807,7 +807,7 @@ function AnnouncementSection() {
           </View>
           <View className="min-h-10 bg-base-bg-default rounded-lg" />
         </View>
-        <Slide count={3} itemWidth={320} gap={8} paddingHorizontal={16}>
+        <Slide count={3} itemWidth={320} gap={8} paddingHorizontal={16} isLoading>
           <SlideScrollView>
             <SlideItem>
               <AnnouncementCardSkeleton />

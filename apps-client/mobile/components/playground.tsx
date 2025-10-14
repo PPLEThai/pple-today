@@ -70,7 +70,6 @@ export function Playground() {
         <View className="flex flex-row items-center justify-between">
           <H1 className="font-inter-bold">Playground</H1>
         </View>
-        <FrontCameraExample />
         <View className="flex flex-col gap-2">
           <H2 className="font-inter-bold">Font</H2>
           <View className="flex flex-col gap-1">
@@ -310,6 +309,7 @@ export function Playground() {
         <ElectionCardExample />
         <FacebookSDKExample />
         <LocationExample />
+        <FrontCameraExample />
       </View>
     </ScrollView>
   )
@@ -1060,16 +1060,28 @@ function LocationExample() {
 }
 
 function FrontCameraExample() {
+  const [status, requestPermission] = ImagePicker.useCameraPermissions()
+  const [asset, setAsset] = useState<ImagePicker.ImagePickerAsset | null>(null)
   return (
     <View className="flex flex-col gap-2">
       <H2 className="font-inter-bold">Front Camera</H2>
+      <Text>Permission: {JSON.stringify(status, null, 2)}</Text>
       <Button
-        onPress={() => {
-          ImagePicker.launchCameraAsync({ cameraType: ImagePicker.CameraType.front })
+        onPress={async () => {
+          const { status } = await requestPermission()
+          if (status !== 'granted') {
+            toast.error({ text1: 'Permission to access camera was denied' })
+            return
+          }
+          const result = await ImagePicker.launchCameraAsync({
+            cameraType: ImagePicker.CameraType.front,
+          })
+          setAsset(result.assets?.[0] ?? null)
         }}
       >
         <Text>Open Front Camera</Text>
       </Button>
+      {asset && <Image source={{ uri: asset.uri }} className="aspect-[3/4]" />}
     </View>
   )
 }

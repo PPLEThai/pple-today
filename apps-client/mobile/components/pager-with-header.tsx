@@ -627,12 +627,12 @@ export function PagerTabBarItem({
       {...props}
     >
       <View>
-        <Text className="text-sm font-heading-semibold relative text-base-text-placeholder">
+        <Text className="text-sm font-heading-medium relative text-base-text-medium">
           {children}
         </Text>
         <Animated.Text
           style={activeStyle}
-          className="text-sm font-heading-semibold text-base-primary-default absolute left-0 top-0 bottom-0 right-0"
+          className="text-sm font-heading-medium text-base-primary-default absolute left-0 top-0 bottom-0 right-0"
           aria-hidden
         >
           {children}

@@ -100,6 +100,7 @@ export default {
         'expo-image-picker',
         {
           photosPermission: 'The app accesses your photos to let you set up your profile image.',
+          cameraPermission: 'The app accesses your camera to let you take a photo.',
         },
       ],
       [

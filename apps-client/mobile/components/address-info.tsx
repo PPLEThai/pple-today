@@ -29,7 +29,7 @@ export function UserAddressInfoSection(props: UserInfoAddressSectionProps) {
         <Text className="text-lg text-base-primary-default font-heading-bold">
           {authMeQuery.data.address.subDistrict}, {authMeQuery.data.address.district}
         </Text>
-        <Text className="text-sm text-base-text-high font-heading-regular">
+        <Text className="text-xs text-base-text-high font-heading-regular">
           {authMeQuery.data.address.province}
         </Text>
       </View>
@@ -43,7 +43,7 @@ export function UserAddressInfoSection(props: UserInfoAddressSectionProps) {
             strokeWidth={1}
           />
         </View>
-        <Text className="text-sm text-base-text-high font-heading-semibold">
+        <Text className="text-sm text-base-text-high font-heading-medium">
           ดูข้อมูล{'\n'}
           สส. ของคุณ
         </Text>
