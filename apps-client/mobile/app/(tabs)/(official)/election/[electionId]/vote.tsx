@@ -276,6 +276,7 @@ function ElectionFaceVerificationStep() {
                   // android: the behavior of this option may vary based on the camera app installed on the device.
                   // https://docs.expo.dev/versions/latest/sdk/imagepicker/#imagepickeroptions
                   cameraType: ImagePicker.CameraType.front,
+                  quality: 0.4,
                 })
                 if (result.canceled) {
                   console.log('User cancelled image picker')

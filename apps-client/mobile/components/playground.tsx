@@ -1075,8 +1075,13 @@ function FrontCameraExample() {
           }
           const result = await ImagePicker.launchCameraAsync({
             cameraType: ImagePicker.CameraType.front,
+            quality: 0.4,
           })
-          setAsset(result.assets?.[0] ?? null)
+          const asset = result.assets?.[0]
+          setAsset(asset ?? null)
+          if (asset) {
+            console.log('File size', asset.fileSize)
+          }
         }}
       >
         <Text>Open Front Camera</Text>
