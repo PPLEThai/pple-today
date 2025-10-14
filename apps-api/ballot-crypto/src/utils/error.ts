@@ -92,6 +92,6 @@ export const mapGoogleAPIError = <
 
   return err({
     code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-    message: 'An unexpected error occurred',
+    message: error.message ?? 'An unexpected error occurred', // return internal error message because API is private
   }) as any
 }

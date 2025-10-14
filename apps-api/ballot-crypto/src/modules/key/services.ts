@@ -1,15 +1,23 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { ElectionKeysStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
+import {
+  BackofficeAdminService,
+  BackofficeAdminServicePlugin,
+} from '../../plugins/backoffice.admin'
 import { KeyManagementPlugin, KeyManagementService } from '../../plugins/kms'
 import { mapGoogleAPIError } from '../../utils/error'
 
 export class KeyService {
-  private MAX_RETRY = 5
-  private DELAY = 1
+  private readonly MAX_RETRY = 5
+  private readonly DELAY = 1
 
-  constructor(private keyManagementService: KeyManagementService) {}
+  constructor(
+    private readonly keyManagementService: KeyManagementService,
+    private readonly backofficeAdminService: BackofficeAdminService
+  ) {}
 
   async createElectionKeys(electionId: string) {
     const createResults = await Promise.all([
@@ -40,6 +48,8 @@ export class KeyService {
       })
     }
 
+    setImmediate(() => this.updateElectionKeys(electionId))
+
     return ok()
   }
 
@@ -62,7 +72,7 @@ export class KeyService {
     return ok()
   }
 
-  async updateElectionKeyStatus(electionId: string) {
+  async updateElectionKeys(electionId: string) {
     let encryptKey: string
     let signingKey: string
 
@@ -75,13 +85,35 @@ export class KeyService {
       if (encryptResult.isOk() && signinResult.isOk()) {
         encryptKey = encryptResult.value
         signingKey = signinResult.value
+
+        await this.backofficeAdminService.updateElectionKeys({
+          electionId,
+          status: ElectionKeysStatus.CREATED,
+          encryptPublicKey: encryptKey,
+          signingPublicKey: signingKey,
+        })
+
+        return ok()
       }
+
+      await new Promise((resolve) => setTimeout(resolve, this.DELAY * 1000))
     }
+
+    await Promise.all([
+      this.keyManagementService.destroyAsymmetricDecryptKey(electionId),
+      this.keyManagementService.destroyAsymmetricSignKey(electionId),
+      this.backofficeAdminService.updateElectionKeys({
+        electionId,
+        status: ElectionKeysStatus.FAILED_CREATED,
+      }),
+    ])
+
+    return ok()
   }
 }
 
 export const KeyServicePlugin = new Elysia({ name: 'KeyService' })
-  .use(KeyManagementPlugin)
-  .decorate(({ keyManagementService }) => ({
-    keyService: new KeyService(keyManagementService),
+  .use([KeyManagementPlugin, BackofficeAdminServicePlugin])
+  .decorate(({ keyManagementService, backofficeService }) => ({
+    keyService: new KeyService(keyManagementService, backofficeService),
   }))

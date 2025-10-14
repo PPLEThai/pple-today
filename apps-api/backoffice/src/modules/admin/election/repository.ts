@@ -2,6 +2,7 @@ import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import {
+  ElectionKeysStatus,
   ElectionMode,
   ElectionResultType,
   ElectionType,
@@ -36,6 +37,7 @@ export class AdminElectionRepository {
     locationMapUrl?: string | null
     type: ElectionType
     mode: ElectionMode
+    keysStatus: ElectionKeysStatus
     openRegister?: Date | null
     closeRegister?: Date | null
     openVoting: Date
@@ -171,6 +173,28 @@ export class AdminElectionRepository {
     return fromRepositoryPromise(
       this.prismaService.electionCandidate.findMany({
         where: { electionId },
+      })
+    )
+  }
+
+  async updateElectionKeys(
+    electionId: string,
+    keys: {
+      status: ElectionKeysStatus
+      encryptionPublicKey?: string
+      signingPublicKey?: string
+    }
+  ) {
+    return fromRepositoryPromise(
+      this.prismaService.election.update({
+        where: {
+          id: electionId,
+        },
+        data: {
+          keysStatus: keys.status,
+          encryptionPublicKey: keys.encryptionPublicKey,
+          signingPublicKey: keys.signingPublicKey,
+        },
       })
     )
   }

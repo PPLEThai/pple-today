@@ -9,7 +9,7 @@ import { ApplicationApiSchema } from '@api/ballot-crypto/app'
 import { ConfigServicePlugin } from './config'
 
 export class BallotCryptoService {
-  private client: Treaty.Create<ApplicationApiSchema>
+  private readonly client: Treaty.Create<ApplicationApiSchema>
 
   constructor(config: { domain: string }) {
     this.client = treaty<ApplicationApiSchema>(config.domain)

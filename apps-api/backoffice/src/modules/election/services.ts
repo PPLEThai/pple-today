@@ -10,6 +10,7 @@ import { err, mapRepositoryError } from '@pple-today/api-common/utils'
 import {
   Election,
   ElectionCandidate,
+  ElectionKeysStatus,
   ElectionType,
   EligibleVoterType,
 } from '@pple-today/database/prisma'
@@ -64,6 +65,10 @@ export class ElectionService {
 
   private isShowElectionInOfficialPage(election: Election, now: Date): boolean {
     if (election.isCancelled) {
+      return false
+    }
+
+    if (election.keysStatus !== ElectionKeysStatus.CREATED) {
       return false
     }
 

@@ -2,7 +2,7 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
-import { CreateKeyBody, DeleteKeyParams } from './models'
+import { CreateKeysBody, CreateKeysResponse, DeleteKeysParams } from './models'
 import { KeyServicePlugin } from './services'
 
 export const KeyController = new Elysia({
@@ -16,16 +16,18 @@ export const KeyController = new Elysia({
       const result = await keyService.createElectionKeys(body.electionId)
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
-      return status(201)
+      return status(201, {
+        message: 'Create keys success',
+      })
     },
     {
       detail: {
         summary: 'Create Election Keys',
         description: 'Create asymmetric encryption and signing keys for election',
       },
-      body: CreateKeyBody,
-      responses: {
-        201: {},
+      body: CreateKeysBody,
+      response: {
+        201: CreateKeysResponse,
         ...createErrorSchema(
           InternalErrorCode.INTERNAL_SERVER_ERROR,
           InternalErrorCode.KEY_ALREADY_EXIST,
@@ -47,9 +49,8 @@ export const KeyController = new Elysia({
         summary: 'Delete Election Keys',
         description: 'Delete asymmetric encryption and signing keys for election',
       },
-      params: DeleteKeyParams,
+      params: DeleteKeysParams,
       responses: {
-        204: {},
         ...createErrorSchema(
           InternalErrorCode.INTERNAL_SERVER_ERROR,
           InternalErrorCode.KET_NOT_FOUND

@@ -32,6 +32,9 @@ import {
   AdminListElectionQuery,
   AdminListElectionResponse,
   AdminUpdateElectionCandidateParams,
+  AdminUpdateElectionKeysBody,
+  AdminUpdateElectionKeysHeaders,
+  AdminUpdateElectionKeysParams,
 } from './models'
 import { AdminElectionServicePlugin } from './services'
 
@@ -457,4 +460,37 @@ export const AdminElectionController = new Elysia({
           },
         }
       )
+  )
+  .group('/:electionId/keys', (app) =>
+    app.put(
+      '/',
+      async ({ headers, params, body, status, adminElectionService }) => {
+        const result = await adminElectionService.updateElectionKeys(
+          headers['x-ballot-crypto-to-backoffice-key'],
+          params.electionId,
+          { ...body }
+        )
+        if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+        return status(204)
+      },
+      {
+        detail: {
+          summary: 'Update election keys',
+          description: 'Update election keys',
+        },
+        headers: AdminUpdateElectionKeysHeaders,
+        params: AdminUpdateElectionKeysParams,
+        body: AdminUpdateElectionKeysBody,
+        response: {
+          ...createErrorSchema(
+            InternalErrorCode.INTERNAL_SERVER_ERROR,
+            InternalErrorCode.BAD_REQUEST,
+            InternalErrorCode.UNAUTHORIZED,
+            InternalErrorCode.ELECTION_NOT_FOUND,
+            InternalErrorCode.ELECTION_KEY_NOT_IN_PENDING_CREATED_STATUS
+          ),
+        },
+      }
+    )
   )

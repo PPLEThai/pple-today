@@ -35,6 +35,7 @@
   },
   "devDependencies": {
     "@pple-today/project-config": "workspace:^",
+    "@pple-today/database": "workspace:^",
     "@api/backoffice": "workspace:^",
     "@types/node": "^22.15.3",
     "esbuild": "^0.25.5",

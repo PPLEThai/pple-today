@@ -1,11 +1,16 @@
 import { Static, t } from 'elysia'
 
-export const CreateKeyBody = t.Object({
+export const CreateKeysBody = t.Object({
   electionId: t.String(),
 })
-export type CreateKeyBody = Static<typeof CreateKeyBody>
+export type CreateKeysBody = Static<typeof CreateKeysBody>
 
-export const DeleteKeyParams = t.Object({
+export const CreateKeysResponse = t.Object({
+  message: t.String(),
+})
+export type CreateKeysResponse = Static<typeof CreateKeysResponse>
+
+export const DeleteKeysParams = t.Object({
   electionId: t.String(),
 })
-export type DeleteKeyParams = Static<typeof DeleteKeyParams>
+export type DeleteKeysParams = Static<typeof DeleteKeysParams>

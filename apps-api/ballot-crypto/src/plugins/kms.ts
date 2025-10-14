@@ -18,10 +18,10 @@ export type KeyManagementServiceConfig = {
 }
 
 export class KeyManagementService {
-  private kmsClient: KeyManagementServiceClient
-  private DESTROY_SCHEDULED_DURATION = 30 * 24 * 60 * 60
+  private readonly kmsClient: KeyManagementServiceClient
+  private readonly DESTROY_SCHEDULED_DURATION = 30 * 24 * 60 * 60
 
-  constructor(private config: KeyManagementServiceConfig) {
+  constructor(private readonly config: KeyManagementServiceConfig) {
     this.kmsClient = new KeyManagementServiceClient({
       credentials: {
         projectId: config.projectId,

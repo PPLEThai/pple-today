@@ -7,7 +7,12 @@ import {
 } from '@pple-today/api-common/dtos'
 import { FileService } from '@pple-today/api-common/services'
 import { err, mapRepositoryError } from '@pple-today/api-common/utils'
-import { Election, ElectionCandidate, EligibleVoterType } from '@pple-today/database/prisma'
+import {
+  Election,
+  ElectionCandidate,
+  ElectionKeysStatus,
+  EligibleVoterType,
+} from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -22,13 +27,18 @@ import {
 import { AdminElectionRepository, AdminElectionRepositoryPlugin } from './repository'
 
 import { BallotCryptoService, BallotCryptoServicePlugin } from '../../../plugins/ballot-crypto'
+import { ConfigServicePlugin } from '../../../plugins/config'
 import { FileServicePlugin } from '../../../plugins/file'
 
 export class AdminElectionService {
   constructor(
     private readonly adminElectionRepository: AdminElectionRepository,
     private readonly fileService: FileService,
-    private readonly ballotCryptoService: BallotCryptoService
+    private readonly ballotCryptoService: BallotCryptoService,
+    private readonly config: {
+      ballotCryptoToBackofficeKey: string
+      backofficeToBallotCryptoKey: string
+    }
   ) {}
 
   private checkIsElectionAllowedToModified(election: Election, now: Date) {
@@ -111,6 +121,7 @@ export class AdminElectionService {
 
     const electionResult = await this.adminElectionRepository.createElection({
       id: electionId,
+      keysStatus: ElectionKeysStatus.PENDING_CREATED,
       ...input,
     })
     if (electionResult.isErr()) {
@@ -434,14 +445,75 @@ export class AdminElectionService {
 
     return ok()
   }
+
+  async updateElectionKeys(
+    apiKey: string,
+    electionId: string,
+    keys: {
+      status: ElectionKeysStatus
+      encryptionPublicKey?: string
+      signingPublicKey?: string
+    }
+  ) {
+    if (this.config.ballotCryptoToBackofficeKey !== apiKey) {
+      return err({
+        code: InternalErrorCode.UNAUTHORIZED,
+        message: 'UNAUTHORIZED',
+      })
+    }
+
+    if (
+      keys.status === ElectionKeysStatus.CREATED &&
+      (!keys.encryptionPublicKey || !keys.signingPublicKey)
+    ) {
+      return err({
+        code: InternalErrorCode.BAD_REQUEST,
+        message: 'Required publicKeys for status CREATED',
+      })
+    }
+
+    const electionResult = await this.adminElectionRepository.getElectionById(electionId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id ${electionId}`,
+        },
+      })
+    }
+
+    if (electionResult.value.keysStatus !== ElectionKeysStatus.PENDING_CREATED) {
+      return err({
+        code: InternalErrorCode.ELECTION_KEY_NOT_IN_PENDING_CREATED_STATUS,
+        message: `Key of election id ${electionId} not in PENDING_CREATED status`,
+      })
+    }
+
+    const updateKeysResult = await this.adminElectionRepository.updateElectionKeys(
+      electionId,
+      keys.status === ElectionKeysStatus.CREATED ? keys : { status: keys.status }
+    )
+    if (updateKeysResult.isErr()) return mapRepositoryError(updateKeysResult.error)
+
+    return ok()
+  }
 }
 
 export const AdminElectionServicePlugin = new Elysia({ name: 'AdminElectionService' })
-  .use([AdminElectionRepositoryPlugin, FileServicePlugin, BallotCryptoServicePlugin])
-  .decorate(({ adminElectionRepository, fileService, ballotCryptoService }) => ({
+  .use([
+    AdminElectionRepositoryPlugin,
+    FileServicePlugin,
+    BallotCryptoServicePlugin,
+    ConfigServicePlugin,
+  ])
+  .decorate(({ adminElectionRepository, fileService, ballotCryptoService, configService }) => ({
     adminElectionService: new AdminElectionService(
       adminElectionRepository,
       fileService,
-      ballotCryptoService
+      ballotCryptoService,
+      {
+        backofficeToBallotCryptoKey: configService.get('BACKOFFICE_TO_BALLOT_CRYPTO_KEY'),
+        ballotCryptoToBackofficeKey: configService.get('BALLOT_CRYPTO_TO_BACKOFFICE_KEY'),
+      }
     ),
   }))

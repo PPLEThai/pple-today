@@ -7,7 +7,7 @@ import {
   ListQuery,
   PaginationMetadataResponse,
 } from '@pple-today/api-common/dtos'
-import { ElectionMode, ElectionType } from '@pple-today/database/prisma'
+import { ElectionKeysStatus, ElectionMode, ElectionType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const AdminCreateElectionBody = t.Object({
@@ -273,3 +273,20 @@ export const AdminDeleteElectionEligibleVoterResponse = t.Object({
 export type AdminDeleteElectionEligibleVoterResponse = Static<
   typeof AdminDeleteElectionEligibleVoterResponse
 >
+
+export const AdminUpdateElectionKeysHeaders = t.Object({
+  'x-ballot-crypto-to-backoffice-key': t.String(),
+})
+export type AdminUpdateElectionKeysHeaders = Static<typeof AdminUpdateElectionKeysHeaders>
+
+export const AdminUpdateElectionKeysParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminUpdateElectionKeysParams = Static<typeof AdminUpdateElectionKeysParams>
+
+export const AdminUpdateElectionKeysBody = t.Object({
+  status: t.Enum(ElectionKeysStatus),
+  encryptionPublicKey: t.Optional(t.String()),
+  signingPublicKey: t.Optional(t.String()),
+})
+export type AdminUpdateElectionKeysBody = Static<typeof AdminUpdateElectionKeysBody>

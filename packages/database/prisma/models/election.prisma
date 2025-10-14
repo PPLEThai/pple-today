@@ -42,8 +42,8 @@ model Election {
     keysDestroyScheduledAt       DateTime?
     keysDestroyScheduledDuration Int? // seconds
 
-    encryptionPublicKey       String?
-    digitalSignaturePublicKey String?
+    encryptionPublicKey String?
+    signingPublicKey    String?
 
     publishDate   DateTime?
     openRegister  DateTime?
