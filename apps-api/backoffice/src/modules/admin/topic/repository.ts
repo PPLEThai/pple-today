@@ -169,19 +169,14 @@ export class AdminTopicRepository {
 
     const updateFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
-        // ถ้าไม่มีรูปใหม่ ให้ใช้รูปเดิม
         if (!data.bannerImagePath) return existingTopic.value.bannerImagePath
 
         const isSameBannerUrl = existingTopic.value.bannerImagePath === data.bannerImagePath
         const isSameStatus = existingTopic.value.status === data.status
 
-        // ถ้า same ให้เช็คว่า status เปลี่ยนเปล่า
-        // เพราะถ้า status เปลี่ยน ต้องโยกรูปภาพไปให้ถูก folder
         if (isSameBannerUrl) {
-          // ถ้าเป็นรูปเดิม สถานะเดิม ให้ใช้รูปเดิม
           if (isSameStatus) return existingTopic.value.bannerImagePath
 
-          // รูปเดิม แต่คนละสถานะ ต้องย้ายรูปไปให้ถูกที่
           const moveResult =
             data.status === TopicStatus.PUBLISHED
               ? await fileTx.bulkMoveToPublicFolder([data.bannerImagePath])
@@ -190,14 +185,11 @@ export class AdminTopicRepository {
           return moveResult.value[0]
         }
 
-        // ถ้าไม่ same แปลว่าเปลี่ยนรูป
-        // 1. ลบรูปเดิมก่อน
         const deleteResult = await fileTx.deleteFile(
           existingTopic.value.bannerImagePath as FilePath
         )
         if (deleteResult.isErr()) return deleteResult
 
-        // 2. โยกรูปใหม่ไป folder ตาม status
         const moveResult =
           data.status === TopicStatus.PUBLISHED
             ? await fileTx.bulkMoveToPublicFolder([data.bannerImagePath])

@@ -139,7 +139,7 @@ function FormMessage({
       className={cn('text-system-danger-default text-sm font-medium font-sans', className)}
       {...props}
     >
-      {String(error?.message ?? '')}
+      {error?.message ?? ''}
     </p>
   ) : !props.children ? null : asChild ? (
     props.children

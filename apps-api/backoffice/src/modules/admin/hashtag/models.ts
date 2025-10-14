@@ -3,7 +3,7 @@ import { HashTagStatus } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const GetHashtagsQuery = t.Object({
-  limit: t.Optional(t.Number({ default: 10 })),
+  limit: t.Optional(t.Number()),
   page: t.Optional(t.Number({ default: 1 })),
   search: t.Optional(t.String()),
 })

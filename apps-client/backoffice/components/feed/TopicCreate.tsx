@@ -24,34 +24,13 @@ import { MultiSelect } from '@pple-today/web-ui/multi-select'
 import { Textarea } from '@pple-today/web-ui/textarea'
 import { Typography } from '@pple-today/web-ui/typography'
 import { ImagePreview } from 'components/ImagePreview'
+import { ACCEPTED_IMAGE_TYPES, handleUploadFile, MAX_FILE_SIZE } from 'utils/fileupload'
 import z from 'zod'
 
 import { FilePath } from '@api/backoffice/admin'
 
 import { userManager } from '~/config/oidc'
 import { reactQueryClient } from '~/libs/api-client'
-
-const MAX_FILE_SIZE = 5 * 1024 * 1024
-const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
-
-const handleUploadFile = async (
-  file: File,
-  uploadUrl: string,
-  uploadFields: Record<string, string>
-) => {
-  const formData = new FormData()
-
-  for (const [key, value] of Object.entries(uploadFields)) {
-    formData.append(key, value)
-  }
-
-  formData.append('file', file)
-
-  await fetch(uploadUrl, {
-    method: 'POST',
-    body: formData,
-  })
-}
 
 const CreateTopicFormSchema = z.object({
   name: z.string().min(1, 'กรุณากรอกชื่อหัวข้อ'),
@@ -89,7 +68,6 @@ export const TopicCreate = (props: TopicCreateProps) => {
   const elFileInput = useRef<HTMLInputElement>(null)
 
   const onSubmit: SubmitHandler<CreateTopicFormSchema> = async ({ bannerImage, ...data }) => {
-    console.log('getFileUploadUrl.mutateAsync')
     const result = await getFileUploadUrl.mutateAsync({
       body: {
         category: 'TOPIC',
@@ -99,13 +77,9 @@ export const TopicCreate = (props: TopicCreateProps) => {
         Authorization: `Bearer ${accessToken}`,
       },
     })
-    console.log('— Done')
 
-    console.log('handleUploadFile')
     await handleUploadFile(bannerImage, result.uploadUrl, result.uploadFields)
-    console.log('— Done')
 
-    console.log('createTopicMutation.mutateAsync')
     await createTopicMutation.mutateAsync({
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -115,7 +89,6 @@ export const TopicCreate = (props: TopicCreateProps) => {
         bannerImagePath: result.filePath as FilePath,
       },
     })
-    console.log('— Done')
 
     props.onSuccess()
 

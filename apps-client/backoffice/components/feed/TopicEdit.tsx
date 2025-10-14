@@ -25,6 +25,7 @@ import { Textarea } from '@pple-today/web-ui/textarea'
 import { Typography } from '@pple-today/web-ui/typography'
 import { ImagePreview } from 'components/ImagePreview'
 import { X } from 'lucide-react'
+import { ACCEPTED_IMAGE_TYPES, handleUploadFile, MAX_FILE_SIZE } from 'utils/fileupload'
 import z from 'zod'
 
 import { DetailedTopic, FilePath } from '@api/backoffice/admin'
@@ -32,36 +33,10 @@ import { DetailedTopic, FilePath } from '@api/backoffice/admin'
 import { userManager } from '~/config/oidc'
 import { reactQueryClient } from '~/libs/api-client'
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024
-const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
-
-const handleUploadFile = async (
-  file: File,
-  uploadUrl: string,
-  uploadFields: Record<string, string>
-) => {
-  const formData = new FormData()
-
-  for (const [key, value] of Object.entries(uploadFields)) {
-    formData.append(key, value)
-  }
-
-  formData.append('file', file)
-
-  await fetch(uploadUrl, {
-    method: 'POST',
-    body: formData,
-  })
-}
-
 const EditTopicFormSchema = z.object({
   name: z.string().min(1, 'กรุณากรอกชื่อหัวข้อ'),
   description: z.string(),
   hashtagIds: z.array(z.string()).min(1, 'กรุณาเลือกอย่างน้อย 1 แฮชแท็ก'),
-  /**
-   * - `File`: อัปรูปใหม่ขึ้นไป
-   * - `undefined`: ไม่แก้ ใช้รูปเดิม
-   */
   bannerImage: z
     .instanceof(File, { error: 'กรุณาอัปโหลดไฟล์' })
     .refine((file) => file.size <= MAX_FILE_SIZE, `กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB`)
@@ -113,7 +88,6 @@ export const TopicEdit = (props: TopicEditProps) => {
     let bannerImagePath: FilePath | undefined
 
     if (bannerImage) {
-      console.log('getFileUploadUrl.mutateAsync')
       const result = await getFileUploadUrl.mutateAsync({
         body: {
           category: 'TOPIC',
@@ -123,16 +97,12 @@ export const TopicEdit = (props: TopicEditProps) => {
           Authorization: `Bearer ${accessToken}`,
         },
       })
-      console.log('— Done')
 
-      console.log('handleUploadFile')
       await handleUploadFile(bannerImage, result.uploadUrl, result.uploadFields)
-      console.log('— Done')
 
       bannerImagePath = result.filePath as FilePath
     }
 
-    console.log('createTopicMutation.mutateAsync')
     await updateTopicMutation.mutateAsync({
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -145,7 +115,6 @@ export const TopicEdit = (props: TopicEditProps) => {
         bannerImagePath,
       },
     })
-    console.log('— Done')
 
     props.onSuccess()
 

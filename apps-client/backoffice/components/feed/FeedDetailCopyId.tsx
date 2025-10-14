@@ -1,20 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 
 import { Button } from '@pple-today/web-ui/button'
 import { Popover, PopoverAnchor, PopoverContent } from '@pple-today/web-ui/popover'
 
-let timeout: NodeJS.Timeout
-
 export const FeedDetailCopyId = ({ id }: { id: string }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
   const [displayText, setDisplayText] = useState('คัดลอก ID แล้ว')
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
   const popupPopover = () => {
-    clearInterval(timeout)
+    clearInterval(timeoutRef.current)
     setIsPopoverOpen(true)
-    timeout = setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       setIsPopoverOpen(false)
       setDisplayText('คัดลอก ID แล้ว')
     }, 1000)
