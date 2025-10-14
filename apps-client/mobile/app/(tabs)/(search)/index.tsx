@@ -1,5 +1,5 @@
 import React from 'react'
-import { Keyboard, Pressable, ScrollView, View } from 'react-native'
+import { FlatList, Keyboard, Pressable, View } from 'react-native'
 
 import { FormControl, FormItem } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
@@ -7,15 +7,19 @@ import { Input, InputGroup, InputLeftIcon } from '@pple-today/ui/input'
 import { Text } from '@pple-today/ui/text'
 import { H1 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
+import { keepPreviousData } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
 import { SearchIcon } from 'lucide-react-native'
 
+import { GetSearchKeywordResponse } from '@api/backoffice/app'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { QuerySearchCard } from '@app/components/search/query-card'
 import { SearchNotEntered, SearchNotFound } from '@app/components/search/search-status'
 import { TopicSearchCard } from '@app/components/search/topic-card'
 import { UserSearchCard } from '@app/components/search/user-card'
+import { Spinner } from '@app/components/spinner'
 import { reactQueryClient } from '@app/libs/api-client'
+import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 
 import { useSearchingContext } from './_layout'
 
@@ -33,7 +37,7 @@ export default function SearchPage() {
       formApi.reset()
       dispatch({ type: 'updateQuery', query: value.query })
       router.navigate({
-        pathname: '/result',
+        pathname: './result',
         params: { query: value.query },
       })
     },
@@ -46,24 +50,35 @@ export default function SearchPage() {
     },
     {
       enabled: !!state.searchQuery,
+      placeholderData: keepPreviousData,
     }
   )
 
-  const RenderKeywordSuggestions = React.useCallback(() => {
-    // TODO: add spinner
+  const keywords = keywordQuery.data
+
+  const keywordList = React.useMemo(() => {
+    if (!keywords) return []
+    const items = [...keywords]
+    return items.sort((a, b) => getKeywordPriority(b) - getKeywordPriority(a))
+  }, [keywords])
+
+  const RenderKeywordSuggestions = () => {
+    // State: loading
     if (keywordQuery.isLoading) {
       return (
-        <Text className="font-heading-regular text-center w-full p-4 text-base-text-placeholder">
-          Loading
-        </Text>
+        <View className="items-center py-6">
+          <Spinner />
+        </View>
       )
     }
 
+    // State NO focusing and NO query
     if (!isFocused && !state.searchQuery) {
       return <SearchNotEntered />
     }
 
-    //TODO: implement trending / suggestion keywords
+    // State focusing but NO query --> Show trending / suggestion keywords
+    // TODO: Integrate trending / suggestion keywords API
     if (!keywordQuery.data) {
       return (
         <Text className="font-heading-regular text-center w-full p-4 text-base-text-placeholder">
@@ -72,37 +87,37 @@ export default function SearchPage() {
       )
     }
 
-    if (keywordQuery.data.length === 0) {
+    // State HAVE query
+    if (keywordList.length === 0) {
       return <SearchNotFound />
     }
 
-    const keywords = keywordQuery.data
-
+    // Normal condition
     return (
-      <ScrollView className="h-full" contentContainerClassName="pb-32">
-        {keywords
-          .filter((k) => k.type === 'USER')
-          .map((profile) => (
-            <UserSearchCard
-              key={profile.id}
-              id={profile.id}
-              name={profile.name}
-              profileImage={profile.profileImage ?? undefined}
-            />
-          ))}
-        {keywords
-          .filter((k) => k.type === 'TOPIC')
-          .map((topic) => (
-            <TopicSearchCard key={topic.id} id={topic.id} name={topic.name} />
-          ))}
-        {keywords
-          .filter((k) => k.type === 'QUERY')
-          .map((query, index) => (
-            <QuerySearchCard key={index} query={query.query} />
-          ))}
-      </ScrollView>
+      <FlatList
+        data={keywordList}
+        renderItem={({ item, index }) => {
+          switch (item.type) {
+            case 'USER':
+              return (
+                <UserSearchCard
+                  key={item.id}
+                  id={item.id}
+                  name={item.name}
+                  profileImage={item.profileImage}
+                />
+              )
+            case 'TOPIC':
+              return <TopicSearchCard key={item.id} id={item.id} name={item.name} />
+            case 'QUERY':
+              return <QuerySearchCard key={`query-${index}`} query={item.query} />
+            default:
+              exhaustiveGuard(item)
+          }
+        }}
+      />
     )
-  }, [keywordQuery])
+  }
 
   return (
     <Pressable onPress={Keyboard.dismiss} className="flex-1">
@@ -156,4 +171,17 @@ export default function SearchPage() {
       </SafeAreaLayout>
     </Pressable>
   )
+}
+
+function getKeywordPriority(keyword: GetSearchKeywordResponse[number]) {
+  switch (keyword.type) {
+    case 'USER':
+      return 0
+    case 'TOPIC':
+      return 1
+    case 'QUERY':
+      return 2
+    default:
+      exhaustiveGuard(keyword)
+  }
 }

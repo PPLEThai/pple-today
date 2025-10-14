@@ -11,7 +11,7 @@ import { SearchCard } from './search-card'
 interface UserSearchCardProps {
   id: string
   name: string
-  profileImage?: string
+  profileImage?: string | null
 }
 
 export function UserSearchCard(props: UserSearchCardProps) {
@@ -23,7 +23,7 @@ export function UserSearchCard(props: UserSearchCardProps) {
         <Avatar className="w-8 h-8" alt={props.name}>
           <AvatarImage
             source={{
-              uri: props.profileImage,
+              uri: props.profileImage ?? undefined,
             }}
           />
           <AvatarPPLEFallback />

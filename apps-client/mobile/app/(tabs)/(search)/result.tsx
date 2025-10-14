@@ -10,7 +10,12 @@ import { cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
-import { InfiniteData, useInfiniteQuery, UseInfiniteQueryResult } from '@tanstack/react-query'
+import {
+  InfiniteData,
+  keepPreviousData,
+  useInfiniteQuery,
+  UseInfiniteQueryResult,
+} from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
 import { ArrowLeftIcon, SearchIcon } from 'lucide-react-native'
 
@@ -27,6 +32,7 @@ import { HashtagSearchCard } from '@app/components/search/hashtag-card'
 import { SearchNotEntered, SearchNotFound } from '@app/components/search/search-status'
 import { TopicSearchBigCard } from '@app/components/search/topic-card'
 import { UserSearchCard } from '@app/components/search/user-card'
+import { Spinner } from '@app/components/spinner'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 
 import { useSearchingContext } from './_layout'
@@ -190,42 +196,41 @@ const AnnouncementSearchSection = ({ data }: AnnouncementSearchSectionProps) => 
 }
 
 const SearchResult = ({ query }: { query: string }) => {
-  const feedQuery = query
   const userSearchQuery = reactQueryClient.useQuery(
     '/search/details/users',
     {
       query: { search: query },
     },
-    { enabled: !!query }
+    { enabled: !!query, placeholderData: keepPreviousData }
   )
   const hashtagSearchQuery = reactQueryClient.useQuery(
     '/search/details/hashtags',
     {
       query: { search: query },
     },
-    { enabled: !!query && query.startsWith('#') }
+    { enabled: !!query && query.startsWith('#'), placeholderData: keepPreviousData }
   )
   const announcementSearchQuery = reactQueryClient.useQuery(
     '/search/details/announcements',
     {
       query: { search: query },
     },
-    { enabled: !!query }
+    { enabled: !!query, placeholderData: keepPreviousData }
   )
   const topicSearchQuery = reactQueryClient.useQuery(
     '/search/details/topics',
     {
       query: { search: query },
     },
-    { enabled: !!query }
+    { enabled: !!query, placeholderData: keepPreviousData }
   )
   const feedInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/search/details/feeds', {
-      query: { search: feedQuery },
+      query: { search: query },
     }),
     queryFn: async ({ pageParam }) => {
       const response = await fetchClient('/search/details/feeds', {
-        query: { limit: LIMIT, search: feedQuery!, cursor: `${pageParam}` },
+        query: { limit: LIMIT, search: query!, cursor: pageParam ? pageParam : undefined },
       })
       if (response.error) {
         throw response.error
@@ -233,16 +238,9 @@ const SearchResult = ({ query }: { query: string }) => {
       return response.data
     },
     initialPageParam: '',
-    getNextPageParam: (lastPage, _) => {
-      if (lastPage && lastPage.length === 0) {
-        return undefined
-      }
-      if (lastPage.length < LIMIT) {
-        return undefined
-      }
-      return lastPage[lastPage.length - 1].id
-    },
-    enabled: !!feedQuery,
+    getNextPageParam: (lastPage) => lastPage.meta.cursor.next,
+    enabled: !!query,
+    placeholderData: keepPreviousData,
   })
   React.useEffect(() => {
     if (feedInfiniteQuery.error) {
@@ -257,13 +255,13 @@ const SearchResult = ({ query }: { query: string }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
 
-  const feedData = React.useMemo((): GetSearchFeedItemsResponse => {
+  const feedData = React.useMemo((): GetSearchFeedItemsResponse['items'][number][] => {
     if (!feedInfiniteQuery.data) return []
-    return feedInfiniteQuery.data.pages.flat()
+    return feedInfiniteQuery.data.pages.flatMap((page) => page.items)
   }, [feedInfiniteQuery.data])
 
   const renderFeedItem = React.useCallback(
-    ({ item }: { item: GetSearchFeedItemsResponse[number]; index: number }) => {
+    ({ item }: { item: GetSearchFeedItemsResponse['items'][number]; index: number }) => {
       return (
         <View className="bg-base-bg-default">
           <FeedCard key={item.id} feedItem={item} className="mb-4 mx-4" />
@@ -290,20 +288,18 @@ const SearchResult = ({ query }: { query: string }) => {
   ])
 
   if (isLoading) {
-    // TODO: Replace with spinner
     return (
-      <Text className="font-heading-regular text-center w-full p-4 text-base-text-placeholder">
-        Loading
-      </Text>
+      <View className="items-center py-6">
+        <Spinner />
+      </View>
     )
   }
 
-  if (query.trim().length === 0) {
+  if (query.length === 0) {
     return <SearchNotEntered />
   }
 
   if (
-    query.startsWith('#') &&
     hashtagSearchQuery.data &&
     announcementSearchQuery.data &&
     topicSearchQuery.data &&
@@ -354,7 +350,7 @@ const SearchResult = ({ query }: { query: string }) => {
 }
 
 interface FeedSearchSectionProps {
-  queryResult: UseInfiniteQueryResult<InfiniteData<unknown[]>>
+  queryResult: UseInfiniteQueryResult<InfiniteData<GetSearchFeedItemsResponse>, unknown>
   className?: string
 }
 function FeedSearchSectionHeader({ queryResult, className }: FeedSearchSectionProps) {
@@ -362,7 +358,7 @@ function FeedSearchSectionHeader({ queryResult, className }: FeedSearchSectionPr
     queryResult.isLoading ||
     (queryResult.data &&
       queryResult.data.pages.length === 1 &&
-      queryResult.data.pages[0].length === 0)
+      queryResult.data.pages[0].items.length === 0)
   ) {
     return null
   }
@@ -385,7 +381,7 @@ function FeedSearchSectionFooter({ queryResult, className }: FeedSearchSectionPr
   if (
     queryResult.data &&
     queryResult.data.pages.length === 1 &&
-    queryResult.data.pages[0].length === 0
+    queryResult.data.pages[0].items.length === 0
   ) {
     // Empty State
     return null
