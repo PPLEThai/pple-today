@@ -41,27 +41,25 @@ export class KeyManagementService {
     )
 
     const publicKeyResult = await fromGoogleAPIPromise(this.kmsClient.getPublicKey({ name }))
-    if (publicKeyResult.isErr()) {
-      return err(publicKeyResult.error)
-    }
+    if (publicKeyResult.isErr()) return err(publicKeyResult.error)
 
     const [publicKey] = publicKeyResult.value
 
     return ok(publicKey.pem)
   }
 
-  async getPublicKeyAsymmetricDecrypt(keyId: string) {
+  async getPublicKeyAsymmetricEncrypt(keyId: string) {
     const result = await this.getPublicKey(this.config.encryptionKeyRing, keyId)
     if (result.isErr()) return err(result.error)
 
-    return ok(result.value as string) // publicKey of asymmetric must be string
+    return ok(result.value as string) // publicKey of asymmetric always be string
   }
 
   async getPublicKeyAsymmetricSign(keyId: string) {
     const result = await this.getPublicKey(this.config.signingKeyRing, keyId)
     if (result.isErr()) return err(result.error)
 
-    return ok(result.value as string) // publicKey of asymmetric must be string
+    return ok(result.value as string) // publicKey of asymmetric always be string
   }
 
   private async createKey(keyRing: string, keyId: string, key: google.cloud.kms.v1.ICryptoKey) {
@@ -80,7 +78,7 @@ export class KeyManagementService {
     )
   }
 
-  async createAsymmetricDecryptKey(keyId: string) {
+  async createAsymmetricEncryptKey(keyId: string) {
     const key = {
       purpose: 'ASYMMETRIC_DECRYPT',
       destroyScheduledDuration: {
@@ -123,7 +121,7 @@ export class KeyManagementService {
     return fromGoogleAPIPromise(this.kmsClient.destroyCryptoKeyVersion({ name: version }))
   }
 
-  async destroyAsymmetricDecryptKey(keyId: string) {
+  async destroyAsymmetricEncryptKey(keyId: string) {
     return this.destroyKey(this.config.encryptionKeyRing, keyId)
   }
 

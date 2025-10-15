@@ -21,7 +21,7 @@ export class KeyService {
 
   async createElectionKeys(electionId: string) {
     const createResults = await Promise.all([
-      this.keyManagementService.createAsymmetricDecryptKey(electionId),
+      this.keyManagementService.createAsymmetricEncryptKey(electionId),
       this.keyManagementService.createAsymmetricSignKey(electionId),
     ])
 
@@ -31,7 +31,7 @@ export class KeyService {
       const [decryptResult, signResult] = createResults
 
       if (decryptResult.isOk()) {
-        const deleteResult = await this.keyManagementService.destroyAsymmetricDecryptKey(electionId)
+        const deleteResult = await this.keyManagementService.destroyAsymmetricEncryptKey(electionId)
         if (deleteResult.isErr()) return mapGoogleAPIError(deleteResult.error)
       }
 
@@ -55,7 +55,7 @@ export class KeyService {
 
   async destroyElectionKeys(electionId: string) {
     const destroyKeyResults = await Promise.all([
-      this.keyManagementService.destroyAsymmetricDecryptKey(electionId),
+      this.keyManagementService.destroyAsymmetricEncryptKey(electionId),
       this.keyManagementService.destroyAsymmetricSignKey(electionId),
     ])
 
@@ -73,24 +73,18 @@ export class KeyService {
   }
 
   async updateElectionKeys(electionId: string) {
-    let encryptKey: string
-    let signingKey: string
-
     for (let i = 0; i < this.MAX_RETRY; i++) {
-      const [encryptResult, signinResult] = await Promise.all([
-        this.keyManagementService.getPublicKeyAsymmetricDecrypt(electionId),
+      const [encryptResult, signingResult] = await Promise.all([
+        this.keyManagementService.getPublicKeyAsymmetricEncrypt(electionId),
         this.keyManagementService.getPublicKeyAsymmetricSign(electionId),
       ])
 
-      if (encryptResult.isOk() && signinResult.isOk()) {
-        encryptKey = encryptResult.value
-        signingKey = signinResult.value
-
+      if (encryptResult.isOk() && signingResult.isOk()) {
         await this.backofficeAdminService.updateElectionKeys({
           electionId,
           status: ElectionKeysStatus.CREATED,
-          encryptPublicKey: encryptKey,
-          signingPublicKey: signingKey,
+          encryptPublicKey: encryptResult.value,
+          signingPublicKey: signingResult.value,
         })
 
         return ok()
@@ -100,7 +94,7 @@ export class KeyService {
     }
 
     await Promise.all([
-      this.keyManagementService.destroyAsymmetricDecryptKey(electionId),
+      this.keyManagementService.destroyAsymmetricEncryptKey(electionId),
       this.keyManagementService.destroyAsymmetricSignKey(electionId),
       this.backofficeAdminService.updateElectionKeys({
         electionId,

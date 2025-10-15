@@ -53,6 +53,31 @@ export const ElectionController = new Elysia({
     }
   )
   .get(
+    '/profile-page',
+    async ({ user, electionService, status }) => {
+      const elections = await electionService.listProfilePageElections(user.id)
+      if (elections.isErr()) {
+        return mapErrorCodeToResponse(elections.error, status)
+      }
+
+      return status(200, elections.value)
+    },
+    {
+      detail: {
+        summary: 'List elections for profile page',
+        description: 'List elections for profile page',
+      },
+      requiredLocalUser: true,
+      response: {
+        200: ListElectionResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .get(
     '/:electionId',
     async ({ user, params: { electionId }, status, electionService }) => {
       const election = await electionService.getMyEligibleElection(user.id, electionId)

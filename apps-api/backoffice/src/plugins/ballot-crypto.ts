@@ -17,9 +17,7 @@ export class BallotCryptoService {
 
   async createElectionKeys(electionId: string) {
     const response = await this.client.keys.post(
-      {
-        electionId,
-      },
+      { electionId },
       {
         headers: {
           'x-backoffice-to-ballot-crypto-key': this.config.apiKey,

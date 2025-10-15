@@ -6,10 +6,10 @@ import { ok } from 'neverthrow'
 import { ConfigServicePlugin } from './config'
 
 export class AuthGuard {
-  constructor(private readonly backofficeToBallotCryptoKey: string) {}
+  constructor(private readonly apiKey: string) {}
 
   validateBackoffice(key: string) {
-    if (key !== this.backofficeToBallotCryptoKey) {
+    if (key !== this.apiKey) {
       return err({
         code: InternalErrorCode.UNAUTHORIZED,
         message: 'Not authenticated',
@@ -33,9 +33,7 @@ export const AuthGuardPlugin = new Elysia({
           headers['x-backoffice-to-ballot-crypto-key'] || ''
         )
 
-        if (result.isErr()) {
-          return mapErrorCodeToResponse(result.error, status)
-        }
+        if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
         return {}
       },

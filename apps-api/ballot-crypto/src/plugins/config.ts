@@ -36,7 +36,7 @@ export const envSchema = t.Object({
   }),
 
   BACKOFFICE_URL: t.String({
-    description: 'Domain of ballot crypto service',
+    description: 'Url of backoffice service',
   }),
   BALLOT_CRYPTO_TO_BACKOFFICE_KEY: t.String({
     description: 'API key for authenticate ballot crypto',

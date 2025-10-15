@@ -5,7 +5,7 @@ import Elysia from 'elysia'
 import { CreateKeysBody, CreateKeysResponse, DeleteKeysParams, DeleteKeysResponse } from './models'
 import { KeyServicePlugin } from './services'
 
-import { AuthGuardPlugin } from '../../plugins/admin-auth-guard'
+import { AuthGuardPlugin } from '../../plugins/auth-guard'
 
 export const KeyController = new Elysia({
   prefix: '/keys',

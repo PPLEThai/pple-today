@@ -117,9 +117,7 @@ export const AdminAuthGuardPlugin = new Elysia({
           headers['x-ballot-crypto-to-backoffice-key'] || ''
         )
 
-        if (result.isErr()) {
-          return mapErrorCodeToResponse(result.error, status)
-        }
+        if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
         return {}
       },
