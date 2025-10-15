@@ -114,25 +114,25 @@ export const Data = () => {
             <>
               <div className="flex gap-3">
                 <Button size="icon" className="size-8" asChild>
-                  <NavLink to={`/feed/announcement/${id}`}>
+                  <NavLink to={`/feed/topic/${id}`}>
                     <span className="sr-only">ประกาศ</span>
                     <Megaphone className="size-4" />
                   </NavLink>
                 </Button>
                 {/* <Button variant="secondary" size="icon" className="size-8" asChild>
-                  <NavLink to={`/feed/announcement/${id}`}>
+                  <NavLink to={`/feed/topic/${id}`}>
                     <span className="sr-only">เก็บในคลัง</span>
                     <EyeOff className="size-4" />
                   </NavLink>
                 </Button> */}
                 <Button variant="outline" size="icon" className="size-8" asChild>
-                  <NavLink to={`/feed/announcement/${id}`}>
+                  <NavLink to={`/feed/topic/${id}`}>
                     <span className="sr-only">แก้ไข</span>
                     <Pencil className="size-4" />
                   </NavLink>
                 </Button>
                 <Button variant="outline-destructive" size="icon" className="size-8" asChild>
-                  <NavLink to={`/feed/announcement/${id}`}>
+                  <NavLink to={`/feed/topic/${id}`}>
                     <span className="sr-only">ลบ</span>
                     <Trash2 className="size-4" />
                   </NavLink>
