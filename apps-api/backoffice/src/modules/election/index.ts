@@ -43,7 +43,7 @@ export const ElectionController = new Elysia({
     {
       detail: {
         summary: 'List elections',
-        description: 'List elections base on page',
+        description: 'List elections based on user and page',
       },
       requiredLocalUser: true,
       query: ListElectionQuery,

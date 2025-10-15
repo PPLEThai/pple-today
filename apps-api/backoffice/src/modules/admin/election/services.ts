@@ -34,11 +34,7 @@ export class AdminElectionService {
   constructor(
     private readonly adminElectionRepository: AdminElectionRepository,
     private readonly fileService: FileService,
-    private readonly ballotCryptoService: BallotCryptoService,
-    private readonly config: {
-      ballotCryptoToBackofficeKey: string
-      backofficeToBallotCryptoKey: string
-    }
+    private readonly ballotCryptoService: BallotCryptoService
   ) {}
 
   private checkIsElectionAllowedToModified(election: Election, now: Date) {
@@ -502,10 +498,6 @@ export const AdminElectionServicePlugin = new Elysia({ name: 'AdminElectionServi
     adminElectionService: new AdminElectionService(
       adminElectionRepository,
       fileService,
-      ballotCryptoService,
-      {
-        backofficeToBallotCryptoKey: configService.get('BACKOFFICE_TO_BALLOT_CRYPTO_KEY'),
-        ballotCryptoToBackofficeKey: configService.get('BALLOT_CRYPTO_TO_BACKOFFICE_KEY'),
-      }
+      ballotCryptoService
     ),
   }))

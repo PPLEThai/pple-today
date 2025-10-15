@@ -190,11 +190,7 @@ export class AdminElectionRepository {
         where: {
           id: electionId,
         },
-        data: {
-          keysStatus: keys.status,
-          encryptionPublicKey: keys.encryptionPublicKey,
-          signingPublicKey: keys.signingPublicKey,
-        },
+        data: keys,
       })
     )
   }

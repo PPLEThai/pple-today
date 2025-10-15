@@ -26,7 +26,10 @@ export const ListElectionQuery = t.Object({
         OFFICIAL: 'OFFICIAL',
         PROFILE: 'PROFILE',
       },
-      { description: 'The page to list elections for', default: 'OFFICIAL' }
+      {
+        description: 'The page to list elections for',
+        default: 'OFFICIAL',
+      }
     )
   ),
 })
