@@ -2,14 +2,14 @@ import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
-import { CreateHashtagBody, UpdateHashtagBody } from './models'
+import { CreateHashtagBody, GetHashtagsQuery, UpdateHashtagBody } from './models'
 
 import { PrismaServicePlugin } from '../../../plugins/prisma'
 
 export class AdminHashtagRepository {
   constructor(private prismaService: PrismaService) {}
 
-  async getHashtags(query: { limit?: number; page: number; search?: string } = { page: 1 }) {
+  async getHashtags(query: GetHashtagsQuery = { page: 1 }) {
     const { limit, page } = query
     const skip = limit !== undefined ? Math.max((page - 1) * limit, 0) : 0
 

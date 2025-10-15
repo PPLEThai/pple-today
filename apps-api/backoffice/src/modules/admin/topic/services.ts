@@ -11,6 +11,7 @@ import {
   CreateTopicResponse,
   DeleteTopicResponse,
   GetTopicByIdResponse,
+  GetTopicsQuery,
   GetTopicsResponse,
   UpdateTopicBody,
   UpdateTopicResponse,
@@ -25,12 +26,7 @@ export class AdminTopicService {
     private readonly fileService: FileService
   ) {}
 
-  async getTopics(
-    query: { limit: number; page: number; search?: string } = {
-      limit: 10,
-      page: 1,
-    }
-  ) {
+  async getTopics(query: GetTopicsQuery = { limit: 10, page: 1 }) {
     const result = await this.adminTopicRepository.getTopics(query)
     if (result.isErr()) return mapRepositoryError(result.error, {})
 

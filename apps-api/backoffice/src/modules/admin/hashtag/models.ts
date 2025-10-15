@@ -4,7 +4,7 @@ import { Static, t } from 'elysia'
 
 export const GetHashtagsQuery = t.Object({
   limit: t.Optional(t.Number()),
-  page: t.Optional(t.Number({ default: 1 })),
+  page: t.Number(),
   search: t.Optional(t.String()),
 })
 export type GetHashtagsQuery = Static<typeof GetHashtagsQuery>

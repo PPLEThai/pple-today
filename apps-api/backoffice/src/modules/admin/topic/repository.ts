@@ -6,7 +6,7 @@ import { TopicStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { CreateTopicBody, UpdateTopicBody } from './models'
+import { CreateTopicBody, GetTopicsQuery, UpdateTopicBody } from './models'
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
@@ -17,12 +17,7 @@ export class AdminTopicRepository {
     private readonly fileService: FileService
   ) {}
 
-  async getTopics(
-    query: { limit: number; page: number; search?: string } = {
-      limit: 10,
-      page: 1,
-    }
-  ) {
+  async getTopics(query: GetTopicsQuery = { limit: 10, page: 1 }) {
     const { limit, page } = query
     const skip = Math.max((page - 1) * limit, 0)
 

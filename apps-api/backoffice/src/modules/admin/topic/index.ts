@@ -1,6 +1,6 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
-import Elysia from 'elysia'
+import Elysia, { t } from 'elysia'
 
 import {
   CreateTopicBody,
@@ -27,7 +27,7 @@ export const AdminTopicController = new Elysia({
   .get(
     '/',
     async ({ query, status, adminTopicService }) => {
-      const pagingQuery = {
+      const pagingQuery: GetTopicsQuery = {
         limit: query.limit ?? 10,
         page: query.page ?? 1,
         search: query.search,
@@ -40,7 +40,7 @@ export const AdminTopicController = new Elysia({
     },
     {
       requiredLocalUser: true,
-      query: GetTopicsQuery,
+      query: t.Partial(GetTopicsQuery),
       response: {
         200: GetTopicsResponse,
         ...createErrorSchema(
