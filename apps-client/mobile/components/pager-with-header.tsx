@@ -395,10 +395,10 @@ const usePagerTabBarContext = () => {
 const PADDING_X = 16
 export function PagerTabBar({
   children,
-  widthFull = false,
+  fullWidth = false,
 }: {
   children: React.ReactNode
-  widthFull?: boolean
+  fullWidth?: boolean
 }) {
   const { tabListSize, dragProgress, dragState, indexToOffset, containerSize, tabBarScrollElRef } =
     usePagerTabBarContext()
@@ -439,7 +439,7 @@ export function PagerTabBar({
         ref={tabBarScrollElRef}
         showsHorizontalScrollIndicator={false}
         className="w-full -mb-px"
-        contentContainerClassName={clsx(widthFull && 'w-full')}
+        contentContainerClassName={clsx(fullWidth && 'w-full')}
         contentContainerStyle={{ paddingHorizontal: PADDING_X }}
         onLayout={(evt) => {
           const height = evt.nativeEvent.layout.height
@@ -452,7 +452,7 @@ export function PagerTabBar({
       >
         <View
           accessibilityRole="tablist"
-          className={clsx('flex flex-row', widthFull && 'w-full')}
+          className={clsx('flex flex-row', fullWidth && 'w-full')}
           onLayout={(e) => {
             tabListSize.set(e.nativeEvent.layout.width)
           }}

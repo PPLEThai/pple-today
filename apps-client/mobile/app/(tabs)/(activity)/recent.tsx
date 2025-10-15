@@ -64,7 +64,7 @@ export default function RecentActivityPage() {
               </View>
             </View>
           </PagerHeaderOnly>
-          <PagerTabBar widthFull>
+          <PagerTabBar fullWidth>
             <PagerTabBarItem index={0} className="flex-1">
               วันนี้
             </PagerTabBarItem>
