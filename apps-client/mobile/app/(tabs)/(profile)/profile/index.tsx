@@ -368,7 +368,7 @@ function LinkFacebookPageDialog() {
         console.error('Failed to get facebook access token')
         return
       }
-      router.push(`/(profile)/facebook?facebookAccessToken=${accessTokenResult.accessToken}`)
+      router.push(`/profile/facebook?facebookAccessToken=${accessTokenResult.accessToken}`)
     } catch (error) {
       console.error('Login Error: ', error)
     }
@@ -521,7 +521,7 @@ const FollowingSection = () => {
           size="icon"
           className="size-9"
           onPress={() => {
-            router.push('/(profile)/follow')
+            router.push('/profile/follow')
           }}
         >
           <Icon icon={PencilIcon} strokeWidth={1} size={20} className="text-base-text-high" />

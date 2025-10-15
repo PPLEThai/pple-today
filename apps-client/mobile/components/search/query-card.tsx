@@ -20,7 +20,7 @@ export function QuerySearchCard(props: QueryCardProps) {
     <SearchCard
       onPress={() => {
         dispatch({ type: 'updateQuery', query: props.query })
-        router.navigate('/result')
+        router.navigate('/search/result')
       }}
     >
       <View className="flex flex-row items-center gap-2  px-4 py-3">

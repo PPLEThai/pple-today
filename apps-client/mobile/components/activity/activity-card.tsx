@@ -43,7 +43,7 @@ export function ActivityCard({ activity, className }: ActivityCardProps) {
         'border border-base-outline-default rounded-2xl bg-base-bg-white flex flex-row gap-4 p-2 items-stretch h-[203px]',
         className
       )}
-      onPress={() => router.navigate(`/activities/${activity.id}`)}
+      onPress={() => router.navigate(`/activity/${activity.id}`)}
     >
       <Image className="rounded-xl bg-base-bg-default w-[137px]" source={{ uri: activity.image }} />
       <View className="flex flex-col justify-between gap-2 flex-1">
@@ -67,7 +67,7 @@ export function ActivityCard({ activity, className }: ActivityCardProps) {
           </View>
         </View>
         {activity.user.isRegistered ? (
-          <Link asChild href={`/activities/${activity.id}`}>
+          <Link asChild href={`/activity/${activity.id}`}>
             <Button size="sm" variant="secondary">
               <Text>ดูรายละเอียด</Text>
             </Button>
