@@ -1,4 +1,5 @@
 import { Treaty, treaty } from '@elysiajs/eden'
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { err } from '@pple-today/api-common/utils'
 import { ElectionKeysStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
@@ -36,8 +37,8 @@ export class BackofficeAdminService {
 
     if (response.status !== 200) {
       return err({
-        code: (response.error?.value as any).code,
-        message: (response.error?.value as any).message,
+        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+        message: 'Unexpected error occured',
       })
     }
 
