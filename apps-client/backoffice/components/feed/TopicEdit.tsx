@@ -236,7 +236,7 @@ export const TopicEdit = (props: TopicEditProps) => {
                     )}
                   </div>
                   <ImagePreview
-                    className="rounded-md overflow-hidden w-full h-[120px] object-center object-cover"
+                    className="rounded-md overflow-hidden w-full h-[120px] object-cover"
                     src={value || props.topic.bannerImage?.url}
                   />
                   <FormMessage asChild>

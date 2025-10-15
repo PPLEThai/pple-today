@@ -194,7 +194,7 @@ export const TopicCreate = (props: TopicCreateProps) => {
                   </FormControl>
                   {value && (
                     <ImagePreview
-                      className="rounded-md overflow-hidden w-full h-[120px] object-center object-cover"
+                      className="rounded-md overflow-hidden w-full h-[120px] object-cover"
                       src={value}
                     />
                   )}

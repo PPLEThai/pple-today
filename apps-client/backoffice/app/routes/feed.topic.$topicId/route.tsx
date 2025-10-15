@@ -147,7 +147,7 @@ export default function HashtagEditPage({ params }: Route.LoaderArgs) {
                 </div>
               </div>
               <img
-                className="shrink-0 w-[236px] h-[120px] overflow-hidden rounded-xl bg-base-bg-dark"
+                className="shrink-0 w-[236px] h-[120px] overflow-hidden rounded-xl bg-base-bg-dark object-cover"
                 src={query.data.bannerImage?.url}
                 alt=""
                 width={236}
