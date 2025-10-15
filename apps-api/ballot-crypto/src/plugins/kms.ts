@@ -8,20 +8,20 @@ import { ConfigServicePlugin } from './config'
 
 import { fromGoogleAPIPromise } from '../utils/error'
 
-export type KeyManagementServiceConfig = {
-  projectId: string
-  clientEmail: string
-  privateKey: string
-  location: string
-  encryptionKeyRing: string
-  signingKeyRing: string
-}
-
 export class KeyManagementService {
   private readonly kmsClient: KeyManagementServiceClient
   private readonly DESTROY_SCHEDULED_DURATION = 30 * 24 * 60 * 60
 
-  constructor(private readonly config: KeyManagementServiceConfig) {
+  constructor(
+    private readonly config: {
+      projectId: string
+      clientEmail: string
+      privateKey: string
+      location: string
+      encryptionKeyRing: string
+      signingKeyRing: string
+    }
+  ) {
     this.kmsClient = new KeyManagementServiceClient({
       credentials: {
         projectId: config.projectId,
