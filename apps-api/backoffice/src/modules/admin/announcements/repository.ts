@@ -6,7 +6,7 @@ import { FeedItemType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { PostAnnouncementBody, PutAnnouncementBody } from './models'
+import { GetAnnouncementsQuery, PostAnnouncementBody, PutAnnouncementBody } from './models'
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
@@ -64,64 +64,78 @@ export class AdminAnnouncementRepository {
     return ok(true)
   }
 
-  async getAnnouncements(
-    query: { limit: number; page: number } = {
-      limit: 10,
-      page: 1,
-    }
-  ) {
+  async getAnnouncements(query: GetAnnouncementsQuery = { limit: 10, page: 1 }) {
     const { limit, page } = query
     const skip = Math.max((page - 1) * limit, 0)
 
+    const where = {
+      ...(query.search && {
+        title: {
+          contains: query.search,
+          mode: 'insensitive' as const,
+        },
+      }),
+      ...(query.status &&
+        query.status.length > 0 && {
+          status: {
+            in: query.status,
+          },
+        }),
+    }
+
     return await fromRepositoryPromise(async () => {
-      const result = await this.prismaService.announcement.findMany({
-        select: {
-          feedItemId: true,
-          title: true,
-          content: true,
-          status: true,
-          type: true,
-          topics: {
-            select: {
-              topic: {
-                select: {
-                  id: true,
-                  name: true,
+      const [rawData, count] = await Promise.all([
+        this.prismaService.announcement.findMany({
+          select: {
+            feedItemId: true,
+            title: true,
+            status: true,
+            feedItem: {
+              select: {
+                createdAt: true,
+                updatedAt: true,
+                publishedAt: true,
+                reactionCounts: {
+                  select: {
+                    type: true,
+                    count: true,
+                  },
+                },
+                _count: {
+                  select: {
+                    comments: true,
+                  },
                 },
               },
             },
+            type: true,
           },
-          attachments: {
-            select: {
-              filePath: true,
+          take: limit,
+          skip,
+          orderBy: {
+            feedItem: {
+              createdAt: 'desc',
             },
           },
-          feedItem: {
-            select: {
-              createdAt: true,
-              updatedAt: true,
-              publishedAt: true,
-            },
-          },
-        },
-        take: limit,
-        skip,
-        orderBy: {
-          feedItem: {
-            createdAt: 'desc',
-          },
-        },
-      })
+          where,
+        }),
+        this.prismaService.announcement.count({
+          where,
+        }),
+      ])
 
-      return result.map(({ feedItemId, topics, attachments, feedItem, ...item }) => ({
-        id: feedItemId,
-        topics: topics.map(({ topic }) => topic),
-        attachments: attachments.map((attachment) => attachment.filePath),
-        createdAt: feedItem.createdAt,
-        updatedAt: feedItem.updatedAt,
-        publishedAt: feedItem.publishedAt,
-        ...item,
-      }))
+      return {
+        data: rawData.map(({ feedItemId, feedItem, ...item }) => ({
+          id: feedItemId,
+          createdAt: feedItem.createdAt,
+          updatedAt: feedItem.updatedAt,
+          publishedAt: feedItem.publishedAt,
+          reactionCounts: feedItem.reactionCounts,
+          commentsCount: feedItem._count.comments,
+          ...item,
+        })),
+        meta: { count },
+      }
     })
   }
 

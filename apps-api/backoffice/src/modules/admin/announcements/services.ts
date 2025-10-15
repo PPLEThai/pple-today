@@ -8,6 +8,7 @@ import { ok } from 'neverthrow'
 
 import {
   GetAnnouncementByIdResponse,
+  GetAnnouncementsQuery,
   GetAnnouncementsResponse,
   PostAnnouncementBody,
   PutAnnouncementBody,
@@ -22,24 +23,11 @@ export class AdminAnnouncementService {
     private readonly fileService: FileService
   ) {}
 
-  async getAnnouncements(
-    query: { limit: number; page: number } = {
-      limit: 10,
-      page: 1,
-    }
-  ) {
+  async getAnnouncements(query: GetAnnouncementsQuery = { limit: 10, page: 1 }) {
     const result = await this.adminAnnouncementRepository.getAnnouncements(query)
     if (result.isErr()) return mapRepositoryError(result.error)
 
-    const value: GetAnnouncementsResponse = result.value.map((announcement) => ({
-      ...announcement,
-      attachments: announcement.attachments.map((filePath) => ({
-        filePath: filePath as FilePath,
-        url: this.fileService.getPublicFileUrl(filePath),
-      })),
-    }))
-
-    return ok(value)
+    return ok(result.value satisfies GetAnnouncementsResponse)
   }
 
   async getAnnouncementById(announcementId: string) {

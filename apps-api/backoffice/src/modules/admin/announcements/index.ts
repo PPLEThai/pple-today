@@ -1,6 +1,6 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
-import Elysia from 'elysia'
+import Elysia, { t } from 'elysia'
 
 import {
   DeleteAnnouncementParams,
@@ -27,9 +27,11 @@ export const AdminAnnouncementsController = new Elysia({
   .get(
     '/',
     async ({ query, status, adminAnnouncementService }) => {
-      const pagingQuery = {
+      const pagingQuery: GetAnnouncementsQuery = {
         limit: query.limit ?? 10,
         page: query.page ?? 1,
+        status: query.status,
+        search: query.search,
       }
 
       const result = await adminAnnouncementService.getAnnouncements(pagingQuery)
@@ -39,7 +41,7 @@ export const AdminAnnouncementsController = new Elysia({
     },
     {
       requiredLocalUser: true,
-      query: GetAnnouncementsQuery,
+      query: t.Partial(GetAnnouncementsQuery),
       response: {
         200: GetAnnouncementsResponse,
         ...createErrorSchema(

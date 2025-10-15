@@ -1,6 +1,6 @@
 import { Announcement } from '@pple-today/api-common/dtos'
 import { FilePath } from '@pple-today/api-common/dtos'
-import { AnnouncementType } from '@pple-today/database/prisma'
+import { AnnouncementStatus, AnnouncementType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const AnnouncementIdParams = t.Object({
@@ -9,36 +9,29 @@ export const AnnouncementIdParams = t.Object({
 export type AnnouncementIdParams = Static<typeof AnnouncementIdParams>
 
 export const GetAnnouncementsQuery = t.Object({
-  type: t.Optional(
-    t.Union(
-      [
-        t.Literal('publish', { description: 'String `publish`' }),
-        t.Literal('draft', { description: 'String `draft`' }),
-      ],
-      {
-        description: 'Type of announcement',
-      }
-    )
-  ),
-  limit: t.Optional(t.Number({ default: 10 })),
-  page: t.Optional(t.Number({ default: 1 })),
+  limit: t.Number(),
+  page: t.Number(),
+  search: t.Optional(t.String()),
+  status: t.Optional(t.Array(t.Enum(AnnouncementStatus))),
 })
 export type GetAnnouncementsQuery = Static<typeof GetAnnouncementsQuery>
 
-export const GetAnnouncementsResponse = t.Array(
-  t.Pick(Announcement, [
-    'id',
-    'status',
-    'content',
-    'createdAt',
-    'updatedAt',
-    'topics',
-    'title',
-    'type',
-    'attachments',
-    'publishedAt',
-  ])
-)
+export const GetAnnouncementsResponse = t.Object({
+  data: t.Array(
+    t.Pick(Announcement, [
+      'id',
+      'title',
+      'reactionCounts',
+      'commentsCount',
+      'status',
+      'type',
+      'publishedAt',
+      'createdAt',
+      'updatedAt',
+    ])
+  ),
+  meta: t.Object({ count: t.Number() }),
+})
 export type GetAnnouncementsResponse = Static<typeof GetAnnouncementsResponse>
 
 export const GetAnnouncementByIdParams = AnnouncementIdParams
