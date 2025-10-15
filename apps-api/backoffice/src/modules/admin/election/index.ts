@@ -468,7 +468,9 @@ export const AdminElectionController = new Elysia({
         const result = await adminElectionService.updateElectionKeys(params.electionId, body)
         if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
-        return status(204)
+        return status(200, {
+          message: 'Update Election Keys Successfully',
+        })
       },
       {
         detail: {
