@@ -106,8 +106,8 @@ export const Data = () => {
         id: 'manage',
         header: 'จัดการ',
         cell: ({ row }) => {
-          const id = row.getValue<GetHashtagsResponse['data'][number]['id']>('id')
-          const status = row.getValue<GetHashtagsResponse['data'][number]['status']>('status')
+          const id = row.original.id
+          const status = row.original.status
 
           return status === 'PUBLISHED' ? (
             <Button

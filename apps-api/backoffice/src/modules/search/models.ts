@@ -3,6 +3,7 @@ import {
   Author,
   DetailedTopic,
   FeedItem,
+  ListCursorResponse,
   SearchKeyword,
   SearchQuery,
 } from '@pple-today/api-common/dtos'
@@ -17,7 +18,7 @@ export type GetSearchKeywordResponse = Static<typeof GetSearchKeywordResponse>
 export const GetSearchFeedItemsQuery = SearchQuery
 export type GetSearchFeedItemsQuery = Static<typeof GetSearchFeedItemsQuery>
 
-export const GetSearchFeedItemsResponse = t.Array(FeedItem)
+export const GetSearchFeedItemsResponse = ListCursorResponse(FeedItem)
 export type GetSearchFeedItemsResponse = Static<typeof GetSearchFeedItemsResponse>
 
 export const GetSearchUsersQuery = SearchQuery

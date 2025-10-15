@@ -230,7 +230,7 @@ export const AuthLifeCycleHook = () => {
           <Button
             onPress={async () => {
               await sessionMutation.mutateAsync(null)
-              router.navigate('/profile')
+              router.navigate('/(profile)')
               setDialogOpen(false)
             }}
           >
@@ -299,7 +299,7 @@ export const useLoginMutation = () => {
     },
     onError: (error) => {
       console.error('Error logging in: ', JSON.stringify(error))
-      router.navigate('/profile')
+      router.navigate('/(profile)')
     },
     onSuccess: async (result) => {
       // save session in expo session store
@@ -357,7 +357,7 @@ export const useLogoutMutation = () => {
       await sessionMutation.mutateAsync(null)
       // reset all reactQueryClient cache
       await queryClient.resetQueries({ queryKey: reactQueryClient.getKey() })
-      router.navigate('/profile')
+      router.navigate('/(profile)')
     },
   })
 }

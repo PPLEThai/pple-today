@@ -5,6 +5,7 @@ import { ok } from 'neverthrow'
 
 import {
   GetSearchAnnouncementResponse,
+  GetSearchFeedItemsResponse,
   GetSearchKeywordResponse,
   GetSearchUsersResponse,
 } from './models'
@@ -73,7 +74,17 @@ export class SearchService {
     const result = await this.searchRepository.searchFeedItems(query)
     if (result.isErr()) return mapRepositoryError(result.error)
 
-    return ok(result.value)
+    const response = {
+      items: result.value,
+      meta: {
+        cursor: {
+          next: result.value.at(-1)?.id || null,
+          previous: query.cursor || null,
+        },
+      },
+    } satisfies GetSearchFeedItemsResponse
+
+    return ok(response)
   }
 
   async searchAnnouncements(query: { search: string; limit?: number; cursor?: string }) {

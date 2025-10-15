@@ -934,18 +934,11 @@ export const MultiSelect = React.forwardRef<MultiSelectRef, MultiSelectProps>(
             role="listbox"
             aria-multiselectable="true"
             aria-label="Available options"
-            className={cn(
-              'w-auto p-0',
-              getPopoverAnimationClass(),
-              screenSize === 'mobile' && 'w-[85vw] max-w-[280px]',
-              screenSize === 'tablet' && 'w-[70vw] max-w-md',
-              screenSize === 'desktop' && 'min-w-[300px]',
-              popoverClassName
-            )}
+            className={cn('w-auto p-0', getPopoverAnimationClass(), popoverClassName)}
             style={{
               animationDuration: `${animationConfig?.duration || animation}s`,
               animationDelay: `${animationConfig?.delay || 0}s`,
-              maxWidth: `min(${widthConstraints.maxWidth}, 85vw)`,
+              maxWidth: `var(--radix-popover-trigger-width)`,
               maxHeight: screenSize === 'mobile' ? '70vh' : '60vh',
               touchAction: 'manipulation',
             }}

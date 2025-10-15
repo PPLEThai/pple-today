@@ -20,11 +20,14 @@ import {
 import { cssInterop } from 'nativewind'
 
 import PPLEIconBlack from '@app/assets/pple-icon-black.svg'
+import { useSession } from '@app/libs/auth'
 
 cssInterop(Image, { className: 'style' })
 
 export default function BottomTabsLayout() {
   const insets = useSafeAreaInsets()
+  const session = useSession()
+
   return (
     <View className="flex-1 px-safe">
       <Tabs
@@ -52,15 +55,17 @@ export default function BottomTabsLayout() {
             tabBarButton: TabBarButton,
           }}
         />
-        <Tabs.Screen
-          name="search"
-          options={{
-            title: 'ค้นหา',
-            tabBarIcon: (props) => <TabBarIcon {...props} icon={SearchIcon} />,
-            tabBarLabel: TabBarLabel,
-            tabBarButton: TabBarButton,
-          }}
-        />
+        <Tabs.Protected guard={!!session}>
+          <Tabs.Screen
+            name="(search)"
+            options={{
+              title: 'ค้นหา',
+              tabBarIcon: (props) => <TabBarIcon {...props} icon={SearchIcon} />,
+              tabBarLabel: TabBarLabel,
+              ...(session ? { tabBarButton: TabBarButton } : { href: null }),
+            }}
+          />
+        </Tabs.Protected>
         <Tabs.Screen
           name="(official)"
           options={{
@@ -80,7 +85,7 @@ export default function BottomTabsLayout() {
           }}
         />
         <Tabs.Screen
-          name="profile"
+          name="(profile)"
           options={{
             title: 'ฉัน',
             tabBarIcon: (props) => <TabBarIcon {...props} icon={CircleUserRoundIcon} />,

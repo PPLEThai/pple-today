@@ -1,5 +1,28 @@
 # @client/backoffice
 
+## 0.3.1
+
+### Patch Changes
+
+- Updated dependencies [[`1053854`](https://github.com/PPLEThai/pple-today/commit/10538541f07642d2b53067b35bf21907245f63e2)]:
+  - @pple-today/web-ui@0.1.1
+
+## 0.3.0
+
+### Minor Changes
+
+- [#101](https://github.com/PPLEThai/pple-today/pull/101) [`572e86c`](https://github.com/PPLEThai/pple-today/commit/572e86c9af4a114c9c676ddec46a27d9b3f33662) Thanks [@miello](https://github.com/miello)! - [[PPLE-307] [CMS] Design Components](https://linear.app/snts/issue/PPLE-307/cms-design-components)
+
+- [#155](https://github.com/PPLEThai/pple-today/pull/155) [`6bc1485`](https://github.com/PPLEThai/pple-today/commit/6bc1485393488c3e84dd4b689b8cbe1ac32bd785) Thanks [@rootEnginear](https://github.com/rootEnginear)! - [PPLE-341] [CMS/FE] Feed/Hashtag Page
+  [PPLE-395] [CMS/FE] Integrate Admin Auth
+
+- [#162](https://github.com/PPLEThai/pple-today/pull/162) [`d32d324`](https://github.com/PPLEThai/pple-today/commit/d32d324e2592174922635bb6e67f5cca32f8eeff) Thanks [@miello](https://github.com/miello)! - [[PPLE-408] [API] CMS api revamp](https://linear.app/snts/issue/PPLE-408/api-cms-api-revamp)
+
+### Patch Changes
+
+- Updated dependencies [[`572e86c`](https://github.com/PPLEThai/pple-today/commit/572e86c9af4a114c9c676ddec46a27d9b3f33662)]:
+  - @pple-today/web-ui@0.1.0
+
 ## 0.2.2
 
 ### Patch Changes
