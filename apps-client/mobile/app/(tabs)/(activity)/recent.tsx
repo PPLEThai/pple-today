@@ -65,10 +65,10 @@ export default function RecentActivityPage() {
             </View>
           </PagerHeaderOnly>
           <PagerTabBar widthFull>
-            <PagerTabBarItem index={0} className="flex-1 flex-row">
+            <PagerTabBarItem index={0} className="flex-1">
               วันนี้
             </PagerTabBarItem>
-            <PagerTabBarItem index={1} className="flex-1 flex-row">
+            <PagerTabBarItem index={1} className="flex-1">
               เร็วๆ นี้
             </PagerTabBarItem>
             <PagerTabBarItemIndicator />

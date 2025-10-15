@@ -639,7 +639,7 @@ export function PagerTabBarItem({
   }
   return (
     <Pressable
-      className={cn('h-10 pt-2 pb-2 px-4 justify-center', className)}
+      className={cn('h-10 pt-2 pb-2 px-4 justify-center flex-row', className)}
       accessibilityRole="tab"
       onLayout={handleLayout}
       onPress={handlePress}
