@@ -22,7 +22,11 @@ import { reactQueryClient } from '~/libs/api-client'
 
 import { Route } from '../feed.topic.$topicId/+types/route'
 
-export default function HashtagEditPage({ params }: Route.LoaderArgs) {
+export function meta() {
+  return [{ title: 'รายละเอียดหัวข้อ' }]
+}
+
+export default function TopicDetailPage({ params }: Route.LoaderArgs) {
   const { topicId } = params
 
   const queryClient = useQueryClient()

@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState } from 'react'
+import { ReactNode, useRef, useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema'
@@ -24,12 +24,11 @@ import { MultiSelect } from '@pple-today/web-ui/multi-select'
 import { Textarea } from '@pple-today/web-ui/textarea'
 import { Typography } from '@pple-today/web-ui/typography'
 import { ImagePreview } from 'components/ImagePreview'
-import { ACCEPTED_IMAGE_TYPES, handleUploadFile, MAX_FILE_SIZE } from 'utils/fileupload'
+import { ACCEPTED_IMAGE_TYPES, handleUploadFile, MAX_FILE_SIZE } from 'utils/file-upload'
 import z from 'zod'
 
 import { FilePath } from '@api/backoffice/admin'
 
-import { userManager } from '~/config/oidc'
 import { reactQueryClient } from '~/libs/api-client'
 
 const CreateTopicFormSchema = z.object({
@@ -50,7 +49,6 @@ interface TopicCreateProps {
 }
 
 export const TopicCreate = (props: TopicCreateProps) => {
-  const [accessToken, setAccessToken] = useState<string | null>(null)
   const [isOpen, setIsOpen] = useState(false)
 
   const hashtagQuery = reactQueryClient.useQuery('/admin/hashtags', { query: {} })
@@ -73,17 +71,11 @@ export const TopicCreate = (props: TopicCreateProps) => {
         category: 'TOPIC',
         contentType: bannerImage.type as any,
       },
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
     })
 
     await handleUploadFile(bannerImage, result.uploadUrl, result.uploadFields)
 
     await createTopicMutation.mutateAsync({
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
       body: {
         ...data,
         bannerImagePath: result.filePath as FilePath,
@@ -95,14 +87,6 @@ export const TopicCreate = (props: TopicCreateProps) => {
     setIsOpen(false)
     form.reset()
   }
-
-  useEffect(() => {
-    const fetchAccessToken = async () => {
-      const user = await userManager.getUser()
-      setAccessToken(user?.access_token ?? null)
-    }
-    fetchAccessToken()
-  }, [])
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>

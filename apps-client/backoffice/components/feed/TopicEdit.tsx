@@ -25,12 +25,11 @@ import { Textarea } from '@pple-today/web-ui/textarea'
 import { Typography } from '@pple-today/web-ui/typography'
 import { ImagePreview } from 'components/ImagePreview'
 import { X } from 'lucide-react'
-import { ACCEPTED_IMAGE_TYPES, handleUploadFile, MAX_FILE_SIZE } from 'utils/fileupload'
+import { ACCEPTED_IMAGE_TYPES, handleUploadFile, MAX_FILE_SIZE } from 'utils/file-upload'
 import z from 'zod'
 
 import { DetailedTopic, FilePath } from '@api/backoffice/admin'
 
-import { userManager } from '~/config/oidc'
 import { reactQueryClient } from '~/libs/api-client'
 
 const EditTopicFormSchema = z.object({
@@ -53,7 +52,6 @@ interface TopicEditProps {
 }
 
 export const TopicEdit = (props: TopicEditProps) => {
-  const [accessToken, setAccessToken] = useState<string | null>(null)
   const [isOpen, setIsOpen] = useState(false)
 
   const hashtagQuery = reactQueryClient.useQuery('/admin/hashtags', { query: {} })
@@ -93,9 +91,6 @@ export const TopicEdit = (props: TopicEditProps) => {
           category: 'TOPIC',
           contentType: bannerImage.type as any,
         },
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
       })
 
       await handleUploadFile(bannerImage, result.uploadUrl, result.uploadFields)
@@ -104,9 +99,6 @@ export const TopicEdit = (props: TopicEditProps) => {
     }
 
     await updateTopicMutation.mutateAsync({
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
       pathParams: {
         topicId: props.topic.id,
       },
@@ -121,14 +113,6 @@ export const TopicEdit = (props: TopicEditProps) => {
     setIsOpen(false)
     resetForm()
   }
-
-  useEffect(() => {
-    const fetchAccessToken = async () => {
-      const user = await userManager.getUser()
-      setAccessToken(user?.access_token ?? null)
-    }
-    fetchAccessToken()
-  }, [])
 
   useEffect(() => {
     resetForm()
