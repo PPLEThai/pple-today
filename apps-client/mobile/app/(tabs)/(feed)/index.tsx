@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { findNodeHandle, Pressable, StyleSheet, View } from 'react-native'
+import { Pressable, StyleSheet, View } from 'react-native'
 import Animated, {
   useAnimatedScrollHandler,
   useSharedValue,
@@ -504,14 +504,7 @@ const TopicSkeleton = () => {
 }
 
 function FeedFollowingContent(props: PagerScrollViewProps) {
-  const { headerHeight, isFocused, scrollElRef, setScrollViewTag } = props
-  React.useEffect(() => {
-    if (isFocused && scrollElRef.current) {
-      const scrollViewTag = findNodeHandle(scrollElRef.current)
-      setScrollViewTag(scrollViewTag)
-      // console.log('scrollViewTag:', scrollViewTag)
-    }
-  }, [isFocused, scrollElRef, setScrollViewTag])
+  const { headerHeight, scrollElRef } = props
 
   const feedInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/feed/following'),
@@ -592,14 +585,7 @@ function FeedFollowingContent(props: PagerScrollViewProps) {
 
 const LIMIT = 10
 function FeedContent(props: PagerScrollViewProps) {
-  const { headerHeight, isFocused, scrollElRef, setScrollViewTag } = props
-  React.useEffect(() => {
-    if (isFocused && scrollElRef.current) {
-      const scrollViewTag = findNodeHandle(scrollElRef.current)
-      setScrollViewTag(scrollViewTag)
-      // console.log('scrollViewTag:', scrollViewTag)
-    }
-  }, [isFocused, scrollElRef, setScrollViewTag])
+  const { headerHeight, scrollElRef } = props
 
   type MyFeedItem = GetMyFeedResponse['items'][number] | { type: 'SUGGESTION' }
   const feedInfiniteQuery = useInfiniteQuery({
@@ -700,14 +686,7 @@ interface FeedTopicContentProps extends PagerScrollViewProps {
 }
 
 function FeedTopicContent(props: FeedTopicContentProps) {
-  const { headerHeight, isFocused, scrollElRef, setScrollViewTag, topicId } = props
-  React.useEffect(() => {
-    if (isFocused && scrollElRef.current) {
-      const scrollViewTag = findNodeHandle(scrollElRef.current)
-      setScrollViewTag(scrollViewTag)
-      // console.log('scrollViewTag:', scrollViewTag)
-    }
-  }, [isFocused, scrollElRef, setScrollViewTag])
+  const { headerHeight, scrollElRef, topicId } = props
 
   const feedInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/feed/topic', { query: { topicId } }),

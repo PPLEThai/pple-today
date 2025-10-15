@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import {
+  findNodeHandle,
   LayoutChangeEvent,
   NativeScrollEvent,
   Platform,
@@ -547,6 +548,15 @@ export function PagerContent({ children, index }: PagerContentProps) {
       registerScrollViewRef(null, index)
     }
   }, [scrollElRef, registerScrollViewRef, index])
+
+  React.useEffect(() => {
+    if (isFocused && scrollElRef.current) {
+      const scrollViewTag = findNodeHandle(scrollElRef.current)
+      setScrollViewTag(scrollViewTag)
+      // console.log('scrollViewTag:', scrollViewTag)
+    }
+  }, [isFocused, scrollElRef, setScrollViewTag])
+
   if (!isHeaderReady) {
     return null
   }

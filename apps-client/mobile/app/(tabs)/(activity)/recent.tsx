@@ -1,5 +1,5 @@
 import React from 'react'
-import { findNodeHandle, View } from 'react-native'
+import { View } from 'react-native'
 import Animated, { useAnimatedScrollHandler } from 'react-native-reanimated'
 
 import { Button } from '@pple-today/ui/button'
@@ -88,16 +88,7 @@ export default function RecentActivityPage() {
 }
 
 function ActivityContent(props: PagerScrollViewProps) {
-  const { headerHeight, isFocused, scrollElRef, setScrollViewTag } = props
-  // TODO: refactor
-  React.useEffect(() => {
-    if (isFocused && scrollElRef.current) {
-      const scrollViewTag = findNodeHandle(scrollElRef.current)
-      setScrollViewTag(scrollViewTag)
-      // console.log('scrollViewTag:', scrollViewTag)
-    }
-  }, [isFocused, scrollElRef, setScrollViewTag])
-
+  const { headerHeight, scrollElRef } = props
   const data: ActivityCardProps['activity'][] = [EXAMPLE_ACTIVITY]
 
   const scrollContext = useScrollContext()
