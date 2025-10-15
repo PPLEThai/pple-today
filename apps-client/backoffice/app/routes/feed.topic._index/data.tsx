@@ -104,7 +104,7 @@ export const Data = () => {
       columnHelper.accessor('name', {
         header: 'ชื่อหัวข้อ',
         cell: (info) => (
-          <NavLink className="hover:underline" to={`/feed/topic/${info.row.getValue('id')}`}>
+          <NavLink className="hover:underline" to={`/feed/topic/${info.row.original.id}`}>
             {info.getValue()}
           </NavLink>
         ),
@@ -133,8 +133,8 @@ export const Data = () => {
         id: 'manage',
         header: 'จัดการ',
         cell: ({ row }) => {
-          const id = row.getValue<GetTopicsResponse['data'][number]['id']>('id')
-          const status = row.getValue<GetTopicsResponse['data'][number]['status']>('status')
+          const id = row.original.id
+          const status = row.original.status
 
           return (
             <div className="flex gap-3">
