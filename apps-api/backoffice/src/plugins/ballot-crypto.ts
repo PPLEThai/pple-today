@@ -27,7 +27,7 @@ export class BallotCryptoService {
       }
     )
 
-    if (response.status !== 201) {
+    if (response.status < 200 || response.status >= 300) {
       return err({
         code: InternalErrorCode.INTERNAL_SERVER_ERROR,
         message: 'An unexpected error occurred',
@@ -40,7 +40,7 @@ export class BallotCryptoService {
   async destroyElectionKeys(electionId: string) {
     const response = await this.client.keys({ electionId }).delete()
 
-    if (response.status !== 204) {
+    if (response.status < 200 || response.status >= 300) {
       return err({
         code: InternalErrorCode.INTERNAL_SERVER_ERROR,
         message: 'An unexpected error occurred',

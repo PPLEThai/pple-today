@@ -14,3 +14,8 @@ export const DeleteKeysParams = t.Object({
   electionId: t.String(),
 })
 export type DeleteKeysParams = Static<typeof DeleteKeysParams>
+
+export const DeleteKeysResponse = t.Object({
+  message: t.String(),
+})
+export type DeleteKeysResponse = Static<typeof DeleteKeysResponse>

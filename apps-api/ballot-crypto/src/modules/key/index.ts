@@ -2,7 +2,7 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
-import { CreateKeysBody, CreateKeysResponse, DeleteKeysParams } from './models'
+import { CreateKeysBody, CreateKeysResponse, DeleteKeysParams, DeleteKeysResponse } from './models'
 import { KeyServicePlugin } from './services'
 
 import { AuthGuardPlugin } from '../../plugins/admin-auth-guard'
@@ -45,7 +45,9 @@ export const KeyController = new Elysia({
       const result = await keyService.destroyElectionKeys(params.electionId)
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
-      return status(204)
+      return status(200, {
+        message: 'Delete keys success',
+      })
     },
     {
       detail: {
@@ -55,6 +57,7 @@ export const KeyController = new Elysia({
       validateBackoffice: true,
       params: DeleteKeysParams,
       responses: {
+        200: DeleteKeysResponse,
         ...createErrorSchema(
           InternalErrorCode.INTERNAL_SERVER_ERROR,
           InternalErrorCode.KET_NOT_FOUND

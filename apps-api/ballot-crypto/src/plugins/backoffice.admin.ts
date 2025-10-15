@@ -35,7 +35,7 @@ export class BackofficeAdminService {
       }
     )
 
-    if (response.status !== 200) {
+    if (response.status < 200 || response.status >= 300) {
       return err({
         code: InternalErrorCode.INTERNAL_SERVER_ERROR,
         message: 'Unexpected error occured',
