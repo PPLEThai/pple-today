@@ -8,9 +8,16 @@ import { H1, H2, H3 } from '@pple-today/ui/typography'
 import dayjs from 'dayjs'
 import { Image } from 'expo-image'
 import { Link } from 'expo-router'
-import { CalendarIcon, CircleArrowRightIcon, HandshakeIcon, TicketIcon } from 'lucide-react-native'
+import {
+  ArrowRightIcon,
+  CalendarHeartIcon,
+  CalendarIcon,
+  CircleArrowRightIcon,
+  HandshakeIcon,
+  TicketIcon,
+} from 'lucide-react-native'
 
-import { EXAMPLE_ACTIVITY } from '@app/components/activity/activity-card'
+import { ActivityCard, EXAMPLE_ACTIVITY } from '@app/components/activity/activity-card'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { useSession } from '@app/libs/auth'
 
@@ -32,6 +39,7 @@ export default function ActivityPage() {
         </View>
         <View className="gap-3 py-4">
           <MyActivity />
+          <RecentActivity />
         </View>
       </ScrollView>
     </SafeAreaLayout>
@@ -111,6 +119,27 @@ function MyActivity() {
           </Button>
         </Link>
       </View>
+    </View>
+  )
+}
+
+function RecentActivity() {
+  return (
+    <View className="px-4 flex flex-col gap-3">
+      <View className="flex flex-row justify-between items-center">
+        <View className="flex flex-row gap-2 items-center">
+          <Icon icon={CalendarHeartIcon} className="size-8 text-base-primary-default" />
+          <H2 className="text-2xl text-base-text-high font-heading-semibold">กิจกรรมช่วงนี้</H2>
+        </View>
+        <Link asChild href="/activity/recent">
+          <Button variant="ghost">
+            <Text>ดูทั้งหมด</Text>
+            <Icon icon={ArrowRightIcon} />
+          </Button>
+        </Link>
+      </View>
+      <ActivityCard activity={EXAMPLE_ACTIVITY} />
+      <ActivityCard activity={EXAMPLE_ACTIVITY} />
     </View>
   )
 }
