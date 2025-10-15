@@ -5,11 +5,13 @@ import Elysia from 'elysia'
 import { CreateKeysBody, CreateKeysResponse, DeleteKeysParams } from './models'
 import { KeyServicePlugin } from './services'
 
+import { AuthGuardPlugin } from '../../plugins/admin-auth-guard'
+
 export const KeyController = new Elysia({
   prefix: '/keys',
   tags: ['Keys'],
 })
-  .use(KeyServicePlugin)
+  .use([KeyServicePlugin, AuthGuardPlugin])
   .post(
     '/',
     async ({ body, status, keyService }) => {
@@ -25,6 +27,7 @@ export const KeyController = new Elysia({
         summary: 'Create Election Keys',
         description: 'Create asymmetric encryption and signing keys for election',
       },
+      validateBackoffice: true,
       body: CreateKeysBody,
       response: {
         201: CreateKeysResponse,
@@ -49,6 +52,7 @@ export const KeyController = new Elysia({
         summary: 'Delete Election Keys',
         description: 'Delete asymmetric encryption and signing keys for election',
       },
+      validateBackoffice: true,
       params: DeleteKeysParams,
       responses: {
         ...createErrorSchema(

@@ -36,8 +36,8 @@ export class BackofficeAdminService {
 
     if (response.status !== 204) {
       return err({
-        code: (response.data as any).error.code,
-        message: (response.data as any).error.message,
+        code: (response.error?.value as any).code,
+        message: (response.error?.value as any).message,
       })
     }
 
