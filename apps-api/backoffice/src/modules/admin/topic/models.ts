@@ -4,12 +4,16 @@ import { TopicStatus } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const GetTopicsQuery = t.Object({
-  limit: t.Optional(t.Number({ default: 10 })),
-  page: t.Optional(t.Number({ default: 1 })),
+  limit: t.Number(),
+  page: t.Number(),
+  search: t.Optional(t.String()),
 })
 export type GetTopicsQuery = Static<typeof GetTopicsQuery>
 
-export const GetTopicsResponse = t.Array(Topic)
+export const GetTopicsResponse = t.Object({
+  data: t.Array(Topic),
+  meta: t.Object({ count: t.Number() }),
+})
 export type GetTopicsResponse = Static<typeof GetTopicsResponse>
 
 export const GetTopicByIdParams = t.Object({
@@ -19,6 +23,14 @@ export const GetTopicByIdParams = t.Object({
 export const GetTopicByIdResponse = DetailedTopic
 export type GetTopicByIdResponse = Static<typeof GetTopicByIdResponse>
 
+export const CreateTopicBody = t.Object({
+  name: t.String({ description: 'The name of the topic' }),
+  description: t.Nullable(t.String({ description: 'The description of the topic' })),
+  bannerImagePath: FilePath,
+  hashtagIds: t.Array(t.String({ description: 'The ID of the hashtag' })),
+})
+export type CreateTopicBody = Static<typeof CreateTopicBody>
+
 export const CreateTopicResponse = t.Object({
   topicId: t.String({ description: 'The ID of the topic' }),
 })
@@ -27,14 +39,17 @@ export type CreateTopicResponse = Static<typeof CreateTopicResponse>
 export const UpdateTopicParams = t.Object({
   topicId: t.String({ description: 'The ID of the topic' }),
 })
+export type UpdateTopicParams = Static<typeof UpdateTopicParams>
 
-export const UpdateTopicBody = t.Object({
-  name: t.String({ description: 'The name of the topic' }),
-  description: t.Nullable(t.String({ description: 'The description of the topic' })),
-  bannerImagePath: t.Nullable(FilePath),
-  status: t.Enum(TopicStatus),
-  hashtagIds: t.Array(t.String({ description: 'The ID of the hashtag' })),
-})
+export const UpdateTopicBody = t.Partial(
+  t.Object({
+    name: t.String({ description: 'The name of the topic' }),
+    description: t.Nullable(t.String({ description: 'The description of the topic' })),
+    bannerImagePath: FilePath,
+    status: t.Enum(TopicStatus),
+    hashtagIds: t.Array(t.String({ description: 'The ID of the hashtag' })),
+  })
+)
 export type UpdateTopicBody = Static<typeof UpdateTopicBody>
 
 export const UpdateTopicResponse = t.Object({

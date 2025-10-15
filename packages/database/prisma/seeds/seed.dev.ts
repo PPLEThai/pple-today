@@ -129,7 +129,7 @@ const seedBanners = async () => {
       },
       create: {
         id: `banner-${i}`,
-        imageFilePath: `local/test/banner-${i}.png`,
+        imageFilePath: `public/test/banner-${i}.png`,
         status: BannerStatusType.PUBLISHED,
         order: i,
         startAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
@@ -138,7 +138,7 @@ const seedBanners = async () => {
       },
       update: {
         id: `banner-${i}`,
-        imageFilePath: `local/test/banner-${i}.png`,
+        imageFilePath: `public/test/banner-${i}.png`,
         status: BannerStatusType.PUBLISHED,
         order: i,
         ...navigationDetails,
@@ -186,6 +186,7 @@ const seedTopics = async (provinces: any[]) => {
           name: province,
           description: `ข่าวเกี่ยวกับจังหวัด${province}`,
           status: TopicStatus.PUBLISHED,
+          bannerImagePath: `public/test/banner-1.png`,
         },
       })
     }
@@ -198,6 +199,7 @@ const seedTopics = async (provinces: any[]) => {
       name: 'Education',
       description: 'All about education',
       status: TopicStatus.PUBLISHED,
+      bannerImagePath: `public/test/banner-1.png`,
     },
   })
   await prisma.topic.upsert({
@@ -208,6 +210,7 @@ const seedTopics = async (provinces: any[]) => {
       name: 'Economy',
       description: 'All about economy',
       status: TopicStatus.PUBLISHED,
+      bannerImagePath: `public/test/banner-2.png`,
     },
   })
   console.log('Seeded topics successfully.')

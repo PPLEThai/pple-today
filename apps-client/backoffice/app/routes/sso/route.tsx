@@ -36,7 +36,7 @@ export default function LoginWithSSO() {
       {user && (
         <>
           <Button asChild>
-            <NavLink to="/feed/hashtag">ไปหน้า Feed</NavLink>
+            <NavLink to="/feed">ไปหน้า Feed</NavLink>
           </Button>
           <details>
             <summary className="text-xl">User Info</summary>

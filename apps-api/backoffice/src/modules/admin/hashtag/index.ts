@@ -1,6 +1,6 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
-import Elysia from 'elysia'
+import Elysia, { t } from 'elysia'
 
 import {
   CreateHashtagBody,
@@ -27,8 +27,8 @@ export const AdminHashtagController = new Elysia({
   .get(
     '/',
     async ({ query, status, adminHashtagService }) => {
-      const pagingQuery = {
-        limit: query.limit ?? 10,
+      const pagingQuery: GetHashtagsQuery = {
+        limit: query.limit,
         page: query.page ?? 1,
         search: query.search,
       }
@@ -40,7 +40,7 @@ export const AdminHashtagController = new Elysia({
     },
     {
       requiredLocalUser: true,
-      query: GetHashtagsQuery,
+      query: t.Partial(GetHashtagsQuery),
       response: {
         200: GetHashtagsResponse,
         ...createErrorSchema(

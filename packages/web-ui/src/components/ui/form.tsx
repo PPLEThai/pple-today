@@ -125,22 +125,32 @@ function FormDescription({ className, ...props }: React.ComponentProps<'p'>) {
   )
 }
 
-function FormMessage({ className, ...props }: React.ComponentProps<'p'>) {
+function FormMessage({
+  className,
+  asChild,
+  ...props
+}: React.ComponentProps<'p'> & { asChild?: boolean }) {
   const { error, formMessageId } = useFormField()
-  const body = error ? String(error?.message ?? '') : props.children
 
-  if (!body) {
-    return null
-  }
-
-  return (
+  return error ? (
     <p
       data-slot="form-message"
       id={formMessageId}
       className={cn('text-system-danger-default text-sm font-medium font-sans', className)}
       {...props}
     >
-      {body}
+      {error?.message ?? ''}
+    </p>
+  ) : !props.children ? null : asChild ? (
+    props.children
+  ) : (
+    <p
+      data-slot="form-message"
+      id={formMessageId}
+      className={cn('text-system-danger-default text-sm font-medium font-sans', className)}
+      {...props}
+    >
+      {props.children}
     </p>
   )
 }
