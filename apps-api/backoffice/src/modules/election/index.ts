@@ -10,6 +10,7 @@ import {
   CreateFaceImageUploadURLResponse,
   GetElectionParams,
   GetElectionResponse,
+  ListElectionQuery,
   ListElectionResponse,
   RegisterElectionBody,
   RegisterElectionParams,
@@ -29,45 +30,23 @@ export const ElectionController = new Elysia({
   .use(ElectionServicePlugin)
   .get(
     '/',
-    async ({ user, electionService, status }) => {
-      const elections = await electionService.listOfficialPageElections(user.id)
-      if (elections.isErr()) {
-        return mapErrorCodeToResponse(elections.error, status)
-      }
+    async ({ user: { id }, query, electionService, status }) => {
+      const elections =
+        query.page === 'PROFILE'
+          ? await electionService.listProfilePageElections(id)
+          : await electionService.listOfficialPageElections(id)
+
+      if (elections.isErr()) return mapErrorCodeToResponse(elections.error, status)
 
       return status(200, elections.value)
     },
     {
       detail: {
-        summary: 'List elections for official page',
-        description: 'List elections for official page',
+        summary: 'List elections',
+        description: 'List elections base on page',
       },
       requiredLocalUser: true,
-      response: {
-        200: ListElectionResponse,
-        ...createErrorSchema(
-          InternalErrorCode.UNAUTHORIZED,
-          InternalErrorCode.INTERNAL_SERVER_ERROR
-        ),
-      },
-    }
-  )
-  .get(
-    '/profile-page',
-    async ({ user, electionService, status }) => {
-      const elections = await electionService.listProfilePageElections(user.id)
-      if (elections.isErr()) {
-        return mapErrorCodeToResponse(elections.error, status)
-      }
-
-      return status(200, elections.value)
-    },
-    {
-      detail: {
-        summary: 'List elections for profile page',
-        description: 'List elections for profile page',
-      },
-      requiredLocalUser: true,
+      query: ListElectionQuery,
       response: {
         200: ListElectionResponse,
         ...createErrorSchema(
