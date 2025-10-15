@@ -550,12 +550,12 @@ export function PagerContent({ children, index }: PagerContentProps) {
   }, [scrollElRef, registerScrollViewRef, index])
 
   React.useEffect(() => {
-    if (isFocused && scrollElRef.current) {
+    if (isHeaderReady && isFocused && scrollElRef.current) {
       const scrollViewTag = findNodeHandle(scrollElRef.current)
       setScrollViewTag(scrollViewTag)
       // console.log('scrollViewTag:', scrollViewTag)
     }
-  }, [isFocused, scrollElRef, setScrollViewTag])
+  }, [isHeaderReady, isFocused, scrollElRef, setScrollViewTag])
 
   if (!isHeaderReady) {
     return null
