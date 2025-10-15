@@ -274,11 +274,6 @@ export type AdminDeleteElectionEligibleVoterResponse = Static<
   typeof AdminDeleteElectionEligibleVoterResponse
 >
 
-export const AdminUpdateElectionKeysHeaders = t.Object({
-  'x-ballot-crypto-to-backoffice-key': t.String(),
-})
-export type AdminUpdateElectionKeysHeaders = Static<typeof AdminUpdateElectionKeysHeaders>
-
 export const AdminUpdateElectionKeysParams = t.Object({
   electionId: t.String(),
 })

@@ -33,7 +33,6 @@ import {
   AdminListElectionResponse,
   AdminUpdateElectionCandidateParams,
   AdminUpdateElectionKeysBody,
-  AdminUpdateElectionKeysHeaders,
   AdminUpdateElectionKeysParams,
 } from './models'
 import { AdminElectionServicePlugin } from './services'
@@ -464,12 +463,8 @@ export const AdminElectionController = new Elysia({
   .group('/:electionId/keys', (app) =>
     app.put(
       '/',
-      async ({ headers, params, body, status, adminElectionService }) => {
-        const result = await adminElectionService.updateElectionKeys(
-          headers['x-ballot-crypto-to-backoffice-key'],
-          params.electionId,
-          { ...body }
-        )
+      async ({ params, body, status, adminElectionService }) => {
+        const result = await adminElectionService.updateElectionKeys(params.electionId, { ...body })
         if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
         return status(204)
@@ -479,7 +474,7 @@ export const AdminElectionController = new Elysia({
           summary: 'Update election keys',
           description: 'Update election keys',
         },
-        headers: AdminUpdateElectionKeysHeaders,
+        validateBallotCrypto: true,
         params: AdminUpdateElectionKeysParams,
         body: AdminUpdateElectionKeysBody,
         response: {

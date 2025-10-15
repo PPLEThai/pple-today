@@ -447,7 +447,6 @@ export class AdminElectionService {
   }
 
   async updateElectionKeys(
-    apiKey: string,
     electionId: string,
     keys: {
       status: ElectionKeysStatus
@@ -455,13 +454,6 @@ export class AdminElectionService {
       signingPublicKey?: string
     }
   ) {
-    if (this.config.ballotCryptoToBackofficeKey !== apiKey) {
-      return err({
-        code: InternalErrorCode.UNAUTHORIZED,
-        message: 'UNAUTHORIZED',
-      })
-    }
-
     if (
       keys.status === ElectionKeysStatus.CREATED &&
       (!keys.encryptionPublicKey || !keys.signingPublicKey)
