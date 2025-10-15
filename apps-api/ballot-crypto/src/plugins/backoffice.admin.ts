@@ -1,19 +1,16 @@
-import { Treaty, treaty } from '@elysiajs/eden'
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { err } from '@pple-today/api-common/utils'
 import { ElectionKeysStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { AdminApiSchema } from '@api/backoffice/admin'
-
 import { ConfigServicePlugin } from './config'
 
 export class BackofficeAdminService {
-  private readonly client: Treaty.Create<AdminApiSchema>
+  constructor(private readonly config: { url: string; apiKey: string }) {}
 
-  constructor(private readonly config: { domain: string; ballotToBackofficeKey: string }) {
-    this.client = treaty<AdminApiSchema>(config.domain)
+  private getUrl(path: string) {
+    return `${this.config.url}${path}`
   }
 
   async updateElectionKeys(data: {
@@ -22,20 +19,20 @@ export class BackofficeAdminService {
     encryptPublicKey?: string
     signingPublicKey?: string
   }) {
-    const response = await this.client.admin.elections({ electionId: data.electionId }).keys.put(
-      {
+    const res = await fetch(this.getUrl(`/admin/elections/${data.electionId}/keys`), {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-ballot-crypto-to-backoffice-key': this.config.apiKey,
+      },
+      body: JSON.stringify({
         status: data.status,
         encryptionPublicKey: data.encryptPublicKey,
         signingPublicKey: data.signingPublicKey,
-      },
-      {
-        headers: {
-          'x-ballot-crypto-to-backoffice-key': this.config.ballotToBackofficeKey,
-        },
-      }
-    )
+      }),
+    })
 
-    if (response.status < 200 || response.status >= 300) {
+    if (!res.ok) {
       return err({
         code: InternalErrorCode.INTERNAL_SERVER_ERROR,
         message: 'Unexpected error occured',
@@ -50,7 +47,7 @@ export const BackofficeAdminServicePlugin = new Elysia({ name: 'BackofficeServic
   .use(ConfigServicePlugin)
   .decorate(({ configService }) => ({
     backofficeService: new BackofficeAdminService({
-      domain: configService.get('BACKOFFICE_DOMAIN'),
-      ballotToBackofficeKey: configService.get('BALLOT_CRYPTO_TO_BACKOFFICE_KEY'),
+      url: configService.get('BACKOFFICE_URL'),
+      apiKey: configService.get('BALLOT_CRYPTO_TO_BACKOFFICE_KEY'),
     }),
   }))

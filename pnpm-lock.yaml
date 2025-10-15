@@ -153,9 +153,6 @@ importers:
         specifier: ^8.2.0
         version: 8.2.0
     devDependencies:
-      '@api/backoffice':
-        specifier: workspace:^
-        version: link:../backoffice
       '@pple-today/database':
         specifier: workspace:^
         version: link:../../packages/database

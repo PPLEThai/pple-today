@@ -35,7 +35,7 @@ export const envSchema = t.Object({
     description: 'Google Cloud Signing Key Ring',
   }),
 
-  BACKOFFICE_DOMAIN: t.String({
+  BACKOFFICE_URL: t.String({
     description: 'Domain of ballot crypto service',
   }),
   BALLOT_CRYPTO_TO_BACKOFFICE_KEY: t.String({

@@ -1,5 +1,6 @@
 {
   "name": "@api/ballot-crypto",
+  "type": "module",
   "version": "0.1.1",
   "description": "",
   "exports": {
@@ -35,7 +36,6 @@
   "devDependencies": {
     "@pple-today/project-config": "workspace:^",
     "@pple-today/database": "workspace:^",
-    "@api/backoffice": "workspace:^",
     "@types/node": "^22.15.3",
     "esbuild": "^0.25.5",
     "esbuild-plugin-copy": "^2.1.1",
