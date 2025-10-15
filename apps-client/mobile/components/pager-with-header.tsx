@@ -32,6 +32,7 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated'
 
+import { clsx, cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 
 import { ScrollContextProvider } from '@app/libs/scroll-context'
@@ -391,7 +392,13 @@ const usePagerTabBarContext = () => {
 }
 
 const PADDING_X = 16
-export function PagerTabBar({ children }: { children: React.ReactNode }) {
+export function PagerTabBar({
+  children,
+  widthFull = false,
+}: {
+  children: React.ReactNode
+  widthFull?: boolean
+}) {
   const { tabListSize, dragProgress, dragState, indexToOffset, containerSize, tabBarScrollElRef } =
     usePagerTabBarContext()
   const { setTabBarHeight } = usePagerContext()
@@ -431,6 +438,7 @@ export function PagerTabBar({ children }: { children: React.ReactNode }) {
         ref={tabBarScrollElRef}
         showsHorizontalScrollIndicator={false}
         className="w-full -mb-px"
+        contentContainerClassName={clsx(widthFull && 'w-full')}
         contentContainerStyle={{ paddingHorizontal: PADDING_X }}
         onLayout={(evt) => {
           const height = evt.nativeEvent.layout.height
@@ -443,7 +451,7 @@ export function PagerTabBar({ children }: { children: React.ReactNode }) {
       >
         <View
           accessibilityRole="tablist"
-          className="flex flex-row"
+          className={clsx('flex flex-row', widthFull && 'w-full')}
           onLayout={(e) => {
             tabListSize.set(e.nativeEvent.layout.width)
           }}
@@ -603,6 +611,7 @@ function useSharedState<T>(value: T): SharedValue<T> {
 export function PagerTabBarItem({
   index,
   children,
+  className,
   ...props
 }: React.ComponentProps<typeof Pressable> & {
   index: number
@@ -620,7 +629,7 @@ export function PagerTabBarItem({
   }
   return (
     <Pressable
-      className="h-10 pt-2 pb-2 px-4 justify-center"
+      className={cn('h-10 pt-2 pb-2 px-4 justify-center', className)}
       accessibilityRole="tab"
       onLayout={handleLayout}
       onPress={handlePress}

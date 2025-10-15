@@ -146,7 +146,7 @@ function RecentActivity() {
           <Icon icon={CalendarHeartIcon} className="size-8 text-base-primary-default" />
           <H2 className="text-2xl text-base-text-high font-heading-semibold">กิจกรรมช่วงนี้</H2>
         </View>
-        <Link asChild href="/activity/recent">
+        <Link asChild href="/(activity)/recent">
           <Button variant="ghost">
             <Text>ดูทั้งหมด</Text>
             <Icon icon={ArrowRightIcon} />
