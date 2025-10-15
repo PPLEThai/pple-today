@@ -285,3 +285,8 @@ export const AdminUpdateElectionKeysBody = t.Object({
   signingPublicKey: t.Optional(t.String()),
 })
 export type AdminUpdateElectionKeysBody = Static<typeof AdminUpdateElectionKeysBody>
+
+export const AdminUpdateElectionKeysResponse = t.Object({
+  message: t.String(),
+})
+export type AdminUpdateElectionKeysResponse = Static<typeof AdminUpdateElectionKeysResponse>

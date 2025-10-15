@@ -34,6 +34,7 @@ import {
   AdminUpdateElectionCandidateParams,
   AdminUpdateElectionKeysBody,
   AdminUpdateElectionKeysParams,
+  AdminUpdateElectionKeysResponse,
 } from './models'
 import { AdminElectionServicePlugin } from './services'
 
@@ -464,7 +465,7 @@ export const AdminElectionController = new Elysia({
     app.put(
       '/',
       async ({ params, body, status, adminElectionService }) => {
-        const result = await adminElectionService.updateElectionKeys(params.electionId, { ...body })
+        const result = await adminElectionService.updateElectionKeys(params.electionId, body)
         if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
         return status(204)
@@ -478,6 +479,7 @@ export const AdminElectionController = new Elysia({
         params: AdminUpdateElectionKeysParams,
         body: AdminUpdateElectionKeysBody,
         response: {
+          200: AdminUpdateElectionKeysResponse,
           ...createErrorSchema(
             InternalErrorCode.INTERNAL_SERVER_ERROR,
             InternalErrorCode.BAD_REQUEST,
