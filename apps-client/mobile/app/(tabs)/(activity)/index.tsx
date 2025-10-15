@@ -1,10 +1,13 @@
-import { ScrollView, View } from 'react-native'
+import React from 'react'
+import { View } from 'react-native'
+import Animated from 'react-native-reanimated'
 
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { Skeleton } from '@pple-today/ui/skeleton'
 import { Text } from '@pple-today/ui/text'
 import { H1, H2, H3 } from '@pple-today/ui/typography'
+import { useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { Image } from 'expo-image'
 import { Link } from 'expo-router'
@@ -14,43 +17,55 @@ import {
   CalendarIcon,
   CircleArrowRightIcon,
   HandshakeIcon,
+  ListTodoIcon,
   TicketIcon,
 } from 'lucide-react-native'
 
+import { FeedItem } from '@api/backoffice/app'
 import { ActivityCard, EXAMPLE_ACTIVITY } from '@app/components/activity/activity-card'
+import { FeedCard } from '@app/components/feed/feed-card'
+import { RefreshControl } from '@app/components/refresh-control'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { useSession } from '@app/libs/auth'
 
 export default function ActivityPage() {
   return (
     <SafeAreaLayout>
-      <ScrollView className="flex-1 bg-base-bg-default">
-        <View className="flex flex-col p-4 bg-base-bg-white">
-          <View className="flex flex-row gap-2 items-center">
-            <Icon
-              icon={HandshakeIcon}
-              size={32}
-              strokeWidth={2}
-              className="text-base-primary-default"
-            />
-            <H1 className="text-3xl font-heading-semibold text-base-primary-default">กิจกรรม</H1>
-          </View>
-          <Text className="font-heading-regular text-base-text-medium">กิจกรรมจากพรรคประชาชน</Text>
-        </View>
-        <View className="gap-3 py-4">
-          <MyActivity />
-          <RecentActivity />
-        </View>
-      </ScrollView>
+      <PollFeedSection
+        ListHeaderComponent={
+          <>
+            <View className="flex flex-col p-4 bg-base-bg-white">
+              <View className="flex flex-row gap-2 items-center">
+                <Icon
+                  icon={HandshakeIcon}
+                  size={32}
+                  strokeWidth={2}
+                  className="text-base-primary-default"
+                />
+                <H1 className="text-3xl font-heading-semibold text-base-primary-default">
+                  กิจกรรม
+                </H1>
+              </View>
+              <Text className="font-heading-regular text-base-text-medium">
+                กิจกรรมจากพรรคประชาชน
+              </Text>
+            </View>
+            <View className="gap-3 py-4">
+              <MyActivity />
+              <RecentActivity />
+            </View>
+          </>
+        }
+      />
     </SafeAreaLayout>
   )
 }
 
 function MyActivity() {
   const session = useSession()
-  // if (!session) {
-  //   return null
-  // }
+  if (!session) {
+    return null
+  }
   const isLoading = false // TODO: fetch user's activities
 
   const activity = EXAMPLE_ACTIVITY
@@ -138,8 +153,50 @@ function RecentActivity() {
           </Button>
         </Link>
       </View>
+      {/* TODO */}
       <ActivityCard activity={EXAMPLE_ACTIVITY} />
       <ActivityCard activity={EXAMPLE_ACTIVITY} />
     </View>
+  )
+}
+
+function PollFeedSection(props: { ListHeaderComponent: React.ReactNode }) {
+  const queryClient = useQueryClient()
+  const onRefresh = React.useCallback(async () => {
+    // TODO
+    queryClient.invalidateQueries({ queryKey: ['/activity'] })
+  }, [queryClient])
+  // TODO
+  const data: FeedItem[] = []
+  const renderFeedItem = React.useCallback(({ item }: { item: FeedItem; index: number }) => {
+    return <FeedCard key={item.id} feedItem={item} className="mt-3 mx-4" />
+  }, [])
+  return (
+    <Animated.FlatList
+      className="flex-1 bg-base-bg-default"
+      contentContainerClassName="flex flex-col gap-3"
+      refreshControl={<RefreshControl onRefresh={onRefresh} />}
+      ListHeaderComponent={
+        <>
+          {props.ListHeaderComponent}
+          {data.length > 0 && (
+            <View className="flex flex-row justify-between items-center px-4">
+              <View className="flex flex-row gap-2 items-center">
+                <Icon icon={ListTodoIcon} className="size-8 text-base-primary-default" />
+                <H2 className="text-2xl text-base-text-high font-heading-semibold">แบบสอบถาม</H2>
+              </View>
+              {/* <Link asChild href="/poll/feed">
+              <Button variant="ghost">
+              <Text>ดูทั้งหมด</Text>
+              <Icon icon={ArrowRightIcon} />
+              </Button>
+              </Link> */}
+            </View>
+          )}
+        </>
+      }
+      data={data}
+      renderItem={renderFeedItem}
+    />
   )
 }
