@@ -494,7 +494,7 @@ export const AdminElectionServicePlugin = new Elysia({ name: 'AdminElectionServi
     BallotCryptoServicePlugin,
     ConfigServicePlugin,
   ])
-  .decorate(({ adminElectionRepository, fileService, ballotCryptoService, configService }) => ({
+  .decorate(({ adminElectionRepository, fileService, ballotCryptoService }) => ({
     adminElectionService: new AdminElectionService(
       adminElectionRepository,
       fileService,
