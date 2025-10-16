@@ -258,7 +258,6 @@ function UpcomingActivityContent(props: PagerScrollViewProps) {
     <Animated.FlatList
       ref={scrollElRef}
       onScroll={scrollHandler}
-      // refreshControl={<FeedRefreshControl headerHeight={headerHeight} onRefresh={onRefresh} />}
       data={data}
       className="flex-1 bg-base-bg-default"
       contentContainerClassName="flex flex-col bg-base-bg-default py-4"
