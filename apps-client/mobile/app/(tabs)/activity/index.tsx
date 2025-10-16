@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { View } from 'react-native'
 import Animated from 'react-native-reanimated'
 
@@ -11,6 +11,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { Image } from 'expo-image'
 import { Link } from 'expo-router'
+import * as WebBrowser from 'expo-web-browser'
 import {
   ArrowRightIcon,
   CalendarHeartIcon,
@@ -22,11 +23,21 @@ import {
 } from 'lucide-react-native'
 
 import { FeedItem } from '@api/backoffice/app'
-import { ActivityCard, EXAMPLE_ACTIVITY } from '@app/components/activity/activity-card'
+import {
+  ActivityCard,
+  ActivityCardProps,
+  ActivityCardSkeleton,
+} from '@app/components/activity/activity-card'
 import { FeedCard } from '@app/components/feed/feed-card'
 import { RefreshControl } from '@app/components/refresh-control'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { useSession } from '@app/libs/auth'
+import {
+  EXAMPLE_ACTIVITY,
+  GetPPLEActivity,
+  mapToActivity,
+  useRecentActivityQuery,
+} from '@app/libs/pple-activity'
 
 export default function ActivityPage() {
   return (
@@ -51,7 +62,6 @@ export default function ActivityPage() {
               </Text>
             </View>
             <View className="gap-3 py-4">
-              <MyActivity />
               <RecentActivity />
             </View>
           </>
@@ -61,13 +71,13 @@ export default function ActivityPage() {
   )
 }
 
-function MyActivity() {
+// Might not be used
+export function MyActivity() {
   const session = useSession()
   if (!session) {
     return null
   }
   const isLoading = false // TODO: fetch user's activities
-
   const activity = EXAMPLE_ACTIVITY
   return (
     <View className="px-4">
@@ -116,16 +126,21 @@ function MyActivity() {
                 </Text>
               </View>
             </View>
-            <Link asChild href={`/activity/${activity.id}`}>
-              <Button variant="ghost" size="icon" aria-label="ดูกิจกรรม">
-                <Icon
-                  icon={CircleArrowRightIcon}
-                  size={24}
-                  strokeWidth={1}
-                  className="text-base-text-high"
-                />
-              </Button>
-            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="ดูกิจกรรม"
+              onPress={() => {
+                WebBrowser.openBrowserAsync(activity.url)
+              }}
+            >
+              <Icon
+                icon={CircleArrowRightIcon}
+                size={24}
+                strokeWidth={1}
+                className="text-base-text-high"
+              />
+            </Button>
           </View>
         ))}
         <Link asChild href="/activity/my-activities">
@@ -139,6 +154,20 @@ function MyActivity() {
 }
 
 function RecentActivity() {
+  const recentActivityQuery = useRecentActivityQuery({
+    variables: { limit: 3 },
+    select: useCallback((data: GetPPLEActivity): ActivityCardProps['activity'][] => {
+      return data.result.map(mapToActivity)
+    }, []),
+  })
+  useEffect(() => {
+    if (recentActivityQuery.isError) {
+      console.error('Error fetching recent activity:', recentActivityQuery.error)
+    }
+  }, [recentActivityQuery])
+  if (recentActivityQuery.isError) {
+    return null
+  }
   return (
     <View className="px-4 flex flex-col gap-3">
       <View className="flex flex-row justify-between items-center">
@@ -153,9 +182,19 @@ function RecentActivity() {
           </Button>
         </Link>
       </View>
-      {/* TODO */}
-      <ActivityCard activity={EXAMPLE_ACTIVITY} />
-      <ActivityCard activity={EXAMPLE_ACTIVITY} />
+      {recentActivityQuery.isError ? null : recentActivityQuery.isLoading ? (
+        <>
+          <ActivityCardSkeleton />
+          <ActivityCardSkeleton />
+          <ActivityCardSkeleton />
+        </>
+      ) : !recentActivityQuery.data || recentActivityQuery.data.length === 0 ? (
+        <Text className="text-base-text-medium w-full text-center">ไม่มีข้อมูลกิจกรรม</Text>
+      ) : (
+        recentActivityQuery.data.map((activity) => (
+          <ActivityCard key={activity.id} activity={activity} />
+        ))
+      )}
     </View>
   )
 }
@@ -164,7 +203,7 @@ function PollFeedSection(props: { ListHeaderComponent: React.ReactNode }) {
   const queryClient = useQueryClient()
   const onRefresh = React.useCallback(async () => {
     // TODO
-    queryClient.invalidateQueries({ queryKey: ['/activity'] })
+    await queryClient.invalidateQueries({ queryKey: useRecentActivityQuery.getKey() })
   }, [queryClient])
   // TODO
   const data: FeedItem[] = []

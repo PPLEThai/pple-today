@@ -1,49 +1,30 @@
 import { View } from 'react-native'
 
-import { AnimatedBackgroundPressable } from '@pple-today/ui/animated-pressable'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { cn } from '@pple-today/ui/lib/utils'
+import { Skeleton } from '@pple-today/ui/skeleton'
 import { Text } from '@pple-today/ui/text'
 import dayjs from 'dayjs'
 import { Image } from 'expo-image'
-import { Link, useRouter } from 'expo-router'
+import * as WebBrowser from 'expo-web-browser'
 import { CalendarIcon, MapPinIcon } from 'lucide-react-native'
+
+import { Activity } from '@app/libs/pple-activity'
 
 export interface ActivityCardProps {
   className?: string
-  activity: {
-    id: string
-    user: {
-      isRegistered: boolean
-    }
-    name: string
-    location: string
-    image: string
-    startAt: Date
-    endAt: Date
-  }
-}
-
-export const EXAMPLE_ACTIVITY: ActivityCardProps['activity'] = {
-  id: '1',
-  user: { isRegistered: false },
-  name: 'Knowledge Center ครั้งที่ 1 – “เอาชีวิตรอดอย่างโปร ปฐมพยาบาลช่วยชีวิตปลอดภัย”',
-  location: 'อาคารอนาคตใหม่ (หัวหมาก 6)',
-  image: 'https://picsum.photos/300?random=0',
-  startAt: new Date(),
-  endAt: dayjs().add(1, 'day').toDate(),
+  activity: Activity
 }
 
 export function ActivityCard({ activity, className }: ActivityCardProps) {
-  const router = useRouter()
+  const isUserRegistered = false
   return (
-    <AnimatedBackgroundPressable
+    <View
       className={cn(
         'border border-base-outline-default rounded-2xl bg-base-bg-white flex flex-row gap-4 p-2 items-stretch h-[203px]',
         className
       )}
-      onPress={() => router.navigate(`/activity/${activity.id}`)}
     >
       <Image className="rounded-xl bg-base-bg-default w-[137px]" source={{ uri: activity.image }} />
       <View className="flex flex-col justify-between gap-2 flex-1">
@@ -61,24 +42,55 @@ export function ActivityCard({ activity, className }: ActivityCardProps) {
           </Text>
           <View className="flex flex-row gap-1 items-center">
             <Icon icon={MapPinIcon} size={12} className="text-base-text-medium" />
-            <Text className="text-base-text-medium text-xs font-heading-semibold line-clamp-1">
+            <Text className="text-base-text-medium text-xs font-heading-semibold line-clamp-1 flex-1">
               {activity.location}
             </Text>
           </View>
         </View>
-        {activity.user.isRegistered ? (
-          <Link asChild href={`/activity/${activity.id}`}>
-            <Button size="sm" variant="secondary">
-              <Text>ดูรายละเอียด</Text>
-            </Button>
-          </Link>
+        {isUserRegistered ? (
+          <Button
+            size="sm"
+            variant="secondary"
+            onPress={() => {
+              WebBrowser.openBrowserAsync(activity.url)
+            }}
+          >
+            <Text>ดูรายละเอียด</Text>
+          </Button>
         ) : (
-          //  TODO: register
-          <Button size="sm">
+          <Button
+            size="sm"
+            onPress={() => {
+              WebBrowser.openBrowserAsync(activity.url)
+            }}
+          >
             <Text>ลงทะเบียน</Text>
           </Button>
         )}
       </View>
-    </AnimatedBackgroundPressable>
+    </View>
+  )
+}
+
+export function ActivityCardSkeleton({ className }: { className?: string }) {
+  return (
+    <View
+      className={cn(
+        'border border-base-outline-default rounded-2xl bg-base-bg-white flex flex-row gap-4 p-2 items-stretch h-[203px]',
+        className
+      )}
+    >
+      <Skeleton className="rounded-xl bg-base-bg-default w-[137px]" />
+      <View className="flex flex-col justify-between gap-2 flex-1">
+        <View className="flex flex-col gap-1">
+          <Skeleton className="h-[12px] mt-[4px] w-20 rounded" />
+          <Skeleton className="h-[16px] mt-[8px] w-full rounded" />
+          <Skeleton className="h-[16px] mt-[8px] w-full rounded" />
+          <Skeleton className="h-[16px] mt-[8px] w-1/2 rounded" />
+          <Skeleton className="h-[12px] mt-[4px] w-24 rounded" />
+        </View>
+        <Skeleton className="h-8 w-full rounded-lg" />
+      </View>
+    </View>
   )
 }
