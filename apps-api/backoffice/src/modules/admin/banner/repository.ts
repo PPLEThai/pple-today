@@ -18,6 +18,7 @@ export class AdminBannerRepository {
     return fromRepositoryPromise(
       this.prismaService.banner.findMany({
         orderBy: { order: 'asc' },
+        include: { miniApp: true },
       })
     )
   }
@@ -26,6 +27,7 @@ export class AdminBannerRepository {
     return fromRepositoryPromise(
       this.prismaService.banner.findUniqueOrThrow({
         where: { id },
+        include: { miniApp: true },
       })
     )
   }

@@ -40,9 +40,6 @@ export const Banner = t.Union([
       miniAppId: t.String({
         description: 'The ID of the mini app to open',
       }),
-      miniAppUrl: t.String({
-        description: 'The URL of the mini app to open',
-      }),
     }),
   ]),
 ])
