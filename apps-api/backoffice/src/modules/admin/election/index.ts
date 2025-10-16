@@ -38,6 +38,9 @@ import {
   AdminUpdateElectionKeysBody,
   AdminUpdateElectionKeysParams,
   AdminUpdateElectionKeysResponse,
+  AdminUploadOnlineResultBody,
+  AdminUploadOnlineResultParams,
+  AdminUploadOnlineResultResponse,
   AdminUploadOnsiteResultBody,
   AdminUploadOnsiteResultParams,
   AdminUploadOnsiteResultResponse,
@@ -500,43 +503,82 @@ export const AdminElectionController = new Elysia({
       )
   )
   .group('/:electionId/result', (app) =>
-    app.post(
-      '/onsite',
-      async ({ params, body, adminElectionService, status }) => {
-        const result = await adminElectionService.uploadElectionOnsiteResult(
-          params.electionId,
-          body
-        )
-        if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+    app
+      .post(
+        '/onsite',
+        async ({ params, body, adminElectionService, status }) => {
+          const result = await adminElectionService.uploadElectionOnsiteResult(
+            params.electionId,
+            body
+          )
+          if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
-        return status(200, {
-          message: 'Upload Onsite Election Result Successfully',
-        })
-      },
-      {
-        detail: {
-          summary: 'Upload onsite election result',
-          description: 'Upload onsite election result',
+          return status(200, {
+            message: 'Upload Onsite Election Result Successfully',
+          })
         },
-        requiredLocalUser: true,
-        params: AdminUploadOnsiteResultParams,
-        body: AdminUploadOnsiteResultBody,
-        response: {
-          200: AdminUploadOnsiteResultResponse,
-          ...createErrorSchema(
-            InternalErrorCode.INTERNAL_SERVER_ERROR,
-            InternalErrorCode.UNAUTHORIZED,
-            InternalErrorCode.BAD_REQUEST,
-            InternalErrorCode.ELECTION_NOT_FOUND,
-            InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
-            InternalErrorCode.ELECTION_IS_CANNCELLED,
-            InternalErrorCode.ELECTION_NOT_IN_CLOSED_VOTE_PERIOD,
-            InternalErrorCode.ELECTION_VOTES_EXCEED_VOTERS,
-            InternalErrorCode.ELECTION_INVALID_TYPE
-          ),
+        {
+          detail: {
+            summary: 'Upload onsite election result',
+            description: 'Upload onsite election result',
+          },
+          requiredLocalUser: true,
+          params: AdminUploadOnsiteResultParams,
+          body: AdminUploadOnsiteResultBody,
+          response: {
+            200: AdminUploadOnsiteResultResponse,
+            ...createErrorSchema(
+              InternalErrorCode.INTERNAL_SERVER_ERROR,
+              InternalErrorCode.UNAUTHORIZED,
+              InternalErrorCode.BAD_REQUEST,
+              InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
+              InternalErrorCode.ELECTION_IS_CANNCELLED,
+              InternalErrorCode.ELECTION_NOT_IN_CLOSED_VOTE_PERIOD,
+              InternalErrorCode.ELECTION_VOTES_EXCEED_VOTERS,
+              InternalErrorCode.ELECTION_INVALID_TYPE
+            ),
+          },
+        }
+      )
+      .post(
+        '/online',
+        async ({ params, body, adminElectionService, status }) => {
+          const result = await adminElectionService.uploadElectionOnlineResult(
+            params.electionId,
+            body.status,
+            body.result
+          )
+          if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+          return status(200, {
+            message: 'Upload Online Election Result Successfully',
+          })
         },
-      }
-    )
+        {
+          detail: {
+            summary: 'Upload online election result',
+            description: 'Upload online election result',
+          },
+          validateBallotCrypto: true,
+          params: AdminUploadOnlineResultParams,
+          body: AdminUploadOnlineResultBody,
+          response: {
+            200: AdminUploadOnlineResultResponse,
+            ...createErrorSchema(
+              InternalErrorCode.INTERNAL_SERVER_ERROR,
+              InternalErrorCode.UNAUTHORIZED,
+              InternalErrorCode.BAD_REQUEST,
+              InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
+              InternalErrorCode.ELECTION_IS_CANNCELLED,
+              InternalErrorCode.ELECTION_NOT_IN_CLOSED_VOTE_PERIOD,
+              InternalErrorCode.ELECTION_VOTES_EXCEED_VOTERS,
+              InternalErrorCode.ELECTION_INVALID_TYPE
+            ),
+          },
+        }
+      )
   )
   .group('/:electionId/keys', (app) =>
     app.put(

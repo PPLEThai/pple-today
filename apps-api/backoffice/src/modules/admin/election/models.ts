@@ -323,3 +323,29 @@ export const AdminUploadOnsiteResultResponse = t.Object({
   message: t.String(),
 })
 export type AdminUploadOnsiteResultResponse = Static<typeof AdminUploadOnsiteResultResponse>
+
+export const AdminUploadOnlineResultParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminUploadOnlineResultParams = Static<typeof AdminUploadOnlineResultParams>
+
+export const AdminUploadOnlineResultBody = t.Object({
+  status: t.Enum({
+    COUNT_SUCCESS: 'COUNT_SUCCESS',
+    COUNT_FAILED: 'COUNT_FAILED',
+  }),
+  result: t.Optional(
+    t.Array(
+      t.Object({
+        candidateId: t.String(),
+        votes: t.Integer({ description: 'Number of votes for the candidate' }),
+      })
+    )
+  ),
+})
+export type AdminUploadOnlineResultBody = Static<typeof AdminUploadOnlineResultBody>
+
+export const AdminUploadOnlineResultResponse = t.Object({
+  message: t.String(),
+})
+export type AdminUploadOnlineResultResponse = Static<typeof AdminUploadOnlineResultResponse>

@@ -4,6 +4,7 @@ import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import {
   ElectionKeysStatus,
   ElectionMode,
+  ElectionOnlineResultStatus,
   ElectionResultType,
   ElectionType,
   EligibleVoterType,
@@ -101,15 +102,6 @@ export class AdminElectionRepository {
     return fromRepositoryPromise(
       this.prismaService.election.findUniqueOrThrow({
         where: { id: electionId },
-        include: {
-          _count: {
-            select: {
-              voters: {
-                where: { type: 'ONSITE' },
-              },
-            },
-          },
-        },
       })
     )
   }
@@ -447,34 +439,86 @@ export class AdminElectionRepository {
     )
   }
 
-  async upsertElectionOnsiteResult(result: { candidateId: string; votes: number }[]) {
+  async countElectionEligibleVoters(electionId: string, type: EligibleVoterType) {
+    return fromRepositoryPromise(
+      this.prismaService.electionEligibleVoter.count({
+        where: {
+          electionId,
+          type,
+        },
+      })
+    )
+  }
+
+  private async upsertElectionResult(
+    tx: Prisma.TransactionClient,
+    type: ElectionResultType,
+    result: { candidateId: string; votes: number }[]
+  ) {
+    for (let i = 0; i < result.length; i += 5) {
+      const endIdx = Math.min(i + 5, result.length)
+      const batch = result.slice(i, endIdx)
+
+      await Promise.all(
+        batch.map(({ candidateId, votes }) =>
+          tx.electionResult.upsert({
+            where: {
+              candidateId_type: {
+                candidateId,
+                type,
+              },
+            },
+            create: {
+              candidateId,
+              type,
+              count: votes,
+            },
+            update: {
+              count: votes,
+            },
+          })
+        )
+      )
+    }
+  }
+
+  async uploadElectionOnsiteResult(result: { candidateId: string; votes: number }[]) {
     return fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
-        for (let i = 0; i < result.length; i += 5) {
-          const endIdx = Math.min(i + 5, result.length)
-          const batch = result.slice(i, endIdx)
+        this.upsertElectionResult(tx, ElectionResultType.ONSITE, result)
+      })
+    )
+  }
 
-          await Promise.all(
-            batch.map(({ candidateId, votes }) =>
-              tx.electionResult.upsert({
-                where: {
-                  candidateId_type: {
-                    candidateId,
-                    type: ElectionResultType.ONSITE,
-                  },
-                },
-                create: {
-                  candidateId,
-                  type: ElectionResultType.ONSITE,
-                  count: votes,
-                },
-                update: {
-                  count: votes,
-                },
-              })
-            )
-          )
-        }
+  async uploadFailedElectionOnlineResult(electionId: string) {
+    return fromRepositoryPromise(
+      this.prismaService.election.update({
+        where: {
+          id: electionId,
+        },
+        data: {
+          onlineResultStatus: ElectionOnlineResultStatus.COUNT_FAILED,
+        },
+      })
+    )
+  }
+
+  async uploadSuccessElectionOnlineResult(
+    electionId: string,
+    result: { candidateId: string; votes: number }[]
+  ) {
+    return fromRepositoryPromise(
+      this.prismaService.$transaction(async (tx) => {
+        await tx.election.update({
+          where: {
+            id: electionId,
+          },
+          data: {
+            onlineResultStatus: ElectionOnlineResultStatus.COUNT_SUCCESS,
+          },
+        })
+
+        await this.upsertElectionResult(tx, ElectionResultType.ONLINE, result)
       })
     )
   }
