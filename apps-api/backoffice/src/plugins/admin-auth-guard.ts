@@ -16,7 +16,8 @@ export class AdminAuthGuard {
       oidcUrl: string
       oidcPrivateJwtKey: string
       oidcKeyId: string
-    }
+    },
+    private readonly ballotCryptoToBackofficeKey: string
   ) {}
 
   async getOIDCUser(headers: Record<string, string | undefined>) {
@@ -70,6 +71,16 @@ export class AdminAuthGuard {
       name: oidcUser.name,
     })
   }
+
+  validateBallotCrypto(key: string) {
+    if (key !== this.ballotCryptoToBackofficeKey) {
+      return err({
+        code: InternalErrorCode.UNAUTHORIZED,
+        message: 'Not authenticated',
+      })
+    }
+    return ok()
+  }
 }
 
 export const AdminAuthGuardPlugin = new Elysia({
@@ -77,12 +88,16 @@ export const AdminAuthGuardPlugin = new Elysia({
 })
   .use([AdminAuthRepositoryPlugin, ConfigServicePlugin])
   .decorate(({ adminAuthRepository, configService }) => ({
-    adminAuthGuard: new AdminAuthGuard(adminAuthRepository, {
-      oidcClientId: configService.get('OIDC_CLIENT_ID'),
-      oidcUrl: configService.get('OIDC_URL'),
-      oidcPrivateJwtKey: configService.get('OIDC_PRIVATE_JWT_KEY'),
-      oidcKeyId: configService.get('OIDC_KEY_ID'),
-    }),
+    adminAuthGuard: new AdminAuthGuard(
+      adminAuthRepository,
+      {
+        oidcClientId: configService.get('OIDC_CLIENT_ID'),
+        oidcUrl: configService.get('OIDC_URL'),
+        oidcPrivateJwtKey: configService.get('OIDC_PRIVATE_JWT_KEY'),
+        oidcKeyId: configService.get('OIDC_KEY_ID'),
+      },
+      configService.get('BALLOT_CRYPTO_TO_BACKOFFICE_KEY')
+    ),
   }))
   .macro({
     requiredLocalUser: {
@@ -94,6 +109,17 @@ export const AdminAuthGuardPlugin = new Elysia({
         }
 
         return { user: user.value }
+      },
+    },
+    validateBallotCrypto: {
+      async resolve({ status, headers, adminAuthGuard }) {
+        const result = adminAuthGuard.validateBallotCrypto(
+          headers['x-ballot-crypto-to-backoffice-key'] || ''
+        )
+
+        if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+        return {}
       },
     },
   })
