@@ -172,7 +172,7 @@ export const AdminElectionController = new Elysia({
         summary: 'Publish Election',
         description: 'Publish Election',
       },
-      // requiredLocalUser: true,
+      requiredLocalUser: true,
       params: AdminPublishElectionParams,
       body: AdminPublishElectionBody,
       response: {
