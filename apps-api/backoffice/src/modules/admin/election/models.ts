@@ -290,3 +290,18 @@ export const AdminUpdateElectionKeysResponse = t.Object({
   message: t.String(),
 })
 export type AdminUpdateElectionKeysResponse = Static<typeof AdminUpdateElectionKeysResponse>
+
+export const AdminPublishElectionParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminPublishElectionParams = Static<typeof AdminPublishElectionParams>
+
+export const AdminPublishElectionBody = t.Object({
+  publishDate: t.Date(),
+})
+export type AdminPublishElectionBody = Static<typeof AdminPublishElectionBody>
+
+export const AdminPublishElectionResponse = t.Object({
+  message: t.String(),
+})
+export type AdminPublishElectionResponse = Static<typeof AdminPublishElectionResponse>

@@ -189,6 +189,31 @@ export class AdminElectionService {
     return ok()
   }
 
+  async publishElection(electionId: string, publishDate: Date) {
+    const electionResult = await this.adminElectionRepository.getElectionById(electionId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id: ${electionId}`,
+        },
+      })
+    }
+
+    const checkResult = this.checkIsElectionAllowedToModified(electionResult.value, new Date())
+    if (checkResult.isErr()) return err(checkResult.error)
+
+    const publishResult = await this.adminElectionRepository.publishElectionById(
+      electionId,
+      publishDate
+    )
+    if (publishResult.isErr()) {
+      return mapRepositoryError(publishResult.error)
+    }
+
+    return ok()
+  }
+
   async listElectionCandidates(electionId: string) {
     const candidatesResult = await this.adminElectionRepository.listElectionCandidates(electionId)
     if (candidatesResult.isErr()) return mapRepositoryError(candidatesResult.error)
