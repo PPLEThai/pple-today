@@ -5,4 +5,4 @@
 '@pple-today/database': minor
 ---
 
-[[API] Create Election Endpoint](https://linear.app/snts/issue/PPLE-462/api-create-election-endpoint)
+[[PPLE-462] [API] Create Election Endpoint](https://linear.app/snts/issue/PPLE-462/api-create-election-endpoint)
