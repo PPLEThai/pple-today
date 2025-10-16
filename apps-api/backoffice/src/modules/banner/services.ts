@@ -21,12 +21,24 @@ export class BannerService {
       return mapRepositoryError(banners.error)
     }
 
-    const response: GetBannersResponse = banners.value.map((banner) => ({
-      id: banner.id,
-      navigation: banner.navigation,
-      destination: banner.destination,
-      imageUrl: this.fileService.getPublicFileUrl(banner.imageFilePath),
-    }))
+    const response: GetBannersResponse = banners.value.map((banner) => {
+      if (banner.navigation === 'MINI_APP') {
+        return {
+          id: banner.id,
+          navigation: banner.navigation,
+          destination: banner.miniApp!.clientUrl!,
+          miniAppId: banner.miniApp!.id,
+          imageUrl: this.fileService.getPublicFileUrl(banner.imageFilePath),
+        }
+      }
+
+      return {
+        id: banner.id,
+        navigation: banner.navigation,
+        destination: banner.destination!,
+        imageUrl: this.fileService.getPublicFileUrl(banner.imageFilePath),
+      }
+    })
 
     return ok(response)
   }
