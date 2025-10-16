@@ -101,6 +101,15 @@ export class AdminElectionRepository {
     return fromRepositoryPromise(
       this.prismaService.election.findUniqueOrThrow({
         where: { id: electionId },
+        include: {
+          _count: {
+            select: {
+              voters: {
+                where: { type: 'ONSITE' },
+              },
+            },
+          },
+        },
       })
     )
   }
@@ -434,6 +443,38 @@ export class AdminElectionRepository {
             },
           },
         },
+      })
+    )
+  }
+
+  async upsertElectionOnsiteResult(result: { candidateId: string; votes: number }[]) {
+    return fromRepositoryPromise(
+      this.prismaService.$transaction(async (tx) => {
+        for (let i = 0; i < result.length; i += 5) {
+          const endIdx = Math.min(i + 5, result.length)
+          const batch = result.slice(i, endIdx)
+
+          await Promise.all(
+            batch.map(({ candidateId, votes }) =>
+              tx.electionResult.upsert({
+                where: {
+                  candidateId_type: {
+                    candidateId,
+                    type: ElectionResultType.ONSITE,
+                  },
+                },
+                create: {
+                  candidateId,
+                  type: ElectionResultType.ONSITE,
+                  count: votes,
+                },
+                update: {
+                  count: votes,
+                },
+              })
+            )
+          )
+        }
       })
     )
   }

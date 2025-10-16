@@ -262,6 +262,10 @@ export class AdminElectionService {
           code: InternalErrorCode.ELECTION_NOT_FOUND,
           message: `Not Found Election with id: ${electionId}`,
         },
+        UNIQUE_CONSTRAINT_FAILED: {
+          code: InternalErrorCode.ELECTION_DUPLICATE_CANDIDATE,
+          message: `Candidate name ${data.name} or number ${data.number} already exists in election ${electionId}`,
+        },
       })
     }
 
@@ -463,6 +467,72 @@ export class AdminElectionService {
       )
     if (bulkCreateEligibleVotersResult.isErr())
       return mapRepositoryError(bulkCreateEligibleVotersResult.error)
+
+    return ok()
+  }
+
+  async uploadElectionOnsiteResult(
+    electionId: string,
+    result: { candidateId: string; votes: number }[]
+  ) {
+    const electionResult = await this.adminElectionRepository.getElectionById(electionId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id ${electionId}`,
+        },
+      })
+    }
+
+    const election = electionResult.value
+    if (election.type !== 'ONSITE' && election.type !== 'HYBRID') {
+      return err({
+        code: InternalErrorCode.ELECTION_INVALID_TYPE,
+        message: `Cannot upload onsite result for election type ${election.type}`,
+      })
+    }
+
+    if (election.isCancelled) {
+      return err({
+        code: InternalErrorCode.ELECTION_IS_CANNCELLED,
+        message: `Election is cancelled`,
+      })
+    }
+
+    const now = new Date()
+
+    if (now < election.closeVoting) {
+      return err({
+        code: InternalErrorCode.ELECTION_NOT_IN_CLOSED_VOTE_PERIOD,
+        message: `Cannot upload onsite result before voting close`,
+      })
+    }
+
+    if (election.startResult && now >= election.startResult) {
+      return err({
+        code: InternalErrorCode.ELECTION_NOT_IN_CLOSED_VOTE_PERIOD,
+        message: `Cannot upload offline result after result announced`,
+      })
+    }
+
+    const votes = result.reduce((acc, cur) => acc + cur.votes, 0)
+    if (votes > election._count.voters) {
+      return err({
+        code: InternalErrorCode.ELECTION_VOTES_EXCEED_VOTERS,
+        message: `Total votes ${votes} exceed total onsite voters ${election._count.voters}`,
+      })
+    }
+
+    const upsertResult = await this.adminElectionRepository.upsertElectionOnsiteResult(result)
+    if (upsertResult.isErr()) {
+      return mapRepositoryError(upsertResult.error, {
+        FOREIGN_KEY_CONSTRAINT_FAILED: {
+          code: InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
+          message: `One of candidateId in result not found`,
+        },
+      })
+    }
 
     return ok()
   }

@@ -305,3 +305,21 @@ export const AdminPublishElectionResponse = t.Object({
   message: t.String(),
 })
 export type AdminPublishElectionResponse = Static<typeof AdminPublishElectionResponse>
+
+export const AdminUploadOnsiteResultParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminUploadOnsiteResultParams = Static<typeof AdminUploadOnsiteResultParams>
+
+export const AdminUploadOnsiteResultBody = t.Array(
+  t.Object({
+    candidateId: t.String(),
+    votes: t.Integer({ description: 'Number of votes for the candidate' }),
+  })
+)
+export type AdminUploadOnsiteResultBody = Static<typeof AdminUploadOnsiteResultBody>
+
+export const AdminUploadOnsiteResultResponse = t.Object({
+  message: t.String(),
+})
+export type AdminUploadOnsiteResultResponse = Static<typeof AdminUploadOnsiteResultResponse>
