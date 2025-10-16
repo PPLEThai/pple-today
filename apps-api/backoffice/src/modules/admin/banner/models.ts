@@ -19,18 +19,40 @@ export type GetBannerByIdParams = Static<typeof GetBannerByIdParams>
 export const GetBannerByIdResponse = Banner
 export type GetBannerByIdResponse = Static<typeof GetBannerByIdResponse>
 
-// POST /admin/banners
-export const CreateBannerBody = t.Object({
+// PATCH /admin/banners
+export const CreateBannerBaseBody = t.Object({
   imageFilePath: FilePath,
-  navigation: t.Enum(BannerNavigationType, {
-    description: 'How the app should navigate when the item is tapped',
-  }),
-  destination: t.String({
-    description: 'The destination URI for the banner item',
-  }),
   startAt: t.Date({ description: 'The start date for the banner item' }),
   endAt: t.Date({ description: 'The end date for the banner item' }),
 })
+export type CreateBannerBaseBody = Static<typeof CreateBannerBaseBody>
+export const CreateBannerBody = t.Union([
+  t.Composite([
+    CreateBannerBaseBody,
+    t.Object({
+      navigation: t.Literal(BannerNavigationType.MINI_APP, {
+        description: 'How the app should navigate when the item is tapped',
+      }),
+      miniAppId: t.Optional(t.String({ description: 'The ID of the mini app to open' })),
+    }),
+  ]),
+  t.Composite([
+    CreateBannerBaseBody,
+    t.Object({
+      navigation: t.Union([
+        t.Literal(BannerNavigationType.EXTERNAL_BROWSER, {
+          description: 'How the app should navigate when the item is tapped',
+        }),
+        t.Literal(BannerNavigationType.IN_APP_NAVIGATION, {
+          description: 'How the app should navigate when the item is tapped',
+        }),
+      ]),
+      destination: t.String({
+        description: 'The destination URI for the banner item',
+      }),
+    }),
+  ]),
+])
 export type CreateBannerBody = Static<typeof CreateBannerBody>
 
 export const CreateBannerResponse = t.Object({
@@ -42,18 +64,22 @@ export type CreateBannerResponse = Static<typeof CreateBannerResponse>
 export const UpdateBannerParams = BannerIdParams
 export type UpdateBannerParams = Static<typeof UpdateBannerParams>
 
-export const UpdateBannerBody = t.Object({
-  imageFilePath: FilePath,
-  status: t.Enum(BannerStatusType, { description: 'Publish status of the banner item' }),
-  navigation: t.Enum(BannerNavigationType, {
-    description: 'How the app should navigate when the item is tapped',
-  }),
-  destination: t.String({
-    description: 'The destination URI for the banner item',
-  }),
-  startAt: t.Date({ description: 'The start date for the banner item' }),
-  endAt: t.Date({ description: 'The end date for the banner item' }),
-})
+export const UpdateBannerBody = t.Partial(
+  t.Object({
+    imageFilePath: FilePath,
+    status: t.Enum(BannerStatusType, { description: 'Publish status of the banner item' }),
+    navigation: t.Enum(BannerNavigationType, {
+      description: 'How the app should navigate when the item is tapped',
+    }),
+    destination: t.String({
+      description: 'The destination URI for the banner item',
+    }),
+    miniAppId: t.Optional(t.String({ description: 'The ID of the mini app to open' })),
+    startAt: t.Date({ description: 'The start date for the banner item' }),
+    endAt: t.Date({ description: 'The end date for the banner item' }),
+  })
+)
+
 export type UpdateBannerBody = Static<typeof UpdateBannerBody>
 
 export const UpdateBannerResponse = t.Object({
