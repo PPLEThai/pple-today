@@ -27,6 +27,13 @@ enum ElectionKeysStatus {
     DESTROY_SCHEDULED
 }
 
+enum ElectionOnlineResultStatus {
+    NONE
+    COUNTING
+    COUNT_SUCCESS
+    COUNT_FAILED
+}
+
 model Election {
     id             String  @id @default(cuid())
     name           String
@@ -41,6 +48,8 @@ model Election {
     keysStatus                   ElectionKeysStatus @default(NOT_CREATED)
     keysDestroyScheduledAt       DateTime?
     keysDestroyScheduledDuration Int? // seconds
+
+    onlineResultStatus ElectionOnlineResultStatus @default(NONE)
 
     encryptionPublicKey String?
     signingPublicKey    String?
