@@ -1,5 +1,11 @@
 # @pple-today/web-ui
 
+## 0.2.0
+
+### Minor Changes
+
+- [#169](https://github.com/PPLEThai/pple-today/pull/169) [`25c65f4`](https://github.com/PPLEThai/pple-today/commit/25c65f4eb141504ec941a4e425164ded77fa5dbd) Thanks [@rootEnginear](https://github.com/rootEnginear)! - [PPLE-340] [CMS/FE] Feed/Topic Page
+
 ## 0.1.1
 
 ### Patch Changes

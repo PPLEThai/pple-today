@@ -1,5 +1,19 @@
 # @api/backoffice
 
+## 0.7.0
+
+### Minor Changes
+
+- [#169](https://github.com/PPLEThai/pple-today/pull/169) [`25c65f4`](https://github.com/PPLEThai/pple-today/commit/25c65f4eb141504ec941a4e425164ded77fa5dbd) Thanks [@rootEnginear](https://github.com/rootEnginear)! - [PPLE-340] [CMS/FE] Feed/Topic Page
+
+### Patch Changes
+
+- [#181](https://github.com/PPLEThai/pple-today/pull/181) [`48e911b`](https://github.com/PPLEThai/pple-today/commit/48e911b6ee8fcc639eb1ccb0538ce9d44f837bc9) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-305] Search Page](https://linear.app/snts/issue/PPLE-305/search-page)
+
+- Updated dependencies [[`957ea15`](https://github.com/PPLEThai/pple-today/commit/957ea158c1e21c0fdbe96499c2de38d690c00a7a), [`25c65f4`](https://github.com/PPLEThai/pple-today/commit/25c65f4eb141504ec941a4e425164ded77fa5dbd)]:
+  - @pple-today/database@0.3.1
+  - @pple-today/api-common@0.4.0
+
 ## 0.6.1
 
 ### Patch Changes
