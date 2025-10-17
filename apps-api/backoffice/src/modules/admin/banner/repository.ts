@@ -129,17 +129,25 @@ export class AdminBannerRepository {
         data: {
           imageFilePath: newImageFilePath,
           navigation: data.navigation,
-          destination: data.destination,
+          destination:
+            data.navigation === undefined
+              ? existingBanner.value.navigation === BannerNavigationType.MINI_APP
+                ? null
+                : data.destination
+              : data.navigation === BannerNavigationType.MINI_APP
+                ? null
+                : data.destination,
           status: data.status,
           startAt: data.startAt,
           endAt: data.endAt,
           miniApp:
-            data.miniAppId &&
-            (data.navigation === BannerNavigationType.MINI_APP ||
-              (data.navigation === undefined &&
-                existingBanner.value.navigation === BannerNavigationType.MINI_APP))
-              ? { connect: { id: data.miniAppId } }
-              : undefined,
+            data.navigation === undefined
+              ? existingBanner.value.navigation === BannerNavigationType.MINI_APP
+                ? { connect: { id: data.miniAppId } }
+                : { disconnect: {} }
+              : data.navigation === BannerNavigationType.MINI_APP
+                ? { connect: { id: data.miniAppId } }
+                : { disconnect: {} },
         },
       })
     )

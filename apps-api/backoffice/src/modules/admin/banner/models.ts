@@ -20,39 +20,20 @@ export const GetBannerByIdResponse = Banner
 export type GetBannerByIdResponse = Static<typeof GetBannerByIdResponse>
 
 // PATCH /admin/banners
-export const CreateBannerBaseBody = t.Object({
+export const CreateBannerBody = t.Object({
   imageFilePath: FilePath,
   startAt: t.Date({ description: 'The start date for the banner item' }),
   endAt: t.Date({ description: 'The end date for the banner item' }),
+  navigation: t.Enum(BannerNavigationType, {
+    description: 'How the app should navigate when the item is tapped',
+  }),
+  miniAppId: t.Optional(t.String({ description: 'The ID of the mini app to open' })),
+  destination: t.Optional(
+    t.String({
+      description: 'The destination URI for the banner item',
+    })
+  ),
 })
-export type CreateBannerBaseBody = Static<typeof CreateBannerBaseBody>
-export const CreateBannerBody = t.Union([
-  t.Composite([
-    CreateBannerBaseBody,
-    t.Object({
-      navigation: t.Literal(BannerNavigationType.MINI_APP, {
-        description: 'How the app should navigate when the item is tapped',
-      }),
-      miniAppId: t.Optional(t.String({ description: 'The ID of the mini app to open' })),
-    }),
-  ]),
-  t.Composite([
-    CreateBannerBaseBody,
-    t.Object({
-      navigation: t.Union([
-        t.Literal(BannerNavigationType.EXTERNAL_BROWSER, {
-          description: 'How the app should navigate when the item is tapped',
-        }),
-        t.Literal(BannerNavigationType.IN_APP_NAVIGATION, {
-          description: 'How the app should navigate when the item is tapped',
-        }),
-      ]),
-      destination: t.String({
-        description: 'The destination URI for the banner item',
-      }),
-    }),
-  ]),
-])
 export type CreateBannerBody = Static<typeof CreateBannerBody>
 
 export const CreateBannerResponse = t.Object({
