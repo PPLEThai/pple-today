@@ -66,10 +66,10 @@ import { useScrollContext } from '@app/libs/scroll-context'
 import { useScrollViewRefContext } from '../_layout'
 
 export default function FeedPage() {
-  const scrollViewRef = useScrollViewRefContext()
+  const { registerScrollViewRef } = useScrollViewRefContext()
   return (
     <SafeAreaLayout>
-      <Pager ref={scrollViewRef}>
+      <Pager ref={registerScrollViewRef(0)}>
         <PagerHeader>
           <PagerHeaderOnly>
             <MainHeader />

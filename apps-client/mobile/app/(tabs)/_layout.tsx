@@ -1,6 +1,6 @@
 // https://www.reactnativereusables.com/extras/material-top-tabs/
 
-import React from 'react'
+import React, { useCallback } from 'react'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -54,7 +54,7 @@ export default function BottomTabsLayout() {
               title: 'หน้าแรก',
               tabBarIcon: (props) => <TabBarIcon {...props} icon={HouseIcon} />,
               tabBarLabel: TabBarLabel,
-              tabBarButton: TabBarButton,
+              tabBarButton: (props) => <TabBarButton {...props} index={0} />,
             }}
           />
           <Tabs.Protected guard={!!session}>
@@ -64,7 +64,9 @@ export default function BottomTabsLayout() {
                 title: 'ค้นหา',
                 tabBarIcon: (props) => <TabBarIcon {...props} icon={SearchIcon} />,
                 tabBarLabel: TabBarLabel,
-                ...(session ? { tabBarButton: TabBarButton } : { href: null }),
+                ...(session
+                  ? { tabBarButton: (props) => <TabBarButton {...props} index={1} /> }
+                  : { href: null }),
               }}
             />
           </Tabs.Protected>
@@ -74,7 +76,7 @@ export default function BottomTabsLayout() {
               title: 'ทางการ',
               tabBarIcon: (props) => <TabBarIcon {...props} icon={PPLEIconBlack} />,
               tabBarLabel: TabBarLabel,
-              tabBarButton: TabBarButton,
+              tabBarButton: (props) => <TabBarButton {...props} index={2} />,
             }}
           />
           <Tabs.Screen
@@ -83,7 +85,7 @@ export default function BottomTabsLayout() {
               title: 'กิจกรรม',
               tabBarIcon: (props) => <TabBarIcon {...props} icon={HandshakeIcon} />,
               tabBarLabel: TabBarLabel,
-              tabBarButton: TabBarButton,
+              tabBarButton: (props) => <TabBarButton {...props} index={3} />,
             }}
           />
           <Tabs.Screen
@@ -92,7 +94,7 @@ export default function BottomTabsLayout() {
               title: 'ฉัน',
               tabBarIcon: (props) => <TabBarIcon {...props} icon={CircleUserRoundIcon} />,
               tabBarLabel: TabBarLabel,
-              tabBarButton: TabBarButton,
+              tabBarButton: (props) => <TabBarButton {...props} index={4} />,
             }}
           />
           <Tabs.Screen
@@ -137,8 +139,8 @@ function TabBarLabel(props: {
     </Text>
   )
 }
-function TabBarButton({ style, ...props }: BottomTabBarButtonProps) {
-  const scrollViewRef = useScrollViewRefContext()
+function TabBarButton({ style, index, ...props }: BottomTabBarButtonProps & { index: number }) {
+  const { scrollViewRef } = useScrollViewRefContext()
   return (
     <PlatformPressable
       {...props}
@@ -151,7 +153,7 @@ function TabBarButton({ style, ...props }: BottomTabBarButtonProps) {
       onPress={(e) => {
         props.onPress?.(e)
         if (props['aria-selected']) {
-          scrollViewRef.current?.scrollToTop()
+          scrollViewRef.current?.[index]?.scrollToTop()
         }
       }}
     />
@@ -161,13 +163,23 @@ function TabBarButton({ style, ...props }: BottomTabBarButtonProps) {
 export interface ScrollViewRef {
   scrollToTop: () => void
 }
-export const ScrollViewRefContext =
-  React.createContext<React.RefObject<ScrollViewRef | null> | null>(null)
+interface ScrollViewRefContextValue {
+  scrollViewRef: React.RefObject<ScrollViewRef[]>
+  registerScrollViewRef: (index: number) => (ref: ScrollViewRef) => void
+}
+export const ScrollViewRefContext = React.createContext<ScrollViewRefContextValue | null>(null)
 
 export function ScrollViewRefProvider({ children }: { children: React.ReactNode }) {
-  const scrollViewRef = React.useRef<ScrollViewRef>(null)
+  const scrollViewRef = React.useRef<ScrollViewRef[]>([])
+  const registerScrollViewRef = useCallback((index: number) => {
+    return (ref: ScrollViewRef) => {
+      scrollViewRef.current[index] = ref
+    }
+  }, [])
   return (
-    <ScrollViewRefContext.Provider value={scrollViewRef}>{children}</ScrollViewRefContext.Provider>
+    <ScrollViewRefContext.Provider value={{ scrollViewRef, registerScrollViewRef }}>
+      {children}
+    </ScrollViewRefContext.Provider>
   )
 }
 

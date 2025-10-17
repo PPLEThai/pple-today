@@ -259,12 +259,12 @@ function PollFeedSection(props: { ListHeaderComponent: React.ReactNode }) {
     await queryClient.invalidateQueries({ queryKey: useRecentActivityQuery.getKey() })
   }, [queryClient])
 
-  const scrollViewRef = useScrollViewRefContext()
+  const { registerScrollViewRef } = useScrollViewRefContext()
   const flatListRef = React.useRef<Animated.FlatList<any>>(null)
   const scrollToTop = React.useCallback(() => {
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true })
   }, [])
-  useImperativeHandle(scrollViewRef, () => ({
+  useImperativeHandle(registerScrollViewRef(3), () => ({
     scrollToTop,
   }))
   return (
