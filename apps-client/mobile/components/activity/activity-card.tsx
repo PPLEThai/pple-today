@@ -3,13 +3,15 @@ import { View } from 'react-native'
 import { AnimatedBackgroundPressable } from '@pple-today/ui/animated-pressable'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
+import { cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 import dayjs from 'dayjs'
 import { Image } from 'expo-image'
 import { Link, useRouter } from 'expo-router'
 import { CalendarIcon, MapPinIcon } from 'lucide-react-native'
 
-interface ActivityCardProps {
+export interface ActivityCardProps {
+  className?: string
   activity: {
     id: string
     user: {
@@ -33,11 +35,14 @@ export const EXAMPLE_ACTIVITY: ActivityCardProps['activity'] = {
   endAt: dayjs().add(1, 'day').toDate(),
 }
 
-export function ActivityCard({ activity }: ActivityCardProps) {
+export function ActivityCard({ activity, className }: ActivityCardProps) {
   const router = useRouter()
   return (
     <AnimatedBackgroundPressable
-      className="border border-base-outline-default rounded-2xl bg-base-bg-white flex flex-row gap-4 p-2 items-stretch h-[203px]"
+      className={cn(
+        'border border-base-outline-default rounded-2xl bg-base-bg-white flex flex-row gap-4 p-2 items-stretch h-[203px]',
+        className
+      )}
       onPress={() => router.navigate(`/activities/${activity.id}`)}
     >
       <Image className="rounded-xl bg-base-bg-default w-[137px]" source={{ uri: activity.image }} />
