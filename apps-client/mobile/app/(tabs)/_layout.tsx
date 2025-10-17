@@ -76,7 +76,7 @@ export default function BottomTabsLayout() {
           }}
         />
         <Tabs.Screen
-          name="activity"
+          name="(activity)"
           options={{
             title: 'กิจกรรม',
             tabBarIcon: (props) => <TabBarIcon {...props} icon={HandshakeIcon} />,

@@ -1,15 +1,12 @@
 import { Stack } from 'expo-router'
 
-export default function OfficialLayout() {
+export default function ActivityLayout() {
   return (
     <Stack
       initialRouteName="index"
       screenOptions={{ headerShown: false, animation: 'slide_from_right' }}
     >
       <Stack.Screen name="index" />
-      <Stack.Screen name="announcement/index" />
-      <Stack.Screen name="announcement/[feedId]" />
-      <Stack.Screen name="election/[electionId]/index" />
     </Stack>
   )
 }
