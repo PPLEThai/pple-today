@@ -116,7 +116,7 @@ function MyActivity() {
                 </Text>
               </View>
             </View>
-            <Link asChild href={`/activities/${activity.id}`}>
+            <Link asChild href={`/activity/${activity.id}`}>
               <Button variant="ghost" size="icon" aria-label="ดูกิจกรรม">
                 <Icon
                   icon={CircleArrowRightIcon}
