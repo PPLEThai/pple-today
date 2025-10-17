@@ -13,10 +13,12 @@ import { AuthRepository, AuthRepositoryPlugin } from './repository'
 import { ConfigServicePlugin } from '../../plugins/config'
 import { FileServicePlugin } from '../../plugins/file'
 import { generateJwtToken } from '../../utils/jwt'
+import { MiniAppRepository, MiniAppRepositoryPlugin } from '../mini-app/repository'
 
 export class AuthService {
   constructor(
     private authRepository: AuthRepository,
+    private miniAppRepository: MiniAppRepository,
     private fileService: FileService,
     private loggerService: ElysiaLoggerInstance,
     private oidcConfig: {
@@ -27,7 +29,18 @@ export class AuthService {
     }
   ) {}
 
-  async generateMiniAppToken(clientId: string, token: string) {
+  async generateMiniAppToken(appId: string, token: string) {
+    const miniApp = await this.miniAppRepository.getMiniAppById(appId)
+
+    if (miniApp.isErr()) {
+      return mapRepositoryError(miniApp.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.MINI_APP_NOT_FOUND,
+          message: 'Mini app not found',
+        },
+      })
+    }
+
     const jwtToken = generateJwtToken(this.oidcConfig)
 
     const httpHeaders = { 'Content-Type': 'application/json' }
@@ -37,7 +50,7 @@ export class AuthService {
       client_assertion: jwtToken,
     }
 
-    const response = await fetch(`${this.oidcConfig.oidcUrl}/mini-app/${clientId}`, {
+    const response = await fetch(`${this.oidcConfig.oidcUrl}/mini-app/${miniApp.value.clientId}`, {
       method: 'POST',
       headers: httpHeaders,
       body: JSON.stringify(data),
@@ -45,7 +58,7 @@ export class AuthService {
 
     if (!response.ok) {
       this.loggerService.error({
-        message: `Failed to generate mini app token for clientId ${clientId}. Status: ${response.status}`,
+        message: `Failed to generate mini app token for clientId ${miniApp.value.clientId}. Status: ${response.status}`,
       })
       return mapRepositoryError({
         code: InternalErrorCode.INTERNAL_SERVER_ERROR,
@@ -58,7 +71,7 @@ export class AuthService {
 
     if (!miniAppToken) {
       this.loggerService.error({
-        message: `Invalid mini app token response for clientId ${clientId}`,
+        message: `Invalid mini app token response for clientId ${miniApp.value.clientId}`,
       })
       return mapRepositoryError({
         code: InternalErrorCode.INTERNAL_SERVER_ERROR,
@@ -121,9 +134,10 @@ export const AuthServicePlugin = new Elysia({ name: 'AuthService' })
     FileServicePlugin,
     ElysiaLoggerPlugin({ name: 'AuthService' }),
     ConfigServicePlugin,
+    MiniAppRepositoryPlugin,
   ])
-  .decorate(({ authRepository, fileService, loggerService, configService }) => ({
-    authService: new AuthService(authRepository, fileService, loggerService, {
+  .decorate(({ authRepository, fileService, miniAppRepository, loggerService, configService }) => ({
+    authService: new AuthService(authRepository, miniAppRepository, fileService, loggerService, {
       oidcClientId: configService.get('OIDC_CLIENT_ID'),
       oidcUrl: configService.get('OIDC_URL'),
       oidcPrivateJwtKey: configService.get('OIDC_PRIVATE_JWT_KEY'),

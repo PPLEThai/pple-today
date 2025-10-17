@@ -87,7 +87,10 @@ export const AuthController = new Elysia({
       params: CreateMiniAppTokenParams,
       response: {
         200: CreateMiniAppTokenResponse,
-        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+        ...createErrorSchema(
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
       },
       detail: {
         summary: 'Generate Mini App Token',

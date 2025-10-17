@@ -16,6 +16,14 @@ export class MiniAppRepository {
       })
     )
   }
+
+  async getMiniAppById(id: string) {
+    return await fromRepositoryPromise(
+      this.prismaService.miniApp.findUniqueOrThrow({
+        where: { id },
+      })
+    )
+  }
 }
 
 export const MiniAppRepositoryPlugin = new Elysia({ name: 'MiniAppRepository' })
