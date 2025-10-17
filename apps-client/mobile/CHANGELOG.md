@@ -1,5 +1,24 @@
 # @client/mobile
 
+## 0.7.0
+
+### Minor Changes
+
+- [#196](https://github.com/PPLEThai/pple-today/pull/196) [`0c76ce6`](https://github.com/PPLEThai/pple-today/commit/0c76ce68da8a62ca0c6866d63d67cbaf20baa313) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-454] Activity List Page](https://linear.app/snts/issue/PPLE-454/activity-list-page)
+
+- [#195](https://github.com/PPLEThai/pple-today/pull/195) [`d6c30e6`](https://github.com/PPLEThai/pple-today/commit/d6c30e6a27f416848f9efab6cf2e7016b724fa8f) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-238] Activity Card](https://linear.app/snts/issue/PPLE-238/activity-card)
+  [[PPLE-237] Activity Page](https://linear.app/snts/issue/PPLE-237/activity-page)
+
+- [#201](https://github.com/PPLEThai/pple-today/pull/201) [`afa844d`](https://github.com/PPLEThai/pple-today/commit/afa844d8152b7fb3c19b467c96c41281617d9c2b) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-461] Activity Integrate](https://linear.app/snts/issue/PPLE-461/activity-integrate-with-api)
+
+### Patch Changes
+
+- [#197](https://github.com/PPLEThai/pple-today/pull/197) [`fb0d327`](https://github.com/PPLEThai/pple-today/commit/fb0d327037e80b957779798d669b0da214270b53) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-464] Fix Unique Routing](https://linear.app/snts/issue/PPLE-464/fix-unique-routing)
+
+- [#181](https://github.com/PPLEThai/pple-today/pull/181) [`48e911b`](https://github.com/PPLEThai/pple-today/commit/48e911b6ee8fcc639eb1ccb0538ce9d44f837bc9) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-305] Search Page](https://linear.app/snts/issue/PPLE-305/search-page)
+
+- [#193](https://github.com/PPLEThai/pple-today/pull/193) [`83dc1f4`](https://github.com/PPLEThai/pple-today/commit/83dc1f4bccb6c492bea792de1303b55f3ac77e62) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-460] Compress image when image upload election](https://linear.app/snts/issue/PPLE-460/compress-image-when-image-upload-election)
+
 ## 0.6.2
 
 ### Patch Changes
