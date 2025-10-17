@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 0.7.1
+
+### Patch Changes
+
+- [#202](https://github.com/PPLEThai/pple-today/pull/202) [`8778b47`](https://github.com/PPLEThai/pple-today/commit/8778b474fc3631f76509de2fc5b4416ccfa25e0a) Thanks [@Anon-136](https://github.com/Anon-136)! - fix: condition of poll feed
+
 ## 0.7.0
 
 ### Minor Changes
