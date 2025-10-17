@@ -1,16 +1,23 @@
-import React from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { View } from 'react-native'
 import Animated from 'react-native-reanimated'
 
+import { QUERY_KEY_SYMBOL } from '@pple-today/api-client'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { Skeleton } from '@pple-today/ui/skeleton'
 import { Text } from '@pple-today/ui/text'
 import { H1, H2, H3 } from '@pple-today/ui/typography'
-import { useQueryClient } from '@tanstack/react-query'
+import {
+  InfiniteData,
+  useInfiniteQuery,
+  UseInfiniteQueryResult,
+  useQueryClient,
+} from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { Image } from 'expo-image'
 import { Link } from 'expo-router'
+import * as WebBrowser from 'expo-web-browser'
 import {
   ArrowRightIcon,
   CalendarHeartIcon,
@@ -21,12 +28,23 @@ import {
   TicketIcon,
 } from 'lucide-react-native'
 
-import { FeedItem } from '@api/backoffice/app'
-import { ActivityCard, EXAMPLE_ACTIVITY } from '@app/components/activity/activity-card'
-import { FeedCard } from '@app/components/feed/feed-card'
+import { FeedItem, FeedItemPoll, ListPollsResponse } from '@api/backoffice/app'
+import {
+  ActivityCard,
+  ActivityCardProps,
+  ActivityCardSkeleton,
+} from '@app/components/activity/activity-card'
+import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
 import { RefreshControl } from '@app/components/refresh-control'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
+import { fetchClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
+import {
+  EXAMPLE_ACTIVITY,
+  GetPPLEActivity,
+  mapToActivity,
+  useRecentActivityQuery,
+} from '@app/libs/pple-activity'
 
 export default function ActivityPage() {
   return (
@@ -51,7 +69,6 @@ export default function ActivityPage() {
               </Text>
             </View>
             <View className="gap-3 py-4">
-              <MyActivity />
               <RecentActivity />
             </View>
           </>
@@ -61,13 +78,13 @@ export default function ActivityPage() {
   )
 }
 
-function MyActivity() {
+// Might not be used
+export function MyActivity() {
   const session = useSession()
   if (!session) {
     return null
   }
   const isLoading = false // TODO: fetch user's activities
-
   const activity = EXAMPLE_ACTIVITY
   return (
     <View className="px-4">
@@ -116,16 +133,21 @@ function MyActivity() {
                 </Text>
               </View>
             </View>
-            <Link asChild href={`/activity/${activity.id}`}>
-              <Button variant="ghost" size="icon" aria-label="ดูกิจกรรม">
-                <Icon
-                  icon={CircleArrowRightIcon}
-                  size={24}
-                  strokeWidth={1}
-                  className="text-base-text-high"
-                />
-              </Button>
-            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="ดูกิจกรรม"
+              onPress={() => {
+                WebBrowser.openBrowserAsync(activity.url)
+              }}
+            >
+              <Icon
+                icon={CircleArrowRightIcon}
+                size={24}
+                strokeWidth={1}
+                className="text-base-text-high"
+              />
+            </Button>
           </View>
         ))}
         <Link asChild href="/activity/my-activities">
@@ -139,6 +161,20 @@ function MyActivity() {
 }
 
 function RecentActivity() {
+  const recentActivityQuery = useRecentActivityQuery({
+    variables: { limit: 3 },
+    select: useCallback((data: GetPPLEActivity): ActivityCardProps['activity'][] => {
+      return data.result.map(mapToActivity)
+    }, []),
+  })
+  useEffect(() => {
+    if (recentActivityQuery.isError) {
+      console.error('Error fetching recent activity:', recentActivityQuery.error)
+    }
+  }, [recentActivityQuery])
+  if (recentActivityQuery.isError) {
+    return null
+  }
   return (
     <View className="px-4 flex flex-col gap-3">
       <View className="flex flex-row justify-between items-center">
@@ -153,24 +189,74 @@ function RecentActivity() {
           </Button>
         </Link>
       </View>
-      {/* TODO */}
-      <ActivityCard activity={EXAMPLE_ACTIVITY} />
-      <ActivityCard activity={EXAMPLE_ACTIVITY} />
+      {recentActivityQuery.isError ? null : recentActivityQuery.isLoading ? (
+        <>
+          <ActivityCardSkeleton />
+          <ActivityCardSkeleton />
+          <ActivityCardSkeleton />
+        </>
+      ) : !recentActivityQuery.data || recentActivityQuery.data.length === 0 ? (
+        <Text className="text-base-text-medium w-full text-center">ไม่มีข้อมูลกิจกรรม</Text>
+      ) : (
+        recentActivityQuery.data.map((activity) => (
+          <ActivityCard key={activity.id} activity={activity} />
+        ))
+      )}
     </View>
   )
 }
 
 function PollFeedSection(props: { ListHeaderComponent: React.ReactNode }) {
-  const queryClient = useQueryClient()
-  const onRefresh = React.useCallback(async () => {
-    // TODO
-    queryClient.invalidateQueries({ queryKey: ['/activity'] })
-  }, [queryClient])
-  // TODO
-  const data: FeedItem[] = []
+  const session = useSession()
+
+  const listPollQuery = useInfiniteQuery({
+    queryKey: [QUERY_KEY_SYMBOL, 'infinite', 'polls'],
+    initialPageParam: 1,
+    queryFn: async ({ pageParam }) => {
+      const response = await fetchClient('/polls', {
+        query: { page: pageParam, limit: 10 },
+      })
+      if (response.error) {
+        throw response.error
+      }
+      return response.data
+    },
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.data.length < 10) {
+        return undefined
+      }
+      return allPages.length + 1
+    },
+    select: useCallback((data: InfiniteData<ListPollsResponse>): InfiniteData<FeedItemPoll[]> => {
+      return {
+        pageParams: data.pageParams,
+        pages: data.pages.map((page) => page.data),
+      }
+    }, []),
+    enabled: !!session,
+  })
+  const data: FeedItemPoll[] = useMemo(() => {
+    if (!listPollQuery.data) {
+      return []
+    }
+    return listPollQuery.data.pages.flat()
+  }, [listPollQuery.data])
   const renderFeedItem = React.useCallback(({ item }: { item: FeedItem; index: number }) => {
     return <FeedCard key={item.id} feedItem={item} className="mt-3 mx-4" />
   }, [])
+  const onEndReached = React.useCallback(() => {
+    if (listPollQuery.hasNextPage && !listPollQuery.isFetchingNextPage) {
+      listPollQuery.fetchNextPage()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listPollQuery.fetchNextPage, listPollQuery.hasNextPage, listPollQuery.isFetchingNextPage])
+
+  const queryClient = useQueryClient()
+  const onRefresh = React.useCallback(async () => {
+    await queryClient.resetQueries({ queryKey: [QUERY_KEY_SYMBOL, 'infinite', 'polls'] })
+    await queryClient.invalidateQueries({ queryKey: useRecentActivityQuery.getKey() })
+  }, [queryClient])
+
   return (
     <Animated.FlatList
       className="flex-1 bg-base-bg-default"
@@ -197,6 +283,38 @@ function PollFeedSection(props: { ListHeaderComponent: React.ReactNode }) {
       }
       data={data}
       renderItem={renderFeedItem}
+      onEndReached={onEndReached}
+      ListFooterComponent={
+        session ? <PollFooter queryResult={listPollQuery} className="mx-4" /> : undefined
+      }
     />
+  )
+}
+
+interface PollFooterProps {
+  queryResult: UseInfiniteQueryResult<InfiniteData<unknown[]>>
+  className?: string
+}
+export function PollFooter({ queryResult, className }: PollFooterProps) {
+  if (queryResult.hasNextPage || queryResult.isLoading || queryResult.error) {
+    return <FeedCardSkeleton className={className} />
+  }
+  if (
+    queryResult.data &&
+    queryResult.data.pages.length === 1 &&
+    queryResult.data.pages[0].length === 0
+  ) {
+    // Empty State
+    return (
+      <View className="flex flex-col items-center justify-center py-6">
+        <Text className="text-base-text-medium font-heading-semibold">ยังไม่มีแบบสอบถาม</Text>
+      </View>
+    )
+  }
+  // Reach end of feed
+  return (
+    <View className="flex flex-col items-center justify-center py-6">
+      <Text className="text-base-text-medium font-heading-semibold">ไม่มีแบบสอบถามเพิ่มเติม</Text>
+    </View>
   )
 }
