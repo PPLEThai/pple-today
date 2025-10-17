@@ -257,9 +257,6 @@ function PollFeedSection(props: { ListHeaderComponent: React.ReactNode }) {
     await queryClient.invalidateQueries({ queryKey: useRecentActivityQuery.getKey() })
   }, [queryClient])
 
-  if (!session) {
-    return null
-  }
   return (
     <Animated.FlatList
       className="flex-1 bg-base-bg-default"
@@ -287,7 +284,9 @@ function PollFeedSection(props: { ListHeaderComponent: React.ReactNode }) {
       data={data}
       renderItem={renderFeedItem}
       onEndReached={onEndReached}
-      ListFooterComponent={<PollFooter queryResult={listPollQuery} className="mx-4" />}
+      ListFooterComponent={
+        session ? <PollFooter queryResult={listPollQuery} className="mx-4" /> : undefined
+      }
     />
   )
 }
