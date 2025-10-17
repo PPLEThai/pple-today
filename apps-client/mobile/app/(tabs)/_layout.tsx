@@ -1,5 +1,6 @@
 // https://www.reactnativereusables.com/extras/material-top-tabs/
 
+import React, { useCallback } from 'react'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -29,79 +30,83 @@ export default function BottomTabsLayout() {
   const session = useSession()
 
   return (
-    <View className="flex-1 px-safe">
-      <Tabs
-        screenOptions={{
-          headerShown: false,
-          animation: 'none',
-          tabBarStyle: {
-            paddingHorizontal: 16,
-            height: 60 + insets.bottom,
-            paddingBottom: insets.bottom,
-            borderTopColor: 'transparent',
-            borderTopWidth: 0,
-            elevation: 0,
-          },
-          tabBarHideOnKeyboard: true,
-        }}
-        initialRouteName="(feed)"
-      >
-        <Tabs.Screen
-          name="(feed)"
-          options={{
-            title: 'หน้าแรก',
-            tabBarIcon: (props) => <TabBarIcon {...props} icon={HouseIcon} />,
-            tabBarLabel: TabBarLabel,
-            tabBarButton: TabBarButton,
+    <ScrollViewRefProvider>
+      <View className="flex-1 px-safe">
+        <Tabs
+          screenOptions={{
+            headerShown: false,
+            animation: 'none',
+            tabBarStyle: {
+              paddingHorizontal: 16,
+              height: 60 + insets.bottom,
+              paddingBottom: insets.bottom,
+              borderTopColor: 'transparent',
+              borderTopWidth: 0,
+              elevation: 0,
+            },
+            tabBarHideOnKeyboard: true,
           }}
-        />
-        <Tabs.Protected guard={!!session}>
+          initialRouteName="(feed)"
+        >
           <Tabs.Screen
-            name="(search)"
+            name="(feed)"
             options={{
-              title: 'ค้นหา',
-              tabBarIcon: (props) => <TabBarIcon {...props} icon={SearchIcon} />,
+              title: 'หน้าแรก',
+              tabBarIcon: (props) => <TabBarIcon {...props} icon={HouseIcon} />,
               tabBarLabel: TabBarLabel,
-              ...(session ? { tabBarButton: TabBarButton } : { href: null }),
+              tabBarButton: (props) => <TabBarButton {...props} index={0} />,
             }}
           />
-        </Tabs.Protected>
-        <Tabs.Screen
-          name="(official)"
-          options={{
-            title: 'ทางการ',
-            tabBarIcon: (props) => <TabBarIcon {...props} icon={PPLEIconBlack} />,
-            tabBarLabel: TabBarLabel,
-            tabBarButton: TabBarButton,
-          }}
-        />
-        <Tabs.Screen
-          name="activity"
-          options={{
-            title: 'กิจกรรม',
-            tabBarIcon: (props) => <TabBarIcon {...props} icon={HandshakeIcon} />,
-            tabBarLabel: TabBarLabel,
-            tabBarButton: TabBarButton,
-          }}
-        />
-        <Tabs.Screen
-          name="(profile)"
-          options={{
-            title: 'ฉัน',
-            tabBarIcon: (props) => <TabBarIcon {...props} icon={CircleUserRoundIcon} />,
-            tabBarLabel: TabBarLabel,
-            tabBarButton: TabBarButton,
-          }}
-        />
-        <Tabs.Screen
-          name="(top-tabs)"
-          options={{
-            title: 'Playground',
-            href: null,
-          }}
-        />
-      </Tabs>
-    </View>
+          <Tabs.Protected guard={!!session}>
+            <Tabs.Screen
+              name="(search)"
+              options={{
+                title: 'ค้นหา',
+                tabBarIcon: (props) => <TabBarIcon {...props} icon={SearchIcon} />,
+                tabBarLabel: TabBarLabel,
+                ...(session
+                  ? { tabBarButton: (props) => <TabBarButton {...props} index={1} /> }
+                  : { href: null }),
+              }}
+            />
+          </Tabs.Protected>
+          <Tabs.Screen
+            name="(official)"
+            options={{
+              title: 'ทางการ',
+              tabBarIcon: (props) => <TabBarIcon {...props} icon={PPLEIconBlack} />,
+              tabBarLabel: TabBarLabel,
+              tabBarButton: (props) => <TabBarButton {...props} index={2} />,
+            }}
+          />
+          <Tabs.Screen
+            name="activity"
+            options={{
+              title: 'กิจกรรม',
+              tabBarIcon: (props) => <TabBarIcon {...props} icon={HandshakeIcon} />,
+              tabBarLabel: TabBarLabel,
+              tabBarButton: (props) => <TabBarButton {...props} index={3} />,
+            }}
+          />
+          <Tabs.Screen
+            name="(profile)"
+            options={{
+              title: 'ฉัน',
+              tabBarIcon: (props) => <TabBarIcon {...props} icon={CircleUserRoundIcon} />,
+              tabBarLabel: TabBarLabel,
+              tabBarButton: (props) => <TabBarButton {...props} index={4} />,
+            }}
+          />
+          <Tabs.Screen
+            name="(top-tabs)"
+            options={{
+              title: 'Playground',
+              href: null,
+            }}
+          />
+        </Tabs>
+      </View>
+    </ScrollViewRefProvider>
   )
 }
 
@@ -134,7 +139,8 @@ function TabBarLabel(props: {
     </Text>
   )
 }
-function TabBarButton({ style, ...props }: BottomTabBarButtonProps) {
+function TabBarButton({ style, index, ...props }: BottomTabBarButtonProps & { index: number }) {
+  const { scrollViewRef } = useScrollViewRefContext()
   return (
     <PlatformPressable
       {...props}
@@ -144,6 +150,43 @@ function TabBarButton({ style, ...props }: BottomTabBarButtonProps) {
         props['aria-selected'] ? 'border-base-primary-default' : 'border-transparent'
       )}
       android_ripple={{ color: undefined }}
+      onPress={(e) => {
+        props.onPress?.(e)
+        if (props['aria-selected']) {
+          scrollViewRef.current?.[index]?.scrollToTop()
+        }
+      }}
     />
   )
+}
+
+export interface ScrollViewRef {
+  scrollToTop: () => void
+}
+interface ScrollViewRefContextValue {
+  scrollViewRef: React.RefObject<ScrollViewRef[]>
+  registerScrollViewRef: (index: number) => (ref: ScrollViewRef) => void
+}
+export const ScrollViewRefContext = React.createContext<ScrollViewRefContextValue | null>(null)
+
+export function ScrollViewRefProvider({ children }: { children: React.ReactNode }) {
+  const scrollViewRef = React.useRef<ScrollViewRef[]>([])
+  const registerScrollViewRef = useCallback((index: number) => {
+    return (ref: ScrollViewRef) => {
+      scrollViewRef.current[index] = ref
+    }
+  }, [])
+  return (
+    <ScrollViewRefContext.Provider value={{ scrollViewRef, registerScrollViewRef }}>
+      {children}
+    </ScrollViewRefContext.Provider>
+  )
+}
+
+export function useScrollViewRefContext() {
+  const context = React.useContext(ScrollViewRefContext)
+  if (!context) {
+    throw new Error('useScrollViewRefContext must be used within a ScrollViewRefContext.Provider')
+  }
+  return context
 }
