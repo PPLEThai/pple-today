@@ -33,7 +33,6 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated'
 
-import { AnimatedBackgroundPressable } from '@pple-today/ui/animated-pressable'
 import { clsx, cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 
@@ -687,7 +686,7 @@ export function PagerTabBarItem({
     onTabPressed?.(index)
   }
   return (
-    <AnimatedBackgroundPressable
+    <Pressable
       className={cn('h-10 pt-2 pb-2 px-4 justify-center flex-row', className)}
       accessibilityRole="tab"
       onLayout={handleLayout}
@@ -706,6 +705,6 @@ export function PagerTabBarItem({
           {children}
         </Animated.Text>
       </View>
-    </AnimatedBackgroundPressable>
+    </Pressable>
   )
 }
