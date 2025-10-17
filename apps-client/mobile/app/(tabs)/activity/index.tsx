@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect, useImperativeHandle, useMemo } from 'react'
 import { View } from 'react-native'
 import Animated from 'react-native-reanimated'
 
@@ -45,6 +45,8 @@ import {
   mapToActivity,
   useRecentActivityQuery,
 } from '@app/libs/pple-activity'
+
+import { useScrollViewRefContext } from '../_layout'
 
 export default function ActivityPage() {
   return (
@@ -257,8 +259,17 @@ function PollFeedSection(props: { ListHeaderComponent: React.ReactNode }) {
     await queryClient.invalidateQueries({ queryKey: useRecentActivityQuery.getKey() })
   }, [queryClient])
 
+  const scrollViewRef = useScrollViewRefContext()
+  const flatListRef = React.useRef<Animated.FlatList<any>>(null)
+  const scrollToTop = React.useCallback(() => {
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true })
+  }, [])
+  useImperativeHandle(scrollViewRef, () => ({
+    scrollToTop,
+  }))
   return (
     <Animated.FlatList
+      ref={flatListRef}
       className="flex-1 bg-base-bg-default"
       contentContainerClassName="flex flex-col gap-3"
       refreshControl={<RefreshControl onRefresh={onRefresh} />}
