@@ -54,3 +54,9 @@ export const GenerateMiniAppTokenResponse = t.Object({
   }),
 })
 export type GenerateMiniAppTokenResponse = Static<typeof GenerateMiniAppTokenResponse>
+
+export const GenerateMiniAppTokenErrorResponse = t.Object({
+  error: t.String({ description: 'Error code' }),
+})
+
+export type GenerateMiniAppTokenErrorResponse = Static<typeof GenerateMiniAppTokenErrorResponse>

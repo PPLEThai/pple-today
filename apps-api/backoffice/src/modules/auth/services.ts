@@ -7,7 +7,7 @@ import { Check } from '@sinclair/typebox/value'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { GenerateMiniAppTokenResponse } from './models'
+import { GenerateMiniAppTokenErrorResponse, GenerateMiniAppTokenResponse } from './models'
 import { AuthRepository, AuthRepositoryPlugin } from './repository'
 
 import { ConfigServicePlugin } from '../../plugins/config'
@@ -56,17 +56,27 @@ export class AuthService {
       body: JSON.stringify(data),
     })
 
+    const body = await response.json()
     if (!response.ok) {
       this.loggerService.error({
         message: `Failed to generate mini app token for clientId ${miniApp.value.clientId}. Status: ${response.status}`,
       })
+
+      const checkResult = Check(GenerateMiniAppTokenErrorResponse, body)
+      const errorMessage = checkResult
+        ? body.error
+        : 'An error occurred while generating the mini app token'
+
+      this.loggerService.error({
+        message: `Invalid mini app token error response for clientId ${miniApp.value.clientId}`,
+      })
+
       return mapRepositoryError({
         code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-        message: 'An error occurred while generating the mini app token',
+        message: errorMessage,
       })
     }
 
-    const body = await response.json()
     const miniAppToken = Check(GenerateMiniAppTokenResponse, body)
 
     if (!miniAppToken) {
