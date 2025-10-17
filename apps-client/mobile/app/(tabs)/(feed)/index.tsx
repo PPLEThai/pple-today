@@ -63,10 +63,13 @@ import { useAuthMe, useSession } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { useScrollContext } from '@app/libs/scroll-context'
 
+import { useScrollViewRefContext } from '../_layout'
+
 export default function FeedPage() {
+  const scrollViewRef = useScrollViewRefContext()
   return (
     <SafeAreaLayout>
-      <Pager>
+      <Pager ref={scrollViewRef}>
         <PagerHeader>
           <PagerHeaderOnly>
             <MainHeader />
