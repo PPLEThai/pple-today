@@ -1,5 +1,6 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { IntrospectAccessTokenResult } from '@pple-today/api-common/dtos'
+import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
 import { FileService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import { Check } from '@sinclair/typebox/value'
@@ -17,6 +18,7 @@ export class AuthService {
   constructor(
     private authRepository: AuthRepository,
     private fileService: FileService,
+    private loggerService: ElysiaLoggerInstance,
     private oidcConfig: {
       oidcClientId: string
       oidcUrl: string
@@ -28,20 +30,23 @@ export class AuthService {
   async generateMiniAppToken(clientId: string, token: string) {
     const jwtToken = generateJwtToken(this.oidcConfig)
 
-    const httpHeaders = { 'Content-Type': 'application/x-www-form-urlencoded' }
+    const httpHeaders = { 'Content-Type': 'application/json' }
     const data = {
+      token,
       client_assertion_type: 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
       client_assertion: jwtToken,
-      token: token,
     }
 
     const response = await fetch(`${this.oidcConfig.oidcUrl}/mini-app/${clientId}`, {
       method: 'POST',
       headers: httpHeaders,
-      body: new URLSearchParams(data),
+      body: JSON.stringify(data),
     })
 
     if (!response.ok) {
+      this.loggerService.error({
+        message: `Failed to generate mini app token for clientId ${clientId}. Status: ${response.status}`,
+      })
       return mapRepositoryError({
         code: InternalErrorCode.INTERNAL_SERVER_ERROR,
         message: 'An error occurred while generating the mini app token',
@@ -52,6 +57,9 @@ export class AuthService {
     const miniAppToken = Check(GenerateMiniAppTokenResponse, body)
 
     if (!miniAppToken) {
+      this.loggerService.error({
+        message: `Invalid mini app token response for clientId ${clientId}`,
+      })
       return mapRepositoryError({
         code: InternalErrorCode.INTERNAL_SERVER_ERROR,
         message: 'An error occurred while generating the mini app token',
@@ -61,8 +69,8 @@ export class AuthService {
     return ok({
       accessToken: body.access_token,
       expiresIn: body.expires_in,
-      id_token: body.id_token,
-      token_type: body.token_type,
+      idToken: body.id_token,
+      tokenType: body.token_type,
     })
   }
 
@@ -108,9 +116,14 @@ export class AuthService {
 }
 
 export const AuthServicePlugin = new Elysia({ name: 'AuthService' })
-  .use([AuthRepositoryPlugin, FileServicePlugin, ConfigServicePlugin])
-  .decorate(({ authRepository, fileService, configService }) => ({
-    authService: new AuthService(authRepository, fileService, {
+  .use([
+    AuthRepositoryPlugin,
+    FileServicePlugin,
+    ElysiaLoggerPlugin({ name: 'AuthService' }),
+    ConfigServicePlugin,
+  ])
+  .decorate(({ authRepository, fileService, loggerService, configService }) => ({
+    authService: new AuthService(authRepository, fileService, loggerService, {
       oidcClientId: configService.get('OIDC_CLIENT_ID'),
       oidcUrl: configService.get('OIDC_URL'),
       oidcPrivateJwtKey: configService.get('OIDC_PRIVATE_JWT_KEY'),
