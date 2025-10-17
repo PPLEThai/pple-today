@@ -265,7 +265,7 @@ function PollFeedSection(props: { ListHeaderComponent: React.ReactNode }) {
       ListHeaderComponent={
         <>
           {props.ListHeaderComponent}
-          {data.length > 0 && (
+          {!!session && (
             <View className="flex flex-row justify-between items-center px-4">
               <View className="flex flex-row gap-2 items-center">
                 <Icon icon={ListTodoIcon} className="size-8 text-base-primary-default" />
