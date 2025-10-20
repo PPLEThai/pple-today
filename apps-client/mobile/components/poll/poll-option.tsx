@@ -92,7 +92,7 @@ interface PollOptionResultProps extends PollOption {
 }
 
 export function PollOptionResult(props: PollOptionResultProps) {
-  const percentage = (props.votes / props.totalVotes) * 100 || 0
+  const percentage = Math.trunc((props.votes / props.totalVotes) * 100) || 0
   const animatedPercentage = useSharedValue(0)
   const animatedBarStyle = useAnimatedStyle(() => ({ width: `${animatedPercentage.value}%` }))
 
@@ -128,7 +128,7 @@ export function PollOptionResult(props: PollOptionResultProps) {
       )}
       {...props}
     >
-      <View className="flex flex-row justify-between items-center m-3 gap-4">
+      <View className="flex flex-row justify-between items-center m-3 gap-2.5">
         {renderCheckbox()}
         <Text className={cn('flex-1 flex-wrap mr-3', props.isSelected && 'text-base-primary-dark')}>
           {props.title}
