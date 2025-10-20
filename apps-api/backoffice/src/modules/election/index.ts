@@ -32,7 +32,7 @@ export const ElectionController = new Elysia({
     '/',
     async ({ user: { id }, query, electionService, status }) => {
       const elections =
-        query.page === 'PROFILE'
+        query.in === 'PROFILE'
           ? await electionService.listProfilePageElections(id)
           : await electionService.listOfficialPageElections(id)
 
