@@ -700,6 +700,39 @@ export class AdminElectionService {
 
     return ok()
   }
+
+  async countBallots(electionId: string) {
+    const electionResult = await this.adminElectionRepository.getElectionById(electionId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id ${electionId}`,
+        },
+      })
+    }
+
+    const election = electionResult.value
+    if (election.type !== 'ONLINE' && election.type !== 'HYBRID') {
+      return err({
+        code: InternalErrorCode.ELECTION_INVALID_TYPE,
+        message: `Cannot upload online result for election type ${election.type}`,
+      })
+    }
+
+    const checkResult = this.checkIsElectionAllowedToUpdateResult(election)
+    if (checkResult.isErr()) return err(checkResult.error)
+
+    const ballotsResult = await this.adminElectionRepository.listElectionBallots(electionId)
+    if (ballotsResult.isErr()) return mapRepositoryError(ballotsResult.error)
+
+    const ballots = ballotsResult.value.map((ballot) => ballot.encryptedBallot)
+
+    const countResult = await this.ballotCryptoService.countBallots(electionId, ballots)
+    if (countResult.isErr()) return mapRepositoryError(countResult.error)
+
+    return ok()
+  }
 }
 
 export const AdminElectionServicePlugin = new Elysia({ name: 'AdminElectionService' })

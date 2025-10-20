@@ -539,6 +539,19 @@ export class AdminElectionRepository {
       })
     )
   }
+
+  async listElectionBallots(electionId: string) {
+    return fromRepositoryPromise(
+      this.prismaService.electionBallot.findMany({
+        where: {
+          electionId,
+        },
+        select: {
+          encryptedBallot: true,
+        },
+      })
+    )
+  }
 }
 
 export const AdminElectionRepositoryPlugin = new Elysia({ name: 'AdminElectionRepository' })

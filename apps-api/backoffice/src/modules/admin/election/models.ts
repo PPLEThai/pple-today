@@ -350,3 +350,13 @@ export const AdminUploadOnlineResultResponse = t.Object({
   message: t.String(),
 })
 export type AdminUploadOnlineResultResponse = Static<typeof AdminUploadOnlineResultResponse>
+
+export const AdminCountBallotsParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminCountBallotsParams = Static<typeof AdminCountBallotsParams>
+
+export const AdminCountBallotsResponse = t.Object({
+  message: t.String(),
+})
+export type AdminCountBallotsResponse = Static<typeof AdminCountBallotsResponse>

@@ -8,6 +8,8 @@ import {
   AdminBulkCreateElectionEligibleVoterResponse,
   AdminCancelElectionParams,
   AdminCancelElectionResponse,
+  AdminCountBallotsParams,
+  AdminCountBallotsResponse,
   AdminCreateCandidateProfileUploadURLBody,
   AdminCreateCandidateProfileUploadURLResponse,
   AdminCreateElectionBody,
@@ -609,6 +611,38 @@ export const AdminElectionController = new Elysia({
             InternalErrorCode.UNAUTHORIZED,
             InternalErrorCode.ELECTION_NOT_FOUND,
             InternalErrorCode.ELECTION_KEY_NOT_IN_PENDING_CREATED_STATUS
+          ),
+        },
+      }
+    )
+  )
+  .group('/:electionId/ballots', (app) =>
+    app.post(
+      '/count',
+      async ({ params, adminElectionService, status }) => {
+        const result = await adminElectionService.countBallots(params.electionId)
+        if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+        return status(200, {
+          message: 'Start counting ballot',
+        })
+      },
+      {
+        detail: {
+          summary: 'Count ballots',
+          description: 'Schedule counting encrypted ballots for election job',
+        },
+        requiredLocalUser: true,
+        params: AdminCountBallotsParams,
+        response: {
+          200: AdminCountBallotsResponse,
+          ...createErrorSchema(
+            InternalErrorCode.INTERNAL_SERVER_ERROR,
+            InternalErrorCode.BAD_REQUEST,
+            InternalErrorCode.ELECTION_NOT_FOUND,
+            InternalErrorCode.ELECTION_IS_CANNCELLED,
+            InternalErrorCode.ELECTION_NOT_IN_CLOSED_VOTE_PERIOD,
+            InternalErrorCode.ELECTION_INVALID_TYPE
           ),
         },
       }

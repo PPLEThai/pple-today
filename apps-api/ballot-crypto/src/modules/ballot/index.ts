@@ -19,13 +19,13 @@ export const BallotController = new Elysia({
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
       return status(200, {
-        message: 'Counting ballot successfully',
+        message: 'Start counting ballot',
       })
     },
     {
       detail: {
         summary: 'Count Ballots',
-        description: 'Count encrypted ballots for election',
+        description: 'Schedule counting encrypted ballots for election job',
       },
       validateBackoffice: true,
       body: BallotCountBody,
