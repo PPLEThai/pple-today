@@ -57,7 +57,12 @@ export function PollOptionItem(props: PollOptionProps) {
     >
       <View className="flex flex-row justify-between items-center m-3 gap-2.5">
         {renderCheckbox()}
-        <Text className={cn('flex-1 flex-wrap mr-3', props.isSelected && 'text-base-primary-dark')}>
+        <Text
+          className={cn(
+            'flex-1 flex-wrap mr-3 font-body-regular',
+            props.isSelected && 'text-base-primary-dark font-body-medium'
+          )}
+        >
           {props.title}
         </Text>
         {props.pollTouched && (
@@ -126,11 +131,15 @@ export function PollOptionResult(props: PollOptionResultProps) {
         'border border-base-outline-medium rounded-xl overflow-hidden mt-2',
         props.isSelected && 'border-base-primary-default'
       )}
-      {...props}
     >
       <View className="flex flex-row justify-between items-center m-3 gap-2.5">
         {renderCheckbox()}
-        <Text className={cn('flex-1 flex-wrap mr-3', props.isSelected && 'text-base-primary-dark')}>
+        <Text
+          className={cn(
+            'flex-1 flex-wrap mr-3 font-body-regular',
+            props.isSelected && 'text-base-primary-dark font-body-medium'
+          )}
+        >
           {props.title}
         </Text>
         <Text
