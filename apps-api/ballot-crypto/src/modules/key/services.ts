@@ -11,7 +11,7 @@ import { KeyManagementPlugin, KeyManagementService } from '../../plugins/kms'
 import { mapGoogleAPIError } from '../../utils/error'
 
 export class KeyService {
-  private readonly MAX_RETRY = 5
+  private readonly MAX_RETRY = 10
   private readonly DELAY = 1
 
   constructor(
