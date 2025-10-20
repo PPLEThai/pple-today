@@ -26,7 +26,6 @@ import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import * as Linking from 'expo-linking'
 import { useRouter } from 'expo-router'
-import * as WebBrowser from 'expo-web-browser'
 import { ArrowRightIcon, CirclePlusIcon, MegaphoneIcon, RadioTowerIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
@@ -223,6 +222,7 @@ function BannerSection() {
 }
 
 function Banner({ banner }: { banner: GetBannersResponse[number] }) {
+  const router = useRouter()
   const onPress = () => {
     switch (banner.navigation) {
       case 'IN_APP_NAVIGATION': // use deeplink scheme like 'pple-today:///auth'
@@ -230,7 +230,7 @@ function Banner({ banner }: { banner: GetBannersResponse[number] }) {
         Linking.openURL(banner.destination)
         break
       case 'MINI_APP':
-        WebBrowser.openBrowserAsync(banner.destination)
+        router.navigate(`/mini-app/${banner.miniAppId}`)
         break
       default:
         return exhaustiveGuard(banner)

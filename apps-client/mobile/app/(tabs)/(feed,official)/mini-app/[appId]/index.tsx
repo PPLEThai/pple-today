@@ -18,11 +18,6 @@ const MiniAppWebView = () => {
   useEffect(() => {
     if (!electionId) {
       router.dismissTo('/')
-    }
-  }, [electionId, router])
-
-  useEffect(() => {
-    if (!electionId) {
       return
     }
 
