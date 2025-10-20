@@ -90,18 +90,16 @@ const PollOptionResultList = (props: PollOptionListProps) => {
     return (
       <>
         {props.poll.options.length > 0 &&
-          props.poll.options
-            .slice(0, 3)
-            .map((option) => (
-              <PollOptionResult
-                id={option.id}
-                key={option.id}
-                title={option.title}
-                votes={option.votes}
-                totalVotes={props.poll.totalVotes}
-                isSelected={option.isSelected}
-              />
-            ))}
+          props.poll.options.slice(0, 3).map((option) => (
+            <PollOptionResult
+              id={option.id}
+              key={option.id}
+              title={option.title}
+              votes={1} // TODO: integrate with real votes
+              totalVotes={3} // TODO: integrate with real total votes
+              isSelected={option.isSelected}
+            />
+          ))}
       </>
     )
   }
@@ -114,8 +112,8 @@ const PollOptionResultList = (props: PollOptionListProps) => {
             id={option.id}
             key={option.id}
             title={option.title}
-            votes={option.votes}
-            totalVotes={props.poll.totalVotes}
+            votes={1} // TODO: integrate with real votes
+            totalVotes={3} // TODO: integrate with real total votes
             isSelected={option.isSelected}
           />
         ))}
