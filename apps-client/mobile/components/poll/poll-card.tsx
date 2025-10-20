@@ -18,35 +18,47 @@ import { PollOptionItem, PollOptionResult } from './poll-option'
 
 type PollItem = FeedItemPoll['poll']
 
+dayjs.extend(duration)
+
 export const PollCardContent = (props: { feedItem: FeedItemPoll }) => {
   const router = useRouter()
   const [isEnded, setIsEnded] = React.useState(dayjs().isAfter(dayjs(props.feedItem.poll.endAt)))
 
+  const renderSeeMoreOptions = () => {
+    if (props.feedItem.poll.options.length > 3) {
+      return (
+        <Button
+          variant="secondary"
+          className="w-full text-start border-2 border-base-outline-default flex flex-row justify-between items-center bg-base-bg-white font-body-medium h-11 rounded-2xl mt-2"
+          onPress={() => {
+            router.navigate(`./feed/${props.feedItem.id}`)
+          }}
+        >
+          <Text className="font-body-medium text-base-text-medium text-sm">
+            {`ดูเพิ่มเติม (อีก ${props.feedItem.poll.options.length - 3} ตัวเลือก)`}
+          </Text>
+          <Icon icon={ChevronRightIcon} size={24} strokeWidth={1} />
+        </Button>
+      )
+    }
+
+    return null
+  }
+
   return (
     <View className="gap-3">
-      <View className="py-[13px] px-2 gap-4 flex flex-col bg-base-bg-default rounded-xl mx-4">
+      <View className="py-[13px] px-2 flex flex-col bg-base-bg-default rounded-xl mx-4">
         <PollHeader
           isEnded={isEnded}
           triggerEnded={() => setIsEnded(true)}
           poll={props.feedItem.poll}
         />
         {isEnded ? (
-          <PollCardOptionResultList {...props.feedItem.poll} />
+          <PollOptionResultList poll={props.feedItem.poll} card />
         ) : (
           getPollCardOptionList(props.feedItem.poll)
         )}
-        <Button
-          variant="secondary"
-          className="w-full text-start border-2 border-base-outline-default flex flex-row justify-between items-center bg-base-bg-white font-body-medium h-11 rounded-2xl"
-          onPress={() => {
-            router.navigate(`./feed/${props.feedItem.id}`)
-          }}
-        >
-          <Text className="font-body-light text-base-text-medium text-sm">
-            ดูเพิ่มเติม (อีก 3 ตัวเลือก)
-          </Text>
-          <Icon icon={ChevronRightIcon} size={24} strokeWidth={1} />
-        </Button>
+        {renderSeeMoreOptions()}
       </View>
     </View>
   )
@@ -57,14 +69,14 @@ export const PollDetailContent = (props: { feedItem: FeedItemPoll }) => {
 
   return (
     <View className="gap-3">
-      <View className="py-[13px] px-2 gap-4 flex flex-col bg-base-bg-default rounded-xl mx-4">
+      <View className="py-[13px] px-2 flex flex-col bg-base-bg-default rounded-xl mx-4">
         <PollHeader
           isEnded={isEnded}
           poll={props.feedItem.poll}
           triggerEnded={() => setIsEnded(true)}
         />
         {isEnded ? (
-          <PollDetailOptionResultList {...props.feedItem.poll} />
+          <PollOptionResultList poll={props.feedItem.poll} />
         ) : (
           getPollDetailOptionList(props.feedItem.poll)
         )}
@@ -73,37 +85,37 @@ export const PollDetailContent = (props: { feedItem: FeedItemPoll }) => {
   )
 }
 
-const PollCardOptionResultList = (props: PollItem) => {
-  return (
-    <>
-      {props.options.length > 0 &&
-        props.options
-          .slice(0, 3)
-          .map((option) => (
-            <PollOptionResult
-              id={option.id}
-              key={option.id}
-              title={option.title}
-              votes={option.votes}
-              totalVotes={props.totalVotes}
-              isSelected={option.isSelected}
-            />
-          ))}
-    </>
-  )
-}
+const PollOptionResultList = (props: PollOptionListProps) => {
+  if (props.card) {
+    return (
+      <>
+        {props.poll.options.length > 0 &&
+          props.poll.options
+            .slice(0, 3)
+            .map((option) => (
+              <PollOptionResult
+                id={option.id}
+                key={option.id}
+                title={option.title}
+                votes={option.votes}
+                totalVotes={props.poll.totalVotes}
+                isSelected={option.isSelected}
+              />
+            ))}
+      </>
+    )
+  }
 
-const PollDetailOptionResultList = (props: PollItem) => {
   return (
     <>
-      {props.options.length > 0 &&
-        props.options.map((option) => (
+      {props.poll.options.length > 0 &&
+        props.poll.options.map((option) => (
           <PollOptionResult
             id={option.id}
             key={option.id}
             title={option.title}
             votes={option.votes}
-            totalVotes={props.totalVotes}
+            totalVotes={props.poll.totalVotes}
             isSelected={option.isSelected}
           />
         ))}
@@ -247,7 +259,7 @@ interface PollHeaderProps {
 
 const PollHeader = (props: PollHeaderProps) => {
   return (
-    <View className="gap-1 flex flex-col">
+    <View className="gap-1 flex flex-col mb-2">
       <View className="w-full flex flex-row items-center gap-2">
         <Icon
           icon={MessageCircleQuestionIcon}
@@ -287,8 +299,6 @@ interface PollCountdownTimerProps {
   targetTime: Date
   triggerEnded: () => void
 }
-
-dayjs.extend(duration)
 
 export function PollCountdownTimer(props: PollCountdownTimerProps) {
   const [display, setDisplay] = React.useState('')

@@ -2,7 +2,6 @@ import React from 'react'
 import { Pressable, View } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 
-import { Checkbox } from '@pple-today/ui/checkbox'
 import { Icon } from '@pple-today/ui/icon'
 import { cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
@@ -51,7 +50,7 @@ export function PollOptionItem(props: PollOptionProps) {
   return (
     <Pressable
       className={cn(
-        'border border-base-outline-medium rounded-xl overflow-hidden',
+        'border border-base-outline-medium rounded-xl overflow-hidden mt-2',
         props.isSelected && 'border-base-primary-default'
       )}
       onPress={() => props.onSelect(props.id)}
@@ -104,14 +103,13 @@ export function PollOptionResult(props: PollOptionResultProps) {
   const renderCheckbox = () => {
     if (props.isSelected) {
       return (
-        <Checkbox
-          checked={props.isSelected}
-          onCheckedChange={() => {}}
+        <View
           className={cn(
-            'border-base-outline-dark',
-            props.isSelected && 'border-base-primary-default'
+            'h-4 w-4 rounded-[4px] border bg-base-primary-default border-base-primary-default'
           )}
-        />
+        >
+          <Icon icon={CheckIcon} size={14} className="text-base-bg-white" strokeWidth={2} />
+        </View>
       )
     }
 
@@ -125,7 +123,7 @@ export function PollOptionResult(props: PollOptionResultProps) {
   return (
     <View
       className={cn(
-        'border border-base-outline-medium rounded-xl overflow-hidden',
+        'border border-base-outline-medium rounded-xl overflow-hidden mt-2',
         props.isSelected && 'border-base-primary-default'
       )}
       {...props}
