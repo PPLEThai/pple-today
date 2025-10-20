@@ -80,12 +80,13 @@ export class KeyService {
       ])
 
       if (encryptResult.isOk() && signingResult.isOk()) {
-        await this.backofficeAdminService.updateElectionKeys({
+        const result = await this.backofficeAdminService.updateElectionKeys({
           electionId,
           status: ElectionKeysStatus.CREATED,
           encryptPublicKey: encryptResult.value,
           signingPublicKey: signingResult.value,
         })
+        if (result.isErr()) break
 
         return ok()
       }
