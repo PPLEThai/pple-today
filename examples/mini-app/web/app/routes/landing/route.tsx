@@ -9,7 +9,7 @@ export default function LoginWithSSO() {
   const [error, setError] = useState<string | null>(null)
   const [queryParams] = useSearchParams()
 
-  const token = queryParams.get('token')
+  const token = queryParams.get('access_token')
 
   useEffect(() => {
     const fetchUser = async () => {
