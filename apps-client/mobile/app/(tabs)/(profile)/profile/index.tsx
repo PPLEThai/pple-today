@@ -62,6 +62,8 @@ import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 import { getRoleName } from '@app/utils/get-role-name'
 
+import { useBottomTabOnPress } from '../../_layout'
+
 export default function Index() {
   const session = useSession()
   if (session) {
@@ -121,9 +123,14 @@ const ProfileSetting = () => {
     }
   }, [queryClient])
 
+  const ref = React.useRef<ScrollView>(null)
+  useBottomTabOnPress(() => {
+    ref.current?.scrollTo({ y: 0, animated: true })
+  })
   return (
     <SafeAreaLayout>
       <ScrollView
+        ref={ref}
         className="flex-1"
         contentContainerClassName="flex-grow"
         refreshControl={
