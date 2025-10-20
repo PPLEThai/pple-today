@@ -243,10 +243,10 @@ const ELECTION_ERROR_SCHEMA = {
     status: 409,
   },
   ELECTION_DUPLICATE_CANDIDATE: {
-    status: 400,
+    status: 409,
   },
   ELECTION_VOTES_EXCEED_VOTERS: {
-    status: 400,
+    status: 409,
   },
 } satisfies InternalErrorSchemas
 
