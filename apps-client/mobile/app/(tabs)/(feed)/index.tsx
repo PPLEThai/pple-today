@@ -68,7 +68,7 @@ import { useBottomTabOnPress } from '../_layout'
 
 export default function FeedPage() {
   const ref = React.useRef<PagerRef>(null)
-  useBottomTabOnPress(0, () => {
+  useBottomTabOnPress(() => {
     ref.current?.scrollToTop()
   })
   return (

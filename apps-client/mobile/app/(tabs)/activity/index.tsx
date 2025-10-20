@@ -260,7 +260,7 @@ function PollFeedSection(props: { ListHeaderComponent: React.ReactNode }) {
   }, [queryClient])
 
   const flatListRef = React.useRef<Animated.FlatList<any>>(null)
-  useBottomTabOnPress(3, () => {
+  useBottomTabOnPress(() => {
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true })
   })
   return (

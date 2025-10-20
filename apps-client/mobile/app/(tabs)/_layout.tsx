@@ -10,7 +10,7 @@ import { Text } from '@pple-today/ui/text'
 import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs'
 import { PlatformPressable } from '@react-navigation/elements'
 import { Image } from 'expo-image'
-import { Tabs, useFocusEffect } from 'expo-router'
+import { Tabs, useFocusEffect, usePathname } from 'expo-router'
 import {
   CircleUserRoundIcon,
   HandshakeIcon,
@@ -55,7 +55,7 @@ export default function BottomTabsLayout() {
               title: 'หน้าแรก',
               tabBarIcon: (props) => <TabBarIcon {...props} icon={HouseIcon} />,
               tabBarLabel: TabBarLabel,
-              tabBarButton: (props) => <TabBarButton {...props} index={0} />,
+              tabBarButton: TabBarButton,
             }}
           />
           <Tabs.Protected guard={!!session}>
@@ -65,9 +65,7 @@ export default function BottomTabsLayout() {
                 title: 'ค้นหา',
                 tabBarIcon: (props) => <TabBarIcon {...props} icon={SearchIcon} />,
                 tabBarLabel: TabBarLabel,
-                ...(session
-                  ? { tabBarButton: (props) => <TabBarButton {...props} index={1} /> }
-                  : { href: null }),
+                ...(session ? { tabBarButton: TabBarButton } : { href: null }),
               }}
             />
           </Tabs.Protected>
@@ -77,7 +75,7 @@ export default function BottomTabsLayout() {
               title: 'ทางการ',
               tabBarIcon: (props) => <TabBarIcon {...props} icon={PPLEIconBlack} />,
               tabBarLabel: TabBarLabel,
-              tabBarButton: (props) => <TabBarButton {...props} index={2} />,
+              tabBarButton: TabBarButton,
             }}
           />
           <Tabs.Screen
@@ -86,7 +84,7 @@ export default function BottomTabsLayout() {
               title: 'กิจกรรม',
               tabBarIcon: (props) => <TabBarIcon {...props} icon={HandshakeIcon} />,
               tabBarLabel: TabBarLabel,
-              tabBarButton: (props) => <TabBarButton {...props} index={3} />,
+              tabBarButton: TabBarButton,
             }}
           />
           <Tabs.Screen
@@ -95,7 +93,7 @@ export default function BottomTabsLayout() {
               title: 'ฉัน',
               tabBarIcon: (props) => <TabBarIcon {...props} icon={CircleUserRoundIcon} />,
               tabBarLabel: TabBarLabel,
-              tabBarButton: (props) => <TabBarButton {...props} index={4} />,
+              tabBarButton: TabBarButton,
             }}
           />
           <Tabs.Screen
@@ -140,8 +138,9 @@ function TabBarLabel(props: {
     </Text>
   )
 }
-function TabBarButton({ style, index, ...props }: BottomTabBarButtonProps & { index: number }) {
+function TabBarButton({ style, ...props }: BottomTabBarButtonProps) {
   const { actions } = useBottomTabActionContext()
+  const pathname = usePathname()
   return (
     <PlatformPressable
       {...props}
@@ -153,8 +152,8 @@ function TabBarButton({ style, index, ...props }: BottomTabBarButtonProps & { in
       android_ripple={{ color: undefined }}
       onPress={(e) => {
         props.onPress?.(e)
-        if (props['aria-selected']) {
-          actions.current?.[index]?.()
+        if (props['aria-selected'] && props.href === pathname) {
+          actions.current?.[pathname]?.()
         }
       }}
     />
@@ -164,17 +163,17 @@ function TabBarButton({ style, index, ...props }: BottomTabBarButtonProps & { in
 type Action = () => void
 
 interface BottomTabActionContextValue {
-  actions: React.RefObject<Record<number, Action>>
-  registerAction: (index: number, fn: Action) => () => void
+  actions: React.RefObject<Record<string, Action>>
+  registerAction: (path: string, fn: Action) => () => void
 }
 export const BottomTabActionContext = React.createContext<BottomTabActionContextValue | null>(null)
 
 export function BottomTabActionProvider({ children }: { children: React.ReactNode }) {
-  const actions = React.useRef<Record<number, Action>>({})
-  const registerAction = useCallback((index: number, fn: () => void) => {
-    actions.current[index] = fn
+  const actions = React.useRef<Record<string, Action>>({})
+  const registerAction = useCallback((path: string, fn: () => void) => {
+    actions.current[path] = fn
     return () => {
-      delete actions.current[index]
+      delete actions.current[path]
     }
   }, [])
   return (
@@ -194,13 +193,15 @@ export function useBottomTabActionContext() {
   return context
 }
 
-export function useBottomTabOnPress(index: number, action: Action) {
+export function useBottomTabOnPress(action: Action) {
   const { registerAction } = useBottomTabActionContext()
   // TODO: useEffectEvent(action)
   const _action = useCallbackRef(action)
+  const pathname = usePathname()
   useFocusEffect(
     React.useCallback(() => {
-      return registerAction(index, _action)
-    }, [registerAction, index, _action])
+      return registerAction(pathname, _action)
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [_action])
   )
 }

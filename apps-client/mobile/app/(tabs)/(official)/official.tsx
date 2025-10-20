@@ -51,7 +51,7 @@ export default function OfficialPage() {
     ])
   }, [queryClient])
 
-  useBottomTabOnPress(2, () => {
+  useBottomTabOnPress(() => {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true })
   })
   const scrollViewRef = React.useRef<ScrollView>(null)
