@@ -51,7 +51,8 @@ export default function OfficialPage() {
   return (
     <SafeAreaLayout>
       <ScrollView
-        className="flex-1 bg-base-bg-default"
+        className="flex-1"
+        contentContainerClassName="bg-base-bg-default flex-grow"
         refreshControl={<RefreshControl onRefresh={onRefresh} />}
       >
         <View className="flex flex-col p-4 bg-base-bg-white">
