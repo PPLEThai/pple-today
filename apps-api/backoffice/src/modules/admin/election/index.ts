@@ -183,7 +183,7 @@ export const AdminElectionController = new Elysia({
           InternalErrorCode.FORBIDDEN,
           InternalErrorCode.ELECTION_NOT_FOUND,
           InternalErrorCode.ELECTION_ALREADY_PUBLISH,
-          InternalErrorCode.ELECTION_IS_CANNCELLED
+          InternalErrorCode.ELECTION_IS_CANCELLED
         ),
       },
     }
