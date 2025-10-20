@@ -58,16 +58,13 @@ export class AuthService {
 
     const body = await response.json()
     if (!response.ok) {
-      this.loggerService.error({
-        message: `Failed to generate mini app token for clientId ${miniApp.value.clientId}. Status: ${response.status}`,
-      })
-
       const checkResult = Check(GenerateMiniAppTokenErrorResponse, body)
       const errorMessage = checkResult
         ? body.error
         : 'An error occurred while generating the mini app token'
 
       this.loggerService.error({
+        error: body,
         message: `Invalid mini app token error response for clientId ${miniApp.value.clientId}`,
       })
 
