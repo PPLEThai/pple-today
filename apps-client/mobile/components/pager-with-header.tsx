@@ -75,7 +75,7 @@ export interface PagerRef {
   scrollToTop: () => void
 }
 
-export function Pager({ children, ref }: { children: React.ReactNode; ref: React.Ref<PagerRef> }) {
+export function Pager({ children, ref }: { children: React.ReactNode; ref?: React.Ref<PagerRef> }) {
   // const layout = useWindowDimensions()
   const [currentPage, setCurrentPage] = React.useState(0)
   const [isHeaderReady, setHeaderReady] = React.useState(false)
