@@ -1,4 +1,4 @@
-import { Announcement } from '@pple-today/api-common/dtos'
+import { Announcement, DetailedAnnouncement } from '@pple-today/api-common/dtos'
 import { FilePath } from '@pple-today/api-common/dtos'
 import { AnnouncementStatus, AnnouncementType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
@@ -17,19 +17,7 @@ export const GetAnnouncementsQuery = t.Object({
 export type GetAnnouncementsQuery = Static<typeof GetAnnouncementsQuery>
 
 export const GetAnnouncementsResponse = t.Object({
-  data: t.Array(
-    t.Pick(Announcement, [
-      'id',
-      'title',
-      'reactionCounts',
-      'commentsCount',
-      'status',
-      'type',
-      'publishedAt',
-      'createdAt',
-      'updatedAt',
-    ])
-  ),
+  data: t.Array(Announcement),
   meta: t.Object({ count: t.Number() }),
 })
 export type GetAnnouncementsResponse = Static<typeof GetAnnouncementsResponse>
@@ -37,18 +25,7 @@ export type GetAnnouncementsResponse = Static<typeof GetAnnouncementsResponse>
 export const GetAnnouncementByIdParams = AnnouncementIdParams
 export type GetAnnouncementByIdParams = Static<typeof GetAnnouncementByIdParams>
 
-export const GetAnnouncementByIdResponse = t.Pick(Announcement, [
-  'id',
-  'status',
-  'content',
-  'createdAt',
-  'updatedAt',
-  'topics',
-  'title',
-  'type',
-  'attachments',
-  'publishedAt',
-])
+export const GetAnnouncementByIdResponse = DetailedAnnouncement
 export type GetAnnouncementByIdResponse = Static<typeof GetAnnouncementByIdResponse>
 
 export const PostAnnouncementBody = t.Object({
@@ -65,32 +42,24 @@ export const PostAnnouncementResponse = t.Object({
 })
 export type PostAnnouncementResponse = Static<typeof PostAnnouncementResponse>
 
-export const PutAnnouncementParams = AnnouncementIdParams
-export type PutAnnouncementParams = Static<typeof PutAnnouncementParams>
+export const UpdateAnnouncementParams = AnnouncementIdParams
+export type UpdateAnnouncementParams = Static<typeof UpdateAnnouncementParams>
 
-export const PutAnnouncementBody = t.Object({
-  title: t.String({ description: 'The title of the announcement' }),
-  content: t.Nullable(t.String({ description: 'The content of the announcement' })),
-  type: t.Enum(AnnouncementType, { description: 'The type of the announcement' }),
-  iconImage: t.Nullable(
-    t.String({ description: 'The icon image of the announcement', format: 'uri' })
-  ),
-  backgroundColor: t.Nullable(
-    t.String({
-      description: 'The background color of the announcement',
-      pattern: '^#([A-Fa-f0-9]{3,4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$',
-    })
-  ),
+export const UpdateAnnouncementBody = t.Partial(
+  t.Object({
+    title: t.String({ description: 'The title of the announcement' }),
+    type: t.Enum(AnnouncementType, { description: 'The type of the announcement' }),
+    content: t.Nullable(t.String({ description: 'The content of the announcement' })),
+    attachmentFilePaths: t.Array(FilePath),
+    status: t.Enum(AnnouncementStatus, { description: 'The status of the announcement' }),
+  })
+)
+export type UpdateAnnouncementBody = Static<typeof UpdateAnnouncementBody>
 
-  topicIds: t.Array(t.String({ description: 'The ID of the announcement topic' })),
-  attachmentFilePaths: t.Array(FilePath),
-})
-export type PutAnnouncementBody = Static<typeof PutAnnouncementBody>
-
-export const PutAnnouncementResponse = t.Object({
+export const UpdateAnnouncementResponse = t.Object({
   message: t.String({ description: 'Success message' }),
 })
-export type PutAnnouncementResponse = Static<typeof PutAnnouncementResponse>
+export type UpdateAnnouncementResponse = Static<typeof UpdateAnnouncementResponse>
 
 export const DeleteAnnouncementParams = AnnouncementIdParams
 export type DeleteAnnouncementParams = Static<typeof DeleteAnnouncementParams>

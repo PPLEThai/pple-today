@@ -11,7 +11,7 @@ import {
   GetAnnouncementsQuery,
   GetAnnouncementsResponse,
   PostAnnouncementBody,
-  PutAnnouncementBody,
+  UpdateAnnouncementBody,
 } from './models'
 import { AdminAnnouncementRepository, AdminAnnouncementRepositoryPlugin } from './repository'
 
@@ -62,7 +62,7 @@ export class AdminAnnouncementService {
     return ok({ announcementId: createResult.value.id })
   }
 
-  async updateAnnouncementById(announcementId: string, data: PutAnnouncementBody) {
+  async updateAnnouncementById(announcementId: string, data: UpdateAnnouncementBody) {
     const updateResult = await this.adminAnnouncementRepository.updateAnnouncementById(
       announcementId,
       data

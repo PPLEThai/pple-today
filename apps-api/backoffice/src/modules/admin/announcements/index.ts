@@ -11,9 +11,9 @@ import {
   GetAnnouncementsResponse,
   PostAnnouncementBody,
   PostAnnouncementResponse,
-  PutAnnouncementBody,
-  PutAnnouncementParams,
-  PutAnnouncementResponse,
+  UpdateAnnouncementBody,
+  UpdateAnnouncementParams,
+  UpdateAnnouncementResponse,
 } from './models'
 import { AdminAnnouncementServicePlugin } from './services'
 
@@ -110,7 +110,7 @@ export const AdminAnnouncementsController = new Elysia({
       },
     }
   )
-  .put(
+  .patch(
     '/:announcementId',
     async ({ params, body, status, adminAnnouncementService }) => {
       const result = await adminAnnouncementService.updateAnnouncementById(
@@ -125,10 +125,10 @@ export const AdminAnnouncementsController = new Elysia({
     },
     {
       requiredLocalUser: true,
-      params: PutAnnouncementParams,
-      body: PutAnnouncementBody,
+      params: UpdateAnnouncementParams,
+      body: UpdateAnnouncementBody,
       response: {
-        200: PutAnnouncementResponse,
+        200: UpdateAnnouncementResponse,
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
           InternalErrorCode.FILE_MOVE_ERROR,

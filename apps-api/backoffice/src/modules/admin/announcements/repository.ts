@@ -6,7 +6,7 @@ import { FeedItemType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { GetAnnouncementsQuery, PostAnnouncementBody, PutAnnouncementBody } from './models'
+import { GetAnnouncementsQuery, PostAnnouncementBody, UpdateAnnouncementBody } from './models'
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
@@ -101,11 +101,7 @@ export class AdminAnnouncementRepository {
                     count: true,
                   },
                 },
-                _count: {
-                  select: {
-                    comments: true,
-                  },
-                },
+                numberOfComments: true,
               },
             },
             type: true,
@@ -131,7 +127,7 @@ export class AdminAnnouncementRepository {
           updatedAt: feedItem.updatedAt,
           publishedAt: feedItem.publishedAt,
           reactionCounts: feedItem.reactionCounts,
-          commentsCount: feedItem._count.comments,
+          commentsCount: feedItem.numberOfComments,
           ...item,
         })),
         meta: { count },
@@ -141,7 +137,7 @@ export class AdminAnnouncementRepository {
 
   async getAnnouncementById(announcementId: string) {
     return await fromRepositoryPromise(async () => {
-      const { feedItemId, topics, attachments, feedItem, ...result } =
+      const { feedItemId, attachments, feedItem, ...result } =
         await this.prismaService.announcement.findUniqueOrThrow({
           where: { feedItemId: announcementId },
           select: {
@@ -150,16 +146,6 @@ export class AdminAnnouncementRepository {
             status: true,
             content: true,
             type: true,
-            topics: {
-              select: {
-                topic: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
-              },
-            },
             attachments: {
               select: {
                 filePath: true,
@@ -170,6 +156,28 @@ export class AdminAnnouncementRepository {
                 createdAt: true,
                 updatedAt: true,
                 publishedAt: true,
+                reactionCounts: {
+                  select: {
+                    type: true,
+                    count: true,
+                  },
+                },
+                numberOfComments: true,
+                comments: {
+                  select: {
+                    id: true,
+                    content: true,
+                    createdAt: true,
+                    isPrivate: true,
+                    user: {
+                      select: {
+                        id: true,
+                        name: true,
+                        profileImagePath: true,
+                      },
+                    },
+                  },
+                },
               },
             },
           },
@@ -177,11 +185,25 @@ export class AdminAnnouncementRepository {
 
       return {
         id: feedItemId,
-        topics: topics.map(({ topic }) => topic),
         attachments: attachments.map((attachment) => attachment.filePath),
         createdAt: feedItem.createdAt,
         updatedAt: feedItem.updatedAt,
         publishedAt: feedItem.publishedAt,
+        reactionCounts: feedItem.reactionCounts,
+        commentsCount: feedItem.numberOfComments,
+        comments: feedItem.comments.map((comment) => ({
+          id: comment.id,
+          content: comment.content,
+          createdAt: comment.createdAt,
+          isPrivate: comment.isPrivate,
+          author: {
+            id: comment.user.id,
+            name: comment.user.name,
+            profileImage: comment.user.profileImagePath
+              ? this.fileService.getPublicFileUrl(comment.user.profileImagePath)
+              : undefined,
+          },
+        })),
         ...result,
       }
     })
@@ -243,7 +265,7 @@ export class AdminAnnouncementRepository {
     return ok(result.value[0])
   }
 
-  async updateAnnouncementById(announcementId: string, data: PutAnnouncementBody) {
+  async updateAnnouncementById(announcementId: string, data: UpdateAnnouncementBody) {
     const announcement = await fromRepositoryPromise(
       this.prismaService.announcement.findUniqueOrThrow({
         where: { feedItemId: announcementId },
@@ -261,6 +283,9 @@ export class AdminAnnouncementRepository {
 
     const uploadAttachmentResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
+        if (!data.attachmentFilePaths)
+          return announcement.value.attachments.map((attachment) => attachment.filePath as FilePath)
+
         const cleanUpResult = await this.cleanUpUnusedAttachment(
           fileTx,
           announcement.value.attachments.map((attachment) => attachment.filePath as FilePath),
@@ -292,20 +317,15 @@ export class AdminAnnouncementRepository {
         where: { feedItemId: announcementId },
         data: {
           title: data.title,
-          content: data.content,
           type: data.type,
-          topics: {
-            deleteMany: {},
-            createMany: {
-              data: data.topicIds.map((topicId) => ({ topicId })),
-            },
-          },
+          content: data.content,
           attachments: {
             deleteMany: {},
             createMany: {
               data: newAttachmentFilePaths.map((filePath) => ({ filePath })),
             },
           },
+          status: data.status,
         },
       })
     )
@@ -354,13 +374,7 @@ export class AdminAnnouncementRepository {
     const [, fileTx] = deleteFileResult.value
 
     const deleteAnnouncementError = await fromRepositoryPromise(
-      this.prismaService.feedItem.delete({
-        where: { id: announcementId },
-        select: {
-          id: true,
-          announcement: { select: { attachments: { select: { id: true, filePath: true } } } },
-        },
-      })
+      this.prismaService.feedItem.delete({ where: { id: announcementId } })
     )
 
     if (deleteAnnouncementError.isErr()) {

@@ -1,18 +1,22 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { NavLink } from 'react-router'
 
 import { Badge } from '@pple-today/web-ui/badge'
 import { Button } from '@pple-today/web-ui/button'
 import { DataTable } from '@pple-today/web-ui/data-table'
-import { keepPreviousData } from '@tanstack/react-query'
+import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
 import { createColumnHelper } from '@tanstack/react-table'
 import { Engagements } from 'components/Engagements'
 import { TableCopyId } from 'components/TableCopyId'
-import { Megaphone, Pencil, Plus, Trash2 } from 'lucide-react'
+import { EyeOff, Megaphone, Pencil, Plus, Trash2 } from 'lucide-react'
 
-import { GetAnnouncementsResponse } from '@api/backoffice/admin'
+import {
+  GetAnnouncementsResponse,
+  UpdateAnnouncementBody,
+  UpdateAnnouncementParams,
+} from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
 
@@ -31,6 +35,7 @@ export const Data = () => {
   const [querySearch, setQuerySearch] = useState('')
   const [queryStatus, setQueryStatus] = useState<string[]>([])
 
+  const queryClient = useQueryClient()
   const query = reactQueryClient.useQuery(
     '/admin/announcements',
     {
@@ -48,6 +53,77 @@ export const Data = () => {
       placeholderData: keepPreviousData,
     }
   )
+  const patchMutation = reactQueryClient.useMutation(
+    'patch',
+    '/admin/announcements/:announcementId'
+  )
+  const deleteMutation = reactQueryClient.useMutation(
+    'delete',
+    '/admin/announcements/:announcementId'
+  )
+  const invalidateQuery = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: reactQueryClient.getQueryKey('/admin/announcements', {
+        query: {
+          limit: queryLimit,
+          page: queryPage,
+          search: querySearch,
+          status:
+            queryStatus.length > 0
+              ? (queryStatus as ('PUBLISHED' | 'ARCHIVED' | 'DRAFT')[])
+              : undefined,
+        },
+      }),
+    })
+  }, [queryClient, queryLimit, queryPage, querySearch, queryStatus])
+
+  const setAnnouncementStatus = useCallback(
+    (
+      { status }: { status: NonNullable<UpdateAnnouncementBody['status']> },
+      { announcementId }: UpdateAnnouncementParams
+    ) => {
+      if (patchMutation.isPending) return
+
+      patchMutation.mutateAsync(
+        { pathParams: { announcementId }, body: { status } },
+        {
+          onSuccess: () => {
+            queryClient.setQueryData(
+              reactQueryClient.getQueryKey('/admin/announcements', {
+                query: {
+                  limit: queryLimit,
+                  page: queryPage,
+                  search: querySearch,
+                  status:
+                    queryStatus.length > 0
+                      ? (queryStatus as ('PUBLISHED' | 'ARCHIVED' | 'DRAFT')[])
+                      : undefined,
+                },
+              }),
+              (_data) => {
+                const data = structuredClone(_data)
+                if (!data) return
+                const idx = data.data.findIndex((d) => d.id === announcementId)
+                if (idx === -1) return
+                data.data[idx].status = status
+                return data
+              }
+            )
+          },
+        }
+      )
+    },
+    [patchMutation, queryClient, queryLimit, queryPage, querySearch, queryStatus]
+  )
+  const deleteAnnouncement = useCallback(
+    (announcementId: UpdateAnnouncementParams['announcementId']) => {
+      deleteMutation.mutateAsync(
+        { pathParams: { announcementId } },
+        { onSuccess: () => invalidateQuery() }
+      )
+    },
+    [deleteMutation, invalidateQuery]
+  )
 
   const columns = useMemo(
     () => [
@@ -60,6 +136,11 @@ export const Data = () => {
       }),
       columnHelper.accessor('title', {
         header: 'ชื่อประกาศ',
+        cell: (info) => (
+          <NavLink className="hover:underline" to={`/feed/announcement/${info.row.original.id}`}>
+            {info.getValue()}
+          </NavLink>
+        ),
       }),
       columnHelper.display({
         id: 'engagements',
@@ -109,36 +190,59 @@ export const Data = () => {
         id: 'manage',
         header: 'จัดการ',
         cell: ({ row }) => {
-          const id = row.getValue<GetAnnouncementsResponse['data'][number]['id']>('id')
+          const id = row.original.id
+          const status = row.original.status
+
           return (
-            <>
-              <div className="flex gap-3">
-                <Button size="icon" className="size-8" asChild>
-                  <NavLink to={`/feed/announcement/${id}`}>
-                    <span className="sr-only">ประกาศ</span>
-                    <Megaphone className="size-4" />
-                  </NavLink>
+            <div className="flex gap-3">
+              {status === 'PUBLISHED' ? (
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="size-8"
+                  disabled={patchMutation.isPending}
+                  aria-busy={patchMutation.isPending}
+                  onClick={() =>
+                    setAnnouncementStatus({ status: 'ARCHIVED' }, { announcementId: id })
+                  }
+                >
+                  <span className="sr-only">เก็บในคลัง</span>
+                  <EyeOff className="size-4" />
                 </Button>
-                {/* <Button variant="secondary" size="icon" className="size-8" asChild>
-                  <NavLink to={`/feed/announcement/${id}`}>
-                    <span className="sr-only">เก็บในคลัง</span>
-                    <EyeOff className="size-4" />
-                  </NavLink>
-                </Button> */}
-                <Button variant="outline" size="icon" className="size-8" asChild>
-                  <NavLink to={`/feed/announcement/${id}`}>
-                    <span className="sr-only">แก้ไข</span>
-                    <Pencil className="size-4" />
-                  </NavLink>
+              ) : (
+                <Button
+                  size="icon"
+                  className="size-8"
+                  disabled={patchMutation.isPending}
+                  aria-busy={patchMutation.isPending}
+                  onClick={() =>
+                    setAnnouncementStatus({ status: 'PUBLISHED' }, { announcementId: id })
+                  }
+                >
+                  <span className="sr-only">ประกาศ</span>
+                  <Megaphone className="size-4" />
                 </Button>
-                <Button variant="outline-destructive" size="icon" className="size-8" asChild>
-                  <NavLink to={`/feed/announcement/${id}`}>
-                    <span className="sr-only">ลบ</span>
-                    <Trash2 className="size-4" />
-                  </NavLink>
-                </Button>
-              </div>
-            </>
+              )}
+              <Button variant="outline" size="icon" className="size-8" asChild>
+                <NavLink to={`/feed/announcement/${id}`}>
+                  <span className="sr-only">แก้ไข</span>
+                  <Pencil className="size-4" />
+                </NavLink>
+              </Button>
+              <Button
+                variant="outline-destructive"
+                size="icon"
+                className="size-8"
+                disabled={deleteMutation.isPending}
+                aria-busy={deleteMutation.isPending}
+                onClick={() => {
+                  deleteAnnouncement(id)
+                }}
+              >
+                <span className="sr-only">ลบ</span>
+                <Trash2 className="size-4" />
+              </Button>
+            </div>
           )
         },
         size: 152,
@@ -146,7 +250,7 @@ export const Data = () => {
         maxSize: 152,
       }),
     ],
-    []
+    [deleteAnnouncement, deleteMutation.isPending, patchMutation.isPending, setAnnouncementStatus]
   )
 
   return (
@@ -183,7 +287,7 @@ export const Data = () => {
       ]}
       filterExtension={
         <Button asChild>
-          <NavLink to="/feed/announcement/create">
+          <NavLink to="/feed/announcement">
             <Plus />
             สร้างประกาศ
           </NavLink>
