@@ -1,5 +1,13 @@
 # @pple-today/database
 
+## 0.3.1
+
+### Patch Changes
+
+- [#192](https://github.com/PPLEThai/pple-today/pull/192) [`957ea15`](https://github.com/PPLEThai/pple-today/commit/957ea158c1e21c0fdbe96499c2de38d690c00a7a) Thanks [@miello](https://github.com/miello)! - [[PPLE-436] Validate and optimize recommendation algorithm](https://linear.app/snts/issue/PPLE-436/validate-and-optimize-recommendation-algorithm)
+
+- [#169](https://github.com/PPLEThai/pple-today/pull/169) [`25c65f4`](https://github.com/PPLEThai/pple-today/commit/25c65f4eb141504ec941a4e425164ded77fa5dbd) Thanks [@rootEnginear](https://github.com/rootEnginear)! - [PPLE-340] [CMS/FE] Feed/Topic Page
+
 ## 0.3.0
 
 ### Minor Changes

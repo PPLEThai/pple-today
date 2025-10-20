@@ -230,7 +230,7 @@ const ELECTION_ERROR_SCHEMA = {
   ELECTION_ALREADY_PUBLISH: {
     status: 409,
   },
-  ELECTION_IS_CANNCELLED: {
+  ELECTION_IS_CANCELLED: {
     status: 409,
   },
   ELECTION_KEY_NOT_IN_PENDING_CREATED_STATUS: {
@@ -238,7 +238,7 @@ const ELECTION_ERROR_SCHEMA = {
   },
 } satisfies InternalErrorSchemas
 
-export const KEY_ERROR_SCHEMA = {
+export const ELECTION_KEY_ERROR_SCHEMA = {
   KEY_ALREADY_EXIST: {
     status: 409,
   },
@@ -261,7 +261,7 @@ export const InternalErrorCodeSchemas = {
   ...HASHTAG_ERROR_SCHEMA,
   ...TOPIC_ERROR_SCHEMA,
   ...ELECTION_ERROR_SCHEMA,
-  ...KEY_ERROR_SCHEMA,
+  ...ELECTION_KEY_ERROR_SCHEMA,
 } as const
 export type InternalErrorCodeSchemas = typeof InternalErrorCodeSchemas
 

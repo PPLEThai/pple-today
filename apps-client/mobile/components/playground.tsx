@@ -55,7 +55,9 @@ import { z } from 'zod/v4'
 import { ElectionWithCurrentStatus } from '@api/backoffice/app'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useFacebookPagesQuery } from '@app/libs/facebook'
+import { EXAMPLE_ACTIVITY } from '@app/libs/pple-activity'
 
+import { ActivityCard } from './activity/activity-card'
 import { AuthPlayground } from './auth-playground'
 import { AvatarPPLEFallback } from './avatar-pple-fallback'
 import { ElectionCard, ElectionDetailCard, ElectionStatusBadge } from './election/election-card'
@@ -70,6 +72,7 @@ export function Playground() {
         <View className="flex flex-row items-center justify-between">
           <H1 className="font-inter-bold">Playground</H1>
         </View>
+        <ActivityCardExample />
         <View className="flex flex-col gap-2">
           <H2 className="font-inter-bold">Font</H2>
           <View className="flex flex-col gap-1">
@@ -1087,6 +1090,15 @@ function FrontCameraExample() {
         <Text>Open Front Camera</Text>
       </Button>
       {asset && <Image source={{ uri: asset.uri }} className="aspect-[3/4]" />}
+    </View>
+  )
+}
+
+function ActivityCardExample() {
+  return (
+    <View className="flex flex-col gap-2 ">
+      <H2 className="font-inter-bold">Activity Card</H2>
+      <ActivityCard activity={EXAMPLE_ACTIVITY} />
     </View>
   )
 }

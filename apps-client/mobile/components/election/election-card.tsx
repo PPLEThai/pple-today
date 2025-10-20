@@ -395,7 +395,7 @@ function ElectionCardFooter(props: ElectionCardProps) {
     case 'RESULT_ANNOUNCE':
       return (
         <View className="flex flex-row pt-2 gap-2.5">
-          <Link href={`./election/${props.election.id}`} asChild>
+          <Link href={`/election/${props.election.id}`} asChild>
             <Button className="w-full" size="sm">
               <Text>ดูผลการเลือกตั้ง</Text>
               <Icon icon={ArrowRightIcon} size={16} />
@@ -414,7 +414,7 @@ function ElectionPercentageActions(props: ElectionCardProps) {
       <Text className="text-sm text-base-text-invert font-heading-regular">
         ใช้สิทธิ์แล้ว: {Math.floor(props.election.votePercentage)}%
       </Text>
-      <Link href={`./election/${props.election.id}`} asChild>
+      <Link href={`/election/${props.election.id}`} asChild>
         <Button size="sm" className="flex-1">
           <Text>{props.election.isVoted ? 'ลงคะแนนใหม่' : 'ไปเลือกตั้ง'}</Text>
           <Icon icon={ArrowRightIcon} size={16} />
