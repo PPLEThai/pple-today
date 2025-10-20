@@ -452,9 +452,22 @@ export class AdminElectionRepository {
 
   private async upsertElectionResult(
     tx: Prisma.TransactionClient,
+    electionId: string,
     type: ElectionResultType,
     result: { candidateId: string; votes: number }[]
   ) {
+    await tx.electionResult.updateMany({
+      where: {
+        candidate: {
+          electionId,
+        },
+        type,
+      },
+      data: {
+        count: 0,
+      },
+    })
+
     for (let i = 0; i < result.length; i += 5) {
       const endIdx = Math.min(i + 5, result.length)
       const batch = result.slice(i, endIdx)
@@ -482,10 +495,13 @@ export class AdminElectionRepository {
     }
   }
 
-  async uploadElectionOnsiteResult(result: { candidateId: string; votes: number }[]) {
+  async uploadElectionOnsiteResult(
+    electionId: string,
+    result: { candidateId: string; votes: number }[]
+  ) {
     return fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
-        this.upsertElectionResult(tx, ElectionResultType.ONSITE, result)
+        this.upsertElectionResult(tx, electionId, ElectionResultType.ONSITE, result)
       })
     )
   }
@@ -509,16 +525,17 @@ export class AdminElectionRepository {
   ) {
     return fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
-        await tx.election.update({
-          where: {
-            id: electionId,
-          },
-          data: {
-            onlineResultStatus: ElectionOnlineResultStatus.COUNT_SUCCESS,
-          },
-        })
-
-        await this.upsertElectionResult(tx, ElectionResultType.ONLINE, result)
+        await Promise.all([
+          tx.election.update({
+            where: {
+              id: electionId,
+            },
+            data: {
+              onlineResultStatus: ElectionOnlineResultStatus.COUNT_SUCCESS,
+            },
+          }),
+          this.upsertElectionResult(tx, electionId, ElectionResultType.ONLINE, result),
+        ])
       })
     )
   }

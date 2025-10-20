@@ -248,6 +248,9 @@ const ELECTION_ERROR_SCHEMA = {
   ELECTION_VOTES_EXCEED_VOTERS: {
     status: 400,
   },
+  ELECTION_INVALID_SIGNATURE: {
+    status: 401,
+  },
 } satisfies InternalErrorSchemas
 
 export const KEY_ERROR_SCHEMA = {

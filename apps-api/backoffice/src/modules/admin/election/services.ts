@@ -13,8 +13,10 @@ import {
   ElectionKeysStatus,
   EligibleVoterType,
 } from '@pple-today/database/prisma'
+import crypto from 'crypto'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
+import { stringify } from 'safe-stable-stringify'
 
 import {
   AdminCreateElectionBody,
@@ -531,6 +533,7 @@ export class AdminElectionService {
 
     const count = countResult.value
     const votes = result.reduce((acc, cur) => acc + cur.votes, 0)
+    // ONSITE election can have a case where votes exceed voters, but HYBRID election cannot
     if (election.type === 'HYBRID' && votes > count) {
       return err({
         code: InternalErrorCode.ELECTION_VOTES_EXCEED_VOTERS,
@@ -538,7 +541,10 @@ export class AdminElectionService {
       })
     }
 
-    const uploadResult = await this.adminElectionRepository.uploadElectionOnsiteResult(result)
+    const uploadResult = await this.adminElectionRepository.uploadElectionOnsiteResult(
+      election.id,
+      result
+    )
     if (uploadResult.isErr()) {
       return mapRepositoryError(uploadResult.error, {
         FOREIGN_KEY_CONSTRAINT_FAILED: {
@@ -551,9 +557,25 @@ export class AdminElectionService {
     return ok()
   }
 
+  private verifySignature(
+    data: { candidateId: string; votes: number }[],
+    signature: string,
+    publicKey: string
+  ): boolean {
+    return crypto.verify(
+      'sha256',
+      Buffer.from(stringify(data)),
+      {
+        key: publicKey,
+      },
+      Buffer.from(signature, 'base64')
+    )
+  }
+
   async uploadElectionOnlineResult(
     electionId: string,
     status: 'COUNT_SUCCESS' | 'COUNT_FAILED',
+    signature: string,
     result?: { candidateId: string; votes: number }[]
   ) {
     const electionResult = await this.adminElectionRepository.getElectionById(electionId)
@@ -585,6 +607,13 @@ export class AdminElectionService {
         })
       }
 
+      if (!this.verifySignature(result, signature, election.signingPublicKey || '')) {
+        return err({
+          code: InternalErrorCode.ELECTION_INVALID_SIGNATURE,
+          message: 'Invalid signature',
+        })
+      }
+
       const countResult = await this.adminElectionRepository.countElectionEligibleVoters(
         electionId,
         'ONLINE'
@@ -596,7 +625,7 @@ export class AdminElectionService {
       if (votes > count) {
         return err({
           code: InternalErrorCode.ELECTION_VOTES_EXCEED_VOTERS,
-          message: `Total votes ${votes} exceed total onsite voters ${count}`,
+          message: `Total votes ${votes} exceed total online voters ${count}`,
         })
       }
 

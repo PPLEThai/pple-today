@@ -82,6 +82,9 @@ importers:
       remeda:
         specifier: ^2.24.0
         version: 2.24.0
+      safe-stable-stringify:
+        specifier: ^2.5.0
+        version: 2.5.0
     devDependencies:
       '@api/ballot-crypto':
         specifier: workspace:^

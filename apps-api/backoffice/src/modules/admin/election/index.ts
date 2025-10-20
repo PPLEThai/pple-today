@@ -547,6 +547,7 @@ export const AdminElectionController = new Elysia({
           const result = await adminElectionService.uploadElectionOnlineResult(
             params.electionId,
             body.status,
+            body.signature,
             body.result
           )
           if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
@@ -574,6 +575,7 @@ export const AdminElectionController = new Elysia({
               InternalErrorCode.ELECTION_IS_CANNCELLED,
               InternalErrorCode.ELECTION_NOT_IN_CLOSED_VOTE_PERIOD,
               InternalErrorCode.ELECTION_VOTES_EXCEED_VOTERS,
+              InternalErrorCode.ELECTION_INVALID_SIGNATURE,
               InternalErrorCode.ELECTION_INVALID_TYPE
             ),
           },
