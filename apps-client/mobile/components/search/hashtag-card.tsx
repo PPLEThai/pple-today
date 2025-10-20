@@ -16,7 +16,7 @@ export function HashtagSearchCard(props: UserSearchCardProps) {
   return (
     <SearchCard
       onPress={() => {
-        router.navigate(`./hashtag/${props.id}`)
+        router.navigate(`/hashtag/${props.id}`)
       }}
     >
       <View className="flex flex-row items-center gap-2 px-4 py-3">

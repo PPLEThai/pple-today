@@ -277,7 +277,7 @@ function AnnouncementSection() {
           />
           <H3 className="text-base-text-high font-heading-semibold text-2xl">ประกาศ</H3>
         </View>
-        <Button variant="ghost" onPress={() => router.navigate('/(feed)/announcement')}>
+        <Button variant="ghost" onPress={() => router.navigate('/announcement')}>
           <Text>ดูเพิ่มเติม</Text>
           <Icon icon={ArrowRightIcon} strokeWidth={2} />
         </Button>
@@ -288,7 +288,7 @@ function AnnouncementSection() {
             <SlideItem key={announcement.id}>
               <AnnouncementCard
                 id={announcement.id}
-                onPress={() => router.navigate(`/(feed)/${announcement.id}`)}
+                onPress={() => router.navigate(`/feed/${announcement.id}`)}
                 feedId={announcement.id}
                 title={announcement.title}
                 date={announcement.publishedAt.toString()}
