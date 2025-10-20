@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import {
+  findNodeHandle,
   LayoutChangeEvent,
   NativeScrollEvent,
   Platform,
@@ -32,6 +33,7 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated'
 
+import { clsx, cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 
 import { ScrollContextProvider } from '@app/libs/scroll-context'
@@ -391,7 +393,13 @@ const usePagerTabBarContext = () => {
 }
 
 const PADDING_X = 16
-export function PagerTabBar({ children }: { children: React.ReactNode }) {
+export function PagerTabBar({
+  children,
+  fullWidth = false,
+}: {
+  children: React.ReactNode
+  fullWidth?: boolean
+}) {
   const { tabListSize, dragProgress, dragState, indexToOffset, containerSize, tabBarScrollElRef } =
     usePagerTabBarContext()
   const { setTabBarHeight } = usePagerContext()
@@ -431,6 +439,7 @@ export function PagerTabBar({ children }: { children: React.ReactNode }) {
         ref={tabBarScrollElRef}
         showsHorizontalScrollIndicator={false}
         className="w-full -mb-px"
+        contentContainerClassName={clsx(fullWidth && 'w-full')}
         contentContainerStyle={{ paddingHorizontal: PADDING_X }}
         onLayout={(evt) => {
           const height = evt.nativeEvent.layout.height
@@ -443,7 +452,7 @@ export function PagerTabBar({ children }: { children: React.ReactNode }) {
       >
         <View
           accessibilityRole="tablist"
-          className="flex flex-row"
+          className={clsx('flex flex-row', fullWidth && 'w-full')}
           onLayout={(e) => {
             tabListSize.set(e.nativeEvent.layout.width)
           }}
@@ -539,6 +548,15 @@ export function PagerContent({ children, index }: PagerContentProps) {
       registerScrollViewRef(null, index)
     }
   }, [scrollElRef, registerScrollViewRef, index])
+
+  React.useEffect(() => {
+    if (isHeaderReady && isFocused && scrollElRef.current) {
+      const scrollViewTag = findNodeHandle(scrollElRef.current)
+      setScrollViewTag(scrollViewTag)
+      // console.log('scrollViewTag:', scrollViewTag)
+    }
+  }, [isHeaderReady, isFocused, scrollElRef, setScrollViewTag])
+
   if (!isHeaderReady) {
     return null
   }
@@ -603,6 +621,7 @@ function useSharedState<T>(value: T): SharedValue<T> {
 export function PagerTabBarItem({
   index,
   children,
+  className,
   ...props
 }: React.ComponentProps<typeof Pressable> & {
   index: number
@@ -620,7 +639,7 @@ export function PagerTabBarItem({
   }
   return (
     <Pressable
-      className="h-10 pt-2 pb-2 px-4 justify-center"
+      className={cn('h-10 pt-2 pb-2 px-4 justify-center flex-row', className)}
       accessibilityRole="tab"
       onLayout={handleLayout}
       onPress={handlePress}

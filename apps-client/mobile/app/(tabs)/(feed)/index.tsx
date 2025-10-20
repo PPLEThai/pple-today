@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { findNodeHandle, Pressable, StyleSheet, View } from 'react-native'
+import { Pressable, StyleSheet, View } from 'react-native'
 import Animated, {
   useAnimatedScrollHandler,
   useSharedValue,
@@ -134,7 +134,7 @@ function MainHeader() {
               environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'development' ||
               environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'local'
             )
-              router.navigate('/(top-tabs)/playground')
+              router.navigate('/playground')
           }}
         >
           <PPLEIcon width={35} height={30} />
@@ -165,7 +165,7 @@ function MainHeader() {
           aria-label="Profile Settings"
           className="overflow-hidden"
           onPress={() => {
-            router.navigate('/(profile)')
+            router.navigate('/profile')
           }}
         >
           <Avatar alt={authMe.data?.name ?? ''} className="size-full rounded-none">
@@ -332,7 +332,7 @@ function SelectTopicButton() {
   const session = useSession()
   const onOpen = () => {
     if (!session) {
-      router.navigate('/(profile)')
+      router.navigate('/profile')
       return
     }
     bottomSheetModalRef.current?.present()
@@ -508,14 +508,7 @@ const TopicSkeleton = () => {
 }
 
 function FeedFollowingContent(props: PagerScrollViewProps) {
-  const { headerHeight, isFocused, scrollElRef, setScrollViewTag } = props
-  React.useEffect(() => {
-    if (isFocused && scrollElRef.current) {
-      const scrollViewTag = findNodeHandle(scrollElRef.current)
-      setScrollViewTag(scrollViewTag)
-      // console.log('scrollViewTag:', scrollViewTag)
-    }
-  }, [isFocused, scrollElRef, setScrollViewTag])
+  const { headerHeight, scrollElRef } = props
 
   const feedInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/feed/following'),
@@ -596,14 +589,7 @@ function FeedFollowingContent(props: PagerScrollViewProps) {
 
 const LIMIT = 10
 function FeedContent(props: PagerScrollViewProps) {
-  const { headerHeight, isFocused, scrollElRef, setScrollViewTag } = props
-  React.useEffect(() => {
-    if (isFocused && scrollElRef.current) {
-      const scrollViewTag = findNodeHandle(scrollElRef.current)
-      setScrollViewTag(scrollViewTag)
-      // console.log('scrollViewTag:', scrollViewTag)
-    }
-  }, [isFocused, scrollElRef, setScrollViewTag])
+  const { headerHeight, scrollElRef } = props
 
   type MyFeedItem = GetMyFeedResponse['items'][number] | { type: 'SUGGESTION' }
   const feedInfiniteQuery = useInfiniteQuery({
@@ -704,14 +690,7 @@ interface FeedTopicContentProps extends PagerScrollViewProps {
 }
 
 function FeedTopicContent(props: FeedTopicContentProps) {
-  const { headerHeight, isFocused, scrollElRef, setScrollViewTag, topicId } = props
-  React.useEffect(() => {
-    if (isFocused && scrollElRef.current) {
-      const scrollViewTag = findNodeHandle(scrollElRef.current)
-      setScrollViewTag(scrollViewTag)
-      // console.log('scrollViewTag:', scrollViewTag)
-    }
-  }, [isFocused, scrollElRef, setScrollViewTag])
+  const { headerHeight, scrollElRef, topicId } = props
 
   const feedInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/feed/topic', { query: { topicId } }),
@@ -844,7 +823,7 @@ function AnnouncementSection() {
           />
           <H3 className="text-base-text-high font-heading-semibold text-2xl">ประกาศ</H3>
         </View>
-        <Button variant="ghost" onPress={() => router.navigate('/(feed)/announcement')}>
+        <Button variant="ghost" onPress={() => router.navigate('/announcement')}>
           <Text>ดูเพิ่มเติม</Text>
           <Icon icon={ArrowRightIcon} strokeWidth={2} />
         </Button>
@@ -855,7 +834,7 @@ function AnnouncementSection() {
             <SlideItem key={announcement.id}>
               <AnnouncementCard
                 id={announcement.id}
-                onPress={() => router.navigate(`/(feed)/${announcement.id}`)}
+                onPress={() => router.navigate(`/announcement/${announcement.id}`)}
                 feedId={announcement.id}
                 title={announcement.title}
                 date={announcement.publishedAt.toString()}

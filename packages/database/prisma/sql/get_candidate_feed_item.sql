@@ -25,7 +25,7 @@ WITH
       FROM
         "Poll" p
         INNER JOIN "FeedItem" fi ON fi."id" = p."feedItemId"
-      WHERE p."status" = 'PUBLISHED' AND fi."publishedAt" IS NOT NULL
+      WHERE p."status" = 'PUBLISHED' AND fi."publishedAt" <= NOW()
       UNION ALL
       SELECT
         fi."id" AS id,
@@ -33,7 +33,7 @@ WITH
       FROM
         "Post" p
         INNER JOIN "FeedItem" fi ON fi."id" = p."feedItemId"
-      WHERE p."status" = 'PUBLISHED' AND fi."publishedAt" IS NOT NULL
+      WHERE p."status" = 'PUBLISHED' AND fi."publishedAt" <= NOW()
     ),
     other_feed_items AS (
         SELECT 

@@ -21,7 +21,7 @@ import { Spinner } from '@app/components/spinner'
 import { reactQueryClient } from '@app/libs/api-client'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 
-import { useSearchingContext } from './_layout'
+import { useSearchingContext } from '../_layout'
 
 export default function SearchPage() {
   const router = useRouter()

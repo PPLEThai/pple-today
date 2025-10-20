@@ -18,7 +18,7 @@ export function AnnouncementSearchCard(props: AnnouncementCardProps) {
   const router = useRouter()
 
   const onPress = () => {
-    router.push(`./announcement/${props.id}`)
+    router.push(`/announcement/${props.id}`)
   }
 
   return (
