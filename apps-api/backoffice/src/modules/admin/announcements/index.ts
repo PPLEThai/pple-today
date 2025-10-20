@@ -3,14 +3,14 @@ import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-commo
 import Elysia, { t } from 'elysia'
 
 import {
+  CreateAnnouncementBody,
+  CreateAnnouncementResponse,
   DeleteAnnouncementParams,
   DeleteAnnouncementResponse,
   GetAnnouncementByIdParams,
   GetAnnouncementByIdResponse,
   GetAnnouncementsQuery,
   GetAnnouncementsResponse,
-  PostAnnouncementBody,
-  PostAnnouncementResponse,
   UpdateAnnouncementBody,
   UpdateAnnouncementParams,
   UpdateAnnouncementResponse,
@@ -67,9 +67,9 @@ export const AdminAnnouncementsController = new Elysia({
     },
     {
       requiredLocalUser: true,
-      body: PostAnnouncementBody,
+      body: CreateAnnouncementBody,
       response: {
-        201: PostAnnouncementResponse,
+        201: CreateAnnouncementResponse,
         ...createErrorSchema(
           InternalErrorCode.FILE_MOVE_ERROR,
           InternalErrorCode.FILE_ROLLBACK_FAILED,

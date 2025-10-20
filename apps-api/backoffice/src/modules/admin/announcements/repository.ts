@@ -2,11 +2,11 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService, FileTransactionService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { FeedItemType } from '@pple-today/database/prisma'
+import { AnnouncementStatus, FeedItemType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { GetAnnouncementsQuery, PostAnnouncementBody, UpdateAnnouncementBody } from './models'
+import { CreateAnnouncementBody, GetAnnouncementsQuery, UpdateAnnouncementBody } from './models'
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
@@ -209,7 +209,7 @@ export class AdminAnnouncementRepository {
     })
   }
 
-  async createAnnouncement(data: PostAnnouncementBody) {
+  async createAnnouncement(data: CreateAnnouncementBody) {
     const officialUserId = await this.lookupOfficialUserId()
 
     if (officialUserId.isErr()) return err(officialUserId.error)
@@ -227,7 +227,7 @@ export class AdminAnnouncementRepository {
 
         const newAttachmentFilePaths = movePublicResult.value
 
-        const createAnnouncementResult = await this.prismaService.feedItem.create({
+        return await this.prismaService.feedItem.create({
           select: {
             id: true,
           },
@@ -241,11 +241,6 @@ export class AdminAnnouncementRepository {
                 title: data.title,
                 content: data.content,
                 type: data.type,
-                topics: {
-                  createMany: {
-                    data: data.topicIds.map((topicId) => ({ topicId })),
-                  },
-                },
                 attachments: {
                   createMany: {
                     data: newAttachmentFilePaths.map((filePath) => ({ filePath })),
@@ -255,8 +250,6 @@ export class AdminAnnouncementRepository {
             },
           },
         })
-
-        return createAnnouncementResult
       })
     )
 

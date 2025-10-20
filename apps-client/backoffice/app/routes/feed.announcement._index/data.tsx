@@ -9,6 +9,7 @@ import { DataTable } from '@pple-today/web-ui/data-table'
 import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
 import { createColumnHelper } from '@tanstack/react-table'
 import { Engagements } from 'components/Engagements'
+import { AnnouncementCreate } from 'components/feed/AnnouncementCreate'
 import { TableCopyId } from 'components/TableCopyId'
 import { EyeOff, Megaphone, Pencil, Plus, Trash2 } from 'lucide-react'
 
@@ -287,12 +288,15 @@ export const Data = () => {
         },
       ]}
       filterExtension={
-        <Button asChild>
-          <NavLink to="/feed/announcement">
-            <Plus />
-            สร้างประกาศ
-          </NavLink>
-        </Button>
+        <AnnouncementCreate
+          trigger={
+            <Button>
+              <Plus />
+              สร้างประกาศ
+            </Button>
+          }
+          onSuccess={invalidateQuery}
+        />
       }
     />
   )

@@ -28,19 +28,18 @@ export type GetAnnouncementByIdParams = Static<typeof GetAnnouncementByIdParams>
 export const GetAnnouncementByIdResponse = DetailedAnnouncement
 export type GetAnnouncementByIdResponse = Static<typeof GetAnnouncementByIdResponse>
 
-export const PostAnnouncementBody = t.Object({
+export const CreateAnnouncementBody = t.Object({
   title: t.String({ description: 'The title of the announcement' }),
-  content: t.String({ description: 'The content of the announcement' }),
   type: t.Enum(AnnouncementType, { description: 'The type of the announcement' }),
-  topicIds: t.Array(t.String({ description: 'The ID of the announcement topic' })),
+  content: t.String({ description: 'The content of the announcement' }),
   attachmentFilePaths: t.Array(FilePath),
 })
 
-export type PostAnnouncementBody = Static<typeof PostAnnouncementBody>
-export const PostAnnouncementResponse = t.Object({
+export type CreateAnnouncementBody = Static<typeof CreateAnnouncementBody>
+export const CreateAnnouncementResponse = t.Object({
   announcementId: t.String({ description: 'The ID of the announcement' }),
 })
-export type PostAnnouncementResponse = Static<typeof PostAnnouncementResponse>
+export type CreateAnnouncementResponse = Static<typeof CreateAnnouncementResponse>
 
 export const UpdateAnnouncementParams = AnnouncementIdParams
 export type UpdateAnnouncementParams = Static<typeof UpdateAnnouncementParams>

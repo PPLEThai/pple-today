@@ -7,10 +7,10 @@ import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import {
+  CreateAnnouncementBody,
   GetAnnouncementByIdResponse,
   GetAnnouncementsQuery,
   GetAnnouncementsResponse,
-  PostAnnouncementBody,
   UpdateAnnouncementBody,
 } from './models'
 import { AdminAnnouncementRepository, AdminAnnouncementRepositoryPlugin } from './repository'
@@ -54,7 +54,7 @@ export class AdminAnnouncementService {
     } satisfies GetAnnouncementByIdResponse)
   }
 
-  async createAnnouncement(data: PostAnnouncementBody) {
+  async createAnnouncement(data: CreateAnnouncementBody) {
     const createResult = await this.adminAnnouncementRepository.createAnnouncement(data)
 
     if (createResult.isErr()) return mapRepositoryError(createResult.error)
