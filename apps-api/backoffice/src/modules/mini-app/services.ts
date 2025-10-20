@@ -19,7 +19,6 @@ export class MiniAppService {
         id: miniApp.id,
         name: miniApp.name,
         iconUrl: miniApp.icon,
-        url: miniApp.clientUrl,
         order: miniApp.order,
       }))
     )

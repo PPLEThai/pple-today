@@ -86,11 +86,14 @@ export class AuthService {
       })
     }
 
+    const url = new URL(miniApp.value.clientUrl)
+    url.searchParams.append('access_token', body.access_token)
+    url.searchParams.append('expires_in', body.expires_in.toString())
+    url.searchParams.append('id_token', body.id_token)
+    url.searchParams.append('token_type', body.token_type)
+
     return ok({
-      accessToken: body.access_token,
-      expiresIn: body.expires_in,
-      idToken: body.id_token,
-      tokenType: body.token_type,
+      url: url.toString(),
     })
   }
 

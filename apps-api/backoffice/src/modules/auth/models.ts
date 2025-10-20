@@ -36,10 +36,7 @@ export const CreateMiniAppTokenParams = t.Object({
 export type CreateMiniAppTokenParams = Static<typeof CreateMiniAppTokenParams>
 
 export const CreateMiniAppTokenResponse = t.Object({
-  accessToken: t.String({ description: 'Access token for the mini app' }),
-  expiresIn: t.Number({ description: 'Expiration time of the access token in seconds' }),
-  idToken: t.String({ description: 'ID token of the authorized user' }),
-  tokenType: t.String({ description: 'Type of the token, e.g., Bearer' }),
+  url: t.String({ description: 'The URL to access the mini app with the generated token' }),
 })
 export type CreateMiniAppTokenResponse = Static<typeof CreateMiniAppTokenResponse>
 
