@@ -239,10 +239,10 @@ const ELECTION_ERROR_SCHEMA = {
 } satisfies InternalErrorSchemas
 
 export const ELECTION_KEY_ERROR_SCHEMA = {
-  KEY_ALREADY_EXIST: {
+  ELECTION_KEY_ALREADY_EXIST: {
     status: 409,
   },
-  KET_NOT_FOUND: {
+  ELECTION_KEY_NOT_FOUND: {
     status: 404,
   },
 } satisfies InternalErrorSchemas
