@@ -18,7 +18,7 @@ export default function LoadingPage() {
     }
   }, [navigation])
   return (
-    <View className="flex-1 flex flex-col items-center justify-center pointer-events-none">
+    <View className="flex-1 flex flex-col items-center justify-center">
       <Spinner />
     </View>
   )
