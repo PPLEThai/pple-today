@@ -63,7 +63,7 @@ export class KeyService {
     if (destroyKeyErr) {
       return mapGoogleAPIError(destroyKeyErr.error, {
         NOT_FOUND: {
-          code: InternalErrorCode.KET_NOT_FOUND,
+          code: InternalErrorCode.KEY_NOT_FOUND,
           message: 'Key for this election not found',
         },
       })

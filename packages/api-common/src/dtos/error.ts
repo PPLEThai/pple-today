@@ -257,8 +257,11 @@ export const KEY_ERROR_SCHEMA = {
   KEY_ALREADY_EXIST: {
     status: 409,
   },
-  KET_NOT_FOUND: {
+  KEY_NOT_FOUND: {
     status: 404,
+  },
+  KEY_NOT_ENABLED: {
+    status: 409,
   },
 } satisfies InternalErrorSchemas
 

@@ -575,7 +575,7 @@ export class AdminElectionService {
   async uploadElectionOnlineResult(
     electionId: string,
     status: 'COUNT_SUCCESS' | 'COUNT_FAILED',
-    signature: string,
+    signature?: string,
     result?: { candidateId: string; votes: number }[]
   ) {
     const electionResult = await this.adminElectionRepository.getElectionById(electionId)
@@ -604,6 +604,13 @@ export class AdminElectionService {
         return err({
           code: InternalErrorCode.BAD_REQUEST,
           message: 'Result is required when status is COUNT_SUCCESS',
+        })
+      }
+
+      if (!signature) {
+        return err({
+          code: InternalErrorCode.BAD_REQUEST,
+          message: 'Signature is required when status is COUNT_SUCCESS',
         })
       }
 

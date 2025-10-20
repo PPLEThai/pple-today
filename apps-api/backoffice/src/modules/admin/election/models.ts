@@ -334,7 +334,7 @@ export const AdminUploadOnlineResultBody = t.Object({
     COUNT_SUCCESS: 'COUNT_SUCCESS',
     COUNT_FAILED: 'COUNT_FAILED',
   }),
-  signature: t.String(),
+  signature: t.Optional(t.String()),
   result: t.Optional(
     t.Array(
       t.Object({

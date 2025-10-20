@@ -34,7 +34,7 @@ export const KeyController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.INTERNAL_SERVER_ERROR,
           InternalErrorCode.KEY_ALREADY_EXIST,
-          InternalErrorCode.KET_NOT_FOUND
+          InternalErrorCode.KEY_NOT_FOUND
         ),
       },
     }
@@ -60,7 +60,7 @@ export const KeyController = new Elysia({
         200: DeleteKeysResponse,
         ...createErrorSchema(
           InternalErrorCode.INTERNAL_SERVER_ERROR,
-          InternalErrorCode.KET_NOT_FOUND
+          InternalErrorCode.KEY_NOT_FOUND
         ),
       },
     }
