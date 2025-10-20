@@ -15,6 +15,7 @@ import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
 import { ANNOUNCEMENT_TYPE_LONG_DISPLAY_TEXT, AnnouncementIcon } from 'components/AnnouncementIcon'
 import { Engagements } from 'components/Engagements'
+import { AnnouncementEdit } from 'components/feed/AnnouncementEdit'
 import { FeedDetailComments } from 'components/feed/FeedDetailComments'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
 import { Calendar, EyeOff, FileText, Link, Megaphone, Pencil, Trash2 } from 'lucide-react'
@@ -159,12 +160,16 @@ export default function AnnouncementDetailPage({ params }: Route.LoaderArgs) {
                 <Megaphone className="size-4" />
               </Button>
             )}
-            <Button variant="outline" size="icon" className="size-8" asChild>
-              <NavLink to={`/feed/announcement/${query.data.id}`}>
-                <span className="sr-only">แก้ไข</span>
-                <Pencil className="size-4" />
-              </NavLink>
-            </Button>
+            <AnnouncementEdit
+              trigger={
+                <Button variant="outline" size="icon" className="size-8">
+                  <span className="sr-only">แก้ไข</span>
+                  <Pencil className="size-4" />
+                </Button>
+              }
+              onSuccess={invalidateQuery}
+              announcement={query.data}
+            />
             <Button
               variant="outline-destructive"
               size="icon"
