@@ -10,7 +10,7 @@ import { Text } from '@pple-today/ui/text'
 import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs'
 import { PlatformPressable } from '@react-navigation/elements'
 import { Image } from 'expo-image'
-import { Tabs } from 'expo-router'
+import { Tabs, useFocusEffect } from 'expo-router'
 import {
   CircleUserRoundIcon,
   HandshakeIcon,
@@ -164,15 +164,15 @@ export interface ScrollViewRef {
   scrollToTop: () => void
 }
 interface ScrollViewRefContextValue {
-  scrollViewRef: React.RefObject<ScrollViewRef[]>
-  registerScrollViewRef: (index: number) => (ref: ScrollViewRef) => void
+  scrollViewRef: React.RefObject<(ScrollViewRef | null)[]>
+  registerScrollViewRef: (index: number) => (ref: ScrollViewRef | null) => void
 }
 export const ScrollViewRefContext = React.createContext<ScrollViewRefContextValue | null>(null)
 
 export function ScrollViewRefProvider({ children }: { children: React.ReactNode }) {
-  const scrollViewRef = React.useRef<ScrollViewRef[]>([])
+  const scrollViewRef = React.useRef<(ScrollViewRef | null)[]>([])
   const registerScrollViewRef = useCallback((index: number) => {
-    return (ref: ScrollViewRef) => {
+    return (ref: ScrollViewRef | null) => {
       scrollViewRef.current[index] = ref
     }
   }, [])
@@ -189,4 +189,18 @@ export function useScrollViewRefContext() {
     throw new Error('useScrollViewRefContext must be used within a ScrollViewRefContext.Provider')
   }
   return context
+}
+
+export function useScrollViewRef(index: number) {
+  const { registerScrollViewRef } = useScrollViewRefContext()
+  const ref = React.useRef<ScrollViewRef>(null)
+  useFocusEffect(
+    React.useCallback(() => {
+      registerScrollViewRef(index)(ref.current)
+      return () => {
+        registerScrollViewRef(index)(null)
+      }
+    }, [registerScrollViewRef, ref, index])
+  )
+  return ref
 }

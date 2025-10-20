@@ -46,7 +46,7 @@ import {
   useRecentActivityQuery,
 } from '@app/libs/pple-activity'
 
-import { useScrollViewRefContext } from '../_layout'
+import { useScrollViewRef } from '../_layout'
 
 export default function ActivityPage() {
   return (
@@ -259,12 +259,12 @@ function PollFeedSection(props: { ListHeaderComponent: React.ReactNode }) {
     await queryClient.invalidateQueries({ queryKey: useRecentActivityQuery.getKey() })
   }, [queryClient])
 
-  const { registerScrollViewRef } = useScrollViewRefContext()
+  const ref = useScrollViewRef(3)
   const flatListRef = React.useRef<Animated.FlatList<any>>(null)
   const scrollToTop = React.useCallback(() => {
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true })
   }, [])
-  useImperativeHandle(registerScrollViewRef(3), () => ({
+  useImperativeHandle(ref, () => ({
     scrollToTop,
   }))
   return (
