@@ -83,7 +83,7 @@ const ElectionSection = () => {
   const session = useSession()
   const electionsQuery = reactQueryClient.useQuery(
     '/elections',
-    { query: { page: 'OFFICIAL' } },
+    { query: { in: 'OFFICIAL' } },
     { enabled: !!session }
   )
   const elections = electionsQuery.data || []
