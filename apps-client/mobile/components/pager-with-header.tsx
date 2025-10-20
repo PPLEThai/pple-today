@@ -36,7 +36,6 @@ import Animated, {
 import { clsx, cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 
-import { ScrollViewRef } from '@app/app/(tabs)/_layout'
 import { ScrollContextProvider } from '@app/libs/scroll-context'
 
 import { ExpoScrollForwarderView } from '../../../packages/expo-scroll-forwarder/build'
@@ -72,13 +71,11 @@ const AnimatedExpoScrollForwarderView = Animated.createAnimatedComponent(ExpoScr
 // disabling it in `app.config.ts` fixes the issue on native build
 // https://github.com/software-mansion/react-native-reanimated/issues/6992
 
-export function Pager({
-  children,
-  ref,
-}: {
-  children: React.ReactNode
-  ref: React.Ref<ScrollViewRef>
-}) {
+export interface PagerRef {
+  scrollToTop: () => void
+}
+
+export function Pager({ children, ref }: { children: React.ReactNode; ref: React.Ref<PagerRef> }) {
   // const layout = useWindowDimensions()
   const [currentPage, setCurrentPage] = React.useState(0)
   const [isHeaderReady, setHeaderReady] = React.useState(false)

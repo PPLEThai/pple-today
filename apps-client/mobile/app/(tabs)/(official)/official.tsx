@@ -1,4 +1,4 @@
-import React, { useCallback, useImperativeHandle } from 'react'
+import React, { useCallback } from 'react'
 import { Pressable, PressableProps, ScrollView, View } from 'react-native'
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -36,7 +36,7 @@ import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
 
-import { useScrollViewRef } from '../_layout'
+import { useBottomTabOnPress } from '../_layout'
 
 export default function OfficialPage() {
   const queryClient = useQueryClient()
@@ -51,14 +51,10 @@ export default function OfficialPage() {
     ])
   }, [queryClient])
 
-  const ref = useScrollViewRef(2)
-  const scrollViewRef = React.useRef<ScrollView>(null)
-  const scrollToTop = React.useCallback(() => {
+  useBottomTabOnPress(2, () => {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true })
-  }, [])
-  useImperativeHandle(ref, () => ({
-    scrollToTop,
-  }))
+  })
+  const scrollViewRef = React.useRef<ScrollView>(null)
   return (
     <SafeAreaLayout>
       <ScrollView

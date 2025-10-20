@@ -22,6 +22,7 @@ import { cssInterop } from 'nativewind'
 
 import PPLEIconBlack from '@app/assets/pple-icon-black.svg'
 import { useSession } from '@app/libs/auth'
+import { useCallbackRef } from '@app/utils/use-callback-ref'
 
 cssInterop(Image, { className: 'style' })
 
@@ -30,7 +31,7 @@ export default function BottomTabsLayout() {
   const session = useSession()
 
   return (
-    <ScrollViewRefProvider>
+    <BottomTabActionProvider>
       <View className="flex-1 px-safe">
         <Tabs
           screenOptions={{
@@ -106,7 +107,7 @@ export default function BottomTabsLayout() {
           />
         </Tabs>
       </View>
-    </ScrollViewRefProvider>
+    </BottomTabActionProvider>
   )
 }
 
@@ -140,7 +141,7 @@ function TabBarLabel(props: {
   )
 }
 function TabBarButton({ style, index, ...props }: BottomTabBarButtonProps & { index: number }) {
-  const { scrollViewRef } = useScrollViewRefContext()
+  const { actions } = useBottomTabActionContext()
   return (
     <PlatformPressable
       {...props}
@@ -153,54 +154,53 @@ function TabBarButton({ style, index, ...props }: BottomTabBarButtonProps & { in
       onPress={(e) => {
         props.onPress?.(e)
         if (props['aria-selected']) {
-          scrollViewRef.current?.[index]?.scrollToTop()
+          actions.current?.[index]?.()
         }
       }}
     />
   )
 }
 
-export interface ScrollViewRef {
-  scrollToTop: () => void
-}
-interface ScrollViewRefContextValue {
-  scrollViewRef: React.RefObject<(ScrollViewRef | null)[]>
-  registerScrollViewRef: (index: number) => (ref: ScrollViewRef | null) => void
-}
-export const ScrollViewRefContext = React.createContext<ScrollViewRefContextValue | null>(null)
+type Action = () => void
 
-export function ScrollViewRefProvider({ children }: { children: React.ReactNode }) {
-  const scrollViewRef = React.useRef<(ScrollViewRef | null)[]>([])
-  const registerScrollViewRef = useCallback((index: number) => {
-    return (ref: ScrollViewRef | null) => {
-      scrollViewRef.current[index] = ref
+interface BottomTabActionContextValue {
+  actions: React.RefObject<Record<number, Action>>
+  registerAction: (index: number, fn: Action) => () => void
+}
+export const BottomTabActionContext = React.createContext<BottomTabActionContextValue | null>(null)
+
+export function BottomTabActionProvider({ children }: { children: React.ReactNode }) {
+  const actions = React.useRef<Record<number, Action>>({})
+  const registerAction = useCallback((index: number, fn: () => void) => {
+    actions.current[index] = fn
+    return () => {
+      delete actions.current[index]
     }
   }, [])
   return (
-    <ScrollViewRefContext.Provider value={{ scrollViewRef, registerScrollViewRef }}>
+    <BottomTabActionContext.Provider value={{ actions, registerAction }}>
       {children}
-    </ScrollViewRefContext.Provider>
+    </BottomTabActionContext.Provider>
   )
 }
 
-export function useScrollViewRefContext() {
-  const context = React.useContext(ScrollViewRefContext)
+export function useBottomTabActionContext() {
+  const context = React.useContext(BottomTabActionContext)
   if (!context) {
-    throw new Error('useScrollViewRefContext must be used within a ScrollViewRefContext.Provider')
+    throw new Error(
+      'useBottomTabActionContext must be used within a BottomTabActionContext.Provider'
+    )
   }
   return context
 }
 
-export function useScrollViewRef(index: number) {
-  const { registerScrollViewRef } = useScrollViewRefContext()
-  const ref = React.useRef<ScrollViewRef>(null)
+export function useBottomTabOnPress(index: number, action: Action) {
+  const { registerAction } = useBottomTabActionContext()
+  // TODO: useEffectEvent(action)
+  const _action = useCallbackRef(action)
   useFocusEffect(
     React.useCallback(() => {
-      registerScrollViewRef(index)(ref.current)
-      return () => {
-        registerScrollViewRef(index)(null)
-      }
-    }, [registerScrollViewRef, ref, index])
+      return registerAction(index, _action)
+    }, [registerAction, index, _action])
   )
-  return ref
 }
