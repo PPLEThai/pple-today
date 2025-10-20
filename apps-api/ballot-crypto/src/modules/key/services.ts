@@ -11,7 +11,7 @@ import { KeyManagementPlugin, KeyManagementService } from '../../plugins/kms'
 import { mapGoogleAPIError } from '../../utils/error'
 
 export class KeyService {
-  private readonly MAX_RETRY = 5
+  private readonly MAX_RETRY = 10
   private readonly DELAY = 1
 
   constructor(
@@ -80,12 +80,13 @@ export class KeyService {
       ])
 
       if (encryptResult.isOk() && signingResult.isOk()) {
-        await this.backofficeAdminService.updateElectionKeys({
+        const result = await this.backofficeAdminService.updateElectionKeys({
           electionId,
           status: ElectionKeysStatus.CREATED,
           encryptPublicKey: encryptResult.value,
           signingPublicKey: signingResult.value,
         })
+        if (result.isErr()) break
 
         return ok()
       }

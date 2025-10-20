@@ -1,5 +1,6 @@
 import { KeyManagementServiceClient } from '@google-cloud/kms'
 import { google } from '@google-cloud/kms/build/protos/protos'
+import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
 import { err } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
@@ -20,7 +21,8 @@ export class KeyManagementService {
       location: string
       encryptionKeyRing: string
       signingKeyRing: string
-    }
+    },
+    private readonly loggerService: ElysiaLoggerInstance
   ) {
     this.kmsClient = new KeyManagementServiceClient({
       credentials: {
@@ -29,6 +31,28 @@ export class KeyManagementService {
         private_key: config.privateKey,
       },
     })
+  }
+
+  private log(options: {
+    keyRing: string
+    keyId: string
+    action: 'CREATE' | 'DESTROY'
+    status: 'INFO' | 'FAILED' | 'SUCCESS'
+  }) {
+    const data = {
+      action: options.action,
+      status: options.status,
+      location: this.config.location,
+      keyRing: options.keyRing,
+      keyId: options.keyId,
+    }
+    const message = `${options.action} key '${options.keyId}' in key ring '${options.keyRing}' - ${options.status}`
+
+    if (options.status === 'FAILED') {
+      this.loggerService.error(data, message)
+    } else {
+      this.loggerService.info(data, message)
+    }
   }
 
   private async getPublicKey(keyRing: string, keyId: string) {
@@ -69,13 +93,39 @@ export class KeyManagementService {
       keyRing
     )
 
-    return fromGoogleAPIPromise(
+    this.log({
+      keyRing,
+      keyId,
+      action: 'CREATE',
+      status: 'INFO',
+    })
+
+    const result = await fromGoogleAPIPromise(
       this.kmsClient.createCryptoKey({
         cryptoKey: key,
         parent: keyRingName,
         cryptoKeyId: keyId,
       })
     )
+    if (result.isErr()) {
+      this.log({
+        keyRing,
+        keyId,
+        action: 'CREATE',
+        status: 'FAILED',
+      })
+
+      return err(result.error)
+    }
+
+    this.log({
+      keyRing,
+      keyId,
+      action: 'CREATE',
+      status: 'SUCCESS',
+    })
+
+    return ok()
   }
 
   async createAsymmetricEncryptKey(keyId: string) {
@@ -118,7 +168,33 @@ export class KeyManagementService {
       '1'
     )
 
-    return fromGoogleAPIPromise(this.kmsClient.destroyCryptoKeyVersion({ name: version }))
+    this.log({
+      keyRing,
+      keyId,
+      action: 'DESTROY',
+      status: 'INFO',
+    })
+
+    const result = await fromGoogleAPIPromise(
+      this.kmsClient.destroyCryptoKeyVersion({ name: version })
+    )
+    if (result.isErr()) {
+      this.log({
+        keyRing,
+        keyId,
+        action: 'DESTROY',
+        status: 'FAILED',
+      })
+    }
+
+    this.log({
+      keyRing,
+      keyId,
+      action: 'DESTROY',
+      status: 'SUCCESS',
+    })
+
+    return ok()
   }
 
   async destroyAsymmetricEncryptKey(keyId: string) {
@@ -132,13 +208,21 @@ export class KeyManagementService {
 
 export const KeyManagementPlugin = new Elysia({ name: 'KeyManagementService' })
   .use(ConfigServicePlugin)
-  .decorate(({ configService }) => ({
-    keyManagementService: new KeyManagementService({
-      clientEmail: configService.get('GCP_CLIENT_EMAIL'),
-      privateKey: configService.get('GCP_PRIVATE_KEY'),
-      projectId: configService.get('GCP_PROJECT_ID'),
-      location: configService.get('GCP_LOCATION'),
-      encryptionKeyRing: configService.get('GCP_ENCRYPTION_KEY_RING'),
-      signingKeyRing: configService.get('GCP_SIGNING_KEY_RING'),
-    }),
+  .use(
+    ElysiaLoggerPlugin({
+      name: 'KeyManagementService',
+    })
+  )
+  .decorate(({ configService, loggerService }) => ({
+    keyManagementService: new KeyManagementService(
+      {
+        clientEmail: configService.get('GCP_CLIENT_EMAIL'),
+        privateKey: configService.get('GCP_PRIVATE_KEY'),
+        projectId: configService.get('GCP_PROJECT_ID'),
+        location: configService.get('GCP_LOCATION'),
+        encryptionKeyRing: configService.get('GCP_ENCRYPTION_KEY_RING'),
+        signingKeyRing: configService.get('GCP_SIGNING_KEY_RING'),
+      },
+      loggerService
+    ),
   }))

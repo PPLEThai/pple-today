@@ -83,7 +83,7 @@ const ElectionSection = () => {
   const session = useSession()
   const electionsQuery = reactQueryClient.useQuery(
     '/elections',
-    { query: { page: 'OFFICIAL' } },
+    { query: { in: 'OFFICIAL' } },
     { enabled: !!session }
   )
   const elections = electionsQuery.data || []
@@ -142,7 +142,7 @@ const AnnouncementSection = () => {
           <AnnouncementCard
             className="w-full"
             key={item.id}
-            onPress={() => router.navigate(`/(official)/announcement/${item.id}`)}
+            onPress={() => router.navigate(`/announcement/${item.id}`)}
             id={item.id}
             feedId={item.id}
             title={item.title}
@@ -163,7 +163,7 @@ const AnnouncementSection = () => {
         </View>
         <View className="min-h-10">
           {data && data.length > 0 && (
-            <Button variant="ghost" onPress={() => router.navigate('/(official)/announcement')}>
+            <Button variant="ghost" onPress={() => router.navigate('/announcement')}>
               <Text>ดูเพิ่มเติม</Text>
               <Icon icon={ArrowRightIcon} strokeWidth={2} />
             </Button>

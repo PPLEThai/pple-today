@@ -1,6 +1,7 @@
 CREATE OR REPLACE FUNCTION public.get_candidate_feed_item_by_follower(_id text)
  RETURNS TABLE(feed_item_id text, score numeric)
  LANGUAGE plpgsql
+ PARALLEL SAFE
 AS $function$
 BEGIN
   RETURN QUERY
@@ -22,7 +23,7 @@ BEGIN
       FROM
         "Poll" p
         INNER JOIN "FeedItem" fi ON fi."id" = p."feedItemId"
-      WHERE p."status" = 'PUBLISHED' AND fi."publishedAt" IS NOT NULL
+      WHERE p."status" = 'PUBLISHED' AND fi."publishedAt" <= NOW()
       UNION ALL
       SELECT
         fi."id" AS id,
@@ -32,7 +33,7 @@ BEGIN
       FROM
         "Post" p
         INNER JOIN "FeedItem" fi ON fi."id" = p."feedItemId"
-      WHERE p."status" = 'PUBLISHED' AND fi."publishedAt" IS NOT NULL
+      WHERE p."status" = 'PUBLISHED' AND fi."publishedAt" <= NOW()
     ),
 
     all_possible_interested_user AS (
@@ -51,26 +52,27 @@ BEGIN
         ufu."followingId" = _id
     ),
 
+    reaction_scores AS (
+      SELECT
+        firc."feedItemId" AS feed_item_id,
+        SUM("count" * CASE WHEN firc."type" = 'UP_VOTE' THEN 3 WHEN firc."type" = 'DOWN_VOTE' THEN 1 ELSE 0 END) AS reaction_score
+      FROM "FeedItemReactionCount" firc
+      GROUP BY firc."feedItemId"
+    ),
+
     candidate_feed_item AS (
       SELECT
-        pfi."id" AS feed_item_id,
+        pfi.id AS feed_item_id,
         (
-          apiu.score + 
-          pfi."number_of_comments" * 2 + 
-          SUM(
-            COALESCE(firc.count, 0) * CASE
-              WHEN firc."type" = 'UP_VOTE' THEN 3
-              WHEN firc."type" = 'DOWN_VOTE' THEN 1
-              ELSE 0
-            END
-          ) + 
-          RANDOM() / 100
-        ) * EXP(-LEAST(extract(EPOCH FROM (NOW() - pfi.published_at)) / 86400, 30)) AS score
+          apiu.score
+          + COALESCE(pfi.number_of_comments, 0) * 2
+          + COALESCE(rs.reaction_score, 0)
+          + RANDOM() / 100
+        ) * EXP(-LEAST(EXTRACT(EPOCH FROM (NOW() - pfi.published_at)) / 86400, 30)) AS score
       FROM
         published_feed_items pfi
         INNER JOIN all_possible_interested_user apiu ON apiu.user_id = pfi.author_id
-        LEFT JOIN "FeedItemReactionCount" firc ON firc."feedItemId" = pfi.id
-      GROUP BY pfi."id", apiu.score, pfi."number_of_comments", pfi.published_at
+        LEFT JOIN reaction_scores rs ON rs.feed_item_id = pfi.id
       ORDER BY score DESC
       LIMIT 1000
     )

@@ -75,7 +75,7 @@ export const FeedCard = React.memo(function FeedCard(props: {
 }) {
   const router = useRouter()
   const navigateToDetailPage = React.useCallback(() => {
-    router.navigate(`/${props.feedItem.id}`)
+    router.navigate(`/feed/${props.feedItem.id}`)
   }, [router, props.feedItem.id])
   // cache initialData of feed item when navigating to detail page
   const feedContentQuery = reactQueryClient.useQuery(
@@ -97,7 +97,7 @@ export const FeedCard = React.memo(function FeedCard(props: {
         onPress={navigateToDetailPage}
       >
         <View className="flex flex-row items-center gap-3">
-          <Link href={`/profile/user/${props.feedItem.author.id}`} asChild>
+          <Link href={`/user/${props.feedItem.author.id}`} asChild>
             <Pressable>
               <Avatar alt={feedContent.author.name} className="w-8 h-8">
                 <AvatarImage source={{ uri: feedContent.author.profileImage }} />
@@ -106,7 +106,7 @@ export const FeedCard = React.memo(function FeedCard(props: {
             </Pressable>
           </Link>
           <View className="flex flex-col">
-            <Link href={`/profile/user/${feedContent.author.id}`} asChild>
+            <Link href={`/user/${feedContent.author.id}`} asChild>
               <Text className="text-base-text-high font-heading-medium text-sm">
                 {feedContent.author.name}
               </Text>
@@ -149,7 +149,7 @@ export const FeedCard = React.memo(function FeedCard(props: {
 function FeedReactionSection(props: { feedItem: FeedItem; disabledPress?: boolean }) {
   const router = useRouter()
   const navigateToDetailPage = React.useCallback(() => {
-    router.navigate(`/(feed)/${props.feedItem.id}`)
+    router.navigate(`/feed/${props.feedItem.id}`)
   }, [router, props.feedItem.id])
   const { upvoteCount } = useFeedReactionValue(props.feedItem.id)
   if (upvoteCount === 0 && props.feedItem.commentCount === 0) return <View className="h-3" />
@@ -194,7 +194,7 @@ function FeedCardContent(props: { feedItem: FeedItem }) {
 function PostCardContent(props: { feedItem: FeedItemPost }) {
   const router = useRouter()
   const navigateToDetailPage = React.useCallback(() => {
-    router.navigate(`/(feed)/${props.feedItem.id}`)
+    router.navigate(`/feed/${props.feedItem.id}`)
   }, [router, props.feedItem.id])
   return (
     <View className="flex flex-col gap-3">
@@ -218,7 +218,7 @@ function PostCardContent(props: { feedItem: FeedItemPost }) {
       {props.feedItem.post.hashTags.length > 0 && (
         <View className="flex flex-row flex-wrap gap-1 px-4">
           {props.feedItem.post.hashTags.map((tag) => (
-            <Link href={`/(feed)/hashtag/${tag.id}`} key={tag.id} asChild>
+            <Link href={`/hashtag/${tag.id}`} key={tag.id} asChild>
               <Badge variant="secondary">
                 <Text>{tag.name}</Text>
               </Badge>
@@ -454,7 +454,7 @@ function UpvoteButton(props: UpvoteButtonProps) {
   const session = useSession()
   const onPress = () => {
     if (!session) {
-      return router.push('/(profile)')
+      return router.push('/profile')
     }
     const newUserReaction = userReaction === 'UP_VOTE' ? null : 'UP_VOTE'
     if (newUserReaction === 'UP_VOTE') {
@@ -526,7 +526,7 @@ function DownvoteButton(props: { feedId: string }) {
   const session = useSession()
   const onPress = () => {
     if (!session) {
-      return router.push('/(profile)')
+      return router.push('/profile')
     }
     const newUserReaction = userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE'
     if (newUserReaction === 'DOWN_VOTE') {
@@ -702,7 +702,7 @@ function CommentButton(props: { feedId: string }) {
   const session = useSession()
   const onPress = () => {
     if (!session) {
-      return router.push('/(profile)')
+      return router.push('/profile')
     }
     onOpen()
   }
@@ -890,7 +890,7 @@ const FeedDetailAuthorSection = (props: { feedItem: FeedItem }) => {
   return (
     <View className="px-4 pt-1 pb-3 flex flex-row items-center justify-between">
       <View className="flex flex-row items-center gap-3">
-        <Link href={`/profile/user/${props.feedItem.author.id}`} asChild>
+        <Link href={`/user/${props.feedItem.author.id}`} asChild>
           <Pressable>
             <Avatar alt={props.feedItem.author.name} className="w-8 h-8">
               <AvatarImage source={{ uri: props.feedItem.author.profileImage }} />
@@ -899,7 +899,7 @@ const FeedDetailAuthorSection = (props: { feedItem: FeedItem }) => {
           </Pressable>
         </Link>
         <View className="flex flex-col">
-          <Link href={`/profile/user/${props.feedItem.author.id}`} asChild>
+          <Link href={`/user/${props.feedItem.author.id}`} asChild>
             <Text className="text-base-text-high font-heading-medium text-sm">
               {props.feedItem.author.name}
             </Text>
@@ -942,7 +942,7 @@ const PostDetailContent = (props: { feedItem: FeedItemPost }) => {
       {props.feedItem.post.hashTags.length > 0 && (
         <View className="flex flex-row flex-wrap gap-1 px-4">
           {props.feedItem.post.hashTags.map((tag) => (
-            <Link href={`/(feed)/hashtag/${tag.id}`} key={tag.id} asChild>
+            <Link href={`/hashtag/${tag.id}`} key={tag.id} asChild>
               <Badge variant="secondary">
                 <Text>{tag.name}</Text>
               </Badge>
