@@ -326,6 +326,13 @@ export class AdminAnnouncementRepository {
             },
           },
           status: data.status,
+          ...(data.status === AnnouncementStatus.PUBLISHED && {
+            feedItem: {
+              update: {
+                publishedAt: new Date(),
+              },
+            },
+          }),
         },
       })
     )

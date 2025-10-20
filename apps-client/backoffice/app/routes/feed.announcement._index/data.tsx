@@ -106,6 +106,7 @@ export const Data = () => {
                 const idx = data.data.findIndex((d) => d.id === announcementId)
                 if (idx === -1) return
                 data.data[idx].status = status
+                if (status === 'PUBLISHED') data.data[idx].publishedAt = new Date()
                 return data
               }
             )
