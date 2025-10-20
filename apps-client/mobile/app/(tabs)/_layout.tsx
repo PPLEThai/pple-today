@@ -1,6 +1,6 @@
 // https://www.reactnativereusables.com/extras/material-top-tabs/
 
-import React, { useCallback } from 'react'
+import React, { useCallback, useEffect } from 'react'
 import { View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -10,7 +10,7 @@ import { Text } from '@pple-today/ui/text'
 import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs'
 import { PlatformPressable } from '@react-navigation/elements'
 import { Image } from 'expo-image'
-import { Tabs, useFocusEffect, usePathname } from 'expo-router'
+import { Tabs, usePathname } from 'expo-router'
 import {
   CircleUserRoundIcon,
   HandshakeIcon,
@@ -198,10 +198,9 @@ export function useBottomTabOnPress(action: Action) {
   // TODO: useEffectEvent(action)
   const _action = useCallbackRef(action)
   const pathname = usePathname()
-  useFocusEffect(
-    React.useCallback(() => {
-      return registerAction(pathname, _action)
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [_action])
-  )
+  useEffect(() => {
+    return registerAction(pathname, _action)
+    // register only on local pathname
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 }
