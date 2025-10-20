@@ -495,7 +495,7 @@ export class AdminElectionService {
 
     if (election.isCancelled) {
       return err({
-        code: InternalErrorCode.ELECTION_IS_CANNCELLED,
+        code: InternalErrorCode.ELECTION_IS_CANCELLED,
         message: `Election is cancelled`,
       })
     }
