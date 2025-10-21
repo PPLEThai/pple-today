@@ -94,7 +94,7 @@ export const AnnouncementEdit = (props: AnnouncementEditProps) => {
 
   const clearFile = (value: 'OLD_FILE' | 'NO_FILE' = 'OLD_FILE') => {
     if (elFileInput.current) elFileInput.current.value = ''
-    form.setValue('attachmentFile', value, { shouldValidate: true, shouldDirty: true })
+    form.setValue('attachmentFile', value, { shouldDirty: true })
   }
 
   const resetForm = useCallback(() => {
@@ -301,7 +301,7 @@ export const AnnouncementEdit = (props: AnnouncementEditProps) => {
                           onClick={() => clearFile('NO_FILE')}
                         >
                           <span className="sr-only">ลบไฟล์เดิม</span>
-                          <X className="size-4" />
+                          <X className="size-6" />
                         </Button>
                       )
                     ) : (
@@ -313,7 +313,7 @@ export const AnnouncementEdit = (props: AnnouncementEditProps) => {
                         onClick={() => clearFile()}
                       >
                         <span className="sr-only">ล้างไฟล์ที่เลือก</span>
-                        <X className="size-4" />
+                        <X className="size-6" />
                       </Button>
                     )}
                   </div>

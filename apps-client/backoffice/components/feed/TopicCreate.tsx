@@ -23,7 +23,9 @@ import { Input } from '@pple-today/web-ui/input'
 import { MultiSelect } from '@pple-today/web-ui/multi-select'
 import { Textarea } from '@pple-today/web-ui/textarea'
 import { Typography } from '@pple-today/web-ui/typography'
+import { FileUploadInput } from 'components/FileUpload'
 import { ImagePreview } from 'components/ImagePreview'
+import { X } from 'lucide-react'
 import { ACCEPTED_IMAGE_TYPES, handleUploadFile, MAX_FILE_SIZE } from 'utils/file-upload'
 import z from 'zod'
 
@@ -64,6 +66,11 @@ export const TopicCreate = (props: TopicCreateProps) => {
     },
   })
   const elFileInput = useRef<HTMLInputElement>(null)
+
+  const clearFile = () => {
+    if (elFileInput.current) elFileInput.current.value = ''
+    form.setValue('bannerImage', undefined as unknown as File, { shouldDirty: true })
+  }
 
   const onSubmit: SubmitHandler<CreateTopicFormSchema> = async ({ bannerImage, ...data }) => {
     const result = await getFileUploadUrl.mutateAsync({
@@ -162,20 +169,41 @@ export const TopicCreate = (props: TopicCreateProps) => {
                   <FormLabel>
                     รูปหัวข้อ <span className="text-system-danger-default">*</span>
                   </FormLabel>
-                  <FormControl>
-                    <Input
-                      type="file"
-                      className="p-0 pr-3 file:px-3 file:py-2 file:mr-3 file:border-0 file:border-solid file:border-r file:border-r-input file:h-10 file:bg-secondary file:hover:opacity-80 file:active:opacity-80 file:text-secondary-foreground file:cursor-pointer file:font-medium file:aria-[invalid=true]:border-r-system-danger-default file:aria-[invalid=true]:text-system-danger-default file:aria-[invalid=true]:bg-system-danger-extra-light"
-                      {...field}
-                      ref={(el) => {
-                        elFileInput.current = el
-                        ref(el)
-                      }}
-                      onChange={(ev) => onChange(ev.target.files?.[0])}
-                      placeholder="เลือกไฟล์"
-                      accept={ACCEPTED_IMAGE_TYPES.join(',')}
-                    />
-                  </FormControl>
+                  <div className="flex gap-2 min-w-0">
+                    <FormControl>
+                      <FileUploadInput fileName={value?.name}>
+                        <Input
+                          type="file"
+                          {...field}
+                          ref={(el) => {
+                            elFileInput.current = el
+                            ref(el)
+                          }}
+                          onChange={(ev) =>
+                            onChange(
+                              ev.target.files && ev.target.files.length > 0
+                                ? ev.target.files[0]
+                                : undefined
+                            )
+                          }
+                          placeholder="เลือกไฟล์"
+                          accept={ACCEPTED_IMAGE_TYPES.join(',')}
+                        />
+                      </FileUploadInput>
+                    </FormControl>
+                    {value && (
+                      <Button
+                        className="shrink-0"
+                        type="button"
+                        variant="secondary"
+                        size="icon"
+                        onClick={clearFile}
+                      >
+                        <span className="sr-only">ล้างไฟล์ที่เลือก</span>
+                        <X className="size-6" />
+                      </Button>
+                    )}
+                  </div>
                   {value && (
                     <ImagePreview
                       className="rounded-md overflow-hidden w-full h-[120px] object-cover"

@@ -83,7 +83,7 @@ export const AnnouncementCreate = (props: AnnouncementCreateProps) => {
 
   const clearFile = () => {
     if (elFileInput.current) elFileInput.current.value = ''
-    form.setValue('attachmentFile', undefined, { shouldValidate: true, shouldDirty: true })
+    form.setValue('attachmentFile', undefined, { shouldDirty: true })
   }
 
   const onSubmit: SubmitHandler<CreateAnnouncementFormSchema> = async ({
@@ -256,7 +256,7 @@ export const AnnouncementCreate = (props: AnnouncementCreateProps) => {
                         onClick={clearFile}
                       >
                         <span className="sr-only">ล้างไฟล์ที่เลือก</span>
-                        <X className="size-4" />
+                        <X className="size-6" />
                       </Button>
                     )}
                   </div>
