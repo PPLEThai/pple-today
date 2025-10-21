@@ -2,9 +2,16 @@
   "name": "@pple-today/mini-app",
   "version": "1.0.0",
   "description": "",
-  "main": "build/index.js",
+  "exports": {
+    ".": {
+      "require": "./build/cjs.js",
+      "import": "./build/esm.js",
+      "default": "./build/esm.js",
+      "types": "./build/index.d.ts"
+    }
+  },
   "scripts": {
-    "build": "rimraf ./build && tsx build.ts",
+    "build": "rimraf ./build && tsx build.ts && dts-bundle-generator -o build/index.d.ts src/index.ts",
     "test": "vitest --run",
     "test:cov": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
@@ -17,6 +24,7 @@
   "license": "ISC",
   "devDependencies": {
     "@pple-today/project-config": "workspace:^",
+    "dts-bundle-generator": "^9.5.1",
     "esbuild": "^0.25.5",
     "open-cli": "^8.0.0",
     "rimraf": "^6.0.1",

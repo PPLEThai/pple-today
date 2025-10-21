@@ -1,19 +1,28 @@
 import { build } from 'esbuild'
 
-import { version } from './package.json'
-
 async function main() {
   await build({
     entryPoints: ['./src/index.ts'],
-    minify: true,
     bundle: true,
     treeShaking: true,
-    target: 'node22',
-    outfile: './build/index.js',
+    platform: 'browser',
+    outfile: './build/script.js',
+    target: ['es6'],
+  })
+  await build({
+    entryPoints: ['./src/index.ts'],
+    bundle: true,
+    treeShaking: true,
+    platform: 'neutral',
+    outfile: './build/esm.js',
+  })
+  await build({
+    entryPoints: ['./src/index.ts'],
+    bundle: true,
+    treeShaking: true,
+    outfile: './build/cjs.js',
     platform: 'node',
-    define: {
-      __APP_VERSION__: JSON.stringify(version),
-    },
+    target: ['es6'],
   })
 }
 main()

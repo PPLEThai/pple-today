@@ -5,7 +5,7 @@ import { AccessTokenDetailsSchema, IdTokenPayloadSchema, UserInfoSchema } from '
 export class PPLEMiniApp {
   private config: { oauthUrl: string; oauthClientId: string; oauthRedirectUri: string }
   private userManager: UserManager
-  private user: User | null = null
+  private _user: User | null = null
 
   private fetchUserInfo = async (accessToken: string) => {
     const response = await fetch(`${this.config.oauthUrl}/oidc/v1/userinfo`, {
@@ -15,12 +15,12 @@ export class PPLEMiniApp {
       },
     })
 
-    if (!response.ok) throw new Error('Failed to fetch user info')
+    if (!response.ok) throw new Error('[PPLE Mini App] Failed to fetch user info')
 
     const userInfo = await response.json()
     const result = await UserInfoSchema.safeParseAsync(userInfo)
 
-    if (!result.success) throw new Error('Invalid user info format')
+    if (!result.success) throw new Error('[PPLE Mini App] Invalid user info format')
 
     return result.data
   }
@@ -31,7 +31,7 @@ export class PPLEMiniApp {
 
     const result = await IdTokenPayloadSchema.safeParseAsync(JSON.parse(payloadJson))
 
-    if (!result.success) throw new Error('Invalid ID token payload format')
+    if (!result.success) throw new Error('[PPLE Mini App] Invalid ID token payload format')
 
     return result.data
   }
@@ -87,7 +87,7 @@ export class PPLEMiniApp {
       const token = JSON.parse(tokenString)
       const result = await AccessTokenDetailsSchema.safeParseAsync(token)
 
-      if (!result.success) throw new Error('Invalid token format in local storage')
+      if (!result.success) throw new Error('[PPLE Mini App] Invalid token format in local storage')
 
       return result.data
     }
@@ -112,7 +112,7 @@ export class PPLEMiniApp {
       const result = await AccessTokenDetailsSchema.safeParseAsync(token)
 
       if (!result.success) {
-        throw new Error('Invalid token format in session storage')
+        throw new Error('[PPLE Mini App] Invalid token format in session storage')
       }
 
       return result.data
@@ -131,6 +131,12 @@ export class PPLEMiniApp {
   }
 
   constructor(config: { oauthUrl: string; oauthClientId: string; oauthRedirectUri: string }) {
+    if (typeof window === 'undefined') {
+      throw new Error(
+        '[PPLE Mini App] PPLEMiniApp can only be instantiated in a browser environment'
+      )
+    }
+
     const isMiniApp = this.isMiniApp()
 
     this.config = config
@@ -164,35 +170,39 @@ export class PPLEMiniApp {
         })
       } else {
         token = await this.loadTokenFromSessionStorage()
-        if (!token) throw new Error('No access token found in URL or session storage')
+        if (!token)
+          throw new Error('[PPLE Mini App] No access token found in URL or session storage')
       }
 
       const user = await this.storeUserInOIDCClient(token)
-      this.user = user
+      this._user = user
     } else {
-      const user = await this.userManager.signinCallback()
+      try {
+        const user = await this.userManager.signinCallback()
+        if (user) {
+          const accessTokenDetails = {
+            accessToken: user.access_token,
+            idToken: user.id_token as string,
+            tokenType: 'Bearer',
+            expiresIn: (user.expires_in || 3600).toString(),
+          }
 
-      if (user) {
-        const accessTokenDetails = {
-          accessToken: user.access_token,
-          idToken: user.id_token as string,
-          tokenType: 'Bearer',
-          expiresIn: (user.expires_in || 3600).toString(),
+          this._user = user
+          this.storeTokenInLocalStorage(accessTokenDetails)
         }
+      } catch {
+        console.warn('[PPLE Mini App] No signin callback to process')
 
-        this.user = user
-        this.storeTokenInLocalStorage(accessTokenDetails)
-      } else {
         const token = await this.loadTokenFromLocalStorage()
 
         if (token) {
           const user = await this.storeUserInOIDCClient(token)
-          this.user = user
+          this._user = user
         } else await this.userManager.signinRedirect()
       }
     }
 
-    console.log('PPLE Mini App initialized')
+    console.log('[PPLE Mini App] PPLE Mini App initialized')
   }
 
   isMiniApp() {
@@ -202,5 +212,19 @@ export class PPLEMiniApp {
     const isAccessTokenParamsInUrl = !!queryParams.has('access_token')
 
     return isHeaderMatch && isAccessTokenParamsInUrl
+  }
+
+  get user() {
+    if (!this._user) {
+      console.warn('[PPLE Mini App] User is not initialized yet. Please call init() first.')
+      return null
+    }
+    return {
+      name: this._user.profile.name,
+      given_name: this._user.profile.given_name,
+      family_name: this._user.profile.family_name,
+      access_token: this._user.access_token,
+      id_token: this._user.id_token,
+    }
   }
 }
