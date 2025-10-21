@@ -46,6 +46,8 @@ import {
   useRecentActivityQuery,
 } from '@app/libs/pple-activity'
 
+import { useBottomTabOnPress } from '../_layout'
+
 export default function ActivityPage() {
   return (
     <SafeAreaLayout>
@@ -255,8 +257,13 @@ function PollFeedSection(props: { ListHeaderComponent: React.ReactNode }) {
     await queryClient.invalidateQueries({ queryKey: useRecentActivityQuery.getKey() })
   }, [queryClient])
 
+  const flatListRef = React.useRef<Animated.FlatList<any>>(null)
+  useBottomTabOnPress(() => {
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true })
+  })
   return (
     <Animated.FlatList
+      ref={flatListRef}
       className="flex-1"
       contentContainerClassName="flex flex-col bg-base-bg-default flex-grow mb-4"
       refreshControl={<RefreshControl onRefresh={onRefresh} />}

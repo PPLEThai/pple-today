@@ -51,6 +51,7 @@ import {
   PagerContentView,
   PagerHeader,
   PagerHeaderOnly,
+  PagerRef,
   PagerScrollViewProps,
   PagerTabBar,
   PagerTabBarItem,
@@ -63,10 +64,16 @@ import { useAuthMe, useSession } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { useScrollContext } from '@app/libs/scroll-context'
 
+import { useBottomTabOnPress } from '../_layout'
+
 export default function FeedPage() {
+  const ref = React.useRef<PagerRef>(null)
+  useBottomTabOnPress(() => {
+    ref.current?.scrollToTop()
+  })
   return (
     <SafeAreaLayout>
-      <Pager>
+      <Pager ref={ref}>
         <PagerHeader>
           <PagerHeaderOnly>
             <MainHeader />

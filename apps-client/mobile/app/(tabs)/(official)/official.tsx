@@ -36,6 +36,8 @@ import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
 
+import { useBottomTabOnPress } from '../_layout'
+
 export default function OfficialPage() {
   const queryClient = useQueryClient()
   const onRefresh = useCallback(async () => {
@@ -48,9 +50,15 @@ export default function OfficialPage() {
       }),
     ])
   }, [queryClient])
+
+  useBottomTabOnPress(() => {
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true })
+  })
+  const scrollViewRef = React.useRef<ScrollView>(null)
   return (
     <SafeAreaLayout>
       <ScrollView
+        ref={scrollViewRef}
         className="flex-1"
         contentContainerClassName="bg-base-bg-default flex-grow"
         refreshControl={<RefreshControl onRefresh={onRefresh} />}
