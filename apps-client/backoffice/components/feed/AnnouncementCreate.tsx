@@ -20,6 +20,7 @@ import {
   FormMessage,
 } from '@pple-today/web-ui/form'
 import { Input } from '@pple-today/web-ui/input'
+import { MultiSelect } from '@pple-today/web-ui/multi-select'
 import {
   Select,
   SelectContent,
@@ -43,6 +44,7 @@ const CreateAnnouncementFormSchema = z.object({
   title: z.string().min(1, 'กรุณากรอกชื่อประกาศ'),
   type: z.enum(['OFFICIAL', 'PARTY_COMMUNICATE', 'INTERNAL']),
   content: z.string().min(1, 'กรุณากรอกรายละเอียด'),
+  topicIds: z.array(z.string()).min(1, 'กรุณาเลือกอย่างน้อย 1 หัวข้อ'),
   attachmentFile: z
     .instanceof(File, { error: 'กรุณาอัปโหลดไฟล์' })
     .refine((file) => file.size <= MAX_FILE_SIZE, `กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB`)
@@ -63,6 +65,7 @@ interface AnnouncementCreateProps {
 export const AnnouncementCreate = (props: AnnouncementCreateProps) => {
   const [isOpen, setIsOpen] = useState(false)
 
+  const topicQuery = reactQueryClient.useQuery('/admin/topics', { query: {} })
   const getFileUploadUrl = reactQueryClient.useMutation('post', '/admin/file/upload-url')
   const createAnnouncementMutation = reactQueryClient.useMutation('post', '/admin/announcements')
 
@@ -72,6 +75,7 @@ export const AnnouncementCreate = (props: AnnouncementCreateProps) => {
       title: '',
       type: 'INTERNAL',
       content: '',
+      topicIds: [],
       attachmentFile: undefined,
     },
   })
@@ -188,6 +192,30 @@ export const AnnouncementCreate = (props: AnnouncementCreateProps) => {
                     <Textarea {...field} placeholder="กรอกรายละเอียด" />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="topicIds"
+              render={({ field: { onChange, ...field } }) => (
+                <FormItem>
+                  <FormLabel>
+                    หัวข้อ <span className="text-system-danger-default">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <MultiSelect
+                      options={
+                        topicQuery.data?.data.map((t) => ({ value: t.id, label: t.name })) ?? []
+                      }
+                      {...field}
+                      onValueChange={onChange}
+                      placeholder="เลือกหัวข้อ"
+                    />
+                  </FormControl>
+                  <FormMessage asChild>
+                    <FormDescription>เลือกอย่างน้อย 1 หัวข้อ</FormDescription>
+                  </FormMessage>
                 </FormItem>
               )}
             />

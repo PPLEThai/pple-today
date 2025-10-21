@@ -32,6 +32,7 @@ export const CreateAnnouncementBody = t.Object({
   title: t.String({ description: 'The title of the announcement' }),
   type: t.Enum(AnnouncementType, { description: 'The type of the announcement' }),
   content: t.String({ description: 'The content of the announcement' }),
+  topicIds: t.Array(t.String({ description: 'The ID of the announcement topic' })),
   attachmentFilePaths: t.Array(FilePath),
 })
 
@@ -49,6 +50,7 @@ export const UpdateAnnouncementBody = t.Partial(
     title: t.String({ description: 'The title of the announcement' }),
     type: t.Enum(AnnouncementType, { description: 'The type of the announcement' }),
     content: t.Nullable(t.String({ description: 'The content of the announcement' })),
+    topicIds: t.Array(t.String({ description: 'The ID of the announcement topic' })),
     attachmentFilePaths: t.Array(FilePath),
     status: t.Enum(AnnouncementStatus, { description: 'The status of the announcement' }),
   })

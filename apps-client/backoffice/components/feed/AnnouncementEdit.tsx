@@ -20,6 +20,7 @@ import {
   FormMessage,
 } from '@pple-today/web-ui/form'
 import { Input } from '@pple-today/web-ui/input'
+import { MultiSelect } from '@pple-today/web-ui/multi-select'
 import {
   Select,
   SelectContent,
@@ -43,6 +44,7 @@ const EditAnnouncementFormSchema = z.object({
   title: z.string().min(1, 'กรุณากรอกชื่อประกาศ'),
   type: z.enum(['OFFICIAL', 'PARTY_COMMUNICATE', 'INTERNAL']),
   content: z.string().min(1, 'กรุณากรอกรายละเอียด'),
+  topicIds: z.array(z.string()).min(1, 'กรุณาเลือกอย่างน้อย 1 หัวข้อ'),
   attachmentFile: z.union([
     z
       .instanceof(File, { error: 'กรุณาอัปโหลดไฟล์' })
@@ -71,6 +73,7 @@ export const AnnouncementEdit = (props: AnnouncementEditProps) => {
     setIsOpen(state)
   }
 
+  const topicQuery = reactQueryClient.useQuery('/admin/topics', { query: {} })
   const getFileUploadUrl = reactQueryClient.useMutation('post', '/admin/file/upload-url')
   const updateAnnouncementMutation = reactQueryClient.useMutation(
     'patch',
@@ -80,9 +83,10 @@ export const AnnouncementEdit = (props: AnnouncementEditProps) => {
   const form = useForm<EditAnnouncementFormSchema>({
     resolver: standardSchemaResolver(EditAnnouncementFormSchema),
     defaultValues: {
-      title: '',
-      type: 'INTERNAL',
-      content: '',
+      title: props.announcement.title,
+      type: props.announcement.type,
+      content: props.announcement.content ?? '',
+      topicIds: props.announcement.topics.map((topic) => topic.id),
       attachmentFile: 'OLD_FILE',
     },
   })
@@ -98,9 +102,16 @@ export const AnnouncementEdit = (props: AnnouncementEditProps) => {
       title: props.announcement.title,
       type: props.announcement.type,
       content: props.announcement.content ?? '',
+      topicIds: props.announcement.topics.map((topic) => topic.id),
       attachmentFile: 'OLD_FILE',
     })
-  }, [form, props.announcement.content, props.announcement.title, props.announcement.type])
+  }, [
+    form,
+    props.announcement.content,
+    props.announcement.title,
+    props.announcement.topics,
+    props.announcement.type,
+  ])
 
   const onSubmit: SubmitHandler<EditAnnouncementFormSchema> = async ({
     attachmentFile,
@@ -215,6 +226,31 @@ export const AnnouncementEdit = (props: AnnouncementEditProps) => {
                     <Textarea {...field} placeholder="กรอกรายละเอียด" />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="topicIds"
+              render={({ field: { onChange, ...field } }) => (
+                <FormItem>
+                  <FormLabel>
+                    หัวข้อ <span className="text-system-danger-default">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <MultiSelect
+                      options={
+                        topicQuery.data?.data.map((t) => ({ value: t.id, label: t.name })) ?? []
+                      }
+                      {...field}
+                      defaultValue={field.value}
+                      onValueChange={onChange}
+                      placeholder="เลือกหัวข้อ"
+                    />
+                  </FormControl>
+                  <FormMessage asChild>
+                    <FormDescription>เลือกอย่างน้อย 1 หัวข้อ</FormDescription>
+                  </FormMessage>
                 </FormItem>
               )}
             />

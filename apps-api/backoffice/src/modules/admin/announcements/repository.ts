@@ -252,6 +252,11 @@ export class AdminAnnouncementRepository {
                 title: data.title,
                 content: data.content,
                 type: data.type,
+                topics: {
+                  createMany: {
+                    data: data.topicIds.map((topicId) => ({ topicId })),
+                  },
+                },
                 attachments: {
                   createMany: {
                     data: newAttachmentFilePaths.map((filePath) => ({ filePath })),
@@ -323,6 +328,14 @@ export class AdminAnnouncementRepository {
           title: data.title,
           type: data.type,
           content: data.content,
+          ...(data.topicIds && {
+            topics: {
+              deleteMany: {},
+              createMany: {
+                data: data.topicIds.map((topicId) => ({ topicId })),
+              },
+            },
+          }),
           attachments: {
             deleteMany: {},
             createMany: {

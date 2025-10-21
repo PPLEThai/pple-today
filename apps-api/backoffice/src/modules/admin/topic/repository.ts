@@ -17,9 +17,9 @@ export class AdminTopicRepository {
     private readonly fileService: FileService
   ) {}
 
-  async getTopics(query: GetTopicsQuery = { limit: 10, page: 1 }) {
+  async getTopics(query: GetTopicsQuery = { page: 1 }) {
     const { limit, page } = query
-    const skip = Math.max((page - 1) * limit, 0)
+    const skip = limit !== undefined ? Math.max((page - 1) * limit, 0) : 0
 
     return fromRepositoryPromise(async () => {
       const [data, count] = await Promise.all([
