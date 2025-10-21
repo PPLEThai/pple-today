@@ -713,6 +713,7 @@ export class AdminElectionService {
     }
 
     const election = electionResult.value
+
     if (election.type !== 'ONLINE' && election.type !== 'HYBRID') {
       return err({
         code: InternalErrorCode.ELECTION_INVALID_TYPE,
@@ -723,6 +724,13 @@ export class AdminElectionService {
     const checkResult = this.checkIsElectionAllowedToUpdateResult(election)
     if (checkResult.isErr()) return err(checkResult.error)
 
+    if (election.keysStatus !== ElectionKeysStatus.CREATED) {
+      return err({
+        code: InternalErrorCode.ELECTION_KEY_NOT_READY,
+        message: `Election's keys are not in the status that can be used to decrypt ballot`,
+      })
+    }
+
     const ballotsResult = await this.adminElectionRepository.listElectionBallots(electionId)
     if (ballotsResult.isErr()) return mapRepositoryError(ballotsResult.error)
 
@@ -730,6 +738,9 @@ export class AdminElectionService {
 
     const countResult = await this.ballotCryptoService.countBallots(electionId, ballots)
     if (countResult.isErr()) return mapRepositoryError(countResult.error)
+
+    const unlinkResult = await this.adminElectionRepository.unlinkVoteRecordsToBallots(electionId)
+    if (unlinkResult.isErr()) return mapRepositoryError(unlinkResult.error)
 
     return ok()
   }

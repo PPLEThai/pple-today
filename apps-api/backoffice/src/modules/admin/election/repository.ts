@@ -552,6 +552,19 @@ export class AdminElectionRepository {
       })
     )
   }
+
+  async unlinkVoteRecordsToBallots(electionId: string) {
+    return fromRepositoryPromise(async () => {
+      await this.prismaService.electionVoteRecord.updateMany({
+        where: {
+          electionId,
+        },
+        data: {
+          ballotId: null,
+        },
+      })
+    })
+  }
 }
 
 export const AdminElectionRepositoryPlugin = new Elysia({ name: 'AdminElectionRepository' })

@@ -251,6 +251,9 @@ const ELECTION_ERROR_SCHEMA = {
   ELECTION_INVALID_SIGNATURE: {
     status: 401,
   },
+  ELECTION_KEY_NOT_READY: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 export const KEY_ERROR_SCHEMA = {

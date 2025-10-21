@@ -642,7 +642,8 @@ export const AdminElectionController = new Elysia({
             InternalErrorCode.ELECTION_NOT_FOUND,
             InternalErrorCode.ELECTION_IS_CANNCELLED,
             InternalErrorCode.ELECTION_NOT_IN_CLOSED_VOTE_PERIOD,
-            InternalErrorCode.ELECTION_INVALID_TYPE
+            InternalErrorCode.ELECTION_INVALID_TYPE,
+            InternalErrorCode.ELECTION_KEY_NOT_READY
           ),
         },
       }
