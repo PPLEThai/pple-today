@@ -517,7 +517,7 @@ export class AdminElectionService {
       })
     }
 
-    const votes = R.sumBy(result, (result) => result.votes)
+    const votes = R.sumBy(result, (candidate) => candidate.votes)
     if (votes > election._count.voters) {
       return err({
         code: InternalErrorCode.ELECTION_VOTES_EXCEED_VOTERS,
