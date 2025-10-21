@@ -313,7 +313,6 @@ export const useLoginMutation = () => {
       if (result.action === 'register') {
         router.dismissTo('/onboarding')
       } else if (result.action === 'login') {
-        console.log('Login successful, navigating to home.')
         router.dismissTo('/')
       }
     },
