@@ -1,29 +1,13 @@
 import { User, UserManager, WebStorageStateStore } from 'oidc-client-ts'
 
-import { AccessTokenDetailsSchema, IdTokenPayloadSchema, UserInfoSchema } from './models'
+import { AccessTokenDetailsSchema, IdTokenPayloadSchema } from './models'
+
+export type { User }
 
 export class PPLEMiniApp {
   private config: { oauthUrl: string; oauthClientId: string; oauthRedirectUri: string }
   private userManager: UserManager
   private _user: User | null = null
-
-  private fetchUserInfo = async (accessToken: string) => {
-    const response = await fetch(`${this.config.oauthUrl}/oidc/v1/userinfo`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    })
-
-    if (!response.ok) throw new Error('[PPLE Mini App] Failed to fetch user info')
-
-    const userInfo = await response.json()
-    const result = await UserInfoSchema.safeParseAsync(userInfo)
-
-    if (!result.success) throw new Error('[PPLE Mini App] Invalid user info format')
-
-    return result.data
-  }
 
   private async extractJWTPayload(token: string) {
     const payloadBase64 = token.split('.')[1]
@@ -54,7 +38,6 @@ export class PPLEMiniApp {
   }
 
   private async storeUserInOIDCClient(accessTokenDetails: AccessTokenDetailsSchema) {
-    const userInfo = await this.fetchUserInfo(accessTokenDetails.accessToken)
     const idTokenPayload = await this.extractJWTPayload(accessTokenDetails.idToken)
 
     const user = new User({
@@ -62,12 +45,6 @@ export class PPLEMiniApp {
       id_token: accessTokenDetails.idToken,
       token_type: accessTokenDetails.tokenType,
       profile: {
-        name: userInfo.name,
-        given_name: userInfo.given_name,
-        family_name: userInfo.family_name,
-        updated_at: userInfo.updated_at,
-        phone_number: userInfo.phone_number,
-        phone_number_verified: userInfo.phone_number_verified,
         aud: idTokenPayload.aud,
         sub: idTokenPayload.sub,
         exp: idTokenPayload.exp,
@@ -214,17 +191,10 @@ export class PPLEMiniApp {
     return isHeaderMatch && isAccessTokenParamsInUrl
   }
 
-  get user() {
+  get user(): User {
     if (!this._user) {
-      console.warn('[PPLE Mini App] User is not initialized yet. Please call init() first.')
-      return null
+      throw new Error('[PPLE Mini App] User not initialized. Please call init() first.')
     }
-    return {
-      name: this._user.profile.name,
-      given_name: this._user.profile.given_name,
-      family_name: this._user.profile.family_name,
-      access_token: this._user.access_token,
-      id_token: this._user.id_token,
-    }
+    return this._user
   }
 }

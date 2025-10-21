@@ -37,7 +37,7 @@ const MiniAppWebView = () => {
 
   return (
     <WebView
-      userAgent={`PPLETodayApp/${Constants.expoConfig?.version ?? 'local'}`}
+      userAgent={`PPLETodayApp/${Constants.expoConfig?.version ?? 'local'} MiniApp`}
       source={{ uri: tokenExchangeMiniAppResult.data.url }}
       startInLoadingState={true}
     />

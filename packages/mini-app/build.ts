@@ -5,6 +5,7 @@ async function main() {
     entryPoints: ['./src/index.ts'],
     bundle: true,
     treeShaking: true,
+    minify: true,
     platform: 'browser',
     outfile: './build/script.js',
     target: ['es6'],
@@ -13,6 +14,7 @@ async function main() {
     entryPoints: ['./src/index.ts'],
     bundle: true,
     treeShaking: true,
+    minify: true,
     platform: 'neutral',
     outfile: './build/esm.js',
   })
@@ -20,6 +22,7 @@ async function main() {
     entryPoints: ['./src/index.ts'],
     bundle: true,
     treeShaking: true,
+    minify: true,
     outfile: './build/cjs.js',
     platform: 'node',
     target: ['es6'],
