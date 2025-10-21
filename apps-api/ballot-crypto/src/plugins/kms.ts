@@ -171,6 +171,8 @@ export class KeyManagementService {
         action: 'DESTROY',
         status: 'FAILED',
       })
+
+      return err(result.error)
     }
 
     this.log({
