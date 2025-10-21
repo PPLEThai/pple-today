@@ -172,8 +172,8 @@ function TodayActivityContent(props: PagerScrollViewProps) {
       ref={scrollElRef}
       onScroll={scrollHandler}
       data={data}
-      className="flex-1 bg-base-bg-default"
-      contentContainerClassName="flex flex-col bg-base-bg-default py-4"
+      className="flex-1"
+      contentContainerClassName="flex-grow flex flex-col bg-base-bg-default py-4"
       contentContainerStyle={{ paddingTop: headerHeight, minHeight: minHeight }}
       onEndReachedThreshold={1}
       renderItem={renderFeedItem}
@@ -259,8 +259,8 @@ function UpcomingActivityContent(props: PagerScrollViewProps) {
       ref={scrollElRef}
       onScroll={scrollHandler}
       data={data}
-      className="flex-1 bg-base-bg-default"
-      contentContainerClassName="flex flex-col bg-base-bg-default py-4"
+      className="flex-1"
+      contentContainerClassName="flex-grow flex flex-col bg-base-bg-default py-4"
       contentContainerStyle={{ paddingTop: headerHeight, minHeight: minHeight }}
       onEndReachedThreshold={1}
       renderItem={renderFeedItem}

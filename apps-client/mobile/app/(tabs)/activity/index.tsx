@@ -70,9 +70,7 @@ export default function ActivityPage() {
                 กิจกรรมจากพรรคประชาชน
               </Text>
             </View>
-            <View className="gap-3 py-4">
-              <RecentActivity />
-            </View>
+            <RecentActivity />
           </>
         }
       />
@@ -178,7 +176,7 @@ function RecentActivity() {
     return null
   }
   return (
-    <View className="px-4 flex flex-col gap-3">
+    <View className="px-4 flex flex-col gap-3 pt-4">
       <View className="flex flex-row justify-between items-center">
         <View className="flex flex-row gap-2 items-center">
           <Icon icon={CalendarHeartIcon} className="size-8 text-base-primary-default" />
@@ -266,14 +264,14 @@ function PollFeedSection(props: { ListHeaderComponent: React.ReactNode }) {
   return (
     <Animated.FlatList
       ref={flatListRef}
-      className="flex-1 bg-base-bg-default"
-      contentContainerClassName="flex flex-col gap-3"
+      className="flex-1"
+      contentContainerClassName="flex flex-col bg-base-bg-default flex-grow mb-4"
       refreshControl={<RefreshControl onRefresh={onRefresh} />}
       ListHeaderComponent={
         <>
           {props.ListHeaderComponent}
           {!!session && (
-            <View className="flex flex-row justify-between items-center px-4">
+            <View className="flex flex-row justify-between items-center px-4 pt-4">
               <View className="flex flex-row gap-2 items-center">
                 <Icon icon={ListTodoIcon} className="size-8 text-base-primary-default" />
                 <H2 className="text-2xl text-base-text-high font-heading-semibold">แบบสอบถาม</H2>

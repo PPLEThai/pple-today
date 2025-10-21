@@ -98,13 +98,14 @@ export function FeedCommentSection({
 
   return (
     <FlatList
+      className="flex-1"
+      contentContainerClassName="pb-2 bg-base-bg-default flex-grow"
       data={data}
       onEndReached={onEndReached}
       onEndReachedThreshold={1}
       ListHeaderComponent={headerComponent}
       ListHeaderComponentClassName="pb-2"
       ListFooterComponent={Footer}
-      contentContainerClassName="pb-2"
       renderItem={renderItem}
     />
   )

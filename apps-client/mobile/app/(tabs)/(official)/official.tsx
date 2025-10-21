@@ -59,7 +59,8 @@ export default function OfficialPage() {
     <SafeAreaLayout>
       <ScrollView
         ref={scrollViewRef}
-        className="flex-1 bg-base-bg-default"
+        className="flex-1"
+        contentContainerClassName="bg-base-bg-default flex-grow"
         refreshControl={<RefreshControl onRefresh={onRefresh} />}
       >
         <View className="flex flex-col p-4 bg-base-bg-white">
@@ -110,8 +111,8 @@ const ElectionSection = () => {
       >
         <SlideScrollView>
           {elections.map((election) => (
-            <SlideItem key={election.id}>
-              <ElectionCard election={election} className="flex-1" />
+            <SlideItem key={election.id} className="flex flex-row items-stretch">
+              <ElectionCard election={election} />
             </SlideItem>
           ))}
         </SlideScrollView>
