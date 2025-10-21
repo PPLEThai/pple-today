@@ -137,7 +137,7 @@ export class AdminAnnouncementRepository {
 
   async getAnnouncementById(announcementId: string) {
     return await fromRepositoryPromise(async () => {
-      const { feedItemId, attachments, feedItem, ...result } =
+      const { feedItemId, attachments, feedItem, topics, ...result } =
         await this.prismaService.announcement.findUniqueOrThrow({
           where: { feedItemId: announcementId },
           select: {
@@ -180,6 +180,16 @@ export class AdminAnnouncementRepository {
                 },
               },
             },
+            topics: {
+              select: {
+                topic: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
           },
         })
 
@@ -204,6 +214,7 @@ export class AdminAnnouncementRepository {
               : undefined,
           },
         })),
+        topics: topics.map((topic) => topic.topic),
         ...result,
       }
     })

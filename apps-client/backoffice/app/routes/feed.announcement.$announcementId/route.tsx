@@ -236,6 +236,20 @@ export default function AnnouncementDetailPage({ params }: Route.LoaderArgs) {
               </div>
               <Engagements likes={upVotes} dislikes={downVotes} comments={commentsCount} />
             </div>
+            <div className="flex items-start gap-2 text-base-text-medium text-sm">
+              <span>หัวข้อ:</span>
+              <div className="flex-1 min-w-0 flex gap-2 flex-wrap">
+                {query.data.topics.length > 0 ? (
+                  query.data.topics.map((t) => (
+                    <Badge key={t.id} variant="secondary">
+                      {t.name}
+                    </Badge>
+                  ))
+                ) : (
+                  <span>ไม่มี</span>
+                )}
+              </div>
+            </div>
             {query.data.attachments.length > 0 && (
               <div className="flex items-center gap-2">
                 {query.data.attachments.map((attachment) => (

@@ -3,6 +3,7 @@ import { Static, t } from 'elysia'
 
 import { FeedItemComment, FeedItemReaction } from './feed'
 import { FilePath } from './file'
+import { Topic } from './topic'
 
 export const Announcement = t.Object({
   id: t.String({ description: 'The ID of the announcement' }),
@@ -28,6 +29,7 @@ export const DetailedAnnouncement = t.Composite([
         filePath: FilePath,
       })
     ),
+    topics: t.Array(t.Pick(Topic, ['id', 'name'])),
   }),
 ])
 export type DetailedAnnouncement = Static<typeof DetailedAnnouncement>
