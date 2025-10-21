@@ -19,6 +19,22 @@ export const ElectionWithCurrentStatus = t.Intersect([
 ])
 export type ElectionWithCurrentStatus = Static<typeof ElectionWithCurrentStatus>
 
+export const ListElectionQuery = t.Object({
+  in: t.Optional(
+    t.Enum(
+      {
+        OFFICIAL: 'OFFICIAL',
+        PROFILE: 'PROFILE',
+      },
+      {
+        description: 'The page to list elections for',
+        default: 'OFFICIAL',
+      }
+    )
+  ),
+})
+export type ListElectionQuery = Static<typeof ListElectionQuery>
+
 export const ListElectionResponse = t.Array(ElectionWithCurrentStatus)
 export type ListElectionResponse = Static<typeof ListElectionResponse>
 

@@ -10,12 +10,14 @@ import {
   AdminCancelElectionResponse,
   AdminCreateCandidateProfileUploadURLBody,
   AdminCreateCandidateProfileUploadURLResponse,
+  AdminCreateElectionBody,
   AdminCreateElectionCandidateBody,
   AdminCreateElectionCandidateParams,
   AdminCreateElectionCandidateResponse,
   AdminCreateElectionEligibleVoterBody,
   AdminCreateElectionEligibleVoterParams,
   AdminCreateElectionEligibleVoterResponse,
+  AdminCreateElectionResponse,
   AdminDeleteElectionCandidateParams,
   AdminDeleteElectionCandidateResponse,
   AdminDeleteElectionEligibleVoterBody,
@@ -30,6 +32,10 @@ import {
   AdminListElectionQuery,
   AdminListElectionResponse,
   AdminUpdateElectionCandidateParams,
+  AdminUpdateElectionCandidateResponse,
+  AdminUpdateElectionKeysBody,
+  AdminUpdateElectionKeysParams,
+  AdminUpdateElectionKeysResponse,
 } from './models'
 import { AdminElectionServicePlugin } from './services'
 
@@ -40,6 +46,32 @@ export const AdminElectionController = new Elysia({
   tags: ['Admin Elections'],
 })
   .use([AdminAuthGuardPlugin, AdminElectionServicePlugin])
+  .post(
+    '/',
+    async ({ body, status, adminElectionService }) => {
+      const result = await adminElectionService.createElection(body)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(201, result.value)
+    },
+    {
+      detail: {
+        summary: 'Create Election',
+        description: 'Create Election',
+      },
+      requiredLocalUser: true,
+      body: AdminCreateElectionBody,
+      response: {
+        201: AdminCreateElectionResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.FORBIDDEN,
+          InternalErrorCode.BAD_REQUEST,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
   .get(
     '/',
     async ({ query, status, adminElectionService }) => {
@@ -200,6 +232,8 @@ export const AdminElectionController = new Elysia({
               InternalErrorCode.UNAUTHORIZED,
               InternalErrorCode.FORBIDDEN,
               InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+              InternalErrorCode.ELECTION_IS_CANCELLED,
               InternalErrorCode.FILE_MOVE_ERROR,
               InternalErrorCode.FILE_ROLLBACK_FAILED,
               InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
@@ -228,11 +262,13 @@ export const AdminElectionController = new Elysia({
           params: AdminUpdateElectionCandidateParams,
           body: AdminCreateElectionCandidateBody,
           response: {
-            200: AdminCreateElectionCandidateResponse,
+            200: AdminUpdateElectionCandidateResponse,
             ...createErrorSchema(
               InternalErrorCode.UNAUTHORIZED,
               InternalErrorCode.FORBIDDEN,
               InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+              InternalErrorCode.ELECTION_IS_CANCELLED,
               InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
               InternalErrorCode.FILE_MOVE_ERROR,
               InternalErrorCode.FILE_ROLLBACK_FAILED,
@@ -263,6 +299,8 @@ export const AdminElectionController = new Elysia({
               InternalErrorCode.UNAUTHORIZED,
               InternalErrorCode.FORBIDDEN,
               InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+              InternalErrorCode.ELECTION_IS_CANCELLED,
               InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
               InternalErrorCode.FILE_MOVE_ERROR,
               InternalErrorCode.FILE_ROLLBACK_FAILED,
@@ -340,9 +378,10 @@ export const AdminElectionController = new Elysia({
             ...createErrorSchema(
               InternalErrorCode.UNAUTHORIZED,
               InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+              InternalErrorCode.ELECTION_IS_CANCELLED,
               InternalErrorCode.USER_NOT_FOUND,
               InternalErrorCode.ELECTION_INVALID_ELIGIBLE_VOTER_IDENTIFIER,
-              InternalErrorCode.ELECTION_ALREADY_PUBLISH,
               InternalErrorCode.INTERNAL_SERVER_ERROR
             ),
           },
@@ -377,6 +416,7 @@ export const AdminElectionController = new Elysia({
               InternalErrorCode.UNAUTHORIZED,
               InternalErrorCode.ELECTION_NOT_FOUND,
               InternalErrorCode.USER_NOT_FOUND,
+              InternalErrorCode.ELECTION_IS_CANCELLED,
               InternalErrorCode.ELECTION_INVALID_ELIGIBLE_VOTER_IDENTIFIER,
               InternalErrorCode.ELECTION_ALREADY_PUBLISH,
               InternalErrorCode.INTERNAL_SERVER_ERROR
@@ -414,10 +454,43 @@ export const AdminElectionController = new Elysia({
               InternalErrorCode.BAD_REQUEST,
               InternalErrorCode.ELECTION_NOT_FOUND,
               InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+              InternalErrorCode.ELECTION_IS_CANCELLED,
               InternalErrorCode.ELECTION_INVALID_ELIGIBLE_VOTER_IDENTIFIER,
               InternalErrorCode.INTERNAL_SERVER_ERROR
             ),
           },
         }
       )
+  )
+  .group('/:electionId/keys', (app) =>
+    app.put(
+      '/',
+      async ({ params, body, status, adminElectionService }) => {
+        const result = await adminElectionService.updateElectionKeys(params.electionId, body)
+        if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+        return status(200, {
+          message: 'Update Election Keys Successfully',
+        })
+      },
+      {
+        detail: {
+          summary: 'Update election keys',
+          description: 'Update election keys',
+        },
+        validateBallotCrypto: true,
+        params: AdminUpdateElectionKeysParams,
+        body: AdminUpdateElectionKeysBody,
+        response: {
+          200: AdminUpdateElectionKeysResponse,
+          ...createErrorSchema(
+            InternalErrorCode.INTERNAL_SERVER_ERROR,
+            InternalErrorCode.BAD_REQUEST,
+            InternalErrorCode.UNAUTHORIZED,
+            InternalErrorCode.ELECTION_NOT_FOUND,
+            InternalErrorCode.ELECTION_KEY_NOT_IN_PENDING_CREATED_STATUS
+          ),
+        },
+      }
+    )
   )

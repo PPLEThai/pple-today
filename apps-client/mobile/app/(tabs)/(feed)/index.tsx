@@ -283,7 +283,11 @@ function Banner({ banner }: { banner: GetBannersResponse[number] }) {
 
 function EventSection() {
   const session = useSession()
-  const electionsQuery = reactQueryClient.useQuery('/elections', {}, { enabled: !!session })
+  const electionsQuery = reactQueryClient.useQuery(
+    '/elections',
+    { query: { in: 'OFFICIAL' } },
+    { enabled: !!session }
+  )
   const elections = electionsQuery.data || []
   if (elections.length === 0) {
     return null

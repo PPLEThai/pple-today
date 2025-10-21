@@ -90,7 +90,11 @@ export default function OfficialPage() {
 
 const ElectionSection = () => {
   const session = useSession()
-  const electionsQuery = reactQueryClient.useQuery('/elections', {}, { enabled: !!session })
+  const electionsQuery = reactQueryClient.useQuery(
+    '/elections',
+    { query: { in: 'OFFICIAL' } },
+    { enabled: !!session }
+  )
   const elections = electionsQuery.data || []
   if (elections.length === 0) {
     return null
