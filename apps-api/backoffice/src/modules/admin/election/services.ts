@@ -15,6 +15,7 @@ import {
 } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
+import * as R from 'remeda'
 
 import {
   AdminCreateElectionBody,
@@ -516,7 +517,7 @@ export class AdminElectionService {
       })
     }
 
-    const votes = result.reduce((acc, cur) => acc + cur.votes, 0)
+    const votes = R.sumBy(result, (result) => result.votes)
     if (votes > election._count.voters) {
       return err({
         code: InternalErrorCode.ELECTION_VOTES_EXCEED_VOTERS,
