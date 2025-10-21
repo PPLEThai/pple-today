@@ -145,9 +145,7 @@ const ProfileSetting = () => {
           <HeaderSection />
           <View className="p-4 flex flex-col gap-3">
             <ProfileSection />
-            {/* <AchievementSection /> */}
             <AddressSection />
-            <PointSection />
           </View>
         </View>
         <View className="bg-base-bg-light flex-1 flex flex-col gap-3 px-4 py-2.5">
@@ -226,7 +224,7 @@ const ProfileSection = () => {
     </View>
   )
 }
-const AchievementSection = () => {
+export const AchievementSection = () => {
   return (
     <View className="rounded-xl border border-base-outline-default px-4 py-2 flex flex-col gap-2">
       <View className="flex flex-row gap-2 items-center">
@@ -278,7 +276,7 @@ const AddressSection = () => {
   )
 }
 
-const PointSection = () => {
+export const PointSection = () => {
   const profileQuery = reactQueryClient.useQuery('/profile/me', {})
   return (
     <View className="rounded-xl bg-base-primary-default p-2 flex flex-row justify-between items-center">
@@ -675,7 +673,7 @@ const Participation = ({
   }
 }
 
-const ActivitySection = () => {
+export const ActivitySection = () => {
   return (
     <View className="flex flex-col gap-3 border border-base-outline-default rounded-xl py-3 px-4 bg-base-bg-white">
       <View className="flex flex-row items-center justify-between pb-2 border-b border-base-outline-default">
