@@ -11,6 +11,7 @@ import {
   Election,
   ElectionCandidate,
   ElectionKeysStatus,
+  ElectionMode,
   EligibleVoterType,
 } from '@pple-today/database/prisma'
 import crypto from 'crypto'
@@ -739,8 +740,10 @@ export class AdminElectionService {
     const countResult = await this.ballotCryptoService.countBallots(electionId, ballots)
     if (countResult.isErr()) return mapRepositoryError(countResult.error)
 
-    const unlinkResult = await this.adminElectionRepository.unlinkVoteRecordsToBallots(electionId)
-    if (unlinkResult.isErr()) return mapRepositoryError(unlinkResult.error)
+    if (election.mode === ElectionMode.SECURE) {
+      const unlinkResult = await this.adminElectionRepository.unlinkVoteRecordsToBallots(electionId)
+      if (unlinkResult.isErr()) return mapRepositoryError(unlinkResult.error)
+    }
 
     return ok()
   }
