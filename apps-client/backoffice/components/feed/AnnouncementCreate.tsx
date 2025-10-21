@@ -30,6 +30,7 @@ import {
 import { Textarea } from '@pple-today/web-ui/textarea'
 import { Typography } from '@pple-today/web-ui/typography'
 import { ANNOUNCEMENT_TYPE_LONG_DISPLAY_TEXT, AnnouncementIcon } from 'components/AnnouncementIcon'
+import { FileUploadInput } from 'components/FileUpload'
 import { X } from 'lucide-react'
 import { ACCEPTED_FILE_TYPES, handleUploadFile, MAX_FILE_SIZE } from 'utils/file-upload'
 import z from 'zod'
@@ -42,15 +43,14 @@ const CreateAnnouncementFormSchema = z.object({
   title: z.string().min(1, 'กรุณากรอกชื่อประกาศ'),
   type: z.enum(['OFFICIAL', 'PARTY_COMMUNICATE', 'INTERNAL']),
   content: z.string().min(1, 'กรุณากรอกรายละเอียด'),
-  attachmentFiles: z.array(
-    z
-      .instanceof(File, { error: 'กรุณาอัปโหลดไฟล์' })
-      .refine((file) => file.size <= MAX_FILE_SIZE, `กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB`)
-      .refine(
-        (file) => ACCEPTED_FILE_TYPES.includes(file.type),
-        'กรุณาอัปโหลดไฟล์ประเภท PDF / JPG / PNG'
-      )
-  ),
+  attachmentFile: z
+    .instanceof(File, { error: 'กรุณาอัปโหลดไฟล์' })
+    .refine((file) => file.size <= MAX_FILE_SIZE, `กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB`)
+    .refine(
+      (file) => ACCEPTED_FILE_TYPES.includes(file.type),
+      'กรุณาอัปโหลดไฟล์ประเภท PDF / JPG / PNG'
+    )
+    .optional(),
 })
 
 type CreateAnnouncementFormSchema = z.infer<typeof CreateAnnouncementFormSchema>
@@ -72,37 +72,37 @@ export const AnnouncementCreate = (props: AnnouncementCreateProps) => {
       title: '',
       type: 'INTERNAL',
       content: '',
-      attachmentFiles: [],
+      attachmentFile: undefined,
     },
   })
   const elFileInput = useRef<HTMLInputElement>(null)
 
   const clearFile = () => {
     if (elFileInput.current) elFileInput.current.value = ''
-    form.setValue('attachmentFiles', [], { shouldValidate: true, shouldDirty: true })
+    form.setValue('attachmentFile', undefined, { shouldValidate: true, shouldDirty: true })
   }
 
   const onSubmit: SubmitHandler<CreateAnnouncementFormSchema> = async ({
-    attachmentFiles,
+    attachmentFile,
     ...data
   }) => {
-    const attachmentUploadFilePaths = await Promise.all(
-      attachmentFiles.map(async (file) => {
-        const result = await getFileUploadUrl.mutateAsync({
-          body: {
-            category: 'ANNOUNCEMENT',
-            contentType: file.type as any,
-          },
-        })
+    let attachmentFilePaths: FilePath[] = []
 
-        await handleUploadFile(file, result.uploadUrl, result.uploadFields)
-
-        return result.filePath as FilePath
+    if (attachmentFile) {
+      const result = await getFileUploadUrl.mutateAsync({
+        body: {
+          category: 'ANNOUNCEMENT',
+          contentType: attachmentFile.type as any,
+        },
       })
-    )
+
+      await handleUploadFile(attachmentFile, result.uploadUrl, result.uploadFields)
+
+      attachmentFilePaths = [result.filePath as FilePath]
+    }
 
     await createAnnouncementMutation.mutateAsync({
-      body: { ...data, attachmentFilePaths: attachmentUploadFilePaths },
+      body: { ...data, attachmentFilePaths },
     })
 
     props.onSuccess()
@@ -149,7 +149,7 @@ export const AnnouncementCreate = (props: AnnouncementCreateProps) => {
                     ประเภทประกาศ <span className="text-system-danger-default">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Select onValueChange={onChange} {...field}>
+                    <Select {...field} onValueChange={onChange}>
                       <SelectTrigger className="w-full gap-4 !h-10">
                         <AnnouncementIcon
                           className="shrink-0 size-8"
@@ -193,30 +193,40 @@ export const AnnouncementCreate = (props: AnnouncementCreateProps) => {
             />
             <FormField
               control={form.control}
-              name="attachmentFiles"
+              name="attachmentFile"
               render={({ field: { onChange, value, ref, ...field } }) => (
                 <FormItem>
                   <FormLabel>เอกสารประกอบ</FormLabel>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 min-w-0">
                     <FormControl>
-                      <Input
-                        type="file"
-                        className="p-0 pr-3 file:px-3 file:py-2 file:mr-3 file:border-0 file:border-solid file:border-r file:border-r-input file:h-10 file:bg-secondary file:hover:opacity-80 file:active:opacity-80 file:text-secondary-foreground file:cursor-pointer file:font-medium file:aria-[invalid=true]:border-r-system-danger-default file:aria-[invalid=true]:text-system-danger-default file:aria-[invalid=true]:bg-system-danger-extra-light"
-                        {...field}
-                        ref={(el) => {
-                          elFileInput.current = el
-                          ref(el)
-                        }}
-                        onChange={(ev) =>
-                          onChange(ev.target.files?.length === 0 ? [] : ev.target.files)
-                        }
-                        placeholder="เลือกไฟล์"
-                        accept={ACCEPTED_FILE_TYPES.join(',')}
-                        multiple
-                      />
+                      <FileUploadInput fileName={value?.name}>
+                        <Input
+                          type="file"
+                          {...field}
+                          ref={(el) => {
+                            elFileInput.current = el
+                            ref(el)
+                          }}
+                          onChange={(ev) =>
+                            onChange(
+                              ev.target.files && ev.target.files.length > 0
+                                ? ev.target.files[0]
+                                : undefined
+                            )
+                          }
+                          placeholder="เลือกไฟล์"
+                          accept={ACCEPTED_FILE_TYPES.join(',')}
+                        />
+                      </FileUploadInput>
                     </FormControl>
-                    {value && value.length > 0 && (
-                      <Button variant="secondary" size="icon" onClick={clearFile}>
+                    {value && (
+                      <Button
+                        className="shrink-0"
+                        type="button"
+                        variant="secondary"
+                        size="icon"
+                        onClick={clearFile}
+                      >
                         <span className="sr-only">ล้างไฟล์ที่เลือก</span>
                         <X className="size-4" />
                       </Button>

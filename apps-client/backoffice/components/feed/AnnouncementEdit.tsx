@@ -30,6 +30,7 @@ import {
 import { Textarea } from '@pple-today/web-ui/textarea'
 import { Typography } from '@pple-today/web-ui/typography'
 import { ANNOUNCEMENT_TYPE_LONG_DISPLAY_TEXT, AnnouncementIcon } from 'components/AnnouncementIcon'
+import { FileUploadInput } from 'components/FileUpload'
 import { X } from 'lucide-react'
 import { ACCEPTED_FILE_TYPES, handleUploadFile, MAX_FILE_SIZE } from 'utils/file-upload'
 import z from 'zod'
@@ -42,15 +43,17 @@ const EditAnnouncementFormSchema = z.object({
   title: z.string().min(1, 'กรุณากรอกชื่อประกาศ'),
   type: z.enum(['OFFICIAL', 'PARTY_COMMUNICATE', 'INTERNAL']),
   content: z.string().min(1, 'กรุณากรอกรายละเอียด'),
-  attachmentFiles: z.array(
+  attachmentFile: z.union([
     z
       .instanceof(File, { error: 'กรุณาอัปโหลดไฟล์' })
       .refine((file) => file.size <= MAX_FILE_SIZE, `กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB`)
       .refine(
         (file) => ACCEPTED_FILE_TYPES.includes(file.type),
         'กรุณาอัปโหลดไฟล์ประเภท PDF / JPG / PNG'
-      )
-  ),
+      ),
+    z.literal('OLD_FILE'),
+    z.literal('NO_FILE'),
+  ]),
 })
 
 type EditAnnouncementFormSchema = z.infer<typeof EditAnnouncementFormSchema>
@@ -63,6 +66,10 @@ interface AnnouncementEditProps {
 
 export const AnnouncementEdit = (props: AnnouncementEditProps) => {
   const [isOpen, setIsOpen] = useState(false)
+  const handleDialogOpenChange = (state: boolean) => {
+    if (!state) resetForm()
+    setIsOpen(state)
+  }
 
   const getFileUploadUrl = reactQueryClient.useMutation('post', '/admin/file/upload-url')
   const updateAnnouncementMutation = reactQueryClient.useMutation(
@@ -76,14 +83,14 @@ export const AnnouncementEdit = (props: AnnouncementEditProps) => {
       title: '',
       type: 'INTERNAL',
       content: '',
-      attachmentFiles: [],
+      attachmentFile: 'OLD_FILE',
     },
   })
   const elFileInput = useRef<HTMLInputElement>(null)
 
-  const clearFile = () => {
+  const clearFile = (value: 'OLD_FILE' | 'NO_FILE' = 'OLD_FILE') => {
     if (elFileInput.current) elFileInput.current.value = ''
-    form.setValue('attachmentFiles', [], { shouldValidate: true, shouldDirty: true })
+    form.setValue('attachmentFile', value, { shouldValidate: true, shouldDirty: true })
   }
 
   const resetForm = useCallback(() => {
@@ -91,38 +98,34 @@ export const AnnouncementEdit = (props: AnnouncementEditProps) => {
       title: props.announcement.title,
       type: props.announcement.type,
       content: props.announcement.content ?? '',
-      attachmentFiles: [],
+      attachmentFile: 'OLD_FILE',
     })
   }, [form, props.announcement.content, props.announcement.title, props.announcement.type])
 
   const onSubmit: SubmitHandler<EditAnnouncementFormSchema> = async ({
-    attachmentFiles,
+    attachmentFile,
     ...data
   }) => {
-    /**
-     * - ถ้าเขียนแบบนี้ = ถ้าเลือกไฟล์ ก็อัพขึ้นไปใหม่เลย เดี๋ยวไฟล์เก่าเซิฟจะ clean up เอง
-     * - แต่ จะไม่สามารถเอาไฟล์ออกแบบเลือกไฟล์ หรือเอาออกทั้งหมดได้
-     * - ถ้าจะเอาออก ต้องอัพไฟล์สักอันไปทับไฟล์เดิม (เข้าโฟลวข้อแรก)
-     * - TODO: ปรึกษา UX ตรงนี้
-     */
-    const attachmentUploadFilePaths = await Promise.all(
-      attachmentFiles.map(async (file) => {
-        const result = await getFileUploadUrl.mutateAsync({
-          body: {
-            category: 'ANNOUNCEMENT',
-            contentType: file.type as any,
-          },
-        })
+    let attachmentFilePaths: FilePath[] = props.announcement.attachments.map((a) => a.filePath)
 
-        await handleUploadFile(file, result.uploadUrl, result.uploadFields)
-
-        return result.filePath as FilePath
+    if (attachmentFile === 'NO_FILE') {
+      attachmentFilePaths = []
+    } else if (attachmentFile !== 'OLD_FILE') {
+      const result = await getFileUploadUrl.mutateAsync({
+        body: {
+          category: 'ANNOUNCEMENT',
+          contentType: attachmentFile.type as any,
+        },
       })
-    )
+
+      await handleUploadFile(attachmentFile, result.uploadUrl, result.uploadFields)
+
+      attachmentFilePaths = [result.filePath as FilePath]
+    }
 
     await updateAnnouncementMutation.mutateAsync({
       pathParams: { announcementId: props.announcement.id },
-      body: { ...data, attachmentFilePaths: attachmentUploadFilePaths },
+      body: { ...data, attachmentFilePaths },
     })
 
     props.onSuccess()
@@ -136,7 +139,7 @@ export const AnnouncementEdit = (props: AnnouncementEditProps) => {
   }, [resetForm])
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
       <DialogTrigger asChild>{props.trigger}</DialogTrigger>
       <DialogContent asChild>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -217,30 +220,62 @@ export const AnnouncementEdit = (props: AnnouncementEditProps) => {
             />
             <FormField
               control={form.control}
-              name="attachmentFiles"
+              name="attachmentFile"
               render={({ field: { onChange, value, ref, ...field } }) => (
                 <FormItem>
                   <FormLabel>เอกสารประกอบ</FormLabel>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 min-w-0">
                     <FormControl>
-                      <Input
-                        type="file"
-                        className="p-0 pr-3 file:px-3 file:py-2 file:mr-3 file:border-0 file:border-solid file:border-r file:border-r-input file:h-10 file:bg-secondary file:hover:opacity-80 file:active:opacity-80 file:text-secondary-foreground file:cursor-pointer file:font-medium file:aria-[invalid=true]:border-r-system-danger-default file:aria-[invalid=true]:text-system-danger-default file:aria-[invalid=true]:bg-system-danger-extra-light"
-                        {...field}
-                        ref={(el) => {
-                          elFileInput.current = el
-                          ref(el)
-                        }}
-                        onChange={(ev) =>
-                          onChange(ev.target.files?.length === 0 ? [] : ev.target.files)
+                      <FileUploadInput
+                        fileName={
+                          value === 'NO_FILE'
+                            ? undefined
+                            : value === 'OLD_FILE'
+                              ? props.announcement.attachments[0]?.filePath
+                              : value.name
                         }
-                        placeholder="เลือกไฟล์"
-                        accept={ACCEPTED_FILE_TYPES.join(',')}
-                        multiple
-                      />
+                      >
+                        <Input
+                          type="file"
+                          {...field}
+                          ref={(el) => {
+                            elFileInput.current = el
+                            ref(el)
+                          }}
+                          onChange={(ev) =>
+                            onChange(
+                              ev.target.files && ev.target.files.length > 0
+                                ? ev.target.files[0]
+                                : undefined
+                            )
+                          }
+                          placeholder="เลือกไฟล์"
+                          accept={ACCEPTED_FILE_TYPES.join(',')}
+                        />
+                      </FileUploadInput>
                     </FormControl>
-                    {value && value.length > 0 && (
-                      <Button variant="secondary" size="icon" onClick={clearFile}>
+                    {typeof value === 'string' ? (
+                      value === 'OLD_FILE' &&
+                      props.announcement.attachments.length > 0 && (
+                        <Button
+                          className="shrink-0"
+                          type="button"
+                          variant="secondary"
+                          size="icon"
+                          onClick={() => clearFile('NO_FILE')}
+                        >
+                          <span className="sr-only">ลบไฟล์เดิม</span>
+                          <X className="size-4" />
+                        </Button>
+                      )
+                    ) : (
+                      <Button
+                        className="shrink-0"
+                        type="button"
+                        variant="secondary"
+                        size="icon"
+                        onClick={() => clearFile()}
+                      >
                         <span className="sr-only">ล้างไฟล์ที่เลือก</span>
                         <X className="size-4" />
                       </Button>
