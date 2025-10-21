@@ -37,7 +37,7 @@ export default function HashtagFeedPage() {
     return null
   }
   return (
-    <View className="flex-1 flex-col bg-base-bg-default">
+    <View className="flex-1 flex-col">
       <View className="pt-safe-offset-4 pb-2 px-4 bg-base-bg-white">
         <Button
           variant="outline-primary"
@@ -113,7 +113,8 @@ function HashtagFeed(props: { hashtagId: string; header?: React.ReactElement }) 
       // onScroll={scrollHandler}
       // headerHeight={headerHeight}
       data={data}
-      contentContainerClassName="flex flex-col"
+      className="flex-1"
+      contentContainerClassName="flex flex-col flex-grow bg-base-bg-default"
       ListHeaderComponent={props.header}
       // ListHeaderComponent={<AnnouncementSection />}
       ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} className="mt-4 mx-4" />}
