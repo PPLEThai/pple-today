@@ -37,14 +37,14 @@ export class KeyManagementService {
     keyRing: string
     keyId: string
     action: 'CREATE' | 'DESTROY'
-    status: 'INFO' | 'FAILED' | 'SUCCESS'
+    status: 'FAILED' | 'SUCCESS'
   }) {
     const data = {
-      action: options.action,
       status: options.status,
-      location: this.config.location,
+      action: options.action,
       keyRing: options.keyRing,
       keyId: options.keyId,
+      location: this.config.location,
     }
     const message = `${options.action} key '${options.keyId}' in key ring '${options.keyRing}' - ${options.status}`
 
@@ -92,13 +92,6 @@ export class KeyManagementService {
       this.config.location,
       keyRing
     )
-
-    this.log({
-      keyRing,
-      keyId,
-      action: 'CREATE',
-      status: 'INFO',
-    })
 
     const result = await fromGoogleAPIPromise(
       this.kmsClient.createCryptoKey({
@@ -168,13 +161,6 @@ export class KeyManagementService {
       '1'
     )
 
-    this.log({
-      keyRing,
-      keyId,
-      action: 'DESTROY',
-      status: 'INFO',
-    })
-
     const result = await fromGoogleAPIPromise(
       this.kmsClient.destroyCryptoKeyVersion({ name: version })
     )
@@ -185,6 +171,8 @@ export class KeyManagementService {
         action: 'DESTROY',
         status: 'FAILED',
       })
+
+      return err(result.error)
     }
 
     this.log({

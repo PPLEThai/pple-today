@@ -42,7 +42,7 @@ export class KeyService {
 
       return mapGoogleAPIError(createErr.error, {
         ALREADY_EXISTS: {
-          code: InternalErrorCode.KEY_ALREADY_EXIST,
+          code: InternalErrorCode.ELECTION_KEY_ALREADY_EXIST,
           message: 'Key for this election exist',
         },
       })
@@ -63,7 +63,7 @@ export class KeyService {
     if (destroyKeyErr) {
       return mapGoogleAPIError(destroyKeyErr.error, {
         NOT_FOUND: {
-          code: InternalErrorCode.KET_NOT_FOUND,
+          code: InternalErrorCode.ELECTION_KEY_NOT_FOUND,
           message: 'Key for this election not found',
         },
       })

@@ -205,7 +205,8 @@ export default function ProfilePage() {
         refreshControl={<FeedRefreshControl headerHeight={0} onRefresh={onRefresh} />}
         data={data}
         renderItem={renderFeedItem}
-        className="flex-1 bg-base-bg-default"
+        className="flex-1"
+        contentContainerClassName="pb-4 bg-base-bg-default flex-grow"
         ListHeaderComponent={
           <>
             {renderProfileSection()}

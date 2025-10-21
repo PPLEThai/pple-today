@@ -35,6 +35,7 @@ import {
   AdminPublishElectionParams,
   AdminPublishElectionResponse,
   AdminUpdateElectionCandidateParams,
+  AdminUpdateElectionCandidateResponse,
   AdminUpdateElectionKeysBody,
   AdminUpdateElectionKeysParams,
   AdminUpdateElectionKeysResponse,
@@ -295,7 +296,7 @@ export const AdminElectionController = new Elysia({
           params: AdminUpdateElectionCandidateParams,
           body: AdminCreateElectionCandidateBody,
           response: {
-            200: AdminCreateElectionCandidateResponse,
+            200: AdminUpdateElectionCandidateResponse,
             ...createErrorSchema(
               InternalErrorCode.UNAUTHORIZED,
               InternalErrorCode.FORBIDDEN,

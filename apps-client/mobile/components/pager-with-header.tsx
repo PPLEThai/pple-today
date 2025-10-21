@@ -71,7 +71,11 @@ const AnimatedExpoScrollForwarderView = Animated.createAnimatedComponent(ExpoScr
 // disabling it in `app.config.ts` fixes the issue on native build
 // https://github.com/software-mansion/react-native-reanimated/issues/6992
 
-export function Pager({ children }: { children: React.ReactNode }) {
+export interface PagerRef {
+  scrollToTop: () => void
+}
+
+export function Pager({ children, ref }: { children: React.ReactNode; ref?: React.Ref<PagerRef> }) {
   // const layout = useWindowDimensions()
   const [currentPage, setCurrentPage] = React.useState(0)
   const [isHeaderReady, setHeaderReady] = React.useState(false)
@@ -144,6 +148,27 @@ export function Pager({ children }: { children: React.ReactNode }) {
   )
   const [scrollViewTag, setScrollViewTag] = React.useState<number | null>(null)
 
+  const scrollToTop = React.useCallback(() => {
+    'worklet'
+    const scrollEl = scrollRefs.get()?.[currentPage]
+    if (scrollEl) {
+      scrollTo(scrollEl, 0, 0, true)
+    }
+  }, [scrollRefs, currentPage])
+
+  const scrollToTopJS = React.useCallback(() => runOnUI(scrollToTop)(), [scrollToTop])
+  React.useImperativeHandle(ref, () => ({
+    scrollToTop: scrollToTopJS,
+  }))
+
+  const scrollToTopTabBar = React.useCallback(() => {
+    'worklet'
+    const scrollEl = scrollRefs.get()?.[currentPage]
+    if (scrollEl) {
+      scrollTo(scrollEl, 0, headerOnlyHeight, true)
+    }
+  }, [scrollRefs, currentPage, headerOnlyHeight])
+
   return (
     <PagerContext.Provider
       value={{
@@ -161,6 +186,7 @@ export function Pager({ children }: { children: React.ReactNode }) {
         adjustScrollForOtherPages,
         isHeaderReady,
         setHeaderReady,
+        scrollToTopTabBar,
       }}
     >
       <PagerTabBarProvider>
@@ -196,6 +222,7 @@ interface PagerContextValue {
   adjustScrollForOtherPages: (scrollState: 'idle' | 'dragging' | 'settling') => void
   isHeaderReady: boolean
   setHeaderReady: React.Dispatch<React.SetStateAction<boolean>>
+  scrollToTopTabBar: () => void
 }
 const PagerContext = React.createContext<PagerContextValue | null>(null)
 
@@ -283,7 +310,13 @@ interface PagerTabBarProviderProps {
   children: React.ReactNode
 }
 function PagerTabBarProvider({ children }: PagerTabBarProviderProps) {
-  const { setCurrentPage, pagerViewRef, adjustScrollForOtherPages } = usePagerContext()
+  const {
+    setCurrentPage,
+    pagerViewRef,
+    adjustScrollForOtherPages,
+    currentPage,
+    scrollToTopTabBar,
+  } = usePagerContext()
 
   const containerSize = useSharedValue(0)
   const tabListSize = useSharedValue(0)
@@ -321,8 +354,20 @@ function PagerTabBarProvider({ children }: PagerTabBarProviderProps) {
 
       const offset = indexToOffset(index)
       runOnUI(scrollTo)(tabBarScrollElRef, offset, 0, true)
+
+      if (currentPage === index) {
+        runOnUI(scrollToTopTabBar)()
+      }
     },
-    [adjustScrollForOtherPages, pagerViewRef, setCurrentPage, tabBarScrollElRef, indexToOffset]
+    [
+      adjustScrollForOtherPages,
+      pagerViewRef,
+      setCurrentPage,
+      tabBarScrollElRef,
+      indexToOffset,
+      currentPage,
+      scrollToTopTabBar,
+    ]
   )
 
   const dragState = useSharedValue<'idle' | 'settling' | 'dragging'>('idle')

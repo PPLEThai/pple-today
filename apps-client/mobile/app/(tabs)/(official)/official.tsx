@@ -36,6 +36,8 @@ import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
 
+import { useBottomTabOnPress } from '../_layout'
+
 export default function OfficialPage() {
   const queryClient = useQueryClient()
   const onRefresh = useCallback(async () => {
@@ -48,10 +50,17 @@ export default function OfficialPage() {
       }),
     ])
   }, [queryClient])
+
+  useBottomTabOnPress(() => {
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true })
+  })
+  const scrollViewRef = React.useRef<ScrollView>(null)
   return (
     <SafeAreaLayout>
       <ScrollView
-        className="flex-1 bg-base-bg-default"
+        ref={scrollViewRef}
+        className="flex-1"
+        contentContainerClassName="bg-base-bg-default flex-grow"
         refreshControl={<RefreshControl onRefresh={onRefresh} />}
       >
         <View className="flex flex-col p-4 bg-base-bg-white">
@@ -106,8 +115,8 @@ const ElectionSection = () => {
       >
         <SlideScrollView>
           {elections.map((election) => (
-            <SlideItem key={election.id}>
-              <ElectionCard election={election} className="flex-1" />
+            <SlideItem key={election.id} className="flex flex-row items-stretch">
+              <ElectionCard election={election} />
             </SlideItem>
           ))}
         </SlideScrollView>
