@@ -5,4 +5,4 @@
 '@pple-today/database': minor
 ---
 
-[[PPLE-322] [API] Overall Result Management Endpoint](https://linear.app/snts/issue/PPLE-322/api-overall-result-management-endpoint)
+[[PPLE-320] [API] Election Ballot Management Endpoint](https://linear.app/snts/issue/PPLE-320/api-election-ballot-management-endpoint)
