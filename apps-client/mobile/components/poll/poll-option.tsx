@@ -51,7 +51,7 @@ export function PollOptionResult(props: PollOptionResultProps) {
         <PollResultCheckbox isSelected={props.isSelected} />
         <Text
           className={cn(
-            'flex-1 flex-wrap mr-2 font-body-regular text-sm',
+            'flex-1 flex-wrap mr-2 font-body-regular text-sm text-base-text-high',
             props.isSelected && 'text-base-primary-dark'
           )}
         >
@@ -140,7 +140,7 @@ export function PollOptionItem({
   return (
     <ToggleGroupPrimitive.Item
       className={cn(
-        'items-center justify-center rounded-xl active:bg-muted w-full overflow-hidden border bg-base-bg-white border-base-outline-medium text-base-text-high',
+        'items-center justify-center rounded-xl active:bg-muted w-full overflow-hidden border bg-base-bg-white border-base-outline-medium',
         ToggleGroupPrimitive.utils.getIsSelected(value, props.value) &&
           'border-base-primary-default',
         className
@@ -152,7 +152,7 @@ export function PollOptionItem({
           <PollOptionCheckbox isSelected={props.isSelected} />
           <Text
             className={cn(
-              'text-sm font-body-regular flex-1 flex-wrap',
+              'text-sm font-body-regular flex-1 flex-wrap text-base-text-high',
               ToggleGroupPrimitive.utils.getIsSelected(value, props.value) &&
                 'text-base-primary-dark'
             )}
@@ -163,7 +163,7 @@ export function PollOptionItem({
         {props.pollTouched && (
           <Text
             className={cn(
-              'text-sm font-body-medium',
+              'text-sm font-body-medium text-base-text-high',
               ToggleGroupPrimitive.utils.getIsSelected(value, props.value) &&
                 'text-base-primary-dark'
             )}
