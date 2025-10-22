@@ -309,7 +309,7 @@ export const useLoginMutation = () => {
         idToken: result.tokenResponse.idToken ?? null,
       })
       // reset all reactQueryClient cache
-      await queryClient.resetQueries({ queryKey: reactQueryClient.getKey() })
+      queryClient.resetQueries({ queryKey: reactQueryClient.getKey() })
       if (result.action === 'register') {
         router.navigate('/onboarding')
       } else if (result.action === 'login') {
@@ -356,7 +356,7 @@ export const useLogoutMutation = () => {
       // Clear tokens from secure storage
       await sessionMutation.mutateAsync(null)
       // reset all reactQueryClient cache
-      await queryClient.resetQueries({ queryKey: reactQueryClient.getKey() })
+      queryClient.resetQueries({ queryKey: reactQueryClient.getKey() })
       router.navigate('/(profile)')
     },
   })
