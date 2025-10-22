@@ -192,6 +192,9 @@ importers:
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      dayjs:
+        specifier: ^1.11.13
+        version: 1.11.13
       isbot:
         specifier: ^5.1.27
         version: 5.1.28
