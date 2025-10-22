@@ -31,7 +31,7 @@ import {
 import { Textarea } from '@pple-today/web-ui/textarea'
 import { Typography } from '@pple-today/web-ui/typography'
 import { ANNOUNCEMENT_TYPE_LONG_DISPLAY_TEXT, AnnouncementIcon } from 'components/AnnouncementIcon'
-import { FileUploadInput } from 'components/FileUpload'
+import { FileUploadInput } from 'components/FileUploadInput'
 import { X } from 'lucide-react'
 import { ACCEPTED_FILE_TYPES, handleUploadFile, MAX_FILE_SIZE } from 'utils/file-upload'
 import z from 'zod'
@@ -227,7 +227,7 @@ export const AnnouncementCreate = (props: AnnouncementCreateProps) => {
                   <FormLabel>เอกสารประกอบ</FormLabel>
                   <div className="flex gap-2 min-w-0">
                     <FormControl>
-                      <FileUploadInput fileName={value?.name}>
+                      <FileUploadInput fileName={value?.name} preview={value}>
                         <Input
                           type="file"
                           {...field}

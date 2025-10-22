@@ -23,7 +23,7 @@ import { Input } from '@pple-today/web-ui/input'
 import { MultiSelect } from '@pple-today/web-ui/multi-select'
 import { Textarea } from '@pple-today/web-ui/textarea'
 import { Typography } from '@pple-today/web-ui/typography'
-import { FileUploadInput } from 'components/FileUpload'
+import { FileUploadInput } from 'components/FileUploadInput'
 import { ImagePreview } from 'components/ImagePreview'
 import { X } from 'lucide-react'
 import { ACCEPTED_IMAGE_TYPES, handleUploadFile, MAX_FILE_SIZE } from 'utils/file-upload'
@@ -196,7 +196,10 @@ export const TopicEdit = (props: TopicEditProps) => {
                   </FormLabel>
                   <div className="flex gap-2 min-w-0">
                     <FormControl>
-                      <FileUploadInput fileName={value?.name || props.topic.bannerImage?.filePath}>
+                      <FileUploadInput
+                        fileName={value?.name || props.topic.bannerImage?.filePath}
+                        preview={value || props.topic.bannerImage?.url}
+                      >
                         <Input
                           type="file"
                           {...field}
