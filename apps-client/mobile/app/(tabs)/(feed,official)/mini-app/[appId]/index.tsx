@@ -16,20 +16,20 @@ const MiniAppWebView = () => {
   const router = useRouter()
 
   const params = useLocalSearchParams()
-  const electionId = params.appId as string
+  const appId = params.appId as string
   const tokenExchangeMiniAppResult = reactQueryClient.useMutation('post', '/auth/mini-app/:appId')
 
   useEffect(() => {
-    if (!electionId) {
+    if (!appId) {
       router.dismissTo('/')
       return
     }
 
     tokenExchangeMiniAppResult.mutateAsync({
-      pathParams: { appId: electionId },
+      pathParams: { appId },
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [electionId, router])
+  }, [appId, router])
 
   return (
     <View className="flex-1 flex-col bg-base-bg-default">
