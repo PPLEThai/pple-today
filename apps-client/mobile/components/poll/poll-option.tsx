@@ -1,24 +1,129 @@
 import React from 'react'
-import { Pressable, View } from 'react-native'
+import { View } from 'react-native'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 
 import { Icon } from '@pple-today/ui/icon'
 import { cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
+import * as ToggleGroupPrimitive from '@rn-primitives/toggle-group'
 import { CheckIcon, MinusIcon } from 'lucide-react-native'
 
 import { FeedItemPoll } from '@api/backoffice/app'
 
 type PollOption = FeedItemPoll['poll']['options'][number]
 
-interface PollOptionProps extends PollOption {
-  totalVotes: number
-  pollTouched: boolean // if the poll has been interacted with
-  onSelect: (id: string) => void
+const PollOptionCheckbox = ({ isSelected }: { isSelected: boolean }) => {
+  return (
+    <View
+      className={cn(
+        'h-4 w-4 rounded-[4px] border border-base-secondary-light',
+        isSelected && 'bg-base-primary-default border-base-primary-default'
+      )}
+    >
+      {isSelected && (
+        <Icon icon={CheckIcon} size={14} className="text-base-bg-white" strokeWidth={2} />
+      )}
+    </View>
+  )
 }
 
-// This function will consist only 2 states: selected or not selected
-export function PollOptionItem(props: PollOptionProps) {
+interface PollOptionResultProps extends PollOption {
+  totalVotes: number
+}
+
+export function PollOptionResult(props: PollOptionResultProps) {
+  const percentage = (props.votes / props.totalVotes) * 100 || 0
+  const animatedPercentage = useSharedValue(0)
+  const animatedBarStyle = useAnimatedStyle(() => ({ width: `${animatedPercentage.value}%` }))
+
+  React.useEffect(() => {
+    animatedPercentage.value = withTiming(percentage, { duration: 500 })
+  }, [percentage, animatedPercentage])
+
+  return (
+    <View
+      className={cn(
+        'border border-base-outline-medium rounded-xl overflow-hidden',
+        props.isSelected && 'border-base-primary-default'
+      )}
+    >
+      <View className="flex flex-row justify-between items-center m-3 gap-2.5">
+        <PollResultCheckbox isSelected={props.isSelected} />
+        <Text
+          className={cn(
+            'flex-1 flex-wrap mr-2 font-body-regular text-sm',
+            props.isSelected && 'text-base-primary-dark'
+          )}
+        >
+          {props.title}
+        </Text>
+        <Text
+          className={cn(
+            'text-sm font-body-medium text-base-text-high',
+            props.isSelected && 'text-base-primary-dark'
+          )}
+        >
+          {Math.trunc(percentage)}%
+        </Text>
+      </View>
+      <Animated.View
+        className={cn(
+          'absolute top-0 left-0 h-full bg-base-bg-medium z-[-1] rounded-r-xl',
+          props.isSelected && 'bg-base-primary-light'
+        )}
+        style={animatedBarStyle}
+      />
+    </View>
+  )
+}
+
+const PollResultCheckbox = ({ isSelected }: { isSelected: boolean }) => {
+  if (isSelected) {
+    return (
+      <View
+        className={cn(
+          'h-4 w-4 rounded-[4px] border bg-base-primary-default border-base-primary-default'
+        )}
+      >
+        <Icon icon={CheckIcon} size={14} className="text-base-bg-white" strokeWidth={2} />
+      </View>
+    )
+  }
+
+  return (
+    <View className="h-4 w-4 rounded-[4px] bg-base-secondary-light items-center justify-center">
+      <Icon icon={MinusIcon} size={16} className="text-base-bg-white" strokeWidth={2} />
+    </View>
+  )
+}
+
+export function PollOptionGroup({
+  className,
+  children,
+  ...props
+}: ToggleGroupPrimitive.RootProps & {
+  ref?: React.RefObject<ToggleGroupPrimitive.RootRef>
+}) {
+  return (
+    <ToggleGroupPrimitive.Root
+      className={cn('flex flex-row items-center justify-center gap-2', className)}
+      {...props}
+    >
+      {children}
+    </ToggleGroupPrimitive.Root>
+  )
+}
+
+export function PollOptionItem({
+  className,
+  ...props
+}: ToggleGroupPrimitive.ItemProps &
+  PollOption & {
+    totalVotes: number
+    pollTouched: boolean
+    ref?: React.RefObject<ToggleGroupPrimitive.ItemRef>
+  }) {
+  const { value } = ToggleGroupPrimitive.useRootContext()
   const percentage = (props.votes / props.totalVotes) * 100 || 0
   const animatedPercentage = useSharedValue(0)
   const animatedBarStyle = useAnimatedStyle(() => ({ width: `${animatedPercentage.value}%` }))
@@ -32,132 +137,51 @@ export function PollOptionItem(props: PollOptionProps) {
     }
   }, [props.isSelected, percentage, animatedPercentage, props.pollTouched])
 
-  const renderCheckbox = () => {
-    return (
-      <View
-        className={cn(
-          'h-4 w-4 rounded-[4px] border border-base-secondary-light',
-          props.isSelected && 'bg-base-primary-default border-base-primary-default'
-        )}
-      >
-        {props.isSelected && (
-          <Icon icon={CheckIcon} size={14} className="text-base-bg-white" strokeWidth={2} />
-        )}
-      </View>
-    )
-  }
-
   return (
-    <Pressable
+    <ToggleGroupPrimitive.Item
       className={cn(
-        'border border-base-outline-medium rounded-xl overflow-hidden mt-2',
-        props.isSelected && 'border-base-primary-default'
+        'items-center justify-center rounded-xl active:bg-muted w-full overflow-hidden border bg-base-bg-white border-base-outline-medium text-base-text-high',
+        ToggleGroupPrimitive.utils.getIsSelected(value, props.value) &&
+          'border-base-primary-default',
+        className
       )}
-      onPress={() => props.onSelect(props.id)}
+      {...props}
     >
-      <View className="flex flex-row justify-between items-center m-3 gap-2.5">
-        {renderCheckbox()}
-        <Text
-          className={cn(
-            'flex-1 flex-wrap mr-3 font-body-regular',
-            props.isSelected && 'text-base-primary-dark font-body-medium'
-          )}
-        >
-          {props.title}
-        </Text>
+      <View className="flex flex-row items-center justify-between w-full gap-2 p-3">
+        <View className="gap-2.5 flex flex-row items-center shrink-0 flex-1">
+          <PollOptionCheckbox isSelected={props.isSelected} />
+          <Text
+            className={cn(
+              'text-sm font-body-regular flex-1 flex-wrap',
+              ToggleGroupPrimitive.utils.getIsSelected(value, props.value) &&
+                'text-base-primary-dark'
+            )}
+          >
+            {props.title}
+          </Text>
+        </View>
         {props.pollTouched && (
           <Text
             className={cn(
               'text-sm font-body-medium',
-              props.pollTouched && 'text-base-text-high',
-              props.isSelected && 'text-base-primary-dark'
+              ToggleGroupPrimitive.utils.getIsSelected(value, props.value) &&
+                'text-base-primary-dark'
             )}
           >
-            {percentage}%
+            {Math.trunc(percentage)}%
           </Text>
         )}
       </View>
       {(props.pollTouched || props.isSelected) && (
         <Animated.View
           className={cn(
-            'absolute top-0 left-0 h-full  z-[-1] rounded-r-xl',
+            'absolute top-0 left-0 z-[-1] rounded-r-xl h-full',
             props.pollTouched && 'bg-base-bg-medium',
             props.isSelected && 'bg-base-primary-light'
           )}
           style={animatedBarStyle}
         />
       )}
-    </Pressable>
-  )
-}
-
-interface PollOptionResultProps extends PollOption {
-  totalVotes: number
-  isSelected: boolean
-}
-
-export function PollOptionResult(props: PollOptionResultProps) {
-  const percentage = Math.trunc((props.votes / props.totalVotes) * 100) || 0
-  const animatedPercentage = useSharedValue(0)
-  const animatedBarStyle = useAnimatedStyle(() => ({ width: `${animatedPercentage.value}%` }))
-
-  React.useEffect(() => {
-    animatedPercentage.value = withTiming(percentage, { duration: 500 })
-  }, [percentage, animatedPercentage])
-
-  const renderCheckbox = () => {
-    if (props.isSelected) {
-      return (
-        <View
-          className={cn(
-            'h-4 w-4 rounded-[4px] border bg-base-primary-default border-base-primary-default'
-          )}
-        >
-          <Icon icon={CheckIcon} size={14} className="text-base-bg-white" strokeWidth={2} />
-        </View>
-      )
-    }
-
-    return (
-      <View className="h-4 w-4 rounded-[4px] bg-base-secondary-light items-center justify-center">
-        <Icon icon={MinusIcon} size={16} className="text-base-bg-white" strokeWidth={2} />
-      </View>
-    )
-  }
-
-  return (
-    <View
-      className={cn(
-        'border border-base-outline-medium rounded-xl overflow-hidden mt-2',
-        props.isSelected && 'border-base-primary-default'
-      )}
-    >
-      <View className="flex flex-row justify-between items-center m-3 gap-2.5">
-        {renderCheckbox()}
-        <Text
-          className={cn(
-            'flex-1 flex-wrap mr-3 font-body-regular',
-            props.isSelected && 'text-base-primary-dark font-body-medium'
-          )}
-        >
-          {props.title}
-        </Text>
-        <Text
-          className={cn(
-            'text-sm font-body-medium text-base-text-high',
-            props.isSelected && 'text-base-primary-dark'
-          )}
-        >
-          {percentage}%
-        </Text>
-      </View>
-      <Animated.View
-        className={cn(
-          'absolute top-0 left-0 h-full bg-base-bg-medium z-[-1] rounded-r-xl',
-          props.isSelected && 'bg-base-primary-light'
-        )}
-        style={animatedBarStyle}
-      />
-    </View>
+    </ToggleGroupPrimitive.Item>
   )
 }

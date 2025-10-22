@@ -1,251 +1,160 @@
 import React from 'react'
-import { View } from 'react-native'
+import { Pressable, View } from 'react-native'
 
 import { Badge } from '@pple-today/ui/badge'
-import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 import dayjs from 'dayjs'
-import duration from 'dayjs/plugin/duration'
 import { useRouter } from 'expo-router'
 import { ChevronRightIcon, Clock3Icon, MessageCircleQuestionIcon } from 'lucide-react-native'
 
 import type { FeedItemPoll } from '@api/backoffice/app'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
+import { formatTimeInterval } from '@app/libs/format-time-interval'
 
-import { PollOptionItem, PollOptionResult } from './poll-option'
+import { PollOptionGroup, PollOptionItem, PollOptionResult } from './poll-option'
 
 type PollItem = FeedItemPoll['poll']
 
-dayjs.extend(duration)
-
-export const PollCardContent = (props: { feedItem: FeedItemPoll }) => {
-  const router = useRouter()
-  const [isEnded, setIsEnded] = React.useState(dayjs().isAfter(dayjs(props.feedItem.poll.endAt)))
-
-  const renderSeeMoreOptions = () => {
-    if (props.feedItem.poll.options.length > 3) {
-      return (
-        <Button
-          variant="secondary"
-          className="w-full text-start border-2 border-base-outline-default flex flex-row justify-between items-center bg-base-bg-white font-body-medium h-11 rounded-2xl mt-2"
-          onPress={() => {
-            router.navigate(`./feed/${props.feedItem.id}`)
-          }}
-        >
-          <Text className="font-body-medium text-base-text-medium text-sm">
-            {`ดูเพิ่มเติม (อีก ${props.feedItem.poll.options.length - 3} ตัวเลือก)`}
-          </Text>
-          <Icon icon={ChevronRightIcon} size={24} strokeWidth={1} />
-        </Button>
-      )
-    }
-
-    return null
-  }
-
-  return (
-    <View className="gap-3">
-      <View className="py-[13px] px-2 flex flex-col bg-base-bg-default rounded-xl mx-4">
-        <PollHeader
-          isEnded={isEnded}
-          triggerEnded={() => setIsEnded(true)}
-          poll={props.feedItem.poll}
-        />
-        {isEnded ? (
-          <PollOptionResultList poll={props.feedItem.poll} card />
-        ) : (
-          getPollCardOptionList(props.feedItem.poll)
-        )}
-        {renderSeeMoreOptions()}
-      </View>
-    </View>
-  )
+interface PollContentProps {
+  feedItem: FeedItemPoll
+  card?: boolean
 }
-
-export const PollDetailContent = (props: { feedItem: FeedItemPoll }) => {
-  const [isEnded, setIsEnded] = React.useState(dayjs().isAfter(dayjs(props.feedItem.poll.endAt)))
-
-  return (
-    <View className="gap-3">
-      <View className="py-[13px] px-2 flex flex-col bg-base-bg-default rounded-xl mx-4">
-        <PollHeader
-          isEnded={isEnded}
-          poll={props.feedItem.poll}
-          triggerEnded={() => setIsEnded(true)}
-        />
-        {isEnded ? (
-          <PollOptionResultList poll={props.feedItem.poll} />
-        ) : (
-          getPollDetailOptionList(props.feedItem.poll)
-        )}
-      </View>
-    </View>
-  )
-}
-
-const PollOptionResultList = (props: PollOptionListProps) => {
-  if (props.card) {
-    return (
-      <>
-        {props.poll.options.length > 0 &&
-          props.poll.options.slice(0, 3).map((option) => (
-            <PollOptionResult
-              id={option.id}
-              key={option.id}
-              title={option.title}
-              votes={1} // TODO: integrate with real votes
-              totalVotes={3} // TODO: integrate with real total votes
-              isSelected={option.isSelected}
-            />
-          ))}
-      </>
-    )
-  }
-
-  return (
-    <>
-      {props.poll.options.length > 0 &&
-        props.poll.options.map((option) => (
-          <PollOptionResult
-            id={option.id}
-            key={option.id}
-            title={option.title}
-            votes={1} // TODO: integrate with real votes
-            totalVotes={3} // TODO: integrate with real total votes
-            isSelected={option.isSelected}
-          />
-        ))}
-    </>
-  )
-}
-
-function getPollCardOptionList(props: PollItem) {
-  switch (props.type) {
-    case 'SINGLE_CHOICE':
-      return <PollSingleOptionList poll={props} card />
-    case 'MULTIPLE_CHOICE':
-      return <PollMultipleOptionList poll={props} card />
-    default:
-      exhaustiveGuard(props.type)
-  }
-}
-
-function getPollDetailOptionList(props: PollItem) {
-  switch (props.type) {
-    case 'SINGLE_CHOICE':
-      return <PollSingleOptionList poll={props} />
-    case 'MULTIPLE_CHOICE':
-      return <PollMultipleOptionList poll={props} />
-    default:
-      exhaustiveGuard(props.type)
-  }
-}
-
-interface PollOptionListProps {
+interface PollProps {
   poll: PollItem
   card?: boolean
 }
 
-const PollSingleOptionList = (props: PollOptionListProps) => {
-  const [optionId, setOptionId] = React.useState<string | null>(null)
+export const PollContent = (props: PollContentProps) => {
+  const [isEnded, setIsEnded] = React.useState(dayjs().isAfter(dayjs(props.feedItem.poll.endAt)))
 
-  const handleOptionSelect = (id: string) => {
-    // TODO: call API remove previous vote if any
-    setOptionId(id)
-    // TODO: call API to submit vote
-  }
+  const getPollOptionList = React.useCallback((props: PollProps) => {
+    switch (props.poll.type) {
+      case 'SINGLE_CHOICE':
+        return <PollSingleOptionList poll={props.poll} card={props.card} />
+      case 'MULTIPLE_CHOICE':
+        return <PollMultipleOptionList poll={props.poll} card={props.card} />
+      default:
+        exhaustiveGuard(props.poll.type)
+    }
+  }, [])
 
-  if (props.card) {
-    return (
-      <>
-        {props.poll.options.length > 0 &&
-          props.poll.options.slice(0, 3).map((option) => (
-            <PollOptionItem
-              key={option.id}
-              id={option.id}
-              title={option.title}
-              votes={1} // TODO: integrate with real votes
-              totalVotes={2} // TODO: integrate with real total votes
-              isSelected={optionId === option.id}
-              pollTouched={optionId !== null}
-              onSelect={handleOptionSelect}
-            />
-          ))}
-      </>
-    )
-  }
+  const triggerPollEnded = React.useCallback(() => {
+    setIsEnded(true)
+    // TODO: revalidate the queries to get the actual result
+  }, [])
 
   return (
     <>
-      {props.poll.options.length > 0 &&
-        props.poll.options.map((option) => (
-          <PollOptionItem
-            key={option.id}
-            id={option.id}
-            title={option.title}
-            votes={1} // TODO: integrate with real votes
-            totalVotes={2} // TODO: integrate with real total votes
-            isSelected={optionId === option.id}
-            pollTouched={optionId !== null}
-            onSelect={handleOptionSelect}
-          />
-        ))}
+      <View className="py-[13px] px-2 flex flex-col bg-base-bg-default rounded-xl mx-4">
+        <PollHeader isEnded={isEnded} triggerEnded={triggerPollEnded} poll={props.feedItem.poll} />
+        {isEnded ? (
+          <PollOptionResultList poll={props.feedItem.poll} card={props.card} />
+        ) : (
+          getPollOptionList({ poll: props.feedItem.poll, card: props.card })
+        )}
+        {props.card && <PollSeeMore feedItem={props.feedItem} />}
+      </View>
     </>
   )
 }
 
-const PollMultipleOptionList = (props: PollOptionListProps) => {
-  const [optionIds, setOptionIds] = React.useState<string[]>([])
+const PollOptionResultList = (props: PollProps) => {
+  const options = React.useMemo(() => {
+    if (props.card) {
+      return props.poll.options.slice(0, 3)
+    }
+    return props.poll.options
+  }, [props.poll.options, props.card])
 
-  const handleOptionSelect = (id: string) => {
-    // TODO: call API remove previous vote if any
-    setOptionIds((prev) => {
-      if (prev.includes(id)) {
-        return prev.filter((optionId) => optionId !== id)
-      }
-      return [...prev, id]
-    })
-    // TODO: call API updated submitted votes
-  }
+  return (
+    <View className="gap-2">
+      {options.length > 0 &&
+        options.map((option) => (
+          <PollOptionResult
+            id={option.id}
+            key={option.id}
+            title={option.title}
+            votes={option.votes}
+            totalVotes={props.poll.totalVotes}
+            isSelected={option.isSelected}
+          />
+        ))}
+    </View>
+  )
+}
 
-  if (props.card) {
-    return (
-      <>
-        {props.poll.options.length > 0 &&
-          props.poll.options.slice(0, 3).map((option) => (
-            <PollOptionItem
-              key={option.id}
-              id={option.id}
-              title={option.title}
-              votes={1} // TODO: integrate with real votes
-              totalVotes={2} // TODO: integrate with real total votes
-              isSelected={optionIds.includes(option.id)}
-              pollTouched={optionIds.length > 0}
-              onSelect={handleOptionSelect}
-            />
-          ))}
-      </>
-    )
+const PollSingleOptionList = (props: PollProps) => {
+  const [optionId, setOptionId] = React.useState<string>('')
+
+  const options = React.useMemo(() => {
+    if (props.card) {
+      return props.poll.options.slice(0, 3)
+    }
+    return props.poll.options
+  }, [props.poll.options, props.card])
+
+  function handleValueChange(value: string | undefined) {
+    // TODO: API here to update poll vote
+    setOptionId(value || '')
   }
 
   return (
-    <>
-      {props.poll.options.length > 0 &&
-        props.poll.options.map((option) => (
+    <PollOptionGroup
+      type="single"
+      onValueChange={handleValueChange}
+      value={optionId}
+      className="flex flex-col"
+    >
+      {options.length > 0 &&
+        options.map((option) => (
           <PollOptionItem
             key={option.id}
             id={option.id}
+            value={option.id}
             title={option.title}
-            votes={1} // TODO: integrate with real votes
-            totalVotes={2} // TODO: integrate with real total votes
-            isSelected={optionIds.includes(option.id)}
-            pollTouched={optionIds.length > 0}
-            onSelect={handleOptionSelect}
+            votes={option.votes}
+            totalVotes={props.poll.totalVotes}
+            isSelected={optionId === option.id}
+            pollTouched={optionId !== ''}
           />
         ))}
-    </>
+    </PollOptionGroup>
+  )
+}
+
+const PollMultipleOptionList = (props: PollProps) => {
+  const [optionIds, setOptionIds] = React.useState<string[]>([])
+
+  const options = React.useMemo(() => {
+    if (props.card) {
+      return props.poll.options.slice(0, 3)
+    }
+    return props.poll.options
+  }, [props.poll.options, props.card])
+
+  return (
+    <PollOptionGroup
+      type="multiple"
+      onValueChange={setOptionIds}
+      value={optionIds}
+      className="flex flex-col"
+    >
+      {options.length > 0 &&
+        options.map((option) => (
+          <PollOptionItem
+            key={option.id}
+            id={option.id}
+            value={option.id}
+            title={option.title}
+            votes={option.votes}
+            totalVotes={props.poll.totalVotes}
+            isSelected={optionIds.includes(option.id)}
+            pollTouched={optionIds.length > 0}
+          />
+        ))}
+    </PollOptionGroup>
   )
 }
 
@@ -257,7 +166,7 @@ interface PollHeaderProps {
 
 const PollHeader = (props: PollHeaderProps) => {
   return (
-    <View className="gap-1 flex flex-col mb-2">
+    <View className="gap-1 flex flex-col mb-4">
       <View className="w-full flex flex-row items-center gap-2">
         <Icon
           icon={MessageCircleQuestionIcon}
@@ -265,7 +174,7 @@ const PollHeader = (props: PollHeaderProps) => {
           className="text-base-primary-default"
           strokeWidth={2}
         />
-        <Text className="font-body-medium flex-1">{props.poll.title}</Text>
+        <Text className="font-body-semibold flex-1">{props.poll.title}</Text>
       </View>
       <View className="flex flex-row items-center justify-between">
         <View className="flex flex-row items-center">
@@ -283,7 +192,14 @@ const PollHeader = (props: PollHeaderProps) => {
                 props.isEnded && 'text-base-text-high'
               )}
             >
-              <PollCountdownTimer triggerEnded={props.triggerEnded} targetTime={props.poll.endAt} />
+              {props.isEnded ? (
+                'หมดเวลา'
+              ) : (
+                <PollCountdownTimer
+                  targetTime={props.poll.endAt}
+                  triggerEnded={props.triggerEnded}
+                />
+              )}
             </Text>
           </Text>
         </View>
@@ -299,55 +215,53 @@ interface PollCountdownTimerProps {
 }
 
 export function PollCountdownTimer(props: PollCountdownTimerProps) {
-  const [display, setDisplay] = React.useState('')
+  const [secondsLeft, setSecondsLeft] = React.useState(0)
 
   React.useEffect(() => {
-    const timer = setInterval(() => {
-      const now = dayjs()
-      const target = dayjs(props.targetTime)
-      const diff = target.diff(now)
-
-      if (diff <= 0) {
-        setDisplay('หมดเวลา')
-        clearInterval(timer)
+    const targetTime = dayjs(props.targetTime)
+    const interval = setInterval(() => {
+      const seconds = targetTime.diff(dayjs(), 'second')
+      setSecondsLeft(seconds >= 0 ? seconds : 0)
+      if (seconds <= 0) {
         props.triggerEnded()
-        return
-      }
-
-      const d = dayjs.duration(diff)
-      const totalHours = d.asHours()
-      const totalMinutes = d.asMinutes()
-      const totalSeconds = d.asSeconds()
-
-      if (totalHours >= 24) {
-        setDisplay(`${Math.floor(d.asDays())} วัน`)
-      } else if (totalHours >= 1) {
-        setDisplay(`${Math.floor(totalHours)} ชั่วโมง`)
-      } else if (totalMinutes >= 1) {
-        setDisplay(`${Math.floor(totalMinutes)} นาที`)
-      } else {
-        setDisplay(`${Math.floor(totalSeconds)} วินาที`)
       }
     }, 1000)
 
-    return () => clearInterval(timer)
-  }, [props.targetTime, props.triggerEnded, props])
+    return () => {
+      clearInterval(interval)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.targetTime])
 
-  return <>{display}</>
+  return <>{secondsLeft ? formatTimeInterval(secondsLeft) : '--'}</>
 }
 
 const PollStatusBadge = ({ isEnded }: { isEnded: boolean }) => {
-  if (isEnded) {
+  return (
+    <Badge variant={isEnded ? 'closed' : 'default'}>
+      <Text>{isEnded ? 'ปิดโพลแล้ว' : 'โพลที่โหวตได้'}</Text>
+    </Badge>
+  )
+}
+
+const PollSeeMore = (props: { feedItem: FeedItemPoll }) => {
+  const router = useRouter()
+
+  if (props.feedItem.poll.options.length > 3) {
     return (
-      <Badge variant={'closed'}>
-        <Text>ปิดโพลแล้ว</Text>
-      </Badge>
+      <Pressable
+        className="w-full border-2 border-base-outline-default flex flex-row justify-between items-center bg-base-bg-white font-body-medium rounded-2xl mt-2 p-3"
+        onPress={() => {
+          router.navigate(`/feed/${props.feedItem.id}`)
+        }}
+      >
+        <Text className="font-body-medium text-base-text-medium text-sm">
+          {`ดูเพิ่มเติม (อีก ${props.feedItem.poll.options.length - 3} ตัวเลือก)`}
+        </Text>
+        <Icon icon={ChevronRightIcon} size={24} strokeWidth={1} />
+      </Pressable>
     )
   }
 
-  return (
-    <Badge>
-      <Text>โพลที่โหวตได้</Text>
-    </Badge>
-  )
+  return null
 }
