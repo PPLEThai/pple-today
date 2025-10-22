@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 import { NavLink, useNavigate } from 'react-router'
 
 import { Badge } from '@pple-today/web-ui/badge'
@@ -14,6 +14,7 @@ import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
 import { ANNOUNCEMENT_TYPE_LONG_DISPLAY_TEXT, AnnouncementIcon } from 'components/AnnouncementIcon'
+import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { Engagements } from 'components/Engagements'
 import { AnnouncementEdit } from 'components/feed/AnnouncementEdit'
 import { FeedDetailComments } from 'components/feed/FeedDetailComments'
@@ -33,6 +34,7 @@ export function meta() {
 export default function AnnouncementDetailPage({ params }: Route.LoaderArgs) {
   const navigate = useNavigate()
   const { announcementId } = params
+  const confirmDialogRef = useRef<ConfirmDialogRef>(null)
 
   const queryClient = useQueryClient()
   const query = reactQueryClient.useQuery('/admin/announcements/:announcementId', {
@@ -83,10 +85,15 @@ export default function AnnouncementDetailPage({ params }: Route.LoaderArgs) {
     [patchMutation, queryClient]
   )
   const deleteAnnouncement = () => {
-    deleteMutation.mutateAsync(
-      { pathParams: { announcementId } },
-      { onSuccess: () => navigate('/feed/announcement') }
-    )
+    confirmDialogRef.current?.confirm({
+      title: `ต้องการลบประกาศ "${query.data?.title}" หรือไม่?`,
+      description: 'เมื่อลบประกาศแล้วจะไม่สามารถกู้คืนได้อีก',
+      onConfirm: () =>
+        deleteMutation.mutateAsync(
+          { pathParams: { announcementId } },
+          { onSuccess: () => navigate('/feed/announcement') }
+        ),
+    })
   }
 
   const { commentsCount, upVotes, downVotes } = useMemo(() => {
@@ -279,6 +286,7 @@ export default function AnnouncementDetailPage({ params }: Route.LoaderArgs) {
           </div>
         </div>
       )}
+      <ConfirmDialog ref={confirmDialogRef} />
     </div>
   )
 }

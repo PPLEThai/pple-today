@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { NavLink } from 'react-router'
 
 import { Badge } from '@pple-today/web-ui/badge'
@@ -8,6 +8,7 @@ import { Button } from '@pple-today/web-ui/button'
 import { DataTable } from '@pple-today/web-ui/data-table'
 import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
 import { createColumnHelper } from '@tanstack/react-table'
+import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { Engagements } from 'components/Engagements'
 import { AnnouncementCreate } from 'components/feed/AnnouncementCreate'
 import { TableCopyId } from 'components/TableCopyId'
@@ -30,6 +31,8 @@ const ANNOUNCEMENT_TYPE_DISPLAY_TEXT = {
 const columnHelper = createColumnHelper<GetAnnouncementsResponse['data'][number]>()
 
 export const Data = () => {
+  const confirmDialogRef = useRef<ConfirmDialogRef>(null)
+
   const [queryLimit, setQueryLimit] = useState(10)
   const [queryPage, setQueryPage] = useState(1)
 
@@ -193,6 +196,7 @@ export const Data = () => {
         header: 'จัดการ',
         cell: ({ row }) => {
           const id = row.original.id
+          const title = row.original.title
           const status = row.original.status
 
           return (
@@ -238,7 +242,11 @@ export const Data = () => {
                 disabled={deleteMutation.isPending}
                 aria-busy={deleteMutation.isPending}
                 onClick={() => {
-                  deleteAnnouncement(id)
+                  confirmDialogRef.current?.confirm({
+                    title: `ต้องการลบประกาศ "${title}" หรือไม่?`,
+                    description: 'เมื่อลบประกาศแล้วจะไม่สามารถกู้คืนได้อีก',
+                    onConfirm: () => deleteAnnouncement(id),
+                  })
                 }}
               >
                 <span className="sr-only">ลบ</span>
@@ -256,48 +264,51 @@ export const Data = () => {
   )
 
   return (
-    <DataTable
-      columns={columns}
-      data={query.data?.data ?? []}
-      count={query.data?.meta.count ?? 0}
-      isQuerying={query.isLoading}
-      isMutating={false}
-      queryLimit={queryLimit}
-      setQueryLimit={setQueryLimit}
-      queryPage={queryPage}
-      setQueryPage={setQueryPage}
-      filter={[
-        {
-          type: 'text',
-          key: 'name',
-          label: 'ค้นหาประกาศ',
-          state: querySearch,
-          setState: setQuerySearch,
-        },
-        {
-          type: 'enum',
-          key: 'status',
-          label: 'สถานะ',
-          options: [
-            { label: 'ประกาศแล้ว', value: 'PUBLISHED' },
-            { label: 'เก็บในคลัง', value: 'ARCHIVED' },
-            { label: 'ร่าง', value: 'DRAFT' },
-          ],
-          state: queryStatus,
-          setState: setQueryStatus,
-        },
-      ]}
-      filterExtension={
-        <AnnouncementCreate
-          trigger={
-            <Button>
-              <Plus />
-              สร้างประกาศ
-            </Button>
-          }
-          onSuccess={invalidateQuery}
-        />
-      }
-    />
+    <>
+      <DataTable
+        columns={columns}
+        data={query.data?.data ?? []}
+        count={query.data?.meta.count ?? 0}
+        isQuerying={query.isLoading}
+        isMutating={false}
+        queryLimit={queryLimit}
+        setQueryLimit={setQueryLimit}
+        queryPage={queryPage}
+        setQueryPage={setQueryPage}
+        filter={[
+          {
+            type: 'text',
+            key: 'name',
+            label: 'ค้นหาประกาศ',
+            state: querySearch,
+            setState: setQuerySearch,
+          },
+          {
+            type: 'enum',
+            key: 'status',
+            label: 'สถานะ',
+            options: [
+              { label: 'ประกาศแล้ว', value: 'PUBLISHED' },
+              { label: 'เก็บในคลัง', value: 'ARCHIVED' },
+              { label: 'ร่าง', value: 'DRAFT' },
+            ],
+            state: queryStatus,
+            setState: setQueryStatus,
+          },
+        ]}
+        filterExtension={
+          <AnnouncementCreate
+            trigger={
+              <Button>
+                <Plus />
+                สร้างประกาศ
+              </Button>
+            }
+            onSuccess={invalidateQuery}
+          />
+        }
+      />
+      <ConfirmDialog ref={confirmDialogRef} />
+    </>
   )
 }
