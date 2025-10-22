@@ -39,7 +39,7 @@ export const FeedDetailComments = ({ feedItemComment, invalidate }: FeedDetailCo
     <div className="flex items-start gap-2">
       <img
         className="size-8 shrink-0 rounded-full"
-        src={feedItemComment.author.profileImage ?? '/images/placeholder.png'}
+        src={feedItemComment.author.profileImage ?? '/images/placeholder.svg'}
         alt=""
         width={32}
         height={32}
