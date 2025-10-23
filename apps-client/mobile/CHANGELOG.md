@@ -1,5 +1,17 @@
 # @client/mobile
 
+## 0.7.2
+
+### Patch Changes
+
+- [#204](https://github.com/PPLEThai/pple-today/pull/204) [`da558ba`](https://github.com/PPLEThai/pple-today/commit/da558ba1ac3c9dad8344e551140802f71175277e) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-440] click home button to scroll to top](https://linear.app/snts/issue/PPLE-440/click-home-button-to-scroll-to-top)
+
+- [#206](https://github.com/PPLEThai/pple-today/pull/206) [`ee51e01`](https://github.com/PPLEThai/pple-today/commit/ee51e012cdbb3fd0d14ed56df30d3b5c9dccf860) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-352] Lock user to not able to swipe while logging in](https://linear.app/snts/issue/PPLE-352/lock-user-to-not-able-to-swipe-while-logging-in)
+
+- [#207](https://github.com/PPLEThai/pple-today/pull/207) [`3f8ce62`](https://github.com/PPLEThai/pple-today/commit/3f8ce625b16a65a8ed6c18a2c3b0cf074a4fe0b5) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-486] Fix election slides collapse sometimes](https://linear.app/snts/issue/PPLE-486/fix-election-slides-collapse-sometimes)
+
+- [#208](https://github.com/PPLEThai/pple-today/pull/208) [`b280031`](https://github.com/PPLEThai/pple-today/commit/b280031eddc43e5c268a8d9055da0a344607171e) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-429] Fix default background as gray when loading](https://linear.app/snts/issue/PPLE-429/fix-default-background-as-gray-when-loading)
+
 ## 0.7.1
 
 ### Patch Changes

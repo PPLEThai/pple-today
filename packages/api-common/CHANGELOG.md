@@ -1,5 +1,16 @@
 # @pple-today/api-common
 
+## 0.5.0
+
+### Minor Changes
+
+- [#198](https://github.com/PPLEThai/pple-today/pull/198) [`56d3b68`](https://github.com/PPLEThai/pple-today/commit/56d3b68dfa6a0cd732ad001c4ab6408fa18bd494) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-462] [API] Create Election Endpoint](https://linear.app/snts/issue/PPLE-462/api-create-election-endpoint)
+
+### Patch Changes
+
+- Updated dependencies [[`56d3b68`](https://github.com/PPLEThai/pple-today/commit/56d3b68dfa6a0cd732ad001c4ab6408fa18bd494)]:
+  - @pple-today/database@0.4.0
+
 ## 0.4.0
 
 ### Minor Changes
