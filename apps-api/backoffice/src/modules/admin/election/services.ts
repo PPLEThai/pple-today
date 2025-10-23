@@ -18,6 +18,7 @@ import crypto from 'crypto'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 import { stringify } from 'safe-stable-stringify'
+import * as R from 'remeda'
 
 import {
   AdminCreateElectionBody,
@@ -52,7 +53,7 @@ export class AdminElectionService {
     const isCancelled = election.isCancelled
     if (isCancelled) {
       return err({
-        code: InternalErrorCode.ELECTION_IS_CANNCELLED,
+        code: InternalErrorCode.ELECTION_IS_CANCELLED,
         message: `Election is cancelled`,
       })
     }
@@ -477,7 +478,7 @@ export class AdminElectionService {
   private checkIsElectionAllowedToUpdateResult(election: Election) {
     if (election.isCancelled) {
       return err({
-        code: InternalErrorCode.ELECTION_IS_CANNCELLED,
+        code: InternalErrorCode.ELECTION_IS_CANCELLED,
         message: `Election is cancelled`,
       })
     }
@@ -523,6 +524,13 @@ export class AdminElectionService {
       })
     }
 
+    if (election.isCancelled) {
+      return err({
+        code: InternalErrorCode.ELECTION_IS_CANCELLED,
+        message: `Election is cancelled`,
+      })
+    }
+
     const checkResult = this.checkIsElectionAllowedToUpdateResult(election)
     if (checkResult.isErr()) return err(checkResult.error)
 
@@ -533,7 +541,7 @@ export class AdminElectionService {
     if (countResult.isErr()) return mapRepositoryError(countResult.error)
 
     const count = countResult.value
-    const votes = result.reduce((acc, cur) => acc + cur.votes, 0)
+    const votes = R.sumBy(result, (candidate) => candidate.votes)
     // ONSITE election can have a case where votes exceed voters, but HYBRID election cannot
     if (election.type === 'HYBRID' && votes > count) {
       return err({

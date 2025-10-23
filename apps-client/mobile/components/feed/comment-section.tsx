@@ -98,13 +98,14 @@ export function FeedCommentSection({
 
   return (
     <FlatList
+      className="flex-1"
+      contentContainerClassName="pb-2 bg-base-bg-default flex-grow"
       data={data}
       onEndReached={onEndReached}
       onEndReachedThreshold={1}
       ListHeaderComponent={headerComponent}
       ListHeaderComponentClassName="pb-2"
       ListFooterComponent={Footer}
-      contentContainerClassName="pb-2"
       renderItem={renderItem}
     />
   )
@@ -113,7 +114,7 @@ export function FeedCommentSection({
 function FeedComment({ item }: { item: GetFeedCommentResponse[number] }) {
   return (
     <View className="flex flex-row gap-2 mt-3 mx-4">
-      <Link href={`/profile/user/${item.author.id}`} asChild>
+      <Link href={`/user/${item.author.id}`} asChild>
         <Pressable>
           <Avatar alt={item.author.name} className="w-8 h-8">
             <AvatarImage source={{ uri: item.author.profileImage }} />
@@ -131,7 +132,7 @@ function FeedComment({ item }: { item: GetFeedCommentResponse[number] }) {
           )}
         >
           <View className="flex flex-row justify-between gap-2 items-center">
-            <Link href={`/profile/user/${item.author.id}`}>
+            <Link href={`/user/${item.author.id}`}>
               <Text className="font-heading-semibold text-base-text-high text-xs">
                 {item.author.name}
               </Text>

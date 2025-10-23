@@ -20,7 +20,7 @@ export const ElectionWithCurrentStatus = t.Intersect([
 export type ElectionWithCurrentStatus = Static<typeof ElectionWithCurrentStatus>
 
 export const ListElectionQuery = t.Object({
-  page: t.Optional(
+  in: t.Optional(
     t.Enum(
       {
         OFFICIAL: 'OFFICIAL',
