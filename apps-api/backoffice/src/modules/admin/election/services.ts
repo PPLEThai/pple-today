@@ -524,13 +524,6 @@ export class AdminElectionService {
       })
     }
 
-    if (election.isCancelled) {
-      return err({
-        code: InternalErrorCode.ELECTION_IS_CANCELLED,
-        message: `Election is cancelled`,
-      })
-    }
-
     const checkResult = this.checkIsElectionAllowedToUpdateResult(election)
     if (checkResult.isErr()) return err(checkResult.error)
 
@@ -554,14 +547,7 @@ export class AdminElectionService {
       election.id,
       result
     )
-    if (uploadResult.isErr()) {
-      return mapRepositoryError(uploadResult.error, {
-        FOREIGN_KEY_CONSTRAINT_FAILED: {
-          code: InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
-          message: `One of candidateId in result not found`,
-        },
-      })
-    }
+    if (uploadResult.isErr()) return mapRepositoryError(uploadResult.error)
 
     return ok()
   }
@@ -649,14 +635,7 @@ export class AdminElectionService {
         electionId,
         result
       )
-      if (uploadResult.isErr()) {
-        return mapRepositoryError(uploadResult.error, {
-          FOREIGN_KEY_CONSTRAINT_FAILED: {
-            code: InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
-            message: `One of candidateId in result not found`,
-          },
-        })
-      }
+      if (uploadResult.isErr()) return mapRepositoryError(uploadResult.error)
     } else {
       const uploadResult =
         await this.adminElectionRepository.uploadFailedElectionOnlineResult(electionId)
