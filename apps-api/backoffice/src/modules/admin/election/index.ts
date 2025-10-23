@@ -31,6 +31,9 @@ import {
   AdminListElectionEligibleVoterResponse,
   AdminListElectionQuery,
   AdminListElectionResponse,
+  AdminPublishElectionBody,
+  AdminPublishElectionParams,
+  AdminPublishElectionResponse,
   AdminUpdateElectionCandidateParams,
   AdminUpdateElectionCandidateResponse,
   AdminUpdateElectionKeysBody,
@@ -151,6 +154,37 @@ export const AdminElectionController = new Elysia({
           InternalErrorCode.FILE_ROLLBACK_FAILED,
           InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .put(
+    '/:electionId/publish',
+    async ({ params, body, adminElectionService, status }) => {
+      const result = await adminElectionService.publishElection(params.electionId, body.publishDate)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, {
+        message: 'Publish Election Successfully',
+      })
+    },
+    {
+      detail: {
+        summary: 'Publish Election',
+        description: 'Publish Election',
+      },
+      requiredLocalUser: true,
+      params: AdminPublishElectionParams,
+      body: AdminPublishElectionBody,
+      response: {
+        200: AdminPublishElectionResponse,
+        ...createErrorSchema(
+          InternalErrorCode.INTERNAL_SERVER_ERROR,
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.FORBIDDEN,
+          InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+          InternalErrorCode.ELECTION_IS_CANCELLED
         ),
       },
     }

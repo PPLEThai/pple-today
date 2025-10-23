@@ -169,6 +169,15 @@ export class AdminElectionRepository {
     return ok()
   }
 
+  async publishElectionById(electionId: string, publishDate: Date) {
+    return fromRepositoryPromise(
+      this.prismaService.election.update({
+        where: { id: electionId },
+        data: { publishDate },
+      })
+    )
+  }
+
   async listElectionCandidates(electionId: string) {
     return fromRepositoryPromise(
       this.prismaService.electionCandidate.findMany({
