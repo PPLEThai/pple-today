@@ -1,5 +1,23 @@
 # @api/backoffice
 
+## 0.8.0
+
+### Minor Changes
+
+- [#200](https://github.com/PPLEThai/pple-today/pull/200) [`0b69e8a`](https://github.com/PPLEThai/pple-today/commit/0b69e8aae21cc7c57b0bc20a688526be43830d83) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-321] [API] Offline Result Management Endpoint](https://linear.app/snts/issue/PPLE-321/api-offline-result-management-endpoint)
+
+- [#199](https://github.com/PPLEThai/pple-today/pull/199) [`1895cb0`](https://github.com/PPLEThai/pple-today/commit/1895cb0518e064aecf165c2c871ea72d0de57cc9) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-463] [API] publish election](https://linear.app/snts/issue/PPLE-463/api-publish-election)
+
+- [#198](https://github.com/PPLEThai/pple-today/pull/198) [`56d3b68`](https://github.com/PPLEThai/pple-today/commit/56d3b68dfa6a0cd732ad001c4ab6408fa18bd494) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-462] [API] Create Election Endpoint](https://linear.app/snts/issue/PPLE-462/api-create-election-endpoint)
+
+### Patch Changes
+
+- [#161](https://github.com/PPLEThai/pple-today/pull/161) [`fd8e09f`](https://github.com/PPLEThai/pple-today/commit/fd8e09fc36f95a4752828a830c2b45ae00f0dd05) Thanks [@miello](https://github.com/miello)! - [[PPLE-392] [API] Only creator accounts can be searched](https://linear.app/snts/issue/PPLE-392/api-only-creator-accounts-can-be-searched)
+
+- Updated dependencies [[`56d3b68`](https://github.com/PPLEThai/pple-today/commit/56d3b68dfa6a0cd732ad001c4ab6408fa18bd494)]:
+  - @pple-today/api-common@0.5.0
+  - @pple-today/database@0.4.0
+
 ## 0.7.0
 
 ### Minor Changes
