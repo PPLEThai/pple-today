@@ -236,6 +236,18 @@ const ELECTION_ERROR_SCHEMA = {
   ELECTION_KEY_NOT_IN_PENDING_CREATED_STATUS: {
     status: 409,
   },
+  ELECTION_NOT_IN_CLOSED_VOTE_PERIOD: {
+    status: 409,
+  },
+  ELECTION_INVALID_TYPE: {
+    status: 409,
+  },
+  ELECTION_DUPLICATE_CANDIDATE: {
+    status: 409,
+  },
+  ELECTION_VOTES_EXCEED_VOTERS: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 export const ELECTION_KEY_ERROR_SCHEMA = {

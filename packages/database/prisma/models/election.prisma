@@ -79,6 +79,8 @@ model ElectionCandidate {
 
     results ElectionResult[]
 
+    @@unique([electionId, name])
+    @@unique([electionId, number])
     @@index(electionId)
 }
 
