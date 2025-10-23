@@ -218,7 +218,7 @@ export class KeyManagementService {
     if (keyErr) {
       return mapGoogleAPIError(keyErr.error, {
         NOT_FOUND: {
-          code: InternalErrorCode.KEY_NOT_FOUND,
+          code: InternalErrorCode.ELECTION_KEY_NOT_FOUND,
           message: `Cannot found key for election id ${electionId}`,
         },
       })

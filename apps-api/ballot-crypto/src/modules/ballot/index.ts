@@ -33,7 +33,7 @@ export const BallotController = new Elysia({
         200: BallotCountResponse,
         ...createErrorSchema(
           InternalErrorCode.INTERNAL_SERVER_ERROR,
-          InternalErrorCode.KEY_NOT_FOUND,
+          InternalErrorCode.ELECTION_KEY_NOT_FOUND,
           InternalErrorCode.KEY_NOT_ENABLED
         ),
       },
