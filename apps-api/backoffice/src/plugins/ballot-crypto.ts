@@ -36,7 +36,37 @@ export class BallotCryptoService {
   }
 
   async destroyElectionKeys(electionId: string) {
-    const response = await this.client.keys({ electionId }).delete()
+    const response = await this.client.keys({ electionId }).delete(
+      {},
+      {
+        headers: {
+          'x-backoffice-to-ballot-crypto-key': this.config.apiKey,
+        },
+      }
+    )
+
+    if (response.status < 200 || response.status >= 300) {
+      return err({
+        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+        message: 'An unexpected error occurred',
+      })
+    }
+
+    return ok()
+  }
+
+  async countBallots(electionId: string, ballots: string[]) {
+    const response = await this.client.ballots.count.post(
+      {
+        electionId,
+        ballots,
+      },
+      {
+        headers: {
+          'x-backoffice-to-ballot-crypto-key': this.config.apiKey,
+        },
+      }
+    )
 
     if (response.status < 200 || response.status >= 300) {
       return err({

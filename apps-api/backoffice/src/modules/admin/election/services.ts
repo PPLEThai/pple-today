@@ -11,11 +11,14 @@ import {
   Election,
   ElectionCandidate,
   ElectionKeysStatus,
+  ElectionMode,
   EligibleVoterType,
 } from '@pple-today/database/prisma'
+import crypto from 'crypto'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 import * as R from 'remeda'
+import { stringify } from 'safe-stable-stringify'
 
 import {
   AdminCreateElectionBody,
@@ -472,6 +475,33 @@ export class AdminElectionService {
     return ok()
   }
 
+  private checkIsElectionAllowedToUpdateResult(election: Election) {
+    if (election.isCancelled) {
+      return err({
+        code: InternalErrorCode.ELECTION_IS_CANCELLED,
+        message: `Election is cancelled`,
+      })
+    }
+
+    const now = new Date()
+
+    if (now < election.closeVoting) {
+      return err({
+        code: InternalErrorCode.ELECTION_NOT_IN_CLOSED_VOTE_PERIOD,
+        message: `Cannot upload result before voting close`,
+      })
+    }
+
+    if (election.startResult && now >= election.startResult) {
+      return err({
+        code: InternalErrorCode.ELECTION_NOT_IN_CLOSED_VOTE_PERIOD,
+        message: `Cannot upload result after result announced`,
+      })
+    }
+
+    return ok()
+  }
+
   async uploadElectionOnsiteResult(
     electionId: string,
     result: { candidateId: string; votes: number }[]
@@ -494,45 +524,122 @@ export class AdminElectionService {
       })
     }
 
-    if (election.isCancelled) {
-      return err({
-        code: InternalErrorCode.ELECTION_IS_CANCELLED,
-        message: `Election is cancelled`,
-      })
-    }
+    const checkResult = this.checkIsElectionAllowedToUpdateResult(election)
+    if (checkResult.isErr()) return err(checkResult.error)
 
-    const now = new Date()
+    const countResult = await this.adminElectionRepository.countElectionEligibleVoters(
+      electionId,
+      'ONSITE'
+    )
+    if (countResult.isErr()) return mapRepositoryError(countResult.error)
 
-    if (now < election.closeVoting) {
-      return err({
-        code: InternalErrorCode.ELECTION_NOT_IN_CLOSED_VOTE_PERIOD,
-        message: `Cannot upload onsite result before voting close`,
-      })
-    }
-
-    if (election.startResult && now >= election.startResult) {
-      return err({
-        code: InternalErrorCode.ELECTION_NOT_IN_CLOSED_VOTE_PERIOD,
-        message: `Cannot upload offline result after result announced`,
-      })
-    }
-
+    const count = countResult.value
     const votes = R.sumBy(result, (candidate) => candidate.votes)
-    if (votes > election._count.voters) {
+    // ONSITE election can have a case where votes exceed voters, but HYBRID election cannot
+    if (election.type === 'HYBRID' && votes > count) {
       return err({
         code: InternalErrorCode.ELECTION_VOTES_EXCEED_VOTERS,
-        message: `Total votes ${votes} exceed total onsite voters ${election._count.voters}`,
+        message: `Total votes ${votes} exceed total onsite voters ${count}`,
       })
     }
 
-    const upsertResult = await this.adminElectionRepository.upsertElectionOnsiteResult(result)
-    if (upsertResult.isErr()) {
-      return mapRepositoryError(upsertResult.error, {
-        FOREIGN_KEY_CONSTRAINT_FAILED: {
-          code: InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
-          message: `One of candidateId in result not found`,
+    const uploadResult = await this.adminElectionRepository.uploadElectionOnsiteResult(
+      election.id,
+      result
+    )
+    if (uploadResult.isErr()) return mapRepositoryError(uploadResult.error)
+
+    return ok()
+  }
+
+  private verifySignature(
+    data: { candidateId: string; votes: number }[],
+    signature: string,
+    publicKey: string
+  ): boolean {
+    return crypto.verify(
+      'sha256',
+      Buffer.from(stringify(data)),
+      {
+        key: publicKey,
+      },
+      Buffer.from(signature, 'base64')
+    )
+  }
+
+  async uploadElectionOnlineResult(
+    electionId: string,
+    status: 'COUNT_SUCCESS' | 'COUNT_FAILED',
+    signature?: string,
+    result?: { candidateId: string; votes: number }[]
+  ) {
+    const electionResult = await this.adminElectionRepository.getElectionById(electionId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id ${electionId}`,
         },
       })
+    }
+
+    const election = electionResult.value
+    if (election.type !== 'ONLINE' && election.type !== 'HYBRID') {
+      return err({
+        code: InternalErrorCode.ELECTION_INVALID_TYPE,
+        message: `Cannot upload online result for election type ${election.type}`,
+      })
+    }
+
+    const checkResult = this.checkIsElectionAllowedToUpdateResult(election)
+    if (checkResult.isErr()) return err(checkResult.error)
+
+    if (status === 'COUNT_SUCCESS') {
+      if (!result) {
+        return err({
+          code: InternalErrorCode.BAD_REQUEST,
+          message: 'Result is required when status is COUNT_SUCCESS',
+        })
+      }
+
+      if (!signature) {
+        return err({
+          code: InternalErrorCode.BAD_REQUEST,
+          message: 'Signature is required when status is COUNT_SUCCESS',
+        })
+      }
+
+      if (!this.verifySignature(result, signature, election.signingPublicKey || '')) {
+        return err({
+          code: InternalErrorCode.ELECTION_INVALID_SIGNATURE,
+          message: 'Invalid signature',
+        })
+      }
+
+      const countResult = await this.adminElectionRepository.countElectionEligibleVoters(
+        electionId,
+        'ONLINE'
+      )
+      if (countResult.isErr()) return mapRepositoryError(countResult.error)
+
+      const count = countResult.value
+      const votes = result.reduce((acc, cur) => acc + cur.votes, 0)
+      if (votes > count) {
+        return err({
+          code: InternalErrorCode.ELECTION_VOTES_EXCEED_VOTERS,
+          message: `Total votes ${votes} exceed total online voters ${count}`,
+        })
+      }
+
+      const uploadResult = await this.adminElectionRepository.uploadSuccessElectionOnlineResult(
+        electionId,
+        result
+      )
+      if (uploadResult.isErr()) return mapRepositoryError(uploadResult.error)
+    } else {
+      const uploadResult =
+        await this.adminElectionRepository.uploadFailedElectionOnlineResult(electionId)
+      if (uploadResult.isErr()) return mapRepositoryError(uploadResult.error)
     }
 
     return ok()
@@ -578,6 +685,52 @@ export class AdminElectionService {
       keys.status === ElectionKeysStatus.CREATED ? keys : { status: keys.status }
     )
     if (updateKeysResult.isErr()) return mapRepositoryError(updateKeysResult.error)
+
+    return ok()
+  }
+
+  async countBallots(electionId: string) {
+    const electionResult = await this.adminElectionRepository.getElectionById(electionId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id ${electionId}`,
+        },
+      })
+    }
+
+    const election = electionResult.value
+
+    if (election.type !== 'ONLINE' && election.type !== 'HYBRID') {
+      return err({
+        code: InternalErrorCode.ELECTION_INVALID_TYPE,
+        message: `Cannot upload online result for election type ${election.type}`,
+      })
+    }
+
+    const checkResult = this.checkIsElectionAllowedToUpdateResult(election)
+    if (checkResult.isErr()) return err(checkResult.error)
+
+    if (election.keysStatus !== ElectionKeysStatus.CREATED) {
+      return err({
+        code: InternalErrorCode.ELECTION_KEY_NOT_READY,
+        message: `Election's keys are not in the status that can be used to decrypt ballot`,
+      })
+    }
+
+    const ballotsResult = await this.adminElectionRepository.listElectionBallots(electionId)
+    if (ballotsResult.isErr()) return mapRepositoryError(ballotsResult.error)
+
+    const ballots = ballotsResult.value.map((ballot) => ballot.encryptedBallot)
+
+    const countResult = await this.ballotCryptoService.countBallots(electionId, ballots)
+    if (countResult.isErr()) return mapRepositoryError(countResult.error)
+
+    if (election.mode === ElectionMode.SECURE) {
+      const unlinkResult = await this.adminElectionRepository.unlinkVoteRecordsToBallots(electionId)
+      if (unlinkResult.isErr()) return mapRepositoryError(unlinkResult.error)
+    }
 
     return ok()
   }

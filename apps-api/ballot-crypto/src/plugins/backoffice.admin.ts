@@ -1,6 +1,6 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { err } from '@pple-today/api-common/utils'
-import { ElectionKeysStatus } from '@pple-today/database/prisma'
+import { ElectionKeysStatus, ElectionOnlineResultStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -33,6 +33,35 @@ export class BackofficeAdminService {
     })
 
     if (!res.ok) {
+      return err({
+        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+        message: 'Unexpected error occured',
+      })
+    }
+
+    return ok()
+  }
+
+  async updateElectionResult(data: {
+    electionId: string
+    status: ElectionOnlineResultStatus
+    signature?: string
+    result?: { candidateId: string; votes: number }[]
+  }) {
+    const response = await fetch(this.getUrl(`/admin/elections/${data.electionId}/result/online`), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-ballot-crypto-to-backoffice-key': this.config.apiKey,
+      },
+      body: JSON.stringify({
+        status: data.status,
+        signature: data.signature,
+        result: data.result,
+      }),
+    })
+
+    if (!response.ok) {
       return err({
         code: InternalErrorCode.INTERNAL_SERVER_ERROR,
         message: 'Unexpected error occured',

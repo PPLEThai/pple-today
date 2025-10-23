@@ -248,6 +248,12 @@ const ELECTION_ERROR_SCHEMA = {
   ELECTION_VOTES_EXCEED_VOTERS: {
     status: 409,
   },
+  ELECTION_INVALID_SIGNATURE: {
+    status: 401,
+  },
+  ELECTION_KEY_NOT_READY: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 export const ELECTION_KEY_ERROR_SCHEMA = {
@@ -256,6 +262,9 @@ export const ELECTION_KEY_ERROR_SCHEMA = {
   },
   ELECTION_KEY_NOT_FOUND: {
     status: 404,
+  },
+  KEY_NOT_ENABLED: {
+    status: 409,
   },
 } satisfies InternalErrorSchemas
 
