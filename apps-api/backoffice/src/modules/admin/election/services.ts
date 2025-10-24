@@ -68,6 +68,8 @@ export class AdminElectionService {
       description: election.description,
       location: election.location,
       locationMapUrl: election.locationMapUrl,
+      province: election.province,
+      district: election.district,
       type: election.type,
       mode: election.mode,
       isCancelled: election.isCancelled,
@@ -107,11 +109,12 @@ export class AdminElectionService {
 
     if (
       (input.type === 'ONSITE' || input.type === 'HYBRID') &&
-      (!input.location || !input.locationMapUrl)
+      (!input.location || !input.locationMapUrl || !input.province || !input.district)
     ) {
       return err({
         code: InternalErrorCode.BAD_REQUEST,
-        message: 'Must specify location and locationMapUrl for ONSITE or HYBRID election',
+        message:
+          'Must specify location, locationMapUrl, province and district for ONSITE or HYBRID election',
       })
     }
 
