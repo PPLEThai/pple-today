@@ -227,6 +227,32 @@ export class AdminElectionService {
     return ok(this.convertToElectionInfo(updateResult.value))
   }
 
+  async deleteElection(electionId: string) {
+    const electionResult = await this.adminElectionRepository.getElectionById(electionId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id: ${electionId}`,
+        },
+      })
+    }
+
+    const election = electionResult.value
+
+    if (election.publishDate) {
+      return err({
+        code: InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+        message: `Election already publish`,
+      })
+    }
+
+    const deleteResult = await this.adminElectionRepository.deleteElection(electionId)
+    if (deleteResult.isErr()) return mapRepositoryError(deleteResult.error)
+
+    return ok()
+  }
+
   async cancelElection(electionId: string) {
     const cancelResult = await this.adminElectionRepository.cancelElectionById(electionId)
     if (cancelResult.isErr()) {

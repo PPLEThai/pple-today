@@ -25,6 +25,8 @@ import {
   AdminDeleteElectionEligibleVoterBody,
   AdminDeleteElectionEligibleVoterParams,
   AdminDeleteElectionEligibleVoterResponse,
+  AdminDeleteElectionParams,
+  AdminDeleteElectionResponse,
   AdminGetElectionParams,
   AdminGetElectionResponse,
   AdminListElectionCandidatesParams,
@@ -161,6 +163,32 @@ export const AdminElectionController = new Elysia({
           InternalErrorCode.BAD_REQUEST,
           InternalErrorCode.ELECTION_ALREADY_PUBLISH,
           InternalErrorCode.ELECTION_IS_CANCELLED
+        ),
+      },
+    }
+  )
+  .delete(
+    '/:electionId',
+    async ({ status, adminElectionService, params }) => {
+      const result = await adminElectionService.deleteElection(params.electionId)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, {
+        message: 'Delete election successfully',
+      })
+    },
+    {
+      detail: {
+        summary: 'Delete Election',
+        description: 'Delete Election',
+      },
+      params: AdminDeleteElectionParams,
+      response: {
+        200: AdminDeleteElectionResponse,
+        ...createErrorSchema(
+          InternalErrorCode.INTERNAL_SERVER_ERROR,
+          InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.ELECTION_ALREADY_PUBLISH
         ),
       },
     }

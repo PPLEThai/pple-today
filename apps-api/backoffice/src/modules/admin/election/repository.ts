@@ -116,6 +116,14 @@ export class AdminElectionRepository {
     )
   }
 
+  async deleteElection(electionId: string) {
+    return fromRepositoryPromise(
+      this.prismaService.election.delete({
+        where: { id: electionId },
+      })
+    )
+  }
+
   async listElections(input: {
     filter?: {
       name?: string
