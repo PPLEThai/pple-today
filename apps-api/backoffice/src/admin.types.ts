@@ -6,6 +6,7 @@ export type * from './modules/admin/auth/models'
 export type * from './modules/admin/banner/models'
 export type * from './modules/admin/file/models'
 export type * from './modules/admin/hashtag/models'
+export type * from './modules/admin/post/models'
 export type * from './modules/admin/topic/models'
 export type * from '@pple-today/api-common/dtos'
 
