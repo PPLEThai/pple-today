@@ -72,6 +72,47 @@ export type AdminGetElectionParams = Static<typeof AdminGetElectionParams>
 export const AdminGetElectionResponse = ElectionInfo
 export type AdminGetElectionResponse = Static<typeof AdminGetElectionResponse>
 
+export const AdminUpdateElectionParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminUpdateElectionParams = Static<typeof AdminUpdateElectionParams>
+
+export const AdminUpdateElectionBody = t.Object({
+  name: t.String(),
+  description: t.Optional(t.Nullable(t.String())),
+  location: t.Optional(
+    t.Nullable(
+      t.String({ description: 'Address of the election, required if type is ONSITE or HYBRID' })
+    )
+  ),
+  locationMapUrl: t.Optional(
+    t.Nullable(
+      t.String({
+        description: 'Google Maps URL of the location, required if type is ONSITE or HYBRID',
+      })
+    )
+  ),
+  province: t.Optional(
+    t.Nullable(
+      t.String({ description: 'Province of the election, required if type is ONSITE or HYBRID' })
+    )
+  ),
+  district: t.Optional(
+    t.Nullable(
+      t.String({ description: 'District of the election, required if type is ONSITE or HYBRID' })
+    )
+  ),
+  type: t.Enum(ElectionType),
+  openRegister: t.Optional(t.Nullable(t.Date({ description: 'Required if type is HYBRID' }))),
+  closeRegister: t.Optional(t.Nullable(t.Date({ description: 'Required if type is HYBRID' }))),
+  openVoting: t.Date(),
+  closeVoting: t.Date(),
+})
+export type AdminUpdateElectionBody = Static<typeof AdminUpdateElectionBody>
+
+export const AdminUpdateElectionResponse = ElectionInfo
+export type AdminUpdateElectionResponse = Static<typeof AdminUpdateElectionResponse>
+
 export const AdminCancelElectionParams = t.Object({
   electionId: t.String(),
 })

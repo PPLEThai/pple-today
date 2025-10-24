@@ -12,6 +12,7 @@ import {
   ElectionCandidate,
   ElectionKeysStatus,
   ElectionMode,
+  ElectionType,
   EligibleVoterType,
 } from '@pple-today/database/prisma'
 import crypto from 'crypto'
@@ -25,6 +26,7 @@ import {
   AdminCreateElectionCandidateBody,
   AdminListElectionQuery,
   AdminListElectionResponse,
+  AdminUpdateElectionBody,
   AdminUpdateElectionCandidateBody,
   ElectionEligibleVoterIdentifier,
 } from './models'
@@ -99,7 +101,15 @@ export class AdminElectionService {
     }
   }
 
-  async createElection(input: AdminCreateElectionBody) {
+  private validateElectionInput(input: {
+    type: ElectionType
+    openRegister?: Date | null
+    closeRegister?: Date | null
+    location?: string | null
+    locationMapUrl?: string | null
+    province?: string | null
+    district?: string | null
+  }) {
     if (input.type === 'HYBRID' && (!input.openRegister || !input.closeRegister)) {
       return err({
         code: InternalErrorCode.BAD_REQUEST,
@@ -117,6 +127,13 @@ export class AdminElectionService {
           'Must specify location, locationMapUrl, province and district for ONSITE or HYBRID election',
       })
     }
+
+    return ok()
+  }
+
+  async createElection(input: AdminCreateElectionBody) {
+    const validateResult = this.validateElectionInput({ ...input })
+    if (validateResult.isErr()) return err(validateResult.error)
 
     const electionId = createId()
     const keysResult = await this.ballotCryptoService.createElectionKeys(electionId)
@@ -181,6 +198,33 @@ export class AdminElectionService {
     }
 
     return ok(this.convertToElectionInfo(getElectionResult.value))
+  }
+
+  async updateElection(electionId: string, input: AdminUpdateElectionBody) {
+    const validateResult = this.validateElectionInput({ ...input })
+    if (validateResult.isErr()) return err(validateResult.error)
+
+    const electionResult = await this.adminElectionRepository.getElectionById(electionId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id: ${electionId}`,
+        },
+      })
+    }
+
+    const election = electionResult.value
+
+    const checkResult = this.checkIsElectionAllowedToModified(election, new Date())
+    if (checkResult.isErr()) return err(checkResult.error)
+
+    const updateResult = await this.adminElectionRepository.updateElection(electionId, input)
+    if (updateResult.isErr()) {
+      return mapRepositoryError(updateResult.error)
+    }
+
+    return ok(this.convertToElectionInfo(updateResult.value))
   }
 
   async cancelElection(electionId: string) {

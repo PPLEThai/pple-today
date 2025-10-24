@@ -36,11 +36,13 @@ import {
   AdminPublishElectionBody,
   AdminPublishElectionParams,
   AdminPublishElectionResponse,
+  AdminUpdateElectionBody,
   AdminUpdateElectionCandidateParams,
   AdminUpdateElectionCandidateResponse,
   AdminUpdateElectionKeysBody,
   AdminUpdateElectionKeysParams,
   AdminUpdateElectionKeysResponse,
+  AdminUpdateElectionResponse,
   AdminUploadOnlineResultBody,
   AdminUploadOnlineResultParams,
   AdminUploadOnlineResultResponse,
@@ -131,6 +133,34 @@ export const AdminElectionController = new Elysia({
           InternalErrorCode.FORBIDDEN,
           InternalErrorCode.ELECTION_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .put(
+    '/:electionId',
+    async ({ status, adminElectionService, params, body }) => {
+      const result = await adminElectionService.updateElection(params.electionId, body)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, result.value)
+    },
+    {
+      detail: {
+        summary: 'Update Election',
+        description: 'Update Election',
+      },
+      requiredLocalUser: true,
+      params: AdminUpdateElectionKeysParams,
+      body: AdminUpdateElectionBody,
+      response: {
+        200: AdminUpdateElectionResponse,
+        ...createErrorSchema(
+          InternalErrorCode.INTERNAL_SERVER_ERROR,
+          InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.BAD_REQUEST,
+          InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+          InternalErrorCode.ELECTION_IS_CANCELLED
         ),
       },
     }

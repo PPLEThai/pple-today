@@ -13,7 +13,7 @@ import { fromGoogleAPIPromise, mapGoogleAPIError } from '../utils/error'
 
 export class KeyManagementService {
   private readonly kmsClient: KeyManagementServiceClient
-  private readonly DESTROY_SCHEDULED_DURATION = 30 * 24 * 60 * 60
+  private readonly DESTROY_SCHEDULED_DURATION = 3 * 30 * 24 * 60 * 60
 
   constructor(
     private readonly config: {
