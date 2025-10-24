@@ -21,72 +21,92 @@ import {
 } from '@pple-today/web-ui/form'
 import { Input } from '@pple-today/web-ui/input'
 import { MultiSelect } from '@pple-today/web-ui/multi-select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@pple-today/web-ui/select'
 import { Textarea } from '@pple-today/web-ui/textarea'
 import { Typography } from '@pple-today/web-ui/typography'
+import { ANNOUNCEMENT_TYPE_LONG_DISPLAY_TEXT, AnnouncementIcon } from 'components/AnnouncementIcon'
 import { FileUploadInput } from 'components/FileUploadInput'
-import { ImagePreview } from 'components/ImagePreview'
 import { X } from 'lucide-react'
-import { ACCEPTED_IMAGE_TYPES, handleUploadFile, MAX_FILE_SIZE } from 'utils/file-upload'
+import { ACCEPTED_FILE_TYPES, handleUploadFile, MAX_FILE_SIZE } from 'utils/file-upload'
 import z from 'zod'
 
 import { FilePath } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
 
-const CreateTopicFormSchema = z.object({
-  name: z.string().min(1, 'กรุณากรอกชื่อหัวข้อ'),
-  description: z.string(),
-  hashtagIds: z.array(z.string()).min(1, 'กรุณาเลือกอย่างน้อย 1 แฮชแท็ก'),
-  bannerImage: z
+const CreateAnnouncementFormSchema = z.object({
+  title: z.string().min(1, 'กรุณากรอกชื่อประกาศ'),
+  type: z.enum(['OFFICIAL', 'PARTY_COMMUNICATE', 'INTERNAL']),
+  content: z.string().min(1, 'กรุณากรอกรายละเอียด'),
+  topicIds: z.array(z.string()).min(1, 'กรุณาเลือกอย่างน้อย 1 หัวข้อ'),
+  attachmentFile: z
     .instanceof(File, { error: 'กรุณาอัปโหลดไฟล์' })
     .refine((file) => file.size <= MAX_FILE_SIZE, `กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB`)
-    .refine((file) => ACCEPTED_IMAGE_TYPES.includes(file.type), 'กรุณาอัปโหลดไฟล์ประเภท JPG / PNG'),
+    .refine(
+      (file) => ACCEPTED_FILE_TYPES.includes(file.type),
+      'กรุณาอัปโหลดไฟล์ประเภท PDF / JPG / PNG'
+    )
+    .optional(),
 })
 
-type CreateTopicFormSchema = z.infer<typeof CreateTopicFormSchema>
+type CreateAnnouncementFormSchema = z.infer<typeof CreateAnnouncementFormSchema>
 
-interface TopicCreateProps {
+interface AnnouncementCreateProps {
   trigger: ReactNode
   onSuccess: () => void
 }
 
-export const TopicCreate = (props: TopicCreateProps) => {
+export const AnnouncementCreate = (props: AnnouncementCreateProps) => {
   const [isOpen, setIsOpen] = useState(false)
 
-  const hashtagQuery = reactQueryClient.useQuery('/admin/hashtags', { query: {} })
+  const topicQuery = reactQueryClient.useQuery('/admin/topics', { query: {} })
   const getFileUploadUrl = reactQueryClient.useMutation('post', '/admin/file/upload-url')
-  const createTopicMutation = reactQueryClient.useMutation('post', '/admin/topics')
+  const createAnnouncementMutation = reactQueryClient.useMutation('post', '/admin/announcements')
 
-  const form = useForm<CreateTopicFormSchema>({
-    resolver: standardSchemaResolver(CreateTopicFormSchema),
+  const form = useForm<CreateAnnouncementFormSchema>({
+    resolver: standardSchemaResolver(CreateAnnouncementFormSchema),
     defaultValues: {
-      name: '',
-      description: '',
-      hashtagIds: [],
+      title: '',
+      type: 'INTERNAL',
+      content: '',
+      topicIds: [],
+      attachmentFile: undefined,
     },
   })
   const elFileInput = useRef<HTMLInputElement>(null)
 
   const clearFile = () => {
     if (elFileInput.current) elFileInput.current.value = ''
-    form.setValue('bannerImage', undefined as unknown as File, { shouldDirty: true })
+    form.setValue('attachmentFile', undefined, { shouldDirty: true })
   }
 
-  const onSubmit: SubmitHandler<CreateTopicFormSchema> = async ({ bannerImage, ...data }) => {
-    const result = await getFileUploadUrl.mutateAsync({
-      body: {
-        category: 'TOPIC',
-        contentType: bannerImage.type as any,
-      },
-    })
+  const onSubmit: SubmitHandler<CreateAnnouncementFormSchema> = async ({
+    attachmentFile,
+    ...data
+  }) => {
+    let attachmentFilePaths: FilePath[] = []
 
-    await handleUploadFile(bannerImage, result.uploadUrl, result.uploadFields)
+    if (attachmentFile) {
+      const result = await getFileUploadUrl.mutateAsync({
+        body: {
+          category: 'ANNOUNCEMENT',
+          contentType: attachmentFile.type as any,
+        },
+      })
 
-    await createTopicMutation.mutateAsync({
-      body: {
-        ...data,
-        bannerImagePath: result.filePath as FilePath,
-      },
+      await handleUploadFile(attachmentFile, result.uploadUrl, result.uploadFields)
+
+      attachmentFilePaths = [result.filePath as FilePath]
+    }
+
+    await createAnnouncementMutation.mutateAsync({
+      body: { ...data, attachmentFilePaths },
     })
 
     props.onSuccess()
@@ -103,22 +123,22 @@ export const TopicCreate = (props: TopicCreateProps) => {
           <Form {...form}>
             <div className="flex flex-col gap-1.5">
               <DialogTitle asChild>
-                <Typography variant="h3">สร้างหัวข้อ</Typography>
+                <Typography variant="h3">สร้างประกาศ</Typography>
               </DialogTitle>
               <DialogDescription className="text-sm text-base-text-medium leading-tight">
-                สร้างหัวข้อสำหรับจัดกลุ่มเนื้อหาและแฮชแท็ก
+                สร้างประกาศสำหรับแจ้งข้อมูลข่าวสาร
               </DialogDescription>
             </div>
             <FormField
               control={form.control}
-              name="name"
+              name="title"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    ชื่อหัวข้อ <span className="text-system-danger-default">*</span>
+                    ชื่อประกาศ <span className="text-system-danger-default">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="กรอกชื่อหัวข้อ" />
+                    <Input {...field} placeholder="กรอกชื่อประกาศ" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -126,10 +146,48 @@ export const TopicCreate = (props: TopicCreateProps) => {
             />
             <FormField
               control={form.control}
-              name="description"
+              name="type"
+              render={({ field: { onChange, ...field } }) => (
+                <FormItem>
+                  <FormLabel>
+                    ประเภทประกาศ <span className="text-system-danger-default">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Select {...field} onValueChange={onChange}>
+                      <SelectTrigger className="w-full gap-4 !h-10">
+                        <AnnouncementIcon
+                          className="shrink-0 size-8"
+                          announcementType={field.value}
+                        />
+                        <span className="mr-auto">
+                          <SelectValue placeholder="เลือกประเภทประกาศ" />
+                        </span>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="OFFICIAL">
+                          {ANNOUNCEMENT_TYPE_LONG_DISPLAY_TEXT.OFFICIAL}
+                        </SelectItem>
+                        <SelectItem value="PARTY_COMMUNICATE">
+                          {ANNOUNCEMENT_TYPE_LONG_DISPLAY_TEXT.PARTY_COMMUNICATE}
+                        </SelectItem>
+                        <SelectItem value="INTERNAL">
+                          {ANNOUNCEMENT_TYPE_LONG_DISPLAY_TEXT.INTERNAL}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="content"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>รายละเอียด</FormLabel>
+                  <FormLabel>
+                    รายละเอียด <span className="text-system-danger-default">*</span>
+                  </FormLabel>
                   <FormControl>
                     <Textarea {...field} placeholder="กรอกรายละเอียด" />
                   </FormControl>
@@ -139,36 +197,34 @@ export const TopicCreate = (props: TopicCreateProps) => {
             />
             <FormField
               control={form.control}
-              name="hashtagIds"
+              name="topicIds"
               render={({ field: { onChange, ...field } }) => (
                 <FormItem>
                   <FormLabel>
-                    แฮชแท็ก <span className="text-system-danger-default">*</span>
+                    หัวข้อ <span className="text-system-danger-default">*</span>
                   </FormLabel>
                   <FormControl>
                     <MultiSelect
                       options={
-                        hashtagQuery.data?.data.map((h) => ({ value: h.id, label: h.name })) ?? []
+                        topicQuery.data?.data.map((t) => ({ value: t.id, label: t.name })) ?? []
                       }
                       {...field}
                       onValueChange={onChange}
-                      placeholder="เลือกแฮชแท็ก"
+                      placeholder="เลือกหัวข้อ"
                     />
                   </FormControl>
                   <FormMessage asChild>
-                    <FormDescription>เลือกอย่างน้อย 1 แฮชแท็ก</FormDescription>
+                    <FormDescription>เลือกอย่างน้อย 1 หัวข้อ</FormDescription>
                   </FormMessage>
                 </FormItem>
               )}
             />
             <FormField
               control={form.control}
-              name="bannerImage"
+              name="attachmentFile"
               render={({ field: { onChange, value, ref, ...field } }) => (
                 <FormItem>
-                  <FormLabel>
-                    รูปหัวข้อ <span className="text-system-danger-default">*</span>
-                  </FormLabel>
+                  <FormLabel>เอกสารประกอบ</FormLabel>
                   <div className="flex gap-2 min-w-0">
                     <FormControl>
                       <FileUploadInput fileName={value?.name} preview={value}>
@@ -187,7 +243,7 @@ export const TopicCreate = (props: TopicCreateProps) => {
                             )
                           }
                           placeholder="เลือกไฟล์"
-                          accept={ACCEPTED_IMAGE_TYPES.join(',')}
+                          accept={ACCEPTED_FILE_TYPES.join(',')}
                         />
                       </FileUploadInput>
                     </FormControl>
@@ -204,14 +260,10 @@ export const TopicCreate = (props: TopicCreateProps) => {
                       </Button>
                     )}
                   </div>
-                  {value && (
-                    <ImagePreview
-                      className="rounded-md overflow-hidden w-full h-[120px] object-cover"
-                      src={value}
-                    />
-                  )}
                   <FormMessage asChild>
-                    <FormDescription>อัปโหลดไฟล์ประเภท JPG / PNG ขนาดไม่เกิน 5 MB</FormDescription>
+                    <FormDescription>
+                      อัปโหลดไฟล์ประเภท PDF / JPG / PNG ขนาดไม่เกิน 5 MB
+                    </FormDescription>
                   </FormMessage>
                 </FormItem>
               )}

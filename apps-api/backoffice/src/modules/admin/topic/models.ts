@@ -4,7 +4,7 @@ import { TopicStatus } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const GetTopicsQuery = t.Object({
-  limit: t.Number(),
+  limit: t.Optional(t.Number()),
   page: t.Number(),
   search: t.Optional(t.String()),
 })

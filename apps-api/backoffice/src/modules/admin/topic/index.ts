@@ -28,7 +28,7 @@ export const AdminTopicController = new Elysia({
     '/',
     async ({ query, status, adminTopicService }) => {
       const pagingQuery: GetTopicsQuery = {
-        limit: query.limit ?? 10,
+        limit: query.limit,
         page: query.page ?? 1,
         search: query.search,
       }
