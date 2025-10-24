@@ -1,9 +1,11 @@
 import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { BannerNavigationType, BannerStatusType } from '@pple-today/database/prisma'
+import { BannerNavigationType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
+
+import { CreateBannerBody, UpdateBannerBody } from './models'
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
@@ -18,6 +20,7 @@ export class AdminBannerRepository {
     return fromRepositoryPromise(
       this.prismaService.banner.findMany({
         orderBy: { order: 'asc' },
+        include: { miniApp: true },
       })
     )
   }
@@ -26,17 +29,12 @@ export class AdminBannerRepository {
     return fromRepositoryPromise(
       this.prismaService.banner.findUniqueOrThrow({
         where: { id },
+        include: { miniApp: true },
       })
     )
   }
 
-  async createBanner(data: {
-    imageFilePath: FilePath
-    navigation: BannerNavigationType
-    destination: string
-    startAt: Date
-    endAt: Date
-  }) {
+  async createBanner(data: CreateBannerBody) {
     const moveFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
         const moveResult = await fileTx.bulkMoveToPublicFolder([data.imageFilePath])
@@ -57,14 +55,24 @@ export class AdminBannerRepository {
         })
 
         return tx.banner.create({
-          data: {
-            imageFilePath: newFileName,
-            navigation: data.navigation,
-            destination: data.destination,
-            order: lastBanner ? lastBanner.order + 1 : 1,
-            startAt: data.startAt,
-            endAt: data.endAt,
-          },
+          data:
+            data.navigation === BannerNavigationType.MINI_APP
+              ? {
+                  imageFilePath: newFileName,
+                  navigation: data.navigation,
+                  order: lastBanner ? lastBanner.order + 1 : 1,
+                  startAt: data.startAt,
+                  endAt: data.endAt,
+                  miniApp: { connect: { id: data.miniAppId } },
+                }
+              : {
+                  imageFilePath: newFileName,
+                  navigation: data.navigation,
+                  order: lastBanner ? lastBanner.order + 1 : 1,
+                  startAt: data.startAt,
+                  endAt: data.endAt,
+                  destination: data.destination,
+                },
           select: {
             id: true,
           },
@@ -81,19 +89,11 @@ export class AdminBannerRepository {
     return ok(createBannerResult.value)
   }
 
-  async updateBannerById(
-    id: string,
-    data: {
-      imageFilePath: FilePath
-      navigation: BannerNavigationType
-      destination: string
-      status: BannerStatusType
-    }
-  ) {
+  async updateBannerById(id: string, data: UpdateBannerBody) {
     const existingBanner = await fromRepositoryPromise(
       this.prismaService.banner.findUniqueOrThrow({
         where: { id },
-        select: { imageFilePath: true },
+        select: { imageFilePath: true, navigation: true },
       })
     )
 
@@ -101,6 +101,9 @@ export class AdminBannerRepository {
 
     const updateFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
+        if (data.imageFilePath === undefined) {
+          return existingBanner.value.imageFilePath as FilePath
+        }
         if (existingBanner.value.imageFilePath !== data.imageFilePath) {
           const deleteResult = await fileTx.deleteFile(
             existingBanner.value.imageFilePath as FilePath
@@ -126,8 +129,25 @@ export class AdminBannerRepository {
         data: {
           imageFilePath: newImageFilePath,
           navigation: data.navigation,
-          destination: data.destination,
+          destination:
+            data.navigation === undefined
+              ? existingBanner.value.navigation === BannerNavigationType.MINI_APP
+                ? null
+                : data.destination
+              : data.navigation === BannerNavigationType.MINI_APP
+                ? null
+                : data.destination,
           status: data.status,
+          startAt: data.startAt,
+          endAt: data.endAt,
+          miniApp:
+            data.navigation === undefined
+              ? existingBanner.value.navigation === BannerNavigationType.MINI_APP
+                ? { connect: { id: data.miniAppId } }
+                : { disconnect: {} }
+              : data.navigation === BannerNavigationType.MINI_APP
+                ? { connect: { id: data.miniAppId } }
+                : { disconnect: {} },
         },
       })
     )
@@ -138,7 +158,7 @@ export class AdminBannerRepository {
       return err(updateBannerResult.error)
     }
 
-    return ok(updateBannerResult.value)
+    return ok()
   }
 
   async deleteBannerById(id: string) {

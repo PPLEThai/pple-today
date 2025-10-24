@@ -17,6 +17,9 @@ export class BannerRepository {
         orderBy: {
           order: 'asc',
         },
+        include: {
+          miniApp: true,
+        },
       })
     )
   }

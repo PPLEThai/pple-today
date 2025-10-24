@@ -80,6 +80,26 @@ export const AdminBannerController = new Elysia({
   .post(
     '/',
     async ({ body, adminBannerService, status }) => {
+      if (body.navigation === 'MINI_APP' && !body.miniAppId) {
+        return mapErrorCodeToResponse(
+          {
+            code: InternalErrorCode.BANNER_INVALID_INPUT,
+            message: 'miniAppId is required when navigation is MINI_APP',
+          },
+          status
+        )
+      }
+
+      if (!body.destination) {
+        return mapErrorCodeToResponse(
+          {
+            code: InternalErrorCode.BANNER_INVALID_INPUT,
+            message: 'destination is required',
+          },
+          status
+        )
+      }
+
       const result = await adminBannerService.createBanner(body)
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
@@ -108,6 +128,28 @@ export const AdminBannerController = new Elysia({
   .patch(
     '/:id',
     async ({ params, body, adminBannerService, status }) => {
+      if (body.navigation) {
+        if (body.navigation === 'MINI_APP' && body.miniAppId === undefined) {
+          return mapErrorCodeToResponse(
+            {
+              code: InternalErrorCode.BANNER_INVALID_INPUT,
+              message: 'miniAppId is required when navigation is MINI_APP',
+            },
+            status
+          )
+        }
+
+        if (body.destination === undefined) {
+          return mapErrorCodeToResponse(
+            {
+              code: InternalErrorCode.BANNER_INVALID_INPUT,
+              message: 'destination is required',
+            },
+            status
+          )
+        }
+      }
+
       const result = await adminBannerService.updateBannerById(params.id, body)
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
@@ -122,6 +164,7 @@ export const AdminBannerController = new Elysia({
         200: UpdateBannerResponse,
         ...createErrorSchema(
           InternalErrorCode.BANNER_NOT_FOUND,
+          InternalErrorCode.BANNER_INVALID_INPUT,
           InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.FILE_MOVE_ERROR,
           InternalErrorCode.FILE_ROLLBACK_FAILED,
