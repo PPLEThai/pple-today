@@ -43,12 +43,22 @@ export class AdminElectionService {
     private readonly ballotCryptoService: BallotCryptoService
   ) {}
 
-  private checkIsElectionAllowedToModified(election: Election, now: Date) {
-    const isPublished = !!election.publishDate && now >= election.publishDate
-    if (isPublished) {
+  private checkIsDraftElection(election: Election) {
+    if (election.publishDate) {
       return err({
         code: InternalErrorCode.ELECTION_ALREADY_PUBLISH,
         message: `Election is already published`,
+      })
+    }
+    return ok()
+  }
+
+  private checkIsElectionAllowedToModified(election: Election, now: Date) {
+    const isOpenVote = now >= election.openVoting
+    if (isOpenVote) {
+      return err({
+        code: InternalErrorCode.ELECTION_IN_VOTE_PERIOD,
+        message: `Election is in vote period`,
       })
     }
 
@@ -216,8 +226,8 @@ export class AdminElectionService {
 
     const election = electionResult.value
 
-    const checkResult = this.checkIsElectionAllowedToModified(election, new Date())
-    if (checkResult.isErr()) return err(checkResult.error)
+    const checkReuslt = this.checkIsDraftElection(election)
+    if (checkReuslt.isErr()) return err(checkReuslt.error)
 
     const updateResult = await this.adminElectionRepository.updateElection(electionId, input)
     if (updateResult.isErr()) {
@@ -240,12 +250,8 @@ export class AdminElectionService {
 
     const election = electionResult.value
 
-    if (election.publishDate) {
-      return err({
-        code: InternalErrorCode.ELECTION_ALREADY_PUBLISH,
-        message: `Election already publish`,
-      })
-    }
+    const checkReuslt = this.checkIsDraftElection(election)
+    if (checkReuslt.isErr()) return err(checkReuslt.error)
 
     const deleteResult = await this.adminElectionRepository.deleteElection(electionId)
     if (deleteResult.isErr()) return mapRepositoryError(deleteResult.error)
@@ -277,7 +283,7 @@ export class AdminElectionService {
       })
     }
 
-    const checkResult = this.checkIsElectionAllowedToModified(electionResult.value, new Date())
+    const checkResult = this.checkIsDraftElection(electionResult.value)
     if (checkResult.isErr()) return err(checkResult.error)
 
     const publishResult = await this.adminElectionRepository.publishElectionById(
