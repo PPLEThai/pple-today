@@ -2,6 +2,7 @@ import {
   AnnouncementType,
   FeedItemReactionType,
   FeedItemType,
+  PollType,
   PostAttachmentType,
 } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
@@ -84,6 +85,9 @@ export const FeedItemPollContent = t.Object({
   poll: t.Object({
     title: t.String({ description: 'The title of the poll' }),
     endAt: t.Date({ description: 'The end date of the poll' }),
+    type: t.Enum(PollType, {
+      description: 'The type of the poll, e.g., single-choice or multiple-choice',
+    }),
     options: t.Array(
       t.Object({
         id: t.String({ description: 'The ID of the poll option' }),
