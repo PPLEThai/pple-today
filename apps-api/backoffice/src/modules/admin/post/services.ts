@@ -3,7 +3,7 @@ import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { GetPostsQuery, GetPostsResponse, UpdatePostBody } from './models'
+import { GetPostByIdResponse, GetPostsQuery, GetPostsResponse, UpdatePostBody } from './models'
 import { AdminPostRepository, AdminPostRepositoryPlugin } from './repository'
 
 export class AdminPostService {
@@ -14,6 +14,19 @@ export class AdminPostService {
     if (result.isErr()) return mapRepositoryError(result.error)
 
     return ok(result.value satisfies GetPostsResponse)
+  }
+
+  async getPostById(postId: string) {
+    const result = await this.adminPostRepository.getPostById(postId)
+
+    if (result.isErr())
+      return mapRepositoryError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POST_NOT_FOUND,
+        },
+      })
+
+    return ok(result.value satisfies GetPostByIdResponse)
   }
 
   async updatePostById(postId: string, data: UpdatePostBody) {
@@ -38,7 +51,7 @@ export class AdminPostService {
         },
       })
 
-    return ok({ message: `Post "${result.value.id}" deleted.` })
+    return ok({ message: `Post "${result.value.feedItemId}" deleted.` })
   }
 }
 

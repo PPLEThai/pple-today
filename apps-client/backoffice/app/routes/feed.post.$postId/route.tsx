@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from 'react'
+import React, { useCallback, useMemo, useRef } from 'react'
 import { NavLink, useNavigate } from 'react-router'
 
 import { Badge } from '@pple-today/web-ui/badge'
@@ -13,63 +13,57 @@ import {
 import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
-import { ANNOUNCEMENT_TYPE_LONG_DISPLAY_TEXT, AnnouncementIcon } from 'components/AnnouncementIcon'
 import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { Engagements } from 'components/Engagements'
-import { AnnouncementEdit } from 'components/feed/AnnouncementEdit'
 import { FeedDetailComments } from 'components/feed/FeedDetailComments'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
-import { Calendar, EyeOff, FileText, Link, Megaphone, Pencil, Trash2 } from 'lucide-react'
+import { PostGallery } from 'components/feed/PostGallery'
+import { Calendar, EyeOff, Link, Megaphone, Trash2 } from 'lucide-react'
+import { getRelativeTime } from 'utils/date'
 
-import { UpdateAnnouncementBody, UpdateAnnouncementParams } from '@api/backoffice/admin'
+import { UpdatePostBody, UpdatePostParams } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
 
-import { Route } from '../feed.announcement.$announcementId/+types/route'
+import { Route } from '../feed.post.$postId/+types/route'
 
 export function meta() {
-  return [{ title: 'รายละเอียดประกาศ' }]
+  return [{ title: 'รายละเอียดโพสต์' }]
 }
 
-export default function AnnouncementDetailPage({ params }: Route.LoaderArgs) {
+export default function PostDetailPage({ params }: Route.LoaderArgs) {
   const navigate = useNavigate()
-  const { announcementId } = params
+  const { postId } = params
   const confirmDialogRef = useRef<ConfirmDialogRef>(null)
 
   const queryClient = useQueryClient()
-  const query = reactQueryClient.useQuery('/admin/announcements/:announcementId', {
-    pathParams: { announcementId },
+  const query = reactQueryClient.useQuery('/admin/posts/:postId', {
+    pathParams: { postId },
   })
-  const patchMutation = reactQueryClient.useMutation(
-    'patch',
-    '/admin/announcements/:announcementId'
-  )
-  const deleteMutation = reactQueryClient.useMutation(
-    'delete',
-    '/admin/announcements/:announcementId'
-  )
+  const patchMutation = reactQueryClient.useMutation('patch', '/admin/posts/:postId')
+  const deleteMutation = reactQueryClient.useMutation('delete', '/admin/posts/:postId')
   const invalidateQuery = useCallback(() => {
     queryClient.invalidateQueries({
-      queryKey: reactQueryClient.getQueryKey('/admin/announcements/:announcementId', {
-        pathParams: { announcementId },
+      queryKey: reactQueryClient.getQueryKey('/admin/posts/:postId', {
+        pathParams: { postId },
       }),
     })
-  }, [queryClient, announcementId])
+  }, [queryClient, postId])
 
-  const setAnnouncementStatus = useCallback(
+  const setPostStatus = useCallback(
     (
-      { status }: { status: NonNullable<UpdateAnnouncementBody['status']> },
-      { announcementId }: UpdateAnnouncementParams
+      { status }: { status: NonNullable<UpdatePostBody['status']> },
+      { postId }: UpdatePostParams
     ) => {
       if (patchMutation.isPending) return
 
       patchMutation.mutateAsync(
-        { pathParams: { announcementId }, body: { status } },
+        { pathParams: { postId }, body: { status } },
         {
           onSuccess: () => {
             queryClient.setQueryData(
-              reactQueryClient.getQueryKey('/admin/announcements/:announcementId', {
-                pathParams: { announcementId },
+              reactQueryClient.getQueryKey('/admin/posts/:postId', {
+                pathParams: { postId },
               }),
               (_data) => {
                 const data = structuredClone(_data)
@@ -84,14 +78,14 @@ export default function AnnouncementDetailPage({ params }: Route.LoaderArgs) {
     },
     [patchMutation, queryClient]
   )
-  const deleteAnnouncement = () => {
+  const deletePost = () => {
     confirmDialogRef.current?.confirm({
-      title: `ต้องการลบประกาศ "${query.data?.title}" หรือไม่?`,
-      description: 'เมื่อลบประกาศแล้วจะไม่สามารถกู้คืนได้อีก',
+      title: `ต้องการลบโพสต์หรือไม่?`,
+      description: 'เมื่อลบโพสต์แล้วจะไม่สามารถกู้คืนได้อีก',
       onConfirm: () =>
         deleteMutation.mutateAsync(
-          { pathParams: { announcementId } },
-          { onSuccess: () => navigate('/feed/announcement') }
+          { pathParams: { postId } },
+          { onSuccess: () => navigate('/feed/post') }
         ),
     })
   }
@@ -123,21 +117,21 @@ export default function AnnouncementDetailPage({ params }: Route.LoaderArgs) {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <NavLink to="/feed/announcement">Announcement</NavLink>
+              <NavLink to="/feed/post">Post</NavLink>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbPage>
-              {query.data?.title ? query.data.title : 'รายละเอียดประกาศ'}
+              {query.data?.content ? query.data.content : 'รายละเอียดโพสต์'}
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
       <div className="flex items-center gap-2 pb-3">
         <Megaphone className="stroke-base-primary-default" size={32} />
-        <Typography variant="h2">รายละเอียดประกาศ</Typography>
-        {query.data && (
+        <Typography variant="h2">รายละเอียดโพสต์</Typography>
+        {query.data && query.data.status !== 'DELETED' && (
           <div className="ml-auto flex gap-3">
             {query.data.status === 'PUBLISHED' ? (
               <Button
@@ -146,11 +140,9 @@ export default function AnnouncementDetailPage({ params }: Route.LoaderArgs) {
                 className="size-8"
                 disabled={patchMutation.isPending}
                 aria-busy={patchMutation.isPending}
-                onClick={() =>
-                  setAnnouncementStatus({ status: 'ARCHIVED' }, { announcementId: query.data.id })
-                }
+                onClick={() => setPostStatus({ status: 'HIDDEN' }, { postId: query.data.id })}
               >
-                <span className="sr-only">เก็บในคลัง</span>
+                <span className="sr-only">ซ่อน</span>
                 <EyeOff className="size-4" />
               </Button>
             ) : (
@@ -159,31 +151,19 @@ export default function AnnouncementDetailPage({ params }: Route.LoaderArgs) {
                 className="size-8"
                 disabled={patchMutation.isPending}
                 aria-busy={patchMutation.isPending}
-                onClick={() =>
-                  setAnnouncementStatus({ status: 'PUBLISHED' }, { announcementId: query.data.id })
-                }
+                onClick={() => setPostStatus({ status: 'PUBLISHED' }, { postId: query.data.id })}
               >
                 <span className="sr-only">ประกาศ</span>
                 <Megaphone className="size-4" />
               </Button>
             )}
-            <AnnouncementEdit
-              trigger={
-                <Button variant="outline" size="icon" className="size-8">
-                  <span className="sr-only">แก้ไข</span>
-                  <Pencil className="size-4" />
-                </Button>
-              }
-              onSuccess={invalidateQuery}
-              announcement={query.data}
-            />
             <Button
               variant="outline-destructive"
               size="icon"
               className="size-8"
               disabled={deleteMutation.isPending}
               aria-busy={deleteMutation.isPending}
-              onClick={deleteAnnouncement}
+              onClick={deletePost}
             >
               <span className="sr-only">ลบ</span>
               <Trash2 className="size-4" />
@@ -203,28 +183,25 @@ export default function AnnouncementDetailPage({ params }: Route.LoaderArgs) {
         <div className="flex flex-col gap-[10px]">
           <div className="flex flex-col gap-4 p-4 border border-base-outline-default rounded-xl">
             <div className="flex items-start gap-2">
-              <Typography className="flex-1 min-w-0 truncate" variant="h3">
-                {query.data.title}
-              </Typography>
+              <div className="flex-1 min-w-0 flex items-center gap-2">
+                <div className="flex items-center gap-1 text-base-text-medium text-sm">
+                  <Link size={16} />
+                  <span>ID:</span>
+                </div>
+                <FeedDetailCopyId id={query.data.id} />
+              </div>
               {query.data.status === 'PUBLISHED' ? (
                 <Badge variant="success">ประกาศแล้ว</Badge>
-              ) : query.data.status === 'ARCHIVED' ? (
-                <Badge variant="secondary">เก็บในคลัง</Badge>
+              ) : query.data.status === 'HIDDEN' ? (
+                <Badge variant="secondary">ซ่อน</Badge>
               ) : (
-                <Badge variant="outline">ร่าง</Badge>
+                <Badge variant="destructive">ลบแล้ว</Badge>
               )}
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 text-base-text-medium text-sm">
-                <Link size={16} />
-                <span>ID:</span>
-              </div>
-              <FeedDetailCopyId id={query.data.id} />
             </div>
             <div className="flex items-center gap-2 text-base-text-medium text-sm">
               <div className="flex items-center gap-1">
                 <Calendar size={16} />
-                <span>วันที่สร้าง:</span>
+                <span>วันที่โพสต์:</span>
               </div>
               <div>
                 {new Date(query.data.createdAt).toLocaleDateString('th', {
@@ -232,24 +209,39 @@ export default function AnnouncementDetailPage({ params }: Route.LoaderArgs) {
                 })}
               </div>
             </div>
-            <div className="flex items-center gap-2 text-base-text-medium text-sm">
-              <AnnouncementIcon className="shrink-0 size-8" announcementType={query.data.type} />
-              <div>{ANNOUNCEMENT_TYPE_LONG_DISPLAY_TEXT[query.data.type]}</div>
-            </div>
-            <p>{query.data.content}</p>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 text-base-text-medium text-sm">
-                การมีส่วนร่วม:
+            <div className="flex items-center gap-3">
+              <img
+                className="size-8 shrink-0 rounded-full"
+                src={query.data.author.profileImage ?? '/images/placeholder.svg'}
+                alt=""
+                width={32}
+                height={32}
+                loading="lazy"
+                decoding="async"
+              />
+              <div className="flex-1 min-w-0 flex flex-col">
+                <div className="text-sm font-medium text-base-text-high">
+                  {query.data.author.name}
+                </div>
+                <div className="text-sm text-base-text-medium leading-tight">
+                  {[
+                    query.data.author.responsibleArea,
+                    getRelativeTime(new Date(query.data.createdAt)),
+                  ]
+                    .filter((x) => x)
+                    .join(' | ')}
+                </div>
               </div>
-              <Engagements likes={upVotes} dislikes={downVotes} comments={commentsCount} />
             </div>
+            <PostGallery images={query.data.attachments.map((a) => a.attachmentPath)} />
+            <p className="font-serif">{query.data.content}</p>
             <div className="flex items-start gap-2 text-base-text-medium text-sm">
-              <span>หัวข้อ:</span>
+              <span>แฮชแท็ก:</span>
               <div className="flex-1 min-w-0 flex gap-2 flex-wrap">
-                {query.data.topics.length > 0 ? (
-                  query.data.topics.map((t) => (
-                    <Badge key={t.id} variant="secondary">
-                      {t.name}
+                {query.data.hashtags.length > 0 ? (
+                  query.data.hashtags.map((h) => (
+                    <Badge key={h.id} variant="secondary">
+                      {h.name}
                     </Badge>
                   ))
                 ) : (
@@ -257,18 +249,12 @@ export default function AnnouncementDetailPage({ params }: Route.LoaderArgs) {
                 )}
               </div>
             </div>
-            {query.data.attachments.length > 0 && (
-              <div className="flex items-center gap-2">
-                {query.data.attachments.map((attachment) => (
-                  <Button key={attachment.url} className="gap-1" asChild>
-                    <a href={attachment.url} target="_blank" rel="noopener noreferrer">
-                      <FileText size={16} />
-                      ดูเอกสาร
-                    </a>
-                  </Button>
-                ))}
+            <div className="flex items-center gap-2 -mt-2">
+              <div className="flex items-center gap-1 text-base-text-medium text-sm">
+                การมีส่วนร่วม:
               </div>
-            )}
+              <Engagements likes={upVotes} dislikes={downVotes} comments={commentsCount} />
+            </div>
           </div>
           <div className="flex flex-col gap-3 p-4 border border-base-outline-default bg-base-bg-light rounded-xl">
             <Typography variant="h4">ความคิดเห็น</Typography>

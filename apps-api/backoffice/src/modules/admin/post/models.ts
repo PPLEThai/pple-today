@@ -1,4 +1,4 @@
-import { Post } from '@pple-today/api-common/dtos'
+import { DetailedPost, Post } from '@pple-today/api-common/dtos'
 import { PostStatus } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
@@ -20,6 +20,12 @@ export const GetPostsResponse = t.Object({
   meta: t.Object({ count: t.Number() }),
 })
 export type GetPostsResponse = Static<typeof GetPostsResponse>
+
+export const GetPostByIdParams = PostIdParams
+export type GetPostByIdParams = Static<typeof PostIdParams>
+
+export const GetPostByIdResponse = DetailedPost
+export type GetPostByIdResponse = Static<typeof GetPostByIdResponse>
 
 export const UpdatePostParams = PostIdParams
 export type UpdatePostParams = Static<typeof UpdatePostParams>

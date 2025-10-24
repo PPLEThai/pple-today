@@ -1,7 +1,7 @@
 import { PostStatus } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
-import { FeedItemReaction } from './feed'
+import { FeedItemComment, FeedItemReaction } from './feed'
 
 export const Post = t.Object({
   id: t.String({ description: 'The ID of the post' }),
@@ -17,13 +17,26 @@ export const Post = t.Object({
 })
 export type Post = Static<typeof Post>
 
-export const PostDetails = t.Object({
-  options: t.Array(
-    t.Object({
-      title: t.String({ description: 'The title of the post option' }),
-      votes: t.Number({ description: 'The vote count of the post option' }),
-    })
-  ),
-  topics: t.Array(t.String({ description: 'The ID of the post topic' })),
-})
-export type PostDetails = Static<typeof PostDetails>
+export const DetailedPost = t.Composite([
+  Post,
+  t.Object({
+    author: t.Object({
+      name: t.String({ description: 'The name of the author' }),
+      profileImage: t.Optional(t.String({ description: 'The profile image URL of the author' })),
+      responsibleArea: t.Nullable(t.String({ description: 'The responsible area of the author' })),
+    }),
+    attachments: t.Array(
+      t.Object({
+        attachmentPath: t.String({ description: 'The signed URL of the post', format: 'uri' }),
+      })
+    ),
+    hashtags: t.Array(
+      t.Object({
+        id: t.String({ description: 'The ID of the post' }),
+        name: t.String({ description: 'The name of the post' }),
+      })
+    ),
+    comments: t.Array(FeedItemComment),
+  }),
+])
+export type DetailedPost = Static<typeof DetailedPost>
