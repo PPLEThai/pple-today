@@ -232,6 +232,12 @@ const ELECTION_ERROR_SCHEMA = {
   },
 } satisfies InternalErrorSchemas
 
+const POST_ERROR_SCHEMA = {
+  POST_NOT_FOUND: {
+    status: 404,
+  },
+} satisfies InternalErrorSchemas
+
 export const InternalErrorCodeSchemas = {
   ...AUTH_ERROR_SCHEMA,
   ...COMMON_ERROR_SCHEMA,
@@ -246,6 +252,7 @@ export const InternalErrorCodeSchemas = {
   ...HASHTAG_ERROR_SCHEMA,
   ...TOPIC_ERROR_SCHEMA,
   ...ELECTION_ERROR_SCHEMA,
+  ...POST_ERROR_SCHEMA,
 } as const
 export type InternalErrorCodeSchemas = typeof InternalErrorCodeSchemas
 
