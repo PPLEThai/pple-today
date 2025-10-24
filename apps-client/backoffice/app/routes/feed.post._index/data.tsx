@@ -178,49 +178,51 @@ export const Data = () => {
           const status = row.original.status
 
           return (
-            <div className="flex gap-3">
-              {status === 'PUBLISHED' ? (
+            status !== 'DELETED' && (
+              <div className="flex gap-3">
+                {status === 'PUBLISHED' ? (
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="size-8"
+                    disabled={patchMutation.isPending}
+                    aria-busy={patchMutation.isPending}
+                    onClick={() => setPostStatus({ status: 'HIDDEN' }, { postId: id })}
+                  >
+                    <span className="sr-only">ซ่อน</span>
+                    <EyeOff className="size-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    size="icon"
+                    className="size-8"
+                    disabled={patchMutation.isPending}
+                    aria-busy={patchMutation.isPending}
+                    onClick={() => setPostStatus({ status: 'PUBLISHED' }, { postId: id })}
+                  >
+                    <span className="sr-only">ประกาศ</span>
+                    <Megaphone className="size-4" />
+                  </Button>
+                )}
                 <Button
-                  variant="secondary"
+                  variant="outline-destructive"
                   size="icon"
                   className="size-8"
-                  disabled={patchMutation.isPending}
-                  aria-busy={patchMutation.isPending}
-                  onClick={() => setPostStatus({ status: 'HIDDEN' }, { postId: id })}
+                  disabled={deleteMutation.isPending}
+                  aria-busy={deleteMutation.isPending}
+                  onClick={() => {
+                    confirmDialogRef.current?.confirm({
+                      title: `ต้องการลบโพสต์หรือไม่?`,
+                      description: 'เมื่อลบโพสต์แล้วจะไม่สามารถกู้คืนได้อีก',
+                      onConfirm: () => deletePost(id),
+                    })
+                  }}
                 >
-                  <span className="sr-only">ซ่อน</span>
-                  <EyeOff className="size-4" />
+                  <span className="sr-only">ลบ</span>
+                  <Trash2 className="size-4" />
                 </Button>
-              ) : (
-                <Button
-                  size="icon"
-                  className="size-8"
-                  disabled={patchMutation.isPending}
-                  aria-busy={patchMutation.isPending}
-                  onClick={() => setPostStatus({ status: 'PUBLISHED' }, { postId: id })}
-                >
-                  <span className="sr-only">ประกาศ</span>
-                  <Megaphone className="size-4" />
-                </Button>
-              )}
-              <Button
-                variant="outline-destructive"
-                size="icon"
-                className="size-8"
-                disabled={deleteMutation.isPending}
-                aria-busy={deleteMutation.isPending}
-                onClick={() => {
-                  confirmDialogRef.current?.confirm({
-                    title: `ต้องการลบโพสต์หรือไม่?`,
-                    description: 'เมื่อลบโพสต์แล้วจะไม่สามารถกู้คืนได้อีก',
-                    onConfirm: () => deletePost(id),
-                  })
-                }}
-              >
-                <span className="sr-only">ลบ</span>
-                <Trash2 className="size-4" />
-              </Button>
-            </div>
+              </div>
+            )
           )
         },
         size: 108,

@@ -5,6 +5,8 @@ import Elysia, { t } from 'elysia'
 import {
   DeletePostParams,
   DeletePostResponse,
+  GetPostByIdParams,
+  GetPostByIdResponse,
   GetPostsQuery,
   GetPostsResponse,
   UpdatePostBody,
@@ -48,6 +50,32 @@ export const AdminPostController = new Elysia({
       detail: {
         summary: 'Get list of posts',
         description: 'Fetch a list of posts',
+      },
+    }
+  )
+  .get(
+    '/:postId',
+    async ({ params, status, adminPostService }) => {
+      const result = await adminPostService.getPostById(params.postId)
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      params: GetPostByIdParams,
+      response: {
+        200: GetPostByIdResponse,
+        ...createErrorSchema(
+          InternalErrorCode.POST_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get post by ID',
+        description: 'Fetch a specific post by its ID',
       },
     }
   )
