@@ -110,6 +110,7 @@ export default {
         },
       ],
       ['./plugins/withAndroidPlugin'],
+      ['expo-notifications'],
     ],
     experiments: {
       typedRoutes: true,

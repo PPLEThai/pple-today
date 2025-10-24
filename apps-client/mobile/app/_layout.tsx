@@ -2,6 +2,7 @@ import '../global.css'
 import 'dayjs/locale/th'
 
 import * as React from 'react'
+import { Platform } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { DevToolsBubble } from 'react-native-react-query-devtools'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
@@ -31,7 +32,9 @@ import dayjs from 'dayjs'
 import buddhistEra from 'dayjs/plugin/buddhistEra'
 import duration from 'dayjs/plugin/duration'
 import * as Clipboard from 'expo-clipboard'
+import * as Device from 'expo-device'
 import { useFonts } from 'expo-font'
+import * as Notifications from 'expo-notifications'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 
@@ -59,8 +62,78 @@ export {
   ErrorBoundary,
 } from 'expo-router'
 
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+})
+
+function handleRegistrationError(errorMessage: string) {
+  alert(errorMessage)
+  throw new Error(errorMessage)
+}
+
+async function registerForPushNotificationsAsync() {
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#FF231F7C',
+    })
+  }
+
+  if (Device.isDevice) {
+    const { status: existingStatus } = await Notifications.getPermissionsAsync()
+    let finalStatus = existingStatus
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync()
+      finalStatus = status
+    }
+    if (finalStatus !== 'granted') {
+      handleRegistrationError('Permission not granted to get push token for push notification!')
+      return
+    }
+    try {
+      const pushTokenString = (await Notifications.getDevicePushTokenAsync()).data
+      console.log(pushTokenString)
+      return pushTokenString
+    } catch (e: unknown) {
+      handleRegistrationError(`${e}`)
+    }
+  } else {
+    handleRegistrationError('Must use physical device for push notifications')
+  }
+}
+
 const queryClient = new QueryClient()
 export default function RootLayout() {
+  const [expoPushToken, setExpoPushToken] = React.useState('')
+  const [notification, setNotification] = React.useState<Notifications.Notification | undefined>(
+    undefined
+  )
+  React.useEffect(() => {
+    registerForPushNotificationsAsync()
+      .then((token) => setExpoPushToken(token ?? ''))
+      .catch((error: any) => setExpoPushToken(`${error}`))
+
+    const notificationListener = Notifications.addNotificationReceivedListener((notification) => {
+      setNotification(notification)
+    })
+
+    const responseListener = Notifications.addNotificationResponseReceivedListener((response) => {
+      console.log(response)
+    })
+
+    return () => {
+      notificationListener.remove()
+      responseListener.remove()
+    }
+  }, [])
+
   return (
     <>
       <SafeAreaProvider>
