@@ -1,5 +1,4 @@
-import { InternalErrorCode } from '@pple-today/api-common/dtos'
-import { FeedItem, FeedItemBaseContent } from '@pple-today/api-common/dtos'
+import { FeedItem, FeedItemBaseContent, InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import {
@@ -106,6 +105,9 @@ export class FeedRepository {
                     },
                   }
                 : undefined,
+            },
+            orderBy: {
+              id: 'asc',
             },
           },
         },

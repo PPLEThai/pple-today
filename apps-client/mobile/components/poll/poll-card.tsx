@@ -5,11 +5,14 @@ import { Badge } from '@pple-today/ui/badge'
 import { Icon } from '@pple-today/ui/icon'
 import { cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
+import { useDebouncedCallback } from '@tanstack/react-pacer'
+import { useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { useRouter } from 'expo-router'
 import { ChevronRightIcon, Clock3Icon, MessageCircleQuestionIcon } from 'lucide-react-native'
 
 import type { FeedItemPoll } from '@api/backoffice/app'
+import { reactQueryClient } from '@app/libs/api-client'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatTimeInterval } from '@app/libs/format-time-interval'
 
@@ -17,42 +20,43 @@ import { PollOptionGroup, PollOptionItem, PollOptionResult } from './poll-option
 
 type PollItem = FeedItemPoll['poll']
 
-interface PollContentProps {
+interface PollProps {
   feedItem: FeedItemPoll
   card?: boolean
 }
-interface PollProps {
-  poll: PollItem
-  card?: boolean
-}
 
-export const PollContent = (props: PollContentProps) => {
+export const PollContent = (props: PollProps) => {
   const [isEnded, setIsEnded] = React.useState(dayjs().isAfter(dayjs(props.feedItem.poll.endAt)))
+  const queryClient = useQueryClient()
 
   const getPollOptionList = React.useCallback((props: PollProps) => {
-    switch (props.poll.type) {
+    switch (props.feedItem.poll.type) {
       case 'SINGLE_CHOICE':
-        return <PollSingleOptionList poll={props.poll} card={props.card} />
+        return <PollSingleOptionList feedItem={props.feedItem} card={props.card} />
       case 'MULTIPLE_CHOICE':
-        return <PollMultipleOptionList poll={props.poll} card={props.card} />
+        return <PollMultipleOptionList feedItem={props.feedItem} card={props.card} />
       default:
-        exhaustiveGuard(props.poll.type)
+        exhaustiveGuard(props.feedItem.poll.type)
     }
   }, [])
 
   const triggerPollEnded = React.useCallback(() => {
     setIsEnded(true)
-    // TODO: revalidate the queries to get the actual result
-  }, [])
+    queryClient.invalidateQueries({
+      queryKey: reactQueryClient.getQueryKey('/feed/:id', {
+        pathParams: { id: props.feedItem.id },
+      }),
+    })
+  }, [queryClient, props.feedItem.id])
 
   return (
     <>
       <View className="py-[13px] px-2 flex flex-col bg-base-bg-default rounded-xl mx-4">
         <PollHeader isEnded={isEnded} triggerEnded={triggerPollEnded} poll={props.feedItem.poll} />
         {isEnded ? (
-          <PollOptionResultList poll={props.feedItem.poll} card={props.card} />
+          <PollOptionResultList feedItem={props.feedItem} card={props.card} />
         ) : (
-          getPollOptionList({ poll: props.feedItem.poll, card: props.card })
+          getPollOptionList({ feedItem: props.feedItem, card: props.card })
         )}
         {props.card && <PollSeeMore feedItem={props.feedItem} />}
       </View>
@@ -63,10 +67,10 @@ export const PollContent = (props: PollContentProps) => {
 const PollOptionResultList = (props: PollProps) => {
   const options = React.useMemo(() => {
     if (props.card) {
-      return props.poll.options.slice(0, 3)
+      return props.feedItem.poll.options.slice(0, 3)
     }
-    return props.poll.options
-  }, [props.poll.options, props.card])
+    return props.feedItem.poll.options
+  }, [props.feedItem.poll.options, props.card])
 
   return (
     <View className="gap-2">
@@ -77,7 +81,7 @@ const PollOptionResultList = (props: PollProps) => {
             key={option.id}
             title={option.title}
             votes={option.votes}
-            totalVotes={props.poll.totalVotes}
+            totalVotes={props.feedItem.poll.totalVotes}
             isSelected={option.isSelected}
           />
         ))}
@@ -87,17 +91,47 @@ const PollOptionResultList = (props: PollProps) => {
 
 const PollSingleOptionList = (props: PollProps) => {
   const [optionId, setOptionId] = React.useState<string>('')
+  const updatePollOptionMutation = reactQueryClient.useMutation('post', '/polls/:id/vote')
+
+  const updatePollOptions = useDebouncedCallback(
+    (options: string[]) => {
+      updatePollOptionMutation.mutateAsync({
+        pathParams: {
+          id: props.feedItem.id,
+        },
+        body: {
+          options: options,
+        },
+      })
+    },
+    {
+      wait: 500, // Wait 300ms between executions
+    }
+  )
+
+  React.useEffect(() => {
+    const pollOptionSelected = props.feedItem.poll.options.find((option) => option.isSelected)
+    setOptionId(pollOptionSelected?.id || '')
+  }, [props.feedItem.poll.options])
+
+  const isPollTouched = React.useMemo(() => {
+    return props.feedItem.poll.options.some((option) => option.isSelected) || optionId !== ''
+    // change if only if the optionId changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [optionId])
 
   const options = React.useMemo(() => {
     if (props.card) {
-      return props.poll.options.slice(0, 3)
+      return props.feedItem.poll.options.slice(0, 3)
     }
-    return props.poll.options
-  }, [props.poll.options, props.card])
+    return props.feedItem.poll.options
+  }, [props.feedItem.poll.options, props.card])
 
   function handleValueChange(value: string | undefined) {
-    // TODO: API here to update poll vote
+    // optimistic update selection
     setOptionId(value || '')
+    const updatedOptions = value ? [value] : []
+    updatePollOptions(updatedOptions)
   }
 
   return (
@@ -108,16 +142,16 @@ const PollSingleOptionList = (props: PollProps) => {
       className="flex flex-col"
     >
       {options.length > 0 &&
-        options.map((option) => (
+        options.map((option, index) => (
           <PollOptionItem
             key={option.id}
             id={option.id}
             value={option.id}
             title={option.title}
             votes={option.votes}
-            totalVotes={props.poll.totalVotes}
-            isSelected={optionId === option.id}
-            pollTouched={optionId !== ''}
+            totalVotes={props.feedItem.poll.totalVotes}
+            isSelected={option.isSelected}
+            pollTouched={isPollTouched}
           />
         ))}
     </PollOptionGroup>
@@ -126,18 +160,53 @@ const PollSingleOptionList = (props: PollProps) => {
 
 const PollMultipleOptionList = (props: PollProps) => {
   const [optionIds, setOptionIds] = React.useState<string[]>([])
+  const updatePollOptionMutation = reactQueryClient.useMutation('post', '/polls/:id/vote')
+
+  const updatePollOptions = useDebouncedCallback(
+    (options: string[]) => {
+      updatePollOptionMutation.mutateAsync({
+        pathParams: {
+          id: props.feedItem.id,
+        },
+        body: {
+          options: options,
+        },
+      })
+    },
+    {
+      wait: 500, // Wait 300ms between executions
+    }
+  )
+
+  React.useEffect(() => {
+    const pollOptionSelected = props.feedItem.poll.options
+    setOptionIds(
+      pollOptionSelected.filter((option) => option.isSelected).map((option) => option.id)
+    )
+  }, [props.feedItem.poll.options])
+
+  const isPollTouched = React.useMemo(() => {
+    return optionIds.length > 0 || props.feedItem.poll.options.some((option) => option.isSelected)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [optionIds])
 
   const options = React.useMemo(() => {
     if (props.card) {
-      return props.poll.options.slice(0, 3)
+      return props.feedItem.poll.options.slice(0, 3)
     }
-    return props.poll.options
-  }, [props.poll.options, props.card])
+    return props.feedItem.poll.options
+  }, [props.feedItem.poll.options, props.card])
+
+  const handleValueChange = (value: string[]) => {
+    // optimistic update
+    setOptionIds(value)
+    updatePollOptions(value)
+  }
 
   return (
     <PollOptionGroup
       type="multiple"
-      onValueChange={setOptionIds}
+      onValueChange={handleValueChange}
       value={optionIds}
       className="flex flex-col"
     >
@@ -149,9 +218,9 @@ const PollMultipleOptionList = (props: PollProps) => {
             value={option.id}
             title={option.title}
             votes={option.votes}
-            totalVotes={props.poll.totalVotes}
-            isSelected={optionIds.includes(option.id)}
-            pollTouched={optionIds.length > 0}
+            totalVotes={props.feedItem.poll.totalVotes}
+            isSelected={option.isSelected}
+            pollTouched={isPollTouched}
           />
         ))}
     </PollOptionGroup>
