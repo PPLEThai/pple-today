@@ -230,7 +230,7 @@ export const AuthLifeCycleHook = () => {
           <Button
             onPress={async () => {
               await sessionMutation.mutateAsync(null)
-              router.navigate('/(profile)')
+              router.navigate('/profile')
               setDialogOpen(false)
             }}
           >
@@ -299,7 +299,7 @@ export const useLoginMutation = () => {
     },
     onError: (error) => {
       console.error('Error logging in: ', JSON.stringify(error))
-      router.navigate('/(profile)')
+      router.dismissTo('/profile')
     },
     onSuccess: async (result) => {
       // save session in expo session store
@@ -309,11 +309,11 @@ export const useLoginMutation = () => {
         idToken: result.tokenResponse.idToken ?? null,
       })
       // reset all reactQueryClient cache
-      await queryClient.resetQueries({ queryKey: reactQueryClient.getKey() })
+      queryClient.resetQueries({ queryKey: reactQueryClient.getKey() })
       if (result.action === 'register') {
-        router.navigate('/onboarding')
+        router.dismissTo('/onboarding')
       } else if (result.action === 'login') {
-        router.navigate('/')
+        router.dismissTo('/')
       }
     },
   })
@@ -356,8 +356,8 @@ export const useLogoutMutation = () => {
       // Clear tokens from secure storage
       await sessionMutation.mutateAsync(null)
       // reset all reactQueryClient cache
-      await queryClient.resetQueries({ queryKey: reactQueryClient.getKey() })
-      router.navigate('/(profile)')
+      queryClient.resetQueries({ queryKey: reactQueryClient.getKey() })
+      router.dismissTo('/profile')
     },
   })
 }

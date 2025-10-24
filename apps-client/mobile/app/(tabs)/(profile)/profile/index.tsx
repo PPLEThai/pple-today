@@ -62,6 +62,8 @@ import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 import { getRoleName } from '@app/utils/get-role-name'
 
+import { useBottomTabOnPress } from '../../_layout'
+
 export default function Index() {
   const session = useSession()
   if (session) {
@@ -121,9 +123,14 @@ const ProfileSetting = () => {
     }
   }, [queryClient])
 
+  const ref = React.useRef<ScrollView>(null)
+  useBottomTabOnPress(() => {
+    ref.current?.scrollTo({ y: 0, animated: true })
+  })
   return (
     <SafeAreaLayout>
       <ScrollView
+        ref={ref}
         className="flex-1"
         contentContainerClassName="flex-grow"
         refreshControl={
@@ -138,9 +145,7 @@ const ProfileSetting = () => {
           <HeaderSection />
           <View className="p-4 flex flex-col gap-3">
             <ProfileSection />
-            {/* <AchievementSection /> */}
             <AddressSection />
-            <PointSection />
           </View>
         </View>
         <View className="bg-base-bg-light flex-1 flex flex-col gap-3 px-4 py-2.5">
@@ -219,7 +224,7 @@ const ProfileSection = () => {
     </View>
   )
 }
-const AchievementSection = () => {
+export const AchievementSection = () => {
   return (
     <View className="rounded-xl border border-base-outline-default px-4 py-2 flex flex-col gap-2">
       <View className="flex flex-row gap-2 items-center">
@@ -271,7 +276,7 @@ const AddressSection = () => {
   )
 }
 
-const PointSection = () => {
+export const PointSection = () => {
   const profileQuery = reactQueryClient.useQuery('/profile/me', {})
   return (
     <View className="rounded-xl bg-base-primary-default p-2 flex flex-row justify-between items-center">
@@ -368,7 +373,7 @@ function LinkFacebookPageDialog() {
         console.error('Failed to get facebook access token')
         return
       }
-      router.push(`/(profile)/facebook?facebookAccessToken=${accessTokenResult.accessToken}`)
+      router.push(`/profile/facebook?facebookAccessToken=${accessTokenResult.accessToken}`)
     } catch (error) {
       console.error('Login Error: ', error)
     }
@@ -521,7 +526,7 @@ const FollowingSection = () => {
           size="icon"
           className="size-9"
           onPress={() => {
-            router.push('/(profile)/follow')
+            router.push('/profile/follow')
           }}
         >
           <Icon icon={PencilIcon} strokeWidth={1} size={20} className="text-base-text-high" />
@@ -668,7 +673,7 @@ const Participation = ({
   }
 }
 
-const ActivitySection = () => {
+export const ActivitySection = () => {
   return (
     <View className="flex flex-col gap-3 border border-base-outline-default rounded-xl py-3 px-4 bg-base-bg-white">
       <View className="flex flex-row items-center justify-between pb-2 border-b border-base-outline-default">

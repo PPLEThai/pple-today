@@ -1,7 +1,7 @@
 {
   "name": "@api/backoffice",
   "type": "module",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "",
   "exports": {
     "./app": {
@@ -51,6 +51,7 @@
     "schema": "./prisma"
   },
   "devDependencies": {
+    "@api/ballot-crypto": "workspace:^",
     "@pple-today/project-config": "workspace:^",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.15.3",
