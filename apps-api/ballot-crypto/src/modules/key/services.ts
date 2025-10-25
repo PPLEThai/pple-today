@@ -144,12 +144,12 @@ export class KeyService {
       if (encryptResult.isOk()) {
         const destroyResult =
           await this.keyManagementService.destroyAsymmetricEncryptKey(electionId)
-        if (destroyResult.isErr()) return err(destroyResult.error)
+        if (destroyResult.isErr()) return mapGoogleAPIError(destroyResult.error)
       }
 
       if (signingResult.isOk()) {
         const destroyResult = await this.keyManagementService.destroyAsymmetricSignKey(electionId)
-        if (destroyResult.isErr()) return err(destroyResult.error)
+        if (destroyResult.isErr()) return mapGoogleAPIError(destroyResult.error)
       }
 
       return mapGoogleAPIError(restoreErr.error, {
