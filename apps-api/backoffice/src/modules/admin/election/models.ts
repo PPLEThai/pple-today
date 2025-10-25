@@ -362,6 +362,16 @@ export const AdminUpdateElectionKeysResponse = t.Object({
 })
 export type AdminUpdateElectionKeysResponse = Static<typeof AdminUpdateElectionKeysResponse>
 
+export const AdminReloadElectionKeysParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminReloadElectionKeysParams = Static<typeof AdminReloadElectionKeysParams>
+
+export const AdminReloadElectionKeysResponse = t.Object({
+  message: t.String(),
+})
+export type AdminReloadElectionKeysResponse = Static<typeof AdminReloadElectionKeysResponse>
+
 export const AdminPublishElectionParams = t.Object({
   electionId: t.String(),
 })

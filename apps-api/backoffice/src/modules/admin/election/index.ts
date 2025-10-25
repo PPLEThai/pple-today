@@ -40,6 +40,8 @@ import {
   AdminPublishElectionBody,
   AdminPublishElectionParams,
   AdminPublishElectionResponse,
+  AdminReloadElectionKeysParams,
+  AdminReloadElectionKeysResponse,
   AdminUpdateElectionBody,
   AdminUpdateElectionCandidateParams,
   AdminUpdateElectionCandidateResponse,
@@ -679,36 +681,63 @@ export const AdminElectionController = new Elysia({
       )
   )
   .group('/:electionId/keys', (app) =>
-    app.put(
-      '/',
-      async ({ params, body, status, adminElectionService }) => {
-        const result = await adminElectionService.updateElectionKeys(params.electionId, body)
-        if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+    app
+      .put(
+        '/',
+        async ({ params, body, status, adminElectionService }) => {
+          const result = await adminElectionService.updateElectionKeys(params.electionId, body)
+          if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
-        return status(200, {
-          message: 'Update Election Keys Successfully',
-        })
-      },
-      {
-        detail: {
-          summary: 'Update election keys',
-          description: 'Update election keys',
+          return status(200, {
+            message: 'Update Election Keys Successfully',
+          })
         },
-        validateBallotCrypto: true,
-        params: AdminUpdateElectionKeysParams,
-        body: AdminUpdateElectionKeysBody,
-        response: {
-          200: AdminUpdateElectionKeysResponse,
-          ...createErrorSchema(
-            InternalErrorCode.INTERNAL_SERVER_ERROR,
-            InternalErrorCode.BAD_REQUEST,
-            InternalErrorCode.UNAUTHORIZED,
-            InternalErrorCode.ELECTION_NOT_FOUND,
-            InternalErrorCode.ELECTION_KEY_NOT_IN_PENDING_CREATED_STATUS
-          ),
+        {
+          detail: {
+            summary: 'Update election keys',
+            description: 'Update election keys',
+          },
+          validateBallotCrypto: true,
+          params: AdminUpdateElectionKeysParams,
+          body: AdminUpdateElectionKeysBody,
+          response: {
+            200: AdminUpdateElectionKeysResponse,
+            ...createErrorSchema(
+              InternalErrorCode.INTERNAL_SERVER_ERROR,
+              InternalErrorCode.BAD_REQUEST,
+              InternalErrorCode.UNAUTHORIZED,
+              InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_KEY_NOT_IN_PENDING_CREATED_STATUS
+            ),
+          },
+        }
+      )
+      .put(
+        '/reload',
+        async ({ status, adminElectionService, params }) => {
+          const result = await adminElectionService.reloadElectionKeys(params.electionId)
+          if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+          return status(200, {
+            message: 'Reload election successfully',
+          })
         },
-      }
-    )
+        {
+          detail: {
+            summary: 'Reload election keys',
+            description: 'Reload election keys',
+          },
+          requiredLocalUser: true,
+          params: AdminReloadElectionKeysParams,
+          response: {
+            200: AdminReloadElectionKeysResponse,
+            ...createErrorSchema(
+              InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.INTERNAL_SERVER_ERROR
+            ),
+          },
+        }
+      )
   )
   .group('/:electionId/ballots', (app) =>
     app.post(

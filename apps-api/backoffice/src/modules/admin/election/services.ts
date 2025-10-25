@@ -210,6 +210,30 @@ export class AdminElectionService {
     return ok(this.convertToElectionInfo(getElectionResult.value))
   }
 
+  async reloadElectionKeys(electionId: string) {
+    const electionResult = await this.adminElectionRepository.getElectionById(electionId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id: ${electionId}`,
+        },
+      })
+    }
+
+    const keysResult = await this.ballotCryptoService.getElectionKeys(electionId)
+    if (keysResult.isErr()) return err(keysResult.error)
+
+    const updateKeysResult = await this.adminElectionRepository.updateElectionKeys(electionId, {
+      status: ElectionKeysStatus.CREATED,
+      encryptionPublicKey: keysResult.value?.publicEncrypt,
+      signingPublicKey: keysResult.value?.publicSigning,
+    })
+    if (updateKeysResult.isErr()) return mapRepositoryError(updateKeysResult.error)
+
+    return ok()
+  }
+
   async updateElection(electionId: string, input: AdminUpdateElectionBody) {
     const validateResult = this.validateElectionInput({ ...input })
     if (validateResult.isErr()) return err(validateResult.error)
