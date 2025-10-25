@@ -1,4 +1,5 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { err } from '@pple-today/api-common/utils'
 import { ElectionKeysStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
@@ -138,6 +139,19 @@ export class KeyService {
     const restoreErr = restoreResults.find((result) => result.isErr())
 
     if (restoreErr) {
+      const [encryptResult, signingResult] = restoreResults
+
+      if (encryptResult.isOk()) {
+        const destroyResult =
+          await this.keyManagementService.destroyAsymmetricEncryptKey(electionId)
+        if (destroyResult.isErr()) return err(destroyResult.error)
+      }
+
+      if (signingResult.isOk()) {
+        const destroyResult = await this.keyManagementService.destroyAsymmetricSignKey(electionId)
+        if (destroyResult.isErr()) return err(destroyResult.error)
+      }
+
       return mapGoogleAPIError(restoreErr.error, {
         NOT_FOUND: {
           code: InternalErrorCode.ELECTION_KEY_NOT_FOUND,
