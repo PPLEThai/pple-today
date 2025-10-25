@@ -74,7 +74,9 @@ export class AdminElectionService {
     return ok()
   }
 
-  private convertToElectionInfo(election: Election): AdminElectionInfo {
+  private convertToElectionInfo(
+    election: Election & { _count: { voters: number } }
+  ): AdminElectionInfo {
     return {
       id: election.id,
       name: election.name,
@@ -83,6 +85,7 @@ export class AdminElectionService {
       locationMapUrl: election.locationMapUrl,
       province: election.province,
       district: election.district,
+      totalVoters: election._count.voters,
       onlineResultStatus: election.onlineResultStatus,
       keyStatus: election.keysStatus,
       keysDestroyScheduledAt: election.keysDestroyScheduledAt,
