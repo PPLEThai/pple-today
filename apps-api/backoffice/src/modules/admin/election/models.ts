@@ -7,8 +7,24 @@ import {
   ListQuery,
   PaginationMetadataResponse,
 } from '@pple-today/api-common/dtos'
-import { ElectionKeysStatus, ElectionMode, ElectionType } from '@pple-today/database/prisma'
+import {
+  ElectionKeysStatus,
+  ElectionMode,
+  ElectionOnlineResultStatus,
+  ElectionType,
+} from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
+
+export const AdminElectionInfo = t.Intersect([
+  ElectionInfo,
+  t.Object({
+    onlineResultStatus: t.Enum(ElectionOnlineResultStatus),
+    keyStatus: t.Enum(ElectionKeysStatus),
+    keysDestroyScheduledAt: t.Nullable(t.Date()),
+    keysDestroyScheduledDuration: t.Nullable(t.Integer()),
+  }),
+])
+export type AdminElectionInfo = Static<typeof AdminElectionInfo>
 
 export const AdminCreateElectionBody = t.Object({
   name: t.String(),
@@ -44,7 +60,7 @@ export const AdminCreateElectionBody = t.Object({
 })
 export type AdminCreateElectionBody = Static<typeof AdminCreateElectionBody>
 
-export const AdminCreateElectionResponse = ElectionInfo
+export const AdminCreateElectionResponse = AdminElectionInfo
 export type AdminCreateElectionResponse = Static<typeof AdminCreateElectionResponse>
 
 export const AdminListElectionQuery = ListQuery(
@@ -69,7 +85,7 @@ export const AdminGetElectionParams = t.Object({
 })
 export type AdminGetElectionParams = Static<typeof AdminGetElectionParams>
 
-export const AdminGetElectionResponse = ElectionInfo
+export const AdminGetElectionResponse = AdminElectionInfo
 export type AdminGetElectionResponse = Static<typeof AdminGetElectionResponse>
 
 export const AdminUpdateElectionParams = t.Object({
@@ -110,7 +126,7 @@ export const AdminUpdateElectionBody = t.Object({
 })
 export type AdminUpdateElectionBody = Static<typeof AdminUpdateElectionBody>
 
-export const AdminUpdateElectionResponse = ElectionInfo
+export const AdminUpdateElectionResponse = AdminElectionInfo
 export type AdminUpdateElectionResponse = Static<typeof AdminUpdateElectionResponse>
 
 export const AdminDeleteElectionParams = t.Object({

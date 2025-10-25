@@ -1,7 +1,6 @@
 import { createId } from '@paralleldrive/cuid2'
 import {
   ElectionCandidate as ElectionCandidateDTO,
-  ElectionInfo,
   ImageFileMimeType,
   InternalErrorCode,
 } from '@pple-today/api-common/dtos'
@@ -24,6 +23,7 @@ import { stringify } from 'safe-stable-stringify'
 import {
   AdminCreateElectionBody,
   AdminCreateElectionCandidateBody,
+  AdminElectionInfo,
   AdminListElectionQuery,
   AdminListElectionResponse,
   AdminUpdateElectionBody,
@@ -73,7 +73,7 @@ export class AdminElectionService {
     return ok()
   }
 
-  private convertToElectionInfo(election: Election): ElectionInfo {
+  private convertToElectionInfo(election: Election): AdminElectionInfo {
     return {
       id: election.id,
       name: election.name,
@@ -82,6 +82,10 @@ export class AdminElectionService {
       locationMapUrl: election.locationMapUrl,
       province: election.province,
       district: election.district,
+      onlineResultStatus: election.onlineResultStatus,
+      keyStatus: election.keysStatus,
+      keysDestroyScheduledAt: election.keysDestroyScheduledAt,
+      keysDestroyScheduledDuration: election.keysDestroyScheduledDuration,
       type: election.type,
       mode: election.mode,
       isCancelled: election.isCancelled,
