@@ -1,5 +1,4 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
-import { err } from '@pple-today/api-common/utils'
 import { ElectionKeysStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
