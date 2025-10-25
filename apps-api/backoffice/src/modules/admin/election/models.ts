@@ -479,4 +479,21 @@ export const AdminGetResultResponse = t.Object({
     ])
   ),
 })
+
 export type AdminGetResultResponse = Static<typeof AdminGetResultResponse>
+
+export const AdminAnnouceResultParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminAnnouceResultParams = Static<typeof AdminAnnouceResultParams>
+
+export const AdminAnnouceResultBody = t.Object({
+  start: t.Date(),
+  end: t.Date(),
+})
+export type AdminAnnouceResultBody = Static<typeof AdminAnnouceResultBody>
+
+export const AdminAnnouceResultResponse = t.Object({
+  message: t.String(),
+})
+export type AdminAnnouceResultResponse = Static<typeof AdminAnnouceResultResponse>

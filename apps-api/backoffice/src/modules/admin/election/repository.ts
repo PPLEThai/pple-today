@@ -716,6 +716,31 @@ export class AdminElectionRepository {
       })
     )
   }
+
+  async annouceElectionResult(
+    electionId: string,
+    timeline: {
+      start: Date
+      end: Date
+    },
+    destroyKeyInfo?: {
+      at: Date
+      duration: number
+    }
+  ) {
+    return fromRepositoryPromise(
+      this.prismaService.election.update({
+        where: { id: electionId },
+        data: {
+          startResult: timeline.start,
+          endResult: timeline.end,
+          keysStatus: destroyKeyInfo && ElectionKeysStatus.DESTROY_SCHEDULED,
+          keysDestroyScheduledAt: destroyKeyInfo?.at,
+          keysDestroyScheduledDuration: destroyKeyInfo?.duration,
+        },
+      })
+    )
+  }
 }
 
 export const AdminElectionRepositoryPlugin = new Elysia({ name: 'AdminElectionRepository' })
