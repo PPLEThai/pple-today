@@ -825,9 +825,11 @@ export const AdminElectionController = new Elysia({
             200: AdminAnnouceResultResponse,
             ...createErrorSchema(
               InternalErrorCode.INTERNAL_SERVER_ERROR,
+              InternalErrorCode.BAD_REQUEST,
               InternalErrorCode.ELECTION_NOT_FOUND,
               InternalErrorCode.ELECTION_IS_CANCELLED,
               InternalErrorCode.ELECTION_IN_VOTE_PERIOD,
+              InternalErrorCode.ELECTION_ALREADY_ANNOUCE_RESULT,
               InternalErrorCode.ELECTION_ONLINE_RESULT_NOT_READY
             ),
           },
