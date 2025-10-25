@@ -13,7 +13,7 @@ import { fromGoogleAPIPromise, mapGoogleAPIError } from '../utils/error'
 
 export class KeyManagementService {
   private readonly kmsClient: KeyManagementServiceClient
-  private readonly DESTROY_SCHEDULED_DURATION = 3 * 30 * 24 * 60 * 60
+  private readonly DESTROY_SCHEDULED_DURATION = 1 * 24 * 60 * 60
 
   constructor(
     private readonly config: {
@@ -38,7 +38,7 @@ export class KeyManagementService {
   private log(options: {
     keyRing: string
     keyId: string
-    action: 'CREATE' | 'DESTROY'
+    action: 'CREATE' | 'DESTROY' | 'RESTORE'
     status: 'FAILED' | 'SUCCESS'
   }) {
     const data = {
@@ -184,7 +184,7 @@ export class KeyManagementService {
       status: 'SUCCESS',
     })
 
-    return ok()
+    return ok(this.DESTROY_SCHEDULED_DURATION)
   }
 
   async destroyAsymmetricEncryptKey(keyId: string) {
@@ -280,6 +280,69 @@ export class KeyManagementService {
     if (signResult.isErr()) return err(signResult.error)
 
     return ok(signResult.value[0].signature?.toString('base64') as string)
+  }
+
+  async restoreKey(keyId: string, keyRing: string) {
+    const version = this.kmsClient.cryptoKeyVersionPath(
+      this.config.projectId,
+      this.config.location,
+      keyRing,
+      keyId,
+      '1'
+    )
+
+    const restoreResult = await fromGoogleAPIPromise(
+      this.kmsClient.restoreCryptoKeyVersion({ name: version })
+    )
+    if (restoreResult.isErr()) {
+      this.log({
+        keyRing,
+        keyId,
+        action: 'RESTORE',
+        status: 'FAILED',
+      })
+
+      return err(restoreResult.error)
+    }
+
+    const enableResult = await fromGoogleAPIPromise(
+      this.kmsClient.updateCryptoKeyVersion({
+        cryptoKeyVersion: {
+          name: version,
+          state: 'ENABLED',
+        },
+        updateMask: {
+          paths: ['state'],
+        },
+      })
+    )
+    if (enableResult.isErr()) {
+      this.log({
+        keyRing,
+        keyId,
+        action: 'RESTORE',
+        status: 'FAILED',
+      })
+
+      return err(enableResult.error)
+    }
+
+    this.log({
+      keyRing,
+      keyId,
+      action: 'RESTORE',
+      status: 'SUCCESS',
+    })
+
+    return ok()
+  }
+
+  async restoreAsymmetricEncryptKey(keyId: string) {
+    return this.restoreKey(keyId, this.config.encryptionKeyRing)
+  }
+
+  async restoreAsymmetricSigningKey(keyId: string) {
+    return this.restoreKey(keyId, this.config.signingKeyRing)
   }
 }
 

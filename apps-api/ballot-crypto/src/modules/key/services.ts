@@ -69,7 +69,9 @@ export class KeyService {
       })
     }
 
-    return ok()
+    const destoryOk = destroyKeyResults.find((result) => result.isOk())
+
+    return ok({ destroyScheduledDuration: destoryOk?.value })
   }
 
   async updateElectionKeys(electionId: string) {
@@ -102,6 +104,29 @@ export class KeyService {
         status: ElectionKeysStatus.FAILED_CREATED,
       }),
     ])
+
+    return ok()
+  }
+
+  async restoreElectionKeys(electionId: string) {
+    const checkResult = await this.keyManagementService.checkIfKeysValid(electionId)
+    if (checkResult.isOk()) return ok()
+
+    const restoreResults = await Promise.all([
+      this.keyManagementService.restoreAsymmetricSigningKey(electionId),
+      this.keyManagementService.restoreAsymmetricEncryptKey(electionId),
+    ])
+
+    const restoreErr = restoreResults.find((result) => result.isErr())
+
+    if (restoreErr) {
+      return mapGoogleAPIError(restoreErr.error, {
+        NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_KEY_NOT_FOUND,
+          message: `Cannot found key id ${electionId}`,
+        },
+      })
+    }
 
     return ok()
   }

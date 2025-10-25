@@ -16,6 +16,16 @@ export const DeleteKeysParams = t.Object({
 export type DeleteKeysParams = Static<typeof DeleteKeysParams>
 
 export const DeleteKeysResponse = t.Object({
-  message: t.String(),
+  destroyScheduledDuration: t.Integer(),
 })
 export type DeleteKeysResponse = Static<typeof DeleteKeysResponse>
+
+export const RestoreKeysParams = t.Object({
+  electionId: t.String(),
+})
+export type RestoreKeysParams = Static<typeof RestoreKeysParams>
+
+export const RestoreKeysResponse = t.Object({
+  message: t.String(),
+})
+export type RestoreKeysResponse = Static<typeof RestoreKeysResponse>

@@ -12,18 +12,15 @@ export class BallotCryptoService {
   private readonly client: Treaty.Create<ApplicationApiSchema>
 
   constructor(private readonly config: { domain: string; apiKey: string }) {
-    this.client = treaty<ApplicationApiSchema>(config.domain)
+    this.client = treaty<ApplicationApiSchema>(config.domain, {
+      headers: {
+        'x-backoffice-to-ballot-crypto-key': this.config.apiKey,
+      },
+    })
   }
 
   async createElectionKeys(electionId: string) {
-    const response = await this.client.keys.post(
-      { electionId },
-      {
-        headers: {
-          'x-backoffice-to-ballot-crypto-key': this.config.apiKey,
-        },
-      }
-    )
+    const response = await this.client.keys.post({ electionId })
 
     if (response.status < 200 || response.status >= 300) {
       return err({
@@ -36,14 +33,23 @@ export class BallotCryptoService {
   }
 
   async destroyElectionKeys(electionId: string) {
-    const response = await this.client.keys({ electionId }).delete(
-      {},
-      {
-        headers: {
-          'x-backoffice-to-ballot-crypto-key': this.config.apiKey,
-        },
-      }
-    )
+    const response = await this.client.keys({ electionId }).delete()
+
+    if (response.status < 200 || response.status >= 300) {
+      return err({
+        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+        message: 'An unexpected error occurred',
+      })
+    }
+
+    return ok(response.data?.destroyScheduledDuration as number)
+  }
+
+  async countBallots(electionId: string, ballots: string[]) {
+    const response = await this.client.ballots.count.post({
+      electionId,
+      ballots,
+    })
 
     if (response.status < 200 || response.status >= 300) {
       return err({
@@ -55,18 +61,8 @@ export class BallotCryptoService {
     return ok()
   }
 
-  async countBallots(electionId: string, ballots: string[]) {
-    const response = await this.client.ballots.count.post(
-      {
-        electionId,
-        ballots,
-      },
-      {
-        headers: {
-          'x-backoffice-to-ballot-crypto-key': this.config.apiKey,
-        },
-      }
-    )
+  async restoreKeys(electionId: string) {
+    const response = await this.client.keys({ electionId }).restore.put({})
 
     if (response.status < 200 || response.status >= 300) {
       return err({

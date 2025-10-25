@@ -2,7 +2,14 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
-import { CreateKeysBody, CreateKeysResponse, DeleteKeysParams, DeleteKeysResponse } from './models'
+import {
+  CreateKeysBody,
+  CreateKeysResponse,
+  DeleteKeysParams,
+  DeleteKeysResponse,
+  RestoreKeysParams,
+  RestoreKeysResponse,
+} from './models'
 import { KeyServicePlugin } from './services'
 
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
@@ -39,15 +46,39 @@ export const KeyController = new Elysia({
       },
     }
   )
+  .put(
+    '/:electionId/restore',
+    async ({ status, keyService, params }) => {
+      const result = await keyService.restoreElectionKeys(params.electionId)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, {
+        message: 'Restore keys successfully',
+      })
+    },
+    {
+      detail: {
+        summary: 'Restore keys',
+        description: 'Restore keys',
+      },
+      validateBackoffice: true,
+      params: RestoreKeysParams,
+      response: {
+        200: RestoreKeysResponse,
+        ...createErrorSchema(
+          InternalErrorCode.INTERNAL_SERVER_ERROR,
+          InternalErrorCode.ELECTION_KEY_NOT_FOUND
+        ),
+      },
+    }
+  )
   .delete(
     '/:electionId',
     async ({ params, status, keyService }) => {
       const result = await keyService.destroyElectionKeys(params.electionId)
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
-      return status(200, {
-        message: 'Delete keys success',
-      })
+      return status(200, result.value)
     },
     {
       detail: {
