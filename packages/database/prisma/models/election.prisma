@@ -40,6 +40,8 @@ model Election {
     description    String?
     location       String?
     locationMapUrl String?
+    province       String?
+    district       String?
 
     isCancelled Boolean      @default(false)
     type        ElectionType

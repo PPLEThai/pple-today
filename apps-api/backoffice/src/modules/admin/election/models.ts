@@ -25,6 +25,16 @@ export const AdminCreateElectionBody = t.Object({
       })
     )
   ),
+  province: t.Optional(
+    t.Nullable(
+      t.String({ description: 'Province of the election, required if type is ONSITE or HYBRID' })
+    )
+  ),
+  district: t.Optional(
+    t.Nullable(
+      t.String({ description: 'District of the election, required if type is ONSITE or HYBRID' })
+    )
+  ),
   type: t.Enum(ElectionType),
   mode: t.Enum(ElectionMode),
   openRegister: t.Optional(t.Nullable(t.Date({ description: 'Required if type is HYBRID' }))),
@@ -62,6 +72,57 @@ export type AdminGetElectionParams = Static<typeof AdminGetElectionParams>
 export const AdminGetElectionResponse = ElectionInfo
 export type AdminGetElectionResponse = Static<typeof AdminGetElectionResponse>
 
+export const AdminUpdateElectionParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminUpdateElectionParams = Static<typeof AdminUpdateElectionParams>
+
+export const AdminUpdateElectionBody = t.Object({
+  name: t.String(),
+  description: t.Optional(t.Nullable(t.String())),
+  location: t.Optional(
+    t.Nullable(
+      t.String({ description: 'Address of the election, required if type is ONSITE or HYBRID' })
+    )
+  ),
+  locationMapUrl: t.Optional(
+    t.Nullable(
+      t.String({
+        description: 'Google Maps URL of the location, required if type is ONSITE or HYBRID',
+      })
+    )
+  ),
+  province: t.Optional(
+    t.Nullable(
+      t.String({ description: 'Province of the election, required if type is ONSITE or HYBRID' })
+    )
+  ),
+  district: t.Optional(
+    t.Nullable(
+      t.String({ description: 'District of the election, required if type is ONSITE or HYBRID' })
+    )
+  ),
+  type: t.Enum(ElectionType),
+  openRegister: t.Optional(t.Nullable(t.Date({ description: 'Required if type is HYBRID' }))),
+  closeRegister: t.Optional(t.Nullable(t.Date({ description: 'Required if type is HYBRID' }))),
+  openVoting: t.Date(),
+  closeVoting: t.Date(),
+})
+export type AdminUpdateElectionBody = Static<typeof AdminUpdateElectionBody>
+
+export const AdminUpdateElectionResponse = ElectionInfo
+export type AdminUpdateElectionResponse = Static<typeof AdminUpdateElectionResponse>
+
+export const AdminDeleteElectionParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminDeleteElectionParams = Static<typeof AdminDeleteElectionParams>
+
+export const AdminDeleteElectionResponse = t.Object({
+  message: t.String(),
+})
+export type AdminDeleteElectionResponse = Static<typeof AdminDeleteElectionResponse>
+
 export const AdminCancelElectionParams = t.Object({
   electionId: t.String(),
 })
@@ -71,6 +132,16 @@ export const AdminCancelElectionResponse = t.Object({
   message: t.String(),
 })
 export type AdminCancelElectionResponse = Static<typeof AdminCancelElectionResponse>
+
+export const AdminMakeElectionSecureModeParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminMakeElectionSecureModeParams = Static<typeof AdminMakeElectionSecureModeParams>
+
+export const AdminMakeElectionSecureModeResponse = t.Object({
+  message: t.String(),
+})
+export type AdminMakeElectionSecureModeResponse = Static<typeof AdminMakeElectionSecureModeResponse>
 
 export const AdminListElectionCandidatesParams = t.Object({
   electionId: t.String(),
@@ -290,6 +361,16 @@ export const AdminUpdateElectionKeysResponse = t.Object({
   message: t.String(),
 })
 export type AdminUpdateElectionKeysResponse = Static<typeof AdminUpdateElectionKeysResponse>
+
+export const AdminReloadElectionKeysParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminReloadElectionKeysParams = Static<typeof AdminReloadElectionKeysParams>
+
+export const AdminReloadElectionKeysResponse = t.Object({
+  message: t.String(),
+})
+export type AdminReloadElectionKeysResponse = Static<typeof AdminReloadElectionKeysResponse>
 
 export const AdminPublishElectionParams = t.Object({
   electionId: t.String(),
