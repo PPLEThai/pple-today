@@ -29,3 +29,14 @@ export const RestoreKeysResponse = t.Object({
   message: t.String(),
 })
 export type RestoreKeysResponse = Static<typeof RestoreKeysResponse>
+
+export const GetKeysParams = t.Object({
+  electionId: t.String(),
+})
+export type GetKeysParams = Static<typeof GetKeysParams>
+
+export const GetKeysResponse = t.Object({
+  publicEncrypt: t.String(),
+  publicSigning: t.String(),
+})
+export type GetKeysResponse = Static<typeof GetKeysResponse>

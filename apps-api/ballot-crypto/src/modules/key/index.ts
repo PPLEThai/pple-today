@@ -7,6 +7,8 @@ import {
   CreateKeysResponse,
   DeleteKeysParams,
   DeleteKeysResponse,
+  GetKeysParams,
+  GetKeysResponse,
   RestoreKeysParams,
   RestoreKeysResponse,
 } from './models'
@@ -41,6 +43,30 @@ export const KeyController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.INTERNAL_SERVER_ERROR,
           InternalErrorCode.ELECTION_KEY_ALREADY_EXIST,
+          InternalErrorCode.ELECTION_KEY_NOT_FOUND
+        ),
+      },
+    }
+  )
+  .get(
+    '/:electionId',
+    async ({ status, keyService, params }) => {
+      const result = await keyService.getElectionKeys(params.electionId)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, result.value)
+    },
+    {
+      detail: {
+        summary: 'Get Election keys',
+        description: 'Get Election keys',
+      },
+      validateBackoffice: true,
+      params: GetKeysParams,
+      response: {
+        200: GetKeysResponse,
+        ...createErrorSchema(
+          InternalErrorCode.INTERNAL_SERVER_ERROR,
           InternalErrorCode.ELECTION_KEY_NOT_FOUND
         ),
       },

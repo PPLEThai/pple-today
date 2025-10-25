@@ -53,6 +53,24 @@ export class KeyService {
     return ok()
   }
 
+  async getElectionKeys(electionId: string) {
+    const results = await Promise.all([
+      this.keyManagementService.getPublicKeyAsymmetricEncrypt(electionId),
+      this.keyManagementService.getPublicKeyAsymmetricSign(electionId),
+    ])
+
+    const err = results.find((result) => result.isErr())
+
+    if (err) return mapGoogleAPIError(err.error)
+
+    const [encryptResult, signingResult] = results.filter((result) => result.isOk())
+
+    return ok({
+      publicEncrypt: encryptResult.value,
+      publicSigning: signingResult.value,
+    })
+  }
+
   async destroyElectionKeys(electionId: string) {
     const destroyKeyResults = await Promise.all([
       this.keyManagementService.destroyAsymmetricEncryptKey(electionId),
