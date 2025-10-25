@@ -133,6 +133,16 @@ export const AdminCancelElectionResponse = t.Object({
 })
 export type AdminCancelElectionResponse = Static<typeof AdminCancelElectionResponse>
 
+export const AdminMakeElectionSecureModeParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminMakeElectionSecureModeParams = Static<typeof AdminMakeElectionSecureModeParams>
+
+export const AdminMakeElectionSecureModeResponse = t.Object({
+  message: t.String(),
+})
+export type AdminMakeElectionSecureModeResponse = Static<typeof AdminMakeElectionSecureModeResponse>
+
 export const AdminListElectionCandidatesParams = t.Object({
   electionId: t.String(),
 })

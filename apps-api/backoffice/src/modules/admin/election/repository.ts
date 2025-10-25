@@ -124,6 +124,36 @@ export class AdminElectionRepository {
     )
   }
 
+  async makeElectionSecureMode(
+    electionId: string,
+    now: Date,
+    destroyKeyInfo?: {
+      at: Date
+      duration: number
+    }
+  ) {
+    return fromRepositoryPromise(
+      this.prismaService.$transaction(async (tx) => {
+        const election = await tx.election.update({
+          where: { id: electionId },
+          data: {
+            mode: ElectionMode.SECURE,
+            keysStatus: destroyKeyInfo && ElectionKeysStatus.DESTROY_SCHEDULED,
+            keysDestroyScheduledAt: destroyKeyInfo?.at,
+            keysDestroyScheduledDuration: destroyKeyInfo?.duration,
+          },
+        })
+
+        if (election.closeVoting && now >= election.closeVoting) {
+          await tx.electionVoteRecord.updateMany({
+            where: { electionId },
+            data: { ballotId: null },
+          })
+        }
+      })
+    )
+  }
+
   async listElections(input: {
     filter?: {
       name?: string
@@ -213,24 +243,13 @@ export class AdminElectionRepository {
     const [_, fileTx] = deleteImageResult.value
 
     const cancelResult = await fromRepositoryPromise(
-      this.prismaService.$transaction(async (tx) => {
-        await Promise.all([
-          tx.electionBallot.deleteMany({
-            where: {
-              electionId,
-            },
-          }),
-          tx.electionVoteRecord.deleteMany({
-            where: {
-              electionId,
-            },
-          }),
-          tx.election.update({
-            where: { id: electionId },
-            data: { isCancelled: true },
-          }),
-        ])
-      })
+      this.prismaService.$transaction([
+        this.prismaService.electionBallot.deleteMany({ where: { electionId } }),
+        this.prismaService.election.update({
+          where: { id: electionId },
+          data: { isCancelled: true },
+        }),
+      ])
     )
     if (cancelResult.isErr()) {
       const rollbackImageResult = await fileTx.rollback()

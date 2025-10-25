@@ -253,15 +253,28 @@ export class AdminElectionService {
     const checkReuslt = this.checkIsDraftElection(election)
     if (checkReuslt.isErr()) return err(checkReuslt.error)
 
-    const deleteResult = await this.adminElectionRepository.deleteElection(electionId)
-    if (deleteResult.isErr()) return mapRepositoryError(deleteResult.error)
+    const destroyKeysResult = await this.ballotCryptoService.destroyElectionKeys(electionId)
+    if (destroyKeysResult.isErr()) return err(destroyKeysResult.error)
+
+    const deleteElectionResult = await this.adminElectionRepository.deleteElection(electionId)
+    if (deleteElectionResult.isErr()) {
+      const restoreKeysResult = await this.ballotCryptoService.restoreKeys(electionId)
+      if (restoreKeysResult.isErr()) return err(restoreKeysResult.error)
+      return mapRepositoryError(deleteElectionResult.error)
+    }
 
     return ok()
   }
 
   async cancelElection(electionId: string) {
+    const destroyKeysResult = await this.ballotCryptoService.destroyElectionKeys(electionId)
+    if (destroyKeysResult.isErr()) return err(destroyKeysResult.error)
+
     const cancelResult = await this.adminElectionRepository.cancelElectionById(electionId)
     if (cancelResult.isErr()) {
+      const restoreKeysResult = await this.ballotCryptoService.restoreKeys(electionId)
+      if (restoreKeysResult.isErr()) return err(restoreKeysResult.error)
+
       return mapRepositoryError(cancelResult.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.ELECTION_NOT_FOUND,
@@ -269,6 +282,7 @@ export class AdminElectionService {
         },
       })
     }
+
     return ok()
   }
 
@@ -292,6 +306,60 @@ export class AdminElectionService {
     )
     if (publishResult.isErr()) {
       return mapRepositoryError(publishResult.error)
+    }
+
+    return ok()
+  }
+
+  async changeElectionSecureMode(electionId: string) {
+    const electionResult = await this.adminElectionRepository.getElectionById(electionId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id: ${electionId}`,
+        },
+      })
+    }
+
+    const election = electionResult.value
+
+    if (election.isCancelled) {
+      return err({
+        code: InternalErrorCode.ELECTION_IS_CANCELLED,
+        message: 'Election is cancelled',
+      })
+    }
+
+    if (election.mode === ElectionMode.SECURE) {
+      return ok()
+    }
+
+    const now = new Date()
+
+    const isDestroyKey = Boolean(election.startResult && now >= election.startResult)
+    let destroyKeyInfo: { at: Date; duration: number } | undefined = undefined
+
+    if (isDestroyKey) {
+      const destroyKeysResult = await this.ballotCryptoService.destroyElectionKeys(election.id)
+      if (destroyKeysResult.isErr()) return err(destroyKeysResult.error)
+      destroyKeyInfo = {
+        at: now,
+        duration: destroyKeysResult.value?.destroyScheduledDuration as number,
+      }
+    }
+
+    const updateResult = await this.adminElectionRepository.makeElectionSecureMode(
+      election.id,
+      now,
+      destroyKeyInfo
+    )
+    if (updateResult.isErr()) {
+      if (isDestroyKey) {
+        const restoreResult = await this.ballotCryptoService.restoreKeys(election.id)
+        if (restoreResult.isErr()) return err(restoreResult.error)
+      }
+      return mapRepositoryError(updateResult.error)
     }
 
     return ok()

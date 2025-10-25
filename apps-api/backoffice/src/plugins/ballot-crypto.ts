@@ -42,7 +42,7 @@ export class BallotCryptoService {
       })
     }
 
-    return ok(response.data?.destroyScheduledDuration as number)
+    return ok(response.data)
   }
 
   async countBallots(electionId: string, ballots: string[]) {

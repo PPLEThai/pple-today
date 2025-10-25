@@ -35,6 +35,8 @@ import {
   AdminListElectionEligibleVoterResponse,
   AdminListElectionQuery,
   AdminListElectionResponse,
+  AdminMakeElectionSecureModeParams,
+  AdminMakeElectionSecureModeResponse,
   AdminPublishElectionBody,
   AdminPublishElectionParams,
   AdminPublishElectionResponse,
@@ -250,6 +252,33 @@ export const AdminElectionController = new Elysia({
           InternalErrorCode.FORBIDDEN,
           InternalErrorCode.ELECTION_NOT_FOUND,
           InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+          InternalErrorCode.ELECTION_IS_CANCELLED
+        ),
+      },
+    }
+  )
+  .put(
+    '/:electionId/secure-mode',
+    async ({ status, adminElectionService, params }) => {
+      const result = await adminElectionService.changeElectionSecureMode(params.electionId)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, {
+        message: 'Make election to SECURE mode successfully',
+      })
+    },
+    {
+      detail: {
+        summary: 'Make election SECURE mode',
+        description: 'Make election SECURE mode',
+      },
+      requiredLocalUser: true,
+      params: AdminMakeElectionSecureModeParams,
+      response: {
+        200: AdminMakeElectionSecureModeResponse,
+        ...createErrorSchema(
+          InternalErrorCode.INTERNAL_SERVER_ERROR,
+          InternalErrorCode.ELECTION_NOT_FOUND,
           InternalErrorCode.ELECTION_IS_CANCELLED
         ),
       },
