@@ -29,6 +29,8 @@ import {
   AdminDeleteElectionResponse,
   AdminGetElectionParams,
   AdminGetElectionResponse,
+  AdminGetResultParams,
+  AdminGetResultResponse,
   AdminListElectionCandidatesParams,
   AdminListElectionCandidatesResponse,
   AdminListElectionEligibleVoterParams,
@@ -767,6 +769,32 @@ export const AdminElectionController = new Elysia({
             InternalErrorCode.ELECTION_NOT_IN_CLOSED_VOTE_PERIOD,
             InternalErrorCode.ELECTION_INVALID_TYPE,
             InternalErrorCode.ELECTION_KEY_NOT_READY
+          ),
+        },
+      }
+    )
+  )
+  .group('/:electionId/result', (app) =>
+    app.get(
+      '/',
+      async ({ status, adminElectionService, params }) => {
+        const result = await adminElectionService.getElectionResult(params.electionId)
+        if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+        return status(200, result.value)
+      },
+      {
+        detail: {
+          summary: 'Get election result',
+          description: 'Get election result',
+        },
+        requiredLocalUser: true,
+        params: AdminGetResultParams,
+        response: {
+          200: AdminGetResultResponse,
+          ...createErrorSchema(
+            InternalErrorCode.INTERNAL_SERVER_ERROR,
+            InternalErrorCode.ELECTION_NOT_FOUND
           ),
         },
       }

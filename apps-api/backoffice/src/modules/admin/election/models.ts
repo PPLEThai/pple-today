@@ -457,3 +457,25 @@ export const AdminCountBallotsResponse = t.Object({
   message: t.String(),
 })
 export type AdminCountBallotsResponse = Static<typeof AdminCountBallotsResponse>
+
+export const AdminGetResultParams = t.Object({
+  electionId: t.String(),
+})
+export type AdminGetResultParams = Static<typeof AdminGetResultParams>
+
+export const AdminGetResultResponse = t.Object({
+  onlineResultStatus: t.Enum(ElectionOnlineResultStatus),
+  candidates: t.Array(
+    t.Intersect([
+      ElectionCandidate,
+      t.Object({
+        result: t.Object({
+          total: t.Integer(),
+          online: t.Integer(),
+          onsite: t.Integer(),
+        }),
+      }),
+    ])
+  ),
+})
+export type AdminGetResultResponse = Static<typeof AdminGetResultResponse>

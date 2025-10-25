@@ -11,6 +11,7 @@ import {
   ElectionCandidate,
   ElectionKeysStatus,
   ElectionMode,
+  ElectionResultType,
   ElectionType,
   EligibleVoterType,
 } from '@pple-today/database/prisma'
@@ -908,6 +909,44 @@ export class AdminElectionService {
     }
 
     return ok()
+  }
+
+  async getElectionResult(electionId: string) {
+    const result = await this.adminElectionRepository.getElectionResult(electionId)
+    if (result.isErr()) {
+      return mapRepositoryError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id ${electionId}`,
+        },
+      })
+    }
+
+    const candidates = result.value.candidates.map((candidate) => {
+      const info = this.convertToCandidateDTO(candidate)
+      const online = R.sumBy(
+        R.filter(candidate.results, (result) => result.type === ElectionResultType.ONLINE),
+        (result) => result.count
+      )
+      const onsite = R.sumBy(
+        R.filter(candidate.results, (result) => result.type === ElectionResultType.ONSITE),
+        (result) => result.count
+      )
+
+      return {
+        ...info,
+        result: {
+          total: online + onsite,
+          online,
+          onsite,
+        },
+      }
+    })
+
+    return ok({
+      onlineResultStatus: result.value.onlineResultStatus,
+      candidates,
+    })
   }
 }
 
