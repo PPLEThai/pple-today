@@ -8,3 +8,4 @@ key.json
 google-services.json
 GoogleService-Info.plist
 .env.default
+*.jks

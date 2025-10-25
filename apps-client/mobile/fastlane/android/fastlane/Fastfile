@@ -47,4 +47,31 @@ platform :android do
       # debug: true,
     )
   end
+
+  # https://medium.com/@malikchohra/ci-cd-pipeline-for-react-native-apps-use-fastlane-and-github-actions-dcf101edc423
+  desc "Send app to play store as a draft"
+  lane :production do
+    increment_version_code(
+      version_code: 4, # manually set version code
+      gradle_file_path: "app/build.gradle"
+    )
+    gradle(
+      task: 'bundle',
+      build_type: 'Release',
+      properties: {
+        "android.injected.signing.store.file" => 'upload-keystore.jks',
+        "android.injected.signing.store.password" => ENV['ANDROID_UPLOAD_KEYSTORE_PASSWORD'],
+        "android.injected.signing.key.alias" => ENV['ANDROID_UPLOAD_KEYSTORE_ALIAS'],
+        "android.injected.signing.key.password" => ENV['ANDROID_UPLOAD_KEYSTORE_PASSWORD'],
+      }
+    )
+    upload_to_play_store(
+      track: 'internal',
+      # Only releases with status draft may be created on draft app
+      # Release needed to be published manually from Play Console
+      release_status: "draft",
+      # track: 'production',
+      # release_status: "completed",
+    )
+  end
 end
