@@ -250,8 +250,8 @@ export class AdminElectionService {
 
     const election = electionResult.value
 
-    const checkReuslt = this.checkIsDraftElection(election)
-    if (checkReuslt.isErr()) return err(checkReuslt.error)
+    const checkResult = this.checkIsDraftElection(election)
+    if (checkResult.isErr()) return err(checkResult.error)
 
     const updateResult = await this.adminElectionRepository.updateElection(electionId, input)
     if (updateResult.isErr()) {
@@ -274,8 +274,8 @@ export class AdminElectionService {
 
     const election = electionResult.value
 
-    const checkReuslt = this.checkIsDraftElection(election)
-    if (checkReuslt.isErr()) return err(checkReuslt.error)
+    const checkResult = this.checkIsDraftElection(election)
+    if (checkResult.isErr()) return err(checkResult.error)
 
     const destroyKeysResult = await this.ballotCryptoService.destroyElectionKeys(electionId)
     if (destroyKeysResult.isErr()) return err(destroyKeysResult.error)
