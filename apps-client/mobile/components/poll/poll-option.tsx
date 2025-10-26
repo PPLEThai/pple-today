@@ -174,7 +174,7 @@ export function PollOptionItem({
           </Text>
         )}
       </View>
-      {(props.pollTouched || props.isSelected) && (
+      {props.pollTouched && (
         <Animated.View
           className={cn(
             'absolute top-0 left-0 z-[-1] rounded-r-xl h-full',

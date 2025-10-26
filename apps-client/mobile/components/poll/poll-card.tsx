@@ -269,9 +269,7 @@ const PollSingleOptionList = (props: PollProps) => {
 
   const selectedOption = options.find((option) => option.isSelected)?.id ?? ''
 
-  const isPollTouched = React.useMemo(() => {
-    return options.some((option) => option.isSelected)
-  }, [options])
+  const isPollTouched = options.some((option) => option.isSelected)
 
   const renderedOptions = React.useMemo(() => {
     if (props.card) {
@@ -296,7 +294,7 @@ const PollSingleOptionList = (props: PollProps) => {
       className="flex flex-col"
     >
       {renderedOptions.length > 0 &&
-        renderedOptions.map((option, index) => (
+        renderedOptions.map((option) => (
           <PollOptionItem
             key={option.id}
             id={option.id}
@@ -334,9 +332,7 @@ const PollMultipleOptionList = (props: PollProps) => {
   )
   const selectedOptions = options.flatMap((option) => (option.isSelected ? [option.id] : []))
 
-  const isPollTouched = React.useMemo(() => {
-    return options.some((option) => option.isSelected)
-  }, [options])
+  const isPollTouched = options.some((option) => option.isSelected)
 
   const renderedOptions = React.useMemo(() => {
     if (props.card) {
