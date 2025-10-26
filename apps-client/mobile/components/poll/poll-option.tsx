@@ -147,7 +147,7 @@ export function PollOptionItem({
       )}
       {...props}
     >
-      <View className="flex flex-row items-center justify-between w-full gap-2 p-3">
+      <View className="flex flex-row items-center w-full gap-2 p-3">
         <View className="gap-2.5 flex flex-row items-center shrink-0 flex-1">
           <PollOptionCheckbox
             isSelected={ToggleGroupPrimitive.utils.getIsSelected(value, props.value)}
