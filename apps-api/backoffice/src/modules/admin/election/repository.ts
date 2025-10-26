@@ -712,6 +712,9 @@ export class AdminElectionRepository {
               results: true,
             },
           },
+          _count: {
+            select: { voters: true },
+          },
         },
       })
     )

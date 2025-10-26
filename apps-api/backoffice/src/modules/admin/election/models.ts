@@ -471,6 +471,7 @@ export const AdminGetResultResponse = t.Object({
       ElectionCandidate,
       t.Object({
         result: t.Object({
+          totalPercent: t.Integer(),
           total: t.Integer(),
           online: t.Integer(),
           onsite: t.Integer(),

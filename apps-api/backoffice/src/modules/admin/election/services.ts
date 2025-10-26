@@ -936,11 +936,15 @@ export class AdminElectionService {
         R.filter(candidate.results, (result) => result.type === ElectionResultType.ONSITE),
         (result) => result.count
       )
+      const total = online + onsite
+      const totalVoters = result.value._count.voters
+      const totalPercent = totalVoters === 0 ? 0 : Math.round((total / totalVoters) * 100)
 
       return {
         ...info,
         result: {
-          total: online + onsite,
+          total,
+          totalPercent,
           online,
           onsite,
         },
