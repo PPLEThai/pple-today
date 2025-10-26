@@ -175,13 +175,10 @@ export class FeedRepository {
               id: option.id,
               title: option.title,
               isSelected: (option.pollAnswers ?? []).length > 0,
-              votes: (option.pollAnswers ?? []).length,
+              votes: option.votes,
             })),
             endAt: rawFeedItem.poll.endAt,
-            totalVotes: sumBy(
-              rawFeedItem.poll.options,
-              (option) => (option.pollAnswers ?? []).length
-            ),
+            totalVotes: sumBy(rawFeedItem.poll.options, (option) => option.votes),
           },
         } satisfies GetFeedContentResponse)
       case FeedItemType.ANNOUNCEMENT:
