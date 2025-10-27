@@ -12,6 +12,7 @@ import {
   ElectionCandidate,
   ElectionKeysStatus,
   ElectionMode,
+  ElectionType,
   EligibleVoterType,
 } from '@pple-today/database/prisma'
 import crypto from 'crypto'
@@ -25,6 +26,7 @@ import {
   AdminCreateElectionCandidateBody,
   AdminListElectionQuery,
   AdminListElectionResponse,
+  AdminUpdateElectionBody,
   AdminUpdateElectionCandidateBody,
   ElectionEligibleVoterIdentifier,
 } from './models'
@@ -41,12 +43,22 @@ export class AdminElectionService {
     private readonly ballotCryptoService: BallotCryptoService
   ) {}
 
-  private checkIsElectionAllowedToModified(election: Election, now: Date) {
-    const isPublished = !!election.publishDate && now >= election.publishDate
-    if (isPublished) {
+  private checkIsDraftElection(election: Election) {
+    if (election.publishDate) {
       return err({
         code: InternalErrorCode.ELECTION_ALREADY_PUBLISH,
         message: `Election is already published`,
+      })
+    }
+    return ok()
+  }
+
+  private checkIsElectionAllowedToModified(election: Election, now: Date) {
+    const isOpenVote = now >= election.openVoting
+    if (isOpenVote) {
+      return err({
+        code: InternalErrorCode.ELECTION_IN_VOTE_PERIOD,
+        message: `Election is in vote period`,
       })
     }
 
@@ -68,6 +80,8 @@ export class AdminElectionService {
       description: election.description,
       location: election.location,
       locationMapUrl: election.locationMapUrl,
+      province: election.province,
+      district: election.district,
       type: election.type,
       mode: election.mode,
       isCancelled: election.isCancelled,
@@ -97,7 +111,15 @@ export class AdminElectionService {
     }
   }
 
-  async createElection(input: AdminCreateElectionBody) {
+  private validateElectionInput(input: {
+    type: ElectionType
+    openRegister?: Date | null
+    closeRegister?: Date | null
+    location?: string | null
+    locationMapUrl?: string | null
+    province?: string | null
+    district?: string | null
+  }) {
     if (input.type === 'HYBRID' && (!input.openRegister || !input.closeRegister)) {
       return err({
         code: InternalErrorCode.BAD_REQUEST,
@@ -107,13 +129,21 @@ export class AdminElectionService {
 
     if (
       (input.type === 'ONSITE' || input.type === 'HYBRID') &&
-      (!input.location || !input.locationMapUrl)
+      (!input.location || !input.locationMapUrl || !input.province || !input.district)
     ) {
       return err({
         code: InternalErrorCode.BAD_REQUEST,
-        message: 'Must specify location and locationMapUrl for ONSITE or HYBRID election',
+        message:
+          'Must specify location, locationMapUrl, province and district for ONSITE or HYBRID election',
       })
     }
+
+    return ok()
+  }
+
+  async createElection(input: AdminCreateElectionBody) {
+    const validateResult = this.validateElectionInput({ ...input })
+    if (validateResult.isErr()) return err(validateResult.error)
 
     const electionId = createId()
     const keysResult = await this.ballotCryptoService.createElectionKeys(electionId)
@@ -180,9 +210,95 @@ export class AdminElectionService {
     return ok(this.convertToElectionInfo(getElectionResult.value))
   }
 
+  async reloadElectionKeys(electionId: string) {
+    const electionResult = await this.adminElectionRepository.getElectionById(electionId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id: ${electionId}`,
+        },
+      })
+    }
+
+    const keysResult = await this.ballotCryptoService.getElectionKeys(electionId)
+    if (keysResult.isErr()) return err(keysResult.error)
+
+    const updateKeysResult = await this.adminElectionRepository.updateElectionKeys(electionId, {
+      status: ElectionKeysStatus.CREATED,
+      encryptionPublicKey: keysResult.value?.publicEncrypt,
+      signingPublicKey: keysResult.value?.publicSigning,
+    })
+    if (updateKeysResult.isErr()) return mapRepositoryError(updateKeysResult.error)
+
+    return ok()
+  }
+
+  async updateElection(electionId: string, input: AdminUpdateElectionBody) {
+    const validateResult = this.validateElectionInput({ ...input })
+    if (validateResult.isErr()) return err(validateResult.error)
+
+    const electionResult = await this.adminElectionRepository.getElectionById(electionId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id: ${electionId}`,
+        },
+      })
+    }
+
+    const election = electionResult.value
+
+    const checkResult = this.checkIsDraftElection(election)
+    if (checkResult.isErr()) return err(checkResult.error)
+
+    const updateResult = await this.adminElectionRepository.updateElection(electionId, input)
+    if (updateResult.isErr()) {
+      return mapRepositoryError(updateResult.error)
+    }
+
+    return ok(this.convertToElectionInfo(updateResult.value))
+  }
+
+  async deleteElection(electionId: string) {
+    const electionResult = await this.adminElectionRepository.getElectionById(electionId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id: ${electionId}`,
+        },
+      })
+    }
+
+    const election = electionResult.value
+
+    const checkResult = this.checkIsDraftElection(election)
+    if (checkResult.isErr()) return err(checkResult.error)
+
+    const destroyKeysResult = await this.ballotCryptoService.destroyElectionKeys(electionId)
+    if (destroyKeysResult.isErr()) return err(destroyKeysResult.error)
+
+    const deleteElectionResult = await this.adminElectionRepository.deleteElection(electionId)
+    if (deleteElectionResult.isErr()) {
+      const restoreKeysResult = await this.ballotCryptoService.restoreKeys(electionId)
+      if (restoreKeysResult.isErr()) return err(restoreKeysResult.error)
+      return mapRepositoryError(deleteElectionResult.error)
+    }
+
+    return ok()
+  }
+
   async cancelElection(electionId: string) {
+    const destroyKeysResult = await this.ballotCryptoService.destroyElectionKeys(electionId)
+    if (destroyKeysResult.isErr()) return err(destroyKeysResult.error)
+
     const cancelResult = await this.adminElectionRepository.cancelElectionById(electionId)
     if (cancelResult.isErr()) {
+      const restoreKeysResult = await this.ballotCryptoService.restoreKeys(electionId)
+      if (restoreKeysResult.isErr()) return err(restoreKeysResult.error)
+
       return mapRepositoryError(cancelResult.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.ELECTION_NOT_FOUND,
@@ -190,6 +306,7 @@ export class AdminElectionService {
         },
       })
     }
+
     return ok()
   }
 
@@ -204,7 +321,7 @@ export class AdminElectionService {
       })
     }
 
-    const checkResult = this.checkIsElectionAllowedToModified(electionResult.value, new Date())
+    const checkResult = this.checkIsDraftElection(electionResult.value)
     if (checkResult.isErr()) return err(checkResult.error)
 
     const publishResult = await this.adminElectionRepository.publishElectionById(
@@ -213,6 +330,60 @@ export class AdminElectionService {
     )
     if (publishResult.isErr()) {
       return mapRepositoryError(publishResult.error)
+    }
+
+    return ok()
+  }
+
+  async changeElectionSecureMode(electionId: string) {
+    const electionResult = await this.adminElectionRepository.getElectionById(electionId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id: ${electionId}`,
+        },
+      })
+    }
+
+    const election = electionResult.value
+
+    if (election.isCancelled) {
+      return err({
+        code: InternalErrorCode.ELECTION_IS_CANCELLED,
+        message: 'Election is cancelled',
+      })
+    }
+
+    if (election.mode === ElectionMode.SECURE) {
+      return ok()
+    }
+
+    const now = new Date()
+
+    const isDestroyKey = Boolean(election.startResult && now >= election.startResult)
+    let destroyKeyInfo: { at: Date; duration: number } | undefined = undefined
+
+    if (isDestroyKey) {
+      const destroyKeysResult = await this.ballotCryptoService.destroyElectionKeys(election.id)
+      if (destroyKeysResult.isErr()) return err(destroyKeysResult.error)
+      destroyKeyInfo = {
+        at: now,
+        duration: destroyKeysResult.value?.destroyScheduledDuration as number,
+      }
+    }
+
+    const updateResult = await this.adminElectionRepository.makeElectionSecureMode(
+      election.id,
+      now,
+      destroyKeyInfo
+    )
+    if (updateResult.isErr()) {
+      if (isDestroyKey) {
+        const restoreResult = await this.ballotCryptoService.restoreKeys(election.id)
+        if (restoreResult.isErr()) return err(restoreResult.error)
+      }
+      return mapRepositoryError(updateResult.error)
     }
 
     return ok()

@@ -15,6 +15,8 @@ export const ElectionInfo = t.Object({
   description: t.Nullable(t.String()),
   location: t.Nullable(t.String()),
   locationMapUrl: t.Nullable(t.String()),
+  province: t.Nullable(t.String()),
+  district: t.Nullable(t.String()),
   type: t.Enum(ElectionType),
   mode: t.Enum(ElectionMode),
   isCancelled: t.Boolean(),
