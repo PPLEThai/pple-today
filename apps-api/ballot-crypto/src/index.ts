@@ -35,7 +35,7 @@ let app = new Elysia({ adapter: node() })
         'request.headers.cookie',
         'request.headers.authorization',
         'body.accessToken',
-        'body.facebookPageAccessToken',
+        'body.ballots',
       ],
     }).into({
       customProps: (ctx) => {
