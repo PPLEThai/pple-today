@@ -46,17 +46,15 @@ export const PollContent = (props: PollContentProps) => {
   }, [])
 
   return (
-    <>
-      <View className="py-[13px] px-2 flex flex-col bg-base-bg-default rounded-xl mx-4">
-        <PollHeader isEnded={isEnded} triggerEnded={triggerPollEnded} poll={props.feedItem.poll} />
-        {isEnded ? (
-          <PollOptionResultList poll={props.feedItem.poll} card={props.card} />
-        ) : (
-          getPollOptionList({ poll: props.feedItem.poll, card: props.card })
-        )}
-        {props.card && <PollSeeMore feedItem={props.feedItem} />}
-      </View>
-    </>
+    <View className="py-[13px] px-2 flex flex-col bg-base-bg-default rounded-xl mx-4">
+      <PollHeader isEnded={isEnded} triggerEnded={triggerPollEnded} poll={props.feedItem.poll} />
+      {isEnded ? (
+        <PollOptionResultList poll={props.feedItem.poll} card={props.card} />
+      ) : (
+        getPollOptionList({ poll: props.feedItem.poll, card: props.card })
+      )}
+      {props.card && <PollSeeMore feedItem={props.feedItem} />}
+    </View>
   )
 }
 
@@ -107,19 +105,18 @@ const PollSingleOptionList = (props: PollProps) => {
       value={optionId}
       className="flex flex-col"
     >
-      {options.length > 0 &&
-        options.map((option) => (
-          <PollOptionItem
-            key={option.id}
-            id={option.id}
-            value={option.id}
-            title={option.title}
-            votes={option.votes}
-            totalVotes={props.poll.totalVotes}
-            isSelected={optionId === option.id}
-            pollTouched={optionId !== ''}
-          />
-        ))}
+      {options.map((option) => (
+        <PollOptionItem
+          key={option.id}
+          id={option.id}
+          value={option.id}
+          title={option.title}
+          votes={option.votes}
+          totalVotes={props.poll.totalVotes}
+          isSelected={optionId === option.id}
+          pollTouched={optionId !== ''}
+        />
+      ))}
     </PollOptionGroup>
   )
 }
@@ -141,19 +138,18 @@ const PollMultipleOptionList = (props: PollProps) => {
       value={optionIds}
       className="flex flex-col"
     >
-      {options.length > 0 &&
-        options.map((option) => (
-          <PollOptionItem
-            key={option.id}
-            id={option.id}
-            value={option.id}
-            title={option.title}
-            votes={option.votes}
-            totalVotes={props.poll.totalVotes}
-            isSelected={optionIds.includes(option.id)}
-            pollTouched={optionIds.length > 0}
-          />
-        ))}
+      {options.map((option) => (
+        <PollOptionItem
+          key={option.id}
+          id={option.id}
+          value={option.id}
+          title={option.title}
+          votes={option.votes}
+          totalVotes={props.poll.totalVotes}
+          isSelected={optionIds.includes(option.id)}
+          pollTouched={optionIds.length > 0}
+        />
+      ))}
     </PollOptionGroup>
   )
 }
