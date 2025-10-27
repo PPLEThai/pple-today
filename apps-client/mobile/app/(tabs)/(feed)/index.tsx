@@ -145,19 +145,12 @@ function MainHeader() {
           <PPLEIcon width={35} height={30} />
         </Pressable>
         <View className="flex flex-col flex-1">
-          {authMe.isLoading ? (
-            <>
-              <Skeleton className="h-3 mt-1 rounded-full w-[80px]" />
-              <Skeleton className="h-6 mt-2 rounded-full w-[150px]" />
-            </>
-          ) : (
-            <View className="flex-1 pr-4">
-              <Text className="font-heading-regular text-xs">{headings.welcome}</Text>
-              <Text className="font-heading-bold text-2xl text-base-primary-default line-clamp-1">
-                {headings.title}
-              </Text>
-            </View>
-          )}
+          <View className="flex-1 pr-4">
+            <Text className="font-heading-regular text-xs">{headings.welcome}</Text>
+            <Text className="font-heading-bold text-2xl text-base-primary-default line-clamp-1">
+              {headings.title}
+            </Text>
+          </View>
         </View>
       </View>
       <View className="flex flex-row gap-4">
@@ -345,7 +338,6 @@ function SelectTopicButton() {
   const onClose = () => {
     bottomSheetModalRef.current?.dismiss()
   }
-  const insets = useSafeAreaInsets()
   return (
     <>
       <Button
@@ -362,15 +354,7 @@ function SelectTopicButton() {
           size={24}
         />
       </Button>
-
-      <BottomSheetModal
-        ref={bottomSheetModalRef}
-        bottomInset={insets.bottom}
-        topInset={insets.top}
-        enableDynamicSizing
-      >
-        <SelectTopicForm onClose={onClose} />
-      </BottomSheetModal>
+      <SelectTopicForm ref={bottomSheetModalRef} onClose={onClose} />
     </>
   )
 }
@@ -379,7 +363,10 @@ const formSchema = z.object({
   topicIds: z.array(z.string()),
 })
 
-const SelectTopicForm = (props: { onClose: () => void }) => {
+const SelectTopicForm = (props: {
+  onClose: () => void
+  ref: React.RefObject<BottomSheetModal | null>
+}) => {
   const listTopicQuery = reactQueryClient.useQuery('/topics/list', {})
   const followingTopicsQuery = reactQueryClient.useQuery('/topics/follows', {})
   const followManyTopicsMutation = reactQueryClient.useMutation('put', '/topics/follows', {})
@@ -424,52 +411,9 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
   const onSkip = () => {
     props.onClose()
   }
-  return (
-    <BottomSheetScrollView>
-      <View className="flex flex-col gap-1 p-4 pb-0">
-        <Text className="text-2xl font-heading-bold">เลือกหัวข้อที่สนใจ</Text>
-        <Text className="text-sm font-heading-regular text-base-text-medium">
-          เลือกหัวข้อสำหรับเพิ่มลงบนหน้าแรก
-        </Text>
-      </View>
-      <form.Field name="topicIds">
-        {(field) => (
-          <FormItem field={field} className="p-4">
-            <FormLabel style={[StyleSheet.absoluteFill, { opacity: 0, pointerEvents: 'none' }]}>
-              หัวข้อ
-            </FormLabel>
-            <ToggleGroup
-              type="multiple"
-              value={field.state.value}
-              variant="outline"
-              onValueChange={(value) => {
-                field.handleChange(value!)
-              }}
-              className="bg-base-bg-light rounded-lg border border-base-outline-default flex flex-row flex-wrap gap-2 justify-start p-2"
-            >
-              {listTopicQuery.isLoading || !listTopicQuery.data ? (
-                <TopicSkeleton />
-              ) : listTopicQuery.data.length === 0 ? (
-                <View className="w-full items-center justify-center py-14">
-                  <Text className="text-base-text-placeholder font-heading-semibold">
-                    ยังไม่มีหัวข้อ
-                  </Text>
-                </View>
-              ) : (
-                listTopicQuery.data?.map((tag) => {
-                  return (
-                    <ToggleGroupItem key={tag.id} value={tag.id}>
-                      <Text>{tag.name}</Text>
-                    </ToggleGroupItem>
-                  )
-                })
-              )}
-            </ToggleGroup>
-            <FormMessage />
-          </FormItem>
-        )}
-      </form.Field>
-      {/* TODO: make sticky and set max height, might use BottomSheetFooter */}
+  const insets = useSafeAreaInsets()
+  const footerComponent = React.useCallback(() => {
+    return (
       <View className="flex flex-col gap-2 px-4 py-2 bg-base-bg-white">
         <form.Subscribe selector={(state) => [state.isSubmitting]}>
           {([isSubmitting]) => (
@@ -485,7 +429,63 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
           <Text>ยกเลิก</Text>
         </Button>
       </View>
-    </BottomSheetScrollView>
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [followManyTopicsMutation.isPending])
+  return (
+    <BottomSheetModal
+      ref={props.ref}
+      bottomInset={insets.bottom}
+      topInset={insets.top}
+      maxDynamicContentSize={500}
+      footerComponent={footerComponent}
+    >
+      <BottomSheetScrollView>
+        <View className="flex flex-col gap-1 p-4 pb-0">
+          <Text className="text-2xl font-heading-bold">เลือกหัวข้อที่สนใจ</Text>
+          <Text className="text-sm font-heading-regular text-base-text-medium">
+            เลือกหัวข้อสำหรับเพิ่มลงบนหน้าแรก
+          </Text>
+        </View>
+        <form.Field name="topicIds">
+          {(field) => (
+            <FormItem field={field} className="p-4">
+              <FormLabel style={[StyleSheet.absoluteFill, { opacity: 0, pointerEvents: 'none' }]}>
+                หัวข้อ
+              </FormLabel>
+              <ToggleGroup
+                type="multiple"
+                value={field.state.value}
+                variant="outline"
+                onValueChange={(value) => {
+                  field.handleChange(value!)
+                }}
+                className="bg-base-bg-light rounded-lg border border-base-outline-default flex flex-row flex-wrap gap-2 justify-start p-2"
+              >
+                {listTopicQuery.isLoading || !listTopicQuery.data ? (
+                  <TopicSkeleton />
+                ) : listTopicQuery.data.length === 0 ? (
+                  <View className="w-full items-center justify-center py-14">
+                    <Text className="text-base-text-placeholder font-heading-semibold">
+                      ยังไม่มีหัวข้อ
+                    </Text>
+                  </View>
+                ) : (
+                  listTopicQuery.data?.map((tag) => {
+                    return (
+                      <ToggleGroupItem key={tag.id} value={tag.id}>
+                        <Text>{tag.name}</Text>
+                      </ToggleGroupItem>
+                    )
+                  })
+                )}
+              </ToggleGroup>
+              <FormMessage />
+            </FormItem>
+          )}
+        </form.Field>
+      </BottomSheetScrollView>
+    </BottomSheetModal>
   )
 }
 
