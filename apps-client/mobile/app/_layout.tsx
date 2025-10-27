@@ -2,7 +2,7 @@ import '../global.css'
 import 'dayjs/locale/th'
 
 import * as React from 'react'
-import { Platform } from 'react-native'
+import { PermissionsAndroid, Platform } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { DevToolsBubble } from 'react-native-react-query-devtools'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
@@ -26,21 +26,27 @@ import { BottomSheetModalProvider } from '@pple-today/ui/bottom-sheet/index'
 import { NAV_THEME } from '@pple-today/ui/lib/constants'
 import { PortalHost } from '@pple-today/ui/portal'
 import { Toaster } from '@pple-today/ui/toast'
+import {
+  AuthorizationStatus,
+  getMessaging,
+  getToken,
+  requestPermission,
+  setBackgroundMessageHandler,
+} from '@react-native-firebase/messaging'
 import { DarkTheme, DefaultTheme, Theme, ThemeProvider } from '@react-navigation/native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import buddhistEra from 'dayjs/plugin/buddhistEra'
 import duration from 'dayjs/plugin/duration'
 import * as Clipboard from 'expo-clipboard'
-import * as Device from 'expo-device'
 import { useFonts } from 'expo-font'
-import * as Notifications from 'expo-notifications'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 
 import { StatusBarProvider } from '@app/context/status-bar'
 import { environment } from '@app/env'
-import { AuthLifeCycleHook } from '@app/libs/auth'
+import { reactQueryClient } from '@app/libs/api-client'
+import { AuthLifeCycleHook, useAuthMe } from '@app/libs/auth'
 
 dayjs.extend(buddhistEra)
 dayjs.extend(duration)
@@ -62,78 +68,29 @@ export {
   ErrorBoundary,
 } from 'expo-router'
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
+const messaging = getMessaging()
+
+async function requestUserPermission() {
+  const authStatus = await requestPermission(messaging)
+  const enabled =
+    authStatus === AuthorizationStatus.AUTHORIZED || authStatus === AuthorizationStatus.PROVISIONAL
+
+  if (enabled) {
+    console.log('Authorization status:', authStatus)
+  }
+}
+
+if (Platform.OS === 'android' && Platform.Version >= 33) {
+  PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)
+}
+
+// Register background handler
+setBackgroundMessageHandler(messaging, async (remoteMessage) => {
+  console.log('Message handled in the background!', remoteMessage)
 })
-
-function handleRegistrationError(errorMessage: string) {
-  alert(errorMessage)
-  throw new Error(errorMessage)
-}
-
-async function registerForPushNotificationsAsync() {
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-      vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#FF231F7C',
-    })
-  }
-
-  if (Device.isDevice) {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync()
-    let finalStatus = existingStatus
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync()
-      finalStatus = status
-    }
-    if (finalStatus !== 'granted') {
-      handleRegistrationError('Permission not granted to get push token for push notification!')
-      return
-    }
-    try {
-      const pushTokenString = (await Notifications.getDevicePushTokenAsync()).data
-      console.log(pushTokenString)
-      return pushTokenString
-    } catch (e: unknown) {
-      handleRegistrationError(`${e}`)
-    }
-  } else {
-    handleRegistrationError('Must use physical device for push notifications')
-  }
-}
 
 const queryClient = new QueryClient()
 export default function RootLayout() {
-  const [expoPushToken, setExpoPushToken] = React.useState('')
-  const [notification, setNotification] = React.useState<Notifications.Notification | undefined>(
-    undefined
-  )
-  React.useEffect(() => {
-    registerForPushNotificationsAsync()
-      .then((token) => setExpoPushToken(token ?? ''))
-      .catch((error: any) => setExpoPushToken(`${error}`))
-
-    const notificationListener = Notifications.addNotificationReceivedListener((notification) => {
-      setNotification(notification)
-    })
-
-    const responseListener = Notifications.addNotificationResponseReceivedListener((response) => {
-      console.log(response)
-    })
-
-    return () => {
-      notificationListener.remove()
-      responseListener.remove()
-    }
-  }, [])
-
   return (
     <>
       <SafeAreaProvider>
@@ -157,6 +114,7 @@ export default function RootLayout() {
             <DevToolsBubble onCopy={onCopy} queryClient={queryClient} />
           )}
           <AuthLifeCycleHook />
+          <NotificationTokenConsentPopup />
         </QueryClientProvider>
       </SafeAreaProvider>
       <PortalHost />
@@ -233,3 +191,37 @@ function ColorSchemeProvider({ children }: { children: React.ReactNode }) {
 
 // const useIsomorphicLayoutEffect =
 //   Platform.OS === 'web' && typeof window === 'undefined' ? React.useEffect : React.useLayoutEffect
+
+function NotificationTokenConsentPopup() {
+  const registerNotificationTokenMutation = reactQueryClient.useMutation(
+    'post',
+    '/notifications/register',
+    {}
+  )
+  const user = useAuthMe()
+
+  React.useEffect(() => {
+    const registerNotification = async () => {
+      try {
+        if (!user.data) return
+
+        await requestUserPermission()
+
+        const token = await getToken(messaging)
+
+        await registerNotificationTokenMutation.mutateAsync({
+          body: {
+            deviceToken: token,
+          },
+        })
+      } catch (err) {
+        console.error('Failed to register notification token', err)
+      }
+    }
+
+    registerNotification()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.data])
+
+  return null
+}

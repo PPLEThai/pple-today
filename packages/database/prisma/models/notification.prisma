@@ -1,0 +1,81 @@
+enum NotificationLinkType {
+  MINI_APP
+  EXTERNAL_BROWSER
+  IN_APP_BROWSER
+}
+
+model UserNotificationToken {
+  userId String
+  token  String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@id([userId, token])
+  @@index([userId])
+}
+
+model Notification {
+  id        String                @id @default(cuid())
+  title     String
+  message   String
+  image     String?
+  linkType  NotificationLinkType?
+  linkValue String?
+
+  isBroadcast Boolean  @default(false)
+  phoneNumber String[]
+  roles       String[]
+  provinces   String[]
+  districts   String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sentNotifications UserNotification[]
+}
+
+model UserNotification {
+  userId         String
+  notificationId String
+
+  isRead Boolean   @default(false)
+  readAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id])
+  notification Notification @relation(fields: [notificationId], references: [id])
+
+  @@id([userId, notificationId])
+  @@index([notificationId])
+  @@index([userId])
+}
+
+model NotificationApiKey {
+  id     String  @id @default(cuid())
+  name   String
+  apiKey String  @unique
+  active Boolean @default(true)
+
+  createdAt DateTime                     @default(now())
+  updatedAt DateTime                     @updatedAt
+  usageLogs NotificationApiKeyUsageLog[]
+
+  @@index([active, apiKey])
+}
+
+model NotificationApiKeyUsageLog {
+  id                   String   @id @default(cuid())
+  notificationApiKeyId String
+  usedAt               DateTime @default(now())
+  body                 Json
+
+  notificationApiKey NotificationApiKey @relation(fields: [notificationApiKeyId], references: [id])
+
+  @@index([notificationApiKeyId])
+  @@index([usedAt])
+}

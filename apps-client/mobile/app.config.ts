@@ -16,7 +16,11 @@ export default {
     // newArchEnabled: true, // this is true by default
     ios: {
       supportsTablet: true,
+      googleServicesFile: './credentials/GoogleService-Info.plist',
       bundleIdentifier: 'th.or.peoplesparty.ppletoday',
+      entitlements: {
+        'aps-environment': 'development',
+      },
     },
     android: {
       adaptiveIcon: {
@@ -25,6 +29,7 @@ export default {
       },
       edgeToEdgeEnabled: true,
       package: 'th.or.peoplesparty.ppletoday',
+      googleServicesFile: './credentials/google-services.json',
       softwareKeyboardLayoutMode: 'pan',
     },
     web: {
@@ -110,7 +115,17 @@ export default {
         },
       ],
       ['./plugins/withAndroidPlugin'],
-      ['expo-notifications'],
+
+      '@react-native-firebase/app',
+      '@react-native-firebase/messaging',
+      [
+        'expo-build-properties',
+        {
+          ios: {
+            useFrameworks: 'static',
+          },
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,
