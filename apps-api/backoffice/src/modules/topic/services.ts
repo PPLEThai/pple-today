@@ -101,17 +101,12 @@ export class TopicService {
     const userFollowTopics = await this.topicRepository.upsertManyUserFollowTopic(userId, topicIds)
 
     if (userFollowTopics.isErr()) {
-      return mapRepositoryError(userFollowTopics.error, {
-        //  user already followed the topic
-        UNIQUE_CONSTRAINT_FAILED: {
-          code: InternalErrorCode.TOPIC_ALREADY_FOLLOWED,
-          message: `User already followed the topic`,
-        },
-      })
+      return mapRepositoryError(userFollowTopics.error)
     }
 
     return ok()
   }
+
   async followTopic(topicId: string, userId: string) {
     const topic = await this.topicRepository.getTopicById(topicId)
 

@@ -150,7 +150,7 @@ export const TopicController = new Elysia({
     '/follows',
     async ({ user, topicService, status, body }) => {
       const userId = user.id
-      const result = await topicService.followTopics(body., userId)
+      const result = await topicService.followTopics(body.topicIds, userId)
 
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
@@ -172,7 +172,7 @@ export const TopicController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR,
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.TOPIC_NOT_FOUND,
-          InternalErrorCode.TOPIC_CANNOT_FOLLOW_SUSPENDED,
+          InternalErrorCode.TOPIC_CANNOT_FOLLOW_SUSPENDED
           // InternalErrorCode.TOPIC_ALREADY_FOLLOWED
         ),
       },

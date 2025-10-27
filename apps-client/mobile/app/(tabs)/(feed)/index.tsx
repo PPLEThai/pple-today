@@ -381,11 +381,12 @@ const formSchema = z.object({
 
 const SelectTopicForm = (props: { onClose: () => void }) => {
   const listTopicQuery = reactQueryClient.useQuery('/topics/list', {})
+  const followingTopicsQuery = reactQueryClient.useQuery('/topics/follows', {})
   const followTopicsMutation = reactQueryClient.useMutation('put', '/topics/follows', {})
   const queryClient = useQueryClient()
   const form = useForm({
     defaultValues: {
-      topicIds: listTopicQuery.data?.map((topic) => topic.id) ?? [],
+      topicIds: followingTopicsQuery.data?.map((topic) => topic.id) ?? [],
     },
     validators: {
       onSubmit: formSchema,
@@ -411,6 +412,15 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
       )
     },
   })
+  React.useEffect(() => {
+    if (followingTopicsQuery.data) {
+      form.setFieldValue(
+        'topicIds',
+        followingTopicsQuery.data.map((topic) => topic.id)
+      )
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [followingTopicsQuery.data])
   const onSkip = () => {
     props.onClose()
   }
@@ -419,18 +429,19 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
       <View className="flex flex-col gap-1 p-4 pb-0">
         <Text className="text-2xl font-heading-bold">เลือกหัวข้อที่สนใจ</Text>
         <Text className="text-sm font-heading-regular text-base-text-medium">
-          เลือก 1 หัวข้อสำหรับเพิ่มลงบนหน้าแรก
+          เลือกหัวข้อสำหรับเพิ่มลงบนหน้าแรก
         </Text>
       </View>
       <form.Field name="topicIds">
         {(field) => (
           <FormItem field={field} className="p-4">
             <FormLabel style={[StyleSheet.absoluteFill, { opacity: 0, pointerEvents: 'none' }]}>
-              ความคิดเห็น
+              หัวข้อ
             </FormLabel>
             <ToggleGroup
               type="multiple"
               value={field.state.value}
+              variant="outline"
               onValueChange={(value) => {
                 field.handleChange(value!)
               }}
@@ -447,7 +458,7 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
               ) : (
                 listTopicQuery.data?.map((tag) => {
                   return (
-                    <ToggleGroupItem key={tag.id} value={tag.id} variant="outline">
+                    <ToggleGroupItem key={tag.id} value={tag.id}>
                       <Text>{tag.name}</Text>
                     </ToggleGroupItem>
                   )
