@@ -578,6 +578,7 @@ const FollowingSection = () => {
   )
 }
 const ParticipationSection = () => {
+  const router = useRouter()
   const participationQuery = reactQueryClient.useQuery('/profile/participation', {})
   if (
     participationQuery.isLoading ||
@@ -597,6 +598,9 @@ const ParticipationSection = () => {
       {participationQuery.data.map((participation) => (
         <Participation key={participation.feedItemId} participation={participation} />
       ))}
+      <Button variant={'secondary'} onPress={() => router.navigate('/profile/participation')}>
+        <Text>ดูเพิ่มเติม</Text>
+      </Button>
     </View>
   )
 }
