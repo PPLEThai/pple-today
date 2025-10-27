@@ -86,7 +86,7 @@ export class TopicService {
     return ok(this.mapTopicsToTopicsResponse(topics))
   }
 
-  async followTopics(topicIds: string[], userId: string) {
+  async followManyTopics(topicIds: string[], userId: string) {
     const topics = await this.topicRepository.getTopicByIds(topicIds)
     if (topics.isErr()) {
       return mapRepositoryError(topics.error)
@@ -98,13 +98,13 @@ export class TopicService {
       })
     }
 
-    const userFollowTopics = await this.topicRepository.upsertManyUserFollowTopic(userId, topicIds)
+    const user = await this.topicRepository.userFollowManyTopics(userId, topicIds)
 
-    if (userFollowTopics.isErr()) {
-      return mapRepositoryError(userFollowTopics.error)
+    if (user.isErr()) {
+      return mapRepositoryError(user.error)
     }
 
-    return ok()
+    return ok(user.value.followingTopics.map((topic) => ({ id: topic.topicId })))
   }
 
   async followTopic(topicId: string, userId: string) {

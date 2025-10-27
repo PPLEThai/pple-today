@@ -382,7 +382,7 @@ const formSchema = z.object({
 const SelectTopicForm = (props: { onClose: () => void }) => {
   const listTopicQuery = reactQueryClient.useQuery('/topics/list', {})
   const followingTopicsQuery = reactQueryClient.useQuery('/topics/follows', {})
-  const followTopicsMutation = reactQueryClient.useMutation('put', '/topics/follows', {})
+  const followManyTopicsMutation = reactQueryClient.useMutation('put', '/topics/follows', {})
   const queryClient = useQueryClient()
   const form = useForm({
     defaultValues: {
@@ -392,7 +392,7 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
       onSubmit: formSchema,
     },
     onSubmit: async ({ value }) => {
-      followTopicsMutation.mutateAsync(
+      followManyTopicsMutation.mutateAsync(
         { body: { topicIds: value.topicIds } },
         {
           onSuccess: () => {
@@ -475,13 +475,13 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
           {([isSubmitting]) => (
             <Button
               onPress={form.handleSubmit}
-              disabled={isSubmitting || followTopicsMutation.isPending}
+              disabled={isSubmitting || followManyTopicsMutation.isPending}
             >
               <Text>ตกลง</Text>
             </Button>
           )}
         </form.Subscribe>
-        <Button variant="ghost" onPress={onSkip} disabled={followTopicsMutation.isPending}>
+        <Button variant="ghost" onPress={onSkip} disabled={followManyTopicsMutation.isPending}>
           <Text>ยกเลิก</Text>
         </Button>
       </View>
