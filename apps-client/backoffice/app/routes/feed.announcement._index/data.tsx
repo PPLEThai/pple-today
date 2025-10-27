@@ -9,6 +9,8 @@ import { DataTable } from '@pple-today/web-ui/data-table'
 import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
 import { createColumnHelper } from '@tanstack/react-table'
 import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
+import { DtFilter } from 'components/datatable/DtFilter'
+import { DtMovement } from 'components/datatable/DtMovement'
 import { Engagements } from 'components/Engagements'
 import { AnnouncementCreate } from 'components/feed/AnnouncementCreate'
 import { TableCopyId } from 'components/TableCopyId'
@@ -265,16 +267,7 @@ export const Data = () => {
 
   return (
     <>
-      <DataTable
-        columns={columns}
-        data={query.data?.data ?? []}
-        count={query.data?.meta.count ?? 0}
-        isQuerying={query.isLoading}
-        isMutating={false}
-        queryLimit={queryLimit}
-        setQueryLimit={setQueryLimit}
-        queryPage={queryPage}
-        setQueryPage={setQueryPage}
+      <DtFilter
         filter={[
           {
             type: 'text',
@@ -305,6 +298,24 @@ export const Data = () => {
               </Button>
             }
             onSuccess={invalidateQuery}
+          />
+        }
+        onChange={() => setQueryPage(1)}
+      />
+      <DataTable
+        columns={columns}
+        data={query.data?.data ?? []}
+        isQuerying={query.isLoading}
+        footerExtension={
+          <DtMovement
+            length={query.data?.data?.length ?? 0}
+            count={query.data?.meta.count ?? 0}
+            isQuerying={query.isLoading}
+            isMutating={patchMutation.isPending || deleteMutation.isPending}
+            queryLimit={queryLimit}
+            setQueryLimit={setQueryLimit}
+            queryPage={queryPage}
+            setQueryPage={setQueryPage}
           />
         }
       />
