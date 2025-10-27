@@ -76,7 +76,7 @@ export type AdminListElectionQuery = Static<typeof AdminListElectionQuery>
 export const AdminListElectionResponse = t.Intersect([
   PaginationMetadataResponse,
   t.Object({
-    data: t.Array(ElectionInfo),
+    data: t.Array(AdminElectionInfo),
   }),
 ])
 export type AdminListElectionResponse = Static<typeof AdminListElectionResponse>
