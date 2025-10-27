@@ -304,6 +304,7 @@ interface PagerTabBarContextValue {
 
   onTabLayout: (index: number, layout: { x: number; width: number }) => void
   onTabPressed: (index: number) => void
+  onTabUnmount: (index: number) => void
 }
 const PagerTabBarContext = React.createContext<PagerTabBarContextValue | null>(null)
 interface PagerTabBarProviderProps {
@@ -410,6 +411,39 @@ function PagerTabBarProvider({ children }: PagerTabBarProviderProps) {
     ]
   )
 
+  const onTabUnmount = React.useCallback(
+    (index: number) => {
+      'worklet'
+      tabItemLayouts.modify((tab) => {
+        delete tab[index]
+        while (tab.length > 0 && !tab[tab.length - 1]) {
+          tab.pop()
+        }
+        return tab
+      })
+    },
+    [tabItemLayouts]
+  )
+
+  const onIndicatorOutOfBounds = React.useCallback(
+    (index: number) => {
+      pagerViewRef.current?.setPage(index)
+      setCurrentPage(index)
+      dragProgress.set(index)
+    },
+    [pagerViewRef, setCurrentPage, dragProgress]
+  )
+  useAnimatedReaction(
+    () => tabItemLayouts.get().length,
+    (length, prevLength) => {
+      console.log('Tab item layouts changed, length:', length, 'prevLength:', prevLength)
+      if (length === prevLength || prevLength === null) return
+      if (currentPage >= length) {
+        runOnJS(onIndicatorOutOfBounds)(length - 1)
+      }
+    }
+  )
+
   return (
     <PagerTabBarContext.Provider
       value={{
@@ -421,6 +455,7 @@ function PagerTabBarProvider({ children }: PagerTabBarProviderProps) {
         handlePageScroll,
         onTabLayout,
         onTabPressed,
+        onTabUnmount,
         tabListSize,
         tabItemLayouts,
       }}
@@ -511,6 +546,7 @@ export function PagerTabBar({
 
 export function PagerTabBarItemIndicator() {
   const { tabListSize, tabItemLayouts, dragProgress } = usePagerTabBarContext()
+  const { currentPage } = usePagerContext()
   const indicatorStyle = useAnimatedStyle(() => {
     const tabItems = tabItemLayouts.get()
     if (tabItems.length === 0) {
@@ -562,7 +598,7 @@ export function PagerTabBarItemIndicator() {
         },
       ],
     }
-  })
+  }, [currentPage])
   return (
     <Animated.View
       className="absolute bottom-0 left-0 right-0 border-b-2 border-base-primary-default opacity-0"
@@ -672,7 +708,7 @@ export function PagerTabBarItem({
   index: number
   children?: React.ReactNode
 }) {
-  const { dragProgress, onTabLayout, onTabPressed } = usePagerTabBarContext()
+  const { dragProgress, onTabLayout, onTabPressed, onTabUnmount } = usePagerTabBarContext()
   const activeStyle = useAnimatedStyle(() => {
     return { opacity: interpolate(dragProgress.get(), [index - 1, index, index + 1], [0, 1, 0]) }
   })
@@ -682,6 +718,11 @@ export function PagerTabBarItem({
   const handlePress = () => {
     onTabPressed?.(index)
   }
+  React.useLayoutEffect(() => {
+    return () => {
+      runOnUI(onTabUnmount)(index)
+    }
+  }, [index, onTabUnmount])
   return (
     <Pressable
       className={cn('h-10 pt-2 pb-2 px-4 justify-center flex-row', className)}
