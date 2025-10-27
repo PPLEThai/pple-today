@@ -7,3 +7,5 @@
 [[PPLE-226] poll card integrate](https://linear.app/snts/issue/PPLE-226/poll-card-integrate)
 
 [[PPLE-227] Poll Card Detail Page Integrate](https://linear.app/snts/issue/PPLE-227/poll-card-detail-page-integrate)
+
+[[PPLE-455] Poll Feed in Activity Tab](https://linear.app/snts/issue/PPLE-455/poll-feed-in-activity-tab)

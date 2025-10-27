@@ -199,7 +199,7 @@ export const PollContent = (props: PollProps) => {
 
   const triggerPollEnded = React.useCallback(() => {
     setIsEnded(true)
-    queryClient.resetQueries({
+    queryClient.refetchQueries({
       queryKey: reactQueryClient.getQueryKey('/feed/:id', {
         pathParams: { id: props.feedItem.id },
       }),
@@ -217,6 +217,17 @@ export const PollContent = (props: PollProps) => {
         getPollOptionList({ feedItem: props.feedItem, card: props.card })
       )}
       {props.card && <PollSeeMore feedItem={props.feedItem} />}
+      <PollVoteCounter feedItem={props.feedItem} />
+    </View>
+  )
+}
+
+export const PollVoteCounter = (props: PollProps) => {
+  const { totalVotes } = usePollVotesValue(props.feedItem.id)
+
+  return (
+    <View className="flex items-end mt-2 px-1">
+      <Text className="text-sm text-base-text-medium text-end font-heading-regular">{`${totalVotes} โหวต`}</Text>
     </View>
   )
 }
