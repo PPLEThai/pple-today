@@ -199,10 +199,11 @@ export const PollContent = (props: PollProps) => {
 
   const triggerPollEnded = React.useCallback(() => {
     setIsEnded(true)
-    queryClient.invalidateQueries({
+    queryClient.resetQueries({
       queryKey: reactQueryClient.getQueryKey('/feed/:id', {
         pathParams: { id: props.feedItem.id },
       }),
+      exact: true,
     })
   }, [queryClient, props.feedItem.id])
 
