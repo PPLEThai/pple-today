@@ -30,6 +30,7 @@ import {
   CalendarIcon,
   CircleArrowRightIcon,
   CircleUserRoundIcon,
+  Clock3Icon,
   HandIcon,
   HeartIcon,
   MapPinnedIcon,
@@ -587,25 +588,32 @@ const ParticipationSection = () => {
   ) {
     return null
   }
+
   return (
-    <View className="flex flex-col gap-3 border border-base-outline-default rounded-xl py-3 px-4 bg-base-bg-white">
-      <View className="flex flex-row items-center justify-between pb-2 border-b border-base-outline-default">
+    <View className="flex flex-col border border-base-outline-default rounded-xl py-3 bg-base-bg-white gap-3">
+      <View className="flex flex-row items-center justify-between pb-2 px-4 border-b border-base-outline-default mb-1">
         <View className="flex flex-row gap-2 items-center">
           <Icon icon={HandIcon} className="text-base-primary-default" size={32} />
           <H2 className="text-xl text-base-text-high font-heading-semibold">การเข้าร่วมของฉัน</H2>
         </View>
       </View>
-      {participationQuery.data.map((participation) => (
+      {participationQuery.data.slice(0, 3).map((participation) => (
         <Participation key={participation.feedItemId} participation={participation} />
       ))}
-      <Button variant={'secondary'} onPress={() => router.navigate('/profile/participation')}>
-        <Text>ดูเพิ่มเติม</Text>
-      </Button>
+      {participationQuery.data.length > 3 && (
+        <Button
+          variant={'secondary'}
+          onPress={() => router.navigate('/profile/participation')}
+          className="mx-4"
+        >
+          <Text>ดูเพิ่มเติม</Text>
+        </Button>
+      )}
     </View>
   )
 }
 
-const Participation = ({
+export const Participation = ({
   participation,
 }: {
   participation: GetUserParticipationResponse[number]
@@ -613,7 +621,7 @@ const Participation = ({
   switch (participation.type) {
     case 'POLL':
       return (
-        <View className="flex flex-row items-center justify-between gap-1">
+        <View className="flex flex-row items-center justify-between px-4 h-[60px] ">
           <View className="flex flex-row gap-3 items-center flex-1">
             <Icon
               icon={MessageCircleQuestionIcon}
@@ -621,13 +629,25 @@ const Participation = ({
               size={32}
               strokeWidth={2}
             />
-            <View className="flex flex-col gap-1 flex-1">
-              <Text className="text-sm text-base-text-high font-heading-semibold line-clamp-2">
+            <View className="flex flex-col gap-1 flex-1 justify-between h-full shrink-0 ">
+              <Text className="text-sm text-base-text-high font-heading-medium line-clamp-2">
                 {participation.title}
               </Text>
-              <Text className="text-xs text-base-text-high font-heading-regular">
-                {formatDateInterval(participation.createdAt.toString())}
-              </Text>
+              <View className="flex flex-row items-center justify-between">
+                <View className="flex flex-row items-center gap-0.5">
+                  <Icon
+                    icon={Clock3Icon}
+                    size={12}
+                    strokeWidth={2}
+                    className="text-base-text-placeholder"
+                  />
+                  <Text className="text-xs text-base-text-placeholder font-heading-regular">
+                    {formatDateInterval(participation.createdAt.toString())}
+                  </Text>
+                </View>
+                {/*TODO: use Poll badge from poll component*/}
+                <View className="w-16 h-4 bg-base-secondary-light rounded-full"></View>
+              </View>
             </View>
           </View>
           <Button variant="ghost" size="icon">
