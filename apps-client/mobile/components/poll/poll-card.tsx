@@ -15,6 +15,7 @@ import { ChevronRightIcon, Clock3Icon, MessageCircleQuestionIcon } from 'lucide-
 
 import type { FeedItemPoll } from '@api/backoffice/app'
 import { reactQueryClient } from '@app/libs/api-client'
+import { useSession } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatTimeInterval } from '@app/libs/format-time-interval'
 
@@ -247,6 +248,8 @@ const PollOptionResultList = (props: PollProps) => {
 }
 
 const PollSingleOptionList = (props: PollProps) => {
+  const router = useRouter()
+  const session = useSession()
   const { options, totalVotes } = usePollVotesValue(props.feedItem.id)
   const setPollVotes = useSetPollVotes(props.feedItem.id)
   const updatePollOptionMutation = reactQueryClient.useMutation('post', '/polls/:id/vote')
@@ -279,6 +282,11 @@ const PollSingleOptionList = (props: PollProps) => {
   }, [options, props.card])
 
   function handleValueChange(value: string | undefined) {
+    if (!session) {
+      router.navigate('/profile')
+      return
+    }
+
     const updatedOptions = value ? [value] : []
     const oldSelectedOption = selectedOption !== '' ? [selectedOption] : []
     // optimistic update
@@ -311,6 +319,8 @@ const PollSingleOptionList = (props: PollProps) => {
 }
 
 const PollMultipleOptionList = (props: PollProps) => {
+  const router = useRouter()
+  const session = useSession()
   const { options, totalVotes } = usePollVotesValue(props.feedItem.id)
   const setPollVotes = useSetPollVotes(props.feedItem.id)
   const updatePollOptionMutation = reactQueryClient.useMutation('post', '/polls/:id/vote')
@@ -342,6 +352,9 @@ const PollMultipleOptionList = (props: PollProps) => {
   }, [options, props.card])
 
   const handleValueChange = (value: string[]) => {
+    if (!session) {
+      router.navigate('/profile')
+    }
     // optimistic update
     setPollVotes(selectedOptions, value)
     updatePollOptions(value)
