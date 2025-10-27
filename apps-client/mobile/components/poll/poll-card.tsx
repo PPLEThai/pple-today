@@ -207,18 +207,16 @@ export const PollContent = (props: PollProps) => {
   }, [queryClient, props.feedItem.id])
 
   return (
-    <>
-      <View className="py-[13px] px-2 flex flex-col bg-base-bg-default rounded-xl mx-4">
-        <PollVotesHook feedId={props.feedItem.id} data={props.feedItem} />
-        <PollHeader isEnded={isEnded} triggerEnded={triggerPollEnded} poll={props.feedItem.poll} />
-        {isEnded ? (
-          <PollOptionResultList feedItem={props.feedItem} card={props.card} />
-        ) : (
-          getPollOptionList({ feedItem: props.feedItem, card: props.card })
-        )}
-        {props.card && <PollSeeMore feedItem={props.feedItem} />}
-      </View>
-    </>
+    <View className="py-[13px] px-2 flex flex-col bg-base-bg-default rounded-xl mx-4">
+      <PollVotesHook feedId={props.feedItem.id} data={props.feedItem} />
+      <PollHeader isEnded={isEnded} triggerEnded={triggerPollEnded} poll={props.feedItem.poll} />
+      {isEnded ? (
+        <PollOptionResultList feedItem={props.feedItem} card={props.card} />
+      ) : (
+        getPollOptionList({ feedItem: props.feedItem, card: props.card })
+      )}
+      {props.card && <PollSeeMore feedItem={props.feedItem} />}
+    </View>
   )
 }
 
@@ -301,19 +299,18 @@ const PollSingleOptionList = (props: PollProps) => {
       value={selectedOption}
       className="flex flex-col"
     >
-      {renderedOptions.length > 0 &&
-        renderedOptions.map((option) => (
-          <PollOptionItem
-            key={option.id}
-            id={option.id}
-            value={option.id}
-            title={option.title}
-            votes={option.votes}
-            totalVotes={totalVotes}
-            isSelected={option.isSelected}
-            pollTouched={isPollTouched}
-          />
-        ))}
+      {renderedOptions.map((option) => (
+        <PollOptionItem
+          key={option.id}
+          id={option.id}
+          value={option.id}
+          title={option.title}
+          votes={option.votes}
+          totalVotes={totalVotes}
+          isSelected={option.isSelected}
+          pollTouched={isPollTouched}
+        />
+      ))}
     </PollOptionGroup>
   )
 }
@@ -367,19 +364,18 @@ const PollMultipleOptionList = (props: PollProps) => {
       value={selectedOptions}
       className="flex flex-col"
     >
-      {renderedOptions.length > 0 &&
-        renderedOptions.map((option) => (
-          <PollOptionItem
-            key={option.id}
-            id={option.id}
-            value={option.id}
-            title={option.title}
-            votes={option.votes}
-            totalVotes={totalVotes}
-            isSelected={option.isSelected}
-            pollTouched={isPollTouched}
-          />
-        ))}
+      {renderedOptions.map((option) => (
+        <PollOptionItem
+          key={option.id}
+          id={option.id}
+          value={option.id}
+          title={option.title}
+          votes={option.votes}
+          totalVotes={totalVotes}
+          isSelected={option.isSelected}
+          pollTouched={isPollTouched}
+        />
+      ))}
     </PollOptionGroup>
   )
 }
