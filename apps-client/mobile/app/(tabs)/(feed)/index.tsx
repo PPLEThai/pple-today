@@ -13,12 +13,10 @@ import { BottomSheetModal, BottomSheetScrollView } from '@pple-today/ui/bottom-s
 import { Button } from '@pple-today/ui/button'
 import { FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
-import { cn } from '@pple-today/ui/lib/utils'
 import { Skeleton } from '@pple-today/ui/skeleton'
 import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { toast } from '@pple-today/ui/toast'
-import { toggleTextVariants, toggleVariants } from '@pple-today/ui/toggle'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H2, H3 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
@@ -378,23 +376,23 @@ function SelectTopicButton() {
 }
 
 const formSchema = z.object({
-  topicId: z.string().min(1, 'กรุณาเลือกหัวข้อ 1 หัวข้อ'),
+  topicIds: z.array(z.string()),
 })
 
 const SelectTopicForm = (props: { onClose: () => void }) => {
   const listTopicQuery = reactQueryClient.useQuery('/topics/list', {})
-  const followTopicMutation = reactQueryClient.useMutation('post', '/topics/:topicId/follow', {})
+  const followTopicsMutation = reactQueryClient.useMutation('put', '/topics/follows', {})
   const queryClient = useQueryClient()
   const form = useForm({
     defaultValues: {
-      topicId: '',
+      topicIds: listTopicQuery.data?.map((topic) => topic.id) ?? [],
     },
     validators: {
       onSubmit: formSchema,
     },
     onSubmit: async ({ value }) => {
-      followTopicMutation.mutateAsync(
-        { pathParams: { topicId: value.topicId } },
+      followTopicsMutation.mutateAsync(
+        { body: { topicIds: value.topicIds } },
         {
           onSuccess: () => {
             queryClient.invalidateQueries({
@@ -424,14 +422,14 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
           เลือก 1 หัวข้อสำหรับเพิ่มลงบนหน้าแรก
         </Text>
       </View>
-      <form.Field name="topicId">
+      <form.Field name="topicIds">
         {(field) => (
           <FormItem field={field} className="p-4">
             <FormLabel style={[StyleSheet.absoluteFill, { opacity: 0, pointerEvents: 'none' }]}>
               ความคิดเห็น
             </FormLabel>
             <ToggleGroup
-              type="single"
+              type="multiple"
               value={field.state.value}
               onValueChange={(value) => {
                 field.handleChange(value!)
@@ -448,20 +446,6 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
                 </View>
               ) : (
                 listTopicQuery.data?.map((tag) => {
-                  if (tag.followed)
-                    return (
-                      <View
-                        key={tag.id}
-                        className={cn(
-                          toggleVariants(),
-                          'bg-base-primary-default active:bg-base-primary-medium web:hover:bg-base-primary-medium border-base-primary-default'
-                        )}
-                      >
-                        <Text className={cn(toggleTextVariants(), 'text-base-text-invert')}>
-                          {tag.name}
-                        </Text>
-                      </View>
-                    )
                   return (
                     <ToggleGroupItem key={tag.id} value={tag.id} variant="outline">
                       <Text>{tag.name}</Text>
@@ -480,13 +464,13 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
           {([isSubmitting]) => (
             <Button
               onPress={form.handleSubmit}
-              disabled={isSubmitting || followTopicMutation.isPending}
+              disabled={isSubmitting || followTopicsMutation.isPending}
             >
               <Text>ตกลง</Text>
             </Button>
           )}
         </form.Subscribe>
-        <Button variant="ghost" onPress={onSkip} disabled={followTopicMutation.isPending}>
+        <Button variant="ghost" onPress={onSkip} disabled={followTopicsMutation.isPending}>
           <Text>ยกเลิก</Text>
         </Button>
       </View>

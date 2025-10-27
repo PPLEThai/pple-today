@@ -81,6 +81,17 @@ export class TopicRepository {
       })
     )
   }
+  async getTopicByIds(topicIds: string[]) {
+    return fromRepositoryPromise(
+      this.prismaService.topic.findMany({
+        where: {
+          id: { in: topicIds },
+          status: TopicStatus.PUBLISHED,
+        },
+        select: { id: true, name: true },
+      })
+    )
+  }
 
   async getTopics() {
     return fromRepositoryPromise(

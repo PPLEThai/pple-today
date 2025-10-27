@@ -5,6 +5,7 @@ import Elysia from 'elysia'
 import {
   FollowTopicParams,
   FollowTopicResponse,
+  FollowTopicsBody,
   GetTopicParams,
   GetTopicRecommendationResponse,
   GetTopicResponse,
@@ -142,6 +143,42 @@ export const TopicController = new Elysia({
       detail: {
         summary: 'Get followed topics',
         description: 'Get followed topics',
+      },
+    }
+  )
+  .put(
+    '/follows',
+    async ({ user, topicService, status, body }) => {
+      const userId = user.id
+      const result = await topicService.followTopics(body., userId)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, {
+        message: 'Successfully follows topic',
+      })
+    },
+    {
+      requiredLocalUserPrecondition: {
+        isActive: true,
+      },
+      body: FollowTopicsBody,
+      response: {
+        200: FollowTopicResponse,
+        ...createErrorSchema(
+          InternalErrorCode.FORBIDDEN,
+          InternalErrorCode.INTERNAL_SERVER_ERROR,
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.TOPIC_NOT_FOUND,
+          InternalErrorCode.TOPIC_CANNOT_FOLLOW_SUSPENDED,
+          // InternalErrorCode.TOPIC_ALREADY_FOLLOWED
+        ),
+      },
+      detail: {
+        summary: 'Follow topic',
+        description: 'Follow topic',
       },
     }
   )

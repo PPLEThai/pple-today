@@ -86,6 +86,32 @@ export class TopicService {
     return ok(this.mapTopicsToTopicsResponse(topics))
   }
 
+  async followTopics(topicIds: string[], userId: string) {
+    const topics = await this.topicRepository.getTopicByIds(topicIds)
+    if (topics.isErr()) {
+      return mapRepositoryError(topics.error)
+    }
+    if (topics.value.length !== topicIds.length) {
+      return err({
+        code: InternalErrorCode.TOPIC_NOT_FOUND,
+        message: `Topic not found`,
+      })
+    }
+
+    const userFollowTopics = await this.topicRepository.upsertManyUserFollowTopic(userId, topicIds)
+
+    if (userFollowTopics.isErr()) {
+      return mapRepositoryError(userFollowTopics.error, {
+        //  user already followed the topic
+        UNIQUE_CONSTRAINT_FAILED: {
+          code: InternalErrorCode.TOPIC_ALREADY_FOLLOWED,
+          message: `User already followed the topic`,
+        },
+      })
+    }
+
+    return ok()
+  }
   async followTopic(topicId: string, userId: string) {
     const topic = await this.topicRepository.getTopicById(topicId)
 
