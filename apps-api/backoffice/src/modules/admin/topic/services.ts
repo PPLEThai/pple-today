@@ -26,7 +26,7 @@ export class AdminTopicService {
     private readonly fileService: FileService
   ) {}
 
-  async getTopics(query: GetTopicsQuery = { limit: 10, page: 1 }) {
+  async getTopics(query: GetTopicsQuery = { page: 1 }) {
     const result = await this.adminTopicRepository.getTopics(query)
     if (result.isErr()) return mapRepositoryError(result.error, {})
 

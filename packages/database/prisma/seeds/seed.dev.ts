@@ -343,10 +343,10 @@ const seedAnnouncements = async () => {
           attachments: {
             create: [
               {
-                filePath: 'https://picsum.photos/300?random=0',
+                filePath: 'public/test/banner-1.png',
               },
               {
-                filePath: 'https://picsum.photos/300?random=1',
+                filePath: 'public/test/banner-2.png',
               },
             ],
           },
@@ -373,10 +373,10 @@ const seedAnnouncements = async () => {
           attachments: {
             create: [
               {
-                filePath: 'https://picsum.photos/300?random=4',
+                filePath: 'public/test/banner-1.png',
               },
               {
-                filePath: 'https://picsum.photos/300?random=5',
+                filePath: 'public/test/banner-2.png',
               },
             ],
           },
@@ -403,10 +403,10 @@ const seedAnnouncements = async () => {
           attachments: {
             create: [
               {
-                filePath: 'https://picsum.photos/300?random=2',
+                filePath: 'public/test/banner-1.png',
               },
               {
-                filePath: 'https://picsum.photos/300?random=3',
+                filePath: 'public/test/banner-2.png',
               },
             ],
           },

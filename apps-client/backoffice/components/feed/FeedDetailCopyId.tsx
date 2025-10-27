@@ -32,7 +32,7 @@ export const FeedDetailCopyId = ({ id }: { id: string }) => {
   return (
     <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
       <PopoverAnchor asChild>
-        <Button className="p-0" variant="link" onClick={copy}>
+        <Button className="p-0 h-auto" variant="link" onClick={copy}>
           {id}
         </Button>
       </PopoverAnchor>

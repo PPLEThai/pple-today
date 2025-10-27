@@ -51,6 +51,7 @@ import {
   PagerContentView,
   PagerHeader,
   PagerHeaderOnly,
+  PagerRef,
   PagerScrollViewProps,
   PagerTabBar,
   PagerTabBarItem,
@@ -63,10 +64,16 @@ import { useAuthMe, useSession } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { useScrollContext } from '@app/libs/scroll-context'
 
+import { useBottomTabOnPress } from '../_layout'
+
 export default function FeedPage() {
+  const ref = React.useRef<PagerRef>(null)
+  useBottomTabOnPress(() => {
+    ref.current?.scrollToTop()
+  })
   return (
     <SafeAreaLayout>
-      <Pager>
+      <Pager ref={ref}>
         <PagerHeader>
           <PagerHeaderOnly>
             <MainHeader />
@@ -276,7 +283,11 @@ function Banner({ banner }: { banner: GetBannersResponse[number] }) {
 
 function EventSection() {
   const session = useSession()
-  const electionsQuery = reactQueryClient.useQuery('/elections', {}, { enabled: !!session })
+  const electionsQuery = reactQueryClient.useQuery(
+    '/elections',
+    { query: { in: 'OFFICIAL' } },
+    { enabled: !!session }
+  )
   const elections = electionsQuery.data || []
   if (elections.length === 0) {
     return null
@@ -296,8 +307,8 @@ function EventSection() {
       >
         <SlideScrollView>
           {elections.map((election) => (
-            <SlideItem key={election.id}>
-              <ElectionCard election={election} className="flex-1" />
+            <SlideItem key={election.id} className="flex flex-row items-stretch">
+              <ElectionCard election={election} />
             </SlideItem>
           ))}
         </SlideScrollView>

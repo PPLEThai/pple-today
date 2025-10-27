@@ -7,10 +7,11 @@ import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import {
+  CreateAnnouncementBody,
   GetAnnouncementByIdResponse,
+  GetAnnouncementsQuery,
   GetAnnouncementsResponse,
-  PostAnnouncementBody,
-  PutAnnouncementBody,
+  UpdateAnnouncementBody,
 } from './models'
 import { AdminAnnouncementRepository, AdminAnnouncementRepositoryPlugin } from './repository'
 
@@ -22,24 +23,11 @@ export class AdminAnnouncementService {
     private readonly fileService: FileService
   ) {}
 
-  async getAnnouncements(
-    query: { limit: number; page: number } = {
-      limit: 10,
-      page: 1,
-    }
-  ) {
+  async getAnnouncements(query: GetAnnouncementsQuery = { limit: 10, page: 1 }) {
     const result = await this.adminAnnouncementRepository.getAnnouncements(query)
     if (result.isErr()) return mapRepositoryError(result.error)
 
-    const value: GetAnnouncementsResponse = result.value.map((announcement) => ({
-      ...announcement,
-      attachments: announcement.attachments.map((filePath) => ({
-        filePath: filePath as FilePath,
-        url: this.fileService.getPublicFileUrl(filePath),
-      })),
-    }))
-
-    return ok(value)
+    return ok(result.value satisfies GetAnnouncementsResponse)
   }
 
   async getAnnouncementById(announcementId: string) {
@@ -66,7 +54,7 @@ export class AdminAnnouncementService {
     } satisfies GetAnnouncementByIdResponse)
   }
 
-  async createAnnouncement(data: PostAnnouncementBody) {
+  async createAnnouncement(data: CreateAnnouncementBody) {
     const createResult = await this.adminAnnouncementRepository.createAnnouncement(data)
 
     if (createResult.isErr()) return mapRepositoryError(createResult.error)
@@ -74,7 +62,7 @@ export class AdminAnnouncementService {
     return ok({ announcementId: createResult.value.id })
   }
 
-  async updateAnnouncementById(announcementId: string, data: PutAnnouncementBody) {
+  async updateAnnouncementById(announcementId: string, data: UpdateAnnouncementBody) {
     const updateResult = await this.adminAnnouncementRepository.updateAnnouncementById(
       announcementId,
       data
