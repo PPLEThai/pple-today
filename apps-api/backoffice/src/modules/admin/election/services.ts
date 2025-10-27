@@ -928,13 +928,15 @@ export class AdminElectionService {
 
     const candidates = result.value.candidates.map((candidate) => {
       const info = this.convertToCandidateDTO(candidate)
-      const online = R.sumBy(
-        R.filter(candidate.results, (result) => result.type === ElectionResultType.ONLINE),
-        (result) => result.count
+      const online = R.pipe(
+        candidate.results,
+        R.filter((result) => result.type === ElectionResultType.ONLINE),
+        R.sumBy((result) => result.count)
       )
-      const onsite = R.sumBy(
-        R.filter(candidate.results, (result) => result.type === ElectionResultType.ONSITE),
-        (result) => result.count
+      const onsite = R.pipe(
+        candidate.results,
+        R.filter((result) => result.type === ElectionResultType.ONSITE),
+        R.sumBy((result) => result.count)
       )
       const total = online + onsite
       const totalVoters = result.value._count.voters
@@ -975,7 +977,7 @@ export class AdminElectionService {
     if (timeline.start >= timeline.end) {
       return err({
         code: InternalErrorCode.BAD_REQUEST,
-        message: 'Start annouce need to be after end',
+        message: 'Start date need to be after end date',
       })
     }
 
