@@ -113,7 +113,7 @@ export class CloudMessagingService {
             const resp = await fetch(this.FCM_URL, {
               method: 'POST',
               headers: {
-                Authorization: `Bearer ${accessToken}`,
+                Authorization: `Bearer ${accessToken.value}`,
                 Accept: 'application/json',
                 'Accept-encoding': 'gzip, deflate',
                 'Content-Type': 'application/json',

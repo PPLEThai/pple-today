@@ -2,7 +2,7 @@ import '../global.css'
 import 'dayjs/locale/th'
 
 import * as React from 'react'
-import { Alert, PermissionsAndroid, Platform } from 'react-native'
+import { PermissionsAndroid, Platform } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { DevToolsBubble } from 'react-native-react-query-devtools'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
@@ -28,12 +28,11 @@ import { PortalHost } from '@pple-today/ui/portal'
 import { Toaster } from '@pple-today/ui/toast'
 import {
   AuthorizationStatus,
+  getInitialNotification,
   getMessaging,
   getToken,
-  onMessage,
   onNotificationOpenedApp,
   requestPermission,
-  setBackgroundMessageHandler,
 } from '@react-native-firebase/messaging'
 import { DarkTheme, DefaultTheme, Theme, ThemeProvider } from '@react-navigation/native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -42,8 +41,9 @@ import buddhistEra from 'dayjs/plugin/buddhistEra'
 import duration from 'dayjs/plugin/duration'
 import * as Clipboard from 'expo-clipboard'
 import { useFonts } from 'expo-font'
-import { Stack } from 'expo-router'
+import { Stack, useRouter } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
+import { openBrowserAsync } from 'expo-web-browser'
 
 import { StatusBarProvider } from '@app/context/status-bar'
 import { environment } from '@app/env'
@@ -81,22 +81,6 @@ async function requestUserPermission() {
     console.log('Authorization status:', authStatus)
   }
 }
-
-if (Platform.OS === 'android' && Platform.Version >= 33) {
-  PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)
-}
-
-// Register background handler
-setBackgroundMessageHandler(messaging, async (remoteMessage) => {
-  Alert.alert('Message handled in the background!', JSON.stringify(remoteMessage))
-})
-
-onNotificationOpenedApp(messaging, async (remoteMessage) => {
-  Alert.alert(
-    'Notification caused app to open from background state:',
-    JSON.stringify(remoteMessage)
-  )
-})
 
 const queryClient = new QueryClient()
 export default function RootLayout() {
@@ -208,11 +192,50 @@ function NotificationTokenConsentPopup() {
     {}
   )
   const user = useAuthMe()
+  const router = useRouter()
+
+  const handleRemoteMessage = async (data: Record<string, string | object>) => {
+    const linkData = data['link']
+
+    if (linkData) {
+      try {
+        const link = JSON.parse(linkData as string)
+        if (link.type && link.value) {
+          switch (link.type) {
+            // TODO: Handle MINI_APP case
+            case 'MINI_APP':
+              router.push(`/mini-app/${link.value as string}` as any)
+              break
+            case 'IN_APP_NAVIGATION':
+              router.push(link.value)
+              break
+            case 'EXTERNAL_BROWSER':
+              await openBrowserAsync(link.value)
+              break
+          }
+        }
+      } catch (err) {
+        console.error('Failed to parse link data:', err)
+      }
+    }
+  }
 
   React.useEffect(() => {
+    const handleInitialMessaging = async () => {
+      const remoteMessage = await getInitialNotification(messaging)
+
+      if (remoteMessage && remoteMessage.data) {
+        await handleRemoteMessage(remoteMessage.data)
+      }
+    }
+
     const registerNotification = async () => {
       try {
         if (!user.data) return
+
+        if (Platform.OS === 'android' && Platform.Version >= 33) {
+          PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)
+        }
 
         await requestUserPermission()
 
@@ -223,6 +246,7 @@ function NotificationTokenConsentPopup() {
             deviceToken: token,
           },
         })
+        await handleInitialMessaging()
       } catch (err) {
         console.error('Failed to register notification token', err)
       }
@@ -230,11 +254,13 @@ function NotificationTokenConsentPopup() {
 
     registerNotification()
 
-    const unsubscribe = onMessage(messaging, async (remoteMessage) => {
-      Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage))
+    const unsubscribeOpenedApp = onNotificationOpenedApp(messaging, async (remoteMessage) => {
+      if (remoteMessage && remoteMessage.data) {
+        await handleRemoteMessage(remoteMessage.data)
+      }
     })
 
-    return unsubscribe
+    return unsubscribeOpenedApp
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.data])
 

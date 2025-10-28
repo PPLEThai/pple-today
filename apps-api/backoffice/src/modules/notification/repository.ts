@@ -211,6 +211,7 @@ export class NotificationRepository {
       }
     })
   }
+
   async sendNotificationToUser(
     conditions: CreateNewExternalNotificationBody['audience'],
     data: {
@@ -314,8 +315,6 @@ export class NotificationRepository {
       })
     }
 
-    const successfulResult = notificationResult.filter((r) => r.result.isOk())
-
     this.loggerService.info({
       message: 'Push notification sent',
       details: {
@@ -327,10 +326,14 @@ export class NotificationRepository {
       },
     })
 
-    return ok({
-      success: successfulResult.map((p) => p.phoneNumber),
-      failed: emptyTokens.map((p) => p.phoneNumber),
-    })
+    return ok(
+      conditions.type === 'PHONE_NUMBER'
+        ? {
+            success: phoneNumberWithTokens.map((p) => p.phoneNumber),
+            failed: notFoundUser ?? [],
+          }
+        : undefined
+    )
   }
 }
 

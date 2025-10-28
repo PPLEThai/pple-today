@@ -63,7 +63,7 @@ export const ListHistoryNotificationResponse = ListCursorResponse(
 export type ListHistoryNotificationResponse = Static<typeof ListHistoryNotificationResponse>
 
 export const CreateNewExternalNotificationHeader = t.Object({
-  Authorization: t.String({ pattern: '^Bearer .+' }),
+  authorization: t.String({ pattern: '^Bearer .+' }),
 })
 export type CreateNewExternalNotificationHeader = Static<typeof CreateNewExternalNotificationHeader>
 export const CreateNewExternalNotificationBody = t.Object({

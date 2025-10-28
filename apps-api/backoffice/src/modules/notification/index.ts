@@ -139,7 +139,7 @@ export const ExternalNotificationController = new Elysia({
   .post(
     '/send',
     async ({ notificationService, body, headers, status }) => {
-      const token = headers['Authorization'].split(' ')[1] // Normally, you would validate this token
+      const token = headers['authorization'].split(' ')[1] // Normally, you would validate this token
       const tokenResult = await notificationService.checkApiToken(token)
 
       if (tokenResult.isErr()) return mapErrorCodeToResponse(tokenResult.error, status)
@@ -166,6 +166,11 @@ export const ExternalNotificationController = new Elysia({
       })
     },
     {
+      details: {
+        summary: 'Send external notification to a user',
+        description:
+          'This endpoint allows sending notifications to external users based on their phone numbers. An API token is required for authentication.',
+      },
       headers: CreateNewExternalNotificationHeader,
       body: CreateNewExternalNotificationBody,
       response: {
