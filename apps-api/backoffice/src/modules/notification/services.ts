@@ -2,7 +2,7 @@ import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { CreateNewExternalNotificationBody } from './models'
+import { CreateNewExternalNotificationBody, ListHistoryNotificationResponse } from './models'
 import { NotificationRepository, NotificationRepositoryPlugin } from './repository'
 
 export class NotificationService {
@@ -16,6 +16,44 @@ export class NotificationService {
     }
 
     return ok(isValid.value?.id)
+  }
+
+  async listNotifications(userId: string, cursor?: string, limit?: number) {
+    const listResult = await this.notificationRepository.listNotifications(userId, cursor, limit)
+
+    if (listResult.isErr()) {
+      return mapRepositoryError(listResult.error)
+    }
+
+    const notifications: ListHistoryNotificationResponse['items'] =
+      listResult.value.notifications.map(({ notification, isRead }) => ({
+        id: notification.id,
+        title: notification.title,
+        content: {
+          header: notification.title,
+          message: notification.message,
+          image: notification.image ?? null,
+          link:
+            notification.linkValue && notification.linkType
+              ? ({
+                  type: notification.linkType,
+                  value: notification.linkValue,
+                } as ListHistoryNotificationResponse['items'][number]['content']['link'])
+              : null,
+        },
+        isRead: isRead,
+        createdAt: notification.createdAt,
+      }))
+
+    return ok({
+      items: notifications,
+      meta: {
+        cursor: {
+          next: listResult.value.nextCursor,
+          previous: listResult.value.previousCursor,
+        },
+      },
+    })
   }
 
   async registerDeviceToken(userId: string, deviceToken: string) {

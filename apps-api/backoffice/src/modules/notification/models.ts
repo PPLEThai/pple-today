@@ -1,3 +1,4 @@
+import { ListCursorResponse } from '@pple-today/api-common/dtos'
 import { Static, t } from 'elysia'
 
 export const RegisterNotificationBody = t.Object({
@@ -24,6 +25,42 @@ export const ReadAllNotificationResponse = t.Object({
   message: t.String(),
 })
 export type ReadAllNotificationResponse = Static<typeof ReadAllNotificationResponse>
+
+export const ListHistoryNotificationQuery = t.Object({
+  cursor: t.Optional(t.String()),
+  limit: t.Optional(t.Number({ minimum: 1, maximum: 100, default: 20 })),
+})
+export type ListHistoryNotificationQuery = Static<typeof ListHistoryNotificationQuery>
+
+export const ListHistoryNotificationResponse = ListCursorResponse(
+  t.Object({
+    id: t.String(),
+    content: t.Object({
+      header: t.String(),
+      message: t.String(),
+      image: t.Nullable(t.String()),
+      link: t.Nullable(
+        t.Union([
+          t.Object({
+            type: t.Literal('MINI_APP'),
+            value: t.String(),
+          }),
+          t.Object({
+            type: t.Literal('IN_APP_NAVIGATION'),
+            value: t.String(),
+          }),
+          t.Object({
+            type: t.Literal('EXTERNAL_BROWSER'),
+            value: t.String(),
+          }),
+        ])
+      ),
+    }),
+    isRead: t.Boolean(),
+    createdAt: t.Date(),
+  })
+)
+export type ListHistoryNotificationResponse = Static<typeof ListHistoryNotificationResponse>
 
 export const CreateNewExternalNotificationHeader = t.Object({
   Authorization: t.String({ pattern: '^Bearer .+' }),

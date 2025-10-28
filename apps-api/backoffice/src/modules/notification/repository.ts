@@ -69,6 +69,53 @@ export class NotificationRepository {
     )
   }
 
+  async listNotifications(userId: string, cursor?: string, limit: number = 20) {
+    return fromRepositoryPromise(async () => {
+      const currentPageNotifications = await this.prismaService.userNotification.findMany({
+        where: {
+          userId,
+        },
+        orderBy: [
+          {
+            createdAt: 'desc',
+          },
+          {
+            notificationId: 'desc',
+          },
+          {
+            userId: 'desc',
+          },
+        ],
+        take: limit,
+        skip: cursor ? 1 : 0,
+        cursor: cursor
+          ? {
+              userId_notificationId: {
+                userId,
+                notificationId: cursor,
+              },
+            }
+          : undefined,
+        include: {
+          notification: true,
+        },
+      })
+
+      const nextCursor =
+        currentPageNotifications.length === limit
+          ? currentPageNotifications[limit - 1].notificationId
+          : null
+
+      const previousCursor = cursor || null
+
+      return {
+        notifications: currentPageNotifications,
+        nextCursor,
+        previousCursor,
+      }
+    })
+  }
+
   async registerDeviceToken(userId: string, deviceToken: string) {
     return fromRepositoryPromise(
       this.prismaService.userNotificationToken.upsert({
