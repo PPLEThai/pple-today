@@ -5,7 +5,7 @@ import { BannerStatusType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 
-import { CreateBannerBody, UpdateBannerBody } from './models'
+import { CreateBannerBody, GetBannersQuery, UpdateBannerBody } from './models'
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
@@ -18,10 +18,24 @@ export class AdminBannerRepository {
     private fileService: FileService
   ) {}
 
-  async getBanners() {
+  async getBanners(query: GetBannersQuery) {
     return fromRepositoryPromise(
       this.prismaService.banner.findMany({
         orderBy: { order: 'asc' },
+        where: {
+          ...(query.search && {
+            headline: {
+              contains: query.search,
+              mode: 'insensitive',
+            },
+          }),
+          ...(query.status &&
+            query.status.length > 0 && {
+              status: {
+                in: query.status,
+              },
+            }),
+        },
       })
     )
   }

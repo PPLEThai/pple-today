@@ -35,16 +35,32 @@ export const Data = () => {
   const queryClient = useQueryClient()
   const query = reactQueryClient.useQuery(
     '/admin/banners',
-    {},
+    {
+      query: {
+        search: querySearch,
+        status:
+          queryStatus.length > 0
+            ? (queryStatus as ('DRAFT' | 'PUBLISHED' | 'ARCHIVED')[])
+            : undefined,
+      },
+    },
     { placeholderData: keepPreviousData }
   )
   const patchMutation = reactQueryClient.useMutation('patch', '/admin/banners/:id')
   const deleteMutation = reactQueryClient.useMutation('delete', '/admin/banners/:id')
   const invalidateQuery = useCallback(() => {
     queryClient.invalidateQueries({
-      queryKey: reactQueryClient.getQueryKey('/admin/banners'),
+      queryKey: reactQueryClient.getQueryKey('/admin/banners', {
+        query: {
+          search: querySearch,
+          status:
+            queryStatus.length > 0
+              ? (queryStatus as ('DRAFT' | 'PUBLISHED' | 'ARCHIVED')[])
+              : undefined,
+        },
+      }),
     })
-  }, [queryClient])
+  }, [queryClient, querySearch, queryStatus])
 
   const setBannerStatus = useCallback(
     (
@@ -251,35 +267,39 @@ export const Data = () => {
             key: 'status',
             label: 'สถานะ',
             options: [
-              { label: 'ประกาศแล้ว', value: 'PUBLISH' },
+              { label: 'ประกาศแล้ว', value: 'PUBLISHED' },
               { label: 'ร่าง', value: 'DRAFT' },
-              { label: 'เก็บในคลัง', value: 'ARCHIVE' },
+              { label: 'เก็บในคลัง', value: 'ARCHIVED' },
             ],
             state: queryStatus,
             setState: setQueryStatus,
           },
         ]}
       />
-      <DataTable
-        columns={orderableColumns}
-        data={publishedBanners ?? []}
-        isQuerying={query.isLoading}
-        headerExtension={
-          <Typography className="mb-2" variant="h5">
-            ประกาศแล้ว ({publishedBanners.length}/5)
-          </Typography>
-        }
-      />
-      <DataTable
-        columns={genericColumns}
-        data={otherBanners ?? []}
-        isQuerying={query.isLoading}
-        headerExtension={
-          <Typography className="mb-2" variant="h5">
-            ยังไม่ประกาศ
-          </Typography>
-        }
-      />
+      {publishedBanners.length > 1 && (
+        <DataTable
+          columns={orderableColumns}
+          data={publishedBanners ?? []}
+          isQuerying={query.isLoading}
+          headerExtension={
+            <Typography className="mb-2" variant="h5">
+              ประกาศแล้ว ({publishedBanners.length}/5)
+            </Typography>
+          }
+        />
+      )}
+      {otherBanners.length > 1 && (
+        <DataTable
+          columns={genericColumns}
+          data={otherBanners ?? []}
+          isQuerying={query.isLoading}
+          headerExtension={
+            <Typography className="mb-2" variant="h5">
+              ยังไม่ประกาศ
+            </Typography>
+          }
+        />
+      )}
       <ConfirmDialog ref={confirmDialogRef} />
     </>
   )

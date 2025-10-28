@@ -9,6 +9,7 @@ import {
   DeleteBannerResponse,
   GetBannerByIdParams,
   GetBannerByIdResponse,
+  GetBannersQuery,
   GetBannersResponse,
   ReorderBannerBody,
   ReorderBannerResponse,
@@ -27,8 +28,8 @@ export const AdminBannerController = new Elysia({
   .use([AdminBannerServicePlugin, AdminAuthGuardPlugin])
   .get(
     '/',
-    async ({ adminBannerService, status }) => {
-      const result = await adminBannerService.getBanners()
+    async ({ adminBannerService, status, query }) => {
+      const result = await adminBannerService.getBanners(query)
 
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
@@ -38,6 +39,7 @@ export const AdminBannerController = new Elysia({
     },
     {
       requiredLocalUser: true,
+      query: GetBannersQuery,
       response: {
         200: GetBannersResponse,
         ...createErrorSchema(

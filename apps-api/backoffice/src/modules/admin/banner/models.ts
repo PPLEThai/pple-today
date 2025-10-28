@@ -9,6 +9,12 @@ export const BannerIdParams = t.Object({
 export type BannerIdParams = Static<typeof BannerIdParams>
 
 // GET /admin/banners
+export const GetBannersQuery = t.Object({
+  search: t.Optional(t.String()),
+  status: t.Optional(t.Array(t.Enum(BannerStatusType))),
+})
+export type GetBannersQuery = Static<typeof GetBannersQuery>
+
 export const GetBannersResponse = t.Array(Banner)
 export type GetBannersResponse = Static<typeof GetBannersResponse>
 

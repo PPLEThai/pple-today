@@ -10,6 +10,7 @@ import {
   CreateBannerBody,
   CreateBannerResponse,
   GetBannerByIdResponse,
+  GetBannersQuery,
   GetBannersResponse,
   UpdateBannerBody,
 } from './models'
@@ -23,9 +24,8 @@ export class AdminBannerService {
     private readonly fileService: FileService
   ) {}
 
-  async getBanners() {
-    const result = await this.bannerRepository.getBanners()
-
+  async getBanners(query: GetBannersQuery) {
+    const result = await this.bannerRepository.getBanners(query)
     if (result.isErr()) return mapRepositoryError(result.error)
 
     const imageBannerFilePaths = result.value.map((banner) => banner.imageFilePath)
