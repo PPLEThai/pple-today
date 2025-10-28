@@ -109,7 +109,7 @@ const seedBanners = async () => {
     destination: 'https://example.com/mini-app',
     navigation: 'MINI_APP',
   } as const
-  for (let i = 1; i <= 5; ++i) {
+  for (let i = 1; i <= 15; ++i) {
     let navigationDetails: { destination: string; navigation: BannerNavigationType }
     switch (i % 3) {
       case 0:
@@ -123,23 +123,29 @@ const seedBanners = async () => {
         break
     }
 
+    const status =
+      i > 10
+        ? BannerStatusType.PUBLISHED
+        : i > 5
+          ? BannerStatusType.ARCHIVED
+          : BannerStatusType.DRAFT
+
     await prisma.banner.upsert({
       where: {
         id: `banner-${i}`,
       },
       create: {
         id: `banner-${i}`,
-        imageFilePath: `public/test/banner-${i}.png`,
-        status: BannerStatusType.PUBLISHED,
+        imageFilePath: `public/test/banner-${(i % 2) + 1}.png`,
+        headline: `Banner ${i}`,
+        status: status,
         order: i,
-        startAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
-        endAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
         ...navigationDetails,
       },
       update: {
         id: `banner-${i}`,
-        imageFilePath: `public/test/banner-${i}.png`,
-        status: BannerStatusType.PUBLISHED,
+        imageFilePath: `public/test/banner-${(i % 2) + 1}.png`,
+        status: status,
         order: i,
         ...navigationDetails,
       },

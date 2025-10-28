@@ -80,6 +80,9 @@ export const BANNER_ERROR_SCHEMA = {
   BANNER_INVALID_INPUT: {
     status: 400,
   },
+  BANNER_PUBLISHING_LIMIT_REACHED: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 const FEED_ERROR_SCHEMA = {

@@ -122,6 +122,7 @@ export const AdminBannerController = new Elysia({
         200: UpdateBannerResponse,
         ...createErrorSchema(
           InternalErrorCode.BANNER_NOT_FOUND,
+          InternalErrorCode.BANNER_PUBLISHING_LIMIT_REACHED,
           InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.FILE_MOVE_ERROR,
           InternalErrorCode.FILE_ROLLBACK_FAILED,

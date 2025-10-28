@@ -1,12 +1,16 @@
-import { FilePath } from '@pple-today/api-common/dtos'
+import { FilePath, InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { BannerNavigationType, BannerStatusType } from '@pple-today/database/prisma'
+import { BannerStatusType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 
+import { CreateBannerBody, UpdateBannerBody } from './models'
+
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
+
+const PUBLISHED_BANNER_LIMIT = 5
 
 export class AdminBannerRepository {
   constructor(
@@ -30,25 +34,18 @@ export class AdminBannerRepository {
     )
   }
 
-  async createBanner(data: {
-    imageFilePath: FilePath
-    navigation: BannerNavigationType
-    destination: string
-    startAt: Date
-    endAt: Date
-  }) {
+  async createBanner(data: CreateBannerBody) {
     const moveFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
         const moveResult = await fileTx.bulkMoveToPublicFolder([data.imageFilePath])
         if (moveResult.isErr()) return moveResult
-
         return moveResult.value[0]
       })
     )
 
     if (moveFileResult.isErr()) return err(moveFileResult.error)
-
     const [newFileName, fileTx] = moveFileResult.value
+
     const createBannerResult = await fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
         const lastBanner = await this.prismaService.banner.findFirst({
@@ -59,11 +56,10 @@ export class AdminBannerRepository {
         return tx.banner.create({
           data: {
             imageFilePath: newFileName,
+            headline: data.headline,
             navigation: data.navigation,
             destination: data.destination,
             order: lastBanner ? lastBanner.order + 1 : 1,
-            startAt: data.startAt,
-            endAt: data.endAt,
           },
           select: {
             id: true,
@@ -81,36 +77,43 @@ export class AdminBannerRepository {
     return ok(createBannerResult.value)
   }
 
-  async updateBannerById(
-    id: string,
-    data: {
-      imageFilePath: FilePath
-      navigation: BannerNavigationType
-      destination: string
-      status: BannerStatusType
-    }
-  ) {
+  async updateBannerById(id: string, data: UpdateBannerBody) {
     const existingBanner = await fromRepositoryPromise(
       this.prismaService.banner.findUniqueOrThrow({
         where: { id },
-        select: { imageFilePath: true },
+        select: { imageFilePath: true, status: true },
       })
     )
-
     if (existingBanner.isErr()) return err(existingBanner.error)
+
+    const totalPublishedBanners = await fromRepositoryPromise(
+      this.prismaService.banner.count({
+        where: { status: BannerStatusType.PUBLISHED },
+      })
+    )
+    if (totalPublishedBanners.isErr()) return err(totalPublishedBanners.error)
+
+    if (
+      totalPublishedBanners.value === PUBLISHED_BANNER_LIMIT &&
+      existingBanner.value.status !== data.status &&
+      data.status === BannerStatusType.PUBLISHED
+    )
+      return err({
+        code: InternalErrorCode.BANNER_PUBLISHING_LIMIT_REACHED,
+        message:
+          'You can only have 5 published banners. Please unpublish a banner before publishing another one.',
+      })
 
     const updateFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
-        if (existingBanner.value.imageFilePath !== data.imageFilePath) {
-          const deleteResult = await fileTx.deleteFile(
-            existingBanner.value.imageFilePath as FilePath
-          )
-          if (deleteResult.isErr()) return deleteResult
-        }
+        if (!data.imageFilePath || existingBanner.value.imageFilePath === data.imageFilePath)
+          return existingBanner.value.imageFilePath
+
+        const deleteResult = await fileTx.deleteFile(existingBanner.value.imageFilePath as FilePath)
+        if (deleteResult.isErr()) return deleteResult
 
         const moveResult = await fileTx.bulkMoveToPublicFolder([data.imageFilePath])
         if (moveResult.isErr()) return moveResult
-
         return moveResult.value[0]
       })
     )
@@ -125,9 +128,11 @@ export class AdminBannerRepository {
         where: { id },
         data: {
           imageFilePath: newImageFilePath,
+          headline: data.headline,
+          status: data.status,
           navigation: data.navigation,
           destination: data.destination,
-          status: data.status,
+          order: data.order,
         },
       })
     )
@@ -155,18 +160,16 @@ export class AdminBannerRepository {
       this.fileService.$transaction(async (fileTx) => {
         const deleteResult = await fileTx.deleteFile(existingBanner.value.imageFilePath as FilePath)
         if (deleteResult.isErr()) return deleteResult
-
         return deleteResult.value
       })
     )
 
-    if (deleteFileResult.isErr()) {
-      return err(deleteFileResult.error)
-    }
-
+    if (deleteFileResult.isErr()) return err(deleteFileResult.error)
     const [deletedFile, fileTx] = deleteFileResult.value
+
     const deleteBannerResult = await fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
+        // TODO - Perhaps use Lexorank?
         // Reorder remaining banners
         const banners = await tx.banner.findMany({
           orderBy: { order: 'asc' },

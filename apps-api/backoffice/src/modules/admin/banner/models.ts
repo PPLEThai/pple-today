@@ -21,15 +21,16 @@ export type GetBannerByIdResponse = Static<typeof GetBannerByIdResponse>
 
 // POST /admin/banners
 export const CreateBannerBody = t.Object({
-  imageFilePath: FilePath,
-  navigation: t.Enum(BannerNavigationType, {
-    description: 'How the app should navigate when the item is tapped',
+  headline: t.String({
+    description: 'The headline for the banner item',
   }),
   destination: t.String({
     description: 'The destination URI for the banner item',
   }),
-  startAt: t.Date({ description: 'The start date for the banner item' }),
-  endAt: t.Date({ description: 'The end date for the banner item' }),
+  navigation: t.Enum(BannerNavigationType, {
+    description: 'How the app should navigate when the item is tapped',
+  }),
+  imageFilePath: FilePath,
 })
 export type CreateBannerBody = Static<typeof CreateBannerBody>
 
@@ -42,18 +43,22 @@ export type CreateBannerResponse = Static<typeof CreateBannerResponse>
 export const UpdateBannerParams = BannerIdParams
 export type UpdateBannerParams = Static<typeof UpdateBannerParams>
 
-export const UpdateBannerBody = t.Object({
-  imageFilePath: FilePath,
-  status: t.Enum(BannerStatusType, { description: 'Publish status of the banner item' }),
-  navigation: t.Enum(BannerNavigationType, {
-    description: 'How the app should navigate when the item is tapped',
-  }),
-  destination: t.String({
-    description: 'The destination URI for the banner item',
-  }),
-  startAt: t.Date({ description: 'The start date for the banner item' }),
-  endAt: t.Date({ description: 'The end date for the banner item' }),
-})
+export const UpdateBannerBody = t.Partial(
+  t.Object({
+    headline: t.String({
+      description: 'The headline for the banner item',
+    }),
+    destination: t.String({
+      description: 'The destination URI for the banner item',
+    }),
+    navigation: t.Enum(BannerNavigationType, {
+      description: 'How the app should navigate when the item is tapped',
+    }),
+    imageFilePath: FilePath,
+    order: t.Number({ description: 'Display order (ascending)' }),
+    status: t.Enum(BannerStatusType, { description: 'Publish status of the banner item' }),
+  })
+)
 export type UpdateBannerBody = Static<typeof UpdateBannerBody>
 
 export const UpdateBannerResponse = t.Object({
