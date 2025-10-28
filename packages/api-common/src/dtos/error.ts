@@ -247,6 +247,12 @@ export const ELECTION_KEY_ERROR_SCHEMA = {
   },
 } satisfies InternalErrorSchemas
 
+export const NOTIFICATION_KEY_ERROR_SCHEMA = {
+  NOTIFICATION_SENT_FAILED: {
+    status: 500,
+  },
+} satisfies InternalErrorSchemas
+
 export const InternalErrorCodeSchemas = {
   ...AUTH_ERROR_SCHEMA,
   ...COMMON_ERROR_SCHEMA,
@@ -262,6 +268,7 @@ export const InternalErrorCodeSchemas = {
   ...TOPIC_ERROR_SCHEMA,
   ...ELECTION_ERROR_SCHEMA,
   ...ELECTION_KEY_ERROR_SCHEMA,
+  ...NOTIFICATION_KEY_ERROR_SCHEMA,
 } as const
 export type InternalErrorCodeSchemas = typeof InternalErrorCodeSchemas
 

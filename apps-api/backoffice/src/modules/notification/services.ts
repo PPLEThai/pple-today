@@ -2,10 +2,21 @@ import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
+import { CreateNewExternalNotificationBody } from './models'
 import { NotificationRepository, NotificationRepositoryPlugin } from './repository'
 
 export class NotificationService {
   constructor(private readonly notificationRepository: NotificationRepository) {}
+
+  async checkApiToken(apiToken: string) {
+    const isValid = await this.notificationRepository.checkApiKey(apiToken)
+
+    if (isValid.isErr()) {
+      return mapRepositoryError(isValid.error)
+    }
+
+    return ok(isValid.value?.id)
+  }
 
   async registerDeviceToken(userId: string, deviceToken: string) {
     const registerResult = await this.notificationRepository.registerDeviceToken(
@@ -40,18 +51,18 @@ export class NotificationService {
     return ok()
   }
 
-  async testSendNotification(phoneNumber: string, title: string, message: string) {
-    const deviceTokensResult = await this.notificationRepository.testSendNotificationToDevice(
-      phoneNumber,
-      title,
-      message
+  async sendExternalNotification(data: CreateNewExternalNotificationBody, apiKeyId: string) {
+    const sendResult = await this.notificationRepository.sendNotificationToUser(
+      data.audience,
+      data.content,
+      apiKeyId
     )
 
-    if (deviceTokensResult.isErr()) {
-      return mapRepositoryError(deviceTokensResult.error)
+    if (sendResult.isErr()) {
+      return mapRepositoryError(sendResult.error)
     }
 
-    return ok()
+    return ok(sendResult.value)
   }
 }
 

@@ -75,7 +75,7 @@ export const CreateNewExternalNotificationBody = t.Object({
 export type CreateNewExternalNotificationBody = Static<typeof CreateNewExternalNotificationBody>
 
 export const CreateNewExternalNotificationResponse = t.Object({
-  message: t.String(),
+  success: t.Boolean(),
   phoneNumber: t.Optional(
     t.Object({
       success: t.Array(t.String()),

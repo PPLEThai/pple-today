@@ -1,8 +1,13 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
 import { PrismaService } from '@pple-today/api-common/services'
-import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { NotificationLinkType } from '@pple-today/database/prisma'
+import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { NotificationLinkType, Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
+import * as R from 'remeda'
+
+import { CreateNewExternalNotificationBody } from './models'
 
 import { CloudMessagingService, CloudMessagingServicePlugin } from '../../plugins/cloud-messaging'
 import { PrismaServicePlugin } from '../../plugins/prisma'
@@ -10,23 +15,72 @@ import { PrismaServicePlugin } from '../../plugins/prisma'
 export class NotificationRepository {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly cloudMessagingService: CloudMessagingService
+    private readonly cloudMessagingService: CloudMessagingService,
+    private readonly loggerService: ElysiaLoggerInstance
   ) {}
+
+  private getFilterConditions(
+    audience: CreateNewExternalNotificationBody['audience']
+  ): Prisma.UserFindManyArgs['where'] {
+    switch (audience.type) {
+      case 'ROLE':
+        return {
+          roles: {
+            some: {
+              role: { in: audience.details },
+            },
+          },
+        }
+      case 'PHONE_NUMBER':
+        return {
+          phoneNumber: {
+            in: audience.details,
+          },
+        }
+      case 'ADDRESS':
+        return {
+          OR: [
+            {
+              province: { in: audience.details.provinces },
+            },
+            {
+              district: { in: audience.details.districts },
+            },
+          ],
+        }
+      case 'BROADCAST':
+        return {}
+      default:
+        exhaustiveGuard(audience)
+    }
+  }
+
+  async checkApiKey(apiKey: string) {
+    return fromRepositoryPromise(
+      this.prismaService.notificationApiKey.findUnique({
+        where: {
+          apiKey,
+          active: true,
+        },
+        select: {
+          id: true,
+        },
+      })
+    )
+  }
 
   async registerDeviceToken(userId: string, deviceToken: string) {
     return fromRepositoryPromise(
       this.prismaService.userNotificationToken.upsert({
         where: {
-          userId_token: {
-            userId,
-            token: deviceToken,
-          },
+          token: deviceToken,
         },
         create: {
           userId,
           token: deviceToken,
         },
         update: {
+          userId,
           updatedAt: new Date(),
         },
       })
@@ -110,64 +164,125 @@ export class NotificationRepository {
       }
     })
   }
-
-  async testSendNotificationToDevice(phoneNumber: string, title: string, message: string) {
-    const userTokens = await this.prismaService.userNotificationToken.findMany({
-      where: {
-        user: {
-          phoneNumber,
-        },
-      },
-    })
-
-    const deviceTokens = userTokens.map((t) => t.token)
-
-    if (deviceTokens.length === 0) {
-      return ok()
-    }
-
-    await this.cloudMessagingService.sendNotification(deviceTokens, {
-      title,
-      message,
-    })
-    return ok()
-  }
-
   async sendNotificationToUser(
-    conditions: {
-      isBroadcast?: boolean
-      phoneNumber?: string[]
-      districts?: string[]
-      provinces?: string[]
-      roles?: string[]
-    },
+    conditions: CreateNewExternalNotificationBody['audience'],
     data: {
-      title: string
+      header: string
       message: string
-      url?: string
+      image?: string
       link?: {
         type: NotificationLinkType
         value: string
       }
-    }
+    },
+    apiKeyId: string
   ) {
-    this.prismaService.notification.create({
-      data: {
-        title: data.title,
-        message: data.message,
-        linkType: data.link?.type,
-        linkValue: data.link?.value,
+    const createResult = await fromRepositoryPromise(async () => {
+      await this.prismaService.$transaction([
+        this.prismaService.notification.create({
+          data: {
+            title: data.header,
+            message: data.message,
+            linkType: data.link?.type,
+            linkValue: data.link?.value,
 
-        isBroadcast: conditions.isBroadcast || false,
-        districts: conditions.districts || [],
-        provinces: conditions.provinces || [],
-        roles: conditions.roles || [],
-        phoneNumbers: {
-          createMany: {
-            data: conditions.phoneNumber?.map((phoneNumber) => ({ phoneNumber })) || [],
+            isBroadcast: conditions.type === 'BROADCAST' ? true : false,
+            districts: conditions.type === 'ADDRESS' ? conditions.details.districts : undefined,
+            provinces: conditions.type === 'ADDRESS' ? conditions.details.provinces : undefined,
+            roles: conditions.type === 'ROLE' ? conditions.details : undefined,
+            phoneNumbers:
+              conditions.type === 'PHONE_NUMBER'
+                ? {
+                    createMany: {
+                      data: conditions.details?.map((phoneNumber) => ({ phoneNumber })) || [],
+                    },
+                  }
+                : undefined,
+          },
+        }),
+        this.prismaService.notificationApiKeyUsageLog.create({
+          data: {
+            body: JSON.stringify({ conditions, data }),
+            notificationApiKey: {
+              connect: {
+                apiKey: apiKeyId,
+              },
+            },
+          },
+        }),
+      ])
+
+      const whereConditions = this.getFilterConditions(conditions)
+
+      return await this.prismaService.user.findMany({
+        where: whereConditions,
+        select: {
+          phoneNumber: true,
+          notificationTokens: {
+            select: {
+              token: true,
+            },
           },
         },
+      })
+    })
+
+    if (createResult.isErr()) {
+      return createResult
+    }
+
+    const phoneNumberWithTokens = createResult.value.flatMap((u) => ({
+      phoneNumber: u.phoneNumber,
+      token: u.notificationTokens.map((t) => t.token),
+    }))
+
+    const notFoundUser =
+      conditions.type === 'PHONE_NUMBER'
+        ? R.difference(
+            conditions.details,
+            phoneNumberWithTokens.map((p) => p.phoneNumber)
+          )
+        : undefined
+    const emptyTokens = phoneNumberWithTokens.filter((p) => p.token.length === 0)
+    const nonEmptyTokens = phoneNumberWithTokens.filter((p) => p.token.length > 0)
+
+    const notificationResult = await Promise.all(
+      nonEmptyTokens.map(async (p) => {
+        return {
+          phoneNumber: p.phoneNumber,
+          result: await this.cloudMessagingService.sendNotifications(p.token, {
+            title: data.header,
+            message: data.message,
+            image: data.image,
+            link: data.link,
+          }),
+        }
+      })
+    )
+    const failedResult = notificationResult.filter((r) => r.result.isErr())
+    if (failedResult.length > 0) {
+      return err({
+        code: InternalErrorCode.NOTIFICATION_SENT_FAILED,
+        message: 'Failed to send push notification to some users',
+      })
+    }
+
+    const successfulResult = notificationResult.filter((r) => r.result.isOk())
+
+    this.loggerService.info({
+      message: 'Push notification sent',
+      details: {
+        totalUsers: phoneNumberWithTokens.length,
+        successfulDeliveries: nonEmptyTokens.length,
+        failedDeliveries: emptyTokens.length,
+        nonExisted: notFoundUser?.length || 0,
+        notification: data,
       },
+    })
+
+    return ok({
+      success: successfulResult.map((p) => p.phoneNumber),
+      failed: emptyTokens.map((p) => p.phoneNumber),
     })
   }
 }
@@ -175,7 +290,15 @@ export class NotificationRepository {
 export const NotificationRepositoryPlugin = new Elysia({
   name: 'NotificationRepositoryPlugin',
 })
-  .use([PrismaServicePlugin, CloudMessagingServicePlugin])
-  .decorate(({ prismaService, cloudMessagingService }) => ({
-    notificationRepository: new NotificationRepository(prismaService, cloudMessagingService),
+  .use([
+    PrismaServicePlugin,
+    CloudMessagingServicePlugin,
+    ElysiaLoggerPlugin({ name: 'NotificationRepository' }),
+  ])
+  .decorate(({ prismaService, cloudMessagingService, loggerService }) => ({
+    notificationRepository: new NotificationRepository(
+      prismaService,
+      cloudMessagingService,
+      loggerService
+    ),
   }))

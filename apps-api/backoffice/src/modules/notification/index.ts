@@ -1,10 +1,11 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
-import Elysia, { t } from 'elysia'
+import Elysia from 'elysia'
 
 import {
   CreateNewExternalNotificationBody,
   CreateNewExternalNotificationHeader,
+  CreateNewExternalNotificationResponse,
   ReadNotificationParams,
   ReadNotificationResponse,
   RegisterNotificationBody,
@@ -36,6 +37,11 @@ export const NotificationController = new Elysia({
       })
     },
     {
+      detail: {
+        summary: 'Register device token for push notifications',
+        description:
+          'This endpoint allows the authenticated user to register their device token for receiving push notifications.',
+      },
       requiredLocalUser: true,
       body: RegisterNotificationBody,
       response: {
@@ -60,6 +66,11 @@ export const NotificationController = new Elysia({
       })
     },
     {
+      detail: {
+        summary: 'Mark a specific notification as read for the authenticated user',
+        description:
+          'This endpoint allows the authenticated user to mark a specific notification as read by providing the notification ID in the URL parameter.',
+      },
       requiredLocalUser: true,
       params: ReadNotificationParams,
       response: {
@@ -82,6 +93,11 @@ export const NotificationController = new Elysia({
       })
     },
     {
+      detail: {
+        summary: 'Mark all notifications as read for the authenticated user',
+        description:
+          'This endpoint allows the authenticated user to mark all their notifications as read in one action.',
+      },
       requiredLocalUser: true,
       response: {
         200: ReadNotificationResponse,
@@ -89,34 +105,51 @@ export const NotificationController = new Elysia({
       },
     }
   )
-  .post(
-    '/test',
-    async ({ body, notificationService, status }) => {
-      const notificationResult = await notificationService.testSendNotification(
-        body.phoneNumber,
-        body.title,
-        body.message
-      )
 
-      if (notificationResult.isErr()) {
-        return mapErrorCodeToResponse(notificationResult.error, status)
+export const ExternalNotificationController = new Elysia({
+  prefix: '/external/notifications',
+  tags: ['External Notifications'],
+})
+  .use([NotificationServicePlugin])
+  .post(
+    '/send',
+    async ({ notificationService, body, headers, status }) => {
+      const token = headers['Authorization'].split(' ')[1] // Normally, you would validate this token
+      const tokenResult = await notificationService.checkApiToken(token)
+
+      if (tokenResult.isErr()) return mapErrorCodeToResponse(tokenResult.error, status)
+
+      if (!tokenResult.value) {
+        return mapErrorCodeToResponse(
+          {
+            code: InternalErrorCode.UNAUTHORIZED,
+            message: 'Invalid API token',
+          },
+          status
+        )
       }
 
-      return status(200, {
-        message: 'Test notification sent successfully',
+      const sendResult = await notificationService.sendExternalNotification(body, tokenResult.value)
+
+      if (sendResult.isErr()) {
+        return mapErrorCodeToResponse(sendResult.error, status)
+      }
+
+      return status(201, {
+        success: true,
+        phoneNumber: sendResult.value,
       })
     },
     {
-      body: t.Object({
-        phoneNumber: t.String(),
-        title: t.String(),
-        message: t.String(),
-      }),
-    }
-  )
-  .group('/external', (app) =>
-    app.post('/send', () => {}, {
       headers: CreateNewExternalNotificationHeader,
       body: CreateNewExternalNotificationBody,
-    })
+      response: {
+        201: CreateNewExternalNotificationResponse,
+        ...createErrorSchema(
+          InternalErrorCode.INTERNAL_SERVER_ERROR,
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.NOTIFICATION_SENT_FAILED
+        ),
+      },
+    }
   )
