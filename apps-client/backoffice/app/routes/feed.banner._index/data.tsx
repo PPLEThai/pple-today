@@ -18,11 +18,15 @@ import { partition } from 'remeda'
 import {
   DeleteBannerParams,
   GetBannersResponse,
+  ReorderBannerByIdByIdBody,
+  ReorderBannerByIdParams,
   UpdateBannerBody,
   UpdateBannerParams,
 } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
+
+const PUBLISHED_BANNER_LIMIT = 5
 
 const columnHelper = createColumnHelper<GetBannersResponse[number]>()
 
@@ -48,6 +52,7 @@ export const Data = () => {
   )
   const patchMutation = reactQueryClient.useMutation('patch', '/admin/banners/:id')
   const deleteMutation = reactQueryClient.useMutation('delete', '/admin/banners/:id')
+  const reorderMutation = reactQueryClient.useMutation('post', '/admin/banners/:id/reorder')
   const invalidateQuery = useCallback(() => {
     queryClient.invalidateQueries({
       queryKey: reactQueryClient.getQueryKey('/admin/banners', {
@@ -78,9 +83,20 @@ export const Data = () => {
   )
   const deleteBanner = useCallback(
     (id: DeleteBannerParams['id']) => {
+      if (deleteMutation.isPending) return
       deleteMutation.mutateAsync({ pathParams: { id } }, { onSuccess: () => invalidateQuery() })
     },
     [deleteMutation, invalidateQuery]
+  )
+  const reorderBanner = useCallback(
+    (id: ReorderBannerByIdParams['id'], data: ReorderBannerByIdByIdBody) => {
+      if (reorderMutation.isPending) return
+      reorderMutation.mutateAsync(
+        { pathParams: { id }, body: data },
+        { onSuccess: () => invalidateQuery() }
+      )
+    },
+    [reorderMutation, invalidateQuery]
   )
 
   const [publishedBanners, otherBanners] = useMemo(() => {
@@ -225,15 +241,34 @@ export const Data = () => {
       columnHelper.accessor('order', {
         header: () => <div className="text-center">ลำดับ</div>,
         cell: (info) => {
+          const id = info.row.original.id
           const index = info.row.index
-          // FIXME : Implement this
+
           return (
             <div className="relative flex gap-3 group">
-              <Button variant="secondary" size="icon" className="size-8" disabled={index === 0}>
+              <Button
+                variant="secondary"
+                size="icon"
+                className="size-8"
+                disabled={index === 0 || reorderMutation.isPending}
+                aria-busy={reorderMutation.isPending}
+                onClick={() => {
+                  reorderBanner(id, { movement: 'up' })
+                }}
+              >
                 <span className="sr-only">เลื่อนขึ้น</span>
                 <ChevronUp className="size-4" />
               </Button>
-              <Button variant="secondary" size="icon" className="size-8" disabled={index === 4}>
+              <Button
+                variant="secondary"
+                size="icon"
+                className="size-8"
+                disabled={index === PUBLISHED_BANNER_LIMIT - 1 || reorderMutation.isPending}
+                aria-busy={reorderMutation.isPending}
+                onClick={() => {
+                  reorderBanner(id, { movement: 'down' })
+                }}
+              >
                 <span className="sr-only">เลื่อนลง</span>
                 <ChevronDown className="size-4" />
               </Button>
@@ -249,7 +284,7 @@ export const Data = () => {
       }),
       ...rest,
     ]
-  }, [genericColumns])
+  }, [genericColumns, reorderBanner, reorderMutation.isPending])
 
   return (
     <>
@@ -283,7 +318,7 @@ export const Data = () => {
           isQuerying={query.isLoading}
           headerExtension={
             <Typography className="mb-2" variant="h5">
-              ประกาศแล้ว ({publishedBanners.length}/5)
+              ประกาศแล้ว ({publishedBanners.length}/{PUBLISHED_BANNER_LIMIT})
             </Typography>
           }
         />

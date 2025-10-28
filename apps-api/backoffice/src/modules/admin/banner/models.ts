@@ -45,7 +45,7 @@ export const CreateBannerResponse = t.Object({
 })
 export type CreateBannerResponse = Static<typeof CreateBannerResponse>
 
-// PUT /admin/banners/{id}
+// PATCH /admin/banners/{id}
 export const UpdateBannerParams = BannerIdParams
 export type UpdateBannerParams = Static<typeof UpdateBannerParams>
 
@@ -81,14 +81,18 @@ export const DeleteBannerResponse = t.Object({
 })
 export type DeleteBannerResponse = Static<typeof DeleteBannerResponse>
 
-export const ReorderBannerBody = t.Object({
-  ids: t.Array(t.String(), {
-    description: 'Array of banner IDs in the new order',
+// POST /admin/banners/{id}/reorder
+export const ReorderBannerByIdParams = BannerIdParams
+export type ReorderBannerByIdParams = Static<typeof GetBannerByIdParams>
+
+export const ReorderBannerByIdByIdBody = t.Object({
+  movement: t.Union([t.Literal('up'), t.Literal('down')], {
+    description: 'The direction of the movement',
   }),
 })
-export type ReorderBannerBody = Static<typeof ReorderBannerBody>
+export type ReorderBannerByIdByIdBody = Static<typeof ReorderBannerByIdByIdBody>
 
-export const ReorderBannerResponse = t.Object({
+export const ReorderBannerByIdByIdResponse = t.Object({
   message: t.String({ description: 'Success message' }),
 })
-export type ReorderBannerResponse = Static<typeof ReorderBannerResponse>
+export type ReorderBannerByIdByIdResponse = Static<typeof ReorderBannerByIdByIdResponse>

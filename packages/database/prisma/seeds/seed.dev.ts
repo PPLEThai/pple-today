@@ -1,4 +1,5 @@
 import { PrismaPg } from '@prisma/adapter-pg'
+import { LexoRank } from 'lexorank'
 
 import {
   AnnouncementStatus,
@@ -109,6 +110,7 @@ const seedBanners = async () => {
     destination: 'https://example.com/mini-app',
     navigation: 'MINI_APP',
   } as const
+  let lexorank = LexoRank.min()
   for (let i = 1; i <= 15; ++i) {
     let navigationDetails: { destination: string; navigation: BannerNavigationType }
     switch (i % 3) {
@@ -130,6 +132,8 @@ const seedBanners = async () => {
           ? BannerStatusType.ARCHIVED
           : BannerStatusType.DRAFT
 
+    lexorank = lexorank.genNext()
+
     await prisma.banner.upsert({
       where: {
         id: `banner-${i}`,
@@ -139,14 +143,14 @@ const seedBanners = async () => {
         imageFilePath: `public/test/banner-${(i % 2) + 1}.png`,
         headline: `Banner ${i}`,
         status: status,
-        order: i,
+        order: lexorank.toString(),
         ...navigationDetails,
       },
       update: {
         id: `banner-${i}`,
         imageFilePath: `public/test/banner-${(i % 2) + 1}.png`,
         status: status,
-        order: i,
+        order: lexorank.toString(),
         ...navigationDetails,
       },
     })

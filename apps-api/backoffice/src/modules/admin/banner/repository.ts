@@ -3,9 +3,19 @@ import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { BannerStatusType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
+import { LexoRank } from 'lexorank'
 import { err, ok } from 'neverthrow'
 
-import { CreateBannerBody, GetBannersQuery, UpdateBannerBody } from './models'
+import {
+  CreateBannerBody,
+  DeleteBannerParams,
+  GetBannerByIdParams,
+  GetBannersQuery,
+  ReorderBannerByIdByIdBody,
+  ReorderBannerByIdParams,
+  UpdateBannerBody,
+  UpdateBannerParams,
+} from './models'
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
@@ -40,7 +50,7 @@ export class AdminBannerRepository {
     )
   }
 
-  async getBannerById(id: string) {
+  async getBannerById(id: GetBannerByIdParams['id']) {
     return fromRepositoryPromise(
       this.prismaService.banner.findUniqueOrThrow({
         where: { id },
@@ -73,7 +83,9 @@ export class AdminBannerRepository {
             headline: data.headline,
             navigation: data.navigation,
             destination: data.destination,
-            order: lastBanner ? lastBanner.order + 1 : 1,
+            order: lastBanner?.order
+              ? LexoRank.parse(lastBanner.order).genNext().toString()
+              : LexoRank.min().toString(),
           },
           select: {
             id: true,
@@ -91,7 +103,7 @@ export class AdminBannerRepository {
     return ok(createBannerResult.value)
   }
 
-  async updateBannerById(id: string, data: UpdateBannerBody) {
+  async updateBannerById(id: UpdateBannerParams['id'], data: UpdateBannerBody) {
     const existingBanner = await fromRepositoryPromise(
       this.prismaService.banner.findUniqueOrThrow({
         where: { id },
@@ -138,16 +150,27 @@ export class AdminBannerRepository {
 
     const [newImageFilePath, fileTx] = updateFileResult.value
     const updateBannerResult = await fromRepositoryPromise(
-      this.prismaService.banner.update({
-        where: { id },
-        data: {
-          imageFilePath: newImageFilePath,
-          headline: data.headline,
-          status: data.status,
-          navigation: data.navigation,
-          destination: data.destination,
-          order: data.order,
-        },
+      this.prismaService.$transaction(async (tx) => {
+        const lastBanner = await this.prismaService.banner.findFirst({
+          orderBy: { order: 'desc' },
+          select: { order: true },
+        })
+
+        return tx.banner.update({
+          where: { id },
+          data: {
+            imageFilePath: newImageFilePath,
+            headline: data.headline,
+            status: data.status,
+            navigation: data.navigation,
+            destination: data.destination,
+            ...(data.status && {
+              order: lastBanner?.order
+                ? LexoRank.parse(lastBanner.order).genNext().toString()
+                : LexoRank.min().toString(),
+            }),
+          },
+        })
       })
     )
 
@@ -160,7 +183,7 @@ export class AdminBannerRepository {
     return ok(updateBannerResult.value)
   }
 
-  async deleteBannerById(id: string) {
+  async deleteBannerById(id: DeleteBannerParams['id']) {
     const existingBanner = await fromRepositoryPromise(
       this.prismaService.banner.findUniqueOrThrow({
         where: { id },
@@ -182,25 +205,7 @@ export class AdminBannerRepository {
     const [deletedFile, fileTx] = deleteFileResult.value
 
     const deleteBannerResult = await fromRepositoryPromise(
-      this.prismaService.$transaction(async (tx) => {
-        // TODO - Perhaps use Lexorank?
-        // Reorder remaining banners
-        const banners = await tx.banner.findMany({
-          orderBy: { order: 'asc' },
-          select: { id: true },
-        })
-
-        await Promise.all(
-          banners.map((banner, index) =>
-            tx.banner.update({
-              where: { id: banner.id },
-              data: { order: index },
-            })
-          )
-        )
-
-        return
-      })
+      this.prismaService.banner.delete({ where: { id } })
     )
 
     if (deleteBannerResult.isErr()) {
@@ -212,16 +217,61 @@ export class AdminBannerRepository {
     return ok(deletedFile)
   }
 
-  async reorderBanner(ids: string[]) {
+  async reorderBanner(id: ReorderBannerByIdParams['id'], data: ReorderBannerByIdByIdBody) {
+    const existingBanner = await fromRepositoryPromise(
+      this.prismaService.banner.findMany({
+        select: {
+          id: true,
+          order: true,
+        },
+        orderBy: { order: 'asc' },
+        where: { status: BannerStatusType.PUBLISHED },
+      })
+    )
+    if (existingBanner.isErr()) return err(existingBanner.error)
+
+    const currentIdIndex = existingBanner.value.findIndex((banner) => banner.id === id)
+    if (currentIdIndex === -1)
+      return err({
+        code: InternalErrorCode.BANNER_NOT_FOUND,
+        message: 'Banner not found.',
+      })
+
+    if (currentIdIndex <= 0 && data.movement === 'up')
+      return err({
+        code: InternalErrorCode.BANNER_MOVING_POSITION_INVALID,
+        message: 'You cannot move the first banner up.',
+      })
+    if (currentIdIndex >= PUBLISHED_BANNER_LIMIT - 1 && data.movement === 'down')
+      return err({
+        code: InternalErrorCode.BANNER_MOVING_POSITION_INVALID,
+        message: 'You cannot move the last banner down.',
+      })
+
+    let newOrder = ''
+    if (currentIdIndex === 1 && data.movement === 'up') {
+      newOrder = LexoRank.parse(existingBanner.value[currentIdIndex - 1].order)
+        .genPrev()
+        .toString()
+    } else if (currentIdIndex === 3 && data.movement === 'down') {
+      newOrder = LexoRank.parse(existingBanner.value[currentIdIndex + 1].order)
+        .genNext()
+        .toString()
+    } else {
+      const beforeIndex = data.movement === 'up' ? currentIdIndex - 2 : currentIdIndex + 1
+      const afterIndex = data.movement === 'up' ? currentIdIndex - 1 : currentIdIndex + 2
+
+      const beforeLexoRank = LexoRank.parse(existingBanner.value[beforeIndex].order)
+      const afterLexoRank = LexoRank.parse(existingBanner.value[afterIndex].order)
+
+      newOrder = beforeLexoRank.between(afterLexoRank).toString()
+    }
+
     return fromRepositoryPromise(
-      this.prismaService.$transaction(
-        ids.map((id, index) =>
-          this.prismaService.banner.update({
-            where: { id },
-            data: { order: index },
-          })
-        )
-      )
+      this.prismaService.banner.update({
+        where: { id },
+        data: { order: newOrder },
+      })
     )
   }
 }

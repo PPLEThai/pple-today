@@ -83,6 +83,9 @@ export const BANNER_ERROR_SCHEMA = {
   BANNER_PUBLISHING_LIMIT_REACHED: {
     status: 409,
   },
+  BANNER_MOVING_POSITION_INVALID: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 const FEED_ERROR_SCHEMA = {

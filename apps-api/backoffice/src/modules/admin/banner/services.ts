@@ -12,6 +12,8 @@ import {
   GetBannerByIdResponse,
   GetBannersQuery,
   GetBannersResponse,
+  ReorderBannerByIdByIdBody,
+  ReorderBannerByIdParams,
   UpdateBannerBody,
 } from './models'
 import { AdminBannerRepository, AdminBannerRepositoryPlugin } from './repository'
@@ -116,8 +118,8 @@ export class AdminBannerService {
     return ok()
   }
 
-  async reorderBanner(ids: string[]) {
-    const result = await this.bannerRepository.reorderBanner(ids)
+  async reorderBanner(id: ReorderBannerByIdParams['id'], data: ReorderBannerByIdByIdBody) {
+    const result = await this.bannerRepository.reorderBanner(id, data)
 
     if (result.isErr()) return mapRepositoryError(result.error)
 

@@ -11,8 +11,9 @@ import {
   GetBannerByIdResponse,
   GetBannersQuery,
   GetBannersResponse,
-  ReorderBannerBody,
-  ReorderBannerResponse,
+  ReorderBannerByIdByIdBody,
+  ReorderBannerByIdByIdResponse,
+  ReorderBannerByIdParams,
   UpdateBannerBody,
   UpdateBannerParams,
   UpdateBannerResponse,
@@ -166,9 +167,9 @@ export const AdminBannerController = new Elysia({
     }
   )
   .post(
-    '/reorder',
-    async ({ body, adminBannerService, status }) => {
-      const result = await adminBannerService.reorderBanner(body.ids)
+    '/:id/reorder',
+    async ({ params, body, adminBannerService, status }) => {
+      const result = await adminBannerService.reorderBanner(params.id, body)
 
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
@@ -176,14 +177,19 @@ export const AdminBannerController = new Elysia({
     },
     {
       requiredLocalUser: true,
-      body: ReorderBannerBody,
+      params: ReorderBannerByIdParams,
+      body: ReorderBannerByIdByIdBody,
       response: {
-        200: ReorderBannerResponse,
-        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+        200: ReorderBannerByIdByIdResponse,
+        ...createErrorSchema(
+          InternalErrorCode.BANNER_NOT_FOUND,
+          InternalErrorCode.BANNER_MOVING_POSITION_INVALID,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
       },
       detail: {
-        summary: 'Bulk reorder banners',
-        description: 'Reorder banners by array of ids',
+        summary: 'Reorder banner',
+        description: 'Reorder banner by id with movement',
       },
     }
   )

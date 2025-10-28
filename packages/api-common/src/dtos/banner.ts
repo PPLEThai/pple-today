@@ -19,7 +19,7 @@ export const Banner = t.Object({
   destination: t.String({
     description: 'The destination URI for the banner item',
   }),
-  order: t.Number({ description: 'Display order (ascending)' }),
+  order: t.String({ description: 'Display order (ascending)' }),
   createdAt: t.Date({ description: 'The creation date of the banner' }),
   updatedAt: t.Date({ description: 'The update date of the banner' }),
 })
