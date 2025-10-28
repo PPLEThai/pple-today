@@ -436,7 +436,6 @@ function PagerTabBarProvider({ children }: PagerTabBarProviderProps) {
   useAnimatedReaction(
     () => tabItemLayouts.get().length,
     (length, prevLength) => {
-      console.log('Tab item layouts changed, length:', length, 'prevLength:', prevLength)
       if (length === prevLength || prevLength === null) return
       if (currentPage >= length) {
         runOnJS(onIndicatorOutOfBounds)(length - 1)
