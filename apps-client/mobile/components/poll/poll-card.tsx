@@ -44,8 +44,8 @@ export const usePollVotesQuery = createQuery({
 })
 
 function usePollVotesValue(feedId: string): PollVotes {
-  const PollVotesQuery = usePollVotesQuery({ variables: { feedId } })
-  return PollVotesQuery.data!
+  const pollVotesQuery = usePollVotesQuery({ variables: { feedId } })
+  return pollVotesQuery.data!
 }
 
 function useSetPollVotes(feedId: string) {
