@@ -323,7 +323,7 @@ export const Data = () => {
           />
         }
       />
-      {publishedBanners.length > 1 && (
+      {publishedBanners.length > 0 && (
         <DataTable
           columns={orderableColumns}
           data={publishedBanners ?? []}
@@ -335,7 +335,7 @@ export const Data = () => {
           }
         />
       )}
-      {otherBanners.length > 1 && (
+      {otherBanners.length > 0 && (
         <DataTable
           columns={genericColumns}
           data={otherBanners ?? []}
