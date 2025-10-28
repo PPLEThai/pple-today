@@ -4,19 +4,28 @@ enum AnnouncementType {
     INTERNAL
 }
 
+enum AnnouncementStatus {
+    DRAFT
+    PUBLISHED
+    ARCHIVED
+}
+
 // Published Announcement model
 model Announcement {
-    feedItemId String           @id
+    feedItemId String  @id
     title      String
     content    String?
-    type       AnnouncementType
 
-    iconImage       String?
-    backgroundColor String?
-    topics          AnnouncementTopic[]
-    attachments     AnnouncementFile[]
+    type   AnnouncementType
+    status AnnouncementStatus @default(DRAFT)
+
+    topics      AnnouncementTopic[]
+    attachments AnnouncementFile[]
 
     feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
+
+    @@index([status])
+    @@index([type])
 }
 
 model AnnouncementTopic {
@@ -30,6 +39,8 @@ model AnnouncementTopic {
     topic        Topic        @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
     @@id([announcementId, topicId])
+    @@index([topicId])
+    @@index([announcementId])
 }
 
 model AnnouncementFile {
@@ -42,45 +53,4 @@ model AnnouncementFile {
     announcement Announcement @relation(fields: [announcementId], references: [feedItemId], onDelete: Cascade)
 
     @@index([announcementId])
-}
-
-// Draft Announcement model
-model AnnouncementDraft {
-    id      String            @id @default(cuid())
-    title   String?
-    content String?
-    type    AnnouncementType?
-
-    iconImage       String?
-    backgroundColor String?
-    topics          AnnouncementTopicDraft[]
-    attachments     AnnouncementFileDraft[]
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-}
-
-model AnnouncementTopicDraft {
-    announcementDraftId String
-    topicId             String
-
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-
-    announcementDraft AnnouncementDraft @relation(fields: [announcementDraftId], references: [id], onDelete: Cascade)
-    topic             Topic             @relation(fields: [topicId], references: [id], onDelete: Cascade)
-
-    @@id([announcementDraftId, topicId])
-}
-
-model AnnouncementFileDraft {
-    id                  String   @id @default(cuid())
-    announcementDraftId String
-    filePath            String
-    createdAt           DateTime @default(now())
-    updatedAt           DateTime @updatedAt
-
-    announcementDraft AnnouncementDraft @relation(fields: [announcementDraftId], references: [id], onDelete: Cascade)
-
-    @@index([announcementDraftId])
 }

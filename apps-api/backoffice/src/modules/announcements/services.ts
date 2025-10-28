@@ -28,9 +28,8 @@ export class AnnouncementService {
         id: announcement.feedItemId,
         title: announcement.title,
         content: announcement.content ?? '',
-        backgroundColor: announcement.backgroundColor ?? '',
-        createdAt: announcement.feedItem.createdAt,
-        updatedAt: announcement.feedItem.updatedAt,
+        type: announcement.type,
+        publishedAt: announcement.feedItem.publishedAt!,
       })),
     } satisfies GetAnnouncementsResponse)
   }
@@ -58,10 +57,9 @@ export class AnnouncementService {
       id: announcementResult.value.feedItemId,
       title: announcementResult.value.title,
       content: announcementResult.value.content ?? '',
-      backgroundColor: announcementResult.value.backgroundColor ?? '',
       attachments: attachmentPublicUrls,
-      createdAt: announcementResult.value.feedItem.createdAt,
-      updatedAt: announcementResult.value.feedItem.updatedAt,
+      type: announcementResult.value.type,
+      publishedAt: announcementResult.value.feedItem.publishedAt!,
       feedItemId: announcementResult.value.feedItemId,
     } satisfies GetAnnouncementByIdResponse)
   }

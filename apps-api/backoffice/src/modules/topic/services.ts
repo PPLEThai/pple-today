@@ -1,15 +1,41 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { HashTag } from '@pple-today/api-common/dtos'
+import { FileService } from '@pple-today/api-common/services'
 import { err, mapRepositoryError } from '@pple-today/api-common/utils'
 import { HashTagInTopic, Topic, TopicStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { GetTopicsResponse } from './models'
+import { GetTopicsResponse, ListTopicResponse } from './models'
 import { TopicRepository, TopicRepositoryPlugin } from './repository'
 
+import { FileServicePlugin } from '../../plugins/file'
+
 export class TopicService {
-  constructor(private readonly topicRepository: TopicRepository) {}
+  constructor(
+    private readonly topicRepository: TopicRepository,
+    private readonly fileService: FileService
+  ) {}
+
+  async getTopicRecommendation(userId: string) {
+    const topics = await this.topicRepository.getTopicRecommendation(userId)
+
+    if (topics.isErr()) {
+      return mapRepositoryError(topics.error)
+    }
+
+    return ok(
+      topics.value.map((topic) => ({
+        id: topic.id,
+        name: topic.name,
+        description: topic.description,
+        bannerImage: topic.bannerImagePath
+          ? this.fileService.getPublicFileUrl(topic.bannerImagePath)
+          : null,
+        hashTags: topic.hashTags,
+      }))
+    )
+  }
 
   async getTopics() {
     const topics = await this.topicRepository.getTopics()
@@ -19,6 +45,33 @@ export class TopicService {
     }
 
     return ok(this.mapTopicsToTopicsResponse(topics.value))
+  }
+
+  async getTopicById(topicId: string) {
+    const topic = await this.topicRepository.getTopicById(topicId)
+
+    if (topic.isErr()) {
+      return mapRepositoryError(topic.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.TOPIC_NOT_FOUND,
+          message: `Topic not found`,
+        },
+      })
+    }
+    return ok(this.mapTopicToTopicResponse(topic.value))
+  }
+
+  async listTopic(userId: string) {
+    const topics = await this.topicRepository.listTopicWithFollowedStatus(userId)
+    if (topics.isErr()) {
+      return mapRepositoryError(topics.error)
+    }
+    const response: ListTopicResponse = topics.value.map((topic) => ({
+      id: topic.id,
+      name: topic.name,
+      followed: topic.followers.length > 0,
+    }))
+    return ok(response)
   }
 
   async getFollowedTopics(userId: string) {
@@ -45,11 +98,11 @@ export class TopicService {
       })
     }
 
-    // cannot follow draft topic
-    if (topic.value?.status == TopicStatus.DRAFT) {
+    // cannot follow suspended topic
+    if (topic.value?.status == TopicStatus.SUSPENDED) {
       return err({
-        code: InternalErrorCode.TOPIC_CANNOT_FOLLOW_DRAFT,
-        message: `Cannot follow topic with status '${TopicStatus.DRAFT}'`,
+        code: InternalErrorCode.TOPIC_CANNOT_FOLLOW_SUSPENDED,
+        message: `Cannot follow topic with status SUSPENDED`,
       })
     }
 
@@ -94,38 +147,44 @@ export class TopicService {
     return ok()
   }
 
+  private mapTopicToTopicResponse(
+    topic: Topic & {
+      hashTags: (HashTagInTopic & {
+        hashTag: HashTag
+      })[]
+    }
+  ) {
+    return {
+      id: topic.id,
+      name: topic.name,
+      description: topic.description,
+      bannerImage: topic.bannerImagePath
+        ? this.fileService.getPublicFileUrl(topic.bannerImagePath)
+        : null,
+      createdAt: topic.createdAt,
+      updatedAt: topic.updatedAt,
+      hashTags: topic.hashTags.map(({ hashTag }) => ({
+        id: hashTag.id,
+        name: hashTag.name,
+        createdAt: hashTag.createdAt,
+        updatedAt: hashTag.updatedAt,
+      })),
+    }
+  }
+
   private mapTopicsToTopicsResponse(
     topics: (Topic & {
-      hashTagInTopics: (HashTagInTopic & {
+      hashTags: (HashTagInTopic & {
         hashTag: HashTag
       })[]
     })[]
   ): GetTopicsResponse {
-    return topics
-      .map((topic) => ({
-        id: topic.id,
-        name: topic.name,
-        description: topic.description,
-        bannerImage: topic.bannerImage,
-        status: topic.status,
-        createdAt: topic.createdAt,
-        updatedAt: topic.updatedAt,
-        hashTags: topic.hashTagInTopics
-          .map(({ hashTag }) => ({
-            id: hashTag.id,
-            name: hashTag.name,
-            status: hashTag.status,
-            createdAt: hashTag.createdAt,
-            updatedAt: hashTag.updatedAt,
-          }))
-          .filter(({ status }) => status === TopicStatus.PUBLISH),
-      }))
-      .filter(({ status }) => status === TopicStatus.PUBLISH)
+    return topics.map((topic) => this.mapTopicToTopicResponse(topic))
   }
 }
 
 export const TopicServicePlugin = new Elysia({ name: 'TopicService' })
-  .use(TopicRepositoryPlugin)
-  .decorate(({ topicRepository }) => ({
-    topicService: new TopicService(topicRepository),
+  .use([TopicRepositoryPlugin, FileServicePlugin])
+  .decorate(({ topicRepository, fileService }) => ({
+    topicService: new TopicService(topicRepository, fileService),
   }))

@@ -9,6 +9,7 @@ import * as R from 'remeda'
 import {
   CompleteOnboardingProfileBody,
   GetUserParticipationResponse,
+  GetUserRecommendationResponse,
   UpdateProfileBody,
 } from './models'
 import { ProfileRepository, ProfileRepositoryPlugin } from './repository'
@@ -22,6 +23,30 @@ export class ProfileService {
     private authRepository: AuthRepository,
     private fileService: FileService
   ) {}
+
+  async getUserRecommendation(userId: string) {
+    const result = await this.profileRepository.getUserRecommendation(userId)
+
+    if (result.isErr()) {
+      return mapRepositoryError(result.error)
+    }
+
+    const users: GetUserRecommendationResponse = result.value.map((user) => ({
+      id: user.id,
+      name: user.name,
+      profileImage: user.profileImagePath
+        ? this.fileService.getPublicFileUrl(user.profileImagePath)
+        : null,
+      address: user.address
+        ? {
+            province: user.address.province,
+            district: user.address.district,
+          }
+        : null,
+    }))
+
+    return ok(users)
+  }
 
   // TODO: Add election to recent activity or formulate new table for activity
   async getUserParticipation(userId: string) {
@@ -64,14 +89,15 @@ export class ProfileService {
     return ok({
       ...user.value,
       address: user.value.address ?? undefined,
-      profileImage: user.value.profileImage
-        ? this.fileService.getPublicFileUrl(user.value.profileImage)
+      profileImage: user.value.profileImagePath
+        ? this.fileService.getPublicFileUrl(user.value.profileImagePath)
         : undefined,
+      roles: user.value.roles.map((r) => r.role),
     })
   }
 
-  async followUser(userId: string, followedUserId: string) {
-    const result = await this.profileRepository.followUser(userId, followedUserId)
+  async followUser(userId: string, followingUserId: string) {
+    const result = await this.profileRepository.followUser(userId, followingUserId)
 
     if (result.isErr())
       return mapRepositoryError(result.error, {
@@ -88,8 +114,8 @@ export class ProfileService {
     return ok()
   }
 
-  async unfollowUser(userId: string, followedUserId: string) {
-    const result = await this.profileRepository.unfollowUser(userId, followedUserId)
+  async unfollowUser(userId: string, followingUserId: string) {
+    const result = await this.profileRepository.unfollowUser(userId, followingUserId)
 
     if (result.isErr())
       return mapRepositoryError(result.error, {
@@ -116,10 +142,10 @@ export class ProfileService {
 
     return ok(
       result.value.followers.map((user) => ({
-        ...user.followed,
-        address: user.followed.address ?? undefined,
-        profileImage: user.followed.profileImage
-          ? this.fileService.getPublicFileUrl(user.followed.profileImage)
+        ...user.following,
+        address: user.following.address ?? undefined,
+        profileImage: user.following.profileImagePath
+          ? this.fileService.getPublicFileUrl(user.following.profileImagePath)
           : undefined,
       }))
     )
@@ -128,7 +154,7 @@ export class ProfileService {
   async updateProfile(userId: string, userData: UpdateProfileBody) {
     const result = await this.profileRepository.updateUserProfile(userId, {
       name: userData.name,
-      profileImage: userData.profileImage,
+      profileImagePath: userData.profileImagePath,
       address: userData.address
         ? {
             connect: {
@@ -159,8 +185,8 @@ export class ProfileService {
     return ok({
       ...result.value,
       address: result.value.address ?? undefined,
-      profileImage: result.value.profileImage
-        ? this.fileService.getPublicFileUrl(result.value.profileImage)
+      profileImage: result.value.profileImagePath
+        ? this.fileService.getPublicFileUrl(result.value.profileImagePath)
         : undefined,
     })
   }
@@ -201,8 +227,8 @@ export class ProfileService {
     return ok({
       ...result.value,
       address: result.value.address ?? undefined,
-      profileImage: result.value.profileImage
-        ? this.fileService.getPublicFileUrl(result.value.profileImage)
+      profileImage: result.value.profileImagePath
+        ? this.fileService.getPublicFileUrl(result.value.profileImagePath)
         : undefined,
     })
   }

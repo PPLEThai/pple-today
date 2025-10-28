@@ -1,6 +1,6 @@
 {
   "name": "@client/backoffice",
-  "version": "0.2.1",
+  "version": "0.4.0",
   "description": "",
   "type": "module",
   "scripts": {
@@ -14,21 +14,27 @@
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.1",
     "@pple-today/api-client": "workspace:^",
+    "@pple-today/web-ui": "workspace:^",
     "@react-router/fs-routes": "^7.6.3",
     "@react-router/node": "^7.5.3",
     "@react-router/serve": "^7.5.3",
     "@tanstack/react-query": "^5.81.5",
+    "@tanstack/react-table": "^8.21.3",
+    "dayjs": "^1.11.13",
     "isbot": "^5.1.27",
+    "lucide-react": "^0.542.0",
     "oidc-client-ts": "^3.3.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "react-router": "^7.5.3"
+    "react-hook-form": "^7.62.0",
+    "react-router": "^7.5.3",
+    "zod": "^4.0.5"
   },
   "devDependencies": {
     "@api/backoffice": "workspace:^",
     "@pple-today/project-config": "workspace:^",
-    "@pple-today/ui": "workspace:^",
     "@react-router/dev": "^7.5.3",
     "@tailwindcss/vite": "^4.1.4",
     "@types/node": "^20",

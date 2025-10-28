@@ -1,25 +1,22 @@
-enum UserRole {
-    USER
-    REPRESENTATIVE
-    MEMBER
-    STAFF
-    OFFICIAL
+enum UserStatus {
+    ACTIVE
+    SUSPENDED
 }
 
 model User {
-    id           String   @id @default(cuid())
-    name         String
-    phoneNumber  String   @unique
-    profileImage String?
-    point        Int      @default(0)
-    role         UserRole @default(USER)
+    id               String  @id @default(cuid())
+    name             String
+    phoneNumber      String  @unique
+    profileImagePath String?
+    point            Int     @default(0)
 
     responsibleArea String?
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    onBoardingCompleted Boolean @default(false)
+    onBoardingCompleted Boolean    @default(false)
+    status              UserStatus @default(ACTIVE)
 
     numberOfPosts           Int @default(0)
     numberOfFollowers       Int @default(0)
@@ -34,18 +31,40 @@ model User {
 
     pollAnswers PollAnswer[]
 
-    followings     UserFollowsUser[]  @relation("Follows")
-    followers      UserFollowsUser[]  @relation("FollowedBy")
-    followedTopics UserFollowsTopic[]
-
-    eventAttendants EventAttendant[]
+    followings      UserFollowsUser[]  @relation("Following")
+    followers       UserFollowsUser[]  @relation("Follower")
+    followingTopics UserFollowsTopic[]
 
     voters      ElectionEligibleVoter[]
     voteRecords ElectionVoteRecord[]
 
     linkedPage FacebookPage?
 
-    feedItems     FeedItem[]
-    feedReactions FeedItemReaction[]
-    feedComments  FeedItemComment[]
+    feedItems      FeedItem[]
+    feedReactions  FeedItemReaction[]
+    feedComments   FeedItemComment[]
+    roles          UserRole[]
+    feedItemScores FeedItemScore[]
+
+    @@index([status])
+}
+
+model UserRole {
+    userId String
+    role   String
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@id([userId, role])
+    @@index([role])
+}
+
+model AdminUser {
+    id   String @id @default(cuid())
+    name String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    auditLogs AuditLog[]
 }

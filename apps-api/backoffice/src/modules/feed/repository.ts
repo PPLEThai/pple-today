@@ -2,9 +2,21 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FeedItem, FeedItemBaseContent } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { FeedItemReactionType, FeedItemType, Prisma, UserRole } from '@pple-today/database/prisma'
+import {
+  AnnouncementStatus,
+  FeedItemReactionType,
+  FeedItemType,
+  HashTagStatus,
+  PollStatus,
+  PostStatus,
+  Prisma,
+  TopicStatus,
+} from '@pple-today/database/prisma'
+import { get_candidate_feed_item } from '@pple-today/database/prisma/sql'
+import dayjs from 'dayjs'
 import Elysia from 'elysia'
 import { Ok, ok } from 'neverthrow'
+import * as R from 'remeda'
 import { sumBy } from 'remeda'
 
 import { GetFeedContentResponse } from './models'
@@ -18,7 +30,46 @@ export class FeedRepository {
     private fileService: FileService
   ) {}
 
-  private readonly constructFeedItemInclude = (userId?: string) =>
+  private constructResultWithMeta<T extends { id: string }>(
+    data: T[],
+    config: {
+      needShuffle?: boolean
+      limit: number
+      cursor?: string
+    }
+  ) {
+    return {
+      items: config.needShuffle ? R.shuffle(data) : data,
+      meta: {
+        cursor: {
+          next: data.length === config.limit ? data[config.limit - 1].id : null,
+          previous: config.cursor || null,
+        },
+      },
+    }
+  }
+
+  private ensureFeedItemExists = async (feedItemId: string, tx?: Prisma.TransactionClient) => {
+    const queryStm = {
+      where: {
+        id: feedItemId,
+        publishedAt: {
+          lte: new Date(),
+        },
+        OR: [
+          { post: { status: PostStatus.PUBLISHED } },
+          { poll: { status: PollStatus.PUBLISHED } },
+          {
+            announcement: { status: AnnouncementStatus.PUBLISHED },
+          },
+        ],
+      },
+    }
+    if (tx) await tx.feedItem.findUniqueOrThrow(queryStm)
+    else await this.prismaService.feedItem.findUniqueOrThrow(queryStm)
+  }
+
+  public constructFeedItemInclude = (userId?: string) =>
     ({
       author: {
         include: {
@@ -31,6 +82,9 @@ export class FeedRepository {
         },
       },
       announcement: {
+        where: {
+          status: AnnouncementStatus.PUBLISHED,
+        },
         include: {
           attachments: true,
         },
@@ -55,12 +109,23 @@ export class FeedRepository {
             },
           },
         },
+        where: {
+          status: PollStatus.PUBLISHED,
+        },
       },
       post: {
+        where: {
+          status: PostStatus.PUBLISHED,
+        },
         include: {
           hashTags: {
             include: {
               hashTag: true,
+            },
+            where: {
+              hashTag: {
+                status: HashTagStatus.PUBLISHED,
+              },
             },
           },
           attachments: true,
@@ -68,22 +133,22 @@ export class FeedRepository {
       },
     }) satisfies Prisma.FeedItemInclude
 
-  private transformToFeedItem(
+  public transformToFeedItem(
     rawFeedItem: Prisma.FeedItemGetPayload<{
       include: ReturnType<typeof FeedRepository.prototype.constructFeedItemInclude>
     }>
   ) {
     const feedItemBaseContent: FeedItemBaseContent = {
       id: rawFeedItem.id,
-      createdAt: rawFeedItem.createdAt,
       commentCount: rawFeedItem.numberOfComments,
       userReaction: rawFeedItem.reactions?.[0]?.type ?? null,
       reactions: rawFeedItem.reactionCounts,
+      publishedAt: rawFeedItem.publishedAt!,
       author: {
         id: rawFeedItem.author.id,
         name: rawFeedItem.author.name,
-        profileImage: rawFeedItem.author.profileImage
-          ? this.fileService.getPublicFileUrl(rawFeedItem.author.profileImage)
+        profileImage: rawFeedItem.author.profileImagePath
+          ? this.fileService.getPublicFileUrl(rawFeedItem.author.profileImagePath)
           : undefined,
         address: rawFeedItem.author.address ?? undefined,
       },
@@ -103,6 +168,7 @@ export class FeedRepository {
           type: FeedItemType.POLL,
           poll: {
             title: rawFeedItem.poll.title,
+            type: rawFeedItem.poll.type,
             options: rawFeedItem.poll.options.map((option) => ({
               id: option.id,
               title: option.title,
@@ -130,6 +196,7 @@ export class FeedRepository {
           announcement: {
             content: rawFeedItem.announcement.content ?? '',
             title: rawFeedItem.announcement.title,
+            type: rawFeedItem.announcement.type,
             attachments: rawFeedItem.announcement.attachments.map((attachment) =>
               this.fileService.getPublicFileUrl(attachment.filePath)
             ),
@@ -160,7 +227,7 @@ export class FeedRepository {
               thumbnailUrl: image.thumbnailPath
                 ? this.fileService.getPublicFileUrl(image.thumbnailPath)
                 : undefined,
-              url: this.fileService.getPublicFileUrl(image.url),
+              url: this.fileService.getPublicFileUrl(image.attachmentPath),
             })),
           },
         } satisfies GetFeedContentResponse)
@@ -172,23 +239,38 @@ export class FeedRepository {
   async listTopicFeedItems({
     userId,
     topicId,
-    page,
+    cursor,
     limit,
   }: {
     userId?: string
     topicId: string
-    page: number
+    cursor?: string
     limit: number
   }) {
-    const skip = Math.max((page - 1) * limit, 0)
     const rawFeedItems = await fromRepositoryPromise(
       this.prismaService.feedItem.findMany({
         take: limit,
-        skip,
-        orderBy: {
-          createdAt: 'desc',
-        },
+        skip: cursor ? 1 : 0,
+        cursor: cursor
+          ? {
+              id: cursor,
+            }
+          : undefined,
+        orderBy: [
+          {
+            publishedAt: 'desc',
+          },
+          {
+            id: 'desc',
+          },
+        ],
         where: {
+          type: {
+            not: FeedItemType.ANNOUNCEMENT,
+          },
+          publishedAt: {
+            lte: new Date(),
+          },
           OR: [
             {
               post: {
@@ -200,66 +282,11 @@ export class FeedRepository {
                           topicId,
                         },
                       },
+                      status: HashTagStatus.PUBLISHED,
                     },
                   },
                 },
-              },
-            },
-            {
-              poll: {
-                topics: {
-                  some: {
-                    topicId,
-                  },
-                },
-              },
-            },
-          ],
-        },
-        include: this.constructFeedItemInclude(userId),
-      })
-    )
-
-    if (rawFeedItems.isErr()) return err(rawFeedItems.error)
-
-    const feedItems = rawFeedItems.value.map((item) => this.transformToFeedItem(item))
-    const feedItemErr = feedItems.find((item) => item.isErr())
-
-    if (feedItemErr) {
-      return err(feedItemErr.error)
-    }
-
-    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
-  }
-
-  async listHashTagFeedItems({
-    userId,
-    hashTagId,
-    page,
-    limit,
-  }: {
-    userId?: string
-    hashTagId: string
-    page: number
-    limit: number
-  }) {
-    const skip = Math.max((page - 1) * limit, 0)
-    const rawFeedItems = await fromRepositoryPromise(
-      this.prismaService.feedItem.findMany({
-        take: limit,
-        skip,
-        orderBy: {
-          createdAt: 'desc',
-        },
-        where: {
-          OR: [
-            {
-              post: {
-                hashTags: {
-                  some: {
-                    hashTagId,
-                  },
-                },
+                status: PostStatus.PUBLISHED,
               },
             },
             {
@@ -267,14 +294,12 @@ export class FeedRepository {
                 topics: {
                   some: {
                     topic: {
-                      hashTagInTopics: {
-                        some: {
-                          hashTagId,
-                        },
-                      },
+                      id: topicId,
+                      status: TopicStatus.PUBLISHED,
                     },
                   },
                 },
+                status: PollStatus.PUBLISHED,
               },
             },
           ],
@@ -292,18 +317,87 @@ export class FeedRepository {
       return err(feedItemErr.error)
     }
 
-    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
+    const transformedFeedItems = feedItems.map(
+      (feedItem) => (feedItem as Ok<FeedItem, never>).value
+    )
+
+    return ok(
+      this.constructResultWithMeta(transformedFeedItems, {
+        needShuffle: false,
+        limit,
+        cursor,
+      })
+    )
   }
 
-  async listFeedItems({ userId, page, limit }: { userId?: string; page: number; limit: number }) {
-    const skip = Math.max((page - 1) * limit, 0)
+  async listHashTagFeedItems({
+    userId,
+    hashTagId,
+    cursor,
+    limit,
+  }: {
+    userId?: string
+    hashTagId: string
+    cursor?: string
+    limit: number
+  }) {
     const rawFeedItems = await fromRepositoryPromise(
       this.prismaService.feedItem.findMany({
-        orderBy: {
-          createdAt: 'desc',
-        },
-        skip,
         take: limit,
+        skip: cursor ? 1 : 0,
+        cursor: cursor
+          ? {
+              id: cursor,
+            }
+          : undefined,
+        orderBy: [
+          {
+            publishedAt: 'desc',
+          },
+          {
+            id: 'desc',
+          },
+        ],
+        where: {
+          publishedAt: {
+            lte: new Date(),
+          },
+          OR: [
+            {
+              post: {
+                hashTags: {
+                  some: {
+                    hashTag: {
+                      id: hashTagId,
+                      status: HashTagStatus.PUBLISHED,
+                    },
+                  },
+                },
+                status: PostStatus.PUBLISHED,
+              },
+            },
+            {
+              poll: {
+                topics: {
+                  some: {
+                    topic: {
+                      hashTags: {
+                        some: {
+                          hashTagId,
+                        },
+                      },
+                      status: TopicStatus.PUBLISHED,
+                    },
+                  },
+                },
+                status: PollStatus.PUBLISHED,
+              },
+            },
+          ],
+          type: {
+            not: FeedItemType.ANNOUNCEMENT,
+          },
+        },
         include: this.constructFeedItemInclude(userId),
       })
     )
@@ -317,11 +411,163 @@ export class FeedRepository {
       return err(feedItemErr.error)
     }
 
-    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
+    const transformedFeedItems = feedItems.map(
+      (feedItem) => (feedItem as Ok<FeedItem, never>).value
+    )
+
+    return ok(
+      this.constructResultWithMeta(transformedFeedItems, {
+        needShuffle: false,
+        limit,
+        cursor,
+      })
+    )
   }
 
-  async listFeedItemsByUserId(userId: string | undefined, query: { page: number; limit: number }) {
-    const skip = Math.max((query.page - 1) * query.limit, 0)
+  async listFeedItems({
+    userId,
+    cursor,
+    limit,
+  }: {
+    userId?: string
+    cursor?: string
+    limit: number
+  }) {
+    const rawFeedItems = await fromRepositoryPromise(async () => {
+      if (!userId) {
+        return await this.prismaService.feedItem.findMany({
+          where: {
+            type: {
+              not: FeedItemType.ANNOUNCEMENT,
+            },
+            publishedAt: {
+              lte: new Date(),
+            },
+          },
+          orderBy: [
+            {
+              publishedAt: 'desc',
+            },
+            {
+              id: 'desc',
+            },
+          ],
+          skip: cursor ? 1 : 0,
+          cursor: cursor
+            ? {
+                id: cursor,
+              }
+            : undefined,
+          take: limit,
+          include: this.constructFeedItemInclude(userId),
+        })
+      }
+
+      const existingFeedItemScore = await this.prismaService.feedItemScore.findFirst({
+        where: { userId, expiresAt: { gt: new Date() } },
+        select: { feedItemId: true },
+      })
+
+      if (!existingFeedItemScore) {
+        const candidateFeedItem = await this.prismaService.$queryRawTyped(
+          get_candidate_feed_item(userId)
+        )
+
+        const candidateFeedItemIds = R.pipe(
+          candidateFeedItem,
+          R.filter((item) => item.feed_item_id !== null && item.score !== null),
+          R.map((item) => ({
+            feedItemId: item.feed_item_id!,
+            score: item.score!,
+            expiresAt: dayjs().add(1, 'hour').toDate(),
+          }))
+        )
+
+        await this.prismaService.user.update({
+          where: { id: userId },
+          data: {
+            feedItemScores: { deleteMany: {}, createMany: { data: candidateFeedItemIds } },
+          },
+        })
+      }
+
+      const feedItemScore = await this.prismaService.feedItemScore.findMany({
+        where: {
+          userId,
+          expiresAt: { gt: new Date() },
+          feedItem: {
+            publishedAt: {
+              lte: new Date(),
+            },
+            OR: [
+              { post: { status: PostStatus.PUBLISHED } },
+              { poll: { status: PollStatus.PUBLISHED } },
+              {
+                announcement: { status: AnnouncementStatus.PUBLISHED },
+              },
+            ],
+          },
+        },
+        select: {
+          feedItem: {
+            include: this.constructFeedItemInclude(userId),
+          },
+        },
+        orderBy: [
+          {
+            score: 'desc',
+          },
+          {
+            userId: 'desc',
+          },
+          {
+            feedItemId: 'desc',
+          },
+        ],
+        take: limit,
+        skip: cursor ? 1 : 0,
+        cursor: cursor
+          ? {
+              userId_feedItemId: {
+                userId,
+                feedItemId: cursor,
+              },
+            }
+          : undefined,
+      })
+
+      return R.pipe(
+        feedItemScore,
+        R.map((item) => item.feedItem)
+      )
+    })
+
+    if (rawFeedItems.isErr()) return err(rawFeedItems.error)
+
+    const feedItems = rawFeedItems.value.map((item) => this.transformToFeedItem(item))
+    const feedItemErr = feedItems.find((item) => item.isErr())
+
+    if (feedItemErr) {
+      return err(feedItemErr.error)
+    }
+
+    const transformedFeedItems = feedItems.map(
+      (feedItem) => (feedItem as Ok<FeedItem, never>).value
+    )
+
+    return ok(
+      this.constructResultWithMeta(transformedFeedItems, {
+        needShuffle: true,
+        limit,
+        cursor,
+      })
+    )
+  }
+
+  async listFeedItemsByUserId(
+    userId: string | undefined,
+    query: { cursor?: string; limit: number }
+  ) {
     const rawFeedItems = await fromRepositoryPromise(async () => {
       await this.prismaService.user.findUniqueOrThrow({
         where: { id: userId },
@@ -329,18 +575,29 @@ export class FeedRepository {
       })
 
       return await this.prismaService.feedItem.findMany({
-        orderBy: {
-          createdAt: 'desc',
-        },
-        skip,
+        orderBy: [
+          {
+            publishedAt: 'desc',
+          },
+          {
+            id: 'desc',
+          },
+        ],
+        skip: query.cursor ? 1 : 0,
         take: query.limit,
+        cursor: query.cursor ? { id: query.cursor } : undefined,
         where: {
           authorId: userId,
-          author: {
-            role: {
-              not: UserRole.OFFICIAL,
-            },
+          publishedAt: {
+            lte: new Date(),
           },
+          type: {
+            not: FeedItemType.ANNOUNCEMENT,
+          },
+          OR: [
+            { post: { status: PostStatus.PUBLISHED } },
+            { poll: { status: PollStatus.PUBLISHED } },
+          ],
         },
         include: this.constructFeedItemInclude(userId),
       })
@@ -355,19 +612,146 @@ export class FeedRepository {
       return err(feedItemErr.error)
     }
 
-    return ok(feedItems.map((feedItem) => (feedItem as Ok<FeedItem, never>).value))
+    const transformedFeedItems = feedItems.map(
+      (feedItem) => (feedItem as Ok<FeedItem, never>).value
+    )
+
+    return ok(
+      this.constructResultWithMeta(transformedFeedItems, {
+        needShuffle: false,
+        limit: query.limit,
+        cursor: query.cursor,
+      })
+    )
   }
 
   async getFeedItemById(feedItemId: string, userId?: string) {
     const rawFeedItem = await fromRepositoryPromise(
       this.prismaService.feedItem.findUniqueOrThrow({
-        where: { id: feedItemId },
+        where: {
+          id: feedItemId,
+          publishedAt: {
+            lte: new Date(),
+          },
+          OR: [
+            { post: { status: PostStatus.PUBLISHED } },
+            { poll: { status: PollStatus.PUBLISHED } },
+            {
+              announcement: { status: AnnouncementStatus.PUBLISHED },
+            },
+          ],
+        },
         include: this.constructFeedItemInclude(userId),
       })
     )
     if (rawFeedItem.isErr()) return err(rawFeedItem.error)
 
     return this.transformToFeedItem(rawFeedItem.value)
+  }
+
+  async listFollowingFeedItems(
+    userId: string,
+    {
+      cursor,
+      limit,
+    }: {
+      cursor?: string
+      limit: number
+    }
+  ) {
+    const rawFeedItems = await fromRepositoryPromise(
+      this.prismaService.feedItem.findMany({
+        take: limit,
+        skip: cursor ? 1 : 0,
+        cursor: cursor
+          ? {
+              id: cursor,
+            }
+          : undefined,
+        orderBy: [
+          {
+            publishedAt: 'desc',
+          },
+          {
+            id: 'desc',
+          },
+        ],
+        include: this.constructFeedItemInclude(userId),
+        where: {
+          publishedAt: {
+            lte: new Date(),
+          },
+          OR: [
+            {
+              author: {
+                followers: {
+                  some: {
+                    followerId: userId,
+                  },
+                },
+              },
+              post: {
+                status: PostStatus.PUBLISHED,
+                hashTags: {
+                  some: {
+                    hashTag: {
+                      hashTagInTopics: {
+                        some: {
+                          topic: {
+                            followers: {
+                              some: {
+                                userId,
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            {
+              poll: {
+                status: PollStatus.PUBLISHED,
+                topics: {
+                  some: {
+                    topic: {
+                      followers: {
+                        some: {
+                          userId,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      })
+    )
+
+    if (rawFeedItems.isErr()) return err(rawFeedItems.error)
+
+    const feedItems = rawFeedItems.value.map((item) => this.transformToFeedItem(item))
+    const feedItemErr = feedItems.find((item) => item.isErr())
+
+    if (feedItemErr) {
+      return err(feedItemErr.error)
+    }
+
+    const transformedFeedItems = feedItems.map(
+      (feedItem) => (feedItem as Ok<FeedItem, never>).value
+    )
+
+    return ok(
+      this.constructResultWithMeta(transformedFeedItems, {
+        needShuffle: false,
+        limit,
+        cursor,
+      })
+    )
   }
 
   async getFeedItemReactionByUserId({
@@ -377,8 +761,10 @@ export class FeedRepository {
     feedItemId: string
     userId: string
   }) {
-    return await fromRepositoryPromise(
-      this.prismaService.feedItemReaction.findUnique({
+    return await fromRepositoryPromise(async () => {
+      await this.ensureFeedItemExists(feedItemId)
+
+      return await this.prismaService.feedItemReaction.findUnique({
         where: {
           userId_feedItemId: {
             userId,
@@ -389,7 +775,7 @@ export class FeedRepository {
           type: true,
         },
       })
-    )
+    })
   }
 
   async upsertFeedItemReaction({
@@ -405,6 +791,8 @@ export class FeedRepository {
   }) {
     return await fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
+        await this.ensureFeedItemExists(feedItemId, tx)
+
         const existingFeedItemReaction = await tx.feedItemReaction.findUnique({
           where: {
             userId_feedItemId: {
@@ -476,7 +864,7 @@ export class FeedRepository {
                 select: {
                   id: true,
                   name: true,
-                  profileImage: true,
+                  profileImagePath: true,
                 },
               },
             },
@@ -499,6 +887,8 @@ export class FeedRepository {
   async deleteFeedItemReaction({ feedItemId, userId }: { feedItemId: string; userId: string }) {
     return await fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
+        await this.ensureFeedItemExists(feedItemId, tx)
+
         const reaction = await tx.feedItemReaction.delete({
           where: {
             userId_feedItemId: {
@@ -530,11 +920,28 @@ export class FeedRepository {
               id: query.cursor,
             }
           : undefined,
-        orderBy: {
-          createdAt: 'desc',
-        },
+        orderBy: [
+          {
+            createdAt: 'desc',
+          },
+          {
+            id: 'desc',
+          },
+        ],
         where: {
           feedItemId,
+          feedItem: {
+            publishedAt: {
+              lte: new Date(),
+            },
+            OR: [
+              { post: { status: PostStatus.PUBLISHED } },
+              { poll: { status: PollStatus.PUBLISHED } },
+              {
+                announcement: { status: AnnouncementStatus.PUBLISHED },
+              },
+            ],
+          },
           OR: [{ isPrivate: false }, { userId: query.userId }],
         },
         select: {
@@ -544,7 +951,7 @@ export class FeedRepository {
             select: {
               id: true,
               name: true,
-              profileImage: true,
+              profileImagePath: true,
               address: {
                 select: {
                   province: true,
@@ -572,35 +979,39 @@ export class FeedRepository {
     isPrivate: boolean
   }) {
     const result = await fromRepositoryPromise(
-      this.prismaService.$transaction([
-        this.prismaService.feedItemComment.create({
-          data: {
-            feedItemId,
-            userId,
-            content,
-            isPrivate,
-          },
-          select: {
-            id: true,
-            content: true,
-            isPrivate: true,
-            createdAt: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-                profileImage: true,
+      this.prismaService.$transaction(async (tx) => {
+        await this.ensureFeedItemExists(feedItemId, tx)
+
+        return await Promise.all([
+          tx.feedItemComment.create({
+            data: {
+              feedItemId,
+              userId,
+              content,
+              isPrivate,
+            },
+            select: {
+              id: true,
+              content: true,
+              isPrivate: true,
+              createdAt: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  profileImagePath: true,
+                },
               },
             },
-          },
-        }),
-        this.prismaService.feedItem.update({
-          where: { id: feedItemId },
-          data: {
-            numberOfComments: { increment: 1 },
-          },
-        }),
-      ])
+          }),
+          tx.feedItem.update({
+            where: { id: feedItemId },
+            data: {
+              numberOfComments: { increment: 1 },
+            },
+          }),
+        ])
+      })
     )
 
     if (result.isErr()) {
@@ -622,15 +1033,19 @@ export class FeedRepository {
     content: string
   }) {
     return await fromRepositoryPromise(
-      this.prismaService.feedItemComment.updateMany({
-        where: {
-          id: commentId,
-          feedItemId,
-          userId,
-        },
-        data: {
-          content,
-        },
+      this.prismaService.$transaction(async (tx) => {
+        await this.ensureFeedItemExists(feedItemId, tx)
+
+        return await tx.feedItemComment.update({
+          where: {
+            id: commentId,
+            feedItemId,
+            userId,
+          },
+          data: {
+            content,
+          },
+        })
       })
     )
   }
@@ -645,12 +1060,18 @@ export class FeedRepository {
     feedItemId: string
   }) {
     return await fromRepositoryPromise(
-      this.prismaService.feedItemComment.deleteMany({
-        where: {
-          id: commentId,
-          userId,
-          feedItemId,
-        },
+      this.prismaService.$transaction(async (tx) => {
+        await this.ensureFeedItemExists(feedItemId, tx)
+
+        return await this.prismaService.feedItemComment.delete({
+          where: {
+            id: commentId,
+            userId,
+            feedItem: {
+              id: feedItemId,
+            },
+          },
+        })
       })
     )
   }
@@ -658,7 +1079,7 @@ export class FeedRepository {
   async checkTopicExists(topicId: string) {
     return await fromRepositoryPromise(
       this.prismaService.topic.findUniqueOrThrow({
-        where: { id: topicId },
+        where: { id: topicId, status: TopicStatus.PUBLISHED },
       })
     )
   }
@@ -666,7 +1087,7 @@ export class FeedRepository {
   async checkHashTagExists(hashTagId: string) {
     return await fromRepositoryPromise(
       this.prismaService.hashTag.findUniqueOrThrow({
-        where: { id: hashTagId },
+        where: { id: hashTagId, status: HashTagStatus.PUBLISHED },
       })
     )
   }

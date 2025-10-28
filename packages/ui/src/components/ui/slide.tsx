@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { NativeScrollEvent, ScrollView, View } from 'react-native'
+import { Dimensions, NativeScrollEvent, ScrollView, View } from 'react-native'
 import Animated, {
   interpolate,
   interpolateColor,
@@ -22,6 +22,7 @@ interface SlideContextValue {
   scrollViewWidth: number
   setScrollViewWidth: React.Dispatch<React.SetStateAction<number>>
   paddingHorizontal: number
+  isLoading: boolean
 }
 const SlideContext = React.createContext<SlideContextValue | null>(null)
 const SlideProvider = SlideContext.Provider
@@ -33,35 +34,40 @@ const useSlideContext = () => {
   return context
 }
 export function Slide({
-  gap,
+  gap = 0,
   count,
-  itemWidth,
+  itemWidth = 'container',
   children,
-  paddingHorizontal,
+  paddingHorizontal = 0,
   className,
+  isLoading = false,
 }: {
-  gap: number
+  gap?: number
   count: number
-  itemWidth: number
+  itemWidth?: number | 'container'
   children: React.ReactNode
-  paddingHorizontal: number
+  paddingHorizontal?: number
   className?: string
+  isLoading?: boolean
 }) {
   const [currentPage, setCurrentPage] = React.useState(0)
-  const [scrollViewWidth, setScrollViewWidth] = React.useState(0)
+  const [scrollViewWidth, setScrollViewWidth] = React.useState(Dimensions.get('window').width)
   const scroll = useSharedValue(0)
+  const itemWidthValue =
+    itemWidth === 'container' ? scrollViewWidth - paddingHorizontal * 2 : itemWidth
   return (
     <SlideProvider
       value={{
         gap,
         count,
-        itemWidth,
+        itemWidth: itemWidthValue,
         currentPage,
         setCurrentPage,
         scroll,
         scrollViewWidth,
         setScrollViewWidth,
         paddingHorizontal,
+        isLoading,
       }}
     >
       <View className={cn('w-full flex flex-col gap-4', className)}>{children}</View>
@@ -73,6 +79,9 @@ export function SlideIndicators() {
   const { count } = useSlideContext()
   // TODO: calculate number of indicators based on the number of items and width of the carousel
   // number of indicators might not equal the number of images since in large screen it might show more than one item
+  if (count <= 1) {
+    return null
+  }
   return (
     <View className="flex flex-row items-center justify-center gap-1">
       {Array.from({ length: count }).map((_, index) => (
@@ -83,7 +92,8 @@ export function SlideIndicators() {
 }
 
 export function SlideIndicator({ index }: { index: number }) {
-  const { scroll, itemWidth, count, scrollViewWidth, gap, paddingHorizontal } = useSlideContext()
+  const { scroll, itemWidth, count, scrollViewWidth, gap, paddingHorizontal, isLoading } =
+    useSlideContext()
   const animatedStyle = useAnimatedStyle(() => {
     const itemWidthWithGap = itemWidth + gap
     const getSnapPoint = (i: number) => {
@@ -106,7 +116,9 @@ export function SlideIndicator({ index }: { index: number }) {
     }
     return {
       width: interpolate(scroll.value, snapRange, widthRange, 'clamp'),
-      backgroundColor: interpolateColor(scroll.value, snapRange, colorRange),
+      backgroundColor: isLoading
+        ? '#F1F5F9'
+        : interpolateColor(scroll.value, snapRange, colorRange),
     }
   })
   return <Animated.View style={animatedStyle} className="h-1.5 rounded-full" />

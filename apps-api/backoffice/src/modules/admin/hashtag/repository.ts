@@ -2,38 +2,55 @@ import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
-import { CreateHashtagBody, UpdateHashtagBody } from './models'
+import { CreateHashtagBody, GetHashtagsQuery, UpdateHashtagBody } from './models'
 
 import { PrismaServicePlugin } from '../../../plugins/prisma'
 
 export class AdminHashtagRepository {
   constructor(private prismaService: PrismaService) {}
 
-  async getHashtags(
-    query: { limit: number; page: number } = {
-      limit: 10,
-      page: 1,
-    }
-  ) {
+  async getHashtags(query: GetHashtagsQuery = { page: 1 }) {
     const { limit, page } = query
-    const skip = Math.max((page - 1) * limit, 0)
+    const skip = limit !== undefined ? Math.max((page - 1) * limit, 0) : 0
 
-    return fromRepositoryPromise(
-      this.prismaService.hashTag.findMany({
-        select: {
-          id: true,
-          name: true,
-          status: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-        take: limit,
-        skip,
-        orderBy: {
-          createdAt: 'desc',
-        },
-      })
-    )
+    return fromRepositoryPromise(async () => {
+      const [data, count] = await Promise.all([
+        this.prismaService.hashTag.findMany({
+          select: {
+            id: true,
+            name: true,
+            status: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+          take: limit,
+          skip,
+          orderBy: {
+            createdAt: 'desc',
+          },
+          ...(query.search && {
+            where: {
+              name: {
+                contains: query.search,
+                mode: 'insensitive',
+              },
+            },
+          }),
+        }),
+        this.prismaService.hashTag.count({
+          ...(query.search && {
+            where: {
+              name: {
+                contains: query.search,
+                mode: 'insensitive',
+              },
+            },
+          }),
+        }),
+      ])
+
+      return { data, meta: { count } }
+    })
   }
 
   async getHashtagById(hashtagId: string) {
@@ -56,7 +73,6 @@ export class AdminHashtagRepository {
       this.prismaService.hashTag.create({
         data: {
           name: data.name,
-          status: data.status,
         },
       })
     )

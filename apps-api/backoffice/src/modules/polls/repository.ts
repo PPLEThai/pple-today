@@ -1,6 +1,6 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { FeedItemType, Prisma } from '@pple-today/database/prisma'
+import { FeedItemType, PollStatus, Prisma } from '@pple-today/database/prisma'
 import { Elysia } from 'elysia'
 
 import { PrismaServicePlugin } from '../../plugins/prisma'
@@ -22,8 +22,8 @@ export class PollsRepository {
           select: {
             id: true,
             name: true,
-            profileImage: true,
-            role: true,
+            profileImagePath: true,
+            roles: true,
             district: true,
           },
         },
@@ -56,7 +56,11 @@ export class PollsRepository {
       const polls = []
 
       // Fetch total poll count
-      const totalPollCount = await this.prismaService.poll.count()
+      const totalPollCount = await this.prismaService.poll.count({
+        where: {
+          status: PollStatus.PUBLISHED,
+        },
+      })
 
       // If skip is greater than total count, return empty array
       if (totalPollCount <= skip) {
@@ -68,9 +72,13 @@ export class PollsRepository {
         where: {
           type: FeedItemType.POLL,
           poll: {
+            status: PollStatus.PUBLISHED,
             endAt: {
-              gte: new Date(),
+              gt: new Date(),
             },
+          },
+          publishedAt: {
+            lte: new Date(),
           },
         },
       })
@@ -81,9 +89,13 @@ export class PollsRepository {
           where: {
             type: FeedItemType.POLL,
             poll: {
+              status: PollStatus.PUBLISHED,
               endAt: {
-                gte: new Date(),
+                gt: new Date(),
               },
+            },
+            publishedAt: {
+              lte: new Date(),
             },
           },
           take: limit,
@@ -104,9 +116,13 @@ export class PollsRepository {
         const endedPolls = await this.prismaService.feedItem.findMany({
           where: {
             type: FeedItemType.POLL,
+            publishedAt: {
+              lte: new Date(),
+            },
             poll: {
+              status: PollStatus.PUBLISHED,
               endAt: {
-                lt: new Date(),
+                lte: new Date(),
               },
             },
           },
@@ -127,7 +143,13 @@ export class PollsRepository {
     return fromRepositoryPromise(async () => {
       const existingVote = await this.prismaService.poll.findFirstOrThrow({
         where: {
-          feedItemId: pollId,
+          feedItem: {
+            id: pollId,
+            publishedAt: {
+              lte: new Date(),
+            },
+          },
+          status: PollStatus.PUBLISHED,
         },
         select: {
           type: true,
@@ -167,6 +189,15 @@ export class PollsRepository {
           id: optionId,
           poll: {
             feedItemId: pollId,
+            status: PollStatus.PUBLISHED,
+            endAt: {
+              gt: new Date(),
+            },
+            feedItem: {
+              publishedAt: {
+                lte: new Date(),
+              },
+            },
           },
         },
         data: {
@@ -192,7 +223,18 @@ export class PollsRepository {
       this.prismaService.pollOption.update({
         where: {
           id: optionId,
-          pollId,
+          poll: {
+            feedItemId: pollId,
+            status: PollStatus.PUBLISHED,
+            endAt: {
+              gt: new Date(),
+            },
+            feedItem: {
+              publishedAt: {
+                lte: new Date(),
+              },
+            },
+          },
         },
         data: {
           votes: {

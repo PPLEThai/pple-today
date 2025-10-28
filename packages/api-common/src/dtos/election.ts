@@ -1,4 +1,4 @@
-import { ElectionType } from '@pple-today/database/prisma'
+import { ElectionMode, ElectionType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const ElectionStatus = t.Enum({
@@ -14,7 +14,11 @@ export const ElectionInfo = t.Object({
   name: t.String(),
   description: t.Nullable(t.String()),
   location: t.Nullable(t.String()),
+  locationMapUrl: t.Nullable(t.String()),
+  province: t.Nullable(t.String()),
+  district: t.Nullable(t.String()),
   type: t.Enum(ElectionType),
+  mode: t.Enum(ElectionMode),
   isCancelled: t.Boolean(),
   encryptionPublicKey: t.Nullable(t.String()),
 
@@ -28,10 +32,6 @@ export const ElectionInfo = t.Object({
 
   createdAt: t.Date(),
   updatedAt: t.Date(),
-
-  status: ElectionStatus,
-  votePercentage: t.Number(),
-  isRegistered: t.Nullable(t.Boolean()),
 })
 export type ElectionInfo = Static<typeof ElectionInfo>
 
@@ -40,9 +40,17 @@ export const ElectionCandidate = t.Object({
   electionId: t.String(),
   name: t.String(),
   description: t.Nullable(t.String()),
-  profileImage: t.Nullable(t.String()),
+  profileImagePath: t.Nullable(t.String()),
   number: t.Nullable(t.Number()),
   createdAt: t.Date(),
   updatedAt: t.Date(),
 })
 export type ElectionCandidate = Static<typeof ElectionCandidate>
+
+export const ElectionEligibleVoter = t.Object({
+  id: t.String(),
+  name: t.String(),
+  phoneNumber: t.String(),
+  profileImage: t.Nullable(t.String({ format: 'uri' })),
+})
+export type ElectionEligibleVoter = Static<typeof ElectionEligibleVoter>

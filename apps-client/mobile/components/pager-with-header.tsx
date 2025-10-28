@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import {
+  findNodeHandle,
   LayoutChangeEvent,
   NativeScrollEvent,
   Platform,
@@ -24,6 +25,7 @@ import Animated, {
   runOnUI,
   scrollTo,
   SharedValue,
+  useAnimatedReaction,
   useAnimatedRef,
   useAnimatedStyle,
   useEvent,
@@ -31,6 +33,7 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated'
 
+import { clsx, cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 
 import { ScrollContextProvider } from '@app/libs/scroll-context'
@@ -68,7 +71,11 @@ const AnimatedExpoScrollForwarderView = Animated.createAnimatedComponent(ExpoScr
 // disabling it in `app.config.ts` fixes the issue on native build
 // https://github.com/software-mansion/react-native-reanimated/issues/6992
 
-export function Pager({ children }: { children: React.ReactNode }) {
+export interface PagerRef {
+  scrollToTop: () => void
+}
+
+export function Pager({ children, ref }: { children: React.ReactNode; ref?: React.Ref<PagerRef> }) {
   // const layout = useWindowDimensions()
   const [currentPage, setCurrentPage] = React.useState(0)
   const [isHeaderReady, setHeaderReady] = React.useState(false)
@@ -141,6 +148,27 @@ export function Pager({ children }: { children: React.ReactNode }) {
   )
   const [scrollViewTag, setScrollViewTag] = React.useState<number | null>(null)
 
+  const scrollToTop = React.useCallback(() => {
+    'worklet'
+    const scrollEl = scrollRefs.get()?.[currentPage]
+    if (scrollEl) {
+      scrollTo(scrollEl, 0, 0, true)
+    }
+  }, [scrollRefs, currentPage])
+
+  const scrollToTopJS = React.useCallback(() => runOnUI(scrollToTop)(), [scrollToTop])
+  React.useImperativeHandle(ref, () => ({
+    scrollToTop: scrollToTopJS,
+  }))
+
+  const scrollToTopTabBar = React.useCallback(() => {
+    'worklet'
+    const scrollEl = scrollRefs.get()?.[currentPage]
+    if (scrollEl) {
+      scrollTo(scrollEl, 0, headerOnlyHeight, true)
+    }
+  }, [scrollRefs, currentPage, headerOnlyHeight])
+
   return (
     <PagerContext.Provider
       value={{
@@ -158,11 +186,12 @@ export function Pager({ children }: { children: React.ReactNode }) {
         adjustScrollForOtherPages,
         isHeaderReady,
         setHeaderReady,
+        scrollToTopTabBar,
       }}
     >
       <PagerTabBarProvider>
         <ScrollContextProvider onScroll={onScrollWorklet}>
-          <View className="flex-1 bg-base-bg-default">
+          <View className="flex-1">
             {/* PanGestureRecognizer only works for one view so we have to move it up to the parent */}
             {Platform.OS === 'ios' ? (
               <ExpoScrollForwarderView scrollViewTag={scrollViewTag} style={{ flex: 1 }}>
@@ -193,6 +222,7 @@ interface PagerContextValue {
   adjustScrollForOtherPages: (scrollState: 'idle' | 'dragging' | 'settling') => void
   isHeaderReady: boolean
   setHeaderReady: React.Dispatch<React.SetStateAction<boolean>>
+  scrollToTopTabBar: () => void
 }
 const PagerContext = React.createContext<PagerContextValue | null>(null)
 
@@ -269,7 +299,11 @@ export function PagerContentView({ children }: { children: React.ReactNode }) {
 }
 
 interface PagerTabBarContextValue {
+  indexToOffset: (index: number) => number
+  containerSize: SharedValue<number>
+  tabBarScrollElRef: AnimatedRef<ScrollView>
   dragProgress: SharedValue<number>
+  dragState: SharedValue<'idle' | 'settling' | 'dragging'>
   handlePageScroll: EventHandlerProcessed<object, never>
   tabListSize: SharedValue<number>
   tabItemLayouts: SharedValue<{ x: number; width: number }[]>
@@ -282,14 +316,64 @@ interface PagerTabBarProviderProps {
   children: React.ReactNode
 }
 function PagerTabBarProvider({ children }: PagerTabBarProviderProps) {
-  const { setCurrentPage, pagerViewRef, adjustScrollForOtherPages } = usePagerContext()
+  const {
+    setCurrentPage,
+    pagerViewRef,
+    adjustScrollForOtherPages,
+    currentPage,
+    scrollToTopTabBar,
+  } = usePagerContext()
+
+  const containerSize = useSharedValue(0)
+  const tabListSize = useSharedValue(0)
+  const tabItemLayouts = useSharedValue<{ x: number; width: number }[]>([])
+  const onTabLayout = React.useCallback(
+    (i: number, layout: { x: number; width: number }) => {
+      'worklet'
+      tabItemLayouts.modify((tab) => {
+        tab[i] = layout
+        return tab
+      })
+    },
+    [tabItemLayouts]
+  )
+  const tabBarScrollElRef = useAnimatedRef<ScrollView>()
+  const indexToOffset = React.useCallback(
+    (index: number) => {
+      'worklet'
+      const itemsLength = tabItemLayouts.get().length
+      const containerWidth = containerSize.get()
+      const screenSize = tabListSize.get()
+      // assume equal width for each item
+      // https://github.com/bluesky-social/social-app/pull/6868/files
+      const scrollableWidth = screenSize - containerWidth + PADDING_X * 2
+      return (index / (itemsLength - 1)) * scrollableWidth
+    },
+    [tabItemLayouts, tabListSize, containerSize]
+  )
+
   const onTabPressed = React.useCallback(
     (index: number) => {
       pagerViewRef.current?.setPage(index)
       setCurrentPage(index)
       runOnUI(adjustScrollForOtherPages)('dragging')
+
+      const offset = indexToOffset(index)
+      runOnUI(scrollTo)(tabBarScrollElRef, offset, 0, true)
+
+      if (currentPage === index) {
+        runOnUI(scrollToTopTabBar)()
+      }
     },
-    [adjustScrollForOtherPages, pagerViewRef, setCurrentPage]
+    [
+      adjustScrollForOtherPages,
+      pagerViewRef,
+      setCurrentPage,
+      tabBarScrollElRef,
+      indexToOffset,
+      currentPage,
+      scrollToTopTabBar,
+    ]
   )
 
   const dragState = useSharedValue<'idle' | 'settling' | 'dragging'>('idle')
@@ -332,22 +416,14 @@ function PagerTabBarProvider({ children }: PagerTabBarProviderProps) {
     ]
   )
 
-  const tabListSize = useSharedValue(0)
-  const tabItemLayouts = useSharedValue<{ x: number; width: number }[]>([])
-  const onTabLayout = React.useCallback(
-    (i: number, layout: { x: number; width: number }) => {
-      'worklet'
-      tabItemLayouts.modify((tab) => {
-        tab[i] = layout
-        return tab
-      })
-    },
-    [tabItemLayouts]
-  )
   return (
     <PagerTabBarContext.Provider
       value={{
+        indexToOffset,
+        containerSize,
+        tabBarScrollElRef,
         dragProgress,
+        dragState,
         handlePageScroll,
         onTabLayout,
         onTabPressed,
@@ -367,33 +443,75 @@ const usePagerTabBarContext = () => {
   return context
 }
 
-export function PagerTabBar({ children }: { children: React.ReactNode }) {
-  const { tabListSize } = usePagerTabBarContext()
+const PADDING_X = 16
+export function PagerTabBar({
+  children,
+  fullWidth = false,
+}: {
+  children: React.ReactNode
+  fullWidth?: boolean
+}) {
+  const { tabListSize, dragProgress, dragState, indexToOffset, containerSize, tabBarScrollElRef } =
+    usePagerTabBarContext()
   const { setTabBarHeight } = usePagerContext()
+  const progressToOffset = React.useCallback(
+    (progress: number) => {
+      'worklet'
+      return interpolate(
+        // 0...1, 1...2, 2...3 etc
+        progress,
+        [Math.floor(progress), Math.ceil(progress)],
+        [indexToOffset(Math.floor(progress)), indexToOffset(Math.ceil(progress))],
+        'clamp'
+      )
+    },
+    [indexToOffset]
+  )
+  // recenter to the current page when tabs change
+  useAnimatedReaction(
+    () => dragProgress.get(),
+    (nextProgress, prevProgress) => {
+      if (
+        nextProgress !== prevProgress &&
+        dragState.value !== 'idle'
+        // This is only OK to do when we're 100% sure we're synced.
+        // Otherwise, there would be a jump at the beginning of the swipe.
+        // syncScrollState.get() === 'synced'
+      ) {
+        const offset = progressToOffset(nextProgress)
+        scrollTo(tabBarScrollElRef, offset, 0, false)
+      }
+    }
+  )
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      className="bg-base-bg-white w-full"
-      contentContainerClassName="px-4 border-b border-base-outline-default w-full"
-      onLayout={(evt) => {
-        const height = evt.nativeEvent.layout.height
-        if (height > 0) {
-          // The rounding is necessary to prevent jumps on iOS
-          setTabBarHeight(Math.round(height * 2) / 2)
-        }
-      }}
-    >
-      <View
-        accessibilityRole="tablist"
-        className="flex flex-row"
-        onLayout={(e) => {
-          tabListSize.set(e.nativeEvent.layout.width)
+    <View className="border-b border-base-outline-default bg-base-bg-white">
+      <ScrollView
+        horizontal
+        ref={tabBarScrollElRef}
+        showsHorizontalScrollIndicator={false}
+        className="w-full -mb-px"
+        contentContainerClassName={clsx(fullWidth && 'w-full')}
+        contentContainerStyle={{ paddingHorizontal: PADDING_X }}
+        onLayout={(evt) => {
+          const height = evt.nativeEvent.layout.height
+          containerSize.set(evt.nativeEvent.layout.width)
+          if (height > 0) {
+            // The rounding is necessary to prevent jumps on iOS
+            setTabBarHeight(Math.round(height * 2) / 2)
+          }
         }}
       >
-        {children}
-      </View>
-    </ScrollView>
+        <View
+          accessibilityRole="tablist"
+          className={clsx('flex flex-row', fullWidth && 'w-full')}
+          onLayout={(e) => {
+            tabListSize.set(e.nativeEvent.layout.width)
+          }}
+        >
+          {children}
+        </View>
+      </ScrollView>
+    </View>
   )
 }
 
@@ -403,10 +521,6 @@ export function PagerTabBarItemIndicator() {
     const tabItems = tabItemLayouts.get()
     if (tabItems.length === 0) {
       return { opacity: 0, transform: [{ scaleX: 0 }] }
-    }
-    // interpolate requires at least 2 items to work properly
-    if (tabItems.length === 1) {
-      return { opacity: 1, transform: [{ scaleX: 1 }] }
     }
     function getScaleX(index: number) {
       'worklet'
@@ -419,8 +533,10 @@ export function PagerTabBarItemIndicator() {
       const itemWidth = tabItems[index].width
       return itemX + itemWidth / 2 - tabListSize.get() / 2
     }
-    // const scaleX = getScaleX(currentPage)
-    // const translateX = getTranslateX(currentPage)
+    // interpolate requires at least 2 items to work properly
+    if (tabItems.length === 1) {
+      return { opacity: 1, transform: [{ translateX: getTranslateX(0) }, { scaleX: getScaleX(0) }] }
+    }
     return {
       opacity: 1,
       transform: [
@@ -455,7 +571,7 @@ export function PagerTabBarItemIndicator() {
   })
   return (
     <Animated.View
-      className="absolute -bottom-px left-0 right-0 border-b-2 border-base-primary-default "
+      className="absolute bottom-0 left-0 right-0 border-b-2 border-base-primary-default opacity-0"
       style={indicatorStyle}
     />
   )
@@ -483,6 +599,15 @@ export function PagerContent({ children, index }: PagerContentProps) {
       registerScrollViewRef(null, index)
     }
   }, [scrollElRef, registerScrollViewRef, index])
+
+  React.useEffect(() => {
+    if (isHeaderReady && isFocused && scrollElRef.current) {
+      const scrollViewTag = findNodeHandle(scrollElRef.current)
+      setScrollViewTag(scrollViewTag)
+      // console.log('scrollViewTag:', scrollViewTag)
+    }
+  }, [isHeaderReady, isFocused, scrollElRef, setScrollViewTag])
+
   if (!isHeaderReady) {
     return null
   }
@@ -547,6 +672,7 @@ function useSharedState<T>(value: T): SharedValue<T> {
 export function PagerTabBarItem({
   index,
   children,
+  className,
   ...props
 }: React.ComponentProps<typeof Pressable> & {
   index: number
@@ -564,22 +690,24 @@ export function PagerTabBarItem({
   }
   return (
     <Pressable
-      className="h-10"
+      className={cn('h-10 pt-2 pb-2 px-4 justify-center flex-row', className)}
       accessibilityRole="tab"
       onLayout={handleLayout}
       onPress={handlePress}
       {...props}
     >
-      <Text className="px-4 pt-2 pb-2.5 text-sm font-anakotmai-medium relative text-base-text-placeholder">
-        {children}
-      </Text>
-      <Animated.Text
-        style={activeStyle}
-        className="px-4 pt-2 pb-2.5 text-sm font-anakotmai-medium text-base-primary-default absolute left-0 top-0 bottom-0 right-0"
-        aria-hidden
-      >
-        {children}
-      </Animated.Text>
+      <View>
+        <Text className="text-sm font-heading-medium relative text-base-text-medium">
+          {children}
+        </Text>
+        <Animated.Text
+          style={activeStyle}
+          className="text-sm font-heading-medium text-base-primary-default absolute left-0 top-0 bottom-0 right-0"
+          aria-hidden
+        >
+          {children}
+        </Animated.Text>
+      </View>
     </Pressable>
   )
 }

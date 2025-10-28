@@ -188,7 +188,7 @@ const TOPIC_ERROR_SCHEMA = {
   TOPIC_INVALID_INPUT: {
     status: 400,
   },
-  TOPIC_CANNOT_FOLLOW_DRAFT: {
+  TOPIC_CANNOT_FOLLOW_SUSPENDED: {
     status: 409,
   },
   TOPIC_ALREADY_FOLLOWED: {
@@ -215,6 +215,60 @@ const ELECTION_ERROR_SCHEMA = {
   ELECTION_NOT_IN_VOTE_PERIOD: {
     status: 409,
   },
+  ELECTION_IN_VOTE_PERIOD: {
+    status: 409,
+  },
+  ELECTION_VOTE_TO_INVALID_TYPE: {
+    status: 409,
+  },
+  ELECTION_USER_ALREADY_VOTE: {
+    status: 409,
+  },
+  ELECTION_CANDIDATE_NOT_FOUND: {
+    status: 404,
+  },
+  ELECTION_INVALID_ELIGIBLE_VOTER_IDENTIFIER: {
+    status: 409,
+  },
+  ELECTION_ALREADY_PUBLISH: {
+    status: 409,
+  },
+  ELECTION_IS_CANCELLED: {
+    status: 409,
+  },
+  ELECTION_KEY_NOT_IN_PENDING_CREATED_STATUS: {
+    status: 409,
+  },
+  ELECTION_NOT_IN_CLOSED_VOTE_PERIOD: {
+    status: 409,
+  },
+  ELECTION_INVALID_TYPE: {
+    status: 409,
+  },
+  ELECTION_DUPLICATE_CANDIDATE: {
+    status: 409,
+  },
+  ELECTION_VOTES_EXCEED_VOTERS: {
+    status: 409,
+  },
+  ELECTION_INVALID_SIGNATURE: {
+    status: 401,
+  },
+  ELECTION_KEY_NOT_READY: {
+    status: 409,
+  },
+} satisfies InternalErrorSchemas
+
+export const ELECTION_KEY_ERROR_SCHEMA = {
+  ELECTION_KEY_ALREADY_EXIST: {
+    status: 409,
+  },
+  ELECTION_KEY_NOT_FOUND: {
+    status: 404,
+  },
+  KEY_NOT_ENABLED: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 export const InternalErrorCodeSchemas = {
@@ -231,6 +285,7 @@ export const InternalErrorCodeSchemas = {
   ...HASHTAG_ERROR_SCHEMA,
   ...TOPIC_ERROR_SCHEMA,
   ...ELECTION_ERROR_SCHEMA,
+  ...ELECTION_KEY_ERROR_SCHEMA,
 } as const
 export type InternalErrorCodeSchemas = typeof InternalErrorCodeSchemas
 

@@ -1,4 +1,4 @@
-import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { FilePath, InternalErrorCode } from '@pple-today/api-common/dtos'
 import {
   AccessTokenResponse,
   ErrorBody,
@@ -13,6 +13,7 @@ import { PrismaService } from '@pple-today/api-common/services'
 import { FileService } from '@pple-today/api-common/services'
 import { err } from '@pple-today/api-common/utils'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { FacebookPageLinkedStatus } from '@pple-today/database/prisma'
 import { TAnySchema } from '@sinclair/typebox'
 import { Check } from '@sinclair/typebox/value'
 import { createHmac } from 'crypto'
@@ -302,94 +303,6 @@ export class FacebookRepository {
     )
   }
 
-  // TODO: implement the following methods when starting to sync posts
-  // async syncInitialPostsFromPage(userId: string, posts: PagePost[]) {
-  //   return await fromRepositoryPromise(
-  //     this.prismaService.$transaction(async (tx) => {
-  //       await Promise.all(
-  //         posts.map(async (post) => {
-  //           const existingPost = await tx.post.findUnique({
-  //             where: { facebookPostId: post.id },
-  //             include: {
-  //               images: true,
-  //               hashTags: {
-  //                 include: {
-  //                   hashTag: true,
-  //                 },
-  //               },
-  //             },
-  //           })
-
-  //           if (existingPost) {
-  //             await tx.post.update({
-  //               where: { feedItemId: existingPost.feedItemId },
-  //               data: {
-  //                 content: post.message,
-  //                 images: {
-  //                   deleteMany: {},
-  //                   create:
-  //                     post.attachments?.data.map((attachment, idx) => ({
-  //                       cacheKey: attachment.target.id,
-  //                       url: attachment.media.image.src,
-  //                       order: idx,
-  //                     })) ?? [],
-  //                 },
-  //                 hashTags: {
-  //                   deleteMany: {},
-  //                   create:
-  //                     post.message_tags?.map((tag) => ({
-  //                       hashTag: {
-  //                         connectOrCreate: {
-  //                           where: { name: tag.data.name },
-  //                           create: { name: tag.data.name },
-  //                         },
-  //                       },
-  //                     })) ?? [],
-  //                 },
-  //               },
-  //             })
-  //             return
-  //           }
-
-  //           await tx.feedItem.create({
-  //             data: {
-  //               author: {
-  //                 connect: { id: userId },
-  //               },
-  //               type: FeedItemType.POST,
-  //               post: {
-  //                 create: {
-  //                   facebookPostId: post.id,
-  //                   content: post.message,
-  //                   hashTags: {
-  //                     create:
-  //                       post.message_tags?.map((tag) => ({
-  //                         hashTag: {
-  //                           connectOrCreate: {
-  //                             where: { name: tag.data.name },
-  //                             create: { name: tag.data.name },
-  //                           },
-  //                         },
-  //                       })) ?? [],
-  //                   },
-  //                   images: {
-  //                     create:
-  //                       post.attachments?.data.map((attachment, idx) => ({
-  //                         cacheKey: attachment.target.id,
-  //                         url: attachment.media.image.src,
-  //                         order: idx,
-  //                       })) ?? [],
-  //                   },
-  //                 },
-  //               },
-  //             },
-  //           })
-  //         })
-  //       )
-  //     })
-  //   )
-  // }
-
   async getUserAccessToken(code: string, redirectUri: string) {
     const queryParams = new URLSearchParams({
       client_id: this.facebookConfig.appId,
@@ -548,12 +461,12 @@ export class FacebookRepository {
     facebookPageId: string,
     data: {
       facebookPageAccessToken: string
-      profilePictureUrl: string
+      profilePicturePath: string
       profilePictureCacheKey: string
       pageName: string
     }
   ) {
-    const { facebookPageAccessToken, profilePictureUrl, profilePictureCacheKey, pageName } = data
+    const { facebookPageAccessToken, profilePicturePath, profilePictureCacheKey, pageName } = data
 
     return await fromRepositoryPromise(
       this.prismaService.facebookPage.upsert({
@@ -563,7 +476,8 @@ export class FacebookRepository {
         create: {
           id: facebookPageId,
           name: pageName,
-          profilePictureUrl,
+          profilePicturePath,
+          linkedStatus: FacebookPageLinkedStatus.PENDING,
           pageAccessToken: facebookPageAccessToken,
           manager: {
             connect: { id: userId },
@@ -572,7 +486,8 @@ export class FacebookRepository {
         },
         update: {
           name: pageName,
-          profilePictureUrl,
+          profilePicturePath,
+          linkedStatus: FacebookPageLinkedStatus.PENDING,
           pageAccessToken: facebookPageAccessToken,
           manager: {
             connect: { id: userId },
@@ -617,9 +532,29 @@ export class FacebookRepository {
     return ok({
       id: linkedPage.value.id,
       name: linkedPage.value.name,
-      profilePictureUrl: linkedPage.value.profilePictureUrl,
+      profileImagePath: linkedPage.value.profilePicturePath,
       pageAccessToken: linkedPage.value.pageAccessToken,
     })
+  }
+
+  async handleUploadedProfilePicture(fileUrl: string, fileName: FilePath) {
+    const uploadResult = await fromRepositoryPromise(
+      this.fileService.$transaction(async (tx) => {
+        const uploadFileResult = await tx.uploadFileFromUrl(fileUrl, fileName)
+        if (uploadFileResult.isErr()) return err(uploadFileResult.error)
+
+        const newFileName = await tx.bulkMoveToPublicFolder([fileName])
+        if (newFileName.isErr()) return err(newFileName.error)
+
+        return newFileName.value[0]
+      })
+    )
+
+    if (uploadResult.isErr()) {
+      return err(uploadResult.error)
+    }
+
+    return ok(uploadResult.value)
   }
 }
 

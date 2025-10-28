@@ -1,164 +1,71 @@
-import { DraftAnnouncement, PublishedAnnouncement } from '@pple-today/api-common/dtos'
+import { Announcement, DetailedAnnouncement } from '@pple-today/api-common/dtos'
 import { FilePath } from '@pple-today/api-common/dtos'
-import { AnnouncementType } from '@pple-today/database/prisma'
+import { AnnouncementStatus, AnnouncementType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const AnnouncementIdParams = t.Object({
   announcementId: t.String({ description: 'The ID of the published/draft announcement' }),
 })
+export type AnnouncementIdParams = Static<typeof AnnouncementIdParams>
 
 export const GetAnnouncementsQuery = t.Object({
-  type: t.Optional(
-    t.Union(
-      [
-        t.Literal('publish', { description: 'String `publish`' }),
-        t.Literal('draft', { description: 'String `draft`' }),
-      ],
-      {
-        description: 'Type of announcement',
-      }
-    )
-  ),
-  limit: t.Optional(t.Number({ default: 10 })),
-  page: t.Optional(t.Number({ default: 1 })),
+  limit: t.Number(),
+  page: t.Number(),
+  search: t.Optional(t.String()),
+  status: t.Optional(t.Array(t.Enum(AnnouncementStatus))),
 })
 export type GetAnnouncementsQuery = Static<typeof GetAnnouncementsQuery>
 
-export const GetAnnouncementsResponse = t.Array(
-  t.Union([
-    t.Pick(DraftAnnouncement, [
-      'id',
-      'content',
-      'iconImage',
-      'backgroundColor',
-      'createdAt',
-      'updatedAt',
-      'topics',
-      'title',
-      'type',
-    ]),
-    t.Pick(PublishedAnnouncement, [
-      'id',
-      'content',
-      'iconImage',
-      'backgroundColor',
-      'createdAt',
-      'updatedAt',
-      'topics',
-      'title',
-      'type',
-    ]),
-  ])
-)
+export const GetAnnouncementsResponse = t.Object({
+  data: t.Array(Announcement),
+  meta: t.Object({ count: t.Number() }),
+})
 export type GetAnnouncementsResponse = Static<typeof GetAnnouncementsResponse>
 
-export const GetPublishedAnnouncementsResponse = t.Array(
-  t.Pick(PublishedAnnouncement, [
-    'id',
-    'content',
-    'iconImage',
-    'backgroundColor',
-    'createdAt',
-    'updatedAt',
-    'topics',
-    'title',
-    'type',
-  ])
-)
-export type GetPublishedAnnouncementsResponse = Static<typeof GetPublishedAnnouncementsResponse>
+export const GetAnnouncementByIdParams = AnnouncementIdParams
+export type GetAnnouncementByIdParams = Static<typeof GetAnnouncementByIdParams>
 
-export const GetPublishedAnnouncementResponse = PublishedAnnouncement
-export type GetPublishedAnnouncementResponse = Static<typeof GetPublishedAnnouncementResponse>
+export const GetAnnouncementByIdResponse = DetailedAnnouncement
+export type GetAnnouncementByIdResponse = Static<typeof GetAnnouncementByIdResponse>
 
-export const PutPublishedAnnouncementBody = t.Object({
+export const CreateAnnouncementBody = t.Object({
   title: t.String({ description: 'The title of the announcement' }),
-  content: t.Nullable(t.String({ description: 'The content of the announcement' })),
   type: t.Enum(AnnouncementType, { description: 'The type of the announcement' }),
-  iconImage: t.Nullable(
-    t.String({ description: 'The icon image of the announcement', format: 'uri' })
-  ),
-  backgroundColor: t.Nullable(
-    t.String({
-      description: 'The background color of the announcement',
-      pattern: '^#([A-Fa-f0-9]{3,4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$',
-    })
-  ),
-
+  content: t.String({ description: 'The content of the announcement' }),
   topicIds: t.Array(t.String({ description: 'The ID of the announcement topic' })),
   attachmentFilePaths: t.Array(FilePath),
 })
-export type PutPublishedAnnouncementBody = Static<typeof PutPublishedAnnouncementBody>
 
-export const PutPublishedAnnouncementResponse = t.Object({
-  message: t.String({ description: 'Success message' }),
-})
-export type PutPublishedAnnouncementResponse = Static<typeof PutPublishedAnnouncementResponse>
-
-export const PublishedAnnouncementUnpublishedResponse = t.Object({
-  message: t.String({ description: 'Success message' }),
-})
-export type PublishedAnnouncementUnpublishedResponse = Static<
-  typeof PublishedAnnouncementUnpublishedResponse
->
-
-export const DeletePublishedAnnouncementResponse = t.Object({
-  message: t.String({ description: 'Success message' }),
-})
-export type DeletePublishedAnnouncementResponse = Static<typeof DeletePublishedAnnouncementResponse>
-
-export const GetDraftAnnouncementsResponse = t.Array(
-  t.Pick(DraftAnnouncement, [
-    'id',
-    'content',
-    'iconImage',
-    'backgroundColor',
-    'createdAt',
-    'updatedAt',
-    'topics',
-    'title',
-    'type',
-  ])
-)
-export type GetDraftAnnouncementsResponse = Static<typeof GetDraftAnnouncementsResponse>
-
-export const GetDraftAnnouncementResponse = DraftAnnouncement
-export type GetDraftAnnouncementResponse = Static<typeof GetDraftAnnouncementResponse>
-
-export const PostDraftAnnouncementResponse = t.Object({
+export type CreateAnnouncementBody = Static<typeof CreateAnnouncementBody>
+export const CreateAnnouncementResponse = t.Object({
   announcementId: t.String({ description: 'The ID of the announcement' }),
 })
-export type PostDraftAnnouncementResponse = Static<typeof PostDraftAnnouncementResponse>
+export type CreateAnnouncementResponse = Static<typeof CreateAnnouncementResponse>
 
-export const PutDraftAnnouncementBody = t.Object({
-  title: t.Nullable(t.String({ description: 'The title of the announcement' })),
-  content: t.Nullable(t.String({ description: 'The content of the announcement' })),
-  type: t.Nullable(t.Enum(AnnouncementType, { description: 'The type of the announcement' })),
-  iconImage: t.Nullable(
-    t.String({ description: 'The icon image of the announcement', format: 'uri' })
-  ),
-  backgroundColor: t.Nullable(
-    t.String({
-      description: 'The background color of the announcement',
-      pattern: '^#([A-Fa-f0-9]{3,4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$',
-    })
-  ),
+export const UpdateAnnouncementParams = AnnouncementIdParams
+export type UpdateAnnouncementParams = Static<typeof UpdateAnnouncementParams>
 
-  topicIds: t.Array(t.String({ description: 'The ID of the announcement topic' })),
-  attachmentFilePaths: t.Array(FilePath),
-})
-export type PutDraftAnnouncementBody = Static<typeof PutDraftAnnouncementBody>
+export const UpdateAnnouncementBody = t.Partial(
+  t.Object({
+    title: t.String({ description: 'The title of the announcement' }),
+    type: t.Enum(AnnouncementType, { description: 'The type of the announcement' }),
+    content: t.Nullable(t.String({ description: 'The content of the announcement' })),
+    topicIds: t.Array(t.String({ description: 'The ID of the announcement topic' })),
+    attachmentFilePaths: t.Array(FilePath),
+    status: t.Enum(AnnouncementStatus, { description: 'The status of the announcement' }),
+  })
+)
+export type UpdateAnnouncementBody = Static<typeof UpdateAnnouncementBody>
 
-export const PutDraftAnnouncementResponse = t.Object({
+export const UpdateAnnouncementResponse = t.Object({
   message: t.String({ description: 'Success message' }),
 })
-export type PutDraftAnnouncementResponse = Static<typeof PutDraftAnnouncementResponse>
+export type UpdateAnnouncementResponse = Static<typeof UpdateAnnouncementResponse>
 
-export const DraftAnnouncementPublishedResponse = t.Object({
+export const DeleteAnnouncementParams = AnnouncementIdParams
+export type DeleteAnnouncementParams = Static<typeof DeleteAnnouncementParams>
+
+export const DeleteAnnouncementResponse = t.Object({
   message: t.String({ description: 'Success message' }),
 })
-export type DraftAnnouncementPublishedResponse = Static<typeof DraftAnnouncementPublishedResponse>
-
-export const DeleteDraftAnnouncementResponse = t.Object({
-  message: t.String({ description: 'Success message' }),
-})
-export type DeleteDraftAnnouncementResponse = Static<typeof DeleteDraftAnnouncementResponse>
+export type DeleteAnnouncementResponse = Static<typeof DeleteAnnouncementResponse>

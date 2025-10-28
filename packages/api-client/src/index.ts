@@ -28,7 +28,7 @@ export type {
   ResponseConfig,
 } from './types'
 
-export const QUERY_KEY = '$'
+export const QUERY_KEY_SYMBOL = '$'
 
 function createReactQueryClient<TSchema extends Record<string, any>>(
   restClient: EdenFetch.Fn<TSchema>
@@ -50,12 +50,17 @@ function createReactQueryClient<TSchema extends Record<string, any>>(
     return result.data
   }
 
-  function getKey(method: any, path: any, payload: any = {}): any {
-    return [QUERY_KEY, method, path, payload?.pathParams, payload?.query, payload?.headers]
-  }
-
-  function getQueryKey(path: any, payload: any = {}): any {
-    return [QUERY_KEY, 'get', path, payload?.pathParams, payload?.query, payload?.headers]
+  function getKey(
+    method: any,
+    path: any,
+    payload: { pathParams?: any; query?: any; headers?: any } = {}
+  ): any {
+    const { pathParams, query, headers } = payload
+    const key: unknown[] = [QUERY_KEY_SYMBOL, method, path, pathParams, query, headers]
+    while (key.length > 0 && key[key.length - 1] === undefined) {
+      key.pop()
+    }
+    return key
   }
 
   return {
@@ -88,7 +93,7 @@ function createReactQueryClient<TSchema extends Record<string, any>>(
       } as UseMutationOptions<any, any, any, any>
     },
     getKey,
-    getQueryKey,
+    getQueryKey: (...args) => getKey('get', ...args),
   }
 }
 

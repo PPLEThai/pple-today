@@ -1,5 +1,165 @@
 # @client/mobile
 
+## 0.7.1
+
+### Patch Changes
+
+- [#202](https://github.com/PPLEThai/pple-today/pull/202) [`8778b47`](https://github.com/PPLEThai/pple-today/commit/8778b474fc3631f76509de2fc5b4416ccfa25e0a) Thanks [@Anon-136](https://github.com/Anon-136)! - fix: condition of poll feed
+
+## 0.7.0
+
+### Minor Changes
+
+- [#196](https://github.com/PPLEThai/pple-today/pull/196) [`0c76ce6`](https://github.com/PPLEThai/pple-today/commit/0c76ce68da8a62ca0c6866d63d67cbaf20baa313) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-454] Activity List Page](https://linear.app/snts/issue/PPLE-454/activity-list-page)
+
+- [#195](https://github.com/PPLEThai/pple-today/pull/195) [`d6c30e6`](https://github.com/PPLEThai/pple-today/commit/d6c30e6a27f416848f9efab6cf2e7016b724fa8f) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-238] Activity Card](https://linear.app/snts/issue/PPLE-238/activity-card)
+  [[PPLE-237] Activity Page](https://linear.app/snts/issue/PPLE-237/activity-page)
+
+- [#201](https://github.com/PPLEThai/pple-today/pull/201) [`afa844d`](https://github.com/PPLEThai/pple-today/commit/afa844d8152b7fb3c19b467c96c41281617d9c2b) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-461] Activity Integrate](https://linear.app/snts/issue/PPLE-461/activity-integrate-with-api)
+
+### Patch Changes
+
+- [#197](https://github.com/PPLEThai/pple-today/pull/197) [`fb0d327`](https://github.com/PPLEThai/pple-today/commit/fb0d327037e80b957779798d669b0da214270b53) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-464] Fix Unique Routing](https://linear.app/snts/issue/PPLE-464/fix-unique-routing)
+
+- [#181](https://github.com/PPLEThai/pple-today/pull/181) [`48e911b`](https://github.com/PPLEThai/pple-today/commit/48e911b6ee8fcc639eb1ccb0538ce9d44f837bc9) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-305] Search Page](https://linear.app/snts/issue/PPLE-305/search-page)
+
+- [#193](https://github.com/PPLEThai/pple-today/pull/193) [`83dc1f4`](https://github.com/PPLEThai/pple-today/commit/83dc1f4bccb6c492bea792de1303b55f3ac77e62) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-460] Compress image when image upload election](https://linear.app/snts/issue/PPLE-460/compress-image-when-image-upload-election)
+
+## 0.6.2
+
+### Patch Changes
+
+- [#180](https://github.com/PPLEThai/pple-today/pull/180) [`432dc51`](https://github.com/PPLEThai/pple-today/commit/432dc510239696f31873b2825bfe679c3629e4fb) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-438] Fix when comment keyboard is not appear](https://linear.app/snts/issue/PPLE-438/fix-when-comment-keyboard-is-not-appear)
+  [[PPLE-398] สส ของคุณชนขอบบน](https://linear.app/snts/issue/PPLE-398/สส-ของคุณชนขอบบน)
+  [[PPLE-424] Update Feed styles due to font change](https://linear.app/snts/issue/PPLE-424/update-feed-styles-due-to-font-change)
+  [[PPLE-425] Link to user when click on avatar](https://linear.app/snts/issue/PPLE-425/link-to-user-when-click-on-avatar)
+
+- [#189](https://github.com/PPLEThai/pple-today/pull/189) [`26f4a5b`](https://github.com/PPLEThai/pple-today/commit/26f4a5b6917ae7b65b4ff5c64cb78ba3af7f2309) Thanks [@Anon-136](https://github.com/Anon-136)! - fix: playground camera for test
+
+## 0.6.1
+
+### Patch Changes
+
+- [#184](https://github.com/PPLEThai/pple-today/pull/184) [`631bb09`](https://github.com/PPLEThai/pple-today/commit/631bb0935488f53ee7119f4b1c6cb97070386c20) Thanks [@Anon-136](https://github.com/Anon-136)! - fix: add camera permision
+
+## 0.6.0
+
+### Minor Changes
+
+- [#173](https://github.com/PPLEThai/pple-today/pull/173) [`804435c`](https://github.com/PPLEThai/pple-today/commit/804435cafa4a5a521345ec766ec8d2f10ebb0a0e) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-211] Election Detail Page UI](https://linear.app/snts/issue/PPLE-211/election-detail-page-ui)
+  [[PPLE-212] Election Detail Page Integrate](https://linear.app/snts/issue/PPLE-212/election-detail-page-integrate)
+
+- [#166](https://github.com/PPLEThai/pple-today/pull/166) [`716ed59`](https://github.com/PPLEThai/pple-today/commit/716ed59316d43e0203e41417f2f8ffafe4866c7c) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-101] Election Card In Feed Integrate](https://linear.app/snts/issue/PPLE-101/election-card-in-feed-integrate)
+
+- [#154](https://github.com/PPLEThai/pple-today/pull/154) [`763a1a0`](https://github.com/PPLEThai/pple-today/commit/763a1a0dddd342cde1a38aab8fe0997650157d2e) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-333] User detail UI](https://linear.app/snts/issue/PPLE-333/user-detail-page-ui)
+
+  [[PPLE-334] User detail Integration](https://linear.app/snts/issue/PPLE-334/user-detail-integrate)
+
+  [[PPLE-399] 2 Announcement Section](https://linear.app/snts/issue/PPLE-399/2-announcement-section)
+
+- [#163](https://github.com/PPLEThai/pple-today/pull/163) [`b4cb326`](https://github.com/PPLEThai/pple-today/commit/b4cb326c36c4a0d59f9c1ca146a83fbba486f505) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-208] Election Card UI](https://linear.app/snts/issue/PPLE-208/election-card-ui)
+
+- [#179](https://github.com/PPLEThai/pple-today/pull/179) [`142fcc1`](https://github.com/PPLEThai/pple-today/commit/142fcc155f5c23de33816e9b3e80c915da976886) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-412] Vote Page](https://linear.app/snts/issue/PPLE-412/vote-page)
+  [[PPLE-413] Vote Page and Submit Integrate](https://linear.app/snts/issue/PPLE-413/vote-submit-integrate)
+
+- [#165](https://github.com/PPLEThai/pple-today/pull/165) [`979986e`](https://github.com/PPLEThai/pple-today/commit/979986e2b65884852c50b249d170e69e6af28106) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-209] Election Card Integrate](https://linear.app/snts/issue/PPLE-209/election-card-integrate)
+
+- [#175](https://github.com/PPLEThai/pple-today/pull/175) [`29233d9`](https://github.com/PPLEThai/pple-today/commit/29233d99508e57738adbf7d10bc5a473e7663f48) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-411] Get User's Image Face for Voting](https://linear.app/snts/issue/PPLE-411/get-users-image-face-for-voting)
+
+- [#174](https://github.com/PPLEThai/pple-today/pull/174) [`08a950a`](https://github.com/PPLEThai/pple-today/commit/08a950ab76652461268a138db9b28de225e35937) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-410] Get User's Location for Voting](https://linear.app/snts/issue/PPLE-410/get-users-location-for-voting)
+
+### Patch Changes
+
+- Updated dependencies [[`572e86c`](https://github.com/PPLEThai/pple-today/commit/572e86c9af4a114c9c676ddec46a27d9b3f33662), [`b4cb326`](https://github.com/PPLEThai/pple-today/commit/b4cb326c36c4a0d59f9c1ca146a83fbba486f505), [`979986e`](https://github.com/PPLEThai/pple-today/commit/979986e2b65884852c50b249d170e69e6af28106), [`08a950a`](https://github.com/PPLEThai/pple-today/commit/08a950ab76652461268a138db9b28de225e35937)]:
+  - @pple-today/ui@0.3.0
+
+## 0.5.2
+
+### Patch Changes
+
+- [#149](https://github.com/PPLEThai/pple-today/pull/149) [`6c67072`](https://github.com/PPLEThai/pple-today/commit/6c67072b7e93940058421e56647a0095d2241ecb) Thanks [@Anon-136](https://github.com/Anon-136)! - fix: invalidate every use query get request on refresh
+
+## 0.5.1
+
+### Patch Changes
+
+- [#145](https://github.com/PPLEThai/pple-today/pull/145) [`4482483`](https://github.com/PPLEThai/pple-today/commit/44824836524a212d0eccbf9fa0378a90367d33b1) Thanks [@Anon-136](https://github.com/Anon-136)! - fix: hide announcment when there is no length is 0
+
+- [#147](https://github.com/PPLEThai/pple-today/pull/147) [`2e748ce`](https://github.com/PPLEThai/pple-today/commit/2e748cee135871d9e258bba1d038b88102ce9912) Thanks [@Anon-136](https://github.com/Anon-136)! - fix: fix follow suggestion empty state and follow button state
+
+## 0.5.0
+
+### Minor Changes
+
+- [#109](https://github.com/PPLEThai/pple-today/pull/109) [`6f86a7e`](https://github.com/PPLEThai/pple-today/commit/6f86a7e5b4f8d959cf5880e6a9d0f1f3c56a3213) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-250] Hashtag Detail UI](https://linear.app/snts/issue/PPLE-250/hashtag-detail-ui)
+  [[PPLE-251] Hashtag Detail Integrate](https://linear.app/snts/issue/PPLE-251/hashtag-detail-integrate)
+
+- [#126](https://github.com/PPLEThai/pple-today/pull/126) [`9e95435`](https://github.com/PPLEThai/pple-today/commit/9e954352ed570e77a8476e71b79c9d7678493f7a) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-228] Follow Suggestion UI](https://linear.app/snts/issue/PPLE-228/follow-suggestion-ui)
+
+- [#121](https://github.com/PPLEThai/pple-today/pull/121) [`296cad5`](https://github.com/PPLEThai/pple-today/commit/296cad573b886e0f549d7578faa2869c4a25e813) Thanks [@miello](https://github.com/miello)! - [[PPLE-378] [SSO] Integrate with member system](https://linear.app/snts/issue/PPLE-378/sso-integrate-with-member-system)
+
+- [#127](https://github.com/PPLEThai/pple-today/pull/127) [`1eac333`](https://github.com/PPLEThai/pple-today/commit/1eac3335790c1261ac98638e3e9c7ca3e462c129) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-230] Follow Suggestion List UI](https://linear.app/snts/issue/PPLE-230/follow-suggestion-list-ui)
+
+- [#136](https://github.com/PPLEThai/pple-today/pull/136) [`cda8683`](https://github.com/PPLEThai/pple-today/commit/cda86830b2f9bba377b51406937dc7d5c19da50c) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-383] Topic Detail Page](https://linear.app/snts/issue/PPLE-383/topic-detail-page)
+
+- [#120](https://github.com/PPLEThai/pple-today/pull/120) [`5f31275`](https://github.com/PPLEThai/pple-today/commit/5f31275304155f323a931565087472432c559851) Thanks [@miello](https://github.com/miello)! - [[PPLE-381] [API] Refactor file path in database schema](https://linear.app/snts/issue/PPLE-381/api-refactor-file-path-in-database-schema)
+
+- [#105](https://github.com/PPLEThai/pple-today/pull/105) [`f628877`](https://github.com/PPLEThai/pple-today/commit/f62887776147b67ff799bf60b06aec6464f987ca) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-302] followed content UI integrate](https://linear.app/snts/issue/PPLE-302/followed-content-ui-and-integrate)
+
+- [#103](https://github.com/PPLEThai/pple-today/pull/103) [`65f8bf0`](https://github.com/PPLEThai/pple-today/commit/65f8bf07d27689b00661f8eba1c421c06a11105c) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-215] Announcement Detail Page](https://linear.app/snts/issue/PPLE-215/announcement-detail-page)
+
+- [#100](https://github.com/PPLEThai/pple-today/pull/100) [`b1d6363`](https://github.com/PPLEThai/pple-today/commit/b1d63633825dec8145450eae631d1a4a5e14e3f8) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-216] Announcement List Page](https://linear.app/snts/issue/PPLE-216/announcement-list-page)
+
+- [#116](https://github.com/PPLEThai/pple-today/pull/116) [`1666db8`](https://github.com/PPLEThai/pple-today/commit/1666db80569ca89386225fff58b1b4b3c6665516) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-313] [API] create user ballot endpoint](https://linear.app/snts/issue/PPLE-313/api-create-user-ballot-endpoint)
+
+- [#117](https://github.com/PPLEThai/pple-today/pull/117) [`75513b9`](https://github.com/PPLEThai/pple-today/commit/75513b9c49f8c37b4b469894b873c2a3201d2d8d) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-298] Announcement in Official Page](https://linear.app/snts/issue/PPLE-298/announcement-in-official-page)
+
+- [#123](https://github.com/PPLEThai/pple-today/pull/123) [`8df4e1e`](https://github.com/PPLEThai/pple-today/commit/8df4e1e17847d8023dec7827f8042314bf279ae9) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-222] Feed Filter with Topics](https://linear.app/snts/issue/PPLE-222/feed-filter-with-topics)
+
+- [#118](https://github.com/PPLEThai/pple-today/pull/118) [`a62edcc`](https://github.com/PPLEThai/pple-today/commit/a62edccc2575944fa67609bebc39fa682e7fb0e8) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-291] Refresh Feed](https://linear.app/snts/issue/PPLE-291/refresh-feed)
+
+- [#114](https://github.com/PPLEThai/pple-today/pull/114) [`c6d9bbf`](https://github.com/PPLEThai/pple-today/commit/c6d9bbf7ae9c454fd6e6671353b41baa31fd034f) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-206] Official Page Header](https://linear.app/snts/issue/PPLE-206/official-page-header)
+
+- [#140](https://github.com/PPLEThai/pple-today/pull/140) [`63d3100`](https://github.com/PPLEThai/pple-today/commit/63d31001c929e6f0a471077411593b5527fa1163) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-229] Follow Suggestion Integrate](https://linear.app/snts/issue/PPLE-229/follow-suggestion-integrate)
+  [[PPLE-231] Follow Suggestion List Integrate](https://linear.app/snts/issue/PPLE-231/follow-suggestion-list-integrate)
+  [[PPLE-236] Topic Suggestion List Page Integrate](https://linear.app/snts/issue/PPLE-236/topic-suggestion-list-page-integrate)
+  [[PPLE-233] Topic Suggestion Integrate](https://linear.app/snts/issue/PPLE-233/topic-suggestion-integrate)
+
+- [#129](https://github.com/PPLEThai/pple-today/pull/129) [`523fcd3`](https://github.com/PPLEThai/pple-today/commit/523fcd35b3ae343362b27583932000df6f074e51) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-232] Topic Suggestion UI](https://linear.app/snts/issue/PPLE-232/topic-suggestion-ui)
+
+- [#130](https://github.com/PPLEThai/pple-today/pull/130) [`b5287e4`](https://github.com/PPLEThai/pple-today/commit/b5287e47dea360517386f00dfda932d21be1dddc) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-234] Topic Suggestion List Page UI](https://linear.app/snts/issue/PPLE-234/topic-suggestion-list-page-ui)
+
+### Patch Changes
+
+- [#141](https://github.com/PPLEThai/pple-today/pull/141) [`13f4603`](https://github.com/PPLEThai/pple-today/commit/13f4603292f2935242308871e2a81a6f2b5ca839) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-387] Fix hide Add Facebook Page if no access](https://linear.app/snts/issue/PPLE-387/fix-hide-add-facebook-page-if-no-access)
+
+- [#134](https://github.com/PPLEThai/pple-today/pull/134) [`45ece33`](https://github.com/PPLEThai/pple-today/commit/45ece33f9993e07d47cd518d698586b46c74b8a9) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-382] Followed content with new tags design modal](https://linear.app/snts/issue/PPLE-382/followed-content-with-new-tags-design-modal)
+
+- [#122](https://github.com/PPLEThai/pple-today/pull/122) [`d26e900`](https://github.com/PPLEThai/pple-today/commit/d26e9006b48c170b91affa8274d2022ea558f009) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-364] Edit address scroll height](https://linear.app/snts/issue/PPLE-364/edit-address-scroll-height)
+
+  [[PPLE-371] Compress Image in ImagePicker](https://linear.app/snts/issue/PPLE-371/improve-compress-image-in-imagepicker)
+
+  [[PPLE-375] Handle long text](https://linear.app/snts/issue/PPLE-375/improve-handle-long-text)
+
+- [#99](https://github.com/PPLEThai/pple-today/pull/99) [`5e5883e`](https://github.com/PPLEThai/pple-today/commit/5e5883edf54a4d2ea062be07d5eeae95f255c63a) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-355] Update comment and connect facebook page](https://linear.app/snts/issue/PPLE-355/update-comment-and-connect-facebook-page)
+
+- [#138](https://github.com/PPLEThai/pple-today/pull/138) [`3705936`](https://github.com/PPLEThai/pple-today/commit/37059365f2ef550e9ec9b34967219ac12066c996) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-372] Change font to system font on IOS](https://linear.app/snts/issue/PPLE-372/change-font-to-system-font-on-ios)
+  [[PPLE-368] Fix my point margin in profile setting](https://linear.app/snts/issue/PPLE-368/fix-my-point-margin-in-profile-setting)
+
+- [#113](https://github.com/PPLEThai/pple-today/pull/113) [`a277f86`](https://github.com/PPLEThai/pple-today/commit/a277f86ffefc0d8da80b26b116337864f452b32c) Thanks [@miello](https://github.com/miello)! - [[PPLE-367] [API] Improve DX in fetch client interceptor](https://linear.app/snts/issue/PPLE-367/api-improve-dx-in-fetch-client-interceptor)
+
+- [#133](https://github.com/PPLEThai/pple-today/pull/133) [`85f7c96`](https://github.com/PPLEThai/pple-today/commit/85f7c9664bb29b1ae286af304389137817582656) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-213] Party Info](https://linear.app/snts/issue/PPLE-213/party-info)
+
+- [#96](https://github.com/PPLEThai/pple-today/pull/96) [`ca5323e`](https://github.com/PPLEThai/pple-today/commit/ca5323e773cf34cebb357972cd25a479f1c960a3) Thanks [@miello](https://github.com/miello)! - [[PPLE-358] [API] Allows type-only import from API](https://linear.app/snts/issue/PPLE-358/api-allows-type-only-import-from-api)
+
+- [#110](https://github.com/PPLEThai/pple-today/pull/110) [`856f614`](https://github.com/PPLEThai/pple-today/commit/856f614e924a8596fb634f0bd3c9c573d4155fd0) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-303] followed people UI integrate](https://linear.app/snts/issue/PPLE-303/followed-people-ui-and-integrate)
+
+- [#111](https://github.com/PPLEThai/pple-today/pull/111) [`68bf6a4`](https://github.com/PPLEThai/pple-today/commit/68bf6a4292c7159a9213eca71c3594deaf247a09) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-304] following topic management](https://linear.app/snts/issue/PPLE-304/followed-topic-ui-and-integrate)
+
+- Updated dependencies [[`8ec7aeb`](https://github.com/PPLEThai/pple-today/commit/8ec7aeb678d9db9b56c15d28ec7330b59bba53a3), [`cda8683`](https://github.com/PPLEThai/pple-today/commit/cda86830b2f9bba377b51406937dc7d5c19da50c), [`b1d6363`](https://github.com/PPLEThai/pple-today/commit/b1d63633825dec8145450eae631d1a4a5e14e3f8), [`8df4e1e`](https://github.com/PPLEThai/pple-today/commit/8df4e1e17847d8023dec7827f8042314bf279ae9), [`3705936`](https://github.com/PPLEThai/pple-today/commit/37059365f2ef550e9ec9b34967219ac12066c996), [`a277f86`](https://github.com/PPLEThai/pple-today/commit/a277f86ffefc0d8da80b26b116337864f452b32c), [`63d3100`](https://github.com/PPLEThai/pple-today/commit/63d31001c929e6f0a471077411593b5527fa1163), [`523fcd3`](https://github.com/PPLEThai/pple-today/commit/523fcd35b3ae343362b27583932000df6f074e51), [`ca5323e`](https://github.com/PPLEThai/pple-today/commit/ca5323e773cf34cebb357972cd25a479f1c960a3)]:
+  - @pple-today/api-client@0.3.2
+  - @pple-today/ui@0.2.2
+
 ## 0.4.0
 
 ### Minor Changes

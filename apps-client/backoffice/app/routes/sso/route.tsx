@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { NavLink, useSearchParams } from 'react-router'
 
+import { Button } from '@pple-today/web-ui/button'
 import { User } from 'oidc-client-ts'
 
 import { userManager } from '~/config/oidc'
@@ -24,8 +25,8 @@ export default function LoginWithSSO() {
   }, [queryParams])
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
-      <h1 className="text-2xl font-bold mb-4">Login with SSO debug</h1>
+    <div className="flex flex-col items-center [justify-content:safe_center] h-screen gap-4">
+      <h1 className="text-2xl font-bold">Login with SSO debug</h1>
       <button
         onClick={() => userManager.signinRedirect()}
         className="bg-primary text-white px-4 py-2 rounded"
@@ -33,12 +34,17 @@ export default function LoginWithSSO() {
         Login with SSO
       </button>
       {user && (
-        <div className="mt-4 max-w-[900px]">
-          <h2 className="text-xl">User Info</h2>
-          <pre className="bg-gray-100 p-4 rounded break-all text-wrap">
-            {JSON.stringify(user, null, 2)}
-          </pre>
-        </div>
+        <>
+          <Button asChild>
+            <NavLink to="/feed">ไปหน้า Feed</NavLink>
+          </Button>
+          <details>
+            <summary className="text-xl">User Info</summary>
+            <pre className="max-w-[900px] bg-gray-100 p-4 rounded break-all text-wrap">
+              {JSON.stringify(user, null, 2)}
+            </pre>
+          </details>
+        </>
       )}
     </div>
   )

@@ -20,6 +20,7 @@ jobs:
   build-android:
     name: Build Android
     runs-on: macos-latest
+    environment: ${{ inputs.environment }}
     if: ${{ inputs.android == 'true' }}
     steps:
       - name: Checkout Repository
@@ -94,6 +95,7 @@ jobs:
     name: Build iOS
     # TODO: update to macos-latest when this is fixed https://github.com/fastlane/fastlane/issues/29659
     runs-on: macos-14
+    environment: ${{ inputs.environment }}
     if: ${{ inputs.ios == 'true' }}
     steps:
       - name: Checkout Repository

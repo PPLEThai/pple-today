@@ -1,15 +1,27 @@
 import { PrismaPg } from '@prisma/adapter-pg'
 
 import {
+  AnnouncementStatus,
   AnnouncementType,
   BannerNavigationType,
+  BannerStatusType,
   FeedItemType,
+  HashTagStatus,
+  PollStatus,
   PollType,
   PrismaClient,
-  UserRole,
+  TopicStatus,
 } from '../../__generated__/prisma'
 
-const transformProvinceDetails = async () => {
+const transformProvinceDetails = async (): Promise<{
+  provinces: string[]
+  address: {
+    postalCode: string
+    province: string
+    district: string
+    subDistrict: string
+  }[]
+}> => {
   const response = await fetch(
     'https://raw.githubusercontent.com/earthchie/jquery.Thailand.js/refs/heads/master/jquery.Thailand.js/database/raw_database/raw_database.json'
   )
@@ -18,14 +30,25 @@ const transformProvinceDetails = async () => {
     throw new Error('Failed to fetch province details')
   }
 
-  const data = await response.json()
+  const data: {
+    zipcode: number
+    province: string
+    amphoe: string
+    district: string
+  }[] = await response.json()
 
-  return data.map(({ zipcode, amphoe, province, district }) => ({
-    postalCode: zipcode.toString(),
-    province,
-    district: amphoe,
-    subDistrict: district,
-  }))
+  const onlyProvince = data.map(({ province }) => province)
+  const uniqueProvince = Array.from(new Set<string>(onlyProvince))
+
+  return {
+    provinces: uniqueProvince,
+    address: data.map(({ zipcode, amphoe, province, district }) => ({
+      postalCode: zipcode.toString(),
+      province,
+      district: amphoe,
+      subDistrict: district,
+    })),
+  }
 }
 
 const connectionString = `${process.env.DATABASE_URL}`
@@ -35,12 +58,17 @@ const prisma = new PrismaClient({
   adapter,
 })
 
-const OFFICIAL_USER_ID = 'official-user'
+const OFFICIAL_USER_ID = 'pple-official-user'
 
-const seedAddresses = async () => {
-  const provinces = await transformProvinceDetails()
-
-  for (const { province, district, subDistrict, postalCode } of provinces) {
+const seedAddresses = async (
+  addresses: {
+    postalCode: string
+    province: string
+    district: string
+    subDistrict: string
+  }[]
+) => {
+  for (const { province, district, subDistrict, postalCode } of addresses) {
     await prisma.address.upsert({
       where: {
         province_district_subDistrict_postalCode: {
@@ -101,15 +129,17 @@ const seedBanners = async () => {
       },
       create: {
         id: `banner-${i}`,
-        imageFilePath: `local/test/banner-${i}.png`,
-        status: 'PUBLISH',
+        imageFilePath: `public/test/banner-${i}.png`,
+        status: BannerStatusType.PUBLISHED,
         order: i,
+        startAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
+        endAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
         ...navigationDetails,
       },
       update: {
         id: `banner-${i}`,
-        imageFilePath: `local/test/banner-${i}.png`,
-        status: 'PUBLISH',
+        imageFilePath: `public/test/banner-${i}.png`,
+        status: BannerStatusType.PUBLISHED,
         order: i,
         ...navigationDetails,
       },
@@ -122,36 +152,54 @@ const seedOfficialUser = async () => {
   await prisma.user.upsert({
     where: { id: OFFICIAL_USER_ID },
     update: {
-      name: 'Official User',
-      phoneNumber: '+1234567890',
-      role: UserRole.OFFICIAL,
+      name: `พรรคประชาชน - People's Party`,
+      phoneNumber: '+0000000000',
+      roles: {
+        connectOrCreate: {
+          where: { userId_role: { userId: OFFICIAL_USER_ID, role: 'official' } },
+          create: { role: 'official' },
+        },
+      },
     },
     create: {
       id: OFFICIAL_USER_ID,
-      name: 'Official User',
-      phoneNumber: '+1234567890',
-      role: UserRole.OFFICIAL,
+      name: `พรรคประชาชน - People's Party`,
+      phoneNumber: '+0000000000',
+      roles: {
+        connectOrCreate: {
+          where: { userId_role: { userId: OFFICIAL_USER_ID, role: 'official' } },
+          create: { role: 'official' },
+        },
+      },
     },
   })
   console.log('Seeded official user successfully.')
 }
 
-const seedTopics = async () => {
+const seedTopics = async (provinces: any[]) => {
+  await prisma.$transaction(async (tx) => {
+    for (const province of provinces) {
+      await tx.topic.upsert({
+        where: { name: province },
+        update: {},
+        create: {
+          name: province,
+          description: `ข่าวเกี่ยวกับจังหวัด${province}`,
+          status: TopicStatus.PUBLISHED,
+          bannerImagePath: `public/test/banner-1.png`,
+        },
+      })
+    }
+  })
   await prisma.topic.upsert({
     where: { id: 'topic-1' },
     update: {},
     create: {
       id: 'topic-1',
-      name: 'General Discussion',
-      description: 'A place for general discussions about PPLE Today.',
-      bannerImage: 'https://picsum.photos/300?random=9',
-      hashTagInTopics: {
-        create: [
-          {
-            hashTag: { connect: { id: 'hashtag-1' } },
-          },
-        ],
-      },
+      name: 'Education',
+      description: 'All about education',
+      status: TopicStatus.PUBLISHED,
+      bannerImagePath: `public/test/banner-1.png`,
     },
   })
   await prisma.topic.upsert({
@@ -159,50 +207,13 @@ const seedTopics = async () => {
     update: {},
     create: {
       id: 'topic-2',
-      name: 'Announcements',
-      description: 'Official announcements and updates.',
-      bannerImage: 'https://picsum.photos/300?random=0',
-      hashTagInTopics: {
-        create: [
-          {
-            hashTag: { connect: { id: 'hashtag-2' } },
-          },
-          {
-            hashTag: { connect: { id: 'hashtag-3' } },
-          },
-        ],
-      },
+      name: 'Economy',
+      description: 'All about economy',
+      status: TopicStatus.PUBLISHED,
+      bannerImagePath: `public/test/banner-2.png`,
     },
   })
   console.log('Seeded topics successfully.')
-}
-
-const seedDraftPolls = async () => {
-  await prisma.pollDraft.upsert({
-    where: { id: 'draft-poll-1' },
-    update: {},
-    create: {
-      id: 'draft-poll-1',
-      title: 'Draft Poll 1',
-      description: 'This is a draft poll.',
-      options: {
-        create: [
-          { id: 'draft-option-1', title: 'Option 1' },
-          { id: 'draft-option-2', title: 'Option 2' },
-          { id: 'draft-option-3', title: 'Option 3' },
-          { id: 'draft-option-4', title: 'Option 4' },
-        ],
-      },
-      type: PollType.SINGLE_CHOICE,
-      topics: {
-        create: [
-          { topic: { connect: { id: 'topic-1' } } },
-          { topic: { connect: { id: 'topic-2' } } },
-        ],
-      },
-    },
-  })
-  console.log('Seeded draft polls successfully.')
 }
 
 const seedHashtags = async () => {
@@ -212,7 +223,7 @@ const seedHashtags = async () => {
     create: {
       id: 'hashtag-1',
       name: '#PPLEToday',
-      status: 'PUBLISH',
+      status: HashTagStatus.PUBLISHED,
     },
   })
   await prisma.hashTag.upsert({
@@ -221,7 +232,7 @@ const seedHashtags = async () => {
     create: {
       id: 'hashtag-2',
       name: '#Announcements',
-      status: 'PUBLISH',
+      status: HashTagStatus.PUBLISHED,
     },
   })
   await prisma.hashTag.upsert({
@@ -230,7 +241,7 @@ const seedHashtags = async () => {
     create: {
       id: 'hashtag-3',
       name: '#Polls',
-      status: 'PUBLISH',
+      status: HashTagStatus.PUBLISHED,
     },
   })
   console.log('Seeded hashtags successfully.')
@@ -246,6 +257,7 @@ const seedPolls = async () => {
         author: {
           connect: { id: OFFICIAL_USER_ID },
         },
+        publishedAt: new Date(),
         type: FeedItemType.POLL,
         poll: {
           create: {
@@ -260,6 +272,7 @@ const seedPolls = async () => {
               ],
             },
             type: PollType.SINGLE_CHOICE,
+            status: PollStatus.PUBLISHED,
             endAt: new Date(Date.now() + (i - 10) * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000),
             topics: {
               create: [
@@ -272,6 +285,41 @@ const seedPolls = async () => {
       },
     })
   }
+
+  await prisma.feedItem.upsert({
+    where: { id: 'draft-poll-1' },
+    update: {},
+    create: {
+      type: FeedItemType.POLL,
+      author: {
+        connect: { id: OFFICIAL_USER_ID },
+      },
+      poll: {
+        create: {
+          endAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          title: 'Draft Poll 1',
+          description: 'This is a draft poll.',
+          status: PollStatus.DRAFT,
+          options: {
+            create: [
+              { id: 'draft-option-1', title: 'Option 1' },
+              { id: 'draft-option-2', title: 'Option 2' },
+              { id: 'draft-option-3', title: 'Option 3' },
+              { id: 'draft-option-4', title: 'Option 4' },
+            ],
+          },
+          type: PollType.SINGLE_CHOICE,
+          topics: {
+            create: [
+              { topic: { connect: { id: 'topic-1' } } },
+              { topic: { connect: { id: 'topic-2' } } },
+            ],
+          },
+        },
+      },
+    },
+  })
+  console.log('Seeded draft polls successfully.')
   console.log('Seeded polls successfully.')
 }
 
@@ -285,19 +333,20 @@ const seedAnnouncements = async () => {
       author: {
         connect: { id: OFFICIAL_USER_ID },
       },
+      publishedAt: new Date(),
       announcement: {
         create: {
           title: 'Welcome to PPLE Today',
           content: 'This is the first announcement on PPLE Today.',
           type: AnnouncementType.OFFICIAL,
-          backgroundColor: '#FF5733',
+          status: AnnouncementStatus.PUBLISHED,
           attachments: {
             create: [
               {
-                filePath: 'https://picsum.photos/300?random=0',
+                filePath: 'public/test/banner-1.png',
               },
               {
-                filePath: 'https://picsum.photos/300?random=1',
+                filePath: 'public/test/banner-2.png',
               },
             ],
           },
@@ -314,19 +363,20 @@ const seedAnnouncements = async () => {
       author: {
         connect: { id: OFFICIAL_USER_ID },
       },
+      publishedAt: new Date(),
       announcement: {
         create: {
           title: 'Welcome to PPLE Today',
           content: 'This is the second announcement on PPLE Today.',
           type: AnnouncementType.OFFICIAL,
-          backgroundColor: '#33FF57',
+          status: AnnouncementStatus.PUBLISHED,
           attachments: {
             create: [
               {
-                filePath: 'https://picsum.photos/300?random=4',
+                filePath: 'public/test/banner-1.png',
               },
               {
-                filePath: 'https://picsum.photos/300?random=5',
+                filePath: 'public/test/banner-2.png',
               },
             ],
           },
@@ -343,19 +393,20 @@ const seedAnnouncements = async () => {
       author: {
         connect: { id: OFFICIAL_USER_ID },
       },
+      publishedAt: new Date(),
       announcement: {
         create: {
           title: 'Welcome to PPLE Today',
           content: 'This is the third announcement on PPLE Today.',
           type: AnnouncementType.OFFICIAL,
-          backgroundColor: '#5733FF',
+          status: AnnouncementStatus.PUBLISHED,
           attachments: {
             create: [
               {
-                filePath: 'https://picsum.photos/300?random=2',
+                filePath: 'public/test/banner-1.png',
               },
               {
-                filePath: 'https://picsum.photos/300?random=3',
+                filePath: 'public/test/banner-2.png',
               },
             ],
           },
@@ -367,11 +418,12 @@ const seedAnnouncements = async () => {
 }
 
 async function main() {
-  await seedAddresses()
+  const { address, provinces } = await transformProvinceDetails()
+
+  await seedAddresses(address)
   await seedHashtags()
   await seedOfficialUser()
-  await seedTopics()
-  await seedDraftPolls()
+  await seedTopics(provinces)
   await seedPolls()
   await seedAnnouncements()
   await seedBanners()

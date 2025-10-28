@@ -1,5 +1,48 @@
 # @client/backoffice
 
+## 0.4.0
+
+### Minor Changes
+
+- [#169](https://github.com/PPLEThai/pple-today/pull/169) [`25c65f4`](https://github.com/PPLEThai/pple-today/commit/25c65f4eb141504ec941a4e425164ded77fa5dbd) Thanks [@rootEnginear](https://github.com/rootEnginear)! - [PPLE-340] [CMS/FE] Feed/Topic Page
+
+### Patch Changes
+
+- Updated dependencies [[`25c65f4`](https://github.com/PPLEThai/pple-today/commit/25c65f4eb141504ec941a4e425164ded77fa5dbd)]:
+  - @pple-today/web-ui@0.2.0
+
+## 0.3.1
+
+### Patch Changes
+
+- Updated dependencies [[`1053854`](https://github.com/PPLEThai/pple-today/commit/10538541f07642d2b53067b35bf21907245f63e2)]:
+  - @pple-today/web-ui@0.1.1
+
+## 0.3.0
+
+### Minor Changes
+
+- [#101](https://github.com/PPLEThai/pple-today/pull/101) [`572e86c`](https://github.com/PPLEThai/pple-today/commit/572e86c9af4a114c9c676ddec46a27d9b3f33662) Thanks [@miello](https://github.com/miello)! - [[PPLE-307] [CMS] Design Components](https://linear.app/snts/issue/PPLE-307/cms-design-components)
+
+- [#155](https://github.com/PPLEThai/pple-today/pull/155) [`6bc1485`](https://github.com/PPLEThai/pple-today/commit/6bc1485393488c3e84dd4b689b8cbe1ac32bd785) Thanks [@rootEnginear](https://github.com/rootEnginear)! - [PPLE-341] [CMS/FE] Feed/Hashtag Page
+  [PPLE-395] [CMS/FE] Integrate Admin Auth
+
+- [#162](https://github.com/PPLEThai/pple-today/pull/162) [`d32d324`](https://github.com/PPLEThai/pple-today/commit/d32d324e2592174922635bb6e67f5cca32f8eeff) Thanks [@miello](https://github.com/miello)! - [[PPLE-408] [API] CMS api revamp](https://linear.app/snts/issue/PPLE-408/api-cms-api-revamp)
+
+### Patch Changes
+
+- Updated dependencies [[`572e86c`](https://github.com/PPLEThai/pple-today/commit/572e86c9af4a114c9c676ddec46a27d9b3f33662)]:
+  - @pple-today/web-ui@0.1.0
+
+## 0.2.2
+
+### Patch Changes
+
+- [#96](https://github.com/PPLEThai/pple-today/pull/96) [`ca5323e`](https://github.com/PPLEThai/pple-today/commit/ca5323e773cf34cebb357972cd25a479f1c960a3) Thanks [@miello](https://github.com/miello)! - [[PPLE-358] [API] Allows type-only import from API](https://linear.app/snts/issue/PPLE-358/api-allows-type-only-import-from-api)
+
+- Updated dependencies [[`8ec7aeb`](https://github.com/PPLEThai/pple-today/commit/8ec7aeb678d9db9b56c15d28ec7330b59bba53a3), [`a277f86`](https://github.com/PPLEThai/pple-today/commit/a277f86ffefc0d8da80b26b116337864f452b32c), [`63d3100`](https://github.com/PPLEThai/pple-today/commit/63d31001c929e6f0a471077411593b5527fa1163), [`ca5323e`](https://github.com/PPLEThai/pple-today/commit/ca5323e773cf34cebb357972cd25a479f1c960a3)]:
+  - @pple-today/api-client@0.3.2
+
 ## 0.2.1
 
 ### Patch Changes

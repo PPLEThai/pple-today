@@ -1,5 +1,37 @@
 # @pple-today/ui
 
+## 0.3.0
+
+### Minor Changes
+
+- [#101](https://github.com/PPLEThai/pple-today/pull/101) [`572e86c`](https://github.com/PPLEThai/pple-today/commit/572e86c9af4a114c9c676ddec46a27d9b3f33662) Thanks [@miello](https://github.com/miello)! - [[PPLE-307] [CMS] Design Components](https://linear.app/snts/issue/PPLE-307/cms-design-components)
+
+### Patch Changes
+
+- [#163](https://github.com/PPLEThai/pple-today/pull/163) [`b4cb326`](https://github.com/PPLEThai/pple-today/commit/b4cb326c36c4a0d59f9c1ca146a83fbba486f505) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-208] Election Card UI](https://linear.app/snts/issue/PPLE-208/election-card-ui)
+
+- [#165](https://github.com/PPLEThai/pple-today/pull/165) [`979986e`](https://github.com/PPLEThai/pple-today/commit/979986e2b65884852c50b249d170e69e6af28106) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-209] Election Card Integrate](https://linear.app/snts/issue/PPLE-209/election-card-integrate)
+
+- [#174](https://github.com/PPLEThai/pple-today/pull/174) [`08a950a`](https://github.com/PPLEThai/pple-today/commit/08a950ab76652461268a138db9b28de225e35937) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-410] Get User's Location for Voting](https://linear.app/snts/issue/PPLE-410/get-users-location-for-voting)
+
+- Updated dependencies [[`572e86c`](https://github.com/PPLEThai/pple-today/commit/572e86c9af4a114c9c676ddec46a27d9b3f33662)]:
+  - @pple-today/tailwind-config@0.1.0
+
+## 0.2.2
+
+### Patch Changes
+
+- [#136](https://github.com/PPLEThai/pple-today/pull/136) [`cda8683`](https://github.com/PPLEThai/pple-today/commit/cda86830b2f9bba377b51406937dc7d5c19da50c) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-383] Topic Detail Page](https://linear.app/snts/issue/PPLE-383/topic-detail-page)
+
+- [#100](https://github.com/PPLEThai/pple-today/pull/100) [`b1d6363`](https://github.com/PPLEThai/pple-today/commit/b1d63633825dec8145450eae631d1a4a5e14e3f8) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-216] Announcement List Page](https://linear.app/snts/issue/PPLE-216/announcement-list-page)
+
+- [#123](https://github.com/PPLEThai/pple-today/pull/123) [`8df4e1e`](https://github.com/PPLEThai/pple-today/commit/8df4e1e17847d8023dec7827f8042314bf279ae9) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-222] Feed Filter with Topics](https://linear.app/snts/issue/PPLE-222/feed-filter-with-topics)
+
+- [#138](https://github.com/PPLEThai/pple-today/pull/138) [`3705936`](https://github.com/PPLEThai/pple-today/commit/37059365f2ef550e9ec9b34967219ac12066c996) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-372] Change font to system font on IOS](https://linear.app/snts/issue/PPLE-372/change-font-to-system-font-on-ios)
+  [[PPLE-368] Fix my point margin in profile setting](https://linear.app/snts/issue/PPLE-368/fix-my-point-margin-in-profile-setting)
+
+- [#129](https://github.com/PPLEThai/pple-today/pull/129) [`523fcd3`](https://github.com/PPLEThai/pple-today/commit/523fcd35b3ae343362b27583932000df6f074e51) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-232] Topic Suggestion UI](https://linear.app/snts/issue/PPLE-232/topic-suggestion-ui)
+
 ## 0.2.1
 
 ### Patch Changes

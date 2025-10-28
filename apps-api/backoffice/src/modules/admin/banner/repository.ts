@@ -34,7 +34,8 @@ export class AdminBannerRepository {
     imageFilePath: FilePath
     navigation: BannerNavigationType
     destination: string
-    status: BannerStatusType
+    startAt: Date
+    endAt: Date
   }) {
     const moveFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
@@ -60,8 +61,9 @@ export class AdminBannerRepository {
             imageFilePath: newFileName,
             navigation: data.navigation,
             destination: data.destination,
-            status: data.status, // Default value
             order: lastBanner ? lastBanner.order + 1 : 1,
+            startAt: data.startAt,
+            endAt: data.endAt,
           },
           select: {
             id: true,
@@ -100,7 +102,7 @@ export class AdminBannerRepository {
     const updateFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
         if (existingBanner.value.imageFilePath !== data.imageFilePath) {
-          const deleteResult = await fileTx.removeFile(
+          const deleteResult = await fileTx.deleteFile(
             existingBanner.value.imageFilePath as FilePath
           )
           if (deleteResult.isErr()) return deleteResult
@@ -151,7 +153,7 @@ export class AdminBannerRepository {
 
     const deleteFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
-        const deleteResult = await fileTx.removeFile(existingBanner.value.imageFilePath as FilePath)
+        const deleteResult = await fileTx.deleteFile(existingBanner.value.imageFilePath as FilePath)
         if (deleteResult.isErr()) return deleteResult
 
         return deleteResult.value

@@ -1,3 +1,5 @@
+import 'tsx/cjs'
+
 import { version } from './package.json'
 
 // TODO: update config when production release https://docs.expo.dev/versions/latest/config/app/
@@ -107,8 +109,16 @@ export default {
         'expo-image-picker',
         {
           photosPermission: 'The app accesses your photos to let you set up your profile image.',
+          cameraPermission: 'The app accesses your camera to let you take a photo.',
         },
       ],
+      [
+        'expo-location',
+        {
+          locationAlwaysAndWhenInUsePermission: 'Allow PPLE Today to use your location.',
+        },
+      ],
+      ['./plugins/withAndroidPlugin'],
     ],
     experiments: {
       typedRoutes: true,

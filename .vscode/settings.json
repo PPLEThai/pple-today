@@ -9,6 +9,7 @@
     "(?:headClassName|headContainerClassName|cellClassName):\\s*?[\"'`]([^\"'`]*).*?[\"'`]",
     ["(?:classNames)=\\s*(?:\"|'|{`|{{)([^)]*)([^(?:\"|'|`}||}})]*)", "[\"'`]([^\"'`]*).*?[\"'`]"]
   ],
+  "tailwindCSS.classFunctions": ["cva", "cn"],
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit",
     "source.organizeImports": "never"
@@ -17,5 +18,9 @@
   "eslint.useFlatConfig": true,
   "[prisma]": {
     "editor.defaultFormatter": "Prisma.prisma"
+  },
+  "[sql]": {
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "cweijan.vscode-postgresql-client2"
   }
 }

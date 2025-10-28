@@ -1,8 +1,9 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
-import Elysia from 'elysia'
+import Elysia, { t } from 'elysia'
 
 import {
+  CreateTopicBody,
   CreateTopicResponse,
   DeleteTopicParams,
   DeleteTopicResponse,
@@ -16,19 +17,20 @@ import {
 } from './models'
 import { AdminTopicServicePlugin } from './services'
 
-import { AuthGuardPlugin } from '../../../plugins/auth-guard'
+import { AdminAuthGuardPlugin } from '../../../plugins/admin-auth-guard'
 
 export const AdminTopicController = new Elysia({
   prefix: '/topics',
   tags: ['Admin Topics'],
 })
-  .use([AuthGuardPlugin, AdminTopicServicePlugin])
+  .use([AdminAuthGuardPlugin, AdminTopicServicePlugin])
   .get(
     '/',
     async ({ query, status, adminTopicService }) => {
-      const pagingQuery = {
-        limit: query.limit ?? 10,
+      const pagingQuery: GetTopicsQuery = {
+        limit: query.limit,
         page: query.page ?? 1,
+        search: query.search,
       }
 
       const result = await adminTopicService.getTopics(pagingQuery)
@@ -38,7 +40,7 @@ export const AdminTopicController = new Elysia({
     },
     {
       requiredLocalUser: true,
-      query: GetTopicsQuery,
+      query: t.Partial(GetTopicsQuery),
       response: {
         200: GetTopicsResponse,
         ...createErrorSchema(
@@ -81,8 +83,8 @@ export const AdminTopicController = new Elysia({
   )
   .post(
     '/',
-    async ({ status, adminTopicService }) => {
-      const result = await adminTopicService.createEmptyTopic()
+    async ({ body, status, adminTopicService }) => {
+      const result = await adminTopicService.createTopic(body)
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
       }
@@ -91,10 +93,14 @@ export const AdminTopicController = new Elysia({
     },
     {
       requiredLocalUser: true,
+      body: CreateTopicBody,
       response: {
         201: CreateTopicResponse,
         ...createErrorSchema(
           InternalErrorCode.TOPIC_INVALID_INPUT,
+          InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -104,7 +110,7 @@ export const AdminTopicController = new Elysia({
       },
     }
   )
-  .put(
+  .patch(
     '/:topicId',
     async ({ params, body, status, adminTopicService }) => {
       const result = await adminTopicService.updateTopicById(params.topicId, body)

@@ -16,11 +16,10 @@ export class FeedService {
     private readonly fileService: FileService
   ) {}
 
-  async getMyFeed(userId?: string, query?: { page?: number; limit?: number }) {
-    // TODO: Use recommendation from dedicated recommendation service
+  async getMyFeed(userId?: string, query?: { cursor?: string; limit?: number }) {
     const feedItems = await this.feedRepository.listFeedItems({
       userId,
-      page: query?.page ?? 1,
+      cursor: query?.cursor,
       limit: query?.limit ?? 10,
     })
 
@@ -31,7 +30,29 @@ export class FeedService {
     return ok(feedItems.value)
   }
 
-  async getTopicFeed(topicId: string, userId?: string, query?: { page?: number; limit?: number }) {
+  async getFollowingFeed(userId: string, query?: { cursor?: string; limit?: number }) {
+    const followingFeed = await this.feedRepository.listFollowingFeedItems(userId, {
+      cursor: query?.cursor,
+      limit: query?.limit ?? 10,
+    })
+
+    if (followingFeed.isErr()) {
+      return mapRepositoryError(followingFeed.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.USER_NOT_FOUND,
+          message: 'User not found',
+        },
+      })
+    }
+
+    return ok(followingFeed.value)
+  }
+
+  async getTopicFeed(
+    topicId: string,
+    userId?: string,
+    query?: { cursor?: string; limit?: number }
+  ) {
     const topicExists = await this.feedRepository.checkTopicExists(topicId)
 
     if (topicExists.isErr()) {
@@ -43,11 +64,10 @@ export class FeedService {
       })
     }
 
-    // TODO: Use recommendation from dedicated recommendation service
     const feedItems = await this.feedRepository.listTopicFeedItems({
       userId,
       topicId,
-      page: query?.page ?? 1,
+      cursor: query?.cursor,
       limit: query?.limit ?? 10,
     })
 
@@ -61,7 +81,7 @@ export class FeedService {
   async getHashTagFeed(
     hashTagId: string,
     userId?: string,
-    query?: { page?: number; limit?: number }
+    query?: { cursor?: string; limit?: number }
   ) {
     const hashTagExists = await this.feedRepository.checkHashTagExists(hashTagId)
 
@@ -74,11 +94,10 @@ export class FeedService {
       })
     }
 
-    // TODO: Use recommendation from dedicated recommendation service
     const feedItems = await this.feedRepository.listHashTagFeedItems({
       userId,
       hashTagId,
-      page: query?.page ?? 1,
+      cursor: query?.cursor,
       limit: query?.limit ?? 10,
     })
 
@@ -132,8 +151,8 @@ export class FeedService {
             author: {
               id: comment.user.id,
               name: comment.user.name,
-              profileImage: comment.user.profileImage
-                ? this.fileService.getPublicFileUrl(comment.user.profileImage)
+              profileImage: comment.user.profileImagePath
+                ? this.fileService.getPublicFileUrl(comment.user.profileImagePath)
                 : undefined,
             },
           }) satisfies FeedItemComment
@@ -141,9 +160,9 @@ export class FeedService {
     )
   }
 
-  async getFeedByUserId(userId?: string, query?: { page?: number; limit?: number }) {
+  async getFeedByUserId(userId?: string, query?: { cursor?: string; limit?: number }) {
     const feedItems = await this.feedRepository.listFeedItemsByUserId(userId, {
-      page: query?.page ?? 1,
+      cursor: query?.cursor,
       limit: query?.limit ?? 10,
     })
 
@@ -190,8 +209,8 @@ export class FeedService {
             author: {
               id: result.value.comment.user.id,
               name: result.value.comment.user.name,
-              profileImage: result.value.comment.user.profileImage
-                ? this.fileService.getPublicFileUrl(result.value.comment.user.profileImage)
+              profileImage: result.value.comment.user.profileImagePath
+                ? this.fileService.getPublicFileUrl(result.value.comment.user.profileImagePath)
                 : undefined, // this should be null
             },
           }
@@ -241,8 +260,8 @@ export class FeedService {
       author: {
         id: result.value.user.id,
         name: result.value.user.name,
-        profileImage: result.value.user.profileImage
-          ? this.fileService.getPublicFileUrl(result.value.user.profileImage)
+        profileImage: result.value.user.profileImagePath
+          ? this.fileService.getPublicFileUrl(result.value.user.profileImagePath)
           : undefined, // this should be null
       },
     })

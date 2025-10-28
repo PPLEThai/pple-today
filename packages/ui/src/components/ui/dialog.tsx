@@ -119,7 +119,7 @@ function DialogTitle({
 }) {
   return (
     <DialogPrimitive.Title
-      className={cn('text-2xl text-base-text-high font-anakotmai-medium', className)}
+      className={cn('text-2xl text-base-text-high font-heading-semibold', className)}
       {...props}
     />
   )
@@ -133,7 +133,7 @@ function DialogDescription({
 }) {
   return (
     <DialogPrimitive.Description
-      className={cn('text-base font-anakotmai-light text-center', className)}
+      className={cn('text-base font-heading-regular text-center', className)}
       {...props}
     />
   )

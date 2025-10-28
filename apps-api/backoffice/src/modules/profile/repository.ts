@@ -1,8 +1,10 @@
 import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { Prisma } from '@pple-today/database/prisma'
+import { Prisma, UserStatus } from '@pple-today/database/prisma'
+import { get_candidate_user } from '@pple-today/database/prisma/sql'
 import Elysia from 'elysia'
+import * as R from 'remeda'
 
 import { CompleteOnboardingProfileBody } from './models'
 
@@ -14,6 +16,33 @@ export class ProfileRepository {
     private prismaService: PrismaService,
     private fileService: FileService
   ) {}
+
+  async getUserRecommendation(userId: string) {
+    return await fromRepositoryPromise(async () => {
+      const candidateUserIds = await this.prismaService.$queryRawTyped(get_candidate_user(userId))
+
+      const candidateUser = await this.prismaService.user.findMany({
+        where: {
+          id: {
+            in: R.pipe(
+              candidateUserIds,
+              R.map(R.prop('user_id')),
+              R.filter((id) => id !== null)
+            ),
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+          profileImagePath: true,
+          responsibleArea: true,
+          address: true,
+        },
+      })
+
+      return candidateUser
+    })
+  }
 
   async getUserParticipation(userId: string) {
     return await fromRepositoryPromise(
@@ -67,22 +96,27 @@ export class ProfileRepository {
         where: { id },
         include: {
           address: true,
+          roles: {
+            select: {
+              role: true,
+            },
+          },
         },
       })
     )
   }
 
-  async followUser(userId: string, followedUserId: string) {
+  async followUser(userId: string, followingUserId: string) {
     return await fromRepositoryPromise(
       this.prismaService.$transaction([
         this.prismaService.userFollowsUser.create({
           data: {
-            followedId: followedUserId,
+            followingId: followingUserId,
             followerId: userId,
           },
         }),
         this.prismaService.user.update({
-          where: { id: followedUserId },
+          where: { id: followingUserId, status: UserStatus.ACTIVE },
           data: {
             numberOfFollowers: {
               increment: 1,
@@ -90,7 +124,7 @@ export class ProfileRepository {
           },
         }),
         this.prismaService.user.update({
-          where: { id: userId },
+          where: { id: userId, status: UserStatus.ACTIVE },
           data: {
             numberOfFollowing: {
               increment: 1,
@@ -101,19 +135,25 @@ export class ProfileRepository {
     )
   }
 
-  async unfollowUser(userId: string, followedUserId: string) {
+  async unfollowUser(userId: string, followingUserId: string) {
     return await fromRepositoryPromise(
       this.prismaService.$transaction([
         this.prismaService.userFollowsUser.delete({
           where: {
-            followedId_followerId: {
-              followedId: followedUserId,
+            followingId_followerId: {
               followerId: userId,
+              followingId: followingUserId,
+            },
+            following: {
+              status: UserStatus.ACTIVE,
+            },
+            follower: {
+              status: UserStatus.ACTIVE,
             },
           },
         }),
         this.prismaService.user.update({
-          where: { id: followedUserId },
+          where: { id: followingUserId },
           data: {
             numberOfFollowers: {
               decrement: 1,
@@ -141,11 +181,11 @@ export class ProfileRepository {
         select: {
           followers: {
             select: {
-              followed: {
+              following: {
                 select: {
                   id: true,
                   name: true,
-                  profileImage: true,
+                  profileImagePath: true,
                   address: true,
                 },
               },
@@ -163,11 +203,11 @@ export class ProfileRepository {
 
     if (profileData.profile) {
       userData.name = profileData.profile.name
-      userData.profileImage = profileData.profile.profileImage
+      userData.profileImagePath = profileData.profile.profileImagePath
     }
 
     if (profileData.interestTopics) {
-      userData.followedTopics = {
+      userData.followingTopics = {
         createMany: {
           data:
             profileData.interestTopics.map((topic) => ({
@@ -200,19 +240,21 @@ export class ProfileRepository {
 
     const moveFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (tx) => {
-        if (profileData.profileImage) {
-          if (existingUser.value.profileImage) {
-            const removeResult = await tx.bulkRemoveFile([
-              existingUser.value.profileImage as FilePath,
+        if (profileData.profileImagePath) {
+          if (existingUser.value.profileImagePath) {
+            const removeResult = await tx.bulkDeleteFile([
+              existingUser.value.profileImagePath as FilePath,
             ])
 
             if (removeResult.isErr()) return removeResult
           }
 
-          const moveResult = await tx.bulkMoveToPublicFolder([profileData.profileImage as FilePath])
+          const moveResult = await tx.bulkMoveToPublicFolder([
+            profileData.profileImagePath as FilePath,
+          ])
           if (moveResult.isErr()) return moveResult
 
-          profileData.profileImage = moveResult.value[0]
+          profileData.profileImagePath = moveResult.value[0]
 
           return moveResult.value[0]
         }

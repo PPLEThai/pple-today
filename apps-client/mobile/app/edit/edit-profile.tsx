@@ -2,7 +2,7 @@ import React from 'react'
 import { ScrollView, View } from 'react-native'
 
 import { Button } from '@pple-today/ui/button'
-import { FormControl, FormItem, FormLabel } from '@pple-today/ui/form'
+import { FormControl, FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
 import { Input } from '@pple-today/ui/input'
 import { Text } from '@pple-today/ui/text'
 import { toast } from '@pple-today/ui/toast'
@@ -18,13 +18,13 @@ import { AddressCard } from '@app/components/address-card'
 import { AvatarImagePicker } from '@app/components/avatar-imagepicker'
 import { Header } from '@app/components/header-navigation'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
-import { getAuthSession } from '@app/libs/auth/session'
+import { getAuthSessionAsync } from '@app/libs/auth/session'
 import { ImageMimeType } from '@app/types/file'
 import { handleUploadImage } from '@app/utils/upload'
 
 const formSchema = z.object({
   name: z.string().min(1, 'กรุณาใส่ชื่อของคุณ'),
-  profileImage: z.string(),
+  profileImagePath: z.string(),
 })
 
 export default function EditProfilePage() {
@@ -41,7 +41,7 @@ export default function EditProfilePage() {
   const form = useForm({
     defaultValues: {
       name: profileQuery.data?.name,
-      profileImage: profileQuery.data?.profileImage || '',
+      profileImagePath: profileQuery.data?.profileImage || '',
     },
     validators: {
       onSubmit: formSchema,
@@ -52,7 +52,7 @@ export default function EditProfilePage() {
       // Handle image update
       if (imagePickerAsset) {
         try {
-          const session = await getAuthSession()
+          const session = await getAuthSessionAsync()
           if (!session) {
             throw new Error('No auth session found')
           }
@@ -69,7 +69,7 @@ export default function EditProfilePage() {
           }
 
           await handleUploadImage(imagePickerAsset, getLink.uploadUrl, getLink.uploadFields)
-          updateProfilePayload.profileImage = getLink.fileKey
+          updateProfilePayload.profileImagePath = getLink.fileKey
         } catch (error) {
           console.error('Image upload failed:', error)
           throw error
@@ -102,7 +102,7 @@ export default function EditProfilePage() {
               queryKey: reactQueryClient.getQueryKey('/profile/me'),
             })
             dispatch({ type: 'reset' })
-            router.replace('/(tabs)/profile')
+            router.replace('/profile')
           },
           onError: () => {
             toast.error({ text1: 'เกิดข้อผิดพลาดในการบันทึกโปรไฟล์', icon: TriangleAlertIcon })
@@ -121,7 +121,7 @@ export default function EditProfilePage() {
       />
       <ScrollView className="p-4">
         <View className="py-6 gap-10">
-          <form.Field name="profileImage">
+          <form.Field name="profileImagePath">
             {(field) => (
               <FormItem field={field}>
                 <FormControl>
@@ -145,6 +145,7 @@ export default function EditProfilePage() {
                     onChangeText={field.handleChange}
                   />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           </form.Field>

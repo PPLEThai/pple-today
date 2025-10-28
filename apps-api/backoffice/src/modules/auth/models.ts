@@ -1,9 +1,5 @@
-import { UserRole } from '@pple-today/database/prisma'
+import { UserStatus } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
-
-export const RegisterUserQuery = t.Object({
-  role: t.Enum(UserRole, { description: 'User role' }),
-})
 
 export const RegisterUserResponse = t.Object({
   message: t.String({ description: 'Success message' }),
@@ -25,9 +21,10 @@ export const GetAuthMeResponse = t.Object({
       province: t.String({ description: 'User province' }),
     })
   ),
+  status: t.Enum(UserStatus, { description: 'User status' }),
   onBoardingCompleted: t.Boolean({ description: 'Whether the user has completed onboarding' }),
   profileImage: t.Optional(t.String({ description: 'User profile image URL' })),
-  role: t.Enum(UserRole, { description: 'User role' }),
+  roles: t.Array(t.String({ description: 'User role' })),
 })
 
 export type GetAuthMeHeaders = Static<typeof GetAuthMeHeaders>

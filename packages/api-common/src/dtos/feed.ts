@@ -1,4 +1,10 @@
-import { FeedItemReactionType, FeedItemType, PostAttachmentType } from '@pple-today/database/prisma'
+import {
+  AnnouncementType,
+  FeedItemReactionType,
+  FeedItemType,
+  PollType,
+  PostAttachmentType,
+} from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 import { Author } from './user'
@@ -29,7 +35,7 @@ export type FeedItemReaction = Static<typeof FeedItemReaction>
 
 export const FeedItemBaseContent = t.Object({
   id: t.String({ description: 'The ID of the feed item' }),
-  createdAt: t.Date({ description: 'The creation date of the feed item' }),
+  publishedAt: t.Date({ description: 'The published date of the feed item' }),
   commentCount: t.Number({ description: 'The number of comments on the feed item' }),
   userReaction: t.Nullable(t.Enum(FeedItemReactionType)),
   reactions: t.Array(FeedItemReaction),
@@ -79,6 +85,9 @@ export const FeedItemPollContent = t.Object({
   poll: t.Object({
     title: t.String({ description: 'The title of the poll' }),
     endAt: t.Date({ description: 'The end date of the poll' }),
+    type: t.Enum(PollType, {
+      description: 'The type of the poll, e.g., single-choice or multiple-choice',
+    }),
     options: t.Array(
       t.Object({
         id: t.String({ description: 'The ID of the poll option' }),
@@ -101,6 +110,7 @@ export const FeedItemAnnouncementContent = t.Object({
   }),
   announcement: t.Object({
     title: t.String({ description: 'The title of the announcement' }),
+    type: t.Enum(AnnouncementType, { description: 'The type of announcement' }),
     content: t.String({ description: 'The content of the announcement' }),
     attachments: t.Optional(t.Array(t.String({ description: 'The URL of the attachment' }))),
   }),

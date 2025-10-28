@@ -1,6 +1,6 @@
 {
   "name": "@pple-today/database",
-  "version": "0.1.0",
+  "version": "0.3.1",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -13,15 +13,23 @@
     "./prisma/runtime/client": {
       "types": "./__generated__/prisma/runtime/client.d.ts",
       "import": "./__generated__/prisma/runtime/client.js"
+    },
+    "./prisma/sql": {
+      "types": "./__generated__/prisma/sql/index.d.ts",
+      "import": "./__generated__/prisma/sql/index.js",
+      "require": "./__generated__/prisma/index-browser.js"
     }
   },
   "scripts": {
     "codegen": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:dev:seed": "tsx prisma/seeds/seed.dev.ts",
-    "db:election:seed": "tsx prisma/seeds/seed.election.ts",
-    "db:prod:seed": "tsx prisma/seeds/seed.prod.ts",
-    "db:reset": "prisma migrate reset",
+    "codegen:sql": "prisma generate --sql",
+    "migrate": "prisma migrate dev",
+    "migrate:function": "python3 prisma/functions/generate_function_migration.py && prisma migrate dev",
+    "seed:dev": "tsx prisma/seeds/seed.dev.ts",
+    "seed:election": "tsx prisma/seeds/seed.election.ts",
+    "seed:recommend": "tsx prisma/seeds/seed.recommend.ts",
+    "seed:prod": "tsx prisma/seeds/seed.prod.ts",
+    "reset": "prisma migrate reset",
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --check .",
     "lint": "eslint . --ext .ts,.tsx"
@@ -32,6 +40,7 @@
   "devDependencies": {
     "@pple-today/project-config": "workspace:^",
     "@prisma/adapter-pg": "^6.15.0",
+    "@tanstack/pacer": "^0.15.4",
     "dotenv": "^17.0.1",
     "prisma": "^6.15.0"
   },

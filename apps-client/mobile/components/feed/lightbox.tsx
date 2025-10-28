@@ -138,7 +138,7 @@ function AlbumLayout(props: AttachmentLayoutProps) {
                 <View key={i} className="relative">
                   <Attachment key={i} index={i + 1} onPress={props.onPress} attachment={m} />
                   <View className="absolute top-0 left-0 right-0 bottom-0 bg-black/50 flex items-center justify-center z-[1] rounded-[2px] pointer-events-none">
-                    <Text className="text-2xl text-white font-anakotmai-medium">
+                    <Text className="text-2xl text-white font-heading-semibold">
                       +{props.attachments.length - 4}
                     </Text>
                   </View>

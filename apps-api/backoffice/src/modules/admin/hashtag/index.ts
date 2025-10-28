@@ -1,6 +1,6 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
-import Elysia from 'elysia'
+import Elysia, { t } from 'elysia'
 
 import {
   CreateHashtagBody,
@@ -17,19 +17,20 @@ import {
 } from './models'
 import { AdminHashtagServicePlugin } from './services'
 
-import { AuthGuardPlugin } from '../../../plugins/auth-guard'
+import { AdminAuthGuardPlugin } from '../../../plugins/admin-auth-guard'
 
 export const AdminHashtagController = new Elysia({
   prefix: '/hashtags',
   tags: ['Admin Hashtags'],
 })
-  .use([AuthGuardPlugin, AdminHashtagServicePlugin])
+  .use([AdminAuthGuardPlugin, AdminHashtagServicePlugin])
   .get(
     '/',
     async ({ query, status, adminHashtagService }) => {
-      const pagingQuery = {
-        limit: query.limit ?? 10,
+      const pagingQuery: GetHashtagsQuery = {
+        limit: query.limit,
         page: query.page ?? 1,
+        search: query.search,
       }
 
       const result = await adminHashtagService.getHashtags(pagingQuery)
@@ -39,7 +40,7 @@ export const AdminHashtagController = new Elysia({
     },
     {
       requiredLocalUser: true,
-      query: GetHashtagsQuery,
+      query: t.Partial(GetHashtagsQuery),
       response: {
         200: GetHashtagsResponse,
         ...createErrorSchema(
@@ -105,7 +106,7 @@ export const AdminHashtagController = new Elysia({
       },
     }
   )
-  .put(
+  .patch(
     '/:hashtagId',
     async ({ params, body, status, adminHashtagService }) => {
       const result = await adminHashtagService.updateHashtagById(params.hashtagId, body)

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Platform, Pressable, ScrollView, TextProps, View } from 'react-native'
+import { Platform, Pressable, ScrollView, Text as RNText, TextProps, View } from 'react-native'
 import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import ImageView from 'react-native-image-viewing'
 import PagerView from 'react-native-pager-view'
@@ -32,15 +32,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@pple-today/ui/select'
+import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { Textarea } from '@pple-today/ui/textarea'
 import { toast } from '@pple-today/ui/toast'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
+import dayjs from 'dayjs'
 import { useEvent } from 'expo'
 import { Image } from 'expo-image'
+import * as ImagePicker from 'expo-image-picker'
 import * as Linking from 'expo-linking'
+import * as Location from 'expo-location'
 import { useRouter } from 'expo-router'
 import { getItemAsync } from 'expo-secure-store'
 import { useTrackingPermissions } from 'expo-tracking-transparency'
@@ -49,12 +53,17 @@ import LottieView from 'lottie-react-native'
 import { InfoIcon, PlusIcon, SearchIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
+import { ElectionWithCurrentStatus, FeedItemPoll } from '@api/backoffice/app'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useFacebookPagesQuery } from '@app/libs/facebook'
+import { EXAMPLE_ACTIVITY } from '@app/libs/pple-activity'
 
+import { ActivityCard } from './activity/activity-card'
 import { AuthPlayground } from './auth-playground'
 import { AvatarPPLEFallback } from './avatar-pple-fallback'
+import { ElectionCard, ElectionDetailCard, ElectionStatusBadge } from './election/election-card'
 import { MoreOrLess } from './more-or-less'
+import { PollContent } from './poll/poll-card'
 
 const AUTH_ACCESS_TOKEN_STORAGE_KEY = 'authAccessToken'
 
@@ -65,19 +74,55 @@ export function Playground() {
         <View className="flex flex-row items-center justify-between">
           <H1 className="font-inter-bold">Playground</H1>
         </View>
-        <FacebookSDKExample />
+        <ActivityCardExample />
         <View className="flex flex-col gap-2">
           <H2 className="font-inter-bold">Font</H2>
           <View className="flex flex-col gap-1">
-            <Text style={{ fontFamily: 'Inter_300Light' }}>Inter</Text>
-            <Text style={{ fontFamily: 'Inter_500Medium' }}>Inter</Text>
+            <Text style={{ fontFamily: 'Inter_400Regular' }}>Inter</Text>
+            <Text style={{ fontFamily: 'Inter_600SemiBold' }}>Inter</Text>
             <Text style={{ fontFamily: 'Inter_700Bold' }}>Inter</Text>
-            <Text className="font-anakotmai-light">Anakotmai</Text>
-            <Text className="font-anakotmai-medium">Anakotmai</Text>
-            <Text className="font-anakotmai-bold">Anakotmai</Text>
-            <Text className="font-noto-light">NotoSansThaiLooped</Text>
-            <Text className="font-noto-medium">NotoSansThaiLooped</Text>
-            <Text className="font-noto-bold">NotoSansThaiLooped</Text>
+            <Text className="font-heading-regular">Heading</Text>
+            <Text className="font-heading-semibold">Heading</Text>
+            <Text className="font-heading-bold">Heading</Text>
+            <Text className="font-body-light">Body</Text>
+            <Text className="font-body-medium">Body</Text>
+          </View>
+        </View>
+        <View className="flex flex-col gap-2">
+          <H2 className="font-inter-bold">Typography</H2>
+          <View className="flex flex-col gap-1">
+            <View className="flex flex-row gap-2 items-center my-4 bg-blue-50 self-start">
+              <RNText
+                style={{
+                  fontFamily: 'NotoSansThai_400Regular',
+                  fontSize: 24,
+                  // comment lineHeight and marginTop/paddingTop to see original sizing
+                  lineHeight: 32,
+                  paddingTop: 4,
+                  marginTop: -4,
+                }}
+                className="bg-red-100/50"
+                // onLayout={(e) => console.log(e.nativeEvent.layout.height)}
+              >
+                ไม่รู้ไม่ชี้
+              </RNText>
+              <Icon icon={InfoIcon} size={32} className="bg-red-100/50" />
+            </View>
+
+            <Text className="font-heading-semibold text-4xl">4xl-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-3xl">3xl-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-2xl">2xl-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-xl">xl-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-lg">lg-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-base">base-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-sm">sm-heading ไม่รู้ไม่ชี้</Text>
+            <Text className="font-heading-semibold text-xs">xs-heading ไม่รู้ไม่ชี้</Text>
+
+            <Text className="font-body-light text-xl">xl-body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-lg">lg-body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-base">base-body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-sm">sm-body ไม่รู้ไม่ชี้</Text>
+            <Text className="font-body-light text-xs">xs-body ไม่รู้ไม่ชี้</Text>
           </View>
         </View>
         <View className="flex flex-col gap-2">
@@ -267,6 +312,11 @@ export function Playground() {
         <VideoExample />
         <QueryExample />
         <AuthPlayground />
+        <ElectionCardExample />
+        <FacebookSDKExample />
+        <LocationExample />
+        <FrontCameraExample />
+        <PollExample />
       </View>
     </ScrollView>
   )
@@ -542,10 +592,10 @@ function MoreOrLessExample() {
 }
 
 function TextPost(props: TextProps) {
-  return <Text {...props} className="text-base-text-high font-noto-light text-base" />
+  return <Text {...props} className="text-base-text-high font-body-light text-base" />
 }
 function ButtonTextPost(props: TextProps) {
-  return <Text {...props} className="text-base-primary-default font-noto-light text-base" />
+  return <Text {...props} className="text-base-primary-default font-body-light text-base" />
 }
 
 const images = [require('@app/assets/post-1.png'), require('@app/assets/banner-2.png')]
@@ -863,6 +913,316 @@ function OnboardPlayground() {
           <Text>Start Onboarding</Text>
         </Button>
       </View>
+    </View>
+  )
+}
+
+const electionDetail: ElectionWithCurrentStatus = {
+  id: '1',
+  name: 'เลือกตั้งตัวแทนสมาชิกพรรคประจำ อ.เมือง จ.ระยอง',
+  description: 'เลือกตั้งตัวแทนสมาชิกพรรคประจำ อ.เมือง จ.ระยอง บลาบลาบลา',
+  location: 'อาคารอเนกประสงชุมชนสองพี่น้อง 1,2,3',
+  locationMapUrl: 'https://maps.app.goo.gl/3Da9VfiGFiHXeQKLA',
+  province: 'ระยอง',
+  district: 'เมือง',
+  mode: 'SECURE',
+  isCancelled: false,
+  encryptionPublicKey: 'some-public-key',
+  type: 'ONLINE',
+  publishDate: dayjs(new Date()).subtract(2, 'day').toDate(),
+  openRegister: dayjs(new Date()).subtract(1, 'day').toDate(),
+  closeRegister: dayjs(new Date()).add(1, 'day').toDate(),
+  openVoting: dayjs(new Date()).add(2, 'day').toDate(),
+  closeVoting: dayjs(new Date()).add(3, 'day').toDate(),
+  startResult: dayjs(new Date()).add(4, 'day').toDate(),
+  endResult: dayjs(new Date()).add(5, 'day').toDate(),
+  createdAt: dayjs(new Date()).toDate(),
+  updatedAt: dayjs(new Date()).toDate(),
+  status: 'NOT_OPENED_VOTE',
+  votePercentage: 0,
+  isRegistered: false,
+  isVoted: false,
+}
+function ElectionCardExample() {
+  const elections: ElectionWithCurrentStatus[] = [
+    // NOT_OPENED_VOTE
+    {
+      ...electionDetail,
+      type: 'ONLINE',
+    },
+    {
+      ...electionDetail,
+      type: 'ONSITE',
+    },
+    // TODO: add canRegister when past publishDate but before openRegister
+    // {
+    //   ...electionDetail,
+    //   type: 'HYBRID',
+    //   canRegister: false,
+    // },
+    {
+      ...electionDetail,
+      type: 'HYBRID',
+    },
+    {
+      ...electionDetail,
+      type: 'HYBRID',
+      isRegistered: true,
+    },
+    // OPEN_VOTE
+    {
+      ...electionDetail,
+      type: 'ONLINE',
+      status: 'OPEN_VOTE',
+    },
+    {
+      ...electionDetail,
+      type: 'ONSITE',
+      status: 'OPEN_VOTE',
+    },
+    {
+      ...electionDetail,
+      type: 'HYBRID',
+      status: 'OPEN_VOTE',
+    },
+    {
+      ...electionDetail,
+      type: 'HYBRID',
+      status: 'OPEN_VOTE',
+      isVoted: true,
+      votePercentage: 45.84,
+    },
+    // CLOSED_VOTE
+    {
+      ...electionDetail,
+      type: 'ONLINE',
+      status: 'CLOSED_VOTE',
+    },
+    {
+      ...electionDetail,
+      type: 'ONSITE',
+      status: 'CLOSED_VOTE',
+    },
+    {
+      ...electionDetail,
+      type: 'HYBRID',
+      status: 'CLOSED_VOTE',
+    },
+    // RESULT_ANNOUNCE
+    {
+      ...electionDetail,
+      type: 'ONLINE',
+      status: 'RESULT_ANNOUNCE',
+    },
+    {
+      ...electionDetail,
+      type: 'ONSITE',
+      status: 'RESULT_ANNOUNCE',
+    },
+    {
+      ...electionDetail,
+      type: 'HYBRID',
+      status: 'RESULT_ANNOUNCE',
+    },
+  ]
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Election Card</H2>
+      <Slide count={elections.length} itemWidth="container" gap={8}>
+        <SlideScrollView>
+          {elections.map((election, index) => (
+            <SlideItem key={index} className="flex flex-row items-stretch">
+              <ElectionCard election={election} />
+            </SlideItem>
+          ))}
+        </SlideScrollView>
+        <SlideIndicators />
+      </Slide>
+      <Slide count={elections.length} itemWidth="container" gap={8}>
+        <SlideScrollView>
+          {elections.map((election, index) => (
+            <SlideItem key={index} className="flex flex-row items-stretch">
+              <ElectionDetailCard election={election} />
+            </SlideItem>
+          ))}
+        </SlideScrollView>
+        <SlideIndicators />
+      </Slide>
+      <View className="flex flex-row gap-2 items-start">
+        <ElectionStatusBadge status="NOT_OPENED_VOTE" />
+        <ElectionStatusBadge status="OPEN_VOTE" />
+        <ElectionStatusBadge status="CLOSED_VOTE" />
+        <ElectionStatusBadge status="RESULT_ANNOUNCE" />
+      </View>
+    </View>
+  )
+}
+
+function LocationExample() {
+  const [status, requestPermission] = Location.useForegroundPermissions()
+  const [location, setLocation] = useState<Location.LocationObject | null>(null)
+  const getCurrentLocation = useCallback(async () => {
+    const { status } = await requestPermission()
+    if (status !== 'granted') {
+      toast.error({ text1: 'Permission to access location was denied' })
+      return
+    }
+    const location = await Location.getCurrentPositionAsync({})
+    setLocation(location)
+  }, [requestPermission])
+
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Location</H2>
+      <Text>Permission: {JSON.stringify(status, null, 2)}</Text>
+      <Text>Location: {JSON.stringify(location, null, 2)}</Text>
+      <Button onPress={getCurrentLocation}>
+        <Text>Get Current Location</Text>
+      </Button>
+    </View>
+  )
+}
+
+function FrontCameraExample() {
+  const [status, requestPermission] = ImagePicker.useCameraPermissions()
+  const [asset, setAsset] = useState<ImagePicker.ImagePickerAsset | null>(null)
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Front Camera</H2>
+      <Text>Permission: {JSON.stringify(status, null, 2)}</Text>
+      <Button
+        onPress={async () => {
+          const { status } = await requestPermission()
+          if (status !== 'granted') {
+            toast.error({ text1: 'Permission to access camera was denied' })
+            return
+          }
+          const result = await ImagePicker.launchCameraAsync({
+            cameraType: ImagePicker.CameraType.front,
+            quality: 0.4,
+          })
+          const asset = result.assets?.[0]
+          setAsset(asset ?? null)
+          if (asset) {
+            console.log('File size', asset.fileSize)
+          }
+        }}
+      >
+        <Text>Open Front Camera</Text>
+      </Button>
+      {asset && <Image source={{ uri: asset.uri }} className="aspect-[3/4]" />}
+    </View>
+  )
+}
+
+function ActivityCardExample() {
+  return (
+    <View className="flex flex-col gap-2 ">
+      <H2 className="font-inter-bold">Activity Card</H2>
+      <ActivityCard activity={EXAMPLE_ACTIVITY} />
+    </View>
+  )
+}
+
+function PollExample() {
+  const feedItemSingle = {
+    id: 'poll-none',
+    author: {
+      id: 'pple-official-user',
+      name: "พรรคประชาชน - People's Party",
+      province: '',
+    },
+    publishedAt: dayjs(new Date()).subtract(2, 'hour').toDate(),
+    userReaction: null,
+    commentCount: 0,
+    reactions: [],
+    type: 'POLL',
+    poll: {
+      options: [
+        {
+          id: 'opt-1',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจตกต่ำ',
+          votes: 1,
+          isSelected: false,
+        },
+        {
+          id: 'opt-2',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจโตไว',
+          votes: 2,
+          isSelected: false,
+        },
+        {
+          id: 'opt-3',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจซบเซา',
+          votes: 3,
+          isSelected: false,
+        },
+        {
+          id: 'opt-4',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจดีขึ้น',
+          votes: 4,
+          isSelected: false,
+        },
+      ],
+      title: 'คุณคิดว่าปัญหาที่สำคัญที่สุดของประเทศไทยคืออะไร?',
+      endAt: dayjs(new Date()).add(2, 'hour').toDate(),
+      type: 'SINGLE_CHOICE',
+      totalVotes: 10,
+    },
+  } as FeedItemPoll
+
+  const feedItemMultiple = {
+    id: 'poll-none',
+    author: {
+      id: 'pple-official-user',
+      name: "พรรคประชาชน - People's Party",
+      province: '',
+    },
+    publishedAt: dayjs(new Date()).subtract(2, 'hour').toDate(),
+    userReaction: null,
+    commentCount: 0,
+    reactions: [],
+    type: 'POLL',
+    poll: {
+      options: [
+        {
+          id: 'opt-1',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจตกต่ำ',
+          votes: 6,
+          isSelected: false,
+        },
+        {
+          id: 'opt-2',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจโตไวที่รวดเร็วอย่างไม่เคยมีมาก่อนเพราะการสนับสนุนจากรัฐบาล',
+          votes: 11,
+          isSelected: false,
+        },
+        {
+          id: 'opt-3',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจซบเซา',
+          votes: 5,
+          isSelected: false,
+        },
+        {
+          id: 'opt-4',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจดีขึ้น',
+          votes: 8,
+          isSelected: false,
+        },
+      ],
+      title: 'คุณคิดว่าปัญหาที่สำคัญที่สุดของประเทศไทยคืออะไร?',
+      endAt: dayjs(new Date()).add(30, 'seconds').toDate(),
+      type: 'MULTIPLE_CHOICE',
+      totalVotes: 30,
+    },
+  } as FeedItemPoll
+
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Poll Card</H2>
+      <PollContent feedItem={feedItemSingle} card />
+      <H2 className="font-inter-bold">Poll Detail</H2>
+      <PollContent feedItem={feedItemMultiple} />
     </View>
   )
 }
