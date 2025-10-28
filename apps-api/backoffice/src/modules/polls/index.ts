@@ -45,7 +45,7 @@ export const PollsController = new Elysia({
       },
     }
   )
-  .post(
+  .put(
     '/:id/vote',
     async ({ params, body, user, pollsService, status }) => {
       const result = await pollsService.upsertPollVote(user.id, params.id, body.options)
