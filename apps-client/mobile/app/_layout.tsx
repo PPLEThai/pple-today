@@ -2,7 +2,7 @@ import '../global.css'
 import 'dayjs/locale/th'
 
 import * as React from 'react'
-import { PermissionsAndroid, Platform } from 'react-native'
+import { Alert, PermissionsAndroid, Platform } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { DevToolsBubble } from 'react-native-react-query-devtools'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
@@ -30,6 +30,8 @@ import {
   AuthorizationStatus,
   getMessaging,
   getToken,
+  onMessage,
+  onNotificationOpenedApp,
   requestPermission,
   setBackgroundMessageHandler,
 } from '@react-native-firebase/messaging'
@@ -86,7 +88,14 @@ if (Platform.OS === 'android' && Platform.Version >= 33) {
 
 // Register background handler
 setBackgroundMessageHandler(messaging, async (remoteMessage) => {
-  console.log('Message handled in the background!', remoteMessage)
+  Alert.alert('Message handled in the background!', JSON.stringify(remoteMessage))
+})
+
+onNotificationOpenedApp(messaging, async (remoteMessage) => {
+  Alert.alert(
+    'Notification caused app to open from background state:',
+    JSON.stringify(remoteMessage)
+  )
 })
 
 const queryClient = new QueryClient()
@@ -220,6 +229,12 @@ function NotificationTokenConsentPopup() {
     }
 
     registerNotification()
+
+    const unsubscribe = onMessage(messaging, async (remoteMessage) => {
+      Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage))
+    })
+
+    return unsubscribe
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.data])
 

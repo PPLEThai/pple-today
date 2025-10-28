@@ -52,36 +52,44 @@ export class CloudMessagingService {
     return resp.value.access_token
   }
 
-  async sendNotification(deviceToken: string[], title: string, message: string, image?: string) {
+  async sendNotification(
+    deviceToken: string[],
+    data: {
+      title: string
+      message: string
+      image?: string
+      link?: { type: string; value: string }
+    }
+  ) {
     const accessToken = await this.getAccessTokenAsync()
 
     const fcmUrl = `https://fcm.googleapis.com/v1/projects/${this.config.PROJECT_ID}/messages:send`
 
     await Promise.all(
       deviceToken.map(async (token) => {
-        const body: any = {
+        const body = {
           message: {
             token,
             notification: {
-              title: title,
-              body: message,
-              image: image,
+              title: data.title,
+              body: data.message,
             },
             data: {
-              volume: '3.21.15',
-              contents: 'http://www.news-magazine.com/world-week/21659772',
-            },
-            android: {
-              priority: 'normal',
+              link: data.link ? JSON.stringify(data.link) : '',
             },
             apns: {
-              headers: {
-                'apns-priority': '5',
+              payload: {
+                aps: {
+                  'mutable-content': 1,
+                },
+              },
+              fcm_options: {
+                image: data.image,
               },
             },
-            webpush: {
-              headers: {
-                Urgency: 'high',
+            android: {
+              notification: {
+                image: data.image,
               },
             },
           },
@@ -100,9 +108,11 @@ export class CloudMessagingService {
 
         if (!resp.ok) {
           console.error('Failed to send FCM notification', await resp.text())
+          throw new Error('Failed to send FCM notification')
         }
 
         console.log('FCM response', await resp.text())
+        console.log('FCM status', resp.status)
       })
     )
   }

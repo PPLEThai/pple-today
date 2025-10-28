@@ -126,7 +126,10 @@ export class NotificationRepository {
       return ok()
     }
 
-    await this.cloudMessagingService.sendNotification(deviceTokens, title, message)
+    await this.cloudMessagingService.sendNotification(deviceTokens, {
+      title,
+      message,
+    })
     return ok()
   }
 
@@ -142,22 +145,28 @@ export class NotificationRepository {
       title: string
       message: string
       url?: string
-      linkType?: NotificationLinkType
-      linkValue?: string
+      link?: {
+        type: NotificationLinkType
+        value: string
+      }
     }
   ) {
     this.prismaService.notification.create({
       data: {
         title: data.title,
         message: data.message,
-        linkType: data.linkType,
-        linkValue: data.linkValue,
+        linkType: data.link?.type,
+        linkValue: data.link?.value,
 
         isBroadcast: conditions.isBroadcast || false,
-        phoneNumber: conditions.phoneNumber || [],
         districts: conditions.districts || [],
         provinces: conditions.provinces || [],
         roles: conditions.roles || [],
+        phoneNumbers: {
+          createMany: {
+            data: conditions.phoneNumber?.map((phoneNumber) => ({ phoneNumber })) || [],
+          },
+        },
       },
     })
   }

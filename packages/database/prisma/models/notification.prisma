@@ -26,7 +26,6 @@ model Notification {
   linkValue String?
 
   isBroadcast Boolean  @default(false)
-  phoneNumber String[]
   roles       String[]
   provinces   String[]
   districts   String[]
@@ -35,6 +34,17 @@ model Notification {
   updatedAt DateTime @updatedAt
 
   sentNotifications UserNotification[]
+  phoneNumbers      NotificationPhoneNumber[]
+}
+
+model NotificationPhoneNumber {
+  notificationId String
+  phoneNumber    String
+
+  notification Notification @relation(fields: [notificationId], references: [id])
+
+  @@id([notificationId, phoneNumber])
+  @@index([phoneNumber])
 }
 
 model UserNotification {

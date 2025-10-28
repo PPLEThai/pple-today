@@ -1,5 +1,7 @@
 import 'tsx/cjs'
 
+import { AppJSONConfig } from 'expo/config'
+
 import { version } from './package.json'
 
 // TODO: update config when production release https://docs.expo.dev/versions/latest/config/app/
@@ -20,6 +22,10 @@ export default {
       bundleIdentifier: 'th.or.peoplesparty.ppletoday',
       entitlements: {
         'aps-environment': 'development',
+        'com.apple.security.application-groups': ['group.th.or.peoplesparty.ppletoday.nse'],
+      },
+      infoPlist: {
+        UIBackgroundModes: ['fetch', 'remote-notification'],
       },
     },
     android: {
@@ -115,6 +121,7 @@ export default {
         },
       ],
       ['./plugins/withAndroidPlugin'],
+      ['./plugins/withIosPlugin'],
 
       '@react-native-firebase/app',
       '@react-native-firebase/messaging',
@@ -124,6 +131,13 @@ export default {
           ios: {
             useFrameworks: 'static',
           },
+        },
+      ],
+      [
+        'expo-notification-service-extension-plugin',
+        {
+          mode: 'development',
+          iosNSEFilePath: './assets/NotificationService.m',
         },
       ],
     ],
@@ -137,4 +151,4 @@ export default {
     //   },
     // },
   },
-}
+} satisfies AppJSONConfig
