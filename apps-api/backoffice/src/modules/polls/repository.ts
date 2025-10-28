@@ -231,14 +231,6 @@ export class PollsRepository {
               poll: {
                 feedItemId: pollId,
                 status: PollStatus.PUBLISHED,
-                endAt: {
-                  gt: new Date(),
-                },
-                feedItem: {
-                  publishedAt: {
-                    lte: new Date(),
-                  },
-                },
               },
             },
             data: {
@@ -263,14 +255,6 @@ export class PollsRepository {
             where: {
               feedItemId: pollId,
               status: PollStatus.PUBLISHED,
-              endAt: {
-                gt: new Date(),
-              },
-              feedItem: {
-                publishedAt: {
-                  lte: new Date(),
-                },
-              },
             },
             data: {
               options: {
