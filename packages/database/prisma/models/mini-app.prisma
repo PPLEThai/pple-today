@@ -1,0 +1,17 @@
+model MiniApp {
+  id    String  @id @default(cuid())
+  name  String
+  icon  String? // Base64 encoded image
+  order Int     @default(0)
+
+  clientId  String
+  clientUrl String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bannerId String? @unique
+  banner   Banner?
+
+  @@index([order])
+}

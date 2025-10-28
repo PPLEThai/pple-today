@@ -22,14 +22,17 @@ export type GetBannerByIdResponse = Static<typeof GetBannerByIdResponse>
 // POST /admin/banners
 export const CreateBannerBody = t.Object({
   imageFilePath: FilePath,
+  startAt: t.Date({ description: 'The start date for the banner item' }),
+  endAt: t.Date({ description: 'The end date for the banner item' }),
   navigation: t.Enum(BannerNavigationType, {
     description: 'How the app should navigate when the item is tapped',
   }),
-  destination: t.String({
-    description: 'The destination URI for the banner item',
-  }),
-  startAt: t.Date({ description: 'The start date for the banner item' }),
-  endAt: t.Date({ description: 'The end date for the banner item' }),
+  miniAppId: t.Optional(t.String({ description: 'The ID of the mini app to open' })),
+  destination: t.Optional(
+    t.String({
+      description: 'The destination URI for the banner item',
+    })
+  ),
 })
 export type CreateBannerBody = Static<typeof CreateBannerBody>
 
@@ -38,22 +41,26 @@ export const CreateBannerResponse = t.Object({
 })
 export type CreateBannerResponse = Static<typeof CreateBannerResponse>
 
-// PUT /admin/banners/{id}
+// PATCH /admin/banners/{id}
 export const UpdateBannerParams = BannerIdParams
 export type UpdateBannerParams = Static<typeof UpdateBannerParams>
 
-export const UpdateBannerBody = t.Object({
-  imageFilePath: FilePath,
-  status: t.Enum(BannerStatusType, { description: 'Publish status of the banner item' }),
-  navigation: t.Enum(BannerNavigationType, {
-    description: 'How the app should navigate when the item is tapped',
-  }),
-  destination: t.String({
-    description: 'The destination URI for the banner item',
-  }),
-  startAt: t.Date({ description: 'The start date for the banner item' }),
-  endAt: t.Date({ description: 'The end date for the banner item' }),
-})
+export const UpdateBannerBody = t.Partial(
+  t.Object({
+    imageFilePath: FilePath,
+    status: t.Enum(BannerStatusType, { description: 'Publish status of the banner item' }),
+    navigation: t.Enum(BannerNavigationType, {
+      description: 'How the app should navigate when the item is tapped',
+    }),
+    destination: t.String({
+      description: 'The destination URI for the banner item',
+    }),
+    miniAppId: t.String({ description: 'The ID of the mini app to open' }),
+    startAt: t.Date({ description: 'The start date for the banner item' }),
+    endAt: t.Date({ description: 'The end date for the banner item' }),
+  })
+)
+
 export type UpdateBannerBody = Static<typeof UpdateBannerBody>
 
 export const UpdateBannerResponse = t.Object({
