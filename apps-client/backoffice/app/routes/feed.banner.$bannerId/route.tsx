@@ -13,9 +13,11 @@ import {
 import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
+import { AlertDialog, AlertDialogRef } from 'components/AlertDialog'
 import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
+import { BannerEdit } from 'components/feed/BannerEdit'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
-import { Calendar, Image, Link, Link2, Trash2 } from 'lucide-react'
+import { Calendar, EyeOff, Image, Link, Link2, Megaphone, Pencil, Trash2 } from 'lucide-react'
 
 import { UpdateBannerBody, UpdateBannerParams } from '@api/backoffice/admin'
 
@@ -31,7 +33,9 @@ export default function BannerDetailPage({ params }: Route.LoaderArgs) {
   const { bannerId } = params
 
   const navigate = useNavigate()
+
   const confirmDialogRef = useRef<ConfirmDialogRef>(null)
+  const alertDialogRef = useRef<AlertDialogRef>(null)
 
   const queryClient = useQueryClient()
   const query = reactQueryClient.useQuery('/admin/banners/:id', {
@@ -47,7 +51,7 @@ export default function BannerDetailPage({ params }: Route.LoaderArgs) {
     })
   }, [queryClient, bannerId])
 
-  const setPostStatus = useCallback(
+  const setBannerStatus = useCallback(
     (
       { status }: { status: NonNullable<UpdateBannerBody['status']> },
       { id }: UpdateBannerParams
@@ -57,23 +61,23 @@ export default function BannerDetailPage({ params }: Route.LoaderArgs) {
       patchMutation.mutateAsync(
         { pathParams: { id }, body: { status } },
         {
-          onSuccess: () => {
-            queryClient.setQueryData(
-              reactQueryClient.getQueryKey('/admin/banners/:id', {
-                pathParams: { id: bannerId },
-              }),
-              (_data) => {
-                const data = structuredClone(_data)
-                if (!data) return
-                data.status = status
-                return data
-              }
-            )
+          onSuccess: () => invalidateQuery(),
+          onError: ({ value }) => {
+            if (value.error.code === 'BANNER_PUBLISHING_LIMIT_REACHED')
+              return alertDialogRef.current?.alert({
+                title: 'เกิดข้อผิดพลาด',
+                description: 'ไม่สามารถแก้ไขสถานะแบนเนอร์ได้ เนื่องจากจำนวนแบนเนอร์เกินกำหนด',
+              })
+
+            alertDialogRef.current?.alert({
+              title: 'เกิดข้อผิดพลาด',
+              description: 'ไม่สามารถแก้ไขสถานะแบนเนอร์ได้',
+            })
           },
         }
       )
     },
-    [bannerId, patchMutation, queryClient]
+    [invalidateQuery, patchMutation]
   )
   const deleteBanner = useCallback(() => {
     if (deleteMutation.isPending) return
@@ -118,16 +122,16 @@ export default function BannerDetailPage({ params }: Route.LoaderArgs) {
         <Typography variant="h2">รายละเอียดแบนเนอร์</Typography>
         {query.data && (
           <div className="ml-auto flex gap-3">
-            {/* {query.data.status === 'PUBLISHED' ? (
+            {query.data.status === 'PUBLISHED' ? (
               <Button
                 variant="secondary"
                 size="icon"
                 className="size-8"
                 disabled={patchMutation.isPending}
                 aria-busy={patchMutation.isPending}
-                onClick={() => setPostStatus({ status: 'HIDDEN' }, { postId: query.data.id })}
+                onClick={() => setBannerStatus({ status: 'ARCHIVED' }, { id: query.data.id })}
               >
-                <span className="sr-only">ซ่อน</span>
+                <span className="sr-only">เก็บในคลัง</span>
                 <EyeOff className="size-4" />
               </Button>
             ) : (
@@ -136,12 +140,22 @@ export default function BannerDetailPage({ params }: Route.LoaderArgs) {
                 className="size-8"
                 disabled={patchMutation.isPending}
                 aria-busy={patchMutation.isPending}
-                onClick={() => setPostStatus({ status: 'PUBLISHED' }, { postId: query.data.id })}
+                onClick={() => setBannerStatus({ status: 'PUBLISHED' }, { id: query.data.id })}
               >
                 <span className="sr-only">ประกาศ</span>
                 <Megaphone className="size-4" />
               </Button>
-            )} */}
+            )}
+            <BannerEdit
+              trigger={
+                <Button variant="outline" size="icon" className="size-8">
+                  <span className="sr-only">แก้ไข</span>
+                  <Pencil className="size-4" />
+                </Button>
+              }
+              onSuccess={invalidateQuery}
+              banner={query.data}
+            />
             <Button
               variant="outline-destructive"
               size="icon"
@@ -224,6 +238,7 @@ export default function BannerDetailPage({ params }: Route.LoaderArgs) {
         </div>
       )}
       <ConfirmDialog ref={confirmDialogRef} />
+      <AlertDialog ref={alertDialogRef} />
     </div>
   )
 }

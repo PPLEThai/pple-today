@@ -11,8 +11,9 @@ import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
 import { createColumnHelper } from '@tanstack/react-table'
 import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { DtFilter } from 'components/datatable/DtFilter'
+import { BannerCreate } from 'components/feed/BannerCreate'
 import { TableCopyId } from 'components/TableCopyId'
-import { ChevronDown, ChevronUp, EyeOff, Megaphone, Pencil, Trash2 } from 'lucide-react'
+import { ChevronDown, ChevronUp, EyeOff, Megaphone, Pencil, Plus, Trash2 } from 'lucide-react'
 import { partition } from 'remeda'
 
 import {
@@ -310,6 +311,17 @@ export const Data = () => {
             setState: setQueryStatus,
           },
         ]}
+        filterExtension={
+          <BannerCreate
+            trigger={
+              <Button>
+                <Plus />
+                สร้างรูปแบนเนอร์
+              </Button>
+            }
+            onSuccess={invalidateQuery}
+          />
+        }
       />
       {publishedBanners.length > 1 && (
         <DataTable
