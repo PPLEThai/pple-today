@@ -35,6 +35,11 @@ export const CreateMiniAppTokenParams = t.Object({
 })
 export type CreateMiniAppTokenParams = Static<typeof CreateMiniAppTokenParams>
 
+export const CreateMiniAppTokenQuery = t.Object({
+  path: t.Optional(t.String({ description: 'The path within the mini app to navigate to' })),
+})
+export type CreateMiniAppTokenQuery = Static<typeof CreateMiniAppTokenQuery>
+
 export const CreateMiniAppTokenResponse = t.Object({
   url: t.String({ description: 'The URL to access the mini app with the generated token' }),
 })

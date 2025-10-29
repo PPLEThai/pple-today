@@ -17,6 +17,7 @@ const MiniAppWebView = () => {
 
   const params = useLocalSearchParams()
   const appId = params.appId as string
+  const path = params.path as string | undefined
   const tokenExchangeMiniAppResult = reactQueryClient.useMutation('post', '/auth/mini-app/:appId')
 
   useEffect(() => {
@@ -27,6 +28,9 @@ const MiniAppWebView = () => {
 
     tokenExchangeMiniAppResult.mutateAsync({
       pathParams: { appId },
+      query: {
+        path,
+      },
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appId, router])
