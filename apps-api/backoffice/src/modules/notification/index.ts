@@ -166,7 +166,7 @@ export const ExternalNotificationController = new Elysia({
       })
     },
     {
-      details: {
+      detail: {
         summary: 'Send external notification to a user',
         description:
           'This endpoint allows sending notifications to external users based on their phone numbers. An API token is required for authentication.',
