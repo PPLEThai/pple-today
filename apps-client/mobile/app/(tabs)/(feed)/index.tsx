@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Pressable, StyleSheet, View } from 'react-native'
 import Animated, {
   useAnimatedScrollHandler,
+  useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
@@ -257,11 +258,16 @@ function Banner({ banner }: { banner: GetBannersResponse[number] }) {
     scale.value = withTiming(1, { duration: 150 })
   }
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }))
+
   return (
     <SlideItem key={banner.id}>
       <Pressable onPressIn={fadeIn} onPressOut={fadeOut} onPress={onPress} disabled={disabled}>
         <Animated.View
-          style={{ opacity, transform: [{ scale }] }}
+          style={animatedStyle}
           className="bg-base-bg-light rounded-xl overflow-hidden"
         >
           <Image
@@ -556,7 +562,12 @@ function FeedFollowingContent(props: PagerScrollViewProps) {
   }, [feedInfiniteQuery.data])
 
   const scrollContext = useScrollContext()
-  const scrollHandler = useAnimatedScrollHandler(scrollContext)
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event, ctx) => {
+      'worklet'
+      scrollContext?.onScroll?.(event, ctx)
+    },
+  })
 
   const queryClient = useQueryClient()
   const onRefresh = React.useCallback(async () => {
@@ -647,7 +658,12 @@ function FeedContent(props: PagerScrollViewProps) {
   }, [feedInfiniteQuery.data])
 
   const scrollContext = useScrollContext()
-  const scrollHandler = useAnimatedScrollHandler(scrollContext)
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event, ctx) => {
+      'worklet'
+      scrollContext?.onScroll?.(event, ctx)
+    },
+  })
 
   const queryClient = useQueryClient()
   const onRefresh = React.useCallback(async () => {
@@ -738,7 +754,12 @@ function FeedTopicContent(props: FeedTopicContentProps) {
   }, [feedInfiniteQuery.data])
 
   const scrollContext = useScrollContext()
-  const scrollHandler = useAnimatedScrollHandler(scrollContext)
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event, ctx) => {
+      'worklet'
+      scrollContext?.onScroll?.(event, ctx)
+    },
+  })
 
   const queryClient = useQueryClient()
   const onRefresh = React.useCallback(async () => {

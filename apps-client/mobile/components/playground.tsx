@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Platform, Pressable, ScrollView, Text as RNText, TextProps, View } from 'react-native'
 import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import ImageView from 'react-native-image-viewing'
+import PagerView from 'react-native-pager-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
@@ -296,6 +297,7 @@ export function Playground() {
           </Dialog>
         </View>
         <AvatarExample />
+        <PagerViewExample />
         <BottomSheetExample />
         <ToggleGroupExample />
         <ProgressExample />
@@ -318,6 +320,22 @@ export function Playground() {
         <PollExample />
       </View>
     </ScrollView>
+  )
+}
+
+function PagerViewExample() {
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Pager View</H2>
+      <PagerView style={{ flex: 1, height: 300, width: '100%' }} initialPage={0}>
+        <View key="1" className="flex-1 items-center justify-center bg-blue-50">
+          <Text>First page</Text>
+        </View>
+        <View key="2" className="flex-1 items-center justify-center bg-red-50">
+          <Text>Second page</Text>
+        </View>
+      </PagerView>
+    </View>
   )
 }
 
