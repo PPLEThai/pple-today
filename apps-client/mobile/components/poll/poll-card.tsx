@@ -373,6 +373,7 @@ const PollMultipleOptionList = (props: PollProps) => {
   const handleValueChange = async (value: string[]) => {
     if (!session) {
       router.navigate('/profile')
+      return
     }
     // optimistic update
     setPollVotes(selectedOptions, value)
