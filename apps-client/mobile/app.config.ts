@@ -13,7 +13,7 @@ export default {
     orientation: 'portrait',
     icon: './assets/images/favicon1024.png',
     userInterfaceStyle: 'automatic',
-    // newArchEnabled: true, // this is true by default
+    newArchEnabled: true, // this is true by default
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'th.or.peoplesparty.ppletoday',
@@ -33,6 +33,9 @@ export default {
       favicon: './assets/images/favicon.svg',
     },
     plugins: [
+      'expo-font',
+      'expo-secure-store',
+      'expo-video',
       'expo-router',
       [
         'expo-splash-screen',
@@ -54,7 +57,6 @@ export default {
         {
           ios: {
             deploymentTarget: '15.1',
-            newArchEnabled: false,
           },
           /**
            * Unfortunately, the performance issue with scrolling (Android) is really deep
@@ -72,7 +74,6 @@ export default {
             compileSdkVersion: 35,
             targetSdkVersion: 35,
             buildToolsVersion: '35.0.0',
-            newArchEnabled: false,
           },
         },
       ],

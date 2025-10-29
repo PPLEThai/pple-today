@@ -38,8 +38,6 @@ import { Text } from '@pple-today/ui/text'
 
 import { ScrollContextProvider } from '@app/libs/scroll-context'
 
-import { ExpoScrollForwarderView } from '../../../packages/expo-scroll-forwarder/build'
-
 // brief structure for PagerView with Header
 // <Pager>
 //   <PagerHeader>
@@ -65,7 +63,7 @@ import { ExpoScrollForwarderView } from '../../../packages/expo-scroll-forwarder
 // </Pager>
 
 const AnimatedPagerView = Animated.createAnimatedComponent(PagerView)
-const AnimatedExpoScrollForwarderView = Animated.createAnimatedComponent(ExpoScrollForwarderView)
+// const AnimatedExpoScrollForwarderView = Animated.createAnimatedComponent(ExpoScrollForwarderView)
 
 // Scrolling with header is laggy on Expo Go Android because of the "new architecture"
 // disabling it in `app.config.ts` fixes the issue on native build
@@ -193,13 +191,7 @@ export function Pager({ children, ref }: { children: React.ReactNode; ref?: Reac
         <ScrollContextProvider onScroll={onScrollWorklet}>
           <View className="flex-1">
             {/* PanGestureRecognizer only works for one view so we have to move it up to the parent */}
-            {Platform.OS === 'ios' ? (
-              <ExpoScrollForwarderView scrollViewTag={scrollViewTag} style={{ flex: 1 }}>
-                {children}
-              </ExpoScrollForwarderView>
-            ) : (
-              children
-            )}
+            {children}
           </View>
         </ScrollContextProvider>
       </PagerTabBarProvider>
@@ -242,13 +234,14 @@ export function PagerHeader({ children }: { children: React.ReactNode }) {
   })
   if (Platform.OS === 'android') {
     return (
-      <AnimatedExpoScrollForwarderView
-        scrollViewTag={scrollViewTag}
-        style={[styles.pagerHeader, headerTransform]}
-      >
-        {/* Somehow a view is required here to make ScrollForward working in android */}
-        <View className="bg-transparent">{children}</View>
-      </AnimatedExpoScrollForwarderView>
+      <View className="bg-transparent">{children}</View>
+      // <AnimatedExpoScrollForwarderView
+      //   scrollViewTag={scrollViewTag}
+      //   style={[styles.pagerHeader, headerTransform]}
+      // >
+      //   {/* Somehow a view is required here to make ScrollForward working in android */}
+      //   <View className="bg-transparent">{children}</View>
+      // </AnimatedExpoScrollForwarderView>
     )
   }
   return <Animated.View style={[styles.pagerHeader, headerTransform]}>{children}</Animated.View>
