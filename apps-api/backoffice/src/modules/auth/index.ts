@@ -73,10 +73,10 @@ export const AuthController = new Elysia({
     }
   )
   .post(
-    '/mini-app/:appId',
+    '/mini-app/:slug',
     async ({ params, user, authService, query, status }) => {
       const result = await authService.generateMiniAppToken(
-        params.appId,
+        params.slug,
         user.accessToken,
         query.path
       )
