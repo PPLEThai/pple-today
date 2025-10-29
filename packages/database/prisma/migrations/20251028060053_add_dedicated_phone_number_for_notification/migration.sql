@@ -1,17 +1,15 @@
 /*
-  Warnings:
+Warnings:
 
-  - You are about to drop the column `phoneNumber` on the `Notification` table. All the data in the column will be lost.
-  - Made the column `bannerImagePath` on table `Topic` required. This step will fail if there are existing NULL values in that column.
+- You are about to drop the column `phoneNumber` on the `Notification` table. All the data in the column will be lost.
+- Made the column `bannerImagePath` on table `Topic` required. This step will fail if there are existing NULL values in that column.
 
 */
 -- AlterTable
 ALTER TABLE "public"."Notification" DROP COLUMN "phoneNumber";
 
--- AlterTable
-ALTER TABLE "public"."Topic" ALTER COLUMN "bannerImagePath" SET NOT NULL;
-
 -- CreateTable
+
 CREATE TABLE "public"."NotificationPhoneNumber" (
     "notificationId" TEXT NOT NULL,
     "phoneNumber" TEXT NOT NULL,
@@ -20,6 +18,7 @@ CREATE TABLE "public"."NotificationPhoneNumber" (
 );
 
 -- CreateTable
+
 CREATE TABLE "public"."NotificationApiKey" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -32,6 +31,7 @@ CREATE TABLE "public"."NotificationApiKey" (
 );
 
 -- CreateTable
+
 CREATE TABLE "public"."NotificationApiKeyUsageLog" (
     "id" TEXT NOT NULL,
     "notificationApiKeyId" TEXT NOT NULL,
