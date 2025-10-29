@@ -26,7 +26,14 @@ export class AuthGuard {
     if (!token)
       return err({ code: InternalErrorCode.UNAUTHORIZED, message: 'User not authenticated' })
 
-    return await introspectAccessToken(token, this.oidcConfig)
+    const user = await introspectAccessToken(token, this.oidcConfig)
+
+    if (user.isErr()) return err(user.error)
+
+    return ok({
+      ...user.value,
+      access_token: token,
+    })
   }
 
   async checkUserPrecondition(
@@ -79,6 +86,7 @@ export class AuthGuard {
 
     return ok({
       ...user.value,
+      accessToken: oidcUser.access_token,
       roles: oidcUserResult.value.pple_roles,
     })
   }

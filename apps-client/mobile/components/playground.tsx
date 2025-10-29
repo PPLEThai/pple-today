@@ -52,7 +52,7 @@ import LottieView from 'lottie-react-native'
 import { InfoIcon, PlusIcon, SearchIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import { ElectionWithCurrentStatus } from '@api/backoffice/app'
+import { ElectionWithCurrentStatus, FeedItemPoll } from '@api/backoffice/app'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useFacebookPagesQuery } from '@app/libs/facebook'
 import { EXAMPLE_ACTIVITY } from '@app/libs/pple-activity'
@@ -62,6 +62,7 @@ import { AuthPlayground } from './auth-playground'
 import { AvatarPPLEFallback } from './avatar-pple-fallback'
 import { ElectionCard, ElectionDetailCard, ElectionStatusBadge } from './election/election-card'
 import { MoreOrLess } from './more-or-less'
+import { PollContent } from './poll/poll-card'
 
 const AUTH_ACCESS_TOKEN_STORAGE_KEY = 'authAccessToken'
 
@@ -313,6 +314,7 @@ export function Playground() {
         <FacebookSDKExample />
         <LocationExample />
         <FrontCameraExample />
+        <PollExample />
       </View>
     </ScrollView>
   )
@@ -904,6 +906,8 @@ const electionDetail: ElectionWithCurrentStatus = {
   description: 'เลือกตั้งตัวแทนสมาชิกพรรคประจำ อ.เมือง จ.ระยอง บลาบลาบลา',
   location: 'อาคารอเนกประสงชุมชนสองพี่น้อง 1,2,3',
   locationMapUrl: 'https://maps.app.goo.gl/3Da9VfiGFiHXeQKLA',
+  province: 'ระยอง',
+  district: 'เมือง',
   mode: 'SECURE',
   isCancelled: false,
   encryptionPublicKey: 'some-public-key',
@@ -1099,6 +1103,109 @@ function ActivityCardExample() {
     <View className="flex flex-col gap-2 ">
       <H2 className="font-inter-bold">Activity Card</H2>
       <ActivityCard activity={EXAMPLE_ACTIVITY} />
+    </View>
+  )
+}
+
+function PollExample() {
+  const feedItemSingle = {
+    id: 'poll-none',
+    author: {
+      id: 'pple-official-user',
+      name: "พรรคประชาชน - People's Party",
+      province: '',
+    },
+    publishedAt: dayjs(new Date()).subtract(2, 'hour').toDate(),
+    userReaction: null,
+    commentCount: 0,
+    reactions: [],
+    type: 'POLL',
+    poll: {
+      options: [
+        {
+          id: 'opt-1',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจตกต่ำ',
+          votes: 1,
+          isSelected: false,
+        },
+        {
+          id: 'opt-2',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจโตไว',
+          votes: 2,
+          isSelected: false,
+        },
+        {
+          id: 'opt-3',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจซบเซา',
+          votes: 3,
+          isSelected: false,
+        },
+        {
+          id: 'opt-4',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจดีขึ้น',
+          votes: 4,
+          isSelected: false,
+        },
+      ],
+      title: 'คุณคิดว่าปัญหาที่สำคัญที่สุดของประเทศไทยคืออะไร?',
+      endAt: dayjs(new Date()).add(2, 'hour').toDate(),
+      type: 'SINGLE_CHOICE',
+      totalVotes: 10,
+    },
+  } as FeedItemPoll
+
+  const feedItemMultiple = {
+    id: 'poll-none',
+    author: {
+      id: 'pple-official-user',
+      name: "พรรคประชาชน - People's Party",
+      province: '',
+    },
+    publishedAt: dayjs(new Date()).subtract(2, 'hour').toDate(),
+    userReaction: null,
+    commentCount: 0,
+    reactions: [],
+    type: 'POLL',
+    poll: {
+      options: [
+        {
+          id: 'opt-1',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจตกต่ำ',
+          votes: 6,
+          isSelected: false,
+        },
+        {
+          id: 'opt-2',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจโตไวที่รวดเร็วอย่างไม่เคยมีมาก่อนเพราะการสนับสนุนจากรัฐบาล',
+          votes: 11,
+          isSelected: false,
+        },
+        {
+          id: 'opt-3',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจซบเซา',
+          votes: 5,
+          isSelected: false,
+        },
+        {
+          id: 'opt-4',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจดีขึ้น',
+          votes: 8,
+          isSelected: false,
+        },
+      ],
+      title: 'คุณคิดว่าปัญหาที่สำคัญที่สุดของประเทศไทยคืออะไร?',
+      endAt: dayjs(new Date()).add(30, 'seconds').toDate(),
+      type: 'MULTIPLE_CHOICE',
+      totalVotes: 30,
+    },
+  } as FeedItemPoll
+
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Poll Card</H2>
+      <PollContent feedItem={feedItemSingle} card />
+      <H2 className="font-inter-bold">Poll Detail</H2>
+      <PollContent feedItem={feedItemMultiple} />
     </View>
   )
 }

@@ -66,6 +66,7 @@ import { formatDateInterval } from '@app/libs/format-date-interval'
 import { Lightbox } from './lightbox'
 
 import { AvatarPPLEFallback } from '../avatar-pple-fallback'
+import { PollContent } from '../poll/poll-card'
 
 type UserReaction = 'UP_VOTE' | 'DOWN_VOTE' | null
 
@@ -181,8 +182,7 @@ function FeedCardContent(props: { feedItem: FeedItem }) {
     case 'POST':
       return <PostCardContent key={props.feedItem.id} feedItem={props.feedItem} />
     case 'POLL':
-      // TODO
-      return null
+      return <PollContent feedItem={props.feedItem} card />
     case 'ANNOUNCEMENT':
       // expected no announcement
       return null
@@ -191,7 +191,7 @@ function FeedCardContent(props: { feedItem: FeedItem }) {
   }
 }
 
-function PostCardContent(props: { feedItem: FeedItemPost }) {
+const PostCardContent = (props: { feedItem: FeedItemPost }) => {
   const router = useRouter()
   const navigateToDetailPage = React.useCallback(() => {
     router.navigate(`/feed/${props.feedItem.id}`)
@@ -919,8 +919,7 @@ const FeedDetailContent = (props: { feedItem: FeedItem }) => {
     case 'POST':
       return <PostDetailContent feedItem={props.feedItem} />
     case 'POLL':
-      // TODO
-      return null
+      return <PollContent feedItem={props.feedItem} />
     case 'ANNOUNCEMENT':
       return <AnnouncementDetailContent feedItem={props.feedItem} />
     default:

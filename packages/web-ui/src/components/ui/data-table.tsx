@@ -91,7 +91,10 @@ export function DataTable<TData>({
                   <MultiSelect
                     options={item.options}
                     defaultValue={item.state}
-                    onValueChange={item.setState}
+                    onValueChange={(values) => {
+                      item.setState(values)
+                      setQueryPage?.(1)
+                    }}
                     placeholder={item.label}
                   />
                 </div>
@@ -106,7 +109,10 @@ export function DataTable<TData>({
                   className="pl-9 max-w-96"
                   placeholder={item.label}
                   value={item.state}
-                  onChange={(event) => item.setState(event.target.value)}
+                  onChange={(event) => {
+                    item.setState(event.target.value)
+                    setQueryPage?.(1)
+                  }}
                 />
                 <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-base-text-high select-none" />
               </div>

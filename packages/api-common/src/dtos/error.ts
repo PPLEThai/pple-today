@@ -215,6 +215,9 @@ const ELECTION_ERROR_SCHEMA = {
   ELECTION_NOT_IN_VOTE_PERIOD: {
     status: 409,
   },
+  ELECTION_IN_VOTE_PERIOD: {
+    status: 409,
+  },
   ELECTION_VOTE_TO_INVALID_TYPE: {
     status: 409,
   },
@@ -236,6 +239,24 @@ const ELECTION_ERROR_SCHEMA = {
   ELECTION_KEY_NOT_IN_PENDING_CREATED_STATUS: {
     status: 409,
   },
+  ELECTION_NOT_IN_CLOSED_VOTE_PERIOD: {
+    status: 409,
+  },
+  ELECTION_INVALID_TYPE: {
+    status: 409,
+  },
+  ELECTION_DUPLICATE_CANDIDATE: {
+    status: 409,
+  },
+  ELECTION_VOTES_EXCEED_VOTERS: {
+    status: 409,
+  },
+  ELECTION_INVALID_SIGNATURE: {
+    status: 401,
+  },
+  ELECTION_KEY_NOT_READY: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 export const ELECTION_KEY_ERROR_SCHEMA = {
@@ -244,6 +265,18 @@ export const ELECTION_KEY_ERROR_SCHEMA = {
   },
   ELECTION_KEY_NOT_FOUND: {
     status: 404,
+  },
+  KEY_NOT_ENABLED: {
+    status: 409,
+  },
+} satisfies InternalErrorSchemas
+
+const MINI_APP_ERROR_SCHEMA = {
+  MINI_APP_NOT_FOUND: {
+    status: 404,
+  },
+  MINI_APP_INVALID_INPUT: {
+    status: 400,
   },
 } satisfies InternalErrorSchemas
 
@@ -267,6 +300,7 @@ export const InternalErrorCodeSchemas = {
   ...HASHTAG_ERROR_SCHEMA,
   ...TOPIC_ERROR_SCHEMA,
   ...ELECTION_ERROR_SCHEMA,
+  ...MINI_APP_ERROR_SCHEMA,
   ...ELECTION_KEY_ERROR_SCHEMA,
   ...NOTIFICATION_KEY_ERROR_SCHEMA,
 } as const

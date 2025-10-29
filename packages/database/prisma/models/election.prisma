@@ -27,12 +27,21 @@ enum ElectionKeysStatus {
     DESTROY_SCHEDULED
 }
 
+enum ElectionOnlineResultStatus {
+    NONE
+    COUNTING
+    COUNT_SUCCESS
+    COUNT_FAILED
+}
+
 model Election {
     id             String  @id @default(cuid())
     name           String
     description    String?
     location       String?
     locationMapUrl String?
+    province       String?
+    district       String?
 
     isCancelled Boolean      @default(false)
     type        ElectionType
@@ -41,6 +50,8 @@ model Election {
     keysStatus                   ElectionKeysStatus @default(NOT_CREATED)
     keysDestroyScheduledAt       DateTime?
     keysDestroyScheduledDuration Int? // seconds
+
+    onlineResultStatus ElectionOnlineResultStatus @default(NONE)
 
     encryptionPublicKey String?
     signingPublicKey    String?
@@ -56,10 +67,11 @@ model Election {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    candidates  ElectionCandidate[]
-    voters      ElectionEligibleVoter[]
-    voteRecords ElectionVoteRecord[]
-    ballots     ElectionBallot[]
+    candidates     ElectionCandidate[]
+    voters         ElectionEligibleVoter[]
+    voteRecords    ElectionVoteRecord[]
+    ballots        ElectionBallot[]
+    invalidBallots ElectionInvalidBallot[]
 
     @@index([name])
 }
@@ -79,6 +91,8 @@ model ElectionCandidate {
 
     results ElectionResult[]
 
+    @@unique([electionId, name])
+    @@unique([electionId, number])
     @@index(electionId)
 }
 
@@ -138,4 +152,15 @@ model ElectionResult {
     candidate ElectionCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 
     @@id([candidateId, type])
+}
+
+model ElectionInvalidBallot {
+    id          String @id @default(cuid())
+    electionId  String
+    candidateId String
+
+    election Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
