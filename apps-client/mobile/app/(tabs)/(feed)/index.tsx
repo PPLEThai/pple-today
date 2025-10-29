@@ -605,6 +605,31 @@ function FeedFollowingContent(props: PagerScrollViewProps) {
   )
 }
 
+// Ref: https://github.com/LegendApp/legend-list/blob/f515e6a7d85ec6b23df6ca0836be2a25f41ba476/src/integrations/reanimated.tsx#L55
+// type TypedMemo = <T extends React.ComponentType<any>>(
+//   Component: T,
+//   propsAreEqual?: (
+//     prevProps: Readonly<React.JSXElementConstructor<T>>,
+//     nextProps: Readonly<React.JSXElementConstructor<T>>
+//   ) => boolean
+// ) => T & { displayName?: string }
+// const typedMemo = React.memo as TypedMemo
+
+// type AnimatedFlashListDefinition = <ItemT>(
+//   props: FlashListProps<ItemT> & { ref?: React.Ref<FlashListRef<ItemT>> }
+// ) => React.ReactElement | null
+// const AnimatedFlashListComponent = Animated.createAnimatedComponent(
+//   FlashList
+// ) as AnimatedFlashListDefinition
+// export const AnimatedFlashList = typedMemo(
+//   React.forwardRef(function AnimatedFlashList<ItemT>(
+//     props: FlashListProps<ItemT>,
+//     ref: React.Ref<FlashListRef<ItemT>>
+//   ) {
+//     return <AnimatedFlashListComponent ref={ref} {...props} />
+//   })
+// ) as AnimatedFlashListDefinition
+
 const LIMIT = 10
 function FeedContent(props: PagerScrollViewProps) {
   const { headerHeight, scrollElRef } = props
