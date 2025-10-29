@@ -33,7 +33,7 @@ export default function FeedDetailPage() {
     return null
   }
   return (
-    <View className="flex-1 flex-col bg-base-bg-default">
+    <View className="flex-1 flex-col">
       <View className="pt-safe-offset-4 pb-2 px-4 bg-base-bg-white">
         <Button
           variant="outline-primary"

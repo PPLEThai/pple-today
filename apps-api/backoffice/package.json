@@ -1,7 +1,7 @@
 {
   "name": "@api/backoffice",
   "type": "module",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "",
   "exports": {
     "./app": {
@@ -35,7 +35,8 @@
     "elysia": "^1.3.5",
     "jsonwebtoken": "^9.0.2",
     "neverthrow": "^8.2.0",
-    "remeda": "^2.24.0"
+    "remeda": "^2.24.0",
+    "safe-stable-stringify": "^2.5.0"
   },
   "tsup": {
     "entry": [
@@ -51,6 +52,7 @@
     "schema": "./prisma"
   },
   "devDependencies": {
+    "@api/ballot-crypto": "workspace:^",
     "@pple-today/project-config": "workspace:^",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^22.15.3",

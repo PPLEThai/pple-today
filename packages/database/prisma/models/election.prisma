@@ -19,17 +19,42 @@ enum ElectionMode {
     FLEXIBLE
 }
 
+enum ElectionKeysStatus {
+    NOT_CREATED
+    PENDING_CREATED
+    CREATED
+    FAILED_CREATED
+    DESTROY_SCHEDULED
+}
+
+enum ElectionOnlineResultStatus {
+    NONE
+    COUNTING
+    COUNT_SUCCESS
+    COUNT_FAILED
+}
+
 model Election {
-    id                        String       @id @default(cuid())
-    name                      String
-    description               String?
-    location                  String?
-    locationMapUrl            String?
-    type                      ElectionType
-    mode                      ElectionMode @default(SECURE)
-    encryptionPublicKey       String?
-    digitalSignaturePublicKey String?
-    isCancelled               Boolean      @default(false)
+    id             String  @id @default(cuid())
+    name           String
+    description    String?
+    location       String?
+    locationMapUrl String?
+    province       String?
+    district       String?
+
+    isCancelled Boolean      @default(false)
+    type        ElectionType
+    mode        ElectionMode @default(SECURE)
+
+    keysStatus                   ElectionKeysStatus @default(NOT_CREATED)
+    keysDestroyScheduledAt       DateTime?
+    keysDestroyScheduledDuration Int? // seconds
+
+    onlineResultStatus ElectionOnlineResultStatus @default(NONE)
+
+    encryptionPublicKey String?
+    signingPublicKey    String?
 
     publishDate   DateTime?
     openRegister  DateTime?
@@ -42,10 +67,11 @@ model Election {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    candidates  ElectionCandidate[]
-    voters      ElectionEligibleVoter[]
-    voteRecords ElectionVoteRecord[]
-    ballots     ElectionBallot[]
+    candidates     ElectionCandidate[]
+    voters         ElectionEligibleVoter[]
+    voteRecords    ElectionVoteRecord[]
+    ballots        ElectionBallot[]
+    invalidBallots ElectionInvalidBallot[]
 
     @@index([name])
 }
@@ -65,6 +91,8 @@ model ElectionCandidate {
 
     results ElectionResult[]
 
+    @@unique([electionId, name])
+    @@unique([electionId, number])
     @@index(electionId)
 }
 
@@ -114,7 +142,6 @@ model ElectionBallot {
 }
 
 model ElectionResult {
-    id          String             @id @default(cuid())
     candidateId String
     type        ElectionResultType
     count       Int                @default(0)
@@ -124,5 +151,16 @@ model ElectionResult {
 
     candidate ElectionCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 
-    @@unique([candidateId, type])
+    @@id([candidateId, type])
+}
+
+model ElectionInvalidBallot {
+    id          String @id @default(cuid())
+    electionId  String
+    candidateId String
+
+    election Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }

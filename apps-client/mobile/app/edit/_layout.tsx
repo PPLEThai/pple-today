@@ -7,16 +7,7 @@ export default function EditingLayout() {
   return (
     <View className="p-safe flex-1">
       <EditingProvider>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            animation: 'slide_from_right',
-            gestureEnabled: true,
-          }}
-        >
-          <Stack.Screen name="edit-profile" />
-          <Stack.Screen name="edit-address" />
-        </Stack>
+        <Stack screenOptions={{ headerShown: false }} />
       </EditingProvider>
     </View>
   )

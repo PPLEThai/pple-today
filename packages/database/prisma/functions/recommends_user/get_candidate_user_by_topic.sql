@@ -1,11 +1,15 @@
-CREATE OR REPLACE FUNCTION public.get_candidate_user_by_topic (_id text) RETURNS TABLE (user_id text, score numeric) LANGUAGE plpgsql AS $function$
+CREATE OR REPLACE FUNCTION public.get_candidate_user_by_topic (_id text) 
+    RETURNS TABLE (user_id text, score numeric) 
+    LANGUAGE plpgsql 
+    PARALLEL SAFE
+AS $function$
 BEGIN
    RETURN QUERY
 WITH
     current_user_follows AS (
         SELECT
             ufu."followerId" AS follower_id,
-            ufu."followingId" AS following_Id
+            ufu."followingId" AS following_id
         FROM "UserFollowsUser" ufu
         WHERE ufu."followerId" = _id
     ),
@@ -20,8 +24,9 @@ WITH
         FROM
             current_topic_follows ctf
             INNER JOIN "HashTagInTopic" hit ON hit."topicId" = ctf."topic_id"
-            INNER JOIN "HashTag" ht ON ht."id" = hit."hashTagId" AND ht."status" = 'PUBLISHED'
-            INNER JOIN "Topic" topic ON topic."id" = hit."topicId" AND topic."status" = 'PUBLISHED'
+            INNER JOIN "HashTag" ht ON ht."id" = hit."hashTagId"
+            INNER JOIN "Topic" topic ON topic."id" = hit."topicId"
+        WHERE ht."status" = 'PUBLISHED' AND topic."status" = 'PUBLISHED'
         GROUP BY
             hit."hashTagId"
     ),
@@ -31,9 +36,10 @@ WITH
         ) AS number_of_hashtag
         FROM
             "PostHashTag" pht
-            INNER JOIN "Post" post ON post."feedItemId" = pht."postId" AND post."status" = 'PUBLISHED'
+            INNER JOIN "Post" post ON post."feedItemId" = pht."postId"
             INNER JOIN "FeedItem" fi ON fi."id" = pht."postId"
             INNER JOIN hashtag_in_topic ON pht."hashTagId" = hashtag_in_topic."hashTagId"
+        WHERE fi."publishedAt" <= NOW() AND post."status" = 'PUBLISHED'
         GROUP BY
             fi."authorId"
     ),
@@ -44,19 +50,16 @@ WITH
       FROM 
         author_from_hashtag afh 
         INNER JOIN "User" u ON afh.author_id = u.id
-      WHERE 
-      	afh."author_id" <> _id AND u."status" = 'ACTIVE'
+        LEFT JOIN current_user_follows AS cuf ON afh.author_id = cuf.following_id
+      WHERE u."status" = 'ACTIVE' AND cuf.following_id IS null AND afh."author_id" <> _id
+      ORDER BY number_of_hashtag DESC
+      LIMIT 10
     )
 
 SELECT
     afhf.author_id AS user_id,
     afhf.number_of_hashtag AS score
 FROM 
-  author_from_hashtag_filtered afhf
-  LEFT JOIN current_user_follows AS cuf ON afhf.author_id = cuf.following_Id
-WHERE
-  cuf.following_Id IS NULL
-ORDER BY score DESC
-LIMIT 10;
+  author_from_hashtag_filtered afhf;
 END;
 $function$

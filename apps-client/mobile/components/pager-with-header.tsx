@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import {
+  findNodeHandle,
   LayoutChangeEvent,
   NativeScrollEvent,
   Platform,
@@ -32,6 +33,7 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated'
 
+import { clsx, cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 
 import { ScrollContextProvider } from '@app/libs/scroll-context'
@@ -69,7 +71,11 @@ const AnimatedExpoScrollForwarderView = Animated.createAnimatedComponent(ExpoScr
 // disabling it in `app.config.ts` fixes the issue on native build
 // https://github.com/software-mansion/react-native-reanimated/issues/6992
 
-export function Pager({ children }: { children: React.ReactNode }) {
+export interface PagerRef {
+  scrollToTop: () => void
+}
+
+export function Pager({ children, ref }: { children: React.ReactNode; ref?: React.Ref<PagerRef> }) {
   // const layout = useWindowDimensions()
   const [currentPage, setCurrentPage] = React.useState(0)
   const [isHeaderReady, setHeaderReady] = React.useState(false)
@@ -142,6 +148,27 @@ export function Pager({ children }: { children: React.ReactNode }) {
   )
   const [scrollViewTag, setScrollViewTag] = React.useState<number | null>(null)
 
+  const scrollToTop = React.useCallback(() => {
+    'worklet'
+    const scrollEl = scrollRefs.get()?.[currentPage]
+    if (scrollEl) {
+      scrollTo(scrollEl, 0, 0, true)
+    }
+  }, [scrollRefs, currentPage])
+
+  const scrollToTopJS = React.useCallback(() => runOnUI(scrollToTop)(), [scrollToTop])
+  React.useImperativeHandle(ref, () => ({
+    scrollToTop: scrollToTopJS,
+  }))
+
+  const scrollToTopTabBar = React.useCallback(() => {
+    'worklet'
+    const scrollEl = scrollRefs.get()?.[currentPage]
+    if (scrollEl) {
+      scrollTo(scrollEl, 0, headerOnlyHeight, true)
+    }
+  }, [scrollRefs, currentPage, headerOnlyHeight])
+
   return (
     <PagerContext.Provider
       value={{
@@ -159,6 +186,7 @@ export function Pager({ children }: { children: React.ReactNode }) {
         adjustScrollForOtherPages,
         isHeaderReady,
         setHeaderReady,
+        scrollToTopTabBar,
       }}
     >
       <PagerTabBarProvider>
@@ -194,6 +222,7 @@ interface PagerContextValue {
   adjustScrollForOtherPages: (scrollState: 'idle' | 'dragging' | 'settling') => void
   isHeaderReady: boolean
   setHeaderReady: React.Dispatch<React.SetStateAction<boolean>>
+  scrollToTopTabBar: () => void
 }
 const PagerContext = React.createContext<PagerContextValue | null>(null)
 
@@ -281,7 +310,13 @@ interface PagerTabBarProviderProps {
   children: React.ReactNode
 }
 function PagerTabBarProvider({ children }: PagerTabBarProviderProps) {
-  const { setCurrentPage, pagerViewRef, adjustScrollForOtherPages } = usePagerContext()
+  const {
+    setCurrentPage,
+    pagerViewRef,
+    adjustScrollForOtherPages,
+    currentPage,
+    scrollToTopTabBar,
+  } = usePagerContext()
 
   const containerSize = useSharedValue(0)
   const tabListSize = useSharedValue(0)
@@ -319,8 +354,20 @@ function PagerTabBarProvider({ children }: PagerTabBarProviderProps) {
 
       const offset = indexToOffset(index)
       runOnUI(scrollTo)(tabBarScrollElRef, offset, 0, true)
+
+      if (currentPage === index) {
+        runOnUI(scrollToTopTabBar)()
+      }
     },
-    [adjustScrollForOtherPages, pagerViewRef, setCurrentPage, tabBarScrollElRef, indexToOffset]
+    [
+      adjustScrollForOtherPages,
+      pagerViewRef,
+      setCurrentPage,
+      tabBarScrollElRef,
+      indexToOffset,
+      currentPage,
+      scrollToTopTabBar,
+    ]
   )
 
   const dragState = useSharedValue<'idle' | 'settling' | 'dragging'>('idle')
@@ -391,7 +438,13 @@ const usePagerTabBarContext = () => {
 }
 
 const PADDING_X = 16
-export function PagerTabBar({ children }: { children: React.ReactNode }) {
+export function PagerTabBar({
+  children,
+  fullWidth = false,
+}: {
+  children: React.ReactNode
+  fullWidth?: boolean
+}) {
   const { tabListSize, dragProgress, dragState, indexToOffset, containerSize, tabBarScrollElRef } =
     usePagerTabBarContext()
   const { setTabBarHeight } = usePagerContext()
@@ -431,6 +484,7 @@ export function PagerTabBar({ children }: { children: React.ReactNode }) {
         ref={tabBarScrollElRef}
         showsHorizontalScrollIndicator={false}
         className="w-full -mb-px"
+        contentContainerClassName={clsx(fullWidth && 'w-full')}
         contentContainerStyle={{ paddingHorizontal: PADDING_X }}
         onLayout={(evt) => {
           const height = evt.nativeEvent.layout.height
@@ -443,7 +497,7 @@ export function PagerTabBar({ children }: { children: React.ReactNode }) {
       >
         <View
           accessibilityRole="tablist"
-          className="flex flex-row"
+          className={clsx('flex flex-row', fullWidth && 'w-full')}
           onLayout={(e) => {
             tabListSize.set(e.nativeEvent.layout.width)
           }}
@@ -539,6 +593,15 @@ export function PagerContent({ children, index }: PagerContentProps) {
       registerScrollViewRef(null, index)
     }
   }, [scrollElRef, registerScrollViewRef, index])
+
+  React.useEffect(() => {
+    if (isHeaderReady && isFocused && scrollElRef.current) {
+      const scrollViewTag = findNodeHandle(scrollElRef.current)
+      setScrollViewTag(scrollViewTag)
+      // console.log('scrollViewTag:', scrollViewTag)
+    }
+  }, [isHeaderReady, isFocused, scrollElRef, setScrollViewTag])
+
   if (!isHeaderReady) {
     return null
   }
@@ -603,6 +666,7 @@ function useSharedState<T>(value: T): SharedValue<T> {
 export function PagerTabBarItem({
   index,
   children,
+  className,
   ...props
 }: React.ComponentProps<typeof Pressable> & {
   index: number
@@ -620,7 +684,7 @@ export function PagerTabBarItem({
   }
   return (
     <Pressable
-      className="h-10 pt-2 pb-2 px-4 justify-center"
+      className={cn('h-10 pt-2 pb-2 px-4 justify-center flex-row', className)}
       accessibilityRole="tab"
       onLayout={handleLayout}
       onPress={handlePress}

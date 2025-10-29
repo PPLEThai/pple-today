@@ -1,5 +1,16 @@
 # @pple-today/api-common
 
+## 0.4.0
+
+### Minor Changes
+
+- [#169](https://github.com/PPLEThai/pple-today/pull/169) [`25c65f4`](https://github.com/PPLEThai/pple-today/commit/25c65f4eb141504ec941a4e425164ded77fa5dbd) Thanks [@rootEnginear](https://github.com/rootEnginear)! - [PPLE-340] [CMS/FE] Feed/Topic Page
+
+### Patch Changes
+
+- Updated dependencies [[`957ea15`](https://github.com/PPLEThai/pple-today/commit/957ea158c1e21c0fdbe96499c2de38d690c00a7a), [`25c65f4`](https://github.com/PPLEThai/pple-today/commit/25c65f4eb141504ec941a4e425164ded77fa5dbd)]:
+  - @pple-today/database@0.3.1
+
 ## 0.3.1
 
 ### Patch Changes

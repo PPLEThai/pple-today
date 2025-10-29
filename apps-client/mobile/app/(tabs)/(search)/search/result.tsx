@@ -35,7 +35,7 @@ import { UserSearchCard } from '@app/components/search/user-card'
 import { Spinner } from '@app/components/spinner'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 
-import { useSearchingContext } from './_layout'
+import { useSearchingContext } from '../_layout'
 
 const LIMIT = 10
 export default function SearchResultPage() {

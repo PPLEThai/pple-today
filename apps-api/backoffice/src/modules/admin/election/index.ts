@@ -8,19 +8,25 @@ import {
   AdminBulkCreateElectionEligibleVoterResponse,
   AdminCancelElectionParams,
   AdminCancelElectionResponse,
+  AdminCountBallotsParams,
+  AdminCountBallotsResponse,
   AdminCreateCandidateProfileUploadURLBody,
   AdminCreateCandidateProfileUploadURLResponse,
+  AdminCreateElectionBody,
   AdminCreateElectionCandidateBody,
   AdminCreateElectionCandidateParams,
   AdminCreateElectionCandidateResponse,
   AdminCreateElectionEligibleVoterBody,
   AdminCreateElectionEligibleVoterParams,
   AdminCreateElectionEligibleVoterResponse,
+  AdminCreateElectionResponse,
   AdminDeleteElectionCandidateParams,
   AdminDeleteElectionCandidateResponse,
   AdminDeleteElectionEligibleVoterBody,
   AdminDeleteElectionEligibleVoterParams,
   AdminDeleteElectionEligibleVoterResponse,
+  AdminDeleteElectionParams,
+  AdminDeleteElectionResponse,
   AdminGetElectionParams,
   AdminGetElectionResponse,
   AdminListElectionCandidatesParams,
@@ -29,7 +35,26 @@ import {
   AdminListElectionEligibleVoterResponse,
   AdminListElectionQuery,
   AdminListElectionResponse,
+  AdminMakeElectionSecureModeParams,
+  AdminMakeElectionSecureModeResponse,
+  AdminPublishElectionBody,
+  AdminPublishElectionParams,
+  AdminPublishElectionResponse,
+  AdminReloadElectionKeysParams,
+  AdminReloadElectionKeysResponse,
+  AdminUpdateElectionBody,
   AdminUpdateElectionCandidateParams,
+  AdminUpdateElectionCandidateResponse,
+  AdminUpdateElectionKeysBody,
+  AdminUpdateElectionKeysParams,
+  AdminUpdateElectionKeysResponse,
+  AdminUpdateElectionResponse,
+  AdminUploadOnlineResultBody,
+  AdminUploadOnlineResultParams,
+  AdminUploadOnlineResultResponse,
+  AdminUploadOnsiteResultBody,
+  AdminUploadOnsiteResultParams,
+  AdminUploadOnsiteResultResponse,
 } from './models'
 import { AdminElectionServicePlugin } from './services'
 
@@ -40,6 +65,32 @@ export const AdminElectionController = new Elysia({
   tags: ['Admin Elections'],
 })
   .use([AdminAuthGuardPlugin, AdminElectionServicePlugin])
+  .post(
+    '/',
+    async ({ body, status, adminElectionService }) => {
+      const result = await adminElectionService.createElection(body)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(201, result.value)
+    },
+    {
+      detail: {
+        summary: 'Create Election',
+        description: 'Create Election',
+      },
+      requiredLocalUser: true,
+      body: AdminCreateElectionBody,
+      response: {
+        201: AdminCreateElectionResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.FORBIDDEN,
+          InternalErrorCode.BAD_REQUEST,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
   .get(
     '/',
     async ({ query, status, adminElectionService }) => {
@@ -93,6 +144,60 @@ export const AdminElectionController = new Elysia({
     }
   )
   .put(
+    '/:electionId',
+    async ({ status, adminElectionService, params, body }) => {
+      const result = await adminElectionService.updateElection(params.electionId, body)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, result.value)
+    },
+    {
+      detail: {
+        summary: 'Update Election',
+        description: 'Update Election',
+      },
+      requiredLocalUser: true,
+      params: AdminUpdateElectionKeysParams,
+      body: AdminUpdateElectionBody,
+      response: {
+        200: AdminUpdateElectionResponse,
+        ...createErrorSchema(
+          InternalErrorCode.INTERNAL_SERVER_ERROR,
+          InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.BAD_REQUEST,
+          InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+          InternalErrorCode.ELECTION_IS_CANCELLED
+        ),
+      },
+    }
+  )
+  .delete(
+    '/:electionId',
+    async ({ status, adminElectionService, params }) => {
+      const result = await adminElectionService.deleteElection(params.electionId)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, {
+        message: 'Delete election successfully',
+      })
+    },
+    {
+      detail: {
+        summary: 'Delete Election',
+        description: 'Delete Election',
+      },
+      params: AdminDeleteElectionParams,
+      response: {
+        200: AdminDeleteElectionResponse,
+        ...createErrorSchema(
+          InternalErrorCode.INTERNAL_SERVER_ERROR,
+          InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.ELECTION_ALREADY_PUBLISH
+        ),
+      },
+    }
+  )
+  .put(
     '/:electionId/cancel',
     async ({ params, status, adminElectionService }) => {
       const result = await adminElectionService.cancelElection(params.electionId)
@@ -119,6 +224,64 @@ export const AdminElectionController = new Elysia({
           InternalErrorCode.FILE_ROLLBACK_FAILED,
           InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .put(
+    '/:electionId/publish',
+    async ({ params, body, adminElectionService, status }) => {
+      const result = await adminElectionService.publishElection(params.electionId, body.publishDate)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, {
+        message: 'Publish Election Successfully',
+      })
+    },
+    {
+      detail: {
+        summary: 'Publish Election',
+        description: 'Publish Election',
+      },
+      requiredLocalUser: true,
+      params: AdminPublishElectionParams,
+      body: AdminPublishElectionBody,
+      response: {
+        200: AdminPublishElectionResponse,
+        ...createErrorSchema(
+          InternalErrorCode.INTERNAL_SERVER_ERROR,
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.FORBIDDEN,
+          InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+          InternalErrorCode.ELECTION_IS_CANCELLED
+        ),
+      },
+    }
+  )
+  .put(
+    '/:electionId/secure-mode',
+    async ({ status, adminElectionService, params }) => {
+      const result = await adminElectionService.changeElectionSecureMode(params.electionId)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, {
+        message: 'Make election to SECURE mode successfully',
+      })
+    },
+    {
+      detail: {
+        summary: 'Make election SECURE mode',
+        description: 'Make election SECURE mode',
+      },
+      requiredLocalUser: true,
+      params: AdminMakeElectionSecureModeParams,
+      response: {
+        200: AdminMakeElectionSecureModeResponse,
+        ...createErrorSchema(
+          InternalErrorCode.INTERNAL_SERVER_ERROR,
+          InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.ELECTION_IS_CANCELLED
         ),
       },
     }
@@ -200,6 +363,10 @@ export const AdminElectionController = new Elysia({
               InternalErrorCode.UNAUTHORIZED,
               InternalErrorCode.FORBIDDEN,
               InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+              InternalErrorCode.ELECTION_DUPLICATE_CANDIDATE,
+              InternalErrorCode.ELECTION_IN_VOTE_PERIOD,
+              InternalErrorCode.ELECTION_IS_CANCELLED,
               InternalErrorCode.FILE_MOVE_ERROR,
               InternalErrorCode.FILE_ROLLBACK_FAILED,
               InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
@@ -228,11 +395,14 @@ export const AdminElectionController = new Elysia({
           params: AdminUpdateElectionCandidateParams,
           body: AdminCreateElectionCandidateBody,
           response: {
-            200: AdminCreateElectionCandidateResponse,
+            200: AdminUpdateElectionCandidateResponse,
             ...createErrorSchema(
               InternalErrorCode.UNAUTHORIZED,
               InternalErrorCode.FORBIDDEN,
               InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+              InternalErrorCode.ELECTION_IS_CANCELLED,
+              InternalErrorCode.ELECTION_IN_VOTE_PERIOD,
               InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
               InternalErrorCode.FILE_MOVE_ERROR,
               InternalErrorCode.FILE_ROLLBACK_FAILED,
@@ -263,7 +433,10 @@ export const AdminElectionController = new Elysia({
               InternalErrorCode.UNAUTHORIZED,
               InternalErrorCode.FORBIDDEN,
               InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+              InternalErrorCode.ELECTION_IS_CANCELLED,
               InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
+              InternalErrorCode.ELECTION_IN_VOTE_PERIOD,
               InternalErrorCode.FILE_MOVE_ERROR,
               InternalErrorCode.FILE_ROLLBACK_FAILED,
               InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
@@ -340,9 +513,11 @@ export const AdminElectionController = new Elysia({
             ...createErrorSchema(
               InternalErrorCode.UNAUTHORIZED,
               InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_IN_VOTE_PERIOD,
+              InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+              InternalErrorCode.ELECTION_IS_CANCELLED,
               InternalErrorCode.USER_NOT_FOUND,
               InternalErrorCode.ELECTION_INVALID_ELIGIBLE_VOTER_IDENTIFIER,
-              InternalErrorCode.ELECTION_ALREADY_PUBLISH,
               InternalErrorCode.INTERNAL_SERVER_ERROR
             ),
           },
@@ -377,8 +552,10 @@ export const AdminElectionController = new Elysia({
               InternalErrorCode.UNAUTHORIZED,
               InternalErrorCode.ELECTION_NOT_FOUND,
               InternalErrorCode.USER_NOT_FOUND,
+              InternalErrorCode.ELECTION_IS_CANCELLED,
               InternalErrorCode.ELECTION_INVALID_ELIGIBLE_VOTER_IDENTIFIER,
               InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+              InternalErrorCode.ELECTION_IN_VOTE_PERIOD,
               InternalErrorCode.INTERNAL_SERVER_ERROR
             ),
           },
@@ -413,11 +590,185 @@ export const AdminElectionController = new Elysia({
               InternalErrorCode.UNAUTHORIZED,
               InternalErrorCode.BAD_REQUEST,
               InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_IN_VOTE_PERIOD,
               InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+              InternalErrorCode.ELECTION_IS_CANCELLED,
               InternalErrorCode.ELECTION_INVALID_ELIGIBLE_VOTER_IDENTIFIER,
               InternalErrorCode.INTERNAL_SERVER_ERROR
             ),
           },
         }
       )
+  )
+  .group('/:electionId/result', (app) =>
+    app
+      .post(
+        '/onsite',
+        async ({ params, body, adminElectionService, status }) => {
+          const result = await adminElectionService.uploadElectionOnsiteResult(
+            params.electionId,
+            body
+          )
+          if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+          return status(200, {
+            message: 'Upload Onsite Election Result Successfully',
+          })
+        },
+        {
+          detail: {
+            summary: 'Upload onsite election result',
+            description: 'Upload onsite election result',
+          },
+          requiredLocalUser: true,
+          params: AdminUploadOnsiteResultParams,
+          body: AdminUploadOnsiteResultBody,
+          response: {
+            200: AdminUploadOnsiteResultResponse,
+            ...createErrorSchema(
+              InternalErrorCode.INTERNAL_SERVER_ERROR,
+              InternalErrorCode.UNAUTHORIZED,
+              InternalErrorCode.BAD_REQUEST,
+              InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
+              InternalErrorCode.ELECTION_IS_CANCELLED,
+              InternalErrorCode.ELECTION_NOT_IN_CLOSED_VOTE_PERIOD,
+              InternalErrorCode.ELECTION_VOTES_EXCEED_VOTERS,
+              InternalErrorCode.ELECTION_INVALID_TYPE
+            ),
+          },
+        }
+      )
+      .post(
+        '/online',
+        async ({ params, body, adminElectionService, status }) => {
+          const result = await adminElectionService.uploadElectionOnlineResult(
+            params.electionId,
+            body.status,
+            body.signature,
+            body.result
+          )
+          if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+          return status(200, {
+            message: 'Upload Online Election Result Successfully',
+          })
+        },
+        {
+          detail: {
+            summary: 'Upload online election result',
+            description: 'Upload online election result',
+          },
+          validateBallotCrypto: true,
+          params: AdminUploadOnlineResultParams,
+          body: AdminUploadOnlineResultBody,
+          response: {
+            200: AdminUploadOnlineResultResponse,
+            ...createErrorSchema(
+              InternalErrorCode.INTERNAL_SERVER_ERROR,
+              InternalErrorCode.UNAUTHORIZED,
+              InternalErrorCode.BAD_REQUEST,
+              InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_CANDIDATE_NOT_FOUND,
+              InternalErrorCode.ELECTION_IS_CANCELLED,
+              InternalErrorCode.ELECTION_NOT_IN_CLOSED_VOTE_PERIOD,
+              InternalErrorCode.ELECTION_VOTES_EXCEED_VOTERS,
+              InternalErrorCode.ELECTION_INVALID_SIGNATURE,
+              InternalErrorCode.ELECTION_INVALID_TYPE
+            ),
+          },
+        }
+      )
+  )
+  .group('/:electionId/keys', (app) =>
+    app
+      .put(
+        '/',
+        async ({ params, body, status, adminElectionService }) => {
+          const result = await adminElectionService.updateElectionKeys(params.electionId, body)
+          if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+          return status(200, {
+            message: 'Update Election Keys Successfully',
+          })
+        },
+        {
+          detail: {
+            summary: 'Update election keys',
+            description: 'Update election keys',
+          },
+          validateBallotCrypto: true,
+          params: AdminUpdateElectionKeysParams,
+          body: AdminUpdateElectionKeysBody,
+          response: {
+            200: AdminUpdateElectionKeysResponse,
+            ...createErrorSchema(
+              InternalErrorCode.INTERNAL_SERVER_ERROR,
+              InternalErrorCode.BAD_REQUEST,
+              InternalErrorCode.UNAUTHORIZED,
+              InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_KEY_NOT_IN_PENDING_CREATED_STATUS
+            ),
+          },
+        }
+      )
+      .put(
+        '/reload',
+        async ({ status, adminElectionService, params }) => {
+          const result = await adminElectionService.reloadElectionKeys(params.electionId)
+          if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+          return status(200, {
+            message: 'Reload election successfully',
+          })
+        },
+        {
+          detail: {
+            summary: 'Reload election keys',
+            description: 'Reload election keys',
+          },
+          requiredLocalUser: true,
+          params: AdminReloadElectionKeysParams,
+          response: {
+            200: AdminReloadElectionKeysResponse,
+            ...createErrorSchema(
+              InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.INTERNAL_SERVER_ERROR
+            ),
+          },
+        }
+      )
+  )
+  .group('/:electionId/ballots', (app) =>
+    app.post(
+      '/count',
+      async ({ params, adminElectionService, status }) => {
+        const result = await adminElectionService.countBallots(params.electionId)
+        if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+        return status(200, {
+          message: 'Start counting ballot',
+        })
+      },
+      {
+        detail: {
+          summary: 'Count ballots',
+          description: 'Schedule counting encrypted ballots for election job',
+        },
+        requiredLocalUser: true,
+        params: AdminCountBallotsParams,
+        response: {
+          200: AdminCountBallotsResponse,
+          ...createErrorSchema(
+            InternalErrorCode.INTERNAL_SERVER_ERROR,
+            InternalErrorCode.BAD_REQUEST,
+            InternalErrorCode.ELECTION_NOT_FOUND,
+            InternalErrorCode.ELECTION_IS_CANCELLED,
+            InternalErrorCode.ELECTION_NOT_IN_CLOSED_VOTE_PERIOD,
+            InternalErrorCode.ELECTION_INVALID_TYPE,
+            InternalErrorCode.ELECTION_KEY_NOT_READY
+          ),
+        },
+      }
+    )
   )

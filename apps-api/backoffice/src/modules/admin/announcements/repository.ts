@@ -2,11 +2,11 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService, FileTransactionService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { FeedItemType } from '@pple-today/database/prisma'
+import { AnnouncementStatus, FeedItemType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { PostAnnouncementBody, PutAnnouncementBody } from './models'
+import { CreateAnnouncementBody, GetAnnouncementsQuery, UpdateAnnouncementBody } from './models'
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
@@ -64,70 +64,80 @@ export class AdminAnnouncementRepository {
     return ok(true)
   }
 
-  async getAnnouncements(
-    query: { limit: number; page: number } = {
-      limit: 10,
-      page: 1,
-    }
-  ) {
+  async getAnnouncements(query: GetAnnouncementsQuery = { limit: 10, page: 1 }) {
     const { limit, page } = query
     const skip = Math.max((page - 1) * limit, 0)
 
+    const where = {
+      ...(query.search && {
+        title: {
+          contains: query.search,
+          mode: 'insensitive' as const,
+        },
+      }),
+      ...(query.status &&
+        query.status.length > 0 && {
+          status: {
+            in: query.status,
+          },
+        }),
+    }
+
     return await fromRepositoryPromise(async () => {
-      const result = await this.prismaService.announcement.findMany({
-        select: {
-          feedItemId: true,
-          title: true,
-          content: true,
-          status: true,
-          type: true,
-          topics: {
-            select: {
-              topic: {
-                select: {
-                  id: true,
-                  name: true,
+      const [rawData, count] = await Promise.all([
+        this.prismaService.announcement.findMany({
+          select: {
+            feedItemId: true,
+            title: true,
+            status: true,
+            feedItem: {
+              select: {
+                createdAt: true,
+                updatedAt: true,
+                publishedAt: true,
+                reactionCounts: {
+                  select: {
+                    type: true,
+                    count: true,
+                  },
                 },
+                numberOfComments: true,
               },
             },
+            type: true,
           },
-          attachments: {
-            select: {
-              filePath: true,
+          take: limit,
+          skip,
+          orderBy: {
+            feedItem: {
+              createdAt: 'desc',
             },
           },
-          feedItem: {
-            select: {
-              createdAt: true,
-              updatedAt: true,
-              publishedAt: true,
-            },
-          },
-        },
-        take: limit,
-        skip,
-        orderBy: {
-          feedItem: {
-            createdAt: 'desc',
-          },
-        },
-      })
+          where,
+        }),
+        this.prismaService.announcement.count({
+          where,
+        }),
+      ])
 
-      return result.map(({ feedItemId, topics, attachments, feedItem, ...item }) => ({
-        id: feedItemId,
-        topics: topics.map(({ topic }) => topic),
-        attachments: attachments.map((attachment) => attachment.filePath),
-        createdAt: feedItem.createdAt,
-        updatedAt: feedItem.updatedAt,
-        publishedAt: feedItem.publishedAt,
-        ...item,
-      }))
+      return {
+        data: rawData.map(({ feedItemId, feedItem, ...item }) => ({
+          id: feedItemId,
+          createdAt: feedItem.createdAt,
+          updatedAt: feedItem.updatedAt,
+          publishedAt: feedItem.publishedAt,
+          reactionCounts: feedItem.reactionCounts,
+          commentsCount: feedItem.numberOfComments,
+          ...item,
+        })),
+        meta: { count },
+      }
     })
   }
 
   async getAnnouncementById(announcementId: string) {
     return await fromRepositoryPromise(async () => {
-      const { feedItemId, topics, attachments, feedItem, ...result } =
+      const { feedItemId, attachments, feedItem, topics, ...result } =
         await this.prismaService.announcement.findUniqueOrThrow({
           where: { feedItemId: announcementId },
           select: {
@@ -136,16 +146,6 @@ export class AdminAnnouncementRepository {
             status: true,
             content: true,
             type: true,
-            topics: {
-              select: {
-                topic: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
-              },
-            },
             attachments: {
               select: {
                 filePath: true,
@@ -156,6 +156,38 @@ export class AdminAnnouncementRepository {
                 createdAt: true,
                 updatedAt: true,
                 publishedAt: true,
+                reactionCounts: {
+                  select: {
+                    type: true,
+                    count: true,
+                  },
+                },
+                numberOfComments: true,
+                comments: {
+                  select: {
+                    id: true,
+                    content: true,
+                    createdAt: true,
+                    isPrivate: true,
+                    user: {
+                      select: {
+                        id: true,
+                        name: true,
+                        profileImagePath: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            topics: {
+              select: {
+                topic: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
               },
             },
           },
@@ -163,17 +195,32 @@ export class AdminAnnouncementRepository {
 
       return {
         id: feedItemId,
-        topics: topics.map(({ topic }) => topic),
         attachments: attachments.map((attachment) => attachment.filePath),
         createdAt: feedItem.createdAt,
         updatedAt: feedItem.updatedAt,
         publishedAt: feedItem.publishedAt,
+        reactionCounts: feedItem.reactionCounts,
+        commentsCount: feedItem.numberOfComments,
+        comments: feedItem.comments.map((comment) => ({
+          id: comment.id,
+          content: comment.content,
+          createdAt: comment.createdAt,
+          isPrivate: comment.isPrivate,
+          author: {
+            id: comment.user.id,
+            name: comment.user.name,
+            profileImage: comment.user.profileImagePath
+              ? this.fileService.getPublicFileUrl(comment.user.profileImagePath)
+              : undefined,
+          },
+        })),
+        topics: topics.map((topic) => topic.topic),
         ...result,
       }
     })
   }
 
-  async createAnnouncement(data: PostAnnouncementBody) {
+  async createAnnouncement(data: CreateAnnouncementBody) {
     const officialUserId = await this.lookupOfficialUserId()
 
     if (officialUserId.isErr()) return err(officialUserId.error)
@@ -191,7 +238,7 @@ export class AdminAnnouncementRepository {
 
         const newAttachmentFilePaths = movePublicResult.value
 
-        const createAnnouncementResult = await this.prismaService.feedItem.create({
+        return await this.prismaService.feedItem.create({
           select: {
             id: true,
           },
@@ -219,8 +266,6 @@ export class AdminAnnouncementRepository {
             },
           },
         })
-
-        return createAnnouncementResult
       })
     )
 
@@ -229,7 +274,7 @@ export class AdminAnnouncementRepository {
     return ok(result.value[0])
   }
 
-  async updateAnnouncementById(announcementId: string, data: PutAnnouncementBody) {
+  async updateAnnouncementById(announcementId: string, data: UpdateAnnouncementBody) {
     const announcement = await fromRepositoryPromise(
       this.prismaService.announcement.findUniqueOrThrow({
         where: { feedItemId: announcementId },
@@ -247,6 +292,9 @@ export class AdminAnnouncementRepository {
 
     const uploadAttachmentResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
+        if (!data.attachmentFilePaths)
+          return announcement.value.attachments.map((attachment) => attachment.filePath as FilePath)
+
         const cleanUpResult = await this.cleanUpUnusedAttachment(
           fileTx,
           announcement.value.attachments.map((attachment) => attachment.filePath as FilePath),
@@ -278,20 +326,30 @@ export class AdminAnnouncementRepository {
         where: { feedItemId: announcementId },
         data: {
           title: data.title,
-          content: data.content,
           type: data.type,
-          topics: {
-            deleteMany: {},
-            createMany: {
-              data: data.topicIds.map((topicId) => ({ topicId })),
+          content: data.content,
+          ...(data.topicIds && {
+            topics: {
+              deleteMany: {},
+              createMany: {
+                data: data.topicIds.map((topicId) => ({ topicId })),
+              },
             },
-          },
+          }),
           attachments: {
             deleteMany: {},
             createMany: {
               data: newAttachmentFilePaths.map((filePath) => ({ filePath })),
             },
           },
+          status: data.status,
+          ...(data.status === AnnouncementStatus.PUBLISHED && {
+            feedItem: {
+              update: {
+                publishedAt: new Date(),
+              },
+            },
+          }),
         },
       })
     )
@@ -340,13 +398,7 @@ export class AdminAnnouncementRepository {
     const [, fileTx] = deleteFileResult.value
 
     const deleteAnnouncementError = await fromRepositoryPromise(
-      this.prismaService.feedItem.delete({
-        where: { id: announcementId },
-        select: {
-          id: true,
-          announcement: { select: { attachments: { select: { id: true, filePath: true } } } },
-        },
-      })
+      this.prismaService.feedItem.delete({ where: { id: announcementId } })
     )
 
     if (deleteAnnouncementError.isErr()) {

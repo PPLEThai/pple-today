@@ -11,7 +11,7 @@ import {
   GetSubDistrictQuery,
   GetSubDistrictResponse,
 } from './models'
-import { AddressServicePlugin } from './service'
+import { AddressServicePlugin } from './services'
 
 export const AddressController = new Elysia({
   prefix: '/address',
