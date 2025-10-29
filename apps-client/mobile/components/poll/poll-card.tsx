@@ -251,7 +251,7 @@ const PollSingleOptionList = (props: PollProps) => {
   const session = useSession()
   const { options, totalVotes } = usePollVotesValue(props.feedItem.id)
   const setPollVotes = useSetPollVotes(props.feedItem.id)
-  const updatePollOptionMutation = reactQueryClient.useMutation('post', '/polls/:id/vote')
+  const updatePollOptionMutation = reactQueryClient.useMutation('put', '/polls/:id/vote')
 
   const updatePollOptions = useDebouncedCallback(
     (options: string[]) => {
@@ -265,7 +265,7 @@ const PollSingleOptionList = (props: PollProps) => {
       })
     },
     {
-      wait: 500, // Wait 300ms between executions
+      wait: 500,
     }
   )
 
@@ -273,12 +273,28 @@ const PollSingleOptionList = (props: PollProps) => {
 
   const isPollTouched = options.some((option) => option.isSelected)
 
-  const renderedOptions = React.useMemo(() => {
-    if (props.card) {
-      return options.slice(0, 3)
-    }
-    return options
-  }, [options, props.card])
+  const listOptions = React.useCallback(
+    (options: PollOption[]) => {
+      let renderedOptions = options
+      if (props.card) {
+        renderedOptions = options.slice(0, 3)
+      }
+
+      return renderedOptions.map((option) => (
+        <PollOptionItem
+          key={option.id}
+          id={option.id}
+          value={option.id}
+          title={option.title}
+          votes={option.votes}
+          totalVotes={totalVotes}
+          isSelected={option.isSelected}
+          pollTouched={isPollTouched}
+        />
+      ))
+    },
+    [props.card, isPollTouched, totalVotes]
+  )
 
   function handleValueChange(value: string | undefined) {
     if (!session) {
@@ -300,18 +316,7 @@ const PollSingleOptionList = (props: PollProps) => {
       value={selectedOption}
       className="flex flex-col"
     >
-      {renderedOptions.map((option) => (
-        <PollOptionItem
-          key={option.id}
-          id={option.id}
-          value={option.id}
-          title={option.title}
-          votes={option.votes}
-          totalVotes={totalVotes}
-          isSelected={option.isSelected}
-          pollTouched={isPollTouched}
-        />
-      ))}
+      {listOptions(options)}
     </PollOptionGroup>
   )
 }
@@ -321,7 +326,7 @@ const PollMultipleOptionList = (props: PollProps) => {
   const session = useSession()
   const { options, totalVotes } = usePollVotesValue(props.feedItem.id)
   const setPollVotes = useSetPollVotes(props.feedItem.id)
-  const updatePollOptionMutation = reactQueryClient.useMutation('post', '/polls/:id/vote')
+  const updatePollOptionMutation = reactQueryClient.useMutation('put', '/polls/:id/vote')
 
   const updatePollOptions = useDebouncedCallback(
     (options: string[]) => {
@@ -342,14 +347,30 @@ const PollMultipleOptionList = (props: PollProps) => {
 
   const isPollTouched = options.some((option) => option.isSelected)
 
-  const renderedOptions = React.useMemo(() => {
-    if (props.card) {
-      return options.slice(0, 3)
-    }
-    return options
-  }, [options, props.card])
+  const listOptions = React.useCallback(
+    (options: PollOption[]) => {
+      let renderedOptions = options
+      if (props.card) {
+        renderedOptions = options.slice(0, 3)
+      }
 
-  const handleValueChange = (value: string[]) => {
+      return renderedOptions.map((option) => (
+        <PollOptionItem
+          key={option.id}
+          id={option.id}
+          value={option.id}
+          title={option.title}
+          votes={option.votes}
+          totalVotes={totalVotes}
+          isSelected={option.isSelected}
+          pollTouched={isPollTouched}
+        />
+      ))
+    },
+    [props.card, isPollTouched, totalVotes]
+  )
+
+  const handleValueChange = async (value: string[]) => {
     if (!session) {
       router.navigate('/profile')
     }
@@ -365,18 +386,7 @@ const PollMultipleOptionList = (props: PollProps) => {
       value={selectedOptions}
       className="flex flex-col"
     >
-      {renderedOptions.map((option) => (
-        <PollOptionItem
-          key={option.id}
-          id={option.id}
-          value={option.id}
-          title={option.title}
-          votes={option.votes}
-          totalVotes={totalVotes}
-          isSelected={option.isSelected}
-          pollTouched={isPollTouched}
-        />
-      ))}
+      {listOptions(options)}
     </PollOptionGroup>
   )
 }
@@ -387,20 +397,22 @@ function getNewVotes(
   oldVotes: string[],
   newVotes: string[]
 ) {
-  options.map((option) => {
+  const newOptions = options.map((option) => {
+    const updatedOption = { ...option }
     if (oldVotes.includes(option.id)) {
-      option.isSelected = false
-      option.votes = Math.max(0, option.votes - 1)
+      updatedOption.isSelected = false
+      updatedOption.votes = Math.max(0, option.votes - 1)
     }
-  })
-  options.map((option) => {
     if (newVotes.includes(option.id)) {
-      option.isSelected = true
-      option.votes += 1
+      updatedOption.isSelected = true
+      updatedOption.votes = updatedOption.votes + 1
     }
+    return updatedOption
   })
-  const newTotalVotes = oldtotalVotes - oldVotes.length + newVotes.length
-  return { newOptions: options, newTotalVotes }
+  const voteDecrement = oldVotes.length >= 1 ? 1 : 0
+  const voteIncrement = newVotes.length >= 1 ? 1 : 0
+  const newTotalVotes = oldtotalVotes - voteDecrement + voteIncrement
+  return { newOptions, newTotalVotes }
 }
 
 function PollVotesHook({ feedId, data }: { feedId: string; data: FeedItemPoll }) {

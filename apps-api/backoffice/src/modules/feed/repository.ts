@@ -16,7 +16,6 @@ import dayjs from 'dayjs'
 import Elysia from 'elysia'
 import { Ok, ok } from 'neverthrow'
 import * as R from 'remeda'
-import { sumBy } from 'remeda'
 
 import { GetFeedContentResponse } from './models'
 
@@ -178,7 +177,7 @@ export class FeedRepository {
               votes: option.votes,
             })),
             endAt: rawFeedItem.poll.endAt,
-            totalVotes: sumBy(rawFeedItem.poll.options, (option) => option.votes),
+            totalVotes: rawFeedItem.poll.totalVotes,
           },
         } satisfies GetFeedContentResponse)
       case FeedItemType.ANNOUNCEMENT:

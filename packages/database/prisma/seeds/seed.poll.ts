@@ -71,6 +71,7 @@ const seedPolls = async () => {
             type: i === 0 ? PollType.SINGLE_CHOICE : PollType.MULTIPLE_CHOICE,
             status: i === 2 ? PollStatus.ARCHIVED : PollStatus.PUBLISHED,
             endAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            totalVotes: 6, // from the below condition
             topics: {
               create: [
                 { topic: { connect: { id: 'topic-1' } } },

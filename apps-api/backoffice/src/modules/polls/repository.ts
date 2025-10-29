@@ -200,6 +200,7 @@ export class PollsRepository {
           await tx.poll.update({
             where: {
               feedItemId: pollId,
+              status: PollStatus.PUBLISHED,
             },
             data: {
               options: {
@@ -220,31 +221,46 @@ export class PollsRepository {
                   },
                 })),
               },
+              totalVotes: {
+                decrement: 1,
+              },
             },
           })
         }
 
         if (pollType === 'SINGLE_CHOICE' && options.length === 1) {
-          await tx.pollOption.update({
+          await tx.poll.update({
             where: {
-              id: options[0],
-              poll: {
-                feedItemId: pollId,
-                status: PollStatus.PUBLISHED,
-              },
+              feedItemId: pollId,
             },
             data: {
-              votes: {
-                increment: 1,
-              },
-              pollAnswers: {
-                create: {
-                  user: {
-                    connect: {
-                      id: userId,
+              options: {
+                update: {
+                  where: {
+                    id: options[0],
+                    poll: {
+                      feedItemId: pollId,
+                      status: PollStatus.PUBLISHED,
+                    },
+                  },
+                  data: {
+                    votes: {
+                      increment: 1,
+                    },
+                    pollAnswers: {
+                      create: {
+                        user: {
+                          connect: {
+                            id: userId,
+                          },
+                        },
+                      },
                     },
                   },
                 },
+              },
+              totalVotes: {
+                increment: 1,
               },
             },
           })
@@ -275,6 +291,9 @@ export class PollsRepository {
                     },
                   },
                 })),
+              },
+              totalVotes: {
+                increment: 1,
               },
             },
           })

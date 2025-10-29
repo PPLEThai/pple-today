@@ -248,7 +248,7 @@ const seedHashtags = async () => {
 }
 
 const seedPolls = async () => {
-  for (let i = 0; i < 5; ++i) {
+  for (let i = 0; i < 10; ++i) {
     await prisma.feedItem.upsert({
       where: { id: `poll-${i + 1}` },
       update: {},
