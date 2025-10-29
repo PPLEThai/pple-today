@@ -59,6 +59,7 @@ jobs:
         working-directory: apps-client/mobile
         shell: bash
         run: |
+          mkdir -p ./credentials
           echo "FACEBOOK_APP_ID=${{ secrets.FACEBOOK_APP_ID }}" >> .env
           echo "FACEBOOK_CLIENT_TOKEN=${{ secrets.FACEBOOK_CLIENT_TOKEN }}" >> .env
           echo "FACEBOOK_DISPLAY_NAME=${{ secrets.FACEBOOK_DISPLAY_NAME }}" >> .env
@@ -127,6 +128,7 @@ jobs:
         working-directory: apps-client/mobile
         shell: bash
         run: |
+          mkdir -p ./credentials
           echo "FACEBOOK_APP_ID=${{ secrets.FACEBOOK_APP_ID }}" >> .env
           echo "FACEBOOK_CLIENT_TOKEN=${{ secrets.FACEBOOK_CLIENT_TOKEN }}" >> .env
           echo "FACEBOOK_DISPLAY_NAME=${{ secrets.FACEBOOK_DISPLAY_NAME }}" >> .env
