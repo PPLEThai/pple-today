@@ -1,7 +1,6 @@
 import * as React from 'react'
-import { FlatList, FlatListComponent, Pressable, StyleSheet, View } from 'react-native'
+import { Pressable, StyleSheet, View } from 'react-native'
 import Animated, {
-  FlatListPropsWithLayout,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
@@ -23,7 +22,6 @@ import { toast } from '@pple-today/ui/toast'
 import { toggleTextVariants, toggleVariants } from '@pple-today/ui/toggle'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H2, H3 } from '@pple-today/ui/typography'
-import { FlashList, FlashListProps, FlashListRef } from '@shopify/flash-list'
 import { useForm } from '@tanstack/react-form'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { Image } from 'expo-image'
@@ -607,41 +605,29 @@ function FeedFollowingContent(props: PagerScrollViewProps) {
 }
 
 // Ref: https://github.com/LegendApp/legend-list/blob/f515e6a7d85ec6b23df6ca0836be2a25f41ba476/src/integrations/reanimated.tsx#L55
-type TypedMemo = <T extends React.ComponentType<any>>(
-  Component: T,
-  propsAreEqual?: (
-    prevProps: Readonly<React.JSXElementConstructor<T>>,
-    nextProps: Readonly<React.JSXElementConstructor<T>>
-  ) => boolean
-) => T & { displayName?: string }
-const typedMemo = React.memo as TypedMemo
+// type TypedMemo = <T extends React.ComponentType<any>>(
+//   Component: T,
+//   propsAreEqual?: (
+//     prevProps: Readonly<React.JSXElementConstructor<T>>,
+//     nextProps: Readonly<React.JSXElementConstructor<T>>
+//   ) => boolean
+// ) => T & { displayName?: string }
+// const typedMemo = React.memo as TypedMemo
 
-type AnimatedFlashListDefinition = <ItemT>(
-  props: FlashListProps<ItemT> & { ref?: React.Ref<FlashListRef<ItemT>> }
-) => React.ReactElement | null
-const AnimatedFlashListComponent = Animated.createAnimatedComponent(
-  FlashList
-) as AnimatedFlashListDefinition
-export const AnimatedFlashList = typedMemo(
-  React.forwardRef(function AnimatedFlashList<ItemT>(
-    props: FlashListProps<ItemT>,
-    ref: React.Ref<FlashListRef<ItemT>>
-  ) {
-    return <AnimatedFlashListComponent ref={ref} {...props} />
-  })
-) as AnimatedFlashListDefinition
-
-type AnimatedFlatListDefinition = <ItemT>(
-  props: FlatListProps<ItemT> & { ref?: React.Ref<FlatListRef<ItemT>> }
-) => React.ReactElement | null
-type FlatListRef<ItemT = any> = FlatListComponent<ItemT, FlatListPropsWithLayout<ItemT>>
-type FlatListProps<ItemT = any> = FlatListPropsWithLayout<ItemT>
-const AnimatedFlatListComponent = Animated.createAnimatedComponent(FlatList)
-export const AnimatedFlatList = typedMemo(
-  React.forwardRef<FlatListRef, FlatListProps>(function AnimatedFlatList(props, ref) {
-    return <AnimatedFlatListComponent ref={ref} {...props} />
-  })
-) as AnimatedFlatListDefinition
+// type AnimatedFlashListDefinition = <ItemT>(
+//   props: FlashListProps<ItemT> & { ref?: React.Ref<FlashListRef<ItemT>> }
+// ) => React.ReactElement | null
+// const AnimatedFlashListComponent = Animated.createAnimatedComponent(
+//   FlashList
+// ) as AnimatedFlashListDefinition
+// export const AnimatedFlashList = typedMemo(
+//   React.forwardRef(function AnimatedFlashList<ItemT>(
+//     props: FlashListProps<ItemT>,
+//     ref: React.Ref<FlashListRef<ItemT>>
+//   ) {
+//     return <AnimatedFlashListComponent ref={ref} {...props} />
+//   })
+// ) as AnimatedFlashListDefinition
 
 const LIMIT = 10
 function FeedContent(props: PagerScrollViewProps) {
