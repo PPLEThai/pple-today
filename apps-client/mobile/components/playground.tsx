@@ -314,6 +314,7 @@ export function Playground() {
         <FacebookSDKExample />
         <LocationExample />
         <FrontCameraExample />
+        <MiniAppExample />
         <PollExample />
       </View>
     </ScrollView>
@@ -1094,6 +1095,30 @@ function FrontCameraExample() {
         <Text>Open Front Camera</Text>
       </Button>
       {asset && <Image source={{ uri: asset.uri }} className="aspect-[3/4]" />}
+    </View>
+  )
+}
+
+function MiniAppExample() {
+  const router = useRouter()
+  const miniApps = reactQueryClient.useQuery('/mini-app', {})
+
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Mini App</H2>
+      {miniApps.data?.map((miniApp) => (
+        <Button
+          variant="outline"
+          key={miniApp.id}
+          className="flex flex-row items-center gap-1"
+          onPress={() => router.push(`/mini-app/${miniApp.id}`)}
+        >
+          {miniApp.iconUrl && (
+            <Image source={{ uri: miniApp.iconUrl }} className="w-4 h-4 color-primary" />
+          )}
+          <Text>{miniApp.name}</Text>
+        </Button>
+      ))}
     </View>
   )
 }
