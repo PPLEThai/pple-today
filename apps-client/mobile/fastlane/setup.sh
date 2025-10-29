@@ -23,6 +23,13 @@ else
     echo $FIREBASE_SERVICE_ACCOUNT_JSON | base64 -d > ./android/key.json
     echo "Firebase service account JSON file created at ./android/key.json."
   fi
+  if [ -z "$ANDROID_UPLOAD_KEYSTORE" ]; then
+    echo "Warning: ANDROID_UPLOAD_KEYSTORE environment variable is not set."
+  else
+    echo $ANDROID_UPLOAD_KEYSTORE | base64 -d > ./android/upload-keystore.jks
+    cp ./android/upload-keystore.jks ./android/app/upload-keystore.jks
+    echo "Android upload keystore file created at ./android/upload-keystore.jks."
+  fi
 
   cp .env ./android/fastlane/.env.default
   echo "Fastlane environment variables file created at ./android/fastlane/.env.default"

@@ -19,7 +19,7 @@ export type GetBannerByIdParams = Static<typeof GetBannerByIdParams>
 export const GetBannerByIdResponse = Banner
 export type GetBannerByIdResponse = Static<typeof GetBannerByIdResponse>
 
-// PATCH /admin/banners
+// POST /admin/banners
 export const CreateBannerBody = t.Object({
   imageFilePath: FilePath,
   startAt: t.Date({ description: 'The start date for the banner item' }),
@@ -41,7 +41,7 @@ export const CreateBannerResponse = t.Object({
 })
 export type CreateBannerResponse = Static<typeof CreateBannerResponse>
 
-// PUT /admin/banners/{id}
+// PATCH /admin/banners/{id}
 export const UpdateBannerParams = BannerIdParams
 export type UpdateBannerParams = Static<typeof UpdateBannerParams>
 
@@ -55,7 +55,7 @@ export const UpdateBannerBody = t.Partial(
     destination: t.String({
       description: 'The destination URI for the banner item',
     }),
-    miniAppId: t.Optional(t.String({ description: 'The ID of the mini app to open' })),
+    miniAppId: t.String({ description: 'The ID of the mini app to open' }),
     startAt: t.Date({ description: 'The start date for the banner item' }),
     endAt: t.Date({ description: 'The end date for the banner item' }),
   })

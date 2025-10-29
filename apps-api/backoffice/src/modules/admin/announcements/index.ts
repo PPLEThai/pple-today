@@ -1,19 +1,19 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
-import Elysia from 'elysia'
+import Elysia, { t } from 'elysia'
 
 import {
+  CreateAnnouncementBody,
+  CreateAnnouncementResponse,
   DeleteAnnouncementParams,
   DeleteAnnouncementResponse,
   GetAnnouncementByIdParams,
   GetAnnouncementByIdResponse,
   GetAnnouncementsQuery,
   GetAnnouncementsResponse,
-  PostAnnouncementBody,
-  PostAnnouncementResponse,
-  PutAnnouncementBody,
-  PutAnnouncementParams,
-  PutAnnouncementResponse,
+  UpdateAnnouncementBody,
+  UpdateAnnouncementParams,
+  UpdateAnnouncementResponse,
 } from './models'
 import { AdminAnnouncementServicePlugin } from './services'
 
@@ -27,9 +27,11 @@ export const AdminAnnouncementsController = new Elysia({
   .get(
     '/',
     async ({ query, status, adminAnnouncementService }) => {
-      const pagingQuery = {
+      const pagingQuery: GetAnnouncementsQuery = {
         limit: query.limit ?? 10,
         page: query.page ?? 1,
+        status: query.status,
+        search: query.search,
       }
 
       const result = await adminAnnouncementService.getAnnouncements(pagingQuery)
@@ -39,7 +41,7 @@ export const AdminAnnouncementsController = new Elysia({
     },
     {
       requiredLocalUser: true,
-      query: GetAnnouncementsQuery,
+      query: t.Partial(GetAnnouncementsQuery),
       response: {
         200: GetAnnouncementsResponse,
         ...createErrorSchema(
@@ -65,9 +67,9 @@ export const AdminAnnouncementsController = new Elysia({
     },
     {
       requiredLocalUser: true,
-      body: PostAnnouncementBody,
+      body: CreateAnnouncementBody,
       response: {
-        201: PostAnnouncementResponse,
+        201: CreateAnnouncementResponse,
         ...createErrorSchema(
           InternalErrorCode.FILE_MOVE_ERROR,
           InternalErrorCode.FILE_ROLLBACK_FAILED,
@@ -108,7 +110,7 @@ export const AdminAnnouncementsController = new Elysia({
       },
     }
   )
-  .put(
+  .patch(
     '/:announcementId',
     async ({ params, body, status, adminAnnouncementService }) => {
       const result = await adminAnnouncementService.updateAnnouncementById(
@@ -123,10 +125,10 @@ export const AdminAnnouncementsController = new Elysia({
     },
     {
       requiredLocalUser: true,
-      params: PutAnnouncementParams,
-      body: PutAnnouncementBody,
+      params: UpdateAnnouncementParams,
+      body: UpdateAnnouncementBody,
       response: {
-        200: PutAnnouncementResponse,
+        200: UpdateAnnouncementResponse,
         ...createErrorSchema(
           InternalErrorCode.ANNOUNCEMENT_NOT_FOUND,
           InternalErrorCode.FILE_MOVE_ERROR,

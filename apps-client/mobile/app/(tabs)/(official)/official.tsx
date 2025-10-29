@@ -36,6 +36,8 @@ import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
 
+import { useBottomTabOnPress } from '../_layout'
+
 export default function OfficialPage() {
   const queryClient = useQueryClient()
   const onRefresh = useCallback(async () => {
@@ -48,10 +50,17 @@ export default function OfficialPage() {
       }),
     ])
   }, [queryClient])
+
+  useBottomTabOnPress(() => {
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true })
+  })
+  const scrollViewRef = React.useRef<ScrollView>(null)
   return (
     <SafeAreaLayout>
       <ScrollView
-        className="flex-1 bg-base-bg-default"
+        ref={scrollViewRef}
+        className="flex-1"
+        contentContainerClassName="bg-base-bg-default flex-grow"
         refreshControl={<RefreshControl onRefresh={onRefresh} />}
       >
         <View className="flex flex-col p-4 bg-base-bg-white">
@@ -81,7 +90,11 @@ export default function OfficialPage() {
 
 const ElectionSection = () => {
   const session = useSession()
-  const electionsQuery = reactQueryClient.useQuery('/elections', {}, { enabled: !!session })
+  const electionsQuery = reactQueryClient.useQuery(
+    '/elections',
+    { query: { in: 'OFFICIAL' } },
+    { enabled: !!session }
+  )
   const elections = electionsQuery.data || []
   if (elections.length === 0) {
     return null
@@ -102,8 +115,8 @@ const ElectionSection = () => {
       >
         <SlideScrollView>
           {elections.map((election) => (
-            <SlideItem key={election.id}>
-              <ElectionCard election={election} className="flex-1" />
+            <SlideItem key={election.id} className="flex flex-row items-stretch">
+              <ElectionCard election={election} />
             </SlideItem>
           ))}
         </SlideScrollView>
@@ -138,7 +151,7 @@ const AnnouncementSection = () => {
           <AnnouncementCard
             className="w-full"
             key={item.id}
-            onPress={() => router.navigate(`/(official)/announcement/${item.id}`)}
+            onPress={() => router.navigate(`/announcement/${item.id}`)}
             id={item.id}
             feedId={item.id}
             title={item.title}
@@ -159,7 +172,7 @@ const AnnouncementSection = () => {
         </View>
         <View className="min-h-10">
           {data && data.length > 0 && (
-            <Button variant="ghost" onPress={() => router.navigate('/(official)/announcement')}>
+            <Button variant="ghost" onPress={() => router.navigate('/announcement')}>
               <Text>ดูเพิ่มเติม</Text>
               <Icon icon={ArrowRightIcon} strokeWidth={2} />
             </Button>

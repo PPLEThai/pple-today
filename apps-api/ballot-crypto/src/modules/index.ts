@@ -1,3 +1,6 @@
 import Elysia from 'elysia'
 
-export const ApplicationController = new Elysia()
+import { BallotController } from './ballot'
+import { KeyController } from './key'
+
+export const ApplicationController = new Elysia().use(KeyController).use(BallotController)

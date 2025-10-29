@@ -1,7 +1,7 @@
 {
   "name": "@client/mobile",
   "main": "expo-router/entry",
-  "version": "0.6.2",
+  "version": "0.7.1",
   "scripts": {
     "dev": "node --env-file .env ./scripts/update-redirect.js && expo start --dev-client",
     "start": "expo start",
@@ -22,7 +22,8 @@
     "build:android": "eas build -p android --profile preview --local",
     "fastlane:setup": "bash ./fastlane/setup.sh",
     "fastlane:android": "pnpm prebuild:android && pnpm fastlane:setup && cd android && fastlane beta",
-    "fastlane:ios": "pnpm prebuild:ios && pnpm fastlane:setup && cd ios && fastlane beta"
+    "fastlane:ios": "pnpm prebuild:ios && pnpm fastlane:setup && cd ios && fastlane beta",
+    "fastlane:android:prod": "pnpm prebuild:android && pnpm fastlane:setup && cd android && fastlane production"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",

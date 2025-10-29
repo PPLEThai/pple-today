@@ -50,6 +50,9 @@ export default function FacebookListPage() {
   const queryClient = useQueryClient()
   const linkPageMutation = reactQueryClient.useMutation('post', '/facebook/linked-page')
   const [value, setValue] = useState('')
+  if (!facebookAccessToken) {
+    return null
+  }
   return (
     <View className="pt-safe flex-1 flex-col">
       <View className="p-4 flex flex-row justify-between items-center border-b border-base-outline-default">

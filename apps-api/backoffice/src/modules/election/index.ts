@@ -10,6 +10,7 @@ import {
   CreateFaceImageUploadURLResponse,
   GetElectionParams,
   GetElectionResponse,
+  ListElectionQuery,
   ListElectionResponse,
   RegisterElectionBody,
   RegisterElectionParams,
@@ -29,20 +30,23 @@ export const ElectionController = new Elysia({
   .use(ElectionServicePlugin)
   .get(
     '/',
-    async ({ user, electionService, status }) => {
-      const elections = await electionService.listMyEligibleElections(user.id)
-      if (elections.isErr()) {
-        return mapErrorCodeToResponse(elections.error, status)
-      }
+    async ({ user: { id }, query, electionService, status }) => {
+      const elections =
+        query.in === 'PROFILE'
+          ? await electionService.listProfilePageElections(id)
+          : await electionService.listOfficialPageElections(id)
+
+      if (elections.isErr()) return mapErrorCodeToResponse(elections.error, status)
 
       return status(200, elections.value)
     },
     {
       detail: {
-        summary: 'List elections based on user',
-        description: 'List elections based on user',
+        summary: 'List elections',
+        description: 'List elections based on user and page',
       },
       requiredLocalUser: true,
+      query: ListElectionQuery,
       response: {
         200: ListElectionResponse,
         ...createErrorSchema(
