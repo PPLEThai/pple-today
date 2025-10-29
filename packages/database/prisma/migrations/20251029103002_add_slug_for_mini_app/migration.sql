@@ -6,6 +6,8 @@ Warnings:
 
 */
 -- AlterTable
+BEGIN;
+
 ALTER TABLE "public"."MiniApp" ADD COLUMN "slug" TEXT;
 
 UPDATE "public"."MiniApp" SET "slug" = "id";
@@ -14,3 +16,5 @@ ALTER TABLE "public"."MiniApp" ALTER COLUMN "slug" SET NOT NULL;
 
 -- CreateIndex
 CREATE UNIQUE INDEX "MiniApp_slug_key" ON "public"."MiniApp"("slug");
+
+COMMIT;
