@@ -50,9 +50,9 @@ const MiniAppWebView = () => {
           <NotFound />
         ) : (
           <WebView
-            className="border-8 border-red-600"
-            userAgent={`PPLETodayApp/${Constants.expoConfig?.version ?? 'local'}`}
+            userAgent={`PPLETodayApp/${Constants.expoConfig?.version ?? 'local'} MiniApp`}
             source={{ uri: tokenExchangeMiniAppResult.data.url }}
+            startInLoadingState={true}
           />
         )}
       </View>

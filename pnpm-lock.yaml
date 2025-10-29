@@ -531,6 +531,9 @@ importers:
 
   examples/mini-app/web:
     dependencies:
+      '@pple-today/mini-app':
+        specifier: workspace:^
+        version: link:../../../packages/mini-app
       '@react-router/fs-routes':
         specifier: ^7.6.3
         version: 7.6.3(@react-router/dev@7.8.2(@react-router/serve@7.8.2(react-router@7.8.2(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3))(@types/node@20.19.6)(jiti@2.4.2)(lightningcss@1.30.1)(react-dom@19.1.1(react@19.1.1))(react-router@7.8.2(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1)(terser@5.39.0)(tsx@4.20.3)(typescript@5.8.3)(vite@6.3.5(@types/node@20.19.6)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.39.0)(tsx@4.20.3)(yaml@2.8.0))(yaml@2.8.0))(typescript@5.8.3)
@@ -683,6 +686,37 @@ importers:
       react-native:
         specifier: 0.79.4
         version: 0.79.4(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.0.14)(react@19.0.0)
+
+  packages/mini-app:
+    dependencies:
+      oidc-client-ts:
+        specifier: ^3.3.0
+        version: 3.3.0
+      zod:
+        specifier: ^4.0.5
+        version: 4.0.5
+    devDependencies:
+      '@pple-today/project-config':
+        specifier: workspace:^
+        version: link:../project-config
+      dts-bundle-generator:
+        specifier: ^9.5.1
+        version: 9.5.1
+      esbuild:
+        specifier: ^0.25.5
+        version: 0.25.5
+      open-cli:
+        specifier: ^8.0.0
+        version: 8.0.0
+      rimraf:
+        specifier: ^6.0.1
+        version: 6.0.1
+      tsx:
+        specifier: ^4.20.3
+        version: 4.20.3
+      typescript:
+        specifier: 5.8.2
+        version: 5.8.2
 
   packages/project-config:
     devDependencies:
@@ -5668,6 +5702,11 @@ packages:
   dotenv@8.6.0:
     resolution: {integrity: sha512-IrPdXQsk2BbzvCBGBOTmmSH5SodmqZNt4ERAZDmW4CT+tL8VtvinqywuANaFu4bOMWki16nqf0e4oC0QIaDr/g==}
     engines: {node: '>=10'}
+
+  dts-bundle-generator@9.5.1:
+    resolution: {integrity: sha512-DxpJOb2FNnEyOzMkG11sxO2dmxPjthoVWxfKqWYJ/bI/rT1rvTMktF5EKjAYrRZu6Z6t3NhOUZ0sZ5ZXevOfbA==}
+    engines: {node: '>=14.0.0'}
+    hasBin: true
 
   dunder-proto@1.0.1:
     resolution: {integrity: sha512-KIN/nDJBQRcXw0MLVhZE9iQHmG68qAVIBg9CqmUYjmQIhgij9U5MFvrqkUL5FbtyyzZuOeOt0zdeRe4UY7ct+A==}
@@ -17013,6 +17052,11 @@ snapshots:
   dotenv@17.0.1: {}
 
   dotenv@8.6.0: {}
+
+  dts-bundle-generator@9.5.1:
+    dependencies:
+      typescript: 5.8.3
+      yargs: 17.7.2
 
   dunder-proto@1.0.1:
     dependencies:
