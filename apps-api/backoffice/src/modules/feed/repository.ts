@@ -438,6 +438,10 @@ export class FeedRepository {
             type: {
               not: FeedItemType.ANNOUNCEMENT,
             },
+            OR: [
+              { post: { status: PostStatus.PUBLISHED } },
+              { poll: { status: PollStatus.PUBLISHED } },
+            ],
             publishedAt: {
               lte: new Date(),
             },

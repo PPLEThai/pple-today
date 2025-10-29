@@ -9,3 +9,5 @@
 [[PPLE-227] Poll Card Detail Page Integrate](https://linear.app/snts/issue/PPLE-227/poll-card-detail-page-integrate)
 
 [[PPLE-455] Poll Feed in Activity Tab](https://linear.app/snts/issue/PPLE-455/poll-feed-in-activity-tab)
+
+[[PPLE-508] Archived Poll should not be sent in Feed API](https://linear.app/snts/issue/PPLE-508/bug-archived-poll-should-not-be-sent-in-feed-api)
