@@ -30,9 +30,12 @@ export const CreateBannerBody = t.Object({
   headline: t.String({
     description: 'The headline for the banner item',
   }),
-  destination: t.String({
-    description: 'The destination URI for the banner item',
-  }),
+  miniAppId: t.Optional(t.String({ description: 'The ID of the mini app to open' })),
+  destination: t.Optional(
+    t.String({
+      description: 'The destination URI for the banner item',
+    })
+  ),
   navigation: t.Enum(BannerNavigationType, {
     description: 'How the app should navigate when the item is tapped',
   }),
@@ -54,9 +57,12 @@ export const UpdateBannerBody = t.Partial(
     headline: t.String({
       description: 'The headline for the banner item',
     }),
-    destination: t.String({
-      description: 'The destination URI for the banner item',
-    }),
+    miniAppId: t.Nullable(t.String({ description: 'The ID of the mini app to open' })),
+    destination: t.Nullable(
+      t.String({
+        description: 'The destination URI for the banner item',
+      })
+    ),
     navigation: t.Enum(BannerNavigationType, {
       description: 'How the app should navigate when the item is tapped',
     }),

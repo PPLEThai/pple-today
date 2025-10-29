@@ -3,6 +3,7 @@ import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService } from '@pple-today/api-common/services'
 import { err } from '@pple-today/api-common/utils'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
+import { BannerNavigationType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -36,13 +37,26 @@ export class AdminBannerService {
     if (imageBannerUrlResults.isErr()) return err(imageBannerUrlResults.error)
 
     const response: GetBannersResponse = result.value.map(
-      ({ imageFilePath, ...bannerBody }, index) => ({
-        ...bannerBody,
-        image: {
-          url: imageBannerUrlResults.value[index],
-          filePath: imageFilePath as FilePath,
-        },
-      })
+      ({ imageFilePath, ...bannerBody }, index) =>
+        bannerBody.navigation === BannerNavigationType.MINI_APP
+          ? {
+              ...bannerBody,
+              miniAppId: bannerBody.miniAppId!,
+              destination: bannerBody.miniApp!.clientUrl!,
+              image: {
+                url: imageBannerUrlResults.value[index],
+                filePath: imageFilePath as FilePath,
+              },
+            }
+          : {
+              ...bannerBody,
+              navigation: bannerBody.navigation,
+              destination: bannerBody.destination!,
+              image: {
+                url: imageBannerUrlResults.value[index],
+                filePath: imageFilePath as FilePath,
+              },
+            }
     )
 
     return ok(response)
@@ -63,13 +77,26 @@ export class AdminBannerService {
     const imageUrlResult = await this.fileService.getFileSignedUrl(imageFilePath)
     if (imageUrlResult.isErr()) return err(imageUrlResult.error)
 
-    const response: GetBannerByIdResponse = {
-      ...bannerBody,
-      image: {
-        url: imageUrlResult.value,
-        filePath: imageFilePath as FilePath,
-      },
-    }
+    const response: GetBannerByIdResponse =
+      bannerBody.navigation === BannerNavigationType.MINI_APP
+        ? {
+            ...bannerBody,
+            miniAppId: result.value.miniAppId!,
+            destination: result.value.miniApp!.clientUrl!,
+            image: {
+              url: imageUrlResult.value,
+              filePath: imageFilePath as FilePath,
+            },
+          }
+        : {
+            ...bannerBody,
+            destination: bannerBody.destination!,
+            navigation: bannerBody.navigation,
+            image: {
+              url: imageUrlResult.value,
+              filePath: imageFilePath as FilePath,
+            },
+          }
 
     return ok(response)
   }

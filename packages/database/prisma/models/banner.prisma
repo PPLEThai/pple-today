@@ -17,11 +17,14 @@ model Banner {
   headline    String
   status      BannerStatusType     @default(DRAFT)
   navigation  BannerNavigationType
-  destination String
+  destination String?
   order       String               @unique // Lexorank
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  miniApp   MiniApp? @relation(fields: [miniAppId], references: [id])
+  miniAppId String?  @unique
 
   @@index([status])
   @@index([navigation])

@@ -1,7 +1,7 @@
 import { FilePath, InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { BannerStatusType } from '@pple-today/database/prisma'
+import { BannerNavigationType, BannerStatusType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { LexoRank } from 'lexorank'
 import { err, ok } from 'neverthrow'
@@ -46,6 +46,7 @@ export class AdminBannerRepository {
               },
             }),
         },
+        include: { miniApp: true },
       })
     )
   }
@@ -54,6 +55,7 @@ export class AdminBannerRepository {
     return fromRepositoryPromise(
       this.prismaService.banner.findUniqueOrThrow({
         where: { id },
+        include: { miniApp: true },
       })
     )
   }
@@ -82,7 +84,9 @@ export class AdminBannerRepository {
             imageFilePath: newFileName,
             headline: data.headline,
             navigation: data.navigation,
-            destination: data.destination,
+            ...(data.navigation === BannerNavigationType.MINI_APP
+              ? { miniApp: { connect: { id: data.miniAppId } } }
+              : { destination: data.destination }),
             order: lastBanner?.order
               ? LexoRank.parse(lastBanner.order).genNext().toString()
               : LexoRank.min().toString(),
@@ -107,7 +111,13 @@ export class AdminBannerRepository {
     const existingBanner = await fromRepositoryPromise(
       this.prismaService.banner.findUniqueOrThrow({
         where: { id },
-        select: { imageFilePath: true, status: true },
+        select: {
+          imageFilePath: true,
+          miniAppId: true,
+          destination: true,
+          navigation: true,
+          status: true,
+        },
       })
     )
     if (existingBanner.isErr()) return err(existingBanner.error)
@@ -156,14 +166,46 @@ export class AdminBannerRepository {
           select: { order: true },
         })
 
+        let connectionResult = {}
+        if (data.navigation === undefined) {
+          if (existingBanner.value.destination && data.destination) {
+            connectionResult = {
+              destination: data.destination,
+            }
+          } else if (existingBanner.value.miniAppId && data.miniAppId) {
+            connectionResult = {
+              miniApp: { disconnect: {}, connect: { id: data.miniAppId } },
+            }
+          }
+        } else if (data.navigation === BannerNavigationType.MINI_APP) {
+          if (data.miniAppId) {
+            connectionResult = {
+              navigation: data.navigation,
+              miniApp: { disconnect: {}, connect: { id: data.miniAppId } },
+              destination: null,
+            }
+          } else {
+            throw new Error('`miniAppId` cannot be null or undefined when `navigation` is MINI_APP')
+          }
+        } else if (data.destination) {
+          connectionResult = {
+            navigation: data.navigation,
+            miniApp: { disconnect: {} },
+            destination: data.destination,
+          }
+        } else {
+          throw new Error(
+            '`destination` cannot be null or undefined when `navigation` is not MINI_APP'
+          )
+        }
+
         return tx.banner.update({
           where: { id },
           data: {
             imageFilePath: newImageFilePath,
             headline: data.headline,
             status: data.status,
-            navigation: data.navigation,
-            destination: data.destination,
+            ...connectionResult,
             ...(data.status && {
               order: lastBanner?.order
                 ? LexoRank.parse(lastBanner.order).genNext().toString()
@@ -180,7 +222,7 @@ export class AdminBannerRepository {
       return err(updateBannerResult.error)
     }
 
-    return ok(updateBannerResult.value)
+    return ok()
   }
 
   async deleteBannerById(id: DeleteBannerParams['id']) {

@@ -283,6 +283,15 @@ const POST_ERROR_SCHEMA = {
   },
 } satisfies InternalErrorSchemas
 
+const MINI_APP_ERROR_SCHEMA = {
+  MINI_APP_NOT_FOUND: {
+    status: 404,
+  },
+  MINI_APP_INVALID_INPUT: {
+    status: 400,
+  },
+} satisfies InternalErrorSchemas
+
 export const InternalErrorCodeSchemas = {
   ...AUTH_ERROR_SCHEMA,
   ...COMMON_ERROR_SCHEMA,
@@ -297,6 +306,7 @@ export const InternalErrorCodeSchemas = {
   ...HASHTAG_ERROR_SCHEMA,
   ...TOPIC_ERROR_SCHEMA,
   ...ELECTION_ERROR_SCHEMA,
+  ...MINI_APP_ERROR_SCHEMA,
   ...ELECTION_KEY_ERROR_SCHEMA,
   ...POST_ERROR_SCHEMA,
 } as const

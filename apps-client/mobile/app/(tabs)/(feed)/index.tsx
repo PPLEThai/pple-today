@@ -240,7 +240,7 @@ function Banner({ banner }: { banner: GetBannersResponse[number] }) {
         WebBrowser.openBrowserAsync(banner.destination)
         break
       default:
-        return exhaustiveGuard(banner.navigation)
+        return exhaustiveGuard(banner)
     }
   }
   const opacity = useSharedValue(1)
