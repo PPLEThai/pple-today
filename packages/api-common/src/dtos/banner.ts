@@ -45,6 +45,11 @@ export const Banner = t.Union([
       miniAppId: t.String({
         description: 'The ID of the mini app to open',
       }),
+      miniApp: t.Object({
+        name: t.String({
+          description: 'The name of the mini app to open',
+        }),
+      }),
     }),
   ]),
 ])

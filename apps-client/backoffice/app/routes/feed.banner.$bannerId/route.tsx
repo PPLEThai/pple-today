@@ -218,11 +218,19 @@ export default function BannerDetailPage({ params }: Route.LoaderArgs) {
                   <Badge>Mini - app</Badge>
                 )}
                 <Typography variant="h3">{query.data.headline}</Typography>
-                <div className="flex items-center gap-1 text-base-text-medium text-sm">
-                  <Link2 size={16} />
-                  <span>URL ที่เชื่อม:</span>
-                  <FeedDetailCopyId id={query.data.id} />
-                </div>
+                {query.data.navigation === 'MINI_APP' ? (
+                  <div className="flex items-center gap-1 text-base-text-medium text-sm">
+                    <Link2 className="shrink-0" size={16} />
+                    <span className="whitespace-nowrap">Mini App ที่เชื่อม:</span>
+                    <FeedDetailCopyId id={query.data.miniAppId} label={query.data.miniApp.name} />
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-base-text-medium text-sm">
+                    <Link2 className="shrink-0" size={16} />
+                    <span className="whitespace-nowrap">URL ที่เชื่อม:</span>
+                    <FeedDetailCopyId id={query.data.destination} />
+                  </div>
+                )}
               </div>
               <img
                 className="shrink-0 w-[320px] h-[180px] rounded-xl overflow-hidden object-cover"
