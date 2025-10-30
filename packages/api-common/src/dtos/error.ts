@@ -275,6 +275,9 @@ const POST_ERROR_SCHEMA = {
   POST_NOT_FOUND: {
     status: 404,
   },
+  POST_ALREADY_DELETED: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 export const InternalErrorCodeSchemas = {

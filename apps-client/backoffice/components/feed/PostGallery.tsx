@@ -7,7 +7,7 @@ export const PostGallery = ({ images }: { images: string[] }) => {
 
   return imagesLength > 0 ? (
     <div className="grid gap-0.5 grid-cols-4 overflow-hidden">
-      {Array(galleryLength).fill``.map((_, aidx) => (
+      {Array(galleryLength).map((_, aidx) => (
         <a
           className={cn(
             'relative overflow-hidden',
