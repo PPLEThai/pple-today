@@ -46,7 +46,6 @@ const seedElections = async (userId: string) => {
       locationMapUrl: 'https://maps.google.com/?q=Bangkok,Thailand',
       province: 'กรุงเทพมหานคร',
       district: 'บางรัก',
-      publishDate: addDays(dateNow, 1),
       openVoting: addDays(dateNow, 2),
       closeVoting: addDays(dateNow, 3),
       voters: {

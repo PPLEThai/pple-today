@@ -1,4 +1,4 @@
-import { FilePath } from '@pple-today/api-common/dtos'
+import { ElectionStatus, FilePath } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import {
@@ -172,22 +172,56 @@ export class AdminElectionRepository {
       name?: string
       type?: ElectionType
       isCancelled?: boolean
+      status?: ElectionStatus
     }
     pagination: {
       page: number
       limit: number
     }
+    now: Date
   }) {
     const { page, limit } = input.pagination
     const skip = Math.max((page - 1) * limit, 0)
 
-    const filter: Prisma.ElectionWhereInput = {
+    let filter: Prisma.ElectionWhereInput = {
       name: {
         contains: input.filter?.name,
         mode: 'insensitive',
       },
       type: input.filter?.type,
       isCancelled: input.filter?.isCancelled,
+    }
+
+    switch (input.filter?.status) {
+      case 'DRAFT':
+        filter = { publishDate: null, ...filter }
+        break
+      case 'NOT_OPENED_VOTE':
+        filter = { publishDate: { not: null }, openVoting: { gt: input.now }, ...filter }
+        break
+      case 'OPEN_VOTE':
+        filter = {
+          publishDate: { not: null },
+          openVoting: { lte: input.now },
+          closeVoting: { gt: input.now },
+          ...filter,
+        }
+        break
+      case 'CLOSED_VOTE':
+        filter = {
+          publishDate: { not: null },
+          closeVoting: { lte: input.now },
+          OR: [{ startResult: null }, { startResult: { gt: input.now } }],
+          ...filter,
+        }
+        break
+      case 'RESULT_ANNOUNCE':
+        filter = {
+          publishDate: { not: null },
+          startResult: { lte: input.now },
+          ...filter,
+        }
+        break
     }
 
     return fromRepositoryPromise(async () => {
