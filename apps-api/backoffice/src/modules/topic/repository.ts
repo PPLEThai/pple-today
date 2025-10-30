@@ -148,19 +148,14 @@ export class TopicRepository {
 
   async userFollowManyTopics(userId: string, topicIds: string[]) {
     return fromRepositoryPromise(
-      this.prismaService.$transaction(async (tx) => {
-        await tx.userFollowsTopic.deleteMany({
-          where: {
-            userId,
-          },
-        })
-        return await tx.user.update({
+        this.prismaService.user.update({
           where: {
             id: userId,
           },
           data: {
             numberOfFollowingTopics: topicIds.length,
             followingTopics: {
+              deleteMany: {},
               createMany: {
                 data: topicIds.map((topicId) => ({
                   topicId,
@@ -170,7 +165,6 @@ export class TopicRepository {
           },
           select: { followingTopics: { select: { topicId: true } } },
         })
-      })
     )
   }
 
