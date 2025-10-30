@@ -14,12 +14,10 @@ import { BottomSheetModal, BottomSheetScrollView } from '@pple-today/ui/bottom-s
 import { Button } from '@pple-today/ui/button'
 import { FormItem, FormLabel, FormMessage } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
-import { cn } from '@pple-today/ui/lib/utils'
 import { Skeleton } from '@pple-today/ui/skeleton'
 import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { toast } from '@pple-today/ui/toast'
-import { toggleTextVariants, toggleVariants } from '@pple-today/ui/toggle'
 import { ToggleGroup, ToggleGroupItem } from '@pple-today/ui/toggle-group'
 import { H2, H3 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
@@ -147,19 +145,12 @@ function MainHeader() {
           <PPLEIcon width={35} height={30} />
         </Pressable>
         <View className="flex flex-col flex-1">
-          {authMe.isLoading ? (
-            <>
-              <Skeleton className="h-3 mt-1 rounded-full w-[80px]" />
-              <Skeleton className="h-6 mt-2 rounded-full w-[150px]" />
-            </>
-          ) : (
-            <View className="flex-1 pr-4">
-              <Text className="font-heading-regular text-xs">{headings.welcome}</Text>
-              <Text className="font-heading-bold text-2xl text-base-primary-default line-clamp-1">
-                {headings.title}
-              </Text>
-            </View>
-          )}
+          <View className="flex-1 pr-4">
+            <Text className="font-heading-regular text-xs">{headings.welcome}</Text>
+            <Text className="font-heading-bold text-2xl text-base-primary-default line-clamp-1">
+              {headings.title}
+            </Text>
+          </View>
         </View>
       </View>
       <View className="flex flex-row gap-4">
@@ -353,7 +344,6 @@ function SelectTopicButton() {
   const onClose = () => {
     bottomSheetModalRef.current?.dismiss()
   }
-  const insets = useSafeAreaInsets()
   return (
     <>
       <Button
@@ -370,37 +360,33 @@ function SelectTopicButton() {
           size={24}
         />
       </Button>
-
-      <BottomSheetModal
-        ref={bottomSheetModalRef}
-        bottomInset={insets.bottom}
-        topInset={insets.top}
-        enableDynamicSizing
-      >
-        <SelectTopicForm onClose={onClose} />
-      </BottomSheetModal>
+      <SelectTopicForm ref={bottomSheetModalRef} onClose={onClose} />
     </>
   )
 }
 
 const formSchema = z.object({
-  topicId: z.string().min(1, 'กรุณาเลือกหัวข้อ 1 หัวข้อ'),
+  topicIds: z.array(z.string()),
 })
 
-const SelectTopicForm = (props: { onClose: () => void }) => {
+const SelectTopicForm = (props: {
+  onClose: () => void
+  ref: React.RefObject<BottomSheetModal | null>
+}) => {
   const listTopicQuery = reactQueryClient.useQuery('/topics/list', {})
-  const followTopicMutation = reactQueryClient.useMutation('post', '/topics/:topicId/follow', {})
+  const followingTopicsQuery = reactQueryClient.useQuery('/topics/follows', {})
+  const followManyTopicsMutation = reactQueryClient.useMutation('put', '/topics/follows', {})
   const queryClient = useQueryClient()
   const form = useForm({
     defaultValues: {
-      topicId: '',
+      topicIds: followingTopicsQuery.data?.map((topic) => topic.id) ?? [],
     },
     validators: {
       onSubmit: formSchema,
     },
     onSubmit: async ({ value }) => {
-      followTopicMutation.mutateAsync(
-        { pathParams: { topicId: value.topicId } },
+      followManyTopicsMutation.mutateAsync(
+        { body: { topicIds: value.topicIds } },
         {
           onSuccess: () => {
             queryClient.invalidateQueries({
@@ -419,84 +405,93 @@ const SelectTopicForm = (props: { onClose: () => void }) => {
       )
     },
   })
+  React.useEffect(() => {
+    if (followingTopicsQuery.data) {
+      form.setFieldValue(
+        'topicIds',
+        followingTopicsQuery.data.map((topic) => topic.id)
+      )
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [followingTopicsQuery.data])
   const onSkip = () => {
     props.onClose()
   }
-  return (
-    <BottomSheetScrollView>
-      <View className="flex flex-col gap-1 p-4 pb-0">
-        <Text className="text-2xl font-heading-bold">เลือกหัวข้อที่สนใจ</Text>
-        <Text className="text-sm font-heading-regular text-base-text-medium">
-          เลือก 1 หัวข้อสำหรับเพิ่มลงบนหน้าแรก
-        </Text>
-      </View>
-      <form.Field name="topicId">
-        {(field) => (
-          <FormItem field={field} className="p-4">
-            <FormLabel style={[StyleSheet.absoluteFill, { opacity: 0, pointerEvents: 'none' }]}>
-              ความคิดเห็น
-            </FormLabel>
-            <ToggleGroup
-              type="single"
-              value={field.state.value}
-              onValueChange={(value) => {
-                field.handleChange(value!)
-              }}
-              className="bg-base-bg-light rounded-lg border border-base-outline-default flex flex-row flex-wrap gap-2 justify-start p-2"
-            >
-              {listTopicQuery.isLoading || !listTopicQuery.data ? (
-                <TopicSkeleton />
-              ) : listTopicQuery.data.length === 0 ? (
-                <View className="w-full items-center justify-center py-14">
-                  <Text className="text-base-text-placeholder font-heading-semibold">
-                    ยังไม่มีหัวข้อ
-                  </Text>
-                </View>
-              ) : (
-                listTopicQuery.data?.map((tag) => {
-                  if (tag.followed)
-                    return (
-                      <View
-                        key={tag.id}
-                        className={cn(
-                          toggleVariants(),
-                          'bg-base-primary-default active:bg-base-primary-medium web:hover:bg-base-primary-medium border-base-primary-default'
-                        )}
-                      >
-                        <Text className={cn(toggleTextVariants(), 'text-base-text-invert')}>
-                          {tag.name}
-                        </Text>
-                      </View>
-                    )
-                  return (
-                    <ToggleGroupItem key={tag.id} value={tag.id} variant="outline">
-                      <Text>{tag.name}</Text>
-                    </ToggleGroupItem>
-                  )
-                })
-              )}
-            </ToggleGroup>
-            <FormMessage />
-          </FormItem>
-        )}
-      </form.Field>
-      {/* TODO: make sticky and set max height, might use BottomSheetFooter */}
+  const insets = useSafeAreaInsets()
+  const footerComponent = React.useCallback(() => {
+    return (
       <View className="flex flex-col gap-2 px-4 py-2 bg-base-bg-white">
         <form.Subscribe selector={(state) => [state.isSubmitting]}>
           {([isSubmitting]) => (
             <Button
               onPress={form.handleSubmit}
-              disabled={isSubmitting || followTopicMutation.isPending}
+              disabled={isSubmitting || followManyTopicsMutation.isPending}
             >
               <Text>ตกลง</Text>
             </Button>
           )}
         </form.Subscribe>
-        <Button variant="ghost" onPress={onSkip} disabled={followTopicMutation.isPending}>
+        <Button variant="ghost" onPress={onSkip} disabled={followManyTopicsMutation.isPending}>
           <Text>ยกเลิก</Text>
         </Button>
       </View>
-    </BottomSheetScrollView>
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [followManyTopicsMutation.isPending])
+  return (
+    <BottomSheetModal
+      ref={props.ref}
+      bottomInset={insets.bottom}
+      topInset={insets.top}
+      maxDynamicContentSize={500}
+      footerComponent={footerComponent}
+    >
+      <BottomSheetScrollView>
+        <View className="flex flex-col gap-1 p-4 pb-0">
+          <Text className="text-2xl font-heading-bold">เลือกหัวข้อที่สนใจ</Text>
+          <Text className="text-sm font-heading-regular text-base-text-medium">
+            เลือกหัวข้อสำหรับเพิ่มลงบนหน้าแรก
+          </Text>
+        </View>
+        <form.Field name="topicIds">
+          {(field) => (
+            <FormItem field={field} className="p-4">
+              <FormLabel style={[StyleSheet.absoluteFill, { opacity: 0, pointerEvents: 'none' }]}>
+                หัวข้อ
+              </FormLabel>
+              <ToggleGroup
+                type="multiple"
+                value={field.state.value}
+                variant="outline"
+                onValueChange={(value) => {
+                  field.handleChange(value!)
+                }}
+                className="bg-base-bg-light rounded-lg border border-base-outline-default flex flex-row flex-wrap gap-2 justify-start p-2"
+              >
+                {listTopicQuery.isLoading || !listTopicQuery.data ? (
+                  <TopicSkeleton />
+                ) : listTopicQuery.data.length === 0 ? (
+                  <View className="w-full items-center justify-center py-14">
+                    <Text className="text-base-text-placeholder font-heading-semibold">
+                      ยังไม่มีหัวข้อ
+                    </Text>
+                  </View>
+                ) : (
+                  listTopicQuery.data?.map((tag) => {
+                    return (
+                      <ToggleGroupItem key={tag.id} value={tag.id}>
+                        <Text>{tag.name}</Text>
+                      </ToggleGroupItem>
+                    )
+                  })
+                )}
+              </ToggleGroup>
+              <FormMessage />
+            </FormItem>
+          )}
+        </form.Field>
+      </BottomSheetScrollView>
+    </BottomSheetModal>
   )
 }
 
