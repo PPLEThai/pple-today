@@ -31,9 +31,14 @@ export type GetAuthMeHeaders = Static<typeof GetAuthMeHeaders>
 export type GetAuthMeResponse = Static<typeof GetAuthMeResponse>
 
 export const CreateMiniAppTokenParams = t.Object({
-  appId: t.String({ description: 'The ID of the mini app' }),
+  slug: t.String({ description: 'The slug of the mini app' }),
 })
 export type CreateMiniAppTokenParams = Static<typeof CreateMiniAppTokenParams>
+
+export const CreateMiniAppTokenQuery = t.Object({
+  path: t.Optional(t.String({ description: 'The path within the mini app to navigate to' })),
+})
+export type CreateMiniAppTokenQuery = Static<typeof CreateMiniAppTokenQuery>
 
 export const CreateMiniAppTokenResponse = t.Object({
   url: t.String({ description: 'The URL to access the mini app with the generated token' }),

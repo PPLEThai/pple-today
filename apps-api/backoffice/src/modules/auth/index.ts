@@ -4,6 +4,7 @@ import Elysia from 'elysia'
 
 import {
   CreateMiniAppTokenParams,
+  CreateMiniAppTokenQuery,
   CreateMiniAppTokenResponse,
   GetAuthMeResponse,
   RegisterUserResponse,
@@ -72,9 +73,13 @@ export const AuthController = new Elysia({
     }
   )
   .post(
-    '/mini-app/:appId',
-    async ({ params, user, authService, status }) => {
-      const result = await authService.generateMiniAppToken(params.appId, user.accessToken)
+    '/mini-app/:slug',
+    async ({ params, user, authService, query, status }) => {
+      const result = await authService.generateMiniAppToken(
+        params.slug,
+        user.accessToken,
+        query.path
+      )
 
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
@@ -85,6 +90,7 @@ export const AuthController = new Elysia({
     {
       requiredLocalUser: true,
       params: CreateMiniAppTokenParams,
+      query: CreateMiniAppTokenQuery,
       response: {
         200: CreateMiniAppTokenResponse,
         ...createErrorSchema(

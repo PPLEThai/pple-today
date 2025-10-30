@@ -1109,9 +1109,9 @@ function MiniAppExample() {
       {miniApps.data?.map((miniApp) => (
         <Button
           variant="outline"
-          key={miniApp.id}
+          key={miniApp.slug}
           className="flex flex-row items-center gap-1"
-          onPress={() => router.push(`/mini-app/${miniApp.id}`)}
+          onPress={() => router.push(`/mini-app/${miniApp.slug}`)}
         >
           {miniApp.iconUrl && (
             <Image source={{ uri: miniApp.iconUrl }} className="w-4 h-4 color-primary" />
