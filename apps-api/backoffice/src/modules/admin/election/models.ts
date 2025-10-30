@@ -70,7 +70,7 @@ export const AdminListElectionQuery = ListQuery(
     name: t.Optional(t.String()),
     type: t.Optional(t.Enum(ElectionType)),
     isCancelled: t.Optional(t.Boolean()),
-    status: t.Optional(ElectionStatus),
+    status: t.Optional(t.Array(ElectionStatus)),
   })
 )
 export type AdminListElectionQuery = Static<typeof AdminListElectionQuery>

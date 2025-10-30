@@ -172,7 +172,7 @@ export class AdminElectionRepository {
       name?: string
       type?: ElectionType
       isCancelled?: boolean
-      status?: ElectionStatus
+      status?: ElectionStatus[]
     }
     pagination: {
       page: number
@@ -183,7 +183,7 @@ export class AdminElectionRepository {
     const { page, limit } = input.pagination
     const skip = Math.max((page - 1) * limit, 0)
 
-    let filter: Prisma.ElectionWhereInput = {
+    const baseFilter: Prisma.ElectionWhereInput = {
       name: {
         contains: input.filter?.name,
         mode: 'insensitive',
@@ -192,37 +192,46 @@ export class AdminElectionRepository {
       isCancelled: input.filter?.isCancelled,
     }
 
-    switch (input.filter?.status) {
-      case 'DRAFT':
-        filter = { publishDate: null, ...filter }
-        break
-      case 'NOT_OPENED_VOTE':
-        filter = { publishDate: { not: null }, openVoting: { gt: input.now }, ...filter }
-        break
-      case 'OPEN_VOTE':
-        filter = {
-          publishDate: { not: null },
-          openVoting: { lte: input.now },
-          closeVoting: { gt: input.now },
-          ...filter,
-        }
-        break
-      case 'CLOSED_VOTE':
-        filter = {
-          publishDate: { not: null },
-          closeVoting: { lte: input.now },
-          OR: [{ startResult: null }, { startResult: { gt: input.now } }],
-          ...filter,
-        }
-        break
-      case 'RESULT_ANNOUNCE':
-        filter = {
-          publishDate: { not: null },
-          startResult: { lte: input.now },
-          ...filter,
-        }
-        break
-    }
+    let statusFilter: Prisma.ElectionWhereInput = {}
+
+    input.filter?.status?.forEach((status) => {
+      let addFilter: Prisma.ElectionWhereInput | undefined = undefined
+
+      switch (status) {
+        case 'DRAFT':
+          addFilter = { publishDate: null }
+          break
+        case 'NOT_OPENED_VOTE':
+          addFilter = { publishDate: { not: null }, openVoting: { gt: input.now } }
+          break
+        case 'OPEN_VOTE':
+          addFilter = {
+            publishDate: { not: null },
+            openVoting: { lte: input.now },
+            closeVoting: { gt: input.now },
+          }
+          break
+        case 'CLOSED_VOTE':
+          addFilter = {
+            publishDate: { not: null },
+            closeVoting: { lte: input.now },
+            OR: [{ startResult: null }, { startResult: { gt: input.now } }],
+          }
+          break
+        case 'RESULT_ANNOUNCE':
+          addFilter = {
+            publishDate: { not: null },
+            startResult: { lte: input.now },
+          }
+          break
+      }
+
+      if (addFilter) {
+        statusFilter = { OR: [addFilter, statusFilter] }
+      }
+    })
+
+    const filter = { ...baseFilter, ...statusFilter }
 
     return fromRepositoryPromise(async () => {
       const [data, count] = await Promise.all([
