@@ -38,6 +38,7 @@ export class AdminNotificationService {
       return mapRepositoryError(updateApiKeyResult.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.NOTIFICATION_API_KEY_NOT_FOUND,
+          message: 'The specified API key notification was not found',
         },
       })
     }
@@ -52,6 +53,7 @@ export class AdminNotificationService {
       return mapRepositoryError(deleteApiKeyResult.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.NOTIFICATION_API_KEY_NOT_FOUND,
+          message: 'The specified API key notification was not found',
         },
       })
     }
@@ -66,6 +68,7 @@ export class AdminNotificationService {
       return mapRepositoryError(rotateApiKeyResult.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.NOTIFICATION_API_KEY_NOT_FOUND,
+          message: 'The specified API key notification was not found',
         },
       })
     }
