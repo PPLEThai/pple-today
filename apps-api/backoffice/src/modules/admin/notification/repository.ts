@@ -1,7 +1,7 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import crypto from 'crypto'
 import Elysia from 'elysia'
-import { randomString } from 'remeda'
 
 import { PrismaServicePlugin } from '../../../plugins/prisma'
 
@@ -9,7 +9,11 @@ export class AdminNotificationRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
   private generateApiKey() {
-    return `pple_notification_${randomString(32)}`
+    const randomNonce = crypto
+      .getRandomValues(new Uint8Array(16))
+      .reduce((acc, byte) => acc + byte.toString(36).padStart(2, '0'), '')
+
+    return `pple_notification_${randomNonce}`
   }
 
   async listApiKeys(query: { limit: number; page: number }) {
