@@ -5,10 +5,11 @@ import { NavLink } from 'react-router'
 
 import { Badge } from '@pple-today/web-ui/badge'
 import { DataTable } from '@pple-today/web-ui/data-table'
+import { Typography } from '@pple-today/web-ui/typography'
 import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
 import { createColumnHelper } from '@tanstack/react-table'
 import { TableCopyId } from 'components/TableCopyId'
-import { Users } from 'lucide-react'
+import { CalendarX2, Pencil, Trash2, Users } from 'lucide-react'
 import { AdminListElectionResponse } from 'node_modules/@api/backoffice/src/modules/admin/election/models'
 
 import { ElectionInfo, ElectionStatus } from '@api/backoffice/admin'
@@ -16,7 +17,7 @@ import { ElectionInfo, ElectionStatus } from '@api/backoffice/admin'
 import { reactQueryClient } from '~/libs/api-client'
 
 import { exhaustiveGuard } from '../../../../../packages/api-common/src/utils/common'
-import { Typography } from '@pple-today/web-ui/typography'
+import { Button } from '@pple-today/web-ui/button'
 
 const columnHelper = createColumnHelper<AdminListElectionResponse['data'][number]>()
 
@@ -24,7 +25,7 @@ export const Data = () => {
   const [queryLimit, setQueryLimit] = useState(10)
   const [queryPage, setQueryPage] = useState(1)
   const [queryName, setQueryName] = useState('')
-  const [queryStatus, setQueryStatus] = useState<ElectionStatus>()
+  const [queryStatus, setQueryStatus] = useState<ElectionStatus[]>()
 
   const queryClient = useQueryClient()
   const query = reactQueryClient.useQuery(
@@ -34,14 +35,13 @@ export const Data = () => {
         limit: queryLimit,
         page: queryPage,
         name: queryName,
-        status: queryStatus,
+        status: queryStatus?.length === 0 ? undefined : queryStatus,
       },
     },
     {
       placeholderData: keepPreviousData,
     }
   )
-  console.log(query.data)
 
   // const mutation = reactQueryClient.useMutation('patch', '/admin/topics/:topicId')
   // const invalidateQuery = useCallback(() => {
@@ -173,6 +173,30 @@ export const Data = () => {
         size: 110,
         minSize: 110,
       }),
+      columnHelper.display({
+        id: 'manage',
+        header: 'จัดการ',
+        cell: (info) => {
+          const { status, isCancelled } = info.row.original
+
+          return (
+            <span className="flex items-center gap-2">
+              <Button size="icon" variant="outline" disabled={status !== 'DRAFT'}>
+                <Pencil strokeWidth={1} size={20} />
+              </Button>
+              {status === 'DRAFT' ? (
+                <Button size="icon" variant="outline">
+                  <Trash2 className="text-system-danger-default" strokeWidth={1} size={20} />
+                </Button>
+              ) : (
+                <Button size="icon" variant="outline" disabled={isCancelled}>
+                  <CalendarX2 className="text-system-danger-default" strokeWidth={1} size={20} />
+                </Button>
+              )}
+            </span>
+          )
+        },
+      }),
       // columnHelper.accessor('pri', {
       //   header: 'สถานะ',
       //   cell: (info) => {
@@ -245,15 +269,29 @@ export const Data = () => {
       setQueryLimit={setQueryLimit}
       queryPage={queryPage}
       setQueryPage={setQueryPage}
-      // filter={[
-      //   {
-      //     type: 'text',
-      //     key: 'name',
-      //     label: 'ค้นหาการเลือกตั้ง',
-      //     state: queryName,
-      //     setState: setQueryName,
-      //   },
-      // ]}
+      filter={[
+        {
+          type: 'text',
+          key: 'name',
+          label: 'ค้นหาการเลือกตั้ง',
+          state: queryName,
+          setState: setQueryName,
+        },
+        {
+          type: 'enum',
+          key: 'status',
+          label: 'สถานะ',
+          options: [
+            { value: 'DRAFT', label: 'ร่าง' },
+            { value: 'NOT_OPENED_VOTE', label: 'ยังไม่เปิดหีบ' },
+            { value: 'OPEN_VOTE', label: 'เปิดหีบ' },
+            { value: 'CLOSED_VOTE', label: 'ปิดหีบ' },
+            { value: 'RESULT_ANNOUNCE', label: 'ประกาศผล' },
+          ],
+          state: queryStatus || [],
+          setState: setQueryStatus as any,
+        },
+      ]}
       // filterExtension={
       //   <TopicCreate
       //     trigger={
