@@ -44,8 +44,17 @@ export class ProfileRepository {
     })
   }
 
-  async getUserParticipation(userId: string) {
-    return await fromRepositoryPromise(
+  async getUserPoll({
+    userId,
+    cursor,
+    limit,
+  }: {
+    userId?: string
+    cursor?: string
+    limit: number
+  }) {
+    console.log('get user poll')
+    return fromRepositoryPromise(
       this.prismaService.poll.findMany({
         where: {
           options: {
@@ -58,34 +67,59 @@ export class ProfileRepository {
             },
           },
         },
-        distinct: ['feedItemId'],
-        select: {
-          title: true,
-          feedItemId: true,
+        include: {
           options: {
-            where: {
-              pollAnswers: {
-                some: {
-                  userId,
-                },
-              },
-            },
-            select: {
+            include: {
               pollAnswers: {
                 where: {
                   userId,
                 },
-                take: 1,
                 orderBy: {
                   createdAt: 'desc',
-                },
-                select: {
-                  createdAt: true,
                 },
               },
             },
           },
         },
+        skip: cursor ? 1 : 0,
+        cursor: cursor ? { feedItemId: cursor } : undefined,
+        take: limit,
+      })
+    )
+  }
+
+  async getUserElection({
+    userId,
+    cursor,
+    limit,
+  }: {
+    userId?: string
+    cursor?: string
+    limit: number
+  }) {
+    console.log('get user election')
+    return fromRepositoryPromise(
+      this.prismaService.election.findMany({
+        where: {
+          voteRecords: {
+            some: {
+              userId,
+            },
+          },
+        },
+        include: {
+          voteRecords: {
+            where: {
+              userId,
+            },
+            orderBy: {
+              createdAt: 'desc',
+            },
+          },
+        },
+        skip: cursor ? 1 : 0,
+        cursor: cursor ? { id: cursor } : undefined,
+        take: limit,
       })
     )
   }

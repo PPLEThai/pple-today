@@ -13,7 +13,7 @@ import {
   GetMyProfileResponse,
   GetProfileByIdParams,
   GetProfileByIdResponse,
-  GetUserParticipationResponse,
+  GetUserRecentParticipationResponse,
   GetUserRecommendationResponse,
   UpdateProfileBody,
   UpdateProfileResponse,
@@ -54,9 +54,9 @@ export const ProfileController = new Elysia({
     }
   )
   .get(
-    '/participation',
-    async ({ user, profileService, status }) => {
-      const result = await profileService.getUserParticipation(user.id)
+    '/participation/recent',
+    async ({ user, status, profileService }) => {
+      const result = await profileService.getUserRecentParticipation(user.id)
 
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
@@ -67,15 +67,15 @@ export const ProfileController = new Elysia({
     {
       requiredLocalUser: true,
       response: {
-        200: GetUserParticipationResponse,
+        200: GetUserRecentParticipationResponse,
         ...createErrorSchema(
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
       detail: {
-        summary: 'Get User Participation',
-        description: "Fetch the authenticated user's participation",
+        summary: 'Get User Recent participation',
+        description: "Fetch the authenticated user's recent participation",
       },
     }
   )

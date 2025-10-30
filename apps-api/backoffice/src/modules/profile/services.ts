@@ -1,14 +1,19 @@
 import { createId } from '@paralleldrive/cuid2'
-import { ImageFileMimeType, InternalErrorCode } from '@pple-today/api-common/dtos'
+import {
+  ElectionStatus,
+  ImageFileMimeType,
+  InternalErrorCode,
+  ParticipationType,
+} from '@pple-today/api-common/dtos'
 import { FileService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
+import { Election } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 import * as R from 'remeda'
 
 import {
   CompleteOnboardingProfileBody,
-  GetUserParticipationResponse,
   GetUserRecommendationResponse,
   UpdateProfileBody,
 } from './models'
@@ -23,6 +28,20 @@ export class ProfileService {
     private authRepository: AuthRepository,
     private fileService: FileService
   ) {}
+
+  private getElectionStatus(election: Election): ElectionStatus {
+    const now = new Date()
+
+    if (now < election.openVoting) {
+      return 'NOT_OPENED_VOTE'
+    } else if (now < election.closeVoting) {
+      return 'OPEN_VOTE'
+    } else if (!election.startResult || now < election.startResult) {
+      return 'CLOSED_VOTE'
+    } else {
+      return 'RESULT_ANNOUNCE'
+    }
+  }
 
   async getUserRecommendation(userId: string) {
     const result = await this.profileRepository.getUserRecommendation(userId)
@@ -48,30 +67,69 @@ export class ProfileService {
     return ok(users)
   }
 
-  // TODO: Add election to recent activity or formulate new table for activity
-  async getUserParticipation(userId: string) {
-    const result = await this.profileRepository.getUserParticipation(userId)
+  async getUserRecentParticipation(userId: string) {
+    const pollParticipation = await this.profileRepository.getUserPoll({
+      userId,
+      cursor: undefined,
+      limit: 3,
+    })
 
-    if (result.isErr()) {
-      return mapRepositoryError(result.error)
+    if (pollParticipation.isErr()) {
+      console.log('poll error')
+      return mapRepositoryError(pollParticipation.error)
     }
 
-    const transformResult: GetUserParticipationResponse = R.pipe(
-      result.value,
+    const electionParticipation = await this.profileRepository.getUserElection({
+      userId,
+      cursor: undefined,
+      limit: 3,
+    })
+
+    if (electionParticipation.isErr()) {
+      console.log('election error')
+      return mapRepositoryError(electionParticipation.error)
+    }
+
+    console.log('reading poll')
+
+    const transformPoll = R.pipe(
+      pollParticipation.value,
       R.map((poll) => ({
-        type: 'POLL' as const,
+        type: ParticipationType.POLL,
         feedItemId: poll.feedItemId,
         title: poll.title,
-        createdAt: R.pipe(
+        endAt: poll.endAt,
+        submittedAt: R.pipe(
           poll.options,
-          R.map((option) => option.pollAnswers[0].createdAt),
+          R.map((option) => option.pollAnswers[0]?.createdAt),
           R.flat(),
           R.firstBy([R.identity(), 'desc'])
         )!,
       }))
     )
 
-    return ok(transformResult)
+    console.log('reading election')
+
+    const transformElection = R.pipe(
+      electionParticipation.value,
+      R.map((election) => ({
+        type: ParticipationType.ELECTION,
+        electionId: election.id,
+        name: election.name,
+        electionStatus: this.getElectionStatus(election),
+        submittedAt: election.voteRecords[0].createdAt,
+      }))
+    )
+
+    console.log('sorting...')
+
+    //combined the transform poll and election
+    const transformPollAndElection = R.pipe(
+      R.concat(transformPoll, transformElection),
+      R.sortBy([R.prop('submittedAt'), 'desc'])
+    )
+
+    return ok(transformPollAndElection)
   }
 
   async getProfileById(id: string) {
