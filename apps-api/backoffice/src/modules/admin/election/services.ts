@@ -179,11 +179,13 @@ export class AdminElectionService {
       this.convertToAdminElectionInfo(election, new Date())
     )
     const currentPage = page
-    const totalPage = Math.ceil(listElections.value.count / limit)
+    const count = listElections.value.count
+    const totalPage = Math.ceil(count / limit)
     const result = {
       meta: {
         currentPage,
         totalPage,
+        count,
       },
       data,
     } satisfies AdminListElectionResponse

@@ -43,61 +43,72 @@ export const Data = () => {
     }
   )
 
-  // const mutation = reactQueryClient.useMutation('patch', '/admin/topics/:topicId')
-  // const invalidateQuery = useCallback(() => {
-  //   queryClient.invalidateQueries({
-  //     queryKey: reactQueryClient.getQueryKey('/admin/elections', {
-  //       query: {
-  //         limit: queryLimit,
-  //         page: queryPage,
-  //         name: queryName,
-  //         status: queryStatus,
-  //       },
-  //     }),
-  //   })
-  // }, [queryClient, queryLimit, queryPage, queryName, queryStatus])
+  const cancelMutation = reactQueryClient.useMutation('put', '/admin/elections/:electionId/cancel')
+  const deleteMutation = reactQueryClient.useMutation('delete', '/admin/elections/:electionId')
 
-  // const setTopicStatus = useCallback(
-  //   (
-  //     { status }: { status: NonNullable<UpdateTopicBody['status']> },
-  //     { topicId }: UpdateTopicParams
-  //   ) => {
-  //     if (mutation.isPending) return
+  const cancelElection = useCallback(
+    (electionId: string) => {
+      if (cancelMutation.isPending) return
 
-  //     mutation.mutateAsync(
-  //       {
-  //         pathParams: {
-  //           topicId,
-  //         },
-  //         body: {
-  //           status,
-  //         },
-  //       },
-  //       {
-  //         onSuccess: () => {
-  //           queryClient.setQueryData(
-  //             reactQueryClient.getQueryKey('/admin/topics', {
-  //               query: {
-  //                 limit: queryLimit,
-  //                 page: queryPage,
-  //                 search: querySearch,
-  //               },
-  //             }),
-  //             (_data) => {
-  //               const data = structuredClone(_data)
-  //               if (!data) return
-  //               const idx = data.data.findIndex((d) => d.id === topicId)
-  //               if (idx === -1) return
-  //               data.data[idx].status = status
-  //               return data
-  //             }
-  //           )
-  //         },
-  //       }
-  //     )
-  //   },
-  //   [mutation, queryClient, queryLimit, queryPage, querySearch]
-  // )
+      cancelMutation.mutateAsync(
+        { pathParams: { electionId } },
+        {
+          onSuccess: () => {
+            queryClient.setQueryData(
+              reactQueryClient.getQueryKey('/admin/elections', {
+                query: {
+                  limit: queryLimit,
+                  page: queryPage,
+                  name: queryName,
+                  status: queryStatus,
+                },
+              }),
+              (_data) => {
+                const data = structuredClone(_data)
+                if (!data) return
+                const idx = data.data.findIndex((d) => d.id === electionId)
+                if (!idx) return
+                data.data[idx].isCancelled = true
+                return data
+              }
+            )
+          },
+        }
+      )
+    },
+    [cancelMutation, queryClient, queryLimit, queryPage, queryName, queryStatus]
+  )
+
+  const deleteElection = useCallback(
+    (electionId: string) => {
+      if (deleteMutation.isPending) return
+
+      deleteMutation.mutateAsync(
+        { pathParams: { electionId } },
+        {
+          onSuccess: () => {
+            queryClient.setQueryData(
+              reactQueryClient.getQueryKey('/admin/elections', {
+                query: {
+                  limit: queryLimit,
+                  page: queryPage,
+                  name: queryName,
+                  status: queryStatus,
+                },
+              }),
+              (_data) => {
+                const data = structuredClone(_data)
+                if (!data) return
+                data.data = data.data.filter((d) => d.id !== electionId)
+                return data
+              }
+            )
+          },
+        }
+      )
+    },
+    [deleteMutation, queryClient, queryLimit, queryPage, queryName, queryStatus]
+  )
 
   const columns = useMemo(
     () => [
@@ -153,7 +164,12 @@ export const Data = () => {
             year: '2-digit',
           })
 
-          return <Typography variant="small">{`${openVote} - ${closeVote}`}</Typography>
+          return (
+            <Typography
+              variant="small"
+              className="font-extralight"
+            >{`${openVote} - ${closeVote}`}</Typography>
+          )
         },
       }),
       columnHelper.accessor('type', {
@@ -166,8 +182,10 @@ export const Data = () => {
         header: 'จำนวนลงคะเเนน',
         cell: (info) => (
           <span className="flex gap-2 items-center">
-            <Users />
-            <Typography variant="small">{info.getValue()}</Typography>
+            <Users strokeWidth={1.5} />
+            <Typography variant="small" className="font-extralight">
+              {info.getValue()}
+            </Typography>
           </span>
         ),
         size: 110,
@@ -177,7 +195,7 @@ export const Data = () => {
         id: 'manage',
         header: 'จัดการ',
         cell: (info) => {
-          const { status, isCancelled } = info.row.original
+          const { status, isCancelled, id } = info.row.original
 
           return (
             <span className="flex items-center gap-2">
@@ -185,11 +203,16 @@ export const Data = () => {
                 <Pencil strokeWidth={1} size={20} />
               </Button>
               {status === 'DRAFT' ? (
-                <Button size="icon" variant="outline">
+                <Button size="icon" variant="outline" onClick={() => deleteElection(id)}>
                   <Trash2 className="text-system-danger-default" strokeWidth={1} size={20} />
                 </Button>
               ) : (
-                <Button size="icon" variant="outline" disabled={isCancelled}>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  disabled={isCancelled}
+                  onClick={() => cancelElection(id)}
+                >
                   <CalendarX2 className="text-system-danger-default" strokeWidth={1} size={20} />
                 </Button>
               )}
@@ -197,74 +220,17 @@ export const Data = () => {
           )
         },
       }),
-      // columnHelper.accessor('pri', {
-      //   header: 'สถานะ',
-      //   cell: (info) => {
-      //     const status = info.getValue()
-      //     if (status === 'PUBLISHED') return <Badge variant="success">เปิดใช้งาน</Badge>
-      //     return <Badge variant="destructive">ระงับการใช้งาน</Badge>
-      //   },
-      //   size: 101,
-      //   minSize: 101,
-      // }),
-      // columnHelper.display({
-      //   id: 'manage',
-      //   header: 'จัดการ',
-      //   cell: ({ row }) => {
-      //     const id = row.original.id
-      //     const status = row.original.status
-
-      //     return (
-      //       <div className="flex gap-3">
-      //         {status === 'PUBLISHED' ? (
-      //           <Button
-      //             variant="secondary"
-      //             size="icon"
-      //             className="size-8"
-      //             disabled={mutation.isPending}
-      //             aria-busy={mutation.isPending}
-      //             onClick={() => setTopicStatus({ status: 'SUSPENDED' }, { topicId: id })}
-      //           >
-      //             <span className="sr-only">ระงับการใช้งาน</span>
-      //             <EyeOff className="size-4" />
-      //           </Button>
-      //         ) : (
-      //           <Button
-      //             size="icon"
-      //             className="size-8"
-      //             disabled={mutation.isPending}
-      //             aria-busy={mutation.isPending}
-      //             onClick={() => setTopicStatus({ status: 'PUBLISHED' }, { topicId: id })}
-      //           >
-      //             <span className="sr-only">เปิดใช้งาน</span>
-      //             <Megaphone className="size-4" />
-      //           </Button>
-      //         )}
-      //         <Button variant="outline" size="icon" className="size-8" asChild>
-      //           <NavLink to={`/feed/topic/${id}`}>
-      //             <span className="sr-only">แก้ไข</span>
-      //             <Pencil className="size-4" />
-      //           </NavLink>
-      //         </Button>
-      //       </div>
-      //     )
-      //   },
-      //   size: 108,
-      //   minSize: 108,
-      //   maxSize: 108,
-      // }),
     ],
-    []
-    // [mutation.isPending, setTopicStatus]
+    [cancelElection, deleteElection]
   )
 
   return (
     <DataTable
       columns={columns}
       data={query.data?.data ?? []}
-      // count={query.data?.meta.count ?? 0}
+      count={query.data?.meta.count ?? 0}
       isQuerying={query.isLoading}
-      // isMutating={mutation.isPending}
+      isMutating={cancelMutation.isPending || deleteMutation.isPending}
       queryLimit={queryLimit}
       setQueryLimit={setQueryLimit}
       queryPage={queryPage}
@@ -292,17 +258,6 @@ export const Data = () => {
           setState: setQueryStatus as any,
         },
       ]}
-      // filterExtension={
-      //   <TopicCreate
-      //     trigger={
-      //       <Button>
-      //         <Plus />
-      //         สร้างหัวข้อ
-      //       </Button>
-      //     }
-      //     onSuccess={invalidateQuery}
-      //   />
-      // }
     />
   )
 }
