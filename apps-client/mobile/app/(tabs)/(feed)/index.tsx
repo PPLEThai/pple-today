@@ -2,6 +2,7 @@ import * as React from 'react'
 import { Pressable, StyleSheet, View } from 'react-native'
 import Animated, {
   useAnimatedScrollHandler,
+  useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
@@ -257,11 +258,16 @@ function Banner({ banner }: { banner: GetBannersResponse[number] }) {
     scale.value = withTiming(1, { duration: 150 })
   }
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ scale: scale.value }],
+  }))
+
   return (
     <SlideItem key={banner.id}>
       <Pressable onPressIn={fadeIn} onPressOut={fadeOut} onPress={onPress} disabled={disabled}>
         <Animated.View
-          style={{ opacity, transform: [{ scale }] }}
+          style={animatedStyle}
           className="bg-base-bg-light rounded-xl overflow-hidden"
         >
           <Image
@@ -556,7 +562,12 @@ function FeedFollowingContent(props: PagerScrollViewProps) {
   }, [feedInfiniteQuery.data])
 
   const scrollContext = useScrollContext()
-  const scrollHandler = useAnimatedScrollHandler(scrollContext)
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event, ctx) => {
+      'worklet'
+      scrollContext?.onScroll?.(event, ctx)
+    },
+  })
 
   const queryClient = useQueryClient()
   const onRefresh = React.useCallback(async () => {
@@ -593,6 +604,31 @@ function FeedFollowingContent(props: PagerScrollViewProps) {
     />
   )
 }
+
+// Ref: https://github.com/LegendApp/legend-list/blob/f515e6a7d85ec6b23df6ca0836be2a25f41ba476/src/integrations/reanimated.tsx#L55
+// type TypedMemo = <T extends React.ComponentType<any>>(
+//   Component: T,
+//   propsAreEqual?: (
+//     prevProps: Readonly<React.JSXElementConstructor<T>>,
+//     nextProps: Readonly<React.JSXElementConstructor<T>>
+//   ) => boolean
+// ) => T & { displayName?: string }
+// const typedMemo = React.memo as TypedMemo
+
+// type AnimatedFlashListDefinition = <ItemT>(
+//   props: FlashListProps<ItemT> & { ref?: React.Ref<FlashListRef<ItemT>> }
+// ) => React.ReactElement | null
+// const AnimatedFlashListComponent = Animated.createAnimatedComponent(
+//   FlashList
+// ) as AnimatedFlashListDefinition
+// export const AnimatedFlashList = typedMemo(
+//   React.forwardRef(function AnimatedFlashList<ItemT>(
+//     props: FlashListProps<ItemT>,
+//     ref: React.Ref<FlashListRef<ItemT>>
+//   ) {
+//     return <AnimatedFlashListComponent ref={ref} {...props} />
+//   })
+// ) as AnimatedFlashListDefinition
 
 const LIMIT = 10
 function FeedContent(props: PagerScrollViewProps) {
@@ -647,7 +683,12 @@ function FeedContent(props: PagerScrollViewProps) {
   }, [feedInfiniteQuery.data])
 
   const scrollContext = useScrollContext()
-  const scrollHandler = useAnimatedScrollHandler(scrollContext)
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event, ctx) => {
+      'worklet'
+      scrollContext?.onScroll?.(event, ctx)
+    },
+  })
 
   const queryClient = useQueryClient()
   const onRefresh = React.useCallback(async () => {
@@ -738,7 +779,12 @@ function FeedTopicContent(props: FeedTopicContentProps) {
   }, [feedInfiniteQuery.data])
 
   const scrollContext = useScrollContext()
-  const scrollHandler = useAnimatedScrollHandler(scrollContext)
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event, ctx) => {
+      'worklet'
+      scrollContext?.onScroll?.(event, ctx)
+    },
+  })
 
   const queryClient = useQueryClient()
   const onRefresh = React.useCallback(async () => {

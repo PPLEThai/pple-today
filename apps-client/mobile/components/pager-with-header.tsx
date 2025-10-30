@@ -260,16 +260,22 @@ export function PagerHeaderOnly({ children }: { children: React.ReactNode }) {
   return (
     <View
       ref={headerRef}
-      onLayout={() => {
-        headerRef.current?.measure((_x: number, _y: number, _width: number, height: number) => {
-          // console.log('Header only height:', height)
+      onLayout={(e) => {
+        const height = e.nativeEvent.layout.height
+        if (height > 0) {
+          // The rounding is necessary to prevent jumps on iOS
+          setHeaderOnlyHeight(Math.round(height * 2) / 2)
+          setHeaderReady(true)
+        }
+        // headerRef.current?.measure((_x: number, _y: number, _width: number, height: number) => {
+        //   console.log('Header only height:', height)
 
-          if (height > 0) {
-            // The rounding is necessary to prevent jumps on iOS
-            setHeaderOnlyHeight(Math.round(height * 2) / 2)
-            setHeaderReady(true)
-          }
-        })
+        //   if (height > 0) {
+        //     // The rounding is necessary to prevent jumps on iOS
+        //     setHeaderOnlyHeight(Math.round(height * 2) / 2)
+        //     setHeaderReady(true)
+        //   }
+        // })
       }}
     >
       {children}
@@ -579,7 +585,7 @@ interface PagerContentProps {
 export interface PagerScrollViewProps {
   isFocused: boolean
   headerHeight: number
-  scrollElRef: AnimatedRef<FlatList>
+  scrollElRef: AnimatedRef<any>
   setScrollViewTag: (tag: number | null) => void
 }
 export function PagerContent({ children, index }: PagerContentProps) {
