@@ -73,13 +73,24 @@ export {
 const messaging = getMessaging()
 
 async function requestUserPermission() {
-  const authStatus = await requestPermission(messaging)
-  const enabled =
-    authStatus === AuthorizationStatus.AUTHORIZED || authStatus === AuthorizationStatus.PROVISIONAL
+  if (Platform.OS === 'android' && Platform.Version >= 33) {
+    const requestResult = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+    )
 
-  if (enabled) {
-    console.log('Authorization status:', authStatus)
+    return requestResult === PermissionsAndroid.RESULTS.GRANTED
   }
+
+  if (Platform.OS === 'ios') {
+    const authStatus = await requestPermission(messaging)
+    const enabled =
+      authStatus === AuthorizationStatus.AUTHORIZED ||
+      authStatus === AuthorizationStatus.PROVISIONAL
+
+    return enabled
+  }
+
+  throw new Error(`Unsupported platform: ${Platform.OS}`)
 }
 
 const queryClient = new QueryClient()
@@ -232,11 +243,8 @@ function NotificationTokenConsentPopup() {
       try {
         if (!user.data) return
 
-        if (Platform.OS === 'android' && Platform.Version >= 33) {
-          PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)
-        }
-
-        await requestUserPermission()
+        const requestPermissionResult = await requestUserPermission()
+        if (!requestPermissionResult) return
 
         const token = await getToken(messaging)
 
