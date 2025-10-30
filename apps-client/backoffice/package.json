@@ -30,6 +30,7 @@
     "react-dom": "19.1.0",
     "react-hook-form": "^7.62.0",
     "react-router": "^7.5.3",
+    "remeda": "^2.24.0",
     "zod": "^4.0.5"
   },
   "devDependencies": {

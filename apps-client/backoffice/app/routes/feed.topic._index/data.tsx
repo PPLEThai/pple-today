@@ -8,6 +8,8 @@ import { Button } from '@pple-today/web-ui/button'
 import { DataTable } from '@pple-today/web-ui/data-table'
 import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
 import { createColumnHelper } from '@tanstack/react-table'
+import { DtFilter } from 'components/datatable/DtFilter'
+import { DtMovement } from 'components/datatable/DtMovement'
 import { TopicCreate } from 'components/feed/TopicCreate'
 import { TableCopyId } from 'components/TableCopyId'
 import { EyeOff, Megaphone, Pencil, Plus } from 'lucide-react'
@@ -180,36 +182,47 @@ export const Data = () => {
   )
 
   return (
-    <DataTable
-      columns={columns}
-      data={query.data?.data ?? []}
-      count={query.data?.meta.count ?? 0}
-      isQuerying={query.isLoading}
-      isMutating={mutation.isPending}
-      queryLimit={queryLimit}
-      setQueryLimit={setQueryLimit}
-      queryPage={queryPage}
-      setQueryPage={setQueryPage}
-      filter={[
-        {
-          type: 'text',
-          key: 'name',
-          label: 'ค้นหาหัวข้อ',
-          state: querySearch,
-          setState: setQuerySearch,
-        },
-      ]}
-      filterExtension={
-        <TopicCreate
-          trigger={
-            <Button>
-              <Plus />
-              สร้างหัวข้อ
-            </Button>
-          }
-          onSuccess={invalidateQuery}
-        />
-      }
-    />
+    <>
+      <DtFilter
+        filter={[
+          {
+            type: 'text',
+            key: 'name',
+            label: 'ค้นหาหัวข้อ',
+            state: querySearch,
+            setState: setQuerySearch,
+          },
+        ]}
+        filterExtension={
+          <TopicCreate
+            trigger={
+              <Button>
+                <Plus />
+                สร้างหัวข้อ
+              </Button>
+            }
+            onSuccess={invalidateQuery}
+          />
+        }
+        onChange={() => setQueryPage(1)}
+      />
+      <DataTable
+        columns={columns}
+        data={query.data?.data ?? []}
+        isQuerying={query.isLoading}
+        footerExtension={
+          <DtMovement
+            length={query.data?.data?.length ?? 0}
+            count={query.data?.meta.count ?? 0}
+            isQuerying={query.isLoading}
+            isMutating={mutation.isPending}
+            queryLimit={queryLimit}
+            setQueryLimit={setQueryLimit}
+            queryPage={queryPage}
+            setQueryPage={setQueryPage}
+          />
+        }
+      />
+    </>
   )
 }

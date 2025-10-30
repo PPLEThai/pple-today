@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "public"."Banner" ALTER COLUMN "order" DROP DEFAULT,
+ALTER COLUMN "order" SET DATA TYPE TEXT;

@@ -9,9 +9,6 @@
 ALTER TABLE "public"."Banner" ADD COLUMN     "miniAppId" TEXT,
 ALTER COLUMN "destination" DROP NOT NULL;
 
--- AlterTable
-ALTER TABLE "public"."Topic" ALTER COLUMN "bannerImagePath" SET NOT NULL;
-
 -- CreateTable
 CREATE TABLE "public"."MiniApp" (
     "id" TEXT NOT NULL,
