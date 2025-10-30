@@ -21,7 +21,7 @@ import { Icon } from '@pple-today/ui/icon'
 import { Text } from '@pple-today/ui/text'
 import { toast } from '@pple-today/ui/toast'
 import { H1, H2 } from '@pple-today/ui/typography'
-import { useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
 import { PermissionStatus, useTrackingPermissions } from 'expo-tracking-transparency'
 import * as WebBrowser from 'expo-web-browser'
@@ -344,19 +344,19 @@ const FacebookPageSection = () => {
           </Badge>
         </View>
       ) : (
-        <LinkFacebookPageDialog />
+        <LinkFacebookPage />
       )}
     </View>
   )
 }
 
-function LinkFacebookPageDialog() {
+function LinkFacebookPage() {
   const [permissionStatus, requestPermission] = useTrackingPermissions()
   const [permissionDialogOpen, setPermissionDialogOpen] = React.useState(false)
   const router = useRouter()
 
-  async function loginWithFacebook() {
-    try {
+  const logitWithFacebookMutation = useMutation({
+    mutationFn: async () => {
       const loginResult = await LoginManager.logInWithPermissions([
         'pages_show_list',
         'pages_read_engagement',
@@ -366,21 +366,24 @@ function LinkFacebookPageDialog() {
       if (loginResult.isCancelled) {
         console.log('User cancelled login')
         // toast({ text1: 'Facebook login is cancelled' })
-        return
+        throw new Error('User cancelled login')
       }
       const accessTokenResult = await AccessToken.getCurrentAccessToken()
       if (!accessTokenResult || !accessTokenResult.accessToken) {
-        console.error('Failed to get facebook access token')
-        return
+        throw new Error('Failed to get facebook access token')
       }
+      return accessTokenResult
+    },
+    onSuccess: (accessTokenResult) => {
       router.push(`/profile/facebook?facebookAccessToken=${accessTokenResult.accessToken}`)
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error('Login Error: ', error)
-    }
-  }
+    },
+  })
   function addFacebookPage() {
     if (Platform.OS !== 'ios') {
-      loginWithFacebook()
+      logitWithFacebookMutation.mutate()
       return
     }
     if (permissionStatus === null) {
@@ -390,12 +393,16 @@ function LinkFacebookPageDialog() {
       setPermissionDialogOpen(true)
       return
     }
-    loginWithFacebook()
+    logitWithFacebookMutation.mutate()
   }
   /* This dialog should only open on iOS when permission is not granted */
   return (
     <Dialog open={permissionDialogOpen} onOpenChange={setPermissionDialogOpen}>
-      <Button variant="secondary" disabled={permissionStatus === null} onPress={addFacebookPage}>
+      <Button
+        variant="secondary"
+        disabled={permissionStatus === null || logitWithFacebookMutation.isPending}
+        onPress={addFacebookPage}
+      >
         <Icon icon={PlusIcon} />
         <Text>เพิ่มเพจที่ดูแล</Text>
       </Button>
@@ -430,14 +437,14 @@ function LinkFacebookPageDialog() {
                   setPermissionDialogOpen(false)
                   // add a delay to wait for dialog to close
                   // otherwise loginWithFacebook will be cancelled
-                  setTimeout(() => loginWithFacebook(), 1000)
+                  setTimeout(() => logitWithFacebookMutation.mutate(), 1000)
                   return
                 }
                 Linking.openSettings()
                 return
               }
               setPermissionDialogOpen(false)
-              setTimeout(() => loginWithFacebook(), 1000)
+              setTimeout(() => logitWithFacebookMutation.mutate(), 1000)
             }}
           >
             <Text>ตกลง</Text>
