@@ -57,6 +57,7 @@ export class PollsService {
               })) || [],
             title: item.poll!.title,
             endAt: item.poll!.endAt,
+            type: item.poll!.type,
             totalVotes: item.poll!.options.reduce((acc, option) => acc + option.votes, 0),
           },
         }

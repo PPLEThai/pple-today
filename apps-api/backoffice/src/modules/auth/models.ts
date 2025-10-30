@@ -29,3 +29,36 @@ export const GetAuthMeResponse = t.Object({
 
 export type GetAuthMeHeaders = Static<typeof GetAuthMeHeaders>
 export type GetAuthMeResponse = Static<typeof GetAuthMeResponse>
+
+export const CreateMiniAppTokenParams = t.Object({
+  slug: t.String({ description: 'The slug of the mini app' }),
+})
+export type CreateMiniAppTokenParams = Static<typeof CreateMiniAppTokenParams>
+
+export const CreateMiniAppTokenQuery = t.Object({
+  path: t.Optional(t.String({ description: 'The path within the mini app to navigate to' })),
+})
+export type CreateMiniAppTokenQuery = Static<typeof CreateMiniAppTokenQuery>
+
+export const CreateMiniAppTokenResponse = t.Object({
+  url: t.String({ description: 'The URL to access the mini app with the generated token' }),
+})
+export type CreateMiniAppTokenResponse = Static<typeof CreateMiniAppTokenResponse>
+
+export const GenerateMiniAppTokenResponse = t.Object({
+  access_token: t.String({ description: 'An access_token as JWT or opaque token' }),
+  expires_in: t.Number({
+    description: 'Number of second until the expiration of the access_token',
+  }),
+  id_token: t.String({ description: 'An id_token of the authorized user' }),
+  token_type: t.Literal('Bearer', {
+    description: 'Type of the access_token. Value is always Bearer',
+  }),
+})
+export type GenerateMiniAppTokenResponse = Static<typeof GenerateMiniAppTokenResponse>
+
+export const GenerateMiniAppTokenErrorResponse = t.Object({
+  error: t.String({ description: 'Error code' }),
+})
+
+export type GenerateMiniAppTokenErrorResponse = Static<typeof GenerateMiniAppTokenErrorResponse>

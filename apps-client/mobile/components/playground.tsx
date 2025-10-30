@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Platform, Pressable, ScrollView, Text as RNText, TextProps, View } from 'react-native'
 import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import ImageView from 'react-native-image-viewing'
+import PagerView from 'react-native-pager-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
@@ -52,7 +53,7 @@ import LottieView from 'lottie-react-native'
 import { InfoIcon, PlusIcon, SearchIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
-import { ElectionWithCurrentStatus } from '@api/backoffice/app'
+import { ElectionWithCurrentStatus, FeedItemPoll } from '@api/backoffice/app'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useFacebookPagesQuery } from '@app/libs/facebook'
 import { EXAMPLE_ACTIVITY } from '@app/libs/pple-activity'
@@ -62,6 +63,7 @@ import { AuthPlayground } from './auth-playground'
 import { AvatarPPLEFallback } from './avatar-pple-fallback'
 import { ElectionCard, ElectionDetailCard, ElectionStatusBadge } from './election/election-card'
 import { MoreOrLess } from './more-or-less'
+import { PollContent } from './poll/poll-card'
 
 const AUTH_ACCESS_TOKEN_STORAGE_KEY = 'authAccessToken'
 
@@ -295,6 +297,7 @@ export function Playground() {
           </Dialog>
         </View>
         <AvatarExample />
+        <PagerViewExample />
         <BottomSheetExample />
         <ToggleGroupExample />
         <ProgressExample />
@@ -313,8 +316,26 @@ export function Playground() {
         <FacebookSDKExample />
         <LocationExample />
         <FrontCameraExample />
+        <MiniAppExample />
+        <PollExample />
       </View>
     </ScrollView>
+  )
+}
+
+function PagerViewExample() {
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Pager View</H2>
+      <PagerView style={{ flex: 1, height: 300, width: '100%' }} initialPage={0}>
+        <View key="1" className="flex-1 items-center justify-center bg-blue-50">
+          <Text>First page</Text>
+        </View>
+        <View key="2" className="flex-1 items-center justify-center bg-red-50">
+          <Text>Second page</Text>
+        </View>
+      </PagerView>
+    </View>
   )
 }
 
@@ -1096,11 +1117,138 @@ function FrontCameraExample() {
   )
 }
 
+function MiniAppExample() {
+  const router = useRouter()
+  const miniApps = reactQueryClient.useQuery('/mini-app', {})
+
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Mini App</H2>
+      {miniApps.data?.map((miniApp) => (
+        <Button
+          variant="outline"
+          key={miniApp.slug}
+          className="flex flex-row items-center gap-1"
+          onPress={() => router.push(`/mini-app/${miniApp.slug}`)}
+        >
+          {miniApp.iconUrl && (
+            <Image source={{ uri: miniApp.iconUrl }} className="w-4 h-4 color-primary" />
+          )}
+          <Text>{miniApp.name}</Text>
+        </Button>
+      ))}
+    </View>
+  )
+}
+
 function ActivityCardExample() {
   return (
     <View className="flex flex-col gap-2 ">
       <H2 className="font-inter-bold">Activity Card</H2>
       <ActivityCard activity={EXAMPLE_ACTIVITY} />
+    </View>
+  )
+}
+
+function PollExample() {
+  const feedItemSingle = {
+    id: 'poll-none',
+    author: {
+      id: 'pple-official-user',
+      name: "พรรคประชาชน - People's Party",
+      province: '',
+    },
+    publishedAt: dayjs(new Date()).subtract(2, 'hour').toDate(),
+    userReaction: null,
+    commentCount: 0,
+    reactions: [],
+    type: 'POLL',
+    poll: {
+      options: [
+        {
+          id: 'opt-1',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจตกต่ำ',
+          votes: 1,
+          isSelected: false,
+        },
+        {
+          id: 'opt-2',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจโตไว',
+          votes: 2,
+          isSelected: false,
+        },
+        {
+          id: 'opt-3',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจซบเซา',
+          votes: 3,
+          isSelected: false,
+        },
+        {
+          id: 'opt-4',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจดีขึ้น',
+          votes: 4,
+          isSelected: false,
+        },
+      ],
+      title: 'คุณคิดว่าปัญหาที่สำคัญที่สุดของประเทศไทยคืออะไร?',
+      endAt: dayjs(new Date()).add(2, 'hour').toDate(),
+      type: 'SINGLE_CHOICE',
+      totalVotes: 10,
+    },
+  } as FeedItemPoll
+
+  const feedItemMultiple = {
+    id: 'poll-none',
+    author: {
+      id: 'pple-official-user',
+      name: "พรรคประชาชน - People's Party",
+      province: '',
+    },
+    publishedAt: dayjs(new Date()).subtract(2, 'hour').toDate(),
+    userReaction: null,
+    commentCount: 0,
+    reactions: [],
+    type: 'POLL',
+    poll: {
+      options: [
+        {
+          id: 'opt-1',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจตกต่ำ',
+          votes: 6,
+          isSelected: false,
+        },
+        {
+          id: 'opt-2',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจโตไวที่รวดเร็วอย่างไม่เคยมีมาก่อนเพราะการสนับสนุนจากรัฐบาล',
+          votes: 11,
+          isSelected: false,
+        },
+        {
+          id: 'opt-3',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจซบเซา',
+          votes: 5,
+          isSelected: false,
+        },
+        {
+          id: 'opt-4',
+          title: 'ปัญหาบ้านเมืองเศรษฐกิจดีขึ้น',
+          votes: 8,
+          isSelected: false,
+        },
+      ],
+      title: 'คุณคิดว่าปัญหาที่สำคัญที่สุดของประเทศไทยคืออะไร?',
+      endAt: dayjs(new Date()).add(30, 'seconds').toDate(),
+      type: 'MULTIPLE_CHOICE',
+      totalVotes: 30,
+    },
+  } as FeedItemPoll
+
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Poll Card</H2>
+      <PollContent feedItem={feedItemSingle} card />
+      <H2 className="font-inter-bold">Poll Detail</H2>
+      <PollContent feedItem={feedItemMultiple} />
     </View>
   )
 }

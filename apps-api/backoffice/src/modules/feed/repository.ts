@@ -168,6 +168,7 @@ export class FeedRepository {
           type: FeedItemType.POLL,
           poll: {
             title: rawFeedItem.poll.title,
+            type: rawFeedItem.poll.type,
             options: rawFeedItem.poll.options.map((option) => ({
               id: option.id,
               title: option.title,
