@@ -97,6 +97,7 @@ export const AdminPostController = new Elysia({
         200: UpdatePostResponse,
         ...createErrorSchema(
           InternalErrorCode.POST_NOT_FOUND,
+          InternalErrorCode.POST_ALREADY_DELETED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -123,6 +124,7 @@ export const AdminPostController = new Elysia({
         200: DeletePostResponse,
         ...createErrorSchema(
           InternalErrorCode.POST_NOT_FOUND,
+          InternalErrorCode.POST_ALREADY_DELETED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

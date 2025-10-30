@@ -17,10 +17,10 @@ export class MiniAppRepository {
     )
   }
 
-  async getMiniAppById(id: string) {
+  async getMiniAppBySlug(slug: string) {
     return await fromRepositoryPromise(
       this.prismaService.miniApp.findUniqueOrThrow({
-        where: { id },
+        where: { slug },
       })
     )
   }

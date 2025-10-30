@@ -263,6 +263,12 @@ const ELECTION_ERROR_SCHEMA = {
   ELECTION_KEY_NOT_READY: {
     status: 409,
   },
+  ELECTION_ONLINE_RESULT_NOT_READY: {
+    status: 409,
+  },
+  ELECTION_ALREADY_ANNOUCE_RESULT: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 export const ELECTION_KEY_ERROR_SCHEMA = {
@@ -280,6 +286,9 @@ export const ELECTION_KEY_ERROR_SCHEMA = {
 const POST_ERROR_SCHEMA = {
   POST_NOT_FOUND: {
     status: 404,
+  },
+  POST_ALREADY_DELETED: {
+    status: 409,
   },
 } satisfies InternalErrorSchemas
 

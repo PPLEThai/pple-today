@@ -1,7 +1,6 @@
 import { createId } from '@paralleldrive/cuid2'
 import {
   ElectionCandidate as ElectionCandidateDTO,
-  ElectionInfo,
   ImageFileMimeType,
   InternalErrorCode,
 } from '@pple-today/api-common/dtos'
@@ -12,6 +11,8 @@ import {
   ElectionCandidate,
   ElectionKeysStatus,
   ElectionMode,
+  ElectionOnlineResultStatus,
+  ElectionResultType,
   ElectionType,
   EligibleVoterType,
 } from '@pple-today/database/prisma'
@@ -24,6 +25,7 @@ import { stringify } from 'safe-stable-stringify'
 import {
   AdminCreateElectionBody,
   AdminCreateElectionCandidateBody,
+  AdminElectionInfo,
   AdminListElectionQuery,
   AdminListElectionResponse,
   AdminUpdateElectionBody,
@@ -73,7 +75,9 @@ export class AdminElectionService {
     return ok()
   }
 
-  private convertToElectionInfo(election: Election): ElectionInfo {
+  private convertToElectionInfo(
+    election: Election & { _count: { voters: number } }
+  ): AdminElectionInfo {
     return {
       id: election.id,
       name: election.name,
@@ -82,6 +86,11 @@ export class AdminElectionService {
       locationMapUrl: election.locationMapUrl,
       province: election.province,
       district: election.district,
+      totalVoters: election._count.voters,
+      onlineResultStatus: election.onlineResultStatus,
+      keyStatus: election.keysStatus,
+      keysDestroyScheduledAt: election.keysDestroyScheduledAt,
+      keysDestroyScheduledDuration: election.keysDestroyScheduledDuration,
       type: election.type,
       mode: election.mode,
       isCancelled: election.isCancelled,
@@ -901,6 +910,143 @@ export class AdminElectionService {
     if (election.mode === ElectionMode.SECURE) {
       const unlinkResult = await this.adminElectionRepository.unlinkVoteRecordsToBallots(electionId)
       if (unlinkResult.isErr()) return mapRepositoryError(unlinkResult.error)
+    }
+
+    return ok()
+  }
+
+  async getElectionResult(electionId: string) {
+    const result = await this.adminElectionRepository.getElectionResult(electionId)
+    if (result.isErr()) {
+      return mapRepositoryError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id ${electionId}`,
+        },
+      })
+    }
+
+    const candidates = result.value.candidates.map((candidate) => {
+      const info = this.convertToCandidateDTO(candidate)
+      const online = R.pipe(
+        candidate.results,
+        R.filter((result) => result.type === ElectionResultType.ONLINE),
+        R.sumBy((result) => result.count)
+      )
+      const onsite = R.pipe(
+        candidate.results,
+        R.filter((result) => result.type === ElectionResultType.ONSITE),
+        R.sumBy((result) => result.count)
+      )
+      const total = online + onsite
+      const totalVoters = result.value._count.voters
+      const totalPercent = totalVoters === 0 ? 0 : Math.round((total / totalVoters) * 100)
+
+      return {
+        ...info,
+        result: {
+          total,
+          totalPercent,
+          online,
+          onsite,
+        },
+      }
+    })
+
+    return ok({
+      onlineResultStatus: result.value.onlineResultStatus,
+      candidates,
+    })
+  }
+
+  async annouceElectionResult(
+    electionId: string,
+    timeline: {
+      start: Date
+      end: Date
+    }
+  ) {
+    const now = new Date()
+    if (timeline.start < now || timeline.end < now) {
+      return err({
+        code: InternalErrorCode.BAD_REQUEST,
+        message: "Timeline can't be before current time",
+      })
+    }
+
+    if (timeline.start >= timeline.end) {
+      return err({
+        code: InternalErrorCode.BAD_REQUEST,
+        message: 'Start date need to be after end date',
+      })
+    }
+
+    const electionResult = await this.adminElectionRepository.getElectionById(electionId)
+    if (electionResult.isErr()) {
+      return mapRepositoryError(electionResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id ${electionId}`,
+        },
+      })
+    }
+
+    const election = electionResult.value
+
+    if (election.isCancelled) {
+      return err({
+        code: InternalErrorCode.ELECTION_IS_CANCELLED,
+        message: 'Election is cancelled',
+      })
+    }
+
+    if (election.startResult || election.endResult) {
+      return err({
+        code: InternalErrorCode.ELECTION_ALREADY_ANNOUCE_RESULT,
+        message: 'Election already annouce result',
+      })
+    }
+
+    if (now < election.closeVoting) {
+      return err({
+        code: InternalErrorCode.ELECTION_IN_VOTE_PERIOD,
+        message: 'Election is in vote period',
+      })
+    }
+
+    if (
+      (election.type === ElectionType.HYBRID || election.type === ElectionType.ONLINE) &&
+      election.onlineResultStatus !== ElectionOnlineResultStatus.COUNT_SUCCESS
+    ) {
+      return err({
+        code: InternalErrorCode.ELECTION_ONLINE_RESULT_NOT_READY,
+        message: 'Election online result is not ready',
+      })
+    }
+
+    const isDestroyKey = election.mode === ElectionMode.SECURE
+    let destroyKeyInfo: { at: Date; duration: number } | undefined = undefined
+
+    if (isDestroyKey) {
+      const destroyKeysResult = await this.ballotCryptoService.destroyElectionKeys(election.id)
+      if (destroyKeysResult.isErr()) return err(destroyKeysResult.error)
+      destroyKeyInfo = {
+        at: now,
+        duration: destroyKeysResult.value?.destroyScheduledDuration as number,
+      }
+    }
+
+    const annouceResult = await this.adminElectionRepository.annouceElectionResult(
+      electionId,
+      timeline,
+      destroyKeyInfo
+    )
+    if (annouceResult.isErr()) {
+      if (isDestroyKey) {
+        const restoreResult = await this.ballotCryptoService.restoreKeys(election.id)
+        if (restoreResult.isErr()) return err(restoreResult.error)
+      }
+      return mapRepositoryError(annouceResult.error)
     }
 
     return ok()

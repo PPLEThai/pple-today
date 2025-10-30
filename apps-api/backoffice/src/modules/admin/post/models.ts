@@ -16,7 +16,7 @@ export const GetPostsQuery = t.Object({
 export type GetPostsQuery = Static<typeof GetPostsQuery>
 
 export const GetPostsResponse = t.Object({
-  data: t.Array(Post),
+  items: t.Array(Post),
   meta: t.Object({ count: t.Number() }),
 })
 export type GetPostsResponse = Static<typeof GetPostsResponse>

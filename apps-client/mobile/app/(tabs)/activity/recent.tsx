@@ -105,7 +105,12 @@ function TodayActivityContent(props: PagerScrollViewProps) {
   const { headerHeight, scrollElRef } = props
 
   const scrollContext = useScrollContext()
-  const scrollHandler = useAnimatedScrollHandler(scrollContext)
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event, ctx) => {
+      'worklet'
+      scrollContext?.onScroll?.(event, ctx)
+    },
+  })
 
   const recentActivityInfiniteQuery = useInfiniteQuery({
     queryKey: [QUERY_KEY_SYMBOL, 'infinite', 'today-activity'],
@@ -191,7 +196,12 @@ function UpcomingActivityContent(props: PagerScrollViewProps) {
   const { headerHeight, scrollElRef } = props
 
   const scrollContext = useScrollContext()
-  const scrollHandler = useAnimatedScrollHandler(scrollContext)
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event, ctx) => {
+      'worklet'
+      scrollContext?.onScroll?.(event, ctx)
+    },
+  })
 
   const recentActivityInfiniteQuery = useInfiniteQuery({
     queryKey: [QUERY_KEY_SYMBOL, 'infinite', 'upcoming-activity'],

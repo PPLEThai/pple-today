@@ -24,7 +24,7 @@ import {
 
 import { reactQueryClient } from '~/libs/api-client'
 
-const columnHelper = createColumnHelper<GetPostsResponse['data'][number]>()
+const columnHelper = createColumnHelper<GetPostsResponse['items'][number]>()
 
 export const Data = () => {
   const confirmDialogRef = useRef<ConfirmDialogRef>(null)
@@ -97,10 +97,10 @@ export const Data = () => {
               (_data) => {
                 const data = structuredClone(_data)
                 if (!data) return
-                const idx = data.data.findIndex((d) => d.id === postId)
+                const idx = data.items.findIndex((d) => d.id === postId)
                 if (idx === -1) return
-                data.data[idx].status = status
-                if (status === 'PUBLISHED') data.data[idx].publishedAt = new Date()
+                data.items[idx].status = status
+                if (status === 'PUBLISHED') data.items[idx].publishedAt = new Date()
                 return data
               }
             )
@@ -263,11 +263,11 @@ export const Data = () => {
       />
       <DataTable
         columns={columns}
-        data={query.data?.data ?? []}
+        data={query.data?.items ?? []}
         isQuerying={query.isLoading}
         footerExtension={
           <DtMovement
-            length={query.data?.data?.length ?? 0}
+            length={query.data?.items?.length ?? 0}
             count={query.data?.meta.count ?? 0}
             isQuerying={query.isLoading}
             isMutating={patchMutation.isPending || deleteMutation.isPending}

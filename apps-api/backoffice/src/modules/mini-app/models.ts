@@ -1,5 +1,5 @@
 import { MiniApp } from '@pple-today/api-common/dtos'
 import { Static, t } from 'elysia'
 
-export const ListMiniAppsResponse = t.Array(t.Pick(MiniApp, ['id', 'name', 'iconUrl', 'order']))
+export const ListMiniAppsResponse = t.Array(t.Pick(MiniApp, ['slug', 'name', 'iconUrl', 'order']))
 export type ListMiniAppsResponse = Static<typeof ListMiniAppsResponse>
