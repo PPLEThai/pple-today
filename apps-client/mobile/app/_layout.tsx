@@ -48,7 +48,7 @@ import { openBrowserAsync } from 'expo-web-browser'
 import { StatusBarProvider } from '@app/context/status-bar'
 import { environment } from '@app/env'
 import { reactQueryClient } from '@app/libs/api-client'
-import { AuthLifeCycleHook, useAuthMe } from '@app/libs/auth'
+import { AuthLifeCycleHook, useSession } from '@app/libs/auth'
 
 dayjs.extend(buddhistEra)
 dayjs.extend(duration)
@@ -71,27 +71,6 @@ export {
 } from 'expo-router'
 
 const messaging = getMessaging()
-
-async function requestUserPermission() {
-  if (Platform.OS === 'android' && Platform.Version >= 33) {
-    const requestResult = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
-    )
-
-    return requestResult === PermissionsAndroid.RESULTS.GRANTED
-  }
-
-  if (Platform.OS === 'ios') {
-    const authStatus = await requestPermission(messaging)
-    const enabled =
-      authStatus === AuthorizationStatus.AUTHORIZED ||
-      authStatus === AuthorizationStatus.PROVISIONAL
-
-    return enabled
-  }
-
-  throw new Error(`Unsupported platform: ${Platform.OS}`)
-}
 
 const queryClient = new QueryClient()
 export default function RootLayout() {
@@ -196,13 +175,34 @@ function ColorSchemeProvider({ children }: { children: React.ReactNode }) {
 // const useIsomorphicLayoutEffect =
 //   Platform.OS === 'web' && typeof window === 'undefined' ? React.useEffect : React.useLayoutEffect
 
+async function requestUserPermission() {
+  if (Platform.OS === 'android' && Platform.Version >= 33) {
+    const requestResult = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+    )
+
+    return requestResult === PermissionsAndroid.RESULTS.GRANTED
+  }
+
+  if (Platform.OS === 'ios') {
+    const authStatus = await requestPermission(messaging)
+    const enabled =
+      authStatus === AuthorizationStatus.AUTHORIZED ||
+      authStatus === AuthorizationStatus.PROVISIONAL
+
+    return enabled
+  }
+
+  throw new Error(`Unsupported platform: ${Platform.OS}`)
+}
+
 function NotificationTokenConsentPopup() {
   const registerNotificationTokenMutation = reactQueryClient.useMutation(
     'post',
     '/notifications/register',
     {}
   )
-  const user = useAuthMe()
+  const session = useSession()
   const router = useRouter()
 
   const handleRemoteMessage = async (data: Record<string, string | object>) => {
@@ -217,7 +217,7 @@ function NotificationTokenConsentPopup() {
               await openBrowserAsync(link.value)
               break
             case 'IN_APP_NAVIGATION':
-              router.push(link.value)
+              router.navigate(link.value)
               break
             case 'EXTERNAL_BROWSER':
               Linking.openURL(link.value as string)
@@ -241,7 +241,7 @@ function NotificationTokenConsentPopup() {
 
     const registerNotification = async () => {
       try {
-        if (!user.data) return
+        if (!session) return
 
         const requestPermissionResult = await requestUserPermission()
         if (!requestPermissionResult) return
@@ -269,7 +269,7 @@ function NotificationTokenConsentPopup() {
 
     return unsubscribeOpenedApp
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user.data])
+  }, [session])
 
   return null
 }
