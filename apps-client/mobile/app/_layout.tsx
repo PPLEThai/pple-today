@@ -2,7 +2,7 @@ import '../global.css'
 import 'dayjs/locale/th'
 
 import * as React from 'react'
-import { PermissionsAndroid, Platform } from 'react-native'
+import { Linking, PermissionsAndroid, Platform } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { DevToolsBubble } from 'react-native-react-query-devtools'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
@@ -202,15 +202,14 @@ function NotificationTokenConsentPopup() {
         const link = JSON.parse(linkData as string)
         if (link.type && link.value) {
           switch (link.type) {
-            // TODO: Handle MINI_APP case
             case 'MINI_APP':
-              router.push(`/mini-app/${link.value as string}` as any)
+              await openBrowserAsync(link.value)
               break
             case 'IN_APP_NAVIGATION':
               router.push(link.value)
               break
             case 'EXTERNAL_BROWSER':
-              await openBrowserAsync(link.value)
+              Linking.openURL(link.value as string)
               break
           }
         }
