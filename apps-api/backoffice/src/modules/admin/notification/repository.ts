@@ -39,14 +39,16 @@ export class AdminNotificationRepository {
   async createApiKey(data: { name: string }) {
     const apiKey = this.generateApiKey()
 
-    return await fromRepositoryPromise(
-      this.prismaService.notificationApiKey.create({
+    return await fromRepositoryPromise(async () => {
+      const newApiKeyEntry = await this.prismaService.notificationApiKey.create({
         data: {
           name: data.name,
-          apiKey,
+          apiKey: crypto.hash('sha256', apiKey),
         },
       })
-    )
+
+      return { ...newApiKeyEntry, apiKey }
+    })
   }
 
   async updateApiKey(id: string, data: { name?: string }) {
@@ -70,13 +72,16 @@ export class AdminNotificationRepository {
 
   async rotateApiKey(id: string) {
     const newApiKey = this.generateApiKey()
-
-    return await fromRepositoryPromise(
-      this.prismaService.notificationApiKey.update({
+    return await fromRepositoryPromise(async () => {
+      await this.prismaService.notificationApiKey.update({
         where: { id },
-        data: { apiKey: newApiKey },
+        data: { apiKey: crypto.hash('sha256', newApiKey) },
       })
-    )
+
+      return {
+        apiKey: newApiKey,
+      }
+    })
   }
 }
 
