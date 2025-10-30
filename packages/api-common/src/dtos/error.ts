@@ -281,6 +281,9 @@ const MINI_APP_ERROR_SCHEMA = {
 } satisfies InternalErrorSchemas
 
 export const NOTIFICATION_KEY_ERROR_SCHEMA = {
+  NOTIFICATION_API_KEY_NOT_FOUND: {
+    status: 404,
+  },
   NOTIFICATION_SENT_FAILED: {
     status: 500,
   },
