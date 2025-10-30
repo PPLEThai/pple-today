@@ -4,6 +4,7 @@ import { useCallback, useMemo, useState } from 'react'
 import { NavLink } from 'react-router'
 
 import { Badge } from '@pple-today/web-ui/badge'
+import { Button } from '@pple-today/web-ui/button'
 import { DataTable } from '@pple-today/web-ui/data-table'
 import { Typography } from '@pple-today/web-ui/typography'
 import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
@@ -17,7 +18,6 @@ import { ElectionInfo, ElectionStatus } from '@api/backoffice/admin'
 import { reactQueryClient } from '~/libs/api-client'
 
 import { exhaustiveGuard } from '../../../../../packages/api-common/src/utils/common'
-import { Button } from '@pple-today/web-ui/button'
 
 const columnHelper = createColumnHelper<AdminListElectionResponse['data'][number]>()
 
@@ -67,7 +67,7 @@ export const Data = () => {
                 const data = structuredClone(_data)
                 if (!data) return
                 const idx = data.data.findIndex((d) => d.id === electionId)
-                if (!idx) return
+                if (idx === undefined) return
                 data.data[idx].isCancelled = true
                 return data
               }
