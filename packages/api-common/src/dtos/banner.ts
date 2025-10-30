@@ -12,6 +12,10 @@ export const BaseBanner = t.Object({
   headline: t.String({
     description: 'The headline for the banner item',
   }),
+  destination: t.String({
+    description:
+      'The destination URI for the banner item. When `navigation` is `"MINI_APP"`, it is mini app\'s `url`',
+  }),
   status: t.Enum(BannerStatusType, { description: 'Publish status of the banner item' }),
   order: t.String({ description: 'Display order (ascending)' }),
   createdAt: t.Date({ description: 'The creation date of the banner' }),
@@ -31,9 +35,6 @@ export const Banner = t.Union([
           description: 'How the app should navigate when the item is tapped',
         }),
       ]),
-      destination: t.String({
-        description: 'The destination URI for the banner item',
-      }),
     }),
   ]),
   t.Composite([
@@ -61,14 +62,16 @@ export const FlatBanner = t.Composite([
     navigation: t.Enum(BannerNavigationType, {
       description: 'How the app should navigate when the item is tapped',
     }),
-    destination: t.Optional(
-      t.String({
-        description: 'The destination URI for the banner item',
-      })
-    ),
     miniAppId: t.Optional(
       t.String({
         description: 'The ID of the mini app to open',
+      })
+    ),
+    miniApp: t.Optional(
+      t.Object({
+        name: t.String({
+          description: 'The name of the mini app to open',
+        }),
       })
     ),
   }),

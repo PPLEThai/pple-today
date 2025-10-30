@@ -42,6 +42,7 @@ export class AdminBannerService {
           ? {
               ...bannerBody,
               navigation,
+              destination: miniApp!.clientUrl,
               miniAppId: miniAppId!,
               miniApp: {
                 name: miniApp!.name,
@@ -85,6 +86,7 @@ export class AdminBannerService {
         ? {
             ...bannerBody,
             navigation: bannerBody.navigation,
+            destination: bannerBody.miniApp!.clientUrl,
             miniAppId: bannerBody.miniAppId!,
             miniApp: {
               name: bannerBody.miniApp!.name,
