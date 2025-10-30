@@ -9,6 +9,7 @@ import {
   BreadcrumbSeparator,
 } from '@pple-today/web-ui/breadcrumb'
 import { Typography } from '@pple-today/web-ui/typography'
+import { Data } from './data'
 
 export function meta() {
   return [{ title: 'Internal Election' }]
@@ -32,6 +33,7 @@ export default function InternalElectionPage() {
         </BreadcrumbList>
       </Breadcrumb>
       <Typography variant="h1">Internal Election Management</Typography>
+      <Data />
     </div>
   )
 }
