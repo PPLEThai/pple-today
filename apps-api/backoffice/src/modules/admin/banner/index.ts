@@ -83,16 +83,15 @@ export const AdminBannerController = new Elysia({
   .post(
     '/',
     async ({ body, adminBannerService, status }) => {
-      if (body.navigation === 'MINI_APP') {
-        if (!body.miniAppId)
-          return mapErrorCodeToResponse(
-            {
-              code: InternalErrorCode.BANNER_INVALID_INPUT,
-              message: 'miniAppId is required when navigation is MINI_APP',
-            },
-            status
-          )
-      } else if (!body.destination) {
+      if (body.navigation === 'MINI_APP' && !body.miniAppId)
+        return mapErrorCodeToResponse(
+          {
+            code: InternalErrorCode.BANNER_INVALID_INPUT,
+            message: 'miniAppId is required when navigation is MINI_APP',
+          },
+          status
+        )
+      if (body.navigation !== 'MINI_APP' && !body.destination)
         return mapErrorCodeToResponse(
           {
             code: InternalErrorCode.BANNER_INVALID_INPUT,
@@ -100,7 +99,6 @@ export const AdminBannerController = new Elysia({
           },
           status
         )
-      }
 
       const result = await adminBannerService.createBanner(body)
       if (result.isErr()) {
@@ -130,27 +128,22 @@ export const AdminBannerController = new Elysia({
   .patch(
     '/:id',
     async ({ params, body, adminBannerService, status }) => {
-      if (body.navigation) {
-        if (body.navigation === 'MINI_APP' && !body.miniAppId) {
-          return mapErrorCodeToResponse(
-            {
-              code: InternalErrorCode.BANNER_INVALID_INPUT,
-              message: 'miniAppId is required when navigation is MINI_APP',
-            },
-            status
-          )
-        }
-
-        if (!body.destination) {
-          return mapErrorCodeToResponse(
-            {
-              code: InternalErrorCode.BANNER_INVALID_INPUT,
-              message: 'destination is required',
-            },
-            status
-          )
-        }
-      }
+      if (body.navigation === 'MINI_APP' && !body.miniAppId)
+        return mapErrorCodeToResponse(
+          {
+            code: InternalErrorCode.BANNER_INVALID_INPUT,
+            message: 'miniAppId is required when navigation is MINI_APP',
+          },
+          status
+        )
+      if (body.navigation && body.navigation !== 'MINI_APP' && !body.destination)
+        return mapErrorCodeToResponse(
+          {
+            code: InternalErrorCode.BANNER_INVALID_INPUT,
+            message: 'destination is required',
+          },
+          status
+        )
 
       const result = await adminBannerService.updateBannerById(params.id, body)
       if (result.isErr()) {
