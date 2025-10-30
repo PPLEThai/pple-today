@@ -9,6 +9,7 @@ import { FacebookController } from './facebook'
 import { FeedController } from './feed'
 import { HashtagController } from './hashtag'
 import { MiniAppController } from './mini-app'
+import { ExternalNotificationController, NotificationController } from './notification'
 import { PollsController } from './polls'
 import { ProfileController } from './profile'
 import { SearchController } from './search'
@@ -25,6 +26,8 @@ export const ApplicationController = new Elysia()
   .use(AddressController)
   .use(TopicController)
   .use(ElectionController)
+  .use(NotificationController)
+  .use(ExternalNotificationController)
   .use(HashtagController)
   .use(SearchController)
   .use(MiniAppController)

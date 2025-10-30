@@ -56,26 +56,41 @@ export class AuthRepository {
     }
 
     return await fromRepositoryPromise(
-      this.prismaService.user.create({
-        data: {
-          id: sub,
-          name,
-          roles: {
-            connectOrCreate: roles.map((role) => ({
-              where: { userId_role: { userId: sub, role } },
-              create: { role },
-            })),
-          },
-          numberOfFollowing: 1,
-          followers: {
-            create: {
-              following: {
-                connect: { id: officialUserId.value },
+      this.prismaService.$transaction(async (tx) => {
+        await tx.user.create({
+          data: {
+            id: sub,
+            name,
+            roles: {
+              connectOrCreate: roles.map((role) => ({
+                where: { userId_role: { userId: sub, role } },
+                create: { role },
+              })),
+            },
+            numberOfFollowing: 1,
+            followers: {
+              create: {
+                following: {
+                  connect: { id: officialUserId.value },
+                },
               },
             },
+            phoneNumber: phone_number,
           },
-          phoneNumber: phone_number,
-        },
+        })
+
+        const notificationId = await tx.notificationPhoneNumber.findMany({
+          where: { phoneNumber: phone_number },
+          select: { notificationId: true },
+        })
+
+        await tx.userNotification.createMany({
+          data: notificationId.map((n) => ({
+            userId: sub,
+            notificationId: n.notificationId,
+          })),
+          skipDuplicates: true,
+        })
       })
     )
   }
