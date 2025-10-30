@@ -75,7 +75,7 @@
     "react-native-image-viewing": "^0.2.2",
     "react-native-pager-view": "6.9.1",
     "react-native-react-query-devtools": "^1.5.0",
-    "react-native-reanimated": "4.2.0-nightly-20251027-7608ffff3",
+    "react-native-reanimated": "4.2.0-nightly-20251029-bca463bf9",
     "react-native-safe-area-context": "5.6.2",
     "react-native-screens": "~4.16.0",
     "react-native-svg": "^15.12.1",
