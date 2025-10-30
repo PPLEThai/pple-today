@@ -81,6 +81,17 @@ export class TopicRepository {
       })
     )
   }
+  async getTopicByIds(topicIds: string[]) {
+    return fromRepositoryPromise(
+      this.prismaService.topic.findMany({
+        where: {
+          id: { in: topicIds },
+          status: TopicStatus.PUBLISHED,
+        },
+        select: { id: true, name: true },
+      })
+    )
+  }
 
   async getTopics() {
     return fromRepositoryPromise(
@@ -131,6 +142,28 @@ export class TopicRepository {
             },
           },
         },
+      })
+    )
+  }
+
+  async userFollowManyTopics(userId: string, topicIds: string[]) {
+    return fromRepositoryPromise(
+      this.prismaService.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          numberOfFollowingTopics: topicIds.length,
+          followingTopics: {
+            deleteMany: {},
+            createMany: {
+              data: topicIds.map((topicId) => ({
+                topicId,
+              })),
+            },
+          },
+        },
+        select: { followingTopics: { select: { topicId: true } } },
       })
     )
   }

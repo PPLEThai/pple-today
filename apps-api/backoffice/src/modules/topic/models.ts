@@ -55,6 +55,18 @@ export const FollowTopicParams = t.Object({
 
 export type FollowTopicParams = typeof FollowTopicParams.static
 
+export const FollowManyTopicsBody = t.Object({
+  topicIds: t.Array(t.String()),
+})
+export type FollowManyTopicsBody = Static<typeof FollowManyTopicsBody>
+
+export const FollowManyTopicsResponse = t.Array(
+  t.Object({
+    id: t.String(),
+  })
+)
+export type FollowManyTopicsResponse = Static<typeof FollowManyTopicsResponse>
+
 export const FollowTopicResponse = t.Object({
   message: t.String(),
 })

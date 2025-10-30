@@ -86,6 +86,27 @@ export class TopicService {
     return ok(this.mapTopicsToTopicsResponse(topics))
   }
 
+  async followManyTopics(topicIds: string[], userId: string) {
+    const topics = await this.topicRepository.getTopicByIds(topicIds)
+    if (topics.isErr()) {
+      return mapRepositoryError(topics.error)
+    }
+    if (topics.value.length !== topicIds.length) {
+      return err({
+        code: InternalErrorCode.TOPIC_NOT_FOUND,
+        message: `Topic not found`,
+      })
+    }
+
+    const user = await this.topicRepository.userFollowManyTopics(userId, topicIds)
+
+    if (user.isErr()) {
+      return mapRepositoryError(user.error)
+    }
+
+    return ok(user.value.followingTopics.map((topic) => ({ id: topic.topicId })))
+  }
+
   async followTopic(topicId: string, userId: string) {
     const topic = await this.topicRepository.getTopicById(topicId)
 

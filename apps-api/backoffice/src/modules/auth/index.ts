@@ -2,7 +2,13 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
-import { GetAuthMeResponse, RegisterUserResponse } from './models'
+import {
+  CreateMiniAppTokenParams,
+  CreateMiniAppTokenQuery,
+  CreateMiniAppTokenResponse,
+  GetAuthMeResponse,
+  RegisterUserResponse,
+} from './models'
 import { AuthServicePlugin } from './services'
 
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
@@ -63,6 +69,38 @@ export const AuthController = new Elysia({
       detail: {
         summary: 'Get authenticated user',
         description: 'Fetch the currently authenticated user details',
+      },
+    }
+  )
+  .post(
+    '/mini-app/:slug',
+    async ({ params, user, authService, query, status }) => {
+      const result = await authService.generateMiniAppToken(
+        params.slug,
+        user.accessToken,
+        query.path
+      )
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      params: CreateMiniAppTokenParams,
+      query: CreateMiniAppTokenQuery,
+      response: {
+        200: CreateMiniAppTokenResponse,
+        ...createErrorSchema(
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Generate Mini App Token',
+        description: 'Generate a token for a specific mini app',
       },
     }
   )

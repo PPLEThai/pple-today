@@ -30,7 +30,6 @@
   },
   "pnpm": {
     "patchedDependencies": {
-      "expo-module-scripts": "patches/expo-module-scripts.patch",
       "react-native-pager-view": "patches/react-native-pager-view.patch"
     }
   }
