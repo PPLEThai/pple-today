@@ -18,7 +18,7 @@ import { partition } from 'remeda'
 
 import {
   DeleteBannerParams,
-  GetBannersResponse,
+  FlatBanner,
   ReorderBannerByIdByIdBody,
   ReorderBannerByIdParams,
   UpdateBannerBody,
@@ -29,7 +29,7 @@ import { reactQueryClient } from '~/libs/api-client'
 
 const PUBLISHED_BANNER_LIMIT = 5
 
-const columnHelper = createColumnHelper<GetBannersResponse[number]>()
+const columnHelper = createColumnHelper<FlatBanner>()
 
 export const Data = () => {
   const confirmDialogRef = useRef<ConfirmDialogRef>(null)
@@ -119,7 +119,7 @@ export const Data = () => {
         cell: (info) => {
           return (
             <img
-              className="size-10 shrink-0 rounded-lg"
+              className="size-10 shrink-0 rounded-lg object-cover"
               src={info.getValue()}
               alt=""
               width={40}

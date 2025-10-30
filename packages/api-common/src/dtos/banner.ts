@@ -13,9 +13,6 @@ export const BaseBanner = t.Object({
     description: 'The headline for the banner item',
   }),
   status: t.Enum(BannerStatusType, { description: 'Publish status of the banner item' }),
-  destination: t.String({
-    description: 'The destination URI for the banner item',
-  }),
   order: t.String({ description: 'Display order (ascending)' }),
   createdAt: t.Date({ description: 'The creation date of the banner' }),
   updatedAt: t.Date({ description: 'The update date of the banner' }),
@@ -34,6 +31,9 @@ export const Banner = t.Union([
           description: 'How the app should navigate when the item is tapped',
         }),
       ]),
+      destination: t.String({
+        description: 'The destination URI for the banner item',
+      }),
     }),
   ]),
   t.Composite([
@@ -49,3 +49,23 @@ export const Banner = t.Union([
   ]),
 ])
 export type Banner = Static<typeof Banner>
+
+export const FlatBanner = t.Composite([
+  BaseBanner,
+  t.Object({
+    navigation: t.Enum(BannerNavigationType, {
+      description: 'How the app should navigate when the item is tapped',
+    }),
+    destination: t.Optional(
+      t.String({
+        description: 'The destination URI for the banner item',
+      })
+    ),
+    miniAppId: t.Optional(
+      t.String({
+        description: 'The ID of the mini app to open',
+      })
+    ),
+  }),
+])
+export type FlatBanner = Static<typeof FlatBanner>

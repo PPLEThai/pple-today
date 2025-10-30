@@ -83,17 +83,16 @@ export const AdminBannerController = new Elysia({
   .post(
     '/',
     async ({ body, adminBannerService, status }) => {
-      if (body.navigation === 'MINI_APP' && !body.miniAppId) {
-        return mapErrorCodeToResponse(
-          {
-            code: InternalErrorCode.BANNER_INVALID_INPUT,
-            message: 'miniAppId is required when navigation is MINI_APP',
-          },
-          status
-        )
-      }
-
-      if (!body.destination) {
+      if (body.navigation === 'MINI_APP') {
+        if (!body.miniAppId)
+          return mapErrorCodeToResponse(
+            {
+              code: InternalErrorCode.BANNER_INVALID_INPUT,
+              message: 'miniAppId is required when navigation is MINI_APP',
+            },
+            status
+          )
+      } else if (!body.destination) {
         return mapErrorCodeToResponse(
           {
             code: InternalErrorCode.BANNER_INVALID_INPUT,

@@ -97,38 +97,23 @@ const seedAddresses = async (
 }
 
 const seedMiniApps = async () => {
-  await prisma.miniApp.upsert({
-    where: { id: 'mini-app-1' },
-    update: {
-      name: 'Sample Mini App',
-      clientId: 'sample-mini-app-client-id',
-      icon: 'data:image/svg+xml;base64,CiAgPHN2ZyB3aWR0aD0iODkiIGhlaWdodD0iNzciIHZpZXdCb3g9IjAgMCA4OSA3NyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBjb2xvcj0iI0ZGNjQxMyI+CjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMF84NTJfMTIpIj4KPHBhdGggZD0iTTIuMTMzNCAwLjVIMTYuMjkyN0w0MS42NzY3IDQ0LjQ3MDlMMzMuMjE1NCA1OS4xMjY3TDAuNzUgMi44OTM1NUwyLjEzMzQgMC41WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik00My4xMjE5IDc2LjI4NTRMMzYuMDQwNSA2NC4wMjMxTDYxLjQyNDUgMjAuMDU1N0g3OC4zNTA2TDQ1Ljg4MTggNzYuMjg1NEg0My4xMjE5WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik04OC4yNTI1IDIuODk5NjNMODEuMTcxMSAxNS4xNjE5SDMwLjM5OTdMMjEuOTM4NCAwLjUwNjA3M0g4Ni44NzI1TDg4LjI1MjUgMi44OTk2M1oiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgo8L2c+CjxkZWZzPgo8Y2xpcFBhdGggaWQ9ImNsaXAwXzg1Ml8xMiI+CjxyZWN0IHdpZHRoPSI4Ny41IiBoZWlnaHQ9Ijc1Ljc4NTYiIGZpbGw9IndoaXRlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjc1IDAuNSkiLz4KPC9jbGlwUGF0aD4KPC9kZWZzPgo8L3N2Zz4K',
-      clientUrl: 'https://example.com/mini-app',
-    },
-    create: {
-      id: 'mini-app-1',
-      name: 'Sample Mini App',
-      icon: 'data:image/svg+xml;base64,CiAgPHN2ZyB3aWR0aD0iODkiIGhlaWdodD0iNzciIHZpZXdCb3g9IjAgMCA4OSA3NyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBjb2xvcj0iI0ZGNjQxMyI+CjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMF84NTJfMTIpIj4KPHBhdGggZD0iTTIuMTMzNCAwLjVIMTYuMjkyN0w0MS42NzY3IDQ0LjQ3MDlMMzMuMjE1NCA1OS4xMjY3TDAuNzUgMi44OTM1NUwyLjEzMzQgMC41WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik00My4xMjE5IDc2LjI4NTRMMzYuMDQwNSA2NC4wMjMxTDYxLjQyNDUgMjAuMDU1N0g3OC4zNTA2TDQ1Ljg4MTggNzYuMjg1NEg0My4xMjE5WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik04OC4yNTI1IDIuODk5NjNMODEuMTcxMSAxNS4xNjE5SDMwLjM5OTdMMjEuOTM4NCAwLjUwNjA3M0g4Ni44NzI1TDg4LjI1MjUgMi44OTk2M1oiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgo8L2c+CjxkZWZzPgo8Y2xpcFBhdGggaWQ9ImNsaXAwXzg1Ml8xMiI+CjxyZWN0IHdpZHRoPSI4Ny41IiBoZWlnaHQ9Ijc1Ljc4NTYiIGZpbGw9IndoaXRlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjc1IDAuNSkiLz4KPC9jbGlwUGF0aD4KPC9kZWZzPgo8L3N2Zz4K',
-      clientId: 'sample-mini-app-client-id',
-      clientUrl: 'https://example.com/mini-app',
-    },
-  })
-  await prisma.miniApp.upsert({
-    where: { id: 'mini-app-2' },
-    update: {
-      name: 'Another Mini App',
-      clientId: 'another-mini-app-client-id',
-      icon: 'data:image/svg+xml;base64,CiAgPHN2ZyB3aWR0aD0iODkiIGhlaWdodD0iNzciIHZpZXdCb3g9IjAgMCA4OSA3NyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBjb2xvcj0iI0ZGNjQxMyI+CjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMF84NTJfMTIpIj4KPHBhdGggZD0iTTIuMTMzNCAwLjVIMTYuMjkyN0w0MS42NzY3IDQ0LjQ3MDlMMzMuMjE1NCA1OS4xMjY3TDAuNzUgMi44OTM1NUwyLjEzMzQgMC41WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik00My4xMjE5IDc2LjI4NTRMMzYuMDQwNSA2NC4wMjMxTDYxLjQyNDUgMjAuMDU1N0g3OC4zNTA2TDQ1Ljg4MTggNzYuMjg1NEg0My4xMjE5WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik04OC4yNTI1IDIuODk5NjNMODEuMTcxMSAxNS4xNjE5SDMwLjM5OTdMMjEuOTM4NCAwLjUwNjA3M0g4Ni44NzI1TDg4LjI1MjUgMi44OTk2M1oiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgo8L2c+CjxkZWZzPgo8Y2xpcFBhdGggaWQ9ImNsaXAwXzg1Ml8xMiI+CjxyZWN0IHdpZHRoPSI4Ny41IiBoZWlnaHQ9Ijc1Ljc4NTYiIGZpbGw9IndoaXRlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjc1IDAuNSkiLz4KPC9jbGlwUGF0aD4KPC9kZWZzPgo8L3N2Zz4K',
-      clientUrl: 'https://example.com/another-mini-app',
-    },
-    create: {
-      id: 'mini-app-2',
-      name: 'Another Mini App',
-      clientId: 'another-mini-app-client-id',
-      icon: 'data:image/svg+xml;base64,CiAgPHN2ZyB3aWR0aD0iODkiIGhlaWdodD0iNzciIHZpZXdCb3g9IjAgMCA4OSA3NyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBjb2xvcj0iI0ZGNjQxMyI+CjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMF84NTJfMTIpIj4KPHBhdGggZD0iTTIuMTMzNCAwLjVIMTYuMjkyN0w0MS42NzY3IDQ0LjQ3MDlMMzMuMjE1NCA1OS4xMjY3TDAuNzUgMi44OTM1NUwyLjEzMzQgMC41WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik00My4xMjE5IDc2LjI4NTRMMzYuMDQwNSA2NC4wMjMxTDYxLjQyNDUgMjAuMDU1N0g3OC4zNTA2TDQ1Ljg4MTggNzYuMjg1NEg0My4xMjE5WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik04OC4yNTI1IDIuODk5NjNMODEuMTcxMSAxNS4xNjE5SDMwLjM5OTdMMjEuOTM4NCAwLjUwNjA3M0g4Ni44NzI1TDg4LjI1MjUgMi44OTk2M1oiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgo8L2c+CjxkZWZzPgo8Y2xpcFBhdGggaWQ9ImNsaXAwXzg1Ml8xMiI+CjxyZWN0IHdpZHRoPSI4Ny41IiBoZWlnaHQ9Ijc1Ljc4NTYiIGZpbGw9IndoaXRlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjc1IDAuNSkiLz4KPC9jbGlwUGF0aD4KPC9kZWZzPgo8L3N2Zz4K',
-      clientUrl: 'https://example.com/another-mini-app',
-    },
-  })
+  for (let i = 1; i <= 10; i++)
+    await prisma.miniApp.upsert({
+      where: { id: `mini-app-${i}` },
+      update: {
+        name: 'Sample Mini App',
+        clientId: 'sample-mini-app-client-id',
+        icon: 'data:image/svg+xml;base64,CiAgPHN2ZyB3aWR0aD0iODkiIGhlaWdodD0iNzciIHZpZXdCb3g9IjAgMCA4OSA3NyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBjb2xvcj0iI0ZGNjQxMyI+CjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMF84NTJfMTIpIj4KPHBhdGggZD0iTTIuMTMzNCAwLjVIMTYuMjkyN0w0MS42NzY3IDQ0LjQ3MDlMMzMuMjE1NCA1OS4xMjY3TDAuNzUgMi44OTM1NUwyLjEzMzQgMC41WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik00My4xMjE5IDc2LjI4NTRMMzYuMDQwNSA2NC4wMjMxTDYxLjQyNDUgMjAuMDU1N0g3OC4zNTA2TDQ1Ljg4MTggNzYuMjg1NEg0My4xMjE5WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik04OC4yNTI1IDIuODk5NjNMODEuMTcxMSAxNS4xNjE5SDMwLjM5OTdMMjEuOTM4NCAwLjUwNjA3M0g4Ni44NzI1TDg4LjI1MjUgMi44OTk2M1oiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgo8L2c+CjxkZWZzPgo8Y2xpcFBhdGggaWQ9ImNsaXAwXzg1Ml8xMiI+CjxyZWN0IHdpZHRoPSI4Ny41IiBoZWlnaHQ9Ijc1Ljc4NTYiIGZpbGw9IndoaXRlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjc1IDAuNSkiLz4KPC9jbGlwUGF0aD4KPC9kZWZzPgo8L3N2Zz4K',
+        clientUrl: 'https://example.com/mini-app',
+      },
+      create: {
+        id: `mini-app-${i}`,
+        name: 'Sample Mini App',
+        icon: 'data:image/svg+xml;base64,CiAgPHN2ZyB3aWR0aD0iODkiIGhlaWdodD0iNzciIHZpZXdCb3g9IjAgMCA4OSA3NyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBjb2xvcj0iI0ZGNjQxMyI+CjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMF84NTJfMTIpIj4KPHBhdGggZD0iTTIuMTMzNCAwLjVIMTYuMjkyN0w0MS42NzY3IDQ0LjQ3MDlMMzMuMjE1NCA1OS4xMjY3TDAuNzUgMi44OTM1NUwyLjEzMzQgMC41WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik00My4xMjE5IDc2LjI4NTRMMzYuMDQwNSA2NC4wMjMxTDYxLjQyNDUgMjAuMDU1N0g3OC4zNTA2TDQ1Ljg4MTggNzYuMjg1NEg0My4xMjE5WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik04OC4yNTI1IDIuODk5NjNMODEuMTcxMSAxNS4xNjE5SDMwLjM5OTdMMjEuOTM4NCAwLjUwNjA3M0g4Ni44NzI1TDg4LjI1MjUgMi44OTk2M1oiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgo8L2c+CjxkZWZzPgo8Y2xpcFBhdGggaWQ9ImNsaXAwXzg1Ml8xMiI+CjxyZWN0IHdpZHRoPSI4Ny41IiBoZWlnaHQ9Ijc1Ljc4NTYiIGZpbGw9IndoaXRlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjc1IDAuNSkiLz4KPC9jbGlwUGF0aD4KPC9kZWZzPgo8L3N2Zz4K',
+        clientId: 'sample-mini-app-client-id',
+        clientUrl: 'https://example.com/mini-app',
+      },
+    })
   console.log('Seeded mini apps successfully.')
 }
 

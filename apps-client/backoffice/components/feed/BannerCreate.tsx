@@ -40,8 +40,23 @@ import { reactQueryClient } from '~/libs/api-client'
 
 const CreateBannerFormSchema = z.object({
   headline: z.string().min(1, 'กรุณากรอกชื่อรูป'),
-  destination: z.string().min(1, 'กรุณากรอก URL / ID ที่เชื่อมต่อ'),
-  navigation: z.enum(['IN_APP_NAVIGATION', 'EXTERNAL_BROWSER', 'MINI_APP']),
+  navigationGroup: z
+    .object({
+      navigation: z.enum(['IN_APP_NAVIGATION', 'EXTERNAL_BROWSER', 'MINI_APP']),
+      destination: z.string(),
+      miniAppId: z.string(),
+    })
+    .refine((data) => (data.navigation === 'MINI_APP' ? data.miniAppId.trim().length > 0 : true), {
+      error: 'กรุณากรอก Mini App ID ที่เชื่อมต่อ',
+      path: ['miniAppId'],
+    })
+    .refine(
+      (data) => (data.navigation !== 'MINI_APP' ? data.destination.trim().length > 0 : true),
+      {
+        error: 'กรุณากรอก URL / ID ที่เชื่อมต่อ',
+        path: ['destination'],
+      }
+    ),
   imageFile: z
     .instanceof(File, { error: 'กรุณาอัปโหลดไฟล์' })
     .refine((file) => file.size <= MAX_FILE_SIZE, `กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB`)
@@ -61,6 +76,7 @@ interface BannerCreateProps {
 export const BannerCreate = (props: BannerCreateProps) => {
   const [isOpen, setIsOpen] = useState(false)
 
+  const miniAppQuery = reactQueryClient.useQuery('/admin/mini-app', {})
   const getFileUploadUrl = reactQueryClient.useMutation('post', '/admin/file/upload-url')
   const createBannerMutation = reactQueryClient.useMutation('post', '/admin/banners')
 
@@ -68,8 +84,11 @@ export const BannerCreate = (props: BannerCreateProps) => {
     resolver: standardSchemaResolver(CreateBannerFormSchema),
     defaultValues: {
       headline: '',
-      destination: '',
-      navigation: 'EXTERNAL_BROWSER',
+      navigationGroup: {
+        navigation: 'EXTERNAL_BROWSER',
+        destination: '',
+        miniAppId: '',
+      },
       imageFile: undefined,
     },
   })
@@ -80,7 +99,17 @@ export const BannerCreate = (props: BannerCreateProps) => {
     form.setValue('imageFile', undefined as unknown as File, { shouldDirty: true })
   }
 
-  const onSubmit: SubmitHandler<CreateBannerFormSchema> = async ({ imageFile, ...data }) => {
+  const onSubmit: SubmitHandler<CreateBannerFormSchema> = async ({
+    imageFile,
+    navigationGroup,
+    ...data
+  }) => {
+    const { navigation, destination, miniAppId } = navigationGroup
+
+    if (navigation === 'MINI_APP') {
+      if (miniAppId.trim().length === 0) return false
+    } else if (destination.trim().length === 0) return false
+
     const result = await getFileUploadUrl.mutateAsync({
       body: {
         category: 'BANNER',
@@ -91,7 +120,12 @@ export const BannerCreate = (props: BannerCreateProps) => {
     await handleUploadFile(imageFile, result.uploadUrl, result.uploadFields)
 
     await createBannerMutation.mutateAsync({
-      body: { ...data, imageFilePath: result.filePath as FilePath },
+      body: {
+        ...data,
+        navigation,
+        ...(navigation === 'MINI_APP' ? { miniAppId } : { destination }),
+        imageFilePath: result.filePath as FilePath,
+      },
     })
 
     props.onSuccess()
@@ -131,22 +165,7 @@ export const BannerCreate = (props: BannerCreateProps) => {
             />
             <FormField
               control={form.control}
-              name="destination"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    URL / ID ที่เชื่อมต่อ <span className="text-system-danger-default">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="กรอก URL หรือ ID ที่ต้องการ" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="navigation"
+              name="navigationGroup.navigation"
               render={({ field: { onChange, ...field } }) => (
                 <FormItem>
                   <FormLabel>
@@ -161,6 +180,55 @@ export const BannerCreate = (props: BannerCreateProps) => {
                         <SelectItem value="EXTERNAL_BROWSER">External Browser</SelectItem>
                         <SelectItem value="IN_APP_NAVIGATION">In App Navigation</SelectItem>
                         <SelectItem value="MINI_APP">Mini App</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="navigationGroup.destination"
+              render={({ field }) => (
+                <FormItem
+                  className={
+                    form.watch('navigationGroup.navigation') !== 'MINI_APP' ? '' : 'hidden'
+                  }
+                >
+                  <FormLabel>
+                    URL / ID ที่เชื่อมต่อ <span className="text-system-danger-default">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="กรอก URL หรือ ID ที่ต้องการ" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="navigationGroup.miniAppId"
+              render={({ field: { onChange, ...field } }) => (
+                <FormItem
+                  className={
+                    form.watch('navigationGroup.navigation') === 'MINI_APP' ? '' : 'hidden'
+                  }
+                >
+                  <FormLabel>
+                    Mini App ID ที่เชื่อมต่อ <span className="text-system-danger-default">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Select {...field} onValueChange={onChange}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="เลือกประเภทประกาศ" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {miniAppQuery.data?.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </FormControl>

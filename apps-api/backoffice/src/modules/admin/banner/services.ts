@@ -37,12 +37,12 @@ export class AdminBannerService {
     if (imageBannerUrlResults.isErr()) return err(imageBannerUrlResults.error)
 
     const response: GetBannersResponse = result.value.map(
-      ({ imageFilePath, ...bannerBody }, index) =>
-        bannerBody.navigation === BannerNavigationType.MINI_APP
+      ({ imageFilePath, navigation, miniAppId, destination, ...bannerBody }, index) =>
+        navigation === BannerNavigationType.MINI_APP
           ? {
               ...bannerBody,
-              miniAppId: bannerBody.miniAppId!,
-              destination: bannerBody.miniApp!.clientUrl!,
+              navigation,
+              miniAppId: miniAppId!,
               image: {
                 url: imageBannerUrlResults.value[index],
                 filePath: imageFilePath as FilePath,
@@ -50,8 +50,8 @@ export class AdminBannerService {
             }
           : {
               ...bannerBody,
-              navigation: bannerBody.navigation,
-              destination: bannerBody.destination!,
+              navigation,
+              destination: destination!,
               image: {
                 url: imageBannerUrlResults.value[index],
                 filePath: imageFilePath as FilePath,
