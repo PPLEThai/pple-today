@@ -76,11 +76,12 @@ export class AdminElectionService {
   }
 
   private convertToAdminElectionInfo(
-    election: Election & { _count: { voters: number } },
+    election: Election & { _count: { voters: number; voteRecords: number } },
     now: Date
   ): AdminElectionInfo {
     return {
       ...convertToElectionInfo(election, now),
+      totalVotes: election._count.voteRecords,
       totalVoters: election._count.voters,
       onlineResultStatus: election.onlineResultStatus,
       keyStatus: election.keysStatus,

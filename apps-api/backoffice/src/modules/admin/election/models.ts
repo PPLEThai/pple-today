@@ -19,6 +19,7 @@ import { Static, t } from 'elysia'
 export const AdminElectionInfo = t.Intersect([
   ElectionInfo,
   t.Object({
+    totalVotes: t.Integer(),
     totalVoters: t.Integer(),
     onlineResultStatus: t.Enum(ElectionOnlineResultStatus),
     keyStatus: t.Enum(ElectionKeysStatus),
