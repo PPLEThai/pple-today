@@ -24,8 +24,8 @@ import useImageDimensions from '../../hooks/useImageDimensions'
 import usePanResponder from '../../hooks/usePanResponder'
 import { getImageStyles, getImageTransform } from '../../utils'
 
-const SWIPE_CLOSE_OFFSET = 75
-const SWIPE_CLOSE_VELOCITY = 1.75
+const SWIPE_CLOSE_OFFSET = 25
+const SWIPE_CLOSE_VELOCITY = 1
 const SCREEN = Dimensions.get('window')
 const SCREEN_WIDTH = SCREEN.width
 const SCREEN_HEIGHT = SCREEN.height
@@ -92,8 +92,10 @@ const ImageItem = ({
     const velocityY = nativeEvent?.velocity?.y ?? 0
     const offsetY = nativeEvent?.contentOffset?.y ?? 0
 
+    console.log(velocityY, offsetY)
     if (
-      (Math.abs(velocityY) > SWIPE_CLOSE_VELOCITY && offsetY > SWIPE_CLOSE_OFFSET) ||
+      Math.abs(velocityY) > SWIPE_CLOSE_VELOCITY ||
+      Math.abs(offsetY) > SWIPE_CLOSE_OFFSET ||
       offsetY > SCREEN_HEIGHT / 2
     ) {
       onRequestClose()
@@ -110,6 +112,8 @@ const ImageItem = ({
     <ScrollView
       ref={imageContainer}
       style={styles.listItem}
+      // contentOffset={{ x: 0, y: 100 }}
+      // contentInset={{ bottom: SCREEN_HEIGHT }}
       pagingEnabled
       nestedScrollEnabled
       showsHorizontalScrollIndicator={false}

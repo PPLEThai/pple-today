@@ -26,8 +26,8 @@ import useDoubleTapToZoom from '../../hooks/useDoubleTapToZoom'
 import useImageDimensions from '../../hooks/useImageDimensions'
 import { getImageStyles, getImageTransform } from '../../utils'
 
-const SWIPE_CLOSE_OFFSET = 75
-const SWIPE_CLOSE_VELOCITY = 1.55
+const SWIPE_CLOSE_OFFSET = 25
+const SWIPE_CLOSE_VELOCITY = 1
 const SCREEN = Dimensions.get('screen')
 const SCREEN_WIDTH = SCREEN.width
 const SCREEN_HEIGHT = SCREEN.height
@@ -77,8 +77,13 @@ const ImageItem = ({
 
       onZoom(scaled)
       setScaled(scaled)
-
-      if (!scaled && swipeToCloseEnabled && Math.abs(velocityY) > SWIPE_CLOSE_VELOCITY) {
+      // console.log(nativeEvent.contentOffset.y)
+      if (
+        !scaled &&
+        swipeToCloseEnabled &&
+        (Math.abs(velocityY) > SWIPE_CLOSE_VELOCITY ||
+          Math.abs(nativeEvent.contentOffset.y) > SWIPE_CLOSE_OFFSET)
+      ) {
         onRequestClose()
       }
     },
