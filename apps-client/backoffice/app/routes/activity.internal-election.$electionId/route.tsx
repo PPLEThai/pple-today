@@ -106,7 +106,7 @@ function Header({ election }: { election: AdminGetElectionResponse }) {
             </Button>
           </>
         ) : (
-          <Button variant="outline">
+          <Button variant="outline" disabled={election.isCancelled}>
             <CalendarX2 className="text-system-danger-default" strokeWidth={1} size={20} />
             <Typography variant="small" className="ml-2">
               ยกเลิกการเลือกตั้ง
@@ -176,10 +176,19 @@ function ElectionDetail({ election }: { election: AdminGetElectionResponse }) {
           <Typography variant="large" className="text-primary">
             {election.totalVoters} คน
           </Typography>
-          <Button variant="secondary">
-            <Download className="mr-2" />
-            <Typography variant="small">รายชื่อผู้มีสิทธิ์เลือกตั้ง</Typography>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary">
+              <Download className="mr-2" />
+              รายชื่อผู้มีสิทธิ์เลือกตั้ง
+            </Button>
+            {election.type === 'HYBRID' &&
+              (election.status === 'CLOSED_VOTE' || election.status === 'RESULT_ANNOUNCE') && (
+                <Button>
+                  <Download className="mr-2" />
+                  รายชื่อผู้มีสิทธิ์ที่ยังไม่ได้ลงทะเบียน
+                </Button>
+              )}
+          </div>
         </div>
       </CardContent>
     </Card>
