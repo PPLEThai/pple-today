@@ -319,6 +319,9 @@ importers:
       '@tanstack/react-form':
         specifier: ^1.14.1
         version: 1.14.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      '@tanstack/react-pacer':
+        specifier: ^0.16.4
+        version: 0.16.4(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@tanstack/react-query':
         specifier: ^5.81.5
         version: 5.81.5(react@19.1.0)
@@ -4134,9 +4137,6 @@ packages:
     engines: {node: '>=14'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
 
   '@svgr/core@8.1.0':
     resolution: {integrity: sha512-8QqtOQT5ACVlmsvKOJNEaWmRPmcojMOzCz4Hs2BGG/toAp/K38LcsMRyLp349glq5AzJbCEeimEoxaX6v/fLrA==}
@@ -16009,6 +16009,7 @@ snapshots:
 
   '@svgr/babel-preset@8.1.0(@babel/core@7.27.1)':
     dependencies:
+      '@babel/core': 7.27.1
       '@svgr/babel-plugin-add-jsx-attribute': 8.0.0(@babel/core@7.27.1)
       '@svgr/babel-plugin-remove-jsx-attribute': 8.0.0(@babel/core@7.27.1)
       '@svgr/babel-plugin-remove-jsx-empty-expression': 8.0.0(@babel/core@7.27.1)
@@ -16017,8 +16018,6 @@ snapshots:
       '@svgr/babel-plugin-svg-em-dimensions': 8.0.0(@babel/core@7.27.1)
       '@svgr/babel-plugin-transform-react-native-svg': 8.1.0(@babel/core@7.27.1)
       '@svgr/babel-plugin-transform-svg-component': 8.0.0(@babel/core@7.27.1)
-    optionalDependencies:
-      '@babel/core': 7.27.1
 
   '@svgr/core@8.1.0(typescript@5.8.3)':
     dependencies:
@@ -16157,18 +16156,14 @@ snapshots:
     transitivePeerDependencies:
       - react-dom
 
-<<<<<<< HEAD
-  '@tanstack/react-pacer@0.16.4(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
+  '@tanstack/react-pacer@0.16.4(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
     dependencies:
       '@tanstack/pacer': 0.15.4
-      '@tanstack/react-store': 0.7.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
-      react: 19.0.0
-      react-dom: 19.0.0(react@19.0.0)
+      '@tanstack/react-store': 0.7.7(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
 
-  '@tanstack/react-query@5.81.5(react@19.0.0)':
-=======
   '@tanstack/react-query@5.81.5(react@19.1.0)':
->>>>>>> main
     dependencies:
       '@tanstack/query-core': 5.81.5
       react: 19.1.0
@@ -16185,18 +16180,14 @@ snapshots:
       react-dom: 19.1.0(react@19.1.0)
       use-sync-external-store: 1.5.0(react@19.1.0)
 
-<<<<<<< HEAD
-  '@tanstack/react-store@0.7.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
+  '@tanstack/react-store@0.7.7(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
     dependencies:
       '@tanstack/store': 0.7.7
-      react: 19.0.0
-      react-dom: 19.0.0(react@19.0.0)
-      use-sync-external-store: 1.5.0(react@19.0.0)
+      react: 19.1.0
+      react-dom: 19.1.0(react@19.1.0)
+      use-sync-external-store: 1.5.0(react@19.1.0)
 
-  '@tanstack/react-table@8.21.3(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
-=======
   '@tanstack/react-table@8.21.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
->>>>>>> main
     dependencies:
       '@tanstack/table-core': 8.21.3
       react: 19.1.0
