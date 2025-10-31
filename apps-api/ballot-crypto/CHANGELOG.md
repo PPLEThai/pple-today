@@ -1,5 +1,26 @@
 # @api/ballot-crypto
 
+## 0.2.0
+
+### Minor Changes
+
+- [#216](https://github.com/PPLEThai/pple-today/pull/216) [`25c486c`](https://github.com/PPLEThai/pple-today/commit/25c486c8128f55fd2c1926412dc3575ffeb60023) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-492] [API] add province, distrinct in election model](https://linear.app/snts/issue/PPLE-492/api-add-province-distrinct-in-election-model)
+  [[PPLE-491] [API] change election mode endpoint](https://linear.app/snts/issue/PPLE-491/api-change-election-mode-endpoint)
+  [[PPLE-490] [API] reload election keys endpoint](https://linear.app/snts/issue/PPLE-490/api-reload-election-keys-endpoint)
+  [[PPLE-489] [API] Can update voters and candidate until open vote](https://linear.app/snts/issue/PPLE-489/api-can-update-voters-and-candidate-until-open-vote)
+  [[PPLE-488] [API] Support Draft election](https://linear.app/snts/issue/PPLE-488/api-support-draft-election)
+
+- [#214](https://github.com/PPLEThai/pple-today/pull/214) [`9c39a59`](https://github.com/PPLEThai/pple-today/commit/9c39a596a6da2a72bfa7d0301dcc9274b2528489) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-320] [API] Election Ballot Management Endpoint](https://linear.app/snts/issue/PPLE-320/api-election-ballot-management-endpoint)
+
+- [#198](https://github.com/PPLEThai/pple-today/pull/198) [`56d3b68`](https://github.com/PPLEThai/pple-today/commit/56d3b68dfa6a0cd732ad001c4ab6408fa18bd494) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-462] [API] Create Election Endpoint](https://linear.app/snts/issue/PPLE-462/api-create-election-endpoint)
+
+### Patch Changes
+
+- [#224](https://github.com/PPLEThai/pple-today/pull/224) [`424ac0a`](https://github.com/PPLEThai/pple-today/commit/424ac0a9dc397240db6d412d6eb44ce6cbd23fcd) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-507] [API] log user event](https://linear.app/snts/issue/PPLE-507/api-log-user-event)
+
+- Updated dependencies [[`25c486c`](https://github.com/PPLEThai/pple-today/commit/25c486c8128f55fd2c1926412dc3575ffeb60023), [`c8c8f19`](https://github.com/PPLEThai/pple-today/commit/c8c8f192d2653f2d21a8dfb4e6ba8550143be5bd), [`9c39a59`](https://github.com/PPLEThai/pple-today/commit/9c39a596a6da2a72bfa7d0301dcc9274b2528489), [`0dd48c1`](https://github.com/PPLEThai/pple-today/commit/0dd48c1750ab905d6131085713b9d8db8149d5a8), [`56d3b68`](https://github.com/PPLEThai/pple-today/commit/56d3b68dfa6a0cd732ad001c4ab6408fa18bd494), [`75c2bb2`](https://github.com/PPLEThai/pple-today/commit/75c2bb2ac5417c294b7a2d891afe004c40efe660), [`92bab92`](https://github.com/PPLEThai/pple-today/commit/92bab92ad41fde1000e9248cfb4f34492f9f2c2d)]:
+  - @pple-today/api-common@0.5.0
+
 ## 0.1.2
 
 ### Patch Changes

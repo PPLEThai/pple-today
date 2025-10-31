@@ -1,5 +1,17 @@
 # @pple-today/ui
 
+## 0.3.1
+
+### Patch Changes
+
+- [#226](https://github.com/PPLEThai/pple-today/pull/226) [`74e6306`](https://github.com/PPLEThai/pple-today/commit/74e6306980d5f0ec2c4054afd71132d72989e95c) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-511] Fix scroll view doesnt work in select Android](https://linear.app/snts/issue/PPLE-511/fix-scroll-view-doesnt-work-in-select-android)
+
+- [#223](https://github.com/PPLEThai/pple-today/pull/223) [`c8cc567`](https://github.com/PPLEThai/pple-today/commit/c8cc5674c7d9cf3caa8edc0ddf180278a4b9c218) Thanks [@Anon-136](https://github.com/Anon-136)! - [BREAKING [PPLE-330] Fix performance issue on RN new arch](https://linear.app/snts/issue/PPLE-330/fix-performance-issue-on-rn-new-arch)
+
+- [#209](https://github.com/PPLEThai/pple-today/pull/209) [`c8c8f19`](https://github.com/PPLEThai/pple-today/commit/c8c8f192d2653f2d21a8dfb4e6ba8550143be5bd) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-224] Poll Card UI](https://linear.app/snts/issue/PPLE-224/poll-card-ui)
+
+  [[PPLE-225] Poll Page UI](https://linear.app/snts/issue/PPLE-225/poll-card-detail-page-ui)
+
 ## 0.3.0
 
 ### Minor Changes
