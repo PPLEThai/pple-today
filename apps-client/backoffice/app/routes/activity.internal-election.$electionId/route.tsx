@@ -11,8 +11,12 @@ import {
 import { Button } from '@pple-today/web-ui/button'
 import { Card, CardContent } from '@pple-today/web-ui/card'
 import { Typography } from '@pple-today/web-ui/typography'
+import ElectionKeyStatusBadge from 'components/election/ElectionKeyStatusBadge'
+import ElectionStatusBadge from 'components/election/ElectionStatusBadge'
+import ElectionTypeBadge from 'components/election/ElectionTypeBadge'
 import {
   Calendar,
+  CalendarX2,
   Download,
   Eye,
   Link,
@@ -29,9 +33,6 @@ import { getTimelineString } from 'utils/date'
 import { reactQueryClient } from '~/libs/api-client'
 
 import { Route } from '.react-router/types/app/+types/root'
-import ElectionTypeBadge from 'components/election/ElectionTypeBadge'
-import ElectionStatusBadge from 'components/election/ElectionStatusBadge'
-import ElectionKeyStatusBadge from 'components/election/ElectionKeyStatusBadge'
 
 export function Mmeta() {
   return [{ title: 'Internal-election' }]
@@ -46,8 +47,12 @@ export default function InternalElectionDetailPage({ params }: Route.LoaderArgs)
   return (
     <div className="mx-6 space-y-4">
       <ElectionBreadcrumb name={query.data?.name || '-'} />
-      <Header />
-      {query.isSuccess && <ElectionDetail election={query.data} />}
+      {query.isSuccess && (
+        <>
+          <Header election={query.data} />
+          <ElectionDetail election={query.data} />
+        </>
+      )}
     </div>
   )
 }
@@ -77,26 +82,37 @@ function ElectionBreadcrumb({ name }: { name: string }) {
   )
 }
 
-function Header() {
+function Header({ election }: { election: AdminGetElectionResponse }) {
   return (
     <div className="flex items-center justify-between mt-4">
       <div className="flex items-center gap-4">
-        <Vote />
+        <Vote size={30} className="text-primary" />
         <Typography variant="h1">รายละเอียดการเลือกตั้ง</Typography>
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="icon">
-          <Trash2 />
-        </Button>
-        <Button variant="default" size="icon">
-          <Eye className="text-white" />
-        </Button>
-        <Button variant="default" className="space-x-2">
-          <Pencil className="text-white" />
-          <Typography variant="small" className="text-white">
-            แก้ไขการเลือกตั้ง
-          </Typography>
-        </Button>
+        {election.status === 'DRAFT' ? (
+          <>
+            <Button variant="outline" size="icon">
+              <Trash2 />
+            </Button>
+            <Button variant="default" size="icon" disabled={election.keyStatus !== 'CREATED'}>
+              <Eye className="text-white" />
+            </Button>
+            <Button variant="default" className="space-x-2">
+              <Pencil className="text-white" />
+              <Typography variant="small" className="text-white">
+                แก้ไขการเลือกตั้ง
+              </Typography>
+            </Button>
+          </>
+        ) : (
+          <Button variant="outline">
+            <CalendarX2 className="text-system-danger-default" strokeWidth={1} size={20} />
+            <Typography variant="small" className="ml-2">
+              ยกเลิกการเลือกตั้ง
+            </Typography>
+          </Button>
+        )}
       </div>
     </div>
   )
