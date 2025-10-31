@@ -1,4 +1,5 @@
 export * from './common'
+export * from './election'
 export * from './error'
 export * from './file'
 export * from './prisma'
