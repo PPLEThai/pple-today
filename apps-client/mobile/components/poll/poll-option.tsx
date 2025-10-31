@@ -31,7 +31,7 @@ interface PollOptionResultProps extends PollOption {
   totalVotes: number
 }
 
-export function PollOptionResult(props: PollOptionResultProps) {
+export const PollOptionResult = React.memo(function PollOptionResult(props: PollOptionResultProps) {
   const percentage = (props.votes / props.totalVotes) * 100 || 0
   const animatedPercentage = useSharedValue(0)
   const animatedBarStyle = useAnimatedStyle(() => ({ width: `${animatedPercentage.value}%` }))
@@ -75,7 +75,7 @@ export function PollOptionResult(props: PollOptionResultProps) {
       />
     </View>
   )
-}
+})
 
 const PollResultCheckbox = ({ isSelected }: { isSelected: boolean }) => {
   if (isSelected) {
@@ -114,7 +114,7 @@ export function PollOptionGroup({
   )
 }
 
-export function PollOptionItem({
+export const PollOptionItem = React.memo(function PollOptionItem({
   className,
   ...props
 }: ToggleGroupPrimitive.ItemProps &
@@ -147,9 +147,11 @@ export function PollOptionItem({
       )}
       {...props}
     >
-      <View className="flex flex-row items-center justify-between w-full gap-2 p-3">
+      <View className="flex flex-row items-center w-full gap-2 p-3">
         <View className="gap-2.5 flex flex-row items-center shrink-0 flex-1">
-          <PollOptionCheckbox isSelected={props.isSelected} />
+          <PollOptionCheckbox
+            isSelected={ToggleGroupPrimitive.utils.getIsSelected(value, props.value)}
+          />
           <Text
             className={cn(
               'text-sm font-body-regular flex-1 flex-wrap text-base-text-high',
@@ -172,16 +174,16 @@ export function PollOptionItem({
           </Text>
         )}
       </View>
-      {(props.pollTouched || props.isSelected) && (
+      {props.pollTouched && (
         <Animated.View
           className={cn(
             'absolute top-0 left-0 z-[-1] rounded-r-xl h-full',
             props.pollTouched && 'bg-base-bg-medium',
-            props.isSelected && 'bg-base-primary-light'
+            ToggleGroupPrimitive.utils.getIsSelected(value, props.value) && 'bg-base-primary-light'
           )}
           style={animatedBarStyle}
         />
       )}
     </ToggleGroupPrimitive.Item>
   )
-}
+})

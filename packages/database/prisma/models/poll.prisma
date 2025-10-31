@@ -21,6 +21,8 @@ model Poll {
     topics  PollTopic[]
     options PollOption[]
 
+    totalVotes Int @default(0)
+
     feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
 
     @@index([status])

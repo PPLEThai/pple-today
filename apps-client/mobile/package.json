@@ -38,6 +38,7 @@
     "@react-navigation/material-top-tabs": "^7.3.2",
     "@react-navigation/native": "^7.1.6",
     "@tanstack/react-form": "^1.14.1",
+    "@tanstack/react-pacer": "^0.16.4",
     "@tanstack/react-query": "^5.81.5",
     "dayjs": "^1.11.13",
     "expo": "~54.0.21",
