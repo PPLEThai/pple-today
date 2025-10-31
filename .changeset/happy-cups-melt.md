@@ -1,7 +1,6 @@
 ---
 "@client/backoffice": patch
 "@client/mobile": minor
-"@mini-app/web": patch
 "expo-scroll-forwarder": patch
 "@pple-today/project-config": patch
 "@pple-today/ui": patch
