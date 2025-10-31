@@ -232,16 +232,13 @@ export class PollsRepository {
           await tx.poll.update({
             where: {
               feedItemId: pollId,
+              status: PollStatus.PUBLISHED,
             },
             data: {
               options: {
                 update: {
                   where: {
                     id: options[0],
-                    poll: {
-                      feedItemId: pollId,
-                      status: PollStatus.PUBLISHED,
-                    },
                   },
                   data: {
                     votes: {

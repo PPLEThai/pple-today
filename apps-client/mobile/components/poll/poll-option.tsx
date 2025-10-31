@@ -31,7 +31,7 @@ interface PollOptionResultProps extends PollOption {
   totalVotes: number
 }
 
-export function PollOptionResult(props: PollOptionResultProps) {
+export const PollOptionResult = React.memo(function PollOptionResult(props: PollOptionResultProps) {
   const percentage = (props.votes / props.totalVotes) * 100 || 0
   const animatedPercentage = useSharedValue(0)
   const animatedBarStyle = useAnimatedStyle(() => ({ width: `${animatedPercentage.value}%` }))
@@ -75,7 +75,7 @@ export function PollOptionResult(props: PollOptionResultProps) {
       />
     </View>
   )
-}
+})
 
 const PollResultCheckbox = ({ isSelected }: { isSelected: boolean }) => {
   if (isSelected) {
@@ -114,7 +114,7 @@ export function PollOptionGroup({
   )
 }
 
-export function PollOptionItem({
+export const PollOptionItem = React.memo(function PollOptionItem({
   className,
   ...props
 }: ToggleGroupPrimitive.ItemProps &
@@ -186,4 +186,4 @@ export function PollOptionItem({
       )}
     </ToggleGroupPrimitive.Item>
   )
-}
+})

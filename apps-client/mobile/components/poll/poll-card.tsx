@@ -231,17 +231,16 @@ const PollOptionResultList = (props: PollProps) => {
 
   return (
     <View className="gap-2">
-      {options.length > 0 &&
-        options.map((option) => (
-          <PollOptionResult
-            id={option.id}
-            key={option.id}
-            title={option.title}
-            votes={option.votes}
-            totalVotes={props.feedItem.poll.totalVotes}
-            isSelected={option.isSelected}
-          />
-        ))}
+      {options.map((option) => (
+        <PollOptionResult
+          id={option.id}
+          key={option.id}
+          title={option.title}
+          votes={option.votes}
+          totalVotes={props.feedItem.poll.totalVotes}
+          isSelected={option.isSelected}
+        />
+      ))}
     </View>
   )
 }
@@ -273,28 +272,12 @@ const PollSingleOptionList = (props: PollProps) => {
 
   const isPollTouched = options.some((option) => option.isSelected)
 
-  const listOptions = React.useCallback(
-    (options: PollOption[]) => {
-      let renderedOptions = options
-      if (props.card) {
-        renderedOptions = options.slice(0, 3)
-      }
-
-      return renderedOptions.map((option) => (
-        <PollOptionItem
-          key={option.id}
-          id={option.id}
-          value={option.id}
-          title={option.title}
-          votes={option.votes}
-          totalVotes={totalVotes}
-          isSelected={option.isSelected}
-          pollTouched={isPollTouched}
-        />
-      ))
-    },
-    [props.card, isPollTouched, totalVotes]
-  )
+  const renderedOptions = React.useMemo(() => {
+    if (props.card) {
+      return options.slice(0, 3)
+    }
+    return options
+  }, [options, props.card])
 
   function handleValueChange(value: string | undefined) {
     if (!session) {
@@ -316,7 +299,18 @@ const PollSingleOptionList = (props: PollProps) => {
       value={selectedOption}
       className="flex flex-col"
     >
-      {listOptions(options)}
+      {renderedOptions.map((option) => (
+        <PollOptionItem
+          key={option.id}
+          id={option.id}
+          value={option.id}
+          title={option.title}
+          votes={option.votes}
+          totalVotes={totalVotes}
+          isSelected={option.isSelected}
+          pollTouched={isPollTouched}
+        />
+      ))}
     </PollOptionGroup>
   )
 }
@@ -347,28 +341,12 @@ const PollMultipleOptionList = (props: PollProps) => {
 
   const isPollTouched = options.some((option) => option.isSelected)
 
-  const listOptions = React.useCallback(
-    (options: PollOption[]) => {
-      let renderedOptions = options
-      if (props.card) {
-        renderedOptions = options.slice(0, 3)
-      }
-
-      return renderedOptions.map((option) => (
-        <PollOptionItem
-          key={option.id}
-          id={option.id}
-          value={option.id}
-          title={option.title}
-          votes={option.votes}
-          totalVotes={totalVotes}
-          isSelected={option.isSelected}
-          pollTouched={isPollTouched}
-        />
-      ))
-    },
-    [props.card, isPollTouched, totalVotes]
-  )
+  const renderedOptions = React.useMemo(() => {
+    if (props.card) {
+      return options.slice(0, 3)
+    }
+    return options
+  }, [props.card, options])
 
   const handleValueChange = async (value: string[]) => {
     if (!session) {
@@ -387,7 +365,18 @@ const PollMultipleOptionList = (props: PollProps) => {
       value={selectedOptions}
       className="flex flex-col"
     >
-      {listOptions(options)}
+      {renderedOptions.map((option) => (
+        <PollOptionItem
+          key={option.id}
+          id={option.id}
+          value={option.id}
+          title={option.title}
+          votes={option.votes}
+          totalVotes={totalVotes}
+          isSelected={option.isSelected}
+          pollTouched={isPollTouched}
+        />
+      ))}
     </PollOptionGroup>
   )
 }
