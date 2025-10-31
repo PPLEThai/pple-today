@@ -14,7 +14,7 @@ import { useRouter } from 'expo-router'
 import { ArrowLeftIcon, HandIcon, PackageOpenIcon } from 'lucide-react-native'
 
 import { ApplicationApiSchema, ListCursorResponse } from '@api/backoffice/app'
-import { Participation } from '@app/app/(tabs)/(profile)/profile/index'
+import { Participation } from '@app/app/(tabs)/(profile)/profile'
 import {
   Pager,
   PagerContent,

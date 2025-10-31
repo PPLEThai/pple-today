@@ -67,7 +67,7 @@ import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 import { getRoleName } from '@app/utils/get-role-name'
 
-import { useBottomTabOnPress } from '../../_layout'
+import { useBottomTabOnPress } from '../_layout'
 
 export default function Index() {
   const session = useSession()
@@ -378,7 +378,7 @@ function LinkFacebookPageDialog() {
         console.error('Failed to get facebook access token')
         return
       }
-      router.push(`/profile/facebook?facebookAccessToken=${accessTokenResult.accessToken}`)
+      router.push(`/facebook?facebookAccessToken=${accessTokenResult.accessToken}`)
     } catch (error) {
       console.error('Login Error: ', error)
     }
@@ -531,7 +531,7 @@ const FollowingSection = () => {
           size="icon"
           className="size-9"
           onPress={() => {
-            router.push('/profile/follow')
+            router.push('/follow')
           }}
         >
           <Icon icon={PencilIcon} strokeWidth={1} size={20} className="text-base-text-high" />
@@ -607,7 +607,7 @@ const ParticipationSection = () => {
       {participationQuery.data.length > 0 && (
         <Button
           variant={'secondary'}
-          onPress={() => router.navigate('/profile/participation')}
+          onPress={() => router.navigate('/participation')}
           className="mx-4"
         >
           <Text>ดูเพิ่มเติม</Text>
