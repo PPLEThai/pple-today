@@ -1,5 +1,52 @@
 # @client/mobile
 
+## 0.8.0
+
+### Minor Changes
+
+- [#223](https://github.com/PPLEThai/pple-today/pull/223) [`c8cc567`](https://github.com/PPLEThai/pple-today/commit/c8cc5674c7d9cf3caa8edc0ddf180278a4b9c218) Thanks [@Anon-136](https://github.com/Anon-136)! - [BREAKING [PPLE-330] Fix performance issue on RN new arch](https://linear.app/snts/issue/PPLE-330/fix-performance-issue-on-rn-new-arch)
+
+- [#212](https://github.com/PPLEThai/pple-today/pull/212) [`ae1183c`](https://github.com/PPLEThai/pple-today/commit/ae1183cc6e61a537e1bc5392bee95a467126ec30) Thanks [@miello](https://github.com/miello)! - [[PPLE-471] [Mini App] Integrate WebView page for mini app](https://linear.app/snts/issue/PPLE-471/mini-app-integrate-webview-page-for-mini-app)
+
+- [#222](https://github.com/PPLEThai/pple-today/pull/222) [`9b39a50`](https://github.com/PPLEThai/pple-today/commit/9b39a50267b12250e4a0e4a814fae7d4a79c78ee) Thanks [@miello](https://github.com/miello)! - [[PPLE-509] [Mini App] Implement Slug for Mini App](https://linear.app/snts/issue/PPLE-509/mini-app-implement-slug-for-mini-app)
+
+- [#213](https://github.com/PPLEThai/pple-today/pull/213) [`1228a4a`](https://github.com/PPLEThai/pple-today/commit/1228a4af3cc71189851bc98b8da214bafcc947eb) Thanks [@miello](https://github.com/miello)! - [[PPLE-472] [Mini App] Implement example app which will represent mini app](https://linear.app/snts/issue/PPLE-472/mini-app-implement-example-app-which-will-represent-mini-app)
+
+- [#209](https://github.com/PPLEThai/pple-today/pull/209) [`c8c8f19`](https://github.com/PPLEThai/pple-today/commit/c8c8f192d2653f2d21a8dfb4e6ba8550143be5bd) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-224] Poll Card UI](https://linear.app/snts/issue/PPLE-224/poll-card-ui)
+
+  [[PPLE-225] Poll Page UI](https://linear.app/snts/issue/PPLE-225/poll-card-detail-page-ui)
+
+- [#205](https://github.com/PPLEThai/pple-today/pull/205) [`75c2bb2`](https://github.com/PPLEThai/pple-today/commit/75c2bb2ac5417c294b7a2d891afe004c40efe660) Thanks [@miello](https://github.com/miello)! - [[PPLE-470] [MIni App] Implement token exchange endpoint API](https://linear.app/snts/issue/PPLE-470/mini-app-implement-token-exchange-endpoint-api)
+  [[PPLE-468] [Mini App] Implement list mini apps endpoint for mobile application](https://linear.app/snts/issue/PPLE-468/mini-app-implement-list-mini-apps-endpoint-for-mobile-application)
+  [[PPLE-467] [Mini App] Add mini app schema for PPLE Today API](https://linear.app/snts/issue/PPLE-467/mini-app-add-mini-app-schema-for-pple-today-api)
+
+- [#220](https://github.com/PPLEThai/pple-today/pull/220) [`63b44e4`](https://github.com/PPLEThai/pple-today/commit/63b44e4f82810cc11155a4fcb32b11234df92385) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-458] Follow Many Topics in feed](https://linear.app/snts/issue/PPLE-458/remove-topic-tabs-in-feed)
+
+### Patch Changes
+
+- [#218](https://github.com/PPLEThai/pple-today/pull/218) [`3657247`](https://github.com/PPLEThai/pple-today/commit/36572473e5983e723e7cbeca8c7481e9975a7307) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-226] poll card integrate](https://linear.app/snts/issue/PPLE-226/poll-card-integrate)
+
+  [[PPLE-227] Poll Card Detail Page Integrate](https://linear.app/snts/issue/PPLE-227/poll-card-detail-page-integrate)
+
+  [[PPLE-455] Poll Feed in Activity Tab](https://linear.app/snts/issue/PPLE-455/poll-feed-in-activity-tab)
+
+  [[PPLE-508] Archived Poll should not be sent in Feed API](https://linear.app/snts/issue/PPLE-508/bug-archived-poll-should-not-be-sent-in-feed-api)
+
+- [#204](https://github.com/PPLEThai/pple-today/pull/204) [`da558ba`](https://github.com/PPLEThai/pple-today/commit/da558ba1ac3c9dad8344e551140802f71175277e) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-440] click home button to scroll to top](https://linear.app/snts/issue/PPLE-440/click-home-button-to-scroll-to-top)
+
+- [#215](https://github.com/PPLEThai/pple-today/pull/215) [`cd91f59`](https://github.com/PPLEThai/pple-today/commit/cd91f595ef788ca3392be458eacce39059c05b75) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-465] Android Signing](https://linear.app/snts/issue/PPLE-465/android-signing)
+
+- [#206](https://github.com/PPLEThai/pple-today/pull/206) [`ee51e01`](https://github.com/PPLEThai/pple-today/commit/ee51e012cdbb3fd0d14ed56df30d3b5c9dccf860) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-352] Lock user to not able to swipe while logging in](https://linear.app/snts/issue/PPLE-352/lock-user-to-not-able-to-swipe-while-logging-in)
+
+- [#207](https://github.com/PPLEThai/pple-today/pull/207) [`3f8ce62`](https://github.com/PPLEThai/pple-today/commit/3f8ce625b16a65a8ed6c18a2c3b0cf074a4fe0b5) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-486] Fix election slides collapse sometimes](https://linear.app/snts/issue/PPLE-486/fix-election-slides-collapse-sometimes)
+
+- [#208](https://github.com/PPLEThai/pple-today/pull/208) [`b280031`](https://github.com/PPLEThai/pple-today/commit/b280031eddc43e5c268a8d9055da0a344607171e) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-429] Fix default background as gray when loading](https://linear.app/snts/issue/PPLE-429/fix-default-background-as-gray-when-loading)
+
+- Updated dependencies [[`74e6306`](https://github.com/PPLEThai/pple-today/commit/74e6306980d5f0ec2c4054afd71132d72989e95c), [`c8cc567`](https://github.com/PPLEThai/pple-today/commit/c8cc5674c7d9cf3caa8edc0ddf180278a4b9c218), [`c8c8f19`](https://github.com/PPLEThai/pple-today/commit/c8c8f192d2653f2d21a8dfb4e6ba8550143be5bd)]:
+  - @pple-today/ui@0.3.1
+  - expo-scroll-forwarder@0.2.1
+  - @pple-today/api-client@0.3.2
+
 ## 0.7.1
 
 ### Patch Changes
