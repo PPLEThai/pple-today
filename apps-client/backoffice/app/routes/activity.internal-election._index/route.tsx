@@ -9,6 +9,7 @@ import {
   BreadcrumbSeparator,
 } from '@pple-today/web-ui/breadcrumb'
 import { Typography } from '@pple-today/web-ui/typography'
+
 import { Data } from './data'
 
 export function meta() {

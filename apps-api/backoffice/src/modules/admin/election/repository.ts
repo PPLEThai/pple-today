@@ -192,44 +192,37 @@ export class AdminElectionRepository {
       isCancelled: input.filter?.isCancelled,
     }
 
-    let statusFilter: Prisma.ElectionWhereInput = {}
-
-    input.filter?.status?.forEach((status) => {
-      let addFilter: Prisma.ElectionWhereInput | undefined = undefined
-
-      switch (status) {
-        case 'DRAFT':
-          addFilter = { publishDate: null }
-          break
-        case 'NOT_OPENED_VOTE':
-          addFilter = { publishDate: { not: null }, openVoting: { gt: input.now } }
-          break
-        case 'OPEN_VOTE':
-          addFilter = {
-            publishDate: { not: null },
-            openVoting: { lte: input.now },
-            closeVoting: { gt: input.now },
+    const statusFilter: Prisma.ElectionWhereInput =
+      input.filter?.status
+        ?.map((status) => {
+          switch (status) {
+            case 'DRAFT':
+              return { publishDate: null }
+            case 'NOT_OPENED_VOTE':
+              return { publishDate: { not: null }, openVoting: { gt: input.now } }
+            case 'OPEN_VOTE':
+              return {
+                publishDate: { not: null },
+                openVoting: { lte: input.now },
+                closeVoting: { gt: input.now },
+              }
+            case 'CLOSED_VOTE':
+              return {
+                publishDate: { not: null },
+                closeVoting: { lte: input.now },
+                OR: [{ startResult: null }, { startResult: { gt: input.now } }],
+              }
+            case 'RESULT_ANNOUNCE':
+              return {
+                publishDate: { not: null },
+                startResult: { lte: input.now },
+              }
+            default:
+              return null
           }
-          break
-        case 'CLOSED_VOTE':
-          addFilter = {
-            publishDate: { not: null },
-            closeVoting: { lte: input.now },
-            OR: [{ startResult: null }, { startResult: { gt: input.now } }],
-          }
-          break
-        case 'RESULT_ANNOUNCE':
-          addFilter = {
-            publishDate: { not: null },
-            startResult: { lte: input.now },
-          }
-          break
-      }
-
-      if (addFilter) {
-        statusFilter = { OR: [addFilter, statusFilter] }
-      }
-    })
+        })
+        .filter((filter) => filter)
+        .reduce((prev, curr) => ({ OR: [prev, curr] }), {}) || {}
 
     const filter = { ...baseFilter, ...statusFilter }
 
@@ -292,27 +285,7 @@ export class AdminElectionRepository {
   }
 
   async cancelElectionById(electionId: string) {
-    const deletedVoteRecords = await this.prismaService.electionVoteRecord.findMany({
-      where: {
-        electionId,
-      },
-    })
-
-    const faceImagePaths = deletedVoteRecords
-      .map((record) => record.faceImagePath)
-      .filter((path) => path !== null)
-
-    const deleteImageResult = await fromRepositoryPromise(
-      this.fileService.$transaction(async (tx) => {
-        const deleteImageResult = await tx.bulkDeleteFile(faceImagePaths as FilePath[])
-        if (deleteImageResult.isErr()) return err(deleteImageResult.error)
-      })
-    )
-    if (deleteImageResult.isErr()) return err(deleteImageResult.error)
-
-    const [_, fileTx] = deleteImageResult.value
-
-    const cancelResult = await fromRepositoryPromise(
+    return fromRepositoryPromise(
       this.prismaService.$transaction([
         this.prismaService.electionBallot.deleteMany({ where: { electionId } }),
         this.prismaService.election.update({
@@ -321,13 +294,6 @@ export class AdminElectionRepository {
         }),
       ])
     )
-    if (cancelResult.isErr()) {
-      const rollbackImageResult = await fileTx.rollback()
-      if (rollbackImageResult.isErr()) return err(rollbackImageResult.error)
-      return err(cancelResult.error)
-    }
-
-    return ok()
   }
 
   async publishElectionById(electionId: string, publishDate: Date) {

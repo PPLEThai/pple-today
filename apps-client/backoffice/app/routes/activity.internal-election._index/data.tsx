@@ -67,7 +67,7 @@ export const Data = () => {
                 const data = structuredClone(_data)
                 if (!data) return
                 const idx = data.data.findIndex((d) => d.id === electionId)
-                if (idx === undefined) return
+                if (idx === -1) return
                 data.data[idx].isCancelled = true
                 return data
               }
