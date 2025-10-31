@@ -29,9 +29,9 @@ export class TopicService {
         id: topic.id,
         name: topic.name,
         description: topic.description,
-        bannerImage: topic.bannerImagePath
-          ? this.fileService.getPublicFileUrl(topic.bannerImagePath)
-          : null,
+        bannerImage: this.fileService.getPublicFileUrl(
+          topic.bannerImagePath ?? '/public/topic/topic-default.png'
+        ),
         hashTags: topic.hashTags,
       }))
     )
@@ -179,9 +179,9 @@ export class TopicService {
       id: topic.id,
       name: topic.name,
       description: topic.description,
-      bannerImage: topic.bannerImagePath
-        ? this.fileService.getPublicFileUrl(topic.bannerImagePath)
-        : null,
+      bannerImage: this.fileService.getPublicFileUrl(
+        topic.bannerImagePath ?? '/public/topic/topic-default.png'
+      ),
       createdAt: topic.createdAt,
       updatedAt: topic.updatedAt,
       hashTags: topic.hashTags.map(({ hashTag }) => ({
