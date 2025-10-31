@@ -162,5 +162,77 @@ const MyPollContent = (props: PagerScrollViewProps) => {
 }
 
 const MyElectionContent = (props: PagerScrollViewProps) => {
-  return null
+  const { headerHeight, scrollElRef } = props
+
+  const scrollContext = useScrollContext()
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event, ctx) => {
+      'worklet'
+      scrollContext?.onScroll?.(event, ctx)
+    },
+  })
+
+  const feedInfiniteQuery = useInfiniteQuery({
+    queryKey: reactQueryClient.getQueryKey('/profile/participation/election'),
+    queryFn: async ({ pageParam }) => {
+      const response = await fetchClient('/profile/participation/election', {
+        query: { cursor: pageParam, limit: LIMIT },
+      })
+      if (response.error) {
+        throw response.error
+      }
+      return response.data
+    },
+    initialPageParam: '',
+    getNextPageParam: (lastPage) => {
+      if (lastPage.meta.cursor.next === null) {
+        return undefined
+      }
+      return lastPage.meta.cursor.next
+    },
+  })
+  React.useEffect(() => {
+    if (feedInfiniteQuery.error) {
+      console.error('Error fetching feed:', JSON.stringify(feedInfiniteQuery.error))
+    }
+  }, [feedInfiniteQuery.error])
+
+  const onEndReached = React.useCallback(() => {
+    if (!feedInfiniteQuery.isFetching && feedInfiniteQuery.hasNextPage) {
+      feedInfiniteQuery.fetchNextPage()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
+
+  type GetUserElectionParticipationResponse = ExtractBodyResponse<
+    ApplicationApiSchema,
+    'get',
+    '/profile/participation/election'
+  >
+  const data = React.useMemo((): GetUserElectionParticipationResponse['items'] => {
+    if (!feedInfiniteQuery.data) return []
+    return feedInfiniteQuery.data.pages.flatMap((page) => page.items)
+  }, [feedInfiniteQuery.data])
+
+  const renderParticipationItem = React.useCallback(
+    ({ item }: { item: GetUserElectionParticipationResponse['items'][number]; index: number }) => {
+      return <Participation key={item.id} participation={item} />
+    },
+    []
+  )
+
+  return (
+    <Animated.FlatList
+      ref={scrollElRef}
+      onScroll={scrollHandler}
+      data={data}
+      className="flex-1"
+      contentContainerClassName="flex-grow flex flex-col gap-4 my-2"
+      contentContainerStyle={{ paddingTop: headerHeight, minHeight: minHeight }}
+      onEndReachedThreshold={1}
+      onEndReached={onEndReached}
+      renderItem={renderParticipationItem}
+      showsVerticalScrollIndicator={false}
+    />
+  )
 }
