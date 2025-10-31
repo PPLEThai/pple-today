@@ -1,13 +1,7 @@
 import { createId } from '@paralleldrive/cuid2'
-import {
-  ElectionStatus,
-  ImageFileMimeType,
-  InternalErrorCode,
-  ParticipationType,
-} from '@pple-today/api-common/dtos'
+import { ImageFileMimeType, InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FileService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
-import { Election } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 import * as R from 'remeda'
@@ -28,20 +22,6 @@ export class ProfileService {
     private authRepository: AuthRepository,
     private fileService: FileService
   ) {}
-
-  private getElectionStatus(election: Election): ElectionStatus {
-    const now = new Date()
-
-    if (now < election.openVoting) {
-      return 'NOT_OPENED_VOTE'
-    } else if (now < election.closeVoting) {
-      return 'OPEN_VOTE'
-    } else if (!election.startResult || now < election.startResult) {
-      return 'CLOSED_VOTE'
-    } else {
-      return 'RESULT_ANNOUNCE'
-    }
-  }
 
   async getUserRecommendation(userId: string) {
     const result = await this.profileRepository.getUserRecommendation(userId)
@@ -68,7 +48,7 @@ export class ProfileService {
   }
 
   async getUserRecentParticipation(userId: string) {
-    const pollParticipation = await this.profileRepository.getUserPoll({
+    const pollParticipation = await this.profileRepository.getUserLatestPoll({
       userId,
       cursor: undefined,
       limit: 3,
@@ -79,7 +59,7 @@ export class ProfileService {
       return mapRepositoryError(pollParticipation.error)
     }
 
-    const electionParticipation = await this.profileRepository.getUserElection({
+    const electionParticipation = await this.profileRepository.getUserLatestElection({
       userId,
       cursor: undefined,
       limit: 3,
@@ -90,46 +70,41 @@ export class ProfileService {
       return mapRepositoryError(electionParticipation.error)
     }
 
-    console.log('reading poll')
-
-    const transformPoll = R.pipe(
-      pollParticipation.value,
-      R.map((poll) => ({
-        type: ParticipationType.POLL,
-        feedItemId: poll.feedItemId,
-        title: poll.title,
-        endAt: poll.endAt,
-        submittedAt: R.pipe(
-          poll.options,
-          R.map((option) => option.pollAnswers[0]?.createdAt),
-          R.flat(),
-          R.firstBy([R.identity(), 'desc'])
-        )!,
-      }))
-    )
-
-    console.log('reading election')
-
-    const transformElection = R.pipe(
-      electionParticipation.value,
-      R.map((election) => ({
-        type: ParticipationType.ELECTION,
-        electionId: election.id,
-        name: election.name,
-        electionStatus: this.getElectionStatus(election),
-        submittedAt: election.voteRecords[0].createdAt,
-      }))
-    )
-
-    console.log('sorting...')
-
     //combined the transform poll and election
     const transformPollAndElection = R.pipe(
-      R.concat(transformPoll, transformElection),
+      R.concat(pollParticipation.value.items, electionParticipation.value.items),
       R.sortBy([R.prop('submittedAt'), 'desc'])
     )
 
     return ok(transformPollAndElection)
+  }
+
+  async getUserPollParticipation(userId: string, query?: { cursor?: string; limit?: number }) {
+    const pollParticipation = await this.profileRepository.getUserLatestPoll({
+      userId,
+      cursor: query?.cursor,
+      limit: query?.limit ?? 10,
+    })
+
+    if (pollParticipation.isErr()) {
+      return mapRepositoryError(pollParticipation.error)
+    }
+
+    return ok(pollParticipation.value)
+  }
+
+  async getUserElectionParticipation(userId: string, query?: { cursor?: string; limit?: number }) {
+    const electionParticipation = await this.profileRepository.getUserLatestElection({
+      userId,
+      cursor: query?.cursor,
+      limit: query?.limit ?? 10,
+    })
+
+    if (electionParticipation.isErr()) {
+      return mapRepositoryError(electionParticipation.error)
+    }
+
+    return ok(electionParticipation.value)
   }
 
   async getProfileById(id: string) {

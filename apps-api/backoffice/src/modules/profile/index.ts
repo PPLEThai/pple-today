@@ -13,6 +13,10 @@ import {
   GetMyProfileResponse,
   GetProfileByIdParams,
   GetProfileByIdResponse,
+  GetUserElectionParticipationQuery,
+  GetUserElectionParticipationResponse,
+  GetUserPollParticipationQuery,
+  GetUserPollParticipationResponse,
   GetUserRecentParticipationResponse,
   GetUserRecommendationResponse,
   UpdateProfileBody,
@@ -76,6 +80,66 @@ export const ProfileController = new Elysia({
       detail: {
         summary: 'Get User Recent participation',
         description: "Fetch the authenticated user's recent participation",
+      },
+    }
+  )
+  .get(
+    '/participation/poll',
+    async ({ query, user, status, profileService }) => {
+      const pollResult = await profileService.getUserPollParticipation(user.id, {
+        cursor: query?.cursor,
+        limit: query?.limit,
+      })
+
+      if (pollResult.isErr()) {
+        return mapErrorCodeToResponse(pollResult.error, status)
+      }
+
+      return status(200, pollResult.value)
+    },
+    {
+      requiredLocalUser: true,
+      query: GetUserPollParticipationQuery,
+      response: {
+        200: GetUserPollParticipationResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get User Poll participation',
+        description: "Fetch the authenticated user's poll participation",
+      },
+    }
+  )
+  .get(
+    '/participation/election',
+    async ({ query, user, status, profileService }) => {
+      const electionResult = await profileService.getUserElectionParticipation(user.id, {
+        cursor: query?.cursor,
+        limit: query?.limit,
+      })
+
+      if (electionResult.isErr()) {
+        return mapErrorCodeToResponse(electionResult.error, status)
+      }
+
+      return status(200, electionResult.value)
+    },
+    {
+      requiredLocalUser: true,
+      query: GetUserElectionParticipationQuery,
+      response: {
+        200: GetUserElectionParticipationResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get User Election participation',
+        description: "Fetch the authenticated user's election participation",
       },
     }
   )
