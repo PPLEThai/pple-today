@@ -30,7 +30,7 @@ export class TopicService {
         name: topic.name,
         description: topic.description,
         bannerImage: this.fileService.getPublicFileUrl(
-          topic.bannerImagePath ?? '/public/topic/topic-default.png'
+          topic.bannerImagePath ?? 'public/topic/topic-default.png'
         ),
         hashTags: topic.hashTags,
       }))
@@ -180,7 +180,7 @@ export class TopicService {
       name: topic.name,
       description: topic.description,
       bannerImage: this.fileService.getPublicFileUrl(
-        topic.bannerImagePath ?? '/public/topic/topic-default.png'
+        topic.bannerImagePath ?? 'public/topic/topic-default.png'
       ),
       createdAt: topic.createdAt,
       updatedAt: topic.updatedAt,
