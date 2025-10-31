@@ -1,16 +1,19 @@
 import React from 'react'
-import { Dimensions, View } from 'react-native'
+import { View } from 'react-native'
 import Animated, { useAnimatedScrollHandler } from 'react-native-reanimated'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { ExtractBodyResponse } from '@pple-today/api-client'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
+import { cn } from '@pple-today/ui/lib/utils'
+import { Text } from '@pple-today/ui/text'
 import { H1 } from '@pple-today/ui/typography'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { InfiniteData, useInfiniteQuery, UseInfiniteQueryResult } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
-import { ArrowLeftIcon, HandIcon } from 'lucide-react-native'
+import { ArrowLeftIcon, HandIcon, PackageOpenIcon } from 'lucide-react-native'
 
-import { ApplicationApiSchema } from '@api/backoffice/app'
+import { ApplicationApiSchema, ListCursorResponse } from '@api/backoffice/app'
 import { Participation } from '@app/app/(tabs)/(profile)/profile/index'
 import {
   Pager,
@@ -24,6 +27,7 @@ import {
   PagerTabBarItemIndicator,
 } from '@app/components/pager-with-header'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
+import { Spinner } from '@app/components/spinner'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { useScrollContext } from '@app/libs/scroll-context'
 
@@ -83,7 +87,6 @@ export default function MyParticipationPage() {
   )
 }
 
-const minHeight = Dimensions.get('window').height
 const LIMIT = 10
 const MyPollContent = (props: PagerScrollViewProps) => {
   const { headerHeight, scrollElRef } = props
@@ -96,7 +99,7 @@ const MyPollContent = (props: PagerScrollViewProps) => {
     },
   })
 
-  const feedInfiniteQuery = useInfiniteQuery({
+  const pollInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/profile/participation/poll'),
     queryFn: async ({ pageParam }) => {
       const response = await fetchClient('/profile/participation/poll', {
@@ -116,17 +119,17 @@ const MyPollContent = (props: PagerScrollViewProps) => {
     },
   })
   React.useEffect(() => {
-    if (feedInfiniteQuery.error) {
-      console.error('Error fetching feed:', JSON.stringify(feedInfiniteQuery.error))
+    if (pollInfiniteQuery.error) {
+      console.error('Error fetching feed:', JSON.stringify(pollInfiniteQuery.error))
     }
-  }, [feedInfiniteQuery.error])
+  }, [pollInfiniteQuery.error])
 
   const onEndReached = React.useCallback(() => {
-    if (!feedInfiniteQuery.isFetching && feedInfiniteQuery.hasNextPage) {
-      feedInfiniteQuery.fetchNextPage()
+    if (!pollInfiniteQuery.isFetching && pollInfiniteQuery.hasNextPage) {
+      pollInfiniteQuery.fetchNextPage()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
+  }, [pollInfiniteQuery.isFetching, pollInfiniteQuery.hasNextPage, pollInfiniteQuery.fetchNextPage])
 
   type GetUserPollParticipationResponse = ExtractBodyResponse<
     ApplicationApiSchema,
@@ -134,9 +137,9 @@ const MyPollContent = (props: PagerScrollViewProps) => {
     '/profile/participation/poll'
   >
   const data = React.useMemo((): GetUserPollParticipationResponse['items'] => {
-    if (!feedInfiniteQuery.data) return []
-    return feedInfiniteQuery.data.pages.flatMap((page) => page.items)
-  }, [feedInfiniteQuery.data])
+    if (!pollInfiniteQuery.data) return []
+    return pollInfiniteQuery.data.pages.flatMap((page) => page.items)
+  }, [pollInfiniteQuery.data])
 
   const renderParticipationItem = React.useCallback(
     ({ item }: { item: GetUserPollParticipationResponse['items'][number]; index: number }) => {
@@ -151,11 +154,13 @@ const MyPollContent = (props: PagerScrollViewProps) => {
       onScroll={scrollHandler}
       data={data}
       className="flex-1"
-      contentContainerClassName="flex-grow flex flex-col gap-4 my-2"
-      contentContainerStyle={{ paddingTop: headerHeight, minHeight: minHeight }}
+      contentContainerClassName="flex-grow flex flex-col gap-4 my-4"
+      contentContainerStyle={{ paddingTop: headerHeight }}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
       renderItem={renderParticipationItem}
+      ListEmptyComponent={<MyParticipationEmpty queryResult={pollInfiniteQuery} />}
+      ListFooterComponent={<MyParticipationFooter queryResult={pollInfiniteQuery} />}
       showsVerticalScrollIndicator={false}
     />
   )
@@ -172,7 +177,7 @@ const MyElectionContent = (props: PagerScrollViewProps) => {
     },
   })
 
-  const feedInfiniteQuery = useInfiniteQuery({
+  const electionInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/profile/participation/election'),
     queryFn: async ({ pageParam }) => {
       const response = await fetchClient('/profile/participation/election', {
@@ -192,17 +197,21 @@ const MyElectionContent = (props: PagerScrollViewProps) => {
     },
   })
   React.useEffect(() => {
-    if (feedInfiniteQuery.error) {
-      console.error('Error fetching feed:', JSON.stringify(feedInfiniteQuery.error))
+    if (electionInfiniteQuery.error) {
+      console.error('Error fetching feed:', JSON.stringify(electionInfiniteQuery.error))
     }
-  }, [feedInfiniteQuery.error])
+  }, [electionInfiniteQuery.error])
 
   const onEndReached = React.useCallback(() => {
-    if (!feedInfiniteQuery.isFetching && feedInfiniteQuery.hasNextPage) {
-      feedInfiniteQuery.fetchNextPage()
+    if (!electionInfiniteQuery.isFetching && electionInfiniteQuery.hasNextPage) {
+      electionInfiniteQuery.fetchNextPage()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [feedInfiniteQuery.isFetching, feedInfiniteQuery.hasNextPage, feedInfiniteQuery.fetchNextPage])
+  }, [
+    electionInfiniteQuery.isFetching,
+    electionInfiniteQuery.hasNextPage,
+    electionInfiniteQuery.fetchNextPage,
+  ])
 
   type GetUserElectionParticipationResponse = ExtractBodyResponse<
     ApplicationApiSchema,
@@ -210,9 +219,9 @@ const MyElectionContent = (props: PagerScrollViewProps) => {
     '/profile/participation/election'
   >
   const data = React.useMemo((): GetUserElectionParticipationResponse['items'] => {
-    if (!feedInfiniteQuery.data) return []
-    return feedInfiniteQuery.data.pages.flatMap((page) => page.items)
-  }, [feedInfiniteQuery.data])
+    if (!electionInfiniteQuery.data) return []
+    return electionInfiniteQuery.data.pages.flatMap((page) => page.items)
+  }, [electionInfiniteQuery.data])
 
   const renderParticipationItem = React.useCallback(
     ({ item }: { item: GetUserElectionParticipationResponse['items'][number]; index: number }) => {
@@ -227,12 +236,56 @@ const MyElectionContent = (props: PagerScrollViewProps) => {
       onScroll={scrollHandler}
       data={data}
       className="flex-1"
-      contentContainerClassName="flex-grow flex flex-col gap-4 my-2"
-      contentContainerStyle={{ paddingTop: headerHeight, minHeight: minHeight }}
+      contentContainerClassName="flex-grow flex flex-col gap-4 my-4"
+      contentContainerStyle={{ paddingTop: headerHeight }}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
       renderItem={renderParticipationItem}
+      ListEmptyComponent={<MyParticipationEmpty queryResult={electionInfiniteQuery} />}
+      ListFooterComponent={<MyParticipationFooter queryResult={electionInfiniteQuery} />}
       showsVerticalScrollIndicator={false}
     />
   )
+}
+
+interface MyParticipationEmptyProps {
+  queryResult: UseInfiniteQueryResult<InfiniteData<ListCursorResponse<unknown>>>
+  className?: string
+}
+const MyParticipationEmpty = ({ queryResult, className }: MyParticipationEmptyProps) => {
+  const inset = useSafeAreaInsets()
+
+  if (queryResult.hasNextPage || queryResult.isLoading || queryResult.error) {
+    return null
+  }
+
+  return (
+    <View
+      className={cn(
+        'items-center justify-center mx-4 border bg-base-bg-light gap-3 border-base-outline-default rounded-xl flex-1 px-[98px]',
+        className
+      )}
+      style={{ marginBottom: inset.bottom }}
+    >
+      <Icon icon={PackageOpenIcon} size={64} className="text-base-outline-medium" strokeWidth={1} />
+      <Text className="font-heading-regular text-base-text-placeholder items-center text-center">
+        ตอบแบบสอบถาม หรือ ลงคะแนนเลือกตั้งเพื่อแสดงข้อมูล
+      </Text>
+    </View>
+  )
+}
+
+interface MyParticipationFooterProps {
+  queryResult: UseInfiniteQueryResult<InfiniteData<ListCursorResponse<unknown>>>
+}
+const MyParticipationFooter = ({ queryResult }: MyParticipationFooterProps) => {
+  if (queryResult.hasNextPage || queryResult.isLoading || queryResult.error) {
+    return (
+      <View className="items-center py-16">
+        <Spinner />
+      </View>
+    )
+  }
+
+  return null
 }
