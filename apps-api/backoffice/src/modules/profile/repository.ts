@@ -1,7 +1,7 @@
 import { ElectionStatus, FilePath, ParticipationType } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { Election, Prisma, UserStatus } from '@pple-today/database/prisma'
+import { Election, PollStatus, Prisma, UserStatus } from '@pple-today/database/prisma'
 import { get_candidate_user } from '@pple-today/database/prisma/sql'
 import Elysia from 'elysia'
 import * as R from 'remeda'
@@ -292,6 +292,7 @@ export class ProfileRepository {
               },
             },
           },
+          status: PollStatus.PUBLISHED,
         },
         distinct: ['feedItemId'],
         select: {

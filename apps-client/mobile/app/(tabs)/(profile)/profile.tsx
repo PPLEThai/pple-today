@@ -670,13 +670,13 @@ export const Participation = ({
     case 'ELECTION':
       return (
         <Pressable
-          onPress={() => router.navigate(`/feed/${participation.id}`)}
+          onPress={() => router.navigate(`/election/${participation.id}`)}
           className="flex flex-row items-center justify-between gap-1 mx-4 h-[60px]"
         >
           <View className="flex flex-row gap-3 items-center flex-1">
             <Icon icon={VoteIcon} className="text-base-primary-default" size={32} strokeWidth={2} />
             <View className="flex flex-col justify-between gap-1 flex-1 h-full shrink-0">
-              <Text className="text-sm text-base-text-high font-heading-semibold line-clamp-2">
+              <Text className="text-sm text-base-text-high font-heading-medium line-clamp-2">
                 {participation.name}
               </Text>
               <View className="flex flex-row items-center justify-between">
