@@ -1,5 +1,12 @@
 # @api/ballot-crypto
 
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @pple-today/api-common@0.5.1
+
 ## 0.2.0
 
 ### Minor Changes
