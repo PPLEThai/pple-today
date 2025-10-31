@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Platform, Pressable, ScrollView, Text as RNText, TextProps, View } from 'react-native'
 import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
-import ImageView from 'react-native-image-viewing'
+// import ImageView from 'react-native-image-viewing'
 import PagerView from 'react-native-pager-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -62,6 +62,7 @@ import { ActivityCard } from './activity/activity-card'
 import { AuthPlayground } from './auth-playground'
 import { AvatarPPLEFallback } from './avatar-pple-fallback'
 import { ElectionCard, ElectionDetailCard, ElectionStatusBadge } from './election/election-card'
+import ImageView from './feed/image-viewer/image-view'
 import { MoreOrLess } from './more-or-less'
 import { PollContent } from './poll/poll-card'
 

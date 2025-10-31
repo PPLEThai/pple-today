@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { Pressable, View } from 'react-native'
-import ImageView from 'react-native-image-viewing'
 
 import { cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
@@ -8,6 +7,8 @@ import { Image } from 'expo-image'
 import { useVideoPlayer, VideoView } from 'expo-video'
 
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
+
+import ImageView from './image-viewer/image-view'
 
 export interface PostCardAttachment {
   id: string
