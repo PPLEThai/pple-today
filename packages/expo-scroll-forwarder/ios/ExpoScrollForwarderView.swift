@@ -11,13 +11,13 @@ class ExpoScrollForwarderView: ExpoView, UIGestureRecognizerDelegate {
         }
     }
 
-    private var rctScrollView: RCTScrollView? {
+    private var scrollView: UIScrollView? {
         didSet {
           if let oldValue {
-                removeGestureRecognizer(oldValue.scrollView.panGestureRecognizer)
+                removeGestureRecognizer(oldValue.panGestureRecognizer)
             }
-            if let rctScrollView {
-                addGestureRecognizer(rctScrollView.scrollView.panGestureRecognizer)
+            if let scrollView {
+                addGestureRecognizer(scrollView.panGestureRecognizer)
             }
         }
     }
@@ -26,14 +26,29 @@ class ExpoScrollForwarderView: ExpoView, UIGestureRecognizerDelegate {
         guard let scrollViewTag = scrollViewTag else {
             return
         }
-
-        self.rctScrollView = self.appContext?
-            .findView(withTag: scrollViewTag, ofType: RCTScrollView.self)
         
-        if (self.rctScrollView == nil) {
+        let rctScrollView = self.appContext?.reactBridge?.uiManager.view(forReactTag: NSNumber(value: scrollViewTag)) as? UIView
+        if (rctScrollView != nil) {
+            self.scrollView = self.findScrollView(in: rctScrollView!)
+        }
+        
+        if (self.scrollView == nil) {
             print("ExpoScrollForwarder: ScrollView \(scrollViewTag) is not found")
         } else {
             print("ExpoScrollForwarder: ScrollView \(scrollViewTag) is found")
         }
     }
+    
+    
+    private func findScrollView(in view: UIView) -> UIScrollView? {
+      if let sv = view as? UIScrollView { return sv }
+      for child in view.subviews {
+        if let found = findScrollView(in: child) {
+          return found
+        }
+      }
+      return nil
+    }
+    
+
 }

@@ -53,6 +53,24 @@ export class KeyService {
     return ok()
   }
 
+  async getElectionKeys(electionId: string) {
+    const results = await Promise.all([
+      this.keyManagementService.getPublicKeyAsymmetricEncrypt(electionId),
+      this.keyManagementService.getPublicKeyAsymmetricSign(electionId),
+    ])
+
+    const err = results.find((result) => result.isErr())
+
+    if (err) return mapGoogleAPIError(err.error)
+
+    const [encryptResult, signingResult] = results.filter((result) => result.isOk())
+
+    return ok({
+      publicEncrypt: encryptResult.value,
+      publicSigning: signingResult.value,
+    })
+  }
+
   async destroyElectionKeys(electionId: string) {
     const destroyKeyResults = await Promise.all([
       this.keyManagementService.destroyAsymmetricEncryptKey(electionId),
@@ -69,7 +87,9 @@ export class KeyService {
       })
     }
 
-    return ok()
+    const destoryOk = destroyKeyResults.find((result) => result.isOk())
+
+    return ok({ destroyScheduledDuration: destoryOk?.value })
   }
 
   async updateElectionKeys(electionId: string) {
@@ -102,6 +122,42 @@ export class KeyService {
         status: ElectionKeysStatus.FAILED_CREATED,
       }),
     ])
+
+    return ok()
+  }
+
+  async restoreElectionKeys(electionId: string) {
+    const checkResult = await this.keyManagementService.checkIfKeysValid(electionId)
+    if (checkResult.isOk()) return ok()
+
+    const restoreResults = await Promise.all([
+      this.keyManagementService.restoreAsymmetricSigningKey(electionId),
+      this.keyManagementService.restoreAsymmetricEncryptKey(electionId),
+    ])
+
+    const restoreErr = restoreResults.find((result) => result.isErr())
+
+    if (restoreErr) {
+      const [encryptResult, signingResult] = restoreResults
+
+      if (encryptResult.isOk()) {
+        const destroyResult =
+          await this.keyManagementService.destroyAsymmetricEncryptKey(electionId)
+        if (destroyResult.isErr()) return mapGoogleAPIError(destroyResult.error)
+      }
+
+      if (signingResult.isOk()) {
+        const destroyResult = await this.keyManagementService.destroyAsymmetricSignKey(electionId)
+        if (destroyResult.isErr()) return mapGoogleAPIError(destroyResult.error)
+      }
+
+      return mapGoogleAPIError(restoreErr.error, {
+        NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_KEY_NOT_FOUND,
+          message: `Cannot found key id ${electionId}`,
+        },
+      })
+    }
 
     return ok()
   }

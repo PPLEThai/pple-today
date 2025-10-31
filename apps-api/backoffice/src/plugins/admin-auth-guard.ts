@@ -3,6 +3,7 @@ import { err, mapErrorCodeToResponse, mapRepositoryError } from '@pple-today/api
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
+import { setUserIdHeader } from './auth-guard'
 import { ConfigServicePlugin } from './config'
 
 import { AdminAuthRepository, AdminAuthRepositoryPlugin } from '../modules/admin/auth/repository'
@@ -101,12 +102,14 @@ export const AdminAuthGuardPlugin = new Elysia({
   }))
   .macro({
     requiredLocalUser: {
-      async resolve({ status, headers, adminAuthGuard }) {
+      async resolve({ status, headers, adminAuthGuard, request }) {
         const user = await adminAuthGuard.getCurrentUser(headers)
 
         if (user.isErr()) {
           return mapErrorCodeToResponse(user.error, status)
         }
+
+        setUserIdHeader(request, user.value.id)
 
         return { user: user.value }
       },

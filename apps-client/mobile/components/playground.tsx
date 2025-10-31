@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Platform, Pressable, ScrollView, Text as RNText, TextProps, View } from 'react-native'
 import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import ImageView from 'react-native-image-viewing'
+import PagerView from 'react-native-pager-view'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
@@ -296,6 +297,7 @@ export function Playground() {
           </Dialog>
         </View>
         <AvatarExample />
+        <PagerViewExample />
         <BottomSheetExample />
         <ToggleGroupExample />
         <ProgressExample />
@@ -314,9 +316,26 @@ export function Playground() {
         <FacebookSDKExample />
         <LocationExample />
         <FrontCameraExample />
+        <MiniAppExample />
         <PollExample />
       </View>
     </ScrollView>
+  )
+}
+
+function PagerViewExample() {
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Pager View</H2>
+      <PagerView style={{ flex: 1, height: 300, width: '100%' }} initialPage={0}>
+        <View key="1" className="flex-1 items-center justify-center bg-blue-50">
+          <Text>First page</Text>
+        </View>
+        <View key="2" className="flex-1 items-center justify-center bg-red-50">
+          <Text>Second page</Text>
+        </View>
+      </PagerView>
+    </View>
   )
 }
 
@@ -906,6 +925,8 @@ const electionDetail: ElectionWithCurrentStatus = {
   description: 'เลือกตั้งตัวแทนสมาชิกพรรคประจำ อ.เมือง จ.ระยอง บลาบลาบลา',
   location: 'อาคารอเนกประสงชุมชนสองพี่น้อง 1,2,3',
   locationMapUrl: 'https://maps.app.goo.gl/3Da9VfiGFiHXeQKLA',
+  province: 'ระยอง',
+  district: 'เมือง',
   mode: 'SECURE',
   isCancelled: false,
   encryptionPublicKey: 'some-public-key',
@@ -1092,6 +1113,30 @@ function FrontCameraExample() {
         <Text>Open Front Camera</Text>
       </Button>
       {asset && <Image source={{ uri: asset.uri }} className="aspect-[3/4]" />}
+    </View>
+  )
+}
+
+function MiniAppExample() {
+  const router = useRouter()
+  const miniApps = reactQueryClient.useQuery('/mini-app', {})
+
+  return (
+    <View className="flex flex-col gap-2">
+      <H2 className="font-inter-bold">Mini App</H2>
+      {miniApps.data?.map((miniApp) => (
+        <Button
+          variant="outline"
+          key={miniApp.slug}
+          className="flex flex-row items-center gap-1"
+          onPress={() => router.push(`/mini-app/${miniApp.slug}`)}
+        >
+          {miniApp.iconUrl && (
+            <Image source={{ uri: miniApp.iconUrl }} className="w-4 h-4 color-primary" />
+          )}
+          <Text>{miniApp.name}</Text>
+        </Button>
+      ))}
     </View>
   )
 }

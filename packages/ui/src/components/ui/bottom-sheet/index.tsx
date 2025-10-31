@@ -38,7 +38,7 @@ const BottomSheetView = cssInterop(BSView, {
   className: 'style',
 })
 
-const BottomSheetScrollView = cssInterop(BSScrollView, {
+const BottomSheetScrollView: React.ComponentType<any> = cssInterop(BSScrollView, {
   className: 'style',
   contentContainerClassName: 'contentContainerStyle',
 })
