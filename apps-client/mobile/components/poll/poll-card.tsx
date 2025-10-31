@@ -152,7 +152,7 @@ export function PollCountdownTimer(props: PollCountdownTimerProps) {
   return <>{secondsLeft ? formatTimeInterval(secondsLeft) : '--'}</>
 }
 
-const PollStatusBadge = ({ isEnded }: { isEnded: boolean }) => {
+export const PollStatusBadge = ({ isEnded }: { isEnded: boolean }) => {
   return (
     <Badge variant={isEnded ? 'closed' : 'default'}>
       <Text>{isEnded ? 'ปิดโพลแล้ว' : 'โพลที่โหวตได้'}</Text>
