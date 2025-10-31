@@ -112,10 +112,10 @@ export const AppSidebar = ({
                 </Collapsible>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <a href="#">
+                    <NavLink to="/facebook">
                       <Facebook />
                       <span>เพจเฟสบุ๊ค</span>
-                    </a>
+                    </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
@@ -151,9 +151,6 @@ export const AppSidebar = ({
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <NavLink to="/banner-test">Banner Test</NavLink>
-                  </SidebarMenuButton>
-                  <SidebarMenuButton asChild>
-                    <NavLink to="/facebook">Facebook</NavLink>
                   </SidebarMenuButton>
                   <SidebarMenuButton asChild>
                     <NavLink to="/file-test">File Test</NavLink>
