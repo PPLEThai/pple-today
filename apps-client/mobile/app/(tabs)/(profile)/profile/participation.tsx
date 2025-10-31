@@ -1,5 +1,5 @@
 import React from 'react'
-import { View } from 'react-native'
+import { Dimensions, View } from 'react-native'
 import Animated, { useAnimatedScrollHandler } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
@@ -155,7 +155,7 @@ const MyPollContent = (props: PagerScrollViewProps) => {
       data={data}
       className="flex-1"
       contentContainerClassName="flex-grow flex flex-col gap-4 my-4"
-      contentContainerStyle={{ paddingTop: headerHeight }}
+      contentContainerStyle={{ paddingTop: headerHeight, minHeight: minHeight }}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
       renderItem={renderParticipationItem}
@@ -166,6 +166,7 @@ const MyPollContent = (props: PagerScrollViewProps) => {
   )
 }
 
+const minHeight = Dimensions.get('window').height
 const MyElectionContent = (props: PagerScrollViewProps) => {
   const { headerHeight, scrollElRef } = props
 
@@ -236,8 +237,8 @@ const MyElectionContent = (props: PagerScrollViewProps) => {
       onScroll={scrollHandler}
       data={data}
       className="flex-1"
-      contentContainerClassName="flex-grow flex flex-col gap-4 my-4"
-      contentContainerStyle={{ paddingTop: headerHeight }}
+      contentContainerClassName="flex-grow flex flex-col gap-4 mt-4"
+      contentContainerStyle={{ minHeight: minHeight, paddingTop: headerHeight }}
       onEndReachedThreshold={1}
       onEndReached={onEndReached}
       renderItem={renderParticipationItem}

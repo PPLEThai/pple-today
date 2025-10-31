@@ -622,10 +622,14 @@ export const Participation = ({
 }: {
   participation: GetUserRecentParticipationResponse[number]
 }) => {
+  const router = useRouter()
   switch (participation.type) {
     case 'POLL':
       return (
-        <View className="flex flex-row items-center justify-between px-4 h-[60px]">
+        <Pressable
+          onPress={() => router.navigate(`/feed/${participation.id}`)}
+          className="flex flex-row items-center justify-between px-4 h-[60px]"
+        >
           <View className="flex flex-row gap-3 items-center flex-1">
             <Icon
               icon={MessageCircleQuestionIcon}
@@ -661,11 +665,14 @@ export const Participation = ({
               strokeWidth={1}
             />
           </View>
-        </View>
+        </Pressable>
       )
     case 'ELECTION':
       return (
-        <View className="flex flex-row items-center justify-between gap-1 mx-4 h-[60px]">
+        <Pressable
+          onPress={() => router.navigate(`/feed/${participation.id}`)}
+          className="flex flex-row items-center justify-between gap-1 mx-4 h-[60px]"
+        >
           <View className="flex flex-row gap-3 items-center flex-1">
             <Icon icon={VoteIcon} className="text-base-primary-default" size={32} strokeWidth={2} />
             <View className="flex flex-col justify-between gap-1 flex-1 h-full shrink-0">
@@ -696,7 +703,7 @@ export const Participation = ({
               strokeWidth={1}
             />
           </Button>
-        </View>
+        </Pressable>
       )
     default:
       return exhaustiveGuard(participation)

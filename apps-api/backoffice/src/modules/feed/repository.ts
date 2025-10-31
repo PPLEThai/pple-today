@@ -111,7 +111,9 @@ export class FeedRepository {
           },
         },
         where: {
-          status: PollStatus.PUBLISHED,
+          status: {
+            in: [PollStatus.PUBLISHED, PollStatus.ARCHIVED],
+          },
         },
       },
       post: {
@@ -637,7 +639,13 @@ export class FeedRepository {
           },
           OR: [
             { post: { status: PostStatus.PUBLISHED } },
-            { poll: { status: PollStatus.PUBLISHED } },
+            {
+              poll: {
+                status: {
+                  in: [PollStatus.ARCHIVED, PollStatus.PUBLISHED],
+                },
+              },
+            },
             {
               announcement: { status: AnnouncementStatus.PUBLISHED },
             },
