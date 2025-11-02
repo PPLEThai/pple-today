@@ -601,8 +601,8 @@ const ParticipationSection = () => {
           <H2 className="text-xl text-base-text-high font-heading-semibold">การเข้าร่วมของฉัน</H2>
         </View>
       </View>
-      {participationQuery.data.slice(0, 3).map((participation) => (
-        <Participation key={participation.id} participation={participation} />
+      {participationQuery.data.slice(0, 3).map((participation, index) => (
+        <Participation key={index} participation={participation} />
       ))}
       {participationQuery.data.length > 0 && (
         <Button
@@ -670,7 +670,7 @@ export const Participation = ({
     case 'ELECTION':
       return (
         <Pressable
-          onPress={() => router.navigate(`/election/${participation.id}`)}
+          onPress={() => router.navigate(`/election/${participation.electionId}`)}
           className="flex flex-row items-center justify-between gap-1 mx-4 h-[60px]"
         >
           <View className="flex flex-row gap-3 items-center flex-1">

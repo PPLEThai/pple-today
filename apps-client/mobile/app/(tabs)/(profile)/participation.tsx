@@ -226,7 +226,7 @@ const MyElectionContent = (props: PagerScrollViewProps) => {
 
   const renderParticipationItem = React.useCallback(
     ({ item }: { item: GetUserElectionParticipationResponse['items'][number]; index: number }) => {
-      return <Participation key={item.id} participation={item} />
+      return <Participation key={item.electionId} participation={item} />
     },
     []
   )
