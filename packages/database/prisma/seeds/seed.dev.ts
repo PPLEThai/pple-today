@@ -362,7 +362,7 @@ const seedPolls = async () => {
       where: { id: `archievedp-${i + 1}` },
       update: {},
       create: {
-        id: `archievedp-${i + 1}`,
+        id: `archivedp-${i + 1}`,
         author: {
           connect: { id: OFFICIAL_USER_ID },
         },
@@ -450,6 +450,11 @@ const seedPolls = async () => {
           id: `poll-answer-${i + 1}-${j}`,
           user: { connect: { id: `poll-voter-${j}` } },
           option: { connect: { id: `popt-${i * OPTION_AMOUNT + 1}` } },
+          poll: {
+            connect: {
+              feedItemId: `mp-${i + 1}`,
+            },
+          },
         },
       })
     }
@@ -461,6 +466,11 @@ const seedPolls = async () => {
           id: `poll-answer-${i + 1}-${j}`,
           user: { connect: { id: `poll-voter-${j}` } },
           option: { connect: { id: `popt-${i * OPTION_AMOUNT + 2}` } },
+          poll: {
+            connect: {
+              feedItemId: `mp-${i + 1}`,
+            },
+          },
         },
       })
     }
@@ -471,6 +481,11 @@ const seedPolls = async () => {
         id: `poll-answer-${i + 1}-6`,
         user: { connect: { id: `poll-voter-6` } },
         option: { connect: { id: `popt-${i * OPTION_AMOUNT + 3}` } }, // 3, 7, 11
+        poll: {
+          connect: {
+            feedItemId: `mp-${i + 1}`,
+          },
+        },
       },
     })
 
@@ -486,6 +501,11 @@ const seedPolls = async () => {
           id: `not-answer-${i + 1}-${j}`,
           user: { connect: { id: `poll-voter-${j}` } },
           option: { connect: { id: `notshow-${i * OPTION_AMOUNT + 1}` } },
+          poll: {
+            connect: {
+              feedItemId: `archivedp-${i + 1}`,
+            },
+          },
         },
       })
     }
@@ -497,6 +517,11 @@ const seedPolls = async () => {
           id: `not-answer-${i + 1}-${j}`,
           user: { connect: { id: `poll-voter-${j}` } },
           option: { connect: { id: `notshow-${i * OPTION_AMOUNT + 2}` } },
+          poll: {
+            connect: {
+              feedItemId: `archivedp-${i + 1}`,
+            },
+          },
         },
       })
     }
@@ -507,6 +532,11 @@ const seedPolls = async () => {
         id: `not-answer-${i + 1}-6`,
         user: { connect: { id: `poll-voter-6` } },
         option: { connect: { id: `notshow-${i * OPTION_AMOUNT + 3}` } },
+        poll: {
+          connect: {
+            feedItemId: `archivedp-${i + 1}`,
+          },
+        },
       },
     })
 
