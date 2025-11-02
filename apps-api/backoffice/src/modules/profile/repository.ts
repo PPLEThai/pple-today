@@ -1,7 +1,7 @@
 import { ElectionStatus, FilePath, ParticipationType } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { Election, PollStatus, Prisma, UserStatus } from '@pple-today/database/prisma'
+import { Election, Prisma, UserStatus } from '@pple-today/database/prisma'
 import { get_candidate_user } from '@pple-today/database/prisma/sql'
 import Elysia from 'elysia'
 import * as R from 'remeda'
@@ -17,7 +17,7 @@ export class ProfileRepository {
     private fileService: FileService
   ) {}
 
-  private constructWithMeta<T extends { id: string }>(
+  private constructPollWithMeta<T extends { id: string }>(
     data: T[],
     config: {
       needShuffle?: boolean
@@ -30,6 +30,26 @@ export class ProfileRepository {
       meta: {
         cursor: {
           next: data.length === config.limit ? data[config.limit - 1].id : null,
+          previous: config.cursor || null,
+        },
+      },
+    }
+  }
+
+  // for readability
+  private constructElectionWithMeta<T extends { electionId: string }>(
+    data: T[],
+    config: {
+      needShuffle?: boolean
+      limit: number
+      cursor?: string
+    }
+  ) {
+    return {
+      items: config.needShuffle ? R.shuffle(data) : data,
+      meta: {
+        cursor: {
+          next: data.length === config.limit ? data[config.limit - 1].electionId : null,
           previous: config.cursor || null,
         },
       },
@@ -281,69 +301,35 @@ export class ProfileRepository {
     limit: number
   }) {
     return await fromRepositoryPromise(async () => {
-      const latestPoll = await this.prismaService.poll.findMany({
+      const latestPoll = await this.prismaService.pollAnswer.findMany({
         where: {
-          options: {
-            some: {
-              pollAnswers: {
-                some: {
-                  userId,
-                },
-              },
-            },
-          },
-          status: PollStatus.PUBLISHED,
+          userId,
         },
-        distinct: ['feedItemId'],
-        select: {
-          title: true,
-          feedItemId: true,
-          endAt: true,
-          options: {
-            where: {
-              pollAnswers: {
-                some: {
-                  userId,
-                },
-              },
-            },
-            select: {
-              pollAnswers: {
-                where: {
-                  userId,
-                },
-                take: 1,
-                orderBy: {
-                  createdAt: 'desc',
-                },
-                select: {
-                  createdAt: true,
-                },
-              },
-            },
-          },
+        distinct: ['pollId'],
+        orderBy: {
+          createdAt: 'desc',
         },
-        cursor: cursor ? { feedItemId: cursor } : undefined,
+        cursor: cursor ? { id: cursor } : undefined,
+        skip: cursor ? 1 : 0,
         take: limit,
+        include: {
+          poll: true,
+        },
       })
 
       const transformPoll = R.pipe(
         latestPoll,
-        R.map((poll) => ({
+        R.map((item) => ({
+          id: item.id,
+          feedItemId: item.poll.feedItemId,
           type: ParticipationType.POLL,
-          id: poll.feedItemId,
-          title: poll.title,
-          endAt: poll.endAt,
-          submittedAt: R.pipe(
-            poll.options,
-            R.map((option) => option.pollAnswers[0]?.createdAt),
-            R.flat(),
-            R.firstBy([R.identity(), 'desc'])
-          )!,
+          title: item.poll.title,
+          endAt: item.poll.endAt,
+          submittedAt: item.createdAt,
         }))
       )
 
-      return this.constructWithMeta(transformPoll, {
+      return this.constructPollWithMeta(transformPoll, {
         needShuffle: false,
         limit,
         cursor,
@@ -357,44 +343,48 @@ export class ProfileRepository {
     limit,
   }: {
     userId: string
-    cursor?: string
+    cursor?: string //cursor by combine the user_id and election_id
     limit: number
   }) {
     return await fromRepositoryPromise(async () => {
-      const latestElection = await this.prismaService.election.findMany({
+      const latestElection = await this.prismaService.electionVoteRecord.findMany({
         where: {
-          voteRecords: {
-            some: {
-              userId,
-            },
-          },
+          userId,
+        },
+        orderBy: {
+          createdAt: 'desc',
         },
         include: {
-          voteRecords: {
-            where: {
-              userId,
-            },
-            select: {
-              createdAt: true,
-            },
-          },
+          election: true,
         },
-        cursor: cursor ? { id: cursor } : undefined,
+        skip: cursor ? 1 : 0,
+        cursor: cursor
+          ? {
+              electionId_userId: {
+                electionId: cursor,
+                userId,
+              },
+            }
+          : undefined,
         take: limit,
       })
 
       const transformElection = R.pipe(
         latestElection,
-        R.map((election) => ({
+        R.map((item) => ({
+          electionId: item.election.id,
           type: ParticipationType.ELECTION,
-          id: election.id,
-          name: election.name,
-          electionStatus: this.getElectionStatus(election),
-          submittedAt: election.voteRecords[0].createdAt,
+          name: item.election.name,
+          electionStatus: this.getElectionStatus(item.election),
+          submittedAt: item.createdAt,
         }))
       )
 
-      return this.constructWithMeta(transformElection, { needShuffle: false, limit, cursor })
+      return this.constructElectionWithMeta(transformElection, {
+        needShuffle: false,
+        limit,
+        cursor,
+      })
     })
   }
 }

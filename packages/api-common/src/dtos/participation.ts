@@ -9,8 +9,9 @@ export const ParticipationType = {
 export type ParticipationType = (typeof ParticipationType)[keyof typeof ParticipationType]
 
 export const UserPollParticipation = t.Object({
+  id: t.String({ description: 'The ID of the poll answer' }),
+  feedItemId: t.String({ description: 'The ID of the feed item' }),
   type: t.Literal(ParticipationType.POLL),
-  id: t.String({ description: 'The ID of the feed item' }),
   title: t.String({ description: 'The title of the poll' }),
   endAt: t.Date({ description: 'The End Date of the poll' }),
   submittedAt: t.Date({ description: 'The latest submission of the poll' }),
@@ -18,8 +19,8 @@ export const UserPollParticipation = t.Object({
 export type UserPollParticipation = Static<typeof UserPollParticipation>
 
 export const UserElectionParticipation = t.Object({
+  electionId: t.String({ description: 'The ID of the election' }),
   type: t.Literal(ParticipationType.ELECTION),
-  id: t.String({ description: 'The ID of the election item' }),
   name: t.String({ description: 'The name of the election' }),
   electionStatus: ElectionStatus,
   submittedAt: t.Date({ description: 'The latest submission of the election' }),
