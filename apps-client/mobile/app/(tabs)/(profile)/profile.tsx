@@ -121,6 +121,9 @@ const ProfileSetting = () => {
         queryKey: reactQueryClient.getQueryKey('/facebook/linked-page'),
       })
       await queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/profile/me') })
+      await queryClient.resetQueries({
+        queryKey: reactQueryClient.getQueryKey('/profile/participation/recent'),
+      })
       setRefreshing(false)
     } catch (error) {
       console.error('Error refreshing feed:', error)
