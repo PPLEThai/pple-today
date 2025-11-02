@@ -156,7 +156,7 @@ const MyPollContent = (props: PagerScrollViewProps) => {
       className="flex-1"
       contentContainerClassName="flex-grow flex flex-col gap-4 my-4"
       contentContainerStyle={{ paddingTop: headerHeight, minHeight: minHeight }}
-      onEndReachedThreshold={1}
+      onEndReachedThreshold={0.2}
       onEndReached={onEndReached}
       renderItem={renderParticipationItem}
       ListEmptyComponent={<MyParticipationEmpty queryResult={pollInfiniteQuery} />}
@@ -239,7 +239,7 @@ const MyElectionContent = (props: PagerScrollViewProps) => {
       className="flex-1"
       contentContainerClassName="flex-grow flex flex-col gap-4 mt-4"
       contentContainerStyle={{ minHeight: minHeight, paddingTop: headerHeight }}
-      onEndReachedThreshold={1}
+      onEndReachedThreshold={0.2}
       onEndReached={onEndReached}
       renderItem={renderParticipationItem}
       ListEmptyComponent={<MyParticipationEmpty queryResult={electionInfiniteQuery} />}

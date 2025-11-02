@@ -630,7 +630,7 @@ export const Participation = ({
     case 'POLL':
       return (
         <Pressable
-          onPress={() => router.navigate(`/feed/${participation.id}`)}
+          onPress={() => router.navigate(`/feed/${participation.feedItemId}`)}
           className="flex flex-row items-center justify-between px-4 h-[60px]"
         >
           <View className="flex flex-row gap-3 items-center flex-1">
