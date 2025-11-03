@@ -92,7 +92,6 @@ const ImageItem = ({
     const velocityY = nativeEvent?.velocity?.y ?? 0
     const offsetY = nativeEvent?.contentOffset?.y ?? 0
 
-    console.log(velocityY, offsetY)
     if (
       Math.abs(velocityY) > SWIPE_CLOSE_VELOCITY ||
       Math.abs(offsetY) > SWIPE_CLOSE_OFFSET ||
