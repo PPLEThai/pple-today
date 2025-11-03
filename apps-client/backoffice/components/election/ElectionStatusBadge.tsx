@@ -16,6 +16,8 @@ export default function ElectionStatusBadge({ status }: { status: ElectionStatus
       return <Badge variant="destructive">ปิดหีบ</Badge>
     case 'RESULT_ANNOUNCE':
       return <Badge variant="default">ประกาศผล</Badge>
+    case 'CANCELLED':
+      return <Badge variant="destructive">ยกเลิก</Badge>
     default:
       exhaustiveGuard(status)
   }

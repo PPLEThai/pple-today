@@ -114,6 +114,7 @@ export function ElectionStatusBadge(props: { status: ElectionWithCurrentStatus['
         </Badge>
       )
     case 'DRAFT':
+    case 'CANCELLED':
       return null
     default:
       exhaustiveGuard(props.status)
@@ -199,6 +200,7 @@ function ElectionCardDetail(props: ElectionCardProps) {
       )
     case 'RESULT_ANNOUNCE':
     case 'DRAFT':
+    case 'CANCELLED':
       return null
     default:
       exhaustiveGuard(props.election.status)
@@ -407,6 +409,7 @@ function ElectionCardFooter(props: ElectionCardProps) {
         </View>
       )
     case 'DRAFT':
+    case 'CANCELLED':
       return null
     default:
       exhaustiveGuard(props.election.status)
@@ -526,6 +529,7 @@ function ElectionDetailCardDetail(props: ElectionDetailCardProps) {
     case 'CLOSED_VOTE':
     case 'RESULT_ANNOUNCE':
     case 'DRAFT':
+    case 'CANCELLED':
       return null
     default:
       exhaustiveGuard(props.election.status)
