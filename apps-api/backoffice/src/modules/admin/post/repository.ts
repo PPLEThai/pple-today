@@ -11,7 +11,7 @@ import { PrismaServicePlugin } from '../../../plugins/prisma'
 
 export class AdminPostRepository {
   constructor(
-    private prismaService: PrismaService,
+    private readonly prismaService: PrismaService,
     private readonly fileService: FileService
   ) {}
 
