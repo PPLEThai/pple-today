@@ -1,4 +1,6 @@
+import { useCallback } from 'react'
 import { NavLink } from 'react-router'
+import { useNavigate } from 'react-router'
 
 import { Avatar, AvatarImage } from '@pple-today/web-ui/avatar'
 import { Badge } from '@pple-today/web-ui/badge'
@@ -14,6 +16,7 @@ import { Button } from '@pple-today/web-ui/button'
 import { Card, CardContent } from '@pple-today/web-ui/card'
 import { Typography } from '@pple-today/web-ui/typography'
 import { cn } from '@pple-today/web-ui/utils'
+import { useQueryClient } from '@tanstack/react-query'
 import ElectionKeyStatusBadge from 'components/election/ElectionKeyStatusBadge'
 import ElectionStatusBadge from 'components/election/ElectionStatusBadge'
 import ElectionTypeBadge from 'components/election/ElectionTypeBadge'
@@ -96,7 +99,66 @@ function Breadcrumbs({ name }: { name: string }) {
   )
 }
 
+const electionQueryKey = (electionId: string) =>
+  reactQueryClient.getQueryKey('/admin/elections/:electionId', {
+    pathParams: { electionId },
+  })
+
 function Header({ election }: { election: AdminGetElectionResponse }) {
+  const navigate = useNavigate()
+
+  const queryClient = useQueryClient()
+  const deleteMutation = reactQueryClient.useMutation('delete', '/admin/elections/:electionId')
+  const cancelMutation = reactQueryClient.useMutation('put', '/admin/elections/:electionId/cancel')
+  const publishMutation = reactQueryClient.useMutation(
+    'put',
+    '/admin/elections/:electionId/publish'
+  )
+
+  const deleteElection = useCallback(() => {
+    if (deleteMutation.isPending) return
+
+    deleteMutation.mutateAsync(
+      { pathParams: { electionId: election.id } },
+      {
+        onSuccess: () => navigate('/activity/internal-election'),
+      }
+    )
+  }, [deleteMutation, navigate, election])
+
+  const cancelElection = useCallback(() => {
+    if (cancelMutation.isPending) return
+
+    cancelMutation.mutateAsync(
+      { pathParams: { electionId: election.id } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: electionQueryKey(election.id),
+          })
+        },
+      }
+    )
+  }, [cancelMutation, queryClient, election])
+
+  const publishElection = useCallback(() => {
+    if (publishMutation.isPending) return
+
+    publishMutation.mutateAsync(
+      {
+        pathParams: { electionId: election.id },
+        body: { publishDate: new Date() },
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: electionQueryKey(election.id),
+          })
+        },
+      }
+    )
+  }, [publishMutation, queryClient, election])
+
   return (
     <div className="flex items-center justify-between mt-4">
       <div className="flex items-center gap-4">
@@ -106,10 +168,15 @@ function Header({ election }: { election: AdminGetElectionResponse }) {
       <div className="flex items-center gap-2">
         {election.status === 'DRAFT' ? (
           <>
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" onClick={deleteElection}>
               <Trash2 />
             </Button>
-            <Button variant="default" size="icon" disabled={election.keyStatus !== 'CREATED'}>
+            <Button
+              variant="default"
+              size="icon"
+              disabled={election.keyStatus !== 'CREATED'}
+              onClick={publishElection}
+            >
               <Eye className="text-white" />
             </Button>
             <Button variant="default" className="space-x-2">
@@ -120,7 +187,7 @@ function Header({ election }: { election: AdminGetElectionResponse }) {
             </Button>
           </>
         ) : (
-          <Button variant="outline" disabled={election.isCancelled}>
+          <Button variant="outline" disabled={election.isCancelled} onClick={cancelElection}>
             <CalendarX2 className="text-system-danger-default" strokeWidth={1} size={20} />
             <Typography variant="small" className="ml-2">
               ยกเลิกการเลือกตั้ง

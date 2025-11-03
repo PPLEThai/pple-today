@@ -1,6 +1,8 @@
 import { Badge } from '@pple-today/web-ui/badge'
 import { AdminElectionInfo } from 'node_modules/@api/backoffice/src/modules/admin/election/models'
 
+import { exhaustiveGuard } from '~/libs/exhaustive-guard'
+
 export default function ElectionKeyStatusBadge({
   status,
 }: {
@@ -13,7 +15,10 @@ export default function ElectionKeyStatusBadge({
       return <Badge variant="success">พร้อมประกาศ</Badge>
     case 'FAILED_CREATED':
       return <Badge variant="destructive">มีข้อผิดพลาด</Badge>
+    case 'NOT_CREATED':
+    case 'DESTROY_SCHEDULED':
+      return null
     default:
-      return <></>
+      return exhaustiveGuard(status)
   }
 }
