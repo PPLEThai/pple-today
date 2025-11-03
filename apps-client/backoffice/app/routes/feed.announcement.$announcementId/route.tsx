@@ -25,7 +25,7 @@ import { UpdateAnnouncementBody, UpdateAnnouncementParams } from '@api/backoffic
 
 import { reactQueryClient } from '~/libs/api-client'
 
-import { Route } from '../feed.announcement.$announcementId/+types/route'
+import { Route } from './+types/route'
 
 export function meta() {
   return [{ title: 'รายละเอียดประกาศ' }]

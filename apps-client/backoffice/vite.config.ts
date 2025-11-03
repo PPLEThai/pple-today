@@ -1,4 +1,4 @@
-import { reactRouter } from '@react-router/dev/vite'
+import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import tailwindcss from 'tailwindcss'
 import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
@@ -20,5 +20,13 @@ export default defineConfig({
         allowedHosts: [process.env.VITE_WEB_DOMAIN],
       }
     : undefined,
-  plugins: [reactRouter(), tsconfigPaths()],
+  plugins: [
+    tanstackRouter({
+      target: 'react',
+      autoCodeSplitting: true,
+      routesDirectory: './app/routes',
+      generatedRouteTree: './app/routeTree.gen.ts',
+    }),
+    tsconfigPaths(),
+  ],
 })

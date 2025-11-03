@@ -20,7 +20,7 @@ import { Calendar, Link, MessageSquareHeart, Pencil, Users } from 'lucide-react'
 
 import { reactQueryClient } from '~/libs/api-client'
 
-import { Route } from '../feed.topic.$topicId/+types/route'
+import { Route } from './+types/route'
 
 export function meta() {
   return [{ title: 'รายละเอียดหัวข้อ' }]
