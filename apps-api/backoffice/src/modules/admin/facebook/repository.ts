@@ -108,6 +108,7 @@ export class AdminFacebookPageRepository {
         where: { id: facebookPageId },
         data: {
           name: data.name,
+          linkedStatus: data.status,
         },
       })
     )

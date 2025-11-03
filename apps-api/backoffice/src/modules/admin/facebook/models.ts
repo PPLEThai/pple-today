@@ -33,6 +33,7 @@ export type UpdateFacebookPageParams = Static<typeof UpdateFacebookPageParams>
 export const UpdateFacebookPageBody = t.Partial(
   t.Object({
     name: t.String({ description: 'The name of the facebook page' }),
+    status: t.Enum(FacebookPageLinkedStatus),
   })
 )
 export type UpdateFacebookPageBody = Static<typeof UpdateFacebookPageBody>

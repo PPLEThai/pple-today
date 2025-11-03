@@ -12,10 +12,13 @@ import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { DtFilter } from 'components/datatable/DtFilter'
 import { DtMovement } from 'components/datatable/DtMovement'
 import { TableCopyId } from 'components/TableCopyId'
-import { Check, EyeOff, Pencil, X } from 'lucide-react'
-import { GetFacebookPagesResponse } from 'node_modules/@api/backoffice/src/modules/admin/facebook/models'
+import { Check, Eye, EyeOff, Pencil, X } from 'lucide-react'
 
-import { UpdatePostBody, UpdatePostParams } from '@api/backoffice/admin'
+import {
+  GetFacebookPagesResponse,
+  UpdateFacebookPageBody,
+  UpdateFacebookPageParams,
+} from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
 
@@ -40,7 +43,7 @@ export const Data = () => {
         search: querySearch,
         status:
           queryStatus.length > 0
-            ? (queryStatus as ('PENDING' | 'APPROVED' | 'REJECTED' | 'UNLINKED')[])
+            ? (queryStatus as ('PENDING' | 'APPROVED' | 'REJECTED' | 'SUSPENDED' | 'UNLINKED')[])
             : undefined,
       },
     },
@@ -48,53 +51,43 @@ export const Data = () => {
       placeholderData: keepPreviousData,
     }
   )
-  const patchMutation = reactQueryClient.useMutation('patch', '/admin/posts/:postId')
-  const invalidateQuery = useCallback(() => {
-    queryClient.invalidateQueries({
-      queryKey: reactQueryClient.getQueryKey('/admin/facebook', {
-        query: {
-          limit: queryLimit,
-          page: queryPage,
-          search: querySearch,
-          status:
-            queryStatus.length > 0
-              ? (queryStatus as ('PENDING' | 'APPROVED' | 'REJECTED' | 'UNLINKED')[])
-              : undefined,
-        },
-      }),
-    })
-  }, [queryClient, queryLimit, queryPage, querySearch, queryStatus])
+  const patchMutation = reactQueryClient.useMutation('patch', '/admin/facebook/:facebookPageId')
 
-  const setPostStatus = useCallback(
+  const setFacebookPageStatus = useCallback(
     (
-      { status }: { status: NonNullable<UpdatePostBody['status']> },
-      { postId }: UpdatePostParams
+      { status }: { status: NonNullable<UpdateFacebookPageBody['status']> },
+      { facebookPageId }: UpdateFacebookPageParams
     ) => {
       if (patchMutation.isPending) return
 
       patchMutation.mutateAsync(
-        { pathParams: { postId }, body: { status } },
+        { pathParams: { facebookPageId }, body: { status } },
         {
           onSuccess: () => {
             queryClient.setQueryData(
-              reactQueryClient.getQueryKey('/admin/posts', {
+              reactQueryClient.getQueryKey('/admin/facebook', {
                 query: {
                   limit: queryLimit,
                   page: queryPage,
                   search: querySearch,
                   status:
                     queryStatus.length > 0
-                      ? (queryStatus as ('PUBLISHED' | 'HIDDEN' | 'DELETED')[])
+                      ? (queryStatus as (
+                          | 'PENDING'
+                          | 'APPROVED'
+                          | 'REJECTED'
+                          | 'SUSPENDED'
+                          | 'UNLINKED'
+                        )[])
                       : undefined,
                 },
               }),
               (_data) => {
                 const data = structuredClone(_data)
                 if (!data) return
-                const idx = data.items.findIndex((d) => d.id === postId)
+                const idx = data.items.findIndex((d) => d.id === facebookPageId)
                 if (idx === -1) return
-                data.items[idx].status = status
-                if (status === 'PUBLISHED') data.items[idx].publishedAt = new Date()
+                data.items[idx].linkedStatus = status
                 return data
               }
             )
@@ -152,7 +145,7 @@ export const Data = () => {
         id: 'manage',
         header: 'จัดการ',
         cell: ({ row }) => {
-          const id = row.original.id
+          const facebookPageId = row.original.id
           const status = row.original.linkedStatus
 
           return (
@@ -165,7 +158,9 @@ export const Data = () => {
                     className="size-8"
                     disabled={patchMutation.isPending}
                     aria-busy={patchMutation.isPending}
-                    onClick={() => setPostStatus({ status: 'HIDDEN' }, { postId: id })}
+                    onClick={() =>
+                      setFacebookPageStatus({ status: 'APPROVED' }, { facebookPageId })
+                    }
                   >
                     <span className="sr-only">อนุมัติ</span>
                     <Check className="size-4" />
@@ -176,7 +171,9 @@ export const Data = () => {
                     className="size-8"
                     disabled={patchMutation.isPending}
                     aria-busy={patchMutation.isPending}
-                    onClick={() => setPostStatus({ status: 'HIDDEN' }, { postId: id })}
+                    onClick={() =>
+                      setFacebookPageStatus({ status: 'REJECTED' }, { facebookPageId })
+                    }
                   >
                     <span className="sr-only">ไม่อนุมัติ</span>
                     <X className="size-4" />
@@ -190,14 +187,27 @@ export const Data = () => {
                   className="size-8"
                   disabled={patchMutation.isPending}
                   aria-busy={patchMutation.isPending}
-                  onClick={() => setPostStatus({ status: 'HIDDEN' }, { postId: id })}
+                  onClick={() => setFacebookPageStatus({ status: 'SUSPENDED' }, { facebookPageId })}
                 >
                   <span className="sr-only">ระงับการใช้งาน</span>
                   <EyeOff className="size-4" />
                 </Button>
               )}
+              {status === 'SUSPENDED' && (
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="size-8"
+                  disabled={patchMutation.isPending}
+                  aria-busy={patchMutation.isPending}
+                  onClick={() => setFacebookPageStatus({ status: 'APPROVED' }, { facebookPageId })}
+                >
+                  <span className="sr-only">เปิดใช้งาน</span>
+                  <Eye className="size-4" />
+                </Button>
+              )}
               <Button variant="outline" size="icon" className="size-8" asChild>
-                <NavLink to={`/facebook/${id}`}>
+                <NavLink to={`/facebook/${facebookPageId}`}>
                   <span className="sr-only">แก้ไข</span>
                   <Pencil className="size-4" />
                 </NavLink>
@@ -210,7 +220,7 @@ export const Data = () => {
         maxSize: 108,
       }),
     ],
-    [patchMutation.isPending, setPostStatus]
+    [patchMutation.isPending, setFacebookPageStatus]
   )
 
   return (
@@ -231,6 +241,7 @@ export const Data = () => {
             options: [
               { label: 'รอการอนุมัติ', value: 'PENDING' },
               { label: 'อนุมัติ', value: 'APPROVED' },
+              { label: 'ระงับการใช้งาน', value: 'SUSPENDED' },
               { label: 'ไม่อนุมัติ', value: 'REJECTED' },
               { label: 'ลบโดยผู้ใช้', value: 'UNLINKED' },
             ],

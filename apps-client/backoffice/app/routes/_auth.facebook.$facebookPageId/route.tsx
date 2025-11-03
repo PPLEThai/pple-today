@@ -15,7 +15,9 @@ import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
 import { FacebookPageEdit } from 'components/facebook/FacebookPageEdit'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
-import { Calendar, Facebook, Link, Pencil, Users } from 'lucide-react'
+import { Calendar, Check, Eye, EyeOff, Facebook, Link, Pencil, Users, X } from 'lucide-react'
+
+import { UpdateFacebookPageBody, UpdateFacebookPageParams } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
 
@@ -33,6 +35,7 @@ export default function FacebookDetailPage({ params }: Route.LoaderArgs) {
   const query = reactQueryClient.useQuery('/admin/facebook/:facebookPageId', {
     pathParams: { facebookPageId },
   })
+  const patchMutation = reactQueryClient.useMutation('patch', '/admin/facebook/:facebookPageId')
   const invalidateQuery = useCallback(() => {
     queryClient.invalidateQueries({
       queryKey: reactQueryClient.getQueryKey('/admin/facebook/:facebookPageId', {
@@ -40,6 +43,23 @@ export default function FacebookDetailPage({ params }: Route.LoaderArgs) {
       }),
     })
   }, [queryClient, facebookPageId])
+
+  const setFacebookPageStatus = useCallback(
+    (
+      { status }: { status: NonNullable<UpdateFacebookPageBody['status']> },
+      { facebookPageId }: UpdateFacebookPageParams
+    ) => {
+      if (patchMutation.isPending) return
+
+      patchMutation.mutateAsync(
+        { pathParams: { facebookPageId }, body: { status } },
+        {
+          onSuccess: () => invalidateQuery(),
+        }
+      )
+    },
+    [invalidateQuery, patchMutation]
+  )
 
   return (
     <div className="px-6 pb-6">
@@ -60,16 +80,70 @@ export default function FacebookDetailPage({ params }: Route.LoaderArgs) {
         <Facebook className="stroke-base-primary-default" size={32} />
         <Typography variant="h2">รายละเอียดเพจ</Typography>
         {query.data && (
-          <FacebookPageEdit
-            trigger={
-              <Button variant="outline" size="icon" className="ml-auto size-8">
-                <span className="sr-only">แก้ไข</span>
-                <Pencil className="size-4" />
+          <div className="ml-auto flex gap-3">
+            {query.data.linkedStatus === 'PENDING' && (
+              <>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="size-8"
+                  disabled={patchMutation.isPending}
+                  aria-busy={patchMutation.isPending}
+                  onClick={() => setFacebookPageStatus({ status: 'APPROVED' }, { facebookPageId })}
+                >
+                  <span className="sr-only">อนุมัติ</span>
+                  <Check className="size-4" />
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="size-8"
+                  disabled={patchMutation.isPending}
+                  aria-busy={patchMutation.isPending}
+                  onClick={() => setFacebookPageStatus({ status: 'REJECTED' }, { facebookPageId })}
+                >
+                  <span className="sr-only">ไม่อนุมัติ</span>
+                  <X className="size-4" />
+                </Button>
+              </>
+            )}
+            {query.data.linkedStatus === 'APPROVED' && (
+              <Button
+                variant="secondary"
+                size="icon"
+                className="size-8"
+                disabled={patchMutation.isPending}
+                aria-busy={patchMutation.isPending}
+                onClick={() => setFacebookPageStatus({ status: 'SUSPENDED' }, { facebookPageId })}
+              >
+                <span className="sr-only">ระงับการใช้งาน</span>
+                <EyeOff className="size-4" />
               </Button>
-            }
-            onSuccess={invalidateQuery}
-            facebookPage={query.data}
-          />
+            )}
+            {query.data.linkedStatus === 'SUSPENDED' && (
+              <Button
+                variant="secondary"
+                size="icon"
+                className="size-8"
+                disabled={patchMutation.isPending}
+                aria-busy={patchMutation.isPending}
+                onClick={() => setFacebookPageStatus({ status: 'APPROVED' }, { facebookPageId })}
+              >
+                <span className="sr-only">เปิดใช้งาน</span>
+                <Eye className="size-4" />
+              </Button>
+            )}
+            <FacebookPageEdit
+              trigger={
+                <Button variant="outline" size="icon" className="size-8">
+                  <span className="sr-only">แก้ไข</span>
+                  <Pencil className="size-4" />
+                </Button>
+              }
+              onSuccess={invalidateQuery}
+              facebookPage={query.data}
+            />
+          </div>
         )}
       </div>
       {query.isLoading ? (
