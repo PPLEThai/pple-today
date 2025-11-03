@@ -1,5 +1,11 @@
 # @client/backoffice
 
+## 0.5.1
+
+### Patch Changes
+
+- [#228](https://github.com/PPLEThai/pple-today/pull/228) [`379b22d`](https://github.com/PPLEThai/pple-today/commit/379b22d1d1ce57828773a1a3de43a9bac0eec883) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-501] list election](chayaponarpayatam2004/pple-501-list-election)
+
 ## 0.5.0
 
 ### Minor Changes

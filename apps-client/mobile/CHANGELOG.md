@@ -1,5 +1,13 @@
 # @client/mobile
 
+## 0.8.1
+
+### Patch Changes
+
+- [#227](https://github.com/PPLEThai/pple-today/pull/227) [`4601c72`](https://github.com/PPLEThai/pple-today/commit/4601c72f404ff08bbc93fd2f7c6a9b664530162d) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-362] Can click Connect Facebook Page again after have clicked](https://linear.app/snts/issue/PPLE-362/can-click-connect-facebook-page-again-after-have-clicked)
+
+- [#235](https://github.com/PPLEThai/pple-today/pull/235) [`8d79b81`](https://github.com/PPLEThai/pple-today/commit/8d79b81a27997381b1a21cee18946d271c7660d7) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-521] Fix Overflow name in feed](https://linear.app/snts/issue/PPLE-521/fix-overflow-name-in-feed)
+
 ## 0.8.0
 
 ### Minor Changes

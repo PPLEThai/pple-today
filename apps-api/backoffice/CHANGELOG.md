@@ -1,5 +1,17 @@
 # @api/backoffice
 
+## 0.8.1
+
+### Patch Changes
+
+- [#230](https://github.com/PPLEThai/pple-today/pull/230) [`4bea3f2`](https://github.com/PPLEThai/pple-today/commit/4bea3f28d0a2279fea443413f1d722f5be1f21c9) Thanks [@miello](https://github.com/miello)! - [[PPLE-520] [API] Remove non-nullable path in topic banner](https://linear.app/snts/issue/PPLE-520/api-remove-non-nullable-path-in-topic-banner)
+
+- [#228](https://github.com/PPLEThai/pple-today/pull/228) [`379b22d`](https://github.com/PPLEThai/pple-today/commit/379b22d1d1ce57828773a1a3de43a9bac0eec883) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-501] list election](chayaponarpayatam2004/pple-501-list-election)
+
+- Updated dependencies [[`4bea3f2`](https://github.com/PPLEThai/pple-today/commit/4bea3f28d0a2279fea443413f1d722f5be1f21c9), [`379b22d`](https://github.com/PPLEThai/pple-today/commit/379b22d1d1ce57828773a1a3de43a9bac0eec883)]:
+  - @pple-today/database@0.4.1
+  - @pple-today/api-common@0.5.1
+
 ## 0.8.0
 
 ### Minor Changes
