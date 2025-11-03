@@ -89,7 +89,7 @@ export const Data = () => {
                   limit: queryLimit,
                   page: queryPage,
                   name: queryName,
-                  status: queryStatus,
+                  status: queryStatus?.length === 0 ? undefined : queryStatus,
                 },
               }),
               (_data) => {
