@@ -69,6 +69,10 @@ export default {
           ios: {
             deploymentTarget: '15.1',
             reactNativeReleaseLevel: 'experimental',
+
+            // https://github.com/invertase/react-native-firebase/issues/8657#issuecomment-3309893085
+            useFrameworks: 'static',
+            forceStaticLinking: ['RNFBApp', 'RNFBMessaging'],
           },
           /**
            * Unfortunately, the performance issue with scrolling (Android) is really deep
@@ -135,14 +139,6 @@ export default {
 
       '@react-native-firebase/app',
       '@react-native-firebase/messaging',
-      [
-        'expo-build-properties',
-        {
-          ios: {
-            useFrameworks: 'static',
-          },
-        },
-      ],
       [
         'expo-notification-service-extension-plugin',
         {
