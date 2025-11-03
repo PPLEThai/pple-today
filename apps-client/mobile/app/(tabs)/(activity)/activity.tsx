@@ -290,7 +290,7 @@ function PollFeedSection(props: { ListHeaderComponent: React.ReactNode }) {
       renderItem={renderFeedItem}
       onEndReached={onEndReached}
       ListFooterComponent={
-        session ? <PollFooter queryResult={listPollQuery} className="mx-4" /> : undefined
+        session ? <PollFooter queryResult={listPollQuery} className="mx-4 mt-4" /> : undefined
       }
     />
   )

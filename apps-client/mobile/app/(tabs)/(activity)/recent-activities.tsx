@@ -13,7 +13,6 @@ import {
   UseInfiniteQueryResult,
   useQueryClient,
 } from '@tanstack/react-query'
-import dayjs from 'dayjs'
 import { useRouter } from 'expo-router'
 import { ArrowLeftIcon, HandshakeIcon } from 'lucide-react-native'
 
@@ -35,7 +34,13 @@ import {
 } from '@app/components/pager-with-header'
 import { RefreshControl } from '@app/components/refresh-control'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
-import { Activity, GetPPLEActivity, getPPLEActivity, mapToActivity } from '@app/libs/pple-activity'
+import {
+  Activity,
+  GetPPLEActivity,
+  getTodayActivity,
+  getUpcomingActivity,
+  mapToActivity,
+} from '@app/libs/pple-activity'
 import { useScrollContext } from '@app/libs/scroll-context'
 
 export default function RecentActivityPage() {
@@ -116,13 +121,7 @@ function TodayActivityContent(props: PagerScrollViewProps) {
     queryKey: [QUERY_KEY_SYMBOL, 'infinite', 'today-activity'],
     initialPageParam: 1,
     queryFn: async ({ pageParam = 1 }) => {
-      const data = await getPPLEActivity({ limit: LIMIT, currentPage: pageParam })
-      return {
-        ...data,
-        result: data.result.filter((activity) => {
-          return dayjs(activity.event_data.event_date).isSame(dayjs(), 'day')
-        }),
-      }
+      return getTodayActivity({ limit: LIMIT, currentPage: pageParam })
     },
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.result.length < LIMIT) {
@@ -207,7 +206,7 @@ function UpcomingActivityContent(props: PagerScrollViewProps) {
     queryKey: [QUERY_KEY_SYMBOL, 'infinite', 'upcoming-activity'],
     initialPageParam: 1,
     queryFn: async ({ pageParam = 1 }) => {
-      return getPPLEActivity({ limit: LIMIT, currentPage: pageParam })
+      return getUpcomingActivity({ limit: LIMIT, currentPage: pageParam })
     },
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.result.length < LIMIT) {
@@ -220,11 +219,7 @@ function UpcomingActivityContent(props: PagerScrollViewProps) {
     },
     select: useCallback((data: InfiniteData<GetPPLEActivity>): InfiniteData<Activity[]> => {
       return {
-        pages: data.pages.map((page) =>
-          page.result.map(mapToActivity).filter((activity) => {
-            return dayjs(activity.startAt).isAfter(dayjs(), 'day')
-          })
-        ),
+        pages: data.pages.map((page) => page.result.map(mapToActivity)),
         pageParams: data.pageParams,
       }
     }, []),
@@ -290,7 +285,13 @@ interface ActivityFooterProps {
 }
 function ActivityFooter({ queryResult, className }: ActivityFooterProps) {
   if (queryResult.hasNextPage || queryResult.isLoading || queryResult.error) {
-    return <ActivityCardSkeleton className={className} />
+    return (
+      <>
+        <ActivityCardSkeleton className={className} />
+        <ActivityCardSkeleton className={className} />
+        <ActivityCardSkeleton className={className} />
+      </>
+    )
   }
   if (
     queryResult.data &&
