@@ -113,6 +113,8 @@ export function ElectionStatusBadge(props: { status: ElectionWithCurrentStatus['
           <Text>ประกาศผล</Text>
         </Badge>
       )
+    case 'DRAFT':
+      return null
     default:
       exhaustiveGuard(props.status)
   }
@@ -196,6 +198,7 @@ function ElectionCardDetail(props: ElectionCardProps) {
         </View>
       )
     case 'RESULT_ANNOUNCE':
+    case 'DRAFT':
       return null
     default:
       exhaustiveGuard(props.election.status)
@@ -403,6 +406,8 @@ function ElectionCardFooter(props: ElectionCardProps) {
           </Link>
         </View>
       )
+    case 'DRAFT':
+      return null
     default:
       exhaustiveGuard(props.election.status)
   }
@@ -520,6 +525,7 @@ function ElectionDetailCardDetail(props: ElectionDetailCardProps) {
       )
     case 'CLOSED_VOTE':
     case 'RESULT_ANNOUNCE':
+    case 'DRAFT':
       return null
     default:
       exhaustiveGuard(props.election.status)
