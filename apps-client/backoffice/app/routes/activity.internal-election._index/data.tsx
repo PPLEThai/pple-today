@@ -56,7 +56,7 @@ export const Data = () => {
                   limit: queryLimit,
                   page: queryPage,
                   name: queryName,
-                  status: queryStatus,
+                  status: queryStatus?.length === 0 ? undefined : queryStatus,
                 },
               }),
               (_data) => {
@@ -148,13 +148,13 @@ export const Data = () => {
         id: 'votingTimeline',
         header: 'ช่วงเวลาลงคะแนน',
         cell: (info) => {
-          const openVote = new Date(info.row.original.openVoting).toLocaleDateString('en-GB', {
+          const openVote = new Date(info.row.original.openVoting).toLocaleDateString('th', {
             day: '2-digit',
             month: '2-digit',
             year: '2-digit',
           })
 
-          const closeVote = new Date(info.row.original.closeVoting).toLocaleDateString('en-GB', {
+          const closeVote = new Date(info.row.original.closeVoting).toLocaleDateString('th', {
             day: '2-digit',
             month: '2-digit',
             year: '2-digit',
@@ -251,7 +251,7 @@ export const Data = () => {
             { value: 'RESULT_ANNOUNCE', label: 'ประกาศผล' },
           ],
           state: queryStatus || [],
-          setState: setQueryStatus as any,
+          setState: setQueryStatus as React.Dispatch<React.SetStateAction<string[]>>,
         },
       ]}
     />
