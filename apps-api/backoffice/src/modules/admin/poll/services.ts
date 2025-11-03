@@ -1,5 +1,6 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
+import { PollStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -9,13 +10,8 @@ import { AdminPollRepository, AdminPollRepositoryPlugin } from './repository'
 export class AdminPollService {
   constructor(private adminPollRepository: AdminPollRepository) {}
 
-  async getPolls(
-    query: { limit: number; page: number } = {
-      limit: 10,
-      page: 1,
-    }
-  ) {
-    const result = await this.adminPollRepository.getPolls(query)
+  async getPolls(page: number, limit: number, status?: PollStatus[], search?: string) {
+    const result = await this.adminPollRepository.getPolls(page, limit, status, search)
     if (result.isErr()) return mapRepositoryError(result.error, {})
 
     return ok(result.value satisfies GetPollsResponse)

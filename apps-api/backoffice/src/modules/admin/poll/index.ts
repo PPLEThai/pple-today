@@ -27,12 +27,12 @@ export const AdminPollsController = new Elysia({
   .get(
     '/',
     async ({ query, status, adminPollService }) => {
-      const pagingQuery = {
-        limit: query.limit ?? 10,
-        page: query.page ?? 1,
-      }
-
-      const result = await adminPollService.getPolls(pagingQuery)
+      const result = await adminPollService.getPolls(
+        query.page ?? 1,
+        query.limit ?? 10,
+        query.status,
+        query.search
+      )
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
       return status(200, result.value)

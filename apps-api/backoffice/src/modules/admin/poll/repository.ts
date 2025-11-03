@@ -1,6 +1,7 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { FeedItemType, PollStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -12,6 +13,23 @@ export class AdminPollRepository {
   private OFFICIAL_USER_ID: string | null = null
 
   constructor(private prismaService: PrismaService) {}
+
+  private constructPollWithMeta<T>(
+    data: T[],
+    config: {
+      totalCount: number
+      limit: number
+      page: number
+    }
+  ) {
+    return {
+      items: data,
+      meta: {
+        totalPage: Math.ceil(config.totalCount / config.limit),
+        currentPage: config.page,
+      },
+    }
+  }
 
   private async lookupOfficialUserId() {
     if (this.OFFICIAL_USER_ID) {
@@ -40,49 +58,89 @@ export class AdminPollRepository {
     return ok(this.OFFICIAL_USER_ID)
   }
 
-  async getPolls(
-    query: { limit: number; page: number } = {
-      limit: 10,
-      page: 1,
-    }
-  ) {
-    const { limit, page } = query
-    const skip = page ? (page - 1) * limit : 0
+  async getPolls(page: number, limit: number, status?: PollStatus[], search?: string) {
+    const skip = Math.max((page - 1) * limit, 0)
 
-    return await fromRepositoryPromise(async () =>
-      (
-        await this.prismaService.poll.findMany({
-          select: {
-            feedItemId: true,
-            title: true,
-            description: true,
-            status: true,
-            endAt: true,
-            type: true,
-            totalVotes: true,
-            feedItem: {
-              select: {
-                createdAt: true,
-                updatedAt: true,
-                publishedAt: true,
+    const where = {
+      ...(search && {
+        title: {
+          contains: search,
+        },
+      }),
+      ...(status && {
+        status: { in: status },
+      }),
+    }
+
+    const result = await fromRepositoryPromise(async () => {
+      const [polls, count] = await Promise.all([
+        await this.prismaService.feedItem.findMany({
+          where: {
+            type: FeedItemType.POLL,
+            poll: {
+              AND: {
+                title: { contains: search },
+                status: { in: status },
               },
             },
           },
-          take: limit,
-          skip,
-          orderBy: {
-            feedItem: {
-              createdAt: 'desc',
+          include: {
+            poll: {
+              select: {
+                endAt: true,
+                title: true,
+                status: true,
+              },
+            },
+            reactionCounts: true,
+            _count: {
+              select: {
+                comments: true,
+              },
             },
           },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          skip,
+          take: limit,
+        }),
+        await this.prismaService.poll.count({
+          where,
+        }),
+      ])
+
+      const transformPolls = polls
+        .map((feed) => {
+          if (!feed.poll) return null
+
+          return {
+            id: feed.id,
+            title: feed.poll.title,
+            reactions: feed.reactionCounts,
+            commentCount: feed.numberOfComments,
+            publishedAt: feed.publishedAt,
+            createdAt: feed.createdAt,
+            updatedAt: feed.updatedAt,
+            endAt: feed.poll.endAt,
+            status: feed.poll.status,
+          }
         })
-      ).map(({ feedItemId, feedItem, ...item }) => ({
-        id: feedItemId,
-        createdAt: feedItem.createdAt,
-        updatedAt: feedItem.updatedAt,
-        publishedAt: feedItem.publishedAt,
-        ...item,
-      }))
+        .filter((item) => item !== null)
+
+      return { transformPolls, count }
+    })
+
+    if (result.isErr()) {
+      return err(result.error)
+    }
+
+    return ok(
+      this.constructPollWithMeta(result.value.transformPolls, {
+        totalCount: result.value.count,
+        limit,
+        page,
+      })
     )
   }
 

@@ -1,4 +1,10 @@
-import { Poll, PollDetails } from '@pple-today/api-common/dtos'
+import {
+  AdminPoll,
+  ListPaginationQuery,
+  ListPaginationReponse,
+  Poll,
+  PollDetails,
+} from '@pple-today/api-common/dtos'
 import { PollType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
@@ -7,24 +13,28 @@ export const PollIdParams = t.Object({
 })
 export type PollIdParams = Static<typeof PollIdParams>
 
-export const GetPollsQuery = t.Object({
-  type: t.Optional(
-    t.Union(
-      [
-        t.Literal('publish', { description: 'String `publish`' }),
-        t.Literal('draft', { description: 'String `draft`' }),
-      ],
-      {
-        description: 'Type of poll',
-      }
-    )
-  ),
-  limit: t.Optional(t.Number({ default: 10 })),
-  page: t.Optional(t.Number({ default: 1 })),
-})
+export const GetPollsQuery = ListPaginationQuery(
+  t.Object({
+    search: t.Optional(t.String({ description: 'The search query for the poll title' })),
+    status: t.Optional(
+      t.Array(
+        t.Union(
+          [
+            t.Literal('PUBLISHED', { description: 'String `publish`' }),
+            t.Literal('DRAFT', { description: 'String `draft`' }),
+            t.Literal('ARCHIVED', { description: 'String `archived`' }),
+          ],
+          {
+            description: 'Type of poll',
+          }
+        )
+      )
+    ),
+  })
+)
 export type GetPollsQuery = Static<typeof GetPollsQuery>
 
-export const GetPollsResponse = t.Array(Poll)
+export const GetPollsResponse = ListPaginationReponse(AdminPoll)
 export type GetPollsResponse = Static<typeof GetPollsResponse>
 
 export const GetPollByIdParams = PollIdParams
