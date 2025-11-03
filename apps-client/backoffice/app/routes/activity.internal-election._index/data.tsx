@@ -150,7 +150,7 @@ export const Data = () => {
       }),
       columnHelper.display({
         id: 'votingTimeline',
-        header: 'ช่วงเวาลงคะเเนน',
+        header: 'ช่วงเวลาลงคะแนน',
         cell: (info) => {
           const openVote = new Date(info.row.original.openVoting).toLocaleDateString('en-GB', {
             day: '2-digit',
@@ -179,7 +179,7 @@ export const Data = () => {
         minSize: 110,
       }),
       columnHelper.accessor('totalVoters', {
-        header: 'จำนวนลงคะเเนน',
+        header: 'จำนวนลงคะแนน',
         cell: (info) => (
           <span className="flex gap-2 items-center">
             <Users strokeWidth={1.5} />

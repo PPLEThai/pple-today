@@ -137,7 +137,7 @@ export const AppSidebar = ({
                     <CollapsibleContent>
                       <SidebarMenuSub>
                         <SidebarMenuSubItem>
-                          <SidebarMenuSubButton>เเบบสอบถาม</SidebarMenuSubButton>
+                          <SidebarMenuSubButton>แบบสอบถาม</SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>
