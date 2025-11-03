@@ -7,6 +7,7 @@ import {
   GetFacebookPageByIdResponse,
   GetFacebookPagesQuery,
   GetFacebookPagesResponse,
+  UpdateFacebookPageBody,
 } from './models'
 import { AdminFacebookPageRepository, AdminFacebookPageRepositoryPlugin } from './repository'
 
@@ -33,30 +34,21 @@ export class AdminFacebookPageService {
     return ok(result.value satisfies GetFacebookPageByIdResponse)
   }
 
-  // async updatePostById(postId: string, data: UpdatePostBody) {
-  //   const updateResult = await this.adminPostRepository.updatePostById(postId, data)
+  async updateFacebookPageById(facebookPageId: string, data: UpdateFacebookPageBody) {
+    const updateResult = await this.adminFacebookPageRepository.updateFacebookPageById(
+      facebookPageId,
+      data
+    )
 
-  //   if (updateResult.isErr())
-  //     return mapRepositoryError(updateResult.error, {
-  //       RECORD_NOT_FOUND: {
-  //         code: InternalErrorCode.POST_NOT_FOUND,
-  //       },
-  //     })
+    if (updateResult.isErr())
+      return mapRepositoryError(updateResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.FACEBOOK_PAGE_NOT_FOUND,
+        },
+      })
 
-  //   return ok({ message: `Post "${updateResult.value.feedItemId}" updated.` })
-  // }
-
-  // async deletePostById(postId: string) {
-  //   const result = await this.adminPostRepository.deletePostById(postId)
-  //   if (result.isErr())
-  //     return mapRepositoryError(result.error, {
-  //       RECORD_NOT_FOUND: {
-  //         code: InternalErrorCode.POST_NOT_FOUND,
-  //       },
-  //     })
-
-  //   return ok({ message: `Post "${result.value.feedItemId}" deleted.` })
-  // }
+    return ok({ message: `Facebook Page "${updateResult.value.id}" updated.` })
+  }
 }
 
 export const AdminFacebookPageServicePlugin = new Elysia({

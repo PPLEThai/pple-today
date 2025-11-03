@@ -7,6 +7,9 @@ import {
   GetFacebookPageByIdResponse,
   GetFacebookPagesQuery,
   GetFacebookPagesResponse,
+  UpdateFacebookPageBody,
+  UpdateFacebookPageParams,
+  UpdateFacebookPageResponse,
 } from './models'
 import { AdminFacebookPageServicePlugin } from './services'
 
@@ -74,58 +77,33 @@ export const AdminFacebookPageController = new Elysia({
       },
     }
   )
-// .patch(
-//   '/:postId',
-//   async ({ params, body, status, adminPostService }) => {
-//     const result = await adminPostService.updatePostById(params.facebookPageId, body)
-//     if (result.isErr()) {
-//       return mapErrorCodeToResponse(result.error, status)
-//     }
+  .patch(
+    '/:facebookPageId',
+    async ({ params, body, status, adminFacebookPageService }) => {
+      const result = await adminFacebookPageService.updateFacebookPageById(
+        params.facebookPageId,
+        body
+      )
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
 
-//     return status(200, result.value)
-//   },
-//   {
-//     requiredLocalUser: true,
-//     params: UpdatePostParams,
-//     body: UpdatePostBody,
-//     response: {
-//       200: UpdatePostResponse,
-//       ...createErrorSchema(
-//         InternalErrorCode.POST_NOT_FOUND,
-//         InternalErrorCode.POST_ALREADY_DELETED,
-//         InternalErrorCode.INTERNAL_SERVER_ERROR
-//       ),
-//     },
-//     detail: {
-//       summary: 'Update post by ID',
-//       description: 'Update a specific post by its ID',
-//     },
-//   }
-// )
-// .delete(
-//   '/:postId',
-//   async ({ params, status, adminPostService }) => {
-//     const result = await adminPostService.deletePostById(params.facebookPageId)
-//     if (result.isErr()) {
-//       return mapErrorCodeToResponse(result.error, status)
-//     }
-
-//     return status(200, result.value)
-//   },
-//   {
-//     requiredLocalUser: true,
-//     params: DeletePostParams,
-//     response: {
-//       200: DeletePostResponse,
-//       ...createErrorSchema(
-//         InternalErrorCode.POST_NOT_FOUND,
-//         InternalErrorCode.POST_ALREADY_DELETED,
-//         InternalErrorCode.INTERNAL_SERVER_ERROR
-//       ),
-//     },
-//     detail: {
-//       summary: 'Delete post by ID',
-//       description: 'Remove a specific post by its ID',
-//     },
-//   }
-// )
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      params: UpdateFacebookPageParams,
+      body: UpdateFacebookPageBody,
+      response: {
+        200: UpdateFacebookPageResponse,
+        ...createErrorSchema(
+          InternalErrorCode.FACEBOOK_PAGE_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Update facebook page by ID',
+        description: 'Update a specific facebook page by its ID',
+      },
+    }
+  )

@@ -1,5 +1,5 @@
 import { DetailedFacebookPage, FacebookPage } from '@pple-today/api-common/dtos'
-import { FacebookPageLinkedStatus, PostStatus } from '@pple-today/database/prisma'
+import { FacebookPageLinkedStatus } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const FacebookPageIdParams = t.Object({
@@ -27,25 +27,17 @@ export type GetFacebookPageByIdParams = Static<typeof FacebookPageIdParams>
 export const GetFacebookPageByIdResponse = DetailedFacebookPage
 export type GetFacebookPageByIdResponse = Static<typeof GetFacebookPageByIdResponse>
 
-export const UpdatePostParams = FacebookPageIdParams
-export type UpdatePostParams = Static<typeof UpdatePostParams>
+export const UpdateFacebookPageParams = FacebookPageIdParams
+export type UpdateFacebookPageParams = Static<typeof UpdateFacebookPageParams>
 
-export const UpdatePostBody = t.Partial(
+export const UpdateFacebookPageBody = t.Partial(
   t.Object({
-    status: t.Enum(PostStatus, { description: 'The status of the post' }),
+    name: t.String({ description: 'The name of the facebook page' }),
   })
 )
-export type UpdatePostBody = Static<typeof UpdatePostBody>
+export type UpdateFacebookPageBody = Static<typeof UpdateFacebookPageBody>
 
-export const UpdatePostResponse = t.Object({
+export const UpdateFacebookPageResponse = t.Object({
   message: t.String({ description: 'Success message' }),
 })
-export type UpdatePostResponse = Static<typeof UpdatePostResponse>
-
-export const DeletePostParams = FacebookPageIdParams
-export type DeletePostParams = Static<typeof DeletePostParams>
-
-export const DeletePostResponse = t.Object({
-  message: t.String({ description: 'Success message' }),
-})
-export type DeletePostResponse = Static<typeof DeletePostResponse>
+export type UpdateFacebookPageResponse = Static<typeof UpdateFacebookPageResponse>

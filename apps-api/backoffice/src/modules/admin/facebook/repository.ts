@@ -1,19 +1,18 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { PostStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import {
   GetFacebookPageByIdResponse,
   GetFacebookPagesQuery,
   GetFacebookPagesResponse,
-  UpdatePostBody,
+  UpdateFacebookPageBody,
 } from './models'
 
 import { PrismaServicePlugin } from '../../../plugins/prisma'
 
 export class AdminFacebookPageRepository {
-  constructor(private prismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   async getFacebookPages(query: GetFacebookPagesQuery = { limit: 10, page: 1 }) {
     const { limit, page } = query
@@ -103,45 +102,13 @@ export class AdminFacebookPageRepository {
     })
   }
 
-  async updatePostById(feedItemId: string, data: UpdatePostBody) {
-    // const existingPost = await this.getDeletedPostById(feedItemId)
-    // if (existingPost.isErr()) return err(existingPost.error)
-    // if (existingPost.value)
-    //   return err({
-    //     code: InternalErrorCode.POST_ALREADY_DELETED,
-    //     message: 'Cannot update deleted post.',
-    //   })
-
+  async updateFacebookPageById(facebookPageId: string, data: UpdateFacebookPageBody) {
     return await fromRepositoryPromise(
-      this.prismaService.post.update({
-        where: { feedItemId },
+      this.prismaService.facebookPage.update({
+        where: { id: facebookPageId },
         data: {
-          status: data.status,
-          ...(data.status === PostStatus.PUBLISHED && {
-            feedItem: {
-              update: {
-                publishedAt: new Date(),
-              },
-            },
-          }),
+          name: data.name,
         },
-      })
-    )
-  }
-
-  async deletePostById(feedItemId: string) {
-    // const existingPost = await this.getDeletedPostById(feedItemId)
-    // if (existingPost.isErr()) return err(existingPost.error)
-    // if (existingPost.value)
-    //   return err({
-    //     code: InternalErrorCode.POST_ALREADY_DELETED,
-    //     message: 'Post is already deleted.',
-    //   })
-
-    return await fromRepositoryPromise(
-      this.prismaService.post.update({
-        where: { feedItemId },
-        data: { status: PostStatus.DELETED, deletedAt: new Date() },
       })
     )
   }

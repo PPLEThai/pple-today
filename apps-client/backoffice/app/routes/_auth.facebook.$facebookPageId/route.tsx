@@ -10,10 +10,12 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@pple-today/web-ui/breadcrumb'
+import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
+import { FacebookPageEdit } from 'components/facebook/FacebookPageEdit'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
-import { Calendar, Facebook, Link, Users } from 'lucide-react'
+import { Calendar, Facebook, Link, Pencil, Users } from 'lucide-react'
 
 import { reactQueryClient } from '~/libs/api-client'
 
@@ -57,18 +59,18 @@ export default function FacebookDetailPage({ params }: Route.LoaderArgs) {
       <div className="flex items-center gap-2 pb-3">
         <Facebook className="stroke-base-primary-default" size={32} />
         <Typography variant="h2">รายละเอียดเพจ</Typography>
-        {/* {query.data && (
-          <TopicEdit
+        {query.data && (
+          <FacebookPageEdit
             trigger={
-              <Button className="ml-auto gap-1">
-                <Pencil size={16} />
-                แก้ไขหัวข้อ
+              <Button variant="outline" size="icon" className="ml-auto size-8">
+                <span className="sr-only">แก้ไข</span>
+                <Pencil className="size-4" />
               </Button>
             }
             onSuccess={invalidateQuery}
-            topic={query.data}
+            facebookPage={query.data}
           />
-        )} */}
+        )}
       </div>
       {query.isLoading ? (
         <div className="flex items-center justify-center p-4 border border-base-outline-default rounded-xl h-40">
