@@ -45,7 +45,7 @@ export class AdminPollService {
         },
       })
 
-    return ok({ message: `Poll "${result.value.feedItemId}" updated.` })
+    return ok({ message: `Poll "${pollId}" updated.` })
   }
 
   async deletePollById(pollId: string) {

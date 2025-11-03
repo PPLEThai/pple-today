@@ -59,17 +59,19 @@ export type PostPollResponse = Static<typeof PostPollResponse>
 export const UpdatePollParams = PollIdParams
 export type UpdatePollParams = Static<typeof UpdatePollParams>
 
-export const UpdatePollBody = t.Object({
-  title: t.String({ description: 'The title of the poll' }),
-  description: t.Nullable(t.String({ description: 'The description of the poll' })),
-  endAt: t.Date({ description: 'The end date of the poll' }),
-  type: t.Enum(PollType),
+export const UpdatePollBody = t.Partial(
+  t.Object({
+    title: t.String({ description: 'The title of the poll' }),
+    description: t.Nullable(t.String({ description: 'The description of the poll' })),
+    endAt: t.Date({ description: 'The end date of the poll' }),
+    type: t.Enum(PollType),
 
-  optionTitles: t.Array(t.String({ description: 'The title of the poll option' })),
-  topicIds: t.Array(t.String({ description: 'The ID of the poll topic' })),
+    optionTitles: t.Array(t.String({ description: 'The title of the poll option' })),
+    topicIds: t.Array(t.String({ description: 'The ID of the poll topic' })),
 
-  status: t.Enum(PollStatus),
-})
+    status: t.Enum(PollStatus),
+  })
+)
 export type UpdatePollBody = Static<typeof UpdatePollBody>
 
 export const UpdatePollResponse = t.Object({

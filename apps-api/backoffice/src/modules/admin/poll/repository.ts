@@ -240,45 +240,44 @@ export class AdminPollRepository {
 
   async updatePollById(feedItemId: string, data: UpdatePollBody) {
     return await fromRepositoryPromise(async () => {
-      const answer = await this.prismaService.poll.findUniqueOrThrow({
-        where: { feedItemId },
-        select: {
-          options: {
-            select: {
-              votes: true,
-            },
+      await this.prismaService.$transaction(async (tx) => {
+        return tx.poll.update({
+          where: { feedItemId },
+          data: {
+            title: data.title,
+            description: data.description,
+            endAt: data.endAt,
+            type: data.type,
+            ...(data.topicIds && {
+              topics: {
+                deleteMany: {},
+                createMany: {
+                  data: data.topicIds.map((topicId) => ({
+                    topicId,
+                  })),
+                },
+              },
+            }),
+            ...(data.optionTitles && {
+              options: {
+                deleteMany: {},
+                createMany: {
+                  data: data.optionTitles.map((optionTitle) => ({
+                    title: optionTitle,
+                  })),
+                },
+              },
+            }),
+            status: data.status,
+            ...(data.status === PollStatus.PUBLISHED && {
+              feedItem: {
+                update: {
+                  publishedAt: new Date(),
+                },
+              },
+            }),
           },
-        },
-      })
-
-      const hasAnswer = answer.options.some((pollOption) => pollOption.votes > 0)
-
-      if (hasAnswer) throw new Error('Cannot update poll with answers')
-
-      return await this.prismaService.poll.update({
-        where: { feedItemId },
-        data: {
-          title: data.title,
-          description: data.description,
-          endAt: data.endAt,
-          type: data.type,
-          topics: {
-            deleteMany: {},
-            createMany: {
-              data: data.topicIds.map((topicId) => ({
-                topicId,
-              })),
-            },
-          },
-          options: {
-            deleteMany: {},
-            createMany: {
-              data: data.optionTitles.map((optionTitle) => ({
-                title: optionTitle,
-              })),
-            },
-          },
-        },
+        })
       })
     })
   }
