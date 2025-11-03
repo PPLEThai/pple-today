@@ -11,9 +11,9 @@ import {
   GetPollsResponse,
   PostPollBody,
   PostPollResponse,
-  PutPollBody,
-  PutPollParams,
-  PutPollResponse,
+  UpdatePollBody,
+  UpdatePollParams,
+  UpdatePollResponse,
 } from './models'
 import { AdminPollServicePlugin } from './services'
 
@@ -105,7 +105,7 @@ export const AdminPollsController = new Elysia({
       },
     }
   )
-  .put(
+  .patch(
     '/:pollId',
     async ({ params, body, status, adminPollService }) => {
       const result = await adminPollService.updatePollById(params.pollId, body)
@@ -117,10 +117,10 @@ export const AdminPollsController = new Elysia({
     },
     {
       requiredLocalUser: true,
-      params: PutPollParams,
-      body: PutPollBody,
+      params: UpdatePollParams,
+      body: UpdatePollBody,
       response: {
-        200: PutPollResponse,
+        200: UpdatePollResponse,
         ...createErrorSchema(
           InternalErrorCode.POLL_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR

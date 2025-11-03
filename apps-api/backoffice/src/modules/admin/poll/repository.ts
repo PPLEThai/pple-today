@@ -5,7 +5,7 @@ import { FeedItemType, PollStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { PostPollBody, PutPollBody } from './models'
+import { PostPollBody, UpdatePollBody } from './models'
 
 import { PrismaServicePlugin } from '../../../plugins/prisma'
 
@@ -238,7 +238,7 @@ export class AdminPollRepository {
     )
   }
 
-  async updatePollById(feedItemId: string, data: PutPollBody) {
+  async updatePollById(feedItemId: string, data: UpdatePollBody) {
     return await fromRepositoryPromise(async () => {
       const answer = await this.prismaService.poll.findUniqueOrThrow({
         where: { feedItemId },

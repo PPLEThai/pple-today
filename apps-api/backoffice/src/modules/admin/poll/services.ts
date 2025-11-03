@@ -4,7 +4,7 @@ import { PollStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { GetPollByIdResponse, GetPollsResponse, PostPollBody, PutPollBody } from './models'
+import { GetPollByIdResponse, GetPollsResponse, PostPollBody, UpdatePollBody } from './models'
 import { AdminPollRepository, AdminPollRepositoryPlugin } from './repository'
 
 export class AdminPollService {
@@ -36,7 +36,7 @@ export class AdminPollService {
     return ok({ id: result.value.id })
   }
 
-  async updatePollById(pollId: string, data: PutPollBody) {
+  async updatePollById(pollId: string, data: UpdatePollBody) {
     const result = await this.adminPollRepository.updatePollById(pollId, data)
     if (result.isErr())
       return mapRepositoryError(result.error, {

@@ -1,5 +1,5 @@
 import { AdminPoll, ListPaginationQuery, Poll, PollDetails } from '@pple-today/api-common/dtos'
-import { PollType } from '@pple-today/database/prisma'
+import { PollStatus, PollType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const PollIdParams = t.Object({
@@ -56,10 +56,10 @@ export const PostPollResponse = t.Object({
 })
 export type PostPollResponse = Static<typeof PostPollResponse>
 
-export const PutPollParams = PollIdParams
-export type PutPollParams = Static<typeof PutPollParams>
+export const UpdatePollParams = PollIdParams
+export type UpdatePollParams = Static<typeof UpdatePollParams>
 
-export const PutPollBody = t.Object({
+export const UpdatePollBody = t.Object({
   title: t.String({ description: 'The title of the poll' }),
   description: t.Nullable(t.String({ description: 'The description of the poll' })),
   endAt: t.Date({ description: 'The end date of the poll' }),
@@ -67,13 +67,15 @@ export const PutPollBody = t.Object({
 
   optionTitles: t.Array(t.String({ description: 'The title of the poll option' })),
   topicIds: t.Array(t.String({ description: 'The ID of the poll topic' })),
-})
-export type PutPollBody = Static<typeof PutPollBody>
 
-export const PutPollResponse = t.Object({
+  status: t.Enum(PollStatus),
+})
+export type UpdatePollBody = Static<typeof UpdatePollBody>
+
+export const UpdatePollResponse = t.Object({
   message: t.String({ description: 'Success message' }),
 })
-export type PutPollResponse = Static<typeof PutPollResponse>
+export type UpdatePollResponse = Static<typeof UpdatePollResponse>
 
 export const DeletePollParams = PollIdParams
 export type DeletePollParams = Static<typeof DeletePollParams>
