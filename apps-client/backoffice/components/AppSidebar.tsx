@@ -24,7 +24,14 @@ import {
   SidebarMenuSubItem,
   SidebarProvider,
 } from '@pple-today/web-ui/sidebar'
-import { ChevronsUpDownIcon, ChevronUp, Facebook, Newspaper, PieChart } from 'lucide-react'
+import {
+  ChevronsUpDownIcon,
+  ChevronUp,
+  Facebook,
+  Handshake,
+  Newspaper,
+  PieChart,
+} from 'lucide-react'
 
 import { GetAuthMeResponse } from '@api/backoffice/admin'
 
@@ -117,6 +124,26 @@ export const AppSidebar = ({
                       <span>เพจเฟสบุ๊ค</span>
                     </a>
                   </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <Collapsible defaultOpen className="group/collapsible">
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton>
+                        <Handshake />
+                        <span>กิจกรรม</span>
+                        <ChevronUp className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton asChild>
+                            <NavLink to="/activity/poll">Poll</NavLink>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </Collapsible>
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
