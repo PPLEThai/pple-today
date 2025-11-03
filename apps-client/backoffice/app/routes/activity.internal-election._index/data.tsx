@@ -13,7 +13,7 @@ import { CalendarX2, Pencil, Trash2, Users } from 'lucide-react'
 import { AdminListElectionResponse, ElectionInfo, ElectionStatus } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
-import { exhaustiveGuard } from '~/libs/exhausetive-guard'
+import { exhaustiveGuard } from '~/libs/exhaustive-guard'
 
 const columnHelper = createColumnHelper<AdminListElectionResponse['data'][number]>()
 
