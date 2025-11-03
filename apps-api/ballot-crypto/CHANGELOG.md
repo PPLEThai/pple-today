@@ -1,5 +1,12 @@
 # @api/ballot-crypto
 
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies [[`379b22d`](https://github.com/PPLEThai/pple-today/commit/379b22d1d1ce57828773a1a3de43a9bac0eec883)]:
+  - @pple-today/api-common@0.5.1
+
 ## 0.2.0
 
 ### Minor Changes
