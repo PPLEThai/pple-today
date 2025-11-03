@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router'
 
 import { Avatar, AvatarImage } from '@pple-today/web-ui/avatar'
+import { Badge } from '@pple-today/web-ui/badge'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -249,7 +250,9 @@ function TopRightCandidate({ election }: { election: AdminGetElectionResponse })
       return (
         <div className="flex flex-col items-end gap-4">
           <div className="flex items-center gap-2">
-            {(election.type === 'ONLINE' || election.type === 'HYBRID') && <CountBallot />}
+            {(election.type === 'ONLINE' || election.type === 'HYBRID') && (
+              <CountBallot election={election} />
+            )}
             {(election.type === 'ONSITE' || election.type === 'HYBRID') && (
               <Button variant="outline" className="flex items-center gap-2">
                 <Save />
@@ -290,9 +293,19 @@ function CandidateHeader({ election }: { election: AdminGetElectionResponse }) {
   )
 }
 
-function CountBallot() {
+function CountBallot({ election }: { election: AdminGetElectionResponse }) {
   return (
-    <div>
+    <div className="flex items-center gap-2">
+      {election.onlineResultStatus === 'COUNT_FAILED' && (
+        <>
+          <Button variant="outline" size="icon">
+            <RefreshCw />
+          </Button>
+          <Badge variant="destructive" className="text-md">
+            มีข้อผิดพลาด
+          </Badge>
+        </>
+      )}
       <Button>
         <RefreshCw className="mr-2" /> นับคะเเนน
       </Button>
