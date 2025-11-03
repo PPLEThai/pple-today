@@ -21,11 +21,11 @@ function RootLayout() {
         <Outlet />
       </QueryClientProvider>
       <TanStackRouterDevtools />
-      {/* <ScrollRestoration /> */}
     </>
   )
 }
 
+// TODO: handle error boundary
 // export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
 //   let message = 'Oops!'
 //   let details = 'An unexpected error occurred.'

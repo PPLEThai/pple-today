@@ -1,5 +1,3 @@
-import { NavLink } from 'react-router'
-
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,14 +7,16 @@ import {
   BreadcrumbSeparator,
 } from '@pple-today/web-ui/breadcrumb'
 import { Typography } from '@pple-today/web-ui/typography'
+import { createFileRoute, Link } from '@tanstack/react-router'
 
 import { Data } from './data'
 
-export function meta() {
-  return [{ title: 'Topic' }]
-}
+export const Route = createFileRoute('/feed/topic')({
+  component: TopicPage,
+  head: () => ({ meta: [{ title: 'Feed Topic' }] }),
+})
 
-export default function TopicPage() {
+function TopicPage() {
   return (
     <div className="px-6 pb-6 space-y-2">
       <Breadcrumb className="pt-4 pb-2">
@@ -24,7 +24,7 @@ export default function TopicPage() {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <NavLink to="/feed">Feed</NavLink>
+              <Link to="/feed">Feed</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />

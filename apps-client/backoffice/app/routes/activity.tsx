@@ -1,11 +1,14 @@
-import { NavLink, Outlet } from 'react-router'
-
 import { Button } from '@pple-today/web-ui/button'
+import { createFileRoute, Link, Outlet } from '@tanstack/react-router'
 import { AppSidebar } from 'components/AppSidebar'
 
 import { reactQueryClient } from '~/libs/api-client'
 
-export default function ActivityLayout() {
+export const Route = createFileRoute('/activity')({
+  component: ActivityLayout,
+  head: () => ({ meta: [{ title: 'Activity' }] }),
+})
+function ActivityLayout() {
   const query = reactQueryClient.useQuery('/admin/auth/me', {}, { retry: false })
 
   return query.isLoading ? (
@@ -16,7 +19,7 @@ export default function ActivityLayout() {
     </AppSidebar>
   ) : (
     <Button asChild>
-      <NavLink to="/sso">ล็อกอิน</NavLink>
+      <Link to="/sso">ล็อกอิน</Link>
     </Button>
   )
 }

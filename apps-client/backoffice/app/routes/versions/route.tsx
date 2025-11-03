@@ -1,3 +1,4 @@
+// TODO: use tanstack start to handle route loader
 export function loader() {
   const body = JSON.stringify({
     name: __APP_NAME__,

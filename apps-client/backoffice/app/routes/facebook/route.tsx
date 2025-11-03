@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
-import { useLocation, useSearchParams } from 'react-router'
+
+import { createFileRoute, useLocation } from '@tanstack/react-router'
+import * as z from 'zod/v4'
 
 import { clientEnv } from '~/config/clientEnv'
 
@@ -20,9 +22,19 @@ const hashToObject = (hash: string) => {
     )
 }
 
-export default function FacebookLinkPage() {
+const facebookSearchParams = z.object({
+  code: z.string().optional(),
+})
+
+export const Route = createFileRoute('/facebook')({
+  component: FacebookLinkPage,
+  head: () => ({ meta: [{ title: 'Facebook' }] }),
+  validateSearch: facebookSearchParams,
+})
+
+function FacebookLinkPage() {
   const { hash } = useLocation()
-  const [queryParams] = useSearchParams()
+  const searchParams = Route.useSearch()
   const accessToken = hashToObject(hash).access_token
 
   const [fetchParams, setFetchParams] = useState('')
@@ -35,12 +47,12 @@ export default function FacebookLinkPage() {
       )
     }
 
-    const code = queryParams.get('code')
+    const code = searchParams.code
 
     if (code) {
       exchangeToken(code)
     }
-  }, [queryParams])
+  }, [searchParams])
 
   const handleFetch = async () => {
     const baseUrl = 'https://graph.facebook.com/v23.0'

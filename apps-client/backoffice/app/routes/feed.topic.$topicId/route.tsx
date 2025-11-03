@@ -1,5 +1,4 @@
 import { useCallback } from 'react'
-import { NavLink } from 'react-router'
 
 import { Badge } from '@pple-today/web-ui/badge'
 import {
@@ -13,6 +12,7 @@ import {
 import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
+import { createFileRoute } from '@tanstack/react-router'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
 import { FeedTopicCard } from 'components/feed/FeedTopicCard'
 import { TopicEdit } from 'components/feed/TopicEdit'
@@ -20,14 +20,13 @@ import { Calendar, Link, MessageSquareHeart, Pencil, Users } from 'lucide-react'
 
 import { reactQueryClient } from '~/libs/api-client'
 
-import { Route } from './+types/route'
+export const Route = createFileRoute('/feed/topic/$topicId')({
+  component: TopicDetailPage,
+  head: ({ params }) => ({ meta: [{ title: `Topic - ${params.topicId}` }] }),
+})
 
-export function meta() {
-  return [{ title: 'รายละเอียดหัวข้อ' }]
-}
-
-export default function TopicDetailPage({ params }: Route.LoaderArgs) {
-  const { topicId } = params
+function TopicDetailPage() {
+  const { topicId } = Route.useParams()
 
   const queryClient = useQueryClient()
   const query = reactQueryClient.useQuery('/admin/topics/:topicId', {
@@ -48,13 +47,13 @@ export default function TopicDetailPage({ params }: Route.LoaderArgs) {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <NavLink to="/feed">Feed</NavLink>
+              <Link to="/feed">Feed</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <NavLink to="/feed/topic">Topic</NavLink>
+              <Link to="/feed/topic">Topic</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />

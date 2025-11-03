@@ -1,4 +1,5 @@
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
+import react from '@vitejs/plugin-react'
 import tailwindcss from 'tailwindcss'
 import { defineConfig } from 'vite'
 import tsconfigPaths from 'vite-tsconfig-paths'
@@ -24,9 +25,8 @@ export default defineConfig({
     tanstackRouter({
       target: 'react',
       autoCodeSplitting: true,
-      routesDirectory: './app/routes',
-      generatedRouteTree: './app/routeTree.gen.ts',
     }),
+    react(),
     tsconfigPaths(),
   ],
 })

@@ -1,11 +1,11 @@
 import { useCallback, useMemo, useState } from 'react'
-import { NavLink } from 'react-router'
 
 import { Badge } from '@pple-today/web-ui/badge'
 import { Button } from '@pple-today/web-ui/button'
 import { DataTable } from '@pple-today/web-ui/data-table'
 import { Typography } from '@pple-today/web-ui/typography'
 import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
 import { TableCopyId } from 'components/TableCopyId'
 import { CalendarX2, Pencil, Trash2, Users } from 'lucide-react'
@@ -118,12 +118,13 @@ export const Data = () => {
       columnHelper.accessor('name', {
         header: 'ชื่อการเลือกตั้ง',
         cell: (info) => (
-          <NavLink
+          <Link
             className="hover:underline"
-            to={`/activity/internal-election/${info.row.original.id}`}
+            to="/activity/internal-election/$electionId"
+            params={{ electionId: info.row.original.id }}
           >
             {info.getValue()}
-          </NavLink>
+          </Link>
         ),
       }),
       columnHelper.accessor('district', {
