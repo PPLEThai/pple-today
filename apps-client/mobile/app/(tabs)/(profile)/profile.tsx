@@ -381,7 +381,7 @@ function LinkFacebookPageDialog() {
         console.error('Failed to get facebook access token')
         return
       }
-      router.push(`/facebook?facebookAccessToken=${accessTokenResult.accessToken}`)
+      router.push(`/profile/facebook?facebookAccessToken=${accessTokenResult.accessToken}`)
     } catch (error) {
       console.error('Login Error: ', error)
     }
@@ -640,7 +640,7 @@ export const Participation = ({
               size={32}
               strokeWidth={2}
             />
-            <View className="flex flex-col gap-1 flex-1 justify-between h-full shrink-0 ">
+            <View className="flex flex-col gap-1 flex-1 justify-between shrink-0 ">
               <Text className="text-sm text-base-text-high font-heading-medium line-clamp-2">
                 {participation.title}
               </Text>
@@ -678,7 +678,7 @@ export const Participation = ({
         >
           <View className="flex flex-row gap-3 items-center flex-1">
             <Icon icon={VoteIcon} className="text-base-primary-default" size={32} strokeWidth={2} />
-            <View className="flex flex-col justify-between gap-1 flex-1 h-full shrink-0">
+            <View className="flex flex-col justify-between gap-1 flex-1 shrink-0">
               <Text className="text-sm text-base-text-high font-heading-medium line-clamp-2">
                 {participation.name}
               </Text>
