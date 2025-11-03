@@ -18,6 +18,8 @@ const badgeVariants = cva(
         outline: 'text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground',
         success:
           'border-transparent bg-system-success-default text-base-text-invert [a&]:hover:bg-system-success-default/90',
+        closed:
+          'border-transparent bg-base-secondary-light web:hover:opacity-80 active:bg-base-secondary-medium text-base-text-invert',
       },
     },
     defaultVariants: {
