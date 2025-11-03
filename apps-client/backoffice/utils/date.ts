@@ -20,7 +20,7 @@ export default dayjs
 
 export function getTimelineString(start: Date, end: Date) {
   const [_start, _end] = [start, end].map((date) =>
-    date.toLocaleDateString('en-GB', {
+    date.toLocaleDateString('th', {
       day: '2-digit',
       month: '2-digit',
       year: '2-digit',
