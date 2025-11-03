@@ -62,7 +62,7 @@ import { ActivityCard } from './activity/activity-card'
 import { AuthPlayground } from './auth-playground'
 import { AvatarPPLEFallback } from './avatar-pple-fallback'
 import { ElectionCard, ElectionDetailCard, ElectionStatusBadge } from './election/election-card'
-import ImageView from './feed/image-viewer/image-view'
+import { LightboxSource, LightboxView } from './feed/lightbox-viewer'
 import { MoreOrLess } from './more-or-less'
 import { PollContent } from './poll/poll-card'
 
@@ -75,7 +75,6 @@ export function Playground() {
         <View className="flex flex-row items-center justify-between">
           <H1 className="font-inter-bold">Playground</H1>
         </View>
-        <ActivityCardExample />
         <View className="flex flex-col gap-2">
           <H2 className="font-inter-bold">Font</H2>
           <View className="flex flex-col gap-1">
@@ -319,6 +318,7 @@ export function Playground() {
         <FrontCameraExample />
         <MiniAppExample />
         <PollExample />
+        <ActivityCardExample />
       </View>
     </ScrollView>
   )
@@ -601,7 +601,18 @@ function ButtonTextPost(props: TextProps) {
   return <Text {...props} className="text-base-primary-default font-body-light text-base" />
 }
 
-const images = [require('@app/assets/post-1.png'), require('@app/assets/banner-2.png')]
+const images: LightboxSource[] = [
+  { type: 'IMAGE', src: require('@app/assets/post-1.png') },
+  { type: 'IMAGE', src: require('@app/assets/banner-2.png') },
+  {
+    type: 'VIDEO',
+    src: require('@app/assets/video.mp4'),
+  },
+  {
+    type: 'VIDEO',
+    src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+  },
+]
 function LightboxExample() {
   const [visible, setIsVisible] = useState(false)
   return (
@@ -613,9 +624,9 @@ function LightboxExample() {
           source={require('@app/assets/post-1.png')}
         />
       </Pressable>
-      <ImageView
-        images={images}
-        imageIndex={0}
+      <LightboxView
+        sources={images}
+        index={0}
         visible={visible}
         onRequestClose={() => setIsVisible(false)}
       />
@@ -654,7 +665,11 @@ function VideoExample() {
     <View className="flex flex-col gap-2">
       <H2 className="font-inter-bold">Video</H2>
       <View className="w-full aspect-square">
-        <VideoView style={{ width: '100%', height: '100%' }} player={player} allowsFullscreen />
+        <VideoView
+          style={{ width: '100%', height: '100%' }}
+          player={player}
+          fullscreenOptions={{ enable: true }}
+        />
       </View>
       <Button
         onPress={() => {
