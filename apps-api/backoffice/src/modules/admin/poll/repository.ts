@@ -14,23 +14,6 @@ export class AdminPollRepository {
 
   constructor(private prismaService: PrismaService) {}
 
-  private constructPollWithMeta<T>(
-    data: T[],
-    config: {
-      totalCount: number
-      limit: number
-      page: number
-    }
-  ) {
-    return {
-      items: data,
-      meta: {
-        totalPage: Math.ceil(config.totalCount / config.limit),
-        currentPage: config.page,
-      },
-    }
-  }
-
   private async lookupOfficialUserId() {
     if (this.OFFICIAL_USER_ID) {
       return ok(this.OFFICIAL_USER_ID)
@@ -135,13 +118,12 @@ export class AdminPollRepository {
       return err(result.error)
     }
 
-    return ok(
-      this.constructPollWithMeta(result.value.transformPolls, {
-        totalCount: result.value.count,
-        limit,
-        page,
-      })
-    )
+    return ok({
+      data: result.value.transformPolls,
+      meta: {
+        count: result.value.count,
+      },
+    })
   }
 
   async getPollById(feedItemId: string) {
