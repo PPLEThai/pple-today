@@ -1,5 +1,5 @@
 ---
-"@client/mobile": patch
+"@client/mobile": minor
 "@api/backoffice": patch
 "@pple-today/api-common": patch
 "@pple-today/database": patch
