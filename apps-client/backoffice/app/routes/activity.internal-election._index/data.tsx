@@ -10,11 +10,11 @@ import ElectionStatusBadge from 'components/election/ElectionStatusBadge'
 import ElectionTypeBadge from 'components/election/ElectionTypeBadge'
 import { TableCopyId } from 'components/TableCopyId'
 import { CalendarX2, Pencil, Trash2, Users } from 'lucide-react'
+import { getTimelineString } from 'utils/date'
 
-import { AdminListElectionResponse, ElectionInfo, ElectionStatus } from '@api/backoffice/admin'
+import { AdminListElectionResponse, ElectionStatus } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
-import { exhaustiveGuard } from '~/libs/exhaustive-guard'
 
 const columnHelper = createColumnHelper<AdminListElectionResponse['data'][number]>()
 

@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router'
 
+import { Avatar, AvatarImage } from '@pple-today/web-ui/avatar'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,6 +12,7 @@ import {
 import { Button } from '@pple-today/web-ui/button'
 import { Card, CardContent } from '@pple-today/web-ui/card'
 import { Typography } from '@pple-today/web-ui/typography'
+import { cn } from '@pple-today/web-ui/utils'
 import ElectionKeyStatusBadge from 'components/election/ElectionKeyStatusBadge'
 import ElectionStatusBadge from 'components/election/ElectionStatusBadge'
 import ElectionTypeBadge from 'components/election/ElectionTypeBadge'
@@ -30,15 +32,16 @@ import {
   Users,
   Vote,
 } from 'lucide-react'
-import { AdminGetElectionResponse } from 'node_modules/@api/backoffice/src/modules/admin/election/models'
 import { getTimelineString } from 'utils/date'
 
+import { AdminGetElectionResponse, AdminGetResultResponse } from '@api/backoffice/admin'
+
 import { reactQueryClient } from '~/libs/api-client'
+import { exhaustiveGuard } from '~/libs/exhaustive-guard'
 
 import { Route } from '.react-router/types/app/+types/root'
 
-
-export function Mmeta() {
+export function meta() {
   return [{ title: 'Internal-election' }]
 }
 
@@ -47,23 +50,27 @@ export default function InternalElectionDetailPage({ params }: Route.LoaderArgs)
   const electionQuery = reactQueryClient.useQuery('/admin/elections/:electionId', {
     pathParams: { electionId: electionId || '' },
   })
-  const election = electionQuery.data
+  const resultQuery = reactQueryClient.useQuery('/admin/elections/:electionId/result', {
+    pathParams: { electionId: electionId || '' },
+  })
 
   return (
     <div className="mx-6 space-y-4">
-      <ElectionBreadcrumb name={election?.name || '-'} />
+      <Breadcrumbs name={electionQuery.data?.name || '-'} />
       {electionQuery.isSuccess && (
         <>
-          <Header election={election} />
-          <ElectionDetail election={election} />
-          <ElectionCandidate election={election} />
+          <Header election={electionQuery.data} />
+          <ElectionDetail election={electionQuery.data} />
+          {resultQuery.isSuccess && (
+            <ElectionCandidate election={electionQuery.data} result={resultQuery.data} />
+          )}
         </>
       )}
     </div>
   )
 }
 
-function ElectionBreadcrumb({ name }: { name: string }) {
+function Breadcrumbs({ name }: { name: string }) {
   return (
     <Breadcrumb className="mt-4">
       <BreadcrumbList>
@@ -201,14 +208,20 @@ function ElectionDetail({ election }: { election: AdminGetElectionResponse }) {
   )
 }
 
-function ElectionCandidate({ election }: { election: AdminGetElectionResponse }) {
+function ElectionCandidate({
+  election,
+  result,
+}: {
+  election: AdminGetElectionResponse
+  result: AdminGetResultResponse
+}) {
   return (
     <Card>
       <div className="flex justify-between">
         <Typography variant="h3">ผู้ลงสมัคร</Typography>
         <TopRightCandidate election={election} />
       </div>
-      <CandidateList election={election} />
+      <Candidates election={election} result={result} />
     </Card>
   )
 }
@@ -234,28 +247,47 @@ function TopRightCandidate({ election }: { election: AdminGetElectionResponse })
       )
     case 'CLOSED_VOTE':
       return (
-        <div className="flex items-center gap-2">
-          {(election.type === 'ONLINE' || election.type === 'HYBRID') && <CountBallot />}
-          {(election.type === 'ONSITE' || election.type === 'HYBRID') && (
-            <Button variant="outline" className="flex items-center gap-2">
-              <Save />
-              <Typography variant="small">บันทึกผลการเลือกตั้งในสถานที่</Typography>
+        <div className="flex flex-col items-end gap-4">
+          <div className="flex items-center gap-2">
+            {(election.type === 'ONLINE' || election.type === 'HYBRID') && <CountBallot />}
+            {(election.type === 'ONSITE' || election.type === 'HYBRID') && (
+              <Button variant="outline" className="flex items-center gap-2">
+                <Save />
+                <Typography variant="small">บันทึกผลการเลือกตั้งในสถานที่</Typography>
+              </Button>
+            )}
+            <Button className="flex items-center gap-2">
+              <Megaphone />
+              <Typography variant="small" className="text-white">
+                ประกาศผลการเลือกตั้ง
+              </Typography>
             </Button>
-          )}
-          <Button className="flex items-center gap-2">
-            <Megaphone />
-            <Typography variant="small" className="text-white">
-              ประกาศผลการเลือกตั้ง
-            </Typography>
-          </Button>
+          </div>
+          <CandidateHeader election={election} />
         </div>
       )
     case 'RESULT_ANNOUNCE':
-      return null
+    case 'CANCELLED':
+      return <CandidateHeader election={election} />
     default:
       exhaustiveGuard(election.status)
   }
-  return
+}
+
+function CandidateHeader({ election }: { election: AdminGetElectionResponse }) {
+  return (
+    <div className="flex items-center">
+      <Typography className="w-32 flex items-center" variant="small">
+        {election.type === 'ONLINE' || (election.type === 'HYBRID' && 'เลือกตั้งออนไลน์')}
+      </Typography>
+      <Typography className="w-32 flex items-center" variant="small">
+        {election.type === 'ONSITE' || (election.type === 'HYBRID' && 'เลือกตั้งในสถานที่')}
+      </Typography>
+      <Typography className="w-52 flex items-center justify-end" variant="large">
+        คะเเนนรวม
+      </Typography>
+    </div>
+  )
 }
 
 function CountBallot() {
@@ -268,22 +300,71 @@ function CountBallot() {
   )
 }
 
-function CandidateList({ election }: { election: AdminGetElectionResponse }) {
+function Candidates({
+  election,
+  result,
+}: {
+  election: AdminGetElectionResponse
+  result: AdminGetResultResponse
+}) {
   return (
-    <div className=" grid grid-flow-col grid-cols-6">
-      {election.status == 'CLOSED_VOTE' && (
-        <>
-          <div className="col-span-3">{''}</div>
-          <Typography className=" flex items-center" variant="small">
-            {election.type === 'ONLINE' || (election.type === 'HYBRID' && 'เลือกตั้งออนไลน์')}
-          </Typography>
-          <Typography className=" flex items-center" variant="small">
-            {election.type === 'ONSITE' || (election.type === 'HYBRID' && 'เลือกตั้งในสถานที')}
-          </Typography>
-          <Typography className="flex items-center" variant="large">
-            คะเเนนรวม
-          </Typography>
-        </>
+    <div className="space-y-2">
+      {result.candidates.map((candidate) => (
+        <div key={candidate.id} className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            {candidate.number && (
+              <div className="w-9 flex flex-col items-center">
+                <Typography variant="small" className="text-primary">
+                  เบอร์
+                </Typography>
+                <Typography variant="h2" component="div" className="text-primary" fontWeight="bold">
+                  {candidate.number}
+                </Typography>
+              </div>
+            )}
+            {candidate.profileImagePath && (
+              <Avatar className="size-10">
+                <AvatarImage
+                  src={candidate.profileImagePath}
+                  alt={candidate.id}
+                  className="object-cover"
+                />
+              </Avatar>
+            )}
+            <Typography variant="p">{candidate.name}</Typography>
+          </div>
+          {(election.status === 'CLOSED_VOTE' ||
+            election.status === 'RESULT_ANNOUNCE' ||
+            election.isCancelled) && (
+            <div className="flex items-center gap-2">
+              <VoteScore score={candidate.result.onsite} />
+              <VoteScore score={candidate.result.online} />
+              <VoteScore score={candidate.result.totalPercent} isPercent />
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function VoteScore({ score, isPercent }: { score: number; isPercent?: boolean }) {
+  return (
+    <div
+      className={cn(
+        'w-32 flex h-10  font-sans  rounded-md border border-input bg-transparent px-3 py-2 text-sm text-foreground',
+        {
+          'border-primary w-52 text-primary relative text-right': isPercent,
+        }
+      )}
+    >
+      {score}
+      {isPercent ? '%' : ' คน'}
+      {isPercent && (
+        <div
+          className="absolute right-0 top-0 bottom-0 rounded-md bg-primary-300"
+          style={{ left: `${100 - score}%` }}
+        />
       )}
     </div>
   )
