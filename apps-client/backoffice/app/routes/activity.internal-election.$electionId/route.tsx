@@ -17,12 +17,15 @@ import ElectionTypeBadge from 'components/election/ElectionTypeBadge'
 import {
   Calendar,
   CalendarX2,
+  CircleAlert,
   Download,
   Eye,
   Link,
   MapPin,
+  Megaphone,
   Pencil,
   RefreshCw,
+  Save,
   Trash2,
   Users,
   Vote,
@@ -34,23 +37,26 @@ import { reactQueryClient } from '~/libs/api-client'
 
 import { Route } from '.react-router/types/app/+types/root'
 
+
 export function Mmeta() {
   return [{ title: 'Internal-election' }]
 }
 
 export default function InternalElectionDetailPage({ params }: Route.LoaderArgs) {
   const { electionId } = params
-  const query = reactQueryClient.useQuery('/admin/elections/:electionId', {
+  const electionQuery = reactQueryClient.useQuery('/admin/elections/:electionId', {
     pathParams: { electionId: electionId || '' },
   })
+  const election = electionQuery.data
 
   return (
     <div className="mx-6 space-y-4">
-      <ElectionBreadcrumb name={query.data?.name || '-'} />
-      {query.isSuccess && (
+      <ElectionBreadcrumb name={election?.name || '-'} />
+      {electionQuery.isSuccess && (
         <>
-          <Header election={query.data} />
-          <ElectionDetail election={query.data} />
+          <Header election={election} />
+          <ElectionDetail election={election} />
+          <ElectionCandidate election={election} />
         </>
       )}
     </div>
@@ -192,5 +198,93 @@ function ElectionDetail({ election }: { election: AdminGetElectionResponse }) {
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+function ElectionCandidate({ election }: { election: AdminGetElectionResponse }) {
+  return (
+    <Card>
+      <div className="flex justify-between">
+        <Typography variant="h3">ผู้ลงสมัคร</Typography>
+        <TopRightCandidate election={election} />
+      </div>
+      <CandidateList election={election} />
+    </Card>
+  )
+}
+
+function TopRightCandidate({ election }: { election: AdminGetElectionResponse }) {
+  switch (election.status) {
+    case 'DRAFT':
+    case 'NOT_OPENED_VOTE':
+      return (
+        <Button>
+          <Pencil />
+          <Typography variant="small" className="text-white ml-2">
+            แก้ไขรายชื่อผู้สมัคร
+          </Typography>
+        </Button>
+      )
+    case 'OPEN_VOTE':
+      return (
+        <Typography variant="small" className="text-secondary-200 flex items-center gap-2">
+          <CircleAlert />
+          ผลคะแนนจะปรากฏเมื่อปิดหีบ
+        </Typography>
+      )
+    case 'CLOSED_VOTE':
+      return (
+        <div className="flex items-center gap-2">
+          {(election.type === 'ONLINE' || election.type === 'HYBRID') && <CountBallot />}
+          {(election.type === 'ONSITE' || election.type === 'HYBRID') && (
+            <Button variant="outline" className="flex items-center gap-2">
+              <Save />
+              <Typography variant="small">บันทึกผลการเลือกตั้งในสถานที่</Typography>
+            </Button>
+          )}
+          <Button className="flex items-center gap-2">
+            <Megaphone />
+            <Typography variant="small" className="text-white">
+              ประกาศผลการเลือกตั้ง
+            </Typography>
+          </Button>
+        </div>
+      )
+    case 'RESULT_ANNOUNCE':
+      return null
+    default:
+      exhaustiveGuard(election.status)
+  }
+  return
+}
+
+function CountBallot() {
+  return (
+    <div>
+      <Button>
+        <RefreshCw className="mr-2" /> นับคะเเนน
+      </Button>
+    </div>
+  )
+}
+
+function CandidateList({ election }: { election: AdminGetElectionResponse }) {
+  return (
+    <div className=" grid grid-flow-col grid-cols-6">
+      {election.status == 'CLOSED_VOTE' && (
+        <>
+          <div className="col-span-3">{''}</div>
+          <Typography className=" flex items-center" variant="small">
+            {election.type === 'ONLINE' || (election.type === 'HYBRID' && 'เลือกตั้งออนไลน์')}
+          </Typography>
+          <Typography className=" flex items-center" variant="small">
+            {election.type === 'ONSITE' || (election.type === 'HYBRID' && 'เลือกตั้งในสถานที')}
+          </Typography>
+          <Typography className="flex items-center" variant="large">
+            คะเเนนรวม
+          </Typography>
+        </>
+      )}
+    </div>
   )
 }

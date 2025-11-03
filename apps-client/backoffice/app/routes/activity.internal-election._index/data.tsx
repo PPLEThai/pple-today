@@ -1,5 +1,3 @@
-'use client'
-
 import { useCallback, useMemo, useState } from 'react'
 import { NavLink } from 'react-router'
 
@@ -12,12 +10,11 @@ import ElectionStatusBadge from 'components/election/ElectionStatusBadge'
 import ElectionTypeBadge from 'components/election/ElectionTypeBadge'
 import { TableCopyId } from 'components/TableCopyId'
 import { CalendarX2, Pencil, Trash2, Users } from 'lucide-react'
-import { AdminListElectionResponse } from 'node_modules/@api/backoffice/src/modules/admin/election/models'
-import { getTimelineString } from 'utils/date'
 
-import { ElectionStatus } from '@api/backoffice/admin'
+import { AdminListElectionResponse, ElectionInfo, ElectionStatus } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
+import { exhaustiveGuard } from '~/libs/exhaustive-guard'
 
 const columnHelper = createColumnHelper<AdminListElectionResponse['data'][number]>()
 
@@ -60,7 +57,7 @@ export const Data = () => {
                   limit: queryLimit,
                   page: queryPage,
                   name: queryName,
-                  status: queryStatus,
+                  status: queryStatus?.length === 0 ? undefined : queryStatus,
                 },
               }),
               (_data) => {
@@ -150,7 +147,7 @@ export const Data = () => {
       }),
       columnHelper.display({
         id: 'votingTimeline',
-        header: 'ช่วงเวาลงคะเเนน',
+        header: 'ช่วงเวลาลงคะแนน',
         cell: (info) => {
           const { openVoting, closeVoting } = info.row.original
 
@@ -167,8 +164,8 @@ export const Data = () => {
         size: 110,
         minSize: 110,
       }),
-      columnHelper.accessor('totalVotes', {
-        header: 'จำนวนลงคะเเนน',
+      columnHelper.accessor('totalVoters', {
+        header: 'จำนวนลงคะแนน',
         cell: (info) => (
           <span className="flex gap-2 items-center">
             <Users strokeWidth={1.5} />
@@ -244,7 +241,7 @@ export const Data = () => {
             { value: 'RESULT_ANNOUNCE', label: 'ประกาศผล' },
           ],
           state: queryStatus || [],
-          setState: setQueryStatus as any,
+          setState: setQueryStatus as React.Dispatch<React.SetStateAction<string[]>>,
         },
       ]}
     />
