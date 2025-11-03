@@ -23,8 +23,8 @@ model Poll {
 
     totalVotes Int @default(0)
 
-    feedItem   FeedItem     @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
-    PollAnswer PollAnswer[]
+    feedItem FeedItem     @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
+    answers  PollAnswer[]
 
     @@index([status])
 }
