@@ -57,6 +57,13 @@ export class AdminElectionRepository {
         data: {
           ...input,
         },
+        include: {
+          _count: {
+            select: {
+              voters: true,
+            },
+          },
+        },
       })
     )
   }
@@ -82,7 +89,13 @@ export class AdminElectionRepository {
         const election = await tx.election.update({
           where: { id: electionId },
           data: { ...input },
-          include: { candidates: true, voters: true },
+          include: {
+            candidates: true,
+            voters: true,
+            _count: {
+              select: { voters: true },
+            },
+          },
         })
 
         await Promise.all([
@@ -181,6 +194,13 @@ export class AdminElectionRepository {
       const [data, count] = await Promise.all([
         this.prismaService.election.findMany({
           where: filter,
+          include: {
+            _count: {
+              select: {
+                voters: true,
+              },
+            },
+          },
           orderBy: {
             updatedAt: 'desc',
           },
@@ -203,6 +223,13 @@ export class AdminElectionRepository {
     return fromRepositoryPromise(
       this.prismaService.election.findUniqueOrThrow({
         where: { id: electionId },
+        include: {
+          _count: {
+            select: {
+              voters: true,
+            },
+          },
+        },
       })
     )
   }
@@ -671,6 +698,49 @@ export class AdminElectionRepository {
       this.prismaService.electionVoteRecord.updateMany({
         where: { electionId },
         data: { ballotId: null },
+      })
+    )
+  }
+
+  async getElectionResult(electionId: string) {
+    return fromRepositoryPromise(
+      this.prismaService.election.findUniqueOrThrow({
+        where: { id: electionId },
+        include: {
+          candidates: {
+            include: {
+              results: true,
+            },
+          },
+          _count: {
+            select: { voters: true },
+          },
+        },
+      })
+    )
+  }
+
+  async annouceElectionResult(
+    electionId: string,
+    timeline: {
+      start: Date
+      end: Date
+    },
+    destroyKeyInfo?: {
+      at: Date
+      duration: number
+    }
+  ) {
+    return fromRepositoryPromise(
+      this.prismaService.election.update({
+        where: { id: electionId },
+        data: {
+          startResult: timeline.start,
+          endResult: timeline.end,
+          keysStatus: destroyKeyInfo && ElectionKeysStatus.DESTROY_SCHEDULED,
+          keysDestroyScheduledAt: destroyKeyInfo?.at,
+          keysDestroyScheduledDuration: destroyKeyInfo?.duration,
+        },
       })
     )
   }

@@ -38,6 +38,7 @@ let app = new Elysia({ adapter: node() })
         'body.accessToken',
         'body.facebookPageAccessToken',
         'body.deviceToken',
+        'body.encryptedBallot',
       ],
     }).into({
       customProps: (ctx) => {
@@ -55,7 +56,6 @@ let app = new Elysia({ adapter: node() })
         ignore: (ctx) => {
           if (ctx.isError) return false
           if (!ctx.isError && 'response' in ctx.error) return true
-
           return (
             ctx.path.startsWith('/health') ||
             ctx.path.startsWith('/swagger') ||

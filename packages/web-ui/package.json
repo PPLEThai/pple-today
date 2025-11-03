@@ -18,8 +18,8 @@
   "devDependencies": {
     "@pple-today/project-config": "workspace:^",
     "@types/node": "^22.13.9",
-    "@types/react": "~19.0.10",
-    "@types/react-dom": "19.0.0",
+    "@types/react": "~19.1.0",
+    "@types/react-dom": "19.1.0",
     "prettier-plugin-tailwindcss": "^0.5.11",
     "tailwindcss": "^3.4.17"
   },
@@ -43,8 +43,8 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "lucide-react": "^0.542.0",
-    "react": "19.0.0",
-    "react-dom": "19.0.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
     "react-hook-form": "^7.62.0",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7"

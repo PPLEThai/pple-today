@@ -3,6 +3,8 @@ import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-commo
 import Elysia from 'elysia'
 
 import {
+  FollowManyTopicsBody,
+  FollowManyTopicsResponse,
   FollowTopicParams,
   FollowTopicResponse,
   GetTopicParams,
@@ -142,6 +144,39 @@ export const TopicController = new Elysia({
       detail: {
         summary: 'Get followed topics',
         description: 'Get followed topics',
+      },
+    }
+  )
+  .put(
+    '/follows',
+    async ({ user, topicService, status, body }) => {
+      const userId = user.id
+      const result = await topicService.followManyTopics(body.topicIds, userId)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUserPrecondition: {
+        isActive: true,
+      },
+      body: FollowManyTopicsBody,
+      response: {
+        200: FollowManyTopicsResponse,
+        ...createErrorSchema(
+          InternalErrorCode.FORBIDDEN,
+          InternalErrorCode.INTERNAL_SERVER_ERROR,
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.TOPIC_NOT_FOUND,
+          InternalErrorCode.TOPIC_CANNOT_FOLLOW_SUSPENDED
+        ),
+      },
+      detail: {
+        summary: 'Follow many topics',
+        description: 'Bulk follow topics by deletting existing follows and adding new ones',
       },
     }
   )

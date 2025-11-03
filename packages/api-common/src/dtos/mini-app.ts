@@ -2,6 +2,7 @@ import { Static, t } from 'elysia'
 
 export const MiniApp = t.Object({
   id: t.String({ description: 'ID of the mini app' }),
+  slug: t.String({ description: 'Slug of the mini app' }),
   name: t.String({ description: 'Name of the mini app' }),
   iconUrl: t.Nullable(
     t.String({

@@ -16,7 +16,7 @@ export class MiniAppService {
 
     return ok(
       miniApps.value.map((miniApp) => ({
-        id: miniApp.id,
+        slug: miniApp.slug,
         name: miniApp.name,
         iconUrl: miniApp.icon,
         order: miniApp.order,
