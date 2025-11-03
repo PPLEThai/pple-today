@@ -11,13 +11,11 @@ import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
 import { createColumnHelper } from '@tanstack/react-table'
 import { TableCopyId } from 'components/TableCopyId'
 import { CalendarX2, Pencil, Trash2, Users } from 'lucide-react'
-import { AdminListElectionResponse } from 'node_modules/@api/backoffice/src/modules/admin/election/models'
 
-import { ElectionInfo, ElectionStatus } from '@api/backoffice/admin'
+import { AdminListElectionResponse, ElectionInfo, ElectionStatus } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
-
-import { exhaustiveGuard } from '../../../../../packages/api-common/src/utils/common'
+import { exhaustiveGuard } from '~/libs/exhausetive-guard'
 
 const columnHelper = createColumnHelper<AdminListElectionResponse['data'][number]>()
 
