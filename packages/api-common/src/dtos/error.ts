@@ -161,6 +161,9 @@ const FACEBOOK_ERROR_SCHEMA = {
   FACEBOOK_PAGE_NOT_FOUND: {
     status: 404,
   },
+  FACEBOOK_PAGE_AUTHOR_NOT_FOUND: {
+    status: 404,
+  },
 } satisfies InternalErrorSchemas
 
 const POLL_ERROR_SCHEMA = {
