@@ -200,6 +200,27 @@ function Header({ election }: { election: AdminGetElectionResponse }) {
 }
 
 function ElectionDetail({ election }: { election: AdminGetElectionResponse }) {
+  const queryClient = useQueryClient()
+  const reloadKeyMutation = reactQueryClient.useMutation(
+    'put',
+    '/admin/elections/:electionId/keys/reload'
+  )
+
+  const reloadKeyElection = useCallback(() => {
+    if (reloadKeyMutation.isPending) return
+
+    reloadKeyMutation.mutateAsync(
+      { pathParams: { electionId: election.id } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: electionQueryKey(election.id),
+          })
+        },
+      }
+    )
+  }, [reloadKeyMutation, queryClient, election])
+
   return (
     <Card>
       <div className="flex items-center justify-between">
@@ -216,7 +237,7 @@ function ElectionDetail({ election }: { election: AdminGetElectionResponse }) {
           {election.status === 'DRAFT' && (
             <>
               {election.keyStatus === 'FAILED_CREATED' && (
-                <Button variant="outline" size="icon">
+                <Button variant="outline" size="icon" onClick={reloadKeyElection}>
                   <RefreshCw className="text-secondary-200" />
                 </Button>
               )}
