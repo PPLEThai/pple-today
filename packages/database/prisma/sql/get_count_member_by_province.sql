@@ -6,4 +6,4 @@ FROM "User" u
   ON u."id" = ur."userId"
 WHERE ur."role" = ANY($1)
 GROUP BY COALESCE(u."province", 'Unknown')
-ORDER BY "province" ASC;
+ORDER BY "count" DESC;

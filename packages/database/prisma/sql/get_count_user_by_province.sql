@@ -3,4 +3,4 @@ SELECT
   COUNT(*) AS count
 FROM "User"
 GROUP BY COALESCE("province", 'Unknown')
-ORDER BY "province" ASC;
+ORDER BY "count" DESC;

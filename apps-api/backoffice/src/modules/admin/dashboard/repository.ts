@@ -172,8 +172,6 @@ export class AdminDashboardRepository {
           getLinkStats(),
           getUserPerProvince(),
           getMemberPerProvince(),
-          // {},
-          // {},
         ])
 
       return {

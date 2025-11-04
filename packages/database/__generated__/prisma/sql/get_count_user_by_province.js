@@ -3,4 +3,4 @@
 /* eslint-disable */
 "use strict"
 const { makeTypedQueryFactory: $mkFactory } = require("../runtime/client")
-exports.get_count_user_by_province = /*#__PURE__*/ $mkFactory("SELECT\nCOALESCE(\"province\", 'Unknown') AS province,\nCOUNT(*) AS count\nFROM \"User\"\nGROUP BY COALESCE(\"province\", 'Unknown')\nORDER BY \"province\" ASC;")
+exports.get_count_user_by_province = /*#__PURE__*/ $mkFactory("SELECT\nCOALESCE(\"province\", 'Unknown') AS province,\nCOUNT(*) AS count\nFROM \"User\"\nGROUP BY COALESCE(\"province\", 'Unknown')\nORDER BY \"count\" DESC;")

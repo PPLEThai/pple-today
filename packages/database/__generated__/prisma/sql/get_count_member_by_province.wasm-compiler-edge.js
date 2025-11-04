@@ -3,4 +3,4 @@
 /* eslint-disable */
 "use strict"
 const { makeTypedQueryFactory: $mkFactory } = require("../runtime/wasm-compiler-edge.js")
-exports.get_count_member_by_province = /*#__PURE__*/ $mkFactory("SELECT\nCOALESCE(u.\"province\", 'Unknown') AS province,\nCOUNT(DISTINCT u.\"id\") AS count\nFROM \"User\" u\nJOIN \"UserRole\" ur\nON u.\"id\" = ur.\"userId\"\nWHERE ur.\"role\" = ANY($1)\nGROUP BY COALESCE(u.\"province\", 'Unknown')\nORDER BY \"province\" ASC;")
+exports.get_count_member_by_province = /*#__PURE__*/ $mkFactory("SELECT\nCOALESCE(u.\"province\", 'Unknown') AS province,\nCOUNT(DISTINCT u.\"id\") AS count\nFROM \"User\" u\nJOIN \"UserRole\" ur\nON u.\"id\" = ur.\"userId\"\nWHERE ur.\"role\" = ANY($1)\nGROUP BY COALESCE(u.\"province\", 'Unknown')\nORDER BY \"count\" DESC;")
