@@ -1,12 +1,7 @@
 import { createId } from '@paralleldrive/cuid2'
-import {
-  ElectionStatus,
-  FileMimeType,
-  FilePath,
-  InternalErrorCode,
-} from '@pple-today/api-common/dtos'
+import { FileMimeType, FilePath, InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FileService } from '@pple-today/api-common/services'
-import { err, mapRepositoryError } from '@pple-today/api-common/utils'
+import { convertToElectionInfo, err, mapRepositoryError } from '@pple-today/api-common/utils'
 import {
   Election,
   ElectionCandidate,
@@ -70,20 +65,6 @@ export class ElectionService {
     return this.isElectionInTimelinePeriod(election, now)
   }
 
-  private getElectionStatus(election: Election): ElectionStatus {
-    const now = new Date()
-
-    if (now < election.openVoting) {
-      return 'NOT_OPENED_VOTE'
-    } else if (now < election.closeVoting) {
-      return 'OPEN_VOTE'
-    } else if (!election.startResult || now < election.startResult) {
-      return 'CLOSED_VOTE'
-    } else {
-      return 'RESULT_ANNOUNCE'
-    }
-  }
-
   private isHybridElectionVoterRegistered(
     voterType: EligibleVoterType,
     electionType: ElectionType
@@ -99,30 +80,11 @@ export class ElectionService {
       voteRecords: { userId: string }[]
       _count: { voters: number; voteRecords: number }
     },
-    voterType: EligibleVoterType
+    voterType: EligibleVoterType,
+    now: Date
   ): ElectionWithCurrentStatus {
     return {
-      id: election.id,
-      name: election.name,
-      description: election.description,
-      location: election.location,
-      locationMapUrl: election.locationMapUrl,
-      province: election.province,
-      district: election.district,
-      type: election.type,
-      mode: election.mode,
-      isCancelled: election.isCancelled,
-      encryptionPublicKey: election.encryptionPublicKey,
-      publishDate: election.publishDate,
-      openRegister: election.openRegister,
-      closeRegister: election.closeRegister,
-      openVoting: election.openVoting,
-      closeVoting: election.closeVoting,
-      startResult: election.startResult,
-      endResult: election.endResult,
-      createdAt: election.createdAt,
-      updatedAt: election.updatedAt,
-      status: this.getElectionStatus(election),
+      ...convertToElectionInfo(election, now),
       votePercentage: 100 * (election._count.voteRecords / election._count.voters),
       isRegistered: this.isHybridElectionVoterRegistered(voterType, election.type),
       isVoted: election.voteRecords.length > 0,
@@ -158,7 +120,7 @@ export class ElectionService {
     const result = eligibleVoters.value
       .filter(({ election }) => this.isShowElectionInOfficialPage(election, now))
       .map(({ election, type: voterType }) =>
-        this.convertToListElection(election, voterType)
+        this.convertToListElection(election, voterType, now)
       ) satisfies ListElectionResponse
 
     return ok(result)
@@ -174,7 +136,7 @@ export class ElectionService {
     const result = eligibleVoters.value
       .filter(({ election }) => this.isElectionInTimelinePeriod(election, now))
       .map(({ election, type: voterType }) =>
-        this.convertToListElection(election, voterType)
+        this.convertToListElection(election, voterType, now)
       ) satisfies ListElectionResponse
 
     return ok(result)
@@ -199,7 +161,7 @@ export class ElectionService {
     }
 
     const election = eligibleVoter.value.election
-    const listElection = this.convertToListElection(election, eligibleVoter.value.type)
+    const listElection = this.convertToListElection(election, eligibleVoter.value.type, new Date())
     const candidates = election.candidates.map((candidate) =>
       this.convertToElectionCandidateWithVoteScore(
         candidate,

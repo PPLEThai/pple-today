@@ -106,9 +106,9 @@ export const FeedCard = React.memo(function FeedCard(props: {
               </Avatar>
             </Pressable>
           </Link>
-          <View className="flex flex-col">
+          <View className="flex flex-col flex-1">
             <Link href={`/user/${feedContent.author.id}`} asChild>
-              <Text className="text-base-text-high font-heading-medium text-sm">
+              <Text className="text-base-text-high font-heading-medium text-sm line-clamp-2">
                 {feedContent.author.name}
               </Text>
             </Link>
@@ -898,9 +898,9 @@ const FeedDetailAuthorSection = (props: { feedItem: FeedItem }) => {
             </Avatar>
           </Pressable>
         </Link>
-        <View className="flex flex-col">
+        <View className="flex flex-col flex-1">
           <Link href={`/user/${props.feedItem.author.id}`} asChild>
-            <Text className="text-base-text-high font-heading-medium text-sm">
+            <Text className="text-base-text-high font-heading-medium text-sm line-clamp-2">
               {props.feedItem.author.name}
             </Text>
           </Link>
