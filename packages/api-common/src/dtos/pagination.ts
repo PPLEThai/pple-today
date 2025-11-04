@@ -10,6 +10,7 @@ export const PaginationMetadataResponse = t.Object({
   meta: t.Object({
     totalPage: t.Number({ description: 'Total number of page' }),
     currentPage: t.Number({ description: 'Current page number' }),
+    count: t.Number({ description: 'Total number of records' }),
   }),
 })
 export type PaginationMetadataResponse = Static<typeof PaginationMetadataResponse>

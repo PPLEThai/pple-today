@@ -1,4 +1,4 @@
-import { FilePath } from '@pple-today/api-common/dtos'
+import { ElectionStatus, FilePath } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import {
@@ -172,16 +172,18 @@ export class AdminElectionRepository {
       name?: string
       type?: ElectionType
       isCancelled?: boolean
+      status?: ElectionStatus[]
     }
     pagination: {
       page: number
       limit: number
     }
+    now: Date
   }) {
     const { page, limit } = input.pagination
     const skip = Math.max((page - 1) * limit, 0)
 
-    const filter: Prisma.ElectionWhereInput = {
+    const baseFilter: Prisma.ElectionWhereInput = {
       name: {
         contains: input.filter?.name,
         mode: 'insensitive',
@@ -189,6 +191,40 @@ export class AdminElectionRepository {
       type: input.filter?.type,
       isCancelled: input.filter?.isCancelled,
     }
+
+    const statusFilter: Prisma.ElectionWhereInput =
+      input.filter?.status
+        ?.map((status) => {
+          switch (status) {
+            case 'DRAFT':
+              return { publishDate: null }
+            case 'NOT_OPENED_VOTE':
+              return { publishDate: { not: null }, openVoting: { gt: input.now } }
+            case 'OPEN_VOTE':
+              return {
+                publishDate: { not: null },
+                openVoting: { lte: input.now },
+                closeVoting: { gt: input.now },
+              }
+            case 'CLOSED_VOTE':
+              return {
+                publishDate: { not: null },
+                closeVoting: { lte: input.now },
+                OR: [{ startResult: null }, { startResult: { gt: input.now } }],
+              }
+            case 'RESULT_ANNOUNCE':
+              return {
+                publishDate: { not: null },
+                startResult: { lte: input.now },
+              }
+            default:
+              return null
+          }
+        })
+        .filter((filter) => filter)
+        .reduce((prev, curr) => ({ OR: [prev, curr] }), {}) || {}
+
+    const filter = { ...baseFilter, ...statusFilter }
 
     return fromRepositoryPromise(async () => {
       const [data, count] = await Promise.all([
@@ -249,27 +285,7 @@ export class AdminElectionRepository {
   }
 
   async cancelElectionById(electionId: string) {
-    const deletedVoteRecords = await this.prismaService.electionVoteRecord.findMany({
-      where: {
-        electionId,
-      },
-    })
-
-    const faceImagePaths = deletedVoteRecords
-      .map((record) => record.faceImagePath)
-      .filter((path) => path !== null)
-
-    const deleteImageResult = await fromRepositoryPromise(
-      this.fileService.$transaction(async (tx) => {
-        const deleteImageResult = await tx.bulkDeleteFile(faceImagePaths as FilePath[])
-        if (deleteImageResult.isErr()) return err(deleteImageResult.error)
-      })
-    )
-    if (deleteImageResult.isErr()) return err(deleteImageResult.error)
-
-    const [_, fileTx] = deleteImageResult.value
-
-    const cancelResult = await fromRepositoryPromise(
+    return fromRepositoryPromise(
       this.prismaService.$transaction([
         this.prismaService.electionBallot.deleteMany({ where: { electionId } }),
         this.prismaService.election.update({
@@ -278,13 +294,6 @@ export class AdminElectionRepository {
         }),
       ])
     )
-    if (cancelResult.isErr()) {
-      const rollbackImageResult = await fileTx.rollback()
-      if (rollbackImageResult.isErr()) return err(rollbackImageResult.error)
-      return err(cancelResult.error)
-    }
-
-    return ok()
   }
 
   async publishElectionById(electionId: string, publishDate: Date) {

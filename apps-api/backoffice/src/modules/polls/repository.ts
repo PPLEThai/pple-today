@@ -1,6 +1,6 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { FeedItemType, PollStatus, Prisma } from '@pple-today/database/prisma'
+import { FeedItemType, PollStatus, PollType, Prisma } from '@pple-today/database/prisma'
 import { Elysia } from 'elysia'
 
 import { PrismaServicePlugin } from '../../plugins/prisma'
@@ -182,73 +182,121 @@ export class PollsRepository {
     })
   }
 
-  async createPollVote(userId: string, pollId: string, optionId: string) {
+  async upsertPollVote(userId: string, pollId: string, options: string[], pollType: PollType) {
     return fromRepositoryPromise(
-      this.prismaService.pollOption.update({
-        where: {
-          id: optionId,
-          poll: {
-            feedItemId: pollId,
-            status: PollStatus.PUBLISHED,
-            endAt: {
-              gt: new Date(),
+      this.prismaService.$transaction(async (tx) => {
+        // retrieve the existing vote
+        const existingVotes = await tx.pollAnswer.findMany({
+          where: {
+            userId,
+            option: {
+              pollId: pollId,
             },
-            feedItem: {
-              publishedAt: {
-                lte: new Date(),
+          },
+        })
+
+        // delete the existingVote if existingVote exist
+        if (existingVotes.length > 0) {
+          await tx.poll.update({
+            where: {
+              feedItemId: pollId,
+              status: PollStatus.PUBLISHED,
+            },
+            data: {
+              options: {
+                update: existingVotes.map((vote) => ({
+                  where: { id: vote.optionId },
+                  data: {
+                    votes: {
+                      decrement: 1,
+                    },
+                    pollAnswers: {
+                      delete: {
+                        userId_optionId: {
+                          userId,
+                          optionId: vote.optionId,
+                        },
+                      },
+                    },
+                  },
+                })),
+              },
+              totalVotes: {
+                decrement: 1,
               },
             },
-          },
-        },
-        data: {
-          votes: {
-            increment: 1,
-          },
-          pollAnswers: {
-            create: {
-              user: {
-                connect: {
-                  id: userId,
+          })
+        }
+
+        if (pollType === 'SINGLE_CHOICE' && options.length === 1) {
+          await tx.poll.update({
+            where: {
+              feedItemId: pollId,
+              status: PollStatus.PUBLISHED,
+            },
+            data: {
+              options: {
+                update: {
+                  where: {
+                    id: options[0],
+                  },
+                  data: {
+                    votes: {
+                      increment: 1,
+                    },
+                    pollAnswers: {
+                      create: {
+                        user: {
+                          connect: {
+                            id: userId,
+                          },
+                        },
+                      },
+                    },
+                  },
                 },
               },
+              totalVotes: {
+                increment: 1,
+              },
             },
-          },
-        },
-      })
-    )
-  }
+          })
+        }
 
-  async deletePollVote(userId: string, pollId: string, optionId: string) {
-    return fromRepositoryPromise(
-      this.prismaService.pollOption.update({
-        where: {
-          id: optionId,
-          poll: {
-            feedItemId: pollId,
-            status: PollStatus.PUBLISHED,
-            endAt: {
-              gt: new Date(),
+        if (pollType === 'MULTIPLE_CHOICE' && options.length > 0) {
+          await tx.poll.update({
+            where: {
+              feedItemId: pollId,
+              status: PollStatus.PUBLISHED,
             },
-            feedItem: {
-              publishedAt: {
-                lte: new Date(),
+            data: {
+              options: {
+                update: options.map((id) => ({
+                  where: { id: id },
+                  data: {
+                    votes: {
+                      increment: 1,
+                    },
+                    pollAnswers: {
+                      create: {
+                        user: {
+                          connect: {
+                            id: userId,
+                          },
+                        },
+                      },
+                    },
+                  },
+                })),
+              },
+              totalVotes: {
+                increment: 1,
               },
             },
-          },
-        },
-        data: {
-          votes: {
-            decrement: 1,
-          },
-          pollAnswers: {
-            delete: {
-              userId_optionId: {
-                userId,
-                optionId,
-              },
-            },
-          },
-        },
+          })
+        }
+
+        // TODO: log the following process in term: <previous_options> to <new_options>
       })
     )
   }

@@ -37,7 +37,7 @@ export default function SearchPage() {
       formApi.reset()
       dispatch({ type: 'updateQuery', query: value.query })
       router.navigate({
-        pathname: './result',
+        pathname: '/search/result',
         params: { query: value.query },
       })
     },
