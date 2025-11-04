@@ -1,5 +1,25 @@
 # @client/backoffice
 
+## 0.5.1
+
+### Patch Changes
+
+- [#228](https://github.com/PPLEThai/pple-today/pull/228) [`379b22d`](https://github.com/PPLEThai/pple-today/commit/379b22d1d1ce57828773a1a3de43a9bac0eec883) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-501] list election](chayaponarpayatam2004/pple-501-list-election)
+
+## 0.5.0
+
+### Minor Changes
+
+- [#167](https://github.com/PPLEThai/pple-today/pull/167) [`92bab92`](https://github.com/PPLEThai/pple-today/commit/92bab92ad41fde1000e9248cfb4f34492f9f2c2d) Thanks [@rootEnginear](https://github.com/rootEnginear)! - [PPLE-342] Feed Announcement CMS Page
+
+### Patch Changes
+
+- [#223](https://github.com/PPLEThai/pple-today/pull/223) [`c8cc567`](https://github.com/PPLEThai/pple-today/commit/c8cc5674c7d9cf3caa8edc0ddf180278a4b9c218) Thanks [@Anon-136](https://github.com/Anon-136)! - [BREAKING [PPLE-330] Fix performance issue on RN new arch](https://linear.app/snts/issue/PPLE-330/fix-performance-issue-on-rn-new-arch)
+
+- Updated dependencies [[`c8cc567`](https://github.com/PPLEThai/pple-today/commit/c8cc5674c7d9cf3caa8edc0ddf180278a4b9c218)]:
+  - @pple-today/web-ui@0.2.1
+  - @pple-today/api-client@0.3.2
+
 ## 0.4.0
 
 ### Minor Changes

@@ -9,6 +9,7 @@ export const Poll = t.Object({
   endAt: t.Date({ description: 'The end date of the poll' }),
   status: t.Enum(PollStatus),
   type: t.Enum(PollType),
+  totalVotes: t.Number({ description: 'The total vote count of the poll' }),
 
   createdAt: t.Date({ description: 'The creation date of the poll' }),
   updatedAt: t.Date({ description: 'The update date of the poll' }),
