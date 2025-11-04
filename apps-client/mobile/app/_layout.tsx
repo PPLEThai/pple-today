@@ -48,7 +48,7 @@ import { openBrowserAsync } from 'expo-web-browser'
 import { StatusBarProvider } from '@app/context/status-bar'
 import { environment } from '@app/env'
 import { reactQueryClient } from '@app/libs/api-client'
-import { AuthLifeCycleHook, useSession } from '@app/libs/auth'
+import { AuthLifeCycleHook, useAuthMe } from '@app/libs/auth'
 
 dayjs.extend(buddhistEra)
 dayjs.extend(duration)
@@ -202,7 +202,7 @@ function NotificationTokenConsentPopup() {
     '/notifications/register',
     {}
   )
-  const session = useSession()
+  const authMe = useAuthMe()
   const router = useRouter()
 
   const handleRemoteMessage = async (data: Record<string, string | object>) => {
@@ -241,7 +241,7 @@ function NotificationTokenConsentPopup() {
 
     const registerNotification = async () => {
       try {
-        if (!session) return
+        if (!authMe.data) return
 
         const requestPermissionResult = await requestUserPermission()
         if (!requestPermissionResult) return
@@ -255,7 +255,7 @@ function NotificationTokenConsentPopup() {
         })
         await handleInitialMessaging()
       } catch (err) {
-        console.error('Failed to register notification token', err)
+        console.error('Failed to register notification token', JSON.stringify(err))
       }
     }
 
@@ -269,7 +269,7 @@ function NotificationTokenConsentPopup() {
 
     return unsubscribeOpenedApp
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session])
+  }, [authMe.data])
 
   return null
 }
