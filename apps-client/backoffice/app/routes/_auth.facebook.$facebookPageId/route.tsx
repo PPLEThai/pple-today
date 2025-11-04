@@ -21,7 +21,7 @@ import { UpdateFacebookPageBody, UpdateFacebookPageParams } from '@api/backoffic
 
 import { reactQueryClient } from '~/libs/api-client'
 
-import { Data } from '../feed.post/data'
+import { Data } from '../feed.post.index/data'
 
 export const Route = createFileRoute('/_auth/facebook/$facebookPageId')({
   component: FacebookDetailPage,

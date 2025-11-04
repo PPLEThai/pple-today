@@ -11,12 +11,12 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 
 import { Data } from './data'
 
-export const Route = createFileRoute('/activity/internal-election')({
-  component: InternalElectionPage,
-  head: () => ({ meta: [{ title: 'Internal Election' }] }),
+export const Route = createFileRoute('/feed/topic/')({
+  component: TopicPage,
+  head: () => ({ meta: [{ title: 'Feed Topic' }] }),
 })
 
-function InternalElectionPage() {
+function TopicPage() {
   return (
     <div className="px-6 pb-6 space-y-2">
       <Breadcrumb className="pt-4 pb-2">
@@ -24,16 +24,16 @@ function InternalElectionPage() {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to="/activity">Activity</Link>
+              <Link to="/feed">Feed</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Internal Election</BreadcrumbPage>
+            <BreadcrumbPage>Topic</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <Typography variant="h1">Internal Election Management</Typography>
+      <Typography variant="h1">จัดการหัวข้อ</Typography>
       <Data />
     </div>
   )

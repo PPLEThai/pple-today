@@ -11,7 +11,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 
 import { Data } from './data'
 
-export const Route = createFileRoute('/feed/post')({
+export const Route = createFileRoute('/feed/post/')({
   component: PostPage,
   head: () => ({ meta: [{ title: 'Post' }] }),
 })

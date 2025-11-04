@@ -12,7 +12,7 @@ import { Link } from '@tanstack/react-router'
 
 import { Data } from './data'
 
-export const Route = createFileRoute('/feed/announcement')({
+export const Route = createFileRoute('/feed/announcement/')({
   component: AnnouncementPage,
   head: () => ({ meta: [{ title: 'Announcement' }] }),
 })
