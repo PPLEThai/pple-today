@@ -201,6 +201,7 @@ export class NotificationRepository {
           data: {
             title: data.header,
             message: data.message,
+            image: data.image,
             linkType: data.link?.type,
             linkValue: data.link?.value,
             actionButtonText: data?.actionButtonText,
@@ -233,18 +234,29 @@ export class NotificationRepository {
 
       const whereConditions = this.getFilterConditions(conditions)
 
-      return {
-        user: await this.prismaService.user.findMany({
-          where: whereConditions,
-          select: {
-            phoneNumber: true,
-            notificationTokens: {
-              select: {
-                token: true,
-              },
+      const users = await this.prismaService.user.findMany({
+        where: whereConditions,
+        select: {
+          id: true,
+          phoneNumber: true,
+          notificationTokens: {
+            select: {
+              token: true,
             },
           },
-        }),
+        },
+      })
+
+      await this.prismaService.userNotification.createMany({
+        data: users.map((u) => ({
+          userId: u.id,
+          notificationId: newNotification.id,
+        })),
+        skipDuplicates: true,
+      })
+
+      return {
+        users,
         newNotification,
       }
     })
@@ -253,9 +265,9 @@ export class NotificationRepository {
       return createResult
     }
 
-    const { user, newNotification } = createResult.value
+    const { users, newNotification } = createResult.value
 
-    const phoneNumberWithTokens = user.flatMap((u) => ({
+    const phoneNumberWithTokens = users.flatMap((u) => ({
       phoneNumber: u.phoneNumber,
       token: u.notificationTokens.map((t) => t.token),
     }))
