@@ -58,6 +58,7 @@ type Props = {
 }
 
 const DEFAULT_ANIMATION_TYPE = 'fade'
+const DEFAULT_PRESENTATION_STYLE = 'overFullScreen'
 const DEFAULT_BG_COLOR = '#000'
 const DEFAULT_DELAY_LONG_PRESS = 800
 const SCREEN = Dimensions.get('screen')
@@ -73,7 +74,7 @@ function LightboxViewer({
   onIndexChange: onImageIndexChange,
   animationType = DEFAULT_ANIMATION_TYPE,
   backgroundColor = DEFAULT_BG_COLOR,
-  presentationStyle,
+  presentationStyle = DEFAULT_PRESENTATION_STYLE,
   swipeToCloseEnabled,
   doubleTapToZoomEnabled,
   delayLongPress = DEFAULT_DELAY_LONG_PRESS,
