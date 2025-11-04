@@ -1,9 +1,12 @@
 import { Button } from '@pple-today/web-ui/button'
-import { Link } from '@tanstack/react-router'
-import { Outlet } from '@tanstack/react-router'
+import { createFileRoute, Link, Outlet } from '@tanstack/react-router'
 import { AppSidebar } from 'components/AppSidebar'
 
 import { reactQueryClient } from '~/libs/api-client'
+
+export const Route = createFileRoute('/_auth')({
+  component: AuthLayout,
+})
 
 export default function AuthLayout() {
   const query = reactQueryClient.useQuery('/admin/auth/me', {}, { retry: false })
