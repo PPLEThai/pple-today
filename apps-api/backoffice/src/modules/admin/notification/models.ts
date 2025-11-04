@@ -47,5 +47,5 @@ export const DeleteApiKeyNotificationParams = t.Object({
 })
 export type DeleteApiKeyNotificationParams = Static<typeof DeleteApiKeyNotificationParams>
 
-export const DeleteApiKeyNotificationResponse = t.Void()
+export const DeleteApiKeyNotificationResponse = t.Literal('No Content')
 export type DeleteApiKeyNotificationResponse = Static<typeof DeleteApiKeyNotificationResponse>

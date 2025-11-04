@@ -102,8 +102,8 @@ export const AdminNotificationController = new Elysia({
           },
         }
       )
-      .put(
-        '/:id/rotate',
+      .post(
+        '/:id/generate',
         async ({ adminNotificationService, params, status }) => {
           const result = await adminNotificationService.rotateApiKey(params.id)
 
@@ -138,9 +138,10 @@ export const AdminNotificationController = new Elysia({
             return mapErrorCodeToResponse(result.error, status)
           }
 
-          return status(204, void 0)
+          return status(204, 'No Content')
         },
         {
+          requiredLocalUser: true,
           detail: {
             summary: 'Delete API Key Notification',
             description: 'Delete an existing API key notification',

@@ -51,12 +51,13 @@ export class AdminNotificationRepository {
     })
   }
 
-  async updateApiKey(id: string, data: { name?: string }) {
+  async updateApiKey(id: string, data: { name?: string; active?: boolean }) {
     return await fromRepositoryPromise(
       this.prismaService.notificationApiKey.update({
         where: { id },
         data: {
           name: data.name,
+          active: data.active,
         },
       })
     )

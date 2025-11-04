@@ -31,7 +31,7 @@ export class AdminNotificationService {
     return ok(createApiKeyResult.value)
   }
 
-  async updateApiKey(id: string, data: { name?: string }) {
+  async updateApiKey(id: string, data: { name?: string; active?: boolean }) {
     const updateApiKeyResult = await this.adminNotificationRepository.updateApiKey(id, data)
 
     if (updateApiKeyResult.isErr()) {
