@@ -34,7 +34,6 @@
   "devDependencies": {
     "@api/backoffice": "workspace:^",
     "@pple-today/project-config": "workspace:^",
-    "@react-router/dev": "^7.5.3",
     "@tailwindcss/vite": "^4.1.4",
     "@tanstack/eslint-plugin-router": "^1.133.19",
     "@tanstack/router-cli": "^1.134.9",
