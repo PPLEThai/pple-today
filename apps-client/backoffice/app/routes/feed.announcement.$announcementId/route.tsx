@@ -128,7 +128,7 @@ function AnnouncementDetailPage() {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbPage>
-              {query.data?.title ? query.data.title : 'รายละเอียดหัวข้อ'}
+              {query.data?.title ? query.data.title : 'รายละเอียดประกาศ'}
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>

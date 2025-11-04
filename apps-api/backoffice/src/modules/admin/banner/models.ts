@@ -9,6 +9,12 @@ export const BannerIdParams = t.Object({
 export type BannerIdParams = Static<typeof BannerIdParams>
 
 // GET /admin/banners
+export const GetBannersQuery = t.Object({
+  search: t.Optional(t.String()),
+  status: t.Optional(t.Array(t.Enum(BannerStatusType))),
+})
+export type GetBannersQuery = Static<typeof GetBannersQuery>
+
 export const GetBannersResponse = t.Array(Banner)
 export type GetBannersResponse = Static<typeof GetBannersResponse>
 
@@ -21,11 +27,8 @@ export type GetBannerByIdResponse = Static<typeof GetBannerByIdResponse>
 
 // POST /admin/banners
 export const CreateBannerBody = t.Object({
-  imageFilePath: FilePath,
-  startAt: t.Date({ description: 'The start date for the banner item' }),
-  endAt: t.Date({ description: 'The end date for the banner item' }),
-  navigation: t.Enum(BannerNavigationType, {
-    description: 'How the app should navigate when the item is tapped',
+  headline: t.String({
+    description: 'The headline for the banner item',
   }),
   miniAppId: t.Optional(t.String({ description: 'The ID of the mini app to open' })),
   destination: t.Optional(
@@ -33,6 +36,10 @@ export const CreateBannerBody = t.Object({
       description: 'The destination URI for the banner item',
     })
   ),
+  navigation: t.Enum(BannerNavigationType, {
+    description: 'How the app should navigate when the item is tapped',
+  }),
+  imageFilePath: FilePath,
 })
 export type CreateBannerBody = Static<typeof CreateBannerBody>
 
@@ -47,20 +54,23 @@ export type UpdateBannerParams = Static<typeof UpdateBannerParams>
 
 export const UpdateBannerBody = t.Partial(
   t.Object({
-    imageFilePath: FilePath,
-    status: t.Enum(BannerStatusType, { description: 'Publish status of the banner item' }),
+    headline: t.String({
+      description: 'The headline for the banner item',
+    }),
+    miniAppId: t.Nullable(t.String({ description: 'The ID of the mini app to open' })),
+    destination: t.Nullable(
+      t.String({
+        description: 'The destination URI for the banner item',
+      })
+    ),
     navigation: t.Enum(BannerNavigationType, {
       description: 'How the app should navigate when the item is tapped',
     }),
-    destination: t.String({
-      description: 'The destination URI for the banner item',
-    }),
-    miniAppId: t.String({ description: 'The ID of the mini app to open' }),
-    startAt: t.Date({ description: 'The start date for the banner item' }),
-    endAt: t.Date({ description: 'The end date for the banner item' }),
+    imageFilePath: FilePath,
+    order: t.Number({ description: 'Display order (ascending)' }),
+    status: t.Enum(BannerStatusType, { description: 'Publish status of the banner item' }),
   })
 )
-
 export type UpdateBannerBody = Static<typeof UpdateBannerBody>
 
 export const UpdateBannerResponse = t.Object({
@@ -77,14 +87,18 @@ export const DeleteBannerResponse = t.Object({
 })
 export type DeleteBannerResponse = Static<typeof DeleteBannerResponse>
 
-export const ReorderBannerBody = t.Object({
-  ids: t.Array(t.String(), {
-    description: 'Array of banner IDs in the new order',
+// POST /admin/banners/{id}/reorder
+export const ReorderBannerByIdParams = BannerIdParams
+export type ReorderBannerByIdParams = Static<typeof GetBannerByIdParams>
+
+export const ReorderBannerByIdByIdBody = t.Object({
+  movement: t.Union([t.Literal('up'), t.Literal('down')], {
+    description: 'The direction of the movement',
   }),
 })
-export type ReorderBannerBody = Static<typeof ReorderBannerBody>
+export type ReorderBannerByIdByIdBody = Static<typeof ReorderBannerByIdByIdBody>
 
-export const ReorderBannerResponse = t.Object({
+export const ReorderBannerByIdByIdResponse = t.Object({
   message: t.String({ description: 'Success message' }),
 })
-export type ReorderBannerResponse = Static<typeof ReorderBannerResponse>
+export type ReorderBannerByIdByIdResponse = Static<typeof ReorderBannerByIdByIdResponse>

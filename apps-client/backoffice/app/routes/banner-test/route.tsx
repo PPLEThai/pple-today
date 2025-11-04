@@ -25,6 +25,7 @@ function BannerTestRoute() {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
+      query: {},
     },
     {
       enabled: !!accessToken,
@@ -103,11 +104,10 @@ function BannerTestRoute() {
 
         const banner = await createBannerMutation.mutateAsync({
           body: {
+            headline: 'Test banner',
             destination: 'https://google.com',
             navigation: 'EXTERNAL_BROWSER',
             imageFilePath: result.filePath as FilePath,
-            startAt: new Date(),
-            endAt: new Date(Date.now() + 86400000),
           },
           headers: {
             Authorization: `Bearer ${user.access_token}`,

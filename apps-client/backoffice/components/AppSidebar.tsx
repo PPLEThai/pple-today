@@ -118,10 +118,10 @@ export const AppSidebar = ({
                 </Collapsible>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <a href="#">
+                    <Link to="/facebook">
                       <Facebook />
                       <span>เพจเฟสบุ๊ค</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <Collapsible defaultOpen className="group/collapsible">
