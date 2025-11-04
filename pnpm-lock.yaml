@@ -657,9 +657,6 @@ importers:
       '@prisma/client':
         specifier: ^6.15.0
         version: 6.15.0(prisma@6.15.0(magicast@0.3.5)(typescript@5.8.3))(typescript@5.8.3)
-      lexorank:
-        specifier: ^1.0.5
-        version: 1.0.5
     devDependencies:
       '@pple-today/project-config':
         specifier: workspace:^
@@ -673,6 +670,9 @@ importers:
       dotenv:
         specifier: ^17.0.1
         version: 17.0.1
+      lexorank:
+        specifier: ^1.0.5
+        version: 1.0.5
       prisma:
         specifier: ^6.15.0
         version: 6.15.0(magicast@0.3.5)(typescript@5.8.3)
@@ -4143,9 +4143,6 @@ packages:
     engines: {node: '>=14'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
 
   '@svgr/core@8.1.0':
     resolution: {integrity: sha512-8QqtOQT5ACVlmsvKOJNEaWmRPmcojMOzCz4Hs2BGG/toAp/K38LcsMRyLp349glq5AzJbCEeimEoxaX6v/fLrA==}
@@ -16008,6 +16005,7 @@ snapshots:
 
   '@svgr/babel-preset@8.1.0(@babel/core@7.27.1)':
     dependencies:
+      '@babel/core': 7.27.1
       '@svgr/babel-plugin-add-jsx-attribute': 8.0.0(@babel/core@7.27.1)
       '@svgr/babel-plugin-remove-jsx-attribute': 8.0.0(@babel/core@7.27.1)
       '@svgr/babel-plugin-remove-jsx-empty-expression': 8.0.0(@babel/core@7.27.1)
@@ -16016,8 +16014,6 @@ snapshots:
       '@svgr/babel-plugin-svg-em-dimensions': 8.0.0(@babel/core@7.27.1)
       '@svgr/babel-plugin-transform-react-native-svg': 8.1.0(@babel/core@7.27.1)
       '@svgr/babel-plugin-transform-svg-component': 8.0.0(@babel/core@7.27.1)
-    optionalDependencies:
-      '@babel/core': 7.27.1
 
   '@svgr/core@8.1.0(typescript@5.8.3)':
     dependencies:
