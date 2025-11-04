@@ -91,14 +91,14 @@ export type DeleteBannerResponse = Static<typeof DeleteBannerResponse>
 export const ReorderBannerByIdParams = BannerIdParams
 export type ReorderBannerByIdParams = Static<typeof GetBannerByIdParams>
 
-export const ReorderBannerByIdByIdBody = t.Object({
+export const ReorderBannerByIdBody = t.Object({
   movement: t.Union([t.Literal('up'), t.Literal('down')], {
     description: 'The direction of the movement',
   }),
 })
-export type ReorderBannerByIdByIdBody = Static<typeof ReorderBannerByIdByIdBody>
+export type ReorderBannerByIdBody = Static<typeof ReorderBannerByIdBody>
 
-export const ReorderBannerByIdByIdResponse = t.Object({
+export const ReorderBannerByIdResponse = t.Object({
   message: t.String({ description: 'Success message' }),
 })
-export type ReorderBannerByIdByIdResponse = Static<typeof ReorderBannerByIdByIdResponse>
+export type ReorderBannerByIdResponse = Static<typeof ReorderBannerByIdResponse>

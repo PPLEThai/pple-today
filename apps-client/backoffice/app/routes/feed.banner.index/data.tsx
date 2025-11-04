@@ -19,7 +19,7 @@ import { partition } from 'remeda'
 import {
   DeleteBannerParams,
   FlatBanner,
-  ReorderBannerByIdByIdBody,
+  ReorderBannerByIdBody,
   ReorderBannerByIdParams,
   UpdateBannerBody,
   UpdateBannerParams,
@@ -90,7 +90,7 @@ export const Data = () => {
     [deleteMutation, invalidateQuery]
   )
   const reorderBanner = useCallback(
-    (id: ReorderBannerByIdParams['id'], data: ReorderBannerByIdByIdBody) => {
+    (id: ReorderBannerByIdParams['id'], data: ReorderBannerByIdBody) => {
       if (reorderMutation.isPending) return
       reorderMutation.mutateAsync(
         { pathParams: { id }, body: data },
@@ -318,7 +318,7 @@ export const Data = () => {
         filterExtension={
           <BannerCreate
             trigger={
-              <Button>
+              <Button className="gap-1">
                 <Plus />
                 สร้างรูปแบนเนอร์
               </Button>

@@ -11,9 +11,9 @@ import {
   GetBannerByIdResponse,
   GetBannersQuery,
   GetBannersResponse,
-  ReorderBannerByIdByIdBody,
-  ReorderBannerByIdByIdResponse,
+  ReorderBannerByIdBody,
   ReorderBannerByIdParams,
+  ReorderBannerByIdResponse,
   UpdateBannerBody,
   UpdateBannerParams,
   UpdateBannerResponse,
@@ -213,9 +213,9 @@ export const AdminBannerController = new Elysia({
     {
       requiredLocalUser: true,
       params: ReorderBannerByIdParams,
-      body: ReorderBannerByIdByIdBody,
+      body: ReorderBannerByIdBody,
       response: {
-        200: ReorderBannerByIdByIdResponse,
+        200: ReorderBannerByIdResponse,
         ...createErrorSchema(
           InternalErrorCode.BANNER_NOT_FOUND,
           InternalErrorCode.BANNER_MOVING_POSITION_INVALID,

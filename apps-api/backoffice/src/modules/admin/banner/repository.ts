@@ -11,7 +11,7 @@ import {
   DeleteBannerParams,
   GetBannerByIdParams,
   GetBannersQuery,
-  ReorderBannerByIdByIdBody,
+  ReorderBannerByIdBody,
   ReorderBannerByIdParams,
   UpdateBannerBody,
   UpdateBannerParams,
@@ -259,7 +259,7 @@ export class AdminBannerRepository {
     return ok(deletedFile)
   }
 
-  async reorderBanner(id: ReorderBannerByIdParams['id'], data: ReorderBannerByIdByIdBody) {
+  async reorderBanner(id: ReorderBannerByIdParams['id'], data: ReorderBannerByIdBody) {
     const existingBanner = await fromRepositoryPromise(
       this.prismaService.banner.findMany({
         select: {
@@ -295,7 +295,7 @@ export class AdminBannerRepository {
       newOrder = LexoRank.parse(existingBanner.value[currentIdIndex - 1].order)
         .genPrev()
         .toString()
-    } else if (currentIdIndex === 3 && data.movement === 'down') {
+    } else if (currentIdIndex === PUBLISHED_BANNER_LIMIT - 2 && data.movement === 'down') {
       newOrder = LexoRank.parse(existingBanner.value[currentIdIndex + 1].order)
         .genNext()
         .toString()

@@ -6,4 +6,4 @@
 '@pple-today/web-ui': minor
 ---
 
-[PPLE-343] Feed Banner CMS Page
+[[PPLE-343] Feed Banner CMS Page](https://linear.app/snts/issue/PPLE-343/banner)
