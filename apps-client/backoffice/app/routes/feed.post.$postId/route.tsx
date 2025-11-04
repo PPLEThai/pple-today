@@ -83,7 +83,7 @@ function PostDetailPage() {
       onConfirm: () =>
         deleteMutation.mutateAsync(
           { pathParams: { postId } },
-          { onSuccess: () => navigate('/feed/post') }
+          { onSuccess: () => navigate({ to: '/feed/post' }) }
         ),
     })
   }
