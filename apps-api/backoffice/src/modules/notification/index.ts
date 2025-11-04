@@ -70,6 +70,11 @@ export const NotificationController = new Elysia({
       return status(200, listResult.value)
     },
     {
+      detail: {
+        summary: 'List notification history for the authenticated user',
+        description:
+          'This endpoint allows the authenticated user to retrieve their notification history with pagination support using cursor and limit query parameters.',
+      },
       requiredLocalUser: true,
       query: ListHistoryNotificationQuery,
       response: {
@@ -94,6 +99,11 @@ export const NotificationController = new Elysia({
       return status(200, getResult.value)
     },
     {
+      detail: {
+        summary: 'Get notification details by ID for the authenticated user',
+        description:
+          'This endpoint allows the authenticated user to retrieve the details of a specific notification by providing the notification ID in the URL parameter.',
+      },
       requiredLocalUser: true,
       params: GetNotificationDetailsByIdParams,
       response: {
