@@ -21,7 +21,7 @@ export const DashboardProvinceCountList = (props: DashboardProvinceCountListProp
               {d.province}
             </dt>
             <dd className="shrink-0 w-max whitespace-nowrap font-semibold leading-6 text-base-text-high">
-              {d.count}
+              {d.count.toLocaleString('th')}
             </dd>
           </div>
         ))}
