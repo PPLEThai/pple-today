@@ -2,7 +2,11 @@ import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { CreateNewExternalNotificationBody, ListHistoryNotificationResponse } from './models'
+import {
+  CreateNewExternalNotificationBody,
+  GetNotificationDetailsByIdResponse,
+  ListHistoryNotificationResponse,
+} from './models'
 import { NotificationRepository, NotificationRepositoryPlugin } from './repository'
 
 export class NotificationService {
@@ -26,23 +30,13 @@ export class NotificationService {
     }
 
     const notifications: ListHistoryNotificationResponse['items'] =
-      listResult.value.notifications.map(({ notification, isRead }) => ({
+      listResult.value.notifications.map(({ notification, isRead, createdAt }) => ({
         id: notification.id,
         title: notification.title,
-        content: {
-          header: notification.title,
-          message: notification.message,
-          image: notification.image ?? null,
-          link:
-            notification.linkValue && notification.linkType
-              ? ({
-                  type: notification.linkType,
-                  value: notification.linkValue,
-                } as ListHistoryNotificationResponse['items'][number]['content']['link'])
-              : null,
-        },
-        isRead: isRead,
-        createdAt: notification.createdAt,
+        description: notification.message ?? undefined,
+        image: notification.image ?? undefined,
+        isRead,
+        createdAt,
       }))
 
     return ok({
@@ -53,6 +47,40 @@ export class NotificationService {
           previous: listResult.value.previousCursor,
         },
       },
+    })
+  }
+
+  async getNotificationDetailsById(userId: string, notificationId: string) {
+    const getResult = await this.notificationRepository.getNotificationDetailsById(
+      userId,
+      notificationId
+    )
+
+    if (getResult.isErr()) {
+      return mapRepositoryError(getResult.error)
+    }
+
+    const notification = getResult.value
+    const notificationDetails = notification.notification
+
+    return ok({
+      id: notificationDetails.id,
+      title: notificationDetails.title,
+      content: {
+        header: notificationDetails.title,
+        message: notificationDetails.message ?? undefined,
+        image: notificationDetails.image ?? undefined,
+        actionButtonText: notificationDetails.actionButtonText ?? undefined,
+        link:
+          notificationDetails.linkValue && notificationDetails.linkType
+            ? ({
+                type: notificationDetails.linkType,
+                value: notificationDetails.linkValue,
+              } as GetNotificationDetailsByIdResponse['content']['link'])
+            : undefined,
+      },
+      isRead: notification.isRead,
+      createdAt: notification.createdAt,
     })
   }
 

@@ -6,6 +6,8 @@ import {
   CreateNewExternalNotificationBody,
   CreateNewExternalNotificationHeader,
   CreateNewExternalNotificationResponse,
+  GetNotificationDetailsByIdParams,
+  GetNotificationDetailsByIdResponse,
   ListHistoryNotificationQuery,
   ListHistoryNotificationResponse,
   ReadNotificationParams,
@@ -72,6 +74,30 @@ export const NotificationController = new Elysia({
       query: ListHistoryNotificationQuery,
       response: {
         200: ListHistoryNotificationResponse,
+        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+    }
+  )
+  .get(
+    '/:id',
+    async ({ params, user, notificationService, status }) => {
+      const { id: notificationId } = params
+      const getResult = await notificationService.getNotificationDetailsById(
+        user.id,
+        notificationId
+      )
+
+      if (getResult.isErr()) {
+        return mapErrorCodeToResponse(getResult.error, status)
+      }
+
+      return status(200, getResult.value)
+    },
+    {
+      requiredLocalUser: true,
+      params: GetNotificationDetailsByIdParams,
+      response: {
+        200: GetNotificationDetailsByIdResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
       },
     }
