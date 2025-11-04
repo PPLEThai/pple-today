@@ -65,7 +65,7 @@ export class PollsService {
     } satisfies ListPollsResponse)
   }
 
-  async createPollVote(userId: string, pollId: string, optionId: string) {
+  async upsertPollVote(userId: string, pollId: string, options: string[]) {
     const pollCondition = await this.pollsRepository.getPollCondition(userId, pollId)
 
     if (pollCondition.isErr()) {
@@ -77,13 +77,6 @@ export class PollsService {
       })
     }
 
-    if (pollCondition.value.type === 'SINGLE_CHOICE' && pollCondition.value.numberOfVotes > 0) {
-      return err({
-        code: InternalErrorCode.POLL_ALREADY_VOTED,
-        message: 'User has already voted for this poll',
-      })
-    }
-
     if (pollCondition.value.endAt < new Date()) {
       return err({
         code: InternalErrorCode.POLL_ALREADY_ENDED,
@@ -91,7 +84,12 @@ export class PollsService {
       })
     }
 
-    const result = await this.pollsRepository.createPollVote(userId, pollId, optionId)
+    const result = await this.pollsRepository.upsertPollVote(
+      userId,
+      pollId,
+      options,
+      pollCondition.value.type
+    )
 
     if (result.isErr()) {
       return mapRepositoryError(result.error, {
@@ -106,43 +104,6 @@ export class PollsService {
         UNIQUE_CONSTRAINT_FAILED: {
           code: InternalErrorCode.POLL_ALREADY_VOTED,
           message: 'User has already voted for this option',
-        },
-      })
-    }
-
-    return ok()
-  }
-
-  async deletePollVote(userId: string, pollId: string, optionId: string) {
-    const pollCondition = await this.pollsRepository.getPollCondition(userId, pollId)
-
-    if (pollCondition.isErr()) {
-      return mapRepositoryError(pollCondition.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.POLL_NOT_FOUND,
-          message: 'Poll not found',
-        },
-      })
-    }
-
-    if (pollCondition.value.endAt < new Date()) {
-      return err({
-        code: InternalErrorCode.POLL_ALREADY_ENDED,
-        message: 'Poll has already ended',
-      })
-    }
-
-    const result = await this.pollsRepository.deletePollVote(userId, pollId, optionId)
-
-    if (result.isErr()) {
-      return mapRepositoryError(result.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.POLL_NOT_FOUND,
-          message: 'Poll not found',
-        },
-        MODEL_NOT_CONNECT: {
-          code: InternalErrorCode.POLL_VOTE_NOT_FOUND,
-          message: 'Poll option not found',
         },
       })
     }

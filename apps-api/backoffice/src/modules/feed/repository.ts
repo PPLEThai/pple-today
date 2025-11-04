@@ -1,5 +1,4 @@
-import { InternalErrorCode } from '@pple-today/api-common/dtos'
-import { FeedItem, FeedItemBaseContent } from '@pple-today/api-common/dtos'
+import { FeedItem, FeedItemBaseContent, InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import {
@@ -17,7 +16,6 @@ import dayjs from 'dayjs'
 import Elysia from 'elysia'
 import { Ok, ok } from 'neverthrow'
 import * as R from 'remeda'
-import { sumBy } from 'remeda'
 
 import { GetFeedContentResponse } from './models'
 
@@ -107,6 +105,9 @@ export class FeedRepository {
                   }
                 : undefined,
             },
+            orderBy: {
+              id: 'asc',
+            },
           },
         },
         where: {
@@ -173,13 +174,10 @@ export class FeedRepository {
               id: option.id,
               title: option.title,
               isSelected: (option.pollAnswers ?? []).length > 0,
-              votes: (option.pollAnswers ?? []).length,
+              votes: option.votes,
             })),
             endAt: rawFeedItem.poll.endAt,
-            totalVotes: sumBy(
-              rawFeedItem.poll.options,
-              (option) => (option.pollAnswers ?? []).length
-            ),
+            totalVotes: rawFeedItem.poll.totalVotes,
           },
         } satisfies GetFeedContentResponse)
       case FeedItemType.ANNOUNCEMENT:
@@ -440,6 +438,10 @@ export class FeedRepository {
             type: {
               not: FeedItemType.ANNOUNCEMENT,
             },
+            OR: [
+              { post: { status: PostStatus.PUBLISHED } },
+              { poll: { status: PollStatus.PUBLISHED } },
+            ],
             publishedAt: {
               lte: new Date(),
             },

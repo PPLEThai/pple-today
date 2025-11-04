@@ -1,7 +1,6 @@
 import {
   ElectionCandidate,
   ElectionInfo,
-  ElectionStatus,
   FilePath,
   ImageFileMimeType,
 } from '@pple-today/api-common/dtos'
@@ -11,7 +10,6 @@ import { Static, t } from 'elysia'
 export const ElectionWithCurrentStatus = t.Intersect([
   ElectionInfo,
   t.Object({
-    status: ElectionStatus,
     votePercentage: t.Number(),
     isRegistered: t.Nullable(t.Boolean()),
     isVoted: t.Boolean(),

@@ -3,12 +3,11 @@ import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-commo
 import Elysia from 'elysia'
 
 import {
-  CreatePollVoteParams,
-  CreatePollVoteResponse,
-  DeletePollVoteParams,
-  DeletePollVoteResponse,
   ListPollsQuery,
   ListPollsResponse,
+  UpsertPollVoteBody,
+  UpsertPollVoteParams,
+  UpsertPollVoteResponse,
 } from './models'
 import { PollsServicePlugin } from './services'
 
@@ -46,24 +45,25 @@ export const PollsController = new Elysia({
       },
     }
   )
-  .post(
-    '/:id/vote/:optionId',
-    async ({ params, user, pollsService, status }) => {
-      const result = await pollsService.createPollVote(user.id, params.id, params.optionId)
+  .put(
+    '/:id/vote',
+    async ({ params, body, user, pollsService, status }) => {
+      const result = await pollsService.upsertPollVote(user.id, params.id, body.options)
 
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
       }
 
-      return status(201, { message: 'Vote created successfully' })
+      return status(201, { message: 'Vote upserted successfully' })
     },
     {
       requiredLocalUserPrecondition: {
         isActive: true,
       },
-      params: CreatePollVoteParams,
+      params: UpsertPollVoteParams,
+      body: UpsertPollVoteBody,
       response: {
-        201: CreatePollVoteResponse,
+        201: UpsertPollVoteResponse,
         ...createErrorSchema(
           InternalErrorCode.FORBIDDEN,
           InternalErrorCode.POLL_NOT_FOUND,
@@ -74,40 +74,8 @@ export const PollsController = new Elysia({
         ),
       },
       detail: {
-        summary: 'Create poll vote',
+        summary: 'Upsert poll vote',
         description: 'Cast a vote for a specific option in a poll',
-      },
-    }
-  )
-  .delete(
-    '/:id/vote/:optionId',
-    async ({ params, user, status, pollsService }) => {
-      const result = await pollsService.deletePollVote(user.id, params.id, params.optionId)
-
-      if (result.isErr()) {
-        return mapErrorCodeToResponse(result.error, status)
-      }
-
-      return status(200, { message: 'Vote deleted successfully' })
-    },
-    {
-      requiredLocalUserPrecondition: {
-        isActive: true,
-      },
-      params: DeletePollVoteParams,
-      response: {
-        200: DeletePollVoteResponse,
-        ...createErrorSchema(
-          InternalErrorCode.FORBIDDEN,
-          InternalErrorCode.POLL_NOT_FOUND,
-          InternalErrorCode.POLL_VOTE_NOT_FOUND,
-          InternalErrorCode.POLL_ALREADY_ENDED,
-          InternalErrorCode.INTERNAL_SERVER_ERROR
-        ),
-      },
-      detail: {
-        summary: 'Delete poll vote',
-        description: 'Remove a vote for a specific option in a poll',
       },
     }
   )
