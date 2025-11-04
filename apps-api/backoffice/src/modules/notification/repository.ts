@@ -253,7 +253,7 @@ export class NotificationRepository {
             body: JSON.stringify({ conditions, data }),
             notificationApiKey: {
               connect: {
-                apiKey: apiKeyId,
+                id: apiKeyId,
               },
             },
           },
