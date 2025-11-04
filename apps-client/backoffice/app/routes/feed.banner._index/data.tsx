@@ -323,6 +323,11 @@ export const Data = () => {
           />
         }
       />
+      {publishedBanners.length === 0 && otherBanners.length === 0 && (
+        <div className="flex items-center justify-center p-4 border border-base-outline-default rounded-xl h-40">
+          ไม่มีข้อมูล
+        </div>
+      )}
       {publishedBanners.length > 0 && (
         <DataTable
           columns={orderableColumns}
