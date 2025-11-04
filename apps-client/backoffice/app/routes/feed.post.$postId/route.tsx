@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo, useRef } from 'react'
-import { NavLink, useNavigate } from 'react-router'
 
 import { Badge } from '@pple-today/web-ui/badge'
 import {
@@ -13,6 +12,7 @@ import {
 import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
+import { createFileRoute } from '@tanstack/react-router'
 import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { Engagements } from 'components/Engagements'
 import { FeedDetailComments } from 'components/feed/FeedDetailComments'
@@ -25,15 +25,13 @@ import { UpdatePostBody, UpdatePostParams } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
 
-import { Route } from '../feed.post.$postId/+types/route'
-
-export function meta() {
-  return [{ title: 'รายละเอียดโพสต์' }]
-}
-
-export default function PostDetailPage({ params }: Route.LoaderArgs) {
+export const Route = createFileRoute('/feed/post/$postId')({
+  component: PostDetailPage,
+  head: ({ params }) => ({ meta: [{ title: `Post - ${params.postId}` }] }),
+})
+function PostDetailPage() {
   const navigate = useNavigate()
-  const { postId } = params
+  const { postId } = Route.useParams()
   const confirmDialogRef = useRef<ConfirmDialogRef>(null)
 
   const queryClient = useQueryClient()
@@ -111,13 +109,13 @@ export default function PostDetailPage({ params }: Route.LoaderArgs) {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <NavLink to="/feed">Feed</NavLink>
+              <Link to="/feed">Feed</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <NavLink to="/feed/post">Post</NavLink>
+              <Link to="/feed/post">Post</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />

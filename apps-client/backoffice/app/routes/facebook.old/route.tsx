@@ -26,10 +26,10 @@ const facebookSearchParams = z.object({
   code: z.string().optional(),
 })
 
-export const Route = createFileRoute('/facebook')({
+export const Route = createFileRoute('/facebook/old')({
   component: FacebookLinkPage,
-  head: () => ({ meta: [{ title: 'Facebook' }] }),
   validateSearch: facebookSearchParams,
+  head: () => ({ meta: [{ title: 'Facebook' }] }),
 })
 
 function FacebookLinkPage() {
