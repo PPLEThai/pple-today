@@ -27,9 +27,6 @@ const userQueryOptions = queryOptions({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const userQuery = useQuery(userQueryOptions)
   useEffect(() => {
-    console.log('SSO user:', userQuery.data)
-  }, [userQuery.data])
-  useEffect(() => {
     if (userQuery.isError) {
       // TODO: handle error
       console.error('SSO user error:', userQuery.error)
@@ -41,9 +38,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     {},
     { retry: false, enabled: userQuery.isSuccess && !!userQuery.data }
   )
-  useEffect(() => {
-    console.log('AuthMe user:', authMeQuery.data)
-  }, [authMeQuery.data])
   useEffect(() => {
     if (authMeQuery.isError) {
       // TODO: handle error

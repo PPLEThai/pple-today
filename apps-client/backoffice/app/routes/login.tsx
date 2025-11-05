@@ -49,11 +49,11 @@ function RouteComponent() {
     }
   }, [queryClient, signInQuery, navigate])
   useEffect(() => {
-    if (signInQuery.isError) {
+    if (signInQuery.error) {
       // TODO: handle error
       console.error('SSO sign-in error:', signInQuery.error)
     }
-  }, [signInQuery.isError, signInQuery.error])
+  }, [signInQuery.error])
   const disabled = signInRedirectMutation.isPending || signInQuery.isLoading
   return (
     <div className="flex py-16 mx-auto justify-center min-h-screen items-center bg-base-bg-default">

@@ -32,14 +32,13 @@ import {
   PieChart,
 } from 'lucide-react'
 
-import { logout } from '~/core/auth'
-import { reactQueryClient } from '~/libs/api-client'
+import { logout, useAuthContext } from '~/core/auth'
 
 import { SidebarUser } from './SidebarUser'
 
 export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
-  const authMeQuery = reactQueryClient.useQuery('/admin/auth/me', {})
-  const authMe = authMeQuery.data!
+  const auth = useAuthContext()
+  const user = auth.user!
   return (
     <SidebarProvider>
       <Sidebar collapsible="none">
@@ -190,7 +189,7 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
             <SidebarMenuItem>
               <SidebarUser
                 src="https://picsum.photos/id/64/64"
-                title={authMe?.name ?? ''}
+                title={user.name ?? '-'}
                 subtitle="pple_admin@pple.com"
               >
                 <DropdownMenu>
