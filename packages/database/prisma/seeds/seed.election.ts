@@ -263,9 +263,42 @@ const seedElections = async (userId: string) => {
       openVoting: addDays(dateNow, -2),
       closeVoting: addDays(dateNow, -1),
       voters: {
-        create: {
-          userId: userId,
-          type: EligibleVoterType.ONLINE,
+        createMany: {
+          data: [
+            {
+              userId: userId,
+              type: EligibleVoterType.ONLINE,
+            },
+            {
+              userId: 'election-user-1',
+              type: EligibleVoterType.ONSITE,
+            },
+            {
+              userId: 'election-user-2',
+              type: EligibleVoterType.ONLINE,
+            },
+          ],
+        },
+      },
+      candidates: {
+        createMany: {
+          data: [
+            {
+              id: 'close-vote-1',
+              name: 'close-vote-1',
+              number: 1,
+            },
+            {
+              id: 'close-vote-2',
+              name: 'close-vote-2',
+              number: 2,
+            },
+            {
+              id: 'close-vote-3',
+              name: 'close-vote-3',
+              number: 3,
+            },
+          ],
         },
       },
     },
