@@ -7,6 +7,8 @@ import { Typography } from '@pple-today/web-ui/typography'
 import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
+import { DtFilter } from 'components/datatable/DtFilter'
+import { DtMovement } from 'components/datatable/DtMovement'
 import { TableCopyId } from 'components/TableCopyId'
 import { CalendarX2, Pencil, Trash2, Users } from 'lucide-react'
 
@@ -222,40 +224,51 @@ export const Data = () => {
   )
 
   return (
-    <DataTable
-      columns={columns}
-      data={query.data?.data ?? []}
-      count={query.data?.meta.count ?? 0}
-      isQuerying={query.isLoading}
-      isMutating={cancelMutation.isPending || deleteMutation.isPending}
-      queryLimit={queryLimit}
-      setQueryLimit={setQueryLimit}
-      queryPage={queryPage}
-      setQueryPage={setQueryPage}
-      filter={[
-        {
-          type: 'text',
-          key: 'name',
-          label: 'ค้นหาการเลือกตั้ง',
-          state: queryName,
-          setState: setQueryName,
-        },
-        {
-          type: 'enum',
-          key: 'status',
-          label: 'สถานะ',
-          options: [
-            { value: 'DRAFT', label: 'ร่าง' },
-            { value: 'NOT_OPENED_VOTE', label: 'ยังไม่เปิดหีบ' },
-            { value: 'OPEN_VOTE', label: 'เปิดหีบ' },
-            { value: 'CLOSED_VOTE', label: 'ปิดหีบ' },
-            { value: 'RESULT_ANNOUNCE', label: 'ประกาศผล' },
-          ],
-          state: queryStatus || [],
-          setState: setQueryStatus as React.Dispatch<React.SetStateAction<string[]>>,
-        },
-      ]}
-    />
+    <>
+      <DtFilter
+        filter={[
+          {
+            type: 'text',
+            key: 'name',
+            label: 'ค้นหาการเลือกตั้ง',
+            state: queryName,
+            setState: setQueryName,
+          },
+          {
+            type: 'enum',
+            key: 'status',
+            label: 'สถานะ',
+            options: [
+              { value: 'DRAFT', label: 'ร่าง' },
+              { value: 'NOT_OPENED_VOTE', label: 'ยังไม่เปิดหีบ' },
+              { value: 'OPEN_VOTE', label: 'เปิดหีบ' },
+              { value: 'CLOSED_VOTE', label: 'ปิดหีบ' },
+              { value: 'RESULT_ANNOUNCE', label: 'ประกาศผล' },
+            ],
+            state: queryStatus || [],
+            setState: setQueryStatus as React.Dispatch<React.SetStateAction<string[]>>,
+          },
+        ]}
+        onChange={() => setQueryPage(1)}
+      />
+      <DataTable
+        columns={columns}
+        data={query.data?.data ?? []}
+        isQuerying={query.isLoading}
+        footerExtension={
+          <DtMovement
+            length={query.data?.data?.length ?? 0}
+            count={query.data?.meta.count ?? 0}
+            isQuerying={query.isLoading}
+            isMutating={cancelMutation.isPending || deleteMutation.isPending}
+            queryLimit={queryLimit}
+            setQueryLimit={setQueryLimit}
+            queryPage={queryPage}
+            setQueryPage={setQueryPage}
+          />
+        }
+      />
+    </>
   )
 }
 
