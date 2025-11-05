@@ -23,7 +23,7 @@ import { reactQueryClient } from '~/libs/api-client'
 
 import { Data } from '../feed.post.index/data'
 
-export const Route = createFileRoute('/_auth/facebook/$facebookPageId')({
+export const Route = createFileRoute('/_app/facebook/$facebookPageId')({
   component: FacebookDetailPage,
 })
 

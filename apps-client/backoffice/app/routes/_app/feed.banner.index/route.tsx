@@ -7,15 +7,17 @@ import {
   BreadcrumbSeparator,
 } from '@pple-today/web-ui/breadcrumb'
 import { Typography } from '@pple-today/web-ui/typography'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
 
 import { Data } from './data'
 
-export const Route = createFileRoute('/feed/post/')({
-  component: PostPage,
-  head: () => ({ meta: [{ title: 'Post' }] }),
+export const Route = createFileRoute('/_app/feed/banner/')({
+  component: BannerPage,
+  head: () => ({ meta: [{ title: 'Banner' }] }),
 })
-function PostPage() {
+
+function BannerPage() {
   return (
     <div className="px-6 pb-6 space-y-2">
       <Breadcrumb className="pt-4 pb-2">
@@ -28,11 +30,11 @@ function PostPage() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Post</BreadcrumbPage>
+            <BreadcrumbPage>Banner</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <Typography variant="h1">จัดการโพสต์</Typography>
+      <Typography variant="h1">จัดการรูปแบนเนอร์</Typography>
       <Data />
     </div>
   )

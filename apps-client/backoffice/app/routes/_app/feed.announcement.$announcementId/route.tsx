@@ -25,7 +25,7 @@ import { UpdateAnnouncementBody, UpdateAnnouncementParams } from '@api/backoffic
 
 import { reactQueryClient } from '~/libs/api-client'
 
-export const Route = createFileRoute('/feed/announcement/$announcementId')({
+export const Route = createFileRoute('/_app/feed/announcement/$announcementId')({
   component: AnnouncementDetailPage,
   head: ({ params }) => ({ meta: [{ title: `Announcement - ${params.announcementId}` }] }),
 })

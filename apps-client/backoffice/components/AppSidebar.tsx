@@ -169,7 +169,7 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
                     <Link to="/banner-test">Banner Test</Link>
                   </SidebarMenuButton>
                   <SidebarMenuButton asChild>
-                    <Link to="/facebook">Facebook</Link>
+                    <Link to="/facebook/old">Facebook</Link>
                   </SidebarMenuButton>
                   <SidebarMenuButton asChild>
                     <Link to="/file-test">File Test</Link>

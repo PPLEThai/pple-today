@@ -25,7 +25,7 @@ import { UpdatePostBody, UpdatePostParams } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
 
-export const Route = createFileRoute('/feed/post/$postId')({
+export const Route = createFileRoute('/_app/feed/post/$postId')({
   component: PostDetailPage,
   head: ({ params }) => ({ meta: [{ title: `Post - ${params.postId}` }] }),
 })

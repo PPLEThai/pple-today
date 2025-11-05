@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/activity/internal-election/$electionId')({
+export const Route = createFileRoute('/_app/activity/internal-election/$electionId')({
   component: InternalElectionPage,
   head: ({ params }) => ({ meta: [{ title: `Internal Election - ${params.electionId}` }] }),
 })

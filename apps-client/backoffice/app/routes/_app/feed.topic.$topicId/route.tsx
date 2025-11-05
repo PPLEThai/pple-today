@@ -20,7 +20,7 @@ import { Calendar, Link, MessageSquareHeart, Pencil, Users } from 'lucide-react'
 
 import { reactQueryClient } from '~/libs/api-client'
 
-export const Route = createFileRoute('/feed/topic/$topicId')({
+export const Route = createFileRoute('/_app/feed/topic/$topicId')({
   component: TopicDetailPage,
   head: ({ params }) => ({ meta: [{ title: `Topic - ${params.topicId}` }] }),
 })

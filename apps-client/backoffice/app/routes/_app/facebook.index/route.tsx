@@ -10,7 +10,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { Data } from './data'
 
-export const Route = createFileRoute('/_auth/facebook/')({
+export const Route = createFileRoute('/_app/facebook/')({
   component: FacebookPage,
   head: () => ({ meta: [{ title: 'Facebook' }] }),
 })

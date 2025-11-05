@@ -23,7 +23,7 @@ import { UpdateBannerBody, UpdateBannerParams } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
 
-export const Route = createFileRoute('/feed/banner/$bannerId')({
+export const Route = createFileRoute('/_app/feed/banner/$bannerId')({
   component: BannerDetailPage,
   head: ({ params }) => ({ meta: [{ title: `Banner - ${params.bannerId}` }] }),
 })
