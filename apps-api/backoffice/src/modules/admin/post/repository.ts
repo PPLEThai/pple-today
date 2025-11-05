@@ -1,18 +1,18 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
-import { FileService, PrismaService } from '@pple-today/api-common/services'
+import { PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { PostStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import { GetPostsQuery, UpdatePostBody } from './models'
 
-import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
+import { FileServerService, FileServerServicePlugin } from '../../files/services'
 
 export class AdminPostRepository {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly fileService: FileService
+    private readonly fileServerService: FileServerService
   ) {}
 
   private async getDeletedPostById(feedItemId: string) {
@@ -163,7 +163,7 @@ export class AdminPostRepository {
         author: {
           name: feedItem.author.name,
           profileImage: feedItem.author.profileImagePath
-            ? this.fileService.getPublicFileUrl(feedItem.author.profileImagePath)
+            ? this.fileServerService.getFileEndpointUrl(feedItem.author.profileImagePath)
             : undefined,
           responsibleArea: feedItem.author.responsibleArea,
         },
@@ -183,7 +183,7 @@ export class AdminPostRepository {
             id: comment.user.id,
             name: comment.user.name,
             profileImage: comment.user.profileImagePath
-              ? this.fileService.getPublicFileUrl(comment.user.profileImagePath)
+              ? this.fileServerService.getFileEndpointUrl(comment.user.profileImagePath)
               : undefined,
           },
         })),
@@ -237,7 +237,7 @@ export class AdminPostRepository {
 }
 
 export const AdminPostRepositoryPlugin = new Elysia({ name: 'AdminPostRepository' })
-  .use([PrismaServicePlugin, FileServicePlugin])
-  .decorate(({ prismaService, fileService }) => ({
-    postRepository: new AdminPostRepository(prismaService, fileService),
+  .use([PrismaServicePlugin, FileServerServicePlugin])
+  .decorate(({ prismaService, fileServerService }) => ({
+    postRepository: new AdminPostRepository(prismaService, fileServerService),
   }))

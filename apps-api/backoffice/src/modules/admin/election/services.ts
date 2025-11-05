@@ -37,11 +37,13 @@ import { AdminElectionRepository, AdminElectionRepositoryPlugin } from './reposi
 import { BallotCryptoService, BallotCryptoServicePlugin } from '../../../plugins/ballot-crypto'
 import { ConfigServicePlugin } from '../../../plugins/config'
 import { FileServicePlugin } from '../../../plugins/file'
+import { FileServerService, FileServerServicePlugin } from '../../files/services'
 
 export class AdminElectionService {
   constructor(
     private readonly adminElectionRepository: AdminElectionRepository,
     private readonly fileService: FileService,
+    private readonly fileServerService: FileServerService,
     private readonly ballotCryptoService: BallotCryptoService
   ) {}
 
@@ -514,7 +516,7 @@ export class AdminElectionService {
         phoneNumber: voter.user.phoneNumber,
         profileImage:
           voter.user.profileImagePath &&
-          this.fileService.getPublicFileUrl(voter.user.profileImagePath),
+          this.fileServerService.getFileEndpointUrl(voter.user.profileImagePath),
       }))
     )
   }
@@ -1045,13 +1047,15 @@ export const AdminElectionServicePlugin = new Elysia({ name: 'AdminElectionServi
   .use([
     AdminElectionRepositoryPlugin,
     FileServicePlugin,
+    FileServerServicePlugin,
     BallotCryptoServicePlugin,
     ConfigServicePlugin,
   ])
-  .decorate(({ adminElectionRepository, fileService, ballotCryptoService }) => ({
+  .decorate(({ adminElectionRepository, fileService, fileServerService, ballotCryptoService }) => ({
     adminElectionService: new AdminElectionService(
       adminElectionRepository,
       fileService,
+      fileServerService,
       ballotCryptoService
     ),
   }))
