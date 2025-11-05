@@ -15,12 +15,13 @@ model UserNotificationToken {
 }
 
 model Notification {
-  id        String                @id @default(cuid())
-  title     String
-  message   String
-  image     String?
-  linkType  NotificationLinkType?
-  linkValue String?
+  id               String                @id @default(cuid())
+  title            String
+  message          String
+  image            String?
+  actionButtonText String?
+  linkType         NotificationLinkType?
+  linkValue        String?
 
   isBroadcast Boolean  @default(false)
   roles       String[]

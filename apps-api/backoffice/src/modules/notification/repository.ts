@@ -166,51 +166,20 @@ export class NotificationRepository {
     )
   }
 
-  async getNotificationHistory(userId: string, query: { cursor?: string; limit: number }) {
-    return fromRepositoryPromise(async () => {
-      const currentPageNotifications = await this.prismaService.userNotification.findMany({
+  async getNotificationDetailsById(userId: string, notificationId: string) {
+    return fromRepositoryPromise(
+      this.prismaService.userNotification.findUniqueOrThrow({
         where: {
-          userId,
+          userId_notificationId: {
+            userId,
+            notificationId,
+          },
         },
-        orderBy: [
-          {
-            createdAt: 'desc',
-          },
-          {
-            notificationId: 'desc',
-          },
-          {
-            userId: 'desc',
-          },
-        ],
-        take: query.limit,
-        skip: query.cursor ? 1 : 0,
-        cursor: query.cursor
-          ? {
-              userId_notificationId: {
-                userId,
-                notificationId: query.cursor,
-              },
-            }
-          : undefined,
         include: {
           notification: true,
         },
       })
-
-      const nextCursor =
-        currentPageNotifications.length === query.limit
-          ? currentPageNotifications[query.limit - 1].notificationId
-          : undefined
-
-      const previousCursor = query.cursor
-
-      return {
-        notifications: currentPageNotifications,
-        nextCursor,
-        previousCursor,
-      }
-    })
+    )
   }
 
   async sendNotificationToUser(
@@ -219,6 +188,7 @@ export class NotificationRepository {
       header: string
       message: string
       image?: string
+      actionButtonText?: string
       link?: {
         type: NotificationLinkType
         value: string
@@ -227,13 +197,15 @@ export class NotificationRepository {
     apiKeyId: string
   ) {
     const createResult = await fromRepositoryPromise(async () => {
-      await this.prismaService.$transaction([
+      const [newNotification] = await this.prismaService.$transaction([
         this.prismaService.notification.create({
           data: {
             title: data.header,
             message: data.message,
+            image: data.image,
             linkType: data.link?.type,
             linkValue: data.link?.value,
+            actionButtonText: data?.actionButtonText,
 
             isBroadcast: conditions.type === 'BROADCAST' ? true : false,
             districts: conditions.type === 'ADDRESS' ? conditions.details.districts : undefined,
@@ -263,9 +235,10 @@ export class NotificationRepository {
 
       const whereConditions = this.getFilterConditions(conditions)
 
-      return await this.prismaService.user.findMany({
+      const users = await this.prismaService.user.findMany({
         where: whereConditions,
         select: {
+          id: true,
           phoneNumber: true,
           notificationTokens: {
             select: {
@@ -274,13 +247,28 @@ export class NotificationRepository {
           },
         },
       })
+
+      await this.prismaService.userNotification.createMany({
+        data: users.map((u) => ({
+          userId: u.id,
+          notificationId: newNotification.id,
+        })),
+        skipDuplicates: true,
+      })
+
+      return {
+        users,
+        newNotification,
+      }
     })
 
     if (createResult.isErr()) {
       return createResult
     }
 
-    const phoneNumberWithTokens = createResult.value.flatMap((u) => ({
+    const { users, newNotification } = createResult.value
+
+    const phoneNumberWithTokens = users.flatMap((u) => ({
       phoneNumber: u.phoneNumber,
       token: u.notificationTokens.map((t) => t.token),
     }))
@@ -323,7 +311,15 @@ export class NotificationRepository {
         successfulDeliveries: nonEmptyTokens.length,
         failedDeliveries: emptyTokens.length,
         nonExisted: notFoundUser?.length || 0,
-        notification: data,
+        notification: {
+          header: data.header,
+          message: data.message,
+          image: data.image,
+          link: {
+            type: 'IN_APP_NAVIGATION',
+            value: `/notification/${newNotification.id}`,
+          },
+        },
       },
     })
 

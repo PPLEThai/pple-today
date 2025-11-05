@@ -76,6 +76,9 @@ importers:
       jsonwebtoken:
         specifier: ^9.0.2
         version: 9.0.2
+      lexorank:
+        specifier: ^1.0.5
+        version: 1.0.5
       neverthrow:
         specifier: ^8.2.0
         version: 8.2.0
@@ -240,6 +243,9 @@ importers:
       react-router:
         specifier: ^7.5.3
         version: 7.6.3(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      remeda:
+        specifier: ^2.24.0
+        version: 2.24.0
       zod:
         specifier: ^4.0.5
         version: 4.0.5
@@ -682,6 +688,9 @@ importers:
       dotenv:
         specifier: ^17.0.1
         version: 17.0.1
+      lexorank:
+        specifier: ^1.0.5
+        version: 1.0.5
       prisma:
         specifier: ^6.15.0
         version: 6.15.0(magicast@0.3.5)(typescript@5.8.3)
@@ -7850,6 +7859,9 @@ packages:
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
+
+  lexorank@1.0.5:
+    resolution: {integrity: sha512-K1B/Yr/gIU0wm68hk/yB0p/mv6xM3ShD5aci42vOwcjof8slG8Kpo3Q7+1WTv7DaRHKWRgLPqrFDt+4GtuFAtA==}
 
   lighthouse-logger@1.4.2:
     resolution: {integrity: sha512-gPWxznF6TKmUHrOQjlVo2UbaL2EJ71mb2CCeRs/2qBpi4L/g4LUVc9+3lKQ6DTUZwJswfM7ainGrLO1+fOqa2g==}
@@ -21651,6 +21663,8 @@ snapshots:
     dependencies:
       prelude-ls: 1.2.1
       type-check: 0.4.0
+
+  lexorank@1.0.5: {}
 
   lighthouse-logger@1.4.2:
     dependencies:

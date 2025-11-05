@@ -80,6 +80,12 @@ export const BANNER_ERROR_SCHEMA = {
   BANNER_INVALID_INPUT: {
     status: 400,
   },
+  BANNER_PUBLISHING_LIMIT_REACHED: {
+    status: 409,
+  },
+  BANNER_MOVING_POSITION_INVALID: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 const FEED_ERROR_SCHEMA = {
@@ -277,6 +283,15 @@ export const ELECTION_KEY_ERROR_SCHEMA = {
   },
 } satisfies InternalErrorSchemas
 
+const POST_ERROR_SCHEMA = {
+  POST_NOT_FOUND: {
+    status: 404,
+  },
+  POST_ALREADY_DELETED: {
+    status: 409,
+  },
+} satisfies InternalErrorSchemas
+
 const MINI_APP_ERROR_SCHEMA = {
   MINI_APP_NOT_FOUND: {
     status: 404,
@@ -311,6 +326,7 @@ export const InternalErrorCodeSchemas = {
   ...ELECTION_ERROR_SCHEMA,
   ...MINI_APP_ERROR_SCHEMA,
   ...ELECTION_KEY_ERROR_SCHEMA,
+  ...POST_ERROR_SCHEMA,
   ...NOTIFICATION_KEY_ERROR_SCHEMA,
 } as const
 export type InternalErrorCodeSchemas = typeof InternalErrorCodeSchemas
