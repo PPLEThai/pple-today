@@ -50,7 +50,6 @@ function RouteComponent() {
   }, [queryClient, signInQuery.data, navigate])
   useEffect(() => {
     if (signInQuery.error) {
-      // TODO: handle error
       console.error('SSO sign-in error:', signInQuery.error)
     }
   }, [signInQuery.error])
