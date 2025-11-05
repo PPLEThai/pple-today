@@ -410,6 +410,27 @@ function CandidateHeader({ election }: { election: AdminGetElectionResponse }) {
 }
 
 function CountBallot({ election }: { election: AdminGetElectionResponse }) {
+  const queryClient = useQueryClient()
+  const countMutation = reactQueryClient.useMutation(
+    'post',
+    '/admin/elections/:electionId/ballots/count'
+  )
+
+  const countElection = useCallback(() => {
+    if (countMutation.isPending) return
+
+    countMutation.mutateAsync(
+      { pathParams: { electionId: election.id } },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: electionQueryKey(election.id),
+          })
+        },
+      }
+    )
+  }, [countMutation, queryClient, election])
+
   return (
     <div className="flex items-center gap-2">
       {election.onlineResultStatus === 'COUNT_FAILED' && (
@@ -422,7 +443,7 @@ function CountBallot({ election }: { election: AdminGetElectionResponse }) {
           </Badge>
         </>
       )}
-      <Button>
+      <Button onClick={countElection}>
         <RefreshCw className="mr-2" /> นับคะเเนน
       </Button>
     </div>
