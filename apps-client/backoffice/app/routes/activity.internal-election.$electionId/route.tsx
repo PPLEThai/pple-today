@@ -14,10 +14,12 @@ import {
 } from '@pple-today/web-ui/breadcrumb'
 import { Button } from '@pple-today/web-ui/button'
 import { Card, CardContent } from '@pple-today/web-ui/card'
+import { Input } from '@pple-today/web-ui/input'
 import { Typography } from '@pple-today/web-ui/typography'
 import { cn } from '@pple-today/web-ui/utils'
 import { useQueryClient } from '@tanstack/react-query'
 import ElectionKeyStatusBadge from 'components/election/ElectionKeyStatusBadge'
+import ElectionResultAnnouceDialog from 'components/election/ElectionResultAnnouceDialog'
 import ElectionStatusBadge from 'components/election/ElectionStatusBadge'
 import ElectionTypeBadge from 'components/election/ElectionTypeBadge'
 import {
@@ -28,7 +30,6 @@ import {
   Eye,
   Link,
   MapPin,
-  Megaphone,
   Pencil,
   RefreshCw,
   Save,
@@ -43,14 +44,13 @@ import { AdminGetElectionResponse, AdminGetResultResponse } from '@api/backoffic
 
 import { fetchClient, reactQueryClient } from '~/libs/api-client'
 import { exhaustiveGuard } from '~/libs/exhaustive-guard'
-
-import { Route } from '.react-router/types/app/+types/root'
 import {
   EditOnsiteResultContext,
   EditOnsiteResultReducer,
   useEditOnsiteResultContext,
 } from '~/routes/activity.internal-election.$electionId/context'
-import { Input } from '@pple-today/web-ui/input'
+
+import { Route } from '.react-router/types/app/+types/root'
 
 export function meta() {
   return [{ title: 'Internal-election' }]
@@ -445,12 +445,7 @@ function TopRightCandidate({ election }: { election: AdminGetElectionResponse })
                   <Typography variant="small">บันทึกผลการเลือกตั้งในสถานที่</Typography>
                 </Button>
               ))}
-            <Button className="flex items-center gap-2">
-              <Megaphone />
-              <Typography variant="small" className="text-white">
-                ประกาศผลการเลือกตั้ง
-              </Typography>
-            </Button>
+            <ElectionResultAnnouceDialog />
           </div>
           <CandidateHeader election={election} />
         </div>
@@ -473,7 +468,7 @@ function CandidateHeader({ election }: { election: AdminGetElectionResponse }) {
         {election.type === 'ONSITE' || (election.type === 'HYBRID' && 'เลือกตั้งในสถานที่')}
       </Typography>
       <Typography className="w-52 flex items-center justify-end" variant="large">
-        คะเเนนรวม
+        คะแนนรวม
       </Typography>
     </div>
   )
@@ -514,7 +509,7 @@ function CountBallot({ election }: { election: AdminGetElectionResponse }) {
         </>
       )}
       <Button onClick={countElection}>
-        <RefreshCw className="mr-2" /> นับคะเเนน
+        <RefreshCw className="mr-2" /> นับคะแนน
       </Button>
     </div>
   )
