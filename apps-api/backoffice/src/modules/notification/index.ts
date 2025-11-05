@@ -6,6 +6,8 @@ import {
   CreateNewExternalNotificationBody,
   CreateNewExternalNotificationHeader,
   CreateNewExternalNotificationResponse,
+  GetNotificationDetailsByIdParams,
+  GetNotificationDetailsByIdResponse,
   ListHistoryNotificationQuery,
   ListHistoryNotificationResponse,
   ReadNotificationParams,
@@ -68,10 +70,44 @@ export const NotificationController = new Elysia({
       return status(200, listResult.value)
     },
     {
+      detail: {
+        summary: 'List notification history for the authenticated user',
+        description:
+          'This endpoint allows the authenticated user to retrieve their notification history with pagination support using cursor and limit query parameters.',
+      },
       requiredLocalUser: true,
       query: ListHistoryNotificationQuery,
       response: {
         200: ListHistoryNotificationResponse,
+        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+    }
+  )
+  .get(
+    '/:id',
+    async ({ params, user, notificationService, status }) => {
+      const { id: notificationId } = params
+      const getResult = await notificationService.getNotificationDetailsById(
+        user.id,
+        notificationId
+      )
+
+      if (getResult.isErr()) {
+        return mapErrorCodeToResponse(getResult.error, status)
+      }
+
+      return status(200, getResult.value)
+    },
+    {
+      detail: {
+        summary: 'Get notification details by ID for the authenticated user',
+        description:
+          'This endpoint allows the authenticated user to retrieve the details of a specific notification by providing the notification ID in the URL parameter.',
+      },
+      requiredLocalUser: true,
+      params: GetNotificationDetailsByIdParams,
+      response: {
+        200: GetNotificationDetailsByIdResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
       },
     }
