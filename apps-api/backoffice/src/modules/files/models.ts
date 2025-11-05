@@ -2,7 +2,7 @@ import { PublicFilePath } from '@pple-today/api-common/dtos'
 import { Static, t } from 'elysia'
 
 export const GetOptimizedImageUrlParams = t.Object({
-  path: PublicFilePath,
+  '*': PublicFilePath,
 })
 export type GetOptimizedImageUrlParams = Static<typeof GetOptimizedImageUrlParams>
 
