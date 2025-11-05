@@ -67,9 +67,12 @@ jobs:
         working-directory: apps-client/mobile
         shell: bash
         run: |
+          mkdir -p ./credentials
           echo "FACEBOOK_APP_ID=${{ secrets.FACEBOOK_APP_ID }}" >> .env
           echo "FACEBOOK_CLIENT_TOKEN=${{ secrets.FACEBOOK_CLIENT_TOKEN }}" >> .env
           echo "FACEBOOK_DISPLAY_NAME=${{ secrets.FACEBOOK_DISPLAY_NAME }}" >> .env
+          echo "${{ secrets.FIREBASE_IOS_SERVICE_FILE }}" | base64 -d > ./credentials/GoogleService-Info.plist
+          echo "${{ secrets.FIREBASE_ANDROID_SERVICE_FILE }}" | base64 -d > ./credentials/google-services.json
 
       - name: Run Prebuild
         run: pnpm turbo prebuild ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}

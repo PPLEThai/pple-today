@@ -37,6 +37,7 @@ let app = new Elysia({ adapter: node() })
         'request.headers.authorization',
         'body.accessToken',
         'body.facebookPageAccessToken',
+        'body.deviceToken',
         'body.encryptedBallot',
       ],
     }).into({

@@ -8,6 +8,7 @@ import { AdminFeedController } from './feed'
 import { AdminFileController } from './file'
 import { AdminHashtagController } from './hashtag'
 import { AdminMiniAppController } from './mini-app'
+import { AdminNotificationController } from './notification'
 import { AdminPollsController } from './poll'
 import { AdminPostController } from './post'
 import { AdminTopicController } from './topic'
@@ -26,3 +27,4 @@ export const AdminController = new Elysia({
   .use(AdminFeedController)
   .use(AdminPostController)
   .use(AdminMiniAppController)
+  .use(AdminNotificationController)

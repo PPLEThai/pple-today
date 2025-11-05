@@ -2,6 +2,7 @@ import { PostStatus } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 import { FeedItemComment, FeedItemReaction } from './feed'
+import { FilePath } from './file'
 
 export const Post = t.Object({
   id: t.String({ description: 'The ID of the post' }),
@@ -27,7 +28,8 @@ export const DetailedPost = t.Composite([
     }),
     attachments: t.Array(
       t.Object({
-        attachmentPath: t.String({ description: 'The signed URL of the post', format: 'uri' }),
+        url: t.String({ description: 'The URL of the attachment', format: 'uri' }),
+        filePath: FilePath,
       })
     ),
     hashtags: t.Array(
