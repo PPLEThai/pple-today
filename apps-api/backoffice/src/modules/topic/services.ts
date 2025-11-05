@@ -1,6 +1,5 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { HashTag } from '@pple-today/api-common/dtos'
-import { FileService } from '@pple-today/api-common/services'
 import { err, mapRepositoryError } from '@pple-today/api-common/utils'
 import { HashTagInTopic, Topic, TopicStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
@@ -9,12 +8,12 @@ import { ok } from 'neverthrow'
 import { GetTopicsResponse, ListTopicResponse } from './models'
 import { TopicRepository, TopicRepositoryPlugin } from './repository'
 
-import { FileServicePlugin } from '../../plugins/file'
+import { FileServerService, FileServerServicePlugin } from '../files/services'
 
 export class TopicService {
   constructor(
     private readonly topicRepository: TopicRepository,
-    private readonly fileService: FileService
+    private readonly fileServerService: FileServerService
   ) {}
 
   async getTopicRecommendation(userId: string) {
@@ -29,7 +28,7 @@ export class TopicService {
         id: topic.id,
         name: topic.name,
         description: topic.description,
-        bannerImage: this.fileService.getPublicFileUrl(
+        bannerImage: this.fileServerService.getFileEndpointUrl(
           topic.bannerImagePath ?? 'public/topic/topic-default.png'
         ),
         hashTags: topic.hashTags,
@@ -179,7 +178,7 @@ export class TopicService {
       id: topic.id,
       name: topic.name,
       description: topic.description,
-      bannerImage: this.fileService.getPublicFileUrl(
+      bannerImage: this.fileServerService.getFileEndpointUrl(
         topic.bannerImagePath ?? 'public/topic/topic-default.png'
       ),
       createdAt: topic.createdAt,
@@ -205,7 +204,7 @@ export class TopicService {
 }
 
 export const TopicServicePlugin = new Elysia({ name: 'TopicService' })
-  .use([TopicRepositoryPlugin, FileServicePlugin])
-  .decorate(({ topicRepository, fileService }) => ({
-    topicService: new TopicService(topicRepository, fileService),
+  .use([TopicRepositoryPlugin, FileServerServicePlugin])
+  .decorate(({ topicRepository, fileServerService }) => ({
+    topicService: new TopicService(topicRepository, fileServerService),
   }))

@@ -1,4 +1,3 @@
-import { FileService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
@@ -11,12 +10,12 @@ import {
 } from './models'
 import { SearchRepository, SearchRepositoryPlugin } from './repository'
 
-import { FileServicePlugin } from '../../plugins/file'
+import { FileServerService, FileServerServicePlugin } from '../files/services'
 
 export class SearchService {
   constructor(
     private readonly searchRepository: SearchRepository,
-    private readonly fileService: FileService
+    private readonly fileServerService: FileServerService
   ) {}
 
   async searchKeywords(query: { search: string }) {
@@ -45,7 +44,7 @@ export class SearchService {
         id: user.id,
         name: user.name,
         profileImage: user.profileImagePath
-          ? this.fileService.getPublicFileUrl(user.profileImagePath)
+          ? this.fileServerService.getFileEndpointUrl(user.profileImagePath)
           : null,
       })),
       ...topicResult.value.map((topic) => ({
@@ -53,7 +52,7 @@ export class SearchService {
         id: topic.id,
         name: topic.name,
         bannerImage: topic.bannerImagePath
-          ? this.fileService.getPublicFileUrl(topic.bannerImagePath)
+          ? this.fileServerService.getFileEndpointUrl(topic.bannerImagePath)
           : null,
       })),
       ...keywordResult.value.map((keyword) => ({
@@ -111,7 +110,7 @@ export class SearchService {
         id: topic.id,
         name: topic.name,
         bannerImage: topic.bannerImagePath
-          ? this.fileService.getPublicFileUrl(topic.bannerImagePath)
+          ? this.fileServerService.getFileEndpointUrl(topic.bannerImagePath)
           : null,
         hashtags: topic.hashTags.map(({ hashTag }) => ({
           id: hashTag.id,
@@ -135,7 +134,7 @@ export class SearchService {
     const response: GetSearchUsersResponse = users.value.map((user) => ({
       ...user,
       profileImage: user.profileImagePath
-        ? this.fileService.getPublicFileUrl(user.profileImagePath)
+        ? this.fileServerService.getFileEndpointUrl(user.profileImagePath)
         : undefined,
     }))
 
@@ -146,7 +145,7 @@ export class SearchService {
 export const SearchServicePlugin = new Elysia({
   name: 'SearchService',
 })
-  .use([SearchRepositoryPlugin, FileServicePlugin])
-  .decorate(({ searchRepository, fileService }) => ({
-    searchService: new SearchService(searchRepository, fileService),
+  .use([SearchRepositoryPlugin, FileServerServicePlugin])
+  .decorate(({ searchRepository, fileServerService }) => ({
+    searchService: new SearchService(searchRepository, fileServerService),
   }))

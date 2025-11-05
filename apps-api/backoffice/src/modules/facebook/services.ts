@@ -1,5 +1,5 @@
 import { FilePath, InternalErrorCode } from '@pple-today/api-common/dtos'
-import { FileService, FileTransactionService } from '@pple-today/api-common/services'
+import { FileTransactionService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
@@ -8,11 +8,12 @@ import * as R from 'remeda'
 import { FacebookRepository, FacebookRepositoryPlugin } from './repository'
 
 import { FileServicePlugin } from '../../plugins/file'
+import { FileServerService, FileServerServicePlugin } from '../files/services'
 
 export class FacebookService {
   constructor(
     private readonly facebookRepository: FacebookRepository,
-    private readonly fileService: FileService
+    private readonly fileServerService: FileServerService
   ) {}
 
   // TODO: Move to admin section
@@ -98,7 +99,7 @@ export class FacebookService {
       return ok(null)
     }
 
-    const publicProfilePictureUrl = this.fileService.getPublicFileUrl(
+    const publicProfilePictureUrl = this.fileServerService.getFileEndpointUrl(
       linkedPageResult.value.profileImagePath
     )
 
@@ -258,7 +259,7 @@ export class FacebookService {
 export const FacebookServicePlugin = new Elysia({
   name: 'FacebookService',
 })
-  .use([FacebookRepositoryPlugin, FileServicePlugin])
-  .decorate(({ facebookRepository, fileService }) => ({
-    facebookService: new FacebookService(facebookRepository, fileService),
+  .use([FacebookRepositoryPlugin, FileServicePlugin, FileServerServicePlugin])
+  .decorate(({ facebookRepository, fileServerService }) => ({
+    facebookService: new FacebookService(facebookRepository, fileServerService),
   }))

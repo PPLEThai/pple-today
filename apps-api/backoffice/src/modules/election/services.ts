@@ -21,11 +21,13 @@ import {
 import { ElectionRepository, ElectionRepositoryPlugin } from './repository'
 
 import { FileServicePlugin } from '../../plugins/file'
+import { FileServerService, FileServerServicePlugin } from '../files/services'
 
 export class ElectionService {
   constructor(
     private readonly electionRepository: ElectionRepository,
-    private readonly fileService: FileService
+    private readonly fileService: FileService,
+    private readonly fileServerService: FileServerService
   ) {}
 
   private readonly SECONDS_IN_A_DAY = 60 * 60 * 24
@@ -101,7 +103,7 @@ export class ElectionService {
       name: candidate.name,
       description: candidate.description,
       profileImagePath: candidate.profileImagePath
-        ? this.fileService.getPublicFileUrl(candidate.profileImagePath)
+        ? this.fileServerService.getFileEndpointUrl(candidate.profileImagePath)
         : null,
       voteScorePercent: isShowResult ? Math.floor(Math.random() * 100) : undefined, // TODO: this is mock data
       number: candidate.number,
@@ -343,7 +345,7 @@ export class ElectionService {
 }
 
 export const ElectionServicePlugin = new Elysia()
-  .use([ElectionRepositoryPlugin, FileServicePlugin])
-  .decorate(({ electionRepository, fileService }) => ({
-    electionService: new ElectionService(electionRepository, fileService),
+  .use([ElectionRepositoryPlugin, FileServicePlugin, FileServerServicePlugin])
+  .decorate(({ electionRepository, fileService, fileServerService }) => ({
+    electionService: new ElectionService(electionRepository, fileService, fileServerService),
   }))

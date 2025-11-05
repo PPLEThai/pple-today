@@ -16,12 +16,14 @@ import { ProfileRepository, ProfileRepositoryPlugin } from './repository'
 
 import { FileServicePlugin } from '../../plugins/file'
 import { AuthRepository, AuthRepositoryPlugin } from '../auth/repository'
+import { FileServerService, FileServerServicePlugin } from '../files/services'
 
 export class ProfileService {
   constructor(
     private profileRepository: ProfileRepository,
     private authRepository: AuthRepository,
-    private fileService: FileService
+    private fileService: FileService,
+    private fileServerService: FileServerService
   ) {}
 
   async getUserRecommendation(userId: string) {
@@ -35,7 +37,7 @@ export class ProfileService {
       id: user.id,
       name: user.name,
       profileImage: user.profileImagePath
-        ? this.fileService.getPublicFileUrl(user.profileImagePath)
+        ? this.fileServerService.getFileEndpointUrl(user.profileImagePath)
         : null,
       address: user.address
         ? {
@@ -90,7 +92,7 @@ export class ProfileService {
       ...user.value,
       address: user.value.address ?? undefined,
       profileImage: user.value.profileImagePath
-        ? this.fileService.getPublicFileUrl(user.value.profileImagePath)
+        ? this.fileServerService.getFileEndpointUrl(user.value.profileImagePath)
         : undefined,
       roles: user.value.roles.map((r) => r.role),
     })
@@ -145,7 +147,7 @@ export class ProfileService {
         ...user.following,
         address: user.following.address ?? undefined,
         profileImage: user.following.profileImagePath
-          ? this.fileService.getPublicFileUrl(user.following.profileImagePath)
+          ? this.fileServerService.getFileEndpointUrl(user.following.profileImagePath)
           : undefined,
       }))
     )
@@ -186,7 +188,7 @@ export class ProfileService {
       ...result.value,
       address: result.value.address ?? undefined,
       profileImage: result.value.profileImagePath
-        ? this.fileService.getPublicFileUrl(result.value.profileImagePath)
+        ? this.fileServerService.getFileEndpointUrl(result.value.profileImagePath)
         : undefined,
     })
   }
@@ -228,7 +230,7 @@ export class ProfileService {
       ...result.value,
       address: result.value.address ?? undefined,
       profileImage: result.value.profileImagePath
-        ? this.fileService.getPublicFileUrl(result.value.profileImagePath)
+        ? this.fileServerService.getFileEndpointUrl(result.value.profileImagePath)
         : undefined,
     })
   }
@@ -259,7 +261,12 @@ export class ProfileService {
 }
 
 export const ProfileServicePlugin = new Elysia({ name: 'ProfileService' })
-  .use([ProfileRepositoryPlugin, AuthRepositoryPlugin, FileServicePlugin])
-  .decorate(({ profileRepository, authRepository, fileService }) => ({
-    profileService: new ProfileService(profileRepository, authRepository, fileService),
+  .use([ProfileRepositoryPlugin, AuthRepositoryPlugin, FileServicePlugin, FileServerServicePlugin])
+  .decorate(({ profileRepository, authRepository, fileService, fileServerService }) => ({
+    profileService: new ProfileService(
+      profileRepository,
+      authRepository,
+      fileService,
+      fileServerService
+    ),
   }))
