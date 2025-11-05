@@ -1,4 +1,4 @@
-import { FilePath } from '@pple-today/api-common/dtos'
+import { PublicFilePath } from '@pple-today/api-common/dtos'
 import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
 import { FileService } from '@pple-today/api-common/services'
 import Elysia from 'elysia'
@@ -29,12 +29,12 @@ export class FileServerService {
     private readonly fileService: FileService
   ) {}
 
-  getOptimizedFileUrl(path: FilePath, config: GetOptimizedImageUrlQuery) {
-    const publicFileUrl = this.fileService.getPublicFileUrl(path)
+  getOptimizedFileUrl(filePath: PublicFilePath, config: GetOptimizedImageUrlQuery) {
+    const publicFileUrl = this.fileService.getPublicFileUrl(filePath)
 
-    if (!this.ALLOW_IMAGE_EXTENSIONS.some((ext) => path.toLowerCase().endsWith(ext))) {
+    if (!this.ALLOW_IMAGE_EXTENSIONS.some((ext) => filePath.toLowerCase().endsWith(ext))) {
       this.loggerService.warn(
-        `File extension not supported for optimization: ${path}, returning original file URL`
+        `File extension not supported for optimization: ${filePath}, returning original file URL`
       )
       return publicFileUrl
     }
@@ -57,7 +57,10 @@ export class FileServerService {
   }
 
   getFileEndpointUrl(path: string) {
-    return `${this.config.imageServerBaseUrl}/images/${path}`
+    const url = new URL(this.config.apiBaseUrl)
+    url.pathname = `/files/${path}`
+
+    return url.toString()
   }
 
   bulkGetFileEndpointUrl(paths: string[]) {

@@ -4,21 +4,22 @@ import { GetOptimizedImageUrlParams, GetOptimizedImageUrlQuery } from './models'
 import { FileServerServicePlugin } from './services'
 
 export const FileServerController = new Elysia({
+  prefix: '/files',
   tags: ['Files'],
 })
   .use(FileServerServicePlugin)
   .get(
-    '/files/*',
-    ({ params, query, fileServerService, redirect }) => {
-      const path = params['*']
-
-      const optimizedUrl = fileServerService.getOptimizedFileUrl(path, {
+    '/*',
+    ({ params, query, fileServerService, set }) => {
+      const filePath = params['*']
+      const optimizedUrl = fileServerService.getOptimizedFileUrl(filePath, {
         width: query.width,
         height: query.height,
         quality: query.quality,
       })
 
-      throw redirect(optimizedUrl, 302)
+      set.headers['location'] = optimizedUrl
+      set.status = 302
     },
     {
       detail: {
