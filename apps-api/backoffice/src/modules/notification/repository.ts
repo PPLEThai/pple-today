@@ -3,6 +3,7 @@ import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common
 import { PrismaService } from '@pple-today/api-common/services'
 import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { NotificationLinkType, Prisma } from '@pple-today/database/prisma'
+import crypto from 'crypto'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 import * as R from 'remeda'
@@ -59,7 +60,7 @@ export class NotificationRepository {
     return fromRepositoryPromise(
       this.prismaService.notificationApiKey.findUnique({
         where: {
-          apiKey,
+          apiKey: crypto.hash('sha256', apiKey),
           active: true,
         },
         select: {
