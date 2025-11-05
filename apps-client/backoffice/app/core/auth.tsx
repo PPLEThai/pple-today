@@ -28,7 +28,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const userQuery = useQuery(userQueryOptions)
   useEffect(() => {
     if (userQuery.isError) {
-      // TODO: handle error
       console.error('SSO user error:', userQuery.error)
     }
   }, [userQuery])
@@ -40,7 +39,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
   useEffect(() => {
     if (authMeQuery.isError) {
-      // TODO: handle error
       console.error('Auth Me error:', JSON.stringify(authMeQuery.error))
     }
   }, [authMeQuery])

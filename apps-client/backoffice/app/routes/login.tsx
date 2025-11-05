@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 
 import { Button } from '@pple-today/web-ui/button'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import * as z from 'zod/v4'
 
 import { userManager } from '~/config/oidc'
@@ -36,9 +36,9 @@ function RouteComponent() {
     queryFn: () => userManager.signinCallback(),
     enabled: !!search.code,
   })
-  const navigate = Route.useNavigate()
+  const navigate = useNavigate()
   useEffect(() => {
-    if (signInQuery.isSuccess) {
+    if (signInQuery.data) {
       queryClient.invalidateQueries({
         queryKey: ['oidc', 'user'],
       })
@@ -47,7 +47,7 @@ function RouteComponent() {
       })
       navigate({ to: signInQuery.data?.url_state ?? '/dashboard' })
     }
-  }, [queryClient, signInQuery, navigate])
+  }, [queryClient, signInQuery.data, navigate])
   useEffect(() => {
     if (signInQuery.error) {
       // TODO: handle error
