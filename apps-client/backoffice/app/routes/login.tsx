@@ -27,10 +27,7 @@ function RouteComponent() {
   const search = Route.useSearch()
   const signInRedirectMutation = useMutation({
     mutationFn: () => {
-      // TODO: Send redirect parameter
-      // const redirectParams = new URLSearchParams([['redirect', search.redirect || '/dashboard']])
-      // const redirectUri = `${clientEnv.OIDC_REDIRECT_URL}/login?${redirectParams.toString()}`
-      return userManager.signinRedirect()
+      return userManager.signinRedirect({ url_state: search.redirect })
     },
   })
   const queryClient = useQueryClient()
@@ -39,6 +36,7 @@ function RouteComponent() {
     queryFn: () => userManager.signinCallback(),
     enabled: !!search.code,
   })
+  const navigate = Route.useNavigate()
   useEffect(() => {
     if (signInQuery.isSuccess) {
       queryClient.invalidateQueries({
@@ -47,8 +45,9 @@ function RouteComponent() {
       queryClient.invalidateQueries({
         queryKey: reactQueryClient.getQueryKey('/admin/auth/me'),
       })
+      navigate({ to: signInQuery.data?.url_state ?? '/dashboard' })
     }
-  }, [queryClient, signInQuery])
+  }, [queryClient, signInQuery, navigate])
   useEffect(() => {
     if (signInQuery.isError) {
       // TODO: handle error
