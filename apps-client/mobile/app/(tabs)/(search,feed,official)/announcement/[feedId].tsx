@@ -1,1 +1,1 @@
-export { default } from '../../(search,feed,profile)/feed/[feedId]'
+export { default } from '../../(search,feed,profile,activity)/feed/[feedId]'

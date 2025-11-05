@@ -153,7 +153,7 @@ export default function TopicDetailPage() {
   const headerTitleHeight = 40
   const headerTitleStyle = useAnimatedStyle(() => {
     return {
-      top: Math.max(headerStickyHeight / 2 + insets.top - scrollY.value, 0),
+      top: Math.max(headerStickyHeight / 2 - scrollY.value, 0),
       opacity: Math.min(
         1,
         Math.max(0, (scrollY.value - headerCollapsableHeight / 2) / headerTitleHeight)

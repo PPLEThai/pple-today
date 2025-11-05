@@ -1,6 +1,6 @@
 {
   "name": "@pple-today/database",
-  "version": "0.3.1",
+  "version": "0.4.1",
   "description": "",
   "main": "index.js",
   "type": "module",
@@ -29,6 +29,7 @@
     "seed:election": "tsx prisma/seeds/seed.election.ts",
     "seed:recommend": "tsx prisma/seeds/seed.recommend.ts",
     "seed:prod": "tsx prisma/seeds/seed.prod.ts",
+    "seed:poll": "tsx prisma/seeds/seed.poll.ts",
     "reset": "prisma migrate reset",
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --check .",

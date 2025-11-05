@@ -5,7 +5,7 @@ import {
   InternalErrorCode,
 } from '@pple-today/api-common/dtos'
 import { FileService } from '@pple-today/api-common/services'
-import { err, mapRepositoryError } from '@pple-today/api-common/utils'
+import { convertToElectionInfo, err, mapRepositoryError } from '@pple-today/api-common/utils'
 import {
   Election,
   ElectionCandidate,
@@ -75,35 +75,17 @@ export class AdminElectionService {
     return ok()
   }
 
-  private convertToElectionInfo(
-    election: Election & { _count: { voters: number } }
+  private convertToAdminElectionInfo(
+    election: Election & { _count: { voters: number } },
+    now: Date
   ): AdminElectionInfo {
     return {
-      id: election.id,
-      name: election.name,
-      description: election.description,
-      location: election.location,
-      locationMapUrl: election.locationMapUrl,
-      province: election.province,
-      district: election.district,
+      ...convertToElectionInfo(election, now),
       totalVoters: election._count.voters,
       onlineResultStatus: election.onlineResultStatus,
       keyStatus: election.keysStatus,
       keysDestroyScheduledAt: election.keysDestroyScheduledAt,
       keysDestroyScheduledDuration: election.keysDestroyScheduledDuration,
-      type: election.type,
-      mode: election.mode,
-      isCancelled: election.isCancelled,
-      encryptionPublicKey: election.encryptionPublicKey,
-      publishDate: election.publishDate,
-      openRegister: election.openRegister,
-      closeRegister: election.closeRegister,
-      openVoting: election.openVoting,
-      closeVoting: election.closeVoting,
-      startResult: election.startResult,
-      endResult: election.endResult,
-      createdAt: election.createdAt,
-      updatedAt: election.updatedAt,
     }
   }
 
@@ -169,7 +151,7 @@ export class AdminElectionService {
       return mapRepositoryError(electionResult.error)
     }
 
-    return ok(this.convertToElectionInfo(electionResult.value))
+    return ok(this.convertToAdminElectionInfo(electionResult.value, new Date()))
   }
 
   async listElections(input: AdminListElectionQuery) {
@@ -181,23 +163,29 @@ export class AdminElectionService {
         name: input.name,
         type: input.type,
         isCancelled: input.isCancelled,
+        status: input.status,
       },
       pagination: {
         page,
         limit,
       },
+      now: new Date(),
     })
     if (listElections.isErr()) {
       return mapRepositoryError(listElections.error)
     }
 
-    const data = listElections.value.data.map((election) => this.convertToElectionInfo(election))
+    const data = listElections.value.data.map((election) =>
+      this.convertToAdminElectionInfo(election, new Date())
+    )
     const currentPage = page
-    const totalPage = Math.ceil(listElections.value.count / limit)
+    const count = listElections.value.count
+    const totalPage = Math.ceil(count / limit)
     const result = {
       meta: {
         currentPage,
         totalPage,
+        count,
       },
       data,
     } satisfies AdminListElectionResponse
@@ -216,7 +204,7 @@ export class AdminElectionService {
       })
     }
 
-    return ok(this.convertToElectionInfo(getElectionResult.value))
+    return ok(this.convertToAdminElectionInfo(getElectionResult.value, new Date()))
   }
 
   async reloadElectionKeys(electionId: string) {
@@ -267,7 +255,7 @@ export class AdminElectionService {
       return mapRepositoryError(updateResult.error)
     }
 
-    return ok(this.convertToElectionInfo(updateResult.value))
+    return ok(this.convertToAdminElectionInfo(updateResult.value, new Date()))
   }
 
   async deleteElection(electionId: string) {
