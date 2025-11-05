@@ -70,6 +70,7 @@ export const AdminPostController = new Elysia({
         200: GetPostByIdResponse,
         ...createErrorSchema(
           InternalErrorCode.POST_NOT_FOUND,
+          InternalErrorCode.FILE_CREATE_SIGNED_URL_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
