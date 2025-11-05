@@ -502,8 +502,11 @@ export class AdminElectionService {
     return ok()
   }
 
-  async listElectionEligibleVoters(electionId: string) {
-    const voterResult = await this.adminElectionRepository.listElectionEligibleVoters(electionId)
+  async listElectionEligibleVoters(electionId: string, isRegistered?: boolean) {
+    const voterResult = await this.adminElectionRepository.listElectionEligibleVoters(
+      electionId,
+      isRegistered
+    )
     if (voterResult.isErr()) {
       return mapRepositoryError(voterResult.error)
     }
@@ -511,11 +514,7 @@ export class AdminElectionService {
     return ok(
       voterResult.value.map((voter) => ({
         id: voter.user.id,
-        name: voter.user.name,
         phoneNumber: voter.user.phoneNumber,
-        profileImage:
-          voter.user.profileImagePath &&
-          this.fileService.getPublicFileUrl(voter.user.profileImagePath),
       }))
     )
   }

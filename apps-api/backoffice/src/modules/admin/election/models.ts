@@ -246,7 +246,14 @@ export type AdminListElectionEligibleVoterParams = Static<
   typeof AdminListElectionEligibleVoterParams
 >
 
-export const AdminListElectionEligibleVoterResponse = t.Array(ElectionEligibleVoter)
+export const AdminListElectionEligibleVoterQuery = t.Object({
+  isRegistered: t.Optional(t.Boolean()),
+})
+export type AdminListElectionEligibleVoterQuery = Static<typeof AdminListElectionEligibleVoterQuery>
+
+export const AdminListElectionEligibleVoterResponse = t.Array(
+  t.Pick(ElectionEligibleVoter, ['id', 'phoneNumber'])
+)
 export type AdminListElectionEligibleVoterResponse = Static<
   typeof AdminListElectionEligibleVoterResponse
 >

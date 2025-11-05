@@ -37,6 +37,7 @@ import {
   AdminListElectionCandidatesParams,
   AdminListElectionCandidatesResponse,
   AdminListElectionEligibleVoterParams,
+  AdminListElectionEligibleVoterQuery,
   AdminListElectionEligibleVoterResponse,
   AdminListElectionQuery,
   AdminListElectionResponse,
@@ -455,8 +456,11 @@ export const AdminElectionController = new Elysia({
     app
       .get(
         '/',
-        async ({ params, adminElectionService, status }) => {
-          const result = await adminElectionService.listElectionEligibleVoters(params.electionId)
+        async ({ params, query, adminElectionService, status }) => {
+          const result = await adminElectionService.listElectionEligibleVoters(
+            params.electionId,
+            query.isRegistered
+          )
           if (result.isErr()) {
             return mapErrorCodeToResponse(result.error, status)
           }
@@ -470,6 +474,7 @@ export const AdminElectionController = new Elysia({
           },
           requiredLocalUser: true,
           params: AdminListElectionEligibleVoterParams,
+          query: AdminListElectionEligibleVoterQuery,
           response: {
             200: AdminListElectionEligibleVoterResponse,
             ...createErrorSchema(

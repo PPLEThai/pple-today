@@ -462,14 +462,25 @@ export class AdminElectionRepository {
     return ok()
   }
 
-  async listElectionEligibleVoters(electionId: string) {
+  async listElectionEligibleVoters(electionId: string, isRegistered?: boolean) {
+    const registerFilter =
+      isRegistered !== undefined
+        ? {
+            election: { type: ElectionType.HYBRID },
+            type: isRegistered ? EligibleVoterType.ONLINE : EligibleVoterType.ONSITE,
+          }
+        : {}
+
     return fromRepositoryPromise(
       this.prismaService.electionEligibleVoter.findMany({
-        where: {
-          electionId,
-        },
-        include: {
-          user: true,
+        where: { electionId, ...registerFilter },
+        select: {
+          user: {
+            select: {
+              id: true,
+              phoneNumber: true,
+            },
+          },
         },
       })
     )
