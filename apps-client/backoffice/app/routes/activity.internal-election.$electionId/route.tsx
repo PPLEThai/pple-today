@@ -36,11 +36,12 @@ import {
   Users,
   Vote,
 } from 'lucide-react'
+import { downloadCSV } from 'utils/csv'
 import { getTimelineString } from 'utils/date'
 
 import { AdminGetElectionResponse, AdminGetResultResponse } from '@api/backoffice/admin'
 
-import { reactQueryClient } from '~/libs/api-client'
+import { fetchClient, reactQueryClient } from '~/libs/api-client'
 import { exhaustiveGuard } from '~/libs/exhaustive-guard'
 
 import { Route } from '.react-router/types/app/+types/root'
@@ -221,6 +222,23 @@ function ElectionDetail({ election }: { election: AdminGetElectionResponse }) {
     )
   }, [reloadKeyMutation, queryClient, election])
 
+  const downloadEligibleVoters = useCallback(
+    async ({ isRegistered, filename }: { isRegistered?: boolean; filename?: string }) => {
+      const { data, error } = await fetchClient('/admin/elections/:electionId/eligible-voters', {
+        params: { electionId: election.id },
+        query: { isRegistered },
+      })
+
+      if (error) {
+        console.error('Failed fetching voters', error)
+        return
+      }
+
+      downloadCSV(data, filename)
+    },
+    [election]
+  )
+
   return (
     <Card>
       <div className="flex items-center justify-between">
@@ -279,13 +297,23 @@ function ElectionDetail({ election }: { election: AdminGetElectionResponse }) {
             {election.totalVoters} คน
           </Typography>
           <div className="flex items-center gap-2">
-            <Button variant="secondary">
+            <Button
+              variant="secondary"
+              onClick={() => downloadEligibleVoters({ filename: 'รายชื่อผู้มีสิทธิ์เลือกตั้ง' })}
+            >
               <Download className="mr-2" />
               รายชื่อผู้มีสิทธิ์เลือกตั้ง
             </Button>
             {election.type === 'HYBRID' &&
               (election.status === 'CLOSED_VOTE' || election.status === 'RESULT_ANNOUNCE') && (
-                <Button>
+                <Button
+                  onClickCapture={() =>
+                    downloadEligibleVoters({
+                      isRegistered: false,
+                      filename: 'รายชื่อผู้มีสิทธิ์ที่ยังไม่ได้ลงทะเบียน',
+                    })
+                  }
+                >
                   <Download className="mr-2" />
                   รายชื่อผู้มีสิทธิ์ที่ยังไม่ได้ลงทะเบียน
                 </Button>
