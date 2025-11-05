@@ -11,11 +11,11 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { DtFilter } from 'components/datatable/DtFilter'
 import { DtMovement } from 'components/datatable/DtMovement'
 import { TableCopyId } from 'components/TableCopyId'
-import { Pencil } from 'lucide-react'
+import { Eye, EyeOff, Pencil } from 'lucide-react'
 import { getRoleName, ROLES } from 'utils/roles'
 import { telFormatter } from 'utils/tel'
 
-import { GetUsersResponse, UpdateBannerBody, UpdateBannerParams } from '@api/backoffice/admin'
+import { GetUsersResponse, UpdateUserBody, UpdateUserParams } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
 
@@ -41,33 +41,42 @@ export const Data = () => {
     },
     { placeholderData: keepPreviousData }
   )
-  const patchMutation = reactQueryClient.useMutation('patch', '/admin/banners/:id')
-  const invalidateQuery = useCallback(() => {
-    queryClient.invalidateQueries({
-      queryKey: reactQueryClient.getQueryKey('/admin/users', {
-        query: {
-          limit: queryLimit,
-          page: queryPage,
-          search: querySearch.length ? querySearch : undefined,
-          roles: queryRoles.length > 0 ? queryRoles : undefined,
-        },
-      }),
-    })
-  }, [queryClient, queryLimit, queryPage, querySearch, queryRoles])
+  const patchMutation = reactQueryClient.useMutation('patch', '/admin/users/:userId')
 
   const setUserStatus = useCallback(
     (
-      { status }: { status: NonNullable<UpdateBannerBody['status']> },
-      { id }: UpdateBannerParams
+      { status }: { status: NonNullable<UpdateUserBody['status']> },
+      { userId }: UpdateUserParams
     ) => {
       if (patchMutation.isPending) return
 
       patchMutation.mutateAsync(
-        { pathParams: { id }, body: { status } },
-        { onSuccess: () => invalidateQuery() }
+        { pathParams: { userId }, body: { status } },
+        {
+          onSuccess: () => {
+            queryClient.setQueryData(
+              reactQueryClient.getQueryKey('/admin/users', {
+                query: {
+                  limit: queryLimit,
+                  page: queryPage,
+                  search: querySearch.length ? querySearch : undefined,
+                  roles: queryRoles.length > 0 ? queryRoles : undefined,
+                },
+              }),
+              (_data) => {
+                const data = structuredClone(_data)
+                if (!data) return
+                const idx = data.users.findIndex((u) => u.id === userId)
+                if (idx === -1) return
+                data.users[idx].status = status
+                return data
+              }
+            )
+          },
+        }
       )
     },
-    [invalidateQuery, patchMutation]
+    [patchMutation, queryClient, queryLimit, queryPage, queryRoles, querySearch]
   )
 
   const genericColumns = useMemo(
@@ -82,7 +91,7 @@ export const Data = () => {
       columnHelper.accessor('name', {
         header: 'ชื่อผู้ใช้งาน',
         cell: (info) => (
-          <NavLink className="hover:underline" to={`/feed/banner/${info.row.original.id}`}>
+          <NavLink className="hover:underline" to={`/user/${info.row.original.id}`}>
             {info.getValue()}
           </NavLink>
         ),
@@ -115,36 +124,36 @@ export const Data = () => {
         header: 'จัดการ',
         cell: ({ row }) => {
           const id = row.original.id
-          // const status = row.original.status
+          const status = row.original.status
 
           return (
             <div className="flex gap-3">
-              {/* {status === 'PUBLISHED' ? (
+              {status === 'ACTIVE' ? (
                 <Button
                   variant="secondary"
                   size="icon"
                   className="size-8"
                   disabled={patchMutation.isPending}
                   aria-busy={patchMutation.isPending}
-                  onClick={() => setUserStatus({ status: 'ARCHIVED' }, { id })}
+                  onClick={() => setUserStatus({ status: 'SUSPENDED' }, { userId: id })}
                 >
-                  <span className="sr-only">เก็บในคลัง</span>
+                  <span className="sr-only">ระงับการใช้งาน</span>
                   <EyeOff className="size-4" />
                 </Button>
               ) : (
                 <Button
                   size="icon"
                   className="size-8"
-                  disabled={publishedBanners.length >= 5 || patchMutation.isPending}
+                  disabled={patchMutation.isPending}
                   aria-busy={patchMutation.isPending}
-                  onClick={() => setUserStatus({ status: 'PUBLISHED' }, { id })}
+                  onClick={() => setUserStatus({ status: 'ACTIVE' }, { userId: id })}
                 >
-                  <span className="sr-only">ประกาศ</span>
-                  <Megaphone className="size-4" />
+                  <span className="sr-only">เปิดใช้งาน</span>
+                  <Eye className="size-4" />
                 </Button>
-              )} */}
+              )}
               <Button variant="outline" size="icon" className="size-8" asChild>
-                <NavLink to={`/feed/banner/${id}`}>
+                <NavLink to={`/user/${id}`}>
                   <span className="sr-only">แก้ไข</span>
                   <Pencil className="size-4" />
                 </NavLink>
@@ -152,12 +161,12 @@ export const Data = () => {
             </div>
           )
         },
-        size: 152,
-        minSize: 152,
-        maxSize: 152,
+        size: 108,
+        minSize: 108,
+        maxSize: 108,
       }),
     ],
-    []
+    [patchMutation.isPending, setUserStatus]
   )
 
   return (

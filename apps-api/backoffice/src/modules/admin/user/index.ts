@@ -2,7 +2,13 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import Elysia, { t } from 'elysia'
 
-import { GetUsersQuery, GetUsersResponse } from './models'
+import {
+  GetUsersQuery,
+  GetUsersResponse,
+  UpdateUserBody,
+  UpdateUserParams,
+  UpdateUserResponse,
+} from './models'
 import { AdminUserServicePlugin } from './services'
 
 import { AdminAuthGuardPlugin } from '../../../plugins/admin-auth-guard'
@@ -37,6 +43,31 @@ export const AdminUserController = new Elysia({
       detail: {
         summary: 'Get list of users',
         description: 'Fetch a list of users',
+      },
+    }
+  )
+  .patch(
+    '/:userId',
+    async ({ params, body, status, adminUserService }) => {
+      const result = await adminUserService.updateUserById(params.userId, body)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      params: UpdateUserParams,
+      body: UpdateUserBody,
+      response: {
+        200: UpdateUserResponse,
+        ...createErrorSchema(
+          InternalErrorCode.USER_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Update user by ID',
+        description: 'Update a specific user by its ID',
       },
     }
   )

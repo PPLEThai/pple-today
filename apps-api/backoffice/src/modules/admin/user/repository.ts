@@ -2,7 +2,7 @@ import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
-import { GetUsersQuery, GetUsersResponse } from './models'
+import { GetUsersQuery, GetUsersResponse, UpdateUserBody, UpdateUserParams } from './models'
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
@@ -101,6 +101,13 @@ export class AdminUserRepository {
         meta: { count },
       } satisfies GetUsersResponse
     })
+  }
+
+  async updateUserById(userId: UpdateUserParams['userId'], data: UpdateUserBody) {
+    // FIXME: Handle Profile Image Change
+    return await fromRepositoryPromise(
+      this.prismaService.user.update({ where: { id: userId }, data })
+    )
   }
 }
 
