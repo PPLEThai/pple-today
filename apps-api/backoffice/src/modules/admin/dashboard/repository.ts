@@ -1,5 +1,6 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { FeedItemReactionType } from '@pple-today/database/prisma'
 import {
   get_count_member_by_province,
   get_count_user_by_province,
@@ -10,14 +11,12 @@ import utc from 'dayjs/plugin/utc'
 import Elysia from 'elysia'
 import * as R from 'remeda'
 
-dayjs.extend(utc)
-dayjs.extend(timezone)
-
-import { FeedItemReactionType } from '@pple-today/database/prisma'
-
 import { GetDashboardInfoResponse } from './models'
 
 import { PrismaServicePlugin } from '../../../plugins/prisma'
+
+dayjs.extend(utc)
+dayjs.extend(timezone)
 
 const MEMBER_ROLES = ['pple-member:membership_permanant', 'pple-member:membership_yearly']
 

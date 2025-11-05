@@ -1,3 +1,5 @@
+import { ScrollArea } from '@pple-today/web-ui/scroll-area'
+
 const UNKNOWN_PROVINCE_KEY = 'Unknown'
 
 interface DashboardProvinceCountListProps {
@@ -13,7 +15,7 @@ export const DashboardProvinceCountList = (props: DashboardProvinceCountListProp
     .sort((a, b) => b.count - a.count)
 
   return formattedData.length > 0 ? (
-    <div className="overflow-y-auto -mr-4 [scrollbar-gutter:stable] [scrollbar-color:#E2E8F0_transparent]">
+    <ScrollArea className="min-h-0 -mr-4 pr-4">
       <dl className="flex flex-col gap-2">
         {formattedData.map((d) => (
           <div key={d.province} className="flex gap-2 py-1 border-b border-b-base-outline-default">
@@ -26,7 +28,7 @@ export const DashboardProvinceCountList = (props: DashboardProvinceCountListProp
           </div>
         ))}
       </dl>
-    </div>
+    </ScrollArea>
   ) : (
     <p className="font-semibold leading-6 text-base-text-medium text-center">ไม่มีข้อมูล</p>
   )
