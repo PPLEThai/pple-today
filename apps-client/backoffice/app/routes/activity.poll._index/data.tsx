@@ -284,7 +284,7 @@ export const Data = () => {
           {
             type: 'text',
             key: 'name',
-            label: 'ค้นหาประกาศ',
+            label: 'ค้นหาแบบสอบถาม',
             state: querySearch,
             setState: setQuerySearch,
           },
@@ -293,9 +293,9 @@ export const Data = () => {
             key: 'status',
             label: 'สถานะ',
             options: [
-              { label: 'โพลที่ประกาศแล้ว', value: 'PUBLISHED' },
-              { label: 'โพลที่เก็บในคลัง', value: 'ARCHIVED' },
-              { label: 'โพลที่ร่าง', value: 'DRAFT' },
+              { label: 'แบบสอบถามที่ประกาศแล้ว', value: 'PUBLISHED' },
+              { label: 'แบบสอบถามที่เก็บในคลัง', value: 'ARCHIVED' },
+              { label: 'แบบสอบถามที่ร่าง', value: 'DRAFT' },
             ],
             state: queryStatus,
             setState: setQueryStatus,
