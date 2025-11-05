@@ -54,6 +54,24 @@ export class ElectionRepository {
     )
   }
 
+  async getCandidateResults(candidateIds: string[]) {
+    const result = await fromRepositoryPromise(
+      this.prismaService.electionResult.groupBy({
+        by: ['candidateId'],
+        where: { candidateId: { in: candidateIds } },
+        _sum: { count: true },
+      })
+    )
+
+    if (result.isErr()) {
+      return err(result.error)
+    }
+
+    const sum = new Map(result.value.map((r) => [r.candidateId, r._sum.count ?? 0]))
+
+    return ok(sum)
+  }
+
   async updateEligibleVoterType(userId: string, electionId: string, type: EligibleVoterType) {
     return fromRepositoryPromise(
       this.prismaService.electionEligibleVoter.update({

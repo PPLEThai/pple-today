@@ -93,7 +93,8 @@ export class ElectionService {
 
   private convertToElectionCandidateWithVoteScore(
     candidate: ElectionCandidate,
-    isShowResult?: boolean // TODO: use for mock
+    resultMap: Map<string, number>,
+    isShowResult?: boolean
   ): ElectionCandidateWithVoteScore {
     return {
       id: candidate.id,
@@ -103,7 +104,9 @@ export class ElectionService {
       profileImagePath: candidate.profileImagePath
         ? this.fileService.getPublicFileUrl(candidate.profileImagePath)
         : null,
-      voteScorePercent: isShowResult ? Math.floor(Math.random() * 100) : undefined, // TODO: this is mock data
+      voteScorePercent: isShowResult
+        ? Math.floor((resultMap.get(candidate.id) ?? 0) * 100)
+        : undefined,
       number: candidate.number,
       createdAt: candidate.createdAt,
       updatedAt: candidate.updatedAt,
@@ -161,10 +164,16 @@ export class ElectionService {
     }
 
     const election = eligibleVoter.value.election
+    const candidateIds = election.candidates.map((candidate) => candidate.id)
+
+    const candidateResults = await this.electionRepository.getCandidateResults(candidateIds)
+    if (candidateResults.isErr()) return mapRepositoryError(candidateResults.error)
+
     const listElection = this.convertToListElection(election, eligibleVoter.value.type, new Date())
     const candidates = election.candidates.map((candidate) =>
       this.convertToElectionCandidateWithVoteScore(
         candidate,
+        candidateResults.value,
         listElection.status === 'RESULT_ANNOUNCE'
       )
     )
