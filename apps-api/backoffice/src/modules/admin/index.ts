@@ -14,6 +14,7 @@ import { AdminNotificationController } from './notification'
 import { AdminPollsController } from './poll'
 import { AdminPostController } from './post'
 import { AdminTopicController } from './topic'
+import { AdminUserController } from './user'
 
 export const AdminController = new Elysia({
   prefix: '/admin',
@@ -32,3 +33,4 @@ export const AdminController = new Elysia({
   .use(AdminMiniAppController)
   .use(AdminFacebookPageController)
   .use(AdminNotificationController)
+  .use(AdminUserController)
