@@ -7,6 +7,20 @@ import { GetUsersQuery, GetUsersResponse } from './models'
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
 
+export const KNOWN_ROLES = [
+  'pple-ad:tto',
+  'pple-ad:candidate',
+  'pple-ad:foundation',
+  'pple-ad:hq',
+  'pple-ad:local',
+  'pple-ad:mp',
+  'pple-ad:mp_assistant',
+  'pple-ad:province',
+  'pple-member:membership_permanant',
+  'pple-member:membership_yearly',
+  'official',
+]
+
 export class AdminUserRepository {
   constructor(
     private readonly prismaService: PrismaService,
@@ -17,6 +31,32 @@ export class AdminUserRepository {
     const { limit, page } = query
     const skip = page ? (page - 1) * limit : 0
 
+    let roleFilter = {}
+    if (query.roles && query.roles.length > 0) {
+      const knownQueryRoles = query.roles.filter((role) => KNOWN_ROLES.includes(role))
+      if (knownQueryRoles.length === 0) {
+        roleFilter = {
+          roles: {
+            some: { role: { notIn: KNOWN_ROLES } },
+          },
+        }
+      } else if (query.roles.length === knownQueryRoles.length) {
+        roleFilter = {
+          roles: {
+            some: { role: { in: knownQueryRoles } },
+          },
+        }
+      } else {
+        roleFilter = {
+          roles: {
+            some: {
+              OR: [{ role: { in: knownQueryRoles } }, { role: { notIn: KNOWN_ROLES } }],
+            },
+          },
+        }
+      }
+    }
+
     const where = {
       ...(query.search && {
         name: {
@@ -24,14 +64,7 @@ export class AdminUserRepository {
           mode: 'insensitive' as const,
         },
       }),
-      ...(query.roles &&
-        query.roles.length > 0 && {
-          roles: {
-            some: {
-              role: { in: query.roles },
-            },
-          },
-        }),
+      ...roleFilter,
     }
 
     return fromRepositoryPromise(async () => {
