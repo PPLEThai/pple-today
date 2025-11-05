@@ -445,7 +445,14 @@ function TopRightCandidate({ election }: { election: AdminGetElectionResponse })
                   <Typography variant="small">บันทึกผลการเลือกตั้งในสถานที่</Typography>
                 </Button>
               ))}
-            <ElectionResultAnnouceDialog />
+            <ElectionResultAnnouceDialog
+              electionId={election.id}
+              onSuccess={() => {
+                queryClient.invalidateQueries({
+                  queryKey: resultQueryKey(election.id),
+                })
+              }}
+            />
           </div>
           <CandidateHeader election={election} />
         </div>

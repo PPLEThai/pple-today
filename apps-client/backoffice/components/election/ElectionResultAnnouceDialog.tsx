@@ -1,5 +1,6 @@
 import 'react-datepicker/dist/react-datepicker.css'
 
+import { useCallback } from 'react'
 import DatePicker from 'react-datepicker'
 import { SubmitHandler, useForm } from 'react-hook-form'
 
@@ -11,7 +12,15 @@ import { Typography } from '@pple-today/web-ui/typography'
 import { Megaphone } from 'lucide-react'
 import z from 'zod'
 
-export default function ElectionResultAnnouceDialog() {
+import { reactQueryClient } from '~/libs/api-client'
+
+export default function ElectionResultAnnouceDialog({
+  electionId,
+  onSuccess,
+}: {
+  electionId: string
+  onSuccess?: () => void
+}) {
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -26,7 +35,7 @@ export default function ElectionResultAnnouceDialog() {
         <DialogTitle asChild>
           <Typography variant="h2">ประกาศผลการเลือกตั้ง</Typography>
         </DialogTitle>
-        <ResultTimelineForm />
+        <ResultTimelineForm electionId={electionId} onSuccess={onSuccess} />
       </DialogContent>
     </Dialog>
   )
@@ -39,7 +48,13 @@ const ResultTimelineSchema = z.object({
 
 type ResultTimelineOutput = z.infer<typeof ResultTimelineSchema>
 
-function ResultTimelineForm() {
+function ResultTimelineForm({
+  electionId,
+  onSuccess,
+}: {
+  electionId: string
+  onSuccess?: () => void
+}) {
   const form = useForm<ResultTimelineOutput>({
     resolver: standardSchemaResolver(ResultTimelineSchema),
     defaultValues: {
@@ -47,6 +62,33 @@ function ResultTimelineForm() {
       endResult: null,
     },
   })
+
+  const annouceResultMutation = reactQueryClient.useMutation(
+    'put',
+    '/admin/elections/:electionId/result/annouce'
+  )
+
+  const annouceResult = useCallback(
+    ({ startResult, endResult }: { startResult: Date; endResult: Date }) => {
+      if (annouceResultMutation.isPending) return
+
+      annouceResultMutation.mutateAsync(
+        {
+          pathParams: {
+            electionId,
+          },
+          body: {
+            start: startResult,
+            end: endResult,
+          },
+        },
+        {
+          onSuccess,
+        }
+      )
+    },
+    [annouceResultMutation, electionId, onSuccess]
+  )
 
   const onSubmit: SubmitHandler<ResultTimelineOutput> = (
     data: z.infer<typeof ResultTimelineSchema>
@@ -68,6 +110,8 @@ function ResultTimelineForm() {
       })
       return
     }
+
+    annouceResult({ startResult: data.startResult, endResult: data.endResult })
   }
 
   return (
