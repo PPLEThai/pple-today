@@ -32,27 +32,14 @@ import {
   PieChart,
 } from 'lucide-react'
 
-import { GetAuthMeResponse } from '@api/backoffice/admin'
-
-import { userManager } from '~/config/oidc'
+import { logout } from '~/core/auth'
+import { reactQueryClient } from '~/libs/api-client'
 
 import { SidebarUser } from './SidebarUser'
 
-const logout = () => {
-  Promise.all([userManager.revokeTokens(), userManager.removeUser()])
-    .then(() => window.location.reload())
-    .catch((err) => {
-      console.log(err)
-    })
-}
-
-export const AppSidebar = ({
-  authMe,
-  children,
-}: {
-  authMe: GetAuthMeResponse
-  children: React.ReactNode
-}) => {
+export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
+  const authMeQuery = reactQueryClient.useQuery('/admin/auth/me', {})
+  const authMe = authMeQuery.data!
   return (
     <SidebarProvider>
       <Sidebar collapsible="none">
@@ -70,7 +57,7 @@ export const AppSidebar = ({
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <Link to="/">
+                    <Link to="/dashboard">
                       <PieChart />
                       <span>Dashboard</span>
                     </Link>
@@ -203,7 +190,7 @@ export const AppSidebar = ({
             <SidebarMenuItem>
               <SidebarUser
                 src="https://picsum.photos/id/64/64"
-                title={authMe.name ?? 'undefined'}
+                title={authMe?.name ?? ''}
                 subtitle="pple_admin@pple.com"
               >
                 <DropdownMenu>
