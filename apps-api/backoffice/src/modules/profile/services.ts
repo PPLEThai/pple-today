@@ -50,23 +50,19 @@ export class ProfileService {
   async getUserRecentParticipation(userId: string) {
     const pollParticipation = await this.profileRepository.getUserLatestPoll({
       userId,
-      cursor: undefined,
       limit: 3,
     })
 
     if (pollParticipation.isErr()) {
-      console.log('poll error')
       return mapRepositoryError(pollParticipation.error)
     }
 
     const electionParticipation = await this.profileRepository.getUserLatestElection({
       userId,
-      cursor: undefined,
       limit: 3,
     })
 
     if (electionParticipation.isErr()) {
-      console.log('election error')
       return mapRepositoryError(electionParticipation.error)
     }
 

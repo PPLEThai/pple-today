@@ -2,6 +2,7 @@ import {
   ElectionCandidate,
   ElectionEligibleVoter,
   ElectionInfo,
+  ElectionStatus,
   FilePath,
   ImageFileMimeType,
   ListPaginationQuery,
@@ -69,6 +70,7 @@ export const AdminListElectionQuery = ListPaginationQuery(
     name: t.Optional(t.String()),
     type: t.Optional(t.Enum(ElectionType)),
     isCancelled: t.Optional(t.Boolean()),
+    status: t.Optional(t.Array(ElectionStatus)),
   })
 )
 export type AdminListElectionQuery = Static<typeof AdminListElectionQuery>

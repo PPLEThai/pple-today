@@ -351,9 +351,17 @@ export class ProfileRepository {
         where: {
           userId,
         },
-        orderBy: {
-          createdAt: 'desc',
-        },
+        orderBy: [
+          {
+            createdAt: 'desc',
+          },
+          {
+            electionId: 'desc',
+          },
+          {
+            userId: 'desc',
+          },
+        ],
         include: {
           election: true,
         },

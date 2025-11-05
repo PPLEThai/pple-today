@@ -125,8 +125,8 @@ export const AppSidebar = ({
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <Collapsible defaultOpen className="group/collapsible">
+                <Collapsible defaultOpen className="group/collapsible">
+                  <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton>
                         <Handshake />
@@ -141,10 +141,15 @@ export const AppSidebar = ({
                             <NavLink to="/activity/poll">Poll</NavLink>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton asChild>
+                            <NavLink to="/activity/internal-election">Internal Election</NavLink>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
                       </SidebarMenuSub>
                     </CollapsibleContent>
-                  </Collapsible>
-                </SidebarMenuItem>
+                  </SidebarMenuItem>
+                </Collapsible>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

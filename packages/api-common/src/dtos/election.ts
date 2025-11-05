@@ -2,6 +2,7 @@ import { ElectionMode, ElectionType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const ElectionStatus = t.Enum({
+  DRAFT: 'DRAFT',
   NOT_OPENED_VOTE: 'NOT_OPENED_VOTE',
   OPEN_VOTE: 'OPEN_VOTE',
   CLOSED_VOTE: 'CLOSED_VOTE',
@@ -19,6 +20,7 @@ export const ElectionInfo = t.Object({
   district: t.Nullable(t.String()),
   type: t.Enum(ElectionType),
   mode: t.Enum(ElectionMode),
+  status: ElectionStatus,
   isCancelled: t.Boolean(),
   encryptionPublicKey: t.Nullable(t.String()),
 

@@ -14,4 +14,7 @@ SET "pollId" = po."pollId"
 FROM "public"."PollOption" po
 WHERE pa."optionId" = po."id";
 
+-- Update pollId to required
+ALTER TABLE "public"."PollAnswer" ALTER COLUMN "pollId" SET NOT NULL;
+
 COMMIT;
