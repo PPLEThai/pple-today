@@ -56,10 +56,10 @@ function RouteComponent() {
   }, [signInQuery.error])
   const disabled = signInRedirectMutation.isPending || signInQuery.isLoading
   return (
-    <div className="flex py-16 mx-auto justify-center min-h-screen items-center bg-base-bg-default">
-      <section className="border border-base-outline-default bg-white rounded-2xl p-6 flex flex-col w-[320px]">
-        <img src="/pple-icon.svg" alt="PPLE Today" className="h-12 w-12 mx-auto mb-4" />
-        <h1 className="text-xl font-regular mb-4 text-center">PPLE Today Backoffice</h1>
+    <div className="flex py-16 mx-auto justify-center min-h-screen items-center bg-base-bg-medium">
+      <section className="bg-base-bg-white shadow-sm text-card-foreground flex flex-col rounded-3xl border p-6 w-full max-w-[350px] gap-4">
+        <img src="/pple-icon.svg" alt="PPLE Today" className="h-12 w-12 mx-auto" />
+        <h1 className="text-xl font-regular text-center">PPLE Today Backoffice</h1>
         <Button onClick={() => signInRedirectMutation.mutate()} disabled={disabled}>
           Login with SSO
         </Button>
