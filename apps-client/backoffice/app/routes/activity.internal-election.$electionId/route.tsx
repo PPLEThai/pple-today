@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useReducer } from 'react'
 import { NavLink } from 'react-router'
 import { useNavigate } from 'react-router'
 
@@ -45,6 +45,12 @@ import { fetchClient, reactQueryClient } from '~/libs/api-client'
 import { exhaustiveGuard } from '~/libs/exhaustive-guard'
 
 import { Route } from '.react-router/types/app/+types/root'
+import {
+  EditOnsiteResultContext,
+  EditOnsiteResultReducer,
+  useEditOnsiteResultContext,
+} from '~/routes/activity.internal-election.$electionId/context'
+import { Input } from '@pple-today/web-ui/input'
 
 export function meta() {
   return [{ title: 'Internal-election' }]
@@ -102,6 +108,11 @@ function Breadcrumbs({ name }: { name: string }) {
 
 const electionQueryKey = (electionId: string) =>
   reactQueryClient.getQueryKey('/admin/elections/:electionId', {
+    pathParams: { electionId },
+  })
+
+const resultQueryKey = (electionId: string) =>
+  reactQueryClient.getQueryKey('/admin/elections/:electionId/result', {
     pathParams: { electionId },
   })
 
@@ -332,18 +343,66 @@ function ElectionCandidate({
   election: AdminGetElectionResponse
   result: AdminGetResultResponse
 }) {
+  const editOnsiteResultInit = {
+    isEdit: false,
+    result: result.candidates.map((candidate) => ({
+      candidateId: candidate.id,
+      votes: candidate.result.onsite,
+    })),
+  }
+
+  const [state, dispatch] = useReducer(EditOnsiteResultReducer, editOnsiteResultInit)
+
   return (
     <Card>
-      <div className="flex justify-between">
-        <Typography variant="h3">ผู้ลงสมัคร</Typography>
-        <TopRightCandidate election={election} />
-      </div>
-      <Candidates election={election} result={result} />
+      <EditOnsiteResultContext.Provider value={{ state, dispatch }}>
+        <div className="flex justify-between">
+          <Typography variant="h3">ผู้ลงสมัคร</Typography>
+          <TopRightCandidate election={election} />
+        </div>
+        <Candidates election={election} result={result} />
+      </EditOnsiteResultContext.Provider>
     </Card>
   )
 }
 
 function TopRightCandidate({ election }: { election: AdminGetElectionResponse }) {
+  const {
+    state: { isEdit, result: results },
+    dispatch,
+  } = useEditOnsiteResultContext()
+
+  const toggleEdit = useCallback(() => {
+    dispatch({ type: 'toggle' })
+  }, [dispatch])
+
+  const queryClient = useQueryClient()
+  const submitOnsiteResultMutation = reactQueryClient.useMutation(
+    'post',
+    '/admin/elections/:electionId/result/onsite'
+  )
+
+  const submitOnsiteResult = useCallback(() => {
+    if (submitOnsiteResultMutation.isPending) return
+
+    submitOnsiteResultMutation.mutateAsync(
+      {
+        pathParams: { electionId: election.id },
+        body: results,
+      },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({
+            queryKey: resultQueryKey(election.id),
+          })
+        },
+        onSettled: () => {
+          toggleEdit()
+        },
+      }
+    )
+  }, [queryClient, submitOnsiteResultMutation, election, results, toggleEdit])
+
   switch (election.status) {
     case 'DRAFT':
     case 'NOT_OPENED_VOTE':
@@ -369,12 +428,23 @@ function TopRightCandidate({ election }: { election: AdminGetElectionResponse })
             {(election.type === 'ONLINE' || election.type === 'HYBRID') && (
               <CountBallot election={election} />
             )}
-            {(election.type === 'ONSITE' || election.type === 'HYBRID') && (
-              <Button variant="outline" className="flex items-center gap-2">
-                <Save />
-                <Typography variant="small">บันทึกผลการเลือกตั้งในสถานที่</Typography>
-              </Button>
-            )}
+            {(election.type === 'ONSITE' || election.type === 'HYBRID') &&
+              (!isEdit ? (
+                <Button variant="outline" className="flex items-center gap-2" onClick={toggleEdit}>
+                  <Pencil />
+                  <Typography variant="small">กรอกผลการเลือกตั้งในสถานที่</Typography>
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  onClick={submitOnsiteResult}
+                  disabled={submitOnsiteResultMutation.isPending}
+                >
+                  <Save />
+                  <Typography variant="small">บันทึกผลการเลือกตั้งในสถานที่</Typography>
+                </Button>
+              ))}
             <Button className="flex items-center gap-2">
               <Megaphone />
               <Typography variant="small" className="text-white">
@@ -457,6 +527,10 @@ function Candidates({
   election: AdminGetElectionResponse
   result: AdminGetResultResponse
 }) {
+  const {
+    state: { isEdit },
+  } = useEditOnsiteResultContext()
+
   return (
     <div className="space-y-2">
       {result.candidates.map((candidate) => (
@@ -487,8 +561,12 @@ function Candidates({
             election.status === 'RESULT_ANNOUNCE' ||
             election.isCancelled) && (
             <div className="flex items-center gap-2">
-              <VoteScore score={candidate.result.onsite} />
               <VoteScore score={candidate.result.online} />
+              {isEdit ? (
+                <VoteScoreInput candidateId={candidate.id} />
+              ) : (
+                <VoteScore score={candidate.result.onsite} />
+              )}
               <VoteScore score={candidate.result.totalPercent} isPercent />
             </div>
           )}
@@ -517,5 +595,33 @@ function VoteScore({ score, isPercent }: { score: number; isPercent?: boolean })
         />
       )}
     </div>
+  )
+}
+
+function VoteScoreInput({ candidateId }: { candidateId: string }) {
+  const {
+    state: { result },
+    dispatch,
+  } = useEditOnsiteResultContext()
+  const vote = result.find((r) => r.candidateId === candidateId)?.votes || 0
+
+  const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const votes = Number(e.target.value)
+    if (isNaN(votes)) return
+
+    dispatch({
+      type: 'set',
+      payload: { candidateId, votes },
+    })
+  }
+
+  return (
+    <Input
+      className="w-32"
+      placeholder="กรอกคะแนน"
+      type="number"
+      value={vote}
+      onChange={onChange}
+    />
   )
 }
