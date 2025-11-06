@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useRef } from 'react'
-import { NavLink, useNavigate } from 'react-router'
 
 import { Badge } from '@pple-today/web-ui/badge'
 import {
@@ -13,6 +12,7 @@ import {
 import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ANNOUNCEMENT_TYPE_LONG_DISPLAY_TEXT, AnnouncementIcon } from 'components/AnnouncementIcon'
 import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { Engagements } from 'components/Engagements'
@@ -25,15 +25,14 @@ import { UpdateAnnouncementBody, UpdateAnnouncementParams } from '@api/backoffic
 
 import { reactQueryClient } from '~/libs/api-client'
 
-import { Route } from '../feed.announcement.$announcementId/+types/route'
+export const Route = createFileRoute('/feed/announcement/$announcementId')({
+  component: AnnouncementDetailPage,
+  head: ({ params }) => ({ meta: [{ title: `Announcement - ${params.announcementId}` }] }),
+})
 
-export function meta() {
-  return [{ title: 'รายละเอียดประกาศ' }]
-}
-
-export default function AnnouncementDetailPage({ params }: Route.LoaderArgs) {
+function AnnouncementDetailPage() {
+  const { announcementId } = Route.useParams()
   const navigate = useNavigate()
-  const { announcementId } = params
   const confirmDialogRef = useRef<ConfirmDialogRef>(null)
 
   const queryClient = useQueryClient()
@@ -91,7 +90,7 @@ export default function AnnouncementDetailPage({ params }: Route.LoaderArgs) {
       onConfirm: () =>
         deleteMutation.mutateAsync(
           { pathParams: { announcementId } },
-          { onSuccess: () => navigate('/feed/announcement') }
+          { onSuccess: () => navigate({ to: '/feed/announcement' }) }
         ),
     })
   }
@@ -117,13 +116,13 @@ export default function AnnouncementDetailPage({ params }: Route.LoaderArgs) {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <NavLink to="/feed">Feed</NavLink>
+              <Link to="/feed">Feed</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <NavLink to="/feed/announcement">Announcement</NavLink>
+              <Link to="/feed/announcement">Announcement</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />

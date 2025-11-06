@@ -6,14 +6,16 @@ import {
   BreadcrumbSeparator,
 } from '@pple-today/web-ui/breadcrumb'
 import { Typography } from '@pple-today/web-ui/typography'
+import { createFileRoute } from '@tanstack/react-router'
 
 import { Data } from './data'
 
-export function meta() {
-  return [{ title: 'Facebook' }]
-}
+export const Route = createFileRoute('/_auth/facebook/')({
+  component: FacebookPage,
+  head: () => ({ meta: [{ title: 'Facebook' }] }),
+})
 
-export default function FacebookPage() {
+function FacebookPage() {
   return (
     <div className="px-6 pb-6 space-y-2">
       <Breadcrumb className="pt-4 pb-2">

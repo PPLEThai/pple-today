@@ -1,5 +1,4 @@
 import React, { useCallback, useRef } from 'react'
-import { NavLink, useNavigate } from 'react-router'
 
 import { Badge } from '@pple-today/web-ui/badge'
 import {
@@ -13,6 +12,7 @@ import {
 import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { AlertDialog, AlertDialogRef } from 'components/AlertDialog'
 import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { BannerEdit } from 'components/feed/BannerEdit'
@@ -23,14 +23,13 @@ import { UpdateBannerBody, UpdateBannerParams } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
 
-import { Route } from '../feed.banner.$bannerId/+types/route'
+export const Route = createFileRoute('/feed/banner/$bannerId')({
+  component: BannerDetailPage,
+  head: ({ params }) => ({ meta: [{ title: `Banner - ${params.bannerId}` }] }),
+})
 
-export function meta() {
-  return [{ title: 'รายละเอียดโพสต์' }]
-}
-
-export default function BannerDetailPage({ params }: Route.LoaderArgs) {
-  const { bannerId } = params
+function BannerDetailPage() {
+  const { bannerId } = Route.useParams()
 
   const navigate = useNavigate()
 
@@ -88,7 +87,7 @@ export default function BannerDetailPage({ params }: Route.LoaderArgs) {
       onConfirm: () =>
         deleteMutation.mutateAsync(
           { pathParams: { id: bannerId } },
-          { onSuccess: () => navigate('/feed/banner') }
+          { onSuccess: () => navigate({ to: '/feed/banner' }) }
         ),
     })
   }, [bannerId, deleteMutation, navigate])
@@ -100,13 +99,13 @@ export default function BannerDetailPage({ params }: Route.LoaderArgs) {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <NavLink to="/feed">Feed</NavLink>
+              <Link to="/feed">Feed</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <NavLink to="/feed/banner">Banner</NavLink>
+              <Link to="/feed/banner">Banner</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />

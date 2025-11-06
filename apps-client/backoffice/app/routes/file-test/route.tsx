@@ -1,11 +1,18 @@
 import { useEffect, useState } from 'react'
 
+import { createFileRoute } from '@tanstack/react-router'
+
 import { FilePath } from '@api/backoffice/admin'
 
 import { userManager } from '~/config/oidc'
 import { reactQueryClient } from '~/libs/api-client'
 
-const FileTestRoute = () => {
+export const Route = createFileRoute('/file-test')({
+  component: FileTestRoute,
+  head: () => ({ meta: [{ title: 'File Test' }] }),
+})
+
+function FileTestRoute() {
   const [announcementId, setAnnouncementId] = useState<string | null>(null)
   const [accessToken, setAccessToken] = useState<string | null>(null)
 
@@ -108,5 +115,3 @@ const FileTestRoute = () => {
     </form>
   )
 }
-
-export default FileTestRoute

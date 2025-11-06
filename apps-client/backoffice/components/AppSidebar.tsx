@@ -1,5 +1,3 @@
-import { NavLink } from 'react-router'
-
 import { Button } from '@pple-today/web-ui/button'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@pple-today/web-ui/collapsible'
 import {
@@ -24,6 +22,7 @@ import {
   SidebarMenuSubItem,
   SidebarProvider,
 } from '@pple-today/web-ui/sidebar'
+import { Link } from '@tanstack/react-router'
 import {
   ChevronsUpDownIcon,
   ChevronUp,
@@ -71,10 +70,10 @@ export const AppSidebar = ({
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <NavLink to="/">
+                    <Link to="/">
                       <PieChart />
                       <span>Dashboard</span>
-                    </NavLink>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <Collapsible defaultOpen className="group/collapsible">
@@ -90,27 +89,27 @@ export const AppSidebar = ({
                       <SidebarMenuSub>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>
-                            <NavLink to="/feed/hashtag">Hashtag</NavLink>
+                            <Link to="/feed/hashtag">Hashtag</Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>
-                            <NavLink to="/feed/topic">Topic</NavLink>
+                            <Link to="/feed/topic">Topic</Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>
-                            <NavLink to="/feed/announcement">Announcement</NavLink>
+                            <Link to="/feed/announcement">Announcement</Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>
-                            <NavLink to="/feed/post">Post</NavLink>
+                            <Link to="/feed/post">Post</Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>
-                            <NavLink to="/feed/banner">Banner</NavLink>
+                            <Link to="/feed/banner">Banner</Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                       </SidebarMenuSub>
@@ -119,10 +118,10 @@ export const AppSidebar = ({
                 </Collapsible>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <NavLink to="/facebook">
+                    <Link to="/facebook">
                       <Facebook />
                       <span>เพจเฟสบุ๊ค</span>
-                    </NavLink>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <Collapsible defaultOpen className="group/collapsible">
@@ -141,7 +140,7 @@ export const AppSidebar = ({
                         </SidebarMenuSubItem>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>
-                            <NavLink to="/activity/internal-election">Internal Election</NavLink>
+                            <Link to="/activity/internal-election">Internal Election</Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                       </SidebarMenuSub>
@@ -180,16 +179,19 @@ export const AppSidebar = ({
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <NavLink to="/banner-test">Banner Test</NavLink>
+                    <Link to="/banner-test">Banner Test</Link>
                   </SidebarMenuButton>
                   <SidebarMenuButton asChild>
-                    <NavLink to="/file-test">File Test</NavLink>
+                    <Link to="/facebook">Facebook</Link>
                   </SidebarMenuButton>
                   <SidebarMenuButton asChild>
-                    <NavLink to="/playground">Playground</NavLink>
+                    <Link to="/file-test">File Test</Link>
                   </SidebarMenuButton>
                   <SidebarMenuButton asChild>
-                    <NavLink to="/sso">SSO</NavLink>
+                    <Link to="/playground">Playground</Link>
+                  </SidebarMenuButton>
+                  <SidebarMenuButton asChild>
+                    <Link to="/sso">SSO</Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>

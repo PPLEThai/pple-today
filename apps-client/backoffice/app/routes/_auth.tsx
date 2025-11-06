@@ -1,9 +1,12 @@
-import { NavLink, Outlet } from 'react-router'
-
 import { Button } from '@pple-today/web-ui/button'
+import { createFileRoute, Link, Outlet } from '@tanstack/react-router'
 import { AppSidebar } from 'components/AppSidebar'
 
 import { reactQueryClient } from '~/libs/api-client'
+
+export const Route = createFileRoute('/_auth')({
+  component: AuthLayout,
+})
 
 export default function AuthLayout() {
   const query = reactQueryClient.useQuery('/admin/auth/me', {}, { retry: false })
@@ -16,7 +19,7 @@ export default function AuthLayout() {
     </AppSidebar>
   ) : (
     <Button asChild>
-      <NavLink to="/sso">ล็อกอิน</NavLink>
+      <Link to="/sso">ล็อกอิน</Link>
     </Button>
   )
 }

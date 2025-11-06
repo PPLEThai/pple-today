@@ -1,5 +1,4 @@
 import { useCallback } from 'react'
-import { NavLink } from 'react-router'
 
 import { Badge } from '@pple-today/web-ui/badge'
 import {
@@ -13,6 +12,7 @@ import {
 import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
+import { createFileRoute } from '@tanstack/react-router'
 import { FacebookPageEdit } from 'components/facebook/FacebookPageEdit'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
 import { Calendar, Check, Eye, EyeOff, Facebook, Link, Pencil, Users, X } from 'lucide-react'
@@ -21,15 +21,14 @@ import { UpdateFacebookPageBody, UpdateFacebookPageParams } from '@api/backoffic
 
 import { reactQueryClient } from '~/libs/api-client'
 
-import { Route } from '../_auth.facebook.$facebookPageId/+types/route'
-import { Data } from '../feed.post._index/data'
+import { Data } from '../feed.post.index/data'
 
-export function meta() {
-  return [{ title: 'รายละเอียดเพจ' }]
-}
+export const Route = createFileRoute('/_auth/facebook/$facebookPageId')({
+  component: FacebookDetailPage,
+})
 
-export default function FacebookDetailPage({ params }: Route.LoaderArgs) {
-  const { facebookPageId } = params
+function FacebookDetailPage() {
+  const { facebookPageId } = Route.useParams()
 
   const queryClient = useQueryClient()
   const query = reactQueryClient.useQuery('/admin/facebook/:facebookPageId', {
@@ -67,7 +66,7 @@ export default function FacebookDetailPage({ params }: Route.LoaderArgs) {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <NavLink to="/facebook">Facebook</NavLink>
+              <Link to="/facebook">Facebook</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />

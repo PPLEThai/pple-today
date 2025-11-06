@@ -1,12 +1,12 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
-import { NavLink } from 'react-router'
 
 import { Badge } from '@pple-today/web-ui/badge'
 import { Button } from '@pple-today/web-ui/button'
 import { DataTable } from '@pple-today/web-ui/data-table'
 import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
 import { DtFilter } from 'components/datatable/DtFilter'
 import { DtMovement } from 'components/datatable/DtMovement'
@@ -106,9 +106,13 @@ export const Data = () => {
       columnHelper.accessor('name', {
         header: 'ชื่อหัวข้อ',
         cell: (info) => (
-          <NavLink className="hover:underline" to={`/feed/topic/${info.row.original.id}`}>
+          <Link
+            className="hover:underline"
+            to="/feed/topic/$topicId"
+            params={{ topicId: info.row.original.id }}
+          >
             {info.getValue()}
-          </NavLink>
+          </Link>
         ),
       }),
       columnHelper.accessor('followersCount', {
@@ -165,10 +169,10 @@ export const Data = () => {
                 </Button>
               )}
               <Button variant="outline" size="icon" className="size-8" asChild>
-                <NavLink to={`/feed/topic/${id}`}>
+                <Link to="/feed/topic/$topicId" params={{ topicId: id }}>
                   <span className="sr-only">แก้ไข</span>
                   <Pencil className="size-4" />
-                </NavLink>
+                </Link>
               </Button>
             </div>
           )

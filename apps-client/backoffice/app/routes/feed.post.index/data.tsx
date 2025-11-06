@@ -1,12 +1,12 @@
 'use client'
 
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { NavLink } from 'react-router'
 
 import { Badge } from '@pple-today/web-ui/badge'
 import { Button } from '@pple-today/web-ui/button'
 import { DataTable } from '@pple-today/web-ui/data-table'
 import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
 import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { DtFilter } from 'components/datatable/DtFilter'
@@ -132,9 +132,13 @@ export const Data = (props: { authorId?: string }) => {
       columnHelper.accessor('content', {
         header: 'เนื้อหา',
         cell: (info) => (
-          <NavLink className="hover:underline" to={`/feed/post/${info.row.original.id}`}>
+          <Link
+            className="hover:underline"
+            to="/feed/post/$postId"
+            params={{ postId: info.row.original.id }}
+          >
             {info.getValue()}
-          </NavLink>
+          </Link>
         ),
       }),
       columnHelper.display({
