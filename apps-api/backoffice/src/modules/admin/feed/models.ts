@@ -1,9 +1,17 @@
+import { AdminFeedItemComment } from '@pple-today/api-common/dtos'
 import { Static, t } from 'elysia'
 
 export const FeedItemCommentIdParams = t.Object({
   id: t.String({ description: 'The ID of the feed item comment' }),
 })
 export type FeedItemCommentIdParams = Static<typeof FeedItemCommentIdParams>
+
+export const GetFeedCommentsParams = t.Object({
+  id: t.String({ description: 'The ID of the feed item comment' }),
+})
+export type GetFeedCommentsParams = Static<typeof GetFeedCommentsParams>
+export const GetFeedCommentsResponse = t.Array(AdminFeedItemComment)
+export type GetFeedCommentsResponse = Static<typeof GetFeedCommentsResponse>
 
 // PATCH /admin/feeds/comments/{id}
 export const UpdateFeedItemCommentPrivacyParams = FeedItemCommentIdParams

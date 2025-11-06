@@ -1,4 +1,4 @@
-import { AdminPollDetails, ListPaginationQuery, PollAnswer } from '@pple-today/api-common/dtos'
+import { AdminPollDetails, ListPaginationQuery } from '@pple-today/api-common/dtos'
 import { PollStatus, PollType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
