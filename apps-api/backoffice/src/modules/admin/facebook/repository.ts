@@ -27,7 +27,7 @@ export class AdminFacebookPageRepository {
       }),
       ...(query.status &&
         query.status.length > 0 && {
-          status: {
+          linkedStatus: {
             in: query.status,
           },
         }),
