@@ -132,10 +132,16 @@ export const Data = () => {
         header: 'สถานะ',
         cell: (info) => {
           const status = info.getValue()
-          if (status === 'UNLINKED') return <Badge className="bg-base-bg-invert">ลบโดยผู้ใช้</Badge>
-          if (status === 'APPROVED') return <Badge variant="success">อนุมัติ</Badge>
-          if (status === 'REJECTED') return <Badge variant="destructive">ไม่อนุมัติ</Badge>
-          if (status === 'SUSPENDED') return <Badge variant="secondary">ถูกระงับ</Badge>
+          switch (status) {
+            case 'UNLINKED':
+              return <Badge className="bg-base-bg-invert">ลบโดยผู้ใช้</Badge>
+            case 'APPROVED':
+              return <Badge variant="success">อนุมัติ</Badge>
+            case 'REJECTED':
+              return <Badge variant="destructive">ไม่อนุมัติ</Badge>
+            case 'SUSPENDED':
+              return <Badge variant="secondary">ถูกระงับ</Badge>
+          }
           return <Badge variant="outline">รอการอนุมัติ</Badge>
         },
         size: 110,
