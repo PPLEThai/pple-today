@@ -12,6 +12,8 @@ import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { DtFilter } from 'components/datatable/DtFilter'
 import { DtMovement } from 'components/datatable/DtMovement'
 import { Engagements } from 'components/Engagements'
+import { PollCreate } from 'components/poll/PollCreate'
+import { PollEdit } from 'components/poll/PollEdit'
 import { TableCopyId } from 'components/TableCopyId'
 import dayjs from 'dayjs'
 import { EyeOff, Megaphone, Pencil, Plus, Trash2 } from 'lucide-react'
@@ -236,12 +238,16 @@ export const Data = () => {
                   <Megaphone className="size-4" />
                 </Button>
               )}
-              <Button variant="outline" size="icon" className="size-8" asChild>
-                <NavLink to={`/activity/poll/${id}`}>
-                  <span className="sr-only">แก้ไข</span>
-                  <Pencil className="size-4" />
-                </NavLink>
-              </Button>
+              <PollEdit
+                trigger={
+                  <Button variant="outline" size="icon" className="size-8">
+                    <span className="sr-only">แก้ไข</span>
+                    <Pencil className="size-4" />
+                  </Button>
+                }
+                onSuccess={invalidateQuery}
+                poll={row.original}
+              />
               <Button
                 variant="outline-destructive"
                 size="icon"
@@ -267,7 +273,7 @@ export const Data = () => {
         maxSize: 152,
       }),
     ],
-    [deleteMutation.isPending, deletePoll, patchMutation.isPending, setPollStatus]
+    [deleteMutation.isPending, deletePoll, patchMutation.isPending, setPollStatus, invalidateQuery]
   )
 
   return (
@@ -295,10 +301,15 @@ export const Data = () => {
           },
         ]}
         filterExtension={
-          <Button>
-            <Plus />
-            สร้างแบบสอบถาม
-          </Button>
+          <PollCreate
+            trigger={
+              <Button>
+                <Plus />
+                สร้างแบบสอบถาม
+              </Button>
+            }
+            onSuccess={invalidateQuery}
+          />
         }
         onChange={() => setQueryPage(1)}
       />
