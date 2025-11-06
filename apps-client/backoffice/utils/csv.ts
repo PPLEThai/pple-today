@@ -1,6 +1,8 @@
-export function downloadCSV(data: Record<string, any>[], filename: string = 'data.csv') {
-  const headers = Object.keys(data[0])
-
+export function downloadCSV(
+  headers: string[],
+  data: Record<string, any>[],
+  filename: string = 'data.csv'
+) {
   const csvRows = [
     headers.join(','),
     ...data.map((row) =>
