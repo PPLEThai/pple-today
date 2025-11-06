@@ -40,13 +40,16 @@ model User {
 
     linkedPage FacebookPage?
 
-    feedItems      FeedItem[]
-    feedReactions  FeedItemReaction[]
-    feedComments   FeedItemComment[]
-    roles          UserRole[]
-    feedItemScores FeedItemScore[]
+    feedItems          FeedItem[]
+    feedReactions      FeedItemReaction[]
+    feedComments       FeedItemComment[]
+    roles              UserRole[]
+    feedItemScores     FeedItemScore[]
+    notifications      UserNotification[]
+    notificationTokens UserNotificationToken[]
 
     @@index([status])
+    @@index([createdAt])
 }
 
 model UserRole {

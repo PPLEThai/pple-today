@@ -1,5 +1,7 @@
 import 'tsx/cjs'
 
+import { AppJSONConfig } from 'expo/config'
+
 import { version } from './package.json'
 
 // TODO: update config when production release https://docs.expo.dev/versions/latest/config/app/
@@ -16,7 +18,15 @@ export default {
     newArchEnabled: true, // this is true by default
     ios: {
       supportsTablet: true,
+      googleServicesFile: './credentials/GoogleService-Info.plist',
       bundleIdentifier: 'th.or.peoplesparty.ppletoday',
+      entitlements: {
+        'aps-environment': 'development',
+        'com.apple.security.application-groups': ['group.th.or.peoplesparty.ppletoday.nse'],
+      },
+      infoPlist: {
+        UIBackgroundModes: ['fetch', 'remote-notification'],
+      },
     },
     android: {
       adaptiveIcon: {
@@ -25,6 +35,7 @@ export default {
       },
       edgeToEdgeEnabled: true,
       package: 'th.or.peoplesparty.ppletoday',
+      googleServicesFile: './credentials/google-services.json',
       softwareKeyboardLayoutMode: 'pan',
     },
     web: {
@@ -58,6 +69,10 @@ export default {
           ios: {
             deploymentTarget: '15.1',
             reactNativeReleaseLevel: 'experimental',
+
+            // https://github.com/invertase/react-native-firebase/issues/8657#issuecomment-3309893085
+            useFrameworks: 'static',
+            forceStaticLinking: ['RNFBApp', 'RNFBMessaging'],
           },
           /**
            * Unfortunately, the performance issue with scrolling (Android) is really deep
@@ -120,6 +135,17 @@ export default {
         },
       ],
       ['./plugins/withAndroidPlugin'],
+      ['./plugins/withIosPlugin'],
+
+      '@react-native-firebase/app',
+      '@react-native-firebase/messaging',
+      [
+        'expo-notification-service-extension-plugin',
+        {
+          mode: 'development',
+          iosNSEFilePath: './assets/NotificationService.m',
+        },
+      ],
     ],
     experiments: {
       typedRoutes: true,
@@ -131,4 +157,4 @@ export default {
     //   },
     // },
   },
-}
+} satisfies AppJSONConfig

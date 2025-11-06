@@ -5,3 +5,5 @@
 exports.get_candidate_feed_item = require("./get_candidate_feed_item.js").get_candidate_feed_item
 exports.get_candidate_topic = require("./get_candidate_topic.js").get_candidate_topic
 exports.get_candidate_user = require("./get_candidate_user.js").get_candidate_user
+exports.get_count_member_by_province = require("./get_count_member_by_province.js").get_count_member_by_province
+exports.get_count_user_by_province = require("./get_count_user_by_province.js").get_count_user_by_province

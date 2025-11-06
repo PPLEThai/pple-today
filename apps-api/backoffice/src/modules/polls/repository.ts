@@ -251,6 +251,11 @@ export class PollsRepository {
                             id: userId,
                           },
                         },
+                        poll: {
+                          connect: {
+                            feedItemId: pollId,
+                          },
+                        },
                       },
                     },
                   },
@@ -282,6 +287,11 @@ export class PollsRepository {
                         user: {
                           connect: {
                             id: userId,
+                          },
+                        },
+                        poll: {
+                          connect: {
+                            feedItemId: pollId,
                           },
                         },
                       },
