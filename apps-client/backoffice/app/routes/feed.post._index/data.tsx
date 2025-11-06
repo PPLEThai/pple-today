@@ -26,7 +26,7 @@ import { reactQueryClient } from '~/libs/api-client'
 
 const columnHelper = createColumnHelper<GetPostsResponse['items'][number]>()
 
-export const Data = () => {
+export const Data = (props: { authorId?: string }) => {
   const confirmDialogRef = useRef<ConfirmDialogRef>(null)
 
   const [queryLimit, setQueryLimit] = useState(10)
@@ -47,6 +47,7 @@ export const Data = () => {
           queryStatus.length > 0
             ? (queryStatus as ('PUBLISHED' | 'HIDDEN' | 'DELETED')[])
             : undefined,
+        authorId: props.authorId,
       },
     },
     {
@@ -66,10 +67,11 @@ export const Data = () => {
             queryStatus.length > 0
               ? (queryStatus as ('PUBLISHED' | 'HIDDEN' | 'DELETED')[])
               : undefined,
+          authorId: props.authorId,
         },
       }),
     })
-  }, [queryClient, queryLimit, queryPage, querySearch, queryStatus])
+  }, [props.authorId, queryClient, queryLimit, queryPage, querySearch, queryStatus])
 
   const setPostStatus = useCallback(
     (
@@ -92,6 +94,7 @@ export const Data = () => {
                     queryStatus.length > 0
                       ? (queryStatus as ('PUBLISHED' | 'HIDDEN' | 'DELETED')[])
                       : undefined,
+                  authorId: props.authorId,
                 },
               }),
               (_data) => {
@@ -108,7 +111,7 @@ export const Data = () => {
         }
       )
     },
-    [patchMutation, queryClient, queryLimit, queryPage, querySearch, queryStatus]
+    [patchMutation, props.authorId, queryClient, queryLimit, queryPage, querySearch, queryStatus]
   )
   const deletePost = useCallback(
     (postId: DeletePostParams['postId']) => {

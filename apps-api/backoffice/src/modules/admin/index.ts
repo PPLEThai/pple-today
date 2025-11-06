@@ -5,6 +5,7 @@ import { AdminAuthController } from './auth'
 import { AdminBannerController } from './banner'
 import { AdminDashboardController } from './dashboard'
 import { AdminElectionController } from './election'
+import { AdminFacebookPageController } from './facebook'
 import { AdminFeedController } from './feed'
 import { AdminFileController } from './file'
 import { AdminHashtagController } from './hashtag'
@@ -29,4 +30,5 @@ export const AdminController = new Elysia({
   .use(AdminDashboardController)
   .use(AdminPostController)
   .use(AdminMiniAppController)
+  .use(AdminFacebookPageController)
   .use(AdminNotificationController)
