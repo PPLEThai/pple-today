@@ -30,6 +30,7 @@
     "seed:recommend": "tsx prisma/seeds/seed.recommend.ts",
     "seed:prod": "tsx prisma/seeds/seed.prod.ts",
     "seed:poll": "tsx prisma/seeds/seed.poll.ts",
+    "seed:dashboard": "tsx prisma/seeds/seed.dashboard.ts",
     "reset": "prisma migrate reset",
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --check .",
@@ -43,6 +44,7 @@
     "@prisma/adapter-pg": "^6.15.0",
     "@tanstack/pacer": "^0.15.4",
     "dotenv": "^17.0.1",
+    "lexorank": "^1.0.5",
     "prisma": "^6.15.0"
   },
   "dependencies": {

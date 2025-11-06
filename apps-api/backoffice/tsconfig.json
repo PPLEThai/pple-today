@@ -4,6 +4,7 @@
   "exclude": ["node_modules", "dist", "build", "coverage", "scripts"],
   "compilerOptions": {
     "module": "esnext",
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "esModuleInterop": true
   }
 }

@@ -4,3 +4,5 @@
 export * from "./get_candidate_feed_item.mjs"
 export * from "./get_candidate_topic.mjs"
 export * from "./get_candidate_user.mjs"
+export * from "./get_count_member_by_province.mjs"
+export * from "./get_count_user_by_province.mjs"

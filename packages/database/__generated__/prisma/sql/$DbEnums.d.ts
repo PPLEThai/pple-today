@@ -12,6 +12,8 @@ export namespace $DbEnums {
   type EligibleVoterType = "ONSITE" | "ONLINE"
   type ElectionResultType = "ONSITE" | "ONLINE"
   type ElectionMode = "SECURE" | "FLEXIBLE"
+  type ElectionKeysStatus = "NOT_CREATED" | "PENDING_CREATED" | "CREATED" | "FAILED_CREATED" | "DESTROY_SCHEDULED"
+  type ElectionOnlineResultStatus = "NONE" | "COUNTING" | "COUNT_SUCCESS" | "COUNT_FAILED"
   type FeedItemType = "POST" | "POLL" | "ANNOUNCEMENT"
   type FeedItemReactionType = "UP_VOTE" | "DOWN_VOTE"
   type FacebookPageLinkedStatus = "PENDING" | "UNLINKED" | "APPROVED" | "REJECTED"

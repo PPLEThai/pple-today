@@ -4,3 +4,5 @@
 export * from "./get_candidate_feed_item.wasm-compiler-edge.mjs"
 export * from "./get_candidate_topic.wasm-compiler-edge.mjs"
 export * from "./get_candidate_user.wasm-compiler-edge.mjs"
+export * from "./get_count_member_by_province.wasm-compiler-edge.mjs"
+export * from "./get_count_user_by_province.wasm-compiler-edge.mjs"
