@@ -12,15 +12,15 @@ import { CircleAlert, Pencil, RefreshCw, Save } from 'lucide-react'
 
 import { AdminGetElectionResponse, AdminGetResultResponse } from '@api/backoffice/admin'
 
+import { reactQueryClient } from '~/libs/api-client'
+import { exhaustiveGuard } from '~/libs/exhaustive-guard'
+
 import {
   EditOnsiteResultContext,
   EditOnsiteResultReducer,
   useEditOnsiteResultContext,
-} from './context'
-import { ResultAnnouceDialog } from './editOnisteResult'
-
-import { reactQueryClient } from '../../libs/api-client'
-import { exhaustiveGuard } from '../../libs/exhaustive-guard'
+} from './-context'
+import { ResultAnnouceDialog } from './-editOnisteResult'
 
 export function CandidatesAndResult({
   election,

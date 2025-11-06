@@ -13,9 +13,9 @@ import z from 'zod'
 
 import { AdminGetElectionResponse } from '@api/backoffice/admin'
 
-import { useEditOnsiteResultContext } from './context'
+import { reactQueryClient } from '~/libs/api-client'
 
-import { reactQueryClient } from '../../libs/api-client'
+import { useEditOnsiteResultContext } from './-context'
 
 export function ResultAnnouceDialog({ election }: { election: AdminGetElectionResponse }) {
   const [open, setOpen] = useState<boolean>(false)

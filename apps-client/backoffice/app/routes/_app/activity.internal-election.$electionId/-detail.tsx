@@ -13,7 +13,7 @@ import { getTimelineString } from 'utils/date'
 
 import { AdminGetElectionResponse } from '@api/backoffice/admin'
 
-import { fetchClient, reactQueryClient } from '../../libs/api-client'
+import { fetchClient, reactQueryClient } from '~/libs/api-client'
 
 export function Detail({ election }: { election: AdminGetElectionResponse }) {
   return (

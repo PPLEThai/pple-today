@@ -8,7 +8,7 @@ import { CalendarX2, Eye, Pencil, Trash2, Vote } from 'lucide-react'
 
 import { AdminGetElectionResponse } from '@api/backoffice/admin'
 
-import { reactQueryClient } from '../../libs/api-client'
+import { reactQueryClient } from '~/libs/api-client'
 
 export function Header({ election }: { election: AdminGetElectionResponse }) {
   return (

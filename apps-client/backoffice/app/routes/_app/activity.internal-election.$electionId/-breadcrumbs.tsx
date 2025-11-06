@@ -1,5 +1,3 @@
-import { NavLink } from 'react-router'
-
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,6 +6,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@pple-today/web-ui/breadcrumb'
+import { Link } from '@tanstack/react-router'
 
 export function Breadcrumbs({ name }: { name?: string }) {
   return (
@@ -16,13 +15,13 @@ export function Breadcrumbs({ name }: { name?: string }) {
         <BreadcrumbSeparator />
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <NavLink to="/activity">Activity</NavLink>
+            <Link to="/activity">Activity</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
         <BreadcrumbItem>
           <BreadcrumbLink asChild>
-            <NavLink to="/activity/internal-election">Internal Election</NavLink>
+            <Link to="/activity/internal-election">Internal Election</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbSeparator />
