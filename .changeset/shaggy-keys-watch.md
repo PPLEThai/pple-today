@@ -2,4 +2,4 @@
 '@pple-today/database': patch
 ---
 
-Banner headline default to ""
+[[PPLE-528] Fix banner headline default value](https://linear.app/snts/issue/PPLE-528/fix-banner-headline-default-value)
