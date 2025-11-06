@@ -72,7 +72,17 @@ export class AdminPollRepository {
               select: {
                 endAt: true,
                 title: true,
+                type: true,
                 status: true,
+                topics: true,
+                options: {
+                  select: {
+                    title: true,
+                  },
+                  orderBy: {
+                    id: 'asc',
+                  },
+                },
               },
             },
             reactionCounts: true,
@@ -100,6 +110,7 @@ export class AdminPollRepository {
           return {
             id: feed.id,
             title: feed.poll.title,
+            type: feed.poll.type,
             reactions: feed.reactionCounts,
             commentCount: feed.numberOfComments,
             publishedAt: feed.publishedAt,
@@ -107,6 +118,8 @@ export class AdminPollRepository {
             updatedAt: feed.updatedAt,
             endAt: feed.poll.endAt,
             status: feed.poll.status,
+            options: feed.poll.options,
+            topics: feed.poll.topics.flatMap((topic) => topic.topicId),
           }
         })
         .filter((item) => item !== null)
