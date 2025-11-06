@@ -1,4 +1,12 @@
-import { FilePath, ImageFileMimeType, UserParticipation } from '@pple-today/api-common/dtos'
+import {
+  CursorPaginationQuery,
+  FilePath,
+  ImageFileMimeType,
+  ListCursorResponse,
+  UserElectionParticipation,
+  UserPollParticipation,
+  UserRecentParticipation,
+} from '@pple-today/api-common/dtos'
 import { Static, t } from 'elysia'
 
 export const GetUserRecommendationResponse = t.Array(
@@ -19,9 +27,18 @@ export const GetUserRecommendationResponse = t.Array(
 )
 export type GetUserRecommendationResponse = Static<typeof GetUserRecommendationResponse>
 
-// TODO: Add election
-export const GetUserParticipationResponse = t.Array(UserParticipation)
-export type GetUserParticipationResponse = Static<typeof GetUserParticipationResponse>
+export const GetUserRecentParticipationResponse = t.Array(UserRecentParticipation)
+export type GetUserRecentParticipationResponse = Static<typeof GetUserRecentParticipationResponse>
+
+export const GetUserPollParticipationQuery = CursorPaginationQuery
+export const GetUserPollParticipationResponse = ListCursorResponse(UserPollParticipation)
+export type GetUserPollParticipationResponse = Static<typeof GetUserPollParticipationResponse>
+
+export const GetUserElectionParticipationQuery = CursorPaginationQuery
+export const GetUserElectionParticipationResponse = ListCursorResponse(UserElectionParticipation)
+export type GetUserElectionParticipationResponse = Static<
+  typeof GetUserElectionParticipationResponse
+>
 
 export const GetMyProfileResponse = t.Object({
   id: t.String({ description: 'The ID of the user' }),

@@ -231,7 +231,7 @@ function PostDetailPage() {
                 </div>
               </div>
             </div>
-            <PostGallery images={query.data.attachments.map((a) => a.attachmentPath)} />
+            <PostGallery images={query.data.attachments.map((a) => a.url)} />
             <p className="font-serif">{query.data.content}</p>
             <div className="flex items-start gap-2 text-base-text-medium text-sm">
               <span>แฮชแท็ก:</span>
