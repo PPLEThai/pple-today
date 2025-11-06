@@ -151,10 +151,10 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <NavLink to="/user">
+                    <Link to="/user">
                       <UserCircle />
                       <span>ผู้ใช้งาน</span>
-                    </NavLink>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>

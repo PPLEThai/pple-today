@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react'
-import { NavLink } from 'react-router'
 
 import { Badge } from '@pple-today/web-ui/badge'
 import {
@@ -13,9 +12,19 @@ import {
 import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
 import { UserEdit } from 'components/user/UserEdit'
-import { Eye, EyeOff, Link, MapPinned, Pencil, Phone, User, UserSquare } from 'lucide-react'
+import {
+  Eye,
+  EyeOff,
+  Link as LinkIcon,
+  MapPinned,
+  Pencil,
+  Phone,
+  User,
+  UserSquare,
+} from 'lucide-react'
 import { getRoleName } from 'utils/roles'
 import { telFormatter } from 'utils/tel'
 
@@ -23,14 +32,13 @@ import { UpdateUserBody, UpdateUserParams } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
 
-import { Route } from '../user.$userId/+types/route'
+export const Route = createFileRoute('/_app/user/$userId')({
+  component: UserDetailPage,
+  head: ({ params }) => ({ meta: [{ title: `รายละเอียดผู้ใช้งาน - ${params.userId}` }] }),
+})
 
-export function meta() {
-  return [{ title: 'รายละเอียดผู้ใช้งาน' }]
-}
-
-export default function UserDetailPage({ params }: Route.LoaderArgs) {
-  const { userId } = params
+function UserDetailPage() {
+  const { userId } = Route.useParams()
 
   const queryClient = useQueryClient()
   const query = reactQueryClient.useQuery('/admin/users/:userId', {
@@ -81,7 +89,7 @@ export default function UserDetailPage({ params }: Route.LoaderArgs) {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <NavLink to="/user">ผู้ใช้งาน</NavLink>
+              <Link to="/user">ผู้ใช้งาน</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -148,7 +156,7 @@ export default function UserDetailPage({ params }: Route.LoaderArgs) {
             <div className="flex items-start gap-2">
               <div className="flex-1 min-w-0 flex items-center gap-2">
                 <div className="flex items-center gap-1 text-base-text-medium text-sm">
-                  <Link size={16} />
+                  <LinkIcon size={16} />
                   <span>ID:</span>
                 </div>
                 <FeedDetailCopyId id={query.data.id} />

@@ -6,14 +6,16 @@ import {
   BreadcrumbSeparator,
 } from '@pple-today/web-ui/breadcrumb'
 import { Typography } from '@pple-today/web-ui/typography'
+import { createFileRoute } from '@tanstack/react-router'
 
-import { Data } from './data'
+import { Data } from './-data'
 
-export function meta() {
-  return [{ title: 'User' }]
-}
+export const Route = createFileRoute('/_app/user/')({
+  component: UserPage,
+  head: () => ({ meta: [{ title: 'User' }] }),
+})
 
-export default function UserPage() {
+function UserPage() {
   return (
     <div className="px-6 pb-6 space-y-2">
       <Breadcrumb className="pt-4 pb-2">
