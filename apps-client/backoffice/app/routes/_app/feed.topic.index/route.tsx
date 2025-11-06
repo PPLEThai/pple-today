@@ -9,7 +9,7 @@ import {
 import { Typography } from '@pple-today/web-ui/typography'
 import { createFileRoute, Link } from '@tanstack/react-router'
 
-import { Data } from './data'
+import { Data } from './-data'
 
 export const Route = createFileRoute('/_app/feed/topic/')({
   component: TopicPage,

@@ -8,7 +8,7 @@ import {
 import { Typography } from '@pple-today/web-ui/typography'
 import { createFileRoute } from '@tanstack/react-router'
 
-import { Data } from './data'
+import { Data } from './-data'
 
 export const Route = createFileRoute('/_app/facebook/')({
   component: FacebookPage,
