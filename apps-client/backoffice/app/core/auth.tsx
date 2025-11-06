@@ -19,7 +19,7 @@ export const InitialAuthState: AuthState = {
 
 const AuthContext = React.createContext<AuthState | null>(null)
 
-const userQueryOptions = queryOptions({
+export const userQueryOptions = queryOptions({
   queryKey: ['oidc', 'user'],
   queryFn: () => userManager.getUser(),
 })

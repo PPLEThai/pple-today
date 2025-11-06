@@ -1,5 +1,9 @@
 import { UserManager, WebStorageStateStore } from 'oidc-client-ts'
 
+import { userQueryOptions } from '~/core/auth'
+import { reactQueryClient } from '~/libs/api-client'
+import { queryClient } from '~/main'
+
 import { clientEnv } from './clientEnv'
 
 export const userManager = new UserManager({
@@ -11,4 +15,12 @@ export const userManager = new UserManager({
   userStore: new WebStorageStateStore({
     store: window.localStorage,
   }),
+})
+
+// subscribe to local storage events to sync user state between tabs
+window.addEventListener('storage', (event) => {
+  if (event.storageArea === window.localStorage && event.key?.startsWith('oidc.user')) {
+    queryClient.resetQueries({ queryKey: userQueryOptions.queryKey })
+    queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/admin/auth/me', {}) })
+  }
 })
