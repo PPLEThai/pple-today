@@ -116,7 +116,7 @@ export const PollCreate = (props: PollCreateProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{props.trigger}</DialogTrigger>
-      <DialogContent asChild className="max-w-3xl">
+      <DialogContent asChild cardClassName="max-w-3xl">
         <DialogTitle asChild>
           <Typography variant="h3">สร้างแบบสอบถาม</Typography>
         </DialogTitle>

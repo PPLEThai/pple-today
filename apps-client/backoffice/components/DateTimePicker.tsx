@@ -51,14 +51,14 @@ export const DateTimePicker = React.forwardRef<HTMLButtonElement, DatetimePicker
             ref={ref}
             variant="outline"
             className={cn(
-              'justify-between font-normal',
+              'justify-start font-normal items-center gap-2',
               !value && 'text-muted-foreground',
               className
             )}
             disabled={disabled}
           >
-            {value ? format(value, 'MM/dd/yyyy hh:mm aa') : <span>{placeholder}</span>}
             <CalendarIcon className="mr-2 h-4 w-4" />
+            {value ? format(value, 'MM/dd/yyyy hh:mm aa') : <span>{placeholder}</span>}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0">

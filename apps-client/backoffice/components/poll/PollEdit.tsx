@@ -138,7 +138,7 @@ export const PollEdit = (props: PollEditProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
       <DialogTrigger asChild>{props.trigger}</DialogTrigger>
-      <DialogContent asChild className="max-w-3xl">
+      <DialogContent asChild cardClassName="max-w-3xl">
         <DialogTitle asChild>
           <Typography variant="h3">แก้ไขแบบสอบถาม</Typography>
         </DialogTitle>
