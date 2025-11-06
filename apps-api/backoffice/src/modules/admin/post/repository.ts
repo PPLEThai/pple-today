@@ -4,7 +4,7 @@ import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { PostStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
-import { GetPostByIdResponse, GetPostsQuery, UpdatePostBody } from './models'
+import { GetPostsQuery, UpdatePostBody } from './models'
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
@@ -16,7 +16,7 @@ export class AdminPostRepository {
   ) {}
 
   private async getDeletedPostById(feedItemId: string) {
-    return fromRepositoryPromise(async () =>
+    return fromRepositoryPromise(
       this.prismaService.post.findUnique({
         where: { feedItemId, status: 'DELETED' },
         select: { feedItemId: true },
@@ -193,7 +193,7 @@ export class AdminPostRepository {
           },
         })),
         ...result,
-      } satisfies GetPostByIdResponse
+      }
     })
   }
 

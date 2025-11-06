@@ -30,6 +30,8 @@ model FeedItem {
   comments       FeedItemComment[]
   reactionCounts FeedItemReactionCount[]
   feedItemScores FeedItemScore[]
+
+  @@index([createdAt])
 }
 
 model FeedItemScore {
@@ -65,6 +67,7 @@ model FeedItemReaction {
   @@id([userId, feedItemId])
   @@index([feedItemId])
   @@index([userId])
+  @@index([createdAt])
 }
 
 model FeedItemReactionCount {
@@ -98,4 +101,5 @@ model FeedItemComment {
 
   @@index([feedItemId])
   @@index([userId])
+  @@index([createdAt])
 }

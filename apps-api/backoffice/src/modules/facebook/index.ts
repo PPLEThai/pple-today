@@ -100,6 +100,11 @@ export const FacebookController = new Elysia({
           return status(200, availableStatus.value)
         },
         {
+          detail: {
+            summary: 'Get Linked Facebook Page Available Status',
+            description:
+              'Checks the availability status of Facebook pages for linking to the user account',
+          },
           requiredLocalUserPrecondition: {
             allowedRoles: ['pple-ad:mp', 'pple-ad:hq'],
           },

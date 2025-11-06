@@ -1,13 +1,19 @@
-import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { FilePath, InternalErrorCode } from '@pple-today/api-common/dtos'
+import { FileService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
-import { ok } from 'neverthrow'
+import { err, ok } from 'neverthrow'
 
 import { GetPostByIdResponse, GetPostsQuery, GetPostsResponse, UpdatePostBody } from './models'
 import { AdminPostRepository, AdminPostRepositoryPlugin } from './repository'
 
+import { FileServicePlugin } from '../../../plugins/file'
+
 export class AdminPostService {
-  constructor(private readonly adminPostRepository: AdminPostRepository) {}
+  constructor(
+    private readonly adminPostRepository: AdminPostRepository,
+    private readonly fileService: FileService
+  ) {}
 
   async getPosts(query: GetPostsQuery = { limit: 10, page: 1 }) {
     const result = await this.adminPostRepository.getPosts(query)
@@ -18,7 +24,6 @@ export class AdminPostService {
 
   async getPostById(postId: string) {
     const result = await this.adminPostRepository.getPostById(postId)
-
     if (result.isErr())
       return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
@@ -26,7 +31,22 @@ export class AdminPostService {
         },
       })
 
-    return ok(result.value satisfies GetPostByIdResponse)
+    const attachments: {
+      url: string
+      filePath: FilePath
+    }[] = []
+
+    for (const { attachmentPath } of result.value.attachments) {
+      const getSignedUrlResult = await this.fileService.getFileSignedUrl(attachmentPath)
+      if (getSignedUrlResult.isErr()) return err(getSignedUrlResult.error)
+
+      attachments.push({
+        url: getSignedUrlResult.value,
+        filePath: attachmentPath as FilePath,
+      })
+    }
+
+    return ok({ ...result.value, attachments } satisfies GetPostByIdResponse)
   }
 
   async updatePostById(postId: string, data: UpdatePostBody) {
@@ -58,7 +78,7 @@ export class AdminPostService {
 export const AdminPostServicePlugin = new Elysia({
   name: 'AdminPostService',
 })
-  .use([AdminPostRepositoryPlugin])
-  .decorate(({ postRepository }) => ({
-    adminPostService: new AdminPostService(postRepository),
+  .use([AdminPostRepositoryPlugin, FileServicePlugin])
+  .decorate(({ postRepository, fileService }) => ({
+    adminPostService: new AdminPostService(postRepository, fileService),
   }))
