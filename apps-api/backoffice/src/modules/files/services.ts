@@ -51,7 +51,12 @@ export class FileServerService {
     }
 
     const url = new URL(this.config.imageServerBaseUrl)
-    url.pathname += `/rs:fit:${config.width}:${config.height}:1/plain/${publicFileUrl}`
+
+    if (config.width && config.width > 0) url.pathname += `/w:${config.width}`
+    if (config.height && config.height > 0) url.pathname += `/h:${config.height}`
+
+    url.pathname += `/q:${config.quality}`
+    url.pathname += `/plain/${publicFileUrl}`
 
     return url.toString()
   }

@@ -19,6 +19,7 @@ import { GetTopicRecommendationResponse } from '@api/backoffice/app'
 import { LinearGradient } from '@app/components/linear-gradient'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
+import { createImageUrl } from '@app/utils/image'
 
 interface TopicCardProps {
   topic: {
@@ -61,7 +62,12 @@ export function TopicCard(props: TopicCardProps) {
     >
       {props.topic.bannerImage ? (
         <Image
-          source={{ uri: props.topic.bannerImage }}
+          source={{
+            uri: createImageUrl(props.topic.bannerImage, {
+              width: 240,
+              height: 334,
+            }),
+          }}
           className="absolute top-0 left-0 right-0 bottom-0"
         />
       ) : (

@@ -61,6 +61,7 @@ import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { useAuthMe, useSession } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { useScrollContext } from '@app/libs/scroll-context'
+import { createImageUrl } from '@app/utils/image'
 
 import { useBottomTabOnPress } from '../_layout'
 
@@ -263,7 +264,10 @@ function Banner({ banner }: { banner: GetBannersResponse[number] }) {
         >
           <Image
             // alt={props.item.description}
-            source={banner.imageUrl}
+            source={createImageUrl(banner.imageUrl, {
+              width: 960,
+              height: 540,
+            })}
             // placeholder={{ blurhash }}
             style={{ width: 320, height: 180 }}
             contentFit="cover"

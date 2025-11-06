@@ -26,6 +26,7 @@ import { useTopicFollowState } from '@app/components/feed/topic-card'
 import { useUserFollowState } from '@app/components/feed/user-card'
 import { Header } from '@app/components/header-navigation'
 import { reactQueryClient } from '@app/libs/api-client'
+import { createImageUrl } from '@app/utils/image'
 
 export default function FollowPage() {
   return (
@@ -353,7 +354,9 @@ const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
     >
       <Image
         source={{
-          uri: topic.bannerImage,
+          uri: createImageUrl(topic.bannerImage, {
+            width: 80,
+          }),
         }}
         contentFit="cover"
         style={{ width: 80, height: '100%', borderRadius: 12 }}

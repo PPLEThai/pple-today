@@ -11,6 +11,7 @@ import * as WebBrowser from 'expo-web-browser'
 import { CalendarIcon, MapPinIcon } from 'lucide-react-native'
 
 import { Activity } from '@app/libs/pple-activity'
+import { createImageUrl } from '@app/utils/image'
 
 export interface ActivityCardProps {
   className?: string
@@ -26,7 +27,15 @@ export function ActivityCard({ activity, className }: ActivityCardProps) {
         className
       )}
     >
-      <Image className="rounded-xl bg-base-bg-default w-[137px]" source={{ uri: activity.image }} />
+      <Image
+        className="rounded-xl bg-base-bg-default w-[137px]"
+        source={{
+          uri: createImageUrl(activity.image, {
+            width: 137,
+            height: 203,
+          }),
+        }}
+      />
       <View className="flex flex-col justify-between gap-2 flex-1">
         <View className="flex flex-col gap-1">
           <View className="flex flex-row gap-1 items-center">

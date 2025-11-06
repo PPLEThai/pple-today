@@ -8,6 +8,7 @@ import { Image } from 'expo-image'
 import { useVideoPlayer, VideoView } from 'expo-video'
 
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
+import { createImageUrl } from '@app/utils/image'
 
 export interface PostCardAttachment {
   id: string
@@ -31,7 +32,12 @@ export function Lightbox(props: LightboxProps) {
         <AlbumLayout attachments={props.attachments} onPress={onPress} />
       </View>
       <ImageView
-        images={props.attachments.map((m) => ({ uri: m.url }))}
+        images={props.attachments.map((m) => ({
+          uri: createImageUrl(m.url, {
+            width: 1080,
+            height: 1920,
+          }),
+        }))}
         imageIndex={imageIndex}
         visible={visible}
         onRequestClose={() => setIsVisible(false)}
@@ -175,7 +181,12 @@ function Attachment(props: AttachmentProps) {
         >
           <Image
             style={{ width: '100%', height: '100%' }}
-            source={{ uri: props.attachment.url }}
+            source={{
+              uri: createImageUrl(props.attachment.url, {
+                width: 1000,
+                height: 1000,
+              }),
+            }}
             alt={props.attachment.description ?? ''}
             contentPosition="top center"
           />
