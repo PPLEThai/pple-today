@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from 'react'
 
-import { queryOptions, useQuery } from '@tanstack/react-query'
+import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { GetAuthMeResponse } from '@api/backoffice/admin'
 
@@ -19,7 +19,7 @@ export const InitialAuthState: AuthState = {
 
 const AuthContext = React.createContext<AuthState | null>(null)
 
-const userQueryOptions = queryOptions({
+export const userQueryOptions = queryOptions({
   queryKey: ['oidc', 'user'],
   queryFn: () => userManager.getUser(),
 })
@@ -42,6 +42,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Auth Me error:', JSON.stringify(authMeQuery.error))
     }
   }, [authMeQuery])
+
+  const queryClient = useQueryClient()
+  useEffect(() => {
+    // subscribe to local storage events to sync user state between tabs
+    // note that this only triggers for other tabs, not the current one
+    const handleStorage = (event: StorageEvent) => {
+      if (event.storageArea === window.localStorage && event.key?.startsWith('oidc.user')) {
+        queryClient.resetQueries({ queryKey: userQueryOptions.queryKey })
+        queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/admin/auth/me', {}) })
+      }
+    }
+    window.addEventListener('storage', handleStorage)
+    return () => {
+      window.removeEventListener('storage', handleStorage)
+    }
+  }, [queryClient])
 
   if (userQuery.isLoading || authMeQuery.isLoading) {
     return (

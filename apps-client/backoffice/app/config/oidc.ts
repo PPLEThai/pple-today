@@ -1,4 +1,4 @@
-import { UserManager } from 'oidc-client-ts'
+import { UserManager, WebStorageStateStore } from 'oidc-client-ts'
 
 import { clientEnv } from './clientEnv'
 
@@ -8,4 +8,7 @@ export const userManager = new UserManager({
   redirect_uri: `${clientEnv.OIDC_REDIRECT_URL}/login`,
   response_type: 'code',
   scope: `openid profile phone ${clientEnv.OIDC_ADDITIONAL_SCOPE}`,
+  userStore: new WebStorageStateStore({
+    store: window.localStorage,
+  }),
 })
