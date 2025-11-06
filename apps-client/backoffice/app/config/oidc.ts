@@ -18,6 +18,7 @@ export const userManager = new UserManager({
 })
 
 // subscribe to local storage events to sync user state between tabs
+// note that this only triggers for other tabs, not the current one
 window.addEventListener('storage', (event) => {
   if (event.storageArea === window.localStorage && event.key?.startsWith('oidc.user')) {
     queryClient.resetQueries({ queryKey: userQueryOptions.queryKey })
