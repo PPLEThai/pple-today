@@ -14,7 +14,8 @@ import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
-import { Eye, EyeOff, Link, MapPinned, Phone, User, UserSquare } from 'lucide-react'
+import { UserEdit } from 'components/user/UserEdit'
+import { Eye, EyeOff, Link, MapPinned, Pencil, Phone, User, UserSquare } from 'lucide-react'
 import { getRoleName } from 'utils/roles'
 import { telFormatter } from 'utils/tel'
 
@@ -120,7 +121,7 @@ export default function UserDetailPage({ params }: Route.LoaderArgs) {
                 <Eye className="size-4" />
               </Button>
             )}
-            {/* <BannerEdit
+            <UserEdit
               trigger={
                 <Button variant="outline" size="icon" className="size-8">
                   <span className="sr-only">แก้ไข</span>
@@ -128,8 +129,8 @@ export default function UserDetailPage({ params }: Route.LoaderArgs) {
                 </Button>
               }
               onSuccess={invalidateQuery}
-              banner={query.data}
-            /> */}
+              user={query.data}
+            />
           </div>
         )}
       </div>

@@ -88,6 +88,8 @@ export const AdminUserController = new Elysia({
         200: UpdateUserResponse,
         ...createErrorSchema(
           InternalErrorCode.USER_NOT_FOUND,
+          InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

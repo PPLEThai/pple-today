@@ -1,6 +1,8 @@
+import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
-import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
+import { ok } from 'neverthrow'
 
 import {
   GetUserByIdParams,
@@ -140,10 +142,52 @@ export class AdminUserRepository {
   }
 
   async updateUserById(userId: UpdateUserParams['userId'], data: UpdateUserBody) {
-    // FIXME: Handle Profile Image Change
-    return await fromRepositoryPromise(
-      this.prismaService.user.update({ where: { id: userId }, data })
+    const existingUser = await fromRepositoryPromise(
+      this.prismaService.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { profileImagePath: true },
+      })
     )
+    if (existingUser.isErr()) return err(existingUser.error)
+
+    const updateFileResult = await fromRepositoryPromise(
+      this.fileService.$transaction(async (fileTx) => {
+        if (!data.profileImage || existingUser.value.profileImagePath === data.profileImage)
+          return existingUser.value.profileImagePath
+
+        if (existingUser.value.profileImagePath) {
+          const deleteResult = await fileTx.deleteFile(
+            existingUser.value.profileImagePath as FilePath
+          )
+          if (deleteResult.isErr()) return deleteResult
+        }
+
+        const moveResult = await fileTx.bulkMoveToPublicFolder([data.profileImage])
+        if (moveResult.isErr()) return moveResult
+        return moveResult.value[0]
+      })
+    )
+    if (updateFileResult.isErr()) return err(updateFileResult.error)
+
+    const [newImageFilePath, fileTx] = updateFileResult.value
+    const updateResult = await fromRepositoryPromise(
+      this.prismaService.user.update({
+        where: { id: userId },
+        data: {
+          name: data.name,
+          status: data.status,
+          profileImagePath: newImageFilePath,
+        },
+      })
+    )
+
+    if (updateResult.isErr()) {
+      const rollbackResult = await fileTx.rollback()
+      if (rollbackResult.isErr()) return err(rollbackResult.error)
+      return err(updateResult.error)
+    }
+
+    return ok(updateResult.value)
   }
 }
 

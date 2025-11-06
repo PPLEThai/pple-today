@@ -1,4 +1,4 @@
-import { DetailedUser, User } from '@pple-today/api-common/dtos'
+import { DetailedUser, FilePath, User } from '@pple-today/api-common/dtos'
 import { UserStatus } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
@@ -33,7 +33,7 @@ export type UpdateUserParams = Static<typeof UpdateUserParams>
 export const UpdateUserBody = t.Partial(
   t.Object({
     name: t.String({ description: 'The name of the author' }),
-    profileImage: t.String({ description: 'The profile image URL of the author' }),
+    profileImage: FilePath,
     status: t.Enum(UserStatus, { description: 'The status of the user' }),
   })
 )
