@@ -1,18 +1,16 @@
 /*
-  Warnings:
+Warnings:
 
-  - A unique constraint covering the columns `[miniAppId]` on the table `Banner` will be added. If there are existing duplicate values, this will fail.
-  - Made the column `bannerImagePath` on table `Topic` required. This step will fail if there are existing NULL values in that column.
+- A unique constraint covering the columns `[miniAppId]` on the table `Banner` will be added. If there are existing duplicate values, this will fail.
+- Made the column `bannerImagePath` on table `Topic` required. This step will fail if there are existing NULL values in that column.
 
 */
 -- AlterTable
 ALTER TABLE "public"."Banner" ADD COLUMN     "miniAppId" TEXT,
 ALTER COLUMN "destination" DROP NOT NULL;
 
--- AlterTable
-ALTER TABLE "public"."Topic" ALTER COLUMN "bannerImagePath" SET NOT NULL;
-
 -- CreateTable
+
 CREATE TABLE "public"."MiniApp" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,

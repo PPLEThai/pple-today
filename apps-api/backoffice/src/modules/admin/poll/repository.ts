@@ -59,6 +59,7 @@ export class AdminPollRepository {
             status: true,
             endAt: true,
             type: true,
+            totalVotes: true,
             feedItem: {
               select: {
                 createdAt: true,
@@ -102,6 +103,7 @@ export class AdminPollRepository {
           status: true,
           endAt: true,
           type: true,
+          totalVotes: true,
           feedItem: {
             select: {
               createdAt: true,

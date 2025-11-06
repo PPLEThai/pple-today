@@ -22,5 +22,14 @@
   "[sql]": {
     "editor.tabSize": 2,
     "editor.defaultFormatter": "cweijan.vscode-postgresql-client2"
+  },
+  "files.readonlyInclude": {
+    "**/routeTree.gen.ts": true
+  },
+  "files.watcherExclude": {
+    "**/routeTree.gen.ts": true
+  },
+  "search.exclude": {
+    "**/routeTree.gen.ts": true
   }
 }

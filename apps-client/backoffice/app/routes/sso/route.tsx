@@ -1,14 +1,25 @@
 import { useEffect, useState } from 'react'
-import { NavLink, useSearchParams } from 'react-router'
 
 import { Button } from '@pple-today/web-ui/button'
-import { User } from 'oidc-client-ts'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { User, UserManager } from 'oidc-client-ts'
 
-import { userManager } from '~/config/oidc'
+import { clientEnv } from '~/config/clientEnv'
 
-export default function LoginWithSSO() {
+export const Route = createFileRoute('/sso')({
+  component: LoginWithSSO,
+})
+
+const userManager = new UserManager({
+  authority: clientEnv.OIDC_AUTHORITY_URL,
+  client_id: clientEnv.OIDC_CLIENT_ID,
+  redirect_uri: `${clientEnv.OIDC_REDIRECT_URL}/sso`,
+  response_type: 'code',
+  scope: `openid profile phone ${clientEnv.OIDC_ADDITIONAL_SCOPE}`,
+})
+
+function LoginWithSSO() {
   const [user, setUser] = useState<User | null>(null)
-  const [queryParams] = useSearchParams()
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -22,7 +33,7 @@ export default function LoginWithSSO() {
     }
 
     fetchUser()
-  }, [queryParams])
+  }, [])
 
   return (
     <div className="flex flex-col items-center [justify-content:safe_center] h-screen gap-4">
@@ -36,7 +47,7 @@ export default function LoginWithSSO() {
       {user && (
         <>
           <Button asChild>
-            <NavLink to="/feed">ไปหน้า Feed</NavLink>
+            <Link to="/feed">ไปหน้า Feed</Link>
           </Button>
           <details>
             <summary className="text-xl">User Info</summary>

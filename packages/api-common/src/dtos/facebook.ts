@@ -1,3 +1,4 @@
+import { FacebookPageLinkedStatus } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const ErrorBody = t.Object({
@@ -335,3 +336,34 @@ export const WebhookFeedChanges = t.Union([
   ]),
 ])
 export type WebhookFeedChanges = Static<typeof WebhookFeedChanges>
+
+export const FacebookPage = t.Object({
+  id: t.String({ description: 'The ID of the facebook page' }),
+  name: t.String({ description: 'The name of the facebook page' }),
+  numberOfFollowers: t.Optional(
+    t.Number({ description: 'The number of followers of the facebook page' })
+  ),
+  linkedStatus: t.Enum(FacebookPageLinkedStatus, {
+    description: 'The status of the facebook page',
+  }),
+})
+export type FacebookPage = Static<typeof FacebookPage>
+
+export const DetailedFacebookPage = t.Composite([
+  FacebookPage,
+  t.Object({
+    createdAt: t.Date({ description: 'The creation date of the facebook page entry' }),
+    user: t.Optional(
+      t.Object({
+        id: t.String({ description: 'The ID of the user who linked the facebook page' }),
+        name: t.String({ description: 'The name of the user who linked the facebook page' }),
+        profileImagePath: t.Nullable(
+          t.String({
+            description: 'The profile image URL of the user who linked the facebook page',
+          })
+        ),
+      })
+    ),
+  }),
+])
+export type DetailedFacebookPage = Static<typeof DetailedFacebookPage>

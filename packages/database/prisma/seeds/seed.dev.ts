@@ -1,4 +1,5 @@
 import { PrismaPg } from '@prisma/adapter-pg'
+import { LexoRank } from 'lexorank'
 
 import {
   AnnouncementStatus,
@@ -96,40 +97,24 @@ const seedAddresses = async (
 }
 
 const seedMiniApps = async () => {
-  await prisma.miniApp.upsert({
-    where: { id: 'mini-app-1' },
-    update: {
-      name: 'Sample Mini App',
-      clientId: 'sample-mini-app-client-id',
-      icon: 'data:image/svg+xml;base64,CiAgPHN2ZyB3aWR0aD0iODkiIGhlaWdodD0iNzciIHZpZXdCb3g9IjAgMCA4OSA3NyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBjb2xvcj0iI0ZGNjQxMyI+CjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMF84NTJfMTIpIj4KPHBhdGggZD0iTTIuMTMzNCAwLjVIMTYuMjkyN0w0MS42NzY3IDQ0LjQ3MDlMMzMuMjE1NCA1OS4xMjY3TDAuNzUgMi44OTM1NUwyLjEzMzQgMC41WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik00My4xMjE5IDc2LjI4NTRMMzYuMDQwNSA2NC4wMjMxTDYxLjQyNDUgMjAuMDU1N0g3OC4zNTA2TDQ1Ljg4MTggNzYuMjg1NEg0My4xMjE5WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik04OC4yNTI1IDIuODk5NjNMODEuMTcxMSAxNS4xNjE5SDMwLjM5OTdMMjEuOTM4NCAwLjUwNjA3M0g4Ni44NzI1TDg4LjI1MjUgMi44OTk2M1oiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgo8L2c+CjxkZWZzPgo8Y2xpcFBhdGggaWQ9ImNsaXAwXzg1Ml8xMiI+CjxyZWN0IHdpZHRoPSI4Ny41IiBoZWlnaHQ9Ijc1Ljc4NTYiIGZpbGw9IndoaXRlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjc1IDAuNSkiLz4KPC9jbGlwUGF0aD4KPC9kZWZzPgo8L3N2Zz4K',
-      clientUrl: 'https://example.com/mini-app',
-    },
-    create: {
-      id: 'mini-app-1',
-      slug: 'mini-app-1',
-      name: 'Sample Mini App',
-      icon: 'data:image/svg+xml;base64,CiAgPHN2ZyB3aWR0aD0iODkiIGhlaWdodD0iNzciIHZpZXdCb3g9IjAgMCA4OSA3NyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBjb2xvcj0iI0ZGNjQxMyI+CjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMF84NTJfMTIpIj4KPHBhdGggZD0iTTIuMTMzNCAwLjVIMTYuMjkyN0w0MS42NzY3IDQ0LjQ3MDlMMzMuMjE1NCA1OS4xMjY3TDAuNzUgMi44OTM1NUwyLjEzMzQgMC41WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik00My4xMjE5IDc2LjI4NTRMMzYuMDQwNSA2NC4wMjMxTDYxLjQyNDUgMjAuMDU1N0g3OC4zNTA2TDQ1Ljg4MTggNzYuMjg1NEg0My4xMjE5WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik04OC4yNTI1IDIuODk5NjNMODEuMTcxMSAxNS4xNjE5SDMwLjM5OTdMMjEuOTM4NCAwLjUwNjA3M0g4Ni44NzI1TDg4LjI1MjUgMi44OTk2M1oiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgo8L2c+CjxkZWZzPgo8Y2xpcFBhdGggaWQ9ImNsaXAwXzg1Ml8xMiI+CjxyZWN0IHdpZHRoPSI4Ny41IiBoZWlnaHQ9Ijc1Ljc4NTYiIGZpbGw9IndoaXRlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjc1IDAuNSkiLz4KPC9jbGlwUGF0aD4KPC9kZWZzPgo8L3N2Zz4K',
-      clientId: 'sample-mini-app-client-id',
-      clientUrl: 'https://example.com/mini-app',
-    },
-  })
-  await prisma.miniApp.upsert({
-    where: { id: 'mini-app-2' },
-    update: {
-      name: 'Another Mini App',
-      clientId: 'another-mini-app-client-id',
-      icon: 'data:image/svg+xml;base64,CiAgPHN2ZyB3aWR0aD0iODkiIGhlaWdodD0iNzciIHZpZXdCb3g9IjAgMCA4OSA3NyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBjb2xvcj0iI0ZGNjQxMyI+CjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMF84NTJfMTIpIj4KPHBhdGggZD0iTTIuMTMzNCAwLjVIMTYuMjkyN0w0MS42NzY3IDQ0LjQ3MDlMMzMuMjE1NCA1OS4xMjY3TDAuNzUgMi44OTM1NUwyLjEzMzQgMC41WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik00My4xMjE5IDc2LjI4NTRMMzYuMDQwNSA2NC4wMjMxTDYxLjQyNDUgMjAuMDU1N0g3OC4zNTA2TDQ1Ljg4MTggNzYuMjg1NEg0My4xMjE5WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik04OC4yNTI1IDIuODk5NjNMODEuMTcxMSAxNS4xNjE5SDMwLjM5OTdMMjEuOTM4NCAwLjUwNjA3M0g4Ni44NzI1TDg4LjI1MjUgMi44OTk2M1oiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgo8L2c+CjxkZWZzPgo8Y2xpcFBhdGggaWQ9ImNsaXAwXzg1Ml8xMiI+CjxyZWN0IHdpZHRoPSI4Ny41IiBoZWlnaHQ9Ijc1Ljc4NTYiIGZpbGw9IndoaXRlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjc1IDAuNSkiLz4KPC9jbGlwUGF0aD4KPC9kZWZzPgo8L3N2Zz4K',
-      clientUrl: 'https://example.com/another-mini-app',
-    },
-    create: {
-      id: 'mini-app-2',
-      slug: 'mini-app-2',
-      name: 'Another Mini App',
-      clientId: 'another-mini-app-client-id',
-      icon: 'data:image/svg+xml;base64,CiAgPHN2ZyB3aWR0aD0iODkiIGhlaWdodD0iNzciIHZpZXdCb3g9IjAgMCA4OSA3NyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBjb2xvcj0iI0ZGNjQxMyI+CjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMF84NTJfMTIpIj4KPHBhdGggZD0iTTIuMTMzNCAwLjVIMTYuMjkyN0w0MS42NzY3IDQ0LjQ3MDlMMzMuMjE1NCA1OS4xMjY3TDAuNzUgMi44OTM1NUwyLjEzMzQgMC41WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik00My4xMjE5IDc2LjI4NTRMMzYuMDQwNSA2NC4wMjMxTDYxLjQyNDUgMjAuMDU1N0g3OC4zNTA2TDQ1Ljg4MTggNzYuMjg1NEg0My4xMjE5WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik04OC4yNTI1IDIuODk5NjNMODEuMTcxMSAxNS4xNjE5SDMwLjM5OTdMMjEuOTM4NCAwLjUwNjA3M0g4Ni44NzI1TDg4LjI1MjUgMi44OTk2M1oiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgo8L2c+CjxkZWZzPgo8Y2xpcFBhdGggaWQ9ImNsaXAwXzg1Ml8xMiI+CjxyZWN0IHdpZHRoPSI4Ny41IiBoZWlnaHQ9Ijc1Ljc4NTYiIGZpbGw9IndoaXRlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjc1IDAuNSkiLz4KPC9jbGlwUGF0aD4KPC9kZWZzPgo8L3N2Zz4K',
-      clientUrl: 'https://example.com/another-mini-app',
-    },
-  })
+  for (let i = 1; i <= 10; i++)
+    await prisma.miniApp.upsert({
+      where: { id: `mini-app-${i}` },
+      update: {
+        name: `Sample Mini App ${i}`,
+        clientId: 'sample-mini-app-client-id',
+        icon: 'data:image/svg+xml;base64,CiAgPHN2ZyB3aWR0aD0iODkiIGhlaWdodD0iNzciIHZpZXdCb3g9IjAgMCA4OSA3NyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBjb2xvcj0iI0ZGNjQxMyI+CjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMF84NTJfMTIpIj4KPHBhdGggZD0iTTIuMTMzNCAwLjVIMTYuMjkyN0w0MS42NzY3IDQ0LjQ3MDlMMzMuMjE1NCA1OS4xMjY3TDAuNzUgMi44OTM1NUwyLjEzMzQgMC41WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik00My4xMjE5IDc2LjI4NTRMMzYuMDQwNSA2NC4wMjMxTDYxLjQyNDUgMjAuMDU1N0g3OC4zNTA2TDQ1Ljg4MTggNzYuMjg1NEg0My4xMjE5WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik04OC4yNTI1IDIuODk5NjNMODEuMTcxMSAxNS4xNjE5SDMwLjM5OTdMMjEuOTM4NCAwLjUwNjA3M0g4Ni44NzI1TDg4LjI1MjUgMi44OTk2M1oiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgo8L2c+CjxkZWZzPgo8Y2xpcFBhdGggaWQ9ImNsaXAwXzg1Ml8xMiI+CjxyZWN0IHdpZHRoPSI4Ny41IiBoZWlnaHQ9Ijc1Ljc4NTYiIGZpbGw9IndoaXRlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjc1IDAuNSkiLz4KPC9jbGlwUGF0aD4KPC9kZWZzPgo8L3N2Zz4K',
+        clientUrl: 'https://example.com/mini-app',
+      },
+      create: {
+        id: `mini-app-${i}`,
+        slug: `mini-app-${i}`,
+        name: `Sample Mini App ${i}`,
+        icon: 'data:image/svg+xml;base64,CiAgPHN2ZyB3aWR0aD0iODkiIGhlaWdodD0iNzciIHZpZXdCb3g9IjAgMCA4OSA3NyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBjb2xvcj0iI0ZGNjQxMyI+CjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMF84NTJfMTIpIj4KPHBhdGggZD0iTTIuMTMzNCAwLjVIMTYuMjkyN0w0MS42NzY3IDQ0LjQ3MDlMMzMuMjE1NCA1OS4xMjY3TDAuNzUgMi44OTM1NUwyLjEzMzQgMC41WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik00My4xMjE5IDc2LjI4NTRMMzYuMDQwNSA2NC4wMjMxTDYxLjQyNDUgMjAuMDU1N0g3OC4zNTA2TDQ1Ljg4MTggNzYuMjg1NEg0My4xMjE5WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik04OC4yNTI1IDIuODk5NjNMODEuMTcxMSAxNS4xNjE5SDMwLjM5OTdMMjEuOTM4NCAwLjUwNjA3M0g4Ni44NzI1TDg4LjI1MjUgMi44OTk2M1oiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgo8L2c+CjxkZWZzPgo8Y2xpcFBhdGggaWQ9ImNsaXAwXzg1Ml8xMiI+CjxyZWN0IHdpZHRoPSI4Ny41IiBoZWlnaHQ9Ijc1Ljc4NTYiIGZpbGw9IndoaXRlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjc1IDAuNSkiLz4KPC9jbGlwUGF0aD4KPC9kZWZzPgo8L3N2Zz4K',
+        clientId: 'sample-mini-app-client-id',
+        clientUrl: 'https://example.com/mini-app',
+      },
+    })
   console.log('Seeded mini apps successfully.')
 }
 
@@ -142,7 +127,8 @@ const seedBanners = async () => {
     destination: `/feed/id`,
     navigation: 'IN_APP_NAVIGATION',
   } as const
-  for (let i = 1, miniAppIdx = 1; i <= 5; ++i) {
+  let lexorank = LexoRank.min()
+  for (let i = 1, miniAppIdx = 1; i <= 15; ++i) {
     let navigationDetails
     switch (i % 3) {
       case 0:
@@ -159,24 +145,32 @@ const seedBanners = async () => {
         break
     }
 
+    const status =
+      i > 10
+        ? BannerStatusType.PUBLISHED
+        : i > 5
+          ? BannerStatusType.ARCHIVED
+          : BannerStatusType.DRAFT
+
+    lexorank = lexorank.genNext()
+
     await prisma.banner.upsert({
       where: {
         id: `banner-${i}`,
       },
       create: {
         id: `banner-${i}`,
-        imageFilePath: `public/test/banner-${i}.png`,
-        status: BannerStatusType.PUBLISHED,
-        order: i,
-        startAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
-        endAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
+        imageFilePath: `public/test/banner-${(i % 2) + 1}.png`,
+        headline: `Banner ${i}`,
+        status: status,
+        order: lexorank.toString(),
         ...navigationDetails,
       },
       update: {
         id: `banner-${i}`,
-        imageFilePath: `public/test/banner-${i}.png`,
-        status: BannerStatusType.PUBLISHED,
-        order: i,
+        imageFilePath: `public/test/banner-${(i % 2) + 1}.png`,
+        status: status,
+        order: lexorank.toString(),
         ...navigationDetails,
       },
     })
@@ -222,7 +216,6 @@ const seedTopics = async (provinces: any[]) => {
           name: province,
           description: `ข่าวเกี่ยวกับจังหวัด${province}`,
           status: TopicStatus.PUBLISHED,
-          bannerImagePath: `public/test/banner-1.png`,
         },
       })
     }
@@ -284,12 +277,33 @@ const seedHashtags = async () => {
 }
 
 const seedPolls = async () => {
-  for (let i = 0; i < 20; ++i) {
-    await prisma.feedItem.upsert({
-      where: { id: `poll-${i + 1}` },
+  // add 6 mock poll voters
+  for (let i = 0; i < 6; ++i) {
+    await prisma.user.upsert({
+      where: { id: `poll-voter-${i + 1}` },
       update: {},
       create: {
-        id: `poll-${i + 1}`,
+        id: `poll-voter-${i + 1}`,
+        name: `PollVoter-${i + 1}`,
+        phoneNumber: `+00000003${i + 1}`,
+        roles: {
+          connectOrCreate: {
+            where: { userId_role: { userId: `poll-voter-${i + 1}`, role: 'citizen' } },
+            create: { role: 'citizen' },
+          },
+        },
+      },
+    })
+  }
+
+  // add 6 PUBLISHED poll
+  const OPTION_AMOUNT = 4
+  for (let i = 0; i < 6; ++i) {
+    await prisma.feedItem.upsert({
+      where: { id: `mp-${i + 1}` },
+      update: {},
+      create: {
+        id: `mp-${i + 1}`,
         author: {
           connect: { id: OFFICIAL_USER_ID },
         },
@@ -297,19 +311,32 @@ const seedPolls = async () => {
         type: FeedItemType.POLL,
         poll: {
           create: {
-            title: `Poll ${i + 1}`,
-            description: `This is the ${i + 1}nth poll.`,
+            title: `Mock-Poll ${i + 1}`,
+            description: `Mock poll ${i + 1}nth poll.`,
             options: {
               create: [
-                { title: 'Option 1' },
-                { title: 'Option 2' },
-                { title: 'Option 3' },
-                { title: 'Option 4' },
+                { id: `popt-${i * OPTION_AMOUNT + 1}`, title: 'ปัญหาเศรษฐกิจสั้น ๆ', votes: 3 },
+                {
+                  id: `popt-${i * OPTION_AMOUNT + 2}`,
+                  title: 'ปัญหาเศรษฐกิจที่เริ่มยาวขึ้นมา',
+                  votes: 2,
+                },
+                {
+                  id: `popt-${i * OPTION_AMOUNT + 3}`,
+                  title: 'ปัญหาเศรษฐกิจยาวมาก ๆ ยังไม่ยาวขนาดนั้น',
+                  votes: 1,
+                },
+                {
+                  id: `popt-${i * OPTION_AMOUNT + 4}`,
+                  title: 'ปัญหาเศรษฐกิจนี้ยาวมาก ทำให้ยังงงว่ามันยาวได้อีกแค่ไหนแต่จบตรงนี้แล้ว',
+                  votes: 0,
+                },
               ],
             },
-            type: PollType.SINGLE_CHOICE,
+            type: i % 2 === 0 ? PollType.SINGLE_CHOICE : PollType.MULTIPLE_CHOICE,
             status: PollStatus.PUBLISHED,
-            endAt: new Date(Date.now() + (i - 10) * 24 * 60 * 60 * 1000 + 1 * 60 * 60 * 1000),
+            endAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+            totalVotes: 6, // from the below condition
             topics: {
               create: [
                 { topic: { connect: { id: 'topic-1' } } },
@@ -322,8 +349,61 @@ const seedPolls = async () => {
     })
   }
 
+  // add 3 ARCHIVED poll
+  for (let i = 0; i < 3; ++i) {
+    await prisma.feedItem.upsert({
+      where: { id: `archievedp-${i + 1}` },
+      update: {},
+      create: {
+        id: `archivedp-${i + 1}`,
+        author: {
+          connect: { id: OFFICIAL_USER_ID },
+        },
+        publishedAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+        type: FeedItemType.POLL,
+        poll: {
+          create: {
+            title: `Mock-ARCHIEVED-DONOT-SHOW-Poll ${i + 1}`,
+            description: `Archieved ${i + 1}nth poll.`,
+            options: {
+              create: [
+                { id: `notshow-${i * OPTION_AMOUNT + 1}`, title: 'DONOTSHOW!!', votes: 3 },
+                {
+                  id: `notshow-${i * OPTION_AMOUNT + 2}`,
+                  title: 'DONOTSHOW!!',
+                  votes: 2,
+                },
+                {
+                  id: `notshow-${i * OPTION_AMOUNT + 3}`,
+                  title: 'DONOTSHOW!!',
+                  votes: 1,
+                },
+                {
+                  id: `notshow-${i * OPTION_AMOUNT + 4}`,
+                  title: 'DONOTSHOW!!',
+                  votes: 0,
+                },
+              ],
+            },
+            type: i % 2 === 0 ? PollType.SINGLE_CHOICE : PollType.MULTIPLE_CHOICE,
+            status: PollStatus.ARCHIVED,
+            endAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
+            totalVotes: 6, // from the poll answer below count
+            topics: {
+              create: [
+                { topic: { connect: { id: 'topic-1' } } },
+                { topic: { connect: { id: 'topic-2' } } },
+              ],
+            },
+          },
+        },
+      },
+    })
+  }
+
+  // add 1 DRAFTED poll
   await prisma.feedItem.upsert({
-    where: { id: 'draft-poll-1' },
+    where: { id: 'mdraftp-1' },
     update: {},
     create: {
       type: FeedItemType.POLL,
@@ -332,31 +412,134 @@ const seedPolls = async () => {
       },
       poll: {
         create: {
-          endAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          endAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
           title: 'Draft Poll 1',
           description: 'This is a draft poll.',
           status: PollStatus.DRAFT,
           options: {
             create: [
-              { id: 'draft-option-1', title: 'Option 1' },
-              { id: 'draft-option-2', title: 'Option 2' },
-              { id: 'draft-option-3', title: 'Option 3' },
-              { id: 'draft-option-4', title: 'Option 4' },
+              { id: 'dopt-1', title: 'Option 1' },
+              { id: 'dopt-2', title: 'Option 2' },
+              { id: 'dopt-3', title: 'Option 3' },
+              { id: 'dopt-4', title: 'Option 4' },
             ],
           },
           type: PollType.SINGLE_CHOICE,
           topics: {
-            create: [
-              { topic: { connect: { id: 'topic-1' } } },
-              { topic: { connect: { id: 'topic-2' } } },
-            ],
+            create: [{ topic: { connect: { id: 'topic-1' } } }],
           },
+          totalVotes: 0,
         },
       },
     },
   })
+
+  // add poll answer for the PUBLISHED 6 polls
+  for (let i = 0; i < 6; ++i) {
+    // First 3 users vote for option 1
+    for (let j = 1; j <= 3; ++j) {
+      await prisma.pollAnswer.create({
+        data: {
+          id: `poll-answer-${i + 1}-${j}`,
+          user: { connect: { id: `poll-voter-${j}` } },
+          option: { connect: { id: `popt-${i * OPTION_AMOUNT + 1}` } },
+          poll: {
+            connect: {
+              feedItemId: `mp-${i + 1}`,
+            },
+          },
+        },
+      })
+    }
+
+    // Next 2 users vote for option 2
+    for (let j = 4; j <= 5; ++j) {
+      await prisma.pollAnswer.create({
+        data: {
+          id: `poll-answer-${i + 1}-${j}`,
+          user: { connect: { id: `poll-voter-${j}` } },
+          option: { connect: { id: `popt-${i * OPTION_AMOUNT + 2}` } },
+          poll: {
+            connect: {
+              feedItemId: `mp-${i + 1}`,
+            },
+          },
+        },
+      })
+    }
+
+    // Last user votes for option 3
+    await prisma.pollAnswer.create({
+      data: {
+        id: `poll-answer-${i + 1}-6`,
+        user: { connect: { id: `poll-voter-6` } },
+        option: { connect: { id: `popt-${i * OPTION_AMOUNT + 3}` } }, // 3, 7, 11
+        poll: {
+          connect: {
+            feedItemId: `mp-${i + 1}`,
+          },
+        },
+      },
+    })
+
+    // No votes for option 4 (0 votes)
+  }
+
+  // add poll answer to ARCHIVED POLL
+  for (let i = 0; i < 3; ++i) {
+    // First 3 users vote for option 1
+    for (let j = 1; j <= 3; ++j) {
+      await prisma.pollAnswer.create({
+        data: {
+          id: `not-answer-${i + 1}-${j}`,
+          user: { connect: { id: `poll-voter-${j}` } },
+          option: { connect: { id: `notshow-${i * OPTION_AMOUNT + 1}` } },
+          poll: {
+            connect: {
+              feedItemId: `archivedp-${i + 1}`,
+            },
+          },
+        },
+      })
+    }
+
+    // Next 2 users vote for option 2
+    for (let j = 4; j <= 5; ++j) {
+      await prisma.pollAnswer.create({
+        data: {
+          id: `not-answer-${i + 1}-${j}`,
+          user: { connect: { id: `poll-voter-${j}` } },
+          option: { connect: { id: `notshow-${i * OPTION_AMOUNT + 2}` } },
+          poll: {
+            connect: {
+              feedItemId: `archivedp-${i + 1}`,
+            },
+          },
+        },
+      })
+    }
+
+    // Last user votes for option 3
+    await prisma.pollAnswer.create({
+      data: {
+        id: `not-answer-${i + 1}-6`,
+        user: { connect: { id: `poll-voter-6` } },
+        option: { connect: { id: `notshow-${i * OPTION_AMOUNT + 3}` } },
+        poll: {
+          connect: {
+            feedItemId: `archivedp-${i + 1}`,
+          },
+        },
+      },
+    })
+
+    // No votes for option 4 (0 votes)
+  }
+
   console.log('Seeded draft polls successfully.')
-  console.log('Seeded polls successfully.')
+  console.log('Seeded PUBLISHED polls successfully.')
+  console.log('Seeded ARCHIEVED polls successfully.')
+  console.log('Seeded poll answers successfully.')
 }
 
 const seedAnnouncements = async () => {

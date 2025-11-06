@@ -101,6 +101,7 @@ import {
 import { Switch } from '@pple-today/web-ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@pple-today/web-ui/tooltip'
 import { Typography } from '@pple-today/web-ui/typography'
+import { createFileRoute } from '@tanstack/react-router'
 import { ColumnDef } from '@tanstack/react-table'
 import {
   BadgeCheckIcon,
@@ -977,4 +978,6 @@ const PlaygroundPage = () => {
   )
 }
 
-export default PlaygroundPage
+export const Route = createFileRoute('/playground')({
+  component: PlaygroundPage,
+})

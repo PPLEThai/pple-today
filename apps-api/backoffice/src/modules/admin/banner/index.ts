@@ -9,9 +9,11 @@ import {
   DeleteBannerResponse,
   GetBannerByIdParams,
   GetBannerByIdResponse,
+  GetBannersQuery,
   GetBannersResponse,
-  ReorderBannerBody,
-  ReorderBannerResponse,
+  ReorderBannerByIdBody,
+  ReorderBannerByIdParams,
+  ReorderBannerByIdResponse,
   UpdateBannerBody,
   UpdateBannerParams,
   UpdateBannerResponse,
@@ -27,8 +29,8 @@ export const AdminBannerController = new Elysia({
   .use([AdminBannerServicePlugin, AdminAuthGuardPlugin])
   .get(
     '/',
-    async ({ adminBannerService, status }) => {
-      const result = await adminBannerService.getBanners()
+    async ({ adminBannerService, status, query }) => {
+      const result = await adminBannerService.getBanners(query)
 
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
@@ -38,6 +40,7 @@ export const AdminBannerController = new Elysia({
     },
     {
       requiredLocalUser: true,
+      query: GetBannersQuery,
       response: {
         200: GetBannersResponse,
         ...createErrorSchema(
@@ -80,7 +83,7 @@ export const AdminBannerController = new Elysia({
   .post(
     '/',
     async ({ body, adminBannerService, status }) => {
-      if (body.navigation === 'MINI_APP' && !body.miniAppId) {
+      if (body.navigation === 'MINI_APP' && !body.miniAppId)
         return mapErrorCodeToResponse(
           {
             code: InternalErrorCode.BANNER_INVALID_INPUT,
@@ -88,9 +91,7 @@ export const AdminBannerController = new Elysia({
           },
           status
         )
-      }
-
-      if (!body.destination) {
+      if (body.navigation !== 'MINI_APP' && !body.destination)
         return mapErrorCodeToResponse(
           {
             code: InternalErrorCode.BANNER_INVALID_INPUT,
@@ -98,7 +99,6 @@ export const AdminBannerController = new Elysia({
           },
           status
         )
-      }
 
       const result = await adminBannerService.createBanner(body)
       if (result.isErr()) {
@@ -128,27 +128,22 @@ export const AdminBannerController = new Elysia({
   .patch(
     '/:id',
     async ({ params, body, adminBannerService, status }) => {
-      if (body.navigation) {
-        if (body.navigation === 'MINI_APP' && body.miniAppId === undefined) {
-          return mapErrorCodeToResponse(
-            {
-              code: InternalErrorCode.BANNER_INVALID_INPUT,
-              message: 'miniAppId is required when navigation is MINI_APP',
-            },
-            status
-          )
-        }
-
-        if (body.destination === undefined) {
-          return mapErrorCodeToResponse(
-            {
-              code: InternalErrorCode.BANNER_INVALID_INPUT,
-              message: 'destination is required',
-            },
-            status
-          )
-        }
-      }
+      if (body.navigation === 'MINI_APP' && !body.miniAppId)
+        return mapErrorCodeToResponse(
+          {
+            code: InternalErrorCode.BANNER_INVALID_INPUT,
+            message: 'miniAppId is required when navigation is MINI_APP',
+          },
+          status
+        )
+      if (body.navigation && body.navigation !== 'MINI_APP' && !body.destination)
+        return mapErrorCodeToResponse(
+          {
+            code: InternalErrorCode.BANNER_INVALID_INPUT,
+            message: 'destination is required',
+          },
+          status
+        )
 
       const result = await adminBannerService.updateBannerById(params.id, body)
       if (result.isErr()) {
@@ -164,6 +159,7 @@ export const AdminBannerController = new Elysia({
         200: UpdateBannerResponse,
         ...createErrorSchema(
           InternalErrorCode.BANNER_NOT_FOUND,
+          InternalErrorCode.BANNER_PUBLISHING_LIMIT_REACHED,
           InternalErrorCode.BANNER_INVALID_INPUT,
           InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.FILE_MOVE_ERROR,
@@ -206,9 +202,9 @@ export const AdminBannerController = new Elysia({
     }
   )
   .post(
-    '/reorder',
-    async ({ body, adminBannerService, status }) => {
-      const result = await adminBannerService.reorderBanner(body.ids)
+    '/:id/reorder',
+    async ({ params, body, adminBannerService, status }) => {
+      const result = await adminBannerService.reorderBanner(params.id, body)
 
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
@@ -216,14 +212,19 @@ export const AdminBannerController = new Elysia({
     },
     {
       requiredLocalUser: true,
-      body: ReorderBannerBody,
+      params: ReorderBannerByIdParams,
+      body: ReorderBannerByIdBody,
       response: {
-        200: ReorderBannerResponse,
-        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+        200: ReorderBannerByIdResponse,
+        ...createErrorSchema(
+          InternalErrorCode.BANNER_NOT_FOUND,
+          InternalErrorCode.BANNER_MOVING_POSITION_INVALID,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
       },
       detail: {
-        summary: 'Bulk reorder banners',
-        description: 'Reorder banners by array of ids',
+        summary: 'Reorder banner',
+        description: 'Reorder banner by id with movement',
       },
     }
   )
