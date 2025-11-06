@@ -2,7 +2,14 @@ import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
-import { GetUsersQuery, GetUsersResponse, UpdateUserBody, UpdateUserParams } from './models'
+import {
+  GetUserByIdParams,
+  GetUserByIdResponse,
+  GetUsersQuery,
+  GetUsersResponse,
+  UpdateUserBody,
+  UpdateUserParams,
+} from './models'
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
@@ -100,6 +107,35 @@ export class AdminUserRepository {
         })),
         meta: { count },
       } satisfies GetUsersResponse
+    })
+  }
+
+  async getUserById(userId: GetUserByIdParams['userId']) {
+    return fromRepositoryPromise(async () => {
+      const { roles, profileImagePath, ...data } = await this.prismaService.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          phoneNumber: true,
+          roles: {
+            select: {
+              role: true,
+            },
+          },
+          status: true,
+          profileImagePath: true,
+          responsibleArea: true,
+        },
+      })
+
+      return {
+        ...data,
+        roles: roles.map(({ role }) => role),
+        profileImage: profileImagePath
+          ? this.fileService.getPublicFileUrl(profileImagePath)
+          : undefined,
+      } satisfies GetUserByIdResponse
     })
   }
 

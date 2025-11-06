@@ -4,7 +4,14 @@ import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { GetUsersQuery, GetUsersResponse, UpdateUserBody, UpdateUserParams } from './models'
+import {
+  GetUserByIdParams,
+  GetUserByIdResponse,
+  GetUsersQuery,
+  GetUsersResponse,
+  UpdateUserBody,
+  UpdateUserParams,
+} from './models'
 import { AdminUserRepository, AdminUserRepositoryPlugin } from './repository'
 
 import { FileServicePlugin } from '../../../plugins/file'
@@ -20,6 +27,18 @@ export class AdminUserService {
     if (result.isErr()) return mapRepositoryError(result.error)
 
     return ok(result.value satisfies GetUsersResponse)
+  }
+
+  async getUserById(userId: GetUserByIdParams['userId']) {
+    const result = await this.adminUserRepository.getUserById(userId)
+    if (result.isErr())
+      return mapRepositoryError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.USER_NOT_FOUND,
+        },
+      })
+
+    return ok(result.value satisfies GetUserByIdResponse)
   }
 
   async updateUserById(userId: UpdateUserParams['userId'], data: UpdateUserBody) {

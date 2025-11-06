@@ -3,6 +3,8 @@ import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-commo
 import Elysia, { t } from 'elysia'
 
 import {
+  GetUserByIdParams,
+  GetUserByIdResponse,
   GetUsersQuery,
   GetUsersResponse,
   UpdateUserBody,
@@ -43,6 +45,30 @@ export const AdminUserController = new Elysia({
       detail: {
         summary: 'Get list of users',
         description: 'Fetch a list of users',
+      },
+    }
+  )
+  .get(
+    '/:userId',
+    async ({ params, status, adminUserService }) => {
+      const result = await adminUserService.getUserById(params.userId)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      params: GetUserByIdParams,
+      response: {
+        200: GetUserByIdResponse,
+        ...createErrorSchema(
+          InternalErrorCode.USER_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get user by ID',
+        description: 'Fetch a specific user by its ID',
       },
     }
   )

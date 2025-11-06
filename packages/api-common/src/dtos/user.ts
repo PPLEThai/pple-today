@@ -28,6 +28,6 @@ export const DetailedUser = t.Composite([
   User,
   t.Object({
     profileImage: t.Optional(t.String({ description: 'The profile image URL of the user' })),
-    responsibleArea: t.Optional(t.String({ description: 'The responsible area of the user' })),
+    responsibleArea: t.Nullable(t.String({ description: 'The responsible area of the user' })),
   }),
 ])
