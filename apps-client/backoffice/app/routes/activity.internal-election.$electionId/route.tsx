@@ -1,4 +1,4 @@
-import { useCallback, useReducer } from 'react'
+import { useCallback, useReducer, useState } from 'react'
 import { NavLink } from 'react-router'
 import { useNavigate } from 'react-router'
 
@@ -51,6 +51,7 @@ import {
 } from '~/routes/activity.internal-election.$electionId/context'
 
 import { Route } from '.react-router/types/app/+types/root'
+import { set } from 'react-hook-form'
 
 export function meta() {
   return [{ title: 'Internal-election' }]
@@ -216,6 +217,9 @@ function Header({ election }: { election: AdminGetElectionResponse }) {
 }
 
 function ElectionDetail({ election }: { election: AdminGetElectionResponse }) {
+  const [isLoadVoters, setIsLoadVoters] = useState(false)
+  const [isLoadRegisteredVoters, setIsLoadRegisteredVoters] = useState(false)
+
   const queryClient = useQueryClient()
   const reloadKeyMutation = reactQueryClient.useMutation(
     'put',
@@ -239,6 +243,12 @@ function ElectionDetail({ election }: { election: AdminGetElectionResponse }) {
 
   const downloadEligibleVoters = useCallback(
     async ({ isRegistered, filename }: { isRegistered?: boolean; filename?: string }) => {
+      if (isRegistered) {
+        setIsLoadRegisteredVoters(isRegistered)
+      } else {
+        setIsLoadVoters(true)
+      }
+
       const { data, error } = await fetchClient('/admin/elections/:electionId/eligible-voters', {
         params: { electionId: election.id },
         query: { isRegistered },
@@ -250,6 +260,9 @@ function ElectionDetail({ election }: { election: AdminGetElectionResponse }) {
       }
 
       downloadCSV(data.headers, data.voters, filename)
+
+      setIsLoadRegisteredVoters(false)
+      setIsLoadVoters(false)
     },
     [election]
   )
@@ -315,6 +328,7 @@ function ElectionDetail({ election }: { election: AdminGetElectionResponse }) {
             <Button
               variant="secondary"
               onClick={() => downloadEligibleVoters({ filename: 'รายชื่อผู้มีสิทธิ์เลือกตั้ง' })}
+              disabled={isLoadVoters}
             >
               <Download className="mr-2" />
               รายชื่อผู้มีสิทธิ์เลือกตั้ง
@@ -328,6 +342,7 @@ function ElectionDetail({ election }: { election: AdminGetElectionResponse }) {
                       filename: 'รายชื่อผู้มีสิทธิ์ที่ยังไม่ได้ลงทะเบียน',
                     })
                   }
+                  disabled={isLoadRegisteredVoters}
                 >
                   <Download className="mr-2" />
                   รายชื่อผู้มีสิทธิ์ที่ยังไม่ได้ลงทะเบียน
