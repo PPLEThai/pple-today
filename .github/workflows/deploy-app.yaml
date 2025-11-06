@@ -92,13 +92,13 @@ jobs:
             PACKAGES=$(echo $PACKAGES | jq -c ". += [${METADATA}]")
           fi
 
-          if [[ ${{ inputs.backoffice }} == true ]]; then
-              METADATA=$(constructMetadata "pple-backoffice" "apps-client/backoffice" "docker-compose.backoffice.yaml")
+          if [[ ${{ inputs.ballot-crypto }} == true ]]; then
+              METADATA=$(constructMetadata "pple-ballot-crypto" "apps-api/ballot-crypto" "docker-compose.api.yaml")
               PACKAGES=$(echo $PACKAGES | jq -c ". += [${METADATA}]")
           fi
 
-          if [[ ${{ inputs.ballot-crypto }} == true ]]; then
-              METADATA=$(constructMetadata "pple-ballot-crypto" "apps-api/ballot-crypto" "docker-compose.ballot-crypto.yaml")
+          if [[ ${{ inputs.backoffice }} == true ]]; then
+              METADATA=$(constructMetadata "pple-backoffice" "apps-client/backoffice" "docker-compose.backoffice.yaml")
               PACKAGES=$(echo $PACKAGES | jq -c ". += [${METADATA}]")
           fi
 
