@@ -6,22 +6,24 @@ import { Button } from '@pple-today/web-ui/button'
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@pple-today/web-ui/dialog'
 import { Form, FormField, FormItem, FormLabel, FormMessage } from '@pple-today/web-ui/form'
 import { Typography } from '@pple-today/web-ui/typography'
+import { useQueryClient } from '@tanstack/react-query'
 import { DateTimePicker } from 'components/DatetimePicker'
 import { Megaphone } from 'lucide-react'
 import z from 'zod'
 
-import { reactQueryClient } from '~/libs/api-client'
+import { AdminGetElectionResponse } from '@api/backoffice/admin'
 
-export default function ElectionResultAnnouceDialog({
-  electionId,
-  onSuccess,
-  disabled,
-}: {
-  electionId: string
-  onSuccess?: () => void
-  disabled?: boolean
-}) {
+import { useEditOnsiteResultContext } from './context'
+
+import { reactQueryClient } from '../../libs/api-client'
+
+export function ResultAnnouceDialog({ election }: { election: AdminGetElectionResponse }) {
   const [open, setOpen] = useState<boolean>(false)
+  const queryClient = useQueryClient()
+
+  const {
+    state: { isEdit },
+  } = useEditOnsiteResultContext()
 
   useEffect(() => {
     if (open) {
@@ -39,7 +41,10 @@ export default function ElectionResultAnnouceDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="flex items-center gap-2" disabled={disabled}>
+        <Button
+          className="flex items-center gap-2"
+          disabled={isEdit || election.onlineResultStatus !== 'COUNT_SUCCESS'}
+        >
           <Megaphone />
           <Typography variant="small" className="text-white">
             ประกาศผลการเลือกตั้ง
@@ -51,9 +56,11 @@ export default function ElectionResultAnnouceDialog({
           <Typography variant="h2">ประกาศผลการเลือกตั้ง</Typography>
         </DialogTitle>
         <ResultTimelineForm
-          electionId={electionId}
+          electionId={election.id}
           onSuccess={() => {
-            onSuccess && onSuccess()
+            queryClient.invalidateQueries({
+              queryKey: resultQueryKey(election.id),
+            })
             setOpen(false)
           }}
         />
@@ -173,4 +180,16 @@ function ResultTimelineForm({
       </Form>
     </form>
   )
+}
+
+function electionQueryKey(electionId: string) {
+  return reactQueryClient.getQueryKey('/admin/elections/:electionId', {
+    pathParams: { electionId },
+  })
+}
+
+function resultQueryKey(electionId: string) {
+  return reactQueryClient.getQueryKey('/admin/elections/:electionId/result', {
+    pathParams: { electionId },
+  })
 }
