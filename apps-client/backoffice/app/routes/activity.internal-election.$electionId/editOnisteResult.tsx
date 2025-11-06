@@ -130,7 +130,7 @@ function ResultTimelineForm({
     if (data.startResult < now) {
       form.setError('startResult', {
         type: 'manual',
-        message: 'วันที่เริ่มประกาศผล ต้องไม่เป็นวันที่ผ่านมาแล้ว',
+        message: 'วันที่เริ่มประกาศผล ต้องเป็นเวลาตั้งแต่ปัจจุบันขึ้นไป',
       })
       return
     }
