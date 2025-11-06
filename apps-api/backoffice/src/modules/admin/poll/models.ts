@@ -1,9 +1,4 @@
-import {
-  AdminPollDetails,
-  ListPaginationQuery,
-  Poll,
-  PollDetails,
-} from '@pple-today/api-common/dtos'
+import { AdminPollDetails, ListPaginationQuery, PollAnswer } from '@pple-today/api-common/dtos'
 import { PollStatus, PollType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
@@ -42,7 +37,7 @@ export type GetPollsResponse = Static<typeof GetPollsResponse>
 export const GetPollByIdParams = PollIdParams
 export type GetPollByIdParams = Static<typeof GetPollByIdParams>
 
-export const GetPollByIdResponse = t.Composite([Poll, PollDetails])
+export const GetPollByIdResponse = AdminPollDetails
 export type GetPollByIdResponse = Static<typeof GetPollByIdResponse>
 
 export const PostPollBody = t.Object({

@@ -18,7 +18,7 @@ export class AdminPollService {
   }
 
   async getPollById(pollId: string) {
-    const result = await this.adminPollRepository.getPollById(pollId)
+    const result = await this.adminPollRepository.getPollDetailById(pollId)
     if (result.isErr())
       return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
