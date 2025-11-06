@@ -251,9 +251,10 @@ export const AdminListElectionEligibleVoterQuery = t.Object({
 })
 export type AdminListElectionEligibleVoterQuery = Static<typeof AdminListElectionEligibleVoterQuery>
 
-export const AdminListElectionEligibleVoterResponse = t.Array(
-  t.Pick(ElectionEligibleVoter, ['id', 'phoneNumber'])
-)
+export const AdminListElectionEligibleVoterResponse = t.Object({
+  headers: t.Tuple([t.Literal('id'), t.Literal('phoneNumber')]),
+  voters: t.Array(t.Pick(ElectionEligibleVoter, ['id', 'phoneNumber'])),
+})
 export type AdminListElectionEligibleVoterResponse = Static<
   typeof AdminListElectionEligibleVoterResponse
 >

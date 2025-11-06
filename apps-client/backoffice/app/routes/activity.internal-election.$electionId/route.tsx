@@ -245,7 +245,7 @@ function ElectionDetail({ election }: { election: AdminGetElectionResponse }) {
         return
       }
 
-      downloadCSV(data, filename)
+      downloadCSV(data.headers, data.voters, filename)
     },
     [election]
   )

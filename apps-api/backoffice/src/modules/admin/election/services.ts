@@ -511,12 +511,15 @@ export class AdminElectionService {
       return mapRepositoryError(voterResult.error)
     }
 
-    return ok(
-      voterResult.value.map((voter) => ({
-        id: voter.user.id,
-        phoneNumber: voter.user.phoneNumber,
-      }))
-    )
+    const voters = voterResult.value.map((voter) => ({
+      id: voter.user.id,
+      phoneNumber: voter.user.phoneNumber,
+    }))
+
+    return ok({
+      headers: ['id', 'phoneNumber'],
+      voters,
+    })
   }
 
   async deleteElectionEligibleVoters(
