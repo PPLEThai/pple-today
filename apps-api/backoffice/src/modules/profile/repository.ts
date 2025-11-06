@@ -1,7 +1,7 @@
-import { FilePath } from '@pple-today/api-common/dtos'
+import { ElectionStatus, FilePath, ParticipationType } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { Prisma, UserStatus } from '@pple-today/database/prisma'
+import { Election, Prisma, UserStatus } from '@pple-today/database/prisma'
 import { get_candidate_user } from '@pple-today/database/prisma/sql'
 import Elysia from 'elysia'
 import * as R from 'remeda'
@@ -16,6 +16,59 @@ export class ProfileRepository {
     private prismaService: PrismaService,
     private fileService: FileService
   ) {}
+
+  private constructPollWithMeta<T extends { id: string }>(
+    data: T[],
+    config: {
+      needShuffle?: boolean
+      limit: number
+      cursor?: string
+    }
+  ) {
+    return {
+      items: config.needShuffle ? R.shuffle(data) : data,
+      meta: {
+        cursor: {
+          next: data.length === config.limit ? data[config.limit - 1].id : null,
+          previous: config.cursor || null,
+        },
+      },
+    }
+  }
+
+  // for readability
+  private constructElectionWithMeta<T extends { electionId: string }>(
+    data: T[],
+    config: {
+      needShuffle?: boolean
+      limit: number
+      cursor?: string
+    }
+  ) {
+    return {
+      items: config.needShuffle ? R.shuffle(data) : data,
+      meta: {
+        cursor: {
+          next: data.length === config.limit ? data[config.limit - 1].electionId : null,
+          previous: config.cursor || null,
+        },
+      },
+    }
+  }
+
+  private getElectionStatus(election: Election): ElectionStatus {
+    const now = new Date()
+
+    if (now < election.openVoting) {
+      return 'NOT_OPENED_VOTE'
+    } else if (now < election.closeVoting) {
+      return 'OPEN_VOTE'
+    } else if (!election.startResult || now < election.startResult) {
+      return 'CLOSED_VOTE'
+    } else {
+      return 'RESULT_ANNOUNCE'
+    }
+  }
 
   async getUserRecommendation(userId: string) {
     return await fromRepositoryPromise(async () => {
@@ -42,52 +95,6 @@ export class ProfileRepository {
 
       return candidateUser
     })
-  }
-
-  async getUserParticipation(userId: string) {
-    return await fromRepositoryPromise(
-      this.prismaService.poll.findMany({
-        where: {
-          options: {
-            some: {
-              pollAnswers: {
-                some: {
-                  userId,
-                },
-              },
-            },
-          },
-        },
-        distinct: ['feedItemId'],
-        select: {
-          title: true,
-          feedItemId: true,
-          options: {
-            where: {
-              pollAnswers: {
-                some: {
-                  userId,
-                },
-              },
-            },
-            select: {
-              pollAnswers: {
-                where: {
-                  userId,
-                },
-                take: 1,
-                orderBy: {
-                  createdAt: 'desc',
-                },
-                select: {
-                  createdAt: true,
-                },
-              },
-            },
-          },
-        },
-      })
-    )
   }
 
   async getProfileById(id: string) {
@@ -282,6 +289,111 @@ export class ProfileRepository {
     }
 
     return updateResult
+  }
+
+  async getUserLatestPoll({
+    userId,
+    cursor,
+    limit,
+  }: {
+    userId: string
+    cursor?: string
+    limit: number
+  }) {
+    return await fromRepositoryPromise(async () => {
+      const latestPoll = await this.prismaService.pollAnswer.findMany({
+        where: {
+          userId,
+        },
+        distinct: ['pollId'],
+        orderBy: {
+          createdAt: 'desc',
+        },
+        cursor: cursor ? { id: cursor } : undefined,
+        skip: cursor ? 1 : 0,
+        take: limit,
+        include: {
+          poll: true,
+        },
+      })
+
+      const transformPoll = R.pipe(
+        latestPoll,
+        R.map((item) => ({
+          id: item.id,
+          feedItemId: item.poll.feedItemId,
+          type: ParticipationType.POLL,
+          title: item.poll.title,
+          endAt: item.poll.endAt,
+          submittedAt: item.createdAt,
+        }))
+      )
+
+      return this.constructPollWithMeta(transformPoll, {
+        needShuffle: false,
+        limit,
+        cursor,
+      })
+    })
+  }
+
+  async getUserLatestElection({
+    userId,
+    cursor,
+    limit,
+  }: {
+    userId: string
+    cursor?: string //cursor by combine the user_id and election_id
+    limit: number
+  }) {
+    return await fromRepositoryPromise(async () => {
+      const latestElection = await this.prismaService.electionVoteRecord.findMany({
+        where: {
+          userId,
+        },
+        orderBy: [
+          {
+            createdAt: 'desc',
+          },
+          {
+            electionId: 'desc',
+          },
+          {
+            userId: 'desc',
+          },
+        ],
+        include: {
+          election: true,
+        },
+        skip: cursor ? 1 : 0,
+        cursor: cursor
+          ? {
+              electionId_userId: {
+                electionId: cursor,
+                userId,
+              },
+            }
+          : undefined,
+        take: limit,
+      })
+
+      const transformElection = R.pipe(
+        latestElection,
+        R.map((item) => ({
+          electionId: item.election.id,
+          type: ParticipationType.ELECTION,
+          name: item.election.name,
+          electionStatus: this.getElectionStatus(item.election),
+          submittedAt: item.createdAt,
+        }))
+      )
+
+      return this.constructElectionWithMeta(transformElection, {
+        needShuffle: false,
+        limit,
+        cursor,
+      })
+    })
   }
 }
 

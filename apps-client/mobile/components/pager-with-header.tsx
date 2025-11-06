@@ -481,9 +481,11 @@ const PADDING_X = 16
 export function PagerTabBar({
   children,
   fullWidth = false,
+  className,
 }: {
   children: React.ReactNode
   fullWidth?: boolean
+  className?: string
 }) {
   const { tabListSize, dragProgress, dragState, indexToOffset, containerSize, tabBarScrollElRef } =
     usePagerTabBarContext()
@@ -518,7 +520,7 @@ export function PagerTabBar({
     }
   )
   return (
-    <View className="border-b border-base-outline-default bg-base-bg-white">
+    <View className={cn('border-b border-base-outline-default bg-base-bg-white', className)}>
       <ScrollView
         horizontal
         ref={tabBarScrollElRef}

@@ -22,6 +22,7 @@ import { Text } from '@pple-today/ui/text'
 import { toast } from '@pple-today/ui/toast'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import dayjs from 'dayjs'
 import { useRouter } from 'expo-router'
 import { PermissionStatus, useTrackingPermissions } from 'expo-tracking-transparency'
 import * as WebBrowser from 'expo-web-browser'
@@ -30,6 +31,7 @@ import {
   CalendarIcon,
   CircleArrowRightIcon,
   CircleUserRoundIcon,
+  Clock3Icon,
   HandIcon,
   HeartIcon,
   MapPinnedIcon,
@@ -42,12 +44,15 @@ import {
   TrashIcon,
   TriangleAlertIcon,
   TrophyIcon,
+  VoteIcon,
 } from 'lucide-react-native'
 
-import type { GetUserParticipationResponse } from '@api/backoffice/app'
+import { GetUserRecentParticipationResponse } from '@api/backoffice/app'
 import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
+import { ElectionStatusBadge } from '@app/components/election/election-card'
+import { PollStatusBadge } from '@app/components/poll/poll-card'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { environment } from '@app/env'
 import { reactQueryClient } from '@app/libs/api-client'
@@ -62,7 +67,7 @@ import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 import { getRoleName } from '@app/utils/get-role-name'
 
-import { useBottomTabOnPress } from '../../_layout'
+import { useBottomTabOnPress } from '../_layout'
 
 export default function Index() {
   const session = useSession()
@@ -116,6 +121,9 @@ const ProfileSetting = () => {
         queryKey: reactQueryClient.getQueryKey('/facebook/linked-page'),
       })
       await queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/profile/me') })
+      await queryClient.resetQueries({
+        queryKey: reactQueryClient.getQueryKey('/profile/participation/recent'),
+      })
       setRefreshing(false)
     } catch (error) {
       console.error('Error refreshing feed:', error)
@@ -533,7 +541,7 @@ const FollowingSection = () => {
           size="icon"
           className="size-9"
           onPress={() => {
-            router.push('/profile/follow')
+            router.push('/follow')
           }}
         >
           <Icon icon={PencilIcon} strokeWidth={1} size={20} className="text-base-text-high" />
@@ -585,7 +593,8 @@ const FollowingSection = () => {
   )
 }
 const ParticipationSection = () => {
-  const participationQuery = reactQueryClient.useQuery('/profile/participation', {})
+  const router = useRouter()
+  const participationQuery = reactQueryClient.useQuery('/profile/participation/recent', {})
   if (
     participationQuery.isLoading ||
     !participationQuery.data ||
@@ -593,30 +602,44 @@ const ParticipationSection = () => {
   ) {
     return null
   }
+
   return (
-    <View className="flex flex-col gap-3 border border-base-outline-default rounded-xl py-3 px-4 bg-base-bg-white">
-      <View className="flex flex-row items-center justify-between pb-2 border-b border-base-outline-default">
-        <View className="flex flex-row gap-2 items-center">
+    <View className="flex flex-col border border-base-outline-default rounded-xl py-3 bg-base-bg-white gap-4">
+      <View className="flex flex-row items-center justify-between mx-4">
+        <View className="flex flex-row gap-2 items-center border-b border-base-outline-default flex-grow pt-0.5 pb-2.5">
           <Icon icon={HandIcon} className="text-base-primary-default" size={32} />
           <H2 className="text-xl text-base-text-high font-heading-semibold">การเข้าร่วมของฉัน</H2>
         </View>
       </View>
-      {participationQuery.data.map((participation) => (
-        <Participation key={participation.feedItemId} participation={participation} />
+      {participationQuery.data.slice(0, 3).map((participation, index) => (
+        <Participation key={index} participation={participation} />
       ))}
+      {participationQuery.data.length > 0 && (
+        <Button
+          variant={'secondary'}
+          onPress={() => router.navigate('/participation')}
+          className="mx-4"
+        >
+          <Text>ดูเพิ่มเติม</Text>
+        </Button>
+      )}
     </View>
   )
 }
 
-const Participation = ({
+export const Participation = ({
   participation,
 }: {
-  participation: GetUserParticipationResponse[number]
+  participation: GetUserRecentParticipationResponse[number]
 }) => {
+  const router = useRouter()
   switch (participation.type) {
     case 'POLL':
       return (
-        <View className="flex flex-row items-center justify-between gap-1">
+        <Pressable
+          onPress={() => router.navigate(`/feed/${participation.feedItemId}`)}
+          className="flex flex-row items-center justify-between px-4 h-[60px]"
+        >
           <View className="flex flex-row gap-3 items-center flex-1">
             <Icon
               icon={MessageCircleQuestionIcon}
@@ -624,13 +647,62 @@ const Participation = ({
               size={32}
               strokeWidth={2}
             />
-            <View className="flex flex-col gap-1 flex-1">
-              <Text className="text-sm text-base-text-high font-heading-semibold line-clamp-2">
+            <View className="flex flex-col gap-1 flex-1 justify-between shrink-0 ">
+              <Text className="text-sm text-base-text-high font-heading-medium line-clamp-2">
                 {participation.title}
               </Text>
-              <Text className="text-xs text-base-text-high font-heading-regular">
-                {formatDateInterval(participation.createdAt.toString())}
+              <View className="flex flex-row items-center justify-between">
+                <View className="flex flex-row items-center gap-0.5">
+                  <Icon
+                    icon={Clock3Icon}
+                    size={12}
+                    strokeWidth={2}
+                    className="text-base-text-placeholder"
+                  />
+                  <Text className="text-xs text-base-text-placeholder font-heading-regular">
+                    {formatDateInterval(participation.submittedAt.toString())}
+                  </Text>
+                </View>
+                <PollStatusBadge isEnded={dayjs(participation.endAt).isBefore(dayjs())} />
+              </View>
+            </View>
+          </View>
+          <View className="p-2">
+            <Icon
+              icon={CircleArrowRightIcon}
+              className="text-base-text-high"
+              size={24}
+              strokeWidth={1}
+            />
+          </View>
+        </Pressable>
+      )
+    case 'ELECTION':
+      return (
+        <Pressable
+          onPress={() => router.navigate(`/election/${participation.electionId}`)}
+          className="flex flex-row items-center justify-between gap-1 mx-4 h-[60px]"
+        >
+          <View className="flex flex-row gap-3 items-center flex-1">
+            <Icon icon={VoteIcon} className="text-base-primary-default" size={32} strokeWidth={2} />
+            <View className="flex flex-col justify-between gap-1 flex-1 shrink-0">
+              <Text className="text-sm text-base-text-high font-heading-medium line-clamp-2">
+                {participation.name}
               </Text>
+              <View className="flex flex-row items-center justify-between">
+                <View className="flex flex-row items-center gap-0.5">
+                  <Icon
+                    icon={Clock3Icon}
+                    size={12}
+                    strokeWidth={2}
+                    className="text-base-text-placeholder"
+                  />
+                  <Text className="text-xs text-base-text-placeholder font-heading-regular">
+                    {formatDateInterval(participation.submittedAt.toString())}
+                  </Text>
+                </View>
+                <ElectionStatusBadge status={participation.electionStatus} />
+              </View>
             </View>
           </View>
           <Button variant="ghost" size="icon">
@@ -641,42 +713,10 @@ const Participation = ({
               strokeWidth={1}
             />
           </Button>
-        </View>
+        </Pressable>
       )
-    // case 'VOTE':
-    //   return (
-    //     <View className="flex flex-row items-center justify-between gap-1">
-    //       <View className="flex flex-row gap-3 items-center flex-1">
-    //         <Icon icon={VoteIcon} className="text-base-primary-default" size={32} strokeWidth={2} />
-    //         <View className="flex flex-col gap-1 flex-1">
-    //           <Text className="text-sm text-base-text-high font-heading-semibold line-clamp-2">
-    //             เลือกตั้ง อบจ. ระยอง
-    //           </Text>
-    //           <View className="flex flex-row gap-1 flex-wrap">
-    //             <Badge variant="secondary">
-    //               <Text>เลือกตั้งออนไลน์</Text>
-    //             </Badge>
-    //             <Badge>
-    //               <Text>ประกาศผล</Text>
-    //             </Badge>
-    //           </View>
-    //           <Text className="text-xs text-base-text-high font-heading-regular">
-    //             2 สัปดาห์ที่แล้ว
-    //           </Text>
-    //         </View>
-    //       </View>
-    //       <Button variant="ghost" size="icon">
-    //         <Icon
-    //           icon={CircleArrowRightIcon}
-    //           className="text-base-text-high"
-    //           size={24}
-    //           strokeWidth={1}
-    //         />
-    //       </Button>
-    //     </View>
-    //   )
     default:
-      return exhaustiveGuard(participation.type)
+      return exhaustiveGuard(participation)
   }
 }
 

@@ -8,7 +8,6 @@ import * as R from 'remeda'
 
 import {
   CompleteOnboardingProfileBody,
-  GetUserParticipationResponse,
   GetUserRecommendationResponse,
   UpdateProfileBody,
 } from './models'
@@ -48,30 +47,60 @@ export class ProfileService {
     return ok(users)
   }
 
-  // TODO: Add election to recent activity or formulate new table for activity
-  async getUserParticipation(userId: string) {
-    const result = await this.profileRepository.getUserParticipation(userId)
+  async getUserRecentParticipation(userId: string) {
+    const pollParticipation = await this.profileRepository.getUserLatestPoll({
+      userId,
+      limit: 3,
+    })
 
-    if (result.isErr()) {
-      return mapRepositoryError(result.error)
+    if (pollParticipation.isErr()) {
+      return mapRepositoryError(pollParticipation.error)
     }
 
-    const transformResult: GetUserParticipationResponse = R.pipe(
-      result.value,
-      R.map((poll) => ({
-        type: 'POLL' as const,
-        feedItemId: poll.feedItemId,
-        title: poll.title,
-        createdAt: R.pipe(
-          poll.options,
-          R.map((option) => option.pollAnswers[0].createdAt),
-          R.flat(),
-          R.firstBy([R.identity(), 'desc'])
-        )!,
-      }))
+    const electionParticipation = await this.profileRepository.getUserLatestElection({
+      userId,
+      limit: 3,
+    })
+
+    if (electionParticipation.isErr()) {
+      return mapRepositoryError(electionParticipation.error)
+    }
+
+    //combined the transform poll and election
+    const transformPollAndElection = R.pipe(
+      R.concat(pollParticipation.value.items, electionParticipation.value.items),
+      R.sortBy([R.prop('submittedAt'), 'desc'])
     )
 
-    return ok(transformResult)
+    return ok(transformPollAndElection)
+  }
+
+  async getUserPollParticipation(userId: string, query?: { cursor?: string; limit?: number }) {
+    const pollParticipation = await this.profileRepository.getUserLatestPoll({
+      userId,
+      cursor: query?.cursor,
+      limit: query?.limit ?? 10,
+    })
+
+    if (pollParticipation.isErr()) {
+      return mapRepositoryError(pollParticipation.error)
+    }
+
+    return ok(pollParticipation.value)
+  }
+
+  async getUserElectionParticipation(userId: string, query?: { cursor?: string; limit?: number }) {
+    const electionParticipation = await this.profileRepository.getUserLatestElection({
+      userId,
+      cursor: query?.cursor,
+      limit: query?.limit ?? 10,
+    })
+
+    if (electionParticipation.isErr()) {
+      return mapRepositoryError(electionParticipation.error)
+    }
+
+    return ok(electionParticipation.value)
   }
 
   async getProfileById(id: string) {
