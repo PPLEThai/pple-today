@@ -516,8 +516,10 @@ export class AdminElectionService {
       phoneNumber: voter.user.phoneNumber,
     }))
 
+    const headers: ['id', 'phoneNumber'] = ['id', 'phoneNumber']
+
     return ok({
-      headers: ['id', 'phoneNumber'],
+      headers,
       voters,
     })
   }

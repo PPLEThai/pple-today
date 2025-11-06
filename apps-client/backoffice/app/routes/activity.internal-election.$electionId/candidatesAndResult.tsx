@@ -17,7 +17,7 @@ import {
   EditOnsiteResultReducer,
   useEditOnsiteResultContext,
 } from './context'
-import { ResultAnnouceDialog } from './editOnisteResultDialog'
+import { ResultAnnouceDialog } from './editOnisteResult'
 
 import { reactQueryClient } from '../../libs/api-client'
 import { exhaustiveGuard } from '../../libs/exhaustive-guard'

@@ -182,12 +182,6 @@ function ResultTimelineForm({
   )
 }
 
-function electionQueryKey(electionId: string) {
-  return reactQueryClient.getQueryKey('/admin/elections/:electionId', {
-    pathParams: { electionId },
-  })
-}
-
 function resultQueryKey(electionId: string) {
   return reactQueryClient.getQueryKey('/admin/elections/:electionId/result', {
     pathParams: { electionId },
