@@ -42,7 +42,7 @@ export type GetPollByIdResponse = Static<typeof GetPollByIdResponse>
 
 export const PostPollBody = t.Object({
   title: t.String({ description: 'The title of the poll' }),
-  description: t.String({ description: 'The description of the poll' }),
+  description: t.Nullable(t.String({ description: 'The description of the poll' })),
   endAt: t.Date({ description: 'The end date of the poll' }),
   type: t.Enum(PollType),
 
