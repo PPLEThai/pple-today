@@ -1,12 +1,12 @@
 'use client'
 
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { NavLink } from 'react-router'
 
 import { Badge } from '@pple-today/web-ui/badge'
 import { Button } from '@pple-today/web-ui/button'
 import { DataTable } from '@pple-today/web-ui/data-table'
 import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
 import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { DtFilter } from 'components/datatable/DtFilter'
@@ -151,9 +151,13 @@ export const Data = () => {
       columnHelper.accessor('title', {
         header: 'ชื่อ',
         cell: (info) => (
-          <NavLink className="hover:underline" to={`/activity/poll/${info.row.original.id}`}>
+          <Link
+            className="hover:underline"
+            to="/activity/poll/$pollId"
+            params={{ pollId: info.row.original.id }}
+          >
             {info.getValue()}
-          </NavLink>
+          </Link>
         ),
       }),
       columnHelper.display({

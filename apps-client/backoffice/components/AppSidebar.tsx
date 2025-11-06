@@ -123,7 +123,7 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
                       <SidebarMenuSub>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>
-                            <NavLink to="/activity/poll">Poll</NavLink>
+                            <Link to="/activity/poll">Poll</Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         <SidebarMenuSubItem>

@@ -1,5 +1,3 @@
-import { NavLink } from 'react-router'
-
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,14 +7,16 @@ import {
   BreadcrumbSeparator,
 } from '@pple-today/web-ui/breadcrumb'
 import { Typography } from '@pple-today/web-ui/typography'
+import { createFileRoute, Link } from '@tanstack/react-router'
 
-import { Data } from './data'
+import { Data } from './-data'
 
-export function meta() {
-  return [{ title: 'Poll' }]
-}
+export const Route = createFileRoute('/_app/activity/poll/')({
+  component: PollPage,
+  head: () => ({ meta: [{ title: 'Poll' }] }),
+})
 
-export default function PollPage() {
+function PollPage() {
   return (
     <div className="px-6 pb-6 space-y-2">
       <Breadcrumb className="pt-4 pb-2">
@@ -24,7 +24,7 @@ export default function PollPage() {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <NavLink to="/activity">Activity</NavLink>
+              <Link to="/activity">Activity</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
