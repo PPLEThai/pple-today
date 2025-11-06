@@ -1,4 +1,9 @@
-import { AdminPoll, ListPaginationQuery, Poll, PollDetails } from '@pple-today/api-common/dtos'
+import {
+  AdminPollDetails,
+  ListPaginationQuery,
+  Poll,
+  PollDetails,
+} from '@pple-today/api-common/dtos'
 import { PollStatus, PollType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
@@ -29,7 +34,7 @@ export const GetPollsQuery = ListPaginationQuery(
 export type GetPollsQuery = Static<typeof GetPollsQuery>
 
 export const GetPollsResponse = t.Object({
-  data: t.Array(AdminPoll),
+  data: t.Array(AdminPollDetails),
   meta: t.Object({ count: t.Number() }),
 })
 export type GetPollsResponse = Static<typeof GetPollsResponse>
