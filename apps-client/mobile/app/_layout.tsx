@@ -2,6 +2,7 @@ import '../global.css'
 import 'dayjs/locale/th'
 
 import * as React from 'react'
+import { Linking, PermissionsAndroid, Platform } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { DevToolsBubble } from 'react-native-react-query-devtools'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
@@ -25,6 +26,14 @@ import { BottomSheetModalProvider } from '@pple-today/ui/bottom-sheet/index'
 import { NAV_THEME } from '@pple-today/ui/lib/constants'
 import { PortalHost } from '@pple-today/ui/portal'
 import { Toaster } from '@pple-today/ui/toast'
+import {
+  AuthorizationStatus,
+  getInitialNotification,
+  getMessaging,
+  getToken,
+  onNotificationOpenedApp,
+  requestPermission,
+} from '@react-native-firebase/messaging'
 import { DarkTheme, DefaultTheme, Theme, ThemeProvider } from '@react-navigation/native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import dayjs from 'dayjs'
@@ -32,12 +41,14 @@ import buddhistEra from 'dayjs/plugin/buddhistEra'
 import duration from 'dayjs/plugin/duration'
 import * as Clipboard from 'expo-clipboard'
 import { useFonts } from 'expo-font'
-import { Stack } from 'expo-router'
+import { Stack, useRouter } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
+import { openBrowserAsync } from 'expo-web-browser'
 
 import { StatusBarProvider } from '@app/context/status-bar'
 import { environment } from '@app/env'
-import { AuthLifeCycleHook } from '@app/libs/auth'
+import { reactQueryClient } from '@app/libs/api-client'
+import { AuthLifeCycleHook, useAuthMe } from '@app/libs/auth'
 
 dayjs.extend(buddhistEra)
 dayjs.extend(duration)
@@ -58,6 +69,8 @@ export {
   // Catch any errors thrown by the Layout component.
   ErrorBoundary,
 } from 'expo-router'
+
+const messaging = getMessaging()
 
 const queryClient = new QueryClient()
 export default function RootLayout() {
@@ -84,6 +97,7 @@ export default function RootLayout() {
             <DevToolsBubble onCopy={onCopy} queryClient={queryClient} />
           )}
           <AuthLifeCycleHook />
+          <NotificationTokenConsentPopup />
         </QueryClientProvider>
       </SafeAreaProvider>
       <PortalHost />
@@ -160,3 +174,102 @@ function ColorSchemeProvider({ children }: { children: React.ReactNode }) {
 
 // const useIsomorphicLayoutEffect =
 //   Platform.OS === 'web' && typeof window === 'undefined' ? React.useEffect : React.useLayoutEffect
+
+async function requestUserPermission() {
+  if (Platform.OS === 'android' && Platform.Version >= 33) {
+    const requestResult = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
+    )
+
+    return requestResult === PermissionsAndroid.RESULTS.GRANTED
+  }
+
+  if (Platform.OS === 'ios') {
+    const authStatus = await requestPermission(messaging)
+    const enabled =
+      authStatus === AuthorizationStatus.AUTHORIZED ||
+      authStatus === AuthorizationStatus.PROVISIONAL
+
+    return enabled
+  }
+
+  throw new Error(`Unsupported platform: ${Platform.OS}`)
+}
+
+function NotificationTokenConsentPopup() {
+  const registerNotificationTokenMutation = reactQueryClient.useMutation(
+    'post',
+    '/notifications/register',
+    {}
+  )
+  const authMe = useAuthMe()
+  const router = useRouter()
+
+  const handleRemoteMessage = async (data: Record<string, string | object>) => {
+    const linkData = data['link']
+
+    if (linkData) {
+      try {
+        const link = JSON.parse(linkData as string)
+        if (link.type && link.value) {
+          switch (link.type) {
+            case 'MINI_APP':
+              await openBrowserAsync(link.value)
+              break
+            case 'IN_APP_NAVIGATION':
+              router.navigate(link.value)
+              break
+            case 'EXTERNAL_BROWSER':
+              Linking.openURL(link.value as string)
+              break
+          }
+        }
+      } catch (err) {
+        console.error('Failed to parse link data:', err)
+      }
+    }
+  }
+
+  React.useEffect(() => {
+    const handleInitialMessaging = async () => {
+      const remoteMessage = await getInitialNotification(messaging)
+
+      if (remoteMessage && remoteMessage.data) {
+        await handleRemoteMessage(remoteMessage.data)
+      }
+    }
+
+    const registerNotification = async () => {
+      try {
+        if (!authMe.data) return
+
+        const requestPermissionResult = await requestUserPermission()
+        if (!requestPermissionResult) return
+
+        const token = await getToken(messaging)
+
+        await registerNotificationTokenMutation.mutateAsync({
+          body: {
+            deviceToken: token,
+          },
+        })
+        await handleInitialMessaging()
+      } catch (err) {
+        console.error('Failed to register notification token', JSON.stringify(err))
+      }
+    }
+
+    registerNotification()
+
+    const unsubscribeOpenedApp = onNotificationOpenedApp(messaging, async (remoteMessage) => {
+      if (remoteMessage && remoteMessage.data) {
+        await handleRemoteMessage(remoteMessage.data)
+      }
+    })
+
+    return unsubscribeOpenedApp
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authMe.data])
+
+  return null
+}

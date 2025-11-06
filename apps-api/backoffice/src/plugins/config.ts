@@ -66,6 +66,16 @@ export const envSchema = t.Object({
   BACKOFFICE_TO_BALLOT_CRYPTO_KEY: t.String({
     description: 'API key for authenticate backoffice',
   }),
+
+  FIREBASE_PROJECT_ID: t.String({
+    description: 'Firebase Project Id',
+  }),
+  FIREBASE_CLIENT_EMAIL: t.String({
+    description: 'Firebase Client Email',
+  }),
+  FIREBASE_PRIVATE_KEY: t.String({
+    description: 'Firebase Private Key',
+  }),
 })
 
 export const ConfigServicePlugin = createConfigServicePlugin({
