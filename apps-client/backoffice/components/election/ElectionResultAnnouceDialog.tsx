@@ -54,7 +54,7 @@ export default function ElectionResultAnnouceDialog({
           electionId={electionId}
           onSuccess={() => {
             onSuccess && onSuccess()
-            setOpen(true)
+            setOpen(false)
           }}
         />
       </DialogContent>
@@ -160,7 +160,15 @@ function ResultTimelineForm({
           <DialogTrigger asChild>
             <Button variant="outline">ยกเลิก</Button>
           </DialogTrigger>
-          <Button disabled={annouceResultMutation.isPending}>ประกาศ</Button>
+          <Button
+            disabled={
+              annouceResultMutation.isPending ||
+              !form.watch().endResult ||
+              !form.watch().startResult
+            }
+          >
+            ประกาศ
+          </Button>
         </div>
       </Form>
     </form>

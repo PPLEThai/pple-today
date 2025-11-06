@@ -199,7 +199,11 @@ function Header({ election }: { election: AdminGetElectionResponse }) {
             </Button>
           </>
         ) : (
-          <Button variant="outline" disabled={election.isCancelled} onClick={cancelElection}>
+          <Button
+            variant="outline"
+            disabled={election.isCancelled || cancelMutation.isPending}
+            onClick={cancelElection}
+          >
             <CalendarX2 className="text-system-danger-default" strokeWidth={1} size={20} />
             <Typography variant="small" className="ml-2">
               ยกเลิกการเลือกตั้ง
