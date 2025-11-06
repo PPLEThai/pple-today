@@ -3,6 +3,7 @@ enum FacebookPageLinkedStatus {
   UNLINKED
   APPROVED
   REJECTED
+  SUSPENDED
 }
 
 model FacebookPage {

@@ -12,6 +12,7 @@ export const GetPostsQuery = t.Object({
   page: t.Number(),
   search: t.Optional(t.String()),
   status: t.Optional(t.Array(t.Enum(PostStatus))),
+  authorId: t.Optional(t.String()),
 })
 export type GetPostsQuery = Static<typeof GetPostsQuery>
 
