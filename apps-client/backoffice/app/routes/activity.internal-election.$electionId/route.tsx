@@ -447,6 +447,7 @@ function TopRightCandidate({ election }: { election: AdminGetElectionResponse })
               ))}
             <ElectionResultAnnouceDialog
               electionId={election.id}
+              disabled={isEdit || election.onlineResultStatus !== 'COUNT_SUCCESS'}
               onSuccess={() => {
                 queryClient.invalidateQueries({
                   queryKey: resultQueryKey(election.id),
@@ -515,7 +516,7 @@ function CountBallot({ election }: { election: AdminGetElectionResponse }) {
           </Badge>
         </>
       )}
-      <Button onClick={countElection}>
+      <Button onClick={countElection} disabled={countMutation.isPending}>
         <RefreshCw className="mr-2" /> นับคะแนน
       </Button>
     </div>

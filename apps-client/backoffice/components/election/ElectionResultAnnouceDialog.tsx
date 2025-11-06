@@ -1,7 +1,4 @@
-import 'react-datepicker/dist/react-datepicker.css'
-
-import { useCallback } from 'react'
-import DatePicker from 'react-datepicker'
+import { useCallback, useEffect, useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema/src/standard-schema.js'
@@ -9,6 +6,7 @@ import { Button } from '@pple-today/web-ui/button'
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@pple-today/web-ui/dialog'
 import { Form, FormField, FormItem, FormLabel, FormMessage } from '@pple-today/web-ui/form'
 import { Typography } from '@pple-today/web-ui/typography'
+import { DateTimePicker } from 'components/Datetimepicker'
 import { Megaphone } from 'lucide-react'
 import z from 'zod'
 
@@ -17,14 +15,31 @@ import { reactQueryClient } from '~/libs/api-client'
 export default function ElectionResultAnnouceDialog({
   electionId,
   onSuccess,
+  disabled,
 }: {
   electionId: string
   onSuccess?: () => void
+  disabled?: boolean
 }) {
+  const [open, setOpen] = useState<boolean>(false)
+
+  useEffect(() => {
+    if (open) {
+      // Pushing the change to the end of the call stack
+      const timer = setTimeout(() => {
+        document.body.style.pointerEvents = ''
+      }, 0)
+
+      return () => clearTimeout(timer)
+    } else {
+      document.body.style.pointerEvents = 'auto'
+    }
+  }, [open])
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="flex items-center gap-2">
+        <Button className="flex items-center gap-2" disabled={disabled}>
           <Megaphone />
           <Typography variant="small" className="text-white">
             ประกาศผลการเลือกตั้ง
@@ -35,15 +50,21 @@ export default function ElectionResultAnnouceDialog({
         <DialogTitle asChild>
           <Typography variant="h2">ประกาศผลการเลือกตั้ง</Typography>
         </DialogTitle>
-        <ResultTimelineForm electionId={electionId} onSuccess={onSuccess} />
+        <ResultTimelineForm
+          electionId={electionId}
+          onSuccess={() => {
+            onSuccess && onSuccess()
+            setOpen(true)
+          }}
+        />
       </DialogContent>
     </Dialog>
   )
 }
 
 const ResultTimelineSchema = z.object({
-  startResult: z.date().nullable(),
-  endResult: z.date().nullable(),
+  startResult: z.date().optional(),
+  endResult: z.date().optional(),
 })
 
 type ResultTimelineOutput = z.infer<typeof ResultTimelineSchema>
@@ -57,10 +78,6 @@ function ResultTimelineForm({
 }) {
   const form = useForm<ResultTimelineOutput>({
     resolver: standardSchemaResolver(ResultTimelineSchema),
-    defaultValues: {
-      startResult: null,
-      endResult: null,
-    },
   })
 
   const annouceResultMutation = reactQueryClient.useMutation(
@@ -115,7 +132,7 @@ function ResultTimelineForm({
   }
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 w-96">
       <Form {...form}>
         <FormField
           control={form.control}
@@ -123,12 +140,7 @@ function ResultTimelineForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>วันเริ่มต้นประกาศผล</FormLabel>
-              <DatePicker
-                selected={field.value}
-                onChange={field.onChange}
-                className="border-2 p-2 rounded-md"
-                placeholderText="เลือกวันที่"
-              />
+              <DateTimePicker {...field} className="w-full" />
               <FormMessage />
             </FormItem>
           )}
@@ -139,12 +151,7 @@ function ResultTimelineForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>วันสิ้นสุดประกาศผล</FormLabel>
-              <DatePicker
-                selected={field.value}
-                onChange={field.onChange}
-                className="border-2 p-2 rounded-md"
-                placeholderText="เลือกวันที่"
-              />
+              <DateTimePicker {...field} className="w-full" />
               <FormMessage />
             </FormItem>
           )}
@@ -153,7 +160,7 @@ function ResultTimelineForm({
           <DialogTrigger asChild>
             <Button variant="outline">ยกเลิก</Button>
           </DialogTrigger>
-          <Button>ประกาศ</Button>
+          <Button disabled={annouceResultMutation.isPending}>ประกาศ</Button>
         </div>
       </Form>
     </form>
