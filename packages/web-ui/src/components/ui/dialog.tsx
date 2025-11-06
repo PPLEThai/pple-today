@@ -62,7 +62,7 @@ function DialogContent({
         >
           <div
             className={cn(
-              'grid w-full max-w-lg m-auto gap-4 border bg-background p-6 shadow-lg duration-200 rounded-lg',
+              'grid w-full max-w-3xl m-auto gap-4 border bg-background p-6 shadow-lg duration-200 rounded-lg',
               cardClassName
             )}
           >
