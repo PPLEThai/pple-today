@@ -11,7 +11,10 @@ import {
   CreateBannerBody,
   CreateBannerResponse,
   GetBannerByIdResponse,
+  GetBannersQuery,
   GetBannersResponse,
+  ReorderBannerByIdBody,
+  ReorderBannerByIdParams,
   UpdateBannerBody,
 } from './models'
 import { AdminBannerRepository, AdminBannerRepositoryPlugin } from './repository'
@@ -24,9 +27,8 @@ export class AdminBannerService {
     private readonly fileService: FileService
   ) {}
 
-  async getBanners() {
-    const result = await this.bannerRepository.getBanners()
-
+  async getBanners(query: GetBannersQuery) {
+    const result = await this.bannerRepository.getBanners(query)
     if (result.isErr()) return mapRepositoryError(result.error)
 
     const imageBannerFilePaths = result.value.map((banner) => banner.imageFilePath)
@@ -35,12 +37,16 @@ export class AdminBannerService {
     if (imageBannerUrlResults.isErr()) return err(imageBannerUrlResults.error)
 
     const response: GetBannersResponse = result.value.map(
-      ({ imageFilePath, ...bannerBody }, index) =>
-        bannerBody.navigation === BannerNavigationType.MINI_APP
+      ({ imageFilePath, navigation, miniAppId, destination, miniApp, ...bannerBody }, index) =>
+        navigation === BannerNavigationType.MINI_APP
           ? {
               ...bannerBody,
-              miniAppId: bannerBody.miniAppId!,
-              destination: bannerBody.miniApp!.clientUrl!,
+              navigation,
+              destination: miniApp!.clientUrl,
+              miniAppId: miniAppId!,
+              miniApp: {
+                name: miniApp!.name,
+              },
               image: {
                 url: imageBannerUrlResults.value[index],
                 filePath: imageFilePath as FilePath,
@@ -48,8 +54,8 @@ export class AdminBannerService {
             }
           : {
               ...bannerBody,
-              navigation: bannerBody.navigation,
-              destination: bannerBody.destination!,
+              navigation,
+              destination: destination!,
               image: {
                 url: imageBannerUrlResults.value[index],
                 filePath: imageFilePath as FilePath,
@@ -79,8 +85,12 @@ export class AdminBannerService {
       bannerBody.navigation === BannerNavigationType.MINI_APP
         ? {
             ...bannerBody,
-            miniAppId: result.value.miniAppId!,
-            destination: result.value.miniApp!.clientUrl!,
+            navigation: bannerBody.navigation,
+            destination: bannerBody.miniApp!.clientUrl,
+            miniAppId: bannerBody.miniAppId!,
+            miniApp: {
+              name: bannerBody.miniApp!.name,
+            },
             image: {
               url: imageUrlResult.value,
               filePath: imageFilePath as FilePath,
@@ -88,8 +98,8 @@ export class AdminBannerService {
           }
         : {
             ...bannerBody,
-            destination: bannerBody.destination!,
             navigation: bannerBody.navigation,
+            destination: bannerBody.destination!,
             image: {
               url: imageUrlResult.value,
               filePath: imageFilePath as FilePath,
@@ -143,8 +153,8 @@ export class AdminBannerService {
     return ok()
   }
 
-  async reorderBanner(ids: string[]) {
-    const result = await this.bannerRepository.reorderBanner(ids)
+  async reorderBanner(id: ReorderBannerByIdParams['id'], data: ReorderBannerByIdBody) {
+    const result = await this.bannerRepository.reorderBanner(id, data)
 
     if (result.isErr()) return mapRepositoryError(result.error)
 

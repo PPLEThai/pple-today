@@ -1,4 +1,5 @@
 import { PrismaPg } from '@prisma/adapter-pg'
+import { LexoRank } from 'lexorank'
 
 import {
   AnnouncementStatus,
@@ -96,40 +97,24 @@ const seedAddresses = async (
 }
 
 const seedMiniApps = async () => {
-  await prisma.miniApp.upsert({
-    where: { id: 'mini-app-1' },
-    update: {
-      name: 'Sample Mini App',
-      clientId: 'sample-mini-app-client-id',
-      icon: 'data:image/svg+xml;base64,CiAgPHN2ZyB3aWR0aD0iODkiIGhlaWdodD0iNzciIHZpZXdCb3g9IjAgMCA4OSA3NyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBjb2xvcj0iI0ZGNjQxMyI+CjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMF84NTJfMTIpIj4KPHBhdGggZD0iTTIuMTMzNCAwLjVIMTYuMjkyN0w0MS42NzY3IDQ0LjQ3MDlMMzMuMjE1NCA1OS4xMjY3TDAuNzUgMi44OTM1NUwyLjEzMzQgMC41WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik00My4xMjE5IDc2LjI4NTRMMzYuMDQwNSA2NC4wMjMxTDYxLjQyNDUgMjAuMDU1N0g3OC4zNTA2TDQ1Ljg4MTggNzYuMjg1NEg0My4xMjE5WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik04OC4yNTI1IDIuODk5NjNMODEuMTcxMSAxNS4xNjE5SDMwLjM5OTdMMjEuOTM4NCAwLjUwNjA3M0g4Ni44NzI1TDg4LjI1MjUgMi44OTk2M1oiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgo8L2c+CjxkZWZzPgo8Y2xpcFBhdGggaWQ9ImNsaXAwXzg1Ml8xMiI+CjxyZWN0IHdpZHRoPSI4Ny41IiBoZWlnaHQ9Ijc1Ljc4NTYiIGZpbGw9IndoaXRlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjc1IDAuNSkiLz4KPC9jbGlwUGF0aD4KPC9kZWZzPgo8L3N2Zz4K',
-      clientUrl: 'https://example.com/mini-app',
-    },
-    create: {
-      id: 'mini-app-1',
-      slug: 'mini-app-1',
-      name: 'Sample Mini App',
-      icon: 'data:image/svg+xml;base64,CiAgPHN2ZyB3aWR0aD0iODkiIGhlaWdodD0iNzciIHZpZXdCb3g9IjAgMCA4OSA3NyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBjb2xvcj0iI0ZGNjQxMyI+CjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMF84NTJfMTIpIj4KPHBhdGggZD0iTTIuMTMzNCAwLjVIMTYuMjkyN0w0MS42NzY3IDQ0LjQ3MDlMMzMuMjE1NCA1OS4xMjY3TDAuNzUgMi44OTM1NUwyLjEzMzQgMC41WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik00My4xMjE5IDc2LjI4NTRMMzYuMDQwNSA2NC4wMjMxTDYxLjQyNDUgMjAuMDU1N0g3OC4zNTA2TDQ1Ljg4MTggNzYuMjg1NEg0My4xMjE5WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik04OC4yNTI1IDIuODk5NjNMODEuMTcxMSAxNS4xNjE5SDMwLjM5OTdMMjEuOTM4NCAwLjUwNjA3M0g4Ni44NzI1TDg4LjI1MjUgMi44OTk2M1oiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgo8L2c+CjxkZWZzPgo8Y2xpcFBhdGggaWQ9ImNsaXAwXzg1Ml8xMiI+CjxyZWN0IHdpZHRoPSI4Ny41IiBoZWlnaHQ9Ijc1Ljc4NTYiIGZpbGw9IndoaXRlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjc1IDAuNSkiLz4KPC9jbGlwUGF0aD4KPC9kZWZzPgo8L3N2Zz4K',
-      clientId: 'sample-mini-app-client-id',
-      clientUrl: 'https://example.com/mini-app',
-    },
-  })
-  await prisma.miniApp.upsert({
-    where: { id: 'mini-app-2' },
-    update: {
-      name: 'Another Mini App',
-      clientId: 'another-mini-app-client-id',
-      icon: 'data:image/svg+xml;base64,CiAgPHN2ZyB3aWR0aD0iODkiIGhlaWdodD0iNzciIHZpZXdCb3g9IjAgMCA4OSA3NyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBjb2xvcj0iI0ZGNjQxMyI+CjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMF84NTJfMTIpIj4KPHBhdGggZD0iTTIuMTMzNCAwLjVIMTYuMjkyN0w0MS42NzY3IDQ0LjQ3MDlMMzMuMjE1NCA1OS4xMjY3TDAuNzUgMi44OTM1NUwyLjEzMzQgMC41WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik00My4xMjE5IDc2LjI4NTRMMzYuMDQwNSA2NC4wMjMxTDYxLjQyNDUgMjAuMDU1N0g3OC4zNTA2TDQ1Ljg4MTggNzYuMjg1NEg0My4xMjE5WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik04OC4yNTI1IDIuODk5NjNMODEuMTcxMSAxNS4xNjE5SDMwLjM5OTdMMjEuOTM4NCAwLjUwNjA3M0g4Ni44NzI1TDg4LjI1MjUgMi44OTk2M1oiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgo8L2c+CjxkZWZzPgo8Y2xpcFBhdGggaWQ9ImNsaXAwXzg1Ml8xMiI+CjxyZWN0IHdpZHRoPSI4Ny41IiBoZWlnaHQ9Ijc1Ljc4NTYiIGZpbGw9IndoaXRlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjc1IDAuNSkiLz4KPC9jbGlwUGF0aD4KPC9kZWZzPgo8L3N2Zz4K',
-      clientUrl: 'https://example.com/another-mini-app',
-    },
-    create: {
-      id: 'mini-app-2',
-      slug: 'mini-app-2',
-      name: 'Another Mini App',
-      clientId: 'another-mini-app-client-id',
-      icon: 'data:image/svg+xml;base64,CiAgPHN2ZyB3aWR0aD0iODkiIGhlaWdodD0iNzciIHZpZXdCb3g9IjAgMCA4OSA3NyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBjb2xvcj0iI0ZGNjQxMyI+CjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMF84NTJfMTIpIj4KPHBhdGggZD0iTTIuMTMzNCAwLjVIMTYuMjkyN0w0MS42NzY3IDQ0LjQ3MDlMMzMuMjE1NCA1OS4xMjY3TDAuNzUgMi44OTM1NUwyLjEzMzQgMC41WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik00My4xMjE5IDc2LjI4NTRMMzYuMDQwNSA2NC4wMjMxTDYxLjQyNDUgMjAuMDU1N0g3OC4zNTA2TDQ1Ljg4MTggNzYuMjg1NEg0My4xMjE5WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik04OC4yNTI1IDIuODk5NjNMODEuMTcxMSAxNS4xNjE5SDMwLjM5OTdMMjEuOTM4NCAwLjUwNjA3M0g4Ni44NzI1TDg4LjI1MjUgMi44OTk2M1oiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgo8L2c+CjxkZWZzPgo8Y2xpcFBhdGggaWQ9ImNsaXAwXzg1Ml8xMiI+CjxyZWN0IHdpZHRoPSI4Ny41IiBoZWlnaHQ9Ijc1Ljc4NTYiIGZpbGw9IndoaXRlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjc1IDAuNSkiLz4KPC9jbGlwUGF0aD4KPC9kZWZzPgo8L3N2Zz4K',
-      clientUrl: 'https://example.com/another-mini-app',
-    },
-  })
+  for (let i = 1; i <= 10; i++)
+    await prisma.miniApp.upsert({
+      where: { id: `mini-app-${i}` },
+      update: {
+        name: `Sample Mini App ${i}`,
+        clientId: 'sample-mini-app-client-id',
+        icon: 'data:image/svg+xml;base64,CiAgPHN2ZyB3aWR0aD0iODkiIGhlaWdodD0iNzciIHZpZXdCb3g9IjAgMCA4OSA3NyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBjb2xvcj0iI0ZGNjQxMyI+CjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMF84NTJfMTIpIj4KPHBhdGggZD0iTTIuMTMzNCAwLjVIMTYuMjkyN0w0MS42NzY3IDQ0LjQ3MDlMMzMuMjE1NCA1OS4xMjY3TDAuNzUgMi44OTM1NUwyLjEzMzQgMC41WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik00My4xMjE5IDc2LjI4NTRMMzYuMDQwNSA2NC4wMjMxTDYxLjQyNDUgMjAuMDU1N0g3OC4zNTA2TDQ1Ljg4MTggNzYuMjg1NEg0My4xMjE5WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik04OC4yNTI1IDIuODk5NjNMODEuMTcxMSAxNS4xNjE5SDMwLjM5OTdMMjEuOTM4NCAwLjUwNjA3M0g4Ni44NzI1TDg4LjI1MjUgMi44OTk2M1oiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgo8L2c+CjxkZWZzPgo8Y2xpcFBhdGggaWQ9ImNsaXAwXzg1Ml8xMiI+CjxyZWN0IHdpZHRoPSI4Ny41IiBoZWlnaHQ9Ijc1Ljc4NTYiIGZpbGw9IndoaXRlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjc1IDAuNSkiLz4KPC9jbGlwUGF0aD4KPC9kZWZzPgo8L3N2Zz4K',
+        clientUrl: 'https://example.com/mini-app',
+      },
+      create: {
+        id: `mini-app-${i}`,
+        slug: `mini-app-${i}`,
+        name: `Sample Mini App ${i}`,
+        icon: 'data:image/svg+xml;base64,CiAgPHN2ZyB3aWR0aD0iODkiIGhlaWdodD0iNzciIHZpZXdCb3g9IjAgMCA4OSA3NyIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiBjb2xvcj0iI0ZGNjQxMyI+CjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMF84NTJfMTIpIj4KPHBhdGggZD0iTTIuMTMzNCAwLjVIMTYuMjkyN0w0MS42NzY3IDQ0LjQ3MDlMMzMuMjE1NCA1OS4xMjY3TDAuNzUgMi44OTM1NUwyLjEzMzQgMC41WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik00My4xMjE5IDc2LjI4NTRMMzYuMDQwNSA2NC4wMjMxTDYxLjQyNDUgMjAuMDU1N0g3OC4zNTA2TDQ1Ljg4MTggNzYuMjg1NEg0My4xMjE5WiIgZmlsbD0iY3VycmVudENvbG9yIi8+CjxwYXRoIGQ9Ik04OC4yNTI1IDIuODk5NjNMODEuMTcxMSAxNS4xNjE5SDMwLjM5OTdMMjEuOTM4NCAwLjUwNjA3M0g4Ni44NzI1TDg4LjI1MjUgMi44OTk2M1oiIGZpbGw9ImN1cnJlbnRDb2xvciIvPgo8L2c+CjxkZWZzPgo8Y2xpcFBhdGggaWQ9ImNsaXAwXzg1Ml8xMiI+CjxyZWN0IHdpZHRoPSI4Ny41IiBoZWlnaHQ9Ijc1Ljc4NTYiIGZpbGw9IndoaXRlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgwLjc1IDAuNSkiLz4KPC9jbGlwUGF0aD4KPC9kZWZzPgo8L3N2Zz4K',
+        clientId: 'sample-mini-app-client-id',
+        clientUrl: 'https://example.com/mini-app',
+      },
+    })
   console.log('Seeded mini apps successfully.')
 }
 
@@ -142,7 +127,8 @@ const seedBanners = async () => {
     destination: `/feed/id`,
     navigation: 'IN_APP_NAVIGATION',
   } as const
-  for (let i = 1, miniAppIdx = 1; i <= 5; ++i) {
+  let lexorank = LexoRank.min()
+  for (let i = 1, miniAppIdx = 1; i <= 15; ++i) {
     let navigationDetails
     switch (i % 3) {
       case 0:
@@ -159,24 +145,32 @@ const seedBanners = async () => {
         break
     }
 
+    const status =
+      i > 10
+        ? BannerStatusType.PUBLISHED
+        : i > 5
+          ? BannerStatusType.ARCHIVED
+          : BannerStatusType.DRAFT
+
+    lexorank = lexorank.genNext()
+
     await prisma.banner.upsert({
       where: {
         id: `banner-${i}`,
       },
       create: {
         id: `banner-${i}`,
-        imageFilePath: `public/test/banner-${i}.png`,
-        status: BannerStatusType.PUBLISHED,
-        order: i,
-        startAt: new Date(Date.now() - 1000 * 60 * 60 * 24),
-        endAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
+        imageFilePath: `public/test/banner-${(i % 2) + 1}.png`,
+        headline: `Banner ${i}`,
+        status: status,
+        order: lexorank.toString(),
         ...navigationDetails,
       },
       update: {
         id: `banner-${i}`,
-        imageFilePath: `public/test/banner-${i}.png`,
-        status: BannerStatusType.PUBLISHED,
-        order: i,
+        imageFilePath: `public/test/banner-${(i % 2) + 1}.png`,
+        status: status,
+        order: lexorank.toString(),
         ...navigationDetails,
       },
     })
@@ -361,7 +355,7 @@ const seedPolls = async () => {
       where: { id: `archievedp-${i + 1}` },
       update: {},
       create: {
-        id: `archievedp-${i + 1}`,
+        id: `archivedp-${i + 1}`,
         author: {
           connect: { id: OFFICIAL_USER_ID },
         },
@@ -449,6 +443,11 @@ const seedPolls = async () => {
           id: `poll-answer-${i + 1}-${j}`,
           user: { connect: { id: `poll-voter-${j}` } },
           option: { connect: { id: `popt-${i * OPTION_AMOUNT + 1}` } },
+          poll: {
+            connect: {
+              feedItemId: `mp-${i + 1}`,
+            },
+          },
         },
       })
     }
@@ -460,6 +459,11 @@ const seedPolls = async () => {
           id: `poll-answer-${i + 1}-${j}`,
           user: { connect: { id: `poll-voter-${j}` } },
           option: { connect: { id: `popt-${i * OPTION_AMOUNT + 2}` } },
+          poll: {
+            connect: {
+              feedItemId: `mp-${i + 1}`,
+            },
+          },
         },
       })
     }
@@ -470,6 +474,11 @@ const seedPolls = async () => {
         id: `poll-answer-${i + 1}-6`,
         user: { connect: { id: `poll-voter-6` } },
         option: { connect: { id: `popt-${i * OPTION_AMOUNT + 3}` } }, // 3, 7, 11
+        poll: {
+          connect: {
+            feedItemId: `mp-${i + 1}`,
+          },
+        },
       },
     })
 
@@ -485,6 +494,11 @@ const seedPolls = async () => {
           id: `not-answer-${i + 1}-${j}`,
           user: { connect: { id: `poll-voter-${j}` } },
           option: { connect: { id: `notshow-${i * OPTION_AMOUNT + 1}` } },
+          poll: {
+            connect: {
+              feedItemId: `archivedp-${i + 1}`,
+            },
+          },
         },
       })
     }
@@ -496,6 +510,11 @@ const seedPolls = async () => {
           id: `not-answer-${i + 1}-${j}`,
           user: { connect: { id: `poll-voter-${j}` } },
           option: { connect: { id: `notshow-${i * OPTION_AMOUNT + 2}` } },
+          poll: {
+            connect: {
+              feedItemId: `archivedp-${i + 1}`,
+            },
+          },
         },
       })
     }
@@ -506,6 +525,11 @@ const seedPolls = async () => {
         id: `not-answer-${i + 1}-6`,
         user: { connect: { id: `poll-voter-6` } },
         option: { connect: { id: `notshow-${i * OPTION_AMOUNT + 3}` } },
+        poll: {
+          connect: {
+            feedItemId: `archivedp-${i + 1}`,
+          },
+        },
       },
     })
 

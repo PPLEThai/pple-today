@@ -1,6 +1,5 @@
 import * as React from 'react'
 import { Pressable, View } from 'react-native'
-import ImageView from 'react-native-image-viewing'
 
 import { cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
@@ -10,9 +9,11 @@ import { useVideoPlayer, VideoView } from 'expo-video'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { createImageUrl } from '@app/utils/image'
 
+import { LightboxView } from './lightbox-viewer'
+
 export interface PostCardAttachment {
   id: string
-  type: 'IMAGE' | 'VIDEO' | 'AUDIO'
+  type: 'IMAGE' | 'VIDEO'
   url: string
   description?: string
 }
@@ -31,14 +32,9 @@ export function Lightbox(props: LightboxProps) {
       <View className="rounded-lg overflow-hidden">
         <AlbumLayout attachments={props.attachments} onPress={onPress} />
       </View>
-      <ImageView
-        images={props.attachments.map((m) => ({
-          uri: createImageUrl(m.url, {
-            width: 1080,
-            height: 1920,
-          }),
-        }))}
-        imageIndex={imageIndex}
+      <LightboxView
+        sources={props.attachments.map((m) => ({ type: m.type, src: { uri: m.url } }))}
+        index={imageIndex}
         visible={visible}
         onRequestClose={() => setIsVisible(false)}
       />
@@ -169,15 +165,18 @@ function Attachment(props: AttachmentProps) {
   switch (props.attachment.type) {
     case 'VIDEO':
       return (
-        <View className={cn(`rounded-[2px] overflow-hidden w-full bg-gray-50`, props.className)}>
+        <Pressable
+          className={cn(`rounded-[2px] overflow-hidden w-full bg-gray-50`, props.className)}
+          onPress={() => props.onPress(props.index)}
+        >
           <VideoComp url={props.attachment.url} />
-        </View>
+        </Pressable>
       )
     case 'IMAGE':
       return (
         <Pressable
-          onPress={() => props.onPress(props.index)}
           className={cn(`rounded-[2px] overflow-hidden w-full bg-gray-50`, props.className)}
+          onPress={() => props.onPress(props.index)}
         >
           <Image
             style={{ width: '100%', height: '100%' }}
@@ -192,8 +191,6 @@ function Attachment(props: AttachmentProps) {
           />
         </Pressable>
       )
-    case 'AUDIO':
-      throw new Error('Unsupported attachment type')
     default:
       exhaustiveGuard(props.attachment.type)
   }
@@ -211,7 +208,7 @@ function VideoComp(props: { url: string }) {
     <VideoView
       style={{ width: '100%', height: '100%' }}
       player={player}
-      allowsFullscreen
+      fullscreenOptions={{ enable: true }}
       contentFit="cover"
     />
   )
