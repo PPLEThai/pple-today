@@ -122,7 +122,9 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
                     <CollapsibleContent>
                       <SidebarMenuSub>
                         <SidebarMenuSubItem>
-                          <SidebarMenuSubButton>แบบสอบถาม</SidebarMenuSubButton>
+                          <SidebarMenuSubButton asChild>
+                            <Link to="/activity/poll">Poll</Link>
+                          </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>

@@ -1,10 +1,11 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { FeedItemType, PollStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { PostPollBody, PutPollBody } from './models'
+import { PostPollBody, UpdatePollBody } from './models'
 
 import { PrismaServicePlugin } from '../../../plugins/prisma'
 
@@ -40,50 +41,90 @@ export class AdminPollRepository {
     return ok(this.OFFICIAL_USER_ID)
   }
 
-  async getPolls(
-    query: { limit: number; page: number } = {
-      limit: 10,
-      page: 1,
-    }
-  ) {
-    const { limit, page } = query
-    const skip = page ? (page - 1) * limit : 0
-
-    return await fromRepositoryPromise(async () =>
-      (
-        await this.prismaService.poll.findMany({
-          select: {
-            feedItemId: true,
-            title: true,
-            description: true,
-            status: true,
-            endAt: true,
-            type: true,
-            totalVotes: true,
-            feedItem: {
+  async getPolls(page: number, limit: number, status?: PollStatus[], search?: string) {
+    const result = await fromRepositoryPromise(async () => {
+      const [polls, count] = await Promise.all([
+        await this.prismaService.feedItem.findMany({
+          where: {
+            type: FeedItemType.POLL,
+            poll: {
+              title: { contains: search, mode: 'insensitive' as const },
+              status: { in: status },
+            },
+          },
+          include: {
+            poll: {
               select: {
-                createdAt: true,
-                updatedAt: true,
-                publishedAt: true,
+                endAt: true,
+                title: true,
+                type: true,
+                status: true,
+                topics: true,
+                options: {
+                  select: {
+                    title: true,
+                  },
+                  orderBy: {
+                    id: 'asc',
+                  },
+                },
+              },
+            },
+            reactionCounts: true,
+            _count: {
+              select: {
+                comments: true,
               },
             },
           },
-          take: limit,
-          skip,
           orderBy: {
-            feedItem: {
-              createdAt: 'desc',
-            },
+            createdAt: 'desc',
           },
+          skip: Math.max((page - 1) * limit, 0),
+          take: limit,
+        }),
+        await this.prismaService.poll.count({
+          where: {
+            title: { contains: search, mode: 'insensitive' as const },
+            status: { in: status },
+          },
+        }),
+      ])
+
+      const transformPolls = polls
+        .map((feed) => {
+          if (!feed.poll) return null
+
+          return {
+            id: feed.id,
+            title: feed.poll.title,
+            type: feed.poll.type,
+            reactions: feed.reactionCounts,
+            commentCount: feed.numberOfComments,
+            publishedAt: feed.publishedAt,
+            createdAt: feed.createdAt,
+            updatedAt: feed.updatedAt,
+            endAt: feed.poll.endAt,
+            status: feed.poll.status,
+            options: feed.poll.options,
+            topics: feed.poll.topics.flatMap((topic) => topic.topicId),
+          }
         })
-      ).map(({ feedItemId, feedItem, ...item }) => ({
-        id: feedItemId,
-        createdAt: feedItem.createdAt,
-        updatedAt: feedItem.updatedAt,
-        publishedAt: feedItem.publishedAt,
-        ...item,
-      }))
-    )
+        .filter((item) => item !== null)
+
+      return { transformPolls, count }
+    })
+
+    if (result.isErr()) {
+      return err(result.error)
+    }
+
+    return ok({
+      data: result.value.transformPolls,
+      meta: {
+        count: result.value.count,
+      },
+    })
   }
 
   async getPollById(feedItemId: string) {
@@ -198,47 +239,46 @@ export class AdminPollRepository {
     )
   }
 
-  async updatePollById(feedItemId: string, data: PutPollBody) {
+  async updatePollById(feedItemId: string, data: UpdatePollBody) {
     return await fromRepositoryPromise(async () => {
-      const answer = await this.prismaService.poll.findUniqueOrThrow({
-        where: { feedItemId },
-        select: {
-          options: {
-            select: {
-              votes: true,
-            },
+      return await this.prismaService.$transaction(async (tx) => {
+        return tx.poll.update({
+          where: { feedItemId },
+          data: {
+            title: data.title,
+            description: data.description,
+            endAt: data.endAt,
+            type: data.type,
+            ...(data.topicIds && {
+              topics: {
+                deleteMany: {},
+                createMany: {
+                  data: data.topicIds.map((topicId) => ({
+                    topicId,
+                  })),
+                },
+              },
+            }),
+            ...(data.optionTitles && {
+              options: {
+                deleteMany: {},
+                createMany: {
+                  data: data.optionTitles.map((optionTitle) => ({
+                    title: optionTitle,
+                  })),
+                },
+              },
+            }),
+            status: data.status,
+            ...(data.status === PollStatus.PUBLISHED && {
+              feedItem: {
+                update: {
+                  publishedAt: new Date(),
+                },
+              },
+            }),
           },
-        },
-      })
-
-      const hasAnswer = answer.options.some((pollOption) => pollOption.votes > 0)
-
-      if (hasAnswer) throw new Error('Cannot update poll with answers')
-
-      return await this.prismaService.poll.update({
-        where: { feedItemId },
-        data: {
-          title: data.title,
-          description: data.description,
-          endAt: data.endAt,
-          type: data.type,
-          topics: {
-            deleteMany: {},
-            createMany: {
-              data: data.topicIds.map((topicId) => ({
-                topicId,
-              })),
-            },
-          },
-          options: {
-            deleteMany: {},
-            createMany: {
-              data: data.optionTitles.map((optionTitle) => ({
-                title: optionTitle,
-              })),
-            },
-          },
-        },
+        })
       })
     })
   }

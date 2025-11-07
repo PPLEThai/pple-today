@@ -43,6 +43,9 @@ export class PollsRepository {
                       where: {
                         userId: query.userId,
                       },
+                      orderBy: {
+                        id: 'asc',
+                      },
                     }
                   : undefined,
               },
