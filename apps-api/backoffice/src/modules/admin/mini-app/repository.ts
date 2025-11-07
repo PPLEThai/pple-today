@@ -6,7 +6,7 @@ import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
 
 export class AdminMiniAppRepository {
-  constructor(private prismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   async getMiniApps() {
     return fromRepositoryPromise(

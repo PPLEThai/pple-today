@@ -16,7 +16,7 @@ import {
 import { AdminHashtagRepository, AdminHashtagRepositoryPlugin } from './repository'
 
 export class AdminHashtagService {
-  constructor(private adminHashtagRepository: AdminHashtagRepository) {}
+  constructor(private readonly adminHashtagRepository: AdminHashtagRepository) {}
 
   async getHashtags(query: GetHashtagsQuery = { page: 1 }) {
     const result = await this.adminHashtagRepository.getHashtags(query)

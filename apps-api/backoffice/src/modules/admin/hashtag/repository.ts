@@ -7,7 +7,7 @@ import { CreateHashtagBody, GetHashtagsQuery, UpdateHashtagBody } from './models
 import { PrismaServicePlugin } from '../../../plugins/prisma'
 
 export class AdminHashtagRepository {
-  constructor(private prismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   async getHashtags(query: GetHashtagsQuery = { page: 1 }) {
     const { limit, page } = query
