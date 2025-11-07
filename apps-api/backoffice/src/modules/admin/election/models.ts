@@ -5,7 +5,7 @@ import {
   ElectionStatus,
   FilePath,
   ImageFileMimeType,
-  ListQuery,
+  ListPaginationQuery,
   PaginationMetadataResponse,
 } from '@pple-today/api-common/dtos'
 import {
@@ -66,7 +66,7 @@ export type AdminCreateElectionBody = Static<typeof AdminCreateElectionBody>
 export const AdminCreateElectionResponse = AdminElectionInfo
 export type AdminCreateElectionResponse = Static<typeof AdminCreateElectionResponse>
 
-export const AdminListElectionQuery = ListQuery(
+export const AdminListElectionQuery = ListPaginationQuery(
   t.Object({
     name: t.Optional(t.String()),
     type: t.Optional(t.Enum(ElectionType)),

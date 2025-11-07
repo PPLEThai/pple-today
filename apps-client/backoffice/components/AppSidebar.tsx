@@ -38,7 +38,7 @@ import { SidebarUser } from './SidebarUser'
 
 export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
   const auth = useAuthContext()
-  const user = auth.user!
+  const user = auth.user
   return (
     <SidebarProvider>
       <Sidebar collapsible="none">
@@ -122,7 +122,9 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
                     <CollapsibleContent>
                       <SidebarMenuSub>
                         <SidebarMenuSubItem>
-                          <SidebarMenuSubButton>แบบสอบถาม</SidebarMenuSubButton>
+                          <SidebarMenuSubButton asChild>
+                            <Link to="/activity/poll">Poll</Link>
+                          </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>
@@ -189,7 +191,7 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
             <SidebarMenuItem>
               <SidebarUser
                 src="https://picsum.photos/id/64/64"
-                title={user.name ?? '-'}
+                title={user?.name ?? '-'}
                 subtitle="pple_admin@pple.com"
               >
                 <DropdownMenu>
