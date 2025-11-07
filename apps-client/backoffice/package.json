@@ -22,7 +22,6 @@
     "@tanstack/react-router": "^1.134.9",
     "@tanstack/react-router-devtools": "^1.134.9",
     "@tanstack/react-table": "^8.21.3",
-    "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
     "isbot": "^5.1.27",
     "lucide-react": "^0.542.0",
