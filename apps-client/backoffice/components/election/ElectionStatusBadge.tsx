@@ -2,7 +2,7 @@ import { Badge } from '@pple-today/web-ui/badge'
 
 import { ElectionStatus } from '@api/backoffice/admin'
 
-import { exhaustiveGuard } from '../../../../packages/api-common/src/utils/common'
+import { exhaustiveGuard } from '~/libs/exhaustive-guard'
 
 export default function ElectionStatusBadge({ status }: { status: ElectionStatus }) {
   switch (status) {

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { SubmitHandler, useForm } from 'react-hook-form'
 
-import { standardSchemaResolver } from '@hookform/resolvers/standard-schema/src/standard-schema.js'
+import { standardSchemaResolver } from '@hookform/resolvers/standard-schema'
 import { Button } from '@pple-today/web-ui/button'
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@pple-today/web-ui/dialog'
 import { Form, FormField, FormItem, FormLabel, FormMessage } from '@pple-today/web-ui/form'

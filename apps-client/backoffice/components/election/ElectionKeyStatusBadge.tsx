@@ -1,5 +1,6 @@
 import { Badge } from '@pple-today/web-ui/badge'
-import { AdminElectionInfo } from 'node_modules/@api/backoffice/src/modules/admin/election/models'
+
+import { AdminElectionInfo } from '@api/backoffice/admin'
 
 import { exhaustiveGuard } from '~/libs/exhaustive-guard'
 
