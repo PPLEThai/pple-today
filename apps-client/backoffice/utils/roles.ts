@@ -7,9 +7,8 @@ export const ROLES = [
   'pple-ad:mp',
   'pple-ad:mp_assistant',
   'pple-ad:province',
-  'pple-member:membership_permanant',
+  'pple-member:membership_permanent',
   'pple-member:membership_yearly',
-  'official',
 ] as const
 
 export const getRoleName = (role: (typeof ROLES)[number] | string) => {
@@ -31,12 +30,13 @@ export const getRoleName = (role: (typeof ROLES)[number] | string) => {
       return 'ผู้ช่วย สส.'
     case 'pple-ad:province':
       return 'ทีมจังหวัด'
-    case 'pple-member:membership_permanant':
+    case 'pple-member:membership_permanent':
       return 'สมาชิกตลอดชีพ'
     case 'pple-member:membership_yearly':
       return 'สมาชิกรายปี'
-    case 'official':
-      return 'Official'
   }
   return 'ประชาชน'
 }
+
+export const getUniqueDisplayRoles = (roles: string[]) =>
+  Array.from(new Set(roles.map((role) => getRoleName(role))))

@@ -16,7 +16,7 @@ import {
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
 
-export const KNOWN_ROLES = [
+export const KNOWN_ROLES_EXCEPT_OFFICIAL = [
   'pple-ad:tto',
   'pple-ad:candidate',
   'pple-ad:foundation',
@@ -25,9 +25,8 @@ export const KNOWN_ROLES = [
   'pple-ad:mp',
   'pple-ad:mp_assistant',
   'pple-ad:province',
-  'pple-member:membership_permanant',
+  'pple-member:membership_permanent',
   'pple-member:membership_yearly',
-  'official',
 ]
 
 export class AdminUserRepository {
@@ -40,26 +39,40 @@ export class AdminUserRepository {
     const { limit, page } = query
     const skip = page ? (page - 1) * limit : 0
 
-    let roleFilter = {}
-    if (query.roles && query.roles.length > 0) {
-      const knownQueryRoles = query.roles.filter((role) => KNOWN_ROLES.includes(role))
+    const whitelistedRoles = query.roles ? query.roles.filter((role) => role !== 'official') : []
+
+    let roleFilter: object = {
+      roles: {
+        none: { role: 'official' },
+      },
+    }
+    if (whitelistedRoles.length > 0) {
+      const knownQueryRoles = whitelistedRoles.filter((role) =>
+        KNOWN_ROLES_EXCEPT_OFFICIAL.includes(role)
+      )
       if (knownQueryRoles.length === 0) {
         roleFilter = {
           roles: {
-            some: { role: { notIn: KNOWN_ROLES } },
+            none: { role: 'official' },
+            some: { role: { notIn: KNOWN_ROLES_EXCEPT_OFFICIAL } },
           },
         }
-      } else if (query.roles.length === knownQueryRoles.length) {
+      } else if (whitelistedRoles.length === knownQueryRoles.length) {
         roleFilter = {
           roles: {
+            none: { role: 'official' },
             some: { role: { in: knownQueryRoles } },
           },
         }
       } else {
         roleFilter = {
           roles: {
+            none: { role: 'official' },
             some: {
-              OR: [{ role: { in: knownQueryRoles } }, { role: { notIn: KNOWN_ROLES } }],
+              OR: [
+                { role: { in: knownQueryRoles } },
+                { role: { notIn: KNOWN_ROLES_EXCEPT_OFFICIAL } },
+              ],
             },
           },
         }
@@ -115,7 +128,7 @@ export class AdminUserRepository {
   async getUserById(userId: GetUserByIdParams['userId']) {
     return fromRepositoryPromise(async () => {
       const { roles, profileImagePath, ...data } = await this.prismaService.user.findUniqueOrThrow({
-        where: { id: userId },
+        where: { id: userId, roles: { none: { role: 'official' } } },
         select: {
           id: true,
           name: true,
@@ -144,7 +157,7 @@ export class AdminUserRepository {
   async updateUserById(userId: UpdateUserParams['userId'], data: UpdateUserBody) {
     const existingUser = await fromRepositoryPromise(
       this.prismaService.user.findUniqueOrThrow({
-        where: { id: userId },
+        where: { id: userId, roles: { none: { role: 'official' } } },
         select: { profileImagePath: true },
       })
     )

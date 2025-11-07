@@ -25,7 +25,7 @@ import {
   User,
   UserSquare,
 } from 'lucide-react'
-import { getRoleName } from 'utils/roles'
+import { getUniqueDisplayRoles } from 'utils/roles'
 import { telFormatter } from 'utils/tel'
 
 import { UpdateUserBody, UpdateUserParams } from '@api/backoffice/admin'
@@ -177,7 +177,9 @@ function UserDetailPage() {
                   </div>
                   <div className="flex-1 min-w-0 flex gap-2 flex-wrap">
                     {query.data.roles.length > 0 ? (
-                      query.data.roles.map((r) => <Badge key={r}>{getRoleName(r)}</Badge>)
+                      getUniqueDisplayRoles(query.data.roles).map((displayRole) => (
+                        <Badge key={displayRole}>{displayRole}</Badge>
+                      ))
                     ) : (
                       <span>ไม่มี</span>
                     )}

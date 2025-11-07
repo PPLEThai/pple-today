@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 
 import { Badge } from '@pple-today/web-ui/badge'
 import { Button } from '@pple-today/web-ui/button'
@@ -12,7 +12,7 @@ import { DtFilter } from 'components/datatable/DtFilter'
 import { DtMovement } from 'components/datatable/DtMovement'
 import { TableCopyId } from 'components/TableCopyId'
 import { Eye, EyeOff, Pencil } from 'lucide-react'
-import { getRoleName, ROLES } from 'utils/roles'
+import { getRoleName, getUniqueDisplayRoles, ROLES } from 'utils/roles'
 import { telFormatter } from 'utils/tel'
 
 import { GetUsersResponse, UpdateUserBody, UpdateUserParams } from '@api/backoffice/admin'
@@ -108,8 +108,13 @@ export const Data = () => {
       }),
       columnHelper.accessor('roles', {
         header: 'หน้าที่',
-        cell: (info) =>
-          info.getValue().map((role) => <Badge key={role}>{getRoleName(role)}</Badge>),
+        cell: (info) => (
+          <div className="flex items-center gap-2">
+            {getUniqueDisplayRoles(info.getValue()).map((displayRole) => (
+              <Badge key={displayRole}>{displayRole}</Badge>
+            ))}
+          </div>
+        ),
         size: 97,
         minSize: 97,
       }),
