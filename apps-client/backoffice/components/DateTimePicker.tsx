@@ -22,7 +22,7 @@ export const DateTimePicker = React.forwardRef<HTMLButtonElement, DatetimePicker
   ({ value, onChange, placeholder = 'กรุณาเลือกวันที่', className, disabled }, ref) => {
     const [isOpen, setIsOpen] = React.useState(false)
 
-    const hours = Array.from({ length: 23 }, (_, i) => i + 1)
+    const hours = Array.from({ length: 24 }, (_, i) => i)
     const handleDateSelect = (selectedDate: Date | undefined) => {
       if (selectedDate && onChange) {
         onChange(selectedDate)
@@ -33,7 +33,7 @@ export const DateTimePicker = React.forwardRef<HTMLButtonElement, DatetimePicker
       if (value) {
         const newDate = new Date(value)
         if (type === 'hour') {
-          newDate.setHours((parseInt(newValue) % 12) + (newDate.getHours() >= 12 ? 12 : 0))
+          newDate.setHours(parseInt(newValue) % 24)
         } else if (type === 'minute') {
           newDate.setMinutes(parseInt(newValue))
         }
@@ -77,7 +77,7 @@ export const DateTimePicker = React.forwardRef<HTMLButtonElement, DatetimePicker
                     <Button
                       key={hour}
                       size="icon"
-                      variant={value && value.getHours() % 12 === hour % 12 ? 'default' : 'ghost'}
+                      variant={value && value.getHours() % 24 === hour % 24 ? 'default' : 'ghost'}
                       className="sm:w-full shrink-0 aspect-square"
                       onClick={() => handleTimeChange('hour', hour.toString())}
                     >
