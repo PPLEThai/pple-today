@@ -12,13 +12,13 @@ import {
 import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { Engagements } from 'components/Engagements'
 import { FeedDetailComments } from 'components/feed/FeedDetailComments'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
 import { PostGallery } from 'components/feed/PostGallery'
-import { Calendar, EyeOff, Link, Megaphone, Trash2 } from 'lucide-react'
+import { Calendar, EyeOff, Link as LinkIcon, Megaphone, Trash2 } from 'lucide-react'
 import { getRelativeTime } from 'utils/date'
 
 import { UpdatePostBody, UpdatePostParams } from '@api/backoffice/admin'
@@ -183,7 +183,7 @@ function PostDetailPage() {
             <div className="flex items-start gap-2">
               <div className="flex-1 min-w-0 flex items-center gap-2">
                 <div className="flex items-center gap-1 text-base-text-medium text-sm">
-                  <Link size={16} />
+                  <LinkIcon size={16} />
                   <span>ID:</span>
                 </div>
                 <FeedDetailCopyId id={query.data.id} />

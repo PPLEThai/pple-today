@@ -12,14 +12,22 @@ import {
 import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { ANNOUNCEMENT_TYPE_LONG_DISPLAY_TEXT, AnnouncementIcon } from 'components/AnnouncementIcon'
 import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { Engagements } from 'components/Engagements'
 import { AnnouncementEdit } from 'components/feed/AnnouncementEdit'
 import { FeedDetailComments } from 'components/feed/FeedDetailComments'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
-import { Calendar, EyeOff, FileText, Link, Megaphone, Pencil, Trash2 } from 'lucide-react'
+import {
+  Calendar,
+  EyeOff,
+  FileText,
+  Link as LinkIcon,
+  Megaphone,
+  Pencil,
+  Trash2,
+} from 'lucide-react'
 
 import { UpdateAnnouncementBody, UpdateAnnouncementParams } from '@api/backoffice/admin'
 
@@ -215,7 +223,7 @@ function AnnouncementDetailPage() {
             </div>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1 text-base-text-medium text-sm">
-                <Link size={16} />
+                <LinkIcon size={16} />
                 <span>ID:</span>
               </div>
               <FeedDetailCopyId id={query.data.id} />

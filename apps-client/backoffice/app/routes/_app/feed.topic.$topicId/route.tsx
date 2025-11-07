@@ -12,11 +12,11 @@ import {
 import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
 import { FeedTopicCard } from 'components/feed/FeedTopicCard'
 import { TopicEdit } from 'components/feed/TopicEdit'
-import { Calendar, Link, MessageSquareHeart, Pencil, Users } from 'lucide-react'
+import { Calendar, Link as LinkIcon, MessageSquareHeart, Pencil, Users } from 'lucide-react'
 
 import { reactQueryClient } from '~/libs/api-client'
 
@@ -103,7 +103,7 @@ function TopicDetailPage() {
             </div>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1 text-base-text-medium text-sm">
-                <Link size={16} />
+                <LinkIcon size={16} />
                 <span>ID:</span>
               </div>
               <FeedDetailCopyId id={query.data.id} />
