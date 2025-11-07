@@ -152,10 +152,10 @@ const seedUsers = async () => {
           where: {
             userId_role: {
               userId: `user-member-yesterday-1`,
-              role: 'pple-member:membership_permanant',
+              role: 'pple-member:membership_permanent',
             },
           },
-          create: { role: 'pple-member:membership_permanant' },
+          create: { role: 'pple-member:membership_permanent' },
         },
       },
       province: 'กาญจนบุรี',
@@ -176,10 +176,10 @@ const seedUsers = async () => {
           where: {
             userId_role: {
               userId: `user-member-today-1`,
-              role: 'pple-member:membership_permanant',
+              role: 'pple-member:membership_permanent',
             },
           },
-          create: { role: 'pple-member:membership_permanant' },
+          create: { role: 'pple-member:membership_permanent' },
         },
       },
       province: 'กาญจนบุรี',
@@ -200,10 +200,10 @@ const seedUsers = async () => {
           where: {
             userId_role: {
               userId: `user-member-today-2`,
-              role: 'pple-member:membership_permanant',
+              role: 'pple-member:membership_permanent',
             },
           },
-          create: { role: 'pple-member:membership_permanant' },
+          create: { role: 'pple-member:membership_permanent' },
         },
       },
       province: 'กระบี่',
