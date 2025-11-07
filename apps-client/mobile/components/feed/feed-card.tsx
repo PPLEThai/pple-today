@@ -102,7 +102,13 @@ export const FeedCard = React.memo(function FeedCard(props: {
           <Link href={`/user/${props.feedItem.author.id}`} asChild>
             <Pressable>
               <Avatar alt={feedContent.author.name} className="w-8 h-8">
-                <AvatarImage source={{ uri: feedContent.author.profileImage }} />
+                <AvatarImage
+                  source={{
+                    uri: feedContent.author.profileImage
+                      ? createImageUrl(feedContent.author.profileImage, { width: 32, height: 32 })
+                      : undefined,
+                  }}
+                />
                 <AvatarPPLEFallback />
               </Avatar>
             </Pressable>
@@ -907,7 +913,16 @@ const FeedDetailAuthorSection = (props: { feedItem: FeedItem }) => {
         <Link href={`/user/${props.feedItem.author.id}`} asChild>
           <Pressable>
             <Avatar alt={props.feedItem.author.name} className="w-8 h-8">
-              <AvatarImage source={{ uri: props.feedItem.author.profileImage }} />
+              <AvatarImage
+                source={{
+                  uri: props.feedItem.author.profileImage
+                    ? createImageUrl(props.feedItem.author.profileImage, {
+                        width: 32,
+                        height: 32,
+                      })
+                    : undefined,
+                }}
+              />
               <AvatarPPLEFallback />
             </Avatar>
           </Pressable>

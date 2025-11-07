@@ -168,7 +168,13 @@ function MainHeader() {
           }}
         >
           <Avatar alt={authMe.data?.name ?? ''} className="size-full rounded-none">
-            <AvatarImage source={{ uri: authMe.data?.profileImage }} />
+            <AvatarImage
+              source={{
+                uri: authMe.data?.profileImage
+                  ? createImageUrl(authMe.data?.profileImage, { width: 40, height: 40 })
+                  : undefined,
+              }}
+            />
             <AvatarPPLEFallback />
           </Avatar>
         </Button>

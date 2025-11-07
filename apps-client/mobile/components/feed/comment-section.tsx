@@ -14,6 +14,7 @@ import type { ApplicationApiSchema, GetFeedCommentResponse } from '@api/backoffi
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { formatDateInterval } from '@app/libs/format-date-interval'
+import { createImageUrl } from '@app/utils/image'
 
 const LIMIT = 10
 export function FeedCommentSection({
@@ -117,7 +118,16 @@ function FeedComment({ item }: { item: GetFeedCommentResponse[number] }) {
       <Link href={`/user/${item.author.id}`} asChild>
         <Pressable>
           <Avatar alt={item.author.name} className="w-8 h-8">
-            <AvatarImage source={{ uri: item.author.profileImage }} />
+            <AvatarImage
+              source={{
+                uri: item.author.profileImage
+                  ? createImageUrl(item.author.profileImage, {
+                      width: 32,
+                      height: 32,
+                    })
+                  : undefined,
+              }}
+            />
             <AvatarPPLEFallback />
           </Avatar>
         </Pressable>

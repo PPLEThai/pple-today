@@ -16,6 +16,7 @@ import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { ElectionDetailCard } from '@app/components/election/election-card'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { reactQueryClient } from '@app/libs/api-client'
+import { createImageUrl } from '@app/utils/image'
 
 export default function ElectionDetailPage() {
   const router = useRouter()
@@ -136,7 +137,14 @@ function ElectionCandidateList({ election }: { election: GetElectionResponse }) 
             </View>
             <Avatar alt="Candidate Profile Image" className="size-10">
               {election.candidates[0].profileImagePath && (
-                <AvatarImage source={{ uri: election.candidates[0].profileImagePath }} />
+                <AvatarImage
+                  source={{
+                    uri: createImageUrl(election.candidates[0].profileImagePath, {
+                      width: 40,
+                      height: 40,
+                    }),
+                  }}
+                />
               )}
               <AvatarPPLEFallback />
             </Avatar>
@@ -168,7 +176,14 @@ function ElectionResult({ election }: { election: GetElectionResponse }) {
             </View>
             <Avatar alt="Candidate Profile Image" className="size-10">
               {election.candidates[0].profileImagePath && (
-                <AvatarImage source={{ uri: election.candidates[0].profileImagePath }} />
+                <AvatarImage
+                  source={{
+                    uri: createImageUrl(election.candidates[0].profileImagePath, {
+                      width: 40,
+                      height: 40,
+                    }),
+                  }}
+                />
               )}
               <AvatarPPLEFallback />
             </Avatar>

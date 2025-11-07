@@ -34,6 +34,7 @@ import { Spinner } from '@app/components/spinner'
 import { reactQueryClient } from '@app/libs/api-client'
 import { ImageMimeType } from '@app/types/file'
 import { encryptBallot } from '@app/utils/election'
+import { createImageUrl } from '@app/utils/image'
 import { handleUploadImage } from '@app/utils/upload'
 
 export default function ElectionVotePage() {
@@ -447,7 +448,14 @@ function ElectionVoteStep({ election }: { election: GetElectionResponse }) {
                 </View>
                 <Avatar alt="Candidate Profile Image" className="size-10">
                   {election.candidates[0].profileImagePath && (
-                    <AvatarImage source={{ uri: election.candidates[0].profileImagePath }} />
+                    <AvatarImage
+                      source={{
+                        uri: createImageUrl(election.candidates[0].profileImagePath, {
+                          width: 40,
+                          height: 40,
+                        }),
+                      }}
+                    />
                   )}
                   <AvatarPPLEFallback />
                 </Avatar>

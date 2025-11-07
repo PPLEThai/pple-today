@@ -181,7 +181,7 @@ const PeopleFollowingItem = (profile: PeopleFollowingItemProps) => {
         <Avatar className="size-8" alt={profile.name}>
           <AvatarImage
             source={{
-              uri: profile.profileImage,
+              uri: createImageUrl(profile.profileImage, { width: 32, height: 32 }),
             }}
           />
           <AvatarPPLEFallback />
