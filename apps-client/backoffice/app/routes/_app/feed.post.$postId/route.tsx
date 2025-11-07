@@ -18,7 +18,7 @@ import { Engagements } from 'components/Engagements'
 import { FeedDetailComments } from 'components/feed/FeedDetailComments'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
 import { PostGallery } from 'components/feed/PostGallery'
-import { Calendar, EyeOff, Link as LinkIcon, Megaphone, Trash2 } from 'lucide-react'
+import { Calendar, EyeOff, LinkIcon, Megaphone, Trash2 } from 'lucide-react'
 import { formatDisplayDate, getRelativeTime } from 'utils/date'
 
 import { UpdatePostBody, UpdatePostParams } from '@api/backoffice/admin'

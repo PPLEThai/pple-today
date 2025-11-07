@@ -22,7 +22,7 @@ import {
   Eye,
   EyeOff,
   Facebook,
-  Link as LinkIcon,
+  LinkIcon,
   Pencil,
   Users,
   X,

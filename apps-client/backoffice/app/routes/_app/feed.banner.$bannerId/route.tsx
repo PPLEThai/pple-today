@@ -17,16 +17,7 @@ import { AlertDialog, AlertDialogRef } from 'components/AlertDialog'
 import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { BannerEdit } from 'components/feed/BannerEdit'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
-import {
-  Calendar,
-  EyeOff,
-  Image,
-  Link as LinkIcon,
-  Link2,
-  Megaphone,
-  Pencil,
-  Trash2,
-} from 'lucide-react'
+import { Calendar, EyeOff, Image, Link2, LinkIcon, Megaphone, Pencil, Trash2 } from 'lucide-react'
 import { formatDisplayDate } from 'utils/date'
 
 import { UpdateBannerBody, UpdateBannerParams } from '@api/backoffice/admin'

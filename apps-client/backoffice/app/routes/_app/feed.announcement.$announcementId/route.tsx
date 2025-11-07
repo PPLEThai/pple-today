@@ -19,15 +19,7 @@ import { Engagements } from 'components/Engagements'
 import { AnnouncementEdit } from 'components/feed/AnnouncementEdit'
 import { FeedDetailComments } from 'components/feed/FeedDetailComments'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
-import {
-  Calendar,
-  EyeOff,
-  FileText,
-  Link as LinkIcon,
-  Megaphone,
-  Pencil,
-  Trash2,
-} from 'lucide-react'
+import { Calendar, EyeOff, FileText, LinkIcon, Megaphone, Pencil, Trash2 } from 'lucide-react'
 import { formatDisplayDate } from 'utils/date'
 
 import { UpdateAnnouncementBody, UpdateAnnouncementParams } from '@api/backoffice/admin'

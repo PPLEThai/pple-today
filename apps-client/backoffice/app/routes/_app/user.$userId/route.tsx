@@ -15,16 +15,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
 import { UserEdit } from 'components/user/UserEdit'
-import {
-  Eye,
-  EyeOff,
-  Link as LinkIcon,
-  MapPinned,
-  Pencil,
-  Phone,
-  User,
-  UserSquare,
-} from 'lucide-react'
+import { Eye, EyeOff, LinkIcon, MapPinned, Pencil, Phone, User, UserSquare } from 'lucide-react'
 import { getUniqueDisplayRoles } from 'utils/roles'
 import { telFormatter } from 'utils/tel'
 

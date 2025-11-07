@@ -16,7 +16,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
 import { FeedTopicCard } from 'components/feed/FeedTopicCard'
 import { TopicEdit } from 'components/feed/TopicEdit'
-import { Calendar, Link as LinkIcon, MessageSquareHeart, Pencil, Users } from 'lucide-react'
+import { Calendar, LinkIcon, MessageSquareHeart, Pencil, Users } from 'lucide-react'
 import { formatDisplayDate } from 'utils/date'
 
 import { reactQueryClient } from '~/libs/api-client'
