@@ -14,20 +14,7 @@ export type PollIdParams = Static<typeof PollIdParams>
 export const GetPollsQuery = ListPaginationQuery(
   t.Object({
     search: t.Optional(t.String({ description: 'The search query for the poll title' })),
-    status: t.Optional(
-      t.Array(
-        t.Union(
-          [
-            t.Literal('PUBLISHED', { description: 'String `publish`' }),
-            t.Literal('DRAFT', { description: 'String `draft`' }),
-            t.Literal('ARCHIVED', { description: 'String `archived`' }),
-          ],
-          {
-            description: 'Type of poll',
-          }
-        )
-      )
-    ),
+    status: t.Optional(t.Array(t.Enum(PollStatus))),
   })
 )
 export type GetPollsQuery = Static<typeof GetPollsQuery>

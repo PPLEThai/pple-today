@@ -1,6 +1,7 @@
-import React, { useContext, useEffect } from 'react'
+import React, { useContext, useEffect, useMemo } from 'react'
 
-import { queryOptions, useQuery } from '@tanstack/react-query'
+import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query'
+import { SplashScreen } from 'components/SplashScreen'
 
 import { GetAuthMeResponse } from '@api/backoffice/admin'
 
@@ -19,7 +20,7 @@ export const InitialAuthState: AuthState = {
 
 const AuthContext = React.createContext<AuthState | null>(null)
 
-const userQueryOptions = queryOptions({
+export const userQueryOptions = queryOptions({
   queryKey: ['oidc', 'user'],
   queryFn: () => userManager.getUser(),
 })
@@ -43,16 +44,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [authMeQuery])
 
+  const queryClient = useQueryClient()
+  useEffect(() => {
+    // subscribe to local storage events to sync user state between tabs
+    // note that this only triggers for other tabs, not the current one
+    const handleStorage = (event: StorageEvent) => {
+      if (event.storageArea === window.localStorage && event.key?.startsWith('oidc.user')) {
+        queryClient.resetQueries({ queryKey: userQueryOptions.queryKey })
+        queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/admin/auth/me', {}) })
+      }
+    }
+    window.addEventListener('storage', handleStorage)
+    return () => {
+      window.removeEventListener('storage', handleStorage)
+    }
+  }, [queryClient])
+
+  const auth = useMemo(() => {
+    const user = authMeQuery.data ?? null
+    const isAuthenticated = !!user
+    return { user, isAuthenticated }
+  }, [authMeQuery.data])
+
   if (userQuery.isLoading || authMeQuery.isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <img src="/pple-icon.svg" />
-      </div>
-    )
+    return <SplashScreen />
   }
-  const user = authMeQuery.data ?? null
-  const isAuthenticated = !!user
-  const auth = { isAuthenticated, user }
   return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>
 }
 
