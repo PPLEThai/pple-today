@@ -27,6 +27,7 @@ import {
   Pencil,
   Trash2,
 } from 'lucide-react'
+import { formatDisplayDate } from 'utils/date'
 
 import { UpdateBannerBody, UpdateBannerParams } from '@api/backoffice/admin'
 
@@ -210,11 +211,7 @@ function BannerDetailPage() {
                 <Calendar size={16} />
                 <span>วันที่สร้าง:</span>
               </div>
-              <div>
-                {new Date(query.data.createdAt).toLocaleDateString('th', {
-                  dateStyle: 'short',
-                })}
-              </div>
+              <div>{formatDisplayDate(new Date(query.data.createdAt))}</div>
             </div>
             <div className="flex items-center gap-4 p-4 border border-base-outline-default bg-base-bg-light rounded-xl">
               <div className="flex-1 min-w-0 flex flex-col gap-3">

@@ -19,7 +19,7 @@ import { FeedDetailComments } from 'components/feed/FeedDetailComments'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
 import { PostGallery } from 'components/feed/PostGallery'
 import { Calendar, EyeOff, Link as LinkIcon, Megaphone, Trash2 } from 'lucide-react'
-import { getRelativeTime } from 'utils/date'
+import { formatDisplayDate, getRelativeTime } from 'utils/date'
 
 import { UpdatePostBody, UpdatePostParams } from '@api/backoffice/admin'
 
@@ -201,11 +201,7 @@ function PostDetailPage() {
                 <Calendar size={16} />
                 <span>วันที่โพสต์:</span>
               </div>
-              <div>
-                {new Date(query.data.createdAt).toLocaleDateString('th', {
-                  dateStyle: 'short',
-                })}
-              </div>
+              <div>{formatDisplayDate(new Date(query.data.createdAt))}</div>
             </div>
             <div className="flex items-center gap-3">
               <img

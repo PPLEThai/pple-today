@@ -28,6 +28,7 @@ import {
   Pencil,
   Trash2,
 } from 'lucide-react'
+import { formatDisplayDate } from 'utils/date'
 
 import { UpdateAnnouncementBody, UpdateAnnouncementParams } from '@api/backoffice/admin'
 
@@ -233,11 +234,7 @@ function AnnouncementDetailPage() {
                 <Calendar size={16} />
                 <span>วันที่สร้าง:</span>
               </div>
-              <div>
-                {new Date(query.data.createdAt).toLocaleDateString('th', {
-                  dateStyle: 'short',
-                })}
-              </div>
+              <div>{formatDisplayDate(new Date(query.data.createdAt))}</div>
             </div>
             <div className="flex items-center gap-2 text-base-text-medium text-sm">
               <AnnouncementIcon className="shrink-0 size-8" announcementType={query.data.type} />

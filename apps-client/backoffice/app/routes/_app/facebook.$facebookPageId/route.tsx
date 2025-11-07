@@ -27,6 +27,7 @@ import {
   Users,
   X,
 } from 'lucide-react'
+import { formatDisplayDate } from 'utils/date'
 
 import { UpdateFacebookPageBody, UpdateFacebookPageParams } from '@api/backoffice/admin'
 
@@ -220,11 +221,7 @@ function FacebookDetailPage() {
                           <Calendar size={16} />
                           <span>วันที่สร้าง:</span>
                         </dt>
-                        <dd>
-                          {new Date(query.data.createdAt).toLocaleDateString('th', {
-                            dateStyle: 'short',
-                          })}
-                        </dd>
+                        <dd>{formatDisplayDate(new Date(query.data.createdAt))}</dd>
                       </div>
                     )}
                     {query.data.numberOfFollowers !== undefined && (

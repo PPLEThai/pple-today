@@ -17,6 +17,7 @@ import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
 import { FeedTopicCard } from 'components/feed/FeedTopicCard'
 import { TopicEdit } from 'components/feed/TopicEdit'
 import { Calendar, Link as LinkIcon, MessageSquareHeart, Pencil, Users } from 'lucide-react'
+import { formatDisplayDate } from 'utils/date'
 
 import { reactQueryClient } from '~/libs/api-client'
 
@@ -117,11 +118,7 @@ function TopicDetailPage() {
                         <Calendar size={16} />
                         <span>วันที่สร้าง:</span>
                       </dt>
-                      <dd>
-                        {new Date(query.data.createdAt).toLocaleDateString('th', {
-                          dateStyle: 'short',
-                        })}
-                      </dd>
+                      <dd>{formatDisplayDate(new Date(query.data.createdAt))}</dd>
                     </div>
                   )}
                   {query.data.followersCount !== undefined && (

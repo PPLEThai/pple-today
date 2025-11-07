@@ -14,6 +14,7 @@ import { DtMovement } from 'components/datatable/DtMovement'
 import { Engagements } from 'components/Engagements'
 import { TableCopyId } from 'components/TableCopyId'
 import { EyeOff, Megaphone, Trash2 } from 'lucide-react'
+import { formatDisplayDate } from 'utils/date'
 
 import {
   DeletePostParams,
@@ -172,9 +173,7 @@ export const Data = (props: { authorId?: string }) => {
         cell: (info) => {
           const publishedAt = info.getValue()
           if (!publishedAt) return '-'
-          return new Date(publishedAt).toLocaleDateString('th', {
-            dateStyle: 'short',
-          })
+          return formatDisplayDate(new Date(publishedAt))
         },
         size: 103,
         minSize: 103,

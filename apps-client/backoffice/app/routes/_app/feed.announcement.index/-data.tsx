@@ -15,6 +15,7 @@ import { Engagements } from 'components/Engagements'
 import { AnnouncementCreate } from 'components/feed/AnnouncementCreate'
 import { TableCopyId } from 'components/TableCopyId'
 import { EyeOff, Megaphone, Pencil, Plus, Trash2 } from 'lucide-react'
+import { formatDisplayDate } from 'utils/date'
 
 import {
   GetAnnouncementsResponse,
@@ -184,9 +185,7 @@ export const Data = () => {
         cell: (info) => {
           const publishedAt = info.getValue()
           if (!publishedAt) return '-'
-          return new Date(publishedAt).toLocaleDateString('th', {
-            dateStyle: 'short',
-          })
+          return formatDisplayDate(new Date(publishedAt))
         },
         size: 103,
         minSize: 103,
