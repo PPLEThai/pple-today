@@ -20,14 +20,7 @@ export const getRelativeTime = (time: Date) =>
 
 export default dayjs
 
-export function getTimelineString(start: Date, end: Date) {
-  const [_start, _end] = [start, end].map((date) =>
-    date.toLocaleDateString('th', {
-      day: '2-digit',
-      month: '2-digit',
-      year: '2-digit',
-    })
-  )
+export const formatDisplayDate = (date: Date) => dayjs(date).locale('th').format('DD/MM/BBBB')
 
-  return `${_start} - ${_end}`
-}
+export const getTimelineString = (start: Date, end: Date) =>
+  `${formatDisplayDate(start)} - ${formatDisplayDate(end)}`
