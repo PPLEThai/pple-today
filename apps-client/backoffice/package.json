@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
+    "@json2csv/plainjs": "^7.0.6",
     "@pple-today/api-client": "workspace:^",
     "@pple-today/web-ui": "workspace:^",
     "@tanstack/react-query": "^5.81.5",

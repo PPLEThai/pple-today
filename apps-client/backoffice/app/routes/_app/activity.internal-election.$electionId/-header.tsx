@@ -1,9 +1,9 @@
 import { useCallback } from 'react'
-import { useNavigate } from 'react-router'
 
 import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
 import { CalendarX2, Eye, Pencil, Trash2, Vote } from 'lucide-react'
 
 import { AdminGetElectionResponse } from '@api/backoffice/admin'
@@ -40,7 +40,7 @@ function DeleteButton({ election }: { election: AdminGetElectionResponse }) {
 
     mutation.mutateAsync(
       { pathParams: { electionId: election.id } },
-      { onSuccess: () => navigate('/activity/internal-election') }
+      { onSuccess: () => navigate({ to: '/activity/internal-election' }) }
     )
   }, [mutation, navigate, election])
 

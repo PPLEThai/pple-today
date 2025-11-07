@@ -1,24 +1,13 @@
+import { Parser } from '@json2csv/plainjs'
+
 export function downloadCSV(
   headers: string[],
   data: Record<string, any>[],
   filename: string = 'data.csv'
 ) {
-  const csvRows = [
-    headers.join(','),
-    ...data.map((row) =>
-      headers
-        .map((field) => {
-          let value = row[field] ?? ''
-          value = String(value).replace(/"/g, '""') // Escape double quotes
-          return /[",\n]/.test(value) ? `"${value}"` : value // Wrap values containing commas or newlines in quotes
-        })
-        .join(',')
-    ),
-  ]
-
-  const csvString = csvRows.join('\n')
-
-  const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' })
+  const parser = new Parser({ fields: headers })
+  const csv = parser.parse(data)
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
   const link = document.createElement('a')
   const url = URL.createObjectURL(blob)
   link.href = url
