@@ -209,16 +209,18 @@ export const Data = () => {
                   <Megaphone className="size-4" />
                 </Button>
               )}
-              <PollEdit
-                trigger={
-                  <Button variant="outline" size="icon" className="size-8">
-                    <span className="sr-only">แก้ไข</span>
-                    <Pencil className="size-4" />
-                  </Button>
-                }
-                onSuccess={invalidateQuery}
-                poll={row.original}
-              />
+              {status === 'DRAFT' && (
+                <PollEdit
+                  trigger={
+                    <Button variant="outline" size="icon" className="size-8">
+                      <span className="sr-only">แก้ไข</span>
+                      <Pencil className="size-4" />
+                    </Button>
+                  }
+                  onSuccess={invalidateQuery}
+                  poll={row.original}
+                />
+              )}
               <Button
                 variant="outline-destructive"
                 size="icon"
