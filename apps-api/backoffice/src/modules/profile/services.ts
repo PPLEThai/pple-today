@@ -18,9 +18,9 @@ import { AuthRepository, AuthRepositoryPlugin } from '../auth/repository'
 
 export class ProfileService {
   constructor(
-    private profileRepository: ProfileRepository,
-    private authRepository: AuthRepository,
-    private fileService: FileService
+    private readonly profileRepository: ProfileRepository,
+    private readonly authRepository: AuthRepository,
+    private readonly fileService: FileService
   ) {}
 
   async getUserRecommendation(userId: string) {

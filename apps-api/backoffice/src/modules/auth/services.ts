@@ -17,11 +17,11 @@ import { MiniAppRepository, MiniAppRepositoryPlugin } from '../mini-app/reposito
 
 export class AuthService {
   constructor(
-    private authRepository: AuthRepository,
-    private miniAppRepository: MiniAppRepository,
-    private fileService: FileService,
-    private loggerService: ElysiaLoggerInstance,
-    private oidcConfig: {
+    private readonly authRepository: AuthRepository,
+    private readonly miniAppRepository: MiniAppRepository,
+    private readonly fileService: FileService,
+    private readonly loggerService: ElysiaLoggerInstance,
+    private readonly oidcConfig: {
       oidcClientId: string
       oidcUrl: string
       oidcPrivateJwtKey: string

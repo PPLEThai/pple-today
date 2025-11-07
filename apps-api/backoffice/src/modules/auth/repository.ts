@@ -9,7 +9,7 @@ import { PrismaServicePlugin } from '../../plugins/prisma'
 export class AuthRepository {
   private OFFICIAL_USER_ID: string = ''
 
-  constructor(private prismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   private async lookupOfficialUserId() {
     if (this.OFFICIAL_USER_ID) {

@@ -12,7 +12,7 @@ import { FileServicePlugin } from '../../plugins/file'
 export class AnnouncementService {
   constructor(
     private readonly announcementRepository: AnnouncementRepository,
-    private fileService: FileService
+    private readonly fileService: FileService
   ) {}
 
   async getAnnouncements(query?: { limit: number; page: number }) {
