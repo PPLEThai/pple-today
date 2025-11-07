@@ -43,7 +43,7 @@ export class AdminFeedRepository {
         isPrivate: comment.isPrivate,
         author: {
           id: comment.user.id,
-          profileImage: comment.user.profileImagePath || null,
+          profileImage: comment.user.profileImagePath,
           name: comment.user.name,
         },
       }))
