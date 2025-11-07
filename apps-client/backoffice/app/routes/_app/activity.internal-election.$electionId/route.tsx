@@ -1,13 +1,12 @@
 'use client'
 
 import { createFileRoute } from '@tanstack/react-router'
+import { Breadcrumbs } from 'components/election/-breadcrumbs'
+import { CandidatesAndResult } from 'components/election/-candidatesAndResult'
+import { Detail } from 'components/election/-detail'
+import { Header } from 'components/election/-header'
 
-import { Breadcrumbs } from './-breadcrumbs'
-import { CandidatesAndResult } from './-candidatesAndResult'
-import { Detail } from './-detail'
-import { Header } from './-header'
-
-import { reactQueryClient } from '../../../libs/api-client'
+import * as apiClient from '~/libs/api-client'
 
 export const Route = createFileRoute('/_app/activity/internal-election/$electionId')({
   component: InternalElectionPage,
@@ -16,10 +15,10 @@ export const Route = createFileRoute('/_app/activity/internal-election/$election
 
 function InternalElectionPage() {
   const { electionId } = Route.useParams()
-  const electionQuery = reactQueryClient.useQuery('/admin/elections/:electionId', {
+  const electionQuery = apiClient.reactQueryClient.useQuery('/admin/elections/:electionId', {
     pathParams: { electionId: electionId || '' },
   })
-  const resultQuery = reactQueryClient.useQuery('/admin/elections/:electionId/result', {
+  const resultQuery = apiClient.reactQueryClient.useQuery('/admin/elections/:electionId/result', {
     pathParams: { electionId: electionId || '' },
   })
 
