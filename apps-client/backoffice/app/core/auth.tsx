@@ -1,6 +1,7 @@
 import React, { useContext, useEffect } from 'react'
 
 import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query'
+import { SplashScreen } from 'components/SplashScreen'
 
 import { GetAuthMeResponse } from '@api/backoffice/admin'
 
@@ -60,11 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [queryClient])
 
   if (userQuery.isLoading || authMeQuery.isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <img src="/pple-icon.svg" />
-      </div>
-    )
+    return <SplashScreen />
   }
   const user = authMeQuery.data ?? null
   const isAuthenticated = !!user
