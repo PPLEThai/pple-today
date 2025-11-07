@@ -67,6 +67,7 @@ import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 import { getRoleName } from '@app/utils/get-role-name'
 
+import packageJson from '../../../package.json'
 import { useBottomTabOnPress } from '../_layout'
 
 export default function Index() {
@@ -105,6 +106,9 @@ const Login = () => {
             <Text>สมัครสมาชิก</Text>
           </Button>
         </View>
+        <Text className="text-center text-xs text-base-text-medium absolute bottom-4">
+          v.{packageJson.version}
+        </Text>
       </View>
     </SafeAreaLayout>
   )
@@ -804,6 +808,7 @@ const SettingSection = () => {
         />
         <Text className="text-base text-base-text-high font-heading-regular">ออกจากระบบ</Text>
       </SettingItem>
+      <Text className="text-center text-xs text-base-text-medium">v.{packageJson.version}</Text>
     </View>
   )
 }
