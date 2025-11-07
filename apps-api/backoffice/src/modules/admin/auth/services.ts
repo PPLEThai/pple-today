@@ -8,7 +8,7 @@ import { AdminAuthRepository, AdminAuthRepositoryPlugin } from './repository'
 import { FileServicePlugin } from '../../../plugins/file'
 
 export class AuthService {
-  constructor(private authRepository: AdminAuthRepository) {}
+  constructor(private readonly authRepository: AdminAuthRepository) {}
 
   async getUserById(id: string) {
     const user = await this.authRepository.getUserById(id)

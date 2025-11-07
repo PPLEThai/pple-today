@@ -6,7 +6,7 @@ import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
 
 export class AdminFeedRepository {
-  constructor(private prismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   async updateFeedItemCommentPrivacy(id: string, data: { isPrivate: boolean }) {
     return fromRepositoryPromise(

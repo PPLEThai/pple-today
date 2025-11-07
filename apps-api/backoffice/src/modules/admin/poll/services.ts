@@ -8,7 +8,7 @@ import { GetPollByIdResponse, GetPollsResponse, PostPollBody, UpdatePollBody } f
 import { AdminPollRepository, AdminPollRepositoryPlugin } from './repository'
 
 export class AdminPollService {
-  constructor(private adminPollRepository: AdminPollRepository) {}
+  constructor(private readonly adminPollRepository: AdminPollRepository) {}
 
   async getPolls(page: number, limit: number, status?: PollStatus[], search?: string) {
     const result = await this.adminPollRepository.getPolls(page, limit, status, search)

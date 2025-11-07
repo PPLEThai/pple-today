@@ -1,5 +1,4 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
-import { FileService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
@@ -14,13 +13,8 @@ import {
 } from './models'
 import { AdminUserRepository, AdminUserRepositoryPlugin } from './repository'
 
-import { FileServicePlugin } from '../../../plugins/file'
-
 export class AdminUserService {
-  constructor(
-    private readonly adminUserRepository: AdminUserRepository,
-    private readonly fileService: FileService
-  ) {}
+  constructor(private readonly adminUserRepository: AdminUserRepository) {}
 
   async getUsers(query: GetUsersQuery = { limit: 10, page: 1 }) {
     const result = await this.adminUserRepository.getUsers(query)
@@ -57,7 +51,7 @@ export class AdminUserService {
 export const AdminUserServicePlugin = new Elysia({
   name: 'AdminUserService',
 })
-  .use([AdminUserRepositoryPlugin, FileServicePlugin])
-  .decorate(({ userRepository, fileService }) => ({
-    adminUserService: new AdminUserService(userRepository, fileService),
+  .use([AdminUserRepositoryPlugin])
+  .decorate(({ userRepository }) => ({
+    adminUserService: new AdminUserService(userRepository),
   }))

@@ -12,12 +12,13 @@ import {
 import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { AlertDialog, AlertDialogRef } from 'components/AlertDialog'
 import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { BannerEdit } from 'components/feed/BannerEdit'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
-import { Calendar, EyeOff, Image, Link, Link2, Megaphone, Pencil, Trash2 } from 'lucide-react'
+import { Calendar, EyeOff, Image, Link2, LinkIcon, Megaphone, Pencil, Trash2 } from 'lucide-react'
+import { formatDisplayDate } from 'utils/date'
 
 import { UpdateBannerBody, UpdateBannerParams } from '@api/backoffice/admin'
 
@@ -183,7 +184,7 @@ function BannerDetailPage() {
             <div className="flex items-start gap-2">
               <div className="flex-1 min-w-0 flex items-center gap-2">
                 <div className="flex items-center gap-1 text-base-text-medium text-sm">
-                  <Link size={16} />
+                  <LinkIcon size={16} />
                   <span>ID:</span>
                 </div>
                 <FeedDetailCopyId id={query.data.id} />
@@ -201,11 +202,7 @@ function BannerDetailPage() {
                 <Calendar size={16} />
                 <span>วันที่สร้าง:</span>
               </div>
-              <div>
-                {new Date(query.data.createdAt).toLocaleDateString('th', {
-                  dateStyle: 'short',
-                })}
-              </div>
+              <div>{formatDisplayDate(new Date(query.data.createdAt))}</div>
             </div>
             <div className="flex items-center gap-4 p-4 border border-base-outline-default bg-base-bg-light rounded-xl">
               <div className="flex-1 min-w-0 flex flex-col gap-3">

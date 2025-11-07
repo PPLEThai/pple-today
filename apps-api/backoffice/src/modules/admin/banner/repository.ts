@@ -24,8 +24,8 @@ const PUBLISHED_BANNER_LIMIT = 5
 
 export class AdminBannerRepository {
   constructor(
-    private prismaService: PrismaService,
-    private fileService: FileService
+    private readonly prismaService: PrismaService,
+    private readonly fileService: FileService
   ) {}
 
   async getBanners(query: GetBannersQuery) {

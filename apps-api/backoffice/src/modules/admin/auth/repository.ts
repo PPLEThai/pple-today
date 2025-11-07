@@ -5,7 +5,7 @@ import Elysia from 'elysia'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
 
 export class AdminAuthRepository {
-  constructor(private prismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   async registerUser(data: { id: string; name: string }) {
     return await fromRepositoryPromise(

@@ -18,7 +18,7 @@ import { PrismaServicePlugin } from '../../../plugins/prisma'
 dayjs.extend(utc)
 dayjs.extend(timezone)
 
-const MEMBER_ROLES = ['pple-member:membership_permanant', 'pple-member:membership_yearly']
+const MEMBER_ROLES = ['pple-member:membership_permanent', 'pple-member:membership_yearly']
 
 export class AdminDashboardRepository {
   constructor(private readonly prismaService: PrismaService) {}

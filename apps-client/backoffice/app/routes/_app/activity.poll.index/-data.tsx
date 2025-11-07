@@ -17,6 +17,7 @@ import { PollEdit } from 'components/poll/PollEdit'
 import { TableCopyId } from 'components/TableCopyId'
 import dayjs from 'dayjs'
 import { EyeOff, Megaphone, Pencil, Plus, Trash2 } from 'lucide-react'
+import { formatDisplayDate } from 'utils/date'
 
 import {
   DeletePollParams,
@@ -204,9 +205,7 @@ export const Data = () => {
         cell: (info) => {
           const publishedAt = info.getValue()
           if (!publishedAt) return '-'
-          return new Date(publishedAt).toLocaleDateString('th', {
-            dateStyle: 'short',
-          })
+          return formatDisplayDate(new Date(publishedAt))
         },
         size: 103,
         minSize: 103,

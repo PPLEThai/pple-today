@@ -12,7 +12,7 @@ import { PrismaServicePlugin } from '../../../plugins/prisma'
 export class AdminPollRepository {
   private OFFICIAL_USER_ID: string | null = null
 
-  constructor(private prismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   private async lookupOfficialUserId() {
     if (this.OFFICIAL_USER_ID) {
