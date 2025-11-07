@@ -12,10 +12,21 @@ import {
 import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { FacebookPageEdit } from 'components/facebook/FacebookPageEdit'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
-import { Calendar, Check, Eye, EyeOff, Facebook, Link, Pencil, Users, X } from 'lucide-react'
+import {
+  ArrowUpRight,
+  Calendar,
+  Check,
+  Eye,
+  EyeOff,
+  Facebook,
+  Link as LinkIcon,
+  Pencil,
+  Users,
+  X,
+} from 'lucide-react'
 
 import { UpdateFacebookPageBody, UpdateFacebookPageParams } from '@api/backoffice/admin'
 
@@ -175,12 +186,12 @@ function FacebookDetailPage() {
               </div>
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1 text-base-text-medium text-sm">
-                  <Link size={16} />
+                  <LinkIcon size={16} />
                   <span>ID:</span>
                 </div>
                 <FeedDetailCopyId id={query.data.id} />
               </div>
-              <div className="flex items-center w-fit rounded-xl border p-3 gap-2 bg-base-bg-light border-base-outline-default">
+              <div className="flex items-center w-fit rounded-xl border p-3 gap-2 bg-base-bg-light border-base-outline-default max-w-[350px]">
                 <img
                   className="size-8 shrink-0 rounded-full"
                   src={query.data.user?.profileImagePath ?? '/images/placeholder.svg'}
@@ -191,6 +202,14 @@ function FacebookDetailPage() {
                   decoding="async"
                 />
                 <span className="flex-1 min-w-0 truncate font-serif">{query.data.user?.name}</span>
+                {query.data.user?.id && (
+                  <Button className="shrink-0" variant="outline" size="icon" asChild>
+                    <Link to="/user/$userId" params={{ userId: query.data.user.id }}>
+                      <span className="sr-only">รายละเอียดผู้ใช้งาน</span>
+                      <ArrowUpRight className="stroke-base-primary-default" />
+                    </Link>
+                  </Button>
+                )}
               </div>
               <div className="flex gap-4">
                 <div className="flex-1 min-w-0 flex flex-col gap-4 text-base-text-medium text-sm">

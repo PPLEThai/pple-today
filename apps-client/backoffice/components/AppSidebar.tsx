@@ -30,6 +30,7 @@ import {
   Handshake,
   Newspaper,
   PieChart,
+  UserCircle,
 } from 'lucide-react'
 
 import { logout, useAuthContext } from '~/core/auth'
@@ -152,10 +153,10 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <a href="#">
-                      <Facebook />
+                    <Link to="/user">
+                      <UserCircle />
                       <span>ผู้ใช้งาน</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
