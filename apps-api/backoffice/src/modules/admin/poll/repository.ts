@@ -203,6 +203,51 @@ export class AdminPollRepository {
     })
   }
 
+  async getPollOptionAnswersById(optionId: string) {
+    return await fromRepositoryPromise(async () => {
+      const option = await this.prismaService.pollOption.findUniqueOrThrow({
+        where: {
+          id: optionId,
+        },
+        include: {
+          pollAnswers: {
+            select: {
+              id: true,
+              createdAt: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  profileImagePath: true,
+                },
+              },
+            },
+            orderBy: {
+              createdAt: 'desc',
+            },
+          },
+        },
+      })
+
+      const transformAnswers = {
+        id: option.id,
+        title: option.title,
+        votes: option.votes,
+        answers: option.pollAnswers.map((answer) => ({
+          id: answer.id,
+          createdAt: answer.createdAt,
+          user: {
+            id: answer.user.id,
+            name: answer.user.name,
+            profileImage: answer.user.profileImagePath,
+          },
+        })),
+      }
+
+      return transformAnswers
+    })
+  }
+
   async createPoll(data: PostPollBody) {
     const officialUserId = await this.lookupOfficialUserId()
 

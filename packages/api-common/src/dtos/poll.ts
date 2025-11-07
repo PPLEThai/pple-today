@@ -54,3 +54,20 @@ export const AdminPollDetails = t.Object({
 })
 
 export type AdminPollDetails = Static<typeof AdminPollDetails>
+
+export const AdminPollOptionAnswer = t.Object({
+  id: t.String({ description: 'The ID of the poll option' }),
+  title: t.String({ description: 'The title of the poll option' }),
+  votes: t.Number({ description: 'The vote count of the poll option' }),
+  answers: t.Array(
+    t.Object({
+      id: t.String({ description: 'The ID of the poll option answer' }),
+      createdAt: t.Date(),
+      user: t.Object({
+        id: t.String({ description: 'The ID of the user' }),
+        name: t.String({ description: 'The name of the user' }),
+        profileImage: t.Nullable(t.String({ description: 'The profile image of the user' })),
+      }),
+    })
+  ),
+})

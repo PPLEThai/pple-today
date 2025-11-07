@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { Badge } from '@pple-today/web-ui/badge'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,6 +10,7 @@ import {
 } from '@pple-today/web-ui/breadcrumb'
 import { Button } from '@pple-today/web-ui/button'
 import { Card } from '@pple-today/web-ui/card'
+import { ScrollArea } from '@pple-today/web-ui/scroll-area'
 import { Typography } from '@pple-today/web-ui/typography'
 import { cn } from '@pple-today/web-ui/utils'
 import { useQueryClient } from '@tanstack/react-query'
@@ -175,28 +175,28 @@ export function Data() {
             </Button>
           )}
           {pollDetailQuery.data?.status === 'DRAFT' && (
-            <Button
-              size="icon"
-              className="size-8"
-              disabled={patchMutation.isPending}
-              aria-busy={patchMutation.isPending}
-              onClick={() => setPollStatus({ status: 'PUBLISHED' }, { pollId })}
-            >
-              <span className="sr-only">ประกาศ</span>
-              <Megaphone className="size-4" />
-            </Button>
-          )}
-          {pollDetailQuery.data && (
-            <PollEdit
-              trigger={
-                <Button variant="outline" size="icon" className="size-8">
-                  <span className="sr-only">แก้ไข</span>
-                  <Pencil className="size-4" />
-                </Button>
-              }
-              onSuccess={invalidateQuery}
-              poll={pollDetailQuery.data}
-            />
+            <>
+              <Button
+                size="icon"
+                className="size-8"
+                disabled={patchMutation.isPending}
+                aria-busy={patchMutation.isPending}
+                onClick={() => setPollStatus({ status: 'PUBLISHED' }, { pollId })}
+              >
+                <span className="sr-only">ประกาศ</span>
+                <Megaphone className="size-4" />
+              </Button>
+              <PollEdit
+                trigger={
+                  <Button variant="outline" size="icon" className="size-8">
+                    <span className="sr-only">แก้ไข</span>
+                    <Pencil className="size-4" />
+                  </Button>
+                }
+                onSuccess={invalidateQuery}
+                poll={pollDetailQuery.data}
+              />
+            </>
           )}
           <Button
             variant="outline-destructive"
@@ -223,7 +223,12 @@ export function Data() {
           handleOptionClick={handleOpenResult}
           selectOption={selectedOptionId}
         />
-        {isResultOpen && <PollAnswerSection optionId={selectedOptionId} />}
+        {isResultOpen && selectedOptionId !== '' && (
+          <PollAnswerSection
+            optionId={selectedOptionId}
+            totalVotes={pollDetailQuery.data.totalVotes}
+          />
+        )}
       </div>
       <PollCommentSection id={pollDetailQuery.data.id} />
       <ConfirmDialog ref={confirmDialogRef} />
@@ -312,20 +317,6 @@ const PollInfoSection = ({ data, selectOption, handleOptionClick }: PollInfoProp
         })}
       </div>
 
-      {/* Topics Section */}
-      {data.topics.length > 0 && (
-        <div className="flex flex-row items-center justify-start gap-1">
-          <p className="text-sm text-base-text-medium">หัวข้อ:</p>
-          <div className="flex flex-wrap gap-1">
-            {data.topics.map((topic) => (
-              <Badge key={topic} variant="secondary">
-                {topic}
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
-
       <div className="flex flex-row gap-1">
         <span className="text-sm font-light">การมีส่วนร่วม:</span>
         <Engagements likes={upVotes} dislikes={downVotes} comments={data.commentCount} />
@@ -379,13 +370,99 @@ const PollCommentSection = ({ id }: { id: string }) => {
   )
 }
 
-const PollAnswerSection = ({ optionId }: { optionId: string | null }) => {
-  if (optionId === '') return null
+interface PollAnswerSectionProps {
+  optionId: string
+  totalVotes: number
+}
+
+const PollAnswerSection = (props: PollAnswerSectionProps) => {
+  const { optionId, totalVotes } = props
+
+  const pollAnswerQuery = reactQueryClient.useQuery(
+    '/admin/polls/answers/:optionId',
+    {
+      pathParams: {
+        optionId,
+      },
+    },
+    {
+      enabled: !!optionId,
+    }
+  )
+
+  const percentage = useMemo(() => {
+    if (!pollAnswerQuery.data || totalVotes === 0) return 0
+    return Math.trunc((pollAnswerQuery.data.votes / totalVotes) * 100)
+  }, [pollAnswerQuery.data, totalVotes])
+
+  if (!pollAnswerQuery.data) {
+    return null
+  }
+
+  if (pollAnswerQuery.isLoading) {
+    return (
+      <Card className="bg-base-bg-light shadow-none font-normal col-span-1">
+        <p>Loading...</p>
+      </Card>
+    )
+  }
 
   return (
     <Card className="bg-base-bg-light shadow-none font-normal col-span-1">
-      <Typography variant="h4">Poll Results</Typography>
-      <div>Option ID: {optionId}</div>
+      <Typography variant="h4">{pollAnswerQuery.data.title}</Typography>
+      <div className="flex flex-row text-base-primary-default gap-1 text-base shrink-0 items-center min-w-fit">
+        <p className="text-xl">{percentage}%</p>
+        <hr className="border border-base-primary-light items-center mx-4 flex-1" />
+        <p className="text-base-text-high">
+          รวม
+          <span className="text-base-primary-default text-xl mx-1">
+            {pollAnswerQuery.data.votes}
+          </span>
+          คำตอบ
+        </p>
+      </div>
+      <ScrollArea className="space-y-2 max-h-96">
+        {pollAnswerQuery.data.answers.map((answer) => (
+          <PollUserAnswer
+            key={answer.id}
+            name={answer.user.name}
+            profileImage={answer.user.profileImage}
+            createdAt={answer.createdAt}
+          />
+        ))}
+      </ScrollArea>
     </Card>
+  )
+}
+
+interface PollUserAnswerProps {
+  name: string
+  profileImage: string | null
+  createdAt: Date
+}
+
+const PollUserAnswer = (props: PollUserAnswerProps) => {
+  return (
+    <div className="flex items-start gap-2 flex-row mb-2">
+      <img
+        className="size-8 shrink-0 rounded-full"
+        src={props.profileImage ?? '/images/placeholder.svg'}
+        alt=""
+        width={32}
+        height={32}
+        loading="lazy"
+        decoding="async"
+      />
+      <div className="flex flex-col items-start w-full gap-1">
+        <div className="flex items-start gap-1 py-2 px-3 bg-base-bg-white border border-base-outline-default rounded-2xl w-full">
+          <div className="flex-1 min-w-0 flex flex-col gap-1 text-base-text-high">
+            <p className="font-serif text-sm">{props.name}</p>
+          </div>
+        </div>
+        <span className="text-xs text-base-text-medium">
+          {dayjs(props.createdAt).format('DD/MM/YYYY HH:mm')}
+        </span>
+      </div>
+    </div>
   )
 }
