@@ -46,7 +46,7 @@ export class ElectionRepository {
             include: {
               _count: { select: { voters: true, voteRecords: true } },
               voteRecords: { where: { userId }, select: { userId: true }, take: 1 },
-              candidates: true,
+              candidates: { include: { results: true } },
             },
           },
         },

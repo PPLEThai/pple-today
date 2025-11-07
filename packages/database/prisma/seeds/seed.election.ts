@@ -1,6 +1,12 @@
 import { PrismaPg } from '@prisma/adapter-pg'
 
-import { ElectionType, EligibleVoterType, Prisma, PrismaClient } from '../../__generated__/prisma'
+import {
+  ElectionKeysStatus,
+  ElectionType,
+  EligibleVoterType,
+  Prisma,
+  PrismaClient,
+} from '../../__generated__/prisma'
 
 const connectionString = `${process.env.DATABASE_URL}`
 const adapter = new PrismaPg({ connectionString })
@@ -29,6 +35,38 @@ const seedElections = async (userId: string) => {
       name: 'online-with-no-eligible',
       type: ElectionType.ONLINE,
       publishDate: dateNow,
+      openVoting: addDays(dateNow, 1),
+      closeVoting: addDays(dateNow, 2),
+    },
+    // online
+    // key pending
+    {
+      id: 'online-with-key-pending',
+      name: 'online-with-key-pending',
+      type: ElectionType.ONLINE,
+      keysStatus: ElectionKeysStatus.PENDING_CREATED,
+      openVoting: addDays(dateNow, 1),
+      closeVoting: addDays(dateNow, 2),
+    },
+    // online
+    // key failed
+    {
+      id: 'online-with-key-failed',
+      name: 'online-with-key-failed',
+      type: ElectionType.ONLINE,
+      keysStatus: ElectionKeysStatus.FAILED_CREATED,
+      openVoting: addDays(dateNow, 1),
+      closeVoting: addDays(dateNow, 2),
+    },
+    // online
+    // key success
+    {
+      id: 'online-with-key-success',
+      name: 'online-with-key-success',
+      type: ElectionType.ONLINE,
+      keysStatus: ElectionKeysStatus.CREATED,
+      encryptionPublicKey: 'mock',
+      signingPublicKey: 'mock',
       openVoting: addDays(dateNow, 1),
       closeVoting: addDays(dateNow, 2),
     },
@@ -225,9 +263,42 @@ const seedElections = async (userId: string) => {
       openVoting: addDays(dateNow, -2),
       closeVoting: addDays(dateNow, -1),
       voters: {
-        create: {
-          userId: userId,
-          type: EligibleVoterType.ONLINE,
+        createMany: {
+          data: [
+            {
+              userId: userId,
+              type: EligibleVoterType.ONLINE,
+            },
+            {
+              userId: 'election-user-1',
+              type: EligibleVoterType.ONSITE,
+            },
+            {
+              userId: 'election-user-2',
+              type: EligibleVoterType.ONLINE,
+            },
+          ],
+        },
+      },
+      candidates: {
+        createMany: {
+          data: [
+            {
+              id: 'close-vote-1',
+              name: 'close-vote-1',
+              number: 1,
+            },
+            {
+              id: 'close-vote-2',
+              name: 'close-vote-2',
+              number: 2,
+            },
+            {
+              id: 'close-vote-3',
+              name: 'close-vote-3',
+              number: 3,
+            },
+          ],
         },
       },
     },

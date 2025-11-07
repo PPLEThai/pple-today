@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
 
-import { Badge } from '@pple-today/web-ui/badge'
 import { Button } from '@pple-today/web-ui/button'
 import { DataTable } from '@pple-today/web-ui/data-table'
 import { Typography } from '@pple-today/web-ui/typography'
@@ -9,13 +8,15 @@ import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
 import { DtFilter } from 'components/datatable/DtFilter'
 import { DtMovement } from 'components/datatable/DtMovement'
+import ElectionStatusBadge from 'components/election/ElectionStatusBadge'
+import ElectionTypeBadge from 'components/election/ElectionTypeBadge'
 import { TableCopyId } from 'components/TableCopyId'
 import { CalendarX2, Pencil, Trash2, Users } from 'lucide-react'
+import { getTimelineString } from 'utils/date'
 
-import { AdminListElectionResponse, ElectionInfo, ElectionStatus } from '@api/backoffice/admin'
+import { AdminListElectionResponse, ElectionStatus } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
-import { exhaustiveGuard } from '~/libs/exhaustive-guard'
 
 const columnHelper = createColumnHelper<AdminListElectionResponse['data'][number]>()
 
@@ -151,23 +152,12 @@ export const Data = () => {
         id: 'votingTimeline',
         header: 'ช่วงเวลาลงคะแนน',
         cell: (info) => {
-          const openVote = new Date(info.row.original.openVoting).toLocaleDateString('th', {
-            day: '2-digit',
-            month: '2-digit',
-            year: '2-digit',
-          })
-
-          const closeVote = new Date(info.row.original.closeVoting).toLocaleDateString('th', {
-            day: '2-digit',
-            month: '2-digit',
-            year: '2-digit',
-          })
+          const { openVoting, closeVoting } = info.row.original
 
           return (
-            <Typography
-              variant="small"
-              className="font-extralight"
-            >{`${openVote} - ${closeVote}`}</Typography>
+            <Typography variant="small" className="font-extralight">
+              {getTimelineString(new Date(openVoting), new Date(closeVoting))}
+            </Typography>
           )
         },
       }),
@@ -270,34 +260,4 @@ export const Data = () => {
       />
     </>
   )
-}
-
-const ElectionStatusBadge = ({ status }: { status: ElectionStatus }) => {
-  switch (status) {
-    case 'DRAFT':
-      return <Badge variant="outline">ร่าง</Badge>
-    case 'NOT_OPENED_VOTE':
-      return <Badge variant="secondary">ยังไม่เปิดหีบ</Badge>
-    case 'OPEN_VOTE':
-      return <Badge variant="success">เปิดหีบ</Badge>
-    case 'CLOSED_VOTE':
-      return <Badge variant="destructive">ปิดหีบ</Badge>
-    case 'RESULT_ANNOUNCE':
-      return <Badge variant="default">ประกาศผล</Badge>
-    default:
-      exhaustiveGuard(status)
-  }
-}
-
-const ElectionTypeBadge = ({ type }: { type: ElectionInfo['type'] }) => {
-  switch (type) {
-    case 'ONSITE':
-      return <Badge variant="default">ในสถานที่</Badge>
-    case 'ONLINE':
-      return <Badge variant="default">ออนไลน์</Badge>
-    case 'HYBRID':
-      return <Badge variant="default">ผสม</Badge>
-    default:
-      exhaustiveGuard(type)
-  }
 }

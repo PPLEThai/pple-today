@@ -3,7 +3,9 @@ import { Election } from '@pple-today/database/prisma'
 import { ElectionInfo, ElectionStatus } from '../dtos'
 
 export function getElectionStatus(election: Election, now: Date): ElectionStatus {
-  if (!election.publishDate) {
+  if (election.isCancelled) {
+    return 'CANCELLED'
+  } else if (!election.publishDate) {
     return 'DRAFT'
   } else if (now < election.openVoting) {
     return 'NOT_OPENED_VOTE'

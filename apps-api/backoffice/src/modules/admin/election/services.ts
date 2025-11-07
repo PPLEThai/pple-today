@@ -76,11 +76,12 @@ export class AdminElectionService {
   }
 
   private convertToAdminElectionInfo(
-    election: Election & { _count: { voters: number } },
+    election: Election & { _count: { voters: number; voteRecords: number } },
     now: Date
   ): AdminElectionInfo {
     return {
       ...convertToElectionInfo(election, now),
+      totalVotes: election._count.voteRecords,
       totalVoters: election._count.voters,
       onlineResultStatus: election.onlineResultStatus,
       keyStatus: election.keysStatus,
@@ -501,22 +502,26 @@ export class AdminElectionService {
     return ok()
   }
 
-  async listElectionEligibleVoters(electionId: string) {
-    const voterResult = await this.adminElectionRepository.listElectionEligibleVoters(electionId)
+  async listElectionEligibleVoters(electionId: string, isRegistered?: boolean) {
+    const voterResult = await this.adminElectionRepository.listElectionEligibleVoters(
+      electionId,
+      isRegistered
+    )
     if (voterResult.isErr()) {
       return mapRepositoryError(voterResult.error)
     }
 
-    return ok(
-      voterResult.value.map((voter) => ({
-        id: voter.user.id,
-        name: voter.user.name,
-        phoneNumber: voter.user.phoneNumber,
-        profileImage:
-          voter.user.profileImagePath &&
-          this.fileService.getPublicFileUrl(voter.user.profileImagePath),
-      }))
-    )
+    const voters = voterResult.value.map((voter) => ({
+      id: voter.user.id,
+      phoneNumber: voter.user.phoneNumber,
+    }))
+
+    const headers: ['id', 'phoneNumber'] = ['id', 'phoneNumber']
+
+    return ok({
+      headers,
+      voters,
+    })
   }
 
   async deleteElectionEligibleVoters(
@@ -947,7 +952,7 @@ export class AdminElectionService {
     })
   }
 
-  async annouceElectionResult(
+  async announceElectionResult(
     electionId: string,
     timeline: {
       start: Date
@@ -991,7 +996,7 @@ export class AdminElectionService {
     if (election.startResult || election.endResult) {
       return err({
         code: InternalErrorCode.ELECTION_ALREADY_ANNOUCE_RESULT,
-        message: 'Election already annouce result',
+        message: 'Election already announce result',
       })
     }
 
@@ -1024,17 +1029,17 @@ export class AdminElectionService {
       }
     }
 
-    const annouceResult = await this.adminElectionRepository.annouceElectionResult(
+    const announceResult = await this.adminElectionRepository.announceElectionResult(
       electionId,
       timeline,
       destroyKeyInfo
     )
-    if (annouceResult.isErr()) {
+    if (announceResult.isErr()) {
       if (isDestroyKey) {
         const restoreResult = await this.ballotCryptoService.restoreKeys(election.id)
         if (restoreResult.isErr()) return err(restoreResult.error)
       }
-      return mapRepositoryError(annouceResult.error)
+      return mapRepositoryError(announceResult.error)
     }
 
     return ok()

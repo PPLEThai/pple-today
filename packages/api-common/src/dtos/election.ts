@@ -7,6 +7,7 @@ export const ElectionStatus = t.Enum({
   OPEN_VOTE: 'OPEN_VOTE',
   CLOSED_VOTE: 'CLOSED_VOTE',
   RESULT_ANNOUNCE: 'RESULT_ANNOUNCE',
+  CANCELLED: 'CANCELLED',
 })
 export type ElectionStatus = Static<typeof ElectionStatus>
 
