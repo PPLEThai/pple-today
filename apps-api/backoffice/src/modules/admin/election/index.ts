@@ -3,9 +3,9 @@ import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-commo
 import Elysia from 'elysia'
 
 import {
-  AdminAnnouceResultBody,
-  AdminAnnouceResultParams,
-  AdminAnnouceResultResponse,
+  AdminAnnounceResultBody,
+  AdminAnnounceResultParams,
+  AdminAnnounceResultResponse,
   AdminBulkCreateElectionEligibleVoterBody,
   AdminBulkCreateElectionEligibleVoterParams,
   AdminBulkCreateElectionEligibleVoterResponse,
@@ -809,25 +809,25 @@ export const AdminElectionController = new Elysia({
         }
       )
       .put(
-        '/annouce',
+        '/announce',
         async ({ status, adminElectionService, params, body }) => {
-          const result = await adminElectionService.annouceElectionResult(params.electionId, body)
+          const result = await adminElectionService.announceElectionResult(params.electionId, body)
           if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
           return status(200, {
-            message: 'Annouce election result successfully',
+            message: 'Announce election result successfully',
           })
         },
         {
           detail: {
-            summary: 'Annouce election result',
-            description: 'Annouce election result',
+            summary: 'Announce election result',
+            description: 'Announce election result',
           },
           requiredLocalUser: true,
-          params: AdminAnnouceResultParams,
-          body: AdminAnnouceResultBody,
+          params: AdminAnnounceResultParams,
+          body: AdminAnnounceResultBody,
           response: {
-            200: AdminAnnouceResultResponse,
+            200: AdminAnnounceResultResponse,
             ...createErrorSchema(
               InternalErrorCode.INTERNAL_SERVER_ERROR,
               InternalErrorCode.BAD_REQUEST,

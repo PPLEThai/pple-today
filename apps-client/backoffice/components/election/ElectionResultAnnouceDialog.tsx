@@ -12,7 +12,7 @@ import z from 'zod'
 
 import { reactQueryClient } from '~/libs/api-client'
 
-export default function ElectionResultAnnouceDialog({
+export default function ElectionResultAnnounceDialog({
   electionId,
   onSuccess,
   disabled,
@@ -80,16 +80,16 @@ function ResultTimelineForm({
     resolver: standardSchemaResolver(ResultTimelineSchema),
   })
 
-  const annouceResultMutation = reactQueryClient.useMutation(
+  const announceResultMutation = reactQueryClient.useMutation(
     'put',
-    '/admin/elections/:electionId/result/annouce'
+    '/admin/elections/:electionId/result/announce'
   )
 
-  const annouceResult = useCallback(
+  const announceResult = useCallback(
     ({ startResult, endResult }: { startResult: Date; endResult: Date }) => {
-      if (annouceResultMutation.isPending) return
+      if (announceResultMutation.isPending) return
 
-      annouceResultMutation.mutateAsync(
+      announceResultMutation.mutateAsync(
         {
           pathParams: {
             electionId,
@@ -104,7 +104,7 @@ function ResultTimelineForm({
         }
       )
     },
-    [annouceResultMutation, electionId, onSuccess]
+    [announceResultMutation, electionId, onSuccess]
   )
 
   const onSubmit: SubmitHandler<ResultTimelineOutput> = (
@@ -128,7 +128,7 @@ function ResultTimelineForm({
       return
     }
 
-    annouceResult({ startResult: data.startResult, endResult: data.endResult })
+    announceResult({ startResult: data.startResult, endResult: data.endResult })
   }
 
   return (
@@ -162,7 +162,7 @@ function ResultTimelineForm({
           </DialogTrigger>
           <Button
             disabled={
-              annouceResultMutation.isPending ||
+              announceResultMutation.isPending ||
               !form.watch().endResult ||
               !form.watch().startResult
             }

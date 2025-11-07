@@ -20,7 +20,7 @@ import {
   EditOnsiteResultReducer,
   useEditOnsiteResultContext,
 } from './-context'
-import { ResultAnnouceDialog } from './-editOnisteResult'
+import { ResultAnnounceDialog } from './-editOnisteResult'
 
 export function CandidatesAndResult({
   election,
@@ -85,7 +85,7 @@ function TopRightCandidate({ election }: { election: AdminGetElectionResponse })
                   return null
               }
             })()}
-            <ResultAnnouceDialog election={election} />
+            <ResultAnnounceDialog election={election} />
           </div>
           <CandidateHeader election={election} />
         </div>

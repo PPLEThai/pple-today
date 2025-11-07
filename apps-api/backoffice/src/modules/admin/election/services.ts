@@ -952,7 +952,7 @@ export class AdminElectionService {
     })
   }
 
-  async annouceElectionResult(
+  async announceElectionResult(
     electionId: string,
     timeline: {
       start: Date
@@ -996,7 +996,7 @@ export class AdminElectionService {
     if (election.startResult || election.endResult) {
       return err({
         code: InternalErrorCode.ELECTION_ALREADY_ANNOUCE_RESULT,
-        message: 'Election already annouce result',
+        message: 'Election already announce result',
       })
     }
 
@@ -1029,17 +1029,17 @@ export class AdminElectionService {
       }
     }
 
-    const annouceResult = await this.adminElectionRepository.annouceElectionResult(
+    const announceResult = await this.adminElectionRepository.announceElectionResult(
       electionId,
       timeline,
       destroyKeyInfo
     )
-    if (annouceResult.isErr()) {
+    if (announceResult.isErr()) {
       if (isDestroyKey) {
         const restoreResult = await this.ballotCryptoService.restoreKeys(election.id)
         if (restoreResult.isErr()) return err(restoreResult.error)
       }
-      return mapRepositoryError(annouceResult.error)
+      return mapRepositoryError(announceResult.error)
     }
 
     return ok()

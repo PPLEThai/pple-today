@@ -735,7 +735,7 @@ export class AdminElectionRepository {
     )
   }
 
-  async annouceElectionResult(
+  async announceElectionResult(
     electionId: string,
     timeline: {
       start: Date
