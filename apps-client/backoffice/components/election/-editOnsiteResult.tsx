@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@pple-today/w
 import { Form, FormField, FormItem, FormLabel, FormMessage } from '@pple-today/web-ui/form'
 import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
-import { DateTimePicker } from 'components/DatetimePicker'
+import { DateTimePicker } from 'components/DateTimePicker'
 import { Megaphone } from 'lucide-react'
 import z from 'zod'
 

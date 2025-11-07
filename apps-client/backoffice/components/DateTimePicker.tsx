@@ -7,11 +7,8 @@ import { Calendar } from '@pple-today/web-ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@pple-today/web-ui/popover'
 import { ScrollArea, ScrollBar } from '@pple-today/web-ui/scroll-area'
 import { cn } from '@pple-today/web-ui/utils'
-import buddhistEra from 'dayjs/plugin/buddhistEra'
 import { CalendarIcon } from 'lucide-react'
 import dayjs from 'utils/date'
-
-dayjs.extend(buddhistEra)
 
 interface DatetimePickerProps {
   value?: Date
@@ -25,23 +22,20 @@ export const DateTimePicker = React.forwardRef<HTMLButtonElement, DatetimePicker
   ({ value, onChange, placeholder = 'กรุณาเลือกวันที่', className, disabled }, ref) => {
     const [isOpen, setIsOpen] = React.useState(false)
 
-    const hours = Array.from({ length: 12 }, (_, i) => i + 1)
+    const hours = Array.from({ length: 23 }, (_, i) => i + 1)
     const handleDateSelect = (selectedDate: Date | undefined) => {
       if (selectedDate && onChange) {
         onChange(selectedDate)
       }
     }
 
-    const handleTimeChange = (type: 'hour' | 'minute' | 'ampm', newValue: string) => {
+    const handleTimeChange = (type: 'hour' | 'minute', newValue: string) => {
       if (value) {
         const newDate = new Date(value)
         if (type === 'hour') {
           newDate.setHours((parseInt(newValue) % 12) + (newDate.getHours() >= 12 ? 12 : 0))
         } else if (type === 'minute') {
           newDate.setMinutes(parseInt(newValue))
-        } else if (type === 'ampm') {
-          const currentHours = newDate.getHours()
-          newDate.setHours(newValue === 'PM' ? currentHours + 12 : currentHours - 12)
         }
         onChange && onChange(newDate)
       }
@@ -108,27 +102,6 @@ export const DateTimePicker = React.forwardRef<HTMLButtonElement, DatetimePicker
                   ))}
                 </div>
                 <ScrollBar orientation="horizontal" className="sm:hidden" />
-              </ScrollArea>
-              <ScrollArea className="">
-                <div className="flex sm:flex-col p-2">
-                  {['AM', 'PM'].map((ampm) => (
-                    <Button
-                      key={ampm}
-                      size="icon"
-                      variant={
-                        value &&
-                        ((ampm === 'AM' && value.getHours() < 12) ||
-                          (ampm === 'PM' && value.getHours() >= 12))
-                          ? 'default'
-                          : 'ghost'
-                      }
-                      className="sm:w-full shrink-0 aspect-square"
-                      onClick={() => handleTimeChange('ampm', ampm)}
-                    >
-                      {ampm}
-                    </Button>
-                  ))}
-                </div>
               </ScrollArea>
             </div>
           </div>
