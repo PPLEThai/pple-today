@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react'
+import React, { useContext, useEffect, useMemo } from 'react'
 
 import { queryOptions, useQuery, useQueryClient } from '@tanstack/react-query'
 import { SplashScreen } from 'components/SplashScreen'
@@ -60,12 +60,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [queryClient])
 
+  const auth = useMemo(() => {
+    const user = authMeQuery.data ?? null
+    const isAuthenticated = !!user
+    return { user, isAuthenticated }
+  }, [authMeQuery.data])
+
   if (userQuery.isLoading || authMeQuery.isLoading) {
     return <SplashScreen />
   }
-  const user = authMeQuery.data ?? null
-  const isAuthenticated = !!user
-  const auth = { isAuthenticated, user }
   return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>
 }
 

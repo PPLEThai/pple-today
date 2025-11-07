@@ -2,12 +2,12 @@ import React, { useEffect, useRef } from 'react'
 
 import { Button } from '@pple-today/web-ui/button'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { createFileRoute, redirect, useNavigate, useRouterState } from '@tanstack/react-router'
+import { createFileRoute, redirect, useRouterState } from '@tanstack/react-router'
 import { SplashScreen } from 'components/SplashScreen'
 import * as z from 'zod/v4'
 
 import { userManager } from '~/config/oidc'
-import { useAuthContext, userQueryOptions } from '~/core/auth'
+import { userQueryOptions } from '~/core/auth'
 import { reactQueryClient } from '~/libs/api-client'
 
 const loginSearchSchema = z.object({
@@ -33,16 +33,19 @@ function RouteComponent() {
     },
   })
 
+  const queryClient = useQueryClient()
+  const navigate = Route.useNavigate()
   const signInMutation = useMutation({
     mutationKey: ['sso', 'signin-callback'],
     mutationFn: () => {
       return userManager.signinCallback()
     },
-    onSuccess: () => {
+    onSuccess: (user) => {
       queryClient.invalidateQueries({ queryKey: userQueryOptions.queryKey })
       queryClient.invalidateQueries({
         queryKey: reactQueryClient.getQueryKey('/admin/auth/me', {}),
       })
+      navigate({ search: { ...search, redirect: user?.url_state } })
     },
     onError: (error) => {
       console.error('SSO sign-in error:', error)
@@ -62,16 +65,6 @@ function RouteComponent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const auth = useAuthContext()
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  useEffect(() => {
-    if (!auth.isAuthenticated || !signInMutation.data) {
-      return
-    }
-    navigate({ to: search.redirect ?? '/dashboard' })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.isAuthenticated, signInMutation.data])
   const disabled = signInRedirectMutation.isPending || signInMutation.isPending
 
   const routerState = useRouterState()
