@@ -183,7 +183,11 @@ export const Data = () => {
             case 'PUBLISHED_ONGOING':
               return <Badge variant={'success'}>ประกาศแล้ว</Badge>
             case 'PUBLISHED_ENDED':
-              return <Badge variant={'closed'}>ปิดโพลแล้ว</Badge>
+              return (
+                <Badge variant={'secondary'} className="bg-base-secondary-light">
+                  ปิดโพลแล้ว
+                </Badge>
+              )
             case 'ARCHIVED':
               return <Badge variant={'secondary'}>เก็บในคลัง</Badge>
             case 'DRAFT':

@@ -42,29 +42,14 @@ export class AdminPollRepository {
   }
 
   async getPolls(page: number, limit: number, status?: PollStatus[], search?: string) {
-    const skip = Math.max((page - 1) * limit, 0)
-
-    const where = {
-      ...(search && {
-        title: {
-          contains: search,
-        },
-      }),
-      ...(status && {
-        status: { in: status },
-      }),
-    }
-
     const result = await fromRepositoryPromise(async () => {
       const [polls, count] = await Promise.all([
         await this.prismaService.feedItem.findMany({
           where: {
             type: FeedItemType.POLL,
             poll: {
-              AND: {
-                title: { contains: search },
-                status: { in: status },
-              },
+              title: { contains: search, mode: 'insensitive' as const },
+              status: { in: status },
             },
           },
           include: {
@@ -95,11 +80,14 @@ export class AdminPollRepository {
           orderBy: {
             createdAt: 'desc',
           },
-          skip,
+          skip: Math.max((page - 1) * limit, 0),
           take: limit,
         }),
         await this.prismaService.poll.count({
-          where,
+          where: {
+            title: { contains: search, mode: 'insensitive' as const },
+            status: { in: status },
+          },
         }),
       ])
 
@@ -253,7 +241,7 @@ export class AdminPollRepository {
 
   async updatePollById(feedItemId: string, data: UpdatePollBody) {
     return await fromRepositoryPromise(async () => {
-      await this.prismaService.$transaction(async (tx) => {
+      return await this.prismaService.$transaction(async (tx) => {
         return tx.poll.update({
           where: { feedItemId },
           data: {

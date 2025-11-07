@@ -154,7 +154,7 @@ export const PollEdit = (props: PollEditProps) => {
                 render={({ field }) => (
                   <FormItem className="basis-2/3">
                     <FormLabel>
-                      ชื่อประกาศ <span className="text-system-danger-default">*</span>
+                      ชื่อแบบสอบถาม <span className="text-system-danger-default">*</span>
                     </FormLabel>
                     <FormControl>
                       <Input {...field} placeholder="กรอกชื่อแบบสอบถาม" />
@@ -190,7 +190,7 @@ export const PollEdit = (props: PollEditProps) => {
               render={({ field: { onChange, ...field } }) => (
                 <FormItem>
                   <FormLabel>
-                    ประเภทประกาศ <span className="text-system-danger-default">*</span>
+                    ประเภทแบบสอบถาม <span className="text-system-danger-default">*</span>
                   </FormLabel>
                   <FormControl>
                     <Select {...field} defaultValue={field.value} onValueChange={onChange}>
@@ -262,7 +262,7 @@ export const PollEdit = (props: PollEditProps) => {
             <Button
               type="button"
               variant="secondary"
-              className="mt-2 border flex-1 w-full"
+              className="mt-2 border w-full"
               onClick={() => append({ title: '' })}
             >
               <CirclePlus className="h-4 w-4 mr-1" /> เพิ่มตัวเลือก
