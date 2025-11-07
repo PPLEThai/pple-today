@@ -7,8 +7,11 @@ import { Calendar } from '@pple-today/web-ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@pple-today/web-ui/popover'
 import { ScrollArea, ScrollBar } from '@pple-today/web-ui/scroll-area'
 import { cn } from '@pple-today/web-ui/utils'
-import { format } from 'date-fns'
+import buddhistEra from 'dayjs/plugin/buddhistEra'
 import { CalendarIcon } from 'lucide-react'
+import dayjs from 'utils/date'
+
+dayjs.extend(buddhistEra)
 
 interface DatetimePickerProps {
   value?: Date
@@ -58,7 +61,11 @@ export const DateTimePicker = React.forwardRef<HTMLButtonElement, DatetimePicker
             disabled={disabled}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {value ? format(value, 'MM/dd/yyyy hh:mm aa') : <span>{placeholder}</span>}
+            {value ? (
+              dayjs(value).locale('th').format('DD/MM/BBBB HH:mm')
+            ) : (
+              <span>{placeholder}</span>
+            )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0">
