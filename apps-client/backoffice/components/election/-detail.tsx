@@ -45,7 +45,7 @@ export function Detail({ election }: { election: AdminGetElectionResponse }) {
           <div className="flex items-center gap-2">
             <MapPin />
             <Typography variant="small" className="text-secondary-200">
-              อำเภอ/เขต: ลาดพร้าว จังหวัด: กรุงเทพมหานคร
+              อำเภอ/เขต: {election.district} จังหวัด: {election.province}
             </Typography>
           </div>
           <div className="flex items-center gap-2">

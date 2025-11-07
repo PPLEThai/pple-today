@@ -20,7 +20,7 @@ import {
   EditOnsiteResultReducer,
   useEditOnsiteResultContext,
 } from './-context'
-import { ResultAnnounceDialog } from './-editOnisteResult'
+import { ResultAnnounceDialog } from './-editOnsiteResult'
 
 export function CandidatesAndResult({
   election,
@@ -68,23 +68,16 @@ function TopRightCandidate({ election }: { election: AdminGetElectionResponse })
       return (
         <div className="flex flex-col items-end gap-4">
           <div className="flex items-center gap-2">
-            {(() => {
-              switch (election.type) {
-                case 'ONLINE':
-                  return <CountBallot election={election} />
-                case 'ONSITE':
-                  return <EditOnsiteResultButton election={election} />
-                case 'HYBRID':
-                  return (
-                    <>
-                      <CountBallot election={election} />
-                      <EditOnsiteResultButton election={election} />
-                    </>
-                  )
-                default:
-                  return null
-              }
-            })()}
+            {election.type === 'ONLINE' ? (
+              <CountBallot election={election} />
+            ) : election.type === 'ONSITE' ? (
+              <EditOnsiteResultButton election={election} />
+            ) : election.type === 'HYBRID' ? (
+              <>
+                <CountBallot election={election} />
+                <EditOnsiteResultButton election={election} />
+              </>
+            ) : null}
             <ResultAnnounceDialog election={election} />
           </div>
           <CandidateHeader election={election} />
@@ -171,12 +164,16 @@ function EditCandidateButton() {
 function CandidateHeader({ election }: { election: AdminGetElectionResponse }) {
   return (
     <div className="flex items-center">
-      <Typography className="w-32 flex items-center" variant="small">
-        {election.type === 'ONLINE' || (election.type === 'HYBRID' && 'เลือกตั้งออนไลน์')}
-      </Typography>
-      <Typography className="w-32 flex items-center" variant="small">
-        {election.type === 'ONSITE' || (election.type === 'HYBRID' && 'เลือกตั้งในสถานที่')}
-      </Typography>
+      {(election.type === 'ONLINE' || election.type === 'HYBRID') && (
+        <Typography className="w-32 flex items-center" variant="small">
+          เลือกตั้งออนไลน์
+        </Typography>
+      )}
+      {(election.type === 'ONSITE' || election.type === 'HYBRID') && (
+        <Typography className="w-32 flex items-center" variant="small">
+          เลือกตั้งในสถานที่
+        </Typography>
+      )}
       <Typography className="w-52 flex items-center justify-end" variant="large">
         คะแนนรวม
       </Typography>
@@ -246,7 +243,7 @@ function Candidates({
                 <Typography variant="small" className="text-primary">
                   เบอร์
                 </Typography>
-                <Typography variant="h2" component="div" className="text-primary" fontWeight="bold">
+                <Typography variant="h2" component="div" className="text-primary font-bold">
                   {candidate.number}
                 </Typography>
               </div>
@@ -266,35 +263,26 @@ function Candidates({
             election.status === 'RESULT_ANNOUNCE' ||
             election.isCancelled) && (
             <div className="flex items-center gap-2">
-              {(() => {
-                switch (election.type) {
-                  case 'ONLINE':
-                    return <VoteScore score={candidate.result.online} />
-                  case 'ONSITE':
-                    return (
-                      <>
-                        {isEdit ? (
-                          <VoteScoreInput candidateId={candidate.id} />
-                        ) : (
-                          <VoteScore score={candidate.result.onsite} />
-                        )}
-                      </>
-                    )
-                  case 'HYBRID':
-                    return (
-                      <>
-                        <VoteScore score={candidate.result.online} />
-                        {isEdit ? (
-                          <VoteScoreInput candidateId={candidate.id} />
-                        ) : (
-                          <VoteScore score={candidate.result.onsite} />
-                        )}
-                      </>
-                    )
-                  default:
-                    return null
-                }
-              })()}
+              {election.type === 'ONLINE' ? (
+                <VoteScore score={candidate.result.online} />
+              ) : election.type === 'ONSITE' ? (
+                <>
+                  {isEdit ? (
+                    <VoteScoreInput candidateId={candidate.id} />
+                  ) : (
+                    <VoteScore score={candidate.result.onsite} />
+                  )}
+                </>
+              ) : election.type === 'HYBRID' ? (
+                <>
+                  <VoteScore score={candidate.result.online} />
+                  {isEdit ? (
+                    <VoteScoreInput candidateId={candidate.id} />
+                  ) : (
+                    <VoteScore score={candidate.result.onsite} />
+                  )}
+                </>
+              ) : null}
               <VoteScore score={candidate.result.totalPercent} isPercent />
             </div>
           )}
