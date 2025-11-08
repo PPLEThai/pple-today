@@ -9,6 +9,7 @@ on:
         options:
           - development
           - staging
+          - production
         default: 'development'
       android:
         type: boolean
@@ -61,6 +62,8 @@ jobs:
       - name: Get affected web application names
         id: affected-apps
         run: |
+          set -e
+
           function constructMetadata {
             NAME=$1
             PACKAGE_PATH=$2
@@ -69,7 +72,12 @@ jobs:
 
             if [[ "${{ github.ref }}" == "refs/tags"* ]]; then
               IMAGE_TAG=${{ inputs.environment }}-$(cat $PACKAGE_PATH/package.json | jq -r '.version')
-            else 
+            else
+              if [[ "${{ inputs.environment }}" == "production" ]]; then
+                echo "Deployments to production must be done via tags."
+                exit 1
+              fi
+
               IMAGE_TAG=${{ inputs.environment }}-${{ github.sha }}
             fi
 
@@ -112,7 +120,7 @@ jobs:
 
   deploy-mobile-app:
     name: Deploy Beta Mobile App
-    if: ${{ needs.get-affected-apps.outputs.deploy-mobile-app == 'true' }}
+    if: ${{ needs.get-affected-apps.outputs.deploy-mobile-app == 'true' && github.event.inputs.environment != 'production' }}
     needs: get-affected-apps
     uses: ./.github/workflows/mobile-beta-deployment.yaml
     secrets: 'inherit'
@@ -122,9 +130,9 @@ jobs:
       groups: ${{ github.event.inputs.groups }}
       environment: ${{ github.event.inputs.environment }}
 
-  deploy-docker:
-    name: Deploy docker application And deploy
-    if: ${{ needs.get-affected-apps.outputs.packages != '[]' }}
+  deploy-beta-docker:
+    name: Publish beta docker application And deploy
+    if: ${{ needs.get-affected-apps.outputs.packages != '[]' && github.event.inputs.environment != 'production' }}
     needs: get-affected-apps
     uses: ./.github/workflows/deploy-docker.yaml
     with:
@@ -141,9 +149,19 @@ jobs:
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       WEB_CLIENT_ENV: ${{ secrets[format('WEB_CLIENT_ENV_{0}', github.event.inputs.environment)] }}
 
+  deploy-production-docker:
+    name: Publish production docker application And deploy
+    if: ${{ needs.get-affected-apps.outputs.packages != '[]' && github.event.inputs.environment == 'production' }}
+    needs: get-affected-apps
+    uses: ./.github/workflows/deploy-prod-docker.yaml
+    with:
+      packages: ${{ needs.get-affected-apps.outputs.packages }}
+      docker_registry: asia-southeast1-docker.pkg.dev
+    secrets: 'inherit'
+
   migrate-database:
-    name: Migrate Database
-    if: ${{ needs.get-affected-apps.outputs.migrate-database == 'true' }}
+    name: Migrate Beta Database
+    if: ${{ needs.get-affected-apps.outputs.migrate-database == 'true' && github.event.inputs.environment != 'production' }}
     needs: get-affected-apps
     uses: ./.github/workflows/migrate-database.yaml
     secrets:

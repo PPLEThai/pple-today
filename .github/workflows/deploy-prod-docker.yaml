@@ -1,0 +1,76 @@
+name: Publish production docker image
+
+on:
+  workflow_call:
+    inputs:
+      packages:
+        type: string
+        description: JSON array of package metadata to be published
+        required: true
+      docker_registry:
+        type: string
+        description: Docker registry URL
+        required: true
+    secrets:
+      WEB_CLIENT_ENV:
+        description: Web client environment variables
+        required: false
+      DOCKER_USERNAME:
+        description: Docker registry username
+        required: true
+      DOCKER_PASSWORD:
+        description: Docker registry password
+        required: true
+      DOCKER_IMAGE_PREFIX:
+        description: Docker image prefix
+        required: true
+
+jobs:
+  release:
+    name: Build and push production docker image
+    runs-on: ubuntu-latest
+    environment: production
+
+    strategy:
+      matrix:
+        packages: ${{ fromJson(inputs.packages) }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # fetch all history for tags
+          persist-credentials: false # avoid checking out the repository again
+
+      - name: Set docker image tags
+        id: set-docker-image-tags
+        working-directory: ${{ matrix.packages.path }}
+        run: |
+          echo "DOCKER_IMAGE_URI=${{ inputs.docker_registry }}/${{ secrets.DOCKER_IMAGE_PREFIX }}/${{ matrix.packages.name }}:${{ matrix.packages.imageTag }}" >> $GITHUB_OUTPUT
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ inputs.docker_registry }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ${{ matrix.packages.path }}/Dockerfile
+          platforms: linux/amd64
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            "VERSION=${{ matrix.packages.version }}"
+            "LOCAL_ENV=${{ secrets.WEB_CLIENT_ENV }}"
+          tags: ${{ steps.set-docker-image-tags.outputs.DOCKER_IMAGE_URI }}
