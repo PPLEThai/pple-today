@@ -1,4 +1,4 @@
-name: Deploy Beta Application
+name: Deploy Application
 
 on:
   workflow_dispatch:
@@ -141,7 +141,7 @@ jobs:
       environment: ${{ github.event.inputs.environment }}
     secrets:
       DOCKER_USERNAME: ${{ secrets.PROD_DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.PROD_DOCKER_PASSWORD }}
+      DOCKER_PASSWORD: ${{ secrets.GAR_SERVICE_ACCOUNT }}
       DOCKER_IMAGE_PREFIX: ${{ secrets.PROD_DOCKER_IMAGE_PREFIX }}
       DOCKER_REGISTRY: ${{ secrets.PROD_DOCKER_REGISTRY }}
       WEB_CLIENT_ENV: ${{ secrets[format('WEB_CLIENT_ENV_{0}', github.event.inputs.environment)] }}
@@ -206,8 +206,8 @@ jobs:
       DOCKER_IMAGE_PREFIX: ${{ needs.setup-beta-deployment-config.outputs.DOCKER_IMAGE_PREFIX }}
       DOCKER_REGISTRY: ghcr.io
 
-  migrate-database:
-    name: Migrate Beta Database
+  migrate-beta-database:
+    name: Migrate beta database
     if: ${{ needs.get-affected-apps.outputs.migrate-database == 'true' && github.event.inputs.environment != 'production' }}
     needs: get-affected-apps
     uses: ./.github/workflows/migrate-database.yaml

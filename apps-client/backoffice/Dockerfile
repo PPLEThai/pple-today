@@ -34,17 +34,10 @@ RUN echo "$LOCAL_ENV" > /app/apps-client/backoffice/.env
 
 RUN pnpm build --filter=@client/backoffice
  
-FROM base AS runner
+FROM nginxinc/nginx-unprivileged:alpine3.22-perl
 WORKDIR /app
  
-RUN addgroup --system --gid 1001 backoffice
-RUN adduser --system --uid 1001 backoffice
-USER backoffice
+COPY --from=installer /app/apps-client/backoffice/build /usr/share/nginx/html
 
-COPY --from=installer --chown=backoffice:nodejs /app/node_modules ./node_modules
-COPY --from=installer --chown=backoffice:nodejs /app/apps-client/backoffice/build ./build
-COPY --from=installer --chown=backoffice:nodejs /app/apps-client/backoffice/package.json ./package.json
-
-EXPOSE 3000
-
-CMD ["pnpm", "start"]
+EXPOSE 8080
+CMD ["nginx", "-g", "daemon off;"]
