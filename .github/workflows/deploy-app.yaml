@@ -118,33 +118,6 @@ jobs:
           echo "deploy-mobile-app=${{ github.event.inputs.android == 'true' || github.event.inputs.ios == 'true' }}" >> $GITHUB_OUTPUT
           echo "migrate-database=${{ github.event.inputs.migrate-database == 'true' }}" >> $GITHUB_OUTPUT
 
-  setup-deployment-config:
-    name: Setup deployment config
-    runs-on: ubuntu-latest
-    needs: get-affected-apps
-    environment: ${{ github.event.inputs.environment }}
-    outputs:
-      DOCKER_USERNAME: ${{ steps.set-config.outputs.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ steps.set-config.outputs.DOCKER_PASSWORD }}
-      DOCKER_IMAGE_PREFIX: ${{ steps.set-config.outputs.DOCKER_IMAGE_PREFIX }}
-      DOCKER_REGISTRY: ${{ steps.set-config.outputs.DOCKER_REGISTRY }}
-    steps:
-      - name: Setup deployment config
-        run: |
-          if [ "${{ github.event.inputs.environment }}" == "production" ]; then
-            echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> $GITHUB_OUTPUT
-            echo "DOCKER_PASSWORD=${{ secrets.GAR_SERVICE_ACCOUNT }}" >> $GITHUB_OUTPUT
-            echo "DOCKER_IMAGE_PREFIX=${{ secrets.DOCKER_IMAGE_PREFIX }}" >> $GITHUB_OUTPUT
-            echo "DOCKER_REGISTRY=${{ secrets.DOCKER_REGISTRY }}" >> $GITHUB_OUTPUT
-          else
-            OWNER_LC=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')
-            
-            echo "DOCKER_USERNAME=$OWNER_LC" >> $GITHUB_OUTPUT
-            echo "DOCKER_PASSWORD=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_OUTPUT
-            echo "DOCKER_IMAGE_PREFIX=$OWNER_LC" >> $GITHUB_OUTPUT
-            echo "DOCKER_REGISTRY=ghcr.io" >> $GITHUB_OUTPUT
-          fi
-
   deploy-mobile-app:
     name: Deploy Beta Mobile App
     if: ${{ needs.get-affected-apps.outputs.deploy-mobile-app == 'true' && github.event.inputs.environment != 'production' }}
@@ -157,9 +130,38 @@ jobs:
       groups: ${{ github.event.inputs.groups }}
       environment: ${{ github.event.inputs.environment }}
 
-  publish-image:
+  publish-production-image:
+    name: Publish production docker images
+    if: ${{ needs.get-affected-apps.outputs.packages != '[]' && github.event.inputs.environment == 'production' }}
+    needs:
+      - get-affected-apps
+    uses: ./.github/workflows/publish-image.yaml
+    with:
+      packages: ${{ needs.get-affected-apps.outputs.packages }}
+      environment: ${{ github.event.inputs.environment }}
+    secrets: 'inherit'
+
+  setup-beta-deployment-config:
+    name: Setup deployment configuration
+    if: ${{ needs.get-affected-apps.outputs.packages != '[]' || github.event.inputs.environment != 'production' }}
+    runs-on: ubuntu-latest
+    outputs:
+      DOCKER_USERNAME: ${{ steps.deployment-config.outputs.DOCKER_USERNAME }}
+    steps:
+      - name: Deployment configuration
+        id: deployment-config
+        run: |
+          set -e
+
+          OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          DOCKER_IMAGE_PREFIX="${OWNER_LC}"
+
+          echo "DOCKER_USERNAME=${OWNER_LC}" >> $GITHUB_OUTPUT
+          echo "DOCKER_IMAGE_PREFIX=${DOCKER_IMAGE_PREFIX}" >> $GITHUB_OUTPUT
+
+  publish-beta-image:
     name: Publish beta docker images
-    if: ${{ needs.get-affected-apps.outputs.packages != '[]' }}
+    if: ${{ needs.get-affected-apps.outputs.packages != '[]' && github.event.inputs.environment != 'production' }}
     needs:
       - get-affected-apps
       - setup-deployment-config
@@ -169,18 +171,16 @@ jobs:
       environment: ${{ github.event.inputs.environment }}
     secrets:
       DOCKER_USERNAME: ${{ needs.setup-deployment-config.outputs.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ needs.setup-deployment-config.outputs.DOCKER_PASSWORD }}
+      DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
       DOCKER_IMAGE_PREFIX: ${{ needs.setup-deployment-config.outputs.DOCKER_IMAGE_PREFIX }}
-      DOCKER_REGISTRY: ${{ needs.setup-deployment-config.outputs.DOCKER_REGISTRY }}
+      DOCKER_REGISTRY: ghcr.io
       WEB_CLIENT_ENV: ${{ secrets.WEB_CLIENT_ENV }}
 
   deploy-beta-server:
     name: Publish beta docker application And deploy
     if: ${{ needs.get-affected-apps.outputs.packages != '[]' && github.event.inputs.environment != 'production' }}
     needs:
-      - get-affected-apps
-      - setup-deployment-config
-      - publish-image
+      - publish-beta-image
     uses: ./.github/workflows/deploy-beta-server.yaml
     with:
       packages: ${{ needs.get-affected-apps.outputs.packages }}
