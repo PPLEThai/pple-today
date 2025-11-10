@@ -148,6 +148,7 @@ jobs:
     needs: get-affected-apps
     outputs:
       DOCKER_USERNAME: ${{ steps.deployment-config.outputs.DOCKER_USERNAME }}
+      DOCKER_IMAGE_PREFIX: ${{ steps.deployment-config.outputs.DOCKER_IMAGE_PREFIX }}
     steps:
       - name: Deployment configuration
         id: deployment-config
@@ -155,10 +156,9 @@ jobs:
           set -e
 
           OWNER_LC=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          DOCKER_IMAGE_PREFIX="${OWNER_LC}"
 
           echo "DOCKER_USERNAME=${OWNER_LC}" >> $GITHUB_OUTPUT
-          echo "DOCKER_IMAGE_PREFIX=${DOCKER_IMAGE_PREFIX}" >> $GITHUB_OUTPUT
+          echo "DOCKER_IMAGE_PREFIX=${OWNER_LC}" >> $GITHUB_OUTPUT
 
   publish-beta-image:
     name: Publish beta docker images
