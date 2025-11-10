@@ -165,15 +165,15 @@ jobs:
     if: ${{ needs.get-affected-apps.outputs.packages != '[]' && github.event.inputs.environment != 'production' }}
     needs:
       - get-affected-apps
-      - setup-deployment-config
+      - setup-beta-deployment-config
     uses: ./.github/workflows/publish-image.yaml
     with:
       packages: ${{ needs.get-affected-apps.outputs.packages }}
       environment: ${{ github.event.inputs.environment }}
     secrets:
-      DOCKER_USERNAME: ${{ needs.setup-deployment-config.outputs.DOCKER_USERNAME }}
+      DOCKER_USERNAME: ${{ needs.setup-beta-deployment-config.outputs.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-      DOCKER_IMAGE_PREFIX: ${{ needs.setup-deployment-config.outputs.DOCKER_IMAGE_PREFIX }}
+      DOCKER_IMAGE_PREFIX: ${{ needs.setup-beta-deployment-config.outputs.DOCKER_IMAGE_PREFIX }}
       DOCKER_REGISTRY: ghcr.io
       WEB_CLIENT_ENV: ${{ secrets.WEB_CLIENT_ENV }}
 
@@ -182,7 +182,7 @@ jobs:
     if: ${{ needs.get-affected-apps.outputs.packages != '[]' && github.event.inputs.environment != 'production' }}
     needs:
       - publish-beta-image
-      - setup-deployment-config
+      - setup-beta-deployment-config
       - get-affected-apps
     uses: ./.github/workflows/deploy-beta-server.yaml
     with:
@@ -196,10 +196,10 @@ jobs:
       SSH_HOST: ${{ secrets.SSH_HOST }}
       SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-      DOCKER_USERNAME: ${{ needs.setup-deployment-config.outputs.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ needs.setup-deployment-config.outputs.DOCKER_PASSWORD }}
-      DOCKER_REGISTRY: ${{ needs.setup-deployment-config.outputs.DOCKER_REGISTRY }}
-      DOCKER_IMAGE_PREFIX: ${{ needs.setup-deployment-config.outputs.DOCKER_IMAGE_PREFIX }}
+      DOCKER_USERNAME: ${{ needs.setup-beta-deployment-config.outputs.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ needs.setup-beta-deployment-config.outputs.DOCKER_PASSWORD }}
+      DOCKER_REGISTRY: ${{ needs.setup-beta-deployment-config.outputs.DOCKER_REGISTRY }}
+      DOCKER_IMAGE_PREFIX: ${{ needs.setup-beta-deployment-config.outputs.DOCKER_IMAGE_PREFIX }}
 
   migrate-database:
     name: Migrate Beta Database
