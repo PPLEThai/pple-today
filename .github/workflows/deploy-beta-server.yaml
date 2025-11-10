@@ -93,7 +93,7 @@ jobs:
 
               cp $DOCKER_COMPOSE_FILE $DOCKER_COMPOSE_FILE.bak
 
-              yq -y ".services.\"${PACKAGE_NAME}\".image = \"${{ inputs.registry }}/${{ secrets.DOCKER_IMAGE_PREFIX }}/${PACKAGE_NAME}:${IMAGE_TAG}\"" $DOCKER_COMPOSE_FILE.bak > $DOCKER_COMPOSE_FILE
+              yq -y ".services.\"${PACKAGE_NAME}\".image = \"${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_IMAGE_PREFIX }}/${PACKAGE_NAME}:${IMAGE_TAG}\"" $DOCKER_COMPOSE_FILE.bak > $DOCKER_COMPOSE_FILE
               rm $DOCKER_COMPOSE_FILE.bak
             done
 
