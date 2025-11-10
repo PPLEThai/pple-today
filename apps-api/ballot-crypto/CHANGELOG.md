@@ -1,5 +1,12 @@
 # @api/ballot-crypto
 
+## 0.2.2
+
+### Patch Changes
+
+- Updated dependencies [[`b10e5ff`](https://github.com/PPLEThai/pple-today/commit/b10e5fffdb3afd14b41a6aa10692fce9e186e487), [`3d3fd3a`](https://github.com/PPLEThai/pple-today/commit/3d3fd3a6c559f95c65355cc8ab32f1603006cd81), [`f362c80`](https://github.com/PPLEThai/pple-today/commit/f362c80e511e3822b986520d9e7ccbbb95da648f), [`41d1507`](https://github.com/PPLEThai/pple-today/commit/41d150789fda8f5cc7425c2ab7f0736078455eed), [`05ec8b0`](https://github.com/PPLEThai/pple-today/commit/05ec8b0450fa45ffac991e19ab9be0079d96a4d4), [`4872f63`](https://github.com/PPLEThai/pple-today/commit/4872f63c9215397eecea891a441fcf04fd1a282b), [`df54e72`](https://github.com/PPLEThai/pple-today/commit/df54e729160fbe906f04d13464d631f4127afbc9), [`c5a87d2`](https://github.com/PPLEThai/pple-today/commit/c5a87d28ee99aff84801713870077417c771a2fc), [`196e009`](https://github.com/PPLEThai/pple-today/commit/196e0098ac1b238fd54e6168e9f43d44ee830a56), [`25595d5`](https://github.com/PPLEThai/pple-today/commit/25595d590ed436a969b5ef2a6fb280f01bbf95ac), [`530f436`](https://github.com/PPLEThai/pple-today/commit/530f436f07f364daa2100916e7db5b280d3f2339)]:
+  - @pple-today/api-common@0.6.0
+
 ## 0.2.1
 
 ### Patch Changes

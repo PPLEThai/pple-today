@@ -1,5 +1,27 @@
 # @client/mobile
 
+## 0.9.0
+
+### Minor Changes
+
+- [#234](https://github.com/PPLEThai/pple-today/pull/234) [`f999258`](https://github.com/PPLEThai/pple-today/commit/f999258dfc02d568d97b44fd0946bb26db47416b) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-268] Improve Lightbox](https://linear.app/snts/issue/PPLE-268/improve-lightbox)
+
+- [#221](https://github.com/PPLEThai/pple-today/pull/221) [`41d1507`](https://github.com/PPLEThai/pple-today/commit/41d150789fda8f5cc7425c2ab7f0736078455eed) Thanks [@miello](https://github.com/miello)! - [[PPLE-485] Send Notification For External User](https://linear.app/snts/issue/PPLE-485/send-notification-for-external-user)
+  [[PPLE-484] List Notification](https://linear.app/snts/issue/PPLE-484/list-notification)
+  [[PPLE-483] Read Notification](https://linear.app/snts/issue/PPLE-483/read-notification)
+
+- [#248](https://github.com/PPLEThai/pple-today/pull/248) [`05ec8b0`](https://github.com/PPLEThai/pple-today/commit/05ec8b0450fa45ffac991e19ab9be0079d96a4d4) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-502] Election Detail](chayaponarpayatam2004/pple-502-election-detail)
+
+- [#233](https://github.com/PPLEThai/pple-today/pull/233) [`25595d5`](https://github.com/PPLEThai/pple-today/commit/25595d590ed436a969b5ef2a6fb280f01bbf95ac) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-447] My Poll](https://linear.app/snts/issue/PPLE-447/my-poll)
+
+  [[PPLE-448] My Election](https://linear.app/snts/issue/PPLE-448/my-election)
+
+- [#244](https://github.com/PPLEThai/pple-today/pull/244) [`5943cbe`](https://github.com/PPLEThai/pple-today/commit/5943cbe49aff9f645ff28b4e776951d5955935c7) Thanks [@miello](https://github.com/miello)! - [[PPLE-513] Use Image Server From PPLE](https://linear.app/snts/issue/PPLE-513/use-image-server-from-pple)
+
+### Patch Changes
+
+- [#254](https://github.com/PPLEThai/pple-today/pull/254) [`a20a236`](https://github.com/PPLEThai/pple-today/commit/a20a2361d12cc829d0a4f322fee897c18b87bcb7) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-526] Display version in profile page](https://linear.app/snts/issue/PPLE-526/display-version-in-profile-page)
+
 ## 0.8.1
 
 ### Patch Changes

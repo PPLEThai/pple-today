@@ -1,5 +1,19 @@
 # @pple-today/web-ui
 
+## 0.3.0
+
+### Minor Changes
+
+- [#168](https://github.com/PPLEThai/pple-today/pull/168) [`f362c80`](https://github.com/PPLEThai/pple-today/commit/f362c80e511e3822b986520d9e7ccbbb95da648f) Thanks [@rootEnginear](https://github.com/rootEnginear)! - [[PPLE-343] Feed Banner CMS Page](https://linear.app/snts/issue/PPLE-343/banner)
+
+- [#248](https://github.com/PPLEThai/pple-today/pull/248) [`05ec8b0`](https://github.com/PPLEThai/pple-today/commit/05ec8b0450fa45ffac991e19ab9be0079d96a4d4) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-502] Election Detail](chayaponarpayatam2004/pple-502-election-detail)
+
+### Patch Changes
+
+- [#246](https://github.com/PPLEThai/pple-today/pull/246) [`9627ab7`](https://github.com/PPLEThai/pple-today/commit/9627ab7ac1ed95a5a0391e8e9b62f24bb32742e7) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-495] Create poll](https://linear.app/snts/issue/PPLE-495/create-poll)
+
+- [#238](https://github.com/PPLEThai/pple-today/pull/238) [`c5a87d2`](https://github.com/PPLEThai/pple-today/commit/c5a87d28ee99aff84801713870077417c771a2fc) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-496] List Poll](https://linear.app/snts/issue/PPLE-496/list-poll)
+
 ## 0.2.1
 
 ### Patch Changes
