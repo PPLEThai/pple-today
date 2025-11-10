@@ -193,6 +193,8 @@ jobs:
       SSH_HOST: ${{ secrets.SSH_HOST }}
       SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      DOCKER_USERNAME: ${{ needs.setup-deployment-config.outputs.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ needs.setup-deployment-config.outputs.DOCKER_PASSWORD }}
       DOCKER_REGISTRY: ${{ needs.setup-deployment-config.outputs.DOCKER_REGISTRY }}
       DOCKER_IMAGE_PREFIX: ${{ needs.setup-deployment-config.outputs.DOCKER_IMAGE_PREFIX }}
 
