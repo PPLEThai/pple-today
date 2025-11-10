@@ -79,7 +79,7 @@ platform :ios do
       build_path: "./builds",
       export_options: {
         provisioningProfiles: {
-          app_identifier => ENV['PROVISIONING_PROFILE_SPECIFIER']
+          app_identifier => ENV['PROVISIONING_PROFILE_SPECIFIER'],
           "#{app_identifier}.NotificationServiceExtension" => "#{ENV['PROVISIONING_PROFILE_SPECIFIER']}.NotificationServiceExtension"
         },
         # installerSigningCertificate: "Apple Distribution: <COMPANY_NAME> (<ID>)", 
