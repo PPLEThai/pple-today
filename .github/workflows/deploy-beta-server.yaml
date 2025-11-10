@@ -1,0 +1,104 @@
+name: Deploy beta application
+
+on:
+  workflow_call:
+    inputs:
+      packages:
+        type: string
+        description: JSON array of package metadata to be published
+        required: true
+      environment:
+        type: string
+        description: Deployment environment
+        required: true
+    secrets:
+      OVPN_CONFIG:
+        description: OpenVPN configuration
+        required: true
+      OVPN_USERNAME:
+        description: OpenVPN username
+        required: true
+      OVPN_PASSWORD:
+        description: OpenVPN password
+        required: true
+      OVPN_USER_KEY:
+        description: OpenVPN user key
+        required: true
+      SSH_HOST:
+        description: SSH host
+        required: true
+      SSH_USERNAME:
+        description: SSH username
+        required: true
+      SSH_PRIVATE_KEY:
+        description: SSH private key
+        required: true
+      DOCKER_USERNAME:
+        description: Docker registry username
+        required: true
+      DOCKER_PASSWORD:
+        description: Docker registry password
+        required: true
+      DOCKER_REGISTRY:
+        description: Docker registry URL
+        required: true
+      DOCKER_IMAGE_PREFIX:
+        description: Docker image prefix
+        required: true
+jobs:
+  deploy-app:
+    name: Deploy app
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Write OpenVPN config
+        run: echo "${{ secrets.OVPN_CONFIG }}" > client.ovpn
+
+      - name: Install OpenVPN
+        run: |
+          sudo apt update
+          sudo apt install -y openvpn openvpn-systemd-resolved
+
+      - name: Connect to VPN
+        uses: 'kota65535/github-openvpn-connect-action@cd2ed8a90cc7b060dc4e001143e811b5f7ea0af5' # v3.1.0
+        with:
+          config_file: client.ovpn
+          username: ${{ secrets.OVPN_USERNAME }}
+          password: ${{ secrets.OVPN_PASSWORD }}
+          client_key: ${{ secrets.OVPN_USER_KEY }}
+
+      - name: Use SSH
+        uses: appleboy/ssh-action@3ca8a7c5359ac6ad91aa47f1946ece1c3b025004
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            #!/usr/bin/env sh
+            echo ${{ secrets.DOCKER_PASSWORD }} | docker login ${{ secrets.DOCKER_REGISTRY }} -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+            cd ~/app/${{ inputs.environment }}
+
+            echo '${{ inputs.packages }}' | jq -c '.[]' | while read package
+            do
+              PACKAGE_NAME=$(echo $package | jq -r '.name')
+              IMAGE_TAG=$(echo $package | jq -r '.imageTag')
+              DOCKER_COMPOSE_FILE=$(echo $package | jq -r '.dockerComposePath')
+
+              echo "Deploying ${PACKAGE_NAME} with image tag ${IMAGE_TAG}"
+
+              if [ ! -f $DOCKER_COMPOSE_FILE ]; then
+                cp templates/$DOCKER_COMPOSE_FILE.tmpl $DOCKER_COMPOSE_FILE
+              fi
+
+              cp $DOCKER_COMPOSE_FILE $DOCKER_COMPOSE_FILE.bak
+
+              yq -y ".services.\"${PACKAGE_NAME}\".image = \"${{ inputs.registry }}/${{ secrets.DOCKER_IMAGE_PREFIX }}/${PACKAGE_NAME}:${IMAGE_TAG}\"" $DOCKER_COMPOSE_FILE.bak > $DOCKER_COMPOSE_FILE
+              rm $DOCKER_COMPOSE_FILE.bak
+            done
+
+            echo '${{ inputs.packages }}' | jq -c '.[]' | jq -r '.dockerComposePath' | sort | uniq | while read DOCKER_COMPOSE_FILE
+            do
+              export COMPOSE_IGNORE_ORPHANS=True
+              docker compose -f $DOCKER_COMPOSE_FILE up -d
+            done
