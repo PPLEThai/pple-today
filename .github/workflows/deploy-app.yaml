@@ -131,7 +131,7 @@ jobs:
     steps:
       - name: Setup deployment config
         run: |
-          if [ "${{ github.event.inputs.environment }}" != "production" ]; then
+          if [ "${{ github.event.inputs.environment }}" == "production" ]; then
             echo "DOCKER_USERNAME=${{ secrets.DOCKER_USERNAME }}" >> $GITHUB_OUTPUT
             echo "DOCKER_PASSWORD=${{ secrets.GAR_SERVICE_ACCOUNT }}" >> $GITHUB_OUTPUT
             echo "DOCKER_IMAGE_PREFIX=${{ secrets.DOCKER_IMAGE_PREFIX }}" >> $GITHUB_OUTPUT
