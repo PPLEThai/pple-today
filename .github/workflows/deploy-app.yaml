@@ -174,11 +174,11 @@ jobs:
       DOCKER_REGISTRY: ${{ needs.setup-deployment-config.outputs.DOCKER_REGISTRY }}
       WEB_CLIENT_ENV: ${{ secrets.WEB_CLIENT_ENV }}
 
-  deploy-beta-docker:
+  deploy-beta-server:
     name: Publish beta docker application And deploy
     if: ${{ needs.get-affected-apps.outputs.packages != '[]' && github.event.inputs.environment != 'production' }}
     needs: get-affected-apps
-    uses: ./.github/workflows/deploy-docker.yaml
+    uses: ./.github/workflows/deploy-beta-server.yaml
     with:
       packages: ${{ needs.get-affected-apps.outputs.packages }}
       environment: ${{ github.event.inputs.environment }}
