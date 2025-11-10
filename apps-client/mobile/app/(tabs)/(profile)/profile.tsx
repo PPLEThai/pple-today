@@ -66,6 +66,7 @@ import {
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 import { getRoleName } from '@app/utils/get-role-name'
+import { createImageUrl } from '@app/utils/image'
 
 import packageJson from '../../../package.json'
 import { useBottomTabOnPress } from '../_layout'
@@ -207,7 +208,13 @@ const ProfileSection = () => {
     ) : (
       <>
         <Avatar className="size-16" alt={profileQuery.data.name}>
-          <AvatarImage source={{ uri: profileQuery.data.profileImage }} />
+          <AvatarImage
+            source={{
+              uri: profileQuery.data.profileImage
+                ? createImageUrl(profileQuery.data.profileImage, { width: 64, height: 64 })
+                : undefined,
+            }}
+          />
           <AvatarPPLEFallback />
         </Avatar>
         <View className="flex flex-col gap-2 items-start flex-1">
@@ -340,7 +347,12 @@ const FacebookPageSection = () => {
         <View className="flex flex-row gap-3 items-center">
           <Avatar alt={linkedPageQuery.data.linkedFacebookPage.name} className="size-8">
             <AvatarImage
-              source={{ uri: linkedPageQuery.data.linkedFacebookPage.profilePictureUrl }}
+              source={{
+                uri: createImageUrl(linkedPageQuery.data.linkedFacebookPage.profilePictureUrl, {
+                  width: 32,
+                  height: 32,
+                }),
+              }}
             />
             <AvatarFallback />
           </Avatar>

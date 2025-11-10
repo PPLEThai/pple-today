@@ -10,13 +10,15 @@ import { CreateAnnouncementBody, GetAnnouncementsQuery, UpdateAnnouncementBody }
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
+import { FileServerService, FileServerServicePlugin } from '../../files/services'
 
 export class AdminAnnouncementRepository {
   private OFFICIAL_USER_ID: string | null = null
 
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly fileService: FileService
+    private readonly fileService: FileService,
+    private readonly fileServerService: FileServerService
   ) {}
 
   // TODO: Refactor to common service
@@ -210,7 +212,7 @@ export class AdminAnnouncementRepository {
             id: comment.user.id,
             name: comment.user.name,
             profileImage: comment.user.profileImagePath
-              ? this.fileService.getPublicFileUrl(comment.user.profileImagePath)
+              ? this.fileServerService.getFileEndpointUrl(comment.user.profileImagePath)
               : undefined,
           },
         })),
@@ -414,7 +416,11 @@ export class AdminAnnouncementRepository {
 export const AdminAnnouncementRepositoryPlugin = new Elysia({
   name: 'AdminAnnouncementRepository',
 })
-  .use([PrismaServicePlugin, FileServicePlugin])
-  .decorate(({ prismaService, fileService }) => ({
-    adminAnnouncementRepository: new AdminAnnouncementRepository(prismaService, fileService),
+  .use([PrismaServicePlugin, FileServicePlugin, FileServerServicePlugin])
+  .decorate(({ prismaService, fileService, fileServerService }) => ({
+    adminAnnouncementRepository: new AdminAnnouncementRepository(
+      prismaService,
+      fileService,
+      fileServerService
+    ),
   }))

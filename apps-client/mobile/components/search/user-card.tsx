@@ -5,6 +5,7 @@ import { Text } from '@pple-today/ui/text'
 import { useRouter } from 'expo-router'
 
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
+import { createImageUrl } from '@app/utils/image'
 
 import { SearchCard } from './search-card'
 
@@ -23,7 +24,9 @@ export function UserSearchCard(props: UserSearchCardProps) {
         <Avatar className="w-8 h-8" alt={props.name}>
           <AvatarImage
             source={{
-              uri: props.profileImage ?? undefined,
+              uri: props.profileImage
+                ? createImageUrl(props.profileImage, { width: 32, height: 32 })
+                : undefined,
             }}
           />
           <AvatarPPLEFallback />

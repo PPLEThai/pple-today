@@ -62,6 +62,7 @@ import { reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
+import { createImageUrl } from '@app/utils/image'
 
 import { Lightbox } from './lightbox'
 
@@ -101,7 +102,13 @@ export const FeedCard = React.memo(function FeedCard(props: {
           <Link href={`/user/${props.feedItem.author.id}`} asChild>
             <Pressable>
               <Avatar alt={feedContent.author.name} className="w-8 h-8">
-                <AvatarImage source={{ uri: feedContent.author.profileImage }} />
+                <AvatarImage
+                  source={{
+                    uri: feedContent.author.profileImage
+                      ? createImageUrl(feedContent.author.profileImage, { width: 32, height: 32 })
+                      : undefined,
+                  }}
+                />
                 <AvatarPPLEFallback />
               </Avatar>
             </Pressable>
@@ -199,7 +206,20 @@ const PostCardContent = (props: { feedItem: FeedItemPost }) => {
   return (
     <View className="flex flex-col gap-3">
       {props.feedItem.post.attachments && props.feedItem.post.attachments.length > 0 && (
-        <Lightbox attachments={props.feedItem.post.attachments} />
+        <Lightbox
+          attachments={props.feedItem.post.attachments.map((attachment) => {
+            if (attachment.type === 'IMAGE')
+              return {
+                ...attachment,
+                url: createImageUrl(attachment.url, {
+                  width: attachment.width,
+                  height: attachment.height,
+                }),
+              }
+
+            return attachment
+          })}
+        />
       )}
       {props.feedItem.post.content && (
         <AnimatedBackgroundPressable className="px-4" onPress={navigateToDetailPage}>
@@ -893,7 +913,16 @@ const FeedDetailAuthorSection = (props: { feedItem: FeedItem }) => {
         <Link href={`/user/${props.feedItem.author.id}`} asChild>
           <Pressable>
             <Avatar alt={props.feedItem.author.name} className="w-8 h-8">
-              <AvatarImage source={{ uri: props.feedItem.author.profileImage }} />
+              <AvatarImage
+                source={{
+                  uri: props.feedItem.author.profileImage
+                    ? createImageUrl(props.feedItem.author.profileImage, {
+                        width: 32,
+                        height: 32,
+                      })
+                    : undefined,
+                }}
+              />
               <AvatarPPLEFallback />
             </Avatar>
           </Pressable>
@@ -931,7 +960,20 @@ const PostDetailContent = (props: { feedItem: FeedItemPost }) => {
   return (
     <View className="flex flex-col gap-3 pb-3">
       {props.feedItem.post.attachments && props.feedItem.post.attachments.length > 0 && (
-        <Lightbox attachments={props.feedItem.post.attachments} />
+        <Lightbox
+          attachments={props.feedItem.post.attachments.map((attachment) => {
+            if (attachment.type === 'IMAGE')
+              return {
+                ...attachment,
+                url: createImageUrl(attachment.url, {
+                  width: attachment.width,
+                  height: attachment.height,
+                }),
+              }
+
+            return attachment
+          })}
+        />
       )}
       {props.feedItem.post.content && (
         <View className="px-4">

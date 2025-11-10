@@ -1,7 +1,6 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { IntrospectAccessTokenResult } from '@pple-today/api-common/dtos'
 import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
-import { FileService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import { Check } from '@sinclair/typebox/value'
 import Elysia from 'elysia'
@@ -11,15 +10,15 @@ import { GenerateMiniAppTokenErrorResponse, GenerateMiniAppTokenResponse } from 
 import { AuthRepository, AuthRepositoryPlugin } from './repository'
 
 import { ConfigServicePlugin } from '../../plugins/config'
-import { FileServicePlugin } from '../../plugins/file'
 import { generateJwtToken } from '../../utils/jwt'
+import { FileServerService, FileServerServicePlugin } from '../files/services'
 import { MiniAppRepository, MiniAppRepositoryPlugin } from '../mini-app/repository'
 
 export class AuthService {
   constructor(
     private readonly authRepository: AuthRepository,
     private readonly miniAppRepository: MiniAppRepository,
-    private readonly fileService: FileService,
+    private readonly fileServerService: FileServerService,
     private readonly loggerService: ElysiaLoggerInstance,
     private readonly oidcConfig: {
       oidcClientId: string
@@ -118,7 +117,7 @@ export class AuthService {
       address: user.value.address ?? undefined,
       onBoardingCompleted: user.value.onBoardingCompleted,
       profileImage: user.value.profileImagePath
-        ? this.fileService.getPublicFileUrl(user.value.profileImagePath)
+        ? this.fileServerService.getFileEndpointUrl(user.value.profileImagePath)
         : undefined,
       status: user.value.status,
       roles: user.value.roles.map((r) => r.role),
@@ -144,16 +143,24 @@ export class AuthService {
 export const AuthServicePlugin = new Elysia({ name: 'AuthService' })
   .use([
     AuthRepositoryPlugin,
-    FileServicePlugin,
+    FileServerServicePlugin,
     ElysiaLoggerPlugin({ name: 'AuthService' }),
     ConfigServicePlugin,
     MiniAppRepositoryPlugin,
   ])
-  .decorate(({ authRepository, fileService, miniAppRepository, loggerService, configService }) => ({
-    authService: new AuthService(authRepository, miniAppRepository, fileService, loggerService, {
-      oidcClientId: configService.get('OIDC_CLIENT_ID'),
-      oidcUrl: configService.get('OIDC_URL'),
-      oidcPrivateJwtKey: configService.get('OIDC_PRIVATE_JWT_KEY'),
-      oidcKeyId: configService.get('OIDC_KEY_ID'),
-    }),
-  }))
+  .decorate(
+    ({ authRepository, fileServerService, miniAppRepository, loggerService, configService }) => ({
+      authService: new AuthService(
+        authRepository,
+        miniAppRepository,
+        fileServerService,
+        loggerService,
+        {
+          oidcClientId: configService.get('OIDC_CLIENT_ID'),
+          oidcUrl: configService.get('OIDC_URL'),
+          oidcPrivateJwtKey: configService.get('OIDC_PRIVATE_JWT_KEY'),
+          oidcKeyId: configService.get('OIDC_KEY_ID'),
+        }
+      ),
+    })
+  )

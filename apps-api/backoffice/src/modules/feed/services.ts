@@ -1,5 +1,4 @@
 import { FeedItemComment, InternalErrorCode } from '@pple-today/api-common/dtos'
-import { FileService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import { FeedItemReactionType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
@@ -9,11 +8,12 @@ import { CreateFeedReactionBody } from './models'
 import { FeedRepository, FeedRepositoryPlugin } from './repository'
 
 import { FileServicePlugin } from '../../plugins/file'
+import { FileServerService, FileServerServicePlugin } from '../files/services'
 
 export class FeedService {
   constructor(
     private readonly feedRepository: FeedRepository,
-    private readonly fileService: FileService
+    private readonly fileServerService: FileServerService
   ) {}
 
   async getMyFeed(userId?: string, query?: { cursor?: string; limit?: number }) {
@@ -152,7 +152,7 @@ export class FeedService {
               id: comment.user.id,
               name: comment.user.name,
               profileImage: comment.user.profileImagePath
-                ? this.fileService.getPublicFileUrl(comment.user.profileImagePath)
+                ? this.fileServerService.getFileEndpointUrl(comment.user.profileImagePath)
                 : undefined,
             },
           }) satisfies FeedItemComment
@@ -210,7 +210,9 @@ export class FeedService {
               id: result.value.comment.user.id,
               name: result.value.comment.user.name,
               profileImage: result.value.comment.user.profileImagePath
-                ? this.fileService.getPublicFileUrl(result.value.comment.user.profileImagePath)
+                ? this.fileServerService.getFileEndpointUrl(
+                    result.value.comment.user.profileImagePath
+                  )
                 : undefined, // this should be null
             },
           }
@@ -261,7 +263,7 @@ export class FeedService {
         id: result.value.user.id,
         name: result.value.user.name,
         profileImage: result.value.user.profileImagePath
-          ? this.fileService.getPublicFileUrl(result.value.user.profileImagePath)
+          ? this.fileServerService.getFileEndpointUrl(result.value.user.profileImagePath)
           : undefined, // this should be null
       },
     })
@@ -312,7 +314,7 @@ export class FeedService {
 }
 
 export const FeedServicePlugin = new Elysia({ name: 'FeedService' })
-  .use([FeedRepositoryPlugin, FileServicePlugin])
-  .decorate(({ feedRepository, fileService }) => ({
-    feedService: new FeedService(feedRepository, fileService),
+  .use([FeedRepositoryPlugin, FileServicePlugin, FileServerServicePlugin])
+  .decorate(({ feedRepository, fileServerService }) => ({
+    feedService: new FeedService(feedRepository, fileServerService),
   }))

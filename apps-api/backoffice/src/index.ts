@@ -1,4 +1,4 @@
-import { cors } from '@elysiajs/cors'
+import cors from '@elysiajs/cors'
 import node from '@elysiajs/node'
 import { swagger } from '@elysiajs/swagger'
 import {

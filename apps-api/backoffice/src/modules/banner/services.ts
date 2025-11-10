@@ -1,4 +1,3 @@
-import { FileService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
@@ -6,12 +5,12 @@ import { ok } from 'neverthrow'
 import { GetBannersResponse } from './models'
 import { BannerRepository, BannerRepositoryPlugin } from './repository'
 
-import { FileServicePlugin } from '../../plugins/file'
+import { FileServerService, FileServerServicePlugin } from '../files/services'
 
 export class BannerService {
   constructor(
     private readonly bannerRepository: BannerRepository,
-    private readonly fileService: FileService
+    private readonly fileServerService: FileServerService
   ) {}
 
   async getBanners() {
@@ -28,7 +27,7 @@ export class BannerService {
           navigation: banner.navigation,
           destination: banner.miniApp!.clientUrl!,
           miniAppId: banner.miniApp!.id,
-          imageUrl: this.fileService.getPublicFileUrl(banner.imageFilePath),
+          imageUrl: this.fileServerService.getFileEndpointUrl(banner.imageFilePath),
         }
       }
 
@@ -36,7 +35,7 @@ export class BannerService {
         id: banner.id,
         navigation: banner.navigation,
         destination: banner.destination!,
-        imageUrl: this.fileService.getPublicFileUrl(banner.imageFilePath),
+        imageUrl: this.fileServerService.getFileEndpointUrl(banner.imageFilePath),
       }
     })
 
@@ -45,7 +44,7 @@ export class BannerService {
 }
 
 export const BannerServicePlugin = new Elysia({ name: 'BannerService' })
-  .use([BannerRepositoryPlugin, FileServicePlugin])
-  .decorate(({ bannerRepository, fileService }) => ({
-    bannerService: new BannerService(bannerRepository, fileService),
+  .use([BannerRepositoryPlugin, FileServerServicePlugin])
+  .decorate(({ bannerRepository, fileServerService }) => ({
+    bannerService: new BannerService(bannerRepository, fileServerService),
   }))

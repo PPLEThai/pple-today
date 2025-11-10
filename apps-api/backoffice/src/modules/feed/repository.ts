@@ -21,11 +21,13 @@ import { GetFeedContentResponse } from './models'
 
 import { FileServicePlugin } from '../../plugins/file'
 import { PrismaServicePlugin } from '../../plugins/prisma'
+import { FileServerService, FileServerServicePlugin } from '../files/services'
 
 export class FeedRepository {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly fileService: FileService
+    private readonly fileService: FileService,
+    private readonly fileServerService: FileServerService
   ) {}
 
   private constructResultWithMeta<T extends { id: string }>(
@@ -149,7 +151,7 @@ export class FeedRepository {
         id: rawFeedItem.author.id,
         name: rawFeedItem.author.name,
         profileImage: rawFeedItem.author.profileImagePath
-          ? this.fileService.getPublicFileUrl(rawFeedItem.author.profileImagePath)
+          ? this.fileServerService.getFileEndpointUrl(rawFeedItem.author.profileImagePath)
           : undefined,
         address: rawFeedItem.author.address ?? undefined,
       },
@@ -196,7 +198,7 @@ export class FeedRepository {
             title: rawFeedItem.announcement.title,
             type: rawFeedItem.announcement.type,
             attachments: rawFeedItem.announcement.attachments.map((attachment) =>
-              this.fileService.getPublicFileUrl(attachment.filePath)
+              this.fileServerService.getFileEndpointUrl(attachment.filePath)
             ),
           },
         } satisfies GetFeedContentResponse)
@@ -223,9 +225,9 @@ export class FeedRepository {
               width: image.width ?? undefined,
               height: image.height ?? undefined,
               thumbnailUrl: image.thumbnailPath
-                ? this.fileService.getPublicFileUrl(image.thumbnailPath)
+                ? this.fileServerService.getFileEndpointUrl(image.thumbnailPath)
                 : undefined,
-              url: this.fileService.getPublicFileUrl(image.attachmentPath),
+              url: this.fileServerService.getFileEndpointUrl(image.attachmentPath),
             })),
           },
         } satisfies GetFeedContentResponse)
@@ -1096,7 +1098,7 @@ export class FeedRepository {
 }
 
 export const FeedRepositoryPlugin = new Elysia({ name: 'FeedRepository' })
-  .use([PrismaServicePlugin, FileServicePlugin])
-  .decorate(({ prismaService, fileService }) => ({
-    feedRepository: new FeedRepository(prismaService, fileService),
+  .use([PrismaServicePlugin, FileServicePlugin, FileServerServicePlugin])
+  .decorate(({ prismaService, fileService, fileServerService }) => ({
+    feedRepository: new FeedRepository(prismaService, fileService, fileServerService),
   }))

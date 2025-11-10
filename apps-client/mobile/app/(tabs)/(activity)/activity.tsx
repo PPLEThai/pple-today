@@ -45,6 +45,7 @@ import {
   mapToActivity,
   useRecentActivityQuery,
 } from '@app/libs/pple-activity'
+import { createImageUrl } from '@app/utils/image'
 
 import { useBottomTabOnPress } from '../_layout'
 
@@ -117,7 +118,12 @@ export function MyActivity() {
         {Array.from({ length: 2 }).map((_, idx) => (
           <View key={idx} className="flex flex-row items-center gap-3">
             <Image
-              source={{ uri: activity.image }}
+              source={{
+                uri: createImageUrl(activity.image, {
+                  width: 48,
+                  height: 48,
+                }),
+              }}
               className="w-12 h-12 rounded-lg bg-base-bg-default"
             />
             <View className="flex flex-col flex-1">

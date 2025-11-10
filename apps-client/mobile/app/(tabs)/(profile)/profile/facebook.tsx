@@ -17,6 +17,7 @@ import FacebookIcon from '@app/assets/facebook-icon.svg'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useFacebookPagesQuery } from '@app/libs/facebook'
+import { createImageUrl } from '@app/utils/image'
 
 export default function FacebookListPage() {
   const params = useLocalSearchParams()
@@ -169,7 +170,7 @@ const FacebookPageRadioItem = React.memo(function FacebookRadioItem({
         </RadioGroupPrimitive.Indicator>
       </View>
       <Avatar alt={props.name} className="size-8">
-        <AvatarImage source={{ uri: props.imageUrl }} />
+        <AvatarImage source={{ uri: createImageUrl(props.imageUrl, { width: 32, height: 32 }) }} />
         <AvatarPPLEFallback />
       </Avatar>
       <View className="flex flex-col">

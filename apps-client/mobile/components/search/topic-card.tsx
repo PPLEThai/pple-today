@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router'
 import { MessageSquareHeartIcon } from 'lucide-react-native'
 
 import { GetSearchTopicsResponse } from '@api/backoffice/app'
+import { createImageUrl } from '@app/utils/image'
 
 import { SearchCard } from './search-card'
 
@@ -70,7 +71,9 @@ export function TopicSearchBigCard(props: TopicSearchBigCardProps) {
       <View className="flex flex-row items-center gap-4 px-4 py-3">
         <Image
           source={{
-            uri: props.bannerImage,
+            uri: props.bannerImage
+              ? createImageUrl(props.bannerImage, { width: 80, height: 80 })
+              : undefined,
           }}
           contentFit="cover"
           style={{ width: 80, height: 80, borderRadius: 12 }}

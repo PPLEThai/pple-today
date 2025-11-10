@@ -8,6 +8,10 @@ export const envSchema = t.Object({
     default: 'production',
   }),
 
+  API_BASE_URL: t.String({
+    description: 'Base URL for backoffice API',
+  }),
+
   OIDC_URL: t.String({ description: 'OIDC URL for authentication' }),
   OIDC_KEY_ID: t.String({ description: 'Key ID for OIDC' }),
   OIDC_CLIENT_ID: t.String({ description: 'Client ID for OIDC' }),
@@ -75,6 +79,10 @@ export const envSchema = t.Object({
   }),
   FIREBASE_PRIVATE_KEY: t.String({
     description: 'Firebase Private Key',
+  }),
+
+  IMAGE_SERVER_BASE_URL: t.String({
+    description: 'Base URL for image server',
   }),
 })
 

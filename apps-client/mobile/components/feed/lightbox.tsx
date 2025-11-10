@@ -7,6 +7,7 @@ import { Image } from 'expo-image'
 import { useVideoPlayer, VideoView } from 'expo-video'
 
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
+import { createImageUrl } from '@app/utils/image'
 
 import { LightboxView } from './lightbox-viewer'
 
@@ -179,7 +180,12 @@ function Attachment(props: AttachmentProps) {
         >
           <Image
             style={{ width: '100%', height: '100%' }}
-            source={{ uri: props.attachment.url }}
+            source={{
+              uri: createImageUrl(props.attachment.url, {
+                width: 1000,
+                height: 1000,
+              }),
+            }}
             alt={props.attachment.description ?? ''}
             contentPosition="top center"
           />

@@ -1,5 +1,4 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
-import { FileService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
@@ -7,12 +6,12 @@ import { err, ok } from 'neverthrow'
 import { GetAnnouncementByIdResponse, GetAnnouncementsResponse } from './models'
 import { AnnouncementRepository, AnnouncementRepositoryPlugin } from './repository'
 
-import { FileServicePlugin } from '../../plugins/file'
+import { FileServerService, FileServerServicePlugin } from '../files/services'
 
 export class AnnouncementService {
   constructor(
     private readonly announcementRepository: AnnouncementRepository,
-    private readonly fileService: FileService
+    private readonly fileServerService: FileServerService
   ) {}
 
   async getAnnouncements(query?: { limit: number; page: number }) {
@@ -49,7 +48,7 @@ export class AnnouncementService {
       })
     }
 
-    const attachmentPublicUrls = this.fileService.bulkGetPublicFileUrl(
+    const attachmentPublicUrls = this.fileServerService.bulkGetFileEndpointUrl(
       announcementResult.value.attachments.map((attachment) => attachment.filePath)
     )
 
@@ -68,7 +67,7 @@ export class AnnouncementService {
 export const AnnouncementServicePlugin = new Elysia({
   name: 'AnnouncementService',
 })
-  .use([AnnouncementRepositoryPlugin, FileServicePlugin])
-  .decorate(({ announcementRepository, fileService }) => ({
-    announcementService: new AnnouncementService(announcementRepository, fileService),
+  .use([AnnouncementRepositoryPlugin, FileServerServicePlugin])
+  .decorate(({ announcementRepository, fileServerService }) => ({
+    announcementService: new AnnouncementService(announcementRepository, fileServerService),
   }))

@@ -24,6 +24,7 @@ import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { renderCount } from '@app/utils/count'
 import { getRoleName } from '@app/utils/get-role-name'
+import { createImageUrl } from '@app/utils/image'
 
 const LIMIT = 10
 export default function ProfilePage() {
@@ -150,7 +151,13 @@ export default function ProfilePage() {
       <View className="w-full flex flex-col bg-base-bg-white">
         <View className="flex flex-row items-center gap-4 px-4 pb-4">
           <Avatar alt={userDetailsQuery.data.name} className="w-16 h-16">
-            <AvatarImage source={{ uri: userDetailsQuery.data.profileImage }} />
+            <AvatarImage
+              source={{
+                uri: userDetailsQuery.data.profileImage
+                  ? createImageUrl(userDetailsQuery.data.profileImage, { width: 64, height: 64 })
+                  : undefined,
+              }}
+            />
             <AvatarPPLEFallback />
           </Avatar>
           <View className="flex-1 gap-2">

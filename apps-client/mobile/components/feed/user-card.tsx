@@ -18,6 +18,7 @@ import { ArrowRightIcon, UserRoundPlusIcon } from 'lucide-react-native'
 import { GetUserRecommendationResponse } from '@api/backoffice/app'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
+import { createImageUrl } from '@app/utils/image'
 
 import { AvatarPPLEFallback } from '../avatar-pple-fallback'
 
@@ -61,7 +62,11 @@ export function UserCard(props: UserCardProps) {
       )}
     >
       <Avatar alt={props.user.name} className="w-14 h-14">
-        {props.user.profileImage && <AvatarImage source={{ uri: props.user.profileImage }} />}
+        {props.user.profileImage && (
+          <AvatarImage
+            source={{ uri: createImageUrl(props.user.profileImage, { width: 56, height: 56 }) }}
+          />
+        )}
         <AvatarPPLEFallback />
       </Avatar>
       <View className="flex-1">
