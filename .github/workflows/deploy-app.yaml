@@ -197,9 +197,9 @@ jobs:
       SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
       SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
       DOCKER_USERNAME: ${{ needs.setup-beta-deployment-config.outputs.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ needs.setup-beta-deployment-config.outputs.DOCKER_PASSWORD }}
-      DOCKER_REGISTRY: ${{ needs.setup-beta-deployment-config.outputs.DOCKER_REGISTRY }}
+      DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
       DOCKER_IMAGE_PREFIX: ${{ needs.setup-beta-deployment-config.outputs.DOCKER_IMAGE_PREFIX }}
+      DOCKER_REGISTRY: ghcr.io
 
   migrate-database:
     name: Migrate Beta Database
