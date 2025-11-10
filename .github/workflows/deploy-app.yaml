@@ -139,9 +139,9 @@ jobs:
           else
             OWNER_LC=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')
             
-            echo "DOCKER_USERNAME=${OWNER_LC}" >> $GITHUB_OUTPUT
+            echo "DOCKER_USERNAME=$OWNER_LC" >> $GITHUB_OUTPUT
             echo "DOCKER_PASSWORD=${{ secrets.GITHUB_TOKEN }}" >> $GITHUB_OUTPUT
-            echo "DOCKER_IMAGE_PREFIX=${OWNER_LC}" >> $GITHUB_OUTPUT
+            echo "DOCKER_IMAGE_PREFIX=$OWNER_LC" >> $GITHUB_OUTPUT
             echo "DOCKER_REGISTRY=ghcr.io" >> $GITHUB_OUTPUT
           fi
 
