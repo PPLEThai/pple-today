@@ -37,14 +37,16 @@ platform :ios do
       team_id: team_id,
       code_sign_identity: "Apple Distribution",
       profile_name: ENV['PROVISIONING_PROFILE_SPECIFIER'],
+      targets: ['PPLEToday'],
       path: './PPLEToday.xcodeproj'
     )
     update_code_signing_settings(
       use_automatic_signing: false,
       team_id: team_id,
+      targets: ['NotificationServiceExtension'],
       code_sign_identity: "Apple Distribution",
       profile_name: "#{ENV['PROVISIONING_PROFILE_SPECIFIER']}.NotificationServiceExtension",
-      path: './NotificationServiceExtension'
+      path: './PPLEToday.xcodeproj'
     )
     # https://medium.com/@iamCoder/how-to-solve-missing-compliance-status-in-testflight-and-invites-not-coming-to-testers-4cbbe3c4ed12
     # https://github.com/fastlane/fastlane/issues/15591
