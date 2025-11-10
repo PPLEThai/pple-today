@@ -21,6 +21,9 @@ export default defineConfig({
         allowedHosts: [process.env.VITE_WEB_DOMAIN],
       }
     : undefined,
+  build: {
+    outDir: 'build',
+  },
   plugins: [
     tanstackRouter({
       target: 'react',
