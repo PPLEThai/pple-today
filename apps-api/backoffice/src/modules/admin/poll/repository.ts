@@ -60,9 +60,12 @@ export class AdminPollRepository {
                 type: true,
                 status: true,
                 topics: true,
+                totalVotes: true,
                 options: {
                   select: {
+                    id: true,
                     title: true,
+                    votes: true,
                   },
                   orderBy: {
                     id: 'asc',
@@ -104,6 +107,7 @@ export class AdminPollRepository {
             publishedAt: feed.publishedAt,
             createdAt: feed.createdAt,
             updatedAt: feed.updatedAt,
+            totalVotes: feed.poll.totalVotes,
             endAt: feed.poll.endAt,
             status: feed.poll.status,
             options: feed.poll.options,
@@ -127,71 +131,108 @@ export class AdminPollRepository {
     })
   }
 
-  async getPollById(feedItemId: string) {
+  async getPollDetailById(feedItemId: string) {
     return await fromRepositoryPromise(async () => {
-      const {
-        feedItemId: id,
-        feedItem,
-        options,
-        topics,
-        ...result
-      } = await this.prismaService.poll.findUniqueOrThrow({
-        where: { feedItemId },
-        select: {
-          feedItemId: true,
-          title: true,
-          description: true,
-          status: true,
-          endAt: true,
-          type: true,
-          totalVotes: true,
-          feedItem: {
+      const feed = await this.prismaService.feedItem.findUniqueOrThrow({
+        where: {
+          id: feedItemId,
+        },
+        include: {
+          poll: {
             select: {
-              createdAt: true,
-              updatedAt: true,
-              publishedAt: true,
-            },
-          },
-          options: {
-            select: {
+              endAt: true,
               title: true,
-              votes: true,
-              pollAnswers: {
+              type: true,
+              status: true,
+              totalVotes: true,
+              topics: {
                 select: {
-                  createdAt: true,
-                  user: {
-                    select: {
-                      name: true,
-                    },
-                  },
+                  topicId: true,
+                },
+              },
+              options: {
+                select: {
+                  id: true,
+                  title: true,
+                  votes: true,
+                },
+                orderBy: {
+                  id: 'asc',
                 },
               },
             },
           },
-          topics: {
+          reactionCounts: true,
+          _count: {
             select: {
-              topicId: true,
+              comments: true,
             },
           },
         },
       })
 
-      return {
-        id,
-        createdAt: feedItem.createdAt,
-        updatedAt: feedItem.updatedAt,
-        publishedAt: feedItem.publishedAt,
-        options: options.map((option) => ({
-          title: option.title,
-          votes: option.votes,
-          answers: option.pollAnswers.map((answer) => ({
-            createdAt: answer.createdAt,
-            username: answer.user.name,
-          })),
-        })),
-        topics: topics.map((topic) => topic.topicId),
-        ...result,
+      const transformPoll = {
+        id: feed.id,
+        title: feed.poll!.title,
+        type: feed.poll!.type,
+        reactions: feed.reactionCounts,
+        commentCount: feed.numberOfComments,
+        publishedAt: feed.publishedAt,
+        createdAt: feed.createdAt,
+        updatedAt: feed.updatedAt,
+        totalVotes: feed.poll!.totalVotes,
+        endAt: feed.poll!.endAt,
+        status: feed.poll!.status,
+        options: feed.poll!.options,
+        topics: feed.poll!.topics.flatMap((topic) => topic.topicId),
       }
+
+      return transformPoll
+    })
+  }
+
+  async getPollOptionAnswersById(optionId: string) {
+    return await fromRepositoryPromise(async () => {
+      const option = await this.prismaService.pollOption.findUniqueOrThrow({
+        where: {
+          id: optionId,
+        },
+        include: {
+          pollAnswers: {
+            select: {
+              id: true,
+              createdAt: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  profileImagePath: true,
+                },
+              },
+            },
+            orderBy: {
+              createdAt: 'desc',
+            },
+          },
+        },
+      })
+
+      const transformAnswers = {
+        id: option.id,
+        title: option.title,
+        votes: option.votes,
+        answers: option.pollAnswers.map((answer) => ({
+          id: answer.id,
+          createdAt: answer.createdAt,
+          user: {
+            id: answer.user.id,
+            name: answer.user.name,
+            profileImage: answer.user.profileImagePath,
+          },
+        })),
+      }
+
+      return transformAnswers
     })
   }
 

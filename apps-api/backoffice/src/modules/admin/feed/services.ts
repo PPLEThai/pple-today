@@ -3,7 +3,7 @@ import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { UpdateFeedItemCommentPrivacyBody } from './models'
+import { GetFeedCommentsResponse, UpdateFeedItemCommentPrivacyBody } from './models'
 import { AdminFeedRepository, AdminFeedRepositoryPlugin } from './repository'
 
 export class AdminFeedService {
@@ -21,6 +21,14 @@ export class AdminFeedService {
       })
 
     return ok()
+  }
+
+  async getFeedItemCommentsById(id: string) {
+    const result = await this.feedRepository.getFeedCommentsById(id)
+
+    if (result.isErr()) return mapRepositoryError(result.error)
+
+    return ok(result.value satisfies GetFeedCommentsResponse)
   }
 }
 

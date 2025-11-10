@@ -18,6 +18,39 @@ export class AdminFeedRepository {
       })
     )
   }
+
+  async getFeedCommentsById(id: string) {
+    return fromRepositoryPromise(async () => {
+      const comments = await this.prismaService.feedItemComment.findMany({
+        where: {
+          feedItemId: id,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              profileImagePath: true,
+              name: true,
+            },
+          },
+        },
+      })
+
+      const transformComments = comments.map((comment) => ({
+        id: comment.id,
+        content: comment.content,
+        createdAt: comment.createdAt,
+        isPrivate: comment.isPrivate,
+        author: {
+          id: comment.user.id,
+          profileImage: comment.user.profileImagePath,
+          name: comment.user.name,
+        },
+      }))
+
+      return transformComments
+    })
+  }
 }
 
 export const AdminFeedRepositoryPlugin = new Elysia({ name: 'AdminFeedRepository' })

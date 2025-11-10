@@ -316,6 +316,15 @@ export const NOTIFICATION_KEY_ERROR_SCHEMA = {
   },
 } satisfies InternalErrorSchemas
 
+export const OPTION_ERROR_SCHEMA = {
+  OPTION_NOT_FOUND: {
+    status: 404,
+  },
+  OPTION_INVALID_INPUT: {
+    status: 400,
+  },
+} satisfies InternalErrorSchemas
+
 export const InternalErrorCodeSchemas = {
   ...AUTH_ERROR_SCHEMA,
   ...COMMON_ERROR_SCHEMA,
@@ -334,6 +343,7 @@ export const InternalErrorCodeSchemas = {
   ...ELECTION_KEY_ERROR_SCHEMA,
   ...POST_ERROR_SCHEMA,
   ...NOTIFICATION_KEY_ERROR_SCHEMA,
+  ...OPTION_ERROR_SCHEMA,
 } as const
 export type InternalErrorCodeSchemas = typeof InternalErrorCodeSchemas
 

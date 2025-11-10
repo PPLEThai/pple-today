@@ -2,7 +2,6 @@
 
 import { useCallback, useMemo, useRef, useState } from 'react'
 
-import { Badge } from '@pple-today/web-ui/badge'
 import { Button } from '@pple-today/web-ui/button'
 import { DataTable } from '@pple-today/web-ui/data-table'
 import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
@@ -12,10 +11,10 @@ import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { DtFilter } from 'components/datatable/DtFilter'
 import { DtMovement } from 'components/datatable/DtMovement'
 import { Engagements } from 'components/Engagements'
+import { PollBadge } from 'components/poll/PollBadge'
 import { PollCreate } from 'components/poll/PollCreate'
 import { PollEdit } from 'components/poll/PollEdit'
 import { TableCopyId } from 'components/TableCopyId'
-import dayjs from 'dayjs'
 import { EyeOff, Megaphone, Pencil, Plus, Trash2 } from 'lucide-react'
 import { formatDisplayDate } from 'utils/date'
 
@@ -27,24 +26,6 @@ import {
 } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
-import { exhaustiveGuard } from '~/libs/exhaustive-guard'
-
-function getPollStatus(poll: GetPollsResponse['data'][number]) {
-  switch (poll.status) {
-    case 'PUBLISHED':
-      if (dayjs(new Date()).isAfter(poll.endAt)) {
-        return 'PUBLISHED_ENDED'
-      } else {
-        return 'PUBLISHED_ONGOING'
-      }
-    case 'ARCHIVED':
-      return 'ARCHIVED'
-    case 'DRAFT':
-      return 'DRAFT'
-    default:
-      exhaustiveGuard(poll.status)
-  }
-}
 
 const columnHelper = createColumnHelper<GetPollsResponse['data'][number]>()
 
@@ -178,25 +159,7 @@ export const Data = () => {
       }),
       columnHelper.accessor('status', {
         header: 'สถานะ',
-        cell: (info) => {
-          const status = getPollStatus(info.row.original)
-          switch (status) {
-            case 'PUBLISHED_ONGOING':
-              return <Badge variant={'success'}>ประกาศแล้ว</Badge>
-            case 'PUBLISHED_ENDED':
-              return (
-                <Badge variant={'secondary'} className="bg-base-secondary-light">
-                  ปิดโพลแล้ว
-                </Badge>
-              )
-            case 'ARCHIVED':
-              return <Badge variant={'secondary'}>เก็บในคลัง</Badge>
-            case 'DRAFT':
-              return <Badge variant={'outline'}>ร่าง</Badge>
-            default:
-              exhaustiveGuard(status)
-          }
-        },
+        cell: (info) => <PollBadge poll={info.row.original} />,
         size: 110,
         minSize: 110,
       }),
@@ -245,16 +208,18 @@ export const Data = () => {
                   <Megaphone className="size-4" />
                 </Button>
               )}
-              <PollEdit
-                trigger={
-                  <Button variant="outline" size="icon" className="size-8">
-                    <span className="sr-only">แก้ไข</span>
-                    <Pencil className="size-4" />
-                  </Button>
-                }
-                onSuccess={invalidateQuery}
-                poll={row.original}
-              />
+              {status === 'DRAFT' && (
+                <PollEdit
+                  trigger={
+                    <Button variant="outline" size="icon" className="size-8">
+                      <span className="sr-only">แก้ไข</span>
+                      <Pencil className="size-4" />
+                    </Button>
+                  }
+                  onSuccess={invalidateQuery}
+                  poll={row.original}
+                />
+              )}
               <Button
                 variant="outline-destructive"
                 size="icon"

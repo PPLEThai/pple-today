@@ -4,7 +4,13 @@ import { PollStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { GetPollByIdResponse, GetPollsResponse, PostPollBody, UpdatePollBody } from './models'
+import {
+  GetPollByIdResponse,
+  GetPollOptionAnswersByIdResponse,
+  GetPollsResponse,
+  PostPollBody,
+  UpdatePollBody,
+} from './models'
 import { AdminPollRepository, AdminPollRepositoryPlugin } from './repository'
 
 export class AdminPollService {
@@ -18,7 +24,7 @@ export class AdminPollService {
   }
 
   async getPollById(pollId: string) {
-    const result = await this.adminPollRepository.getPollById(pollId)
+    const result = await this.adminPollRepository.getPollDetailById(pollId)
     if (result.isErr())
       return mapRepositoryError(result.error, {
         RECORD_NOT_FOUND: {
@@ -27,6 +33,18 @@ export class AdminPollService {
       })
 
     return ok(result.value satisfies GetPollByIdResponse)
+  }
+
+  async getPollOptionAnswers(optionId: string) {
+    const result = await this.adminPollRepository.getPollOptionAnswersById(optionId)
+    if (result.isErr())
+      return mapRepositoryError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.POLL_NOT_FOUND,
+        },
+      })
+
+    return ok(result.value satisfies GetPollOptionAnswersByIdResponse)
   }
 
   async createPoll(data: PostPollBody) {
