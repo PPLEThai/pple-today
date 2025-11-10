@@ -180,6 +180,7 @@ jobs:
     needs:
       - get-affected-apps
       - setup-deployment-config
+      - publish-image
     uses: ./.github/workflows/deploy-beta-server.yaml
     with:
       packages: ${{ needs.get-affected-apps.outputs.packages }}
