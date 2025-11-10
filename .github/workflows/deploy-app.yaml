@@ -139,7 +139,12 @@ jobs:
     with:
       packages: ${{ needs.get-affected-apps.outputs.packages }}
       environment: ${{ github.event.inputs.environment }}
-    secrets: 'inherit'
+    secrets:
+      DOCKER_USERNAME: ${{ secrets.PROD_DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.PROD_DOCKER_PASSWORD }}
+      DOCKER_IMAGE_PREFIX: ${{ secrets.PROD_DOCKER_IMAGE_PREFIX }}
+      DOCKER_REGISTRY: ${{ secrets.PROD_DOCKER_REGISTRY }}
+      WEB_CLIENT_ENV: ${{ secrets[format('WEB_CLIENT_ENV_{0}', github.event.inputs.environment)] }}
 
   setup-beta-deployment-config:
     name: Setup deployment configuration
@@ -175,7 +180,7 @@ jobs:
       DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
       DOCKER_IMAGE_PREFIX: ${{ needs.setup-beta-deployment-config.outputs.DOCKER_IMAGE_PREFIX }}
       DOCKER_REGISTRY: ghcr.io
-      WEB_CLIENT_ENV: ${{ secrets.WEB_CLIENT_ENV }}
+      WEB_CLIENT_ENV: ${{ secrets[format('WEB_CLIENT_ENV_{0}', github.event.inputs.environment)] }}
 
   deploy-beta-server:
     name: Publish beta docker application And deploy
