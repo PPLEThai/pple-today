@@ -1,5 +1,51 @@
 # @pple-today/api-common
 
+## 0.6.0
+
+### Minor Changes
+
+- [#240](https://github.com/PPLEThai/pple-today/pull/240) [`b10e5ff`](https://github.com/PPLEThai/pple-today/commit/b10e5fffdb3afd14b41a6aa10692fce9e186e487) Thanks [@miello](https://github.com/miello)! - [[PPLE-518] Navigate to Notification Detail Page instead of the destination](https://linear.app/snts/issue/PPLE-518/navigate-to-notification-detail-page-instead-of-the-destination)
+  [[PPLE-517] Call to action button title in API](https://linear.app/snts/issue/PPLE-517/call-to-action-button-title-in-api)
+
+- [#225](https://github.com/PPLEThai/pple-today/pull/225) [`3d3fd3a`](https://github.com/PPLEThai/pple-today/commit/3d3fd3a6c559f95c65355cc8ab32f1603006cd81) Thanks [@miello](https://github.com/miello)! - [[PPLE-510] API Key Management for external user](https://linear.app/snts/issue/PPLE-510/api-key-management-for-external-user)
+
+- [#168](https://github.com/PPLEThai/pple-today/pull/168) [`f362c80`](https://github.com/PPLEThai/pple-today/commit/f362c80e511e3822b986520d9e7ccbbb95da648f) Thanks [@rootEnginear](https://github.com/rootEnginear)! - [[PPLE-343] Feed Banner CMS Page](https://linear.app/snts/issue/PPLE-343/banner)
+
+- [#221](https://github.com/PPLEThai/pple-today/pull/221) [`41d1507`](https://github.com/PPLEThai/pple-today/commit/41d150789fda8f5cc7425c2ab7f0736078455eed) Thanks [@miello](https://github.com/miello)! - [[PPLE-485] Send Notification For External User](https://linear.app/snts/issue/PPLE-485/send-notification-for-external-user)
+  [[PPLE-484] List Notification](https://linear.app/snts/issue/PPLE-484/list-notification)
+  [[PPLE-483] Read Notification](https://linear.app/snts/issue/PPLE-483/read-notification)
+
+- [#248](https://github.com/PPLEThai/pple-today/pull/248) [`05ec8b0`](https://github.com/PPLEThai/pple-today/commit/05ec8b0450fa45ffac991e19ab9be0079d96a4d4) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-502] Election Detail](chayaponarpayatam2004/pple-502-election-detail)
+
+- [#170](https://github.com/PPLEThai/pple-today/pull/170) [`4872f63`](https://github.com/PPLEThai/pple-today/commit/4872f63c9215397eecea891a441fcf04fd1a282b) Thanks [@rootEnginear](https://github.com/rootEnginear)! - [PPLE-339] Feed Post CMS Page
+
+- [#237](https://github.com/PPLEThai/pple-today/pull/237) [`df54e72`](https://github.com/PPLEThai/pple-today/commit/df54e729160fbe906f04d13464d631f4127afbc9) Thanks [@rootEnginear](https://github.com/rootEnginear)! - [[PPLE-344] Facebook Page Management](https://linear.app/snts/issue/PPLE-344/facebook-page-management)
+
+### Patch Changes
+
+- [#238](https://github.com/PPLEThai/pple-today/pull/238) [`c5a87d2`](https://github.com/PPLEThai/pple-today/commit/c5a87d28ee99aff84801713870077417c771a2fc) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-496] List Poll](https://linear.app/snts/issue/PPLE-496/list-poll)
+
+- [#255](https://github.com/PPLEThai/pple-today/pull/255) [`196e009`](https://github.com/PPLEThai/pple-today/commit/196e0098ac1b238fd54e6168e9f43d44ee830a56) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-500] Poll detail page](https://linear.app/snts/issue/PPLE-500/poll-detail-page)
+
+  [[PPLE-530] Poll Detail Section](https://linear.app/snts/issue/PPLE-530/poll-detail-section)
+
+  [[PPLE-499] List Comment](https://linear.app/snts/issue/PPLE-499/list-comment)
+
+  [[PPLE-498] Poll Answer](https://linear.app/snts/issue/PPLE-498/poll-answer)
+
+  [[PPLE-474] [API] Poll Management](https://linear.app/snts/issue/PPLE-474/api-poll-management)
+
+  [[PPLE-346] Poll](https://linear.app/snts/issue/PPLE-346/poll)
+
+- [#233](https://github.com/PPLEThai/pple-today/pull/233) [`25595d5`](https://github.com/PPLEThai/pple-today/commit/25595d590ed436a969b5ef2a6fb280f01bbf95ac) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-447] My Poll](https://linear.app/snts/issue/PPLE-447/my-poll)
+
+  [[PPLE-448] My Election](https://linear.app/snts/issue/PPLE-448/my-election)
+
+- [#247](https://github.com/PPLEThai/pple-today/pull/247) [`530f436`](https://github.com/PPLEThai/pple-today/commit/530f436f07f364daa2100916e7db5b280d3f2339) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-497] Edit Poll](https://linear.app/snts/issue/PPLE-497/edit-page)
+
+- Updated dependencies [[`f362c80`](https://github.com/PPLEThai/pple-today/commit/f362c80e511e3822b986520d9e7ccbbb95da648f), [`41d1507`](https://github.com/PPLEThai/pple-today/commit/41d150789fda8f5cc7425c2ab7f0736078455eed), [`05ec8b0`](https://github.com/PPLEThai/pple-today/commit/05ec8b0450fa45ffac991e19ab9be0079d96a4d4), [`df54e72`](https://github.com/PPLEThai/pple-today/commit/df54e729160fbe906f04d13464d631f4127afbc9), [`196e009`](https://github.com/PPLEThai/pple-today/commit/196e0098ac1b238fd54e6168e9f43d44ee830a56), [`25595d5`](https://github.com/PPLEThai/pple-today/commit/25595d590ed436a969b5ef2a6fb280f01bbf95ac), [`786b65e`](https://github.com/PPLEThai/pple-today/commit/786b65efe16624726614170a98f3f4726a775d30), [`f15f14d`](https://github.com/PPLEThai/pple-today/commit/f15f14d7a8b945d8b0fda78930a3ac9fd4da7fcb)]:
+  - @pple-today/database@0.5.0
+
 ## 0.5.1
 
 ### Patch Changes

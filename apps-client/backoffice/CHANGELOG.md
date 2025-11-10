@@ -1,5 +1,52 @@
 # @client/backoffice
 
+## 0.6.0
+
+### Minor Changes
+
+- [#239](https://github.com/PPLEThai/pple-today/pull/239) [`af2abc0`](https://github.com/PPLEThai/pple-today/commit/af2abc0ca16ad2b15e4bbc6d6078d27a80df7c40) Thanks [@Anon-136](https://github.com/Anon-136)! - [BREAKING [PPLE-523] Migrate from react router to tanstack router](https://linear.app/snts/issue/PPLE-523/migrate-to-tanstack-router)
+
+- [#168](https://github.com/PPLEThai/pple-today/pull/168) [`f362c80`](https://github.com/PPLEThai/pple-today/commit/f362c80e511e3822b986520d9e7ccbbb95da648f) Thanks [@rootEnginear](https://github.com/rootEnginear)! - [[PPLE-343] Feed Banner CMS Page](https://linear.app/snts/issue/PPLE-343/banner)
+
+- [#248](https://github.com/PPLEThai/pple-today/pull/248) [`05ec8b0`](https://github.com/PPLEThai/pple-today/commit/05ec8b0450fa45ffac991e19ab9be0079d96a4d4) Thanks [@TeeGoood](https://github.com/TeeGoood)! - [[PPLE-502] Election Detail](chayaponarpayatam2004/pple-502-election-detail)
+
+- [#170](https://github.com/PPLEThai/pple-today/pull/170) [`4872f63`](https://github.com/PPLEThai/pple-today/commit/4872f63c9215397eecea891a441fcf04fd1a282b) Thanks [@rootEnginear](https://github.com/rootEnginear)! - [PPLE-339] Feed Post CMS Page
+
+- [#237](https://github.com/PPLEThai/pple-today/pull/237) [`df54e72`](https://github.com/PPLEThai/pple-today/commit/df54e729160fbe906f04d13464d631f4127afbc9) Thanks [@rootEnginear](https://github.com/rootEnginear)! - [[PPLE-344] Facebook Page Management](https://linear.app/snts/issue/PPLE-344/facebook-page-management)
+
+- [#255](https://github.com/PPLEThai/pple-today/pull/255) [`196e009`](https://github.com/PPLEThai/pple-today/commit/196e0098ac1b238fd54e6168e9f43d44ee830a56) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-500] Poll detail page](https://linear.app/snts/issue/PPLE-500/poll-detail-page)
+
+  [[PPLE-530] Poll Detail Section](https://linear.app/snts/issue/PPLE-530/poll-detail-section)
+
+  [[PPLE-499] List Comment](https://linear.app/snts/issue/PPLE-499/list-comment)
+
+  [[PPLE-498] Poll Answer](https://linear.app/snts/issue/PPLE-498/poll-answer)
+
+  [[PPLE-474] [API] Poll Management](https://linear.app/snts/issue/PPLE-474/api-poll-management)
+
+  [[PPLE-346] Poll](https://linear.app/snts/issue/PPLE-346/poll)
+
+- [#243](https://github.com/PPLEThai/pple-today/pull/243) [`f043ad3`](https://github.com/PPLEThai/pple-today/commit/f043ad3130ee43fc37f9e8e69fa9f4c74b429472) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-525] CMS Login and redirect](https://linear.app/snts/issue/PPLE-525/cms-login-and-redirect)
+
+### Patch Changes
+
+- [#246](https://github.com/PPLEThai/pple-today/pull/246) [`9627ab7`](https://github.com/PPLEThai/pple-today/commit/9627ab7ac1ed95a5a0391e8e9b62f24bb32742e7) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-495] Create poll](https://linear.app/snts/issue/PPLE-495/create-poll)
+
+- [#238](https://github.com/PPLEThai/pple-today/pull/238) [`c5a87d2`](https://github.com/PPLEThai/pple-today/commit/c5a87d28ee99aff84801713870077417c771a2fc) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-496] List Poll](https://linear.app/snts/issue/PPLE-496/list-poll)
+
+- [#249](https://github.com/PPLEThai/pple-today/pull/249) [`744e3c7`](https://github.com/PPLEThai/pple-today/commit/744e3c79edd74b2bf22cd82645acf23954aad2ad) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-529] Fix user not synced between tabs](https://linear.app/snts/issue/PPLE-529/fix-user-not-synced-between-tabs)
+
+- [#257](https://github.com/PPLEThai/pple-today/pull/257) [`df75a8c`](https://github.com/PPLEThai/pple-today/commit/df75a8c477e97287fbc75c8503240f8bac3d9c57) Thanks [@miello](https://github.com/miello)! - [[PPLE-543] [CI/CD] Wrong backoffice docker configuration](https://linear.app/snts/issue/PPLE-543/cicd-wrong-backoffice-docker-configuration)
+
+- [#252](https://github.com/PPLEThai/pple-today/pull/252) [`e59f7e1`](https://github.com/PPLEThai/pple-today/commit/e59f7e122abb93e37578b96e0a314fef69ba4557) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-531] CMS called API infinitely if failed to get auth me](https://linear.app/snts/issue/PPLE-531/cms-called-api-infinitely-if-failed-to-get-auth-me)
+
+- [#247](https://github.com/PPLEThai/pple-today/pull/247) [`530f436`](https://github.com/PPLEThai/pple-today/commit/530f436f07f364daa2100916e7db5b280d3f2339) Thanks [@ChanatpakornS](https://github.com/ChanatpakornS)! - [[PPLE-497] Edit Poll](https://linear.app/snts/issue/PPLE-497/edit-page)
+
+- [#253](https://github.com/PPLEThai/pple-today/pull/253) [`f15f14d`](https://github.com/PPLEThai/pple-today/commit/f15f14d7a8b945d8b0fda78930a3ac9fd4da7fcb) Thanks [@rootEnginear](https://github.com/rootEnginear)! - [[PPLE-524] Housekeeping](https://linear.app/snts/issue/PPLE-524/housekeeping)
+
+- Updated dependencies [[`f362c80`](https://github.com/PPLEThai/pple-today/commit/f362c80e511e3822b986520d9e7ccbbb95da648f), [`9627ab7`](https://github.com/PPLEThai/pple-today/commit/9627ab7ac1ed95a5a0391e8e9b62f24bb32742e7), [`05ec8b0`](https://github.com/PPLEThai/pple-today/commit/05ec8b0450fa45ffac991e19ab9be0079d96a4d4), [`c5a87d2`](https://github.com/PPLEThai/pple-today/commit/c5a87d28ee99aff84801713870077417c771a2fc)]:
+  - @pple-today/web-ui@0.3.0
+
 ## 0.5.1
 
 ### Patch Changes
