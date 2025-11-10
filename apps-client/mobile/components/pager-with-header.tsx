@@ -624,6 +624,7 @@ export interface PagerScrollViewProps {
   headerHeight: number
   scrollElRef: AnimatedRef<any>
   setScrollViewTag: (tag: number | null) => void
+  onLayout: () => void
 }
 export function PagerContent({ children, index }: PagerContentProps) {
   const { isHeaderReady, headerHeight, registerScrollViewRef, currentPage, setScrollViewTag } =
@@ -637,13 +638,17 @@ export function PagerContent({ children, index }: PagerContentProps) {
     }
   }, [scrollElRef, registerScrollViewRef, index])
 
+  const [isMounted, setMounted] = React.useState(false)
+  const onLayout = React.useCallback(() => {
+    setMounted(true)
+  }, [])
   React.useEffect(() => {
-    if (isHeaderReady && isFocused && scrollElRef.current) {
+    if (isHeaderReady && isMounted && isFocused && scrollElRef.current) {
       const scrollViewTag = findNodeHandle(scrollElRef.current)
       setScrollViewTag(scrollViewTag)
       // console.log('scrollViewTag:', scrollViewTag)
     }
-  }, [isHeaderReady, isFocused, scrollElRef, setScrollViewTag])
+  }, [isHeaderReady, isMounted, isFocused, scrollElRef, setScrollViewTag])
 
   if (!isHeaderReady) {
     return null
@@ -653,6 +658,7 @@ export function PagerContent({ children, index }: PagerContentProps) {
     headerHeight,
     scrollElRef,
     setScrollViewTag,
+    onLayout,
   })
 }
 

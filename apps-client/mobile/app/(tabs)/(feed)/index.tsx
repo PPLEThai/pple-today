@@ -526,7 +526,7 @@ const TopicSkeleton = () => {
 }
 
 function FeedFollowingContent(props: PagerScrollViewProps) {
-  const { headerHeight, scrollElRef } = props
+  const { headerHeight, scrollElRef, onLayout } = props
 
   const feedInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/feed/following'),
@@ -606,6 +606,7 @@ function FeedFollowingContent(props: PagerScrollViewProps) {
       onEndReached={onEndReached}
       renderItem={renderFeedItem}
       showsVerticalScrollIndicator={false}
+      onLayout={onLayout}
     />
   )
 }
@@ -637,7 +638,7 @@ function FeedFollowingContent(props: PagerScrollViewProps) {
 
 const LIMIT = 10
 function FeedContent(props: PagerScrollViewProps) {
-  const { headerHeight, scrollElRef } = props
+  const { headerHeight, scrollElRef, onLayout } = props
 
   type MyFeedItem = GetMyFeedResponse['items'][number] | { type: 'SUGGESTION' }
   const feedInfiniteQuery = useInfiniteQuery({
@@ -734,6 +735,7 @@ function FeedContent(props: PagerScrollViewProps) {
       onEndReached={onEndReached}
       renderItem={renderFeedItem}
       showsVerticalScrollIndicator={false}
+      onLayout={onLayout}
     />
   )
 }
@@ -743,7 +745,7 @@ interface FeedTopicContentProps extends PagerScrollViewProps {
 }
 
 function FeedTopicContent(props: FeedTopicContentProps) {
-  const { headerHeight, scrollElRef, topicId } = props
+  const { headerHeight, scrollElRef, topicId, onLayout } = props
 
   const feedInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/feed/topic', { query: { topicId } }),
@@ -823,6 +825,7 @@ function FeedTopicContent(props: FeedTopicContentProps) {
       onEndReached={onEndReached}
       renderItem={renderFeedItem}
       showsVerticalScrollIndicator={false}
+      onLayout={onLayout}
     />
   )
 }
