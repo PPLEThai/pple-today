@@ -166,7 +166,6 @@ jobs:
     uses: ./.github/workflows/publish-image.yaml
     with:
       packages: ${{ needs.get-affected-apps.outputs.packages }}
-      docker_registry: ${{ env.DOCKER_REGISTRY }}
       environment: ${{ github.event.inputs.environment }}
     secrets:
       DOCKER_USERNAME: ${{ needs.setup-deployment-config.outputs.DOCKER_USERNAME }}
@@ -182,7 +181,6 @@ jobs:
     uses: ./.github/workflows/deploy-docker.yaml
     with:
       packages: ${{ needs.get-affected-apps.outputs.packages }}
-      docker_registry: ghcr.io
       environment: ${{ github.event.inputs.environment }}
     secrets:
       OVPN_CONFIG: ${{ secrets.OVPN_CONFIG }}
