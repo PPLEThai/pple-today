@@ -39,6 +39,13 @@ platform :ios do
       profile_name: ENV['PROVISIONING_PROFILE_SPECIFIER'],
       path: './PPLEToday.xcodeproj'
     )
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      team_id: team_id,
+      code_sign_identity: "Apple Distribution",
+      profile_name: "#{ENV['PROVISIONING_PROFILE_SPECIFIER']}.NotificationServiceExtension",
+      path: './NotificationServiceExtension'
+    )
     # https://medium.com/@iamCoder/how-to-solve-missing-compliance-status-in-testflight-and-invites-not-coming-to-testers-4cbbe3c4ed12
     # https://github.com/fastlane/fastlane/issues/15591
     set_info_plist_value( 
@@ -77,13 +84,13 @@ platform :ios do
       export_method: "app-store",
       configuration: "Release",
       build_path: "./builds",
-      # export_options: {
-        # provisioningProfiles: {
-        #   app_identifier => ENV['PROVISIONING_PROFILE_SPECIFIER'],
-        #   "#{app_identifier}.NotificationServiceExtension" => "#{ENV['PROVISIONING_PROFILE_SPECIFIER']}.NotificationServiceExtension"
-        # },
+      export_options: {
+        provisioningProfiles: {
+          app_identifier => ENV['PROVISIONING_PROFILE_SPECIFIER'],
+          "#{app_identifier}.NotificationServiceExtension" => "#{ENV['PROVISIONING_PROFILE_SPECIFIER']}.NotificationServiceExtension"
+        },
         # installerSigningCertificate: "Apple Distribution: <COMPANY_NAME> (<ID>)", 
-      # },
+      },
       output_directory: "./builds",
       # configuration: "Debug",
     )
