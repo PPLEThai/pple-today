@@ -8,6 +8,7 @@ import { Text } from '@pple-today/ui/text'
 import dayjs from 'dayjs'
 import { Image } from 'expo-image'
 import * as WebBrowser from 'expo-web-browser'
+import { decode } from 'html-entities'
 import { CalendarIcon, MapPinIcon } from 'lucide-react-native'
 
 import { Activity } from '@app/libs/pple-activity'
@@ -38,12 +39,12 @@ export function ActivityCard({ activity, className }: ActivityCardProps) {
             </Text>
           </View>
           <Text className="line-clamp-4 text-base-text-high text-base font-body-semibold">
-            {activity.name}
+            {decode(activity.name)}
           </Text>
           <View className="flex flex-row gap-1 items-center">
             <Icon icon={MapPinIcon} size={12} className="text-base-text-medium" />
             <Text className="text-base-text-medium text-xs font-heading-semibold line-clamp-1 flex-1">
-              {activity.location}
+              {decode(activity.location)}
             </Text>
           </View>
         </View>
