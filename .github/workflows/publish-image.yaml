@@ -11,9 +11,21 @@ on:
         type: string
         description: Deployment environment
         required: true
-      docker_registry:
-        type: string
+    secrets:
+      DOCKER_USERNAME:
+        description: Docker registry username
+        required: true
+      DOCKER_PASSWORD:
+        description: Docker registry password
+        required: true
+      DOCKER_IMAGE_PREFIX:
+        description: Docker image prefix
+        required: true
+      DOCKER_REGISTRY:
         description: Docker registry URL
+        required: true
+      WEB_CLIENT_ENV:
+        description: Web client environment variables
         required: true
 
 jobs:
@@ -58,4 +70,4 @@ jobs:
           build-args: |
             "VERSION=${{ matrix.packages.version }}"
             "LOCAL_ENV=${{ secrets.WEB_CLIENT_ENV }}"
-          tags: ${{ inputs.docker_registry }}/${{ secrets.DOCKER_IMAGE_PREFIX }}/${{ matrix.packages.name }}:${{ matrix.packages.imageTag }}
+          tags: ${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_IMAGE_PREFIX }}/${{ matrix.packages.name }}:${{ matrix.packages.imageTag }}
