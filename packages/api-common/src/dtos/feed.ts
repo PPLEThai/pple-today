@@ -122,3 +122,16 @@ export type FeedItemAnnouncement = Static<typeof FeedItemAnnouncement>
 
 export const FeedItem = t.Union([FeedItemPost, FeedItemPoll, FeedItemAnnouncement])
 export type FeedItem = Static<typeof FeedItem>
+
+export const AdminFeedItemComment = t.Object({
+  id: t.String({ description: 'The ID of the comment' }),
+  content: t.String({ description: 'The content of the comment' }),
+  createdAt: t.Date({ description: 'The creation date of the comment' }),
+  isPrivate: t.Boolean({ description: 'Whether the comment is private' }),
+  author: t.Object({
+    id: t.String({ description: 'The ID of the user' }),
+    name: t.String({ description: 'The name of the user' }),
+    profileImage: t.Nullable(t.String({ description: 'The profile image URL of the user' })),
+  }),
+})
+export type AdminFeedItemComment = Static<typeof AdminFeedItemComment>

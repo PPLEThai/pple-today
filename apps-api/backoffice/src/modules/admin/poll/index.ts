@@ -7,13 +7,15 @@ import {
   DeletePollResponse,
   GetPollByIdParams,
   GetPollByIdResponse,
+  GetPollOptionAnswersByIdParams,
+  GetPollOptionAnswersByIdResponse,
   GetPollsQuery,
   GetPollsResponse,
   PostPollBody,
   PostPollResponse,
-  PutPollBody,
-  PutPollParams,
-  PutPollResponse,
+  UpdatePollBody,
+  UpdatePollParams,
+  UpdatePollResponse,
 } from './models'
 import { AdminPollServicePlugin } from './services'
 
@@ -27,12 +29,12 @@ export const AdminPollsController = new Elysia({
   .get(
     '/',
     async ({ query, status, adminPollService }) => {
-      const pagingQuery = {
-        limit: query.limit ?? 10,
-        page: query.page ?? 1,
-      }
-
-      const result = await adminPollService.getPolls(pagingQuery)
+      const result = await adminPollService.getPolls(
+        query.page ?? 1,
+        query.limit ?? 10,
+        query.status,
+        query.search
+      )
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
       return status(200, result.value)
@@ -105,7 +107,35 @@ export const AdminPollsController = new Elysia({
       },
     }
   )
-  .put(
+  .get(
+    '/answers/:optionId',
+    async ({ params, status, adminPollService }) => {
+      const result = await adminPollService.getPollOptionAnswers(params.optionId)
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      params: GetPollOptionAnswersByIdParams,
+      response: {
+        200: GetPollOptionAnswersByIdResponse,
+        ...createErrorSchema(
+          InternalErrorCode.POLL_NOT_FOUND,
+          InternalErrorCode.OPTION_NOT_FOUND,
+          InternalErrorCode.OPTION_INVALID_INPUT,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get answers of option by optionID',
+        description: 'Fetch answers by its option ID',
+      },
+    }
+  )
+  .patch(
     '/:pollId',
     async ({ params, body, status, adminPollService }) => {
       const result = await adminPollService.updatePollById(params.pollId, body)
@@ -117,10 +147,10 @@ export const AdminPollsController = new Elysia({
     },
     {
       requiredLocalUser: true,
-      params: PutPollParams,
-      body: PutPollBody,
+      params: UpdatePollParams,
+      body: UpdatePollBody,
       response: {
-        200: PutPollResponse,
+        200: UpdatePollResponse,
         ...createErrorSchema(
           InternalErrorCode.POLL_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR

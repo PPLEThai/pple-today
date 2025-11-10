@@ -19,10 +19,10 @@ import { FileServerService, FileServerServicePlugin } from '../files/services'
 
 export class ProfileService {
   constructor(
-    private profileRepository: ProfileRepository,
-    private authRepository: AuthRepository,
-    private fileService: FileService,
-    private fileServerService: FileServerService
+    private readonly profileRepository: ProfileRepository,
+    private readonly authRepository: AuthRepository,
+    private readonly fileService: FileService,
+    private readonly fileServerService: FileServerService
   ) {}
 
   async getUserRecommendation(userId: string) {

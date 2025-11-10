@@ -25,12 +25,28 @@ export const CursorPaginationQuery = t.Object({
 })
 export type CursorPaginationQuery = Static<typeof CursorPaginationQuery>
 
-export const ListQuery = <T extends TSchema>(baseQuery: T) => {
+export const ListPaginationQuery = <T extends TSchema>(baseQuery: T) => {
   return t.Composite([baseQuery, PaginationQuery])
 }
 
 export const ListCursorQuery = <T extends TSchema>(baseQuery: T) => {
   return t.Composite([baseQuery, CursorPaginationQuery])
+}
+
+export const ListPaginationReponse = <T extends TSchema>(itemSchema: T) => {
+  return t.Composite([
+    t.Object({
+      items: t.Array(itemSchema),
+    }),
+    PaginationMetadataResponse,
+  ])
+}
+export type ListPaginationResponse<T> = {
+  items: T[]
+  meta: {
+    totalPage: number
+    currentPage: number
+  }
 }
 
 export const ListCursorResponse = <T extends TSchema>(itemSchema: T) => {
@@ -53,6 +69,7 @@ export const ListCursorResponse = <T extends TSchema>(itemSchema: T) => {
     }),
   })
 }
+
 export type ListCursorResponse<T> = {
   items: T[]
   meta: {

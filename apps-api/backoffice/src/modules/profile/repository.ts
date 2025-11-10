@@ -13,8 +13,8 @@ import { PrismaServicePlugin } from '../../plugins/prisma'
 
 export class ProfileRepository {
   constructor(
-    private prismaService: PrismaService,
-    private fileService: FileService
+    private readonly prismaService: PrismaService,
+    private readonly fileService: FileService
   ) {}
 
   private constructPollWithMeta<T extends { id: string }>(

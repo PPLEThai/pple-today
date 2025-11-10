@@ -25,8 +25,8 @@ import { FileServerService, FileServerServicePlugin } from '../files/services'
 
 export class FeedRepository {
   constructor(
-    private prismaService: PrismaService,
-    private fileService: FileService,
+    private readonly prismaService: PrismaService,
+    private readonly fileService: FileService,
     private readonly fileServerService: FileServerService
   ) {}
 

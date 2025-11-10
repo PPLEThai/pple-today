@@ -44,3 +44,4 @@ yarn-error.log*
 *.pem
 
 .react-router
+.tanstack

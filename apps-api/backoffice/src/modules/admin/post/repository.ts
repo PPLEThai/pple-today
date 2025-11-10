@@ -41,6 +41,11 @@ export class AdminPostRepository {
             in: query.status,
           },
         }),
+      ...(query.authorId && {
+        feedItem: {
+          authorId: query.authorId,
+        },
+      }),
     }
 
     return fromRepositoryPromise(async () => {

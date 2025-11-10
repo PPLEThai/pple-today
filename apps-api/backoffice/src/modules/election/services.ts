@@ -11,6 +11,7 @@ import {
 import dayjs from 'dayjs'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
+import * as R from 'remeda'
 
 import {
   ElectionCandidateWithVoteScore,
@@ -93,10 +94,12 @@ export class ElectionService {
     }
   }
 
-  private convertToElectionCandidateWithVoteScore(
-    candidate: ElectionCandidate,
-    isShowResult?: boolean // TODO: use for mock
-  ): ElectionCandidateWithVoteScore {
+  private convertToElectionCandidateWithVoteScore(input: {
+    candidate: ElectionCandidate
+    voteScorePercent?: number
+  }): ElectionCandidateWithVoteScore {
+    const { candidate, voteScorePercent } = input
+
     return {
       id: candidate.id,
       electionId: candidate.electionId,
@@ -105,7 +108,7 @@ export class ElectionService {
       profileImagePath: candidate.profileImagePath
         ? this.fileServerService.getFileEndpointUrl(candidate.profileImagePath)
         : null,
-      voteScorePercent: isShowResult ? Math.floor(Math.random() * 100) : undefined, // TODO: this is mock data
+      voteScorePercent,
       number: candidate.number,
       createdAt: candidate.createdAt,
       updatedAt: candidate.updatedAt,
@@ -164,12 +167,17 @@ export class ElectionService {
 
     const election = eligibleVoter.value.election
     const listElection = this.convertToListElection(election, eligibleVoter.value.type, new Date())
-    const candidates = election.candidates.map((candidate) =>
-      this.convertToElectionCandidateWithVoteScore(
+    const candidates = election.candidates.map((candidate) => {
+      const totalVote = R.sumBy(candidate.results, (result) => result.count)
+      const votePercent =
+        election._count.voters > 0 ? (totalVote / election._count.voters) * 100 : 0
+
+      return this.convertToElectionCandidateWithVoteScore({
         candidate,
-        listElection.status === 'RESULT_ANNOUNCE'
-      )
-    )
+        voteScorePercent: listElection.status === 'RESULT_ANNOUNCE' ? votePercent : undefined,
+      })
+    })
+
     const result = {
       ...listElection,
       candidates,

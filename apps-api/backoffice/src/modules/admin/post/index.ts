@@ -30,6 +30,7 @@ export const AdminPostController = new Elysia({
         page: query.page ?? 1,
         status: query.status,
         search: query.search,
+        authorId: query.authorId,
       }
 
       const result = await adminPostService.getPosts(pagingQuery)

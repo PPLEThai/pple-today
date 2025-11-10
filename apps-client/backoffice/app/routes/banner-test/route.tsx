@@ -1,11 +1,18 @@
 import { useEffect, useState } from 'react'
 
+import { createFileRoute } from '@tanstack/react-router'
+
 import { FilePath } from '@api/backoffice/admin'
 
 import { userManager } from '~/config/oidc'
 import { reactQueryClient } from '~/libs/api-client'
 
-const BannerTestRoute = () => {
+export const Route = createFileRoute('/banner-test')({
+  component: BannerTestRoute,
+  head: () => ({ meta: [{ title: 'Banner Test' }] }),
+})
+
+function BannerTestRoute() {
   const [bannerId, setBannerId] = useState<string | null>(null)
   const [accessToken, setAccessToken] = useState<string | null>(null)
 
@@ -143,5 +150,3 @@ const BannerTestRoute = () => {
     </form>
   )
 }
-
-export default BannerTestRoute

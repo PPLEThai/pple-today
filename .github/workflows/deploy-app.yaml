@@ -26,6 +26,10 @@ on:
         type: boolean
         description: 'Deploy Backoffice'
         default: false
+      ballot-crypto:
+        type: boolean
+        description: 'Deploy Ballot Crypto Service'
+        default: false
       migrate-database:
         type: boolean
         description: 'Run database migrations'
@@ -86,6 +90,11 @@ jobs:
           if [[ ${{ inputs.api }} == true ]]; then
             METADATA=$(constructMetadata "pple-api" "apps-api/backoffice" "docker-compose.api.yaml")
             PACKAGES=$(echo $PACKAGES | jq -c ". += [${METADATA}]")
+          fi
+
+          if [[ ${{ inputs.ballot-crypto }} == true ]]; then
+              METADATA=$(constructMetadata "pple-ballot-crypto" "apps-api/ballot-crypto" "docker-compose.api.yaml")
+              PACKAGES=$(echo $PACKAGES | jq -c ". += [${METADATA}]")
           fi
 
           if [[ ${{ inputs.backoffice }} == true ]]; then

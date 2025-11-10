@@ -5,7 +5,7 @@ import {
   ElectionStatus,
   FilePath,
   ImageFileMimeType,
-  ListQuery,
+  ListPaginationQuery,
   PaginationMetadataResponse,
 } from '@pple-today/api-common/dtos'
 import {
@@ -19,6 +19,7 @@ import { Static, t } from 'elysia'
 export const AdminElectionInfo = t.Intersect([
   ElectionInfo,
   t.Object({
+    totalVotes: t.Integer(),
     totalVoters: t.Integer(),
     onlineResultStatus: t.Enum(ElectionOnlineResultStatus),
     keyStatus: t.Enum(ElectionKeysStatus),
@@ -65,7 +66,7 @@ export type AdminCreateElectionBody = Static<typeof AdminCreateElectionBody>
 export const AdminCreateElectionResponse = AdminElectionInfo
 export type AdminCreateElectionResponse = Static<typeof AdminCreateElectionResponse>
 
-export const AdminListElectionQuery = ListQuery(
+export const AdminListElectionQuery = ListPaginationQuery(
   t.Object({
     name: t.Optional(t.String()),
     type: t.Optional(t.Enum(ElectionType)),
@@ -245,7 +246,15 @@ export type AdminListElectionEligibleVoterParams = Static<
   typeof AdminListElectionEligibleVoterParams
 >
 
-export const AdminListElectionEligibleVoterResponse = t.Array(ElectionEligibleVoter)
+export const AdminListElectionEligibleVoterQuery = t.Object({
+  isRegistered: t.Optional(t.Boolean()),
+})
+export type AdminListElectionEligibleVoterQuery = Static<typeof AdminListElectionEligibleVoterQuery>
+
+export const AdminListElectionEligibleVoterResponse = t.Object({
+  headers: t.Tuple([t.Literal('id'), t.Literal('phoneNumber')]),
+  voters: t.Array(t.Pick(ElectionEligibleVoter, ['id', 'phoneNumber'])),
+})
 export type AdminListElectionEligibleVoterResponse = Static<
   typeof AdminListElectionEligibleVoterResponse
 >
@@ -485,18 +494,18 @@ export const AdminGetResultResponse = t.Object({
 
 export type AdminGetResultResponse = Static<typeof AdminGetResultResponse>
 
-export const AdminAnnouceResultParams = t.Object({
+export const AdminAnnounceResultParams = t.Object({
   electionId: t.String(),
 })
-export type AdminAnnouceResultParams = Static<typeof AdminAnnouceResultParams>
+export type AdminAnnounceResultParams = Static<typeof AdminAnnounceResultParams>
 
-export const AdminAnnouceResultBody = t.Object({
+export const AdminAnnounceResultBody = t.Object({
   start: t.Date(),
   end: t.Date(),
 })
-export type AdminAnnouceResultBody = Static<typeof AdminAnnouceResultBody>
+export type AdminAnnounceResultBody = Static<typeof AdminAnnounceResultBody>
 
-export const AdminAnnouceResultResponse = t.Object({
+export const AdminAnnounceResultResponse = t.Object({
   message: t.String(),
 })
-export type AdminAnnouceResultResponse = Static<typeof AdminAnnouceResultResponse>
+export type AdminAnnounceResultResponse = Static<typeof AdminAnnounceResultResponse>

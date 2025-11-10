@@ -3,6 +3,8 @@ import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-commo
 import Elysia from 'elysia'
 
 import {
+  GetFeedCommentsParams,
+  GetFeedCommentsResponse,
   UpdateFeedItemCommentPrivacyBody,
   UpdateFeedItemCommentPrivacyParams,
   UpdateFeedItemCommentPrivacyResponse,
@@ -16,6 +18,31 @@ export const AdminFeedController = new Elysia({
   tags: ['Admin Feed'],
 })
   .use([AdminFeedServicePlugin, AdminAuthGuardPlugin])
+  .get(
+    '/:id/comments',
+    async ({ params, adminFeedService, status }) => {
+      const result = await adminFeedService.getFeedItemCommentsById(params.id)
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      params: GetFeedCommentsParams,
+      response: {
+        200: GetFeedCommentsResponse,
+        ...createErrorSchema(
+          InternalErrorCode.FEED_ITEM_COMMENT_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get feed item comments by ID',
+        description: 'Get feed item comments by ID',
+      },
+    }
+  )
   .patch(
     '/comments/:id',
     async ({ params, body, adminFeedService, status }) => {

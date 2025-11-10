@@ -14,7 +14,7 @@ model Banner {
   id            String @id @default(cuid())
   imageFilePath String
 
-  headline    String
+  headline    String               @default("")
   status      BannerStatusType     @default(DRAFT)
   navigation  BannerNavigationType
   destination String?

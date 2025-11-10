@@ -1,0 +1,308 @@
+'use client'
+
+import { useCallback, useMemo, useRef, useState } from 'react'
+
+import { Button } from '@pple-today/web-ui/button'
+import { DataTable } from '@pple-today/web-ui/data-table'
+import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
+import { Link } from '@tanstack/react-router'
+import { createColumnHelper } from '@tanstack/react-table'
+import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
+import { DtFilter } from 'components/datatable/DtFilter'
+import { DtMovement } from 'components/datatable/DtMovement'
+import { Engagements } from 'components/Engagements'
+import { PollBadge } from 'components/poll/PollBadge'
+import { PollCreate } from 'components/poll/PollCreate'
+import { PollEdit } from 'components/poll/PollEdit'
+import { TableCopyId } from 'components/TableCopyId'
+import { EyeOff, Megaphone, Pencil, Plus, Trash2 } from 'lucide-react'
+import { formatDisplayDate } from 'utils/date'
+
+import {
+  DeletePollParams,
+  GetPollsResponse,
+  UpdatePollBody,
+  UpdatePollParams,
+} from '@api/backoffice/admin'
+
+import { reactQueryClient } from '~/libs/api-client'
+
+const columnHelper = createColumnHelper<GetPollsResponse['data'][number]>()
+
+export const Data = () => {
+  const confirmDialogRef = useRef<ConfirmDialogRef>(null)
+
+  const [queryLimit, setQueryLimit] = useState(10)
+  const [queryPage, setQueryPage] = useState(1)
+
+  const [querySearch, setQuerySearch] = useState('')
+  const [queryStatus, setQueryStatus] = useState<string[]>([])
+
+  const queryClient = useQueryClient()
+  const query = reactQueryClient.useQuery(
+    '/admin/polls',
+    {
+      query: {
+        limit: queryLimit,
+        page: queryPage,
+        search: querySearch,
+        status:
+          queryStatus.length > 0
+            ? (queryStatus as ('PUBLISHED' | 'ARCHIVED' | 'DRAFT')[])
+            : undefined,
+      },
+    },
+    {
+      placeholderData: keepPreviousData,
+    }
+  )
+  const patchMutation = reactQueryClient.useMutation('patch', '/admin/polls/:pollId')
+  const deleteMutation = reactQueryClient.useMutation('delete', '/admin/polls/:pollId')
+  const invalidateQuery = useCallback(() => {
+    queryClient.invalidateQueries({
+      queryKey: reactQueryClient.getQueryKey('/admin/polls', {
+        query: {
+          limit: queryLimit,
+          page: queryPage,
+          search: querySearch,
+          status:
+            queryStatus.length > 0
+              ? (queryStatus as ('PUBLISHED' | 'ARCHIVED' | 'DRAFT')[])
+              : undefined,
+        },
+      }),
+    })
+  }, [queryClient, queryLimit, queryPage, querySearch, queryStatus])
+
+  const setPollStatus = useCallback(
+    (
+      { status }: { status: NonNullable<UpdatePollBody['status']> },
+      { pollId }: UpdatePollParams
+    ) => {
+      if (patchMutation.isPending) return
+
+      patchMutation.mutateAsync(
+        { pathParams: { pollId }, body: { status } },
+        {
+          onSuccess: () => {
+            queryClient.setQueryData(
+              reactQueryClient.getQueryKey('/admin/polls', {
+                query: {
+                  limit: queryLimit,
+                  page: queryPage,
+                  search: querySearch,
+                  status:
+                    queryStatus.length > 0
+                      ? (queryStatus as ('PUBLISHED' | 'ARCHIVED' | 'DRAFT')[])
+                      : undefined,
+                },
+              }),
+              (_data) => {
+                const data = structuredClone(_data)
+                if (!data) return
+                const idx = data.data.findIndex((d) => d.id === pollId)
+                if (idx === -1) return
+                data.data[idx].status = status
+                if (status === 'PUBLISHED') data.data[idx].publishedAt = new Date()
+                return data
+              }
+            )
+          },
+        }
+      )
+    },
+    [patchMutation, queryClient, queryLimit, queryPage, querySearch, queryStatus]
+  )
+
+  const deletePoll = useCallback(
+    (pollId: DeletePollParams['pollId']) => {
+      deleteMutation.mutateAsync({ pathParams: { pollId } }, { onSuccess: () => invalidateQuery() })
+    },
+    [deleteMutation, invalidateQuery]
+  )
+
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor('id', {
+        header: () => <div className="pl-2">ID</div>,
+        cell: (info) => <TableCopyId id={info.getValue()} />,
+        size: 64,
+        minSize: 64,
+        maxSize: 64,
+      }),
+      columnHelper.accessor('title', {
+        header: 'ชื่อ',
+        cell: (info) => (
+          <Link
+            className="hover:underline"
+            to="/activity/poll/$pollId"
+            params={{ pollId: info.row.original.id }}
+          >
+            {info.getValue()}
+          </Link>
+        ),
+      }),
+      columnHelper.display({
+        id: 'engagements',
+        header: 'การมีส่วนร่วม',
+        cell: ({ row }) => {
+          const reactionCounts = row.original.reactions
+          const commentsCount = row.original.commentCount
+
+          const upVotes = reactionCounts.find((r) => r.type === 'UP_VOTE')?.count ?? 0
+          const downVotes = reactionCounts.find((r) => r.type === 'DOWN_VOTE')?.count ?? 0
+
+          return <Engagements likes={upVotes} dislikes={downVotes} comments={commentsCount} />
+        },
+        size: 194,
+        minSize: 194,
+      }),
+      columnHelper.accessor('status', {
+        header: 'สถานะ',
+        cell: (info) => <PollBadge poll={info.row.original} />,
+        size: 110,
+        minSize: 110,
+      }),
+      columnHelper.accessor('publishedAt', {
+        header: 'วันที่ประกาศ',
+        cell: (info) => {
+          const publishedAt = info.getValue()
+          if (!publishedAt) return '-'
+          return formatDisplayDate(new Date(publishedAt))
+        },
+        size: 103,
+        minSize: 103,
+      }),
+      columnHelper.display({
+        id: 'manage',
+        header: 'จัดการ',
+        cell: ({ row }) => {
+          const id = row.original.id
+          const title = row.original.title
+          const status = row.original.status
+
+          return (
+            <div className="flex gap-3 justify-end">
+              {status === 'PUBLISHED' && (
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="size-8"
+                  disabled={patchMutation.isPending}
+                  aria-busy={patchMutation.isPending}
+                  onClick={() => setPollStatus({ status: 'ARCHIVED' }, { pollId: id })}
+                >
+                  <span className="sr-only">เก็บในคลัง</span>
+                  <EyeOff className="size-4" />
+                </Button>
+              )}
+              {status === 'DRAFT' && (
+                <Button
+                  size="icon"
+                  className="size-8"
+                  disabled={patchMutation.isPending}
+                  aria-busy={patchMutation.isPending}
+                  onClick={() => setPollStatus({ status: 'PUBLISHED' }, { pollId: id })}
+                >
+                  <span className="sr-only">ประกาศ</span>
+                  <Megaphone className="size-4" />
+                </Button>
+              )}
+              {status === 'DRAFT' && (
+                <PollEdit
+                  trigger={
+                    <Button variant="outline" size="icon" className="size-8">
+                      <span className="sr-only">แก้ไข</span>
+                      <Pencil className="size-4" />
+                    </Button>
+                  }
+                  onSuccess={invalidateQuery}
+                  poll={row.original}
+                />
+              )}
+              <Button
+                variant="outline-destructive"
+                size="icon"
+                className="size-8"
+                disabled={deleteMutation.isPending}
+                aria-busy={deleteMutation.isPending}
+                onClick={() => {
+                  confirmDialogRef.current?.confirm({
+                    title: `ต้องการลบแบบสอบถาม "${title}" หรือไม่?`,
+                    description: 'เมื่อลบแบบสอบถามนี้แล้วจะไม่สามารถกู้คืนได้อีก',
+                    onConfirm: () => deletePoll(id),
+                  })
+                }}
+              >
+                <span className="sr-only">ลบ</span>
+                <Trash2 className="size-4" />
+              </Button>
+            </div>
+          )
+        },
+        size: 152,
+        minSize: 152,
+        maxSize: 152,
+      }),
+    ],
+    [deleteMutation.isPending, deletePoll, patchMutation.isPending, setPollStatus, invalidateQuery]
+  )
+
+  return (
+    <>
+      <DtFilter
+        filter={[
+          {
+            type: 'text',
+            key: 'name',
+            label: 'ค้นหาแบบสอบถาม',
+            state: querySearch,
+            setState: setQuerySearch,
+          },
+          {
+            type: 'enum',
+            key: 'status',
+            label: 'สถานะ',
+            options: [
+              { label: 'โพลที่ประกาศแล้ว', value: 'PUBLISHED' },
+              { label: 'โพลที่เก็บในคลัง', value: 'ARCHIVED' },
+              { label: 'โพลที่ร่าง', value: 'DRAFT' },
+            ],
+            state: queryStatus,
+            setState: setQueryStatus,
+          },
+        ]}
+        filterExtension={
+          <PollCreate
+            trigger={
+              <Button>
+                <Plus />
+                สร้างแบบสอบถาม
+              </Button>
+            }
+            onSuccess={invalidateQuery}
+          />
+        }
+        onChange={() => setQueryPage(1)}
+      />
+      <DataTable
+        columns={columns}
+        data={query.data?.data ?? []}
+        isQuerying={query.isLoading}
+        footerExtension={
+          <DtMovement
+            length={query.data?.data?.length ?? 0}
+            count={query.data?.meta.count ?? 0}
+            isQuerying={query.isLoading}
+            isMutating={patchMutation.isPending || deleteMutation.isPending}
+            queryLimit={queryLimit}
+            setQueryLimit={setQueryLimit}
+            queryPage={queryPage}
+            setQueryPage={setQueryPage}
+          />
+        }
+      />
+      <ConfirmDialog ref={confirmDialogRef} />
+    </>
+  )
+}

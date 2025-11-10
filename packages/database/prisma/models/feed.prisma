@@ -45,7 +45,7 @@ model FeedItemScore {
   updatedAt DateTime @updatedAt
 
   user     User     @relation(fields: [userId], references: [id])
-  feedItem FeedItem @relation(fields: [feedItemId], references: [id])
+  feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
 
   @@id([userId, feedItemId])
   @@index([feedItemId])
@@ -62,7 +62,7 @@ model FeedItemReaction {
   updatedAt DateTime @updatedAt
 
   user     User     @relation(fields: [userId], references: [id])
-  feedItem FeedItem @relation(fields: [feedItemId], references: [id])
+  feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
 
   @@id([userId, feedItemId])
   @@index([feedItemId])
@@ -79,7 +79,7 @@ model FeedItemReactionCount {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  feedItem FeedItem @relation(fields: [feedItemId], references: [id])
+  feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
 
   @@id([feedItemId, type])
 }
@@ -97,7 +97,7 @@ model FeedItemComment {
   updatedAt DateTime @updatedAt
 
   user     User     @relation(fields: [userId], references: [id])
-  feedItem FeedItem @relation(fields: [feedItemId], references: [id])
+  feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
 
   @@index([feedItemId])
   @@index([userId])

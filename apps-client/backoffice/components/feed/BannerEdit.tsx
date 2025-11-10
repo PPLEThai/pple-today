@@ -60,10 +60,7 @@ const EditBannerFormSchema = z.object({
   imageFile: z
     .instanceof(File, { error: 'กรุณาอัปโหลดไฟล์' })
     .refine((file) => file.size <= MAX_FILE_SIZE, `กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB`)
-    .refine(
-      (file) => ACCEPTED_IMAGE_TYPES.includes(file.type),
-      'กรุณาอัปโหลดไฟล์ประเภท PDF / JPG / PNG'
-    )
+    .refine((file) => ACCEPTED_IMAGE_TYPES.includes(file.type), 'กรุณาอัปโหลดไฟล์ประเภท JPG / PNG')
     .optional(),
 })
 

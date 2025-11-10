@@ -141,7 +141,14 @@ jobs:
 
               echo "Deploying ${PACKAGE_NAME} with image tag ${IMAGE_TAG}"
 
-              yq -y ".services.\"${PACKAGE_NAME}\".image = \"${{ steps.set-docker-image-tags.outputs.BASE_DOCKER_IMAGE_URI }}/${PACKAGE_NAME}:${IMAGE_TAG}\"" templates/$DOCKER_COMPOSE_FILE.tmpl > $DOCKER_COMPOSE_FILE
+              if [ ! -f $DOCKER_COMPOSE_FILE ]; then
+                cp templates/$DOCKER_COMPOSE_FILE.tmpl $DOCKER_COMPOSE_FILE
+              fi
+
+              cp $DOCKER_COMPOSE_FILE $DOCKER_COMPOSE_FILE.bak
+
+              yq -y ".services.\"${PACKAGE_NAME}\".image = \"${{ steps.set-docker-image-tags.outputs.BASE_DOCKER_IMAGE_URI }}/${PACKAGE_NAME}:${IMAGE_TAG}\"" $DOCKER_COMPOSE_FILE.bak > $DOCKER_COMPOSE_FILE
+              rm $DOCKER_COMPOSE_FILE.bak
 
               export COMPOSE_IGNORE_ORPHANS=True
               docker compose -f $DOCKER_COMPOSE_FILE up -d

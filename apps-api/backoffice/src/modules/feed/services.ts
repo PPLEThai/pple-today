@@ -12,7 +12,7 @@ import { FileServerService, FileServerServicePlugin } from '../files/services'
 
 export class FeedService {
   constructor(
-    private feedRepository: FeedRepository,
+    private readonly feedRepository: FeedRepository,
     private readonly fileServerService: FileServerService
   ) {}
 
