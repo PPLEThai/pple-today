@@ -270,10 +270,7 @@ function Banner({ banner }: { banner: GetBannersResponse[number] }) {
         >
           <Image
             // alt={props.item.description}
-            source={createImageUrl(banner.imageUrl, {
-              width: 960,
-              height: 540,
-            })}
+            source={createImageUrl(banner.imageUrl, { width: 320, height: 180 })}
             // placeholder={{ blurhash }}
             style={{ width: 320, height: 180 }}
             contentFit="cover"
