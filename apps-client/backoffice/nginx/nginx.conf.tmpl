@@ -42,7 +42,7 @@ http {
         listen 8080;
         root /usr/share/nginx/html;
 
-        server_name backoffice-pple-dev.validate.work;
+        server_name ${BACKOFFICE_DOMAIN_URL};
 
         location / {
             try_files $uri $uri/ /index.html;
