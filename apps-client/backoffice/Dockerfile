@@ -5,6 +5,8 @@ RUN apk add --no-cache libc6-compat jq
 ARG VERSION=latest
 ARG LOCAL_ENV="test=test"
 
+ENV BACKOFFICE_DOMAIN_URL="example.com"
+
 RUN npm install -g turbo@2.5.2
 RUN npm install -g pnpm@9.9.0
  
@@ -38,7 +40,7 @@ FROM nginxinc/nginx-unprivileged:alpine3.22-perl
 WORKDIR /app
  
 COPY --from=installer /app/apps-client/backoffice/build /usr/share/nginx/html
-COPY --from=installer /app/apps-client/backoffice/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY --from=installer --chown=nginx:nginx /app/apps-client/backoffice/nginx/nginx.conf.tmpl /etc/nginx/nginx.conf.tmpl
 
 EXPOSE 8080
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["/bin/sh", "-c", "envsubst < /etc/nginx/nginx.conf.tmpl > /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"]
