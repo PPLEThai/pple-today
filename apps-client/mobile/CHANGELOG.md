@@ -1,5 +1,13 @@
 # @client/mobile
 
+## 0.9.1
+
+### Patch Changes
+
+- [#256](https://github.com/PPLEThai/pple-today/pull/256) [`9ca3ad2`](https://github.com/PPLEThai/pple-today/commit/9ca3ad2bf1d26e63d271b01396b886683e0a4684) Thanks [@miello](https://github.com/miello)! - [[PPLE-515] Decode HTML in Activity Page](https://linear.app/snts/issue/PPLE-515/decode-html-in-activity-page)
+
+- [#258](https://github.com/PPLEThai/pple-today/pull/258) [`0b3441c`](https://github.com/PPLEThai/pple-today/commit/0b3441c879c1ff64f977bf700699ae5bf2828fd8) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-535] Scroll stuck in Followed Content](https://linear.app/snts/issue/PPLE-535/scroll-stuck-in-followed-content)
+
 ## 0.9.0
 
 ### Minor Changes
