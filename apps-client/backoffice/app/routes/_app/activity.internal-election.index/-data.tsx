@@ -8,10 +8,11 @@ import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
 import { DtFilter } from 'components/datatable/DtFilter'
 import { DtMovement } from 'components/datatable/DtMovement'
+import { ElectionCreate } from 'components/election/ElectionCreate'
 import ElectionStatusBadge from 'components/election/ElectionStatusBadge'
 import ElectionTypeBadge from 'components/election/ElectionTypeBadge'
 import { TableCopyId } from 'components/TableCopyId'
-import { CalendarX2, Pencil, Trash2, Users } from 'lucide-react'
+import { CalendarX2, Pencil, Plus, Trash2, Users } from 'lucide-react'
 import { getTimelineString } from 'utils/date'
 
 import { AdminListElectionResponse, ElectionStatus } from '@api/backoffice/admin'
@@ -239,6 +240,17 @@ export const Data = () => {
             setState: setQueryStatus as React.Dispatch<React.SetStateAction<string[]>>,
           },
         ]}
+        filterExtension={
+          <ElectionCreate
+            trigger={
+              <Button>
+                <Plus />
+                สร้างแบบสอบถาม
+              </Button>
+            }
+            onSuccess={() => {}}
+          />
+        }
         onChange={() => setQueryPage(1)}
       />
       <DataTable
