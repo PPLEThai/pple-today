@@ -32,7 +32,7 @@ export default function NotificationDetailPage() {
         'Error fetching notification detail:',
         JSON.stringify(notificationDetailQuery.error)
       )
-      // router.dismissTo('/notification')
+      router.dismissTo('/notification')
     }
   }, [notificationDetailQuery.error, router])
   const item = notificationDetailQuery.data
