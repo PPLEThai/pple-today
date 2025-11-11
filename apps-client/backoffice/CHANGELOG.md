@@ -1,5 +1,11 @@
 # @client/backoffice
 
+## 0.6.1
+
+### Patch Changes
+
+- [#261](https://github.com/PPLEThai/pple-today/pull/261) [`d8c4059`](https://github.com/PPLEThai/pple-today/commit/d8c4059b90ddde14972e9ad0ab91b96069179456) Thanks [@miello](https://github.com/miello)! - [[PPLE-545] [Backoffice] Nginx problem causes broken](https://linear.app/snts/issue/PPLE-545/backoffice-nginx-problem-causes-broken)
+
 ## 0.6.0
 
 ### Minor Changes
