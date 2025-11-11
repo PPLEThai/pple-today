@@ -40,7 +40,7 @@ FROM nginxinc/nginx-unprivileged:alpine3.22-perl
 WORKDIR /app
  
 COPY --from=installer /app/apps-client/backoffice/build /usr/share/nginx/html
-COPY --from=installer --chown=nginx:nginx /app/apps-client/backoffice/nginx/nginx.conf.tmpl /etc/nginx/nginx.conf.tmpl
+COPY --from=installer --chown=nginx:nginx /app/apps-client/backoffice/nginx/nginx.conf.tmpl /tmp/nginx.conf.tmpl
 
 EXPOSE 8080
-CMD ["/bin/sh", "-c", "envsubst < /etc/nginx/nginx.conf.tmpl > /etc/nginx/nginx.conf && exec nginx -g 'daemon off;'"]
+CMD ["/bin/sh", "-c", "envsubst '${BACKOFFICE_DOMAIN_URL}' < /tmp/nginx.conf.tmpl > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"]
