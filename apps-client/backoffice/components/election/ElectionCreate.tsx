@@ -19,6 +19,8 @@ import {
   FormMessage,
 } from '@pple-today/web-ui/form'
 import { Input } from '@pple-today/web-ui/input'
+import { Label } from '@pple-today/web-ui/label'
+import { RadioGroup, RadioGroupItem } from '@pple-today/web-ui/radio-group'
 import { Typography } from '@pple-today/web-ui/typography'
 import { DateTimePicker } from 'components/DateTimePicker'
 import z from 'zod'
@@ -59,7 +61,7 @@ export const ElectionCreate = (props: ElectionCreateProps) => {
     }
   }, [isOpen])
 
-  const onSubmit: SubmitHandler<CreateElectionFormSchema> = async ({ ...data }) => {
+  const onSubmit: SubmitHandler<CreateElectionFormSchema> = async () => {
     props.onSuccess()
     setIsOpen(false)
     form.reset()
@@ -135,11 +137,31 @@ export const ElectionCreate = (props: ElectionCreateProps) => {
               control={form.control}
               name="type"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="space-y-2">
                   <FormLabel>
                     ประเภทการเลือกตั้ง <span className="text-system-danger-default">*</span>
                   </FormLabel>
-                  <FormControl></FormControl>
+                  <FormControl>
+                    <RadioGroup
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      ref={field.ref}
+                      className="grid-cols-3"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="ONLINE" id="radio-group-online" />
+                        <Label htmlFor="radio-group-online">เลือกตั้ง Online</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="ONSITE" id="radio-group-onsite" />
+                        <Label htmlFor="radio-group-onsite">เลือกตั้งในสถานที่</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="HYBRID" id="radio-group-hybrid" />
+                        <Label htmlFor="radio-group-hybrid">เลือกตั้งแบบผสม</Label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -148,12 +170,44 @@ export const ElectionCreate = (props: ElectionCreateProps) => {
               control={form.control}
               name="mode"
               render={({ field }) => (
-                <FormItem>
+                <FormItem className="space-y-2">
                   <FormLabel>
                     ประเภทของการเชื่อมต่อข้อมูล{' '}
                     <span className="text-system-danger-default">*</span>
                   </FormLabel>
-                  <FormControl></FormControl>
+                  <FormControl>
+                    <RadioGroup
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      ref={field.ref}
+                      className="grid-cols-2"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="FLEXIBLE" id="radio-group-flexible" />
+                        <Label htmlFor="radio-group-flexible">
+                          <div className="flex flex-col gap-2">
+                            <Typography variant="small" className="text-base-text-high">
+                              Flexible Mode
+                            </Typography>
+                            <Typography variant="small" className="text-base-text-placeholder">
+                              ยังคงการเชื่อมต่อระหว่างบัตรเลือกตั้งกับผู้เลือกตั้งไว้เมื่อกดนับคะแนน
+                            </Typography>
+                          </div>
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="SECURE" id="radio-group-secure" />
+                        <Label htmlFor="radio-group-secure">
+                          <div className="flex flex-col gap-2">
+                            <Typography variant="small">Secure Mode</Typography>
+                            <Typography variant="small" className="text-base-text-placeholder">
+                              ตัดการเชื่อมต่อระหว่างบัตรเลือกตั้งกับผู้เลือกตั้งทันทีเมื่อกดนับคะแนน
+                            </Typography>
+                          </div>
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
