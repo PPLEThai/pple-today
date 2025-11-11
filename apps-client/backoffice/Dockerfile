@@ -38,6 +38,7 @@ FROM nginxinc/nginx-unprivileged:alpine3.22-perl
 WORKDIR /app
  
 COPY --from=installer /app/apps-client/backoffice/build /usr/share/nginx/html
+COPY --from=installer /app/apps-client/backoffice/nginx/nginx.conf /etc/nginx/nginx.conf
 
 EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]
