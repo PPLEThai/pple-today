@@ -1,12 +1,15 @@
 import React from 'react'
 import { FlatList, View } from 'react-native'
 
+import { QUERY_KEY_SYMBOL } from '@pple-today/api-client'
 import { AnimatedBackgroundPressable } from '@pple-today/ui/animated-pressable'
 import { Icon } from '@pple-today/ui/icon'
+import { clsx } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
-import { InfiniteData, useInfiniteQuery } from '@tanstack/react-query'
+import { infiniteQueryOptions, useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { useRouter } from 'expo-router'
+import { produce } from 'immer'
 import { BellIcon } from 'lucide-react-native'
 
 import { ListHistoryNotificationResponse } from '@api/backoffice/app'
@@ -22,48 +25,30 @@ export default function NotificationHistoryPage() {
   )
 }
 
+const infiniteNotificationsQueryOptions = infiniteQueryOptions({
+  queryKey: [QUERY_KEY_SYMBOL, 'infinite', '/notifications/history'],
+  queryFn: async ({ pageParam }) => {
+    const response = await fetchClient('/notifications/history', {
+      query: { limit: 5, cursor: pageParam },
+    })
+    if (response.error) {
+      throw response.error
+    }
+    return response.data
+  },
+  initialPageParam: '',
+  getNextPageParam: (lastPage) => {
+    return lastPage.meta.cursor.next
+  },
+  select: (data) => {
+    return data.pages.flatMap((page) => page.items)
+  },
+})
+
 function NotificationHistory() {
-  const infiniteNotificationsQuery = useInfiniteQuery({
-    queryKey: reactQueryClient.getQueryKey('/notifications/history'),
-    queryFn: async ({ pageParam }) => {
-      const response = await fetchClient('/notifications/history', {
-        query: { limit: 5, cursor: pageParam },
-      })
-      if (response.error) {
-        throw response.error
-      }
-      return response.data
-    },
-    initialPageParam: '',
-    getNextPageParam: (lastPage) => {
-      return lastPage.meta.cursor.next
-    },
-    select: React.useCallback((data: InfiniteData<ListHistoryNotificationResponse>) => {
-      return data.pages.flatMap((page) => page.items)
-    }, []),
-  })
+  const infiniteNotificationsQuery = useInfiniteQuery(infiniteNotificationsQueryOptions)
 
   const data: ListHistoryNotificationResponse['items'] = React.useMemo(() => {
-    return [
-      {
-        id: '1',
-        title: 'การประชุมสรรหาและเลือกตั้งผู้แทนพรรคในเขต\nเลือกตั้งที่ 3',
-        message: 'message',
-        createdAt: new Date(),
-        isRead: false,
-        description: 'Description',
-        image: undefined,
-      },
-      {
-        id: '2',
-        title: 'ข้อมูลการเลือกตั้งเบื้องต้นสำหรับสมาชิกพรรคทั่วประเทศ',
-        message: 'message',
-        createdAt: new Date(),
-        isRead: false,
-        description: 'Description',
-        image: undefined,
-      },
-    ]
     return infiniteNotificationsQuery.data ?? []
   }, [infiniteNotificationsQuery.data])
 
@@ -118,13 +103,36 @@ function NotificationHistory() {
 
 const NotificationItem = ({ item }: { item: ListHistoryNotificationResponse['items'][number] }) => {
   const router = useRouter()
+  const markAsReadMutation = reactQueryClient.useMutation('put', '/notifications/read/:id', {})
+  const queryClient = useQueryClient()
   return (
     <AnimatedBackgroundPressable
       className="flex flex-col gap-2 p-3 bg-base-bg-white rounded-2xl border border-base-outline-default"
-      onPress={() => router.navigate(`/notification/${item.id}`)}
+      onPress={() => {
+        router.navigate(`/notification/${item.id}`)
+        queryClient.setQueryData(infiniteNotificationsQueryOptions.queryKey, (oldData) => {
+          if (!oldData) return oldData
+          return produce(oldData, (draft) => {
+            for (const page of draft.pages) {
+              for (const notification of page.items) {
+                if (notification.id === item.id) {
+                  notification.isRead = true
+                  return
+                }
+              }
+            }
+          })
+        })
+        markAsReadMutation.mutateAsync({ pathParams: { id: item.id } })
+      }}
     >
       <View className="flex flex-row gap-2 items-center">
-        <View className="size-8 rounded-full bg-base-primary-default flex items-center justify-center">
+        <View
+          className={clsx(
+            'size-8 rounded-full flex items-center justify-center',
+            item.isRead ? 'bg-base-bg-dark' : 'bg-base-primary-default'
+          )}
+        >
           <Icon icon={BellIcon} className="text-base-bg-white" />
         </View>
         <Text className="text-sm text-base-text-medium font-heading-medium flex-1">
