@@ -10,7 +10,6 @@ import dayjs from 'dayjs'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeftIcon, ArrowUpRightIcon, BellIcon } from 'lucide-react-native'
 
-import { GetNotificationDetailsByIdResponse } from '@api/backoffice/app'
 import { reactQueryClient } from '@app/libs/api-client'
 import { openLink } from '@app/utils/link'
 
@@ -36,23 +35,7 @@ export default function NotificationDetailPage() {
       // router.dismissTo('/notification')
     }
   }, [notificationDetailQuery.error, router])
-  // const item = notificationDetailQuery.data
-  const item: GetNotificationDetailsByIdResponse = {
-    id: '1',
-    content: {
-      header: 'การประชุมสรรหาและเลือกตั้งผู้แทนพรรคใน\nเขตเลือกตั้งที่ 3',
-      message:
-        'ประกาศจากรัฐสภาเกี่ยวกับการปรับใช้ห้องประชุมเพื่อรองรับการประชุมที่มีประสิทธิภาพมากยิ่งขึ้น โดยห้องประชุมจะได้รับการปรับปรุงทั้งในด้านเทคโนโลยีและการจัดการพื้นที่ เพื่อให้สามารถรองรับผู้เข้าร่วมประชุมได้อย่างสะดวกสบายและมีประสิทธิภาพสูงสุด นอกจากนี้ยังมีการจัดเตรียมอุปกรณ์ที่ทันสมัยเพื่อสนับสนุนการนำเสนอข้อมูลและการสื่อสารระหว่างผู้เข้าร่วมประชุมอย่างมีประสิทธิภาพ โดยคาดว่าการปรับใช้ห้องประชุมนี้จะช่วยเสริมสร้างการทำงานร่วมกันและการตัดสินใจที่ดีขึ้นในทุกระดับของการบริหารงานภาครัฐ.',
-      actionButtonText: 'ดูรายละเอียดเพิ่มเติม',
-      image: undefined,
-      link: {
-        type: 'EXTERNAL_BROWSER',
-        value: 'https://google.com',
-      },
-    },
-    createdAt: new Date(),
-    isRead: false,
-  }
+  const item = notificationDetailQuery.data
   if (!notificationId) {
     return null
   }
