@@ -12,28 +12,32 @@ import {
 } from '@pple-today/web-ui/dialog'
 import { Form } from '@pple-today/web-ui/form'
 import { Typography } from '@pple-today/web-ui/typography'
+import z from 'zod'
 
-import { ElectionCandidateForm } from './ElectionCandidateForm'
 import { ElectionEligibleVoterForm } from './ElectionEligibleVoterForm'
 import { ElectionGeneralInfoForm } from './ElectionGeneralInfoForm'
-import { ElectionFormSchema, ElectionFormValues } from './models'
+import { ElectionFormSchema } from './models'
 
-interface ElectionCreateFormProps {
+const ElectionEditGeneralInfoFormSchema = ElectionFormSchema.omit({ candidates: true })
+
+type ElectionEditGeneralInfoFormValues = z.infer<typeof ElectionEditGeneralInfoFormSchema>
+
+interface ElectionEditGeneralInfoFormProps {
+  defaultValues?: ElectionEditGeneralInfoFormValues
   setIsOpen: (isOpen: boolean) => void
   onSuccess: () => void
 }
 
-export const ElectionCreateForm = (props: ElectionCreateFormProps) => {
-  const form = useForm<ElectionFormValues>({
-    resolver: standardSchemaResolver(ElectionFormSchema),
-    defaultValues: {
+export const ElectionEditGeneralInfoForm = (props: ElectionEditGeneralInfoFormProps) => {
+  const form = useForm<ElectionEditGeneralInfoFormValues>({
+    resolver: standardSchemaResolver(ElectionEditGeneralInfoFormSchema),
+    defaultValues: props.defaultValues ?? {
       name: '',
       eligibleVoterFile: 'NO_FILE',
-      candidates: [],
     },
   })
 
-  const onSubmit: SubmitHandler<ElectionFormValues> = async () => {
+  const onSubmit: SubmitHandler<ElectionEditGeneralInfoFormValues> = async () => {
     props.onSuccess()
     props.setIsOpen(false)
     form.reset()
@@ -52,8 +56,6 @@ export const ElectionCreateForm = (props: ElectionCreateFormProps) => {
           <ElectionGeneralInfoForm />
           <div className="my-4 border border-base-bg-default" />
           <ElectionEligibleVoterForm />
-          <div className="my-4 border border-base-bg-default" />
-          <ElectionCandidateForm />
           <div className="flex flex-row-reverse gap-2 mt-2">
             <Button type="submit" className="flex-1" disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting ? 'กําลังบันทึก' : 'บันทึก'}
@@ -70,12 +72,13 @@ export const ElectionCreateForm = (props: ElectionCreateFormProps) => {
   )
 }
 
-interface ElectionCreateProps {
+interface ElectionEditGeneralInfoProps {
   trigger: ReactNode
+  defaultValues?: ElectionEditGeneralInfoFormValues
   onSuccess: () => void
 }
 
-export const ElectionCreate = (props: ElectionCreateProps) => {
+export const ElectionEditGeneralInfo = (props: ElectionEditGeneralInfoProps) => {
   const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
@@ -95,7 +98,11 @@ export const ElectionCreate = (props: ElectionCreateProps) => {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{props.trigger}</DialogTrigger>
       <DialogContent asChild cardClassName="max-w-3xl">
-        <ElectionCreateForm setIsOpen={setIsOpen} onSuccess={props.onSuccess} />
+        <ElectionEditGeneralInfoForm
+          setIsOpen={setIsOpen}
+          onSuccess={props.onSuccess}
+          defaultValues={props.defaultValues}
+        />
       </DialogContent>
     </Dialog>
   )

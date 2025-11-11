@@ -12,28 +12,30 @@ import {
 } from '@pple-today/web-ui/dialog'
 import { Form } from '@pple-today/web-ui/form'
 import { Typography } from '@pple-today/web-ui/typography'
+import z from 'zod'
 
 import { ElectionCandidateForm } from './ElectionCandidateForm'
-import { ElectionEligibleVoterForm } from './ElectionEligibleVoterForm'
-import { ElectionGeneralInfoForm } from './ElectionGeneralInfoForm'
-import { ElectionFormSchema, ElectionFormValues } from './models'
+import { ElectionFormSchema } from './models'
+
+const ElectionEditCandidateFormSchema = ElectionFormSchema.pick({ candidates: true })
+
+type ElectionEditCandidateFormValues = z.infer<typeof ElectionEditCandidateFormSchema>
 
 interface ElectionCreateFormProps {
+  defaultValues?: ElectionEditCandidateFormValues
   setIsOpen: (isOpen: boolean) => void
   onSuccess: () => void
 }
 
-export const ElectionCreateForm = (props: ElectionCreateFormProps) => {
-  const form = useForm<ElectionFormValues>({
-    resolver: standardSchemaResolver(ElectionFormSchema),
-    defaultValues: {
-      name: '',
-      eligibleVoterFile: 'NO_FILE',
+export const ElectionEditCandidateForm = (props: ElectionCreateFormProps) => {
+  const form = useForm<ElectionEditCandidateFormValues>({
+    resolver: standardSchemaResolver(ElectionEditCandidateFormSchema),
+    defaultValues: props.defaultValues ?? {
       candidates: [],
     },
   })
 
-  const onSubmit: SubmitHandler<ElectionFormValues> = async () => {
+  const onSubmit: SubmitHandler<ElectionEditCandidateFormValues> = async () => {
     props.onSuccess()
     props.setIsOpen(false)
     form.reset()
@@ -42,17 +44,13 @@ export const ElectionCreateForm = (props: ElectionCreateFormProps) => {
   return (
     <>
       <DialogTitle asChild>
-        <Typography variant="h3">สร้างการเลือกตั้ง</Typography>
+        <Typography variant="h3">แก้ไขการเลือกตั้ง</Typography>
       </DialogTitle>
       <DialogDescription className="text-sm text-base-text-medium leading-tight">
-        สร้างการเลือกตั้งสำหรับลงคะแนนภายในพรรค
+        แก้ไขรายละเอียดการเลือกตั้งสำหรับลงคะแนนภายในพรรค
       </DialogDescription>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <Form {...form}>
-          <ElectionGeneralInfoForm />
-          <div className="my-4 border border-base-bg-default" />
-          <ElectionEligibleVoterForm />
-          <div className="my-4 border border-base-bg-default" />
           <ElectionCandidateForm />
           <div className="flex flex-row-reverse gap-2 mt-2">
             <Button type="submit" className="flex-1" disabled={form.formState.isSubmitting}>
@@ -70,12 +68,13 @@ export const ElectionCreateForm = (props: ElectionCreateFormProps) => {
   )
 }
 
-interface ElectionCreateProps {
+interface ElectionEditCandidateProps {
   trigger: ReactNode
+  defaultValues?: ElectionEditCandidateFormValues
   onSuccess: () => void
 }
 
-export const ElectionCreate = (props: ElectionCreateProps) => {
+export const ElectionEditCandidate = (props: ElectionEditCandidateProps) => {
   const [isOpen, setIsOpen] = useState(false)
 
   useEffect(() => {
@@ -95,7 +94,11 @@ export const ElectionCreate = (props: ElectionCreateProps) => {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{props.trigger}</DialogTrigger>
       <DialogContent asChild cardClassName="max-w-3xl">
-        <ElectionCreateForm setIsOpen={setIsOpen} onSuccess={props.onSuccess} />
+        <ElectionEditCandidateForm
+          setIsOpen={setIsOpen}
+          onSuccess={props.onSuccess}
+          defaultValues={props.defaultValues}
+        />
       </DialogContent>
     </Dialog>
   )
