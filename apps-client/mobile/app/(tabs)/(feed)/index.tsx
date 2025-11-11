@@ -23,9 +23,14 @@ import { H2, H3 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { Image } from 'expo-image'
-import * as Linking from 'expo-linking'
 import { useRouter } from 'expo-router'
-import { ArrowRightIcon, CirclePlusIcon, MegaphoneIcon, RadioTowerIcon } from 'lucide-react-native'
+import {
+  ArrowRightIcon,
+  BellIcon,
+  CirclePlusIcon,
+  MegaphoneIcon,
+  RadioTowerIcon,
+} from 'lucide-react-native'
 import { z } from 'zod/v4'
 
 import type {
@@ -59,9 +64,9 @@ import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { environment } from '@app/env'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { useAuthMe, useSession } from '@app/libs/auth'
-import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { useScrollContext } from '@app/libs/scroll-context'
 import { createImageUrl } from '@app/utils/image'
+import { openLink } from '@app/utils/link'
 
 import { useBottomTabOnPress } from '../_layout'
 
@@ -130,6 +135,7 @@ function MainHeader() {
   const headings = authMe.data
     ? { welcome: 'ยินดีต้อนรับ', title: authMe.data.name }
     : { welcome: 'ยินดีต้อนรับสู่', title: 'PPLE Today' }
+  const session = useSession()
   return (
     <View className="w-full px-4 pt-4 pb-2 flex flex-row justify-between gap-2 bg-base-bg-white border-b border-base-outline-default ">
       <View className="flex flex-row items-center gap-3 flex-1">
@@ -155,10 +161,18 @@ function MainHeader() {
         </View>
       </View>
       <View className="flex flex-row gap-4">
-        {/* TODO: Notification system */}
-        {/* <Button variant="secondary" size="icon" aria-label="Notifications">
-          <Icon icon={BellIcon} size={20} className="fill-base-secondary-default" />
-        </Button> */}
+        {session && (
+          <Button
+            variant="secondary"
+            size="icon"
+            aria-label="Notifications"
+            onPress={() => {
+              router.navigate('/notification')
+            }}
+          >
+            <Icon icon={BellIcon} size={20} className="fill-base-secondary-default" />
+          </Button>
+        )}
         <Button
           size="icon"
           aria-label="Profile Settings"
@@ -228,19 +242,8 @@ function BannerSection() {
 }
 
 function Banner({ banner }: { banner: GetBannersResponse[number] }) {
-  const router = useRouter()
   const onPress = () => {
-    switch (banner.navigation) {
-      case 'IN_APP_NAVIGATION': // use deeplink scheme like 'pple-today:///auth'
-      case 'EXTERNAL_BROWSER':
-        Linking.openURL(banner.destination)
-        break
-      case 'MINI_APP':
-        router.navigate(`/mini-app/${banner.miniAppId}`)
-        break
-      default:
-        return exhaustiveGuard(banner)
-    }
+    openLink({ type: banner.navigation, value: banner.destination })
   }
   const opacity = useSharedValue(1)
   const scale = useSharedValue(1)

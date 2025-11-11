@@ -3,7 +3,7 @@ import { Fragment } from 'react/jsx-runtime'
 import { FlatList, View } from 'react-native'
 
 import { Text } from '@pple-today/ui/text'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { InfiniteData, useInfiniteQuery } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
 import { MegaphoneIcon } from 'lucide-react-native'
 
@@ -34,11 +34,11 @@ function AnnouncementList() {
       if (response.error) {
         throw response.error
       }
-      return response.data
+      return response.data as GetAnnouncementsResponse
     },
-    select: (data) => {
+    select: useCallback((data: InfiniteData<GetAnnouncementsResponse>) => {
       return data.pages.map((page) => page.announcements)
-    },
+    }, []),
     initialPageParam: 1,
     getNextPageParam: (lastPage, _, lastPageParam) => {
       if (lastPage.announcements.length < 5) {
