@@ -205,8 +205,6 @@ const PostCardContent = (props: { feedItem: FeedItemPost }) => {
     router.navigate(`/feed/${props.feedItem.id}`)
   }, [router, props.feedItem.id])
   const texts = React.useMemo(() => {
-    // const original =
-    //   'https://stackoverflow.com/questions/6038061/regular-expression-to-find-urls-within-a-string'
     return createTextWithLinks(props.feedItem.post.content, TextPost)
   }, [props.feedItem.post.content])
   return (
