@@ -3,7 +3,6 @@ import React, { ComponentType, useCallback, useEffect, useMemo, useRef, useState
 import {
   LayoutAnimation,
   NativeSyntheticEvent,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -42,41 +41,6 @@ export function useToggle(initialValue = false) {
       value,
     }),
     [value, setters]
-  )
-}
-
-interface ClippedShrunkTextProps {
-  children: React.ReactNode
-  linesToRender: TextLayoutLine[]
-  numberOfLines: number
-  textComponent: ComponentType<TextProps>
-}
-
-const ClippedShrunkText = ({
-  children,
-  linesToRender,
-  numberOfLines,
-  textComponent: TextComponent,
-}: ClippedShrunkTextProps) => {
-  const text = useMemo(
-    () =>
-      Platform.select({
-        ios: linesToRender.slice(0, linesToRender.length - 1).map((line) => line.text),
-        android: children,
-        default: children,
-      }),
-    [children, linesToRender]
-  )
-
-  const numberOfLinesToClip = useMemo(
-    () => Math.min(numberOfLines, linesToRender.length),
-    [linesToRender.length, numberOfLines]
-  )
-
-  return (
-    <TextComponent numberOfLines={numberOfLinesToClip} ellipsizeMode="tail">
-      {text}
-    </TextComponent>
   )
 }
 
@@ -178,13 +142,9 @@ export const MoreOrLess = ({
           </TextComponent>
         ) : (
           <>
-            <ClippedShrunkText
-              linesToRender={linesToRender}
-              numberOfLines={numberOfLines}
-              textComponent={TextComponent}
-            >
+            <TextComponent numberOfLines={numberOfLines} ellipsizeMode="tail">
               {children}
-            </ClippedShrunkText>
+            </TextComponent>
             {onMorePress && <ButtonComponent>{moreText}</ButtonComponent>}
           </>
         )}
@@ -207,4 +167,3 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
 })
-export default ClippedShrunkText

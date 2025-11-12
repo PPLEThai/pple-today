@@ -35,6 +35,7 @@ import { toast } from '@pple-today/ui/toast'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
 import { useQueryClient } from '@tanstack/react-query'
+import * as Linking from 'expo-linking'
 import { Link, useRouter } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
 import LottieView from 'lottie-react-native'
@@ -62,7 +63,6 @@ import { reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
-import { createTextWithLinks } from '@app/utils/createTextWithLinks'
 import { createImageUrl } from '@app/utils/image'
 
 import { Lightbox } from './lightbox'
@@ -197,6 +197,34 @@ function FeedCardContent(props: { feedItem: FeedItem }) {
     default:
       exhaustiveGuard(props.feedItem)
   }
+}
+
+// https://stackoverflow.com/a/6041965
+const re = /(http|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])/g
+
+function createTextWithLinks(
+  original: string,
+  TextComponent: React.ComponentType<TextProps>
+): React.ReactNode[] {
+  const matches = original.matchAll(re)
+  const urls = Array.from(matches, (m) => ({ match: m[0], index: m.index }))
+  let index = 0
+  const texts: React.ReactNode[] = []
+  for (const url of urls) {
+    texts.push(original.slice(index, url.index))
+    texts.push(
+      <TextComponent
+        onPress={() => Linking.openURL(url.match)}
+        className="text-blue-500"
+        key={url.index}
+      >
+        {url.match}
+      </TextComponent>
+    )
+    index = url.index + url.match.length
+  }
+  texts.push(original.slice(index, original.length))
+  return texts
 }
 
 const PostCardContent = (props: { feedItem: FeedItemPost }) => {
