@@ -489,6 +489,7 @@ export class FacebookRepository {
           profilePicturePath,
           linkedStatus: FacebookPageLinkedStatus.PENDING,
           pageAccessToken: facebookPageAccessToken,
+          profilePictureCacheKey: profilePictureCacheKey,
           manager: {
             connect: { id: userId },
           },
