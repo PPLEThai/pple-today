@@ -49,11 +49,15 @@ export const ElectionCreateForm = (props: ElectionCreateFormProps) => {
       </DialogDescription>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <Form {...form}>
-          <ElectionGeneralInfoForm />
-          <div className="my-4 border border-base-bg-default" />
-          <ElectionEligibleVoterForm />
-          <div className="my-4 border border-base-bg-default" />
-          <ElectionCandidateForm />
+          <div className="max-h-[60vh] px-2 overflow-auto">
+            <div className="space-y-4">
+              <ElectionGeneralInfoForm />
+              <div className="my-4 border border-base-bg-default" />
+              <ElectionEligibleVoterForm />
+              <div className="my-4 border border-base-bg-default" />
+              <ElectionCandidateForm />
+            </div>
+          </div>
           <div className="flex flex-row-reverse gap-2 mt-2">
             <Button type="submit" className="flex-1" disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting ? 'กําลังบันทึก' : 'บันทึก'}

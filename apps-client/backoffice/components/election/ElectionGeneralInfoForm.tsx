@@ -1,5 +1,6 @@
 import { useFormContext } from 'react-hook-form'
 
+import { ComboBox } from '@pple-today/web-ui/combobox'
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@pple-today/web-ui/form'
 import { Input } from '@pple-today/web-ui/input'
 import { Label } from '@pple-today/web-ui/label'
@@ -7,10 +8,23 @@ import { RadioGroup, RadioGroupItem } from '@pple-today/web-ui/radio-group'
 import { Typography } from '@pple-today/web-ui/typography'
 import { DateTimePicker } from 'components/DateTimePicker'
 
+import { reactQueryClient } from '~/libs/api-client'
+
 import { ElectionFormValues } from './models'
 
 export const ElectionGeneralInfoForm = () => {
   const form = useFormContext<Omit<ElectionFormValues, 'candidates'>>()
+  const electionType = form.watch('type')
+  const province = form.watch('province')
+
+  const provinceQuery = reactQueryClient.useQuery('/admin/address/province', {})
+  const districtQuery = reactQueryClient.useQuery(
+    '/admin/address/district',
+    { query: { province } },
+    {
+      enabled: !!province,
+    }
+  )
 
   return (
     <>
@@ -32,21 +46,6 @@ export const ElectionGeneralInfoForm = () => {
       <div className="flex flex-row gap-4">
         <FormField
           control={form.control}
-          name="district"
-          render={({ field }) => (
-            <FormItem className="basis-1/2 self-baseline">
-              <FormLabel>
-                อำเภอ/เขต <span className="text-system-danger-default">*</span>
-              </FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="กรอกอำเภอ/เขต" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
           name="province"
           render={({ field }) => (
             <FormItem className="basis-1/2 self-baseline">
@@ -54,7 +53,46 @@ export const ElectionGeneralInfoForm = () => {
                 จังหวัด <span className="text-system-danger-default">*</span>
               </FormLabel>
               <FormControl>
-                <Input {...field} placeholder="กรอกจังหวัด" />
+                <ComboBox
+                  {...field}
+                  onChange={(value) => {
+                    field.onChange(value)
+                    form.setValue('district', '')
+                  }}
+                  placeholder="เลือกจังหวัด"
+                  disabled={provinceQuery.isLoading}
+                  options={
+                    provinceQuery.data?.map((p) => ({
+                      label: p,
+                      value: p,
+                    })) || []
+                  }
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="district"
+          render={({ field }) => (
+            <FormItem className="basis-1/2 self-baseline">
+              <FormLabel>
+                อำเภอ/เขต <span className="text-system-danger-default">*</span>
+              </FormLabel>
+              <FormControl>
+                <ComboBox
+                  {...field}
+                  disabled={!province || districtQuery.isLoading}
+                  options={
+                    districtQuery.data?.map((p) => ({
+                      label: p,
+                      value: p,
+                    })) || []
+                  }
+                  placeholder="เลือกอำเภอ/เขต"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -139,38 +177,40 @@ export const ElectionGeneralInfoForm = () => {
           </FormItem>
         )}
       />
-      <div className="flex flex-row gap-4">
-        <FormField
-          control={form.control}
-          name="openRegister"
-          render={({ field }) => (
-            <FormItem className="basis-1/2 self-baseline">
-              <FormLabel>
-                วันที่เปิดลงทะเบียน <span className="text-system-danger-default">*</span>
-              </FormLabel>
-              <FormControl>
-                <DateTimePicker {...field} placeholder="เลือกวันที่เปิดลงทะเบียน" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="closeRegister"
-          render={({ field }) => (
-            <FormItem className="basis-1/2 self-baseline">
-              <FormLabel>
-                วันที่ปิดลงทะเบียน <span className="text-system-danger-default">*</span>
-              </FormLabel>
-              <FormControl>
-                <DateTimePicker {...field} placeholder="เลือกวันที่ปิดลงทะเบียน" />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
+      {electionType === 'HYBRID' && (
+        <div className="flex flex-row gap-4">
+          <FormField
+            control={form.control}
+            name="openRegister"
+            render={({ field }) => (
+              <FormItem className="basis-1/2 self-baseline">
+                <FormLabel>
+                  วันที่เปิดลงทะเบียน <span className="text-system-danger-default">*</span>
+                </FormLabel>
+                <FormControl>
+                  <DateTimePicker {...field} placeholder="เลือกวันที่เปิดลงทะเบียน" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="closeRegister"
+            render={({ field }) => (
+              <FormItem className="basis-1/2 self-baseline">
+                <FormLabel>
+                  วันที่ปิดลงทะเบียน <span className="text-system-danger-default">*</span>
+                </FormLabel>
+                <FormControl>
+                  <DateTimePicker {...field} placeholder="เลือกวันที่ปิดลงทะเบียน" />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+      )}
       <div className="flex flex-row gap-4">
         <FormField
           control={form.control}
@@ -203,24 +243,26 @@ export const ElectionGeneralInfoForm = () => {
           )}
         />
       </div>
-      <FormField
-        control={form.control}
-        name="locationMapUrl"
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>
-              URL สถานที่เลือกตั้ง <span className="text-system-danger-default">*</span>
-            </FormLabel>
-            <FormControl>
-              <Input {...field} placeholder="กรอก URL สถานที่" />
-            </FormControl>
-            <Typography variant="small" className="text-base-text-placeholder ">
-              กรอก URL จาก Google Maps สำหรับการเลือกตั้งในสถานที่
-            </Typography>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {electionType !== 'ONLINE' && (
+        <FormField
+          control={form.control}
+          name="locationMapUrl"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                URL สถานที่เลือกตั้ง <span className="text-system-danger-default">*</span>
+              </FormLabel>
+              <FormControl>
+                <Input {...field} placeholder="กรอก URL สถานที่" />
+              </FormControl>
+              <Typography variant="small" className="text-base-text-placeholder ">
+                กรอก URL จาก Google Maps สำหรับการเลือกตั้งในสถานที่
+              </Typography>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
     </>
   )
 }
