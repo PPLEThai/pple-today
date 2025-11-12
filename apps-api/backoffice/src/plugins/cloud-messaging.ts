@@ -4,6 +4,7 @@ import { err } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { Credentials, JWT } from 'google-auth-library'
 import { fromPromise, ok } from 'neverthrow'
+import * as R from 'remeda'
 
 import { ConfigServicePlugin } from './config'
 
@@ -122,7 +123,7 @@ export class CloudMessagingService {
             })
 
             if (!resp.ok) {
-              throw new Error(await resp.text())
+              throw await resp.json()
             }
 
             return
@@ -133,19 +134,52 @@ export class CloudMessagingService {
               details: err,
             })
 
+            const { error } = err as {
+              error: {
+                code: number
+                message: string
+                status: string
+                details: {
+                  '@type': string
+                  errorCode?: string
+                  fieldViolations?: {
+                    field: string
+                    description: string
+                  }[]
+                }[]
+              }
+            }
+
+            if (
+              error.code === 404 ||
+              error.message === 'The registration token is not a valid FCM registration token'
+            ) {
+              return {
+                code: InternalErrorCode.NOTIFICATION_INVALID_REGISTRATION_TOKEN,
+                token,
+                message: 'Invalid registration token',
+                details: error,
+              }
+            }
+
             return {
-              code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+              code: InternalErrorCode.NOTIFICATION_SENT_FAILED,
               message: 'Failed to send notification',
+              details: error,
             }
           }
         )
       )
     )
 
-    const sendErrors = sendResult.find((res) => res.isErr())
+    const sendErrors = R.pipe(
+      sendResult,
+      R.filter((e) => e.isErr()),
+      R.map((e) => e.error)
+    )
 
-    if (sendErrors) {
-      return err(sendErrors.error)
+    if (sendErrors.length > 0) {
+      return err(sendErrors)
     }
 
     return ok()
