@@ -6,7 +6,6 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { ExtractBodyResponse } from '@pple-today/api-client'
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
@@ -424,10 +423,9 @@ const SelectTopicForm = (props: {
   const onSkip = () => {
     props.onClose()
   }
-  const insets = useSafeAreaInsets()
   const footerComponent = React.useCallback(() => {
     return (
-      <View className="flex flex-col gap-2 px-4 py-2 bg-base-bg-white">
+      <View className="flex flex-col gap-2 px-4 py-2 bg-base-bg-white pb-safe">
         <form.Subscribe selector={(state) => [state.isSubmitting]}>
           {([isSubmitting]) => (
             <Button
@@ -446,13 +444,7 @@ const SelectTopicForm = (props: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [followManyTopicsMutation.isPending])
   return (
-    <BottomSheetModal
-      ref={props.ref}
-      bottomInset={insets.bottom}
-      topInset={insets.top}
-      maxDynamicContentSize={500}
-      footerComponent={footerComponent}
-    >
+    <BottomSheetModal ref={props.ref} maxDynamicContentSize={500} footerComponent={footerComponent}>
       <BottomSheetScrollView>
         <View className="flex flex-col gap-1 p-4 pb-0">
           <Text className="text-2xl font-heading-bold">เลือกหัวข้อที่สนใจ</Text>
