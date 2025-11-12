@@ -509,25 +509,29 @@ function UpvoteButton(props: UpvoteButtonProps) {
   const deleteReactionQuery = reactQueryClient.useMutation('delete', '/feed/:id/reaction')
   const router = useRouter()
   const session = useSession()
-  const onPress = () => {
+  const queryClient = useQueryClient()
+  const onPress = async () => {
     if (!session) {
       return router.push('/profile')
     }
     const newUserReaction = userReaction === 'UP_VOTE' ? null : 'UP_VOTE'
+    // optimistic update
+    setFeedReaction(newUserReaction)
     if (newUserReaction === 'UP_VOTE') {
       // skip some empty frames
       likeAnimationRef.current?.play(8, 30)
-      createReactionQuery.mutateAsync({
+      await createReactionQuery.mutateAsync({
         pathParams: { id: props.feedId },
         body: { type: 'UP_VOTE' },
       })
     } else {
-      deleteReactionQuery.mutateAsync({
+      await deleteReactionQuery.mutateAsync({
         pathParams: { id: props.feedId },
       })
     }
-    // optimistic update
-    setFeedReaction(newUserReaction)
+    queryClient.invalidateQueries({
+      queryKey: reactQueryClient.getQueryKey('/feed/:id', { pathParams: { id: props.feedId } }),
+    })
   }
 
   return (
@@ -581,7 +585,8 @@ function DownvoteButton(props: { feedId: string }) {
 
   const router = useRouter()
   const session = useSession()
-  const onPress = () => {
+  const queryClient = useQueryClient()
+  const onPress = async () => {
     if (!session) {
       return router.push('/profile')
     }
@@ -589,15 +594,16 @@ function DownvoteButton(props: { feedId: string }) {
     if (newUserReaction === 'DOWN_VOTE') {
       onOpen()
     } else if (newUserReaction === null) {
-      deleteReactionQuery.mutateAsync({
-        pathParams: { id: props.feedId },
-      })
       // optimistic update
       setFeedReaction(newUserReaction)
+      await deleteReactionQuery.mutateAsync({
+        pathParams: { id: props.feedId },
+      })
+      queryClient.invalidateQueries({
+        queryKey: reactQueryClient.getQueryKey('/feed/:id', { pathParams: { id: props.feedId } }),
+      })
     }
   }
-
-  const insets = useSafeAreaInsets()
 
   return (
     <>
@@ -614,11 +620,7 @@ function DownvoteButton(props: { feedId: string }) {
         />
         <Text className="text-sm font-heading-regular text-base-text-medium">ไม่เห็นด้วย</Text>
       </AnimatedButton>
-      <BottomSheetModal
-        ref={bottomSheetModalRef}
-        keyboardBehavior="interactive"
-        bottomInset={insets.bottom}
-      >
+      <BottomSheetModal ref={bottomSheetModalRef} keyboardBehavior="interactive">
         <BottomSheetView>
           <DownvoteCommentForm onClose={onClose} feedId={props.feedId} />
         </BottomSheetView>
@@ -648,6 +650,9 @@ function DownvoteCommentForm(props: DownvoteCommentFormProps) {
     },
     onSubmit: async ({ value }) => {
       const comment = value.comment.trim()
+      // optimistic update
+      const newUserReaction = userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE'
+      setFeedReaction(newUserReaction)
       createReactionMutation.mutateAsync(
         {
           pathParams: { id: props.feedId },
@@ -660,9 +665,6 @@ function DownvoteCommentForm(props: DownvoteCommentFormProps) {
               text1: 'เพิ่มความคิดเห็นส่วนตัวแล้ว',
               icon: MessageCircleIcon,
             })
-            // optimistic update
-            const newUserReaction = userReaction === 'DOWN_VOTE' ? null : 'DOWN_VOTE'
-            setFeedReaction(newUserReaction)
             // manually update infinite query
             queryClient.setQueryData(
               // TODO fix type
@@ -678,6 +680,11 @@ function DownvoteCommentForm(props: DownvoteCommentFormProps) {
                 }
               }
             )
+            queryClient.invalidateQueries({
+              queryKey: reactQueryClient.getQueryKey('/feed/:id', {
+                pathParams: { id: props.feedId },
+              }),
+            })
           },
           onError: () => {
             toast.error({
@@ -700,7 +707,7 @@ function DownvoteCommentForm(props: DownvoteCommentFormProps) {
     setFeedReaction(newUserReaction)
   }
   return (
-    <View className="flex flex-col flex-1">
+    <View className="flex flex-col flex-1 pb-safe">
       <View className="flex flex-col gap-1 p-4 pb-0">
         <Text className="text-2xl font-heading-bold">ข้อเสนอแนะ</Text>
         <Text className="text-sm font-heading-regular">
@@ -732,7 +739,10 @@ function DownvoteCommentForm(props: DownvoteCommentFormProps) {
       <View className="flex flex-col gap-2 px-4">
         <form.Subscribe selector={(state) => [state.isSubmitting]}>
           {([isSubmitting]) => (
-            <Button onPress={form.handleSubmit} disabled={isSubmitting}>
+            <Button
+              onPress={form.handleSubmit}
+              disabled={isSubmitting || createReactionMutation.isPending}
+            >
               <Text>แสดงความคิดเห็น</Text>
             </Button>
           )}
@@ -875,7 +885,7 @@ function CommentForm(props: CommentFormProps) {
         {([comment]) =>
           comment.trim() !== '' && (
             <Button size="icon" onPress={form.handleSubmit} disabled={commentMutation.isPending}>
-              <Icon icon={SendIcon} strokeWidth={1} />
+              <Icon icon={SendIcon} strokeWidth={1} className="size-6" />
             </Button>
           )
         }
