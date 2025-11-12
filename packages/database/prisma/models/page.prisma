@@ -10,7 +10,7 @@ model FacebookPage {
   id                     String @id
   name                   String
   profilePicturePath     String
-  profilePictureCacheKey String @unique
+  profilePictureCacheKey String
 
   isSubscribed    Boolean @default(false)
   pageAccessToken String
