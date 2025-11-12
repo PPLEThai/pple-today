@@ -5,6 +5,7 @@ import {
   Pressable,
   PressableProps,
   StyleSheet,
+  TextProps,
   View,
 } from 'react-native'
 import Animated, {
@@ -16,7 +17,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { TextProps } from 'react-native-svg'
 import { createQuery } from 'react-query-kit'
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
@@ -62,6 +62,7 @@ import { reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
+import { createTextWithLinks } from '@app/utils/createTextWithLinks'
 import { createImageUrl } from '@app/utils/image'
 
 import { Lightbox } from './lightbox'
@@ -203,6 +204,11 @@ const PostCardContent = (props: { feedItem: FeedItemPost }) => {
   const navigateToDetailPage = React.useCallback(() => {
     router.navigate(`/feed/${props.feedItem.id}`)
   }, [router, props.feedItem.id])
+  const texts = React.useMemo(() => {
+    // const original =
+    //   'https://stackoverflow.com/questions/6038061/regular-expression-to-find-urls-within-a-string'
+    return createTextWithLinks(props.feedItem.post.content, TextPost)
+  }, [props.feedItem.post.content])
   return (
     <View className="flex flex-col gap-3">
       {props.feedItem.post.attachments && props.feedItem.post.attachments.length > 0 && (
@@ -231,7 +237,7 @@ const PostCardContent = (props: { feedItem: FeedItemPost }) => {
             textComponent={TextPost}
             buttonComponent={ButtonTextPost}
           >
-            {props.feedItem.post.content}
+            {texts}
           </MoreOrLess>
         </AnimatedBackgroundPressable>
       )}
@@ -291,7 +297,12 @@ export const FeedCardSkeleton = ({ className }: { className?: string }) => {
 }
 
 function TextPost(props: TextProps) {
-  return <Text {...props} className="text-base-text-medium font-body-regular text-sm" />
+  return (
+    <Text
+      {...props}
+      className={cn('text-base-text-medium font-body-regular text-sm', props.className)}
+    />
+  )
 }
 function ButtonTextPost(props: TextProps) {
   return <Text {...props} className="text-base-primary-default font-body-regular text-sm" />
@@ -957,6 +968,9 @@ const FeedDetailContent = (props: { feedItem: FeedItem }) => {
 }
 
 const PostDetailContent = (props: { feedItem: FeedItemPost }) => {
+  const texts = React.useMemo(() => {
+    return createTextWithLinks(props.feedItem.post.content, TextPost)
+  }, [props.feedItem.post.content])
   return (
     <View className="flex flex-col gap-3 pb-3">
       {props.feedItem.post.attachments && props.feedItem.post.attachments.length > 0 && (
@@ -977,7 +991,7 @@ const PostDetailContent = (props: { feedItem: FeedItemPost }) => {
       )}
       {props.feedItem.post.content && (
         <View className="px-4">
-          <TextPost>{props.feedItem.post.content}</TextPost>
+          <TextPost>{texts}</TextPost>
         </View>
       )}
       {props.feedItem.post.hashTags.length > 0 && (

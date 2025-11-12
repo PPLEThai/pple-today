@@ -10,7 +10,6 @@ import {
   TextLayoutEventData,
   TextLayoutLine,
   TextProps,
-  UIManager,
   View,
 } from 'react-native'
 
@@ -70,26 +69,25 @@ const ClippedShrunkText = ({
   )
 
   const numberOfLinesToClip = useMemo(
-    () => Math.min(numberOfLines, linesToRender.length) - 1,
+    () => Math.min(numberOfLines, linesToRender.length),
     [linesToRender.length, numberOfLines]
   )
 
-  if (linesToRender.length < 2) return null
-
   return (
-    <TextComponent numberOfLines={numberOfLinesToClip} ellipsizeMode="clip">
+    <TextComponent numberOfLines={numberOfLinesToClip} ellipsizeMode="tail">
       {text}
     </TextComponent>
   )
 }
 
-// TODO: figure out why animation doesn't work on android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true)
-}
+// setLayoutAnimationEnabledExperimental is currently a no-op in the New Architecture.
+// // TODO: figure out why animation doesn't work on android
+// if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+//   UIManager.setLayoutAnimationEnabledExperimental(true)
+// }
 
 interface MoreOrLessProps {
-  children: string
+  children: React.ReactNode
   numberOfLines: number
   moreText?: string
   lessText?: string
@@ -187,12 +185,7 @@ export const MoreOrLess = ({
             >
               {children}
             </ClippedShrunkText>
-            <View style={styles.flexRow}>
-              <TextComponent numberOfLines={1} ellipsizeMode="tail">
-                {linesToRender[linesToRender.length - 1].text}
-              </TextComponent>
-              {onMorePress && <ButtonComponent>{moreText}</ButtonComponent>}
-            </View>
+            {onMorePress && <ButtonComponent>{moreText}</ButtonComponent>}
           </>
         )}
       </Comp>
