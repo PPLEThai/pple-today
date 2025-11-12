@@ -636,6 +636,69 @@ const seedAnnouncements = async () => {
   console.log('Seeded announcements successfully.')
 }
 
+const seedPosts = async () => {
+  await prisma.feedItem.upsert({
+    where: { id: 'post-1' },
+    update: {},
+    create: {
+      id: 'post-1',
+      type: FeedItemType.POST,
+      author: {
+        connect: { id: OFFICIAL_USER_ID },
+      },
+      publishedAt: new Date(),
+      post: {
+        create: {
+          facebookPostId: '1',
+          content: 'Hello PPLE Today!',
+          status: 'PUBLISHED',
+        },
+      },
+    },
+  })
+  await prisma.feedItem.upsert({
+    where: { id: 'post-2' },
+    update: {},
+    create: {
+      id: 'post-2',
+      type: FeedItemType.POST,
+      author: {
+        connect: { id: OFFICIAL_USER_ID },
+      },
+      publishedAt: new Date(),
+      post: {
+        create: {
+          facebookPostId: '2',
+          content:
+            'The link of this question: https://stackoverflow.com/questions/6038061/regular-expression-to-find-urls-within-a-string\nAlso there are some urls: www.google.com, facebook.com, http://test.com/method?param=wasd, http://test.com/method?param=wasd&params2=kjhdkjshd\nThe code below catches all urls in text and returns urls in list.',
+          status: 'PUBLISHED',
+        },
+      },
+    },
+  })
+  await prisma.feedItem.upsert({
+    where: { id: 'post-3' },
+    update: {},
+    create: {
+      id: 'post-3',
+      type: FeedItemType.POST,
+      author: {
+        connect: { id: OFFICIAL_USER_ID },
+      },
+      publishedAt: new Date(),
+      post: {
+        create: {
+          facebookPostId: '3',
+          content:
+            'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.',
+          status: 'PUBLISHED',
+        },
+      },
+    },
+  })
+  console.log('Seeded posts successfully.')
+}
+
 async function main() {
   const { address, provinces } = await transformProvinceDetails()
 
@@ -647,6 +710,7 @@ async function main() {
   await seedPolls()
   await seedAnnouncements()
   await seedBanners()
+  await seedPosts()
 }
 
 main()

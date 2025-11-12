@@ -5,6 +5,7 @@ import {
   Pressable,
   PressableProps,
   StyleSheet,
+  TextProps,
   View,
 } from 'react-native'
 import Animated, {
@@ -16,7 +17,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { TextProps } from 'react-native-svg'
 import { createQuery } from 'react-query-kit'
 
 import { BottomSheetTextInput } from '@gorhom/bottom-sheet'
@@ -35,6 +35,7 @@ import { toast } from '@pple-today/ui/toast'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
 import { useQueryClient } from '@tanstack/react-query'
+import * as Linking from 'expo-linking'
 import { Link, useRouter } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
 import LottieView from 'lottie-react-native'
@@ -198,11 +199,42 @@ function FeedCardContent(props: { feedItem: FeedItem }) {
   }
 }
 
+// https://stackoverflow.com/a/6041965
+const re = /(http|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@?^=%&/~+#-])/g
+
+function createTextWithLinks(
+  original: string,
+  TextComponent: React.ComponentType<TextProps>
+): React.ReactNode[] {
+  const matches = original.matchAll(re)
+  const urls = Array.from(matches, (m) => ({ match: m[0], index: m.index }))
+  let index = 0
+  const texts: React.ReactNode[] = []
+  for (const url of urls) {
+    texts.push(original.slice(index, url.index))
+    texts.push(
+      <TextComponent
+        onPress={() => Linking.openURL(url.match)}
+        className="text-blue-500"
+        key={url.index}
+      >
+        {url.match}
+      </TextComponent>
+    )
+    index = url.index + url.match.length
+  }
+  texts.push(original.slice(index, original.length))
+  return texts
+}
+
 const PostCardContent = (props: { feedItem: FeedItemPost }) => {
   const router = useRouter()
   const navigateToDetailPage = React.useCallback(() => {
     router.navigate(`/feed/${props.feedItem.id}`)
   }, [router, props.feedItem.id])
+  const texts = React.useMemo(() => {
+    return createTextWithLinks(props.feedItem.post.content, TextPost)
+  }, [props.feedItem.post.content])
   return (
     <View className="flex flex-col gap-3">
       {props.feedItem.post.attachments && props.feedItem.post.attachments.length > 0 && (
@@ -231,7 +263,7 @@ const PostCardContent = (props: { feedItem: FeedItemPost }) => {
             textComponent={TextPost}
             buttonComponent={ButtonTextPost}
           >
-            {props.feedItem.post.content}
+            {texts}
           </MoreOrLess>
         </AnimatedBackgroundPressable>
       )}
@@ -291,7 +323,12 @@ export const FeedCardSkeleton = ({ className }: { className?: string }) => {
 }
 
 function TextPost(props: TextProps) {
-  return <Text {...props} className="text-base-text-medium font-body-regular text-sm" />
+  return (
+    <Text
+      {...props}
+      className={cn('text-base-text-medium font-body-regular text-sm', props.className)}
+    />
+  )
 }
 function ButtonTextPost(props: TextProps) {
   return <Text {...props} className="text-base-primary-default font-body-regular text-sm" />
@@ -957,6 +994,9 @@ const FeedDetailContent = (props: { feedItem: FeedItem }) => {
 }
 
 const PostDetailContent = (props: { feedItem: FeedItemPost }) => {
+  const texts = React.useMemo(() => {
+    return createTextWithLinks(props.feedItem.post.content, TextPost)
+  }, [props.feedItem.post.content])
   return (
     <View className="flex flex-col gap-3 pb-3">
       {props.feedItem.post.attachments && props.feedItem.post.attachments.length > 0 && (
@@ -977,7 +1017,7 @@ const PostDetailContent = (props: { feedItem: FeedItemPost }) => {
       )}
       {props.feedItem.post.content && (
         <View className="px-4">
-          <TextPost>{props.feedItem.post.content}</TextPost>
+          <TextPost>{texts}</TextPost>
         </View>
       )}
       {props.feedItem.post.hashTags.length > 0 && (

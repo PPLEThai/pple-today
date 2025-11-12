@@ -3,14 +3,12 @@ import React, { ComponentType, useCallback, useEffect, useMemo, useRef, useState
 import {
   LayoutAnimation,
   NativeSyntheticEvent,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
   TextLayoutEventData,
   TextLayoutLine,
   TextProps,
-  UIManager,
   View,
 } from 'react-native'
 
@@ -46,50 +44,14 @@ export function useToggle(initialValue = false) {
   )
 }
 
-interface ClippedShrunkTextProps {
-  children: React.ReactNode
-  linesToRender: TextLayoutLine[]
-  numberOfLines: number
-  textComponent: ComponentType<TextProps>
-}
-
-const ClippedShrunkText = ({
-  children,
-  linesToRender,
-  numberOfLines,
-  textComponent: TextComponent,
-}: ClippedShrunkTextProps) => {
-  const text = useMemo(
-    () =>
-      Platform.select({
-        ios: linesToRender.slice(0, linesToRender.length - 1).map((line) => line.text),
-        android: children,
-        default: children,
-      }),
-    [children, linesToRender]
-  )
-
-  const numberOfLinesToClip = useMemo(
-    () => Math.min(numberOfLines, linesToRender.length) - 1,
-    [linesToRender.length, numberOfLines]
-  )
-
-  if (linesToRender.length < 2) return null
-
-  return (
-    <TextComponent numberOfLines={numberOfLinesToClip} ellipsizeMode="clip">
-      {text}
-    </TextComponent>
-  )
-}
-
-// TODO: figure out why animation doesn't work on android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true)
-}
+// setLayoutAnimationEnabledExperimental is currently a no-op in the New Architecture.
+// // TODO: figure out why animation doesn't work on android
+// if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+//   UIManager.setLayoutAnimationEnabledExperimental(true)
+// }
 
 interface MoreOrLessProps {
-  children: string
+  children: React.ReactNode
   numberOfLines: number
   moreText?: string
   lessText?: string
@@ -180,19 +142,10 @@ export const MoreOrLess = ({
           </TextComponent>
         ) : (
           <>
-            <ClippedShrunkText
-              linesToRender={linesToRender}
-              numberOfLines={numberOfLines}
-              textComponent={TextComponent}
-            >
+            <TextComponent numberOfLines={numberOfLines} ellipsizeMode="tail">
               {children}
-            </ClippedShrunkText>
-            <View style={styles.flexRow}>
-              <TextComponent numberOfLines={1} ellipsizeMode="tail">
-                {linesToRender[linesToRender.length - 1].text}
-              </TextComponent>
-              {onMorePress && <ButtonComponent>{moreText}</ButtonComponent>}
-            </View>
+            </TextComponent>
+            {onMorePress && <ButtonComponent>{moreText}</ButtonComponent>}
           </>
         )}
       </Comp>
@@ -214,4 +167,3 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
 })
-export default ClippedShrunkText
