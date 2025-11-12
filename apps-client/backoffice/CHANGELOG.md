@@ -1,5 +1,11 @@
 # @client/backoffice
 
+## 0.6.2
+
+### Patch Changes
+
+- [#262](https://github.com/PPLEThai/pple-today/pull/262) [`725b7f5`](https://github.com/PPLEThai/pple-today/commit/725b7f590fed2fd8513c75d462d5d269bc2f0420) Thanks [@miello](https://github.com/miello)! - [[PPLE-547] [Backoffice] Cannot access to staging environment due to wrong configuration](https://linear.app/snts/issue/PPLE-547/backoffice-cannot-access-to-staging-environment-due-to-wrong)
+
 ## 0.6.1
 
 ### Patch Changes

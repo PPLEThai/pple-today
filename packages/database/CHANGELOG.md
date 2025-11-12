@@ -1,5 +1,13 @@
 # @pple-today/database
 
+## 0.5.1
+
+### Patch Changes
+
+- [#268](https://github.com/PPLEThai/pple-today/pull/268) [`1efec8b`](https://github.com/PPLEThai/pple-today/commit/1efec8b54002fed4ffc10c5ba331ba49d233fa66) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-538] Hyper Link in Post](https://linear.app/snts/issue/PPLE-538/hyper-link-in-post)
+
+- [#267](https://github.com/PPLEThai/pple-today/pull/267) [`e6a3b2a`](https://github.com/PPLEThai/pple-today/commit/e6a3b2a9583d4df407edefac13cdd35ea75253be) Thanks [@miello](https://github.com/miello)! - [[PPLE-549] [API] Could not connect to facebook page due to image duplication](https://linear.app/snts/issue/PPLE-549/api-could-not-connect-to-facebook-page-due-to-image-duplication)
+
 ## 0.5.0
 
 ### Minor Changes

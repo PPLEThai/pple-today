@@ -1,7 +1,7 @@
 {
   "name": "@api/ballot-crypto",
   "type": "module",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "",
   "exports": {
     "./app": {
