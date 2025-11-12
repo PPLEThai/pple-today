@@ -1,11 +1,10 @@
 import { View } from 'react-native'
 
-import { AnimatedBackgroundPressable } from '@pple-today/ui/animated-pressable'
 import { Icon } from '@pple-today/ui/icon'
 import { cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 import { H2 } from '@pple-today/ui/typography'
-import { ContactRoundIcon, MapPinnedIcon } from 'lucide-react-native'
+import { MapPinnedIcon } from 'lucide-react-native'
 
 import { useAuthMe } from '@app/libs/auth'
 
@@ -33,8 +32,8 @@ export function UserAddressInfoSection(props: UserInfoAddressSectionProps) {
           {authMeQuery.data.address.province}
         </Text>
       </View>
-      {/* TODO: style active state & navigate */}
-      <AnimatedBackgroundPressable className="flex flex-row items-center gap-3 border border-base-outline-default rounded-2xl p-4">
+      {/* TODO */}
+      {/* <AnimatedBackgroundPressable className="flex flex-row items-center gap-3 border border-base-outline-default rounded-2xl p-4">
         <View className="w-8 h-8 flex items-center justify-center rounded-lg bg-base-primary-medium">
           <Icon
             icon={ContactRoundIcon}
@@ -47,7 +46,7 @@ export function UserAddressInfoSection(props: UserInfoAddressSectionProps) {
           ดูข้อมูล{'\n'}
           สส. ของคุณ
         </Text>
-      </AnimatedBackgroundPressable>
+      </AnimatedBackgroundPressable> */}
     </View>
   )
 }
