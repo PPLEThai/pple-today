@@ -314,6 +314,9 @@ export const NOTIFICATION_KEY_ERROR_SCHEMA = {
   NOTIFICATION_SENT_FAILED: {
     status: 500,
   },
+  NOTIFICATION_INVALID_REGISTRATION_TOKEN: {
+    status: 400,
+  },
 } satisfies InternalErrorSchemas
 
 export const OPTION_ERROR_SCHEMA = {

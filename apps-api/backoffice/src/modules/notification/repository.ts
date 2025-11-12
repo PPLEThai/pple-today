@@ -1,6 +1,6 @@
 import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
 import { PrismaService } from '@pple-today/api-common/services'
-import { exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { NotificationLinkType, Prisma } from '@pple-today/database/prisma'
 import crypto from 'crypto'
 import Elysia from 'elysia'
@@ -282,23 +282,6 @@ export class NotificationRepository {
     const emptyTokens = phoneNumberWithTokens.filter((p) => p.token.length === 0)
     const nonEmptyTokens = phoneNumberWithTokens.filter((p) => p.token.length > 0)
 
-    const notificationResult = await Promise.all(
-      nonEmptyTokens.map(async (p) => {
-        return {
-          phoneNumber: p.phoneNumber,
-          result: await this.cloudMessagingService.sendNotifications(p.token, {
-            title: data.header,
-            message: data.message,
-            image: data.image,
-            link: {
-              type: 'IN_APP_NAVIGATION',
-              value: `/notification/${newNotification.id}`,
-            },
-          }),
-        }
-      })
-    )
-
     this.loggerService.info({
       message: 'Attempt sending push notification to user',
       details: {
@@ -318,15 +301,71 @@ export class NotificationRepository {
       },
     })
 
-    const failedResult = notificationResult.filter((r) => r.result.isErr())
-    if (failedResult.length > 0) {
-      this.loggerService.error({
-        message: 'Failed to send push notification to some users',
-        details: failedResult.map((r) => ({
-          phoneNumber: r.phoneNumber,
-          error: r.result.isErr() ? r.result.error : null,
-        })),
+    const notificationResult = await Promise.all(
+      nonEmptyTokens.map(async (p) => {
+        return {
+          phoneNumber: p.phoneNumber,
+          result: await this.cloudMessagingService.sendNotifications(p.token, {
+            title: data.header,
+            message: data.message,
+            image: data.image,
+            link: {
+              type: 'IN_APP_NAVIGATION',
+              value: `/notification/${newNotification.id}`,
+            },
+          }),
+        }
       })
+    )
+
+    const failedResult = R.pipe(
+      notificationResult,
+      R.filter((r) => r.result.isErr())
+    )
+
+    if (failedResult.length > 0) {
+      const failedTokens = R.pipe(
+        failedResult,
+        R.flatMap((res) => {
+          const error = res.result._unsafeUnwrapErr()
+
+          if (Array.isArray(error)) {
+            return R.map(error, (e) => e.token)
+          }
+
+          return []
+        }),
+        R.filter((t) => t !== undefined)
+      )
+
+      R.pipe(
+        failedResult,
+        R.forEach(({ phoneNumber, result }) => {
+          this.loggerService.error({
+            message: 'Failed to send push notification',
+            phoneNumber,
+            details: result._unsafeUnwrapErr(),
+          })
+        })
+      )
+
+      const clearNotificationResult = await fromRepositoryPromise(
+        this.prismaService.userNotificationToken.deleteMany({
+          where: {
+            token: {
+              in: failedTokens,
+            },
+          },
+        })
+      )
+
+      if (clearNotificationResult.isErr()) {
+        this.loggerService.error({
+          message: 'Failed to clear invalid notification tokens',
+          details: clearNotificationResult.error,
+        })
+        return err(clearNotificationResult.error)
+      }
     } else {
       this.loggerService.info({
         message: 'Successfully sent push notifications to all targeted users',
