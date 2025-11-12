@@ -1,5 +1,26 @@
 # @client/mobile
 
+## 1.0.0
+
+### Major Changes
+
+- [#272](https://github.com/PPLEThai/pple-today/pull/272) [`2553844`](https://github.com/PPLEThai/pple-today/commit/2553844e4fb0ee24f5a022b440d7d053b97cb1aa) Thanks [@Anon-136](https://github.com/Anon-136)! - Major Release
+
+### Minor Changes
+
+- [#264](https://github.com/PPLEThai/pple-today/pull/264) [`e45262a`](https://github.com/PPLEThai/pple-today/commit/e45262ac2020f9bfe8b3bb6de1bf115947dfed8d) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-480] Notification Center](https://linear.app/snts/issue/PPLE-480/notification-center)
+  [[PPLE-481] Notification Detail](https://linear.app/snts/issue/PPLE-481/notification-detail)
+
+- [#268](https://github.com/PPLEThai/pple-today/pull/268) [`1efec8b`](https://github.com/PPLEThai/pple-today/commit/1efec8b54002fed4ffc10c5ba331ba49d233fa66) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-538] Hyper Link in Post](https://linear.app/snts/issue/PPLE-538/hyper-link-in-post)
+
+### Patch Changes
+
+- [#271](https://github.com/PPLEThai/pple-today/pull/271) [`bce56c5`](https://github.com/PPLEThai/pple-today/commit/bce56c59edc72493953cf66a0871b0046f62d3ea) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-519] Reaction disappear when add the comment](https://linear.app/snts/issue/PPLE-519/reaction-disappear-when-add-the-comment)
+
+- [#265](https://github.com/PPLEThai/pple-today/pull/265) [`f5820ce`](https://github.com/PPLEThai/pple-today/commit/f5820ce9bb8e0671c40c445efd6eebe64a5d605c) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-544] Fix image dpi scale](https://linear.app/snts/issue/PPLE-544/fix-image-dpi-scale)
+
+- [#269](https://github.com/PPLEThai/pple-today/pull/269) [`6097ef1`](https://github.com/PPLEThai/pple-today/commit/6097ef123f1d0d993b65bc8afaa9906392a4968b) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-536] Safe area padding bottom in drawer](https://linear.app/snts/issue/PPLE-536/safe-area-padding-bottom-in-drawer)
+
 ## 0.9.1
 
 ### Patch Changes

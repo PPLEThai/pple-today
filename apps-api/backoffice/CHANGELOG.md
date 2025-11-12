@@ -1,5 +1,21 @@
 # @api/backoffice
 
+## 0.9.1
+
+### Patch Changes
+
+- [#270](https://github.com/PPLEThai/pple-today/pull/270) [`c418889`](https://github.com/PPLEThai/pple-today/commit/c4188897f09b0729642e38f13514b167d9d961ac) Thanks [@miello](https://github.com/miello)! - [[PPLE-553] [Notification] When user uninstall or does not use app anymore, it should ignore instead of throwing error](https://linear.app/snts/issue/PPLE-553/notification-when-user-uninstall-or-does-not-use-app-anymore-it-should)
+  [[PPLE-551] [Notification] Click push notification should navigate to notification details page](https://linear.app/snts/issue/PPLE-551/notification-click-push-notification-should-navigate-to-notification)
+
+- [#264](https://github.com/PPLEThai/pple-today/pull/264) [`e45262a`](https://github.com/PPLEThai/pple-today/commit/e45262ac2020f9bfe8b3bb6de1bf115947dfed8d) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-480] Notification Center](https://linear.app/snts/issue/PPLE-480/notification-center)
+  [[PPLE-481] Notification Detail](https://linear.app/snts/issue/PPLE-481/notification-detail)
+
+- [#267](https://github.com/PPLEThai/pple-today/pull/267) [`e6a3b2a`](https://github.com/PPLEThai/pple-today/commit/e6a3b2a9583d4df407edefac13cdd35ea75253be) Thanks [@miello](https://github.com/miello)! - [[PPLE-549] [API] Could not connect to facebook page due to image duplication](https://linear.app/snts/issue/PPLE-549/api-could-not-connect-to-facebook-page-due-to-image-duplication)
+
+- Updated dependencies [[`1efec8b`](https://github.com/PPLEThai/pple-today/commit/1efec8b54002fed4ffc10c5ba331ba49d233fa66), [`e6a3b2a`](https://github.com/PPLEThai/pple-today/commit/e6a3b2a9583d4df407edefac13cdd35ea75253be)]:
+  - @pple-today/database@0.5.1
+  - @pple-today/api-common@0.6.1
+
 ## 0.9.0
 
 ### Minor Changes
