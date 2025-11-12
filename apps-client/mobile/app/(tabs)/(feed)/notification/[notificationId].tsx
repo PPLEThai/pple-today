@@ -51,43 +51,40 @@ export default function NotificationDetailPage() {
           <Icon icon={ArrowLeftIcon} size={24} />
         </Button>
       </View>
-      {
-        // notificationDetailQuery.isLoading ||
-        !item ? (
-          <NotificationDetailSkeleton />
-        ) : (
-          <>
-            <ScrollView
-              className="flex-1"
-              contentContainerClassName="pt-1 pb-2 bg-base-bg-white flex-grow flex flex-col gap-3 px-4"
-            >
-              <View className="flex flex-row items-center gap-2">
-                <View className="size-8 rounded-full bg-base-primary-default flex items-center justify-center">
-                  <Icon icon={BellIcon} className="text-base-bg-white" />
-                </View>
-                <Text className="text-sm text-base-text-medium font-heading-medium flex-1">
-                  แจ้งเตือนทั่วไป
-                </Text>
-                <Text className="text-sm text-base-text-medium font-heading-regular">
-                  {dayjs(item.createdAt).format('DD MMM BB')}
-                </Text>
+      {notificationDetailQuery.isLoading || !item ? (
+        <NotificationDetailSkeleton />
+      ) : (
+        <>
+          <ScrollView
+            className="flex-1"
+            contentContainerClassName="pt-1 pb-2 bg-base-bg-white flex-grow flex flex-col gap-3 px-4"
+          >
+            <View className="flex flex-row items-center gap-2">
+              <View className="size-8 rounded-full bg-base-primary-default flex items-center justify-center">
+                <Icon icon={BellIcon} className="text-base-bg-white" />
               </View>
-              <H1 className="text-lg font-heading-semibold">{item.content.header}</H1>
-              <Text className="text-base-text-medium font-body-regular text-base">
-                {item.content.message}
+              <Text className="text-sm text-base-text-medium font-heading-medium flex-1">
+                แจ้งเตือนทั่วไป
               </Text>
-            </ScrollView>
-            {item.content.link && (
-              <View className="p-4 pb-6 bg-base-bg-white">
-                <Button onPress={() => openLink(item.content.link!)}>
-                  <Icon icon={ArrowUpRightIcon} />
-                  <Text>{item.content.actionButtonText}</Text>
-                </Button>
-              </View>
-            )}
-          </>
-        )
-      }
+              <Text className="text-sm text-base-text-medium font-heading-regular">
+                {dayjs(item.createdAt).format('DD MMM BB')}
+              </Text>
+            </View>
+            <H1 className="text-lg font-heading-semibold">{item.content.header}</H1>
+            <Text className="text-base-text-medium font-body-regular text-base">
+              {item.content.message}
+            </Text>
+          </ScrollView>
+          {item.content.link && (
+            <View className="p-4 pb-6 bg-base-bg-white">
+              <Button onPress={() => openLink(item.content.link!)}>
+                <Icon icon={ArrowUpRightIcon} />
+                <Text>{item.content.actionButtonText}</Text>
+              </Button>
+            </View>
+          )}
+        </>
+      )}
     </View>
   )
 }
