@@ -1,7 +1,6 @@
-import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
 import { PrismaService } from '@pple-today/api-common/services'
-import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { NotificationLinkType, Prisma } from '@pple-today/database/prisma'
 import crypto from 'crypto'
 import Elysia from 'elysia'
@@ -291,21 +290,17 @@ export class NotificationRepository {
             title: data.header,
             message: data.message,
             image: data.image,
-            link: data.link,
+            link: {
+              type: 'IN_APP_NAVIGATION',
+              value: `/notification/${newNotification.id}`,
+            },
           }),
         }
       })
     )
-    const failedResult = notificationResult.filter((r) => r.result.isErr())
-    if (failedResult.length > 0) {
-      return err({
-        code: InternalErrorCode.NOTIFICATION_SENT_FAILED,
-        message: 'Failed to send push notification to some users',
-      })
-    }
 
     this.loggerService.info({
-      message: 'Push notification sent',
+      message: 'Attempt sending push notification to user',
       details: {
         totalUsers: phoneNumberWithTokens.length,
         successfulDeliveries: nonEmptyTokens.length,
@@ -322,6 +317,21 @@ export class NotificationRepository {
         },
       },
     })
+
+    const failedResult = notificationResult.filter((r) => r.result.isErr())
+    if (failedResult.length > 0) {
+      this.loggerService.error({
+        message: 'Failed to send push notification to some users',
+        details: failedResult.map((r) => ({
+          phoneNumber: r.phoneNumber,
+          error: r.result.isErr() ? r.result.error : null,
+        })),
+      })
+    } else {
+      this.loggerService.info({
+        message: 'Successfully sent push notifications to all targeted users',
+      })
+    }
 
     return ok(
       conditions.type === 'PHONE_NUMBER'
