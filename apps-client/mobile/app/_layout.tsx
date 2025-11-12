@@ -2,7 +2,7 @@ import '../global.css'
 import 'dayjs/locale/th'
 
 import * as React from 'react'
-import { Linking, PermissionsAndroid, Platform } from 'react-native'
+import { PermissionsAndroid, Platform } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { DevToolsBubble } from 'react-native-react-query-devtools'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
@@ -41,14 +41,14 @@ import buddhistEra from 'dayjs/plugin/buddhistEra'
 import duration from 'dayjs/plugin/duration'
 import * as Clipboard from 'expo-clipboard'
 import { useFonts } from 'expo-font'
-import { Stack, useRouter } from 'expo-router'
+import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
-import { openBrowserAsync } from 'expo-web-browser'
 
 import { StatusBarProvider } from '@app/context/status-bar'
 import { environment } from '@app/env'
 import { reactQueryClient } from '@app/libs/api-client'
 import { AuthLifeCycleHook, useAuthMe } from '@app/libs/auth'
+import { openLink } from '@app/utils/link'
 
 dayjs.extend(buddhistEra)
 dayjs.extend(duration)
@@ -203,7 +203,6 @@ function NotificationTokenConsentPopup() {
     {}
   )
   const authMe = useAuthMe()
-  const router = useRouter()
 
   const handleRemoteMessage = async (data: Record<string, string | object>) => {
     const linkData = data['link']
@@ -212,17 +211,7 @@ function NotificationTokenConsentPopup() {
       try {
         const link = JSON.parse(linkData as string)
         if (link.type && link.value) {
-          switch (link.type) {
-            case 'MINI_APP':
-              await openBrowserAsync(link.value)
-              break
-            case 'IN_APP_NAVIGATION':
-              router.navigate(link.value)
-              break
-            case 'EXTERNAL_BROWSER':
-              Linking.openURL(link.value as string)
-              break
-          }
+          await openLink(link)
         }
       } catch (err) {
         console.error('Failed to parse link data:', err)
