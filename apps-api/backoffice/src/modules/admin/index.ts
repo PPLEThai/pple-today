@@ -1,5 +1,6 @@
 import Elysia from 'elysia'
 
+import { AdminAddressController } from './address'
 import { AdminAnnouncementsController } from './announcements'
 import { AdminAuthController } from './auth'
 import { AdminBannerController } from './banner'
@@ -34,3 +35,4 @@ export const AdminController = new Elysia({
   .use(AdminFacebookPageController)
   .use(AdminNotificationController)
   .use(AdminUserController)
+  .use(AdminAddressController)

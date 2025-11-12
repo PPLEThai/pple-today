@@ -11,13 +11,17 @@ import {
   DialogTrigger,
 } from '@pple-today/web-ui/dialog'
 import { Form } from '@pple-today/web-ui/form'
+import { ScrollArea } from '@pple-today/web-ui/scroll-area'
 import { Typography } from '@pple-today/web-ui/typography'
 import z from 'zod'
 
 import { ElectionCandidateForm } from './ElectionCandidateForm'
 import { ElectionFormSchema } from './models'
 
-const ElectionEditCandidateFormSchema = ElectionFormSchema.pick({ candidates: true })
+const ElectionEditCandidateFormSchema = ElectionFormSchema.pick({
+  candidates: true,
+  isCandidateHasNumber: true,
+})
 
 type ElectionEditCandidateFormValues = z.infer<typeof ElectionEditCandidateFormSchema>
 
@@ -51,7 +55,9 @@ export const ElectionEditCandidateForm = (props: ElectionCreateFormProps) => {
       </DialogDescription>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <Form {...form}>
-          <ElectionCandidateForm />
+          <ScrollArea className="h-[60vh] px-1">
+            <ElectionCandidateForm />
+          </ScrollArea>
           <div className="flex flex-row-reverse gap-2 mt-2">
             <Button type="submit" className="flex-1" disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting ? 'กําลังบันทึก' : 'บันทึก'}
