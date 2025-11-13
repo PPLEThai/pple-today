@@ -156,6 +156,7 @@ Feel free to update this file :)
   - `upload-keystore.jks` is a key to sign the app before uploading to playstore. Please see https://developer.android.com/studio/publish/app-signing
   - `ANDROID_UPLOAD_KEYSTORE_PASSWORD` is the password of the upload key
   - `ANDROID_UPLOAD_KEYSTORE_ALIAS` is the alias of the upload key
+- `FIREBASE_APP_ID` is used in fastlane to distribute beta via Firebase Distribution
 
 ### iOS
 
