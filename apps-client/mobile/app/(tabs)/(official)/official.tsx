@@ -10,6 +10,7 @@ import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/
 import { Text } from '@pple-today/ui/text'
 import { H1, H2, H3 } from '@pple-today/ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
+import { Image } from 'expo-image'
 import * as Linking from 'expo-linking'
 import { useRouter } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
@@ -48,6 +49,9 @@ export default function OfficialPage() {
       queryClient.resetQueries({
         queryKey: reactQueryClient.getQueryKey('/announcements'),
       }),
+      queryClient.invalidateQueries({
+        queryKey: reactQueryClient.getQueryKey('/mini-app'),
+      }),
     ])
   }, [queryClient])
 
@@ -82,6 +86,7 @@ export default function OfficialPage() {
           <ElectionSection />
           <AnnouncementSection />
           <InformationSection />
+          <MiniAppSection />
         </View>
       </ScrollView>
     </SafeAreaLayout>
@@ -347,6 +352,50 @@ const InformationSection = () => {
               />
             </View>
           </InfoItem>
+        </View>
+      </View>
+    </View>
+  )
+}
+
+const MiniAppSection = () => {
+  const router = useRouter()
+  const miniAppQuery = reactQueryClient.useQuery('/mini-app', {})
+  if (!miniAppQuery.data || miniAppQuery.data.length === 0) {
+    return null
+  }
+  return (
+    <View className="px-4">
+      <View className="flex flex-row gap-2 items-center">
+        <View className="w-8 h-8 flex items-center justify-center">
+          <Icon icon={InfoIcon} size={32} className="text-base-primary-default" />
+        </View>
+        <H2 className="text-2xl font-heading-semibold text-base-text-high">Mini App</H2>
+        <View className="mt-4 gap-y-4">
+          <View className="flex flex-row gap-x-[12.5px]">
+            {miniAppQuery.data.map((app) => (
+              <InfoItem key={app.slug} onPress={() => router.navigate(`/mini-app/${app.slug}`)}>
+                <View className="flex justify-start flex-col flex-wrap">
+                  <View className="flex flex-col mb-3 h-8 w-8 bg-base-secondary-default rounded-lg items-center justify-center">
+                    {app.iconUrl ? (
+                      <Image source={{ uri: app.iconUrl }} className="w-6 h-6" />
+                    ) : (
+                      <Personal width={24} height={24} color="white" />
+                    )}
+                  </View>
+                  <Text className="text-base font-heading-semibold w-full">{app.name}</Text>
+                </View>
+                <View className="flex-1 justify-end items-end">
+                  <Icon
+                    icon={CircleChevronRightIcon}
+                    size={28}
+                    strokeWidth={1}
+                    className="text-foreground"
+                  />
+                </View>
+              </InfoItem>
+            ))}
+          </View>
         </View>
       </View>
     </View>
