@@ -118,7 +118,6 @@ const seedTopics = async (provinces: string[]) => {
           name: province,
           description: `ข่าวเกี่ยวกับจังหวัด${province}`,
           status: TopicStatus.PUBLISHED,
-          bannerImagePath: 'public/banner/placeholder.png',
         },
       })
     }
