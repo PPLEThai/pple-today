@@ -148,17 +148,21 @@ Feel free to update this file :)
 
 - Please see prerequisite steps
   https://thecodingmachine.github.io/react-native-boilerplate/docs/BetaBuild/#android
-- We encode `key.json` to an envinorment variable called `FIREBASE_SERVICE_ACCOUNT_JSON` with command `base64`
+- We encode `google-services.json` to an environment variable called `FIREBASE_SERVICE_ACCOUNT_JSON` with command `base64`
   - `key.json` is a Google Cloud **Service Account** Key.
     Please see https://docs.fastlane.tools/getting-started/android/setup/ on topic **Collect your Google credentials** or https://cdmunoz.medium.com/bye-bye-firebase-token-hello-service-accounts-540ed6cb20c8
   - To test `key.json` file please run `fastlane run validate_play_store_json_key json_key:key.json`
+- We also encode `upload-keystore.jks` into an environment variable called `ANDROID_UPLOAD_KEYSTORE` with command `base64`
+  - `upload-keystore.jks` is a key to sign the app before uploading to playstore. Please see https://developer.android.com/studio/publish/app-signing
+  - `ANDROID_UPLOAD_KEYSTORE_PASSWORD` is the password of the upload key
+  - `ANDROID_UPLOAD_KEYSTORE_ALIAS` is the alias of the upload key
 
 ### iOS
 
 - Please see prerequisite steps
   https://thecodingmachine.github.io/react-native-boilerplate/docs/BetaBuild/#ios
-- `FASTLANE_USER` is your Apple ID admin username
-- `FASTLANE_PASSWORD` is your Apple ID password
+- `FASTLANE_USER` is your Apple Developer Account username
+- `FASTLANE_PASSWORD` is your Apple Developer Account password
 - `FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD` is an App-Specific Password which you can generate here https://appleid.apple.com/account/manage
   - Please see https://stackoverflow.com/questions/74210927/fastlane-altool-error-unable-to-upload-archive-failed-to-get-authorization
 - `FASTLANE_SESSION` is session token for **temporary** auth method in our CI right now
@@ -183,6 +187,7 @@ Feel free to update this file :)
   3.  Run `fastlane match development` `fastlane match appstore`
 - `MATCH_GIT_BASIC_AUTHORIZATION` is `echo -n <your_github_username>:<your_personal_access_token> | base64`
   - Don't forget to generate `your_personal_access_token` in GitHub > Settings > Developer settings > Personal access token > Fine-grained tokens
+    https://github.com/settings/personal-access-tokens
 - `PROVISIONING_PROFILE_SPECIFIER` is `match AppStore <DEVELOPER_APP_IDENTIFIER>`
   - It should appear here after running match https://developer.apple.com/account/resources/profiles/list
 - `APP_STORE_CONNECT_TEAM_ID`
@@ -191,6 +196,13 @@ Feel free to update this file :)
   2. https://appstoreconnect.apple.com/WebObjects/iTunesConnect.woa/ra/user/detail
 - `DEVELOPER_PORTAL_TEAM_ID` \
    Please go to https://appstoreconnect.apple.com/access/users > Open User Profile Menu (Top Right) > Edit Profile
+
+### Notification Service
+
+We setup notification service according to this guide https://docs.expo.dev/push-notifications/sending-notifications-custom/
+
+- `FIREBASE_ANDROID_SERVICE_FILE` (which should be the same as `FIREBASE_SERVICE_ACCOUNT_JSON` please see more details above) is base64 encoded of the file `google-services.json`
+- `FIREBASE_IOS_SERVICE_FILE` is base64 encoded of the file `GoogleService-Info.plist`
 
 ## VPN Connect
 
