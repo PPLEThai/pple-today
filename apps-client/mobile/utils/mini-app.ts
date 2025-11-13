@@ -7,9 +7,17 @@ export function createMiniAppPath(url: string) {
     return null
   }
 
-  const splitPathname = urlObj.pathname.split('/')
+  if (urlObj.pathname === '/' || urlObj.pathname === '') {
+    return null
+  }
+
+  const splitPathname = urlObj.pathname.split('/').slice(1)
   const slug = splitPathname[0]
   const queryParams = splitPathname.slice(1).join('/')
 
-  return `/mini-app/${slug}?path=${queryParams}` as const
+  const miniAppPath = queryParams
+    ? (`/mini-app/${slug}?path=${queryParams}` as const)
+    : (`/mini-app/${slug}` as const)
+
+  return miniAppPath
 }
