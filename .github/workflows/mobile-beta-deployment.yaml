@@ -162,9 +162,9 @@ jobs:
           echo "EXPO_PUBLIC_BACKEND_BASE_URL=${{ secrets.EXPO_PUBLIC_BACKEND_BASE_URL }}" >> .env
           echo "DEVELOPER_APP_IDENTIFIER=${{ secrets.DEVELOPER_APP_IDENTIFIER }}" >> .env
           echo "FASTLANE_USER=${{ secrets.FASTLANE_USER }}" >> .env
-          echo "APP_STORE_CONNECT_API_KEY_ID"=${{ secrets.APP_STORE_CONNECT_API_KEY_ID }} >> .env
-          echo "APP_STORE_CONNECT_API_KEY_ISSUER_ID"=${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }} >> .env
-          echo "APP_STORE_CONNECT_API_KEY_CONTENT"=${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }} >> .env
+          echo "APP_STORE_CONNECT_API_KEY_ID=${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}" >> .env
+          echo "APP_STORE_CONNECT_API_KEY_ISSUER_ID=${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}" >> .env
+          echo "APP_STORE_CONNECT_API_KEY_CONTENT=${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}" >> .env
           echo "MATCH_PASSWORD=${{ secrets.MATCH_PASSWORD }}" >> .env
           echo "MATCH_GIT_BASIC_AUTHORIZATION=${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}" >> .env
           echo "PROVISIONING_PROFILE_SPECIFIER=${{ secrets.PROVISIONING_PROFILE_SPECIFIER }}" >> .env
