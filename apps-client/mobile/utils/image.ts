@@ -8,23 +8,20 @@ export const createImageUrl = (
 
   const urlObj = new URL(url)
 
+  urlObj.searchParams.set('quality', config.quality?.toString() ?? '80')
+
   if (!config.width && !config.height) {
     return urlObj.toString()
   }
 
   if (config.width) {
-    urlObj.searchParams.append(
-      'width',
-      PixelRatio.getPixelSizeForLayoutSize(config.width).toString()
-    )
+    urlObj.searchParams.set('width', PixelRatio.getPixelSizeForLayoutSize(config.width).toString())
   }
   if (config.height) {
-    urlObj.searchParams.append(
+    urlObj.searchParams.set(
       'height',
       PixelRatio.getPixelSizeForLayoutSize(config.height).toString()
     )
   }
-  urlObj.searchParams.append('quality', config.quality?.toString() ?? '80')
-
   return urlObj.toString()
 }
