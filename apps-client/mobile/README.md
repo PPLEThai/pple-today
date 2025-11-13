@@ -148,7 +148,7 @@ Feel free to update this file :)
 
 - Please see prerequisite steps
   https://thecodingmachine.github.io/react-native-boilerplate/docs/BetaBuild/#android
-- We encode `google-services.json` to an environment variable called `FIREBASE_SERVICE_ACCOUNT_JSON` with command `base64`
+- We encode `google-services.json` to an environment variable called `FIREBASE_ANDROID_SERVICE_FILE` with command `base64`
   - `key.json` is a Google Cloud **Service Account** Key.
     Please see https://docs.fastlane.tools/getting-started/android/setup/ on topic **Collect your Google credentials** or https://cdmunoz.medium.com/bye-bye-firebase-token-hello-service-accounts-540ed6cb20c8
   - To test `key.json` file please run `fastlane run validate_play_store_json_key json_key:key.json`
@@ -201,7 +201,7 @@ Feel free to update this file :)
 
 We setup notification service according to this guide https://docs.expo.dev/push-notifications/sending-notifications-custom/
 
-- `FIREBASE_ANDROID_SERVICE_FILE` (which should be the same as `FIREBASE_SERVICE_ACCOUNT_JSON` please see more details above) is base64 encoded of the file `google-services.json`
+- `FIREBASE_ANDROID_SERVICE_FILE` is base64 encoded of the file `google-services.json` (please see more details above)
 - `FIREBASE_IOS_SERVICE_FILE` is base64 encoded of the file `GoogleService-Info.plist`
 
 ## VPN Connect

@@ -17,10 +17,10 @@ else
   cp -r ./fastlane/android/* ./android
   echo "Fastlane directory copied to android folder."
   source .env  
-  if [ -z "$FIREBASE_SERVICE_ACCOUNT_JSON" ]; then
-    echo "Warning: FIREBASE_SERVICE_ACCOUNT_JSON environment variable is not set."
+  if [ -z "$FIREBASE_ANDROID_SERVICE_FILE" ]; then
+    echo "Warning: FIREBASE_ANDROID_SERVICE_FILE environment variable is not set."
   else
-    echo $FIREBASE_SERVICE_ACCOUNT_JSON | base64 -d > ./android/key.json
+    echo $FIREBASE_ANDROID_SERVICE_FILE | base64 -d > ./android/key.json
     echo "Firebase service account JSON file created at ./android/key.json."
   fi
   if [ -z "$ANDROID_UPLOAD_KEYSTORE" ]; then
