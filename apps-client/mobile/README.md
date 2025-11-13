@@ -172,13 +172,13 @@ Feel free to update this file :)
   - run `fastlane spaceauth -u <your_apple_username>`
   - copy and then single quote it in github variable like this `'---\n ...'`
 
-- **TODO** APP Store Connect API Key
+- APP Store Connect API Key
   - https://github.com/fastlane/fastlane/issues/29468#issuecomment-2942861970
   - Please see `ios/Fastfile`
   - Create/List here https://appstoreconnect.apple.com/access/integrations/api
-  - `APP_STORE_CONNECT_API_KEY_KEY_ID`
+  - `APP_STORE_CONNECT_API_KEY_ID`
   - `APP_STORE_CONNECT_API_KEY_ISSUER_ID`
-  - `APP_STORE_CONNECT_API_KEY_KEY`
+  - `APP_STORE_CONNECT_API_KEY_CONTENT`
 - `MATCH_PASSWORD` is your password for accessing Certificates
   - Please see
     https://docs.fastlane.tools/actions/match/ and

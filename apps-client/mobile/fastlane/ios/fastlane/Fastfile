@@ -18,6 +18,12 @@ platform :ios do
   desc "Submit a new Beta Build to TestFlight"
   lane :beta do
     setup_ci() if ENV['CI']
+    app_store_connect_api_key(
+      key_id: ENV['APP_STORE_CONNECT_API_KEY_ID'],
+      issuer_id: ENV['APP_STORE_CONNECT_API_KEY_ISSUER_ID'],
+      key_content: ENV['APP_STORE_CONNECT_API_KEY_CONTENT'],
+    )
+
     app_identifier = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
     team_id = CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
     # TODO: Seems like we need to fix this to use App Store Connect API Key
