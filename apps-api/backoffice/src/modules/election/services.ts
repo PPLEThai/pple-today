@@ -37,6 +37,10 @@ export class ElectionService {
     return election.publishDate !== null && now >= election.publishDate
   }
 
+  private isElectionDetailsAvailable(election: Election, now: Date): boolean {
+    return this.isElectionPublished(election, now) && now >= election.openVoting
+  }
+
   private isElectionInTimelinePeriod(election: Election, now: Date): boolean {
     if (!this.isElectionPublished(election, now)) {
       return false
@@ -163,7 +167,7 @@ export class ElectionService {
       })
     }
 
-    if (!this.isElectionPublished(eligibleVoter.value.election, currentDate)) {
+    if (!this.isElectionDetailsAvailable(eligibleVoter.value.election, currentDate)) {
       return err({
         code: InternalErrorCode.ELECTION_NOT_FOUND,
         message: `Cannot found election id "${electionId}"`,
