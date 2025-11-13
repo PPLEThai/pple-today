@@ -23,7 +23,8 @@
     "fastlane:setup": "bash ./fastlane/setup.sh",
     "fastlane:android": "pnpm prebuild:android && pnpm fastlane:setup && cd android && fastlane beta",
     "fastlane:ios": "pnpm prebuild:ios && pnpm fastlane:setup && cd ios && fastlane beta",
-    "fastlane:android:prod": "pnpm prebuild:android && pnpm fastlane:setup && cd android && fastlane production"
+    "fastlane:android:prod": "pnpm prebuild:android && pnpm fastlane:setup && cd android && fastlane production",
+    "fastlane:ios:prod": "pnpm prebuild:ios && pnpm fastlane:setup && cd ios && fastlane production"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
