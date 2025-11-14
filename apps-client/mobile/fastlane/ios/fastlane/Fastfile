@@ -14,9 +14,7 @@ before_all do
 end
 
 platform :ios do
-
-  desc "Submit a new Beta Build to TestFlight"
-  lane :beta do
+  lane :testflight do
     setup_ci() if ENV['CI']
     app_store_connect_api_key(
       key_id: ENV['APP_STORE_CONNECT_API_KEY_ID'],
@@ -107,8 +105,18 @@ platform :ios do
       # Note: https://github.com/fastlane/fastlane/pull/19735#issuecomment-1084221116
       # You have to disabled the checkbox "Enable automatic distribution" checkbox
       # in App Store Connect when creating the internal group
-      groups: ENV['DISTRIBUTE_GROUPS'] || "dev-team", 
+      groups: ENV['DISTRIBUTE_GROUPS'], 
       skip_waiting_for_build_processing: true,
     )
+  end
+
+  desc "Submit a new Beta Build to TestFlight"
+  lane :beta do
+    testflight
+  end
+
+  desc "Submit a new Production Build to TestFlight"
+  lane :production do
+    testflight
   end
 end

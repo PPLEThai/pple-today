@@ -11,6 +11,7 @@ default_platform(:android)
 platform :android do
   desc "Submit a new Beta Build to Firebase App Distribution"
   lane :beta do
+    setup_ci() if ENV['CI']
     app_id = ENV["FIREBASE_APP_ID"]
     # Grab the latest build number from Firebase App Distribution
     latest_release = firebase_app_distribution_get_latest_release(
@@ -51,8 +52,15 @@ platform :android do
   # https://medium.com/@malikchohra/ci-cd-pipeline-for-react-native-apps-use-fastlane-and-github-actions-dcf101edc423
   desc "Send app to play store as a draft"
   lane :production do
+    setup_ci() if ENV['CI']
+    g = google_play_track_version_codes(track: 'production')
+    gb = google_play_track_version_codes(track: 'beta')
+    ga = google_play_track_version_codes(track: 'alpha')
+    gi = google_play_track_version_codes(track: 'internal')
+    max_value = [g[0].to_i, gb[0].to_i, ga[0].to_i, gi[0].to_i].max
+    version_updated = max_value + 1
     increment_version_code(
-      version_code: 4, # manually set version code
+      version_code: version_updated,
       gradle_file_path: "app/build.gradle"
     )
     gradle(
@@ -66,7 +74,7 @@ platform :android do
       }
     )
     upload_to_play_store(
-      track: 'internal',
+      track: 'alpha',
       # Only releases with status draft may be created on draft app
       # Release needed to be published manually from Play Console
       release_status: "draft",

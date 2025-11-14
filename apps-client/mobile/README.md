@@ -148,8 +148,10 @@ Feel free to update this file :)
 
 - Please see prerequisite steps
   https://thecodingmachine.github.io/react-native-boilerplate/docs/BetaBuild/#android
-- We encode `google-services.json` to an environment variable called `FIREBASE_ANDROID_SERVICE_FILE` with command `base64`
-  - `key.json` is a Google Cloud **Service Account** Key.
+- `FIREBASE_ANDROID_SERVICE_FILE` is a Firebase Project SDK Service Account `google-services.json` content encoded with base64
+  - It can be access by Project Settings > General > Your Apps > Android App > SDK setup and configuration> google-services.json
+- `FIREBASE_ANDROID_SERVICE_CREDENTIALS` is base64 encoded with of a key generated to access Google Play Service
+  - `key.json` is a Google Cloud **Service Account** Credentials.
     Please see https://docs.fastlane.tools/getting-started/android/setup/ on topic **Collect your Google credentials** or https://cdmunoz.medium.com/bye-bye-firebase-token-hello-service-accounts-540ed6cb20c8
   - To test `key.json` file please run `fastlane run validate_play_store_json_key json_key:key.json`
 - We also encode `upload-keystore.jks` into an environment variable called `ANDROID_UPLOAD_KEYSTORE` with command `base64`

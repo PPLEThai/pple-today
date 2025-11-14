@@ -75,11 +75,13 @@ jobs:
         working-directory: apps-client/mobile
         shell: bash
         run: |
+          echo "APP_ENVIRONMENT=${{ inputs.environment }}" >> .env
           echo "EXPO_PUBLIC_APP_ENVIRONMENT=${{ inputs.environment }}" >> .env
           echo "EXPO_PUBLIC_OIDC_BASE_URL=${{ secrets.EXPO_PUBLIC_OIDC_BASE_URL }}" >> .env
           echo "EXPO_PUBLIC_OIDC_CLIENT_ID=${{ secrets.EXPO_PUBLIC_OIDC_CLIENT_ID }}" >> .env
           echo "EXPO_PUBLIC_BACKEND_BASE_URL=${{ secrets.EXPO_PUBLIC_BACKEND_BASE_URL }}" >> .env
           echo "DEVELOPER_APP_IDENTIFIER=${{ secrets.DEVELOPER_APP_IDENTIFIER }}" >> .env
+          echo "FIREBASE_ANDROID_SERVICE_CREDENTIALS=${{ secrets.FIREBASE_ANDROID_SERVICE_CREDENTIALS }}" >> .env
           echo "FIREBASE_ANDROID_SERVICE_FILE=${{ secrets.FIREBASE_ANDROID_SERVICE_FILE }}" >> .env
           echo "FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}" >> .env
           echo "DISTRIBUTE_GROUPS=${{ inputs.groups }}" >> .env
@@ -133,6 +135,7 @@ jobs:
           echo "FACEBOOK_APP_ID=${{ secrets.FACEBOOK_APP_ID }}" >> .env
           echo "FACEBOOK_CLIENT_TOKEN=${{ secrets.FACEBOOK_CLIENT_TOKEN }}" >> .env
           echo "FACEBOOK_DISPLAY_NAME=${{ secrets.FACEBOOK_DISPLAY_NAME }}" >> .env
+          echo "DEVELOPER_APP_IDENTIFIER=${{ secrets.DEVELOPER_APP_IDENTIFIER }}" >> .env
           echo "${{ secrets.FIREBASE_IOS_SERVICE_FILE }}" | base64 -d > ./credentials/GoogleService-Info.plist
           echo "${{ secrets.FIREBASE_ANDROID_SERVICE_FILE }}" | base64 -d > ./credentials/google-services.json
 
@@ -149,14 +152,11 @@ jobs:
         working-directory: apps-client/mobile
         run: cd ios && pod install --repo-update && cd ..
 
-      # Note that you might run into fastlane issue of 2 Factor Authentication
-      # run `fastlane spaceauth -u <your_apple_username>`
-      # copy the output and then single quote it in `FASTLANE_SESSION` variable like this '---\n ...'
-      # Read more at README.md in apps-client/mobile
       - name: Set up environment
         working-directory: apps-client/mobile
         shell: bash
         run: |
+          echo "APP_ENVIRONMENT=${{ inputs.environment }}" >> .env
           echo "EXPO_PUBLIC_APP_ENVIRONMENT=${{ inputs.environment }}" >> .env
           echo "EXPO_PUBLIC_OIDC_BASE_URL=${{ secrets.EXPO_PUBLIC_OIDC_BASE_URL }}" >> .env
           echo "EXPO_PUBLIC_OIDC_CLIENT_ID=${{ secrets.EXPO_PUBLIC_OIDC_CLIENT_ID }}" >> .env
