@@ -67,7 +67,7 @@ jobs:
         working-directory: apps-client/mobile
         shell: bash
         env: ${{ secrets }}
-        run: ./setup-credentials.sh
+        run: ./scripts/setup-credentials.sh
 
       - name: Run Prebuild
         run: pnpm turbo prebuild ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}
