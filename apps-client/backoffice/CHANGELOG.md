@@ -1,5 +1,17 @@
 # @client/backoffice
 
+## 1.0.0
+
+### Major Changes
+
+- [#284](https://github.com/PPLEThai/pple-today/pull/284) [`e014f92`](https://github.com/PPLEThai/pple-today/commit/e014f92bb07792b8b68d5bd3e3a3763f957ae01d) Thanks [@Anon-136](https://github.com/Anon-136)! - Major Bump
+
+### Patch Changes
+
+- Updated dependencies [[`e014f92`](https://github.com/PPLEThai/pple-today/commit/e014f92bb07792b8b68d5bd3e3a3763f957ae01d)]:
+  - @pple-today/api-client@1.0.0
+  - @pple-today/web-ui@1.0.0
+
 ## 0.6.2
 
 ### Patch Changes
