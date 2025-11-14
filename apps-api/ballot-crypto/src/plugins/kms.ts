@@ -17,9 +17,9 @@ export class KeyManagementService {
 
   constructor(
     private readonly config: {
-      projectId: string
-      clientEmail: string
-      privateKey: string
+      projectId?: string
+      clientEmail?: string
+      privateKey?: string
       location: string
       encryptionKeyRing: string
       signingKeyRing: string
@@ -33,6 +33,10 @@ export class KeyManagementService {
         private_key: config.privateKey,
       },
     })
+  }
+
+  private getProjectId() {
+    return this.config.projectId ?? this.kmsClient.getProjectId()
   }
 
   private log(options: {
@@ -59,7 +63,7 @@ export class KeyManagementService {
 
   private async getPublicKey(keyRing: string, keyId: string) {
     const name = this.kmsClient.cryptoKeyVersionPath(
-      this.config.projectId,
+      await this.getProjectId(),
       this.config.location,
       keyRing,
       keyId,
@@ -89,11 +93,8 @@ export class KeyManagementService {
   }
 
   private async createKey(keyRing: string, keyId: string, key: google.cloud.kms.v1.ICryptoKey) {
-    const keyRingName = this.kmsClient.keyRingPath(
-      this.config.projectId,
-      this.config.location,
-      keyRing
-    )
+    const projectId = this.config.projectId ?? (await this.kmsClient.getProjectId())
+    const keyRingName = this.kmsClient.keyRingPath(projectId, this.config.location, keyRing)
 
     const result = await fromGoogleAPIPromise(
       this.kmsClient.createCryptoKey({
@@ -156,7 +157,7 @@ export class KeyManagementService {
 
   private async destroyKey(keyRing: string, keyId: string) {
     const version = this.kmsClient.cryptoKeyVersionPath(
-      this.config.projectId,
+      await this.getProjectId(),
       this.config.location,
       keyRing,
       keyId,
@@ -197,7 +198,7 @@ export class KeyManagementService {
 
   private async getCryptoKey(keyRing: string, keyId: string) {
     const version = this.kmsClient.cryptoKeyVersionPath(
-      this.config.projectId,
+      await this.getProjectId(),
       this.config.location,
       keyRing,
       keyId,
@@ -240,7 +241,7 @@ export class KeyManagementService {
 
   async decryptCiphertext(keyId: string, ciphertext: string) {
     const version = this.kmsClient.cryptoKeyVersionPath(
-      this.config.projectId,
+      await this.getProjectId(),
       this.config.location,
       this.config.encryptionKeyRing,
       keyId,
@@ -260,7 +261,7 @@ export class KeyManagementService {
 
   async createSignature(keyId: string, message: string) {
     const version = this.kmsClient.cryptoKeyVersionPath(
-      this.config.projectId,
+      await this.getProjectId(),
       this.config.location,
       this.config.signingKeyRing,
       keyId,
@@ -284,7 +285,7 @@ export class KeyManagementService {
 
   async restoreKey(keyId: string, keyRing: string) {
     const version = this.kmsClient.cryptoKeyVersionPath(
-      this.config.projectId,
+      await this.getProjectId(),
       this.config.location,
       keyRing,
       keyId,
