@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { Pressable, PressableProps, ScrollView, View } from 'react-native'
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -6,10 +6,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/index'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
+import { cn } from '@pple-today/ui/lib/utils'
 import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { H1, H2, H3 } from '@pple-today/ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
+import { Image } from 'expo-image'
 import * as Linking from 'expo-linking'
 import { useRouter } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
@@ -48,6 +50,9 @@ export default function OfficialPage() {
       queryClient.resetQueries({
         queryKey: reactQueryClient.getQueryKey('/announcements'),
       }),
+      queryClient.resetQueries({
+        queryKey: reactQueryClient.getQueryKey('/mini-app'),
+      }),
     ])
   }, [queryClient])
 
@@ -82,6 +87,7 @@ export default function OfficialPage() {
           <ElectionSection />
           <AnnouncementSection />
           <InformationSection />
+          <MiniAppSection />
         </View>
       </ScrollView>
     </SafeAreaLayout>
@@ -353,6 +359,67 @@ const InformationSection = () => {
   )
 }
 
+const MiniAppSection = () => {
+  const router = useRouter()
+  const { data: miniAppData } = reactQueryClient.useQuery('/mini-app', {})
+
+  const miniAppGroupByTwo = useMemo(() => {
+    if (!miniAppData) {
+      return []
+    }
+
+    const grouped: (typeof miniAppData)[] = []
+    for (let i = 0; i < miniAppData.length; i += 2) {
+      grouped.push(miniAppData.slice(i, i + 2))
+    }
+
+    return grouped
+  }, [miniAppData])
+
+  if (!miniAppData || miniAppData.length === 0) {
+    return null
+  }
+
+  return (
+    <View className="px-4">
+      <View className="flex flex-row gap-2 items-center">
+        <View className="w-8 h-8 flex items-center justify-center">
+          <Icon icon={InfoIcon} size={32} className="text-base-primary-default" />
+        </View>
+        <H2 className="text-2xl font-heading-semibold text-base-text-high">Mini App</H2>
+      </View>
+      <View className="flex flex-col gap-4 mt-4 items-center">
+        {miniAppGroupByTwo.map((group, index) => (
+          <View key={index} className="flex flex-1 flex-row gap-4">
+            {group.map((app) => (
+              <InfoItem key={app.slug} onPress={() => router.navigate(`/mini-app/${app.slug}`)}>
+                <View className="flex justify-start flex-col">
+                  <View className="flex flex-col mb-3 h-8 w-8 bg-base-secondary-default rounded-lg items-center justify-center">
+                    {app.iconUrl ? (
+                      <Image source={{ uri: app.iconUrl }} className="w-4 h-4" />
+                    ) : (
+                      <Personal width={16} height={16} color="white" />
+                    )}
+                  </View>
+                  <Text className="text-base font-heading-semibold w-full">{app.name}</Text>
+                </View>
+                <View className="flex-1 justify-end items-end">
+                  <Icon
+                    icon={CircleChevronRightIcon}
+                    size={28}
+                    strokeWidth={1}
+                    className="text-foreground"
+                  />
+                </View>
+              </InfoItem>
+            ))}
+          </View>
+        ))}
+      </View>
+    </View>
+  )
+}
+
 interface InfoItemProps extends PressableProps {
   children: React.ReactNode
 }
@@ -366,7 +433,12 @@ const InfoItem = ({ children, ...props }: InfoItemProps) => {
     opacity.value = withTiming(1, { duration: 150 })
   }
   return (
-    <Pressable onPressIn={onPressIn} onPressOut={onPressOut} {...props} className="flex-1">
+    <Pressable
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+      {...props}
+      className={cn('flex-1', props.className)}
+    >
       <Animated.View
         style={{ opacity }}
         className="p-4 flex flex-col justify-between min-h-[163px] bg-base-bg-white rounded-2xl border border-base-outline-default"
