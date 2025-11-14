@@ -1,6 +1,7 @@
 import * as React from 'react'
 import {
   GestureResponderEvent,
+  Linking,
   Platform,
   Pressable,
   PressableProps,
@@ -35,7 +36,6 @@ import { toast } from '@pple-today/ui/toast'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
 import { useQueryClient } from '@tanstack/react-query'
-import * as Linking from 'expo-linking'
 import { Link, useRouter } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
 import LottieView from 'lottie-react-native'
@@ -64,6 +64,7 @@ import { useSession } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 import { createImageUrl } from '@app/utils/image'
+import { createMiniAppPath } from '@app/utils/mini-app'
 
 import { Lightbox } from './lightbox'
 
@@ -204,6 +205,7 @@ const re = /(http|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:/~+#-]*[\w@
 
 function createTextWithLinks(
   original: string,
+  handleOpenUrl: (url: string) => void,
   TextComponent: React.ComponentType<TextProps>
 ): React.ReactNode[] {
   const matches = original.matchAll(re)
@@ -214,7 +216,7 @@ function createTextWithLinks(
     texts.push(original.slice(index, url.index))
     texts.push(
       <TextComponent
-        onPress={() => Linking.openURL(url.match)}
+        onPress={() => handleOpenUrl(url.match)}
         className="text-blue-500"
         key={url.index}
       >
@@ -232,9 +234,24 @@ const PostCardContent = (props: { feedItem: FeedItemPost }) => {
   const navigateToDetailPage = React.useCallback(() => {
     router.navigate(`/feed/${props.feedItem.id}`)
   }, [router, props.feedItem.id])
+
+  const handleOpenUrl = React.useCallback(
+    async (url: string) => {
+      const miniAppPath = createMiniAppPath(url)
+
+      if (miniAppPath) {
+        router.navigate(miniAppPath)
+        return
+      }
+
+      await Linking.openURL(url)
+    },
+    [router]
+  )
+
   const texts = React.useMemo(() => {
-    return createTextWithLinks(props.feedItem.post.content, TextPost)
-  }, [props.feedItem.post.content])
+    return createTextWithLinks(props.feedItem.post.content, handleOpenUrl, TextPost)
+  }, [handleOpenUrl, props.feedItem.post.content])
   return (
     <View className="flex flex-col gap-3">
       {props.feedItem.post.attachments && props.feedItem.post.attachments.length > 0 && (
@@ -1004,9 +1021,25 @@ const FeedDetailContent = (props: { feedItem: FeedItem }) => {
 }
 
 const PostDetailContent = (props: { feedItem: FeedItemPost }) => {
+  const router = useRouter()
+
+  const handleOpenUrl = React.useCallback(
+    async (url: string) => {
+      const miniAppPath = createMiniAppPath(url)
+
+      if (miniAppPath) {
+        router.navigate(miniAppPath)
+        return
+      }
+
+      await Linking.openURL(url)
+    },
+    [router]
+  )
+
   const texts = React.useMemo(() => {
-    return createTextWithLinks(props.feedItem.post.content, TextPost)
-  }, [props.feedItem.post.content])
+    return createTextWithLinks(props.feedItem.post.content, handleOpenUrl, TextPost)
+  }, [handleOpenUrl, props.feedItem.post.content])
   return (
     <View className="flex flex-col gap-3 pb-3">
       {props.feedItem.post.attachments && props.feedItem.post.attachments.length > 0 && (
