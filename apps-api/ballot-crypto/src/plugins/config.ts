@@ -16,15 +16,21 @@ export const envSchema = t.Object({
     .Decode((value) => value === 'true')
     .Encode((value) => (value ? 'true' : 'false')),
 
-  GCP_PROJECT_ID: t.String({
-    description: 'Google Cloud Project ID',
-  }),
-  GCP_CLIENT_EMAIL: t.String({
-    description: 'Google Cloud Client Email',
-  }),
-  GCP_PRIVATE_KEY: t.String({
-    description: 'Google Cloud Private Key',
-  }),
+  GCP_PROJECT_ID: t.Optional(
+    t.String({
+      description: 'Google Cloud Project ID',
+    })
+  ),
+  GCP_CLIENT_EMAIL: t.Optional(
+    t.String({
+      description: 'Google Cloud Client Email',
+    })
+  ),
+  GCP_PRIVATE_KEY: t.Optional(
+    t.String({
+      description: 'Google Cloud Private Key',
+    })
+  ),
   GCP_LOCATION: t.String({
     description: 'Google Cloud Location',
   }),
