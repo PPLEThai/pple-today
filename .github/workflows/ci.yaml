@@ -70,4 +70,5 @@ jobs:
         run: bash ./scripts/setup-credentials.sh
 
       - name: Run Prebuild
+        env: ${{ secrets }}
         run: pnpm turbo prebuild ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}
