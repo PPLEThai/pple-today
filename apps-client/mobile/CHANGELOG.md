@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 2.1.0
+
+### Minor Changes
+
+- [#275](https://github.com/PPLEThai/pple-today/pull/275) [`c0463a6`](https://github.com/PPLEThai/pple-today/commit/c0463a61f164e4911fea751b676035a83aa0f5c0) Thanks [@miello](https://github.com/miello)! - [[PPLE-540] Mini-app entry point](https://linear.app/snts/issue/PPLE-540/mini-app-entry-point)
+
 ## 2.0.0
 
 ### Major Changes
