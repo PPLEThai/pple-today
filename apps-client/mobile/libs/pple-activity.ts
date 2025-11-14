@@ -21,7 +21,7 @@ export const GetPPLEActivitySchema = z.object({
         url: z.url(),
         image: z.url(),
         event_date: z.string().pipe(z.iso.date()),
-        is_upcoming: z.boolean(),
+        is_upcoming: z.boolean().optional(), // This field is missing in getUpcomingActivity
         province: z.string(),
         event_type: z.string(),
         event_detail: z.object({
@@ -56,6 +56,50 @@ export async function getPPLEActivity({
   return {
     ...data,
     result: data.result.filter((item) => item.event_data.is_upcoming === is_upcoming),
+  }
+}
+
+export async function getTodayActivity({
+  limit,
+  currentPage,
+}: { limit?: number; currentPage?: number } = {}) {
+  const params = new URLSearchParams({
+    ...(limit ? { limit: limit.toString() } : {}),
+    ...(currentPage ? { current_page: currentPage.toString() } : {}),
+  })
+  const response = await fetch(
+    `https://act.pplethai.org/external-api/get-last-event-today/?${params.toString()}`
+  )
+  if (!response.ok) {
+    throw response
+  }
+  const json = await response.json()
+  const data = await GetPPLEActivitySchema.parseAsync(json)
+  return {
+    ...data,
+    result: data.result,
+  }
+}
+
+export async function getUpcomingActivity({
+  limit,
+  currentPage,
+}: { limit?: number; currentPage?: number } = {}) {
+  const params = new URLSearchParams({
+    ...(limit ? { limit: limit.toString() } : {}),
+    ...(currentPage ? { current_page: currentPage.toString() } : {}),
+  })
+  const response = await fetch(
+    `https://act.pplethai.org/external-api/get-last-event-upcoming/?${params.toString()}`
+  )
+  if (!response.ok) {
+    throw response
+  }
+  const json = await response.json()
+  const data = await GetPPLEActivitySchema.parseAsync(json)
+  return {
+    ...data,
+    result: data.result,
   }
 }
 
