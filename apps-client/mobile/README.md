@@ -163,29 +163,35 @@ Feel free to update this file :)
 - Please see prerequisite steps
   https://thecodingmachine.github.io/react-native-boilerplate/docs/BetaBuild/#ios
 - `FASTLANE_USER` is your Apple Developer Account username
-- `FASTLANE_PASSWORD` is your Apple Developer Account password
-- `FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD` is an App-Specific Password which you can generate here https://appleid.apple.com/account/manage
-  - Please see https://stackoverflow.com/questions/74210927/fastlane-altool-error-unable-to-upload-archive-failed-to-get-authorization
-- `FASTLANE_SESSION` is session token for **temporary** auth method in our CI right now
 
-  - Please see https://stackoverflow.com/questions/58097010/fastlane-doesnt-work-for-apple-id-with-two-factor-authentication-on-continuous
-  - run `fastlane spaceauth -u <your_apple_username>`
-  - copy and then single quote it in github variable like this `'---\n ...'`
+- App Store Connect API Key
 
-- **TODO** APP Store Connect API Key
-  - https://github.com/fastlane/fastlane/issues/29468#issuecomment-2942861970
-  - Please see `ios/Fastfile`
+  - Follow this guide https://docs.fastlane.tools/app-store-connect-api/
   - Create/List here https://appstoreconnect.apple.com/access/integrations/api
-  - `APP_STORE_CONNECT_API_KEY_KEY_ID`
-  - `APP_STORE_CONNECT_API_KEY_ISSUER_ID`
-  - `APP_STORE_CONNECT_API_KEY_KEY`
+  - `APP_STORE_CONNECT_API_KEY_ID` is the key ID
+  - `APP_STORE_CONNECT_API_KEY_ISSUER_ID` is the Issuer Id above the table
+  - `APP_STORE_CONNECT_API_KEY_CONTENT` is the file content (string with \n)
+
+- Alternative to the API Key, you can use password + session
+
+  - `FASTLANE_PASSWORD` is your Apple Developer Account password
+  - `FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD` is an App-Specific Password which you can generate here https://appleid.apple.com/account/manage
+    - Please see https://stackoverflow.com/questions/74210927/fastlane-altool-error-unable-to-upload-archive-failed-to-get-authorization
+  - `FASTLANE_SESSION` is session token for **temporary** auth method in our CI right now
+    - Please see https://stackoverflow.com/questions/58097010/fastlane-doesnt-work-for-apple-id-with-two-factor-authentication-on-continuous
+    - run `fastlane spaceauth -u <your_apple_username>`
+    - copy and then single quote it in github variable like this `'---\n ...'`
+
 - `MATCH_PASSWORD` is your password for accessing Certificates
+
   - Please see
     https://docs.fastlane.tools/actions/match/ and
     https://codesigning.guide/
+
   1.  Create a private git repo for keeping certificates
   2.  Run `fastlane match init`
   3.  Run `fastlane match development` `fastlane match appstore`
+
 - `MATCH_GIT_BASIC_AUTHORIZATION` is `echo -n <your_github_username>:<your_personal_access_token> | base64`
   - Don't forget to generate `your_personal_access_token` in GitHub > Settings > Developer settings > Personal access token > Fine-grained tokens
     https://github.com/settings/personal-access-tokens

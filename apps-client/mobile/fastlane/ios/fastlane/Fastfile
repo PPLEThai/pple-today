@@ -18,16 +18,16 @@ platform :ios do
   desc "Submit a new Beta Build to TestFlight"
   lane :beta do
     setup_ci() if ENV['CI']
+    app_store_connect_api_key(
+      key_id: ENV['APP_STORE_CONNECT_API_KEY_ID'],
+      issuer_id: ENV['APP_STORE_CONNECT_API_KEY_ISSUER_ID'],
+      key_content: ENV['APP_STORE_CONNECT_API_KEY_CONTENT'],
+      duration: 1200 # maximum 20 minutes
+    )
+
     app_identifier = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
     team_id = CredentialsManager::AppfileConfig.try_fetch_value(:team_id)
-    # TODO: Seems like we need to fix this to use App Store Connect API Key
-    # https://github.com/fastlane/fastlane/issues/29468#issuecomment-2942861970
-    # https://github.com/fastlane/fastlane/issues/21109
-    # otherwise we need to use Spaceship to do 2 factor
-    # app_store_connect_api_key(
-    #   in_house: false,
-    #   is_key_content_base64: true,
-    # )
+    
     latest_build_number = latest_testflight_build_number(
       app_identifier: app_identifier
     )
