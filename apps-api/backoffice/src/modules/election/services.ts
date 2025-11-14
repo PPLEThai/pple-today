@@ -33,9 +33,16 @@ export class ElectionService {
 
   private readonly SECONDS_IN_A_DAY = 60 * 60 * 24
 
+  private isElectionPublished(election: Election, now: Date): boolean {
+    return election.publishDate !== null && now >= election.publishDate
+  }
+
+  private isElectionDetailsAvailable(election: Election, now: Date): boolean {
+    return this.isElectionPublished(election, now) && now >= election.openVoting
+  }
+
   private isElectionInTimelinePeriod(election: Election, now: Date): boolean {
-    const isPublished = election.publishDate && now >= election.publishDate
-    if (!isPublished) {
+    if (!this.isElectionPublished(election, now)) {
       return false
     }
 
@@ -139,7 +146,7 @@ export class ElectionService {
 
     const now = new Date()
     const result = eligibleVoters.value
-      .filter(({ election }) => this.isElectionInTimelinePeriod(election, now))
+      .filter(({ election }) => this.isElectionPublished(election, now))
       .map(({ election, type: voterType }) =>
         this.convertToListElection(election, voterType, now)
       ) satisfies ListElectionResponse
@@ -149,6 +156,8 @@ export class ElectionService {
 
   async getMyEligibleElection(userId: string, electionId: string) {
     const eligibleVoter = await this.electionRepository.getMyEligibleVoter(userId, electionId)
+    const currentDate = new Date()
+
     if (eligibleVoter.isErr()) {
       return mapRepositoryError(eligibleVoter.error, {
         RECORD_NOT_FOUND: {
@@ -158,7 +167,7 @@ export class ElectionService {
       })
     }
 
-    if (!this.isElectionInTimelinePeriod(eligibleVoter.value.election, new Date())) {
+    if (!this.isElectionDetailsAvailable(eligibleVoter.value.election, currentDate)) {
       return err({
         code: InternalErrorCode.ELECTION_NOT_FOUND,
         message: `Cannot found election id "${electionId}"`,
@@ -166,7 +175,7 @@ export class ElectionService {
     }
 
     const election = eligibleVoter.value.election
-    const listElection = this.convertToListElection(election, eligibleVoter.value.type, new Date())
+    const listElection = this.convertToListElection(election, eligibleVoter.value.type, currentDate)
     const candidates = election.candidates.map((candidate) => {
       const totalVote = R.sumBy(candidate.results, (result) => result.count)
       const votePercent =
