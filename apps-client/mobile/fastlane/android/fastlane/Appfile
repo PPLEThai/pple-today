@@ -1,2 +1,2 @@
-json_key_file("key.json")
+json_key_file("google-key.json")
 package_name(ENV["DEVELOPER_APP_IDENTIFIER"])
