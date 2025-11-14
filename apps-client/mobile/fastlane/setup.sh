@@ -17,17 +17,11 @@ else
   cp -r ./fastlane/android/* ./android
   echo "Fastlane directory copied to android folder."
   source .env  
-  if [ -z "$FIREBASE_ANDROID_SERVICE_FILE" ]; then
-    echo "Warning: FIREBASE_ANDROID_SERVICE_FILE environment variable is not set."
+  if [ -z "$FIREBASE_ANDROID_SERVICE_CREDENTIALS" ]; then
+    echo "Warning: FIREBASE_ANDROID_SERVICE_CREDENTIALS environment variable is not set."
   else
-    echo $FIREBASE_ANDROID_SERVICE_FILE | base64 -d > ./android/key.json
-    echo "Firebase service account JSON file created at ./android/key.json."
-  fi
-  if [ -z "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_KEY" ]; then
-    echo "Warning: GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_KEY environment variable is not set."
-  else
-    echo $GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_KEY | base64 -d > ./android/google-key.json
-    echo "Google Play Console service account JSON file created at ./android/google-key.json."
+    echo $FIREBASE_ANDROID_SERVICE_CREDENTIALS | base64 -d > ./android/key.json
+    echo "Firebase Android Service Credentials JSON file created at ./android/key.json."
   fi
   if [ -z "$ANDROID_UPLOAD_KEYSTORE" ]; then
     echo "Warning: ANDROID_UPLOAD_KEYSTORE environment variable is not set."

@@ -150,14 +150,14 @@ Feel free to update this file :)
   https://thecodingmachine.github.io/react-native-boilerplate/docs/BetaBuild/#android
 - `FIREBASE_ANDROID_SERVICE_FILE` is a Firebase Project SDK Service Account `google-services.json` content encoded with base64
   - It can be access by Project Settings > General > Your Apps > Android App > SDK setup and configuration> google-services.json
+- `FIREBASE_ANDROID_SERVICE_CREDENTIALS` is base64 encoded with of a key generated to access Google Play Service
+  - `key.json` is a Google Cloud **Service Account** Credentials.
+    Please see https://docs.fastlane.tools/getting-started/android/setup/ on topic **Collect your Google credentials** or https://cdmunoz.medium.com/bye-bye-firebase-token-hello-service-accounts-540ed6cb20c8
+  - To test `key.json` file please run `fastlane run validate_play_store_json_key json_key:key.json`
 - We also encode `upload-keystore.jks` into an environment variable called `ANDROID_UPLOAD_KEYSTORE` with command `base64`
   - `upload-keystore.jks` is a key to sign the app before uploading to playstore. Please see https://developer.android.com/studio/publish/app-signing
   - `ANDROID_UPLOAD_KEYSTORE_PASSWORD` is the password of the upload key
   - `ANDROID_UPLOAD_KEYSTORE_ALIAS` is the alias of the upload key
-- `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON_KEY` is base64 encoded with of a key generated from Google Play Service Account
-  - `google-key.json` is a Google Cloud **Service Account** Key.
-    Please see https://docs.fastlane.tools/getting-started/android/setup/ on topic **Collect your Google credentials** or https://cdmunoz.medium.com/bye-bye-firebase-token-hello-service-accounts-540ed6cb20c8
-  - To test `google-key.json` file please run `fastlane run validate_play_store_json_key json_key:google-key.json`
 - `FIREBASE_APP_ID` is used in fastlane to distribute beta via Firebase Distribution
 
 ### iOS
