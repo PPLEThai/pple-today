@@ -1,5 +1,24 @@
 # @client/mobile
 
+## 2.0.0
+
+### Major Changes
+
+- [#284](https://github.com/PPLEThai/pple-today/pull/284) [`e014f92`](https://github.com/PPLEThai/pple-today/commit/e014f92bb07792b8b68d5bd3e3a3763f957ae01d) Thanks [@Anon-136](https://github.com/Anon-136)! - Major Bump
+
+### Patch Changes
+
+- [#280](https://github.com/PPLEThai/pple-today/pull/280) [`f340f70`](https://github.com/PPLEThai/pple-today/commit/f340f7096fe610ee7106f7f1d8dcdf531b8f3a7c) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-566] Update to use App Store Connect API Key](https://linear.app/snts/issue/PPLE-566/update-to-use-app-store-connect-api-key)
+
+- [#278](https://github.com/PPLEThai/pple-today/pull/278) [`3d7c7ca`](https://github.com/PPLEThai/pple-today/commit/3d7c7ca25ac51c5d95819d0308b715dd2ab965e4) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-565] Update Android Service Account](https://linear.app/snts/issue/PPLE-565/update-android-service-account)
+
+- [#273](https://github.com/PPLEThai/pple-today/pull/273) [`2e85afd`](https://github.com/PPLEThai/pple-today/commit/2e85afdd9a3f28f94ce5008438b02ab6f321dd2b) Thanks [@miello](https://github.com/miello)! - [[PPLE-554] Multiple width and height appear in image server query](https://linear.app/snts/issue/PPLE-554/multiple-width-and-height-appear-in-image-server-query)
+
+- Updated dependencies [[`e014f92`](https://github.com/PPLEThai/pple-today/commit/e014f92bb07792b8b68d5bd3e3a3763f957ae01d)]:
+  - @pple-today/api-client@1.0.0
+  - expo-scroll-forwarder@1.0.0
+  - @pple-today/ui@1.0.0
+
 ## 1.0.0
 
 ### Major Changes
