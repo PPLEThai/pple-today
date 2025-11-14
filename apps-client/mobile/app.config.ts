@@ -4,8 +4,6 @@ import { AppJSONConfig } from 'expo/config'
 
 import { version } from './package.json'
 
-// TODO: update config when production release https://docs.expo.dev/versions/latest/config/app/
-
 export default {
   expo: {
     name: 'PPLE Today',
@@ -15,14 +13,15 @@ export default {
     orientation: 'portrait',
     icon: './assets/images/favicon1024.png',
     userInterfaceStyle: 'automatic',
-    newArchEnabled: true, // this is true by default
     ios: {
       supportsTablet: true,
       googleServicesFile: './credentials/GoogleService-Info.plist',
-      bundleIdentifier: 'th.or.peoplesparty.ppletoday',
+      bundleIdentifier: process.env.DEVELOPER_APP_IDENTIFIER,
       entitlements: {
         'aps-environment': 'development',
-        'com.apple.security.application-groups': ['group.th.or.peoplesparty.ppletoday.nse'],
+        'com.apple.security.application-groups': [
+          `group.${process.env.DEVELOPER_APP_IDENTIFIER}.nse`,
+        ],
       },
       infoPlist: {
         UIBackgroundModes: ['fetch', 'remote-notification'],
@@ -34,14 +33,9 @@ export default {
         backgroundColor: '#FF6A13',
       },
       edgeToEdgeEnabled: true,
-      package: 'th.or.peoplesparty.ppletoday',
+      package: process.env.DEVELOPER_APP_IDENTIFIER,
       googleServicesFile: './credentials/google-services.json',
       softwareKeyboardLayoutMode: 'pan',
-    },
-    web: {
-      bundler: 'metro',
-      output: 'static',
-      favicon: './assets/images/favicon.svg',
     },
     plugins: [
       'expo-font',
@@ -74,25 +68,6 @@ export default {
             useFrameworks: 'static',
             forceStaticLinking: ['RNFBApp', 'RNFBMessaging'],
           },
-          /**
-           * Unfortunately, the performance issue with scrolling (Android) is really deep
-           * I dug in and found that its related to the "new arch" (fabric)
-           *
-           * UPDATE: facebook fixed this issues
-           * https://github.com/facebook/react-native/issues/51870
-           * we should wait for react-native-reanimated to confirm that this behavior is fixed
-           * and we might as well try this
-           * https://github.com/software-mansion/react-native-reanimated/issues/7108#issuecomment-3135327546
-           * https://github.com/software-mansion/react-native-reanimated/issues/7435
-           *
-           * https://github.com/software-mansion/react-native-reanimated/issues/6992
-           * https://github.com/bluesky-social/social-app/issues/8535
-           *
-           * https://github.com/bluesky-social/social-app/releases/tag/1.104.0
-           * Bluesky fixes this by disabling new arch (which i try and it successfully solves the problem)
-           * but expo go only support new arch and this may lead to unexpected behavior
-           * we have to double test them on native builds
-           */
           android: {
             compileSdkVersion: 35,
             targetSdkVersion: 35,
@@ -150,11 +125,5 @@ export default {
     experiments: {
       typedRoutes: true,
     },
-    // for local build like .apk
-    // extra: {
-    //   eas: {
-    //     projectId: '90a95f98-0504-4546-bc89-dc954e009f22',
-    //   },
-    // },
   },
 } satisfies AppJSONConfig
