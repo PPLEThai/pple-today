@@ -45,6 +45,9 @@ jobs:
           APP_ENVIRONMENT: ${{ inputs.environment }}
           EXPO_PUBLIC_APP_ENVIRONMENT: ${{ inputs.environment }}
           DISTRIBUTE_GROUPS: ${{ inputs.groups }}
+        run: |
+          bash ./scripts/setup-credentials.sh
+          env > .env
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -62,10 +65,6 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-
-        run: |
-          bash ./scripts/setup-credentials.sh
-          env > .env
 
       - name: Prebuild Android
         working-directory: apps-client/mobile
