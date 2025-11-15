@@ -13,3 +13,4 @@ ios
 .idea
 
 credentials
+.env.prod
