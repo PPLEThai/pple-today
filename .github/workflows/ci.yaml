@@ -63,7 +63,7 @@ jobs:
       - name: Run Type Check, Format Check
         run: pnpm turbo typecheck format:check lint ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}
 
-      - name: Setup Prebuild Environment
+      - name: Setup Environment File
         working-directory: apps-client/mobile
         shell: bash
         env: ${{ secrets }}
