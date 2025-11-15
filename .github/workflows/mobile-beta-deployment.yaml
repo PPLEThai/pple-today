@@ -76,8 +76,6 @@ jobs:
         run: |
           bash ./fastlane/setup.sh
           cd android && bundle install
-        env:
-          CI: true
 
       - name: Build Android App via fastlane
         working-directory: apps-client/mobile/android
@@ -146,8 +144,6 @@ jobs:
         run: |
           bash ./fastlane/setup.sh
           cd ios && bundle install
-        env:
-          CI: true
 
       - name: Build iOS App via fastlane
         working-directory: apps-client/mobile/ios
