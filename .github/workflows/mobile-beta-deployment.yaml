@@ -146,6 +146,8 @@ jobs:
         run: |
           bash ./fastlane/setup.sh
           cd ios && bundle install
+        env:
+          CI: true
 
       - name: Build iOS App via fastlane
         working-directory: apps-client/mobile/ios
