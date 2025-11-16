@@ -38,17 +38,6 @@ jobs:
           node-version: 22.14.0
           cache: pnpm
 
-      - name: Setup Environment File
-        working-directory: apps-client/mobile
-        env:
-          ${{ insert }}: ${{ secrets }}
-          APP_ENVIRONMENT: ${{ inputs.environment }}
-          EXPO_PUBLIC_APP_ENVIRONMENT: ${{ inputs.environment }}
-          DISTRIBUTE_GROUPS: ${{ inputs.groups }}
-        run: |
-          bash ./scripts/setup-credentials.sh
-          env > .env
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -66,6 +55,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Setup Environment File
+        working-directory: apps-client/mobile
+        env:
+          ${{ insert }}: ${{ secrets }}
+          APP_ENVIRONMENT: ${{ inputs.environment }}
+          EXPO_PUBLIC_APP_ENVIRONMENT: ${{ inputs.environment }}
+          DISTRIBUTE_GROUPS: ${{ inputs.groups }}
+        run: |
+          bash ./scripts/setup-credentials.sh
+          env > .env
+
       - name: Prebuild Android
         working-directory: apps-client/mobile
         run: npx expo prebuild --platform android
@@ -73,6 +73,9 @@ jobs:
       - name: Install Fastlane
         working-directory: apps-client/mobile
         shell: bash
+        env:
+          ${{ insert }}: ${{ secrets }}
+          CI: true
         run: |
           bash ./fastlane/setup.sh
           cd android && bundle install
