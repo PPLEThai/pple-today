@@ -16,7 +16,10 @@ if [ ! -d "./android" ]; then
 else
   cp -r ./fastlane/android/* ./android
   echo "Fastlane directory copied to android folder."
-  source .env  
+  if [ -z "$CI" ]; then
+    echo "Note: CI environment variable is not set. Assuming local development environment."
+    source .env  
+  fi
   if [ -z "$FIREBASE_ANDROID_SERVICE_CREDENTIALS" ]; then
     echo "Warning: FIREBASE_ANDROID_SERVICE_CREDENTIALS environment variable is not set."
   else
