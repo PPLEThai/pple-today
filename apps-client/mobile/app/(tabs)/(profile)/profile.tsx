@@ -343,7 +343,7 @@ const FacebookPageStatusBadge = (
     case 'REJECTED':
       return (
         <Badge variant="destructive">
-          <Text>ถูกปฏิเสธ</Text>
+          <Text>ไม่อนุมัติ</Text>
         </Badge>
       )
     case 'SUSPENDED':
