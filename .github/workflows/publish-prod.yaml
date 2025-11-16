@@ -165,17 +165,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Setup Prebuild Environment
+      - name: Setup Environment File
         working-directory: apps-client/mobile
-        shell: bash
+        env:
+          ${{ insert }}: ${{ secrets }}
+          APP_ENVIRONMENT: production
+          EXPO_PUBLIC_APP_ENVIRONMENT: production
+          DISTRIBUTE_GROUPS: ${{ inputs.groups }}
         run: |
-          mkdir -p ./credentials
-          echo "FACEBOOK_APP_ID=${{ secrets.FACEBOOK_APP_ID }}" >> .env
-          echo "FACEBOOK_CLIENT_TOKEN=${{ secrets.FACEBOOK_CLIENT_TOKEN }}" >> .env
-          echo "FACEBOOK_DISPLAY_NAME=${{ secrets.FACEBOOK_DISPLAY_NAME }}" >> .env
-          echo "DEVELOPER_APP_IDENTIFIER=${{ secrets.DEVELOPER_APP_IDENTIFIER }}" >> .env
-          echo "${{ secrets.FIREBASE_IOS_SERVICE_FILE }}" | base64 -d > ./credentials/GoogleService-Info.plist
-          echo "${{ secrets.FIREBASE_ANDROID_SERVICE_FILE }}" | base64 -d > ./credentials/google-services.json
+          bash ./scripts/setup-credentials.sh
+          env > .env
 
       - name: Prebuild Android
         working-directory: apps-client/mobile
@@ -184,20 +183,12 @@ jobs:
       - name: Install Fastlane
         working-directory: apps-client/mobile
         shell: bash
+        env:
+          ${{ insert }}: ${{ secrets }}
+          CI: true
         run: |
-          echo "APP_ENVIRONMENT=production" >> .env
-          echo "EXPO_PUBLIC_APP_ENVIRONMENT=production" >> .env
-          echo "EXPO_PUBLIC_OIDC_BASE_URL=${{ secrets.EXPO_PUBLIC_OIDC_BASE_URL }}" >> .env
-          echo "EXPO_PUBLIC_OIDC_CLIENT_ID=${{ secrets.EXPO_PUBLIC_OIDC_CLIENT_ID }}" >> .env
-          echo "EXPO_PUBLIC_BACKEND_BASE_URL=${{ secrets.EXPO_PUBLIC_BACKEND_BASE_URL }}" >> .env
-          echo "DEVELOPER_APP_IDENTIFIER=${{ secrets.DEVELOPER_APP_IDENTIFIER }}" >> .env
-          echo "FIREBASE_ANDROID_SERVICE_CREDENTIALS=${{ secrets.FIREBASE_ANDROID_SERVICE_CREDENTIALS }}" >> .env
-          echo "FIREBASE_ANDROID_SERVICE_FILE=${{ secrets.FIREBASE_ANDROID_SERVICE_FILE }}" >> .env
-          echo "FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }}" >> .env
           bash ./fastlane/setup.sh
           cd android && bundle install
-        env:
-          CI: true
 
       - name: Build Android App via fastlane
         working-directory: apps-client/mobile/android
@@ -210,7 +201,7 @@ jobs:
     name: Build iOS
     # TODO: update to macos-latest when this is fixed https://github.com/fastlane/fastlane/issues/29659
     runs-on: macos-14
-    environment: 'production'
+    environment: production
     if: ${{ inputs.ios == 'true' }}
     steps:
       - name: Checkout Repository
@@ -236,17 +227,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Setup Prebuild Environment
+      - name: Setup Environment File
         working-directory: apps-client/mobile
-        shell: bash
+        env:
+          ${{ insert }}: ${{ secrets }}
+          APP_ENVIRONMENT: production
+          EXPO_PUBLIC_APP_ENVIRONMENT: production
+          DISTRIBUTE_GROUPS: ${{ inputs.groups }}
         run: |
-          mkdir -p ./credentials
-          echo "FACEBOOK_APP_ID=${{ secrets.FACEBOOK_APP_ID }}" >> .env
-          echo "FACEBOOK_CLIENT_TOKEN=${{ secrets.FACEBOOK_CLIENT_TOKEN }}" >> .env
-          echo "FACEBOOK_DISPLAY_NAME=${{ secrets.FACEBOOK_DISPLAY_NAME }}" >> .env
-          echo "DEVELOPER_APP_IDENTIFIER=${{ secrets.DEVELOPER_APP_IDENTIFIER }}" >> .env
-          echo "${{ secrets.FIREBASE_IOS_SERVICE_FILE }}" | base64 -d > ./credentials/GoogleService-Info.plist
-          echo "${{ secrets.FIREBASE_ANDROID_SERVICE_FILE }}" | base64 -d > ./credentials/google-services.json
+          bash ./scripts/setup-credentials.sh
+          env > .env
 
       - name: Prebuild iOS
         working-directory: apps-client/mobile
@@ -261,33 +251,12 @@ jobs:
         working-directory: apps-client/mobile
         run: cd ios && pod install --repo-update && cd ..
 
-      # Note that you might run into fastlane issue of 2 Factor Authentication
-      # run `fastlane spaceauth -u <your_apple_username>`
-      # copy the output and then single quote it in `FASTLANE_SESSION` variable like this '---\n ...'
-      # Read more at README.md in apps-client/mobile
-      - name: Set up environment
-        working-directory: apps-client/mobile
-        shell: bash
-        run: |
-          echo "APP_ENVIRONMENT=production" >> .env
-          echo "EXPO_PUBLIC_APP_ENVIRONMENT=production" >> .env
-          echo "EXPO_PUBLIC_OIDC_BASE_URL=${{ secrets.EXPO_PUBLIC_OIDC_BASE_URL }}" >> .env
-          echo "EXPO_PUBLIC_OIDC_CLIENT_ID=${{ secrets.EXPO_PUBLIC_OIDC_CLIENT_ID }}" >> .env
-          echo "EXPO_PUBLIC_BACKEND_BASE_URL=${{ secrets.EXPO_PUBLIC_BACKEND_BASE_URL }}" >> .env
-          echo "DEVELOPER_APP_IDENTIFIER=${{ secrets.DEVELOPER_APP_IDENTIFIER }}" >> .env
-          echo "FASTLANE_USER=${{ secrets.FASTLANE_USER }}" >> .env
-          echo "APP_STORE_CONNECT_API_KEY_ID=${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}" >> .env
-          echo "APP_STORE_CONNECT_API_KEY_ISSUER_ID=${{ secrets.APP_STORE_CONNECT_API_KEY_ISSUER_ID }}" >> .env
-          echo "APP_STORE_CONNECT_API_KEY_CONTENT=${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}" >> .env
-          echo "MATCH_PASSWORD=${{ secrets.MATCH_PASSWORD }}" >> .env
-          echo "MATCH_GIT_BASIC_AUTHORIZATION=${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}" >> .env
-          echo "PROVISIONING_PROFILE_SPECIFIER=${{ secrets.PROVISIONING_PROFILE_SPECIFIER }}" >> .env
-          echo "APP_STORE_CONNECT_TEAM_ID=${{ secrets.APP_STORE_CONNECT_TEAM_ID }}" >> .env
-          echo "DEVELOPER_PORTAL_TEAM_ID=${{ secrets.DEVELOPER_PORTAL_TEAM_ID }}" >> .env
-
       - name: Install Fastlane
         working-directory: apps-client/mobile
         shell: bash
+        env:
+          ${{ insert }}: ${{ secrets }}
+          CI: true
         run: |
           bash ./fastlane/setup.sh
           cd ios && bundle install
