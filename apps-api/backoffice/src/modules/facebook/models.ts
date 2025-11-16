@@ -1,3 +1,4 @@
+import { FacebookPageLinkedStatus } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const RequestAccessTokenQuery = t.Object({
@@ -81,6 +82,9 @@ export const GetLinkedFacebookPageResponse = t.Object({
       }),
       name: t.String({
         description: 'The name of the linked Facebook page',
+      }),
+      status: t.Enum(FacebookPageLinkedStatus, {
+        description: 'The linked status of the Facebook page',
       }),
       profilePictureUrl: t.String({
         description: 'The URL of the profile picture for the linked Facebook page',

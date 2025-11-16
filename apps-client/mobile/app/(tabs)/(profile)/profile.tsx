@@ -4,6 +4,7 @@ import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import { ScrollView } from 'react-native-gesture-handler'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 
+import { ExtractBodyResponse } from '@pple-today/api-client'
 import { Avatar, AvatarFallback, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
@@ -47,7 +48,7 @@ import {
   VoteIcon,
 } from 'lucide-react-native'
 
-import { GetUserRecentParticipationResponse } from '@api/backoffice/app'
+import { ApplicationApiSchema, GetUserRecentParticipationResponse } from '@api/backoffice/app'
 import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
@@ -321,10 +322,46 @@ export const PointSection = () => {
   )
 }
 
+const FacebookPageStatusBadge = (
+  linkedPage: ExtractBodyResponse<ApplicationApiSchema, 'get', '/facebook/linked-page'>
+) => {
+  if (!linkedPage.linkedFacebookPage) return null
+
+  switch (linkedPage.linkedFacebookPage.status) {
+    case 'PENDING':
+      return (
+        <Badge>
+          <Text>รอการอนุมัติ</Text>
+        </Badge>
+      )
+    case 'APPROVED':
+      return (
+        <Badge variant="success">
+          <Text>อนุมัติ</Text>
+        </Badge>
+      )
+    case 'REJECTED':
+      return (
+        <Badge variant="destructive">
+          <Text>ไม่อนุมัติ</Text>
+        </Badge>
+      )
+    case 'SUSPENDED':
+      return (
+        <Badge variant="secondary">
+          <Text>ถูกระงับ</Text>
+        </Badge>
+      )
+    default:
+      return null
+  }
+}
+
 const FacebookPageSection = () => {
   const linkedPageQuery = reactQueryClient.useQuery('/facebook/linked-page', {})
   const authMe = useAuthMe()
   const user = authMe.data
+
   if (!user || !(user.roles.includes('pple-ad:hq') || user.roles.includes('pple-ad:mp'))) {
     return null
   }
@@ -359,13 +396,7 @@ const FacebookPageSection = () => {
           <Text className="text-base-text-medium text-sm font-heading-semibold flex-1 line-clamp-2">
             {linkedPageQuery.data.linkedFacebookPage.name}
           </Text>
-          {/* TODO: linked page status */}
-          {/* <Badge>
-            <Text>รอการอนุมัติ</Text>
-          </Badge> */}
-          <Badge variant="success">
-            <Text>อนุมัติ</Text>
-          </Badge>
+          <FacebookPageStatusBadge linkedFacebookPage={linkedPageQuery.data.linkedFacebookPage} />
         </View>
       ) : (
         <LinkFacebookPage />

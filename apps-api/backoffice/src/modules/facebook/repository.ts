@@ -533,6 +533,7 @@ export class FacebookRepository {
     return ok({
       id: linkedPage.value.id,
       name: linkedPage.value.name,
+      status: linkedPage.value.linkedStatus,
       profileImagePath: linkedPage.value.profilePicturePath,
       pageAccessToken: linkedPage.value.pageAccessToken,
     })
