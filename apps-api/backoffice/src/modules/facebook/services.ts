@@ -106,6 +106,7 @@ export class FacebookService {
     return ok({
       id: linkedPageResult.value.id,
       name: linkedPageResult.value.name,
+      status: linkedPageResult.value.status,
       profilePictureUrl: publicProfilePictureUrl,
     })
   }
