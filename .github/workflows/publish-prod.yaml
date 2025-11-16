@@ -119,7 +119,6 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             "VERSION=${{ matrix.packages.version }}"
-            "LOCAL_ENV=${{ secrets.WEB_CLIENT_ENV_PRODUCTION }}"
           tags: ${{ secrets.GAR_REGISTRY }}/${{ secrets.GAR_REGISTRY_PREFIX }}/${{ matrix.package.name }}:${{ matrix.package.imageTag }}
 
   publish-backoffice:
