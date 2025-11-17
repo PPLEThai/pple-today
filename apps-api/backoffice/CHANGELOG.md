@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.1.1
+
+### Patch Changes
+
+- [#290](https://github.com/PPLEThai/pple-today/pull/290) [`c044cc0`](https://github.com/PPLEThai/pple-today/commit/c044cc0a1690bf07a1362d3a0a1212a5ea1cea95) Thanks [@miello](https://github.com/miello)! - [[PPLE-573] [API] Non-optional project id should be optional too](https://linear.app/snts/issue/PPLE-573/api-non-optional-project-id-should-be-optional-too)
+
 ## 1.1.0
 
 ### Minor Changes
