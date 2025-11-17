@@ -149,6 +149,9 @@ jobs:
           node-version: 22.14.0
           cache: pnpm
 
+      - name: Install wrangler CLI
+        run: pnpm add -g wrangler@3.90.0
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
