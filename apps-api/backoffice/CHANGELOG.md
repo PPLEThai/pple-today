@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.1.3
+
+### Patch Changes
+
+- [#295](https://github.com/PPLEThai/pple-today/pull/295) [`c15dd0b`](https://github.com/PPLEThai/pple-today/commit/c15dd0b1d4dae07d3f7403cd5a19d565e7123b05) Thanks [@miello](https://github.com/miello)! - [[PPLE-578] [CI/CD] Cloudflare deployment not working](https://linear.app/snts/issue/PPLE-578/cicd-cloudflare-deployment-not-working)
+
 ## 1.1.2
 
 ### Patch Changes
