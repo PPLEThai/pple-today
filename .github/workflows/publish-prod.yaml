@@ -138,6 +138,17 @@ jobs:
         with:
           node-version: 22.14.0
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.9.0
+
+      - name: Setup node with cache
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22.14.0
+          cache: pnpm
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -147,12 +158,12 @@ jobs:
           echo ${{ secrets.WEB_CLIENT_ENV }} > .env
           pnpm build --filter=@client/backoffice...
 
-      - name: Deploy
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy ./apps-client/backoffice/build --project-name=${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }}
+      # - name: Deploy
+      #   uses: cloudflare/wrangler-action@v3
+      #   with:
+      #     apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      #     accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      #     command: pages deploy ./apps-client/backoffice/build --project-name=${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }}
 
   build-android:
     name: Build Android
