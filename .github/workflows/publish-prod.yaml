@@ -156,7 +156,7 @@ jobs:
         working-directory: apps-client/backoffice
         run: |
           echo ${{ secrets.WEB_CLIENT_ENV }} > .env
-          pnpm build --filter=@client/backoffice...
+          pnpm build
 
       # - name: Deploy
       #   uses: cloudflare/wrangler-action@v3
