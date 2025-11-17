@@ -1,5 +1,13 @@
 # @client/mobile
 
+## 2.1.0
+
+### Minor Changes
+
+- [#288](https://github.com/PPLEThai/pple-today/pull/288) [`a0694a9`](https://github.com/PPLEThai/pple-today/commit/a0694a97593ce11e8d2c8b0640bd89140289c97d) Thanks [@miello](https://github.com/miello)! - [[PPLE-560] FB approval flow](https://linear.app/snts/issue/PPLE-560/fb-approval-flow)
+
+- [#275](https://github.com/PPLEThai/pple-today/pull/275) [`c0463a6`](https://github.com/PPLEThai/pple-today/commit/c0463a61f164e4911fea751b676035a83aa0f5c0) Thanks [@miello](https://github.com/miello)! - [[PPLE-540] Mini-app entry point](https://linear.app/snts/issue/PPLE-540/mini-app-entry-point)
+
 ## 2.0.0
 
 ### Major Changes

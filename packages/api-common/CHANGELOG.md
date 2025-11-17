@@ -1,5 +1,11 @@
 # @pple-today/api-common
 
+## 1.0.1
+
+### Patch Changes
+
+- [#286](https://github.com/PPLEThai/pple-today/pull/286) [`c9dcf53`](https://github.com/PPLEThai/pple-today/commit/c9dcf5349ff68fc522c176f7ebdef1332770d5c5) Thanks [@miello](https://github.com/miello)! - [[PPLE-570] [API] Optional GCP credentials for API and Ballot Crypto](https://linear.app/snts/issue/PPLE-570/api-optional-gcp-credentials-for-api-and-ballot-crypto)
+
 ## 1.0.0
 
 ### Major Changes
