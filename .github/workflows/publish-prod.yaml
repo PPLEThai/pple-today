@@ -158,7 +158,7 @@ jobs:
     name: Build Android
     runs-on: macos-latest
     environment: production
-    if: ${{ inputs.android == 'true' }}
+    if: ${{ inputs.android == true }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -228,7 +228,7 @@ jobs:
     # TODO: update to macos-latest when this is fixed https://github.com/fastlane/fastlane/issues/29659
     runs-on: macos-14
     environment: production
-    if: ${{ inputs.ios == 'true' }}
+    if: ${{ inputs.ios == true }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
