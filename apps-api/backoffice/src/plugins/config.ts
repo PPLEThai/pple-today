@@ -51,12 +51,16 @@ export const envSchema = t.Object({
   GCP_PROJECT_ID: t.String({
     description: 'Google Cloud Project ID',
   }),
-  GCP_CLIENT_EMAIL: t.String({
-    description: 'Google Cloud Client Email',
-  }),
-  GCP_PRIVATE_KEY: t.String({
-    description: 'Google Cloud Private Key',
-  }),
+  GCP_CLIENT_EMAIL: t.Optional(
+    t.String({
+      description: 'Google Cloud Client Email',
+    })
+  ),
+  GCP_PRIVATE_KEY: t.Optional(
+    t.String({
+      description: 'Google Cloud Private Key',
+    })
+  ),
   GCP_STORAGE_BUCKET_NAME: t.String({
     description: 'Google Cloud Storage Bucket Name',
   }),

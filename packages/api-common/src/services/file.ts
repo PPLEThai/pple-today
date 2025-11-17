@@ -37,10 +37,10 @@ export class FileService {
 
   constructor(
     config: {
-      projectId: string
+      projectId?: string
       bucketName: string
-      clientEmail: string
-      privateKey: string
+      clientEmail?: string
+      privateKey?: string
     },
     public readonly loggerService: ElysiaLoggerInstance
   ) {
