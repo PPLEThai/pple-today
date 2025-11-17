@@ -1,5 +1,18 @@
 # @api/backoffice
 
+## 1.1.0
+
+### Minor Changes
+
+- [#288](https://github.com/PPLEThai/pple-today/pull/288) [`a0694a9`](https://github.com/PPLEThai/pple-today/commit/a0694a97593ce11e8d2c8b0640bd89140289c97d) Thanks [@miello](https://github.com/miello)! - [[PPLE-560] FB approval flow](https://linear.app/snts/issue/PPLE-560/fb-approval-flow)
+
+### Patch Changes
+
+- [#286](https://github.com/PPLEThai/pple-today/pull/286) [`c9dcf53`](https://github.com/PPLEThai/pple-today/commit/c9dcf5349ff68fc522c176f7ebdef1332770d5c5) Thanks [@miello](https://github.com/miello)! - [[PPLE-570] [API] Optional GCP credentials for API and Ballot Crypto](https://linear.app/snts/issue/PPLE-570/api-optional-gcp-credentials-for-api-and-ballot-crypto)
+
+- Updated dependencies [[`c9dcf53`](https://github.com/PPLEThai/pple-today/commit/c9dcf5349ff68fc522c176f7ebdef1332770d5c5)]:
+  - @pple-today/api-common@1.0.1
+
 ## 1.0.0
 
 ### Major Changes
