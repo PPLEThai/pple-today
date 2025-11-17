@@ -124,7 +124,7 @@ jobs:
   publish-backoffice:
     name: Publish Backoffice Static Files
     runs-on: ubuntu-latest
-    if: ${{ inputs.backoffice == 'true' }}
+    if: ${{ inputs.backoffice == true }}
     environment: production
     steps:
       - name: Checkout
