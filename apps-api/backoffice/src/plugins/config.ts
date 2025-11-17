@@ -48,9 +48,11 @@ export const envSchema = t.Object({
     description: 'Token used to verify Facebook webhook requests',
   }),
 
-  GCP_PROJECT_ID: t.String({
-    description: 'Google Cloud Project ID',
-  }),
+  GCP_PROJECT_ID: t.Optional(
+    t.String({
+      description: 'Google Cloud Project ID',
+    })
+  ),
   GCP_CLIENT_EMAIL: t.Optional(
     t.String({
       description: 'Google Cloud Client Email',
