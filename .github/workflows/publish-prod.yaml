@@ -166,7 +166,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy ./apps-client/backoffice/build --project-name=${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }} --branch=production
+          command: pages deploy ./apps-client/backoffice/build --project-name=${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }} --branch=${{ secrets.CLOUDFLARE_PAGES_PRODUCTION_BRANCH_NAME }}
 
   build-android:
     name: Build Android
