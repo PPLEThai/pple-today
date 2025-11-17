@@ -110,7 +110,18 @@ export const ElectionGeneralInfoForm = () => {
             <FormControl>
               <RadioGroup
                 value={field.value}
-                onValueChange={field.onChange}
+                onValueChange={(value) => {
+                  field.onChange(value)
+
+                  if (value !== 'HYBRID') {
+                    form.setValue('openRegister', undefined)
+                    form.setValue('closeRegister', undefined)
+                  }
+
+                  if (value !== 'ONLINE') {
+                    form.setValue('locationMapUrl', '')
+                  }
+                }}
                 ref={field.ref}
                 className="grid-cols-3"
               >
