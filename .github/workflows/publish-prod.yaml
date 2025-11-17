@@ -88,6 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: get-affected-apps
     environment: production
+    if: ${{ needs.get-affected-apps.outputs.packages != '[]' }}
     strategy:
       matrix:
         packages: ${{ fromJson(needs.get-affected-apps.outputs.packages) }}
@@ -138,13 +139,26 @@ jobs:
         with:
           node-version: 22.14.0
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.9.0
+
+      - name: Setup node with cache
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22.14.0
+          cache: pnpm
+
+      - name: Install wrangler CLI
+        run: pnpm add -g wrangler@3.90.0
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Build Backoffice
-        working-directory: apps-client/backoffice
         run: |
-          echo ${{ secrets.WEB_CLIENT_ENV }} > .env
+          echo ${{ secrets.WEB_CLIENT_ENV }} > apps-client/backoffice/.env
           pnpm build --filter=@client/backoffice...
 
       - name: Deploy
@@ -152,7 +166,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy ./apps-client/backoffice/build --project-name=${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }}
+          command: pages deploy ./apps-client/backoffice/build --project-name=${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }} --branch=${{ secrets.CLOUDFLARE_PAGES_PRODUCTION_BRANCH_NAME }}
 
   build-android:
     name: Build Android
