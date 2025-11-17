@@ -11,7 +11,6 @@ default_platform(:android)
 platform :android do
   desc "Submit a new Beta Build to Firebase App Distribution"
   lane :beta do
-    setup_ci() if ENV['CI']
     app_id = ENV["FIREBASE_APP_ID"]
     # Grab the latest build number from Firebase App Distribution
     latest_release = firebase_app_distribution_get_latest_release(
@@ -52,11 +51,9 @@ platform :android do
   # https://medium.com/@malikchohra/ci-cd-pipeline-for-react-native-apps-use-fastlane-and-github-actions-dcf101edc423
   desc "Send app to play store as a draft"
   lane :production do
-    setup_ci() if ENV['CI']
-    gb = google_play_track_version_codes(track: 'beta')
     ga = google_play_track_version_codes(track: 'alpha')
     gi = google_play_track_version_codes(track: 'internal')
-    max_value = [gb[0].to_i, ga[0].to_i, gi[0].to_i].max
+    max_value = [ga[0].to_i, gi[0].to_i].max
     version_updated = max_value + 1
     increment_version_code(
       version_code: version_updated,
