@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.1.2
+
+### Patch Changes
+
+- [#292](https://github.com/PPLEThai/pple-today/pull/292) [`8fceaad`](https://github.com/PPLEThai/pple-today/commit/8fceaadaa820be967b0b7fa020f0f1191bcf0461) Thanks [@Anon-136](https://github.com/Anon-136)! - fix: production pipeline not working
+
 ## 1.1.1
 
 ### Patch Changes

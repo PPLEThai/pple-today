@@ -90,7 +90,7 @@ jobs:
     environment: production
     strategy:
       matrix:
-        package: ${{ fromJson(needs.get-affected-apps.outputs.packages) }}
+        packages: ${{ fromJson(needs.get-affected-apps.outputs.packages) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -119,12 +119,12 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             "VERSION=${{ matrix.packages.version }}"
-          tags: ${{ secrets.GAR_REGISTRY }}/${{ secrets.GAR_REGISTRY_PREFIX }}/${{ matrix.package.name }}:${{ matrix.package.imageTag }}
+          tags: ${{ secrets.GAR_REGISTRY }}/${{ secrets.GAR_REGISTRY_PREFIX }}/${{ matrix.packages.name }}:${{ matrix.packages.imageTag }}
 
   publish-backoffice:
     name: Publish Backoffice Static Files
     runs-on: ubuntu-latest
-    if: ${{ inputs.backoffice == 'true' }}
+    if: ${{ inputs.backoffice == true }}
     environment: production
     steps:
       - name: Checkout
