@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { useFieldArray, useFormContext } from 'react-hook-form'
 
 import { Button } from '@pple-today/web-ui/button'
@@ -18,6 +19,7 @@ export const ElectionCandidateForm = () => {
     control: form.control,
     name: 'candidates',
   })
+
   const isCandidateHasNumber = form.watch('isCandidateHasNumber')
 
   return (
@@ -82,7 +84,14 @@ export const ElectionCandidateForm = () => {
                             หมายเลขผู้สมัคร <span className="text-system-danger-default">*</span>
                           </FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="กรอกหมายเลขผู้สมัคร" />
+                            <Input
+                              type="number"
+                              {...field}
+                              placeholder="กรอกหมายเลขผู้สมัคร"
+                              onChange={(ev) => {
+                                field.onChange(ev.currentTarget.valueAsNumber)
+                              }}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -110,19 +119,70 @@ export const ElectionCandidateForm = () => {
                     )}
                   />
                 </div>
-                <div className="flex items-center gap-2">
-                  <FileUploadInput>
-                    <Input
-                      type="file"
-                      placeholder="เลือกไฟล์"
-                      accept={ACCEPTED_FILE_TYPES.join(',')}
-                    />
-                  </FileUploadInput>
-                  <Button className="shrink-0" type="button" variant="secondary" size="icon">
-                    <span className="sr-only">ล้างไฟล์ที่เลือก</span>
-                    <X className="size-6" />
-                  </Button>
-                </div>
+                <FormField
+                  control={form.control}
+                  name={`candidates.${index}.imageFile`}
+                  render={({ field: { onChange, value, ref, ...field } }) => {
+                    // eslint-disable-next-line react-hooks/rules-of-hooks
+                    const fieldRef = useRef<HTMLInputElement | null>(null)
+
+                    return (
+                      <div className="flex items-center gap-2">
+                        <FileUploadInput
+                          fileName={
+                            value.type === 'NO_FILE'
+                              ? null
+                              : value.type === 'OLD_FILE'
+                                ? value.filePath
+                                : value.file.name
+                          }
+                          preview={
+                            value.type === 'NO_FILE'
+                              ? undefined
+                              : value.type === 'OLD_FILE'
+                                ? value.url
+                                : value.file
+                          }
+                        >
+                          <Input
+                            type="file"
+                            {...field}
+                            placeholder="เลือกไฟล์"
+                            accept={ACCEPTED_FILE_TYPES.join(',')}
+                            ref={(el) => {
+                              fieldRef.current = el
+                              ref(el)
+                            }}
+                            onChange={(ev) => {
+                              if (!ev.target.files || ev.target.files.length === 0) return
+                              onChange({
+                                type: 'NEW_FILE',
+                                file: ev.target.files[0],
+                              })
+                            }}
+                          />
+                        </FileUploadInput>
+                        {value.type !== 'NO_FILE' && (
+                          <Button
+                            className="shrink-0"
+                            type="button"
+                            variant="secondary"
+                            size="icon"
+                            onClick={() => {
+                              if (fieldRef.current) fieldRef.current.value = ''
+                              onChange({
+                                type: 'NO_FILE',
+                              })
+                            }}
+                          >
+                            <span className="sr-only">ล้างไฟล์ที่เลือก</span>
+                            <X className="size-6" />
+                          </Button>
+                        )}
+                      </div>
+                    )
+                  }}
+                />
                 <Button size="sm" className="w-full" onClick={() => candidates.remove(index)}>
                   ลบผู้สมัคร
                 </Button>
@@ -136,8 +196,9 @@ export const ElectionCandidateForm = () => {
               onClick={() =>
                 candidates.append({
                   name: '',
-                  number: undefined,
-                  imageFile: 'NO_FILE',
+                  imageFile: {
+                    type: 'NO_FILE',
+                  },
                 })
               }
             >

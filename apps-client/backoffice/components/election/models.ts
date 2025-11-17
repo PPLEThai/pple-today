@@ -17,34 +17,41 @@ export const ElectionFormSchema = z
     closeRegister: z.date({ error: 'กรุณาเลือกวันที่ปิดลงทะเบียน' }).optional(),
     openVoting: z.date({ error: 'กรุณาเลือกวันที่เปิดหีบ' }),
     closeVoting: z.date({ error: 'กรุณาเลือกวันที่ปิดหีบ' }),
-    eligibleVoterFile: z.union([
-      z
-        .instanceof(File, { error: 'กรุณาอัปโหลดไฟล์' })
-        .refine((file) => file.size <= MAX_FILE_SIZE, `กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB`)
-        .refine(
-          (file) => ACCEPTED_FILE_TYPES.includes(file.type),
-          'กรุณาอัปโหลดไฟล์ประเภท PDF / JPG / PNG'
-        ),
-      z.literal('OLD_FILE'),
-      z.literal('NO_FILE'),
-    ]),
+    eligibleVoterFile: z.file().nullable().optional(),
     isCandidateHasNumber: z.boolean({ error: 'กรุณาเลือกว่าผู้สมัครมีหมายเลขประจําตัวหรือไม่' }),
     candidates: z
       .array(
         z.object({
           number: z.number().optional(),
           name: z.string().min(1, 'กรุณากรอกชื่อผู้สมัคร'),
-          imageFile: z.union([
-            z
-              .instanceof(File, { error: 'กรุณาอัปโหลดไฟล์' })
-              .refine((file) => file.size <= MAX_FILE_SIZE, `กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB`)
-              .refine(
-                (file) => ACCEPTED_FILE_TYPES.includes(file.type),
-                'กรุณาอัปโหลดไฟล์ประเภท PDF / JPG / PNG'
-              ),
-            z.literal('OLD_FILE'),
-            z.literal('NO_FILE'),
-          ]),
+          imageFile: z.discriminatedUnion(
+            'type',
+            [
+              z.object({
+                type: z.literal('NEW_FILE'),
+                file: z
+                  .instanceof(File, { error: 'กรุณาอัปโหลดไฟล์' })
+                  .refine((file) => file.size <= MAX_FILE_SIZE, `กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB`)
+                  .refine(
+                    (file) => ACCEPTED_FILE_TYPES.includes(file.type),
+                    'กรุณาอัปโหลดไฟล์ประเภท PDF / JPG / PNG'
+                  ),
+              }),
+              z.object({
+                type: z.literal('OLD_FILE'),
+                filePath: z.string(),
+                url: z.url({
+                  error: 'กรุณาอัปโหลดไฟล์ประเภท PDF / JPG / PNG',
+                }),
+              }),
+              z.object({
+                type: z.literal('NO_FILE'),
+              }),
+            ],
+            {
+              error: 'กรุณากรอกข้อมูลให้ครบถ้วน',
+            }
+          ),
         })
       )
       .min(2, 'กรุณาสร้างผู้ลงสมัครอย่างน้อย 2 คน'),

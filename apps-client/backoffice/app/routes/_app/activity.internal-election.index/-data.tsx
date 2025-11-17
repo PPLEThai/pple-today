@@ -11,11 +11,13 @@ import { DtMovement } from 'components/datatable/DtMovement'
 import { ElectionCreate } from 'components/election/ElectionCreate'
 import ElectionStatusBadge from 'components/election/ElectionStatusBadge'
 import ElectionTypeBadge from 'components/election/ElectionTypeBadge'
+import { ElectionFormValues } from 'components/election/models'
 import { TableCopyId } from 'components/TableCopyId'
 import { CalendarX2, Pencil, Plus, Trash2, Users } from 'lucide-react'
 import { getTimelineString } from 'utils/date'
+import { handleUploadFile } from 'utils/file-upload'
 
-import { AdminListElectionResponse, ElectionStatus } from '@api/backoffice/admin'
+import { AdminListElectionResponse, ElectionStatus, PublicFilePath } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
 
@@ -43,8 +45,95 @@ export const Data = () => {
     }
   )
 
+  const createMutation = reactQueryClient.useMutation('post', '/admin/elections')
+  const bulkCreateCandidateMutation = reactQueryClient.useMutation(
+    'post',
+    '/admin/elections/:electionId/candidates'
+  )
+  const bulkAddEligibleVoterMutation = reactQueryClient.useMutation(
+    'post',
+    '/admin/elections/:electionId/eligible-voters/bulk-create'
+  )
+  const createCandidateProfilePictureMutation = reactQueryClient.useMutation(
+    'post',
+    '/admin/elections/:electionId/candidates/upload-url'
+  )
   const cancelMutation = reactQueryClient.useMutation('put', '/admin/elections/:electionId/cancel')
   const deleteMutation = reactQueryClient.useMutation('delete', '/admin/elections/:electionId')
+
+  const createElection = useCallback(
+    async (data: ElectionFormValues) => {
+      if (createMutation.isPending) return
+
+      const result = await createMutation.mutateAsync({
+        body: {
+          name: data.name,
+          district: data.district,
+          province: data.province,
+          openVoting: data.openVoting,
+          closeVoting: data.closeVoting,
+          type: data.type,
+          mode: data.mode,
+          openRegister: data.openRegister,
+          closeRegister: data.closeRegister,
+        },
+      })
+
+      if (data.eligibleVoterFile) {
+        const voterFile = await data.eligibleVoterFile.text()
+        const phoneNumbers = voterFile
+          .split('\n')
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0)
+        await bulkAddEligibleVoterMutation.mutateAsync({
+          pathParams: { electionId: result.id },
+          body: {
+            identifier: 'PHONE_NUMBER',
+            phoneNumbers,
+          },
+        })
+      }
+
+      if (data.candidates.length > 0) {
+        for (const candidate of data.candidates) {
+          let profilePicturePath
+
+          if (candidate.imageFile.type === 'NEW_FILE') {
+            const uploadUrlResult = await createCandidateProfilePictureMutation.mutateAsync({
+              pathParams: { electionId: result.id },
+              body: {
+                contentType: candidate.imageFile.file.type as any,
+              },
+            })
+
+            await handleUploadFile(
+              candidate.imageFile.file,
+              uploadUrlResult.uploadUrl,
+              uploadUrlResult.uploadFields
+            )
+
+            profilePicturePath = uploadUrlResult.fileKey
+          }
+
+          await bulkCreateCandidateMutation.mutateAsync({
+            pathParams: { electionId: result.id },
+            body: {
+              name: candidate.name,
+              description: null,
+              number: candidate.number ?? null,
+              profileImagePath: (profilePicturePath ?? null) as PublicFilePath | null,
+            },
+          })
+        }
+      }
+    },
+    [
+      bulkAddEligibleVoterMutation,
+      bulkCreateCandidateMutation,
+      createCandidateProfilePictureMutation,
+      createMutation,
+    ]
+  )
 
   const cancelElection = useCallback(
     (electionId: string) => {
@@ -243,12 +332,12 @@ export const Data = () => {
         filterExtension={
           <ElectionCreate
             trigger={
-              <Button>
+              <Button className="space-x-2">
                 <Plus />
-                สร้างแบบสอบถาม
+                <span>สร้างแบบสอบถาม</span>
               </Button>
             }
-            onSuccess={() => {}}
+            onSuccess={createElection}
           />
         }
         onChange={() => setQueryPage(1)}

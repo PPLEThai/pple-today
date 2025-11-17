@@ -20,7 +20,7 @@ import { ElectionFormSchema, ElectionFormValues } from './models'
 
 interface ElectionCreateFormProps {
   setIsOpen: (isOpen: boolean) => void
-  onSuccess: () => void
+  onSuccess: (data: ElectionFormValues) => void | Promise<void>
 }
 
 export const ElectionCreateForm = (props: ElectionCreateFormProps) => {
@@ -28,15 +28,14 @@ export const ElectionCreateForm = (props: ElectionCreateFormProps) => {
     resolver: standardSchemaResolver(ElectionFormSchema),
     defaultValues: {
       name: '',
-      eligibleVoterFile: 'NO_FILE',
+      eligibleVoterFile: null,
       candidates: [],
     },
   })
 
-  const onSubmit: SubmitHandler<ElectionFormValues> = async () => {
-    props.onSuccess()
+  const onSubmit: SubmitHandler<ElectionFormValues> = async (data) => {
+    await props.onSuccess(data)
     props.setIsOpen(false)
-    form.reset()
   }
 
   return (
@@ -76,7 +75,7 @@ export const ElectionCreateForm = (props: ElectionCreateFormProps) => {
 
 interface ElectionCreateProps {
   trigger: ReactNode
-  onSuccess: () => void
+  onSuccess: (data: ElectionFormValues) => Promise<void> | void
 }
 
 export const ElectionCreate = (props: ElectionCreateProps) => {
