@@ -153,10 +153,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build Backoffice
-        working-directory: apps-client/backoffice
         run: |
-          echo ${{ secrets.WEB_CLIENT_ENV }} > .env
-          pnpm build
+          echo ${{ secrets.WEB_CLIENT_ENV }} > apps-client/backoffice/.env
+          pnpm build --filter=@client/backoffice...
 
       # - name: Deploy
       #   uses: cloudflare/wrangler-action@v3
