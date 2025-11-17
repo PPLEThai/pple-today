@@ -157,12 +157,12 @@ jobs:
           echo ${{ secrets.WEB_CLIENT_ENV }} > apps-client/backoffice/.env
           pnpm build --filter=@client/backoffice...
 
-      # - name: Deploy
-      #   uses: cloudflare/wrangler-action@v3
-      #   with:
-      #     apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      #     accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      #     command: pages deploy ./apps-client/backoffice/build --project-name=${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }}
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy ./apps-client/backoffice/build --project-name=${{ secrets.CLOUDFLARE_PAGES_PROJECT_NAME }}
 
   build-android:
     name: Build Android
