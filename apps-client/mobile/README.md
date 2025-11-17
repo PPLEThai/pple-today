@@ -194,6 +194,7 @@ Feel free to update this file :)
   2.  Run `fastlane match init`
   3.  Run `fastlane match development` `fastlane match appstore`
 
+- `MATCH_GIT_URL` is your repository where you store certificates data using `fastlane match init` command
 - `MATCH_GIT_BASIC_AUTHORIZATION` is `echo -n <your_github_username>:<your_personal_access_token> | base64`
   - Don't forget to generate `your_personal_access_token` in GitHub > Settings > Developer settings > Personal access token > Fine-grained tokens
     https://github.com/settings/personal-access-tokens

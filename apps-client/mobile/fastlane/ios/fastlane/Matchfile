@@ -1,4 +1,4 @@
-git_url("https://github.com/softnetics/pple-today-certificates")
+git_url(ENV["MATCH_GIT_URL"])
 
 storage_mode("git")
 
