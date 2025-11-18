@@ -4,7 +4,7 @@ import { Button } from '@pple-today/web-ui/button'
 import { DataTable } from '@pple-today/web-ui/data-table'
 import { Typography } from '@pple-today/web-ui/typography'
 import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
-import { Link } from '@tanstack/react-router'
+import { Link, useNavigate } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
 import { DtFilter } from 'components/datatable/DtFilter'
 import { DtMovement } from 'components/datatable/DtMovement'
@@ -28,6 +28,7 @@ export const Data = () => {
   const [queryPage, setQueryPage] = useState(1)
   const [queryName, setQueryName] = useState('')
   const [queryStatus, setQueryStatus] = useState<ElectionStatus[]>()
+  const navigate = useNavigate()
 
   const queryClient = useQueryClient()
   const query = reactQueryClient.useQuery(
@@ -283,7 +284,17 @@ export const Data = () => {
 
           return (
             <span className="flex items-center gap-2">
-              <Button size="icon" variant="outline" disabled={status !== 'DRAFT'}>
+              <Button
+                size="icon"
+                variant="outline"
+                disabled={status !== 'DRAFT'}
+                onClick={() =>
+                  navigate({
+                    to: '/activity/internal-election/$electionId',
+                    params: { electionId: id },
+                  })
+                }
+              >
                 <Pencil strokeWidth={1} size={20} />
               </Button>
               {status === 'DRAFT' ? (
@@ -305,7 +316,7 @@ export const Data = () => {
         },
       }),
     ],
-    [cancelElection, deleteElection]
+    [cancelElection, deleteElection, navigate]
   )
 
   return (
