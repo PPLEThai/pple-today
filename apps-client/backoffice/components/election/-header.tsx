@@ -138,6 +138,8 @@ function EditButton({ election }: { election: AdminGetElectionResponse }) {
       }
       defaultValues={{
         ...election,
+        description: election.description ?? undefined,
+        location: election.location ?? undefined,
         province: election.province!,
         district: election.district!,
         locationMapUrl: election.locationMapUrl ?? undefined,

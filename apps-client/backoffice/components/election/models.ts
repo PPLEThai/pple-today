@@ -4,6 +4,8 @@ import z from 'zod'
 export const ElectionFormSchema = z
   .object({
     name: z.string({ error: 'กรุณากรอกชื่อการเลือกตั้ง' }).min(1, 'กรุณากรอกชื่อการเลือกตั้ง'),
+    description: z.string({ error: 'กรุณากรอกคำอธิบายการเลือกตั้ง' }).optional(),
+    location: z.string().optional(),
     locationMapUrl: z.url({ error: 'กรุณากรอก URL สถานที่เลือกตั้งที่ถูกต้อง' }).optional(),
     province: z.string({ error: 'กรุณาเลือกจังหวัด' }).min(1, 'กรุณาเลือกจังหวัด'),
     district: z.string({ error: 'กรุณาเลือกเขต' }).min(1, 'กรุณาเลือกเขต'),
@@ -13,20 +15,10 @@ export const ElectionFormSchema = z
     mode: z.enum(['FLEXIBLE', 'SECURE'], {
       error: 'กรุณาเลือกประเภทของการเชื่อมต่อข้อมูล',
     }),
-    openRegister: z
-      .date({ error: 'กรุณาเลือกวันที่เปิดลงทะเบียน' })
-      .min(new Date(), 'วันที่เปิดลงทะเบียนต้องอยู่หลังปัจจุบัน')
-      .optional(),
-    closeRegister: z
-      .date({ error: 'กรุณาเลือกวันที่ปิดลงทะเบียน' })
-      .min(new Date(), 'วันที่ปิดลงทะเบียนต้องอยู่หลังปัจจุบัน')
-      .optional(),
-    openVoting: z
-      .date({ error: 'กรุณาเลือกวันที่เปิดหีบ' })
-      .min(new Date(), 'วันที่เปิดหีบต้องอยู่หลังปัจจุบัน'),
-    closeVoting: z
-      .date({ error: 'กรุณาเลือกวันที่ปิดหีบ' })
-      .min(new Date(), 'วันที่ปิดหีบต้องอยู่หลังปัจจุบัน'),
+    openRegister: z.date({ error: 'กรุณาเลือกวันที่เปิดลงทะเบียน' }).optional(),
+    closeRegister: z.date({ error: 'กรุณาเลือกวันที่ปิดลงทะเบียน' }).optional(),
+    openVoting: z.date({ error: 'กรุณาเลือกวันที่เปิดหีบ' }),
+    closeVoting: z.date({ error: 'กรุณาเลือกวันที่ปิดหีบ' }),
     eligibleVoterFile: z.file().nullable().optional(),
     isCandidateHasNumber: z.boolean({ error: 'กรุณาเลือกว่าผู้สมัครมีหมายเลขประจําตัวหรือไม่' }),
     candidates: z
@@ -97,10 +89,19 @@ export const ElectionFormSchema = z
       }
     }
     if (value.type !== 'ONLINE') {
+      if (!value.location) {
+        issues.push({
+          code: 'invalid_type',
+          message: 'กรุณากรอกชื่อสถานที่เลือกตั้ง',
+          expected: 'string',
+          input: value.location,
+          path: ['location'],
+        })
+      }
       if (!value.locationMapUrl) {
         issues.push({
           code: 'invalid_type',
-          message: 'กรุณากรอก URL สำหรับสถานที่เลือกตั้ง',
+          message: 'กรุณากรอกลิงก์สำหรับสถานที่เลือกตั้ง',
           expected: 'string',
           input: value.locationMapUrl,
           path: ['locationMapUrl'],

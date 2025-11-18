@@ -5,6 +5,7 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@pple-
 import { Input } from '@pple-today/web-ui/input'
 import { Label } from '@pple-today/web-ui/label'
 import { RadioGroup, RadioGroupItem } from '@pple-today/web-ui/radio-group'
+import { Textarea } from '@pple-today/web-ui/textarea'
 import { Typography } from '@pple-today/web-ui/typography'
 import { DateTimePicker } from 'components/DateTimePicker'
 
@@ -38,6 +39,19 @@ export const ElectionGeneralInfoForm = () => {
             </FormLabel>
             <FormControl>
               <Input {...field} placeholder="กรอกชื่อการเลือกตั้ง" />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="description"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>คำอธิบายการเลือกตั้ง</FormLabel>
+            <FormControl>
+              <Textarea {...field} placeholder="กรอกคำอธิบายการเลือกตั้ง" />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -255,24 +269,44 @@ export const ElectionGeneralInfoForm = () => {
         />
       </div>
       {electionType !== 'ONLINE' && (
-        <FormField
-          control={form.control}
-          name="locationMapUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                URL สถานที่เลือกตั้ง <span className="text-system-danger-default">*</span>
-              </FormLabel>
-              <FormControl>
-                <Input {...field} placeholder="กรอก URL สถานที่" />
-              </FormControl>
-              <Typography variant="small" className="text-base-text-placeholder ">
-                กรอก URL จาก Google Maps สำหรับการเลือกตั้งในสถานที่
-              </Typography>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <>
+          <FormField
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  ชื่อสถานที่เลือกตั้ง <span className="text-system-danger-default">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="กรอกชื่อสถานที่" />
+                </FormControl>
+                <Typography variant="small" className="text-base-text-placeholder ">
+                  กรอกชื่อสถานที่สำหรับการเลือกตั้งในสถานที่
+                </Typography>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="locationMapUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  URL สถานที่เลือกตั้ง <span className="text-system-danger-default">*</span>
+                </FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder="กรอก URL สถานที่" />
+                </FormControl>
+                <Typography variant="small" className="text-base-text-placeholder ">
+                  กรอก URL จาก Google Maps สำหรับการเลือกตั้งในสถานที่
+                </Typography>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </>
       )}
     </>
   )
