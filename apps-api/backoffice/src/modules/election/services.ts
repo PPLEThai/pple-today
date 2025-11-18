@@ -105,7 +105,7 @@ export class ElectionService {
       electionId: candidate.electionId,
       name: candidate.name,
       description: candidate.description,
-      profileImagePath: candidate.profileImagePath
+      profileImageUrl: candidate.profileImagePath
         ? this.fileServerService.getFileEndpointUrl(candidate.profileImagePath)
         : null,
       voteScorePercent,
