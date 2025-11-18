@@ -73,13 +73,7 @@ platform :android do
       track: 'alpha',
       # Only releases with status draft may be created on draft app
       # Release needed to be published manually from Play Console
-      release_status: "draft",
-      # track: 'production',
-      # release_status: "completed",
-      skip_upload_metadata: true,
-      skip_upload_changelogs: true,
-      skip_upload_images: true,
-      skip_upload_screenshots: true,
+      release_status: "completed",
     )
   end
 end
