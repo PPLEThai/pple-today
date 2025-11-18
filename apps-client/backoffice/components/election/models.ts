@@ -90,6 +90,7 @@ export const ElectionFormSchema = z
       }
     }
     if (value.isCandidateHasNumber) {
+      const existingNumbers = new Set<number>()
       for (const candidateIdx in value.candidates) {
         const candidate = value.candidates[candidateIdx]
         if (candidate.number === undefined) {
@@ -100,6 +101,16 @@ export const ElectionFormSchema = z
             input: candidate.number,
             path: ['candidates', candidateIdx, 'number'],
           })
+        } else if (existingNumbers.has(candidate.number)) {
+          issues.push({
+            code: 'invalid_type',
+            message: 'หมายเลขผู้สมัครซ้ำกัน กรุณากรอกใหม่',
+            expected: 'number',
+            input: candidate.number,
+            path: ['candidates', candidateIdx, 'number'],
+          })
+        } else {
+          existingNumbers.add(candidate.number)
         }
       }
     }

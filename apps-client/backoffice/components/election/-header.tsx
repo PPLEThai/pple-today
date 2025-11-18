@@ -92,17 +92,38 @@ function PublishButton({ election }: { election: AdminGetElectionResponse }) {
 
 function EditButton({ election }: { election: AdminGetElectionResponse }) {
   const editElectionMutation = reactQueryClient.useMutation('put', '/admin/elections/:electionId')
+  const bulkAddEligibleVoterMutation = reactQueryClient.useMutation(
+    'post',
+    '/admin/elections/:electionId/eligible-voters/bulk-create'
+  )
+
   const handleGeneralInfoSuccess = useCallback(
     async (data: ElectionEditGeneralInfoFormValues) => {
       await editElectionMutation.mutateAsync({
         pathParams: { electionId: election.id },
         body: data,
       })
+
+      if (data.eligibleVoterFile) {
+        const voterFile = await data.eligibleVoterFile.text()
+        const phoneNumbers = voterFile
+          .split('\n')
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0)
+        await bulkAddEligibleVoterMutation.mutateAsync({
+          pathParams: { electionId: election.id },
+          body: {
+            identifier: 'PHONE_NUMBER',
+            phoneNumbers,
+          },
+        })
+      }
+
       await queryClient.invalidateQueries({
         queryKey: electionQueryKey(election.id),
       })
     },
-    [editElectionMutation, election.id]
+    [bulkAddEligibleVoterMutation, editElectionMutation, election.id]
   )
 
   return (
