@@ -1,4 +1,5 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
 import { ElectionKeysStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
@@ -16,7 +17,8 @@ export class KeyService {
 
   constructor(
     private readonly keyManagementService: KeyManagementService,
-    private readonly backofficeAdminService: BackofficeAdminService
+    private readonly backofficeAdminService: BackofficeAdminService,
+    private readonly loggerService: ElysiaLoggerInstance
   ) {}
 
   async createElectionKeys(electionId: string) {
@@ -111,8 +113,32 @@ export class KeyService {
         return ok()
       }
 
+      if (encryptResult.isErr()) {
+        this.loggerService.warn(
+          `Waiting for encryption key creation for election id ${electionId}: ${JSON.stringify(
+            encryptResult.error,
+            null,
+            2
+          )}`
+        )
+      }
+
+      if (signingResult.isErr()) {
+        this.loggerService.warn(
+          `Waiting for signing key creation for election id ${electionId}: ${JSON.stringify(
+            signingResult.error,
+            null,
+            2
+          )}`
+        )
+      }
+
       await new Promise((resolve) => setTimeout(resolve, this.DELAY * 1000))
     }
+
+    this.loggerService.error(
+      `Failed to create keys for election id ${electionId} after ${this.MAX_RETRY} retries`
+    )
 
     await Promise.all([
       this.keyManagementService.destroyAsymmetricEncryptKey(electionId),
@@ -164,7 +190,13 @@ export class KeyService {
 }
 
 export const KeyServicePlugin = new Elysia({ name: 'KeyService' })
-  .use([KeyManagementPlugin, BackofficeAdminServicePlugin])
-  .decorate(({ keyManagementService, backofficeService }) => ({
-    keyService: new KeyService(keyManagementService, backofficeService),
+  .use([
+    KeyManagementPlugin,
+    BackofficeAdminServicePlugin,
+    ElysiaLoggerPlugin({
+      name: 'KeyService',
+    }),
+  ])
+  .decorate(({ keyManagementService, backofficeService, loggerService }) => ({
+    keyService: new KeyService(keyManagementService, backofficeService, loggerService),
   }))
