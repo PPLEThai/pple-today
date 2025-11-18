@@ -52,13 +52,13 @@ export const ElectionEditCandidateFormSchema = ElectionFormSchema.pick({
 
 export type ElectionEditCandidateFormValues = z.infer<typeof ElectionEditCandidateFormSchema>
 
-interface ElectionCreateFormProps {
-  defaultValues?: ElectionEditCandidateFormValues
+interface ElectionEditCandidateFormProps {
+  defaultValues: ElectionEditCandidateFormValues
   setIsOpen: (isOpen: boolean) => void
   onSuccess: (data: ElectionEditCandidateFormValues) => MaybePromise<void>
 }
 
-export const ElectionEditCandidateForm = (props: ElectionCreateFormProps) => {
+export const ElectionEditCandidateForm = (props: ElectionEditCandidateFormProps) => {
   const form = useForm<ElectionEditCandidateFormValues>({
     resolver: standardSchemaResolver(ElectionEditCandidateFormSchema),
     defaultValues: props.defaultValues ?? {
@@ -102,7 +102,7 @@ export const ElectionEditCandidateForm = (props: ElectionCreateFormProps) => {
 
 interface ElectionEditCandidateProps {
   trigger: ReactNode
-  defaultValues?: ElectionEditCandidateFormValues
+  defaultValues: ElectionEditCandidateFormValues
   onSuccess: (data: ElectionEditCandidateFormValues) => MaybePromise<void>
 }
 

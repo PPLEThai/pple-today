@@ -9,7 +9,6 @@ import { CalendarX2, Eye, Pencil, Trash2, Vote } from 'lucide-react'
 import { AdminGetElectionResponse } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
-import { queryClient } from '~/main'
 
 import {
   ElectionEditGeneralInfo,
@@ -92,6 +91,11 @@ function PublishButton({ election }: { election: AdminGetElectionResponse }) {
 
 function EditButton({ election }: { election: AdminGetElectionResponse }) {
   const editElectionMutation = reactQueryClient.useMutation('put', '/admin/elections/:electionId')
+  const changeToSecureModeMutation = reactQueryClient.useMutation(
+    'put',
+    '/admin/elections/:electionId/secure-mode'
+  )
+  const queryClient = useQueryClient()
   const bulkAddEligibleVoterMutation = reactQueryClient.useMutation(
     'post',
     '/admin/elections/:electionId/eligible-voters/bulk-create'
@@ -119,11 +123,24 @@ function EditButton({ election }: { election: AdminGetElectionResponse }) {
         })
       }
 
+      if (election.mode === 'FLEXIBLE' && data.mode === 'SECURE') {
+        await changeToSecureModeMutation.mutateAsync({
+          pathParams: { electionId: election.id },
+        })
+      }
+
       await queryClient.invalidateQueries({
         queryKey: electionQueryKey(election.id),
       })
     },
-    [bulkAddEligibleVoterMutation, editElectionMutation, election.id]
+    [
+      bulkAddEligibleVoterMutation,
+      changeToSecureModeMutation,
+      editElectionMutation,
+      election.id,
+      election.mode,
+      queryClient,
+    ]
   )
 
   return (

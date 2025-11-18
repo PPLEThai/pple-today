@@ -27,7 +27,7 @@ export const ElectionEditGeneralInfoFormSchema = ElectionFormSchema.omit({
 export type ElectionEditGeneralInfoFormValues = z.infer<typeof ElectionEditGeneralInfoFormSchema>
 
 interface ElectionEditGeneralInfoFormProps {
-  defaultValues?: ElectionEditGeneralInfoFormValues
+  defaultValues: ElectionEditGeneralInfoFormValues
   setIsOpen: (isOpen: boolean) => void
   onSuccess: (data: ElectionEditGeneralInfoFormValues) => MaybePromise<void>
 }
@@ -56,7 +56,7 @@ export const ElectionEditGeneralInfoForm = (props: ElectionEditGeneralInfoFormPr
       </DialogDescription>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <Form {...form}>
-          <ElectionGeneralInfoForm />
+          <ElectionGeneralInfoForm isAbleToChangeMode={props.defaultValues?.mode === 'FLEXIBLE'} />
           <div className="my-4 border border-base-bg-default" />
           <ElectionEligibleVoterForm />
           <div className="flex flex-row-reverse gap-2 mt-2">
@@ -77,7 +77,7 @@ export const ElectionEditGeneralInfoForm = (props: ElectionEditGeneralInfoFormPr
 
 interface ElectionEditGeneralInfoProps {
   trigger: ReactNode
-  defaultValues?: ElectionEditGeneralInfoFormValues
+  defaultValues: ElectionEditGeneralInfoFormValues
   onSuccess: (data: ElectionEditGeneralInfoFormValues) => MaybePromise<void>
 }
 

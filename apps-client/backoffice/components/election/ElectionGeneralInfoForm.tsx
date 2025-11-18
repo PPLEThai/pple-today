@@ -13,7 +13,13 @@ import { reactQueryClient } from '~/libs/api-client'
 
 import { ElectionFormValues } from './models'
 
-export const ElectionGeneralInfoForm = () => {
+interface ElectionGeneralInfoFormProps {
+  isAbleToChangeMode?: boolean
+}
+
+export const ElectionGeneralInfoForm = ({
+  isAbleToChangeMode = true,
+}: ElectionGeneralInfoFormProps) => {
   const form = useFormContext<Omit<ElectionFormValues, 'candidates'>>()
   const electionType = form.watch('type')
   const province = form.watch('province')
@@ -167,8 +173,11 @@ export const ElectionGeneralInfoForm = () => {
             </FormLabel>
             <FormControl>
               <RadioGroup
+                disabled={!isAbleToChangeMode}
                 value={field.value}
-                onValueChange={field.onChange}
+                onValueChange={(value) => {
+                  field.onChange(value)
+                }}
                 ref={field.ref}
                 className="grid-cols-2"
               >
@@ -198,6 +207,11 @@ export const ElectionGeneralInfoForm = () => {
                 </div>
               </RadioGroup>
             </FormControl>
+            {field.value === 'SECURE' && isAbleToChangeMode && (
+              <Typography variant="small" className="text-system-danger-default m-auto mt-2">
+                เมื่อเปลี่ยนประเภทการเชื่อมต่อข้อมูลเป็น Secure Mode แล้วจะไม่สามารถย้อนกลับได้
+              </Typography>
+            )}
             <FormMessage />
           </FormItem>
         )}
