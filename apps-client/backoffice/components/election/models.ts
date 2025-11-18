@@ -13,10 +13,20 @@ export const ElectionFormSchema = z
     mode: z.enum(['FLEXIBLE', 'SECURE'], {
       error: 'กรุณาเลือกประเภทของการเชื่อมต่อข้อมูล',
     }),
-    openRegister: z.date({ error: 'กรุณาเลือกวันที่เปิดลงทะเบียน' }).optional(),
-    closeRegister: z.date({ error: 'กรุณาเลือกวันที่ปิดลงทะเบียน' }).optional(),
-    openVoting: z.date({ error: 'กรุณาเลือกวันที่เปิดหีบ' }),
-    closeVoting: z.date({ error: 'กรุณาเลือกวันที่ปิดหีบ' }),
+    openRegister: z
+      .date({ error: 'กรุณาเลือกวันที่เปิดลงทะเบียน' })
+      .min(new Date(), 'วันที่เปิดลงทะเบียนต้องอยู่หลังปัจจุบัน')
+      .optional(),
+    closeRegister: z
+      .date({ error: 'กรุณาเลือกวันที่ปิดลงทะเบียน' })
+      .min(new Date(), 'วันที่ปิดลงทะเบียนต้องอยู่หลังปัจจุบัน')
+      .optional(),
+    openVoting: z
+      .date({ error: 'กรุณาเลือกวันที่เปิดหีบ' })
+      .min(new Date(), 'วันที่เปิดหีบต้องอยู่หลังปัจจุบัน'),
+    closeVoting: z
+      .date({ error: 'กรุณาเลือกวันที่ปิดหีบ' })
+      .min(new Date(), 'วันที่ปิดหีบต้องอยู่หลังปัจจุบัน'),
     eligibleVoterFile: z.file().nullable().optional(),
     isCandidateHasNumber: z.boolean({ error: 'กรุณาเลือกว่าผู้สมัครมีหมายเลขประจําตัวหรือไม่' }),
     candidates: z
@@ -58,6 +68,34 @@ export const ElectionFormSchema = z
       .min(2, 'กรุณาสร้างผู้ลงสมัครอย่างน้อย 2 คน'),
   })
   .check(({ issues, value }) => {
+    if (value.closeVoting <= value.openVoting) {
+      issues.push({
+        code: 'invalid_type',
+        message: 'วันที่เปิดหีบต้องอยู่ก่อนวันที่ปิดหีบ',
+        expected: 'date',
+        input: value.closeVoting,
+      })
+    }
+    if (value.closeRegister && value.openRegister) {
+      if (value.openVoting <= value.openRegister) {
+        issues.push({
+          code: 'invalid_type',
+          message: 'วันที่เปิดลงทะเบียนต้องอยู่ก่อนวันที่เปิดหีบ',
+          expected: 'date',
+          input: value.openRegister,
+          path: ['openRegister'],
+        })
+      }
+      if (value.closeRegister <= value.openRegister) {
+        issues.push({
+          code: 'invalid_type',
+          message: 'วันที่เปิดลงทะเบียนต้องอยู่ก่อนวันที่ปิดลงทะเบียน',
+          expected: 'date',
+          input: value.closeRegister,
+          path: ['openRegister'],
+        })
+      }
+    }
     if (value.type !== 'ONLINE') {
       if (!value.locationMapUrl) {
         issues.push({
