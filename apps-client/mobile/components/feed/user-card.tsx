@@ -37,21 +37,7 @@ interface UserCardProps {
 }
 
 export function UserCard(props: UserCardProps) {
-  const [isFollowing, setIsFollowing] = useUserFollowState(
-    props.user.id,
-    props.user.followed ?? false
-  )
-  const followMutation = reactQueryClient.useMutation('post', '/profile/:id/follow', {})
-  const unfollowMutation = reactQueryClient.useMutation('delete', '/profile/:id/follow', {})
-  const toggleFollow = async () => {
-    setIsFollowing(!isFollowing) // optimistic update
-    if (isFollowing) {
-      await unfollowMutation.mutateAsync({ pathParams: { id: props.user.id } })
-      return
-    } else {
-      await followMutation.mutateAsync({ pathParams: { id: props.user.id } })
-    }
-  }
+  const { isFollowing, toggleFollow } = useUserFollow(props.user.id, props.user.followed ?? false)
   const router = useRouter()
   return (
     <AnimatedBackgroundPressable
@@ -99,19 +85,33 @@ const useUserFollowQuery = createQuery({
   },
   enabled: false,
 })
-export function useUserFollowState(userId: string, initialData: boolean) {
+export function useUserFollow(userId: string, initialData: boolean) {
   const userFollowQuery = useUserFollowQuery({
     variables: { userId },
     initialData: initialData,
   })
+
+  const followMutation = reactQueryClient.useMutation('post', '/profile/:id/follow', {})
+  const unfollowMutation = reactQueryClient.useMutation('delete', '/profile/:id/follow', {})
+
   const queryClient = useQueryClient()
-  const setUserFollowState = useCallback(
+  const setFollowing = useCallback(
     (data: boolean) => {
       queryClient.setQueryData(useUserFollowQuery.getKey({ userId }), data)
     },
     [queryClient, userId]
   )
-  return [userFollowQuery.data, setUserFollowState] as const
+  const isFollowing = userFollowQuery.data
+  const toggleFollow = async () => {
+    setFollowing(!isFollowing)
+    if (isFollowing) {
+      await unfollowMutation.mutateAsync({ pathParams: { id: userId } })
+    } else {
+      await followMutation.mutateAsync({ pathParams: { id: userId } })
+    }
+    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/profile/me') })
+  }
+  return { isFollowing, toggleFollow }
 }
 
 export function UserSuggestion() {

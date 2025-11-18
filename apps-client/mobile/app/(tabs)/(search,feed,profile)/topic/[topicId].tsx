@@ -31,7 +31,7 @@ import { ArrowLeftIcon, CheckIcon, HashIcon, InfoIcon, PlusIcon } from 'lucide-r
 import { GetTopicFeedResponse, GetTopicsResponse } from '@api/backoffice/app'
 import { FeedFooter } from '@app/components/feed'
 import { FeedCard } from '@app/components/feed/feed-card'
-import { useTopicFollowState } from '@app/components/feed/topic-card'
+import { useTopicFollow } from '@app/components/feed/topic-card'
 import { useLightStatusBar } from '@app/context/status-bar'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 
@@ -137,18 +137,7 @@ export default function TopicDetailPage() {
   )
 
   // Note: assume that user did not follow recommended topic
-  const [isFollowing, setIsFollowing] = useTopicFollowState(topicId!, false)
-
-  const followMutation = reactQueryClient.useMutation('post', '/topics/:topicId/follow', {})
-  const unfollowMutation = reactQueryClient.useMutation('delete', '/topics/:topicId/follow', {})
-  const toggleFollow = async () => {
-    setIsFollowing(!isFollowing) // optimistic update
-    if (isFollowing) {
-      await unfollowMutation.mutateAsync({ pathParams: { topicId: topicId } })
-    } else {
-      await followMutation.mutateAsync({ pathParams: { topicId: topicId } })
-    }
-  }
+  const { isFollowing, toggleFollow } = useTopicFollow(topicId!, false)
 
   const headerTitleHeight = 40
   const headerTitleStyle = useAnimatedStyle(() => {

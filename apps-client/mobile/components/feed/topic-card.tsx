@@ -37,20 +37,10 @@ interface TopicCardProps {
 }
 
 export function TopicCard(props: TopicCardProps) {
-  const [isFollowing, setIsFollowing] = useTopicFollowState(
+  const { isFollowing, toggleFollow } = useTopicFollow(
     props.topic.id,
     props.topic.followed ?? false
   )
-  const followMutation = reactQueryClient.useMutation('post', '/topics/:topicId/follow', {})
-  const unfollowMutation = reactQueryClient.useMutation('delete', '/topics/:topicId/follow', {})
-  const toggleFollow = async () => {
-    setIsFollowing(!isFollowing) // optimistic update
-    if (isFollowing) {
-      await unfollowMutation.mutateAsync({ pathParams: { topicId: props.topic.id } })
-    } else {
-      await followMutation.mutateAsync({ pathParams: { topicId: props.topic.id } })
-    }
-  }
   const router = useRouter()
   return (
     <Pressable
@@ -129,7 +119,7 @@ const useTopicFollowQuery = createQuery({
   },
   enabled: false,
 })
-export function useTopicFollowState(topicId: string, initialData: boolean) {
+export function useTopicFollow(topicId: string, initialData: boolean) {
   const topicFollowQuery = useTopicFollowQuery({
     variables: { topicId },
     initialData: initialData,
@@ -141,7 +131,19 @@ export function useTopicFollowState(topicId: string, initialData: boolean) {
     },
     [queryClient, topicId]
   )
-  return [topicFollowQuery.data, setTopicFollowState] as const
+  const isFollowing = topicFollowQuery.data
+  const followMutation = reactQueryClient.useMutation('post', '/topics/:topicId/follow', {})
+  const unfollowMutation = reactQueryClient.useMutation('delete', '/topics/:topicId/follow', {})
+  const toggleFollow = async () => {
+    setTopicFollowState(!isFollowing) // optimistic update
+    if (isFollowing) {
+      await unfollowMutation.mutateAsync({ pathParams: { topicId: topicId } })
+    } else {
+      await followMutation.mutateAsync({ pathParams: { topicId: topicId } })
+    }
+    queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/profile/me') })
+  }
+  return { isFollowing, toggleFollow }
 }
 
 export function TopicSuggestion() {
