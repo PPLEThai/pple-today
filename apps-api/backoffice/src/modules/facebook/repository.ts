@@ -505,6 +505,8 @@ export class FacebookRepository {
           managerId: userId,
         },
         data: {
+          linkedStatus: FacebookPageLinkedStatus.UNLINKED,
+          pageAccessToken: '',
           manager: {
             disconnect: true,
           },
