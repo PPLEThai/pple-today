@@ -39,7 +39,7 @@ export function Detail({ election }: { election: AdminGetElectionResponse }) {
           <ElectionStatusBadge status={election.status} />
         </div>
       </div>
-      <Typography variant="h2">เลือกตั้งผู้แทนเขต</Typography>
+      <Typography variant="h2">{election.name}</Typography>
       <CardContent>
         <div className="flex flex-col gap-4 text-secondary-200">
           <div className="flex items-center gap-2">

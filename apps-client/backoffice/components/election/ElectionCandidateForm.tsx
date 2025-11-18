@@ -13,7 +13,11 @@ import { ACCEPTED_FILE_TYPES } from 'utils/file-upload'
 
 import { ElectionFormValues } from './models'
 
-export const ElectionCandidateForm = () => {
+interface ElectionCandidateFormProps {
+  showTitle?: boolean
+}
+
+export const ElectionCandidateForm = ({ showTitle }: ElectionCandidateFormProps) => {
   const form = useFormContext<Pick<ElectionFormValues, 'candidates' | 'isCandidateHasNumber'>>()
   const candidates = useFieldArray({
     control: form.control,
@@ -23,15 +27,17 @@ export const ElectionCandidateForm = () => {
   const isCandidateHasNumber = form.watch('isCandidateHasNumber')
 
   return (
-    <>
-      <div className="space-y-1">
-        <Typography variant="h6">
-          ผู้ลงสมัคร <span className="text-system-danger-default">*</span>
-        </Typography>
-        <Typography variant="small" className="text-base-text-placeholder mb-4">
-          กรุณาสร้างอย่างน้อย 2 ตัวเลือก
-        </Typography>
-      </div>
+    <div className="space-y-4">
+      {showTitle && (
+        <div className="space-y-1">
+          <Typography variant="h6">
+            ผู้ลงสมัคร <span className="text-system-danger-default">*</span>
+          </Typography>
+          <Typography variant="small" className="text-base-text-placeholder mb-4">
+            กรุณาสร้างอย่างน้อย 2 ตัวเลือก
+          </Typography>
+        </div>
+      )}
       <FormField
         control={form.control}
         name="isCandidateHasNumber"
@@ -195,6 +201,7 @@ export const ElectionCandidateForm = () => {
               className="w-full border-dashed gap-2 text-base-secondary-light"
               onClick={() =>
                 candidates.append({
+                  id: `new-added-${Math.random().toString(36).substring(2, 15)}`,
                   name: '',
                   imageFile: {
                     type: 'NO_FILE',
@@ -208,6 +215,6 @@ export const ElectionCandidateForm = () => {
           </>
         )}
       />
-    </>
+    </div>
   )
 }

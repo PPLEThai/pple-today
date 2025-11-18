@@ -126,12 +126,17 @@ export const Data = () => {
           })
         }
       }
+
+      await queryClient.invalidateQueries({
+        queryKey: reactQueryClient.getQueryKey('/admin/elections'),
+      })
     },
     [
       bulkAddEligibleVoterMutation,
       bulkCreateCandidateMutation,
       createCandidateProfilePictureMutation,
       createMutation,
+      queryClient,
     ]
   )
 

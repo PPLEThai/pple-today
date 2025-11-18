@@ -44,6 +44,7 @@ export const ElectionCandidate = t.Object({
   name: t.String(),
   description: t.Nullable(t.String()),
   profileImagePath: t.Nullable(t.String()),
+  profileImageUrl: t.Nullable(t.String({ format: 'uri' })),
   number: t.Nullable(t.Number()),
   createdAt: t.Date(),
   updatedAt: t.Date(),

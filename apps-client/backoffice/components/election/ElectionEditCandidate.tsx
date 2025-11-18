@@ -13,22 +13,38 @@ import {
 import { Form } from '@pple-today/web-ui/form'
 import { ScrollArea } from '@pple-today/web-ui/scroll-area'
 import { Typography } from '@pple-today/web-ui/typography'
+import { MaybePromise } from 'utils/promise'
 import z from 'zod'
 
 import { ElectionCandidateForm } from './ElectionCandidateForm'
 import { ElectionFormSchema } from './models'
 
-const ElectionEditCandidateFormSchema = ElectionFormSchema.pick({
+export const ElectionEditCandidateFormSchema = ElectionFormSchema.pick({
   candidates: true,
   isCandidateHasNumber: true,
+}).check(({ issues, value }) => {
+  if (value.isCandidateHasNumber) {
+    for (const candidateIdx in value.candidates) {
+      const candidate = value.candidates[candidateIdx]
+      if (candidate.number === undefined) {
+        issues.push({
+          code: 'invalid_type',
+          message: 'กรุณากรอกหมายเลขผู้สมัคร',
+          expected: 'number',
+          input: candidate.number,
+          path: ['candidates', candidateIdx, 'number'],
+        })
+      }
+    }
+  }
 })
 
-type ElectionEditCandidateFormValues = z.infer<typeof ElectionEditCandidateFormSchema>
+export type ElectionEditCandidateFormValues = z.infer<typeof ElectionEditCandidateFormSchema>
 
 interface ElectionCreateFormProps {
   defaultValues?: ElectionEditCandidateFormValues
   setIsOpen: (isOpen: boolean) => void
-  onSuccess: () => void
+  onSuccess: (data: ElectionEditCandidateFormValues) => MaybePromise<void>
 }
 
 export const ElectionEditCandidateForm = (props: ElectionCreateFormProps) => {
@@ -39,19 +55,18 @@ export const ElectionEditCandidateForm = (props: ElectionCreateFormProps) => {
     },
   })
 
-  const onSubmit: SubmitHandler<ElectionEditCandidateFormValues> = async () => {
-    props.onSuccess()
+  const onSubmit: SubmitHandler<ElectionEditCandidateFormValues> = async (data) => {
+    await props.onSuccess(data)
     props.setIsOpen(false)
-    form.reset()
   }
 
   return (
     <>
       <DialogTitle asChild>
-        <Typography variant="h3">แก้ไขการเลือกตั้ง</Typography>
+        <Typography variant="h3">แก้ไขผู้ลงสมัคร</Typography>
       </DialogTitle>
       <DialogDescription className="text-sm text-base-text-medium leading-tight">
-        แก้ไขรายละเอียดการเลือกตั้งสำหรับลงคะแนนภายในพรรค
+        แก้ไขรายละเอียดผู้ลงสมัคร
       </DialogDescription>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <Form {...form}>
@@ -77,7 +92,7 @@ export const ElectionEditCandidateForm = (props: ElectionCreateFormProps) => {
 interface ElectionEditCandidateProps {
   trigger: ReactNode
   defaultValues?: ElectionEditCandidateFormValues
-  onSuccess: () => void
+  onSuccess: (data: ElectionEditCandidateFormValues) => MaybePromise<void>
 }
 
 export const ElectionEditCandidate = (props: ElectionEditCandidateProps) => {

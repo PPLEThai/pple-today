@@ -726,6 +726,14 @@ export class AdminElectionRepository {
             include: {
               results: true,
             },
+            orderBy: [
+              {
+                number: 'asc',
+              },
+              {
+                id: 'asc',
+              },
+            ],
           },
           _count: {
             select: { voters: true },

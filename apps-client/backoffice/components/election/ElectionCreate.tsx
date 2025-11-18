@@ -54,7 +54,7 @@ export const ElectionCreateForm = (props: ElectionCreateFormProps) => {
               <div className="my-4 border border-base-bg-default" />
               <ElectionEligibleVoterForm />
               <div className="my-4 border border-base-bg-default" />
-              <ElectionCandidateForm />
+              <ElectionCandidateForm showTitle={true} />
             </div>
           </div>
           <div className="flex flex-row-reverse gap-2 mt-2">

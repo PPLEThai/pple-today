@@ -22,6 +22,7 @@ export const ElectionFormSchema = z
     candidates: z
       .array(
         z.object({
+          id: z.string(),
           number: z.number().optional(),
           name: z.string().min(1, 'กรุณากรอกชื่อผู้สมัคร'),
           imageFile: z.discriminatedUnion(

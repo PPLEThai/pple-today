@@ -9,6 +9,12 @@ import { CalendarX2, Eye, Pencil, Trash2, Vote } from 'lucide-react'
 import { AdminGetElectionResponse } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
+import { queryClient } from '~/main'
+
+import {
+  ElectionEditGeneralInfo,
+  ElectionEditGeneralInfoFormValues,
+} from './ElectionEditGeneralInfo'
 
 export function Header({ election }: { election: AdminGetElectionResponse }) {
   return (
@@ -22,7 +28,7 @@ export function Header({ election }: { election: AdminGetElectionResponse }) {
           <>
             <DeleteButton election={election} />
             <PublishButton election={election} />
-            <EditButton />
+            <EditButton election={election} />
           </>
         ) : (
           <CancelButton election={election} />
@@ -84,14 +90,43 @@ function PublishButton({ election }: { election: AdminGetElectionResponse }) {
   )
 }
 
-function EditButton() {
+function EditButton({ election }: { election: AdminGetElectionResponse }) {
+  const editElectionMutation = reactQueryClient.useMutation('put', '/admin/elections/:electionId')
+  const handleGeneralInfoSuccess = useCallback(
+    async (data: ElectionEditGeneralInfoFormValues) => {
+      await editElectionMutation.mutateAsync({
+        pathParams: { electionId: election.id },
+        body: data,
+      })
+      await queryClient.invalidateQueries({
+        queryKey: electionQueryKey(election.id),
+      })
+    },
+    [editElectionMutation, election.id]
+  )
+
   return (
-    <Button variant="default" className="space-x-2">
-      <Pencil className="text-white" />
-      <Typography variant="small" className="text-white">
-        แก้ไขการเลือกตั้ง
-      </Typography>
-    </Button>
+    <ElectionEditGeneralInfo
+      trigger={
+        <Button variant="default" className="space-x-2">
+          <Pencil className="text-white" />
+          <Typography variant="small" className="text-white">
+            แก้ไขการเลือกตั้ง
+          </Typography>
+        </Button>
+      }
+      defaultValues={{
+        ...election,
+        province: election.province!,
+        district: election.district!,
+        locationMapUrl: election.locationMapUrl ?? undefined,
+        openRegister: election.openRegister ? new Date(election.openRegister) : undefined,
+        closeRegister: election.closeRegister ? new Date(election.closeRegister) : undefined,
+        openVoting: new Date(election.openVoting),
+        closeVoting: new Date(election.closeVoting),
+      }}
+      onSuccess={handleGeneralInfoSuccess}
+    />
   )
 }
 

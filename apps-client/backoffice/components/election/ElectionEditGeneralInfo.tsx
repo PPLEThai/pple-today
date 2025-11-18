@@ -12,20 +12,24 @@ import {
 } from '@pple-today/web-ui/dialog'
 import { Form } from '@pple-today/web-ui/form'
 import { Typography } from '@pple-today/web-ui/typography'
+import { MaybePromise } from 'utils/promise'
 import z from 'zod'
 
 import { ElectionEligibleVoterForm } from './ElectionEligibleVoterForm'
 import { ElectionGeneralInfoForm } from './ElectionGeneralInfoForm'
 import { ElectionFormSchema } from './models'
 
-const ElectionEditGeneralInfoFormSchema = ElectionFormSchema.omit({ candidates: true })
+export const ElectionEditGeneralInfoFormSchema = ElectionFormSchema.omit({
+  candidates: true,
+  isCandidateHasNumber: true,
+})
 
-type ElectionEditGeneralInfoFormValues = z.infer<typeof ElectionEditGeneralInfoFormSchema>
+export type ElectionEditGeneralInfoFormValues = z.infer<typeof ElectionEditGeneralInfoFormSchema>
 
 interface ElectionEditGeneralInfoFormProps {
   defaultValues?: ElectionEditGeneralInfoFormValues
   setIsOpen: (isOpen: boolean) => void
-  onSuccess: () => void
+  onSuccess: (data: ElectionEditGeneralInfoFormValues) => MaybePromise<void>
 }
 
 export const ElectionEditGeneralInfoForm = (props: ElectionEditGeneralInfoFormProps) => {
@@ -33,14 +37,13 @@ export const ElectionEditGeneralInfoForm = (props: ElectionEditGeneralInfoFormPr
     resolver: standardSchemaResolver(ElectionEditGeneralInfoFormSchema),
     defaultValues: props.defaultValues ?? {
       name: '',
-      eligibleVoterFile: 'NO_FILE',
+      eligibleVoterFile: null,
     },
   })
 
-  const onSubmit: SubmitHandler<ElectionEditGeneralInfoFormValues> = async () => {
-    props.onSuccess()
+  const onSubmit: SubmitHandler<ElectionEditGeneralInfoFormValues> = async (data) => {
+    await props.onSuccess(data)
     props.setIsOpen(false)
-    form.reset()
   }
 
   return (
@@ -75,7 +78,7 @@ export const ElectionEditGeneralInfoForm = (props: ElectionEditGeneralInfoFormPr
 interface ElectionEditGeneralInfoProps {
   trigger: ReactNode
   defaultValues?: ElectionEditGeneralInfoFormValues
-  onSuccess: () => void
+  onSuccess: (data: ElectionEditGeneralInfoFormValues) => MaybePromise<void>
 }
 
 export const ElectionEditGeneralInfo = (props: ElectionEditGeneralInfoProps) => {
