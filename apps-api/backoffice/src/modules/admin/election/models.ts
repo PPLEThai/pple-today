@@ -44,16 +44,12 @@ export const AdminCreateElectionBody = t.Object({
       })
     )
   ),
-  province: t.Optional(
-    t.Nullable(
-      t.String({ description: 'Province of the election, required if type is ONSITE or HYBRID' })
-    )
-  ),
-  district: t.Optional(
-    t.Nullable(
-      t.String({ description: 'District of the election, required if type is ONSITE or HYBRID' })
-    )
-  ),
+  province: t.String({
+    description: 'Province of the election, required if type is ONSITE or HYBRID',
+  }),
+  district: t.String({
+    description: 'District of the election, required if type is ONSITE or HYBRID',
+  }),
   type: t.Enum(ElectionType),
   mode: t.Enum(ElectionMode),
   openRegister: t.Optional(t.Nullable(t.Date({ description: 'Required if type is HYBRID' }))),
@@ -113,14 +109,10 @@ export const AdminUpdateElectionBody = t.Object({
     )
   ),
   province: t.Optional(
-    t.Nullable(
-      t.String({ description: 'Province of the election, required if type is ONSITE or HYBRID' })
-    )
+    t.String({ description: 'Province of the election, required if type is ONSITE or HYBRID' })
   ),
   district: t.Optional(
-    t.Nullable(
-      t.String({ description: 'District of the election, required if type is ONSITE or HYBRID' })
-    )
+    t.String({ description: 'District of the election, required if type is ONSITE or HYBRID' })
   ),
   type: t.Enum(ElectionType),
   openRegister: t.Optional(t.Nullable(t.Date({ description: 'Required if type is HYBRID' }))),

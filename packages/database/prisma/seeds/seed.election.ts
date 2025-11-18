@@ -37,6 +37,8 @@ const seedElections = async (userId: string) => {
       publishDate: dateNow,
       openVoting: addDays(dateNow, 1),
       closeVoting: addDays(dateNow, 2),
+      province: 'กรุงเทพมหานคร',
+      district: 'บางรัก',
     },
     // online
     // key pending
@@ -47,6 +49,8 @@ const seedElections = async (userId: string) => {
       keysStatus: ElectionKeysStatus.PENDING_CREATED,
       openVoting: addDays(dateNow, 1),
       closeVoting: addDays(dateNow, 2),
+      province: 'กรุงเทพมหานคร',
+      district: 'บางรัก',
     },
     // online
     // key failed
@@ -57,6 +61,8 @@ const seedElections = async (userId: string) => {
       keysStatus: ElectionKeysStatus.FAILED_CREATED,
       openVoting: addDays(dateNow, 1),
       closeVoting: addDays(dateNow, 2),
+      province: 'กรุงเทพมหานคร',
+      district: 'บางรัก',
     },
     // online
     // key success
@@ -69,6 +75,8 @@ const seedElections = async (userId: string) => {
       signingPublicKey: 'mock',
       openVoting: addDays(dateNow, 1),
       closeVoting: addDays(dateNow, 2),
+      province: 'กรุงเทพมหานคร',
+      district: 'บางรัก',
     },
     // onsite
     // not publish
