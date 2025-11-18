@@ -22,6 +22,7 @@ import { FeedCard } from '@app/components/feed/feed-card'
 import { useUserFollowState } from '@app/components/feed/user-card'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
+import { useAuthMe } from '@app/libs/auth'
 import { renderCount } from '@app/utils/count'
 import { getRoleName } from '@app/utils/get-role-name'
 import { createImageUrl } from '@app/utils/image'
@@ -53,6 +54,7 @@ export default function ProfilePage() {
     }
   }
 
+  const authMe = useAuthMe()
   const userDetailsQuery = reactQueryClient.useQuery('/profile/:id', {
     pathParams: { id: userId },
   })
@@ -184,14 +186,16 @@ export default function ProfilePage() {
             </View>
           </View>
         </View>
-        <Button
-          variant={isFollowing ? 'outline-primary' : 'primary'}
-          size="sm"
-          onPress={toggleFollow}
-          className="mx-4 mb-4"
-        >
-          <Text>{isFollowing ? 'กำลังติดตาม' : 'ติดตาม'} </Text>
-        </Button>
+        {userDetailsQuery.data.id !== authMe.data?.id && (
+          <Button
+            variant={isFollowing ? 'outline-primary' : 'primary'}
+            size="sm"
+            onPress={toggleFollow}
+            className="mx-4 mb-4"
+          >
+            <Text>{isFollowing ? 'กำลังติดตาม' : 'ติดตาม'} </Text>
+          </Button>
+        )}
       </View>
     )
   }
