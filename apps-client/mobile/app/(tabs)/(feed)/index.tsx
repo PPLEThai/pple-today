@@ -591,7 +591,7 @@ function FeedFollowingContent(props: PagerScrollViewProps) {
       refreshControl={<FeedRefreshControl headerHeight={headerHeight} onRefresh={onRefresh} />}
       data={data}
       className="flex-1"
-      contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
+      contentContainerClassName="py-4 flex flex-col bg-base-bg-default flex-grow"
       contentContainerStyle={{ paddingTop: headerHeight }}
       ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} className="mt-4 mx-4" />}
       onEndReachedThreshold={1}
@@ -719,7 +719,7 @@ function FeedContent(props: PagerScrollViewProps) {
       refreshControl={<FeedRefreshControl headerHeight={headerHeight} onRefresh={onRefresh} />}
       data={data}
       className="flex-1"
-      contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
+      contentContainerClassName="py-4 flex flex-col bg-base-bg-default flex-grow"
       contentContainerStyle={{ paddingTop: headerHeight }}
       ListHeaderComponent={<AnnouncementSection />}
       ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} className="mt-4 mx-4" />}
@@ -810,7 +810,7 @@ function FeedTopicContent(props: FeedTopicContentProps) {
       refreshControl={<FeedRefreshControl headerHeight={headerHeight} onRefresh={onRefresh} />}
       data={data}
       className="flex-1"
-      contentContainerClassName="py-4 flex flex-col bg-base-bg-default"
+      contentContainerClassName="py-4 flex flex-col bg-base-bg-default flex-grow"
       contentContainerStyle={{ paddingTop: headerHeight }}
       ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} className="mt-4 mx-4" />}
       onEndReachedThreshold={1}
