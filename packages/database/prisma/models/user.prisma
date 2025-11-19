@@ -47,6 +47,11 @@ model User {
     feedItemScores     FeedItemScore[]
     notifications      UserNotification[]
     notificationTokens UserNotificationToken[]
+    reactionLogs       FeedItemReactionLog[]
+    commentLogs        FeedItemCommentLog[]
+
+    followingLogs UserFollowsUserLog[] @relation("FollowingLog")
+    followerLogs  UserFollowsUserLog[] @relation("FollowerLog")
 
     @@index([status])
     @@index([createdAt])

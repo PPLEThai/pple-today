@@ -9,6 +9,18 @@ enum FeedItemReactionType {
   DOWN_VOTE
 }
 
+enum FeedItemReactionLogType {
+  UP_VOTE
+  DOWN_VOTE
+  REMOVE_VOTE
+}
+
+enum FeedItemCommentAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
 model FeedItem {
   id   String       @id @default(cuid())
   type FeedItemType
@@ -26,10 +38,12 @@ model FeedItem {
   poll         Poll?
   announcement Announcement?
 
-  reactions      FeedItemReaction[]
-  comments       FeedItemComment[]
-  reactionCounts FeedItemReactionCount[]
-  feedItemScores FeedItemScore[]
+  reactions           FeedItemReaction[]
+  reactionLogs        FeedItemReactionLog[]
+  comments            FeedItemComment[]
+  reactionCounts      FeedItemReactionCount[]
+  feedItemScores      FeedItemScore[]
+  feedItemCommentLogs FeedItemCommentLog[]
 
   @@index([createdAt])
 }
@@ -70,6 +84,23 @@ model FeedItemReaction {
   @@index([createdAt])
 }
 
+model FeedItemReactionLog {
+  id         String @id @default(cuid())
+  userId     String
+  feedItemId String
+
+  type FeedItemReactionLogType
+
+  createdAt DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id])
+  feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
+
+  @@index([feedItemId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
 model FeedItemReactionCount {
   feedItemId String
   type       FeedItemReactionType
@@ -96,10 +127,28 @@ model FeedItemComment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user     User     @relation(fields: [userId], references: [id])
-  feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
+  user     User                 @relation(fields: [userId], references: [id])
+  feedItem FeedItem             @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
+  comments FeedItemCommentLog[]
 
   @@index([feedItemId])
   @@index([userId])
   @@index([createdAt])
+}
+
+model FeedItemCommentLog {
+  id         String @id @default(cuid())
+  userId     String
+  feedItemId String
+  action     String
+
+  content   String?
+  commentId String?
+  isPrivate Boolean?
+
+  createdAt DateTime @default(now())
+
+  user     User             @relation(fields: [userId], references: [id])
+  feedItem FeedItem         @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
+  comment  FeedItemComment? @relation(fields: [commentId], references: [id], onDelete: SetNull)
 }

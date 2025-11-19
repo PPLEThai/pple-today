@@ -1,3 +1,8 @@
+enum FollowActionType {
+    FOLLOW
+    UNFOLLOW
+}
+
 model UserFollowsUser {
     followerId  String
     followingId String
@@ -8,6 +13,21 @@ model UserFollowsUser {
     follower  User @relation(name: "Follower", fields: [followerId], references: [id])
 
     @@id([followingId, followerId])
+    @@index([followerId])
+    @@index([followingId])
+}
+
+model UserFollowsUserLog {
+    id          String           @id @default(cuid())
+    followerId  String
+    followingId String
+    action      FollowActionType
+
+    createdAt DateTime @default(now())
+
+    following User @relation(name: "FollowingLog", fields: [followingId], references: [id])
+    follower  User @relation(name: "FollowerLog", fields: [followerId], references: [id])
+
     @@index([followerId])
     @@index([followingId])
 }
