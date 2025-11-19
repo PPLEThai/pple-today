@@ -11,7 +11,7 @@ export class MiniAppRepository {
     return await fromRepositoryPromise(
       this.prismaService.miniApp.findMany({
         orderBy: {
-          order: 'asc',
+          id: 'desc',
         },
       })
     )
