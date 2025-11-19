@@ -6,6 +6,7 @@ export const VersionController = new Elysia({ tags: ['Version'] }).get('/version
   const body = {
     name: packageJson.name,
     version: packageJson.version,
+    timestamp: new Date().toISOString(),
   }
 
   return status(200, body)
