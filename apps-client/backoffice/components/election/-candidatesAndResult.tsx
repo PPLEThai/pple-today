@@ -9,11 +9,19 @@ import { Typography } from '@pple-today/web-ui/typography'
 import { cn } from '@pple-today/web-ui/utils'
 import { useQueryClient } from '@tanstack/react-query'
 import { CircleAlert, Pencil, RefreshCw, Save } from 'lucide-react'
+import * as R from 'remeda'
+import { handleUploadFile } from 'utils/file-upload'
 
-import { AdminGetElectionResponse, AdminGetResultResponse } from '@api/backoffice/admin'
+import {
+  AdminGetElectionResponse,
+  AdminGetResultResponse,
+  ImageFileMimeType,
+  TemporaryFilePath,
+} from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
 import { exhaustiveGuard } from '~/libs/exhaustive-guard'
+import { queryClient } from '~/main'
 
 import {
   EditOnsiteResultContext,
@@ -21,6 +29,7 @@ import {
   useEditOnsiteResultContext,
 } from './-context'
 import { ResultAnnounceDialog } from './-editOnsiteResult'
+import { ElectionEditCandidate, ElectionEditCandidateFormValues } from './ElectionEditCandidate'
 
 export function CandidatesAndResult({
   election,
@@ -44,7 +53,7 @@ export function CandidatesAndResult({
       <EditOnsiteResultContext.Provider value={{ state, dispatch }}>
         <div className="flex justify-between">
           <Typography variant="h3">ผู้ลงสมัคร</Typography>
-          <TopRightCandidate election={election} />
+          <TopRightCandidate election={election} result={result} />
         </div>
         <Candidates election={election} result={result} />
       </EditOnsiteResultContext.Provider>
@@ -52,11 +61,17 @@ export function CandidatesAndResult({
   )
 }
 
-function TopRightCandidate({ election }: { election: AdminGetElectionResponse }) {
+function TopRightCandidate({
+  election,
+  result,
+}: {
+  election: AdminGetElectionResponse
+  result: AdminGetResultResponse
+}) {
   switch (election.status) {
     case 'DRAFT':
     case 'NOT_OPENED_VOTE':
-      return <EditCandidateButton />
+      return <EditCandidateButton electionId={election.id} result={result} />
     case 'OPEN_VOTE':
       return (
         <Typography variant="small" className="text-secondary-200 flex items-center gap-2">
@@ -150,14 +165,146 @@ function EditOnsiteResultButton({ election }: { election: AdminGetElectionRespon
   )
 }
 
-function EditCandidateButton() {
+function EditCandidateButton({
+  electionId,
+  result,
+}: {
+  electionId: string
+  result: AdminGetResultResponse
+}) {
+  const getUploadUrlMutation = reactQueryClient.useMutation(
+    'post',
+    '/admin/elections/:electionId/candidates/upload-url'
+  )
+  const deleteCandidateMutation = reactQueryClient.useMutation(
+    'delete',
+    '/admin/elections/:electionId/candidates/:candidateId'
+  )
+  const createCandidateMutation = reactQueryClient.useMutation(
+    'post',
+    '/admin/elections/:electionId/candidates'
+  )
+  const editCandidateMutation = reactQueryClient.useMutation(
+    'put',
+    '/admin/elections/:electionId/candidates/:candidateId'
+  )
+  const handleCandidateSubmit = useCallback(
+    async (data: ElectionEditCandidateFormValues) => {
+      const removedCandidates = R.differenceWith(
+        result.candidates,
+        data.candidates,
+        (asIs, toBe) => asIs.id === toBe.id
+      )
+      const addedCandidates = R.filter(data.candidates, (c) => c.id.startsWith('new-added-'))
+      const updatedCandidates = R.filter(data.candidates, (c) => !c.id.startsWith('new-added-'))
+
+      await Promise.all([
+        ...removedCandidates.map((candidate) =>
+          deleteCandidateMutation.mutateAsync({
+            pathParams: { electionId, candidateId: candidate.id },
+          })
+        ),
+        ...addedCandidates.map(async (candidate) => {
+          let profileImagePath
+          if (candidate.imageFile.type === 'NEW_FILE') {
+            const uploadUrlResponse = await getUploadUrlMutation.mutateAsync({
+              pathParams: { electionId },
+              body: { contentType: candidate.imageFile.file.type as ImageFileMimeType },
+            })
+            await handleUploadFile(
+              candidate.imageFile.file,
+              uploadUrlResponse.uploadUrl,
+              uploadUrlResponse.uploadFields
+            )
+            profileImagePath = uploadUrlResponse.fileKey
+          }
+
+          return createCandidateMutation.mutateAsync({
+            pathParams: { electionId },
+            body: {
+              name: candidate.name,
+              description: null,
+              number: candidate.number ?? null,
+              profileImagePath: (profileImagePath ?? null) as TemporaryFilePath | null,
+            },
+          })
+        }),
+        ...updatedCandidates.map(async (candidate) => {
+          let profileImagePath
+          if (candidate.imageFile.type === 'NEW_FILE') {
+            const uploadUrlResponse = await getUploadUrlMutation.mutateAsync({
+              pathParams: { electionId },
+              body: { contentType: candidate.imageFile.file.type as ImageFileMimeType },
+            })
+            await handleUploadFile(
+              candidate.imageFile.file,
+              uploadUrlResponse.uploadUrl,
+              uploadUrlResponse.uploadFields
+            )
+            profileImagePath = uploadUrlResponse.fileKey
+          } else if (candidate.imageFile.type === 'OLD_FILE') {
+            profileImagePath = candidate.imageFile.filePath
+          }
+
+          return editCandidateMutation.mutateAsync({
+            pathParams: { electionId, candidateId: candidate.id },
+            body: {
+              name: candidate.name,
+              description: null,
+              number:
+                data.isCandidateHasNumber && candidate.number !== undefined
+                  ? candidate.number
+                  : null,
+              profileImagePath: (profileImagePath ?? null) as TemporaryFilePath | null,
+            },
+          })
+        }),
+      ])
+
+      await queryClient.invalidateQueries({
+        queryKey: resultQueryKey(electionId),
+      })
+    },
+    [
+      createCandidateMutation,
+      deleteCandidateMutation,
+      editCandidateMutation,
+      electionId,
+      getUploadUrlMutation,
+      result.candidates,
+    ]
+  )
+
   return (
-    <Button>
-      <Pencil />
-      <Typography variant="small" className="text-white ml-2">
-        แก้ไขรายชื่อผู้สมัคร
-      </Typography>
-    </Button>
+    <ElectionEditCandidate
+      trigger={
+        <Button>
+          <Pencil />
+          <Typography variant="small" className="text-white ml-2">
+            แก้ไขรายชื่อผู้สมัคร
+          </Typography>
+        </Button>
+      }
+      defaultValues={{
+        isCandidateHasNumber: result.candidates.some((c) => c.number !== null),
+        candidates: result.candidates.map((c) => ({
+          id: c.id,
+          name: c.name,
+          number: c.number ?? undefined,
+          imageFile:
+            c.profileImagePath && c.profileImageUrl
+              ? {
+                  type: 'OLD_FILE',
+                  filePath: c.profileImagePath,
+                  url: c.profileImageUrl,
+                }
+              : {
+                  type: 'NO_FILE',
+                },
+        })),
+      }}
+      onSuccess={handleCandidateSubmit}
+    />
   )
 }
 
@@ -248,10 +395,10 @@ function Candidates({
                 </Typography>
               </div>
             )}
-            {candidate.profileImagePath && (
+            {candidate.profileImageUrl && (
               <Avatar className="size-10">
                 <AvatarImage
-                  src={candidate.profileImagePath}
+                  src={candidate.profileImageUrl}
                   alt={candidate.id}
                   className="object-cover"
                 />

@@ -447,10 +447,10 @@ function ElectionVoteStep({ election }: { election: GetElectionResponse }) {
                   </Text>
                 </View>
                 <Avatar alt="Candidate Profile Image" className="size-10">
-                  {election.candidates[0].profileImagePath && (
+                  {election.candidates[0].profileImageUrl && (
                     <AvatarImage
                       source={{
-                        uri: createImageUrl(election.candidates[0].profileImagePath, {
+                        uri: createImageUrl(election.candidates[0].profileImageUrl, {
                           width: 40,
                           height: 40,
                         }),

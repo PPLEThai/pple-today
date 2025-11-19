@@ -51,8 +51,8 @@ export class AdminElectionRepository {
     description?: string | null
     location?: string | null
     locationMapUrl?: string | null
-    province?: string | null
-    district?: string | null
+    province: string
+    district: string
     type: ElectionType
     mode: ElectionMode
     keysStatus: ElectionKeysStatus
@@ -80,8 +80,8 @@ export class AdminElectionRepository {
       description?: string | null
       location?: string | null
       locationMapUrl?: string | null
-      province?: string | null
-      district?: string | null
+      province?: string
+      district?: string
       type: ElectionType
       openRegister?: Date | null
       closeRegister?: Date | null
@@ -726,6 +726,14 @@ export class AdminElectionRepository {
             include: {
               results: true,
             },
+            orderBy: [
+              {
+                number: 'asc',
+              },
+              {
+                id: 'asc',
+              },
+            ],
           },
           _count: {
             select: { voters: true },

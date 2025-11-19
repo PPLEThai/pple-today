@@ -42,7 +42,7 @@ export const GetElectionParams = t.Object({
 export type GetElectionParams = Static<typeof GetElectionParams>
 
 export const ElectionCandidateWithVoteScore = t.Composite([
-  ElectionCandidate,
+  t.Omit(ElectionCandidate, ['profileImagePath']),
   t.Object({
     voteScorePercent: t.Optional(t.Integer({ description: 'Percentage of vote score' })),
   }),

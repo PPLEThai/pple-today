@@ -38,7 +38,7 @@ export function ComboBox(props: ComboBoxProps) {
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="justify-between"
+          className="justify-between text-sm"
         >
           <p className={!value ? 'text-muted-foreground' : ''}>
             {value ? options?.find((framework) => framework.value === value)?.label : placeholder}

@@ -3,6 +3,8 @@ import { ComponentPropsWithRef } from 'react'
 
 import { cva, VariantProps } from 'class-variance-authority'
 
+import { cn } from '../../libs/utils'
+
 export interface TypographyProps
   extends ComponentPropsWithRef<'div'>,
     VariantProps<typeof typographyVariant> {
@@ -64,7 +66,7 @@ export const Typography = forwardRef<HTMLElement, TypographyProps>(
     return (
       <Component
         {...(props as any)}
-        className={typographyVariant({ fontWeight, variant, className })}
+        className={cn(typographyVariant({ fontWeight, variant }), className)}
         ref={ref}
       />
     )

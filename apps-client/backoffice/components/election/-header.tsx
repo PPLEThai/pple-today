@@ -10,6 +10,11 @@ import { AdminGetElectionResponse } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
 
+import {
+  ElectionEditGeneralInfo,
+  ElectionEditGeneralInfoFormValues,
+} from './ElectionEditGeneralInfo'
+
 export function Header({ election }: { election: AdminGetElectionResponse }) {
   return (
     <div className="flex items-center justify-between mt-4">
@@ -22,7 +27,7 @@ export function Header({ election }: { election: AdminGetElectionResponse }) {
           <>
             <DeleteButton election={election} />
             <PublishButton election={election} />
-            <EditButton />
+            <EditButton election={election} />
           </>
         ) : (
           <CancelButton election={election} />
@@ -84,14 +89,84 @@ function PublishButton({ election }: { election: AdminGetElectionResponse }) {
   )
 }
 
-function EditButton() {
+function EditButton({ election }: { election: AdminGetElectionResponse }) {
+  const editElectionMutation = reactQueryClient.useMutation('put', '/admin/elections/:electionId')
+  const changeToSecureModeMutation = reactQueryClient.useMutation(
+    'put',
+    '/admin/elections/:electionId/secure-mode'
+  )
+  const queryClient = useQueryClient()
+  const bulkAddEligibleVoterMutation = reactQueryClient.useMutation(
+    'post',
+    '/admin/elections/:electionId/eligible-voters/bulk-create'
+  )
+
+  const handleGeneralInfoSuccess = useCallback(
+    async (data: ElectionEditGeneralInfoFormValues) => {
+      await editElectionMutation.mutateAsync({
+        pathParams: { electionId: election.id },
+        body: data,
+      })
+
+      if (data.eligibleVoterFile) {
+        const voterFile = await data.eligibleVoterFile.text()
+        const phoneNumbers = voterFile
+          .split('\n')
+          .map((line) => line.trim())
+          .filter((line) => line.length > 0)
+        await bulkAddEligibleVoterMutation.mutateAsync({
+          pathParams: { electionId: election.id },
+          body: {
+            identifier: 'PHONE_NUMBER',
+            phoneNumbers,
+          },
+        })
+      }
+
+      if (election.mode === 'FLEXIBLE' && data.mode === 'SECURE') {
+        await changeToSecureModeMutation.mutateAsync({
+          pathParams: { electionId: election.id },
+        })
+      }
+
+      await queryClient.invalidateQueries({
+        queryKey: electionQueryKey(election.id),
+      })
+    },
+    [
+      bulkAddEligibleVoterMutation,
+      changeToSecureModeMutation,
+      editElectionMutation,
+      election.id,
+      election.mode,
+      queryClient,
+    ]
+  )
+
   return (
-    <Button variant="default" className="space-x-2">
-      <Pencil className="text-white" />
-      <Typography variant="small" className="text-white">
-        แก้ไขการเลือกตั้ง
-      </Typography>
-    </Button>
+    <ElectionEditGeneralInfo
+      trigger={
+        <Button variant="default" className="space-x-2">
+          <Pencil className="text-white" />
+          <Typography variant="small" className="text-white">
+            แก้ไขการเลือกตั้ง
+          </Typography>
+        </Button>
+      }
+      defaultValues={{
+        ...election,
+        description: election.description ?? undefined,
+        location: election.location ?? undefined,
+        province: election.province!,
+        district: election.district!,
+        locationMapUrl: election.locationMapUrl ?? undefined,
+        openRegister: election.openRegister ? new Date(election.openRegister) : undefined,
+        closeRegister: election.closeRegister ? new Date(election.closeRegister) : undefined,
+        openVoting: new Date(election.openVoting),
+        closeVoting: new Date(election.closeVoting),
+      }}
+      onSuccess={handleGeneralInfoSuccess}
+    />
   )
 }
 

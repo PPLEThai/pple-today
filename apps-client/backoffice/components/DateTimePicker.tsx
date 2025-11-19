@@ -48,8 +48,8 @@ export const DateTimePicker = React.forwardRef<HTMLButtonElement, DatetimePicker
             ref={ref}
             variant="outline"
             className={cn(
-              'justify-start font-normal items-center gap-2',
-              !value && 'text-muted-foreground',
+              'justify-start font-normal items-center text-sm gap-2',
+              !value && 'text-muted-foreground font-light',
               className
             )}
             disabled={disabled}
@@ -73,7 +73,7 @@ export const DateTimePicker = React.forwardRef<HTMLButtonElement, DatetimePicker
             <div className="flex flex-col sm:flex-row sm:h-[300px] divide-y sm:divide-y-0 sm:divide-x">
               <ScrollArea className="w-64 sm:w-auto">
                 <div className="flex sm:flex-col p-2">
-                  {hours.reverse().map((hour) => (
+                  {hours.map((hour) => (
                     <Button
                       key={hour}
                       size="icon"
@@ -81,7 +81,7 @@ export const DateTimePicker = React.forwardRef<HTMLButtonElement, DatetimePicker
                       className="sm:w-full shrink-0 aspect-square"
                       onClick={() => handleTimeChange('hour', hour.toString())}
                     >
-                      {hour}
+                      {hour.toString().padStart(2, '0')}
                     </Button>
                   ))}
                 </div>
@@ -97,7 +97,7 @@ export const DateTimePicker = React.forwardRef<HTMLButtonElement, DatetimePicker
                       className="sm:w-full shrink-0 aspect-square"
                       onClick={() => handleTimeChange('minute', minute.toString())}
                     >
-                      {minute}
+                      {minute.toString().padStart(2, '0')}
                     </Button>
                   ))}
                 </div>

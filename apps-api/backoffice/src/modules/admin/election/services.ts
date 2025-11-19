@@ -99,6 +99,9 @@ export class AdminElectionService {
       name: candidate.name,
       description: candidate.description,
       profileImagePath: candidate.profileImagePath,
+      profileImageUrl: candidate.profileImagePath
+        ? this.fileServerService.getFileEndpointUrl(candidate.profileImagePath)
+        : null,
       number: candidate.number,
       createdAt: candidate.createdAt,
       updatedAt: candidate.updatedAt,
