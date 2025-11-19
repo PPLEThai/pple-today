@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react'
 
 import { Button } from '@pple-today/web-ui/button'
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { User, UserManager } from 'oidc-client-ts'
 
 import { clientEnv } from '~/config/clientEnv'
 
 export const Route = createFileRoute('/sso')({
   component: LoginWithSSO,
+  beforeLoad: async () => {
+    if (clientEnv.IS_PRODUCTION) {
+      throw redirect({ to: '/login', search: { redirect: location.href } })
+    }
+  },
 })
 
 const userManager = new UserManager({

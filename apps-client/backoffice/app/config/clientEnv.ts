@@ -37,4 +37,5 @@ export const clientEnv = {
   FACEBOOK_APP_ID: clientEnvResult.data.VITE_FACEBOOK_APP_ID,
   FACEBOOK_REDIRECT_URL: clientEnvResult.data.VITE_FACEBOOK_REDIRECT_URL,
   API_URL: clientEnvResult.data.VITE_API_URL,
+  IS_PRODUCTION: import.meta.env.PROD,
 }
