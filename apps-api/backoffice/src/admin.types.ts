@@ -13,6 +13,7 @@ export type * from './modules/admin/poll/models'
 export type * from './modules/admin/post/models'
 export type * from './modules/admin/topic/models'
 export type * from './modules/admin/user/models'
+export type * from './modules/health/models'
 export type * from '@pple-today/api-common/dtos'
 
 export type AdminApiSchema = typeof AdminController
