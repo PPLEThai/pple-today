@@ -1,16 +1,36 @@
 import z from 'zod'
 
-const CLIENT_ENV_SCHEMA = z.object({
-  VITE_OIDC_AUTHORITY_URL: z.string().url(),
-  VITE_OIDC_CLIENT_ID: z.string().nonempty(),
-  VITE_OIDC_REDIRECT_URL: z.string().url(),
-  VITE_OIDC_ADDITIONAL_SCOPE: z.string().optional().default(''),
+const CLIENT_ENV_SCHEMA = z
+  .object({
+    VITE_OIDC_AUTHORITY_URL: z.string().url(),
+    VITE_OIDC_CLIENT_ID: z.string().nonempty(),
+    VITE_OIDC_REDIRECT_URL: z.string().url(),
+    VITE_OIDC_ADDITIONAL_SCOPE: z.string().optional().default(''),
 
-  VITE_FACEBOOK_APP_ID: z.string().nonempty(),
-  VITE_FACEBOOK_REDIRECT_URL: z.string().url(),
+    VITE_FACEBOOK_APP_ID: z.string().optional(),
+    VITE_FACEBOOK_REDIRECT_URL: z.url().optional(),
 
-  VITE_API_URL: z.string().url(),
-})
+    VITE_API_URL: z.url(),
+  })
+  .check(({ issues, value }) => {
+    if (import.meta.env.DEV) {
+      if (value.VITE_FACEBOOK_APP_ID === undefined) {
+        issues.push({
+          code: 'custom',
+          message: 'VITE_FACEBOOK_APP_ID is required in development mode',
+          input: value.VITE_FACEBOOK_APP_ID,
+        })
+      }
+
+      if (value.VITE_FACEBOOK_REDIRECT_URL === undefined) {
+        issues.push({
+          code: 'custom',
+          message: 'VITE_FACEBOOK_REDIRECT_URL is required in development mode',
+          input: value.VITE_FACEBOOK_REDIRECT_URL,
+        })
+      }
+    }
+  })
 
 const clientEnvResult = CLIENT_ENV_SCHEMA.safeParse({
   VITE_OIDC_AUTHORITY_URL: import.meta.env.VITE_OIDC_AUTHORITY_URL,

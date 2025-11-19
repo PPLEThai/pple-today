@@ -48,7 +48,7 @@ function FacebookLinkPage() {
   useEffect(() => {
     const exchangeToken = async (code: string) => {
       await fetch(
-        `${clientEnv.API_URL}/facebook/callback?code=${code}&redirectUri=${encodeURIComponent(FACEBOOK_REDIRECT_URI)}`
+        `${clientEnv.API_URL}/facebook/callback?code=${code}&redirectUri=${encodeURIComponent(FACEBOOK_REDIRECT_URI || '')}`
       )
     }
 
