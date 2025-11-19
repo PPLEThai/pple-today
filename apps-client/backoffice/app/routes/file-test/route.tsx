@@ -1,14 +1,20 @@
 import { useEffect, useState } from 'react'
 
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
 import { FilePath } from '@api/backoffice/admin'
 
+import { clientEnv } from '~/config/clientEnv'
 import { userManager } from '~/config/oidc'
 import { reactQueryClient } from '~/libs/api-client'
 
 export const Route = createFileRoute('/file-test')({
   component: FileTestRoute,
+  beforeLoad: async () => {
+    if (clientEnv.IS_PRODUCTION) {
+      throw redirect({ to: '/login', search: { redirect: location.href } })
+    }
+  },
   head: () => ({ meta: [{ title: 'File Test' }] }),
 })
 

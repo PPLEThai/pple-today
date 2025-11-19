@@ -101,7 +101,7 @@ import {
 import { Switch } from '@pple-today/web-ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@pple-today/web-ui/tooltip'
 import { Typography } from '@pple-today/web-ui/typography'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { ColumnDef } from '@tanstack/react-table'
 import {
   BadgeCheckIcon,
@@ -117,6 +117,8 @@ import {
   User,
 } from 'lucide-react'
 import z from 'zod'
+
+import { clientEnv } from '~/config/clientEnv'
 
 const ColorPaletteSection = () => {
   return (
@@ -980,4 +982,9 @@ const PlaygroundPage = () => {
 
 export const Route = createFileRoute('/playground')({
   component: PlaygroundPage,
+  beforeLoad: async () => {
+    if (clientEnv.IS_PRODUCTION) {
+      throw redirect({ to: '/login', search: { redirect: location.href } })
+    }
+  },
 })

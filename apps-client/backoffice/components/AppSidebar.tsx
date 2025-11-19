@@ -33,6 +33,7 @@ import {
   UserCircle,
 } from 'lucide-react'
 
+import { clientEnv } from '~/config/clientEnv'
 import { logout, useAuthContext } from '~/core/auth'
 
 import { SidebarUser } from './SidebarUser'
@@ -162,30 +163,32 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-          <SidebarGroup>
-            <SidebarGroupLabel>Debugging</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Link to="/banner-test">Banner Test</Link>
-                  </SidebarMenuButton>
-                  <SidebarMenuButton asChild>
-                    <Link to="/facebook/old">Facebook</Link>
-                  </SidebarMenuButton>
-                  <SidebarMenuButton asChild>
-                    <Link to="/file-test">File Test</Link>
-                  </SidebarMenuButton>
-                  <SidebarMenuButton asChild>
-                    <Link to="/playground">Playground</Link>
-                  </SidebarMenuButton>
-                  <SidebarMenuButton asChild>
-                    <Link to="/sso">SSO</Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          {!clientEnv.IS_PRODUCTION && (
+            <SidebarGroup>
+              <SidebarGroupLabel>Debugging</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild>
+                      <Link to="/banner-test">Banner Test</Link>
+                    </SidebarMenuButton>
+                    <SidebarMenuButton asChild>
+                      <Link to="/facebook/old">Facebook</Link>
+                    </SidebarMenuButton>
+                    <SidebarMenuButton asChild>
+                      <Link to="/file-test">File Test</Link>
+                    </SidebarMenuButton>
+                    <SidebarMenuButton asChild>
+                      <Link to="/playground">Playground</Link>
+                    </SidebarMenuButton>
+                    <SidebarMenuButton asChild>
+                      <Link to="/sso">SSO</Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          )}
         </SidebarContent>
         <SidebarFooter>
           <SidebarMenu>

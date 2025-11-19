@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { createFileRoute, useLocation } from '@tanstack/react-router'
+import { createFileRoute, redirect, useLocation } from '@tanstack/react-router'
 import * as z from 'zod/v4'
 
 import { clientEnv } from '~/config/clientEnv'
@@ -29,6 +29,11 @@ const facebookSearchParams = z.object({
 export const Route = createFileRoute('/facebook/old')({
   component: FacebookLinkPage,
   validateSearch: facebookSearchParams,
+  beforeLoad: async () => {
+    if (clientEnv.IS_PRODUCTION) {
+      throw redirect({ to: '/login', search: { redirect: location.href } })
+    }
+  },
   head: () => ({ meta: [{ title: 'Facebook' }] }),
 })
 
@@ -43,7 +48,7 @@ function FacebookLinkPage() {
   useEffect(() => {
     const exchangeToken = async (code: string) => {
       await fetch(
-        `${clientEnv.API_URL}/facebook/callback?code=${code}&redirectUri=${encodeURIComponent(FACEBOOK_REDIRECT_URI)}`
+        `${clientEnv.API_URL}/facebook/callback?code=${code}&redirectUri=${encodeURIComponent(FACEBOOK_REDIRECT_URI || '')}`
       )
     }
 
