@@ -41,10 +41,10 @@ export const ElectionCreateForm = (props: ElectionCreateFormProps) => {
   return (
     <>
       <DialogTitle asChild>
-        <Typography variant="h3">แก้ไขรายละเอียดการเลือกตั้ง</Typography>
+        <Typography variant="h3">สร้างการเลือกตั้ง</Typography>
       </DialogTitle>
       <DialogDescription className="text-sm text-base-text-medium leading-tight">
-        แก้ไขรายละเอียดการเลือกตั้งสำหรับลงคะแนนภายในพรรค
+        สร้างการเลือกตั้งสำหรับลงคะแนนภายในพรรค
       </DialogDescription>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <Form {...form}>

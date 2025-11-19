@@ -49,10 +49,10 @@ export const ElectionEditGeneralInfoForm = (props: ElectionEditGeneralInfoFormPr
   return (
     <>
       <DialogTitle asChild>
-        <Typography variant="h3">สร้างการเลือกตั้ง</Typography>
+        <Typography variant="h3">แก้ไขรายละเอียดการเลือกตั้ง</Typography>
       </DialogTitle>
       <DialogDescription className="text-sm text-base-text-medium leading-tight">
-        สร้างการเลือกตั้งสำหรับลงคะแนนภายในพรรค
+        แก้ไขรายละเอียดการเลือกตั้งสำหรับลงคะแนนภายในพรรค
       </DialogDescription>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <Form {...form}>
