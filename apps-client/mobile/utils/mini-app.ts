@@ -11,6 +11,7 @@ export function createMiniAppPath(url: string) {
     return null
   }
 
+  // TODO: Handle query params and hash if needed
   const splitPathname = urlObj.pathname.split('/').slice(1)
   const slug = splitPathname[0]
   const queryParams = splitPathname.slice(1).join('/')

@@ -1,7 +1,6 @@
 import * as React from 'react'
 import {
   GestureResponderEvent,
-  Linking,
   Platform,
   Pressable,
   PressableProps,
@@ -36,6 +35,7 @@ import { toast } from '@pple-today/ui/toast'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
 import { useQueryClient } from '@tanstack/react-query'
+import * as Linking from 'expo-linking'
 import { Link, useRouter } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
 import LottieView from 'lottie-react-native'
