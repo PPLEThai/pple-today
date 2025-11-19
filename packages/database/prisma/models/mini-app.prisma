@@ -1,9 +1,8 @@
 model MiniApp {
-  id    String  @id @default(cuid())
-  slug  String  @unique
-  name  String
-  icon  String? // Base64 encoded image
-  order Int     @default(0)
+  id   String  @id @default(cuid())
+  slug String  @unique
+  name String
+  icon String? // Base64 encoded image
 
   clientId  String
   clientUrl String
@@ -13,6 +12,4 @@ model MiniApp {
 
   bannerId String? @unique
   banner   Banner?
-
-  @@index([order])
 }
