@@ -49,6 +49,7 @@ model User {
     notificationTokens UserNotificationToken[]
     reactionLogs       FeedItemReactionLog[]
     commentLogs        FeedItemCommentLog[]
+    followTopicLogs    UserFollowsTopicLog[]
 
     followingLogs UserFollowsUserLog[] @relation("FollowingLog")
     followerLogs  UserFollowsUserLog[] @relation("FollowerLog")

@@ -45,3 +45,18 @@ model UserFollowsTopic {
     @@index([userId])
     @@index([topicId])
 }
+
+model UserFollowsTopicLog {
+    id      String           @id @default(cuid())
+    userId  String
+    topicId String
+    action  FollowActionType
+
+    createdAt DateTime @default(now())
+
+    user  User  @relation(fields: [userId], references: [id])
+    topic Topic @relation(fields: [topicId], references: [id])
+
+    @@index([userId])
+    @@index([topicId])
+}
