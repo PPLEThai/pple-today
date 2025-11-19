@@ -22,8 +22,8 @@ import { CircleUserRoundIcon, Heart, MessageSquareHeartIcon } from 'lucide-react
 
 import type { GetTopicsResponse } from '@api/backoffice/app'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
-import { useTopicFollowState } from '@app/components/feed/topic-card'
-import { useUserFollowState } from '@app/components/feed/user-card'
+import { useTopicFollow } from '@app/components/feed/topic-card'
+import { useUserFollow } from '@app/components/feed/user-card'
 import { Header } from '@app/components/header-navigation'
 import { reactQueryClient } from '@app/libs/api-client'
 import { createImageUrl } from '@app/utils/image'
@@ -156,21 +156,7 @@ interface PeopleFollowingItemProps {
 }
 
 const PeopleFollowingItem = (profile: PeopleFollowingItemProps) => {
-  const [isFollowing, setIsFollowing] = useUserFollowState(profile.id, true)
-
-  const followMutation = reactQueryClient.useMutation('post', '/profile/:id/follow', {})
-  const unfollowMutation = reactQueryClient.useMutation('delete', '/profile/:id/follow', {})
-
-  const toggleFollow = async () => {
-    // optimistic update
-    setIsFollowing(!isFollowing)
-    if (isFollowing) {
-      await unfollowMutation.mutateAsync({ pathParams: { id: profile.id } })
-      return
-    } else {
-      await followMutation.mutateAsync({ pathParams: { id: profile.id } })
-    }
-  }
+  const { isFollowing, toggleFollow } = useUserFollow(profile.id, true)
 
   return (
     <Pressable
@@ -273,23 +259,7 @@ interface TopicsFollowingItemProps {
 
 const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
   const router = useRouter()
-  const [isFollowing, setIsFollowing] = useTopicFollowState(topic.id, true)
-
-  const followTopicMutation = reactQueryClient.useMutation('post', '/topics/:topicId/follow', {})
-  const unfollowTopicMutation = reactQueryClient.useMutation(
-    'delete',
-    '/topics/:topicId/follow',
-    {}
-  )
-
-  const toggleFollow = async () => {
-    setIsFollowing(!isFollowing) // optimistic update
-    if (isFollowing) {
-      await unfollowTopicMutation.mutateAsync({ pathParams: { topicId: topic.id } })
-    } else {
-      await followTopicMutation.mutateAsync({ pathParams: { topicId: topic.id } })
-    }
-  }
+  const { isFollowing, toggleFollow } = useTopicFollow(topic.id, true)
 
   const renderHashtags = (hashtags: HashtagList) => {
     if (hashtags.length === 0) return null

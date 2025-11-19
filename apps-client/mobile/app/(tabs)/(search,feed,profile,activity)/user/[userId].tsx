@@ -19,7 +19,7 @@ import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/anno
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { FeedFooter, FeedRefreshControl } from '@app/components/feed'
 import { FeedCard } from '@app/components/feed/feed-card'
-import { useUserFollowState } from '@app/components/feed/user-card'
+import { useUserFollow } from '@app/components/feed/user-card'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { useAuthMe } from '@app/libs/auth'
@@ -39,20 +39,7 @@ export default function ProfilePage() {
     }
   }, [userId, router])
 
-  const [isFollowing, setIsFollowing] = useUserFollowState(userId, false)
-
-  const followMutation = reactQueryClient.useMutation('post', '/profile/:id/follow', {})
-  const unfollowMutation = reactQueryClient.useMutation('delete', '/profile/:id/follow', {})
-
-  const toggleFollow = async () => {
-    setIsFollowing(!isFollowing) // optimistic update
-    if (isFollowing) {
-      await unfollowMutation.mutateAsync({ pathParams: { id: userId } })
-      return
-    } else {
-      await followMutation.mutateAsync({ pathParams: { id: userId } })
-    }
-  }
+  const { isFollowing, toggleFollow } = useUserFollow(userId, false)
 
   const authMe = useAuthMe()
   const userDetailsQuery = reactQueryClient.useQuery('/profile/:id', {
