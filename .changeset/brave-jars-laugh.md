@@ -1,11 +1,11 @@
 ---
-'@api/ballot-crypto': minor
+'@api/ballot-crypto': patch
 '@client/backoffice': minor
 '@api/backoffice': minor
-'@pple-today/api-common': minor
-'@client/mobile': minor
-'@pple-today/database': minor
-'@pple-today/web-ui': minor
+'@pple-today/api-common': patch
+'@client/mobile': patch
+'@pple-today/database': patch
+'@pple-today/web-ui': patch
 ---
 
 [[PPLE-539] Create Election](https://linear.app/snts/issue/PPLE-539/create-election)
