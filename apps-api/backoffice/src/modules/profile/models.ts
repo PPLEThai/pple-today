@@ -23,6 +23,7 @@ export const GetUserRecommendationResponse = t.Array(
       )
     ),
     profileImage: t.Nullable(t.String({ description: 'The profile image URL of the author' })),
+    roles: t.Array(t.String({ description: 'The role of the user' })),
   })
 )
 export type GetUserRecommendationResponse = Static<typeof GetUserRecommendationResponse>

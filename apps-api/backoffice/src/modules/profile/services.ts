@@ -44,6 +44,7 @@ export class ProfileService {
             district: user.address.district,
           }
         : null,
+      roles: user.roles.map((r) => r.role),
     }))
 
     return ok(users)
