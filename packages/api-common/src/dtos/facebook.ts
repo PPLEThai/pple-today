@@ -58,9 +58,11 @@ export const InspectAccessTokenResponseBody = t.Object({
       scope: t.String({
         description: 'The specific scope granted by the access token',
       }),
-      target_ids: t.Array(t.Integer(), {
-        description: 'List of target IDs for the granular scope',
-      }),
+      target_ids: t.Optional(
+        t.Array(t.Integer(), {
+          description: 'List of target IDs for the granular scope',
+        })
+      ),
     }),
     {
       description: 'List of granular scopes granted by the access token',
