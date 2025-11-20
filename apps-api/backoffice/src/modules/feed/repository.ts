@@ -898,7 +898,7 @@ export class FeedRepository {
 
         await tx.feedItemReactionCount.upsert({
           where: { feedItemId_type: { feedItemId, type: reaction.type } },
-          update: { count: { decrement: reaction.type === 'UP_VOTE' ? 1 : 0 } },
+          update: { count: { decrement: 1 } },
           create: { feedItemId, type: reaction.type, count: 0 },
         })
       })
