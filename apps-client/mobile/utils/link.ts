@@ -1,8 +1,9 @@
 import * as Linking from 'expo-linking'
 import { router } from 'expo-router'
-import { openBrowserAsync } from 'expo-web-browser'
 
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
+
+import { createMiniAppPath } from './mini-app'
 
 type LinkType =
   | {
@@ -20,10 +21,13 @@ type LinkType =
 
 export async function openLink(link: LinkType) {
   switch (link.type) {
-    case 'MINI_APP':
-      // TODO: Implement mini app opening logic
-      await openBrowserAsync(link.value)
+    case 'MINI_APP': {
+      const miniAppPath = createMiniAppPath(link.value)
+      if (!miniAppPath) throw new Error('Invalid mini app link')
+
+      router.push(miniAppPath)
       break
+    }
     case 'IN_APP_NAVIGATION':
       router.navigate(link.value as any)
       break
