@@ -142,14 +142,6 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
-                    <a href="#">
-                      <PieChart />
-                      <span>คะแนน</span>
-                    </a>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
                     <Link to="/user">
                       <UserCircle />
                       <span>ผู้ใช้งาน</span>
