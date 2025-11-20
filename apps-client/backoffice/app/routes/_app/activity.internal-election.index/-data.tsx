@@ -350,7 +350,7 @@ export const Data = () => {
             trigger={
               <Button className="space-x-2">
                 <Plus />
-                <span>สร้างแบบสอบถาม</span>
+                <span>สร้างการเลือกตั้ง</span>
               </Button>
             }
             onSuccess={createElection}
