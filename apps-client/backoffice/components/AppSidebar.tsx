@@ -45,11 +45,7 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
     <SidebarProvider>
       <Sidebar collapsible="none">
         <SidebarHeader>
-          <SidebarUser
-            src="https://picsum.photos/id/64/64"
-            title="PPLE Today"
-            subtitle="Web Admin"
-          />
+          <SidebarUser src="/pple-icon.svg" title="PPLE Today" subtitle="Web Admin" />
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
@@ -77,27 +73,27 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
                       <SidebarMenuSub>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>
-                            <Link to="/feed/hashtag">Hashtag</Link>
+                            <Link to="/feed/hashtag">แฮชแท็ก</Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>
-                            <Link to="/feed/topic">Topic</Link>
+                            <Link to="/feed/topic">หัวข้อ</Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>
-                            <Link to="/feed/announcement">Announcement</Link>
+                            <Link to="/feed/announcement">ประกาศ</Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>
-                            <Link to="/feed/post">Post</Link>
+                            <Link to="/feed/post">โพสต์</Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>
-                            <Link to="/feed/banner">Banner</Link>
+                            <Link to="/feed/banner">แบนเนอร์</Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                       </SidebarMenuSub>
@@ -125,12 +121,12 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
                       <SidebarMenuSub>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>
-                            <Link to="/activity/poll">Poll</Link>
+                            <Link to="/activity/poll">โพล</Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton asChild>
-                            <Link to="/activity/internal-election">Internal Election</Link>
+                            <Link to="/activity/internal-election">การเลือกตั้ง</Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                       </SidebarMenuSub>
@@ -193,11 +189,7 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
         <SidebarFooter>
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarUser
-                src="https://picsum.photos/id/64/64"
-                title={user?.name ?? '-'}
-                subtitle="pple_admin@pple.com"
-              >
+              <SidebarUser src="/pple-icon.svg" title={user?.name ?? '-'}>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
