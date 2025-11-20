@@ -305,6 +305,9 @@ const MINI_APP_ERROR_SCHEMA = {
   MINI_APP_INVALID_INPUT: {
     status: 400,
   },
+  MINI_APP_SLUG_ALREADY_EXISTS: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 export const NOTIFICATION_KEY_ERROR_SCHEMA = {
