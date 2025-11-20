@@ -49,6 +49,12 @@ export const AuthController = new Elysia({
   .get(
     '/me',
     async ({ status, user, authService }) => {
+      const updatedRolesResult = await authService.replaceUserRoles(user.id, user.roles)
+
+      if (updatedRolesResult.isErr()) {
+        return mapErrorCodeToResponse(updatedRolesResult.error, status)
+      }
+
       const localInfo = await authService.getUserById(user.id)
 
       if (localInfo.isErr()) {
