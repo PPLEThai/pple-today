@@ -99,6 +99,16 @@ export class AuthService {
     })
   }
 
+  async replaceUserRoles(id: string, roles: string[]) {
+    const result = await this.authRepository.replaceUserRoles(id, roles)
+
+    if (result.isErr()) {
+      return mapRepositoryError(result.error)
+    }
+
+    return result
+  }
+
   async getUserById(id: string) {
     const user = await this.authRepository.getUserById(id)
 

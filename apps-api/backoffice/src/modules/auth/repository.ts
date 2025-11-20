@@ -47,6 +47,23 @@ export class AuthRepository {
     )
   }
 
+  async replaceUserRoles(id: string, roles: string[]) {
+    return await fromRepositoryPromise(
+      this.prismaService.user.update({
+        where: { id },
+        data: {
+          roles: {
+            deleteMany: {},
+            createMany: {
+              data: roles.map((role) => ({ role })),
+            },
+          },
+        },
+        select: { id: true, roles: true },
+      })
+    )
+  }
+
   async createUser(data: IntrospectAccessTokenResult, roles: string[]) {
     const { sub, name, phone_number } = data
     const officialUserId = await this.lookupOfficialUserId()
