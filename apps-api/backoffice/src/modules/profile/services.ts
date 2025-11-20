@@ -13,6 +13,7 @@ import {
 } from './models'
 import { ProfileRepository, ProfileRepositoryPlugin } from './repository'
 
+import { ALLOWED_ROLES } from '../../constants/roles'
 import { FileServicePlugin } from '../../plugins/file'
 import { AuthRepository, AuthRepositoryPlugin } from '../auth/repository'
 import { FileServerService, FileServerServicePlugin } from '../files/services'
@@ -123,7 +124,11 @@ export class ProfileService {
       profileImage: user.value.profileImagePath
         ? this.fileServerService.getFileEndpointUrl(user.value.profileImagePath)
         : undefined,
-      roles: user.value.roles.map((r) => r.role),
+      roles: R.pipe(
+        user.value.roles,
+        R.map((r) => r.role),
+        R.filter((role) => ALLOWED_ROLES.includes(role))
+      ),
     })
   }
 
