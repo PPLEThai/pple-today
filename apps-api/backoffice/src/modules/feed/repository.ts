@@ -874,12 +874,6 @@ export class FeedRepository {
             },
           })
 
-          await tx.feedItem.update({
-            where: { id: feedItemId },
-            data: {
-              numberOfComments: { increment: 1 },
-            },
-          })
           return { ...reaction, comment }
         }
 
@@ -904,7 +898,7 @@ export class FeedRepository {
 
         await tx.feedItemReactionCount.upsert({
           where: { feedItemId_type: { feedItemId, type: reaction.type } },
-          update: { count: { decrement: 1 } },
+          update: { count: { decrement: reaction.type === 'UP_VOTE' ? 1 : 0 } },
           create: { feedItemId, type: reaction.type, count: 0 },
         })
       })
@@ -1067,13 +1061,20 @@ export class FeedRepository {
       this.prismaService.$transaction(async (tx) => {
         await this.ensureFeedItemExists(feedItemId, tx)
 
-        return await this.prismaService.feedItemComment.delete({
+        const feedItemComment = await tx.feedItemComment.delete({
           where: {
             id: commentId,
             userId,
             feedItem: {
               id: feedItemId,
             },
+          },
+        })
+
+        await tx.feedItem.update({
+          where: { id: feedItemId },
+          data: {
+            numberOfComments: { decrement: !feedItemComment.isPrivate ? 1 : 0 },
           },
         })
       })
