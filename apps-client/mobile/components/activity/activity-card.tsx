@@ -50,12 +50,14 @@ export function ActivityCard({ activity, className }: ActivityCardProps) {
           <Text className="line-clamp-4 text-base-text-high text-base font-body-semibold">
             {decode(activity.name)}
           </Text>
-          <View className="flex flex-row gap-1 items-center">
-            <Icon icon={MapPinIcon} size={12} className="text-base-text-medium" />
-            <Text className="text-base-text-medium text-xs font-heading-semibold line-clamp-1 flex-1">
-              {decode(activity.location)}
-            </Text>
-          </View>
+          {activity.location && (
+            <View className="flex flex-row gap-1 items-center">
+              <Icon icon={MapPinIcon} size={12} className="text-base-text-medium" />
+              <Text className="text-base-text-medium text-xs font-heading-semibold line-clamp-1 flex-1">
+                {decode(activity.location)}
+              </Text>
+            </View>
+          )}
         </View>
         {isUserRegistered ? (
           <Button
