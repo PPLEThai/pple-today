@@ -16,39 +16,6 @@ export class FacebookService {
     private readonly fileServerService: FileServerService
   ) {}
 
-  // TODO: Move to admin section
-  // private async syncPostsFromPage({
-  //   userId,
-  //   facebookPageId,
-  //   facebookPageAccessToken,
-  // }: {
-  //   userId: string
-  //   facebookPageId: string
-  //   facebookPageAccessToken: string
-  // }) {
-  //   const initialPagePosts = await this.facebookRepository.getPagePosts(
-  //     facebookPageId,
-  //     facebookPageAccessToken
-  //   )
-
-  //   if (initialPagePosts.isErr()) {
-  //     return err(initialPagePosts.error)
-  //   }
-
-  //   const postWithoutParentId = initialPagePosts.value.data.filter((post) => !post.parent_id)
-
-  //   const syncResult = await this.facebookRepository.syncInitialPostsFromPage(
-  //     userId,
-  //     postWithoutParentId
-  //   )
-
-  //   if (syncResult.isErr()) {
-  //     return err(syncResult.error)
-  //   }
-
-  //   return await this.facebookRepository.subscribeToPostUpdates(userId, facebookPageId)
-  // }
-
   async getUserAccessToken(code: string, redirectUri: string) {
     return await this.facebookRepository.getUserAccessToken(code, redirectUri)
   }
@@ -193,20 +160,6 @@ export class FacebookService {
       })
     }
 
-    const subscribeResult = await this.facebookRepository.subscribeToPostUpdates(
-      userId,
-      linkedPage.value.id,
-      pageAccessToken.value.accessToken
-    )
-
-    if (subscribeResult.isErr()) {
-      if (txFile) {
-        const rollbackResult = await txFile.rollback()
-        if (rollbackResult.isErr()) return mapRepositoryError(rollbackResult.error)
-      }
-      return mapRepositoryError(subscribeResult.error)
-    }
-
     return ok(linkedPage.value)
   }
 
@@ -244,13 +197,15 @@ export class FacebookService {
       })
     }
 
-    const unlinkPostsResult = await this.facebookRepository.unsubscribeFromPostUpdates(
-      unlinkResult.value.id,
-      pageAccessTokenResult.value.pageAccessToken
-    )
+    if (unlinkResult.value.isSubscribed) {
+      const unlinkPostsResult = await this.facebookRepository.unsubscribeFromPostUpdates(
+        unlinkResult.value.id,
+        pageAccessTokenResult.value.pageAccessToken
+      )
 
-    if (unlinkPostsResult.isErr()) {
-      return mapRepositoryError(unlinkPostsResult.error)
+      if (unlinkPostsResult.isErr()) {
+        return mapRepositoryError(unlinkPostsResult.error)
+      }
     }
 
     return ok()
