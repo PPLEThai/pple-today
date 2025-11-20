@@ -5,10 +5,12 @@ import { mapRepositoryError } from '@pple-today/api-common/utils'
 import { Check } from '@sinclair/typebox/value'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
+import * as R from 'remeda'
 
 import { GenerateMiniAppTokenErrorResponse, GenerateMiniAppTokenResponse } from './models'
 import { AuthRepository, AuthRepositoryPlugin } from './repository'
 
+import { ALLOWED_ROLES } from '../../constants/roles'
 import { ConfigServicePlugin } from '../../plugins/config'
 import { generateJwtToken } from '../../utils/jwt'
 import { FileServerService, FileServerServicePlugin } from '../files/services'
@@ -120,7 +122,11 @@ export class AuthService {
         ? this.fileServerService.getFileEndpointUrl(user.value.profileImagePath)
         : undefined,
       status: user.value.status,
-      roles: user.value.roles.map((r) => r.role),
+      roles: R.pipe(
+        user.value.roles,
+        R.map((r) => r.role),
+        R.filter((role) => ALLOWED_ROLES.includes(role))
+      ),
     })
   }
 
