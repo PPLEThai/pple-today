@@ -163,7 +163,7 @@ export class TopicRepository {
         const newTopicIds = topicIds.filter((id) => !currentTopicIds.includes(id))
         const deletedTopicIds = currentTopicIds.filter((id) => !topicIds.includes(id))
 
-        return await this.prismaService.user.update({
+        return await tx.user.update({
           where: {
             id: userId,
           },
