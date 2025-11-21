@@ -105,6 +105,7 @@ export class CloudMessagingService {
                 },
                 android: {
                   notification: {
+                    click_action: '.MainActivity',
                     image: data.image,
                   },
                 },
