@@ -5,23 +5,21 @@
   "files": [
     "build"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PPLEThai/pple-today.git",
+    "directory": "packages/mini-app"
+  },
   "exports": {
     ".": {
-      "require": "./src/index.ts",
-      "import": "./src/index.ts",
-      "default": "./src/index.ts",
-      "types": "./src/index.ts"
+      "require": "./build/cjs.js",
+      "import": "./build/esm.js",
+      "default": "./build/esm.js",
+      "types": "./build/index.d.ts"
     }
   },
   "publishConfig": {
-    "exports": {
-      ".": {
-        "require": "./build/cjs.js",
-        "import": "./build/esm.js",
-        "default": "./build/esm.js",
-        "types": "./build/index.d.ts"
-      }
-    }
+    "access": "public"
   },
   "scripts": {
     "build": "rimraf ./build && tsx build.ts && dts-bundle-generator -o build/index.d.ts src/index.ts",
