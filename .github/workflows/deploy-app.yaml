@@ -1,4 +1,5 @@
 name: Deploy Beta Application
+run-name: Deploy Beta Application - ${{ inputs.environment }}
 
 on:
   workflow_dispatch:
