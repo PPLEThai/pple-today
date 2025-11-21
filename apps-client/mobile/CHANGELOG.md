@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 2.2.1
+
+### Patch Changes
+
+- [#316](https://github.com/PPLEThai/pple-today/pull/316) [`9cda67c`](https://github.com/PPLEThai/pple-today/commit/9cda67c00fe7fcf674a644d50f209abf81a7a836) Thanks [@Anon-136](https://github.com/Anon-136)! - update ios build pipeline
+
 ## 2.2.0
 
 ### Minor Changes
