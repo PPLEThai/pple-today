@@ -160,8 +160,12 @@ export class FeedService {
     )
   }
 
-  async getFeedByUserId(userId?: string, query?: { cursor?: string; limit?: number }) {
-    const feedItems = await this.feedRepository.listFeedItemsByUserId(userId, {
+  async getFeedByAuthorId(
+    authorId: string,
+    userId: string | undefined,
+    query?: { cursor?: string; limit?: number }
+  ) {
+    const feedItems = await this.feedRepository.listFeedItemsByAuthorId(authorId, userId, {
       cursor: query?.cursor,
       limit: query?.limit ?? 10,
     })
