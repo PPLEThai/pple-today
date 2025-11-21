@@ -51,8 +51,9 @@ model User {
     commentLogs        FeedItemCommentLog[]
     followTopicLogs    UserFollowsTopicLog[]
 
-    followingLogs UserFollowsUserLog[] @relation("FollowingLog")
-    followerLogs  UserFollowsUserLog[] @relation("FollowerLog")
+    followingLogs         UserFollowsUserLog[]   @relation("FollowingLog")
+    followerLogs          UserFollowsUserLog[]   @relation("FollowerLog")
+    electionNotifications ElectionNotification[]
 
     @@index([status])
     @@index([createdAt])
