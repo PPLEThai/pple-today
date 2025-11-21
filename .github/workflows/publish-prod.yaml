@@ -203,11 +203,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Publish Mini App Package
+      - name: Build Mini App Package
         run: |
           pnpm build --filter=@pplethai/pple-today-miniapp-sdk...
-          cd packages/mini-app
-          npm publish --access public
+
+      - name: Update npm to latest version
+        run: npm install -g npm@latest
+
+      - name: Publish Mini App Package
+        working-directory: packages/mini-app
+        run: npm publish --access public
 
   build-android:
     name: Build Android
