@@ -570,9 +570,9 @@ importers:
 
   examples/mini-app/web:
     dependencies:
-      '@pple-today/mini-app':
-        specifier: workspace:^
-        version: link:../../../packages/mini-app
+      '@pplethai/pple-today-miniapp-sdk':
+        specifier: ^0.1.1
+        version: 0.1.1
       '@react-router/fs-routes':
         specifier: ^7.6.3
         version: 7.6.3(@react-router/dev@7.8.2(@react-router/serve@7.8.2(react-router@7.8.2(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(typescript@5.8.3))(@types/node@20.19.6)(jiti@2.4.2)(lightningcss@1.30.1)(react-dom@19.1.1(react@19.1.1))(react-router@7.8.2(react-dom@19.1.1(react@19.1.1))(react@19.1.1))(react@19.1.1)(terser@5.39.0)(tsx@4.20.3)(typescript@5.8.3)(vite@6.3.5(@types/node@20.19.6)(jiti@2.4.2)(lightningcss@1.30.1)(terser@5.39.0)(tsx@4.20.3)(yaml@2.8.0))(yaml@2.8.0))(typescript@5.8.3)
@@ -2827,6 +2827,9 @@ packages:
     resolution: {integrity: sha512-ROFF39F6ZrnzSUEmQQZUar0Jt4xVoP9WnDRdWwF4NNcXs3xBTLgBUDoOwW141y1jP+S8nahIbdxbFC7IShw9Iw==}
     engines: {node: ^12.20.0 || ^14.18.0 || >=16.0.0}
 
+  '@pplethai/pple-today-miniapp-sdk@0.1.1':
+    resolution: {integrity: sha512-DKhCwF+KoyotKYDoDvFKcZKfDKaXlAhIKHTu/5wHJXV0sftACm90dso5EU7FncrtKSfh9gys/CGsI2OM5zfZ7A==}
+
   '@prisma/adapter-pg@6.15.0':
     resolution: {integrity: sha512-UDqysvOwrSLUDgSnLOKPmTvIrXhod5bMOBwb4GzSR/b6qqSO/SEb3Fq2ddGi1hZt6fAOSp+sXmdaQBy5Sakvkw==}
 
@@ -4409,9 +4412,6 @@ packages:
     engines: {node: '>=14'}
     peerDependencies:
       '@babel/core': ^7.0.0-0
-    peerDependenciesMeta:
-      '@babel/core':
-        optional: true
 
   '@svgr/core@8.1.0':
     resolution: {integrity: sha512-8QqtOQT5ACVlmsvKOJNEaWmRPmcojMOzCz4Hs2BGG/toAp/K38LcsMRyLp349glq5AzJbCEeimEoxaX6v/fLrA==}
@@ -14512,6 +14512,11 @@ snapshots:
 
   '@pkgr/core@0.2.4': {}
 
+  '@pplethai/pple-today-miniapp-sdk@0.1.1':
+    dependencies:
+      oidc-client-ts: 3.3.0
+      zod: 4.0.5
+
   '@prisma/adapter-pg@6.15.0':
     dependencies:
       '@prisma/driver-adapter-utils': 6.15.0
@@ -16912,6 +16917,7 @@ snapshots:
 
   '@svgr/babel-preset@8.1.0(@babel/core@7.27.1)':
     dependencies:
+      '@babel/core': 7.27.1
       '@svgr/babel-plugin-add-jsx-attribute': 8.0.0(@babel/core@7.27.1)
       '@svgr/babel-plugin-remove-jsx-attribute': 8.0.0(@babel/core@7.27.1)
       '@svgr/babel-plugin-remove-jsx-empty-expression': 8.0.0(@babel/core@7.27.1)
@@ -16920,8 +16926,6 @@ snapshots:
       '@svgr/babel-plugin-svg-em-dimensions': 8.0.0(@babel/core@7.27.1)
       '@svgr/babel-plugin-transform-react-native-svg': 8.1.0(@babel/core@7.27.1)
       '@svgr/babel-plugin-transform-svg-component': 8.0.0(@babel/core@7.27.1)
-    optionalDependencies:
-      '@babel/core': 7.27.1
 
   '@svgr/core@8.1.0(typescript@5.8.3)':
     dependencies:

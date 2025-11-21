@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 
-import { PPLEMiniApp, type User } from '@pple-today/mini-app'
+import { PPLEMiniApp, type User } from '@pplethai/pple-today-miniapp-sdk'
 
 import { clientEnv } from '~/config/clientEnv'
 
