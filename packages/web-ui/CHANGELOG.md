@@ -1,5 +1,12 @@
 # @pple-today/web-ui
 
+## 1.0.1
+
+### Patch Changes
+
+- [#302](https://github.com/PPLEThai/pple-today/pull/302) [`2c7289f`](https://github.com/PPLEThai/pple-today/commit/2c7289f9c34d787a27e742d746d8d7b905951689) Thanks [@miello](https://github.com/miello)! - [[PPLE-539] Create Election](https://linear.app/snts/issue/PPLE-539/create-election)
+  [[PPLE-505] Edit Election](https://linear.app/snts/issue/PPLE-505/edit-election)
+
 ## 1.0.0
 
 ### Major Changes

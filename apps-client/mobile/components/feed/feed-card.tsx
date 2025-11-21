@@ -88,6 +88,15 @@ export const FeedCard = React.memo(function FeedCard(props: {
     // TODO: fix type
     { initialData: props.feedItem as any, enabled: false }
   )
+  const queryClient = useQueryClient()
+  React.useEffect(() => {
+    if (!props.feedItem) return
+    queryClient.setQueryData(
+      reactQueryClient.getQueryKey('/feed/:id', { pathParams: { id: props.feedItem.id } }),
+      // TODO: fix type
+      props.feedItem as any
+    )
+  }, [props.feedItem, queryClient])
   const feedContent = feedContentQuery.data as FeedItem
   return (
     <View

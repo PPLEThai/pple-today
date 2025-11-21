@@ -1,5 +1,43 @@
 # @api/backoffice
 
+## 1.2.0
+
+### Minor Changes
+
+- [#302](https://github.com/PPLEThai/pple-today/pull/302) [`2c7289f`](https://github.com/PPLEThai/pple-today/commit/2c7289f9c34d787a27e742d746d8d7b905951689) Thanks [@miello](https://github.com/miello)! - [[PPLE-539] Create Election](https://linear.app/snts/issue/PPLE-539/create-election)
+  [[PPLE-505] Edit Election](https://linear.app/snts/issue/PPLE-505/edit-election)
+
+- [#306](https://github.com/PPLEThai/pple-today/pull/306) [`42cfabb`](https://github.com/PPLEThai/pple-today/commit/42cfabb8fb50141aca6ee8bbe2beebd168d21812) Thanks [@miello](https://github.com/miello)! - [[PPLE-469] [Mini App] Implement CRUD for mini app management](https://linear.app/snts/issue/PPLE-469/mini-app-implement-crud-for-mini-app-management)
+
+- [#304](https://github.com/PPLEThai/pple-today/pull/304) [`5bf3693`](https://github.com/PPLEThai/pple-today/commit/5bf36936c47a353ac7859d2426ae16a2d3bf5671) Thanks [@miello](https://github.com/miello)! - [[PPLE-583] Add robot.txt for backoffice to prevent bot scraping](https://linear.app/snts/issue/PPLE-583/add-robottxt-for-backoffice-to-prevent-bot-scraping)
+
+- [#307](https://github.com/PPLEThai/pple-today/pull/307) [`00aa3c1`](https://github.com/PPLEThai/pple-today/commit/00aa3c1812d4a31a2e8e60acdc2192d6129c8516) Thanks [@miello](https://github.com/miello)! - [[PPLE-437] Implement reaction, comment, follows logging](https://linear.app/snts/issue/PPLE-437/implement-reaction-comment-follows-logging)
+
+### Patch Changes
+
+- [#313](https://github.com/PPLEThai/pple-today/pull/313) [`92b418b`](https://github.com/PPLEThai/pple-today/commit/92b418b58efdfe698f88e4fd8c6955e591df9d76) Thanks [@miello](https://github.com/miello)! - [[PPLE-598] Remove pin icon when activity location is not provided](https://linear.app/snts/issue/PPLE-598/remove-pin-icon-when-activity-location-is-not-provided)
+  [[PPLE-592] Wrong User Profile Description in Who to follow](https://linear.app/snts/issue/PPLE-592/wrong-user-profile-description-in-who-to-follow)
+
+- [#308](https://github.com/PPLEThai/pple-today/pull/308) [`63aeb8d`](https://github.com/PPLEThai/pple-today/commit/63aeb8d070d216afd5c49a8d621c4c6b2542fa22) Thanks [@miello](https://github.com/miello)! - [[PPLE-576] Fix error while deleting FB Page Connection](https://linear.app/snts/issue/PPLE-576/fix-error-while-deleting-fb-page-connection)
+
+- [#277](https://github.com/PPLEThai/pple-today/pull/277) [`6f99f6e`](https://github.com/PPLEThai/pple-today/commit/6f99f6eb6771141e9f2b6f40e9889d518687a586) Thanks [@miello](https://github.com/miello)! - [[PPLE-550] Election not found after 7 days or after end period in "My Election"](https://linear.app/snts/issue/PPLE-550/election-not-found-after-7-days-or-after-end-period-in-my-election)
+
+- [#309](https://github.com/PPLEThai/pple-today/pull/309) [`a2309de`](https://github.com/PPLEThai/pple-today/commit/a2309dec94ed0a33f37c6e5f161fa8845633286a) Thanks [@miello](https://github.com/miello)! - [[PPLE-588] [API] Filter user role when send back to mobile](https://linear.app/snts/issue/PPLE-588/api-filter-user-role-when-send-back-to-mobile)
+
+- [#314](https://github.com/PPLEThai/pple-today/pull/314) [`5c2d008`](https://github.com/PPLEThai/pple-today/commit/5c2d008e5165dd36cd76beac6e2caae2666bd577) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-595] Poll and Post Interaction disappear when refresh](https://linear.app/snts/issue/PPLE-595/poll-and-post-interaction-disappear-when-refresh)
+
+- [#303](https://github.com/PPLEThai/pple-today/pull/303) [`432da5a`](https://github.com/PPLEThai/pple-today/commit/432da5a933802914b317da7aa99641670fbf0b80) Thanks [@miello](https://github.com/miello)! - [[PPLE-574] [Facebook] FB page in CMS not change state to orphan](https://linear.app/snts/issue/PPLE-574/facebook-fb-page-in-cms-not-change-state-to-orphan)
+
+- [#312](https://github.com/PPLEThai/pple-today/pull/312) [`99feef2`](https://github.com/PPLEThai/pple-today/commit/99feef2e8a6b59c7312d05b87afc5b8ed841c7ef) Thanks [@miello](https://github.com/miello)! - [[PPLE-594] Comment counts private comment](https://linear.app/snts/issue/PPLE-594/comment-counts-private-comment)
+
+- [#308](https://github.com/PPLEThai/pple-today/pull/308) [`6f173f1`](https://github.com/PPLEThai/pple-today/commit/6f173f1e4f71bc86537d57d76b9925612c472d53) Thanks [@miello](https://github.com/miello)! - [[PPLE-586] [API] Fix wrong schema in inspect facebook access token](https://linear.app/snts/issue/PPLE-586/api-fix-wrong-schema-in-inspect-facebook-access-token)
+
+- [#310](https://github.com/PPLEThai/pple-today/pull/310) [`a59d10b`](https://github.com/PPLEThai/pple-today/commit/a59d10b56f47b4266ca9ede375209149c12e8a86) Thanks [@miello](https://github.com/miello)! - [[PPLE-587] [API] Sync roles between SSO and Today](https://linear.app/snts/issue/PPLE-587/api-sync-roles-between-sso-and-today)
+
+- Updated dependencies [[`63aeb8d`](https://github.com/PPLEThai/pple-today/commit/63aeb8d070d216afd5c49a8d621c4c6b2542fa22), [`2c7289f`](https://github.com/PPLEThai/pple-today/commit/2c7289f9c34d787a27e742d746d8d7b905951689), [`42cfabb`](https://github.com/PPLEThai/pple-today/commit/42cfabb8fb50141aca6ee8bbe2beebd168d21812), [`6f173f1`](https://github.com/PPLEThai/pple-today/commit/6f173f1e4f71bc86537d57d76b9925612c472d53), [`00aa3c1`](https://github.com/PPLEThai/pple-today/commit/00aa3c1812d4a31a2e8e60acdc2192d6129c8516)]:
+  - @pple-today/api-common@1.1.0
+  - @pple-today/database@1.1.0
+
 ## 1.1.3
 
 ### Patch Changes
