@@ -213,6 +213,8 @@ jobs:
       - name: Publish Mini App Package
         working-directory: packages/mini-app
         run: npm publish --access public
+        env:
+          NPM_CONFIG_PROVENANCE: true
 
   build-android:
     name: Build Android
