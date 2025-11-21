@@ -29,6 +29,7 @@ jobs:
   get-affected-apps:
     name: Get affected applications
     runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') && (inputs.api == true || inputs.ballot-crypto == true)
     outputs:
       packages: ${{ steps.affected-apps.outputs.packages }}
     steps:
@@ -176,17 +177,8 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ inputs.mini-app == true }}
     permissions:
-      actions: read
-      checks: read
-      contents: write
-      deployments: read
-      issues: write
-      discussions: read
-      packages: write
-      pull-requests: write
-      repository-projects: write
-      security-events: read
-      statuses: write
+      contents: read
+      id-token: write
     environment: production
     steps:
       - name: Checkout
@@ -195,33 +187,32 @@ jobs:
           fetch-depth: 0 # fetch all history for tags
           persist-credentials: false # avoid checking out the repository again
 
-      - name: Setup Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 22.14.0
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: 9.9.0
 
-      - name: Setup node with cache
+      - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: 22.14.0
+          registry-url: https://registry.npmjs.org
+          scope: '@pplethai'
           cache: pnpm
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Publish Mini App Package
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          GITHUB_TOKEN: ${{ github.token }}
+      - name: Build Mini App Package
         run: |
-          pnpm build --filter=@pplethai/pple-today-mini-app...
-          cd packages/mini-app
-          npm publish --access public
+          pnpm build --filter=@pplethai/pple-today-miniapp-sdk...
+
+      - name: Update npm to latest version
+        run: npm install -g npm@latest
+
+      - name: Publish Mini App Package
+        working-directory: packages/mini-app
+        run: npm publish --access public
 
   build-android:
     name: Build Android
