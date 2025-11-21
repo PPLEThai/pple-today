@@ -29,8 +29,9 @@ jobs:
   get-affected-apps:
     name: Get affected applications
     runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') && (inputs.api == true || inputs.ballot-crypto == true)
     outputs:
-      packages: ${{ steps.affected-apps.outputs.packages && startsWith(github.ref, 'refs/tags/') }}
+      packages: ${{ steps.affected-apps.outputs.packages }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
