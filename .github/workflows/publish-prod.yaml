@@ -30,7 +30,7 @@ jobs:
     name: Get affected applications
     runs-on: ubuntu-latest
     outputs:
-      packages: ${{ steps.affected-apps.outputs.packages }}
+      packages: ${{ steps.affected-apps.outputs.packages && startWith(github.ref, 'refs/tags/') }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
