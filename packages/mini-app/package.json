@@ -1,7 +1,7 @@
 {
-  "name": "@pplethai/pple-today-mini-app",
-  "version": "1.0.1",
-  "description": "",
+  "name": "@pplethai/pple-today-miniapp-sdk",
+  "version": "0.1.0",
+  "description": "PPLE Today Mini App SDK",
   "exports": {
     ".": {
       "require": "./src/index.ts",
@@ -27,9 +27,7 @@
     "format:check": "prettier --check .",
     "coverage": "open-cli coverage/index.html"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@pple-today/project-config": "workspace:^",
     "dts-bundle-generator": "^9.5.1",
