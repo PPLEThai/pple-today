@@ -1,6 +1,6 @@
 {
   "name": "@pple-today/web-ui",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "exports": {
     "./*": "./src/components/ui/*.tsx",

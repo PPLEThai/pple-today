@@ -1,5 +1,18 @@
 # @pple-today/database
 
+## 1.1.0
+
+### Minor Changes
+
+- [#306](https://github.com/PPLEThai/pple-today/pull/306) [`42cfabb`](https://github.com/PPLEThai/pple-today/commit/42cfabb8fb50141aca6ee8bbe2beebd168d21812) Thanks [@miello](https://github.com/miello)! - [[PPLE-469] [Mini App] Implement CRUD for mini app management](https://linear.app/snts/issue/PPLE-469/mini-app-implement-crud-for-mini-app-management)
+
+- [#307](https://github.com/PPLEThai/pple-today/pull/307) [`00aa3c1`](https://github.com/PPLEThai/pple-today/commit/00aa3c1812d4a31a2e8e60acdc2192d6129c8516) Thanks [@miello](https://github.com/miello)! - [[PPLE-437] Implement reaction, comment, follows logging](https://linear.app/snts/issue/PPLE-437/implement-reaction-comment-follows-logging)
+
+### Patch Changes
+
+- [#302](https://github.com/PPLEThai/pple-today/pull/302) [`2c7289f`](https://github.com/PPLEThai/pple-today/commit/2c7289f9c34d787a27e742d746d8d7b905951689) Thanks [@miello](https://github.com/miello)! - [[PPLE-539] Create Election](https://linear.app/snts/issue/PPLE-539/create-election)
+  [[PPLE-505] Edit Election](https://linear.app/snts/issue/PPLE-505/edit-election)
+
 ## 1.0.0
 
 ### Major Changes

@@ -1,5 +1,23 @@
 # @client/backoffice
 
+## 1.1.0
+
+### Minor Changes
+
+- [#302](https://github.com/PPLEThai/pple-today/pull/302) [`2c7289f`](https://github.com/PPLEThai/pple-today/commit/2c7289f9c34d787a27e742d746d8d7b905951689) Thanks [@miello](https://github.com/miello)! - [[PPLE-539] Create Election](https://linear.app/snts/issue/PPLE-539/create-election)
+  [[PPLE-505] Edit Election](https://linear.app/snts/issue/PPLE-505/edit-election)
+
+- [#305](https://github.com/PPLEThai/pple-today/pull/305) [`a3504bd`](https://github.com/PPLEThai/pple-today/commit/a3504bd8a570f20b22260d82499b633e04fa955e) Thanks [@miello](https://github.com/miello)! - [[PPLE-584] [Backoffice] Hide debug page and optional facebook id in production](https://linear.app/snts/issue/PPLE-584/backoffice-hide-debug-page-and-optional-facebook-id-in-production)
+
+- [#304](https://github.com/PPLEThai/pple-today/pull/304) [`5bf3693`](https://github.com/PPLEThai/pple-today/commit/5bf36936c47a353ac7859d2426ae16a2d3bf5671) Thanks [@miello](https://github.com/miello)! - [[PPLE-583] Add robot.txt for backoffice to prevent bot scraping](https://linear.app/snts/issue/PPLE-583/add-robottxt-for-backoffice-to-prevent-bot-scraping)
+
+### Patch Changes
+
+- [#311](https://github.com/PPLEThai/pple-today/pull/311) [`8770a66`](https://github.com/PPLEThai/pple-today/commit/8770a66715cbc41acd0d924264545472a7467dd5) Thanks [@miello](https://github.com/miello)! - [[PPLE-591] Change nav bar manu to Thai](https://linear.app/snts/issue/PPLE-591/change-nav-bar-manu-to-thai)
+  [[PPLE-590] Use User Profile and email in CMS](https://linear.app/snts/issue/PPLE-590/use-user-profile-and-email-in-cms)
+- Updated dependencies [[`2c7289f`](https://github.com/PPLEThai/pple-today/commit/2c7289f9c34d787a27e742d746d8d7b905951689)]:
+  - @pple-today/web-ui@1.0.1
+
 ## 1.0.0
 
 ### Major Changes
