@@ -70,10 +70,9 @@ platform :android do
       }
     )
     upload_to_play_store(
-      track: 'alpha',
-      # Only releases with status draft may be created on draft app
-      # Release needed to be published manually from Play Console
+      track: 'internal',
       release_status: "completed",
+      # Release needed to be published manually from Play Console
     )
   end
 end
