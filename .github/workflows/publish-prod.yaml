@@ -187,22 +187,17 @@ jobs:
           fetch-depth: 0 # fetch all history for tags
           persist-credentials: false # avoid checking out the repository again
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.9.0
+
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: 22.14.0
           registry-url: https://registry.npmjs.org
           scope: '@pplethai'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.9.0
-
-      - name: Setup node with cache
-        uses: actions/setup-node@v3
-        with:
-          node-version: 22.14.0
           cache: pnpm
 
       - name: Install dependencies
