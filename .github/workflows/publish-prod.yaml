@@ -213,8 +213,6 @@ jobs:
           pnpm build --filter=@pplethai/pple-today-miniapp-sdk...
           cd packages/mini-app
           npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   build-android:
     name: Build Android
