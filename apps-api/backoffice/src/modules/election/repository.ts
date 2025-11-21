@@ -148,6 +148,28 @@ export class ElectionRepository {
 
     return ok(createBollotResult.value)
   }
+
+  async createNotification(electionId: string, userId: string) {
+    return await fromRepositoryPromise(
+      this.prismaService.electionNotification.create({
+        data: {
+          electionId,
+          userId,
+        },
+      })
+    )
+  }
+
+  async deleteNotification(electionId: string, userId: string) {
+    return await fromRepositoryPromise(
+      this.prismaService.electionNotification.deleteMany({
+        where: {
+          electionId,
+          userId,
+        },
+      })
+    )
+  }
 }
 
 export const ElectionRepositoryPlugin = new Elysia()

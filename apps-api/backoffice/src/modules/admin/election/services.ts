@@ -36,6 +36,7 @@ import { AdminElectionRepository, AdminElectionRepositoryPlugin } from './reposi
 
 import { BallotCryptoService, BallotCryptoServicePlugin } from '../../../plugins/ballot-crypto'
 import { ConfigServicePlugin } from '../../../plugins/config'
+import { CronService, CronServicePlugin } from '../../../plugins/cron'
 import { FileServicePlugin } from '../../../plugins/file'
 import { FileServerService, FileServerServicePlugin } from '../../files/services'
 
@@ -44,7 +45,8 @@ export class AdminElectionService {
     private readonly adminElectionRepository: AdminElectionRepository,
     private readonly fileService: FileService,
     private readonly fileServerService: FileServerService,
-    private readonly ballotCryptoService: BallotCryptoService
+    private readonly ballotCryptoService: BallotCryptoService,
+    private readonly cronService: CronService
   ) {}
 
   private checkIsAllowedToPublish(election: Election) {
@@ -120,6 +122,8 @@ export class AdminElectionService {
 
     return ok()
   }
+
+  private initScheduledTasks() {}
 
   private checkIsDraftElection(election: Election) {
     if (election.publishDate) {
@@ -1195,12 +1199,22 @@ export const AdminElectionServicePlugin = new Elysia({ name: 'AdminElectionServi
     FileServerServicePlugin,
     BallotCryptoServicePlugin,
     ConfigServicePlugin,
+    CronServicePlugin,
   ])
-  .decorate(({ adminElectionRepository, fileService, fileServerService, ballotCryptoService }) => ({
-    adminElectionService: new AdminElectionService(
+  .decorate(
+    ({
       adminElectionRepository,
       fileService,
       fileServerService,
-      ballotCryptoService
-    ),
-  }))
+      ballotCryptoService,
+      cronService,
+    }) => ({
+      adminElectionService: new AdminElectionService(
+        adminElectionRepository,
+        fileService,
+        fileServerService,
+        ballotCryptoService,
+        cronService
+      ),
+    })
+  )
