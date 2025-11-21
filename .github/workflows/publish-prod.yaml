@@ -199,6 +199,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 22.14.0
+          registry-url: https://registry.npmjs.org
+          scope: '@pplethai'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -215,13 +217,12 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Publish Mini App Package
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          GITHUB_TOKEN: ${{ github.token }}
         run: |
           pnpm build --filter=@pplethai/pple-today-miniapp-sdk...
           cd packages/mini-app
           npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   build-android:
     name: Build Android
