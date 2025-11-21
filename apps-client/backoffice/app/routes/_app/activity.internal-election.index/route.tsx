@@ -33,7 +33,7 @@ function InternalElectionPage() {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <Typography variant="h1">Internal Election Management</Typography>
+      <Typography variant="h1">จัดการการเลือกตั้ง</Typography>
       <Data />
     </div>
   )
