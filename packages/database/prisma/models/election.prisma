@@ -67,11 +67,12 @@ model Election {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    candidates     ElectionCandidate[]
-    voters         ElectionEligibleVoter[]
-    voteRecords    ElectionVoteRecord[]
-    ballots        ElectionBallot[]
-    invalidBallots ElectionInvalidBallot[]
+    candidates            ElectionCandidate[]
+    voters                ElectionEligibleVoter[]
+    voteRecords           ElectionVoteRecord[]
+    ballots               ElectionBallot[]
+    invalidBallots        ElectionInvalidBallot[]
+    electionNotifications ElectionNotification[]
 
     @@index([name])
 }
@@ -163,4 +164,17 @@ model ElectionInvalidBallot {
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+}
+
+model ElectionNotification {
+    userId     String
+    electionId String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    election Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+
+    @@id([userId, electionId])
 }
