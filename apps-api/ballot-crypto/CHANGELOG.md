@@ -1,5 +1,18 @@
 # @api/ballot-crypto
 
+## 1.1.0
+
+### Minor Changes
+
+- [#304](https://github.com/PPLEThai/pple-today/pull/304) [`5bf3693`](https://github.com/PPLEThai/pple-today/commit/5bf36936c47a353ac7859d2426ae16a2d3bf5671) Thanks [@miello](https://github.com/miello)! - [[PPLE-583] Add robot.txt for backoffice to prevent bot scraping](https://linear.app/snts/issue/PPLE-583/add-robottxt-for-backoffice-to-prevent-bot-scraping)
+
+### Patch Changes
+
+- [#302](https://github.com/PPLEThai/pple-today/pull/302) [`2c7289f`](https://github.com/PPLEThai/pple-today/commit/2c7289f9c34d787a27e742d746d8d7b905951689) Thanks [@miello](https://github.com/miello)! - [[PPLE-539] Create Election](https://linear.app/snts/issue/PPLE-539/create-election)
+  [[PPLE-505] Edit Election](https://linear.app/snts/issue/PPLE-505/edit-election)
+- Updated dependencies [[`63aeb8d`](https://github.com/PPLEThai/pple-today/commit/63aeb8d070d216afd5c49a8d621c4c6b2542fa22), [`2c7289f`](https://github.com/PPLEThai/pple-today/commit/2c7289f9c34d787a27e742d746d8d7b905951689), [`42cfabb`](https://github.com/PPLEThai/pple-today/commit/42cfabb8fb50141aca6ee8bbe2beebd168d21812), [`6f173f1`](https://github.com/PPLEThai/pple-today/commit/6f173f1e4f71bc86537d57d76b9925612c472d53)]:
+  - @pple-today/api-common@1.1.0
+
 ## 1.0.1
 
 ### Patch Changes

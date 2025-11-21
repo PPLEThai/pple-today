@@ -1,5 +1,29 @@
 # @client/mobile
 
+## 2.2.0
+
+### Minor Changes
+
+- [#276](https://github.com/PPLEThai/pple-today/pull/276) [`5103fc2`](https://github.com/PPLEThai/pple-today/commit/5103fc255e17ac30c17c10988182ecb9bedcbf95) Thanks [@miello](https://github.com/miello)! - [[PPLE-541] Mini-app hyper link](https://linear.app/snts/issue/PPLE-541/mini-app-hyper-link)
+
+### Patch Changes
+
+- [#313](https://github.com/PPLEThai/pple-today/pull/313) [`92b418b`](https://github.com/PPLEThai/pple-today/commit/92b418b58efdfe698f88e4fd8c6955e591df9d76) Thanks [@miello](https://github.com/miello)! - [[PPLE-598] Remove pin icon when activity location is not provided](https://linear.app/snts/issue/PPLE-598/remove-pin-icon-when-activity-location-is-not-provided)
+  [[PPLE-592] Wrong User Profile Description in Who to follow](https://linear.app/snts/issue/PPLE-592/wrong-user-profile-description-in-who-to-follow)
+
+- [#302](https://github.com/PPLEThai/pple-today/pull/302) [`2c7289f`](https://github.com/PPLEThai/pple-today/commit/2c7289f9c34d787a27e742d746d8d7b905951689) Thanks [@miello](https://github.com/miello)! - [[PPLE-539] Create Election](https://linear.app/snts/issue/PPLE-539/create-election)
+  [[PPLE-505] Edit Election](https://linear.app/snts/issue/PPLE-505/edit-election)
+
+- [#300](https://github.com/PPLEThai/pple-today/pull/300) [`df55eaa`](https://github.com/PPLEThai/pple-today/commit/df55eaae1dd7649839b89dbbb786163d6cc544a1) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-555] Display "waiting for announcement" in election status "closed"](https://linear.app/snts/issue/PPLE-555/display-waiting-for-announcement-in-election-status-closed)
+
+- [#301](https://github.com/PPLEThai/pple-today/pull/301) [`fbf029c`](https://github.com/PPLEThai/pple-today/commit/fbf029cd7d4b860b7cd76d673641d7126650dc57) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-556] Optimistic Action](https://linear.app/snts/issue/PPLE-556/optimistic-action)
+
+- [#314](https://github.com/PPLEThai/pple-today/pull/314) [`5c2d008`](https://github.com/PPLEThai/pple-today/commit/5c2d008e5165dd36cd76beac6e2caae2666bd577) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-595] Poll and Post Interaction disappear when refresh](https://linear.app/snts/issue/PPLE-595/poll-and-post-interaction-disappear-when-refresh)
+
+- [#297](https://github.com/PPLEThai/pple-today/pull/297) [`b4b0fa0`](https://github.com/PPLEThai/pple-today/commit/b4b0fa04dd2cbc415a9cf2627bb861248bc35029) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-581] Fix android deploy](https://linear.app/snts/issue/PPLE-581/fix-android-deploy)
+
+- [#299](https://github.com/PPLEThai/pple-today/pull/299) [`1010c00`](https://github.com/PPLEThai/pple-today/commit/1010c00f2292dd5d5814366f570f7a3277b0aa2d) Thanks [@Anon-136](https://github.com/Anon-136)! - [[PPLE-562] Prevent user follow themselves](https://linear.app/snts/issue/PPLE-562/prevent-user-follow-themselves)
+
 ## 2.1.0
 
 ### Minor Changes
