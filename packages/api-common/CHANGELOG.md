@@ -1,5 +1,23 @@
 # @pple-today/api-common
 
+## 1.1.0
+
+### Minor Changes
+
+- [#306](https://github.com/PPLEThai/pple-today/pull/306) [`42cfabb`](https://github.com/PPLEThai/pple-today/commit/42cfabb8fb50141aca6ee8bbe2beebd168d21812) Thanks [@miello](https://github.com/miello)! - [[PPLE-469] [Mini App] Implement CRUD for mini app management](https://linear.app/snts/issue/PPLE-469/mini-app-implement-crud-for-mini-app-management)
+
+### Patch Changes
+
+- [#308](https://github.com/PPLEThai/pple-today/pull/308) [`63aeb8d`](https://github.com/PPLEThai/pple-today/commit/63aeb8d070d216afd5c49a8d621c4c6b2542fa22) Thanks [@miello](https://github.com/miello)! - [[PPLE-576] Fix error while deleting FB Page Connection](https://linear.app/snts/issue/PPLE-576/fix-error-while-deleting-fb-page-connection)
+
+- [#302](https://github.com/PPLEThai/pple-today/pull/302) [`2c7289f`](https://github.com/PPLEThai/pple-today/commit/2c7289f9c34d787a27e742d746d8d7b905951689) Thanks [@miello](https://github.com/miello)! - [[PPLE-539] Create Election](https://linear.app/snts/issue/PPLE-539/create-election)
+  [[PPLE-505] Edit Election](https://linear.app/snts/issue/PPLE-505/edit-election)
+
+- [#308](https://github.com/PPLEThai/pple-today/pull/308) [`6f173f1`](https://github.com/PPLEThai/pple-today/commit/6f173f1e4f71bc86537d57d76b9925612c472d53) Thanks [@miello](https://github.com/miello)! - [[PPLE-586] [API] Fix wrong schema in inspect facebook access token](https://linear.app/snts/issue/PPLE-586/api-fix-wrong-schema-in-inspect-facebook-access-token)
+
+- Updated dependencies [[`2c7289f`](https://github.com/PPLEThai/pple-today/commit/2c7289f9c34d787a27e742d746d8d7b905951689), [`42cfabb`](https://github.com/PPLEThai/pple-today/commit/42cfabb8fb50141aca6ee8bbe2beebd168d21812), [`00aa3c1`](https://github.com/PPLEThai/pple-today/commit/00aa3c1812d4a31a2e8e60acdc2192d6129c8516)]:
+  - @pple-today/database@1.1.0
+
 ## 1.0.1
 
 ### Patch Changes

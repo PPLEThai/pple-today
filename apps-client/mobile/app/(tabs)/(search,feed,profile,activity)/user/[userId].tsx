@@ -47,11 +47,11 @@ export default function ProfilePage() {
   })
 
   const userFeedInfiniteQuery = useInfiniteQuery({
-    queryKey: reactQueryClient.getQueryKey('/feed/users/:id', {
+    queryKey: reactQueryClient.getQueryKey('/feed/author/:id', {
       pathParams: { id: userId! },
     }),
     queryFn: async ({ pageParam }) => {
-      const response = await fetchClient('/feed/users/:id', {
+      const response = await fetchClient('/feed/author/:id', {
         params: { id: userId! },
         query: { cursor: pageParam, limit: LIMIT },
       })
@@ -93,7 +93,7 @@ export default function ProfilePage() {
           queryKey: reactQueryClient.getQueryKey('/profile/:id', { pathParams: { id: userId! } }),
         }),
         queryClient.resetQueries({
-          queryKey: reactQueryClient.getQueryKey('/feed/users/:id', {
+          queryKey: reactQueryClient.getQueryKey('/feed/author/:id', {
             pathParams: { id: userId! },
           }),
         }),
@@ -107,7 +107,7 @@ export default function ProfilePage() {
           queryKey: reactQueryClient.getQueryKey('/profile/:id', { pathParams: { id: userId! } }),
         }),
         queryClient.resetQueries({
-          queryKey: reactQueryClient.getQueryKey('/feed/users/:id', {
+          queryKey: reactQueryClient.getQueryKey('/feed/author/:id', {
             pathParams: { id: userId! },
           }),
         }),

@@ -162,9 +162,9 @@ export const FeedController = new Elysia({
     }
   )
   .get(
-    '/users/:id',
-    async ({ feedService, query, params, status }) => {
-      const result = await feedService.getFeedByUserId(params.id, {
+    '/author/:id',
+    async ({ feedService, query, params, status, user }) => {
+      const result = await feedService.getFeedByAuthorId(params.id, user?.id, {
         cursor: query?.cursor,
         limit: query?.limit,
       })
@@ -188,8 +188,8 @@ export const FeedController = new Elysia({
         ),
       },
       detail: {
-        summary: 'Get feed items by user ID',
-        description: 'Fetch feed items created by a specific user',
+        summary: 'Get feed items by author ID',
+        description: 'Fetch feed items created by a specific author',
       },
     }
   )
