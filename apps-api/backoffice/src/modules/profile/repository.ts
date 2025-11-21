@@ -1,7 +1,7 @@
 import { ElectionStatus, FilePath, ParticipationType } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { Election, Prisma, UserStatus } from '@pple-today/database/prisma'
+import { Election, FollowActionType, Prisma, UserStatus } from '@pple-today/database/prisma'
 import { get_candidate_user } from '@pple-today/database/prisma/sql'
 import Elysia from 'elysia'
 import * as R from 'remeda'
@@ -135,6 +135,13 @@ export class ProfileRepository {
             },
           },
         }),
+        this.prismaService.userFollowsUserLog.create({
+          data: {
+            followerId: userId,
+            followingId: followingUserId,
+            action: FollowActionType.FOLLOW,
+          },
+        }),
         this.prismaService.user.update({
           where: { id: userId, status: UserStatus.ACTIVE },
           data: {
@@ -162,6 +169,13 @@ export class ProfileRepository {
             follower: {
               status: UserStatus.ACTIVE,
             },
+          },
+        }),
+        this.prismaService.userFollowsUserLog.create({
+          data: {
+            followerId: userId,
+            followingId: followingUserId,
+            action: FollowActionType.UNFOLLOW,
           },
         }),
         this.prismaService.user.update({

@@ -30,10 +30,11 @@ model Topic {
     createdAt       DateTime    @default(now())
     updatedAt       DateTime    @updatedAt
 
-    hashTags      HashTagInTopic[]
-    followers     UserFollowsTopic[]
-    polls         PollTopic[]
-    announcements AnnouncementTopic[]
+    hashTags        HashTagInTopic[]
+    followers       UserFollowsTopic[]
+    polls           PollTopic[]
+    announcements   AnnouncementTopic[]
+    userFollowsLogs UserFollowsTopicLog[]
 
     @@index([status])
 }

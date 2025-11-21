@@ -1,6 +1,6 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { HashTagStatus, Prisma, TopicStatus } from '@pple-today/database/prisma'
+import { FollowActionType, HashTagStatus, Prisma, TopicStatus } from '@pple-today/database/prisma'
 import { get_candidate_topic } from '@pple-today/database/prisma/sql'
 import Elysia from 'elysia'
 import * as R from 'remeda'
@@ -148,22 +148,58 @@ export class TopicRepository {
 
   async userFollowManyTopics(userId: string, topicIds: string[]) {
     return fromRepositoryPromise(
-      this.prismaService.user.update({
-        where: {
-          id: userId,
-        },
-        data: {
-          numberOfFollowingTopics: topicIds.length,
-          followingTopics: {
-            deleteMany: {},
-            createMany: {
-              data: topicIds.map((topicId) => ({
-                topicId,
-              })),
+      this.prismaService.$transaction(async (tx) => {
+        const currentTopics = await tx.userFollowsTopic.findMany({
+          where: {
+            userId,
+          },
+          select: {
+            topicId: true,
+          },
+        })
+
+        const currentTopicIds = currentTopics.map((t) => t.topicId)
+
+        const newTopicIds = topicIds.filter((id) => !currentTopicIds.includes(id))
+        const deletedTopicIds = currentTopicIds.filter((id) => !topicIds.includes(id))
+
+        return await tx.user.update({
+          where: {
+            id: userId,
+          },
+          data: {
+            numberOfFollowingTopics: topicIds.length,
+            followingTopics: {
+              deleteMany: {
+                topicId: {
+                  in: deletedTopicIds,
+                },
+              },
+              createMany: {
+                data: newTopicIds.map((topicId) => ({
+                  topicId,
+                })),
+              },
+            },
+            followTopicLogs: {
+              createMany: {
+                data: [
+                  ...deletedTopicIds.map((topicId) => ({
+                    topicId,
+                    userId,
+                    action: FollowActionType.UNFOLLOW,
+                  })),
+                  ...newTopicIds.map((topicId) => ({
+                    topicId,
+                    userId,
+                    action: FollowActionType.FOLLOW,
+                  })),
+                ],
+              },
             },
           },
-        },
-        select: { followingTopics: { select: { topicId: true } } },
+          select: { followingTopics: { select: { topicId: true } } },
+        })
       })
     )
   }
@@ -181,6 +217,12 @@ export class TopicRepository {
             followingTopics: {
               create: {
                 topicId,
+              },
+            },
+            followTopicLogs: {
+              create: {
+                topicId,
+                action: FollowActionType.FOLLOW,
               },
             },
             numberOfFollowingTopics: {
@@ -208,6 +250,12 @@ export class TopicRepository {
                   userId,
                   topicId,
                 },
+              },
+            },
+            followTopicLogs: {
+              create: {
+                topicId,
+                action: FollowActionType.UNFOLLOW,
               },
             },
             numberOfFollowingTopics: {

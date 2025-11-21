@@ -3,6 +3,8 @@ import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import {
   AnnouncementStatus,
+  FeedItemCommentAction,
+  FeedItemReactionLogType,
   FeedItemReactionType,
   FeedItemType,
   HashTagStatus,
@@ -837,6 +839,14 @@ export class FeedRepository {
           },
         })
 
+        await tx.feedItemReactionLog.create({
+          data: {
+            feedItemId,
+            userId,
+            type,
+          },
+        })
+
         await tx.feedItemReactionCount.upsert({
           where: { feedItemId_type: { feedItemId, type } },
           update: { count: { increment: 1 } },
@@ -858,6 +868,15 @@ export class FeedRepository {
               userId,
               content,
               isPrivate: true, // Assuming downvotes are private comments
+              commentLogs: {
+                create: {
+                  userId,
+                  action: FeedItemCommentAction.CREATE,
+                  feedItemId,
+                  content,
+                  isPrivate: true,
+                },
+              },
             },
             select: {
               id: true,
@@ -893,6 +912,14 @@ export class FeedRepository {
               userId,
               feedItemId,
             },
+          },
+        })
+
+        await tx.feedItemReactionLog.create({
+          data: {
+            feedItemId,
+            userId,
+            type: FeedItemReactionLogType.REMOVE_VOTE,
           },
         })
 
@@ -987,6 +1014,15 @@ export class FeedRepository {
               userId,
               content,
               isPrivate,
+              commentLogs: {
+                create: {
+                  userId,
+                  action: FeedItemCommentAction.CREATE,
+                  feedItemId,
+                  content,
+                  isPrivate,
+                },
+              },
             },
             select: {
               id: true,
@@ -1042,6 +1078,14 @@ export class FeedRepository {
           },
           data: {
             content,
+            commentLogs: {
+              create: {
+                userId,
+                action: FeedItemCommentAction.UPDATE,
+                feedItemId,
+                content,
+              },
+            },
           },
         })
       })
@@ -1075,6 +1119,12 @@ export class FeedRepository {
           where: { id: feedItemId },
           data: {
             numberOfComments: { decrement: !feedItemComment.isPrivate ? 1 : 0 },
+            commentLogs: {
+              create: {
+                userId,
+                action: FeedItemCommentAction.DELETE,
+              },
+            },
           },
         })
       })
