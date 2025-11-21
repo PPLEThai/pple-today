@@ -33,6 +33,7 @@ interface UserCardProps {
       district: string
     } | null
     followed?: boolean
+    roles: string[]
   }
 }
 
@@ -59,9 +60,8 @@ export function UserCard(props: UserCardProps) {
         <Text className="text-sm text-base-text-high font-heading-semibold text-center line-clamp-2">
           {props.user.name}
         </Text>
-        {props.user.address && (
+        {props.user.address && props.user.roles.includes('pple-ad:mp') && (
           <Text className="text-sm text-base-text-medium font-heading-regular text-center line-clamp-1">
-            {/* TODO: check role */}
             สส. {props.user.address.province}
           </Text>
         )}
