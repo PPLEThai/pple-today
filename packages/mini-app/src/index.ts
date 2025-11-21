@@ -123,7 +123,7 @@ export class PPLEMiniApp {
       redirect_uri: this.config.oauthRedirectUri,
       response_type: 'code',
       scope: 'openid profile phone',
-      stateStore: new WebStorageStateStore({
+      userStore: new WebStorageStateStore({
         store: isMiniApp ? window.sessionStorage : window.localStorage,
       }),
     })
