@@ -570,13 +570,14 @@ export class FeedRepository {
     )
   }
 
-  async listFeedItemsByUserId(
+  async listFeedItemsByAuthorId(
+    authorId: string,
     userId: string | undefined,
     query: { cursor?: string; limit: number }
   ) {
     const rawFeedItems = await fromRepositoryPromise(async () => {
       await this.prismaService.user.findUniqueOrThrow({
-        where: { id: userId },
+        where: { id: authorId },
         select: { id: true },
       })
 
@@ -593,7 +594,7 @@ export class FeedRepository {
         take: query.limit,
         cursor: query.cursor ? { id: query.cursor } : undefined,
         where: {
-          authorId: userId,
+          authorId: authorId,
           publishedAt: {
             lte: new Date(),
           },
