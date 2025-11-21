@@ -6,8 +6,12 @@ import {
   CreateBallotBody,
   CreateBallotParams,
   CreateBallotResponse,
+  CreateElectionNotificationParams,
+  CreateElectionNotificationResponse,
   CreateFaceImageUploadURLBody,
   CreateFaceImageUploadURLResponse,
+  DeleteElectionNotificationParams,
+  DeleteElectionNotificationResponse,
   GetElectionParams,
   GetElectionResponse,
   ListElectionQuery,
@@ -215,3 +219,35 @@ export const ElectionController = new Elysia({
       },
     }
   )
+  .post('/:electionId/notify', async () => {}, {
+    detail: {
+      summary: 'Create election notification',
+      description: 'Create election notification for the user',
+    },
+    requiredLocalUser: true,
+    params: CreateElectionNotificationParams,
+    response: {
+      200: CreateElectionNotificationResponse,
+      ...createErrorSchema(
+        InternalErrorCode.UNAUTHORIZED,
+        InternalErrorCode.ELECTION_NOT_FOUND,
+        InternalErrorCode.INTERNAL_SERVER_ERROR
+      ),
+    },
+  })
+  .delete('/:electionId/notify', async () => {}, {
+    detail: {
+      summary: 'Remove election notification',
+      description: 'Remove election notification for the user',
+    },
+    requiredLocalUser: true,
+    params: DeleteElectionNotificationParams,
+    response: {
+      200: DeleteElectionNotificationResponse,
+      ...createErrorSchema(
+        InternalErrorCode.UNAUTHORIZED,
+        InternalErrorCode.ELECTION_NOT_FOUND,
+        InternalErrorCode.INTERNAL_SERVER_ERROR
+      ),
+    },
+  })

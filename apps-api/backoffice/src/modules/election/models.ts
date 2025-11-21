@@ -112,3 +112,23 @@ export const CreateBallotResponse = t.Object({
   message: t.String(),
 })
 export type CreateBallotResponse = Static<typeof CreateBallotResponse>
+
+export const CreateElectionNotificationParams = t.Object({
+  electionId: t.String(),
+})
+export type CreateElectionNotificationParams = Static<typeof CreateElectionNotificationParams>
+
+export const CreateElectionNotificationResponse = t.Object({
+  message: t.String(),
+})
+export type CreateElectionNotificationResponse = Static<typeof CreateElectionNotificationResponse>
+
+export const DeleteElectionNotificationParams = t.Object({
+  electionId: t.String(),
+})
+export type DeleteElectionNotificationParams = Static<typeof DeleteElectionNotificationParams>
+
+export const DeleteElectionNotificationResponse = t.Object({
+  message: t.String(),
+})
+export type DeleteElectionNotificationResponse = Static<typeof DeleteElectionNotificationResponse>

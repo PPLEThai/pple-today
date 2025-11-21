@@ -359,6 +359,30 @@ export class ElectionService {
       uploadUrl: uploadUrl.value.url,
     })
   }
+
+  async createNotification(electionId: string, userId: string) {
+    const createNotificationResult = await this.electionRepository.createNotification(
+      electionId,
+      userId
+    )
+    if (createNotificationResult.isErr()) {
+      return mapRepositoryError(createNotificationResult.error)
+    }
+
+    return ok()
+  }
+
+  async deleteNotification(electionId: string, userId: string) {
+    const deleteNotificationResult = await this.electionRepository.deleteNotification(
+      electionId,
+      userId
+    )
+    if (deleteNotificationResult.isErr()) {
+      return mapRepositoryError(deleteNotificationResult.error)
+    }
+
+    return ok()
+  }
 }
 
 export const ElectionServicePlugin = new Elysia()
