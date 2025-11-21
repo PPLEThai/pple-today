@@ -62,7 +62,6 @@ export function UserCard(props: UserCardProps) {
         </Text>
         {props.user.address && props.user.roles.includes('pple-ad:mp') && (
           <Text className="text-sm text-base-text-medium font-heading-regular text-center line-clamp-1">
-            {/* TODO: check role */}
             สส. {props.user.address.province}
           </Text>
         )}
