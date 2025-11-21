@@ -1,5 +1,11 @@
 # @pple-today/mini-app
 
+## 1.0.1
+
+### Patch Changes
+
+- [#318](https://github.com/PPLEThai/pple-today/pull/318) [`9f2619c`](https://github.com/PPLEThai/pple-today/commit/9f2619cd8e5ff82d66d174ce042cc5d368d5f5d5) Thanks [@miello](https://github.com/miello)! - [[PPLE-599] [Mini App] Publish to npm package](https://linear.app/snts/issue/PPLE-599/mini-app-publish-to-npm-package)
+
 ## 1.0.0
 
 ### Major Changes
