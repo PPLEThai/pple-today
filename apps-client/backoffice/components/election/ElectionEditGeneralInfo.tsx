@@ -5,6 +5,7 @@ import { standardSchemaResolver } from '@hookform/resolvers/standard-schema'
 import { Button } from '@pple-today/web-ui/button'
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogTitle,
@@ -63,11 +64,11 @@ export const ElectionEditGeneralInfoForm = (props: ElectionEditGeneralInfoFormPr
             <Button type="submit" className="flex-1" disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting ? 'กําลังบันทึก' : 'บันทึก'}
             </Button>
-            <DialogTrigger asChild>
-              <Button variant="ghost" className="flex-1 min-w-0">
+            <DialogClose asChild>
+              <Button type="button" variant="ghost" className="flex-1 min-w-0">
                 ยกเลิก
               </Button>
-            </DialogTrigger>
+            </DialogClose>
           </div>
         </Form>
       </form>

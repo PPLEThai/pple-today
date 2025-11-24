@@ -51,7 +51,7 @@ export const AdminCreateElectionBody = t.Object({
     description: 'District of the election, required if type is ONSITE or HYBRID',
   }),
   type: t.Enum(ElectionType),
-  mode: t.Enum(ElectionMode),
+  mode: t.Optional(t.Enum(ElectionMode)),
   openRegister: t.Optional(t.Nullable(t.Date({ description: 'Required if type is HYBRID' }))),
   closeRegister: t.Optional(t.Nullable(t.Date({ description: 'Required if type is HYBRID' }))),
   openVoting: t.Date(),

@@ -7,7 +7,7 @@ import { Input } from '@pple-today/web-ui/input'
 import { Typography } from '@pple-today/web-ui/typography'
 import { FileUploadInput } from 'components/FileUploadInput'
 import { X } from 'lucide-react'
-import { ACCEPTED_FILE_TYPES } from 'utils/file-upload'
+import { ACCEPTED_CSV_FILE_TYPES } from 'utils/file-upload'
 
 import { ElectionFormValues } from './models'
 
@@ -38,7 +38,7 @@ export const ElectionEligibleVoterForm = () => {
                       if (!ev.target.files || ev.target.files.length === 0) return
                       onChange(ev.target.files[0])
                     }}
-                    accept={ACCEPTED_FILE_TYPES.join(',')}
+                    accept={ACCEPTED_CSV_FILE_TYPES.join(',')}
                   />
                 </FileUploadInput>
                 <Button
@@ -54,7 +54,7 @@ export const ElectionEligibleVoterForm = () => {
               </div>
             </FormControl>
             <Typography variant="small" className="text-base-text-placeholder">
-              อัปโหลดไฟล์รายชื่อผู้มีสิทธิ์ลงคะแนน (.csv, .xlsx)
+              อัปโหลดไฟล์รายชื่อผู้มีสิทธิ์ลงคะแนน (.csv)
             </Typography>
             <FormMessage />
           </FormItem>

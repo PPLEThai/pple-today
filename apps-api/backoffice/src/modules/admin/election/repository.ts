@@ -54,7 +54,7 @@ export class AdminElectionRepository {
     province: string
     district: string
     type: ElectionType
-    mode: ElectionMode
+    mode?: ElectionMode
     keysStatus: ElectionKeysStatus
     openRegister?: Date | null
     closeRegister?: Date | null
