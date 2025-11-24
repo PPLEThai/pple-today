@@ -42,26 +42,17 @@ export class AdminTopicService {
         },
       })
 
-    let bannerImageRes: {
-      url: string
-      filePath: FilePath
-    } | null = null
+    const bannerImagePath = result.value.bannerImagePath ?? 'public/topic/topic-default.png'
 
-    if (result.value.bannerImagePath) {
-      const getSignedUrlResult = await this.fileService.getFileSignedUrl(
-        result.value.bannerImagePath
-      )
-      if (getSignedUrlResult.isErr()) return err(getSignedUrlResult.error)
-
-      bannerImageRes = {
-        url: getSignedUrlResult.value,
-        filePath: result.value.bannerImagePath as FilePath,
-      }
-    }
+    const getSignedUrlResult = await this.fileService.getFileSignedUrl(bannerImagePath)
+    if (getSignedUrlResult.isErr()) return err(getSignedUrlResult.error)
 
     return ok({
       ...result.value,
-      bannerImage: bannerImageRes,
+      bannerImage: {
+        url: getSignedUrlResult.value,
+        filePath: bannerImagePath as FilePath,
+      },
     } satisfies GetTopicByIdResponse)
   }
 
