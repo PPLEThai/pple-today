@@ -54,7 +54,12 @@ WITH
       other_candidate_user
       INNER JOIN "User" u ON other_candidate_user.user_id = u.id
     WHERE 
-      u."status" = 'ACTIVE'
+      u."status" = 'ACTIVE' AND EXISTS (
+        SELECT 1
+        FROM "UserRole" ur
+        WHERE ur."userId" = other_candidate_user.user_id AND (ur."role" = 'pple-ad:mp' OR ur."role" = 'pple-ad:hq')
+        LIMIT 1
+      )
     UNION ALL
     SELECT 
       candidate_user.user_id,
@@ -63,7 +68,12 @@ WITH
       candidate_user
       INNER JOIN "User" u ON candidate_user.user_id = u.id
     WHERE 
-      u."status" = 'ACTIVE'
+      u."status" = 'ACTIVE' AND EXISTS (
+        SELECT 1
+        FROM "UserRole" ur
+        WHERE ur."userId" = candidate_user.user_id AND (ur."role" = 'pple-ad:mp' OR ur."role" = 'pple-ad:hq')
+        LIMIT 1
+      )
   ),
 
   final_candidate_score AS (
