@@ -12,9 +12,11 @@ export const ElectionFormSchema = z
     type: z.enum(['ONSITE', 'ONLINE', 'HYBRID'], {
       error: 'กรุณาเลือกประเภทการเลือกตั้ง',
     }),
-    mode: z.enum(['FLEXIBLE', 'SECURE'], {
-      error: 'กรุณาเลือกประเภทของการเชื่อมต่อข้อมูล',
-    }),
+    mode: z
+      .enum(['FLEXIBLE', 'SECURE'], {
+        error: 'กรุณาเลือกประเภทของการเชื่อมต่อข้อมูล',
+      })
+      .optional(),
     openRegister: z.date({ error: 'กรุณาเลือกวันที่เปิดลงทะเบียน' }).optional(),
     closeRegister: z.date({ error: 'กรุณาเลือกวันที่ปิดลงทะเบียน' }).optional(),
     openVoting: z.date({ error: 'กรุณาเลือกวันที่เปิดหีบ' }),
@@ -125,6 +127,16 @@ export const ElectionFormSchema = z
           expected: 'date',
           input: value.closeRegister,
           path: ['closeRegister'],
+        })
+      }
+    }
+    if (value.type !== 'ONSITE') {
+      if (!value.mode) {
+        issues.push({
+          code: 'invalid_type',
+          message: 'กรุณาเลือกโหมดการเชื่อมต่อข้อมูล',
+          expected: 'string',
+          input: value.mode,
         })
       }
     }

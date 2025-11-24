@@ -163,59 +163,61 @@ export const ElectionGeneralInfoForm = ({
           </FormItem>
         )}
       />
-      <FormField
-        control={form.control}
-        name="mode"
-        render={({ field }) => (
-          <FormItem className="space-y-2">
-            <FormLabel>
-              ประเภทของการเชื่อมต่อข้อมูล <span className="text-system-danger-default">*</span>
-            </FormLabel>
-            <FormControl>
-              <RadioGroup
-                disabled={!isAbleToChangeMode}
-                value={field.value}
-                onValueChange={(value) => {
-                  field.onChange(value)
-                }}
-                ref={field.ref}
-                className="grid-cols-2"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="FLEXIBLE" id="radio-group-flexible" />
-                  <Label htmlFor="radio-group-flexible">
-                    <div className="flex flex-col gap-2">
-                      <Typography variant="small" className="text-base-text-high">
-                        Flexible Mode
-                      </Typography>
-                      <Typography variant="small" className="text-base-text-placeholder">
-                        ยังคงการเชื่อมต่อระหว่างบัตรเลือกตั้งกับผู้เลือกตั้งไว้เมื่อกดนับคะแนน
-                      </Typography>
-                    </div>
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="SECURE" id="radio-group-secure" />
-                  <Label htmlFor="radio-group-secure">
-                    <div className="flex flex-col gap-2">
-                      <Typography variant="small">Secure Mode</Typography>
-                      <Typography variant="small" className="text-base-text-placeholder">
-                        ตัดการเชื่อมต่อระหว่างบัตรเลือกตั้งกับผู้เลือกตั้งทันทีเมื่อกดนับคะแนน
-                      </Typography>
-                    </div>
-                  </Label>
-                </div>
-              </RadioGroup>
-            </FormControl>
-            {field.value === 'SECURE' && isAbleToChangeMode && (
-              <Typography variant="small" className="text-system-danger-default m-auto mt-2">
-                เมื่อเปลี่ยนประเภทการเชื่อมต่อข้อมูลเป็น Secure Mode แล้วจะไม่สามารถย้อนกลับได้
-              </Typography>
-            )}
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      {electionType !== 'ONSITE' && (
+        <FormField
+          control={form.control}
+          name="mode"
+          render={({ field }) => (
+            <FormItem className="space-y-2">
+              <FormLabel>
+                ประเภทของการเชื่อมต่อข้อมูล <span className="text-system-danger-default">*</span>
+              </FormLabel>
+              <FormControl>
+                <RadioGroup
+                  disabled={!isAbleToChangeMode}
+                  value={field.value}
+                  onValueChange={(value) => {
+                    field.onChange(value)
+                  }}
+                  ref={field.ref}
+                  className="grid-cols-2"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="FLEXIBLE" id="radio-group-flexible" />
+                    <Label htmlFor="radio-group-flexible">
+                      <div className="flex flex-col gap-2">
+                        <Typography variant="small" className="text-base-text-high">
+                          Flexible Mode
+                        </Typography>
+                        <Typography variant="small" className="text-base-text-placeholder">
+                          ยังคงการเชื่อมต่อระหว่างบัตรเลือกตั้งกับผู้เลือกตั้งไว้เมื่อกดนับคะแนน
+                        </Typography>
+                      </div>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="SECURE" id="radio-group-secure" />
+                    <Label htmlFor="radio-group-secure">
+                      <div className="flex flex-col gap-2">
+                        <Typography variant="small">Secure Mode</Typography>
+                        <Typography variant="small" className="text-base-text-placeholder">
+                          ตัดการเชื่อมต่อระหว่างบัตรเลือกตั้งกับผู้เลือกตั้งทันทีเมื่อกดนับคะแนน
+                        </Typography>
+                      </div>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </FormControl>
+              {field.value === 'SECURE' && isAbleToChangeMode && (
+                <Typography variant="small" className="text-system-danger-default m-auto mt-2">
+                  เมื่อเปลี่ยนประเภทการเชื่อมต่อข้อมูลเป็น Secure Mode แล้วจะไม่สามารถย้อนกลับได้
+                </Typography>
+              )}
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      )}
       {electionType === 'HYBRID' && (
         <div className="flex flex-row gap-4">
           <FormField
