@@ -13,6 +13,10 @@ const withAndroidPlugin: ConfigPlugin = (config) => {
         },
       ],
     })
+    config.modResults.manifest.application?.[0].activity?.[0]['intent-filter']?.push({
+      action: [{ $: { 'android:name': '.MainActivity' } }],
+      category: [{ $: { 'android:name': 'android.intent.category.DEFAULT' } }],
+    })
 
     return config
   })
