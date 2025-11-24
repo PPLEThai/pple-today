@@ -1,6 +1,7 @@
 export const MAX_FILE_SIZE = 5 * 1024 * 1024
 export const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
 export const ACCEPTED_FILE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf']
+export const ACCEPTED_CSV_FILE_TYPES = ['text/csv']
 
 export const handleUploadFile = async (
   file: File,
