@@ -139,7 +139,7 @@ export const ElectionGeneralInfoForm = ({
                   }
 
                   if (value !== 'ONLINE') {
-                    form.setValue('locationMapUrl', '')
+                    form.setValue('locationMapUrl', undefined)
                   }
                 }}
                 ref={field.ref}

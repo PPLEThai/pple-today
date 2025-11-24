@@ -69,6 +69,9 @@ export const Data = () => {
       const result = await createMutation.mutateAsync({
         body: {
           name: data.name,
+          description: data.description,
+          location: data.location,
+          locationMapUrl: data.locationMapUrl,
           district: data.district,
           province: data.province,
           openVoting: data.openVoting,
