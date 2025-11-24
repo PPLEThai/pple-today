@@ -146,7 +146,7 @@ export const Data = () => {
         header: 'ชื่อประกาศ',
         cell: (info) => (
           <Link
-            className="hover:underline"
+            className="hover:underline block max-w-[400px] overflow-ellipsis overflow-hidden"
             to="/feed/announcement/$announcementId"
             params={{ announcementId: info.row.original.id }}
           >
@@ -295,9 +295,9 @@ export const Data = () => {
         filterExtension={
           <AnnouncementCreate
             trigger={
-              <Button>
+              <Button className="gap-2">
                 <Plus />
-                สร้างประกาศ
+                <span>สร้างประกาศ</span>
               </Button>
             }
             onSuccess={invalidateQuery}
