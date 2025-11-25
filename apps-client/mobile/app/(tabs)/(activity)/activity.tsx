@@ -28,7 +28,7 @@ import {
   TicketIcon,
 } from 'lucide-react-native'
 
-import { FeedItem, FeedItemPoll, ListPollsResponse } from '@api/backoffice/app'
+import { FeedItem, FeedItemPoll, ListPollsResponse, PPLEActivity } from '@api/backoffice/app'
 import {
   ActivityCard,
   ActivityCardProps,
@@ -39,12 +39,7 @@ import { RefreshControl } from '@app/components/refresh-control'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
-import {
-  EXAMPLE_ACTIVITY,
-  GetPPLEActivity,
-  mapToActivity,
-  useRecentActivityQuery,
-} from '@app/libs/pple-activity'
+import { EXAMPLE_ACTIVITY, mapToActivity } from '@app/libs/pple-activity'
 import { createImageUrl } from '@app/utils/image'
 
 import { useBottomTabOnPress } from '../_layout'
@@ -175,7 +170,7 @@ function RecentActivity() {
       },
     },
     {
-      select: useCallback((data: GetPPLEActivity): ActivityCardProps['activity'][] => {
+      select: useCallback((data: PPLEActivity): ActivityCardProps['activity'][] => {
         return data.result.map(mapToActivity)
       }, []),
     }
@@ -267,7 +262,6 @@ function PollFeedSection(props: { ListHeaderComponent: React.ReactNode }) {
   const queryClient = useQueryClient()
   const onRefresh = React.useCallback(async () => {
     await queryClient.resetQueries({ queryKey: [QUERY_KEY_SYMBOL, 'infinite', 'polls'] })
-    await queryClient.invalidateQueries({ queryKey: useRecentActivityQuery.getKey() })
   }, [queryClient])
 
   const flatListRef = React.useRef<Animated.FlatList<any>>(null)

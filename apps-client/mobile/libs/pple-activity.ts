@@ -1,70 +1,6 @@
-import { createQuery } from 'react-query-kit'
-
-import { QUERY_KEY_SYMBOL } from '@pple-today/api-client'
 import dayjs from 'dayjs'
-import { z } from 'zod/v4'
 
-export const GetPPLEActivitySchema = z.object({
-  data: z.object({
-    date: z.string().pipe(z.iso.date()),
-    limit: z.number(),
-    total_items: z.number(),
-    current_page: z.number(),
-    last_pages: z.number(),
-    is_lastpage: z.boolean(),
-  }),
-  result: z.array(
-    z.object({
-      event_data: z.object({
-        ID: z.number(),
-        title: z.string(),
-        url: z.url(),
-        image: z.url(),
-        event_date: z.string().pipe(z.iso.date()),
-        is_upcoming: z.boolean(),
-        province: z.string(),
-        event_type: z.string(),
-        event_detail: z.object({
-          time_start: z.string().pipe(z.iso.time()).nullable(),
-          time_end: z.string().pipe(z.iso.time()).nullable(),
-          date: z.string().pipe(z.iso.date()),
-          venue: z.string(),
-        }),
-      }),
-    })
-  ),
-})
-export type GetPPLEActivity = z.infer<typeof GetPPLEActivitySchema>
-
-export async function getPPLEActivity({
-  limit,
-  currentPage,
-  is_upcoming = true,
-}: { limit?: number; currentPage?: number; is_upcoming?: boolean } = {}) {
-  const params = new URLSearchParams({
-    ...(limit ? { limit: limit.toString() } : {}),
-    ...(currentPage ? { current_page: currentPage.toString() } : {}),
-  })
-  const response = await fetch(
-    `https://act.pplethai.org/external-api/get-last-event/?${params.toString()}`
-  )
-  if (!response.ok) {
-    throw response
-  }
-  const json = await response.json()
-  const data = await GetPPLEActivitySchema.parseAsync(json)
-  return {
-    ...data,
-    result: data.result.filter((item) => item.event_data.is_upcoming === is_upcoming),
-  }
-}
-
-export const useRecentActivityQuery = createQuery({
-  queryKey: [QUERY_KEY_SYMBOL, 'get', '/recent-activity'],
-  fetcher: ({ limit, currentPage }: { limit: number; currentPage?: number }) => {
-    return getPPLEActivity({ limit, currentPage })
-  },
-})
+import { PPLEActivity } from '@api/backoffice/app'
 
 export interface Activity {
   id: string
@@ -86,7 +22,7 @@ export const EXAMPLE_ACTIVITY: Activity = {
   url: 'https://www.facebook.com/',
 }
 
-export function mapToActivity(data: GetPPLEActivity['result'][number]): Activity {
+export function mapToActivity(data: PPLEActivity['result'][number]): Activity {
   return {
     id: data.event_data.ID.toString(),
     name: data.event_data.title,

@@ -17,6 +17,7 @@ import dayjs from 'dayjs'
 import { useRouter } from 'expo-router'
 import { ArrowLeftIcon, HandshakeIcon } from 'lucide-react-native'
 
+import { PPLEActivity } from '@api/backoffice/app'
 import {
   ActivityCard,
   ActivityCardProps,
@@ -36,7 +37,7 @@ import {
 import { RefreshControl } from '@app/components/refresh-control'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { fetchClient } from '@app/libs/api-client'
-import { Activity, GetPPLEActivity, mapToActivity } from '@app/libs/pple-activity'
+import { Activity, mapToActivity } from '@app/libs/pple-activity'
 import { useScrollContext } from '@app/libs/scroll-context'
 
 export default function RecentActivityPage() {
@@ -137,7 +138,7 @@ function TodayActivityContent(props: PagerScrollViewProps) {
       }
       return undefined
     },
-    select: useCallback((data: InfiniteData<GetPPLEActivity>): InfiniteData<Activity[]> => {
+    select: useCallback((data: InfiniteData<PPLEActivity>): InfiniteData<Activity[]> => {
       return {
         pages: data.pages.map((page) => page.result.map(mapToActivity)),
         pageParams: data.pageParams,
@@ -231,7 +232,7 @@ function UpcomingActivityContent(props: PagerScrollViewProps) {
       }
       return undefined
     },
-    select: useCallback((data: InfiniteData<GetPPLEActivity>): InfiniteData<Activity[]> => {
+    select: useCallback((data: InfiniteData<PPLEActivity>): InfiniteData<Activity[]> => {
       return {
         pages: data.pages.map((page) =>
           page.result.map(mapToActivity).filter((activity) => {
