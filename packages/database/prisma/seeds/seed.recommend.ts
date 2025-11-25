@@ -57,6 +57,23 @@ const seedUsers = async () => {
     skipDuplicates: true,
   })
 
+  for (let i = 0; i < NUMBER_OF_AUTHORS; i++) {
+    await prisma.user.update({
+      where: { id: `author-${i + 1}` },
+      data: {
+        roles: {
+          createMany: {
+            data: [
+              {
+                role: 'pple-ad:mp',
+              },
+            ],
+          },
+        },
+      },
+    })
+  }
+
   console.log(`Seeded ${NUMBER_OF_USERS} users, ${NUMBER_OF_AUTHORS} authors and 1 official user`)
 }
 
