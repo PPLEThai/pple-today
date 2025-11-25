@@ -35,7 +35,8 @@ import {
 } from '@app/components/pager-with-header'
 import { RefreshControl } from '@app/components/refresh-control'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
-import { Activity, GetPPLEActivity, getPPLEActivity, mapToActivity } from '@app/libs/pple-activity'
+import { fetchClient } from '@app/libs/api-client'
+import { Activity, GetPPLEActivity, mapToActivity } from '@app/libs/pple-activity'
 import { useScrollContext } from '@app/libs/scroll-context'
 
 export default function RecentActivityPage() {
@@ -116,13 +117,16 @@ function TodayActivityContent(props: PagerScrollViewProps) {
     queryKey: [QUERY_KEY_SYMBOL, 'infinite', 'today-activity'],
     initialPageParam: 1,
     queryFn: async ({ pageParam = 1 }) => {
-      const data = await getPPLEActivity({ limit: LIMIT, currentPage: pageParam })
-      return {
-        ...data,
-        result: data.result.filter((activity) => {
-          return dayjs(activity.event_data.event_date).isSame(dayjs(), 'day')
-        }),
+      const { data, error } = await fetchClient('/events/today', {
+        method: 'GET',
+        query: { limit: LIMIT, page: pageParam },
+      })
+
+      if (error) {
+        throw error
       }
+
+      return data
     },
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.result.length < LIMIT) {
@@ -207,7 +211,16 @@ function UpcomingActivityContent(props: PagerScrollViewProps) {
     queryKey: [QUERY_KEY_SYMBOL, 'infinite', 'upcoming-activity'],
     initialPageParam: 1,
     queryFn: async ({ pageParam = 1 }) => {
-      return getPPLEActivity({ limit: LIMIT, currentPage: pageParam })
+      const { data, error } = await fetchClient('/events', {
+        method: 'GET',
+        query: { limit: LIMIT, page: pageParam },
+      })
+
+      if (error) {
+        throw error
+      }
+
+      return data
     },
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.result.length < LIMIT) {

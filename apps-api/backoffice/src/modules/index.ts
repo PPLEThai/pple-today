@@ -5,6 +5,7 @@ import { AnnouncementsController } from './announcements'
 import { AuthController } from './auth'
 import { BannerController } from './banner'
 import { ElectionController } from './election'
+import { EventsController } from './event'
 import { FacebookController } from './facebook'
 import { FeedController } from './feed'
 import { FileServerController } from './files'
@@ -34,4 +35,5 @@ export const ApplicationController = new Elysia()
   .use(HashtagController)
   .use(FileServerController)
   .use(SearchController)
+  .use(EventsController)
   .use(MiniAppController)

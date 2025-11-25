@@ -37,7 +37,7 @@ import {
 import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
 import { RefreshControl } from '@app/components/refresh-control'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
-import { fetchClient } from '@app/libs/api-client'
+import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
 import {
   EXAMPLE_ACTIVITY,
@@ -167,12 +167,19 @@ export function MyActivity() {
 }
 
 function RecentActivity() {
-  const recentActivityQuery = useRecentActivityQuery({
-    variables: { limit: 3 },
-    select: useCallback((data: GetPPLEActivity): ActivityCardProps['activity'][] => {
-      return data.result.map(mapToActivity)
-    }, []),
-  })
+  const recentActivityQuery = reactQueryClient.useQuery(
+    '/events/today',
+    {
+      query: {
+        limit: 3,
+      },
+    },
+    {
+      select: useCallback((data: GetPPLEActivity): ActivityCardProps['activity'][] => {
+        return data.result.map(mapToActivity)
+      }, []),
+    }
+  )
   useEffect(() => {
     if (recentActivityQuery.isError) {
       console.error('Error fetching recent activity:', recentActivityQuery.error)
