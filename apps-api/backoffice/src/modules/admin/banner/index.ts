@@ -142,7 +142,7 @@ export const AdminBannerController = new Elysia({
   .patch(
     '/:id',
     async ({ params, body, adminBannerService, status }) => {
-      if (body.navigation === 'MINI_APP' && !body.miniAppId)
+      if (body.navigation === BannerNavigationType.MINI_APP && !body.miniAppId)
         return mapErrorCodeToResponse(
           {
             code: InternalErrorCode.BANNER_INVALID_INPUT,
@@ -150,15 +150,19 @@ export const AdminBannerController = new Elysia({
           },
           status
         )
-      if (body.navigation && body.navigation !== 'MINI_APP' && !body.destination)
+      if (body.navigation === BannerNavigationType.EXTERNAL_BROWSER && !body.destination)
         return mapErrorCodeToResponse(
           {
             code: InternalErrorCode.BANNER_INVALID_INPUT,
-            message: 'destination is required',
+            message: 'destination is required when navigation is EXTERNAL_BROWSER',
           },
           status
         )
-      if (body.navigation === 'IN_APP_NAVIGATION' && !body.inAppId && !body.inAppType)
+      if (
+        body.navigation === BannerNavigationType.IN_APP_NAVIGATION &&
+        !body.inAppId &&
+        !body.inAppType
+      )
         return mapErrorCodeToResponse(
           {
             code: InternalErrorCode.BANNER_INVALID_INPUT,
