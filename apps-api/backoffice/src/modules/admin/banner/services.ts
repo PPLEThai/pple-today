@@ -52,15 +52,26 @@ export class AdminBannerService {
                 filePath: imageFilePath as FilePath,
               },
             }
-          : {
-              ...bannerBody,
-              navigation,
-              destination: destination!,
-              image: {
-                url: imageBannerUrlResults.value[index],
-                filePath: imageFilePath as FilePath,
-              },
-            }
+          : navigation === BannerNavigationType.IN_APP_NAVIGATION
+            ? {
+                ...bannerBody,
+                navigation,
+                inAppId: bannerBody.inAppId!,
+                inAppType: bannerBody.inAppType!,
+                image: {
+                  url: imageBannerUrlResults.value[index],
+                  filePath: imageFilePath as FilePath,
+                },
+              }
+            : {
+                ...bannerBody,
+                navigation,
+                destination: destination!,
+                image: {
+                  url: imageBannerUrlResults.value[index],
+                  filePath: imageFilePath as FilePath,
+                },
+              }
     )
 
     return ok(response)
@@ -96,15 +107,26 @@ export class AdminBannerService {
               filePath: imageFilePath as FilePath,
             },
           }
-        : {
-            ...bannerBody,
-            navigation: bannerBody.navigation,
-            destination: bannerBody.destination!,
-            image: {
-              url: imageUrlResult.value,
-              filePath: imageFilePath as FilePath,
-            },
-          }
+        : bannerBody.navigation === BannerNavigationType.IN_APP_NAVIGATION
+          ? {
+              ...bannerBody,
+              navigation: bannerBody.navigation,
+              inAppId: bannerBody.inAppId!,
+              inAppType: bannerBody.inAppType!,
+              image: {
+                url: imageUrlResult.value,
+                filePath: imageFilePath as FilePath,
+              },
+            }
+          : {
+              ...bannerBody,
+              navigation: bannerBody.navigation,
+              destination: bannerBody.destination!,
+              image: {
+                url: imageUrlResult.value,
+                filePath: imageFilePath as FilePath,
+              },
+            }
 
     return ok(response)
   }

@@ -31,6 +31,16 @@ export class BannerService {
         }
       }
 
+      if (banner.navigation === 'IN_APP_NAVIGATION') {
+        return {
+          id: banner.id,
+          navigation: banner.navigation,
+          inAppId: banner.inAppId!,
+          inAppType: banner.inAppType!,
+          imageUrl: this.fileServerService.getFileEndpointUrl(banner.imageFilePath),
+        }
+      }
+
       return {
         id: banner.id,
         navigation: banner.navigation,

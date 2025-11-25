@@ -100,8 +100,14 @@ export const BannerEdit = (props: BannerEditProps) => {
       headline: props.banner.headline,
       navigationGroup: {
         navigation: props.banner.navigation,
-        destination: props.banner.navigation === 'MINI_APP' ? '' : props.banner.destination,
+        destination:
+          props.banner.navigation === 'EXTERNAL_BROWSER' || props.banner.navigation === 'MINI_APP'
+            ? props.banner.destination
+            : '',
         miniAppId: props.banner.navigation === 'MINI_APP' ? props.banner.miniAppId : '',
+        inAppId: props.banner.navigation === 'IN_APP_NAVIGATION' ? props.banner.inAppId : '',
+        inAppType:
+          props.banner.navigation === 'IN_APP_NAVIGATION' ? props.banner.inAppType : undefined,
       },
       imageFile: undefined,
     },
@@ -118,8 +124,14 @@ export const BannerEdit = (props: BannerEditProps) => {
       headline: props.banner.headline,
       navigationGroup: {
         navigation: props.banner.navigation,
-        destination: props.banner.navigation === 'MINI_APP' ? '' : props.banner.destination,
+        destination:
+          props.banner.navigation === 'EXTERNAL_BROWSER' || props.banner.navigation === 'MINI_APP'
+            ? props.banner.destination
+            : '',
         miniAppId: props.banner.navigation === 'MINI_APP' ? props.banner.miniAppId : '',
+        inAppId: props.banner.navigation === 'IN_APP_NAVIGATION' ? props.banner.inAppId : '',
+        inAppType:
+          props.banner.navigation === 'IN_APP_NAVIGATION' ? props.banner.inAppType : undefined,
       },
       imageFile: undefined,
     })

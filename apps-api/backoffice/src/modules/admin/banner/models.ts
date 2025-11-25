@@ -7,6 +7,8 @@ import {
 } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
+export { BannerInAppType }
+
 export const BannerIdParams = t.Object({
   id: t.String({ description: 'The ID of the banner item' }),
 })
