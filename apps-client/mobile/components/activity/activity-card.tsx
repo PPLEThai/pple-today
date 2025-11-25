@@ -11,7 +11,7 @@ import * as WebBrowser from 'expo-web-browser'
 import { decode } from 'html-entities'
 import { CalendarIcon, MapPinIcon } from 'lucide-react-native'
 
-import { Activity } from '@app/libs/pple-activity'
+import { Event as Activity } from '@api/backoffice/app'
 import { createImageUrl } from '@app/utils/image'
 
 export interface ActivityCardProps {
