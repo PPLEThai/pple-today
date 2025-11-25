@@ -43,6 +43,7 @@ export class AdminTopicService {
       })
 
     const bannerImagePath = result.value.bannerImagePath ?? 'public/topic/topic-default.png'
+    const isPlaceholder = !result.value.bannerImagePath
 
     const getSignedUrlResult = await this.fileService.getFileSignedUrl(bannerImagePath)
     if (getSignedUrlResult.isErr()) return err(getSignedUrlResult.error)
@@ -52,6 +53,7 @@ export class AdminTopicService {
       bannerImage: {
         url: getSignedUrlResult.value,
         filePath: bannerImagePath as FilePath,
+        isPlaceholder,
       },
     } satisfies GetTopicByIdResponse)
   }

@@ -21,6 +21,7 @@ export const DetailedTopic = t.Composite([
       t.Object({
         url: t.String({ description: 'The URL of the banner image' }),
         filePath: FilePath,
+        isPlaceholder: t.Boolean({ description: 'Whether the image is a placeholder' }),
       })
     ),
     hashtags: t.Array(
