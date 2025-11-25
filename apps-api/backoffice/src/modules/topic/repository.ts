@@ -186,12 +186,10 @@ export class TopicRepository {
                 data: [
                   ...deletedTopicIds.map((topicId) => ({
                     topicId,
-                    userId,
                     action: FollowActionType.UNFOLLOW,
                   })),
                   ...newTopicIds.map((topicId) => ({
                     topicId,
-                    userId,
                     action: FollowActionType.FOLLOW,
                   })),
                 ],
