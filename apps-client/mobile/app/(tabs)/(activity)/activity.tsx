@@ -28,14 +28,13 @@ import {
   TicketIcon,
 } from 'lucide-react-native'
 
-import { FeedItem, FeedItemPoll, ListPollsResponse } from '@api/backoffice/app'
+import { Event, FeedItem, FeedItemPoll, ListPollsResponse } from '@api/backoffice/app'
 import { ActivityCard, ActivityCardSkeleton } from '@app/components/activity/activity-card'
 import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
 import { RefreshControl } from '@app/components/refresh-control'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
-import { EXAMPLE_ACTIVITY } from '@app/libs/pple-activity'
 import { createImageUrl } from '@app/utils/image'
 
 import { useBottomTabOnPress } from '../_layout'
@@ -77,7 +76,16 @@ export function MyActivity() {
     return null
   }
   const isLoading = false // TODO: fetch user's activities
-  const activity = EXAMPLE_ACTIVITY
+  const activity: Event = {
+    id: '1',
+    name: 'Knowledge Center ครั้งที่ 1 – “เอาชีวิตรอดอย่างโปร ปฐมพยาบาลช่วยชีวิตปลอดภัย”',
+    location: 'อาคารอนาคตใหม่ (หัวหมาก 6)',
+    image: 'https://picsum.photos/300?random=0',
+    startAt: new Date(),
+    endAt: dayjs().add(1, 'day').toDate(),
+    url: 'https://www.facebook.com/',
+  }
+
   return (
     <View className="px-4">
       <View className="rounded-2xl border border-base-outline-default bg-base-bg-white px-4 py-3 flex flex-col gap-3">
