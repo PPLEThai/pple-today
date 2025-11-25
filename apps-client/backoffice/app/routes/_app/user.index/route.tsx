@@ -22,7 +22,7 @@ function UserPage() {
         <BreadcrumbList>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>ผู้ใช้งาน</BreadcrumbPage>
+            <BreadcrumbPage>User</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>

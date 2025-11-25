@@ -56,7 +56,7 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
                   <SidebarMenuButton asChild>
                     <Link to="/dashboard">
                       <PieChart />
-                      <span>Dashboard</span>
+                      <span>แดชบอร์ด</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -65,7 +65,7 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton>
                         <Newspaper />
-                        <span>Feed</span>
+                        <span>ฟีด</span>
                         <ChevronUp className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>

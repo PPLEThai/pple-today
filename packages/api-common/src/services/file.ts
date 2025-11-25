@@ -306,7 +306,7 @@ export class FileService {
 
       return [result, fileTransaction] as any
     } catch (err) {
-      const errorBody = err instanceof Err ? err.error : err
+      const errorBody = err instanceof Err ? err.error : err instanceof Error ? err.message : err
       this.loggerService.warn({
         message: 'File transaction failed, rolling back changes',
         context: { err: errorBody },

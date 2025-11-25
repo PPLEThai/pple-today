@@ -45,7 +45,7 @@ function Dashboard() {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <Typography variant="h1">Dashboard</Typography>
+      <Typography variant="h1">แดชบอร์ด</Typography>
       <div className="flex-1 min-h-0 flex flex-col gap-4">
         <div className="grid grid-cols-2 grid-rows-2 gap-4">
           <DashboardStatCard

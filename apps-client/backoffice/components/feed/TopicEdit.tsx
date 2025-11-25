@@ -197,8 +197,18 @@ export const TopicEdit = (props: TopicEditProps) => {
                   <div className="flex gap-2 min-w-0">
                     <FormControl>
                       <FileUploadInput
-                        fileName={value?.name || props.topic.bannerImage?.filePath}
-                        preview={value || props.topic.bannerImage?.url}
+                        fileName={
+                          value?.name ||
+                          (!props.topic.bannerImage?.isPlaceholder
+                            ? props.topic.bannerImage?.filePath
+                            : undefined)
+                        }
+                        preview={
+                          value ||
+                          (!props.topic.bannerImage?.isPlaceholder
+                            ? props.topic.bannerImage?.url
+                            : undefined)
+                        }
                       >
                         <Input
                           type="file"
@@ -226,10 +236,13 @@ export const TopicEdit = (props: TopicEditProps) => {
                       </Button>
                     )}
                   </div>
-                  <ImagePreview
-                    className="rounded-md overflow-hidden w-full h-[120px] object-cover"
-                    src={value || props.topic.bannerImage?.url}
-                  />
+                  {(value ||
+                    (!props.topic.bannerImage?.isPlaceholder && props.topic.bannerImage?.url)) && (
+                    <ImagePreview
+                      className="rounded-md overflow-hidden w-full h-[120px] object-cover"
+                      src={value || props.topic.bannerImage?.url}
+                    />
+                  )}
                   <FormMessage asChild>
                     <FormDescription>อัปโหลดไฟล์ประเภท JPG / PNG ขนาดไม่เกิน 5 MB</FormDescription>
                   </FormMessage>

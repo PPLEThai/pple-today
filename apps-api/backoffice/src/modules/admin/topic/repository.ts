@@ -170,7 +170,7 @@ export class AdminTopicRepository {
         const isSameStatus = existingTopic.value.status === data.status
 
         if (isSameBannerUrl) {
-          if (isSameStatus) return existingTopic.value.bannerImagePath
+          if (isSameStatus || !data.status) return existingTopic.value.bannerImagePath
 
           const moveResult =
             data.status === TopicStatus.PUBLISHED
@@ -180,10 +180,12 @@ export class AdminTopicRepository {
           return moveResult.value[0]
         }
 
-        const deleteResult = await fileTx.deleteFile(
-          existingTopic.value.bannerImagePath as FilePath
-        )
-        if (deleteResult.isErr()) return deleteResult
+        if (existingTopic.value.bannerImagePath) {
+          const deleteResult = await fileTx.deleteFile(
+            existingTopic.value.bannerImagePath as FilePath
+          )
+          if (deleteResult.isErr()) return deleteResult
+        }
 
         const moveResult =
           data.status === TopicStatus.PUBLISHED

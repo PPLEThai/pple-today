@@ -689,7 +689,7 @@ describe('File service', async () => {
         expect(loggerService.warn).toBeCalledWith({
           message: 'File transaction failed, rolling back changes',
           context: {
-            err: new Error('Some error'),
+            err: 'Some error',
           },
         })
 
