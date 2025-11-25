@@ -1,11 +1,9 @@
-import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { InternalErrorCode, PPLEActivity, PPLETodayActivity } from '@pple-today/api-common/dtos'
 import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
 import { err } from '@pple-today/api-common/utils'
 import { Parse } from '@sinclair/typebox/value'
 import Elysia from 'elysia'
 import { fromPromise, ok } from 'neverthrow'
-
-import { PPLEActivity, PPLETodayActivity } from './models'
 
 import { ConfigServicePlugin } from '../../plugins/config'
 
@@ -17,7 +15,7 @@ export class EventService {
       data: unknown
     }
   >()
-  private readonly CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+  private CACHE_TTL_MS: number
 
   private getCacheKeyForTodayEvents(query: { page: number; limit: number }) {
     return `today-events-page-${query.page}-limit-${query.limit}`
@@ -50,9 +48,11 @@ export class EventService {
   }
 
   constructor(
-    private readonly config: { activityBaseUrl: string },
+    private readonly config: { activityBaseUrl: string; cacheTimeSec?: number },
     private readonly loggerService: ElysiaLoggerInstance
-  ) {}
+  ) {
+    this.CACHE_TTL_MS = (this.config.cacheTimeSec ?? 300) * 1000
+  }
 
   async getTodayEvents(query: { page: number; limit: number }) {
     if (query.page <= 0) query.page = 1
@@ -178,6 +178,7 @@ export const EventServicePlugin = new Elysia({
     eventService: new EventService(
       {
         activityBaseUrl: configService.get('PPLE_ACTIVITY_BASE_URL'),
+        cacheTimeSec: configService.get('PPLE_ACTIVITY_CACHE_TIME'),
       },
       loggerService
     ),
