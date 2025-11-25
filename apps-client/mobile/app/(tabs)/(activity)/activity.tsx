@@ -28,18 +28,14 @@ import {
   TicketIcon,
 } from 'lucide-react-native'
 
-import { FeedItem, FeedItemPoll, ListPollsResponse, PPLEActivity } from '@api/backoffice/app'
-import {
-  ActivityCard,
-  ActivityCardProps,
-  ActivityCardSkeleton,
-} from '@app/components/activity/activity-card'
+import { FeedItem, FeedItemPoll, ListPollsResponse } from '@api/backoffice/app'
+import { ActivityCard, ActivityCardSkeleton } from '@app/components/activity/activity-card'
 import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
 import { RefreshControl } from '@app/components/refresh-control'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
-import { EXAMPLE_ACTIVITY, mapToActivity } from '@app/libs/pple-activity'
+import { EXAMPLE_ACTIVITY } from '@app/libs/pple-activity'
 import { createImageUrl } from '@app/utils/image'
 
 import { useBottomTabOnPress } from '../_layout'
@@ -162,19 +158,11 @@ export function MyActivity() {
 }
 
 function RecentActivity() {
-  const recentActivityQuery = reactQueryClient.useQuery(
-    '/events/today',
-    {
-      query: {
-        limit: 3,
-      },
+  const recentActivityQuery = reactQueryClient.useQuery('/events', {
+    query: {
+      limit: 3,
     },
-    {
-      select: useCallback((data: PPLEActivity): ActivityCardProps['activity'][] => {
-        return data.result.map(mapToActivity)
-      }, []),
-    }
-  )
+  })
   useEffect(() => {
     if (recentActivityQuery.isError) {
       console.error('Error fetching recent activity:', recentActivityQuery.error)
@@ -203,10 +191,10 @@ function RecentActivity() {
           <ActivityCardSkeleton />
           <ActivityCardSkeleton />
         </>
-      ) : !recentActivityQuery.data || recentActivityQuery.data.length === 0 ? (
+      ) : !recentActivityQuery.data || recentActivityQuery.data.result.length === 0 ? (
         <Text className="text-base-text-medium w-full text-center">ไม่มีข้อมูลกิจกรรม</Text>
       ) : (
-        recentActivityQuery.data.map((activity) => (
+        recentActivityQuery.data.result.map((activity) => (
           <ActivityCard key={activity.id} activity={activity} />
         ))
       )}
@@ -262,6 +250,9 @@ function PollFeedSection(props: { ListHeaderComponent: React.ReactNode }) {
   const queryClient = useQueryClient()
   const onRefresh = React.useCallback(async () => {
     await queryClient.resetQueries({ queryKey: [QUERY_KEY_SYMBOL, 'infinite', 'polls'] })
+    await queryClient.resetQueries({
+      queryKey: reactQueryClient.getQueryKey('/events'),
+    })
   }, [queryClient])
 
   const flatListRef = React.useRef<Animated.FlatList<any>>(null)

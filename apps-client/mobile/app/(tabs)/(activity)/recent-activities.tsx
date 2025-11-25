@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import { Dimensions, View } from 'react-native'
 import Animated, { useAnimatedScrollHandler } from 'react-native-reanimated'
 
@@ -13,11 +13,9 @@ import {
   UseInfiniteQueryResult,
   useQueryClient,
 } from '@tanstack/react-query'
-import dayjs from 'dayjs'
 import { useRouter } from 'expo-router'
 import { ArrowLeftIcon, HandshakeIcon } from 'lucide-react-native'
 
-import { PPLEActivity } from '@api/backoffice/app'
 import {
   ActivityCard,
   ActivityCardProps,
@@ -37,7 +35,6 @@ import {
 import { RefreshControl } from '@app/components/refresh-control'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { fetchClient } from '@app/libs/api-client'
-import { Activity, mapToActivity } from '@app/libs/pple-activity'
 import { useScrollContext } from '@app/libs/scroll-context'
 
 export default function RecentActivityPage() {
@@ -138,12 +135,12 @@ function TodayActivityContent(props: PagerScrollViewProps) {
       }
       return undefined
     },
-    select: useCallback((data: InfiniteData<PPLEActivity>): InfiniteData<Activity[]> => {
+    select: (data) => {
       return {
-        pages: data.pages.map((page) => page.result.map(mapToActivity)),
+        pages: data.pages.map((page) => page.result),
         pageParams: data.pageParams,
       }
-    }, []),
+    },
   })
   const data = useMemo(() => {
     if (!recentActivityInfiniteQuery.data) {
@@ -212,7 +209,7 @@ function UpcomingActivityContent(props: PagerScrollViewProps) {
     queryKey: [QUERY_KEY_SYMBOL, 'infinite', 'upcoming-activity'],
     initialPageParam: 1,
     queryFn: async ({ pageParam = 1 }) => {
-      const { data, error } = await fetchClient('/events', {
+      const { data, error } = await fetchClient('/events/upcoming', {
         method: 'GET',
         query: { limit: LIMIT, page: pageParam },
       })
@@ -232,16 +229,12 @@ function UpcomingActivityContent(props: PagerScrollViewProps) {
       }
       return undefined
     },
-    select: useCallback((data: InfiniteData<PPLEActivity>): InfiniteData<Activity[]> => {
+    select: (data) => {
       return {
-        pages: data.pages.map((page) =>
-          page.result.map(mapToActivity).filter((activity) => {
-            return dayjs(activity.startAt).isAfter(dayjs(), 'day')
-          })
-        ),
+        pages: data.pages.map((page) => page.result),
         pageParams: data.pageParams,
       }
-    }, []),
+    },
   })
   const data = useMemo(() => {
     if (!recentActivityInfiniteQuery.data) {
