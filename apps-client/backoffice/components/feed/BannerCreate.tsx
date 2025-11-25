@@ -45,7 +45,7 @@ const CreateBannerFormSchema = z.object({
       navigation: z.enum(['IN_APP_NAVIGATION', 'EXTERNAL_BROWSER', 'MINI_APP']),
       destination: z.string(),
       inAppType: z
-        .enum(['POST', 'TOPIC', 'ANNOUNCEMENT', 'POLL', 'ELECTION', 'HASHTAG'])
+        .enum(['POST', 'TOPIC', 'ANNOUNCEMENT', 'POLL', 'USER', 'ELECTION', 'HASHTAG'])
         .optional(),
       inAppId: z.string().optional(),
       miniAppId: z.string(),
@@ -128,19 +128,39 @@ export const BannerCreate = (props: BannerCreateProps) => {
 
     await handleUploadFile(imageFile, result.uploadUrl, result.uploadFields)
 
-    await createBannerMutation.mutateAsync({
-      body: {
-        ...data,
-        navigation,
-        ...(navigation === 'MINI_APP' ? { miniAppId } : { destination }),
-        imageFilePath: result.filePath as FilePath,
+    await createBannerMutation.mutateAsync(
+      {
+        body: {
+          ...data,
+          navigation,
+          ...(navigation === 'MINI_APP'
+            ? { miniAppId }
+            : navigation === 'IN_APP_NAVIGATION'
+              ? {
+                  inAppType: navigationGroup.inAppType,
+                  inAppId: navigationGroup.inAppId,
+                }
+              : { destination }),
+          imageFilePath: result.filePath as FilePath,
+        },
       },
-    })
+      {
+        onSuccess: () => {
+          props.onSuccess()
 
-    props.onSuccess()
-
-    setIsOpen(false)
-    form.reset()
+          setIsOpen(false)
+          form.reset()
+        },
+        onError: (err) => {
+          if (err.value.error.code === 'BANNER_INVALID_IN_APP_NAVIGATION') {
+            form.setError('navigationGroup.inAppId', {
+              type: 'manual',
+              message: 'กรุณากรอก ID ที่เชื่อมต่อให้ถูกต้อง',
+            })
+          }
+        },
+      }
+    )
   }
 
   return (
@@ -236,6 +256,7 @@ export const BannerCreate = (props: BannerCreateProps) => {
                         <SelectItem value="POST">โพส</SelectItem>
                         <SelectItem value="POLL">โพล</SelectItem>
                         <SelectItem value="TOPIC">หัวข้อ</SelectItem>
+                        <SelectItem value="USER">ผู้ใช้</SelectItem>
                         <SelectItem value="ANNOUNCEMENT">ประกาศ</SelectItem>
                         <SelectItem value="ELECTION">การเลือกตั้ง</SelectItem>
                         <SelectItem value="HASHTAG">แฮชแท็ก</SelectItem>

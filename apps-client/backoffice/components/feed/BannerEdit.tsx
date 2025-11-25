@@ -44,17 +44,28 @@ const EditBannerFormSchema = z.object({
     .object({
       navigation: z.enum(['IN_APP_NAVIGATION', 'EXTERNAL_BROWSER', 'MINI_APP']),
       destination: z.string(),
+      inAppType: z
+        .enum(['POST', 'TOPIC', 'ANNOUNCEMENT', 'POLL', 'USER', 'ELECTION', 'HASHTAG'])
+        .optional(),
+      inAppId: z.string().optional(),
       miniAppId: z.string(),
     })
-    .refine((data) => (data.navigation === 'MINI_APP' ? data.miniAppId.trim().length > 0 : true), {
+    .refine((data) => (data.navigation === 'MINI_APP' ? !!data.miniAppId.trim() : true), {
       error: 'กรุณากรอก Mini App ID ที่เชื่อมต่อ',
       path: ['miniAppId'],
     })
+    .refine((data) => (data.navigation === 'EXTERNAL_BROWSER' ? !!data.destination.trim() : true), {
+      error: 'กรุณากรอก URL ที่เชื่อมต่อ',
+      path: ['destination'],
+    })
     .refine(
-      (data) => (data.navigation !== 'MINI_APP' ? data.destination.trim().length > 0 : true),
+      (data) =>
+        data.navigation === 'IN_APP_NAVIGATION'
+          ? !!data.inAppId?.trim() && !!data.inAppType?.trim()
+          : true,
       {
-        error: 'กรุณากรอก URL / ID ที่เชื่อมต่อ',
-        path: ['destination'],
+        error: 'กรุณากรอก ID ที่เชื่อมต่อ',
+        path: ['inAppId'],
       }
     ),
   imageFile: z
@@ -140,20 +151,40 @@ export const BannerEdit = (props: BannerEditProps) => {
       imageFilePath = result.filePath as FilePath
     }
 
-    await updateBannerMutation.mutateAsync({
-      pathParams: { id: props.banner.id },
-      body: {
-        ...data,
-        navigation,
-        ...(navigation === 'MINI_APP' ? { miniAppId } : { destination }),
-        imageFilePath,
+    await updateBannerMutation.mutateAsync(
+      {
+        pathParams: { id: props.banner.id },
+        body: {
+          ...data,
+          navigation,
+          ...(navigation === 'MINI_APP'
+            ? { miniAppId }
+            : navigation === 'IN_APP_NAVIGATION'
+              ? {
+                  inAppType: navigationGroup.inAppType,
+                  inAppId: navigationGroup.inAppId,
+                }
+              : { destination }),
+          imageFilePath,
+        },
       },
-    })
+      {
+        onSuccess: () => {
+          props.onSuccess()
 
-    props.onSuccess()
-
-    setIsOpen(false)
-    resetForm()
+          setIsOpen(false)
+          form.reset()
+        },
+        onError: (err) => {
+          if (err.value.error.code === 'BANNER_INVALID_IN_APP_NAVIGATION') {
+            form.setError('navigationGroup.inAppId', {
+              type: 'manual',
+              message: 'กรุณากรอก ID ที่เชื่อมต่อให้ถูกต้อง',
+            })
+          }
+        },
+      }
+    )
   }
 
   useEffect(() => {
@@ -219,14 +250,65 @@ export const BannerEdit = (props: BannerEditProps) => {
               render={({ field }) => (
                 <FormItem
                   className={
-                    form.watch('navigationGroup.navigation') !== 'MINI_APP' ? '' : 'hidden'
+                    form.watch('navigationGroup.navigation') === 'EXTERNAL_BROWSER' ? '' : 'hidden'
                   }
                 >
                   <FormLabel>
-                    URL / ID ที่เชื่อมต่อ <span className="text-system-danger-default">*</span>
+                    URL ที่เชื่อมต่อ <span className="text-system-danger-default">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="กรอก URL หรือ ID ที่ต้องการ" />
+                    <Input {...field} placeholder="กรอก URL ที่ต้องการ" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="navigationGroup.inAppType"
+              render={({ field: { onChange, ...field } }) => (
+                <FormItem
+                  className={
+                    form.watch('navigationGroup.navigation') === 'IN_APP_NAVIGATION' ? '' : 'hidden'
+                  }
+                >
+                  <FormLabel>
+                    ประเภทของเนื้อหาในแอป <span className="text-system-danger-default">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Select {...field} onValueChange={onChange}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="เลือกประเภทเนื้อหาในแอป" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="POST">โพส</SelectItem>
+                        <SelectItem value="POLL">โพล</SelectItem>
+                        <SelectItem value="TOPIC">หัวข้อ</SelectItem>
+                        <SelectItem value="USER">ผู้ใช้</SelectItem>
+                        <SelectItem value="ANNOUNCEMENT">ประกาศ</SelectItem>
+                        <SelectItem value="ELECTION">การเลือกตั้ง</SelectItem>
+                        <SelectItem value="HASHTAG">แฮชแท็ก</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="navigationGroup.inAppId"
+              render={({ field }) => (
+                <FormItem
+                  className={
+                    form.watch('navigationGroup.navigation') === 'IN_APP_NAVIGATION' ? '' : 'hidden'
+                  }
+                >
+                  <FormLabel>
+                    ID ที่เชื่อมต่อ <span className="text-system-danger-default">*</span>
+                  </FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder="กรอก ID ที่ต้องการ" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

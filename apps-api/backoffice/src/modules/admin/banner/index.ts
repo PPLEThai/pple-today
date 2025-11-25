@@ -1,5 +1,6 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
+import { BannerNavigationType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import {
@@ -83,7 +84,7 @@ export const AdminBannerController = new Elysia({
   .post(
     '/',
     async ({ body, adminBannerService, status }) => {
-      if (body.navigation === 'MINI_APP' && !body.miniAppId)
+      if (body.navigation === BannerNavigationType.MINI_APP && !body.miniAppId)
         return mapErrorCodeToResponse(
           {
             code: InternalErrorCode.BANNER_INVALID_INPUT,
@@ -91,11 +92,23 @@ export const AdminBannerController = new Elysia({
           },
           status
         )
-      if (body.navigation !== 'MINI_APP' && !body.destination)
+      if (body.navigation === BannerNavigationType.EXTERNAL_BROWSER && !body.destination)
         return mapErrorCodeToResponse(
           {
             code: InternalErrorCode.BANNER_INVALID_INPUT,
-            message: 'destination is required',
+            message: 'destination is required when navigation is ',
+          },
+          status
+        )
+      if (
+        body.navigation === BannerNavigationType.IN_APP_NAVIGATION &&
+        !body.inAppId &&
+        !body.inAppType
+      )
+        return mapErrorCodeToResponse(
+          {
+            code: InternalErrorCode.BANNER_INVALID_INPUT,
+            message: 'inAppId and inAppType are required when navigation is IN_APP_NAVIGATION',
           },
           status
         )
@@ -116,6 +129,7 @@ export const AdminBannerController = new Elysia({
           InternalErrorCode.FILE_MOVE_ERROR,
           InternalErrorCode.FILE_ROLLBACK_FAILED,
           InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
+          InternalErrorCode.BANNER_INVALID_IN_APP_NAVIGATION,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -144,6 +158,14 @@ export const AdminBannerController = new Elysia({
           },
           status
         )
+      if (body.navigation === 'IN_APP_NAVIGATION' && !body.inAppId && !body.inAppType)
+        return mapErrorCodeToResponse(
+          {
+            code: InternalErrorCode.BANNER_INVALID_INPUT,
+            message: 'inAppId and inAppType are required when navigation is IN_APP_NAVIGATION',
+          },
+          status
+        )
 
       const result = await adminBannerService.updateBannerById(params.id, body)
       if (result.isErr()) {
@@ -159,6 +181,7 @@ export const AdminBannerController = new Elysia({
         200: UpdateBannerResponse,
         ...createErrorSchema(
           InternalErrorCode.BANNER_NOT_FOUND,
+          InternalErrorCode.BANNER_INVALID_IN_APP_NAVIGATION,
           InternalErrorCode.BANNER_PUBLISHING_LIMIT_REACHED,
           InternalErrorCode.BANNER_INVALID_INPUT,
           InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,

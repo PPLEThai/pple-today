@@ -10,15 +10,29 @@ enum BannerNavigationType {
   MINI_APP
 }
 
+enum BannerInAppType {
+  POST
+  POLL
+  TOPIC
+  USER
+  ANNOUNCEMENT
+  ELECTION
+  HASHTAG
+}
+
 model Banner {
   id            String @id @default(cuid())
   imageFilePath String
 
-  headline    String               @default("")
-  status      BannerStatusType     @default(DRAFT)
-  navigation  BannerNavigationType
+  headline   String               @default("")
+  status     BannerStatusType     @default(DRAFT)
+  navigation BannerNavigationType
+
+  inAppType BannerInAppType?
+  inAppId   String?
+
   destination String?
-  order       String               @unique // Lexorank
+  order       String  @unique // Lexorank
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
