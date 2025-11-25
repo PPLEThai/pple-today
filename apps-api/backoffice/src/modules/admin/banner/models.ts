@@ -30,6 +30,22 @@ export const CreateBannerBody = t.Object({
   headline: t.String({
     description: 'The headline for the banner item',
   }),
+  inAppId: t.Optional(t.String({ description: 'The ID of the in-app content to open' })),
+  inAppType: t.Optional(
+    t.Enum(
+      {
+        POST: 'POST',
+        POLL: 'POLL',
+        TOPIC: 'TOPIC',
+        ANNOUNCEMENT: 'ANNOUNCEMENT',
+        ELECTION: 'ELECTION',
+        HASHTAG: 'HASHTAG',
+      },
+      {
+        description: 'The type of the in-app content to open',
+      }
+    )
+  ),
   miniAppId: t.Optional(t.String({ description: 'The ID of the mini app to open' })),
   destination: t.Optional(
     t.String({
