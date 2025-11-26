@@ -42,14 +42,12 @@ export async function openLink(link: LinkType) {
 
 export function createLinkFromInAppNavigation(inAppType: BannerInAppType, inAppId: string) {
   switch (inAppType) {
-    case 'ANNOUNCEMENT':
-      return `/feed/${inAppId}`
     case 'ELECTION':
       return `/election/${inAppId}`
     case 'HASHTAG':
       return `/hashtag/${inAppId}`
+    case 'ANNOUNCEMENT':
     case 'POLL':
-      return `/poll/${inAppId}`
     case 'POST':
       return `/feed/${inAppId}`
     case 'TOPIC':
