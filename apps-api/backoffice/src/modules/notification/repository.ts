@@ -183,28 +183,31 @@ export class NotificationRepository {
 
   async sendNotificationToUser(
     conditions: CreateNewExternalNotificationBody['audience'],
-    data: {
-      header: string
-      message: string
-      image?: string
-      actionButtonText?: string
-      link?: {
-        type: NotificationLinkType
-        value: string
-      }
-    },
+    data: CreateNewExternalNotificationBody['content'],
     apiKeyId: string
   ) {
+    const linkNavigation = !data.link
+      ? undefined
+      : data.link?.type === NotificationLinkType.IN_APP_NAVIGATION
+        ? {
+            linkType: data.link.type,
+            linkInAppType: data.link.destination.inAppType,
+            linkInAppId: data.link.destination.inAppId,
+          }
+        : {
+            linkType: data.link.type,
+            linkDestination: data.link.destination,
+          }
+
     const createResult = await fromRepositoryPromise(async () => {
       const [newNotification] = await this.prismaService.$transaction([
         this.prismaService.notification.create({
           data: {
+            ...linkNavigation,
             title: data.header,
             message: data.message,
             image: data.image,
-            linkType: data.link?.type,
-            linkValue: data.link?.value,
-            actionButtonText: data?.actionButtonText,
+            actionButtonText: linkNavigation ? data?.actionButtonText : undefined,
 
             isBroadcast: conditions.type === 'BROADCAST' ? true : false,
             districts: conditions.type === 'ADDRESS' ? conditions.details.districts : undefined,
@@ -282,6 +285,19 @@ export class NotificationRepository {
     const emptyTokens = phoneNumberWithTokens.filter((p) => p.token.length === 0)
     const nonEmptyTokens = phoneNumberWithTokens.filter((p) => p.token.length > 0)
 
+    const notificationDetails = {
+      title: data.header,
+      message: data.message,
+      image: data.image,
+      link: {
+        type: 'IN_APP_NAVIGATION' as const,
+        destination: {
+          inAppType: 'NOTIFICATION' as const,
+          inAppId: newNotification.id,
+        },
+      },
+    }
+
     this.loggerService.info({
       message: 'Attempt sending push notification to user',
       details: {
@@ -289,15 +305,7 @@ export class NotificationRepository {
         successfulDeliveries: nonEmptyTokens.length,
         failedDeliveries: emptyTokens.length,
         nonExisted: notFoundUser?.length || 0,
-        notification: {
-          header: data.header,
-          message: data.message,
-          image: data.image,
-          link: {
-            type: 'IN_APP_NAVIGATION',
-            value: `/notification/${newNotification.id}`,
-          },
-        },
+        notification: notificationDetails,
       },
     })
 
@@ -305,15 +313,7 @@ export class NotificationRepository {
       nonEmptyTokens.map(async (p) => {
         return {
           phoneNumber: p.phoneNumber,
-          result: await this.cloudMessagingService.sendNotifications(p.token, {
-            title: data.header,
-            message: data.message,
-            image: data.image,
-            link: {
-              type: 'IN_APP_NAVIGATION',
-              value: `/notification/${newNotification.id}`,
-            },
-          }),
+          result: await this.cloudMessagingService.sendNotifications(p.token, notificationDetails),
         }
       })
     )

@@ -65,23 +65,33 @@ export class NotificationService {
 
     return ok({
       id: notificationDetails.id,
-      title: notificationDetails.title,
       content: {
         header: notificationDetails.title,
         message: notificationDetails.message ?? undefined,
         image: notificationDetails.image ?? undefined,
-        actionButtonText: notificationDetails.actionButtonText ?? undefined,
-        link:
-          notificationDetails.linkValue && notificationDetails.linkType
-            ? ({
-                type: notificationDetails.linkType,
-                value: notificationDetails.linkValue,
-              } as GetNotificationDetailsByIdResponse['content']['link'])
+        actionButtonText:
+          notificationDetails.linkType && notificationDetails.actionButtonText
+            ? notificationDetails.actionButtonText
             : undefined,
+        link: !notificationDetails.linkType
+          ? undefined
+          : notificationDetails.linkType === 'EXTERNAL_BROWSER' ||
+              notificationDetails.linkType === 'MINI_APP'
+            ? {
+                type: notificationDetails.linkType,
+                destination: notificationDetails.linkDestination!,
+              }
+            : {
+                type: 'IN_APP_NAVIGATION',
+                destination: {
+                  inAppType: notificationDetails.linkInAppType!,
+                  inAppId: notificationDetails.linkInAppId!,
+                },
+              },
       },
       isRead: notification.isRead,
       createdAt: notification.createdAt,
-    })
+    } satisfies GetNotificationDetailsByIdResponse)
   }
 
   async registerDeviceToken(userId: string, deviceToken: string) {
