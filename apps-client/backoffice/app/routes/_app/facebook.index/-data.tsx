@@ -11,7 +11,6 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { DtFilter } from 'components/datatable/DtFilter'
 import { DtMovement } from 'components/datatable/DtMovement'
-import { TableCopyId } from 'components/TableCopyId'
 import { Check, Eye, EyeOff, Pencil, X } from 'lucide-react'
 
 import {
@@ -100,15 +99,8 @@ export const Data = () => {
 
   const columns = useMemo(
     () => [
-      columnHelper.accessor('id', {
-        header: () => <div className="pl-2">ID</div>,
-        cell: (info) => <TableCopyId id={info.getValue()} />,
-        size: 64,
-        minSize: 64,
-        maxSize: 64,
-      }),
       columnHelper.accessor('name', {
-        header: 'ชื่อเพจ',
+        header: () => <div className="pl-2">ชื่อเพจ</div>,
         cell: (info) => (
           <Link
             className="hover:underline"

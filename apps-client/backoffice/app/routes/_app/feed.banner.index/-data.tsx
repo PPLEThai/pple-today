@@ -12,7 +12,6 @@ import { createColumnHelper } from '@tanstack/react-table'
 import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { DtFilter } from 'components/datatable/DtFilter'
 import { BannerCreate } from 'components/feed/BannerCreate'
-import { TableCopyId } from 'components/TableCopyId'
 import { ChevronDown, ChevronUp, EyeOff, Megaphone, Pencil, Plus, Trash2 } from 'lucide-react'
 import { partition } from 'remeda'
 
@@ -107,15 +106,8 @@ export const Data = () => {
 
   const genericColumns = useMemo(
     () => [
-      columnHelper.accessor('id', {
-        header: () => <div className="pl-2">ID</div>,
-        cell: (info) => <TableCopyId id={info.getValue()} />,
-        size: 64,
-        minSize: 64,
-        maxSize: 64,
-      }),
       columnHelper.accessor('image.url', {
-        header: 'รูป',
+        header: () => <div className="text-center">รูป</div>,
         cell: (info) => {
           return (
             <img
