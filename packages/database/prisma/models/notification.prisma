@@ -14,7 +14,7 @@ model UserNotificationToken {
   user User @relation(fields: [userId], references: [id])
 }
 
-enum NavigationInAppType {
+enum NotificationInAppType {
   POST
   POLL
   TOPIC
@@ -33,7 +33,7 @@ model Notification {
   linkType         NotificationLinkType?
   linkDestination  String?
 
-  linkInAppType NavigationInAppType?
+  linkInAppType NotificationInAppType?
   linkInAppId   String?
 
   isBroadcast Boolean  @default(false)

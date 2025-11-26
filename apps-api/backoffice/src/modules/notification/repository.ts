@@ -1,7 +1,18 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
 import { PrismaService } from '@pple-today/api-common/services'
 import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { NotificationLinkType, Prisma } from '@pple-today/database/prisma'
+import {
+  AnnouncementStatus,
+  HashTagStatus,
+  NotificationInAppType,
+  NotificationLinkType,
+  PollStatus,
+  PostStatus,
+  Prisma,
+  TopicStatus,
+  UserStatus,
+} from '@pple-today/database/prisma'
 import crypto from 'crypto'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
@@ -18,6 +29,52 @@ export class NotificationRepository {
     private readonly cloudMessagingService: CloudMessagingService,
     private readonly loggerService: ElysiaLoggerInstance
   ) {}
+
+  private async checkValidInAppType(inAppType: NotificationInAppType, inAppId: string) {
+    switch (inAppType) {
+      case NotificationInAppType.POST:
+        await this.prismaService.post.findUniqueOrThrow({
+          where: { feedItemId: inAppId, status: PostStatus.PUBLISHED },
+        })
+        return true
+      case NotificationInAppType.POLL:
+        await this.prismaService.poll.findUniqueOrThrow({
+          where: { feedItemId: inAppId, status: PollStatus.PUBLISHED },
+        })
+        return true
+      case NotificationInAppType.TOPIC:
+        await this.prismaService.topic.findUniqueOrThrow({
+          where: { id: inAppId, status: TopicStatus.PUBLISHED },
+        })
+        return true
+      case NotificationInAppType.ANNOUNCEMENT:
+        await this.prismaService.announcement.findUniqueOrThrow({
+          where: { feedItemId: inAppId, status: AnnouncementStatus.PUBLISHED },
+        })
+        return true
+      case NotificationInAppType.ELECTION:
+        await this.prismaService.election.findUniqueOrThrow({
+          where: {
+            id: inAppId,
+            isCancelled: false,
+            publishDate: { lte: new Date() },
+          },
+        })
+        return true
+      case NotificationInAppType.HASHTAG:
+        await this.prismaService.hashTag.findUniqueOrThrow({
+          where: { id: inAppId, status: HashTagStatus.PUBLISHED },
+        })
+        return true
+      case NotificationInAppType.USER:
+        await this.prismaService.user.findUniqueOrThrow({
+          where: { id: inAppId, status: UserStatus.ACTIVE },
+        })
+        return true
+      default:
+        exhaustiveGuard(inAppType)
+    }
+  }
 
   private getFilterConditions(
     audience: CreateNewExternalNotificationBody['audience']
@@ -186,6 +243,22 @@ export class NotificationRepository {
     data: CreateNewExternalNotificationBody['content'],
     apiKeyId: string
   ) {
+    if (data.link?.type === NotificationLinkType.IN_APP_NAVIGATION) {
+      const checkResult = await fromRepositoryPromise(
+        this.checkValidInAppType(data.link.destination.inAppType, data.link.destination.inAppId)
+      )
+
+      if (checkResult.isErr()) {
+        if (checkResult.error.code === 'RECORD_NOT_FOUND') {
+          return err({
+            code: InternalErrorCode.NOTIFICATION_INVALID_IN_APP_NAVIGATION,
+            message: `The in-app link destination with type ${data.link.destination.inAppType} and ID ${data.link.destination.inAppId} is invalid.`,
+          })
+        }
+        return err(checkResult.error)
+      }
+    }
+
     const linkNavigation = !data.link
       ? undefined
       : data.link?.type === NotificationLinkType.IN_APP_NAVIGATION

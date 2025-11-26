@@ -2,9 +2,15 @@ import { FilePath, InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import {
+  AnnouncementStatus,
   BannerInAppType,
   BannerNavigationType,
   BannerStatusType,
+  HashTagStatus,
+  PollStatus,
+  PostStatus,
+  TopicStatus,
+  UserStatus,
 } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { LexoRank } from 'lexorank'
@@ -35,28 +41,46 @@ export class AdminBannerRepository {
   private async checkValidInAppType(inAppType: BannerInAppType, inAppId: string) {
     switch (inAppType) {
       case BannerInAppType.POST:
-        await this.prismaService.post.findUniqueOrThrow({ where: { feedItemId: inAppId } })
+        await this.prismaService.post.findUniqueOrThrow({
+          where: { feedItemId: inAppId, status: PostStatus.PUBLISHED },
+        })
         return true
       case BannerInAppType.POLL:
-        await this.prismaService.poll.findUniqueOrThrow({ where: { feedItemId: inAppId } })
+        await this.prismaService.poll.findUniqueOrThrow({
+          where: { feedItemId: inAppId, status: PollStatus.PUBLISHED },
+        })
         return true
       case BannerInAppType.TOPIC:
-        await this.prismaService.topic.findUniqueOrThrow({ where: { id: inAppId } })
+        await this.prismaService.topic.findUniqueOrThrow({
+          where: { id: inAppId, status: TopicStatus.PUBLISHED },
+        })
         return true
       case BannerInAppType.ANNOUNCEMENT:
-        await this.prismaService.announcement.findUniqueOrThrow({ where: { feedItemId: inAppId } })
+        await this.prismaService.announcement.findUniqueOrThrow({
+          where: { feedItemId: inAppId, status: AnnouncementStatus.PUBLISHED },
+        })
         return true
       case BannerInAppType.ELECTION:
-        await this.prismaService.election.findUniqueOrThrow({ where: { id: inAppId } })
+        await this.prismaService.election.findUniqueOrThrow({
+          where: {
+            id: inAppId,
+            isCancelled: false,
+            publishDate: { lte: new Date() },
+          },
+        })
         return true
       case BannerInAppType.HASHTAG:
-        await this.prismaService.hashTag.findUniqueOrThrow({ where: { id: inAppId } })
+        await this.prismaService.hashTag.findUniqueOrThrow({
+          where: { id: inAppId, status: HashTagStatus.PUBLISHED },
+        })
         return true
       case BannerInAppType.USER:
-        await this.prismaService.user.findUniqueOrThrow({ where: { id: inAppId } })
+        await this.prismaService.user.findUniqueOrThrow({
+          where: { id: inAppId, status: UserStatus.ACTIVE },
+        })
         return true
       default:
-        return exhaustiveGuard(inAppType)
+        exhaustiveGuard(inAppType)
     }
   }
 

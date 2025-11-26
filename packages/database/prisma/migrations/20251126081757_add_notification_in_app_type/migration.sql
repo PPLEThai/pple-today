@@ -7,13 +7,13 @@ Warnings:
 -- CreateEnum
 BEGIN;
 
-CREATE TYPE "public"."NavigationInAppType" AS ENUM ('POST', 'POLL', 'TOPIC', 'USER', 'ANNOUNCEMENT', 'ELECTION', 'HASHTAG');
+CREATE TYPE "public"."NotificationInAppType" AS ENUM ('POST', 'POLL', 'TOPIC', 'USER', 'ANNOUNCEMENT', 'ELECTION', 'HASHTAG');
 
 -- AlterTable
 ALTER TABLE "public"."Notification"
 ADD COLUMN     "linkDestination" TEXT,
 ADD COLUMN     "linkInAppId" TEXT,
-ADD COLUMN     "linkInAppType" "public"."NavigationInAppType";
+ADD COLUMN     "linkInAppType" "public"."NotificationInAppType";
 
 UPDATE "public"."Notification"
 SET "linkDestination" = CASE

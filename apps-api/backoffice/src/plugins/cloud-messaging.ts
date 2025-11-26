@@ -1,7 +1,7 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
 import { err } from '@pple-today/api-common/utils'
-import { NavigationInAppType } from '@pple-today/database/prisma'
+import { NotificationInAppType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { Credentials, JWT } from 'google-auth-library'
 import { fromPromise, ok } from 'neverthrow'
@@ -76,7 +76,7 @@ export class CloudMessagingService {
         | {
             type: 'IN_APP_NAVIGATION'
             destination: {
-              inAppType: NavigationInAppType | 'NOTIFICATION'
+              inAppType: NotificationInAppType | 'NOTIFICATION'
               inAppId: string
             }
           }
