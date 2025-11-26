@@ -144,9 +144,13 @@ export const BannerEdit = (props: BannerEditProps) => {
   }) => {
     const { navigation, destination, miniAppId } = navigationGroup
 
-    if (navigation === 'MINI_APP') {
-      if (miniAppId.trim().length === 0) return false
-    } else if (destination.trim().length === 0) return false
+    if (navigation === 'MINI_APP' && !miniAppId.trim()) return false
+    else if (navigation === 'EXTERNAL_BROWSER' && !destination.trim()) return false
+    else if (
+      navigation === 'IN_APP_NAVIGATION' &&
+      (!navigationGroup.inAppId?.trim() || !navigationGroup.inAppType?.trim())
+    )
+      return false
 
     let imageFilePath: FilePath | undefined
 
@@ -207,7 +211,12 @@ export const BannerEdit = (props: BannerEditProps) => {
     <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
       <DialogTrigger asChild>{props.trigger}</DialogTrigger>
       <DialogContent asChild>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <form
+          onSubmit={form.handleSubmit(onSubmit, (err) => {
+            console.error(err)
+          })}
+          className="space-y-4"
+        >
           <Form {...form}>
             <div className="flex flex-col gap-1.5">
               <DialogTitle asChild>

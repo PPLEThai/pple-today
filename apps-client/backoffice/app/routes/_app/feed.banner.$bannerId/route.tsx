@@ -19,7 +19,7 @@ import { BannerEdit } from 'components/feed/BannerEdit'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
 import { Calendar, EyeOff, Image, Link2, LinkIcon, Megaphone, Pencil, Trash2 } from 'lucide-react'
 import { formatDisplayDate } from 'utils/date'
-import { createLinkFromInAppNavigation } from 'utils/link'
+import { createLinkFromInAppNavigation, mapInAppNavigationTypeToLabel } from 'utils/link'
 
 import { UpdateBannerBody, UpdateBannerParams } from '@api/backoffice/admin'
 
@@ -236,11 +236,9 @@ function BannerDetailPage() {
                     <Button className="p-0 h-auto min-w-0" variant="link" asChild>
                       <Link
                         to={createLinkFromInAppNavigation(query.data.inAppType, query.data.inAppId)}
-                        target="_blank"
-                        rel="nofollow noopener noreferrer"
                       >
                         <span className="w-full truncate">
-                          {query.data.inAppType} {query.data.inAppId}
+                          {mapInAppNavigationTypeToLabel(query.data.inAppType)} {query.data.inAppId}
                         </span>
                       </Link>
                     </Button>

@@ -22,3 +22,24 @@ export function createLinkFromInAppNavigation(inAppType: BannerInAppType, inAppI
       exhaustiveGuard(inAppType)
   }
 }
+
+export function mapInAppNavigationTypeToLabel(inAppType: BannerInAppType) {
+  switch (inAppType) {
+    case 'ANNOUNCEMENT':
+      return 'ประกาศ'
+    case 'ELECTION':
+      return 'การเลือกตั้ง'
+    case 'HASHTAG':
+      return 'แฮชแท็ก'
+    case 'POLL':
+      return 'โพล'
+    case 'POST':
+      return 'โพสต์'
+    case 'TOPIC':
+      return 'หัวข้อ'
+    case 'USER':
+      return 'ผู้ใช้'
+    default:
+      exhaustiveGuard(inAppType)
+  }
+}

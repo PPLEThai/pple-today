@@ -115,9 +115,13 @@ export const BannerCreate = (props: BannerCreateProps) => {
   }) => {
     const { navigation, destination, miniAppId } = navigationGroup
 
-    if (navigation === 'MINI_APP') {
-      if (miniAppId.trim().length === 0) return false
-    } else if (destination.trim().length === 0) return false
+    if (navigation === 'MINI_APP' && !miniAppId.trim()) return false
+    else if (navigation === 'EXTERNAL_BROWSER' && !destination.trim()) return false
+    else if (
+      navigation === 'IN_APP_NAVIGATION' &&
+      (!navigationGroup.inAppId?.trim() || !navigationGroup.inAppType?.trim())
+    )
+      return false
 
     const result = await getFileUploadUrl.mutateAsync({
       body: {
