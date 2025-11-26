@@ -257,7 +257,7 @@ export const BannerCreate = (props: BannerCreateProps) => {
                         <SelectValue placeholder="เลือกประเภทเนื้อหาในแอป" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="POST">โพส</SelectItem>
+                        <SelectItem value="POST">โพสต์</SelectItem>
                         <SelectItem value="POLL">โพล</SelectItem>
                         <SelectItem value="TOPIC">หัวข้อ</SelectItem>
                         <SelectItem value="USER">ผู้ใช้</SelectItem>

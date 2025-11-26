@@ -76,7 +76,7 @@ function Dashboard() {
               isLoading={query.isLoading}
             />
             <DashboardStatCard
-              title="จำนวนโพสใหม่ต่อวัน"
+              title="จำนวนโพสต์ใหม่ต่อวัน"
               icon={FilePlus}
               displayValue={query.data?.posts.today ?? 0}
               trendNewValue={query.data?.posts.today ?? 0}
