@@ -575,6 +575,7 @@ function FeedFollowingContent(props: PagerScrollViewProps) {
       queryClient.resetQueries({
         queryKey: reactQueryClient.getQueryKey('/feed/following'),
       }),
+      queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/banners') }),
     ])
     await feedInfiniteQuery.refetch()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -698,6 +699,7 @@ function FeedContent(props: PagerScrollViewProps) {
     await Promise.all([
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/feed/me') }),
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/announcements') }),
+      queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/banners') }),
     ])
     await feedInfiniteQuery.refetch()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -794,6 +796,7 @@ function FeedTopicContent(props: FeedTopicContentProps) {
       queryClient.resetQueries({
         queryKey: reactQueryClient.getQueryKey('/feed/topic', { query: { topicId } }),
       }),
+      queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/banners') }),
     ])
     await feedInfiniteQuery.refetch()
     // eslint-disable-next-line react-hooks/exhaustive-deps
