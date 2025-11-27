@@ -69,10 +69,37 @@ export function ResultAnnounceDialog({ election }: { election: AdminGetElectionR
   )
 }
 
-const ResultTimelineSchema = z.object({
-  startResult: z.date().optional(),
-  endResult: z.date().optional(),
-})
+const ResultTimelineSchema = z
+  .object({
+    startResult: z.date({
+      error: 'กรุณาเลือกวันเริ่มต้นประกาศผล',
+    }),
+    endResult: z.date({
+      error: 'กรุณาเลือกวันสิ้นสุดประกาศผล',
+    }),
+  })
+  .check(({ issues, value }) => {
+    const now = new Date()
+    if (value.startResult >= value.endResult) {
+      issues.push({
+        code: 'custom',
+        message: 'วันที่เริ่มประกาศผล ต้องอยู่ก่อนหน้าวันที่สิ้นสุดการประกาศผล',
+        path: ['startResult'],
+        input: value.startResult,
+      })
+      return
+    }
+    if (value.startResult < now) {
+      issues.push({
+        code: 'custom',
+        message: 'วันที่เริ่มประกาศผล ต้องเป็นเวลาตั้งแต่ปัจจุบันขึ้นไป',
+        path: ['startResult'],
+        input: value.startResult,
+      })
+
+      return
+    }
+  })
 
 type ResultTimelineOutput = z.infer<typeof ResultTimelineSchema>
 
@@ -114,27 +141,7 @@ function ResultTimelineForm({
     [announceResultMutation, electionId, onSuccess]
   )
 
-  const onSubmit: SubmitHandler<ResultTimelineOutput> = (
-    data: z.infer<typeof ResultTimelineSchema>
-  ) => {
-    if (!data.startResult || !data.endResult) return
-
-    const now = new Date()
-    if (data.startResult >= data.endResult) {
-      form.setError('startResult', {
-        type: 'manual',
-        message: 'วันที่เริ่มประกาศผล ต้องอยู่ก่อนหน้าวันที่สิ้นสุดการประกาศผล',
-      })
-      return
-    }
-    if (data.startResult < now) {
-      form.setError('startResult', {
-        type: 'manual',
-        message: 'วันที่เริ่มประกาศผล ต้องเป็นเวลาตั้งแต่ปัจจุบันขึ้นไป',
-      })
-      return
-    }
-
+  const onSubmit: SubmitHandler<ResultTimelineOutput> = (data) => {
     announceResult({ startResult: data.startResult, endResult: data.endResult })
   }
 
@@ -146,7 +153,9 @@ function ResultTimelineForm({
           name="startResult"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>วันเริ่มต้นประกาศผล</FormLabel>
+              <FormLabel>
+                วันเริ่มต้นประกาศผล <span className="text-system-danger-default">*</span>
+              </FormLabel>
               <DateTimePicker {...field} className="w-full" />
               <FormMessage />
             </FormItem>
@@ -157,7 +166,9 @@ function ResultTimelineForm({
           name="endResult"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>วันสิ้นสุดประกาศผล</FormLabel>
+              <FormLabel>
+                วันสิ้นสุดประกาศผล <span className="text-system-danger-default">*</span>
+              </FormLabel>
               <DateTimePicker {...field} className="w-full" />
               <FormMessage />
             </FormItem>
@@ -167,15 +178,7 @@ function ResultTimelineForm({
           <DialogTrigger asChild>
             <Button variant="outline">ยกเลิก</Button>
           </DialogTrigger>
-          <Button
-            disabled={
-              announceResultMutation.isPending ||
-              !form.watch().endResult ||
-              !form.watch().startResult
-            }
-          >
-            ประกาศ
-          </Button>
+          <Button disabled={announceResultMutation.isPending}>ประกาศ</Button>
         </div>
       </Form>
     </form>
