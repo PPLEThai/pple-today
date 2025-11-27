@@ -152,6 +152,7 @@ export const TopicCreate = (props: TopicCreateProps) => {
                       }
                       {...field}
                       onValueChange={onChange}
+                      modalPopover={true}
                       placeholder="เลือกแฮชแท็ก"
                     />
                   </FormControl>

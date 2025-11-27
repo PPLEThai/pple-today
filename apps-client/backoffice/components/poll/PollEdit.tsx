@@ -222,6 +222,7 @@ export const PollEdit = (props: PollEditProps) => {
                       }
                       {...field}
                       defaultValue={field.value}
+                      modalPopover={true}
                       onValueChange={onChange}
                       placeholder="เลือกหัวข้อ"
                     />

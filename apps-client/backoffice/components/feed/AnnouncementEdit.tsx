@@ -245,6 +245,7 @@ export const AnnouncementEdit = (props: AnnouncementEditProps) => {
                       {...field}
                       defaultValue={field.value}
                       onValueChange={onChange}
+                      modalPopover={true}
                       placeholder="เลือกหัวข้อ"
                     />
                   </FormControl>

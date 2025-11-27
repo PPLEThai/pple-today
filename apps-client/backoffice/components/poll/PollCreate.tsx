@@ -199,6 +199,7 @@ export const PollCreate = (props: PollCreateProps) => {
                         topicQuery.data?.data.map((t) => ({ value: t.id, label: t.name })) ?? []
                       }
                       {...field}
+                      modalPopover={true}
                       onValueChange={onChange}
                       placeholder="เลือกหัวข้อ"
                     />
