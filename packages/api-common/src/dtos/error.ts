@@ -254,6 +254,9 @@ const ELECTION_ERROR_SCHEMA = {
   ELECTION_NOT_IN_CLOSED_VOTE_PERIOD: {
     status: 409,
   },
+  ELECTION_NOT_ALLOWED_TO_PUBLISH: {
+    status: 409,
+  },
   ELECTION_INVALID_TYPE: {
     status: 409,
   },

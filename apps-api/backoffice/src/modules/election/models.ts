@@ -7,7 +7,7 @@ import {
 import { EligibleVoterType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
-export const ElectionWithCurrentStatus = t.Intersect([
+export const ElectionWithCurrentStatus = t.Composite([
   ElectionInfo,
   t.Object({
     votePercentage: t.Number(),
@@ -49,7 +49,7 @@ export const ElectionCandidateWithVoteScore = t.Composite([
 ])
 export type ElectionCandidateWithVoteScore = Static<typeof ElectionCandidateWithVoteScore>
 
-export const GetElectionResponse = t.Intersect([
+export const GetElectionResponse = t.Composite([
   ElectionWithCurrentStatus,
   t.Object({
     candidates: t.Array(ElectionCandidateWithVoteScore),

@@ -258,6 +258,7 @@ export const AdminElectionController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR,
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.FORBIDDEN,
+          InternalErrorCode.ELECTION_NOT_ALLOWED_TO_PUBLISH,
           InternalErrorCode.ELECTION_NOT_FOUND,
           InternalErrorCode.ELECTION_ALREADY_PUBLISH,
           InternalErrorCode.ELECTION_IS_CANCELLED
@@ -612,6 +613,62 @@ export const AdminElectionController = new Elysia({
   )
   .group('/:electionId/result', (app) =>
     app
+      .get(
+        '/',
+        async ({ status, adminElectionService, params }) => {
+          const result = await adminElectionService.getElectionResult(params.electionId)
+          if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+          return status(200, result.value)
+        },
+        {
+          detail: {
+            summary: 'Get election result',
+            description: 'Get election result',
+          },
+          requiredLocalUser: true,
+          params: AdminGetResultParams,
+          response: {
+            200: AdminGetResultResponse,
+            ...createErrorSchema(
+              InternalErrorCode.INTERNAL_SERVER_ERROR,
+              InternalErrorCode.ELECTION_NOT_FOUND
+            ),
+          },
+        }
+      )
+      .put(
+        '/announce',
+        async ({ status, adminElectionService, params, body }) => {
+          const result = await adminElectionService.announceElectionResult(params.electionId, body)
+          if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+          return status(200, {
+            message: 'Announce election result successfully',
+          })
+        },
+        {
+          detail: {
+            summary: 'Announce election result',
+            description: 'Announce election result',
+          },
+          requiredLocalUser: true,
+          params: AdminAnnounceResultParams,
+          body: AdminAnnounceResultBody,
+          response: {
+            200: AdminAnnounceResultResponse,
+            ...createErrorSchema(
+              InternalErrorCode.INTERNAL_SERVER_ERROR,
+              InternalErrorCode.BAD_REQUEST,
+              InternalErrorCode.ELECTION_NOT_FOUND,
+              InternalErrorCode.ELECTION_IS_CANCELLED,
+              InternalErrorCode.ELECTION_IN_VOTE_PERIOD,
+              InternalErrorCode.ELECTION_ALREADY_ANNOUCE_RESULT,
+              InternalErrorCode.ELECTION_ONLINE_RESULT_NOT_READY
+            ),
+          },
+        }
+      )
       .post(
         '/onsite',
         async ({ params, body, adminElectionService, status }) => {
@@ -781,63 +838,4 @@ export const AdminElectionController = new Elysia({
         },
       }
     )
-  )
-  .group('/:electionId/result', (app) =>
-    app
-      .get(
-        '/',
-        async ({ status, adminElectionService, params }) => {
-          const result = await adminElectionService.getElectionResult(params.electionId)
-          if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
-
-          return status(200, result.value)
-        },
-        {
-          detail: {
-            summary: 'Get election result',
-            description: 'Get election result',
-          },
-          requiredLocalUser: true,
-          params: AdminGetResultParams,
-          response: {
-            200: AdminGetResultResponse,
-            ...createErrorSchema(
-              InternalErrorCode.INTERNAL_SERVER_ERROR,
-              InternalErrorCode.ELECTION_NOT_FOUND
-            ),
-          },
-        }
-      )
-      .put(
-        '/announce',
-        async ({ status, adminElectionService, params, body }) => {
-          const result = await adminElectionService.announceElectionResult(params.electionId, body)
-          if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
-
-          return status(200, {
-            message: 'Announce election result successfully',
-          })
-        },
-        {
-          detail: {
-            summary: 'Announce election result',
-            description: 'Announce election result',
-          },
-          requiredLocalUser: true,
-          params: AdminAnnounceResultParams,
-          body: AdminAnnounceResultBody,
-          response: {
-            200: AdminAnnounceResultResponse,
-            ...createErrorSchema(
-              InternalErrorCode.INTERNAL_SERVER_ERROR,
-              InternalErrorCode.BAD_REQUEST,
-              InternalErrorCode.ELECTION_NOT_FOUND,
-              InternalErrorCode.ELECTION_IS_CANCELLED,
-              InternalErrorCode.ELECTION_IN_VOTE_PERIOD,
-              InternalErrorCode.ELECTION_ALREADY_ANNOUCE_RESULT,
-              InternalErrorCode.ELECTION_ONLINE_RESULT_NOT_READY
-            ),
-          },
-        }
-      )
   )
