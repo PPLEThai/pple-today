@@ -219,35 +219,67 @@ export const ElectionController = new Elysia({
       },
     }
   )
-  .post('/:electionId/notify', async () => {}, {
-    detail: {
-      summary: 'Create election notification',
-      description: 'Create election notification for the user',
+  .post(
+    '/:electionId/notify',
+    async ({ user, electionService, params, status }) => {
+      const createNotification = await electionService.createNotification(
+        params.electionId,
+        user.id
+      )
+      if (createNotification.isErr()) {
+        return mapErrorCodeToResponse(createNotification.error, status)
+      }
+
+      return status(200, {
+        message: 'Create election notification success',
+      })
     },
-    requiredLocalUser: true,
-    params: CreateElectionNotificationParams,
-    response: {
-      200: CreateElectionNotificationResponse,
-      ...createErrorSchema(
-        InternalErrorCode.UNAUTHORIZED,
-        InternalErrorCode.ELECTION_NOT_FOUND,
-        InternalErrorCode.INTERNAL_SERVER_ERROR
-      ),
+    {
+      detail: {
+        summary: 'Create election notification',
+        description: 'Create election notification for the user',
+      },
+      requiredLocalUser: true,
+      params: CreateElectionNotificationParams,
+      response: {
+        200: CreateElectionNotificationResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .delete(
+    '/:electionId/notify',
+    async ({ electionService, params, status, user }) => {
+      const deleteNotification = await electionService.deleteNotification(
+        params.electionId,
+        user.id
+      )
+      if (deleteNotification.isErr()) {
+        return mapErrorCodeToResponse(deleteNotification.error, status)
+      }
+
+      return status(200, {
+        message: 'Delete election notification success',
+      })
     },
-  })
-  .delete('/:electionId/notify', async () => {}, {
-    detail: {
-      summary: 'Remove election notification',
-      description: 'Remove election notification for the user',
-    },
-    requiredLocalUser: true,
-    params: DeleteElectionNotificationParams,
-    response: {
-      200: DeleteElectionNotificationResponse,
-      ...createErrorSchema(
-        InternalErrorCode.UNAUTHORIZED,
-        InternalErrorCode.ELECTION_NOT_FOUND,
-        InternalErrorCode.INTERNAL_SERVER_ERROR
-      ),
-    },
-  })
+    {
+      detail: {
+        summary: 'Remove election notification',
+        description: 'Remove election notification for the user',
+      },
+      requiredLocalUser: true,
+      params: DeleteElectionNotificationParams,
+      response: {
+        200: DeleteElectionNotificationResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.ELECTION_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
