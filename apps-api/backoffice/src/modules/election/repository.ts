@@ -25,6 +25,7 @@ export class ElectionRepository {
             include: {
               _count: { select: { voters: true, voteRecords: true } },
               voteRecords: { where: { userId }, select: { userId: true }, take: 1 },
+              notifications: { where: { userId }, select: { userId: true }, take: 1 },
             },
           },
         },
@@ -47,6 +48,7 @@ export class ElectionRepository {
               _count: { select: { voters: true, voteRecords: true } },
               voteRecords: { where: { userId }, select: { userId: true }, take: 1 },
               candidates: { include: { results: true } },
+              notifications: { where: { userId }, select: { userId: true }, take: 1 },
             },
           },
         },

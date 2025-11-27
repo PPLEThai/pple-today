@@ -13,6 +13,7 @@ export const ElectionWithCurrentStatus = t.Composite([
     votePercentage: t.Number(),
     isRegistered: t.Nullable(t.Boolean()),
     isVoted: t.Boolean(),
+    isRemindMe: t.Boolean(),
   }),
 ])
 export type ElectionWithCurrentStatus = Static<typeof ElectionWithCurrentStatus>

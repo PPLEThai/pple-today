@@ -300,7 +300,10 @@ function ElectionCardFooter(props: ElectionCardProps) {
     case 'NOT_OPENED_VOTE': {
       if (props.election.type === 'ONLINE') {
         return (
-          <ElectionNotification electionId={props.election.id}>
+          <ElectionNotification
+            electionId={props.election.id}
+            initialData={props.election.isRemindMe}
+          >
             {({ isEnabled, setIsEnabled }) => (
               <Button size="sm" className="w-full mt-2" onPress={() => setIsEnabled(!isEnabled)}>
                 <Icon icon={isEnabled ? AlarmClockCheckIcon : AlarmClockIcon} size={16} />
@@ -322,7 +325,10 @@ function ElectionCardFooter(props: ElectionCardProps) {
               <Icon icon={MapPinnedIcon} size={16} />
               <Text>ดูสถานที่</Text>
             </Button>
-            <ElectionNotification electionId={props.election.id}>
+            <ElectionNotification
+              electionId={props.election.id}
+              initialData={props.election.isRemindMe}
+            >
               {({ isEnabled, setIsEnabled }) => (
                 <Button size="sm" className="flex-1" onPress={() => setIsEnabled(!isEnabled)}>
                   <Icon icon={isEnabled ? AlarmClockCheckIcon : AlarmClockIcon} size={16} />
@@ -364,7 +370,10 @@ function ElectionCardFooter(props: ElectionCardProps) {
               <Icon icon={MapPinnedIcon} size={16} />
               <Text>ดูสถานที่</Text>
             </Button>
-            <ElectionNotification electionId={props.election.id}>
+            <ElectionNotification
+              electionId={props.election.id}
+              initialData={props.election.isRemindMe}
+            >
               {({ isEnabled, setIsEnabled }) => (
                 <Button size="sm" className="flex-1" onPress={() => setIsEnabled(!isEnabled)}>
                   <Icon icon={isEnabled ? AlarmClockCheckIcon : AlarmClockIcon} size={16} />

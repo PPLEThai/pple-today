@@ -67,12 +67,12 @@ model Election {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    candidates            ElectionCandidate[]
-    voters                ElectionEligibleVoter[]
-    voteRecords           ElectionVoteRecord[]
-    ballots               ElectionBallot[]
-    invalidBallots        ElectionInvalidBallot[]
-    electionNotifications ElectionNotification[]
+    candidates     ElectionCandidate[]
+    voters         ElectionEligibleVoter[]
+    voteRecords    ElectionVoteRecord[]
+    ballots        ElectionBallot[]
+    invalidBallots ElectionInvalidBallot[]
+    notifications  ElectionNotification[]
 
     @@index([name])
 }
