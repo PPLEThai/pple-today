@@ -343,7 +343,10 @@ function ElectionCardFooter(props: ElectionCardProps) {
         if (dayjs().isBefore(props.election.closeRegister) || props.election.isRegistered) {
           return (
             <View className="flex flex-row pt-2 gap-2.5">
-              <ElectionNotification electionId={props.election.id}>
+              <ElectionNotification
+                electionId={props.election.id}
+                initialData={props.election.isRemindMe}
+              >
                 {({ isEnabled, setIsEnabled }) => (
                   <Button
                     size="icon"
@@ -454,12 +457,40 @@ function useElectionNotificationState(electionId: string, initialData: boolean) 
     variables: { electionId },
     initialData: initialData,
   })
+  const notifyMeMutation = reactQueryClient.useMutation('post', '/elections/:electionId/notify', {})
+  const cancelNotifyMeMutation = reactQueryClient.useMutation(
+    'delete',
+    '/elections/:electionId/notify',
+    {}
+  )
   const queryClient = useQueryClient()
   const setElectionNotificationState = useCallback(
-    (data: boolean) => {
+    async (data: boolean) => {
       queryClient.setQueryData(useElectionNotificationQuery.getKey({ electionId }), data)
+
+      if (data) {
+        await notifyMeMutation.mutateAsync(
+          {
+            pathParams: { electionId },
+          },
+          {
+            onError: (error) => {
+              console.error('Election notify me error', JSON.stringify(error))
+            },
+          }
+        )
+      } else {
+        await cancelNotifyMeMutation.mutateAsync(
+          { pathParams: { electionId } },
+          {
+            onError: (error) => {
+              console.error('Election cancel notify me error', JSON.stringify(error))
+            },
+          }
+        )
+      }
     },
-    [queryClient, electionId]
+    [queryClient, electionId, notifyMeMutation, cancelNotifyMeMutation]
   )
   return [electionNotificationQuery.data, setElectionNotificationState] as const
 }
