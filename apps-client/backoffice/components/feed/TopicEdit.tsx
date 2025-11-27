@@ -177,6 +177,7 @@ export const TopicEdit = (props: TopicEditProps) => {
                       {...field}
                       defaultValue={field.value}
                       onValueChange={onChange}
+                      modalPopover={true}
                       placeholder="เลือกแฮชแท็ก"
                     />
                   </FormControl>

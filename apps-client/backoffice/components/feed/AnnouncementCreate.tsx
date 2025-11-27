@@ -210,6 +210,7 @@ export const AnnouncementCreate = (props: AnnouncementCreateProps) => {
                       }
                       {...field}
                       onValueChange={onChange}
+                      modalPopover={true}
                       placeholder="เลือกหัวข้อ"
                     />
                   </FormControl>
