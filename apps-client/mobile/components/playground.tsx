@@ -56,7 +56,6 @@ import { z } from 'zod/v4'
 import { ElectionWithCurrentStatus, FeedItemPoll } from '@api/backoffice/app'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useFacebookPagesQuery } from '@app/libs/facebook'
-import { EXAMPLE_ACTIVITY } from '@app/libs/pple-activity'
 
 import { ActivityCard } from './activity/activity-card'
 import { AuthPlayground } from './auth-playground'
@@ -1161,7 +1160,17 @@ function ActivityCardExample() {
   return (
     <View className="flex flex-col gap-2 ">
       <H2 className="font-inter-bold">Activity Card</H2>
-      <ActivityCard activity={EXAMPLE_ACTIVITY} />
+      <ActivityCard
+        activity={{
+          id: '1',
+          name: 'Knowledge Center ครั้งที่ 1 – “เอาชีวิตรอดอย่างโปร ปฐมพยาบาลช่วยชีวิตปลอดภัย”',
+          location: 'อาคารอนาคตใหม่ (หัวหมาก 6)',
+          image: 'https://picsum.photos/300?random=0',
+          startAt: new Date(),
+          endAt: dayjs().add(1, 'day').toDate(),
+          url: 'https://www.facebook.com/',
+        }}
+      />
     </View>
   )
 }

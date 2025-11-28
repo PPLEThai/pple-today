@@ -211,6 +211,12 @@ const TOPIC_ERROR_SCHEMA = {
   },
 } satisfies InternalErrorSchemas
 
+const EVENT_ERROR_SCHEMA = {
+  EVENT_FAILED_TO_FETCH: {
+    status: 500,
+  },
+} satisfies InternalErrorSchemas
+
 const ELECTION_ERROR_SCHEMA = {
   ELECTION_NOT_FOUND: {
     status: 404,
@@ -335,6 +341,7 @@ export const InternalErrorCodeSchemas = {
   ...AUTH_ERROR_SCHEMA,
   ...COMMON_ERROR_SCHEMA,
   ...ABOUT_US_ERROR_SCHEMA,
+  ...EVENT_ERROR_SCHEMA,
   ...USER_ERROR_SCHEMA,
   ...FILE_ERROR_SCHEMA,
   ...FACEBOOK_ERROR_SCHEMA,

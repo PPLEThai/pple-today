@@ -28,23 +28,13 @@ import {
   TicketIcon,
 } from 'lucide-react-native'
 
-import { FeedItem, FeedItemPoll, ListPollsResponse } from '@api/backoffice/app'
-import {
-  ActivityCard,
-  ActivityCardProps,
-  ActivityCardSkeleton,
-} from '@app/components/activity/activity-card'
+import { Event, FeedItem, FeedItemPoll, ListPollsResponse } from '@api/backoffice/app'
+import { ActivityCard, ActivityCardSkeleton } from '@app/components/activity/activity-card'
 import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
 import { RefreshControl } from '@app/components/refresh-control'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
-import { fetchClient } from '@app/libs/api-client'
+import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
-import {
-  EXAMPLE_ACTIVITY,
-  GetPPLEActivity,
-  mapToActivity,
-  useRecentActivityQuery,
-} from '@app/libs/pple-activity'
 import { createImageUrl } from '@app/utils/image'
 
 import { useBottomTabOnPress } from '../_layout'
@@ -86,7 +76,16 @@ export function MyActivity() {
     return null
   }
   const isLoading = false // TODO: fetch user's activities
-  const activity = EXAMPLE_ACTIVITY
+  const activity: Event = {
+    id: '1',
+    name: 'Knowledge Center ครั้งที่ 1 – “เอาชีวิตรอดอย่างโปร ปฐมพยาบาลช่วยชีวิตปลอดภัย”',
+    location: 'อาคารอนาคตใหม่ (หัวหมาก 6)',
+    image: 'https://picsum.photos/300?random=0',
+    startAt: new Date(),
+    endAt: dayjs().add(1, 'day').toDate(),
+    url: 'https://www.facebook.com/',
+  }
+
   return (
     <View className="px-4">
       <View className="rounded-2xl border border-base-outline-default bg-base-bg-white px-4 py-3 flex flex-col gap-3">
@@ -167,11 +166,10 @@ export function MyActivity() {
 }
 
 function RecentActivity() {
-  const recentActivityQuery = useRecentActivityQuery({
-    variables: { limit: 3 },
-    select: useCallback((data: GetPPLEActivity): ActivityCardProps['activity'][] => {
-      return data.result.map(mapToActivity)
-    }, []),
+  const recentActivityQuery = reactQueryClient.useQuery('/events', {
+    query: {
+      limit: 3,
+    },
   })
   useEffect(() => {
     if (recentActivityQuery.isError) {
@@ -201,10 +199,10 @@ function RecentActivity() {
           <ActivityCardSkeleton />
           <ActivityCardSkeleton />
         </>
-      ) : !recentActivityQuery.data || recentActivityQuery.data.length === 0 ? (
+      ) : !recentActivityQuery.data || recentActivityQuery.data.result.length === 0 ? (
         <Text className="text-base-text-medium w-full text-center">ไม่มีข้อมูลกิจกรรม</Text>
       ) : (
-        recentActivityQuery.data.map((activity) => (
+        recentActivityQuery.data.result.map((activity) => (
           <ActivityCard key={activity.id} activity={activity} />
         ))
       )}
@@ -260,7 +258,9 @@ function PollFeedSection(props: { ListHeaderComponent: React.ReactNode }) {
   const queryClient = useQueryClient()
   const onRefresh = React.useCallback(async () => {
     await queryClient.resetQueries({ queryKey: [QUERY_KEY_SYMBOL, 'infinite', 'polls'] })
-    await queryClient.invalidateQueries({ queryKey: useRecentActivityQuery.getKey() })
+    await queryClient.resetQueries({
+      queryKey: reactQueryClient.getQueryKey('/events'),
+    })
   }, [queryClient])
 
   const flatListRef = React.useRef<Animated.FlatList<any>>(null)

@@ -13,10 +13,10 @@ import {
   UseInfiniteQueryResult,
   useQueryClient,
 } from '@tanstack/react-query'
-import dayjs from 'dayjs'
 import { useRouter } from 'expo-router'
 import { ArrowLeftIcon, HandshakeIcon } from 'lucide-react-native'
 
+import { GetTodayEventsResponse, GetUpcomingEventsResponse } from '@api/backoffice/app'
 import {
   ActivityCard,
   ActivityCardProps,
@@ -35,7 +35,7 @@ import {
 } from '@app/components/pager-with-header'
 import { RefreshControl } from '@app/components/refresh-control'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
-import { Activity, GetPPLEActivity, getPPLEActivity, mapToActivity } from '@app/libs/pple-activity'
+import { fetchClient } from '@app/libs/api-client'
 import { useScrollContext } from '@app/libs/scroll-context'
 
 export default function RecentActivityPage() {
@@ -116,13 +116,16 @@ function TodayActivityContent(props: PagerScrollViewProps) {
     queryKey: [QUERY_KEY_SYMBOL, 'infinite', 'today-activity'],
     initialPageParam: 1,
     queryFn: async ({ pageParam = 1 }) => {
-      const data = await getPPLEActivity({ limit: LIMIT, currentPage: pageParam })
-      return {
-        ...data,
-        result: data.result.filter((activity) => {
-          return dayjs(activity.event_data.event_date).isSame(dayjs(), 'day')
-        }),
+      const { data, error } = await fetchClient('/events/today', {
+        method: 'GET',
+        query: { limit: LIMIT, page: pageParam },
+      })
+
+      if (error) {
+        throw error
       }
+
+      return data
     },
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.result.length < LIMIT) {
@@ -133,9 +136,9 @@ function TodayActivityContent(props: PagerScrollViewProps) {
       }
       return undefined
     },
-    select: useCallback((data: InfiniteData<GetPPLEActivity>): InfiniteData<Activity[]> => {
+    select: useCallback((data: InfiniteData<GetTodayEventsResponse>) => {
       return {
-        pages: data.pages.map((page) => page.result.map(mapToActivity)),
+        pages: data.pages.map((page) => page.result),
         pageParams: data.pageParams,
       }
     }, []),
@@ -207,7 +210,16 @@ function UpcomingActivityContent(props: PagerScrollViewProps) {
     queryKey: [QUERY_KEY_SYMBOL, 'infinite', 'upcoming-activity'],
     initialPageParam: 1,
     queryFn: async ({ pageParam = 1 }) => {
-      return getPPLEActivity({ limit: LIMIT, currentPage: pageParam })
+      const { data, error } = await fetchClient('/events/upcoming', {
+        method: 'GET',
+        query: { limit: LIMIT, page: pageParam },
+      })
+
+      if (error) {
+        throw error
+      }
+
+      return data
     },
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.result.length < LIMIT) {
@@ -218,13 +230,9 @@ function UpcomingActivityContent(props: PagerScrollViewProps) {
       }
       return undefined
     },
-    select: useCallback((data: InfiniteData<GetPPLEActivity>): InfiniteData<Activity[]> => {
+    select: useCallback((data: InfiniteData<GetUpcomingEventsResponse>) => {
       return {
-        pages: data.pages.map((page) =>
-          page.result.map(mapToActivity).filter((activity) => {
-            return dayjs(activity.startAt).isAfter(dayjs(), 'day')
-          })
-        ),
+        pages: data.pages.map((page) => page.result),
         pageParams: data.pageParams,
       }
     }, []),

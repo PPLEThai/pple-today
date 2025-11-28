@@ -90,6 +90,15 @@ export const envSchema = t.Object({
   IMAGE_SERVER_BASE_URL: t.String({
     description: 'Base URL for image server',
   }),
+  PPLE_ACTIVITY_BASE_URL: t.String({
+    description: 'Base URL for PPLE Activity API',
+    format: 'uri',
+  }),
+  PPLE_ACTIVITY_CACHE_TIME: t.Optional(
+    t.Number({
+      description: 'Cache time for PPLE Activity API responses in seconds',
+    })
+  ),
 })
 
 export const ConfigServicePlugin = createConfigServicePlugin({
