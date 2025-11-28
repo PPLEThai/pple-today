@@ -39,7 +39,10 @@ export const EventsController = new Elysia({
       query: GetAllEventsQuery,
       response: {
         200: GetAllEventsResponse,
-        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+        ...createErrorSchema(
+          InternalErrorCode.EVENT_FAILED_TO_FETCH,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
       },
     }
   )
@@ -65,7 +68,10 @@ export const EventsController = new Elysia({
       query: GetUpcomingEventsQuery,
       response: {
         200: GetUpcomingEventsResponse,
-        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+        ...createErrorSchema(
+          InternalErrorCode.EVENT_FAILED_TO_FETCH,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
       },
     }
   )
@@ -91,7 +97,10 @@ export const EventsController = new Elysia({
       query: GetTodayEventsQuery,
       response: {
         200: GetTodayEventsResponse,
-        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+        ...createErrorSchema(
+          InternalErrorCode.EVENT_FAILED_TO_FETCH,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
       },
     }
   )

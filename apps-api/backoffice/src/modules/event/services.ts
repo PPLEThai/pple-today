@@ -3,7 +3,7 @@ import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common
 import { err } from '@pple-today/api-common/utils'
 import { Parse } from '@sinclair/typebox/value'
 import Elysia from 'elysia'
-import { fromPromise, ok } from 'neverthrow'
+import { Err, fromPromise, ok } from 'neverthrow'
 
 import {
   GetAllEventsResponse,
@@ -97,7 +97,7 @@ export class EventService {
         const resp = await fetch(url.toString())
         if (!resp.ok) {
           throw {
-            code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+            code: InternalErrorCode.EVENT_FAILED_TO_FETCH,
             message: `Failed to fetch today's events: ${resp.statusText}`,
           }
         }
@@ -123,6 +123,13 @@ export class EventService {
           message: "Failed to fetch today's events",
           error: err instanceof Error ? err.message : err,
         })
+
+        if (err instanceof Err) {
+          return err.error as {
+            code: 'EVENT_FAILED_TO_FETCH'
+            message: string
+          }
+        }
 
         return {
           code: InternalErrorCode.INTERNAL_SERVER_ERROR,
@@ -163,7 +170,7 @@ export class EventService {
         const resp = await fetch(url.toString())
         if (!resp.ok) {
           throw {
-            code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+            code: InternalErrorCode.EVENT_FAILED_TO_FETCH,
             message: `Failed to fetch upcoming events: ${resp.statusText}`,
           }
         }
@@ -178,6 +185,13 @@ export class EventService {
           message: 'Failed to fetch upcoming events',
           error: err instanceof Error ? err.message : err,
         })
+
+        if (err instanceof Err) {
+          return err.error as {
+            code: 'EVENT_FAILED_TO_FETCH'
+            message: string
+          }
+        }
 
         return {
           code: InternalErrorCode.INTERNAL_SERVER_ERROR,
@@ -218,7 +232,7 @@ export class EventService {
         const resp = await fetch(url.toString())
         if (!resp.ok) {
           throw {
-            code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+            code: InternalErrorCode.EVENT_FAILED_TO_FETCH,
             message: `Failed to fetch today's events: ${resp.statusText}`,
           }
         }
@@ -233,6 +247,13 @@ export class EventService {
           message: "Failed to fetch today's events",
           error: err instanceof Error ? err.message : err,
         })
+
+        if (err instanceof Err) {
+          return err.error as {
+            code: 'EVENT_FAILED_TO_FETCH'
+            message: string
+          }
+        }
 
         return {
           code: InternalErrorCode.INTERNAL_SERVER_ERROR,

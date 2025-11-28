@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useCallback, useMemo } from 'react'
 import { Dimensions, View } from 'react-native'
 import Animated, { useAnimatedScrollHandler } from 'react-native-reanimated'
 
@@ -16,6 +16,7 @@ import {
 import { useRouter } from 'expo-router'
 import { ArrowLeftIcon, HandshakeIcon } from 'lucide-react-native'
 
+import { GetTodayEventsResponse, GetUpcomingEventsResponse } from '@api/backoffice/app'
 import {
   ActivityCard,
   ActivityCardProps,
@@ -135,12 +136,12 @@ function TodayActivityContent(props: PagerScrollViewProps) {
       }
       return undefined
     },
-    select: (data) => {
+    select: useCallback((data: InfiniteData<GetTodayEventsResponse>) => {
       return {
         pages: data.pages.map((page) => page.result),
         pageParams: data.pageParams,
       }
-    },
+    }, []),
   })
   const data = useMemo(() => {
     if (!recentActivityInfiniteQuery.data) {
@@ -229,12 +230,12 @@ function UpcomingActivityContent(props: PagerScrollViewProps) {
       }
       return undefined
     },
-    select: (data) => {
+    select: useCallback((data: InfiniteData<GetUpcomingEventsResponse>) => {
       return {
         pages: data.pages.map((page) => page.result),
         pageParams: data.pageParams,
       }
-    },
+    }, []),
   })
   const data = useMemo(() => {
     if (!recentActivityInfiniteQuery.data) {
