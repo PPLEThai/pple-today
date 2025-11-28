@@ -153,6 +153,25 @@ export class AdminElectionService {
     return ok()
   }
 
+  private checkElectionCanBeCancelled(election: Election) {
+    const isCancelled = election.isCancelled
+    if (isCancelled) {
+      return err({
+        code: InternalErrorCode.ELECTION_IS_CANCELLED,
+        message: `Election is already cancelled`,
+      })
+    }
+
+    if (!election.publishDate) {
+      return err({
+        code: InternalErrorCode.ELECTION_NOT_PUBLISHED,
+        message: 'Election is not published',
+      })
+    }
+
+    return ok()
+  }
+
   private convertToAdminElectionInfo(
     election: Election & { _count: { voters: number; voteRecords: number } },
     now: Date
@@ -379,6 +398,9 @@ export class AdminElectionService {
         },
       })
     }
+
+    const checkResult = this.checkElectionCanBeCancelled(electionDetails.value)
+    if (checkResult.isErr()) return err(checkResult.error)
 
     const isDestroyKey = electionDetails.value.type !== ElectionType.ONSITE
 

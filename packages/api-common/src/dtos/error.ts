@@ -257,6 +257,9 @@ const ELECTION_ERROR_SCHEMA = {
   ELECTION_NOT_ALLOWED_TO_PUBLISH: {
     status: 409,
   },
+  ELECTION_NOT_PUBLISHED: {
+    status: 409,
+  },
   ELECTION_INVALID_TYPE: {
     status: 409,
   },
