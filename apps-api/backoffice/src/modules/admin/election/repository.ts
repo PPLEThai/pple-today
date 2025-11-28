@@ -291,13 +291,13 @@ export class AdminElectionRepository {
     )
   }
 
-  async publishElectionById(electionId: string, publishDate: Date, isDestroyKey: boolean) {
+  async publishElectionById(electionId: string, publishDate: Date, shouldDestroyKey: boolean) {
     return fromRepositoryPromise(
       this.prismaService.election.update({
         where: { id: electionId },
         data: {
           publishDate,
-          keysStatus: isDestroyKey ? ElectionKeysStatus.DESTROY_SCHEDULED : undefined,
+          keysStatus: shouldDestroyKey ? ElectionKeysStatus.DESTROY_SCHEDULED : undefined,
         },
       })
     )
