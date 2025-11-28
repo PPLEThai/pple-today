@@ -1,7 +1,13 @@
 import { Banner } from '@pple-today/api-common/dtos'
 import { FilePath } from '@pple-today/api-common/dtos'
-import { BannerNavigationType, BannerStatusType } from '@pple-today/database/prisma'
+import {
+  BannerInAppType,
+  BannerNavigationType,
+  BannerStatusType,
+} from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
+
+export { BannerInAppType }
 
 export const BannerIdParams = t.Object({
   id: t.String({ description: 'The ID of the banner item' }),
@@ -30,6 +36,12 @@ export const CreateBannerBody = t.Object({
   headline: t.String({
     description: 'The headline for the banner item',
   }),
+  inAppId: t.Optional(t.String({ description: 'The ID of the in-app content to open' })),
+  inAppType: t.Optional(
+    t.Enum(BannerInAppType, {
+      description: 'The type of the in-app content to open',
+    })
+  ),
   miniAppId: t.Optional(t.String({ description: 'The ID of the mini app to open' })),
   destination: t.Optional(
     t.String({
@@ -61,6 +73,12 @@ export const UpdateBannerBody = t.Partial(
     destination: t.Nullable(
       t.String({
         description: 'The destination URI for the banner item',
+      })
+    ),
+    inAppId: t.Optional(t.String({ description: 'The ID of the in-app content to open' })),
+    inAppType: t.Optional(
+      t.Enum(BannerInAppType, {
+        description: 'The type of the in-app content to open',
       })
     ),
     navigation: t.Enum(BannerNavigationType, {

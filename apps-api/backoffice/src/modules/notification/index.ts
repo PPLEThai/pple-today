@@ -214,6 +214,7 @@ export const ExternalNotificationController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.INTERNAL_SERVER_ERROR,
           InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.NOTIFICATION_INVALID_IN_APP_NAVIGATION,
           InternalErrorCode.NOTIFICATION_SENT_FAILED
         ),
       },

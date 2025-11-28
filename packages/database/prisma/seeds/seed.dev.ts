@@ -124,8 +124,9 @@ const seedBanners = async () => {
     navigation: 'EXTERNAL_BROWSER',
   } as const
   const inAppBrowser = {
-    destination: `/feed/id`,
     navigation: 'IN_APP_NAVIGATION',
+    inAppId: 'announcement-1',
+    inAppType: 'ANNOUNCEMENT',
   } as const
   let lexorank = LexoRank.min()
   for (let i = 1, miniAppIdx = 1; i <= 15; ++i) {

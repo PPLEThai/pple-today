@@ -1,6 +1,7 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
 import { err } from '@pple-today/api-common/utils'
+import { NotificationInAppType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { Credentials, JWT } from 'google-auth-library'
 import { fromPromise, ok } from 'neverthrow'
@@ -67,7 +68,18 @@ export class CloudMessagingService {
       title: string
       message: string
       image?: string
-      link?: { type: string; value: string }
+      link?:
+        | {
+            type: 'MINI_APP' | 'EXTERNAL_BROWSER'
+            destination: string
+          }
+        | {
+            type: 'IN_APP_NAVIGATION'
+            destination: {
+              inAppType: NotificationInAppType | 'NOTIFICATION'
+              inAppId: string
+            }
+          }
     }
   ) {
     const accessToken = await fromPromise(this.getAccessTokenAsync(), () => ({

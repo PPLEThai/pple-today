@@ -1,7 +1,18 @@
 import { FilePath, InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
-import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { BannerNavigationType, BannerStatusType } from '@pple-today/database/prisma'
+import { exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
+import {
+  AnnouncementStatus,
+  BannerInAppType,
+  BannerNavigationType,
+  BannerStatusType,
+  HashTagStatus,
+  PollStatus,
+  PostStatus,
+  Prisma,
+  TopicStatus,
+  UserStatus,
+} from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { LexoRank } from 'lexorank'
 import { err, ok } from 'neverthrow'
@@ -27,6 +38,52 @@ export class AdminBannerRepository {
     private readonly prismaService: PrismaService,
     private readonly fileService: FileService
   ) {}
+
+  private async checkValidInAppType(inAppType: BannerInAppType, inAppId: string) {
+    switch (inAppType) {
+      case BannerInAppType.POST:
+        await this.prismaService.post.findUniqueOrThrow({
+          where: { feedItemId: inAppId, status: PostStatus.PUBLISHED },
+        })
+        return true
+      case BannerInAppType.POLL:
+        await this.prismaService.poll.findUniqueOrThrow({
+          where: { feedItemId: inAppId, status: PollStatus.PUBLISHED },
+        })
+        return true
+      case BannerInAppType.TOPIC:
+        await this.prismaService.topic.findUniqueOrThrow({
+          where: { id: inAppId, status: TopicStatus.PUBLISHED },
+        })
+        return true
+      case BannerInAppType.ANNOUNCEMENT:
+        await this.prismaService.announcement.findUniqueOrThrow({
+          where: { feedItemId: inAppId, status: AnnouncementStatus.PUBLISHED },
+        })
+        return true
+      case BannerInAppType.ELECTION:
+        await this.prismaService.election.findUniqueOrThrow({
+          where: {
+            id: inAppId,
+            isCancelled: false,
+            publishDate: { lte: new Date() },
+          },
+        })
+        return true
+      case BannerInAppType.HASHTAG:
+        await this.prismaService.hashTag.findUniqueOrThrow({
+          where: { id: inAppId, status: HashTagStatus.PUBLISHED },
+        })
+        return true
+      case BannerInAppType.USER:
+        await this.prismaService.user.findUniqueOrThrow({
+          where: { id: inAppId, status: UserStatus.ACTIVE },
+        })
+        return true
+      default:
+        exhaustiveGuard(inAppType)
+    }
+  }
 
   async getBanners(query: GetBannersQuery) {
     return fromRepositoryPromise(
@@ -61,6 +118,22 @@ export class AdminBannerRepository {
   }
 
   async createBanner(data: CreateBannerBody) {
+    if (data.navigation === BannerNavigationType.IN_APP_NAVIGATION) {
+      const isValidInAppType = await fromRepositoryPromise(
+        this.checkValidInAppType(data.inAppType!, data.inAppId!)
+      )
+
+      if (isValidInAppType.isErr()) {
+        if (isValidInAppType.error.code === 'RECORD_NOT_FOUND') {
+          return err({
+            code: InternalErrorCode.BANNER_INVALID_IN_APP_NAVIGATION,
+            message: 'The provided inAppId is not valid for the specified inAppType',
+          })
+        }
+        return err(isValidInAppType.error)
+      }
+    }
+
     const moveFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
         const moveResult = await fileTx.bulkMoveToPublicFolder([data.imageFilePath])
@@ -86,7 +159,12 @@ export class AdminBannerRepository {
             navigation: data.navigation,
             ...(data.navigation === BannerNavigationType.MINI_APP
               ? { miniApp: { connect: { id: data.miniAppId } } }
-              : { destination: data.destination }),
+              : data.navigation === BannerNavigationType.IN_APP_NAVIGATION
+                ? {
+                    inAppId: data.inAppId,
+                    inAppType: data.inAppType,
+                  }
+                : { destination: data.destination }),
             order: lastBanner?.order
               ? LexoRank.parse(lastBanner.order).genNext().toString()
               : LexoRank.min().toString(),
@@ -115,12 +193,34 @@ export class AdminBannerRepository {
           imageFilePath: true,
           miniAppId: true,
           destination: true,
+          inAppId: true,
+          inAppType: true,
           navigation: true,
           status: true,
         },
       })
     )
     if (existingBanner.isErr()) return err(existingBanner.error)
+
+    if (
+      data.navigation === BannerNavigationType.IN_APP_NAVIGATION ||
+      (!data.navigation &&
+        existingBanner.value.navigation === BannerNavigationType.IN_APP_NAVIGATION)
+    ) {
+      const isValidInAppType = await fromRepositoryPromise(
+        this.checkValidInAppType(data.inAppType ?? existingBanner.value.inAppType!, data.inAppId!)
+      )
+
+      if (isValidInAppType.isErr()) {
+        if (isValidInAppType.error.code === 'RECORD_NOT_FOUND') {
+          return err({
+            code: InternalErrorCode.BANNER_INVALID_IN_APP_NAVIGATION,
+            message: 'The provided inAppId is not valid for the specified inAppType',
+          })
+        }
+        return err(isValidInAppType.error)
+      }
+    }
 
     const totalPublishedBanners = await fromRepositoryPromise(
       this.prismaService.banner.count({
@@ -166,7 +266,7 @@ export class AdminBannerRepository {
           select: { order: true },
         })
 
-        let connectionResult = {}
+        let connectionResult: Prisma.BannerUpdateArgs['data'] = {}
         if (data.navigation === undefined) {
           if (existingBanner.value.destination && data.destination) {
             connectionResult = {
@@ -175,6 +275,11 @@ export class AdminBannerRepository {
           } else if (existingBanner.value.miniAppId && data.miniAppId) {
             connectionResult = {
               miniApp: { disconnect: {}, connect: { id: data.miniAppId } },
+            }
+          } else {
+            connectionResult = {
+              inAppId: data.inAppId,
+              inAppType: data.inAppType,
             }
           }
         } else if (data.navigation === BannerNavigationType.MINI_APP) {
@@ -187,16 +292,20 @@ export class AdminBannerRepository {
           } else {
             throw new Error('`miniAppId` cannot be null or undefined when `navigation` is MINI_APP')
           }
-        } else if (data.destination) {
+        } else if (data.navigation === BannerNavigationType.EXTERNAL_BROWSER && data.destination) {
           connectionResult = {
             navigation: data.navigation,
             miniApp: { disconnect: {} },
             destination: data.destination,
           }
-        } else {
-          throw new Error(
-            '`destination` cannot be null or undefined when `navigation` is not MINI_APP'
-          )
+        } else if (data.navigation === BannerNavigationType.IN_APP_NAVIGATION) {
+          connectionResult = {
+            navigation: data.navigation,
+            inAppId: data.inAppId,
+            inAppType: data.inAppType,
+            miniApp: { disconnect: {} },
+            destination: null,
+          }
         }
 
         return tx.banner.update({

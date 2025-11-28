@@ -65,7 +65,7 @@ import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { useAuthMe, useSession } from '@app/libs/auth'
 import { useScrollContext } from '@app/libs/scroll-context'
 import { createImageUrl } from '@app/utils/image'
-import { openLink } from '@app/utils/link'
+import { convertBannerToLink, openLink } from '@app/utils/link'
 
 import { useBottomTabOnPress } from '../_layout'
 
@@ -201,13 +201,13 @@ const PLACEHOLDER_BANNERS: GetBannersResponse = [
     id: '1',
     imageUrl: '',
     destination: '',
-    navigation: 'IN_APP_NAVIGATION',
+    navigation: 'EXTERNAL_BROWSER',
   },
   {
     id: '2',
     imageUrl: '',
     destination: '',
-    navigation: 'IN_APP_NAVIGATION',
+    navigation: 'EXTERNAL_BROWSER',
   },
 ]
 
@@ -242,11 +242,14 @@ function BannerSection() {
 
 function Banner({ banner }: { banner: GetBannersResponse[number] }) {
   const onPress = () => {
-    openLink({ type: banner.navigation, value: banner.destination })
+    openLink(convertBannerToLink(banner))
   }
   const opacity = useSharedValue(1)
   const scale = useSharedValue(1)
-  const disabled = !banner.destination
+  const disabled =
+    banner.navigation === 'EXTERNAL_BROWSER' || banner.navigation === 'MINI_APP'
+      ? !banner.destination
+      : !banner.inAppId || !banner.inAppType
   const fadeIn = () => {
     if (disabled) return
     opacity.value = withTiming(0.9, { duration: 150 })
@@ -572,6 +575,7 @@ function FeedFollowingContent(props: PagerScrollViewProps) {
       queryClient.resetQueries({
         queryKey: reactQueryClient.getQueryKey('/feed/following'),
       }),
+      queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/banners') }),
     ])
     await feedInfiniteQuery.refetch()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -695,6 +699,7 @@ function FeedContent(props: PagerScrollViewProps) {
     await Promise.all([
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/feed/me') }),
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/announcements') }),
+      queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/banners') }),
     ])
     await feedInfiniteQuery.refetch()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -791,6 +796,7 @@ function FeedTopicContent(props: FeedTopicContentProps) {
       queryClient.resetQueries({
         queryKey: reactQueryClient.getQueryKey('/feed/topic', { query: { topicId } }),
       }),
+      queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/banners') }),
     ])
     await feedInfiniteQuery.refetch()
     // eslint-disable-next-line react-hooks/exhaustive-deps

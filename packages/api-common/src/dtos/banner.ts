@@ -1,4 +1,8 @@
-import { BannerNavigationType, BannerStatusType } from '@pple-today/database/prisma'
+import {
+  BannerInAppType,
+  BannerNavigationType,
+  BannerStatusType,
+} from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 import { FilePath } from './file'
@@ -11,10 +15,6 @@ export const BaseBanner = t.Object({
   }),
   headline: t.String({
     description: 'The headline for the banner item',
-  }),
-  destination: t.String({
-    description:
-      'The destination URI for the banner item. When `navigation` is `"MINI_APP"`, it is mini app\'s `url`',
   }),
   status: t.Enum(BannerStatusType, { description: 'Publish status of the banner item' }),
   order: t.String({ description: 'Display order (ascending)' }),
@@ -31,10 +31,24 @@ export const Banner = t.Union([
         t.Literal(BannerNavigationType.EXTERNAL_BROWSER, {
           description: 'How the app should navigate when the item is tapped',
         }),
-        t.Literal(BannerNavigationType.IN_APP_NAVIGATION, {
-          description: 'How the app should navigate when the item is tapped',
-        }),
       ]),
+      destination: t.String({
+        description: 'The destination URI for the banner item',
+      }),
+    }),
+  ]),
+  t.Composite([
+    BaseBanner,
+    t.Object({
+      navigation: t.Literal(BannerNavigationType.IN_APP_NAVIGATION, {
+        description: 'How the app should navigate when the item is tapped',
+      }),
+      inAppId: t.String({
+        description: 'The ID of the in-app content to open',
+      }),
+      inAppType: t.Enum(BannerInAppType, {
+        description: 'The type of the in-app content to open',
+      }),
     }),
   ]),
   t.Composite([
@@ -42,6 +56,9 @@ export const Banner = t.Union([
     t.Object({
       navigation: t.Literal(BannerNavigationType.MINI_APP, {
         description: 'How the app should navigate when the item is tapped',
+      }),
+      destination: t.String({
+        description: 'The destination URI for the banner item',
       }),
       miniAppId: t.String({
         description: 'The ID of the mini app to open',
@@ -72,6 +89,21 @@ export const FlatBanner = t.Composite([
         name: t.String({
           description: 'The name of the mini app to open',
         }),
+      })
+    ),
+    destination: t.Optional(
+      t.String({
+        description: 'The destination URI for the banner item',
+      })
+    ),
+    inAppId: t.Optional(
+      t.String({
+        description: 'The ID of the in-app content to open',
+      })
+    ),
+    inAppType: t.Optional(
+      t.Enum(BannerInAppType, {
+        description: 'The type of the in-app content to open',
       })
     ),
   }),

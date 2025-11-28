@@ -19,6 +19,7 @@ import { BannerEdit } from 'components/feed/BannerEdit'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
 import { Calendar, EyeOff, Image, Link2, LinkIcon, Megaphone, Pencil, Trash2 } from 'lucide-react'
 import { formatDisplayDate } from 'utils/date'
+import { createLinkFromInAppNavigation, mapInAppNavigationTypeToLabel } from 'utils/link'
 
 import { UpdateBannerBody, UpdateBannerParams } from '@api/backoffice/admin'
 
@@ -226,6 +227,20 @@ function BannerDetailPage() {
                       >
                         <span className="w-full truncate">{query.data.miniApp.name}</span>
                       </a>
+                    </Button>
+                  </div>
+                ) : query.data.navigation === 'IN_APP_NAVIGATION' ? (
+                  <div className="flex items-center gap-1 text-base-text-medium text-sm">
+                    <Link2 className="shrink-0" size={16} />
+                    <span className="whitespace-nowrap">เนื้อหาที่เชื่อม:</span>
+                    <Button className="p-0 h-auto min-w-0" variant="link" asChild>
+                      <Link
+                        to={createLinkFromInAppNavigation(query.data.inAppType, query.data.inAppId)}
+                      >
+                        <span className="w-full truncate">
+                          {mapInAppNavigationTypeToLabel(query.data.inAppType)} {query.data.inAppId}
+                        </span>
+                      </Link>
                     </Button>
                   </div>
                 ) : (

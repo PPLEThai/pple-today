@@ -14,6 +14,16 @@ model UserNotificationToken {
   user User @relation(fields: [userId], references: [id])
 }
 
+enum NotificationInAppType {
+  POST
+  POLL
+  TOPIC
+  USER
+  ANNOUNCEMENT
+  ELECTION
+  HASHTAG
+}
+
 model Notification {
   id               String                @id @default(cuid())
   title            String
@@ -21,7 +31,10 @@ model Notification {
   image            String?
   actionButtonText String?
   linkType         NotificationLinkType?
-  linkValue        String?
+  linkDestination  String?
+
+  linkInAppType NotificationInAppType?
+  linkInAppId   String?
 
   isBroadcast Boolean  @default(false)
   roles       String[]

@@ -1,3 +1,4 @@
+import { NotificationInAppType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const Notification = t.Object({
@@ -11,15 +12,18 @@ export const Notification = t.Object({
       t.Union([
         t.Object({
           type: t.Literal('MINI_APP'),
-          value: t.String(),
+          destination: t.String(),
         }),
         t.Object({
           type: t.Literal('IN_APP_NAVIGATION'),
-          value: t.String(),
+          destination: t.Object({
+            inAppType: t.Enum(NotificationInAppType),
+            inAppId: t.String(),
+          }),
         }),
         t.Object({
           type: t.Literal('EXTERNAL_BROWSER'),
-          value: t.String(),
+          destination: t.String(),
         }),
       ])
     ),

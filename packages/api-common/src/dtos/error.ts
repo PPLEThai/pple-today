@@ -86,6 +86,9 @@ export const BANNER_ERROR_SCHEMA = {
   BANNER_MOVING_POSITION_INVALID: {
     status: 409,
   },
+  BANNER_INVALID_IN_APP_NAVIGATION: {
+    status: 400,
+  },
 } satisfies InternalErrorSchemas
 
 const FEED_ERROR_SCHEMA = {
@@ -330,6 +333,9 @@ export const NOTIFICATION_KEY_ERROR_SCHEMA = {
     status: 500,
   },
   NOTIFICATION_INVALID_REGISTRATION_TOKEN: {
+    status: 400,
+  },
+  NOTIFICATION_INVALID_IN_APP_NAVIGATION: {
     status: 400,
   },
 } satisfies InternalErrorSchemas

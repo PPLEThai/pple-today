@@ -120,9 +120,7 @@ function PostDetailPage() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>
-              {query.data?.content ? query.data.content : 'รายละเอียดโพสต์'}
-            </BreadcrumbPage>
+            <BreadcrumbPage>{query.data?.id ?? 'รายละเอียดโพสต์'}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>

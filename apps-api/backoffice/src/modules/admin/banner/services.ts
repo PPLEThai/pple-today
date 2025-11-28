@@ -27,6 +27,30 @@ export class AdminBannerService {
     private readonly fileService: FileService
   ) {}
 
+  private checkBannerBody(data: CreateBannerBody | UpdateBannerBody) {
+    if (data.navigation === BannerNavigationType.MINI_APP && !data.miniAppId)
+      return err({
+        code: InternalErrorCode.BANNER_INVALID_INPUT,
+        message: 'miniAppId is required when navigation is MINI_APP',
+      })
+    if (data.navigation === BannerNavigationType.EXTERNAL_BROWSER && !data.destination)
+      return err({
+        code: InternalErrorCode.BANNER_INVALID_INPUT,
+        message: 'destination is required when navigation is ',
+      })
+    if (
+      data.navigation === BannerNavigationType.IN_APP_NAVIGATION &&
+      !data.inAppId &&
+      !data.inAppType
+    )
+      return err({
+        code: InternalErrorCode.BANNER_INVALID_INPUT,
+        message: 'inAppId and inAppType are required when navigation is IN_APP_NAVIGATION',
+      })
+
+    return ok()
+  }
+
   async getBanners(query: GetBannersQuery) {
     const result = await this.bannerRepository.getBanners(query)
     if (result.isErr()) return mapRepositoryError(result.error)
@@ -52,15 +76,26 @@ export class AdminBannerService {
                 filePath: imageFilePath as FilePath,
               },
             }
-          : {
-              ...bannerBody,
-              navigation,
-              destination: destination!,
-              image: {
-                url: imageBannerUrlResults.value[index],
-                filePath: imageFilePath as FilePath,
-              },
-            }
+          : navigation === BannerNavigationType.IN_APP_NAVIGATION
+            ? {
+                ...bannerBody,
+                navigation,
+                inAppId: bannerBody.inAppId!,
+                inAppType: bannerBody.inAppType!,
+                image: {
+                  url: imageBannerUrlResults.value[index],
+                  filePath: imageFilePath as FilePath,
+                },
+              }
+            : {
+                ...bannerBody,
+                navigation,
+                destination: destination!,
+                image: {
+                  url: imageBannerUrlResults.value[index],
+                  filePath: imageFilePath as FilePath,
+                },
+              }
     )
 
     return ok(response)
@@ -96,20 +131,34 @@ export class AdminBannerService {
               filePath: imageFilePath as FilePath,
             },
           }
-        : {
-            ...bannerBody,
-            navigation: bannerBody.navigation,
-            destination: bannerBody.destination!,
-            image: {
-              url: imageUrlResult.value,
-              filePath: imageFilePath as FilePath,
-            },
-          }
+        : bannerBody.navigation === BannerNavigationType.IN_APP_NAVIGATION
+          ? {
+              ...bannerBody,
+              navigation: bannerBody.navigation,
+              inAppId: bannerBody.inAppId!,
+              inAppType: bannerBody.inAppType!,
+              image: {
+                url: imageUrlResult.value,
+                filePath: imageFilePath as FilePath,
+              },
+            }
+          : {
+              ...bannerBody,
+              navigation: bannerBody.navigation,
+              destination: bannerBody.destination!,
+              image: {
+                url: imageUrlResult.value,
+                filePath: imageFilePath as FilePath,
+              },
+            }
 
     return ok(response)
   }
 
   async createBanner(data: CreateBannerBody) {
+    const checkResult = this.checkBannerBody(data)
+    if (checkResult.isErr()) return err(checkResult.error)
+
     const result = await this.bannerRepository.createBanner(data)
 
     if (result.isErr())
@@ -126,6 +175,9 @@ export class AdminBannerService {
   }
 
   async updateBannerById(id: string, data: UpdateBannerBody) {
+    const checkResult = this.checkBannerBody(data)
+    if (checkResult.isErr()) return err(checkResult.error)
+
     const result = await this.bannerRepository.updateBannerById(id, data)
 
     if (result.isErr())

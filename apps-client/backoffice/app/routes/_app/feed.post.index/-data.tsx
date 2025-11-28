@@ -134,13 +134,15 @@ export const Data = (props: { authorId?: string }) => {
         header: 'เนื้อหา',
         cell: (info) => (
           <Link
-            className="hover:underline"
+            className="hover:underline w-[500px] max-w-[500px] overflow-hidden text-ellipsis line-clamp-2"
             to="/feed/post/$postId"
             params={{ postId: info.row.original.id }}
           >
             {info.getValue()}
           </Link>
         ),
+        size: 500,
+        maxSize: 500,
       }),
       columnHelper.display({
         id: 'engagements',
