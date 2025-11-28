@@ -228,6 +228,8 @@ export const AdminElectionController = new Elysia({
           InternalErrorCode.ELECTION_NOT_FOUND,
           InternalErrorCode.FILE_MOVE_ERROR,
           InternalErrorCode.FILE_ROLLBACK_FAILED,
+          InternalErrorCode.ELECTION_IS_CANCELLED,
+          InternalErrorCode.ELECTION_NOT_PUBLISHED,
           InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
