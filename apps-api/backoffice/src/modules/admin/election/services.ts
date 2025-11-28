@@ -56,7 +56,7 @@ export class AdminElectionService {
       })
     }
 
-    if (election.type !== ElectionType.ONLINE) {
+    if (election.type === ElectionType.ONSITE || election.type === ElectionType.HYBRID) {
       if (!election.location || !election.locationMapUrl) {
         return err({
           code: InternalErrorCode.ELECTION_NOT_ALLOWED_TO_PUBLISH,
@@ -65,7 +65,7 @@ export class AdminElectionService {
       }
     }
 
-    if (election.type !== ElectionType.ONSITE) {
+    if (election.type === ElectionType.ONLINE || election.type === ElectionType.HYBRID) {
       if (election.keysStatus !== ElectionKeysStatus.CREATED) {
         return err({
           code: InternalErrorCode.ELECTION_NOT_ALLOWED_TO_PUBLISH,
@@ -402,16 +402,16 @@ export class AdminElectionService {
     const checkResult = this.checkElectionCanBeCancelled(electionDetails.value)
     if (checkResult.isErr()) return err(checkResult.error)
 
-    const isDestroyKey = electionDetails.value.type !== ElectionType.ONSITE
+    const shouldDestroyKey = electionDetails.value.type !== ElectionType.ONSITE
 
-    if (isDestroyKey) {
+    if (shouldDestroyKey) {
       const destroyKeysResult = await this.ballotCryptoService.destroyElectionKeys(electionId)
       if (destroyKeysResult.isErr()) return err(destroyKeysResult.error)
     }
 
     const cancelResult = await this.adminElectionRepository.cancelElectionById(electionId)
     if (cancelResult.isErr()) {
-      if (isDestroyKey) {
+      if (shouldDestroyKey) {
         const restoreKeysResult = await this.ballotCryptoService.restoreKeys(electionId)
         if (restoreKeysResult.isErr()) return err(restoreKeysResult.error)
       }
@@ -436,8 +436,8 @@ export class AdminElectionService {
     const checkResult = this.checkIsAllowedToPublish(electionResult.value)
     if (checkResult.isErr()) return err(checkResult.error)
 
-    const isDestroyKey = electionResult.value.type === ElectionType.ONSITE
-    if (isDestroyKey) {
+    const shouldDestroyKey = electionResult.value.type === ElectionType.ONSITE
+    if (shouldDestroyKey) {
       const destroyKeysResult = await this.ballotCryptoService.destroyElectionKeys(electionId)
       if (destroyKeysResult.isErr()) return err(destroyKeysResult.error)
     }
@@ -445,10 +445,10 @@ export class AdminElectionService {
     const publishResult = await this.adminElectionRepository.publishElectionById(
       electionId,
       publishDate,
-      isDestroyKey
+      shouldDestroyKey
     )
     if (publishResult.isErr()) {
-      if (isDestroyKey) {
+      if (shouldDestroyKey) {
         const restoreResult = await this.ballotCryptoService.restoreKeys(electionId)
         if (restoreResult.isErr()) return err(restoreResult.error)
       }
@@ -484,10 +484,10 @@ export class AdminElectionService {
 
     const now = new Date()
 
-    const isDestroyKey = Boolean(election.startResult && now >= election.startResult)
+    const shouldDestroyKey = Boolean(election.startResult && now >= election.startResult)
     let destroyKeyInfo: { at: Date; duration: number } | undefined = undefined
 
-    if (isDestroyKey) {
+    if (shouldDestroyKey) {
       const destroyKeysResult = await this.ballotCryptoService.destroyElectionKeys(election.id)
       if (destroyKeysResult.isErr()) return err(destroyKeysResult.error)
       destroyKeyInfo = {
@@ -502,7 +502,7 @@ export class AdminElectionService {
       destroyKeyInfo
     )
     if (updateResult.isErr()) {
-      if (isDestroyKey) {
+      if (shouldDestroyKey) {
         const restoreResult = await this.ballotCryptoService.restoreKeys(election.id)
         if (restoreResult.isErr()) return err(restoreResult.error)
       }
@@ -1142,10 +1142,10 @@ export class AdminElectionService {
       })
     }
 
-    const isDestroyKey = election.mode === ElectionMode.SECURE
+    const shouldDestroyKey = election.mode === ElectionMode.SECURE
     let destroyKeyInfo: { at: Date; duration: number } | undefined = undefined
 
-    if (isDestroyKey) {
+    if (shouldDestroyKey) {
       const destroyKeysResult = await this.ballotCryptoService.destroyElectionKeys(election.id)
       if (destroyKeysResult.isErr()) return err(destroyKeysResult.error)
       destroyKeyInfo = {
@@ -1160,7 +1160,7 @@ export class AdminElectionService {
       destroyKeyInfo
     )
     if (announceResult.isErr()) {
-      if (isDestroyKey) {
+      if (shouldDestroyKey) {
         const restoreResult = await this.ballotCryptoService.restoreKeys(election.id)
         if (restoreResult.isErr()) return err(restoreResult.error)
       }
