@@ -1,6 +1,5 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
-import { BannerNavigationType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import {
@@ -84,35 +83,6 @@ export const AdminBannerController = new Elysia({
   .post(
     '/',
     async ({ body, adminBannerService, status }) => {
-      if (body.navigation === BannerNavigationType.MINI_APP && !body.miniAppId)
-        return mapErrorCodeToResponse(
-          {
-            code: InternalErrorCode.BANNER_INVALID_INPUT,
-            message: 'miniAppId is required when navigation is MINI_APP',
-          },
-          status
-        )
-      if (body.navigation === BannerNavigationType.EXTERNAL_BROWSER && !body.destination)
-        return mapErrorCodeToResponse(
-          {
-            code: InternalErrorCode.BANNER_INVALID_INPUT,
-            message: 'destination is required when navigation is ',
-          },
-          status
-        )
-      if (
-        body.navigation === BannerNavigationType.IN_APP_NAVIGATION &&
-        !body.inAppId &&
-        !body.inAppType
-      )
-        return mapErrorCodeToResponse(
-          {
-            code: InternalErrorCode.BANNER_INVALID_INPUT,
-            message: 'inAppId and inAppType are required when navigation is IN_APP_NAVIGATION',
-          },
-          status
-        )
-
       const result = await adminBannerService.createBanner(body)
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)
@@ -142,35 +112,6 @@ export const AdminBannerController = new Elysia({
   .patch(
     '/:id',
     async ({ params, body, adminBannerService, status }) => {
-      if (body.navigation === BannerNavigationType.MINI_APP && !body.miniAppId)
-        return mapErrorCodeToResponse(
-          {
-            code: InternalErrorCode.BANNER_INVALID_INPUT,
-            message: 'miniAppId is required when navigation is MINI_APP',
-          },
-          status
-        )
-      if (body.navigation === BannerNavigationType.EXTERNAL_BROWSER && !body.destination)
-        return mapErrorCodeToResponse(
-          {
-            code: InternalErrorCode.BANNER_INVALID_INPUT,
-            message: 'destination is required when navigation is EXTERNAL_BROWSER',
-          },
-          status
-        )
-      if (
-        body.navigation === BannerNavigationType.IN_APP_NAVIGATION &&
-        !body.inAppId &&
-        !body.inAppType
-      )
-        return mapErrorCodeToResponse(
-          {
-            code: InternalErrorCode.BANNER_INVALID_INPUT,
-            message: 'inAppId and inAppType are required when navigation is IN_APP_NAVIGATION',
-          },
-          status
-        )
-
       const result = await adminBannerService.updateBannerById(params.id, body)
       if (result.isErr()) {
         return mapErrorCodeToResponse(result.error, status)

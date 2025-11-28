@@ -9,6 +9,7 @@ import {
   HashTagStatus,
   PollStatus,
   PostStatus,
+  Prisma,
   TopicStatus,
   UserStatus,
 } from '@pple-today/database/prisma'
@@ -265,7 +266,7 @@ export class AdminBannerRepository {
           select: { order: true },
         })
 
-        let connectionResult = {}
+        let connectionResult: Prisma.BannerUpdateArgs['data'] = {}
         if (data.navigation === undefined) {
           if (existingBanner.value.destination && data.destination) {
             connectionResult = {
