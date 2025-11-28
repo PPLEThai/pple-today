@@ -7,7 +7,8 @@ import { useQueryClient } from '@tanstack/react-query'
 import ElectionKeyStatusBadge from 'components/election/ElectionKeyStatusBadge'
 import ElectionStatusBadge from 'components/election/ElectionStatusBadge'
 import ElectionTypeBadge from 'components/election/ElectionTypeBadge'
-import { Calendar, Download, Link, MapPin, RefreshCw, Users } from 'lucide-react'
+import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
+import { Calendar, Download, Link, MapPin, Megaphone, RefreshCw, Users } from 'lucide-react'
 import { downloadCSV } from 'utils/csv'
 import { getTimelineString } from 'utils/date'
 
@@ -21,12 +22,10 @@ export function Detail({ election }: { election: AdminGetElectionResponse }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center text-secondary-200">
           <Link className="mr-2 " />
-          <Typography variant="p" className="mr-2 text-secondary-200">
+          <Typography variant="p" className="mr-2 mb-0.5 text-secondary-200">
             ID:
           </Typography>
-          <Typography variant="p" className="text-primary">
-            {election.id}
-          </Typography>
+          <FeedDetailCopyId id={election.id} />
         </div>
         <div className="flex items-center gap-2">
           {election.status === 'DRAFT' && (
@@ -55,6 +54,17 @@ export function Detail({ election }: { election: AdminGetElectionResponse }) {
               {getTimelineString(new Date(election.openVoting), new Date(election.closeVoting))}
             </Typography>
           </div>
+          {election.status === 'RESULT_ANNOUNCE' || election.status === 'CLOSED_VOTE' ? (
+            <div className="flex items-center gap-2">
+              <Megaphone />
+              <Typography variant="small" className="text-secondary-200">
+                ช่วงเวลาประกาศผล:{' '}
+                {election.startResult && election.endResult
+                  ? getTimelineString(new Date(election.startResult), new Date(election.endResult))
+                  : 'ไม่ระบุ'}
+              </Typography>
+            </div>
+          ) : null}
           <div className="flex items-center gap-2">
             <Users />
             <Typography variant="small" className="text-secondary-200">

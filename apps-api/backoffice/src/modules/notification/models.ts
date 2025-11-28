@@ -56,7 +56,7 @@ export const CreateNewExternalNotificationHeader = t.Object({
   authorization: t.String({ pattern: '^Bearer .+' }),
 })
 export type CreateNewExternalNotificationHeader = Static<typeof CreateNewExternalNotificationHeader>
-export const CreateNewExternalNotificationBody = t.Intersect([
+export const CreateNewExternalNotificationBody = t.Composite([
   t.Object({
     audience: t.Union([
       t.Object({

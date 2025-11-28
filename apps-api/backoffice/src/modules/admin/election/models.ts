@@ -16,7 +16,7 @@ import {
 } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
-export const AdminElectionInfo = t.Intersect([
+export const AdminElectionInfo = t.Composite([
   ElectionInfo,
   t.Object({
     totalVotes: t.Integer(),
@@ -72,7 +72,7 @@ export const AdminListElectionQuery = ListPaginationQuery(
 )
 export type AdminListElectionQuery = Static<typeof AdminListElectionQuery>
 
-export const AdminListElectionResponse = t.Intersect([
+export const AdminListElectionResponse = t.Composite([
   PaginationMetadataResponse,
   t.Object({
     data: t.Array(AdminElectionInfo),
@@ -470,7 +470,7 @@ export type AdminGetResultParams = Static<typeof AdminGetResultParams>
 export const AdminGetResultResponse = t.Object({
   onlineResultStatus: t.Enum(ElectionOnlineResultStatus),
   candidates: t.Array(
-    t.Intersect([
+    t.Composite([
       ElectionCandidate,
       t.Object({
         result: t.Object({

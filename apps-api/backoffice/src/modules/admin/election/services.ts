@@ -47,6 +47,80 @@ export class AdminElectionService {
     private readonly ballotCryptoService: BallotCryptoService
   ) {}
 
+  private checkIsAllowedToPublish(election: Election) {
+    const now = new Date()
+    if (election.publishDate) {
+      return err({
+        code: InternalErrorCode.ELECTION_ALREADY_PUBLISH,
+        message: `Election is already published`,
+      })
+    }
+
+    if (election.type === ElectionType.ONSITE || election.type === ElectionType.HYBRID) {
+      if (!election.location || !election.locationMapUrl) {
+        return err({
+          code: InternalErrorCode.ELECTION_NOT_ALLOWED_TO_PUBLISH,
+          message: `Election of type ${election.type} must have location info to allow publishing`,
+        })
+      }
+    }
+
+    if (election.type === ElectionType.ONLINE || election.type === ElectionType.HYBRID) {
+      if (election.keysStatus !== ElectionKeysStatus.CREATED) {
+        return err({
+          code: InternalErrorCode.ELECTION_NOT_ALLOWED_TO_PUBLISH,
+          message: `Election of type ${election.type} must have created keys to allow publishing`,
+        })
+      }
+    }
+
+    if (election.type === ElectionType.HYBRID) {
+      if (!election.openRegister || !election.closeRegister) {
+        return err({
+          code: InternalErrorCode.ELECTION_NOT_ALLOWED_TO_PUBLISH,
+          message: `Election of type ${election.type} must have registration period to allow publishing`,
+        })
+      }
+
+      if (election.openRegister <= now) {
+        return err({
+          code: InternalErrorCode.ELECTION_NOT_ALLOWED_TO_PUBLISH,
+          message: `Election registration period should be in the future to allow publishing`,
+        })
+      }
+
+      if (election.closeRegister <= election.openRegister) {
+        return err({
+          code: InternalErrorCode.ELECTION_NOT_ALLOWED_TO_PUBLISH,
+          message: `Election close registration must be after open registration`,
+        })
+      }
+
+      if (election.openVoting <= election.closeRegister) {
+        return err({
+          code: InternalErrorCode.ELECTION_NOT_ALLOWED_TO_PUBLISH,
+          message: `Election open voting must be after close registration`,
+        })
+      }
+    }
+
+    if (election.openVoting <= now) {
+      return err({
+        code: InternalErrorCode.ELECTION_NOT_ALLOWED_TO_PUBLISH,
+        message: `Election voting period should be in the future to allow publishing`,
+      })
+    }
+
+    if (election.closeVoting <= election.openVoting) {
+      return err({
+        code: InternalErrorCode.ELECTION_NOT_ALLOWED_TO_PUBLISH,
+        message: `Election close voting must be after open voting`,
+      })
+    }
+
+    return ok()
+  }
+
   private checkIsDraftElection(election: Election) {
     if (election.publishDate) {
       return err({
@@ -58,6 +132,8 @@ export class AdminElectionService {
   }
 
   private checkIsElectionAllowedToModified(election: Election, now: Date) {
+    if (election.publishDate === null) return ok()
+
     const isOpenVote = now >= election.openVoting
     if (isOpenVote) {
       return err({
@@ -71,6 +147,25 @@ export class AdminElectionService {
       return err({
         code: InternalErrorCode.ELECTION_IS_CANCELLED,
         message: `Election is cancelled`,
+      })
+    }
+
+    return ok()
+  }
+
+  private checkElectionCanBeCancelled(election: Election) {
+    const isCancelled = election.isCancelled
+    if (isCancelled) {
+      return err({
+        code: InternalErrorCode.ELECTION_IS_CANCELLED,
+        message: `Election is already cancelled`,
+      })
+    }
+
+    if (!election.publishDate) {
+      return err({
+        code: InternalErrorCode.ELECTION_NOT_PUBLISHED,
+        message: 'Election is not published',
       })
     }
 
@@ -294,20 +389,34 @@ export class AdminElectionService {
   }
 
   async cancelElection(electionId: string) {
-    const destroyKeysResult = await this.ballotCryptoService.destroyElectionKeys(electionId)
-    if (destroyKeysResult.isErr()) return err(destroyKeysResult.error)
+    const electionDetails = await this.adminElectionRepository.getElectionById(electionId)
+    if (electionDetails.isErr()) {
+      return mapRepositoryError(electionDetails.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.ELECTION_NOT_FOUND,
+          message: `Cannot found election id: ${electionId}`,
+        },
+      })
+    }
+
+    const checkResult = this.checkElectionCanBeCancelled(electionDetails.value)
+    if (checkResult.isErr()) return err(checkResult.error)
+
+    const shouldDestroyKey = electionDetails.value.type !== ElectionType.ONSITE
+
+    if (shouldDestroyKey) {
+      const destroyKeysResult = await this.ballotCryptoService.destroyElectionKeys(electionId)
+      if (destroyKeysResult.isErr()) return err(destroyKeysResult.error)
+    }
 
     const cancelResult = await this.adminElectionRepository.cancelElectionById(electionId)
     if (cancelResult.isErr()) {
-      const restoreKeysResult = await this.ballotCryptoService.restoreKeys(electionId)
-      if (restoreKeysResult.isErr()) return err(restoreKeysResult.error)
+      if (shouldDestroyKey) {
+        const restoreKeysResult = await this.ballotCryptoService.restoreKeys(electionId)
+        if (restoreKeysResult.isErr()) return err(restoreKeysResult.error)
+      }
 
-      return mapRepositoryError(cancelResult.error, {
-        RECORD_NOT_FOUND: {
-          code: InternalErrorCode.ELECTION_NOT_FOUND,
-          message: `Cannot Found Election id: ${electionId}`,
-        },
-      })
+      return mapRepositoryError(cancelResult.error)
     }
 
     return ok()
@@ -324,14 +433,25 @@ export class AdminElectionService {
       })
     }
 
-    const checkResult = this.checkIsDraftElection(electionResult.value)
+    const checkResult = this.checkIsAllowedToPublish(electionResult.value)
     if (checkResult.isErr()) return err(checkResult.error)
+
+    const shouldDestroyKey = electionResult.value.type === ElectionType.ONSITE
+    if (shouldDestroyKey) {
+      const destroyKeysResult = await this.ballotCryptoService.destroyElectionKeys(electionId)
+      if (destroyKeysResult.isErr()) return err(destroyKeysResult.error)
+    }
 
     const publishResult = await this.adminElectionRepository.publishElectionById(
       electionId,
-      publishDate
+      publishDate,
+      shouldDestroyKey
     )
     if (publishResult.isErr()) {
+      if (shouldDestroyKey) {
+        const restoreResult = await this.ballotCryptoService.restoreKeys(electionId)
+        if (restoreResult.isErr()) return err(restoreResult.error)
+      }
       return mapRepositoryError(publishResult.error)
     }
 
@@ -364,10 +484,10 @@ export class AdminElectionService {
 
     const now = new Date()
 
-    const isDestroyKey = Boolean(election.startResult && now >= election.startResult)
+    const shouldDestroyKey = Boolean(election.startResult && now >= election.startResult)
     let destroyKeyInfo: { at: Date; duration: number } | undefined = undefined
 
-    if (isDestroyKey) {
+    if (shouldDestroyKey) {
       const destroyKeysResult = await this.ballotCryptoService.destroyElectionKeys(election.id)
       if (destroyKeysResult.isErr()) return err(destroyKeysResult.error)
       destroyKeyInfo = {
@@ -382,7 +502,7 @@ export class AdminElectionService {
       destroyKeyInfo
     )
     if (updateResult.isErr()) {
-      if (isDestroyKey) {
+      if (shouldDestroyKey) {
         const restoreResult = await this.ballotCryptoService.restoreKeys(election.id)
         if (restoreResult.isErr()) return err(restoreResult.error)
       }
@@ -1022,10 +1142,10 @@ export class AdminElectionService {
       })
     }
 
-    const isDestroyKey = election.mode === ElectionMode.SECURE
+    const shouldDestroyKey = election.mode === ElectionMode.SECURE
     let destroyKeyInfo: { at: Date; duration: number } | undefined = undefined
 
-    if (isDestroyKey) {
+    if (shouldDestroyKey) {
       const destroyKeysResult = await this.ballotCryptoService.destroyElectionKeys(election.id)
       if (destroyKeysResult.isErr()) return err(destroyKeysResult.error)
       destroyKeyInfo = {
@@ -1040,7 +1160,7 @@ export class AdminElectionService {
       destroyKeyInfo
     )
     if (announceResult.isErr()) {
-      if (isDestroyKey) {
+      if (shouldDestroyKey) {
         const restoreResult = await this.ballotCryptoService.restoreKeys(election.id)
         if (restoreResult.isErr()) return err(restoreResult.error)
       }
