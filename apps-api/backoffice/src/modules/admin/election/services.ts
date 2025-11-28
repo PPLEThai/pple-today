@@ -676,12 +676,22 @@ export class AdminElectionService {
           voters.userIds
         )
         break
-      case ElectionEligibleVoterIdentifier.PHONE_NUMBER:
+      case ElectionEligibleVoterIdentifier.PHONE_NUMBER: {
+        const phoneNumbers = R.pipe(
+          voters.phoneNumbers,
+          R.unique(),
+          R.filter((pn) => pn.trim().length > 0),
+          R.map((pn) => {
+            if (!pn.startsWith('+')) return `+66${pn.slice(1)}`
+            return pn
+          })
+        )
         result = await this.adminElectionRepository.bulkDeleteElectionEligibleVoterByPhoneNumber(
           electionId,
-          voters.phoneNumbers
+          phoneNumbers
         )
         break
+      }
       default:
         return err({
           code: InternalErrorCode.ELECTION_INVALID_ELIGIBLE_VOTER_IDENTIFIER,
@@ -736,9 +746,16 @@ export class AdminElectionService {
         break
       }
       case 'PHONE_NUMBER': {
-        const result = await this.adminElectionRepository.listUserIdsFromPhoneNumbers(
-          voters.phoneNumbers
+        const phoneNumbers = R.pipe(
+          voters.phoneNumbers,
+          R.unique(),
+          R.filter((pn) => pn.trim().length > 0),
+          R.map((pn) => {
+            if (!pn.startsWith('+')) return `+66${pn.slice(1)}`
+            return pn
+          })
         )
+        const result = await this.adminElectionRepository.listUserIdsFromPhoneNumbers(phoneNumbers)
         if (result.isErr()) return mapRepositoryError(result.error)
 
         const { userIds: existUserIds, nonExistPhoneNumbers } = result.value

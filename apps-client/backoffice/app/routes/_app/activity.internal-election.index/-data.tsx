@@ -14,6 +14,7 @@ import ElectionTypeBadge from 'components/election/ElectionTypeBadge'
 import { ElectionFormValues } from 'components/election/models'
 import { TableCopyId } from 'components/TableCopyId'
 import { CalendarX2, Pencil, Plus, Trash2, Users } from 'lucide-react'
+import * as R from 'remeda'
 import { getTimelineString } from 'utils/date'
 import { handleUploadFile } from 'utils/file-upload'
 
@@ -85,10 +86,13 @@ export const Data = () => {
 
       if (data.eligibleVoterFile) {
         const voterFile = await data.eligibleVoterFile.text()
-        const phoneNumbers = voterFile
-          .split('\n')
-          .map((line) => line.trim())
-          .filter((line) => line.length > 0)
+        const phoneNumbers = R.pipe(
+          voterFile,
+          R.split('\n'),
+          R.map((line) => line.trim()),
+          R.filter((line) => line.length > 0),
+          R.unique()
+        )
         await bulkAddEligibleVoterMutation.mutateAsync({
           pathParams: { electionId: result.id },
           body: {
