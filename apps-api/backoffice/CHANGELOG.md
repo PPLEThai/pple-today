@@ -1,5 +1,36 @@
 # @api/backoffice
 
+## 1.3.0
+
+### Minor Changes
+
+- [#328](https://github.com/PPLEThai/pple-today/pull/328) [`b47b9c2`](https://github.com/PPLEThai/pple-today/commit/b47b9c2cb13966db513b5b2ff9b428020fdb7d2f) Thanks [@miello](https://github.com/miello)! - [[PPLE-604] Cache activity API](https://linear.app/snts/issue/PPLE-604/cache-activity-api)
+
+- [#330](https://github.com/PPLEThai/pple-today/pull/330) [`6fc608b`](https://github.com/PPLEThai/pple-today/commit/6fc608b05bc8cbefd257c705da8d0898d584b8a7) Thanks [@miello](https://github.com/miello)! - [[PPLE-615] Cannot in-app navigate from banner using just id from feed item](https://linear.app/snts/issue/PPLE-615/cannot-in-app-navigate-from-banner-using-just-id-from-feed-item)
+
+### Patch Changes
+
+- [#323](https://github.com/PPLEThai/pple-today/pull/323) [`86b7c14`](https://github.com/PPLEThai/pple-today/commit/86b7c1444e70c139396bb0229caecc88b45a1e0b) Thanks [@miello](https://github.com/miello)! - [[PPLE-552] [Notification] Android push notification cannot be clicked to redirect](https://linear.app/snts/issue/PPLE-552/notification-android-push-notification-cannot-be-clicked-to-redirect)
+
+- [#329](https://github.com/PPLEThai/pple-today/pull/329) [`6eb5c4a`](https://github.com/PPLEThai/pple-today/commit/6eb5c4aa87fbe9f46568914fd21a941dc1670979) Thanks [@miello](https://github.com/miello)! - [[PPLE-617] Fix cannot add topic in feed tab](https://linear.app/snts/issue/PPLE-617/fix-cannot-add-topic-in-feed-tab)
+
+- [#332](https://github.com/PPLEThai/pple-today/pull/332) [`2e5d849`](https://github.com/PPLEThai/pple-today/commit/2e5d849c05be0fc6983c2755d1c8174ae9931ae1) Thanks [@miello](https://github.com/miello)! - [[PPLE-580] [Election] Create endpoint does not handle case that open voting is behind today or not](https://linear.app/snts/issue/PPLE-580/election-create-endpoint-does-not-handle-case-that-open-voting-is)
+  [[PPLE-579] [Election] Could not reload election key if key got rollback](https://linear.app/snts/issue/PPLE-579/election-could-not-reload-election-key-if-key-got-rollback)
+
+- [#327](https://github.com/PPLEThai/pple-today/pull/327) [`4f6cfa6`](https://github.com/PPLEThai/pple-today/commit/4f6cfa698447183d62f1f5ae50de3a1830e41fc8) Thanks [@miello](https://github.com/miello)! - [[PPLE-610] Add fallback background image for topic](https://linear.app/snts/issue/PPLE-610/add-fallback-background-image-for-topic)
+  [[PPLE-609] Change Breadcrumb title to English](https://linear.app/snts/issue/PPLE-609/change-breadcrumb-title-to-english)
+  [[PPLE-608] Change Navbar menu to Thai](https://linear.app/snts/issue/PPLE-608/change-navbar-menu-to-thai)
+  [[PPLE-597] Fix announcement title](https://linear.app/snts/issue/PPLE-597/fix-announcement-title)
+
+- [#333](https://github.com/PPLEThai/pple-today/pull/333) [`1ce3879`](https://github.com/PPLEThai/pple-today/commit/1ce38798fe5be9259268157dfb93eac9cfed741d) Thanks [@miello](https://github.com/miello)! - [[PPLE-621] [Election] Import eligible user by phone number cannot start with 0](https://linear.app/snts/issue/PPLE-621/election-import-eligible-user-by-phone-number-cannot-start-with-0)
+
+- [#324](https://github.com/PPLEThai/pple-today/pull/324) [`cbe7a83`](https://github.com/PPLEThai/pple-today/commit/cbe7a837c0b9399ec42a0425066ee78bf91aaf1d) Thanks [@miello](https://github.com/miello)! - [[PPLE-614] Cannot upload eligible user](https://linear.app/snts/issue/PPLE-614/cannot-upload-eligible-user)
+  [[PPLE-613] Remove .xlsx in upload eligible user's tooltips](https://linear.app/snts/issue/PPLE-613/remove-xlsx-in-upload-eligible-users-tooltips)
+  [[PPLE-611] Remove Election mode for Offline election](https://linear.app/snts/issue/PPLE-611/remove-election-mode-for-offline-election)
+- Updated dependencies [[`b47b9c2`](https://github.com/PPLEThai/pple-today/commit/b47b9c2cb13966db513b5b2ff9b428020fdb7d2f), [`2e5d849`](https://github.com/PPLEThai/pple-today/commit/2e5d849c05be0fc6983c2755d1c8174ae9931ae1), [`4f6cfa6`](https://github.com/PPLEThai/pple-today/commit/4f6cfa698447183d62f1f5ae50de3a1830e41fc8), [`6fc608b`](https://github.com/PPLEThai/pple-today/commit/6fc608b05bc8cbefd257c705da8d0898d584b8a7), [`e46d0e0`](https://github.com/PPLEThai/pple-today/commit/e46d0e02761a44a52adfde7750a1af664fdb21e7)]:
+  - @pple-today/api-common@1.2.0
+  - @pple-today/database@1.2.0
+
 ## 1.2.0
 
 ### Minor Changes

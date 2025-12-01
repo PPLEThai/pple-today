@@ -1,5 +1,25 @@
 # @pple-today/api-common
 
+## 1.2.0
+
+### Minor Changes
+
+- [#328](https://github.com/PPLEThai/pple-today/pull/328) [`b47b9c2`](https://github.com/PPLEThai/pple-today/commit/b47b9c2cb13966db513b5b2ff9b428020fdb7d2f) Thanks [@miello](https://github.com/miello)! - [[PPLE-604] Cache activity API](https://linear.app/snts/issue/PPLE-604/cache-activity-api)
+
+- [#330](https://github.com/PPLEThai/pple-today/pull/330) [`6fc608b`](https://github.com/PPLEThai/pple-today/commit/6fc608b05bc8cbefd257c705da8d0898d584b8a7) Thanks [@miello](https://github.com/miello)! - [[PPLE-615] Cannot in-app navigate from banner using just id from feed item](https://linear.app/snts/issue/PPLE-615/cannot-in-app-navigate-from-banner-using-just-id-from-feed-item)
+
+### Patch Changes
+
+- [#332](https://github.com/PPLEThai/pple-today/pull/332) [`2e5d849`](https://github.com/PPLEThai/pple-today/commit/2e5d849c05be0fc6983c2755d1c8174ae9931ae1) Thanks [@miello](https://github.com/miello)! - [[PPLE-580] [Election] Create endpoint does not handle case that open voting is behind today or not](https://linear.app/snts/issue/PPLE-580/election-create-endpoint-does-not-handle-case-that-open-voting-is)
+  [[PPLE-579] [Election] Could not reload election key if key got rollback](https://linear.app/snts/issue/PPLE-579/election-could-not-reload-election-key-if-key-got-rollback)
+
+- [#327](https://github.com/PPLEThai/pple-today/pull/327) [`4f6cfa6`](https://github.com/PPLEThai/pple-today/commit/4f6cfa698447183d62f1f5ae50de3a1830e41fc8) Thanks [@miello](https://github.com/miello)! - [[PPLE-610] Add fallback background image for topic](https://linear.app/snts/issue/PPLE-610/add-fallback-background-image-for-topic)
+  [[PPLE-609] Change Breadcrumb title to English](https://linear.app/snts/issue/PPLE-609/change-breadcrumb-title-to-english)
+  [[PPLE-608] Change Navbar menu to Thai](https://linear.app/snts/issue/PPLE-608/change-navbar-menu-to-thai)
+  [[PPLE-597] Fix announcement title](https://linear.app/snts/issue/PPLE-597/fix-announcement-title)
+- Updated dependencies [[`6fc608b`](https://github.com/PPLEThai/pple-today/commit/6fc608b05bc8cbefd257c705da8d0898d584b8a7), [`e46d0e0`](https://github.com/PPLEThai/pple-today/commit/e46d0e02761a44a52adfde7750a1af664fdb21e7)]:
+  - @pple-today/database@1.2.0
+
 ## 1.1.0
 
 ### Minor Changes
