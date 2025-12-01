@@ -1,5 +1,15 @@
 # @pple-today/database
 
+## 1.2.0
+
+### Minor Changes
+
+- [#330](https://github.com/PPLEThai/pple-today/pull/330) [`6fc608b`](https://github.com/PPLEThai/pple-today/commit/6fc608b05bc8cbefd257c705da8d0898d584b8a7) Thanks [@miello](https://github.com/miello)! - [[PPLE-615] Cannot in-app navigate from banner using just id from feed item](https://linear.app/snts/issue/PPLE-615/cannot-in-app-navigate-from-banner-using-just-id-from-feed-item)
+
+### Patch Changes
+
+- [#325](https://github.com/PPLEThai/pple-today/pull/325) [`e46d0e0`](https://github.com/PPLEThai/pple-today/commit/e46d0e02761a44a52adfde7750a1af664fdb21e7) Thanks [@miello](https://github.com/miello)! - [[PPLE-603] Only mp and hq can be suggested](https://linear.app/snts/issue/PPLE-603/only-mp-and-hq-can-be-suggested)
+
 ## 1.1.0
 
 ### Minor Changes

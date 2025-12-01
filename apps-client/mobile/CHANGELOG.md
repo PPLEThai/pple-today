@@ -1,5 +1,17 @@
 # @client/mobile
 
+## 2.3.0
+
+### Minor Changes
+
+- [#328](https://github.com/PPLEThai/pple-today/pull/328) [`b47b9c2`](https://github.com/PPLEThai/pple-today/commit/b47b9c2cb13966db513b5b2ff9b428020fdb7d2f) Thanks [@miello](https://github.com/miello)! - [[PPLE-604] Cache activity API](https://linear.app/snts/issue/PPLE-604/cache-activity-api)
+
+- [#330](https://github.com/PPLEThai/pple-today/pull/330) [`6fc608b`](https://github.com/PPLEThai/pple-today/commit/6fc608b05bc8cbefd257c705da8d0898d584b8a7) Thanks [@miello](https://github.com/miello)! - [[PPLE-615] Cannot in-app navigate from banner using just id from feed item](https://linear.app/snts/issue/PPLE-615/cannot-in-app-navigate-from-banner-using-just-id-from-feed-item)
+
+### Patch Changes
+
+- [#323](https://github.com/PPLEThai/pple-today/pull/323) [`86b7c14`](https://github.com/PPLEThai/pple-today/commit/86b7c1444e70c139396bb0229caecc88b45a1e0b) Thanks [@miello](https://github.com/miello)! - [[PPLE-552] [Notification] Android push notification cannot be clicked to redirect](https://linear.app/snts/issue/PPLE-552/notification-android-push-notification-cannot-be-clicked-to-redirect)
+
 ## 2.2.1
 
 ### Patch Changes

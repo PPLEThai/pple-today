@@ -1,5 +1,29 @@
 # @client/backoffice
 
+## 1.2.0
+
+### Minor Changes
+
+- [#330](https://github.com/PPLEThai/pple-today/pull/330) [`6fc608b`](https://github.com/PPLEThai/pple-today/commit/6fc608b05bc8cbefd257c705da8d0898d584b8a7) Thanks [@miello](https://github.com/miello)! - [[PPLE-615] Cannot in-app navigate from banner using just id from feed item](https://linear.app/snts/issue/PPLE-615/cannot-in-app-navigate-from-banner-using-just-id-from-feed-item)
+
+### Patch Changes
+
+- [#332](https://github.com/PPLEThai/pple-today/pull/332) [`2e5d849`](https://github.com/PPLEThai/pple-today/commit/2e5d849c05be0fc6983c2755d1c8174ae9931ae1) Thanks [@miello](https://github.com/miello)! - [[PPLE-580] [Election] Create endpoint does not handle case that open voting is behind today or not](https://linear.app/snts/issue/PPLE-580/election-create-endpoint-does-not-handle-case-that-open-voting-is)
+  [[PPLE-579] [Election] Could not reload election key if key got rollback](https://linear.app/snts/issue/PPLE-579/election-could-not-reload-election-key-if-key-got-rollback)
+
+- [#327](https://github.com/PPLEThai/pple-today/pull/327) [`4f6cfa6`](https://github.com/PPLEThai/pple-today/commit/4f6cfa698447183d62f1f5ae50de3a1830e41fc8) Thanks [@miello](https://github.com/miello)! - [[PPLE-610] Add fallback background image for topic](https://linear.app/snts/issue/PPLE-610/add-fallback-background-image-for-topic)
+  [[PPLE-609] Change Breadcrumb title to English](https://linear.app/snts/issue/PPLE-609/change-breadcrumb-title-to-english)
+  [[PPLE-608] Change Navbar menu to Thai](https://linear.app/snts/issue/PPLE-608/change-navbar-menu-to-thai)
+  [[PPLE-597] Fix announcement title](https://linear.app/snts/issue/PPLE-597/fix-announcement-title)
+
+- [#331](https://github.com/PPLEThai/pple-today/pull/331) [`8f35263`](https://github.com/PPLEThai/pple-today/commit/8f35263e3970fea0720fa48a22428e509af93c96) Thanks [@miello](https://github.com/miello)! - [[PPLE-563] Fix cannot select combobox list in CMS](https://linear.app/snts/issue/PPLE-563/fix-cannot-select-combobox-list-in-cms)
+
+- [#333](https://github.com/PPLEThai/pple-today/pull/333) [`1ce3879`](https://github.com/PPLEThai/pple-today/commit/1ce38798fe5be9259268157dfb93eac9cfed741d) Thanks [@miello](https://github.com/miello)! - [[PPLE-621] [Election] Import eligible user by phone number cannot start with 0](https://linear.app/snts/issue/PPLE-621/election-import-eligible-user-by-phone-number-cannot-start-with-0)
+
+- [#324](https://github.com/PPLEThai/pple-today/pull/324) [`cbe7a83`](https://github.com/PPLEThai/pple-today/commit/cbe7a837c0b9399ec42a0425066ee78bf91aaf1d) Thanks [@miello](https://github.com/miello)! - [[PPLE-614] Cannot upload eligible user](https://linear.app/snts/issue/PPLE-614/cannot-upload-eligible-user)
+  [[PPLE-613] Remove .xlsx in upload eligible user's tooltips](https://linear.app/snts/issue/PPLE-613/remove-xlsx-in-upload-eligible-users-tooltips)
+  [[PPLE-611] Remove Election mode for Offline election](https://linear.app/snts/issue/PPLE-611/remove-election-mode-for-offline-election)
+
 ## 1.1.0
 
 ### Minor Changes
