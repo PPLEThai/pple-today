@@ -37,6 +37,7 @@
     "jsonwebtoken": "^9.0.2",
     "lexorank": "^1.0.5",
     "neverthrow": "^8.2.0",
+    "redis": "^5.10.0",
     "remeda": "^2.24.0",
     "safe-stable-stringify": "^2.5.0"
   },

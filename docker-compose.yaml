@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 services:
   backoffice-db:
@@ -9,11 +9,15 @@ services:
       POSTGRES_PASSWORD: pple
       POSTGRES_DB: pple
     ports:
-      - '9000:5432'
+      - "9000:5432"
 
-networks:
-  esnet:
+  redis:
+    image: redis:7
+    container_name: redis
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
 
 volumes:
-  es01-data:
-  es02-data:
+  redis-data:

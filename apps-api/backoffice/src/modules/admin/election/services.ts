@@ -121,7 +121,15 @@ export class AdminElectionService {
     return ok()
   }
 
-  private initScheduledTasks() {}
+  async initScheduledTasks() {
+    const result = await this.adminElectionRepository.registerElectionNotification()
+
+    if (result.isErr()) {
+      return mapRepositoryError(result.error)
+    }
+
+    return ok()
+  }
 
   private checkIsDraftElection(election: Election) {
     if (election.publishDate) {
@@ -1206,3 +1214,12 @@ export const AdminElectionServicePlugin = new Elysia({ name: 'AdminElectionServi
       ballotCryptoService
     ),
   }))
+  .onStart(async (app) => {
+    const scheduledResult = await app.decorator.adminElectionService.initScheduledTasks()
+
+    if (scheduledResult.isErr()) {
+      throw new Error(
+        `Failed to initialize scheduled tasks: ${scheduledResult.error.message || 'Unknown error'}`
+      )
+    }
+  })

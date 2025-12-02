@@ -841,3 +841,6 @@ export const AdminElectionController = new Elysia({
       }
     )
   )
+  .onStart(async (app) => {
+    await app.decorator.adminElectionService.initScheduledTasks()
+  })
