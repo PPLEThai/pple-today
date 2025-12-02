@@ -9,7 +9,7 @@ class PrismaService extends PrismaClient<
   constructor(loggerService: ElysiaLoggerInstance, optionsArg?: Prisma.PrismaClientOptions) {
     super({
       ...optionsArg,
-      errorFormat: 'minimal',
+      errorFormat: 'colorless',
       log: [
         { emit: 'event', level: 'error' },
         { emit: 'event', level: 'warn' },

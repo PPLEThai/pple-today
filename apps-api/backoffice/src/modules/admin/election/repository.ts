@@ -33,7 +33,31 @@ export class AdminElectionRepository {
     private readonly redisElectionService: RedisElectionService,
     private readonly loggerService: ElysiaLoggerInstance,
     private readonly notificationRepository: NotificationRepository
-  ) {}
+  ) {
+    this.registerElectionNotification()
+      .then((result) => {
+        if (result.isErr()) {
+          this.loggerService.error('Failed to register election notifications on startup', {
+            error: result.error,
+          })
+          process.exit(1)
+        }
+        this.redisElectionService.registerExpirationCallback(
+          this.handleExpirationMessage.bind(this)
+        )
+        this.loggerService.info('Successfully registered election notifications on startup')
+        return
+      })
+      .catch((error) => {
+        this.loggerService.error(
+          'Unexpected error during registering election notifications on startup',
+          {
+            error,
+          }
+        )
+        process.exit(1)
+      })
+  }
 
   private resultTypesMap = {
     [ElectionType.ONSITE]: [ElectionResultType.ONSITE],
@@ -1041,17 +1065,3 @@ export const AdminElectionRepositoryPlugin = new Elysia({ name: 'AdminElectionRe
       loggerService,
     })
   )
-  .onStart(async (app) => {
-    const registerResult =
-      await app.decorator.adminElectionRepository.registerElectionNotification()
-
-    if (registerResult.isErr()) {
-      app.decorator.loggerService.error(
-        'Failed to register election notification schedules on Redis',
-        {
-          error: registerResult.error,
-        }
-      )
-      throw new Error('Failed to register election notification schedules on Redis')
-    }
-  })
