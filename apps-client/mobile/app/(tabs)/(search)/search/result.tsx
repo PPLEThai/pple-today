@@ -231,6 +231,8 @@ const SearchResult = ({ query }: { query: string }) => {
     queryFn: async ({ pageParam }) => {
       const response = await fetchClient('/search/details/feeds', {
         query: { limit: LIMIT, search: query!, cursor: pageParam ? pageParam : undefined },
+        headers: {},
+        body: {},
       })
       if (response.error) {
         throw response.error
