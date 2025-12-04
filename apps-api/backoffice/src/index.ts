@@ -42,9 +42,7 @@ let app: AnyElysia = new Elysia({ adapter: node() })
       ],
     }).into({
       customProps: (ctx) => {
-        const responseBody =
-          ctx.isError ||
-          ('response' in (ctx.error as any) ? (ctx.error as any)?.response : undefined)
+        const responseBody = ctx.response || (ctx.isError ? (ctx.error as any).response : undefined)
 
         return {
           body: ctx.body,
@@ -56,7 +54,6 @@ let app: AnyElysia = new Elysia({ adapter: node() })
       autoLogging: {
         ignore: (ctx) => {
           if (ctx.isError) return false
-          if (!ctx.isError && 'response' in (ctx.error as any)) return true
 
           return (
             ctx.path.startsWith('/health') ||
