@@ -38,17 +38,17 @@ importers:
   apps-api/backoffice:
     dependencies:
       '@elysiajs/cors':
-        specifier: ^1.3.3
-        version: 1.3.3(elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2))
+        specifier: ^1.4.0
+        version: 1.4.0(elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2))
       '@elysiajs/eden':
-        specifier: ^1.3.2
-        version: 1.3.2(elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2))
+        specifier: ^1.4.5
+        version: 1.4.5(elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2))
       '@elysiajs/node':
-        specifier: ^1.3.0
-        version: 1.3.0(elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2))(hono@4.8.4)
-      '@elysiajs/swagger':
-        specifier: ^1.3.1
-        version: 1.3.1(elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2))
+        specifier: ^1.4.2
+        version: 1.4.2(elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2))
+      '@elysiajs/openapi':
+        specifier: ^1.4.11
+        version: 1.4.11(elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2))
       '@paralleldrive/cuid2':
         specifier: ^2.2.2
         version: 2.2.2
@@ -62,14 +62,14 @@ importers:
         specifier: ^6.15.0
         version: 6.15.0
       '@sinclair/typebox':
-        specifier: ^0.34.37
-        version: 0.34.37
+        specifier: ^0.34.41
+        version: 0.34.41
       dayjs:
         specifier: ^1.11.13
         version: 1.11.13
       elysia:
-        specifier: ^1.3.5
-        version: 1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2)
+        specifier: ^1.4.18
+        version: 1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2)
       google-auth-library:
         specifier: ^10.4.2
         version: 10.4.2
@@ -135,17 +135,17 @@ importers:
   apps-api/ballot-crypto:
     dependencies:
       '@elysiajs/cors':
-        specifier: ^1.3.3
-        version: 1.3.3(elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2))
+        specifier: ^1.4.0
+        version: 1.4.0(elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2))
       '@elysiajs/eden':
-        specifier: ^1.3.2
-        version: 1.3.2(elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2))
+        specifier: ^1.4.5
+        version: 1.4.5(elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2))
       '@elysiajs/node':
-        specifier: ^1.3.0
-        version: 1.3.0(elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2))(hono@4.8.4)
-      '@elysiajs/swagger':
-        specifier: ^1.3.1
-        version: 1.3.1(elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2))
+        specifier: ^1.4.2
+        version: 1.4.2(elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2))
+      '@elysiajs/openapi':
+        specifier: ^1.4.11
+        version: 1.4.11(elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2))
       '@google-cloud/kms':
         specifier: ^5.2.0
         version: 5.2.0
@@ -153,8 +153,8 @@ importers:
         specifier: workspace:^
         version: link:../../packages/api-common
       elysia:
-        specifier: ^1.3.5
-        version: 1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2)
+        specifier: ^1.4.18
+        version: 1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2)
       neverthrow:
         specifier: ^8.2.0
         version: 8.2.0
@@ -537,20 +537,20 @@ importers:
   examples/mini-app/api:
     dependencies:
       '@elysiajs/cors':
-        specifier: ^1.3.3
-        version: 1.3.3(elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.3))
+        specifier: ^1.4.0
+        version: 1.4.0(elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.3))
       '@elysiajs/node':
-        specifier: ^1.3.0
-        version: 1.3.0(elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.3))(hono@4.8.4)
+        specifier: ^1.4.2
+        version: 1.4.2(elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.3))
       '@sinclair/typebox':
-        specifier: ^0.34.37
-        version: 0.34.37
+        specifier: ^0.34.41
+        version: 0.34.41
       dotenv:
         specifier: ^17.0.1
         version: 17.0.1
       elysia:
-        specifier: ^1.3.5
-        version: 1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.3)
+        specifier: ^1.4.18
+        version: 1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.3)
       jsonwebtoken:
         specifier: ^9.0.2
         version: 9.0.2
@@ -626,8 +626,8 @@ importers:
   packages/api-client:
     dependencies:
       '@elysiajs/eden':
-        specifier: ^1.3.2
-        version: 1.3.2(elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2))
+        specifier: ^1.4.5
+        version: 1.4.5(elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2))
       '@tanstack/react-query':
         specifier: ^5.81.5
         version: 5.81.5(react@19.1.1)
@@ -636,8 +636,8 @@ importers:
         specifier: workspace:^
         version: link:../project-config
       elysia:
-        specifier: ^1.3.5
-        version: 1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2)
+        specifier: ^1.4.18
+        version: 1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2)
       type-fest:
         specifier: ^4.41.0
         version: 4.41.0
@@ -648,8 +648,8 @@ importers:
   packages/api-common:
     dependencies:
       '@bogeychan/elysia-logger':
-        specifier: ^0.1.8
-        version: 0.1.8(elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.3))
+        specifier: ^0.1.10
+        version: 0.1.10(elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.3))(pino@9.7.0)
       '@google-cloud/storage':
         specifier: ^7.16.0
         version: 7.16.0
@@ -660,14 +660,14 @@ importers:
         specifier: ^6.15.0
         version: 6.15.0
       '@sinclair/typebox':
-        specifier: ^0.34.37
-        version: 0.34.37
+        specifier: ^0.34.41
+        version: 0.34.41
       dotenv:
         specifier: ^17.0.1
         version: 17.0.1
       elysia:
-        specifier: ^1.3.5
-        version: 1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.3)
+        specifier: ^1.4.18
+        version: 1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.3)
       neverthrow:
         specifier: ^8.2.0
         version: 8.2.0
@@ -1842,10 +1842,11 @@ packages:
     resolution: {integrity: sha512-6zABk/ECA/QYSCQ1NGiVwwbQerUCZ+TQbp64Q3AgmfNvurHH0j8TtXa1qbShXA6qqkpAj4V5W8pP6mLe1mcMqA==}
     engines: {node: '>=18'}
 
-  '@bogeychan/elysia-logger@0.1.8':
-    resolution: {integrity: sha512-TbCpMX+m68t0FbvpbBjMrCs4HQ9f1twkvTSGf6ShAkjash7zP9vGLGnEJ0iSG0ymgqLNN8Dgq0SdAEaMC6XLug==}
+  '@bogeychan/elysia-logger@0.1.10':
+    resolution: {integrity: sha512-wFp3KUCNIkCV4zcbo70gifHH99ch7e4LNrP5Xa5e2MRO2MDyPgM92SWQmrzkng6PsSZk13+UKJskGNQ+ZuDZkQ==}
     peerDependencies:
       elysia: '>= 1.2.10'
+      pino: '>= 9.6.0'
 
   '@changesets/apply-release-plan@7.0.12':
     resolution: {integrity: sha512-EaET7As5CeuhTzvXTQCRZeBUcisoYPDDcXvgTE/2jmmypKp0RC7LxKj/yzqeh/1qFTZI7oDGFcL1PHRuQuketQ==}
@@ -1915,25 +1916,25 @@ packages:
     resolution: {integrity: sha512-XQsZgjm2EcVUiZQf11UBJQfmZeEmOW8DpI1gsFeln6w0ae0ii4dMQEQ0kjl6DspdWX1aGY1/loyXnP0JS06e/A==}
     engines: {node: '>=0.8.0'}
 
-  '@elysiajs/cors@1.3.3':
-    resolution: {integrity: sha512-mYIU6PyMM6xIJuj7d27Vt0/wuzVKIEnFPjcvlkyd7t/m9xspAG37cwNjFxVOnyvY43oOd2I/oW2DB85utXpA2Q==}
+  '@elysiajs/cors@1.4.0':
+    resolution: {integrity: sha512-pb0SCzBfFbFSYA/U40HHO7R+YrcXBJXOWgL20eSViK33ol1e20ru2/KUaZYo5IMUn63yaTJI/bQERuQ+77ND8g==}
     peerDependencies:
-      elysia: '>= 1.3.0'
+      elysia: '>= 1.4.0'
 
-  '@elysiajs/eden@1.3.2':
-    resolution: {integrity: sha512-0bCU5DO7J7hQfS2y3O3399GtoxMWRDMgQNMTHOnf70/F2nF8SwGHvzwh3+wO62Ko5FMF7EYqTN9Csw/g/Q7qwg==}
+  '@elysiajs/eden@1.4.5':
+    resolution: {integrity: sha512-hIOeH+S5NU/84A7+t8yB1JjxqjmzRkBF9fnLn6y+AH8EcF39KumOAnciMhIOkhhThVZvXZ3d+GsizRc+Fxoi8g==}
     peerDependencies:
-      elysia: '>= 1.3.0'
+      elysia: '>= 1.4.0'
 
-  '@elysiajs/node@1.3.0':
-    resolution: {integrity: sha512-AA9rnL/FOBklxtJjFpUDBVZLuiKddDaV1KgnKawHzj5VgN99SzE+V0h1MOhp+8jlo2KQQJO/3aD3upyGgrfohQ==}
+  '@elysiajs/node@1.4.2':
+    resolution: {integrity: sha512-zqeBAV4/faCcmIEjCp3g6jRwsbaWsd5HqmlEf3CirD9HkTWQNo4T+GN/qGZi7zgd84D3Kzxsny7ZTMXEfrDSXQ==}
     peerDependencies:
-      elysia: '>= 1.3.3'
+      elysia: '>= 1.4.0'
 
-  '@elysiajs/swagger@1.3.1':
-    resolution: {integrity: sha512-LcbLHa0zE6FJKWPWKsIC/f+62wbDv3aXydqcNPVPyqNcaUgwvCajIi+5kHEU6GO3oXUCpzKaMsb3gsjt8sLzFQ==}
+  '@elysiajs/openapi@1.4.11':
+    resolution: {integrity: sha512-d75bMxYJpN6qSDi/z9L1S7SLk1S/8Px+cTb3W2lrYzU8uQ5E0kXdy1oOMJEfTyVsz3OA19NP9KNxE7ztSbLBLg==}
     peerDependencies:
-      elysia: '>= 1.3.0'
+      elysia: '>= 1.4.0'
 
   '@emnapi/core@1.4.3':
     resolution: {integrity: sha512-4m62DuCE07lw01soJwPiBGC0nAww0Q+RY70VZ+n49yDIO13yyinhbWCeNnaob0lakDtWQzSdtNWzJeOJt2ma+g==}
@@ -2574,12 +2575,6 @@ packages:
 
   '@hapi/topo@5.1.0':
     resolution: {integrity: sha512-foQZKJig7Ob0BMAYBfcJk8d77QtOe7Wo4ox7ff1lQYoNNAb6jwcY1ncdoy2e9wQZzvNy7ODZCYJkK8kzmcAnAg==}
-
-  '@hono/node-server@1.15.0':
-    resolution: {integrity: sha512-MjmK4l5N4dQpZ9OSWN0tCj7ejuc7WvuWMzSKtc89bnknJykAeHxzRigXBTYZk85H6Awrii6RM59iUiUluApu2A==}
-    engines: {node: '>=18.14.1'}
-    peerDependencies:
-      hono: ^4
 
   '@hookform/resolvers@5.2.1':
     resolution: {integrity: sha512-u0+6X58gkjMcxur1wRWokA7XsiiBJ6aK17aPZxhkoYiK5J+HcTx0Vhu9ovXe6H+dVpO6cjrn2FkJTryXEMlryQ==}
@@ -4309,26 +4304,6 @@ packages:
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
 
-  '@scalar/openapi-types@0.1.1':
-    resolution: {integrity: sha512-NMy3QNk6ytcCoPUGJH0t4NNr36OWXgZhA3ormr3TvhX1NDgoF95wFyodGVH8xiHeUyn2/FxtETm8UBLbB5xEmg==}
-    engines: {node: '>=18'}
-
-  '@scalar/openapi-types@0.2.0':
-    resolution: {integrity: sha512-waiKk12cRCqyUCWTOX0K1WEVX46+hVUK+zRPzAahDJ7G0TApvbNkuy5wx7aoUyEk++HHde0XuQnshXnt8jsddA==}
-    engines: {node: '>=18'}
-
-  '@scalar/themes@0.9.86':
-    resolution: {integrity: sha512-QUHo9g5oSWi+0Lm1vJY9TaMZRau8LHg+vte7q5BVTBnu6NuQfigCaN+ouQ73FqIVd96TwMO6Db+dilK1B+9row==}
-    engines: {node: '>=18'}
-
-  '@scalar/types@0.0.12':
-    resolution: {integrity: sha512-XYZ36lSEx87i4gDqopQlGCOkdIITHHEvgkuJFrXFATQs9zHARop0PN0g4RZYWj+ZpCUclOcaOjbCt8JGe22mnQ==}
-    engines: {node: '>=18'}
-
-  '@scalar/types@0.1.7':
-    resolution: {integrity: sha512-irIDYzTQG2KLvFbuTI8k2Pz/R4JR+zUUSykVTbEMatkzMmVFnn1VzNSMlODbadycwZunbnL2tA27AXed9URVjw==}
-    engines: {node: '>=18'}
-
   '@sideway/address@4.1.5':
     resolution: {integrity: sha512-IqO/DUQHUkPeixNQ8n0JA6102hT9CmaljNTPmQ1u8MEhBo/R4Q8eKLN/vGZxuebwOroDB4cbpjheD4+/sKFK4Q==}
 
@@ -4341,8 +4316,8 @@ packages:
   '@sinclair/typebox@0.27.8':
     resolution: {integrity: sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA==}
 
-  '@sinclair/typebox@0.34.37':
-    resolution: {integrity: sha512-2TRuQVgQYfy+EzHRTIvkhv2ADEouJ2xNS/Vq+W5EuuewBdOrvATvljZTxHWZSTYr2sTjTHpGvucaGAt67S2akw==}
+  '@sinclair/typebox@0.34.41':
+    resolution: {integrity: sha512-6gS8pZzSXdyRHTIqoqSVknxolr1kzfy4/CeDnrzsVz8TTIWUbOBr6gnzOmTYJ3eXQNh4IYHIGi5aIL7sOZ2G/g==}
 
   '@sinonjs/commons@3.0.1':
     resolution: {integrity: sha512-K3mCHKQ9sVh8o1C9cxkwxaOmXoAMlDxC1mYyHrjqOWEcBjYr76t96zL2zlj5dUGZ3HSw240X1qgH3Mjf1yJWpQ==}
@@ -4873,9 +4848,6 @@ packages:
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
-
-  '@unhead/schema@1.11.20':
-    resolution: {integrity: sha512-0zWykKAaJdm+/Y7yi/Yds20PrUK7XabLe9c3IRcjnwYmSWY6z0Cr19VIs3ozCj8P+GhR+/TI2mwtGlueCEYouA==}
 
   '@unrs/resolver-binding-darwin-arm64@1.7.2':
     resolution: {integrity: sha512-vxtBno4xvowwNmO/ASL0Y45TpHqmNkAaDtz4Jqb+clmcVSSl8XCG/PNFFkGsXXXS6AMjP+ja/TtNCFFa1QwLRg==}
@@ -5797,6 +5769,10 @@ packages:
     resolution: {integrity: sha512-9Kr/j4O16ISv8zBBhJoi4bXOYNTkFLOqSL3UDB0njXxCXNezjeyVrJyGOWtgfs/q2km1gwBcfH8q1yEGoMYunA==}
     engines: {node: '>=18'}
 
+  cookie@1.1.1:
+    resolution: {integrity: sha512-ei8Aos7ja0weRpFzJnEA9UHJ/7XQmqglbRwnf2ATjcB9Wq874VKH9kfjjirM6UhU2/E5fFYadylyhFldcqSidQ==}
+    engines: {node: '>=18'}
+
   core-js-compat@3.44.0:
     resolution: {integrity: sha512-JepmAj2zfl6ogy34qfWtcE7nHKAJnKsQFRn++scjVS2bZFllwptzw61BZcZFYBPpUznLfAvh0LGhxKppk04ClA==}
 
@@ -5840,6 +5816,14 @@ packages:
   cross-spawn@7.0.6:
     resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
+
+  crossws@0.4.1:
+    resolution: {integrity: sha512-E7WKBcHVhAVrY6JYD5kteNqVq1GSZxqGrdSiwXR9at+XHi43HJoCQKXcCczR5LBnBquFZPsB3o7HklulKoBU5w==}
+    peerDependencies:
+      srvx: '>=0.7.1'
+    peerDependenciesMeta:
+      srvx:
+        optional: true
 
   crypto-random-string@1.0.0:
     resolution: {integrity: sha512-GsVpkFPlycH7/fRR7Dhcmnoii54gV1nz7y4CWyeFS14N+JVBBhY+r8amRHE4BwSYal7BPTDp8isvAlCxyFt3Hg==}
@@ -6172,12 +6156,20 @@ packages:
   electron-to-chromium@1.5.194:
     resolution: {integrity: sha512-SdnWJwSUot04UR51I2oPD8kuP2VI37/CADR1OHsFOUzZIvfWJBO6q11k5P/uKNyTT3cdOsnyjkrZ+DDShqYqJA==}
 
-  elysia@1.3.5:
-    resolution: {integrity: sha512-XVIKXlKFwUT7Sta8GY+wO5reD9I0rqAEtaz1Z71UgJb61csYt8Q3W9al8rtL5RgumuRR8e3DNdzlUN9GkC4KDw==}
+  elysia@1.4.18:
+    resolution: {integrity: sha512-A6BhlipmSvgCy69SBgWADYZSdDIj3fT2gk8/9iMAC8iD+aGcnCr0fitziX0xr36MFDs/fsvVp8dWqxeq1VCgKg==}
     peerDependencies:
+      '@sinclair/typebox': '>= 0.34.0 < 1'
+      '@types/bun': '>= 1.2.0'
       exact-mirror: '>= 0.0.9'
       file-type: '>= 20.0.0'
+      openapi-types: '>= 12.0.0'
       typescript: '>= 5.0.0'
+    peerDependenciesMeta:
+      '@types/bun':
+        optional: true
+      typescript:
+        optional: true
 
   emittery@0.13.1:
     resolution: {integrity: sha512-DeWwawk6r5yR9jFgnDKYt4sLS0LmHJJi3ZOnb5/JdbYwj3nW+FxQnHIjhBKz8YLC7oRNPVM9NQ47I3CVx34eqQ==}
@@ -7338,13 +7330,6 @@ packages:
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
 
-  hono@4.8.4:
-    resolution: {integrity: sha512-KOIBp1+iUs0HrKztM4EHiB2UtzZDTBihDtOF5K6+WaJjCPeaW4Q92R8j63jOhvJI5+tZSMuKD9REVEXXY9illg==}
-    engines: {node: '>=16.9.0'}
-
-  hookable@5.5.3:
-    resolution: {integrity: sha512-Yc+BQe8SvoXH1643Qez1zqLRmbA5rCL+sSmk6TVos0LWVfNIB7PGncdlId77WzLGSIB5KaWgTaNTs2lNVEI6VQ==}
-
   hosted-git-info@6.1.3:
     resolution: {integrity: sha512-HVJyzUrLIL1c0QmviVh5E8VGyUS7xCFPS6yydaVd1UegW+ibV/CohqTH9MkOLDp5o+rb82DMo77PTuc9F/8GKw==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
@@ -8296,6 +8281,9 @@ packages:
     resolution: {integrity: sha512-aisnrDP4GNe06UcKFnV5bfMNPBUw4jsLGaWwWfnH3v02GnBuXX2MCVn5RbrWo0j3pczUilYblq7fQ7Nw2t5XKw==}
     engines: {node: '>= 0.8'}
 
+  memoirist@0.4.0:
+    resolution: {integrity: sha512-zxTgA0mSYELa66DimuNQDvyLq36AwDlTuVRbnQtB+VuTcKWm5Qc4z3WkSpgsFWHNhexqkIooqpv4hdcqrX5Nmg==}
+
   memoize-one@5.2.1:
     resolution: {integrity: sha512-zYiwtZUcYyXKo/np96AGZAckk+FWWsUdJ3cHGGmld7+AhvcWmQyGCYUh1hc4Q/pkOhb65dQR/pqCyK0cOaHz4Q==}
 
@@ -8481,11 +8469,6 @@ packages:
   nanoid@3.3.11:
     resolution: {integrity: sha512-N8SpfPUnUp1bK+PMYW8qSWdl9U+wwNWI4QKxOYDy9JAro3WMX7p2OeVRF9v+347pnakNevPmiHhNmZ2HbFA76w==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
-    hasBin: true
-
-  nanoid@5.1.5:
-    resolution: {integrity: sha512-Ir/+ZpE9fDsNH0hQ3C68uyThDXzYcim2EqcZ8zn8Chtt1iylPT9xXJB0kPCnqzgcEGikO9RxSrh63MsmVCU7Fw==}
-    engines: {node: ^18 || >=20}
     hasBin: true
 
   napi-postinstall@0.2.3:
@@ -10011,6 +9994,11 @@ packages:
   sprintf-js@1.0.3:
     resolution: {integrity: sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g==}
 
+  srvx@0.9.7:
+    resolution: {integrity: sha512-N2a2nx8YTq13+A8qucg4lHZREfWOVnlMHAvrA9C2jbY9/QnVEAPzjdmpFHrY6/9BxSwIbvywCj7zahuGrVzCiQ==}
+    engines: {node: '>=20.16.0'}
+    hasBin: true
+
   stable-hash@0.0.5:
     resolution: {integrity: sha512-+L3ccpzibovGXFK+Ap/f8LOS0ahMrHTf3xu7mMLSpEGU0EO9ucaysSylKo9eRDFNhWve/y275iPmIZ4z39a9iA==}
 
@@ -11156,9 +11144,6 @@ packages:
   yocto-queue@0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
-
-  zhead@2.2.4:
-    resolution: {integrity: sha512-8F0OI5dpWIA5IGG5NHUg9staDwz/ZPxZtvGVf01j7vHqSyZ0raHY+78atOVxRqb73AotX22uV1pXt3gYSstGag==}
 
   zimmerframe@1.1.2:
     resolution: {integrity: sha512-rAbqEGa8ovJy4pyBxZM70hg4pE6gDgaQ0Sl9M3enG3I0d6H4XSAM3GeNGLKnsBpuijUow064sf7ww1nutC5/3w==}
@@ -12688,9 +12673,9 @@ snapshots:
 
   '@bcoe/v8-coverage@1.0.2': {}
 
-  '@bogeychan/elysia-logger@0.1.8(elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.3))':
+  '@bogeychan/elysia-logger@0.1.10(elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.3))(pino@9.7.0)':
     dependencies:
-      elysia: 1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.3)
+      elysia: 1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.3)
       pino: 9.7.0
 
   '@changesets/apply-release-plan@7.0.12':
@@ -12856,39 +12841,33 @@ snapshots:
     dependencies:
       '@types/hammerjs': 2.0.46
 
-  '@elysiajs/cors@1.3.3(elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2))':
+  '@elysiajs/cors@1.4.0(elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2))':
     dependencies:
-      elysia: 1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2)
+      elysia: 1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2)
 
-  '@elysiajs/cors@1.3.3(elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.3))':
+  '@elysiajs/cors@1.4.0(elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.3))':
     dependencies:
-      elysia: 1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.3)
+      elysia: 1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.3)
 
-  '@elysiajs/eden@1.3.2(elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2))':
+  '@elysiajs/eden@1.4.5(elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2))':
     dependencies:
-      elysia: 1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2)
+      elysia: 1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2)
 
-  '@elysiajs/node@1.3.0(elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2))(hono@4.8.4)':
+  '@elysiajs/node@1.4.2(elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2))':
     dependencies:
-      '@hono/node-server': 1.15.0(hono@4.8.4)
-      elysia: 1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2)
-    transitivePeerDependencies:
-      - hono
+      crossws: 0.4.1(srvx@0.9.7)
+      elysia: 1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2)
+      srvx: 0.9.7
 
-  '@elysiajs/node@1.3.0(elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.3))(hono@4.8.4)':
+  '@elysiajs/node@1.4.2(elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.3))':
     dependencies:
-      '@hono/node-server': 1.15.0(hono@4.8.4)
-      elysia: 1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.3)
-    transitivePeerDependencies:
-      - hono
+      crossws: 0.4.1(srvx@0.9.7)
+      elysia: 1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.3)
+      srvx: 0.9.7
 
-  '@elysiajs/swagger@1.3.1(elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2))':
+  '@elysiajs/openapi@1.4.11(elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2))':
     dependencies:
-      '@scalar/themes': 0.9.86
-      '@scalar/types': 0.0.12
-      elysia: 1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2)
-      openapi-types: 12.1.3
-      pathe: 1.1.2
+      elysia: 1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2)
 
   '@emnapi/core@1.4.3':
     dependencies:
@@ -14127,10 +14106,6 @@ snapshots:
       '@hapi/hoek': 9.3.0
     optional: true
 
-  '@hono/node-server@1.15.0(hono@4.8.4)':
-    dependencies:
-      hono: 4.8.4
-
   '@hookform/resolvers@5.2.1(react-hook-form@7.62.0(react@19.1.0))':
     dependencies:
       '@standard-schema/utils': 0.3.0
@@ -14303,7 +14278,7 @@ snapshots:
 
   '@jest/schemas@30.0.5':
     dependencies:
-      '@sinclair/typebox': 0.34.37
+      '@sinclair/typebox': 0.34.41
 
   '@jest/source-map@29.6.3':
     dependencies:
@@ -16831,29 +16806,6 @@ snapshots:
 
   '@rtsao/scc@1.1.0': {}
 
-  '@scalar/openapi-types@0.1.1': {}
-
-  '@scalar/openapi-types@0.2.0':
-    dependencies:
-      zod: 3.25.76
-
-  '@scalar/themes@0.9.86':
-    dependencies:
-      '@scalar/types': 0.1.7
-
-  '@scalar/types@0.0.12':
-    dependencies:
-      '@scalar/openapi-types': 0.1.1
-      '@unhead/schema': 1.11.20
-
-  '@scalar/types@0.1.7':
-    dependencies:
-      '@scalar/openapi-types': 0.2.0
-      '@unhead/schema': 1.11.20
-      nanoid: 5.1.5
-      type-fest: 4.41.0
-      zod: 3.25.76
-
   '@sideway/address@4.1.5':
     dependencies:
       '@hapi/hoek': 9.3.0
@@ -16867,7 +16819,7 @@ snapshots:
 
   '@sinclair/typebox@0.27.8': {}
 
-  '@sinclair/typebox@0.34.37': {}
+  '@sinclair/typebox@0.34.41': {}
 
   '@sinonjs/commons@3.0.1':
     dependencies:
@@ -17522,11 +17474,6 @@ snapshots:
       eslint-visitor-keys: 4.2.0
 
   '@ungap/structured-clone@1.3.0': {}
-
-  '@unhead/schema@1.11.20':
-    dependencies:
-      hookable: 5.5.3
-      zhead: 2.2.4
 
   '@unrs/resolver-binding-darwin-arm64@1.7.2':
     optional: true
@@ -18767,6 +18714,8 @@ snapshots:
 
   cookie@1.0.2: {}
 
+  cookie@1.1.1: {}
+
   core-js-compat@3.44.0:
     dependencies:
       browserslist: 4.25.1
@@ -18857,6 +18806,10 @@ snapshots:
       path-key: 3.1.1
       shebang-command: 2.0.0
       which: 2.0.2
+
+  crossws@0.4.1(srvx@0.9.7):
+    optionalDependencies:
+      srvx: 0.9.7
 
   crypto-random-string@1.0.0: {}
 
@@ -19125,27 +19078,29 @@ snapshots:
 
   electron-to-chromium@1.5.194: {}
 
-  elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.2):
+  elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.2):
     dependencies:
-      cookie: 1.0.2
-      exact-mirror: 0.1.2(@sinclair/typebox@0.34.37)
+      '@sinclair/typebox': 0.34.41
+      cookie: 1.1.1
+      exact-mirror: 0.1.2(@sinclair/typebox@0.34.41)
       fast-decode-uri-component: 1.0.1
       file-type: 21.0.0
+      memoirist: 0.4.0
+      openapi-types: 12.1.3
+    optionalDependencies:
       typescript: 5.8.2
-    optionalDependencies:
-      '@sinclair/typebox': 0.34.37
-      openapi-types: 12.1.3
 
-  elysia@1.3.5(exact-mirror@0.1.2(@sinclair/typebox@0.34.37))(file-type@21.0.0)(typescript@5.8.3):
+  elysia@1.4.18(@sinclair/typebox@0.34.41)(exact-mirror@0.1.2(@sinclair/typebox@0.34.41))(file-type@21.0.0)(openapi-types@12.1.3)(typescript@5.8.3):
     dependencies:
-      cookie: 1.0.2
-      exact-mirror: 0.1.2(@sinclair/typebox@0.34.37)
+      '@sinclair/typebox': 0.34.41
+      cookie: 1.1.1
+      exact-mirror: 0.1.2(@sinclair/typebox@0.34.41)
       fast-decode-uri-component: 1.0.1
       file-type: 21.0.0
-      typescript: 5.8.3
-    optionalDependencies:
-      '@sinclair/typebox': 0.34.37
+      memoirist: 0.4.0
       openapi-types: 12.1.3
+    optionalDependencies:
+      typescript: 5.8.3
 
   emittery@0.13.1: {}
 
@@ -19717,9 +19672,9 @@ snapshots:
     dependencies:
       eventsource-parser: 3.0.1
 
-  exact-mirror@0.1.2(@sinclair/typebox@0.34.37):
+  exact-mirror@0.1.2(@sinclair/typebox@0.34.41):
     optionalDependencies:
-      '@sinclair/typebox': 0.34.37
+      '@sinclair/typebox': 0.34.41
 
   exec-async@2.2.0: {}
 
@@ -21017,10 +20972,6 @@ snapshots:
     dependencies:
       react-is: 16.13.1
 
-  hono@4.8.4: {}
-
-  hookable@5.5.3: {}
-
   hosted-git-info@6.1.3:
     dependencies:
       lru-cache: 7.18.3
@@ -22236,6 +22187,8 @@ snapshots:
 
   media-typer@1.1.0: {}
 
+  memoirist@0.4.0: {}
+
   memoize-one@5.2.1: {}
 
   memoize-one@6.0.0: {}
@@ -22503,8 +22456,6 @@ snapshots:
       thenify-all: 1.6.0
 
   nanoid@3.3.11: {}
-
-  nanoid@5.1.5: {}
 
   napi-postinstall@0.2.3: {}
 
@@ -24428,6 +24379,8 @@ snapshots:
 
   sprintf-js@1.0.3: {}
 
+  srvx@0.9.7: {}
+
   stable-hash@0.0.5: {}
 
   stack-generator@2.0.10:
@@ -25731,8 +25684,6 @@ snapshots:
       yargs-parser: 21.1.1
 
   yocto-queue@0.1.0: {}
-
-  zhead@2.2.4: {}
 
   zimmerframe@1.1.2: {}
 

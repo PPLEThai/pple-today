@@ -62,6 +62,7 @@ export default function EditProfilePage() {
             body: {
               contentType: (imagePickerAsset.mimeType || 'image/png') as ImageMimeType,
             },
+            headers: {},
           })
 
           if (!getLink || !getLink.uploadUrl || !getLink.uploadFields) {

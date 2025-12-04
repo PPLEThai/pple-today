@@ -95,7 +95,7 @@ export function OnboardingAddress() {
   const getPostalCodeQuery = reactQueryClient.useQuery(
     '/address/postal-code',
     {
-      query: { province: provinceValues, district: districtValues, subDistrict: subdistrictValues },
+      query: { province: provinceValues, district: districtValues, subdistrict: subdistrictValues },
     },
     { enabled: !!subdistrictValues }
   )
@@ -149,6 +149,7 @@ export function OnboardingAddress() {
           contentType: (state.profileStepResult.imagePickerAsset?.mimeType ||
             'image/png') as ImageMimeType,
         },
+        headers: {},
       })
 
       if (!getLink || !getLink.uploadUrl || !getLink.uploadFields) {

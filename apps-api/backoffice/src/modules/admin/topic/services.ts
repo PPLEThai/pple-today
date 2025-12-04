@@ -5,6 +5,7 @@ import { err } from '@pple-today/api-common/utils'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
+import * as R from 'remeda'
 
 import {
   CreateTopicBody,
@@ -49,7 +50,7 @@ export class AdminTopicService {
     if (getSignedUrlResult.isErr()) return err(getSignedUrlResult.error)
 
     return ok({
-      ...result.value,
+      ...R.omit(result.value, ['bannerImagePath']),
       bannerImage: {
         url: getSignedUrlResult.value,
         filePath: bannerImagePath as FilePath,
