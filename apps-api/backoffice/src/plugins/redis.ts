@@ -70,15 +70,18 @@ export class RedisElectionService extends RedisService {
     })
   }
 
-  private async handleExpiration(message: string, channel: string) {
+  private async handleExpiration(_: string, channel: string) {
     if (!channel.startsWith('election:')) return
+    const [, type, electionId] = channel.split(':')
     for (const listener of this.expirationListeners) {
-      listener(JSON.parse(message) as ElectionNotificationMessage)
+      listener({
+        electionId,
+        type: type === 'startVoting' ? 'START_VOTING' : 'START_RESULT',
+      } as ElectionNotificationMessage)
     }
   }
 
   async setup() {
-    await this.client.connect()
     this.subscriptionClient = this.client.duplicate()
 
     if (!this.subscriptionClient) {
@@ -86,13 +89,14 @@ export class RedisElectionService extends RedisService {
     }
 
     await this.subscriptionClient.config('SET', 'notify-keyspace-events', 'Ex')
-    await this.subscriptionClient.subscribe('__keyevent@1__:expired', (error, count) => {
+    await this.subscriptionClient.subscribe('__keyevent@1__:expired', (error, result) => {
       if (error) {
         this.loggerService.error('Failed to subscribe to Redis key expiration events', {
           error: error.message,
         })
       } else {
-        this.loggerService.info(`Subscribed to ${count} Redis key expiration event channels`)
+        this.loggerService.info(`Subscribed to ${result} Redis key expiration event channels`)
+        this.subscriptionClient!.on('message', this.handleExpiration.bind(this))
       }
     })
   }
@@ -105,16 +109,12 @@ export class RedisElectionService extends RedisService {
     this.expirationListeners = this.expirationListeners.filter((cb) => cb !== callback)
   }
 
-  async setElectionStartVotingSchedule(
-    electionId: string,
-    resultData: ElectionNotificationMessage,
-    sentAt: Date
-  ) {
+  async setElectionStartVotingSchedule(electionId: string, sentAt: Date) {
     const key = `election:startVoting:${electionId}`
     const now = new Date()
-    const ttlSeconds = Math.max(1, Math.floor((sentAt.getTime() - now.getTime()) / 1000))
+    const ttlSeconds = Math.max(1000, sentAt.getTime() - now.getTime())
 
-    return fromPromise(this.client.setex(key, ttlSeconds, JSON.stringify(resultData)), (error) => {
+    return fromPromise(this.client.psetex(key, ttlSeconds, 1), (error) => {
       this.loggerService.error({
         message: 'Failed to set election publish schedule in Redis',
         error: (error as Error).message,
@@ -128,16 +128,12 @@ export class RedisElectionService extends RedisService {
     })
   }
 
-  async setElectionStartResultSchedule(
-    electionId: string,
-    resultData: ElectionNotificationMessage,
-    sentAt: Date
-  ) {
+  async setElectionStartResultSchedule(electionId: string, sentAt: Date) {
     const key = `election:startResult:${electionId}`
     const now = new Date()
     const ttlSeconds = Math.max(1, Math.floor((sentAt.getTime() - now.getTime()) / 1000))
 
-    return fromPromise(this.client.setex(key, ttlSeconds, JSON.stringify(resultData)), (error) => {
+    return fromPromise(this.client.setex(key, ttlSeconds, 1), (error) => {
       this.loggerService.error('Failed to set election start result schedule in Redis', {
         error,
         electionId,
@@ -151,7 +147,7 @@ export class RedisElectionService extends RedisService {
   }
 
   async setMutexElectionNotification(electionId: string, type: 'START_VOTING' | 'START_RESULT') {
-    const key = `election-notificationMutex:${type.toLowerCase()}:${electionId}`
+    const key = `election-notification-mutex:${type.toLowerCase()}:${electionId}`
 
     return fromPromise(this.client.setnx(key, 'locked'), (error) => {
       this.loggerService.error('Failed to set mutex for election notification in Redis', {
@@ -163,6 +159,23 @@ export class RedisElectionService extends RedisService {
       return {
         code: 'REDIS_ERROR' as const,
         message: 'Failed to set mutex for election notification in Redis',
+      }
+    })
+  }
+
+  async revokeMutexElectionNotification(electionId: string, type: 'START_VOTING' | 'START_RESULT') {
+    const key = `election-notification-mutex:${type.toLowerCase()}:${electionId}`
+
+    return fromPromise(this.client.del(key), (error) => {
+      this.loggerService.error('Failed to revoke mutex for election notification in Redis', {
+        error,
+        electionId,
+        type,
+      })
+
+      return {
+        code: 'REDIS_ERROR' as const,
+        message: 'Failed to revoke mutex for election notification in Redis',
       }
     })
   }

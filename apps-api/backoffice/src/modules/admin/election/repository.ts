@@ -37,7 +37,8 @@ export class AdminElectionRepository {
     this.registerElectionNotification()
       .then((result) => {
         if (result.isErr()) {
-          this.loggerService.error('Failed to register election notifications on startup', {
+          this.loggerService.error({
+            message: 'Failed to register election notifications on startup',
             error: result.error,
           })
           process.exit(1)
@@ -45,16 +46,16 @@ export class AdminElectionRepository {
         this.redisElectionService.registerExpirationCallback(
           this.handleExpirationMessage.bind(this)
         )
-        this.loggerService.info('Successfully registered election notifications on startup')
+        this.loggerService.info({
+          message: 'Successfully registered election notifications on startup',
+        })
         return
       })
       .catch((error) => {
-        this.loggerService.error(
-          'Unexpected error during registering election notifications on startup',
-          {
-            error,
-          }
-        )
+        this.loggerService.error({
+          message: 'Unexpected error during registering election notifications on startup',
+          error,
+        })
         process.exit(1)
       })
   }
@@ -81,7 +82,7 @@ export class AdminElectionRepository {
   }
 
   private async handleExpirationMessage(message: ElectionNotificationMessage) {
-    this.loggerService.info('Handling election notification message', { message })
+    this.loggerService.info({ message: 'Handling election notification message', data: message })
 
     const mutexLockResult = await this.redisElectionService.setMutexElectionNotification(
       message.electionId,
@@ -89,7 +90,8 @@ export class AdminElectionRepository {
     )
 
     if (mutexLockResult.isErr()) {
-      this.loggerService.warn('Failed to acquire mutex lock for election notification', {
+      this.loggerService.warn({
+        message: 'Failed to acquire mutex lock for election notification',
         electionId: message.electionId,
         type: message.type,
         error: mutexLockResult.error,
@@ -98,7 +100,8 @@ export class AdminElectionRepository {
     }
 
     if (!mutexLockResult.value) {
-      this.loggerService.info('Mutex lock already acquired by another process', {
+      this.loggerService.info({
+        message: 'Mutex lock already acquired by another process, skipping notification',
         electionId: message.electionId,
         type: message.type,
       })
@@ -133,10 +136,23 @@ export class AdminElectionRepository {
     })
 
     if (getUserNotificationResult.isErr()) {
-      this.loggerService.error('Failed to get election notification user phone numbers', {
+      this.loggerService.error({
+        message: 'Failed to get election notification user phone numbers',
         electionId: message.electionId,
         error: getUserNotificationResult.error,
       })
+      const revokeResult = await this.redisElectionService.revokeMutexElectionNotification(
+        message.electionId,
+        message.type
+      )
+      if (revokeResult.isErr()) {
+        this.loggerService.error({
+          message: 'Failed to revoke mutex lock after notification failure',
+          electionId: message.electionId,
+          type: message.type,
+          error: revokeResult.error,
+        })
+      }
       return err(getUserNotificationResult.error)
     }
 
@@ -176,7 +192,7 @@ export class AdminElectionRepository {
 
         const awaitingResult = []
 
-        if (onsitePhoneNumber.length > 0) {
+        if (onlinePhoneNumber.length > 0) {
           awaitingResult.push(
             this.notificationRepository.sendNotificationToUser(
               {
@@ -184,8 +200,8 @@ export class AdminElectionRepository {
                 details: onlinePhoneNumber,
               },
               {
-                header: `การเลือกตั้ง "${electionDetails.name}" ได้เริ่มต้นขึ้นแล้ว`,
-                message: `โปรดไปใช้สิทธิ์ของคุณในแอปพลิเคชัน สามารถตรวจสอบรายละเอียดเพิ่มเติมได้ในแอปพลิเคชัน`,
+                header: `การเลือกตั้ง ${electionDetails.name} ได้เริ่มต้นขึ้นแล้ว`,
+                message: `โปรดใช้สิทธิ์ของคุณในแอปพลิเคชัน สามารถตรวจสอบรายละเอียดเพิ่มเติมได้ในแอปพลิเคชัน`,
                 actionButtonText: 'ไปใช้สิทธิ์',
                 link: {
                   type: 'IN_APP_NAVIGATION',
@@ -202,7 +218,7 @@ export class AdminElectionRepository {
           )
         }
 
-        if (onlinePhoneNumber.length > 0) {
+        if (onsitePhoneNumber.length > 0) {
           awaitingResult.push(
             this.notificationRepository.sendNotificationToUser(
               {
@@ -210,7 +226,7 @@ export class AdminElectionRepository {
                 details: onsitePhoneNumber,
               },
               {
-                header: `การเลือกตั้ง "${electionDetails.name}" ได้เริ่มต้นขึ้นแล้ว`,
+                header: `การเลือกตั้ง ${electionDetails.name} ได้เริ่มต้นขึ้นแล้ว`,
                 message: `โปรดใช้สิทธิ์ของคุณที่หน่วยเลือกตั้ง สามารถตรวจสอบรายละเอียดเพิ่มเติมได้ในแอปพลิเคชัน`,
                 actionButtonText: 'ตรวจสอบรายละเอียด',
                 link: {
@@ -237,8 +253,8 @@ export class AdminElectionRepository {
             details: electionNotifications.map((en) => en.user.phoneNumber),
           },
           {
-            header: `ประกาศผลการเลือกตั้ง "${electionDetails.name}"`,
-            message: `ผลการเลือกตั้ง "${electionDetails.name}" ได้ถูกประกาศแล้ว สามารถตรวจสอบผลการเลือกตั้งได้ในแอปพลิเคชัน`,
+            header: `ประกาศผลการเลือกตั้ง ${electionDetails.name}`,
+            message: `ผลการเลือกตั้ง ${electionDetails.name} ได้ถูกประกาศแล้ว สามารถตรวจสอบผลการเลือกตั้งได้ในแอปพลิเคชัน`,
             actionButtonText: 'ดูผลการเลือกตั้ง',
             link: {
               type: 'IN_APP_NAVIGATION',
@@ -263,8 +279,8 @@ export class AdminElectionRepository {
         where: {
           OR: [
             {
-              publishDate: {
-                lt: new Date(),
+              openVoting: {
+                gt: new Date(),
               },
             },
             {
@@ -278,24 +294,22 @@ export class AdminElectionRepository {
           id: true,
           publishDate: true,
           startResult: true,
+          openVoting: true,
         },
       })
 
       return await Promise.all(
         elections.map(async (election) => {
-          if (!election.publishDate || !election.startResult) return
-          if (election.publishDate < new Date()) {
+          if (election.openVoting && election.openVoting > new Date()) {
             await this.redisElectionService.setElectionStartVotingSchedule(
               election.id,
-              { electionId: election.id, type: 'START_VOTING' },
-              election.publishDate
+              election.openVoting
             )
           }
 
-          if (election.startResult > new Date()) {
+          if (election.startResult && election.startResult > new Date()) {
             await this.redisElectionService.setElectionStartResultSchedule(
               election.id,
-              { electionId: election.id, type: 'START_RESULT' },
               election.startResult
             )
           }
@@ -557,15 +571,20 @@ export class AdminElectionRepository {
   }
 
   async publishElectionById(electionId: string, publishDate: Date, shouldDestroyKey: boolean) {
-    return fromRepositoryPromise(
-      this.prismaService.election.update({
+    return fromRepositoryPromise(async () => {
+      const updateResult = await this.prismaService.election.update({
         where: { id: electionId },
         data: {
           publishDate,
           keysStatus: shouldDestroyKey ? ElectionKeysStatus.DESTROY_SCHEDULED : undefined,
         },
       })
-    )
+
+      await this.redisElectionService.setElectionStartVotingSchedule(
+        electionId,
+        updateResult.openVoting
+      )
+    })
   }
 
   async listElectionCandidates(electionId: string) {
@@ -1022,8 +1041,8 @@ export class AdminElectionRepository {
       duration: number
     }
   ) {
-    return fromRepositoryPromise(
-      this.prismaService.election.update({
+    return fromRepositoryPromise(async () => {
+      await this.prismaService.election.update({
         where: { id: electionId },
         data: {
           startResult: timeline.start,
@@ -1033,7 +1052,9 @@ export class AdminElectionRepository {
           keysDestroyScheduledDuration: destroyKeyInfo?.duration,
         },
       })
-    )
+
+      await this.redisElectionService.setElectionStartResultSchedule(electionId, timeline.start)
+    })
   }
 }
 

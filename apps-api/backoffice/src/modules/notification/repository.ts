@@ -247,7 +247,6 @@ export class NotificationRepository {
         }
       | {
           type: 'EXTERNAL'
-
           apiKeyId: string
         }
   ) {
