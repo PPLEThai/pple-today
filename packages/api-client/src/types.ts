@@ -9,7 +9,7 @@ import type {
   UseQueryResult,
 } from '@tanstack/react-query'
 import type { AnyElysia } from 'elysia'
-import type { Prettify2 } from 'elysia/types'
+import type { Equal, Prettify } from 'elysia/types'
 import type { ConditionalExcept, IntClosedRange, IsNever, ValueOf } from 'type-fest'
 
 type ErrorRange = IntClosedRange<300, 599>
@@ -71,25 +71,31 @@ type GroupPathByMethod<
 type GetBody<TSchema extends Record<string, any>> = TSchema extends {
   body: infer TBody extends Record<string, any>
 }
-  ? TBody
+  ? Equal<TBody, {}> extends true
+    ? never
+    : TBody
   : never
 
 type GetQuery<TSchema extends Record<string, any>> = TSchema extends {
   query: infer TQuery extends Record<string, any>
 }
-  ? TQuery
+  ? Equal<TQuery, {}> extends true
+    ? never
+    : TQuery
   : never
 
-type GetHeaders<TSchema extends Record<string, any>> = TSchema extends { headers: infer THeaders }
-  ? THeaders extends Record<string, any>
-    ? { headers: THeaders & Record<string, unknown> }
-    : { headers?: Record<string, unknown> }
+type GetHeaders<TSchema extends Record<string, any>> = TSchema extends {
+  headers: infer THeaders extends Record<string, any>
+}
+  ? Equal<THeaders, {}> extends true
+    ? { headers?: Record<string, unknown> }
+    : { headers: THeaders & Record<string, unknown> }
   : { headers?: Record<string, unknown> }
 
 type GetPathParams<TSchema extends Record<string, any>> = TSchema extends {
   params: infer TPathParams extends Record<string, any>
 }
-  ? {} extends TPathParams
+  ? Equal<TPathParams, {}> extends true
     ? never
     : TPathParams
   : never
@@ -137,7 +143,7 @@ export type EdenSuccess<TResponse extends Record<string, unknown>> = {
   [K in keyof TResponse as K extends SuccessRange ? K : never]: TResponse[K]
 }
 
-export type EdenResponse<TSchema extends Record<string, unknown>> = Prettify2<
+export type EdenResponse<TSchema extends Record<string, unknown>> = Prettify<
   TSchema extends { response: infer TResponse extends Record<string, unknown> }
     ? ValueOf<EdenSuccess<TResponse>>
     : never

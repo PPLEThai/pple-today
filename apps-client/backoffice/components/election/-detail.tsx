@@ -144,8 +144,11 @@ function DownloadVotersButton({
     setIsPending(true)
 
     const { data, error } = await fetchClient('/admin/elections/:electionId/eligible-voters', {
+      method: 'GET',
       params: { electionId: election.id },
       query: { isRegistered },
+      headers: {},
+      body: {},
     })
 
     if (error) {

@@ -55,6 +55,8 @@ export default function TopicDetailPage() {
     queryFn: async ({ pageParam }) => {
       const response = await fetchClient('/feed/topic', {
         query: { cursor: pageParam, limit: LIMIT, topicId: topicId! },
+        headers: {},
+        body: {},
       })
       if (response.error) {
         throw response.error

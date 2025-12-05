@@ -28,6 +28,7 @@ export type UpdateApiKeyNotificationBody = Static<typeof UpdateApiKeyNotificatio
 export const UpdateApiKeyNotificationResponse = t.Pick(NotificationApiKey, [
   'id',
   'name',
+  'apiKey',
   'active',
   'createdAt',
   'updatedAt',

@@ -8,6 +8,7 @@ import * as R from 'remeda'
 
 import {
   CompleteOnboardingProfileBody,
+  GetProfileByIdResponse,
   GetUserRecommendationResponse,
   UpdateProfileBody,
 } from './models'
@@ -120,7 +121,7 @@ export class ProfileService {
     }
 
     return ok({
-      ...user.value,
+      ...R.omit(user.value, ['status']),
       address: user.value.address ?? undefined,
       profileImage: user.value.profileImagePath
         ? this.fileServerService.getFileEndpointUrl(user.value.profileImagePath)
@@ -130,7 +131,7 @@ export class ProfileService {
         R.map((r) => r.role),
         R.filter((role) => ALLOWED_ROLES.includes(role))
       ),
-    })
+    } satisfies GetProfileByIdResponse)
   }
 
   async followUser(userId: string, followingUserId: string) {

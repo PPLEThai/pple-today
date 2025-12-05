@@ -30,6 +30,8 @@ const infiniteNotificationsQueryOptions = infiniteQueryOptions({
   queryFn: async ({ pageParam }) => {
     const response = await fetchClient('/notifications/history', {
       query: { limit: 5, cursor: pageParam },
+      headers: {},
+      body: {},
     })
     if (response.error) {
       throw response.error

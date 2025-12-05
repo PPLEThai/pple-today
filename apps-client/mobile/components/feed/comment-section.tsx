@@ -30,6 +30,8 @@ export function FeedCommentSection({
       const response = await fetchClient('/feed/:id/comments', {
         params: { id: feedId! },
         query: { cursor: pageParam, limit: LIMIT },
+        headers: {},
+        body: {},
       })
       if (response.error) {
         throw response.error
