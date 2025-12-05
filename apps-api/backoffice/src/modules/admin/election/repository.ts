@@ -200,7 +200,7 @@ export class AdminElectionRepository {
                 details: onlinePhoneNumber,
               },
               {
-                header: `การเลือกตั้ง ${electionDetails.name} ได้เริ่มต้นขึ้นแล้ว`,
+                header: `อย่าลืมไป ${electionDetails.name} วันนี้!`,
                 message: `โปรดใช้สิทธิ์ของคุณในแอปพลิเคชัน สามารถตรวจสอบรายละเอียดเพิ่มเติมได้ในแอปพลิเคชัน`,
                 actionButtonText: 'ไปใช้สิทธิ์',
                 link: {
@@ -226,7 +226,7 @@ export class AdminElectionRepository {
                 details: onsitePhoneNumber,
               },
               {
-                header: `การเลือกตั้ง ${electionDetails.name} ได้เริ่มต้นขึ้นแล้ว`,
+                header: `อย่าลืมไป ${electionDetails.name} วันนี้!`,
                 message: `โปรดใช้สิทธิ์ของคุณที่หน่วยเลือกตั้ง สามารถตรวจสอบรายละเอียดเพิ่มเติมได้ในแอปพลิเคชัน`,
                 actionButtonText: 'ตรวจสอบรายละเอียด',
                 link: {
@@ -253,8 +253,8 @@ export class AdminElectionRepository {
             details: electionNotifications.map((en) => en.user.phoneNumber),
           },
           {
-            header: `ประกาศผลการเลือกตั้ง ${electionDetails.name}`,
-            message: `ผลการเลือกตั้ง ${electionDetails.name} ได้ถูกประกาศแล้ว สามารถตรวจสอบผลการเลือกตั้งได้ในแอปพลิเคชัน`,
+            header: `ประกาศผล ${electionDetails.name}`,
+            message: `สามารถตรวจสอบผลการเลือกตั้งได้ในแอปพลิเคชัน`,
             actionButtonText: 'ดูผลการเลือกตั้ง',
             link: {
               type: 'IN_APP_NAVIGATION',
