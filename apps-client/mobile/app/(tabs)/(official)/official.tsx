@@ -165,6 +165,11 @@ const AnnouncementSection = () => {
             type={item.type}
           />
         ))}
+        {data.length === 0 && (
+          <View className="flex flex-col items-center justify-center">
+            <Text className="text-base-text-medium font-heading-semibold">ยังไม่มีประกาศ</Text>
+          </View>
+        )}
       </View>
     )
   }
