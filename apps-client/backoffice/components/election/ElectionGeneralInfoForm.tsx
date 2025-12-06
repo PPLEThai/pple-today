@@ -131,8 +131,6 @@ export const ElectionGeneralInfoForm = ({
               <RadioGroup
                 value={field.value}
                 onValueChange={(value) => {
-                  field.onChange(value)
-
                   if (value !== 'HYBRID') {
                     form.setValue('openRegister', undefined)
                     form.setValue('closeRegister', undefined)
@@ -141,6 +139,8 @@ export const ElectionGeneralInfoForm = ({
                   if (value !== 'ONLINE') {
                     form.setValue('locationMapUrl', undefined)
                   }
+
+                  field.onChange(value)
                 }}
                 ref={field.ref}
                 className="grid-cols-3"
