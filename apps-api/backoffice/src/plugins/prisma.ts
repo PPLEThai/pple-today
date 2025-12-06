@@ -35,3 +35,6 @@ export const PrismaServicePlugin = new Elysia({ name: 'PrismaService' })
 
     return { prismaService }
   })
+  .onStop(async (app) => {
+    await app.decorator.prismaService.$disconnect()
+  })

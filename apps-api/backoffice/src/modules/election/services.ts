@@ -89,6 +89,9 @@ export class ElectionService {
     election: Election & {
       voteRecords: { userId: string }[]
       _count: { voters: number; voteRecords: number }
+      notifications: {
+        userId: string
+      }[]
     },
     voterType: EligibleVoterType,
     now: Date
@@ -98,6 +101,7 @@ export class ElectionService {
       votePercentage: 100 * (election._count.voteRecords / election._count.voters),
       isRegistered: this.isHybridElectionVoterRegistered(voterType, election.type),
       isVoted: election.voteRecords.length > 0,
+      isRemindMe: election.notifications.length > 0,
     }
   }
 
@@ -358,6 +362,30 @@ export class ElectionService {
       uploadFields: uploadUrl.value.fields,
       uploadUrl: uploadUrl.value.url,
     })
+  }
+
+  async createNotification(electionId: string, userId: string) {
+    const createNotificationResult = await this.electionRepository.createNotification(
+      electionId,
+      userId
+    )
+    if (createNotificationResult.isErr()) {
+      return mapRepositoryError(createNotificationResult.error)
+    }
+
+    return ok()
+  }
+
+  async deleteNotification(electionId: string, userId: string) {
+    const deleteNotificationResult = await this.electionRepository.deleteNotification(
+      electionId,
+      userId
+    )
+    if (deleteNotificationResult.isErr()) {
+      return mapRepositoryError(deleteNotificationResult.error)
+    }
+
+    return ok()
   }
 }
 

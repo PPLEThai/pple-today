@@ -959,6 +959,7 @@ const electionDetail: ElectionWithCurrentStatus = {
   votePercentage: 0,
   isRegistered: false,
   isVoted: false,
+  isRemindMe: false,
 }
 function ElectionCardExample() {
   const elections: ElectionWithCurrentStatus[] = [

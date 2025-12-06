@@ -1,6 +1,7 @@
 import { ElectionStatus, FilePath } from '@pple-today/api-common/dtos'
+import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
-import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import {
   ElectionKeysStatus,
   ElectionMode,
@@ -12,17 +13,52 @@ import {
 } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
+import * as R from 'remeda'
 
 import { AdminCreateElectionCandidateBody } from './models'
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
+import {
+  ElectionNotificationMessage,
+  RedisElectionService,
+  RedisElectionServicePlugin,
+} from '../../../plugins/redis'
+import { NotificationRepository, NotificationRepositoryPlugin } from '../../notification/repository'
 
 export class AdminElectionRepository {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly fileService: FileService
-  ) {}
+    private readonly fileService: FileService,
+    private readonly redisElectionService: RedisElectionService,
+    private readonly loggerService: ElysiaLoggerInstance,
+    private readonly notificationRepository: NotificationRepository
+  ) {
+    this.registerElectionNotification()
+      .then((result) => {
+        if (result.isErr()) {
+          this.loggerService.error({
+            message: 'Failed to register election notifications on startup',
+            error: result.error,
+          })
+          process.exit(1)
+        }
+        this.redisElectionService.registerExpirationCallback(
+          this.handleExpirationMessage.bind(this)
+        )
+        this.loggerService.info({
+          message: 'Successfully registered election notifications on startup',
+        })
+        return
+      })
+      .catch((error) => {
+        this.loggerService.error({
+          message: 'Unexpected error during registering election notifications on startup',
+          error,
+        })
+        process.exit(1)
+      })
+  }
 
   private resultTypesMap = {
     [ElectionType.ONSITE]: [ElectionResultType.ONSITE],
@@ -43,6 +79,249 @@ export class AdminElectionRepository {
         voteRecords: true,
       },
     }
+  }
+
+  private async handleExpirationMessage(message: ElectionNotificationMessage) {
+    this.loggerService.info({ message: 'Handling election notification message', data: message })
+
+    const mutexLockResult = await this.redisElectionService.setMutexElectionNotification(
+      message.electionId,
+      message.type
+    )
+
+    if (mutexLockResult.isErr()) {
+      this.loggerService.warn({
+        message: 'Failed to acquire mutex lock for election notification',
+        electionId: message.electionId,
+        type: message.type,
+        error: mutexLockResult.error,
+      })
+      return
+    }
+
+    if (!mutexLockResult.value) {
+      this.loggerService.info({
+        message: 'Mutex lock already acquired by another process, skipping notification',
+        electionId: message.electionId,
+        type: message.type,
+      })
+      return
+    }
+
+    const getUserNotificationResult = await fromRepositoryPromise(async () => {
+      const [electionNotifications, electionDetails] = await Promise.all([
+        this.prismaService.electionNotification.findMany({
+          where: { electionId: message.electionId },
+          select: {
+            user: {
+              select: {
+                phoneNumber: true,
+                voters: {
+                  where: { electionId: message.electionId },
+                  select: { type: true },
+                },
+              },
+            },
+          },
+        }),
+        this.prismaService.election.findUniqueOrThrow({
+          where: { id: message.electionId },
+        }),
+      ])
+
+      return {
+        electionNotifications,
+        electionDetails,
+      }
+    })
+
+    if (getUserNotificationResult.isErr()) {
+      this.loggerService.error({
+        message: 'Failed to get election notification user phone numbers',
+        electionId: message.electionId,
+        error: getUserNotificationResult.error,
+      })
+      const revokeResult = await this.redisElectionService.revokeMutexElectionNotification(
+        message.electionId,
+        message.type
+      )
+      if (revokeResult.isErr()) {
+        this.loggerService.error({
+          message: 'Failed to revoke mutex lock after notification failure',
+          electionId: message.electionId,
+          type: message.type,
+          error: revokeResult.error,
+        })
+      }
+      return err(getUserNotificationResult.error)
+    }
+
+    const { electionNotifications, electionDetails } = getUserNotificationResult.value
+
+    switch (message.type) {
+      case 'START_VOTING': {
+        const availableVoters = R.filter(electionNotifications, (en) => en.user.voters.length > 0)
+
+        let onsitePhoneNumber = R.pipe(
+          availableVoters,
+          R.filter((en) => en.user.voters[0].type === EligibleVoterType.ONSITE),
+          R.map((en) => en.user.phoneNumber)
+        )
+
+        let onlinePhoneNumber = R.pipe(
+          availableVoters,
+          R.filter((en) => en.user.voters[0].type === EligibleVoterType.ONLINE),
+          R.map((en) => en.user.phoneNumber)
+        )
+
+        if (electionDetails.type === ElectionType.ONSITE) {
+          onsitePhoneNumber = R.pipe(
+            availableVoters,
+            R.map((en) => en.user.phoneNumber)
+          )
+          onlinePhoneNumber = []
+        }
+
+        if (electionDetails.type === ElectionType.ONLINE) {
+          onsitePhoneNumber = []
+          onlinePhoneNumber = R.pipe(
+            availableVoters,
+            R.map((en) => en.user.phoneNumber)
+          )
+        }
+
+        const awaitingResult = []
+
+        if (onlinePhoneNumber.length > 0) {
+          awaitingResult.push(
+            this.notificationRepository.sendNotificationToUser(
+              {
+                type: 'PHONE_NUMBER',
+                details: onlinePhoneNumber,
+              },
+              {
+                header: `อย่าลืมไป ${electionDetails.name} วันนี้!`,
+                message: `โปรดใช้สิทธิ์ของคุณในแอปพลิเคชัน สามารถตรวจสอบรายละเอียดเพิ่มเติมได้ในแอปพลิเคชัน`,
+                actionButtonText: 'ไปใช้สิทธิ์',
+                link: {
+                  type: 'IN_APP_NAVIGATION',
+                  destination: {
+                    inAppType: 'ELECTION',
+                    inAppId: message.electionId,
+                  },
+                },
+              },
+              {
+                type: 'INTERNAL',
+              }
+            )
+          )
+        }
+
+        if (onsitePhoneNumber.length > 0) {
+          awaitingResult.push(
+            this.notificationRepository.sendNotificationToUser(
+              {
+                type: 'PHONE_NUMBER',
+                details: onsitePhoneNumber,
+              },
+              {
+                header: `อย่าลืมไป ${electionDetails.name} วันนี้!`,
+                message: `โปรดใช้สิทธิ์ของคุณที่หน่วยเลือกตั้ง สามารถตรวจสอบรายละเอียดเพิ่มเติมได้ในแอปพลิเคชัน`,
+                actionButtonText: 'ตรวจสอบรายละเอียด',
+                link: {
+                  type: 'IN_APP_NAVIGATION',
+                  destination: {
+                    inAppType: 'ELECTION',
+                    inAppId: message.electionId,
+                  },
+                },
+              },
+              {
+                type: 'INTERNAL',
+              }
+            )
+          )
+        }
+
+        return Promise.all(awaitingResult)
+      }
+      case 'START_RESULT':
+        return this.notificationRepository.sendNotificationToUser(
+          {
+            type: 'PHONE_NUMBER',
+            details: electionNotifications.map((en) => en.user.phoneNumber),
+          },
+          {
+            header: `ประกาศผล ${electionDetails.name}`,
+            message: `สามารถตรวจสอบผลการเลือกตั้งได้ในแอปพลิเคชัน`,
+            actionButtonText: 'ดูผลการเลือกตั้ง',
+            link: {
+              type: 'IN_APP_NAVIGATION',
+              destination: {
+                inAppType: 'ELECTION',
+                inAppId: message.electionId,
+              },
+            },
+          },
+          {
+            type: 'INTERNAL',
+          }
+        )
+      default:
+        exhaustiveGuard(message.type)
+    }
+  }
+
+  async registerElectionNotification() {
+    const registerResult = await fromRepositoryPromise(async () => {
+      const elections = await this.prismaService.election.findMany({
+        where: {
+          OR: [
+            {
+              openVoting: {
+                gt: new Date(),
+              },
+            },
+            {
+              startResult: {
+                gt: new Date(),
+              },
+            },
+          ],
+        },
+        select: {
+          id: true,
+          publishDate: true,
+          startResult: true,
+          openVoting: true,
+        },
+      })
+
+      return await Promise.all(
+        elections.map(async (election) => {
+          if (election.openVoting && election.openVoting > new Date()) {
+            await this.redisElectionService.setElectionStartVotingSchedule(
+              election.id,
+              election.openVoting
+            )
+          }
+
+          if (election.startResult && election.startResult > new Date()) {
+            await this.redisElectionService.setElectionStartResultSchedule(
+              election.id,
+              election.startResult
+            )
+          }
+        })
+      )
+    })
+
+    if (registerResult.isErr()) {
+      return err(registerResult.error)
+    }
+
+    return ok()
   }
 
   async createElection(input: {
@@ -292,15 +571,20 @@ export class AdminElectionRepository {
   }
 
   async publishElectionById(electionId: string, publishDate: Date, shouldDestroyKey: boolean) {
-    return fromRepositoryPromise(
-      this.prismaService.election.update({
+    return fromRepositoryPromise(async () => {
+      const updateResult = await this.prismaService.election.update({
         where: { id: electionId },
         data: {
           publishDate,
           keysStatus: shouldDestroyKey ? ElectionKeysStatus.DESTROY_SCHEDULED : undefined,
         },
       })
-    )
+
+      await this.redisElectionService.setElectionStartVotingSchedule(
+        electionId,
+        updateResult.openVoting
+      )
+    })
   }
 
   async listElectionCandidates(electionId: string) {
@@ -757,8 +1041,8 @@ export class AdminElectionRepository {
       duration: number
     }
   ) {
-    return fromRepositoryPromise(
-      this.prismaService.election.update({
+    return fromRepositoryPromise(async () => {
+      await this.prismaService.election.update({
         where: { id: electionId },
         data: {
           startResult: timeline.start,
@@ -768,12 +1052,37 @@ export class AdminElectionRepository {
           keysDestroyScheduledDuration: destroyKeyInfo?.duration,
         },
       })
-    )
+
+      await this.redisElectionService.setElectionStartResultSchedule(electionId, timeline.start)
+    })
   }
 }
 
 export const AdminElectionRepositoryPlugin = new Elysia({ name: 'AdminElectionRepository' })
-  .use([PrismaServicePlugin, FileServicePlugin])
-  .decorate(({ prismaService, fileService }) => ({
-    adminElectionRepository: new AdminElectionRepository(prismaService, fileService),
-  }))
+  .use([
+    PrismaServicePlugin,
+    FileServicePlugin,
+    RedisElectionServicePlugin,
+    ElysiaLoggerPlugin({
+      name: 'AdminElectionRepository',
+    }),
+    NotificationRepositoryPlugin,
+  ])
+  .decorate(
+    ({
+      prismaService,
+      fileService,
+      notificationRepository,
+      redisElectionService,
+      loggerService,
+    }) => ({
+      adminElectionRepository: new AdminElectionRepository(
+        prismaService,
+        fileService,
+        redisElectionService,
+        loggerService,
+        notificationRepository
+      ),
+      loggerService,
+    })
+  )

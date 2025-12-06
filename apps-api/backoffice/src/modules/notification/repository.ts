@@ -241,7 +241,14 @@ export class NotificationRepository {
   async sendNotificationToUser(
     conditions: CreateNewExternalNotificationBody['audience'],
     data: CreateNewExternalNotificationBody['content'],
-    apiKeyId: string
+    apiKey:
+      | {
+          type: 'INTERNAL'
+        }
+      | {
+          type: 'EXTERNAL'
+          apiKeyId: string
+        }
   ) {
     if (data.link?.type === NotificationLinkType.IN_APP_NAVIGATION) {
       const checkResult = await fromRepositoryPromise(
@@ -273,8 +280,8 @@ export class NotificationRepository {
           }
 
     const createResult = await fromRepositoryPromise(async () => {
-      const [newNotification] = await this.prismaService.$transaction([
-        this.prismaService.notification.create({
+      const [newNotification] = await this.prismaService.$transaction(async (tx) => {
+        const newNotification = await tx.notification.create({
           data: {
             ...linkNavigation,
             title: data.header,
@@ -295,18 +302,23 @@ export class NotificationRepository {
                   }
                 : undefined,
           },
-        }),
-        this.prismaService.notificationApiKeyUsageLog.create({
-          data: {
-            body: JSON.stringify({ conditions, data }),
-            notificationApiKey: {
-              connect: {
-                id: apiKeyId,
+        })
+
+        if (apiKey.type === 'EXTERNAL') {
+          await this.prismaService.notificationApiKeyUsageLog.create({
+            data: {
+              body: JSON.stringify({ conditions, data }),
+              notificationApiKey: {
+                connect: {
+                  id: apiKey.apiKeyId,
+                },
               },
             },
-          },
-        }),
-      ])
+          })
+        }
+
+        return [newNotification]
+      })
 
       const whereConditions = this.getFilterConditions(conditions)
 
