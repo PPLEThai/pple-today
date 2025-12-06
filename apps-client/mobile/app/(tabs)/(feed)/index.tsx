@@ -404,6 +404,9 @@ const SelectTopicForm = (props: {
             queryClient.invalidateQueries({
               queryKey: reactQueryClient.getQueryKey('/topics/follows'),
             })
+            queryClient.invalidateQueries({
+              queryKey: reactQueryClient.getQueryKey('/profile/me'),
+            })
             props.onClose()
           },
           onError: (error) => {
