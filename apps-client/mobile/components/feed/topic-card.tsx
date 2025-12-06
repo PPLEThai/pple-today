@@ -142,6 +142,9 @@ export function useTopicFollow(topicId: string, initialData: boolean) {
       await followMutation.mutateAsync({ pathParams: { topicId: topicId } })
     }
     queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/profile/me') })
+    queryClient.invalidateQueries({
+      queryKey: reactQueryClient.getQueryKey('/topics/follows'),
+    })
   }
   return { isFollowing, toggleFollow }
 }
