@@ -11,7 +11,7 @@ export const Engagements = ({ likes, dislikes, comments }: EngagementsProps) => 
     <dl className="flex items-center gap-3">
       <div className="flex items-center gap-1">
         <dt>
-          <span className="sr-only">เห็นด้วย</span>
+          <span className="sr-only">สนับสนุน</span>
           <HeartHandshake className="size-4" />
         </dt>
         <dd>
@@ -23,7 +23,7 @@ export const Engagements = ({ likes, dislikes, comments }: EngagementsProps) => 
       </div>
       <div className="flex items-center gap-1">
         <dt>
-          <span className="sr-only">ไม่เห็นด้วย</span>
+          <span className="sr-only">ไม่สนับสนุน</span>
           <HeartCrack className="size-4" />
         </dt>
         <dd>
