@@ -25,12 +25,13 @@ import {
 import { BottomSheetModalProvider } from '@pple-today/ui/bottom-sheet/index'
 import { NAV_THEME } from '@pple-today/ui/lib/constants'
 import { PortalHost } from '@pple-today/ui/portal'
-import { Toaster } from '@pple-today/ui/toast'
+import { toast, Toaster } from '@pple-today/ui/toast'
 import {
   AuthorizationStatus,
   getInitialNotification,
   getMessaging,
   getToken,
+  onMessage,
   onNotificationOpenedApp,
   requestPermission,
 } from '@react-native-firebase/messaging'
@@ -43,6 +44,7 @@ import * as Clipboard from 'expo-clipboard'
 import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
+import { InfoIcon } from 'lucide-react-native'
 
 import { StatusBarProvider } from '@app/context/status-bar'
 import { environment } from '@app/env'
@@ -210,7 +212,7 @@ function NotificationTokenConsentPopup() {
     if (linkData) {
       try {
         const link = JSON.parse(linkData as string)
-        if (link.type && link.value) {
+        if (link.type && link.destination) {
           await openLink(link)
         }
       } catch (err) {
@@ -256,7 +258,27 @@ function NotificationTokenConsentPopup() {
       }
     })
 
-    return unsubscribeOpenedApp
+    const unsubscribeOnMessage = onMessage(messaging, async (remoteMessage) => {
+      const title = remoteMessage.notification?.title
+      const body = remoteMessage.notification?.body
+
+      toast.info({
+        text1: title,
+        text2: body,
+        icon: InfoIcon,
+        onPress: async () => {
+          if (remoteMessage && remoteMessage.data) {
+            await handleRemoteMessage(remoteMessage.data)
+            toast.hide()
+          }
+        },
+      })
+    })
+
+    return () => {
+      unsubscribeOpenedApp()
+      unsubscribeOnMessage()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authMe.data])
 

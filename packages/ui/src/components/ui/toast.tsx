@@ -1,4 +1,4 @@
-import { View } from 'react-native'
+import { Pressable, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Toast, { ToastConfig, ToastConfigParams, ToastShowParams } from 'react-native-toast-message'
 
@@ -15,12 +15,13 @@ interface ToastAdditionalProps {
 }
 
 const toastVariants = cva(
-  'flex flex-row items-center gap-4 rounded-2xl border border-base-outline-default px-4 py-3 shadow-lg',
+  'flex flex-row items-center gap-4 rounded-2xl border border-base-outline-default px-4 py-3 shadow-lg w-full max-w-sm',
   {
     variants: {
       type: {
         success: 'bg-base-primary-default',
         error: 'bg-system-danger-default',
+        info: 'bg-base-secondary-default',
       },
     },
     defaultVariants: {
@@ -33,21 +34,40 @@ function ToastBody(props: ToastConfigParams<ToastAdditionalProps>) {
   const type = props.type as ToastType
   return (
     <View className={toastVariants({ type })}>
-      {props.props.icon ? (
-        <Icon icon={props.props.icon} className="text-white" size={26} strokeWidth={2} />
-      ) : null}
-      <View className="flex flex-col gap-1">
-        {props.text1 && (
-          <Text className="text-sm text-white font-heading-semibold">{props.text1}</Text>
-        )}
-        {props.text2 && (
-          <Text className="text-sm text-white font-heading-regular">{props.text2}</Text>
-        )}
-      </View>
+      <Pressable className="flex flex-1 flex-row items-center gap-4 w-full" onPress={props.onPress}>
+        {props.props.icon ? (
+          <Icon icon={props.props.icon} className="text-white" size={26} strokeWidth={2} />
+        ) : null}
+        <View className="flex flex-1 flex-col gap-1">
+          {props.text1 && (
+            <Text
+              numberOfLines={1}
+              className="text-sm text-white font-heading-semibold overflow-ellipsis"
+            >
+              {props.text1}
+            </Text>
+          )}
+          {props.text2 && (
+            <Text
+              numberOfLines={1}
+              className="text-sm text-white font-heading-regular overflow-ellipsis"
+            >
+              {props.text2}
+            </Text>
+          )}
+        </View>
+      </Pressable>
       {props.props.action === null ? null : typeof props.props.action === 'function' ? (
         props.props.action(props)
       ) : (
-        <Button variant="link" size="icon" className="h-6 w-6" onPress={() => props.hide()}>
+        <Button
+          variant="link"
+          size="icon"
+          className="h-6 w-6"
+          onPress={() => {
+            props.hide()
+          }}
+        >
           <Icon icon={XIcon} className="text-white" />
         </Button>
       )}
@@ -55,10 +75,11 @@ function ToastBody(props: ToastConfigParams<ToastAdditionalProps>) {
   )
 }
 
-type ToastType = 'success' | 'error'
+type ToastType = 'success' | 'error' | 'info'
 const config: ToastConfig = {
   success: ToastBody,
   error: ToastBody,
+  info: ToastBody,
 } satisfies Record<ToastType, ToastConfig[ToastType]>
 
 export const Toaster = () => {
@@ -69,6 +90,8 @@ export const Toaster = () => {
 interface Toast {
   (props: ToastProps): void
   error: (props: ToastProps) => void
+  info: (props: ToastProps) => void
+  hide: () => void
 }
 interface ToastProps extends ToastShowParams, ToastAdditionalProps {}
 export const toast: Toast = ({ icon, action, ...props }) => {
@@ -78,3 +101,9 @@ export const toast: Toast = ({ icon, action, ...props }) => {
 toast.error = ({ icon, action, ...props }) => {
   Toast.show({ ...props, type: 'error', props: { icon, action } })
 }
+
+toast.info = ({ icon, action, ...props }) => {
+  Toast.show({ ...props, type: 'info', props: { icon, action } })
+}
+
+toast.hide = Toast.hide
