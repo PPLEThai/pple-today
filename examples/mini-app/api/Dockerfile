@@ -12,7 +12,7 @@ FROM base AS builder
 WORKDIR /app
 COPY . .
  
-RUN turbo prune --scope=@mini-app/web --docker
+RUN turbo prune --scope=@mini-app/api --docker
 
 FROM base AS installer
 RUN apk update
@@ -29,13 +29,17 @@ RUN pnpm install --frozen-lockfile --prefer-offline
 
 # Build the project
 COPY --from=builder /app/out/full/ .
-RUN jq --arg version "$VERSION" '.version = $version' /app/examples/mini-app/web/package.json > tmp.json && mv tmp.json /app/examples/mini-app/web/package.json
+RUN jq --arg version "$VERSION" '.version = $version' /app/examples/mini-app/api/package.json > tmp.json && mv tmp.json /app/examples/mini-app/api/package.json
 
-RUN pnpm build --filter=@mini-app/web
+RUN pnpm build --filter=@mini-app/api
  
-FROM node:20-alpine
-COPY --from=installer /app/examples/mini-app/web/package.json /app/
-COPY --from=installer /app/node_modules /app/node_modules
-COPY --from=installer /app/examples/mini-app/web/build /app/build
+FROM base AS runner
 WORKDIR /app
-CMD ["npm", "run", "start"]
+ 
+RUN addgroup --system --gid 1001 backoffice
+RUN adduser --system --uid 1001 backoffice
+USER backoffice
+
+COPY --from=installer --chown=backoffice:nodejs /app/examples/mini-app/api/build ./
+
+CMD ["node", "index.js"]
