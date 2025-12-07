@@ -6,7 +6,12 @@ import { AnimatedBackgroundPressable } from '@pple-today/ui/animated-pressable'
 import { Icon } from '@pple-today/ui/icon'
 import { clsx } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
-import { infiniteQueryOptions, useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  infiniteQueryOptions,
+  QueryClient,
+  useInfiniteQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { useRouter } from 'expo-router'
 import { produce } from 'immer'
@@ -25,7 +30,7 @@ export default function NotificationHistoryPage() {
   )
 }
 
-const infiniteNotificationsQueryOptions = infiniteQueryOptions({
+export const infiniteNotificationsQueryOptions = infiniteQueryOptions({
   queryKey: [QUERY_KEY_SYMBOL, 'infinite', '/notifications/history'],
   queryFn: async ({ pageParam }) => {
     const response = await fetchClient('/notifications/history', {
@@ -44,6 +49,55 @@ const infiniteNotificationsQueryOptions = infiniteQueryOptions({
     return data.pages.flatMap((page) => page.items)
   },
 })
+
+export function optimisticMarkAsRead(queryClient: QueryClient, notificationId: string) {
+  queryClient.setQueryData(infiniteNotificationsQueryOptions.queryKey, (oldData) => {
+    if (!oldData) return oldData
+    return produce(oldData, (draft) => {
+      for (const page of draft.pages) {
+        for (const notification of page.items) {
+          if (notification.id === notificationId) {
+            notification.isRead = true
+            return
+          }
+        }
+      }
+    })
+  })
+  queryClient.setQueryData(
+    reactQueryClient.getQueryKey('/notifications/unread-count'),
+    (oldData) => {
+      if (!oldData) return oldData
+      return {
+        ...oldData,
+        unreadCount: Math.max(0, oldData.unreadCount - 1),
+      }
+    }
+  )
+}
+
+export function optimisticMarkAllAsRead(queryClient: QueryClient) {
+  queryClient.setQueryData(infiniteNotificationsQueryOptions.queryKey, (oldData) => {
+    if (!oldData) return oldData
+    return produce(oldData, (draft) => {
+      for (const page of draft.pages) {
+        for (const notification of page.items) {
+          notification.isRead = true
+        }
+      }
+    })
+  })
+  queryClient.setQueryData(
+    reactQueryClient.getQueryKey('/notifications/unread-count'),
+    (oldData) => {
+      if (!oldData) return oldData
+      return {
+        ...oldData,
+        unreadCount: 0,
+      }
+    }
+  )
+}
 
 function NotificationHistory() {
   const infiniteNotificationsQuery = useInfiniteQuery(infiniteNotificationsQueryOptions)
@@ -110,20 +164,10 @@ const NotificationItem = ({ item }: { item: ListHistoryNotificationResponse['ite
       className="flex flex-col gap-2 p-3 bg-base-bg-white rounded-2xl border border-base-outline-default"
       onPress={() => {
         router.navigate(`/notification/${item.id}`)
-        queryClient.setQueryData(infiniteNotificationsQueryOptions.queryKey, (oldData) => {
-          if (!oldData) return oldData
-          return produce(oldData, (draft) => {
-            for (const page of draft.pages) {
-              for (const notification of page.items) {
-                if (notification.id === item.id) {
-                  notification.isRead = true
-                  return
-                }
-              }
-            }
-          })
-        })
-        markAsReadMutation.mutateAsync({ pathParams: { id: item.id } })
+        if (!item.isRead) {
+          optimisticMarkAsRead(queryClient, item.id)
+          markAsReadMutation.mutateAsync({ pathParams: { id: item.id } })
+        }
       }}
     >
       <View className="flex flex-row gap-2 items-center">

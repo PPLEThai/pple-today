@@ -52,6 +52,8 @@ import { reactQueryClient } from '@app/libs/api-client'
 import { AuthLifeCycleHook, useAuthMe } from '@app/libs/auth'
 import { openLink } from '@app/utils/link'
 
+import { optimisticMarkAsRead } from './(tabs)/(feed)/notification'
+
 dayjs.extend(buddhistEra)
 dayjs.extend(duration)
 dayjs.locale('th')
@@ -204,6 +206,7 @@ function NotificationTokenConsentPopup() {
     '/notifications/register',
     {}
   )
+  const markAsReadMutation = reactQueryClient.useMutation('put', '/notifications/read/:id', {})
   const authMe = useAuthMe()
 
   const handleRemoteMessage = async (data: Record<string, string | object>) => {
@@ -213,6 +216,11 @@ function NotificationTokenConsentPopup() {
       try {
         const link = JSON.parse(linkData as string)
         if (link.type && link.destination) {
+          if (link.type === 'IN_APP_NAVIGATION' && link.destination.inAppType === 'NOTIFICATION') {
+            const notificationId = link.destination.inAppId
+            optimisticMarkAsRead(queryClient, notificationId)
+            markAsReadMutation.mutateAsync({ pathParams: { id: notificationId } })
+          }
           await openLink(link)
         }
       } catch (err) {
@@ -261,6 +269,17 @@ function NotificationTokenConsentPopup() {
     const unsubscribeOnMessage = onMessage(messaging, async (remoteMessage) => {
       const title = remoteMessage.notification?.title
       const body = remoteMessage.notification?.body
+
+      queryClient.setQueryData(
+        reactQueryClient.getQueryKey('/notifications/unread-count'),
+        (oldData) => {
+          if (!oldData) return oldData
+          return {
+            ...oldData,
+            unreadCount: oldData.unreadCount + 1,
+          }
+        }
+      )
 
       toast.info({
         text1: title,
