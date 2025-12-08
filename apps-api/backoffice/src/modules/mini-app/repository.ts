@@ -7,11 +7,20 @@ import { PrismaServicePlugin } from '../../plugins/prisma'
 export class MiniAppRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async listMiniApps() {
+  async listMiniApps(roles: string[]) {
     return await fromRepositoryPromise(
       this.prismaService.miniApp.findMany({
         orderBy: {
           id: 'desc',
+        },
+        where: {
+          miniAppRoles: {
+            some: {
+              role: {
+                in: roles,
+              },
+            },
+          },
         },
       })
     )

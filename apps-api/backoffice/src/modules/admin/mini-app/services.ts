@@ -19,7 +19,13 @@ export class AdminMiniAppService {
     const result = await this.adminMiniAppRepository.getMiniApps()
     if (result.isErr()) return mapRepositoryError(result.error)
 
-    return ok(result.value satisfies GetMiniAppsResponse)
+    return ok(
+      result.value.map((miniApp) => ({
+        id: miniApp.id,
+        name: miniApp.name,
+        roles: miniApp.miniAppRoles.map((role) => role.role),
+      })) satisfies GetMiniAppsResponse
+    )
   }
 
   async createMiniApp(data: CreateMiniAppBody) {
@@ -39,6 +45,7 @@ export class AdminMiniAppService {
       iconUrl: createResult.value.icon,
       url: createResult.value.clientUrl,
       clientId: createResult.value.clientId,
+      roles: createResult.value.miniAppRoles.map(({ role }) => role),
     } satisfies CreateMiniAppResponse)
   }
 
@@ -63,6 +70,7 @@ export class AdminMiniAppService {
       iconUrl: updateResult.value.icon,
       url: updateResult.value.clientUrl,
       clientId: updateResult.value.clientId,
+      roles: updateResult.value.miniAppRoles.map(({ role }) => role),
     } satisfies UpdateMiniAppResponse)
   }
 

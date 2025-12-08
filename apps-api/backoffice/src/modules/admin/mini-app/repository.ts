@@ -16,6 +16,7 @@ export class AdminMiniAppRepository {
         select: {
           id: true,
           name: true,
+          miniAppRoles: true,
         },
         orderBy: { createdAt: 'desc' },
       })
@@ -31,6 +32,14 @@ export class AdminMiniAppRepository {
           clientUrl: data.url,
           clientId: data.clientId,
           icon: data.iconUrl,
+          miniAppRoles: {
+            createMany: {
+              data: data.roles.map((role) => ({ role })),
+            },
+          },
+        },
+        include: {
+          miniAppRoles: true,
         },
       })
     )
@@ -46,6 +55,15 @@ export class AdminMiniAppRepository {
           clientUrl: data.url,
           clientId: data.clientId,
           icon: data.iconUrl,
+          miniAppRoles: {
+            deleteMany: {},
+            createMany: {
+              data: data.roles?.map((role) => ({ role })) || [],
+            },
+          },
+        },
+        include: {
+          miniAppRoles: true,
         },
       })
     )
