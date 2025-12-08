@@ -33,6 +33,7 @@ export class AdminMiniAppRepository {
           clientUrl: data.url,
           clientId: data.clientId,
           icon: data.iconUrl,
+          order: data.order,
           miniAppRoles: data.roles
             ? {
                 createMany: {
@@ -58,6 +59,7 @@ export class AdminMiniAppRepository {
           clientUrl: data.url,
           clientId: data.clientId,
           icon: data.iconUrl,
+          order: data.order,
           miniAppRoles: data.roles
             ? {
                 deleteMany: {},
