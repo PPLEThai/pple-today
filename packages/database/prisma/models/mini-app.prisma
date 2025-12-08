@@ -12,4 +12,18 @@ model MiniApp {
 
   bannerId String? @unique
   banner   Banner?
+
+  miniAppRoles MiniAppRole[]
+}
+
+model MiniAppRole {
+  role String
+
+  miniAppId String
+  miniApp   MiniApp @relation(fields: [miniAppId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([role, miniAppId])
 }
