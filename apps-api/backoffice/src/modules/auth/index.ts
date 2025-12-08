@@ -84,6 +84,7 @@ export const AuthController = new Elysia({
       const result = await authService.generateMiniAppToken(
         params.slug,
         user.accessToken,
+        user.roles,
         query.path
       )
 
