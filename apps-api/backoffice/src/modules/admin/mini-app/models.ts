@@ -4,13 +4,9 @@ import { Static, t } from 'elysia'
 export const GetMiniAppsResponse = t.Array(t.Pick(MiniApp, ['id', 'name', 'roles']))
 export type GetMiniAppsResponse = Static<typeof GetMiniAppsResponse>
 
-export const CreateMiniAppBody = t.Pick(MiniApp, [
-  'name',
-  'slug',
-  'url',
-  'clientId',
-  'iconUrl',
-  'roles',
+export const CreateMiniAppBody = t.Composite([
+  t.Pick(MiniApp, ['name', 'slug', 'url', 'clientId', 'iconUrl']),
+  t.Partial(t.Pick(MiniApp, ['roles'])),
 ])
 export type CreateMiniAppBody = Static<typeof CreateMiniAppBody>
 

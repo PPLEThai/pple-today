@@ -32,11 +32,13 @@ export class AdminMiniAppRepository {
           clientUrl: data.url,
           clientId: data.clientId,
           icon: data.iconUrl,
-          miniAppRoles: {
-            createMany: {
-              data: data.roles.map((role) => ({ role })),
-            },
-          },
+          miniAppRoles: data.roles
+            ? {
+                createMany: {
+                  data: data.roles.map((role) => ({ role })),
+                },
+              }
+            : undefined,
         },
         include: {
           miniAppRoles: true,
@@ -55,12 +57,14 @@ export class AdminMiniAppRepository {
           clientUrl: data.url,
           clientId: data.clientId,
           icon: data.iconUrl,
-          miniAppRoles: {
-            deleteMany: {},
-            createMany: {
-              data: data.roles?.map((role) => ({ role })) || [],
-            },
-          },
+          miniAppRoles: data.roles
+            ? {
+                deleteMany: {},
+                createMany: {
+                  data: data.roles.map((role) => ({ role })) || [],
+                },
+              }
+            : undefined,
         },
         include: {
           miniAppRoles: true,

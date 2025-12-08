@@ -14,13 +14,22 @@ export class MiniAppRepository {
           id: 'desc',
         },
         where: {
-          miniAppRoles: {
-            some: {
-              role: {
-                in: roles,
+          OR: [
+            {
+              miniAppRoles: {
+                some: {
+                  role: {
+                    in: roles,
+                  },
+                },
               },
             },
-          },
+            {
+              miniAppRoles: {
+                none: {},
+              },
+            },
+          ],
         },
       })
     )
