@@ -17,8 +17,9 @@ export class AdminMiniAppRepository {
           id: true,
           name: true,
           miniAppRoles: true,
+          order: true,
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
       })
     )
   }

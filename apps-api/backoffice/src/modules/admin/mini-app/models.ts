@@ -1,11 +1,11 @@
 import { MiniApp } from '@pple-today/api-common/dtos'
 import { Static, t } from 'elysia'
 
-export const GetMiniAppsResponse = t.Array(t.Pick(MiniApp, ['id', 'name', 'roles']))
+export const GetMiniAppsResponse = t.Array(t.Pick(MiniApp, ['id', 'name', 'roles', 'order']))
 export type GetMiniAppsResponse = Static<typeof GetMiniAppsResponse>
 
 export const CreateMiniAppBody = t.Composite([
-  t.Pick(MiniApp, ['name', 'slug', 'url', 'clientId', 'iconUrl']),
+  t.Pick(MiniApp, ['name', 'slug', 'url', 'clientId', 'iconUrl', 'order']),
   t.Partial(t.Pick(MiniApp, ['roles'])),
 ])
 export type CreateMiniAppBody = Static<typeof CreateMiniAppBody>
@@ -23,6 +23,7 @@ export const CreateMiniAppResponse = t.Object({
     description: 'Client URL of the created mini app',
     format: 'uri',
   }),
+  order: t.Number({ description: 'Order of the created mini app' }),
   clientId: t.String({ description: 'Client ID of the created mini app' }),
   roles: t.Array(t.String({ description: 'Roles assigned to the mini app' })),
 })
@@ -34,7 +35,7 @@ export const UpdateMiniAppParams = t.Object({
 export type UpdateMiniAppParams = Static<typeof UpdateMiniAppParams>
 
 export const UpdateMiniAppBody = t.Partial(
-  t.Pick(MiniApp, ['name', 'slug', 'clientId', 'url', 'iconUrl', 'roles'])
+  t.Pick(MiniApp, ['name', 'slug', 'clientId', 'url', 'iconUrl', 'roles', 'order'])
 )
 export type UpdateMiniAppBody = Static<typeof UpdateMiniAppBody>
 
@@ -51,6 +52,7 @@ export const UpdateMiniAppResponse = t.Object({
     description: 'Client URL of the created mini app',
     format: 'uri',
   }),
+  order: t.Number({ description: 'Order of the created mini app' }),
   clientId: t.String({ description: 'Client ID of the created mini app' }),
   roles: t.Array(t.String({ description: 'Roles assigned to the mini app' })),
 })

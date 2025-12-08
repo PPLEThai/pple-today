@@ -10,9 +10,14 @@ export class MiniAppRepository {
   async listMiniApps(roles: string[]) {
     return await fromRepositoryPromise(
       this.prismaService.miniApp.findMany({
-        orderBy: {
-          id: 'desc',
-        },
+        orderBy: [
+          {
+            order: 'asc',
+          },
+          {
+            createdAt: 'desc',
+          },
+        ],
         where: {
           OR: [
             {

@@ -23,6 +23,7 @@ export class AdminMiniAppService {
       result.value.map((miniApp) => ({
         id: miniApp.id,
         name: miniApp.name,
+        order: miniApp.order,
         roles: miniApp.miniAppRoles.map((role) => role.role),
       })) satisfies GetMiniAppsResponse
     )
@@ -45,6 +46,7 @@ export class AdminMiniAppService {
       iconUrl: createResult.value.icon,
       url: createResult.value.clientUrl,
       clientId: createResult.value.clientId,
+      order: createResult.value.order,
       roles: createResult.value.miniAppRoles.map(({ role }) => role),
     } satisfies CreateMiniAppResponse)
   }
@@ -70,6 +72,7 @@ export class AdminMiniAppService {
       iconUrl: updateResult.value.icon,
       url: updateResult.value.clientUrl,
       clientId: updateResult.value.clientId,
+      order: updateResult.value.order,
       roles: updateResult.value.miniAppRoles.map(({ role }) => role),
     } satisfies UpdateMiniAppResponse)
   }
