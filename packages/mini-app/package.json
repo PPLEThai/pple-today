@@ -23,6 +23,7 @@
   },
   "scripts": {
     "build": "rimraf ./build && tsx build.ts && dts-bundle-generator -o build/index.d.ts src/index.ts",
+    "codegen": "pnpm build",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx",
     "format:check": "prettier --check .",
