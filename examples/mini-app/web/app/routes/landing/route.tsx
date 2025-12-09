@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 
-import { clientEnv } from '~/config/clientEnv'
 import { useAuth } from '~/context/AuthContext'
 
 export default function LoginWithSSO() {
@@ -14,15 +13,7 @@ export default function LoginWithSSO() {
     const fetchUser = async () => {
       if (!user?.access_token) return
       try {
-        const res = await fetch(`${clientEnv.API_URL}/me?token=${user.access_token}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${user.access_token}`,
-          },
-        })
-
-        setUserDetails(await res.json())
+        setUserDetails(user.profile)
         setIsLoading(false)
       } catch (error) {
         if (error instanceof Error) setError(error.message)

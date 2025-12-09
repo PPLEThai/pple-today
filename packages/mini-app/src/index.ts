@@ -1,6 +1,6 @@
 import { User, UserManager, WebStorageStateStore } from 'oidc-client-ts'
 
-import { AccessTokenDetailsSchema, IdTokenPayloadSchema } from './models'
+import { AccessTokenDetailsSchema, IdTokenPayloadSchema, UserInfoSchema } from './models'
 
 export type { User }
 
@@ -38,18 +38,20 @@ export class PPLEMiniApp {
   }
 
   private async storeUserInOIDCClient(accessTokenDetails: AccessTokenDetailsSchema) {
-    const idTokenPayload = await this.extractJWTPayload(accessTokenDetails.idToken)
+    const idTokenDetails = await this.extractJWTPayload(accessTokenDetails.idToken)
+    const userInfo = await this.fetchProfileByAccessToken(accessTokenDetails.accessToken)
 
     const user = new User({
       access_token: accessTokenDetails.accessToken,
       id_token: accessTokenDetails.idToken,
       token_type: accessTokenDetails.tokenType,
       profile: {
-        aud: idTokenPayload.aud,
-        sub: idTokenPayload.sub,
-        exp: idTokenPayload.exp,
-        iat: idTokenPayload.iat,
-        iss: idTokenPayload.iss,
+        ...userInfo,
+        sub: idTokenDetails.sub,
+        aud: idTokenDetails.aud,
+        iss: idTokenDetails.iss,
+        exp: idTokenDetails.exp,
+        iat: idTokenDetails.iat,
       },
     })
 
@@ -98,6 +100,27 @@ export class PPLEMiniApp {
     return null
   }
 
+  private async fetchProfileByAccessToken(accessToken: string) {
+    const userInfoEndpoint = `${this.config.oauthUrl}/oidc/v1/userinfo`
+    const userInfoResult = await fetch(userInfoEndpoint, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    })
+
+    if (!userInfoResult.ok) {
+      throw new Error('[PPLE Mini App] Failed to fetch user info from OAuth server')
+    }
+
+    const userInfoBody = await userInfoResult.json()
+
+    if (UserInfoSchema.safeParse(userInfoBody).success === false) {
+      throw new Error('[PPLE Mini App] Invalid user info format received from OAuth server')
+    }
+
+    return userInfoBody as UserInfoSchema
+  }
+
   private storeTokenInSessionStorage(token: {
     accessToken: string
     idToken: string
@@ -127,11 +150,6 @@ export class PPLEMiniApp {
         store: isMiniApp ? window.sessionStorage : window.localStorage,
       }),
     })
-  }
-
-  async logout() {
-    await this.userManager.revokeTokens(['access_token'])
-    return await this.userManager.removeUser()
   }
 
   async init() {
@@ -164,7 +182,9 @@ export class PPLEMiniApp {
             expiresIn: (user.expires_in || 3600).toString(),
           }
 
-          this._user = user
+          const storedUser = await this.storeUserInOIDCClient(accessTokenDetails)
+          this._user = storedUser
+
           this.storeTokenInLocalStorage(accessTokenDetails)
         }
       } catch {
@@ -182,6 +202,10 @@ export class PPLEMiniApp {
     console.log('[PPLE Mini App] PPLE Mini App initialized')
   }
 
+  get user() {
+    return this._user
+  }
+
   isMiniApp() {
     const queryParams = new URLSearchParams(window.location.search)
 
@@ -191,10 +215,12 @@ export class PPLEMiniApp {
     return isHeaderMatch && isAccessTokenParamsInUrl
   }
 
-  get user(): User {
-    if (!this._user) {
-      throw new Error('[PPLE Mini App] User not initialized. Please call init() first.')
+  async logout() {
+    await this.userManager.revokeTokens(['access_token'])
+    await this.userManager.removeUser()
+
+    if (typeof window !== 'undefined') {
+      window.location.reload()
     }
-    return this._user
   }
 }

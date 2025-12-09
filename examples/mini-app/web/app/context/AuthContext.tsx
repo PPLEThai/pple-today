@@ -29,8 +29,12 @@ export const AuthProvider = ({ children }: React.PropsWithChildren) => {
 
   useEffect(() => {
     const init = async () => {
-      await ppleMiniAppInstance?.init()
-      setUser(ppleMiniAppInstance?.user ?? null)
+      if (!ppleMiniAppInstance) return
+      await ppleMiniAppInstance.init()
+
+      const userProfile = ppleMiniAppInstance.user
+
+      setUser(userProfile)
       setIsLoading(false)
     }
 
