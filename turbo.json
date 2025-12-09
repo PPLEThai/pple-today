@@ -32,7 +32,7 @@
       "persistent": true
     },
     "typecheck": {
-      "dependsOn": ["^typecheck"],
+      "dependsOn": ["^typecheck", "^codegen"],
       "outputs": []
     },
     "prebuild": {
