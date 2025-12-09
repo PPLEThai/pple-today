@@ -7,13 +7,13 @@ export default function LoginWithSSO() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const { user } = useAuth()
+  const { user, accessToken } = useAuth()
 
   useEffect(() => {
     const fetchUser = async () => {
-      if (!user?.access_token) return
+      if (!user || !accessToken) return
       try {
-        setUserDetails(user.profile)
+        setUserDetails(user)
         setIsLoading(false)
       } catch (error) {
         if (error instanceof Error) setError(error.message)
@@ -22,12 +22,12 @@ export default function LoginWithSSO() {
     }
 
     fetchUser()
-  }, [user?.access_token])
+  }, [user])
 
   return (
     <div className="flex flex-col items-center justify-center h-screen text-black">
       <div className="flex flex-col justify-center items-center shadow-2xl p-6 rounded-lg bg-white w-full max-w-[600px] m-4 ">
-        {!user?.access_token ? (
+        {!accessToken ? (
           <p className="text-red-500 font-semibold">
             Please open this application from PPLE Today to see the result
           </p>

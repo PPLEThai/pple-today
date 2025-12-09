@@ -4,6 +4,7 @@ import {
   AccessTokenDetails,
   AccessTokenDetailsSchema,
   IdTokenPayloadSchema,
+  UserInfo,
   UserInfoSchema,
 } from './models'
 
@@ -232,14 +233,27 @@ export class PPLEMiniApp {
     console.log('[PPLE Mini App] PPLE Mini App initialized')
   }
 
-  async getProfile(): Promise<User> {
+  async getAccessToken(): Promise<string> {
+    if (!this._user) throw new Error('[PPLE Mini App] No user is currently logged in')
+
+    return this._user.access_token
+  }
+
+  async getProfile(): Promise<UserInfo> {
     if (!this._user) throw new Error('[PPLE Mini App] No user is currently logged in')
 
     const newUser = await this.storeUserInOIDCClient()
-
     this._user = newUser
 
-    return this._user
+    return {
+      sub: this._user.profile.sub,
+      family_name: this._user.profile.family_name,
+      given_name: this._user.profile.given_name,
+      phone_number: this._user.profile.phone_number,
+      name: this._user.profile.name,
+      phone_number_verified: this._user.profile.phone_number_verified,
+      updated_at: this._user.profile.updated_at,
+    }
   }
 
   isMiniApp() {
