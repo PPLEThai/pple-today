@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: React.PropsWithChildren) => {
       if (!ppleMiniAppInstance) return
       await ppleMiniAppInstance.init()
 
-      const userProfile = ppleMiniAppInstance.user
+      const userProfile = await ppleMiniAppInstance.getProfile()
 
       setUser(userProfile)
       setIsLoading(false)

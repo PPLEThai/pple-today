@@ -1,6 +1,11 @@
 import { User, UserManager, WebStorageStateStore } from 'oidc-client-ts'
 
-import { AccessTokenDetailsSchema, IdTokenPayloadSchema, UserInfoSchema } from './models'
+import {
+  AccessTokenDetails,
+  AccessTokenDetailsSchema,
+  IdTokenPayloadSchema,
+  UserInfoSchema,
+} from './models'
 
 export type { User }
 
@@ -37,16 +42,41 @@ export class PPLEMiniApp {
     return result.data
   }
 
-  private async storeUserInOIDCClient(accessTokenDetails: AccessTokenDetailsSchema) {
+  private async storeUserInOIDCClient() {
+    const user = await this.userManager.getUser()
+
+    if (!user?.profile)
+      throw new Error('[PPLE Mini App] No existing user profile found in OIDC client')
+
+    if (user.state && (user.state as Record<string, unknown>).isProfileFetched) {
+      return user
+    }
+
+    const userInfo = await this.fetchProfileByAccessToken(user.access_token)
+
+    const userWithInfo = new User({
+      ...user,
+      profile: {
+        ...user?.profile,
+        ...userInfo,
+      },
+      userState: {
+        isProfileFetched: true,
+      },
+    })
+
+    await this.userManager.storeUser(userWithInfo)
+    return userWithInfo
+  }
+
+  private async storeJWTProfileInOIDCClient(accessTokenDetails: AccessTokenDetails) {
     const idTokenDetails = await this.extractJWTPayload(accessTokenDetails.idToken)
-    const userInfo = await this.fetchProfileByAccessToken(accessTokenDetails.accessToken)
 
     const user = new User({
       access_token: accessTokenDetails.accessToken,
       id_token: accessTokenDetails.idToken,
       token_type: accessTokenDetails.tokenType,
       profile: {
-        ...userInfo,
         sub: idTokenDetails.sub,
         aud: idTokenDetails.aud,
         iss: idTokenDetails.iss,
@@ -118,7 +148,7 @@ export class PPLEMiniApp {
       throw new Error('[PPLE Mini App] Invalid user info format received from OAuth server')
     }
 
-    return userInfoBody as UserInfoSchema
+    return userInfoBody
   }
 
   private storeTokenInSessionStorage(token: {
@@ -169,7 +199,7 @@ export class PPLEMiniApp {
           throw new Error('[PPLE Mini App] No access token found in URL or session storage')
       }
 
-      const user = await this.storeUserInOIDCClient(token)
+      const user = await this.storeJWTProfileInOIDCClient(token)
       this._user = user
     } else {
       try {
@@ -182,7 +212,7 @@ export class PPLEMiniApp {
             expiresIn: (user.expires_in || 3600).toString(),
           }
 
-          const storedUser = await this.storeUserInOIDCClient(accessTokenDetails)
+          const storedUser = await this.storeJWTProfileInOIDCClient(accessTokenDetails)
           this._user = storedUser
 
           this.storeTokenInLocalStorage(accessTokenDetails)
@@ -193,7 +223,7 @@ export class PPLEMiniApp {
         const token = await this.loadTokenFromLocalStorage()
 
         if (token) {
-          const user = await this.storeUserInOIDCClient(token)
+          const user = await this.storeJWTProfileInOIDCClient(token)
           this._user = user
         } else await this.userManager.signinRedirect()
       }
@@ -202,7 +232,13 @@ export class PPLEMiniApp {
     console.log('[PPLE Mini App] PPLE Mini App initialized')
   }
 
-  get user() {
+  async getProfile(): Promise<User> {
+    if (!this._user) throw new Error('[PPLE Mini App] No user is currently logged in')
+
+    const newUser = await this.storeUserInOIDCClient()
+
+    this._user = newUser
+
     return this._user
   }
 
