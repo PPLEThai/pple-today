@@ -1,6 +1,6 @@
 {
   "name": "@pplethai/pple-today-miniapp-sdk",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "PPLE Today Mini App SDK",
   "files": [
     "build"
