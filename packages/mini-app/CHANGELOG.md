@@ -1,5 +1,11 @@
 # @pplethai/pple-today-miniapp-sdk
 
+## 0.1.2
+
+### Patch Changes
+
+- [#341](https://github.com/PPLEThai/pple-today/pull/341) [`f8a86d5`](https://github.com/PPLEThai/pple-today/commit/f8a86d5ee678b0276fee0da33d878da89f1ed13e) Thanks [@miello](https://github.com/miello)! - [[PPLE-629] Add getProfile in mini-app sdk](https://linear.app/snts/issue/PPLE-629/add-getprofile-in-mini-app-sdk)
+
 ## 0.1.1
 
 ### Patch Changes
