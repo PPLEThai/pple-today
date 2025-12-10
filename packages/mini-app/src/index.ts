@@ -198,13 +198,13 @@ export class PPLEMiniApp {
   }
 
   async getAccessToken() {
-    if (!this._user) return null
+    if (!this._user) throw new Error('[PPLE Mini App] No user is currently logged in')
 
     return this._user.access_token
   }
 
   async getProfile(): Promise<UserInfo | null> {
-    if (!this._user) return null
+    if (!this._user) throw new Error('[PPLE Mini App] No user is currently logged in')
 
     const newUser = await this.storeUserInOIDCClient()
     this._user = newUser
