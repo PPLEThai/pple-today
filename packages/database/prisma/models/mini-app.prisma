@@ -3,6 +3,7 @@ model MiniApp {
   slug String  @unique
   name String
   icon String? // Base64 encoded image
+  order Int     @default(0)
 
   clientId  String
   clientUrl String
@@ -12,4 +13,18 @@ model MiniApp {
 
   bannerId String? @unique
   banner   Banner?
+
+  miniAppRoles MiniAppRole[]
+}
+
+model MiniAppRole {
+  role String
+
+  miniAppId String
+  miniApp   MiniApp @relation(fields: [miniAppId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([role, miniAppId])
 }

@@ -11,8 +11,8 @@ export const MiniAppController = new Elysia({ prefix: '/mini-app', tags: ['Mini 
   .use([AuthGuardPlugin, MiniAppServicePlugin])
   .get(
     '/',
-    async ({ status, miniAppService }) => {
-      const miniApps = await miniAppService.listMiniApps()
+    async ({ status, miniAppService, user }) => {
+      const miniApps = await miniAppService.listMiniApps(user.roles)
 
       if (miniApps.isErr()) {
         return mapErrorCodeToResponse(miniApps.error, status)

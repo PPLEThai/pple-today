@@ -30,8 +30,8 @@ export class AuthService {
     }
   ) {}
 
-  async generateMiniAppToken(slug: string, token: string, path?: string) {
-    const miniApp = await this.miniAppRepository.getMiniAppBySlug(slug)
+  async generateMiniAppToken(slug: string, token: string, roles: string[], path?: string) {
+    const miniApp = await this.miniAppRepository.getMiniAppBySlug(slug, roles)
 
     if (miniApp.isErr()) {
       return mapRepositoryError(miniApp.error, {
