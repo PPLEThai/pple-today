@@ -23,6 +23,11 @@ export class PPLEMiniApp {
 
     if (!result.success) throw new Error('[PPLE Mini App] Invalid ID token payload format')
 
+    if (result.data.exp <= new Date().getTime() / 1000) {
+      await this.logout()
+      throw new Error('[PPLE Mini App] ID token has expired')
+    }
+
     return result.data
   }
 
@@ -90,47 +95,6 @@ export class PPLEMiniApp {
     return user
   }
 
-  private async loadTokenFromLocalStorage() {
-    const tokenString = localStorage.getItem('pple-mini-app-token')
-
-    if (tokenString) {
-      const token = JSON.parse(tokenString)
-      const result = await AccessTokenDetailsSchema.safeParseAsync(token)
-
-      if (!result.success) throw new Error('[PPLE Mini App] Invalid token format in local storage')
-
-      return result.data
-    }
-
-    return null
-  }
-
-  private storeTokenInLocalStorage(token: {
-    accessToken: string
-    idToken: string
-    tokenType: string
-    expiresIn: string
-  }) {
-    localStorage.setItem('pple-mini-app-token', JSON.stringify(token))
-  }
-
-  private async loadTokenFromSessionStorage() {
-    const tokenString = sessionStorage.getItem('pple-mini-app-token')
-
-    if (tokenString) {
-      const token = JSON.parse(tokenString)
-      const result = await AccessTokenDetailsSchema.safeParseAsync(token)
-
-      if (!result.success) {
-        throw new Error('[PPLE Mini App] Invalid token format in session storage')
-      }
-
-      return result.data
-    }
-
-    return null
-  }
-
   private async fetchProfileByAccessToken(accessToken: string) {
     const userInfoEndpoint = `${this.config.oauthUrl}/oidc/v1/userinfo`
     const userInfoResult = await fetch(userInfoEndpoint, {
@@ -150,15 +114,6 @@ export class PPLEMiniApp {
     }
 
     return userInfoBody
-  }
-
-  private storeTokenInSessionStorage(token: {
-    accessToken: string
-    idToken: string
-    tokenType: string
-    expiresIn: string
-  }) {
-    sessionStorage.setItem('ppleToken', JSON.stringify(token))
   }
 
   constructor(config: { oauthUrl: string; oauthClientId: string; oauthRedirectUri: string }) {
@@ -184,24 +139,28 @@ export class PPLEMiniApp {
   }
 
   async init() {
+    console.log('[PPLE Mini App] Initializing PPLE Mini App...')
+
     if (this.isMiniApp()) {
-      let token = await this.getAccessTokenFromUrl()
+      const token = await this.getAccessTokenFromUrl()
 
       if (token) {
-        this.storeTokenInSessionStorage({
-          accessToken: token.accessToken,
-          idToken: token.idToken,
-          tokenType: token.tokenType,
-          expiresIn: token.expiresIn,
-        })
-      } else {
-        token = await this.loadTokenFromSessionStorage()
-        if (!token)
-          throw new Error('[PPLE Mini App] No access token found in URL or session storage')
-      }
+        const user = await this.storeJWTProfileInOIDCClient(token)
 
-      const user = await this.storeJWTProfileInOIDCClient(token)
-      this._user = user
+        console.log('[PPLE Mini App] User signed in successfully via Mini App URL parameters')
+
+        this._user = user
+      } else {
+        const currentUser = await this.userManager.getUser()
+
+        if (currentUser) {
+          this._user = currentUser
+          console.log('[PPLE Mini App] Existing user found, no need to sign in again')
+          return
+        }
+
+        throw new Error('[PPLE Mini App] No user is currently logged in in Mini App')
+      }
     } else {
       try {
         const user = await this.userManager.signinCallback()
@@ -216,21 +175,26 @@ export class PPLEMiniApp {
           const storedUser = await this.storeJWTProfileInOIDCClient(accessTokenDetails)
           this._user = storedUser
 
-          this.storeTokenInLocalStorage(accessTokenDetails)
+          console.log('[PPLE Mini App] User signed in successfully')
+          return
         }
+
+        console.error('[PPLE Mini App] Signin callback did not return a user')
       } catch {
         console.warn('[PPLE Mini App] No signin callback to process')
 
-        const token = await this.loadTokenFromLocalStorage()
+        const currentUser = await this.userManager.getUser()
 
-        if (token) {
-          const user = await this.storeJWTProfileInOIDCClient(token)
-          this._user = user
-        } else await this.userManager.signinRedirect()
+        if (currentUser) {
+          this._user = currentUser
+          console.log('[PPLE Mini App] Existing user found, no need to sign in again')
+          return
+        }
       }
-    }
 
-    console.log('[PPLE Mini App] PPLE Mini App initialized')
+      console.warn('[PPLE Mini App] Redirecting to sign-in page...')
+      await this.userManager.signinRedirect()
+    }
   }
 
   async getAccessToken(): Promise<string> {
@@ -268,9 +232,5 @@ export class PPLEMiniApp {
   async logout() {
     await this.userManager.revokeTokens(['access_token'])
     await this.userManager.removeUser()
-
-    if (typeof window !== 'undefined') {
-      window.location.reload()
-    }
   }
 }
