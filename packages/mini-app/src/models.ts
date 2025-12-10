@@ -11,7 +11,7 @@ export const IdTokenPayloadSchema = z.object({
   at_hash: z.string().optional(),
   sid: z.string().optional(),
 })
-export type IdTokenPayloadSchema = z.infer<typeof IdTokenPayloadSchema>
+export type IdTokenPayload = z.infer<typeof IdTokenPayloadSchema>
 
 export const UserInfoSchema = z.object({
   sub: z.string(),
@@ -22,7 +22,7 @@ export const UserInfoSchema = z.object({
   phone_number: z.string().optional(),
   phone_number_verified: z.boolean().optional(),
 })
-export type UserInfoSchema = z.infer<typeof UserInfoSchema>
+export type UserInfo = z.infer<typeof UserInfoSchema>
 
 export const AccessTokenDetailsSchema = z.object({
   accessToken: z.string(),
@@ -30,4 +30,4 @@ export const AccessTokenDetailsSchema = z.object({
   tokenType: z.string(),
   expiresIn: z.string(),
 })
-export type AccessTokenDetailsSchema = z.infer<typeof AccessTokenDetailsSchema>
+export type AccessTokenDetails = z.infer<typeof AccessTokenDetailsSchema>
