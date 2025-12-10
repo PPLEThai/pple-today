@@ -96,7 +96,7 @@ export class PPLEMiniApp {
   }
 
   private async fetchProfileByAccessToken(accessToken: string) {
-    const userInfoEndpoint = `${this.config.oauthUrl}/oidc/v1/userinfo`
+    const userInfoEndpoint = await this.userManager.metadataService.getUserInfoEndpoint()
     const userInfoResult = await fetch(userInfoEndpoint, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -197,14 +197,14 @@ export class PPLEMiniApp {
     }
   }
 
-  async getAccessToken(): Promise<string> {
-    if (!this._user) throw new Error('[PPLE Mini App] No user is currently logged in')
+  async getAccessToken() {
+    if (!this._user) return null
 
     return this._user.access_token
   }
 
-  async getProfile(): Promise<UserInfo> {
-    if (!this._user) throw new Error('[PPLE Mini App] No user is currently logged in')
+  async getProfile(): Promise<UserInfo | null> {
+    if (!this._user) return null
 
     const newUser = await this.storeUserInOIDCClient()
     this._user = newUser
