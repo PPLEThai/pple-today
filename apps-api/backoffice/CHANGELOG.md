@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.4.1
+
+### Patch Changes
+
+- [#343](https://github.com/PPLEThai/pple-today/pull/343) [`56d95bc`](https://github.com/PPLEThai/pple-today/commit/56d95bc37f4520ca8ee494ebeab4491edc127868) Thanks [@miello](https://github.com/miello)! - [[PPLE-634] [Mini App] Fix cannot navigate when using wildcard](https://linear.app/snts/issue/PPLE-634/mini-app-fix-cannot-navigate-when-using-wildcard)
+
 ## 1.4.0
 
 ### Minor Changes
