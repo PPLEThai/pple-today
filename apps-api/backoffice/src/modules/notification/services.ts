@@ -140,6 +140,16 @@ export class NotificationService {
 
     return ok(sendResult.value)
   }
+
+  async getUnreadNotificationCount(userId: string) {
+    const countResult = await this.notificationRepository.getUnreadNotificationCount(userId)
+
+    if (countResult.isErr()) {
+      return mapRepositoryError(countResult.error)
+    }
+
+    return ok(countResult.value)
+  }
 }
 
 export const NotificationServicePlugin = new Elysia({ name: 'NotificationService' })

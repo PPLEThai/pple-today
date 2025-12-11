@@ -454,6 +454,17 @@ export class NotificationRepository {
         : undefined
     )
   }
+
+  async getUnreadNotificationCount(userId: string) {
+    return fromRepositoryPromise(
+      this.prismaService.userNotification.count({
+        where: {
+          userId,
+          isRead: false,
+        },
+      })
+    )
+  }
 }
 
 export const NotificationRepositoryPlugin = new Elysia({
