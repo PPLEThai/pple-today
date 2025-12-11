@@ -66,7 +66,7 @@ export function convertBannerToLink(banner: GetBannersResponse[number]) {
   switch (banner.navigation) {
     case 'MINI_APP': {
       const url = new URL(environment.EXPO_PUBLIC_ALLOWED_MINI_APP_ORIGIN_REDIRECT)
-      url.pathname = `${banner.miniAppId}`
+      url.pathname = banner.slug
 
       return {
         type: 'MINI_APP' as const,

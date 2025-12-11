@@ -14,11 +14,8 @@ export const GetBannersResponse = t.Array(
       }),
       t.Object({
         navigation: t.Literal(BannerNavigationType.MINI_APP),
-        miniAppId: t.String({
-          description: 'ID of the mini app',
-        }),
-        destination: t.String({
-          description: 'The destination URI for the banner item',
+        slug: t.String({
+          description: 'Slug of the mini app',
         }),
       }),
     ]),

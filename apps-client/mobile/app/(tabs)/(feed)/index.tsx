@@ -247,9 +247,11 @@ function Banner({ banner }: { banner: GetBannersResponse[number] }) {
   const opacity = useSharedValue(1)
   const scale = useSharedValue(1)
   const disabled =
-    banner.navigation === 'EXTERNAL_BROWSER' || banner.navigation === 'MINI_APP'
+    banner.navigation === 'EXTERNAL_BROWSER'
       ? !banner.destination
-      : !banner.inAppId || !banner.inAppType
+      : banner.navigation === 'MINI_APP'
+        ? !banner.slug
+        : !banner.inAppId || !banner.inAppType
   const fadeIn = () => {
     if (disabled) return
     opacity.value = withTiming(0.9, { duration: 150 })

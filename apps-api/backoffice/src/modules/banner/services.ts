@@ -25,8 +25,7 @@ export class BannerService {
         return {
           id: banner.id,
           navigation: banner.navigation,
-          destination: banner.miniApp!.clientUrl!,
-          miniAppId: banner.miniApp!.id,
+          slug: banner.miniApp!.slug,
           imageUrl: this.fileServerService.getFileEndpointUrl(banner.imageFilePath),
         }
       }
