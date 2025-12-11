@@ -43,7 +43,25 @@ export class MiniAppRepository {
   async getMiniAppBySlug(slug: string, roles: string[]) {
     return await fromRepositoryPromise(
       this.prismaService.miniApp.findUniqueOrThrow({
-        where: { slug, miniAppRoles: { some: { role: { in: roles } } } },
+        where: {
+          slug,
+          OR: [
+            {
+              miniAppRoles: {
+                some: {
+                  role: {
+                    in: roles,
+                  },
+                },
+              },
+            },
+            {
+              miniAppRoles: {
+                none: {},
+              },
+            },
+          ],
+        },
       })
     )
   }
