@@ -38,7 +38,7 @@ model Banner {
   updatedAt DateTime @updatedAt
 
   miniApp   MiniApp? @relation(fields: [miniAppId], references: [id])
-  miniAppId String?  @unique
+  miniAppId String?
 
   @@index([status])
   @@index([navigation])

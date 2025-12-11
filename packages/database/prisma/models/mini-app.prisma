@@ -1,8 +1,8 @@
 model MiniApp {
-  id   String  @id @default(cuid())
-  slug String  @unique
-  name String
-  icon String? // Base64 encoded image
+  id    String  @id @default(cuid())
+  slug  String  @unique
+  name  String
+  icon  String? // Base64 encoded image
   order Int     @default(0)
 
   clientId  String
@@ -11,8 +11,7 @@ model MiniApp {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  bannerId String? @unique
-  banner   Banner?
+  banners Banner[]
 
   miniAppRoles MiniAppRole[]
 }

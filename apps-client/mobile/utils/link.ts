@@ -6,6 +6,7 @@ import {
   CreateNewExternalNotificationBody,
   GetBannersResponse,
 } from '@api/backoffice/app'
+import { environment } from '@app/env'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 
 import { createMiniAppPath } from './mini-app'
@@ -63,11 +64,15 @@ export function createLinkFromInAppNavigation(
 
 export function convertBannerToLink(banner: GetBannersResponse[number]) {
   switch (banner.navigation) {
-    case 'MINI_APP':
+    case 'MINI_APP': {
+      const url = new URL(environment.EXPO_PUBLIC_ALLOWED_MINI_APP_ORIGIN_REDIRECT)
+      url.pathname = banner.slug
+
       return {
         type: 'MINI_APP' as const,
-        destination: banner.destination,
+        destination: url.toString(),
       }
+    }
     case 'IN_APP_NAVIGATION': {
       return {
         type: 'IN_APP_NAVIGATION' as const,
