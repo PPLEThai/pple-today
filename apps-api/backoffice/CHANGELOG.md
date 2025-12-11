@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.4.3
+
+### Patch Changes
+
+- [#347](https://github.com/PPLEThai/pple-today/pull/347) [`9b885db`](https://github.com/PPLEThai/pple-today/commit/9b885db918fa5e5cddf40175acb56c5f4f2adbf6) Thanks [@miello](https://github.com/miello)! - [[PPLE-640] [Backoffice] Set mini app to banner causes null in database](https://linear.app/snts/issue/PPLE-640/backoffice-set-mini-app-to-banner-causes-null-in-database)
+
 ## 1.4.2
 
 ### Patch Changes
