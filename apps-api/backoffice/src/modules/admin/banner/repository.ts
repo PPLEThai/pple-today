@@ -274,7 +274,7 @@ export class AdminBannerRepository {
             }
           } else if (existingBanner.value.miniAppId && data.miniAppId) {
             connectionResult = {
-              miniApp: { disconnect: {}, connect: { id: data.miniAppId } },
+              miniApp: { connect: { id: data.miniAppId } },
             }
           } else {
             connectionResult = {
@@ -286,7 +286,7 @@ export class AdminBannerRepository {
           if (data.miniAppId) {
             connectionResult = {
               navigation: data.navigation,
-              miniApp: { disconnect: {}, connect: { id: data.miniAppId } },
+              miniApp: { connect: { id: data.miniAppId } },
               destination: null,
             }
           } else {
@@ -295,7 +295,7 @@ export class AdminBannerRepository {
         } else if (data.navigation === BannerNavigationType.EXTERNAL_BROWSER && data.destination) {
           connectionResult = {
             navigation: data.navigation,
-            miniApp: { disconnect: {} },
+            miniApp: { disconnect: true },
             destination: data.destination,
           }
         } else if (data.navigation === BannerNavigationType.IN_APP_NAVIGATION) {
@@ -303,7 +303,7 @@ export class AdminBannerRepository {
             navigation: data.navigation,
             inAppId: data.inAppId,
             inAppType: data.inAppType,
-            miniApp: { disconnect: {} },
+            miniApp: { disconnect: true },
             destination: null,
           }
         }
