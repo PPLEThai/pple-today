@@ -583,7 +583,7 @@ function UpvoteButton(props: UpvoteButtonProps) {
           style={{ width: 100, height: 100 }}
         />
       </View>
-      <Text className="text-sm font-heading-regular text-base-text-medium">เห็นด้วย</Text>
+      <Text className="text-sm font-heading-regular text-base-text-medium">สนับสนุน</Text>
     </AnimatedButton>
   )
 }
@@ -644,7 +644,7 @@ function DownvoteButton(props: { feedId: string }) {
               : 'text-base-text-high'
           )}
         />
-        <Text className="text-sm font-heading-regular text-base-text-medium">ไม่เห็นด้วย</Text>
+        <Text className="text-sm font-heading-regular text-base-text-medium">ไม่สนับสนุน</Text>
       </AnimatedButton>
       <BottomSheetModal ref={bottomSheetModalRef} keyboardBehavior="interactive">
         <BottomSheetView>
@@ -738,7 +738,7 @@ function DownvoteCommentForm(props: DownvoteCommentFormProps) {
         <Text className="text-2xl font-heading-bold">ข้อเสนอแนะ</Text>
         <Text className="text-sm font-heading-regular">
           {
-            'บอกพวกเราทีว่าเหตุใดคุณถึงไม่เห็นด้วย\nความคิดเห็นของคุณจะถูกแสดงเป็นความคิดเห็นส่วนตัว'
+            'บอกพวกเราทีว่าเหตุใดคุณถึงไม่สนับสนุน\nความคิดเห็นของคุณจะถูกแสดงเป็นความคิดเห็นส่วนตัว'
           }
         </Text>
       </View>
