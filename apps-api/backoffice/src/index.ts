@@ -1,6 +1,6 @@
 import cors from '@elysiajs/cors'
 import node from '@elysiajs/node'
-import { swagger } from '@elysiajs/swagger'
+import { openapi } from '@elysiajs/openapi'
 import {
   GlobalExceptionPlugin,
   loggerBuilder,
@@ -18,7 +18,7 @@ import packageJson from '../package.json'
 
 const configService = ConfigServicePlugin.decorator.configService
 
-let app = new Elysia({ adapter: node() })
+let app: AnyElysia = new Elysia({ adapter: node() })
   .use([
     loggerBuilder({
       name: 'Global Logger',
@@ -42,8 +42,7 @@ let app = new Elysia({ adapter: node() })
       ],
     }).into({
       customProps: (ctx) => {
-        const responseBody =
-          ctx.response || ('response' in ctx.error ? ctx.error.response : undefined)
+        const responseBody = ctx.response || (ctx.isError ? (ctx.error as any).response : undefined)
 
         return {
           body: ctx.body,
@@ -55,7 +54,7 @@ let app = new Elysia({ adapter: node() })
       autoLogging: {
         ignore: (ctx) => {
           if (ctx.isError) return false
-          if (!ctx.isError && 'response' in ctx.error) return true
+
           return (
             ctx.path.startsWith('/health') ||
             ctx.path.startsWith('/swagger') ||
@@ -99,7 +98,7 @@ if (process.env.ENABLE_SWAGGER === 'true') {
     ],
   }
 
-  const swaggerPlugin = swagger({
+  const swaggerPlugin = openapi({
     documentation: {
       info: {
         title: 'PPLE Today API',

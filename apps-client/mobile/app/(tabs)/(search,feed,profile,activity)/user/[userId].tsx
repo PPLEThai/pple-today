@@ -54,6 +54,8 @@ export default function ProfilePage() {
       const response = await fetchClient('/feed/author/:id', {
         params: { id: userId! },
         query: { cursor: pageParam, limit: LIMIT },
+        headers: {},
+        body: {},
       })
       if (response.error) {
         throw response.error

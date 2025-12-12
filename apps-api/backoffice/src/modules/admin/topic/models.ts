@@ -19,6 +19,7 @@ export type GetTopicsResponse = Static<typeof GetTopicsResponse>
 export const GetTopicByIdParams = t.Object({
   topicId: t.String({ description: 'The ID of the topic' }),
 })
+export type GetTopicByIdParams = Static<typeof GetTopicByIdParams>
 
 export const GetTopicByIdResponse = DetailedTopic
 export type GetTopicByIdResponse = Static<typeof GetTopicByIdResponse>

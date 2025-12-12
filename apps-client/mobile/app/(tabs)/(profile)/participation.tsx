@@ -104,6 +104,8 @@ const MyPollContent = (props: PagerScrollViewProps) => {
     queryFn: async ({ pageParam }) => {
       const response = await fetchClient('/profile/participation/poll', {
         query: { cursor: pageParam, limit: LIMIT },
+        headers: {},
+        body: {},
       })
       if (response.error) {
         throw response.error
@@ -183,6 +185,8 @@ const MyElectionContent = (props: PagerScrollViewProps) => {
     queryFn: async ({ pageParam }) => {
       const response = await fetchClient('/profile/participation/election', {
         query: { cursor: pageParam, limit: LIMIT },
+        headers: {},
+        body: {},
       })
       if (response.error) {
         throw response.error
