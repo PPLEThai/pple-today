@@ -413,6 +413,7 @@ const MiniAppSection = () => {
                 </View>
               </InfoItem>
             ))}
+            {group.length === 1 && <View className="flex-1" />}
           </View>
         ))}
       </View>
