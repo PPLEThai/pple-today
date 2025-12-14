@@ -55,10 +55,10 @@ const MiniAppWebView = () => {
             }}
             aria-label="Back to previous web page"
           >
-            <Icon icon={ArrowLeftIcon} size={24} />
+            <Icon className="text-foreground" icon={ArrowLeftIcon} size={24} />
           </Button>
         ) : (
-          <View className="size-5" />
+          <View className="size-6" />
         )}
         <Text className="flex-1 text-center align-middle">
           {tokenExchangeMiniAppResult.isSuccess ? tokenExchangeMiniAppResult.data.appName : ''}
@@ -76,7 +76,7 @@ const MiniAppWebView = () => {
             }
           }}
         >
-          <Icon icon={XIcon} size={24} />
+          <Icon className="text-foreground" icon={XIcon} size={24} />
         </Button>
       </View>
       <View className="flex-1">
