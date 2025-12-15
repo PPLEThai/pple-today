@@ -26,13 +26,17 @@ export class KeyManagementService {
     },
     private readonly loggerService: ElysiaLoggerInstance
   ) {
-    this.kmsClient = new KeyManagementServiceClient({
-      credentials: {
-        projectId: config.projectId,
-        client_email: config.clientEmail,
-        private_key: config.privateKey,
-      },
-    })
+    const kmsClientConfig =
+      config.projectId && config.clientEmail && config.privateKey
+        ? {
+            projectId: config.projectId,
+            credentials: {
+              client_email: config.clientEmail,
+              private_key: config.privateKey,
+            },
+          }
+        : undefined
+    this.kmsClient = new KeyManagementServiceClient(kmsClientConfig)
   }
 
   private getProjectId() {
