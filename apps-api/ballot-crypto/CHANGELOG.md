@@ -1,5 +1,14 @@
 # @api/ballot-crypto
 
+## 1.1.5
+
+### Patch Changes
+
+- [#352](https://github.com/PPLEThai/pple-today/pull/352) [`28e00f6`](https://github.com/PPLEThai/pple-today/commit/28e00f62499d2f6d4a955f1a4a31762353220be4) Thanks [@miello](https://github.com/miello)! - [[PPLE-645] [GCP] Always include project id when initialized sdk client](https://linear.app/snts/issue/PPLE-645/gcp-always-include-project-id-when-initialized-sdk-client)
+
+- Updated dependencies [[`28e00f6`](https://github.com/PPLEThai/pple-today/commit/28e00f62499d2f6d4a955f1a4a31762353220be4)]:
+  - @pple-today/api-common@1.3.3
+
 ## 1.1.4
 
 ### Patch Changes
