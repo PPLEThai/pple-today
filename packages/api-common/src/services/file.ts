@@ -44,17 +44,16 @@ export class FileService {
     },
     public readonly loggerService: ElysiaLoggerInstance
   ) {
-    const storageConfig =
-      config.projectId && config.clientEmail && config.privateKey
-        ? {
-            projectId: config.projectId,
-            credentials: {
+    this.storage = new Storage({
+      projectId: config.projectId,
+      credentials:
+        config.clientEmail && config.privateKey
+          ? {
               client_email: config.clientEmail,
               private_key: config.privateKey,
-            },
-          }
-        : undefined
-    this.storage = new Storage(storageConfig)
+            }
+          : undefined,
+    })
     this.bucket = this.storage.bucket(config.bucketName)
   }
 
