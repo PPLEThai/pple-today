@@ -1,5 +1,14 @@
 # @api/backoffice
 
+## 1.4.4
+
+### Patch Changes
+
+- [#350](https://github.com/PPLEThai/pple-today/pull/350) [`789ad3b`](https://github.com/PPLEThai/pple-today/commit/789ad3bcbe23cc2e484c361789ae36f988f19a6c) Thanks [@miello](https://github.com/miello)! - [[PPLE-644] [GCP] Utilize ADC if credentials not provided](https://linear.app/snts/issue/PPLE-644/gcp-utilize-adc-if-credentials-not-provided)
+
+- Updated dependencies [[`789ad3b`](https://github.com/PPLEThai/pple-today/commit/789ad3bcbe23cc2e484c361789ae36f988f19a6c)]:
+  - @pple-today/api-common@1.3.2
+
 ## 1.4.3
 
 ### Patch Changes
