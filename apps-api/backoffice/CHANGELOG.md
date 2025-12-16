@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.4.6
+
+### Patch Changes
+
+- [#354](https://github.com/PPLEThai/pple-today/pull/354) [`f6b0f07`](https://github.com/PPLEThai/pple-today/commit/f6b0f0779df2e0c0e8bcfbf6c4015427124be4a6) Thanks [@miello](https://github.com/miello)! - [[PPLE-647] [API] Wrong official user retrieval](https://linear.app/snts/issue/PPLE-647/api-wrong-official-user-retrieval)
+
 ## 1.4.5
 
 ### Patch Changes
