@@ -17,9 +17,9 @@ export class AuthRepository {
     }
 
     const findOfficialResult = await fromRepositoryPromise(
-      this.prismaService.user.findFirst({
-        where: { roles: { every: { role: 'official' } } },
-        select: { id: true },
+      this.prismaService.userRole.findFirst({
+        where: { role: 'official' },
+        select: { user: { select: { id: true } } },
       })
     )
 
@@ -34,7 +34,7 @@ export class AuthRepository {
       })
     }
 
-    this.OFFICIAL_USER_ID = findOfficialResult.value.id
+    this.OFFICIAL_USER_ID = findOfficialResult.value.user.id
     return ok(this.OFFICIAL_USER_ID)
   }
 
