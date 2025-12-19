@@ -98,6 +98,7 @@ export class AuthService {
 
     return ok({
       url: url.toString(),
+      appName: miniApp.value.name,
     })
   }
 

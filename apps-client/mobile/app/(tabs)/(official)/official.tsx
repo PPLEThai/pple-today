@@ -23,6 +23,7 @@ import {
   LandmarkIcon,
   MailIcon,
   MegaphoneIcon,
+  PanelsTopLeftIcon,
   PhoneIcon,
   VoteIcon,
 } from 'lucide-react-native'
@@ -384,9 +385,9 @@ const MiniAppSection = () => {
     <View className="px-4">
       <View className="flex flex-row gap-2 items-center">
         <View className="w-8 h-8 flex items-center justify-center">
-          <Icon icon={InfoIcon} size={32} className="text-base-primary-default" />
+          <Icon icon={PanelsTopLeftIcon} size={32} className="text-base-primary-default" />
         </View>
-        <H2 className="text-2xl font-heading-semibold text-base-text-high">Mini App</H2>
+        <H2 className="text-2xl font-heading-semibold text-base-text-high">มินิแอปฯ</H2>
       </View>
       <View className="flex flex-col gap-4 mt-4 items-center">
         {miniAppGroupByTwo.map((group, index) => (
@@ -413,6 +414,7 @@ const MiniAppSection = () => {
                 </View>
               </InfoItem>
             ))}
+            {group.length === 1 && <View className="flex-1" />}
           </View>
         ))}
       </View>
