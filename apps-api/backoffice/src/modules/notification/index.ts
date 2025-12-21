@@ -8,6 +8,7 @@ import {
   CreateNewExternalNotificationResponse,
   GetNotificationDetailsByIdParams,
   GetNotificationDetailsByIdResponse,
+  GetUnreadNotificationCountResponse,
   ListHistoryNotificationQuery,
   ListHistoryNotificationResponse,
   ReadNotificationParams,
@@ -162,6 +163,32 @@ export const NotificationController = new Elysia({
       requiredLocalUser: true,
       response: {
         200: ReadNotificationResponse,
+        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+    }
+  )
+  .get(
+    '/unread-count',
+    async ({ user, notificationService, status }) => {
+      const countResult = await notificationService.getUnreadNotificationCount(user.id)
+
+      if (countResult.isErr()) {
+        return mapErrorCodeToResponse(countResult.error, status)
+      }
+
+      return status(200, {
+        unreadCount: countResult.value,
+      })
+    },
+    {
+      detail: {
+        summary: 'Get unread notification count for the authenticated user',
+        description:
+          'This endpoint allows the authenticated user to retrieve the count of their unread notifications.',
+      },
+      requiredLocalUser: true,
+      response: {
+        200: GetUnreadNotificationCountResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
       },
     }
