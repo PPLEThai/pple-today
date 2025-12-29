@@ -104,7 +104,9 @@ export const ElectionController = new Elysia({
         summary: 'Register hybrid election',
         description: 'Can choose to vote either ONLINE or ONSITE.',
       },
-      requiredLocalUser: true,
+      requiredLocalUserPrecondition: {
+        isActive: true,
+      },
       params: RegisterElectionParams,
       body: RegisterElectionBody,
       response: {
@@ -132,7 +134,9 @@ export const ElectionController = new Elysia({
         summary: 'Get Face Image Upload URL',
         description: 'Fetch the signed URL to upload face image picture',
       },
-      requiredLocalUser: true,
+      requiredLocalUserPrecondition: {
+        isActive: true,
+      },
       body: CreateFaceImageUploadURLBody,
       response: {
         200: CreateFaceImageUploadURLResponse,
@@ -166,7 +170,9 @@ export const ElectionController = new Elysia({
         summary: 'Create ballot',
         description: 'Create ballot',
       },
-      requiredLocalUser: true,
+      requiredLocalUserPrecondition: {
+        isActive: true,
+      },
       params: CreateBallotParams,
       body: CreateBallotBody,
       response: {
@@ -201,7 +207,9 @@ export const ElectionController = new Elysia({
         summary: 'Withdraw ballot',
         description: 'Withdraw ballot',
       },
-      requiredLocalUser: true,
+      requiredLocalUserPrecondition: {
+        isActive: true,
+      },
       params: WithdrawBallotParams,
       response: {
         200: WithdrawBallotResponse,

@@ -1,4 +1,3 @@
-import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { FeedItemType, PollStatus } from '@pple-today/database/prisma'
@@ -8,38 +7,13 @@ import { ok } from 'neverthrow'
 import { PostPollBody, UpdatePollBody } from './models'
 
 import { PrismaServicePlugin } from '../../../plugins/prisma'
+import { CommonRepository, CommonRepositoryPlugin } from '../../common/repository'
 
 export class AdminPollRepository {
-  private OFFICIAL_USER_ID: string | null = null
-
-  constructor(private readonly prismaService: PrismaService) {}
-
-  private async lookupOfficialUserId() {
-    if (this.OFFICIAL_USER_ID) {
-      return ok(this.OFFICIAL_USER_ID)
-    }
-
-    const findOfficialResult = await fromRepositoryPromise(
-      this.prismaService.userRole.findFirst({
-        where: { role: 'official' },
-        select: { user: { select: { id: true } } },
-      })
-    )
-
-    if (findOfficialResult.isErr()) {
-      return err(findOfficialResult.error)
-    }
-
-    if (!findOfficialResult.value) {
-      return err({
-        message: 'Official user not found',
-        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-      })
-    }
-
-    this.OFFICIAL_USER_ID = findOfficialResult.value.user.id
-    return ok(this.OFFICIAL_USER_ID)
-  }
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly commonRepository: CommonRepository
+  ) {}
 
   async getPolls(page: number, limit: number, status?: PollStatus[], search?: string) {
     const result = await fromRepositoryPromise(async () => {
@@ -237,7 +211,7 @@ export class AdminPollRepository {
   }
 
   async createPoll(data: PostPollBody) {
-    const officialUserId = await this.lookupOfficialUserId()
+    const officialUserId = await this.commonRepository.lookupOfficialUserId()
 
     if (officialUserId.isErr()) return err(officialUserId.error)
 
@@ -334,7 +308,7 @@ export class AdminPollRepository {
 export const AdminPollRepositoryPlugin = new Elysia({
   name: 'AdminPollRepository',
 })
-  .use([PrismaServicePlugin])
-  .decorate(({ prismaService }) => ({
-    adminPollRepository: new AdminPollRepository(prismaService),
+  .use([PrismaServicePlugin, CommonRepositoryPlugin])
+  .decorate(({ prismaService, commonRepository }) => ({
+    adminPollRepository: new AdminPollRepository(prismaService, commonRepository),
   }))
