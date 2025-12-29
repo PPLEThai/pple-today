@@ -143,7 +143,17 @@ export const useUser = () => {
 
 export const useAuthMe = () => {
   const session = useSession()
-  return reactQueryClient.useQuery('/auth/me', {}, { enabled: !!session })
+  return reactQueryClient.useQuery(
+    '/auth/me',
+    {},
+    {
+      enabled: !!session,
+      select: ({ status, ...user }) => ({
+        ...user,
+        isSuspended: status !== 'ACTIVE',
+      }),
+    }
+  )
 }
 
 export const codeExchange = async ({

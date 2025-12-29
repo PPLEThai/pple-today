@@ -60,7 +60,7 @@ import type {
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { MoreOrLess } from '@app/components/more-or-less'
 import { reactQueryClient } from '@app/libs/api-client'
-import { useSession } from '@app/libs/auth'
+import { useAuthMe, useSession } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 import { createImageUrl } from '@app/utils/image'
@@ -488,9 +488,9 @@ function AnimatedButton(props: PressableProps) {
   })
   return (
     <AnimatedPressable
-      style={styles}
-      className="flex flex-row items-center gap-1 rounded-md py-3 px-1"
       {...props}
+      style={styles}
+      className={clsx('flex flex-row items-center gap-1 rounded-md py-3 px-1', props.className)}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
     />
@@ -535,6 +535,7 @@ function UpvoteButton(props: UpvoteButtonProps) {
   const deleteReactionQuery = reactQueryClient.useMutation('delete', '/feed/:id/reaction')
   const router = useRouter()
   const session = useSession()
+  const user = useAuthMe()
   const queryClient = useQueryClient()
   const onPress = async () => {
     if (!session) {
@@ -561,7 +562,12 @@ function UpvoteButton(props: UpvoteButtonProps) {
   }
 
   return (
-    <AnimatedButton onPress={onPress} onPressIn={onPressIn} onPressOut={onPressOut}>
+    <AnimatedButton
+      disabled={user.data?.isSuspended}
+      onPress={onPress}
+      onPressIn={onPressIn}
+      onPressOut={onPressOut}
+    >
       <View>
         <Animated.View style={animatedStyle}>
           <Icon
@@ -571,7 +577,8 @@ function UpvoteButton(props: UpvoteButtonProps) {
             className={clsx(
               userReaction === 'UP_VOTE'
                 ? 'fill-base-primary-medium text-white'
-                : 'text-base-text-high'
+                : 'text-base-text-high',
+              user.data?.isSuspended && 'opacity-70'
             )}
           />
         </Animated.View>
@@ -580,10 +587,17 @@ function UpvoteButton(props: UpvoteButtonProps) {
           ref={likeAnimationRef}
           source={LikeAnimationFile}
           loop={false}
-          style={{ width: 100, height: 100 }}
+          style={{ width: 100, height: 100, opacity: user.data?.isSuspended ? 0.7 : 1 }}
         />
       </View>
-      <Text className="text-sm font-heading-regular text-base-text-medium">เห็นด้วย</Text>
+      <Text
+        className={clsx(
+          'text-sm font-heading-regular text-base-text-medium',
+          user.data?.isSuspended && 'opacity-70'
+        )}
+      >
+        เห็นด้วย
+      </Text>
     </AnimatedButton>
   )
 }
@@ -611,6 +625,7 @@ function DownvoteButton(props: { feedId: string }) {
 
   const router = useRouter()
   const session = useSession()
+  const user = useAuthMe()
   const queryClient = useQueryClient()
   const onPress = async () => {
     if (!session) {
@@ -633,7 +648,7 @@ function DownvoteButton(props: { feedId: string }) {
 
   return (
     <>
-      <AnimatedButton onPress={onPress}>
+      <AnimatedButton onPress={onPress} disabled={user.data?.isSuspended}>
         <Icon
           icon={HeartCrackIcon}
           size={20}
@@ -641,10 +656,18 @@ function DownvoteButton(props: { feedId: string }) {
           className={clsx(
             userReaction === 'DOWN_VOTE'
               ? 'fill-base-primary-medium text-white'
-              : 'text-base-text-high'
+              : 'text-base-text-high',
+            user.data?.isSuspended && 'opacity-70'
           )}
         />
-        <Text className="text-sm font-heading-regular text-base-text-medium">ไม่เห็นด้วย</Text>
+        <Text
+          className={clsx(
+            'text-sm font-heading-regular text-base-text-medium',
+            user.data?.isSuspended && 'opacity-70'
+          )}
+        >
+          ไม่เห็นด้วย
+        </Text>
       </AnimatedButton>
       <BottomSheetModal ref={bottomSheetModalRef} keyboardBehavior="interactive">
         <BottomSheetView>
@@ -792,6 +815,7 @@ function CommentButton(props: { feedId: string }) {
   const insets = useSafeAreaInsets()
 
   const router = useRouter()
+  const user = useAuthMe()
   const session = useSession()
   const onPress = () => {
     if (!session) {
@@ -801,9 +825,21 @@ function CommentButton(props: { feedId: string }) {
   }
   return (
     <>
-      <AnimatedButton onPress={onPress}>
-        <Icon icon={MessageCircleIcon} size={20} strokeWidth={1} className="text-base-text-high" />
-        <Text className="text-sm font-heading-regular text-base-text-medium">ความคิดเห็น</Text>
+      <AnimatedButton onPress={onPress} disabled={user.data?.isSuspended}>
+        <Icon
+          icon={MessageCircleIcon}
+          size={20}
+          strokeWidth={1}
+          className={clsx('text-base-text-high', user.data?.isSuspended && 'opacity-70')}
+        />
+        <Text
+          className={clsx(
+            'text-sm font-heading-regular text-base-text-medium',
+            user.data?.isSuspended && 'opacity-70'
+          )}
+        >
+          ความคิดเห็น
+        </Text>
       </AnimatedButton>
       <BottomSheetModal
         ref={bottomSheetModalRef}
