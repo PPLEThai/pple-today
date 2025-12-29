@@ -29,6 +29,7 @@ import {
 import { ElectionWithCurrentStatus } from '@api/backoffice/app'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { reactQueryClient } from '@app/libs/api-client'
+import { useAuthMe } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 
 interface ElectionCardProps extends ViewProps {
@@ -296,13 +297,19 @@ export function CountdownTimer(props: { targetTime: Date }) {
 }
 
 function ElectionCardFooter(props: ElectionCardProps) {
+  const user = useAuthMe()
   switch (props.election.status) {
     case 'NOT_OPENED_VOTE': {
       if (props.election.type === 'ONLINE') {
         return (
           <ElectionNotification electionId={props.election.id}>
             {({ isEnabled, setIsEnabled }) => (
-              <Button size="sm" className="w-full mt-2" onPress={() => setIsEnabled(!isEnabled)}>
+              <Button
+                size="sm"
+                className="w-full mt-2"
+                disabled={user.data?.isSuspended}
+                onPress={() => setIsEnabled(!isEnabled)}
+              >
                 <Icon icon={isEnabled ? AlarmClockCheckIcon : AlarmClockIcon} size={16} />
                 <Text>{isEnabled ? 'ตั้งแจ้งเตือนแล้ว' : 'แจ้งเตือน'}</Text>
               </Button>
@@ -324,7 +331,12 @@ function ElectionCardFooter(props: ElectionCardProps) {
             </Button>
             <ElectionNotification electionId={props.election.id}>
               {({ isEnabled, setIsEnabled }) => (
-                <Button size="sm" className="flex-1" onPress={() => setIsEnabled(!isEnabled)}>
+                <Button
+                  disabled={user.data?.isSuspended}
+                  size="sm"
+                  className="flex-1"
+                  onPress={() => setIsEnabled(!isEnabled)}
+                >
                   <Icon icon={isEnabled ? AlarmClockCheckIcon : AlarmClockIcon} size={16} />
                   <Text>{isEnabled ? 'ตั้งแจ้งเตือนแล้ว' : 'แจ้งเตือน'}</Text>
                 </Button>
@@ -341,6 +353,7 @@ function ElectionCardFooter(props: ElectionCardProps) {
                 {({ isEnabled, setIsEnabled }) => (
                   <Button
                     size="icon"
+                    disabled={user.data?.isSuspended}
                     variant="secondary"
                     className="h-9 w-9"
                     onPress={() => setIsEnabled(!isEnabled)}
@@ -560,6 +573,7 @@ function ElectionRegisterButton(props: ElectionCardProps) {
     '/elections/:electionId/register',
     {}
   )
+  const user = useAuthMe()
   const [isRegistered, setIsRegistered] = useState(props.election.isRegistered)
   return (
     <Button
@@ -568,10 +582,11 @@ function ElectionRegisterButton(props: ElectionCardProps) {
       disabled={
         isRegistered ||
         electionRegisterMutation.isPending ||
+        user.data?.isSuspended ||
         dayjs().isBefore(props.election.openRegister)
       }
       onPress={() => {
-        if (isRegistered) return
+        if (isRegistered || user.data?.isSuspended) return
         setIsRegistered(true)
         electionRegisterMutation.mutateAsync(
           {
