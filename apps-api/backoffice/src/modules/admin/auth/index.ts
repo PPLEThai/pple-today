@@ -29,6 +29,7 @@ export const AdminAuthController = new Elysia({
         200: GetAuthMeResponse,
         ...createErrorSchema(
           InternalErrorCode.AUTH_USER_NOT_FOUND,
+          InternalErrorCode.FORBIDDEN,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

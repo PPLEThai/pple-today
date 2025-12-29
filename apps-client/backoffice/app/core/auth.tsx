@@ -39,9 +39,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     { retry: false, enabled: userQuery.isSuccess && !!userQuery.data }
   )
   useEffect(() => {
-    if (authMeQuery.isError) {
-      console.error('Auth Me error:', JSON.stringify(authMeQuery.error))
+    const handleError = async () => {
+      if (authMeQuery.isError) {
+        console.error('Auth Me error:', JSON.stringify(authMeQuery.error))
+        if (authMeQuery.error.value.error.code === 'FORBIDDEN') {
+          await userManager.revokeTokens()
+          await userManager.removeUser()
+        }
+      }
     }
+
+    handleError()
   }, [authMeQuery])
 
   const queryClient = useQueryClient()
