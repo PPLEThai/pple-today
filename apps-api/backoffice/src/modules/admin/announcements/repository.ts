@@ -10,6 +10,7 @@ import { CreateAnnouncementBody, GetAnnouncementsQuery, UpdateAnnouncementBody }
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
+import { CommonRepository, CommonRepositoryPlugin } from '../../common/repository'
 import { FileServerService, FileServerServicePlugin } from '../../files/services'
 
 export class AdminAnnouncementRepository {
@@ -18,36 +19,9 @@ export class AdminAnnouncementRepository {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly fileService: FileService,
-    private readonly fileServerService: FileServerService
+    private readonly fileServerService: FileServerService,
+    private readonly commonRepository: CommonRepository
   ) {}
-
-  // TODO: Refactor to common service
-  private async lookupOfficialUserId() {
-    if (this.OFFICIAL_USER_ID) {
-      return ok(this.OFFICIAL_USER_ID)
-    }
-
-    const findOfficialResult = await fromRepositoryPromise(
-      this.prismaService.userRole.findFirst({
-        where: { role: 'official' },
-        select: { user: { select: { id: true } } },
-      })
-    )
-
-    if (findOfficialResult.isErr()) {
-      return err(findOfficialResult.error)
-    }
-
-    if (!findOfficialResult.value) {
-      return err({
-        message: 'Official user not found',
-        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-      })
-    }
-
-    this.OFFICIAL_USER_ID = findOfficialResult.value.user.id
-    return ok(this.OFFICIAL_USER_ID)
-  }
 
   private async cleanUpUnusedAttachment(
     fileTx: FileTransactionService,
@@ -223,7 +197,7 @@ export class AdminAnnouncementRepository {
   }
 
   async createAnnouncement(data: CreateAnnouncementBody) {
-    const officialUserId = await this.lookupOfficialUserId()
+    const officialUserId = await this.commonRepository.lookupOfficialUserId()
 
     if (officialUserId.isErr()) return err(officialUserId.error)
 
@@ -416,11 +390,12 @@ export class AdminAnnouncementRepository {
 export const AdminAnnouncementRepositoryPlugin = new Elysia({
   name: 'AdminAnnouncementRepository',
 })
-  .use([PrismaServicePlugin, FileServicePlugin, FileServerServicePlugin])
-  .decorate(({ prismaService, fileService, fileServerService }) => ({
+  .use([PrismaServicePlugin, FileServicePlugin, FileServerServicePlugin, CommonRepositoryPlugin])
+  .decorate(({ prismaService, fileService, fileServerService, commonRepository }) => ({
     adminAnnouncementRepository: new AdminAnnouncementRepository(
       prismaService,
       fileService,
-      fileServerService
+      fileServerService,
+      commonRepository
     ),
   }))
