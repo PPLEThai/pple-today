@@ -2,6 +2,7 @@
   "name": "@pplethai/pple-today-miniapp-sdk",
   "version": "0.1.2",
   "description": "PPLE Today Mini App SDK",
+  "types": "./build/index.d.ts",
   "files": [
     "build"
   ],
@@ -14,8 +15,7 @@
     ".": {
       "require": "./build/cjs.js",
       "import": "./build/esm.js",
-      "default": "./build/esm.js",
-      "types": "./build/index.d.ts"
+      "default": "./build/esm.js"
     }
   },
   "publishConfig": {
