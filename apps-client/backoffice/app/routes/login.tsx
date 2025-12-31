@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 
 import { Button } from '@pple-today/web-ui/button'
+import { Typography } from '@pple-today/web-ui/typography'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, redirect, useRouterState } from '@tanstack/react-router'
 import { SplashScreen } from 'components/SplashScreen'
@@ -35,10 +36,12 @@ function RouteComponent() {
 
   const queryClient = useQueryClient()
   const navigate = Route.useNavigate()
+  const [errorMessage, setErrorMessage] = React.useState<string>('')
   const signInMutation = useMutation({
     mutationKey: ['sso', 'signin-callback'],
-    mutationFn: () => {
-      return userManager.signinCallback()
+    mutationFn: async () => {
+      await userManager.clearStaleState()
+      return await userManager.signinCallback()
     },
     onSuccess: (user) => {
       queryClient.invalidateQueries({ queryKey: userQueryOptions.queryKey })
@@ -48,11 +51,14 @@ function RouteComponent() {
       navigate({ search: { ...search, redirect: user?.url_state } })
     },
     onError: (error) => {
+      setErrorMessage('Failed to sign in. Please try again.')
       console.error('SSO sign-in error:', error)
     },
   })
 
+  const authMeQuery = reactQueryClient.useQuery('/admin/auth/me', {}, { enabled: false })
   const userQuery = useQuery({ ...userQueryOptions, enabled: false })
+
   // prevent double call in React Strict Mode
   // mutation.isPending is not sufficient
   const called = useRef(false)
@@ -65,7 +71,7 @@ function RouteComponent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const disabled = signInRedirectMutation.isPending || signInMutation.isPending
+  const disabled = signInRedirectMutation.isPending || (!errorMessage && signInMutation.isPending)
 
   const routerState = useRouterState()
   if (routerState.isLoading) {
@@ -79,6 +85,11 @@ function RouteComponent() {
         <Button onClick={() => signInRedirectMutation.mutate()} disabled={disabled}>
           Login with SSO
         </Button>
+        {(authMeQuery.isError || errorMessage) && (
+          <Typography variant="p" fontWeight="bold" className="text-red-600 text-center">
+            {authMeQuery.error?.value.error.message || errorMessage}
+          </Typography>
+        )}
       </section>
     </div>
   )
