@@ -124,17 +124,19 @@ function ElectionCandidateList({ election }: { election: GetElectionResponse }) 
       <H2 className="text-xs font-heading-semibold text-base-text-high mb-1">
         รายชื่อผู้ลงสมัครเลือกตั้ง
       </H2>
-      <View className="flex flex-col gap-3">
+      <View className="flex flex-col">
         {election.candidates.map((candidate) => (
-          <View key={candidate.id} className="py-3 px-1 flex flex-row gap-2 items-center">
-            <View className="flex flex-col gap-1 items-center">
-              <Text className="text-xs font-heading-semibold text-base-primary-default -mb-1">
-                เบอร์
-              </Text>
-              <Text className="text-3xl font-heading-bold text-base-primary-default">
-                {candidate.number}
-              </Text>
-            </View>
+          <View key={candidate.id} className="py-1 px-1 flex flex-row gap-2 items-center">
+            {candidate.number !== null && (
+              <View className="flex flex-col gap-1 items-center">
+                <Text className="text-xs font-heading-semibold text-base-primary-default -mb-1">
+                  เบอร์
+                </Text>
+                <Text className="text-3xl font-heading-bold text-base-primary-default">
+                  {candidate.number}
+                </Text>
+              </View>
+            )}
             <Avatar alt="Candidate Profile Image" className="size-10">
               {election.candidates[0].profileImageUrl && (
                 <AvatarImage

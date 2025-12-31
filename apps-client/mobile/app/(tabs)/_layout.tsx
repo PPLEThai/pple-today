@@ -20,7 +20,7 @@ import {
 } from 'lucide-react-native'
 import { cssInterop } from 'nativewind'
 
-import PPLEIconBlack from '@app/assets/pple-icon-black.svg'
+import PPLEIcon from '@app/assets/pple-icon.svg'
 import { useSession } from '@app/libs/auth'
 import { useCallbackRef } from '@app/utils/use-callback-ref'
 
@@ -73,7 +73,7 @@ export default function BottomTabsLayout() {
             name="(official)"
             options={{
               title: 'ทางการ',
-              tabBarIcon: (props) => <TabBarIcon {...props} icon={PPLEIconBlack} />,
+              tabBarIcon: (props) => <TabBarIcon {...props} icon={PPLEIcon} />,
               tabBarLabel: TabBarLabel,
               tabBarButton: TabBarButton,
             }}
@@ -109,12 +109,15 @@ export default function BottomTabsLayout() {
   )
 }
 
-function TabBarIcon(props: { focused: boolean; icon: LucideIcon }) {
+function TabBarIcon(props: { focused: boolean; icon: LucideIcon; size?: number }) {
+  const size = props.size ?? 24
   return (
     <Icon
       icon={props.icon}
-      size={24}
-      className={clsx(props.focused ? 'text-base-primary-default' : 'text-base-text-high ')}
+      size={size}
+      width={size}
+      height={size}
+      className={clsx(props.focused ? 'text-base-primary-default' : 'text-base-text-high')}
       strokeWidth={1.5}
     />
   )
