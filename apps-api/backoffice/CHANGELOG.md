@@ -1,5 +1,17 @@
 # @api/backoffice
 
+## 1.4.7
+
+### Patch Changes
+
+- [#334](https://github.com/PPLEThai/pple-today/pull/334) [`3810b06`](https://github.com/PPLEThai/pple-today/commit/3810b062cd57cc00bdb805f951467b21ee10dc45) Thanks [@miello](https://github.com/miello)! - [[PPLE-628] Guard Suspended User not to be able to vote in an election](https://linear.app/snts/issue/PPLE-628/guard-suspended-user-not-to-be-able-to-vote-in-an-election)
+
+- [#349](https://github.com/PPLEThai/pple-today/pull/349) [`36d5344`](https://github.com/PPLEThai/pple-today/commit/36d534453e4f82fc9fae71eb24456d741e9d5566) Thanks [@miello](https://github.com/miello)! - [[PPLE-636] [App] Mini app styling](https://linear.app/snts/issue/PPLE-636/app-mini-app-styling)
+  [[PPLE-633] [App] Mini App card too wide when it only has single card](https://linear.app/snts/issue/PPLE-633/app-mini-app-card-too-wide-when-it-only-has-single-card)
+
+- [#338](https://github.com/PPLEThai/pple-today/pull/338) [`10578bf`](https://github.com/PPLEThai/pple-today/commit/10578bf4a2b925f44e5051714468a8c6d8a70e72) Thanks [@miello](https://github.com/miello)! - [[PPLE-625] Cancel status not display in Today App](https://linear.app/snts/issue/PPLE-625/cancel-status-not-display-in-today-app)
+  [[PPLE-616] Add Announcement Empty state](https://linear.app/snts/issue/PPLE-616/add-announcement-empty-state)
+
 ## 1.4.6
 
 ### Patch Changes
