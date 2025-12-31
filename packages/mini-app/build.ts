@@ -3,7 +3,6 @@ import { build } from 'esbuild'
 async function main() {
   await build({
     entryPoints: ['./src/index.ts'],
-    bundle: true,
     treeShaking: true,
     minify: true,
     platform: 'browser',
@@ -12,7 +11,6 @@ async function main() {
   })
   await build({
     entryPoints: ['./src/index.ts'],
-    bundle: true,
     treeShaking: true,
     minify: true,
     platform: 'neutral',
@@ -20,7 +18,6 @@ async function main() {
   })
   await build({
     entryPoints: ['./src/index.ts'],
-    bundle: true,
     treeShaking: true,
     minify: true,
     outfile: './build/cjs.js',
