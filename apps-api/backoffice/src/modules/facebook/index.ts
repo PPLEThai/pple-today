@@ -41,7 +41,10 @@ export const FacebookController = new Elysia({
           return status(200, accessTokenResult.value)
         },
         {
-          requiredLocalRole: ['pple-ad:mp', 'pple-ad:hq'],
+          requiredLocalUserPrecondition: {
+            allowedRoles: ['pple-ad:mp', 'pple-ad:hq'],
+            isActive: true,
+          },
           detail: {
             summary: 'Get Facebook User Access Token',
             description: 'Fetches the user access token from Facebook using the authorization code',
@@ -69,7 +72,10 @@ export const FacebookController = new Elysia({
           return status(200, pageList.value)
         },
         {
-          requiredLocalRole: ['pple-ad:mp', 'pple-ad:hq'],
+          requiredLocalUserPrecondition: {
+            allowedRoles: ['pple-ad:mp', 'pple-ad:hq'],
+            isActive: true,
+          },
           detail: {
             summary: 'Get Facebook User Page List',
             description: 'Fetches the list of Facebook pages associated with the user',
@@ -107,6 +113,7 @@ export const FacebookController = new Elysia({
           },
           requiredLocalUserPrecondition: {
             allowedRoles: ['pple-ad:mp', 'pple-ad:hq'],
+            isActive: true,
           },
           query: GetLinkedPageAvailableStatusQuery,
           response: {
@@ -135,6 +142,7 @@ export const FacebookController = new Elysia({
         {
           requiredLocalUserPrecondition: {
             allowedRoles: ['pple-ad:mp', 'pple-ad:hq'],
+            isActive: true,
           },
           response: {
             200: GetLinkedFacebookPageResponse,
