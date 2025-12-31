@@ -57,8 +57,11 @@ export class ProfileRepository {
   }
 
   private getElectionStatus(election: Election): ElectionStatus {
-    const now = new Date()
+    if (election.isCancelled) {
+      return 'CANCELLED'
+    }
 
+    const now = new Date()
     if (now < election.openVoting) {
       return 'NOT_OPENED_VOTE'
     } else if (now < election.closeVoting) {
