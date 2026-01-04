@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { createMutation, createQuery } from 'react-query-kit'
 
 import { Button } from '@pple-today/ui/button'
@@ -29,6 +29,7 @@ import { useRouter } from 'expo-router'
 import { TriangleAlertIcon } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
+import type { GetAuthMeResponse } from '@api/backoffice/app'
 import { environment } from '@app/env'
 
 import { AuthSession, getAuthSession, getAuthSessionAsync, setAuthSession } from './session'
@@ -148,10 +149,13 @@ export const useAuthMe = () => {
     {},
     {
       enabled: !!session,
-      select: ({ status, ...user }) => ({
-        ...user,
-        isSuspended: status !== 'ACTIVE',
-      }),
+      select: useCallback(
+        ({ status, ...user }: GetAuthMeResponse) => ({
+          ...user,
+          isSuspended: status !== 'ACTIVE',
+        }),
+        []
+      ),
     }
   )
 }
