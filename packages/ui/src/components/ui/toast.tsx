@@ -33,8 +33,8 @@ const toastVariants = cva(
 function ToastBody(props: ToastConfigParams<ToastAdditionalProps>) {
   const type = props.type as ToastType
   return (
-    <View className={toastVariants({ type })}>
-      <Pressable className="flex flex-1 flex-row items-center gap-4 w-full" onPress={props.onPress}>
+    <Pressable className={toastVariants({ type })} onPress={props.onPress}>
+      <View className="flex flex-1 flex-row items-center gap-4 w-full">
         {props.props.icon ? (
           <Icon icon={props.props.icon} className="text-white" size={26} strokeWidth={2} />
         ) : null}
@@ -56,7 +56,7 @@ function ToastBody(props: ToastConfigParams<ToastAdditionalProps>) {
             </Text>
           )}
         </View>
-      </Pressable>
+      </View>
       {props.props.action === null ? null : typeof props.props.action === 'function' ? (
         props.props.action(props)
       ) : (
@@ -71,7 +71,7 @@ function ToastBody(props: ToastConfigParams<ToastAdditionalProps>) {
           <Icon icon={XIcon} className="text-white" />
         </Button>
       )}
-    </View>
+    </Pressable>
   )
 }
 
