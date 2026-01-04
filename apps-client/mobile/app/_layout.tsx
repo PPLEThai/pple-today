@@ -25,12 +25,13 @@ import {
 import { BottomSheetModalProvider } from '@pple-today/ui/bottom-sheet/index'
 import { NAV_THEME } from '@pple-today/ui/lib/constants'
 import { PortalHost } from '@pple-today/ui/portal'
-import { Toaster } from '@pple-today/ui/toast'
+import { toast, Toaster } from '@pple-today/ui/toast'
 import {
   AuthorizationStatus,
   getInitialNotification,
   getMessaging,
   getToken,
+  onMessage,
   onNotificationOpenedApp,
   requestPermission,
 } from '@react-native-firebase/messaging'
@@ -43,12 +44,15 @@ import * as Clipboard from 'expo-clipboard'
 import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
+import { InfoIcon } from 'lucide-react-native'
 
 import { StatusBarProvider } from '@app/context/status-bar'
 import { environment } from '@app/env'
 import { reactQueryClient } from '@app/libs/api-client'
 import { AuthLifeCycleHook, useAuthMe } from '@app/libs/auth'
 import { openLink } from '@app/utils/link'
+
+import { optimisticMarkAsRead } from './(tabs)/(feed)/notification'
 
 dayjs.extend(buddhistEra)
 dayjs.extend(duration)
@@ -202,6 +206,7 @@ function NotificationTokenConsentPopup() {
     '/notifications/register',
     {}
   )
+  const markAsReadMutation = reactQueryClient.useMutation('put', '/notifications/read/:id', {})
   const authMe = useAuthMe()
 
   const handleRemoteMessage = async (data: Record<string, string | object>) => {
@@ -210,7 +215,12 @@ function NotificationTokenConsentPopup() {
     if (linkData) {
       try {
         const link = JSON.parse(linkData as string)
-        if (link.type && link.value) {
+        if (link.type && link.destination) {
+          if (link.type === 'IN_APP_NAVIGATION' && link.destination.inAppType === 'NOTIFICATION') {
+            const notificationId = link.destination.inAppId
+            optimisticMarkAsRead(queryClient, notificationId)
+            markAsReadMutation.mutateAsync({ pathParams: { id: notificationId } })
+          }
           await openLink(link)
         }
       } catch (err) {
@@ -256,7 +266,38 @@ function NotificationTokenConsentPopup() {
       }
     })
 
-    return unsubscribeOpenedApp
+    const unsubscribeOnMessage = onMessage(messaging, async (remoteMessage) => {
+      const title = remoteMessage.notification?.title
+      const body = remoteMessage.notification?.body
+
+      queryClient.setQueryData(
+        reactQueryClient.getQueryKey('/notifications/unread-count'),
+        (oldData) => {
+          if (!oldData) return oldData
+          return {
+            ...oldData,
+            unreadCount: oldData.unreadCount + 1,
+          }
+        }
+      )
+
+      toast.info({
+        text1: title,
+        text2: body,
+        icon: InfoIcon,
+        onPress: async () => {
+          if (remoteMessage && remoteMessage.data) {
+            await handleRemoteMessage(remoteMessage.data)
+            toast.hide()
+          }
+        },
+      })
+    })
+
+    return () => {
+      unsubscribeOpenedApp()
+      unsubscribeOnMessage()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authMe.data])
 
