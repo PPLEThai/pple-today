@@ -36,7 +36,6 @@ function RouteComponent() {
 
   const queryClient = useQueryClient()
   const navigate = Route.useNavigate()
-  const [errorMessage, setErrorMessage] = React.useState<string>('')
   const signInMutation = useMutation({
     mutationKey: ['sso', 'signin-callback'],
     mutationFn: async () => {
@@ -51,7 +50,6 @@ function RouteComponent() {
       navigate({ search: { ...search, redirect: user?.url_state } })
     },
     onError: (error) => {
-      setErrorMessage('Failed to sign in. Please try again.')
       console.error('SSO sign-in error:', error)
     },
   })
@@ -67,11 +65,12 @@ function RouteComponent() {
       return
     }
     called.current = true
-    signInMutation.mutate()
+    setTimeout(() => signInMutation.mutate(), 0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const disabled = signInRedirectMutation.isPending || (!errorMessage && signInMutation.isPending)
+  const disabled =
+    signInRedirectMutation.isPending || (!signInMutation.error?.message && signInMutation.isPending)
 
   const routerState = useRouterState()
   if (routerState.isLoading) {
@@ -85,9 +84,9 @@ function RouteComponent() {
         <Button onClick={() => signInRedirectMutation.mutate()} disabled={disabled}>
           Login with SSO
         </Button>
-        {(authMeQuery.isError || errorMessage) && (
+        {(authMeQuery.isError || signInMutation.error?.message) && (
           <Typography variant="p" fontWeight="bold" className="text-red-600 text-center">
-            {authMeQuery.error?.value.error.message || errorMessage}
+            {authMeQuery.error?.value.error.message || signInMutation.error?.message}
           </Typography>
         )}
       </section>
