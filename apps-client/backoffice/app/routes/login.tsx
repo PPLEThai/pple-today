@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react'
 
 import { Button } from '@pple-today/web-ui/button'
+import { Typography } from '@pple-today/web-ui/typography'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, redirect, useRouterState } from '@tanstack/react-router'
 import { SplashScreen } from 'components/SplashScreen'
@@ -37,8 +38,9 @@ function RouteComponent() {
   const navigate = Route.useNavigate()
   const signInMutation = useMutation({
     mutationKey: ['sso', 'signin-callback'],
-    mutationFn: () => {
-      return userManager.signinCallback()
+    mutationFn: async () => {
+      await userManager.clearStaleState()
+      return await userManager.signinCallback()
     },
     onSuccess: (user) => {
       queryClient.invalidateQueries({ queryKey: userQueryOptions.queryKey })
@@ -52,7 +54,9 @@ function RouteComponent() {
     },
   })
 
+  const authMeQuery = reactQueryClient.useQuery('/admin/auth/me', {}, { enabled: false })
   const userQuery = useQuery({ ...userQueryOptions, enabled: false })
+
   // prevent double call in React Strict Mode
   // mutation.isPending is not sufficient
   const called = useRef(false)
@@ -61,11 +65,15 @@ function RouteComponent() {
       return
     }
     called.current = true
-    signInMutation.mutate()
+    // Ref: https://github.com/TanStack/query/issues/5341
+    const timeoutId = setTimeout(() => signInMutation.mutate(), 0)
+
+    return () => clearTimeout(timeoutId)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const disabled = signInRedirectMutation.isPending || signInMutation.isPending
+  const disabled =
+    signInRedirectMutation.isPending || (!signInMutation.error?.message && signInMutation.isPending)
 
   const routerState = useRouterState()
   if (routerState.isLoading) {
@@ -79,6 +87,11 @@ function RouteComponent() {
         <Button onClick={() => signInRedirectMutation.mutate()} disabled={disabled}>
           Login with SSO
         </Button>
+        {(authMeQuery.isError || signInMutation.error?.message) && (
+          <Typography variant="p" fontWeight="bold" className="text-red-600 text-center">
+            {authMeQuery.error?.value.error.message || signInMutation.error?.message}
+          </Typography>
+        )}
       </section>
     </div>
   )
