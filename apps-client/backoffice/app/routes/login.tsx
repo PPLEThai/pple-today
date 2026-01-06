@@ -65,6 +65,7 @@ function RouteComponent() {
       return
     }
     called.current = true
+    // Ref: https://github.com/TanStack/query/issues/5341
     setTimeout(() => signInMutation.mutate(), 0)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
