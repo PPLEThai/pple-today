@@ -8,7 +8,7 @@ import {
   ListUserPageResponse,
   PagePost,
 } from '@pple-today/api-common/dtos'
-import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
+import { ElysiaLoggerInstance } from '@pple-today/api-common/plugins'
 import { PrismaService } from '@pple-today/api-common/services'
 import { FileService } from '@pple-today/api-common/services'
 import { err } from '@pple-today/api-common/utils'
@@ -22,6 +22,7 @@ import { fromPromise, ok } from 'neverthrow'
 
 import { ConfigServicePlugin } from '../../plugins/config'
 import { FileServicePlugin } from '../../plugins/file'
+import { ElysiaLoggerPlugin } from '../../plugins/log'
 import { PrismaServicePlugin } from '../../plugins/prisma'
 
 export class FacebookRepository {

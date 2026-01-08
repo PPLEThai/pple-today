@@ -1,5 +1,5 @@
 import { PublicFilePath } from '@pple-today/api-common/dtos'
-import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
+import { ElysiaLoggerInstance } from '@pple-today/api-common/plugins'
 import { FileService } from '@pple-today/api-common/services'
 import Elysia from 'elysia'
 
@@ -7,6 +7,7 @@ import { GetOptimizedImageUrlQuery } from './models'
 
 import { ConfigServicePlugin } from '../../plugins/config'
 import { FileServicePlugin } from '../../plugins/file'
+import { ElysiaLoggerPlugin } from '../../plugins/log'
 
 export class FileServerService {
   private readonly ALLOW_IMAGE_EXTENSIONS = [

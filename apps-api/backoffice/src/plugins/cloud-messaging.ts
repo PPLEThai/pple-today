@@ -1,5 +1,5 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
-import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
+import { ElysiaLoggerInstance } from '@pple-today/api-common/plugins'
 import { err } from '@pple-today/api-common/utils'
 import { NotificationInAppType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
@@ -8,6 +8,7 @@ import { fromPromise, ok } from 'neverthrow'
 import * as R from 'remeda'
 
 import { ConfigServicePlugin } from './config'
+import { ElysiaLoggerPlugin } from './log'
 
 import { promiseWithExponentialBackoff } from '../utils/promise'
 

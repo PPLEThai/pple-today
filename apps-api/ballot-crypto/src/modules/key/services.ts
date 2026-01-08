@@ -1,5 +1,5 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
-import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
+import { ElysiaLoggerInstance } from '@pple-today/api-common/plugins'
 import { ElectionKeysStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
@@ -9,6 +9,7 @@ import {
   BackofficeAdminServicePlugin,
 } from '../../plugins/backoffice.admin'
 import { KeyManagementPlugin, KeyManagementService } from '../../plugins/kms'
+import { ElysiaLoggerPlugin } from '../../plugins/log'
 import { mapGoogleAPIError } from '../../utils/error'
 
 export class KeyService {

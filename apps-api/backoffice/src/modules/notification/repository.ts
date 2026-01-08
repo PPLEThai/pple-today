@@ -1,5 +1,5 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
-import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
+import { ElysiaLoggerInstance } from '@pple-today/api-common/plugins'
 import { PrismaService } from '@pple-today/api-common/services'
 import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import {
@@ -21,6 +21,7 @@ import * as R from 'remeda'
 import { CreateNewExternalNotificationBody } from './models'
 
 import { CloudMessagingService, CloudMessagingServicePlugin } from '../../plugins/cloud-messaging'
+import { ElysiaLoggerPlugin } from '../../plugins/log'
 import { PrismaServicePlugin } from '../../plugins/prisma'
 
 export class NotificationRepository {
