@@ -210,7 +210,7 @@ function NotificationTokenConsentPopup() {
     if (linkData) {
       try {
         const link = JSON.parse(linkData as string)
-        if (link.type && link.value) {
+        if (link.type && link.destination) {
           await openLink(link)
         }
       } catch (err) {
