@@ -45,7 +45,9 @@ export const ElectionController = new Elysia({
         summary: 'List elections',
         description: 'List elections based on user and page',
       },
-      requiredLocalUser: true,
+      requiredLocalUserPrecondition: {
+        isActive: true,
+      },
       query: ListElectionQuery,
       response: {
         200: ListElectionResponse,
@@ -71,7 +73,9 @@ export const ElectionController = new Elysia({
         summary: 'Get election by id based on user',
         description: 'Get election by id based on user',
       },
-      requiredLocalUser: true,
+      requiredLocalUserPrecondition: {
+        isActive: true,
+      },
       params: GetElectionParams,
       response: {
         200: GetElectionResponse,

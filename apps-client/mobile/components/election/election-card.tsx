@@ -115,8 +115,13 @@ export function ElectionStatusBadge(props: { status: ElectionWithCurrentStatus['
         </Badge>
       )
     case 'DRAFT':
-    case 'CANCELLED':
       return null
+    case 'CANCELLED':
+      return (
+        <Badge variant="destructive">
+          <Text>ยกเลิก</Text>
+        </Badge>
+      )
     default:
       exhaustiveGuard(props.status)
   }

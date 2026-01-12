@@ -758,14 +758,14 @@ export const Participation = ({
               </View>
             </View>
           </View>
-          <Button variant="ghost" size="icon">
+          <View className="p-2">
             <Icon
               icon={CircleArrowRightIcon}
               className="text-base-text-high"
               size={24}
               strokeWidth={1}
             />
-          </Button>
+          </View>
         </Pressable>
       )
     default:

@@ -596,7 +596,7 @@ function UpvoteButton(props: UpvoteButtonProps) {
           user.data?.isSuspended && 'opacity-70'
         )}
       >
-        เห็นด้วย
+        สนับสนุน
       </Text>
     </AnimatedButton>
   )
@@ -666,7 +666,7 @@ function DownvoteButton(props: { feedId: string }) {
             user.data?.isSuspended && 'opacity-70'
           )}
         >
-          ไม่เห็นด้วย
+          ไม่สนับสนุน
         </Text>
       </AnimatedButton>
       <BottomSheetModal ref={bottomSheetModalRef} keyboardBehavior="interactive">
@@ -761,7 +761,7 @@ function DownvoteCommentForm(props: DownvoteCommentFormProps) {
         <Text className="text-2xl font-heading-bold">ข้อเสนอแนะ</Text>
         <Text className="text-sm font-heading-regular">
           {
-            'บอกพวกเราทีว่าเหตุใดคุณถึงไม่เห็นด้วย\nความคิดเห็นของคุณจะถูกแสดงเป็นความคิดเห็นส่วนตัว'
+            'บอกพวกเราทีว่าเหตุใดคุณถึงไม่สนับสนุน\nความคิดเห็นของคุณจะถูกแสดงเป็นความคิดเห็นส่วนตัว'
           }
         </Text>
       </View>
