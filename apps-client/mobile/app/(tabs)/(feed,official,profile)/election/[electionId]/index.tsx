@@ -16,6 +16,7 @@ import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { ElectionDetailCard } from '@app/components/election/election-card'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { reactQueryClient } from '@app/libs/api-client'
+import { useAuthMe } from '@app/libs/auth'
 import { createImageUrl } from '@app/utils/image'
 
 export default function ElectionDetailPage() {
@@ -81,14 +82,15 @@ export default function ElectionDetailPage() {
 }
 
 function ElectionAction({ election }: { election: ElectionWithCurrentStatus }) {
+  const user = useAuthMe()
   if (
     election.status === 'OPEN_VOTE' &&
     (election.type === 'ONLINE' || election.type === 'HYBRID')
   ) {
     return (
       <View className="p-4">
-        <Link href={`/election/${election.id}/vote`} asChild>
-          <Button>
+        <Link disabled={user.data?.isSuspended} href={`/election/${election.id}/vote`} asChild>
+          <Button disabled={user.data?.isSuspended}>
             <Icon icon={VoteIcon} size={16} />
             <Text>{election.isVoted ? 'ลงคะแนนใหม่' : 'ลงคะแนน'}</Text>
           </Button>

@@ -409,6 +409,7 @@ function LinkFacebookPage() {
   const [permissionStatus, requestPermission] = useTrackingPermissions()
   const [permissionDialogOpen, setPermissionDialogOpen] = React.useState(false)
   const router = useRouter()
+  const user = useAuthMe()
 
   const logitWithFacebookMutation = useMutation({
     mutationFn: async () => {
@@ -437,6 +438,9 @@ function LinkFacebookPage() {
     },
   })
   function addFacebookPage() {
+    if (user.data?.isSuspended) {
+      return
+    }
     if (Platform.OS !== 'ios') {
       logitWithFacebookMutation.mutate()
       return
@@ -455,7 +459,9 @@ function LinkFacebookPage() {
     <Dialog open={permissionDialogOpen} onOpenChange={setPermissionDialogOpen}>
       <Button
         variant="secondary"
-        disabled={permissionStatus === null || logitWithFacebookMutation.isPending}
+        disabled={
+          permissionStatus === null || logitWithFacebookMutation.isPending || user.data?.isSuspended
+        }
         onPress={addFacebookPage}
       >
         <Icon icon={PlusIcon} />

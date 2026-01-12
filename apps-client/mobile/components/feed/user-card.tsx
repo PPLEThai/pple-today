@@ -17,7 +17,7 @@ import { ArrowRightIcon, UserRoundPlusIcon } from 'lucide-react-native'
 
 import { GetUserRecommendationResponse } from '@api/backoffice/app'
 import { reactQueryClient } from '@app/libs/api-client'
-import { useSession } from '@app/libs/auth'
+import { useAuthMe, useSession } from '@app/libs/auth'
 import { createImageUrl } from '@app/utils/image'
 
 import { AvatarPPLEFallback } from '../avatar-pple-fallback'
@@ -40,6 +40,7 @@ interface UserCardProps {
 export function UserCard(props: UserCardProps) {
   const { isFollowing, toggleFollow } = useUserFollow(props.user.id, props.user.followed ?? false)
   const router = useRouter()
+  const user = useAuthMe()
   return (
     <AnimatedBackgroundPressable
       onPress={() => router.navigate(`/user/${props.user.id}`)}
@@ -70,6 +71,7 @@ export function UserCard(props: UserCardProps) {
         variant={isFollowing ? 'outline-primary' : 'primary'}
         size="sm"
         onPress={toggleFollow}
+        disabled={user.data?.isSuspended}
         className="w-full"
       >
         <Text>{isFollowing ? 'กำลังติดตาม' : 'ติดตาม'} </Text>
@@ -90,6 +92,7 @@ export function useUserFollow(userId: string, initialData: boolean) {
     variables: { userId },
     initialData: initialData,
   })
+  const user = useAuthMe()
 
   const followMutation = reactQueryClient.useMutation('post', '/profile/:id/follow', {})
   const unfollowMutation = reactQueryClient.useMutation('delete', '/profile/:id/follow', {})
@@ -103,6 +106,10 @@ export function useUserFollow(userId: string, initialData: boolean) {
   )
   const isFollowing = userFollowQuery.data
   const toggleFollow = async () => {
+    if (user.data?.isSuspended) {
+      return
+    }
+
     setFollowing(!isFollowing)
     if (isFollowing) {
       await unfollowMutation.mutateAsync({ pathParams: { id: userId } })

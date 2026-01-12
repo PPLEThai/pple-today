@@ -143,6 +143,7 @@ export const PollOptionItem = React.memo(function PollOptionItem({
         'items-center justify-center rounded-xl active:bg-muted w-full overflow-hidden border bg-base-bg-white border-base-outline-medium',
         ToggleGroupPrimitive.utils.getIsSelected(value, props.value) &&
           'border-base-primary-default',
+        props.disabled && 'opacity-50',
         className
       )}
       {...props}
