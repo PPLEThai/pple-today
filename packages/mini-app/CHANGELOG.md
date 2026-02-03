@@ -1,5 +1,11 @@
 # @pplethai/pple-today-miniapp-sdk
 
+## 0.1.3
+
+### Patch Changes
+
+- [#358](https://github.com/PPLEThai/pple-today/pull/358) [`22658ca`](https://github.com/PPLEThai/pple-today/commit/22658ca6a2b96121ae0f6d86cf132cad932b9d8d) Thanks [@miello](https://github.com/miello)! - [[PPLE-648] [Mini App] Optimize package size by removing bundle flag](https://linear.app/snts/issue/PPLE-648/mini-app-optimize-package-size-by-removing-bundle-flag)
+
 ## 0.1.2
 
 ### Patch Changes

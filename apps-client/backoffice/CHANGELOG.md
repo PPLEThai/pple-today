@@ -1,5 +1,18 @@
 # @client/backoffice
 
+## 1.2.1
+
+### Patch Changes
+
+- [#337](https://github.com/PPLEThai/pple-today/pull/337) [`6b8fb5b`](https://github.com/PPLEThai/pple-today/commit/6b8fb5b7badbfbfc485872cbddb2b1c330054a6b) Thanks [@miello](https://github.com/miello)! - [[PPLE-624] Handle no candidate number](https://linear.app/snts/issue/PPLE-624/handle-no-candidate-number)
+  [[PPLE-612] Cannot Navigate to Election Detail page through button](https://linear.app/snts/issue/PPLE-612/cannot-navigate-to-election-detail-page-through-button)
+  [[PPLE-607] Sync following topic to feed tab](https://linear.app/snts/issue/PPLE-607/sync-following-topic-to-feed-tab)
+  [[PPLE-606] Followed topic does not appear as following in my content](https://linear.app/snts/issue/PPLE-606/followed-topic-does-not-appear-as-following-in-my-content)
+  [[PPLE-605] Change เห็นด้วย to สนับสนุน](https://linear.app/snts/issue/PPLE-605/change-เห็นด้วย-to-สนับสนุน)
+  [[PPLE-601] Use solid instead of outline](https://linear.app/snts/issue/PPLE-601/use-solid-instead-of-outline)
+
+- [#361](https://github.com/PPLEThai/pple-today/pull/361) [`b4fccd1`](https://github.com/PPLEThai/pple-today/commit/b4fccd14645315d9026f6568e1440648ee189476) Thanks [@miello](https://github.com/miello)! - chore: bump react and react-dom to resolve CVE-2026-23864
+
 ## 1.2.0
 
 ### Minor Changes
