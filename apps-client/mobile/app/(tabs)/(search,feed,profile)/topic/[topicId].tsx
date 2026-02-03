@@ -34,6 +34,7 @@ import { FeedCard } from '@app/components/feed/feed-card'
 import { useTopicFollow } from '@app/components/feed/topic-card'
 import { useLightStatusBar } from '@app/context/status-bar'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
+import { useAuthMe } from '@app/libs/auth'
 
 const LIMIT = 10
 export default function TopicDetailPage() {
@@ -49,6 +50,7 @@ export default function TopicDetailPage() {
     pathParams: { id: topicId! },
     enabled: !!topicId,
   })
+  const user = useAuthMe()
 
   const feedInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/feed/topic'),
@@ -240,6 +242,7 @@ export default function TopicDetailPage() {
               <Button
                 size="icon"
                 variant={isFollowing ? 'outline-primary' : 'primary'}
+                disabled={user.data?.isSuspended}
                 onPress={toggleFollow}
                 aria-label="ติดตาม"
               >
@@ -259,6 +262,7 @@ export default function TopicDetailPage() {
           </H1>
           <Button
             size="sm"
+            disabled={user.data?.isSuspended}
             variant={isFollowing ? 'outline-primary' : 'primary'}
             onPress={toggleFollow}
           >
