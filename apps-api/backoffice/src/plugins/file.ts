@@ -1,8 +1,8 @@
-import { ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
 import { FileService } from '@pple-today/api-common/services'
 import Elysia from 'elysia'
 
 import { ConfigServicePlugin } from './config'
+import { ElysiaLoggerPlugin } from './log'
 
 export const FileServicePlugin = new Elysia({ name: 'FileService' })
   .use([

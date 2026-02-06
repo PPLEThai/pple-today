@@ -1,31 +1,12 @@
-import { ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
 import { PrismaService } from '@pple-today/api-common/services'
 import { PrismaPg } from '@prisma/adapter-pg'
 import Elysia from 'elysia'
 
 import { ConfigServicePlugin } from './config'
+import { ElysiaLoggerPlugin } from './log'
 
 export const PrismaServicePlugin = new Elysia({ name: 'PrismaService' })
-  .use([ConfigServicePlugin])
-  .use((app) => {
-    const configService = app.decorator.configService
-
-    return app.use(
-      ElysiaLoggerPlugin({
-        name: 'PrismaService',
-        transport:
-          configService.get('APP_ENV') === 'development'
-            ? {
-                target: 'pino-pretty',
-                options: {
-                  colorize: true,
-                  translateTime: 'SYS:standard',
-                },
-              }
-            : undefined,
-      })
-    )
-  })
+  .use([ConfigServicePlugin, ElysiaLoggerPlugin({ name: 'PrismaService' })])
   .decorate(({ loggerService, configService }) => {
     const connectionString = configService.get('DATABASE_URL')
     const adapter = new PrismaPg({ connectionString })
