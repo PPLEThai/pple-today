@@ -307,7 +307,10 @@ function ElectionCardFooter(props: ElectionCardProps) {
     case 'NOT_OPENED_VOTE': {
       if (props.election.type === 'ONLINE') {
         return (
-          <ElectionNotification electionId={props.election.id}>
+          <ElectionNotification
+            electionId={props.election.id}
+            initialData={props.election.isRemindMe}
+          >
             {({ isEnabled, setIsEnabled }) => (
               <Button
                 size="sm"
@@ -334,7 +337,10 @@ function ElectionCardFooter(props: ElectionCardProps) {
               <Icon icon={MapPinnedIcon} size={16} />
               <Text>ดูสถานที่</Text>
             </Button>
-            <ElectionNotification electionId={props.election.id}>
+            <ElectionNotification
+              electionId={props.election.id}
+              initialData={props.election.isRemindMe}
+            >
               {({ isEnabled, setIsEnabled }) => (
                 <Button
                   disabled={user.data?.isSuspended}
@@ -354,7 +360,10 @@ function ElectionCardFooter(props: ElectionCardProps) {
         if (dayjs().isBefore(props.election.closeRegister) || props.election.isRegistered) {
           return (
             <View className="flex flex-row pt-2 gap-2.5">
-              <ElectionNotification electionId={props.election.id}>
+              <ElectionNotification
+                electionId={props.election.id}
+                initialData={props.election.isRemindMe}
+              >
                 {({ isEnabled, setIsEnabled }) => (
                   <Button
                     size="icon"
@@ -382,7 +391,10 @@ function ElectionCardFooter(props: ElectionCardProps) {
               <Icon icon={MapPinnedIcon} size={16} />
               <Text>ดูสถานที่</Text>
             </Button>
-            <ElectionNotification electionId={props.election.id}>
+            <ElectionNotification
+              electionId={props.election.id}
+              initialData={props.election.isRemindMe}
+            >
               {({ isEnabled, setIsEnabled }) => (
                 <Button size="sm" className="flex-1" onPress={() => setIsEnabled(!isEnabled)}>
                   <Icon icon={isEnabled ? AlarmClockCheckIcon : AlarmClockIcon} size={16} />
@@ -463,12 +475,40 @@ function useElectionNotificationState(electionId: string, initialData: boolean) 
     variables: { electionId },
     initialData: initialData,
   })
+  const notifyMeMutation = reactQueryClient.useMutation('post', '/elections/:electionId/notify', {})
+  const cancelNotifyMeMutation = reactQueryClient.useMutation(
+    'delete',
+    '/elections/:electionId/notify',
+    {}
+  )
   const queryClient = useQueryClient()
   const setElectionNotificationState = useCallback(
-    (data: boolean) => {
+    async (data: boolean) => {
       queryClient.setQueryData(useElectionNotificationQuery.getKey({ electionId }), data)
+
+      if (data) {
+        await notifyMeMutation.mutateAsync(
+          {
+            pathParams: { electionId },
+          },
+          {
+            onError: (error) => {
+              console.error('Election notify me error', JSON.stringify(error))
+            },
+          }
+        )
+      } else {
+        await cancelNotifyMeMutation.mutateAsync(
+          { pathParams: { electionId } },
+          {
+            onError: (error) => {
+              console.error('Election cancel notify me error', JSON.stringify(error))
+            },
+          }
+        )
+      }
     },
-    [queryClient, electionId]
+    [queryClient, electionId, notifyMeMutation, cancelNotifyMeMutation]
   )
   return [electionNotificationQuery.data, setElectionNotificationState] as const
 }

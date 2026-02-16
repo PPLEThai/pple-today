@@ -131,7 +131,10 @@ export class NotificationService {
     const sendResult = await this.notificationRepository.sendNotificationToUser(
       data.audience,
       data.content,
-      apiKeyId
+      {
+        type: 'EXTERNAL',
+        apiKeyId,
+      }
     )
 
     if (sendResult.isErr()) {

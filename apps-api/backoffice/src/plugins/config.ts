@@ -99,6 +99,10 @@ export const envSchema = t.Object({
       description: 'Cache time for PPLE Activity API responses in seconds',
     })
   ),
+
+  REDIS_URI: t.String({
+    description: 'URI for connecting to Redis instance',
+  }),
 })
 
 export const ConfigServicePlugin = createConfigServicePlugin({
