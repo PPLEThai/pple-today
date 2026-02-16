@@ -69,3 +69,5 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+!**/**/certificates/*.pem
