@@ -135,6 +135,11 @@ function MainHeader() {
     ? { welcome: 'ยินดีต้อนรับ', title: authMe.data.name }
     : { welcome: 'ยินดีต้อนรับสู่', title: 'PPLE Today' }
   const session = useSession()
+  const unreadNotificationCountQuery = reactQueryClient.useQuery(
+    '/notifications/unread-count',
+    {},
+    { enabled: !!session }
+  )
   return (
     <View className="w-full px-4 pt-4 pb-2 flex flex-row justify-between gap-2 bg-base-bg-white border-b border-base-outline-default ">
       <View className="flex flex-row items-center gap-3 flex-1">
@@ -165,10 +170,20 @@ function MainHeader() {
             variant="secondary"
             size="icon"
             aria-label="Notifications"
+            className="relative"
             onPress={() => {
               router.navigate('/notification')
             }}
           >
+            {unreadNotificationCountQuery.data?.unreadCount ? (
+              <View className="absolute -top-1 -right-2 min-w-[16px] h-4 rounded-full bg-system-danger-default px-1.5 flex items-center justify-center z-10">
+                <Text className="text-white font-heading-bold text-xs">
+                  {unreadNotificationCountQuery.data.unreadCount > 99
+                    ? '99+'
+                    : unreadNotificationCountQuery.data.unreadCount}
+                </Text>
+              </View>
+            ) : null}
             <Icon icon={BellIcon} size={20} className="fill-base-secondary-default" />
           </Button>
         )}
@@ -577,6 +592,9 @@ function FeedFollowingContent(props: PagerScrollViewProps) {
       queryClient.resetQueries({
         queryKey: reactQueryClient.getQueryKey('/feed/following'),
       }),
+      queryClient.resetQueries({
+        queryKey: reactQueryClient.getQueryKey('/notifications/unread-count'),
+      }),
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/banners') }),
     ])
     await feedInfiniteQuery.refetch()
@@ -701,6 +719,9 @@ function FeedContent(props: PagerScrollViewProps) {
     await Promise.all([
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/feed/me') }),
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/announcements') }),
+      queryClient.resetQueries({
+        queryKey: reactQueryClient.getQueryKey('/notifications/unread-count'),
+      }),
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/banners') }),
     ])
     await feedInfiniteQuery.refetch()
@@ -797,6 +818,9 @@ function FeedTopicContent(props: FeedTopicContentProps) {
     await Promise.all([
       queryClient.resetQueries({
         queryKey: reactQueryClient.getQueryKey('/feed/topic', { query: { topicId } }),
+      }),
+      queryClient.resetQueries({
+        queryKey: reactQueryClient.getQueryKey('/notifications/unread-count'),
       }),
       queryClient.resetQueries({ queryKey: reactQueryClient.getQueryKey('/banners') }),
     ])

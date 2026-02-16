@@ -52,6 +52,11 @@ export type GetNotificationDetailsByIdParams = Static<typeof GetNotificationDeta
 export const GetNotificationDetailsByIdResponse = Notification
 export type GetNotificationDetailsByIdResponse = Static<typeof GetNotificationDetailsByIdResponse>
 
+export const GetUnreadNotificationCountResponse = t.Object({
+  unreadCount: t.Number(),
+})
+export type GetUnreadNotificationCountResponse = Static<typeof GetUnreadNotificationCountResponse>
+
 export const CreateNewExternalNotificationHeader = t.Object({
   authorization: t.String({ pattern: '^Bearer .+' }),
 })
