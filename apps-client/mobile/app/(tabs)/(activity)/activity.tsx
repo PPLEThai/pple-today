@@ -219,6 +219,8 @@ function PollFeedSection(props: { ListHeaderComponent: React.ReactNode }) {
     queryFn: async ({ pageParam }) => {
       const response = await fetchClient('/polls', {
         query: { page: pageParam, limit: 10 },
+        headers: {},
+        body: {},
       })
       if (response.error) {
         throw response.error

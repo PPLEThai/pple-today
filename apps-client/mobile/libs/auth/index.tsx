@@ -287,6 +287,7 @@ export const login = async ({ discovery }: { discovery: DiscoveryDocument }) => 
       headers: { Authorization: `Bearer ${tokenResponse.accessToken}` },
       method: 'POST',
       query: { role: 'USER' },
+      body: {},
     })
     if (registerResponse.error?.status === 409) {
       console.log('User already exists:', JSON.stringify(registerResponse.error))

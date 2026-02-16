@@ -1,7 +1,7 @@
 import { TLiteral, TObject, TOptional, TString, TUnion, TUnknown } from '@sinclair/typebox'
 import { Static, t } from 'elysia'
 import { ElysiaCustomStatusResponse } from 'elysia/error'
-import { Prettify2 } from 'elysia/types'
+import { Prettify } from 'elysia/types'
 import { Err, err as defaultErr, ok, Result } from 'neverthrow'
 import { groupBy, map, mapValues, pipe } from 'remeda'
 import { Simplify, ValueOf } from 'type-fest'
@@ -16,7 +16,7 @@ type GroupErrorCodeToStatusCode<
 > = T extends [infer First extends InternalErrorCode, ...infer Rest extends InternalErrorCode[]]
   ? GroupErrorCodeToStatusCode<
       Rest,
-      Prettify2<
+      Prettify<
         Omit<Result, InternalErrorCodeSchemas[First]['status']> & {
           [K in InternalErrorCodeSchemas[First]['status']]: K extends keyof Result
             ? [...Result[K], ApiErrorSchema<First>]

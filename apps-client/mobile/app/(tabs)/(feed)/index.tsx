@@ -545,6 +545,8 @@ function FeedFollowingContent(props: PagerScrollViewProps) {
     queryFn: async ({ pageParam }) => {
       const response = await fetchClient('/feed/following', {
         query: { cursor: pageParam, limit: LIMIT },
+        headers: {},
+        body: {},
       })
       if (response.error) {
         throw response.error
@@ -662,6 +664,8 @@ function FeedContent(props: PagerScrollViewProps) {
     queryFn: async ({ pageParam }): Promise<ListCursorResponse<MyFeedItem>> => {
       const response = await fetchClient('/feed/me', {
         query: { cursor: pageParam, limit: LIMIT },
+        headers: {},
+        body: {},
       })
       if (response.error) {
         throw response.error
@@ -772,6 +776,8 @@ function FeedTopicContent(props: FeedTopicContentProps) {
     queryFn: async ({ pageParam }) => {
       const response = await fetchClient('/feed/topic', {
         query: { cursor: pageParam, limit: LIMIT, topicId },
+        headers: {},
+        body: {},
       })
       if (response.error) {
         throw response.error

@@ -1,6 +1,7 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
+import * as R from 'remeda'
 
 import {
   CompleteOnboardingProfileBody,
@@ -227,7 +228,10 @@ export const ProfileController = new Elysia({
         return mapErrorCodeToResponse(user.error, status)
       }
 
-      return status(200, user.value)
+      return status(
+        200,
+        R.pick(user.value, ['id', 'roles', 'name', 'profileImage', 'numberOfFollowers', 'address'])
+      )
     },
     {
       requiredLocalUser: true,
