@@ -1,14 +1,16 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 
-import { PPLEMiniApp, type User } from '@pplethai/pple-today-miniapp-sdk'
+import { PPLEMiniApp, type UserInfo } from '@pplethai/pple-today-miniapp-sdk'
 
 import { clientEnv } from '~/config/clientEnv'
 
 const AuthContext = createContext<{
-  user: User | null
+  user: UserInfo | null
+  accessToken: string | null
   isLoading: boolean
 }>({
   user: null,
+  accessToken: null,
   isLoading: true,
 })
 
@@ -24,18 +26,27 @@ export const AuthProvider = ({ children }: React.PropsWithChildren) => {
         })
       : null
   )
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<UserInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [accessToken, setAccessToken] = useState<string | null>(null)
 
   useEffect(() => {
     const init = async () => {
-      await ppleMiniAppInstance?.init()
-      setUser(ppleMiniAppInstance?.user ?? null)
+      if (!ppleMiniAppInstance) return
+      await ppleMiniAppInstance.init()
+
+      const userProfile = await ppleMiniAppInstance.getProfile()
+      const token = await ppleMiniAppInstance.getAccessToken()
+
+      setUser(userProfile)
+      setAccessToken(token)
       setIsLoading(false)
     }
 
     init()
   }, [ppleMiniAppInstance])
 
-  return <AuthContext.Provider value={{ user, isLoading }}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={{ user, accessToken, isLoading }}>{children}</AuthContext.Provider>
+  )
 }

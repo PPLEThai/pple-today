@@ -1,5 +1,19 @@
 # @pple-today/database
 
+## 1.3.1
+
+### Patch Changes
+
+- [#345](https://github.com/PPLEThai/pple-today/pull/345) [`6fea193`](https://github.com/PPLEThai/pple-today/commit/6fea193ea9cf1cc6148aed91c7bb44ab6959ce34) Thanks [@miello](https://github.com/miello)! - [[PPLE-639] [Mini App] Making one mini app can stay more than one banner](https://linear.app/snts/issue/PPLE-639/mini-app-making-one-mini-app-can-stay-more-than-one-banner)
+  [[PPLE-638] [Recommendation] Outdated function in backend](https://linear.app/snts/issue/PPLE-638/recommendation-outdated-function-in-backend)
+  [[PPLE-637] [App] Cannot navigate to miniapp from banner](https://linear.app/snts/issue/PPLE-637/app-cannot-navigate-to-miniapp-from-banner)
+
+## 1.3.0
+
+### Minor Changes
+
+- [#340](https://github.com/PPLEThai/pple-today/pull/340) [`76c2b0f`](https://github.com/PPLEThai/pple-today/commit/76c2b0f88a67cccb2417fc37096d8f89bf9fff68) Thanks [@miello](https://github.com/miello)! - [[PPLE-630] Filter mini-app visibility according to pre-config roles](https://linear.app/snts/issue/PPLE-630/filter-mini-app-visibility-according-to-pre-config-roles)
+
 ## 1.2.0
 
 ### Minor Changes

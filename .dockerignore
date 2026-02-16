@@ -57,3 +57,5 @@ yarn-error.log*
 
 # Env files
 **/.env
+
+!**/**/certificates/*.pem

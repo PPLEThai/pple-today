@@ -1,5 +1,62 @@
 # @api/backoffice
 
+## 1.4.6
+
+### Patch Changes
+
+- [#354](https://github.com/PPLEThai/pple-today/pull/354) [`f6b0f07`](https://github.com/PPLEThai/pple-today/commit/f6b0f0779df2e0c0e8bcfbf6c4015427124be4a6) Thanks [@miello](https://github.com/miello)! - [[PPLE-647] [API] Wrong official user retrieval](https://linear.app/snts/issue/PPLE-647/api-wrong-official-user-retrieval)
+
+## 1.4.5
+
+### Patch Changes
+
+- Updated dependencies [[`28e00f6`](https://github.com/PPLEThai/pple-today/commit/28e00f62499d2f6d4a955f1a4a31762353220be4)]:
+  - @pple-today/api-common@1.3.3
+
+## 1.4.4
+
+### Patch Changes
+
+- [#350](https://github.com/PPLEThai/pple-today/pull/350) [`789ad3b`](https://github.com/PPLEThai/pple-today/commit/789ad3bcbe23cc2e484c361789ae36f988f19a6c) Thanks [@miello](https://github.com/miello)! - [[PPLE-644] [GCP] Utilize ADC if credentials not provided](https://linear.app/snts/issue/PPLE-644/gcp-utilize-adc-if-credentials-not-provided)
+
+- Updated dependencies [[`789ad3b`](https://github.com/PPLEThai/pple-today/commit/789ad3bcbe23cc2e484c361789ae36f988f19a6c)]:
+  - @pple-today/api-common@1.3.2
+
+## 1.4.3
+
+### Patch Changes
+
+- [#347](https://github.com/PPLEThai/pple-today/pull/347) [`9b885db`](https://github.com/PPLEThai/pple-today/commit/9b885db918fa5e5cddf40175acb56c5f4f2adbf6) Thanks [@miello](https://github.com/miello)! - [[PPLE-640] [Backoffice] Set mini app to banner causes null in database](https://linear.app/snts/issue/PPLE-640/backoffice-set-mini-app-to-banner-causes-null-in-database)
+
+## 1.4.2
+
+### Patch Changes
+
+- [#345](https://github.com/PPLEThai/pple-today/pull/345) [`6fea193`](https://github.com/PPLEThai/pple-today/commit/6fea193ea9cf1cc6148aed91c7bb44ab6959ce34) Thanks [@miello](https://github.com/miello)! - [[PPLE-639] [Mini App] Making one mini app can stay more than one banner](https://linear.app/snts/issue/PPLE-639/mini-app-making-one-mini-app-can-stay-more-than-one-banner)
+  [[PPLE-638] [Recommendation] Outdated function in backend](https://linear.app/snts/issue/PPLE-638/recommendation-outdated-function-in-backend)
+  [[PPLE-637] [App] Cannot navigate to miniapp from banner](https://linear.app/snts/issue/PPLE-637/app-cannot-navigate-to-miniapp-from-banner)
+- Updated dependencies [[`6fea193`](https://github.com/PPLEThai/pple-today/commit/6fea193ea9cf1cc6148aed91c7bb44ab6959ce34)]:
+  - @pple-today/database@1.3.1
+  - @pple-today/api-common@1.3.1
+
+## 1.4.1
+
+### Patch Changes
+
+- [#343](https://github.com/PPLEThai/pple-today/pull/343) [`56d95bc`](https://github.com/PPLEThai/pple-today/commit/56d95bc37f4520ca8ee494ebeab4491edc127868) Thanks [@miello](https://github.com/miello)! - [[PPLE-634] [Mini App] Fix cannot navigate when using wildcard](https://linear.app/snts/issue/PPLE-634/mini-app-fix-cannot-navigate-when-using-wildcard)
+
+## 1.4.0
+
+### Minor Changes
+
+- [#340](https://github.com/PPLEThai/pple-today/pull/340) [`76c2b0f`](https://github.com/PPLEThai/pple-today/commit/76c2b0f88a67cccb2417fc37096d8f89bf9fff68) Thanks [@miello](https://github.com/miello)! - [[PPLE-630] Filter mini-app visibility according to pre-config roles](https://linear.app/snts/issue/PPLE-630/filter-mini-app-visibility-according-to-pre-config-roles)
+
+### Patch Changes
+
+- Updated dependencies [[`76c2b0f`](https://github.com/PPLEThai/pple-today/commit/76c2b0f88a67cccb2417fc37096d8f89bf9fff68)]:
+  - @pple-today/api-common@1.3.0
+  - @pple-today/database@1.3.0
+
 ## 1.3.0
 
 ### Minor Changes

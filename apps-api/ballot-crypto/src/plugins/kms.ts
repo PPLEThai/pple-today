@@ -1,13 +1,14 @@
 import { KeyManagementServiceClient } from '@google-cloud/kms'
 import { google } from '@google-cloud/kms/build/protos/protos'
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
-import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
+import { ElysiaLoggerInstance } from '@pple-today/api-common/plugins'
 import { err } from '@pple-today/api-common/utils'
 import crypto from 'crypto'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import { ConfigServicePlugin } from './config'
+import { ElysiaLoggerPlugin } from './log'
 
 import { fromGoogleAPIPromise, mapGoogleAPIError } from '../utils/error'
 
@@ -27,11 +28,14 @@ export class KeyManagementService {
     private readonly loggerService: ElysiaLoggerInstance
   ) {
     this.kmsClient = new KeyManagementServiceClient({
-      credentials: {
-        projectId: config.projectId,
-        client_email: config.clientEmail,
-        private_key: config.privateKey,
-      },
+      projectId: config.projectId,
+      credentials:
+        config.clientEmail && config.privateKey
+          ? {
+              client_email: config.clientEmail,
+              private_key: config.privateKey,
+            }
+          : undefined,
     })
   }
 

@@ -16,8 +16,10 @@ export class AdminMiniAppRepository {
         select: {
           id: true,
           name: true,
+          miniAppRoles: true,
+          order: true,
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
       })
     )
   }
@@ -31,6 +33,17 @@ export class AdminMiniAppRepository {
           clientUrl: data.url,
           clientId: data.clientId,
           icon: data.iconUrl,
+          order: data.order,
+          miniAppRoles: data.roles
+            ? {
+                createMany: {
+                  data: data.roles.map((role) => ({ role })),
+                },
+              }
+            : undefined,
+        },
+        include: {
+          miniAppRoles: true,
         },
       })
     )
@@ -46,6 +59,18 @@ export class AdminMiniAppRepository {
           clientUrl: data.url,
           clientId: data.clientId,
           icon: data.iconUrl,
+          order: data.order,
+          miniAppRoles: data.roles
+            ? {
+                deleteMany: {},
+                createMany: {
+                  data: data.roles.map((role) => ({ role })) || [],
+                },
+              }
+            : undefined,
+        },
+        include: {
+          miniAppRoles: true,
         },
       })
     )

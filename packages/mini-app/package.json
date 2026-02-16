@@ -1,7 +1,8 @@
 {
   "name": "@pplethai/pple-today-miniapp-sdk",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "PPLE Today Mini App SDK",
+  "types": "./build/index.d.ts",
   "files": [
     "build"
   ],
@@ -23,7 +24,8 @@
   },
   "scripts": {
     "build": "rimraf ./build && tsx build.ts && dts-bundle-generator -o build/index.d.ts src/index.ts",
-    "typecheck": "tsc --noEmit",
+    "codegen": "pnpm build",
+    "typecheck": "pnpm build && tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx",
     "format:check": "prettier --check .",
     "coverage": "open-cli coverage/index.html"

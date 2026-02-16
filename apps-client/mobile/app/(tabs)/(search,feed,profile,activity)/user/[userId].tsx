@@ -179,6 +179,7 @@ export default function ProfilePage() {
           <Button
             variant={isFollowing ? 'outline-primary' : 'primary'}
             size="sm"
+            disabled={authMe.data?.isSuspended}
             onPress={toggleFollow}
             className="mx-4 mb-4"
           >

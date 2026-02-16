@@ -6,7 +6,6 @@ import {
   serializers as defaultSerializer,
 } from '@bogeychan/elysia-logger'
 import { LoggerOptions, StandaloneLoggerOptions } from '@bogeychan/elysia-logger/types'
-import Elysia from 'elysia'
 import { omit } from 'remeda'
 
 const formatters = {
@@ -76,12 +75,6 @@ export const loggerBuilder = (config: StandaloneLoggerOptions) => {
     serializers,
     formatters,
   })
-}
-
-export const ElysiaLoggerPlugin = (options: StandaloneLoggerOptions) => {
-  return new Elysia({ name: `Logger-${options.name}` }).decorate(() => ({
-    loggerService: loggerBuilder(options),
-  }))
 }
 
 export type ElysiaLoggerInstance = ReturnType<typeof createPinoLogger>

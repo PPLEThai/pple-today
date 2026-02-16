@@ -26,6 +26,7 @@ import { useTopicFollow } from '@app/components/feed/topic-card'
 import { useUserFollow } from '@app/components/feed/user-card'
 import { Header } from '@app/components/header-navigation'
 import { reactQueryClient } from '@app/libs/api-client'
+import { useAuthMe } from '@app/libs/auth'
 import { createImageUrl } from '@app/utils/image'
 
 export default function FollowPage() {
@@ -157,6 +158,7 @@ interface PeopleFollowingItemProps {
 
 const PeopleFollowingItem = (profile: PeopleFollowingItemProps) => {
   const { isFollowing, toggleFollow } = useUserFollow(profile.id, true)
+  const user = useAuthMe()
 
   return (
     <Pressable
@@ -177,6 +179,7 @@ const PeopleFollowingItem = (profile: PeopleFollowingItemProps) => {
       <Button
         variant={isFollowing ? 'outline-primary' : 'primary'}
         size="sm"
+        disabled={user.data?.isSuspended}
         onPress={toggleFollow}
       >
         <Text>{isFollowing ? 'กำลังติดตาม' : 'ติดตาม'} </Text>
@@ -260,6 +263,7 @@ interface TopicsFollowingItemProps {
 const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
   const router = useRouter()
   const { isFollowing, toggleFollow } = useTopicFollow(topic.id, true)
+  const user = useAuthMe()
 
   const renderHashtags = (hashtags: HashtagList) => {
     if (hashtags.length === 0) return null
@@ -340,6 +344,7 @@ const TopicsFollowingItem = (topic: TopicsFollowingItemProps) => {
         </View>
         <Button
           variant={isFollowing ? 'outline-primary' : 'primary'}
+          disabled={user.data?.isSuspended}
           size="sm"
           onPress={toggleFollow}
         >

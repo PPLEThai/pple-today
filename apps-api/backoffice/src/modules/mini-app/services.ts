@@ -7,8 +7,8 @@ import { MiniAppRepository, MiniAppRepositoryPlugin } from './repository'
 export class MiniAppService {
   constructor(private readonly miniAppRepository: MiniAppRepository) {}
 
-  async listMiniApps() {
-    const miniApps = await this.miniAppRepository.listMiniApps()
+  async listMiniApps(roles: string[]) {
+    const miniApps = await this.miniAppRepository.listMiniApps(roles)
 
     if (miniApps.isErr()) {
       return mapRepositoryError(miniApps.error)
@@ -19,6 +19,7 @@ export class MiniAppService {
         slug: miniApp.slug,
         name: miniApp.name,
         iconUrl: miniApp.icon,
+        order: miniApp.order,
       }))
     )
   }

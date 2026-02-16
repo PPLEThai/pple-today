@@ -46,10 +46,13 @@ export class FileService {
   ) {
     this.storage = new Storage({
       projectId: config.projectId,
-      credentials: {
-        client_email: config.clientEmail,
-        private_key: config.privateKey,
-      },
+      credentials:
+        config.clientEmail && config.privateKey
+          ? {
+              client_email: config.clientEmail,
+              private_key: config.privateKey,
+            }
+          : undefined,
     })
     this.bucket = this.storage.bucket(config.bucketName)
   }

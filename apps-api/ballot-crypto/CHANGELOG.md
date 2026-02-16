@@ -1,5 +1,37 @@
 # @api/ballot-crypto
 
+## 1.1.5
+
+### Patch Changes
+
+- [#352](https://github.com/PPLEThai/pple-today/pull/352) [`28e00f6`](https://github.com/PPLEThai/pple-today/commit/28e00f62499d2f6d4a955f1a4a31762353220be4) Thanks [@miello](https://github.com/miello)! - [[PPLE-645] [GCP] Always include project id when initialized sdk client](https://linear.app/snts/issue/PPLE-645/gcp-always-include-project-id-when-initialized-sdk-client)
+
+- Updated dependencies [[`28e00f6`](https://github.com/PPLEThai/pple-today/commit/28e00f62499d2f6d4a955f1a4a31762353220be4)]:
+  - @pple-today/api-common@1.3.3
+
+## 1.1.4
+
+### Patch Changes
+
+- [#350](https://github.com/PPLEThai/pple-today/pull/350) [`789ad3b`](https://github.com/PPLEThai/pple-today/commit/789ad3bcbe23cc2e484c361789ae36f988f19a6c) Thanks [@miello](https://github.com/miello)! - [[PPLE-644] [GCP] Utilize ADC if credentials not provided](https://linear.app/snts/issue/PPLE-644/gcp-utilize-adc-if-credentials-not-provided)
+
+- Updated dependencies [[`789ad3b`](https://github.com/PPLEThai/pple-today/commit/789ad3bcbe23cc2e484c361789ae36f988f19a6c)]:
+  - @pple-today/api-common@1.3.2
+
+## 1.1.3
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @pple-today/api-common@1.3.1
+
+## 1.1.2
+
+### Patch Changes
+
+- Updated dependencies [[`76c2b0f`](https://github.com/PPLEThai/pple-today/commit/76c2b0f88a67cccb2417fc37096d8f89bf9fff68)]:
+  - @pple-today/api-common@1.3.0
+
 ## 1.1.1
 
 ### Patch Changes

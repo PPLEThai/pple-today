@@ -6,7 +6,7 @@ import { QUERY_KEY_SYMBOL } from '@pple-today/api-client'
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
-import { cn } from '@pple-today/ui/lib/utils'
+import { clsx, cn } from '@pple-today/ui/lib/utils'
 import { Slide, SlideIndicators, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { H3 } from '@pple-today/ui/typography'
@@ -18,7 +18,7 @@ import { ArrowRightIcon, MessageSquareHeartIcon } from 'lucide-react-native'
 import { GetTopicRecommendationResponse } from '@api/backoffice/app'
 import { LinearGradient } from '@app/components/linear-gradient'
 import { reactQueryClient } from '@app/libs/api-client'
-import { useSession } from '@app/libs/auth'
+import { useAuthMe, useSession } from '@app/libs/auth'
 import { createImageUrl } from '@app/utils/image'
 
 interface TopicCardProps {
@@ -41,6 +41,7 @@ export function TopicCard(props: TopicCardProps) {
     props.topic.id,
     props.topic.followed ?? false
   )
+  const user = useAuthMe()
   const router = useRouter()
   return (
     <Pressable
@@ -103,7 +104,8 @@ export function TopicCard(props: TopicCardProps) {
         <Button
           onPress={toggleFollow}
           variant={isFollowing ? 'outline-primary' : 'primary'}
-          className={isFollowing ? 'bg-black active:bg-white/10' : ''}
+          disabled={user.data?.isSuspended}
+          className={clsx(isFollowing && 'bg-black active:bg-white/10')}
         >
           <Text>{isFollowing ? 'กำลังติดตาม' : 'ติดตาม'} </Text>
         </Button>
@@ -124,6 +126,7 @@ export function useTopicFollow(topicId: string, initialData: boolean) {
     variables: { topicId },
     initialData: initialData,
   })
+  const user = useAuthMe()
   const queryClient = useQueryClient()
   const setTopicFollowState = useCallback(
     (data: boolean) => {
@@ -135,12 +138,19 @@ export function useTopicFollow(topicId: string, initialData: boolean) {
   const followMutation = reactQueryClient.useMutation('post', '/topics/:topicId/follow', {})
   const unfollowMutation = reactQueryClient.useMutation('delete', '/topics/:topicId/follow', {})
   const toggleFollow = async () => {
+    if (user.data?.isSuspended) {
+      return
+    }
+
     setTopicFollowState(!isFollowing) // optimistic update
     if (isFollowing) {
       await unfollowMutation.mutateAsync({ pathParams: { topicId: topicId } })
     } else {
       await followMutation.mutateAsync({ pathParams: { topicId: topicId } })
     }
+    queryClient.invalidateQueries({
+      queryKey: reactQueryClient.getQueryKey('/topics/follows'),
+    })
     queryClient.invalidateQueries({ queryKey: reactQueryClient.getQueryKey('/profile/me') })
   }
   return { isFollowing, toggleFollow }

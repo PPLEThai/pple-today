@@ -27,9 +27,9 @@
     "isbot": "^5.1.27",
     "lucide-react": "^0.542.0",
     "oidc-client-ts": "^3.3.0",
-    "react": "19.1.0",
+    "react": "19.1.5",
     "react-day-picker": "^9.11.1",
-    "react-dom": "19.1.0",
+    "react-dom": "19.1.5",
     "react-hook-form": "^7.62.0",
     "remeda": "^2.24.0",
     "zod": "^4.0.5"

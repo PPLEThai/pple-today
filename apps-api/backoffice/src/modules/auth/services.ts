@@ -1,6 +1,6 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { IntrospectAccessTokenResult } from '@pple-today/api-common/dtos'
-import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
+import { ElysiaLoggerInstance } from '@pple-today/api-common/plugins'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import { Check } from '@sinclair/typebox/value'
 import Elysia from 'elysia'
@@ -12,6 +12,7 @@ import { AuthRepository, AuthRepositoryPlugin } from './repository'
 
 import { ALLOWED_ROLES } from '../../constants/roles'
 import { ConfigServicePlugin } from '../../plugins/config'
+import { ElysiaLoggerPlugin } from '../../plugins/log'
 import { generateJwtToken } from '../../utils/jwt'
 import { FileServerService, FileServerServicePlugin } from '../files/services'
 import { MiniAppRepository, MiniAppRepositoryPlugin } from '../mini-app/repository'
@@ -30,8 +31,8 @@ export class AuthService {
     }
   ) {}
 
-  async generateMiniAppToken(slug: string, token: string, path?: string) {
-    const miniApp = await this.miniAppRepository.getMiniAppBySlug(slug)
+  async generateMiniAppToken(slug: string, token: string, roles: string[], path?: string) {
+    const miniApp = await this.miniAppRepository.getMiniAppBySlug(slug, roles)
 
     if (miniApp.isErr()) {
       return mapRepositoryError(miniApp.error, {
@@ -98,6 +99,7 @@ export class AuthService {
 
     return ok({
       url: url.toString(),
+      appName: miniApp.value.name,
     })
   }
 

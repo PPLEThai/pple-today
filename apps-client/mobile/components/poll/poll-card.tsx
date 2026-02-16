@@ -15,7 +15,7 @@ import { ChevronRightIcon, Clock3Icon, MessageCircleQuestionIcon } from 'lucide-
 
 import type { FeedItemPoll } from '@api/backoffice/app'
 import { reactQueryClient } from '@app/libs/api-client'
-import { useSession } from '@app/libs/auth'
+import { useAuthMe, useSession } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { formatTimeInterval } from '@app/libs/format-time-interval'
 
@@ -248,6 +248,7 @@ const PollOptionResultList = (props: PollProps) => {
 const PollSingleOptionList = (props: PollProps) => {
   const router = useRouter()
   const session = useSession()
+  const user = useAuthMe()
   const { options, totalVotes } = usePollVotesValue(props.feedItem.id)
   const setPollVotes = useSetPollVotes(props.feedItem.id)
   const updatePollOptionMutation = reactQueryClient.useMutation('put', '/polls/:id/vote')
@@ -296,6 +297,7 @@ const PollSingleOptionList = (props: PollProps) => {
     <PollOptionGroup
       type="single"
       onValueChange={handleValueChange}
+      disabled={user.data?.isSuspended}
       value={selectedOption}
       className="flex flex-col"
     >
@@ -304,6 +306,7 @@ const PollSingleOptionList = (props: PollProps) => {
           key={option.id}
           id={option.id}
           value={option.id}
+          disabled={user.data?.isSuspended}
           title={option.title}
           votes={option.votes}
           totalVotes={totalVotes}

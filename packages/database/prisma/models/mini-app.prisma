@@ -1,8 +1,9 @@
 model MiniApp {
-  id   String  @id @default(cuid())
-  slug String  @unique
-  name String
-  icon String? // Base64 encoded image
+  id    String  @id @default(cuid())
+  slug  String  @unique
+  name  String
+  icon  String? // Base64 encoded image
+  order Int     @default(0)
 
   clientId  String
   clientUrl String
@@ -10,6 +11,19 @@ model MiniApp {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  bannerId String? @unique
-  banner   Banner?
+  banners Banner[]
+
+  miniAppRoles MiniAppRole[]
+}
+
+model MiniAppRole {
+  role String
+
+  miniAppId String
+  miniApp   MiniApp @relation(fields: [miniAppId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@id([role, miniAppId])
 }

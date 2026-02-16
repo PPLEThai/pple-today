@@ -5,6 +5,9 @@ RUN apk add --no-cache libc6-compat jq
 ARG VERSION=latest
 
 RUN npm install -g turbo@2.5.2
+
+RUN apk update
+RUN apk add --no-cache ca-certificates
  
 FROM base AS builder
 
@@ -15,7 +18,6 @@ COPY . .
 RUN turbo prune --scope=@api/backoffice --docker
 
 FROM base AS installer
-RUN apk update
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
  
@@ -36,6 +38,11 @@ RUN pnpm build --filter=@api/backoffice
 FROM base AS runner
 WORKDIR /app
  
+COPY --from=installer --chown=backoffice:nodejs /app/apps-api/backoffice/certificates/*.pem /usr/local/share/ca-certificates/
+
+RUN chmod 644 /usr/local/share/ca-certificates/*.pem
+RUN update-ca-certificates
+
 RUN addgroup --system --gid 1001 backoffice
 RUN adduser --system --uid 1001 backoffice
 USER backoffice

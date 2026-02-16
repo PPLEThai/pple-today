@@ -42,6 +42,7 @@ export type CreateMiniAppTokenQuery = Static<typeof CreateMiniAppTokenQuery>
 
 export const CreateMiniAppTokenResponse = t.Object({
   url: t.String({ description: 'The URL to access the mini app with the generated token' }),
+  appName: t.String({ description: 'The name of the mini app' }),
 })
 export type CreateMiniAppTokenResponse = Static<typeof CreateMiniAppTokenResponse>
 

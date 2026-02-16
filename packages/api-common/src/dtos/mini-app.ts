@@ -15,5 +15,6 @@ export const MiniApp = t.Object({
   }),
   clientId: t.String({ description: 'Client ID of the mini app' }),
   order: t.Number({ description: 'Order of the mini app' }),
+  roles: t.Array(t.String({ description: 'Roles assigned to the mini app' })),
 })
 export type MiniApp = Static<typeof MiniApp>
