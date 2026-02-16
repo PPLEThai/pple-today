@@ -1,5 +1,5 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
-import { ElysiaLoggerInstance, ElysiaLoggerPlugin } from '@pple-today/api-common/plugins'
+import { ElysiaLoggerInstance } from '@pple-today/api-common/plugins'
 import { err } from '@pple-today/api-common/utils'
 import { Parse } from '@sinclair/typebox/value'
 import Elysia from 'elysia'
@@ -15,6 +15,7 @@ import {
 } from './models'
 
 import { ConfigServicePlugin } from '../../plugins/config'
+import { ElysiaLoggerPlugin } from '../../plugins/log'
 
 export class EventService {
   private caching = new Map<
