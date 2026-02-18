@@ -64,11 +64,10 @@ function RouteComponent() {
     if (!search.code || !search.state || called.current || userQuery.data) {
       return
     }
-    called.current = true
-    // Ref: https://github.com/TanStack/query/issues/5341
-    const timeoutId = setTimeout(() => signInMutation.mutate(), 0)
 
-    return () => clearTimeout(timeoutId)
+    called.current = true
+    signInMutation.mutate()
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
