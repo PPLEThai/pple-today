@@ -54,8 +54,16 @@ let app = new Elysia({ adapter: node() })
       },
       autoLogging: {
         ignore: (ctx) => {
-          if (ctx.isError) return false
+          if (ctx.isError) {
+            // NOTE: Ignore errors from Facebook webhook when the error code is FACEBOOK_WEBHOOK_NOT_SUPPORTED
+            return (
+              ctx.path.startsWith('/facebook/webhook') &&
+              'code' in ctx.error &&
+              ctx.error.code === 'FACEBOOK_WEBHOOK_NOT_SUPPORTED'
+            )
+          }
           if (!ctx.isError && 'response' in ctx.error) return true
+
           return (
             ctx.path.startsWith('/health') ||
             ctx.path.startsWith('/swagger') ||
