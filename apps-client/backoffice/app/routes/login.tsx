@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect } from 'react'
 
 import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
@@ -57,18 +57,14 @@ function RouteComponent() {
   const authMeQuery = reactQueryClient.useQuery('/admin/auth/me', {}, { enabled: false })
   const userQuery = useQuery({ ...userQueryOptions, enabled: false })
 
-  // prevent double call in React Strict Mode
-  // mutation.isPending is not sufficient
-  const called = useRef(false)
   useEffect(() => {
-    if (!search.code || !search.state || called.current || userQuery.data) {
+    if (!search.code || !search.state || userQuery.data) {
       return
     }
-    called.current = true
-    // Ref: https://github.com/TanStack/query/issues/5341
-    const timeoutId = setTimeout(() => signInMutation.mutate(), 0)
 
-    return () => clearTimeout(timeoutId)
+    const signInMutate = setTimeout(() => signInMutation.mutate(), 0)
+
+    return () => clearTimeout(signInMutate)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

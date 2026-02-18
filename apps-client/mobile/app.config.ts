@@ -124,6 +124,8 @@ export default {
     ],
     experiments: {
       typedRoutes: true,
+      reactCanary: true,
+      reactCompiler: true,
     },
   },
 } satisfies AppJSONConfig
