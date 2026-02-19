@@ -485,7 +485,7 @@ export class FeedRepository {
           R.map((item) => ({
             feedItemId: item.feed_item_id!,
             score: item.score!,
-            expiresAt: dayjs().add(1, 'hour').toDate(),
+            expiresAt: dayjs().add(5, 'minutes').toDate(),
           }))
         )
 
