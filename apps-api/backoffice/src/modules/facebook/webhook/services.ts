@@ -10,6 +10,7 @@ import { ElysiaLoggerInstance } from '@pple-today/api-common/plugins'
 import { err, getFileName } from '@pple-today/api-common/utils'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import { PostAttachmentType } from '@pple-today/database/prisma'
+import dayjs from 'dayjs'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
@@ -26,7 +27,7 @@ export class FacebookWebhookService {
   private postActionQueue: Map<string, { action: WebhookChangesVerb; body: WebhookFeedChanges }> =
     new Map()
 
-  private readonly DEBOUNCE_TIMEOUT = 5000
+  private readonly DEBOUNCE_TIMEOUT = 3000
 
   constructor(
     private readonly facebookConfig: {
@@ -58,11 +59,9 @@ export class FacebookWebhookService {
       },
     })
 
-    if (!existingAction) {
-      this.postActionQueue.set(key, { action, body })
-    } else if (action === WebhookChangesVerb.ADD) {
-      this.postActionQueue.set(key, { action, body })
-    } else if (action === WebhookChangesVerb.REMOVE) {
+    if (!existingAction) this.postActionQueue.set(key, { action, body })
+    else if (action === WebhookChangesVerb.ADD) this.postActionQueue.set(key, { action, body })
+    else if (action === WebhookChangesVerb.REMOVE) {
       // NOTE: ADD and REMOVE actions should cancel each other out
       if (existingAction.action === WebhookChangesVerb.ADD) {
         this.debouncePostUpdate.delete(key)
@@ -71,6 +70,10 @@ export class FacebookWebhookService {
       }
 
       this.postActionQueue.set(key, { action, body })
+    } else if (action === WebhookChangesVerb.EDIT) {
+      if (existingAction.action === WebhookChangesVerb.ADD)
+        this.postActionQueue.set(key, { action: WebhookChangesVerb.ADD, body })
+      else this.postActionQueue.set(key, { action, body })
     }
 
     this.debouncePostUpdate.set(
@@ -102,7 +105,7 @@ export class FacebookWebhookService {
         const result =
           postAction.action === WebhookChangesVerb.REMOVE
             ? await this.facebookWebhookRepository.deletePost(postId)
-            : await this.upsertPostDetails(postAction.body)
+            : await this.upsertPostDetails(postAction.body, postAction.action)
 
         if (result.isErr()) {
           if (
@@ -124,9 +127,25 @@ export class FacebookWebhookService {
     return ok()
   }
 
-  private async upsertPostDetails(body: WebhookFeedChanges) {
+  private async upsertPostDetails(
+    body: WebhookFeedChanges,
+    action: Exclude<WebhookChangesVerb, 'remove'> = WebhookChangesVerb.EDIT
+  ) {
     const pageId = body.from.id
     const postId = body.post_id
+
+    const existingPost =
+      await this.facebookWebhookRepository.getExistingPostByFacebookPostId(postId)
+    if (existingPost.isErr()) return mapRepositoryError(existingPost.error)
+
+    const createdAt = dayjs.unix(body.created_time)
+    if (
+      !existingPost.value &&
+      action === WebhookChangesVerb.EDIT &&
+      createdAt.isBefore(dayjs().subtract(1, 'day'))
+    ) {
+      return ok()
+    }
 
     let message: string = ''
     let photos: string[] = []
@@ -143,10 +162,6 @@ export class FacebookWebhookService {
 
     const page = await this.facebookRepository.getLocalFacebookPage(pageId)
     if (page.isErr()) return mapRepositoryError(page.error)
-
-    const existingPost =
-      await this.facebookWebhookRepository.getExistingPostByFacebookPostId(postId)
-    if (existingPost.isErr()) return mapRepositoryError(existingPost.error)
 
     const newAttachments = photos.map((photoUrl, idx) => ({
       description: null,
@@ -169,21 +184,23 @@ export class FacebookWebhookService {
     const [updatedAttachment, fileTx] = updatedAttachmentResult.value
     const hashTags = extractHashtags(message)
 
-    const upsertResult = existingPost.value
-      ? await this.facebookWebhookRepository.updatePost({
-          facebookPageId: pageId,
-          postId,
-          content: message,
-          hashTags,
-          attachments: updatedAttachment,
-        })
-      : await this.facebookWebhookRepository.publishNewPost({
-          facebookPageId: pageId,
-          postId,
-          content: message,
-          hashTags,
-          attachments: updatedAttachment,
-        })
+    const upsertResult =
+      action === WebhookChangesVerb.EDIT && existingPost.value
+        ? await this.facebookWebhookRepository.updatePost({
+            facebookPageId: pageId,
+            postId,
+            content: message,
+            hashTags,
+            attachments: updatedAttachment,
+          })
+        : await this.facebookWebhookRepository.publishNewPost({
+            facebookPageId: pageId,
+            postId,
+            content: message,
+            hashTags,
+            publishedAt: createdAt,
+            attachments: updatedAttachment,
+          })
 
     if (upsertResult.isErr()) {
       const rollbackResult = await fileTx.rollback()
