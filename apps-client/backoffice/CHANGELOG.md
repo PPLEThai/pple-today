@@ -1,5 +1,27 @@
 # @client/backoffice
 
+## 1.2.1
+
+### Patch Changes
+
+- [#337](https://github.com/PPLEThai/pple-today/pull/337) [`6b8fb5b`](https://github.com/PPLEThai/pple-today/commit/6b8fb5b7badbfbfc485872cbddb2b1c330054a6b) Thanks [@miello](https://github.com/miello)! - [[PPLE-624] Handle no candidate number](https://linear.app/snts/issue/PPLE-624/handle-no-candidate-number)
+  [[PPLE-612] Cannot Navigate to Election Detail page through button](https://linear.app/snts/issue/PPLE-612/cannot-navigate-to-election-detail-page-through-button)
+  [[PPLE-607] Sync following topic to feed tab](https://linear.app/snts/issue/PPLE-607/sync-following-topic-to-feed-tab)
+  [[PPLE-606] Followed topic does not appear as following in my content](https://linear.app/snts/issue/PPLE-606/followed-topic-does-not-appear-as-following-in-my-content)
+  [[PPLE-605] Change เห็นด้วย to สนับสนุน](https://linear.app/snts/issue/PPLE-605/change-เห็นด้วย-to-สนับสนุน)
+  [[PPLE-601] Use solid instead of outline](https://linear.app/snts/issue/PPLE-601/use-solid-instead-of-outline)
+
+- [#363](https://github.com/PPLEThai/pple-today/pull/363) [`c44721e`](https://github.com/PPLEThai/pple-today/commit/c44721eb8a16dd83513e59d777343c93e6e83df5) Thanks [@miello](https://github.com/miello)! - [[PPLE-653] [Mobile] React version problem](https://linear.app/snts/issue/PPLE-653/mobile-react-version-problem)
+
+- [#361](https://github.com/PPLEThai/pple-today/pull/361) [`b4fccd1`](https://github.com/PPLEThai/pple-today/commit/b4fccd14645315d9026f6568e1440648ee189476) Thanks [@miello](https://github.com/miello)! - chore: bump react and react-dom to resolve CVE-2026-23864
+
+- [#363](https://github.com/PPLEThai/pple-today/pull/363) [`7c57301`](https://github.com/PPLEThai/pple-today/commit/7c573014827322430a43043d7325ff9a7f5cfa5e) Thanks [@miello](https://github.com/miello)! - [[PPLE-652] [Facebook] Ignore logging if facebook webhook got unsupported body](https://linear.app/snts/issue/PPLE-652/facebook-ignore-logging-if-facebook-webhook-got-unsupported-body)
+
+- [#357](https://github.com/PPLEThai/pple-today/pull/357) [`2b40a1f`](https://github.com/PPLEThai/pple-today/commit/2b40a1f11c34bbc9b3dc1a604c4fc088cbf25d5f) Thanks [@miello](https://github.com/miello)! - [[PPLE-641] [Backoffice] Sometimes auth does not working as expected](https://linear.app/snts/issue/PPLE-641/backoffice-sometimes-auth-does-not-working-as-expected)
+
+- Updated dependencies [[`c44721e`](https://github.com/PPLEThai/pple-today/commit/c44721eb8a16dd83513e59d777343c93e6e83df5)]:
+  - @pple-today/web-ui@1.0.2
+
 ## 1.2.0
 
 ### Minor Changes

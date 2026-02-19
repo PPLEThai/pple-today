@@ -1,5 +1,16 @@
 # @pple-today/ui
 
+## 1.1.0
+
+### Minor Changes
+
+- [#339](https://github.com/PPLEThai/pple-today/pull/339) [`3deb2a9`](https://github.com/PPLEThai/pple-today/commit/3deb2a9312a6757e42096b8e123c9cb1252d51e0) Thanks [@miello](https://github.com/miello)! - [[PPLE-619] New Notification mark](https://linear.app/snts/issue/PPLE-619/new-notification-mark)
+  [[PPLE-618] In-app Notification Toast](https://linear.app/snts/issue/PPLE-618/in-app-notification-toast)
+
+### Patch Changes
+
+- [#363](https://github.com/PPLEThai/pple-today/pull/363) [`c44721e`](https://github.com/PPLEThai/pple-today/commit/c44721eb8a16dd83513e59d777343c93e6e83df5) Thanks [@miello](https://github.com/miello)! - [[PPLE-653] [Mobile] React version problem](https://linear.app/snts/issue/PPLE-653/mobile-react-version-problem)
+
 ## 1.0.0
 
 ### Major Changes

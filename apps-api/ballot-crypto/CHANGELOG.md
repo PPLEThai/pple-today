@@ -1,5 +1,14 @@
 # @api/ballot-crypto
 
+## 1.1.6
+
+### Patch Changes
+
+- [#360](https://github.com/PPLEThai/pple-today/pull/360) [`c2f124b`](https://github.com/PPLEThai/pple-today/commit/c2f124b5f50ac8cf666144bd6800fd279395df5c) Thanks [@miello](https://github.com/miello)! - [[PPLE-649] [Facebook] Lean webhook handler to use only information from webhook](https://linear.app/snts/issue/PPLE-649/facebook-lean-webhook-handler-to-use-only-information-from-webhook)
+
+- Updated dependencies [[`c2f124b`](https://github.com/PPLEThai/pple-today/commit/c2f124b5f50ac8cf666144bd6800fd279395df5c)]:
+  - @pple-today/api-common@1.3.4
+
 ## 1.1.5
 
 ### Patch Changes
