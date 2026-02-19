@@ -1,5 +1,34 @@
 # @client/mobile
 
+## 2.4.0
+
+### Minor Changes
+
+- [#339](https://github.com/PPLEThai/pple-today/pull/339) [`3deb2a9`](https://github.com/PPLEThai/pple-today/commit/3deb2a9312a6757e42096b8e123c9cb1252d51e0) Thanks [@miello](https://github.com/miello)! - [[PPLE-619] New Notification mark](https://linear.app/snts/issue/PPLE-619/new-notification-mark)
+  [[PPLE-618] In-app Notification Toast](https://linear.app/snts/issue/PPLE-618/in-app-notification-toast)
+
+### Patch Changes
+
+- [#337](https://github.com/PPLEThai/pple-today/pull/337) [`6b8fb5b`](https://github.com/PPLEThai/pple-today/commit/6b8fb5b7badbfbfc485872cbddb2b1c330054a6b) Thanks [@miello](https://github.com/miello)! - [[PPLE-624] Handle no candidate number](https://linear.app/snts/issue/PPLE-624/handle-no-candidate-number)
+  [[PPLE-612] Cannot Navigate to Election Detail page through button](https://linear.app/snts/issue/PPLE-612/cannot-navigate-to-election-detail-page-through-button)
+  [[PPLE-607] Sync following topic to feed tab](https://linear.app/snts/issue/PPLE-607/sync-following-topic-to-feed-tab)
+  [[PPLE-606] Followed topic does not appear as following in my content](https://linear.app/snts/issue/PPLE-606/followed-topic-does-not-appear-as-following-in-my-content)
+  [[PPLE-605] Change เห็นด้วย to สนับสนุน](https://linear.app/snts/issue/PPLE-605/change-เห็นด้วย-to-สนับสนุน)
+  [[PPLE-601] Use solid instead of outline](https://linear.app/snts/issue/PPLE-601/use-solid-instead-of-outline)
+
+- [#363](https://github.com/PPLEThai/pple-today/pull/363) [`c44721e`](https://github.com/PPLEThai/pple-today/commit/c44721eb8a16dd83513e59d777343c93e6e83df5) Thanks [@miello](https://github.com/miello)! - [[PPLE-653] [Mobile] React version problem](https://linear.app/snts/issue/PPLE-653/mobile-react-version-problem)
+
+- [#349](https://github.com/PPLEThai/pple-today/pull/349) [`36d5344`](https://github.com/PPLEThai/pple-today/commit/36d534453e4f82fc9fae71eb24456d741e9d5566) Thanks [@miello](https://github.com/miello)! - [[PPLE-636] [App] Mini app styling](https://linear.app/snts/issue/PPLE-636/app-mini-app-styling)
+  [[PPLE-633] [App] Mini App card too wide when it only has single card](https://linear.app/snts/issue/PPLE-633/app-mini-app-card-too-wide-when-it-only-has-single-card)
+
+- [#356](https://github.com/PPLEThai/pple-today/pull/356) [`309272c`](https://github.com/PPLEThai/pple-today/commit/309272cc85286b4b00ee717671d3df392d74d0c6) Thanks [@miello](https://github.com/miello)! - [[PPLE-577] Suspended user can like a post due to optimistic?](https://linear.app/snts/issue/PPLE-577/suspended-user-can-like-a-post-due-to-optimistic)
+
+- [#338](https://github.com/PPLEThai/pple-today/pull/338) [`10578bf`](https://github.com/PPLEThai/pple-today/commit/10578bf4a2b925f44e5051714468a8c6d8a70e72) Thanks [@miello](https://github.com/miello)! - [[PPLE-625] Cancel status not display in Today App](https://linear.app/snts/issue/PPLE-625/cancel-status-not-display-in-today-app)
+  [[PPLE-616] Add Announcement Empty state](https://linear.app/snts/issue/PPLE-616/add-announcement-empty-state)
+- Updated dependencies [[`3deb2a9`](https://github.com/PPLEThai/pple-today/commit/3deb2a9312a6757e42096b8e123c9cb1252d51e0), [`c44721e`](https://github.com/PPLEThai/pple-today/commit/c44721eb8a16dd83513e59d777343c93e6e83df5)]:
+  - @pple-today/ui@1.1.0
+  - expo-scroll-forwarder@1.0.1
+
 ## 2.3.1
 
 ### Patch Changes

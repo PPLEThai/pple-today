@@ -1,5 +1,40 @@
 # @api/backoffice
 
+## 1.5.0
+
+### Minor Changes
+
+- [#339](https://github.com/PPLEThai/pple-today/pull/339) [`3deb2a9`](https://github.com/PPLEThai/pple-today/commit/3deb2a9312a6757e42096b8e123c9cb1252d51e0) Thanks [@miello](https://github.com/miello)! - [[PPLE-619] New Notification mark](https://linear.app/snts/issue/PPLE-619/new-notification-mark)
+  [[PPLE-618] In-app Notification Toast](https://linear.app/snts/issue/PPLE-618/in-app-notification-toast)
+
+### Patch Changes
+
+- [#334](https://github.com/PPLEThai/pple-today/pull/334) [`3810b06`](https://github.com/PPLEThai/pple-today/commit/3810b062cd57cc00bdb805f951467b21ee10dc45) Thanks [@miello](https://github.com/miello)! - [[PPLE-628] Guard Suspended User not to be able to vote in an election](https://linear.app/snts/issue/PPLE-628/guard-suspended-user-not-to-be-able-to-vote-in-an-election)
+
+- [#363](https://github.com/PPLEThai/pple-today/pull/363) [`c44721e`](https://github.com/PPLEThai/pple-today/commit/c44721eb8a16dd83513e59d777343c93e6e83df5) Thanks [@miello](https://github.com/miello)! - [[PPLE-653] [Mobile] React version problem](https://linear.app/snts/issue/PPLE-653/mobile-react-version-problem)
+
+- [#364](https://github.com/PPLEThai/pple-today/pull/364) [`b6f0f25`](https://github.com/PPLEThai/pple-today/commit/b6f0f2569c93108732df623a07d7f6096dbf3ada) Thanks [@miello](https://github.com/miello)! - [[PPLE-654] [Facebook] Optimize webhook to pull only image or post](https://linear.app/snts/issue/PPLE-654/facebook-optimize-webhook-to-pull-only-image-or-post)
+  [[PPLE-655] [Feed] Decrease feed rotation time making new feed reaching user more often](https://linear.app/snts/issue/PPLE-655/feed-decrease-feed-rotation-time-making-new-feed-reaching-user-more)
+
+- [#363](https://github.com/PPLEThai/pple-today/pull/363) [`7c57301`](https://github.com/PPLEThai/pple-today/commit/7c573014827322430a43043d7325ff9a7f5cfa5e) Thanks [@miello](https://github.com/miello)! - [[PPLE-652] [Facebook] Ignore logging if facebook webhook got unsupported body](https://linear.app/snts/issue/PPLE-652/facebook-ignore-logging-if-facebook-webhook-got-unsupported-body)
+
+- [#349](https://github.com/PPLEThai/pple-today/pull/349) [`36d5344`](https://github.com/PPLEThai/pple-today/commit/36d534453e4f82fc9fae71eb24456d741e9d5566) Thanks [@miello](https://github.com/miello)! - [[PPLE-636] [App] Mini app styling](https://linear.app/snts/issue/PPLE-636/app-mini-app-styling)
+  [[PPLE-633] [App] Mini App card too wide when it only has single card](https://linear.app/snts/issue/PPLE-633/app-mini-app-card-too-wide-when-it-only-has-single-card)
+
+- [#357](https://github.com/PPLEThai/pple-today/pull/357) [`2b40a1f`](https://github.com/PPLEThai/pple-today/commit/2b40a1f11c34bbc9b3dc1a604c4fc088cbf25d5f) Thanks [@miello](https://github.com/miello)! - [[PPLE-641] [Backoffice] Sometimes auth does not working as expected](https://linear.app/snts/issue/PPLE-641/backoffice-sometimes-auth-does-not-working-as-expected)
+
+- [#356](https://github.com/PPLEThai/pple-today/pull/356) [`309272c`](https://github.com/PPLEThai/pple-today/commit/309272cc85286b4b00ee717671d3df392d74d0c6) Thanks [@miello](https://github.com/miello)! - [[PPLE-577] Suspended user can like a post due to optimistic?](https://linear.app/snts/issue/PPLE-577/suspended-user-can-like-a-post-due-to-optimistic)
+
+- [#338](https://github.com/PPLEThai/pple-today/pull/338) [`10578bf`](https://github.com/PPLEThai/pple-today/commit/10578bf4a2b925f44e5051714468a8c6d8a70e72) Thanks [@miello](https://github.com/miello)! - [[PPLE-625] Cancel status not display in Today App](https://linear.app/snts/issue/PPLE-625/cancel-status-not-display-in-today-app)
+  [[PPLE-616] Add Announcement Empty state](https://linear.app/snts/issue/PPLE-616/add-announcement-empty-state)
+
+- [#362](https://github.com/PPLEThai/pple-today/pull/362) [`98518a9`](https://github.com/PPLEThai/pple-today/commit/98518a9333e97693fb79fae1f2e4c0eb305f9455) Thanks [@miello](https://github.com/miello)! - [[PPLE-650] [API] Add root CA trust for facebook webhook](https://linear.app/snts/issue/PPLE-650/api-add-root-ca-trust-for-facebook-webhook)
+
+- [#360](https://github.com/PPLEThai/pple-today/pull/360) [`c2f124b`](https://github.com/PPLEThai/pple-today/commit/c2f124b5f50ac8cf666144bd6800fd279395df5c) Thanks [@miello](https://github.com/miello)! - [[PPLE-649] [Facebook] Lean webhook handler to use only information from webhook](https://linear.app/snts/issue/PPLE-649/facebook-lean-webhook-handler-to-use-only-information-from-webhook)
+
+- Updated dependencies [[`c2f124b`](https://github.com/PPLEThai/pple-today/commit/c2f124b5f50ac8cf666144bd6800fd279395df5c)]:
+  - @pple-today/api-common@1.3.4
+
 ## 1.4.6
 
 ### Patch Changes

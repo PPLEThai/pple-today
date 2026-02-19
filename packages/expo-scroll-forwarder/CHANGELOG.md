@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.1
+
+### Patch Changes
+
+- [#363](https://github.com/PPLEThai/pple-today/pull/363) [`c44721e`](https://github.com/PPLEThai/pple-today/commit/c44721eb8a16dd83513e59d777343c93e6e83df5) Thanks [@miello](https://github.com/miello)! - [[PPLE-653] [Mobile] React version problem](https://linear.app/snts/issue/PPLE-653/mobile-react-version-problem)
+
 ## 1.0.0
 
 ### Major Changes

@@ -1,7 +1,7 @@
 {
   "name": "@client/mobile",
   "main": "expo-router/entry",
-  "version": "2.3.1",
+  "version": "2.4.0",
   "scripts": {
     "dev": "node --env-file .env ./scripts/update-redirect.js && expo start --dev-client",
     "start": "expo start",
