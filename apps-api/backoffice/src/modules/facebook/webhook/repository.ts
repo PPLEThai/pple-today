@@ -11,6 +11,7 @@ import {
   PostAttachmentType,
   PostStatus,
 } from '@pple-today/database/prisma'
+import { Dayjs } from 'dayjs'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 import * as R from 'remeda'
@@ -157,6 +158,7 @@ export class FacebookWebhookRepository {
     facebookPageId: string
     content?: string
     postId: string
+    publishedAt: Dayjs
     attachments?: Pick<
       PostAttachment,
       | 'description'
@@ -183,12 +185,12 @@ export class FacebookWebhookRepository {
       return await this.prismaService.feedItem.create({
         data: {
           type: FeedItemType.POST,
-          publishedAt: new Date(),
           author: {
             connect: {
               id: pageManager.managerId!,
             },
           },
+          publishedAt: data.publishedAt.toDate(),
           post: {
             create: {
               facebookPostId: data.postId,
