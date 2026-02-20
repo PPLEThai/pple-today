@@ -137,7 +137,7 @@ function AlbumLayout(props: AttachmentLayoutProps) {
           {props.attachments.slice(1, 4).map((m, i) => {
             if (i === 2) {
               return (
-                <View key={i} className="relative">
+                <View key={i} className="relative flex-1">
                   <Attachment key={i} index={i + 1} onPress={props.onPress} attachment={m} />
                   <View className="absolute top-0 left-0 right-0 bottom-0 bg-black/50 flex items-center justify-center z-[1] rounded-[2px] pointer-events-none">
                     <Text className="text-2xl text-white font-heading-semibold">
@@ -147,7 +147,15 @@ function AlbumLayout(props: AttachmentLayoutProps) {
                 </View>
               )
             }
-            return <Attachment key={i} index={i + 1} onPress={props.onPress} attachment={m} />
+            return (
+              <Attachment
+                key={i}
+                index={i + 1}
+                onPress={props.onPress}
+                attachment={m}
+                className="flex-1"
+              />
+            )
           })}
         </View>
       </View>

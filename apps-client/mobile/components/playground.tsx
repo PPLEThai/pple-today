@@ -61,6 +61,7 @@ import { ActivityCard } from './activity/activity-card'
 import { AuthPlayground } from './auth-playground'
 import { AvatarPPLEFallback } from './avatar-pple-fallback'
 import { ElectionCard, ElectionDetailCard, ElectionStatusBadge } from './election/election-card'
+import { Lightbox, PostCardAttachment } from './feed/lightbox'
 import { LightboxSource, LightboxView } from './feed/lightbox-viewer'
 import { MoreOrLess } from './more-or-less'
 import { PollContent } from './poll/poll-card'
@@ -612,6 +613,40 @@ const images: LightboxSource[] = [
     src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
   },
 ]
+
+const attachments: PostCardAttachment[] = [
+  {
+    id: '1',
+    type: 'IMAGE',
+    url: 'https://picsum.photos/300?random=0',
+    description: '',
+  },
+  {
+    id: '2',
+    type: 'IMAGE',
+    url: 'https://picsum.photos/300?random=0',
+    description: '',
+  },
+  {
+    id: '3',
+    type: 'IMAGE',
+    url: 'https://picsum.photos/300?random=0',
+    description: '',
+  },
+  {
+    id: '4',
+    type: 'IMAGE',
+    url: 'https://picsum.photos/300?random=0',
+    description: '',
+  },
+  {
+    id: '5',
+    type: 'IMAGE',
+    url: 'https://picsum.photos/300?random=0',
+    description: '',
+  },
+]
+
 function LightboxExample() {
   const [visible, setIsVisible] = useState(false)
   return (
@@ -629,6 +664,8 @@ function LightboxExample() {
         visible={visible}
         onRequestClose={() => setIsVisible(false)}
       />
+      <H2 className="font-inter-bold">Album Layout</H2>
+      <Lightbox attachments={attachments} />
     </View>
   )
 }
