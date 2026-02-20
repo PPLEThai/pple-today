@@ -7,6 +7,10 @@ export const createImageUrl = (
   if (!url) return url
 
   const urlObj = new URL(url)
+  // TODO: check if url origin domain is from image server otherwise return original url without transformation
+  // if (urlObj.origin !== environment.EXPO_PUBLIC_IMAGE_SERVER_BASE_URL) {
+  //   return url
+  // }
 
   urlObj.searchParams.set('quality', config.quality?.toString() ?? '80')
 
