@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 2.4.1
+
+### Patch Changes
+
+- [#365](https://github.com/PPLEThai/pple-today/pull/365) [`5844a59`](https://github.com/PPLEThai/pple-today/commit/5844a59075000db6f16b77a716a524af5fbdd2eb) Thanks [@Anon-136](https://github.com/Anon-136)! - fix: AlbumLayout with flex properties and add Lightbox example
+
 ## 2.4.0
 
 ### Minor Changes
