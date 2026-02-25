@@ -31,6 +31,12 @@ const formatters = {
       }
 
       if (object.isError) {
+        object.store.startTime ??= 0
+        object.store.endTime = performance.now()
+
+        object.store.responseTime =
+          (object.store.endTime as number) - (object.store.startTime as number)
+
         if (object.error instanceof Error && 'code' in object.error) {
           log.message = object.error.message
           log.code = object.error.code
@@ -50,10 +56,10 @@ const formatters = {
             log.message = 'Unknown error'
           }
         }
-      } else {
-        if (object.store.responseTime) {
-          log.responseTime = object.store.responseTime
-        }
+      }
+
+      if (object.store.responseTime) {
+        log.responseTime = object.store.responseTime
       }
 
       return log
