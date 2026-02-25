@@ -8,7 +8,22 @@ import {
 import { LoggerOptions, StandaloneLoggerOptions } from '@bogeychan/elysia-logger/types'
 import { omit } from 'remeda'
 
+const PinoLevelToSeverityLookup: Record<string, string> = {
+  trace: 'DEBUG',
+  debug: 'DEBUG',
+  info: 'INFO',
+  warn: 'WARNING',
+  error: 'ERROR',
+  fatal: 'CRITICAL',
+}
+
 const formatters = {
+  level(label, number) {
+    return {
+      severity: PinoLevelToSeverityLookup[label] || PinoLevelToSeverityLookup['info'],
+      level: number,
+    }
+  },
   log(object) {
     if (isContext(object)) {
       const log: Record<string, any> = {
