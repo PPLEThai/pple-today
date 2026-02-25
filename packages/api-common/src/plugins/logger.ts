@@ -8,22 +8,44 @@ import {
 import { LoggerOptions, StandaloneLoggerOptions } from '@bogeychan/elysia-logger/types'
 import { omit } from 'remeda'
 
+const PinoLevelToSeverityLookup: Record<string, string> = {
+  trace: 'DEBUG',
+  debug: 'DEBUG',
+  info: 'INFO',
+  warn: 'WARNING',
+  error: 'ERROR',
+  fatal: 'CRITICAL',
+}
+
 const formatters = {
+  level(label, number) {
+    return {
+      severity: PinoLevelToSeverityLookup[label] || PinoLevelToSeverityLookup['info'],
+      level: number,
+    }
+  },
   log(object) {
     if (isContext(object)) {
-      const log: Record<string, any> = {
-        request: object.request,
-      }
+      const log: Record<string, any> = {}
 
       if (object.isError) {
+        object.store.startTime ??= 0
+        object.store.endTime = performance.now()
+
+        object.store.responseTime =
+          (object.store.endTime as number) - (object.store.startTime as number)
+
         if (object.error instanceof Error && 'code' in object.error) {
           log.message = object.error.message
           log.code = object.error.code
           log.stack = object.error.stack
         } else {
-          const { code, error } = object
+          const { code, error, query, path, request } = object
 
           log.code = code
+          log.path = path
+          log.query = query
+          log.originalUrl = request.url
 
           if ('message' in error) {
             log.message = error.message
@@ -35,10 +57,10 @@ const formatters = {
             log.message = 'Unknown error'
           }
         }
-      } else {
-        if (object.store.responseTime) {
-          log.responseTime = object.store.responseTime
-        }
+      }
+
+      if (object.store.responseTime) {
+        log.responseTime = object.store.responseTime
       }
 
       return log
