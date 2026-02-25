@@ -24,10 +24,13 @@ import { FacebookRepository, FacebookRepositoryPlugin } from '../repository'
 
 export class FacebookWebhookService {
   private debouncePostUpdate: Map<string, number | NodeJS.Timeout> = new Map()
-  private postActionQueue: Map<string, { action: WebhookChangesVerb; body: WebhookFeedChanges }> =
-    new Map()
+  private postActionQueue: Map<
+    string,
+    { action: WebhookChangesVerb; body: WebhookFeedChanges; retryCount: number }
+  > = new Map()
 
   private readonly DEBOUNCE_TIMEOUT = 3000
+  private readonly RETRY_LIMIT = 3
 
   constructor(
     private readonly facebookConfig: {
@@ -39,7 +42,11 @@ export class FacebookWebhookService {
     private readonly loggerService: ElysiaLoggerInstance
   ) {}
 
-  private enqueuePostFetching(body: WebhookFeedChanges, action: WebhookChangesVerb) {
+  private enqueuePostFetching(
+    body: WebhookFeedChanges,
+    action: WebhookChangesVerb,
+    retryCount: number = 0
+  ) {
     const pageId = body.from.id
     const postId = body.post_id
 
@@ -59,8 +66,15 @@ export class FacebookWebhookService {
       },
     })
 
-    if (!existingAction) this.postActionQueue.set(key, { action, body })
-    else if (action === WebhookChangesVerb.ADD) this.postActionQueue.set(key, { action, body })
+    if (retryCount >= this.RETRY_LIMIT) {
+      this.debouncePostUpdate.delete(key)
+      this.postActionQueue.delete(key)
+      return ok()
+    }
+
+    if (!existingAction) this.postActionQueue.set(key, { action, body, retryCount })
+    else if (action === WebhookChangesVerb.ADD)
+      this.postActionQueue.set(key, { action, body, retryCount })
     else if (action === WebhookChangesVerb.REMOVE) {
       // NOTE: ADD and REMOVE actions should cancel each other out
       if (existingAction.action === WebhookChangesVerb.ADD) {
@@ -69,11 +83,11 @@ export class FacebookWebhookService {
         return ok()
       }
 
-      this.postActionQueue.set(key, { action, body })
+      this.postActionQueue.set(key, { action, body, retryCount })
     } else if (action === WebhookChangesVerb.EDIT) {
       if (existingAction.action === WebhookChangesVerb.ADD)
-        this.postActionQueue.set(key, { action: WebhookChangesVerb.ADD, body })
-      else this.postActionQueue.set(key, { action, body })
+        this.postActionQueue.set(key, { action: WebhookChangesVerb.ADD, body, retryCount })
+      else this.postActionQueue.set(key, { action, body, retryCount })
     }
 
     this.debouncePostUpdate.set(
@@ -112,15 +126,19 @@ export class FacebookWebhookService {
             result.error.code === 'RECORD_NOT_FOUND' ||
             result.error.code === InternalErrorCode.FEED_ITEM_NOT_FOUND
           ) {
-            return ok()
+            this.postActionQueue.delete(key)
+            return
           }
 
           this.loggerService.error({
             message: `Failed to upsert post details for post ${postId}. Try again`,
             error: result.error,
           })
-          this.enqueuePostFetching(postAction.body, postAction.action)
+          this.enqueuePostFetching(postAction.body, postAction.action, postAction.retryCount + 1)
+          return
         }
+
+        this.postActionQueue.delete(key)
       }, this.DEBOUNCE_TIMEOUT)
     )
 
