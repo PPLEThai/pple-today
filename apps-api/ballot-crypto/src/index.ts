@@ -31,22 +31,16 @@ let app = new Elysia({ adapter: node() })
               },
             }
           : undefined,
-      redact: [
-        'request.headers.cookie',
-        'request.headers.authorization',
-        'body.accessToken',
-        'body.ballots',
-      ],
+      redact: ['headers.cookie', 'headers.authorization'],
     }).into({
       customProps: (ctx) => {
-        const responseBody =
-          ctx.response || ('response' in ctx.error ? ctx.error.response : undefined)
+        const errorResponseBody = 'response' in ctx.error ? ctx.error.response : {}
 
         return {
-          body: ctx.body,
+          headers: ctx.headers,
           query: ctx.query,
           params: ctx.params,
-          response: responseBody,
+          ...errorResponseBody,
         }
       },
       autoLogging: {

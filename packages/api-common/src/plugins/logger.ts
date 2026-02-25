@@ -26,9 +26,7 @@ const formatters = {
   },
   log(object) {
     if (isContext(object)) {
-      const log: Record<string, any> = {
-        request: object.request,
-      }
+      const log: Record<string, any> = {}
 
       if (object.isError) {
         object.store.startTime ??= 0
@@ -42,9 +40,12 @@ const formatters = {
           log.code = object.error.code
           log.stack = object.error.stack
         } else {
-          const { code, error } = object
+          const { code, error, query, path, request } = object
 
           log.code = code
+          log.path = path
+          log.query = query
+          log.originalUrl = request.url
 
           if ('message' in error) {
             log.message = error.message
