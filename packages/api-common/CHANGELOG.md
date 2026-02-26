@@ -1,5 +1,14 @@
 # @pple-today/api-common
 
+## 1.3.5
+
+### Patch Changes
+
+- [#369](https://github.com/PPLEThai/pple-today/pull/369) [`8f8b4d6`](https://github.com/PPLEThai/pple-today/commit/8f8b4d6f5de1b388dd3b6d6bc9a725da4bd88d3b) Thanks [@miello](https://github.com/miello)! - [[PPLE-658] [API] Remove set user id header from application endpoint](https://linear.app/snts/issue/PPLE-658/api-remove-set-user-id-header-from-application-endpoint)
+  [[PPLE-657] [API] Remove stack trace from unnecessary logging](https://linear.app/snts/issue/PPLE-657/api-remove-stack-trace-from-unnecessary-logging)
+
+- [#367](https://github.com/PPLEThai/pple-today/pull/367) [`8e02350`](https://github.com/PPLEThai/pple-today/commit/8e023504e087db778097d148266d5a2b2f6a1632) Thanks [@miello](https://github.com/miello)! - [[PPLE-656] [API] Remove request body and response from logging body](https://linear.app/snts/issue/PPLE-656/api-remove-request-body-and-response-from-logging-body)
+
 ## 1.3.4
 
 ### Patch Changes
