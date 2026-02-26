@@ -26,7 +26,12 @@ const formatters = {
   },
   log(object) {
     if (isContext(object)) {
-      const log: Record<string, any> = {}
+      const log: Record<string, any> = {
+        query: object.query,
+        params: object.params,
+        path: object.path,
+        headers: Object.fromEntries(object.request.headers.entries()),
+      }
 
       if (object.isError) {
         object.store.startTime ??= 0
@@ -39,11 +44,9 @@ const formatters = {
           log.message = object.error.message
           log.code = object.error.code
         } else {
-          const { code, error, query, path, request } = object
+          const { code, error, request } = object
 
           log.code = code
-          log.path = path
-          log.query = query
           log.originalUrl = request.url
 
           if ('message' in error) {
@@ -81,15 +84,6 @@ const serializers = {
     }
 
     return body
-  },
-  request: (request: Request) => {
-    const url = new URL(request.url)
-
-    return {
-      ...serializeRequest(request),
-      path: url.pathname,
-      headers: Object.fromEntries(request.headers.entries()),
-    }
   },
 } satisfies LoggerOptions['serializers']
 

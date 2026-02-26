@@ -106,14 +106,12 @@ export const AuthGuardPlugin = new Elysia({
   }))
   .macro({
     requiredOIDCUser: {
-      async resolve({ headers, status, authGuard, request }) {
+      async resolve({ headers, status, authGuard }) {
         const oidcUserResult = await authGuard.getOIDCUser(headers)
 
         if (oidcUserResult.isErr()) {
           return mapErrorCodeToResponse(oidcUserResult.error, status)
         }
-
-        setUserIdHeader(request, oidcUserResult.value.sub)
 
         return { oidcUser: oidcUserResult.value }
       },
@@ -122,20 +120,18 @@ export const AuthGuardPlugin = new Elysia({
       allowedRoles?: string[]
       isActive?: boolean
     }) => ({
-      async resolve({ status, headers, authGuard, request }) {
+      async resolve({ status, headers, authGuard }) {
         const checkResult = await authGuard.checkUserPrecondition(headers, conditions)
 
         if (checkResult.isErr()) {
           return mapErrorCodeToResponse(checkResult.error, status)
         }
 
-        setUserIdHeader(request, checkResult.value.id)
-
         return { user: checkResult.value }
       },
     }),
     fetchLocalUser: {
-      async resolve({ headers, status, authGuard, request }) {
+      async resolve({ headers, status, authGuard }) {
         const user = await authGuard.getCurrentUser(headers)
 
         if (user.isErr()) {
@@ -143,27 +139,19 @@ export const AuthGuardPlugin = new Elysia({
           return mapErrorCodeToResponse(user.error, status)
         }
 
-        setUserIdHeader(request, user.value.id)
-
         return { user: user.value }
       },
     },
     requiredLocalUser: {
-      async resolve({ status, headers, authGuard, request }) {
+      async resolve({ status, headers, authGuard }) {
         const user = await authGuard.getCurrentUser(headers)
 
         if (user.isErr()) {
           return mapErrorCodeToResponse(user.error, status)
         }
 
-        setUserIdHeader(request, user.value.id)
-
         return { user: user.value }
       },
     },
   })
   .as('scoped')
-
-export function setUserIdHeader(request: Request, userId: string) {
-  request.headers.set('x-user-id', userId)
-}

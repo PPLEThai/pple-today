@@ -3,11 +3,11 @@ import { err, mapErrorCodeToResponse, mapRepositoryError } from '@pple-today/api
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { setUserIdHeader } from './auth-guard'
 import { ConfigServicePlugin } from './config'
 
 import { AdminAuthRepository, AdminAuthRepositoryPlugin } from '../modules/admin/auth/repository'
 import { introspectAccessToken } from '../utils/jwt'
+import { setUserIdHeader } from '../utils/request'
 
 export class AdminAuthGuard {
   constructor(
