@@ -37,12 +37,7 @@ let app = new Elysia({ adapter: node() })
       customProps: (ctx) => {
         const errorResponseBody = 'response' in ctx.error ? ctx.error.response : {}
 
-        return {
-          headers: ctx.headers,
-          query: ctx.query,
-          params: ctx.params,
-          ...errorResponseBody,
-        }
+        return errorResponseBody
       },
       autoLogging: {
         ignore: (ctx) => {
