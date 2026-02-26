@@ -21,7 +21,6 @@ class PrismaService extends PrismaClient<
         message: event.message,
         timestamp: event.timestamp,
         target: event.target,
-        stackTrace: new Error().stack,
       })
     })
 
@@ -30,7 +29,6 @@ class PrismaService extends PrismaClient<
         message: event.message,
         timestamp: event.timestamp,
         target: event.target,
-        stackTrace: new Error().stack,
       })
     })
   }
