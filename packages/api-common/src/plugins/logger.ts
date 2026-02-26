@@ -38,7 +38,6 @@ const formatters = {
         if (object.error instanceof Error && 'code' in object.error) {
           log.message = object.error.message
           log.code = object.error.code
-          log.stack = object.error.stack
         } else {
           const { code, error, query, path, request } = object
 
@@ -52,7 +51,10 @@ const formatters = {
           } else if ('code' in error && 'response' in error) {
             const response = (error.response as any).error
             log.message = `HTTP ${error.code}: Code ${response.code} with message ${response.message}`
-            log.stack = response.stack
+
+            if (error.code >= 500) {
+              log.stack = response.stack
+            }
           } else {
             log.message = 'Unknown error'
           }
@@ -89,7 +91,7 @@ const serializers = {
       headers: Object.fromEntries(request.headers.entries()),
     }
   },
-}
+} satisfies LoggerOptions['serializers']
 
 export const loggerBuilder = (config: StandaloneLoggerOptions) => {
   return createPinoLogger({

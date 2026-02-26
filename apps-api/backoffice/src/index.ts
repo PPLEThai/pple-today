@@ -38,9 +38,10 @@ let app = new Elysia({ adapter: node() })
         const errorResponseBody = 'response' in ctx.error ? ctx.error.response : {}
 
         return {
-          headers: ctx.headers,
+          headers: ctx.request.headers,
           query: ctx.query,
           params: ctx.params,
+          path: ctx.path,
           ...errorResponseBody,
         }
       },
@@ -60,6 +61,7 @@ let app = new Elysia({ adapter: node() })
           )
         },
       },
+      useLevel: 'warn',
     }),
     RequestIdPlugin,
     GlobalExceptionPlugin,
