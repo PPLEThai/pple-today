@@ -55,7 +55,6 @@ let app = new Elysia({ adapter: node() })
           )
         },
       },
-      useLevel: 'warn',
     }),
     RequestIdPlugin,
     GlobalExceptionPlugin,
