@@ -1,6 +1,6 @@
 # PPLE Today
 
-**PPLE Today** is a civic-engagement and community voting platform that lets citizens participate in polls, elections, and public discussions. The platform is composed of a back-end REST API, a web-based admin dashboard, cross-platform iOS/Android mobile apps, and a public Mini App SDK that lets third-party developers embed their own experiences inside the PPLE Today ecosystem.
+**PPLE Today** is an engagement platform that helps the party share timely updates, run interactive campaigns, and collect actionable supporter feedback through mobile and web experiences. The platform is composed of a back-end REST API, a web-based admin dashboard, cross-platform iOS/Android mobile apps, and a public Mini App SDK that lets third-party developers embed their own experiences inside the PPLE Today ecosystem.
 
 The project is structured as a **pnpm + Turborepo monorepo** and is written entirely in TypeScript.
 
@@ -10,36 +10,36 @@ The project is structured as a **pnpm + Turborepo monorepo** and is written enti
 
 ### Apps — API (`apps-api/`)
 
-| App | Package name | Description | Deeper README |
-|-----|-------------|-------------|---------------|
-| `apps-api/backoffice` | `@api/backoffice` | Central REST API — handles auth (OIDC/Facebook), content management, elections, voting, push notifications, and media storage. Runs on port **2000**. | [README](apps-api/backoffice/README.md) |
-| `apps-api/ballot-crypto` | `@api/ballot-crypto` | Cryptographic ballot service that uses Google Cloud KMS to sign and verify votes. Runs on port **2001**. | [README](apps-api/ballot-crypto/README.md) |
+| App                      | Package name         | Description                                                                                                                                           | Deeper README                              |
+| ------------------------ | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `apps-api/backoffice`    | `@api/backoffice`    | Central REST API — handles auth (OIDC/Facebook), content management, elections, voting, push notifications, and media storage. Runs on port **2000**. | [README](apps-api/backoffice/README.md)    |
+| `apps-api/ballot-crypto` | `@api/ballot-crypto` | Cryptographic ballot service that uses Google Cloud KMS to sign and verify votes. Runs on port **2001**.                                              | [README](apps-api/ballot-crypto/README.md) |
 
 ### Apps — Client (`apps-client/`)
 
-| App | Package name | Description | Deeper README |
-|-----|-------------|-------------|---------------|
-| `apps-client/backoffice` | `@client/backoffice` | React 19 + Vite admin dashboard for platform administrators (managing users, elections, polls, and content). | [README](apps-client/backoffice/README.md) |
-| `apps-client/mobile` | `@client/mobile` | Expo / React Native mobile app for iOS and Android. Supports push notifications, social login (OIDC, Facebook), and the Mini App framework. | [README](apps-client/mobile/README.md) |
+| App                      | Package name         | Description                                                                                                                                 | Deeper README                              |
+| ------------------------ | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `apps-client/backoffice` | `@client/backoffice` | React 19 + Vite admin dashboard for platform administrators (managing users, elections, polls, and content).                                | [README](apps-client/backoffice/README.md) |
+| `apps-client/mobile`     | `@client/mobile`     | Expo / React Native mobile app for iOS and Android. Supports push notifications, social login (OIDC, Facebook), and the Mini App framework. | [README](apps-client/mobile/README.md)     |
 
 ### Packages (`packages/`)
 
-| Package | Package name | Description | Deeper README |
-|---------|-------------|-------------|---------------|
-| `packages/database` | `@pple-today/database` | Prisma schema, migrations, and seed scripts. Single source of truth for the PostgreSQL database. | — |
-| `packages/api-common` | `@pple-today/api-common` | Shared Elysia plugins, DTOs, services, and utilities reused by all API apps. | — |
-| `packages/api-client` | `@pple-today/api-client` | Type-safe HTTP client (Elysia Eden) used by web and mobile front-ends to call the backoffice API. | — |
-| `packages/ui` | `@pple-today/ui` | React Native UI component library (NativeWind / Tailwind) used by the mobile app. | — |
-| `packages/web-ui` | `@pple-today/web-ui` | React web UI component library (Tailwind + Radix UI) used by the backoffice dashboard. | — |
-| `packages/mini-app` | `@pplethai/pple-today-miniapp-sdk` | Public Mini App SDK (published to npm) for third-party developers building mini apps inside PPLE Today. | — |
-| `packages/expo-scroll-forwarder` | `@pple-today/expo-scroll-forwarder` | Custom Expo module for forwarding scroll events between nested scroll views. | [README](packages/expo-scroll-forwarder/README.md) |
-| `packages/tailwind-config` | `@pple-today/tailwind-config` | Shared Tailwind CSS configuration used by all front-end packages. | — |
-| `packages/project-config` | `@pple-today/project-config` | Centralised ESLint, Prettier, and TypeScript configurations for the entire monorepo. | — |
+| Package                          | Package name                        | Description                                                                                             | Deeper README                                      |
+| -------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `packages/database`              | `@pple-today/database`              | Prisma schema, migrations, and seed scripts. Single source of truth for the PostgreSQL database.        | —                                                  |
+| `packages/api-common`            | `@pple-today/api-common`            | Shared Elysia plugins, DTOs, services, and utilities reused by all API apps.                            | —                                                  |
+| `packages/api-client`            | `@pple-today/api-client`            | Type-safe HTTP client (Elysia Eden) used by web and mobile front-ends to call the backoffice API.       | —                                                  |
+| `packages/ui`                    | `@pple-today/ui`                    | React Native UI component library (NativeWind / Tailwind) used by the mobile app.                       | —                                                  |
+| `packages/web-ui`                | `@pple-today/web-ui`                | React web UI component library (Tailwind + Radix UI) used by the backoffice dashboard.                  | —                                                  |
+| `packages/mini-app`              | `@pplethai/pple-today-miniapp-sdk`  | Public Mini App SDK (published to npm) for third-party developers building mini apps inside PPLE Today. | —                                                  |
+| `packages/expo-scroll-forwarder` | `@pple-today/expo-scroll-forwarder` | Custom Expo module for forwarding scroll events between nested scroll views.                            | [README](packages/expo-scroll-forwarder/README.md) |
+| `packages/tailwind-config`       | `@pple-today/tailwind-config`       | Shared Tailwind CSS configuration used by all front-end packages.                                       | —                                                  |
+| `packages/project-config`        | `@pple-today/project-config`        | Centralised ESLint, Prettier, and TypeScript configurations for the entire monorepo.                    | —                                                  |
 
 ### Examples (`examples/`)
 
-| Example | Description |
-|---------|-------------|
+| Example             | Description                                                                                                              |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `examples/mini-app` | Reference implementation of a Mini App (Elysia backend + React Router 7 frontend) that integrates with the Mini App SDK. |
 
 ---
@@ -48,58 +48,58 @@ The project is structured as a **pnpm + Turborepo monorepo** and is written enti
 
 ### Backend / API
 
-| Library | Role |
-|---------|------|
-| [Elysia](https://elysiajs.com/) | TypeScript HTTP framework used for all API services. Provides end-to-end type safety via Eden. |
-| [Prisma](https://www.prisma.io/) | ORM for PostgreSQL — schema, migrations, and typed queries. |
-| [neverthrow](https://github.com/supermacro/neverthrow) | Result-type error handling instead of throwing exceptions (`ok` / `err`). Used extensively in service and repository layers. |
-| [@sinclair/typebox](https://github.com/sinclairzx81/typebox) | JSON Schema builder used for request/response validation with Elysia. |
-| [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken) | JWT creation and verification for service-to-service auth. |
-| [@google-cloud/storage](https://github.com/googleapis/nodejs-storage) | Google Cloud Storage for media uploads. |
-| [@google-cloud/kms](https://github.com/googleapis/nodejs-kms) | Google Cloud KMS used by `ballot-crypto` for cryptographic signing. |
-| [google-auth-library](https://github.com/googleapis/google-auth-library-nodejs) | Google OAuth2 / service account authentication. |
+| Library                                                                         | Role                                                                                                                         |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| [Elysia](https://elysiajs.com/)                                                 | TypeScript HTTP framework used for all API services. Provides end-to-end type safety via Eden.                               |
+| [Prisma](https://www.prisma.io/)                                                | ORM for PostgreSQL — schema, migrations, and typed queries.                                                                  |
+| [neverthrow](https://github.com/supermacro/neverthrow)                          | Result-type error handling instead of throwing exceptions (`ok` / `err`). Used extensively in service and repository layers. |
+| [@sinclair/typebox](https://github.com/sinclairzx81/typebox)                    | JSON Schema builder used for request/response validation with Elysia.                                                        |
+| [jsonwebtoken](https://github.com/auth0/node-jsonwebtoken)                      | JWT creation and verification for service-to-service auth.                                                                   |
+| [@google-cloud/storage](https://github.com/googleapis/nodejs-storage)           | Google Cloud Storage for media uploads.                                                                                      |
+| [@google-cloud/kms](https://github.com/googleapis/nodejs-kms)                   | Google Cloud KMS used by `ballot-crypto` for cryptographic signing.                                                          |
+| [google-auth-library](https://github.com/googleapis/google-auth-library-nodejs) | Google OAuth2 / service account authentication.                                                                              |
 
 ### Frontend — Web (Backoffice Dashboard)
 
-| Library | Role |
-|---------|------|
-| [React 19](https://react.dev/) | UI framework for the backoffice dashboard. |
-| [React Router v7](https://reactrouter.com/) | File-system-based routing with type-safe route tree generation (`tsr codegen`). |
-| [TanStack React Query](https://tanstack.com/query) | Server-state management, caching, and data fetching. |
-| [React Hook Form](https://react-hook-form.com/) | Performant form state management. |
-| [Zod](https://zod.dev/) | Schema validation for forms and API responses. |
-| [TanStack React Table](https://tanstack.com/table) | Headless data table with sorting, filtering, and pagination. |
-| [Radix UI](https://www.radix-ui.com/) | Accessible, unstyled UI primitives (used inside `@pple-today/web-ui`). |
-| [Tailwind CSS](https://tailwindcss.com/) | Utility-first CSS framework. |
-| [oidc-client-ts](https://github.com/authts/oidc-client-ts) | OpenID Connect login / token refresh flow. |
-| [Vite](https://vite.dev/) | Fast development server and production bundler. |
+| Library                                                    | Role                                                                            |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| [React 19](https://react.dev/)                             | UI framework for the backoffice dashboard.                                      |
+| [React Router v7](https://reactrouter.com/)                | File-system-based routing with type-safe route tree generation (`tsr codegen`). |
+| [TanStack React Query](https://tanstack.com/query)         | Server-state management, caching, and data fetching.                            |
+| [React Hook Form](https://react-hook-form.com/)            | Performant form state management.                                               |
+| [Zod](https://zod.dev/)                                    | Schema validation for forms and API responses.                                  |
+| [TanStack React Table](https://tanstack.com/table)         | Headless data table with sorting, filtering, and pagination.                    |
+| [Radix UI](https://www.radix-ui.com/)                      | Accessible, unstyled UI primitives (used inside `@pple-today/web-ui`).          |
+| [Tailwind CSS](https://tailwindcss.com/)                   | Utility-first CSS framework.                                                    |
+| [oidc-client-ts](https://github.com/authts/oidc-client-ts) | OpenID Connect login / token refresh flow.                                      |
+| [Vite](https://vite.dev/)                                  | Fast development server and production bundler.                                 |
 
 ### Frontend — Mobile
 
-| Library | Role |
-|---------|------|
-| [Expo](https://expo.dev/) & [React Native](https://reactnative.dev/) | Cross-platform iOS/Android framework. |
-| [Expo Router](https://expo.github.io/router/) | File-based routing for React Native apps. |
-| [TanStack React Query](https://tanstack.com/query) | Server-state management (shared pattern with web). |
-| [NativeWind](https://www.nativewind.dev/) | Tailwind CSS for React Native styling. |
-| [React Native Firebase](https://rnfirebase.io/) | Push notifications via Firebase Cloud Messaging. |
-| [React Native Reanimated](https://docs.swmansion.com/react-native-reanimated/) | High-performance animations. |
-| [Lottie React Native](https://github.com/lottie-react-native/lottie-react-native) | JSON-based animation playback. |
-| [TanStack React Form](https://tanstack.com/form) | Form state management on mobile. |
-| [react-native-fbsdk-next](https://github.com/thebergamo/react-native-fbsdk-next) | Facebook login integration. |
+| Library                                                                           | Role                                               |
+| --------------------------------------------------------------------------------- | -------------------------------------------------- |
+| [Expo](https://expo.dev/) & [React Native](https://reactnative.dev/)              | Cross-platform iOS/Android framework.              |
+| [Expo Router](https://expo.github.io/router/)                                     | File-based routing for React Native apps.          |
+| [TanStack React Query](https://tanstack.com/query)                                | Server-state management (shared pattern with web). |
+| [NativeWind](https://www.nativewind.dev/)                                         | Tailwind CSS for React Native styling.             |
+| [React Native Firebase](https://rnfirebase.io/)                                   | Push notifications via Firebase Cloud Messaging.   |
+| [React Native Reanimated](https://docs.swmansion.com/react-native-reanimated/)    | High-performance animations.                       |
+| [Lottie React Native](https://github.com/lottie-react-native/lottie-react-native) | JSON-based animation playback.                     |
+| [TanStack React Form](https://tanstack.com/form)                                  | Form state management on mobile.                   |
+| [react-native-fbsdk-next](https://github.com/thebergamo/react-native-fbsdk-next)  | Facebook login integration.                        |
 
 ### Shared / Monorepo
 
-| Library | Role |
-|---------|------|
-| [Turborepo](https://turborepo.com/) | Monorepo build system with task-graph caching. |
-| [pnpm](https://pnpm.io/) | Fast, disk-efficient package manager with workspace support. |
-| [TypeScript 5.8](https://www.typescriptlang.org/) | Static typing across the entire codebase. |
-| [Vitest](https://vitest.dev/) | Unit test runner used by API packages. |
+| Library                                                          | Role                                                                     |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| [Turborepo](https://turborepo.com/)                              | Monorepo build system with task-graph caching.                           |
+| [pnpm](https://pnpm.io/)                                         | Fast, disk-efficient package manager with workspace support.             |
+| [TypeScript 5.8](https://www.typescriptlang.org/)                | Static typing across the entire codebase.                                |
+| [Vitest](https://vitest.dev/)                                    | Unit test runner used by API packages.                                   |
 | [ESLint](https://eslint.org/) + [Prettier](https://prettier.io/) | Linting and formatting (config shared via `@pple-today/project-config`). |
-| [Changesets](https://github.com/changesets/changesets) | Versioning and changelog management for publishable packages. |
-| [remeda](https://remedajs.com/) | Functional utility library (type-safe Lodash alternative). |
-| [dayjs](https://day.js.org/) | Lightweight date/time manipulation. |
+| [Changesets](https://github.com/changesets/changesets)           | Versioning and changelog management for publishable packages.            |
+| [remeda](https://remedajs.com/)                                  | Functional utility library (type-safe Lodash alternative).               |
+| [dayjs](https://day.js.org/)                                     | Lightweight date/time manipulation.                                      |
 
 ---
 
@@ -133,13 +133,13 @@ The project is structured as a **pnpm + Turborepo monorepo** and is written enti
 
 ### Prerequisites
 
-| Tool | Required version |
-|------|-----------------|
-| Node.js | ≥ 22 (LTS recommended — use [Volta](https://volta.sh/) to pin automatically) |
-| pnpm | 9.9.0 — install with `npm install -g pnpm@9.9.0` |
-| Docker | Any recent version (for running PostgreSQL locally) |
-| Xcode (iOS only) | Latest stable |
-| Android Studio (Android only) | Latest stable |
+| Tool                          | Required version                                                             |
+| ----------------------------- | ---------------------------------------------------------------------------- |
+| Node.js                       | ≥ 22 (LTS recommended — use [Volta](https://volta.sh/) to pin automatically) |
+| pnpm                          | 9.9.0 — install with `npm install -g pnpm@9.9.0`                             |
+| Docker                        | Any recent version (for running PostgreSQL locally)                          |
+| Xcode (iOS only)              | Latest stable                                                                |
+| Android Studio (Android only) | Latest stable                                                                |
 
 ### 1. Clone the repository
 
@@ -161,6 +161,7 @@ docker compose up -d
 ```
 
 This starts a PostgreSQL 15 container on **port 9000** with:
+
 - user: `pple`
 - password: `pple`
 - database: `pple`
@@ -266,6 +267,7 @@ Contributions are welcome! Here's how to get started:
    ```
 
 3. **Make your changes**, following the conventions already in the codebase:
+
    - TypeScript everywhere — no `any` without a comment explaining why.
    - Use `neverthrow` `Result` types in service/repository functions.
    - Put reusable UI in `packages/ui` (mobile) or `packages/web-ui` (web).
