@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import { Pressable, PressableProps, ScrollView, View } from 'react-native'
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -7,6 +7,14 @@ import { BottomSheetModal, BottomSheetView } from '@pple-today/ui/bottom-sheet/i
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { cn } from '@pple-today/ui/lib/utils'
+import {
+  Option,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@pple-today/ui/select'
 import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { H1, H2, H3 } from '@pple-today/ui/typography'
@@ -38,6 +46,7 @@ import { RefreshControl } from '@app/components/refresh-control'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
+import { getRoleName } from '@app/utils/get-role-name'
 
 import { useBottomTabOnPress } from '../_layout'
 
@@ -365,9 +374,15 @@ const InformationSection = () => {
   )
 }
 
+const ALL_ROLES_OPTION: Option = { value: '', label: 'ทั้งหมด' }
+
 const MiniAppSection = () => {
   const router = useRouter()
-  const { data: miniAppData } = reactQueryClient.useQuery('/mini-app', {})
+  const [selectedRole, setSelectedRole] = useState<Option | undefined>(ALL_ROLES_OPTION)
+  const profileQuery = reactQueryClient.useQuery('/profile/me', {})
+  const { data: miniAppData } = reactQueryClient.useQuery('/mini-app', {
+    query: selectedRole?.value ? { role: selectedRole.value } : {},
+  })
 
   const miniAppGroupByTwo = useMemo(() => {
     if (!miniAppData) {
@@ -388,11 +403,26 @@ const MiniAppSection = () => {
 
   return (
     <View className="px-4">
-      <View className="flex flex-row gap-2 items-center">
-        <View className="w-8 h-8 flex items-center justify-center">
-          <Icon icon={PanelsTopLeftIcon} size={32} className="text-base-primary-default" />
+      <View className="flex flex-row justify-between items-center">
+        <View className="flex flex-row gap-2 items-center">
+          <View className="w-8 h-8 flex items-center justify-center">
+            <Icon icon={PanelsTopLeftIcon} size={32} className="text-base-primary-default" />
+          </View>
+          <H2 className="text-2xl font-heading-semibold text-base-text-high">มินิแอปฯ</H2>
         </View>
-        <H2 className="text-2xl font-heading-semibold text-base-text-high">มินิแอปฯ</H2>
+        {profileQuery.data && profileQuery.data.roles.length > 0 && (
+          <Select value={selectedRole} onValueChange={setSelectedRole}>
+            <SelectTrigger className="min-w-[120px]">
+              <SelectValue placeholder="ทั้งหมด" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem label="ทั้งหมด" value="" />
+              {profileQuery.data.roles.map((role) => (
+                <SelectItem key={role} label={getRoleName([role])} value={role} />
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </View>
       <View className="flex flex-col gap-4 mt-4 items-center">
         {miniAppGroupByTwo.map((group, index) => (

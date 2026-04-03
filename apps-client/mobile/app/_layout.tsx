@@ -49,6 +49,7 @@ import { InfoIcon } from 'lucide-react-native'
 import { StatusBarProvider } from '@app/context/status-bar'
 import { environment } from '@app/env'
 import { reactQueryClient } from '@app/libs/api-client'
+import { useScreenTracking } from '@app/libs/analytics'
 import { AuthLifeCycleHook, useAuthMe } from '@app/libs/auth'
 import { openLink } from '@app/utils/link'
 
@@ -101,6 +102,7 @@ export default function RootLayout() {
             <DevToolsBubble onCopy={onCopy} queryClient={queryClient} />
           )}
           <AuthLifeCycleHook />
+          <AnalyticsScreenTracker />
           <NotificationTokenConsentPopup />
         </QueryClientProvider>
       </SafeAreaProvider>
@@ -178,6 +180,11 @@ function ColorSchemeProvider({ children }: { children: React.ReactNode }) {
 
 // const useIsomorphicLayoutEffect =
 //   Platform.OS === 'web' && typeof window === 'undefined' ? React.useEffect : React.useLayoutEffect
+
+function AnalyticsScreenTracker() {
+  useScreenTracking()
+  return null
+}
 
 async function requestUserPermission() {
   if (Platform.OS === 'android' && Platform.Version >= 33) {
