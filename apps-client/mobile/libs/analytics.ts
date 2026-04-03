@@ -1,31 +1,34 @@
 import { useEffect, useRef } from 'react'
 
-import { getAnalytics, logScreenView } from '@react-native-firebase/analytics'
-import { usePathname, useSegments } from 'expo-router'
+import { getAnalytics, logEvent } from '@react-native-firebase/analytics'
+import { useRootNavigationState, useSegments } from 'expo-router'
 
 const analytics = getAnalytics()
 
-function getScreenName(segments: string[]): string {
-  const filtered = segments.filter((s) => !s.startsWith('(') || !s.endsWith(')'))
-  return filtered.length > 0 ? filtered.join('/') : 'index'
-}
-
 export function useScreenTracking() {
-  const pathname = usePathname()
   const segments = useSegments()
-  const previousPathname = useRef<string | null>(null)
+  const navigationState = useRootNavigationState()
+  const previousScreen = useRef<string | null>(null)
 
   useEffect(() => {
-    if (pathname === previousPathname.current) return
-    previousPathname.current = pathname
+    if (!navigationState?.key) return
 
-    const screenName = getScreenName(segments)
+    const screenName =
+      segments
+        .filter((s) => s !== '(tabs)')
+        .map((s) => s.replace(/[()]/g, ''))
+        .join('/') || 'home'
 
-    logScreenView(analytics, {
+    if (screenName === previousScreen.current) return
+    previousScreen.current = screenName
+
+    logEvent(analytics, 'screen_view' as any, {
       screen_name: screenName,
       screen_class: screenName,
-    }).catch((err: unknown) => {
-      console.warn('[Analytics] Failed to log screen view:', err)
-    })
-  }, [pathname, segments])
+    }).catch(() => {})
+
+    if (__DEV__) {
+      console.log(`[Analytics] 🚀 Tracked: ${screenName}`)
+    }
+  }, [segments, navigationState])
 }
