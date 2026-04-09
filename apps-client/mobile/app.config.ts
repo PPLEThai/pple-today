@@ -66,7 +66,7 @@ export default {
 
             // https://github.com/invertase/react-native-firebase/issues/8657#issuecomment-3309893085
             useFrameworks: 'static',
-            forceStaticLinking: ['RNFBApp', 'RNFBMessaging'],
+            forceStaticLinking: ['RNFBApp', 'RNFBMessaging', 'RNFBAnalytics'],
           },
           android: {
             compileSdkVersion: 35,

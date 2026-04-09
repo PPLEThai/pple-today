@@ -72,7 +72,7 @@ export default function BottomTabsLayout() {
           <Tabs.Screen
             name="(official)"
             options={{
-              title: 'ทางการ',
+              title: 'แอป',
               tabBarIcon: (props) => <TabBarIcon {...props} icon={PPLEIcon} />,
               tabBarLabel: TabBarLabel,
               tabBarButton: TabBarButton,
