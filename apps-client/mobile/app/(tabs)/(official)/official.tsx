@@ -18,7 +18,7 @@ import { H1, H2 } from '@pple-today/ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
-import { CircleChevronRightIcon, VoteIcon } from 'lucide-react-native'
+import { VoteIcon } from 'lucide-react-native'
 
 import Personal from '@app/assets/personal.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
@@ -84,7 +84,7 @@ export default function OfficialPage() {
             แอปพลิเคชันจากพรรคประชาชน
           </Text>
         </View>
-        <View className="gap-3 py-4">
+        <View className="gap-3 py-4 flex-1">
           <ElectionSection />
           <MiniAppSection selectedRole={selectedRole} />
         </View>
@@ -137,14 +137,14 @@ const MiniAppSection = ({ selectedRole }: { selectedRole: Option | undefined }) 
     query: selectedRole?.value ? { role: selectedRole.value } : {},
   })
 
-  const miniAppGroupByTwo = useMemo(() => {
+  const miniAppGroupByThree = useMemo(() => {
     if (!miniAppData) {
       return []
     }
 
     const grouped: (typeof miniAppData)[] = []
-    for (let i = 0; i < miniAppData.length; i += 2) {
-      grouped.push(miniAppData.slice(i, i + 2))
+    for (let i = 0; i < miniAppData.length; i += 3) {
+      grouped.push(miniAppData.slice(i, i + 3))
     }
 
     return grouped
@@ -156,32 +156,38 @@ const MiniAppSection = ({ selectedRole }: { selectedRole: Option | undefined }) 
 
   return (
     <View className="px-4">
-      <View className="flex flex-col gap-4 mt-4 items-center">
-        {miniAppGroupByTwo.map((group, index) => (
-          <View key={index} className="flex flex-1 flex-row gap-4">
+      <View className="flex flex-col gap-4 mt-4">
+        {miniAppGroupByThree.map((group, index) => (
+          <View key={index} className="flex flex-row gap-4 w-full">
             {group.map((app) => (
-              <InfoItem key={app.slug} onPress={() => router.navigate(`/mini-app/${app.slug}`)}>
-                <View className="flex justify-start flex-col">
-                  <View className="flex flex-col mb-3 h-8 w-8 bg-base-secondary-default rounded-lg items-center justify-center">
-                    {app.iconUrl ? (
-                      <Image source={{ uri: app.iconUrl }} className="w-4 h-4" />
-                    ) : (
-                      <Personal width={16} height={16} color="white" />
-                    )}
+              <View key={app.slug} className="flex-1">
+                <InfoItem onPress={() => router.navigate(`/mini-app/${app.slug}`)}>
+                  <View className="flex justify-center items-center flex-col">
+                    <View className="flex flex-col mb-3 h-16 w-16 bg-base-secondary-default rounded-lg items-center justify-center">
+                      {app.iconUrl ? (
+                        <Image source={{ uri: app.iconUrl }} className="w-8 h-8" />
+                      ) : (
+                        <Personal width={32} height={32} color="white" />
+                      )}
+                    </View>
+                    <Text
+                      numberOfLines={2}
+                      className="text-xs font-heading-semibold w-full text-center"
+                    >
+                      {app.name}
+                    </Text>
                   </View>
-                  <Text className="text-base font-heading-semibold w-full">{app.name}</Text>
-                </View>
-                <View className="flex-1 justify-end items-end">
-                  <Icon
-                    icon={CircleChevronRightIcon}
-                    size={28}
-                    strokeWidth={1}
-                    className="text-foreground"
-                  />
-                </View>
-              </InfoItem>
+                </InfoItem>
+              </View>
             ))}
-            {group.length === 1 && <View className="flex-1" />}
+
+            {group.length === 1 && (
+              <>
+                <View className="flex-1" />
+                <View className="flex-1" />
+              </>
+            )}
+            {group.length === 2 && <View className="flex-1" />}
           </View>
         ))}
       </View>
@@ -208,10 +214,7 @@ const InfoItem = ({ children, ...props }: InfoItemProps) => {
       {...props}
       className={cn('flex-1', props.className)}
     >
-      <Animated.View
-        style={{ opacity }}
-        className="p-4 flex flex-col justify-between min-h-[163px] bg-base-bg-white rounded-2xl border border-base-outline-default"
-      >
+      <Animated.View style={{ opacity }} className="p-4 flex flex-col justify-between">
         {children}
       </Animated.View>
     </Pressable>
