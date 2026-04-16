@@ -46,10 +46,12 @@ import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { InfoIcon } from 'lucide-react-native'
 
+import { AppUpdateGate } from '@app/components/app-update-gate'
 import { StatusBarProvider } from '@app/context/status-bar'
 import { environment } from '@app/env'
-import { reactQueryClient } from '@app/libs/api-client'
 import { useScreenTracking } from '@app/libs/analytics'
+import { reactQueryClient } from '@app/libs/api-client'
+import { initAppUpdate } from '@app/libs/app-update'
 import { AuthLifeCycleHook, useAuthMe } from '@app/libs/auth'
 import { openLink } from '@app/utils/link'
 
@@ -76,6 +78,8 @@ export {
 } from 'expo-router'
 
 const messaging = getMessaging()
+
+initAppUpdate()
 
 const queryClient = new QueryClient()
 export default function RootLayout() {
@@ -104,6 +108,7 @@ export default function RootLayout() {
           <AuthLifeCycleHook />
           <AnalyticsScreenTracker />
           <NotificationTokenConsentPopup />
+          <AppUpdateGate />
         </QueryClientProvider>
       </SafeAreaProvider>
       <PortalHost />
