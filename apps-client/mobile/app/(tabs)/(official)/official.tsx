@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@pple-today/ui/select'
+import { Skeleton } from '@pple-today/ui/skeleton'
 import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
 import { H1, H2 } from '@pple-today/ui/typography'
@@ -20,7 +21,6 @@ import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
 import { VoteIcon } from 'lucide-react-native'
 
-import Personal from '@app/assets/personal.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { ElectionCard } from '@app/components/election/election-card'
 import { RefreshControl } from '@app/components/refresh-control'
@@ -133,7 +133,7 @@ const ElectionSection = () => {
 
 const MiniAppSection = ({ selectedRole }: { selectedRole: Option | undefined }) => {
   const router = useRouter()
-  const { data: miniAppData } = reactQueryClient.useQuery('/mini-app', {
+  const { data: miniAppData, isLoading } = reactQueryClient.useQuery('/mini-app', {
     query: selectedRole?.value ? { role: selectedRole.value } : {},
   })
 
@@ -150,6 +150,10 @@ const MiniAppSection = ({ selectedRole }: { selectedRole: Option | undefined }) 
     return grouped
   }, [miniAppData])
 
+  if (isLoading) {
+    return <MiniAppSkeleton />
+  }
+
   if (!miniAppData || miniAppData.length === 0) {
     return null
   }
@@ -163,12 +167,13 @@ const MiniAppSection = ({ selectedRole }: { selectedRole: Option | undefined }) 
               <View key={app.slug} className="flex-1">
                 <InfoItem onPress={() => router.navigate(`/mini-app/${app.slug}`)}>
                   <View className="flex justify-center items-center flex-col">
-                    <View className="flex flex-col mb-3 h-16 w-16 bg-base-secondary-default rounded-lg items-center justify-center">
-                      {app.iconUrl ? (
-                        <Image source={{ uri: app.iconUrl }} className="w-8 h-8" />
-                      ) : (
-                        <Personal width={32} height={32} color="white" />
+                    <View
+                      className={cn(
+                        'flex flex-col mb-3 h-16 w-16 rounded-lg items-center justify-center overflow-hidden border border-base-outline-default',
+                        isImageUri(app.iconUrl) ? 'bg-transparent' : 'bg-base-secondary-default'
                       )}
+                    >
+                      <MiniAppIcon iconUrl={app.iconUrl} />
                     </View>
                     <Text
                       numberOfLines={2}
@@ -199,6 +204,18 @@ interface InfoItemProps extends PressableProps {
   children: React.ReactNode
 }
 
+function isImageUri(url: string | null): url is string {
+  if (!url) return false
+  return url.startsWith('https://') || url.startsWith('data:image/')
+}
+
+function MiniAppIcon({ iconUrl }: { iconUrl: string | null }) {
+  if (isImageUri(iconUrl)) {
+    return <Image source={{ uri: iconUrl }} contentFit="contain" className="w-16 h-16" />
+  }
+  return <Icon icon={PPLEIcon} width={32} height={32} className="text-primary" />
+}
+
 const InfoItem = ({ children, ...props }: InfoItemProps) => {
   const opacity = useSharedValue(1)
   const onPressIn = () => {
@@ -214,9 +231,32 @@ const InfoItem = ({ children, ...props }: InfoItemProps) => {
       {...props}
       className={cn('flex-1', props.className)}
     >
-      <Animated.View style={{ opacity }} className="p-4 flex flex-col justify-between">
+      <Animated.View style={{ opacity }} className="p-4 flex flex-col items-center">
         {children}
       </Animated.View>
     </Pressable>
+  )
+}
+
+function MiniAppItemSkeleton() {
+  return (
+    <View className="flex-1 p-4 flex justify-center items-center flex-col">
+      <Skeleton className="mb-3 h-16 w-16 rounded-lg bg-base-bg-white" />
+      <Skeleton className="h-3 w-12 rounded bg-base-bg-white" />
+    </View>
+  )
+}
+
+function MiniAppSkeleton() {
+  return (
+    <View className="px-4">
+      <View className="flex flex-col gap-4">
+        <View className="flex flex-row gap-4 w-full">
+          <MiniAppItemSkeleton />
+          <View className="flex-1" />
+          <View className="flex-1" />
+        </View>
+      </View>
+    </View>
   )
 }
