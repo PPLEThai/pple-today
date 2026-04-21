@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 2.4.3
+
+### Patch Changes
+
+- [#377](https://github.com/PPLEThai/pple-today/pull/377) [`6b4f1c8`](https://github.com/PPLEThai/pple-today/commit/6b4f1c81529a73bfc2dfd0d2f82f0bff0490b5e7) Thanks [@miello](https://github.com/miello)! - fix: fastlane error about GoogleUtilities
+
 ## 2.4.2
 
 ### Patch Changes
