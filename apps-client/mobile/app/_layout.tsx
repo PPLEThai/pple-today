@@ -46,9 +46,12 @@ import { Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { InfoIcon } from 'lucide-react-native'
 
+import { AppUpdateGate } from '@app/components/app-update-gate'
 import { StatusBarProvider } from '@app/context/status-bar'
 import { environment } from '@app/env'
+import { useScreenTracking } from '@app/libs/analytics'
 import { reactQueryClient } from '@app/libs/api-client'
+import { initAppUpdate } from '@app/libs/app-update'
 import { AuthLifeCycleHook, useAuthMe } from '@app/libs/auth'
 import { openLink } from '@app/utils/link'
 
@@ -76,6 +79,8 @@ export {
 
 const messaging = getMessaging()
 
+initAppUpdate()
+
 const queryClient = new QueryClient()
 export default function RootLayout() {
   return (
@@ -101,7 +106,9 @@ export default function RootLayout() {
             <DevToolsBubble onCopy={onCopy} queryClient={queryClient} />
           )}
           <AuthLifeCycleHook />
+          <AnalyticsScreenTracker />
           <NotificationTokenConsentPopup />
+          <AppUpdateGate />
         </QueryClientProvider>
       </SafeAreaProvider>
       <PortalHost />
@@ -178,6 +185,11 @@ function ColorSchemeProvider({ children }: { children: React.ReactNode }) {
 
 // const useIsomorphicLayoutEffect =
 //   Platform.OS === 'web' && typeof window === 'undefined' ? React.useEffect : React.useLayoutEffect
+
+function AnalyticsScreenTracker() {
+  useScreenTracking()
+  return null
+}
 
 async function requestUserPermission() {
   if (Platform.OS === 'android' && Platform.Version >= 33) {

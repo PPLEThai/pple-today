@@ -1171,7 +1171,7 @@ function FrontCameraExample() {
 
 function MiniAppExample() {
   const router = useRouter()
-  const miniApps = reactQueryClient.useQuery('/mini-app', {})
+  const miniApps = reactQueryClient.useQuery('/mini-app', { query: {} })
 
   return (
     <View className="flex flex-col gap-2">
