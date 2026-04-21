@@ -1,6 +1,6 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
-import Elysia, { t } from 'elysia'
+import Elysia from 'elysia'
 
 import { ListMiniAppsResponse } from './models'
 import { MiniAppServicePlugin } from './services'
@@ -11,9 +11,8 @@ export const MiniAppController = new Elysia({ prefix: '/mini-app', tags: ['Mini 
   .use([AuthGuardPlugin, MiniAppServicePlugin])
   .get(
     '/',
-    async ({ query, status, miniAppService, user }) => {
-      const roles = query.role ? [query.role] : user.roles
-      const miniApps = await miniAppService.listMiniApps(roles)
+    async ({ status, miniAppService, user }) => {
+      const miniApps = await miniAppService.listMiniApps(user.roles)
 
       if (miniApps.isErr()) {
         return mapErrorCodeToResponse(miniApps.error, status)
@@ -23,9 +22,6 @@ export const MiniAppController = new Elysia({ prefix: '/mini-app', tags: ['Mini 
     },
     {
       requiredLocalUser: true,
-      query: t.Object({
-        role: t.Optional(t.String()),
-      }),
       detail: {
         summary: 'List Mini Apps',
         description: 'Retrieve the list of mini apps',
