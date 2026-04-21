@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.5.2
+
+### Patch Changes
+
+- [#373](https://github.com/PPLEThai/pple-today/pull/373) [`943052a`](https://github.com/PPLEThai/pple-today/commit/943052a9e4acacd8267805c241c7329d48b2aa2e) Thanks [@miello](https://github.com/miello)! - Add Firebase Analytics screen tracking and update mini app layout
+
 ## 1.5.1
 
 ### Patch Changes
