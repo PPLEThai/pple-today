@@ -5,6 +5,7 @@ const withIosPlugin: ConfigPlugin = (config) => {
 target 'NotificationServiceExtension' do
   use_frameworks! :linkage => :static
   pod 'Firebase/Messaging'
+  pod 'GoogleUtilities'
 end
 `
     return config
