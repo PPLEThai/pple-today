@@ -36,7 +36,7 @@ import { reactQueryClient } from '~/libs/api-client'
 const EditTopicFormSchema = z.object({
   name: z.string().min(1, 'กรุณากรอกชื่อหัวข้อ'),
   description: z.string(),
-  hashtagIds: z.array(z.string()).min(1, 'กรุณาเลือกอย่างน้อย 1 แฮชแท็ก'),
+  hashtagIds: z.array(z.string()),
   bannerImage: z
     .instanceof(File, { error: 'กรุณาอัปโหลดไฟล์' })
     .refine((file) => file.size <= MAX_FILE_SIZE, `กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB`)
@@ -166,9 +166,7 @@ export const TopicEdit = (props: TopicEditProps) => {
               name="hashtagIds"
               render={({ field: { onChange, ...field } }) => (
                 <FormItem>
-                  <FormLabel>
-                    แฮชแท็ก <span className="text-system-danger-default">*</span>
-                  </FormLabel>
+                  <FormLabel>แฮชแท็ก</FormLabel>
                   <FormControl>
                     <MultiSelect
                       options={
@@ -181,9 +179,7 @@ export const TopicEdit = (props: TopicEditProps) => {
                       placeholder="เลือกแฮชแท็ก"
                     />
                   </FormControl>
-                  <FormMessage asChild>
-                    <FormDescription>เลือกอย่างน้อย 1 แฮชแท็ก</FormDescription>
-                  </FormMessage>
+                  <FormMessage />
                 </FormItem>
               )}
             />
