@@ -414,6 +414,7 @@ function LinkFacebookPage() {
   const logitWithFacebookMutation = useMutation({
     mutationFn: async () => {
       const loginResult = await LoginManager.logInWithPermissions([
+        'business_management',
         'pages_show_list',
         'pages_read_engagement',
         'pages_read_user_content',
