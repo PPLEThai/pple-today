@@ -23,11 +23,13 @@ import { CreateNewExternalNotificationBody } from './models'
 import { CloudMessagingService, CloudMessagingServicePlugin } from '../../plugins/cloud-messaging'
 import { ElysiaLoggerPlugin } from '../../plugins/log'
 import { PrismaServicePlugin } from '../../plugins/prisma'
+import { SmsService, SmsServicePlugin } from '../../plugins/sms'
 
 export class NotificationRepository {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly cloudMessagingService: CloudMessagingService,
+    private readonly smsService: SmsService,
     private readonly loggerService: ElysiaLoggerInstance
   ) {}
 
@@ -242,7 +244,8 @@ export class NotificationRepository {
   async sendNotificationToUser(
     conditions: CreateNewExternalNotificationBody['audience'],
     data: CreateNewExternalNotificationBody['content'],
-    apiKeyId: string
+    apiKeyId: string,
+    smsFallbackText?: string
   ) {
     if (data.link?.type === NotificationLinkType.IN_APP_NAVIGATION) {
       const checkResult = await fromRepositoryPromise(
@@ -446,6 +449,31 @@ export class NotificationRepository {
       })
     }
 
+    const smsFallbackPhoneNumbers =
+      conditions.type === 'PHONE_NUMBER'
+        ? [...emptyTokens.map((p) => p.phoneNumber), ...(notFoundUser ?? [])]
+        : []
+
+    if (smsFallbackText && smsFallbackPhoneNumbers.length > 0) {
+      this.loggerService.info({
+        message: 'Sending SMS fallback to users without push notification tokens',
+        details: { count: smsFallbackPhoneNumbers.length },
+      })
+
+      await Promise.all(
+        smsFallbackPhoneNumbers.map(async (phoneNumber) => {
+          const smsResult = await this.smsService.sendSms(phoneNumber, smsFallbackText)
+          if (smsResult.isErr()) {
+            this.loggerService.error({
+              message: 'Failed to send SMS fallback',
+              phoneNumber,
+              details: smsResult.error,
+            })
+          }
+        })
+      )
+    }
+
     return ok(
       conditions.type === 'PHONE_NUMBER'
         ? {
@@ -474,12 +502,14 @@ export const NotificationRepositoryPlugin = new Elysia({
   .use([
     PrismaServicePlugin,
     CloudMessagingServicePlugin,
+    SmsServicePlugin,
     ElysiaLoggerPlugin({ name: 'NotificationRepository' }),
   ])
-  .decorate(({ prismaService, cloudMessagingService, loggerService }) => ({
+  .decorate(({ prismaService, cloudMessagingService, smsService, loggerService }) => ({
     notificationRepository: new NotificationRepository(
       prismaService,
       cloudMessagingService,
+      smsService,
       loggerService
     ),
   }))

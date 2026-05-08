@@ -131,7 +131,8 @@ export class NotificationService {
     const sendResult = await this.notificationRepository.sendNotificationToUser(
       data.audience,
       data.content,
-      apiKeyId
+      apiKeyId,
+      data.smsFallbackText
     )
 
     if (sendResult.isErr()) {

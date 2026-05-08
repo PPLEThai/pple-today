@@ -83,6 +83,12 @@ export const CreateNewExternalNotificationBody = t.Composite([
         type: t.Literal('BROADCAST'),
       }),
     ]),
+    smsFallbackText: t.Optional(
+      t.String({
+        description:
+          'If provided, sends an SMS with this text to users who are not in the Today app (i.e. have no registered push notification token).',
+      })
+    ),
   }),
   t.Pick(Notification, ['content']),
 ])

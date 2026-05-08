@@ -87,6 +87,27 @@ export const envSchema = t.Object({
     description: 'Firebase Private Key',
   }),
 
+  SMS_SERVICE_BASE_URL: t.Optional(
+    t.String({
+      description: 'Base URL for SMS service provider',
+    })
+  ),
+  SMS_SERVICE_API_KEY: t.Optional(
+    t.String({
+      description: 'API key for SMS service provider',
+    })
+  ),
+  SMS_SERVICE_SECRET_KEY: t.Optional(
+    t.String({
+      description: 'Secret key for SMS service provider',
+    })
+  ),
+  SMS_SERVICE_SENDER_NAME: t.Optional(
+    t.String({
+      description: 'Sender name displayed in outbound SMS messages',
+    })
+  ),
+
   IMAGE_SERVER_BASE_URL: t.String({
     description: 'Base URL for image server',
   }),
