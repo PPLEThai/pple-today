@@ -2,4 +2,4 @@
 "@api/backoffice": patch
 ---
 
-Remove query mini app api
+refactor: add condition guards for miniapp endpoint
