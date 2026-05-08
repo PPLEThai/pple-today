@@ -1,5 +1,13 @@
 # @api/backoffice
 
+## 1.5.3
+
+### Patch Changes
+
+- [#382](https://github.com/PPLEThai/pple-today/pull/382) [`7b837e9`](https://github.com/PPLEThai/pple-today/commit/7b837e9324d0875c1ba5e3b270c63e7825fb0dce) Thanks [@PanJ](https://github.com/PanJ)! - feat: add SMS fallback functionality to notifications
+
+- [#376](https://github.com/PPLEThai/pple-today/pull/376) [`d8c8d8e`](https://github.com/PPLEThai/pple-today/commit/d8c8d8eb41a023f606304d31ed77182cf2f27f97) Thanks [@Parinyadahmi](https://github.com/Parinyadahmi)! - refactor: add condition guards for miniapp endpoint
+
 ## 1.5.2
 
 ### Patch Changes
