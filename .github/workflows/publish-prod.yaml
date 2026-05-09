@@ -287,7 +287,7 @@ jobs:
 
   build-ios:
     name: Build iOS
-    runs-on: macos-15
+    runs-on: macos-26
     environment: production
     if: ${{ inputs.ios == true }}
     steps:
@@ -328,13 +328,22 @@ jobs:
         working-directory: apps-client/mobile
         run: npx expo prebuild --platform ios
 
+      # Note: Required due to Swift linker problem
+      # See https://github.com/invertase/react-native-firebase/issues/8702#issuecomment-3843214625
+      - name: Set Xcode Toolchain
+        shell: bash
+        run: |
+          echo "TOOLCHAINS=com.apple.dt.toolchain.XcodeDefault" >> $GITHUB_ENV
+
+      # Note: Xcode 26.3 is required because of optimization issues with Xcode 26.4 and React Native 0.72.0.
+      # See https://github.com/invertase/react-native-firebase/issues/8949
       - name: Select Xcode version
-        run: sudo xcode-select -s '/Applications/Xcode_16.4.app/Contents/Developer'
+        run: sudo xcode-select -s '/Applications/Xcode_26.3.app/Contents/Developer'
 
       - name: Set up Xcode version
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '16.4'
+          xcode-version: '26.3'
 
       - name: Install pods
         working-directory: apps-client/mobile
