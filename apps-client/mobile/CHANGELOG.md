@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 2.4.4
+
+### Patch Changes
+
+- [#379](https://github.com/PPLEThai/pple-today/pull/379) [`06bc71f`](https://github.com/PPLEThai/pple-today/commit/06bc71f8cf52dfbb5fa743efa82f24e9fb396153) Thanks [@miello](https://github.com/miello)! - feat: bump Xcode to newer version to use IOS SDK 26
+
 ## 2.4.3
 
 ### Patch Changes
