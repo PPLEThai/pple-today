@@ -138,6 +138,7 @@ Feel free to update this file :)
   - `EXPO_PUBLIC_OIDC_CLIENT_ID` is your OIDC client ID used for mobile apps
   - `EXPO_PUBLIC_BACKEND_BASE_URL` is your PPLE Today backend base URL
     - For development, it is usually `http://localhost:2000`
+  - `EXPO_PUBLIC_ALLOWED_MINI_APP_ORIGIN_REDIRECT` is the HTTPS origin for mini-app links (e.g. `https://miniapp.peoplesparty.or.th`). Required for Universal Links / App Links; see [DEEPLINKING.md](./DEEPLINKING.md).
 - The following environment variables are used in local development only, **it should not be included in production**:
   - `OIDC_MANAGEMENT_URL` is your OIDC backend URL **which might not be the same as `EXPO_PUBLIC_OIDC_BASE_URL`**
   - `OIDC_APPLICATION_ID` is your OIDC application resource ID used for mobile apps **not the same as `EXPO_PUBLIC_OIDC_CLIENT_ID`**
