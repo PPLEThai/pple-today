@@ -54,6 +54,8 @@ PPLE Today Backoffice API
    pnpm dev
    ```
 
+   This starts the backoffice API (port **2000**) and the mini app redirect server (port **2002**, `MINIAPP_REDIRECT_PORT`) in the same process. Example: `https://miniapp.peoplesparty.or.th/abc/app-path?query=params` redirects to `{miniApp.clientUrl}/app-path?query=params`.
+
 ## API Documentation
 
 - Swagger UI is available at endpoint `/swagger`

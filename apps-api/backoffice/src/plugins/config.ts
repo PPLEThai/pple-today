@@ -3,6 +3,10 @@ import { t } from 'elysia'
 
 export const envSchema = t.Object({
   PORT: t.Number({ default: 5000 }),
+  MINIAPP_REDIRECT_PORT: t.Number({
+    default: 2002,
+    description: 'Port for the mini app redirect server',
+  }),
   DATABASE_URL: t.String(),
   APP_ENV: t.Union([t.Literal('development'), t.Literal('production')], {
     default: 'production',

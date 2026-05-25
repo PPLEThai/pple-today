@@ -12,6 +12,7 @@ import * as R from 'remeda'
 import { ApplicationController } from './modules'
 import { AdminController } from './modules/admin'
 import { VersionController } from './modules/version'
+import { createMiniAppRedirectApp } from './miniapp-redirect'
 import { ConfigServicePlugin } from './plugins/config'
 
 import packageJson from '../package.json'
@@ -149,6 +150,13 @@ if (process.env.ENABLE_SWAGGER === 'true') {
   )
 }
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server is running on http://localhost:${process.env.PORT}`)
+const port = configService.get('PORT')
+const miniAppRedirectPort = configService.get('MINIAPP_REDIRECT_PORT')
+
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`)
+})
+
+createMiniAppRedirectApp().listen(miniAppRedirectPort, () => {
+  console.log(`Mini app redirect server is running on http://localhost:${miniAppRedirectPort}`)
 })
