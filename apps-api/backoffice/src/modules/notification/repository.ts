@@ -1,7 +1,12 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { ElysiaLoggerInstance } from '@pple-today/api-common/plugins'
 import { PrismaService } from '@pple-today/api-common/services'
-import { err, exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
+import {
+  err,
+  exhaustiveGuard,
+  fromRepositoryPromise,
+  normalizeThaiPhoneNumber,
+} from '@pple-today/api-common/utils'
 import {
   AnnouncementStatus,
   HashTagStatus,
@@ -269,6 +274,14 @@ export class NotificationRepository {
     apiKeyId: string,
     smsFallbackText?: string
   ) {
+    const audience: CreateNewExternalNotificationBody['audience'] =
+      conditions.type === 'PHONE_NUMBER'
+        ? {
+            type: 'PHONE_NUMBER',
+            details: conditions.details.map(normalizeThaiPhoneNumber),
+          }
+        : conditions
+
     if (data.link?.bypassNotificationCenter === true) {
       if (data.link.type === NotificationLinkType.EXTERNAL_BROWSER) {
         return err({
@@ -318,15 +331,15 @@ export class NotificationRepository {
             image: data.image,
             actionButtonText: linkNavigation ? data?.actionButtonText : undefined,
 
-            isBroadcast: conditions.type === 'BROADCAST' ? true : false,
-            districts: conditions.type === 'ADDRESS' ? conditions.details.districts : undefined,
-            provinces: conditions.type === 'ADDRESS' ? conditions.details.provinces : undefined,
-            roles: conditions.type === 'ROLE' ? conditions.details : undefined,
+            isBroadcast: audience.type === 'BROADCAST' ? true : false,
+            districts: audience.type === 'ADDRESS' ? audience.details.districts : undefined,
+            provinces: audience.type === 'ADDRESS' ? audience.details.provinces : undefined,
+            roles: audience.type === 'ROLE' ? audience.details : undefined,
             phoneNumbers:
-              conditions.type === 'PHONE_NUMBER'
+              audience.type === 'PHONE_NUMBER'
                 ? {
                     createMany: {
-                      data: conditions.details?.map((phoneNumber) => ({ phoneNumber })) || [],
+                      data: audience.details?.map((phoneNumber) => ({ phoneNumber })) || [],
                     },
                   }
                 : undefined,
@@ -334,7 +347,7 @@ export class NotificationRepository {
         }),
         this.prismaService.notificationApiKeyUsageLog.create({
           data: {
-            body: JSON.stringify({ conditions, data }),
+            body: JSON.stringify({ audience, data }),
             notificationApiKey: {
               connect: {
                 id: apiKeyId,
@@ -344,7 +357,7 @@ export class NotificationRepository {
         }),
       ])
 
-      const whereConditions = this.getFilterConditions(conditions)
+      const whereConditions = this.getFilterConditions(audience)
 
       const users = await this.prismaService.user.findMany({
         where: whereConditions,
@@ -385,9 +398,9 @@ export class NotificationRepository {
     }))
 
     const notFoundUser =
-      conditions.type === 'PHONE_NUMBER'
+      audience.type === 'PHONE_NUMBER'
         ? R.difference(
-            conditions.details,
+            audience.details,
             phoneNumberWithTokens.map((p) => p.phoneNumber)
           )
         : undefined
@@ -489,7 +502,7 @@ export class NotificationRepository {
     }
 
     const smsFallbackPhoneNumbers =
-      conditions.type === 'PHONE_NUMBER'
+      audience.type === 'PHONE_NUMBER'
         ? [...emptyTokens.map((p) => p.phoneNumber), ...(notFoundUser ?? [])]
         : []
 
@@ -514,7 +527,7 @@ export class NotificationRepository {
     }
 
     return ok(
-      conditions.type === 'PHONE_NUMBER'
+      audience.type === 'PHONE_NUMBER'
         ? {
             success: phoneNumberWithTokens.map((p) => p.phoneNumber),
             failed: notFoundUser ?? [],

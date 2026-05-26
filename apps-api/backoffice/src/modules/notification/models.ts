@@ -70,7 +70,12 @@ export const CreateNewExternalNotificationBody = t.Composite([
       }),
       t.Object({
         type: t.Literal('PHONE_NUMBER'),
-        details: t.Array(t.String()),
+        details: t.Array(
+          t.String({
+            description:
+              'Thai mobile number in +66XXXXXXXXX or 0XXXXXXXXX format (leading zero is converted to +66).',
+          })
+        ),
       }),
       t.Object({
         type: t.Literal('ADDRESS'),
