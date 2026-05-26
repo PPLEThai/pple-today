@@ -3,6 +3,31 @@ import { t } from 'elysia'
 
 export const envSchema = t.Object({
   PORT: t.Number({ default: 5000 }),
+  MINIAPP_REDIRECT_PORT: t.Number({
+    default: 2002,
+    description: 'Port for the mini app redirect server',
+  }),
+  MINIAPP_IOS_TEAM_ID: t.Optional(
+    t.String({
+      description: 'Apple Developer Team ID for Universal Links (AASA appID prefix)',
+    })
+  ),
+  MINIAPP_IOS_BUNDLE_ID: t.Optional(
+    t.String({
+      description: 'iOS bundle identifier (must match PPLE Today app DEVELOPER_APP_IDENTIFIER)',
+    })
+  ),
+  MINIAPP_ANDROID_PACKAGE_NAME: t.Optional(
+    t.String({
+      description: 'Android application ID for App Links (assetlinks.json)',
+    })
+  ),
+  MINIAPP_ANDROID_SHA256_CERT_FINGERPRINTS: t.Optional(
+    t.String({
+      description:
+        'Comma-separated SHA-256 cert fingerprints for App Links verification (upload + Play signing certs)',
+    })
+  ),
   DATABASE_URL: t.String(),
   APP_ENV: t.Union([t.Literal('development'), t.Literal('production')], {
     default: 'production',

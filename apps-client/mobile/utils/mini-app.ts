@@ -1,5 +1,14 @@
 import { environment } from '@app/env'
 
+import {
+  pathnameToMiniAppRoute,
+  resolveIncomingDeepLinkPathname,
+  type MiniAppRoutePath,
+} from './mini-app-path'
+
+export type { MiniAppRoutePath }
+export { pathnameToMiniAppRoute, resolveIncomingDeepLinkPathname }
+
 export function createMiniAppPath(url: string) {
   const urlObj = new URL(url)
 
@@ -7,18 +16,29 @@ export function createMiniAppPath(url: string) {
     return null
   }
 
-  if (urlObj.pathname === '/' || urlObj.pathname === '') {
+  return pathnameToMiniAppRoute(urlObj.pathname)
+}
+
+/**
+ * Resolves an incoming system deep link path or URL to an Expo Router path.
+ * Used by +native-intent for Universal Links / App Links on the mini-app host.
+ */
+export function resolveIncomingDeepLinkPath(pathOrUrl: string): string | null {
+  const pathnameRoute = resolveIncomingDeepLinkPathname(pathOrUrl)
+
+  if (pathnameRoute) {
+    return pathnameRoute
+  }
+
+  const trimmed = pathOrUrl.trim()
+
+  if (!trimmed.includes('://')) {
     return null
   }
 
-  // TODO: Handle query params and hash if needed
-  const splitPathname = urlObj.pathname.split('/').slice(1)
-  const slug = splitPathname[0]
-  const queryParams = splitPathname.slice(1).join('/')
-
-  const miniAppPath = queryParams
-    ? (`/mini-app/${slug}?path=${queryParams}` as const)
-    : (`/mini-app/${slug}` as const)
-
-  return miniAppPath
+  try {
+    return createMiniAppPath(trimmed)
+  } catch {
+    return null
+  }
 }

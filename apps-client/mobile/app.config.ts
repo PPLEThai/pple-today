@@ -2,7 +2,10 @@ import 'tsx/cjs'
 
 import { AppJSONConfig } from 'expo/config'
 
+import { getMiniAppDeepLinkNativeConfig } from './deeplink.config'
 import { version } from './package.json'
+
+const miniAppDeepLink = getMiniAppDeepLinkNativeConfig()
 
 export default {
   expo: {
@@ -17,6 +20,9 @@ export default {
       supportsTablet: true,
       googleServicesFile: './credentials/GoogleService-Info.plist',
       bundleIdentifier: process.env.DEVELOPER_APP_IDENTIFIER,
+      ...(miniAppDeepLink.ios?.associatedDomains
+        ? { associatedDomains: miniAppDeepLink.ios.associatedDomains }
+        : {}),
       entitlements: {
         'aps-environment': 'development',
         'com.apple.security.application-groups': [
@@ -36,6 +42,9 @@ export default {
       package: process.env.DEVELOPER_APP_IDENTIFIER,
       googleServicesFile: './credentials/google-services.json',
       softwareKeyboardLayoutMode: 'pan',
+      ...(miniAppDeepLink.android?.intentFilters
+        ? { intentFilters: miniAppDeepLink.android.intentFilters }
+        : {}),
     },
     plugins: [
       'expo-font',

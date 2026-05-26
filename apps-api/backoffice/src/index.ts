@@ -9,6 +9,7 @@ import {
 import Elysia, { AnyElysia } from 'elysia'
 import * as R from 'remeda'
 
+import { createMiniAppRedirectApp } from './miniapp-redirect'
 import { ApplicationController } from './modules'
 import { AdminController } from './modules/admin'
 import { VersionController } from './modules/version'
@@ -149,6 +150,13 @@ if (process.env.ENABLE_SWAGGER === 'true') {
   )
 }
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server is running on http://localhost:${process.env.PORT}`)
+const port = configService.get('PORT')
+const miniAppRedirectPort = configService.get('MINIAPP_REDIRECT_PORT')
+
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`)
+})
+
+createMiniAppRedirectApp().listen(miniAppRedirectPort, () => {
+  console.log(`Mini app redirect server is running on http://localhost:${miniAppRedirectPort}`)
 })

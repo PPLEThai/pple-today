@@ -54,6 +54,15 @@ PPLE Today Backoffice API
    pnpm dev
    ```
 
+   This starts the backoffice API (port **2000**) and the mini app redirect server (port **2002**, `MINIAPP_REDIRECT_PORT`) in the same process. Example: `https://miniapp.peoplesparty.or.th/abc/app-path?query=params` redirects to `{miniApp.clientUrl}/app-path?query=params`.
+
+   When `MINIAPP_IOS_*` and `MINIAPP_ANDROID_*` env vars are set, the redirect host also serves Universal Link / App Link verification files:
+
+   - `/.well-known/apple-app-site-association`
+   - `/.well-known/assetlinks.json`
+
+   See [mobile DEEPLINKING.md](../../apps-client/mobile/DEEPLINKING.md) for Apple Developer, App Store Connect, and Play Console setup.
+
 ## API Documentation
 
 - Swagger UI is available at endpoint `/swagger`
