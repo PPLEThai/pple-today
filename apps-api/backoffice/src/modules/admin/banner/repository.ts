@@ -80,6 +80,28 @@ export class AdminBannerRepository {
           where: { id: inAppId, status: UserStatus.ACTIVE },
         })
         return true
+      case BannerInAppType.ELECTION_VOTE:
+        await this.prismaService.election.findUniqueOrThrow({
+          where: {
+            id: inAppId,
+            isCancelled: false,
+            publishDate: { lte: new Date() },
+          },
+        })
+        return true
+      case BannerInAppType.OFFICIAL:
+      case BannerInAppType.ACTIVITY:
+      case BannerInAppType.ANNOUNCEMENT_LIST:
+      case BannerInAppType.NOTIFICATION_LIST:
+      case BannerInAppType.SEARCH:
+      case BannerInAppType.PROFILE:
+      case BannerInAppType.MY_ACTIVITIES:
+      case BannerInAppType.RECENT_ACTIVITIES:
+      case BannerInAppType.FOLLOW:
+      case BannerInAppType.PARTICIPATION:
+      case BannerInAppType.TOPIC_SUGGESTION:
+      case BannerInAppType.USER_SUGGESTION:
+        return true
       default:
         exhaustiveGuard(inAppType)
     }

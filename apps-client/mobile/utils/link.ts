@@ -9,6 +9,7 @@ import {
 import { environment } from '@app/env'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 
+import { getMobilePathFromInAppNavigation } from './in-app-navigation-path'
 import { createMiniAppPath } from './mini-app'
 
 type LinkType = NonNullable<CreateNewExternalNotificationBody['content']['link']>
@@ -42,24 +43,7 @@ export function createLinkFromInAppNavigation(
   inAppType: BannerInAppType | 'NOTIFICATION',
   inAppId: string
 ) {
-  switch (inAppType) {
-    case 'ELECTION':
-      return `/election/${inAppId}` as const
-    case 'HASHTAG':
-      return `/hashtag/${inAppId}` as const
-    case 'ANNOUNCEMENT':
-    case 'POLL':
-    case 'POST':
-      return `/feed/${inAppId}` as const
-    case 'TOPIC':
-      return `/topic/${inAppId}` as const
-    case 'USER':
-      return `/user/${inAppId}` as const
-    case 'NOTIFICATION':
-      return `/notification/${inAppId}` as const
-    default:
-      exhaustiveGuard(inAppType)
-  }
+  return getMobilePathFromInAppNavigation(inAppType, inAppId)
 }
 
 export function convertBannerToLink(banner: GetBannersResponse[number]) {

@@ -28,13 +28,16 @@ import {
   SelectValue,
 } from '@pple-today/web-ui/select'
 import { Typography } from '@pple-today/web-ui/typography'
+import { BannerInAppTypeSelect } from 'components/feed/BannerInAppTypeSelect'
 import { FileUploadInput } from 'components/FileUploadInput'
 import { ImagePreview } from 'components/ImagePreview'
 import { X } from 'lucide-react'
 import { ACCEPTED_IMAGE_TYPES, handleUploadFile, MAX_FILE_SIZE } from 'utils/file-upload'
+import { BANNER_IN_APP_TYPE_VALUES } from 'utils/in-app-navigation-types'
+import { inAppNavigationRequiresId } from 'utils/link'
 import z from 'zod'
 
-import { FilePath } from '@api/backoffice/admin'
+import { BannerInAppType, FilePath } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
 
@@ -44,9 +47,7 @@ const CreateBannerFormSchema = z.object({
     .object({
       navigation: z.enum(['IN_APP_NAVIGATION', 'EXTERNAL_BROWSER', 'MINI_APP']),
       destination: z.string(),
-      inAppType: z
-        .enum(['POST', 'TOPIC', 'ANNOUNCEMENT', 'POLL', 'USER', 'ELECTION', 'HASHTAG'])
-        .optional(),
+      inAppType: z.enum(BANNER_IN_APP_TYPE_VALUES).optional(),
       inAppId: z.string().optional(),
       miniAppId: z.string(),
     })
@@ -59,15 +60,21 @@ const CreateBannerFormSchema = z.object({
       path: ['destination'],
     })
     .refine(
-      (data) =>
-        data.navigation === 'IN_APP_NAVIGATION'
-          ? !!data.inAppId?.trim() && !!data.inAppType?.trim()
-          : true,
+      (data) => {
+        if (data.navigation !== 'IN_APP_NAVIGATION') return true
+        if (!data.inAppType?.trim()) return false
+        if (!inAppNavigationRequiresId(data.inAppType as BannerInAppType)) return true
+        return !!data.inAppId?.trim()
+      },
       {
         error: 'กรุณากรอก ID ที่เชื่อมต่อ',
         path: ['inAppId'],
       }
-    ),
+    )
+    .refine((data) => data.navigation !== 'IN_APP_NAVIGATION' || !!data.inAppType?.trim(), {
+      error: 'กรุณาเลือกประเภทเนื้อหาในแอป',
+      path: ['inAppType'],
+    }),
   imageFile: z
     .instanceof(File, { error: 'กรุณาอัปโหลดไฟล์' })
     .refine((file) => file.size <= MAX_FILE_SIZE, `กรุณาอัปโหลดไฟล์ขนาดไม่เกิน 5 MB`)
@@ -117,11 +124,15 @@ export const BannerCreate = (props: BannerCreateProps) => {
 
     if (navigation === 'MINI_APP' && !miniAppId.trim()) return false
     else if (navigation === 'EXTERNAL_BROWSER' && !destination.trim()) return false
-    else if (
-      navigation === 'IN_APP_NAVIGATION' &&
-      (!navigationGroup.inAppId?.trim() || !navigationGroup.inAppType?.trim())
-    )
-      return false
+    else if (navigation === 'IN_APP_NAVIGATION') {
+      if (!navigationGroup.inAppType?.trim()) return false
+      if (
+        inAppNavigationRequiresId(navigationGroup.inAppType as BannerInAppType) &&
+        !navigationGroup.inAppId?.trim()
+      ) {
+        return false
+      }
+    }
 
     const result = await getFileUploadUrl.mutateAsync({
       body: {
@@ -142,7 +153,7 @@ export const BannerCreate = (props: BannerCreateProps) => {
             : navigation === 'IN_APP_NAVIGATION'
               ? {
                   inAppType: navigationGroup.inAppType,
-                  inAppId: navigationGroup.inAppId,
+                  inAppId: navigationGroup.inAppId?.trim() ?? '',
                 }
               : { destination }),
           imageFilePath: result.filePath as FilePath,
@@ -242,7 +253,7 @@ export const BannerCreate = (props: BannerCreateProps) => {
             <FormField
               control={form.control}
               name="navigationGroup.inAppType"
-              render={({ field: { onChange, ...field } }) => (
+              render={({ field: { onChange, value } }) => (
                 <FormItem
                   className={
                     form.watch('navigationGroup.navigation') === 'IN_APP_NAVIGATION' ? '' : 'hidden'
@@ -252,20 +263,7 @@ export const BannerCreate = (props: BannerCreateProps) => {
                     ประเภทของเนื้อหาในแอป <span className="text-system-danger-default">*</span>
                   </FormLabel>
                   <FormControl>
-                    <Select {...field} onValueChange={onChange}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="เลือกประเภทเนื้อหาในแอป" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="POST">โพสต์</SelectItem>
-                        <SelectItem value="POLL">โพล</SelectItem>
-                        <SelectItem value="TOPIC">หัวข้อ</SelectItem>
-                        <SelectItem value="USER">ผู้ใช้</SelectItem>
-                        <SelectItem value="ANNOUNCEMENT">ประกาศ</SelectItem>
-                        <SelectItem value="ELECTION">การเลือกตั้ง</SelectItem>
-                        <SelectItem value="HASHTAG">แฮชแท็ก</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <BannerInAppTypeSelect value={value} onValueChange={onChange} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -274,21 +272,35 @@ export const BannerCreate = (props: BannerCreateProps) => {
             <FormField
               control={form.control}
               name="navigationGroup.inAppId"
-              render={({ field }) => (
-                <FormItem
-                  className={
-                    form.watch('navigationGroup.navigation') === 'IN_APP_NAVIGATION' ? '' : 'hidden'
-                  }
-                >
-                  <FormLabel>
-                    ID ที่เชื่อมต่อ <span className="text-system-danger-default">*</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="กรอก ID ที่ต้องการ" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const inAppType = form.watch('navigationGroup.inAppType') as
+                  | BannerInAppType
+                  | undefined
+                const requiresId = inAppType !== undefined && inAppNavigationRequiresId(inAppType)
+
+                return (
+                  <FormItem
+                    className={
+                      form.watch('navigationGroup.navigation') === 'IN_APP_NAVIGATION'
+                        ? ''
+                        : 'hidden'
+                    }
+                  >
+                    <FormLabel>
+                      ID ที่เชื่อมต่อ{' '}
+                      {requiresId ? (
+                        <span className="text-system-danger-default">*</span>
+                      ) : (
+                        <span className="text-base-text-medium font-normal">(ไม่จำเป็น)</span>
+                      )}
+                    </FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="กรอก ID ที่ต้องการ" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )
+              }}
             />
             <FormField
               control={form.control}

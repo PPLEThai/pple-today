@@ -74,6 +74,28 @@ export class NotificationRepository {
           where: { id: inAppId, status: UserStatus.ACTIVE },
         })
         return true
+      case NotificationInAppType.ELECTION_VOTE:
+        await this.prismaService.election.findUniqueOrThrow({
+          where: {
+            id: inAppId,
+            isCancelled: false,
+            publishDate: { lte: new Date() },
+          },
+        })
+        return true
+      case NotificationInAppType.OFFICIAL:
+      case NotificationInAppType.ACTIVITY:
+      case NotificationInAppType.ANNOUNCEMENT_LIST:
+      case NotificationInAppType.NOTIFICATION_LIST:
+      case NotificationInAppType.SEARCH:
+      case NotificationInAppType.PROFILE:
+      case NotificationInAppType.MY_ACTIVITIES:
+      case NotificationInAppType.RECENT_ACTIVITIES:
+      case NotificationInAppType.FOLLOW:
+      case NotificationInAppType.PARTICIPATION:
+      case NotificationInAppType.TOPIC_SUGGESTION:
+      case NotificationInAppType.USER_SUGGESTION:
+        return true
       default:
         exhaustiveGuard(inAppType)
     }
