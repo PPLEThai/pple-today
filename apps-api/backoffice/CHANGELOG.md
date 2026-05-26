@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.6.2
+
+### Patch Changes
+
+- [#389](https://github.com/PPLEThai/pple-today/pull/389) [`5447e37`](https://github.com/PPLEThai/pple-today/commit/5447e3785316f6ff80ccdd87a654c480f36b910b) Thanks [@PanJ](https://github.com/PanJ)! - support more mobile number format
+
 ## 1.6.1
 
 ### Patch Changes
