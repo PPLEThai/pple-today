@@ -5,14 +5,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@pple-today/web-ui/select'
-
-import { BannerInAppType } from '@api/backoffice/admin'
-
 import {
   BANNER_IN_APP_TYPE_VALUES,
   type BannerInAppTypeFormValue,
 } from 'utils/in-app-navigation-types'
 import { mapInAppNavigationTypeToLabel } from 'utils/link'
+
+import { BannerInAppType } from '@api/backoffice/admin'
 
 type BannerInAppTypeSelectProps = {
   value?: string
