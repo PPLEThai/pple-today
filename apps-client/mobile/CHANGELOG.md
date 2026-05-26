@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 2.5.0
+
+### Minor Changes
+
+- [#385](https://github.com/PPLEThai/pple-today/pull/385) [`033cf86`](https://github.com/PPLEThai/pple-today/commit/033cf86e5d7de7a5ab7b08b16759298e3883aad0) Thanks [@PanJ](https://github.com/PanJ)! - Add deeplink capability
+
 ## 2.4.4
 
 ### Patch Changes
