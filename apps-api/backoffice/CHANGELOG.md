@@ -1,5 +1,15 @@
 # @api/backoffice
 
+## 1.6.0
+
+### Minor Changes
+
+- [#385](https://github.com/PPLEThai/pple-today/pull/385) [`033cf86`](https://github.com/PPLEThai/pple-today/commit/033cf86e5d7de7a5ab7b08b16759298e3883aad0) Thanks [@PanJ](https://github.com/PanJ)! - Add deeplink capability
+
+### Patch Changes
+
+- [#385](https://github.com/PPLEThai/pple-today/pull/385) [`b2089b1`](https://github.com/PPLEThai/pple-today/commit/b2089b1ee61fdee5826fd188b7b2c1f15e9c633b) Thanks [@PanJ](https://github.com/PanJ)! - add miniapp redirect
+
 ## 1.5.3
 
 ### Patch Changes
