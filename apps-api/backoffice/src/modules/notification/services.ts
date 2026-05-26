@@ -63,6 +63,11 @@ export class NotificationService {
     const notification = getResult.value
     const notificationDetails = notification.notification
 
+    const linkBypassFields =
+      notificationDetails.linkBypassNotificationCenter != null
+        ? { bypassNotificationCenter: notificationDetails.linkBypassNotificationCenter }
+        : {}
+
     return ok({
       id: notificationDetails.id,
       content: {
@@ -80,6 +85,7 @@ export class NotificationService {
             ? {
                 type: notificationDetails.linkType,
                 destination: notificationDetails.linkDestination!,
+                ...linkBypassFields,
               }
             : {
                 type: 'IN_APP_NAVIGATION',
@@ -87,6 +93,7 @@ export class NotificationService {
                   inAppType: notificationDetails.linkInAppType!,
                   inAppId: notificationDetails.linkInAppId!,
                 },
+                ...linkBypassFields,
               },
       },
       isRead: notification.isRead,

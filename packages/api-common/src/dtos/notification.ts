@@ -1,6 +1,10 @@
 import { NotificationInAppType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
+const NotificationLinkBase = t.Object({
+  bypassNotificationCenter: t.Optional(t.Boolean()),
+})
+
 export const Notification = t.Object({
   id: t.String(),
   content: t.Object({
@@ -10,21 +14,30 @@ export const Notification = t.Object({
     actionButtonText: t.Optional(t.String()),
     link: t.Optional(
       t.Union([
-        t.Object({
-          type: t.Literal('MINI_APP'),
-          destination: t.String(),
-        }),
-        t.Object({
-          type: t.Literal('IN_APP_NAVIGATION'),
-          destination: t.Object({
-            inAppType: t.Enum(NotificationInAppType),
-            inAppId: t.String(),
+        t.Composite([
+          NotificationLinkBase,
+          t.Object({
+            type: t.Literal('MINI_APP'),
+            destination: t.String(),
           }),
-        }),
-        t.Object({
-          type: t.Literal('EXTERNAL_BROWSER'),
-          destination: t.String(),
-        }),
+        ]),
+        t.Composite([
+          NotificationLinkBase,
+          t.Object({
+            type: t.Literal('IN_APP_NAVIGATION'),
+            destination: t.Object({
+              inAppType: t.Enum(NotificationInAppType),
+              inAppId: t.String(),
+            }),
+          }),
+        ]),
+        t.Composite([
+          NotificationLinkBase,
+          t.Object({
+            type: t.Literal('EXTERNAL_BROWSER'),
+            destination: t.String(),
+          }),
+        ]),
       ])
     ),
   }),

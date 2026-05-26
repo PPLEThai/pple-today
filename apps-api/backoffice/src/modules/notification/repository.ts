@@ -74,6 +74,28 @@ export class NotificationRepository {
           where: { id: inAppId, status: UserStatus.ACTIVE },
         })
         return true
+      case NotificationInAppType.ELECTION_VOTE:
+        await this.prismaService.election.findUniqueOrThrow({
+          where: {
+            id: inAppId,
+            isCancelled: false,
+            publishDate: { lte: new Date() },
+          },
+        })
+        return true
+      case NotificationInAppType.OFFICIAL:
+      case NotificationInAppType.ACTIVITY:
+      case NotificationInAppType.ANNOUNCEMENT_LIST:
+      case NotificationInAppType.NOTIFICATION_LIST:
+      case NotificationInAppType.SEARCH:
+      case NotificationInAppType.PROFILE:
+      case NotificationInAppType.MY_ACTIVITIES:
+      case NotificationInAppType.RECENT_ACTIVITIES:
+      case NotificationInAppType.FOLLOW:
+      case NotificationInAppType.PARTICIPATION:
+      case NotificationInAppType.TOPIC_SUGGESTION:
+      case NotificationInAppType.USER_SUGGESTION:
+        return true
       default:
         exhaustiveGuard(inAppType)
     }
@@ -247,6 +269,15 @@ export class NotificationRepository {
     apiKeyId: string,
     smsFallbackText?: string
   ) {
+    if (data.link?.bypassNotificationCenter === true) {
+      if (data.link.type === NotificationLinkType.EXTERNAL_BROWSER) {
+        return err({
+          code: InternalErrorCode.NOTIFICATION_INVALID_BYPASS,
+          message: 'bypassNotificationCenter cannot be used with EXTERNAL_BROWSER link type.',
+        })
+      }
+    }
+
     if (data.link?.type === NotificationLinkType.IN_APP_NAVIGATION) {
       const checkResult = await fromRepositoryPromise(
         this.checkValidInAppType(data.link.destination.inAppType, data.link.destination.inAppId)
@@ -281,6 +312,7 @@ export class NotificationRepository {
         this.prismaService.notification.create({
           data: {
             ...linkNavigation,
+            linkBypassNotificationCenter: data.link?.bypassNotificationCenter ?? null,
             title: data.header,
             message: data.message,
             image: data.image,
@@ -362,17 +394,24 @@ export class NotificationRepository {
     const emptyTokens = phoneNumberWithTokens.filter((p) => p.token.length === 0)
     const nonEmptyTokens = phoneNumberWithTokens.filter((p) => p.token.length > 0)
 
+    const shouldBypass =
+      data.link?.bypassNotificationCenter === true &&
+      (data.link.type === 'MINI_APP' || data.link.type === 'IN_APP_NAVIGATION')
+
     const notificationDetails = {
       title: data.header,
       message: data.message,
       image: data.image,
-      link: {
-        type: 'IN_APP_NAVIGATION' as const,
-        destination: {
-          inAppType: 'NOTIFICATION' as const,
-          inAppId: newNotification.id,
-        },
-      },
+      link: shouldBypass
+        ? data.link
+        : {
+            type: 'IN_APP_NAVIGATION' as const,
+            destination: {
+              inAppType: 'NOTIFICATION' as const,
+              inAppId: newNotification.id,
+            },
+          },
+      notificationId: newNotification.id,
     }
 
     this.loggerService.info({
