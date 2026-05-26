@@ -338,6 +338,9 @@ export const NOTIFICATION_KEY_ERROR_SCHEMA = {
   NOTIFICATION_INVALID_IN_APP_NAVIGATION: {
     status: 400,
   },
+  NOTIFICATION_INVALID_BYPASS: {
+    status: 400,
+  },
 } satisfies InternalErrorSchemas
 
 export const OPTION_ERROR_SCHEMA = {

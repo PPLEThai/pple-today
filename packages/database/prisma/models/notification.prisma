@@ -49,6 +49,8 @@ model Notification {
   linkInAppType NotificationInAppType?
   linkInAppId   String?
 
+  linkBypassNotificationCenter Boolean?
+
   isBroadcast Boolean  @default(false)
   roles       String[]
   provinces   String[]

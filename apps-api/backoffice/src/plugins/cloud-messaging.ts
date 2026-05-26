@@ -69,10 +69,12 @@ export class CloudMessagingService {
       title: string
       message: string
       image?: string
+      notificationId?: string
       link?:
         | {
             type: 'MINI_APP' | 'EXTERNAL_BROWSER'
             destination: string
+            bypassNotificationCenter?: boolean
           }
         | {
             type: 'IN_APP_NAVIGATION'
@@ -80,6 +82,7 @@ export class CloudMessagingService {
               inAppType: NotificationInAppType | 'NOTIFICATION'
               inAppId: string
             }
+            bypassNotificationCenter?: boolean
           }
     }
   ) {
@@ -105,6 +108,7 @@ export class CloudMessagingService {
                 },
                 data: {
                   link: data.link ? JSON.stringify(data.link) : '',
+                  ...(data.notificationId ? { notificationId: data.notificationId } : {}),
                 },
                 apns: {
                   payload: {

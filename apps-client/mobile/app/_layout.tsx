@@ -227,12 +227,18 @@ function NotificationTokenConsentPopup() {
     if (linkData) {
       try {
         const link = JSON.parse(linkData as string)
+        const notificationId =
+          (data['notificationId'] as string | undefined) ??
+          (link.type === 'IN_APP_NAVIGATION' && link.destination?.inAppType === 'NOTIFICATION'
+            ? link.destination.inAppId
+            : undefined)
+
+        if (notificationId) {
+          optimisticMarkAsRead(queryClient, notificationId)
+          markAsReadMutation.mutateAsync({ pathParams: { id: notificationId } })
+        }
+
         if (link.type && link.destination) {
-          if (link.type === 'IN_APP_NAVIGATION' && link.destination.inAppType === 'NOTIFICATION') {
-            const notificationId = link.destination.inAppId
-            optimisticMarkAsRead(queryClient, notificationId)
-            markAsReadMutation.mutateAsync({ pathParams: { id: notificationId } })
-          }
           await openLink(link)
         }
       } catch (err) {
