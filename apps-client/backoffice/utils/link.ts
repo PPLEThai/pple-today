@@ -1,10 +1,8 @@
-import { inAppNavigationRequiresId } from '@pple-today/api-common/utils'
-
 import { BannerInAppType } from '@api/backoffice/admin'
 
 import { exhaustiveGuard } from '~/libs/exhaustive-guard'
 
-export { inAppNavigationRequiresId }
+export { inAppNavigationRequiresId } from 'utils/in-app-navigation-types'
 
 export function createLinkFromInAppNavigation(inAppType: BannerInAppType, inAppId: string) {
   switch (inAppType) {

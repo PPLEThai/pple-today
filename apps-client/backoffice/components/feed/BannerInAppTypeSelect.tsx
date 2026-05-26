@@ -1,14 +1,18 @@
-import { BannerInAppType } from '@api/backoffice/admin'
-
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '~/components/ui/select'
-import { BANNER_IN_APP_TYPE_VALUES } from '~/utils/in-app-navigation-types'
-import { mapInAppNavigationTypeToLabel } from '~/utils/link'
+} from '@pple-today/web-ui/select'
+
+import { BannerInAppType } from '@api/backoffice/admin'
+
+import {
+  BANNER_IN_APP_TYPE_VALUES,
+  type BannerInAppTypeFormValue,
+} from 'utils/in-app-navigation-types'
+import { mapInAppNavigationTypeToLabel } from 'utils/link'
 
 type BannerInAppTypeSelectProps = {
   value?: string
@@ -22,7 +26,7 @@ export function BannerInAppTypeSelect({ value, onValueChange }: BannerInAppTypeS
         <SelectValue placeholder="เลือกประเภทเนื้อหาในแอป" />
       </SelectTrigger>
       <SelectContent>
-        {BANNER_IN_APP_TYPE_VALUES.map((inAppType) => (
+        {BANNER_IN_APP_TYPE_VALUES.map((inAppType: BannerInAppTypeFormValue) => (
           <SelectItem key={inAppType} value={inAppType}>
             {mapInAppNavigationTypeToLabel(inAppType as BannerInAppType)}
           </SelectItem>
