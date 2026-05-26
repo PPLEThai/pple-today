@@ -1,5 +1,17 @@
 # @api/backoffice
 
+## 1.6.1
+
+### Patch Changes
+
+- [#387](https://github.com/PPLEThai/pple-today/pull/387) [`3ae4afd`](https://github.com/PPLEThai/pple-today/commit/3ae4afd12312ee50488388ffd2b02ca7f4083166) Thanks [@PanJ](https://github.com/PanJ)! - add more paths support in in-app navigation
+
+- [#387](https://github.com/PPLEThai/pple-today/pull/387) [`b50520b`](https://github.com/PPLEThai/pple-today/commit/b50520b773dc826981a1d85ec629ed01f3a6d1a1) Thanks [@PanJ](https://github.com/PanJ)! - add bypassNotificationCenter parameter
+
+- Updated dependencies [[`3ae4afd`](https://github.com/PPLEThai/pple-today/commit/3ae4afd12312ee50488388ffd2b02ca7f4083166), [`b50520b`](https://github.com/PPLEThai/pple-today/commit/b50520b773dc826981a1d85ec629ed01f3a6d1a1)]:
+  - @pple-today/api-common@1.3.6
+  - @pple-today/database@1.3.2
+
 ## 1.6.0
 
 ### Minor Changes
