@@ -1,5 +1,11 @@
 # @pplethai/pple-today-miniapp-sdk
 
+## 0.1.4
+
+### Patch Changes
+
+- [#381](https://github.com/PPLEThai/pple-today/pull/381) [`4f91c17`](https://github.com/PPLEThai/pple-today/commit/4f91c17223bf46048426b3cbe556eeb78c19e6f2) Thanks [@miello](https://github.com/miello)! - fix: missing models file in output package
+
 ## 0.1.3
 
 ### Patch Changes
