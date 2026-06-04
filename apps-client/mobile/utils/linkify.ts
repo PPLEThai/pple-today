@@ -1,6 +1,4 @@
-export type TextSegment =
-  | { type: 'text'; value: string }
-  | { type: 'link'; value: string }
+export type TextSegment = { type: 'text'; value: string } | { type: 'link'; value: string }
 
 // Matches http(s) URLs. The trailing character class avoids capturing common
 // trailing punctuation (e.g. the period ending a sentence) as part of the URL.
