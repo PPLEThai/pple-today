@@ -7,8 +7,10 @@ import * as R from 'remeda'
 
 import { ConfigServicePlugin } from './config'
 
+import { AD_ROLE_PREFIX } from '../constants/roles'
 import { AuthRepository, AuthRepositoryPlugin } from '../modules/auth/repository'
 import { introspectAccessToken } from '../utils/jwt'
+import { fetchAdUserInfo, resolveVisibleRoles } from '../utils/sso-ad'
 
 export class AuthGuard {
   constructor(
@@ -36,6 +38,17 @@ export class AuthGuard {
     })
   }
 
+  async getAdVisibleRoles(headers: Record<string, string | undefined>) {
+    const token = headers['authorization']?.replace('Bearer', '').trim()
+    if (!token)
+      return err({ code: InternalErrorCode.UNAUTHORIZED, message: 'User not authenticated' })
+
+    const userInfo = await fetchAdUserInfo(token, this.oidcConfig.oidcUrl)
+    if (userInfo.isErr()) return err(userInfo.error)
+
+    return ok(resolveVisibleRoles(userInfo.value))
+  }
+
   async checkUserPrecondition(
     headers: Record<string, string | undefined>,
     conditions: { allowedRoles?: string[]; isActive?: boolean }
@@ -45,7 +58,16 @@ export class AuthGuard {
     if (user.isErr()) return mapRepositoryError(user.error)
 
     if (conditions.allowedRoles) {
-      const intersectionRoles = R.intersection(user.value.roles, conditions.allowedRoles)
+      // `pple-ad:`-prefixed roles are resolved live from the SSO AD active role
+      // (main + extra roles); other roles fall back to the OIDC token roles.
+      let roles = user.value.roles
+      if (conditions.allowedRoles.some((role) => role.startsWith(AD_ROLE_PREFIX))) {
+        const adRoles = await this.getAdVisibleRoles(headers)
+        if (adRoles.isErr()) return err(adRoles.error)
+        roles = adRoles.value
+      }
+
+      const intersectionRoles = R.intersection(roles, conditions.allowedRoles)
       if (intersectionRoles.length === 0) {
         return err({
           code: InternalErrorCode.FORBIDDEN,

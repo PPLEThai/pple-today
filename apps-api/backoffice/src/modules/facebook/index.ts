@@ -42,7 +42,7 @@ export const FacebookController = new Elysia({
         },
         {
           requiredLocalUserPrecondition: {
-            allowedRoles: ['pple-ad:mp', 'pple-ad:hq'],
+            allowedRoles: ['pple-ad:mp', 'pple-ad:hq', 'pple-ad:ppleToday:allowFB'],
             isActive: true,
           },
           detail: {
@@ -73,7 +73,7 @@ export const FacebookController = new Elysia({
         },
         {
           requiredLocalUserPrecondition: {
-            allowedRoles: ['pple-ad:mp', 'pple-ad:hq'],
+            allowedRoles: ['pple-ad:mp', 'pple-ad:hq', 'pple-ad:ppleToday:allowFB'],
             isActive: true,
           },
           detail: {
@@ -112,7 +112,7 @@ export const FacebookController = new Elysia({
               'Checks the availability status of Facebook pages for linking to the user account',
           },
           requiredLocalUserPrecondition: {
-            allowedRoles: ['pple-ad:mp', 'pple-ad:hq'],
+            allowedRoles: ['pple-ad:mp', 'pple-ad:hq', 'pple-ad:ppleToday:allowFB'],
             isActive: true,
           },
           query: GetLinkedPageAvailableStatusQuery,
@@ -141,7 +141,7 @@ export const FacebookController = new Elysia({
         },
         {
           requiredLocalUserPrecondition: {
-            allowedRoles: ['pple-ad:mp', 'pple-ad:hq'],
+            allowedRoles: ['pple-ad:mp', 'pple-ad:hq', 'pple-ad:ppleToday:allowFB'],
             isActive: true,
           },
           response: {
@@ -175,7 +175,7 @@ export const FacebookController = new Elysia({
         },
         {
           requiredLocalUserPrecondition: {
-            allowedRoles: ['pple-ad:mp', 'pple-ad:hq'],
+            allowedRoles: ['pple-ad:mp', 'pple-ad:hq', 'pple-ad:ppleToday:allowFB'],
             isActive: true,
           },
           body: LinkFacebookPageToUserBody,
@@ -215,7 +215,7 @@ export const FacebookController = new Elysia({
         },
         {
           requiredLocalUserPrecondition: {
-            allowedRoles: ['pple-ad:mp', 'pple-ad:hq'],
+            allowedRoles: ['pple-ad:mp', 'pple-ad:hq', 'pple-ad:ppleToday:allowFB'],
             isActive: true,
           },
           response: {

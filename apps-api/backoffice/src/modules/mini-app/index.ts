@@ -11,19 +11,17 @@ export const MiniAppController = new Elysia({ prefix: '/mini-app', tags: ['Mini 
   .use([AuthGuardPlugin, MiniAppServicePlugin])
   .get(
     '/',
-    async ({ status, miniAppService, user, query }) => {
-      if (query.role && !user.roles.includes(query.role)) {
-        return mapErrorCodeToResponse(
-          {
-            code: InternalErrorCode.FORBIDDEN,
-            message: 'You are not allowed to perform this action',
-          },
-          status
-        )
+    async ({ status, miniAppService, headers, authGuard }) => {
+      // Resolve the visible roles from the user's active role in SSO AD
+      // (main role + extra roles). The legacy `role` query param is accepted
+      // for backward compatibility with older app versions but ignored.
+      const visibleRoles = await authGuard.getAdVisibleRoles(headers)
+
+      if (visibleRoles.isErr()) {
+        return mapErrorCodeToResponse(visibleRoles.error, status)
       }
 
-      const roles = query.role ? [query.role] : user.roles
-      const miniApps = await miniAppService.listMiniApps(roles)
+      const miniApps = await miniAppService.listMiniApps(visibleRoles.value)
 
       if (miniApps.isErr()) {
         return mapErrorCodeToResponse(miniApps.error, status)
@@ -40,7 +38,10 @@ export const MiniAppController = new Elysia({ prefix: '/mini-app', tags: ['Mini 
       query: ListMiniAppsQuery,
       response: {
         200: ListMiniAppsResponse,
-        ...createErrorSchema(InternalErrorCode.FORBIDDEN, InternalErrorCode.INTERNAL_SERVER_ERROR),
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
       },
     }
   )
