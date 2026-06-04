@@ -10,6 +10,7 @@ import dayjs from 'dayjs'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeftIcon, ArrowUpRightIcon, BellIcon } from 'lucide-react-native'
 
+import { LinkifiedText } from '@app/components/linkified-text'
 import { reactQueryClient } from '@app/libs/api-client'
 import { openLink } from '@app/utils/link'
 
@@ -71,9 +72,9 @@ export default function NotificationDetailPage() {
               </Text>
             </View>
             <H1 className="text-lg font-heading-semibold">{item.content.header}</H1>
-            <Text className="text-base-text-medium font-body-regular text-base">
+            <LinkifiedText className="text-base-text-medium font-body-regular text-base">
               {item.content.message}
-            </Text>
+            </LinkifiedText>
           </ScrollView>
           {item.content.link && (
             <View className="p-4 pb-6 bg-base-bg-white">
