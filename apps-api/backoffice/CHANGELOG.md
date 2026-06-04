@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.6.3
+
+### Patch Changes
+
+- [#392](https://github.com/PPLEThai/pple-today/pull/392) [`8ae7018`](https://github.com/PPLEThai/pple-today/commit/8ae70184ddec37ddd1f4c518ca50839a5a3b10a2) Thanks [@PanJ](https://github.com/PanJ)! - Resolve mini app visibility from the SSO AD active role (main + extra roles) instead of Zitadel roles. The official page now shows a `บทบาท:` active-role dropdown that polls every 10s, switches role via SSO, and refreshes the app list on change. Facebook endpoints are gated by the SSO AD active role as well.
+
 ## 1.6.2
 
 ### Patch Changes
