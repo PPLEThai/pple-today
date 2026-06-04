@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo } from 'react'
 import { Pressable, PressableProps, ScrollView, View } from 'react-native'
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
 
@@ -26,17 +26,37 @@ import { ElectionCard } from '@app/components/election/election-card'
 import { RefreshControl } from '@app/components/refresh-control'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { reactQueryClient } from '@app/libs/api-client'
-import { useSession } from '@app/libs/auth'
-import { getRoleName } from '@app/utils/get-role-name'
+import { useActiveRole, useSession, useSwitchRoleMutation } from '@app/libs/auth'
 
 import { useBottomTabOnPress } from '../_layout'
 
-const ALL_ROLES_OPTION: Option = { value: '', label: 'ทั้งหมด' }
-
 export default function OfficialPage() {
   const queryClient = useQueryClient()
-  const [selectedRole, setSelectedRole] = useState<Option | undefined>(ALL_ROLES_OPTION)
-  const profileQuery = reactQueryClient.useQuery('/profile/me', {})
+  const activeRoleQuery = useActiveRole()
+  const switchRoleMutation = useSwitchRoleMutation()
+
+  const activeRole = activeRoleQuery.data?.activeRole ?? null
+  const eligibleRoles = activeRoleQuery.data?.eligibleRoles ?? []
+  const roleMapping = activeRoleQuery.data?.roleMapping ?? {}
+  const roleLabel = (role: string) => roleMapping[role] ?? role
+
+  // Refresh the app list whenever the active role changes, whether from the
+  // dropdown (switch mutation) or the 10s polling interval.
+  useEffect(() => {
+    queryClient.resetQueries({
+      queryKey: reactQueryClient.getQueryKey('/mini-app'),
+    })
+  }, [activeRole, queryClient])
+
+  const onRoleChange = useCallback(
+    (option?: Option) => {
+      if (option?.value && option.value !== activeRole) {
+        switchRoleMutation.mutate({ role: option.value })
+      }
+    },
+    [activeRole, switchRoleMutation]
+  )
+
   const onRefresh = useCallback(async () => {
     await Promise.all([
       queryClient.invalidateQueries({
@@ -66,18 +86,23 @@ export default function OfficialPage() {
               <PPLEIcon width={35} height={30} />
               <H1 className="text-3xl font-heading-semibold text-base-primary-default">แอป</H1>
             </View>
-            {profileQuery.data && profileQuery.data.roles.length > 0 && (
-              <Select value={selectedRole} onValueChange={setSelectedRole}>
-                <SelectTrigger className="min-w-[120px]">
-                  <SelectValue placeholder="ทั้งหมด" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem label="ทั้งหมด" value="" />
-                  {profileQuery.data.roles.map((role) => (
-                    <SelectItem key={role} label={getRoleName([role])} value={role} />
-                  ))}
-                </SelectContent>
-              </Select>
+            {activeRole && (
+              <View className="flex flex-row gap-2 items-center">
+                <Text className="font-heading-regular text-base-text-medium">บทบาท:</Text>
+                <Select
+                  value={{ value: activeRole, label: roleLabel(activeRole) }}
+                  onValueChange={onRoleChange}
+                >
+                  <SelectTrigger className="min-w-[120px]">
+                    <SelectValue placeholder="" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {eligibleRoles.map((role) => (
+                      <SelectItem key={role} label={roleLabel(role)} value={role} />
+                    ))}
+                  </SelectContent>
+                </Select>
+              </View>
             )}
           </View>
           <Text className="font-heading-regular text-base-text-medium">
@@ -86,7 +111,7 @@ export default function OfficialPage() {
         </View>
         <View className="gap-3 py-4 flex-1">
           <ElectionSection />
-          <MiniAppSection selectedRole={selectedRole} />
+          <MiniAppSection />
         </View>
       </ScrollView>
     </SafeAreaLayout>
@@ -131,11 +156,9 @@ const ElectionSection = () => {
   )
 }
 
-const MiniAppSection = ({ selectedRole }: { selectedRole: Option | undefined }) => {
+const MiniAppSection = () => {
   const router = useRouter()
-  const { data: miniAppData, isLoading } = reactQueryClient.useQuery('/mini-app', {
-    query: selectedRole?.value ? { role: selectedRole.value } : {},
-  })
+  const { data: miniAppData, isLoading } = reactQueryClient.useQuery('/mini-app', { query: {} })
 
   const miniAppGroupByThree = useMemo(() => {
     if (!miniAppData) {

@@ -142,6 +142,100 @@ export const useUser = () => {
   })
 }
 
+// SSO AD active-role info, derived from the `ad` object of the userinfo response.
+// Every level is nullish because the AD block is omitted for users with no active role.
+const ActiveRoleSchema = z.object({
+  ad: z
+    .object({
+      activeRole: z.string().nullish(),
+      eligibleRoles: z.array(z.string()).nullish(),
+      roleMapping: z.record(z.string(), z.string()).nullish(),
+    })
+    .nullish(),
+})
+
+export interface ActiveRoleInfo {
+  activeRole: string | null
+  eligibleRoles: string[]
+  roleMapping: Record<string, string>
+}
+
+const ACTIVE_ROLE_POLL_INTERVAL_MS = 10_000
+
+export const useActiveRoleQuery = createQuery<
+  ActiveRoleInfo | null,
+  UseUserQueryVariables,
+  Record<string, any>
+>({
+  queryKey: ['ad-active-role'],
+  fetcher: async (variables: UseUserQueryVariables) => {
+    const userInfo = await fetchUserInfoAsync(
+      { accessToken: variables.session.accessToken },
+      variables.discovery
+    )
+    if (userInfo?.error) {
+      throw userInfo
+    }
+    const parsed = ActiveRoleSchema.safeParse(userInfo)
+    if (parsed.error) {
+      console.error('Error parsing AD active role:', parsed.error, userInfo)
+      throw parsed.error
+    }
+    const ad = parsed.data.ad
+    return {
+      activeRole: ad?.activeRole ?? null,
+      eligibleRoles: ad?.eligibleRoles ?? [],
+      roleMapping: ad?.roleMapping ?? {},
+    }
+  },
+  initialData: null,
+  retry: false,
+})
+
+export const useActiveRole = () => {
+  const sessionQuery = useSessionQuery()
+  const discoveryQuery = useDiscoveryQuery()
+  return useActiveRoleQuery({
+    variables: {
+      session: sessionQuery.data!,
+      discovery: discoveryQuery.data!,
+    },
+    enabled: !!discoveryQuery.data && !!sessionQuery.data,
+    refetchInterval: ACTIVE_ROLE_POLL_INTERVAL_MS,
+  })
+}
+
+export const switchActiveRole = async ({ role }: { role: string }) => {
+  const session = await getAuthSessionAsync()
+  if (!session) {
+    throw new Error('No active session to switch role')
+  }
+  const response = await fetch(`${environment.EXPO_PUBLIC_OIDC_BASE_URL}/api/me/switch-role`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${session.accessToken}`,
+    },
+    body: JSON.stringify({ role }),
+  })
+  if (!response.ok) {
+    const detail = await response.text().catch(() => '')
+    throw new Error(`Failed to switch role: ${response.status} ${detail}`)
+  }
+  return response.json().catch(() => ({}))
+}
+
+export const useSwitchRoleMutation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: switchActiveRole,
+    onSuccess: () => {
+      // Refresh the active role so the dropdown (and the app-list effect) react.
+      queryClient.invalidateQueries({ queryKey: useActiveRoleQuery.getKey() })
+    },
+  })
+}
+
 export const useAuthMe = () => {
   const session = useSession()
   return reactQueryClient.useQuery(

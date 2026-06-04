@@ -80,11 +80,19 @@ export const AuthController = new Elysia({
   )
   .post(
     '/mini-app/:slug',
-    async ({ params, user, authService, query, status }) => {
+    async ({ params, user, authService, query, status, headers, authGuard }) => {
+      // Use the visible roles of the active role (SSO AD) so an app openable
+      // from the list is also tokenable, consistent with `GET /mini-app`.
+      const visibleRoles = await authGuard.getAdVisibleRoles(headers)
+
+      if (visibleRoles.isErr()) {
+        return mapErrorCodeToResponse(visibleRoles.error, status)
+      }
+
       const result = await authService.generateMiniAppToken(
         params.slug,
         user.accessToken,
-        user.roles,
+        visibleRoles.value,
         query.path
       )
 
@@ -102,6 +110,7 @@ export const AuthController = new Elysia({
         200: CreateMiniAppTokenResponse,
         ...createErrorSchema(
           InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

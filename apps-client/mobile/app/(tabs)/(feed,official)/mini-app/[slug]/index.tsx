@@ -5,9 +5,10 @@ import { WebView } from 'react-native-webview'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { Text } from '@pple-today/ui/text'
+import { toast } from '@pple-today/ui/toast'
 import Constants from 'expo-constants'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { ArrowLeftIcon, XIcon } from 'lucide-react-native'
+import { ArrowLeftIcon, TriangleAlertIcon, XIcon } from 'lucide-react-native'
 
 import NotFound from '@app/app/+not-found'
 import LoadingPage from '@app/app/loading'
@@ -20,25 +21,32 @@ const MiniAppWebView = () => {
   const slug = params.slug as string
   const path = params.path as string | undefined
 
-  const tokenExchangeMiniAppResult = reactQueryClient.useMutation('post', '/auth/mini-app/:slug')
+  const tokenExchangeMiniAppResult = reactQueryClient.useMutation('post', '/auth/mini-app/:slug', {
+    retry: 3,
+  })
 
   const [canGoBack, setCanGoBack] = useState(false)
   const miniAppRef = useRef<WebView>(null)
 
   useEffect(() => {
-    if (!slug) {
-      router.dismissTo('/')
-      return
-    }
+    // On cold start params may hydrate a tick after mount; do nothing until
+    // slug is available rather than bouncing to home on a transient empty value.
+    if (!slug) return
 
-    tokenExchangeMiniAppResult.mutateAsync({
+    tokenExchangeMiniAppResult.mutate({
       pathParams: { slug },
       query: {
         path,
       },
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug, router])
+  }, [slug, path])
+
+  useEffect(() => {
+    if (tokenExchangeMiniAppResult.isError) {
+      toast.error({ text1: 'เกิดข้อผิดพลาดในการยืนยันตัวตน', icon: TriangleAlertIcon })
+    }
+  }, [tokenExchangeMiniAppResult.isError])
 
   return (
     <View className="flex-1 flex-col bg-base-bg-default">
