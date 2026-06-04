@@ -1,5 +1,13 @@
 # @client/mobile
 
+## 2.5.3
+
+### Patch Changes
+
+- [#394](https://github.com/PPLEThai/pple-today/pull/394) [`7f82c86`](https://github.com/PPLEThai/pple-today/commit/7f82c8622f7d21e152993d0d16b6bf337a321a66) Thanks [@PanJ](https://github.com/PanJ)! - fix margin issue in miniapp
+
+- [#394](https://github.com/PPLEThai/pple-today/pull/394) [`820ff51`](https://github.com/PPLEThai/pple-today/commit/820ff512e19789a5fbeb003d48fd0e8c7239ea9e) Thanks [@PanJ](https://github.com/PanJ)! - fix notification linkify
+
 ## 2.5.2
 
 ### Patch Changes
