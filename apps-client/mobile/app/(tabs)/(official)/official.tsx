@@ -30,6 +30,31 @@ import { useActiveRole, useSession, useSwitchRoleMutation } from '@app/libs/auth
 
 import { useBottomTabOnPress } from '../_layout'
 
+// บทบาท (role) value→label mapping. The SSO userinfo `roleMapping` is
+// inconsistent about whether its keys are role values or labels, which mixed up
+// the dropdown display and caused the wrong identifier to be sent to the
+// switch-role endpoint. Map roles locally instead: always show the Thai label
+// and always send the canonical role value.
+const ROLE_LABELS: Record<string, string> = {
+  local: 'ทีมท้องถิ่น',
+  province: 'ทีมจังหวัด',
+  tto: 'ตทอ.',
+  hq: 'ส่วนกลาง',
+  foundation: 'มูลนิธิ',
+  mp: 'สส.',
+  candidate: 'ผู้สมัคร',
+  confirmed_candidate: 'ผู้สมัคร (ยืนยัน)',
+  delegate: 'ปฎิบัติงานแทน',
+}
+
+const ROLE_VALUE_BY_LABEL: Record<string, string> = Object.fromEntries(
+  Object.entries(ROLE_LABELS).map(([value, label]) => [label, value])
+)
+
+// Resolve either a role value or a Thai label to the canonical role value.
+const toRoleValue = (role: string) => ROLE_VALUE_BY_LABEL[role] ?? role
+const toRoleLabel = (role: string) => ROLE_LABELS[toRoleValue(role)] ?? role
+
 export default function OfficialPage() {
   const queryClient = useQueryClient()
   const activeRoleQuery = useActiveRole()
@@ -37,8 +62,7 @@ export default function OfficialPage() {
 
   const activeRole = activeRoleQuery.data?.activeRole ?? null
   const eligibleRoles = activeRoleQuery.data?.eligibleRoles ?? []
-  const roleMapping = activeRoleQuery.data?.roleMapping ?? {}
-  const roleLabel = (role: string) => roleMapping[role] ?? role
+  const activeRoleValue = activeRole ? toRoleValue(activeRole) : null
 
   // Refresh the app list whenever the active role changes, whether from the
   // dropdown (switch mutation) or the 10s polling interval.
@@ -50,11 +74,12 @@ export default function OfficialPage() {
 
   const onRoleChange = useCallback(
     (option?: Option) => {
-      if (option?.value && option.value !== activeRole) {
+      // option.value is already the canonical role value (see SelectItem below).
+      if (option?.value && option.value !== activeRoleValue) {
         switchRoleMutation.mutate({ role: option.value })
       }
     },
-    [activeRole, switchRoleMutation]
+    [activeRoleValue, switchRoleMutation]
   )
 
   const onRefresh = useCallback(async () => {
@@ -90,16 +115,17 @@ export default function OfficialPage() {
               <View className="flex flex-row gap-2 items-center">
                 <Text className="font-heading-regular text-base-text-medium">บทบาท:</Text>
                 <Select
-                  value={{ value: activeRole, label: roleLabel(activeRole) }}
+                  value={{ value: activeRoleValue ?? activeRole, label: toRoleLabel(activeRole) }}
                   onValueChange={onRoleChange}
                 >
                   <SelectTrigger className="min-w-[120px]">
                     <SelectValue placeholder="" />
                   </SelectTrigger>
                   <SelectContent>
-                    {eligibleRoles.map((role) => (
-                      <SelectItem key={role} label={roleLabel(role)} value={role} />
-                    ))}
+                    {eligibleRoles.map((role) => {
+                      const value = toRoleValue(role)
+                      return <SelectItem key={value} label={toRoleLabel(role)} value={value} />
+                    })}
                   </SelectContent>
                 </Select>
               </View>
@@ -198,12 +224,14 @@ const MiniAppSection = () => {
                     >
                       <MiniAppIcon iconUrl={app.iconUrl} />
                     </View>
-                    <Text
-                      numberOfLines={2}
-                      className="text-xs font-heading-semibold w-full text-center"
-                    >
-                      {app.name}
-                    </Text>
+                    <View className="h-9 w-full items-center justify-center">
+                      <Text
+                        numberOfLines={2}
+                        className="text-xs font-heading-semibold w-full text-center"
+                      >
+                        {app.name}
+                      </Text>
+                    </View>
                   </View>
                 </InfoItem>
               </View>
@@ -265,7 +293,9 @@ function MiniAppItemSkeleton() {
   return (
     <View className="flex-1 p-4 flex justify-center items-center flex-col">
       <Skeleton className="mb-3 h-16 w-16 rounded-lg bg-base-bg-white" />
-      <Skeleton className="h-3 w-12 rounded bg-base-bg-white" />
+      <View className="h-9 w-full items-center justify-center">
+        <Skeleton className="h-3 w-12 rounded bg-base-bg-white" />
+      </View>
     </View>
   )
 }

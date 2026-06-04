@@ -39,6 +39,25 @@ export async function openLink(link: LinkType) {
   }
 }
 
+/**
+ * Opens a raw URL string extracted from free-form text (e.g. a notification body).
+ * If the URL matches the allowed mini app origin, it initiates the mini app flow.
+ * Otherwise it falls back to opening in the external browser.
+ */
+export async function openUrl(url: string) {
+  try {
+    const miniAppPath = createMiniAppPath(url)
+    if (miniAppPath) {
+      router.push(miniAppPath)
+      return
+    }
+  } catch {
+    // Not a parsable URL for the mini app scheme; fall through to external browser.
+  }
+
+  await Linking.openURL(url)
+}
+
 export function createLinkFromInAppNavigation(
   inAppType: BannerInAppType | 'NOTIFICATION',
   inAppId: string
