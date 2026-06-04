@@ -147,11 +147,10 @@ function FontProvider({ children }: { children: React.ReactNode }) {
     }
   }, [fontLoaded, fontError])
 
-  // TODO: add a loading screen or spinner while fonts are loading
-  if (!fontLoaded && !fontError) {
-    return null
-  }
-
+  // Keep the navigator mounted at all times so expo-router can resolve the
+  // initial deep-link URL on cold start. The native splash (kept up by
+  // SplashScreen.preventAutoHideAsync() at module load) covers the UI until
+  // fonts are ready, then hideAsync() reveals the already-routed screen.
   return children
 }
 
