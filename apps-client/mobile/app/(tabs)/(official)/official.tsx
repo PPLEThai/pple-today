@@ -198,12 +198,14 @@ const MiniAppSection = () => {
                     >
                       <MiniAppIcon iconUrl={app.iconUrl} />
                     </View>
-                    <Text
-                      numberOfLines={2}
-                      className="text-xs font-heading-semibold w-full text-center"
-                    >
-                      {app.name}
-                    </Text>
+                    <View className="h-9 w-full items-center justify-center">
+                      <Text
+                        numberOfLines={2}
+                        className="text-xs font-heading-semibold w-full text-center"
+                      >
+                        {app.name}
+                      </Text>
+                    </View>
                   </View>
                 </InfoItem>
               </View>
@@ -265,7 +267,9 @@ function MiniAppItemSkeleton() {
   return (
     <View className="flex-1 p-4 flex justify-center items-center flex-col">
       <Skeleton className="mb-3 h-16 w-16 rounded-lg bg-base-bg-white" />
-      <Skeleton className="h-3 w-12 rounded bg-base-bg-white" />
+      <View className="h-9 w-full items-center justify-center">
+        <Skeleton className="h-3 w-12 rounded bg-base-bg-white" />
+      </View>
     </View>
   )
 }
