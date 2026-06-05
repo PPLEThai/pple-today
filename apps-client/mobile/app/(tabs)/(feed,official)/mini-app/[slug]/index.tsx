@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import { View } from 'react-native'
+import { Pressable, View } from 'react-native'
 import { WebView } from 'react-native-webview'
 
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { Text } from '@pple-today/ui/text'
 import { toast } from '@pple-today/ui/toast'
+import * as Clipboard from 'expo-clipboard'
 import Constants from 'expo-constants'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { ArrowLeftIcon, TriangleAlertIcon, XIcon } from 'lucide-react-native'
+import { ArrowLeftIcon, CopyIcon, TriangleAlertIcon, XIcon } from 'lucide-react-native'
 
 import NotFound from '@app/app/+not-found'
 import LoadingPage from '@app/app/loading'
@@ -24,6 +25,9 @@ const MiniAppWebView = () => {
   const tokenExchangeMiniAppResult = reactQueryClient.useMutation('post', '/auth/mini-app/:slug', {
     retry: 3,
   })
+
+  const { data: miniAppListData } = reactQueryClient.useQuery('/mini-app', { query: {} })
+  const currentMiniApp = miniAppListData?.find((app) => app.slug === slug)
 
   const [canGoBack, setCanGoBack] = useState(false)
   const miniAppRef = useRef<WebView>(null)
@@ -68,9 +72,23 @@ const MiniAppWebView = () => {
         ) : (
           <View className="size-6" />
         )}
-        <Text className="flex-1 text-center align-middle">
-          {tokenExchangeMiniAppResult.isSuccess ? tokenExchangeMiniAppResult.data.appName : ''}
-        </Text>
+        <Pressable
+          className="flex-1 flex-row items-center justify-center gap-1"
+          disabled={!currentMiniApp}
+          aria-label="Copy mini app URL"
+          onPress={async () => {
+            if (!currentMiniApp) return
+            await Clipboard.setStringAsync(currentMiniApp.url)
+            toast({
+              text1: `คัดลอก URL ของแอปฯ "${currentMiniApp.name}" เรียบร้อย`,
+            })
+          }}
+        >
+          <Text className="text-center align-middle font-heading-bold">
+            {tokenExchangeMiniAppResult.isSuccess ? tokenExchangeMiniAppResult.data.appName : ''}
+          </Text>
+          {currentMiniApp ? <Icon className="text-foreground" icon={CopyIcon} size={14} /> : null}
+        </Pressable>
         <Button
           variant="ghost"
           size="icon"

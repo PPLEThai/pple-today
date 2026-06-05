@@ -148,6 +148,11 @@ const ActiveRoleSchema = z.object({
   ad: z
     .object({
       activeRole: z.string().nullish(),
+      actualPpleUser: z
+        .object({
+          role: z.string().nullish(),
+        })
+        .nullish(),
       eligibleRoles: z.array(z.string()).nullish(),
       roleMapping: z.record(z.string(), z.string()).nullish(),
     })
@@ -183,7 +188,7 @@ export const useActiveRoleQuery = createQuery<
     }
     const ad = parsed.data.ad
     return {
-      activeRole: ad?.activeRole ?? null,
+      activeRole: ad?.actualPpleUser?.role ?? null,
       eligibleRoles: ad?.eligibleRoles ?? [],
       roleMapping: ad?.roleMapping ?? {},
     }
@@ -205,16 +210,33 @@ export const useActiveRole = () => {
   })
 }
 
-export const switchActiveRole = async ({ role }: { role: string }) => {
-  const session = await getAuthSessionAsync()
-  if (!session) {
-    throw new Error('No active session to switch role')
+export const switchActiveRole = async ({
+  role,
+  slug = environment.EXPO_PUBLIC_PPLE_ID_MINI_APP_SLUG,
+}: {
+  role: string
+  slug?: string
+}) => {
+  // The SSO `switch-role` endpoint rejects the PPLE Today client token; it only
+  // accepts a mini-app-scoped token. Mint one via the backend mini-app token
+  // exchange (defaulting to the `pple-id` app) and use it to switch the role.
+  const tokenExchange = await fetchClient('/auth/mini-app/:slug', {
+    method: 'POST',
+    params: { slug },
+    query: {},
+  })
+  if (tokenExchange.error) {
+    throw tokenExchange.error
+  }
+  const accessToken = new URL(tokenExchange.data.url).searchParams.get('access_token')
+  if (!accessToken) {
+    throw new Error('Mini app token exchange did not return an access token')
   }
   const response = await fetch(`${environment.EXPO_PUBLIC_OIDC_BASE_URL}/api/me/switch-role`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${session.accessToken}`,
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({ role }),
   })

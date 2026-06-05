@@ -25,6 +25,7 @@ import PPLEIcon from '@app/assets/pple-icon.svg'
 import { ElectionCard } from '@app/components/election/election-card'
 import { RefreshControl } from '@app/components/refresh-control'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
+import { Spinner } from '@app/components/spinner'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useActiveRole, useSession, useSwitchRoleMutation } from '@app/libs/auth'
 
@@ -63,6 +64,7 @@ export default function OfficialPage() {
   const activeRole = activeRoleQuery.data?.activeRole ?? null
   const eligibleRoles = activeRoleQuery.data?.eligibleRoles ?? []
   const activeRoleValue = activeRole ? toRoleValue(activeRole) : null
+  const isSwitchingRole = switchRoleMutation.isPending
 
   // Refresh the app list whenever the active role changes, whether from the
   // dropdown (switch mutation) or the 10s polling interval.
@@ -118,7 +120,7 @@ export default function OfficialPage() {
                   value={{ value: activeRoleValue ?? activeRole, label: toRoleLabel(activeRole) }}
                   onValueChange={onRoleChange}
                 >
-                  <SelectTrigger className="min-w-[120px]">
+                  <SelectTrigger className="min-w-[120px]" disabled={isSwitchingRole}>
                     <SelectValue placeholder="" />
                   </SelectTrigger>
                   <SelectContent>
@@ -137,7 +139,7 @@ export default function OfficialPage() {
         </View>
         <View className="gap-3 py-4 flex-1">
           <ElectionSection />
-          <MiniAppSection />
+          <MiniAppSection isSwitchingRole={isSwitchingRole} />
         </View>
       </ScrollView>
     </SafeAreaLayout>
@@ -182,10 +184,9 @@ const ElectionSection = () => {
   )
 }
 
-const MiniAppSection = () => {
+const MiniAppSection = ({ isSwitchingRole }: { isSwitchingRole: boolean }) => {
   const router = useRouter()
   const { data: miniAppData, isLoading } = reactQueryClient.useQuery('/mini-app', { query: {} })
-
   const miniAppGroupByThree = useMemo(() => {
     if (!miniAppData) {
       return []
@@ -199,6 +200,16 @@ const MiniAppSection = () => {
     return grouped
   }, [miniAppData])
 
+  // While the active role is switching, clear the (now stale) app list and show
+  // a spinner until the role-scoped list reloads.
+  if (isSwitchingRole) {
+    return (
+      <View className="px-4 py-10 items-center justify-center">
+        <Spinner />
+      </View>
+    )
+  }
+
   if (isLoading) {
     return <MiniAppSkeleton />
   }
@@ -209,9 +220,9 @@ const MiniAppSection = () => {
 
   return (
     <View className="px-4">
-      <View className="flex flex-col gap-4 mt-4">
+      <View className="flex flex-col gap-0 mt-4">
         {miniAppGroupByThree.map((group, index) => (
-          <View key={index} className="flex flex-row gap-4 w-full">
+          <View key={index} className="flex flex-row gap-0 w-full">
             {group.map((app) => (
               <View key={app.slug} className="flex-1">
                 <InfoItem onPress={() => router.navigate(`/mini-app/${app.slug}`)}>
