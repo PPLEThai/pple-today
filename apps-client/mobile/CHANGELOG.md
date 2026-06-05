@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 2.5.4
+
+### Patch Changes
+
+- [#398](https://github.com/PPLEThai/pple-today/pull/398) [`a3860a2`](https://github.com/PPLEThai/pple-today/commit/a3860a2a73b6b8ed576d2da02c2b625c38af8afa) Thanks [@PanJ](https://github.com/PanJ)! - revamp mini app page
+
 ## 2.5.3
 
 ### Patch Changes
