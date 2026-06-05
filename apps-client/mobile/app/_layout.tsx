@@ -42,7 +42,8 @@ import buddhistEra from 'dayjs/plugin/buddhistEra'
 import duration from 'dayjs/plugin/duration'
 import * as Clipboard from 'expo-clipboard'
 import { useFonts } from 'expo-font'
-import { Stack } from 'expo-router'
+import * as Linking from 'expo-linking'
+import { type Href, router, Stack, useRootNavigationState } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { InfoIcon } from 'lucide-react-native'
 
@@ -54,6 +55,7 @@ import { reactQueryClient } from '@app/libs/api-client'
 import { initAppUpdate } from '@app/libs/app-update'
 import { AuthLifeCycleHook, useAuthMe } from '@app/libs/auth'
 import { openLink } from '@app/utils/link'
+import { resolveIncomingDeepLinkPath } from '@app/utils/mini-app'
 
 import { optimisticMarkAsRead } from './(tabs)/(feed)/notification'
 
@@ -95,6 +97,7 @@ export default function RootLayout() {
                     <Stack initialRouteName="(tabs)" screenOptions={{ headerShown: false }}>
                       <Stack.Screen name="loading" options={{ gestureEnabled: false }} />
                     </Stack>
+                    <InitialDeepLinkHandler />
                     <Toaster />
                   </BottomSheetModalProvider>
                 </GestureHandlerRootView>
@@ -147,11 +150,50 @@ function FontProvider({ children }: { children: React.ReactNode }) {
     }
   }, [fontLoaded, fontError])
 
-  // Keep the navigator mounted at all times so expo-router can resolve the
-  // initial deep-link URL on cold start. The native splash (kept up by
-  // SplashScreen.preventAutoHideAsync() at module load) covers the UI until
-  // fonts are ready, then hideAsync() reveals the already-routed screen.
+  // Keep the splash up (and the navigator unmounted) until fonts are ready.
+  // Because the navigator is not mounted on cold start, expo-router drops the
+  // initial deep-link URL; <InitialDeepLinkHandler /> replays it once the
+  // navigator mounts. See https://docs.expo.dev/router/advanced/native-intent/
+  if (!fontLoaded && !fontError) {
+    return null
+  }
   return children
+}
+
+/**
+ * Replays the launch deep link on cold start.
+ *
+ * While fonts load, <FontProvider /> renders `null`, so the root navigator is
+ * not mounted and expo-router discards the URL that launched the app. Once the
+ * navigator is ready we read the initial URL ourselves and navigate to the
+ * resolved mini-app route. Non-mini-app URLs resolve to `null` and are left for
+ * expo-router / the notification handlers to deal with.
+ */
+function InitialDeepLinkHandler() {
+  const navigationState = useRootNavigationState()
+  const handledRef = React.useRef(false)
+
+  React.useEffect(() => {
+    // Wait until the root navigator is mounted, then run exactly once.
+    if (!navigationState?.key || handledRef.current) return
+    handledRef.current = true
+
+    const handleInitialDeepLink = async () => {
+      const url = await Linking.getInitialURL()
+      if (!url) return
+
+      const route = resolveIncomingDeepLinkPath(url)
+      if (route) {
+        router.push(route as Href)
+      }
+    }
+
+    handleInitialDeepLink().catch((err) => {
+      console.error('Failed to handle initial deep link', err)
+    })
+  }, [navigationState?.key])
+
+  return null
 }
 
 function ColorSchemeProvider({ children }: { children: React.ReactNode }) {
