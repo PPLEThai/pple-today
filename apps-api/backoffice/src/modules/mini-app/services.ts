@@ -20,6 +20,7 @@ export class MiniAppService {
         name: miniApp.name,
         iconUrl: miniApp.icon,
         order: miniApp.order,
+        url: miniApp.clientUrl,
       }))
     )
   }
