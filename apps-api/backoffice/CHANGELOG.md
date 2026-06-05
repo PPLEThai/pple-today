@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.6.4
+
+### Patch Changes
+
+- [#396](https://github.com/PPLEThai/pple-today/pull/396) [`dcc92f5`](https://github.com/PPLEThai/pple-today/commit/dcc92f5589fa204b55171bc5eaa851b45cb5e512) Thanks [@PanJ](https://github.com/PanJ)! - add url to minipp list API
+
 ## 1.6.3
 
 ### Patch Changes
