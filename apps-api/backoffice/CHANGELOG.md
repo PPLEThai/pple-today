@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.6.6
+
+### Patch Changes
+
+- [#402](https://github.com/PPLEThai/pple-today/pull/402) [`bc8bb6c`](https://github.com/PPLEThai/pple-today/commit/bc8bb6c762d264150d67f54d4876174737d3c681) Thanks [@PanJ](https://github.com/PanJ)! - List mini apps no longer errors for unauthenticated users; instead returns only mini apps with no required roles
+
 ## 1.6.5
 
 ### Patch Changes
