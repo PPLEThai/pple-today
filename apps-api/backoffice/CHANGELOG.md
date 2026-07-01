@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.6.5
+
+### Patch Changes
+
+- [#400](https://github.com/PPLEThai/pple-today/pull/400) [`dda29d6`](https://github.com/PPLEThai/pple-today/commit/dda29d6cd73a42f3898a1bbccd0c8902453e2343) Thanks [@PanJ](https://github.com/PanJ)! - Add caching to miniapp API
+
 ## 1.6.4
 
 ### Patch Changes
