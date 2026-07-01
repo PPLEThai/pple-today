@@ -15,13 +15,21 @@ export const MiniAppController = new Elysia({ prefix: '/mini-app', tags: ['Mini 
       // Resolve the visible roles from the user's active role in SSO AD
       // (main role + extra roles). The legacy `role` query param is accepted
       // for backward compatibility with older app versions but ignored.
-      const visibleRoles = await authGuard.getAdVisibleRoles(headers)
+      // Users who are not logged in are not an error case here: they simply
+      // see the mini apps that require no roles.
+      const visibleRolesResult = await authGuard.getAdVisibleRoles(headers)
 
-      if (visibleRoles.isErr()) {
-        return mapErrorCodeToResponse(visibleRoles.error, status)
+      let visibleRoles: string[]
+      if (visibleRolesResult.isErr()) {
+        if (visibleRolesResult.error.code !== InternalErrorCode.UNAUTHORIZED) {
+          return mapErrorCodeToResponse(visibleRolesResult.error, status)
+        }
+        visibleRoles = []
+      } else {
+        visibleRoles = visibleRolesResult.value
       }
 
-      const miniApps = await miniAppService.listMiniApps(visibleRoles.value)
+      const miniApps = await miniAppService.listMiniApps(visibleRoles)
 
       if (miniApps.isErr()) {
         return mapErrorCodeToResponse(miniApps.error, status)
@@ -30,18 +38,15 @@ export const MiniAppController = new Elysia({ prefix: '/mini-app', tags: ['Mini 
       return status(200, miniApps.value)
     },
     {
-      requiredLocalUser: true,
       detail: {
         summary: 'List Mini Apps',
-        description: 'Retrieve the list of mini apps',
+        description:
+          'Retrieve the list of mini apps. Anonymous users see only mini apps with no required roles.',
       },
       query: ListMiniAppsQuery,
       response: {
         200: ListMiniAppsResponse,
-        ...createErrorSchema(
-          InternalErrorCode.UNAUTHORIZED,
-          InternalErrorCode.INTERNAL_SERVER_ERROR
-        ),
+        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
       },
     }
   )
