@@ -128,6 +128,7 @@ export default {
 
       '@react-native-firebase/app',
       '@react-native-firebase/messaging',
+      'expo-notifications',
       [
         'expo-notification-service-extension-plugin',
         {

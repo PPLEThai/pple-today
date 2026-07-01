@@ -43,6 +43,7 @@ import duration from 'dayjs/plugin/duration'
 import * as Clipboard from 'expo-clipboard'
 import { useFonts } from 'expo-font'
 import * as Linking from 'expo-linking'
+import * as Notifications from 'expo-notifications'
 import { type Href, router, Stack, useRootNavigationState } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { InfoIcon } from 'lucide-react-native'
@@ -53,7 +54,7 @@ import { environment } from '@app/env'
 import { useScreenTracking } from '@app/libs/analytics'
 import { reactQueryClient } from '@app/libs/api-client'
 import { initAppUpdate } from '@app/libs/app-update'
-import { AuthLifeCycleHook, useAuthMe } from '@app/libs/auth'
+import { AuthLifeCycleHook, useAuthMe, useSession } from '@app/libs/auth'
 import { openLink } from '@app/utils/link'
 import { resolveIncomingDeepLinkPath } from '@app/utils/mini-app'
 
@@ -111,6 +112,7 @@ export default function RootLayout() {
           <AuthLifeCycleHook />
           <AnalyticsScreenTracker />
           <NotificationTokenConsentPopup />
+          <AppIconBadgeSync />
           <AppUpdateGate />
         </QueryClientProvider>
       </SafeAreaProvider>
@@ -229,6 +231,34 @@ function ColorSchemeProvider({ children }: { children: React.ReactNode }) {
 
 function AnalyticsScreenTracker() {
   useScreenTracking()
+  return null
+}
+
+/**
+ * Keeps the app icon badge (the red circle with a number) in sync with the
+ * unread notification count. `/notifications/unread-count` is updated
+ * optimistically on read and on incoming push messages, so this only needs
+ * to mirror that query's value onto the native badge.
+ */
+function AppIconBadgeSync() {
+  const session = useSession()
+  const unreadNotificationCountQuery = reactQueryClient.useQuery(
+    '/notifications/unread-count',
+    {},
+    { enabled: !!session }
+  )
+  const unreadCount = unreadNotificationCountQuery.data?.unreadCount
+
+  React.useEffect(() => {
+    if (!session) {
+      Notifications.setBadgeCountAsync(0).catch(() => {})
+      return
+    }
+    if (unreadCount !== undefined) {
+      Notifications.setBadgeCountAsync(unreadCount).catch(() => {})
+    }
+  }, [session, unreadCount])
+
   return null
 }
 
