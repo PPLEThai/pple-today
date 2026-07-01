@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 2.5.5
+
+### Patch Changes
+
+- [#400](https://github.com/PPLEThai/pple-today/pull/400) [`1d554e1`](https://github.com/PPLEThai/pple-today/commit/1d554e162ffa1a133a43e62a1e8db0a202095298) Thanks [@PanJ](https://github.com/PanJ)! - Fix notification badge and noti center UI
+
 ## 2.5.4
 
 ### Patch Changes
