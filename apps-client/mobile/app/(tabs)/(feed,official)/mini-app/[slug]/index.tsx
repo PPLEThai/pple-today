@@ -60,6 +60,7 @@ const MiniAppWebView = () => {
             variant="ghost"
             size="icon"
             className="size-6"
+            hitSlop={16}
             onPress={() => {
               if (miniAppRef.current) {
                 miniAppRef.current.goBack()
@@ -93,6 +94,7 @@ const MiniAppWebView = () => {
           variant="ghost"
           size="icon"
           className="size-6"
+          hitSlop={16}
           aria-label="Close mini app"
           onPress={() => {
             if (router.canGoBack()) {

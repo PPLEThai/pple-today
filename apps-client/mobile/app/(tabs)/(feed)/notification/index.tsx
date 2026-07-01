@@ -179,14 +179,18 @@ const NotificationItem = ({ item }: { item: ListHistoryNotificationResponse['ite
         >
           <Icon icon={BellIcon} className="text-base-bg-white" />
         </View>
-        <Text className="text-sm text-base-text-medium font-heading-medium flex-1">
-          แจ้งเตือนทั่วไป
+        <Text className="text-sm text-base-text-high font-heading-medium flex-1 line-clamp-1">
+          {item.title}
         </Text>
         <Text className="text-sm text-base-text-medium font-heading-regular">
           {dayjs(item.createdAt).format('DD MMM BB')}
         </Text>
       </View>
-      <Text className="text-sm text-base-text-high font-heading-medium">{item.title}</Text>
+      {item.description ? (
+        <Text className="text-sm text-base-text-medium font-body-regular line-clamp-2">
+          {item.description}
+        </Text>
+      ) : null}
     </AnimatedBackgroundPressable>
   )
 }
