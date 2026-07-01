@@ -12,8 +12,13 @@ import {
 } from './models'
 import { AdminMiniAppRepository, AdminMiniAppRepositoryPlugin } from './repository'
 
+import { MiniAppListCache, MiniAppListCachePlugin } from '../../../plugins/mini-app-cache'
+
 export class AdminMiniAppService {
-  constructor(private readonly adminMiniAppRepository: AdminMiniAppRepository) {}
+  constructor(
+    private readonly adminMiniAppRepository: AdminMiniAppRepository,
+    private readonly miniAppListCache: MiniAppListCache
+  ) {}
 
   async getMiniApps() {
     const result = await this.adminMiniAppRepository.getMiniApps()
@@ -38,6 +43,8 @@ export class AdminMiniAppService {
           message: 'Mini app with the given slug already exists',
         },
       })
+
+    this.miniAppListCache.invalidate()
 
     return ok({
       id: createResult.value.id,
@@ -65,6 +72,8 @@ export class AdminMiniAppService {
         },
       })
 
+    this.miniAppListCache.invalidate()
+
     return ok({
       id: updateResult.value.id,
       name: updateResult.value.name,
@@ -87,6 +96,8 @@ export class AdminMiniAppService {
         },
       })
 
+    this.miniAppListCache.invalidate()
+
     return ok(deleteResult.value)
   }
 }
@@ -94,7 +105,7 @@ export class AdminMiniAppService {
 export const AdminMiniAppServicePlugin = new Elysia({
   name: 'AdminMiniAppService',
 })
-  .use([AdminMiniAppRepositoryPlugin])
-  .decorate(({ adminMiniAppRepository }) => ({
-    adminMiniAppService: new AdminMiniAppService(adminMiniAppRepository),
+  .use([AdminMiniAppRepositoryPlugin, MiniAppListCachePlugin])
+  .decorate(({ adminMiniAppRepository, miniAppListCache }) => ({
+    adminMiniAppService: new AdminMiniAppService(adminMiniAppRepository, miniAppListCache),
   }))
