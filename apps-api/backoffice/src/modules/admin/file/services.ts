@@ -26,6 +26,10 @@ export class AdminFileService {
         filePathWithoutExt =
           `${this.fileService.prefixTempFolder}announcement/announcement-${randomId}` as FilePath
         break
+      case UploadFileCategory.MINI_APP:
+        filePathWithoutExt =
+          `${this.fileService.prefixTempFolder}mini-app/mini-app-${randomId}` as FilePath
+        break
       case UploadFileCategory.TOPIC:
         filePathWithoutExt =
           `${this.fileService.prefixTempFolder}topic/topic-${randomId}` as FilePath

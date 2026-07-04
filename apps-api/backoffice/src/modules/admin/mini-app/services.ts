@@ -1,61 +1,89 @@
-import { InternalErrorCode } from '@pple-today/api-common/dtos'
+import { InternalErrorCode, MiniApp } from '@pple-today/api-common/dtos'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
+import { MiniApp as MiniAppModel, MiniAppRole } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
-import { ok } from 'neverthrow'
+import { err, ok } from 'neverthrow'
 
 import {
   CreateMiniAppBody,
-  CreateMiniAppResponse,
+  CreateZitadelAppBody,
   GetMiniAppsResponse,
   UpdateMiniAppBody,
-  UpdateMiniAppResponse,
 } from './models'
 import { AdminMiniAppRepository, AdminMiniAppRepositoryPlugin } from './repository'
 
+import { ConfigServicePlugin } from '../../../plugins/config'
 import { MiniAppListCache, MiniAppListCachePlugin } from '../../../plugins/mini-app-cache'
+import { ZitadelService, ZitadelServicePlugin } from '../zitadel/services'
+
+const toMiniAppDto = (miniApp: MiniAppModel & { miniAppRoles: MiniAppRole[] }): MiniApp => ({
+  id: miniApp.id,
+  name: miniApp.name,
+  slug: miniApp.slug,
+  iconUrl: miniApp.icon,
+  url: miniApp.clientUrl,
+  clientId: miniApp.clientId,
+  requiresAuth: miniApp.requiresAuth,
+  order: miniApp.order,
+  roles: miniApp.miniAppRoles.map(({ role }) => role),
+})
 
 export class AdminMiniAppService {
   constructor(
     private readonly adminMiniAppRepository: AdminMiniAppRepository,
-    private readonly miniAppListCache: MiniAppListCache
+    private readonly miniAppListCache: MiniAppListCache,
+    private readonly zitadelService: ZitadelService,
+    private readonly defaultMiniAppClientId?: string
   ) {}
 
   async getMiniApps() {
     const result = await this.adminMiniAppRepository.getMiniApps()
     if (result.isErr()) return mapRepositoryError(result.error)
 
-    return ok(
-      result.value.map((miniApp) => ({
-        id: miniApp.id,
-        name: miniApp.name,
-        order: miniApp.order,
-        roles: miniApp.miniAppRoles.map((role) => role.role),
-      })) satisfies GetMiniAppsResponse
-    )
+    return ok(result.value.map(toMiniAppDto) satisfies GetMiniAppsResponse)
   }
 
   async createMiniApp(data: CreateMiniAppBody) {
-    const createResult = await this.adminMiniAppRepository.createMiniApp(data)
+    let clientId = data.clientId
+
+    if (data.createZitadelApp) {
+      const zitadelResult = await this.zitadelService.createOidcApp({
+        name: data.name,
+        ...data.createZitadelApp,
+      })
+      if (zitadelResult.isErr()) return err(zitadelResult.error)
+      clientId = zitadelResult.value.clientId
+    } else if (!clientId && data.requiresAuth === false) {
+      clientId = this.defaultMiniAppClientId
+    }
+
+    if (!clientId) {
+      return err({
+        code: InternalErrorCode.MINI_APP_CLIENT_ID_REQUIRED,
+        message:
+          'Provide a clientId, request a Zitadel app to be created, or mark the mini app as not requiring auth (with DEFAULT_MINI_APP_CLIENT_ID configured)',
+      })
+    }
+
+    const createResult = await this.adminMiniAppRepository.createMiniApp({ ...data, clientId })
     if (createResult.isErr())
       return mapRepositoryError(createResult.error, {
         UNIQUE_CONSTRAINT_FAILED: {
           code: InternalErrorCode.MINI_APP_SLUG_ALREADY_EXISTS,
-          message: 'Mini app with the given slug already exists',
+          message: data.createZitadelApp
+            ? `Mini app with the given slug already exists. Note: a Zitadel app was already created with clientId "${clientId}" — reuse it or clean it up in Zitadel.`
+            : 'Mini app with the given slug already exists',
         },
+        ...(data.createZitadelApp
+          ? {
+              INTERNAL_SERVER_ERROR: `Failed to create mini app. Note: a Zitadel app was already created with clientId "${clientId}" — reuse it or clean it up in Zitadel.`,
+            }
+          : {}),
       })
 
     this.miniAppListCache.invalidate()
 
-    return ok({
-      id: createResult.value.id,
-      name: createResult.value.name,
-      slug: createResult.value.slug,
-      iconUrl: createResult.value.icon,
-      url: createResult.value.clientUrl,
-      clientId: createResult.value.clientId,
-      order: createResult.value.order,
-      roles: createResult.value.miniAppRoles.map(({ role }) => role),
-    } satisfies CreateMiniAppResponse)
+    return ok(toMiniAppDto(createResult.value))
   }
 
   async updateMiniApp(id: string, data: UpdateMiniAppBody) {
@@ -74,16 +102,7 @@ export class AdminMiniAppService {
 
     this.miniAppListCache.invalidate()
 
-    return ok({
-      id: updateResult.value.id,
-      name: updateResult.value.name,
-      slug: updateResult.value.slug,
-      iconUrl: updateResult.value.icon,
-      url: updateResult.value.clientUrl,
-      clientId: updateResult.value.clientId,
-      order: updateResult.value.order,
-      roles: updateResult.value.miniAppRoles.map(({ role }) => role),
-    } satisfies UpdateMiniAppResponse)
+    return ok(toMiniAppDto(updateResult.value))
   }
 
   async deleteMiniApp(id: string) {
@@ -100,12 +119,26 @@ export class AdminMiniAppService {
 
     return ok(deleteResult.value)
   }
+
+  async createZitadelApp(data: CreateZitadelAppBody) {
+    return this.zitadelService.createOidcApp(data)
+  }
 }
 
 export const AdminMiniAppServicePlugin = new Elysia({
   name: 'AdminMiniAppService',
 })
-  .use([AdminMiniAppRepositoryPlugin, MiniAppListCachePlugin])
-  .decorate(({ adminMiniAppRepository, miniAppListCache }) => ({
-    adminMiniAppService: new AdminMiniAppService(adminMiniAppRepository, miniAppListCache),
+  .use([
+    AdminMiniAppRepositoryPlugin,
+    MiniAppListCachePlugin,
+    ZitadelServicePlugin,
+    ConfigServicePlugin,
+  ])
+  .decorate(({ adminMiniAppRepository, miniAppListCache, zitadelService, configService }) => ({
+    adminMiniAppService: new AdminMiniAppService(
+      adminMiniAppRepository,
+      miniAppListCache,
+      zitadelService,
+      configService.get('DEFAULT_MINI_APP_CLIENT_ID')
+    ),
   }))

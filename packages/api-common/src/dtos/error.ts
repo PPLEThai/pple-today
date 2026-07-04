@@ -323,6 +323,18 @@ const MINI_APP_ERROR_SCHEMA = {
   MINI_APP_SLUG_ALREADY_EXISTS: {
     status: 409,
   },
+  MINI_APP_CLIENT_ID_REQUIRED: {
+    status: 400,
+  },
+} satisfies InternalErrorSchemas
+
+const ZITADEL_ERROR_SCHEMA = {
+  ZITADEL_NOT_CONFIGURED: {
+    status: 500,
+  },
+  ZITADEL_APP_CREATE_FAILED: {
+    status: 502,
+  },
 } satisfies InternalErrorSchemas
 
 export const NOTIFICATION_KEY_ERROR_SCHEMA = {
@@ -368,6 +380,7 @@ export const InternalErrorCodeSchemas = {
   ...TOPIC_ERROR_SCHEMA,
   ...ELECTION_ERROR_SCHEMA,
   ...MINI_APP_ERROR_SCHEMA,
+  ...ZITADEL_ERROR_SCHEMA,
   ...ELECTION_KEY_ERROR_SCHEMA,
   ...POST_ERROR_SCHEMA,
   ...NOTIFICATION_KEY_ERROR_SCHEMA,

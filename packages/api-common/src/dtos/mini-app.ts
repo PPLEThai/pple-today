@@ -14,6 +14,9 @@ export const MiniApp = t.Object({
     format: 'uri',
   }),
   clientId: t.String({ description: 'Client ID of the mini app' }),
+  requiresAuth: t.Boolean({
+    description: 'Whether the mini app requires an authenticated user (token exchange)',
+  }),
   order: t.Number({ description: 'Order of the mini app' }),
   roles: t.Array(t.String({ description: 'Roles assigned to the mini app' })),
 })

@@ -31,6 +31,7 @@
     "seed:prod": "tsx prisma/seeds/seed.prod.ts",
     "seed:poll": "tsx prisma/seeds/seed.poll.ts",
     "seed:dashboard": "tsx prisma/seeds/seed.dashboard.ts",
+    "migrate:mini-app-icons": "tsx prisma/scripts/migrate-mini-app-icons.ts",
     "reset": "prisma migrate reset",
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --check .",
@@ -40,12 +41,14 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@google-cloud/storage": "^7.16.0",
     "@pple-today/project-config": "workspace:^",
     "@prisma/adapter-pg": "^6.15.0",
     "@tanstack/pacer": "^0.15.4",
     "dotenv": "^17.0.1",
     "lexorank": "^1.0.5",
-    "prisma": "^6.15.0"
+    "prisma": "^6.15.0",
+    "sharp": "^0.33.0"
   },
   "dependencies": {
     "@prisma/client": "^6.15.0"

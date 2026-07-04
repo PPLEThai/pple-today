@@ -24,6 +24,7 @@ import {
 } from '@pple-today/web-ui/sidebar'
 import { Link } from '@tanstack/react-router'
 import {
+  Blocks,
   ChevronsUpDownIcon,
   ChevronUp,
   Facebook,
@@ -105,6 +106,14 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
                     <Link to="/facebook">
                       <Facebook />
                       <span>เพจเฟสบุ๊ค</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link to="/mini-app">
+                      <Blocks />
+                      <span>Mini App</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

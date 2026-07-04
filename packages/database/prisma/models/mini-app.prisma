@@ -2,11 +2,12 @@ model MiniApp {
   id    String  @id @default(cuid())
   slug  String  @unique
   name  String
-  icon  String? // Base64 encoded image
+  icon  String? // Public icon URL (legacy rows may still hold a base64 data URI)
   order Int     @default(0)
 
-  clientId  String
-  clientUrl String
+  clientId     String
+  clientUrl    String
+  requiresAuth Boolean @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
