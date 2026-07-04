@@ -42,6 +42,7 @@ export class MiniAppService {
         iconUrl: miniApp.icon,
         order: miniApp.order,
         url: miniApp.clientUrl,
+        requiresAuth: miniApp.requiresAuth,
       }))
     )
   }

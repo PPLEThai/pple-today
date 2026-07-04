@@ -5,6 +5,8 @@ import Elysia from 'elysia'
 import {
   CreateMiniAppBody,
   CreateMiniAppResponse,
+  CreateZitadelAppBody,
+  CreateZitadelAppResponse,
   DeleteMiniAppParams,
   DeleteMiniAppResponse,
   GetMiniAppsResponse,
@@ -60,12 +62,48 @@ export const AdminMiniAppController = new Elysia({
         201: CreateMiniAppResponse,
         ...createErrorSchema(
           InternalErrorCode.MINI_APP_SLUG_ALREADY_EXISTS,
+          InternalErrorCode.MINI_APP_CLIENT_ID_REQUIRED,
+          InternalErrorCode.ZITADEL_NOT_CONFIGURED,
+          InternalErrorCode.ZITADEL_APP_CREATE_FAILED,
+          InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
       detail: {
         summary: 'Create a mini app',
-        description: 'Create a new mini app with the provided data',
+        description:
+          'Create a new mini app with the provided data. Optionally creates the OIDC app in Zitadel first (createZitadelApp) or falls back to the default client ID for mini apps that do not require auth.',
+      },
+    }
+  )
+  .post(
+    '/zitadel-app',
+    async ({ adminMiniAppService, body, status }) => {
+      const createResult = await adminMiniAppService.createZitadelApp(body)
+
+      if (createResult.isErr()) {
+        return mapErrorCodeToResponse(createResult.error, status)
+      }
+
+      return status(201, createResult.value)
+    },
+    {
+      requiredLocalUser: true,
+      body: CreateZitadelAppBody,
+      response: {
+        201: CreateZitadelAppResponse,
+        ...createErrorSchema(
+          InternalErrorCode.ZITADEL_NOT_CONFIGURED,
+          InternalErrorCode.ZITADEL_APP_CREATE_FAILED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Create a Zitadel OIDC app only',
+        description:
+          'Create an OIDC app in the Zitadel mini-app project without creating a mini app entry (for standalone webapps). The client secret, if any, is only shown once.',
       },
     }
   )
@@ -89,6 +127,9 @@ export const AdminMiniAppController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.MINI_APP_NOT_FOUND,
           InternalErrorCode.MINI_APP_SLUG_ALREADY_EXISTS,
+          InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
@@ -118,6 +159,9 @@ export const AdminMiniAppController = new Elysia({
         200: DeleteMiniAppResponse,
         ...createErrorSchema(
           InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
+          InternalErrorCode.FILE_ROLLBACK_FAILED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },

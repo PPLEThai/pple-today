@@ -52,6 +52,36 @@ export const envSchema = t.Object({
     )
     .Decode((value) => value === 'true')
     .Encode((value) => (value ? 'true' : 'false')),
+  ZITADEL_API_URL: t.Optional(
+    t.String({
+      description: 'Base URL of the Zitadel instance for Management API calls',
+    })
+  ),
+  ZITADEL_PAT: t.Optional(
+    t.String({
+      description: 'Personal access token of the Zitadel machine user used for the Management API',
+    })
+  ),
+  ZITADEL_PROJECT_ID: t.Optional(
+    t.String({
+      description: 'Zitadel project ID ("PPLE Mini App") where OIDC apps are created',
+    })
+  ),
+  ZITADEL_ORG_ID: t.Optional(
+    t.String({
+      description: 'Zitadel organization ID (sent as x-zitadel-orgid header)',
+    })
+  ),
+  ZITADEL_LOGIN_V2_BASE_URI: t.String({
+    default: 'https://id.peoplesparty.or.th/',
+    description: 'Base URI of the new Login UI (Login V2) applied to created OIDC apps',
+  }),
+  DEFAULT_MINI_APP_CLIENT_ID: t.Optional(
+    t.String({
+      description: 'Fallback OIDC client ID for mini apps that do not require authentication',
+    })
+  ),
+
   DEVELOPMENT_OIDC_URL: t.Optional(
     t.String({
       description: 'Development OIDC URL for testing purposes',

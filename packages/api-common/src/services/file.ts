@@ -205,6 +205,12 @@ export class FileService {
     return this.bucket.file(fileKey).publicUrl()
   }
 
+  getFilePathFromPublicUrl(url: string): FilePath | null {
+    const prefix = `https://storage.googleapis.com/${this.bucket.name}/`
+    if (!url.startsWith(prefix)) return null
+    return decodeURIComponent(url.slice(prefix.length)) as FilePath
+  }
+
   async removeFile(fileKey: string): Promise<
     Result<
       DeleteFileResponse,

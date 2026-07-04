@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
 import { WebView } from 'react-native-webview'
 
@@ -26,16 +26,33 @@ const MiniAppWebView = () => {
     retry: 3,
   })
 
-  const { data: miniAppListData } = reactQueryClient.useQuery('/mini-app', { query: {} })
+  const { data: miniAppListData, isError: isMiniAppListError } = reactQueryClient.useQuery(
+    '/mini-app',
+    { query: {} }
+  )
   const currentMiniApp = miniAppListData?.find((app) => app.slug === slug)
 
   const [canGoBack, setCanGoBack] = useState(false)
   const miniAppRef = useRef<WebView>(null)
 
+  // Mini apps that do not require authentication are opened directly without
+  // a token exchange, so logged-out users can use them and no tokens are
+  // handed to public apps.
+  const noAuthUrl = useMemo(() => {
+    if (!currentMiniApp || currentMiniApp.requiresAuth) return null
+    const url = new URL(currentMiniApp.url)
+    if (path) url.pathname = path
+    return url.toString()
+  }, [currentMiniApp, path])
+
   useEffect(() => {
     // On cold start params may hydrate a tick after mount; do nothing until
     // slug is available rather than bouncing to home on a transient empty value.
     if (!slug) return
+    // Wait for the mini app list to know whether authentication is needed,
+    // but fall back to the token exchange if the list cannot be fetched.
+    if (!miniAppListData && !isMiniAppListError) return
+    if (currentMiniApp && !currentMiniApp.requiresAuth) return
 
     tokenExchangeMiniAppResult.mutate({
       pathParams: { slug },
@@ -44,7 +61,7 @@ const MiniAppWebView = () => {
       },
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug, path])
+  }, [slug, path, miniAppListData, isMiniAppListError])
 
   useEffect(() => {
     if (tokenExchangeMiniAppResult.isError) {
@@ -86,7 +103,9 @@ const MiniAppWebView = () => {
           }}
         >
           <Text className="text-center align-middle font-heading-bold">
-            {tokenExchangeMiniAppResult.isSuccess ? tokenExchangeMiniAppResult.data.appName : ''}
+            {tokenExchangeMiniAppResult.isSuccess
+              ? tokenExchangeMiniAppResult.data.appName
+              : (currentMiniApp?.name ?? '')}
           </Text>
           {currentMiniApp ? <Icon className="text-foreground" icon={CopyIcon} size={14} /> : null}
         </Pressable>
@@ -108,7 +127,17 @@ const MiniAppWebView = () => {
         </Button>
       </View>
       <View className="flex-1">
-        {tokenExchangeMiniAppResult.isPending ? (
+        {noAuthUrl ? (
+          <WebView
+            ref={miniAppRef}
+            onNavigationStateChange={(navState) => {
+              setCanGoBack(navState.canGoBack)
+            }}
+            userAgent={`PPLETodayApp/${Constants.expoConfig?.version ?? 'local'} MiniApp`}
+            source={{ uri: noAuthUrl }}
+            startInLoadingState={true}
+          />
+        ) : (!miniAppListData && !isMiniAppListError) || tokenExchangeMiniAppResult.isPending ? (
           <LoadingPage />
         ) : !tokenExchangeMiniAppResult.isSuccess ? (
           <NotFound />
