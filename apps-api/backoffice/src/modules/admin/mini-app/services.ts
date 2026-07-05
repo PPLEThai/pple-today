@@ -21,7 +21,10 @@ import { MiniAppListCache, MiniAppListCachePlugin } from '../../../plugins/mini-
 import { ZitadelService, ZitadelServicePlugin } from '../zitadel/services'
 
 /** Shape of the AD role options API response (labels/values without prefix). */
-const RawRoleOptions = t.Array(t.Object({ label: t.String(), value: t.String() }))
+const RawRoleOptions = t.Object({
+  ok: t.Boolean(),
+  data: t.Array(t.Object({ label: t.String(), value: t.String() })),
+})
 
 const toMiniAppDto = (miniApp: MiniAppModel & { miniAppRoles: MiniAppRole[] }): MiniApp => ({
   id: miniApp.id,
@@ -168,7 +171,7 @@ export class AdminMiniAppService {
       })
     }
 
-    const extraRoleOptions = body.map((option) => ({
+    const extraRoleOptions = body.data.map((option) => ({
       label: option.label,
       value: `${AD_ROLE_PREFIX}${option.value}`,
     }))
