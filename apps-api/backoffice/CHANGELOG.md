@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.7.2
+
+### Patch Changes
+
+- [#408](https://github.com/PPLEThai/pple-today/pull/408) [`30f5e41`](https://github.com/PPLEThai/pple-today/commit/30f5e41c076e42c06a696100340715995b7125e0) Thanks [@PanJ](https://github.com/PanJ)! - change shape of the response extra_roles
+
 ## 1.7.1
 
 ### Patch Changes
