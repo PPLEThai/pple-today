@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.7.3
+
+### Patch Changes
+
+- [#410](https://github.com/PPLEThai/pple-today/pull/410) [`56b867e`](https://github.com/PPLEThai/pple-today/commit/56b867ebfbfb7dcfcad1d4e005b08c42cd92edda) Thanks [@PanJ](https://github.com/PanJ)! - fix internal token
+
 ## 1.7.2
 
 ### Patch Changes
