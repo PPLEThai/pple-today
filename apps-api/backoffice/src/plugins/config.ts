@@ -84,8 +84,13 @@ export const envSchema = t.Object({
   AD_ROLE_OPTIONS_URL: t.String({
     default: 'https://id.peoplesparty.or.th/api/internal/config/extra_roles',
     description:
-      'URL returning the SSO AD extra-role options ([{label, value}]); called with the admin user bearer token',
+      'URL returning the SSO AD extra-role options ([{label, value}]); called with the internal SSO bearer token (SSO_INTERNAL_TOKEN)',
   }),
+  SSO_INTERNAL_TOKEN: t.Optional(
+    t.String({
+      description: 'Internal bearer token used to call the SSO internal APIs (e.g. AD role options)',
+    })
+  ),
 
   DEVELOPMENT_OIDC_URL: t.Optional(
     t.String({

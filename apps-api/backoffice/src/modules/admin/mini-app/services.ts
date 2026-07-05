@@ -46,6 +46,7 @@ export class AdminMiniAppService {
     private readonly serviceConfig: {
       defaultMiniAppClientId?: string
       adRoleOptionsUrl?: string
+      adRoleOptionsToken?: string
     } = {}
   ) {}
 
@@ -149,18 +150,18 @@ export class AdminMiniAppService {
     return this.zitadelService.deleteApp(appId)
   }
 
-  async getRoleOptions(authorizationHeader?: string) {
+  async getRoleOptions() {
     const mainRoleOptions = Object.entries(MAIN_AD_ROLE_LABELS).map(([value, label]) => ({
       label,
       value: `${AD_ROLE_PREFIX}${value}`,
     }))
 
-    if (!this.serviceConfig.adRoleOptionsUrl || !authorizationHeader) {
+    if (!this.serviceConfig.adRoleOptionsUrl || !this.serviceConfig.adRoleOptionsToken) {
       return ok(mainRoleOptions satisfies GetRoleOptionsResponse)
     }
 
     const response = await fetch(this.serviceConfig.adRoleOptionsUrl, {
-      headers: { Authorization: authorizationHeader },
+      headers: { Authorization: `Bearer ${this.serviceConfig.adRoleOptionsToken}` },
     })
     const body = await response.json().catch(() => null)
 
@@ -197,6 +198,7 @@ export const AdminMiniAppServicePlugin = new Elysia({
       {
         defaultMiniAppClientId: configService.get('DEFAULT_MINI_APP_CLIENT_ID'),
         adRoleOptionsUrl: configService.get('AD_ROLE_OPTIONS_URL'),
+        adRoleOptionsToken: configService.get('SSO_INTERNAL_TOKEN'),
       }
     ),
   }))
