@@ -52,6 +52,7 @@ type ZitadelAppFormSchema = z.infer<typeof ZitadelAppFormSchema>
 
 interface ZitadelAppCreateProps {
   trigger: ReactNode
+  onSuccess?: () => void
 }
 
 const CopyableField = ({ label, value }: { label: string; value: string }) => {
@@ -122,6 +123,7 @@ export const ZitadelAppCreate = (props: ZitadelAppCreateProps) => {
       {
         onSuccess: (res) => {
           setResult(res)
+          props.onSuccess?.()
         },
         onError: (err) => {
           const code = err.value.error.code

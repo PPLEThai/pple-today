@@ -37,14 +37,13 @@ import { ImagePreview } from 'components/ImagePreview'
 import { Plus, X } from 'lucide-react'
 import { ACCEPTED_IMAGE_TYPES, handleUploadFile, MAX_FILE_SIZE } from 'utils/file-upload'
 import { resizeImageToPng } from 'utils/resize-image'
-import { getRoleName, ROLES } from 'utils/roles'
 import z from 'zod'
 
 import { CreateMiniAppBody, TemporaryFilePath } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
 
-const ROLE_OPTIONS = ROLES.map((role) => ({ value: role, label: getRoleName(role) }))
+import { useMiniAppRoleOptions } from './useMiniAppRoleOptions'
 
 const CreateMiniAppFormSchema = z
   .object({
@@ -104,6 +103,7 @@ export const MiniAppCreate = (props: MiniAppCreateProps) => {
 
   const getFileUploadUrl = reactQueryClient.useMutation('post', '/admin/file/upload-url')
   const createMiniAppMutation = reactQueryClient.useMutation('post', '/admin/mini-app')
+  const roleOptions = useMiniAppRoleOptions()
 
   const form = useForm<CreateMiniAppFormSchema>({
     resolver: standardSchemaResolver(CreateMiniAppFormSchema),
@@ -293,7 +293,7 @@ export const MiniAppCreate = (props: MiniAppCreateProps) => {
                   <FormLabel>บทบาทที่เข้าถึงได้</FormLabel>
                   <FormControl>
                     <MultiSelect
-                      options={ROLE_OPTIONS}
+                      options={roleOptions.getOptionsWithSelected(value)}
                       defaultValue={value}
                       onValueChange={onChange}
                       modalPopover={true}
@@ -301,7 +301,11 @@ export const MiniAppCreate = (props: MiniAppCreateProps) => {
                     />
                   </FormControl>
                   <FormMessage asChild>
-                    <FormDescription>เว้นว่างไว้เพื่อให้ทุกคนเข้าถึงได้</FormDescription>
+                    <FormDescription>
+                      {roleOptions.isError
+                        ? 'ไม่สามารถโหลดรายการบทบาทได้ แสดงเฉพาะบทบาทที่เลือกไว้'
+                        : 'เว้นว่างไว้เพื่อให้ทุกคนเข้าถึงได้'}
+                    </FormDescription>
                   </FormMessage>
                 </FormItem>
               )}

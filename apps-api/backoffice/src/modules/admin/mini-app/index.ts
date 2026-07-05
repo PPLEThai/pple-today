@@ -9,10 +9,16 @@ import {
   CreateZitadelAppResponse,
   DeleteMiniAppParams,
   DeleteMiniAppResponse,
+  DeleteZitadelAppResponse,
   GetMiniAppsResponse,
+  GetRoleOptionsResponse,
+  GetZitadelAppsResponse,
   UpdateMiniAppBody,
   UpdateMiniAppParams,
   UpdateMiniAppResponse,
+  UpdateZitadelAppInput,
+  UpdateZitadelAppResponse,
+  ZitadelAppParams,
 } from './models'
 import { AdminMiniAppServicePlugin } from './services'
 
@@ -75,6 +81,109 @@ export const AdminMiniAppController = new Elysia({
         summary: 'Create a mini app',
         description:
           'Create a new mini app with the provided data. Optionally creates the OIDC app in Zitadel first (createZitadelApp) or falls back to the default client ID for mini apps that do not require auth.',
+      },
+    }
+  )
+  .get(
+    '/roles',
+    async ({ adminMiniAppService, headers, status }) => {
+      const result = await adminMiniAppService.getRoleOptions(headers.authorization)
+
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      response: {
+        200: GetRoleOptionsResponse,
+        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+      detail: {
+        summary: 'Get role options',
+        description:
+          'List selectable mini app role options (main AD roles plus extra roles from the AD role options API)',
+      },
+    }
+  )
+  .get(
+    '/zitadel-app',
+    async ({ adminMiniAppService, status }) => {
+      const result = await adminMiniAppService.getZitadelApps()
+
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      response: {
+        200: GetZitadelAppsResponse,
+        ...createErrorSchema(
+          InternalErrorCode.ZITADEL_NOT_CONFIGURED,
+          InternalErrorCode.ZITADEL_APP_NOT_FOUND,
+          InternalErrorCode.ZITADEL_REQUEST_FAILED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'List Zitadel OIDC apps',
+        description: 'List all OIDC apps in the Zitadel mini-app project',
+      },
+    }
+  )
+  .patch(
+    '/zitadel-app/:appId',
+    async ({ adminMiniAppService, params, body, status }) => {
+      const result = await adminMiniAppService.updateZitadelApp(params.appId, body)
+
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      params: ZitadelAppParams,
+      body: UpdateZitadelAppInput,
+      response: {
+        200: UpdateZitadelAppResponse,
+        ...createErrorSchema(
+          InternalErrorCode.ZITADEL_NOT_CONFIGURED,
+          InternalErrorCode.ZITADEL_APP_NOT_FOUND,
+          InternalErrorCode.ZITADEL_REQUEST_FAILED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Update a Zitadel OIDC app',
+        description: 'Update the name and/or OIDC configuration of a Zitadel app',
+      },
+    }
+  )
+  .delete(
+    '/zitadel-app/:appId',
+    async ({ adminMiniAppService, params, status }) => {
+      const result = await adminMiniAppService.deleteZitadelApp(params.appId)
+
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      params: ZitadelAppParams,
+      response: {
+        200: DeleteZitadelAppResponse,
+        ...createErrorSchema(
+          InternalErrorCode.ZITADEL_NOT_CONFIGURED,
+          InternalErrorCode.ZITADEL_APP_NOT_FOUND,
+          InternalErrorCode.ZITADEL_REQUEST_FAILED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Delete a Zitadel OIDC app',
+        description: 'Delete an OIDC app from the Zitadel mini-app project',
       },
     }
   )
