@@ -86,8 +86,8 @@ export const AdminMiniAppController = new Elysia({
   )
   .get(
     '/roles',
-    async ({ adminMiniAppService, headers, status }) => {
-      const result = await adminMiniAppService.getRoleOptions(headers.authorization)
+    async ({ adminMiniAppService, status }) => {
+      const result = await adminMiniAppService.getRoleOptions()
 
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
 
