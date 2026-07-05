@@ -81,6 +81,11 @@ export const envSchema = t.Object({
       description: 'Fallback OIDC client ID for mini apps that do not require authentication',
     })
   ),
+  AD_ROLE_OPTIONS_URL: t.String({
+    default: 'https://id.peoplesparty.or.th/api/internal/config/extra_roles',
+    description:
+      'URL returning the SSO AD extra-role options ([{label, value}]); called with the admin user bearer token',
+  }),
 
   DEVELOPMENT_OIDC_URL: t.Optional(
     t.String({

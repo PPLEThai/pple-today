@@ -1,20 +1,27 @@
 import { InternalErrorCode, MiniApp } from '@pple-today/api-common/dtos'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import { MiniApp as MiniAppModel, MiniAppRole } from '@pple-today/database/prisma'
-import Elysia from 'elysia'
+import { Check } from '@sinclair/typebox/value'
+import Elysia, { t } from 'elysia'
 import { err, ok } from 'neverthrow'
 
 import {
   CreateMiniAppBody,
   CreateZitadelAppBody,
   GetMiniAppsResponse,
+  GetRoleOptionsResponse,
   UpdateMiniAppBody,
+  UpdateZitadelAppInput,
 } from './models'
 import { AdminMiniAppRepository, AdminMiniAppRepositoryPlugin } from './repository'
 
+import { AD_ROLE_PREFIX, MAIN_AD_ROLE_LABELS } from '../../../constants/roles'
 import { ConfigServicePlugin } from '../../../plugins/config'
 import { MiniAppListCache, MiniAppListCachePlugin } from '../../../plugins/mini-app-cache'
 import { ZitadelService, ZitadelServicePlugin } from '../zitadel/services'
+
+/** Shape of the AD role options API response (labels/values without prefix). */
+const RawRoleOptions = t.Array(t.Object({ label: t.String(), value: t.String() }))
 
 const toMiniAppDto = (miniApp: MiniAppModel & { miniAppRoles: MiniAppRole[] }): MiniApp => ({
   id: miniApp.id,
@@ -33,7 +40,10 @@ export class AdminMiniAppService {
     private readonly adminMiniAppRepository: AdminMiniAppRepository,
     private readonly miniAppListCache: MiniAppListCache,
     private readonly zitadelService: ZitadelService,
-    private readonly defaultMiniAppClientId?: string
+    private readonly serviceConfig: {
+      defaultMiniAppClientId?: string
+      adRoleOptionsUrl?: string
+    } = {}
   ) {}
 
   async getMiniApps() {
@@ -54,7 +64,7 @@ export class AdminMiniAppService {
       if (zitadelResult.isErr()) return err(zitadelResult.error)
       clientId = zitadelResult.value.clientId
     } else if (!clientId && data.requiresAuth === false) {
-      clientId = this.defaultMiniAppClientId
+      clientId = this.serviceConfig.defaultMiniAppClientId
     }
 
     if (!clientId) {
@@ -123,6 +133,48 @@ export class AdminMiniAppService {
   async createZitadelApp(data: CreateZitadelAppBody) {
     return this.zitadelService.createOidcApp(data)
   }
+
+  async getZitadelApps() {
+    return this.zitadelService.listOidcApps()
+  }
+
+  async updateZitadelApp(appId: string, data: UpdateZitadelAppInput) {
+    return this.zitadelService.updateOidcApp(appId, data)
+  }
+
+  async deleteZitadelApp(appId: string) {
+    return this.zitadelService.deleteApp(appId)
+  }
+
+  async getRoleOptions(authorizationHeader?: string) {
+    const mainRoleOptions = Object.entries(MAIN_AD_ROLE_LABELS).map(([value, label]) => ({
+      label,
+      value: `${AD_ROLE_PREFIX}${value}`,
+    }))
+
+    if (!this.serviceConfig.adRoleOptionsUrl || !authorizationHeader) {
+      return ok(mainRoleOptions satisfies GetRoleOptionsResponse)
+    }
+
+    const response = await fetch(this.serviceConfig.adRoleOptionsUrl, {
+      headers: { Authorization: authorizationHeader },
+    })
+    const body = await response.json().catch(() => null)
+
+    if (!response.ok || !Check(RawRoleOptions, body)) {
+      return err({
+        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+        message: 'An error occurred while fetching the AD role options',
+      })
+    }
+
+    const extraRoleOptions = body.map((option) => ({
+      label: option.label,
+      value: `${AD_ROLE_PREFIX}${option.value}`,
+    }))
+
+    return ok([...mainRoleOptions, ...extraRoleOptions] satisfies GetRoleOptionsResponse)
+  }
 }
 
 export const AdminMiniAppServicePlugin = new Elysia({
@@ -139,6 +191,9 @@ export const AdminMiniAppServicePlugin = new Elysia({
       adminMiniAppRepository,
       miniAppListCache,
       zitadelService,
-      configService.get('DEFAULT_MINI_APP_CLIENT_ID')
+      {
+        defaultMiniAppClientId: configService.get('DEFAULT_MINI_APP_CLIENT_ID'),
+        adRoleOptionsUrl: configService.get('AD_ROLE_OPTIONS_URL'),
+      }
     ),
   }))

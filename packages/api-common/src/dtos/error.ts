@@ -335,6 +335,12 @@ const ZITADEL_ERROR_SCHEMA = {
   ZITADEL_APP_CREATE_FAILED: {
     status: 502,
   },
+  ZITADEL_APP_NOT_FOUND: {
+    status: 404,
+  },
+  ZITADEL_REQUEST_FAILED: {
+    status: 502,
+  },
 } satisfies InternalErrorSchemas
 
 export const NOTIFICATION_KEY_ERROR_SCHEMA = {

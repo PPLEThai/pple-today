@@ -73,6 +73,53 @@ export const CreateZitadelAppBody = t.Composite([
 ])
 export type CreateZitadelAppBody = Static<typeof CreateZitadelAppBody>
 
+export const ZitadelApp = t.Object({
+  appId: t.String({ description: 'ID of the Zitadel app' }),
+  name: t.String({ description: 'Name of the Zitadel app' }),
+  clientId: t.String({ description: 'OIDC client ID of the Zitadel app' }),
+  redirectUris: t.Array(t.String()),
+  postLogoutRedirectUris: t.Array(t.String()),
+  appType: t.String({ description: 'OIDC app type' }),
+  authMethodType: t.String({ description: 'OIDC auth method type' }),
+  devMode: t.Boolean({ description: 'Whether http redirect URIs are allowed' }),
+})
+export type ZitadelApp = Static<typeof ZitadelApp>
+
+export const GetZitadelAppsResponse = t.Array(ZitadelApp)
+export type GetZitadelAppsResponse = Static<typeof GetZitadelAppsResponse>
+
+export const ZitadelAppParams = t.Object({
+  appId: t.String({ description: 'ID of the Zitadel app' }),
+})
+export type ZitadelAppParams = Static<typeof ZitadelAppParams>
+
+export const UpdateZitadelAppInput = t.Object({
+  name: t.Optional(t.String()),
+  redirectUris: t.Optional(t.Array(t.String({ format: 'uri' }), { minItems: 1 })),
+  postLogoutRedirectUris: t.Optional(t.Array(t.String({ format: 'uri' }))),
+  appType: t.Optional(ZitadelOidcAppType),
+  authMethodType: t.Optional(ZitadelOidcAuthMethodType),
+  devMode: t.Optional(t.Boolean()),
+})
+export type UpdateZitadelAppInput = Static<typeof UpdateZitadelAppInput>
+
+export const UpdateZitadelAppResponse = ZitadelApp
+export type UpdateZitadelAppResponse = Static<typeof UpdateZitadelAppResponse>
+
+export const DeleteZitadelAppResponse = t.Object({
+  message: t.String({ description: 'Confirmation message of the deletion' }),
+})
+export type DeleteZitadelAppResponse = Static<typeof DeleteZitadelAppResponse>
+
+export const RoleOption = t.Object({
+  label: t.String({ description: 'Human readable role name' }),
+  value: t.String({ description: 'Role value as stored in mini app roles (pple-ad:*)' }),
+})
+export type RoleOption = Static<typeof RoleOption>
+
+export const GetRoleOptionsResponse = t.Array(RoleOption)
+export type GetRoleOptionsResponse = Static<typeof GetRoleOptionsResponse>
+
 export const CreateZitadelAppResponse = t.Object({
   appId: t.String({ description: 'ID of the created Zitadel app' }),
   clientId: t.String({ description: 'OIDC client ID of the created Zitadel app' }),
