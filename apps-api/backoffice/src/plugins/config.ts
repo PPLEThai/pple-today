@@ -88,7 +88,8 @@ export const envSchema = t.Object({
   }),
   SSO_INTERNAL_TOKEN: t.Optional(
     t.String({
-      description: 'Internal bearer token used to call the SSO internal APIs (e.g. AD role options)',
+      description:
+        'Internal bearer token used to call the SSO internal APIs (e.g. AD role options)',
     })
   ),
 
