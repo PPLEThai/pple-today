@@ -35,6 +35,7 @@ const toMiniAppDto = (miniApp: MiniAppModel & { miniAppRoles: MiniAppRole[] }): 
   clientId: miniApp.clientId,
   requiresAuth: miniApp.requiresAuth,
   order: miniApp.order,
+  tier: miniApp.tier,
   roles: miniApp.miniAppRoles.map(({ role }) => role),
 })
 

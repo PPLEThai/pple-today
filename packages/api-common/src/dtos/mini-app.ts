@@ -1,3 +1,4 @@
+import { MiniAppTier } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const MiniApp = t.Object({
@@ -18,6 +19,9 @@ export const MiniApp = t.Object({
     description: 'Whether the mini app requires an authenticated user (token exchange)',
   }),
   order: t.Number({ description: 'Order of the mini app' }),
+  tier: t.Enum(MiniAppTier, {
+    description: 'Lifecycle tier of the mini app (DRAFT/BETA/LIVE); clients badge non-LIVE apps',
+  }),
   roles: t.Array(t.String({ description: 'Roles assigned to the mini app' })),
 })
 export type MiniApp = Static<typeof MiniApp>

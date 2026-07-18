@@ -1,3 +1,14 @@
+enum MiniAppTier {
+  DRAFT
+  BETA
+  LIVE
+}
+
+enum MiniAppSource {
+  ADMIN
+  PLATFORM
+}
+
 model MiniApp {
   id    String  @id @default(cuid())
   slug  String  @unique
@@ -8,6 +19,14 @@ model MiniApp {
   clientId     String
   clientUrl    String
   requiresAuth Boolean @default(true)
+
+  // Builder-app lifecycle. Existing rows are central-team apps that are already
+  // live, so the defaults (LIVE/ADMIN, no owner) keep them behaving exactly as
+  // before. Platform-provisioned Builder apps start as DRAFT/PLATFORM with an
+  // ownerSub (the Builder's PPLE ID `sub`) so only the owner sees them.
+  tier     MiniAppTier   @default(LIVE)
+  source   MiniAppSource @default(ADMIN)
+  ownerSub String? // Builder's PPLE ID sub; set only when source = PLATFORM
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
