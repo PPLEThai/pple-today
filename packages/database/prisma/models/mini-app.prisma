@@ -28,13 +28,25 @@ model MiniApp {
   source   MiniAppSource @default(ADMIN)
   ownerSub String? // Builder's PPLE ID sub; set only when source = PLATFORM
 
+  // Zitadel's internal app id (distinct from the OIDC clientId), recorded when
+  // the platform provisions the app so retire can delete the OIDC app. Null for
+  // central-team rows, whose Zitadel apps are managed through the admin API.
+  zitadelAppId String?
+
+  // Retire is a soft-delete: the platform deletes the Zitadel app and
+  // deactivates the notification key, then stamps this. Retired apps are hidden
+  // from the mini-app list but the row (and its App User registry) is kept for
+  // audit. Null for every live app.
+  retiredAt DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   banners Banner[]
 
-  miniAppRoles MiniAppRole[]
-  appUsers     MiniAppUser[]
+  miniAppRoles        MiniAppRole[]
+  appUsers            MiniAppUser[]
+  notificationApiKeys NotificationApiKey[]
 }
 
 // One row per (mini app, user) the first time that user opens the app. Opening

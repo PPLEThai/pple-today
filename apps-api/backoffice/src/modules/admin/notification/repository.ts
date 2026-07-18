@@ -1,20 +1,15 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import crypto from 'crypto'
 import Elysia from 'elysia'
 
 import { PrismaServicePlugin } from '../../../plugins/prisma'
+import {
+  generateNotificationApiKey,
+  hashNotificationApiKey,
+} from '../../../utils/notification-api-key'
 
 export class AdminNotificationRepository {
   constructor(private readonly prismaService: PrismaService) {}
-
-  private generateApiKey() {
-    const randomNonce = crypto
-      .getRandomValues(new Uint8Array(16))
-      .reduce((acc, byte) => acc + byte.toString(36).padStart(2, '0'), '')
-
-    return `pple_notification_${randomNonce}`
-  }
 
   async listApiKeys(query: { limit: number; page: number }) {
     const skip = (query.page - 1) * query.limit
@@ -37,13 +32,13 @@ export class AdminNotificationRepository {
   }
 
   async createApiKey(data: { name: string }) {
-    const apiKey = this.generateApiKey()
+    const apiKey = generateNotificationApiKey()
 
     return await fromRepositoryPromise(async () => {
       const newApiKeyEntry = await this.prismaService.notificationApiKey.create({
         data: {
           name: data.name,
-          apiKey: crypto.hash('sha256', apiKey),
+          apiKey: hashNotificationApiKey(apiKey),
         },
       })
 
@@ -72,11 +67,11 @@ export class AdminNotificationRepository {
   }
 
   async rotateApiKey(id: string) {
-    const newApiKey = this.generateApiKey()
+    const newApiKey = generateNotificationApiKey()
     return await fromRepositoryPromise(async () => {
       await this.prismaService.notificationApiKey.update({
         where: { id },
-        data: { apiKey: crypto.hash('sha256', newApiKey) },
+        data: { apiKey: hashNotificationApiKey(newApiKey) },
       })
 
       return {

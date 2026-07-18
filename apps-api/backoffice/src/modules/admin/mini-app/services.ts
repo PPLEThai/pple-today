@@ -1,6 +1,5 @@
-import { InternalErrorCode, MiniApp } from '@pple-today/api-common/dtos'
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
-import { MiniApp as MiniAppModel, MiniAppRole } from '@pple-today/database/prisma'
 import { Check } from '@sinclair/typebox/value'
 import Elysia, { t } from 'elysia'
 import { err, ok } from 'neverthrow'
@@ -18,25 +17,13 @@ import { AdminMiniAppRepository, AdminMiniAppRepositoryPlugin } from './reposito
 import { AD_ROLE_PREFIX, MAIN_AD_ROLE_LABELS } from '../../../constants/roles'
 import { ConfigServicePlugin } from '../../../plugins/config'
 import { MiniAppListCache, MiniAppListCachePlugin } from '../../../plugins/mini-app-cache'
+import { toMiniAppDto } from '../../mini-app/dto'
 import { ZitadelService, ZitadelServicePlugin } from '../zitadel/services'
 
 /** Shape of the AD role options API response (labels/values without prefix). */
 const RawRoleOptions = t.Object({
   ok: t.Boolean(),
   data: t.Array(t.Object({ label: t.String(), value: t.String() })),
-})
-
-const toMiniAppDto = (miniApp: MiniAppModel & { miniAppRoles: MiniAppRole[] }): MiniApp => ({
-  id: miniApp.id,
-  name: miniApp.name,
-  slug: miniApp.slug,
-  iconUrl: miniApp.icon,
-  url: miniApp.clientUrl,
-  clientId: miniApp.clientId,
-  requiresAuth: miniApp.requiresAuth,
-  order: miniApp.order,
-  tier: miniApp.tier,
-  roles: miniApp.miniAppRoles.map(({ role }) => role),
 })
 
 export class AdminMiniAppService {

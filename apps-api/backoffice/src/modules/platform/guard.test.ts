@@ -25,6 +25,17 @@ describe('PlatformAuthGuard.authenticate', () => {
     expect(guard.authenticate({}).isErr()).toBe(true)
   })
 
+  test('rejects an admin/user bearer token — only the dedicated service token is accepted', () => {
+    // The platform token is separate from admin/user auth: an admin token (or
+    // any other bearer that is not the configured service token) is rejected.
+    const guard = new PlatformAuthGuard('platform-service-token')
+
+    const result = guard.authenticate({ authorization: 'Bearer an-admin-users-oidc-token' })
+
+    expect(result.isErr()).toBe(true)
+    expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.UNAUTHORIZED)
+  })
+
   test('rejects every request when no service token is configured, even a bearer', () => {
     const guard = new PlatformAuthGuard(undefined)
 
