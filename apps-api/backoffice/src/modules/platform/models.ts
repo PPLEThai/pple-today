@@ -2,6 +2,8 @@ import { MiniApp } from '@pple-today/api-common/dtos'
 import { MiniAppTier } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
+import { MiniAppInvite, MiniAppInvitePhoneNumber } from '../mini-app/models'
+
 export const GetMiniAppUserCountParams = t.Object({
   id: t.String({ description: 'Mini app id' }),
 })
@@ -72,3 +74,34 @@ export const RetireMiniAppResponse = t.Object({
   message: t.String({ description: 'Confirmation message of the retirement' }),
 })
 export type RetireMiniAppResponse = Static<typeof RetireMiniAppResponse>
+
+export const DeleteMiniAppInviteParams = t.Object({
+  id: t.String({ description: 'Mini app id' }),
+  phoneNumber: t.String({
+    description:
+      'The invited number, URL-encoded (e.g. %2B66812345678). Local format is accepted too.',
+  }),
+})
+export type DeleteMiniAppInviteParams = Static<typeof DeleteMiniAppInviteParams>
+
+export const ListMiniAppInvitesResponse = t.Array(MiniAppInvite)
+export type ListMiniAppInvitesResponse = Static<typeof ListMiniAppInvitesResponse>
+
+export const CreateMiniAppInviteBody = t.Object({
+  phoneNumber: MiniAppInvitePhoneNumber,
+})
+export type CreateMiniAppInviteBody = Static<typeof CreateMiniAppInviteBody>
+
+export const CreateMiniAppInviteResponse = t.Object({
+  invite: MiniAppInvite,
+  notified: t.Boolean({
+    description:
+      'Whether the invitation reached a PPLE Today account. False means the number has no account yet (or the push failed), so the person will not see the invitation until they sign up — worth surfacing to the Builder. The invite is recorded either way and waits in the invitee’s inbox, so this is a delivery warning, not a failure.',
+  }),
+})
+export type CreateMiniAppInviteResponse = Static<typeof CreateMiniAppInviteResponse>
+
+export const DeleteMiniAppInviteResponse = t.Object({
+  message: t.String(),
+})
+export type DeleteMiniAppInviteResponse = Static<typeof DeleteMiniAppInviteResponse>

@@ -268,10 +268,14 @@ export class NotificationRepository {
     )
   }
 
+  /**
+   * @param apiKeyId The notification API key this send is billed to, or
+   *                 `undefined` for platform-internal sends that hold no key.
+   */
   async sendNotificationToUser(
     conditions: CreateNewExternalNotificationBody['audience'],
     data: CreateNewExternalNotificationBody['content'],
-    apiKeyId: string,
+    apiKeyId: string | undefined,
     smsFallbackText?: string
   ) {
     const audience: CreateNewExternalNotificationBody['audience'] =
@@ -321,6 +325,24 @@ export class NotificationRepository {
           }
 
     const createResult = await fromRepositoryPromise(async () => {
+      // The usage log meters *API key* traffic. Platform-internal sends (an
+      // invite delivered on the Builder's behalf) hold no key, so there is
+      // nothing to meter and the log is skipped rather than faked.
+      const usageLogWrites = apiKeyId
+        ? [
+            this.prismaService.notificationApiKeyUsageLog.create({
+              data: {
+                body: JSON.stringify({ audience, data }),
+                notificationApiKey: {
+                  connect: {
+                    id: apiKeyId,
+                  },
+                },
+              },
+            }),
+          ]
+        : []
+
       const [newNotification] = await this.prismaService.$transaction([
         this.prismaService.notification.create({
           data: {
@@ -345,16 +367,7 @@ export class NotificationRepository {
                 : undefined,
           },
         }),
-        this.prismaService.notificationApiKeyUsageLog.create({
-          data: {
-            body: JSON.stringify({ audience, data }),
-            notificationApiKey: {
-              connect: {
-                id: apiKeyId,
-              },
-            },
-          },
-        }),
+        ...usageLogWrites,
       ])
 
       const whereConditions = this.getFilterConditions(audience)
