@@ -100,6 +100,8 @@ export class AuthService {
     return ok({
       url: url.toString(),
       appName: miniApp.value.name,
+      // Surfaced so the caller can register the App User on this first-open path.
+      miniAppId: miniApp.value.id,
     })
   }
 

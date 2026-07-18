@@ -12,12 +12,13 @@ import {
 import { AuthServicePlugin } from './services'
 
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
+import { AppUserServicePlugin } from '../mini-app/services'
 
 export const AuthController = new Elysia({
   prefix: '/auth',
   tags: ['Auth'],
 })
-  .use([AuthGuardPlugin, AuthServicePlugin])
+  .use([AuthGuardPlugin, AuthServicePlugin, AppUserServicePlugin])
   .post(
     '/register',
     async ({ oidcUser, status, authService }) => {
@@ -80,7 +81,7 @@ export const AuthController = new Elysia({
   )
   .post(
     '/mini-app/:slug',
-    async ({ params, user, authService, query, status, headers, authGuard }) => {
+    async ({ params, user, authService, appUserService, query, status, headers, authGuard }) => {
       // Use the visible roles of the active role (SSO AD) so an app openable
       // from the list is also tokenable, consistent with `GET /mini-app`.
       const visibleRoles = await authGuard.getAdVisibleRoles(headers)
@@ -100,7 +101,14 @@ export const AuthController = new Elysia({
         return mapErrorCodeToResponse(result.error, status)
       }
 
-      return status(200, result.value)
+      // Opening a mini app registers the user as its App User — the consent
+      // boundary for that app's notifications and the source of the Console's
+      // user count. Runs for every tier (this endpoint already gates who may
+      // open the app) and is idempotent, so repeat opens are a no-op. Awaited
+      // but best-effort: a registry failure is logged, not surfaced.
+      await appUserService.registerOpen(result.value.miniAppId, user.id)
+
+      return status(200, { url: result.value.url, appName: result.value.appName })
     },
     {
       requiredLocalUser: true,

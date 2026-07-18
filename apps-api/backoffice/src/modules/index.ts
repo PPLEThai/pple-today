@@ -13,6 +13,7 @@ import { HashtagController } from './hashtag'
 import { HealthController } from './health'
 import { MiniAppController } from './mini-app'
 import { ExternalNotificationController, NotificationController } from './notification'
+import { PlatformController } from './platform'
 import { PollsController } from './polls'
 import { ProfileController } from './profile'
 import { SearchController } from './search'
@@ -37,3 +38,4 @@ export const ApplicationController = new Elysia()
   .use(SearchController)
   .use(EventsController)
   .use(MiniAppController)
+  .use(PlatformController)

@@ -47,6 +47,7 @@ model User {
     feedItemScores     FeedItemScore[]
     notifications      UserNotification[]
     notificationTokens UserNotificationToken[]
+    miniAppUsers       MiniAppUser[]
     reactionLogs       FeedItemReactionLog[]
     commentLogs        FeedItemCommentLog[]
     followTopicLogs    UserFollowsTopicLog[]
