@@ -341,6 +341,9 @@ const MINI_APP_ERROR_SCHEMA = {
   MINI_APP_INVITE_ALREADY_RESPONDED: {
     status: 409,
   },
+  MINI_APP_PLATFORM_MANAGED: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 const ZITADEL_ERROR_SCHEMA = {
