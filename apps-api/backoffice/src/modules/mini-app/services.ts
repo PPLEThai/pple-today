@@ -2,9 +2,15 @@ import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
+import { AppUserService } from './app-user-service'
 import { selectVisibleMiniApps } from './eligibility'
-import { MiniAppRepository, MiniAppRepositoryPlugin } from './repository'
+import {
+  MiniAppRepository,
+  MiniAppRepositoryPlugin,
+  MiniAppUserRepositoryPlugin,
+} from './repository'
 
+import { ElysiaLoggerPlugin } from '../../plugins/log'
 import { MiniAppListCache, MiniAppListCachePlugin } from '../../plugins/mini-app-cache'
 
 export class MiniAppService {
@@ -45,4 +51,10 @@ export const MiniAppServicePlugin = new Elysia({ name: 'MiniAppService' })
   .use([MiniAppRepositoryPlugin, MiniAppListCachePlugin])
   .decorate(({ miniAppRepository, miniAppListCache }) => ({
     miniAppService: new MiniAppService(miniAppRepository, miniAppListCache),
+  }))
+
+export const AppUserServicePlugin = new Elysia({ name: 'AppUserService' })
+  .use([MiniAppUserRepositoryPlugin, ElysiaLoggerPlugin({ name: 'AppUserService' })])
+  .decorate(({ miniAppUserRepository, loggerService }) => ({
+    appUserService: new AppUserService(miniAppUserRepository, loggerService),
   }))

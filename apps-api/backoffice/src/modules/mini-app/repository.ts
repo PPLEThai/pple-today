@@ -2,6 +2,8 @@ import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
+import { MiniAppUserRepository } from './app-user-repository'
+
 import { PrismaServicePlugin } from '../../plugins/prisma'
 
 export class MiniAppRepository {
@@ -56,4 +58,10 @@ export const MiniAppRepositoryPlugin = new Elysia({ name: 'MiniAppRepository' })
   .use([PrismaServicePlugin])
   .decorate(({ prismaService }) => ({
     miniAppRepository: new MiniAppRepository(prismaService),
+  }))
+
+export const MiniAppUserRepositoryPlugin = new Elysia({ name: 'MiniAppUserRepository' })
+  .use([PrismaServicePlugin])
+  .decorate(({ prismaService }) => ({
+    miniAppUserRepository: new MiniAppUserRepository(prismaService),
   }))

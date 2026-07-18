@@ -34,6 +34,23 @@ model MiniApp {
   banners Banner[]
 
   miniAppRoles MiniAppRole[]
+  appUsers     MiniAppUser[]
+}
+
+// One row per (mini app, user) the first time that user opens the app. Opening
+// a mini app for the first time registers the person as that app's App User —
+// the consent boundary for audience-bound notifications and the source of the
+// Console's per-app user count. Registration is idempotent on the composite
+// key: repeat opens touch nothing.
+model MiniAppUser {
+  miniAppId String
+  miniApp   MiniApp @relation(fields: [miniAppId], references: [id])
+
+  userId        String // PPLE ID `sub` of the App User (same identity as User.id)
+  user          User     @relation(fields: [userId], references: [id])
+  firstOpenedAt DateTime @default(now())
+
+  @@id([miniAppId, userId])
 }
 
 model MiniAppRole {

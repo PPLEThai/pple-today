@@ -93,6 +93,13 @@ export const envSchema = t.Object({
     })
   ),
 
+  PLATFORM_SERVICE_TOKEN: t.Optional(
+    t.String({
+      description:
+        'Bearer token the pple-platform provisioner presents to the `/platform` service API. Dedicated to the platform consumer and separate from admin/user auth; when unset, the platform API rejects every request.',
+    })
+  ),
+
   DEVELOPMENT_OIDC_URL: t.Optional(
     t.String({
       description: 'Development OIDC URL for testing purposes',
