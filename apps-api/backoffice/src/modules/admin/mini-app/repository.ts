@@ -18,6 +18,15 @@ export class AdminMiniAppRepository {
     private readonly fileService: FileService
   ) {}
 
+  async findMiniAppSource(id: string) {
+    return fromRepositoryPromise(
+      this.prismaService.miniApp.findUniqueOrThrow({
+        where: { id },
+        select: { source: true },
+      })
+    )
+  }
+
   async getMiniApps() {
     return fromRepositoryPromise(
       this.prismaService.miniApp.findMany({

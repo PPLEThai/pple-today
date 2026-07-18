@@ -13,6 +13,7 @@ import {
   UpdateMiniAppBody,
   UpdateZitadelAppInput,
 } from './models'
+import { isPlatformManaged } from './policy'
 import { AdminMiniAppRepository, AdminMiniAppRepositoryPlugin } from './repository'
 
 import { AD_ROLE_PREFIX, MAIN_AD_ROLE_LABELS } from '../../../constants/roles'
@@ -36,6 +37,9 @@ const toMiniAppDto = (miniApp: MiniAppModel & { miniAppRoles: MiniAppRole[] }): 
   requiresAuth: miniApp.requiresAuth,
   order: miniApp.order,
   tier: miniApp.tier,
+  source: miniApp.source,
+  ownerSub: miniApp.ownerSub,
+  createdAt: miniApp.createdAt,
   roles: miniApp.miniAppRoles.map(({ role }) => role),
 })
 
@@ -101,7 +105,35 @@ export class AdminMiniAppService {
     return ok(toMiniAppDto(createResult.value))
   }
 
+  /**
+   * Platform apps are provisioned and owned by the Provisioner; this admin can
+   * see them but must not mutate them, so both update and delete check source
+   * first.
+   */
+  async checkNotPlatformManaged(id: string) {
+    const sourceResult = await this.adminMiniAppRepository.findMiniAppSource(id)
+    if (sourceResult.isErr())
+      return mapRepositoryError(sourceResult.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.MINI_APP_NOT_FOUND,
+          message: 'Mini app with the given ID does not exist',
+        },
+      })
+
+    if (isPlatformManaged(sourceResult.value.source)) {
+      return err({
+        code: InternalErrorCode.MINI_APP_PLATFORM_MANAGED,
+        message: 'Platform apps are managed by the PPLE Platform Provisioner and read-only here',
+      })
+    }
+
+    return ok(undefined)
+  }
+
   async updateMiniApp(id: string, data: UpdateMiniAppBody) {
+    const editableResult = await this.checkNotPlatformManaged(id)
+    if (editableResult.isErr()) return err(editableResult.error)
+
     const updateResult = await this.adminMiniAppRepository.updateMiniApp(id, data)
     if (updateResult.isErr())
       return mapRepositoryError(updateResult.error, {
@@ -121,6 +153,9 @@ export class AdminMiniAppService {
   }
 
   async deleteMiniApp(id: string) {
+    const editableResult = await this.checkNotPlatformManaged(id)
+    if (editableResult.isErr()) return err(editableResult.error)
+
     const deleteResult = await this.adminMiniAppRepository.deleteMiniApp(id)
     if (deleteResult.isErr())
       return mapRepositoryError(deleteResult.error, {

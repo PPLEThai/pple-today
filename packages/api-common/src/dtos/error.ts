@@ -326,6 +326,9 @@ const MINI_APP_ERROR_SCHEMA = {
   MINI_APP_CLIENT_ID_REQUIRED: {
     status: 400,
   },
+  MINI_APP_PLATFORM_MANAGED: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 const ZITADEL_ERROR_SCHEMA = {

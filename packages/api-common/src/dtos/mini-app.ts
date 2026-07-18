@@ -1,4 +1,4 @@
-import { MiniAppTier } from '@pple-today/database/prisma'
+import { MiniAppSource, MiniAppTier } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 export const MiniApp = t.Object({
@@ -22,6 +22,14 @@ export const MiniApp = t.Object({
   tier: t.Enum(MiniAppTier, {
     description: 'Lifecycle tier of the mini app (DRAFT/BETA/LIVE); clients badge non-LIVE apps',
   }),
+  source: t.Enum(MiniAppSource, {
+    description:
+      'Who owns the mini app row (ADMIN = manually managed here; PLATFORM = provisioned by the PPLE Platform and read-only in this admin)',
+  }),
+  ownerSub: t.Nullable(
+    t.String({ description: "Builder's PPLE ID sub; set only when source = PLATFORM" })
+  ),
+  createdAt: t.Date({ description: 'Creation date of the mini app' }),
   roles: t.Array(t.String({ description: 'Roles assigned to the mini app' })),
 })
 export type MiniApp = Static<typeof MiniApp>

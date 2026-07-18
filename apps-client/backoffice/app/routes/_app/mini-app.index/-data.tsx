@@ -17,7 +17,8 @@ import { useMiniAppRoleOptions } from 'components/mini-app/useMiniAppRoleOptions
 import { ZitadelAppCreate } from 'components/mini-app/ZitadelAppCreate'
 import { ZitadelAppEdit } from 'components/mini-app/ZitadelAppEdit'
 import { TableCopyId } from 'components/TableCopyId'
-import { ImageIcon, KeyRound, Pencil, Plus, Trash2 } from 'lucide-react'
+import dayjs from 'dayjs'
+import { ImageIcon, KeyRound, Lock, Pencil, Plus, Trash2 } from 'lucide-react'
 
 import { MiniApp, ZitadelApp } from '@api/backoffice/admin'
 
@@ -149,11 +150,66 @@ export const Data = () => {
           )
         },
       }),
+      columnHelper.accessor('tier', {
+        header: 'สถานะ',
+        cell: (info) => {
+          const tier = info.getValue()
+          if (tier === 'DRAFT') return <Badge variant="secondary">Draft</Badge>
+          if (tier === 'BETA') return <Badge variant="default">Beta</Badge>
+          return <Badge variant="outline">Live</Badge>
+        },
+        size: 90,
+        minSize: 90,
+      }),
+      columnHelper.accessor('source', {
+        header: 'แหล่งที่มา',
+        cell: (info) =>
+          info.getValue() === 'PLATFORM' ? (
+            <Badge variant="secondary">จัดการโดย PPLE Platform</Badge>
+          ) : (
+            <Badge variant="outline">Admin</Badge>
+          ),
+        size: 170,
+        minSize: 170,
+      }),
+      columnHelper.accessor('ownerSub', {
+        header: 'เจ้าของ',
+        cell: (info) => {
+          const ownerSub = info.getValue()
+          if (!ownerSub) return <span className="text-base-text-medium">-</span>
+          return (
+            <div className="flex items-center gap-1">
+              <span className="truncate font-mono text-xs">{ownerSub}</span>
+              <TableCopyId id={ownerSub} />
+            </div>
+          )
+        },
+      }),
+      columnHelper.accessor('createdAt', {
+        header: 'สร้างเมื่อ',
+        cell: (info) => dayjs(info.getValue()).format('DD/MM/YYYY'),
+        size: 110,
+        minSize: 110,
+      }),
       columnHelper.display({
         id: 'manage',
         header: 'จัดการ',
         cell: ({ row }) => {
           const miniApp = row.original
+
+          if (miniApp.source === 'PLATFORM') {
+            return (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1 text-base-text-medium">
+                    <Lock className="size-4" />
+                    <span className="text-sm">อ่านอย่างเดียว</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>จัดการผ่าน PPLE Platform Provisioner เท่านั้น</TooltipContent>
+              </Tooltip>
+            )
+          }
 
           return (
             <div className="flex gap-3">

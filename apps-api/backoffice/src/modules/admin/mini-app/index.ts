@@ -236,6 +236,7 @@ export const AdminMiniAppController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.MINI_APP_NOT_FOUND,
           InternalErrorCode.MINI_APP_SLUG_ALREADY_EXISTS,
+          InternalErrorCode.MINI_APP_PLATFORM_MANAGED,
           InternalErrorCode.FILE_MOVE_ERROR,
           InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.FILE_ROLLBACK_FAILED,
@@ -268,6 +269,7 @@ export const AdminMiniAppController = new Elysia({
         200: DeleteMiniAppResponse,
         ...createErrorSchema(
           InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.MINI_APP_PLATFORM_MANAGED,
           InternalErrorCode.FILE_MOVE_ERROR,
           InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
           InternalErrorCode.FILE_ROLLBACK_FAILED,
