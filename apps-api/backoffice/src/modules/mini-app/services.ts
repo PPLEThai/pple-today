@@ -2,6 +2,7 @@ import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
+import { selectVisibleMiniApps } from './eligibility'
 import { MiniAppRepository, MiniAppRepositoryPlugin } from './repository'
 
 import { MiniAppListCache, MiniAppListCachePlugin } from '../../plugins/mini-app-cache'
@@ -12,7 +13,14 @@ export class MiniAppService {
     private readonly miniAppListCache: MiniAppListCache
   ) {}
 
-  async listMiniApps(roles: string[]) {
+  /**
+   * List the mini apps visible to the requesting user.
+   *
+   * @param roles   `pple-ad:`-prefixed visible roles resolved from SSO AD.
+   * @param userSub The user's PPLE ID `sub`, or `null` for anonymous users.
+   *                Used to gate owner-only (DRAFT/BETA) apps.
+   */
+  async listMiniApps(roles: string[], userSub: string | null) {
     let miniApps = this.miniAppListCache.get()
 
     if (!miniApps) {
@@ -26,25 +34,10 @@ export class MiniAppService {
       this.miniAppListCache.set(miniApps)
     }
 
-    // Eligibility (role-based) filtering happens here in the backend layer,
-    // over the full cached mini-app list, rather than in the database query,
-    // so the cached data can be reused across requests with different roles.
-    const eligibleMiniApps = miniApps.filter(
-      (miniApp) =>
-        miniApp.miniAppRoles.length === 0 ||
-        miniApp.miniAppRoles.some((miniAppRole) => roles.includes(miniAppRole.role))
-    )
-
-    return ok(
-      eligibleMiniApps.map((miniApp) => ({
-        slug: miniApp.slug,
-        name: miniApp.name,
-        iconUrl: miniApp.icon,
-        order: miniApp.order,
-        url: miniApp.clientUrl,
-        requiresAuth: miniApp.requiresAuth,
-      }))
-    )
+    // Eligibility filtering happens here in the backend layer, over the full
+    // cached mini-app list, rather than in the database query, so the cached
+    // data can be reused across requests with different roles and users.
+    return ok(selectVisibleMiniApps(miniApps, roles, userSub))
   }
 }
 
