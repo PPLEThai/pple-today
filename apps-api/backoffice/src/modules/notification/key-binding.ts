@@ -31,3 +31,23 @@ export const requireUnboundKey = (key: KeyBinding) => {
 
   return ok()
 }
+
+/**
+ * Guard the audience-bound send path, the mirror image of `requireUnboundKey`.
+ *
+ * A legacy central-team key has no app to resolve an audience from, so there is
+ * nobody for it to reach here — it belongs on the raw-targeting path. Returns
+ * the binding narrowed to a non-null `miniAppId`, so the caller carries a key it
+ * has proved is bound rather than re-checking downstream.
+ */
+export const requireAppBoundKey = <T extends KeyBinding>(key: T) => {
+  if (key.miniAppId === null) {
+    return err({
+      code: InternalErrorCode.NOTIFICATION_KEY_NOT_APP_BOUND,
+      message:
+        'This notification key is not bound to a mini app, so it has no audience to resolve. Use the raw-targeting endpoint instead.',
+    })
+  }
+
+  return ok(key as T & { miniAppId: string })
+}

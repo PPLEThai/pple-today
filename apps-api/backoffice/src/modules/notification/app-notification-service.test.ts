@@ -256,11 +256,12 @@ describe('AppNotificationService.send', () => {
 
       await service.send(appBoundKey(), CONTENT)
 
-      expect(repository.usage[0].body).toEqual({
+      // Stringified, matching how the raw-targeting path writes this column.
+      expect(JSON.parse(repository.usage[0].body as string)).toEqual({
         audience: { type: 'APP_USERS', miniAppId: MINI_APP_ID },
         data: CONTENT,
       })
-      expect(JSON.stringify(repository.usage[0].body)).not.toContain(OWNER)
+      expect(repository.usage[0].body).not.toContain(OWNER)
     })
   })
 })

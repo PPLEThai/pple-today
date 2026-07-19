@@ -25,6 +25,13 @@ export const CreateMiniAppBody = t.Object({
   url: t.String({ description: 'Client URL of the mini app', format: 'uri' }),
   ownerSub: t.String({ description: "The Builder's PPLE ID `sub` — the app's owner" }),
   iconUrl: t.Optional(t.String({ description: 'Public icon URL of the mini app' })),
+  dailyQuota: t.Optional(
+    t.Integer({
+      minimum: 0,
+      description:
+        "Daily notification quota for the app's key. The platform owns Resource Limits, so it passes the limit it provisioned the app with; omitted falls back to the database default.",
+    })
+  ),
 })
 export type CreateMiniAppBody = Static<typeof CreateMiniAppBody>
 

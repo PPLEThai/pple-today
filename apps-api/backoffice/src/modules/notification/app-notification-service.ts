@@ -4,7 +4,8 @@ import { err, ok } from 'neverthrow'
 
 import { resolveAppAudience } from './app-audience'
 import type { AppNotificationRepository } from './app-notification-repository'
-import type { CreateNewExternalNotificationBody } from './models'
+import { requireAppBoundKey } from './key-binding'
+import type { CreateAppNotificationBody } from './models'
 import { evaluateDailyQuota, quotaDayStart } from './quota'
 import type { NotificationRepository } from './repository'
 
@@ -16,8 +17,12 @@ export interface AppBoundKey {
   dailyQuota: number
 }
 
-/** The content an app may send. No audience — that is the whole point. */
-export type AppNotificationContent = CreateNewExternalNotificationBody['content']
+/**
+ * The content an app may send. No audience — that is the whole point — and no
+ * `link` either: derived from the *app* body rather than the external one, so
+ * the type cannot admit a destination the route has already refused.
+ */
+export type AppNotificationContent = CreateAppNotificationBody['content']
 
 /**
  * Audience-bound sends: a Builder App supplies content, and the platform decides
@@ -55,15 +60,12 @@ export class AppNotificationService {
    * advisory limit rather than paying for a lock on every send.
    */
   async send(key: AppBoundKey, content: AppNotificationContent) {
-    if (key.miniAppId === null) {
-      return err({
-        code: InternalErrorCode.NOTIFICATION_KEY_NOT_APP_BOUND,
-        message:
-          'This notification key is not bound to a mini app, so it has no audience to resolve. Use the raw-targeting endpoint instead.',
-      })
-    }
+    const boundKey = requireAppBoundKey(key)
+    if (boundKey.isErr()) return err(boundKey.error)
 
-    const audienceInput = await this.appNotificationRepository.getAudienceInput(key.miniAppId)
+    const audienceInput = await this.appNotificationRepository.getAudienceInput(
+      boundKey.value.miniAppId
+    )
     if (audienceInput.isErr()) {
       return mapRepositoryError(audienceInput.error, {
         RECORD_NOT_FOUND: {
@@ -116,12 +118,18 @@ export class AppNotificationService {
       if (sendResult.isErr()) return mapRepositoryError(sendResult.error)
     }
 
-    const usageResult = await this.appNotificationRepository.recordUsage(key.id, {
-      // The audience is recorded as the app it was derived from, never as the
-      // list of people it resolved to.
-      audience: { type: 'APP_USERS', miniAppId: key.miniAppId },
-      data: content,
-    })
+    const usageResult = await this.appNotificationRepository.recordUsage(
+      key.id,
+      // Stringified to match how the raw-targeting path has always written this
+      // column (`sendNotificationToUser`), so the usage log stays one shape and
+      // a reader never has to branch on which path wrote the row.
+      JSON.stringify({
+        // The audience is recorded as the app it was derived from, never as the
+        // list of people it resolved to.
+        audience: { type: 'APP_USERS', miniAppId: boundKey.value.miniAppId },
+        data: content,
+      })
+    )
     if (usageResult.isErr()) return mapRepositoryError(usageResult.error)
 
     return ok({

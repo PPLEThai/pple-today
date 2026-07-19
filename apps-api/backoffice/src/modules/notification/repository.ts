@@ -23,6 +23,7 @@ import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 import * as R from 'remeda'
 
+import { AppNotificationRepository } from './app-notification-repository'
 import { CreateNewExternalNotificationBody } from './models'
 
 /**
@@ -593,6 +594,14 @@ export class NotificationRepository {
     )
   }
 }
+
+export const AppNotificationRepositoryPlugin = new Elysia({
+  name: 'AppNotificationRepository',
+})
+  .use([PrismaServicePlugin])
+  .decorate(({ prismaService }) => ({
+    appNotificationRepository: new AppNotificationRepository(prismaService),
+  }))
 
 export const NotificationRepositoryPlugin = new Elysia({
   name: 'NotificationRepositoryPlugin',
