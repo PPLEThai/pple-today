@@ -12,6 +12,12 @@ export class MiniAppRepository {
   async listMiniApps() {
     return await fromRepositoryPromise(
       this.prismaService.miniApp.findMany({
+        // Retired platform apps are soft-deleted: their Zitadel app is gone and
+        // their notification key is deactivated, and they must vanish from every
+        // user's list. Excluding them here keeps them out of the cached list too.
+        where: {
+          retiredAt: null,
+        },
         orderBy: [
           {
             order: 'asc',
@@ -32,6 +38,9 @@ export class MiniAppRepository {
       this.prismaService.miniApp.findUniqueOrThrow({
         where: {
           slug,
+          // A retired app is soft-deleted everywhere: unreachable by slug, not
+          // just hidden from the list (its Zitadel client is gone regardless).
+          retiredAt: null,
           OR: [
             {
               miniAppRoles: {
