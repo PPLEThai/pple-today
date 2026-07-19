@@ -1,5 +1,39 @@
 # @pple-today/database
 
+## 1.6.0
+
+### Minor Changes
+
+- [#417](https://github.com/PPLEThai/pple-today/pull/417) [`54f98b6`](https://github.com/PPLEThai/pple-today/commit/54f98b6c604e450f638b7d991e794f57bf1a353a) Thanks [@PanJ](https://github.com/PanJ)! - Beta invites for Builder Apps
+
+  - New `MiniAppInvite` model: a Builder invites a tester by phone number, and the invitation is delivered through the existing PPLE Today notification pipeline. The number is only a delivery address — accepting binds the invite to the invitee's account (`userId`), and listing eligibility matches on that alone, so changing a phone number never revokes access that was already consented to.
+  - `GET /mini-app/invites` plus `POST /mini-app/invites/:miniAppId/accept` and `/decline` let the invitee see and answer their invitations. A Beta app appears in their mini app list only after they accept; pending and declined invitations show nothing.
+  - The `/platform` service API gains `GET`/`POST /platform/mini-apps/:id/invites` and `DELETE .../invites/:phoneNumber` for managing an app's testers, behind the existing platform service token. The 20-tester cap is enforced here with an actionable error; removing a tester revokes their access and frees the seat, and a declined invitation does not hold one.
+  - BETA-tier listing now resolves to the owner _or_ an accepted invitee. DRAFT and LIVE visibility are unchanged.
+  - Invited numbers are validated as Thai mobile numbers after normalisation, so a malformed number is rejected outright rather than stored as an undeliverable row holding one of the app's twenty tester seats.
+  - `notified` reflects whether the invitation actually reached a PPLE Today account, not merely that the send call succeeded — the pipeline reports unmatched numbers as `failed` rather than erroring.
+  - `sendNotificationToUser` now accepts sends with no notification API key, for platform-internal deliveries that have no key usage to meter. Existing keyed senders are unaffected.
+
+- [#414](https://github.com/PPLEThai/pple-today/pull/414) [`c9b2a51`](https://github.com/PPLEThai/pple-today/commit/c9b2a51ad180be1a857f40c8ad8290db7d073507) Thanks [@PanJ](https://github.com/PanJ)! - App User registration & per-app user count for Builder Apps
+
+  - New `MiniAppUser` model (`(miniAppId, userId)` composite key, `firstOpenedAt`): the registry of who has opened each mini app. It is the consent boundary for audience-bound notifications and the source of the Console's per-app user count.
+  - Opening a mini app now registers the caller as that app's App User on the token-exchange path (`POST /auth/mini-app/:slug`), for every tier. Registration is an idempotent upsert, so repeat opens are a no-op and preserve the original `firstOpenedAt`. It is best-effort: a registry write failure is logged, never surfaced, so it can't block a user from opening an app.
+  - New service-to-service `/platform` API, gated by a dedicated `PLATFORM_SERVICE_TOKEN` (separate from admin/user auth; rejects all requests when unset). Its first endpoint, `GET /platform/mini-apps/:id/user-count`, returns the per-app App User count for the pple-platform provisioner.
+
+- [#416](https://github.com/PPLEThai/pple-today/pull/416) [`e2da97d`](https://github.com/PPLEThai/pple-today/commit/e2da97d3b7f7b5ead26c7734a555fc7ba97359ca) Thanks [@PanJ](https://github.com/PanJ)! - Platform service API for the Builder App lifecycle
+
+  The `/platform` service-to-service API (gated by `PLATFORM_SERVICE_TOKEN`, separate from admin/user auth) gains the endpoints the pple-platform provisioner uses to drive a Builder App from creation to retirement. today-v2 remains the single writer of Zitadel state — every Zitadel effect flows through `ZitadelService`.
+
+  - `POST /platform/mini-apps` — create a complete app registration in one call: a Zitadel OIDC app, a `DRAFT`/`PLATFORM` mini-app row owned by the Builder (`ownerSub`), and an app-bound notification key. Returns the `clientId` and the notification key (shown once, stored hashed). The app is immediately visible to its owner as a Draft.
+  - `PATCH /platform/mini-apps/:id` — update name/icon/url; a URL change re-syncs the Zitadel redirect URIs before persisting.
+  - `PUT /platform/mini-apps/:id/tier` — set the effective tier (DRAFT/BETA/LIVE).
+  - `PUT /platform/mini-apps/:id/roles` — set the Live-tier visibility roles (reuses `MiniAppRole`; empty = everyone).
+  - `DELETE /platform/mini-apps/:id` — retire the app: delete its Zitadel OIDC app, soft-delete the row (`retiredAt`), and deactivate its notification key. Retired apps are hidden from every mini-app list; the row and its App User registry are kept for audit.
+
+  Every mutation invalidates the mini-app list cache so effects surface in PPLE Today promptly.
+
+  Schema: `MiniApp` gains `zitadelAppId` (so retire can delete the OIDC app) and `retiredAt` (soft-retire); `NotificationApiKey` gains a nullable `miniAppId` binding it to an app (null = legacy central-team key, unchanged).
+
 ## 1.5.0
 
 ### Minor Changes

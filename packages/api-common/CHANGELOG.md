@@ -1,5 +1,37 @@
 # @pple-today/api-common
 
+## 1.6.0
+
+### Minor Changes
+
+- [#421](https://github.com/PPLEThai/pple-today/pull/421) [`d4ca97d`](https://github.com/PPLEThai/pple-today/commit/d4ca97d7fedda067ce9a00ca8ae8612158a247f4) Thanks [@PanJ](https://github.com/PanJ)! - Read-only admin view of platform-managed mini apps
+
+  - The `MiniApp` DTO gains `source` (ADMIN/PLATFORM), `ownerSub`, and `createdAt`, exposed to the admin backoffice API alongside the existing fields.
+  - The admin mini-app table shows tier, source, owner, and created date for every app, with a "จัดการโดย PPLE Platform" marker on platform-provisioned apps.
+  - Platform-sourced apps have no edit/delete controls in the table and are rejected by the admin update/delete endpoints (`MINI_APP_PLATFORM_MANAGED`) — they're owned by the Provisioner, not this admin. Manual admin app management is unchanged for ADMIN-source apps.
+
+- [#417](https://github.com/PPLEThai/pple-today/pull/417) [`54f98b6`](https://github.com/PPLEThai/pple-today/commit/54f98b6c604e450f638b7d991e794f57bf1a353a) Thanks [@PanJ](https://github.com/PanJ)! - Beta invites for Builder Apps
+
+  - New `MiniAppInvite` model: a Builder invites a tester by phone number, and the invitation is delivered through the existing PPLE Today notification pipeline. The number is only a delivery address — accepting binds the invite to the invitee's account (`userId`), and listing eligibility matches on that alone, so changing a phone number never revokes access that was already consented to.
+  - `GET /mini-app/invites` plus `POST /mini-app/invites/:miniAppId/accept` and `/decline` let the invitee see and answer their invitations. A Beta app appears in their mini app list only after they accept; pending and declined invitations show nothing.
+  - The `/platform` service API gains `GET`/`POST /platform/mini-apps/:id/invites` and `DELETE .../invites/:phoneNumber` for managing an app's testers, behind the existing platform service token. The 20-tester cap is enforced here with an actionable error; removing a tester revokes their access and frees the seat, and a declined invitation does not hold one.
+  - BETA-tier listing now resolves to the owner _or_ an accepted invitee. DRAFT and LIVE visibility are unchanged.
+  - Invited numbers are validated as Thai mobile numbers after normalisation, so a malformed number is rejected outright rather than stored as an undeliverable row holding one of the app's twenty tester seats.
+  - `notified` reflects whether the invitation actually reached a PPLE Today account, not merely that the send call succeeded — the pipeline reports unmatched numbers as `failed` rather than erroring.
+  - `sendNotificationToUser` now accepts sends with no notification API key, for platform-internal deliveries that have no key usage to meter. Existing keyed senders are unaffected.
+
+- [#420](https://github.com/PPLEThai/pple-today/pull/420) [`2d33915`](https://github.com/PPLEThai/pple-today/commit/2d33915790a69c38c52ebd46c88b3629046ca703) Thanks [@PanJ](https://github.com/PanJ)! - Full-phone identity lookup for Collaborators
+
+  - `POST /platform/users/lookup` resolves a complete mobile number to `{ sub, name }` behind the platform service token, so the Provisioner can ask an Owner to confirm a masked name before granting Collaborator access. Exact match only — incomplete or malformed numbers are reported as not-found and never searched as prefixes.
+  - `isThaiMobileE164` is extracted into `@pple-today/api-common` and shared with Beta invite phone validation, so "whole Thai mobile after normalisation" is one check rather than two copies of the same regex.
+
+### Patch Changes
+
+- [#425](https://github.com/PPLEThai/pple-today/pull/425) [`f8efa12`](https://github.com/PPLEThai/pple-today/commit/f8efa127fcb1695f162723f71dc6c8d9fcb5db35) Thanks [@PanJ](https://github.com/PanJ)! - Allow Builder Apps to self-deep-link notifications via optional `linkPath` on the audience-bound send route. Path-only values are joined to the sending app's redirect entry; absolute URLs and cross-app destinations are rejected with `NOTIFICATION_INVALID_LINK_PATH`.
+
+- Updated dependencies [[`54f98b6`](https://github.com/PPLEThai/pple-today/commit/54f98b6c604e450f638b7d991e794f57bf1a353a), [`c9b2a51`](https://github.com/PPLEThai/pple-today/commit/c9b2a51ad180be1a857f40c8ad8290db7d073507), [`e2da97d`](https://github.com/PPLEThai/pple-today/commit/e2da97d3b7f7b5ead26c7734a555fc7ba97359ca)]:
+  - @pple-today/database@1.6.0
+
 ## 1.5.0
 
 ### Minor Changes
