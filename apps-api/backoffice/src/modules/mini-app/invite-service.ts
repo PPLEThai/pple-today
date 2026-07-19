@@ -1,5 +1,10 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
-import { err, mapRepositoryError, normalizeThaiPhoneNumber } from '@pple-today/api-common/utils'
+import {
+  err,
+  isThaiMobileE164,
+  mapRepositoryError,
+  normalizeThaiPhoneNumber,
+} from '@pple-today/api-common/utils'
 import { MiniAppInviteStatus } from '@pple-today/database/prisma'
 import { ok } from 'neverthrow'
 
@@ -14,17 +19,6 @@ import type { MiniAppInviteRepository } from './invite-repository'
  * LimitRequest flow), and that must not need a migration.
  */
 export const MINI_APP_INVITE_LIMIT = 20
-
-/**
- * A Thai mobile number in E.164: `+66` and nine digits.
- *
- * `normalizeThaiPhoneNumber` converts formats it recognises but does not reject
- * ones it doesn't — it would turn `66812345678` into `+666812345678` and
- * `081-234-5678` into `+6681-234-5678`. Those are undeliverable, and each would
- * quietly consume one of the app's twenty tester seats, so an invite is checked
- * against this after normalising rather than trusting the conversion.
- */
-const E164_THAI_MOBILE = /^\+66\d{9}$/
 
 export type InviteResponse = 'ACCEPT' | 'DECLINE'
 
@@ -86,7 +80,9 @@ export class MiniAppInviteService {
 
     const phoneNumber = normalizeThaiPhoneNumber(rawPhoneNumber)
 
-    if (!E164_THAI_MOBILE.test(phoneNumber)) {
+    // An unrecognised format survives normalisation undeliverable, and each one
+    // would quietly consume one of the app's twenty tester seats.
+    if (!isThaiMobileE164(phoneNumber)) {
       return err({
         code: InternalErrorCode.MINI_APP_INVITE_INVALID_PHONE_NUMBER,
         message: `${rawPhoneNumber} is not a Thai mobile number. Use 0XXXXXXXXX or +66XXXXXXXXX.`,

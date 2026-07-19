@@ -13,6 +13,8 @@ import {
   GetMiniAppUserCountParams,
   GetMiniAppUserCountResponse,
   ListMiniAppInvitesResponse,
+  LookupUserBody,
+  LookupUserResponse,
   MiniAppIdParams,
   MiniAppResponse,
   RetireMiniAppResponse,
@@ -22,7 +24,7 @@ import {
   SetTierBody,
   UpdateMiniAppBody,
 } from './models'
-import { PlatformMiniAppServicePlugin } from './services'
+import { PlatformMiniAppServicePlugin, PlatformUserLookupServicePlugin } from './services'
 
 import { ConfigServicePlugin } from '../../plugins/config'
 import { AppUserServicePlugin, MiniAppInviteServicePlugin } from '../mini-app/services'
@@ -55,6 +57,9 @@ const PlatformAuthGuardPlugin = new Elysia({ name: 'PlatformAuthGuardPlugin' })
  * create (Zitadel OIDC app + Draft mini-app row + notification key), update,
  * set-tier, set-roles, and retire — plus the App User count. Every mutation
  * invalidates the mini-app list cache so effects show up in PPLE Today promptly.
+ *
+ * It also answers the one identity question the platform cannot answer itself:
+ * which PPLE ID a given phone number belongs to, for Collaborator-by-phone.
  */
 export const PlatformController = new Elysia({ prefix: '/platform', tags: ['Platform'] })
   .use([
@@ -63,6 +68,7 @@ export const PlatformController = new Elysia({ prefix: '/platform', tags: ['Plat
     PlatformMiniAppServicePlugin,
     MiniAppInviteServicePlugin,
     AppNotificationServicePlugin,
+    PlatformUserLookupServicePlugin,
   ])
   .post(
     '/mini-apps',
@@ -372,6 +378,39 @@ export const PlatformController = new Elysia({ prefix: '/platform', tags: ['Plat
         summary: 'Remove a Beta tester',
         description:
           'Revokes the invitation. If the tester had accepted, the app disappears from their mini app list on their next listing — eligibility is read live, so there is no grant left behind. Requires the platform service token.',
+      },
+    }
+  )
+  // Identity behind a phone number, for the platform's Collaborator-by-phone
+  // flow (PPLEThai/pple-platform#35). A POST rather than a GET so the number
+  // travels in a body: query strings land in access logs and proxy caches, and a
+  // phone number should not be scattered across either.
+  .post(
+    '/users/lookup',
+    async ({ body, status, platformUserLookupService }) => {
+      const result = await platformUserLookupService.lookupByPhoneNumber(body.phoneNumber)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredPlatformService: true,
+      body: LookupUserBody,
+      response: {
+        200: LookupUserResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.USER_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Resolve a phone number to a PPLE identity',
+        description:
+          'Exact full-number match only, returning the account’s `sub` and full name so the platform can ask an Owner to confirm a masked name before granting Collaborator access. This is deliberately not a directory or people-search: a partial number is never searched on, and an incomplete number is reported as not-found exactly like an unknown one. Requires the platform service token; the Provisioner is the only caller.',
       },
     }
   )

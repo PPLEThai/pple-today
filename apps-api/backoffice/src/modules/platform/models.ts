@@ -126,3 +126,20 @@ export const DeleteMiniAppInviteResponse = t.Object({
   message: t.String(),
 })
 export type DeleteMiniAppInviteResponse = Static<typeof DeleteMiniAppInviteResponse>
+
+export const LookupUserBody = t.Object({
+  phoneNumber: t.String({
+    description:
+      'The complete mobile number, as 0XXXXXXXXX or +66XXXXXXXXX. Matched exactly — a partial number is never searched on.',
+  }),
+})
+export type LookupUserBody = Static<typeof LookupUserBody>
+
+export const LookupUserResponse = t.Object({
+  sub: t.String({ description: 'The PPLE ID OIDC subject of the matching account' }),
+  name: t.String({
+    description:
+      'The account holder’s full display name. The platform masks it before showing it to the Owner.',
+  }),
+})
+export type LookupUserResponse = Static<typeof LookupUserResponse>
