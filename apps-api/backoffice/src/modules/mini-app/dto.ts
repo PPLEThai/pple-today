@@ -16,5 +16,8 @@ export const toMiniAppDto = (miniApp: MiniAppModel & { miniAppRoles: MiniAppRole
   requiresAuth: miniApp.requiresAuth,
   order: miniApp.order,
   tier: miniApp.tier,
+  source: miniApp.source,
+  ownerSub: miniApp.ownerSub,
+  createdAt: miniApp.createdAt,
   roles: miniApp.miniAppRoles.map(({ role }) => role),
 })
