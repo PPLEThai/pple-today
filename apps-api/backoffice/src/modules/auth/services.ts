@@ -1,7 +1,8 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { IntrospectAccessTokenResult } from '@pple-today/api-common/dtos'
 import { ElysiaLoggerInstance } from '@pple-today/api-common/plugins'
-import { mapRepositoryError } from '@pple-today/api-common/utils'
+import { err, mapRepositoryError } from '@pple-today/api-common/utils'
+import { MiniAppTier } from '@pple-today/database/prisma'
 import { Check } from '@sinclair/typebox/value'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
@@ -15,12 +16,19 @@ import { ConfigServicePlugin } from '../../plugins/config'
 import { ElysiaLoggerPlugin } from '../../plugins/log'
 import { generateJwtToken } from '../../utils/jwt'
 import { FileServerService, FileServerServicePlugin } from '../files/services'
-import { MiniAppRepository, MiniAppRepositoryPlugin } from '../mini-app/repository'
+import { isMiniAppVisible } from '../mini-app/eligibility'
+import { MiniAppInviteRepository } from '../mini-app/invite-repository'
+import {
+  MiniAppInviteRepositoryPlugin,
+  MiniAppRepository,
+  MiniAppRepositoryPlugin,
+} from '../mini-app/repository'
 
 export class AuthService {
   constructor(
     private readonly authRepository: AuthRepository,
     private readonly miniAppRepository: MiniAppRepository,
+    private readonly miniAppInviteRepository: MiniAppInviteRepository,
     private readonly fileServerService: FileServerService,
     private readonly loggerService: ElysiaLoggerInstance,
     private readonly oidcConfig: {
@@ -31,8 +39,25 @@ export class AuthService {
     }
   ) {}
 
-  async generateMiniAppToken(slug: string, token: string, roles: string[], path?: string) {
-    const miniApp = await this.miniAppRepository.getMiniAppBySlug(slug, roles)
+  /**
+   * Exchange the caller's token for a mini-app session URL.
+   *
+   * Eligibility matches listing (`isMiniAppVisible`): Draft = owner only,
+   * Beta = owner or ACCEPTED invitee, Live = role filter (empty = public).
+   * Denied opens return `MINI_APP_NOT_FOUND` — same as a missing slug — so
+   * App User registration in the controller only runs after a successful
+   * exchange.
+   *
+   * @param userSub The caller's PPLE ID `sub` (local user id).
+   */
+  async generateMiniAppToken(
+    slug: string,
+    token: string,
+    roles: string[],
+    userSub: string,
+    path?: string
+  ) {
+    const miniApp = await this.miniAppRepository.getMiniAppBySlug(slug)
 
     if (miniApp.isErr()) {
       return mapRepositoryError(miniApp.error, {
@@ -40,6 +65,32 @@ export class AuthService {
           code: InternalErrorCode.MINI_APP_NOT_FOUND,
           message: 'Mini app not found',
         },
+      })
+    }
+
+    // Accepted invites are the only per-user fact not on the mini-app row, and
+    // they only matter for Beta — same short-circuit as listing.
+    let acceptedInviteMiniAppIds: ReadonlySet<string> = new Set()
+    if (miniApp.value.tier === MiniAppTier.BETA) {
+      const invites = await this.miniAppInviteRepository.listAcceptedMiniAppIds(userSub)
+
+      if (invites.isErr()) {
+        return mapRepositoryError(invites.error)
+      }
+
+      acceptedInviteMiniAppIds = invites.value
+    }
+
+    if (
+      !isMiniAppVisible(miniApp.value, {
+        roles,
+        sub: userSub,
+        acceptedInviteMiniAppIds,
+      })
+    ) {
+      return err({
+        code: InternalErrorCode.MINI_APP_NOT_FOUND,
+        message: 'Mini app not found',
       })
     }
 
@@ -167,12 +218,21 @@ export const AuthServicePlugin = new Elysia({ name: 'AuthService' })
     ElysiaLoggerPlugin({ name: 'AuthService' }),
     ConfigServicePlugin,
     MiniAppRepositoryPlugin,
+    MiniAppInviteRepositoryPlugin,
   ])
   .decorate(
-    ({ authRepository, fileServerService, miniAppRepository, loggerService, configService }) => ({
+    ({
+      authRepository,
+      fileServerService,
+      miniAppRepository,
+      miniAppInviteRepository,
+      loggerService,
+      configService,
+    }) => ({
       authService: new AuthService(
         authRepository,
         miniAppRepository,
+        miniAppInviteRepository,
         fileServerService,
         loggerService,
         {

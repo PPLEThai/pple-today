@@ -3,9 +3,10 @@ import { MiniAppTier } from '@pple-today/database/prisma'
 import { ListMiniAppsResponse } from './models'
 
 /**
- * The mini-app fields the tier-aware listing rules read. Kept structural (rather
- * than the full Prisma row) so this module stays pure and unit-testable without
- * the plugin/config graph.
+ * The mini-app fields the tier-aware eligibility rules read — used by both
+ * listing and token-exchange / first-open. Kept structural (rather than the
+ * full Prisma row) so this module stays pure and unit-testable without the
+ * plugin/config graph.
  */
 export interface MiniAppForListing {
   id: string
@@ -21,9 +22,9 @@ export interface MiniAppForListing {
 }
 
 /**
- * Everything the listing rules know about the person asking. The mini-app list
- * itself is cached process-wide, so all per-user facts are gathered here and
- * passed in per request.
+ * Everything the eligibility rules know about the person asking. The mini-app
+ * list itself is cached process-wide, so all per-user facts are gathered here
+ * and passed in per request (listing and token exchange alike).
  */
 export interface MiniAppViewer {
   /** `pple-ad:`-prefixed visible roles resolved from SSO AD. */
@@ -46,16 +47,17 @@ export interface MiniAppViewer {
 export type ListedMiniApp = ListMiniAppsResponse[number]
 
 /**
- * Tier-aware visibility rule for a single mini app.
+ * Tier-aware eligibility for a single mini app — whether it may appear in the
+ * caller's list and whether they may complete token exchange / first-open.
+ * One matrix, both callers: do not invent a second tier filter elsewhere.
  *
- * - `LIVE`  — the established role-based rule: visible to everyone when it has
- *   no required roles, otherwise only to users holding one of those roles. An
- *   invite grants nothing here; Live visibility is roles, and roles only.
- * - `DRAFT` — visible only to its owner (`ownerSub === sub`), so a Builder sees
- *   their own draft in their normal list and nobody else does.
- * - `BETA`  — visible to its owner, or to a tester holding an ACCEPTED invite
- *   bound to their account. A pending or declined invite grants nothing: an app
- *   reaches someone's home screen only once they have consented to it.
+ * - `LIVE`  — the established role-based rule: eligible for everyone when it
+ *   has no required roles, otherwise only for users holding one of those
+ *   roles. An invite grants nothing here; Live eligibility is roles only.
+ * - `DRAFT` — owner only (`ownerSub === sub`), so a Builder sees and can open
+ *   their own draft and nobody else can.
+ * - `BETA`  — owner, or a tester holding an ACCEPTED invite bound to their
+ *   account. A pending or declined invite grants nothing.
  */
 export const isMiniAppVisible = (
   miniApp: Pick<MiniAppForListing, 'id' | 'tier' | 'ownerSub' | 'miniAppRoles'>,
