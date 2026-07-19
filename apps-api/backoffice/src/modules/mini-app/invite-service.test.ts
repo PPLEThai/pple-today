@@ -60,8 +60,7 @@ const createFakeRepository = () => {
      */
     upsertPendingUnderCap: vi.fn(async (miniAppId: string, phoneNumber: string, limit: number) => {
       const held = invites.filter(
-        (invite) =>
-          invite.miniAppId === miniAppId && invite.status !== MiniAppInviteStatus.DECLINED
+        (invite) => invite.miniAppId === miniAppId && invite.status !== MiniAppInviteStatus.DECLINED
       ).length
 
       if (held >= limit) {
@@ -325,10 +324,7 @@ describe('MiniAppInviteService', () => {
       for (let index = 0; index < MINI_APP_INVITE_LIMIT - 1; index++) {
         expect(
           (
-            await service.createInvite(
-              MINI_APP_ID,
-              `+6681000${String(index).padStart(4, '0')}`
-            )
+            await service.createInvite(MINI_APP_ID, `+6681000${String(index).padStart(4, '0')}`)
           ).isOk()
         ).toBe(true)
       }
