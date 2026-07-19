@@ -282,7 +282,9 @@ describe('AppNotificationService.send', () => {
       const failures = results.filter((result) => result.isErr())
       expect(successes).toHaveLength(1)
       expect(failures).toHaveLength(1)
-      expect(failures[0]!._unsafeUnwrapErr().code).toBe(InternalErrorCode.NOTIFICATION_QUOTA_EXCEEDED)
+      expect(failures[0]!._unsafeUnwrapErr().code).toBe(
+        InternalErrorCode.NOTIFICATION_QUOTA_EXCEEDED
+      )
       expect(failures[0]!._unsafeUnwrapErr()).toMatchObject({
         data: { dailyQuota: 2, remaining: 0, resetAt: NEXT_RESET.toISOString() },
       })
