@@ -72,8 +72,11 @@ export class AppNotificationService {
     }
 
     const now = this.now()
-    // The usage log records content and the audience descriptor, never the
-    // resolved recipients. Claimed up front so the body is ready before send.
+    // Stringified to match how the raw-targeting path has always written this
+    // column (`sendNotificationToUser`), so the usage log stays one shape and
+    // a reader never has to branch on which path wrote the row. The audience is
+    // recorded as the app it was derived from, never as the list of people it
+    // resolved to. Claimed up front so the body is ready before send.
     const usageBody = JSON.stringify({
       audience: { type: 'APP_USERS', miniAppId: boundKey.value.miniAppId },
       data: content,
@@ -129,15 +132,20 @@ export class AppNotificationService {
       }
     }
 
+    // `claim.used` includes this send; evaluate against the pre-claim count so
+    // the pure quota rule keeps its "used before this send" contract.
+    const quota = evaluateDailyQuota({
+      used: claim.used - 1,
+      dailyQuota: key.dailyQuota,
+      now,
+    })
+
     return ok({
       recipientCount: recipients.length,
-      dailyQuota: key.dailyQuota,
-      remaining: Math.max(key.dailyQuota - claim.used, 0),
-      resetAt: evaluateDailyQuota({
-        used: claim.used,
-        dailyQuota: key.dailyQuota,
-        now,
-      }).resetAt.toISOString(),
+      dailyQuota: quota.dailyQuota,
+      // This send has now been spent, so report what is left after it.
+      remaining: Math.max(quota.remaining - 1, 0),
+      resetAt: quota.resetAt.toISOString(),
     })
   }
 
