@@ -224,7 +224,11 @@ export const ExternalNotificationController = new Elysia({
         )
       }
 
-      const sendResult = await appNotificationService.send(tokenResult.value, body.content)
+      const sendResult = await appNotificationService.send(
+        tokenResult.value,
+        body.content,
+        body.linkPath
+      )
 
       if (sendResult.isErr()) {
         return mapErrorCodeToResponse(sendResult.error, status)
@@ -236,7 +240,7 @@ export const ExternalNotificationController = new Elysia({
       detail: {
         summary: 'Send an audience-bound notification from a Builder App',
         description:
-          "Send content to the app's own users. The notification key identifies the app, and the platform resolves the recipients: this app's App Users (people who have opened it), narrowed to its current publication tier — the owner for a Draft, the owner plus accepted testers for a Beta, every App User for a Live app. The request carries no phone numbers, user ids or audience of any kind. Each send counts against the key's daily quota; exceeding it returns 429 with the remaining budget and the reset time. Legacy central-team keys have no app binding and must use /send instead.",
+          "Send content to the app's own users. The notification key identifies the app, and the platform resolves the recipients: this app's App Users (people who have opened it), narrowed to its current publication tier — the owner for a Draft, the owner plus accepted testers for a Beta, every App User for a Live app. The request carries no phone numbers, user ids or audience of any kind. An optional linkPath deep-links into this app only (path starting with `/`); free-form cross-app destinations are not accepted. Each send counts against the key's daily quota; exceeding it returns 429 with the remaining budget and the reset time. Legacy central-team keys have no app binding and must use /send instead.",
       },
       headers: CreateNewExternalNotificationHeader,
       body: CreateAppNotificationBody,
@@ -247,6 +251,7 @@ export const ExternalNotificationController = new Elysia({
           InternalErrorCode.NOTIFICATION_KEY_NOT_APP_BOUND,
           InternalErrorCode.NOTIFICATION_QUOTA_EXCEEDED,
           InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.NOTIFICATION_INVALID_LINK_PATH,
           InternalErrorCode.NOTIFICATION_INVALID_IN_APP_NAVIGATION,
           InternalErrorCode.NOTIFICATION_INVALID_BYPASS,
           InternalErrorCode.NOTIFICATION_SENT_FAILED,

@@ -8,6 +8,7 @@ import { requireAppBoundKey } from './key-binding'
 import type { CreateAppNotificationBody } from './models'
 import { evaluateDailyQuota, quotaDayStart } from './quota'
 import type { NotificationRepository } from './repository'
+import { resolveAppLinkPath } from './resolve-app-link-path'
 
 /** The notification key as the send path needs to see it. */
 export interface AppBoundKey {
@@ -19,10 +20,16 @@ export interface AppBoundKey {
 
 /**
  * The content an app may send. No audience — that is the whole point — and no
- * `link` either: derived from the *app* body rather than the external one, so
- * the type cannot admit a destination the route has already refused.
+ * free-form `link` either: derived from the *app* body rather than the external
+ * one, so the type cannot admit a cross-app destination. Optional self-links
+ * arrive as `linkPath` and are resolved here into a normal `MINI_APP` link.
  */
 export type AppNotificationContent = CreateAppNotificationBody['content']
+
+/** Content as handed to the shared send pipeline after any self-link is resolved. */
+type AppNotificationSendContent = AppNotificationContent & {
+  link?: { type: 'MINI_APP'; destination: string }
+}
 
 /**
  * Audience-bound sends: a Builder App supplies content, and the platform decides
@@ -41,6 +48,12 @@ export class AppNotificationService {
   constructor(
     private readonly appNotificationRepository: AppNotificationRepository,
     private readonly notificationRepository: NotificationRepository,
+    /**
+     * Public origin of the mini-app redirect host. Joined with the app's slug
+     * (and optional linkPath) to form a `MINI_APP` destination the mobile
+     * client already understands. Injected so tests never boot the config graph.
+     */
+    private readonly miniAppRedirectOrigin: string,
     /** Injected so the quota window is testable without a fake timer. */
     private readonly now: () => Date = () => new Date()
   ) {}
@@ -48,14 +61,16 @@ export class AppNotificationService {
   /**
    * Send one audience-bound notification.
    *
-   * The order is deliberate: refuse unbound keys, resolve the audience, claim a
-   * quota slot, send, and release the claim if the send fails. Claiming *before*
-   * the send (atomically against the usage log) keeps concurrent last-slot sends
-   * from both landing; releasing on failure keeps the usage log meaning what it
-   * has always meant — notifications that were actually created — so an internal
-   * failure never costs the Builder part of their day's budget.
+   * The order is deliberate: refuse unbound keys, resolve the audience, resolve
+   * any self-link, claim a quota slot, send, and release the claim if the send
+   * fails. Claiming *before* the send (atomically against the usage log) keeps
+   * concurrent last-slot sends from both landing; releasing on failure keeps
+   * the usage log meaning what it has always meant — notifications that were
+   * actually created — so an internal failure never costs the Builder part of
+   * their day's budget. An invalid `linkPath` fails before the claim so junk
+   * never costs budget.
    */
-  async send(key: AppBoundKey, content: AppNotificationContent) {
+  async send(key: AppBoundKey, content: AppNotificationContent, linkPath?: string) {
     const boundKey = requireAppBoundKey(key)
     if (boundKey.isErr()) return err(boundKey.error)
 
@@ -71,6 +86,17 @@ export class AppNotificationService {
       })
     }
 
+    let sendContent: AppNotificationSendContent = content
+    if (linkPath !== undefined) {
+      const linkResult = resolveAppLinkPath(
+        linkPath,
+        { slug: audienceInput.value.slug },
+        this.miniAppRedirectOrigin
+      )
+      if (linkResult.isErr()) return err(linkResult.error)
+      sendContent = { ...content, link: linkResult.value }
+    }
+
     const now = this.now()
     // Stringified to match how the raw-targeting path has always written this
     // column (`sendNotificationToUser`), so the usage log stays one shape and
@@ -79,7 +105,7 @@ export class AppNotificationService {
     // resolved to. Claimed up front so the body is ready before send.
     const usageBody = JSON.stringify({
       audience: { type: 'APP_USERS', miniAppId: boundKey.value.miniAppId },
-      data: content,
+      data: sendContent,
     })
 
     // Quota accounting is a single transactional claim so concurrent sends
@@ -118,10 +144,10 @@ export class AppNotificationService {
     if (recipients.length > 0) {
       const sendResult = await this.notificationRepository.sendNotificationToUser(
         { type: 'USER_ID', details: recipients },
-        content,
-        // The usage log above is this path's meter, and it records content only.
-        // Letting the shared path log as well would both double-count the send
-        // and copy the resolved recipients into the log.
+        sendContent,
+        // The usage log above is this path's meter. Letting the shared path log
+        // as well would both double-count the send and copy the resolved
+        // recipients into the log.
         undefined
       )
 

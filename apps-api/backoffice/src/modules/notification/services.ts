@@ -4,6 +4,8 @@ import { AppNotificationService } from './app-notification-service'
 import { NotificationService } from './notification-service'
 import { AppNotificationRepositoryPlugin, NotificationRepositoryPlugin } from './repository'
 
+import { ConfigServicePlugin } from '../../plugins/config'
+
 export const NotificationServicePlugin = new Elysia({ name: 'NotificationService' })
   .use([NotificationRepositoryPlugin])
   .decorate(({ notificationRepository }) => ({
@@ -11,10 +13,11 @@ export const NotificationServicePlugin = new Elysia({ name: 'NotificationService
   }))
 
 export const AppNotificationServicePlugin = new Elysia({ name: 'AppNotificationService' })
-  .use([AppNotificationRepositoryPlugin, NotificationRepositoryPlugin])
-  .decorate(({ appNotificationRepository, notificationRepository }) => ({
+  .use([AppNotificationRepositoryPlugin, NotificationRepositoryPlugin, ConfigServicePlugin])
+  .decorate(({ appNotificationRepository, notificationRepository, configService }) => ({
     appNotificationService: new AppNotificationService(
       appNotificationRepository,
-      notificationRepository
+      notificationRepository,
+      configService.get('MINIAPP_REDIRECT_ORIGIN')
     ),
   }))

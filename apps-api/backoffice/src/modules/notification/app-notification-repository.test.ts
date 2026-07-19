@@ -20,6 +20,7 @@ const createPrismaService = () => {
     prismaService: {
       miniApp: {
         findUniqueOrThrow: vi.fn().mockResolvedValue({
+          slug: 'canvassing',
           tier: MiniAppTier.BETA,
           ownerSub: 'owner-sub',
           appUsers: [{ userId: 'owner-sub' }, { userId: 'invitee-sub' }],
@@ -72,6 +73,7 @@ describe('AppNotificationRepository.getAudienceInput', () => {
     const result = await repository.getAudienceInput('app-1')
 
     expect(result._unsafeUnwrap()).toEqual({
+      slug: 'canvassing',
       tier: MiniAppTier.BETA,
       ownerSub: 'owner-sub',
       appUserIds: ['owner-sub', 'invitee-sub'],

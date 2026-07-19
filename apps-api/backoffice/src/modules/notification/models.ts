@@ -100,7 +100,8 @@ export const CreateNewExternalNotificationBody = t.Composite([
 export type CreateNewExternalNotificationBody = Static<typeof CreateNewExternalNotificationBody>
 
 /**
- * The body of an audience-bound send: content, and nothing else.
+ * The body of an audience-bound send: content, plus an optional path-only
+ * self-link.
  *
  * There is deliberately no `audience` field. The key identifies the app, the
  * platform resolves the app's App Users within its current tier, and an app has
@@ -108,14 +109,12 @@ export type CreateNewExternalNotificationBody = Static<typeof CreateNewExternalN
  * `smsFallbackText` escape hatch is absent for the same reason: SMS fallback is
  * addressed by phone number.
  *
- * `link` is withheld too, and that is a narrower point about *authority* rather
- * than privacy: the shared `content` schema can address `MINI_APP` and
- * `IN_APP_NAVIGATION` destinations anywhere in PPLE Today, so accepting it here
- * would let a Builder App deep-link people into another team's mini app or an
- * arbitrary in-app screen. Without a link the send falls back to the
- * notification centre, which is the correct destination for an app-authored
- * message today. Letting an app link into *itself* is worth adding — it needs a
- * destination validated against the sending app, not a free-form link.
+ * Free-form `content.link` is withheld: the shared schema can address `MINI_APP`
+ * and `IN_APP_NAVIGATION` destinations anywhere in PPLE Today, so accepting it
+ * here would let a Builder App deep-link people into another team's mini app.
+ * Optional `linkPath` is the self-link alternative — a path under *this* app,
+ * validated and joined to the app's redirect entry server-side before it becomes
+ * a normal notification destination.
  */
 export const CreateAppNotificationBody = t.Object({
   content: t.Object({
@@ -123,6 +122,12 @@ export const CreateAppNotificationBody = t.Object({
     message: t.String({ description: 'Notification body' }),
     image: t.Optional(t.String({ description: 'Optional image URL' })),
   }),
+  linkPath: t.Optional(
+    t.String({
+      description:
+        'Path-only deep link into this app (must start with `/`). Resolved server-side against the key’s bound mini app; absolute URLs and cross-app targets are rejected.',
+    })
+  ),
 })
 export type CreateAppNotificationBody = Static<typeof CreateAppNotificationBody>
 

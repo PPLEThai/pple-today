@@ -377,6 +377,11 @@ export const NOTIFICATION_KEY_ERROR_SCHEMA = {
   NOTIFICATION_INVALID_BYPASS: {
     status: 400,
   },
+  // An app-bound send supplied a linkPath that is not a safe path-only self-link
+  // (scheme/host/`..`/other-app tricks). Apps may deep-link into themselves only.
+  NOTIFICATION_INVALID_LINK_PATH: {
+    status: 400,
+  },
   // An app-bound key tried to target recipients itself. Bound keys send content
   // only; the platform resolves who receives it.
   NOTIFICATION_KEY_APP_BOUND: {

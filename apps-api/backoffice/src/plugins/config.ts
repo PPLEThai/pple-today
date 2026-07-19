@@ -7,6 +7,12 @@ export const envSchema = t.Object({
     default: 2002,
     description: 'Port for the mini app redirect server',
   }),
+  MINIAPP_REDIRECT_ORIGIN: t.String({
+    default: 'https://miniapp.peoplesparty.or.th',
+    description:
+      'Public HTTPS origin of the mini-app redirect host (no trailing slash). Used to build MINI_APP notification destinations from app-bound linkPath values; must match the mobile client’s EXPO_PUBLIC_ALLOWED_MINI_APP_ORIGIN_REDIRECT.',
+    format: 'uri',
+  }),
   MINIAPP_IOS_TEAM_ID: t.Optional(
     t.String({
       description: 'Apple Developer Team ID for Universal Links (AASA appID prefix)',
