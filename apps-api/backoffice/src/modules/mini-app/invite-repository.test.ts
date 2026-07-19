@@ -4,30 +4,48 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 
 import { MiniAppInviteRepository } from './invite-repository'
 
-const createPrismaService = () =>
-  ({
+const createPrismaService = () => {
+  const tx = {
+    $queryRaw: vi.fn().mockResolvedValue([{ '?column?': 1 }]),
     miniAppInvite: {
-      findMany: vi.fn().mockResolvedValue([]),
-      findUnique: vi.fn().mockResolvedValue(null),
       count: vi.fn().mockResolvedValue(0),
-      upsert: vi.fn().mockResolvedValue({}),
-      update: vi.fn().mockResolvedValue({}),
-      deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+      upsert: vi.fn().mockResolvedValue({
+        miniAppId: 'app-1',
+        phoneNumber: '+66812345678',
+        status: MiniAppInviteStatus.PENDING,
+      }),
     },
-    miniApp: {
-      findUnique: vi.fn().mockResolvedValue(null),
-    },
-  }) as unknown as PrismaService & {
-    miniAppInvite: {
-      findMany: ReturnType<typeof vi.fn>
-      findUnique: ReturnType<typeof vi.fn>
-      count: ReturnType<typeof vi.fn>
-      upsert: ReturnType<typeof vi.fn>
-      update: ReturnType<typeof vi.fn>
-      deleteMany: ReturnType<typeof vi.fn>
-    }
-    miniApp: { findUnique: ReturnType<typeof vi.fn> }
   }
+
+  return {
+    prismaService: {
+      miniAppInvite: {
+        findMany: vi.fn().mockResolvedValue([]),
+        findUnique: vi.fn().mockResolvedValue(null),
+        count: vi.fn().mockResolvedValue(0),
+        upsert: vi.fn().mockResolvedValue({}),
+        update: vi.fn().mockResolvedValue({}),
+        deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+      miniApp: {
+        findUnique: vi.fn().mockResolvedValue(null),
+      },
+      $transaction: vi.fn(async (cb: (txClient: typeof tx) => unknown) => cb(tx)),
+    } as unknown as PrismaService & {
+      miniAppInvite: {
+        findMany: ReturnType<typeof vi.fn>
+        findUnique: ReturnType<typeof vi.fn>
+        count: ReturnType<typeof vi.fn>
+        upsert: ReturnType<typeof vi.fn>
+        update: ReturnType<typeof vi.fn>
+        deleteMany: ReturnType<typeof vi.fn>
+      }
+      miniApp: { findUnique: ReturnType<typeof vi.fn> }
+      $transaction: ReturnType<typeof vi.fn>
+    },
+    tx,
+  }
+}
 
 afterEach(() => {
   vi.clearAllMocks()
@@ -35,7 +53,7 @@ afterEach(() => {
 
 describe('MiniAppInviteRepository.countHoldingSeat', () => {
   test('excludes declined invites, so a refusal frees the seat', async () => {
-    const prismaService = createPrismaService()
+    const { prismaService } = createPrismaService()
     const repository = new MiniAppInviteRepository(prismaService)
 
     await repository.countHoldingSeat('app-1')
@@ -46,27 +64,135 @@ describe('MiniAppInviteRepository.countHoldingSeat', () => {
   })
 })
 
-describe('MiniAppInviteRepository.upsertPending', () => {
-  test('re-opening a declined invite clears the previous answer', async () => {
-    const prismaService = createPrismaService()
+describe('MiniAppInviteRepository.upsertPendingUnderCap', () => {
+  test('locks the app row, counts held seats, and upserts when under the cap', async () => {
+    const { prismaService, tx } = createPrismaService()
     const repository = new MiniAppInviteRepository(prismaService)
 
-    await repository.upsertPending('app-1', '+66812345678')
+    const result = await repository.upsertPendingUnderCap('app-1', '+66812345678', 20)
 
+    expect(prismaService.$transaction).toHaveBeenCalledOnce()
+    expect(tx.$queryRaw).toHaveBeenCalledOnce()
+    const [sqlChunks, lockedMiniAppId] = tx.$queryRaw.mock.calls[0]! as [
+      TemplateStringsArray,
+      string,
+    ]
+    expect(sqlChunks.join('')).toContain('FOR UPDATE')
+    expect(sqlChunks.join('')).toContain('"MiniApp"')
+    expect(lockedMiniAppId).toBe('app-1')
+    expect(tx.miniAppInvite.count).toHaveBeenCalledWith({
+      where: { miniAppId: 'app-1', status: { not: MiniAppInviteStatus.DECLINED } },
+    })
     // `upsert` (not `create`) reuses the existing row, and the update must reset
     // both the binding and the timestamp — otherwise a re-invited tester would
     // still look like they had already answered.
-    expect(prismaService.miniAppInvite.upsert).toHaveBeenCalledWith({
+    expect(tx.miniAppInvite.upsert).toHaveBeenCalledWith({
       where: { miniAppId_phoneNumber: { miniAppId: 'app-1', phoneNumber: '+66812345678' } },
       create: { miniAppId: 'app-1', phoneNumber: '+66812345678' },
       update: { status: MiniAppInviteStatus.PENDING, userId: null, respondedAt: null },
     })
+    expect(result._unsafeUnwrap()).toEqual({
+      status: 'ok',
+      invite: expect.objectContaining({
+        miniAppId: 'app-1',
+        phoneNumber: '+66812345678',
+        status: MiniAppInviteStatus.PENDING,
+      }),
+    })
+  })
+
+  test('refuses without writing when the app is already at the cap', async () => {
+    const { prismaService, tx } = createPrismaService()
+    tx.miniAppInvite.count.mockResolvedValue(20)
+    const repository = new MiniAppInviteRepository(prismaService)
+
+    const result = await repository.upsertPendingUnderCap('app-1', '+66812345678', 20)
+
+    expect(result._unsafeUnwrap()).toEqual({ status: 'limit_exceeded' })
+    expect(tx.miniAppInvite.upsert).not.toHaveBeenCalled()
+  })
+
+  test('a declined seat does not count against the cap', async () => {
+    const { prismaService, tx } = createPrismaService()
+    // Nineteen held seats — the count query itself excludes DECLINED, so a
+    // twentieth invite (including re-opening a declined row) is still allowed.
+    tx.miniAppInvite.count.mockResolvedValue(19)
+    const repository = new MiniAppInviteRepository(prismaService)
+
+    const result = await repository.upsertPendingUnderCap('app-1', '+66899999999', 20)
+
+    expect(result._unsafeUnwrap().status).toBe('ok')
+    expect(tx.miniAppInvite.upsert).toHaveBeenCalledOnce()
+  })
+
+  test('two concurrent claims at seat 19 cannot both write when the app row is locked', async () => {
+    // `$transaction` itself does not serialise — only `$queryRaw` … `FOR UPDATE`
+    // does, matching Postgres row locks. Count and upsert each yield so two
+    // unlocked transactions can both read 19 and both insert; with the lock,
+    // the second waits and then sees 20. Dropping the lock from the repository
+    // makes this fail with held === 21.
+    let held = 19
+    let rowLock: Promise<void> = Promise.resolve()
+
+    const createTx = () => {
+      let releaseLock: (() => void) | undefined
+
+      return {
+        release: () => releaseLock?.(),
+        $queryRaw: vi.fn(async (chunks: TemplateStringsArray) => {
+          expect(chunks.join('')).toContain('FOR UPDATE')
+          const previous = rowLock
+          rowLock = new Promise<void>((resolve) => {
+            releaseLock = resolve
+          })
+          await previous
+        }),
+        miniAppInvite: {
+          count: vi.fn(async () => {
+            await Promise.resolve()
+            return held
+          }),
+          upsert: vi.fn(async (args: { create: { miniAppId: string; phoneNumber: string } }) => {
+            await Promise.resolve()
+            held += 1
+            return {
+              miniAppId: args.create.miniAppId,
+              phoneNumber: args.create.phoneNumber,
+              status: MiniAppInviteStatus.PENDING,
+            }
+          }),
+        },
+      }
+    }
+
+    const prismaService = {
+      $transaction: vi.fn(async (cb: (txClient: ReturnType<typeof createTx>) => unknown) => {
+        const txClient = createTx()
+        try {
+          return await cb(txClient)
+        } finally {
+          txClient.release()
+        }
+      }),
+    } as unknown as PrismaService
+
+    const repository = new MiniAppInviteRepository(prismaService)
+
+    const results = await Promise.all([
+      repository.upsertPendingUnderCap('app-1', '+66820000001', 20),
+      repository.upsertPendingUnderCap('app-1', '+66820000002', 20),
+    ])
+
+    const statuses = results.map((result) => result._unsafeUnwrap().status)
+    expect(statuses.filter((status) => status === 'ok')).toHaveLength(1)
+    expect(statuses.filter((status) => status === 'limit_exceeded')).toHaveLength(1)
+    expect(held).toBe(20)
   })
 })
 
 describe('MiniAppInviteRepository.listAcceptedMiniAppIds', () => {
   test('matches on the account only — never on the phone number', async () => {
-    const prismaService = createPrismaService()
+    const { prismaService } = createPrismaService()
     prismaService.miniAppInvite.findMany.mockResolvedValue([
       { miniAppId: 'app-1' },
       { miniAppId: 'app-2' },
@@ -87,7 +213,7 @@ describe('MiniAppInviteRepository.listAcceptedMiniAppIds', () => {
 
 describe('MiniAppInviteRepository.remove', () => {
   test('reports whether a row was actually deleted', async () => {
-    const prismaService = createPrismaService()
+    const { prismaService } = createPrismaService()
     const repository = new MiniAppInviteRepository(prismaService)
 
     expect((await repository.remove('app-1', '+66812345678'))._unsafeUnwrap()).toBe(true)
@@ -99,7 +225,7 @@ describe('MiniAppInviteRepository.remove', () => {
 
 describe('MiniAppInviteRepository.listPendingForPhoneNumber', () => {
   test('returns only unanswered invites, newest first, with the app for the card', async () => {
-    const prismaService = createPrismaService()
+    const { prismaService } = createPrismaService()
     const repository = new MiniAppInviteRepository(prismaService)
 
     await repository.listPendingForPhoneNumber('+66812345678')

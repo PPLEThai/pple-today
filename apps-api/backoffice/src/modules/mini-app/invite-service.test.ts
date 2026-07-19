@@ -52,14 +52,27 @@ const createFakeRepository = () => {
     findOne: vi.fn(async (miniAppId: string, phoneNumber: string) =>
       ok(find(miniAppId, phoneNumber) ?? null)
     ),
-    upsertPending: vi.fn(async (miniAppId: string, phoneNumber: string) => {
-      const existing = find(miniAppId, phoneNumber)
+    /**
+     * Atomic seat claim. Deliberately does not `await` between the count and
+     * the write — that gap is the race the real `$transaction` + `FOR UPDATE`
+     * closes, and leaving a yield here would let the concurrent-cap test pass
+     * for the wrong reason (or fail the demonstration).
+     */
+    upsertPendingUnderCap: vi.fn(async (miniAppId: string, phoneNumber: string, limit: number) => {
+      const held = invites.filter(
+        (invite) => invite.miniAppId === miniAppId && invite.status !== MiniAppInviteStatus.DECLINED
+      ).length
 
+      if (held >= limit) {
+        return ok({ status: 'limit_exceeded' as const })
+      }
+
+      const existing = find(miniAppId, phoneNumber)
       if (existing) {
         existing.status = MiniAppInviteStatus.PENDING
         existing.userId = null
         existing.respondedAt = null
-        return ok(existing)
+        return ok({ status: 'ok' as const, invite: existing })
       }
 
       const invite: InviteRow = {
@@ -71,7 +84,7 @@ const createFakeRepository = () => {
         respondedAt: null,
       }
       invites.push(invite)
-      return ok(invite)
+      return ok({ status: 'ok' as const, invite })
     }),
     remove: vi.fn(async (miniAppId: string, phoneNumber: string) => {
       const index = invites.findIndex(
@@ -304,6 +317,32 @@ describe('MiniAppInviteService', () => {
       const result = await service.createInvite(MINI_APP_ID, '+66810000000')
 
       expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.MINI_APP_INVITE_LIMIT_EXCEEDED)
+      expect(await seatsTaken()).toBe(MINI_APP_INVITE_LIMIT)
+    })
+
+    test('two concurrent invites at seat 19 cannot produce 21 seated testers', async () => {
+      for (let index = 0; index < MINI_APP_INVITE_LIMIT - 1; index++) {
+        expect(
+          (
+            await service.createInvite(MINI_APP_ID, `+6681000${String(index).padStart(4, '0')}`)
+          ).isOk()
+        ).toBe(true)
+      }
+      expect(await seatsTaken()).toBe(MINI_APP_INVITE_LIMIT - 1)
+
+      const results = await Promise.all([
+        service.createInvite(MINI_APP_ID, '+66820000001'),
+        service.createInvite(MINI_APP_ID, '+66820000002'),
+      ])
+
+      const successes = results.filter((result) => result.isOk())
+      const failures = results.filter((result) => result.isErr())
+      expect(successes).toHaveLength(1)
+      expect(failures).toHaveLength(1)
+      expect(failures[0]!._unsafeUnwrapErr().code).toBe(
+        InternalErrorCode.MINI_APP_INVITE_LIMIT_EXCEEDED
+      )
+      expect(failures[0]!._unsafeUnwrapErr().message).toContain(String(MINI_APP_INVITE_LIMIT))
       expect(await seatsTaken()).toBe(MINI_APP_INVITE_LIMIT)
     })
 

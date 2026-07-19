@@ -64,8 +64,9 @@ enum MiniAppInviteStatus {
 // eligibility matches on. That split is deliberate — a tester who later changes
 // their phone number keeps the access they consented to.
 //
-// The 20-invite cap is enforced in the service, not the schema, so a Platform
-// Admin can raise it per app later without a migration.
+// The invite cap is enforced in the service (passed into a transactional
+// repository claim), not the schema, so a Platform Admin can raise it per app
+// later without a migration.
 model MiniAppInvite {
   miniAppId String
   miniApp   MiniApp @relation(fields: [miniAppId], references: [id])

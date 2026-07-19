@@ -56,22 +56,44 @@ export class MiniAppInviteRepository {
   }
 
   /**
-   * Create the invite, or re-open a declined one. An upsert (not a create) so
-   * that re-inviting someone who said no reuses their row — the table is keyed
-   * by app + number — and clears their previous answer.
+   * Claim a tester seat under the cap, atomically.
+   *
+   * Create the invite, or re-open a declined one (upsert, not create, so the
+   * table key of app + number is reused and the previous answer cleared).
+   *
+   * `count` then `upsert` alone can race: two concurrent creates both read
+   * "19 held" and both insert. Locking the parent `MiniApp` row serialises
+   * seat claims for that app; the limit stays a caller-supplied constant so a
+   * Platform Admin can raise it later without a migration.
    */
-  async upsertPending(miniAppId: string, phoneNumber: string) {
-    return await fromRepositoryPromise(
-      this.prismaService.miniAppInvite.upsert({
-        where: { miniAppId_phoneNumber: { miniAppId, phoneNumber } },
-        create: { miniAppId, phoneNumber },
-        update: {
-          status: MiniAppInviteStatus.PENDING,
-          userId: null,
-          respondedAt: null,
-        },
+  async upsertPendingUnderCap(miniAppId: string, phoneNumber: string, limit: number) {
+    return await fromRepositoryPromise(async () => {
+      return await this.prismaService.$transaction(async (tx) => {
+        await tx.$queryRaw`
+          SELECT 1 FROM "MiniApp" WHERE id = ${miniAppId} FOR UPDATE
+        `
+
+        const held = await tx.miniAppInvite.count({
+          where: { miniAppId, status: { not: MiniAppInviteStatus.DECLINED } },
+        })
+
+        if (held >= limit) {
+          return { status: 'limit_exceeded' as const }
+        }
+
+        const invite = await tx.miniAppInvite.upsert({
+          where: { miniAppId_phoneNumber: { miniAppId, phoneNumber } },
+          create: { miniAppId, phoneNumber },
+          update: {
+            status: MiniAppInviteStatus.PENDING,
+            userId: null,
+            respondedAt: null,
+          },
+        })
+
+        return { status: 'ok' as const, invite }
       })
-    )
+    })
   }
 
   /** Returns whether a row was actually removed, so the caller can 404 honestly. */
