@@ -34,7 +34,14 @@ export class MiniAppRepository {
     )
   }
 
-  async getMiniAppBySlug(slug: string, roles: string[]) {
+  /**
+   * Load a non-retired mini app by slug for the token-exchange / first-open
+   * path. Tier and role eligibility are applied in the service layer via
+   * `isMiniAppVisible` — the same rules as listing — so this query does not
+   * invent a second matrix (and in particular does not treat empty roles as
+   * "public" for Draft/Beta apps).
+   */
+  async getMiniAppBySlug(slug: string) {
     return await fromRepositoryPromise(
       this.prismaService.miniApp.findUniqueOrThrow({
         where: {
@@ -42,22 +49,9 @@ export class MiniAppRepository {
           // A retired app is soft-deleted everywhere: unreachable by slug, not
           // just hidden from the list (its Zitadel client is gone regardless).
           retiredAt: null,
-          OR: [
-            {
-              miniAppRoles: {
-                some: {
-                  role: {
-                    in: roles,
-                  },
-                },
-              },
-            },
-            {
-              miniAppRoles: {
-                none: {},
-              },
-            },
-          ],
+        },
+        include: {
+          miniAppRoles: true,
         },
       })
     )

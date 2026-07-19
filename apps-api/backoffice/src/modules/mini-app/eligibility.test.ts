@@ -1,7 +1,12 @@
 import { MiniAppTier } from '@pple-today/database/prisma'
 import { describe, expect, test } from 'vitest'
 
-import { MiniAppForListing, MiniAppViewer, selectVisibleMiniApps } from './eligibility'
+import {
+  isMiniAppVisible,
+  MiniAppForListing,
+  MiniAppViewer,
+  selectVisibleMiniApps,
+} from './eligibility'
 
 const OWNER_SUB = 'owner-sub'
 const OTHER_SUB = 'other-sub'
@@ -32,7 +37,7 @@ const makeViewer = (overrides: Partial<MiniAppViewer> = {}): MiniAppViewer => ({
 const visibleSlugs = (miniApps: MiniAppForListing[], viewer: MiniAppViewer) =>
   selectVisibleMiniApps(miniApps, viewer).map((app) => app.slug)
 
-describe('selectVisibleMiniApps tier eligibility', () => {
+describe('tier eligibility (listing and token exchange share isMiniAppVisible)', () => {
   describe('LIVE tier (existing role-based visibility is unchanged)', () => {
     test('an app with no required roles is visible to everyone, including anonymous', () => {
       const miniApps = [makeMiniApp({ slug: 'public-live', tier: MiniAppTier.LIVE })]
@@ -197,5 +202,56 @@ describe('selectVisibleMiniApps tier eligibility', () => {
         tier: MiniAppTier.DRAFT,
       },
     ])
+  })
+
+  // Token exchange calls `isMiniAppVisible` for a single looked-up app (not the
+  // listing projection). These assert that gate directly against the same
+  // Draft / Beta / Live matrix.
+  describe('isMiniAppVisible for token exchange / first-open', () => {
+    test('Draft: only the owner may open', () => {
+      const draft = makeMiniApp({
+        id: 'draft-id',
+        tier: MiniAppTier.DRAFT,
+        ownerSub: OWNER_SUB,
+      })
+
+      expect(isMiniAppVisible(draft, makeViewer({ sub: OWNER_SUB }))).toBe(true)
+      expect(isMiniAppVisible(draft, makeViewer({ sub: OTHER_SUB, roles: [MEMBER_ROLE] }))).toBe(
+        false
+      )
+    })
+
+    test('Beta: owner and accepted invitee may open; pending/declined may not', () => {
+      const beta = makeMiniApp({
+        id: 'beta-id',
+        tier: MiniAppTier.BETA,
+        ownerSub: OWNER_SUB,
+      })
+
+      expect(isMiniAppVisible(beta, makeViewer({ sub: OWNER_SUB }))).toBe(true)
+      expect(
+        isMiniAppVisible(
+          beta,
+          makeViewer({
+            sub: INVITEE_SUB,
+            acceptedInviteMiniAppIds: new Set(['beta-id']),
+          })
+        )
+      ).toBe(true)
+      // Pending and declined never enter the accepted set.
+      expect(isMiniAppVisible(beta, makeViewer({ sub: INVITEE_SUB }))).toBe(false)
+    })
+
+    test('Live: empty roles stay public; role gating is unchanged', () => {
+      const publicLive = makeMiniApp({ tier: MiniAppTier.LIVE })
+      const membersOnly = makeMiniApp({
+        tier: MiniAppTier.LIVE,
+        miniAppRoles: [{ role: MEMBER_ROLE }],
+      })
+
+      expect(isMiniAppVisible(publicLive, makeViewer({ sub: OTHER_SUB }))).toBe(true)
+      expect(isMiniAppVisible(membersOnly, makeViewer({ roles: [MEMBER_ROLE] }))).toBe(true)
+      expect(isMiniAppVisible(membersOnly, makeViewer({ roles: ['pple-ad:staff'] }))).toBe(false)
+    })
   })
 })

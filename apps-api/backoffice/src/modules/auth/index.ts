@@ -94,6 +94,7 @@ export const AuthController = new Elysia({
         params.slug,
         user.accessToken,
         visibleRoles.value,
+        user.id,
         query.path
       )
 
