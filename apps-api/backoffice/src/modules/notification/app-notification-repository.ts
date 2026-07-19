@@ -58,37 +58,64 @@ export class AppNotificationRepository {
   }
 
   /**
-   * Count this key's sends inside the current quota window. The window is a
-   * time range rather than a stored counter, so the budget resets at the day
-   * boundary on its own — there is no job to run and nothing to reset.
+   * Claim one send against the key's daily quota, atomically.
+   *
+   * Count-then-create alone can race: two concurrent sends both read "9 of 10"
+   * and both insert. Locking the parent `NotificationApiKey` row serialises
+   * claims for that key; the window is still a time range (`since`), so the
+   * budget resets at the Bangkok day boundary with no job to run.
+   *
+   * The caller meters *before* the actual send and must `releaseUsage` if the
+   * send fails — otherwise an internal failure would consume budget.
    */
-  async countUsageSince(notificationApiKeyId: string, since: Date) {
-    return await fromRepositoryPromise(
-      this.prismaService.notificationApiKeyUsageLog.count({
-        where: {
-          notificationApiKeyId,
-          usedAt: { gte: since },
-        },
+  async claimUsageUnderQuota(
+    notificationApiKeyId: string,
+    dailyQuota: number,
+    since: Date,
+    body: Prisma.InputJsonValue
+  ) {
+    return await fromRepositoryPromise(async () => {
+      return await this.prismaService.$transaction(async (tx) => {
+        await tx.$queryRaw`
+          SELECT 1 FROM "NotificationApiKey" WHERE id = ${notificationApiKeyId} FOR UPDATE
+        `
+
+        const used = await tx.notificationApiKeyUsageLog.count({
+          where: {
+            notificationApiKeyId,
+            usedAt: { gte: since },
+          },
+        })
+
+        if (used >= dailyQuota) {
+          return { status: 'quota_exceeded' as const, used }
+        }
+
+        const log = await tx.notificationApiKeyUsageLog.create({
+          data: {
+            body,
+            notificationApiKey: { connect: { id: notificationApiKeyId } },
+          },
+        })
+
+        return {
+          status: 'ok' as const,
+          usageLogId: log.id,
+          // This claim is now spent, so report usage including it.
+          used: used + 1,
+        }
       })
-    )
+    })
   }
 
   /**
-   * Meter one audience-bound send against the key.
-   *
-   * The logged body records the *content and the audience descriptor*, never the
-   * resolved recipients. The recipient list is derived from the registry and can
-   * be re-derived at any time; copying user ids into a log row would spread the
-   * audience across another table for no gain, in a feature whose entire point
-   * is that an app never handles who its users are.
+   * Undo a claim whose send never landed. Paired with `claimUsageUnderQuota` so
+   * an internal failure does not cost the Builder part of their day's budget.
    */
-  async recordUsage(notificationApiKeyId: string, body: Prisma.InputJsonValue) {
+  async releaseUsage(usageLogId: string) {
     return await fromRepositoryPromise(
-      this.prismaService.notificationApiKeyUsageLog.create({
-        data: {
-          body,
-          notificationApiKey: { connect: { id: notificationApiKeyId } },
-        },
+      this.prismaService.notificationApiKeyUsageLog.delete({
+        where: { id: usageLogId },
       })
     )
   }
