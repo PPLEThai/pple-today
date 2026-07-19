@@ -1,5 +1,5 @@
 import { TAnySchema } from '@sinclair/typebox'
-import { InvertedStatusMap } from 'elysia'
+import { InvertedStatusMap, t } from 'elysia'
 
 export type InternalErrorSchema = {
   status: keyof InvertedStatusMap
@@ -373,6 +373,29 @@ export const NOTIFICATION_KEY_ERROR_SCHEMA = {
   },
   NOTIFICATION_INVALID_BYPASS: {
     status: 400,
+  },
+  // An app-bound key tried to target recipients itself. Bound keys send content
+  // only; the platform resolves who receives it.
+  NOTIFICATION_KEY_APP_BOUND: {
+    status: 403,
+  },
+  // A legacy central-team key used the audience-bound endpoint. It has no mini
+  // app to resolve an audience from, so there is nobody to send to.
+  NOTIFICATION_KEY_NOT_APP_BOUND: {
+    status: 403,
+  },
+  NOTIFICATION_QUOTA_EXCEEDED: {
+    status: 429,
+    // Carries the budget itself, so a Builder App can back off intelligently
+    // rather than guess when it may send again.
+    data: t.Object({
+      dailyQuota: t.Integer({ description: 'Sends allowed per day for this key' }),
+      remaining: t.Integer({ description: 'Sends still available in the current window' }),
+      resetAt: t.String({
+        format: 'date-time',
+        description: 'When the quota window rolls over (Asia/Bangkok midnight)',
+      }),
+    }),
   },
 } satisfies InternalErrorSchemas
 

@@ -2,7 +2,10 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
+import { requireUnboundKey } from './key-binding'
 import {
+  CreateAppNotificationBody,
+  CreateAppNotificationResponse,
   CreateNewExternalNotificationBody,
   CreateNewExternalNotificationHeader,
   CreateNewExternalNotificationResponse,
@@ -16,7 +19,7 @@ import {
   RegisterNotificationBody,
   RegisterNotificationResponse,
 } from './models'
-import { NotificationServicePlugin } from './services'
+import { AppNotificationServicePlugin, NotificationServicePlugin } from './services'
 
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
 
@@ -198,7 +201,60 @@ export const ExternalNotificationController = new Elysia({
   prefix: '/external/notifications',
   tags: ['External Notifications'],
 })
-  .use([NotificationServicePlugin])
+  .use([NotificationServicePlugin, AppNotificationServicePlugin])
+  // Audience-bound send for Builder Apps. The key identifies the app; the body
+  // carries content and nothing else. Recipients are resolved server-side as
+  // that app's App Users within its current publication tier, so a Builder App
+  // can reach the people who use it and has no way to name anybody else.
+  .post(
+    '/',
+    async ({ appNotificationService, notificationService, body, headers, status }) => {
+      const token = headers['authorization'].split(' ')[1]
+      const tokenResult = await notificationService.checkApiToken(token)
+
+      if (tokenResult.isErr()) return mapErrorCodeToResponse(tokenResult.error, status)
+
+      if (!tokenResult.value) {
+        return mapErrorCodeToResponse(
+          {
+            code: InternalErrorCode.UNAUTHORIZED,
+            message: 'Invalid API token',
+          },
+          status
+        )
+      }
+
+      const sendResult = await appNotificationService.send(tokenResult.value, body.content)
+
+      if (sendResult.isErr()) {
+        return mapErrorCodeToResponse(sendResult.error, status)
+      }
+
+      return status(201, sendResult.value)
+    },
+    {
+      detail: {
+        summary: 'Send an audience-bound notification from a Builder App',
+        description:
+          "Send content to the app's own users. The notification key identifies the app, and the platform resolves the recipients: this app's App Users (people who have opened it), narrowed to its current publication tier — the owner for a Draft, the owner plus accepted testers for a Beta, every App User for a Live app. The request carries no phone numbers, user ids or audience of any kind. Each send counts against the key's daily quota; exceeding it returns 429 with the remaining budget and the reset time. Legacy central-team keys have no app binding and must use /send instead.",
+      },
+      headers: CreateNewExternalNotificationHeader,
+      body: CreateAppNotificationBody,
+      response: {
+        201: CreateAppNotificationResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.NOTIFICATION_KEY_NOT_APP_BOUND,
+          InternalErrorCode.NOTIFICATION_QUOTA_EXCEEDED,
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.NOTIFICATION_INVALID_IN_APP_NAVIGATION,
+          InternalErrorCode.NOTIFICATION_INVALID_BYPASS,
+          InternalErrorCode.NOTIFICATION_SENT_FAILED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
   .post(
     '/send',
     async ({ notificationService, body, headers, status }) => {
@@ -217,7 +273,20 @@ export const ExternalNotificationController = new Elysia({
         )
       }
 
-      const sendResult = await notificationService.sendExternalNotification(body, tokenResult.value)
+      // This is the raw-targeting path: the caller names its own audience, phone
+      // numbers included. That stays a central-team capability, so app-bound
+      // keys are refused here (see `requireUnboundKey`). Legacy null-binding
+      // keys pass straight through, unchanged.
+      const bindingResult = requireUnboundKey(tokenResult.value)
+
+      if (bindingResult.isErr()) {
+        return mapErrorCodeToResponse(bindingResult.error, status)
+      }
+
+      const sendResult = await notificationService.sendExternalNotification(
+        body,
+        tokenResult.value.id
+      )
 
       if (sendResult.isErr()) {
         return mapErrorCodeToResponse(sendResult.error, status)
@@ -232,7 +301,7 @@ export const ExternalNotificationController = new Elysia({
       detail: {
         summary: 'Send external notification to a user',
         description:
-          'This endpoint allows sending notifications to external users based on their phone numbers. An API token is required for authentication.',
+          'This endpoint allows sending notifications to external users based on their phone numbers. An API token is required for authentication. Raw recipient targeting is a central-team capability: keys bound to a mini app are rejected here and must use POST /external/notifications.',
       },
       headers: CreateNewExternalNotificationHeader,
       body: CreateNewExternalNotificationBody,
@@ -241,6 +310,7 @@ export const ExternalNotificationController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.INTERNAL_SERVER_ERROR,
           InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.NOTIFICATION_KEY_APP_BOUND,
           InternalErrorCode.NOTIFICATION_INVALID_IN_APP_NAVIGATION,
           InternalErrorCode.NOTIFICATION_INVALID_BYPASS,
           InternalErrorCode.NOTIFICATION_SENT_FAILED

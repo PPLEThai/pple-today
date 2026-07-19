@@ -2,6 +2,8 @@ import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
+import { AppNotificationRepository } from './app-notification-repository'
+import { AppNotificationService } from './app-notification-service'
 import {
   CreateNewExternalNotificationBody,
   GetNotificationDetailsByIdResponse,
@@ -9,9 +11,18 @@ import {
 } from './models'
 import { NotificationRepository, NotificationRepositoryPlugin } from './repository'
 
+import { PrismaServicePlugin } from '../../plugins/prisma'
+
 export class NotificationService {
   constructor(private readonly notificationRepository: NotificationRepository) {}
 
+  /**
+   * Resolve a presented API key, or null when it is unknown or deactivated.
+   *
+   * Returns the whole record rather than just its id: a key's `miniAppId`
+   * binding decides which send path it may use, so every caller has to see it
+   * at the point it authenticates.
+   */
   async checkApiToken(apiToken: string) {
     const isValid = await this.notificationRepository.checkApiKey(apiToken)
 
@@ -19,7 +30,7 @@ export class NotificationService {
       return mapRepositoryError(isValid.error)
     }
 
-    return ok(isValid.value?.id)
+    return ok(isValid.value)
   }
 
   async listNotifications(userId: string, cursor?: string, limit?: number) {
@@ -164,4 +175,13 @@ export const NotificationServicePlugin = new Elysia({ name: 'NotificationService
   .use([NotificationRepositoryPlugin])
   .decorate(({ notificationRepository }) => ({
     notificationService: new NotificationService(notificationRepository),
+  }))
+
+export const AppNotificationServicePlugin = new Elysia({ name: 'AppNotificationService' })
+  .use([PrismaServicePlugin, NotificationRepositoryPlugin])
+  .decorate(({ prismaService, notificationRepository }) => ({
+    appNotificationService: new AppNotificationService(
+      new AppNotificationRepository(prismaService),
+      notificationRepository
+    ),
   }))

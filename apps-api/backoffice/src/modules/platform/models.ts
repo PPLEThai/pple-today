@@ -67,6 +67,20 @@ export const SetRolesBody = t.Object({
 })
 export type SetRolesBody = Static<typeof SetRolesBody>
 
+export const SetNotificationQuotaBody = t.Object({
+  dailyQuota: t.Integer({
+    minimum: 0,
+    description:
+      "Sends allowed per day on the app's notification key. Zero suspends the app's notifications outright.",
+  }),
+})
+export type SetNotificationQuotaBody = Static<typeof SetNotificationQuotaBody>
+
+export const SetNotificationQuotaResponse = t.Object({
+  dailyQuota: t.Integer({ description: 'The quota now in effect' }),
+})
+export type SetNotificationQuotaResponse = Static<typeof SetNotificationQuotaResponse>
+
 export const MiniAppResponse = MiniApp
 export type MiniAppResponse = Static<typeof MiniAppResponse>
 

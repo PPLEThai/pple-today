@@ -16,6 +16,8 @@ import {
   MiniAppIdParams,
   MiniAppResponse,
   RetireMiniAppResponse,
+  SetNotificationQuotaBody,
+  SetNotificationQuotaResponse,
   SetRolesBody,
   SetTierBody,
   UpdateMiniAppBody,
@@ -24,6 +26,7 @@ import { PlatformMiniAppServicePlugin } from './services'
 
 import { ConfigServicePlugin } from '../../plugins/config'
 import { AppUserServicePlugin, MiniAppInviteServicePlugin } from '../mini-app/services'
+import { AppNotificationServicePlugin } from '../notification/services'
 
 const PlatformAuthGuardPlugin = new Elysia({ name: 'PlatformAuthGuardPlugin' })
   .use([ConfigServicePlugin])
@@ -59,6 +62,7 @@ export const PlatformController = new Elysia({ prefix: '/platform', tags: ['Plat
     AppUserServicePlugin,
     PlatformMiniAppServicePlugin,
     MiniAppInviteServicePlugin,
+    AppNotificationServicePlugin,
   ])
   .post(
     '/mini-apps',
@@ -212,6 +216,38 @@ export const PlatformController = new Elysia({ prefix: '/platform', tags: ['Plat
         summary: 'Retire a Builder App',
         description:
           'Retire the app: delete its Zitadel OIDC app, soft-delete the mini-app row, and deactivate its notification key. The app disappears from every list; the row and App User registry are kept for audit.',
+      },
+    }
+  )
+  // The Resource Limit on an app's notifications. The platform owns the
+  // approval (a LimitRequest); today-v2 only records the effective number.
+  .put(
+    '/mini-apps/:id/notification-quota',
+    async ({ params, body, status, appNotificationService }) => {
+      const result = await appNotificationService.setDailyQuota(params.id, body.dailyQuota)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredPlatformService: true,
+      params: MiniAppIdParams,
+      body: SetNotificationQuotaBody,
+      response: {
+        200: SetNotificationQuotaResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.NOTIFICATION_API_KEY_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: "Set a Builder App's daily notification quota",
+        description:
+          "Set how many audience-bound notifications the app may send per day (Asia/Bangkok). This is how an approved LimitRequest takes effect. Applies to the app's active notification key; a retired app has none.",
       },
     }
   )

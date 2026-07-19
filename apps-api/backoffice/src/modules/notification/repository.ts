@@ -25,6 +25,24 @@ import * as R from 'remeda'
 
 import { CreateNewExternalNotificationBody } from './models'
 
+/**
+ * An audience whose recipients the platform has already resolved to user ids.
+ *
+ * Deliberately absent from `CreateNewExternalNotificationBody`, so it cannot be
+ * supplied over the wire: it is how *audience-bound* sends address an app's App
+ * Users, and letting a caller name user ids directly would be exactly the raw
+ * targeting the binding exists to prevent.
+ */
+export interface ResolvedUserAudience {
+  type: 'USER_ID'
+  details: string[]
+}
+
+/** Every audience the send path understands — public ones plus the internal one. */
+export type NotificationAudience =
+  | CreateNewExternalNotificationBody['audience']
+  | ResolvedUserAudience
+
 import { CloudMessagingService, CloudMessagingServicePlugin } from '../../plugins/cloud-messaging'
 import { ElysiaLoggerPlugin } from '../../plugins/log'
 import { PrismaServicePlugin } from '../../plugins/prisma'
@@ -106,10 +124,14 @@ export class NotificationRepository {
     }
   }
 
-  private getFilterConditions(
-    audience: CreateNewExternalNotificationBody['audience']
-  ): Prisma.UserFindManyArgs['where'] {
+  private getFilterConditions(audience: NotificationAudience): Prisma.UserFindManyArgs['where'] {
     switch (audience.type) {
+      case 'USER_ID':
+        return {
+          id: {
+            in: audience.details,
+          },
+        }
       case 'ROLE':
         return {
           roles: {
@@ -142,6 +164,15 @@ export class NotificationRepository {
     }
   }
 
+  /**
+   * Resolve a presented key to its record, or null when it is unknown or
+   * deactivated (retiring an app deactivates its key, which is what stops a
+   * retired Builder App from notifying anyone).
+   *
+   * Returns the app binding and the daily quota alongside the id: `miniAppId`
+   * decides *which* send path the key may use at all, so the caller needs it at
+   * the same moment it learns the key is valid.
+   */
   async checkApiKey(apiKey: string) {
     return fromRepositoryPromise(
       this.prismaService.notificationApiKey.findUnique({
@@ -151,6 +182,8 @@ export class NotificationRepository {
         },
         select: {
           id: true,
+          miniAppId: true,
+          dailyQuota: true,
         },
       })
     )
@@ -273,12 +306,12 @@ export class NotificationRepository {
    *                 `undefined` for platform-internal sends that hold no key.
    */
   async sendNotificationToUser(
-    conditions: CreateNewExternalNotificationBody['audience'],
+    conditions: NotificationAudience,
     data: CreateNewExternalNotificationBody['content'],
     apiKeyId: string | undefined,
     smsFallbackText?: string
   ) {
-    const audience: CreateNewExternalNotificationBody['audience'] =
+    const audience: NotificationAudience =
       conditions.type === 'PHONE_NUMBER'
         ? {
             type: 'PHONE_NUMBER',
