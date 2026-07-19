@@ -1,5 +1,15 @@
 # @client/backoffice
 
+## 1.4.0
+
+### Minor Changes
+
+- [#421](https://github.com/PPLEThai/pple-today/pull/421) [`d4ca97d`](https://github.com/PPLEThai/pple-today/commit/d4ca97d7fedda067ce9a00ca8ae8612158a247f4) Thanks [@PanJ](https://github.com/PanJ)! - Read-only admin view of platform-managed mini apps
+
+  - The `MiniApp` DTO gains `source` (ADMIN/PLATFORM), `ownerSub`, and `createdAt`, exposed to the admin backoffice API alongside the existing fields.
+  - The admin mini-app table shows tier, source, owner, and created date for every app, with a "จัดการโดย PPLE Platform" marker on platform-provisioned apps.
+  - Platform-sourced apps have no edit/delete controls in the table and are rejected by the admin update/delete endpoints (`MINI_APP_PLATFORM_MANAGED`) — they're owned by the Provisioner, not this admin. Manual admin app management is unchanged for ADMIN-source apps.
+
 ## 1.3.1
 
 ### Patch Changes
