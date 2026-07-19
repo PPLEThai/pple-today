@@ -47,9 +47,9 @@ const quotaDayEnd = (now: Date): Date =>
  * the day rollover, is testable without a database or a fake timer.
  *
  * `used` is the count *before* this send, so a key at 9 of 10 is still allowed
- * and reports 1 remaining. Because the count and the send are not atomic,
- * concurrent sends can each pass and push usage past the quota; `remaining`
- * clamps at zero rather than going negative.
+ * and reports 1 remaining. Concurrent overshoot is prevented by the repository
+ * claim that locks the key before counting and writing; `remaining` still clamps
+ * at zero so a historically overshot window never reports a negative budget.
  */
 export const evaluateDailyQuota = ({
   used,

@@ -19,6 +19,7 @@ const STRANGER = 'stranger-sub'
 
 // 11:30 on 2026-07-19 in Bangkok; the window resets at 17:00Z the same day.
 const NOW = new Date('2026-07-19T04:30:00.000Z')
+const DAY_START = new Date('2026-07-18T17:00:00.000Z')
 const NEXT_RESET = new Date('2026-07-19T17:00:00.000Z')
 
 const CONTENT = { header: 'Canvassing today', message: 'Three streets left in Bang Rak' }
@@ -44,7 +45,8 @@ const createFakeAppNotificationRepository = (
     acceptedInviteUserIds?: Set<string>
   } = {}
 ) => {
-  const usage: { keyId: string; usedAt: Date; body: unknown }[] = []
+  const usage: { id: string; keyId: string; usedAt: Date; body: unknown }[] = []
+  let nextUsageId = 1
   const audience = {
     tier: overrides.tier ?? MiniAppTier.LIVE,
     ownerSub: overrides.ownerSub === undefined ? OWNER : overrides.ownerSub,
@@ -56,11 +58,28 @@ const createFakeAppNotificationRepository = (
     usage,
     audience,
     getAudienceInput: vi.fn(async () => ok(audience)),
-    countUsageSince: vi.fn(async (keyId: string, since: Date) =>
-      ok(usage.filter((row) => row.keyId === keyId && row.usedAt >= since).length)
+    /**
+     * Atomic quota claim. Deliberately does not `await` between the count and
+     * the write — that gap is the race the real `$transaction` + `FOR UPDATE`
+     * closes, and leaving a yield here would let the concurrent-quota test pass
+     * for the wrong reason (or fail the demonstration).
+     */
+    claimUsageUnderQuota: vi.fn(
+      async (keyId: string, dailyQuota: number, since: Date, body: unknown) => {
+        const used = usage.filter((row) => row.keyId === keyId && row.usedAt >= since).length
+
+        if (used >= dailyQuota) {
+          return ok({ status: 'quota_exceeded' as const, used })
+        }
+
+        const id = `usage-${nextUsageId++}`
+        usage.push({ id, keyId, usedAt: NOW, body })
+        return ok({ status: 'ok' as const, usageLogId: id, used: used + 1 })
+      }
     ),
-    recordUsage: vi.fn(async (keyId: string, body: unknown) => {
-      usage.push({ keyId, usedAt: NOW, body })
+    releaseUsage: vi.fn(async (usageLogId: string) => {
+      const index = usage.findIndex((row) => row.id === usageLogId)
+      if (index !== -1) usage.splice(index, 1)
       return ok({})
     }),
     setDailyQuota: vi.fn(async () => ok(1)),
@@ -212,16 +231,16 @@ describe('AppNotificationService.send', () => {
       // Yesterday's sends exhausted the budget, but they fall outside today's
       // window, so today starts from zero.
       repository.usage.push(
-        { keyId: KEY_ID, usedAt: new Date('2026-07-18T05:00:00.000Z'), body: {} },
-        { keyId: KEY_ID, usedAt: new Date('2026-07-18T06:00:00.000Z'), body: {} }
+        { id: 'old-1', keyId: KEY_ID, usedAt: new Date('2026-07-18T05:00:00.000Z'), body: {} },
+        { id: 'old-2', keyId: KEY_ID, usedAt: new Date('2026-07-18T06:00:00.000Z'), body: {} }
       )
       const { service } = createService(repository)
 
       const result = await service.send(appBoundKey({ dailyQuota: 2 }), CONTENT)
 
       expect(result._unsafeUnwrap().remaining).toBe(1)
-      const [, since] = repository.countUsageSince.mock.calls[0]
-      expect(since).toEqual(new Date('2026-07-18T17:00:00.000Z'))
+      const [, , since] = repository.claimUsageUnderQuota.mock.calls[0]
+      expect(since).toEqual(DAY_START)
     })
 
     test('is metered per key, not across an app', async () => {
@@ -245,7 +264,29 @@ describe('AppNotificationService.send', () => {
       const result = await service.send(appBoundKey(), CONTENT)
 
       expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.NOTIFICATION_SENT_FAILED)
+      expect(repository.releaseUsage).toHaveBeenCalledOnce()
       expect(repository.usage).toHaveLength(0)
+    })
+
+    test('two concurrent sends at the last remaining slot cannot push usage past the quota', async () => {
+      const repository = createFakeAppNotificationRepository()
+      const { service } = createService(repository)
+      const key = appBoundKey({ dailyQuota: 2 })
+
+      await service.send(key, CONTENT)
+      expect(repository.usage).toHaveLength(1)
+
+      const results = await Promise.all([service.send(key, CONTENT), service.send(key, CONTENT)])
+
+      const successes = results.filter((result) => result.isOk())
+      const failures = results.filter((result) => result.isErr())
+      expect(successes).toHaveLength(1)
+      expect(failures).toHaveLength(1)
+      expect(failures[0]!._unsafeUnwrapErr().code).toBe(InternalErrorCode.NOTIFICATION_QUOTA_EXCEEDED)
+      expect(failures[0]!._unsafeUnwrapErr()).toMatchObject({
+        data: { dailyQuota: 2, remaining: 0, resetAt: NEXT_RESET.toISOString() },
+      })
+      expect(repository.usage).toHaveLength(2)
     })
   })
 

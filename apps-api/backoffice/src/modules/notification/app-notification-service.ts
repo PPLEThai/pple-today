@@ -48,16 +48,12 @@ export class AppNotificationService {
   /**
    * Send one audience-bound notification.
    *
-   * The order is deliberate: refuse unbound keys, resolve the audience, check
-   * the budget, send, then meter. Metering *after* a successful send keeps the
-   * usage log meaning what it has always meant — notifications that were
-   * actually created — so an internal failure never costs the Builder part of
-   * their day's budget.
-   *
-   * The check and the meter are not atomic, so concurrent sends can each pass
-   * the check and land slightly over quota. The window is a day and the
-   * overshoot is bounded by concurrency, so this is deliberately left as an
-   * advisory limit rather than paying for a lock on every send.
+   * The order is deliberate: refuse unbound keys, resolve the audience, claim a
+   * quota slot, send, and release the claim if the send fails. Claiming *before*
+   * the send (atomically against the usage log) keeps concurrent last-slot sends
+   * from both landing; releasing on failure keeps the usage log meaning what it
+   * has always meant — notifications that were actually created — so an internal
+   * failure never costs the Builder part of their day's budget.
    */
   async send(key: AppBoundKey, content: AppNotificationContent) {
     const boundKey = requireAppBoundKey(key)
@@ -76,19 +72,29 @@ export class AppNotificationService {
     }
 
     const now = this.now()
-    const usedResult = await this.appNotificationRepository.countUsageSince(
-      key.id,
-      quotaDayStart(now)
-    )
-    if (usedResult.isErr()) return mapRepositoryError(usedResult.error)
-
-    const quota = evaluateDailyQuota({
-      used: usedResult.value,
-      dailyQuota: key.dailyQuota,
-      now,
+    // The usage log records content and the audience descriptor, never the
+    // resolved recipients. Claimed up front so the body is ready before send.
+    const usageBody = JSON.stringify({
+      audience: { type: 'APP_USERS', miniAppId: boundKey.value.miniAppId },
+      data: content,
     })
 
-    if (!quota.allowed) {
+    // Quota accounting is a single transactional claim so concurrent sends
+    // cannot both squeeze past the last remaining slot.
+    const claimResult = await this.appNotificationRepository.claimUsageUnderQuota(
+      key.id,
+      key.dailyQuota,
+      quotaDayStart(now),
+      usageBody
+    )
+    if (claimResult.isErr()) return mapRepositoryError(claimResult.error)
+
+    if (claimResult.value.status === 'quota_exceeded') {
+      const quota = evaluateDailyQuota({
+        used: claimResult.value.used,
+        dailyQuota: key.dailyQuota,
+        now,
+      })
       return err({
         code: InternalErrorCode.NOTIFICATION_QUOTA_EXCEEDED,
         message: `Daily notification quota of ${quota.dailyQuota} exhausted. It resets at ${quota.resetAt.toISOString()}.`,
@@ -100,44 +106,38 @@ export class AppNotificationService {
       })
     }
 
+    const claim = claimResult.value
     const recipients = resolveAppAudience(audienceInput.value)
 
     // An audience of nobody has no notification to create — creating one would
-    // leave a row addressed to no one. The request is still metered: it is a
-    // send the app asked for, and not metering it would leave a free path.
+    // leave a row addressed to no one. The claim still stands: it is a send the
+    // app asked for, and not metering it would leave a free path.
     if (recipients.length > 0) {
       const sendResult = await this.notificationRepository.sendNotificationToUser(
         { type: 'USER_ID', details: recipients },
         content,
-        // The usage log below is this path's meter, and it records content only.
+        // The usage log above is this path's meter, and it records content only.
         // Letting the shared path log as well would both double-count the send
         // and copy the resolved recipients into the log.
         undefined
       )
 
-      if (sendResult.isErr()) return mapRepositoryError(sendResult.error)
+      if (sendResult.isErr()) {
+        const releaseResult = await this.appNotificationRepository.releaseUsage(claim.usageLogId)
+        if (releaseResult.isErr()) return mapRepositoryError(releaseResult.error)
+        return mapRepositoryError(sendResult.error)
+      }
     }
-
-    const usageResult = await this.appNotificationRepository.recordUsage(
-      key.id,
-      // Stringified to match how the raw-targeting path has always written this
-      // column (`sendNotificationToUser`), so the usage log stays one shape and
-      // a reader never has to branch on which path wrote the row.
-      JSON.stringify({
-        // The audience is recorded as the app it was derived from, never as the
-        // list of people it resolved to.
-        audience: { type: 'APP_USERS', miniAppId: boundKey.value.miniAppId },
-        data: content,
-      })
-    )
-    if (usageResult.isErr()) return mapRepositoryError(usageResult.error)
 
     return ok({
       recipientCount: recipients.length,
-      dailyQuota: quota.dailyQuota,
-      // This send has now been spent, so report what is left after it.
-      remaining: Math.max(quota.remaining - 1, 0),
-      resetAt: quota.resetAt.toISOString(),
+      dailyQuota: key.dailyQuota,
+      remaining: Math.max(key.dailyQuota - claim.used, 0),
+      resetAt: evaluateDailyQuota({
+        used: claim.used,
+        dailyQuota: key.dailyQuota,
+        now,
+      }).resetAt.toISOString(),
     })
   }
 
