@@ -23,6 +23,8 @@ import { VoteIcon } from 'lucide-react-native'
 
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { ElectionCard } from '@app/components/election/election-card'
+import { MiniAppInviteInbox, refreshMiniAppLists } from '@app/components/mini-app/invite-inbox'
+import { MiniAppTierBadge } from '@app/components/mini-app/tier-badge'
 import { RefreshControl } from '@app/components/refresh-control'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { Spinner } from '@app/components/spinner'
@@ -89,9 +91,7 @@ export default function OfficialPage() {
       queryClient.invalidateQueries({
         queryKey: reactQueryClient.getQueryKey('/elections'),
       }),
-      queryClient.resetQueries({
-        queryKey: reactQueryClient.getQueryKey('/mini-app'),
-      }),
+      refreshMiniAppLists(queryClient),
     ])
   }, [queryClient])
 
@@ -138,6 +138,7 @@ export default function OfficialPage() {
           </Text>
         </View>
         <View className="gap-3 py-4 flex-1">
+          <MiniAppInviteInbox />
           <ElectionSection />
           <MiniAppSection isSwitchingRole={isSwitchingRole} />
         </View>
@@ -241,6 +242,7 @@ const MiniAppSection = ({ isSwitchingRole }: { isSwitchingRole: boolean }) => {
                     >
                       {app.name}
                     </Text>
+                    <MiniAppTierBadge tier={app.tier} />
                   </View>
                 </InfoItem>
               </View>
