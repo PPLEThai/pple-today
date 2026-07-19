@@ -46,6 +46,7 @@ const createFakeAppNotificationRepository = (
 ) => {
   const usage: { keyId: string; usedAt: Date; body: unknown }[] = []
   const audience = {
+    slug: 'canvassing',
     tier: overrides.tier ?? MiniAppTier.LIVE,
     ownerSub: overrides.ownerSub === undefined ? OWNER : overrides.ownerSub,
     appUserIds: overrides.appUserIds ?? [OWNER, INVITEE, STRANGER],
@@ -77,6 +78,8 @@ const createFakeNotificationRepository = () => ({
   ),
 })
 
+const REDIRECT_ORIGIN = 'https://miniapp.peoplesparty.or.th'
+
 const createService = (
   appNotificationRepository = createFakeAppNotificationRepository(),
   notificationRepository = createFakeNotificationRepository()
@@ -86,6 +89,7 @@ const createService = (
   service: new AppNotificationService(
     appNotificationRepository as unknown as AppNotificationRepository,
     notificationRepository as unknown as NotificationRepository,
+    REDIRECT_ORIGIN,
     () => NOW
   ),
 })
@@ -262,6 +266,47 @@ describe('AppNotificationService.send', () => {
         data: CONTENT,
       })
       expect(repository.usage[0].body).not.toContain(OWNER)
+    })
+  })
+
+  describe('optional linkPath self-links into this app only', () => {
+    test('linkPath “/foo” delivers a MINI_APP destination under this app’s slug', async () => {
+      const { service, notificationRepository } = createService()
+
+      const result = await service.send(appBoundKey(), CONTENT, '/foo')
+
+      expect(result.isOk()).toBe(true)
+      const [, content] = notificationRepository.sendNotificationToUser.mock.calls[0]
+      expect(content).toEqual({
+        ...CONTENT,
+        link: {
+          type: 'MINI_APP',
+          destination: 'https://miniapp.peoplesparty.or.th/canvassing/foo',
+        },
+      })
+    })
+
+    test('omitting linkPath keeps today’s content-only behaviour', async () => {
+      const { service, notificationRepository } = createService()
+
+      await service.send(appBoundKey(), CONTENT)
+
+      const [, content] = notificationRepository.sendNotificationToUser.mock.calls[0]
+      expect(content).toEqual(CONTENT)
+      expect(content).not.toHaveProperty('link')
+    })
+
+    test('an unsafe linkPath is a 4xx and is not metered or sent', async () => {
+      const repository = createFakeAppNotificationRepository()
+      const { service, notificationRepository } = createService(repository)
+
+      const result = await service.send(appBoundKey(), CONTENT, 'https://evil.example/foo')
+
+      expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.NOTIFICATION_INVALID_LINK_PATH)
+      expect(notificationRepository.sendNotificationToUser).not.toHaveBeenCalled()
+      expect(repository.usage).toHaveLength(0)
+      expect(repository.countUsageSince).not.toHaveBeenCalled()
+      expect(repository.recordUsage).not.toHaveBeenCalled()
     })
   })
 })

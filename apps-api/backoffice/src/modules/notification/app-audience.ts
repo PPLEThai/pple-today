@@ -16,6 +16,14 @@ export interface AppNotificationAudienceInput {
 }
 
 /**
+ * Audience input plus the app facts the send path needs for self-links
+ * (`slug` → mini-app redirect entry). Loaded in the same round trip.
+ */
+export type AppNotificationSendContext = AppNotificationAudienceInput & {
+  slug: string
+}
+
+/**
  * Resolve who an app-bound notification may reach: this app's App Users,
  * narrowed to those still inside its current publication tier's audience.
  *
