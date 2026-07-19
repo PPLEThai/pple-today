@@ -47,6 +47,44 @@ model MiniApp {
   miniAppRoles        MiniAppRole[]
   appUsers            MiniAppUser[]
   notificationApiKeys NotificationApiKey[]
+  invites             MiniAppInvite[]
+}
+
+enum MiniAppInviteStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+// A Builder's invitation for one tester to try their BETA app.
+//
+// An invite is *addressed* by phone number but *bound* to an account: the phone
+// number exists only to deliver the invitation and to let the invitee find it,
+// while `userId` is written once at accept time and is the only thing listing
+// eligibility matches on. That split is deliberate — a tester who later changes
+// their phone number keeps the access they consented to.
+//
+// The 20-invite cap is enforced in the service, not the schema, so a Platform
+// Admin can raise it per app later without a migration.
+model MiniAppInvite {
+  miniAppId String
+  miniApp   MiniApp @relation(fields: [miniAppId], references: [id])
+
+  phoneNumber String // E.164-normalised; a delivery address, never the key to access
+
+  status MiniAppInviteStatus @default(PENDING)
+  userId String? // PPLE ID `sub` of the invitee (same identity as User.id), bound at accept time
+  user   User?               @relation(fields: [userId], references: [id])
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  respondedAt DateTime?
+
+  @@id([miniAppId, phoneNumber])
+  // Listing eligibility reads accepted invites by account…
+  @@index([userId])
+  // …while the invitee's own inbox finds pending ones by their number.
+  @@index([phoneNumber])
 }
 
 // One row per (mini app, user) the first time that user opens the app. Opening

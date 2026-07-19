@@ -5,9 +5,14 @@ import Elysia from 'elysia'
 import { PlatformAuthGuard } from './guard'
 import {
   CreateMiniAppBody,
+  CreateMiniAppInviteBody,
+  CreateMiniAppInviteResponse,
   CreateMiniAppResponse,
+  DeleteMiniAppInviteParams,
+  DeleteMiniAppInviteResponse,
   GetMiniAppUserCountParams,
   GetMiniAppUserCountResponse,
+  ListMiniAppInvitesResponse,
   MiniAppIdParams,
   MiniAppResponse,
   RetireMiniAppResponse,
@@ -18,7 +23,7 @@ import {
 import { PlatformMiniAppServicePlugin } from './services'
 
 import { ConfigServicePlugin } from '../../plugins/config'
-import { AppUserServicePlugin } from '../mini-app/services'
+import { AppUserServicePlugin, MiniAppInviteServicePlugin } from '../mini-app/services'
 
 const PlatformAuthGuardPlugin = new Elysia({ name: 'PlatformAuthGuardPlugin' })
   .use([ConfigServicePlugin])
@@ -49,7 +54,12 @@ const PlatformAuthGuardPlugin = new Elysia({ name: 'PlatformAuthGuardPlugin' })
  * invalidates the mini-app list cache so effects show up in PPLE Today promptly.
  */
 export const PlatformController = new Elysia({ prefix: '/platform', tags: ['Platform'] })
-  .use([PlatformAuthGuardPlugin, AppUserServicePlugin, PlatformMiniAppServicePlugin])
+  .use([
+    PlatformAuthGuardPlugin,
+    AppUserServicePlugin,
+    PlatformMiniAppServicePlugin,
+    MiniAppInviteServicePlugin,
+  ])
   .post(
     '/mini-apps',
     async ({ body, status, platformMiniAppService }) => {
@@ -230,6 +240,102 @@ export const PlatformController = new Elysia({ prefix: '/platform', tags: ['Plat
         summary: 'Get Mini App User count',
         description:
           'Per-app App User count — the number of distinct users who have opened the mini app. Requires the platform service token.',
+      },
+    }
+  )
+  // The Builder's side of Beta invitations, reached through the Console rather
+  // than directly: the Console holds the workflow (who may invite, and when) and
+  // proxies here with its service token. today-v2 stores only the effective
+  // facts — who is invited, and whether they said yes.
+  .get(
+    '/mini-apps/:id/invites',
+    async ({ status, params, miniAppInviteService }) => {
+      const invites = await miniAppInviteService.listInvites(params.id)
+
+      if (invites.isErr()) {
+        return mapErrorCodeToResponse(invites.error, status)
+      }
+
+      return status(200, invites.value)
+    },
+    {
+      requiredPlatformService: true,
+      params: MiniAppIdParams,
+      response: {
+        200: ListMiniAppInvitesResponse,
+        ...createErrorSchema(
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'List a Mini App’s Beta testers',
+        description:
+          'Every invitation on the app with its current status, including declined ones. Requires the platform service token.',
+      },
+    }
+  )
+  .post(
+    '/mini-apps/:id/invites',
+    async ({ status, params, body, miniAppInviteService }) => {
+      const invite = await miniAppInviteService.createInvite(params.id, body.phoneNumber)
+
+      if (invite.isErr()) {
+        return mapErrorCodeToResponse(invite.error, status)
+      }
+
+      return status(201, invite.value)
+    },
+    {
+      requiredPlatformService: true,
+      params: MiniAppIdParams,
+      body: CreateMiniAppInviteBody,
+      response: {
+        201: CreateMiniAppInviteResponse,
+        ...createErrorSchema(
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.MINI_APP_INVITE_ALREADY_EXISTS,
+          InternalErrorCode.MINI_APP_INVITE_LIMIT_EXCEEDED,
+          InternalErrorCode.MINI_APP_INVITE_INVALID_PHONE_NUMBER,
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Invite a Beta tester',
+        description:
+          'Invites one tester by phone number and delivers the invitation as a PPLE Today notification. The app’s tester cap is enforced here; a declined invitation frees its seat. The invitee sees nothing in their mini app list until they accept. Requires the platform service token.',
+      },
+    }
+  )
+  .delete(
+    '/mini-apps/:id/invites/:phoneNumber',
+    async ({ status, params, miniAppInviteService }) => {
+      const result = await miniAppInviteService.deleteInvite(params.id, params.phoneNumber)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, { message: 'Invite removed successfully' })
+    },
+    {
+      requiredPlatformService: true,
+      params: DeleteMiniAppInviteParams,
+      response: {
+        200: DeleteMiniAppInviteResponse,
+        ...createErrorSchema(
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.MINI_APP_INVITE_NOT_FOUND,
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Remove a Beta tester',
+        description:
+          'Revokes the invitation. If the tester had accepted, the app disappears from their mini app list on their next listing — eligibility is read live, so there is no grant left behind. Requires the platform service token.',
       },
     }
   )

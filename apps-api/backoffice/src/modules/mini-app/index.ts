@@ -2,13 +2,19 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
-import { ListMiniAppsQuery, ListMiniAppsResponse } from './models'
-import { MiniAppServicePlugin } from './services'
+import {
+  ListMiniAppsQuery,
+  ListMiniAppsResponse,
+  ListMyMiniAppInvitesResponse,
+  MiniAppInviteParams,
+  RespondToMiniAppInviteResponse,
+} from './models'
+import { MiniAppInviteServicePlugin, MiniAppServicePlugin } from './services'
 
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
 
 export const MiniAppController = new Elysia({ prefix: '/mini-app', tags: ['Mini Apps'] })
-  .use([AuthGuardPlugin, MiniAppServicePlugin])
+  .use([AuthGuardPlugin, MiniAppServicePlugin, MiniAppInviteServicePlugin])
   .get(
     '/',
     async ({ status, miniAppService, headers, authGuard }) => {
@@ -58,6 +64,91 @@ export const MiniAppController = new Elysia({ prefix: '/mini-app', tags: ['Mini 
       response: {
         200: ListMiniAppsResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+    }
+  )
+  // The invitee's side of Beta invitations. Nothing here takes a mini app id on
+  // trust: the invitation is always looked up by the *requesting user's own*
+  // phone number, so a user can only ever answer invitations addressed to them.
+  .get(
+    '/invites',
+    async ({ status, user, miniAppInviteService }) => {
+      const invites = await miniAppInviteService.listPendingInvitesForUser(user.phoneNumber)
+
+      if (invites.isErr()) {
+        return mapErrorCodeToResponse(invites.error, status)
+      }
+
+      return status(200, invites.value)
+    },
+    {
+      detail: {
+        summary: 'List my pending mini app invitations',
+        description:
+          'Invitations addressed to the authenticated user’s phone number that they have not yet answered.',
+      },
+      requiredLocalUser: true,
+      response: {
+        200: ListMyMiniAppInvitesResponse,
+        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+    }
+  )
+  .post(
+    '/invites/:miniAppId/accept',
+    async ({ status, user, params, miniAppInviteService }) => {
+      const invite = await miniAppInviteService.respondToInvite(user, params.miniAppId, 'ACCEPT')
+
+      if (invite.isErr()) {
+        return mapErrorCodeToResponse(invite.error, status)
+      }
+
+      return status(200, invite.value)
+    },
+    {
+      detail: {
+        summary: 'Accept a mini app invitation',
+        description:
+          'Binds the invitation to the authenticated user’s account, after which the Beta mini app appears in their mini app list. Because the binding is to the account and not the phone number, later changing their number does not revoke access.',
+      },
+      requiredLocalUser: true,
+      params: MiniAppInviteParams,
+      response: {
+        200: RespondToMiniAppInviteResponse,
+        ...createErrorSchema(
+          InternalErrorCode.MINI_APP_INVITE_NOT_FOUND,
+          InternalErrorCode.MINI_APP_INVITE_ALREADY_RESPONDED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .post(
+    '/invites/:miniAppId/decline',
+    async ({ status, user, params, miniAppInviteService }) => {
+      const invite = await miniAppInviteService.respondToInvite(user, params.miniAppId, 'DECLINE')
+
+      if (invite.isErr()) {
+        return mapErrorCodeToResponse(invite.error, status)
+      }
+
+      return status(200, invite.value)
+    },
+    {
+      detail: {
+        summary: 'Decline a mini app invitation',
+        description:
+          'Records the refusal. The mini app never appears in the user’s list, and the Builder’s tester seat is freed.',
+      },
+      requiredLocalUser: true,
+      params: MiniAppInviteParams,
+      response: {
+        200: RespondToMiniAppInviteResponse,
+        ...createErrorSchema(
+          InternalErrorCode.MINI_APP_INVITE_NOT_FOUND,
+          InternalErrorCode.MINI_APP_INVITE_ALREADY_RESPONDED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
       },
     }
   )

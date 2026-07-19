@@ -326,6 +326,21 @@ const MINI_APP_ERROR_SCHEMA = {
   MINI_APP_CLIENT_ID_REQUIRED: {
     status: 400,
   },
+  MINI_APP_INVITE_NOT_FOUND: {
+    status: 404,
+  },
+  MINI_APP_INVITE_INVALID_PHONE_NUMBER: {
+    status: 400,
+  },
+  MINI_APP_INVITE_ALREADY_EXISTS: {
+    status: 409,
+  },
+  MINI_APP_INVITE_LIMIT_EXCEEDED: {
+    status: 409,
+  },
+  MINI_APP_INVITE_ALREADY_RESPONDED: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 const ZITADEL_ERROR_SCHEMA = {
