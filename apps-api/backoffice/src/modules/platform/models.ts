@@ -25,6 +25,13 @@ export const CreateMiniAppBody = t.Object({
   url: t.String({ description: 'Client URL of the mini app', format: 'uri' }),
   ownerSub: t.String({ description: "The Builder's PPLE ID `sub` — the app's owner" }),
   iconUrl: t.Optional(t.String({ description: 'Public icon URL of the mini app' })),
+  dailyQuota: t.Optional(
+    t.Integer({
+      minimum: 0,
+      description:
+        "Daily notification quota for the app's key. The platform owns Resource Limits, so it passes the limit it provisioned the app with; omitted falls back to the database default.",
+    })
+  ),
 })
 export type CreateMiniAppBody = Static<typeof CreateMiniAppBody>
 
@@ -66,6 +73,20 @@ export const SetRolesBody = t.Object({
   }),
 })
 export type SetRolesBody = Static<typeof SetRolesBody>
+
+export const SetNotificationQuotaBody = t.Object({
+  dailyQuota: t.Integer({
+    minimum: 0,
+    description:
+      "Sends allowed per day on the app's notification key. Zero suspends the app's notifications outright.",
+  }),
+})
+export type SetNotificationQuotaBody = Static<typeof SetNotificationQuotaBody>
+
+export const SetNotificationQuotaResponse = t.Object({
+  dailyQuota: t.Integer({ description: 'The quota now in effect' }),
+})
+export type SetNotificationQuotaResponse = Static<typeof SetNotificationQuotaResponse>
 
 export const MiniAppResponse = MiniApp
 export type MiniAppResponse = Static<typeof MiniAppResponse>

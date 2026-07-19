@@ -99,6 +99,47 @@ export const CreateNewExternalNotificationBody = t.Composite([
 ])
 export type CreateNewExternalNotificationBody = Static<typeof CreateNewExternalNotificationBody>
 
+/**
+ * The body of an audience-bound send: content, and nothing else.
+ *
+ * There is deliberately no `audience` field. The key identifies the app, the
+ * platform resolves the app's App Users within its current tier, and an app has
+ * no way to name a recipient — which is the entire privacy guarantee. The
+ * `smsFallbackText` escape hatch is absent for the same reason: SMS fallback is
+ * addressed by phone number.
+ *
+ * `link` is withheld too, and that is a narrower point about *authority* rather
+ * than privacy: the shared `content` schema can address `MINI_APP` and
+ * `IN_APP_NAVIGATION` destinations anywhere in PPLE Today, so accepting it here
+ * would let a Builder App deep-link people into another team's mini app or an
+ * arbitrary in-app screen. Without a link the send falls back to the
+ * notification centre, which is the correct destination for an app-authored
+ * message today. Letting an app link into *itself* is worth adding — it needs a
+ * destination validated against the sending app, not a free-form link.
+ */
+export const CreateAppNotificationBody = t.Object({
+  content: t.Object({
+    header: t.String({ description: 'Notification title' }),
+    message: t.String({ description: 'Notification body' }),
+    image: t.Optional(t.String({ description: 'Optional image URL' })),
+  }),
+})
+export type CreateAppNotificationBody = Static<typeof CreateAppNotificationBody>
+
+export const CreateAppNotificationResponse = t.Object({
+  recipientCount: t.Integer({
+    description:
+      'How many App Users the notification was addressed to, after the tier audience was applied. Zero is a valid outcome — nobody has opened the app yet, or the tier admits nobody.',
+  }),
+  dailyQuota: t.Integer({ description: 'Sends allowed per day for this key' }),
+  remaining: t.Integer({ description: 'Sends still available after this one' }),
+  resetAt: t.String({
+    format: 'date-time',
+    description: 'When the quota window rolls over (Asia/Bangkok midnight)',
+  }),
+})
+export type CreateAppNotificationResponse = Static<typeof CreateAppNotificationResponse>
+
 export const CreateNewExternalNotificationResponse = t.Object({
   success: t.Boolean(),
   phoneNumber: t.Optional(

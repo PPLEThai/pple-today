@@ -15,6 +15,12 @@ export interface CreatePlatformMiniAppData {
   clientId: string
   zitadelAppId: string
   iconUrl?: string
+  /**
+   * Daily notification quota for the app's key. The platform owns Resource
+   * Limits, so it passes the limit the app was provisioned with; omitted leaves
+   * the column default.
+   */
+  dailyQuota?: number
 }
 
 export interface UpdatePlatformMiniAppData {
@@ -69,6 +75,7 @@ export class PlatformMiniAppRepository {
             name: data.name,
             apiKey: hashNotificationApiKey(notificationApiKey),
             miniAppId: miniApp.id,
+            dailyQuota: data.dailyQuota,
           },
         })
 
