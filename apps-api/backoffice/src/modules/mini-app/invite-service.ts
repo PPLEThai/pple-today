@@ -108,22 +108,22 @@ export class MiniAppInviteService {
     // The cap is checked on every path that could take a seat, including
     // re-opening a declined invite. A declined row holds no seat, so it never
     // counts itself here — but re-opening it claims one, and by then the seat
-    // it freed may already have gone to someone else.
-    const countResult = await this.miniAppInviteRepository.countHoldingSeat(miniAppId)
-    if (countResult.isErr()) {
-      return mapRepositoryError(countResult.error)
+    // it freed may already have gone to someone else. Seat accounting is a
+    // single transactional claim so concurrent creates cannot both squeeze in.
+    const inviteResult = await this.miniAppInviteRepository.upsertPendingUnderCap(
+      miniAppId,
+      phoneNumber,
+      MINI_APP_INVITE_LIMIT
+    )
+    if (inviteResult.isErr()) {
+      return mapRepositoryError(inviteResult.error)
     }
 
-    if (countResult.value >= MINI_APP_INVITE_LIMIT) {
+    if (inviteResult.value.status === 'limit_exceeded') {
       return err({
         code: InternalErrorCode.MINI_APP_INVITE_LIMIT_EXCEEDED,
         message: `This app already has the maximum of ${MINI_APP_INVITE_LIMIT} testers. Remove a tester before inviting another.`,
       })
-    }
-
-    const inviteResult = await this.miniAppInviteRepository.upsertPending(miniAppId, phoneNumber)
-    if (inviteResult.isErr()) {
-      return mapRepositoryError(inviteResult.error)
     }
 
     // Delivery is best-effort and reported, not enforced: the invite row is the
@@ -131,7 +131,7 @@ export class MiniAppInviteService {
     // push never lands.
     const notified = await this.inviteNotifier.notifyInvitee(phoneNumber, miniApp)
 
-    return ok({ invite: inviteResult.value, notified })
+    return ok({ invite: inviteResult.value.invite, notified })
   }
 
   /**
