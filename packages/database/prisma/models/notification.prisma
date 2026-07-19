@@ -104,9 +104,10 @@ model NotificationApiKey {
   miniApp   MiniApp? @relation(fields: [miniAppId], references: [id])
 
   // Sends allowed per calendar day (Asia/Bangkok), metered against
-  // NotificationApiKeyUsageLog. The default is the Builder App Resource Limit;
-  // raises are approved on the platform (LimitRequest) and applied here.
-  // Legacy central-team keys are never metered, so this column is inert for them.
+  // NotificationApiKeyUsageLog via a transactional claim that locks this row.
+  // The default is the Builder App Resource Limit; raises are approved on the
+  // platform (LimitRequest) and applied here. Legacy central-team keys are never
+  // metered, so this column is inert for them.
   dailyQuota Int @default(1000)
 
   createdAt DateTime                     @default(now())
