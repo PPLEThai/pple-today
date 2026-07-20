@@ -131,4 +131,27 @@ export class AppNotificationRepository {
       return count
     })
   }
+
+  /**
+   * How many sends the app's active key has logged since `since` — the same
+   * window and rows `claimUsageUnderQuota` meters against. `null` means there
+   * is no active key (retired / never provisioned), distinct from zero sends.
+   */
+  async countUsageSince(miniAppId: string, since: Date) {
+    return await fromRepositoryPromise(async () => {
+      const key = await this.prismaService.notificationApiKey.findFirst({
+        where: { miniAppId, active: true },
+        select: { id: true },
+      })
+
+      if (!key) return null
+
+      return await this.prismaService.notificationApiKeyUsageLog.count({
+        where: {
+          notificationApiKeyId: key.id,
+          usedAt: { gte: since },
+        },
+      })
+    })
+  }
 }

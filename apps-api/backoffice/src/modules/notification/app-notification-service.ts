@@ -193,4 +193,28 @@ export class AppNotificationService {
 
     return ok({ dailyQuota })
   }
+
+  /**
+   * How many notifications the app has sent in the current Bangkok quota day —
+   * the number the platform Console Usage tile shows against `dailyQuota`.
+   * Uses the same window and usage-log rows as the send path's claim, so the
+   * tile and a 429 cannot disagree. An app with no active key is not-found
+   * (unavailable on the platform side), distinct from zero sends today.
+   */
+  async getNotificationUsage(miniAppId: string, now: Date = this.now()) {
+    const result = await this.appNotificationRepository.countUsageSince(
+      miniAppId,
+      quotaDayStart(now)
+    )
+    if (result.isErr()) return mapRepositoryError(result.error)
+
+    if (result.value === null) {
+      return err({
+        code: InternalErrorCode.NOTIFICATION_API_KEY_NOT_FOUND,
+        message: 'This mini app has no active notification key',
+      })
+    }
+
+    return ok({ sent: result.value })
+  }
 }

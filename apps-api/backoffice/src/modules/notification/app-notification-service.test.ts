@@ -84,6 +84,7 @@ const createFakeAppNotificationRepository = (
       return ok({})
     }),
     setDailyQuota: vi.fn(async () => ok(1)),
+    countUsageSince: vi.fn(async () => ok<number | null>(usage.length)),
   }
 }
 
@@ -370,6 +371,41 @@ describe('AppNotificationService.setDailyQuota', () => {
     const { service } = createService(repository)
 
     const result = await service.setDailyQuota(MINI_APP_ID, 5000)
+
+    expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.NOTIFICATION_API_KEY_NOT_FOUND)
+  })
+})
+
+describe('AppNotificationService.getNotificationUsage', () => {
+  test('reports sends in the current Bangkok quota day as { sent }', async () => {
+    const repository = createFakeAppNotificationRepository()
+    repository.countUsageSince = vi.fn(async () => ok(7))
+    const { service } = createService(repository)
+
+    const result = await service.getNotificationUsage(MINI_APP_ID)
+
+    expect(result._unsafeUnwrap()).toEqual({ sent: 7 })
+    // Same day boundary the claim path uses — the Console tile and the 429
+    // must agree on what "today" means.
+    expect(repository.countUsageSince).toHaveBeenCalledWith(MINI_APP_ID, DAY_START)
+  })
+
+  test('an app that sent nothing today reports zero, not not-found', async () => {
+    const repository = createFakeAppNotificationRepository()
+    repository.countUsageSince = vi.fn(async () => ok(0))
+    const { service } = createService(repository)
+
+    const result = await service.getNotificationUsage(MINI_APP_ID)
+
+    expect(result._unsafeUnwrap()).toEqual({ sent: 0 })
+  })
+
+  test('an app with no active key is a not-found, not zero sends', async () => {
+    const repository = createFakeAppNotificationRepository()
+    repository.countUsageSince = vi.fn(async () => ok(null))
+    const { service } = createService(repository)
+
+    const result = await service.getNotificationUsage(MINI_APP_ID)
 
     expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.NOTIFICATION_API_KEY_NOT_FOUND)
   })
