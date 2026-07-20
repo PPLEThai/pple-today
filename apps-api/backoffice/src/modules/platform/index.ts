@@ -285,7 +285,7 @@ export const PlatformController = new Elysia({ prefix: '/platform', tags: ['Plat
       detail: {
         summary: "Get a Builder App's notification sends today",
         description:
-          "How many audience-bound notifications the app has sent in the current Asia/Bangkok quota day — the same window that drives the daily quota 429. Requires the platform service token. An app with no active key is not-found.",
+          'How many audience-bound notifications the app has sent in the current Asia/Bangkok quota day — the same window that drives the daily quota 429. Requires the platform service token. An app with no active key is not-found.',
       },
     }
   )

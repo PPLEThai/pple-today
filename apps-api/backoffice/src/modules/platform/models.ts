@@ -20,9 +20,7 @@ export const GetMiniAppNotificationUsageResponse = t.Object({
       "Notifications sent today on the app's active key (Asia/Bangkok quota day), against dailyQuota",
   }),
 })
-export type GetMiniAppNotificationUsageResponse = Static<
-  typeof GetMiniAppNotificationUsageResponse
->
+export type GetMiniAppNotificationUsageResponse = Static<typeof GetMiniAppNotificationUsageResponse>
 
 export const MiniAppIdParams = t.Object({
   id: t.String({ description: 'Mini app id' }),
