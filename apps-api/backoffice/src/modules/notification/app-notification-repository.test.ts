@@ -29,15 +29,23 @@ const createPrismaService = () => {
       },
       notificationApiKeyUsageLog: {
         delete: vi.fn().mockResolvedValue({ id: 'usage-log-id' }),
+        count: vi.fn().mockResolvedValue(3),
       },
       notificationApiKey: {
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+        findFirst: vi.fn().mockResolvedValue({ id: 'key-1' }),
       },
       $transaction: vi.fn(async (cb: (txClient: typeof tx) => unknown) => cb(tx)),
     } as unknown as PrismaService & {
       miniApp: { findUniqueOrThrow: ReturnType<typeof vi.fn> }
-      notificationApiKeyUsageLog: { delete: ReturnType<typeof vi.fn> }
-      notificationApiKey: { updateMany: ReturnType<typeof vi.fn> }
+      notificationApiKeyUsageLog: {
+        delete: ReturnType<typeof vi.fn>
+        count: ReturnType<typeof vi.fn>
+      }
+      notificationApiKey: {
+        updateMany: ReturnType<typeof vi.fn>
+        findFirst: ReturnType<typeof vi.fn>
+      }
       $transaction: ReturnType<typeof vi.fn>
     },
     tx,
@@ -219,5 +227,37 @@ describe('AppNotificationRepository.setDailyQuota', () => {
       data: { dailyQuota: 5000 },
     })
     expect(result._unsafeUnwrap()).toBe(1)
+  })
+})
+
+describe('AppNotificationRepository.countUsageSince', () => {
+  test('counts usage-log rows for the app’s active key since the window start', async () => {
+    const { prismaService } = createPrismaService()
+    const repository = new AppNotificationRepository(prismaService)
+
+    const result = await repository.countUsageSince('app-1', SINCE)
+
+    // Same active-key scope as setDailyQuota — a retired/deactivated key is not
+    // the meter the Console should read.
+    expect(prismaService.notificationApiKey.findFirst).toHaveBeenCalledWith({
+      where: { miniAppId: 'app-1', active: true },
+      select: { id: true },
+    })
+    // Same query shape the claim path uses for the daily window.
+    expect(prismaService.notificationApiKeyUsageLog.count).toHaveBeenCalledWith({
+      where: { notificationApiKeyId: 'key-1', usedAt: { gte: SINCE } },
+    })
+    expect(result._unsafeUnwrap()).toBe(3)
+  })
+
+  test('an app with no active key reports null, not zero sends', async () => {
+    const { prismaService } = createPrismaService()
+    prismaService.notificationApiKey.findFirst = vi.fn().mockResolvedValue(null)
+    const repository = new AppNotificationRepository(prismaService)
+
+    const result = await repository.countUsageSince('retired-app', SINCE)
+
+    expect(result._unsafeUnwrap()).toBeNull()
+    expect(prismaService.notificationApiKeyUsageLog.count).not.toHaveBeenCalled()
   })
 })

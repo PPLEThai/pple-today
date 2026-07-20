@@ -10,6 +10,7 @@ import {
   CreateMiniAppResponse,
   DeleteMiniAppInviteParams,
   DeleteMiniAppInviteResponse,
+  GetMiniAppNotificationUsageResponse,
   GetMiniAppUserCountParams,
   GetMiniAppUserCountResponse,
   ListMiniAppInvitesResponse,
@@ -254,6 +255,37 @@ export const PlatformController = new Elysia({ prefix: '/platform', tags: ['Plat
         summary: "Set a Builder App's daily notification quota",
         description:
           "Set how many audience-bound notifications the app may send per day (Asia/Bangkok). This is how an approved LimitRequest takes effect. Applies to the app's active notification key; a retired app has none.",
+      },
+    }
+  )
+  // Sends authenticate with the app's Notification Key and never traverse the
+  // platform, so today-v2 exposes the count it meters for the Console Usage tile.
+  .get(
+    '/mini-apps/:id/notification-usage',
+    async ({ params, status, appNotificationService }) => {
+      const result = await appNotificationService.getNotificationUsage(params.id)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredPlatformService: true,
+      params: MiniAppIdParams,
+      response: {
+        200: GetMiniAppNotificationUsageResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.NOTIFICATION_API_KEY_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: "Get a Builder App's notification sends today",
+        description:
+          "How many audience-bound notifications the app has sent in the current Asia/Bangkok quota day — the same window that drives the daily quota 429. Requires the platform service token. An app with no active key is not-found.",
       },
     }
   )
