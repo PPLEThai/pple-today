@@ -35,6 +35,10 @@ enum NotificationInAppType {
   TOPIC_SUGGESTION
   USER_SUGGESTION
   ELECTION_VOTE
+  // Not a navigation entity: marks a notification as a Beta invite so the
+  // notification centre renders the accept/decline inbox inline, and a push tap
+  // lands on the แอป tab where that same inbox lives.
+  MINI_APP_INVITE
 }
 
 model Notification {

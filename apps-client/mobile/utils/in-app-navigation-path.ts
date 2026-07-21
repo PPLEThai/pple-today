@@ -3,10 +3,14 @@ import { BannerInAppType } from '@api/backoffice/app'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 
 export function getMobilePathFromInAppNavigation(
-  inAppType: BannerInAppType | 'NOTIFICATION',
+  inAppType: BannerInAppType | 'NOTIFICATION' | 'MINI_APP_INVITE',
   inAppId: string
 ) {
   switch (inAppType) {
+    // A Beta invite has no entity to open; a tap lands on the แอป tab, where the
+    // accept/decline inbox is rendered.
+    case 'MINI_APP_INVITE':
+      return '/official' as const
     case 'ELECTION':
       return `/election/${inAppId}` as const
     case 'ELECTION_VOTE':

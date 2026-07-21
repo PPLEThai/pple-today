@@ -59,7 +59,7 @@ export async function openUrl(url: string) {
 }
 
 export function createLinkFromInAppNavigation(
-  inAppType: BannerInAppType | 'NOTIFICATION',
+  inAppType: BannerInAppType | 'NOTIFICATION' | 'MINI_APP_INVITE',
   inAppId: string
 ) {
   return getMobilePathFromInAppNavigation(inAppType, inAppId)

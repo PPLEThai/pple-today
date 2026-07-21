@@ -11,6 +11,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeftIcon, ArrowUpRightIcon, BellIcon } from 'lucide-react-native'
 
 import { LinkifiedText } from '@app/components/linkified-text'
+import { MiniAppInviteInbox } from '@app/components/mini-app/invite-inbox'
 import { reactQueryClient } from '@app/libs/api-client'
 import { openLink } from '@app/utils/link'
 
@@ -37,6 +38,13 @@ export default function NotificationDetailPage() {
     }
   }, [notificationDetailQuery.error, router])
   const item = notificationDetailQuery.data
+  // A Beta invite is delivered as an ordinary notification carrying the
+  // MINI_APP_INVITE marker. Rather than dead-end on the message, we render the
+  // same accept/decline inbox shown on the แอป tab inline here, and drop the
+  // bottom action button (the inbox has its own accept/decline).
+  const isInvite =
+    item?.content.link?.type === 'IN_APP_NAVIGATION' &&
+    item.content.link.destination.inAppType === 'MINI_APP_INVITE'
   if (!notificationId) {
     return null
   }
@@ -75,8 +83,16 @@ export default function NotificationDetailPage() {
             <LinkifiedText className="text-base-text-medium font-body-regular text-base">
               {item.content.message}
             </LinkifiedText>
+            {isInvite && (
+              // The inbox owns its own px-4; cancel the ScrollView's so its cards
+              // line up with the message above. It renders nothing once every
+              // invite has been answered (e.g. accepted on another device).
+              <View className="-mx-4">
+                <MiniAppInviteInbox />
+              </View>
+            )}
           </ScrollView>
-          {item.content.link && (
+          {item.content.link && !isInvite && (
             <View className="p-4 pb-6 bg-base-bg-white">
               <Button onPress={() => openLink(item.content.link!)}>
                 <Icon icon={ArrowUpRightIcon} />

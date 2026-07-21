@@ -107,6 +107,7 @@ export class NotificationRepository {
           },
         })
         return true
+      case NotificationInAppType.MINI_APP_INVITE:
       case NotificationInAppType.OFFICIAL:
       case NotificationInAppType.ACTIVITY:
       case NotificationInAppType.ANNOUNCEMENT_LIST:

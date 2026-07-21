@@ -1,4 +1,5 @@
 import type { ElysiaLoggerInstance } from '@pple-today/api-common/plugins'
+import { NotificationInAppType } from '@pple-today/database/prisma'
 
 import type { NotificationRepository } from '../notification/repository'
 
@@ -16,10 +17,13 @@ export interface MiniAppForInviteNotification {
  * roll back an invitation that was genuinely recorded, nor cost the Builder a
  * tester seat, so there is no error for a caller to propagate.
  *
- * The notification carries no deep link. An invitation is not yet access: until
- * the tester accepts there is nothing to open, so it lands in the notification
- * centre, and the invite card in the app (PPLEThai/pple-platform#7) is where the
- * accept/decline decision is actually made.
+ * The notification carries no deep link *into the app itself*: an invitation is
+ * not yet access, so there is nothing in the Beta app to open. It instead
+ * carries a `MINI_APP_INVITE` in-app link, which is not a navigation entity but
+ * a marker — the notification centre renders the accept/decline inbox
+ * (PPLEThai/pple-platform#7) inline from it, and a push tap lands on the แอป tab
+ * where that same inbox lives. Either way the tester reaches the one place the
+ * accept/decline decision is actually made, instead of a dead-end message.
  *
  * Kept free of Elysia/config imports so it can be unit-tested without booting
  * the app's config graph; the plugin wiring lives in `services.ts`.
@@ -39,6 +43,14 @@ export class InviteNotifier {
       {
         header: 'คำเชิญทดลองใช้แอปพลิเคชัน',
         message: `คุณถูกเชิญให้ทดลองใช้ "${miniApp.name}" กดเพื่อตอบรับหรือปฏิเสธคำเชิญ`,
+        // Older clients that don't render the inbox inline fall back to this
+        // button, which follows the link to the แอป tab where the inbox lives.
+        actionButtonText: 'ดูคำเชิญ',
+        link: {
+          type: 'IN_APP_NAVIGATION',
+          // MINI_APP_INVITE has no target entity; the empty id is expected.
+          destination: { inAppType: NotificationInAppType.MINI_APP_INVITE, inAppId: '' },
+        },
       },
       // Platform-internal send: there is no notification API key to meter it against.
       undefined

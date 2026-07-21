@@ -35,8 +35,13 @@ describe('InviteNotifier.notifyInvitee', () => {
     expect(content.message).toContain('Canvassing')
     // Platform-internal send: no key to meter it against.
     expect(apiKeyId).toBeUndefined()
-    // An invitation is not yet access, so it must carry no deep link.
-    expect(content.link).toBeUndefined()
+    // Not a deep link into the Beta app (there is nothing to open yet) but the
+    // MINI_APP_INVITE marker the client turns into the inline accept/decline
+    // inbox / a tap through to the แอป tab.
+    expect(content.link).toEqual({
+      type: 'IN_APP_NAVIGATION',
+      destination: { inAppType: 'MINI_APP_INVITE', inAppId: '' },
+    })
   })
 
   test('reports delivered when the number reached a PPLE Today account', async () => {
