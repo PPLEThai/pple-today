@@ -1,7 +1,6 @@
 import { Badge } from '@pple-today/ui/badge'
-import { Text } from '@pple-today/ui/text'
-
 import { cn } from '@pple-today/ui/lib/utils'
+import { Text } from '@pple-today/ui/text'
 
 import { MiniApp } from '@api/backoffice/app'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
@@ -31,7 +30,9 @@ export function MiniAppTierBadge({
   }
 
   return (
-    <Badge className={cn('h-6 justify-center border-transparent px-2 py-0', badge.className, className)}>
+    <Badge
+      className={cn('h-6 justify-center border-transparent px-2 py-0', badge.className, className)}
+    >
       <Text className="text-base-bg-white font-heading-bold">{badge.label}</Text>
     </Badge>
   )
