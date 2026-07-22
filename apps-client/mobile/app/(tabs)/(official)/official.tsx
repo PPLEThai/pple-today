@@ -228,13 +228,19 @@ const MiniAppSection = ({ isSwitchingRole }: { isSwitchingRole: boolean }) => {
               <View key={app.slug} className="flex-1">
                 <InfoItem onPress={() => router.navigate(`/mini-app/${app.slug}`)}>
                   <View className="flex justify-center items-center flex-col">
-                    <View
-                      className={cn(
-                        'flex flex-col mb-3 h-16 w-16 rounded-lg items-center justify-center overflow-hidden border border-base-outline-default',
-                        isImageUri(app.iconUrl) ? 'bg-transparent' : 'bg-base-secondary-default'
-                      )}
-                    >
-                      <MiniAppIcon iconUrl={app.iconUrl} />
+                    <View className="relative mb-3">
+                      <View
+                        className={cn(
+                          'flex flex-col h-16 w-16 rounded-lg items-center justify-center overflow-hidden border border-base-outline-default',
+                          isImageUri(app.iconUrl) ? 'bg-transparent' : 'bg-base-secondary-default'
+                        )}
+                      >
+                        <MiniAppIcon iconUrl={app.iconUrl} />
+                      </View>
+                      {/* Half the badge's h-6 (24px) sits above the icon's top border. */}
+                      <View className="absolute -top-3 left-0 right-0 items-center">
+                        <MiniAppTierBadge tier={app.tier} />
+                      </View>
                     </View>
                     <Text
                       numberOfLines={2}
@@ -242,7 +248,6 @@ const MiniAppSection = ({ isSwitchingRole }: { isSwitchingRole: boolean }) => {
                     >
                       {app.name}
                     </Text>
-                    <MiniAppTierBadge tier={app.tier} />
                   </View>
                 </InfoItem>
               </View>
