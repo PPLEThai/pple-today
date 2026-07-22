@@ -32,7 +32,7 @@ export function MiniAppTierBadge({
 
   return (
     <Badge className={cn('h-6 justify-center border-transparent px-2 py-0', badge.className, className)}>
-      <Text className="text-base-bg-white">{badge.label}</Text>
+      <Text className="text-base-bg-white font-heading-bold">{badge.label}</Text>
     </Badge>
   )
 }
@@ -44,7 +44,7 @@ function getMiniAppTierBadge(tier: MiniApp['tier']) {
       return { label: 'ฉบับร่าง', className: 'bg-system-danger-default' }
     case 'BETA':
       // Blue pill: an invited beta test.
-      return { label: 'ทดลองใช้', className: 'bg-system-info-default' }
+      return { label: 'ทดลอง', className: 'bg-system-info-default' }
     case 'LIVE':
       // The ordinary case carries no badge.
       return null
