@@ -1,5 +1,12 @@
 # @pple-today/api-common
 
+## 1.6.1
+
+### Patch Changes
+
+- Updated dependencies [[`57cd7c7`](https://github.com/PPLEThai/pple-today/commit/57cd7c72a8897ae1831d87f446bc6629b37fbfd3)]:
+  - @pple-today/database@1.7.0
+
 ## 1.6.0
 
 ### Minor Changes
