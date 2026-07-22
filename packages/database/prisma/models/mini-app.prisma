@@ -28,6 +28,18 @@ model MiniApp {
   source   MiniAppSource @default(ADMIN)
   ownerSub String? // Builder's PPLE ID sub; set only when source = PLATFORM
 
+  // The app's Collaborators (PPLE ID `sub`s), synced from the platform database
+  // which authoritatively owns them. today-v2 keeps this copy only so a Draft or
+  // Beta app is *listed* in PPLE Today for its Collaborators, not the Owner
+  // alone — the web membership door reads builders from the platform, so the
+  // listing was the inconsistent side. Empty for central-team (ADMIN) rows.
+  collaboratorSubs String[] @default([])
+
+  // A LIVE app that is listed to no one yet stays reachable by its link — the
+  // `unlisted` visibility mode, distinct from empty `miniAppRoles` (which means
+  // "listed to everyone"). Ignored for DRAFT/BETA, which are already restricted.
+  unlisted Boolean @default(false)
+
   // Zitadel's internal app id (distinct from the OIDC clientId), recorded when
   // the platform provisions the app so retire can delete the OIDC app. Null for
   // central-team rows, whose Zitadel apps are managed through the admin API.

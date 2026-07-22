@@ -149,6 +149,23 @@ export class MiniAppInviteRepository {
     })
   }
 
+  /**
+   * Whether one identity holds an ACCEPTED invite to one app. Matched on
+   * `userId` (the account bound at accept time), never the phone number — the
+   * same rule the listing uses. This is the single-app membership question the
+   * platform's edge door asks for a Beta app, so it counts rather than loading
+   * the whole accepted set.
+   */
+  async isAcceptedInvitee(miniAppId: string, userId: string) {
+    return await fromRepositoryPromise(async () => {
+      const count = await this.prismaService.miniAppInvite.count({
+        where: { miniAppId, userId, status: MiniAppInviteStatus.ACCEPTED },
+      })
+
+      return count > 0
+    })
+  }
+
   async recordResponse(
     miniAppId: string,
     phoneNumber: string,

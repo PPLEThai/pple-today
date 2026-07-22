@@ -10,6 +10,8 @@ import {
   CreateMiniAppResponse,
   DeleteMiniAppInviteParams,
   DeleteMiniAppInviteResponse,
+  GetBetaMembershipParams,
+  GetBetaMembershipResponse,
   GetMiniAppNotificationUsageResponse,
   GetMiniAppUserCountParams,
   GetMiniAppUserCountResponse,
@@ -19,10 +21,13 @@ import {
   MiniAppIdParams,
   MiniAppResponse,
   RetireMiniAppResponse,
+  SetCollaboratorsBody,
+  SetCollaboratorsResponse,
   SetNotificationQuotaBody,
   SetNotificationQuotaResponse,
   SetRolesBody,
   SetTierBody,
+  SetUnlistedBody,
   UpdateMiniAppBody,
 } from './models'
 import { PlatformMiniAppServicePlugin, PlatformUserLookupServicePlugin } from './services'
@@ -192,6 +197,66 @@ export const PlatformController = new Elysia({ prefix: '/platform', tags: ['Plat
         summary: "Set a Builder App's Live-tier visibility roles",
         description:
           'Replace the Live-tier visibility roles (reuses MiniAppRole). An empty array makes the app visible to everyone.',
+      },
+    }
+  )
+  .put(
+    '/mini-apps/:id/unlisted',
+    async ({ params, body, status, platformMiniAppService }) => {
+      const result = await platformMiniAppService.setUnlisted(params.id, body.unlisted)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredPlatformService: true,
+      params: MiniAppIdParams,
+      body: SetUnlistedBody,
+      response: {
+        200: MiniAppResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: "Set a Builder App's Live `unlisted` mode",
+        description:
+          'Toggle the Live `unlisted` visibility mode: an unlisted app is listed to no one but stays reachable by its link. Orthogonal to the visibility roles, which are left untouched.',
+      },
+    }
+  )
+  .put(
+    '/mini-apps/:id/collaborators',
+    async ({ params, body, status, platformMiniAppService }) => {
+      const result = await platformMiniAppService.setCollaborators(params.id, body.collaboratorSubs)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredPlatformService: true,
+      params: MiniAppIdParams,
+      body: SetCollaboratorsBody,
+      response: {
+        200: SetCollaboratorsResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: "Sync a Builder App's Collaborators",
+        description:
+          "Replace the app's Collaborators (PPLE ID `sub`s). The platform database owns them; this syncs today-v2's copy so a Draft or Beta app is listed in PPLE Today for its Collaborators, not the Owner alone.",
       },
     }
   )
@@ -410,6 +475,39 @@ export const PlatformController = new Elysia({ prefix: '/platform', tags: ['Plat
         summary: 'Remove a Beta tester',
         description:
           'Revokes the invitation. If the tester had accepted, the app disappears from their mini app list on their next listing — eligibility is read live, so there is no grant left behind. Requires the platform service token.',
+      },
+    }
+  )
+  // The invited-tester half of the platform edge door's membership decision.
+  // today-v2 owns invited-tester membership (the platform owns Owner and
+  // Collaborators), so the door composes its Beta predicate by asking here
+  // whether a given identity holds an accepted invite to the app.
+  .get(
+    '/mini-apps/:id/beta-membership/:userSub',
+    async ({ status, params, miniAppInviteService }) => {
+      const result = await miniAppInviteService.isAcceptedTester(params.id, params.userSub)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredPlatformService: true,
+      params: GetBetaMembershipParams,
+      response: {
+        200: GetBetaMembershipResponse,
+        ...createErrorSchema(
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Check Beta-invitee membership',
+        description:
+          'Whether the given identity holds an ACCEPTED invite to this app — the Beta-invitee half of the edge door’s membership decision. Matched on account, not phone number. Requires the platform service token.',
       },
     }
   )

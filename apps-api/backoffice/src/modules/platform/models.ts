@@ -82,6 +82,43 @@ export const SetRolesBody = t.Object({
 })
 export type SetRolesBody = Static<typeof SetRolesBody>
 
+export const SetUnlistedBody = t.Object({
+  unlisted: t.Boolean({
+    description:
+      'When true, a Live app is listed to no one yet stays reachable by its link. Orthogonal to the visibility roles; ignored for non-Live tiers.',
+  }),
+})
+export type SetUnlistedBody = Static<typeof SetUnlistedBody>
+
+export const SetCollaboratorsBody = t.Object({
+  collaboratorSubs: t.Array(t.String({ description: "A Collaborator's PPLE ID `sub`" }), {
+    description:
+      "The app's Collaborators, replacing the current set. The platform database owns them; this syncs today-v2's copy so a Draft/Beta app lists for its Collaborators, not the Owner alone.",
+  }),
+})
+export type SetCollaboratorsBody = Static<typeof SetCollaboratorsBody>
+
+export const SetCollaboratorsResponse = t.Object({
+  collaboratorSubs: t.Array(t.String({ description: "A Collaborator's PPLE ID `sub`" }), {
+    description: 'The Collaborators now in effect',
+  }),
+})
+export type SetCollaboratorsResponse = Static<typeof SetCollaboratorsResponse>
+
+export const GetBetaMembershipParams = t.Object({
+  id: t.String({ description: 'Mini app id' }),
+  userSub: t.String({ description: 'The PPLE ID `sub` to check membership for' }),
+})
+export type GetBetaMembershipParams = Static<typeof GetBetaMembershipParams>
+
+export const GetBetaMembershipResponse = t.Object({
+  isAcceptedTester: t.Boolean({
+    description:
+      'Whether this identity holds an ACCEPTED invite to this app — the Beta-invitee half of the edge door’s membership decision.',
+  }),
+})
+export type GetBetaMembershipResponse = Static<typeof GetBetaMembershipResponse>
+
 export const SetNotificationQuotaBody = t.Object({
   dailyQuota: t.Integer({
     minimum: 0,

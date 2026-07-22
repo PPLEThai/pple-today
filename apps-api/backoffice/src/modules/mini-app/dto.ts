@@ -20,4 +20,5 @@ export const toMiniAppDto = (miniApp: MiniAppModel & { miniAppRoles: MiniAppRole
   ownerSub: miniApp.ownerSub,
   createdAt: miniApp.createdAt,
   roles: miniApp.miniAppRoles.map(({ role }) => role),
+  unlisted: miniApp.unlisted,
 })

@@ -2,13 +2,15 @@ import { MiniAppTier } from '@pple-today/database/prisma'
 import { describe, expect, test } from 'vitest'
 
 import {
-  isMiniAppVisible,
+  isMiniAppAccessible,
+  isMiniAppListable,
   MiniAppForListing,
   MiniAppViewer,
   selectVisibleMiniApps,
 } from './eligibility'
 
 const OWNER_SUB = 'owner-sub'
+const COLLABORATOR_SUB = 'collaborator-sub'
 const OTHER_SUB = 'other-sub'
 const INVITEE_SUB = 'invitee-sub'
 const MEMBER_ROLE = 'pple-ad:member'
@@ -23,6 +25,8 @@ const makeMiniApp = (overrides: Partial<MiniAppForListing> = {}): MiniAppForList
   requiresAuth: true,
   tier: MiniAppTier.LIVE,
   ownerSub: null,
+  collaboratorSubs: [],
+  unlisted: false,
   miniAppRoles: [],
   ...overrides,
 })
@@ -37,7 +41,7 @@ const makeViewer = (overrides: Partial<MiniAppViewer> = {}): MiniAppViewer => ({
 const visibleSlugs = (miniApps: MiniAppForListing[], viewer: MiniAppViewer) =>
   selectVisibleMiniApps(miniApps, viewer).map((app) => app.slug)
 
-describe('tier eligibility (listing and token exchange share isMiniAppVisible)', () => {
+describe('tier eligibility — listing', () => {
   describe('LIVE tier (existing role-based visibility is unchanged)', () => {
     test('an app with no required roles is visible to everyone, including anonymous', () => {
       const miniApps = [makeMiniApp({ slug: 'public-live', tier: MiniAppTier.LIVE })]
@@ -79,10 +83,22 @@ describe('tier eligibility (listing and token exchange share isMiniAppVisible)',
 
       expect(visibleSlugs(miniApps, viewer)).toEqual([])
     })
+
+    test('an unlisted Live app is listed to no one — not even everyone-role holders', () => {
+      const miniApps = [
+        makeMiniApp({ slug: 'unlisted-live', tier: MiniAppTier.LIVE, unlisted: true }),
+      ]
+
+      // Would be public (empty roles) if listed, but unlisted hides it from all.
+      expect(visibleSlugs(miniApps, makeViewer())).toEqual([])
+      expect(visibleSlugs(miniApps, makeViewer({ roles: [MEMBER_ROLE], sub: OTHER_SUB }))).toEqual(
+        []
+      )
+    })
   })
 
-  describe('DRAFT tier (owner-only)', () => {
-    test('is visible only to its owner — not other users, not anonymous', () => {
+  describe('DRAFT tier (builders only)', () => {
+    test('is visible to its owner — not other users, not anonymous', () => {
       const miniApps = [
         makeMiniApp({ slug: 'my-draft', tier: MiniAppTier.DRAFT, ownerSub: OWNER_SUB }),
       ]
@@ -92,6 +108,21 @@ describe('tier eligibility (listing and token exchange share isMiniAppVisible)',
         []
       )
       expect(visibleSlugs(miniApps, makeViewer())).toEqual([])
+    })
+
+    test('is visible to a Collaborator, not the Owner alone', () => {
+      const miniApps = [
+        makeMiniApp({
+          slug: 'my-draft',
+          tier: MiniAppTier.DRAFT,
+          ownerSub: OWNER_SUB,
+          collaboratorSubs: [COLLABORATOR_SUB],
+        }),
+      ]
+
+      expect(visibleSlugs(miniApps, makeViewer({ sub: COLLABORATOR_SUB }))).toEqual(['my-draft'])
+      // A non-builder still sees nothing.
+      expect(visibleSlugs(miniApps, makeViewer({ sub: OTHER_SUB }))).toEqual([])
     })
 
     test('an accepted invite does not make a DRAFT app visible — only BETA takes invitees', () => {
@@ -113,7 +144,7 @@ describe('tier eligibility (listing and token exchange share isMiniAppVisible)',
     })
   })
 
-  describe('BETA tier (owner plus accepted invitees)', () => {
+  describe('BETA tier (builders plus accepted invitees)', () => {
     const betaApp = makeMiniApp({
       id: 'beta-id',
       slug: 'my-beta',
@@ -123,6 +154,21 @@ describe('tier eligibility (listing and token exchange share isMiniAppVisible)',
 
     test('is visible to its owner', () => {
       expect(visibleSlugs([betaApp], makeViewer({ sub: OWNER_SUB }))).toEqual(['my-beta'])
+    })
+
+    test('is visible to a Collaborator without spending an invite seat', () => {
+      const withCollaborator = makeMiniApp({
+        id: 'beta-id',
+        slug: 'my-beta',
+        tier: MiniAppTier.BETA,
+        ownerSub: OWNER_SUB,
+        collaboratorSubs: [COLLABORATOR_SUB],
+      })
+
+      // No accepted invite for the collaborator — being a builder is enough.
+      expect(visibleSlugs([withCollaborator], makeViewer({ sub: COLLABORATOR_SUB }))).toEqual([
+        'my-beta',
+      ])
     })
 
     test('is visible to a tester whose accepted invite is bound to their account', () => {
@@ -135,9 +181,6 @@ describe('tier eligibility (listing and token exchange share isMiniAppVisible)',
     })
 
     test('is not visible to a user with no accepted invite — pending and declined alike', () => {
-      // Pending and declined invites never reach the accepted set, so both
-      // present here as an empty set: an invitation the tester has not
-      // consented to must not put the app on their home screen.
       expect(visibleSlugs([betaApp], makeViewer({ sub: INVITEE_SUB }))).toEqual([])
     })
 
@@ -203,55 +246,81 @@ describe('tier eligibility (listing and token exchange share isMiniAppVisible)',
       },
     ])
   })
+})
 
-  // Token exchange calls `isMiniAppVisible` for a single looked-up app (not the
-  // listing projection). These assert that gate directly against the same
-  // Draft / Beta / Live matrix.
-  describe('isMiniAppVisible for token exchange / first-open', () => {
-    test('Draft: only the owner may open', () => {
-      const draft = makeMiniApp({
-        id: 'draft-id',
-        tier: MiniAppTier.DRAFT,
-        ownerSub: OWNER_SUB,
-      })
+// Token exchange / first-open calls `isMiniAppAccessible` for a single looked-up
+// app. Access is distinct from listing: an unlisted Live app opens by link but
+// lists nowhere, and a role-restricted Live app still gates on roles.
+describe('tier eligibility — access (token exchange / first-open)', () => {
+  test('Draft: builders (Owner or Collaborator) may open, nobody else', () => {
+    const draft = makeMiniApp({
+      id: 'draft-id',
+      tier: MiniAppTier.DRAFT,
+      ownerSub: OWNER_SUB,
+      collaboratorSubs: [COLLABORATOR_SUB],
+    })
 
-      expect(isMiniAppVisible(draft, makeViewer({ sub: OWNER_SUB }))).toBe(true)
-      expect(isMiniAppVisible(draft, makeViewer({ sub: OTHER_SUB, roles: [MEMBER_ROLE] }))).toBe(
-        false
+    expect(isMiniAppAccessible(draft, makeViewer({ sub: OWNER_SUB }))).toBe(true)
+    expect(isMiniAppAccessible(draft, makeViewer({ sub: COLLABORATOR_SUB }))).toBe(true)
+    expect(isMiniAppAccessible(draft, makeViewer({ sub: OTHER_SUB, roles: [MEMBER_ROLE] }))).toBe(
+      false
+    )
+  })
+
+  test('Beta: builders and accepted invitees may open; pending/declined may not', () => {
+    const beta = makeMiniApp({
+      id: 'beta-id',
+      tier: MiniAppTier.BETA,
+      ownerSub: OWNER_SUB,
+      collaboratorSubs: [COLLABORATOR_SUB],
+    })
+
+    expect(isMiniAppAccessible(beta, makeViewer({ sub: OWNER_SUB }))).toBe(true)
+    expect(isMiniAppAccessible(beta, makeViewer({ sub: COLLABORATOR_SUB }))).toBe(true)
+    expect(
+      isMiniAppAccessible(
+        beta,
+        makeViewer({ sub: INVITEE_SUB, acceptedInviteMiniAppIds: new Set(['beta-id']) })
       )
+    ).toBe(true)
+    expect(isMiniAppAccessible(beta, makeViewer({ sub: INVITEE_SUB }))).toBe(false)
+  })
+
+  test('Live: empty roles stay public; role gating is unchanged', () => {
+    const publicLive = makeMiniApp({ tier: MiniAppTier.LIVE })
+    const membersOnly = makeMiniApp({
+      tier: MiniAppTier.LIVE,
+      miniAppRoles: [{ role: MEMBER_ROLE }],
     })
 
-    test('Beta: owner and accepted invitee may open; pending/declined may not', () => {
-      const beta = makeMiniApp({
-        id: 'beta-id',
-        tier: MiniAppTier.BETA,
-        ownerSub: OWNER_SUB,
-      })
+    expect(isMiniAppAccessible(publicLive, makeViewer({ sub: OTHER_SUB }))).toBe(true)
+    expect(isMiniAppAccessible(membersOnly, makeViewer({ roles: [MEMBER_ROLE] }))).toBe(true)
+    expect(isMiniAppAccessible(membersOnly, makeViewer({ roles: ['pple-ad:staff'] }))).toBe(false)
+  })
 
-      expect(isMiniAppVisible(beta, makeViewer({ sub: OWNER_SUB }))).toBe(true)
-      expect(
-        isMiniAppVisible(
-          beta,
-          makeViewer({
-            sub: INVITEE_SUB,
-            acceptedInviteMiniAppIds: new Set(['beta-id']),
-          })
-        )
-      ).toBe(true)
-      // Pending and declined never enter the accepted set.
-      expect(isMiniAppVisible(beta, makeViewer({ sub: INVITEE_SUB }))).toBe(false)
+  test('Live unlisted: reachable by any authenticated member, but never anonymous', () => {
+    const unlisted = makeMiniApp({ tier: MiniAppTier.LIVE, unlisted: true })
+
+    // Any signed-in member with the link may open it, regardless of roles…
+    expect(isMiniAppAccessible(unlisted, makeViewer({ sub: OTHER_SUB }))).toBe(true)
+    // …but it is not listed to anyone.
+    expect(isMiniAppListable(unlisted, makeViewer({ sub: OTHER_SUB }))).toBe(false)
+    // Anonymous callers still cannot open it.
+    expect(isMiniAppAccessible(unlisted, makeViewer())).toBe(false)
+  })
+
+  test('Live unlisted ignores role gating for access (reachable by link)', () => {
+    const unlistedWithRoles = makeMiniApp({
+      tier: MiniAppTier.LIVE,
+      unlisted: true,
+      miniAppRoles: [{ role: MEMBER_ROLE }],
     })
 
-    test('Live: empty roles stay public; role gating is unchanged', () => {
-      const publicLive = makeMiniApp({ tier: MiniAppTier.LIVE })
-      const membersOnly = makeMiniApp({
-        tier: MiniAppTier.LIVE,
-        miniAppRoles: [{ role: MEMBER_ROLE }],
-      })
-
-      expect(isMiniAppVisible(publicLive, makeViewer({ sub: OTHER_SUB }))).toBe(true)
-      expect(isMiniAppVisible(membersOnly, makeViewer({ roles: [MEMBER_ROLE] }))).toBe(true)
-      expect(isMiniAppVisible(membersOnly, makeViewer({ roles: ['pple-ad:staff'] }))).toBe(false)
-    })
+    // A member without the role can still open it by link…
+    expect(isMiniAppAccessible(unlistedWithRoles, makeViewer({ sub: OTHER_SUB }))).toBe(true)
+    // …yet it lists for no one.
+    expect(
+      isMiniAppListable(unlistedWithRoles, makeViewer({ sub: OTHER_SUB, roles: [MEMBER_ROLE] }))
+    ).toBe(false)
   })
 })

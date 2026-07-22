@@ -28,6 +28,7 @@ const createPrismaService = () => {
 
   const miniApp = {
     findFirstOrThrow: vi.fn().mockResolvedValue({ id: 'app-1', miniAppRoles: [] }),
+    update: vi.fn().mockResolvedValue({ id: 'app-1', miniAppRoles: [] }),
   }
 
   const prismaService = {
@@ -145,5 +146,35 @@ describe('PlatformMiniAppRepository.setRoles', () => {
 
     expect(tx.miniAppRole.deleteMany).toHaveBeenCalledWith({ where: { miniAppId: 'app-1' } })
     expect(tx.miniAppRole.createMany).not.toHaveBeenCalled()
+  })
+})
+
+describe('PlatformMiniAppRepository.setUnlisted', () => {
+  test('updates only the unlisted flag, leaving the visibility roles untouched', async () => {
+    const { prismaService, miniApp } = createPrismaService()
+    const repository = new PlatformMiniAppRepository(prismaService)
+
+    await repository.setUnlisted('app-1', true)
+
+    expect(miniApp.update).toHaveBeenCalledWith({
+      where: { id: 'app-1' },
+      data: { unlisted: true },
+      include: { miniAppRoles: true },
+    })
+  })
+})
+
+describe('PlatformMiniAppRepository.setCollaborators', () => {
+  test('replaces the whole collaborator set so today-v2 mirrors the platform exactly', async () => {
+    const { prismaService, miniApp } = createPrismaService()
+    const repository = new PlatformMiniAppRepository(prismaService)
+
+    await repository.setCollaborators('app-1', ['sub-a', 'sub-b'])
+
+    expect(miniApp.update).toHaveBeenCalledWith({
+      where: { id: 'app-1' },
+      data: { collaboratorSubs: ['sub-a', 'sub-b'] },
+      include: { miniAppRoles: true },
+    })
   })
 })
