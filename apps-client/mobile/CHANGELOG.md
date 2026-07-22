@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 2.7.1
+
+### Patch Changes
+
+- [#431](https://github.com/PPLEThai/pple-today/pull/431) [`109adf8`](https://github.com/PPLEThai/pple-today/commit/109adf8b9f33e65ca5d99249cbc9d40695568077) Thanks [@PanJ](https://github.com/PanJ)! - badge test app
+
 ## 2.7.0
 
 ### Minor Changes
