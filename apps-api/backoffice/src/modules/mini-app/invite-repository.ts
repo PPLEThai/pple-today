@@ -2,7 +2,7 @@ import type { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { MiniAppInviteStatus } from '@pple-today/database/prisma'
 
-const MINI_APP_SELECTION = { id: true, name: true, slug: true } as const
+const MINI_APP_SELECTION = { id: true, name: true, slug: true, ownerSub: true } as const
 
 /**
  * Persistence for `MiniAppInvite` — the Beta testers a Builder has invited and
@@ -14,6 +14,21 @@ const MINI_APP_SELECTION = { id: true, name: true, slug: true } as const
  */
 export class MiniAppInviteRepository {
   constructor(private readonly prismaService: PrismaService) {}
+
+  /**
+   * Display names for a set of PPLE ID subs (which are `User.id`), used to name
+   * the Builder who sent an invitation. Missing ids simply drop out — the name
+   * is a nicety on the invite, never a key, so an owner without a matching
+   * account must not break the listing or the notification.
+   */
+  async getUserNamesByIds(ids: string[]) {
+    return await fromRepositoryPromise(
+      this.prismaService.user.findMany({
+        where: { id: { in: ids } },
+        select: { id: true, name: true },
+      })
+    )
+  }
 
   async getMiniApp(miniAppId: string) {
     return await fromRepositoryPromise(

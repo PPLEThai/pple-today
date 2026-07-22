@@ -35,6 +35,29 @@ export class MiniAppInviteService {
     private readonly inviteNotifier: InviteNotifier
   ) {}
 
+  /**
+   * Map each app's `ownerSub` (the Builder who owns it) to that Builder's
+   * display name, in a single lookup.
+   *
+   * The name is best-effort: a null owner (central-team apps) or an owner with
+   * no matching account resolves to nothing, and a lookup failure yields an
+   * empty map rather than an error — naming the inviter must never stop an
+   * invitation being delivered or listed.
+   */
+  private async resolveInviterNames(ownerSubs: (string | null | undefined)[]) {
+    const ids = Array.from(new Set(ownerSubs.filter((sub): sub is string => !!sub)))
+    if (ids.length === 0) {
+      return new Map<string, string>()
+    }
+
+    const result = await this.miniAppInviteRepository.getUserNamesByIds(ids)
+    if (result.isErr()) {
+      return new Map<string, string>()
+    }
+
+    return new Map(result.value.map((user) => [user.id, user.name]))
+  }
+
   private async requireMiniApp(miniAppId: string) {
     const result = await this.miniAppInviteRepository.getMiniApp(miniAppId)
 
@@ -129,7 +152,9 @@ export class MiniAppInviteService {
     // Delivery is best-effort and reported, not enforced: the invite row is the
     // durable fact, and the invitee can still find it in their inbox if the
     // push never lands.
-    const notified = await this.inviteNotifier.notifyInvitee(phoneNumber, miniApp)
+    const inviterNames = await this.resolveInviterNames([miniApp.ownerSub])
+    const inviterName = miniApp.ownerSub ? inviterNames.get(miniApp.ownerSub) : undefined
+    const notified = await this.inviteNotifier.notifyInvitee(phoneNumber, miniApp, inviterName)
 
     return ok({ invite: inviteResult.value.invite, notified })
   }
@@ -169,11 +194,18 @@ export class MiniAppInviteService {
       return mapRepositoryError(invites.error)
     }
 
+    const inviterNames = await this.resolveInviterNames(
+      invites.value.map((invite) => invite.miniApp.ownerSub)
+    )
+
     return ok(
       invites.value.map((invite) => ({
         miniAppId: invite.miniAppId,
         miniAppName: invite.miniApp.name,
         miniAppSlug: invite.miniApp.slug,
+        inviterName: invite.miniApp.ownerSub
+          ? inviterNames.get(invite.miniApp.ownerSub)
+          : undefined,
         createdAt: invite.createdAt,
       }))
     )
