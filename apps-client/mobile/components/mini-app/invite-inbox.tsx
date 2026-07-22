@@ -144,6 +144,7 @@ export function MiniAppInviteInbox() {
           <MiniAppInviteCard
             key={invite.miniAppId}
             miniAppName={invite.miniAppName}
+            inviterName={invite.inviterName}
             disabled={responding !== null}
             respondingWith={responding?.miniAppId === invite.miniAppId ? responding.response : null}
             onAccept={() => respond(invite.miniAppId, invite.miniAppName, 'ACCEPT')}
@@ -157,6 +158,8 @@ export function MiniAppInviteInbox() {
 
 interface MiniAppInviteCardProps {
   miniAppName: string
+  /** The Builder who sent the invitation, when the server could resolve them. */
+  inviterName?: string
   /** Every card is disabled while any one of them is being answered. */
   disabled: boolean
   /** How *this* card is being answered, if it is — so progress names the button the user actually pressed. */
@@ -169,6 +172,7 @@ const RESPONDING_LABEL = 'กำลังดำเนินการ...'
 
 function MiniAppInviteCard({
   miniAppName,
+  inviterName,
   disabled,
   respondingWith,
   onAccept,
@@ -178,7 +182,9 @@ function MiniAppInviteCard({
     <View className="w-full bg-base-bg-white border border-base-outline-default rounded-2xl flex flex-col gap-3 p-4">
       <View className="flex flex-col gap-1">
         <H3 className="text-base font-heading-semibold text-base-text-high">
-          คุณถูกเชิญให้ทดลองใช้ “{miniAppName}”
+          {inviterName
+            ? `${inviterName} เชิญคุณทดลองใช้ “${miniAppName}”`
+            : `คุณถูกเชิญให้ทดลองใช้ “${miniAppName}”`}
         </H3>
         <Text className="text-sm font-heading-regular text-base-text-medium">
           แอปนี้อยู่ระหว่างทดลองใช้ หากตอบรับ แอปจะปรากฏในรายการแอปของคุณ

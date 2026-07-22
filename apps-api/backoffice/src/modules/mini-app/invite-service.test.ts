@@ -26,15 +26,24 @@ interface InviteRow {
  * and revocation — are exercised as a sequence rather than as isolated stubs.
  * The repository's own query shapes are asserted in `invite-repository.test.ts`.
  */
+const BUILDER_ID = 'builder-user-id'
+
 const createFakeRepository = () => {
   const invites: InviteRow[] = []
-  const miniApps = [{ id: MINI_APP_ID, name: 'Canvassing', slug: 'canvassing' }]
+  const miniApps: { id: string; name: string; slug: string; ownerSub: string | null }[] = [
+    { id: MINI_APP_ID, name: 'Canvassing', slug: 'canvassing', ownerSub: BUILDER_ID },
+  ]
+  const users = [{ id: BUILDER_ID, name: 'สมชาย' }]
   const find = (miniAppId: string, phoneNumber: string) =>
     invites.find((invite) => invite.miniAppId === miniAppId && invite.phoneNumber === phoneNumber)
 
   return {
     invites,
     miniApps,
+    users,
+    getUserNamesByIds: vi.fn(async (ids: string[]) =>
+      ok(users.filter((user) => ids.includes(user.id)))
+    ),
     getMiniApp: vi.fn(async (miniAppId: string) =>
       ok(miniApps.find((app) => app.id === miniAppId) ?? null)
     ),
@@ -136,7 +145,7 @@ const createFakeRepository = () => {
 }
 
 const createFakeNotifier = () => {
-  const sent: { phoneNumber: string; miniAppName: string }[] = []
+  const sent: { phoneNumber: string; miniAppName: string; inviterName?: string }[] = []
   let delivers = true
 
   return {
@@ -144,12 +153,14 @@ const createFakeNotifier = () => {
     fail: () => {
       delivers = false
     },
-    notifyInvitee: vi.fn(async (phoneNumber: string, miniApp: { name: string }) => {
-      if (!delivers) return false
+    notifyInvitee: vi.fn(
+      async (phoneNumber: string, miniApp: { name: string }, inviterName?: string) => {
+        if (!delivers) return false
 
-      sent.push({ phoneNumber, miniAppName: miniApp.name })
-      return true
-    }),
+        sent.push({ phoneNumber, miniAppName: miniApp.name, inviterName })
+        return true
+      }
+    ),
   }
 }
 
@@ -183,7 +194,9 @@ describe('MiniAppInviteService', () => {
         status: MiniAppInviteStatus.PENDING,
         userId: null,
       })
-      expect(notifier.sent).toEqual([{ phoneNumber: INVITEE_PHONE, miniAppName: 'Canvassing' }])
+      expect(notifier.sent).toEqual([
+        { phoneNumber: INVITEE_PHONE, miniAppName: 'Canvassing', inviterName: 'สมชาย' },
+      ])
     })
 
     test('normalises a local phone number so it is stored and delivered in E.164', async () => {
@@ -347,7 +360,7 @@ describe('MiniAppInviteService', () => {
     })
 
     test('the cap is per app, not global', async () => {
-      repository.miniApps.push({ id: 'other-app', name: 'Other', slug: 'other' })
+      repository.miniApps.push({ id: 'other-app', name: 'Other', slug: 'other', ownerSub: null })
       await fillToCap()
 
       expect((await service.createInvite('other-app', INVITEE_PHONE)).isOk()).toBe(true)
@@ -410,7 +423,7 @@ describe('MiniAppInviteService', () => {
   })
 
   describe('the invitee inbox', () => {
-    test('lists pending invites for the requesting number with the app name', async () => {
+    test('lists pending invites for the requesting number with the app and inviter name', async () => {
       await service.createInvite(MINI_APP_ID, INVITEE_PHONE)
 
       const result = await service.listPendingInvitesForUser(INVITEE_PHONE)
@@ -420,8 +433,19 @@ describe('MiniAppInviteService', () => {
           miniAppId: MINI_APP_ID,
           miniAppName: 'Canvassing',
           miniAppSlug: 'canvassing',
+          inviterName: 'สมชาย',
         }),
       ])
+    })
+
+    test('omits the inviter name when the app has no resolvable owner', async () => {
+      // Central-team apps carry no ownerSub; the card falls back to passive copy.
+      repository.miniApps[0].ownerSub = null
+      await service.createInvite(MINI_APP_ID, INVITEE_PHONE)
+
+      const [invite] = (await service.listPendingInvitesForUser(INVITEE_PHONE))._unsafeUnwrap()
+
+      expect(invite.inviterName).toBeUndefined()
     })
 
     test('does not list invites the user has already answered', async () => {

@@ -49,6 +49,12 @@ export const ListMyMiniAppInvitesResponse = t.Array(
     miniAppId: t.String({ description: 'ID of the mini app you are invited to' }),
     miniAppName: t.String({ description: 'Name to show on the invitation card' }),
     miniAppSlug: t.String({ description: 'Slug of the mini app' }),
+    inviterName: t.Optional(
+      t.String({
+        description:
+          'Display name of the Builder who invited you. Absent when the owner cannot be resolved.',
+      })
+    ),
     createdAt: t.Date({ description: 'When you were invited' }),
   })
 )

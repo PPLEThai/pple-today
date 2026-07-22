@@ -36,13 +36,21 @@ export class InviteNotifier {
 
   async notifyInvitee(
     phoneNumber: string,
-    miniApp: MiniAppForInviteNotification
+    miniApp: MiniAppForInviteNotification,
+    inviterName?: string
   ): Promise<boolean> {
+    // Name the Builder when we know who they are; fall back to the passive
+    // phrasing when the owner can't be resolved so the message never reads
+    // "undefined เชิญคุณ".
+    const message = inviterName
+      ? `${inviterName} เชิญคุณให้ทดลองใช้ "${miniApp.name}" กดเพื่อตอบรับหรือปฏิเสธคำเชิญ`
+      : `คุณถูกเชิญให้ทดลองใช้ "${miniApp.name}" กดเพื่อตอบรับหรือปฏิเสธคำเชิญ`
+
     const sendResult = await this.notificationRepository.sendNotificationToUser(
       { type: 'PHONE_NUMBER', details: [phoneNumber] },
       {
         header: 'คำเชิญทดลองใช้แอปพลิเคชัน',
-        message: `คุณถูกเชิญให้ทดลองใช้ "${miniApp.name}" กดเพื่อตอบรับหรือปฏิเสธคำเชิญ`,
+        message,
         // Older clients that don't render the inbox inline fall back to this
         // button, which follows the link to the แอป tab where the inbox lives.
         actionButtonText: 'ดูคำเชิญ',

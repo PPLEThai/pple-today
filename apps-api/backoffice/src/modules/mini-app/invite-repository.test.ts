@@ -30,6 +30,9 @@ const createPrismaService = () => {
       miniApp: {
         findUnique: vi.fn().mockResolvedValue(null),
       },
+      user: {
+        findMany: vi.fn().mockResolvedValue([]),
+      },
       $transaction: vi.fn(async (cb: (txClient: typeof tx) => unknown) => cb(tx)),
     } as unknown as PrismaService & {
       miniAppInvite: {
@@ -41,6 +44,7 @@ const createPrismaService = () => {
         deleteMany: ReturnType<typeof vi.fn>
       }
       miniApp: { findUnique: ReturnType<typeof vi.fn> }
+      user: { findMany: ReturnType<typeof vi.fn> }
       $transaction: ReturnType<typeof vi.fn>
     },
     tx,
@@ -233,7 +237,21 @@ describe('MiniAppInviteRepository.listPendingForPhoneNumber', () => {
     expect(prismaService.miniAppInvite.findMany).toHaveBeenCalledWith({
       where: { phoneNumber: '+66812345678', status: MiniAppInviteStatus.PENDING },
       orderBy: { createdAt: 'desc' },
-      include: { miniApp: { select: { id: true, name: true, slug: true } } },
+      include: { miniApp: { select: { id: true, name: true, slug: true, ownerSub: true } } },
+    })
+  })
+})
+
+describe('MiniAppInviteRepository.getUserNamesByIds', () => {
+  test('looks up display names by user id', async () => {
+    const { prismaService } = createPrismaService()
+    const repository = new MiniAppInviteRepository(prismaService)
+
+    await repository.getUserNamesByIds(['builder-1', 'builder-2'])
+
+    expect(prismaService.user.findMany).toHaveBeenCalledWith({
+      where: { id: { in: ['builder-1', 'builder-2'] } },
+      select: { id: true, name: true },
     })
   })
 })

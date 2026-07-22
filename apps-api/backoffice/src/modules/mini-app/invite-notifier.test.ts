@@ -35,6 +35,31 @@ describe('InviteNotifier.notifyInvitee', () => {
     expect(content.message).toContain('Canvassing')
     // Platform-internal send: no key to meter it against.
     expect(apiKeyId).toBeUndefined()
+  })
+
+  test('names the inviter in the message when one is given', async () => {
+    const sendNotificationToUser = vi
+      .fn()
+      .mockResolvedValue(ok({ success: [INVITEE_PHONE], failed: [] }))
+
+    await createNotifier(sendNotificationToUser).notifyInvitee(INVITEE_PHONE, miniApp, 'สมชาย')
+
+    const [, content] = sendNotificationToUser.mock.calls[0]
+    expect(content.message).toContain('สมชาย')
+    expect(content.message).toContain('Canvassing')
+  })
+
+  test('falls back to passive phrasing when the inviter is unknown', async () => {
+    const sendNotificationToUser = vi
+      .fn()
+      .mockResolvedValue(ok({ success: [INVITEE_PHONE], failed: [] }))
+
+    await createNotifier(sendNotificationToUser).notifyInvitee(INVITEE_PHONE, miniApp)
+
+    const [, content] = sendNotificationToUser.mock.calls[0]
+    // No inviter name, so it must not read "undefined เชิญคุณ".
+    expect(content.message).not.toContain('undefined')
+    expect(content.message).toContain('คุณถูกเชิญให้ทดลองใช้')
     // Not a deep link into the Beta app (there is nothing to open yet) but the
     // MINI_APP_INVITE marker the client turns into the inline accept/decline
     // inbox / a tap through to the แอป tab.
