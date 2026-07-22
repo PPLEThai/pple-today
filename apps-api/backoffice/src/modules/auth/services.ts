@@ -16,7 +16,7 @@ import { ConfigServicePlugin } from '../../plugins/config'
 import { ElysiaLoggerPlugin } from '../../plugins/log'
 import { generateJwtToken } from '../../utils/jwt'
 import { FileServerService, FileServerServicePlugin } from '../files/services'
-import { isMiniAppVisible } from '../mini-app/eligibility'
+import { isMiniAppAccessible } from '../mini-app/eligibility'
 import { MiniAppInviteRepository } from '../mini-app/invite-repository'
 import {
   MiniAppInviteRepositoryPlugin,
@@ -42,9 +42,12 @@ export class AuthService {
   /**
    * Exchange the caller's token for a mini-app session URL.
    *
-   * Eligibility matches listing (`isMiniAppVisible`): Draft = owner only,
-   * Beta = owner or ACCEPTED invitee, Live = role filter (empty = public).
-   * Denied opens return `MINI_APP_NOT_FOUND` — same as a missing slug — so
+   * Access is `isMiniAppAccessible`: Draft/Beta = builders (Owner or a
+   * Collaborator), Beta also an ACCEPTED invitee, Live = role filter (empty =
+   * public) unless `unlisted`, which is reachable by any authenticated member.
+   * This is *access*, not listing — an unlisted Live app opens by link though it
+   * is listed to no one. Denied opens return `MINI_APP_NOT_FOUND` — same as a
+   * missing slug — so
    * App User registration in the controller only runs after a successful
    * exchange.
    *
@@ -82,7 +85,7 @@ export class AuthService {
     }
 
     if (
-      !isMiniAppVisible(miniApp.value, {
+      !isMiniAppAccessible(miniApp.value, {
         roles,
         sub: userSub,
         acceptedInviteMiniAppIds,

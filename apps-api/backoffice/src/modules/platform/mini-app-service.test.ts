@@ -35,6 +35,8 @@ const makeRow = (
     ownerSub: 'owner-sub',
     zitadelAppId: 'zitadel-app-1',
     retiredAt: null,
+    collaboratorSubs: [],
+    unlisted: false,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     miniAppRoles: [],
@@ -47,6 +49,8 @@ const createFakeRepository = () => ({
   updateMiniApp: vi.fn(),
   setTier: vi.fn(),
   setRoles: vi.fn(),
+  setUnlisted: vi.fn(),
+  setCollaborators: vi.fn(),
   retire: vi.fn(),
 })
 
@@ -100,10 +104,11 @@ describe('PlatformMiniAppService.createMiniApp', () => {
 
     const result = await service.createMiniApp(CREATE_INPUT)
 
-    // The provisioned app URL is the single allowed OAuth redirect URI.
+    // The app URL and the edge door's callback on the same host are both allowed
+    // redirect URIs, so the door reuses the app's client instead of minting one.
     expect(zitadel.createOidcApp).toHaveBeenCalledWith({
       name: 'My App',
-      redirectUris: ['https://my-app.ppleth.ai'],
+      redirectUris: ['https://my-app.ppleth.ai', 'https://my-app.ppleth.ai/.pple/auth/callback'],
     })
     // The Zitadel clientId and internal appId are handed to the repository to store.
     expect(repository.createMiniApp).toHaveBeenCalledWith({
@@ -163,7 +168,7 @@ describe('PlatformMiniAppService.updateMiniApp', () => {
     const result = await service.updateMiniApp('app-1', { url: 'https://renamed.ppleth.ai' })
 
     expect(zitadel.updateOidcApp).toHaveBeenCalledWith('zitadel-app-1', {
-      redirectUris: ['https://renamed.ppleth.ai'],
+      redirectUris: ['https://renamed.ppleth.ai', 'https://renamed.ppleth.ai/.pple/auth/callback'],
     })
     expect(repository.updateMiniApp).toHaveBeenCalledWith('app-1', {
       url: 'https://renamed.ppleth.ai',
@@ -270,6 +275,64 @@ describe('PlatformMiniAppService.setRoles', () => {
 
     expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.MINI_APP_NOT_FOUND)
     expect(repository.setRoles).not.toHaveBeenCalled()
+    expect(cache.invalidate).not.toHaveBeenCalled()
+  })
+})
+
+describe('PlatformMiniAppService.setUnlisted', () => {
+  test('persists the unlisted flag and invalidates the list cache', async () => {
+    const { service, repository, cache } = makeService()
+    repository.getMiniAppById.mockResolvedValue(ok(makeRow({ tier: MiniAppTier.LIVE })))
+    repository.setUnlisted.mockResolvedValue(
+      ok(makeRow({ tier: MiniAppTier.LIVE, unlisted: true }))
+    )
+
+    const result = await service.setUnlisted('app-1', true)
+
+    expect(repository.setUnlisted).toHaveBeenCalledWith('app-1', true)
+    expect(result._unsafeUnwrap().unlisted).toBe(true)
+    expect(cache.invalidate).toHaveBeenCalledOnce()
+  })
+
+  test('returns MINI_APP_NOT_FOUND for an unknown id, without attempting the write', async () => {
+    const { service, repository, cache } = makeService()
+    repository.getMiniAppById.mockResolvedValue(
+      err({ code: 'RECORD_NOT_FOUND', message: 'not found' })
+    )
+
+    const result = await service.setUnlisted('missing', true)
+
+    expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.MINI_APP_NOT_FOUND)
+    expect(repository.setUnlisted).not.toHaveBeenCalled()
+    expect(cache.invalidate).not.toHaveBeenCalled()
+  })
+})
+
+describe('PlatformMiniAppService.setCollaborators', () => {
+  test('replaces the collaborators, echoes them back, and invalidates the list cache', async () => {
+    const { service, repository, cache } = makeService()
+    repository.getMiniAppById.mockResolvedValue(ok(makeRow()))
+    repository.setCollaborators.mockResolvedValue(
+      ok(makeRow({ collaboratorSubs: ['sub-a', 'sub-b'] }))
+    )
+
+    const result = await service.setCollaborators('app-1', ['sub-a', 'sub-b'])
+
+    expect(repository.setCollaborators).toHaveBeenCalledWith('app-1', ['sub-a', 'sub-b'])
+    expect(result._unsafeUnwrap().collaboratorSubs).toEqual(['sub-a', 'sub-b'])
+    expect(cache.invalidate).toHaveBeenCalledOnce()
+  })
+
+  test('returns MINI_APP_NOT_FOUND for an unknown id, without attempting the write', async () => {
+    const { service, repository, cache } = makeService()
+    repository.getMiniAppById.mockResolvedValue(
+      err({ code: 'RECORD_NOT_FOUND', message: 'not found' })
+    )
+
+    const result = await service.setCollaborators('missing', ['sub-a'])
+
+    expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.MINI_APP_NOT_FOUND)
+    expect(repository.setCollaborators).not.toHaveBeenCalled()
     expect(cache.invalidate).not.toHaveBeenCalled()
   })
 })

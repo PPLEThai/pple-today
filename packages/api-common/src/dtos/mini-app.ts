@@ -31,5 +31,9 @@ export const MiniApp = t.Object({
   ),
   createdAt: t.Date({ description: 'Creation date of the mini app' }),
   roles: t.Array(t.String({ description: 'Roles assigned to the mini app' })),
+  unlisted: t.Boolean({
+    description:
+      'LIVE-only: when true, the app is listed to no one but stays reachable by its link. Distinct from empty roles, which means listed to everyone.',
+  }),
 })
 export type MiniApp = Static<typeof MiniApp>

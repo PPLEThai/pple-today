@@ -21,6 +21,28 @@ const NOT_FOUND = {
 } as const
 
 /**
+ * The reserved path the platform's edge membership door redirects to when it
+ * runs its PKCE flow on the app's own host. Registered as a second redirect URI
+ * on the app's OIDC client (alongside the app URL) so the door reuses the app's
+ * existing client instead of minting a second one, and the resulting session
+ * cookie is host-scoped by construction. Dispatch intercepts this path; it never
+ * reaches the Builder's app. See pple-platform ADR-0013.
+ */
+export const DOOR_CALLBACK_PATH = '/.pple/auth/callback'
+
+/**
+ * The redirect URIs an app's OIDC client must allow: the app's own origin (the
+ * mini-app SDK's default redirect) and the door callback on that same origin.
+ *
+ * Exported so the one-time backfill (`scripts/backfill-door-redirect-uris.ts`)
+ * registers exactly the same pair on apps provisioned before the door existed.
+ */
+export const doorRedirectUris = (appUrl: string): string[] => [
+  appUrl,
+  new URL(DOOR_CALLBACK_PATH, appUrl).toString(),
+]
+
+/**
  * The lifecycle of a platform-provisioned Builder App, as driven by the
  * pple-platform provisioner over the `/platform` service API. today-v2 is the
  * single writer of Zitadel state, so every Zitadel effect flows through
@@ -47,11 +69,12 @@ export class PlatformMiniAppService {
    * Zitadel app to reuse or clean up — the same contract as the admin path.
    */
   async createMiniApp(data: Omit<CreatePlatformMiniAppData, 'clientId' | 'zitadelAppId'>) {
-    // The mini-app SDK defaults its OAuth redirect URI to the app origin, so the
-    // provisioned app URL is the single allowed redirect URI.
+    // The mini-app SDK defaults its OAuth redirect URI to the app origin, and the
+    // platform's edge door adds one more on the same host — the reserved door
+    // callback — so both the app's own sign-in and the door share one client.
     const zitadelResult = await this.zitadelService.createOidcApp({
       name: data.name,
-      redirectUris: [data.url],
+      redirectUris: doorRedirectUris(data.url),
     })
     if (zitadelResult.isErr()) return err(zitadelResult.error)
     const { appId, clientId } = zitadelResult.value
@@ -92,7 +115,7 @@ export class PlatformMiniAppService {
 
     if (data.url !== undefined && data.url !== existing.clientUrl && existing.zitadelAppId) {
       const zitadelResult = await this.zitadelService.updateOidcApp(existing.zitadelAppId, {
-        redirectUris: [data.url],
+        redirectUris: doorRedirectUris(data.url),
       })
       if (zitadelResult.isErr()) return err(zitadelResult.error)
     }
@@ -136,6 +159,42 @@ export class PlatformMiniAppService {
     this.miniAppListCache.invalidate()
 
     return ok(toMiniAppDto(result.value))
+  }
+
+  /**
+   * Set the Live `unlisted` visibility mode. Unlisted lists the app to no one
+   * while leaving it reachable by its link — orthogonal to the visibility roles,
+   * so this leaves them untouched. Only meaningful for a Live app.
+   */
+  async setUnlisted(id: string, unlisted: boolean) {
+    // Scope to platform apps first (see setTier).
+    const existingResult = await this.platformMiniAppRepository.getMiniAppById(id)
+    if (existingResult.isErr()) return mapRepositoryError(existingResult.error, NOT_FOUND)
+
+    const result = await this.platformMiniAppRepository.setUnlisted(id, unlisted)
+    if (result.isErr()) return mapRepositoryError(result.error, NOT_FOUND)
+
+    this.miniAppListCache.invalidate()
+
+    return ok(toMiniAppDto(result.value))
+  }
+
+  /**
+   * Replace the app's Collaborators (PPLE ID `sub`s). The platform database owns
+   * Collaborators authoritatively; this syncs today-v2's copy so a Draft or Beta
+   * app is *listed* in PPLE Today for its Collaborators, not the Owner alone.
+   */
+  async setCollaborators(id: string, collaboratorSubs: string[]) {
+    // Scope to platform apps first (see setTier).
+    const existingResult = await this.platformMiniAppRepository.getMiniAppById(id)
+    if (existingResult.isErr()) return mapRepositoryError(existingResult.error, NOT_FOUND)
+
+    const result = await this.platformMiniAppRepository.setCollaborators(id, collaboratorSubs)
+    if (result.isErr()) return mapRepositoryError(result.error, NOT_FOUND)
+
+    this.miniAppListCache.invalidate()
+
+    return ok({ collaboratorSubs: result.value.collaboratorSubs })
   }
 
   /**

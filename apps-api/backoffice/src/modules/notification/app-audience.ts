@@ -75,7 +75,7 @@ export const resolveAppAudience = (input: AppNotificationAudienceInput): string[
       return appUserIds
     default:
       // An unknown tier reaches nobody: the audience rule fails closed, matching
-      // `isMiniAppVisible`'s default in the listing path.
+      // the eligibility rules' default in the listing path.
       return []
   }
 }

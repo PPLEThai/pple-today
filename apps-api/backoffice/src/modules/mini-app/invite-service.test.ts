@@ -128,6 +128,16 @@ const createFakeRepository = () => {
         )
       )
     ),
+    isAcceptedInvitee: vi.fn(async (miniAppId: string, userId: string) =>
+      ok(
+        invites.some(
+          (invite) =>
+            invite.miniAppId === miniAppId &&
+            invite.userId === userId &&
+            invite.status === MiniAppInviteStatus.ACCEPTED
+        )
+      )
+    ),
     recordResponse: vi.fn(
       async (
         miniAppId: string,
@@ -508,6 +518,46 @@ describe('MiniAppInviteService', () => {
 
     test('rejects listing an unknown mini app', async () => {
       const result = await service.listInvites('nope')
+
+      expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.MINI_APP_NOT_FOUND)
+    })
+  })
+
+  describe('the Beta-invitee membership read (isAcceptedTester)', () => {
+    test('is true once the invitee has accepted, matched on their account', async () => {
+      await service.createInvite(MINI_APP_ID, INVITEE_PHONE)
+      await service.respondToInvite(invitee, MINI_APP_ID, 'ACCEPT')
+
+      const result = await service.isAcceptedTester(MINI_APP_ID, invitee.id)
+
+      expect(result._unsafeUnwrap()).toEqual({ isAcceptedTester: true })
+    })
+
+    test('is false while the invite is only pending', async () => {
+      await service.createInvite(MINI_APP_ID, INVITEE_PHONE)
+
+      const result = await service.isAcceptedTester(MINI_APP_ID, invitee.id)
+
+      expect(result._unsafeUnwrap()).toEqual({ isAcceptedTester: false })
+    })
+
+    test('is false after the invitee declines', async () => {
+      await service.createInvite(MINI_APP_ID, INVITEE_PHONE)
+      await service.respondToInvite(invitee, MINI_APP_ID, 'DECLINE')
+
+      const result = await service.isAcceptedTester(MINI_APP_ID, invitee.id)
+
+      expect(result._unsafeUnwrap()).toEqual({ isAcceptedTester: false })
+    })
+
+    test('is false for someone with no invite to the app', async () => {
+      const result = await service.isAcceptedTester(MINI_APP_ID, 'a-stranger')
+
+      expect(result._unsafeUnwrap()).toEqual({ isAcceptedTester: false })
+    })
+
+    test('rejects an unknown mini app rather than reporting a silent false', async () => {
+      const result = await service.isAcceptedTester('nope', invitee.id)
 
       expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.MINI_APP_NOT_FOUND)
     })

@@ -90,6 +90,29 @@ export class MiniAppInviteService {
   }
 
   /**
+   * Whether an identity is an accepted invited tester of one app — the
+   * Beta-invitee membership read the platform's edge door composes its decision
+   * from. today-v2 owns invited-tester membership, so this is the one door
+   * predicate the platform cannot answer from its own database.
+   *
+   * The app is required (a genuinely unknown id is a not-found, not a silent
+   * "false") so a provisioning mismatch surfaces rather than reads as "no
+   * access". Answers by account, never phone number — a tester who changed
+   * their number keeps the access they accepted.
+   */
+  async isAcceptedTester(miniAppId: string, userSub: string) {
+    const miniApp = await this.requireMiniApp(miniAppId)
+    if (miniApp.isErr()) return miniApp
+
+    const result = await this.miniAppInviteRepository.isAcceptedInvitee(miniAppId, userSub)
+    if (result.isErr()) {
+      return mapRepositoryError(result.error)
+    }
+
+    return ok({ isAcceptedTester: result.value })
+  }
+
+  /**
    * Invite one tester by phone number.
    *
    * The number is normalised first so that the cap, the duplicate check and

@@ -125,6 +125,32 @@ export class PlatformMiniAppRepository {
     )
   }
 
+  /** Set the Live `unlisted` visibility mode. Leaves the visibility roles alone. */
+  async setUnlisted(id: string, unlisted: boolean) {
+    return await fromRepositoryPromise(
+      this.prismaService.miniApp.update({
+        where: { id },
+        data: { unlisted },
+        include: { miniAppRoles: true },
+      })
+    )
+  }
+
+  /**
+   * Replace the app's Collaborators (PPLE ID `sub`s). A whole-list replace, like
+   * `setRoles`, so the platform stays the single source of truth: today-v2 mirrors
+   * exactly what it is told and never accumulates stale entries.
+   */
+  async setCollaborators(id: string, collaboratorSubs: string[]) {
+    return await fromRepositoryPromise(
+      this.prismaService.miniApp.update({
+        where: { id },
+        data: { collaboratorSubs },
+        include: { miniAppRoles: true },
+      })
+    )
+  }
+
   /**
    * Replace the Live-tier visibility roles. Reuses `MiniAppRole`, the same table
    * the LIVE listing rule reads, so an empty array means "visible to everyone".

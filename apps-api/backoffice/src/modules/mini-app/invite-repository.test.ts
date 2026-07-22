@@ -215,6 +215,33 @@ describe('MiniAppInviteRepository.listAcceptedMiniAppIds', () => {
   })
 })
 
+describe('MiniAppInviteRepository.isAcceptedInvitee', () => {
+  test('matches one app and account on ACCEPTED only, and reports a boolean', async () => {
+    const { prismaService } = createPrismaService()
+    prismaService.miniAppInvite.count.mockResolvedValue(1)
+    const repository = new MiniAppInviteRepository(prismaService)
+
+    const result = await repository.isAcceptedInvitee('app-1', 'user-1')
+
+    // Matched on the account, never the phone number — the same guarantee as
+    // the listing: changing a number never revokes accepted access.
+    expect(prismaService.miniAppInvite.count).toHaveBeenCalledWith({
+      where: { miniAppId: 'app-1', userId: 'user-1', status: MiniAppInviteStatus.ACCEPTED },
+    })
+    expect(result._unsafeUnwrap()).toBe(true)
+  })
+
+  test('is false when no accepted invite matches', async () => {
+    const { prismaService } = createPrismaService()
+    prismaService.miniAppInvite.count.mockResolvedValue(0)
+    const repository = new MiniAppInviteRepository(prismaService)
+
+    const result = await repository.isAcceptedInvitee('app-1', 'user-1')
+
+    expect(result._unsafeUnwrap()).toBe(false)
+  })
+})
+
 describe('MiniAppInviteRepository.remove', () => {
   test('reports whether a row was actually deleted', async () => {
     const { prismaService } = createPrismaService()

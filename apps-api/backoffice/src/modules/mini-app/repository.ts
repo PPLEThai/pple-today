@@ -37,9 +37,9 @@ export class MiniAppRepository {
   /**
    * Load a non-retired mini app by slug for the token-exchange / first-open
    * path. Tier and role eligibility are applied in the service layer via
-   * `isMiniAppVisible` — the same rules as listing — so this query does not
-   * invent a second matrix (and in particular does not treat empty roles as
-   * "public" for Draft/Beta apps).
+   * `isMiniAppAccessible` — the access counterpart of the listing rule — so this
+   * query does not invent a second matrix (and in particular does not treat
+   * empty roles as "public" for Draft/Beta apps).
    */
   async getMiniAppBySlug(slug: string) {
     return await fromRepositoryPromise(
