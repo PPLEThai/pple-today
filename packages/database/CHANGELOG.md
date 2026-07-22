@@ -1,5 +1,11 @@
 # @pple-today/database
 
+## 1.8.0
+
+### Minor Changes
+
+- [#435](https://github.com/PPLEThai/pple-today/pull/435) [`1ce490d`](https://github.com/PPLEThai/pple-today/commit/1ce490d8c3d7617cde68f50e7549dc31ad6a8949) Thanks [@PanJ](https://github.com/PanJ)! - Add the today-v2-side dependencies the platform's edge membership door needs (pple-platform #134): register the `/.pple/auth/callback` redirect URI on each Builder App's OIDC client; expose a Beta-invitee membership read (`GET /platform/mini-apps/:id/beta-membership/:userSub`); add an `unlisted` Live visibility state (listed to no one, reachable by link) with the listing/access eligibility split; and list Draft/Beta apps for Collaborators as well as the Owner (`collaboratorSubs`, synced via `PUT /platform/mini-apps/:id/collaborators`). Launch-token delivery is confirmed as server-visible query parameters — zero SDK change. See `docs/platform-web-door-dependencies.md`.
+
 ## 1.7.0
 
 ### Minor Changes

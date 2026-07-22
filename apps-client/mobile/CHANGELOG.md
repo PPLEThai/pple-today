@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 2.7.2
+
+### Patch Changes
+
+- [#433](https://github.com/PPLEThai/pple-today/pull/433) [`745cd43`](https://github.com/PPLEThai/pple-today/commit/745cd43b80959a6557bf331a1466af9f80c6ef3d) Thanks [@PanJ](https://github.com/PanJ)! - Target Android 16 (API level 36) for Google Play compliance by bumping compileSdk/targetSdk/buildTools to 36 in expo-build-properties.
+
 ## 2.7.1
 
 ### Patch Changes
