@@ -1,5 +1,5 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
-import { MiniAppTier } from '@pple-today/database/prisma'
+import { MiniAppSource, MiniAppTier } from '@pple-today/database/prisma'
 import { err, ok } from 'neverthrow'
 import { describe, expect, test, vi } from 'vitest'
 
@@ -24,9 +24,17 @@ const NEXT_RESET = new Date('2026-07-19T17:00:00.000Z')
 
 const CONTENT = { header: 'Canvassing today', message: 'Three streets left in Bang Rak' }
 
+const builderApp = {
+  id: MINI_APP_ID,
+  source: MiniAppSource.PLATFORM,
+  name: 'Canvassing',
+  icon: 'https://cdn.example/canvassing.png',
+}
+const centralTeamApp = { ...builderApp, source: MiniAppSource.ADMIN }
+
 const appBoundKey = (overrides: Partial<AppBoundKey> = {}): AppBoundKey => ({
   id: KEY_ID,
-  miniAppId: MINI_APP_ID,
+  miniApp: builderApp,
   dailyQuota: 10,
   ...overrides,
 })
@@ -93,7 +101,7 @@ const createFakeNotificationRepository = () => ({
     async (
       _audience: { type: string; details?: string[] },
       _content: AppNotificationContent,
-      _apiKeyId: string | undefined
+      _options?: { apiKeyId?: string; app?: { id: string; name: string } }
     ) => ok(undefined)
   ),
 })
@@ -119,7 +127,7 @@ describe('AppNotificationService.send', () => {
     test('a legacy key with no app binding is refused', async () => {
       const { service, notificationRepository } = createService()
 
-      const result = await service.send(appBoundKey({ miniAppId: null }), CONTENT)
+      const result = await service.send(appBoundKey({ miniApp: null }), CONTENT)
 
       expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.NOTIFICATION_KEY_NOT_APP_BOUND)
       // Nothing was sent: there is no app to resolve an audience from.
@@ -144,13 +152,13 @@ describe('AppNotificationService.send', () => {
       const result = await service.send(appBoundKey(), CONTENT)
 
       expect(result._unsafeUnwrap().recipientCount).toBe(3)
-      const [audience, content, apiKeyId] =
+      const [audience, content, options] =
         notificationRepository.sendNotificationToUser.mock.calls[0]
       expect(audience).toEqual({ type: 'USER_ID', details: [OWNER, INVITEE, STRANGER] })
       expect(content).toEqual(CONTENT)
       // The audience-bound path writes its own content-only usage log, so the
       // shared send path must not also meter this against the key.
-      expect(apiKeyId).toBeUndefined()
+      expect(options?.apiKeyId).toBeUndefined()
     })
 
     test('a Beta app reaches only accepted invitees who have opened it', async () => {
@@ -195,6 +203,27 @@ describe('AppNotificationService.send', () => {
       // still made, so it is metered. Otherwise an app could poll for free.
       expect(notificationRepository.sendNotificationToUser).not.toHaveBeenCalled()
       expect(repository.usage).toHaveLength(1)
+    })
+  })
+
+  describe('the notification is attributed to the app that sent it', () => {
+    test('the bound app travels with the send, name and icon included', async () => {
+      const { service, notificationRepository } = createService()
+
+      await service.send(appBoundKey(), CONTENT)
+
+      const [, , options] = notificationRepository.sendNotificationToUser.mock.calls[0]
+      expect(options?.app).toEqual(builderApp)
+    })
+
+    test('a central-team app is attributed the same way a Builder App is', async () => {
+      // Attribution follows the key, not the audience or the vetting status.
+      const { service, notificationRepository } = createService()
+
+      await service.send(appBoundKey({ miniApp: centralTeamApp }), CONTENT)
+
+      const [, , options] = notificationRepository.sendNotificationToUser.mock.calls[0]
+      expect(options?.app).toEqual(centralTeamApp)
     })
   })
 
@@ -294,6 +323,44 @@ describe('AppNotificationService.send', () => {
         data: { dailyQuota: 2, remaining: 0, resetAt: NEXT_RESET.toISOString() },
       })
       expect(repository.usage).toHaveLength(2)
+    })
+
+    test('does not apply to a key bound to a central-team app', async () => {
+      // The quota is a Builder App Resource Limit. A central-team app taking a
+      // bound key to be attributed must not thereby acquire a 1000/day cap.
+      const repository = createFakeAppNotificationRepository()
+      const { service, notificationRepository } = createService(repository)
+      const key = appBoundKey({ miniApp: centralTeamApp, dailyQuota: 1 })
+
+      await service.send(key, CONTENT)
+      const second = await service.send(key, CONTENT)
+
+      expect(second.isOk()).toBe(true)
+      expect(notificationRepository.sendNotificationToUser).toHaveBeenCalledTimes(2)
+      expect(repository.claimUsageUnderQuota).not.toHaveBeenCalled()
+      expect(repository.usage).toHaveLength(0)
+    })
+
+    test('an unmetered send reports no budget rather than one nothing enforces', async () => {
+      const { service } = createService()
+
+      const result = await service.send(appBoundKey({ miniApp: centralTeamApp }), CONTENT)
+
+      expect(result._unsafeUnwrap()).toEqual({ recipientCount: 3 })
+    })
+
+    test('a failed unmetered send has no claim to release', async () => {
+      const repository = createFakeAppNotificationRepository()
+      const notificationRepository = createFakeNotificationRepository()
+      notificationRepository.sendNotificationToUser = vi.fn(async () =>
+        err({ code: InternalErrorCode.NOTIFICATION_SENT_FAILED, message: 'boom' })
+      ) as never
+      const { service } = createService(repository, notificationRepository)
+
+      const result = await service.send(appBoundKey({ miniApp: centralTeamApp }), CONTENT)
+
+      expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.NOTIFICATION_SENT_FAILED)
+      expect(repository.releaseUsage).not.toHaveBeenCalled()
     })
   })
 

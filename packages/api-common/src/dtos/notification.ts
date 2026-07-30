@@ -5,8 +5,23 @@ const NotificationLinkBase = t.Object({
   bypassNotificationCenter: t.Optional(t.Boolean()),
 })
 
+/**
+ * The app a notification came from, as the client renders it: an icon in place
+ * of the platform bell and a name in place of "แจ้งเตือนทั่วไป".
+ *
+ * Absent means PPLE Today itself — every notification sent before app binding,
+ * and every send from a legacy unbound key — so a client that ignores this
+ * field keeps today's appearance.
+ */
+export const NotificationSenderApp = t.Object({
+  name: t.String(),
+  iconUrl: t.Optional(t.String()),
+})
+export type NotificationSenderApp = Static<typeof NotificationSenderApp>
+
 export const Notification = t.Object({
   id: t.String(),
+  app: t.Optional(NotificationSenderApp),
   content: t.Object({
     header: t.String(),
     message: t.String(),

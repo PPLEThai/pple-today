@@ -1,8 +1,31 @@
-import { ListCursorResponse, Notification } from '@pple-today/api-common/dtos'
+import {
+  ListCursorResponse,
+  Notification,
+  NotificationSenderApp,
+} from '@pple-today/api-common/dtos'
+import { NotificationTokenPlatform } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
+/**
+ * Both new fields are optional so an older client keeps registering exactly as
+ * it does today. Omitting them is not "leave as-is": registration asserts what
+ * *this install* can do right now, so an omission records an unknown platform
+ * and no branding support — which is also what a downgrade should record.
+ */
 export const RegisterNotificationBody = t.Object({
   deviceToken: t.String(),
+  platform: t.Optional(
+    t.Enum(NotificationTokenPlatform, {
+      description:
+        'The device platform. The server builds a different push payload per platform; omitted by clients built before app-bound notifications.',
+    })
+  ),
+  supportsAppBranding: t.Optional(
+    t.Boolean({
+      description:
+        'Whether this build can render an app-branded notification from a data-only message. Only tokens that assert this receive the data-only Android payload.',
+    })
+  ),
 })
 export type RegisterNotificationBody = Static<typeof RegisterNotificationBody>
 
@@ -38,6 +61,8 @@ export const ListHistoryNotificationResponse = ListCursorResponse(
     title: t.String(),
     description: t.Optional(t.String()),
     image: t.Optional(t.String()),
+    /** The sending app, or absent for PPLE Today's own notifications. */
+    app: t.Optional(NotificationSenderApp),
     isRead: t.Boolean(),
     createdAt: t.Date(),
   })
@@ -131,17 +156,30 @@ export const CreateAppNotificationBody = t.Object({
 })
 export type CreateAppNotificationBody = Static<typeof CreateAppNotificationBody>
 
+/**
+ * The quota fields are optional because not every bound key is metered. The
+ * daily quota is a Builder App Resource Limit; a key bound to a central-team
+ * app is exempt, and reporting a budget it is not held to would be a number
+ * nothing enforces.
+ */
 export const CreateAppNotificationResponse = t.Object({
   recipientCount: t.Integer({
     description:
       'How many App Users the notification was addressed to, after the tier audience was applied. Zero is a valid outcome — nobody has opened the app yet, or the tier admits nobody.',
   }),
-  dailyQuota: t.Integer({ description: 'Sends allowed per day for this key' }),
-  remaining: t.Integer({ description: 'Sends still available after this one' }),
-  resetAt: t.String({
-    format: 'date-time',
-    description: 'When the quota window rolls over (Asia/Bangkok midnight)',
-  }),
+  dailyQuota: t.Optional(
+    t.Integer({ description: 'Sends allowed per day for this key; absent when unmetered' })
+  ),
+  remaining: t.Optional(
+    t.Integer({ description: 'Sends still available after this one; absent when unmetered' })
+  ),
+  resetAt: t.Optional(
+    t.String({
+      format: 'date-time',
+      description:
+        'When the quota window rolls over (Asia/Bangkok midnight); absent when unmetered',
+    })
+  ),
 })
 export type CreateAppNotificationResponse = Static<typeof CreateAppNotificationResponse>
 

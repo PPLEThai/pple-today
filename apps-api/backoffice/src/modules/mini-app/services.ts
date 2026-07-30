@@ -17,7 +17,7 @@ import {
 
 import { ElysiaLoggerPlugin } from '../../plugins/log'
 import { MiniAppListCache, MiniAppListCachePlugin } from '../../plugins/mini-app-cache'
-import { NotificationRepositoryPlugin } from '../notification/repository'
+import { NotificationRepositoryPlugin } from '../notification/services'
 
 export class MiniAppService {
   constructor(

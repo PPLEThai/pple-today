@@ -33,7 +33,8 @@ export const NotificationController = new Elysia({
     async ({ body, user, notificationService, status }) => {
       const registerResult = await notificationService.registerDeviceToken(
         user.id,
-        body.deviceToken
+        body.deviceToken,
+        { platform: body.platform, supportsAppBranding: body.supportsAppBranding }
       )
 
       if (registerResult.isErr()) {
@@ -240,7 +241,7 @@ export const ExternalNotificationController = new Elysia({
       detail: {
         summary: 'Send an audience-bound notification from a Builder App',
         description:
-          "Send content to the app's own users. The notification key identifies the app, and the platform resolves the recipients: this app's App Users (people who have opened it), narrowed to its current publication tier — the owner for a Draft, the owner plus accepted testers for a Beta, every App User for a Live app. The request carries no phone numbers, user ids or audience of any kind. An optional linkPath deep-links into this app only (path starting with `/`); free-form cross-app destinations are not accepted. Each send counts against the key's daily quota; exceeding it returns 429 with the remaining budget and the reset time. Legacy central-team keys have no app binding and must use /send instead.",
+          "Send content to the app's own users. The notification key identifies the app, and the platform resolves the recipients: this app's App Users (people who have opened it), narrowed to its current publication tier — the owner for a Draft, the owner plus accepted testers for a Beta, every App User for a Live app. The request carries no phone numbers, user ids or audience of any kind. An optional linkPath deep-links into this app only (path starting with `/`); free-form cross-app destinations are not accepted. The notification carries the app's name and icon into the notification centre and the OS tray. A key bound to a Builder App counts each send against its daily quota; exceeding it returns 429 with the remaining budget and the reset time. Keys bound to a central-team app are not metered and their responses omit the quota fields. Legacy keys have no app binding and must use /send instead.",
       },
       headers: CreateNewExternalNotificationHeader,
       body: CreateAppNotificationBody,
@@ -288,10 +289,7 @@ export const ExternalNotificationController = new Elysia({
         return mapErrorCodeToResponse(bindingResult.error, status)
       }
 
-      const sendResult = await notificationService.sendExternalNotification(
-        body,
-        tokenResult.value.id
-      )
+      const sendResult = await notificationService.sendExternalNotification(body, tokenResult.value)
 
       if (sendResult.isErr()) {
         return mapErrorCodeToResponse(sendResult.error, status)
@@ -306,7 +304,7 @@ export const ExternalNotificationController = new Elysia({
       detail: {
         summary: 'Send external notification to a user',
         description:
-          'This endpoint allows sending notifications to external users based on their phone numbers. An API token is required for authentication. Raw recipient targeting is a central-team capability: keys bound to a mini app are rejected here and must use POST /external/notifications.',
+          "This endpoint allows sending notifications to external users based on their phone numbers. An API token is required for authentication. Raw recipient targeting is a central-team capability: keys bound to a Builder App are rejected here and must use POST /external/notifications. Legacy keys and keys bound to a central-team app are both accepted, and a bound key's notification carries that app's name and icon.",
       },
       headers: CreateNewExternalNotificationHeader,
       body: CreateNewExternalNotificationBody,
