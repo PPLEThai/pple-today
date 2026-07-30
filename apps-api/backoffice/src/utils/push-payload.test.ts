@@ -105,6 +105,49 @@ describe('iOS carries the app in the payload, with no app release', () => {
   })
 })
 
+describe('every attributed send names its app in the data payload', () => {
+  // The foreground toast is built by the client from the message it receives, on
+  // both platforms, and a notification the OS brands but the toast does not would
+  // look like two different senders depending on whether the app happened to be
+  // open. `aps.alert.subtitle` is not readable as data, so the identity is
+  // repeated where the client can reach it.
+  test('an iOS attributed send carries the app name and icon as data', () => {
+    const message = build(ios(), { ...CONTENT, app: APP })
+
+    expect(message.data).toMatchObject({ appName: APP.name, appIconUrl: APP.icon })
+  })
+
+  test('so does an Android send that stayed on today’s notification payload', () => {
+    const message = build(android(), { ...CONTENT, app: APP })
+
+    expect(message.data).toMatchObject({ appName: APP.name, appIconUrl: APP.icon })
+  })
+
+  test('the kill switch withdraws the data-only payload, not the app’s identity', () => {
+    const message = build(android({ supportsAppBranding: true }), { ...CONTENT, app: APP }, true)
+
+    expect(message.data).toMatchObject({ appName: APP.name, appIconUrl: APP.icon })
+  })
+
+  test('an unattributed send names no app, so the client keeps the platform bell', () => {
+    const message = build(ios())
+
+    expect(message.data).not.toHaveProperty('appName')
+    expect(message.data).not.toHaveProperty('appIconUrl')
+  })
+
+  test('an icon the client cannot fetch either is left out, and the name kept', () => {
+    // The same rule as the push itself: the two halves of an identity fail
+    // independently. A base64 data URI would also blow the 4KB data budget.
+    for (const icon of [null, 'data:image/png;base64,iVBORw0KGgo=']) {
+      const message = build(ios(), { ...CONTENT, app: { name: APP.name, icon } })
+
+      expect(message.data?.appName).toBe(APP.name)
+      expect(message.data).not.toHaveProperty('appIconUrl')
+    }
+  })
+})
+
 describe('Android branding is data-only, and only where it is safe', () => {
   test('a capable token gets no notification block, so the client can brand it', () => {
     const message = build(android({ supportsAppBranding: true }), { ...CONTENT, app: APP })

@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
+  expo-notifications@0.32.17:
+    hash: g3l4ro4unbcchr7yxqbrgp4xcy
+    path: patches/expo-notifications@0.32.17.patch
   react-native-pager-view:
     hash: rp3wn5d4p62k3reyprd7s5dt6e
     path: patches/react-native-pager-view.patch
@@ -408,7 +411,7 @@ importers:
         version: 1.0.2
       expo-notifications:
         specifier: ~0.32.17
-        version: 0.32.17(expo@54.0.21(@babel/core@7.27.1)(@expo/metro-runtime@5.0.4(react-native@0.81.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.5)(react@19.1.5)))(expo-router@6.0.14)(react-native-webview@13.15.0(react-native@0.81.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.5)(react@19.1.5))(react@19.1.5))(react-native@0.81.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.5)(react@19.1.5))(react@19.1.5))(react-native@0.81.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.5)(react@19.1.5))(react@19.1.5)(typescript@5.8.3)
+        version: 0.32.17(patch_hash=g3l4ro4unbcchr7yxqbrgp4xcy)(expo@54.0.21(@babel/core@7.27.1)(@expo/metro-runtime@5.0.4(react-native@0.81.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.5)(react@19.1.5)))(expo-router@6.0.14)(react-native-webview@13.15.0(react-native@0.81.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.5)(react@19.1.5))(react@19.1.5))(react-native@0.81.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.5)(react@19.1.5))(react@19.1.5))(react-native@0.81.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.5)(react@19.1.5))(react@19.1.5)(typescript@5.8.3)
       expo-router:
         specifier: ~6.0.14
         version: 6.0.14(q45tf5znyyvbg35xzs7zh6tcva)
@@ -20524,7 +20527,7 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  expo-notifications@0.32.17(expo@54.0.21(@babel/core@7.27.1)(@expo/metro-runtime@5.0.4(react-native@0.81.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.5)(react@19.1.5)))(expo-router@6.0.14)(react-native-webview@13.15.0(react-native@0.81.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.5)(react@19.1.5))(react@19.1.5))(react-native@0.81.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.5)(react@19.1.5))(react@19.1.5))(react-native@0.81.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.5)(react@19.1.5))(react@19.1.5)(typescript@5.8.3):
+  expo-notifications@0.32.17(patch_hash=g3l4ro4unbcchr7yxqbrgp4xcy)(expo@54.0.21(@babel/core@7.27.1)(@expo/metro-runtime@5.0.4(react-native@0.81.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.5)(react@19.1.5)))(expo-router@6.0.14)(react-native-webview@13.15.0(react-native@0.81.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.5)(react@19.1.5))(react@19.1.5))(react-native@0.81.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.5)(react@19.1.5))(react@19.1.5))(react-native@0.81.5(@babel/core@7.27.1)(@react-native-community/cli@18.0.0(typescript@5.8.3))(@types/react@19.1.5)(react@19.1.5))(react@19.1.5)(typescript@5.8.3):
     dependencies:
       '@expo/image-utils': 0.8.14(typescript@5.8.3)
       '@ide/backoff': 1.0.0

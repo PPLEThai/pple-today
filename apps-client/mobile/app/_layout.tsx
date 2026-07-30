@@ -49,12 +49,14 @@ import * as SplashScreen from 'expo-splash-screen'
 import { InfoIcon } from 'lucide-react-native'
 
 import { AppUpdateGate } from '@app/components/app-update-gate'
+import { NotificationSenderIcon } from '@app/components/notification/sender-icon'
 import { StatusBarProvider } from '@app/context/status-bar'
 import { environment } from '@app/env'
 import { useScreenTracking } from '@app/libs/analytics'
 import { reactQueryClient } from '@app/libs/api-client'
 import { initAppUpdate } from '@app/libs/app-update'
 import { AuthLifeCycleHook, useAuthMe, useSession } from '@app/libs/auth'
+import { parseBrandedPush, pushSenderApp } from '@app/utils/branded-push'
 import { openLink } from '@app/utils/link'
 import { resolveIncomingDeepLinkPath } from '@app/utils/mini-app'
 
@@ -292,14 +294,17 @@ function NotificationTokenConsentPopup() {
   const markAsReadMutation = reactQueryClient.useMutation('put', '/notifications/read/:id', {})
   const authMe = useAuthMe()
 
-  const handleRemoteMessage = async (data: Record<string, string | object>) => {
+  // `Record<string, unknown>` rather than RNFB's own data type, because the same
+  // handler now also receives the data off a notification this client presented,
+  // which `expo-notifications` types as unknown values.
+  const handleRemoteMessage = async (data: Record<string, unknown>) => {
     const linkData = data['link']
 
-    if (linkData) {
+    if (typeof linkData === 'string' && linkData) {
       try {
-        const link = JSON.parse(linkData as string)
+        const link = JSON.parse(linkData)
         const notificationId =
-          (data['notificationId'] as string | undefined) ??
+          (typeof data['notificationId'] === 'string' ? data['notificationId'] : undefined) ??
           (link.type === 'IN_APP_NAVIGATION' && link.destination?.inAppType === 'NOTIFICATION'
             ? link.destination.inAppId
             : undefined)
@@ -317,6 +322,29 @@ function NotificationTokenConsentPopup() {
       }
     }
   }
+
+  // A notification this client presented itself is not one Play services
+  // displayed, so tapping it never reaches `onNotificationOpenedApp` — it comes
+  // back through `expo-notifications` instead. The hook covers the cold-start case
+  // too, and returns the same object until a *different* notification is tapped,
+  // so this effect runs once per tap.
+  //
+  // Android only. There, `expo-notifications` yields the incoming message to RNFB
+  // (`android:priority="-1"`) and so only ever reports responses for notifications
+  // we built; on iOS it is the `UNUserNotificationCenter` delegate and would report
+  // FCM-displayed ones as well, double-handling every tap.
+  const lastNotificationResponse = Notifications.useLastNotificationResponse()
+  React.useEffect(() => {
+    if (Platform.OS !== 'android' || !lastNotificationResponse) return
+    const data = lastNotificationResponse.notification.request.content.data
+    // Cleared once handled so that a remount cannot replay a tap that has already
+    // been navigated.
+    Notifications.clearLastNotificationResponseAsync().catch(() => {})
+    if (data) {
+      handleRemoteMessage(data)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lastNotificationResponse])
 
   React.useEffect(() => {
     const handleInitialMessaging = async () => {
@@ -339,6 +367,16 @@ function NotificationTokenConsentPopup() {
         await registerNotificationTokenMutation.mutateAsync({
           body: {
             deviceToken: token,
+            // The server builds a different push payload per platform, so it has
+            // to know which one this token belongs to.
+            platform: Platform.OS === 'ios' ? 'IOS' : 'ANDROID',
+            // Asserts that this build can render an app-branded notification from
+            // a data-only message. Only the Android path does — see
+            // `registerBrandedPushBackgroundHandler` — and on iOS the server
+            // brands the push itself, with no client involvement. Registration
+            // already runs on every cold start after auth, so an upgraded install
+            // re-asserts this without any new trigger.
+            supportsAppBranding: Platform.OS === 'android',
           },
         })
         await handleInitialMessaging()
@@ -356,8 +394,16 @@ function NotificationTokenConsentPopup() {
     })
 
     const unsubscribeOnMessage = onMessage(messaging, async (remoteMessage) => {
-      const title = remoteMessage.notification?.title
-      const body = remoteMessage.notification?.body
+      // An attributed Android push arrives data-only — Play services must not
+      // display it, or there would be nothing left for the client to brand — so
+      // its title and body are in `data` rather than in a `notification` block.
+      const brandedPush = parseBrandedPush(remoteMessage.data)
+      const title = remoteMessage.notification?.title ?? brandedPush?.title
+      const body = remoteMessage.notification?.body ?? brandedPush?.body
+      // Both platforms name the sending app in `data`, so the toast brands the
+      // same notification the tray does. Otherwise one notification would look
+      // like two different senders depending on whether the app was open.
+      const senderApp = pushSenderApp(remoteMessage.data)
 
       queryClient.setQueryData(
         reactQueryClient.getQueryKey('/notifications/unread-count'),
@@ -373,7 +419,12 @@ function NotificationTokenConsentPopup() {
       toast.info({
         text1: title,
         text2: body,
-        icon: InfoIcon,
+        // An attributed notification never falls back to the platform's own
+        // glyph, even when the app has no icon to show: that would read as PPLE
+        // Today having sent it. `NotificationSenderIcon` picks the neutral app
+        // mark in that case, the same as the list and detail screens.
+        icon: senderApp ? null : InfoIcon,
+        leading: senderApp ? <NotificationSenderIcon app={senderApp} size={26} /> : undefined,
         onPress: async () => {
           if (remoteMessage && remoteMessage.data) {
             await handleRemoteMessage(remoteMessage.data)

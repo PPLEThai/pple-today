@@ -98,13 +98,24 @@ export const buildFcmMessage = (
   data: PushNotificationContent,
   options: { androidBrandedPushDisabled: boolean }
 ): FcmMessage => {
+  const app = data.app
+  const isAndroid = target.platform === NotificationTokenPlatform.ANDROID
+  const appIconUrl = app ? fetchableIcon(app.icon) : undefined
+
+  // These key names are a contract with the mobile client, which restates them in
+  // `apps-client/mobile/utils/branded-push.ts` — sharing them would drag Elysia and
+  // the Prisma client into a React Native bundle. Change one side, change the other.
   const baseData: Record<string, string> = {
     link: data.link ? JSON.stringify(data.link) : '',
     ...(data.notificationId ? { notificationId: data.notificationId } : {}),
+    // The app's identity, on every attributed send rather than only the
+    // data-only one. The client builds the foreground toast from the message it
+    // receives on both platforms, and `aps.alert.subtitle` is not readable as
+    // data — so a notification the OS brands but the toast does not would look
+    // like two different senders depending on whether the app was open.
+    ...(app ? { appName: app.name } : {}),
+    ...(appIconUrl ? { appIconUrl } : {}),
   }
-
-  const app = data.app
-  const isAndroid = target.platform === NotificationTokenPlatform.ANDROID
   const brandedAndroid =
     isAndroid &&
     app !== undefined &&
@@ -112,22 +123,18 @@ export const buildFcmMessage = (
     !options.androidBrandedPushDisabled
 
   if (brandedAndroid) {
-    const iconUrl = fetchableIcon(app.icon)
-
     return {
       token: target.token,
       // No `notification` block: its presence is what makes Play services
       // display the message itself, leaving the client nothing to brand.
       //
-      // These keys are the contract with the Android display path (a separate
-      // issue): it reads `title`/`body` for the notification, `appName` for the
-      // sub-text, and `appIconUrl` for the per-notification large icon.
+      // These keys are the contract with the Android display path: it reads
+      // `title`/`body` for the notification, and `appName`/`appIconUrl` from
+      // `baseData` for the sub-text and the per-notification large icon.
       data: {
         ...baseData,
         title: data.title,
         body: data.message,
-        appName: app.name,
-        ...(iconUrl ? { appIconUrl: iconUrl } : {}),
         // The content image is deliberately absent. This is the one payload
         // where the app icon and the content image would compete for the same
         // large-icon slot, and the app icon wins; a carve-out for image
@@ -189,7 +196,7 @@ export const buildFcmMessage = (
       // app icon really does displace the content image. When it is not
       // fetchable the slot is left empty and the default app icon shows, rather
       // than handing it back to the image the app icon was displacing.
-      fcm_options: { image: fetchableIcon(app.icon) },
+      fcm_options: { image: appIconUrl },
     }
   }
 

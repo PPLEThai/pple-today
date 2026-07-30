@@ -8,10 +8,14 @@ import { Text } from '@pple-today/ui/text'
 import { H1 } from '@pple-today/ui/typography'
 import dayjs from 'dayjs'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { ArrowLeftIcon, ArrowUpRightIcon, BellIcon } from 'lucide-react-native'
+import { ArrowLeftIcon, ArrowUpRightIcon } from 'lucide-react-native'
 
 import { LinkifiedText } from '@app/components/linkified-text'
 import { MiniAppInviteInbox } from '@app/components/mini-app/invite-inbox'
+import {
+  NotificationSenderIcon,
+  PLATFORM_SENDER_NAME,
+} from '@app/components/notification/sender-icon'
 import { reactQueryClient } from '@app/libs/api-client'
 import { openLink } from '@app/utils/link'
 
@@ -69,11 +73,12 @@ export default function NotificationDetailPage() {
             contentContainerClassName="pt-1 pb-2 bg-base-bg-white flex-grow flex flex-col gap-3 px-4"
           >
             <View className="flex flex-row items-center gap-2">
-              <View className="size-8 rounded-full bg-base-primary-default flex items-center justify-center">
-                <Icon icon={BellIcon} className="text-base-bg-white" />
-              </View>
-              <Text className="text-sm text-base-text-medium font-heading-medium flex-1">
-                แจ้งเตือนทั่วไป
+              <NotificationSenderIcon app={item.app} />
+              <Text
+                className="text-sm text-base-text-medium font-heading-medium flex-1"
+                numberOfLines={1}
+              >
+                {item.app?.name ?? PLATFORM_SENDER_NAME}
               </Text>
               <Text className="text-sm text-base-text-medium font-heading-regular">
                 {dayjs(item.createdAt).format('DD MMM BB')}
