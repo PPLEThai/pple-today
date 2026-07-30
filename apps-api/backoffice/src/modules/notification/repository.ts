@@ -12,6 +12,7 @@ import {
   HashTagStatus,
   NotificationInAppType,
   NotificationLinkType,
+  NotificationTokenPlatform,
   PollStatus,
   PostStatus,
   Prisma,
@@ -19,11 +20,10 @@ import {
   UserStatus,
 } from '@pple-today/database/prisma'
 import crypto from 'crypto'
-import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 import * as R from 'remeda'
 
-import { AppNotificationRepository } from './app-notification-repository'
+import type { BoundApp } from './key-binding'
 import { CreateNewExternalNotificationBody } from './models'
 
 /**
@@ -44,11 +44,15 @@ export type NotificationAudience =
   | CreateNewExternalNotificationBody['audience']
   | ResolvedUserAudience
 
-import { CloudMessagingService, CloudMessagingServicePlugin } from '../../plugins/cloud-messaging'
-import { ElysiaLoggerPlugin } from '../../plugins/log'
-import { PrismaServicePlugin } from '../../plugins/prisma'
-import { SmsService, SmsServicePlugin } from '../../plugins/sms'
+import type { CloudMessagingService } from '../../plugins/cloud-messaging'
+import type { SmsService } from '../../plugins/sms'
 
+/**
+ * The central-team notification store and send pipeline.
+ *
+ * Kept free of Elysia/config imports so it can be unit-tested without booting
+ * the app's config graph; the plugin wiring lives in `services.ts`.
+ */
 export class NotificationRepository {
   constructor(
     private readonly prismaService: PrismaService,
@@ -171,9 +175,12 @@ export class NotificationRepository {
    * deactivated (retiring an app deactivates its key, which is what stops a
    * retired Builder App from notifying anyone).
    *
-   * Returns the app binding and the daily quota alongside the id: `miniAppId`
-   * decides *which* send path the key may use at all, so the caller needs it at
-   * the same moment it learns the key is valid.
+   * Returns the whole bound app, not just its id. Every fact the rest of the
+   * request needs about the sender is known here and nowhere cheaper: `source`
+   * decides which send path the key may use and whether it is metered, and
+   * `name`/`icon` are what the notification carries into the tray. Fetching
+   * them together means the send path never has to go back for the app it
+   * already proved the key belongs to.
    */
   async checkApiKey(apiKey: string) {
     return fromRepositoryPromise(
@@ -184,8 +191,10 @@ export class NotificationRepository {
         },
         select: {
           id: true,
-          miniAppId: true,
           dailyQuota: true,
+          miniApp: {
+            select: { id: true, source: true, name: true, icon: true },
+          },
         },
       })
     )
@@ -219,7 +228,9 @@ export class NotificationRepository {
             }
           : undefined,
         include: {
-          notification: true,
+          // The sending app is read live rather than snapshotted onto the
+          // notification, so a rename or new icon re-labels its whole history.
+          notification: { include: { miniApp: { select: { name: true, icon: true } } } },
         },
       })
 
@@ -238,7 +249,25 @@ export class NotificationRepository {
     })
   }
 
-  async registerDeviceToken(userId: string, deviceToken: string) {
+  /**
+   * Record a device token and what its install can do.
+   *
+   * The capability is written on **both** branches. The update branch is the
+   * one that matters: an upgraded install keeps its FCM token, so it only ever
+   * takes that path, and leaving the columns alone there would mean a client
+   * could never assert the capability at all. Writing them on every
+   * registration also makes a downgrade self-correcting.
+   */
+  async registerDeviceToken(
+    userId: string,
+    deviceToken: string,
+    device: { platform?: NotificationTokenPlatform; supportsAppBranding?: boolean } = {}
+  ) {
+    const capability = {
+      platform: device.platform ?? null,
+      supportsAppBranding: device.supportsAppBranding ?? false,
+    }
+
     return fromRepositoryPromise(
       this.prismaService.userNotificationToken.upsert({
         where: {
@@ -247,10 +276,12 @@ export class NotificationRepository {
         create: {
           userId,
           token: deviceToken,
+          ...capability,
         },
         update: {
           userId,
           updatedAt: new Date(),
+          ...capability,
         },
       })
     )
@@ -297,22 +328,38 @@ export class NotificationRepository {
           },
         },
         include: {
-          notification: true,
+          // The sending app is read live rather than snapshotted onto the
+          // notification, so a rename or new icon re-labels its whole history.
+          notification: { include: { miniApp: { select: { name: true, icon: true } } } },
         },
       })
     )
   }
 
   /**
-   * @param apiKeyId The notification API key this send is billed to, or
-   *                 `undefined` for platform-internal sends that hold no key.
+   * Create one notification and deliver it.
+   *
+   * `options.app` is the sender's identity, not its audience: it is written to
+   * the notification row and carried into the push, and it comes from the key
+   * both send paths have already resolved. Absent means PPLE Today itself —
+   * every legacy unbound-key send, and every platform-internal one.
    */
   async sendNotificationToUser(
     conditions: NotificationAudience,
     data: CreateNewExternalNotificationBody['content'],
-    apiKeyId: string | undefined,
-    smsFallbackText?: string
+    options: {
+      /**
+       * The notification API key this send is metered against. Absent for
+       * platform-internal sends that hold no key, and for the audience-bound
+       * path, which writes its own content-only usage log.
+       */
+      apiKeyId?: string
+      /** The app that sent this. Absent = PPLE Today. */
+      app?: BoundApp
+      smsFallbackText?: string
+    } = {}
   ) {
+    const { apiKeyId, app, smsFallbackText } = options
     const audience: NotificationAudience =
       conditions.type === 'PHONE_NUMBER'
         ? {
@@ -388,6 +435,10 @@ export class NotificationRepository {
             image: data.image,
             actionButtonText: linkNavigation ? data?.actionButtonText : undefined,
 
+            // A foreign key, so a later rename or new icon re-labels this
+            // notification too. Null is PPLE Today itself.
+            miniAppId: app?.id ?? null,
+
             isBroadcast: audience.type === 'BROADCAST' ? true : false,
             districts: audience.type === 'ADDRESS' ? audience.details.districts : undefined,
             provinces: audience.type === 'ADDRESS' ? audience.details.provinces : undefined,
@@ -413,8 +464,12 @@ export class NotificationRepository {
           id: true,
           phoneNumber: true,
           notificationTokens: {
+            // The payload is chosen per token, not per send, so each one's
+            // platform and asserted capability travel with it.
             select: {
               token: true,
+              platform: true,
+              supportsAppBranding: true,
             },
           },
         },
@@ -442,7 +497,7 @@ export class NotificationRepository {
 
     const phoneNumberWithTokens = users.flatMap((u) => ({
       phoneNumber: u.phoneNumber,
-      token: u.notificationTokens.map((t) => t.token),
+      tokens: u.notificationTokens,
     }))
 
     const notFoundUser =
@@ -452,8 +507,8 @@ export class NotificationRepository {
             phoneNumberWithTokens.map((p) => p.phoneNumber)
           )
         : undefined
-    const emptyTokens = phoneNumberWithTokens.filter((p) => p.token.length === 0)
-    const nonEmptyTokens = phoneNumberWithTokens.filter((p) => p.token.length > 0)
+    const emptyTokens = phoneNumberWithTokens.filter((p) => p.tokens.length === 0)
+    const nonEmptyTokens = phoneNumberWithTokens.filter((p) => p.tokens.length > 0)
 
     const shouldBypass =
       data.link?.bypassNotificationCenter === true &&
@@ -473,6 +528,9 @@ export class NotificationRepository {
             },
           },
       notificationId: newNotification.id,
+      // The push names the sender; PPLE Today's own notifications name nobody
+      // and keep the platform bell.
+      app: app ? { name: app.name, icon: app.icon } : undefined,
     }
 
     this.loggerService.info({
@@ -490,7 +548,7 @@ export class NotificationRepository {
       nonEmptyTokens.map(async (p) => {
         return {
           phoneNumber: p.phoneNumber,
-          result: await this.cloudMessagingService.sendNotifications(p.token, notificationDetails),
+          result: await this.cloudMessagingService.sendNotifications(p.tokens, notificationDetails),
         }
       })
     )
@@ -595,29 +653,3 @@ export class NotificationRepository {
     )
   }
 }
-
-export const AppNotificationRepositoryPlugin = new Elysia({
-  name: 'AppNotificationRepository',
-})
-  .use([PrismaServicePlugin])
-  .decorate(({ prismaService }) => ({
-    appNotificationRepository: new AppNotificationRepository(prismaService),
-  }))
-
-export const NotificationRepositoryPlugin = new Elysia({
-  name: 'NotificationRepositoryPlugin',
-})
-  .use([
-    PrismaServicePlugin,
-    CloudMessagingServicePlugin,
-    SmsServicePlugin,
-    ElysiaLoggerPlugin({ name: 'NotificationRepository' }),
-  ])
-  .decorate(({ prismaService, cloudMessagingService, smsService, loggerService }) => ({
-    notificationRepository: new NotificationRepository(
-      prismaService,
-      cloudMessagingService,
-      smsService,
-      loggerService
-    ),
-  }))

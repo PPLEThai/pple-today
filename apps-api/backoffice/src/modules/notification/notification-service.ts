@@ -1,12 +1,22 @@
 import { mapRepositoryError } from '@pple-today/api-common/utils'
+import type { NotificationTokenPlatform } from '@pple-today/database/prisma'
 import { ok } from 'neverthrow'
 
+import type { BoundApp } from './key-binding'
 import type {
   CreateNewExternalNotificationBody,
   GetNotificationDetailsByIdResponse,
   ListHistoryNotificationResponse,
 } from './models'
 import type { NotificationRepository } from './repository'
+
+/**
+ * The sending app as the client renders it. A notification with no app is PPLE
+ * Today's own and keeps the platform bell, so `undefined` is the answer rather
+ * than a placeholder name.
+ */
+const toSenderApp = (miniApp: { name: string; icon: string | null } | null) =>
+  miniApp ? { name: miniApp.name, iconUrl: miniApp.icon ?? undefined } : undefined
 
 /**
  * The central-team notification surface: history, read state, device tokens and
@@ -22,9 +32,10 @@ export class NotificationService {
   /**
    * Resolve a presented API key, or null when it is unknown or deactivated.
    *
-   * Returns the whole record rather than just its id: a key's `miniAppId`
-   * binding decides which send path it may use, so every caller has to see it
-   * at the point it authenticates.
+   * Returns the whole record rather than just its id: the app a key is bound to
+   * decides which send path it may use, whether it is metered, and whose name
+   * and icon the notification carries — so every caller has to see it at the
+   * point it authenticates.
    */
   async checkApiToken(apiToken: string) {
     const isValid = await this.notificationRepository.checkApiKey(apiToken)
@@ -49,6 +60,7 @@ export class NotificationService {
         title: notification.title,
         description: notification.message ?? undefined,
         image: notification.image ?? undefined,
+        app: toSenderApp(notification.miniApp),
         isRead,
         createdAt,
       }))
@@ -84,6 +96,7 @@ export class NotificationService {
 
     return ok({
       id: notificationDetails.id,
+      app: toSenderApp(notificationDetails.miniApp),
       content: {
         header: notificationDetails.title,
         message: notificationDetails.message ?? undefined,
@@ -115,10 +128,15 @@ export class NotificationService {
     } satisfies GetNotificationDetailsByIdResponse)
   }
 
-  async registerDeviceToken(userId: string, deviceToken: string) {
+  async registerDeviceToken(
+    userId: string,
+    deviceToken: string,
+    device: { platform?: NotificationTokenPlatform; supportsAppBranding?: boolean } = {}
+  ) {
     const registerResult = await this.notificationRepository.registerDeviceToken(
       userId,
-      deviceToken
+      deviceToken,
+      device
     )
 
     if (registerResult.isErr()) {
@@ -148,12 +166,23 @@ export class NotificationService {
     return ok()
   }
 
-  async sendExternalNotification(data: CreateNewExternalNotificationBody, apiKeyId: string) {
+  /**
+   * @param key The resolved key this send is metered against, and whose bound
+   *            app (if any) the notification is attributed to. A legacy unbound
+   *            key attributes to nobody, exactly as before.
+   */
+  async sendExternalNotification(
+    data: CreateNewExternalNotificationBody,
+    key: { id: string; miniApp: BoundApp | null }
+  ) {
     const sendResult = await this.notificationRepository.sendNotificationToUser(
       data.audience,
       data.content,
-      apiKeyId,
-      data.smsFallbackText
+      {
+        apiKeyId: key.id,
+        app: key.miniApp ?? undefined,
+        smsFallbackText: data.smsFallbackText,
+      }
     )
 
     if (sendResult.isErr()) {

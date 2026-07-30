@@ -59,6 +59,7 @@ model MiniApp {
   miniAppRoles        MiniAppRole[]
   appUsers            MiniAppUser[]
   notificationApiKeys NotificationApiKey[]
+  notifications       Notification[]
   invites             MiniAppInvite[]
 }
 

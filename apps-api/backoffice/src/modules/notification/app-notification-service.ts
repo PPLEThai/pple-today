@@ -1,10 +1,11 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
+import { MiniAppSource } from '@pple-today/database/prisma'
 import { err, ok } from 'neverthrow'
 
 import { resolveAppAudience } from './app-audience'
 import type { AppNotificationRepository } from './app-notification-repository'
-import { requireAppBoundKey } from './key-binding'
+import { type BoundApp, requireAppBoundKey } from './key-binding'
 import type { CreateAppNotificationBody } from './models'
 import { evaluateDailyQuota, quotaDayStart } from './quota'
 import type { NotificationRepository } from './repository'
@@ -13,8 +14,8 @@ import { resolveAppLinkPath } from './resolve-app-link-path'
 /** The notification key as the send path needs to see it. */
 export interface AppBoundKey {
   id: string
-  /** The app this key sends for. Null = a legacy central-team key. */
-  miniAppId: string | null
+  /** The app this key speaks for. Null = a legacy unbound key. */
+  miniApp: BoundApp | null
   dailyQuota: number
 }
 
@@ -69,14 +70,18 @@ export class AppNotificationService {
    * actually created — so an internal failure never costs the Builder part of
    * their day's budget. An invalid `linkPath` fails before the claim so junk
    * never costs budget.
+   *
+   * A key bound to a central-team app skips metering entirely: the daily quota
+   * is a *Builder App Resource Limit*, and a central-team app is not an outside
+   * Builder. Without that, taking a bound key purely to be attributed would
+   * silently acquire a 1000/day cap the first time this endpoint was used.
    */
   async send(key: AppBoundKey, content: AppNotificationContent, linkPath?: string) {
     const boundKey = requireAppBoundKey(key)
     if (boundKey.isErr()) return err(boundKey.error)
 
-    const audienceInput = await this.appNotificationRepository.getAudienceInput(
-      boundKey.value.miniAppId
-    )
+    const app = boundKey.value.miniApp
+    const audienceInput = await this.appNotificationRepository.getAudienceInput(app.id)
     if (audienceInput.isErr()) {
       return mapRepositoryError(audienceInput.error, {
         RECORD_NOT_FOUND: {
@@ -98,44 +103,54 @@ export class AppNotificationService {
     }
 
     const now = this.now()
-    // Stringified to match how the raw-targeting path has always written this
-    // column (`sendNotificationToUser`), so the usage log stays one shape and
-    // a reader never has to branch on which path wrote the row. The audience is
-    // recorded as the app it was derived from, never as the list of people it
-    // resolved to. Claimed up front so the body is ready before send.
-    const usageBody = JSON.stringify({
-      audience: { type: 'APP_USERS', miniAppId: boundKey.value.miniAppId },
-      data: sendContent,
-    })
+    // Metered by default, and exempt only for a vetted central-team app. A
+    // source this code has not heard of is treated as an outside Builder rather
+    // than quietly granted an unlimited send path.
+    const metered = app.source !== MiniAppSource.ADMIN
 
-    // Quota accounting is a single transactional claim so concurrent sends
-    // cannot both squeeze past the last remaining slot.
-    const claimResult = await this.appNotificationRepository.claimUsageUnderQuota(
-      key.id,
-      key.dailyQuota,
-      quotaDayStart(now),
-      usageBody
-    )
-    if (claimResult.isErr()) return mapRepositoryError(claimResult.error)
+    let claim: { usageLogId: string; used: number } | undefined
 
-    if (claimResult.value.status === 'quota_exceeded') {
-      const quota = evaluateDailyQuota({
-        used: claimResult.value.used,
-        dailyQuota: key.dailyQuota,
-        now,
+    if (metered) {
+      // Stringified to match how the raw-targeting path has always written this
+      // column (`sendNotificationToUser`), so the usage log stays one shape and
+      // a reader never has to branch on which path wrote the row. The audience
+      // is recorded as the app it was derived from, never as the list of people
+      // it resolved to. Claimed up front so the body is ready before send.
+      const usageBody = JSON.stringify({
+        audience: { type: 'APP_USERS', miniAppId: app.id },
+        data: sendContent,
       })
-      return err({
-        code: InternalErrorCode.NOTIFICATION_QUOTA_EXCEEDED,
-        message: `Daily notification quota of ${quota.dailyQuota} exhausted. It resets at ${quota.resetAt.toISOString()}.`,
-        data: {
-          dailyQuota: quota.dailyQuota,
-          remaining: quota.remaining,
-          resetAt: quota.resetAt.toISOString(),
-        },
-      })
+
+      // Quota accounting is a single transactional claim so concurrent sends
+      // cannot both squeeze past the last remaining slot.
+      const claimResult = await this.appNotificationRepository.claimUsageUnderQuota(
+        key.id,
+        key.dailyQuota,
+        quotaDayStart(now),
+        usageBody
+      )
+      if (claimResult.isErr()) return mapRepositoryError(claimResult.error)
+
+      if (claimResult.value.status === 'quota_exceeded') {
+        const quota = evaluateDailyQuota({
+          used: claimResult.value.used,
+          dailyQuota: key.dailyQuota,
+          now,
+        })
+        return err({
+          code: InternalErrorCode.NOTIFICATION_QUOTA_EXCEEDED,
+          message: `Daily notification quota of ${quota.dailyQuota} exhausted. It resets at ${quota.resetAt.toISOString()}.`,
+          data: {
+            dailyQuota: quota.dailyQuota,
+            remaining: quota.remaining,
+            resetAt: quota.resetAt.toISOString(),
+          },
+        })
+      }
+
+      claim = claimResult.value
     }
 
-    const claim = claimResult.value
     const recipients = resolveAppAudience(audienceInput.value)
 
     // An audience of nobody has no notification to create — creating one would
@@ -145,33 +160,38 @@ export class AppNotificationService {
       const sendResult = await this.notificationRepository.sendNotificationToUser(
         { type: 'USER_ID', details: recipients },
         sendContent,
-        // The usage log above is this path's meter. Letting the shared path log
-        // as well would both double-count the send and copy the resolved
-        // recipients into the log.
-        undefined
+        {
+          // The usage log above is this path's meter. Letting the shared path
+          // log as well would both double-count the send and copy the resolved
+          // recipients into the log.
+          app,
+        }
       )
 
       if (sendResult.isErr()) {
-        const releaseResult = await this.appNotificationRepository.releaseUsage(claim.usageLogId)
-        if (releaseResult.isErr()) return mapRepositoryError(releaseResult.error)
+        if (claim) {
+          const releaseResult = await this.appNotificationRepository.releaseUsage(claim.usageLogId)
+          if (releaseResult.isErr()) return mapRepositoryError(releaseResult.error)
+        }
         return mapRepositoryError(sendResult.error)
       }
     }
 
-    // `claim.used` includes this send; evaluate against the pre-claim count so
-    // the pure quota rule keeps its "used before this send" contract.
-    const quota = evaluateDailyQuota({
-      used: claim.used - 1,
-      dailyQuota: key.dailyQuota,
-      now,
-    })
+    // An unmetered key has no budget to report, and the quota fields fall away
+    // as a group — inventing one would put a cap in the response that nothing
+    // enforces. `claim.used` includes this send, so evaluate against the
+    // pre-claim count and keep the pure rule's "used before this send"
+    // contract.
+    const quota = claim
+      ? evaluateDailyQuota({ used: claim.used - 1, dailyQuota: key.dailyQuota, now })
+      : undefined
 
     return ok({
       recipientCount: recipients.length,
-      dailyQuota: quota.dailyQuota,
+      dailyQuota: quota?.dailyQuota,
       // This send has now been spent, so report what is left after it.
-      remaining: Math.max(quota.remaining - 1, 0),
-      resetAt: quota.resetAt.toISOString(),
+      remaining: quota && Math.max(quota.remaining - 1, 0),
+      resetAt: quota?.resetAt.toISOString(),
     })
   }
 

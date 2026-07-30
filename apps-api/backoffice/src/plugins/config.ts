@@ -166,6 +166,17 @@ export const envSchema = t.Object({
     description: 'Firebase Private Key',
   }),
 
+  ANDROID_BRANDED_PUSH_DISABLED: t
+    .Transform(
+      t.Union([t.Literal('true'), t.Literal('false')], {
+        default: 'false',
+        description:
+          'Kill switch for Android app-branded pushes. When true, every Android token receives the legacy `notification` payload regardless of the capability it registered — branding degrades to unbranded and delivery is restored without an app release. The mitigation for a data-only push being dropped by OEM background restrictions.',
+      })
+    )
+    .Decode((value) => value === 'true')
+    .Encode((value) => (value ? 'true' : 'false')),
+
   SMS_SERVICE_BASE_URL: t.Optional(
     t.String({
       description: 'Base URL for SMS service provider',

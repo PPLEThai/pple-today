@@ -1,7 +1,6 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { ElysiaLoggerInstance } from '@pple-today/api-common/plugins'
 import { err } from '@pple-today/api-common/utils'
-import { NotificationInAppType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { Credentials, JWT } from 'google-auth-library'
 import { fromPromise, ok } from 'neverthrow'
@@ -11,6 +10,11 @@ import { ConfigServicePlugin } from './config'
 import { ElysiaLoggerPlugin } from './log'
 
 import { promiseWithExponentialBackoff } from '../utils/promise'
+import {
+  buildFcmMessage,
+  type PushNotificationContent,
+  type PushToken,
+} from '../utils/push-payload'
 
 export class CloudMessagingService {
   private JWT_TOKEN: Credentials | null = null
@@ -22,6 +26,11 @@ export class CloudMessagingService {
       CLIENT_EMAIL: string
       PRIVATE_KEY: string
       PROJECT_ID: string
+      /**
+       * Withdraw Android branded (data-only) pushes without an app release —
+       * the one lever if OEM background restrictions start swallowing them.
+       */
+      ANDROID_BRANDED_PUSH_DISABLED: boolean
     }
   ) {
     this.FCM_URL = `https://fcm.googleapis.com/v1/projects/${this.config.PROJECT_ID}/messages:send`
@@ -63,29 +72,7 @@ export class CloudMessagingService {
     return resp.value.access_token
   }
 
-  async sendNotifications(
-    deviceToken: string[],
-    data: {
-      title: string
-      message: string
-      image?: string
-      notificationId?: string
-      link?:
-        | {
-            type: 'MINI_APP' | 'EXTERNAL_BROWSER'
-            destination: string
-            bypassNotificationCenter?: boolean
-          }
-        | {
-            type: 'IN_APP_NAVIGATION'
-            destination: {
-              inAppType: NotificationInAppType | 'NOTIFICATION'
-              inAppId: string
-            }
-            bypassNotificationCenter?: boolean
-          }
-    }
-  ) {
+  async sendNotifications(targets: PushToken[], data: PushNotificationContent) {
     const accessToken = await fromPromise(this.getAccessTokenAsync(), () => ({
       code: InternalErrorCode.INTERNAL_SERVER_ERROR,
       message: 'Failed to send notification',
@@ -96,37 +83,13 @@ export class CloudMessagingService {
     }
 
     const sendResult = await Promise.all(
-      deviceToken.map((token) =>
+      targets.map((target) =>
         fromPromise(
           promiseWithExponentialBackoff(async () => {
             const body = {
-              message: {
-                token,
-                notification: {
-                  title: data.title,
-                  body: data.message,
-                },
-                data: {
-                  link: data.link ? JSON.stringify(data.link) : '',
-                  ...(data.notificationId ? { notificationId: data.notificationId } : {}),
-                },
-                apns: {
-                  payload: {
-                    aps: {
-                      'mutable-content': 1,
-                    },
-                  },
-                  fcm_options: {
-                    image: data.image,
-                  },
-                },
-                android: {
-                  notification: {
-                    click_action: '.MainActivity',
-                    image: data.image,
-                  },
-                },
-              },
+              message: buildFcmMessage(target, data, {
+                androidBrandedPushDisabled: this.config.ANDROID_BRANDED_PUSH_DISABLED,
+              }),
             }
 
             const resp = await fetch(this.FCM_URL, {
@@ -174,7 +137,7 @@ export class CloudMessagingService {
             ) {
               return {
                 code: InternalErrorCode.NOTIFICATION_INVALID_REGISTRATION_TOKEN,
-                token,
+                token: target.token,
                 message: 'Invalid registration token',
                 details: error,
               }
@@ -211,5 +174,6 @@ export const CloudMessagingServicePlugin = new Elysia()
       CLIENT_EMAIL: configService.get('FIREBASE_CLIENT_EMAIL'),
       PRIVATE_KEY: configService.get('FIREBASE_PRIVATE_KEY'),
       PROJECT_ID: configService.get('FIREBASE_PROJECT_ID'),
+      ANDROID_BRANDED_PUSH_DISABLED: configService.get('ANDROID_BRANDED_PUSH_DISABLED'),
     }),
   }))

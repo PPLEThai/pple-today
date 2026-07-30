@@ -4,9 +4,26 @@ enum NotificationLinkType {
   EXTERNAL_BROWSER
 }
 
+enum NotificationTokenPlatform {
+  IOS
+  ANDROID
+}
+
 model UserNotificationToken {
   token  String @id
   userId String
+
+  // The send path builds a different FCM payload per platform, so it has to
+  // know which one a token belongs to. Null for tokens registered before this
+  // change — and unknown-platform tokens keep the payload they already
+  // understand, which is what makes "no backfill" safe.
+  platform NotificationTokenPlatform?
+
+  // The client asserts, on every registration, that this build can render a
+  // branded notification from a data-only message. False for every token
+  // registered by an older build, which is what keeps those installs on the
+  // proven `notification` payload.
+  supportsAppBranding Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -60,11 +77,24 @@ model Notification {
   provinces   String[]
   districts   String[]
 
+  // The app this notification came from. Null = PPLE Today itself: every
+  // pre-existing row, and every send from a legacy unbound key.
+  //
+  // A foreign key rather than a snapshot of the name and icon, so a rename or a
+  // new icon re-labels the app's whole notification history — a reader asks
+  // "which app is this?", not "what was it called in March". MiniApp rows are
+  // never hard-deleted (retire is a soft-delete), so a retired app's old
+  // notifications keep resolving.
+  miniAppId String?
+  miniApp   MiniApp? @relation(fields: [miniAppId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   sentNotifications UserNotification[]
   phoneNumbers      NotificationPhoneNumber[]
+
+  @@index([miniAppId])
 }
 
 model NotificationPhoneNumber {

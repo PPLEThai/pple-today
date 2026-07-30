@@ -30,11 +30,25 @@ describe('InviteNotifier.notifyInvitee', () => {
 
     await createNotifier(sendNotificationToUser).notifyInvitee(INVITEE_PHONE, miniApp)
 
-    const [audience, content, apiKeyId] = sendNotificationToUser.mock.calls[0]
+    const [audience, content, options] = sendNotificationToUser.mock.calls[0]
     expect(audience).toEqual({ type: 'PHONE_NUMBER', details: [INVITEE_PHONE] })
     expect(content.message).toContain('Canvassing')
     // Platform-internal send: no key to meter it against.
-    expect(apiKeyId).toBeUndefined()
+    expect(options?.apiKeyId).toBeUndefined()
+  })
+
+  test('stays platform-branded — an invitation is never attributed to the app', async () => {
+    // The only send that reaches someone who has never opened the app, for an
+    // app that may still be DRAFT. Attributing it would let an unreviewed
+    // Builder put a name and icon of their choosing in a stranger's tray.
+    const sendNotificationToUser = vi
+      .fn()
+      .mockResolvedValue(ok({ success: [INVITEE_PHONE], failed: [] }))
+
+    await createNotifier(sendNotificationToUser).notifyInvitee(INVITEE_PHONE, miniApp)
+
+    const [, , options] = sendNotificationToUser.mock.calls[0]
+    expect(options?.app).toBeUndefined()
   })
 
   test('names the inviter in the message when one is given', async () => {
