@@ -1,15 +1,27 @@
 import { NotificationApiKey, PaginationQuery } from '@pple-today/api-common/dtos'
 import { Static, t } from 'elysia'
 
-export const ListApiKeyNotificationsQuery = PaginationQuery
+export const ListApiKeyNotificationsQuery = t.Composite([
+  PaginationQuery,
+  t.Object({
+    miniAppId: t.Optional(t.String({ description: 'Only return keys bound to this mini app' })),
+  }),
+])
 export type ListApiKeyNotificationsQuery = Static<typeof ListApiKeyNotificationsQuery>
 
 export const ListApiKeyNotificationsResponse = t.Array(
-  t.Pick(NotificationApiKey, ['id', 'name', 'active', 'createdAt', 'updatedAt'])
+  t.Pick(NotificationApiKey, ['id', 'name', 'active', 'miniAppId', 'createdAt', 'updatedAt'])
 )
 export type ListApiKeyNotificationsResponse = Static<typeof ListApiKeyNotificationsResponse>
 
-export const CreateApiKeyNotificationBody = t.Pick(NotificationApiKey, ['name'])
+export const CreateApiKeyNotificationBody = t.Composite([
+  t.Pick(NotificationApiKey, ['name']),
+  t.Object({
+    miniAppId: t.Optional(
+      t.String({ description: 'Bind the new key to this mini app; omit for an unbound key' })
+    ),
+  }),
+])
 export type CreateApiKeyNotificationBody = Static<typeof CreateApiKeyNotificationBody>
 
 export const CreateApiKeyNotificationResponse = NotificationApiKey

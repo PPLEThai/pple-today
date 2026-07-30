@@ -70,7 +70,10 @@ export const AdminNotificationController = new Elysia({
           body: CreateApiKeyNotificationBody,
           response: {
             201: CreateApiKeyNotificationResponse,
-            ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+            ...createErrorSchema(
+              InternalErrorCode.INTERNAL_SERVER_ERROR,
+              InternalErrorCode.MINI_APP_NOT_FOUND
+            ),
           },
         }
       )

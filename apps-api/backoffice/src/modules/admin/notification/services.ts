@@ -3,16 +3,22 @@ import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
-import { AdminNotificationRepository, AdminNotificationRepositoryPlugin } from './repository'
+import { AdminNotificationRepository } from './repository'
+
+import { PrismaServicePlugin } from '../../../plugins/prisma'
 
 export class AdminNotificationService {
   constructor(private readonly adminNotificationRepository: AdminNotificationRepository) {}
 
-  async listApiKeys(query: { limit?: number; page?: number }) {
+  async listApiKeys(query: { limit?: number; page?: number; miniAppId?: string }) {
     const limit = query.limit ?? 10
     const page = query.page ?? 1
 
-    const apiKeyResult = await this.adminNotificationRepository.listApiKeys({ limit, page })
+    const apiKeyResult = await this.adminNotificationRepository.listApiKeys({
+      limit,
+      page,
+      miniAppId: query.miniAppId,
+    })
 
     if (apiKeyResult.isErr()) {
       return mapRepositoryError(apiKeyResult.error)
@@ -21,11 +27,16 @@ export class AdminNotificationService {
     return ok(apiKeyResult.value)
   }
 
-  async createApiKey(data: { name: string }) {
+  async createApiKey(data: { name: string; miniAppId?: string }) {
     const createApiKeyResult = await this.adminNotificationRepository.createApiKey(data)
 
     if (createApiKeyResult.isErr()) {
-      return mapRepositoryError(createApiKeyResult.error)
+      return mapRepositoryError(createApiKeyResult.error, {
+        FOREIGN_KEY_CONSTRAINT_FAILED: {
+          code: InternalErrorCode.MINI_APP_NOT_FOUND,
+          message: 'The mini app to bind this key to was not found',
+        },
+      })
     }
 
     return ok(createApiKeyResult.value)
@@ -80,7 +91,9 @@ export class AdminNotificationService {
 export const AdminNotificationServicePlugin = new Elysia({
   name: 'AdminNotificationService',
 })
-  .use(AdminNotificationRepositoryPlugin)
-  .decorate(({ adminNotificationRepository }) => ({
-    adminNotificationService: new AdminNotificationService(adminNotificationRepository),
+  .use(PrismaServicePlugin)
+  .decorate(({ prismaService }) => ({
+    adminNotificationService: new AdminNotificationService(
+      new AdminNotificationRepository(prismaService)
+    ),
   }))
