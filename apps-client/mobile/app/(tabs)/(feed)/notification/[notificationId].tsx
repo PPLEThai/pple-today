@@ -6,7 +6,6 @@ import { Icon } from '@pple-today/ui/icon'
 import { Skeleton } from '@pple-today/ui/skeleton'
 import { Text } from '@pple-today/ui/text'
 import { H1 } from '@pple-today/ui/typography'
-import dayjs from 'dayjs'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ArrowLeftIcon, ArrowUpRightIcon } from 'lucide-react-native'
 
@@ -17,7 +16,9 @@ import {
   PLATFORM_SENDER_NAME,
 } from '@app/components/notification/sender-icon'
 import { reactQueryClient } from '@app/libs/api-client'
+import { formatNotificationTime } from '@app/libs/format-notification-time'
 import { openLink } from '@app/utils/link'
+import { pathnameToMiniAppRoute } from '@app/utils/mini-app'
 
 export default function NotificationDetailPage() {
   const router = useRouter()
@@ -49,6 +50,24 @@ export default function NotificationDetailPage() {
   const isInvite =
     item?.content.link?.type === 'IN_APP_NAVIGATION' &&
     item.content.link.destination.inAppType === 'MINI_APP_INVITE'
+  // A notification that names no destination of its own still came from
+  // somewhere: an app-sent one falls back to the app itself, which is the only
+  // place its message can be acted on. One of PPLE Today's own has no such
+  // fallback — the reader is already inside it — and keeps no button at all.
+  // The slug is read defensively: an API deployed before it existed sends the
+  // sending app without one, and this screen must still render.
+  const appRoute = item?.app?.slug ? pathnameToMiniAppRoute(item.app.slug) : null
+  const action = item?.content.link
+    ? {
+        label: item.content.actionButtonText,
+        onPress: () => openLink(item.content.link!),
+      }
+    : appRoute && item?.app
+      ? {
+          label: `ไปยังแอป ${item.app.name}`,
+          onPress: () => router.push(appRoute),
+        }
+      : undefined
   if (!notificationId) {
     return null
   }
@@ -81,7 +100,7 @@ export default function NotificationDetailPage() {
                 {item.app?.name ?? PLATFORM_SENDER_NAME}
               </Text>
               <Text className="text-sm text-base-text-medium font-heading-regular">
-                {dayjs(item.createdAt).format('DD MMM BB')}
+                {formatNotificationTime(item.createdAt)}
               </Text>
             </View>
             <H1 className="text-lg font-heading-semibold">{item.content.header}</H1>
@@ -97,11 +116,11 @@ export default function NotificationDetailPage() {
               </View>
             )}
           </ScrollView>
-          {item.content.link && !isInvite && (
+          {action && !isInvite && (
             <View className="p-4 pb-6 bg-base-bg-white">
-              <Button onPress={() => openLink(item.content.link!)}>
+              <Button onPress={action.onPress}>
                 <Icon icon={ArrowUpRightIcon} />
-                <Text>{item.content.actionButtonText}</Text>
+                <Text>{action.label}</Text>
               </Button>
             </View>
           )}

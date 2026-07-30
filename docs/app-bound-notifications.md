@@ -249,11 +249,19 @@ them again. One-time, and arguably correct, but it should not be a surprise.
 All three places a notification is rendered:
 
 - **Notification centre list** ([index.tsx:174][list]) — the app icon replaces
-  the bell. The bell circle currently encodes read state through its background
-  colour, so unread moves to a **dot beside the timestamp**; dimming the icon
-  instead would undercut the branding being added.
+  the bell, and the app's name sits above the title as a sub-text, the way the
+  Android tray carries it: the icon alone identifies an app only to someone who
+  already recognises it. The app's own artwork is framed as a **rounded square**
+  here rather than a circle, which would crop the corners of an icon drawn to be
+  square; the platform bell and the no-icon app mark are glyphs, not artwork, and
+  stay circular. The bell circle currently encodes read state through its
+  background colour, so unread moves to a **dot beside the timestamp**; dimming
+  the icon instead would undercut the branding being added.
 - **Detail page** ([[notificationId].tsx:71][detail]) — app icon and app name
-  replace the bell and the literal "แจ้งเตือนทั่วไป".
+  replace the bell and the literal "แจ้งเตือนทั่วไป". A notification that names
+  no destination of its own gets a **"ไปยังแอป {name}"** button in place of the
+  action button: the app that sent it is the one place its message can be acted
+  on. One of PPLE Today's own keeps no button — the reader is already inside it.
 - **Foreground toast** ([_layout.tsx:374][toast]) — app icon. Branding the push
   but not the toast would make one notification look like two different senders
   depending on whether the app happened to be open. An app with no fetchable
@@ -265,7 +273,8 @@ that has a name but *no* icon gets a neutral app glyph rather than the bell —
 borrowing the bell would read as PPLE Today having sent the notification.
 
 `ListHistoryNotificationResponse` and the notification detail response gain an
-optional app `{ name, iconUrl }`.
+optional app `{ name, iconUrl, slug }`. The slug is what the fallback button
+routes on — a name cannot be turned back into a mini-app route.
 
 ## Backoffice admin
 

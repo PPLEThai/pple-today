@@ -230,7 +230,9 @@ export class NotificationRepository {
         include: {
           // The sending app is read live rather than snapshotted onto the
           // notification, so a rename or new icon re-labels its whole history.
-          notification: { include: { miniApp: { select: { name: true, icon: true } } } },
+          notification: {
+            include: { miniApp: { select: { name: true, icon: true, slug: true } } },
+          },
         },
       })
 
@@ -330,7 +332,9 @@ export class NotificationRepository {
         include: {
           // The sending app is read live rather than snapshotted onto the
           // notification, so a rename or new icon re-labels its whole history.
-          notification: { include: { miniApp: { select: { name: true, icon: true } } } },
+          notification: {
+            include: { miniApp: { select: { name: true, icon: true, slug: true } } },
+          },
         },
       })
     )

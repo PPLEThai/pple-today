@@ -2,8 +2,16 @@ export type MiniAppRoutePath = `/mini-app/${string}`
 
 /**
  * Maps a mini-app redirect pathname (e.g. `/my-slug/nested/path`) to an in-app route.
+ *
+ * Every caller feeds this server data, and an API older than the field it reads
+ * omits it entirely — so an absent pathname resolves to "no route" rather than
+ * throwing on a value TypeScript was told would be there.
  */
 export function pathnameToMiniAppRoute(pathname: string): MiniAppRoutePath | null {
+  if (!pathname) {
+    return null
+  }
+
   const normalized = pathname.startsWith('/') ? pathname : `/${pathname}`
 
   if (normalized === '/' || normalized === '') {
