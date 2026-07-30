@@ -24,9 +24,37 @@ const CENTRAL_TEAM_KEY = {
   dailyQuota: 1000,
 }
 
+const SENDING_APP = {
+  name: 'Canvassing',
+  icon: 'https://cdn.example/canvassing.png',
+  slug: 'canvassing',
+}
+
+const NOTIFICATION_ROW = {
+  isRead: false,
+  createdAt: new Date('2026-07-30T00:00:00.000Z'),
+  notification: {
+    id: 'notif-1',
+    title: 'ผลโหวตออกแล้ว',
+    message: 'มาดูผลโหวตกัน',
+    image: null,
+    actionButtonText: null,
+    linkType: null,
+    linkDestination: null,
+    linkInAppType: null,
+    linkInAppId: null,
+    linkBypassNotificationCenter: null,
+    miniApp: SENDING_APP,
+  },
+}
+
 const createService = (checkApiKeyResult: unknown = LEGACY_KEY) => {
   const notificationRepository = {
     checkApiKey: vi.fn(async () => ok(checkApiKeyResult)),
+    getNotificationDetailsById: vi.fn(async () => ok(NOTIFICATION_ROW)),
+    listNotifications: vi.fn(async () =>
+      ok({ notifications: [NOTIFICATION_ROW], nextCursor: null, previousCursor: null })
+    ),
     sendNotificationToUser: vi.fn(
       async (
         _audience: { type: string; details?: unknown },
@@ -131,5 +159,37 @@ describe('NotificationService.sendExternalNotification (legacy behaviour)', () =
       { type: 'BROADCAST' },
       { type: 'ROLE', details: ['pple-ad:hq'] },
     ])
+  })
+})
+
+/**
+ * The sending app is what brands a notification in the centre, and its slug is
+ * the only route the client has back into that app — a notification carrying no
+ * link of its own offers "ไปยังแอป {name}" instead, which cannot be built from
+ * the name alone.
+ */
+describe('the sending app the notification centre renders', () => {
+  test('names the app and carries its slug on the detail screen', async () => {
+    const { service } = createService()
+
+    const result = await service.getNotificationDetailsById('user-1', 'notif-1')
+
+    expect(result._unsafeUnwrap().app).toEqual({
+      name: 'Canvassing',
+      iconUrl: 'https://cdn.example/canvassing.png',
+      slug: 'canvassing',
+    })
+  })
+
+  test('carries the same app onto every row of the history list', async () => {
+    const { service } = createService()
+
+    const result = await service.listNotifications('user-1')
+
+    expect(result._unsafeUnwrap().items[0].app).toEqual({
+      name: 'Canvassing',
+      iconUrl: 'https://cdn.example/canvassing.png',
+      slug: 'canvassing',
+    })
   })
 })

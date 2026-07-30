@@ -16,6 +16,12 @@ const NotificationLinkBase = t.Object({
 export const NotificationSenderApp = t.Object({
   name: t.String(),
   iconUrl: t.Optional(t.String()),
+  /**
+   * The app's mini-app slug, which the client turns into a route so a
+   * notification carrying no link of its own can still offer a way into the app
+   * that sent it.
+   */
+  slug: t.String(),
 })
 export type NotificationSenderApp = Static<typeof NotificationSenderApp>
 

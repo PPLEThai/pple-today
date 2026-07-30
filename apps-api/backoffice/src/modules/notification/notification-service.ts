@@ -15,8 +15,10 @@ import type { NotificationRepository } from './repository'
  * Today's own and keeps the platform bell, so `undefined` is the answer rather
  * than a placeholder name.
  */
-const toSenderApp = (miniApp: { name: string; icon: string | null } | null) =>
-  miniApp ? { name: miniApp.name, iconUrl: miniApp.icon ?? undefined } : undefined
+const toSenderApp = (miniApp: { name: string; icon: string | null; slug: string } | null) =>
+  miniApp
+    ? { name: miniApp.name, iconUrl: miniApp.icon ?? undefined, slug: miniApp.slug }
+    : undefined
 
 /**
  * The central-team notification surface: history, read state, device tokens and
