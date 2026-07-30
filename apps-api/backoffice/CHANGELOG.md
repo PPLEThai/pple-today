@@ -1,5 +1,18 @@
 # @api/backoffice
 
+## 1.14.0
+
+### Minor Changes
+
+- [#441](https://github.com/PPLEThai/pple-today/pull/441) [`6bdc3e4`](https://github.com/PPLEThai/pple-today/commit/6bdc3e46e4f27f8771080b950217e305fc1ee1e0) Thanks [@PanJ](https://github.com/PanJ)! - Provision per-app notification keys from the backoffice mini-app section (pple-platform #165). Admin key creation now accepts an optional `miniAppId`, and the key list can be filtered by app and returns each key's binding, so a key minted here is bound to its app and its sends are attributed to it. Each mini-app row gains a "Notification keys" action opening a dialog that lists the app's keys (name, active, created) and offers create (bound to this app), rotate, and deactivate — with the plaintext key shown exactly once on create and rotate behind a copy control and a "you won't see this again" warning. Apps whose icon FCM cannot fetch (null or a base64 `data:` URI) are flagged on the row and in the dialog as name-only in push. Legacy unbound keys are unaffected and stay manageable. See `docs/app-bound-notifications.md`.
+
+### Patch Changes
+
+- [#439](https://github.com/PPLEThai/pple-today/pull/439) [`25e05f2`](https://github.com/PPLEThai/pple-today/commit/25e05f22264c8406860959fa03eeb8519b0b28b4) Thanks [@PanJ](https://github.com/PanJ)! - Show which app a notification came from, in the OS notification and on every in-app surface (pple-platform #164, the client half of #163). Android attributed pushes are now displayed by the client from the data-only payload — an `expo-notifications` patch carries a per-notification large icon (the app's icon) through to `setLargeIcon`, and the app's name becomes the notification's sub-text; the background message handler is registered from a new `index.js` entry, because a data-only message starts the app headless and no route module is ever evaluated. Token registration now sends `platform` and `supportsAppBranding`. In-app, the notification centre list and detail screen and the foreground toast all show the sending app's icon, the detail screen its name in place of "แจ้งเตือนทั่วไป", and unread state moves from the icon circle's background to a dot beside the timestamp. A notification with no sending app keeps today's bell and label everywhere. iOS needed no client change: the existing Notification Service Extension already renders the branding the server sends. On the server, an attributed send now repeats the app's name and icon in `data` on every payload shape, not just the data-only one, so the foreground toast can brand itself on both platforms. See `docs/app-bound-notifications.md`.
+
+- Updated dependencies [[`6bdc3e4`](https://github.com/PPLEThai/pple-today/commit/6bdc3e46e4f27f8771080b950217e305fc1ee1e0)]:
+  - @pple-today/api-common@1.9.0
+
 ## 1.13.0
 
 ### Minor Changes
