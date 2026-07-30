@@ -53,6 +53,7 @@ import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { ElectionStatusBadge } from '@app/components/election/election-card'
+import { PartyInformationSection } from '@app/components/party-information'
 import { PollStatusBadge } from '@app/components/poll/poll-card'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { environment } from '@app/env'
@@ -167,6 +168,7 @@ const ProfileSetting = () => {
           <FollowingSection />
           <ParticipationSection />
           {/* <ActivitySection /> */}
+          <PartyInformationSection className="py-1" />
           <SettingSection />
         </View>
       </ScrollView>
