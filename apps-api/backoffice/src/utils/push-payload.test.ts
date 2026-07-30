@@ -143,6 +143,21 @@ describe('Android branding is data-only, and only where it is safe', () => {
     expect(message.android?.notification?.click_action).toBe('.MainActivity')
   })
 
+  test('that fallback keeps the content image, because it is not the icon slot', () => {
+    // `android.notification.image` is the expanded big picture; the collapsed
+    // icon is the large icon, which FCM cannot set per notification at all.
+    // Nothing is competing with the app icon here, so dropping the big picture
+    // would cost an image notification its image for no gain — unlike iOS,
+    // where the app icon really does displace the thumbnail.
+    const message = build(android(), {
+      ...CONTENT,
+      image: 'https://cdn.example/photo.jpg',
+      app: APP,
+    })
+
+    expect(message.android?.notification?.image).toBe('https://cdn.example/photo.jpg')
+  })
+
   test('an app with an unusable icon still brands by name', () => {
     const message = build(android({ supportsAppBranding: true }), {
       ...CONTENT,

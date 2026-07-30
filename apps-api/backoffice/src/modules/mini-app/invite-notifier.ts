@@ -46,6 +46,12 @@ export class InviteNotifier {
       ? `${inviterName} เชิญคุณให้ทดลองใช้ "${miniApp.name}" กดเพื่อตอบรับหรือปฏิเสธคำเชิญ`
       : `คุณถูกเชิญให้ทดลองใช้ "${miniApp.name}" กดเพื่อตอบรับหรือปฏิเสธคำเชิญ`
 
+    // No API key to meter this against, and deliberately no app to attribute it
+    // to. An invitation is the only send that reaches someone who has never
+    // opened the app, addressed by a phone number the Builder chose, for an app
+    // that may still be DRAFT — attributing it would let an unreviewed Builder
+    // put a name and icon of their choosing in a stranger's notification tray.
+    // The app's name already appears inside the message, framed by platform copy.
     const sendResult = await this.notificationRepository.sendNotificationToUser(
       { type: 'PHONE_NUMBER', details: [phoneNumber] },
       {
@@ -59,15 +65,7 @@ export class InviteNotifier {
           // MINI_APP_INVITE has no target entity; the empty id is expected.
           destination: { inAppType: NotificationInAppType.MINI_APP_INVITE, inAppId: '' },
         },
-      },
-      // Platform-internal send: there is no notification API key to meter it
-      // against, and deliberately no app to attribute it to. An invitation is
-      // the only send that reaches someone who has never opened the app,
-      // addressed by a phone number the Builder chose, for an app that may
-      // still be DRAFT — attributing it would let an unreviewed Builder put a
-      // name and icon of their choosing in a stranger's notification tray. The
-      // app's name already appears inside the message, framed by platform copy.
-      {}
+      }
     )
 
     if (sendResult.isErr()) {

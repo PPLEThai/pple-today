@@ -11,6 +11,18 @@ const BOUND_KEY = {
   miniApp: { id: 'mini-app-id', source: MiniAppSource.PLATFORM, name: 'Canvassing', icon: null },
   dailyQuota: 1000,
 }
+// The only *bound* key that reaches this path: `requireUnboundKey` turns a
+// PLATFORM-bound one away at the controller.
+const CENTRAL_TEAM_KEY = {
+  id: 'central-team-key-id',
+  miniApp: {
+    id: 'election-app-id',
+    source: MiniAppSource.ADMIN,
+    name: 'เลือกตั้ง',
+    icon: 'https://cdn.example/election.png',
+  },
+  dailyQuota: 1000,
+}
 
 const createService = (checkApiKeyResult: unknown = LEGACY_KEY) => {
   const notificationRepository = {
@@ -86,18 +98,20 @@ describe('NotificationService.sendExternalNotification (legacy behaviour)', () =
     expect(result._unsafeUnwrap()).toEqual({ success: ['+66812345678'], failed: [] })
   })
 
-  test('a bound key attributes its raw-targeted send to its app', async () => {
+  test('a central-team key attributes its broadcast to its app', async () => {
     // Attribution follows the key, not the audience: a central-team app
-    // broadcasting to everyone still puts its own name in the tray.
-    const { service, notificationRepository } = createService(BOUND_KEY)
+    // broadcasting to everyone still puts its own name in the tray, even though
+    // most recipients have never opened it. Branding communicates provenance,
+    // and a central-team app is vetted.
+    const { service, notificationRepository } = createService(CENTRAL_TEAM_KEY)
 
     await service.sendExternalNotification(
       { audience: { type: 'BROADCAST' }, content: { header: 'Hello', message: 'World' } },
-      BOUND_KEY
+      CENTRAL_TEAM_KEY
     )
 
     const [, , options] = notificationRepository.sendNotificationToUser.mock.calls[0]
-    expect(options?.app).toEqual(BOUND_KEY.miniApp)
+    expect(options?.app).toEqual(CENTRAL_TEAM_KEY.miniApp)
   })
 
   test('still supports the other audience types unchanged', async () => {

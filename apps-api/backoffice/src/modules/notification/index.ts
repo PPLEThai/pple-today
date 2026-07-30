@@ -203,10 +203,12 @@ export const ExternalNotificationController = new Elysia({
   tags: ['External Notifications'],
 })
   .use([NotificationServicePlugin, AppNotificationServicePlugin])
-  // Audience-bound send for Builder Apps. The key identifies the app; the body
-  // carries content and nothing else. Recipients are resolved server-side as
-  // that app's App Users within its current publication tier, so a Builder App
-  // can reach the people who use it and has no way to name anybody else.
+  // Audience-bound send. The key identifies the app; the body carries content
+  // and nothing else. Recipients are resolved server-side as that app's App
+  // Users within its current publication tier, so a Builder App can reach the
+  // people who use it and has no way to name anybody else. A central-team app
+  // may send here too — it simply has a second audience available to it on
+  // /send — and is not metered.
   .post(
     '/',
     async ({ appNotificationService, notificationService, body, headers, status }) => {
@@ -280,9 +282,9 @@ export const ExternalNotificationController = new Elysia({
       }
 
       // This is the raw-targeting path: the caller names its own audience, phone
-      // numbers included. That stays a central-team capability, so app-bound
-      // keys are refused here (see `requireUnboundKey`). Legacy null-binding
-      // keys pass straight through, unchanged.
+      // numbers included. That stays a central-team capability, so keys bound to
+      // a Builder App are refused here (see `requireUnboundKey`). Legacy unbound
+      // keys and keys bound to a central-team app both pass straight through.
       const bindingResult = requireUnboundKey(tokenResult.value)
 
       if (bindingResult.isErr()) {

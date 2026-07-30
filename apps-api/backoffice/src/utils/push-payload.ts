@@ -103,28 +103,34 @@ export const buildFcmMessage = (
     ...(data.notificationId ? { notificationId: data.notificationId } : {}),
   }
 
+  const app = data.app
   const isAndroid = target.platform === NotificationTokenPlatform.ANDROID
   const brandedAndroid =
     isAndroid &&
-    data.app !== undefined &&
+    app !== undefined &&
     target.supportsAppBranding &&
     !options.androidBrandedPushDisabled
 
   if (brandedAndroid) {
-    const iconUrl = fetchableIcon(data.app!.icon)
+    const iconUrl = fetchableIcon(app.icon)
 
     return {
       token: target.token,
       // No `notification` block: its presence is what makes Play services
       // display the message itself, leaving the client nothing to brand.
+      //
+      // These keys are the contract with the Android display path (a separate
+      // issue): it reads `title`/`body` for the notification, `appName` for the
+      // sub-text, and `appIconUrl` for the per-notification large icon.
       data: {
         ...baseData,
         title: data.title,
         body: data.message,
-        appName: data.app!.name,
+        appName: app.name,
         ...(iconUrl ? { appIconUrl: iconUrl } : {}),
-        // The content image is deliberately absent. Both platforms show one
-        // thumbnail, the app icon has claimed it, and a carve-out for image
+        // The content image is deliberately absent. This is the one payload
+        // where the app icon and the content image would compete for the same
+        // large-icon slot, and the app icon wins; a carve-out for image
         // notifications would drop attribution from exactly the notifications
         // most worth attributing. The image still renders in the notification
         // centre and on the detail screen.
@@ -156,13 +162,19 @@ export const buildFcmMessage = (
     },
     android: {
       notification: {
+        // Kept even for an attributed send. `android.notification.image` is the
+        // *expanded* big picture, not the collapsed icon slot — that slot is
+        // the large icon, which FCM cannot set per notification at all, which
+        // is the whole reason the branded path has to be data-only. So there is
+        // no slot here for the app icon to win, and dropping the content image
+        // would lose the big picture for nothing.
         click_action: '.MainActivity',
         image: data.image,
       },
     },
   }
 
-  if (data.app && !isAndroid) {
+  if (app && !isAndroid) {
     // `aps.alert` is spelled out in full rather than left to FCM's mapping of
     // the common `notification` block, so the title and body cannot be lost to
     // however that merge is resolved.
@@ -170,13 +182,14 @@ export const buildFcmMessage = (
       payload: {
         aps: {
           'mutable-content': 1,
-          alert: { title: data.title, body: data.message, subtitle: data.app.name },
+          alert: { title: data.title, body: data.message, subtitle: app.name },
         },
       },
-      // The app icon takes the thumbnail; when it is not fetchable the slot is
-      // left empty so the default app icon shows, rather than handing it to the
-      // content image the app icon was displacing.
-      fcm_options: { image: fetchableIcon(data.app.icon) },
+      // `fcm_options.image` *is* the collapsed thumbnail on iOS, so here the
+      // app icon really does displace the content image. When it is not
+      // fetchable the slot is left empty and the default app icon shows, rather
+      // than handing it back to the image the app icon was displacing.
+      fcm_options: { image: fetchableIcon(app.icon) },
     }
   }
 

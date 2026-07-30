@@ -497,7 +497,7 @@ export class NotificationRepository {
 
     const phoneNumberWithTokens = users.flatMap((u) => ({
       phoneNumber: u.phoneNumber,
-      token: u.notificationTokens,
+      tokens: u.notificationTokens,
     }))
 
     const notFoundUser =
@@ -507,8 +507,8 @@ export class NotificationRepository {
             phoneNumberWithTokens.map((p) => p.phoneNumber)
           )
         : undefined
-    const emptyTokens = phoneNumberWithTokens.filter((p) => p.token.length === 0)
-    const nonEmptyTokens = phoneNumberWithTokens.filter((p) => p.token.length > 0)
+    const emptyTokens = phoneNumberWithTokens.filter((p) => p.tokens.length === 0)
+    const nonEmptyTokens = phoneNumberWithTokens.filter((p) => p.tokens.length > 0)
 
     const shouldBypass =
       data.link?.bypassNotificationCenter === true &&
@@ -548,7 +548,7 @@ export class NotificationRepository {
       nonEmptyTokens.map(async (p) => {
         return {
           phoneNumber: p.phoneNumber,
-          result: await this.cloudMessagingService.sendNotifications(p.token, notificationDetails),
+          result: await this.cloudMessagingService.sendNotifications(p.tokens, notificationDetails),
         }
       })
     )
