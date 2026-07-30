@@ -2,7 +2,7 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { MiniAppSource } from '@pple-today/database/prisma'
 import { describe, expect, test } from 'vitest'
 
-import { requireAppBoundKey, requireUnboundKey } from './key-binding'
+import { isMeteredKey, requireAppBoundKey, requireUnboundKey } from './key-binding'
 
 const unbound = { miniApp: null }
 const builderApp = { miniApp: { source: MiniAppSource.PLATFORM } }
@@ -65,5 +65,28 @@ describe('requireAppBoundKey', () => {
     // No key is accepted by both, and none is locked out of both.
     expect(requireUnboundKey(unbound).isOk()).toBe(!requireAppBoundKey(unbound).isOk())
     expect(requireUnboundKey(builderApp).isOk()).toBe(!requireAppBoundKey(builderApp).isOk())
+  })
+})
+
+describe('isMeteredKey', () => {
+  test('a key bound to a Builder App is metered', () => {
+    expect(isMeteredKey(builderApp)).toBe(true)
+  })
+
+  test('a key bound to a central-team app is not metered', () => {
+    // The daily quota is a Builder App Resource Limit, and a central-team app is
+    // not an outside Builder.
+    expect(isMeteredKey(centralTeamApp)).toBe(false)
+  })
+
+  test('a legacy unbound key is not metered', () => {
+    // Unbound keys have never been metered, on either endpoint.
+    expect(isMeteredKey(unbound)).toBe(false)
+  })
+
+  test('a source this code has not heard of is metered', () => {
+    // Metered by default: a new app kind must not quietly arrive with an
+    // unlimited send path.
+    expect(isMeteredKey({ miniApp: { source: 'FUTURE_SOURCE' as MiniAppSource } })).toBe(true)
   })
 })

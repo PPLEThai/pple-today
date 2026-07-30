@@ -1,5 +1,5 @@
 import { PrismaService } from '@pple-today/api-common/services'
-import { MiniAppInviteStatus, MiniAppTier } from '@pple-today/database/prisma'
+import { MiniAppInviteStatus, MiniAppSource, MiniAppTier } from '@pple-today/database/prisma'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
 import { AppNotificationRepository } from './app-notification-repository'
@@ -33,7 +33,11 @@ const createPrismaService = () => {
       },
       notificationApiKey: {
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
-        findFirst: vi.fn().mockResolvedValue({ id: 'key-1' }),
+        findFirst: vi.fn().mockResolvedValue({
+          id: 'key-1',
+          dailyQuota: 1000,
+          miniApp: { source: MiniAppSource.PLATFORM },
+        }),
       },
       $transaction: vi.fn(async (cb: (txClient: typeof tx) => unknown) => cb(tx)),
     } as unknown as PrismaService & {
@@ -230,24 +234,29 @@ describe('AppNotificationRepository.setDailyQuota', () => {
   })
 })
 
-describe('AppNotificationRepository.countUsageSince', () => {
+describe('AppNotificationRepository.getUsageSince', () => {
   test('counts usage-log rows for the app’s active key since the window start', async () => {
     const { prismaService } = createPrismaService()
     const repository = new AppNotificationRepository(prismaService)
 
-    const result = await repository.countUsageSince('app-1', SINCE)
+    const result = await repository.getUsageSince('app-1', SINCE)
 
     // Same active-key scope as setDailyQuota — a retired/deactivated key is not
-    // the meter the Console should read.
+    // the meter the Console should read. The budget and the binding are selected
+    // with it, because a count nobody can judge is half an answer.
     expect(prismaService.notificationApiKey.findFirst).toHaveBeenCalledWith({
       where: { miniAppId: 'app-1', active: true },
-      select: { id: true },
+      select: { id: true, dailyQuota: true, miniApp: { select: { source: true } } },
     })
     // Same query shape the claim path uses for the daily window.
     expect(prismaService.notificationApiKeyUsageLog.count).toHaveBeenCalledWith({
       where: { notificationApiKeyId: 'key-1', usedAt: { gte: SINCE } },
     })
-    expect(result._unsafeUnwrap()).toBe(3)
+    expect(result._unsafeUnwrap()).toEqual({
+      sent: 3,
+      dailyQuota: 1000,
+      miniApp: { source: MiniAppSource.PLATFORM },
+    })
   })
 
   test('an app with no active key reports null, not zero sends', async () => {
@@ -255,7 +264,7 @@ describe('AppNotificationRepository.countUsageSince', () => {
     prismaService.notificationApiKey.findFirst = vi.fn().mockResolvedValue(null)
     const repository = new AppNotificationRepository(prismaService)
 
-    const result = await repository.countUsageSince('retired-app', SINCE)
+    const result = await repository.getUsageSince('retired-app', SINCE)
 
     expect(result._unsafeUnwrap()).toBeNull()
     expect(prismaService.notificationApiKeyUsageLog.count).not.toHaveBeenCalled()
