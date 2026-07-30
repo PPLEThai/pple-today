@@ -1,5 +1,15 @@
 # @client/mobile
 
+## 2.9.0
+
+### Minor Changes
+
+- [#444](https://github.com/PPLEThai/pple-today/pull/444) [`4b18bdd`](https://github.com/PPLEThai/pple-today/commit/4b18bdd22fe78b0fdc3217bac7d9b920ddbf3957) Thanks [@PanJ](https://github.com/PanJ)! - Name the sending app in the notification centre, and offer a way into it. Each list card now carries the app's name as a sub-text above the title — the way the Android tray carries it — because the icon alone identifies an app only to someone who already recognises it; a notification of PPLE Today's own keeps "แจ้งเตือนทั่วไป" there. The app's own artwork is framed as a rounded square in the list rather than a circle, which cropped the corners of an icon drawn to be square; the platform bell and the no-icon app mark stay circular. Timestamps under a week old are now counted rather than dated — "เมื่อสักครู่", "5 นาทีที่แล้ว", "4 วันที่แล้ว" — since a recent notification is one the reader may not have seen yet. On the detail screen, a notification that names no destination of its own now offers "ไปยังแอป {name}" in place of the action button, since the app that sent it is the one place its message can be acted on; one of PPLE Today's own still gets no button. `NotificationSenderApp` gains the app's `slug`, which is what that button routes on — a name cannot be turned back into a mini-app route. See `docs/app-bound-notifications.md`.
+
+### Patch Changes
+
+- [#446](https://github.com/PPLEThai/pple-today/pull/446) [`4ae7c15`](https://github.com/PPLEThai/pple-today/commit/4ae7c15f5bcfadfeabd573e1c9fc5eaab745f30c) Thanks [@PanJ](https://github.com/PanJ)! - Move "ข้อมูลพรรคประชาชน" from the กิจกรรม tab to the ฉัน tab, where it now sits directly above ตั้งค่า. The four cards — บุคลากรของพรรค, เกี่ยวกับพรรคประชาชน, ช่องทางการติดต่อ, เว็บไซต์ทางการ — are unchanged, along with the contact bottom sheet behind the third of them; only their home moved. กิจกรรม was the tab a reader reached for upcoming events and polls, so a block of static party links sat at the bottom of a feed nobody scrolls to the end of, while ฉัน was already the tab for the standing, non-feed things: what you follow, what you have taken part in, and the app's own settings. The section is extracted out of the route file into `components/party-information.tsx` as `PartyInformationSection` so it is no longer tied to the screen that happens to render it. Note that it now shows only to a signed-in reader, since the ฉัน tab renders the login screen otherwise; on กิจกรรม it had been visible to everyone.
+
 ## 2.8.1
 
 ### Patch Changes
