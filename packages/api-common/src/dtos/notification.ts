@@ -66,6 +66,12 @@ export const NotificationApiKey = t.Object({
   name: t.String({ description: 'The name of the notification API key' }),
   apiKey: t.String({ description: 'The notification API key' }),
   active: t.Boolean({ description: 'Whether the notification API key is active' }),
+  miniAppId: t.Nullable(
+    t.String({
+      description:
+        "The mini app this key is bound to. Null for a legacy unbound key with today's raw phone-number behaviour.",
+    })
+  ),
   createdAt: t.Date({
     description: 'The date and time when the notification API key was created',
   }),

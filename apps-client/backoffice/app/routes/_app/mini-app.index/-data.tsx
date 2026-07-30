@@ -13,12 +13,16 @@ import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { DtFilter } from 'components/datatable/DtFilter'
 import { MiniAppCreate } from 'components/mini-app/MiniAppCreate'
 import { MiniAppEdit } from 'components/mini-app/MiniAppEdit'
+import {
+  isPushIconUsable,
+  MiniAppNotificationKeys,
+} from 'components/mini-app/MiniAppNotificationKeys'
 import { useMiniAppRoleOptions } from 'components/mini-app/useMiniAppRoleOptions'
 import { ZitadelAppCreate } from 'components/mini-app/ZitadelAppCreate'
 import { ZitadelAppEdit } from 'components/mini-app/ZitadelAppEdit'
 import { TableCopyId } from 'components/TableCopyId'
 import dayjs from 'dayjs'
-import { ImageIcon, KeyRound, Lock, Pencil, Plus, Trash2 } from 'lucide-react'
+import { AlertTriangle, Bell, ImageIcon, KeyRound, Lock, Pencil, Plus, Trash2 } from 'lucide-react'
 
 import { MiniApp, ZitadelApp } from '@api/backoffice/admin'
 
@@ -80,14 +84,7 @@ export const Data = () => {
         header: () => <div className="text-center">ไอคอน</div>,
         cell: (info) => {
           const iconUrl = info.getValue()
-          if (!iconUrl) {
-            return (
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-base-bg-medium text-base-text-medium">
-                <ImageIcon className="size-5" />
-              </div>
-            )
-          }
-          return (
+          const iconEl = iconUrl ? (
             <img
               className="size-10 shrink-0 rounded-lg object-cover"
               src={iconUrl}
@@ -95,6 +92,30 @@ export const Data = () => {
               width={40}
               height={40}
             />
+          ) : (
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-base-bg-medium text-base-text-medium">
+              <ImageIcon className="size-5" />
+            </div>
+          )
+
+          // An icon FCM cannot fetch (missing, or a base64 data URI) leaves the
+          // push name-only. Flag it here so ops can see who is affected.
+          if (isPushIconUsable(iconUrl)) return iconEl
+
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="relative w-fit">
+                  {iconEl}
+                  <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-background">
+                    <AlertTriangle className="size-4 text-system-warning-default" />
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                ไอคอนนี้ใช้ในการแจ้งเตือนไม่ได้ — การแจ้งเตือนจะแสดงเฉพาะชื่อแอป
+              </TooltipContent>
+            </Tooltip>
           )
         },
         size: 72,
@@ -213,6 +234,15 @@ export const Data = () => {
 
           return (
             <div className="flex gap-3">
+              <MiniAppNotificationKeys
+                miniApp={miniApp}
+                trigger={
+                  <Button variant="outline" size="icon" className="size-8">
+                    <span className="sr-only">คีย์การแจ้งเตือน</span>
+                    <Bell className="size-4" />
+                  </Button>
+                }
+              />
               <MiniAppEdit
                 miniApp={miniApp}
                 onSuccess={invalidateQuery}
@@ -243,9 +273,9 @@ export const Data = () => {
             </div>
           )
         },
-        size: 120,
-        minSize: 120,
-        maxSize: 120,
+        size: 160,
+        minSize: 160,
+        maxSize: 160,
       }),
     ],
     [deleteMiniApp, deleteMutation.isPending, invalidateQuery, roleOptions]

@@ -1,17 +1,19 @@
-import { PrismaService } from '@pple-today/api-common/services'
+import type { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import Elysia from 'elysia'
 
-import { PrismaServicePlugin } from '../../../plugins/prisma'
 import {
   generateNotificationApiKey,
   hashNotificationApiKey,
 } from '../../../utils/notification-api-key'
 
+/**
+ * Kept free of Elysia/config imports so it can be unit-tested without booting
+ * the app's config graph; the plugin wiring lives in `services.ts`.
+ */
 export class AdminNotificationRepository {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async listApiKeys(query: { limit: number; page: number }) {
+  async listApiKeys(query: { limit: number; page: number; miniAppId?: string }) {
     const skip = (query.page - 1) * query.limit
     const take = query.limit
 
@@ -19,11 +21,13 @@ export class AdminNotificationRepository {
       this.prismaService.notificationApiKey.findMany({
         skip,
         take,
+        where: query.miniAppId ? { miniAppId: query.miniAppId } : undefined,
         orderBy: { createdAt: 'desc' },
         select: {
           id: true,
           name: true,
           active: true,
+          miniAppId: true,
           createdAt: true,
           updatedAt: true,
         },
@@ -31,7 +35,7 @@ export class AdminNotificationRepository {
     )
   }
 
-  async createApiKey(data: { name: string }) {
+  async createApiKey(data: { name: string; miniAppId?: string }) {
     const apiKey = generateNotificationApiKey()
 
     return await fromRepositoryPromise(async () => {
@@ -39,6 +43,7 @@ export class AdminNotificationRepository {
         data: {
           name: data.name,
           apiKey: hashNotificationApiKey(apiKey),
+          miniAppId: data.miniAppId,
         },
       })
 
@@ -80,11 +85,3 @@ export class AdminNotificationRepository {
     })
   }
 }
-
-export const AdminNotificationRepositoryPlugin = new Elysia({
-  name: 'AdminNotificationRepository',
-})
-  .use(PrismaServicePlugin)
-  .decorate(({ prismaService }) => ({
-    adminNotificationRepository: new AdminNotificationRepository(prismaService),
-  }))
