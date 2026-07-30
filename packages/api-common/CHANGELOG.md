@@ -1,5 +1,16 @@
 # @pple-today/api-common
 
+## 1.8.0
+
+### Minor Changes
+
+- [#437](https://github.com/PPLEThai/pple-today/pull/437) [`bc5cf99`](https://github.com/PPLEThai/pple-today/commit/bc5cf99156c11732d32fb7b935d7828b89fb85e2) Thanks [@PanJ](https://github.com/PanJ)! - Bind each notification to the app that sent it, so the app's name and icon reach both the notification centre and the OS tray (pple-platform #163). `NotificationApiKey.miniAppId` no longer means two things at once: binding is attribution, and whether a key is _confined_ to the audience-bound path is derived from `MiniApp.source` — Builder Apps (`PLATFORM`) still cannot name their own recipients and are still metered, while central-team apps (`ADMIN`) may use either send path and are not metered. `Notification.miniAppId` records the sender as a foreign key, so a rename or new icon re-labels that app's whole history. The push payload is now chosen per token: iOS gains `aps.alert.subtitle` and an `fcm_options.image` app icon with no app release, and Android attributed sends to tokens that registered `supportsAppBranding` go data-only, behind the `ANDROID_BRANDED_PUSH_DISABLED` kill switch. Token registration gains `platform` and `supportsAppBranding`; the history and detail responses gain an optional `app`. Beta invites stay platform-branded. No backfill — existing rows and tokens keep today's behaviour. See `docs/app-bound-notifications.md`.
+
+### Patch Changes
+
+- Updated dependencies [[`bc5cf99`](https://github.com/PPLEThai/pple-today/commit/bc5cf99156c11732d32fb7b935d7828b89fb85e2)]:
+  - @pple-today/database@1.9.0
+
 ## 1.7.0
 
 ### Minor Changes
