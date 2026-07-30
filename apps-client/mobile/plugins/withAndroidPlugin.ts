@@ -18,6 +18,22 @@ const withAndroidPlugin: ConfigPlugin = (config) => {
       category: [{ $: { 'android:name': 'android.intent.category.DEFAULT' } }],
     })
 
+    // Send the notifications Play services displays itself to the same channel the
+    // client-built ones use, so a user finds one switch in system settings rather
+    // than two for what is, to them, one kind of notification. Without this, FCM
+    // uses a channel of its own ("Miscellaneous") that the app cannot address.
+    // See DEFAULT_NOTIFICATION_CHANNEL_ID in libs/notification-display.ts.
+    const application = config.modResults.manifest.application?.[0]
+    if (application) {
+      application['meta-data'] = application['meta-data'] ?? []
+      application['meta-data'].push({
+        $: {
+          'android:name': 'com.google.firebase.messaging.default_notification_channel_id',
+          'android:value': 'pple-today-default',
+        },
+      })
+    }
+
     return config
   })
 }

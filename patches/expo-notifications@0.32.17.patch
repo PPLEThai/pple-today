@@ -1,0 +1,190 @@
+diff --git a/android/src/main/java/expo/modules/notifications/notifications/ArgumentsNotificationContentBuilder.java b/android/src/main/java/expo/modules/notifications/notifications/ArgumentsNotificationContentBuilder.java
+index f7d3a451735314493e282c02dfe74d5acfca98c1..52103c45153c7da7dd7c7b910a77b8246021ebc3 100644
+--- a/android/src/main/java/expo/modules/notifications/notifications/ArgumentsNotificationContentBuilder.java
++++ b/android/src/main/java/expo/modules/notifications/notifications/ArgumentsNotificationContentBuilder.java
+@@ -29,6 +29,8 @@ public class ArgumentsNotificationContentBuilder extends NotificationContent.Bui
+   private static final String AUTO_DISMISS_KEY = "autoDismiss";
+   private static final String CATEGORY_IDENTIFIER_KEY = "categoryIdentifier";
+   private static final String STICKY_KEY = "sticky";
++  // PPLE patch: see NotificationContent.Builder#setLargeIconUrl.
++  private static final String LARGE_ICON_URL_KEY = "largeIconUrl";
+ 
+   private SoundResolver mSoundResolver;
+ 
+@@ -46,7 +48,8 @@ public class ArgumentsNotificationContentBuilder extends NotificationContent.Bui
+       .setColor(getColor(payload))
+       .setAutoDismiss(getAutoDismiss(payload))
+       .setCategoryId(getCategoryId(payload))
+-      .setSticky(getSticky(payload));
++      .setSticky(getSticky(payload))
++      .setLargeIconUrl(payload.getString(LARGE_ICON_URL_KEY, null));
+ 
+     if (shouldPlayDefaultSound(payload)) {
+       useDefaultSound();
+diff --git a/android/src/main/java/expo/modules/notifications/notifications/model/NotificationContent.java b/android/src/main/java/expo/modules/notifications/notifications/model/NotificationContent.java
+index 191b64e101c03eeec37920c2d6582bfd50d8b902..8357b414ae480f621d55f984200d8b07d8084fdb 100644
+--- a/android/src/main/java/expo/modules/notifications/notifications/model/NotificationContent.java
++++ b/android/src/main/java/expo/modules/notifications/notifications/model/NotificationContent.java
+@@ -49,6 +49,10 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
+   private boolean mAutoDismiss;
+   private String mCategoryId;
+   private boolean mSticky;
++  // PPLE patch: a per-notification large icon, as a remote URL. Upstream can only
++  // put the one static icon from manifest meta-data in that slot, which cannot
++  // say which app a notification came from.
++  private String mLargeIconUrl;
+ 
+   protected NotificationContent() {
+   }
+@@ -152,6 +156,12 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
+     return mSticky;
+   }
+ 
++  /** PPLE patch: see {@link Builder#setLargeIconUrl}. Null keeps upstream behaviour. */
++  @Nullable
++  public String getLargeIconUrl() {
++    return mLargeIconUrl;
++  }
++
+   @Override
+   public int describeContents() {
+     return 0;
+@@ -179,6 +189,7 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
+     mAutoDismiss = in.readByte() == 1;
+     mCategoryId = in.readString();
+     mSticky = in.readByte() == 1;
++    mLargeIconUrl = in.readString();
+   }
+ 
+   @Override
+@@ -197,6 +208,7 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
+     dest.writeByte((byte) (mAutoDismiss ? 1 : 0));
+     dest.writeString(mCategoryId);
+     dest.writeByte((byte) (mSticky ? 1 : 0));
++    dest.writeString(mLargeIconUrl);
+   }
+ 
+   //                                           EXPONOTIFCONTENT02
+@@ -224,6 +236,7 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
+     out.writeByte(mAutoDismiss ? 1 : 0);
+     out.writeObject(mCategoryId != null ? mCategoryId.toString() : null);
+     out.writeByte(mSticky ? 1 : 0);
++    out.writeObject(mLargeIconUrl);
+   }
+ 
+   private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
+@@ -271,6 +284,16 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
+       mCategoryId = new String(categoryIdString);
+     }
+     mSticky = in.readByte() == 1;
++    // PPLE patch: read the trailing large-icon URL only if it is there. A
++    // notification scheduled by a build from before this field existed is still
++    // sitting in SharedPreferences under the same serialVersionUID, and its
++    // stream simply ends after mSticky — so the absence is expected, not a
++    // corrupt record.
++    try {
++      mLargeIconUrl = (String) in.readObject();
++    } catch (java.io.OptionalDataException | java.io.EOFException e) {
++      mLargeIconUrl = null;
++    }
+   }
+ 
+   private void readObjectNoData() throws ObjectStreamException {
+@@ -368,6 +391,20 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
+       return this;
+     }
+ 
++    /**
++     * PPLE patch: the URL of a large icon for <em>this</em> notification.
++     *
++     * Upstream's only large icon is the single static resource named by manifest
++     * meta-data, so every notification the app presents wears the same one. A URL
++     * here lets one notification carry the icon of the app that sent it. It is
++     * downloaded at display time and falls back to the static icon if it cannot
++     * be fetched; null leaves upstream behaviour untouched.
++     */
++    public Builder setLargeIconUrl(String largeIconUrl) {
++      content.mLargeIconUrl = largeIconUrl;
++      return this;
++    }
++
+     public NotificationContent build() {
+       return content;
+     }
+diff --git a/android/src/main/java/expo/modules/notifications/notifications/presentation/builders/ExpoNotificationBuilder.kt b/android/src/main/java/expo/modules/notifications/notifications/presentation/builders/ExpoNotificationBuilder.kt
+index 610d3039cefd589647538ad8ba14587d29fab338..b7ec9e3a617ac6bc7ca7dcf11a3c9ce8dac8fcde 100644
+--- a/android/src/main/java/expo/modules/notifications/notifications/presentation/builders/ExpoNotificationBuilder.kt
++++ b/android/src/main/java/expo/modules/notifications/notifications/presentation/builders/ExpoNotificationBuilder.kt
+@@ -5,6 +5,7 @@ import android.content.Context
+ import android.content.pm.PackageManager
+ import android.graphics.Bitmap
+ import android.graphics.BitmapFactory
++import android.net.Uri
+ import android.os.Build
+ import android.os.Bundle
+ import android.os.Parcel
+@@ -17,6 +18,7 @@ import expo.modules.notifications.notifications.enums.NotificationPriority
+ import expo.modules.notifications.notifications.interfaces.INotificationContent
+ import expo.modules.notifications.notifications.model.NotificationAction
+ import expo.modules.notifications.notifications.model.NotificationCategory
++import expo.modules.notifications.notifications.model.NotificationContent
+ import expo.modules.notifications.notifications.model.NotificationRequest
+ import expo.modules.notifications.notifications.model.NotificationResponse
+ import expo.modules.notifications.notifications.model.TextInputNotificationAction
+@@ -147,7 +149,15 @@ open class ExpoNotificationBuilder(
+       )
+     )
+ 
+-    if (notificationContent.containsImage()) {
++    // PPLE patch: a per-notification large icon, so a notification can wear the
++    // icon of the app that sent it. Upstream's only large icon is the single
++    // static resource named by manifest meta-data, which is the same for every
++    // notification the app presents. A download that fails hands the slot back to
++    // that static icon rather than leaving the notification iconless.
++    val largeIconUrl = (notificationContent as? NotificationContent)?.largeIconUrl
++    if (largeIconUrl != null) {
++      builder.setLargeIcon(downloadImage(Uri.parse(largeIconUrl)) ?: largeIcon)
++    } else if (notificationContent.containsImage()) {
+       val bitmap = notificationContent.getImage(context)
+       bitmap?.let { builder.setLargeIcon(it) }
+     } else {
+diff --git a/build/Notifications.types.d.ts b/build/Notifications.types.d.ts
+index 1c9226d2aa3f8c5bd4450d9c7cd57be2c8ced55e..dd457aa9dd199edff30ea4766410d79c9b9559cb 100644
+--- a/build/Notifications.types.d.ts
++++ b/build/Notifications.types.d.ts
+@@ -562,6 +562,15 @@ export type NotificationContentInput = {
+      * @platform android
+      */
+     sticky?: boolean;
++    /**
++     * PPLE patch. URL of a large icon for *this* notification, downloaded at display
++     * time. Without it the large icon is the single static resource named by manifest
++     * meta-data, which is the same for every notification the app presents — so there
++     * is no way to show which app a notification came from. Falls back to that static
++     * icon if the download fails.
++     * @platform android
++     */
++    largeIconUrl?: string;
+     /**
+      * The visual and audio attachments to display alongside the notification’s main content.
+      * @platform ios
+diff --git a/src/Notifications.types.ts b/src/Notifications.types.ts
+index 7cd3ba38dd22a9e0b695efc17211ee8c542502b5..022db552f4e9168d87b3209382d1c8c62fd802b3 100644
+--- a/src/Notifications.types.ts
++++ b/src/Notifications.types.ts
+@@ -609,6 +609,15 @@ export type NotificationContentInput = {
+    * @platform android
+    */
+   sticky?: boolean;
++  /**
++   * PPLE patch. URL of a large icon for *this* notification, downloaded at display
++   * time. Without it the large icon is the single static resource named by manifest
++   * meta-data, which is the same for every notification the app presents — so there
++   * is no way to show which app a notification came from. Falls back to that static
++   * icon if the download fails.
++   * @platform android
++   */
++  largeIconUrl?: string;
+   /**
+    * The visual and audio attachments to display alongside the notification’s main content.
+    * @platform ios

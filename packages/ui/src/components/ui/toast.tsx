@@ -11,6 +11,12 @@ import { Text } from './text'
 
 interface ToastAdditionalProps {
   icon?: LucideIcon | null
+  /**
+   * Rendered in the icon slot instead of `icon`, for a leading element the toast
+   * cannot express as a Lucide glyph — an avatar or a remote image, say. Keeps
+   * image loading in the app, out of this package.
+   */
+  leading?: React.ReactNode
   action?: null | ((props: ToastConfigParams<any>) => React.ReactNode)
 }
 
@@ -35,9 +41,10 @@ function ToastBody(props: ToastConfigParams<ToastAdditionalProps>) {
   return (
     <Pressable className={toastVariants({ type })} onPress={props.onPress}>
       <View className="flex flex-1 flex-row items-center gap-4 w-full">
-        {props.props.icon ? (
-          <Icon icon={props.props.icon} className="text-white" size={26} strokeWidth={2} />
-        ) : null}
+        {props.props.leading ??
+          (props.props.icon ? (
+            <Icon icon={props.props.icon} className="text-white" size={26} strokeWidth={2} />
+          ) : null)}
         <View className="flex flex-1 flex-col gap-1">
           {props.text1 && (
             <Text
@@ -94,16 +101,16 @@ interface Toast {
   hide: () => void
 }
 interface ToastProps extends ToastShowParams, ToastAdditionalProps {}
-export const toast: Toast = ({ icon, action, ...props }) => {
-  Toast.show({ ...props, type: 'success', props: { icon, action } })
+export const toast: Toast = ({ icon, leading, action, ...props }) => {
+  Toast.show({ ...props, type: 'success', props: { icon, leading, action } })
 }
 
-toast.error = ({ icon, action, ...props }) => {
-  Toast.show({ ...props, type: 'error', props: { icon, action } })
+toast.error = ({ icon, leading, action, ...props }) => {
+  Toast.show({ ...props, type: 'error', props: { icon, leading, action } })
 }
 
-toast.info = ({ icon, action, ...props }) => {
-  Toast.show({ ...props, type: 'info', props: { icon, action } })
+toast.info = ({ icon, leading, action, ...props }) => {
+  Toast.show({ ...props, type: 'info', props: { icon, leading, action } })
 }
 
 toast.hide = Toast.hide

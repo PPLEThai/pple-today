@@ -3,8 +3,6 @@ import { FlatList, View } from 'react-native'
 
 import { QUERY_KEY_SYMBOL } from '@pple-today/api-client'
 import { AnimatedBackgroundPressable } from '@pple-today/ui/animated-pressable'
-import { Icon } from '@pple-today/ui/icon'
-import { clsx } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 import {
   infiniteQueryOptions,
@@ -18,6 +16,7 @@ import { produce } from 'immer'
 import { BellIcon } from 'lucide-react-native'
 
 import { ListHistoryNotificationResponse } from '@api/backoffice/app'
+import { NotificationSenderIcon } from '@app/components/notification/sender-icon'
 import { PageHeader } from '@app/components/page-header'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 
@@ -171,20 +170,24 @@ const NotificationItem = ({ item }: { item: ListHistoryNotificationResponse['ite
       }}
     >
       <View className="flex flex-row gap-2 items-center">
-        <View
-          className={clsx(
-            'size-8 rounded-full flex items-center justify-center',
-            item.isRead ? 'bg-base-bg-dark' : 'bg-base-primary-default'
-          )}
-        >
-          <Icon icon={BellIcon} className="text-base-bg-white" />
-        </View>
+        <NotificationSenderIcon app={item.app} />
         <Text className="text-sm text-base-text-high font-heading-medium flex-1 line-clamp-1">
           {item.title}
         </Text>
         <Text className="text-sm text-base-text-medium font-heading-regular">
           {dayjs(item.createdAt).format('DD MMM BB')}
         </Text>
+        {/* Read state used to be the icon circle's background colour. Now that the
+            circle carries the sending app's icon, dimming it would undercut the
+            branding — so unread moves out here. The slot is always rendered so the
+            timestamp does not shift sideways when a notification is read. */}
+        <View
+          className="size-2"
+          accessible={!item.isRead}
+          accessibilityLabel={item.isRead ? undefined : 'ยังไม่ได้อ่าน'}
+        >
+          {!item.isRead ? <View className="size-2 rounded-full bg-base-primary-default" /> : null}
+        </View>
       </View>
       {item.description ? (
         <Text className="text-sm text-base-text-medium font-body-regular line-clamp-2">

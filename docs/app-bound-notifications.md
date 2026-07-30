@@ -156,6 +156,15 @@ hold a base64 data URI, which FCM cannot fetch. In that case fall back to the
 default icon but **keep the app name** — the two halves of the identity fail
 independently, and there is no reason to discard the half that works.
 
+**The identity is repeated in `data` on every attributed send**, not only the
+data-only one. The client builds the foreground toast itself, on both platforms,
+from the message it receives — and `aps.alert.subtitle` is not readable as data.
+Without this, a notification the OS branded would arrive as an unbranded toast
+whenever the app happened to be open, which is the same "two different senders"
+problem the toast is being branded to avoid. The icon is filtered the same way as
+the push's own: a base64 data URI would blow the 4KB data budget, so those apps
+are name-only here too.
+
 ### Kill switch
 
 One config key, e.g. `ANDROID_BRANDED_PUSH_DISABLED`, read in the payload
@@ -206,9 +215,30 @@ instead of against it. The cost is that Expo SDK upgrades acquire a manual step
 `android:priority="-1"`, deliberately yielding to `@react-native-firebase/messaging`.
 So RNFB owns the message: register `setBackgroundMessageHandler`, and display
 via `expo-notifications` with `subtitle` = app name and the patched large-icon
-URL = app icon. Use the **existing default channel** — per-app channels would
-give true per-app muting but Android offers no way to clean up channels, so a
-retired app would leave a permanent orphan in system settings.
+URL = app icon. Use **one shared channel** — per-app channels would give true
+per-app muting but Android offers no way to clean up channels, so a retired app
+would leave a permanent orphan in system settings.
+
+There was no app-defined channel to reuse: FCM had been displaying notifications
+on a channel of its own ("Miscellaneous") that the app cannot address, and
+presenting with a null trigger would land on `expo-notifications`' *own* fallback
+channel — a second entry in system settings, which is the cost this decision was
+avoiding. So the app now defines one channel and names it as FCM's
+`default_notification_channel_id` in the manifest, putting both display paths on
+the same single switch.
+
+The handler is registered from a custom `index.js` entry point ahead of
+`expo-router/entry`, not from a component. A data-only message is delivered by
+starting the app as a **headless task**: no root view is mounted, so expo-router
+never evaluates any route module — `app/_layout.tsx` included — and a handler
+registered from a component would not exist when the message arrived. `require`
+rather than `import`, since ES import declarations hoist above every statement.
+
+Tapping a client-built notification does not reach `onNotificationOpenedApp`
+either — Play services never displayed it — so the response comes back through
+`expo-notifications` and is routed into the same link handler, guarded to Android.
+On iOS `expo-notifications` is the `UNUserNotificationCenter` delegate and would
+report FCM-displayed notifications as well, double-handling every tap.
 
 Note that moving app notifications onto a client-built path resets their
 per-channel settings, so a user who had muted the old channel may start seeing
@@ -226,9 +256,13 @@ All three places a notification is rendered:
   replace the bell and the literal "แจ้งเตือนทั่วไป".
 - **Foreground toast** ([_layout.tsx:374][toast]) — app icon. Branding the push
   but not the toast would make one notification look like two different senders
-  depending on whether the app happened to be open.
+  depending on whether the app happened to be open. An app with no fetchable
+  icon keeps the platform glyph here: the toast has no room for a sender name,
+  so a name-only identity has nothing to show.
 
-A `null` sender keeps today's bell and "แจ้งเตือนทั่วไป" on all three.
+A `null` sender keeps today's bell and "แจ้งเตือนทั่วไป" on all three. An app
+that has a name but *no* icon gets a neutral app glyph rather than the bell —
+borrowing the bell would read as PPLE Today having sent the notification.
 
 `ListHistoryNotificationResponse` and the notification detail response gain an
 optional app `{ name, iconUrl }`.
