@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 2.8.1
+
+### Patch Changes
+
+- [#442](https://github.com/PPLEThai/pple-today/pull/442) [`efb3482`](https://github.com/PPLEThai/pple-today/commit/efb3482e2ce75c4b5d9dc68db3f36fb98293fff3) Thanks [@PanJ](https://github.com/PanJ)! - Fix the Android release build failing at `:app:processReleaseMainManifest`. `@react-native-firebase/messaging` declares the `com.google.firebase.messaging.default_notification_channel_id` meta-data with an empty value, which conflicted with the app's own `pple-today-default` value and made the manifest merger abort. The Android config plugin now sets `tools:replace="android:value"` (and ensures the `tools` namespace is present) so the app's value wins, and injects the meta-data idempotently so re-prebuilds can't duplicate it.
+
 ## 2.8.0
 
 ### Minor Changes
