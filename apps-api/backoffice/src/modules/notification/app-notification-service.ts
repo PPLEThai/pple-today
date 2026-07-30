@@ -1,11 +1,10 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
-import { MiniAppSource } from '@pple-today/database/prisma'
 import { err, ok } from 'neverthrow'
 
 import { resolveAppAudience } from './app-audience'
 import type { AppNotificationRepository } from './app-notification-repository'
-import { type BoundApp, requireAppBoundKey } from './key-binding'
+import { type BoundApp, isMeteredKey, requireAppBoundKey } from './key-binding'
 import type { CreateAppNotificationBody } from './models'
 import { evaluateDailyQuota, quotaDayStart } from './quota'
 import type { NotificationRepository } from './repository'
@@ -103,10 +102,9 @@ export class AppNotificationService {
     }
 
     const now = this.now()
-    // Metered by default, and exempt only for a vetted central-team app. A
-    // source this code has not heard of is treated as an outside Builder rather
-    // than quietly granted an unlimited send path.
-    const metered = app.source !== MiniAppSource.ADMIN
+    // The same predicate `getNotificationUsage` reports against, so what is
+    // enforced here and what the Console shows cannot drift apart.
+    const metered = isMeteredKey(boundKey.value)
 
     let claim: { usageLogId: string; used: number } | undefined
 
@@ -215,17 +213,21 @@ export class AppNotificationService {
   }
 
   /**
-   * How many notifications the app has sent in the current Bangkok quota day —
-   * the number the platform Console Usage tile shows against `dailyQuota`.
-   * Uses the same window and usage-log rows as the send path's claim, so the
-   * tile and a 429 cannot disagree. An app with no active key is not-found
-   * (unavailable on the platform side), distinct from zero sends today.
+   * How many notifications the app has sent in the current Bangkok quota day,
+   * and the budget that count is judged against — what the platform Console
+   * Usage tile shows. Uses the same window and usage-log rows as the send path's
+   * claim, so the tile and a 429 cannot disagree. An app with no active key is
+   * not-found (unavailable on the platform side), distinct from zero sends today.
+   *
+   * `dailyQuota` falls away for an unmetered app, the same way the send response
+   * drops its quota fields for one. A central-team app's raw-targeting sends
+   * still write usage-log rows — that is the audit trail, and it stays whole —
+   * so `sent` may climb for an app no quota is ever claimed against. Reporting a
+   * cap alongside it would show a number on the Console that nothing enforces,
+   * and one the count can pass without anything happening.
    */
   async getNotificationUsage(miniAppId: string, now: Date = this.now()) {
-    const result = await this.appNotificationRepository.countUsageSince(
-      miniAppId,
-      quotaDayStart(now)
-    )
+    const result = await this.appNotificationRepository.getUsageSince(miniAppId, quotaDayStart(now))
     if (result.isErr()) return mapRepositoryError(result.error)
 
     if (result.value === null) {
@@ -235,6 +237,11 @@ export class AppNotificationService {
       })
     }
 
-    return ok({ sent: result.value })
+    const usage = result.value
+
+    return ok({
+      sent: usage.sent,
+      dailyQuota: isMeteredKey(usage) ? usage.dailyQuota : undefined,
+    })
   }
 }

@@ -17,8 +17,14 @@ export type GetMiniAppUserCountResponse = Static<typeof GetMiniAppUserCountRespo
 export const GetMiniAppNotificationUsageResponse = t.Object({
   sent: t.Integer({
     description:
-      "Notifications sent today on the app's active key (Asia/Bangkok quota day), against dailyQuota",
+      "Notifications sent today on the app's active key (Asia/Bangkok quota day), against dailyQuota when one applies",
   }),
+  dailyQuota: t.Optional(
+    t.Integer({
+      description:
+        'Sends allowed per day for this app; absent when the app is unmetered, in which case `sent` is measured against no cap',
+    })
+  ),
 })
 export type GetMiniAppNotificationUsageResponse = Static<typeof GetMiniAppNotificationUsageResponse>
 

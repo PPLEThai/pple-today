@@ -350,7 +350,7 @@ export const PlatformController = new Elysia({ prefix: '/platform', tags: ['Plat
       detail: {
         summary: "Get a Builder App's notification sends today",
         description:
-          'How many audience-bound notifications the app has sent in the current Asia/Bangkok quota day — the same window that drives the daily quota 429. Requires the platform service token. An app with no active key is not-found.',
+          'How many notifications the app has sent in the current Asia/Bangkok quota day — the same window that drives the daily quota 429 — and the quota that count is held to. `dailyQuota` is absent for an unmetered app (a central-team app), whose sends are logged for audit but capped by nothing. Requires the platform service token. An app with no active key is not-found.',
       },
     }
   )

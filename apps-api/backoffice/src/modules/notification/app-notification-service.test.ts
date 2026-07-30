@@ -3,7 +3,7 @@ import { MiniAppSource, MiniAppTier } from '@pple-today/database/prisma'
 import { err, ok } from 'neverthrow'
 import { describe, expect, test, vi } from 'vitest'
 
-import type { AppNotificationRepository } from './app-notification-repository'
+import type { ActiveKeyUsage, AppNotificationRepository } from './app-notification-repository'
 import {
   AppBoundKey,
   AppNotificationContent,
@@ -38,6 +38,13 @@ const appBoundKey = (overrides: Partial<AppBoundKey> = {}): AppBoundKey => ({
   dailyQuota: 10,
   ...overrides,
 })
+
+/** A metered Builder App on the same 10/day budget `appBoundKey` carries. */
+const METERED = { dailyQuota: 10, miniApp: builderApp }
+
+/** A `getUsageSince` stand-in; metered unless the test says otherwise. */
+const fakeUsage = (overrides: Partial<ActiveKeyUsage> & { sent: number }) =>
+  vi.fn(async () => ok<ActiveKeyUsage | null>({ ...METERED, ...overrides }))
 
 /**
  * In-memory stand-in for `AppNotificationRepository`. Usage rows persist across
@@ -92,7 +99,7 @@ const createFakeAppNotificationRepository = (
       return ok({})
     }),
     setDailyQuota: vi.fn(async () => ok(1)),
-    countUsageSince: vi.fn(async () => ok<number | null>(usage.length)),
+    getUsageSince: vi.fn(async () => ok<ActiveKeyUsage | null>({ ...METERED, sent: usage.length })),
   }
 }
 
@@ -444,32 +451,45 @@ describe('AppNotificationService.setDailyQuota', () => {
 })
 
 describe('AppNotificationService.getNotificationUsage', () => {
-  test('reports sends in the current Bangkok quota day as { sent }', async () => {
+  test('reports sends in the current Bangkok quota day against the budget they are held to', async () => {
     const repository = createFakeAppNotificationRepository()
-    repository.countUsageSince = vi.fn(async () => ok(7))
+    repository.getUsageSince = fakeUsage({ sent: 7 })
     const { service } = createService(repository)
 
     const result = await service.getNotificationUsage(MINI_APP_ID)
 
-    expect(result._unsafeUnwrap()).toEqual({ sent: 7 })
+    expect(result._unsafeUnwrap()).toEqual({ sent: 7, dailyQuota: 10 })
     // Same day boundary the claim path uses — the Console tile and the 429
     // must agree on what "today" means.
-    expect(repository.countUsageSince).toHaveBeenCalledWith(MINI_APP_ID, DAY_START)
+    expect(repository.getUsageSince).toHaveBeenCalledWith(MINI_APP_ID, DAY_START)
   })
 
   test('an app that sent nothing today reports zero, not not-found', async () => {
     const repository = createFakeAppNotificationRepository()
-    repository.countUsageSince = vi.fn(async () => ok(0))
+    repository.getUsageSince = fakeUsage({ sent: 0 })
     const { service } = createService(repository)
 
     const result = await service.getNotificationUsage(MINI_APP_ID)
 
-    expect(result._unsafeUnwrap()).toEqual({ sent: 0 })
+    expect(result._unsafeUnwrap()).toEqual({ sent: 0, dailyQuota: 10 })
+  })
+
+  test('an unmetered app reports no quota rather than one nothing enforces', async () => {
+    // A central-team app's sends on the raw-targeting path still write usage-log
+    // rows for audit, so `sent` may climb — but it is measured against no cap,
+    // and reporting one would put a number on the Console that no 429 backs.
+    const repository = createFakeAppNotificationRepository()
+    repository.getUsageSince = fakeUsage({ sent: 42, miniApp: centralTeamApp })
+    const { service } = createService(repository)
+
+    const result = await service.getNotificationUsage(MINI_APP_ID)
+
+    expect(result._unsafeUnwrap()).toEqual({ sent: 42 })
   })
 
   test('an app with no active key is a not-found, not zero sends', async () => {
     const repository = createFakeAppNotificationRepository()
-    repository.countUsageSince = vi.fn(async () => ok(null))
+    repository.getUsageSince = vi.fn(async () => ok(null))
     const { service } = createService(repository)
 
     const result = await service.getNotificationUsage(MINI_APP_ID)

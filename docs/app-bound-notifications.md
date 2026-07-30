@@ -98,6 +98,11 @@ which endpoint the key may use at all.
   Limit*, and a central-team app is not an outside Builder. Without this, a
   bound central-team key would silently acquire a 1000/day cap the first time it
   used that endpoint.
+- Reporting follows the same rule. `getNotificationUsage` omits `dailyQuota` for
+  an unmetered app, so the Console Usage tile never shows a cap no 429 backs.
+  The raw path keeps writing its usage-log row for an `ADMIN`-bound key — that
+  row is the audit trail, shared with legacy unbound keys — so those sends are
+  still counted; they are simply counted against nothing.
 
 ### Attribution on the send path
 

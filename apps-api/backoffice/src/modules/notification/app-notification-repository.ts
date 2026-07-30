@@ -4,6 +4,19 @@ import type { Prisma } from '@pple-today/database/prisma'
 import { MiniAppInviteStatus } from '@pple-today/database/prisma'
 
 import type { AppNotificationSendContext } from './app-audience'
+import type { KeyBinding } from './key-binding'
+
+/**
+ * One app's spend in a quota window, with everything needed to read it: the
+ * budget it is measured against and the binding that decides whether it is
+ * measured at all. A `KeyBinding`, so the metering rule that governs a send
+ * governs what is reported about it.
+ */
+export interface ActiveKeyUsage extends KeyBinding {
+  /** Sends logged in the window — the rows `claimUsageUnderQuota` meters against. */
+  sent: number
+  dailyQuota: number
+}
 
 /**
  * Persistence for audience-bound sends: who an app may reach, and how much of
@@ -133,25 +146,37 @@ export class AppNotificationRepository {
   }
 
   /**
-   * How many sends the app's active key has logged since `since` — the same
-   * window and rows `claimUsageUnderQuota` meters against. `null` means there
-   * is no active key (retired / never provisioned), distinct from zero sends.
+   * What the app's active key has spent since `since` — the same window and rows
+   * `claimUsageUnderQuota` meters against.
+   *
+   * The budget and the binding come back with the count because a count alone
+   * cannot be reported honestly: what it is measured against, and whether it is
+   * measured at all, are properties of the key and the app it speaks for.
+   *
+   * `null` means there is no active key (retired / never provisioned), distinct
+   * from zero sends.
    */
-  async countUsageSince(miniAppId: string, since: Date) {
+  async getUsageSince(miniAppId: string, since: Date) {
     return await fromRepositoryPromise(async () => {
       const key = await this.prismaService.notificationApiKey.findFirst({
         where: { miniAppId, active: true },
-        select: { id: true },
+        select: { id: true, dailyQuota: true, miniApp: { select: { source: true } } },
       })
 
       if (!key) return null
 
-      return await this.prismaService.notificationApiKeyUsageLog.count({
+      const sent = await this.prismaService.notificationApiKeyUsageLog.count({
         where: {
           notificationApiKeyId: key.id,
           usedAt: { gte: since },
         },
       })
+
+      return {
+        sent,
+        dailyQuota: key.dailyQuota,
+        miniApp: key.miniApp,
+      } satisfies ActiveKeyUsage
     })
   }
 }

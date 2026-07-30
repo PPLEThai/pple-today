@@ -26,6 +26,21 @@ export interface KeyBinding {
 }
 
 /**
+ * Whether sends on this key count against a daily quota.
+ *
+ * The daily quota is a *Builder App Resource Limit*, so only an outside
+ * Builder's app is held to one: a central-team (`ADMIN`) app is exempt, and a
+ * legacy unbound key has never been metered on either endpoint. Metered by
+ * default — a source this code has not heard of is treated as an outside Builder
+ * rather than quietly granted an unlimited send path.
+ *
+ * One predicate for both the send path's claim and the usage the Console
+ * reports, so what is enforced and what is shown cannot drift apart.
+ */
+export const isMeteredKey = (key: KeyBinding): boolean =>
+  key.miniApp !== null && key.miniApp.source !== MiniAppSource.ADMIN
+
+/**
  * Guard the raw-targeting send path, where the caller names its own audience —
  * phone numbers, roles, a broadcast to everyone.
  *
