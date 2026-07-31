@@ -1,5 +1,21 @@
 # @client/mobile
 
+## 2.9.3
+
+### Patch Changes
+
+- [#455](https://github.com/PPLEThai/pple-today/pull/455) [`a3945e4`](https://github.com/PPLEThai/pple-today/commit/a3945e487bb5a57999981f14fc545894411be162) Thanks [@PanJ](https://github.com/PanJ)! - Keep the session when a notification deep-links into a mini app
+
+  - The token exchange wrote the deep-link path over `clientUrl`'s pathname instead of joining under it, so an app registered on a sub-path lost that prefix: a notification addressing `kaitom-mp` at `attendances` opened `/attendances` rather than `/mp/attendances`, outside the app's own module. The browser door had always joined correctly, so the same link worked in a browser and failed in the app; both now share one `miniAppUrlWithPath`. Root-hosted apps are unaffected.
+  - The mobile client resolved the same path the same way when opening a mini app that needs no authentication, so public apps on a sub-path lost their prefix too. Both callers now share one join.
+  - The SDK read `window.location` twice: once in the constructor, once when the async `init()` finally ran. A client-side router that rewrote the URL in between — a catch-all redirect firing from a child effect, say — left the second read with no `access_token`, so the SDK concluded it was not running inside PPLE Today and redirected to the login page, discarding a session the app had already been handed. The launch URL is now captured once at construction; routing cannot revoke it.
+
+- [#453](https://github.com/PPLEThai/pple-today/pull/453) [`89abf01`](https://github.com/PPLEThai/pple-today/commit/89abf017379021ff812bdf37340b31138ab62325) Thanks [@PanJ](https://github.com/PanJ)! - Make the บทบาท choice in the mini-app role prompt tappable on iOS
+
+  - The prompt shown when a mini-app link falls outside your role offered the roles in a `Select`. A `Select` opens through the same portal host the dialog itself renders into, so on iOS its dropdown landed under the dialog layer and no tap could reach it — the choice was unusable on device.
+  - The roles are now radio rows inside the dialog: no nested portal, no measure-and-position step, and the whole row is the tap target rather than the dot alone. A long list scrolls instead of pushing ยกเลิก and เข้าใช้งาน off screen.
+  - The multi-role copy now reads บทบาทปัจจุบัน, naming the role that does not fit rather than the person's roles in general.
+
 ## 2.9.2
 
 ### Patch Changes
