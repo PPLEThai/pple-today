@@ -80,10 +80,7 @@ export function MiniAppRoleGateDialog({
                 same portal host the dialog is already using, and on iOS its
                 dropdown lands under the dialog layer where no tap can reach it.
                 With a handful of roles the list is the better control anyway. */}
-            <ScrollView
-              className="max-h-48 rounded-lg border border-input"
-              contentContainerClassName="px-3 py-1"
-            >
+            <ScrollView className="max-h-48">
               <RadioGroupPrimitive.Root
                 className="flex flex-col"
                 value={selectedRole ?? ''}
