@@ -95,7 +95,7 @@ export const AuthController = new Elysia({
         user.accessToken,
         visibleRoles.value,
         user.id,
-        query.path
+        { path: query.path, acknowledgeRoleMismatch: query.acknowledgeRoleMismatch }
       )
 
       if (result.isErr()) {
@@ -119,6 +119,7 @@ export const AuthController = new Elysia({
         200: CreateMiniAppTokenResponse,
         ...createErrorSchema(
           InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.MINI_APP_ROLE_NOT_ELIGIBLE,
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),

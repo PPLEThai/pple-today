@@ -55,7 +55,7 @@ export interface MiniAppViewer {
 export type ListedMiniApp = ListMiniAppsResponse[number]
 
 // NOTE: a new `MiniAppTier` case must be handled in three places that switch on
-// tier — `isMiniAppListable` and `isMiniAppAccessible` here, and
+// tier — `isMiniAppListable` and `resolveMiniAppAccess` here, and
 // `resolveAppAudience` in `../notification/app-audience.ts`. They are kept
 // separate on purpose (listing vs access vs notification audience are different
 // questions); this note is the cross-link between them.
@@ -115,30 +115,52 @@ export const isMiniAppListable = (miniApp: EligibilityMiniApp, viewer: MiniAppVi
 }
 
 /**
+ * The outcome of an access check.
+ *
+ * `ROLE_MISMATCH` is a *soft* denial and exists only for Live apps: the app is
+ * published and the person is a signed-in member, they simply do not hold one of
+ * the roles the app is listed for. Since the role list governs discovery — and
+ * every mini app guards its own routes anyway — the caller is offered the app
+ * (switch role, or enter as they are) instead of being turned away. `DENIED` is
+ * the hard denial and is indistinguishable from a missing app.
+ */
+export type MiniAppAccess = 'ALLOWED' | 'ROLE_MISMATCH' | 'DENIED'
+
+/**
  * Whether the caller may open the app — token exchange / first-open. Access is
  * distinct from listing: an `unlisted` Live app is not listed to anyone yet is
  * reachable by any authenticated member who has its link.
  *
  * - `LIVE`  — `unlisted` ⇒ any authenticated member (reachable by link);
- *   otherwise the same role rule as listing.
+ *   otherwise the role rule, and failing it is a `ROLE_MISMATCH` for a member
+ *   (an anonymous caller is simply `DENIED` — there is no role to switch).
  * - `DRAFT` — its builders only.
  * - `BETA`  — its builders, or an ACCEPTED invitee.
+ *
+ * Draft and Beta never soften: they are gated on *being* a builder or a named
+ * tester, which no role switch can change.
  */
-export const isMiniAppAccessible = (
+export const resolveMiniAppAccess = (
   miniApp: EligibilityMiniApp,
   viewer: MiniAppViewer
-): boolean => {
+): MiniAppAccess => {
   switch (miniApp.tier) {
     case MiniAppTier.LIVE:
-      return miniApp.unlisted ? viewer.sub !== null : hasVisibilityRole(miniApp, viewer)
+      if (miniApp.unlisted) return viewer.sub !== null ? 'ALLOWED' : 'DENIED'
+      if (hasVisibilityRole(miniApp, viewer)) return 'ALLOWED'
+      return viewer.sub !== null ? 'ROLE_MISMATCH' : 'DENIED'
     case MiniAppTier.DRAFT:
-      return isBuilder(miniApp, viewer)
+      return isBuilder(miniApp, viewer) ? 'ALLOWED' : 'DENIED'
     case MiniAppTier.BETA:
-      return isBetaMember(miniApp, viewer)
+      return isBetaMember(miniApp, viewer) ? 'ALLOWED' : 'DENIED'
     default:
-      return false
+      return 'DENIED'
   }
 }
+
+/** Whether the caller may open the app outright, with nothing to confirm. */
+export const isMiniAppAccessible = (miniApp: EligibilityMiniApp, viewer: MiniAppViewer): boolean =>
+  resolveMiniAppAccess(miniApp, viewer) === 'ALLOWED'
 
 /**
  * Filter a full mini-app list down to the apps *listable* to the requesting user

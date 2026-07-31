@@ -37,6 +37,15 @@ export type CreateMiniAppTokenParams = Static<typeof CreateMiniAppTokenParams>
 
 export const CreateMiniAppTokenQuery = t.Object({
   path: t.Optional(t.String({ description: 'The path within the mini app to navigate to' })),
+  // Set by the client after the user confirms the "your role is not listed for
+  // this app" prompt. Waives the Live role check for this exchange only; every
+  // other access rule (tier, ownership, invitation) still applies, as does the
+  // mini app's own authorisation.
+  acknowledgeRoleMismatch: t.Optional(
+    t.Boolean({
+      description: 'Open a Live app the active role is not listed for, at the user’s request',
+    })
+  ),
 })
 export type CreateMiniAppTokenQuery = Static<typeof CreateMiniAppTokenQuery>
 
