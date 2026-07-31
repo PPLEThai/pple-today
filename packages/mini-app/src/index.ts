@@ -14,6 +14,19 @@ export class PPLEMiniApp {
   private config: { oauthUrl: string; oauthClientId: string; oauthRedirectUri: string }
   private userManager: UserManager
   private _user: User | null = null
+  /**
+   * The query string PPLE Today launched the app with, read once at
+   * construction.
+   *
+   * `init()` is async and usually runs from an effect, so a client-side router
+   * has every chance to rewrite the URL first — a catch-all redirect, a
+   * canonicalising `replace`, a route guard. Re-reading `window.location` then
+   * would show no `access_token`, the host would look like a plain browser, and
+   * a session PPLE Today had already handed over would be thrown away for a
+   * sign-in redirect. The launch URL is a fact about how the app was opened; it
+   * does not change when the route does.
+   */
+  private readonly launchSearch: string
 
   private async extractJWTPayload(token: string) {
     const payloadBase64 = token.split('.')[1]
@@ -32,7 +45,7 @@ export class PPLEMiniApp {
   }
 
   private async getAccessTokenFromUrl() {
-    const searchParams = new URLSearchParams(window.location.search)
+    const searchParams = new URLSearchParams(this.launchSearch)
 
     const accessTokenDetails = {
       accessToken: searchParams.get('access_token'),
@@ -122,6 +135,8 @@ export class PPLEMiniApp {
         '[PPLE Mini App] PPLEMiniApp can only be instantiated in a browser environment'
       )
     }
+
+    this.launchSearch = window.location.search
 
     const isMiniApp = this.isMiniApp()
 
@@ -221,7 +236,7 @@ export class PPLEMiniApp {
   }
 
   isMiniApp() {
-    const queryParams = new URLSearchParams(window.location.search)
+    const queryParams = new URLSearchParams(this.launchSearch)
 
     const isHeaderMatch = !!navigator.userAgent.match(/PPLETodayApp\/(\d.\d.\d) MiniApp/)
     const isAccessTokenParamsInUrl = !!queryParams.has('access_token')
