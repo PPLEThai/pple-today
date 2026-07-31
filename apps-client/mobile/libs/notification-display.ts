@@ -76,6 +76,17 @@ export async function presentBrandedPush(notification: BrandedPushNotification) 
     // system settings — and log an error on the way.
     trigger: { channelId: DEFAULT_NOTIFICATION_CHANNEL_ID },
   })
+  // The app-icon badge, for the one payload nothing else badges: a data-only
+  // message carries no `notification` block, so Play services never sees the
+  // `notification_count` it would otherwise read. Set after presenting, so a
+  // failure here costs the badge and not the notification.
+  if (notification.badgeCount !== undefined) {
+    try {
+      await Notifications.setBadgeCountAsync(notification.badgeCount)
+    } catch (err) {
+      console.error('Failed to set the app icon badge', JSON.stringify(err))
+    }
+  }
 }
 
 /**

@@ -500,6 +500,7 @@ export class NotificationRepository {
     const { users, newNotification } = createResult.value
 
     const phoneNumberWithTokens = users.flatMap((u) => ({
+      userId: u.id,
       phoneNumber: u.phoneNumber,
       tokens: u.notificationTokens,
     }))
@@ -548,11 +549,19 @@ export class NotificationRepository {
       },
     })
 
+    const unreadCountByUser = await this.getUnreadCountsForRecipients(newNotification.id)
+
     const notificationResult = await Promise.all(
       nonEmptyTokens.map(async (p) => {
         return {
           phoneNumber: p.phoneNumber,
-          result: await this.cloudMessagingService.sendNotifications(p.tokens, notificationDetails),
+          result: await this.cloudMessagingService.sendNotifications(p.tokens, {
+            ...notificationDetails,
+            // The one field that differs per recipient: their own unread total,
+            // for the app-icon badge. Undefined when the count could not be
+            // read, which leaves the badge alone rather than failing the send.
+            unreadCount: unreadCountByUser.get(p.userId),
+          }),
         }
       })
     )
@@ -644,6 +653,44 @@ export class NotificationRepository {
           }
         : undefined
     )
+  }
+
+  /**
+   * Every recipient of `notificationId`, mapped to their unread total.
+   *
+   * Read after the `UserNotification` rows are written, so the notification
+   * being sent is already counted and the badge matches what the notification
+   * centre will show when it is opened.
+   *
+   * The audience is expressed as a subquery on the notification rather than as
+   * an `IN` list of user ids: a broadcast reaches the whole membership, and that
+   * list belongs in the database rather than on the wire.
+   *
+   * A badge is the least load-bearing part of a push, so a failure here is
+   * logged and returns an empty map — every recipient then gets the payload
+   * without a badge, and their next foreground sync corrects it.
+   */
+  private async getUnreadCountsForRecipients(notificationId: string) {
+    const countsResult = await fromRepositoryPromise(
+      this.prismaService.userNotification.groupBy({
+        by: ['userId'],
+        where: {
+          isRead: false,
+          user: { notifications: { some: { notificationId } } },
+        },
+        _count: { _all: true },
+      })
+    )
+
+    if (countsResult.isErr()) {
+      this.loggerService.error({
+        message: 'Failed to read unread counts for the app icon badge',
+        details: countsResult.error,
+      })
+      return new Map<string, number>()
+    }
+
+    return new Map(countsResult.value.map((row) => [row.userId, row._count._all]))
   }
 
   async getUnreadNotificationCount(userId: string) {

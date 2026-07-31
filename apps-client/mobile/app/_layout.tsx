@@ -56,7 +56,7 @@ import { useScreenTracking } from '@app/libs/analytics'
 import { reactQueryClient } from '@app/libs/api-client'
 import { initAppUpdate } from '@app/libs/app-update'
 import { AuthLifeCycleHook, useAuthMe, useSession } from '@app/libs/auth'
-import { parseBrandedPush, pushSenderApp } from '@app/utils/branded-push'
+import { parseBrandedPush, pushBadgeCount, pushSenderApp } from '@app/utils/branded-push'
 import { openLink } from '@app/utils/link'
 import { resolveIncomingDeepLinkPath } from '@app/utils/mini-app'
 
@@ -405,13 +405,19 @@ function NotificationTokenConsentPopup() {
       // like two different senders depending on whether the app was open.
       const senderApp = pushSenderApp(remoteMessage.data)
 
+      // The push states the recipient's unread total; incrementing is only the
+      // fallback for a payload that carries none. The count feeds the app icon
+      // badge as well as the in-app bell (see `AppIconBadgeSync`), so taking the
+      // server's number keeps a device that missed a push — or one of several
+      // signed in to the same account — from settling on its own private total.
+      const badgeCount = pushBadgeCount(remoteMessage.data)
       queryClient.setQueryData(
         reactQueryClient.getQueryKey('/notifications/unread-count'),
         (oldData) => {
           if (!oldData) return oldData
           return {
             ...oldData,
-            unreadCount: oldData.unreadCount + 1,
+            unreadCount: badgeCount ?? oldData.unreadCount + 1,
           }
         }
       )

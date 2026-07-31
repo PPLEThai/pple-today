@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import type { ListHistoryNotificationResponse } from '@api/backoffice/app'
 
-import { parseBrandedPush, PushSenderApp, pushSenderApp } from './branded-push'
+import { parseBrandedPush, pushBadgeCount, PushSenderApp, pushSenderApp } from './branded-push'
 
 // A type-level assertion, checked by `pnpm typecheck` rather than at run time: the
 // sending app as the API returns it must stay assignable to the sending app as a
@@ -119,5 +119,40 @@ describe('parseBrandedPush', () => {
   test('a message with a title and app name but no body still presents', () => {
     const { body: _, ...bodyless } = attributed
     expect(parseBrandedPush(bodyless)).toMatchObject({ title: 'ผลโหวตออกแล้ว', body: '' })
+  })
+
+  // The data-only payload is the one nothing else badges: no `notification`
+  // block means Play services never sees a `notification_count`, so the count
+  // travels here and `presentBrandedPush` applies it.
+  test('carries the badge count onto the notification it presents', () => {
+    expect(parseBrandedPush({ ...attributed, badge: '12' })?.badgeCount).toBe(12)
+  })
+})
+
+describe('pushBadgeCount', () => {
+  test('reads the recipient’s unread total off any push', () => {
+    // Not only the data-only one: an iOS push carries the same key so a
+    // foregrounded client can take the server's number instead of its own +1.
+    expect(pushBadgeCount({ link: '', notificationId: 'n1', badge: '3' })).toBe(3)
+  })
+
+  test('zero is a count, not an absence', () => {
+    // A send that leaves the recipient with nothing unread has to clear the
+    // badge; reading zero as "no badge" would leave the old number on screen.
+    expect(pushBadgeCount({ ...attributed, badge: '0' })).toBe(0)
+  })
+
+  test('a push with no badge leaves the badge alone', () => {
+    expect(pushBadgeCount(attributed)).toBeUndefined()
+    expect(pushBadgeCount(undefined)).toBeUndefined()
+  })
+
+  test('refuses anything that is not a whole count', () => {
+    // Dropped rather than clamped or rounded: whatever produced these did not
+    // mean a badge, and the last good number beats a made-up one.
+    for (const badge of ['-1', '1.5', 'many', '', '1e3o']) {
+      expect(pushBadgeCount({ ...attributed, badge })).toBeUndefined()
+    }
+    expect(pushBadgeCount({ ...attributed, badge: { count: 3 } })).toBeUndefined()
   })
 })

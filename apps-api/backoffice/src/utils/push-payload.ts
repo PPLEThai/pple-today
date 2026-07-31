@@ -37,6 +37,21 @@ export interface PushNotificationContent {
       }
   /** Absent for PPLE Today's own notifications, which stay platform-branded. */
   app?: PushSenderApp
+  /**
+   * What the recipient's app-icon badge should read once this push lands —
+   * their unread total, this notification included.
+   *
+   * The only per-*recipient* field on an otherwise per-send payload, because a
+   * badge is a property of the person, not of the notification: the same
+   * broadcast leaves one user on 1 and another on 12. The client keeps the badge
+   * in step while the app is open (`AppIconBadgeSync`); this is what keeps it
+   * honest while the app is closed, which is most of the time.
+   *
+   * Omitted when the count could not be read — see `sendNotificationToUser`.
+   * An absent badge leaves whatever the OS is already showing, which is a
+   * staler number but never a wrong-looking zero.
+   */
+  unreadCount?: number
 }
 
 interface FcmMessage {
@@ -48,13 +63,14 @@ interface FcmMessage {
       aps: {
         'mutable-content': 1
         alert?: { title: string; body: string; subtitle: string }
+        badge?: number
       }
     }
     fcm_options?: { image?: string }
   }
   android?: {
     priority?: 'HIGH'
-    notification?: { click_action: string; image?: string }
+    notification?: { click_action: string; image?: string; notification_count?: number }
   }
 }
 
@@ -101,6 +117,7 @@ export const buildFcmMessage = (
   const app = data.app
   const isAndroid = target.platform === NotificationTokenPlatform.ANDROID
   const appIconUrl = app ? fetchableIcon(app.icon) : undefined
+  const badge = data.unreadCount
 
   // These key names are a contract with the mobile client, which restates them in
   // `apps-client/mobile/utils/branded-push.ts` — sharing them would drag Elysia and
@@ -115,6 +132,11 @@ export const buildFcmMessage = (
     // like two different senders depending on whether the app was open.
     ...(app ? { appName: app.name } : {}),
     ...(appIconUrl ? { appIconUrl } : {}),
+    // The badge as data, on every payload rather than only the data-only one.
+    // `aps.badge` and `notification_count` are applied by the OS but cannot be
+    // read back, so this is the only place a foregrounded client can learn the
+    // authoritative count — otherwise it is left incrementing a local guess.
+    ...(badge !== undefined ? { badge: String(badge) } : {}),
   }
   const brandedAndroid =
     isAndroid &&
@@ -135,6 +157,12 @@ export const buildFcmMessage = (
         ...baseData,
         title: data.title,
         body: data.message,
+        // The badge rides in `baseData`, and here it is the *only* carrier:
+        // `android.notification.notification_count` needs a `notification`
+        // block, and this payload is data-only precisely to avoid one. So this
+        // is the one payload whose badge the client must apply by hand — see
+        // `presentBrandedPush`.
+        //
         // The content image is deliberately absent. This is the one payload
         // where the app icon and the content image would compete for the same
         // large-icon slot, and the app icon wins; a carve-out for image
@@ -161,6 +189,9 @@ export const buildFcmMessage = (
       payload: {
         aps: {
           'mutable-content': 1,
+          // APNs applies this itself, without waking the app — which is the
+          // whole reason the badge is set here and not left to the client.
+          badge,
         },
       },
       fcm_options: {
@@ -169,6 +200,9 @@ export const buildFcmMessage = (
     },
     android: {
       notification: {
+        // Android has no OS-level badge count: launchers that badge at all read
+        // this, and the rest show their usual dot. Harmless where unsupported.
+        notification_count: badge,
         // Kept even for an attributed send. `android.notification.image` is the
         // *expanded* big picture, not the collapsed icon slot — that slot is
         // the large icon, which FCM cannot set per notification at all, which
@@ -190,6 +224,7 @@ export const buildFcmMessage = (
         aps: {
           'mutable-content': 1,
           alert: { title: data.title, body: data.message, subtitle: app.name },
+          badge,
         },
       },
       // `fcm_options.image` *is* the collapsed thumbnail on iOS, so here the

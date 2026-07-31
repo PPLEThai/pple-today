@@ -54,6 +54,12 @@ const createRepository = (
     },
     userNotification: {
       createMany: vi.fn(async (_args: unknown) => ({ count: users.length })),
+      // The badge counts, read after the rows are written — so every recipient
+      // is at least one unread deep. Overridden where a test needs recipients
+      // to differ from each other.
+      groupBy: vi.fn(async (_args: unknown) =>
+        users.map((u) => ({ userId: u.id, _count: { _all: 1 } }))
+      ),
     },
     notificationApiKeyUsageLog: {
       create: vi.fn(async (_args: unknown) => ({ id: 'usage-log-id' })),
@@ -63,7 +69,10 @@ const createRepository = (
 
   const cloudMessagingService = {
     sendNotifications: vi.fn(
-      async (_targets: unknown[], _data: { app?: { name: string; icon: string | null } }) => ok()
+      async (
+        _targets: unknown[],
+        _data: { app?: { name: string; icon: string | null }; unreadCount?: number }
+      ) => ok()
     ),
   }
   const loggerService = { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
@@ -198,6 +207,55 @@ describe('NotificationRepository.sendNotificationToUser', () => {
 
     const [, details] = cloudMessagingService.sendNotifications.mock.calls[0]
     expect(details.app).toBeUndefined()
+  })
+
+  test('gives each recipient their own unread total for the app icon badge', async () => {
+    // The one per-recipient field on a per-send payload: the same broadcast
+    // leaves one person on 1 and another on 12, and a badge showing the
+    // audience's count rather than yours would be worse than none.
+    const other = { ...recipient, id: 'other-user-id', phoneNumber: '+66898765432' }
+    const { prismaService, cloudMessagingService, repository } = createRepository([
+      recipient,
+      other,
+    ])
+    prismaService.userNotification.groupBy.mockResolvedValue([
+      { userId: other.id, _count: { _all: 12 } },
+      { userId: recipient.id, _count: { _all: 1 } },
+    ])
+
+    await repository.sendNotificationToUser({ type: 'BROADCAST' }, CONTENT)
+
+    const badges = cloudMessagingService.sendNotifications.mock.calls.map(
+      ([, details]) => details.unreadCount
+    )
+    expect(badges).toEqual([1, 12])
+  })
+
+  test('counts the notification being sent, so the badge matches the inbox', async () => {
+    // Read after the `UserNotification` rows are written. A badge one behind the
+    // notification centre is the bug this ordering exists to avoid.
+    const { prismaService, cloudMessagingService, repository } = createRepository([recipient])
+
+    await repository.sendNotificationToUser({ type: 'BROADCAST' }, CONTENT)
+
+    expect(prismaService.userNotification.createMany).toHaveBeenCalledBefore(
+      prismaService.userNotification.groupBy
+    )
+    const [, details] = cloudMessagingService.sendNotifications.mock.calls[0]
+    expect(details.unreadCount).toBe(1)
+  })
+
+  test('a count that cannot be read costs the badge, never the notification', async () => {
+    // Leaving the OS showing a stale number beats failing a send over the least
+    // load-bearing part of it.
+    const { prismaService, cloudMessagingService, repository } = createRepository([recipient])
+    prismaService.userNotification.groupBy.mockRejectedValue(new Error('connection lost'))
+
+    const result = await repository.sendNotificationToUser({ type: 'BROADCAST' }, CONTENT)
+
+    expect(result.isOk()).toBe(true)
+    const [, details] = cloudMessagingService.sendNotifications.mock.calls[0]
+    expect(details.unreadCount).toBeUndefined()
   })
 
   test('still meters against the key when one is given', async () => {
