@@ -207,8 +207,13 @@ jobs:
         run: |
           pnpm build --filter=@pplethai/pple-today-miniapp-sdk...
 
-      - name: Update npm to latest version
-        run: npm install -g npm@latest
+      # Pinned to a major, not `@latest`: npm 12 raised its floor to node
+      # ^22.22.2 and this job runs node 22.14.0, so `@latest` failed EBADENGINE
+      # before publish and took the release with it. npm 11 covers what this
+      # step is here for (provenance) and runs on the node pinned above; bump
+      # both together.
+      - name: Update npm
+        run: npm install -g npm@11
 
       - name: Publish Mini App Package
         working-directory: packages/mini-app
