@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { View } from 'react-native'
+import { ScrollView, View } from 'react-native'
 
 import {
   AlertDialog,
@@ -10,15 +10,8 @@ import {
   AlertDialogTitle,
 } from '@pple-today/ui/alert-dialog'
 import { Button } from '@pple-today/ui/button'
-import {
-  Option,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@pple-today/ui/select'
 import { Text } from '@pple-today/ui/text'
+import * as RadioGroupPrimitive from '@rn-primitives/radio-group'
 
 import { toRoleLabel, toRoleValue } from '@app/utils/ad-role'
 import { preferredRoleForApp } from '@app/utils/mini-app-role-gate'
@@ -83,24 +76,42 @@ export function MiniAppRoleGateDialog({
         {canSwitchRole && (
           <View className="flex flex-col gap-2">
             <Text className="font-heading-regular text-base-text-medium">บทบาท:</Text>
-            <Select
-              value={
-                selectedRole ? { value: selectedRole, label: toRoleLabel(selectedRole) } : undefined
-              }
-              onValueChange={(option?: Option) => {
-                if (option?.value) setChosenRole(option.value)
-              }}
+            {/* Listed inline rather than in a Select: a Select opens through the
+                same portal host the dialog is already using, and on iOS its
+                dropdown lands under the dialog layer where no tap can reach it.
+                With a handful of roles the list is the better control anyway. */}
+            <ScrollView
+              className="max-h-48 rounded-lg border border-input"
+              contentContainerClassName="px-3 py-1"
             >
-              <SelectTrigger>
-                <SelectValue placeholder="เลือกบทบาท" />
-              </SelectTrigger>
-              <SelectContent>
+              <RadioGroupPrimitive.Root
+                className="flex flex-col"
+                value={selectedRole ?? ''}
+                onValueChange={setChosenRole}
+                disabled={isSubmitting}
+              >
                 {eligibleRoles.map((role) => {
                   const value = toRoleValue(role)
-                  return <SelectItem key={value} label={toRoleLabel(role)} value={value} />
+                  const label = toRoleLabel(role)
+                  return (
+                    <RadioGroupPrimitive.Item
+                      key={value}
+                      value={value}
+                      aria-label={label}
+                      // The whole row is the tap target, not just the dot.
+                      className="py-3 flex flex-row gap-3 items-center"
+                    >
+                      <View className="aspect-square h-5 w-5 rounded-full justify-center items-center border border-primary">
+                        <RadioGroupPrimitive.Indicator className="flex items-center justify-center">
+                          <View className="aspect-square h-[10px] w-[10px] bg-primary rounded-full" />
+                        </RadioGroupPrimitive.Indicator>
+                      </View>
+                      <Text className="font-heading-regular text-base-text-high">{label}</Text>
+                    </RadioGroupPrimitive.Item>
+                  )
                 })}
-              </SelectContent>
-            </Select>
+              </RadioGroupPrimitive.Root>
+            </ScrollView>
           </View>
         )}
         {/* Plain buttons rather than AlertDialogAction/Cancel: both of those
@@ -111,7 +122,7 @@ export function MiniAppRoleGateDialog({
           <Button variant="outline" onPress={onCancel} disabled={isSubmitting}>
             <Text>ยกเลิก</Text>
           </Button>
-          {/* With no dropdown on screen, the copy only asks them to confirm —
+          {/* With no role list on screen, the copy only asks them to confirm —
               so nothing is switched behind their back. */}
           <Button
             onPress={() => onConfirm(canSwitchRole ? selectedRole : null)}
