@@ -212,6 +212,58 @@ describe('Android branding is data-only, and only where it is safe', () => {
   })
 })
 
+describe('the app icon badge carries the recipient’s unread total', () => {
+  const withBadge = { ...CONTENT, unreadCount: 7 }
+
+  test('iOS gets it as aps.badge, which APNs applies without waking the app', () => {
+    for (const message of [build(ios(), withBadge), build(ios(), { ...withBadge, app: APP })]) {
+      expect(message.apns?.payload.aps.badge).toBe(7)
+    }
+  })
+
+  test('Android gets it as notification_count, for launchers that badge', () => {
+    const message = build(android(), withBadge)
+
+    expect(message.android?.notification?.notification_count).toBe(7)
+  })
+
+  test('the data-only payload carries it as data, its only route to the badge', () => {
+    // No `notification` block means no `notification_count`, so the client sets
+    // the badge by hand when it presents — see `presentBrandedPush`.
+    const message = build(android({ supportsAppBranding: true }), { ...withBadge, app: APP })
+
+    expect(message.data.badge).toBe('7')
+  })
+
+  test('every payload repeats it as data, for a client that is already open', () => {
+    // `aps.badge` and `notification_count` are write-only as far as the app is
+    // concerned, so a foregrounded client can only learn the authoritative
+    // count from `data` — otherwise it increments a guess of its own.
+    for (const target of [token(), ios(), android()]) {
+      expect(build(target, withBadge).data.badge).toBe('7')
+    }
+  })
+
+  test('zero is a real count and travels like any other', () => {
+    // Not merely falsy-safe: a send that leaves the recipient on zero unread —
+    // every earlier notification already read — has to clear the badge, and
+    // dropping it here would strand the last number the OS was shown.
+    const message = build(ios(), { ...CONTENT, unreadCount: 0 })
+
+    expect(message.apns?.payload.aps.badge).toBe(0)
+    expect(message.data.badge).toBe('0')
+  })
+
+  test('a send with no count sets no badge, rather than clearing it', () => {
+    // The count is read on a best-effort basis; when it fails, leaving the OS
+    // showing a stale number beats showing a wrong zero.
+    const message = build(ios())
+
+    expect(message.apns?.payload.aps.badge).toBeUndefined()
+    expect(message.data).not.toHaveProperty('badge')
+  })
+})
+
 describe('the kill switch', () => {
   test('puts every Android token back on today’s payload, capability or not', () => {
     // The only mitigation for a data-only push being dropped by an OEM: no app

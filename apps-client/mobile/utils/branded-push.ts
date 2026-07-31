@@ -3,10 +3,10 @@
  *
  * The keys are the other half of a contract written in
  * `apps-api/backoffice/src/utils/push-payload.ts` — `title`, `body`, `appName`,
- * `appIconUrl`, `link`, `notificationId`. They are restated here rather than
- * shared from `@pple-today/api-common`, because that package is built on Elysia
+ * `appIconUrl`, `link`, `notificationId`, `badge`. They are restated here rather
+ * than shared from `@pple-today/api-common`, because that package is built on Elysia
  * and the Prisma client and has no business in a React Native bundle for the sake
- * of six string literals. Change one side and you must change the other; the
+ * of seven string literals. Change one side and you must change the other; the
  * comment on `baseData` in that file points back here.
  */
 
@@ -43,6 +43,15 @@ export interface BrandedPushNotification {
    * destination an FCM-displayed one would.
    */
   data: Record<string, string>
+  /**
+   * What the app-icon badge should read once this notification is presented.
+   *
+   * Every other payload leaves the badge to the OS — APNs applies `aps.badge`
+   * and Play services `notification_count` without the app running. This one is
+   * displayed by the client, so the client sets the badge too. Absent when the
+   * server could not read the count.
+   */
+  badgeCount?: number
 }
 
 /**
@@ -57,6 +66,33 @@ const asDataMap = (payload: unknown): Record<string, unknown> | undefined =>
 const stringField = (data: Record<string, unknown>, key: string): string | undefined => {
   const value = data[key]
   return typeof value === 'string' && value.length > 0 ? value : undefined
+}
+
+/**
+ * The recipient's unread total as of this push, or `undefined` if it carries
+ * none.
+ *
+ * Present on every payload, attributed or not. `aps.badge` and Android's
+ * `notification_count` are applied by the OS but cannot be read back, so this
+ * is the only way a running client learns the authoritative count instead of
+ * incrementing a local guess.
+ *
+ * Data payloads are strings on the wire, so the number has to survive a parse.
+ * Anything that is not a whole count — a negative, a decimal, a non-number — is
+ * dropped rather than clamped: leaving the badge as it stands beats setting it
+ * to a value the server did not mean.
+ */
+export function pushBadgeCount(payload: unknown): number | undefined {
+  const data = asDataMap(payload)
+  if (!data) {
+    return undefined
+  }
+  const raw = stringField(data, 'badge')
+  if (raw === undefined) {
+    return undefined
+  }
+  const value = Number(raw)
+  return Number.isInteger(value) && value >= 0 ? value : undefined
 }
 
 /**
@@ -115,5 +151,6 @@ export function parseBrandedPush(payload: unknown): BrandedPushNotification | nu
       ...(link ? { link } : {}),
       ...(notificationId ? { notificationId } : {}),
     },
+    badgeCount: pushBadgeCount(data),
   }
 }
