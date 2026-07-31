@@ -1,13 +1,14 @@
 import { environment } from '@app/env'
 
 import {
+  type MiniAppRoutePath,
+  miniAppUrlWithPath,
   pathnameToMiniAppRoute,
   resolveIncomingDeepLinkPathname,
-  type MiniAppRoutePath,
 } from './mini-app-path'
 
 export type { MiniAppRoutePath }
-export { pathnameToMiniAppRoute, resolveIncomingDeepLinkPathname }
+export { miniAppUrlWithPath, pathnameToMiniAppRoute, resolveIncomingDeepLinkPathname }
 
 export function createMiniAppPath(url: string) {
   const urlObj = new URL(url)

@@ -8,6 +8,7 @@ import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 import * as R from 'remeda'
 
+import { buildMiniAppSessionUrl } from './mini-app-session-url'
 import { GenerateMiniAppTokenErrorResponse, GenerateMiniAppTokenResponse } from './models'
 import { AuthRepository, AuthRepositoryPlugin } from './repository'
 
@@ -160,17 +161,19 @@ export class AuthService {
       })
     }
 
-    const url = new URL(miniApp.value.clientUrl)
-
-    url.searchParams.append('access_token', body.access_token)
-    url.searchParams.append('expires_in', body.expires_in.toString())
-    url.searchParams.append('id_token', body.id_token)
-    url.searchParams.append('token_type', body.token_type)
-
-    if (path) url.pathname = path
+    const url = buildMiniAppSessionUrl(
+      miniApp.value.clientUrl,
+      {
+        accessToken: body.access_token,
+        expiresIn: body.expires_in,
+        idToken: body.id_token,
+        tokenType: body.token_type,
+      },
+      path
+    )
 
     return ok({
-      url: url.toString(),
+      url,
       appName: miniApp.value.name,
       // Surfaced so the caller can register the App User on this first-open path.
       miniAppId: miniApp.value.id,

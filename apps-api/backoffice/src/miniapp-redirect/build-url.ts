@@ -1,14 +1,12 @@
+import { miniAppUrlWithPath } from '../utils/mini-app-path'
+
 export function buildMiniAppRedirectUrl(
   clientUrl: string,
   appPath: string,
   search: string,
   hash: string
 ): string {
-  const target = new URL(clientUrl)
-  const basePath = target.pathname.replace(/\/$/, '')
-  const extraPath = appPath.replace(/^\/+/, '')
-
-  target.pathname = extraPath ? `${basePath}/${extraPath}` : basePath
+  const target = miniAppUrlWithPath(clientUrl, appPath)
 
   if (search) {
     target.search = search

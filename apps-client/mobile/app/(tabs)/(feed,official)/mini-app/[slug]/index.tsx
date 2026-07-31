@@ -19,6 +19,7 @@ import { MiniAppRoleGateDialog } from '@app/components/mini-app/role-gate-dialog
 import { reactQueryClient } from '@app/libs/api-client'
 import { useActiveRole, useSwitchRoleMutation } from '@app/libs/auth'
 import { toRoleValue } from '@app/utils/ad-role'
+import { miniAppUrlWithPath } from '@app/utils/mini-app'
 import { roleMismatchFromError } from '@app/utils/mini-app-role-gate'
 
 const MiniAppWebView = () => {
@@ -58,9 +59,7 @@ const MiniAppWebView = () => {
   // handed to public apps.
   const noAuthUrl = useMemo(() => {
     if (!currentMiniApp || currentMiniApp.requiresAuth) return null
-    const url = new URL(currentMiniApp.url)
-    if (path) url.pathname = path
-    return url.toString()
+    return miniAppUrlWithPath(currentMiniApp.url, path)
   }, [currentMiniApp, path])
 
   useEffect(() => {
