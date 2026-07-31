@@ -6,6 +6,7 @@ import {
   isMiniAppListable,
   MiniAppForListing,
   MiniAppViewer,
+  resolveMiniAppAccess,
   selectVisibleMiniApps,
 } from './eligibility'
 
@@ -322,5 +323,61 @@ describe('tier eligibility — access (token exchange / first-open)', () => {
     expect(
       isMiniAppListable(unlistedWithRoles, makeViewer({ sub: OTHER_SUB, roles: [MEMBER_ROLE] }))
     ).toBe(false)
+  })
+})
+
+// Only one denial is soft: a signed-in member opening a published app whose role
+// list does not cover them is asked whether to switch role or enter anyway,
+// because the role list is a listing filter and the app guards itself. Every
+// other denial is indistinguishable from a missing app.
+describe('access outcomes — role mismatch vs. hard denial', () => {
+  const membersOnly = makeMiniApp({
+    tier: MiniAppTier.LIVE,
+    miniAppRoles: [{ role: MEMBER_ROLE }],
+  })
+
+  test('a member without a listed role gets ROLE_MISMATCH, not a denial', () => {
+    expect(
+      resolveMiniAppAccess(membersOnly, makeViewer({ sub: OTHER_SUB, roles: ['pple-ad:staff'] }))
+    ).toBe('ROLE_MISMATCH')
+  })
+
+  test('a member with no active role at all still gets ROLE_MISMATCH', () => {
+    // Users outside the AD (ประชาชน) resolve to no visible roles — they are the
+    // most common people to follow a link to a role-listed app.
+    expect(resolveMiniAppAccess(membersOnly, makeViewer({ sub: OTHER_SUB, roles: [] }))).toBe(
+      'ROLE_MISMATCH'
+    )
+  })
+
+  test('holding a listed role is plain ALLOWED', () => {
+    expect(
+      resolveMiniAppAccess(membersOnly, makeViewer({ sub: OTHER_SUB, roles: [MEMBER_ROLE] }))
+    ).toBe('ALLOWED')
+  })
+
+  test('an anonymous caller is DENIED — there is no role for them to switch to', () => {
+    expect(resolveMiniAppAccess(membersOnly, makeViewer())).toBe('DENIED')
+  })
+
+  test('Draft and Beta never soften: no role switch makes someone a builder or a tester', () => {
+    const draft = makeMiniApp({ id: 'draft-id', tier: MiniAppTier.DRAFT, ownerSub: OWNER_SUB })
+    const beta = makeMiniApp({ id: 'beta-id', tier: MiniAppTier.BETA, ownerSub: OWNER_SUB })
+    const outsider = makeViewer({ sub: OTHER_SUB, roles: [MEMBER_ROLE] })
+
+    expect(resolveMiniAppAccess(draft, outsider)).toBe('DENIED')
+    expect(resolveMiniAppAccess(beta, outsider)).toBe('DENIED')
+  })
+
+  test('an unlisted Live app opens for any member without prompting', () => {
+    const unlisted = makeMiniApp({
+      tier: MiniAppTier.LIVE,
+      unlisted: true,
+      miniAppRoles: [{ role: MEMBER_ROLE }],
+    })
+
+    expect(resolveMiniAppAccess(unlisted, makeViewer({ sub: OTHER_SUB, roles: [] }))).toBe(
+      'ALLOWED'
+    )
   })
 })

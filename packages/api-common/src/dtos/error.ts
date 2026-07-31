@@ -317,6 +317,21 @@ const MINI_APP_ERROR_SCHEMA = {
   MINI_APP_NOT_FOUND: {
     status: 404,
   },
+  // The caller opened a published (LIVE) app whose role list does not include
+  // their active role. Distinct from NOT_FOUND on purpose: the app exists and is
+  // reachable, the role list is a *listing* filter, and each mini app guards its
+  // own routes — so the client offers to switch role or to enter anyway rather
+  // than dead-ending. Carries what that prompt needs to name the app.
+  MINI_APP_ROLE_NOT_ELIGIBLE: {
+    status: 403,
+    data: t.Object({
+      appName: t.String({ description: 'Name of the mini app being opened' }),
+      requiredRoles: t.Array(
+        t.String({ description: 'A `pple-ad:`-prefixed role listed for the app' }),
+        { description: 'Roles the app is listed for' }
+      ),
+    }),
+  },
   MINI_APP_INVALID_INPUT: {
     status: 400,
   },

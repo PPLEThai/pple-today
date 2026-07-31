@@ -16,7 +16,7 @@ import { ConfigServicePlugin } from '../../plugins/config'
 import { ElysiaLoggerPlugin } from '../../plugins/log'
 import { generateJwtToken } from '../../utils/jwt'
 import { FileServerService, FileServerServicePlugin } from '../files/services'
-import { isMiniAppAccessible } from '../mini-app/eligibility'
+import { resolveMiniAppAccess } from '../mini-app/eligibility'
 import { MiniAppInviteRepository } from '../mini-app/invite-repository'
 import {
   MiniAppInviteRepositoryPlugin,
@@ -42,14 +42,19 @@ export class AuthService {
   /**
    * Exchange the caller's token for a mini-app session URL.
    *
-   * Access is `isMiniAppAccessible`: Draft/Beta = builders (Owner or a
+   * Access is `resolveMiniAppAccess`: Draft/Beta = builders (Owner or a
    * Collaborator), Beta also an ACCEPTED invitee, Live = role filter (empty =
    * public) unless `unlisted`, which is reachable by any authenticated member.
    * This is *access*, not listing — an unlisted Live app opens by link though it
-   * is listed to no one. Denied opens return `MINI_APP_NOT_FOUND` — same as a
-   * missing slug — so
-   * App User registration in the controller only runs after a successful
-   * exchange.
+   * is listed to no one. Hard denials return `MINI_APP_NOT_FOUND` — same as a
+   * missing slug — so App User registration in the controller only runs after a
+   * successful exchange.
+   *
+   * A Live app whose role list does not cover the caller is the one soft denial:
+   * it returns `MINI_APP_ROLE_NOT_ELIGIBLE` carrying the app's name and roles,
+   * so the client can offer to switch role or to open it anyway. Opening anyway
+   * comes back with `acknowledgeRoleMismatch`, which waives *only* that check —
+   * the mini app still authenticates and authorises the session itself.
    *
    * @param userSub The caller's PPLE ID `sub` (local user id).
    */
@@ -58,8 +63,10 @@ export class AuthService {
     token: string,
     roles: string[],
     userSub: string,
-    path?: string
+    options: { path?: string; acknowledgeRoleMismatch?: boolean } = {}
   ) {
+    const { path, acknowledgeRoleMismatch = false } = options
+
     const miniApp = await this.miniAppRepository.getMiniAppBySlug(slug)
 
     if (miniApp.isErr()) {
@@ -84,16 +91,27 @@ export class AuthService {
       acceptedInviteMiniAppIds = invites.value
     }
 
-    if (
-      !isMiniAppAccessible(miniApp.value, {
-        roles,
-        sub: userSub,
-        acceptedInviteMiniAppIds,
-      })
-    ) {
+    const access = resolveMiniAppAccess(miniApp.value, {
+      roles,
+      sub: userSub,
+      acceptedInviteMiniAppIds,
+    })
+
+    if (access === 'DENIED') {
       return err({
         code: InternalErrorCode.MINI_APP_NOT_FOUND,
         message: 'Mini app not found',
+      })
+    }
+
+    if (access === 'ROLE_MISMATCH' && !acknowledgeRoleMismatch) {
+      return err({
+        code: InternalErrorCode.MINI_APP_ROLE_NOT_ELIGIBLE,
+        message: 'Your active role is not listed for this mini app',
+        data: {
+          appName: miniApp.value.name,
+          requiredRoles: miniApp.value.miniAppRoles.map((miniAppRole) => miniAppRole.role),
+        },
       })
     }
 
