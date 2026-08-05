@@ -9,6 +9,8 @@ import {
   CreateNewExternalNotificationBody,
   CreateNewExternalNotificationHeader,
   CreateNewExternalNotificationResponse,
+  GetAppInstallStatusQuery,
+  GetAppInstallStatusResponse,
   GetNotificationDetailsByIdParams,
   GetNotificationDetailsByIdResponse,
   GetUnreadNotificationCountResponse,
@@ -319,6 +321,60 @@ export const ExternalNotificationController = new Elysia({
           InternalErrorCode.NOTIFICATION_INVALID_IN_APP_NAVIGATION,
           InternalErrorCode.NOTIFICATION_INVALID_BYPASS,
           InternalErrorCode.NOTIFICATION_SENT_FAILED
+        ),
+      },
+    }
+  )
+  // The read companion to /send: before a caller decides whether a person is
+  // reachable by push at all, it can ask. Gated like the raw send path, and for
+  // the same reason — the caller names a phone number it chose, which is a
+  // central-team capability (see `requireUnboundKey`).
+  .get(
+    '/app-install',
+    async ({ notificationService, query, headers, status }) => {
+      const token = headers['authorization'].split(' ')[1]
+      const tokenResult = await notificationService.checkApiToken(token)
+
+      if (tokenResult.isErr()) return mapErrorCodeToResponse(tokenResult.error, status)
+
+      if (!tokenResult.value) {
+        return mapErrorCodeToResponse(
+          {
+            code: InternalErrorCode.UNAUTHORIZED,
+            message: 'Invalid API token',
+          },
+          status
+        )
+      }
+
+      const bindingResult = requireUnboundKey(tokenResult.value)
+
+      if (bindingResult.isErr()) {
+        return mapErrorCodeToResponse(bindingResult.error, status)
+      }
+
+      const result = await notificationService.getAppInstallStatus(query.phoneNumber)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      detail: {
+        summary: 'Whether PPLE Today reaches the phone behind a number',
+        description:
+          'Answers two things about a number, so a caller can tell someone who is missing notifications what to do about it. `isAppInstalled` says a PPLE Today account holds the number — which a PPLE ID alone does not imply, since registration happens on the pple-sso web site. `hasPushToken` says the native app is installed and reachable, and is the one that answers "will this person see a notification?": only the mobile app registers a token, it is false when notification permission was refused, and it self-corrects on uninstall because tokens FCM rejects are dropped on the next send. Unknown and malformed numbers answer both-false rather than erroring, and nothing else about the account is returned. Naming a phone number is a central-team capability, so keys bound to a Builder App are rejected here.',
+      },
+      headers: CreateNewExternalNotificationHeader,
+      query: GetAppInstallStatusQuery,
+      response: {
+        200: GetAppInstallStatusResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.NOTIFICATION_KEY_APP_BOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
     }

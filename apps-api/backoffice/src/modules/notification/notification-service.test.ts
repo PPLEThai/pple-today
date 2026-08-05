@@ -62,6 +62,9 @@ const createService = (checkApiKeyResult: unknown = LEGACY_KEY) => {
         _options?: { apiKeyId?: string; app?: unknown; smsFallbackText?: string }
       ) => ok({ success: ['+66812345678'], failed: [] })
     ),
+    getAppInstallStatus: vi.fn(async (_phoneNumber: string) =>
+      ok({ isAppInstalled: true, hasPushToken: true })
+    ),
   }
 
   return {
@@ -191,5 +194,48 @@ describe('the sending app the notification centre renders', () => {
       iconUrl: 'https://cdn.example/canvassing.png',
       slug: 'canvassing',
     })
+  })
+})
+
+describe('NotificationService.getAppInstallStatus', () => {
+  test('reports both facts for a number that has the app', async () => {
+    const { service } = createService()
+
+    const result = await service.getAppInstallStatus('+66812345678')
+
+    expect(result._unsafeUnwrap()).toEqual({ isAppInstalled: true, hasPushToken: true })
+  })
+
+  test('accepts the domestic 0-prefixed form and looks it up in E.164', async () => {
+    const { service, notificationRepository } = createService()
+
+    await service.getAppInstallStatus('0812345678')
+
+    expect(notificationRepository.getAppInstallStatus).toHaveBeenCalledWith('+66812345678')
+  })
+
+  // The pair exists for this case: registration happens on the pple-sso web
+  // site, so someone can hold a PPLE ID, then a PPLE Today account, and still
+  // have no phone to notify.
+  test('separates having used PPLE Today from being reachable by push', async () => {
+    const { service, notificationRepository } = createService()
+    notificationRepository.getAppInstallStatus.mockResolvedValue(
+      ok({ isAppInstalled: true, hasPushToken: false })
+    )
+
+    const result = await service.getAppInstallStatus('+66812345678')
+
+    expect(result._unsafeUnwrap()).toEqual({ isAppInstalled: true, hasPushToken: false })
+  })
+
+  test('answers both-false for a number that is not a Thai mobile, without querying', async () => {
+    const { service, notificationRepository } = createService()
+
+    const result = await service.getAppInstallStatus('not-a-number')
+
+    expect(result._unsafeUnwrap()).toEqual({ isAppInstalled: false, hasPushToken: false })
+    // A malformed number must never reach the database, and must not be
+    // distinguishable from a number nobody holds.
+    expect(notificationRepository.getAppInstallStatus).not.toHaveBeenCalled()
   })
 })

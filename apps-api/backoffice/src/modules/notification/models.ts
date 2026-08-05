@@ -195,3 +195,23 @@ export const CreateNewExternalNotificationResponse = t.Object({
 export type CreateNewExternalNotificationResponse = Static<
   typeof CreateNewExternalNotificationResponse
 >
+
+export const GetAppInstallStatusQuery = t.Object({
+  phoneNumber: t.String({
+    description:
+      'The complete mobile number, as 0XXXXXXXXX or +66XXXXXXXXX. Matched exactly — a partial number is never searched on.',
+  }),
+})
+export type GetAppInstallStatusQuery = Static<typeof GetAppInstallStatusQuery>
+
+export const GetAppInstallStatusResponse = t.Object({
+  isAppInstalled: t.Boolean({
+    description:
+      'True when a PPLE Today account holds this number — the person has used PPLE Today at least once. False for someone who registered a PPLE ID on the web and never opened PPLE Today, and for a number no account holds at all.',
+  }),
+  hasPushToken: t.Boolean({
+    description:
+      'True when that account has at least one live push token, meaning the native app is installed and can actually be reached. False when notification permission was refused, when the app was uninstalled (tokens FCM rejects are dropped on the next send), and whenever isAppInstalled is false. This is the flag that answers "will this person see a notification?".',
+  }),
+})
+export type GetAppInstallStatusResponse = Static<typeof GetAppInstallStatusResponse>

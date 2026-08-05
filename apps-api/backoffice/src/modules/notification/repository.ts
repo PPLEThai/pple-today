@@ -289,6 +289,40 @@ export class NotificationRepository {
     )
   }
 
+  /**
+   * How reachable the person behind a number is, as two separate facts.
+   *
+   * They are separate because a PPLE ID is not a PPLE Today account: people
+   * register on the pple-sso web site, so an account can exist for someone who
+   * has never opened PPLE Today at all. `isAppInstalled` is the `User` row here
+   * — written by the first token-bearing call this API sees
+   * (`AuthRepository.createUser`) — and so distinguishes that web-only
+   * registrant from someone who has actually used PPLE Today.
+   *
+   * `hasPushToken` is the stronger fact, and the only evidence of a *native*
+   * install this system holds, since only the mobile app ever registers a token.
+   * It is false for an install that refused notification permission, and it
+   * self-corrects on uninstall: the send path deletes the tokens FCM rejects
+   * (see `sendNotificationToUser`). A token cannot exist without its user, so
+   * `hasPushToken` implies `isAppInstalled`.
+   *
+   * One query for both, with the tokens narrowed to the single row that settles
+   * the question — the caller wants two booleans, not a token or a count.
+   */
+  async getAppInstallStatus(phoneNumber: string) {
+    return fromRepositoryPromise(async () => {
+      const user = await this.prismaService.user.findUnique({
+        where: { phoneNumber },
+        select: { notificationTokens: { select: { token: true }, take: 1 } },
+      })
+
+      return {
+        isAppInstalled: user !== null,
+        hasPushToken: (user?.notificationTokens.length ?? 0) > 0,
+      }
+    })
+  }
+
   async markAsRead(userId: string, notificationId: string) {
     return fromRepositoryPromise(
       this.prismaService.userNotification.updateMany({

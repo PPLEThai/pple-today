@@ -51,6 +51,7 @@ const createRepository = (
     },
     user: {
       findMany: vi.fn(async (_args: unknown) => users),
+      findUnique: vi.fn(async (_args: unknown) => null as { notificationTokens: unknown[] } | null),
     },
     userNotification: {
       createMany: vi.fn(async (_args: unknown) => ({ count: users.length })),
@@ -267,5 +268,49 @@ describe('NotificationRepository.sendNotificationToUser', () => {
     })
 
     expect(prismaService.notificationApiKeyUsageLog.create).toHaveBeenCalledOnce()
+  })
+})
+
+describe('NotificationRepository.getAppInstallStatus', () => {
+  test('reports no account and no push for a number nobody holds', async () => {
+    const { repository } = createRepository()
+
+    const result = await repository.getAppInstallStatus('+66899999999')
+
+    expect(result._unsafeUnwrap()).toEqual({ isAppInstalled: false, hasPushToken: false })
+  })
+
+  // The case the two flags exist for: a PPLE Today account whose phone cannot
+  // be reached — notification permission refused, or the app since uninstalled
+  // and its token dropped by the send path.
+  test('reports an account with no live token as installed but unreachable', async () => {
+    const { prismaService, repository } = createRepository()
+    prismaService.user.findUnique.mockResolvedValue({ notificationTokens: [] })
+
+    const result = await repository.getAppInstallStatus('+66812345678')
+
+    expect(result._unsafeUnwrap()).toEqual({ isAppInstalled: true, hasPushToken: false })
+  })
+
+  test('reports both true once a token exists', async () => {
+    const { prismaService, repository } = createRepository()
+    prismaService.user.findUnique.mockResolvedValue({ notificationTokens: [{ token: 'fcm-1' }] })
+
+    const result = await repository.getAppInstallStatus('+66812345678')
+
+    expect(result._unsafeUnwrap()).toEqual({ isAppInstalled: true, hasPushToken: true })
+  })
+
+  test('matches the whole number exactly and reads at most one token', async () => {
+    const { prismaService, repository } = createRepository()
+
+    await repository.getAppInstallStatus('+66812345678')
+
+    // findUnique on the unique column — never a prefix search — and the tokens
+    // narrowed to the single row that settles the question.
+    expect(prismaService.user.findUnique).toHaveBeenCalledWith({
+      where: { phoneNumber: '+66812345678' },
+      select: { notificationTokens: { select: { token: true }, take: 1 } },
+    })
   })
 })
