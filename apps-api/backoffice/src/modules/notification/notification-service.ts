@@ -1,4 +1,8 @@
-import { mapRepositoryError } from '@pple-today/api-common/utils'
+import {
+  isThaiMobileE164,
+  mapRepositoryError,
+  normalizeThaiPhoneNumber,
+} from '@pple-today/api-common/utils'
 import type { NotificationTokenPlatform } from '@pple-today/database/prisma'
 import { ok } from 'neverthrow'
 
@@ -146,6 +150,35 @@ export class NotificationService {
     }
 
     return ok()
+  }
+
+  /**
+   * Whether the person behind a number has PPLE Today, and whether it can
+   * actually reach them.
+   *
+   * A number that is not a Thai mobile answers both-false rather than erroring,
+   * the same as a number nobody holds. The caller acts on the same thing either
+   * way — there is no install to notify — and collapsing the two keeps this from
+   * doubling as a way to probe which numbers are well-formed. It also means a
+   * malformed number never reaches the database.
+   *
+   * The number is normalised first, so a caller may pass either the domestic
+   * `0XXXXXXXXX` form or E.164, matching the send path's audience handling.
+   */
+  async getAppInstallStatus(rawPhoneNumber: string) {
+    const phoneNumber = normalizeThaiPhoneNumber(rawPhoneNumber)
+
+    if (!isThaiMobileE164(phoneNumber)) {
+      return ok({ isAppInstalled: false, hasPushToken: false })
+    }
+
+    const result = await this.notificationRepository.getAppInstallStatus(phoneNumber)
+
+    if (result.isErr()) {
+      return mapRepositoryError(result.error)
+    }
+
+    return ok(result.value)
   }
 
   async markAsRead(userId: string, notificationId: string) {
