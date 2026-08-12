@@ -4,7 +4,8 @@
  *
  * `/auth/me` only fills this when the user opens the app. Rows tagged
  * extra-role `testUser` are ignored (same as SSO introspect): they are not
- * treated as MP and `responsibleArea` is cleared if it was set.
+ * treated as MP, `responsibleArea` is cleared if it was set, and stale
+ * `pple-ad:mp` / `pple-ad:mpassistant` rows are removed from `UserRole`.
  *
  * DRY-RUN by default; pass --execute to write. Requires DATABASE_URL (Today)
  * and SSO_DATABASE_URL (pple-sso).
@@ -22,6 +23,8 @@ const SHOW_HELP = process.argv.includes('--help') || process.argv.includes('-h')
 
 const MP_ROLE = 'mp'
 const MP_ASSISTANT_ROLE = 'mp_assistant'
+const TODAY_MP_ROLE = 'pple-ad:mp'
+const TODAY_MP_ASSISTANT_ROLE = 'pple-ad:mpassistant'
 const TEST_USER_EXTRA_ROLE = 'testUser'
 const PARTYLIST_AREA = 'บัญชีรายชื่อ'
 const ROLE_PREFIX: Record<string, string> = {
@@ -43,6 +46,14 @@ type SsoPerson = {
   metadata: unknown
 }
 
+type Label = {
+  mobile: string
+  person: SsoPerson | null
+  hasRealMp: boolean
+  hasRealAssistant: boolean
+  publicRole: string | null
+}
+
 type PlannedRow = {
   mobile: string
   ssoPersonId: number | null
@@ -53,6 +64,7 @@ type PlannedRow = {
   userName: string | null
   todayPhone: string | null
   previous: string | null
+  rolesToRemove: string[]
   action: 'update' | 'already' | 'clear' | 'skip' | 'missing'
 }
 
@@ -100,7 +112,32 @@ function formatMpPublicRole(role: string, metadata: unknown): string {
 function pickPerson(rows: SsoPerson[]): SsoPerson | null {
   const real = rows.filter((row) => !isTestUser(row.metadata))
   if (real.length === 0) return null
-  return real.find((row) => row.role === MP_ROLE) ?? real.find((row) => row.role === MP_ASSISTANT_ROLE) ?? null
+  return (
+    real.find((row) => row.role === MP_ROLE) ??
+    real.find((row) => row.role === MP_ASSISTANT_ROLE) ??
+    null
+  )
+}
+
+function toLabel(mobile: string, rows: SsoPerson[]): Label {
+  const real = rows.filter((row) => !isTestUser(row.metadata))
+  const person = pickPerson(rows)
+  return {
+    mobile,
+    person,
+    hasRealMp: real.some((row) => row.role === MP_ROLE),
+    hasRealAssistant: real.some((row) => row.role === MP_ASSISTANT_ROLE),
+    publicRole: person ? formatMpPublicRole(person.role, person.metadata) : null,
+  }
+}
+
+function staleTodayRoles(label: Label, userRoles: string[]): string[] {
+  const stale: string[] = []
+  if (!label.hasRealMp && userRoles.includes(TODAY_MP_ROLE)) stale.push(TODAY_MP_ROLE)
+  if (!label.hasRealAssistant && userRoles.includes(TODAY_MP_ASSISTANT_ROLE)) {
+    stale.push(TODAY_MP_ASSISTANT_ROLE)
+  }
+  return stale
 }
 
 function phoneKeys(mobile: string): string[] {
@@ -146,15 +183,7 @@ async function main() {
       byMobile.set(person.mobile, rows)
     }
 
-    const labels = [...byMobile.entries()].map(([mobile, rows]) => {
-      const person = pickPerson(rows)
-      return {
-        mobile,
-        person,
-        testUserOnly: person === null,
-        publicRole: person ? formatMpPublicRole(person.role, person.metadata) : null,
-      }
-    })
+    const labels = [...byMobile.entries()].map(([mobile, rows]) => toLabel(mobile, rows))
 
     const phoneToLabel = new Map<string, (typeof labels)[number]>()
     for (const label of labels) {
@@ -165,7 +194,13 @@ async function main() {
 
     const users = await today.user.findMany({
       where: { phoneNumber: { in: [...phoneToLabel.keys()] } },
-      select: { id: true, name: true, phoneNumber: true, responsibleArea: true },
+      select: {
+        id: true,
+        name: true,
+        phoneNumber: true,
+        responsibleArea: true,
+        roles: { select: { role: true } },
+      },
     })
 
     const matchedMobiles = new Set<string>()
@@ -176,8 +211,14 @@ async function main() {
       if (!label) continue
       matchedMobiles.add(label.mobile)
 
+      const testUserOnly = !label.hasRealMp && !label.hasRealAssistant
+      const rolesToRemove = staleTodayRoles(
+        label,
+        user.roles.map((row) => row.role)
+      )
+
       let action: PlannedRow['action']
-      if (label.testUserOnly) {
+      if (testUserOnly) {
         action = user.responsibleArea === null ? 'skip' : 'clear'
       } else {
         action = user.responsibleArea === label.publicRole ? 'already' : 'update'
@@ -187,18 +228,19 @@ async function main() {
         mobile: label.mobile,
         ssoPersonId: label.person?.id ?? null,
         role: label.person?.role ?? null,
-        testUserOnly: label.testUserOnly,
+        testUserOnly,
         publicRole: label.publicRole,
         userId: user.id,
         userName: user.name,
         todayPhone: user.phoneNumber,
         previous: user.responsibleArea,
+        rolesToRemove,
         action,
       })
     }
 
     for (const label of labels) {
-      if (matchedMobiles.has(label.mobile) || label.testUserOnly) continue
+      if (matchedMobiles.has(label.mobile) || (!label.hasRealMp && !label.hasRealAssistant)) continue
       plan.push({
         mobile: label.mobile,
         ssoPersonId: label.person?.id ?? null,
@@ -209,6 +251,7 @@ async function main() {
         userName: null,
         todayPhone: null,
         previous: null,
+        rolesToRemove: [],
         action: 'missing',
       })
     }
@@ -218,57 +261,76 @@ async function main() {
     const already = plan.filter((row) => row.action === 'already')
     const skipped = plan.filter((row) => row.action === 'skip')
     const missing = plan.filter((row) => row.action === 'missing')
+    const roleStrips = plan.filter((row) => row.rolesToRemove.length > 0)
 
     console.log(`${EXECUTE ? 'EXECUTE' : 'DRY-RUN'}: ${labels.length} SSO MP/assistant mobile(s)\n`)
     console.log(`  update:         ${updates.length}`)
     console.log(`  clear testUser: ${clears.length}`)
     console.log(`  already synced: ${already.length}`)
     console.log(`  skip testUser:  ${skipped.length}`)
+    console.log(`  strip UserRole: ${roleStrips.length}`)
     console.log(`  no Today user:  ${missing.length}\n`)
 
     for (const row of plan) {
+      const roleNote =
+        row.rolesToRemove.length > 0 ? `; remove UserRole ${row.rolesToRemove.join(', ')}` : ''
       if (row.action === 'update') {
         console.log(
-          `~ ${row.todayPhone} ${row.userName} [${row.role}]: ${JSON.stringify(row.previous)} → ${JSON.stringify(row.publicRole)}`
+          `~ ${row.todayPhone} ${row.userName} [${row.role}]: ${JSON.stringify(row.previous)} → ${JSON.stringify(row.publicRole)}${roleNote}`
         )
       } else if (row.action === 'clear') {
         console.log(
-          `- ${row.todayPhone} ${row.userName} testUser: ${JSON.stringify(row.previous)} → null`
+          `- ${row.todayPhone} ${row.userName} testUser: ${JSON.stringify(row.previous)} → null${roleNote}`
         )
       } else if (row.action === 'skip') {
-        console.log(`· ${row.todayPhone} ${row.userName} testUser: leave responsibleArea null`)
+        console.log(
+          `· ${row.todayPhone} ${row.userName} testUser: leave responsibleArea null${roleNote}`
+        )
+      } else if (row.action === 'already' && roleNote) {
+        console.log(`= ${row.todayPhone} ${row.userName} [${row.role}]: area already synced${roleNote}`)
       } else if (row.action === 'missing') {
         console.log(`? ${row.mobile} [${row.role}]: ${JSON.stringify(row.publicRole)} (no Today user)`)
       }
     }
 
+    const writes = plan.filter(
+      (row) =>
+        row.userId &&
+        (row.action === 'update' || row.action === 'clear' || row.rolesToRemove.length > 0)
+    )
+
     if (!EXECUTE) {
-      console.log(
-        `\nDry-run only. Re-run with --execute to apply ${updates.length} update(s) and ${clears.length} clear(s).`
-      )
+      console.log(`\nDry-run only. Re-run with --execute to apply ${writes.length} write(s).`)
       return
     }
 
     let updated = 0
     let cleared = 0
-    for (const row of updates) {
+    let stripped = 0
+    for (const row of writes) {
       if (!row.userId) continue
-      await today.user.update({
-        where: { id: row.userId },
-        data: { responsibleArea: row.publicRole },
-      })
-      updated += 1
-    }
-    for (const row of clears) {
-      if (!row.userId) continue
-      await today.user.update({
-        where: { id: row.userId },
-        data: { responsibleArea: null },
-      })
-      cleared += 1
+      if (row.action === 'update') {
+        await today.user.update({
+          where: { id: row.userId },
+          data: { responsibleArea: row.publicRole },
+        })
+        updated += 1
+      } else if (row.action === 'clear') {
+        await today.user.update({
+          where: { id: row.userId },
+          data: { responsibleArea: null },
+        })
+        cleared += 1
+      }
+      if (row.rolesToRemove.length > 0) {
+        await today.userRole.deleteMany({
+          where: { userId: row.userId, role: { in: row.rolesToRemove } },
+        })
+        stripped += 1
+      }
     }
 
-    console.log(`\nDone. Updated ${updated}, cleared ${cleared}.`)
+    console.log(`\nDone. Updated ${updated}, cleared ${cleared}, stripped roles on ${stripped}.`)
   } finally {
     await Promise.all([today.$disconnect(), sso.$disconnect()])
   }
