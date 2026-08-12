@@ -39,12 +39,9 @@ export class ProfileService {
       profileImage: user.profileImagePath
         ? this.fileServerService.getFileEndpointUrl(user.profileImagePath)
         : null,
-      address: user.address
-        ? {
-            province: user.address.province,
-            district: user.address.district,
-          }
-        : null,
+      // Shipped mobile shows `สส. {address.province}` (onboarding address, not AD).
+      // Null this so current clients hide the subtitle without an app release.
+      address: null,
       roles: user.roles.map((r) => r.role),
       publicRole: user.responsibleArea,
     }))

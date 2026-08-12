@@ -92,7 +92,6 @@ export class ProfileRepository {
           name: true,
           profileImagePath: true,
           responsibleArea: true,
-          address: true,
           roles: {
             select: {
               role: true,
