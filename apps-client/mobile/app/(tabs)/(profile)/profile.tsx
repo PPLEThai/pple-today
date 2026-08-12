@@ -225,7 +225,7 @@ const ProfileSection = () => {
             {profileQuery.data.name}
           </Text>
           <Badge>
-            <Text>{getRoleName(profileQuery.data.roles)}</Text>
+            <Text>{getRoleName(profileQuery.data.roles, profileQuery.data.publicRole)}</Text>
           </Badge>
         </View>
       </>

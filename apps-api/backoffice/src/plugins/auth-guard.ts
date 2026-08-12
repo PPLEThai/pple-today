@@ -110,6 +110,7 @@ export class AuthGuard {
       ...user.value,
       accessToken: oidcUser.access_token,
       roles: oidcUserResult.value.pple_roles,
+      publicRole: oidcUserResult.value.public_role,
     })
   }
 }

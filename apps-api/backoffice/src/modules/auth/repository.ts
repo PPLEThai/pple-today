@@ -21,7 +21,7 @@ export class AuthRepository {
     )
   }
 
-  async replaceUserRoles(id: string, roles: string[]) {
+  async replaceUserRoles(id: string, roles: string[], publicRole?: string | null) {
     return await fromRepositoryPromise(
       this.prismaService.user.update({
         where: { id },
@@ -32,8 +32,9 @@ export class AuthRepository {
               data: roles.map((role) => ({ role })),
             },
           },
+          ...(publicRole !== undefined ? { responsibleArea: publicRole } : {}),
         },
-        select: { id: true, roles: true },
+        select: { id: true, roles: true, responsibleArea: true },
       })
     )
   }
@@ -67,6 +68,7 @@ export class AuthRepository {
               },
             },
             phoneNumber: phone_number,
+            responsibleArea: data.public_role ?? null,
           },
         })
 

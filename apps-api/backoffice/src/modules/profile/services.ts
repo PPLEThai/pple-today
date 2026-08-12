@@ -39,13 +39,11 @@ export class ProfileService {
       profileImage: user.profileImagePath
         ? this.fileServerService.getFileEndpointUrl(user.profileImagePath)
         : null,
-      address: user.address
-        ? {
-            province: user.address.province,
-            district: user.address.district,
-          }
-        : null,
+      // Shipped mobile shows `สส. {address.province}` (onboarding address, not AD).
+      // Null this so current clients hide the subtitle without an app release.
+      address: null,
       roles: user.roles.map((r) => r.role),
+      publicRole: user.responsibleArea,
     }))
 
     return ok(users)
@@ -121,6 +119,7 @@ export class ProfileService {
 
     return ok({
       ...user.value,
+      publicRole: user.value.responsibleArea,
       address: user.value.address ?? undefined,
       profileImage: user.value.profileImagePath
         ? this.fileServerService.getFileEndpointUrl(user.value.profileImagePath)
