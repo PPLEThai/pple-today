@@ -1,5 +1,14 @@
 # @api/backoffice
 
+## 1.15.1
+
+### Patch Changes
+
+- [#459](https://github.com/PPLEThai/pple-today/pull/459) [`cbc49d5`](https://github.com/PPLEThai/pple-today/commit/cbc49d57135c6ef5e12b5c6473c390b862918660) Thanks [@PanJ](https://github.com/PanJ)! - Show an MP's AD public role (e.g. สส. นนทบุรี เขต 1) on profiles and recommendation cards, synced from SSO introspect into `User.responsibleArea`. `/profile/recommend` omits onboarding address so shipped clients stop showing `สส. {province}` without an app release.
+
+- Updated dependencies [[`cbc49d5`](https://github.com/PPLEThai/pple-today/commit/cbc49d57135c6ef5e12b5c6473c390b862918660)]:
+  - @pple-today/api-common@1.10.2
+
 ## 1.15.0
 
 ### Minor Changes
