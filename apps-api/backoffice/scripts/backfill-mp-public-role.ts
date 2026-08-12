@@ -2,11 +2,9 @@
  * One-time backfill: copy AD public-role labels from pple-sso `PplePerson`
  * onto Today `User.responsibleArea`, matched by phone.
  *
- * `/auth/me` only fills this when the user opens the app. This script covers
- * everyone, including approved rows tagged extra-role `testUser` (SSO
- * introspect ignores those, so they would never sync otherwise).
- *
- * A real (non-testUser) MP/assistant row on the same mobile still wins.
+ * `/auth/me` only fills this when the user opens the app. Rows tagged
+ * extra-role `testUser` are ignored (same as SSO introspect): they are not
+ * treated as MP and `responsibleArea` is cleared if it was set.
  *
  * DRY-RUN by default; pass --execute to write. Requires DATABASE_URL (Today)
  * and SSO_DATABASE_URL (pple-sso).
@@ -47,15 +45,15 @@ type SsoPerson = {
 
 type PlannedRow = {
   mobile: string
-  ssoPersonId: number
-  role: string
+  ssoPersonId: number | null
+  role: string | null
   testUserOnly: boolean
-  publicRole: string
+  publicRole: string | null
   userId: string | null
   userName: string | null
   todayPhone: string | null
   previous: string | null
-  action: 'update' | 'already' | 'missing'
+  action: 'update' | 'already' | 'clear' | 'skip' | 'missing'
 }
 
 function printHelp() {
@@ -99,15 +97,10 @@ function formatMpPublicRole(role: string, metadata: unknown): string {
   return prefix
 }
 
-function pickPerson(rows: SsoPerson[]): SsoPerson {
+function pickPerson(rows: SsoPerson[]): SsoPerson | null {
   const real = rows.filter((row) => !isTestUser(row.metadata))
-  const pool = real.length > 0 ? real : rows
-  const person =
-    pool.find((row) => row.role === MP_ROLE) ?? pool.find((row) => row.role === MP_ASSISTANT_ROLE)
-  if (!person) {
-    throw new Error(`No mp/mp_assistant row for mobile ${rows[0]?.mobile}`)
-  }
-  return person
+  if (real.length === 0) return null
+  return real.find((row) => row.role === MP_ROLE) ?? real.find((row) => row.role === MP_ASSISTANT_ROLE) ?? null
 }
 
 function phoneKeys(mobile: string): string[] {
@@ -158,8 +151,8 @@ async function main() {
       return {
         mobile,
         person,
-        testUserOnly: rows.every((row) => isTestUser(row.metadata)),
-        publicRole: formatMpPublicRole(person.role, person.metadata),
+        testUserOnly: person === null,
+        publicRole: person ? formatMpPublicRole(person.role, person.metadata) : null,
       }
     })
 
@@ -182,27 +175,35 @@ async function main() {
       const label = phoneToLabel.get(user.phoneNumber)
       if (!label) continue
       matchedMobiles.add(label.mobile)
+
+      let action: PlannedRow['action']
+      if (label.testUserOnly) {
+        action = user.responsibleArea === null ? 'skip' : 'clear'
+      } else {
+        action = user.responsibleArea === label.publicRole ? 'already' : 'update'
+      }
+
       plan.push({
         mobile: label.mobile,
-        ssoPersonId: label.person.id,
-        role: label.person.role,
+        ssoPersonId: label.person?.id ?? null,
+        role: label.person?.role ?? null,
         testUserOnly: label.testUserOnly,
         publicRole: label.publicRole,
         userId: user.id,
         userName: user.name,
         todayPhone: user.phoneNumber,
         previous: user.responsibleArea,
-        action: user.responsibleArea === label.publicRole ? 'already' : 'update',
+        action,
       })
     }
 
     for (const label of labels) {
-      if (matchedMobiles.has(label.mobile)) continue
+      if (matchedMobiles.has(label.mobile) || label.testUserOnly) continue
       plan.push({
         mobile: label.mobile,
-        ssoPersonId: label.person.id,
-        role: label.person.role,
-        testUserOnly: label.testUserOnly,
+        ssoPersonId: label.person?.id ?? null,
+        role: label.person?.role ?? null,
+        testUserOnly: false,
         publicRole: label.publicRole,
         userId: null,
         userName: null,
@@ -213,33 +214,43 @@ async function main() {
     }
 
     const updates = plan.filter((row) => row.action === 'update')
+    const clears = plan.filter((row) => row.action === 'clear')
     const already = plan.filter((row) => row.action === 'already')
+    const skipped = plan.filter((row) => row.action === 'skip')
     const missing = plan.filter((row) => row.action === 'missing')
-    const testUserOnly = plan.filter((row) => row.testUserOnly)
 
     console.log(`${EXECUTE ? 'EXECUTE' : 'DRY-RUN'}: ${labels.length} SSO MP/assistant mobile(s)\n`)
     console.log(`  update:         ${updates.length}`)
+    console.log(`  clear testUser: ${clears.length}`)
     console.log(`  already synced: ${already.length}`)
-    console.log(`  no Today user:  ${missing.length}`)
-    console.log(`  testUser-only:  ${testUserOnly.length}\n`)
+    console.log(`  skip testUser:  ${skipped.length}`)
+    console.log(`  no Today user:  ${missing.length}\n`)
 
     for (const row of plan) {
-      const tag = row.testUserOnly ? ' testUser' : ''
       if (row.action === 'update') {
         console.log(
-          `~ ${row.todayPhone} ${row.userName} [${row.role}]${tag}: ${JSON.stringify(row.previous)} → ${JSON.stringify(row.publicRole)}`
+          `~ ${row.todayPhone} ${row.userName} [${row.role}]: ${JSON.stringify(row.previous)} → ${JSON.stringify(row.publicRole)}`
         )
+      } else if (row.action === 'clear') {
+        console.log(
+          `- ${row.todayPhone} ${row.userName} testUser: ${JSON.stringify(row.previous)} → null`
+        )
+      } else if (row.action === 'skip') {
+        console.log(`· ${row.todayPhone} ${row.userName} testUser: leave responsibleArea null`)
       } else if (row.action === 'missing') {
-        console.log(`? ${row.mobile} [${row.role}]${tag}: ${JSON.stringify(row.publicRole)} (no Today user)`)
+        console.log(`? ${row.mobile} [${row.role}]: ${JSON.stringify(row.publicRole)} (no Today user)`)
       }
     }
 
     if (!EXECUTE) {
-      console.log(`\nDry-run only. Re-run with --execute to apply ${updates.length} update(s).`)
+      console.log(
+        `\nDry-run only. Re-run with --execute to apply ${updates.length} update(s) and ${clears.length} clear(s).`
+      )
       return
     }
 
     let updated = 0
+    let cleared = 0
     for (const row of updates) {
       if (!row.userId) continue
       await today.user.update({
@@ -248,8 +259,16 @@ async function main() {
       })
       updated += 1
     }
+    for (const row of clears) {
+      if (!row.userId) continue
+      await today.user.update({
+        where: { id: row.userId },
+        data: { responsibleArea: null },
+      })
+      cleared += 1
+    }
 
-    console.log(`\nDone. Updated ${updated}.`)
+    console.log(`\nDone. Updated ${updated}, cleared ${cleared}.`)
   } finally {
     await Promise.all([today.$disconnect(), sso.$disconnect()])
   }
