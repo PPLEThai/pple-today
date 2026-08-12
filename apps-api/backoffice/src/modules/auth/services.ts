@@ -180,8 +180,8 @@ export class AuthService {
     })
   }
 
-  async replaceUserRoles(id: string, roles: string[]) {
-    const result = await this.authRepository.replaceUserRoles(id, roles)
+  async replaceUserRoles(id: string, roles: string[], publicRole?: string | null) {
+    const result = await this.authRepository.replaceUserRoles(id, roles, publicRole)
 
     if (result.isErr()) {
       return mapRepositoryError(result.error)

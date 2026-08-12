@@ -160,6 +160,7 @@ export const ProfileController = new Elysia({
         numberOfFollowing: result.value.numberOfFollowing,
         point: result.value.point,
         numberOfFollowingTopics: result.value.numberOfFollowingTopics,
+        publicRole: result.value.publicRole,
         address: result.value.address
           ? {
               district: result.value.address.district,

@@ -25,6 +25,13 @@ export const IntrospectAccessTokenResult = t.Union([
     phone_number: t.String({ description: 'Phone number of the user' }),
     phone_number_verified: t.Boolean({ description: 'Indicates if the phone number' }),
     pple_roles: t.Array(t.String({ description: 'Roles assigned to the user' })),
+    public_role: t.Optional(
+      t.Nullable(
+        t.String({
+          description: 'Public-facing AD role label from pple-sso (e.g. สส. นนทบุรี เขต 1)',
+        })
+      )
+    ),
   }),
   t.Object({
     active: t.Literal(false, { description: 'Indicates if the token is active' }),

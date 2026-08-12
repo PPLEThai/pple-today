@@ -1,4 +1,6 @@
-export const getRoleName = (roles: string[]) => {
+export const getRoleName = (roles: string[], publicRole?: string | null) => {
+  if (publicRole) return publicRole
+
   for (const role of roles) {
     switch (role) {
       case 'pple-ad:mp':

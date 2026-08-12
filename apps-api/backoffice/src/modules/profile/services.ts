@@ -46,6 +46,7 @@ export class ProfileService {
           }
         : null,
       roles: user.roles.map((r) => r.role),
+      publicRole: user.responsibleArea,
     }))
 
     return ok(users)
@@ -121,6 +122,7 @@ export class ProfileService {
 
     return ok({
       ...user.value,
+      publicRole: user.value.responsibleArea,
       address: user.value.address ?? undefined,
       profileImage: user.value.profileImagePath
         ? this.fileServerService.getFileEndpointUrl(user.value.profileImagePath)

@@ -24,6 +24,9 @@ export const GetUserRecommendationResponse = t.Array(
     ),
     profileImage: t.Nullable(t.String({ description: 'The profile image URL of the author' })),
     roles: t.Array(t.String({ description: 'The role of the user' })),
+    publicRole: t.Nullable(
+      t.String({ description: 'Public-facing AD role label (e.g. สส. นนทบุรี เขต 1)' })
+    ),
   })
 )
 export type GetUserRecommendationResponse = Static<typeof GetUserRecommendationResponse>
@@ -51,6 +54,9 @@ export const GetMyProfileResponse = t.Object({
   numberOfFollowing: t.Number({ description: 'Number of users the user is following' }),
   point: t.Number({ description: 'Points earned by the user' }),
   numberOfFollowingTopics: t.Number({ description: 'Number of topics the user is following' }),
+  publicRole: t.Nullable(
+    t.String({ description: 'Public-facing AD role label (e.g. สส. นนทบุรี เขต 1)' })
+  ),
   address: t.Optional(
     t.Object({
       province: t.String({ description: "Province or state of the user's address" }),
@@ -75,6 +81,9 @@ export const GetProfileByIdResponse = t.Object({
     t.String({ description: 'The URL of the profile image', format: 'uri' })
   ),
   numberOfFollowers: t.Number({ description: 'Number of followers the user has' }),
+  publicRole: t.Nullable(
+    t.String({ description: 'Public-facing AD role label (e.g. สส. นนทบุรี เขต 1)' })
+  ),
   address: t.Optional(
     t.Object({
       province: t.String({ description: "Province or state of the user's address" }),

@@ -156,7 +156,7 @@ export default function ProfilePage() {
             <View className="flex flex-row items-center gap-3">
               <Badge>
                 <Text className="text-xs font-heading-semibold">
-                  {getRoleName(userDetailsQuery.data.roles)}
+                  {getRoleName(userDetailsQuery.data.roles, userDetailsQuery.data.publicRole)}
                 </Text>
               </Badge>
               <View className="flex flex-row gap-0.5 items-center">

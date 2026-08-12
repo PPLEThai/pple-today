@@ -18,6 +18,7 @@ import { ArrowRightIcon, UserRoundPlusIcon } from 'lucide-react-native'
 import { GetUserRecommendationResponse } from '@api/backoffice/app'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useAuthMe, useSession } from '@app/libs/auth'
+import { getRoleName } from '@app/utils/get-role-name'
 import { createImageUrl } from '@app/utils/image'
 
 import { AvatarPPLEFallback } from '../avatar-pple-fallback'
@@ -34,6 +35,7 @@ interface UserCardProps {
     } | null
     followed?: boolean
     roles: string[]
+    publicRole: string | null
   }
 }
 
@@ -61,11 +63,15 @@ export function UserCard(props: UserCardProps) {
         <Text className="text-sm text-base-text-high font-heading-semibold text-center line-clamp-2">
           {props.user.name}
         </Text>
-        {props.user.address && props.user.roles.includes('pple-ad:mp') && (
+        {props.user.publicRole ? (
           <Text className="text-sm text-base-text-medium font-heading-regular text-center line-clamp-1">
-            สส. {props.user.address.province}
+            {props.user.publicRole}
           </Text>
-        )}
+        ) : props.user.roles.includes('pple-ad:mp') ? (
+          <Text className="text-sm text-base-text-medium font-heading-regular text-center line-clamp-1">
+            {getRoleName(['pple-ad:mp'])}
+          </Text>
+        ) : null}
       </View>
       <Button
         variant={isFollowing ? 'outline-primary' : 'primary'}
