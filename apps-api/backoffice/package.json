@@ -18,6 +18,7 @@
     "test:cov": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "backfill:door-redirect-uris": "tsx scripts/backfill-door-redirect-uris.ts",
+    "backfill:mp-public-role": "tsx scripts/backfill-mp-public-role.ts",
     "lint": "eslint . --ext .ts,.tsx",
     "format:check": "prettier --check .",
     "coverage": "open-cli coverage/index.html"
