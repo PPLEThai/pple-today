@@ -303,7 +303,6 @@ describe('AppNotificationService.send', () => {
       const result = await service.send(appBoundKey(), toDirect([{ sub: INVITEE }]))
 
       expect(result._unsafeUnwrap()).toMatchObject({
-        recipientCount: 1,
         results: [{ recipient: { sub: INVITEE }, status: 'delivered' }],
       })
       const [audience] = notificationRepository.sendNotificationToUser.mock.calls[0]
@@ -331,7 +330,6 @@ describe('AppNotificationService.send', () => {
       const result = await service.send(appBoundKey(), toDirect([{ phone: '0899999999' }]))
 
       expect(result._unsafeUnwrap()).toMatchObject({
-        recipientCount: 0,
         results: [{ recipient: { phone: '0899999999' }, status: 'not_reachable' }],
       })
       expect(notificationRepository.sendNotificationToUser).not.toHaveBeenCalled()
@@ -401,9 +399,54 @@ describe('AppNotificationService.send', () => {
         'delivered',
         'delivered',
       ])
-      expect(result._unsafeUnwrap().recipientCount).toBe(1)
       const [audience] = notificationRepository.sendNotificationToUser.mock.calls[0]
       expect(audience).toEqual({ type: 'USER_ID', details: [INVITEE] })
+    })
+
+    test('a named send never answers with a count of the people it reached', async () => {
+      // Both entries below come back `delivered`, which says nothing about
+      // whether they are one person or two. A count of *distinct* people
+      // reached would say exactly that — so naming a sub alongside a phone
+      // would become a way to test whether they belong to the same person,
+      // which refusing a both-fields entry exists to prevent.
+      const { service } = createService()
+
+      const onePerson = await service.send(
+        appBoundKey(),
+        toDirect([{ sub: INVITEE }, { phone: INVITEE_PHONE }])
+      )
+      const twoPeople = await service.send(
+        appBoundKey(),
+        toDirect([{ sub: INVITEE }, { phone: OWNER_PHONE }])
+      )
+
+      expect(onePerson._unsafeUnwrap().recipientCount).toBeUndefined()
+      expect(twoPeople._unsafeUnwrap().recipientCount).toBeUndefined()
+      // Both calls report the same outcomes, so the bodies differ only in the
+      // recipients they echo back — which the caller supplied. The budget they
+      // spent still differs, and that disclosure follows from the contract's
+      // own de-duplication rule rather than from anything added here.
+      const statuses = (result: typeof onePerson) =>
+        result._unsafeUnwrap().results?.map((entry) => entry.status)
+      expect(statuses(onePerson)).toEqual(['delivered', 'delivered'])
+      expect(statuses(twoPeople)).toEqual(statuses(onePerson))
+    })
+
+    test('a refusal names the count addressed, never the units it would charge', async () => {
+      // The same leak by another route: units are the named list after people
+      // it resolved to one person collapse, so quoting them in the 429 would
+      // answer the question the response body refuses to.
+      const { service } = createService()
+      const key = appBoundKey({ dailyQuota: 1 })
+
+      await service.send(key, toDirect([{ sub: OWNER }]))
+      const refused = await service.send(
+        key,
+        toDirect([{ sub: INVITEE }, { phone: INVITEE_PHONE }])
+      )
+
+      expect(refused._unsafeUnwrapErr().message).toContain('addresses 2')
+      expect(refused._unsafeUnwrapErr().message).not.toContain('addresses 1')
     })
 
     describe('a recipient list that cannot be honoured is refused whole', () => {
@@ -481,7 +524,7 @@ describe('AppNotificationService.send', () => {
       // The cost of a send is what the caller asked for, not what it achieved —
       // otherwise a list of strangers would be free to probe with.
       expect(repository.usage[0].units).toBe(2)
-      expect(result._unsafeUnwrap()).toMatchObject({ recipientCount: 1, remaining: 8 })
+      expect(result._unsafeUnwrap()).toMatchObject({ remaining: 8 })
     })
 
     test('spends across sends and reports what is left', async () => {

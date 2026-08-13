@@ -145,14 +145,22 @@ export const settleDirectDelivery = (
   reach: {
     /** The app's App Users narrowed to its current tier — who it may reach. */
     reachable: ReadonlySet<string>
-    /** E.164 → sub, built from that same reachable set and nothing wider. */
+    /**
+     * E.164 → sub, over the app's App Users. Narrower than the directory at
+     * large, and narrowed again by `reachable` here: an App User who has since
+     * fallen outside the tier (an invite withdrawn, an app pulled back to
+     * Draft) resolves to nobody rather than to somebody filtered out later.
+     */
     subByPhone: ReadonlyMap<string, string>
   }
 ): DirectSettlement => {
+  // Both ways of naming a person end at the same question — is this someone the
+  // app may reach? — so neither branch can answer it more generously.
   const resolve = (lookup: RecipientLookup): string | null => {
     if (lookup === null) return null
-    if (lookup.by === 'sub') return reach.reachable.has(lookup.sub) ? lookup.sub : null
-    return reach.subByPhone.get(lookup.phone) ?? null
+    const sub = lookup.by === 'sub' ? lookup.sub : reach.subByPhone.get(lookup.phone)
+
+    return sub !== undefined && reach.reachable.has(sub) ? sub : null
   }
 
   const deliverTo = new Set<string>()

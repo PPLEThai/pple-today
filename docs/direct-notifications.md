@@ -29,6 +29,26 @@ traffic was zero when this shipped (confirmed 2026-08-14), so there is no
 lenient window and no versioned route; compatibility machinery would be
 permanent complexity for a transient problem.
 
+> **Status codes: read this before writing a client.** Issue #461 asked for
+> `400` on every malformed body. What ships is split, because two different
+> layers do the refusing:
+>
+> | Body | Status | Code |
+> | --- | --- | --- |
+> | No `audience`; unknown `kind`; `direct` with no `recipients`; `recipients` not an array | **422** | `VALIDATION_ERROR` |
+> | `recipients: []`; over the 200 cap; an entry naming neither or both | **400** | `NOTIFICATION_INVALID_RECIPIENTS` |
+>
+> The first row is Elysia schema validation, which is a uniform 422 across
+> *every* route in this API — inverting it here would make one endpoint
+> disagree with the rest of the surface. The second row is `canonicalizeRecipients`,
+> which answers 400 as the issue asked.
+>
+> The strict-migration guarantee is intact either way: every one of these is a
+> refusal, none is a broadcast, and none is a no-op. But a client that branches
+> on `400` alone will mis-handle the first row, so **pple-platform should
+> confirm this split before shipping its template helper** — or say the word and
+> the schema can be loosened to route everything through the 400.
+
 **`not_reachable` is one collapsed status, and that is the feature.** It covers
 *no PPLE ID account*, *an account that has never opened this app*, *outside the
 app's current tier audience*, and *opted out*, and it must not distinguish
@@ -66,7 +86,8 @@ two. Neither, both, an empty list, or more than **200** recipients is a `400`
 (`NOTIFICATION_INVALID_RECIPIENTS`) — never a silent truncation. Which
 identifier wins when both are given would be a rule nobody remembers, and
 answering an entry that named two different people would let a caller probe
-whether they are the same person.
+whether they are the same person — the same probe the response shape below is
+careful not to answer.
 
 Phone numbers are canonicalised to **E.164, default region TH**, so `0812345678`
 and `+66812345678` resolve to the same person. A number that is not a whole Thai
@@ -77,18 +98,31 @@ indistinguishable is the point.
 ## Response
 
 ```jsonc
-{ "recipientCount": 1,
-  "results": [ { "recipient": { "sub": "…" },   "status": "delivered" },
+{ "results": [ { "recipient": { "sub": "…" },   "status": "delivered" },
                { "recipient": { "phone": "…" }, "status": "not_reachable" } ] }
 ```
 
 One result per entry, in the order named, echoing each entry **as named** so the
-caller can match them up. `recipientCount` is the number of distinct people
-delivered to. `kind: "all"` answers as it always has, with no `results`.
+caller can match them up. `kind: "all"` answers as it always has, with
+`recipientCount` and no `results`.
 
 Two entries naming the same person are both answered `delivered`, but that
 person is notified once and charged once — de-duplication happens after
 resolution, before metering.
+
+**A direct send deliberately reports no `recipientCount`.** Both entries of a
+pair naming one person come back `delivered`, which discloses nothing about
+whether they *are* one person; a count of distinct people reached would answer
+exactly that, and turn naming a `sub` alongside a `phone` into a test for
+whether they belong to the same account. The 429 message quotes the count
+*addressed* rather than the units it would have charged, for the same reason.
+
+> **Residual disclosure, worth knowing about.** The contract requires both
+> de-duplicated metering and a `remaining` budget in the response, so a caller
+> who diffs `remaining` across a send can still infer that two identifiers
+> collapsed to one person. That follows from the two requirements together, not
+> from anything added here, and closing it would mean giving up one of them.
+> Flagged for ADR-0017 rather than decided unilaterally.
 
 ## Metering — this changes existing behaviour
 
@@ -135,6 +169,14 @@ timestamp, the named count, the delivered count and the match ratio — and **no
 recipient identities**, deliberately, so no per-person messaging history
 accumulates. The platform cannot log any of this itself: the send is
 authenticated by the app's own key and never traverses it.
+
+The row also carries a positional array of the per-entry outcomes
+(`["delivered", "not_reachable", …]`). This is beyond the list #461 enumerated,
+and it is there for one reason: without it an `idempotencyKey` retry of a
+*direct* send cannot be answered truthfully — re-resolving would report today's
+reachability for a send that went out yesterday. It holds no identities and is
+meaningless without the caller's own request, so nothing per-person accumulates;
+but it is an addition, and should be confirmed rather than assumed.
 
 The row is written for unmetered (central-team) keys too, which is a change: the
 audit trail is per *call*, not per *metered* call. Those rows still carry their

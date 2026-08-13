@@ -250,14 +250,16 @@ export type DirectRecipientResult = Static<typeof DirectRecipientResult>
  * nothing enforces.
  */
 export const CreateAppNotificationResponse = t.Object({
-  recipientCount: t.Integer({
-    description:
-      'How many distinct people the notification was delivered to. For `kind: "all"`, the App Users inside the current tier audience; for `kind: "direct"`, the named recipients who were reachable. Zero is a valid outcome — nobody has opened the app yet, or nobody named was reachable.',
-  }),
+  recipientCount: t.Optional(
+    t.Integer({
+      description:
+        'How many App Users the notification was delivered to — present for `kind: "all"` only. Zero is a valid outcome: nobody has opened the app yet, or the tier admits nobody. Absent for `kind: "direct"`, where the per-recipient results are the answer and a count of *distinct* people reached would disclose whether two entries named the same person.',
+    })
+  ),
   results: t.Optional(
     t.Array(DirectRecipientResult, {
       description:
-        'One result per named recipient, in the order named — present for `kind: "direct"` only. Two entries naming the same person are both answered, but that person is notified once and charged once.',
+        'One result per named recipient, in the order named — present for `kind: "direct"` only. Two entries naming the same person are both answered `delivered`, and that person is notified once and charged once.',
     })
   ),
   dailyQuota: t.Optional(

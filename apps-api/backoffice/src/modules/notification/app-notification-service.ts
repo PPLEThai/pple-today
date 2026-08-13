@@ -12,7 +12,7 @@ import {
 } from './direct-recipients'
 import { type BoundApp, isMeteredKey, requireAppBoundKey } from './key-binding'
 import type { CreateAppNotificationBody, DirectRecipientResult } from './models'
-import { evaluateDailyQuota, quotaDayEnd, quotaDayStart } from './quota'
+import { evaluateDailyQuota, quotaDayStart } from './quota'
 import type { NotificationRepository } from './repository'
 import { resolveAppLinkPath } from './resolve-app-link-path'
 
@@ -43,9 +43,13 @@ type AppNotificationSendContent = AppNotificationContent & {
  * audiences reduce to, so metering and delivery never have to branch on which
  * one was asked for.
  *
- * `results` is spelled in terms of the wire schema rather than the settlement
- * module's own type, so nothing about how recipients are resolved leaks into
- * the API surface the mobile client infers from these routes.
+ * `results` is spelled in terms of the wire schema (`DirectRecipientResult`)
+ * rather than `DirectSettlement['results']`, and the fields are restated rather
+ * than `Omit`-ed from it. That is load-bearing, not incidental: writing this as
+ * `Omit<DirectSettlement, 'results'> & …` makes `direct-recipients` reachable
+ * from the route's inferred type, and `@client/mobile`'s Eden client then fails
+ * to compile with TS2742 ("cannot be named without a reference to …"). Keep the
+ * settlement module out of the API surface.
  */
 interface SendPlan {
   /** Distinct people to actually create a notification for. */
@@ -83,47 +87,53 @@ const broadcastPlan = (audience: string[]): SendPlan => ({
 })
 
 /**
- * Settle a named list against the audience, resolving phones only among people
- * the app may actually reach.
+ * How far a send reached, told the way each audience is entitled to hear it.
  *
- * The intersection is applied to the phone map *before* settlement rather than
- * after, so an App User who has since fallen outside the tier (an invite
- * withdrawn, an app narrowed back to Draft) resolves to nobody rather than to
- * somebody who is then filtered out.
+ * A broadcast gets `recipientCount`: the app already knows its own audience, so
+ * its size discloses nothing about any individual.
+ *
+ * A named send gets `results` and **no count**. Both entries of a pair naming
+ * one person come back `delivered`, which says nothing about whether they are
+ * the same person — but a count of distinct people reached would answer exactly
+ * that, and answering it is what refusing a both-fields entry exists to
+ * prevent. So the count stays out, which is also the shape the contract asks
+ * for: per-recipient results for `direct`, today's body for `all`.
  */
-const settleWith = (
-  recipients: CanonicalRecipient[],
-  audience: string[],
-  subsByPhone: ReadonlyMap<string, string>
-): SendPlan => {
-  const reachable = new Set(audience)
-
-  return settleDirectDelivery(recipients, {
-    reachable,
-    subByPhone: new Map(Array.from(subsByPhone).filter(([, sub]) => reachable.has(sub))),
-  })
-}
+const reportReach = (plan: SendPlan) =>
+  plan.results
+    ? { recipientCount: undefined, results: plan.results }
+    : { recipientCount: plan.deliverTo.length, results: undefined }
 
 /** The quota fields, or nothing at all when the key is not held to a budget. */
-const remainingBudget = (meteredKey: AppBoundKey | undefined, used: number, now: Date) =>
-  meteredKey
-    ? {
-        dailyQuota: meteredKey.dailyQuota,
-        // `used` already includes this send, so this is what is left after it.
-        remaining: Math.max(meteredKey.dailyQuota - used, 0),
-        resetAt: quotaDayEnd(now).toISOString(),
-      }
-    : // The quota fields fall away as a group — inventing one would put a cap in
-      // the response that nothing enforces.
-      { dailyQuota: undefined, remaining: undefined, resetAt: undefined }
+const remainingBudget = (meteredKey: AppBoundKey | undefined, used: number, now: Date) => {
+  if (!meteredKey) {
+    // The quota fields fall away as a group — inventing one would put a cap in
+    // the response that nothing enforces.
+    return { dailyQuota: undefined, remaining: undefined, resetAt: undefined }
+  }
+
+  // `used` already includes this send, so the verdict describes what is left
+  // after it. The same rule the refusal path reports through.
+  const quota = evaluateDailyQuota({ used, dailyQuota: meteredKey.dailyQuota, now })
+
+  return {
+    dailyQuota: quota.dailyQuota,
+    remaining: quota.remaining,
+    resetAt: quota.resetAt.toISOString(),
+  }
+}
 
 /** Read back a usage row's stored outcome, or `null` if it is not one. */
 const parseStoredResult = (storedBody: unknown): StoredSendResult | null => {
-  try {
-    const parsed = typeof storedBody === 'string' ? JSON.parse(storedBody) : storedBody
-    const result = (parsed as { result?: StoredSendResult } | null)?.result
+  // Always written by `claimUsage` as a JSON string, matching how the
+  // raw-targeting path has always written this column. Anything else is a row
+  // this code did not write, and is not something to guess at.
+  if (typeof storedBody !== 'string') return null
 
-    return typeof result?.recipientCount === 'number' ? result : null
+  try {
+    const parsed = JSON.parse(storedBody) as { result?: StoredSendResult } | null
+
+    return typeof parsed?.result?.recipientCount === 'number' ? parsed.result : null
   } catch {
     return null
   }
@@ -276,7 +286,11 @@ export class AppNotificationService {
       const quota = evaluateDailyQuota({ used: claim.used, dailyQuota: key.dailyQuota, now })
       return err({
         code: InternalErrorCode.NOTIFICATION_QUOTA_EXCEEDED,
-        message: `Daily notification quota of ${quota.dailyQuota} exhausted; this send needs ${plan.units}, and ${quota.remaining} remain. It resets at ${quota.resetAt.toISOString()}.`,
+        // The count *named*, never the units charged. Units are the named list
+        // after people it resolved to the same person collapse, so quoting them
+        // would answer "are these two identifiers the same person?" — the very
+        // question refusing a both-fields entry exists to leave unanswered.
+        message: `Daily notification quota of ${quota.dailyQuota} exhausted; this send addresses ${plan.audit.named}, and ${quota.remaining} remain. It resets at ${quota.resetAt.toISOString()}.`,
         data: {
           dailyQuota: quota.dailyQuota,
           remaining: quota.remaining,
@@ -316,8 +330,7 @@ export class AppNotificationService {
     }
 
     return ok({
-      recipientCount: plan.deliverTo.length,
-      results: plan.results,
+      ...reportReach(plan),
       ...remainingBudget(metered ? key : undefined, claim.used, now),
     })
   }
@@ -344,7 +357,16 @@ export class AppNotificationService {
     )
     if (subsByPhone.isErr()) return err(subsByPhone.error)
 
-    return ok(settleWith(recipients, audience, subsByPhone.value))
+    // Annotated, not inferred: this is the boundary that keeps
+    // `direct-recipients` out of the route's inferred type. Letting
+    // `DirectSettlement` flow out of here breaks `@client/mobile` with TS2742
+    // (see `SendPlan`).
+    const plan: SendPlan = settleDirectDelivery(recipients, {
+      reachable: new Set(audience),
+      subByPhone: subsByPhone.value,
+    })
+
+    return ok(plan)
   }
 
   /**
@@ -358,7 +380,7 @@ export class AppNotificationService {
    */
   private replay(
     storedBody: unknown,
-    recipients: { named: { sub?: string; phone?: string } }[] | undefined,
+    recipients: CanonicalRecipient[] | undefined,
     used: number,
     meteredKey: AppBoundKey | undefined,
     now: Date
@@ -387,11 +409,23 @@ export class AppNotificationService {
     }
 
     return ok({
-      recipientCount: stored.recipientCount,
-      results:
-        statuses && recipients
-          ? statuses.map((status, index) => ({ recipient: recipients[index].named, status }))
-          : undefined,
+      // Reported the same way a first attempt is: a named send answers with
+      // outcomes and no count (see `reportReach`), a broadcast with the count.
+      ...(statuses && recipients
+        ? {
+            recipientCount: undefined,
+            // Annotated for the same reason `SendPlan` restates its fields:
+            // `recipients[index].named` is a `NamedRecipient`, and letting that
+            // flow into the return type puts `direct-recipients` in the route's
+            // inferred type and breaks `@client/mobile` with TS2742.
+            results: statuses.map(
+              (status, index): DirectRecipientResult => ({
+                recipient: recipients[index].named,
+                status,
+              })
+            ),
+          }
+        : { recipientCount: stored.recipientCount, results: undefined }),
       ...remainingBudget(meteredKey, used, now),
     })
   }
