@@ -1,5 +1,11 @@
 # App-bound notifications — implementation plan
 
+> **Superseded in part.** The audience-bound send described here is now
+> audience-*selecting*: `POST /external/notifications` takes a required
+> `audience` field, and an app may name individual recipients within the same
+> `App Users ∩ tier` set. The quota is also now denominated in deliveries rather
+> than calls. See [direct-notifications.md](./direct-notifications.md).
+
 Today every PPLE Today notification looks the same: a bell icon, the label
 "แจ้งเตือนทั่วไป" in the notification centre, and "PPLE Today" in the OS tray —
 whether it came from the central team or from a mini app. This plan binds each

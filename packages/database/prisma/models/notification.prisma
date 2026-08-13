@@ -158,10 +158,30 @@ model NotificationApiKeyUsageLog {
   usedAt               DateTime @default(now())
   body                 Json
 
+  // What this call debits: the reach it *requested*, not the reach it achieved.
+  // A direct send costs one unit per named recipient (delivered or not, after
+  // entries resolving to the same person collapse); a broadcast costs the
+  // audience size at send time. The quota is therefore denominated in
+  // deliveries rather than calls, and the daily budget is a `SUM` over this
+  // column rather than a row count.
+  //
+  // Defaults to 1, which is exactly what a pre-existing row meant when a row
+  // was a call — so no backfill, and the raw-targeting path (never metered)
+  // keeps writing its audit rows without naming a number.
+  units Int @default(1)
+
+  // Client-supplied retry token, unique per key. A call that repeats one is
+  // answered from this row instead of being delivered and charged twice, which
+  // is what makes retrying after a timeout safe. Null for calls that supplied
+  // none — many such rows per key, hence a nullable unique rather than a
+  // required one.
+  idempotencyKey String?
+
   notificationApiKey NotificationApiKey @relation(fields: [notificationApiKeyId], references: [id])
 
+  @@unique([notificationApiKeyId, idempotencyKey])
   @@index([notificationApiKeyId])
   @@index([usedAt])
-  // Serves the daily-quota count, which always asks "this key, since midnight".
+  // Serves the daily-quota sum, which always asks "this key, since midnight".
   @@index([notificationApiKeyId, usedAt])
 }

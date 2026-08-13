@@ -36,7 +36,7 @@ export const quotaDayStart = (now: Date): Date =>
   dayjs(now).tz(QUOTA_TIMEZONE).startOf('day').toDate()
 
 /** The next Bangkok midnight — when the current window's usage stops counting. */
-const quotaDayEnd = (now: Date): Date =>
+export const quotaDayEnd = (now: Date): Date =>
   dayjs(now).tz(QUOTA_TIMEZONE).add(1, 'day').startOf('day').toDate()
 
 /**

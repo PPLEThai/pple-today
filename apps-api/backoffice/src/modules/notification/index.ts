@@ -205,12 +205,14 @@ export const ExternalNotificationController = new Elysia({
   tags: ['External Notifications'],
 })
   .use([NotificationServicePlugin, AppNotificationServicePlugin])
-  // Audience-bound send. The key identifies the app; the body carries content
-  // and nothing else. Recipients are resolved server-side as that app's App
-  // Users within its current publication tier, so a Builder App can reach the
-  // people who use it and has no way to name anybody else. A central-team app
-  // may send here too — it simply has a second audience available to it on
-  // /send — and is not metered.
+  // Audience-bound send. The key identifies the app; the body says whether the
+  // notification is for all of that app's audience or a named subset of it.
+  // Either way the audience is the same: that app's App Users within its
+  // current publication tier. Naming narrows it and can never widen it, so a
+  // Builder App still reaches only the people who use it.
+  //
+  // A central-team app may send here too — it simply has a second audience
+  // available to it on /send — and is never held to the quota.
   .post(
     '/',
     async ({ appNotificationService, notificationService, body, headers, status }) => {
@@ -229,11 +231,7 @@ export const ExternalNotificationController = new Elysia({
         )
       }
 
-      const sendResult = await appNotificationService.send(
-        tokenResult.value,
-        body.content,
-        body.linkPath
-      )
+      const sendResult = await appNotificationService.send(tokenResult.value, body)
 
       if (sendResult.isErr()) {
         return mapErrorCodeToResponse(sendResult.error, status)
@@ -245,7 +243,7 @@ export const ExternalNotificationController = new Elysia({
       detail: {
         summary: 'Send an audience-bound notification from a Builder App',
         description:
-          "Send content to the app's own users. The notification key identifies the app, and the platform resolves the recipients: this app's App Users (people who have opened it), narrowed to its current publication tier — the owner for a Draft, the owner plus accepted testers for a Beta, every App User for a Live app. The request carries no phone numbers, user ids or audience of any kind. An optional linkPath deep-links into this app only (path starting with `/`); free-form cross-app destinations are not accepted. The notification carries the app's name and icon into the notification centre and the OS tray. A key bound to a Builder App counts each send against its daily quota; exceeding it returns 429 with the remaining budget and the reset time. Keys bound to a central-team app are not metered and their responses omit the quota fields. Legacy keys have no app binding and must use /send instead.",
+          'Send content to the app\'s own users. The notification key identifies the app, and the platform owns the audience: this app\'s App Users (people who have opened it), narrowed to its current publication tier — the owner for a Draft, the owner plus accepted testers for a Beta, every App User for a Live app.\n\n`audience` is required and chooses between the whole of that audience (`{ "kind": "all" }`) and a named subset of it (`{ "kind": "direct", "recipients": [{ "sub": "…" }, { "phone": "…" }] }`). Naming recipients narrows the send; it can never widen it, so an app can address the people who use it individually without gaining the ability to reach anybody new. A body with no audience is a 400 — never a broadcast and never a no-op.\n\nEach recipient names exactly one of `sub` or `phone` (neither or both is a 400), at most 200 per call (over the cap is a 400, never a truncation). Phone numbers are canonicalised to E.164 with Thailand as the default region, so `0812345678` and `+66812345678` are the same person, and entries resolving to the same person are delivered and charged once. A direct send answers with one result per named recipient, each `delivered` or `not_reachable`; `not_reachable` is a single collapsed status covering every reason someone cannot be reached, and does not distinguish between them.\n\nContent is uniform across recipients. An optional linkPath deep-links into this app only (path starting with `/`); free-form cross-app destinations are not accepted. The notification carries the app\'s name and icon into the notification centre and the OS tray.\n\nA key bound to a Builder App is metered in **deliveries, not calls**: a send debits the reach it requests — one unit per named recipient whether or not they were reachable, or the audience size for a broadcast. The budget is checked up front against the whole call, so insufficient quota is a 429 with nothing delivered. Supply `idempotencyKey` to make retrying a timed-out call safe. Keys bound to a central-team app are not metered and their responses omit the quota fields. Legacy keys have no app binding and must use /send instead.',
       },
       headers: CreateNewExternalNotificationHeader,
       body: CreateAppNotificationBody,
@@ -254,6 +252,8 @@ export const ExternalNotificationController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.NOTIFICATION_KEY_NOT_APP_BOUND,
+          InternalErrorCode.NOTIFICATION_INVALID_RECIPIENTS,
+          InternalErrorCode.NOTIFICATION_IDEMPOTENCY_KEY_CONFLICT,
           InternalErrorCode.NOTIFICATION_QUOTA_EXCEEDED,
           InternalErrorCode.MINI_APP_NOT_FOUND,
           InternalErrorCode.NOTIFICATION_INVALID_LINK_PATH,
