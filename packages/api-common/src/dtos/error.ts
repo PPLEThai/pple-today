@@ -407,6 +407,21 @@ export const NOTIFICATION_KEY_ERROR_SCHEMA = {
   NOTIFICATION_KEY_NOT_APP_BOUND: {
     status: 403,
   },
+  // A `direct` send named a recipient list that cannot be honoured: empty, over
+  // the per-call cap, or an entry that names neither or both of `sub`/`phone`.
+  // Always a refusal — never a silent truncation, and never a fallback to the
+  // whole audience, since a dropped field must not widen a message meant for
+  // one person into a broadcast.
+  NOTIFICATION_INVALID_RECIPIENTS: {
+    status: 400,
+  },
+  // An idempotency key was reused with a recipient list of a different length,
+  // so the stored per-recipient outcomes cannot be replayed against it. A
+  // client bug rather than a retry, and answering with the old result would
+  // misreport who was reached.
+  NOTIFICATION_IDEMPOTENCY_KEY_CONFLICT: {
+    status: 409,
+  },
   NOTIFICATION_QUOTA_EXCEEDED: {
     status: 429,
     // Carries the budget itself, so a Builder App can back off intelligently

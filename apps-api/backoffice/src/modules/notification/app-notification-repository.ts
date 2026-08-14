@@ -13,9 +13,32 @@ import type { KeyBinding } from './key-binding'
  * governs what is reported about it.
  */
 export interface ActiveKeyUsage extends KeyBinding {
-  /** Sends logged in the window — the rows `claimUsageUnderQuota` meters against. */
+  /**
+   * Deliveries logged in the window — the `units` `claimUsage` meters against.
+   * Denominated in deliveries rather than calls, so a broadcast to 4,000 App
+   * Users reads as 4,000 and a direct send to three people reads as three.
+   */
   sent: number
   dailyQuota: number
+}
+
+/** One call's claim on a key's daily budget, and the audit row that records it. */
+export interface UsageClaim {
+  notificationApiKeyId: string
+  /**
+   * The budget to hold this call to, or `null` to record it without enforcing
+   * one. Null is how an unmetered key still leaves an audit trail: the daily
+   * quota is a Builder App Resource Limit, but *every* call on this path is
+   * recorded, because the platform cannot log it itself — the send is
+   * authenticated by the app's own key and never traverses the platform.
+   */
+  dailyQuota: number | null
+  since: Date
+  /** The reach this call requests: named recipients, or the broadcast audience. */
+  units: number
+  body: Prisma.InputJsonValue
+  /** Client retry token. A repeat is answered from the stored row, not re-sent. */
+  idempotencyKey?: string
 }
 
 /**
@@ -71,42 +94,102 @@ export class AppNotificationRepository {
   }
 
   /**
-   * Claim one send against the key's daily quota, atomically.
+   * Every App User of this app whose account holds one of `phones`, keyed by
+   * number — how a direct send turns a phone into a person.
    *
-   * Count-then-create alone can race: two concurrent sends both read "9 of 10"
+   * Scoped to the app's own `MiniAppUser` rows on purpose. The platform never
+   * asks its global directory whether an unknown number belongs to anyone, so a
+   * number outside the app simply does not come back, and there is no fact here
+   * that a later step would have to remember not to disclose. Bounded by the
+   * per-call recipient cap and served by the `User.phoneNumber` unique index.
+   *
+   * The tier narrowing is applied by the caller against the same audience the
+   * broadcast path resolves, so both paths agree on who an app may reach.
+   */
+  async getAppUserSubsByPhone(miniAppId: string, phones: string[]) {
+    return await fromRepositoryPromise(async () => {
+      if (phones.length === 0) return new Map<string, string>()
+
+      const appUsers = await this.prismaService.miniAppUser.findMany({
+        where: { miniAppId, user: { phoneNumber: { in: phones } } },
+        select: { userId: true, user: { select: { phoneNumber: true } } },
+      })
+
+      return new Map(appUsers.map((appUser) => [appUser.user.phoneNumber, appUser.userId]))
+    })
+  }
+
+  /**
+   * Record one call against the key's daily budget, atomically.
+   *
+   * Sum-then-create alone can race: two concurrent sends both read "9 of 10"
    * and both insert. Locking the parent `NotificationApiKey` row serialises
    * claims for that key; the window is still a time range (`since`), so the
    * budget resets at the Bangkok day boundary with no job to run.
    *
+   * The budget is denominated in **deliveries**, not calls: a claim spends
+   * `units`, and the check is `used + units > dailyQuota` — so a call is refused
+   * whole rather than delivered partway. That is what makes the cost of a send
+   * knowable from the request alone, and it is why the 429 leaves nothing
+   * delivered: a partial send the caller retries would double-notify.
+   *
+   * An `idempotencyKey` is looked up under the same lock, so a retry after a
+   * timeout is answered from the row the first attempt wrote instead of being
+   * delivered and charged twice.
+   *
    * The caller meters *before* the actual send and must `releaseUsage` if the
    * send fails — otherwise an internal failure would consume budget.
    */
-  async claimUsageUnderQuota(
-    notificationApiKeyId: string,
-    dailyQuota: number,
-    since: Date,
-    body: Prisma.InputJsonValue
-  ) {
+  async claimUsage(claim: UsageClaim) {
+    const { notificationApiKeyId, dailyQuota, since, units, body, idempotencyKey } = claim
+
     return await fromRepositoryPromise(async () => {
       return await this.prismaService.$transaction(async (tx) => {
         await tx.$queryRaw`
           SELECT 1 FROM "NotificationApiKey" WHERE id = ${notificationApiKeyId} FOR UPDATE
         `
 
-        const used = await tx.notificationApiKeyUsageLog.count({
+        const spend = await tx.notificationApiKeyUsageLog.aggregate({
           where: {
             notificationApiKeyId,
             usedAt: { gte: since },
           },
+          _sum: { units: true },
         })
+        // No rows in the window sums to null, which is zero spent, not unknown.
+        const used = spend._sum.units ?? 0
 
-        if (used >= dailyQuota) {
+        // Read before the quota check rather than after, so a replay comes back
+        // carrying the same `used` an original does and the caller's remaining
+        // budget reads the same either way — the original charge is already in
+        // the sum.
+        if (idempotencyKey !== undefined) {
+          const replayed = await tx.notificationApiKeyUsageLog.findUnique({
+            where: {
+              notificationApiKeyId_idempotencyKey: { notificationApiKeyId, idempotencyKey },
+            },
+            select: { id: true, body: true },
+          })
+
+          if (replayed) {
+            return {
+              status: 'replayed' as const,
+              usageLogId: replayed.id,
+              body: replayed.body,
+              used,
+            }
+          }
+        }
+
+        if (dailyQuota !== null && used + units > dailyQuota) {
           return { status: 'quota_exceeded' as const, used }
         }
 
         const log = await tx.notificationApiKeyUsageLog.create({
           data: {
             body,
+            units,
+            idempotencyKey,
             notificationApiKey: { connect: { id: notificationApiKeyId } },
           },
         })
@@ -115,7 +198,7 @@ export class AppNotificationRepository {
           status: 'ok' as const,
           usageLogId: log.id,
           // This claim is now spent, so report usage including it.
-          used: used + 1,
+          used: used + units,
         }
       })
     })
@@ -147,10 +230,14 @@ export class AppNotificationRepository {
 
   /**
    * What the app's active key has spent since `since` — the same window and rows
-   * `claimUsageUnderQuota` meters against.
+   * `claimUsage` meters against, summed the same way.
    *
-   * The budget and the binding come back with the count because a count alone
-   * cannot be reported honestly: what it is measured against, and whether it is
+   * A `SUM` over `units` rather than a row count, because the budget is
+   * denominated in deliveries: the Console tile and a 429 have to be reading the
+   * same number, so the tile counts what the quota charges.
+   *
+   * The budget and the binding come back with it because a count alone cannot
+   * be reported honestly: what it is measured against, and whether it is
    * measured at all, are properties of the key and the app it speaks for.
    *
    * `null` means there is no active key (retired / never provisioned), distinct
@@ -165,15 +252,17 @@ export class AppNotificationRepository {
 
       if (!key) return null
 
-      const sent = await this.prismaService.notificationApiKeyUsageLog.count({
+      const spend = await this.prismaService.notificationApiKeyUsageLog.aggregate({
         where: {
           notificationApiKeyId: key.id,
           usedAt: { gte: since },
         },
+        _sum: { units: true },
       })
 
       return {
-        sent,
+        // No rows in the window sums to null, which is zero sent, not unknown.
+        sent: spend._sum.units ?? 0,
         dailyQuota: key.dailyQuota,
         miniApp: key.miniApp,
       } satisfies ActiveKeyUsage

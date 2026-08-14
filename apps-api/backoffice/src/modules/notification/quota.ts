@@ -14,18 +14,21 @@ dayjs.extend(timezone)
 const QUOTA_TIMEZONE = 'Asia/Bangkok'
 
 export interface DailyQuotaInput {
-  /** Sends already logged for this key inside the current window. */
+  /**
+   * Deliveries logged for this key inside the current window — the `units` sum,
+   * as of the moment being described. The caller decides which moment that is:
+   * the count *before* a refused call, or the count *including* one that landed.
+   */
   used: number
-  /** Sends allowed per day, from the key's Resource Limit. */
+  /** Deliveries allowed per day, from the key's Resource Limit. */
   dailyQuota: number
   now: Date
 }
 
 export interface DailyQuotaVerdict {
-  allowed: boolean
   dailyQuota: number
   used: number
-  /** Sends still available in this window, including the one being judged. */
+  /** Deliveries still available in this window, given `used`. */
   remaining: number
   /** When the window rolls over and the budget refills. */
   resetAt: Date
@@ -40,23 +43,28 @@ const quotaDayEnd = (now: Date): Date =>
   dayjs(now).tz(QUOTA_TIMEZONE).add(1, 'day').startOf('day').toDate()
 
 /**
- * Judge one send against a key's daily quota.
+ * Describe a key's daily budget: what it is, what has been spent, what is left,
+ * and when it refills.
  *
  * Pure over its inputs — the caller supplies both the usage count (from the
  * usage log, since `quotaDayStart`) and the clock — so the whole rule, including
  * the day rollover, is testable without a database or a fake timer.
  *
- * `used` is the count *before* this send, so a key at 9 of 10 is still allowed
- * and reports 1 remaining. Concurrent overshoot is prevented by the repository
- * claim that locks the key before counting and writing; `remaining` still clamps
- * at zero so a historically overshot window never reports a negative budget.
+ * It *describes* rather than *decides*. Whether a call fits is settled inside
+ * `AppNotificationRepository.claimUsage`, under the row lock that makes the
+ * answer race-free — a verdict reached out here could not be, since two callers
+ * could both read the same `used`. So both of the service's paths report through
+ * this one function: the refusal passes the count before the call, the success
+ * passes the count including it, and `remaining` is what is left either way.
+ *
+ * `remaining` clamps at zero, so a window that historically overshot (concurrent
+ * claims against an older, un-locked path) never reports a negative budget.
  */
 export const evaluateDailyQuota = ({
   used,
   dailyQuota,
   now,
 }: DailyQuotaInput): DailyQuotaVerdict => ({
-  allowed: used < dailyQuota,
   dailyQuota,
   used,
   remaining: Math.max(dailyQuota - used, 0),

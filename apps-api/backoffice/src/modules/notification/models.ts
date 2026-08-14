@@ -6,6 +6,8 @@ import {
 import { NotificationTokenPlatform } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
+import { MAX_DIRECT_RECIPIENTS } from './direct-recipients'
+
 /**
  * Both new fields are optional so an older client keeps registering exactly as
  * it does today. Omitting them is not "leave as-is": registration asserts what
@@ -125,14 +127,71 @@ export const CreateNewExternalNotificationBody = t.Composite([
 export type CreateNewExternalNotificationBody = Static<typeof CreateNewExternalNotificationBody>
 
 /**
- * The body of an audience-bound send: content, plus an optional path-only
- * self-link.
+ * One recipient a Builder App may *name*, by `sub` or `phone` — exactly one of
+ * the two. Both, neither, or a blank identifier is a 400: picking a winner would
+ * be a rule nobody remembers, and answering an entry that names two different
+ * people would let a caller probe whether they are the same person.
  *
- * There is deliberately no `audience` field. The key identifies the app, the
- * platform resolves the app's App Users within its current tier, and an app has
- * no way to name a recipient — which is the entire privacy guarantee. The
- * `smsFallbackText` escape hatch is absent for the same reason: SMS fallback is
- * addressed by phone number.
+ * The schema leaves both properties optional because the exactly-one-of rule,
+ * the per-call cap and the non-empty rule are enforced together in
+ * `canonicalizeRecipients`, which answers 400 for all of them rather than
+ * splitting one contract across two status codes.
+ */
+export const DirectRecipient = t.Object(
+  {
+    sub: t.Optional(t.String({ description: 'PPLE ID subject of the recipient' })),
+    phone: t.Optional(
+      t.String({
+        description:
+          'Thai mobile number, `0XXXXXXXXX` or `+66XXXXXXXXX`. Canonicalised to E.164 (default region TH), so both spellings resolve to the same person.',
+      })
+    ),
+  },
+  { description: 'Exactly one of `sub` or `phone`. Neither or both is a 400.' }
+)
+export type DirectRecipient = Static<typeof DirectRecipient>
+
+/**
+ * Who a send is for. **Required** — and required is the whole point.
+ *
+ * A dropped field must not be able to turn a message meant for one person into
+ * a message to everyone, so there is no default: a body without an `audience` is
+ * refused, never treated as a broadcast and never as a no-op.
+ *
+ * Naming recipients **narrows** a send; it can never widen one. A `direct` list
+ * is filtered by the same `App Users ∩ current tier audience` intersection that
+ * resolves a broadcast, so an app still reaches only the people who use it and
+ * still has no way to learn or reach anybody else.
+ */
+export const AppNotificationAudience = t.Union(
+  [
+    t.Object(
+      { kind: t.Literal('all') },
+      { description: "Every App User inside the app's current publication tier." }
+    ),
+    t.Object(
+      {
+        kind: t.Literal('direct'),
+        recipients: t.Array(DirectRecipient, {
+          description: `The people to notify, 1–${MAX_DIRECT_RECIPIENTS} per call. An empty list or one over the cap is a 400 — never a silent truncation, and never a fallback to the whole audience.`,
+        }),
+      },
+      { description: 'A named subset of that same audience. Naming narrows; it never widens.' }
+    ),
+  ],
+  { description: 'Required. A body with no audience is a 400, never a broadcast.' }
+)
+export type AppNotificationAudience = Static<typeof AppNotificationAudience>
+
+/**
+ * The body of an audience-bound send: who it is for, the content, and an
+ * optional path-only self-link.
+ *
+ * The key identifies the app and the platform resolves the audience from the
+ * app's own App User registry; `audience` chooses between all of them and a
+ * named subset of them. The `smsFallbackText` escape hatch stays absent — SMS
+ * reaches people by phone number whether or not they use the app, which is
+ * exactly the reach a Builder App must not have.
  *
  * Free-form `content.link` is withheld: the shared schema can address `MINI_APP`
  * and `IN_APP_NAVIGATION` destinations anywhere in PPLE Today, so accepting it
@@ -140,8 +199,12 @@ export type CreateNewExternalNotificationBody = Static<typeof CreateNewExternalN
  * Optional `linkPath` is the self-link alternative — a path under *this* app,
  * validated and joined to the app's redirect entry server-side before it becomes
  * a normal notification destination.
+ *
+ * Content is uniform across recipients: this is one notification addressed to
+ * several people, not several notifications in one call.
  */
 export const CreateAppNotificationBody = t.Object({
+  audience: AppNotificationAudience,
   content: t.Object({
     header: t.String({ description: 'Notification title' }),
     message: t.String({ description: 'Notification body' }),
@@ -153,8 +216,32 @@ export const CreateAppNotificationBody = t.Object({
         'Path-only deep link into this app (must start with `/`). Resolved server-side against the key’s bound mini app; absolute URLs and cross-app targets are rejected.',
     })
   ),
+  idempotencyKey: t.Optional(
+    t.String({
+      description:
+        'Retry token, unique per notification key. Repeating a call that already landed returns its original outcome instead of delivering and charging it again, which is what makes a retry after a timeout safe. Reusing one with a different number of recipients is a 409.',
+    })
+  ),
 })
 export type CreateAppNotificationBody = Static<typeof CreateAppNotificationBody>
+
+/**
+ * What became of one named recipient.
+ *
+ * `not_reachable` is a **single collapsed status**, deliberately. It covers *no
+ * PPLE ID account*, *an account that has never opened this app*, *someone
+ * outside the app's current tier audience*, and *opted out* — and it must not
+ * distinguish between them, in this body, in an error code, or through timing.
+ * Splitting it into more specific reasons would turn naming a phone number into
+ * a directory lookup: an app that cannot *reach* anyone new could still *learn*
+ * who exists. The collapse is the feature.
+ */
+export const DirectRecipientResult = t.Object({
+  /** The entry exactly as it was named, so the caller can match it up. */
+  recipient: DirectRecipient,
+  status: t.Union([t.Literal('delivered'), t.Literal('not_reachable')]),
+})
+export type DirectRecipientResult = Static<typeof DirectRecipientResult>
 
 /**
  * The quota fields are optional because not every bound key is metered. The
@@ -163,15 +250,26 @@ export type CreateAppNotificationBody = Static<typeof CreateAppNotificationBody>
  * nothing enforces.
  */
 export const CreateAppNotificationResponse = t.Object({
-  recipientCount: t.Integer({
-    description:
-      'How many App Users the notification was addressed to, after the tier audience was applied. Zero is a valid outcome — nobody has opened the app yet, or the tier admits nobody.',
-  }),
+  recipientCount: t.Optional(
+    t.Integer({
+      description:
+        'How many App Users the notification was delivered to — present for `kind: "all"` only. Zero is a valid outcome: nobody has opened the app yet, or the tier admits nobody. Absent for `kind: "direct"`, where the per-recipient results are the answer and a count of *distinct* people reached would disclose whether two entries named the same person.',
+    })
+  ),
+  results: t.Optional(
+    t.Array(DirectRecipientResult, {
+      description:
+        'One result per named recipient, in the order named — present for `kind: "direct"` only. Two entries naming the same person are both answered `delivered`, and that person is notified once and charged once.',
+    })
+  ),
   dailyQuota: t.Optional(
-    t.Integer({ description: 'Sends allowed per day for this key; absent when unmetered' })
+    t.Integer({
+      description:
+        'Deliveries allowed per day for this key; absent when unmetered. A send debits the reach it *requests*, not the reach it achieves: one unit per named recipient (delivered or not), or the audience size for a broadcast.',
+    })
   ),
   remaining: t.Optional(
-    t.Integer({ description: 'Sends still available after this one; absent when unmetered' })
+    t.Integer({ description: 'Deliveries still available after this send; absent when unmetered' })
   ),
   resetAt: t.Optional(
     t.String({

@@ -4,8 +4,14 @@ import { err, ok } from 'neverthrow'
 
 import { resolveAppAudience } from './app-audience'
 import type { AppNotificationRepository } from './app-notification-repository'
+import {
+  canonicalizeRecipients,
+  type CanonicalRecipient,
+  phonesToResolve,
+  settleDirectDelivery,
+} from './direct-recipients'
 import { type BoundApp, isMeteredKey, requireAppBoundKey } from './key-binding'
-import type { CreateAppNotificationBody } from './models'
+import type { CreateAppNotificationBody, DirectRecipientResult } from './models'
 import { evaluateDailyQuota, quotaDayStart } from './quota'
 import type { NotificationRepository } from './repository'
 import { resolveAppLinkPath } from './resolve-app-link-path'
@@ -19,16 +25,118 @@ export interface AppBoundKey {
 }
 
 /**
- * The content an app may send. No audience — that is the whole point — and no
- * free-form `link` either: derived from the *app* body rather than the external
- * one, so the type cannot admit a cross-app destination. Optional self-links
- * arrive as `linkPath` and are resolved here into a normal `MINI_APP` link.
+ * The content an app may send. Uniform across recipients — one notification
+ * addressed to several people, not several notifications in one call — and with
+ * no free-form `link`: derived from the *app* body rather than the external one,
+ * so the type cannot admit a cross-app destination. Optional self-links arrive
+ * as `linkPath` and are resolved here into a normal `MINI_APP` link.
  */
 export type AppNotificationContent = CreateAppNotificationBody['content']
 
 /** Content as handed to the shared send pipeline after any self-link is resolved. */
 type AppNotificationSendContent = AppNotificationContent & {
   link?: { type: 'MINI_APP'; destination: string }
+}
+
+/**
+ * Who this call reaches, what it costs, and what to report — the one shape both
+ * audiences reduce to, so metering and delivery never have to branch on which
+ * one was asked for.
+ *
+ * `results` is spelled in terms of the wire schema (`DirectRecipientResult`)
+ * rather than `DirectSettlement['results']`, and the fields are restated rather
+ * than `Omit`-ed from it. That is load-bearing, not incidental: writing this as
+ * `Omit<DirectSettlement, 'results'> & …` makes `direct-recipients` reachable
+ * from the route's inferred type, and `@client/mobile`'s Eden client then fails
+ * to compile with TS2742 ("cannot be named without a reference to …"). Keep the
+ * settlement module out of the API surface.
+ */
+interface SendPlan {
+  /** Distinct people to actually create a notification for. */
+  deliverTo: string[]
+  /** What this call debits: the reach it requested, after de-duplication. */
+  units: number
+  /** The per-call audit record. Counts only — never who they were. */
+  audit: { named: number; delivered: number; matchRatio: number }
+  /** Per-recipient outcomes, for a `direct` send only. */
+  results?: DirectRecipientResult[]
+}
+
+/** What a usage-log row has to carry to answer a retry without re-sending. */
+interface StoredSendResult {
+  recipientCount: number
+  statuses?: DirectRecipientResult['status'][]
+}
+
+/**
+ * A broadcast as the same plan a named send produces.
+ *
+ * A broadcast debits the audience size at send time, so the reach it requests
+ * and the reach it achieves are the same number — which is why `named`,
+ * `delivered` and `units` all agree here. An audience of nobody costs nothing
+ * and reaches nobody; there is no delivery to charge for.
+ */
+const broadcastPlan = (audience: string[]): SendPlan => ({
+  deliverTo: audience,
+  units: audience.length,
+  audit: {
+    named: audience.length,
+    delivered: audience.length,
+    matchRatio: audience.length > 0 ? 1 : 0,
+  },
+})
+
+/**
+ * How far a send reached, told the way each audience is entitled to hear it.
+ *
+ * A broadcast gets `recipientCount`: the app already knows its own audience, so
+ * its size discloses nothing about any individual.
+ *
+ * A named send gets `results` and **no count**. Both entries of a pair naming
+ * one person come back `delivered`, which says nothing about whether they are
+ * the same person — but a count of distinct people reached would answer exactly
+ * that, and answering it is what refusing a both-fields entry exists to
+ * prevent. So the count stays out, which is also the shape the contract asks
+ * for: per-recipient results for `direct`, today's body for `all`.
+ */
+const reportReach = (plan: SendPlan) =>
+  plan.results
+    ? { recipientCount: undefined, results: plan.results }
+    : { recipientCount: plan.deliverTo.length, results: undefined }
+
+/** The quota fields, or nothing at all when the key is not held to a budget. */
+const remainingBudget = (meteredKey: AppBoundKey | undefined, used: number, now: Date) => {
+  if (!meteredKey) {
+    // The quota fields fall away as a group — inventing one would put a cap in
+    // the response that nothing enforces.
+    return { dailyQuota: undefined, remaining: undefined, resetAt: undefined }
+  }
+
+  // `used` already includes this send, so the verdict describes what is left
+  // after it. The same rule the refusal path reports through.
+  const quota = evaluateDailyQuota({ used, dailyQuota: meteredKey.dailyQuota, now })
+
+  return {
+    dailyQuota: quota.dailyQuota,
+    remaining: quota.remaining,
+    resetAt: quota.resetAt.toISOString(),
+  }
+}
+
+/** Read back a usage row's stored outcome, or `null` if it is not one. */
+const parseStoredResult = (storedBody: unknown): StoredSendResult | null => {
+  // Always written by `claimUsage` as a JSON string, matching how the
+  // raw-targeting path has always written this column. Anything else is a row
+  // this code did not write, and is not something to guess at.
+  if (typeof storedBody !== 'string') return null
+
+  try {
+    const parsed = JSON.parse(storedBody) as { result?: StoredSendResult } | null
+
+    return typeof parsed?.result?.recipientCount === 'number' ? parsed.result : null
+  } catch {
+    return null
+  }
 }
 
 /**
@@ -59,27 +167,46 @@ export class AppNotificationService {
   ) {}
 
   /**
-   * Send one audience-bound notification.
+   * Send one audience-bound notification, to the app's whole audience or to a
+   * named subset of it.
    *
-   * The order is deliberate: refuse unbound keys, resolve the audience, resolve
-   * any self-link, claim a quota slot, send, and release the claim if the send
-   * fails. Claiming *before* the send (atomically against the usage log) keeps
-   * concurrent last-slot sends from both landing; releasing on failure keeps
-   * the usage log meaning what it has always meant — notifications that were
-   * actually created — so an internal failure never costs the Builder part of
-   * their day's budget. An invalid `linkPath` fails before the claim so junk
-   * never costs budget.
+   * The order is deliberate: refuse unbound keys, refuse a recipient list that
+   * cannot be honoured, resolve the audience, resolve any self-link, settle who
+   * is actually reachable, claim the budget, send, and release the claim if the
+   * send fails.
    *
-   * A key bound to a central-team app skips metering entirely: the daily quota
-   * is a *Builder App Resource Limit*, and a central-team app is not an outside
-   * Builder. Without that, taking a bound key purely to be attributed would
-   * silently acquire a 1000/day cap the first time this endpoint was used.
+   * Claiming *before* the send (atomically against the usage log) keeps
+   * concurrent last-budget sends from both landing, and makes the refusal
+   * all-or-nothing: insufficient quota is a 429 with **nothing delivered**,
+   * because a partial send the caller retries would double-notify everyone it
+   * already reached. Releasing on failure keeps the usage log meaning what it
+   * has always meant — notifications that were actually created — so an
+   * internal failure never costs the Builder part of their day's budget. An
+   * invalid `linkPath` or recipient list fails before the claim, so junk never
+   * costs budget.
+   *
+   * A key bound to a central-team app is never *held* to the quota: the daily
+   * budget is a *Builder App Resource Limit*, and a central-team app is not an
+   * outside Builder. It is still *recorded*, because the audit trail is
+   * per-call and the platform cannot write it itself — this send is
+   * authenticated by the app's own key and never traverses the platform.
    */
-  async send(key: AppBoundKey, content: AppNotificationContent, linkPath?: string) {
+  async send(key: AppBoundKey, body: CreateAppNotificationBody) {
     const boundKey = requireAppBoundKey(key)
     if (boundKey.isErr()) return err(boundKey.error)
 
     const app = boundKey.value.miniApp
+
+    // Refused before any lookup and before any budget is touched: a malformed
+    // list must never resolve into a *different*, wider send. Undefined here is
+    // a broadcast — the audience the app has always been able to reach.
+    let named: CanonicalRecipient[] | undefined
+    if (body.audience.kind === 'direct') {
+      const canonical = canonicalizeRecipients(body.audience.recipients)
+      if (canonical.isErr()) return err(canonical.error)
+      named = canonical.value
+    }
+
     const audienceInput = await this.appNotificationRepository.getAudienceInput(app.id)
     if (audienceInput.isErr()) {
       return mapRepositoryError(audienceInput.error, {
@@ -90,73 +217,102 @@ export class AppNotificationService {
       })
     }
 
-    let sendContent: AppNotificationSendContent = content
-    if (linkPath !== undefined) {
+    let sendContent: AppNotificationSendContent = body.content
+    if (body.linkPath !== undefined) {
       const linkResult = resolveAppLinkPath(
-        linkPath,
+        body.linkPath,
         { slug: audienceInput.value.slug },
         this.miniAppRedirectOrigin
       )
       if (linkResult.isErr()) return err(linkResult.error)
-      sendContent = { ...content, link: linkResult.value }
+      sendContent = { ...body.content, link: linkResult.value }
     }
+
+    // The same audience a broadcast resolves to, whether or not recipients were
+    // named — which is what makes naming a narrowing and never a widening.
+    const audience = resolveAppAudience(audienceInput.value)
+
+    const planResult = named
+      ? await this.settleNamedSend(app.id, named, audience)
+      : ok(broadcastPlan(audience))
+    if (planResult.isErr()) return mapRepositoryError(planResult.error)
+    const plan = planResult.value
 
     const now = this.now()
     // The same predicate `getNotificationUsage` reports against, so what is
     // enforced here and what the Console shows cannot drift apart.
     const metered = isMeteredKey(boundKey.value)
 
-    let claim: { usageLogId: string; used: number } | undefined
-
-    if (metered) {
-      // Stringified to match how the raw-targeting path has always written this
-      // column (`sendNotificationToUser`), so the usage log stays one shape and
-      // a reader never has to branch on which path wrote the row. The audience
-      // is recorded as the app it was derived from, never as the list of people
-      // it resolved to. Claimed up front so the body is ready before send.
-      const usageBody = JSON.stringify({
-        audience: { type: 'APP_USERS', miniAppId: app.id },
-        data: sendContent,
-      })
-
-      // Quota accounting is a single transactional claim so concurrent sends
-      // cannot both squeeze past the last remaining slot.
-      const claimResult = await this.appNotificationRepository.claimUsageUnderQuota(
-        key.id,
-        key.dailyQuota,
-        quotaDayStart(now),
-        usageBody
-      )
-      if (claimResult.isErr()) return mapRepositoryError(claimResult.error)
-
-      if (claimResult.value.status === 'quota_exceeded') {
-        const quota = evaluateDailyQuota({
-          used: claimResult.value.used,
-          dailyQuota: key.dailyQuota,
-          now,
-        })
-        return err({
-          code: InternalErrorCode.NOTIFICATION_QUOTA_EXCEEDED,
-          message: `Daily notification quota of ${quota.dailyQuota} exhausted. It resets at ${quota.resetAt.toISOString()}.`,
-          data: {
-            dailyQuota: quota.dailyQuota,
-            remaining: quota.remaining,
-            resetAt: quota.resetAt.toISOString(),
-          },
-        })
-      }
-
-      claim = claimResult.value
+    const storedResult: StoredSendResult = {
+      recipientCount: plan.deliverTo.length,
+      statuses: plan.results?.map((result) => result.status),
     }
 
-    const recipients = resolveAppAudience(audienceInput.value)
+    // Stringified to match how the raw-targeting path has always written this
+    // column (`sendNotificationToUser`), so the usage log stays one shape and a
+    // reader never has to branch on which path wrote the row.
+    //
+    // The audience is recorded as the app it was derived from and the audit as
+    // counts — named, delivered, and the ratio between them. **No recipient
+    // identities**, deliberately: this row is the only per-call record that
+    // exists, and it must not accumulate into a per-person messaging history.
+    // `statuses` is positional and carries no identity of its own; it is what
+    // lets a retry be answered without re-sending.
+    const usageBody = JSON.stringify({
+      audience: {
+        type: body.audience.kind === 'direct' ? 'APP_USERS_DIRECT' : 'APP_USERS',
+        miniAppId: app.id,
+      },
+      data: sendContent,
+      audit: plan.audit,
+      result: storedResult,
+    })
+
+    // A single transactional claim, so concurrent sends cannot both squeeze
+    // past the last of the budget and a repeat of an idempotency key is
+    // recognised under the same lock.
+    const claimResult = await this.appNotificationRepository.claimUsage({
+      notificationApiKeyId: key.id,
+      dailyQuota: metered ? key.dailyQuota : null,
+      since: quotaDayStart(now),
+      units: plan.units,
+      body: usageBody,
+      idempotencyKey: body.idempotencyKey,
+    })
+    if (claimResult.isErr()) return mapRepositoryError(claimResult.error)
+    const claim = claimResult.value
+
+    if (claim.status === 'quota_exceeded') {
+      const quota = evaluateDailyQuota({ used: claim.used, dailyQuota: key.dailyQuota, now })
+      return err({
+        code: InternalErrorCode.NOTIFICATION_QUOTA_EXCEEDED,
+        // The count *named*, never the units charged. Units are the named list
+        // after people it resolved to the same person collapse, so quoting them
+        // would answer "are these two identifiers the same person?" — the very
+        // question refusing a both-fields entry exists to leave unanswered.
+        message: `Daily notification quota of ${quota.dailyQuota} exhausted; this send addresses ${plan.audit.named}, and ${quota.remaining} remain. It resets at ${quota.resetAt.toISOString()}.`,
+        data: {
+          dailyQuota: quota.dailyQuota,
+          remaining: quota.remaining,
+          resetAt: quota.resetAt.toISOString(),
+        },
+      })
+    }
+
+    // The call already landed. Answer from what it recorded rather than
+    // delivering and charging a second time — that is the whole point of the
+    // key, and re-resolving instead would report today's reachability for a
+    // send that went out yesterday.
+    if (claim.status === 'replayed') {
+      return this.replay(claim.body, named, claim.used, metered ? key : undefined, now)
+    }
 
     // An audience of nobody has no notification to create — creating one would
-    // leave a row addressed to no one. The claim still stands: it is a send the
-    // app asked for, and not metering it would leave a free path.
-    if (recipients.length > 0) {
+    // leave a row addressed to no one. The claim still stands: it is the reach
+    // the app asked for, and refunding it would leave a free path.
+    if (plan.deliverTo.length > 0) {
       const sendResult = await this.notificationRepository.sendNotificationToUser(
-        { type: 'USER_ID', details: recipients },
+        { type: 'USER_ID', details: plan.deliverTo },
         sendContent,
         {
           // The usage log above is this path's meter. Letting the shared path
@@ -167,29 +323,110 @@ export class AppNotificationService {
       )
 
       if (sendResult.isErr()) {
-        if (claim) {
-          const releaseResult = await this.appNotificationRepository.releaseUsage(claim.usageLogId)
-          if (releaseResult.isErr()) return mapRepositoryError(releaseResult.error)
-        }
+        const releaseResult = await this.appNotificationRepository.releaseUsage(claim.usageLogId)
+        if (releaseResult.isErr()) return mapRepositoryError(releaseResult.error)
         return mapRepositoryError(sendResult.error)
       }
     }
 
-    // An unmetered key has no budget to report, and the quota fields fall away
-    // as a group — inventing one would put a cap in the response that nothing
-    // enforces. `claim.used` includes this send, so evaluate against the
-    // pre-claim count and keep the pure rule's "used before this send"
-    // contract.
-    const quota = claim
-      ? evaluateDailyQuota({ used: claim.used - 1, dailyQuota: key.dailyQuota, now })
-      : undefined
+    return ok({
+      ...reportReach(plan),
+      ...remainingBudget(metered ? key : undefined, claim.used, now),
+    })
+  }
+
+  /**
+   * Work out who a *named* send actually reaches.
+   *
+   * Phone numbers are resolved inside the app's own App Users and nothing
+   * wider, and the result is narrowed again to the tier audience before it is
+   * used — so an entry naming somebody outside the app is never resolved to a
+   * person at all, and there is no fact here that a later step would have to
+   * remember not to disclose. One batched lookup rather than one per entry,
+   * which also keeps `not_reachable` from being distinguishable by timing.
+   */
+  private async settleNamedSend(
+    miniAppId: string,
+    recipients: CanonicalRecipient[],
+    audience: string[]
+  ) {
+    const phones = phonesToResolve(recipients)
+    const subsByPhone = await this.appNotificationRepository.getAppUserSubsByPhone(
+      miniAppId,
+      phones
+    )
+    if (subsByPhone.isErr()) return err(subsByPhone.error)
+
+    // Annotated, not inferred: this is the boundary that keeps
+    // `direct-recipients` out of the route's inferred type. Letting
+    // `DirectSettlement` flow out of here breaks `@client/mobile` with TS2742
+    // (see `SendPlan`).
+    const plan: SendPlan = settleDirectDelivery(recipients, {
+      reachable: new Set(audience),
+      subByPhone: subsByPhone.value,
+    })
+
+    return ok(plan)
+  }
+
+  /**
+   * Rebuild the answer a landed call already gave.
+   *
+   * The stored row holds outcomes but no identities, so the recipients are
+   * taken from *this* request and zipped with them positionally. A key reused
+   * with a different number of recipients cannot be zipped, and answering it
+   * with the old outcomes would tell the caller who was reached under a list
+   * they did not send — so it is a conflict rather than a best effort.
+   */
+  private replay(
+    storedBody: unknown,
+    recipients: CanonicalRecipient[] | undefined,
+    used: number,
+    meteredKey: AppBoundKey | undefined,
+    now: Date
+  ) {
+    const stored = parseStoredResult(storedBody)
+    if (!stored) {
+      return err({
+        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+        message: 'The stored outcome for this idempotency key could not be read',
+      })
+    }
+
+    const statuses = stored.statuses
+    if ((statuses === undefined) !== (recipients === undefined)) {
+      return err({
+        code: InternalErrorCode.NOTIFICATION_IDEMPOTENCY_KEY_CONFLICT,
+        message: 'This idempotency key was already used for a send to a different audience kind.',
+      })
+    }
+
+    if (statuses && recipients && statuses.length !== recipients.length) {
+      return err({
+        code: InternalErrorCode.NOTIFICATION_IDEMPOTENCY_KEY_CONFLICT,
+        message: `This idempotency key was already used for a send naming ${statuses.length} recipients; this call names ${recipients.length}.`,
+      })
+    }
 
     return ok({
-      recipientCount: recipients.length,
-      dailyQuota: quota?.dailyQuota,
-      // This send has now been spent, so report what is left after it.
-      remaining: quota && Math.max(quota.remaining - 1, 0),
-      resetAt: quota?.resetAt.toISOString(),
+      // Reported the same way a first attempt is: a named send answers with
+      // outcomes and no count (see `reportReach`), a broadcast with the count.
+      ...(statuses && recipients
+        ? {
+            recipientCount: undefined,
+            // Annotated for the same reason `SendPlan` restates its fields:
+            // `recipients[index].named` is a `NamedRecipient`, and letting that
+            // flow into the return type puts `direct-recipients` in the route's
+            // inferred type and breaks `@client/mobile` with TS2742.
+            results: statuses.map(
+              (status, index): DirectRecipientResult => ({
+                recipient: recipients[index].named,
+                status,
+              })
+            ),
+          }
+        : { recipientCount: stored.recipientCount, results: undefined }),
+      ...remainingBudget(meteredKey, used, now),
     })
   }
 
@@ -219,12 +456,18 @@ export class AppNotificationService {
    * claim, so the tile and a 429 cannot disagree. An app with no active key is
    * not-found (unavailable on the platform side), distinct from zero sends today.
    *
+   * `sent` is denominated in **deliveries**, not calls: a broadcast to 4,000 App
+   * Users reads as 4,000, and a direct send to three people reads as three. This
+   * is a change of meaning for the Console tile, and it is the same denomination
+   * the daily budget is expressed in — so the tile and a 429 are talking about
+   * the same number.
+   *
    * `dailyQuota` falls away for an unmetered app, the same way the send response
-   * drops its quota fields for one. A central-team app's raw-targeting sends
-   * still write usage-log rows — that is the audit trail, and it stays whole —
-   * so `sent` may climb for an app no quota is ever claimed against. Reporting a
-   * cap alongside it would show a number on the Console that nothing enforces,
-   * and one the count can pass without anything happening.
+   * drops its quota fields for one. An unmetered app's sends still write
+   * usage-log rows — that is the audit trail, and it stays whole — so `sent` may
+   * climb for an app no quota is ever claimed against. Reporting a cap alongside
+   * it would show a number on the Console that nothing enforces, and one the
+   * count can pass without anything happening.
    */
   async getNotificationUsage(miniAppId: string, now: Date = this.now()) {
     const result = await this.appNotificationRepository.getUsageSince(miniAppId, quotaDayStart(now))

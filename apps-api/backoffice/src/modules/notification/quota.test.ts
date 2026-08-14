@@ -28,48 +28,47 @@ describe('quotaDayStart', () => {
 })
 
 describe('evaluateDailyQuota', () => {
-  test('allows a send when usage is below the quota and reports what is left', () => {
+  test('reports the budget, what is spent, and what is left', () => {
     const result = evaluateDailyQuota({ used: 3, dailyQuota: 10, now: MIDDAY_BANGKOK })
 
     expect(result).toEqual({
-      allowed: true,
       dailyQuota: 10,
       used: 3,
-      // The send about to happen is not yet counted, so 7 remain including it.
       remaining: 7,
       resetAt: BANGKOK_NEXT_DAY_START,
     })
   })
 
-  test('allows the send that exactly reaches the quota', () => {
-    const result = evaluateDailyQuota({ used: 9, dailyQuota: 10, now: MIDDAY_BANGKOK })
+  test('reads the same whichever moment the caller is describing', () => {
+    // A refusal passes the count *before* the call; a success passes the count
+    // *including* it. Both want "what is left given this much spent", which is
+    // why one function serves both rather than two that differ by an offset.
+    const beforeARefusedCall = evaluateDailyQuota({ used: 9, dailyQuota: 10, now: MIDDAY_BANGKOK })
+    const afterOneThatLanded = evaluateDailyQuota({ used: 10, dailyQuota: 10, now: MIDDAY_BANGKOK })
 
-    expect(result.allowed).toBe(true)
-    expect(result.remaining).toBe(1)
+    expect(beforeARefusedCall.remaining).toBe(1)
+    expect(afterOneThatLanded.remaining).toBe(0)
   })
 
-  test('refuses the send once usage has reached the quota', () => {
+  test('an exhausted budget reports zero left and when it refills', () => {
     const result = evaluateDailyQuota({ used: 10, dailyQuota: 10, now: MIDDAY_BANGKOK })
 
-    expect(result.allowed).toBe(false)
     expect(result.remaining).toBe(0)
     expect(result.resetAt).toEqual(BANGKOK_NEXT_DAY_START)
   })
 
   test('never reports a negative remaining, even if usage overshot the quota', () => {
-    // Concurrent sends can each pass the check before either is logged, so
-    // usage can land above the quota. Report exhausted, not a negative budget.
+    // Concurrent claims against an older, un-locked path could land usage above
+    // the quota. Report exhausted, not a negative budget.
     const result = evaluateDailyQuota({ used: 14, dailyQuota: 10, now: MIDDAY_BANGKOK })
 
-    expect(result.allowed).toBe(false)
     expect(result.remaining).toBe(0)
   })
 
-  test('a zero quota refuses every send', () => {
+  test('a zero quota has nothing to spend', () => {
     // The platform's way of suspending an app's notifications outright.
     const result = evaluateDailyQuota({ used: 0, dailyQuota: 0, now: MIDDAY_BANGKOK })
 
-    expect(result.allowed).toBe(false)
     expect(result.remaining).toBe(0)
   })
 
@@ -84,7 +83,6 @@ describe('evaluateDailyQuota', () => {
       now: new Date(exhausted.resetAt.getTime() + 1000),
     })
 
-    expect(afterReset.allowed).toBe(true)
     expect(afterReset.remaining).toBe(10)
     expect(afterReset.resetAt.getTime()).toBeGreaterThan(exhausted.resetAt.getTime())
   })
