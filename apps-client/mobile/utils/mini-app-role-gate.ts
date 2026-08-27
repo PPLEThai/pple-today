@@ -9,6 +9,7 @@
  * the component that draws it.
  */
 
+import type { EligiblePerson } from './active-role'
 import { toRoleValue } from './ad-role'
 
 /** What the prompt needs to know about the app that turned the caller away. */
@@ -47,30 +48,31 @@ export function roleMismatchFromError(error: unknown): MiniAppRoleMismatch | nul
 }
 
 /**
- * Which บทบาท the dropdown should start on.
+ * Which person the prompt should start on.
  *
- * A role that actually gets the person in beats the one they are already
- * wearing: the prompt exists because the active role does not fit, so preselect
- * the first eligible role that does. Failing that, leave them on their active
- * role — they can still choose to enter as they are.
+ * A person whose role actually gets them in beats the one they are already
+ * wearing: the prompt exists because the active person is not listed, so
+ * preselect the first eligible person who is. Failing that, leave them on their
+ * current person — they can still choose to enter as they are.
+ *
+ * Compared by `id`, not by role string: two `delegate` rows must stay two
+ * options even though `role` is the same.
  */
-export function preferredRoleForApp({
-  eligibleRoles,
+export function preferredPersonForApp({
+  eligiblePersons,
   requiredRoles,
-  activeRole,
+  activePersonId,
 }: {
-  eligibleRoles: string[]
+  eligiblePersons: EligiblePerson[]
   requiredRoles: string[]
-  activeRole: string | null
-}): string | null {
-  const eligibleValues = eligibleRoles.map(toRoleValue)
+  activePersonId: number | null
+}): number | null {
   const requiredValues = new Set(requiredRoles.map(toRoleValue))
 
-  const fitting = eligibleValues.find((role) => requiredValues.has(role))
-  if (fitting) return fitting
+  const fitting = eligiblePersons.find((entry) => requiredValues.has(toRoleValue(entry.role)))
+  if (fitting) return fitting.id
 
-  const activeValue = activeRole ? toRoleValue(activeRole) : null
-  if (activeValue && eligibleValues.includes(activeValue)) return activeValue
+  if (activePersonId != null) return activePersonId
 
-  return activeValue ?? eligibleValues[0] ?? null
+  return eligiblePersons[0]?.id ?? null
 }

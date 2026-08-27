@@ -18,7 +18,6 @@ import { refreshMiniAppLists } from '@app/components/mini-app/invite-inbox'
 import { MiniAppRoleGateDialog } from '@app/components/mini-app/role-gate-dialog'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useActiveRole, useSwitchRoleMutation } from '@app/libs/auth'
-import { toRoleValue } from '@app/utils/ad-role'
 import { miniAppUrlWithPath } from '@app/utils/mini-app'
 import { roleMismatchFromError } from '@app/utils/mini-app-role-gate'
 
@@ -96,28 +95,26 @@ const MiniAppWebView = () => {
     }
   }
 
-  // เข้าใช้งาน: switch บทบาท first when the user picked a different one, then
+  // เข้าใช้งาน: switch บทบาท first when the user picked a different person, then
   // re-run the exchange. Waiving the role check is kept for the case where they
-  // enter as they are — a switch that lands on a listed role needs no waiver,
+  // enter as they are — a switch that lands on a listed person needs no waiver,
   // but the flag costs nothing and covers a switch that does not.
-  const enterWithRole = async (role: string | null) => {
+  const enterWithPerson = async (personId: number | null) => {
     // The dialog stays up until the re-run exchange clears the error, so a
     // second tap in that gap must not switch บทบาท twice.
     if (switchRoleMutation.isPending || roleMismatchAcknowledged) return
 
-    const activeRoleValue = activeRoleQuery.data?.activeRole
-      ? toRoleValue(activeRoleQuery.data.activeRole)
-      : null
+    const activePersonId = activeRoleQuery.data?.activePersonId ?? null
 
-    if (role && role !== activeRoleValue) {
+    if (personId != null && personId !== activePersonId) {
       try {
-        await switchRoleMutation.mutateAsync({ role })
+        await switchRoleMutation.mutateAsync({ pplePersonId: personId })
       } catch {
         toast.error({ text1: 'เปลี่ยนบทบาทไม่สำเร็จ', icon: TriangleAlertIcon })
         return
       }
       // The app grid is role-scoped, and the user may have just switched into
-      // the role this app is listed for — drop the list they came in with.
+      // a person this app is listed for — drop the list they came in with.
       await refreshMiniAppLists(queryClient)
     }
 
@@ -212,11 +209,11 @@ const MiniAppWebView = () => {
         <MiniAppRoleGateDialog
           appName={roleMismatch.appName}
           requiredRoles={roleMismatch.requiredRoles}
-          eligibleRoles={activeRoleQuery.data?.eligibleRoles ?? []}
-          activeRole={activeRoleQuery.data?.activeRole ?? null}
+          eligiblePersons={activeRoleQuery.data?.eligiblePersons ?? []}
+          activePersonId={activeRoleQuery.data?.activePersonId ?? null}
           isSubmitting={switchRoleMutation.isPending}
           onCancel={closeMiniApp}
-          onConfirm={enterWithRole}
+          onConfirm={enterWithPerson}
         />
       )}
     </View>

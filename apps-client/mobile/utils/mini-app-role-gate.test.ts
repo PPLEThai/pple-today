@@ -1,6 +1,15 @@
 import { describe, expect, test } from 'vitest'
 
-import { preferredRoleForApp, roleMismatchFromError } from './mini-app-role-gate'
+import type { EligiblePerson } from './active-role'
+import { preferredPersonForApp, roleMismatchFromError } from './mini-app-role-gate'
+
+const person = (id: number, role: string, roleLabel = role): EligiblePerson => ({
+  id,
+  role,
+  roleLabel,
+  supervisorFullName: null,
+  supervisorRoleLabel: null,
+})
 
 const edenError = (code: string, data?: unknown) => ({
   status: 403,
@@ -39,50 +48,73 @@ describe('roleMismatchFromError', () => {
   })
 })
 
-describe('preferredRoleForApp', () => {
-  test('preselects a role that gets the user in, over the one they are wearing', () => {
+describe('preferredPersonForApp', () => {
+  test('preselects a person whose role gets the user in, over the one they are wearing', () => {
     expect(
-      preferredRoleForApp({
-        eligibleRoles: ['local', 'mp'],
+      preferredPersonForApp({
+        eligiblePersons: [person(1, 'local'), person(2, 'mp')],
         requiredRoles: ['mp'],
-        activeRole: 'local',
+        activePersonId: 1,
       })
-    ).toBe('mp')
+    ).toBe(2)
   })
 
   test('matches roles the SSO reports by Thai label', () => {
     expect(
-      preferredRoleForApp({
-        eligibleRoles: ['ทีมท้องถิ่น', 'สส.'],
+      preferredPersonForApp({
+        eligiblePersons: [person(1, 'ทีมท้องถิ่น'), person(2, 'สส.')],
         requiredRoles: ['mp'],
-        activeRole: 'ทีมท้องถิ่น',
+        activePersonId: 1,
       })
-    ).toBe('mp')
+    ).toBe(2)
   })
 
-  test('keeps the active role when none of the eligible roles fit', () => {
+  test('two delegates stay two people — the first listed role that fits wins', () => {
     expect(
-      preferredRoleForApp({
-        eligibleRoles: ['local', 'province'],
-        requiredRoles: ['mp'],
-        activeRole: 'province',
+      preferredPersonForApp({
+        eligiblePersons: [
+          person(11, 'delegate', 'ปฎิบัติงานแทน'),
+          person(12, 'delegate', 'ปฎิบัติงานแทน'),
+        ],
+        requiredRoles: ['delegate'],
+        activePersonId: 12,
       })
-    ).toBe('province')
+    ).toBe(11)
   })
 
-  test('falls back to the first eligible role when there is no active role', () => {
+  test('keeps the current person when none of the eligible people fit', () => {
     expect(
-      preferredRoleForApp({
-        eligibleRoles: ['local', 'province'],
+      preferredPersonForApp({
+        eligiblePersons: [person(1, 'local'), person(2, 'province')],
         requiredRoles: ['mp'],
-        activeRole: null,
+        activePersonId: 2,
       })
-    ).toBe('local')
+    ).toBe(2)
+  })
+
+  test('keeps the current person even when they are not among the eligible rows', () => {
+    expect(
+      preferredPersonForApp({
+        eligiblePersons: [person(1, 'local'), person(2, 'province')],
+        requiredRoles: ['mp'],
+        activePersonId: 99,
+      })
+    ).toBe(99)
+  })
+
+  test('falls back to the first eligible person when there is no current person', () => {
+    expect(
+      preferredPersonForApp({
+        eligiblePersons: [person(1, 'local'), person(2, 'province')],
+        requiredRoles: ['mp'],
+        activePersonId: null,
+      })
+    ).toBe(1)
   })
 
   test('is null when there is nothing to choose between', () => {
     expect(
-      preferredRoleForApp({ eligibleRoles: [], requiredRoles: [], activeRole: null })
+      preferredPersonForApp({ eligiblePersons: [], requiredRoles: [], activePersonId: null })
     ).toBeNull()
   })
 })
