@@ -3,9 +3,9 @@
  *
  * The same role travels under three spellings: the API prefixes it
  * (`pple-ad:mp`), the SSO userinfo returns it bare (`mp`) — and, inconsistently,
- * sometimes returns the Thai label instead. Everything user-facing has to agree
- * on one canonical value, because that value is also what the switch-role
- * endpoint is given; sending the wrong spelling switches nothing.
+ * sometimes returns the Thai label instead. Comparing a mini app's listing
+ * against `eligiblePersons` has to agree on one canonical value; switching
+ * itself is by `pple_person_id`.
  */
 
 /** How the API qualifies AD roles (mini-app role lists, `/auth/me`). */
@@ -30,7 +30,8 @@ const ROLE_VALUE_BY_LABEL: Record<string, string> = Object.fromEntries(
 /**
  * The canonical role value, from any of the three spellings. Unknown roles pass
  * through unchanged (minus the prefix) so a role added in SSO before it is added
- * here still switches correctly — it just shows its raw name.
+ * here still matches a listing — it just shows its raw name when no `role_label`
+ * arrived with it.
  */
 export const toRoleValue = (role: string) => {
   const bare = role.startsWith(AD_ROLE_PREFIX) ? role.slice(AD_ROLE_PREFIX.length) : role

@@ -31,6 +31,7 @@ import { z } from 'zod/v4'
 
 import type { GetAuthMeResponse } from '@api/backoffice/app'
 import { environment } from '@app/env'
+import { type ActiveRoleInfo, activeRoleInfoFromUserInfo } from '@app/utils/active-role'
 
 import { AuthSession, getAuthSession, getAuthSessionAsync, setAuthSession } from './session'
 
@@ -142,28 +143,7 @@ export const useUser = () => {
   })
 }
 
-// SSO AD active-role info, derived from the `ad` object of the userinfo response.
-// Every level is nullish because the AD block is omitted for users with no active role.
-const ActiveRoleSchema = z.object({
-  ad: z
-    .object({
-      activeRole: z.string().nullish(),
-      actualPpleUser: z
-        .object({
-          role: z.string().nullish(),
-        })
-        .nullish(),
-      eligibleRoles: z.array(z.string()).nullish(),
-      roleMapping: z.record(z.string(), z.string()).nullish(),
-    })
-    .nullish(),
-})
-
-export interface ActiveRoleInfo {
-  activeRole: string | null
-  eligibleRoles: string[]
-  roleMapping: Record<string, string>
-}
+export type { ActiveRoleInfo }
 
 const ACTIVE_ROLE_POLL_INTERVAL_MS = 10_000
 
@@ -181,16 +161,11 @@ export const useActiveRoleQuery = createQuery<
     if (userInfo?.error) {
       throw userInfo
     }
-    const parsed = ActiveRoleSchema.safeParse(userInfo)
-    if (parsed.error) {
-      console.error('Error parsing AD active role:', parsed.error, userInfo)
-      throw parsed.error
-    }
-    const ad = parsed.data.ad
-    return {
-      activeRole: ad?.actualPpleUser?.role ?? null,
-      eligibleRoles: ad?.eligibleRoles ?? [],
-      roleMapping: ad?.roleMapping ?? {},
+    try {
+      return activeRoleInfoFromUserInfo(userInfo)
+    } catch (error) {
+      console.error('Error parsing AD active role:', error, userInfo)
+      throw error
     }
   },
   initialData: null,
@@ -211,10 +186,10 @@ export const useActiveRole = () => {
 }
 
 export const switchActiveRole = async ({
-  role,
+  pplePersonId,
   slug = environment.EXPO_PUBLIC_PPLE_ID_MINI_APP_SLUG,
 }: {
-  role: string
+  pplePersonId: number
   slug?: string
 }) => {
   // The SSO `switch-role` endpoint rejects the PPLE Today client token; it only
@@ -238,7 +213,7 @@ export const switchActiveRole = async ({
       'Content-Type': 'application/json',
       Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify({ role }),
+    body: JSON.stringify({ pple_person_id: pplePersonId }),
   })
   if (!response.ok) {
     const detail = await response.text().catch(() => '')
@@ -252,7 +227,7 @@ export const useSwitchRoleMutation = () => {
   return useMutation({
     mutationFn: switchActiveRole,
     onSuccess: () => {
-      // Refresh the active role so the dropdown (and the app-list effect) react.
+      // Refresh the active person so the picker (and the app-list effect) react.
       queryClient.invalidateQueries({ queryKey: useActiveRoleQuery.getKey() })
     },
   })

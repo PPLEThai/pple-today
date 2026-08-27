@@ -1,38 +1,30 @@
-import React, { useCallback, useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Pressable, PressableProps, ScrollView, View } from 'react-native'
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
 
 import { Icon } from '@pple-today/ui/icon'
 import { cn } from '@pple-today/ui/lib/utils'
-import {
-  Option,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@pple-today/ui/select'
 import { Skeleton } from '@pple-today/ui/skeleton'
 import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
+import { toast } from '@pple-today/ui/toast'
 import { H1, H2 } from '@pple-today/ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import { useRouter } from 'expo-router'
-import { VoteIcon } from 'lucide-react-native'
+import { ChevronDownIcon, TriangleAlertIcon, VoteIcon } from 'lucide-react-native'
 
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { ElectionCard } from '@app/components/election/election-card'
 import { MiniAppInviteInbox, refreshMiniAppLists } from '@app/components/mini-app/invite-inbox'
+import { PersonRolePickerDialog } from '@app/components/mini-app/role-person-picker'
 import { MiniAppTierBadge } from '@app/components/mini-app/tier-badge'
 import { RefreshControl } from '@app/components/refresh-control'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { Spinner } from '@app/components/spinner'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useActiveRole, useSession, useSwitchRoleMutation } from '@app/libs/auth'
-// The SSO userinfo `roleMapping` is inconsistent about whether its keys are role
-// values or labels, so roles are named locally instead — see `utils/ad-role`.
-import { toRoleLabel, toRoleValue } from '@app/utils/ad-role'
+import { activePersonLabel } from '@app/utils/active-role'
 
 import { useBottomTabOnPress } from '../_layout'
 
@@ -40,28 +32,39 @@ export default function OfficialPage() {
   const queryClient = useQueryClient()
   const activeRoleQuery = useActiveRole()
   const switchRoleMutation = useSwitchRoleMutation()
+  const [pickerOpen, setPickerOpen] = useState(false)
 
-  const activeRole = activeRoleQuery.data?.activeRole ?? null
-  const eligibleRoles = activeRoleQuery.data?.eligibleRoles ?? []
-  const activeRoleValue = activeRole ? toRoleValue(activeRole) : null
+  const activePersonId = activeRoleQuery.data?.activePersonId ?? null
+  const eligiblePersons = activeRoleQuery.data?.eligiblePersons ?? []
+  const triggerLabel = activeRoleQuery.data ? activePersonLabel(activeRoleQuery.data) : null
   const isSwitchingRole = switchRoleMutation.isPending
 
-  // Refresh the app list whenever the active role changes, whether from the
-  // dropdown (switch mutation) or the 10s polling interval.
+  // Refresh the app list whenever the active person changes, whether from the
+  // picker (switch mutation) or the 10s polling interval. Two delegates share a
+  // role string, so this has to key on person id.
   useEffect(() => {
     queryClient.resetQueries({
       queryKey: reactQueryClient.getQueryKey('/mini-app'),
     })
-  }, [activeRole, queryClient])
+  }, [activePersonId, queryClient])
 
-  const onRoleChange = useCallback(
-    (option?: Option) => {
-      // option.value is already the canonical role value (see SelectItem below).
-      if (option?.value && option.value !== activeRoleValue) {
-        switchRoleMutation.mutate({ role: option.value })
+  const onConfirmPerson = useCallback(
+    async (personId: number | null) => {
+      // The dialog stays up until the switch finishes, so a second tap in that
+      // gap must not switch บทบาท twice.
+      if (isSwitchingRole) return
+
+      if (personId != null && personId !== activePersonId) {
+        try {
+          await switchRoleMutation.mutateAsync({ pplePersonId: personId })
+        } catch {
+          toast.error({ text1: 'เปลี่ยนบทบาทไม่สำเร็จ', icon: TriangleAlertIcon })
+          return
+        }
       }
+      setPickerOpen(false)
     },
-    [activeRoleValue, switchRoleMutation]
+    [activePersonId, isSwitchingRole, switchRoleMutation]
   )
 
   const onRefresh = useCallback(async () => {
@@ -91,23 +94,24 @@ export default function OfficialPage() {
               <PPLEIcon width={35} height={30} />
               <H1 className="text-3xl font-heading-semibold text-base-primary-default">แอป</H1>
             </View>
-            {activeRole && (
+            {triggerLabel && (
               <View className="flex flex-row gap-2 items-center">
                 <Text className="font-heading-regular text-base-text-medium">บทบาท:</Text>
-                <Select
-                  value={{ value: activeRoleValue ?? activeRole, label: toRoleLabel(activeRole) }}
-                  onValueChange={onRoleChange}
+                <Pressable
+                  accessibilityRole="button"
+                  aria-label="บทบาท"
+                  disabled={isSwitchingRole}
+                  onPress={() => setPickerOpen(true)}
+                  className={cn(
+                    'flex flex-row h-10 min-w-[120px] items-center justify-between rounded-lg border border-input bg-background px-3 py-2',
+                    isSwitchingRole && 'opacity-50'
+                  )}
                 >
-                  <SelectTrigger className="min-w-[120px]" disabled={isSwitchingRole}>
-                    <SelectValue placeholder="" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {eligibleRoles.map((role) => {
-                      const value = toRoleValue(role)
-                      return <SelectItem key={value} label={toRoleLabel(role)} value={value} />
-                    })}
-                  </SelectContent>
-                </Select>
+                  <Text className="text-[0.875rem] font-heading-regular text-foreground">
+                    {triggerLabel}
+                  </Text>
+                  <Icon icon={ChevronDownIcon} size={16} className="text-foreground" />
+                </Pressable>
               </View>
             )}
           </View>
@@ -121,6 +125,20 @@ export default function OfficialPage() {
           <MiniAppSection isSwitchingRole={isSwitchingRole} />
         </View>
       </ScrollView>
+      {pickerOpen && (
+        <PersonRolePickerDialog
+          title="เลือกบทบาทที่ต้องการใช้งาน"
+          confirmLabel="ยืนยัน"
+          eligiblePersons={eligiblePersons}
+          preferredPersonId={activePersonId}
+          showList={eligiblePersons.length > 1}
+          isSubmitting={isSwitchingRole}
+          onCancel={() => {
+            if (!isSwitchingRole) setPickerOpen(false)
+          }}
+          onConfirm={onConfirmPerson}
+        />
+      )}
     </SafeAreaLayout>
   )
 }
