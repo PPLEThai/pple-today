@@ -1,5 +1,29 @@
 # @api/backoffice
 
+## 1.16.1
+
+### Patch Changes
+
+- [#467](https://github.com/PPLEThai/pple-today/pull/467) [`1ecf4ff`](https://github.com/PPLEThai/pple-today/commit/1ecf4ffb625f6d44ba83d897a8fb5e7724ac0f06) Thanks [@PanJ](https://github.com/PanJ)! - Move Facebook page access and CMS admin access onto SSO AD roles.
+
+  `GET /facebook/config` now answers `canConnectPage` by running the same precondition the `/facebook` routes enforce, so the section a user sees and the routes they may call can no longer disagree — and changing who may connect a page (including the `pple-ad:ppleToday:allowFB` override) is a backend deploy rather than an app release. The app caches the answer for an hour and re-asks when the user switches บทบาท.
+
+  The CMS guard now requires the AD role `pple-ad:ppleToday:admin` instead of the Zitadel role `today-cms:admin`, so admin access follows the active role like every other authorisation decision. **Grant `ppleToday:admin` in SSO AD to everyone who needs the CMS before deploying** — the Zitadel role no longer admits.
+
+- [#469](https://github.com/PPLEThai/pple-today/pull/469) [`67347d3`](https://github.com/PPLEThai/pple-today/commit/67347d3eb4444324121d6e717b3f71f61abd20ae) Thanks [@PanJ](https://github.com/PanJ)! - Fix feed variety and user-suggestion relevance.
+
+  The feed no longer collapses onto one prolific author or the same viral posts. The follower signal was pointing at the requesting user instead of the accounts they follow (regressed in the `followedId` → `followingId` rename) — following someone now actually boosts their posts, and your own posts are excluded. Engagement (reactions/comments) is counted once instead of up to three times and log-dampened so popularity amplifies personal relevance instead of replacing it; each author's items after their best are discounted (×0.6 per rank) so a single author cannot fill the feed; decay softens to a 3-day half-life with ±15% exploration noise per 10-minute score refresh.
+
+  User suggestions (`GET /profile/recommend`) now rank official accounts by real signals — per-source-normalized affinity, +2.0 when the account's `responsibleArea` matches the user's province, activity in the user's followed topics over the last 30 days, and a small follower prior — instead of the previous `0 + RANDOM()` lottery, and the ranking now survives the Prisma lookup instead of being scrambled. Eligibility expands from MP/HQ to all official roles: `pple-ad:mp`, `pple-ad:hq`, `pple-ad:local`, `pple-ad:province`, `pple-ad:tto`.
+
+  Performance: `FeedItem` gains `publishedAt` and `authorId` indexes, the per-user score cache shrinks from 1000 to 300 rows (3× less write churn), and score regeneration takes a per-user advisory lock so concurrent first-page requests no longer duplicate the heavy query or collide on the primary key.
+
+  **Deploy note:** run `prisma migrate deploy` (recreates the three `get_candidate_feed_item_by_*` functions and adds the two indexes; plain `CREATE INDEX` briefly locks `FeedItem`, so prefer a quiet window). Users pick up the new ranking within 10 minutes as their score cache expires.
+
+- Updated dependencies [[`67347d3`](https://github.com/PPLEThai/pple-today/commit/67347d3eb4444324121d6e717b3f71f61abd20ae)]:
+  - @pple-today/database@1.10.1
+  - @pple-today/api-common@1.11.1
+
 ## 1.16.0
 
 ### Minor Changes
