@@ -481,7 +481,9 @@ export class FeedRepository {
         // on the (userId, feedItemId) primary key in `createMany` below.
         await this.prismaService.$transaction(
           async (tx) => {
-            await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}))`
+            // pg_advisory_xact_lock returns `void`, which $queryRaw cannot
+            // deserialize — $executeRaw runs the statement without reading rows.
+            await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}))`
 
             const existingFeedItemScoreInTx = await tx.feedItemScore.findFirst({
               where: { userId, expiresAt: { gt: new Date() } },
