@@ -118,3 +118,11 @@ export const UnlinkPageResponse = t.Object({
   }),
 })
 export type UnlinkPageResponse = Static<typeof UnlinkPageResponse>
+
+export const GetFacebookConfigResponse = t.Object({
+  canConnectPage: t.Boolean({
+    description:
+      'Whether the caller may connect and manage a Facebook page, decided from their SSO AD roles. Clients gate the Facebook page section on this instead of matching roles themselves.',
+  }),
+})
+export type GetFacebookConfigResponse = Static<typeof GetFacebookConfigResponse>

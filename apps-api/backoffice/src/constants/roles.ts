@@ -28,3 +28,32 @@ export const MAIN_AD_ROLE_LABELS: Record<string, string> = {
   confirmed_candidate: 'ผู้สมัคร (ยืนยัน)',
   delegate: 'ปฎิบัติงานแทน',
 }
+
+/**
+ * Roles allowed to connect and manage a Facebook page in PPLE Today.
+ *
+ * Enforced by the `/facebook` route guards and served to clients through
+ * `GET /facebook/config`, so changing who may connect a page is a backend
+ * change only — shipped apps pick it up without a release.
+ */
+export const FACEBOOK_CONNECT_ALLOWED_ROLES = [
+  'pple-ad:mp',
+  'pple-ad:hq',
+  'pple-ad:ppleToday:allowFB',
+]
+
+/**
+ * The AD role that grants access to the PPLE Today CMS (every `/admin/*` route).
+ *
+ * Replaces the Zitadel `today-cms:admin` role: admin access now follows the AD
+ * active role like every other authorisation decision, so granting or revoking
+ * it is an AD change rather than a Zitadel one.
+ */
+export const CMS_ADMIN_ROLE = 'pple-ad:ppleToday:admin'
+
+/**
+ * Whether the caller may use the CMS, from the visible roles resolved for their
+ * active role. Takes AD roles only: the retired Zitadel `today-cms:admin` does
+ * not admit, because a Zitadel role does not follow a role switch.
+ */
+export const isCmsAdmin = (visibleRoles: string[]) => visibleRoles.includes(CMS_ADMIN_ROLE)

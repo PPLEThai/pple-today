@@ -90,3 +90,25 @@ export const resolveVisibleRoles = (userInfo: AdUserInfo): string[] => {
     .filter((role): role is string => Boolean(role))
     .map((role) => `${AD_ROLE_PREFIX}${role}`)
 }
+
+/**
+ * The caller's `pple-ad:`-prefixed visible roles, resolved live from their own
+ * bearer token.
+ *
+ * Shared by both guards so user and admin authorisation read the same source:
+ * the AD active role, not the OIDC token's `pple_roles` — a Zitadel mirror that
+ * does not follow a role switch.
+ */
+export const fetchAdVisibleRoles = async (
+  headers: Record<string, string | undefined>,
+  oidcUrl: string
+) => {
+  const token = headers['authorization']?.replace('Bearer', '').trim()
+  if (!token)
+    return err({ code: InternalErrorCode.UNAUTHORIZED, message: 'User not authenticated' })
+
+  const userInfo = await fetchAdUserInfo(token, oidcUrl)
+  if (userInfo.isErr()) return err(userInfo.error)
+
+  return ok(resolveVisibleRoles(userInfo.value))
+}

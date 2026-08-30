@@ -3,6 +3,7 @@ import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-commo
 import Elysia from 'elysia'
 
 import {
+  GetFacebookConfigResponse,
   GetFacebookUserPageListQuery,
   GetFacebookUserPageListResponse,
   GetLinkedFacebookPageResponse,
@@ -17,7 +18,21 @@ import {
 import { FacebookServicePlugin } from './services'
 import { FacebookWebhookController } from './webhook'
 
+import { FACEBOOK_CONNECT_ALLOWED_ROLES } from '../../constants/roles'
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
+
+/**
+ * The one precondition every Facebook page endpoint enforces — and the same
+ * question `GET /facebook/config` answers for clients, so the section a user
+ * sees and the routes they may call can never disagree.
+ *
+ * The roles are `pple-ad:`-prefixed, so `checkUserPrecondition` resolves them
+ * live from SSO AD (active role + extra roles) rather than the OIDC token.
+ */
+const FACEBOOK_CONNECT_PRECONDITION = {
+  allowedRoles: FACEBOOK_CONNECT_ALLOWED_ROLES,
+  isActive: true,
+}
 
 export const FacebookController = new Elysia({
   prefix: '/facebook',
@@ -25,6 +40,50 @@ export const FacebookController = new Elysia({
 })
   .use([FacebookServicePlugin, AuthGuardPlugin])
   .use(FacebookWebhookController)
+  .get(
+    '/config',
+    async ({ status, headers, authGuard }) => {
+      // Ask the guard the same question it asks on every other route here, so a
+      // client never shows an entry point the API would refuse. Only FORBIDDEN
+      // is an answer — an unresolvable token or an SSO outage stays an error
+      // rather than a silently hidden section.
+      const checkResult = await authGuard.checkUserPrecondition(
+        headers,
+        FACEBOOK_CONNECT_PRECONDITION
+      )
+
+      if (checkResult.isErr() && checkResult.error.code !== InternalErrorCode.FORBIDDEN) {
+        // Everything the guard can fail with other than FORBIDDEN is either an
+        // unusable token or a broken dependency; narrow it to the two the caller
+        // can act on rather than leaking the guard's whole error surface here.
+        return mapErrorCodeToResponse(
+          checkResult.error.code === InternalErrorCode.UNAUTHORIZED
+            ? { code: InternalErrorCode.UNAUTHORIZED, message: checkResult.error.message }
+            : {
+                code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+                message: 'Failed to resolve Facebook page permission',
+              },
+          status
+        )
+      }
+
+      return status(200, { canConnectPage: checkResult.isOk() })
+    },
+    {
+      response: {
+        200: GetFacebookConfigResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get Facebook Feature Config',
+        description:
+          'Whether the caller may connect a Facebook page, decided from their SSO AD roles so clients need no role list of their own',
+      },
+    }
+  )
   // TODO: Remove this endpoint groups
   .group('/token', (app) =>
     app
@@ -41,10 +100,7 @@ export const FacebookController = new Elysia({
           return status(200, accessTokenResult.value)
         },
         {
-          requiredLocalUserPrecondition: {
-            allowedRoles: ['pple-ad:mp', 'pple-ad:hq', 'pple-ad:ppleToday:allowFB'],
-            isActive: true,
-          },
+          requiredLocalUserPrecondition: FACEBOOK_CONNECT_PRECONDITION,
           detail: {
             summary: 'Get Facebook User Access Token',
             description: 'Fetches the user access token from Facebook using the authorization code',
@@ -72,10 +128,7 @@ export const FacebookController = new Elysia({
           return status(200, pageList.value)
         },
         {
-          requiredLocalUserPrecondition: {
-            allowedRoles: ['pple-ad:mp', 'pple-ad:hq', 'pple-ad:ppleToday:allowFB'],
-            isActive: true,
-          },
+          requiredLocalUserPrecondition: FACEBOOK_CONNECT_PRECONDITION,
           detail: {
             summary: 'Get Facebook User Page List',
             description: 'Fetches the list of Facebook pages associated with the user',
@@ -111,10 +164,7 @@ export const FacebookController = new Elysia({
             description:
               'Checks the availability status of Facebook pages for linking to the user account',
           },
-          requiredLocalUserPrecondition: {
-            allowedRoles: ['pple-ad:mp', 'pple-ad:hq', 'pple-ad:ppleToday:allowFB'],
-            isActive: true,
-          },
+          requiredLocalUserPrecondition: FACEBOOK_CONNECT_PRECONDITION,
           query: GetLinkedPageAvailableStatusQuery,
           response: {
             200: GetLinkedPageAvailableStatusResponse,
@@ -140,10 +190,7 @@ export const FacebookController = new Elysia({
           return status(200, { linkedFacebookPage: linkedPageResult.value })
         },
         {
-          requiredLocalUserPrecondition: {
-            allowedRoles: ['pple-ad:mp', 'pple-ad:hq', 'pple-ad:ppleToday:allowFB'],
-            isActive: true,
-          },
+          requiredLocalUserPrecondition: FACEBOOK_CONNECT_PRECONDITION,
           response: {
             200: GetLinkedFacebookPageResponse,
             ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
@@ -174,10 +221,7 @@ export const FacebookController = new Elysia({
           })
         },
         {
-          requiredLocalUserPrecondition: {
-            allowedRoles: ['pple-ad:mp', 'pple-ad:hq', 'pple-ad:ppleToday:allowFB'],
-            isActive: true,
-          },
+          requiredLocalUserPrecondition: FACEBOOK_CONNECT_PRECONDITION,
           body: LinkFacebookPageToUserBody,
           response: {
             201: LinkFacebookPageToUserResponse,
@@ -214,10 +258,7 @@ export const FacebookController = new Elysia({
           })
         },
         {
-          requiredLocalUserPrecondition: {
-            allowedRoles: ['pple-ad:mp', 'pple-ad:hq', 'pple-ad:ppleToday:allowFB'],
-            isActive: true,
-          },
+          requiredLocalUserPrecondition: FACEBOOK_CONNECT_PRECONDITION,
           response: {
             200: UnlinkPageResponse,
             ...createErrorSchema(

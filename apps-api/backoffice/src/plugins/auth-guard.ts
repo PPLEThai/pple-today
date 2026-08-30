@@ -10,7 +10,7 @@ import { ConfigServicePlugin } from './config'
 import { AD_ROLE_PREFIX } from '../constants/roles'
 import { AuthRepository, AuthRepositoryPlugin } from '../modules/auth/repository'
 import { introspectAccessToken } from '../utils/jwt'
-import { fetchAdUserInfo, resolveVisibleRoles } from '../utils/sso-ad'
+import { fetchAdVisibleRoles } from '../utils/sso-ad'
 
 export class AuthGuard {
   constructor(
@@ -39,14 +39,7 @@ export class AuthGuard {
   }
 
   async getAdVisibleRoles(headers: Record<string, string | undefined>) {
-    const token = headers['authorization']?.replace('Bearer', '').trim()
-    if (!token)
-      return err({ code: InternalErrorCode.UNAUTHORIZED, message: 'User not authenticated' })
-
-    const userInfo = await fetchAdUserInfo(token, this.oidcConfig.oidcUrl)
-    if (userInfo.isErr()) return err(userInfo.error)
-
-    return ok(resolveVisibleRoles(userInfo.value))
+    return await fetchAdVisibleRoles(headers, this.oidcConfig.oidcUrl)
   }
 
   async checkUserPrecondition(

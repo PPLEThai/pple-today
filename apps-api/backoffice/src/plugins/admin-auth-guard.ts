@@ -5,9 +5,11 @@ import { ok } from 'neverthrow'
 
 import { ConfigServicePlugin } from './config'
 
+import { isCmsAdmin } from '../constants/roles'
 import { AdminAuthRepository, AdminAuthRepositoryPlugin } from '../modules/admin/auth/repository'
 import { introspectAccessToken } from '../utils/jwt'
 import { setUserIdHeader } from '../utils/request'
+import { fetchAdVisibleRoles } from '../utils/sso-ad'
 
 export class AdminAuthGuard {
   constructor(
@@ -26,10 +28,20 @@ export class AdminAuthGuard {
     if (!token)
       return err({ code: InternalErrorCode.UNAUTHORIZED, message: 'User not authenticated' })
 
-    const introspectionResult = await introspectAccessToken(token, this.oidcConfig)
+    // Identity and authorisation are two different SSO reads, taken in parallel
+    // over the same token: introspection says who this is, AD userinfo says
+    // which บทบาท they are currently wearing. Only the AD side decides admin
+    // access — the token's `pple_roles` are a Zitadel mirror that does not
+    // follow a role switch.
+    const [introspectionResult, visibleRolesResult] = await Promise.all([
+      introspectAccessToken(token, this.oidcConfig),
+      fetchAdVisibleRoles(headers, this.oidcConfig.oidcUrl),
+    ])
 
     if (introspectionResult.isErr()) return err(introspectionResult.error)
-    if (!introspectionResult.value.pple_roles.includes('today-cms:admin')) {
+    if (visibleRolesResult.isErr()) return err(visibleRolesResult.error)
+
+    if (!isCmsAdmin(visibleRolesResult.value)) {
       return err({
         code: InternalErrorCode.FORBIDDEN,
         message: 'Required admin role to access this resource',
