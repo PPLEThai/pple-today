@@ -1,5 +1,15 @@
 # @api/backoffice
 
+## 1.16.2
+
+### Patch Changes
+
+- [#472](https://github.com/PPLEThai/pple-today/pull/472) [`a20aaa4`](https://github.com/PPLEThai/pple-today/commit/a20aaa4b0e9fd1d49aa819bc35fa739a5222f233) Thanks [@PanJ](https://github.com/PanJ)! - Fix `GET /feed/me` returning 500 on every feed-score regeneration: `pg_advisory_xact_lock()` returns the Postgres `void` type, which Prisma's `$queryRaw` cannot deserialize. The advisory lock is now taken with `$executeRaw`, which executes the statement without parsing result rows.
+
+- Updated dependencies [[`25d8822`](https://github.com/PPLEThai/pple-today/commit/25d88229e457edc502713df2dcd0ec599147e1cf)]:
+  - @pple-today/database@1.10.2
+  - @pple-today/api-common@1.11.2
+
 ## 1.16.1
 
 ### Patch Changes
