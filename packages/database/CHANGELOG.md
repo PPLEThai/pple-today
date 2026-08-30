@@ -1,5 +1,11 @@
 # @pple-today/database
 
+## 1.10.2
+
+### Patch Changes
+
+- [#470](https://github.com/PPLEThai/pple-today/pull/470) [`25d8822`](https://github.com/PPLEThai/pple-today/commit/25d88229e457edc502713df2dcd0ec599147e1cf) Thanks [@PanJ](https://github.com/PanJ)! - Regenerate TypedSQL artifacts (`prisma generate --sql`) for the reworked feed and user-recommendation queries. `get_candidate_user`'s `user_id` result type narrows from `string | null` to `string`, and `$DbEnums` catches up with enum values added to the schema since the last regeneration (mini-app tiers/invites, notification platforms, expanded in-app navigation types). No runtime behavior change.
+
 ## 1.10.1
 
 ### Patch Changes
