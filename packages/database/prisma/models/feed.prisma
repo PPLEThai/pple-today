@@ -46,6 +46,8 @@ model FeedItem {
   feedItemScores FeedItemScore[]
 
   @@index([createdAt])
+  @@index([publishedAt])
+  @@index([authorId])
 }
 
 model FeedItemScore {

@@ -475,26 +475,42 @@ export class FeedRepository {
       })
 
       if (!existingFeedItemScore) {
-        const candidateFeedItem = await this.prismaService.$queryRawTyped(
-          get_candidate_feed_item(userId)
-        )
+        // Two concurrent requests can both see no unexpired score and both
+        // start regenerating: an advisory lock keyed on the user serializes
+        // them so we don't run the heavy candidate query twice and collide
+        // on the (userId, feedItemId) primary key in `createMany` below.
+        await this.prismaService.$transaction(
+          async (tx) => {
+            await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}))`
 
-        const candidateFeedItemIds = R.pipe(
-          candidateFeedItem,
-          R.filter((item) => item.feed_item_id !== null && item.score !== null),
-          R.map((item) => ({
-            feedItemId: item.feed_item_id!,
-            score: item.score!,
-            expiresAt: dayjs().add(10, 'minutes').toDate(),
-          }))
-        )
+            const existingFeedItemScoreInTx = await tx.feedItemScore.findFirst({
+              where: { userId, expiresAt: { gt: new Date() } },
+              select: { feedItemId: true },
+            })
 
-        await this.prismaService.user.update({
-          where: { id: userId },
-          data: {
-            feedItemScores: { deleteMany: {}, createMany: { data: candidateFeedItemIds } },
+            if (existingFeedItemScoreInTx) return
+
+            const candidateFeedItem = await tx.$queryRawTyped(get_candidate_feed_item(userId))
+
+            const candidateFeedItemIds = R.pipe(
+              candidateFeedItem,
+              R.filter((item) => item.feed_item_id !== null && item.score !== null),
+              R.map((item) => ({
+                feedItemId: item.feed_item_id!,
+                score: item.score!,
+                expiresAt: dayjs().add(10, 'minutes').toDate(),
+              }))
+            )
+
+            await tx.user.update({
+              where: { id: userId },
+              data: {
+                feedItemScores: { deleteMany: {}, createMany: { data: candidateFeedItemIds } },
+              },
+            })
           },
-        })
+          { timeout: 30_000 }
+        )
       }
 
       const feedItemScore = await this.prismaService.feedItemScore.findMany({
