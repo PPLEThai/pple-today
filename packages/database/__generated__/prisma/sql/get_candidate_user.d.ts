@@ -8,6 +8,6 @@ export const get_candidate_user: (text: string) => $runtime.TypedSql<get_candida
 export namespace get_candidate_user {
   export type Parameters = [text: string]
   export type Result = {
-    user_id: string | null
+    user_id: string
   }
 }
