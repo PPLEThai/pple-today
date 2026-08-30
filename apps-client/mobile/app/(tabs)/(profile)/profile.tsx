@@ -66,6 +66,7 @@ import {
   useSession,
 } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
+import { useFacebookConfigQuery } from '@app/libs/facebook'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 import { getRoleName } from '@app/utils/get-role-name'
 import { createImageUrl } from '@app/utils/image'
@@ -361,10 +362,13 @@ const FacebookPageStatusBadge = (
 
 const FacebookPageSection = () => {
   const linkedPageQuery = reactQueryClient.useQuery('/facebook/linked-page', {})
-  const authMe = useAuthMe()
-  const user = authMe.data
+  const facebookConfigQuery = useFacebookConfigQuery()
 
-  if (!user || !(user.roles.includes('pple-ad:hq') || user.roles.includes('pple-ad:mp'))) {
+  // Whether this section belongs to the user is the backend's call, decided from
+  // their SSO AD roles — the same check the `/facebook` routes make. Matching
+  // roles here instead would read `/auth/me`, which carries the OIDC token's
+  // roles rather than the AD ones the API actually gates on.
+  if (!facebookConfigQuery.data?.canConnectPage) {
     return null
   }
   return (

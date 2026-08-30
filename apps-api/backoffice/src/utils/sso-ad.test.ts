@@ -1,7 +1,8 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { Check } from '@sinclair/typebox/value'
-import { describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 
-import { AdUserInfo, resolveVisibleRoles } from './sso-ad'
+import { AdUserInfo, fetchAdVisibleRoles, resolveVisibleRoles } from './sso-ad'
 
 // Trimmed shape of GET /oidc/v1/userinfo for a user with an active role.
 const userInfoWithActiveRole = {
@@ -50,5 +51,62 @@ describe('resolveVisibleRoles', () => {
     expect(resolveVisibleRoles({})).toEqual([])
     expect(resolveVisibleRoles({ ad: null })).toEqual([])
     expect(resolveVisibleRoles({ ad: { activeRole: null, user: null } })).toEqual([])
+  })
+})
+
+describe('fetchAdVisibleRoles', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  test("resolves the caller's roles from their own bearer token", async () => {
+    const fetchMock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(JSON.stringify(userInfoWithActiveRole), { status: 200 }))
+
+    const result = await fetchAdVisibleRoles(
+      { authorization: 'Bearer user-token' },
+      'https://id.example.com'
+    )
+
+    expect(result._unsafeUnwrap()).toEqual(['pple-ad:mp', 'pple-ad:ad:admin'])
+    expect(fetchMock).toHaveBeenCalledWith('https://id.example.com/oidc/v1/userinfo', {
+      headers: { Authorization: 'Bearer user-token' },
+    })
+  })
+
+  test('rejects a request with no authorization header', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch')
+
+    const result = await fetchAdVisibleRoles({}, 'https://id.example.com')
+
+    expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.UNAUTHORIZED)
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  test('surfaces an SSO failure as an error rather than an empty role list', async () => {
+    // An empty list would read as "this user holds no roles" and silently deny
+    // every AD-gated route; a broken dependency has to stay distinguishable.
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('nope', { status: 503 }))
+
+    const result = await fetchAdVisibleRoles(
+      { authorization: 'Bearer user-token' },
+      'https://id.example.com'
+    )
+
+    expect(result.isErr()).toBe(true)
+  })
+
+  test('returns no roles for a user without an active role', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ sub: 'x', name: 'y' }), { status: 200 })
+    )
+
+    const result = await fetchAdVisibleRoles(
+      { authorization: 'Bearer user-token' },
+      'https://id.example.com'
+    )
+
+    expect(result._unsafeUnwrap()).toEqual([])
   })
 })

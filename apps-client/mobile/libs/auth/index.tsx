@@ -254,6 +254,11 @@ export const useSwitchRoleMutation = () => {
     onSuccess: () => {
       // Refresh the active role so the dropdown (and the app-list effect) react.
       queryClient.invalidateQueries({ queryKey: useActiveRoleQuery.getKey() })
+      // Anything the backend decides from the active role has to be asked again
+      // — otherwise its long cache would outlive the role it was answered for.
+      queryClient.invalidateQueries({
+        queryKey: reactQueryClient.getQueryKey('/facebook/config'),
+      })
     },
   })
 }
