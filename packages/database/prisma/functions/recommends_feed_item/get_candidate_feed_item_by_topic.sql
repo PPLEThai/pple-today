@@ -4,6 +4,9 @@ CREATE OR REPLACE FUNCTION public.get_candidate_feed_item_by_topic(_id text)
  PARALLEL SAFE
 AS $function$
 BEGIN
+  -- Returns PURE personal-affinity scores.
+  -- Engagement (reactions / comments), time decay and exploration noise are
+  -- applied exactly once by the caller (prisma/sql/get_candidate_feed_item.sql).
   RETURN QUERY
   WITH 
     candidate_topic AS (
@@ -83,44 +86,25 @@ BEGIN
       WHERE p."status" = 'PUBLISHED'
     ),
 
-    total_reaction_score AS (
-      SELECT
-        firc."feedItemId" AS feed_item_id,
-        SUM(
-          COALESCE(firc.count, 0) * 
-          CASE
-            WHEN firc."type" = 'UP_VOTE' THEN 3
-            WHEN firc."type" = 'DOWN_VOTE' THEN 1
-            ELSE 0
-          END
-        ) AS interaction_score
-      FROM
-        "FeedItemReactionCount" firc
-      GROUP BY firc."feedItemId"
-    ),
-
-    final_candidate_score_with_decay AS (
+    final_candidate_score AS (
       SELECT
         cs.feed_item_id,
-        (
-          COALESCE(trc.interaction_score, 0) + 
-          fi."numberOfComments" * 2 +
-          cs.score + 
-          RANDOM() / 100
-        ) * EXP(-LEAST(EXTRACT(EPOCH FROM (NOW() - fi."publishedAt")) / 86400, 30)) AS score
+        SUM(cs.score) AS score
       FROM
         candidate_score cs
         INNER JOIN "FeedItem" fi ON fi."id" = cs.feed_item_id
-        LEFT JOIN total_reaction_score trc ON trc.feed_item_id = cs.feed_item_id
       WHERE fi."publishedAt" <= NOW()
-      ORDER BY score DESC
+      GROUP BY cs.feed_item_id, fi."publishedAt"
+      -- Recency only breaks ties: it decides which 1000 rows survive the cut,
+      -- it does not change the affinity score itself.
+      ORDER BY score DESC, fi."publishedAt" DESC
       LIMIT 1000
     )
 
   SELECT
-    final_candidate_score_with_decay.feed_item_id,
-    final_candidate_score_with_decay.score::NUMERIC AS score
+    final_candidate_score.feed_item_id,
+    final_candidate_score.score::NUMERIC AS score
   FROM
-    final_candidate_score_with_decay;
+    final_candidate_score;
 END;
 $function$

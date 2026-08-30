@@ -77,14 +77,16 @@ export class ProfileRepository {
     return await fromRepositoryPromise(async () => {
       const candidateUserIds = await this.prismaService.$queryRawTyped(get_candidate_user(userId))
 
+      const orderedCandidateUserIds = R.pipe(
+        candidateUserIds,
+        R.map(R.prop('user_id')),
+        R.filter((id) => id !== null)
+      )
+
       const candidateUser = await this.prismaService.user.findMany({
         where: {
           id: {
-            in: R.pipe(
-              candidateUserIds,
-              R.map(R.prop('user_id')),
-              R.filter((id) => id !== null)
-            ),
+            in: orderedCandidateUserIds,
           },
         },
         select: {
@@ -100,7 +102,13 @@ export class ProfileRepository {
         },
       })
 
-      return candidateUser
+      const candidateUserById = new Map(candidateUser.map((user) => [user.id, user]))
+
+      return R.pipe(
+        orderedCandidateUserIds,
+        R.map((id) => candidateUserById.get(id)),
+        R.filter((user) => user !== undefined)
+      )
     })
   }
 

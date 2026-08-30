@@ -4,6 +4,9 @@ CREATE OR REPLACE FUNCTION public.get_candidate_feed_item_by_follower(_id text)
  PARALLEL SAFE
 AS $function$
 BEGIN
+  -- Returns PURE personal-affinity scores.
+  -- Engagement (reactions / comments), time decay and exploration noise are
+  -- applied exactly once by the caller (prisma/sql/get_candidate_feed_item.sql).
   RETURN QUERY
   WITH
     candidate_user AS (
@@ -15,65 +18,64 @@ BEGIN
     ),
 
     published_feed_items AS (
-      SELECT 
+      SELECT
         fi."id" AS id,
         fi."authorId" AS author_id,
-        fi."publishedAt" AS published_at,
-        fi."numberOfComments" AS "number_of_comments"
+        fi."publishedAt" AS published_at
       FROM
         "Poll" p
         INNER JOIN "FeedItem" fi ON fi."id" = p."feedItemId"
-      WHERE p."status" = 'PUBLISHED' AND fi."publishedAt" <= NOW()
+      WHERE p."status" = 'PUBLISHED' AND fi."publishedAt" <= NOW() AND fi."authorId" <> _id
       UNION ALL
       SELECT
         fi."id" AS id,
         fi."authorId" AS author_id,
-        fi."publishedAt" AS published_at,
-        fi."numberOfComments" AS number_of_comments
+        fi."publishedAt" AS published_at
       FROM
         "Post" p
         INNER JOIN "FeedItem" fi ON fi."id" = p."feedItemId"
-      WHERE p."status" = 'PUBLISHED' AND fi."publishedAt" <= NOW()
+      WHERE p."status" = 'PUBLISHED' AND fi."publishedAt" <= NOW() AND fi."authorId" <> _id
     ),
 
     all_possible_interested_user AS (
       SELECT
         cu.user_id,
         cu.score
-      FROM 
+      FROM
         candidate_user cu
       UNION ALL
+      -- `followerId` is the user doing the following, `followingId` is the
+      -- account being followed: take the accounts _id follows.
       SELECT
         ufu."followingId" AS user_id,
         1 AS score
       FROM
         "UserFollowsUser" ufu
-      WHERE 
-        ufu."followingId" = _id
+      WHERE
+        ufu."followerId" = _id
     ),
 
-    reaction_scores AS (
+    interested_user AS (
       SELECT
-        firc."feedItemId" AS feed_item_id,
-        SUM("count" * CASE WHEN firc."type" = 'UP_VOTE' THEN 3 WHEN firc."type" = 'DOWN_VOTE' THEN 1 ELSE 0 END) AS reaction_score
-      FROM "FeedItemReactionCount" firc
-      GROUP BY firc."feedItemId"
+        apiu.user_id,
+        SUM(apiu.score) AS score
+      FROM
+        all_possible_interested_user apiu
+      WHERE apiu.user_id <> _id
+      GROUP BY
+        apiu.user_id
     ),
 
     candidate_feed_item AS (
       SELECT
         pfi.id AS feed_item_id,
-        (
-          apiu.score
-          + COALESCE(pfi.number_of_comments, 0) * 2
-          + COALESCE(rs.reaction_score, 0)
-          + RANDOM() / 100
-        ) * EXP(-LEAST(EXTRACT(EPOCH FROM (NOW() - pfi.published_at)) / 86400, 30)) AS score
+        iu.score AS score
       FROM
         published_feed_items pfi
-        INNER JOIN all_possible_interested_user apiu ON apiu.user_id = pfi.author_id
-        LEFT JOIN reaction_scores rs ON rs.feed_item_id = pfi.id
-      ORDER BY score DESC
+        INNER JOIN interested_user iu ON iu.user_id = pfi.author_id
+      -- Recency only breaks ties: it decides which 1000 rows survive the cut,
+      -- it does not change the affinity score itself.
+      ORDER BY score DESC, pfi.published_at DESC
       LIMIT 1000
     )
 
