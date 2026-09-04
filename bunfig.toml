@@ -1,0 +1,5 @@
+[install]
+# Mirrors the previous .npmrc `node-linker=hoisted`.
+# React Native / Metro and Expo's babel presets resolve from a flat node_modules,
+# so the hoisted layout is required here — bun's default is "isolated".
+linker = "hoisted"

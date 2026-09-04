@@ -36,8 +36,8 @@ Association domains and intent filters are applied at **prebuild** time:
 
 ```bash
 cd apps-client/mobile
-pnpm prebuild
-# or platform-specific: pnpm prebuild:ios / pnpm prebuild:android
+bun run prebuild
+# or platform-specific: bun run prebuild:ios / bun run prebuild:android
 ```
 
 Then build and install a new binary (EAS or Fastlane). Deep linking will not work in an old build that was generated before this config.

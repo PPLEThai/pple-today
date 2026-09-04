@@ -12,14 +12,14 @@ PPLE Today Backoffice API
 ## Prerequisites
 
 - Node.js (v22.17.0 or later)
-- pnpm (v9.9.0 or later)
+- bun (v1.4.1 or later)
 
 ## Project Setup
 
 1. Install dependencies
 
    ```bash
-   pnpm install
+   bun install
    ```
 
 2. Copy `.env.example` to `.env` and fill in the required environment variables.
@@ -33,7 +33,7 @@ PPLE Today Backoffice API
 3. Generate Prisma client
 
    ```bash
-   pnpm db:generate
+   bun run db:generate
    ```
 
 4. If you did not start postgresql yet, you can use Docker to run it. Make sure you have Docker installed and running.:
@@ -45,13 +45,13 @@ PPLE Today Backoffice API
    Then, run the migrations:
 
    ```bash
-   pnpm db:migrate
+   bun run db:migrate
    ```
 
 5. Start the application
 
    ```bash
-   pnpm dev
+   bun run dev
    ```
 
    This starts the backoffice API (port **2000**) and the mini app redirect server (port **2002**, `MINIAPP_REDIRECT_PORT`) in the same process. Example: `https://miniapp.peoplesparty.or.th/abc/app-path?query=params` redirects to `{miniApp.clientUrl}/app-path?query=params`.
@@ -72,5 +72,5 @@ PPLE Today Backoffice API
 To build the application for production, run:
 
 ```bash
-pnpm build
+bun run build
 ```

@@ -29,4 +29,4 @@ with open(f'{new_folder_path}/migration.sql', 'w') as f:
   f.write('\n\n'.join(final_result))
 
 print(f'Writing to {new_folder_path}/migration.sql')
-print('Please run pnpm db:migrate to apply the migration.')
+print('Please run bun run db:migrate to apply the migration.')

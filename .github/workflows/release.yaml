@@ -31,9 +31,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          version: 9.9.0
+          bun-version: 1.4.1
 
       - name: Setup node
         uses: actions/setup-node@v2
@@ -41,7 +41,7 @@ jobs:
           node-version: 20.16.0
 
       - name: Install changeset
-        run: pnpm install --ignore-workspace
+        run: bun install --frozen-lockfile
 
       - name: Create Versioning Pull Request
         id: changesets
@@ -50,5 +50,5 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           createGithubReleases: true
-          version: pnpm changeset version
-          publish: pnpm changeset tag
+          version: bun run changeset version
+          publish: bun run changeset tag

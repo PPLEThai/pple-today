@@ -45,6 +45,7 @@
     "@pple-today/project-config": "workspace:^",
     "@prisma/adapter-pg": "^6.15.0",
     "@tanstack/pacer": "^0.15.4",
+    "@types/node": "^22.15.3",
     "dotenv": "^17.0.1",
     "lexorank": "^1.0.5",
     "prisma": "^6.15.0",

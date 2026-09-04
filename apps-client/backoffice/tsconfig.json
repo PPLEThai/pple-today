@@ -1,6 +1,7 @@
 {
   "extends": "@pple-today/project-config/tsconfig/react.json",
   "include": ["**/*", "**/.server/**/*", "**/.client/**/*"],
+  "exclude": ["node_modules", "build", "eslint.config.js"],
   "compilerOptions": {
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "types": ["node", "vite/client"],

@@ -1,5 +1,0 @@
-packages:
-  - 'apps-client/*'
-  - 'apps-api/*'
-  - 'examples/mini-app/*'
-  - 'packages/*'

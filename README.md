@@ -2,7 +2,7 @@
 
 **PPLE Today** is an engagement platform that helps the party share timely updates, run interactive campaigns, and collect actionable supporter feedback through mobile and web experiences. The platform is composed of a back-end REST API, a web-based admin dashboard, cross-platform iOS/Android mobile apps, and a public Mini App SDK that lets third-party developers embed their own experiences inside the PPLE Today ecosystem.
 
-The project is structured as a **pnpm + Turborepo monorepo** and is written entirely in TypeScript.
+The project is structured as a **bun + Turborepo monorepo** and is written entirely in TypeScript.
 
 ---
 
@@ -93,7 +93,7 @@ The project is structured as a **pnpm + Turborepo monorepo** and is written enti
 | Library                                                          | Role                                                                     |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | [Turborepo](https://turborepo.com/)                              | Monorepo build system with task-graph caching.                           |
-| [pnpm](https://pnpm.io/)                                         | Fast, disk-efficient package manager with workspace support.             |
+| [bun](https://bun.sh/)                                           | Fast package manager and runtime with workspace support.                 |
 | [TypeScript 5.8](https://www.typescriptlang.org/)                | Static typing across the entire codebase.                                |
 | [Vitest](https://vitest.dev/)                                    | Unit test runner used by API packages.                                   |
 | [ESLint](https://eslint.org/) + [Prettier](https://prettier.io/) | Linting and formatting (config shared via `@pple-today/project-config`). |
@@ -105,19 +105,19 @@ The project is structured as a **pnpm + Turborepo monorepo** and is written enti
 
 ## 💡 Tips and Tricks
 
-- **Monorepo commands first.** Run `pnpm install` from the **root** of the repository. Never run `npm install` or `yarn` — the project requires pnpm 9.9.0 and Node.js ≥ 22.
+- **Monorepo commands first.** Run `bun install` from the **root** of the repository. Never run `npm install` or `yarn` — the project requires bun 1.4.1 and Node.js ≥ 22.
 
-- **Turbo task graph.** `turbo.json` defines the dependency order. `build` depends on `codegen`, so running `pnpm build` from the root will generate all code first. When developing a single package, filter: `pnpm turbo dev --filter=@api/backoffice`.
+- **Turbo task graph.** `turbo.json` defines the dependency order. `build` depends on `codegen`, so running `bun run build` from the root will generate all code first. When developing a single package, filter: `bun run turbo dev --filter=@api/backoffice`.
 
-- **Code generation is mandatory before TypeScript.** The route trees (`routeTree.gen.ts`), Prisma client (`__generated__/prisma`), and Elysia Eden types are all generated artefacts. Run `pnpm codegen` after a fresh clone or after changing the Prisma schema / route files. CI fails if generated files are stale.
+- **Code generation is mandatory before TypeScript.** The route trees (`routeTree.gen.ts`), Prisma client (`__generated__/prisma`), and Elysia Eden types are all generated artefacts. Run `bun run codegen` after a fresh clone or after changing the Prisma schema / route files. CI fails if generated files are stale.
 
-- **Type-safe API client.** The backoffice API exposes its full TypeScript type signature via `@elysiajs/eden`. Any change to a route handler signature is automatically reflected in `@pple-today/api-client` without manual schema updates — just run `pnpm codegen`.
+- **Type-safe API client.** The backoffice API exposes its full TypeScript type signature via `@elysiajs/eden`. Any change to a route handler signature is automatically reflected in `@pple-today/api-client` without manual schema updates — just run `bun run codegen`.
 
 - **neverthrow pattern.** Service and repository functions return `Result<T, E>` instead of throwing. Use `.match()`, `.map()`, or `isOk()` to handle the result. Do not introduce `throw` unless you are handling a truly unrecoverable error.
 
 - **Environment variables.** Every app has a `.env.example` (or `.env.template` for mobile). Copy the example file to `.env` before running the app. The API uses `dotenv`; the mobile app uses Expo's `--env-file` flag. Never commit `.env` files.
 
-- **Database is always the `@pple-today/database` package.** Prisma schema and migrations live in `packages/database/prisma/`. If you add a new model or column, run `pnpm --filter=@pple-today/database migrate` to create a migration, then `pnpm --filter=@pple-today/database codegen` to regenerate the Prisma client.
+- **Database is always the `@pple-today/database` package.** Prisma schema and migrations live in `packages/database/prisma/`. If you add a new model or column, run `bun run --filter=@pple-today/database migrate` to create a migration, then `bun run --filter=@pple-today/database codegen` to regenerate the Prisma client.
 
 - **Shared UI components.** Mobile UI lives in `@pple-today/ui`; web UI lives in `@pple-today/web-ui`. Add new reusable components to the appropriate package rather than co-locating them in an app.
 
@@ -125,7 +125,7 @@ The project is structured as a **pnpm + Turborepo monorepo** and is written enti
 
 - **CI runs on macOS** because the mobile prebuild step (generating native iOS/Android code) requires macOS tooling. If you add a workflow step that only runs on Linux, make sure it is conditioned correctly.
 
-- **Versioning.** The project uses [Changesets](https://github.com/changesets/changesets). When you make a user-facing change to a publishable package (e.g. `packages/mini-app`), add a changeset with `pnpm changeset` before raising your PR.
+- **Versioning.** The project uses [Changesets](https://github.com/changesets/changesets). When you make a user-facing change to a publishable package (e.g. `packages/mini-app`), add a changeset with `bun run changeset` before raising your PR.
 
 ---
 
@@ -136,7 +136,7 @@ The project is structured as a **pnpm + Turborepo monorepo** and is written enti
 | Tool                          | Required version                                                             |
 | ----------------------------- | ---------------------------------------------------------------------------- |
 | Node.js                       | ≥ 22 (LTS recommended — use [Volta](https://volta.sh/) to pin automatically) |
-| pnpm                          | 9.9.0 — install with `npm install -g pnpm@9.9.0`                             |
+| bun                           | 1.4.1 — install with the official installer at https://bun.sh                |
 | Docker                        | Any recent version (for running PostgreSQL locally)                          |
 | Xcode (iOS only)              | Latest stable                                                                |
 | Android Studio (Android only) | Latest stable                                                                |
@@ -151,7 +151,7 @@ cd pple-today
 ### 2. Install dependencies
 
 ```bash
-pnpm install
+bun install
 ```
 
 ### 3. Start the local database
@@ -193,20 +193,20 @@ DATABASE_URL=postgresql://pple:pple@localhost:9000/pple?schema=public
 ### 5. Run database migrations and generate the Prisma client
 
 ```bash
-pnpm --filter=@pple-today/database migrate   # apply all pending migrations
-pnpm --filter=@pple-today/database codegen   # generate the Prisma client
+bun run --filter=@pple-today/database migrate   # apply all pending migrations
+bun run --filter=@pple-today/database codegen   # generate the Prisma client
 ```
 
 To seed the database with development data:
 
 ```bash
-pnpm --filter=@pple-today/database seed:dev
+bun run --filter=@pple-today/database seed:dev
 ```
 
 ### 6. Generate code (route trees, API types)
 
 ```bash
-pnpm codegen
+bun run codegen
 ```
 
 ### 7. Start the development servers
@@ -214,20 +214,20 @@ pnpm codegen
 To start **everything** at once (API + web dashboard + mobile):
 
 ```bash
-pnpm dev
+bun run dev
 ```
 
 Or start individual apps:
 
 ```bash
 # Backend API only (http://localhost:2000, Swagger at /swagger)
-pnpm turbo dev --filter=@api/backoffice
+bun run turbo dev --filter=@api/backoffice
 
 # Web admin dashboard only (http://localhost:5173)
-pnpm turbo dev --filter=@client/backoffice
+bun run turbo dev --filter=@client/backoffice
 
 # Mobile app (Expo dev client)
-pnpm turbo dev --filter=@client/mobile
+bun run turbo dev --filter=@client/mobile
 ```
 
 ### 8. Mobile-specific setup
@@ -238,18 +238,18 @@ pnpm turbo dev --filter=@client/mobile
 
 ```bash
 cd apps-client/mobile
-pnpm prebuild:ios        # generates the native ios/ directory
-pnpm open:ios            # opens the project in Xcode
+bun run prebuild:ios        # generates the native ios/ directory
+bun run open:ios            # opens the project in Xcode
 # — or —
-pnpm ios                 # builds and runs on the default simulator
+bun run ios                 # builds and runs on the default simulator
 ```
 
 **Android:**
 
 ```bash
 cd apps-client/mobile
-pnpm prebuild:android    # generates the native android/ directory
-pnpm android             # builds and runs on the default emulator
+bun run prebuild:android    # generates the native android/ directory
+bun run android             # builds and runs on the default emulator
 ```
 
 ---
@@ -272,21 +272,21 @@ Contributions are welcome! Here's how to get started:
    - Use `neverthrow` `Result` types in service/repository functions.
    - Put reusable UI in `packages/ui` (mobile) or `packages/web-ui` (web).
    - Keep Prisma schema changes in `packages/database` and include a migration.
-   - Run `pnpm codegen` after schema or route changes.
+   - Run `bun run codegen` after schema or route changes.
 
 4. **Add a changeset** if you changed a publishable package:
 
    ```bash
-   pnpm changeset
+   bun run changeset
    ```
 
 5. **Verify your changes pass all checks:**
 
    ```bash
-   pnpm lint
-   pnpm typecheck
-   pnpm test
-   pnpm format:check
+   bun run lint
+   bun run typecheck
+   bun run test
+   bun run format:check
    ```
 
 6. **Push** your branch and open a **Pull Request** against `main`.  

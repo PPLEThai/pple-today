@@ -1,7 +1,14 @@
 {
   "name": "pple-today",
   "private": true,
+  "workspaces": [
+    "apps-client/*",
+    "apps-api/*",
+    "examples/mini-app/*",
+    "packages/*"
+  ],
   "scripts": {
+    "postinstall": "node scripts/fix-prettier-bin.mjs 2>/dev/null || true",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
@@ -16,22 +23,43 @@
     "@changesets/cli": "^2.29.3",
     "@pple-today/project-config": "workspace:^",
     "eslint": "^9.22.0",
-    "prettier": "^3.5.3",
+    "prettier": "~3.5.3",
     "turbo": "^2.5.2",
     "typescript": "5.8.2"
   },
-  "packageManager": "pnpm@9.9.0",
+  "packageManager": "bun@1.4.1",
   "engines": {
-    "node": ">=22"
+    "node": ">=22",
+    "bun": ">=1.4.0"
   },
   "volta": {
-    "node": "22.15.0",
-    "pnpm": "9.9.0"
+    "node": "22.15.0"
   },
-  "pnpm": {
-    "patchedDependencies": {
-      "react-native-pager-view": "patches/react-native-pager-view.patch",
-      "expo-notifications@0.32.17": "patches/expo-notifications@0.32.17.patch"
-    }
+  "patchedDependencies": {
+    "react-native-pager-view@6.9.1": "patches/react-native-pager-view.patch",
+    "expo-notifications@0.32.17": "patches/expo-notifications@0.32.17.patch"
+  },
+  "trustedDependencies": [
+    "@firebase/util",
+    "@prisma/client",
+    "@prisma/engines",
+    "@tailwindcss/oxide",
+    "esbuild",
+    "prisma",
+    "protobufjs",
+    "sharp",
+    "unrs-resolver"
+  ],
+  "overrides": {
+    "pino": "9.7.0",
+    "typescript-eslint": "8.31.0",
+    "@typescript-eslint/eslint-plugin": "8.31.0",
+    "@typescript-eslint/parser": "8.31.0",
+    "@typescript-eslint/scope-manager": "8.31.0",
+    "@typescript-eslint/type-utils": "8.31.0",
+    "@typescript-eslint/types": "8.31.0",
+    "@typescript-eslint/typescript-estree": "8.31.0",
+    "@typescript-eslint/utils": "8.31.0",
+    "@typescript-eslint/visitor-keys": "8.31.0"
   }
 }

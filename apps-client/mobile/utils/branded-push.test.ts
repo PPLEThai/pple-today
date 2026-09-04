@@ -4,7 +4,7 @@ import type { ListHistoryNotificationResponse } from '@api/backoffice/app'
 
 import { parseBrandedPush, pushBadgeCount, PushSenderApp, pushSenderApp } from './branded-push'
 
-// A type-level assertion, checked by `pnpm typecheck` rather than at run time: the
+// A type-level assertion, checked by `bun run typecheck` rather than at run time: the
 // sending app as the API returns it must stay assignable to the sending app as a
 // push carries it, because one component brands both. Diverge the two and this
 // stops compiling.
