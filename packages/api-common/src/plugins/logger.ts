@@ -96,3 +96,25 @@ export const loggerBuilder = (config: StandaloneLoggerOptions) => {
 }
 
 export type ElysiaLoggerInstance = ReturnType<typeof createPinoLogger>
+
+/**
+ * Resolve the request path inside an `autoLogging.ignore` callback.
+ *
+ * Elysia's node adapter put `path` on the logger context; the native Bun
+ * adapter does not, and only exposes the full `request.url`. Reading it through
+ * this helper keeps the ignore rules working on either adapter.
+ */
+export const getLogContextPath = (ctx: { path?: string; request?: { url?: string } }): string => {
+  if (typeof ctx.path === 'string') return ctx.path
+
+  const url = ctx.request?.url
+  if (!url) return ''
+
+  // Slice the pathname out directly — this runs on every request, so avoid
+  // constructing a URL just to read one field.
+  const pathStart = url.indexOf('/', url.indexOf('://') + 3)
+  if (pathStart === -1) return '/'
+
+  const queryStart = url.indexOf('?', pathStart)
+  return queryStart === -1 ? url.slice(pathStart) : url.slice(pathStart, queryStart)
+}

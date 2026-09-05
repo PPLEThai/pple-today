@@ -19,6 +19,9 @@ async function main() {
     target: 'node22',
     outfile: './build/index.js',
     platform: 'node',
+    // Elysia ships a dedicated 'bun' export condition; without it esbuild would
+    // bundle the generic WebStandard build instead of the native Bun.serve one.
+    conditions: ['bun'],
     define: {
       __APP_VERSION__: JSON.stringify(version),
     },

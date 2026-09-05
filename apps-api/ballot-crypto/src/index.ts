@@ -1,7 +1,7 @@
 import { cors } from '@elysiajs/cors'
-import node from '@elysiajs/node'
 import { swagger } from '@elysiajs/swagger'
 import {
+  getLogContextPath,
   GlobalExceptionPlugin,
   loggerBuilder,
   RequestIdPlugin,
@@ -17,7 +17,7 @@ import packageJson from '../package.json'
 
 const configService = ConfigServicePlugin.decorator.configService
 
-let app = new Elysia({ adapter: node() })
+let app = new Elysia()
   .use([
     loggerBuilder({
       name: 'Global Logger',
@@ -43,10 +43,12 @@ let app = new Elysia({ adapter: node() })
           if (ctx.isError) return false
           if (!ctx.isError && 'response' in ctx.error) return true
 
+          const path = getLogContextPath(ctx)
+
           return (
-            ctx.path.startsWith('/health') ||
-            ctx.path.startsWith('/swagger') ||
-            ctx.path.startsWith('/versions')
+            path.startsWith('/health') ||
+            path.startsWith('/swagger') ||
+            path.startsWith('/versions')
           )
         },
       },
