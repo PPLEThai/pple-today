@@ -10,14 +10,14 @@ PPLE Today Ballot Crypto API
 ## Prerequisites
 
 - Node.js (v22.17.0 or later)
-- pnpm (v9.9.0 or later)
+- bun (v1.4.1 or later)
 
 ## Project Setup
 
 1. Install dependencies
 
    ```bash
-   pnpm install
+   bun install
    ```
 
 2. Copy `.env.example` to `.env` and fill in the required environment variables.
@@ -29,7 +29,7 @@ PPLE Today Ballot Crypto API
 3. Start the application
 
    ```bash
-   pnpm dev
+   bun run dev
    ```
 
 ## API Documentation
@@ -41,5 +41,5 @@ PPLE Today Ballot Crypto API
 To build the application for production, run:
 
 ```bash
-pnpm build
+bun run build
 ```

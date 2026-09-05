@@ -24,19 +24,18 @@ jobs:
       - name: Setup GitHub Actions caching for Turbo
         uses: rharkor/caching-for-turbo@v1.8
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: 9.9.0
+          bun-version: 1.4.1
 
       - name: Setup node with cache
         uses: actions/setup-node@v3
         with:
           node-version: 22.14.0
-          cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Get turbo filter
         id: get-turbo-filter
@@ -55,13 +54,13 @@ jobs:
           echo "TURBO_FILTER=$TURBO_FILTER" >> $GITHUB_OUTPUT
 
       - name: Run script generate
-        run: pnpm turbo codegen
+        run: bun run turbo codegen
 
       - name: Run Test
-        run: pnpm turbo test ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}
+        run: bun run turbo test ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}
 
       - name: Run Type Check, Format Check
-        run: pnpm turbo typecheck format:check lint ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}
+        run: bun run turbo typecheck format:check lint ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}
 
       - name: Setup Environment File
         working-directory: apps-client/mobile
@@ -72,4 +71,4 @@ jobs:
           env > .env
 
       - name: Run Prebuild
-        run: pnpm turbo prebuild ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}
+        run: bun run turbo prebuild ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}

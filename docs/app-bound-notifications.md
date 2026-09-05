@@ -209,7 +209,7 @@ Verified in the installed source:
   icon for the whole app, never per notification. The remote-URL path reads only
   `remoteMessage.notification.imageUrl`, which data-only messages don't have.
 
-So: a pnpm patch (`patchedDependencies`, already used here for
+So: a bun patch (`patchedDependencies`, already used here for
 `react-native-pager-view`) adding a per-notification large-icon URL through the
 content record to `setLargeIcon`. Roughly thirty lines across the Kotlin/Java
 content model and the JS type surface.

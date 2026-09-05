@@ -9,14 +9,14 @@ Feel free to update this file :)
 1. Install dependencies
 
    ```bash
-   pnpm install
+   bun install
    ```
 
 2. Setup `.env`
 3. Start the app
 
    ```bash
-   pnpm dev
+   bun run dev
    ```
 
 4. We deprecated the expo go dev server since we use expo-native module.
@@ -31,19 +31,19 @@ Feel free to update this file :)
 1. Generate Native `android/`
 
    ```bash
-   pnpm prebuild:android
+   bun run prebuild:android
    ```
 
 2. Run App
 
    ```bash
-   pnpm android
+   bun run android
    ```
 
 3. You can also edit Android native code via [Android Studio](https://developer.android.com/studio)
 
    ```bash
-   pnpm open:android
+   bun run open:android
    ```
 
 ## iOS Development Build
@@ -53,14 +53,14 @@ Feel free to update this file :)
 1. Generate Native `ios/`
 
    ```bash
-   pnpm prebuild:ios
+   bun run prebuild:ios
    ```
 
 2. Open `ios/` folder with Xcode \
    You need to install xcode and iOS development kit
 
    ```bash
-   pnpm open:ios
+   bun run open:ios
    ```
 
 3. Install fastlane
@@ -88,13 +88,13 @@ Feel free to update this file :)
 6. Run App
 
    ```bash
-   pnpm ios
+   bun run ios
    ```
 
    or you can run on your physical device with
 
    ```bash
-   pnpm ios:device
+   bun run ios:device
    ```
 
    check your device and simulators in Xcode > Window > Devices and Simulators
@@ -104,7 +104,7 @@ Feel free to update this file :)
 1. Generate native `ios/` and `android/`
 
    ```bash
-   pnpm prebuild
+   bun run prebuild
    ```
 
 2. Install Fastlane
@@ -120,7 +120,7 @@ Feel free to update this file :)
 4. Setup Fastlane in native folders
 
    ```
-   pnpm fastlane:setup
+   bun run fastlane:setup
    ```
 
    These are fastlane config file that will be copied to `android/` and `ios/` folder which will copy files like

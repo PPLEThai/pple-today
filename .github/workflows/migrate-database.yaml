@@ -44,19 +44,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: 9.9.0
+          bun-version: 1.4.1
 
       - name: Setup node with cache
         uses: actions/setup-node@v4
         with:
           node-version: 22.15.0
-          cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install -g prisma@^6.15.0
+        run: bun add -g prisma@^6.15.0
 
       - name: Install OpenVPN
         run: |
@@ -83,7 +82,7 @@ jobs:
           eval `ssh-agent -s`
           ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
           ssh -fN -L 5432:${{ secrets.DATABASE_HOST }}:5432 ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}
-          pnpm prisma migrate deploy
+          bunx prisma migrate deploy
         shell: bash
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}

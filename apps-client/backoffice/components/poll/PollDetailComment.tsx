@@ -1,13 +1,13 @@
 import { Button } from '@pple-today/web-ui/button'
 import { cn } from '@pple-today/web-ui/utils'
 import { Eye, EyeOff } from 'lucide-react'
-import {
-  UpdateFeedItemCommentPrivacyBody,
-  UpdateFeedItemCommentPrivacyParams,
-} from 'node_modules/@api/backoffice/src/modules/admin/feed/models'
 import { getRelativeTime } from 'utils/date'
 
-import { AdminFeedItemComment } from '@api/backoffice/admin'
+import {
+  AdminFeedItemComment,
+  UpdateFeedItemCommentPrivacyBody,
+  UpdateFeedItemCommentPrivacyParams,
+} from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
 

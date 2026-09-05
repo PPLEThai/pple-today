@@ -32,7 +32,7 @@ intercepts this path; it never reaches the Builder's app.
   **update**, so the callback stays in sync with the app origin.
 - **Existing apps** (provisioned before the door, URL unchanged) are backfilled
   once by `apps-api/backoffice/scripts/backfill-door-redirect-uris.ts`
-  (`pnpm --filter @api/backoffice backfill:door-redirect-uris --execute`).
+  (`bun run --filter @api/backoffice backfill:door-redirect-uris --execute`).
   Dry-run by default; idempotent. **Run it before the door is enabled** so the
   PKCE flow does not fail for the existing fleet.
 

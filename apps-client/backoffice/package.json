@@ -12,7 +12,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "codegen": "tsr generate",
-    "typecheck": "pnpm codegen && tsc"
+    "typecheck": "bun run codegen && tsc"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",

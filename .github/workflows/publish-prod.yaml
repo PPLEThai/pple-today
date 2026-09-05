@@ -143,27 +143,26 @@ jobs:
         with:
           node-version: 22.14.0
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: 9.9.0
+          bun-version: 1.4.1
 
       - name: Setup node with cache
         uses: actions/setup-node@v3
         with:
           node-version: 22.14.0
-          cache: pnpm
 
       - name: Install wrangler CLI
-        run: pnpm add -g wrangler@3.90.0
+        run: bun add -g wrangler@3.90.0
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Build Backoffice
         run: |
           echo ${{ secrets.WEB_CLIENT_ENV }} > apps-client/backoffice/.env
-          pnpm build --filter=@client/backoffice...
+          bun run build --filter=@client/backoffice...
 
       - name: Deploy
         uses: cloudflare/wrangler-action@v3
@@ -187,10 +186,10 @@ jobs:
           fetch-depth: 0 # fetch all history for tags
           persist-credentials: false # avoid checking out the repository again
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
         with:
-          version: 9.9.0
+          bun-version: 1.4.1
 
       - name: Setup Node
         uses: actions/setup-node@v3
@@ -198,14 +197,13 @@ jobs:
           node-version: 22.14.0
           registry-url: https://registry.npmjs.org
           scope: '@pplethai'
-          cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Build Mini App Package
         run: |
-          pnpm build --filter=@pplethai/pple-today-miniapp-sdk...
+          bun run build --filter=@pplethai/pple-today-miniapp-sdk...
 
       # Pinned to a major, not `@latest`: npm 12 raised its floor to node
       # ^22.22.2 and this job runs node 22.14.0, so `@latest` failed EBADENGINE
@@ -232,15 +230,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          version: 9.9.0
+          bun-version: 1.4.1
 
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: 22.14.0
-          cache: pnpm
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -257,7 +254,7 @@ jobs:
       #   uses: gradle/wrapper-validation-action@v1
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Setup Environment File
         working-directory: apps-client/mobile
@@ -301,15 +298,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          version: 9.9.0
+          bun-version: 1.4.1
 
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: 22.14.0
-          cache: pnpm
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
@@ -317,7 +313,7 @@ jobs:
           ruby-version: '3.3'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Setup Environment File
         working-directory: apps-client/mobile

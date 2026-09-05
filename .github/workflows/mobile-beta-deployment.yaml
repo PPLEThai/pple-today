@@ -28,15 +28,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          version: 9.9.0
+          bun-version: 1.4.1
 
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: 22.14.0
-          cache: pnpm
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -53,7 +52,7 @@ jobs:
       #   uses: gradle/wrapper-validation-action@v1
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Setup Environment File
         working-directory: apps-client/mobile
@@ -98,15 +97,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          version: 9.9.0
+          bun-version: 1.4.1
 
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: 22.14.0
-          cache: pnpm
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
@@ -114,7 +112,7 @@ jobs:
           ruby-version: '3.3'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: bun install --frozen-lockfile
 
       - name: Setup Environment File
         working-directory: apps-client/mobile

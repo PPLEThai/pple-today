@@ -16,7 +16,7 @@
  * Declared structurally so one component can brand a notification whether it
  * arrived as a push or came back from `/notifications/history` as the API's
  * `NotificationSenderApp`. `branded-push.test.ts` asserts the two stay assignable,
- * and fails `pnpm typecheck` if they ever diverge.
+ * and fails `bun run typecheck` if they ever diverge.
  */
 export interface PushSenderApp {
   name: string

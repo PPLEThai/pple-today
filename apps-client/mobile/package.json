@@ -22,10 +22,10 @@
     "prebuild:ios": "expo prebuild --clean --platform ios",
     "build:android": "eas build -p android --profile preview --local",
     "fastlane:setup": "bash ./fastlane/setup.sh",
-    "fastlane:android": "pnpm prebuild:android && pnpm fastlane:setup && cd android && fastlane beta",
-    "fastlane:ios": "pnpm prebuild:ios && pnpm fastlane:setup && cd ios && fastlane beta",
-    "fastlane:android:prod": "pnpm prebuild:android && pnpm fastlane:setup && cd android && fastlane production",
-    "fastlane:ios:prod": "pnpm prebuild:ios && pnpm fastlane:setup && cd ios && fastlane production"
+    "fastlane:android": "bun run prebuild:android && bun run fastlane:setup && cd android && fastlane beta",
+    "fastlane:ios": "bun run prebuild:ios && bun run fastlane:setup && cd ios && fastlane beta",
+    "fastlane:android:prod": "bun run prebuild:android && bun run fastlane:setup && cd android && fastlane production",
+    "fastlane:ios:prod": "bun run prebuild:ios && bun run fastlane:setup && cd ios && fastlane production"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
@@ -43,6 +43,8 @@
     "@react-navigation/elements": "^2.3.8",
     "@react-navigation/material-top-tabs": "^7.3.2",
     "@react-navigation/native": "^7.1.6",
+    "@rn-primitives/radio-group": "^1.2.0",
+    "@rn-primitives/toggle-group": "^1.2.0",
     "@tanstack/react-form": "^1.14.1",
     "@tanstack/react-pacer": "^0.16.4",
     "@tanstack/react-query": "^5.81.5",
@@ -108,6 +110,7 @@
     "@types/react": "~19.1.5",
     "@types/react-dom": "19.1.5",
     "@types/semver": "^7.5.8",
+    "babel-preset-expo": "~54.0.12",
     "prettier-plugin-tailwindcss": "^0.5.11",
     "react-native-svg-transformer": "^1.5.1",
     "tailwindcss": "^3.4.17",
