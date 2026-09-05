@@ -22,6 +22,9 @@ WORKDIR /app
 COPY --from=builder /app/out/json/ .
 
 COPY --from=builder /app/out/bun.lock ./bun.lock
+# `turbo prune` does not copy patches/, but the root manifest's patchedDependencies
+# still references it and bun validates every patch file up front.
+COPY --from=builder /app/patches ./patches
 RUN bun install --frozen-lockfile
 
 # Build the project
