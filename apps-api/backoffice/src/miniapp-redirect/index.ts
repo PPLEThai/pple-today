@@ -1,5 +1,4 @@
-import node from '@elysiajs/node'
-import { loggerBuilder, RequestIdPlugin } from '@pple-today/api-common/plugins'
+import { getLogContextPath, loggerBuilder, RequestIdPlugin } from '@pple-today/api-common/plugins'
 import Elysia from 'elysia'
 
 import { buildMiniAppRedirectUrl, parseMiniAppRequestPath } from './build-url'
@@ -90,7 +89,7 @@ export const MiniAppRedirectController = new Elysia({ tags: ['Mini App Redirect'
   })
 
 export function createMiniAppRedirectApp() {
-  return new Elysia({ adapter: node() })
+  return new Elysia()
     .use([
       loggerBuilder({
         name: 'Mini App Redirect Logger',
@@ -106,7 +105,10 @@ export function createMiniAppRedirectApp() {
             : undefined,
       }).into({
         autoLogging: {
-          ignore: (ctx) => ctx.path.startsWith('/healthz') || ctx.path.startsWith('/.well-known/'),
+          ignore: (ctx) => {
+            const path = getLogContextPath(ctx)
+            return path.startsWith('/healthz') || path.startsWith('/.well-known/')
+          },
         },
       }),
       RequestIdPlugin,
