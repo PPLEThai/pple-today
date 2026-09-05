@@ -1,10 +1,10 @@
-FROM node:22-alpine3.22 AS base
+FROM oven/bun:1.4.1-alpine AS base
 RUN apk update
-RUN apk add --no-cache libc6-compat jq libstdc++
+RUN apk add --no-cache jq
 
 ARG VERSION=latest
 
-RUN npm install -g turbo@2.5.2 bun@1.4.1
+RUN bun add -g turbo@2.5.2
 
 RUN apk update
 RUN apk add --no-cache ca-certificates
@@ -18,7 +18,6 @@ COPY . .
 RUN turbo prune --scope=@api/backoffice --docker
 
 FROM base AS installer
-RUN apk add --no-cache libc6-compat libstdc++
 WORKDIR /app
  
 
@@ -37,8 +36,7 @@ RUN jq --arg version "$VERSION" '.version = $version' /app/apps-api/backoffice/p
 
 RUN bun run build --filter=@api/backoffice
  
-# The service runs on bun, so the final image needs no node at all.
-# Build stages stay on node: turbo and tsx (which drives esbuild) run there.
+# Clean bun image, not `base`: the runner needs neither turbo nor jq.
 FROM oven/bun:1.4.1-alpine AS runner
 WORKDIR /app
 
