@@ -38,7 +38,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v2
         with:
-          node-version: 20.16.0
+          node-version: 22.15.0
 
       - name: Install changeset
         run: bun install --frozen-lockfile
