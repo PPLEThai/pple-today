@@ -37,18 +37,23 @@ RUN jq --arg version "$VERSION" '.version = $version' /app/apps-api/backoffice/p
 
 RUN bun run build --filter=@api/backoffice
  
-FROM base AS runner
+# The service runs on bun, so the final image needs no node at all.
+# Build stages stay on node: turbo and tsx (which drives esbuild) run there.
+FROM oven/bun:1.4.1-alpine AS runner
 WORKDIR /app
- 
-COPY --from=installer --chown=backoffice:nodejs /app/apps-api/backoffice/certificates/*.pem /usr/local/share/ca-certificates/
+
+RUN apk add --no-cache ca-certificates
+
+RUN addgroup --system --gid 1001 backoffice
+RUN adduser --system --uid 1001 -G backoffice backoffice
+
+COPY --from=installer /app/apps-api/backoffice/certificates/*.pem /usr/local/share/ca-certificates/
 
 RUN chmod 644 /usr/local/share/ca-certificates/*.pem
 RUN update-ca-certificates
 
-RUN addgroup --system --gid 1001 backoffice
-RUN adduser --system --uid 1001 backoffice
 USER backoffice
 
-COPY --from=installer --chown=backoffice:nodejs /app/apps-api/backoffice/build ./
+COPY --from=installer --chown=backoffice:backoffice /app/apps-api/backoffice/build ./
 
-CMD ["node", "index.js"]
+CMD ["bun", "index.js"]

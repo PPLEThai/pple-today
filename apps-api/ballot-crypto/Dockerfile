@@ -33,13 +33,15 @@ RUN jq --arg version "$VERSION" '.version = $version' /app/apps-api/ballot-crypt
 
 RUN bun run build --filter=@api/ballot-crypto
 
-FROM base AS runner
+# The service runs on bun, so the final image needs no node at all.
+# Build stages stay on node: turbo and tsx (which drives esbuild) run there.
+FROM oven/bun:1.4.1-alpine AS runner
 WORKDIR /app
 
 RUN addgroup --system --gid 1001 ballot-crypto
-RUN adduser --system --uid 1001 ballot-crypto
+RUN adduser --system --uid 1001 -G ballot-crypto ballot-crypto
 USER ballot-crypto
 
-COPY --from=installer --chown=ballot-crypto:nodejs /app/apps-api/ballot-crypto/build ./
+COPY --from=installer --chown=ballot-crypto:ballot-crypto /app/apps-api/ballot-crypto/build ./
 
-CMD ["node", "index.js"]
+CMD ["bun", "index.js"]
