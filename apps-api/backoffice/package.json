@@ -13,11 +13,11 @@
   },
   "scripts": {
     "dev": "bun --watch src/index.ts",
-    "build": "rimraf ./build && tsx build.ts",
+    "build": "rimraf ./build && bun ./build.ts",
     "test": "vitest --run",
     "test:cov": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "backfill:door-redirect-uris": "tsx scripts/backfill-door-redirect-uris.ts",
+    "backfill:door-redirect-uris": "bun ./scripts/backfill-door-redirect-uris.ts",
     "lint": "eslint . --ext .ts,.tsx",
     "format:check": "prettier --check .",
     "coverage": "open-cli coverage/index.html"
@@ -65,7 +65,6 @@
     "open-cli": "^8.0.0",
     "pino-pretty": "^13.1.1",
     "rimraf": "^6.0.1",
-    "tsx": "^4.20.3",
     "typescript": "5.8.2",
     "vitest": "^3.2.4"
   },
