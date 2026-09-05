@@ -1,5 +1,37 @@
 # @api/ballot-crypto
 
+## 1.1.25
+
+### Patch Changes
+
+- [#479](https://github.com/PPLEThai/pple-today/pull/479) [`50110b4`](https://github.com/PPLEThai/pple-today/commit/50110b4128322975469e94b9c66465a386b88c9a) Thanks [@PanJ](https://github.com/PanJ)! - Drop node from the API Docker images entirely.
+
+  The images previously ran on `node:22-alpine` with bun installed on top, because
+  turbo and tsx both needed a node runtime. Bun runs TypeScript directly, so the
+  build scripts call `bun ./build.ts` instead of `tsx build.ts`, and turbo's
+  launcher works under bun as-is. Every stage now starts from
+  `oven/bun:1.4.1-alpine` and `tsx` is no longer a dependency of either service.
+
+  The runner stays on a clean bun image rather than the shared build base, so
+  turbo and jq stay out of the shipped layer.
+
+- [#479](https://github.com/PPLEThai/pple-today/pull/479) [`db5bb10`](https://github.com/PPLEThai/pple-today/commit/db5bb10fccef7ca0349f1b42f2bbc1dc5f3e7c06) Thanks [@PanJ](https://github.com/PanJ)! - Serve the APIs from Elysia's native Bun adapter instead of `@elysiajs/node`.
+
+  Both services constructed Elysia with `adapter: node()`, which routed every
+  request through `@hono/node-server` even once the images ran on bun. Dropping
+  the adapter lets Elysia use `Bun.serve` directly; esbuild now resolves elysia's
+  `bun` export condition so the native build is what gets bundled.
+
+  The node adapter populated `path` on the logger context and the Bun adapter does
+  not, which broke every `autoLogging.ignore` rule. `@pple-today/api-common` now
+  exports `getLogContextPath`, which reads `path` when present and falls back to
+  parsing `request.url`, and the ignore rules go through it.
+
+  Requires the images to run on bun.
+
+- Updated dependencies [[`db5bb10`](https://github.com/PPLEThai/pple-today/commit/db5bb10fccef7ca0349f1b42f2bbc1dc5f3e7c06)]:
+  - @pple-today/api-common@1.11.3
+
 ## 1.1.24
 
 ### Patch Changes
