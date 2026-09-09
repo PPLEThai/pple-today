@@ -1,5 +1,9 @@
 import { PrismaService } from '@pple-today/api-common/services'
-import { MiniAppInviteStatus, MiniAppSource, MiniAppTier } from '@pple-today/database/prisma'
+import {
+  MiniAppInviteStatus,
+  MiniAppTier,
+  NotificationApiKeySource,
+} from '@pple-today/database/prisma'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
 import { AppNotificationRepository } from './app-notification-repository'
@@ -52,8 +56,8 @@ const createPrismaService = () => {
         updateMany: vi.fn().mockResolvedValue({ count: 1 }),
         findFirst: vi.fn().mockResolvedValue({
           id: 'key-1',
+          source: NotificationApiKeySource.PLATFORM,
           dailyQuota: 1000,
-          miniApp: { source: MiniAppSource.PLATFORM },
         }),
       },
       $transaction: vi.fn(async (cb: (txClient: typeof tx) => unknown) => cb(tx)),
@@ -365,16 +369,22 @@ describe('AppNotificationRepository.releaseUsage', () => {
 })
 
 describe('AppNotificationRepository.setDailyQuota', () => {
-  test('updates only the app’s active keys and reports how many it touched', async () => {
+  test('updates only the app’s active provisioned key and reports how many it touched', async () => {
     const { prismaService } = createPrismaService()
     const repository = new AppNotificationRepository(prismaService)
 
     const result = await repository.setDailyQuota('app-1', 5000)
 
     // Scoped to `active`, so a retired app's deactivated key cannot be handed a
-    // fresh budget behind the platform's back.
+    // fresh budget behind the platform's back — and to the PLATFORM key, since
+    // an admin key an admin bound to this same app is unmetered by construction
+    // and would only carry a budget that nothing reads.
     expect(prismaService.notificationApiKey.updateMany).toHaveBeenCalledWith({
-      where: { miniAppId: 'app-1', active: true },
+      where: {
+        miniAppId: 'app-1',
+        active: true,
+        source: NotificationApiKeySource.PLATFORM,
+      },
       data: { dailyQuota: 5000 },
     })
     expect(result._unsafeUnwrap()).toBe(1)
@@ -388,12 +398,17 @@ describe('AppNotificationRepository.getUsageSince', () => {
 
     const result = await repository.getUsageSince('app-1', SINCE)
 
-    // Same active-key scope as setDailyQuota — a retired/deactivated key is not
-    // the meter the Console should read. The budget and the binding are selected
-    // with it, because a count nobody can judge is half an answer.
+    // Same scope as setDailyQuota — a retired/deactivated key is not the meter
+    // the Console should read, and neither is an admin's key on this app: its
+    // unmetered sends are not the Builder's spend. The budget and the provenance
+    // come back with it, because a count nobody can judge is half an answer.
     expect(prismaService.notificationApiKey.findFirst).toHaveBeenCalledWith({
-      where: { miniAppId: 'app-1', active: true },
-      select: { id: true, dailyQuota: true, miniApp: { select: { source: true } } },
+      where: {
+        miniAppId: 'app-1',
+        active: true,
+        source: NotificationApiKeySource.PLATFORM,
+      },
+      select: { id: true, source: true, dailyQuota: true },
     })
     // The same SUM the claim path enforces against, so the Console tile and a
     // 429 cannot disagree about what has been spent today.
@@ -403,8 +418,8 @@ describe('AppNotificationRepository.getUsageSince', () => {
     })
     expect(result._unsafeUnwrap()).toEqual({
       sent: 3,
+      source: NotificationApiKeySource.PLATFORM,
       dailyQuota: 1000,
-      miniApp: { source: MiniAppSource.PLATFORM },
     })
   })
 
@@ -418,7 +433,7 @@ describe('AppNotificationRepository.getUsageSince', () => {
     expect(result._unsafeUnwrap()).toMatchObject({ sent: 0 })
   })
 
-  test('an app with no active key reports null, not zero sends', async () => {
+  test('an app with no active provisioned key reports null, not zero sends', async () => {
     const { prismaService } = createPrismaService()
     prismaService.notificationApiKey.findFirst = vi.fn().mockResolvedValue(null)
     const repository = new AppNotificationRepository(prismaService)

@@ -15,7 +15,7 @@ import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
 import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import dayjs from 'dayjs'
-import { AlertTriangle, Check, Copy, KeyRound, RefreshCw } from 'lucide-react'
+import { AlertTriangle, Check, Copy, Info, KeyRound, Lock, RefreshCw } from 'lucide-react'
 
 import { MiniApp } from '@api/backoffice/admin'
 
@@ -142,6 +142,7 @@ export const MiniAppNotificationKeys = (props: MiniAppNotificationKeysProps) => 
 
   const keys = query.data ?? []
   const iconUsable = isPushIconUsable(miniApp.iconUrl)
+  const isPlatformApp = miniApp.source === 'PLATFORM'
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
@@ -154,8 +155,22 @@ export const MiniAppNotificationKeys = (props: MiniAppNotificationKeysProps) => 
           <DialogDescription className="text-sm text-base-text-medium leading-tight">
             คีย์ที่สร้างจากหน้านี้จะผูกกับแอปนี้
             การแจ้งเตือนที่ส่งด้วยคีย์นี้จะแสดงชื่อและไอคอนของแอป
+            และยังส่งถึงผู้รับที่ระบุเองได้ทุกแบบ (เบอร์โทร บทบาท หรือส่งทั่วถึง)
+            โดยไม่จำกัดเฉพาะผู้ใช้ของแอป
           </DialogDescription>
         </div>
+
+        {isPlatformApp && (
+          <div className="flex gap-2 rounded-md border border-base-outline-default bg-base-bg-light p-3 text-sm">
+            <Info className="size-4 shrink-0 text-base-text-medium" />
+            <span className="text-base-text-high leading-tight">
+              แอปนี้จัดการโดย PPLE Platform Provisioner
+              คีย์ของผู้พัฒนาจะส่งได้เฉพาะผู้ใช้ของแอปและมีโควตารายวัน
+              จึงแก้ไขหรือหมุนจากที่นี่ไม่ได้{' '}
+              <strong>คีย์ที่แอดมินสร้างที่นี่ไม่มีข้อจำกัดดังกล่าว</strong>
+            </span>
+          </div>
+        )}
 
         {!iconUsable && (
           <div className="flex gap-2 rounded-md border border-system-warning-border bg-system-warning-background p-3 text-sm">
@@ -203,59 +218,74 @@ export const MiniAppNotificationKeys = (props: MiniAppNotificationKeysProps) => 
             </div>
           ) : (
             <ul className="flex flex-col gap-2">
-              {keys.map((key) => (
-                <li
-                  key={key.id}
-                  className="flex items-center gap-2 rounded-md border border-base-outline-default p-3"
-                >
-                  <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <div className="flex items-center gap-1.5">
-                      <span className="truncate font-medium">{key.name}</span>
-                      {key.active ? (
-                        <Badge variant="outline">ใช้งานอยู่</Badge>
-                      ) : (
-                        <Badge variant="secondary">ปิดใช้งาน</Badge>
-                      )}
+              {keys.map((key) => {
+                // The Builder's own key: theirs to hold, the Provisioner's to
+                // manage. Rotating it here would break an integration nobody in
+                // this portal operates, and the API refuses it — so the actions
+                // are not offered rather than offered and rejected.
+                const isProvisioned = key.source === 'PLATFORM'
+
+                return (
+                  <li
+                    key={key.id}
+                    className="flex items-center gap-2 rounded-md border border-base-outline-default p-3"
+                  >
+                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <span className="truncate font-medium">{key.name}</span>
+                        {key.active ? (
+                          <Badge variant="outline">ใช้งานอยู่</Badge>
+                        ) : (
+                          <Badge variant="secondary">ปิดใช้งาน</Badge>
+                        )}
+                        {isProvisioned && <Badge variant="secondary">คีย์ของผู้พัฒนา</Badge>}
+                      </div>
+                      <span className="text-xs text-base-text-medium">
+                        สร้างเมื่อ {dayjs(key.createdAt).format('DD/MM/YYYY')}
+                        {isProvisioned && ' · ส่งได้เฉพาะผู้ใช้ของแอป'}
+                      </span>
                     </div>
-                    <span className="text-xs text-base-text-medium">
-                      สร้างเมื่อ {dayjs(key.createdAt).format('DD/MM/YYYY')}
-                    </span>
-                  </div>
-                  {key.active ? (
-                    <div className="flex shrink-0 gap-1.5">
+                    {isProvisioned ? (
+                      <div className="flex shrink-0 items-center gap-1 text-base-text-medium">
+                        <Lock className="size-4" />
+                        <span className="text-sm">อ่านอย่างเดียว</span>
+                      </div>
+                    ) : key.active ? (
+                      <div className="flex shrink-0 gap-1.5">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="size-8"
+                          disabled={rotateMutation.isPending}
+                          onClick={() => rotateKey(key.id, key.name)}
+                        >
+                          <span className="sr-only">หมุนคีย์</span>
+                          <RefreshCw className="size-4" />
+                        </Button>
+                        <Button
+                          variant="outline-destructive"
+                          size="sm"
+                          className="h-8"
+                          disabled={updateMutation.isPending}
+                          onClick={() => deactivateKey(key.id, key.name)}
+                        >
+                          ปิดใช้งาน
+                        </Button>
+                      </div>
+                    ) : (
                       <Button
                         variant="outline"
-                        size="icon"
-                        className="size-8"
-                        disabled={rotateMutation.isPending}
-                        onClick={() => rotateKey(key.id, key.name)}
-                      >
-                        <span className="sr-only">หมุนคีย์</span>
-                        <RefreshCw className="size-4" />
-                      </Button>
-                      <Button
-                        variant="outline-destructive"
                         size="sm"
-                        className="h-8"
+                        className="h-8 shrink-0"
                         disabled={updateMutation.isPending}
-                        onClick={() => deactivateKey(key.id, key.name)}
+                        onClick={() => setKeyActive(key.id, true)}
                       >
-                        ปิดใช้งาน
+                        เปิดใช้งาน
                       </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-8 shrink-0"
-                      disabled={updateMutation.isPending}
-                      onClick={() => setKeyActive(key.id, true)}
-                    >
-                      เปิดใช้งาน
-                    </Button>
-                  )}
-                </li>
-              ))}
+                    )}
+                  </li>
+                )
+              })}
             </ul>
           )}
         </div>

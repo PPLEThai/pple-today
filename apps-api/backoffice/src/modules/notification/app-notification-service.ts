@@ -1,5 +1,6 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
+import type { NotificationApiKeySource } from '@pple-today/database/prisma'
 import { err, ok } from 'neverthrow'
 
 import { resolveAppAudience } from './app-audience'
@@ -19,6 +20,8 @@ import { resolveAppLinkPath } from './resolve-app-link-path'
 /** The notification key as the send path needs to see it. */
 export interface AppBoundKey {
   id: string
+  /** Who issued the key, which is what decides whether it is metered. */
+  source: NotificationApiKeySource
   /** The app this key speaks for. Null = a legacy unbound key. */
   miniApp: BoundApp | null
   dailyQuota: number
@@ -185,9 +188,9 @@ export class AppNotificationService {
    * invalid `linkPath` or recipient list fails before the claim, so junk never
    * costs budget.
    *
-   * A key bound to a central-team app is never *held* to the quota: the daily
-   * budget is a *Builder App Resource Limit*, and a central-team app is not an
-   * outside Builder. It is still *recorded*, because the audit trail is
+   * An admin-issued key is never *held* to the quota, whichever app it speaks
+   * for: the daily budget is a *Builder App Resource Limit*, and an admin is
+   * not an outside Builder. It is still *recorded*, because the audit trail is
    * per-call and the platform cannot write it itself — this send is
    * authenticated by the app's own key and never traverses the platform.
    */

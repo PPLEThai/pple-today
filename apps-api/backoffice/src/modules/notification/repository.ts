@@ -176,11 +176,11 @@ export class NotificationRepository {
    * retired Builder App from notifying anyone).
    *
    * Returns the whole bound app, not just its id. Every fact the rest of the
-   * request needs about the sender is known here and nowhere cheaper: `source`
-   * decides which send path the key may use and whether it is metered, and
-   * `name`/`icon` are what the notification carries into the tray. Fetching
-   * them together means the send path never has to go back for the app it
-   * already proved the key belongs to.
+   * request needs about the sender is known here and nowhere cheaper: the key's
+   * own `source` decides which send path it may use and whether it is metered,
+   * and the app's `name`/`icon` are what the notification carries into the
+   * tray. Fetching them together means the send path never has to go back for
+   * the app it already proved the key belongs to.
    */
   async checkApiKey(apiKey: string) {
     return fromRepositoryPromise(
@@ -191,9 +191,10 @@ export class NotificationRepository {
         },
         select: {
           id: true,
+          source: true,
           dailyQuota: true,
           miniApp: {
-            select: { id: true, source: true, name: true, icon: true },
+            select: { id: true, name: true, icon: true },
           },
         },
       })

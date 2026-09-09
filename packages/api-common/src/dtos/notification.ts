@@ -1,4 +1,4 @@
-import { NotificationInAppType } from '@pple-today/database/prisma'
+import { NotificationApiKeySource, NotificationInAppType } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 const NotificationLinkBase = t.Object({
@@ -78,6 +78,10 @@ export const NotificationApiKey = t.Object({
         "The mini app this key is bound to. Null for a legacy unbound key with today's raw phone-number behaviour.",
     })
   ),
+  source: t.Enum(NotificationApiKeySource, {
+    description:
+      "Who issued the key, which is what decides its capability. ADMIN keys were created in the admin portal and may target recipients directly whichever app they are bound to. PLATFORM keys were provisioned for a Builder App: confined to that app's own users, and metered against a daily quota.",
+  }),
   createdAt: t.Date({
     description: 'The date and time when the notification API key was created',
   }),

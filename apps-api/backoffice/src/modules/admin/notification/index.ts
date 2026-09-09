@@ -65,7 +65,8 @@ export const AdminNotificationController = new Elysia({
           requiredLocalUser: true,
           detail: {
             summary: 'Create API Key Notification',
-            description: 'Create a new API key notification',
+            description:
+              "Create a new API key notification. Optionally bound to a mini app, whose name and icon the notification then carries. Binding is attribution only: a key created here keeps full raw-targeting reach even when bound to a Builder App, which is how the central team notifies a Builder App's users with an audience the Builder itself may not name. Only the key the platform provisions for a Builder App is audience-scoped and metered.",
           },
           body: CreateApiKeyNotificationBody,
           response: {
@@ -92,7 +93,8 @@ export const AdminNotificationController = new Elysia({
           requiredLocalUser: true,
           detail: {
             summary: 'Update API Key Notification',
-            description: 'Update an existing API key notification',
+            description:
+              'Update an existing API key notification. Keys provisioned for a Builder App are managed by the PPLE Platform Provisioner and are refused here.',
           },
           params: UpdateApiKeyNotificationParams,
           body: UpdateApiKeyNotificationBody,
@@ -100,7 +102,8 @@ export const AdminNotificationController = new Elysia({
             200: UpdateApiKeyNotificationResponse,
             ...createErrorSchema(
               InternalErrorCode.INTERNAL_SERVER_ERROR,
-              InternalErrorCode.NOTIFICATION_API_KEY_NOT_FOUND
+              InternalErrorCode.NOTIFICATION_API_KEY_NOT_FOUND,
+              InternalErrorCode.NOTIFICATION_API_KEY_PLATFORM_MANAGED
             ),
           },
         }
@@ -120,14 +123,16 @@ export const AdminNotificationController = new Elysia({
           requiredLocalUser: true,
           detail: {
             summary: 'Rotate API Key',
-            description: 'Rotate the API key for an existing API key notification',
+            description:
+              'Rotate the API key for an existing API key notification. Keys provisioned for a Builder App are managed by the PPLE Platform Provisioner and are refused here.',
           },
           params: RotateApiKeyNotificationParams,
           response: {
             200: RotateApiKeyNotificationResponse,
             ...createErrorSchema(
               InternalErrorCode.INTERNAL_SERVER_ERROR,
-              InternalErrorCode.NOTIFICATION_API_KEY_NOT_FOUND
+              InternalErrorCode.NOTIFICATION_API_KEY_NOT_FOUND,
+              InternalErrorCode.NOTIFICATION_API_KEY_PLATFORM_MANAGED
             ),
           },
         }
@@ -147,14 +152,16 @@ export const AdminNotificationController = new Elysia({
           requiredLocalUser: true,
           detail: {
             summary: 'Delete API Key Notification',
-            description: 'Delete an existing API key notification',
+            description:
+              'Delete an existing API key notification. Keys provisioned for a Builder App are managed by the PPLE Platform Provisioner and are refused here.',
           },
           params: DeleteApiKeyNotificationParams,
           response: {
             204: DeleteApiKeyNotificationResponse,
             ...createErrorSchema(
               InternalErrorCode.INTERNAL_SERVER_ERROR,
-              InternalErrorCode.NOTIFICATION_API_KEY_NOT_FOUND
+              InternalErrorCode.NOTIFICATION_API_KEY_NOT_FOUND,
+              InternalErrorCode.NOTIFICATION_API_KEY_PLATFORM_MANAGED
             ),
           },
         }

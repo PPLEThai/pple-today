@@ -34,7 +34,7 @@ const createRepository = (
       findUnique: vi.fn(
         async (_args: {
           where: { apiKey: string; active: boolean }
-          select: { miniApp: { select: Record<string, boolean> } }
+          select: { source: boolean; miniApp: { select: Record<string, boolean> } }
         }) => null
       ),
     },
@@ -101,15 +101,12 @@ describe('NotificationRepository.checkApiKey', () => {
     await repository.checkApiKey('plaintext-key')
 
     const [args] = prismaService.notificationApiKey.findUnique.mock.calls[0]
-    // `source` decides which path the key may use and whether it is metered,
-    // and name/icon are what the send path puts in the tray — all needed the
-    // moment the key is known to be valid.
-    expect(args.select.miniApp.select).toEqual({
-      id: true,
-      source: true,
-      name: true,
-      icon: true,
-    })
+    // The key's own `source` decides which path it may use and whether it is
+    // metered; the app's name/icon are what the send path puts in the tray — all
+    // needed the moment the key is known to be valid. The app's *own* source is
+    // deliberately absent: it answers no question on this path any more.
+    expect(args.select.source).toBe(true)
+    expect(args.select.miniApp.select).toEqual({ id: true, name: true, icon: true })
   })
 
   test('only ever matches an active key, by hash', async () => {

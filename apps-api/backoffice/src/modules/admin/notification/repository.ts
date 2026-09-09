@@ -28,9 +28,23 @@ export class AdminNotificationRepository {
           name: true,
           active: true,
           miniAppId: true,
+          source: true,
           createdAt: true,
           updatedAt: true,
         },
+      })
+    )
+  }
+
+  /**
+   * The one fact the mutation guard needs, fetched on its own so a refusal can
+   * say *why* rather than reporting a scoped update as a missing row.
+   */
+  async findApiKeySource(id: string) {
+    return await fromRepositoryPromise(
+      this.prismaService.notificationApiKey.findUniqueOrThrow({
+        where: { id },
+        select: { source: true },
       })
     )
   }
