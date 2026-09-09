@@ -5,6 +5,11 @@
 > `audience` field, and an app may name individual recipients within the same
 > `App Users ∩ tier` set. The quota is also now denominated in deliveries rather
 > than calls. See [direct-notifications.md](./direct-notifications.md).
+>
+> **Also superseded:** capability is no longer derived from `MiniApp.source`. It
+> is `NotificationApiKey.source`, a per-key column — see
+> [Capability is per key, not per app](#capability-is-per-key-not-per-app) at
+> the end of this document.
 
 Today every PPLE Today notification looks the same: a bell icon, the label
 "แจ้งเตือนทั่วไป" in the notification centre, and "PPLE Today" in the OS tray —
@@ -22,7 +27,7 @@ Three ideas carry the whole design.
 means two things at once: which app a key speaks for, and that the key may not
 name its own recipients. Those are separated. Every app — central-team and
 Builder alike — gets a bound key; whether the key is *confined* to the
-audience-bound path is decided by `MiniApp.source`:
+audience-bound path was originally decided by `MiniApp.source`:
 
 | `source`   | Raw targeting (phone/role/address/broadcast) | Audience-bound path | Metered |
 | ---------- | -------------------------------------------- | ------------------- | ------- |
@@ -34,6 +39,9 @@ A derived rule rather than a new column: "may this key name recipients" is a
 property of *what kind of app it is*, and a flag could drift out of sync with
 the app it describes. The privacy guarantee for Builder Apps is unchanged — a
 `PLATFORM` key still cannot express who receives its notification.
+
+> This is the part that did not survive contact with use. See [Capability is per
+> key, not per app](#capability-is-per-key-not-per-app).
 
 **Attribution follows the key, not the audience.** A bound `ADMIN` key
 broadcasting to everyone produces a branded notification, even though most
@@ -365,3 +373,45 @@ integration has moved.
 [list]: ../apps-client/mobile/app/(tabs)/(feed)/notification/index.tsx
 [detail]: ../apps-client/mobile/app/(tabs)/(feed)/notification/[notificationId].tsx
 [toast]: ../apps-client/mobile/app/_layout.tsx
+
+## Capability is per key, not per app
+
+The rule above read capability off `MiniApp.source`, on the reasoning that "may
+this key name recipients" is a property of what kind of app it is. That held
+only while every key bound to a Builder App belonged to the Builder.
+
+It stopped holding when the central team needed to notify a Builder App's users
+with an audience the app itself may not express — a phone number, a role, a
+broadcast — while the notification still carried the Builder App's name and icon.
+Under the derived rule, the *only* way to get that attribution was a key bound to
+a `PLATFORM` app, and such a key was refused on the raw-targeting path with
+`NOTIFICATION_KEY_APP_BOUND`. Attribution and reach could not be had together,
+and no amount of admin authority helped, because the admin was not part of the
+rule.
+
+So capability moved to its own column, `NotificationApiKey.source`:
+
+| key `source` | Issued by                              | Raw targeting | Audience-bound path | Metered |
+| ------------ | -------------------------------------- | ------------- | ------------------- | ------- |
+| `ADMIN`      | the admin portal (and every legacy key) | allowed       | allowed if bound    | no      |
+| `PLATFORM`   | the provisioner, with a Builder App     | refused       | yes                 | yes     |
+
+The two columns now answer two different questions, and reading either one for
+the other's question is the bug this split exists to prevent:
+
+- `miniAppId` — **attribution**. Whose name and icon the notification wears.
+- `source` — **capability**. What the key may ask for, and whether it is metered.
+
+The privacy guarantee for Builder Apps is untouched: a provisioned key still
+cannot express who receives its notification, and the only keys that gained reach
+are ones a vetted admin created deliberately. The drift the original reasoning
+feared is real, and is handled by making the provisioner the sole writer of
+`PLATFORM` (the column defaults to `ADMIN`, which is exactly what an
+admin-portal create is) and by scoping every quota read and write to
+`source = PLATFORM`, so an admin's key on a Builder App is never mistaken for the
+Builder's own spend.
+
+The admin portal offers this on a Builder App's row: the app itself stays
+read-only, its provisioned key is listed but not manageable, and the admin may
+add and manage keys of their own. `NOTIFICATION_API_KEY_PLATFORM_MANAGED` is the
+refusal if one tries to rotate, edit or delete the Builder's key anyway.

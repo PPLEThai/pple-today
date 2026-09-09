@@ -1,5 +1,5 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
-import { MiniAppSource, MiniAppTier } from '@pple-today/database/prisma'
+import { MiniAppSource, MiniAppTier, NotificationApiKeySource } from '@pple-today/database/prisma'
 import { err, ok } from 'neverthrow'
 import { describe, expect, test, vi } from 'vitest'
 
@@ -58,15 +58,21 @@ const builderApp = {
 }
 const centralTeamApp = { ...builderApp, source: MiniAppSource.ADMIN }
 
+/**
+ * A provisioned Builder key by default — the metered, audience-scoped kind.
+ * Metering follows the *key's* `source`, not the app's, so tests about budgets
+ * override `source` and tests about attribution override `miniApp`.
+ */
 const appBoundKey = (overrides: Partial<AppBoundKey> = {}): AppBoundKey => ({
   id: KEY_ID,
+  source: NotificationApiKeySource.PLATFORM,
   miniApp: builderApp,
   dailyQuota: 10,
   ...overrides,
 })
 
-/** A metered Builder App on the same 10/day budget `appBoundKey` carries. */
-const METERED = { dailyQuota: 10, miniApp: builderApp }
+/** A metered Builder key on the same 10/day budget `appBoundKey` carries. */
+const METERED = { source: NotificationApiKeySource.PLATFORM, dailyQuota: 10 }
 
 /** A `getUsageSince` stand-in; metered unless the test says otherwise. */
 const fakeUsage = (overrides: Partial<ActiveKeyUsage> & { sent: number }) =>
@@ -638,12 +644,16 @@ describe('AppNotificationService.send', () => {
       expect(repository.usage.reduce((total, row) => total + row.units, 0)).toBe(4)
     })
 
-    test('does not hold a key bound to a central-team app to a budget', async () => {
-      // The quota is a Builder App Resource Limit. A central-team app taking a
-      // bound key to be attributed must not thereby acquire a cap.
+    test('does not hold an admin-issued key to a budget', async () => {
+      // The quota is a Builder App Resource Limit. An admin key taking a binding
+      // to be attributed must not thereby acquire a cap.
       const repository = createFakeAppNotificationRepository()
       const { service, notificationRepository } = createService(repository)
-      const key = appBoundKey({ miniApp: centralTeamApp, dailyQuota: 1 })
+      const key = appBoundKey({
+        source: NotificationApiKeySource.ADMIN,
+        miniApp: centralTeamApp,
+        dailyQuota: 1,
+      })
 
       await service.send(key, toAll())
       const second = await service.send(key, toAll())
@@ -658,10 +668,31 @@ describe('AppNotificationService.send', () => {
       expect(repository.usage).toHaveLength(2)
     })
 
+    test('does not hold an admin key bound to a Builder App to that app’s budget', async () => {
+      // The enhanced-audience case, from the metering side: the budget belongs
+      // to the Builder, and this key is not theirs. Charging the central team's
+      // sends to it would exhaust a limit the Builder never spent — the same
+      // binding as the default key above, the opposite answer.
+      const repository = createFakeAppNotificationRepository()
+      const { service } = createService(repository)
+      const key = appBoundKey({ source: NotificationApiKeySource.ADMIN, dailyQuota: 1 })
+
+      await service.send(key, toAll())
+      const second = await service.send(key, toAll())
+
+      expect(second.isOk()).toBe(true)
+      expect(repository.claimUsage.mock.calls.every(([claim]) => claim.dailyQuota === null)).toBe(
+        true
+      )
+    })
+
     test('an unmetered send reports no budget rather than one nothing enforces', async () => {
       const { service } = createService()
 
-      const result = await service.send(appBoundKey({ miniApp: centralTeamApp }), toAll())
+      const result = await service.send(
+        appBoundKey({ source: NotificationApiKeySource.ADMIN, miniApp: centralTeamApp }),
+        toAll()
+      )
 
       expect(result._unsafeUnwrap()).toEqual({
         recipientCount: 3,
@@ -900,7 +931,7 @@ describe('AppNotificationService.getNotificationUsage', () => {
     // may climb — but it is measured against no cap, and reporting one would
     // put a number on the Console that no 429 backs.
     const repository = createFakeAppNotificationRepository()
-    repository.getUsageSince = fakeUsage({ sent: 42, miniApp: centralTeamApp })
+    repository.getUsageSince = fakeUsage({ sent: 42, source: NotificationApiKeySource.ADMIN })
     const { service } = createService(repository)
 
     const result = await service.getNotificationUsage(MINI_APP_ID)

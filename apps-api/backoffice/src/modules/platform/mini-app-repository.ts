@@ -1,6 +1,6 @@
 import type { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { MiniAppSource, MiniAppTier } from '@pple-today/database/prisma'
+import { MiniAppSource, MiniAppTier, NotificationApiKeySource } from '@pple-today/database/prisma'
 
 import {
   generateNotificationApiKey,
@@ -70,11 +70,16 @@ export class PlatformMiniAppRepository {
           include: { miniAppRoles: true },
         })
 
+        // Stamped PLATFORM explicitly rather than inherited from the app: this
+        // key goes to an outside Builder, so it is the audience-scoped, metered
+        // kind. The column defaults to ADMIN, which is what an admin-portal
+        // create is — including one bound to *this* app.
         await tx.notificationApiKey.create({
           data: {
             name: data.name,
             apiKey: hashNotificationApiKey(notificationApiKey),
             miniAppId: miniApp.id,
+            source: NotificationApiKeySource.PLATFORM,
             dailyQuota: data.dailyQuota,
           },
         })

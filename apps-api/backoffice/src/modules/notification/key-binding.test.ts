@@ -1,12 +1,26 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
-import { MiniAppSource } from '@pple-today/database/prisma'
+import { MiniAppSource, NotificationApiKeySource } from '@pple-today/database/prisma'
 import { describe, expect, test } from 'vitest'
 
 import { isMeteredKey, requireAppBoundKey, requireUnboundKey } from './key-binding'
 
-const unbound = { miniApp: null }
-const builderApp = { miniApp: { source: MiniAppSource.PLATFORM } }
-const centralTeamApp = { miniApp: { source: MiniAppSource.ADMIN } }
+/** A legacy admin key that speaks for no app. */
+const unbound = { source: NotificationApiKeySource.ADMIN, miniApp: null }
+/** The key the provisioner hands a Builder along with their app. */
+const provisionedKey = {
+  source: NotificationApiKeySource.PLATFORM,
+  miniApp: { source: MiniAppSource.PLATFORM },
+}
+/** An admin key bound to a central-team app, purely for attribution. */
+const centralTeamApp = {
+  source: NotificationApiKeySource.ADMIN,
+  miniApp: { source: MiniAppSource.ADMIN },
+}
+/** An admin key bound to a *Builder* App — the enhanced-audience case. */
+const adminKeyOnBuilderApp = {
+  source: NotificationApiKeySource.ADMIN,
+  miniApp: { source: MiniAppSource.PLATFORM },
+}
 
 describe('requireUnboundKey', () => {
   describe('legacy central-team keys are unchanged', () => {
@@ -17,7 +31,7 @@ describe('requireUnboundKey', () => {
     })
   })
 
-  describe('what the key may do follows the app it speaks for', () => {
+  describe('what the key may do follows who issued it', () => {
     test('a key bound to a central-team app may still target recipients', () => {
       // Binding is attribution, not audience restriction. A vetted central-team
       // app takes a bound key purely so its notifications carry its identity;
@@ -25,8 +39,8 @@ describe('requireUnboundKey', () => {
       expect(requireUnboundKey(centralTeamApp).isOk()).toBe(true)
     })
 
-    test('a key bound to a Builder App is refused', () => {
-      const result = requireUnboundKey(builderApp)
+    test('a provisioned Builder key is refused', () => {
+      const result = requireUnboundKey(provisionedKey)
 
       expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.NOTIFICATION_KEY_APP_BOUND)
     })
@@ -34,16 +48,24 @@ describe('requireUnboundKey', () => {
     test('the refusal points at the audience-bound path', () => {
       // A Builder App hitting this endpoint has made an honest mistake; the
       // error has to name the path that will actually work for them.
-      const result = requireUnboundKey(builderApp)
+      const result = requireUnboundKey(provisionedKey)
 
       expect(result._unsafeUnwrapErr().message).toContain('POST /external/notifications')
+    })
+
+    test('an admin key bound to a Builder App may target recipients', () => {
+      // The reason this is a per-key column rather than a read of
+      // `MiniApp.source`: an admin adds a key to a Builder App precisely so the
+      // central team can reach that app's users with an audience the Builder
+      // itself may not express. Same binding as the key above, opposite answer.
+      expect(requireUnboundKey(adminKeyOnBuilderApp).isOk()).toBe(true)
     })
   })
 })
 
 describe('requireAppBoundKey', () => {
   test('a bound key passes and carries its app forward', () => {
-    const result = requireAppBoundKey({ id: 'key-1', miniApp: { source: MiniAppSource.PLATFORM } })
+    const result = requireAppBoundKey({ ...provisionedKey, id: 'key-1' })
 
     // Narrowed to a non-null app, so the caller never re-checks it.
     expect(result._unsafeUnwrap().miniApp.source).toBe(MiniAppSource.PLATFORM)
@@ -61,16 +83,22 @@ describe('requireAppBoundKey', () => {
     expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.NOTIFICATION_KEY_NOT_APP_BOUND)
   })
 
-  test('an unbound key is locked out of exactly one path, and a Builder key out of the other', () => {
-    // No key is accepted by both, and none is locked out of both.
+  test('an unbound key is locked out of exactly one path, and a provisioned key out of the other', () => {
+    // Neither of these is accepted by both, nor locked out of both. Note this is
+    // no longer a partition over all keys: an admin key bound to any app may use
+    // either path, which is the capability this column exists to grant.
     expect(requireUnboundKey(unbound).isOk()).toBe(!requireAppBoundKey(unbound).isOk())
-    expect(requireUnboundKey(builderApp).isOk()).toBe(!requireAppBoundKey(builderApp).isOk())
+    expect(requireUnboundKey(provisionedKey).isOk()).toBe(
+      !requireAppBoundKey(provisionedKey).isOk()
+    )
+    expect(requireUnboundKey(adminKeyOnBuilderApp).isOk()).toBe(true)
+    expect(requireAppBoundKey(adminKeyOnBuilderApp).isOk()).toBe(true)
   })
 })
 
 describe('isMeteredKey', () => {
-  test('a key bound to a Builder App is metered', () => {
-    expect(isMeteredKey(builderApp)).toBe(true)
+  test('a provisioned Builder key is metered', () => {
+    expect(isMeteredKey(provisionedKey)).toBe(true)
   })
 
   test('a key bound to a central-team app is not metered', () => {
@@ -79,14 +107,21 @@ describe('isMeteredKey', () => {
     expect(isMeteredKey(centralTeamApp)).toBe(false)
   })
 
+  test('an admin key on a Builder App is not metered', () => {
+    // The budget belongs to the Builder, and this key is not theirs — charging
+    // the central team's sends to it would exhaust a limit they cannot see and
+    // did not spend.
+    expect(isMeteredKey(adminKeyOnBuilderApp)).toBe(false)
+  })
+
   test('a legacy unbound key is not metered', () => {
     // Unbound keys have never been metered, on either endpoint.
     expect(isMeteredKey(unbound)).toBe(false)
   })
 
   test('a source this code has not heard of is metered', () => {
-    // Metered by default: a new app kind must not quietly arrive with an
+    // Metered by default: a new key kind must not quietly arrive with an
     // unlimited send path.
-    expect(isMeteredKey({ miniApp: { source: 'FUTURE_SOURCE' as MiniAppSource } })).toBe(true)
+    expect(isMeteredKey({ source: 'FUTURE_SOURCE' as NotificationApiKeySource })).toBe(true)
   })
 })

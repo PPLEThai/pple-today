@@ -218,17 +218,35 @@ export const Data = () => {
         cell: ({ row }) => {
           const miniApp = row.original
 
+          // A Platform app's *row* stays read-only — it is the Provisioner's —
+          // but notification keys are not part of that row. An admin may add
+          // their own key to a Builder App to notify its users with an audience
+          // the Builder itself cannot name, so that one action is offered here;
+          // the dialog keeps the Builder's own provisioned key untouchable.
           if (miniApp.source === 'PLATFORM') {
             return (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="flex items-center gap-1 text-base-text-medium">
-                    <Lock className="size-4" />
-                    <span className="text-sm">อ่านอย่างเดียว</span>
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>จัดการผ่าน PPLE Platform Provisioner เท่านั้น</TooltipContent>
-              </Tooltip>
+              <div className="flex items-center gap-3">
+                <MiniAppNotificationKeys
+                  miniApp={miniApp}
+                  trigger={
+                    <Button variant="outline" size="icon" className="size-8">
+                      <span className="sr-only">คีย์การแจ้งเตือน</span>
+                      <Bell className="size-4" />
+                    </Button>
+                  }
+                />
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1 text-base-text-medium">
+                      <Lock className="size-4" />
+                      <span className="text-sm">อ่านอย่างเดียว</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    ข้อมูลแอปจัดการผ่าน PPLE Platform Provisioner เท่านั้น
+                  </TooltipContent>
+                </Tooltip>
+              </div>
             )
           }
 

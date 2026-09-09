@@ -407,6 +407,13 @@ export const NOTIFICATION_KEY_ERROR_SCHEMA = {
   NOTIFICATION_KEY_NOT_APP_BOUND: {
     status: 403,
   },
+  // The admin portal tried to rotate, edit or delete a key the platform
+  // provisioned for a Builder App. Admins may add their own keys to any app,
+  // including a Builder's, but the Builder's own key is the provisioner's to
+  // manage — rotating it here would break an integration nobody here operates.
+  NOTIFICATION_API_KEY_PLATFORM_MANAGED: {
+    status: 409,
+  },
   // A `direct` send named a recipient list that cannot be honoured: empty, over
   // the per-call cap, or an entry that names neither or both of `sub`/`phone`.
   // Always a refusal — never a silent truncation, and never a fallback to the

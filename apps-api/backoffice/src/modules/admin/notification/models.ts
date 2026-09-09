@@ -9,11 +9,26 @@ export const ListApiKeyNotificationsQuery = t.Composite([
 ])
 export type ListApiKeyNotificationsQuery = Static<typeof ListApiKeyNotificationsQuery>
 
+// `source` is on the wire because the portal must not offer to manage a key it
+// does not own: a PLATFORM key belongs to the Builder and is managed through the
+// provisioner, and it is also the one kind that cannot target recipients.
 export const ListApiKeyNotificationsResponse = t.Array(
-  t.Pick(NotificationApiKey, ['id', 'name', 'active', 'miniAppId', 'createdAt', 'updatedAt'])
+  t.Pick(NotificationApiKey, [
+    'id',
+    'name',
+    'active',
+    'miniAppId',
+    'source',
+    'createdAt',
+    'updatedAt',
+  ])
 )
 export type ListApiKeyNotificationsResponse = Static<typeof ListApiKeyNotificationsResponse>
 
+// No `source`: a key created here is an admin key by definition, and letting the
+// caller ask for a PLATFORM one would be asking to hand itself a restriction.
+// Binding to a Builder App is allowed and is the point — the key wears the app's
+// name and icon while keeping the admin's own audience reach.
 export const CreateApiKeyNotificationBody = t.Composite([
   t.Pick(NotificationApiKey, ['name']),
   t.Object({

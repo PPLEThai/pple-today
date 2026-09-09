@@ -1,4 +1,5 @@
 import type { PrismaService } from '@pple-today/api-common/services'
+import { NotificationApiKeySource } from '@pple-today/database/prisma'
 import { describe, expect, test, vi } from 'vitest'
 
 import { AdminNotificationRepository } from './repository'
@@ -10,20 +11,25 @@ const createRepository = () => {
     apiKey: 'hashed',
     active: true,
     miniAppId: (_args.data.miniAppId as string | undefined) ?? null,
+    source: NotificationApiKeySource.ADMIN,
     dailyQuota: 1000,
     createdAt: new Date(),
     updatedAt: new Date(),
   }))
   const findMany = vi.fn(async (_args: unknown) => [])
+  const findUniqueOrThrow = vi.fn(async (_args: unknown) => ({
+    source: NotificationApiKeySource.PLATFORM,
+  }))
 
   const prismaService = {
-    notificationApiKey: { create, findMany },
+    notificationApiKey: { create, findMany, findUniqueOrThrow },
   } as unknown as PrismaService
 
   return {
     repository: new AdminNotificationRepository(prismaService),
     create,
     findMany,
+    findUniqueOrThrow,
   }
 }
 
@@ -56,7 +62,18 @@ describe('AdminNotificationRepository', () => {
     )
   })
 
-  test('listApiKeys filters by mini app and selects the binding', async () => {
+  test('createApiKey does not name a source, so the ADMIN default applies', async () => {
+    // An admin-portal key is an admin key by construction. Spelling it here as
+    // well would give a second place for the two to disagree.
+    const { repository, create } = createRepository()
+
+    await repository.createApiKey({ name: 'Enhanced audience key', miniAppId: 'builder-app' })
+
+    const [args] = create.mock.calls[0]!
+    expect(args.data).not.toHaveProperty('source')
+  })
+
+  test('listApiKeys filters by mini app and selects the binding and provenance', async () => {
     const { repository, findMany } = createRepository()
 
     await repository.listApiKeys({ limit: 10, page: 1, miniAppId: 'app-1' })
@@ -64,9 +81,23 @@ describe('AdminNotificationRepository', () => {
     expect(findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { miniAppId: 'app-1' },
-        select: expect.objectContaining({ miniAppId: true }),
+        // `source` goes out with the row because the portal must not offer to
+        // manage a key the provisioner owns.
+        select: expect.objectContaining({ miniAppId: true, source: true }),
       })
     )
+  })
+
+  test('findApiKeySource reads provenance alone, by id', async () => {
+    const { repository, findUniqueOrThrow } = createRepository()
+
+    const result = await repository.findApiKeySource('key-1')
+
+    expect(findUniqueOrThrow).toHaveBeenCalledWith({
+      where: { id: 'key-1' },
+      select: { source: true },
+    })
+    expect(result._unsafeUnwrap().source).toBe(NotificationApiKeySource.PLATFORM)
   })
 
   test('listApiKeys omits the where clause when no mini app is given', async () => {

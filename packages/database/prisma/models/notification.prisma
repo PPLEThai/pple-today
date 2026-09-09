@@ -125,6 +125,24 @@ model UserNotification {
   @@index([userId])
 }
 
+// Who issued a notification key, which is what decides the key's *capability*
+// — separately from `miniAppId`, which decides the app it speaks for.
+//
+// Originally this was derived from `MiniApp.source`: a key bound to a Builder
+// App was, by definition, that Builder's key. That stopped being true once the
+// central team needed to send to a Builder App's users with a richer audience
+// than the app itself may name. Such a key is bound to a `PLATFORM` app but was
+// issued by a vetted admin, so the app's source can no longer answer for it.
+//
+// `ADMIN` — issued from the admin portal (and every key that predates the
+// platform provisioner). Full raw-targeting capability, never metered.
+// `PLATFORM` — provisioned by the platform alongside a Builder App, on the
+// Builder's behalf. Confined to the audience-bound path and metered.
+enum NotificationApiKeySource {
+  ADMIN
+  PLATFORM
+}
+
 model NotificationApiKey {
   id     String  @id @default(cuid())
   name   String
@@ -134,8 +152,17 @@ model NotificationApiKey {
   // App-bound key. Null = legacy central-team key with today's raw
   // phone-number behaviour, unchanged. Set for the per-app key the platform
   // provisions with each Builder App; retire deactivates it via this binding.
+  //
+  // Binding is attribution: it says whose name and icon the notification
+  // carries, not who the key may reach. `source` decides that.
   miniAppId String?
   miniApp   MiniApp? @relation(fields: [miniAppId], references: [id])
+
+  // Defaults to ADMIN because that is what an admin-portal create is, and what
+  // every pre-existing unbound key has always been. The provisioner sets
+  // PLATFORM explicitly; the migration backfilled it for the keys it had
+  // already created against Builder Apps.
+  source NotificationApiKeySource @default(ADMIN)
 
   // Sends allowed per calendar day (Asia/Bangkok), metered against
   // NotificationApiKeyUsageLog via a transactional claim that locks this row.
@@ -149,7 +176,9 @@ model NotificationApiKey {
   usageLogs NotificationApiKeyUsageLog[]
 
   @@index([active, apiKey])
-  @@index([miniAppId])
+  // Serves both "this app's keys" (admin portal) and "this app's provisioned
+  // key" (quota read/write), which is always qualified by source.
+  @@index([miniAppId, source])
 }
 
 model NotificationApiKeyUsageLog {

@@ -1,18 +1,18 @@
 import type { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import type { Prisma } from '@pple-today/database/prisma'
-import { MiniAppInviteStatus } from '@pple-today/database/prisma'
+import { MiniAppInviteStatus, NotificationApiKeySource } from '@pple-today/database/prisma'
 
 import type { AppNotificationSendContext } from './app-audience'
 import type { KeyBinding } from './key-binding'
 
 /**
  * One app's spend in a quota window, with everything needed to read it: the
- * budget it is measured against and the binding that decides whether it is
- * measured at all. A `KeyBinding`, so the metering rule that governs a send
- * governs what is reported about it.
+ * budget it is measured against and the provenance that decides whether it is
+ * measured at all. Carries the same `source` a `KeyBinding` does, so the
+ * metering rule that governs a send governs what is reported about it.
  */
-export interface ActiveKeyUsage extends KeyBinding {
+export interface ActiveKeyUsage extends Pick<KeyBinding, 'source'> {
   /**
    * Deliveries logged in the window — the `units` `claimUsage` meters against.
    * Denominated in deliveries rather than calls, so a broadcast to 4,000 App
@@ -216,11 +216,18 @@ export class AppNotificationRepository {
     )
   }
 
-  /** Set a key's daily quota — how the platform applies an approved LimitRequest. */
+  /**
+   * Set a key's daily quota — how the platform applies an approved LimitRequest.
+   *
+   * Scoped to the app's *provisioned* key. An admin may also bind a key of their
+   * own to a Builder App, and that key is unmetered by construction: writing a
+   * budget onto it would record a limit nothing reads, and — worse — a later
+   * reader could mistake it for one that applies.
+   */
   async setDailyQuota(miniAppId: string, dailyQuota: number) {
     return await fromRepositoryPromise(async () => {
       const { count } = await this.prismaService.notificationApiKey.updateMany({
-        where: { miniAppId, active: true },
+        where: { miniAppId, active: true, source: NotificationApiKeySource.PLATFORM },
         data: { dailyQuota },
       })
 
@@ -236,18 +243,24 @@ export class AppNotificationRepository {
    * denominated in deliveries: the Console tile and a 429 have to be reading the
    * same number, so the tile counts what the quota charges.
    *
-   * The budget and the binding come back with it because a count alone cannot
-   * be reported honestly: what it is measured against, and whether it is
-   * measured at all, are properties of the key and the app it speaks for.
+   * The budget and the key's provenance come back with it because a count alone
+   * cannot be reported honestly: what it is measured against, and whether it is
+   * measured at all, are properties of the key.
    *
-   * `null` means there is no active key (retired / never provisioned), distinct
-   * from zero sends.
+   * Reads the app's *provisioned* key specifically, not merely its first active
+   * one. An admin may bind a key of their own to the same app, and that key's
+   * unmetered sends are not the Builder's spend — reporting them here would
+   * charge the Builder, on the Console, for traffic they did not send and no
+   * 429 will ever mention.
+   *
+   * `null` means there is no active provisioned key (retired / never
+   * provisioned), distinct from zero sends.
    */
   async getUsageSince(miniAppId: string, since: Date) {
     return await fromRepositoryPromise(async () => {
       const key = await this.prismaService.notificationApiKey.findFirst({
-        where: { miniAppId, active: true },
-        select: { id: true, dailyQuota: true, miniApp: { select: { source: true } } },
+        where: { miniAppId, active: true, source: NotificationApiKeySource.PLATFORM },
+        select: { id: true, source: true, dailyQuota: true },
       })
 
       if (!key) return null
@@ -263,8 +276,8 @@ export class AppNotificationRepository {
       return {
         // No rows in the window sums to null, which is zero sent, not unknown.
         sent: spend._sum.units ?? 0,
+        source: key.source,
         dailyQuota: key.dailyQuota,
-        miniApp: key.miniApp,
       } satisfies ActiveKeyUsage
     })
   }
