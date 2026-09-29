@@ -27,6 +27,13 @@ import type { BoundApp } from './key-binding'
 import { CreateNewExternalNotificationBody } from './models'
 
 /**
+ * Numbers per `COUNT` statement in `countAppInstall`. Well under Postgres's
+ * 65535 bind-parameter limit, and small enough that no single statement is a
+ * long scan.
+ */
+const APP_INSTALL_COUNT_CHUNK_SIZE = 5000
+
+/**
  * An audience whose recipients the platform has already resolved to user ids.
  *
  * Deliberately absent from `CreateNewExternalNotificationBody`, so it cannot be
@@ -321,6 +328,45 @@ export class NotificationRepository {
         isAppInstalled: user !== null,
         hasPushToken: (user?.notificationTokens.length ?? 0) > 0,
       }
+    })
+  }
+
+  /**
+   * How many of these numbers are reachable, as counts only.
+   *
+   * The same two facts as `getAppInstallStatus`, aggregated in the database so a
+   * caller previewing a broadcast to tens of thousands of numbers pays two
+   * `COUNT`s per chunk rather than a query per number. Only counts leave: which
+   * numbers matched is never read back, so this cannot be used as a directory
+   * lookup.
+   *
+   * `phoneNumbers` must be distinct, normalised E.164 — `User.phoneNumber` is
+   * unique, so distinct numbers mean each user is counted at most once, and the
+   * chunks are disjoint, so their counts simply add. The IN list is chunked
+   * because a single statement carries a bind parameter per number, and Postgres
+   * caps those at 65535.
+   *
+   * `withPushToken` uses the same rule as `getAppInstallStatus` and the send
+   * path: the user has at least one `notificationTokens` row.
+   */
+  async countAppInstall(phoneNumbers: string[]) {
+    return fromRepositoryPromise(async () => {
+      let withAccount = 0
+      let withPushToken = 0
+
+      for (const chunk of R.chunk(phoneNumbers, APP_INSTALL_COUNT_CHUNK_SIZE)) {
+        const [accounts, reachable] = await Promise.all([
+          this.prismaService.user.count({ where: { phoneNumber: { in: chunk } } }),
+          this.prismaService.user.count({
+            where: { phoneNumber: { in: chunk }, notificationTokens: { some: {} } },
+          }),
+        ])
+
+        withAccount += accounts
+        withPushToken += reachable
+      }
+
+      return { withAccount, withPushToken }
     })
   }
 

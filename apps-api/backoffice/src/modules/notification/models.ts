@@ -313,3 +313,49 @@ export const GetAppInstallStatusResponse = t.Object({
   }),
 })
 export type GetAppInstallStatusResponse = Static<typeof GetAppInstallStatusResponse>
+
+/**
+ * The most numbers one count call takes. It bounds the request body and the
+ * work behind it — a broadcast preview is the intended caller, and a whole
+ * audience is tens of thousands, so a caller pages through in a few calls.
+ */
+export const MAX_APP_INSTALL_COUNT_PHONE_NUMBERS = 10000
+
+export const CountAppInstallBody = t.Object({
+  phoneNumbers: t.Array(
+    t.String({
+      description:
+        'A complete mobile number, as 0XXXXXXXXX or +66XXXXXXXXX. Matched exactly — a partial number is never searched on. A malformed entry is counted under `invalid` rather than rejecting the call.',
+    }),
+    {
+      minItems: 1,
+      maxItems: MAX_APP_INSTALL_COUNT_PHONE_NUMBERS,
+      description: `The numbers to count, 1–${MAX_APP_INSTALL_COUNT_PHONE_NUMBERS} per call. An empty list or one over the cap is a 400 — never a silent truncation. Duplicates, and the same number written both ways, count once.`,
+    }
+  ),
+})
+export type CountAppInstallBody = Static<typeof CountAppInstallBody>
+
+export const CountAppInstallResponse = t.Object({
+  total: t.Integer({
+    minimum: 0,
+    description:
+      'The distinct well-formed numbers in the request, after normalising 0XXXXXXXXX and +66XXXXXXXXX to one form. Duplicates count once; malformed entries are not included (see `invalid`).',
+  }),
+  withAccount: t.Integer({
+    minimum: 0,
+    description:
+      'How many of those numbers a PPLE Today account holds — the same fact as `isAppInstalled` on GET /app-install.',
+  }),
+  withPushToken: t.Integer({
+    minimum: 0,
+    description:
+      'How many of those numbers have an account with at least one live push token — the same fact as `hasPushToken` on GET /app-install, and the rule /send uses to decide push over SMS fallback. Never more than `withAccount`; `total` minus this is who would get the SMS fallback.',
+  }),
+  invalid: t.Integer({
+    minimum: 0,
+    description:
+      'How many entries were not a complete Thai mobile number. Duplicates of a malformed entry each count, since there is nothing to deduplicate them by.',
+  }),
+})
+export type CountAppInstallResponse = Static<typeof CountAppInstallResponse>

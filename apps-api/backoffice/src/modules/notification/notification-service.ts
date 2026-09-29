@@ -181,6 +181,46 @@ export class NotificationService {
     return ok(result.value)
   }
 
+  /**
+   * The counts behind a broadcast preview: of these numbers, how many have a
+   * PPLE Today account and how many can be reached by push.
+   *
+   * Each entry is normalised and checked exactly as `getAppInstallStatus` does
+   * it, so the two endpoints cannot disagree about a number. Entries that are
+   * not a Thai mobile are counted as `invalid` and never reach the database.
+   * The rest are deduplicated after normalising — `0812345678` and
+   * `+66812345678` are one person — so `total` is people, not rows in the
+   * request, and the repository may rely on distinct input.
+   *
+   * Only counts are returned, never which numbers matched.
+   */
+  async countAppInstall(rawPhoneNumbers: string[]) {
+    const valid = new Set<string>()
+    let invalid = 0
+
+    for (const raw of rawPhoneNumbers) {
+      const phoneNumber = normalizeThaiPhoneNumber(raw)
+
+      if (isThaiMobileE164(phoneNumber)) {
+        valid.add(phoneNumber)
+      } else {
+        invalid += 1
+      }
+    }
+
+    if (valid.size === 0) {
+      return ok({ total: 0, withAccount: 0, withPushToken: 0, invalid })
+    }
+
+    const result = await this.notificationRepository.countAppInstall(Array.from(valid))
+
+    if (result.isErr()) {
+      return mapRepositoryError(result.error)
+    }
+
+    return ok({ total: valid.size, invalid, ...result.value })
+  }
+
   async markAsRead(userId: string, notificationId: string) {
     const markResult = await this.notificationRepository.markAsRead(userId, notificationId)
 

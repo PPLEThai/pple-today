@@ -52,6 +52,7 @@ const createRepository = (
     user: {
       findMany: vi.fn(async (_args: unknown) => users),
       findUnique: vi.fn(async (_args: unknown) => null as { notificationTokens: unknown[] } | null),
+      count: vi.fn(async (_args: unknown) => 0),
     },
     userNotification: {
       createMany: vi.fn(async (_args: unknown) => ({ count: users.length })),
@@ -309,5 +310,69 @@ describe('NotificationRepository.getAppInstallStatus', () => {
       where: { phoneNumber: '+66812345678' },
       select: { notificationTokens: { select: { token: true }, take: 1 } },
     })
+  })
+})
+
+describe('NotificationRepository.countAppInstall', () => {
+  // The two counts are told apart by the token filter, which is what makes
+  // `withPushToken` the same rule as `hasPushToken` on the single-number path.
+  const hasTokenFilter = (args: unknown) =>
+    (args as { where: { notificationTokens?: unknown } }).where.notificationTokens !== undefined
+
+  test('counts accounts and push-reachable accounts with one query each', async () => {
+    const { prismaService, repository } = createRepository()
+    prismaService.user.count.mockImplementation(async (args) => (hasTokenFilter(args) ? 2 : 3))
+
+    const result = await repository.countAppInstall([
+      '+66812345678',
+      '+66823456789',
+      '+66834567890',
+    ])
+
+    expect(result._unsafeUnwrap()).toEqual({ withAccount: 3, withPushToken: 2 })
+    expect(prismaService.user.count).toHaveBeenCalledTimes(2)
+    expect(prismaService.user.count).toHaveBeenCalledWith({
+      where: { phoneNumber: { in: ['+66812345678', '+66823456789', '+66834567890'] } },
+    })
+    expect(prismaService.user.count).toHaveBeenCalledWith({
+      where: {
+        phoneNumber: { in: ['+66812345678', '+66823456789', '+66834567890'] },
+        notificationTokens: { some: {} },
+      },
+    })
+  })
+
+  test('reports zeros when no number is held', async () => {
+    const { repository } = createRepository()
+
+    const result = await repository.countAppInstall(['+66899999999'])
+
+    expect(result._unsafeUnwrap()).toEqual({ withAccount: 0, withPushToken: 0 })
+  })
+
+  // 12000 numbers is three chunks of at most 5000, and the counts add across
+  // them — without ever issuing a query per number.
+  test('chunks a long list and sums the chunk counts', async () => {
+    const { prismaService, repository } = createRepository()
+    prismaService.user.count.mockImplementation(async (args) => (hasTokenFilter(args) ? 1 : 2))
+    const numbers = Array.from({ length: 12000 }, (_, i) => `+668${String(i).padStart(8, '0')}`)
+
+    const result = await repository.countAppInstall(numbers)
+
+    expect(result._unsafeUnwrap()).toEqual({ withAccount: 6, withPushToken: 3 })
+    expect(prismaService.user.count).toHaveBeenCalledTimes(6)
+    const sizes = prismaService.user.count.mock.calls.map(
+      ([args]) => (args as { where: { phoneNumber: { in: string[] } } }).where.phoneNumber.in.length
+    )
+    expect(sizes.sort((a, b) => a - b)).toEqual([2000, 2000, 5000, 5000, 5000, 5000])
+  })
+
+  test('never reads a row back, only counts', async () => {
+    const { prismaService, repository } = createRepository()
+
+    await repository.countAppInstall(['+66812345678'])
+
+    expect(prismaService.user.findMany).not.toHaveBeenCalled()
+    expect(prismaService.user.findUnique).not.toHaveBeenCalled()
   })
 })

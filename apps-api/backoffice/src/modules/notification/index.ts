@@ -4,6 +4,8 @@ import Elysia from 'elysia'
 
 import { requireUnboundKey } from './key-binding'
 import {
+  CountAppInstallBody,
+  CountAppInstallResponse,
   CreateAppNotificationBody,
   CreateAppNotificationResponse,
   CreateNewExternalNotificationBody,
@@ -371,6 +373,61 @@ export const ExternalNotificationController = new Elysia({
       query: GetAppInstallStatusQuery,
       response: {
         200: GetAppInstallStatusResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.NOTIFICATION_KEY_APP_BOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  // The bulk form of /app-install, for a caller that wants to preview a
+  // broadcast ("N get the push, M get the SMS fallback") without a request per
+  // number. Gated identically, since it too takes numbers the caller chose. It
+  // answers counts only — the single-number endpoint is the way to ask about a
+  // named person, and a bulk one that echoed matches back would be a directory.
+  .post(
+    '/app-install/count',
+    async ({ notificationService, body, headers, status }) => {
+      const token = headers['authorization'].split(' ')[1]
+      const tokenResult = await notificationService.checkApiToken(token)
+
+      if (tokenResult.isErr()) return mapErrorCodeToResponse(tokenResult.error, status)
+
+      if (!tokenResult.value) {
+        return mapErrorCodeToResponse(
+          {
+            code: InternalErrorCode.UNAUTHORIZED,
+            message: 'Invalid API token',
+          },
+          status
+        )
+      }
+
+      const bindingResult = requireUnboundKey(tokenResult.value)
+
+      if (bindingResult.isErr()) {
+        return mapErrorCodeToResponse(bindingResult.error, status)
+      }
+
+      const result = await notificationService.countAppInstall(body.phoneNumbers)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      detail: {
+        summary: 'How many of a list of numbers PPLE Today reaches',
+        description:
+          'The bulk form of GET /app-install, for previewing a broadcast: of up to 10000 numbers, how many a PPLE Today account holds (`withAccount`, the same fact as `isAppInstalled`) and how many of those have a live push token (`withPushToken`, the same fact as `hasPushToken` and the rule /send uses to choose push over SMS fallback). `total` minus `withPushToken` is therefore who would get the SMS fallback. Numbers are normalised and deduplicated first, so `total` counts people; entries that are not a complete Thai mobile number are counted under `invalid` rather than rejecting the call. Only counts are returned — never which numbers matched — so this cannot be used to look up who has an account; use GET /app-install to ask about one named person. Naming phone numbers is a central-team capability, so keys bound to a Builder App are rejected here.',
+      },
+      headers: CreateNewExternalNotificationHeader,
+      body: CountAppInstallBody,
+      response: {
+        200: CountAppInstallResponse,
         ...createErrorSchema(
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.NOTIFICATION_KEY_APP_BOUND,

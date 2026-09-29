@@ -65,6 +65,9 @@ const createService = (checkApiKeyResult: unknown = LEGACY_KEY) => {
     getAppInstallStatus: vi.fn(async (_phoneNumber: string) =>
       ok({ isAppInstalled: true, hasPushToken: true })
     ),
+    countAppInstall: vi.fn(async (_phoneNumbers: string[]) =>
+      ok({ withAccount: 2, withPushToken: 1 })
+    ),
   }
 
   return {
@@ -237,5 +240,90 @@ describe('NotificationService.getAppInstallStatus', () => {
     // A malformed number must never reach the database, and must not be
     // distinguishable from a number nobody holds.
     expect(notificationRepository.getAppInstallStatus).not.toHaveBeenCalled()
+  })
+})
+
+describe('NotificationService.countAppInstall', () => {
+  test('combines the repository counts with the total and invalid tallies', async () => {
+    const { service } = createService()
+
+    const result = await service.countAppInstall(['+66812345678', '0823456789', 'not-a-number'])
+
+    expect(result._unsafeUnwrap()).toEqual({
+      total: 2,
+      withAccount: 2,
+      withPushToken: 1,
+      invalid: 1,
+    })
+  })
+
+  test('normalises the domestic form and queries in E.164', async () => {
+    const { service, notificationRepository } = createService()
+
+    await service.countAppInstall(['0812345678', '+66823456789'])
+
+    expect(notificationRepository.countAppInstall).toHaveBeenCalledWith([
+      '+66812345678',
+      '+66823456789',
+    ])
+  })
+
+  // One person written two ways, and one number repeated, are one number: the
+  // caller is sizing an audience of people, and the repository relies on
+  // distinct input to add its chunk counts.
+  test('counts a number once however many times and ways it is written', async () => {
+    const { service, notificationRepository } = createService()
+
+    const result = await service.countAppInstall([
+      '0812345678',
+      '+66812345678',
+      ' 0812345678 ',
+      '0812345678',
+    ])
+
+    expect(notificationRepository.countAppInstall).toHaveBeenCalledWith(['+66812345678'])
+    expect(result._unsafeUnwrap()).toMatchObject({ total: 1, invalid: 0 })
+  })
+
+  test.each([
+    ['too short', '081234567'],
+    ['too long', '08123456789'],
+    ['punctuated', '081-234-5678'],
+    ['not a number', 'abc'],
+    ['blank', ''],
+  ])('counts a number that is %s as invalid without querying for it', async (_name, entry) => {
+    const { service, notificationRepository } = createService()
+
+    const result = await service.countAppInstall([entry, '0812345678'])
+
+    expect(result._unsafeUnwrap()).toMatchObject({ total: 1, invalid: 1 })
+    expect(notificationRepository.countAppInstall).toHaveBeenCalledWith(['+66812345678'])
+  })
+
+  test('skips the database when nothing is well-formed', async () => {
+    const { service, notificationRepository } = createService()
+
+    const result = await service.countAppInstall(['nope', '123'])
+
+    expect(result._unsafeUnwrap()).toEqual({
+      total: 0,
+      withAccount: 0,
+      withPushToken: 0,
+      invalid: 2,
+    })
+    expect(notificationRepository.countAppInstall).not.toHaveBeenCalled()
+  })
+
+  test('returns only counts, nothing that names a number', async () => {
+    const { service } = createService()
+
+    const result = await service.countAppInstall(['0812345678'])
+
+    expect(Object.keys(result._unsafeUnwrap()).sort()).toEqual([
+      'invalid',
+      'total',
+      'withAccount',
+      'withPushToken',
+    ])
   })
 })
