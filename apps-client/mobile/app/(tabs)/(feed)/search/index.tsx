@@ -1,15 +1,15 @@
 import React from 'react'
 import { FlatList, Keyboard, Pressable, View } from 'react-native'
 
+import { Button } from '@pple-today/ui/button'
 import { FormControl, FormItem } from '@pple-today/ui/form'
 import { Icon } from '@pple-today/ui/icon'
 import { Input, InputGroup, InputLeftIcon } from '@pple-today/ui/input'
 import { Text } from '@pple-today/ui/text'
-import { H1 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
 import { keepPreviousData } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
-import { SearchIcon } from 'lucide-react-native'
+import { ArrowLeftIcon, SearchIcon } from 'lucide-react-native'
 
 import { GetSearchKeywordResponse } from '@api/backoffice/app'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
@@ -21,12 +21,12 @@ import { Spinner } from '@app/components/spinner'
 import { reactQueryClient } from '@app/libs/api-client'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 
-import { useSearchingContext } from '../_layout'
+import { useSearchingContext } from './_layout'
 
 export default function SearchPage() {
   const router = useRouter()
   const { state, dispatch } = useSearchingContext()
-  const [isFocused, setIsFocused] = React.useState(false)
+  const [isFocused, setIsFocused] = React.useState(true)
   const searchForm = useForm({
     defaultValues: {
       query: state.searchQuery,
@@ -123,48 +123,51 @@ export default function SearchPage() {
     <Pressable onPress={Keyboard.dismiss} className="flex-1">
       <SafeAreaLayout>
         <View className="flex flex-col">
-          <View className="p-4 gap-3">
-            {/* Search Header */}
-            <View className="flex flex-row items-center gap-2">
-              <Icon icon={SearchIcon} size={32} className="text-base-primary-default" />
-              <H1 className="text-lg font-semibold text-base-primary-default text-3xl font-heading-semibold">
-                ค้นหา
-              </H1>
-            </View>
-            {/* Search Input */}
-            <searchForm.Field
-              name="query"
-              listeners={{
-                onChangeDebounceMs: 300,
-                onChange: ({ value }) => {
-                  dispatch({ type: 'updateQuery', query: value })
-                },
-              }}
+          <View className="p-4 flex flex-row items-center gap-3">
+            <Button
+              variant="outline-primary"
+              size="icon"
+              onPress={() => (router.canGoBack() ? router.back() : router.dismissTo('/'))}
+              aria-label="Go back"
             >
-              {(field) => (
-                <FormItem field={field}>
-                  <FormControl>
-                    <InputGroup>
-                      <InputLeftIcon icon={SearchIcon} className="text-base-text-medium" />
-                      <Input
-                        placeholder="ค้นหา"
-                        className="rounded-lg"
-                        value={field.state.value}
-                        onChangeText={field.handleChange}
-                        returnKeyType="search"
-                        onSubmitEditing={searchForm.handleSubmit}
-                        onFocus={() => {
-                          setIsFocused(true)
-                        }}
-                        onBlur={() => {
-                          setIsFocused(false)
-                        }}
-                      />
-                    </InputGroup>
-                  </FormControl>
-                </FormItem>
-              )}
-            </searchForm.Field>
+              <Icon icon={ArrowLeftIcon} size={24} />
+            </Button>
+            <View className="flex-1">
+              <searchForm.Field
+                name="query"
+                listeners={{
+                  onChangeDebounceMs: 300,
+                  onChange: ({ value }) => {
+                    dispatch({ type: 'updateQuery', query: value })
+                  },
+                }}
+              >
+                {(field) => (
+                  <FormItem field={field}>
+                    <FormControl>
+                      <InputGroup>
+                        <InputLeftIcon icon={SearchIcon} className="text-base-text-medium" />
+                        <Input
+                          autoFocus
+                          placeholder="ค้นหา"
+                          className="rounded-lg"
+                          value={field.state.value}
+                          onChangeText={field.handleChange}
+                          returnKeyType="search"
+                          onSubmitEditing={searchForm.handleSubmit}
+                          onFocus={() => {
+                            setIsFocused(true)
+                          }}
+                          onBlur={() => {
+                            setIsFocused(false)
+                          }}
+                        />
+                      </InputGroup>
+                    </FormControl>
+                  </FormItem>
+                )}
+              </searchForm.Field>
+            </View>
           </View>
         </View>
         {RenderKeywordSuggestions()}

@@ -8,7 +8,7 @@ import { Icon } from '@pple-today/ui/icon'
 import { Input, InputGroup, InputLeftIcon } from '@pple-today/ui/input'
 import { cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
-import { H1, H2 } from '@pple-today/ui/typography'
+import { H2 } from '@pple-today/ui/typography'
 import { useForm } from '@tanstack/react-form'
 import {
   InfiniteData,
@@ -35,7 +35,7 @@ import { UserSearchCard } from '@app/components/search/user-card'
 import { Spinner } from '@app/components/spinner'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 
-import { useSearchingContext } from '../_layout'
+import { useSearchingContext } from './_layout'
 
 const LIMIT = 10
 export default function SearchResultPage() {
@@ -50,14 +50,7 @@ export default function SearchResultPage() {
   return (
     <Pressable onPress={Keyboard.dismiss} className="flex-1">
       <SafeAreaLayout>
-        <View className="p-4 gap-3">
-          {/* Search Header */}
-          <View className="flex flex-row items-center gap-2">
-            <Icon icon={SearchIcon} size={32} className="text-base-primary-default" />
-            <H1 className="font-semibold text-base-primary-default text-3xl font-heading-semibold">
-              ผลการค้นหา
-            </H1>
-          </View>
+        <View className="p-4">
           <View className="flex flex-row gap-3 items-center">
             <Button
               variant="outline-primary"

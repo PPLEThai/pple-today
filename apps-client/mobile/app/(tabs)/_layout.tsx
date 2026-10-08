@@ -11,15 +11,10 @@ import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs'
 import { PlatformPressable } from '@react-navigation/elements'
 import { Image } from 'expo-image'
 import { Tabs, usePathname } from 'expo-router'
-import {
-  CircleUserRoundIcon,
-  HandshakeIcon,
-  HouseIcon,
-  LucideIcon,
-  SearchIcon,
-} from 'lucide-react-native'
+import { CircleUserRoundIcon, HandshakeIcon, HouseIcon, LucideIcon } from 'lucide-react-native'
 import { cssInterop } from 'nativewind'
 
+import PeopleIcon from '@app/assets/people.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { useSession } from '@app/libs/auth'
 import { useCallbackRef } from '@app/utils/use-callback-ref'
@@ -60,10 +55,10 @@ export default function BottomTabsLayout() {
           />
           <Tabs.Protected guard={!!session}>
             <Tabs.Screen
-              name="(search)"
+              name="(volunteer)"
               options={{
-                title: 'ค้นหา',
-                tabBarIcon: (props) => <TabBarIcon {...props} icon={SearchIcon} />,
+                title: 'อาสา',
+                tabBarIcon: (props) => <TabBarIcon {...props} icon={PeopleIcon} />,
                 tabBarLabel: TabBarLabel,
                 ...(session ? { tabBarButton: TabBarButton } : { href: null }),
               }}
