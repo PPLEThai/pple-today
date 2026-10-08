@@ -380,11 +380,15 @@ export function OnboardingAddress() {
           </View>
           <View className="gap-2 px-6 pb-6">
             <form.Subscribe
-              selector={(state) => [state.isSubmitting, state.isFormValid, state.isTouched]}
+              selector={(state) => [
+                state.isSubmitting,
+                state.isFormValid,
+                formSchema.safeParse(state.values).success,
+              ]}
             >
-              {([isSubmitting, isFormValid, isTouched]) => (
+              {([isSubmitting, isFormValid, isComplete]) => (
                 <Button
-                  disabled={isSubmitting || !isFormValid || !isTouched}
+                  disabled={isSubmitting || !isFormValid || !isComplete}
                   onPress={form.handleSubmit}
                 >
                   <Text>บันทึก</Text>
