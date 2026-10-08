@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.18.1
+
+### Patch Changes
+
+- [#485](https://github.com/PPLEThai/pple-today/pull/485) [`325f239`](https://github.com/PPLEThai/pple-today/commit/325f239584e0ae7e3a225366e1ad352b2f1245c9) Thanks [@PanJ](https://github.com/PanJ)! - Delete a mini-app's users, invites and roles together with the app so deletion no longer fails on restricted foreign keys
+
 ## 1.18.0
 
 ### Minor Changes
