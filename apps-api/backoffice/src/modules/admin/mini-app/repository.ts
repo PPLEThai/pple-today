@@ -173,10 +173,18 @@ export class AdminMiniAppRepository {
     if (deleteFileResult.isErr()) return err(deleteFileResult.error)
     const [, fileTx] = deleteFileResult.value
 
+    // App Users, invites and visibility roles reference the app with ON DELETE
+    // RESTRICT, so they go first in the same transaction. Banners, notifications
+    // and notification keys are SET NULL and survive on their own.
     const deleteResult = await fromRepositoryPromise(
-      this.prismaService.miniApp.delete({
-        where: { id },
-      })
+      this.prismaService
+        .$transaction([
+          this.prismaService.miniAppUser.deleteMany({ where: { miniAppId: id } }),
+          this.prismaService.miniAppInvite.deleteMany({ where: { miniAppId: id } }),
+          this.prismaService.miniAppRole.deleteMany({ where: { miniAppId: id } }),
+          this.prismaService.miniApp.delete({ where: { id } }),
+        ])
+        .then((results) => results[3])
     )
 
     if (deleteResult.isErr()) {
