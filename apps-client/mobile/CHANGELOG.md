@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 2.10.0
+
+### Minor Changes
+
+- [#487](https://github.com/PPLEThai/pple-today/pull/487) [`7270019`](https://github.com/PPLEThai/pple-today/commit/72700195f8c0b61010815eee0a4b37fb25bd7a16) Thanks [@PanJ](https://github.com/PanJ)! - Adds a volunteer (อาสา) tab in place of the search tab, moves search to a button in the feed header, and opens the profile from the header avatar
+
 ## 2.9.8
 
 ### Patch Changes
