@@ -29,6 +29,7 @@ import {
   CirclePlusIcon,
   MegaphoneIcon,
   RadioTowerIcon,
+  SearchIcon,
 } from 'lucide-react-native'
 import { z } from 'zod/v4'
 
@@ -41,7 +42,6 @@ import type {
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { UserAddressInfoSection } from '@app/components/address-info'
 import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/announcement'
-import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { ElectionCard } from '@app/components/election/election-card'
 import { FeedFooter, FeedRefreshControl } from '@app/components/feed'
 import { FeedCard } from '@app/components/feed/feed-card'
@@ -60,7 +60,6 @@ import {
   PagerTabBarItemIndicator,
 } from '@app/components/pager-with-header'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
-import { environment } from '@app/env'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { useAuthMe, useSession } from '@app/libs/auth'
 import { useScrollContext } from '@app/libs/scroll-context'
@@ -145,15 +144,22 @@ function MainHeader() {
       <View className="flex flex-row items-center gap-3 flex-1">
         <Pressable
           className="w-10 h-10 flex flex-col items-center justify-center"
+          aria-label="Profile"
           onPress={() => {
-            if (
-              environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'development' ||
-              environment.EXPO_PUBLIC_APP_ENVIRONMENT === 'local'
-            )
-              router.navigate('/playground')
+            router.navigate('/profile')
           }}
         >
-          <PPLEIcon width={35} height={30} />
+          {authMe.data?.profileImage ? (
+            <Avatar alt={authMe.data.name ?? ''} className="size-10 rounded-full">
+              <AvatarImage
+                source={{
+                  uri: createImageUrl(authMe.data.profileImage, { width: 40, height: 40 }),
+                }}
+              />
+            </Avatar>
+          ) : (
+            <PPLEIcon width={35} height={30} />
+          )}
         </Pressable>
         <View className="flex flex-col flex-1">
           <View className="flex-1 pr-4">
@@ -187,25 +193,18 @@ function MainHeader() {
             <Icon icon={BellIcon} size={20} className="fill-base-secondary-default" />
           </Button>
         )}
-        <Button
-          size="icon"
-          aria-label="Profile Settings"
-          className="overflow-hidden"
-          onPress={() => {
-            router.navigate('/profile')
-          }}
-        >
-          <Avatar alt={authMe.data?.name ?? ''} className="size-full rounded-none">
-            <AvatarImage
-              source={{
-                uri: authMe.data?.profileImage
-                  ? createImageUrl(authMe.data?.profileImage, { width: 40, height: 40 })
-                  : undefined,
-              }}
-            />
-            <AvatarPPLEFallback />
-          </Avatar>
-        </Button>
+        {session && (
+          <Button
+            variant="secondary"
+            size="icon"
+            aria-label="Search"
+            onPress={() => {
+              router.navigate('/search')
+            }}
+          >
+            <Icon icon={SearchIcon} size={20} className="text-base-secondary-default" />
+          </Button>
+        )}
       </View>
     </View>
   )

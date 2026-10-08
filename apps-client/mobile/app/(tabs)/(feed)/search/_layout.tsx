@@ -8,7 +8,7 @@ export default function Layout() {
   return (
     <KeyboardAvoidingViewLayout>
       <SearchingProvider>
-        <Stack initialRouteName="search/index" screenOptions={{ headerShown: false }} />
+        <Stack initialRouteName="index" screenOptions={{ headerShown: false }} />
       </SearchingProvider>
     </KeyboardAvoidingViewLayout>
   )

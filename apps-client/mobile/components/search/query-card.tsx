@@ -5,7 +5,7 @@ import { Text } from '@pple-today/ui/text'
 import { useRouter } from 'expo-router'
 import { SearchIcon } from 'lucide-react-native'
 
-import { useSearchingContext } from '@app/app/(tabs)/(search)/_layout'
+import { useSearchingContext } from '@app/app/(tabs)/(feed)/search/_layout'
 
 import { SearchCard } from './search-card'
 
