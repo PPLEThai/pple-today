@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 2.9.8
+
+### Patch Changes
+
+- [#485](https://github.com/PPLEThai/pple-today/pull/485) [`bd2644b`](https://github.com/PPLEThai/pple-today/commit/bd2644b78651a7cf70ee25a24d147d1142922f2a) Thanks [@PanJ](https://github.com/PanJ)! - Enable the save button when editing an already-filled address during onboarding
+
 ## 2.9.7
 
 ### Patch Changes
