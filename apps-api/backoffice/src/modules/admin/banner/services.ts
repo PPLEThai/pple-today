@@ -2,7 +2,7 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FilePath } from '@pple-today/api-common/dtos'
 import { FileService } from '@pple-today/api-common/services'
 import { err } from '@pple-today/api-common/utils'
-import { mapRepositoryError } from '@pple-today/api-common/utils'
+import { inAppNavigationRequiresId, mapRepositoryError } from '@pple-today/api-common/utils'
 import { BannerNavigationType } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
@@ -40,8 +40,7 @@ export class AdminBannerService {
       })
     if (
       data.navigation === BannerNavigationType.IN_APP_NAVIGATION &&
-      !data.inAppId &&
-      !data.inAppType
+      (!data.inAppType || (inAppNavigationRequiresId(data.inAppType) && !data.inAppId))
     )
       return err({
         code: InternalErrorCode.BANNER_INVALID_INPUT,
