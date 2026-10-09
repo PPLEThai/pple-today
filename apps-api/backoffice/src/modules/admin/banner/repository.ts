@@ -1,6 +1,10 @@
 import { FilePath, InternalErrorCode } from '@pple-today/api-common/dtos'
 import { FileService, PrismaService } from '@pple-today/api-common/services'
-import { exhaustiveGuard, fromRepositoryPromise } from '@pple-today/api-common/utils'
+import {
+  exhaustiveGuard,
+  fromRepositoryPromise,
+  inAppNavigationRequiresId,
+} from '@pple-today/api-common/utils'
 import {
   AnnouncementStatus,
   BannerInAppType,
@@ -107,6 +111,36 @@ export class AdminBannerRepository {
     }
   }
 
+  // A partial update (e.g. publish only) leaves the in-app target to the stored values, so
+  // either may be missing here; reject that up front instead of handing Prisma an
+  // `id: undefined` lookup.
+  private async validateInAppNavigation(
+    inAppType: BannerInAppType | null | undefined,
+    inAppId: string | null | undefined
+  ) {
+    if (!inAppType || (inAppNavigationRequiresId(inAppType) && !inAppId)) {
+      return err({
+        code: InternalErrorCode.BANNER_INVALID_IN_APP_NAVIGATION,
+        message: 'inAppType and inAppId are required for this in-app navigation',
+      })
+    }
+
+    const isValidInAppType = await fromRepositoryPromise(
+      this.checkValidInAppType(inAppType, inAppId ?? '')
+    )
+    if (isValidInAppType.isErr()) {
+      if (isValidInAppType.error.code === 'RECORD_NOT_FOUND') {
+        return err({
+          code: InternalErrorCode.BANNER_INVALID_IN_APP_NAVIGATION,
+          message: 'The provided inAppId is not valid for the specified inAppType',
+        })
+      }
+      return err(isValidInAppType.error)
+    }
+
+    return ok()
+  }
+
   async getBanners(query: GetBannersQuery) {
     return fromRepositoryPromise(
       this.prismaService.banner.findMany({
@@ -141,19 +175,8 @@ export class AdminBannerRepository {
 
   async createBanner(data: CreateBannerBody) {
     if (data.navigation === BannerNavigationType.IN_APP_NAVIGATION) {
-      const isValidInAppType = await fromRepositoryPromise(
-        this.checkValidInAppType(data.inAppType!, data.inAppId!)
-      )
-
-      if (isValidInAppType.isErr()) {
-        if (isValidInAppType.error.code === 'RECORD_NOT_FOUND') {
-          return err({
-            code: InternalErrorCode.BANNER_INVALID_IN_APP_NAVIGATION,
-            message: 'The provided inAppId is not valid for the specified inAppType',
-          })
-        }
-        return err(isValidInAppType.error)
-      }
+      const validateResult = await this.validateInAppNavigation(data.inAppType, data.inAppId)
+      if (validateResult.isErr()) return err(validateResult.error)
     }
 
     const moveFileResult = await fromRepositoryPromise(
@@ -229,19 +252,11 @@ export class AdminBannerRepository {
       (!data.navigation &&
         existingBanner.value.navigation === BannerNavigationType.IN_APP_NAVIGATION)
     ) {
-      const isValidInAppType = await fromRepositoryPromise(
-        this.checkValidInAppType(data.inAppType ?? existingBanner.value.inAppType!, data.inAppId!)
+      const validateResult = await this.validateInAppNavigation(
+        data.inAppType ?? existingBanner.value.inAppType,
+        data.inAppId ?? existingBanner.value.inAppId
       )
-
-      if (isValidInAppType.isErr()) {
-        if (isValidInAppType.error.code === 'RECORD_NOT_FOUND') {
-          return err({
-            code: InternalErrorCode.BANNER_INVALID_IN_APP_NAVIGATION,
-            message: 'The provided inAppId is not valid for the specified inAppType',
-          })
-        }
-        return err(isValidInAppType.error)
-      }
+      if (validateResult.isErr()) return err(validateResult.error)
     }
 
     const totalPublishedBanners = await fromRepositoryPromise(
