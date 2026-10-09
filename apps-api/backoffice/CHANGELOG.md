@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.18.2
+
+### Patch Changes
+
+- [#489](https://github.com/PPLEThai/pple-today/pull/489) [`a8187c9`](https://github.com/PPLEThai/pple-today/commit/a8187c91e8ff91f20d1229b9201e8b63cf901ff9) Thanks [@PanJ](https://github.com/PanJ)! - Fix publishing in-app navigation banners and reject in-app banners missing their target ID
+
 ## 1.18.1
 
 ### Patch Changes
