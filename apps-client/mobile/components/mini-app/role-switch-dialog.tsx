@@ -15,13 +15,17 @@ export function MiniAppRoleSwitchDialog({
   appName,
   eligiblePersons,
   activePersonId,
+  isLoading = false,
   isSubmitting = false,
   onCancel,
   onConfirm,
 }: {
-  appName: string
+  /** Null until the app asking is known. */
+  appName: string | null
   eligiblePersons: EligiblePerson[]
   activePersonId: number | null
+  /** The app is still being resolved: a spinner stands in for the list. */
+  isLoading?: boolean
   /** The บทบาท switch behind เปลี่ยนบทบาท is still running. */
   isSubmitting?: boolean
   onCancel: () => void
@@ -31,11 +35,14 @@ export function MiniAppRoleSwitchDialog({
   return (
     <PersonRolePickerDialog
       title="เปลี่ยนบทบาท"
-      description={`"${appName}" ขอให้คุณเลือกบทบาทที่จะใช้งาน`}
+      description={
+        appName != null ? `"${appName}" ขอให้คุณเลือกบทบาทที่จะใช้งาน` : 'เลือกบทบาทที่จะใช้งาน'
+      }
       confirmLabel="เปลี่ยนบทบาท"
       eligiblePersons={eligiblePersons}
       preferredPersonId={activePersonId}
       showList
+      isLoading={isLoading}
       isSubmitting={isSubmitting}
       onCancel={onCancel}
       onConfirm={onConfirm}
