@@ -339,6 +339,7 @@
         "rimraf": "^6.0.1",
         "tsx": "^4.20.3",
         "typescript": "5.8.2",
+        "vitest": "^3.2.4",
       },
     },
     "packages/project-config": {

@@ -7,7 +7,11 @@ import {
 
 // See BRIDGE.md for the protocol.
 
-const MINI_APP_USER_AGENT = /PPLETodayApp\/(\d.\d.\d) MiniApp/
+/**
+ * The User-Agent PPLE Today's WebView sends to a mini-app, e.g.
+ * `PPLETodayApp/2.10.0 MiniApp`. Each version part may have several digits.
+ */
+const MINI_APP_USER_AGENT = /PPLETodayApp\/(\d+\.\d+\.\d+)\s+MiniApp/
 const ACK_TIMEOUT_MS = 3_000
 // The host may be showing the user a role prompt before it answers.
 const RESPONSE_TIMEOUT_MS = 120_000
