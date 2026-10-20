@@ -3,6 +3,9 @@ import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-commo
 import Elysia from 'elysia'
 
 import {
+  CreateMiniAppPageTokenParams,
+  CreateMiniAppPageTokenQuery,
+  CreateMiniAppPageTokenResponse,
   CreateMiniAppTokenParams,
   CreateMiniAppTokenQuery,
   CreateMiniAppTokenResponse,
@@ -111,9 +114,11 @@ export const AuthController = new Elysia({
       // user count. Runs for every tier (this endpoint already gates who may
       // open the app) and is idempotent, so repeat opens are a no-op. Awaited
       // but best-effort: a registry failure is logged, not surfaced.
-      await appUserService.registerOpen(result.value.miniAppId, user.id)
+      const { miniAppId, ...response } = result.value
 
-      return status(200, { url: result.value.url, appName: result.value.appName })
+      await appUserService.registerOpen(miniAppId, user.id)
+
+      return status(200, response)
     },
     {
       requiredLocalUser: true,
@@ -131,6 +136,62 @@ export const AuthController = new Elysia({
       detail: {
         summary: 'Generate Mini App Token',
         description: 'Generate a token for a specific mini app',
+      },
+    }
+  )
+  // The session bridge: a page inside the WebView asks for its own session, and
+  // the host forwards the page URL its WebView reports. Same access rules and App
+  // User registration as opening by slug — this is how the second app gets a
+  // session when one mini app navigates to another.
+  .post(
+    '/mini-app/client/:clientId',
+    async ({ params, user, authService, appUserService, query, status, headers, authGuard }) => {
+      const visibleRoles = await authGuard.getAdVisibleRoles(headers)
+
+      if (visibleRoles.isErr()) {
+        return mapErrorCodeToResponse(visibleRoles.error, status)
+      }
+
+      const result = await authService.generateMiniAppTokenForPage(
+        params.clientId,
+        query.pageUrl,
+        user.accessToken,
+        visibleRoles.value,
+        user.id,
+        { acknowledgeRoleMismatch: query.acknowledgeRoleMismatch }
+      )
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      const { miniAppId, ...response } = result.value
+
+      // A public app gets no session, so there is no open to consent to — the
+      // slug path skips the exchange for these apps for the same reason.
+      if (response.session) {
+        await appUserService.registerOpen(miniAppId, user.id)
+      }
+
+      return status(200, response)
+    },
+    {
+      requiredLocalUser: true,
+      params: CreateMiniAppPageTokenParams,
+      query: CreateMiniAppPageTokenQuery,
+      response: {
+        200: CreateMiniAppPageTokenResponse,
+        ...createErrorSchema(
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.MINI_APP_ROLE_NOT_ELIGIBLE,
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Generate Mini App Token for a page',
+        description:
+          'Session bridge exchange: resolve the mini app registered under a client id at the page’s origin and generate its token',
       },
     }
   )

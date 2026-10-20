@@ -56,6 +56,25 @@ export class MiniAppRepository {
       })
     )
   }
+
+  /**
+   * Load the non-retired mini apps registered under an OIDC client id. Client
+   * ids are not unique — no-auth apps share the default client, and an app may
+   * be registered twice at different URLs — so the caller narrows by page URL.
+   */
+  async listMiniAppsByClientId(clientId: string) {
+    return await fromRepositoryPromise(
+      this.prismaService.miniApp.findMany({
+        where: {
+          clientId,
+          retiredAt: null,
+        },
+        include: {
+          miniAppRoles: true,
+        },
+      })
+    )
+  }
 }
 
 export const MiniAppRepositoryPlugin = new Elysia({ name: 'MiniAppRepository' })
