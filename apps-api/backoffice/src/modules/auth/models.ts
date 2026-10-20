@@ -49,11 +49,56 @@ export const CreateMiniAppTokenQuery = t.Object({
 })
 export type CreateMiniAppTokenQuery = Static<typeof CreateMiniAppTokenQuery>
 
-export const CreateMiniAppTokenResponse = t.Object({
-  url: t.String({ description: 'The URL to access the mini app with the generated token' }),
+export const MiniAppSession = t.Object({
+  accessToken: t.String({ description: 'Access token issued for the mini app’s client' }),
+  idToken: t.String({ description: 'ID token issued for the mini app’s client' }),
+  tokenType: t.String({ description: 'Token type, always Bearer' }),
+  expiresIn: t.Number({ description: 'Seconds until the access token expires' }),
+})
+export type MiniAppSession = Static<typeof MiniAppSession>
+
+const MiniAppIdentity = {
   appName: t.String({ description: 'The name of the mini app' }),
+  slug: t.String({ description: 'The slug of the mini app' }),
+  clientId: t.String({ description: 'The OIDC client id of the mini app' }),
+  baseUrl: t.String({ description: 'The mini app’s registered URL, without any token' }),
+}
+
+export const CreateMiniAppTokenResponse = t.Object({
+  url: t.String({
+    description:
+      'The URL to access the mini app with the generated token. Carries the session in its query string for SDKs that predate the session bridge.',
+  }),
+  ...MiniAppIdentity,
+  session: MiniAppSession,
 })
 export type CreateMiniAppTokenResponse = Static<typeof CreateMiniAppTokenResponse>
+
+export const CreateMiniAppPageTokenParams = t.Object({
+  clientId: t.String({ description: 'The OIDC client id the page says it belongs to' }),
+})
+export type CreateMiniAppPageTokenParams = Static<typeof CreateMiniAppPageTokenParams>
+
+export const CreateMiniAppPageTokenQuery = t.Object({
+  pageUrl: t.String({
+    description:
+      'The URL of the page asking, as the host WebView reports it. The app must be registered at this origin.',
+  }),
+  acknowledgeRoleMismatch: t.Optional(
+    t.Boolean({
+      description: 'Open a Live app the active role is not listed for, at the user’s request',
+    })
+  ),
+})
+export type CreateMiniAppPageTokenQuery = Static<typeof CreateMiniAppPageTokenQuery>
+
+export const CreateMiniAppPageTokenResponse = t.Object({
+  ...MiniAppIdentity,
+  session: t.Nullable(MiniAppSession, {
+    description: 'Null when the mini app does not require authentication',
+  }),
+})
+export type CreateMiniAppPageTokenResponse = Static<typeof CreateMiniAppPageTokenResponse>
 
 export const GenerateMiniAppTokenResponse = t.Object({
   access_token: t.String({ description: 'An access_token as JWT or opaque token' }),

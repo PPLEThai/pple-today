@@ -203,7 +203,11 @@ export const switchActiveRole = async ({
   if (tokenExchange.error) {
     throw tokenExchange.error
   }
-  const accessToken = new URL(tokenExchange.data.url).searchParams.get('access_token')
+  // Prefer the session field; the URL's query string is kept as a fallback for
+  // a backend that predates it.
+  const accessToken =
+    tokenExchange.data.session?.accessToken ??
+    new URL(tokenExchange.data.url).searchParams.get('access_token')
   if (!accessToken) {
     throw new Error('Mini app token exchange did not return an access token')
   }

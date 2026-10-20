@@ -2,12 +2,13 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { IntrospectAccessTokenResult } from '@pple-today/api-common/dtos'
 import { ElysiaLoggerInstance } from '@pple-today/api-common/plugins'
 import { err, mapRepositoryError } from '@pple-today/api-common/utils'
-import { MiniAppTier } from '@pple-today/database/prisma'
+import { MiniAppTier, Prisma } from '@pple-today/database/prisma'
 import { Check } from '@sinclair/typebox/value'
 import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 import * as R from 'remeda'
 
+import { pickMiniAppForPage } from './mini-app-page-match'
 import { buildMiniAppSessionUrl } from './mini-app-session-url'
 import { GenerateMiniAppTokenErrorResponse, GenerateMiniAppTokenResponse } from './models'
 import { AuthRepository, AuthRepositoryPlugin } from './repository'
@@ -24,6 +25,8 @@ import {
   MiniAppRepository,
   MiniAppRepositoryPlugin,
 } from '../mini-app/repository'
+
+type MiniAppWithRoles = Prisma.MiniAppGetPayload<{ include: { miniAppRoles: true } }>
 
 export class AuthService {
   constructor(
@@ -66,8 +69,6 @@ export class AuthService {
     userSub: string,
     options: { path?: string; acknowledgeRoleMismatch?: boolean } = {}
   ) {
-    const { path, acknowledgeRoleMismatch = false } = options
-
     const miniApp = await this.miniAppRepository.getMiniAppBySlug(slug)
 
     if (miniApp.isErr()) {
@@ -79,10 +80,74 @@ export class AuthService {
       })
     }
 
+    const access = await this.checkMiniAppAccess(miniApp.value, roles, userSub, options)
+
+    if (access.isErr()) return err(access.error)
+
+    return await this.exchangeMiniAppToken(miniApp.value, token, options.path)
+  }
+
+  /**
+   * The session bridge's exchange: a page inside the WebView asks for a session
+   * naming its OIDC `clientId`, and the host forwards the WebView's own page URL.
+   *
+   * The app is the one registered under that client id **at the page's
+   * origin** (`pickMiniAppForPage`) — so a page can only ever get a session for
+   * an app hosted where it runs, whatever client id it claims. Access rules are
+   * the slug exchange's, unchanged.
+   *
+   * An app that does not require authentication resolves with `session: null`:
+   * the host still learns which app is on screen, but no token is handed to a
+   * public app.
+   */
+  async generateMiniAppTokenForPage(
+    clientId: string,
+    pageUrl: string,
+    token: string,
+    roles: string[],
+    userSub: string,
+    options: { acknowledgeRoleMismatch?: boolean } = {}
+  ) {
+    const candidates = await this.miniAppRepository.listMiniAppsByClientId(clientId)
+
+    if (candidates.isErr()) return mapRepositoryError(candidates.error)
+
+    const miniApp = pickMiniAppForPage(candidates.value, pageUrl)
+
+    if (!miniApp) {
+      return err({
+        code: InternalErrorCode.MINI_APP_NOT_FOUND,
+        message: 'Mini app not found',
+      })
+    }
+
+    if (!miniApp.requiresAuth) {
+      const access = await this.checkMiniAppAccess(miniApp, roles, userSub, {
+        acknowledgeRoleMismatch: true,
+      })
+
+      if (access.isErr()) return err(access.error)
+
+      return ok({ ...this.describeMiniApp(miniApp), session: null })
+    }
+
+    const access = await this.checkMiniAppAccess(miniApp, roles, userSub, options)
+
+    if (access.isErr()) return err(access.error)
+
+    return await this.exchangeMiniAppToken(miniApp, token)
+  }
+
+  private async checkMiniAppAccess(
+    miniApp: MiniAppWithRoles,
+    roles: string[],
+    userSub: string,
+    { acknowledgeRoleMismatch = false }: { acknowledgeRoleMismatch?: boolean }
+  ) {
     // Accepted invites are the only per-user fact not on the mini-app row, and
     // they only matter for Beta — same short-circuit as listing.
     let acceptedInviteMiniAppIds: ReadonlySet<string> = new Set()
-    if (miniApp.value.tier === MiniAppTier.BETA) {
+    if (miniApp.tier === MiniAppTier.BETA) {
       const invites = await this.miniAppInviteRepository.listAcceptedMiniAppIds(userSub)
 
       if (invites.isErr()) {
@@ -92,7 +157,7 @@ export class AuthService {
       acceptedInviteMiniAppIds = invites.value
     }
 
-    const access = resolveMiniAppAccess(miniApp.value, {
+    const access = resolveMiniAppAccess(miniApp, {
       roles,
       sub: userSub,
       acceptedInviteMiniAppIds,
@@ -110,12 +175,27 @@ export class AuthService {
         code: InternalErrorCode.MINI_APP_ROLE_NOT_ELIGIBLE,
         message: 'Your active role is not listed for this mini app',
         data: {
-          appName: miniApp.value.name,
-          requiredRoles: miniApp.value.miniAppRoles.map((miniAppRole) => miniAppRole.role),
+          appName: miniApp.name,
+          requiredRoles: miniApp.miniAppRoles.map((miniAppRole) => miniAppRole.role),
         },
       })
     }
 
+    return ok()
+  }
+
+  private describeMiniApp(miniApp: MiniAppWithRoles) {
+    return {
+      appName: miniApp.name,
+      // Surfaced so the caller can register the App User on this first-open path.
+      miniAppId: miniApp.id,
+      slug: miniApp.slug,
+      clientId: miniApp.clientId,
+      baseUrl: miniApp.clientUrl,
+    }
+  }
+
+  private async exchangeMiniAppToken(miniApp: MiniAppWithRoles, token: string, path?: string) {
     const jwtToken = generateJwtToken(this.oidcConfig)
 
     const httpHeaders = { 'Content-Type': 'application/json' }
@@ -125,7 +205,7 @@ export class AuthService {
       client_assertion: jwtToken,
     }
 
-    const response = await fetch(`${this.oidcConfig.oidcUrl}/mini-app/${miniApp.value.clientId}`, {
+    const response = await fetch(`${this.oidcConfig.oidcUrl}/mini-app/${miniApp.clientId}`, {
       method: 'POST',
       headers: httpHeaders,
       body: JSON.stringify(data),
@@ -140,7 +220,7 @@ export class AuthService {
 
       this.loggerService.error({
         error: body,
-        message: `Invalid mini app token error response for clientId ${miniApp.value.clientId}`,
+        message: `Invalid mini app token error response for clientId ${miniApp.clientId}`,
       })
 
       return mapRepositoryError({
@@ -153,7 +233,7 @@ export class AuthService {
 
     if (!miniAppToken) {
       this.loggerService.error({
-        message: `Invalid mini app token response for clientId ${miniApp.value.clientId}`,
+        message: `Invalid mini app token response for clientId ${miniApp.clientId}`,
       })
       return mapRepositoryError({
         code: InternalErrorCode.INTERNAL_SERVER_ERROR,
@@ -161,23 +241,18 @@ export class AuthService {
       })
     }
 
-    const url = buildMiniAppSessionUrl(
-      miniApp.value.clientUrl,
-      {
-        accessToken: body.access_token,
-        expiresIn: body.expires_in,
-        idToken: body.id_token,
-        tokenType: body.token_type,
-      },
-      path
-    )
+    const session = {
+      accessToken: body.access_token,
+      expiresIn: body.expires_in,
+      idToken: body.id_token,
+      tokenType: body.token_type,
+    }
 
-    return ok({
-      url,
-      appName: miniApp.value.name,
-      // Surfaced so the caller can register the App User on this first-open path.
-      miniAppId: miniApp.value.id,
-    })
+    // The launch URL still carries the session: SDKs that predate the bridge
+    // read it from there, and nothing else reaches them.
+    const url = buildMiniAppSessionUrl(miniApp.clientUrl, session, path)
+
+    return ok({ ...this.describeMiniApp(miniApp), url, session })
   }
 
   async replaceUserRoles(id: string, roles: string[], publicRole?: string | null) {
