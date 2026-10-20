@@ -10,6 +10,12 @@ import {
 
 export type { User }
 
+/**
+ * The User-Agent PPLE Today's WebView sends to a mini-app, e.g.
+ * `PPLETodayApp/2.10.0 MiniApp`. Each version part may have several digits.
+ */
+const PPLE_TODAY_MINI_APP_USER_AGENT = /PPLETodayApp\/(\d+\.\d+\.\d+)\s+MiniApp/
+
 export class PPLEMiniApp {
   private config: { oauthUrl: string; oauthClientId: string; oauthRedirectUri: string }
   private userManager: UserManager
@@ -238,7 +244,7 @@ export class PPLEMiniApp {
   isMiniApp() {
     const queryParams = new URLSearchParams(this.launchSearch)
 
-    const isHeaderMatch = !!navigator.userAgent.match(/PPLETodayApp\/(\d.\d.\d) MiniApp/)
+    const isHeaderMatch = PPLE_TODAY_MINI_APP_USER_AGENT.test(navigator.userAgent)
     const isAccessTokenParamsInUrl = !!queryParams.has('access_token')
 
     return isHeaderMatch && isAccessTokenParamsInUrl
