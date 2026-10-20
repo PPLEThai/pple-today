@@ -1,3 +1,4 @@
+import { User, UserManager } from 'oidc-client-ts'
 import { afterEach, describe, expect, test, vi } from 'vitest'
 
 import { PPLEMiniApp } from './index'
@@ -71,5 +72,51 @@ describe('PPLEMiniApp.isMiniApp', () => {
     const miniApp = createMiniApp(browserUserAgent, '')
 
     expect(miniApp.isMiniApp()).toBe(false)
+  })
+})
+
+describe('PPLEMiniApp.init in a browser', () => {
+  const toBase64Url = (value: object) =>
+    btoa(JSON.stringify(value)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+
+  const now = Math.floor(Date.now() / 1000)
+  const idToken = [
+    toBase64Url({ alg: 'none' }),
+    toBase64Url({
+      sub: 'user-1',
+      aud: 'client-id',
+      iss: 'https://sso.example.com',
+      iat: now,
+      exp: now + 3600,
+    }),
+    'signature',
+  ].join('.')
+
+  test('removes the spent code and state from the URL after the exchange', async () => {
+    const search = '?code=abc&state=xyz&iss=https%3A%2F%2Fsso.example.com&tab=news'
+    const replaceState = vi.fn()
+    vi.stubGlobal('navigator', { userAgent: browserUserAgent })
+    vi.stubGlobal('window', {
+      location: { search, href: `https://miniapp.example.com/callback${search}#top` },
+      history: { state: { key: 'router' }, replaceState },
+      localStorage: memoryStorage(),
+      sessionStorage: memoryStorage(),
+    })
+    vi.spyOn(UserManager.prototype, 'signinCallback').mockResolvedValue(
+      new User({
+        access_token: 'access',
+        id_token: idToken,
+        token_type: 'Bearer',
+        profile: {} as never,
+      })
+    )
+
+    await new PPLEMiniApp(config).init()
+
+    expect(replaceState).toHaveBeenCalledWith(
+      { key: 'router' },
+      '',
+      'https://miniapp.example.com/callback?tab=news#top'
+    )
   })
 })
