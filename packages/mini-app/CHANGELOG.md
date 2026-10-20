@@ -1,5 +1,11 @@
 # @pplethai/pple-today-miniapp-sdk
 
+## 0.1.8
+
+### Patch Changes
+
+- [#495](https://github.com/PPLEThai/pple-today/pull/495) [`87f1bd5`](https://github.com/PPLEThai/pple-today/commit/87f1bd5398247271065630f90b60b7348591ad95) Thanks [@PanJ](https://github.com/PanJ)! - Remove `code`, `state`, `session_state` and `iss` from the URL once the sign-in code exchange succeeds
+
 ## 0.1.7
 
 ### Patch Changes
