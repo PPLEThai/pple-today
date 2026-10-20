@@ -1,5 +1,19 @@
 # @pplethai/pple-today-miniapp-sdk
 
+## 0.1.7
+
+### Patch Changes
+
+- [#492](https://github.com/PPLEThai/pple-today/pull/492) [`c0aa981`](https://github.com/PPLEThai/pple-today/commit/c0aa9814dd51e96c0a2b1d21088ebc7ef21dd2a5) Thanks [@PanJ](https://github.com/PanJ)! - Fix `isMiniApp()` failing to detect PPLE Today 2.10.0 and later: the User-Agent check only matched single-digit version parts, so the SDK ignored the launch token and fell back to a stale browser session.
+
+- [#494](https://github.com/PPLEThai/pple-today/pull/494) [`034bd3f`](https://github.com/PPLEThai/pple-today/commit/034bd3f8bcf38f721e1b1351950f9a7755b0b81e) Thanks [@PanJ](https://github.com/PanJ)! - Ask PPLE Today for the session instead of relying only on the launch URL
+
+  - The SDK used to get its session solely from `access_token` and `id_token` in the launch URL. A server-side redirect (`/` to `/th/`, apex to `www.`, an auth gate) drops the query string before any JS runs, and navigating from one mini app to another in the same WebView left the second app with no token at all. The SDK now asks the host app over a session bridge (`pple:session-request`, see `BRIDGE.md`), which answers for whichever app is actually on screen.
+  - A launch URL token is still used first when it was issued for this app's `oauthClientId` and has not expired, so older hosts keep working unchanged. A token for another app, or an expired one, is skipped and the bridge is asked instead. The host-side answer is only accepted from the host itself, never from an iframe.
+  - The session now records when it expires, and `getAccessToken()` asks the host for a fresh one when the current token is expired or within 30 seconds of expiring. Concurrent calls share one request, and if the host cannot refresh, the existing token is returned as before.
+  - `isMiniApp()` is also true inside a bridge-capable host when the URL carries no token. The public API is otherwise unchanged.
+  - New `switchRole()` lets the user switch บทบาท without leaving the app and resolves with `switched`, `unchanged`, `cancelled` or `unavailable`. Inside PPLE Today it shows the app's native picker and returns with a session minted for the new role; in a browser, or an older PPLE Today, the SDK shows its own picker and switches through PPLE ID directly.
+
 ## 0.1.6
 
 ### Patch Changes
