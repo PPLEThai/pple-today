@@ -1,5 +1,13 @@
 # @client/mobile
 
+## 2.10.1
+
+### Patch Changes
+
+- [#494](https://github.com/PPLEThai/pple-today/pull/494) [`034bd3f`](https://github.com/PPLEThai/pple-today/commit/034bd3f8bcf38f721e1b1351950f9a7755b0b81e) Thanks [@PanJ](https://github.com/PanJ)! - Mini apps can now ask PPLE Today for a session from inside the app, so signing in survives redirects and works when one mini app links to another. The top bar names the mini app actually on screen.
+
+  Mini apps can also offer a บทบาท switch: PPLE Today shows its own picker, naming the app that asked.
+
 ## 2.10.0
 
 ### Minor Changes

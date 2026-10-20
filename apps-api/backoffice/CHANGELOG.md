@@ -1,5 +1,14 @@
 # @api/backoffice
 
+## 1.18.3
+
+### Patch Changes
+
+- [#494](https://github.com/PPLEThai/pple-today/pull/494) [`034bd3f`](https://github.com/PPLEThai/pple-today/commit/034bd3f8bcf38f721e1b1351950f9a7755b0b81e) Thanks [@PanJ](https://github.com/PanJ)! - Add a mini-app session exchange keyed by client id and page URL for the session bridge
+
+  - New `POST /auth/mini-app/client/:clientId?pageUrl=…` resolves the mini app registered under that client id at the page's origin, applies the same access rules and App User registration as opening by slug, and returns its session. An app that does not require authentication resolves with `session: null`.
+  - `POST /auth/mini-app/:slug` also returns `slug`, `clientId`, `baseUrl` and `session` alongside `url`, which still carries the tokens for older SDKs.
+
 ## 1.18.2
 
 ### Patch Changes
