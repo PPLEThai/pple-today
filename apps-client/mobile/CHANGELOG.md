@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 2.10.2
+
+### Patch Changes
+
+- [#497](https://github.com/PPLEThai/pple-today/pull/497) [`421290f`](https://github.com/PPLEThai/pple-today/commit/421290f6f459c4b6337b4d1dc31ad3260f888a23) Thanks [@PanJ](https://github.com/PanJ)! - Open the mini app's บทบาท picker as soon as the page asks for it: an app the WebView has already resolved needs no round trip first, and any other is resolved behind a spinner. After a switch the picker stays up, busy, until the new person's session is minted.
+
 ## 2.10.1
 
 ### Patch Changes
