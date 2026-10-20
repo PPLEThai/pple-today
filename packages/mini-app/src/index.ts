@@ -33,6 +33,10 @@ export type RoleSwitchResult =
 // that expires before the server reads it.
 const REFRESH_MARGIN_SECONDS = 30
 
+// What the authorization server appends to the redirect URI. They are spent
+// once the code is exchanged, and a reload would try to exchange them again.
+const AUTH_RESPONSE_PARAMS = ['code', 'state', 'session_state', 'iss']
+
 export class PPLEMiniApp {
   private config: { oauthUrl: string; oauthClientId: string; oauthRedirectUri: string }
   private userManager: UserManager
@@ -212,6 +216,19 @@ export class PPLEMiniApp {
     }
   }
 
+  /**
+   * Drops the spent authorization response from the address bar without a
+   * navigation, keeping the rest of the URL and the router's history state.
+   */
+  private removeAuthResponseFromUrl() {
+    const url = new URL(window.location.href)
+    const hadParams = AUTH_RESPONSE_PARAMS.some((param) => url.searchParams.has(param))
+    if (!hadParams) return
+
+    AUTH_RESPONSE_PARAMS.forEach((param) => url.searchParams.delete(param))
+    window.history.replaceState(window.history.state, '', url.toString())
+  }
+
   constructor(config: { oauthUrl: string; oauthClientId: string; oauthRedirectUri: string }) {
     if (typeof window === 'undefined') {
       throw new Error(
@@ -274,6 +291,8 @@ export class PPLEMiniApp {
       try {
         const user = await this.userManager.signinCallback()
         if (user) {
+          this.removeAuthResponseFromUrl()
+
           const accessTokenDetails = {
             accessToken: user.access_token,
             idToken: user.id_token as string,
