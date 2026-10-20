@@ -60,7 +60,10 @@ type RoleSwitchChoice =
 
 interface RoleSwitchPrompt {
   id: number
-  appName: string
+  /** Null while the app is still being resolved: the picker shows a spinner. */
+  appName: string | null
+  /** The switch went through and the new person's session is being minted. */
+  isFinishing: boolean
   finish: (choice: RoleSwitchChoice) => void
 }
 
@@ -262,37 +265,55 @@ export function useSessionBridge({
       return roleSwitchDeniedReply(requestId, 'busy')
     }
 
+    // Not loaded yet is not the same as having nobody to switch to.
+    if (!hasActiveRoleRef.current) return roleSwitchDeniedReply(requestId, 'error')
+    if (eligiblePersonsRef.current.length < 2) {
+      return roleSwitchDeniedReply(requestId, 'no-eligible-persons')
+    }
+
     roleSwitchBusyRef.current = true
+    const id = ++promptIdRef.current
+    // Touches this request's picker only, should another have replaced it.
+    const updatePrompt = (patch: Partial<RoleSwitchPrompt>) =>
+      setRoleSwitchPrompt((current) => (current?.id === id ? { ...current, ...patch } : current))
+    let choose!: (choice: RoleSwitchChoice) => void
+    const chosen = new Promise<RoleSwitchChoice>((resolve) => {
+      choose = resolve
+    })
+
     try {
-      // Resolved before anything is shown, so only a registered app at its
-      // own origin can raise the picker. The role list is waived: the user is
-      // already inside this app, and a list mismatch is exactly what they may
-      // be trying to fix by switching.
-      const resolved = await requestApp(clientId, pageUrl, true)
-      if (resolved.kind === 'not-found') return roleSwitchDeniedReply(requestId, 'not-found')
-      if (resolved.kind !== 'resolved') return roleSwitchDeniedReply(requestId, 'error')
-      remember(clientId, origin, resolved)
-
-      // Not loaded yet is not the same as having nobody to switch to.
-      if (!hasActiveRoleRef.current) return roleSwitchDeniedReply(requestId, 'error')
-      if (eligiblePersonsRef.current.length < 2) {
-        return roleSwitchDeniedReply(requestId, 'no-eligible-persons')
-      }
-      // A role prompt may have been raised while the app was resolving.
-      if (openRolePromptsRef.current > 0) return roleSwitchDeniedReply(requestId, 'busy')
-
-      const choice = await new Promise<RoleSwitchChoice>((resolve) => {
-        const id = ++promptIdRef.current
-        setRoleSwitchPrompt({
-          id,
-          appName: resolved.app.appName,
-          finish: (next) => {
-            setRoleSwitchPrompt((current) => (current?.id === id ? null : current))
-            resolve(next)
-          },
-        })
+      // The picker goes up at once — the user tapped something and should see
+      // it answer. An app this WebView has already resolved (the page asked
+      // for its session first, or was opened with one) needs no round trip.
+      // Any other is resolved behind a spinner, so only a registered app at
+      // its own origin ever gets a choice out of the user.
+      const known = appsRef.current.get(SessionCache.key(clientId, origin))
+      setRoleSwitchPrompt({
+        id,
+        appName: known?.appName ?? null,
+        isFinishing: false,
+        finish: (next) => {
+          // A switch keeps the picker up, busy, until the new session is
+          // minted; anything else closes it now.
+          if (next.status === 'switched') updatePrompt({ isFinishing: true })
+          else setRoleSwitchPrompt((current) => (current?.id === id ? null : current))
+          choose(next)
+        },
       })
 
+      if (known) {
+        onResolvedRef.current(known, origin)
+      } else {
+        // The role list is waived: the user is already inside this app, and a
+        // list mismatch is exactly what they may be trying to fix by switching.
+        const resolved = await requestApp(clientId, pageUrl, true)
+        if (resolved.kind === 'not-found') return roleSwitchDeniedReply(requestId, 'not-found')
+        if (resolved.kind !== 'resolved') return roleSwitchDeniedReply(requestId, 'error')
+        remember(clientId, origin, resolved)
+        updatePrompt({ appName: resolved.app.appName })
+      }
+
+      const choice = await chosen
       if (choice.status === 'cancelled') return roleSwitchCancelledReply(requestId)
       if (choice.status === 'unchanged') return roleSwitchUnchangedReply(requestId)
 
@@ -309,6 +330,7 @@ export function useSessionBridge({
       console.warn('Mini app re-exchange after role switch failed', { clientId, kind: again.kind })
       return roleSwitchSwitchedReply(requestId, choice.personId, null)
     } finally {
+      setRoleSwitchPrompt((current) => (current?.id === id ? null : current))
       roleSwitchBusyRef.current = false
     }
   }
@@ -376,7 +398,7 @@ export function useSessionBridge({
   }
 
   const confirmRoleSwitch = async (personId: number | null) => {
-    if (!roleSwitchPrompt || isSwitching) return
+    if (!roleSwitchPrompt || roleSwitchPrompt.appName == null || isSwitching) return
     if (personId == null || personId === activePersonId) {
       roleSwitchPrompt.finish({ status: 'unchanged' })
       return
@@ -410,7 +432,8 @@ export function useSessionBridge({
       appName: roleSwitchPrompt.appName,
       eligiblePersons,
       activePersonId,
-      isSubmitting: isSwitching,
+      isLoading: roleSwitchPrompt.appName == null,
+      isSubmitting: isSwitching || roleSwitchPrompt.isFinishing,
       onCancel: () => roleSwitchPrompt.finish({ status: 'cancelled' }),
       onConfirm: confirmRoleSwitch,
     },

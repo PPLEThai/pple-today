@@ -13,6 +13,7 @@ import { Button } from '@pple-today/ui/button'
 import { Text } from '@pple-today/ui/text'
 import * as RadioGroupPrimitive from '@rn-primitives/radio-group'
 
+import { Spinner } from '@app/components/spinner'
 import { type EligiblePerson, personRowCopy } from '@app/utils/active-role'
 
 /**
@@ -89,6 +90,7 @@ export function PersonRolePickerDialog({
   eligiblePersons,
   preferredPersonId,
   showList,
+  isLoading = false,
   isSubmitting = false,
   onCancel,
   onConfirm,
@@ -99,6 +101,8 @@ export function PersonRolePickerDialog({
   eligiblePersons: EligiblePerson[]
   preferredPersonId: number | null
   showList: boolean
+  /** Not ready to choose yet: a spinner stands in for the list, confirm is off. */
+  isLoading?: boolean
   isSubmitting?: boolean
   onCancel: () => void
   onConfirm: (personId: number | null) => void | Promise<void>
@@ -130,14 +134,18 @@ export function PersonRolePickerDialog({
           <AlertDialogTitle>{title}</AlertDialogTitle>
           {description ? <AlertDialogDescription>{description}</AlertDialogDescription> : null}
         </AlertDialogHeader>
-        {showList && (
+        {showList && isLoading ? (
+          <View className="h-24 items-center justify-center">
+            <Spinner />
+          </View>
+        ) : showList ? (
           <EligiblePersonRadioList
             persons={eligiblePersons}
             value={selectedId}
             onValueChange={setChosenId}
             disabled={busy}
           />
-        )}
+        ) : null}
         {/* Plain buttons rather than AlertDialogAction/Cancel: both of those
             close the dialog through `onOpenChange`, which here means "the user
             gave up" — confirming has to keep the dialog up while the บทบาท is
@@ -148,7 +156,7 @@ export function PersonRolePickerDialog({
           </Button>
           <Button
             onPress={async () => {
-              if (busy || confirmLockedRef.current) return
+              if (busy || isLoading || confirmLockedRef.current) return
               confirmLockedRef.current = true
               setConfirmLocked(true)
               try {
@@ -158,7 +166,7 @@ export function PersonRolePickerDialog({
                 setConfirmLocked(false)
               }
             }}
-            disabled={busy}
+            disabled={busy || isLoading}
           >
             <Text>{confirmLabel}</Text>
           </Button>
