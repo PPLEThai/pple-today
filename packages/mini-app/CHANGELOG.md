@@ -1,5 +1,18 @@
 # @pplethai/pple-today-miniapp-sdk
 
+## 0.1.9
+
+### Patch Changes
+
+- [#503](https://github.com/PPLEThai/pple-today/pull/503) [`6171d3d`](https://github.com/PPLEThai/pple-today/commit/6171d3dddac47e67566664b83c68f1f2c3dde129) Thanks [@PanJ](https://github.com/PanJ)! - Support PPLE ID identity verification (KYC)
+
+  - `getProfile()` now returns the userinfo `kyc` block (`status`, `verified`, `verifiedAt`, `source`). It is optional, so PPLE ID versions without KYC still work, and a block the SDK cannot read is dropped instead of failing the profile.
+  - New `startKyc({ returnTo? })` sends the user to PPLE ID's `/kyc`, inside PPLE Today and in a browser. Session tokens, a spent sign-in response and an old `kyc` result are removed from `return_to` first.
+  - New `consumeKycResult()` reads `?kyc=passed|pending_review|cancelled` from the launch URL and removes it from the address bar. It is a UI hint only; read `kyc` from the profile to know whether the user is verified.
+  - New `refreshProfile()` fetches userinfo from PPLE ID again, e.g. right after the user comes back from KYC.
+  - New `kycOnSignIn` option adds the `pple:kyc` scope to browser sign-in, so PPLE ID runs KYC before sending the user back.
+  - `Kyc`, `KycResult` and `UserInfo` types are exported.
+
 ## 0.1.8
 
 ### Patch Changes
