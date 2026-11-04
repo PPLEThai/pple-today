@@ -13,6 +13,20 @@ export const IdTokenPayloadSchema = z.object({
 })
 export type IdTokenPayload = z.infer<typeof IdTokenPayloadSchema>
 
+/**
+ * The userinfo `kyc` block from PPLE ID. It says whether the person has proven
+ * their identity, never who they are: the verified name and ID number only
+ * reach the app's server through the PPLE Platform.
+ */
+export const KycSchema = z.object({
+  status: z.enum(['none', 'pending_review', 'verified', 'rejected']),
+  verified: z.boolean(),
+  verifiedAt: z.string().nullable(),
+  /** `membership` when party membership already proved the identity. */
+  source: z.enum(['membership', 'kyc']).nullable(),
+})
+export type Kyc = z.infer<typeof KycSchema>
+
 export const UserInfoSchema = z.object({
   sub: z.string(),
   name: z.string().optional(),
@@ -21,8 +35,15 @@ export const UserInfoSchema = z.object({
   updated_at: z.number().optional(),
   phone_number: z.string().optional(),
   phone_number_verified: z.boolean().optional(),
+  // Absent from PPLE ID versions without KYC. A block this SDK cannot read (a
+  // status added later) is dropped rather than failing the whole profile.
+  kyc: KycSchema.optional().catch(undefined),
 })
 export type UserInfo = z.infer<typeof UserInfoSchema>
+
+/** What PPLE ID appends to `return_to` when the user leaves `/kyc`. */
+export const KycResultSchema = z.enum(['passed', 'pending_review', 'cancelled'])
+export type KycResult = z.infer<typeof KycResultSchema>
 
 export const AccessTokenDetailsSchema = z.object({
   accessToken: z.string(),

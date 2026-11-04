@@ -11,12 +11,16 @@ import {
   AccessTokenDetailsSchema,
   BridgeSession,
   IdTokenPayloadSchema,
+  Kyc,
+  KycResult,
+  KycResultSchema,
+  KycSchema,
   UserInfo,
   UserInfoSchema,
 } from './models'
 import { fetchRoleInfo, showRoleSwitchDialog, switchRoleOnServer } from './web-role-switcher'
 
-export type { User }
+export type { Kyc, KycResult, User, UserInfo }
 
 /**
  * How a `switchRole()` call ended. `unavailable` covers every case where no
@@ -37,8 +41,31 @@ const REFRESH_MARGIN_SECONDS = 30
 // once the code is exchanged, and a reload would try to exchange them again.
 const AUTH_RESPONSE_PARAMS = ['code', 'state', 'session_state', 'iss']
 
+// How older PPLE Today hosts hand the session over in the launch URL.
+const LAUNCH_TOKEN_PARAMS = ['access_token', 'id_token', 'token_type', 'expires_in']
+
+// What PPLE ID appends to `return_to` when the user leaves `/kyc`.
+const KYC_RESULT_PARAM = 'kyc'
+
+const BASE_SCOPE = 'openid profile phone'
+const KYC_SCOPE = 'pple:kyc'
+
+export type PPLEMiniAppConfig = {
+  oauthUrl: string
+  oauthClientId: string
+  oauthRedirectUri: string
+  /**
+   * Run PPLE ID KYC as part of browser sign-in, before the user comes back to
+   * the app (adds the `pple:kyc` scope). Only the browser sign-in redirect is
+   * affected: inside PPLE Today the session comes from the host, so use
+   * `startKyc()` there. A user who already has a session is not sent through
+   * sign-in again.
+   */
+  kycOnSignIn?: boolean
+}
+
 export class PPLEMiniApp {
-  private config: { oauthUrl: string; oauthClientId: string; oauthRedirectUri: string }
+  private config: PPLEMiniAppConfig
   private userManager: UserManager
   private _user: User | null = null
   /**
@@ -165,12 +192,15 @@ export class PPLEMiniApp {
     }
 
     const userInfoBody = await userInfoResult.json()
+    const userInfo = UserInfoSchema.safeParse(userInfoBody)
 
-    if (UserInfoSchema.safeParse(userInfoBody).success === false) {
+    if (!userInfo.success) {
       throw new Error('[PPLE Mini App] Invalid user info format received from OAuth server')
     }
 
-    return userInfoBody
+    // Keep any claims this SDK does not model, but never a `kyc` block it
+    // could not read.
+    return { ...userInfoBody, kyc: userInfo.data.kyc }
   }
 
   /**
@@ -229,7 +259,7 @@ export class PPLEMiniApp {
     window.history.replaceState(window.history.state, '', url.toString())
   }
 
-  constructor(config: { oauthUrl: string; oauthClientId: string; oauthRedirectUri: string }) {
+  constructor(config: PPLEMiniAppConfig) {
     if (typeof window === 'undefined') {
       throw new Error(
         '[PPLE Mini App] PPLEMiniApp can only be instantiated in a browser environment'
@@ -246,7 +276,7 @@ export class PPLEMiniApp {
       client_id: this.config.oauthClientId,
       redirect_uri: this.config.oauthRedirectUri,
       response_type: 'code',
-      scope: 'openid profile phone',
+      scope: config.kycOnSignIn ? `${BASE_SCOPE} ${KYC_SCOPE}` : BASE_SCOPE,
       userStore: new WebStorageStateStore({
         store: isMiniApp ? window.sessionStorage : window.localStorage,
       }),
@@ -435,11 +465,19 @@ export class PPLEMiniApp {
     this._user = user
   }
 
+  /**
+   * The signed-in user's PPLE ID profile.
+   *
+   * `kyc` is absent when PPLE ID does not report KYC (older versions, or KYC
+   * not enabled).
+   */
   async getProfile(): Promise<UserInfo | null> {
     if (!this._user) throw new Error('[PPLE Mini App] No user is currently logged in')
 
     const newUser = await this.storeUserInOIDCClient()
     this._user = newUser
+
+    const kyc = KycSchema.safeParse(this._user.profile.kyc)
 
     return {
       sub: this._user.profile.sub,
@@ -449,7 +487,69 @@ export class PPLEMiniApp {
       name: this._user.profile.name,
       phone_number_verified: this._user.profile.phone_number_verified,
       updated_at: this._user.profile.updated_at,
+      kyc: kyc.success ? kyc.data : undefined,
     }
+  }
+
+  /**
+   * Fetches the profile from PPLE ID again, never from a cache, e.g. to read
+   * the `kyc` block after the user comes back from `startKyc()`.
+   */
+  async refreshProfile(): Promise<UserInfo | null> {
+    if (!this._user) throw new Error('[PPLE Mini App] No user is currently logged in')
+
+    await this.markProfileStale()
+    return await this.getProfile()
+  }
+
+  /**
+   * Sends the user to PPLE ID to verify their identity with their Thai ID card.
+   * This is a full-page navigation, the same inside PPLE Today and in a
+   * browser; PPLE ID sends the user back to `returnTo` with `?kyc=<result>`
+   * (read it with `consumeKycResult()`).
+   *
+   * `returnTo` defaults to the current page. Its scheme and host must match
+   * one of the app's registered redirect URIs. Session tokens and a spent
+   * sign-in response are removed from it, so they never travel to PPLE ID; a
+   * mini app inside PPLE Today gets its session back over the bridge.
+   */
+  startKyc(options: { returnTo?: string } = {}): void {
+    const returnTo = new URL(options.returnTo ?? window.location.href, window.location.href)
+    ;[KYC_RESULT_PARAM, ...LAUNCH_TOKEN_PARAMS, ...AUTH_RESPONSE_PARAMS].forEach((param) =>
+      returnTo.searchParams.delete(param)
+    )
+
+    const kycUrl = new URL('/kyc', this.config.oauthUrl)
+    kycUrl.searchParams.set('client_id', this.config.oauthClientId)
+    kycUrl.searchParams.set('return_to', returnTo.toString())
+
+    window.location.assign(kycUrl.toString())
+  }
+
+  /**
+   * How the user left PPLE ID KYC, if this page is where they came back to:
+   * `passed`, `pending_review` (a person will review the card), `cancelled`, or
+   * `null` when the page was not opened from KYC.
+   *
+   * **This is a UI hint only.** Anyone can type `?kyc=passed` into the address
+   * bar. To know whether the user is verified, read `kyc` from
+   * `refreshProfile()` — and on the server, ask the PPLE Platform.
+   *
+   * The value is read from the URL the page was opened with and removed from
+   * the address bar, so reloading the page does not show the result again.
+   * Calling it again during the same page load returns the same value.
+   */
+  consumeKycResult(): KycResult | null {
+    const url = new URL(window.location.href)
+    if (url.searchParams.has(KYC_RESULT_PARAM)) {
+      url.searchParams.delete(KYC_RESULT_PARAM)
+      window.history.replaceState(window.history.state, '', url.toString())
+    }
+
+    const result = KycResultSchema.safeParse(
+      new URLSearchParams(this.launchSearch).get(KYC_RESULT_PARAM)
+    )
+    return result.success ? result.data : null
   }
 
   isMiniApp() {
