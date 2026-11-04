@@ -150,6 +150,22 @@ that never acks counts), `switchRole()` falls back to the SDK's own picker:
 `Authorization` and `Content-Type`), or step 1 fails and `switchRole()` resolves
 `unavailable: error`.
 
+## Identity verification (KYC)
+
+KYC is not a bridge message. `startKyc()` navigates the WebView itself to
+`{oauthUrl}/kyc?client_id=…&return_to=…`, the same as in a browser, and PPLE ID sends
+the user back to `return_to?kyc=passed|pending_review|cancelled`. See the
+[README](./README.md#identity-verification-kyc).
+
+- The SDK strips the launch tokens (`access_token`, `id_token`, `token_type`,
+  `expires_in`) from `return_to`, so they never reach PPLE ID or its logs. When the
+  page loads again at `return_to`, `init()` gets its session over the bridge as it does
+  after any redirect. On an old host with no bridge there is no session to get back,
+  so the app falls back to browser sign-in.
+- `/kyc` needs a PPLE ID browser session cookie. A mini app inside PPLE Today has none
+  of its own (its session comes from the host), so PPLE ID may ask the user to log in
+  again. A token handoff for `/kyc` (PPLEThai/pple-sso#177) would fix this.
+
 ## Backward compatibility
 
 | Host                           | SDK                 | Result                                                                                    |
