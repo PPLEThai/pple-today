@@ -1,5 +1,11 @@
 # @client/backoffice
 
+## 1.7.0
+
+### Minor Changes
+
+- [#510](https://github.com/PPLEThai/pple-today/pull/510) [`1ce5ee0`](https://github.com/PPLEThai/pple-today/commit/1ce5ee04eb71c74d8ead7bbc6f858378ab589d57) Thanks [@PanJ](https://github.com/PanJ)! - An admin can set the list order of a PPLE Platform app that is Live and not unlisted, from a new button on its otherwise read-only row in the backoffice.
+
 ## 1.6.0
 
 ### Minor Changes
