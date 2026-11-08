@@ -104,18 +104,22 @@ export class PlatformMiniAppService {
   }
 
   /**
-   * Update presentation fields (name/icon/url). When the URL changes, the
-   * Zitadel redirect URIs are re-synced first — if that fails the row is left
-   * untouched, so the OIDC config and the stored URL never silently diverge.
+   * Update presentation fields (name/icon/url). The Zitadel app mirrors two of
+   * them: its name follows the app's name, and its redirect URIs follow the
+   * URL. Either change is pushed to Zitadel first — if that fails the row is
+   * left untouched, so the OIDC app and the stored row never silently diverge.
    */
   async updateMiniApp(id: string, data: UpdatePlatformMiniAppData) {
     const existingResult = await this.platformMiniAppRepository.getMiniAppById(id)
     if (existingResult.isErr()) return mapRepositoryError(existingResult.error, NOT_FOUND)
     const existing = existingResult.value
 
-    if (data.url !== undefined && data.url !== existing.clientUrl && existing.zitadelAppId) {
+    const renamed = data.name !== undefined && data.name !== existing.name
+    const moved = data.url !== undefined && data.url !== existing.clientUrl
+    if ((renamed || moved) && existing.zitadelAppId) {
       const zitadelResult = await this.zitadelService.updateOidcApp(existing.zitadelAppId, {
-        redirectUris: doorRedirectUris(data.url),
+        ...(renamed ? { name: data.name } : {}),
+        ...(moved ? { redirectUris: doorRedirectUris(data.url!) } : {}),
       })
       if (zitadelResult.isErr()) return err(zitadelResult.error)
     }

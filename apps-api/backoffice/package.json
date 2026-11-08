@@ -18,6 +18,7 @@
     "test:cov": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "backfill:door-redirect-uris": "bun ./scripts/backfill-door-redirect-uris.ts",
+    "backfill:zitadel-app-names": "bun ./scripts/backfill-zitadel-app-names.ts",
     "lint": "eslint . --ext .ts,.tsx",
     "format:check": "prettier --check .",
     "coverage": "open-cli coverage/index.html"

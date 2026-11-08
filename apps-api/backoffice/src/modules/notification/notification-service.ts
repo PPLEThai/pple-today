@@ -8,13 +8,13 @@ import type { NotificationTokenPlatform } from '@pple-today/database/prisma'
 import { err, ok } from 'neverthrow'
 
 import type { BoundApp } from './key-binding'
-import { resolveAppLinkPath } from './resolve-app-link-path'
 import type {
   CreateNewExternalNotificationBody,
   GetNotificationDetailsByIdResponse,
   ListHistoryNotificationResponse,
 } from './models'
 import type { NotificationRepository } from './repository'
+import { resolveAppLinkPath } from './resolve-app-link-path'
 
 /**
  * The sending app as the client renders it. A notification with no app is PPLE

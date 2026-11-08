@@ -177,15 +177,61 @@ describe('PlatformMiniAppService.updateMiniApp', () => {
     expect(cache.invalidate).toHaveBeenCalledOnce()
   })
 
-  test('does not touch Zitadel when the URL is unchanged', async () => {
-    const { service, repository, zitadel } = makeService()
+  test('renames the Zitadel app when the name changes, then persists', async () => {
+    const { service, repository, zitadel, cache } = makeService()
     repository.getMiniAppById.mockResolvedValue(ok(makeRow()))
+    zitadel.updateOidcApp.mockResolvedValue(ok({}))
     repository.updateMiniApp.mockResolvedValue(ok(makeRow({ name: 'Renamed' })))
 
     await service.updateMiniApp('app-1', { name: 'Renamed' })
 
-    expect(zitadel.updateOidcApp).not.toHaveBeenCalled()
+    expect(zitadel.updateOidcApp).toHaveBeenCalledWith('zitadel-app-1', { name: 'Renamed' })
     expect(repository.updateMiniApp).toHaveBeenCalledWith('app-1', { name: 'Renamed' })
+    expect(cache.invalidate).toHaveBeenCalledOnce()
+  })
+
+  test('renames and re-syncs redirect URIs in one Zitadel call when both change', async () => {
+    const { service, repository, zitadel } = makeService()
+    repository.getMiniAppById.mockResolvedValue(ok(makeRow()))
+    zitadel.updateOidcApp.mockResolvedValue(ok({}))
+    repository.updateMiniApp.mockResolvedValue(ok(makeRow()))
+
+    await service.updateMiniApp('app-1', { name: 'Renamed', url: 'https://renamed.ppleth.ai' })
+
+    expect(zitadel.updateOidcApp).toHaveBeenCalledOnce()
+    expect(zitadel.updateOidcApp).toHaveBeenCalledWith('zitadel-app-1', {
+      name: 'Renamed',
+      redirectUris: ['https://renamed.ppleth.ai', 'https://renamed.ppleth.ai/.pple/auth/callback'],
+    })
+  })
+
+  test('does not touch Zitadel when neither the name nor the URL changes', async () => {
+    const { service, repository, zitadel } = makeService()
+    repository.getMiniAppById.mockResolvedValue(ok(makeRow()))
+    repository.updateMiniApp.mockResolvedValue(ok(makeRow()))
+
+    await service.updateMiniApp('app-1', {
+      name: 'My App',
+      url: 'https://my-app.ppleth.ai',
+      iconUrl: 'https://icons.example/new.png',
+    })
+
+    expect(zitadel.updateOidcApp).not.toHaveBeenCalled()
+    expect(repository.updateMiniApp).toHaveBeenCalledOnce()
+  })
+
+  test('leaves the row untouched when the Zitadel rename fails', async () => {
+    const { service, repository, zitadel, cache } = makeService()
+    repository.getMiniAppById.mockResolvedValue(ok(makeRow()))
+    zitadel.updateOidcApp.mockResolvedValue(
+      err({ code: InternalErrorCode.ZITADEL_REQUEST_FAILED, message: 'boom' })
+    )
+
+    const result = await service.updateMiniApp('app-1', { name: 'Renamed' })
+
+    expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.ZITADEL_REQUEST_FAILED)
+    expect(repository.updateMiniApp).not.toHaveBeenCalled()
+    expect(cache.invalidate).not.toHaveBeenCalled()
   })
 
   test('leaves the row untouched when the Zitadel redirect sync fails', async () => {

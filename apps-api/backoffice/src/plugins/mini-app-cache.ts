@@ -1,7 +1,13 @@
 import { Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
-const MINI_APP_LIST_CACHE_TTL_MS = 10 * 60 * 1000
+// The cache lives in each API pod's memory, and the API runs up to three
+// replicas. `invalidate()` only clears the pod that handled the write (a
+// platform retire, rename, or re-list), so every *other* pod keeps serving its
+// copy until it expires. The TTL is therefore how long a retired app can stay
+// listed, or a rename stay unseen, on the phone — keep it short. The list query
+// is one small indexed read, so refreshing it this often costs little.
+const MINI_APP_LIST_CACHE_TTL_MS = 30 * 1000
 
 type CachedMiniApp = Prisma.MiniAppGetPayload<{ include: { miniAppRoles: true } }>
 
