@@ -54,6 +54,11 @@ export const UpdateMiniAppBody = t.Composite([
 ])
 export type UpdateMiniAppBody = Static<typeof UpdateMiniAppBody>
 
+export const SetMiniAppOrderBody = t.Object({
+  order: t.Integer({ description: 'Position in the PPLE Today list; lower comes first' }),
+})
+export type SetMiniAppOrderBody = Static<typeof SetMiniAppOrderBody>
+
 export const UpdateMiniAppResponse = MiniApp
 export type UpdateMiniAppResponse = Static<typeof UpdateMiniAppResponse>
 

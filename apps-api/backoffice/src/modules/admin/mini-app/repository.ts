@@ -27,6 +27,27 @@ export class AdminMiniAppRepository {
     )
   }
 
+  /** The fields that decide whether an app's order may be set (see `isOrderEditable`). */
+  async findMiniAppOrderState(id: string) {
+    return fromRepositoryPromise(
+      this.prismaService.miniApp.findUniqueOrThrow({
+        where: { id },
+        select: { source: true, tier: true, unlisted: true, retiredAt: true },
+      })
+    )
+  }
+
+  /** Set only the list order, touching no other field of the row. */
+  async setOrder(id: string, order: number) {
+    return fromRepositoryPromise(
+      this.prismaService.miniApp.update({
+        where: { id },
+        data: { order },
+        include: { miniAppRoles: true },
+      })
+    )
+  }
+
   async getMiniApps() {
     return fromRepositoryPromise(
       this.prismaService.miniApp.findMany({

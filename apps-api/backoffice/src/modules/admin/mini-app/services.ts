@@ -12,7 +12,7 @@ import {
   UpdateMiniAppBody,
   UpdateZitadelAppInput,
 } from './models'
-import { isPlatformManaged } from './policy'
+import { isOrderEditable, isPlatformManaged } from './policy'
 import { AdminMiniAppRepository, AdminMiniAppRepositoryPlugin } from './repository'
 
 import { AD_ROLE_PREFIX, MAIN_AD_ROLE_LABELS } from '../../../constants/roles'
@@ -130,6 +130,38 @@ export class AdminMiniAppService {
           message: 'Mini app with the given slug already exists',
         },
       })
+
+    this.miniAppListCache.invalidate()
+
+    return ok(toMiniAppDto(updateResult.value))
+  }
+
+  /**
+   * Set an app's position in PPLE Today's list. Unlike `updateMiniApp`, this is
+   * open to platform apps — order is not part of what the Provisioner owns —
+   * but only to ones that are actually listed (`isOrderEditable`).
+   */
+  async setMiniAppOrder(id: string, order: number) {
+    const notFound = {
+      RECORD_NOT_FOUND: {
+        code: InternalErrorCode.MINI_APP_NOT_FOUND,
+        message: 'Mini app with the given ID does not exist',
+      },
+    } as const
+
+    const stateResult = await this.adminMiniAppRepository.findMiniAppOrderState(id)
+    if (stateResult.isErr()) return mapRepositoryError(stateResult.error, notFound)
+
+    if (!isOrderEditable(stateResult.value)) {
+      return err({
+        code: InternalErrorCode.MINI_APP_ORDER_NOT_LISTED,
+        message:
+          'Only a listed app can be ordered: a platform app must be Live and not unlisted, and a retired app cannot be ordered',
+      })
+    }
+
+    const updateResult = await this.adminMiniAppRepository.setOrder(id, order)
+    if (updateResult.isErr()) return mapRepositoryError(updateResult.error, notFound)
 
     this.miniAppListCache.invalidate()
 
