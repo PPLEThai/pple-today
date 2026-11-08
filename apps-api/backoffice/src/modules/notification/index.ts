@@ -11,7 +11,6 @@ import {
   CreateNewExternalNotificationBody,
   CreateNewExternalNotificationHeader,
   CreateNewExternalNotificationResponse,
-  SendExternalNotificationHeader,
   GetAppInstallStatusQuery,
   GetAppInstallStatusResponse,
   GetNotificationDetailsByIdParams,
@@ -23,6 +22,7 @@ import {
   ReadNotificationResponse,
   RegisterNotificationBody,
   RegisterNotificationResponse,
+  SendExternalNotificationHeader,
 } from './models'
 import { AppNotificationServicePlugin, NotificationServicePlugin } from './services'
 
