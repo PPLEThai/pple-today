@@ -40,6 +40,10 @@ const APP_INSTALL_COUNT_CHUNK_SIZE = 5000
  * supplied over the wire: it is how *audience-bound* sends address an app's App
  * Users, and letting a caller name user ids directly would be exactly the raw
  * targeting the binding exists to prevent.
+ *
+ * `SUB` is the public spelling of the same lookup, and it is allowed on the raw
+ * send because that path is authorized by an admin key. It is not limited to
+ * people who have opened the sending app.
  */
 export interface ResolvedUserAudience {
   type: 'USER_ID'
@@ -140,6 +144,7 @@ export class NotificationRepository {
   private getFilterConditions(audience: NotificationAudience): Prisma.UserFindManyArgs['where'] {
     switch (audience.type) {
       case 'USER_ID':
+      case 'SUB':
         return {
           id: {
             in: audience.details,
@@ -451,7 +456,12 @@ export class NotificationRepository {
             type: 'PHONE_NUMBER',
             details: conditions.details.map(normalizeThaiPhoneNumber),
           }
-        : conditions
+        : conditions.type === 'SUB'
+          ? {
+              type: 'SUB',
+              details: conditions.details.map((sub) => sub.trim()),
+            }
+          : conditions
 
     if (data.link?.bypassNotificationCenter === true) {
       if (data.link.type === NotificationLinkType.EXTERNAL_BROWSER) {
@@ -586,13 +596,18 @@ export class NotificationRepository {
       tokens: u.notificationTokens,
     }))
 
-    const notFoundUser =
+    const notFound =
       audience.type === 'PHONE_NUMBER'
         ? R.difference(
             audience.details,
             phoneNumberWithTokens.map((p) => p.phoneNumber)
           )
-        : undefined
+        : audience.type === 'SUB'
+          ? R.difference(
+              audience.details,
+              phoneNumberWithTokens.map((p) => p.userId)
+            )
+          : undefined
     const emptyTokens = phoneNumberWithTokens.filter((p) => p.tokens.length === 0)
     const nonEmptyTokens = phoneNumberWithTokens.filter((p) => p.tokens.length > 0)
 
@@ -625,7 +640,7 @@ export class NotificationRepository {
         totalUsers: phoneNumberWithTokens.length,
         successfulDeliveries: nonEmptyTokens.length,
         failedDeliveries: emptyTokens.length,
-        nonExisted: notFoundUser?.length || 0,
+        nonExisted: notFound?.length || 0,
         notification: notificationDetails,
       },
     })
@@ -701,10 +716,16 @@ export class NotificationRepository {
       })
     }
 
+    // A named phone with no account can still be texted: the caller supplied the
+    // number. A named sub with no account cannot — there is no number to send
+    // to — so SMS for a SUB audience is only the accounts we found that have
+    // nothing to push to.
     const smsFallbackPhoneNumbers =
       audience.type === 'PHONE_NUMBER'
-        ? [...emptyTokens.map((p) => p.phoneNumber), ...(notFoundUser ?? [])]
-        : []
+        ? [...emptyTokens.map((p) => p.phoneNumber), ...(notFound ?? [])]
+        : audience.type === 'SUB'
+          ? emptyTokens.map((p) => p.phoneNumber)
+          : []
 
     if (smsFallbackText && smsFallbackPhoneNumbers.length > 0) {
       this.loggerService.info({
@@ -730,9 +751,14 @@ export class NotificationRepository {
       audience.type === 'PHONE_NUMBER'
         ? {
             success: phoneNumberWithTokens.map((p) => p.phoneNumber),
-            failed: notFoundUser ?? [],
+            failed: notFound ?? [],
           }
-        : undefined
+        : audience.type === 'SUB'
+          ? {
+              success: phoneNumberWithTokens.map((p) => p.userId),
+              failed: notFound ?? [],
+            }
+          : undefined
     )
   }
 

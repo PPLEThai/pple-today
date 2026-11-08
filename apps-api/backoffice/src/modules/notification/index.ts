@@ -11,6 +11,7 @@ import {
   CreateNewExternalNotificationBody,
   CreateNewExternalNotificationHeader,
   CreateNewExternalNotificationResponse,
+  SendExternalNotificationHeader,
   GetAppInstallStatusQuery,
   GetAppInstallStatusResponse,
   GetNotificationDetailsByIdParams,
@@ -285,17 +286,23 @@ export const ExternalNotificationController = new Elysia({
         )
       }
 
-      // This is the raw-targeting path: the caller names its own audience, phone
-      // numbers included. That stays a central-team capability, so keys bound to
-      // a Builder App are refused here (see `requireUnboundKey`). Legacy unbound
-      // keys and keys bound to a central-team app both pass straight through.
+      // This is the raw-targeting path: the caller names its own audience. That
+      // stays a central-team capability, so a Builder App's own key is refused
+      // here as the bearer (see `requireUnboundKey`). The same key may still be
+      // sent in `x-notification-app-key`, where it only names the app to show.
       const bindingResult = requireUnboundKey(tokenResult.value)
 
       if (bindingResult.isErr()) {
         return mapErrorCodeToResponse(bindingResult.error, status)
       }
 
-      const sendResult = await notificationService.sendExternalNotification(body, tokenResult.value)
+      const attributed = await notificationService.attributeSend(
+        tokenResult.value,
+        headers['x-notification-app-key']
+      )
+      if (attributed.isErr()) return mapErrorCodeToResponse(attributed.error, status)
+
+      const sendResult = await notificationService.sendExternalNotification(body, attributed.value)
 
       if (sendResult.isErr()) {
         return mapErrorCodeToResponse(sendResult.error, status)
@@ -303,16 +310,17 @@ export const ExternalNotificationController = new Elysia({
 
       return status(201, {
         success: true,
-        phoneNumber: sendResult.value,
+        phoneNumber: body.audience.type === 'PHONE_NUMBER' ? sendResult.value : undefined,
+        ...(body.audience.type === 'SUB' ? { sub: sendResult.value } : {}),
       })
     },
     {
       detail: {
         summary: 'Send external notification to a user',
         description:
-          "This endpoint allows sending notifications to external users based on their phone numbers. An API token is required for authentication. Raw recipient targeting is a central-team capability: keys bound to a Builder App are rejected here and must use POST /external/notifications. Legacy keys and keys bound to a central-team app are both accepted, and a bound key's notification carries that app's name and icon.",
+          "Send a notification to people the caller names, authorized by an admin notification key (Bearer). The send is unmetered and is not limited to people who have opened an app. Audience is one of PHONE_NUMBER, SUB (PPLE ID subject, the same value as the user id), ROLE, ADDRESS, or BROADCAST.\n\nPass the app's own notification key in the `x-notification-app-key` header to show that app's name and icon in the notification centre and the OS tray. The app key must be active and bound to a mini app. It does not authorize the send and it is not metered; omitting it shows the admin key's own app, or PPLE Today when that key is unbound.\n\n`smsFallbackText` texts people who will not get a push. For PHONE_NUMBER that includes numbers with no account. For SUB it includes accounts with no push token, using the number on the account; a sub that matches nobody is reported under `sub.failed` and is not texted.\n\nA key provisioned for a Builder App is rejected as the bearer and must use POST /external/notifications.",
       },
-      headers: CreateNewExternalNotificationHeader,
+      headers: SendExternalNotificationHeader,
       body: CreateNewExternalNotificationBody,
       response: {
         201: CreateNewExternalNotificationResponse,
@@ -320,6 +328,7 @@ export const ExternalNotificationController = new Elysia({
           InternalErrorCode.INTERNAL_SERVER_ERROR,
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.NOTIFICATION_KEY_APP_BOUND,
+          InternalErrorCode.NOTIFICATION_KEY_NOT_APP_BOUND,
           InternalErrorCode.NOTIFICATION_INVALID_IN_APP_NAVIGATION,
           InternalErrorCode.NOTIFICATION_INVALID_BYPASS,
           InternalErrorCode.NOTIFICATION_SENT_FAILED

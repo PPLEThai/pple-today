@@ -77,15 +77,17 @@ const createRepository = (
       ) => ok()
     ),
   }
+  const smsService = { sendSms: vi.fn(async (_phoneNumber: string, _text: string) => ok()) }
   const loggerService = { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
 
   return {
     prismaService,
     cloudMessagingService,
+    smsService,
     repository: new NotificationRepository(
       prismaService as unknown as PrismaService,
       cloudMessagingService as unknown as CloudMessagingService,
-      { sendSms: vi.fn(async () => ok()) } as unknown as SmsService,
+      smsService as unknown as SmsService,
       loggerService as unknown as ElysiaLoggerInstance
     ),
   }
@@ -255,6 +257,57 @@ describe('NotificationRepository.sendNotificationToUser', () => {
     expect(result.isOk()).toBe(true)
     const [, details] = cloudMessagingService.sendNotifications.mock.calls[0]
     expect(details.unreadCount).toBeUndefined()
+  })
+
+  test('a SUB audience is looked up by user id across every account', async () => {
+    const { prismaService, repository } = createRepository([recipient])
+
+    await repository.sendNotificationToUser(
+      { type: 'SUB', details: ['  user-id  ', 'missing-sub'] },
+      CONTENT,
+      { app: BOUND_APP }
+    )
+
+    const [args] = prismaService.user.findMany.mock.calls[0] as [{ where: unknown }]
+    expect(args.where).toEqual({ id: { in: ['user-id', 'missing-sub'] } })
+    expect(prismaService.notification.create.mock.calls[0][0].data.miniAppId).toBe(BOUND_APP.id)
+  })
+
+  test('texts an account named by sub when it has no push token, and never a sub that matches nobody', async () => {
+    const noToken = {
+      id: 'no-token-sub',
+      phoneNumber: '+66800000000',
+      notificationTokens: [],
+    }
+    const { smsService, repository } = createRepository([recipient, noToken])
+
+    const result = await repository.sendNotificationToUser(
+      { type: 'SUB', details: ['user-id', 'no-token-sub', 'missing-sub'] },
+      CONTENT,
+      { smsFallbackText: 'open PPLE Today' }
+    )
+
+    expect(result._unsafeUnwrap()).toEqual({
+      success: ['user-id', 'no-token-sub'],
+      failed: ['missing-sub'],
+    })
+    // The account that already has a token is pushed, not texted. The unknown
+    // sub has no number to text.
+    expect(smsService.sendSms).toHaveBeenCalledTimes(1)
+    expect(smsService.sendSms).toHaveBeenCalledWith('+66800000000', 'open PPLE Today')
+  })
+
+  test('a phone number with no account is still texted', async () => {
+    const { smsService, repository } = createRepository([])
+
+    const result = await repository.sendNotificationToUser(
+      { type: 'PHONE_NUMBER', details: ['0812345678'] },
+      CONTENT,
+      { smsFallbackText: 'install the app' }
+    )
+
+    expect(result._unsafeUnwrap()).toEqual({ success: [], failed: ['+66812345678'] })
+    expect(smsService.sendSms).toHaveBeenCalledWith('+66812345678', 'install the app')
   })
 
   test('still meters against the key when one is given', async () => {
