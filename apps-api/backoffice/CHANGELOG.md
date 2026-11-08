@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.18.5
+
+### Patch Changes
+
+- [#507](https://github.com/PPLEThai/pple-today/pull/507) [`de0f19b`](https://github.com/PPLEThai/pple-today/commit/de0f19bcab403890a952bd0e3e08dabb18d53dbe) Thanks [@PanJ](https://github.com/PanJ)! - Let `POST /external/notifications/send` take a path-only mini-app link. `content.link.destination` may be `/approval/123`; the slug comes from `x-notification-app-key` and the stored link is the full redirect URL. A path with no app key is a 400. A full URL is unchanged.
+
 ## 1.18.4
 
 ### Patch Changes
