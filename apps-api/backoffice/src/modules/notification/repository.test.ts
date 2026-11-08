@@ -109,7 +109,7 @@ describe('NotificationRepository.checkApiKey', () => {
     // needed the moment the key is known to be valid. The app's *own* source is
     // deliberately absent: it answers no question on this path any more.
     expect(args.select.source).toBe(true)
-    expect(args.select.miniApp.select).toEqual({ id: true, name: true, icon: true })
+    expect(args.select.miniApp.select).toEqual({ id: true, name: true, icon: true, slug: true })
   })
 
   test('only ever matches an active key, by hash', async () => {
