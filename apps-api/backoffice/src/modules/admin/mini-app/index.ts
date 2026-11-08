@@ -13,6 +13,7 @@ import {
   GetMiniAppsResponse,
   GetRoleOptionsResponse,
   GetZitadelAppsResponse,
+  SetMiniAppOrderBody,
   UpdateMiniAppBody,
   UpdateMiniAppParams,
   UpdateMiniAppResponse,
@@ -246,6 +247,34 @@ export const AdminMiniAppController = new Elysia({
       detail: {
         summary: 'Update a mini app',
         description: 'Update an existing mini app with the provided data',
+      },
+    }
+  )
+  .put(
+    '/:id/order',
+    async ({ adminMiniAppService, body, params, status }) => {
+      const result = await adminMiniAppService.setMiniAppOrder(params.id, body.order)
+
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      params: UpdateMiniAppParams,
+      body: SetMiniAppOrderBody,
+      response: {
+        200: UpdateMiniAppResponse,
+        ...createErrorSchema(
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.MINI_APP_ORDER_NOT_LISTED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: "Set a mini app's list order",
+        description:
+          "Set where the app sits in PPLE Today's list (lower first). Open to platform apps too, since the Provisioner never sets order — but only to a listed one: Live and not unlisted. Any admin app may be ordered; a retired app may not.",
       },
     }
   )

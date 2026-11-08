@@ -17,12 +17,23 @@ import {
   isPushIconUsable,
   MiniAppNotificationKeys,
 } from 'components/mini-app/MiniAppNotificationKeys'
+import { isPlatformOrderEditable, MiniAppOrderEdit } from 'components/mini-app/MiniAppOrderEdit'
 import { useMiniAppRoleOptions } from 'components/mini-app/useMiniAppRoleOptions'
 import { ZitadelAppCreate } from 'components/mini-app/ZitadelAppCreate'
 import { ZitadelAppEdit } from 'components/mini-app/ZitadelAppEdit'
 import { TableCopyId } from 'components/TableCopyId'
 import dayjs from 'dayjs'
-import { AlertTriangle, Bell, ImageIcon, KeyRound, Lock, Pencil, Plus, Trash2 } from 'lucide-react'
+import {
+  AlertTriangle,
+  ArrowUpDown,
+  Bell,
+  ImageIcon,
+  KeyRound,
+  Lock,
+  Pencil,
+  Plus,
+  Trash2,
+} from 'lucide-react'
 
 import { MiniApp, ZitadelApp } from '@api/backoffice/admin'
 
@@ -223,9 +234,23 @@ export const Data = () => {
           // their own key to a Builder App to notify its users with an audience
           // the Builder itself cannot name, so that one action is offered here;
           // the dialog keeps the Builder's own provisioned key untouchable.
+          // Order is the other: the Provisioner never sets it, so once the app
+          // is Live and listed an admin may place it in PPLE Today's list.
           if (miniApp.source === 'PLATFORM') {
             return (
               <div className="flex items-center gap-3">
+                {isPlatformOrderEditable(miniApp) && (
+                  <MiniAppOrderEdit
+                    miniApp={miniApp}
+                    onSuccess={invalidateQuery}
+                    trigger={
+                      <Button variant="outline" size="icon" className="size-8">
+                        <span className="sr-only">ตั้งลำดับ</span>
+                        <ArrowUpDown className="size-4" />
+                      </Button>
+                    }
+                  />
+                )}
                 <MiniAppNotificationKeys
                   miniApp={miniApp}
                   trigger={
