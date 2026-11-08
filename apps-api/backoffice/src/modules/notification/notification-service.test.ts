@@ -50,7 +50,7 @@ const NOTIFICATION_ROW = {
 
 const createService = (checkApiKeyResult: unknown = LEGACY_KEY) => {
   const notificationRepository = {
-    checkApiKey: vi.fn(async () => ok(checkApiKeyResult)),
+    checkApiKey: vi.fn(async (_token: string) => ok(checkApiKeyResult)),
     getNotificationDetailsById: vi.fn(async () => ok(NOTIFICATION_ROW)),
     listNotifications: vi.fn(async () =>
       ok({ notifications: [NOTIFICATION_ROW], nextCursor: null, previousCursor: null })
@@ -108,6 +108,72 @@ describe('NotificationService.checkApiToken (legacy keys)', () => {
     expect((await service.checkApiToken('plaintext-key'))._unsafeUnwrap()?.miniApp).toEqual(
       BOUND_KEY.miniApp
     )
+  })
+})
+
+const APP_KEY = {
+  id: 'builder-key-id',
+  miniApp: {
+    id: 'canvassing-id',
+    name: 'Canvassing',
+    icon: 'https://cdn.example/canvassing.png',
+  },
+  dailyQuota: 1000,
+}
+
+describe('NotificationService.attributeSend', () => {
+  test('no app key keeps the admin key’s own app', async () => {
+    const { service, notificationRepository } = createService(CENTRAL_TEAM_KEY)
+
+    const result = await service.attributeSend(CENTRAL_TEAM_KEY)
+
+    expect(result._unsafeUnwrap()).toEqual(CENTRAL_TEAM_KEY)
+    expect(notificationRepository.checkApiKey).not.toHaveBeenCalled()
+  })
+
+  test('an app key brands the send, and the admin key stays the one recorded', async () => {
+    const { service, notificationRepository } = createService(null)
+    notificationRepository.checkApiKey.mockImplementation(async (token: string) =>
+      ok(token === 'app-key' ? APP_KEY : null)
+    )
+
+    const attributed = await service.attributeSend(LEGACY_KEY, 'app-key')
+
+    // The usage log stays on the admin key, so the app's quota is never charged
+    // and the send stays unmetered. Only the name and icon change.
+    expect(attributed._unsafeUnwrap()).toEqual({ id: LEGACY_KEY.id, miniApp: APP_KEY.miniApp })
+
+    await service.sendExternalNotification(
+      {
+        audience: { type: 'SUB', details: ['user-sub'] },
+        content: { header: 'Hello', message: 'World' },
+        smsFallbackText: 'Hello',
+      },
+      attributed._unsafeUnwrap()
+    )
+
+    expect(notificationRepository.sendNotificationToUser).toHaveBeenCalledWith(
+      { type: 'SUB', details: ['user-sub'] },
+      { header: 'Hello', message: 'World' },
+      { apiKeyId: LEGACY_KEY.id, app: APP_KEY.miniApp, smsFallbackText: 'Hello' }
+    )
+  })
+
+  test('an unknown app key is rejected', async () => {
+    const { service } = createService(null)
+
+    const result = await service.attributeSend(LEGACY_KEY, 'missing-app-key')
+
+    expect(result._unsafeUnwrapErr().code).toBe('UNAUTHORIZED')
+  })
+
+  test('an app key that is not bound to an app is rejected', async () => {
+    const { service, notificationRepository } = createService(LEGACY_KEY)
+
+    const result = await service.attributeSend(CENTRAL_TEAM_KEY, 'unbound-key')
+
+    expect(notificationRepository.checkApiKey).toHaveBeenCalledWith('unbound-key')
+    expect(result._unsafeUnwrapErr().code).toBe('NOTIFICATION_KEY_NOT_APP_BOUND')
   })
 })
 

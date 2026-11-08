@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest'
 import {
   CountAppInstallBody,
   CreateAppNotificationBody,
+  CreateNewExternalNotificationBody,
   MAX_APP_INSTALL_COUNT_PHONE_NUMBERS,
 } from './models'
 
@@ -74,6 +75,30 @@ describe('CreateAppNotificationBody', () => {
  * The bulk app-install count body, at the wire boundary. The cap is a schema
  * concern so an oversized call is a 400 before any handler code or query runs.
  */
+describe('CreateNewExternalNotificationBody', () => {
+  const acceptsSend = (body: unknown) => Check(CreateNewExternalNotificationBody, body)
+  const content = { header: 'Canvassing today', message: 'Three streets left' }
+
+  test('accepts a send addressed by sub, with SMS fallback', () => {
+    expect(
+      acceptsSend({
+        audience: { type: 'SUB', details: ['user-sub'] },
+        content,
+        smsFallbackText: 'open the app',
+      })
+    ).toBe(true)
+  })
+
+  test('still accepts the existing phone audience', () => {
+    expect(
+      acceptsSend({
+        audience: { type: 'PHONE_NUMBER', details: ['0812345678'] },
+        content,
+      })
+    ).toBe(true)
+  })
+})
+
 describe('CountAppInstallBody', () => {
   const acceptsCount = (body: unknown) => Check(CountAppInstallBody, body)
   const numbers = (n: number) => Array.from({ length: n }, () => '0812345678')

@@ -1,10 +1,11 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import {
   isThaiMobileE164,
   mapRepositoryError,
   normalizeThaiPhoneNumber,
 } from '@pple-today/api-common/utils'
 import type { NotificationTokenPlatform } from '@pple-today/database/prisma'
-import { ok } from 'neverthrow'
+import { err, ok } from 'neverthrow'
 
 import type { BoundApp } from './key-binding'
 import type {
@@ -242,9 +243,46 @@ export class NotificationService {
   }
 
   /**
-   * @param key The resolved key this send is metered against, and whose bound
-   *            app (if any) the notification is attributed to. A legacy unbound
-   *            key attributes to nobody, exactly as before.
+   * Decide which app a raw send is from.
+   *
+   * The admin key is the authorization and stays the key the usage log is
+   * written against, so the send stays unmetered and the app's own quota is
+   * never charged. An app key, when the caller sends one, replaces only the
+   * attribution: the notification wears that app's name and icon. Who can be
+   * reached does not change — the audience is still whatever the body names.
+   *
+   * No app key keeps today's rule: a bound admin key shows its own app, and an
+   * unbound one sends as PPLE Today.
+   */
+  async attributeSend(adminKey: { id: string; miniApp: BoundApp | null }, appKeyToken?: string) {
+    const presented = appKeyToken?.trim()
+    if (!presented) return ok(adminKey)
+
+    const appKey = await this.checkApiToken(presented)
+    if (appKey.isErr()) return err(appKey.error)
+    if (!appKey.value) {
+      return err({
+        code: InternalErrorCode.UNAUTHORIZED,
+        message: 'Invalid app key',
+      })
+    }
+    if (!appKey.value.miniApp) {
+      return err({
+        code: InternalErrorCode.NOTIFICATION_KEY_NOT_APP_BOUND,
+        message:
+          'The app key is not bound to a mini app, so the notification has no app to show as its sender.',
+      })
+    }
+
+    return ok({ id: adminKey.id, miniApp: appKey.value.miniApp })
+  }
+
+  /**
+   * @param key The admin key this send is recorded against, and the app the
+   *            notification is attributed to. The app is the admin key's own
+   *            binding unless `attributeSend` replaced it with the app named
+   *            by the accompanying app key. A key with no app attributes to
+   *            nobody, and the notification stays PPLE Today's.
    */
   async sendExternalNotification(
     data: CreateNewExternalNotificationBody,

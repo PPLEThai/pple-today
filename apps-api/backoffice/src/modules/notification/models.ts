@@ -88,6 +88,27 @@ export const CreateNewExternalNotificationHeader = t.Object({
   authorization: t.String({ pattern: '^Bearer .+' }),
 })
 export type CreateNewExternalNotificationHeader = Static<typeof CreateNewExternalNotificationHeader>
+
+/**
+ * The raw send takes two keys. The bearer token is the admin key and is what
+ * authorizes an unmetered send to anyone. `x-notification-app-key` is the app's
+ * own notification key and is what the notification is *from*: its bound app's
+ * name and icon are what the centre and the OS tray show. It is not a second
+ * authorization and it is not metered.
+ */
+export const SendExternalNotificationHeader = t.Composite([
+  CreateNewExternalNotificationHeader,
+  t.Object({
+    'x-notification-app-key': t.Optional(
+      t.String({
+        description:
+          "The app's own notification API key. When present it must be active and bound to a mini app, and that app is shown as the sender. The bearer token stays the admin key that authorizes the send. Omitted, a bound admin key's own app is shown, and an unbound admin key sends as PPLE Today.",
+      })
+    ),
+  }),
+])
+export type SendExternalNotificationHeader = Static<typeof SendExternalNotificationHeader>
+
 export const CreateNewExternalNotificationBody = t.Composite([
   t.Object({
     audience: t.Union([
@@ -105,6 +126,15 @@ export const CreateNewExternalNotificationBody = t.Composite([
         ),
       }),
       t.Object({
+        type: t.Literal('SUB'),
+        details: t.Array(
+          t.String({
+            description:
+              'PPLE ID subject, the same value as the user id. Looked up across every PPLE Today account, not only people who have opened the sending app.',
+          })
+        ),
+      }),
+      t.Object({
         type: t.Literal('ADDRESS'),
         details: t.Object({
           provinces: t.Array(t.String()),
@@ -118,7 +148,7 @@ export const CreateNewExternalNotificationBody = t.Composite([
     smsFallbackText: t.Optional(
       t.String({
         description:
-          'If provided, sends an SMS with this text to users who are not in the Today app (i.e. have no registered push notification token).',
+          'SMS sent to people who will not get a push. For PHONE_NUMBER that is numbers with no account and accounts with no push token. For SUB that is accounts with no push token, texted on the number the account holds; a sub that matches no account is not texted, because there is no number to send to.',
       })
     ),
   }),
@@ -288,6 +318,28 @@ export const CreateNewExternalNotificationResponse = t.Object({
       success: t.Array(t.String()),
       failed: t.Array(t.String()),
     })
+  ),
+  sub: t.Optional(
+    t.Object(
+      {
+        success: t.Array(
+          t.String({
+            description:
+              'Subs that match a PPLE Today account. A notification was created for each.',
+          })
+        ),
+        failed: t.Array(
+          t.String({
+            description:
+              'Subs that match no account. No notification was created and no SMS was sent.',
+          })
+        ),
+      },
+      {
+        description:
+          'Present for a SUB audience only. Accounts with no push token are still `success`: the in-app notification exists, and SMS fallback, when supplied, uses their number.',
+      }
+    )
   ),
 })
 export type CreateNewExternalNotificationResponse = Static<
