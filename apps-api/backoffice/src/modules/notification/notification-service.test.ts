@@ -72,7 +72,10 @@ const createService = (checkApiKeyResult: unknown = LEGACY_KEY) => {
 
   return {
     notificationRepository,
-    service: new NotificationService(notificationRepository as unknown as NotificationRepository),
+    service: new NotificationService(
+      notificationRepository as unknown as NotificationRepository,
+      'https://miniapp.peoplesparty.or.th'
+    ),
   }
 }
 
@@ -117,8 +120,15 @@ const APP_KEY = {
     id: 'canvassing-id',
     name: 'Canvassing',
     icon: 'https://cdn.example/canvassing.png',
+    slug: 'canvassing',
   },
   dailyQuota: 1000,
+}
+
+const APP_FOR_TRAY = {
+  id: APP_KEY.miniApp.id,
+  name: APP_KEY.miniApp.name,
+  icon: APP_KEY.miniApp.icon,
 }
 
 describe('NotificationService.attributeSend', () => {
@@ -127,7 +137,7 @@ describe('NotificationService.attributeSend', () => {
 
     const result = await service.attributeSend(CENTRAL_TEAM_KEY)
 
-    expect(result._unsafeUnwrap()).toEqual(CENTRAL_TEAM_KEY)
+    expect(result._unsafeUnwrap()).toEqual({ ...CENTRAL_TEAM_KEY, slug: null })
     expect(notificationRepository.checkApiKey).not.toHaveBeenCalled()
   })
 
@@ -141,7 +151,11 @@ describe('NotificationService.attributeSend', () => {
 
     // The usage log stays on the admin key, so the app's quota is never charged
     // and the send stays unmetered. Only the name and icon change.
-    expect(attributed._unsafeUnwrap()).toEqual({ id: LEGACY_KEY.id, miniApp: APP_KEY.miniApp })
+    expect(attributed._unsafeUnwrap()).toEqual({
+      id: LEGACY_KEY.id,
+      miniApp: APP_FOR_TRAY,
+      slug: 'canvassing',
+    })
 
     await service.sendExternalNotification(
       {
@@ -155,7 +169,7 @@ describe('NotificationService.attributeSend', () => {
     expect(notificationRepository.sendNotificationToUser).toHaveBeenCalledWith(
       { type: 'SUB', details: ['user-sub'] },
       { header: 'Hello', message: 'World' },
-      { apiKeyId: LEGACY_KEY.id, app: APP_KEY.miniApp, smsFallbackText: 'Hello' }
+      { apiKeyId: LEGACY_KEY.id, app: APP_FOR_TRAY, smsFallbackText: 'Hello' }
     )
   })
 
@@ -174,6 +188,72 @@ describe('NotificationService.attributeSend', () => {
 
     expect(notificationRepository.checkApiKey).toHaveBeenCalledWith('unbound-key')
     expect(result._unsafeUnwrapErr().code).toBe('NOTIFICATION_KEY_NOT_APP_BOUND')
+  })
+})
+
+describe('NotificationService.sendExternalNotification (mini-app path)', () => {
+  const content = {
+    header: 'Hello',
+    message: 'World',
+    link: {
+      type: 'MINI_APP' as const,
+      destination: '/approval/123',
+      bypassNotificationCenter: true,
+    },
+  }
+
+  test('joins a path onto the app key’s slug', async () => {
+    const { service, notificationRepository } = createService()
+
+    const result = await service.sendExternalNotification(
+      { audience: { type: 'BROADCAST' }, content },
+      { id: LEGACY_KEY.id, miniApp: APP_FOR_TRAY, slug: 'canvassing' }
+    )
+
+    expect(result.isOk()).toBe(true)
+    expect(notificationRepository.sendNotificationToUser).toHaveBeenCalledWith(
+      { type: 'BROADCAST' },
+      {
+        ...content,
+        link: {
+          type: 'MINI_APP',
+          destination: 'https://miniapp.peoplesparty.or.th/canvassing/approval/123',
+          bypassNotificationCenter: true,
+        },
+      },
+      { apiKeyId: LEGACY_KEY.id, app: APP_FOR_TRAY, smsFallbackText: undefined }
+    )
+  })
+
+  test('a full mini-app URL is stored as written', async () => {
+    const { service, notificationRepository } = createService()
+    const linked = {
+      ...content,
+      link: {
+        type: 'MINI_APP' as const,
+        destination: 'https://miniapp.peoplesparty.or.th/other/page',
+      },
+    }
+
+    await service.sendExternalNotification(
+      { audience: { type: 'BROADCAST' }, content: linked },
+      { id: LEGACY_KEY.id, miniApp: null, slug: 'canvassing' }
+    )
+
+    const [, sent] = notificationRepository.sendNotificationToUser.mock.calls[0]
+    expect(sent).toEqual(linked)
+  })
+
+  test('a path with no app key is refused', async () => {
+    const { service, notificationRepository } = createService()
+
+    const result = await service.sendExternalNotification(
+      { audience: { type: 'BROADCAST' }, content },
+      { id: LEGACY_KEY.id, miniApp: null, slug: null }
+    )
+
+    expect(result._unsafeUnwrapErr().code).toBe('NOTIFICATION_INVALID_LINK_PATH')
+    expect(notificationRepository.sendNotificationToUser).not.toHaveBeenCalled()
   })
 })
 

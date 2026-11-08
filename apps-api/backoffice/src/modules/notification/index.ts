@@ -289,7 +289,8 @@ export const ExternalNotificationController = new Elysia({
       // This is the raw-targeting path: the caller names its own audience. That
       // stays a central-team capability, so a Builder App's own key is refused
       // here as the bearer (see `requireUnboundKey`). The same key may still be
-      // sent in `x-notification-app-key`, where it only names the app to show.
+      // sent in `x-notification-app-key`, where it names the app to show and
+      // supplies the slug for a path-only mini-app link.
       const bindingResult = requireUnboundKey(tokenResult.value)
 
       if (bindingResult.isErr()) {
@@ -318,7 +319,7 @@ export const ExternalNotificationController = new Elysia({
       detail: {
         summary: 'Send external notification to a user',
         description:
-          "Send a notification to people the caller names, authorized by an admin notification key (Bearer). The send is unmetered and is not limited to people who have opened an app. Audience is one of PHONE_NUMBER, SUB (PPLE ID subject, the same value as the user id), ROLE, ADDRESS, or BROADCAST.\n\nPass the app's own notification key in the `x-notification-app-key` header to show that app's name and icon in the notification centre and the OS tray. The app key must be active and bound to a mini app. It does not authorize the send and it is not metered; omitting it shows the admin key's own app, or PPLE Today when that key is unbound.\n\n`smsFallbackText` texts people who will not get a push. For PHONE_NUMBER that includes numbers with no account. For SUB it includes accounts with no push token, using the number on the account; a sub that matches nobody is reported under `sub.failed` and is not texted.\n\nA key provisioned for a Builder App is rejected as the bearer and must use POST /external/notifications.",
+          "Send a notification to people the caller names, authorized by an admin notification key (Bearer). The send is unmetered and is not limited to people who have opened an app. Audience is one of PHONE_NUMBER, SUB (PPLE ID subject, the same value as the user id), ROLE, ADDRESS, or BROADCAST.\n\nPass the app's own notification key in the `x-notification-app-key` header to show that app's name and icon in the notification centre and the OS tray. The app key must be active and bound to a mini app. It does not authorize the send and it is not metered; omitting it shows the admin key's own app, or PPLE Today when that key is unbound. The same key supplies the slug when `content.link` is `MINI_APP` and `destination` is only a path, such as `/approval/123`. That path is stored as `{redirect-origin}/{slug}/approval/123`. A full URL is stored as given. A path with no app key is a 400.\n\n`smsFallbackText` texts people who will not get a push. For PHONE_NUMBER that includes numbers with no account. For SUB it includes accounts with no push token, using the number on the account; a sub that matches nobody is reported under `sub.failed` and is not texted.\n\nA key provisioned for a Builder App is rejected as the bearer and must use POST /external/notifications.",
       },
       headers: SendExternalNotificationHeader,
       body: CreateNewExternalNotificationBody,
@@ -331,6 +332,7 @@ export const ExternalNotificationController = new Elysia({
           InternalErrorCode.NOTIFICATION_KEY_NOT_APP_BOUND,
           InternalErrorCode.NOTIFICATION_INVALID_IN_APP_NAVIGATION,
           InternalErrorCode.NOTIFICATION_INVALID_BYPASS,
+          InternalErrorCode.NOTIFICATION_INVALID_LINK_PATH,
           InternalErrorCode.NOTIFICATION_SENT_FAILED
         ),
       },

@@ -38,9 +38,12 @@ export const NotificationRepositoryPlugin = new Elysia({
   }))
 
 export const NotificationServicePlugin = new Elysia({ name: 'NotificationService' })
-  .use([NotificationRepositoryPlugin])
-  .decorate(({ notificationRepository }) => ({
-    notificationService: new NotificationService(notificationRepository),
+  .use([NotificationRepositoryPlugin, ConfigServicePlugin])
+  .decorate(({ notificationRepository, configService }) => ({
+    notificationService: new NotificationService(
+      notificationRepository,
+      configService.get('MINIAPP_REDIRECT_ORIGIN')
+    ),
   }))
 
 export const AppNotificationServicePlugin = new Elysia({ name: 'AppNotificationService' })

@@ -8,6 +8,7 @@ import type { NotificationTokenPlatform } from '@pple-today/database/prisma'
 import { err, ok } from 'neverthrow'
 
 import type { BoundApp } from './key-binding'
+import { resolveAppLinkPath } from './resolve-app-link-path'
 import type {
   CreateNewExternalNotificationBody,
   GetNotificationDetailsByIdResponse,
@@ -34,7 +35,15 @@ const toSenderApp = (miniApp: { name: string; icon: string | null; slug: string 
  * bound sends for Builder Apps live in `AppNotificationService` instead.)
  */
 export class NotificationService {
-  constructor(private readonly notificationRepository: NotificationRepository) {}
+  constructor(
+    private readonly notificationRepository: NotificationRepository,
+    /**
+     * Public origin of the mini-app redirect host. A path destination on a raw
+     * send is joined to `{origin}/{slug}` before it is stored, so the phone
+     * opens the same URL an app-bound `linkPath` produces.
+     */
+    private readonly miniAppRedirectOrigin: string
+  ) {}
 
   /**
    * Resolve a presented API key, or null when it is unknown or deactivated.
@@ -252,11 +261,13 @@ export class NotificationService {
    * reached does not change — the audience is still whatever the body names.
    *
    * No app key keeps today's rule: a bound admin key shows its own app, and an
-   * unbound one sends as PPLE Today.
+   * unbound one sends as PPLE Today. `slug` is set only from the app key,
+   * because a path destination such as `/approval/123` is completed with that
+   * slug and must not silently use a different app.
    */
   async attributeSend(adminKey: { id: string; miniApp: BoundApp | null }, appKeyToken?: string) {
     const presented = appKeyToken?.trim()
-    if (!presented) return ok(adminKey)
+    if (!presented) return ok({ ...adminKey, slug: null })
 
     const appKey = await this.checkApiToken(presented)
     if (appKey.isErr()) return err(appKey.error)
@@ -274,7 +285,9 @@ export class NotificationService {
       })
     }
 
-    return ok({ id: adminKey.id, miniApp: appKey.value.miniApp })
+    const { id, name, icon, slug } = appKey.value.miniApp
+
+    return ok({ id: adminKey.id, miniApp: { id, name, icon }, slug })
   }
 
   /**
@@ -286,11 +299,14 @@ export class NotificationService {
    */
   async sendExternalNotification(
     data: CreateNewExternalNotificationBody,
-    key: { id: string; miniApp: BoundApp | null }
+    key: { id: string; miniApp: BoundApp | null; slug?: string | null }
   ) {
+    const content = this.resolveMiniAppPath(data.content, key.slug ?? null)
+    if (content.isErr()) return err(content.error)
+
     const sendResult = await this.notificationRepository.sendNotificationToUser(
       data.audience,
-      data.content,
+      content.value,
       {
         apiKeyId: key.id,
         app: key.miniApp ?? undefined,
@@ -313,5 +329,37 @@ export class NotificationService {
     }
 
     return ok(countResult.value)
+  }
+
+  /**
+   * A `MINI_APP` destination that is only a path (`/approval/123`) is completed
+   * with the app key's slug. The stored link is the full redirect URL the
+   * phone already understands. A full URL is left as the caller wrote it.
+   */
+  private resolveMiniAppPath(
+    content: CreateNewExternalNotificationBody['content'],
+    slug: string | null
+  ) {
+    const link = content.link
+    if (!link || link.type !== 'MINI_APP') return ok(content)
+
+    const destination = link.destination
+    if (!destination.startsWith('/') || destination.startsWith('//')) return ok(content)
+
+    if (!slug) {
+      return err({
+        code: InternalErrorCode.NOTIFICATION_INVALID_LINK_PATH,
+        message:
+          'A path destination such as /approval/123 needs the app key in x-notification-app-key. The slug is taken from that key.',
+      })
+    }
+
+    const resolved = resolveAppLinkPath(destination, { slug }, this.miniAppRedirectOrigin)
+    if (resolved.isErr()) return err(resolved.error)
+
+    return ok({
+      ...content,
+      link: { ...link, destination: resolved.value.destination },
+    })
   }
 }

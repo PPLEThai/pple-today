@@ -206,7 +206,7 @@ export class NotificationRepository {
           source: true,
           dailyQuota: true,
           miniApp: {
-            select: { id: true, name: true, icon: true },
+            select: { id: true, name: true, icon: true, slug: true },
           },
         },
       })
