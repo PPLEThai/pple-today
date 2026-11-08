@@ -30,6 +30,11 @@ export class AdminMiniAppRepository {
   async getMiniApps() {
     return fromRepositoryPromise(
       this.prismaService.miniApp.findMany({
+        // A retired platform app is soft-deleted: its Zitadel app is gone, its
+        // notification key is off, and the phone no longer lists it. Leaving it
+        // here, shown as an ordinary read-only row, made a retired app look as
+        // if it were still live in PPLE Today.
+        where: { retiredAt: null },
         include: {
           miniAppRoles: true,
         },
