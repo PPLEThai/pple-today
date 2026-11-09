@@ -9,8 +9,12 @@ const createPrismaService = () =>
       upsert: vi.fn().mockResolvedValue({ miniAppId: 'app-1', userId: 'user-1' }),
       count: vi.fn().mockResolvedValue(3),
     },
+    miniApp: { count: vi.fn().mockResolvedValue(1) },
+    user: { count: vi.fn().mockResolvedValue(0) },
   }) as unknown as PrismaService & {
     miniAppUser: { upsert: ReturnType<typeof vi.fn>; count: ReturnType<typeof vi.fn> }
+    miniApp: { count: ReturnType<typeof vi.fn> }
+    user: { count: ReturnType<typeof vi.fn> }
   }
 
 afterEach(() => {
@@ -43,5 +47,29 @@ describe('MiniAppUserRepository.countByMiniApp', () => {
 
     expect(prismaService.miniAppUser.count).toHaveBeenCalledWith({ where: { miniAppId: 'app-1' } })
     expect(result._unsafeUnwrap()).toBe(3)
+  })
+})
+
+describe('MiniAppUserRepository existence checks', () => {
+  test('activeMiniAppExists excludes retired apps', async () => {
+    const prismaService = createPrismaService()
+    const repository = new MiniAppUserRepository(prismaService)
+
+    const result = await repository.activeMiniAppExists('app-1')
+
+    expect(prismaService.miniApp.count).toHaveBeenCalledWith({
+      where: { id: 'app-1', retiredAt: null },
+    })
+    expect(result._unsafeUnwrap()).toBe(true)
+  })
+
+  test('userExists matches on User.id', async () => {
+    const prismaService = createPrismaService()
+    const repository = new MiniAppUserRepository(prismaService)
+
+    const result = await repository.userExists('ghost')
+
+    expect(prismaService.user.count).toHaveBeenCalledWith({ where: { id: 'ghost' } })
+    expect(result._unsafeUnwrap()).toBe(false)
   })
 })

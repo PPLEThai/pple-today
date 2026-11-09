@@ -29,6 +29,8 @@ const createFakeRepository = () => {
       store.add(key(miniAppId, userId))
       return ok({ miniAppId, userId })
     }),
+    activeMiniAppExists: vi.fn(async (_miniAppId: string) => ok(true)),
+    userExists: vi.fn(async (_userId: string) => ok(true)),
     countByMiniApp: vi.fn(async (miniAppId: string) =>
       ok(Array.from(store).filter((entry) => entry.startsWith(`${miniAppId}|`)).length)
     ),
@@ -113,6 +115,68 @@ describe('AppUserService.getUserCount', () => {
     const result = await service.getUserCount('app-1')
 
     expect(result.isErr()).toBe(true)
+    expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.INTERNAL_SERVER_ERROR)
+  })
+})
+
+describe('AppUserService.registerExternalOpen', () => {
+  const setup = () => {
+    const repository = createFakeRepository()
+    const service = new AppUserService(
+      repository as unknown as MiniAppUserRepository,
+      loggerService
+    )
+    return { repository, service }
+  }
+
+  test('registers the App User and answers success', async () => {
+    const { repository, service } = setup()
+
+    const result = await service.registerExternalOpen('app-1', 'user-1')
+
+    expect(result.isOk()).toBe(true)
+    expect(repository.register).toHaveBeenCalledWith('app-1', 'user-1')
+    expect((await service.getUserCount('app-1'))._unsafeUnwrap()).toBe(1)
+  })
+
+  test('is idempotent — repeating the call succeeds and the count stays at one', async () => {
+    const { service } = setup()
+
+    expect((await service.registerExternalOpen('app-1', 'user-1')).isOk()).toBe(true)
+    expect((await service.registerExternalOpen('app-1', 'user-1')).isOk()).toBe(true)
+
+    expect((await service.getUserCount('app-1'))._unsafeUnwrap()).toBe(1)
+  })
+
+  test('an unknown (or retired) mini app is not found and nothing is written', async () => {
+    const { repository, service } = setup()
+    repository.activeMiniAppExists.mockResolvedValueOnce(ok(false))
+
+    const result = await service.registerExternalOpen('missing', 'user-1')
+
+    expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.MINI_APP_NOT_FOUND)
+    expect(repository.register).not.toHaveBeenCalled()
+  })
+
+  test('a sub with no PPLE Today account succeeds without writing', async () => {
+    const { repository, service } = setup()
+    repository.userExists.mockResolvedValueOnce(ok(false))
+
+    const result = await service.registerExternalOpen('app-1', 'ghost')
+
+    expect(result.isOk()).toBe(true)
+    expect(repository.register).not.toHaveBeenCalled()
+    expect((await service.getUserCount('app-1'))._unsafeUnwrap()).toBe(0)
+  })
+
+  test('maps a repository failure to an internal server error', async () => {
+    const { repository, service } = setup()
+    repository.register.mockResolvedValueOnce(
+      err({ code: 'UNKNOWN_ERROR', message: 'database is down' }) as never
+    )
+
+    const result = await service.registerExternalOpen('app-1', 'user-1')
+
     expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.INTERNAL_SERVER_ERROR)
   })
 })

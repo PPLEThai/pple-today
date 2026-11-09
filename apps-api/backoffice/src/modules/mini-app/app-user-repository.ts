@@ -29,6 +29,22 @@ export class MiniAppUserRepository {
     )
   }
 
+  /** Whether a non-retired mini app with this id exists. */
+  async activeMiniAppExists(miniAppId: string) {
+    return await fromRepositoryPromise(
+      this.prismaService.miniApp
+        .count({ where: { id: miniAppId, retiredAt: null } })
+        .then((count) => count > 0)
+    )
+  }
+
+  /** Whether a PPLE Today account exists for this PPLE ID `sub` (== `User.id`). */
+  async userExists(userId: string) {
+    return await fromRepositoryPromise(
+      this.prismaService.user.count({ where: { id: userId } }).then((count) => count > 0)
+    )
+  }
+
   /** Count the App Users of a single mini app. */
   async countByMiniApp(miniAppId: string) {
     return await fromRepositoryPromise(

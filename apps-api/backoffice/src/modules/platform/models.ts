@@ -14,6 +14,17 @@ export const GetMiniAppUserCountResponse = t.Object({
 })
 export type GetMiniAppUserCountResponse = Static<typeof GetMiniAppUserCountResponse>
 
+export const RegisterMiniAppUserParams = t.Object({
+  id: t.String({ description: 'Mini app id' }),
+  sub: t.String({ description: 'PPLE ID `sub` of the user who opened the app' }),
+})
+export type RegisterMiniAppUserParams = Static<typeof RegisterMiniAppUserParams>
+
+export const RegisterMiniAppUserResponse = t.Object({
+  message: t.String(),
+})
+export type RegisterMiniAppUserResponse = Static<typeof RegisterMiniAppUserResponse>
+
 export const GetMiniAppNotificationUsageResponse = t.Object({
   sent: t.Integer({
     description:
