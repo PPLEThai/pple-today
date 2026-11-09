@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.20.0
+
+### Minor Changes
+
+- [#513](https://github.com/PPLEThai/pple-today/pull/513) [`1e5026f`](https://github.com/PPLEThai/pple-today/commit/1e5026f8eb106080f7a896b9ebe1cc921e10a00b) Thanks [@PanJ](https://github.com/PanJ)! - The PPLE Platform can now register an App User who opened a Builder App outside PPLE Today, such as from a browser link, so the app's Notification Key can reach them. Registering the same person again changes nothing.
+
 ## 1.19.0
 
 ### Minor Changes
