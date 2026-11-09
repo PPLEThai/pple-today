@@ -20,6 +20,8 @@ import {
   LookupUserResponse,
   MiniAppIdParams,
   MiniAppResponse,
+  RegisterMiniAppUserParams,
+  RegisterMiniAppUserResponse,
   RetireMiniAppResponse,
   SetCollaboratorsBody,
   SetCollaboratorsResponse,
@@ -379,6 +381,35 @@ export const PlatformController = new Elysia({ prefix: '/platform', tags: ['Plat
         summary: 'Get Mini App User count',
         description:
           'Per-app App User count — the number of distinct users who have opened the mini app. Requires the platform service token.',
+      },
+    }
+  )
+  .put(
+    '/mini-apps/:id/users/:sub',
+    async ({ params, status, appUserService }) => {
+      const result = await appUserService.registerExternalOpen(params.id, params.sub)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, { message: 'App User registered' })
+    },
+    {
+      requiredPlatformService: true,
+      params: RegisterMiniAppUserParams,
+      response: {
+        200: RegisterMiniAppUserResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Register an App User opened outside PPLE Today',
+        description:
+          'Record that a PPLE ID `sub` opened the mini app outside PPLE Today (e.g. from a browser link), so the app’s Notification Key can reach them. Writes the same App User row as an in-app open. Idempotent. A sub with no PPLE Today account is acknowledged with success and not stored, so the response does not reveal whether an account exists. A retired or unknown app is not-found. Requires the platform service token.',
       },
     }
   )
