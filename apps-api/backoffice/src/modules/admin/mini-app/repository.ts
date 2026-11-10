@@ -48,6 +48,34 @@ export class AdminMiniAppRepository {
     )
   }
 
+  /** Callback settings, plus the fields target resolution and the SSRF-checked test need. */
+  async findCallbackSettings(id: string) {
+    return fromRepositoryPromise(
+      this.prismaService.miniApp.findUniqueOrThrow({
+        where: { id },
+        select: {
+          slug: true,
+          source: true,
+          notificationCallbackUrl: true,
+          notificationCallbackSecret: true,
+        },
+      })
+    )
+  }
+
+  async setCallbackSettings(
+    id: string,
+    data: { notificationCallbackUrl: string | null; notificationCallbackSecret?: string | null }
+  ) {
+    return fromRepositoryPromise(
+      this.prismaService.miniApp.update({
+        where: { id },
+        data,
+        select: { notificationCallbackUrl: true },
+      })
+    )
+  }
+
   async getMiniApps() {
     return fromRepositoryPromise(
       this.prismaService.miniApp.findMany({
@@ -205,12 +233,15 @@ export class AdminMiniAppRepository {
     const deleteResult = await fromRepositoryPromise(
       this.prismaService
         .$transaction([
+          // Interactive-notification answers reference the app with ON DELETE
+          // RESTRICT too; with the app gone there is nowhere to deliver them.
+          this.prismaService.notificationResponse.deleteMany({ where: { miniAppId: id } }),
           this.prismaService.miniAppUser.deleteMany({ where: { miniAppId: id } }),
           this.prismaService.miniAppInvite.deleteMany({ where: { miniAppId: id } }),
           this.prismaService.miniAppRole.deleteMany({ where: { miniAppId: id } }),
           this.prismaService.miniApp.delete({ where: { id } }),
         ])
-        .then((results) => results[3])
+        .then((results) => results[4])
     )
 
     if (deleteResult.isErr()) {

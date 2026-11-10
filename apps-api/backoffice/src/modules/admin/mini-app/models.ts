@@ -135,3 +135,40 @@ export const CreateZitadelAppResponse = t.Object({
   ),
 })
 export type CreateZitadelAppResponse = Static<typeof CreateZitadelAppResponse>
+
+export const NotificationCallbackSettings = t.Object({
+  url: t.Nullable(t.String({ description: 'Where answers are POSTed, null when not set' })),
+  hasSecret: t.Boolean({ description: 'Whether a signing secret exists (never returned again)' }),
+})
+export type NotificationCallbackSettings = Static<typeof NotificationCallbackSettings>
+
+export const SetNotificationCallbackUrlBody = t.Object({
+  url: t.String({ minLength: 1, description: 'https URL that must resolve to a public address' }),
+})
+export type SetNotificationCallbackUrlBody = Static<typeof SetNotificationCallbackUrlBody>
+
+export const SetNotificationCallbackUrlResponse = t.Object({
+  url: t.String(),
+  secret: t.Nullable(
+    t.String({
+      description:
+        'The signing secret, present only when this call generated it (first time a URL is set). Shown once.',
+    })
+  ),
+})
+export type SetNotificationCallbackUrlResponse = Static<typeof SetNotificationCallbackUrlResponse>
+
+export const RotateNotificationCallbackSecretResponse = t.Object({
+  secret: t.String({ description: 'The new signing secret. Shown once.' }),
+})
+export type RotateNotificationCallbackSecretResponse = Static<
+  typeof RotateNotificationCallbackSecretResponse
+>
+
+export const TestNotificationCallbackResponse = t.Object({
+  statusCode: t.Nullable(t.Integer({ description: "The receiver's HTTP status, null if none" })),
+  error: t.Nullable(
+    t.String({ description: 'Why no status was obtained (timeout, refused, ...)' })
+  ),
+})
+export type TestNotificationCallbackResponse = Static<typeof TestNotificationCallbackResponse>

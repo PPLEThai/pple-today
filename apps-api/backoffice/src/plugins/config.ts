@@ -214,6 +214,12 @@ export const envSchema = t.Object({
       description: 'Bearer token for the pple-platform notification-response relay',
     })
   ),
+  NOTIFICATION_CALLBACK_SWEEP_TOKEN: t.Optional(
+    t.String({
+      description:
+        'Bearer token for the internal POST /internal/notification-callbacks/sweep route called by the gitops CronJob. When unset the route rejects every request.',
+    })
+  ),
   NOTIFICATION_CALLBACK_SECRET_KEY: t.Optional(
     t.String({
       description:

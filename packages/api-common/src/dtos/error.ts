@@ -364,6 +364,15 @@ const MINI_APP_ERROR_SCHEMA = {
   MINI_APP_ORDER_NOT_LISTED: {
     status: 409,
   },
+  // The notification callback URL failed validation: not https, or it points
+  // (literally or by DNS) at a private, loopback or link-local address.
+  MINI_APP_CALLBACK_URL_INVALID: {
+    status: 400,
+  },
+  // Rotate / test asked of an app that has no callback URL (and so no secret).
+  MINI_APP_CALLBACK_NOT_CONFIGURED: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 const ZITADEL_ERROR_SCHEMA = {
