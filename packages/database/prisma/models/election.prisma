@@ -1,166 +1,166 @@
 enum ElectionType {
-    ONSITE
-    ONLINE
-    HYBRID
+  ONSITE
+  ONLINE
+  HYBRID
 }
 
 enum EligibleVoterType {
-    ONSITE
-    ONLINE
+  ONSITE
+  ONLINE
 }
 
 enum ElectionResultType {
-    ONSITE
-    ONLINE
+  ONSITE
+  ONLINE
 }
 
 enum ElectionMode {
-    SECURE
-    FLEXIBLE
+  SECURE
+  FLEXIBLE
 }
 
 enum ElectionKeysStatus {
-    NOT_CREATED
-    PENDING_CREATED
-    CREATED
-    FAILED_CREATED
-    DESTROY_SCHEDULED
+  NOT_CREATED
+  PENDING_CREATED
+  CREATED
+  FAILED_CREATED
+  DESTROY_SCHEDULED
 }
 
 enum ElectionOnlineResultStatus {
-    NONE
-    COUNTING
-    COUNT_SUCCESS
-    COUNT_FAILED
+  NONE
+  COUNTING
+  COUNT_SUCCESS
+  COUNT_FAILED
 }
 
 model Election {
-    id             String  @id @default(cuid())
-    name           String
-    description    String?
-    location       String?
-    locationMapUrl String?
-    province       String
-    district       String
+  id             String  @id @default(cuid())
+  name           String
+  description    String?
+  location       String?
+  locationMapUrl String?
+  province       String
+  district       String
 
-    isCancelled Boolean      @default(false)
-    type        ElectionType
-    mode        ElectionMode @default(SECURE)
+  isCancelled Boolean      @default(false)
+  type        ElectionType
+  mode        ElectionMode @default(SECURE)
 
-    keysStatus                   ElectionKeysStatus @default(NOT_CREATED)
-    keysDestroyScheduledAt       DateTime?
-    keysDestroyScheduledDuration Int? // seconds
+  keysStatus                   ElectionKeysStatus @default(NOT_CREATED)
+  keysDestroyScheduledAt       DateTime?
+  keysDestroyScheduledDuration Int? // seconds
 
-    onlineResultStatus ElectionOnlineResultStatus @default(NONE)
+  onlineResultStatus ElectionOnlineResultStatus @default(NONE)
 
-    encryptionPublicKey String?
-    signingPublicKey    String?
+  encryptionPublicKey String?
+  signingPublicKey    String?
 
-    publishDate   DateTime?
-    openRegister  DateTime?
-    closeRegister DateTime?
-    openVoting    DateTime
-    closeVoting   DateTime
-    startResult   DateTime?
-    endResult     DateTime?
+  publishDate   DateTime?
+  openRegister  DateTime?
+  closeRegister DateTime?
+  openVoting    DateTime
+  closeVoting   DateTime
+  startResult   DateTime?
+  endResult     DateTime?
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    candidates     ElectionCandidate[]
-    voters         ElectionEligibleVoter[]
-    voteRecords    ElectionVoteRecord[]
-    ballots        ElectionBallot[]
-    invalidBallots ElectionInvalidBallot[]
+  candidates     ElectionCandidate[]
+  voters         ElectionEligibleVoter[]
+  voteRecords    ElectionVoteRecord[]
+  ballots        ElectionBallot[]
+  invalidBallots ElectionInvalidBallot[]
 
-    @@index([name])
+  @@index([name])
 }
 
 model ElectionCandidate {
-    id               String  @id @default(cuid())
-    electionId       String
-    name             String
-    description      String?
-    profileImagePath String?
-    number           Int?
+  id               String  @id @default(cuid())
+  electionId       String
+  name             String
+  description      String?
+  profileImagePath String?
+  number           Int?
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    election Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  election Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
 
-    results ElectionResult[]
+  results ElectionResult[]
 
-    @@unique([electionId, name])
-    @@unique([electionId, number])
-    @@index(electionId)
+  @@unique([electionId, name])
+  @@unique([electionId, number])
+  @@index(electionId)
 }
 
 model ElectionEligibleVoter {
-    electionId String
-    userId     String
-    type       EligibleVoterType
+  electionId String
+  userId     String
+  type       EligibleVoterType
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    election Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
-    user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  election Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@id([electionId, userId])
-    @@index(userId)
+  @@id([electionId, userId])
+  @@index(userId)
 }
 
 model ElectionVoteRecord {
-    electionId    String
-    userId        String
-    ballotId      String?  @unique
-    location      String?
-    faceImagePath String?
-    createdAt     DateTime @default(now())
-    updatedAt     DateTime @updatedAt
+  electionId    String
+  userId        String
+  ballotId      String?  @unique
+  location      String?
+  faceImagePath String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-    election Election        @relation(fields: [electionId], references: [id], onDelete: Cascade)
-    user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-    ballot   ElectionBallot? @relation(fields: [ballotId], references: [id], onDelete: SetNull)
+  election Election        @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ballot   ElectionBallot? @relation(fields: [ballotId], references: [id], onDelete: SetNull)
 
-    @@id([electionId, userId])
-    @@index(userId)
+  @@id([electionId, userId])
+  @@index(userId)
 }
 
 model ElectionBallot {
-    id              String   @id @default(cuid())
-    electionId      String
-    encryptedBallot String
-    createdAt       DateTime @default(now())
-    updatedAt       DateTime @updatedAt
+  id              String   @id @default(cuid())
+  electionId      String
+  encryptedBallot String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-    election   Election            @relation(fields: [electionId], references: [id], onDelete: Cascade)
-    voteRecord ElectionVoteRecord?
+  election   Election            @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  voteRecord ElectionVoteRecord?
 
-    @@index(electionId)
+  @@index(electionId)
 }
 
 model ElectionResult {
-    candidateId String
-    type        ElectionResultType
-    count       Int                @default(0)
+  candidateId String
+  type        ElectionResultType
+  count       Int                @default(0)
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    candidate ElectionCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidate ElectionCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
 
-    @@id([candidateId, type])
+  @@id([candidateId, type])
 }
 
 model ElectionInvalidBallot {
-    id          String @id @default(cuid())
-    electionId  String
-    candidateId String
+  id          String @id @default(cuid())
+  electionId  String
+  candidateId String
 
-    election Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
+  election Election @relation(fields: [electionId], references: [id], onDelete: Cascade)
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

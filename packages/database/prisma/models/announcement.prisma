@@ -1,56 +1,56 @@
 enum AnnouncementType {
-    OFFICIAL
-    PARTY_COMMUNICATE
-    INTERNAL
+  OFFICIAL
+  PARTY_COMMUNICATE
+  INTERNAL
 }
 
 enum AnnouncementStatus {
-    DRAFT
-    PUBLISHED
-    ARCHIVED
+  DRAFT
+  PUBLISHED
+  ARCHIVED
 }
 
 // Published Announcement model
 model Announcement {
-    feedItemId String  @id
-    title      String
-    content    String?
+  feedItemId String  @id
+  title      String
+  content    String?
 
-    type   AnnouncementType
-    status AnnouncementStatus @default(DRAFT)
+  type   AnnouncementType
+  status AnnouncementStatus @default(DRAFT)
 
-    topics      AnnouncementTopic[]
-    attachments AnnouncementFile[]
+  topics      AnnouncementTopic[]
+  attachments AnnouncementFile[]
 
-    feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
+  feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
 
-    @@index([status])
-    @@index([type])
+  @@index([status])
+  @@index([type])
 }
 
 model AnnouncementTopic {
-    announcementId String
-    topicId        String
+  announcementId String
+  topicId        String
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    announcement Announcement @relation(fields: [announcementId], references: [feedItemId], onDelete: Cascade)
-    topic        Topic        @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  announcement Announcement @relation(fields: [announcementId], references: [feedItemId], onDelete: Cascade)
+  topic        Topic        @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
-    @@id([announcementId, topicId])
-    @@index([topicId])
-    @@index([announcementId])
+  @@id([announcementId, topicId])
+  @@index([topicId])
+  @@index([announcementId])
 }
 
 model AnnouncementFile {
-    id             String   @id @default(cuid())
-    announcementId String
-    filePath       String
-    createdAt      DateTime @default(now())
-    updatedAt      DateTime @updatedAt
+  id             String   @id @default(cuid())
+  announcementId String
+  filePath       String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-    announcement Announcement @relation(fields: [announcementId], references: [feedItemId], onDelete: Cascade)
+  announcement Announcement @relation(fields: [announcementId], references: [feedItemId], onDelete: Cascade)
 
-    @@index([announcementId])
+  @@index([announcementId])
 }

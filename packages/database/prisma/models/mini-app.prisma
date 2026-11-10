@@ -54,11 +54,17 @@ model MiniApp {
   // Where answers to this app's interactive notifications are POSTed.
   // ADMIN apps only, set in the admin portal. PLATFORM apps ignore it and
   // always deliver through the platform at the predefined path.
-  notificationCallbackUrl    String?
+  notificationCallbackUrl                     String?
   // HMAC key for the callback signature. Generated when a URL is first set,
   // revealed once, rotatable. Stored encrypted: it must be usable to sign, so it
   // cannot be hashed like the notification key.
-  notificationCallbackSecret String?
+  notificationCallbackSecret                  String?
+  // The secret replaced by the last rotation. Requests are signed with both
+  // until notificationCallbackPreviousSecretExpiresAt (24 h), so an app can
+  // switch keys without rejecting deliveries in flight. Encrypted like the
+  // current secret.
+  notificationCallbackPreviousSecret          String?
+  notificationCallbackPreviousSecretExpiresAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

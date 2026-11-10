@@ -1,62 +1,62 @@
 enum PostAttachmentType {
-    IMAGE
-    VIDEO
+  IMAGE
+  VIDEO
 }
 
 enum PostStatus {
-    PUBLISHED
-    HIDDEN
-    DELETED
+  PUBLISHED
+  HIDDEN
+  DELETED
 }
 
 model Post {
-    feedItemId     String @id
-    facebookPostId String @unique
+  feedItemId     String @id
+  facebookPostId String @unique
 
-    status    PostStatus @default(PUBLISHED)
-    deletedAt DateTime?
+  status    PostStatus @default(PUBLISHED)
+  deletedAt DateTime?
 
-    content     String?
-    attachments PostAttachment[]
-    hashTags    PostHashTag[]
+  content     String?
+  attachments PostAttachment[]
+  hashTags    PostHashTag[]
 
-    feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
+  feedItem FeedItem @relation(fields: [feedItemId], references: [id], onDelete: Cascade)
 
-    @@index([status])
+  @@index([status])
 }
 
 model PostAttachment {
-    id     String @id @default(cuid())
-    postId String
+  id     String @id @default(cuid())
+  postId String
 
-    attachmentPath String
-    type           PostAttachmentType
-    cacheKey       String             @unique
-    order          Int
+  attachmentPath String
+  type           PostAttachmentType
+  cacheKey       String             @unique
+  order          Int
 
-    description   String?
-    thumbnailPath String?
+  description   String?
+  thumbnailPath String?
 
-    width  Int?
-    height Int?
+  width  Int?
+  height Int?
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    post Post @relation(fields: [postId], references: [feedItemId], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [feedItemId], onDelete: Cascade)
 }
 
 model PostHashTag {
-    postId    String
-    hashTagId String
+  postId    String
+  hashTagId String
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    hashTag HashTag @relation(fields: [hashTagId], references: [id], onDelete: Cascade)
-    post    Post    @relation(fields: [postId], references: [feedItemId], onDelete: Cascade)
+  hashTag HashTag @relation(fields: [hashTagId], references: [id], onDelete: Cascade)
+  post    Post    @relation(fields: [postId], references: [feedItemId], onDelete: Cascade)
 
-    @@id([postId, hashTagId])
-    @@index([postId])
-    @@index([hashTagId])
+  @@id([postId, hashTagId])
+  @@index([postId])
+  @@index([hashTagId])
 }

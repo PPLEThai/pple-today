@@ -6,7 +6,9 @@ CREATE TYPE "public"."NotificationCallbackStatus" AS ENUM ('PENDING', 'DELIVERED
 CREATE TYPE "public"."NotificationResponseChannel" AS ENUM ('APP', 'TRAY');
 
 -- AlterTable
-ALTER TABLE "public"."MiniApp" ADD COLUMN     "notificationCallbackSecret" TEXT,
+ALTER TABLE "public"."MiniApp" ADD COLUMN     "notificationCallbackPreviousSecret" TEXT,
+ADD COLUMN     "notificationCallbackPreviousSecretExpiresAt" TIMESTAMP(3),
+ADD COLUMN     "notificationCallbackSecret" TEXT,
 ADD COLUMN     "notificationCallbackUrl" TEXT;
 
 -- AlterTable
@@ -22,7 +24,7 @@ CREATE TABLE "public"."NotificationResponse" (
     "id" TEXT NOT NULL,
     "notificationId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "miniAppId" TEXT NOT NULL,
+    "miniAppId" TEXT,
     "actionId" TEXT NOT NULL,
     "values" JSONB,
     "channel" "public"."NotificationResponseChannel" NOT NULL,
@@ -55,7 +57,8 @@ CREATE UNIQUE INDEX "NotificationResponse_notificationId_userId_key" ON "public"
 ALTER TABLE "public"."NotificationResponse" ADD CONSTRAINT "NotificationResponse_notificationId_fkey" FOREIGN KEY ("notificationId") REFERENCES "public"."Notification"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."NotificationResponse" ADD CONSTRAINT "NotificationResponse_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."NotificationResponse" ADD CONSTRAINT "NotificationResponse_userId_fkey" FOREIGN KEY ("userId") REFERENCES "public"."User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "public"."NotificationResponse" ADD CONSTRAINT "NotificationResponse_miniAppId_fkey" FOREIGN KEY ("miniAppId") REFERENCES "public"."MiniApp"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "public"."NotificationResponse" ADD CONSTRAINT "NotificationResponse_miniAppId_fkey" FOREIGN KEY ("miniAppId") REFERENCES "public"."MiniApp"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+

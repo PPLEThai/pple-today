@@ -1,62 +1,62 @@
 enum FollowActionType {
-    FOLLOW
-    UNFOLLOW
+  FOLLOW
+  UNFOLLOW
 }
 
 model UserFollowsUser {
-    followerId  String
-    followingId String
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-    following User @relation(name: "Following", fields: [followingId], references: [id])
-    follower  User @relation(name: "Follower", fields: [followerId], references: [id])
+  following User @relation(name: "Following", fields: [followingId], references: [id])
+  follower  User @relation(name: "Follower", fields: [followerId], references: [id])
 
-    @@id([followingId, followerId])
-    @@index([followerId])
-    @@index([followingId])
+  @@id([followingId, followerId])
+  @@index([followerId])
+  @@index([followingId])
 }
 
 model UserFollowsUserLog {
-    id          String           @id @default(cuid())
-    followerId  String
-    followingId String
-    action      FollowActionType
+  id          String           @id @default(cuid())
+  followerId  String
+  followingId String
+  action      FollowActionType
 
-    createdAt DateTime @default(now())
+  createdAt DateTime @default(now())
 
-    following User @relation(name: "FollowingLog", fields: [followingId], references: [id])
-    follower  User @relation(name: "FollowerLog", fields: [followerId], references: [id])
+  following User @relation(name: "FollowingLog", fields: [followingId], references: [id])
+  follower  User @relation(name: "FollowerLog", fields: [followerId], references: [id])
 
-    @@index([followerId])
-    @@index([followingId])
+  @@index([followerId])
+  @@index([followingId])
 }
 
 model UserFollowsTopic {
-    userId    String
-    topicId   String
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  userId    String
+  topicId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    user  User  @relation(fields: [userId], references: [id])
-    topic Topic @relation(fields: [topicId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+  topic Topic @relation(fields: [topicId], references: [id])
 
-    @@id([userId, topicId])
-    @@index([userId])
-    @@index([topicId])
+  @@id([userId, topicId])
+  @@index([userId])
+  @@index([topicId])
 }
 
 model UserFollowsTopicLog {
-    id      String           @id @default(cuid())
-    userId  String
-    topicId String
-    action  FollowActionType
+  id      String           @id @default(cuid())
+  userId  String
+  topicId String
+  action  FollowActionType
 
-    createdAt DateTime @default(now())
+  createdAt DateTime @default(now())
 
-    user  User  @relation(fields: [userId], references: [id])
-    topic Topic @relation(fields: [topicId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
+  topic Topic @relation(fields: [topicId], references: [id])
 
-    @@index([userId])
-    @@index([topicId])
+  @@index([userId])
+  @@index([topicId])
 }
