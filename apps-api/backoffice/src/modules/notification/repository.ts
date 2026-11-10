@@ -284,6 +284,14 @@ export class NotificationRepository {
    * could never assert the capability at all. Writing them on every
    * registration also makes a downgrade self-correcting.
    */
+  async unregisterDeviceToken(userId: string, deviceToken: string) {
+    return fromRepositoryPromise(
+      this.prismaService.userNotificationToken.deleteMany({
+        where: { userId, token: deviceToken },
+      })
+    )
+  }
+
   async registerDeviceToken(
     userId: string,
     deviceToken: string,
@@ -459,7 +467,11 @@ export class NotificationRepository {
     const result = await fromRepositoryPromise(
       this.prismaService.miniApp.findUnique({
         where: { id: miniAppId },
-        select: { source: true, notificationCallbackUrl: true },
+        select: {
+          source: true,
+          notificationCallbackUrl: true,
+          notificationCallbackSecret: true,
+        },
       })
     )
     // A failed lookup reads as "no target": refusing the send is the safe side.

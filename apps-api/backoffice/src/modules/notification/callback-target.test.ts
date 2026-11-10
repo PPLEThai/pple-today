@@ -4,6 +4,7 @@ import { describe, expect, test } from 'vitest'
 import { encryptCallbackSecret } from './callback-secret'
 import {
   buildPlatformRelayUrl,
+  type CallbackTargetApp,
   isBlockedIp,
   resolveCallbackTarget,
   resolvePublicAddress,
@@ -153,7 +154,7 @@ describe('resolveCallbackTarget', () => {
       target: {
         kind: 'ADMIN',
         url: 'https://hooks.example.com/pple',
-        signingSecret: 'whsec_abc',
+        signingSecrets: ['whsec_abc'],
         pinned: { address: '93.184.216.34' },
       },
     })
@@ -171,6 +172,75 @@ describe('resolveCallbackTarget', () => {
     expect((await resolveCallbackTarget(adminApp, { secretKey: 'other' }, publicLookup)).ok).toBe(
       false
     )
+  })
+
+  test('ADMIN: a previous secret signs alongside the new one until its window closes', async () => {
+    const now = new Date('2026-11-10T00:00:00Z')
+    const app = {
+      ...adminApp,
+      notificationCallbackPreviousSecret: encryptCallbackSecret('whsec_old', KEY),
+      notificationCallbackPreviousSecretExpiresAt: new Date(now.getTime() + 3_600_000),
+    }
+    const open = await resolveCallbackTarget(app, { secretKey: KEY }, publicLookup, now)
+    expect(open).toMatchObject({ ok: true, target: { signingSecrets: ['whsec_abc', 'whsec_old'] } })
+
+    const later = new Date(now.getTime() + 3_600_001)
+    const closed = await resolveCallbackTarget(app, { secretKey: KEY }, publicLookup, later)
+    expect(closed).toMatchObject({ ok: true, target: { signingSecrets: ['whsec_abc'] } })
+  })
+
+  test('ADMIN: an undecryptable previous secret is skipped, not fatal', async () => {
+    const now = new Date('2026-11-10T00:00:00Z')
+    const app = {
+      ...adminApp,
+      notificationCallbackPreviousSecret: encryptCallbackSecret('whsec_old', 'lost-key'),
+      notificationCallbackPreviousSecretExpiresAt: new Date(now.getTime() + 3_600_000),
+    }
+    const r = await resolveCallbackTarget(app, { secretKey: KEY }, publicLookup, now)
+    expect(r).toMatchObject({ ok: true, target: { signingSecrets: ['whsec_abc'] } })
+  })
+
+  test('ADMIN: decrypts secrets written under the previous key', async () => {
+    const app = {
+      ...adminApp,
+      notificationCallbackSecret: encryptCallbackSecret('whsec_p', 'prev-key'),
+    }
+    const r = await resolveCallbackTarget(
+      app,
+      { secretKey: KEY, secretKeyPrevious: 'prev-key' },
+      publicLookup
+    )
+    expect(r).toMatchObject({ ok: true, target: { signingSecrets: ['whsec_p'] } })
+  })
+
+  test('configuration failures are flagged, target failures are not', async () => {
+    const cfg = { secretKey: KEY }
+    const flagged = async (app: CallbackTargetApp, c: object, lookup = publicLookup) => {
+      const r = await resolveCallbackTarget(app, c, lookup)
+      return r.ok ? null : r.configError
+    }
+    expect(await flagged({ ...adminApp, notificationCallbackUrl: null }, cfg)).toBe(true)
+    expect(await flagged({ ...adminApp, notificationCallbackSecret: null }, cfg)).toBe(true)
+    expect(await flagged(adminApp, {})).toBe(true)
+    expect(await flagged(adminApp, { secretKey: 'other' })).toBe(true)
+    expect(
+      await flagged(
+        { ...adminApp, source: MiniAppSource.PLATFORM },
+        { platformRelayUrl: 'https://r' }
+      )
+    ).toBe(true)
+    // unreachable / unresolvable / SSRF-blocked count as normal attempts
+    expect(
+      await flagged({ ...adminApp, notificationCallbackUrl: 'https://127.0.0.1/x' }, cfg)
+    ).toBe(false)
+    expect(await flagged(adminApp, cfg, async () => [{ address: '10.0.0.1', family: 4 }])).toBe(
+      false
+    )
+    expect(
+      await flagged(adminApp, cfg, async () => {
+        throw new Error('ENOTFOUND')
+      })
+    ).toBe(false)
   })
 
   test('ADMIN: re-checks the URL and DNS at send time', async () => {

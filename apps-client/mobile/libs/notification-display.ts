@@ -13,7 +13,9 @@ import {
   outcomeForStatus,
   parseDismiss,
   parseTrayInteraction,
+  selectCategoriesToKeep,
   selectCategoriesToPrune,
+  selectInteractiveToDismiss,
   submissionFromResponse,
   tapToDetailData,
   trayCategoryId,
@@ -248,6 +250,48 @@ export async function dismissTrayNotification(notificationId: string) {
     await Notifications.dismissNotificationAsync(trayNotificationIdentifier(notificationId))
   } catch (err) {
     console.error('Failed to dismiss a notification', JSON.stringify(err))
+  }
+}
+
+/**
+ * On logout, take every interactive card out of the tray and delete the
+ * `pple.ix.*` categories. The server also refuses their tokens once the device is
+ * unregistered; this is the UX half. Never throws.
+ */
+export async function clearInteractiveNotifications() {
+  if (Platform.OS !== 'android' && Platform.OS !== 'ios') {
+    return
+  }
+  try {
+    const presented = await Notifications.getPresentedNotificationsAsync()
+    const ids = selectInteractiveToDismiss(
+      presented.map((n) => ({
+        identifier: n.request.identifier,
+        categoryIdentifier: n.request.content.categoryIdentifier,
+        data: n.request.content.data,
+      })),
+      Platform.OS
+    )
+    for (const id of ids) {
+      await Notifications.dismissNotificationAsync(id).catch((err) => {
+        console.error('Failed to dismiss an interactive notification', JSON.stringify(err))
+      })
+    }
+  } catch (err) {
+    console.error('Failed to clear interactive notifications', JSON.stringify(err))
+  }
+  try {
+    // Deleting the `pple.ix.*` categories one by one leaves every other category
+    // as it was. A set-the-whole-list API would need the merge done by hand.
+    const categories = await Notifications.getNotificationCategoriesAsync()
+    const keep = new Set(selectCategoriesToKeep(categories).map((c) => c.identifier))
+    for (const category of categories) {
+      if (!keep.has(category.identifier)) {
+        await Notifications.deleteNotificationCategoryAsync(category.identifier)
+      }
+    }
+  } catch (err) {
+    console.error('Failed to delete interactive notification categories', JSON.stringify(err))
   }
 }
 

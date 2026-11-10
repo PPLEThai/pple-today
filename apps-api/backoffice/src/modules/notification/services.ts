@@ -47,7 +47,14 @@ export const NotificationServicePlugin = new Elysia({ name: 'NotificationService
     notificationService: new NotificationService(
       notificationRepository,
       configService.get('MINIAPP_REDIRECT_ORIGIN'),
-      { interactiveNotificationsEnabled: configService.get('INTERACTIVE_NOTIFICATIONS_ENABLED') }
+      {
+        interactiveNotificationsEnabled: configService.get('INTERACTIVE_NOTIFICATIONS_ENABLED'),
+        callbackConfig: {
+          platformRelayUrl: configService.get('PLATFORM_CALLBACK_RELAY_URL'),
+          platformRelayToken: configService.get('PLATFORM_CALLBACK_RELAY_TOKEN'),
+          secretKey: configService.get('NOTIFICATION_CALLBACK_SECRET_KEY'),
+        },
+      }
     ),
   }))
 
@@ -59,7 +66,14 @@ export const AppNotificationServicePlugin = new Elysia({ name: 'AppNotificationS
       notificationRepository,
       configService.get('MINIAPP_REDIRECT_ORIGIN'),
       () => new Date(),
-      { interactiveNotificationsEnabled: configService.get('INTERACTIVE_NOTIFICATIONS_ENABLED') }
+      {
+        interactiveNotificationsEnabled: configService.get('INTERACTIVE_NOTIFICATIONS_ENABLED'),
+        callbackConfig: {
+          platformRelayUrl: configService.get('PLATFORM_CALLBACK_RELAY_URL'),
+          platformRelayToken: configService.get('PLATFORM_CALLBACK_RELAY_TOKEN'),
+          secretKey: configService.get('NOTIFICATION_CALLBACK_SECRET_KEY'),
+        },
+      }
     ),
   }))
 
@@ -103,6 +117,9 @@ export const InteractionServicePlugin = new Elysia({ name: 'InteractionService' 
         {
           interactiveNotificationsEnabled: configService.get('INTERACTIVE_NOTIFICATIONS_ENABLED'),
           responseTokenSecret: configService.get('NOTIFICATION_RESPONSE_TOKEN_SECRET'),
+          responseTokenSecretPrevious: configService.get(
+            'NOTIFICATION_RESPONSE_TOKEN_SECRET_PREVIOUS'
+          ),
         }
       ),
     })

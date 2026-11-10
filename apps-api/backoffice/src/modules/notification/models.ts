@@ -41,6 +41,15 @@ export const RegisterNotificationBody = t.Object({
 })
 export type RegisterNotificationBody = Static<typeof RegisterNotificationBody>
 
+/**
+ * The device token to forget on logout. Only the caller's own row is removed, so
+ * a token that has since been re-registered by someone else is left alone.
+ */
+export const UnregisterNotificationBody = t.Object({
+  deviceToken: t.String(),
+})
+export type UnregisterNotificationBody = Static<typeof UnregisterNotificationBody>
+
 export const RegisterNotificationResponse = t.Object({
   message: t.String(),
 })

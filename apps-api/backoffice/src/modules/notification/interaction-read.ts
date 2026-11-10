@@ -21,12 +21,24 @@ export const isStoredInteraction = (value: unknown): value is StoredInteraction 
   typeof value === 'object' && value !== null && (value as { v?: unknown }).v === 1
 
 /**
+ * True when the app that sent the notification no longer accepts answers: it was
+ * retired, or deleted (`miniApp` is null because `miniAppId` was set null).
+ */
+export const isAppGone = (miniApp: InteractionRow['miniApp']) =>
+  miniApp === null || miniApp.retiredAt != null
+
+/**
  * The client-facing interaction for one caller, or undefined for a notification
  * that has none (or one stored in a shape this build does not know).
+ *
+ * `enabled` is `INTERACTIVE_NOTIFICATIONS_ENABLED`. While it is off nothing can
+ * be answered, so anything not already RESPONDED reads CLOSED rather than
+ * offering a form that would 503.
  */
 export function readClientInteraction(
   row: InteractionRow,
-  now: Date
+  now: Date,
+  { enabled }: { enabled: boolean }
 ): NotificationInteraction | undefined {
   if (!isStoredInteraction(row.interaction)) return undefined
   const response = row.responses[0]
@@ -34,12 +46,12 @@ export function readClientInteraction(
     hasResponse: response !== undefined,
     closedAt: row.interactionClosedAt,
     expiresAt: row.interactionExpiresAt,
-    appRetired: row.miniApp?.retiredAt != null,
+    appGone: isAppGone(row.miniApp),
     now,
   })
   return toClientInteraction(
     row.interaction,
-    state,
+    !enabled && state !== 'RESPONDED' ? 'CLOSED' : state,
     response
       ? {
           actionId: response.actionId,

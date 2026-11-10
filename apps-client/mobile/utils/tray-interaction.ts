@@ -359,3 +359,38 @@ export function parseDismiss(payload: unknown): string | null {
   if (!isRecord(payload)) return null
   return isNonEmptyString(payload.pple_dismiss) ? payload.pple_dismiss : null
 }
+
+/**
+ * Which presented notifications to remove on logout, and which categories to
+ * delete. Interactive cards carry an action token for the signed-in user, so
+ * none should outlive the session.
+ *
+ * Android: identifier `pple.notification.*` with `pple_interaction` in its data.
+ * iOS: the category starts with `pple.ix.`. Either marker is enough on either
+ * platform, since the identifier of a remote iOS notification is not ours.
+ */
+export interface PresentedNotificationView {
+  identifier: string
+  categoryIdentifier?: string | null
+  data?: Record<string, unknown> | null
+}
+
+export function selectInteractiveToDismiss(
+  presented: readonly PresentedNotificationView[],
+  platform: string
+): string[] {
+  return presented
+    .filter((n) => {
+      if (platform === 'ios') return isTrayCategory(n.categoryIdentifier)
+      return (
+        n.identifier.startsWith('pple.notification.') &&
+        isNonEmptyString(n.data?.['pple_interaction'])
+      )
+    })
+    .map((n) => n.identifier)
+}
+
+/** The categories to re-register on logout: everything except `pple.ix.*`. */
+export const selectCategoriesToKeep = <T extends { identifier: string }>(
+  categories: readonly T[]
+): T[] => categories.filter((c) => !isTrayCategory(c.identifier))

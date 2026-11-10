@@ -184,6 +184,22 @@ describe('NotificationRepository.registerDeviceToken', () => {
   })
 })
 
+describe('NotificationRepository.unregisterDeviceToken', () => {
+  test("removes only the caller's own registration of the token", async () => {
+    // Scoped by user: if the device has since been re-registered by someone
+    // else, a late logout from the previous user must not remove their row.
+    const { prismaService, repository } = createRepository()
+    prismaService.userNotificationToken.deleteMany.mockResolvedValue({ count: 1 })
+
+    const result = await repository.unregisterDeviceToken('user-id', 'device-token')
+
+    expect(result.isOk()).toBe(true)
+    expect(prismaService.userNotificationToken.deleteMany).toHaveBeenCalledWith({
+      where: { userId: 'user-id', token: 'device-token' },
+    })
+  })
+})
+
 describe('NotificationRepository.sendNotificationToUser', () => {
   const recipient = {
     id: 'user-id',

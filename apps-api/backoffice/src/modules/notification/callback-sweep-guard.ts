@@ -1,8 +1,10 @@
-import { timingSafeEqual } from 'node:crypto'
+import { createHash, timingSafeEqual } from 'node:crypto'
 
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { err } from '@pple-today/api-common/utils'
 import { ok } from 'neverthrow'
+
+const sha256 = (value: string) => createHash('sha256').update(value, 'utf8').digest()
 
 /**
  * Authenticates the gitops CronJob that drives the callback sweep: a single
@@ -18,8 +20,9 @@ export class CallbackSweepAuthGuard {
     const valid =
       !!this.token &&
       !!presented &&
-      presented.length === this.token.length &&
-      timingSafeEqual(Buffer.from(presented), Buffer.from(this.token))
+      // Compare fixed-length digests: `timingSafeEqual` throws on unequal byte
+      // lengths, and equal character counts can differ in bytes (non-ASCII).
+      timingSafeEqual(sha256(presented), sha256(this.token))
 
     if (!valid) {
       return err({

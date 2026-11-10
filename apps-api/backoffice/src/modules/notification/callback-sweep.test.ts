@@ -19,6 +19,15 @@ describe('CallbackSweepAuthGuard', () => {
     expect(guard.authenticate(headers).isErr()).toBe(true)
   })
 
+  test('never throws for a non-ASCII token of equal character length', () => {
+    const thai = new CallbackSweepAuthGuard('โทเค็นลับ')
+    // same number of characters, different byte length
+    expect(() => thai.authenticate({ authorization: 'Bearer abcdefghi' })).not.toThrow()
+    expect(thai.authenticate({ authorization: 'Bearer abcdefghi' }).isErr()).toBe(true)
+    expect(thai.authenticate({ authorization: 'Bearer โทเค็นลับ' }).isOk()).toBe(true)
+    expect(thai.authenticate({ authorization: 'Bearer โทเค็นลัม' }).isErr()).toBe(true)
+  })
+
   test('rejects everything when no token is configured', () => {
     const open = new CallbackSweepAuthGuard(undefined)
     expect(open.authenticate({ authorization: 'Bearer ' }).isErr()).toBe(true)

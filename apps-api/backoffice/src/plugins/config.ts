@@ -193,6 +193,12 @@ export const envSchema = t.Object({
         'HMAC secret for the per-recipient response token carried in interactive pushes (tray actions). Without it, no tray data is sent.',
     })
   ),
+  NOTIFICATION_RESPONSE_TOKEN_SECRET_PREVIOUS: t.Optional(
+    t.String({
+      description:
+        'The previous `NOTIFICATION_RESPONSE_TOKEN_SECRET`, kept for one token lifetime (up to 30 days) after a rotation so tokens already in flight still verify. Tokens are always minted with the current secret.',
+    })
+  ),
   TRAY_INTERACTION_DISABLED: t
     .Transform(
       t.Union([t.Literal('true'), t.Literal('false')], {
@@ -224,6 +230,12 @@ export const envSchema = t.Object({
     t.String({
       description:
         'Encryption key for the stored per-app notification callback signing secrets (MiniApp.notificationCallbackSecret)',
+    })
+  ),
+  NOTIFICATION_CALLBACK_SECRET_KEY_PREVIOUS: t.Optional(
+    t.String({
+      description:
+        'Previous NOTIFICATION_CALLBACK_SECRET_KEY, kept while rotating the key. Only used to decrypt stored secrets; new ones are always encrypted with the current key.',
     })
   ),
 

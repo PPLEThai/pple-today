@@ -1,11 +1,13 @@
 import type { PrismaService } from '@pple-today/api-common/services'
 import { NotificationTokenPlatform, Prisma } from '@pple-today/database/prisma'
+import { PrismaClientKnownRequestError } from '@pple-today/database/prisma/runtime/client'
 import { describe, expect, test, vi } from 'vitest'
 
 import { InteractionRepository } from './interaction-repository'
+import { deviceHash } from './response-token'
 
 const createRepository = () => {
-  const prismaService = {
+  const prismaService: Record<string, any> = {
     userNotification: {
       findUnique: vi.fn(async (_args: Record<string, any>) => null as unknown),
       updateMany: vi.fn(async (_args: Record<string, any>) => ({ count: 1 })),
@@ -20,11 +22,13 @@ const createRepository = () => {
     notification: {
       findFirst: vi.fn(async (_args: Record<string, any>) => null),
       updateMany: vi.fn(async (_args: Record<string, any>) => ({ count: 1 })),
+      findUnique: vi.fn(async (_args: Record<string, any>) => null as unknown),
       findUniqueOrThrow: vi.fn(async (_args: unknown) => ({
         interactionClosedAt: null as Date | null,
       })),
     },
-    $transaction: vi.fn(async (operations: Promise<unknown>[]) => Promise.all(operations)),
+    $queryRaw: vi.fn(async (..._args: unknown[]) => [] as unknown[]),
+    $transaction: vi.fn(async (fn: (tx: unknown) => Promise<unknown>) => fn(prismaService)),
   }
   return {
     prismaService,
@@ -47,20 +51,44 @@ describe('InteractionRepository', () => {
     expect(result._unsafeUnwrap()).toBeNull()
   })
 
-  test('records the answer and marks the notification read in one transaction', async () => {
-    const { prismaService, repository } = createRepository()
+  const open = {
+    miniAppId: 'app-id',
+    interactionClosedAt: null as Date | null,
+    interactionExpiresAt: null as Date | null,
+    miniApp: { retiredAt: null as Date | null } as { retiredAt: Date | null } | null,
+  }
+  const input = {
+    notificationId: 'notification-id',
+    userId: 'user-id',
+    actionId: 'approve',
+    values: undefined,
+    channel: 'TRAY' as const,
+    now: new Date('2026-11-10T00:00:00Z'),
+  }
 
-    await repository.createResponse({
-      notificationId: 'notification-id',
-      userId: 'user-id',
-      miniAppId: 'app-id',
-      actionId: 'approve',
-      values: undefined,
-      channel: 'TRAY',
-    })
+  test('locks the notification, re-checks, records the answer and marks it read in one transaction', async () => {
+    const { prismaService, repository } = createRepository()
+    prismaService.notification.findUnique.mockResolvedValue(open)
+
+    const result = await repository.createResponse(input)
 
     expect(prismaService.$transaction).toHaveBeenCalledOnce()
-    expect(prismaService.notificationResponse.create.mock.calls[0][0].data).toMatchObject({
+    const order = [
+      prismaService.$queryRaw.mock.invocationCallOrder[0],
+      prismaService.notification.findUnique.mock.invocationCallOrder[0],
+      prismaService.notificationResponse.create.mock.invocationCallOrder[0],
+      prismaService.userNotification.updateMany.mock.invocationCallOrder[0],
+    ]
+    expect(order).toEqual([...order].sort((a, b) => a - b))
+    const [strings, ...values] = prismaService.$queryRaw.mock.calls[0] as unknown as [
+      string[],
+      ...unknown[],
+    ]
+    expect(strings.join('?')).toMatch(/FOR UPDATE/)
+    expect(values).toEqual(['notification-id'])
+
+    const created = prismaService.notificationResponse.create.mock.calls[0][0].data
+    expect(created).toMatchObject({
       notificationId: 'notification-id',
       userId: 'user-id',
       miniAppId: 'app-id',
@@ -74,6 +102,66 @@ describe('InteractionRepository', () => {
       isRead: false,
     })
     expect(read.data.isRead).toBe(true)
+    expect(result._unsafeUnwrap()).toMatchObject({ status: 'CREATED' })
+  })
+
+  test('sets nextAttemptAt from the app clock, not the database default', async () => {
+    const { prismaService, repository } = createRepository()
+    prismaService.notification.findUnique.mockResolvedValue(open)
+    const before = Date.now()
+
+    await repository.createResponse(input)
+
+    const { nextAttemptAt } = prismaService.notificationResponse.create.mock.calls[0][0].data
+    expect(nextAttemptAt).toBeInstanceOf(Date)
+    expect(nextAttemptAt.getTime()).toBeGreaterThanOrEqual(before)
+    expect(nextAttemptAt.getTime()).toBeLessThanOrEqual(Date.now())
+  })
+
+  test.each([
+    ['closed', { interactionClosedAt: new Date('2026-11-09') }, 'CLOSED'],
+    ['expired', { interactionExpiresAt: new Date('2026-11-09') }, 'EXPIRED'],
+    ['from a retired app', { miniApp: { retiredAt: new Date('2026-11-01') } }, 'CLOSED'],
+    ['from a deleted app', { miniAppId: null, miniApp: null }, 'CLOSED'],
+  ])('writes nothing when the locked re-check finds it %s', async (_n, overrides, status) => {
+    const { prismaService, repository } = createRepository()
+    prismaService.notification.findUnique.mockResolvedValue({ ...open, ...overrides })
+
+    const result = await repository.createResponse(input)
+
+    expect(result._unsafeUnwrap()).toEqual({ status })
+    expect(prismaService.notificationResponse.create).not.toHaveBeenCalled()
+    expect(prismaService.userNotification.updateMany).not.toHaveBeenCalled()
+  })
+
+  test('a unique violation inside the transaction surfaces as UNIQUE_CONSTRAINT_FAILED', async () => {
+    const { prismaService, repository } = createRepository()
+    prismaService.notification.findUnique.mockResolvedValue(open)
+    prismaService.notificationResponse.create.mockRejectedValue(
+      new PrismaClientKnownRequestError('dup', { code: 'P2002', clientVersion: 'x' })
+    )
+
+    const result = await repository.createResponse(input)
+
+    expect(result._unsafeUnwrapErr().code).toBe('UNIQUE_CONSTRAINT_FAILED')
+  })
+
+  test('a device is found by the hash of any of the user’s tokens', async () => {
+    const { prismaService, repository } = createRepository()
+    prismaService.userNotificationToken.findMany.mockResolvedValue([
+      { token: 'a' },
+      { token: 'fcm-b' },
+    ])
+
+    expect(
+      (await repository.hasDeviceWithHash('user-id', deviceHash('fcm-b')))._unsafeUnwrap()
+    ).toBe(true)
+    expect(
+      (await repository.hasDeviceWithHash('user-id', deviceHash('fcm-gone')))._unsafeUnwrap()
+    ).toBe(false)
+    expect(prismaService.userNotificationToken.findMany.mock.calls[0][0].where).toEqual({
+      userId: 'user-id',
+    })
   })
 
   test('the dismiss goes to the user’s Android tray-capable devices only', async () => {

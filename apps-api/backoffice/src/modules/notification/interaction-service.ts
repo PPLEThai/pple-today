@@ -7,7 +7,12 @@ import { err, ok } from 'neverthrow'
 
 import type { NotificationCallbackDispatcher } from './callback-delivery'
 import { deriveInteractionState, validateAnswer } from './interaction'
-import { type InteractionRow, isStoredInteraction, readClientInteraction } from './interaction-read'
+import {
+  type InteractionRow,
+  isAppGone,
+  isStoredInteraction,
+  readClientInteraction,
+} from './interaction-read'
 import type { InteractionRepository } from './interaction-repository'
 import { verifyResponseToken } from './response-token'
 
@@ -49,6 +54,8 @@ export class InteractionService {
       interactiveNotificationsEnabled: boolean
       /** `NOTIFICATION_RESPONSE_TOKEN_SECRET`. Unset: no token can be verified, so every token is a 401. */
       responseTokenSecret?: string
+      /** `NOTIFICATION_RESPONSE_TOKEN_SECRET_PREVIOUS`: still verifies tokens minted before a rotation; never used to mint. */
+      responseTokenSecretPrevious?: string
     },
     /** Injected so expiry is testable without a fake timer. */
     private readonly now: () => Date = () => new Date()
@@ -65,9 +72,10 @@ export class InteractionService {
    * Record one recipient's answer.
    *
    * The same checks run whichever credential is used, in this order, so the
-   * first failing one names the response: token (401), recipient / has an
-   * interaction (404), already answered (409), closed / expired / app retired
-   * (410), then the answer itself against the stored spec (400).
+   * first failing one names the response: token (401; bad signature, expired,
+   * another notification, or no longer a device of that user), recipient / has
+   * an interaction (404), already answered (409), closed / expired / app retired
+   * or deleted (410), then the answer itself against the stored spec (400).
    *
    * On success it records the answer and marks the notification read in one
    * transaction. After that commits it starts one callback attempt and sends the
@@ -87,16 +95,29 @@ export class InteractionService {
       userId = credential.userId
       channel = NotificationResponseChannel.APP
     } else {
-      const secret = this.options.responseTokenSecret
-      const verified = secret ? verifyResponseToken(credential.token, secret, this.now()) : null
-      // A token for another notification is as good as a bad one: it authorises
-      // exactly one thing.
-      if (!verified?.ok || verified.notificationId !== notificationId) {
-        return err({
+      const { responseTokenSecret, responseTokenSecretPrevious } = this.options
+      const secrets = [responseTokenSecret, responseTokenSecretPrevious].filter((s): s is string =>
+        Boolean(s)
+      )
+      const verified =
+        secrets.length > 0 ? verifyResponseToken(credential.token, secrets, this.now()) : null
+      const invalidToken = () =>
+        err({
           code: InternalErrorCode.NOTIFICATION_RESPONSE_TOKEN_INVALID,
           message: 'The response token is invalid or has expired',
         })
-      }
+      // A token for another notification is as good as a bad one: it authorises
+      // exactly one thing.
+      if (!verified?.ok || verified.notificationId !== notificationId) return invalidToken()
+      // The token is bound to the device it was pushed to: the user must still
+      // have that device registered. Logging in as someone else on the device
+      // re-registers it to them, which kills the previous user's tokens.
+      const device = await this.interactionRepository.hasDeviceWithHash(
+        verified.userId,
+        verified.deviceHash
+      )
+      if (device.isErr()) return mapRepositoryError(device.error)
+      if (!device.value) return invalidToken()
       userId = verified.userId
       channel = NotificationResponseChannel.TRAY
     }
@@ -105,13 +126,7 @@ export class InteractionService {
     if (loaded.isErr()) return mapRepositoryError(loaded.error)
     const notification = loaded.value
     // Missing, not a recipient and no interaction all answer the same.
-    if (
-      !notification ||
-      !notification.miniAppId ||
-      !isStoredInteraction(notification.interaction)
-    ) {
-      return notFound()
-    }
+    if (!notification || !isStoredInteraction(notification.interaction)) return notFound()
     const spec = notification.interaction
     const now = this.now()
 
@@ -119,7 +134,8 @@ export class InteractionService {
       hasResponse: notification.responses.length > 0,
       closedAt: notification.interactionClosedAt,
       expiresAt: notification.interactionExpiresAt,
-      appRetired: notification.miniApp?.retiredAt != null,
+      // No app (deleted) reads like a retired one: closed.
+      appGone: isAppGone(notification.miniApp),
       now,
     })
     if (state === 'RESPONDED') return this.alreadyResponded(notification, now)
@@ -139,13 +155,15 @@ export class InteractionService {
       })
     }
 
+    // The checks above ran on a read; the insert re-checks under a row lock, so
+    // a close that lands in between wins.
     const created = await this.interactionRepository.createResponse({
       notificationId,
       userId,
-      miniAppId: notification.miniAppId,
       actionId: answer.actionId,
       values: answer.values as Prisma.InputJsonValue | undefined,
       channel,
+      now,
     })
     if (created.isErr()) {
       // Lost the race to another device or a double tap: the unique key held.
@@ -154,7 +172,16 @@ export class InteractionService {
       }
       return mapRepositoryError(created.error)
     }
-    const response = created.value
+    if (created.value.status !== 'CREATED') {
+      return err({
+        code: InternalErrorCode.NOTIFICATION_INTERACTION_CLOSED,
+        message:
+          created.value.status === 'EXPIRED'
+            ? 'This interaction has expired'
+            : 'This interaction is closed',
+      })
+    }
+    const response = created.value.response
 
     // After the commit, and neither awaited: a throw here must not turn a
     // recorded answer into a failed request.
@@ -168,14 +195,16 @@ export class InteractionService {
     }
     void this.dismissOnTrayDevices(userId, notificationId)
 
-    const interaction = readClientInteraction({ ...notification, responses: [response] }, now)
+    const interaction = readClientInteraction({ ...notification, responses: [response] }, now, {
+      enabled: true,
+    })
     // Unreachable: the spec was read above. Kept so the type is honest.
     if (!interaction) return notFound()
     return ok({ interaction })
   }
 
   private alreadyResponded(notification: InteractionRow, now: Date) {
-    const interaction = readClientInteraction(notification, now)
+    const interaction = readClientInteraction(notification, now, { enabled: true })
     if (!interaction) return notFound()
     return err({
       code: InternalErrorCode.NOTIFICATION_ALREADY_RESPONDED,

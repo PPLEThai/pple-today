@@ -57,12 +57,23 @@ const INTERACTION = {
 const SENT_AT = new Date('2026-07-30T00:00:00.000Z')
 const ENABLED = { interactiveNotificationsEnabled: true, now: () => SENT_AT }
 
+const CALLBACK_CONFIG = {
+  platformRelayUrl: 'https://relay.example',
+  platformRelayToken: 'relay-token',
+  secretKey: 'secret-key',
+}
+
 const createService = (
   checkApiKeyResult: unknown = LEGACY_KEY,
   options: { interactiveNotificationsEnabled?: boolean; now?: () => Date } = { now: () => SENT_AT },
-  callbackTarget: { source: MiniAppSource; notificationCallbackUrl: string | null } | null = {
+  callbackTarget: {
+    source: MiniAppSource
+    notificationCallbackUrl: string | null
+    notificationCallbackSecret: string | null
+  } | null = {
     source: MiniAppSource.PLATFORM,
     notificationCallbackUrl: null,
+    notificationCallbackSecret: null,
   }
 ) => {
   const notificationRepository = {
@@ -101,7 +112,7 @@ const createService = (
     service: new NotificationService(
       notificationRepository as unknown as NotificationRepository,
       'https://miniapp.peoplesparty.or.th',
-      options
+      { callbackConfig: CALLBACK_CONFIG, ...options }
     ),
   }
 }
@@ -546,6 +557,7 @@ describe('NotificationService.sendExternalNotification with an interaction', () 
     const { service } = createService(CENTRAL_TEAM_KEY, ENABLED, {
       source: MiniAppSource.ADMIN,
       notificationCallbackUrl: null,
+      notificationCallbackSecret: null,
     })
 
     const result = await send(service, CENTRAL_TEAM_KEY)
@@ -585,6 +597,7 @@ describe('NotificationService.sendExternalNotification with an interaction', () 
     const { service, notificationRepository } = createService(CENTRAL_TEAM_KEY, ENABLED, {
       source: MiniAppSource.ADMIN,
       notificationCallbackUrl: 'https://app.example/callback',
+      notificationCallbackSecret: 'enc',
     })
 
     const result = await send(service, CENTRAL_TEAM_KEY)
@@ -616,8 +629,9 @@ describe('the interaction a notification carries when it is read', () => {
       ...overrides,
     },
   })
+  const ON = { interactiveNotificationsEnabled: true, now: () => SENT_AT }
   const serviceReading = (row: unknown) => {
-    const made = createService()
+    const made = createService(LEGACY_KEY, ON)
     made.notificationRepository.getNotificationDetailsById.mockResolvedValue(ok(row) as never)
     made.notificationRepository.listNotifications.mockResolvedValue(
       ok({ notifications: [row], nextCursor: null, previousCursor: null }) as never
@@ -686,7 +700,7 @@ describe('the interaction a notification carries when it is read', () => {
 
   test('the history list carries just the state, still without extra queries', async () => {
     const { service, notificationRepository } = (() => {
-      const made = createService()
+      const made = createService(LEGACY_KEY, ON)
       made.notificationRepository.listNotifications.mockResolvedValue(
         ok({ notifications: [interactiveRow()], nextCursor: null, previousCursor: null }) as never
       )
@@ -699,19 +713,67 @@ describe('the interaction a notification carries when it is read', () => {
     expect(notificationRepository.listNotifications).toHaveBeenCalledTimes(1)
   })
 
-  test('reads still render an existing interaction when the flag is off', async () => {
-    const made = createService(LEGACY_KEY, {
-      interactiveNotificationsEnabled: false,
-      now: () => SENT_AT,
+  describe('while the flag is off', () => {
+    const readOff = (row: unknown) => {
+      const made = createService(LEGACY_KEY, {
+        interactiveNotificationsEnabled: false,
+        now: () => SENT_AT,
+      })
+      made.notificationRepository.getNotificationDetailsById.mockResolvedValue(ok(row) as never)
+      made.notificationRepository.listNotifications.mockResolvedValue(
+        ok({ notifications: [row], nextCursor: null, previousCursor: null }) as never
+      )
+      return made.service
+    }
+
+    test('an open interaction still renders, but as CLOSED, on detail and in history', async () => {
+      const service = readOff(interactiveRow())
+
+      const { interaction } = (await service.getNotificationDetailsById('u', 'n'))._unsafeUnwrap()
+      const item = (await service.listNotifications('u'))._unsafeUnwrap().items[0]
+
+      expect(interaction?.state).toBe('CLOSED')
+      expect(interaction?.actions).toHaveLength(1)
+      expect(item.interactionState).toBe('CLOSED')
     })
-    made.notificationRepository.getNotificationDetailsById.mockResolvedValue(
-      ok(interactiveRow()) as never
+
+    test('an expired one reads CLOSED too', async () => {
+      const service = readOff(
+        interactiveRow({ interactionExpiresAt: new Date('2026-07-29T00:00:00.000Z') })
+      )
+
+      expect(
+        (await service.getNotificationDetailsById('u', 'n'))._unsafeUnwrap().interaction?.state
+      ).toBe('CLOSED')
+    })
+
+    test('the caller’s own answer still reads RESPONDED', async () => {
+      const service = readOff(
+        interactiveRow({}, [{ actionId: 'approve', values: null, respondedAt: SENT_AT }])
+      )
+
+      expect(
+        (await service.getNotificationDetailsById('u', 'n'))._unsafeUnwrap().interaction?.state
+      ).toBe('RESPONDED')
+      expect((await service.listNotifications('u'))._unsafeUnwrap().items[0].interactionState).toBe(
+        'RESPONDED'
+      )
+    })
+  })
+
+  test('a deleted sending app (no miniApp) reads CLOSED, unless answered', async () => {
+    const closed = serviceReading(interactiveRow({ miniApp: null }))
+    const answered = serviceReading(
+      interactiveRow({ miniApp: null }, [
+        { actionId: 'approve', values: null, respondedAt: SENT_AT },
+      ])
     )
 
-    const { interaction } = (
-      await made.service.getNotificationDetailsById('u', 'n')
-    )._unsafeUnwrap()
-
-    expect(interaction?.state).toBe('OPEN')
+    expect(
+      (await closed.getNotificationDetailsById('u', 'n'))._unsafeUnwrap().interaction?.state
+    ).toBe('CLOSED')
+    expect(
+      (await answered.getNotificationDetailsById('u', 'n'))._unsafeUnwrap().interaction?.state
+    ).toBe('RESPONDED')
   })
 })

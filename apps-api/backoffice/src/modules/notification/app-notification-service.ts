@@ -12,7 +12,7 @@ import {
   phonesToResolve,
   settleDirectDelivery,
 } from './direct-recipients'
-import { prepareInteractionSend } from './interaction-send'
+import { type CallbackSendConfig, prepareInteractionSend } from './interaction-send'
 import { type BoundApp, isMeteredKey, requireAppBoundKey } from './key-binding'
 import type { CreateAppNotificationBody, DirectRecipientResult } from './models'
 import { evaluateDailyQuota, quotaDayStart } from './quota'
@@ -174,6 +174,8 @@ export class AppNotificationService {
     private readonly options: {
       /** `INTERACTIVE_NOTIFICATIONS_ENABLED`. While false a send with `interaction` is refused. */
       interactiveNotificationsEnabled?: boolean
+      /** Relay and secret-key config the send-time callback check mirrors. */
+      callbackConfig?: CallbackSendConfig
     } = {}
   ) {}
 
@@ -248,6 +250,7 @@ export class AppNotificationService {
       bypass: false, // `linkPath` can never set bypass
       app,
       getCallbackTarget: (miniAppId) => this.notificationRepository.getCallbackTarget(miniAppId),
+      callbackConfig: this.options.callbackConfig,
       now: this.now(),
     })
     if (interaction.isErr()) return err(interaction.error)

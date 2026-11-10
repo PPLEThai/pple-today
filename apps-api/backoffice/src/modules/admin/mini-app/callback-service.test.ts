@@ -15,11 +15,15 @@ import { decryptCallbackSecret, encryptCallbackSecret } from '../../notification
 const KEY = 'k'
 const publicLookup = async () => [{ address: '93.184.216.34', family: 4 as const }]
 
+const NOW = new Date('2026-11-10T00:00:00Z')
+
 const setup = (
   app: {
     source?: MiniAppSource
     url?: string | null
     secret?: string | null
+    previousSecret?: string | null
+    previousExpiresAt?: Date | null
   } = {}
 ) => {
   const stored = {
@@ -27,6 +31,8 @@ const setup = (
     source: app.source ?? MiniAppSource.ADMIN,
     notificationCallbackUrl: app.url === undefined ? null : app.url,
     notificationCallbackSecret: app.secret === undefined ? null : app.secret,
+    notificationCallbackPreviousSecret: app.previousSecret ?? null,
+    notificationCallbackPreviousSecretExpiresAt: app.previousExpiresAt ?? null,
   }
   const repository = {
     findCallbackSettings: vi.fn().mockResolvedValue(ok(stored)),
@@ -37,7 +43,7 @@ const setup = (
   }
   const post = vi.fn<CallbackHttpClient['post']>().mockResolvedValue({ statusCode: 200 })
   const sender = new NotificationCallbackSender({ secretKey: KEY }, { post }, publicLookup)
-  const service = new AdminMiniAppCallbackService(repository, sender, KEY, publicLookup)
+  const service = new AdminMiniAppCallbackService(repository, sender, KEY, publicLookup, () => NOW)
   return { service, repository, post }
 }
 
@@ -123,6 +129,8 @@ describe('AdminMiniAppCallbackService.get / clear', () => {
     expect(repository.setCallbackSettings).toHaveBeenCalledWith('app-1', {
       notificationCallbackUrl: null,
       notificationCallbackSecret: null,
+      notificationCallbackPreviousSecret: null,
+      notificationCallbackPreviousSecretExpiresAt: null,
     })
   })
 })
@@ -136,6 +144,31 @@ describe('AdminMiniAppCallbackService.rotateSecret', () => {
     const saved = repository.setCallbackSettings.mock.calls[0][1]
     expect(saved.notificationCallbackSecret).not.toBe(old)
     expect(decryptCallbackSecret(saved.notificationCallbackSecret, KEY)).toBe(secret)
+  })
+
+  test('moves the old secret to the previous slot for 24 hours', async () => {
+    const old = encryptCallbackSecret('whsec_old', KEY)
+    const { service, repository } = setup({ url: 'https://a.example.com/', secret: old })
+    await service.rotateSecret('app-1')
+    const saved = repository.setCallbackSettings.mock.calls[0][1]
+    expect(saved.notificationCallbackPreviousSecret).toBe(old)
+    expect(saved.notificationCallbackPreviousSecretExpiresAt).toEqual(
+      new Date(NOW.getTime() + 24 * 3_600_000)
+    )
+  })
+
+  test('a second rotation replaces the previous slot with the then-current secret', async () => {
+    const current = encryptCallbackSecret('whsec_cur', KEY)
+    const { service, repository } = setup({
+      url: 'https://a.example.com/',
+      secret: current,
+      previousSecret: encryptCallbackSecret('whsec_older', KEY),
+      previousExpiresAt: new Date(NOW.getTime() + 1000),
+    })
+    await service.rotateSecret('app-1')
+    expect(repository.setCallbackSettings.mock.calls[0][1].notificationCallbackPreviousSecret).toBe(
+      current
+    )
   })
 
   test('needs a URL first', async () => {
@@ -161,6 +194,19 @@ describe('AdminMiniAppCallbackService.sendTestEvent', () => {
       error: null,
     })
     expect(post.mock.calls[0][0].headers['X-PPLE-Event']).toBe('notification.test')
+  })
+
+  test('the test event is signed with both secrets during the grace window', async () => {
+    const { service, post } = setup({
+      url: 'https://hooks.example.com/pple',
+      secret: encryptCallbackSecret('whsec_new', KEY),
+      previousSecret: encryptCallbackSecret('whsec_old', KEY),
+      previousExpiresAt: new Date(Date.now() + 3_600_000),
+    })
+    await service.sendTestEvent('app-1')
+    expect(post.mock.calls[0][0].headers['X-PPLE-Signature']).toMatch(
+      /^v1=[0-9a-f]{64},v1=[0-9a-f]{64}$/
+    )
   })
 
   test('reports a transport error without a status', async () => {

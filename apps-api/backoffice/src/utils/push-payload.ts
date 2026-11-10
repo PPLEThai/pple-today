@@ -2,7 +2,7 @@ import type { TrayInteraction } from '@pple-today/api-common/dtos'
 import { NotificationInAppType, NotificationTokenPlatform } from '@pple-today/database/prisma'
 
 import { type StoredInteraction, trayShape } from '../modules/notification/interaction'
-import { mintResponseToken } from '../modules/notification/response-token'
+import { deviceHash, mintResponseToken } from '../modules/notification/response-token'
 
 /** A response token with no interaction expiry lives this long (see the spec). */
 const DEFAULT_RESPONSE_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000
@@ -146,6 +146,11 @@ export const buildFcmMessage = (
   const isAndroid = target.platform === NotificationTokenPlatform.ANDROID
   const appIconUrl = app ? fetchableIcon(app.icon) : undefined
   const badge = data.unreadCount
+  const brandedAndroid =
+    isAndroid &&
+    app !== undefined &&
+    target.supportsAppBranding &&
+    !options.androidBrandedPushDisabled
 
   // These key names are a contract with the mobile client, which restates them in
   // `apps-client/mobile/utils/branded-push.ts` — sharing them would drag Elysia and
@@ -165,13 +170,8 @@ export const buildFcmMessage = (
     // read back, so this is the only place a foregrounded client can learn the
     // authoritative count — otherwise it is left incrementing a local guess.
     ...(badge !== undefined ? { badge: String(badge) } : {}),
-    ...trayData(target, data, options),
+    ...trayData(target, data, options, brandedAndroid),
   }
-  const brandedAndroid =
-    isAndroid &&
-    app !== undefined &&
-    target.supportsAppBranding &&
-    !options.androidBrandedPushDisabled
 
   if (brandedAndroid) {
     return {
@@ -270,7 +270,12 @@ export const buildFcmMessage = (
 /**
  * The two tray data keys for one token, or nothing.
  *
- * Only for a token that asserted `supportsTrayInteraction`, only while the tray
+ * Only for a token that asserted `supportsTrayInteraction` and whose payload the
+ * client can actually turn into tray actions: iOS (the Notification Service
+ * Extension and category), or Android on the data-only branded path, where the
+ * client builds the notification itself. An Android token on the legacy
+ * `notification` payload is displayed by Play services with no code of ours, so
+ * it gets no tray data. Only while the tray
  * is not switched off, only while the interaction is still open, and only when
  * the interaction's shape gets tray actions (`trayShape`; otherwise a tap opens
  * the form). Both values are strings, because FCM `data` values must be. The
@@ -282,11 +287,16 @@ export const buildFcmMessage = (
 const trayData = (
   target: PushToken,
   data: PushNotificationContent,
-  options: BuildFcmMessageOptions
+  options: BuildFcmMessageOptions,
+  brandedAndroid: boolean
 ): Record<string, string> => {
   const { interaction, notificationId } = data
   if (!interaction || !notificationId) return {}
   if (!target.supportsTrayInteraction || options.trayInteractionDisabled) return {}
+  const trayCapable =
+    target.platform === NotificationTokenPlatform.IOS ||
+    (target.platform === NotificationTokenPlatform.ANDROID && brandedAndroid)
+  if (!trayCapable) return {}
   if (!options.responseTokenSecret) return {}
 
   const now = options.now ?? new Date()
@@ -302,7 +312,12 @@ const trayData = (
   return {
     pple_interaction: JSON.stringify(tray),
     pple_response_token: mintResponseToken(
-      { notificationId, userId: target.userId, exp: Math.floor(expiresAtMs / 1000) },
+      {
+        notificationId,
+        userId: target.userId,
+        exp: Math.floor(expiresAtMs / 1000),
+        deviceHash: deviceHash(target.token),
+      },
       options.responseTokenSecret
     ),
   }

@@ -53,6 +53,12 @@ export const BACKOFF_SCHEDULE_MS = [
 export const CLAIM_LEASE_MS = 5 * 60_000
 export const MAX_IN_FLIGHT_PER_APP = 10
 export const SWEEP_BATCH_SIZE = 100
+/** Most rows one sweep batch claims for a single app, so one backlog cannot starve the rest. */
+export const SWEEP_PER_APP_CLAIM = 20
+/** A configuration failure is retried this much later without counting an attempt. */
+export const CONFIG_RETRY_DELAY_MS = 30 * 60_000
+/** A row that has been undeliverable for our own reasons this long is given up on. */
+export const CONFIG_FAILURE_GIVE_UP_MS = 7 * 24 * 3_600_000
 export const RETENTION_MS = 90 * 24 * 3_600_000
 const LAST_ERROR_MAX = 300
 
@@ -64,7 +70,17 @@ export const backoffDelayMs = (attemptsMade: number): number =>
 
 export const classifyStatus = (statusCode: number): AttemptOutcome => {
   if (statusCode >= 200 && statusCode < 300) return 'DELIVERED'
-  if (statusCode === 408 || statusCode === 429 || statusCode >= 500) return 'RETRY'
+  // 401/403/404 are usually a receiver that is mid-deploy or has a wrong secret
+  // or route that its owner is about to fix, so they are retried on the backoff.
+  if (
+    statusCode === 401 ||
+    statusCode === 403 ||
+    statusCode === 404 ||
+    statusCode === 408 ||
+    statusCode === 429 ||
+    statusCode >= 500
+  )
+    return 'RETRY'
   // 410 Gone is how an app says "stop sending me these"; other 4xx will not fix
   // themselves; a redirect is never followed (SSRF), so it is a broken receiver.
   return 'FAILED'
@@ -136,6 +152,43 @@ export const decideAfterAttempt = (
   }
 }
 
+/**
+ * What to store when delivery cannot even be attempted because of our own
+ * configuration. The attempt is not counted; the row is tried again later and
+ * only given up on after `CONFIG_FAILURE_GIVE_UP_MS` since the user answered.
+ * An app that no longer exists (`reason` "app deleted") fails immediately.
+ */
+export const decideAfterConfigFailure = (
+  reason: string,
+  respondedAt: Date,
+  now: Date,
+  opts: { permanent?: boolean } = {}
+): Omit<AttemptDecision, 'attempts'> => {
+  const base = { lastStatusCode: null, deliveredAt: null }
+  if (opts.permanent) {
+    return {
+      ...base,
+      deliveryStatus: NotificationCallbackStatus.FAILED,
+      nextAttemptAt: null,
+      lastError: truncateError(reason),
+    }
+  }
+  if (now.getTime() - respondedAt.getTime() > CONFIG_FAILURE_GIVE_UP_MS) {
+    return {
+      ...base,
+      deliveryStatus: NotificationCallbackStatus.FAILED,
+      nextAttemptAt: null,
+      lastError: truncateError(`${reason} (gave up after 7 days)`),
+    }
+  }
+  return {
+    ...base,
+    deliveryStatus: NotificationCallbackStatus.PENDING,
+    nextAttemptAt: new Date(now.getTime() + CONFIG_RETRY_DELAY_MS),
+    lastError: truncateError(reason),
+  }
+}
+
 /** `v1=<hex HMAC-SHA256(secret, "<timestamp>.<raw body>")>` */
 export const signCallbackBody = (secret: string, timestamp: number | string, rawBody: string) =>
   `v1=${createHmac('sha256', secret).update(`${timestamp}.${rawBody}`).digest('hex')}`
@@ -143,7 +196,7 @@ export const signCallbackBody = (secret: string, timestamp: number | string, raw
 export type CallbackRequest = { headers: Record<string, string>; rawBody: string }
 
 export const buildCallbackRequest = (params: {
-  target: Pick<CallbackTarget, 'headers' | 'signingSecret'>
+  target: Pick<CallbackTarget, 'headers' | 'signingSecrets'>
   event: string
   deliveryId: string
   body: unknown
@@ -159,8 +212,11 @@ export const buildCallbackRequest = (params: {
     'X-PPLE-Timestamp': String(timestamp),
     ...params.target.headers,
   }
-  if (params.target.signingSecret) {
-    headers['X-PPLE-Signature'] = signCallbackBody(params.target.signingSecret, timestamp, rawBody)
+  if (params.target.signingSecrets?.length) {
+    // `v1=<new>,v1=<old>` while a rotation grace window is open; receivers accept any match.
+    headers['X-PPLE-Signature'] = params.target.signingSecrets
+      .map((secret) => signCallbackBody(secret, timestamp, rawBody))
+      .join(',')
   }
   return { headers, rawBody }
 }
@@ -194,24 +250,49 @@ export const buildResponseEventBody = (row: ResponseRowForCallback, attempt: num
   }
 }
 
-/** Run `fn` over `items` with at most `limit` in flight. Never rejects. */
-export const runWithConcurrency = async <T>(
-  items: readonly T[],
-  limit: number,
-  fn: (item: T) => Promise<void>
-): Promise<void> => {
-  let next = 0
-  const worker = async () => {
-    while (next < items.length) {
-      const item = items[next++]
-      try {
-        await fn(item)
-      } catch {
-        // the caller's fn records its own failures; one row must not stop the rest
+/**
+ * In-process, per-key concurrency cap (the key is a mini app id). `dispatchSoon`
+ * uses `tryAcquire` and gives up when full; the sweep uses `acquire` and waits,
+ * because its rows are already claimed. A released permit goes straight to the
+ * oldest waiter, so a steady stream of `dispatchSoon` calls cannot starve the sweep.
+ */
+export class KeyedLimiter {
+  private readonly state = new Map<string, { inFlight: number; waiters: (() => void)[] }>()
+
+  constructor(private readonly limit: number) {}
+
+  private releaser(key: string): () => void {
+    let released = false
+    return () => {
+      if (released) return
+      released = true
+      const entry = this.state.get(key)
+      if (!entry) return
+      const next = entry.waiters.shift()
+      if (next) {
+        next() // hand the permit over: inFlight stays the same
+        return
       }
+      entry.inFlight--
+      if (entry.inFlight <= 0) this.state.delete(key)
     }
   }
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker))
+
+  /** A release function, or null when `key` is already at the cap. */
+  tryAcquire(key: string): (() => void) | null {
+    const entry = this.state.get(key) ?? { inFlight: 0, waiters: [] }
+    if (entry.inFlight >= this.limit) return null
+    entry.inFlight++
+    this.state.set(key, entry)
+    return this.releaser(key)
+  }
+
+  async acquire(key: string): Promise<() => void> {
+    const immediate = this.tryAcquire(key)
+    if (immediate) return immediate
+    await new Promise<void>((resolve) => this.state.get(key)!.waiters.push(resolve))
+    return this.releaser(key)
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -233,7 +314,8 @@ export type CallbackHttpClient = {
  * POSTs with node's http(s) client, which never follows redirects (a 3xx comes
  * back as a status and is treated as a failure) and lets us pin the connection
  * to the address that passed the SSRF check while TLS still verifies the
- * original host name. The response body is drained and ignored.
+ * original host name. The response body is never read: the socket is destroyed
+ * as soon as the status line arrives.
  */
 export const nodeCallbackHttpClient: CallbackHttpClient = {
   post: ({ url, headers, body, timeoutMs, pinned }) =>
@@ -266,9 +348,11 @@ export const nodeCallbackHttpClient: CallbackHttpClient = {
             : {}),
         },
         (res) => {
+          // The status is all we use. Destroy the socket instead of reading the
+          // body, so a hostile receiver cannot make us drain an unbounded stream.
           res.on('error', () => {})
-          res.resume()
           done({ statusCode: res.statusCode ?? 0 })
+          res.destroy()
         }
       )
       const timer = setTimeout(() => {
@@ -288,7 +372,7 @@ export const nodeCallbackHttpClient: CallbackHttpClient = {
 
 export type CallbackSendResult =
   | { ok: true; result: AttemptResult; target: CallbackTarget }
-  | { ok: false; reason: string }
+  | { ok: false; reason: string; configError: boolean }
 
 export class NotificationCallbackSender {
   constructor(
@@ -304,15 +388,17 @@ export class NotificationCallbackSender {
     body: unknown
     now?: Date
   }): Promise<CallbackSendResult> {
-    const resolved = await resolveCallbackTarget(params.app, this.config, this.lookup)
-    if (!resolved.ok) return { ok: false, reason: resolved.reason }
+    const now = params.now ?? new Date()
+    const resolved = await resolveCallbackTarget(params.app, this.config, this.lookup, now)
+    if (!resolved.ok)
+      return { ok: false, reason: resolved.reason, configError: resolved.configError }
     const { target } = resolved
     const request = buildCallbackRequest({
       target,
       event: params.event,
       deliveryId: params.deliveryId,
       body: params.body,
-      now: params.now ?? new Date(),
+      now,
     })
     const result = await this.httpClient.post({
       url: target.url,
@@ -358,6 +444,9 @@ export type SweepResult = {
 export type Logger = { error: (obj: unknown) => void; warn?: (obj: unknown) => void }
 
 export class NotificationCallbackDeliveryService implements NotificationCallbackDispatcher {
+  /** Shared by `dispatchSoon` and the sweep: at most MAX_IN_FLIGHT_PER_APP per app per replica. */
+  private readonly limiter = new KeyedLimiter(MAX_IN_FLIGHT_PER_APP)
+
   constructor(
     private readonly prismaService: PrismaService,
     private readonly sender: NotificationCallbackSender,
@@ -365,11 +454,31 @@ export class NotificationCallbackDeliveryService implements NotificationCallback
     private readonly now: () => Date = () => new Date()
   ) {}
 
-  /** One immediate attempt, not awaited. A failure is left to the sweep. */
+  /**
+   * One immediate attempt, not awaited. A failure is left to the sweep. When the
+   * app is already at its in-flight cap this does nothing at all: the row is not
+   * claimed and stays PENDING for the sweep.
+   */
   dispatchSoon(responseId: string): void {
-    void this.attemptOne(responseId).catch((error) => {
+    void this.dispatch(responseId).catch((error) => {
       this.logger?.error({ message: 'Notification callback dispatch failed', responseId, error })
     })
+  }
+
+  private async dispatch(responseId: string) {
+    const row = await this.prismaService.notificationResponse.findUnique({
+      where: { id: responseId },
+      select: { miniAppId: true },
+    })
+    if (!row) return
+    // A deleted app (null) needs no HTTP call, so it needs no permit.
+    const release = row.miniAppId ? this.limiter.tryAcquire(row.miniAppId) : () => {}
+    if (!release) return
+    try {
+      await this.attemptOne(responseId)
+    } finally {
+      release()
+    }
   }
 
   /**
@@ -411,6 +520,8 @@ export class NotificationCallbackDeliveryService implements NotificationCallback
             source: true,
             notificationCallbackUrl: true,
             notificationCallbackSecret: true,
+            notificationCallbackPreviousSecret: true,
+            notificationCallbackPreviousSecretExpiresAt: true,
           },
         },
       },
@@ -418,20 +529,42 @@ export class NotificationCallbackDeliveryService implements NotificationCallback
     if (!row || row.deliveryStatus !== NotificationCallbackStatus.PENDING) return null
 
     const attemptNumber = row.attempts + 1
-    let result: AttemptResult
-    try {
-      const sent = await this.sender.send({
-        app: row.miniApp,
-        event: 'notification.response',
-        deliveryId: row.id,
-        body: buildResponseEventBody(row, attemptNumber),
+    // Either a counted attempt (receiver's behaviour) or a configuration failure
+    // (ours: not counted, retried in 30 minutes, given up after 7 days).
+    let decision: Omit<AttemptDecision, 'attempts'> & { attempts?: number }
+    if (!row.miniApp) {
+      decision = decideAfterConfigFailure('app deleted', row.respondedAt, this.now(), {
+        permanent: true,
       })
-      result = sent.ok ? sent.result : { error: sent.reason }
-    } catch (error) {
-      result = { error: truncateError(`delivery error: ${(error as Error).message}`) }
+    } else {
+      let result: AttemptResult | null
+      let configReason: string | null = null
+      try {
+        const sent = await this.sender.send({
+          app: row.miniApp,
+          event: 'notification.response',
+          deliveryId: row.id,
+          now: this.now(),
+          body: buildResponseEventBody({ ...row, miniApp: row.miniApp }, attemptNumber),
+        })
+        if (sent.ok) result = sent.result
+        else if (sent.configError) {
+          result = null
+          configReason = sent.reason
+        } else result = { error: sent.reason }
+      } catch (error) {
+        result = { error: truncateError(`delivery error: ${(error as Error).message}`) }
+      }
+      decision =
+        result === null
+          ? decideAfterConfigFailure(
+              configReason ?? 'configuration error',
+              row.respondedAt,
+              this.now()
+            )
+          : decideAfterAttempt(attemptNumber, result, this.now())
     }
 
-    const decision = decideAfterAttempt(attemptNumber, result, this.now())
     // Guarded on PENDING so a row retired mid-flight stays FAILED ("app retired").
     await this.prismaService.notificationResponse.updateMany({
       where: { id: row.id, deliveryStatus: NotificationCallbackStatus.PENDING },
@@ -445,21 +578,43 @@ export class NotificationCallbackDeliveryService implements NotificationCallback
   }
 
   /**
-   * Claim due rows with `FOR UPDATE SKIP LOCKED`, leasing them in the same
-   * statement so concurrent sweeps (several replicas) and `dispatchSoon` never
-   * deliver the same row twice at once.
+   * Claim due rows, fairly, leasing them in the same statement so concurrent
+   * sweeps (several replicas) and `dispatchSoon` never deliver the same row twice
+   * at once.
+   *
+   * Postgres rejects `FOR UPDATE` in a SELECT that uses window functions, so the
+   * two are in separate SELECTs. The innermost one ranks every due row per app
+   * (`ROW_NUMBER() OVER (PARTITION BY "miniAppId" ORDER BY "nextAttemptAt")`) with
+   * no locking; the ranks are cut to `perApp` per app and `limit` overall, oldest
+   * first. The middle SELECT then locks just those candidates with
+   * `FOR UPDATE SKIP LOCKED`, re-checking they are still PENDING and due, so a row
+   * another replica leased in between is skipped (the batch can only come up
+   * short, never double-claim). The outer UPDATE pushes `nextAttemptAt` out by the
+   * lease. Only the chosen rows are ever locked, not the whole backlog.
    */
-  async claimDue(limit = SWEEP_BATCH_SIZE): Promise<{ id: string; miniAppId: string }[]> {
+  async claimDue(
+    limit = SWEEP_BATCH_SIZE,
+    perApp = SWEEP_PER_APP_CLAIM
+  ): Promise<{ id: string; miniAppId: string | null }[]> {
     const now = this.now()
     const leaseUntil = new Date(now.getTime() + CLAIM_LEASE_MS)
-    return this.prismaService.$queryRaw<{ id: string; miniAppId: string }[]>(Prisma.sql`
+    return this.prismaService.$queryRaw<{ id: string; miniAppId: string | null }[]>(Prisma.sql`
       UPDATE "NotificationResponse"
       SET "nextAttemptAt" = ${leaseUntil}
       WHERE "id" IN (
-        SELECT "id" FROM "NotificationResponse"
-        WHERE "deliveryStatus" = 'PENDING' AND "nextAttemptAt" <= ${now}
-        ORDER BY "nextAttemptAt"
-        LIMIT ${limit}
+        SELECT c."id" FROM "NotificationResponse" c
+        WHERE c."id" IN (
+          SELECT ranked."id" FROM (
+            SELECT d."id", d."nextAttemptAt",
+              ROW_NUMBER() OVER (PARTITION BY d."miniAppId" ORDER BY d."nextAttemptAt") AS rn
+            FROM "NotificationResponse" d
+            WHERE d."deliveryStatus" = 'PENDING' AND d."nextAttemptAt" <= ${now}
+          ) ranked
+          WHERE ranked.rn <= ${perApp}
+          ORDER BY ranked."nextAttemptAt"
+          LIMIT ${limit}
+        )
+        AND c."deliveryStatus" = 'PENDING' AND c."nextAttemptAt" <= ${now}
         FOR UPDATE SKIP LOCKED
       )
       RETURNING "id", "miniAppId"
@@ -493,21 +648,24 @@ export class NotificationCallbackDeliveryService implements NotificationCallback
     const claimed = await this.claimDue()
     const counts = { delivered: 0, retried: 0, failed: 0 }
 
-    const byApp = new Map<string, string[]>()
-    for (const { id, miniAppId } of claimed) {
-      byApp.set(miniAppId, [...(byApp.get(miniAppId) ?? []), id])
-    }
-    // Apps run in parallel; within an app at most MAX_IN_FLIGHT_PER_APP at once,
-    // so one slow app cannot hold up the others.
+    // Rows are already leased; each waits for its app's permit, so an app never
+    // has more than MAX_IN_FLIGHT_PER_APP in flight (counting `dispatchSoon`),
+    // and a slow app does not hold up the others.
     await Promise.all(
-      Array.from(byApp.values()).map((ids) =>
-        runWithConcurrency(ids, MAX_IN_FLIGHT_PER_APP, async (id) => {
+      claimed.map(async ({ id, miniAppId }) => {
+        const release = miniAppId ? await this.limiter.acquire(miniAppId) : () => {}
+        try {
           const outcome = await this.deliverClaimed(id)
           if (outcome === 'DELIVERED') counts.delivered++
           else if (outcome === 'FAILED') counts.failed++
           else if (outcome === 'RETRY') counts.retried++
-        })
-      )
+        } catch (error) {
+          // One row must not stop the rest; it stays leased and is retried after the lease.
+          this.logger?.error({ message: 'Notification callback sweep delivery failed', id, error })
+        } finally {
+          release()
+        }
+      })
     )
 
     const purged = await this.purgeExpiredValues()

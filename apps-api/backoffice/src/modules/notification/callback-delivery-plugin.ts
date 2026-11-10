@@ -18,6 +18,7 @@ export const NotificationCallbackSenderPlugin = new Elysia({
       platformRelayUrl: configService.get('PLATFORM_CALLBACK_RELAY_URL'),
       platformRelayToken: configService.get('PLATFORM_CALLBACK_RELAY_TOKEN'),
       secretKey: configService.get('NOTIFICATION_CALLBACK_SECRET_KEY'),
+      secretKeyPrevious: configService.get('NOTIFICATION_CALLBACK_SECRET_KEY_PREVIOUS'),
     }),
   }))
 

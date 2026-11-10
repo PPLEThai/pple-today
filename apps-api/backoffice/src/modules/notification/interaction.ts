@@ -16,6 +16,10 @@ import {
 
 const MAX_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000
 const ID_PATTERN = /^[a-z0-9_-]{1,32}$/
+/** Ids that would collide with Object.prototype members if ever used as keys. */
+const RESERVED_IDS = new Set(['__proto__', 'constructor', 'prototype'])
+/** An ISO date-time that states its offset: `Z` or `±hh:mm`. A bare local time is ambiguous. */
+const ISO_WITH_OFFSET = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/
 
 /** The spec as stored on `Notification.interaction`, after validation. */
 export type StoredInteraction = {
@@ -77,6 +81,7 @@ function id(v: unknown, path: string, seen: Set<string>): string {
   if (typeof v !== 'string' || !ID_PATTERN.test(v)) {
     return bail(path, 'must match ^[a-z0-9_-]{1,32}$')
   }
+  if (RESERVED_IDS.has(v)) return bail(path, `"${v}" is a reserved id`)
   if (seen.has(v)) return bail(path, `duplicate id "${v}"`)
   seen.add(v)
   return v
@@ -258,8 +263,8 @@ export function validateInteractionSpec(input: unknown, now: Date): ValidateInte
 
     let expiresAt: Date | null = null
     if (input.expiresAt !== undefined) {
-      if (typeof input.expiresAt !== 'string' || !/^\d{4}-\d{2}-\d{2}T/.test(input.expiresAt)) {
-        return bail('interaction.expiresAt', 'must be an ISO date-time')
+      if (typeof input.expiresAt !== 'string' || !ISO_WITH_OFFSET.test(input.expiresAt)) {
+        return bail('interaction.expiresAt', 'must be an ISO date-time with a Z or ±hh:mm offset')
       }
       expiresAt = new Date(input.expiresAt)
       if (Number.isNaN(expiresAt.getTime())) {
@@ -326,11 +331,12 @@ export function validateAnswer(
     if (!spec.fields.some((f) => f.id === key)) return fail(`values.${key}`, 'is not a field')
   }
 
-  const values: NotificationInteractionValues = {}
+  // A Map, so a field id can never reach Object.prototype.
+  const values = new Map<string, string | string[]>()
   for (const field of spec.fields) {
     const path = `values.${field.id}`
     const required = field.required || (action.requires?.includes(field.id) ?? false)
-    const value = raw[field.id]
+    const value = Object.prototype.hasOwnProperty.call(raw, field.id) ? raw[field.id] : undefined
     const missing = () => fail(path, 'is required')
 
     if (field.type === 'text') {
@@ -350,7 +356,7 @@ export function validateAnswer(
       if (field.minLength !== undefined && text.length < field.minLength) {
         return fail(path, `must be at least ${field.minLength} characters`)
       }
-      values[field.id] = text
+      values.set(field.id, text)
     } else if (field.type === 'radio') {
       if (value === undefined || value === null) {
         if (required) return missing()
@@ -359,7 +365,7 @@ export function validateAnswer(
       if (typeof value !== 'string' || !field.options.some((o) => o.id === value)) {
         return fail(path, 'must be one of the option ids')
       }
-      values[field.id] = value
+      values.set(field.id, value)
     } else {
       if (value === undefined || value === null) {
         if (required) return missing()
@@ -384,27 +390,34 @@ export function validateAnswer(
       if (field.max !== undefined && picked.size > field.max) {
         return fail(path, `must pick at most ${field.max}`)
       }
-      values[field.id] = field.options.map((o) => o.id).filter((oid) => picked.has(oid))
+      values.set(
+        field.id,
+        field.options.map((o) => o.id).filter((oid) => picked.has(oid))
+      )
     }
   }
 
   return {
     ok: true,
     actionId: action.id,
-    values: Object.keys(values).length > 0 ? values : undefined,
+    values:
+      values.size > 0 ? (Object.fromEntries(values) as NotificationInteractionValues) : undefined,
   }
 }
 
-/** RESPONDED > CLOSED > EXPIRED > OPEN. A retired sending app counts as closed. */
+/**
+ * RESPONDED > CLOSED > EXPIRED > OPEN. A sending app that is gone (retired, or
+ * deleted so the notification has no app any more) counts as closed.
+ */
 export function deriveInteractionState(input: {
   hasResponse: boolean
   closedAt: Date | null
   expiresAt: Date | null
-  appRetired: boolean
+  appGone: boolean
   now: Date
 }): NotificationInteractionState {
   if (input.hasResponse) return 'RESPONDED'
-  if (input.closedAt || input.appRetired) return 'CLOSED'
+  if (input.closedAt || input.appGone) return 'CLOSED'
   if (input.expiresAt && input.expiresAt.getTime() <= input.now.getTime()) return 'EXPIRED'
   return 'OPEN'
 }
@@ -461,8 +474,22 @@ export function trayShape(spec: StoredInteraction): TrayInteractionShape | null 
   const field = fields[0]
   if (fields.length === 1 && field.type === 'text' && actions.length === 1) {
     const action = actions[0]
-    // A dialog can't be shown in the tray, so a confirming action is form-only.
-    if (action.confirm) return null
+    // A dialog can't be shown in the tray, so a confirming action becomes a
+    // plain button that opens the app (bg: false), where the dialog is shown.
+    if (action.confirm) {
+      return {
+        kind: 'buttons',
+        actions: [
+          compact({
+            id: action.id,
+            label: action.label,
+            icon: action.icon,
+            destructive: action.style === 'destructive' ? true : undefined,
+            bg: false,
+          }),
+        ],
+      }
+    }
     return compact({
       kind: 'reply' as const,
       fieldId: field.id,

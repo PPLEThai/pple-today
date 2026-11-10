@@ -8,7 +8,9 @@ import {
   parseDismiss,
   parseTrayInteraction,
   pendingActionFromResponse,
+  selectCategoriesToKeep,
   selectCategoriesToPrune,
+  selectInteractiveToDismiss,
   submissionFromResponse,
   supportsTrayInteraction,
   tapToDetailData,
@@ -274,5 +276,56 @@ describe('misc', () => {
     expect(supportsTrayInteraction('android')).toBe(true)
     expect(supportsTrayInteraction('ios')).toBe(true)
     expect(supportsTrayInteraction('web')).toBe(false)
+  })
+})
+
+describe('single bg:false button (reply with confirm)', () => {
+  const single = {
+    id: 'n3',
+    kind: 'buttons',
+    actions: [{ id: 'send', label: 'ส่ง', bg: false }],
+  }
+  const input = {
+    actionIdentifier: 'send',
+    categoryIdentifier: 'pple.ix.n3',
+    data: {
+      notificationId: 'n',
+      pple_response_token: 't',
+      pple_interaction: JSON.stringify(single),
+    },
+  }
+  test('opens the app instead of submitting', () => {
+    expect(parseTrayInteraction(JSON.stringify(single))).not.toBeNull()
+    expect(submissionFromResponse(input)).toBeNull()
+    expect(pendingActionFromResponse(input)).toBe('send')
+  })
+  test('the category action opens the app to the foreground', () => {
+    const category = buildTrayCategory(parseTrayInteraction(single)!)
+    expect(category.actions).toHaveLength(1)
+    expect(category.actions[0].options.opensAppToForeground).toBe(true)
+  })
+})
+
+describe('logout clearing', () => {
+  const presented = [
+    { identifier: 'pple.notification.a', data: { pple_interaction: '{}' } },
+    { identifier: 'pple.notification.b', data: { link: 'x' } },
+    { identifier: 'other', data: { pple_interaction: '{}' } },
+    { identifier: 'ios-1', categoryIdentifier: 'pple.ix.a' },
+    { identifier: 'ios-2', categoryIdentifier: 'pple.result' },
+    { identifier: 'ios-3', categoryIdentifier: null },
+  ]
+  test('android picks interactive pple.notification.* only', () => {
+    expect(selectInteractiveToDismiss(presented, 'android')).toEqual(['pple.notification.a'])
+  })
+  test('ios picks pple.ix.* categories only', () => {
+    expect(selectInteractiveToDismiss(presented, 'ios')).toEqual(['ios-1'])
+  })
+  test('categories to keep exclude pple.ix.*', () => {
+    expect(
+      selectCategoriesToKeep([{ identifier: 'pple.ix.a' }, { identifier: 'pple.result' }]).map(
+        (c) => c.identifier
+      )
+    ).toEqual(['pple.result'])
   })
 })

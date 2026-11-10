@@ -190,12 +190,17 @@ export type CallbackTargetApp = {
   source: MiniAppSource
   notificationCallbackUrl: string | null
   notificationCallbackSecret: string | null
+  /** The secret that was replaced by the last rotation; still signs until it expires. */
+  notificationCallbackPreviousSecret?: string | null
+  notificationCallbackPreviousSecretExpiresAt?: Date | null
 }
 
 export type CallbackTargetConfig = {
   platformRelayUrl?: string
   platformRelayToken?: string
   secretKey?: string
+  /** `NOTIFICATION_CALLBACK_SECRET_KEY_PREVIOUS`: only used to decrypt. */
+  secretKeyPrevious?: string
 }
 
 export type CallbackTarget = {
@@ -203,15 +208,23 @@ export type CallbackTarget = {
   url: string
   /** Extra request headers (the relay's bearer). */
   headers: Record<string, string>
-  /** HMAC secret for `X-PPLE-Signature`; ADMIN apps only. */
-  signingSecret?: string
+  /**
+   * HMAC secrets for `X-PPLE-Signature`; ADMIN apps only. The current secret
+   * first, then the previous one while its rotation grace window is open.
+   */
+  signingSecrets?: string[]
   /** Connect to this address instead of resolving again (ADMIN apps). */
   pinned?: ResolvedAddress
 }
 
+/**
+ * `configError` marks a failure that is ours (unset relay or key, an app with no
+ * URL or secret, a secret that cannot be decrypted), not the receiver's: those
+ * do not burn delivery attempts.
+ */
 export type CallbackTargetResult =
   | { ok: true; target: CallbackTarget }
-  | { ok: false; reason: string }
+  | { ok: false; reason: string; configError: boolean }
 
 export const buildPlatformRelayUrl = (relayBase: string, slug: string) =>
   `${relayBase.replace(/\/+$/, '')}/apps/${encodeURIComponent(slug)}/notification-response`
@@ -219,11 +232,12 @@ export const buildPlatformRelayUrl = (relayBase: string, slug: string) =>
 export const resolveCallbackTarget = async (
   app: CallbackTargetApp,
   config: CallbackTargetConfig,
-  lookup: HostLookup = defaultHostLookup
+  lookup: HostLookup = defaultHostLookup,
+  now: Date = new Date()
 ): Promise<CallbackTargetResult> => {
   if (app.source === MiniAppSource.PLATFORM) {
     if (!config.platformRelayUrl || !config.platformRelayToken)
-      return { ok: false, reason: 'Platform callback relay is not configured' }
+      return { ok: false, reason: 'Platform callback relay is not configured', configError: true }
     return {
       ok: true,
       target: {
@@ -234,18 +248,37 @@ export const resolveCallbackTarget = async (
     }
   }
 
-  if (!app.notificationCallbackUrl) return { ok: false, reason: 'App has no callback URL' }
+  if (!app.notificationCallbackUrl)
+    return { ok: false, reason: 'App has no callback URL', configError: true }
   if (!app.notificationCallbackSecret || !config.secretKey)
-    return { ok: false, reason: 'App has no callback signing secret' }
+    return { ok: false, reason: 'App has no callback signing secret', configError: true }
 
   const checked = validateCallbackUrl(app.notificationCallbackUrl)
-  if (!checked.ok) return { ok: false, reason: checked.reason }
+  if (!checked.ok) return { ok: false, reason: checked.reason, configError: false }
 
-  const secret = decryptCallbackSecret(app.notificationCallbackSecret, config.secretKey)
-  if (!secret) return { ok: false, reason: 'Callback signing secret could not be decrypted' }
+  const keys = { current: config.secretKey, previous: config.secretKeyPrevious }
+  const secret = decryptCallbackSecret(app.notificationCallbackSecret, keys)
+  if (!secret)
+    return {
+      ok: false,
+      reason: 'Callback signing secret could not be decrypted',
+      configError: true,
+    }
+
+  const signingSecrets = [secret]
+  const previousExpiresAt = app.notificationCallbackPreviousSecretExpiresAt
+  if (
+    app.notificationCallbackPreviousSecret &&
+    previousExpiresAt &&
+    previousExpiresAt.getTime() > now.getTime()
+  ) {
+    // A previous secret that no longer decrypts is skipped, never fatal.
+    const previous = decryptCallbackSecret(app.notificationCallbackPreviousSecret, keys)
+    if (previous && previous !== secret) signingSecrets.push(previous)
+  }
 
   const resolved = await resolvePublicAddress(checked.url, lookup)
-  if (!resolved.ok) return { ok: false, reason: resolved.reason }
+  if (!resolved.ok) return { ok: false, reason: resolved.reason, configError: false }
 
   return {
     ok: true,
@@ -253,7 +286,7 @@ export const resolveCallbackTarget = async (
       kind: 'ADMIN',
       url: checked.url.toString(),
       headers: {},
-      signingSecret: secret,
+      signingSecrets,
       pinned: resolved.pinned,
     },
   }

@@ -14,6 +14,9 @@ import {
   validateCallbackUrl,
 } from '../../notification/callback-target'
 
+/** After a rotation the replaced secret keeps signing (alongside the new one) this long. */
+export const SECRET_ROTATION_GRACE_MS = 24 * 3_600_000
+
 const NOT_FOUND = {
   RECORD_NOT_FOUND: {
     code: InternalErrorCode.MINI_APP_NOT_FOUND,
@@ -31,7 +34,8 @@ export class AdminMiniAppCallbackService {
     private readonly repository: AdminMiniAppRepository,
     private readonly sender: NotificationCallbackSender,
     private readonly secretKey: string | undefined,
-    private readonly lookup: HostLookup = defaultHostLookup
+    private readonly lookup: HostLookup = defaultHostLookup,
+    private readonly now: () => Date = () => new Date()
   ) {}
 
   private async loadAdminApp(id: string) {
@@ -92,18 +96,32 @@ export class AdminMiniAppCallbackService {
     return ok({ url: checked.url.toString(), secret })
   }
 
-  /** Remove the URL and the secret. Pending answers wait for a new URL. */
+  /**
+   * Remove the URL and both secrets (current and the rotation-grace one).
+   * Answers still PENDING are not failed: each delivery attempt finds no URL, which
+   * is a configuration failure, so it is rescheduled every 30 minutes without
+   * using up attempts. They deliver once a URL is set again, and are marked FAILED
+   * if they are still undelivered 7 days after the user answered.
+   */
   async clear(id: string) {
     const app = await this.loadAdminApp(id)
     if (app.isErr()) return err(app.error)
     const saved = await this.repository.setCallbackSettings(id, {
       notificationCallbackUrl: null,
       notificationCallbackSecret: null,
+      notificationCallbackPreviousSecret: null,
+      notificationCallbackPreviousSecretExpiresAt: null,
     })
     if (saved.isErr()) return mapRepositoryError(saved.error, NOT_FOUND)
     return ok({ url: null, hasSecret: false })
   }
 
+  /**
+   * New secret, shown once. The replaced one moves to the "previous" slot and
+   * keeps signing for 24 hours (`X-PPLE-Signature` carries both), so the app can
+   * switch over without dropping answers. A second rotation inside the window
+   * replaces the previous slot: only one old secret is ever honoured.
+   */
   async rotateSecret(id: string) {
     const app = await this.loadAdminApp(id)
     if (app.isErr()) return err(app.error)
@@ -115,6 +133,10 @@ export class AdminMiniAppCallbackService {
     const saved = await this.repository.setCallbackSettings(id, {
       notificationCallbackUrl: app.value.notificationCallbackUrl,
       notificationCallbackSecret: encryptCallbackSecret(secret, key.value),
+      notificationCallbackPreviousSecret: app.value.notificationCallbackSecret,
+      notificationCallbackPreviousSecretExpiresAt: app.value.notificationCallbackSecret
+        ? new Date(this.now().getTime() + SECRET_ROTATION_GRACE_MS)
+        : null,
     })
     if (saved.isErr()) return mapRepositoryError(saved.error, NOT_FOUND)
     return ok({ secret })

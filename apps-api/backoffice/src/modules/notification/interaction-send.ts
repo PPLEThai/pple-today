@@ -15,6 +15,17 @@ export interface PreparedInteraction {
 export interface CallbackTarget {
   source: MiniAppSource
   notificationCallbackUrl: string | null
+  notificationCallbackSecret: string | null
+}
+
+/**
+ * The deployment config a callback needs, mirroring `resolveCallbackTarget`:
+ * PLATFORM apps need the relay URL and token, ADMIN apps need the secret key.
+ */
+export interface CallbackSendConfig {
+  platformRelayUrl?: string
+  platformRelayToken?: string
+  secretKey?: string
 }
 
 /**
@@ -35,6 +46,8 @@ export async function prepareInteractionSend(args: {
   /** The sending app, or null for an unbound key. */
   app: { id: string } | null
   getCallbackTarget: (miniAppId: string) => Promise<CallbackTarget | null>
+  /** Callback config of this deployment. Absent counts as nothing configured. */
+  callbackConfig?: CallbackSendConfig
   now: Date
 }) {
   if (args.input === undefined) return ok<PreparedInteraction | undefined>(undefined)
@@ -66,15 +79,21 @@ export async function prepareInteractionSend(args: {
     err({
       code: InternalErrorCode.NOTIFICATION_INTERACTION_NO_CALLBACK,
       message:
-        'The sending app has no callback target. An interaction needs an app with a callback URL (or a platform app), because the answer is POSTed back to it.',
+        'The sending app has no usable callback target. An interaction needs an app with a callback URL and signing secret (or a platform app), and a server configured to deliver to it, because the answer is POSTed back.',
     })
   if (!args.app) return noCallback()
 
   const target = await args.getCallbackTarget(args.app.id)
-  // PLATFORM apps always deliver through the platform relay; ADMIN apps need a URL.
+  // Mirrors `resolveCallbackTarget`: refuse now whatever delivery could not do later.
+  // PLATFORM apps deliver through the relay; ADMIN apps need a URL, a secret and the key.
+  const config = args.callbackConfig ?? {}
   const hasTarget =
     target !== null &&
-    (target.source === MiniAppSource.PLATFORM || Boolean(target.notificationCallbackUrl))
+    (target.source === MiniAppSource.PLATFORM
+      ? Boolean(config.platformRelayUrl && config.platformRelayToken)
+      : Boolean(
+          target.notificationCallbackUrl && target.notificationCallbackSecret && config.secretKey
+        ))
   if (!hasTarget) return noCallback()
 
   return ok<PreparedInteraction | undefined>({

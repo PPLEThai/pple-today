@@ -29,6 +29,7 @@ import {
   RespondNotificationParams,
   RespondNotificationResponse,
   SendExternalNotificationHeader,
+  UnregisterNotificationBody,
 } from './models'
 import {
   AppNotificationServicePlugin,
@@ -144,6 +145,27 @@ const TypedNotificationController = new Elysia({
       body: RegisterNotificationBody,
       response: {
         201: RegisterNotificationResponse,
+        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+    }
+  )
+  .post(
+    '/unregister',
+    async ({ body, user, notificationService, status }) => {
+      const result = await notificationService.unregisterDeviceToken(user.id, body.deviceToken)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+      return status(200, { message: 'Device token unregistered' })
+    },
+    {
+      detail: {
+        summary: 'Unregister device token (logout)',
+        description:
+          "Removes the caller's registration of this device token. Called on logout, so the device stops receiving the user's pushes and its tray response tokens stop working. Idempotent: an unknown token, or one now registered to someone else, is a no-op.",
+      },
+      requiredLocalUser: true,
+      body: UnregisterNotificationBody,
+      response: {
+        200: RegisterNotificationResponse,
         ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
       },
     }

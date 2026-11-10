@@ -8,7 +8,7 @@ import type { NotificationTokenPlatform } from '@pple-today/database/prisma'
 import { err, ok } from 'neverthrow'
 
 import { readClientInteraction } from './interaction-read'
-import { prepareInteractionSend } from './interaction-send'
+import { type CallbackSendConfig, prepareInteractionSend } from './interaction-send'
 import type { BoundApp } from './key-binding'
 import type {
   CreateNewExternalNotificationBody,
@@ -48,10 +48,16 @@ export class NotificationService {
     private readonly options: {
       /** `INTERACTIVE_NOTIFICATIONS_ENABLED`. While false a send with `interaction` is refused. */
       interactiveNotificationsEnabled?: boolean
+      /** Relay and secret-key config the send-time callback check mirrors. */
+      callbackConfig?: CallbackSendConfig
       /** Injected so interaction state is testable without a fake timer. */
       now?: () => Date
     } = {}
   ) {}
+
+  private interactionsEnabled() {
+    return { enabled: this.options.interactiveNotificationsEnabled ?? false }
+  }
 
   private now() {
     return this.options.now?.() ?? new Date()
@@ -90,7 +96,8 @@ export class NotificationService {
         description: notification.message ?? undefined,
         image: notification.image ?? undefined,
         app: toSenderApp(notification.miniApp),
-        interactionState: readClientInteraction(notification, now)?.state,
+        interactionState: readClientInteraction(notification, now, this.interactionsEnabled())
+          ?.state,
         isRead,
         createdAt,
       }))
@@ -153,12 +160,27 @@ export class NotificationService {
                 ...linkBypassFields,
               },
       },
-      // Reads render an existing interaction whatever the flag says; the flag
-      // gates sending and answering.
-      interaction: readClientInteraction(notificationDetails, this.now()),
+      // An existing interaction keeps rendering while the flag is off, but as
+      // CLOSED (unless already answered): nothing can be answered then.
+      interaction: readClientInteraction(
+        notificationDetails,
+        this.now(),
+        this.interactionsEnabled()
+      ),
       isRead: notification.isRead,
       createdAt: notification.createdAt,
     } satisfies GetNotificationDetailsByIdResponse)
+  }
+
+  /**
+   * Forgets this device for this user (logout). Removing the row also invalidates
+   * every tray response token minted for the device, since a token is bound to
+   * its device registration.
+   */
+  async unregisterDeviceToken(userId: string, deviceToken: string) {
+    const result = await this.notificationRepository.unregisterDeviceToken(userId, deviceToken)
+    if (result.isErr()) return mapRepositoryError(result.error)
+    return ok()
   }
 
   async registerDeviceToken(
@@ -333,6 +355,7 @@ export class NotificationService {
       bypass: content.value.link?.bypassNotificationCenter === true,
       app: key.miniApp,
       getCallbackTarget: (miniAppId) => this.notificationRepository.getCallbackTarget(miniAppId),
+      callbackConfig: this.options.callbackConfig,
       now: this.now(),
     })
     if (interaction.isErr()) return err(interaction.error)

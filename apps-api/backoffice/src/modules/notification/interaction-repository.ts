@@ -6,6 +6,10 @@ import {
   Prisma,
 } from '@pple-today/database/prisma'
 
+import { deriveInteractionState } from './interaction'
+import { isAppGone } from './interaction-read'
+import { deviceHash } from './response-token'
+
 /** The response fields a client may see, always filtered to the caller by the query. */
 const callerResponseSelect = { actionId: true, values: true, respondedAt: true } as const
 
@@ -55,7 +59,30 @@ export class InteractionRepository {
   }
 
   /**
-   * Record the answer and mark the notification read, in one transaction.
+   * Whether the user still has a registered device whose FCM token hashes to
+   * `hash` (`deviceHash`): what binds a tray response token to a device that is
+   * still signed in to that user. Tokens are hashed here rather than in SQL; a
+   * user has a handful.
+   */
+  async hasDeviceWithHash(userId: string, hash: string) {
+    return fromRepositoryPromise(async () => {
+      const tokens = await this.prismaService.userNotificationToken.findMany({
+        where: { userId },
+        select: { token: true },
+      })
+      return tokens.some((t) => deviceHash(t.token) === hash)
+    })
+  }
+
+  /**
+   * Record the answer and mark the notification read, only while the
+   * interaction is still open.
+   *
+   * One interactive transaction: lock the notification row (`FOR UPDATE`, which
+   * is also what a concurrent close, an `updateMany` on that row, waits on),
+   * re-read closed / expiry / app state under the lock, then insert the response
+   * and mark it read. If the interaction is no longer open nothing is written and
+   * the result says why.
    *
    * The unique `(notificationId, userId)` key is what makes "answer once" a
    * database fact: a concurrent second answer fails here with
@@ -64,31 +91,70 @@ export class InteractionRepository {
   async createResponse(input: {
     notificationId: string
     userId: string
-    miniAppId: string
     actionId: string
     values: Prisma.InputJsonValue | undefined
     channel: NotificationResponseChannel
+    now: Date
   }) {
-    return fromRepositoryPromise(async () => {
-      const [response] = await this.prismaService.$transaction([
-        this.prismaService.notificationResponse.create({
-          data: {
-            notificationId: input.notificationId,
-            userId: input.userId,
-            miniAppId: input.miniAppId,
-            actionId: input.actionId,
-            values: input.values,
-            channel: input.channel,
-          },
-          select: { id: true, ...callerResponseSelect },
-        }),
-        this.prismaService.userNotification.updateMany({
-          where: { userId: input.userId, notificationId: input.notificationId, isRead: false },
-          data: { isRead: true, readAt: new Date() },
-        }),
-      ])
-      return response
-    })
+    return fromRepositoryPromise(
+      this.prismaService.$transaction(
+        async (
+          tx
+        ): Promise<
+          | {
+              status: 'CREATED'
+              response: {
+                id: string
+                actionId: string
+                values: Prisma.JsonValue
+                respondedAt: Date
+              }
+            }
+          | { status: 'CLOSED' | 'EXPIRED' }
+        > => {
+          await tx.$queryRaw`SELECT "id" FROM "Notification" WHERE "id" = ${input.notificationId} FOR UPDATE`
+
+          const row = await tx.notification.findUnique({
+            where: { id: input.notificationId },
+            select: {
+              miniAppId: true,
+              interactionClosedAt: true,
+              interactionExpiresAt: true,
+              miniApp: { select: { retiredAt: true } },
+            },
+          })
+          if (!row) return { status: 'CLOSED' }
+          const state = deriveInteractionState({
+            hasResponse: false,
+            closedAt: row.interactionClosedAt,
+            expiresAt: row.interactionExpiresAt,
+            appGone: row.miniAppId === null || isAppGone(row.miniApp),
+            now: input.now,
+          })
+          if (state === 'CLOSED' || state === 'EXPIRED') return { status: state }
+
+          const response = await tx.notificationResponse.create({
+            data: {
+              notificationId: input.notificationId,
+              userId: input.userId,
+              miniAppId: row.miniAppId,
+              actionId: input.actionId,
+              values: input.values,
+              channel: input.channel,
+              // The app's clock, not the database default: the sweep compares this
+              // against the app's `now`, and the two clocks can differ.
+              nextAttemptAt: new Date(),
+            },
+            select: { id: true, ...callerResponseSelect },
+          })
+          await tx.userNotification.updateMany({
+            where: { userId: input.userId, notificationId: input.notificationId, isRead: false },
+            data: { isRead: true, readAt: new Date() },
+          })
+          return { status: 'CREATED', response }
+        }
+      )
+    )
   }
 
   /**

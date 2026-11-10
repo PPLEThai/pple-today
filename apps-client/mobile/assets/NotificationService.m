@@ -251,6 +251,28 @@ static BOOL PPLERegisterCategory(UNNotificationCategory *category) {
 
         [center setNotificationCategories:merged];
         [defaults setObject:oldestFirst forKey:kPPLECategoryOrderKey];
+
+        // Read the set back before the caller displays: `setNotificationCategories:`
+        // returns before iOS has necessarily committed it, and a notification shown
+        // ahead of that has no actions (as OneSignal's extension also guards
+        // against). Bounded by the same timeout. If the category is not there when
+        // time runs out we still report success: the worst case is a notification
+        // without actions, never a lost one.
+        dispatch_semaphore_t committed = dispatch_semaphore_create(0);
+        __block BOOL found = NO;
+        [center getNotificationCategoriesWithCompletionHandler:^(NSSet<UNNotificationCategory *> *categories) {
+            for (UNNotificationCategory *candidate in categories) {
+                if ([candidate.identifier isEqualToString:category.identifier]) {
+                    found = YES;
+                    break;
+                }
+            }
+            dispatch_semaphore_signal(committed);
+        }];
+        dispatch_semaphore_wait(committed, dispatch_time(DISPATCH_TIME_NOW, kPPLECategoriesTimeoutSeconds * NSEC_PER_SEC));
+        if (!found) {
+            NSLog(@"[NotificationService] category %@ not visible after registering", category.identifier);
+        }
         return YES;
     }
 }

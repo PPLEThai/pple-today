@@ -1,5 +1,6 @@
 import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { NotificationCallbackStatus } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 
@@ -58,6 +59,8 @@ export class AdminMiniAppRepository {
           source: true,
           notificationCallbackUrl: true,
           notificationCallbackSecret: true,
+          notificationCallbackPreviousSecret: true,
+          notificationCallbackPreviousSecretExpiresAt: true,
         },
       })
     )
@@ -65,7 +68,12 @@ export class AdminMiniAppRepository {
 
   async setCallbackSettings(
     id: string,
-    data: { notificationCallbackUrl: string | null; notificationCallbackSecret?: string | null }
+    data: {
+      notificationCallbackUrl: string | null
+      notificationCallbackSecret?: string | null
+      notificationCallbackPreviousSecret?: string | null
+      notificationCallbackPreviousSecretExpiresAt?: Date | null
+    }
   ) {
     return fromRepositoryPromise(
       this.prismaService.miniApp.update({
@@ -229,13 +237,22 @@ export class AdminMiniAppRepository {
 
     // App Users, invites and visibility roles reference the app with ON DELETE
     // RESTRICT, so they go first in the same transaction. Banners, notifications
-    // and notification keys are SET NULL and survive on their own.
+    // and notification keys are SET NULL and survive on their own. So do
+    // interactive-notification answers: `NotificationResponse.miniAppId` is SET
+    // NULL, the answer rows are kept, and the ones still waiting for delivery are
+    // failed first because there is nowhere left to deliver them.
     const deleteResult = await fromRepositoryPromise(
       this.prismaService
         .$transaction([
-          // Interactive-notification answers reference the app with ON DELETE
-          // RESTRICT too; with the app gone there is nowhere to deliver them.
-          this.prismaService.notificationResponse.deleteMany({ where: { miniAppId: id } }),
+          this.prismaService.notificationResponse.updateMany({
+            where: { miniAppId: id, deliveryStatus: NotificationCallbackStatus.PENDING },
+            data: {
+              deliveryStatus: NotificationCallbackStatus.FAILED,
+              lastError: 'app deleted',
+              lastAttemptAt: new Date(),
+              nextAttemptAt: null,
+            },
+          }),
           this.prismaService.miniAppUser.deleteMany({ where: { miniAppId: id } }),
           this.prismaService.miniAppInvite.deleteMany({ where: { miniAppId: id } }),
           this.prismaService.miniAppRole.deleteMany({ where: { miniAppId: id } }),

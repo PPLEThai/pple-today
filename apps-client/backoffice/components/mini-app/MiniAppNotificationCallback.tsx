@@ -110,7 +110,7 @@ export const MiniAppNotificationCallback = (props: MiniAppNotificationCallbackPr
     confirmDialogRef.current?.confirm({
       title: 'หมุนรหัสลับสำหรับลงลายเซ็นหรือไม่?',
       description:
-        'รหัสลับเดิมจะใช้ไม่ได้ทันที ระบบจะแสดงรหัสใหม่เพียงครั้งเดียว แอปของคุณต้องเปลี่ยนไปใช้รหัสใหม่เพื่อตรวจลายเซ็นให้ผ่าน',
+        'ระบบจะแสดงรหัสใหม่เพียงครั้งเดียว รหัสลับเดิมยังใช้ได้อีก 24 ชั่วโมง (ลายเซ็นจะมีทั้งรหัสใหม่และรหัสเดิมในส่วนหัว X-PPLE-Signature) ให้แอปของคุณเปลี่ยนไปใช้รหัสใหม่ภายในเวลานี้',
       onConfirm: () => {
         if (rotateMutation.isPending) return
         setErrorMessage(null)
@@ -129,7 +129,7 @@ export const MiniAppNotificationCallback = (props: MiniAppNotificationCallbackPr
     confirmDialogRef.current?.confirm({
       title: 'ลบ Callback URL หรือไม่?',
       description:
-        'รหัสลับจะถูกลบด้วย คำตอบที่ยังส่งไม่สำเร็จจะรอจนกว่าจะตั้ง URL ใหม่ (ระบบลองส่งซ้ำได้ไม่เกิน 7 ครั้ง)',
+        'รหัสลับจะถูกลบด้วย (รวมรหัสเดิมที่ยังอยู่ในช่วง 24 ชั่วโมง) คำตอบที่ยังส่งไม่สำเร็จจะรอจนกว่าจะตั้ง URL ใหม่ โดยระบบจะรอได้ไม่เกิน 7 วันนับจากที่ผู้ใช้ตอบ',
       onConfirm: () => {
         if (clearMutation.isPending) return
         setErrorMessage(null)
@@ -252,7 +252,8 @@ export const MiniAppNotificationCallback = (props: MiniAppNotificationCallbackPr
                   )}
                 </div>
                 <span className="text-xs text-base-text-medium">
-                  แสดงเพียงครั้งเดียวตอนสร้างหรือหมุน ดูย้อนหลังไม่ได้
+                  แสดงเพียงครั้งเดียวตอนสร้างหรือหมุน ดูย้อนหลังไม่ได้ หลังหมุน รหัสเดิมยังใช้ได้อีก
+                  24 ชั่วโมง
                 </span>
               </div>
               <Button

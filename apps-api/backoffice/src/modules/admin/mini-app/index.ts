@@ -351,7 +351,8 @@ export const AdminMiniAppController = new Elysia({
       },
       detail: {
         summary: 'Rotate the notification callback signing secret',
-        description: 'The old secret stops working at once. The new one is returned once.',
+        description:
+          'The new secret is returned once. The old one keeps signing for 24 hours: X-PPLE-Signature carries both (v1=<new>,v1=<old>) until then.',
       },
     }
   )

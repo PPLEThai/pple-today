@@ -191,6 +191,7 @@ const createFakeNotificationRepository = (
   callbackTarget: CallbackTarget | null = {
     source: MiniAppSource.PLATFORM,
     notificationCallbackUrl: null,
+    notificationCallbackSecret: null,
   }
 ) => ({
   sendNotificationToUser: vi.fn(
@@ -210,10 +211,16 @@ const createFakeNotificationRepository = (
 
 const REDIRECT_ORIGIN = 'https://miniapp.peoplesparty.or.th'
 
+const CALLBACK_CONFIG = {
+  platformRelayUrl: 'https://relay.example',
+  platformRelayToken: 'relay-token',
+  secretKey: 'secret-key',
+}
+
 const createService = (
   appNotificationRepository = createFakeAppNotificationRepository(),
   notificationRepository = createFakeNotificationRepository(),
-  options: { interactiveNotificationsEnabled?: boolean } = {}
+  options: { interactiveNotificationsEnabled?: boolean; callbackConfig?: object } = {}
 ) => ({
   appNotificationRepository,
   notificationRepository,
@@ -222,7 +229,7 @@ const createService = (
     notificationRepository as unknown as NotificationRepository,
     REDIRECT_ORIGIN,
     () => NOW,
-    options
+    { callbackConfig: CALLBACK_CONFIG, ...options }
   ),
 })
 
@@ -1029,6 +1036,7 @@ describe('AppNotificationService.send with an interaction', () => {
       createFakeNotificationRepository({
         source: MiniAppSource.ADMIN,
         notificationCallbackUrl: null,
+        notificationCallbackSecret: null,
       }),
       enabled
     )
@@ -1048,6 +1056,7 @@ describe('AppNotificationService.send with an interaction', () => {
       createFakeNotificationRepository({
         source: MiniAppSource.ADMIN,
         notificationCallbackUrl: 'https://app.example/callback',
+        notificationCallbackSecret: 'enc',
       }),
       enabled
     )

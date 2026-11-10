@@ -6,13 +6,14 @@ import { describe, expect, test, vi } from 'vitest'
 import type { NotificationCallbackDispatcher } from './callback-delivery'
 import type { InteractionRepository } from './interaction-repository'
 import { InteractionService } from './interaction-service'
-import { mintResponseToken } from './response-token'
+import { deviceHash, mintResponseToken } from './response-token'
 
 const NOW = new Date('2026-11-10T04:00:00.000Z')
 const SECRET = 'test-secret'
 const NOTIFICATION_ID = 'notification-1'
 const USER_ID = 'user-1'
 const APP_ID = 'app-1'
+const DEVICE_TOKEN = 'fcm-device-1'
 
 const SPEC = {
   v: 1 as const,
@@ -56,7 +57,14 @@ const openNotification = (overrides: Partial<Loaded> = {}): Loaded => ({
 const CREATED = { id: 'response-1', actionId: 'approve', values: null, respondedAt: NOW }
 
 const createService = (
-  options: { enabled?: boolean; secret?: string | undefined; notification?: Loaded | null } = {}
+  options: {
+    enabled?: boolean
+    secret?: string | undefined
+    previousSecret?: string
+    notification?: Loaded | null
+    /** Whether the user still has a registered device with the token's hash. */
+    hasDevice?: boolean
+  } = {}
 ) => {
   const loaded = options.notification === undefined ? openNotification() : options.notification
   const repository = {
@@ -68,9 +76,14 @@ const createService = (
         respondedAt: Date
       } | null)
     ),
+    hasDeviceWithHash: vi.fn(async (_userId: string, _hash: string) =>
+      ok(options.hasDevice ?? true)
+    ),
     createResponse: vi.fn(
       async (_input: Record<string, unknown>) =>
-        ok(CREATED) as unknown as ReturnType<InteractionRepository['createResponse']>
+        ok({ status: 'CREATED', response: CREATED }) as unknown as ReturnType<
+          InteractionRepository['createResponse']
+        >
     ),
     getTrayDismissTokens: vi.fn(async (_userId: string) => ok(['android-1', 'android-2'])),
     getOwnInteraction: vi.fn(async (_id: string, _appId: string) =>
@@ -90,6 +103,7 @@ const createService = (
     {
       interactiveNotificationsEnabled: options.enabled ?? true,
       responseTokenSecret: 'secret' in options ? options.secret : SECRET,
+      responseTokenSecretPrevious: options.previousSecret,
     },
     () => NOW
   )
@@ -97,13 +111,16 @@ const createService = (
 }
 
 const session = { kind: 'session' as const, userId: USER_ID }
-const tokenFor = (overrides: { n?: string; u?: string; exp?: number; secret?: string } = {}) => ({
+const tokenFor = (
+  overrides: { n?: string; u?: string; exp?: number; secret?: string; device?: string } = {}
+) => ({
   kind: 'token' as const,
   token: mintResponseToken(
     {
       notificationId: overrides.n ?? NOTIFICATION_ID,
       userId: overrides.u ?? USER_ID,
       exp: overrides.exp ?? Math.floor(NOW.getTime() / 1000) + 3600,
+      deviceHash: deviceHash(overrides.device ?? DEVICE_TOKEN),
     },
     overrides.secret ?? SECRET
   ),
@@ -121,10 +138,10 @@ describe('InteractionService.respond', () => {
       expect(repository.createResponse).toHaveBeenCalledWith({
         notificationId: NOTIFICATION_ID,
         userId: USER_ID,
-        miniAppId: APP_ID,
         actionId: 'approve',
         values: undefined,
         channel: 'APP',
+        now: NOW,
       })
       const { interaction } = result._unsafeUnwrap()
       expect(interaction.state).toBe('RESPONDED')
@@ -160,6 +177,62 @@ describe('InteractionService.respond', () => {
       })
     })
 
+    test('checks the device hash against the token’s own user', async () => {
+      const { service, repository } = createService()
+
+      await service.respond(NOTIFICATION_ID, tokenFor({ u: 'someone' }), { actionId: 'approve' })
+
+      expect(repository.hasDeviceWithHash).toHaveBeenCalledWith('someone', deviceHash(DEVICE_TOKEN))
+    })
+
+    test('a token whose device is no longer the user’s is a 401 and touches nothing', async () => {
+      const { service, repository } = createService({ hasDevice: false })
+
+      const result = await service.respond(NOTIFICATION_ID, tokenFor(), { actionId: 'approve' })
+
+      expect(codeOf(result)).toBe(InternalErrorCode.NOTIFICATION_RESPONSE_TOKEN_INVALID)
+      expect(repository.getForResponse).not.toHaveBeenCalled()
+      expect(repository.createResponse).not.toHaveBeenCalled()
+    })
+
+    test('a session answer needs no device', async () => {
+      const { service, repository } = createService({ hasDevice: false })
+
+      const result = await service.respond(NOTIFICATION_ID, session, { actionId: 'approve' })
+
+      expect(result.isOk()).toBe(true)
+      expect(repository.hasDeviceWithHash).not.toHaveBeenCalled()
+    })
+
+    test('a repository failure on the device lookup is not reported as a bad token', async () => {
+      const { service, repository } = createService()
+      repository.hasDeviceWithHash.mockResolvedValue(
+        err({ code: 'INTERNAL_SERVER_ERROR' }) as never
+      )
+
+      const result = await service.respond(NOTIFICATION_ID, tokenFor(), { actionId: 'approve' })
+
+      expect(codeOf(result)).not.toBe(InternalErrorCode.NOTIFICATION_RESPONSE_TOKEN_INVALID)
+    })
+
+    test('a token signed with the previous secret still verifies; unknown secrets do not', async () => {
+      const rotated = createService({ previousSecret: 'old-secret' })
+      const ok1 = await rotated.service.respond(
+        NOTIFICATION_ID,
+        tokenFor({ secret: 'old-secret' }),
+        { actionId: 'approve' }
+      )
+      expect(ok1.isOk()).toBe(true)
+
+      const unrotated = createService()
+      const bad = await unrotated.service.respond(
+        NOTIFICATION_ID,
+        tokenFor({ secret: 'old-secret' }),
+        { actionId: 'approve' }
+      )
+      expect(codeOf(bad)).toBe(InternalErrorCode.NOTIFICATION_RESPONSE_TOKEN_INVALID)
+    })
+
     test.each([
       ['a bad signature', () => tokenFor({ secret: 'other-secret' })],
       ['an expired token', () => tokenFor({ exp: Math.floor(NOW.getTime() / 1000) - 1 })],
@@ -188,7 +261,6 @@ describe('InteractionService.respond', () => {
     test.each([
       ['does not exist or is not theirs', null],
       ['has no interaction', openNotification({ interaction: null })],
-      ['has no sending app', openNotification({ miniAppId: null })],
     ])('one that %s is the same 404', async (_name, notification) => {
       const { service, repository } = createService({ notification })
 
@@ -239,6 +311,7 @@ describe('InteractionService.respond', () => {
       ['closed', { interactionClosedAt: new Date('2026-11-10T01:00:00.000Z') }],
       ['expired', { interactionExpiresAt: new Date('2026-11-10T03:59:59.000Z') }],
       ['from a retired app', { miniApp: { retiredAt: new Date('2026-11-01') } }],
+      ['from a deleted app', { miniAppId: null, miniApp: null }],
     ])('one that is %s is a 410', async (_name, overrides) => {
       const { service, repository } = createService({ notification: openNotification(overrides) })
 
@@ -263,6 +336,41 @@ describe('InteractionService.respond', () => {
         expect(error.message).toContain(path)
       }
       expect(repository.createResponse).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('a deleted app', () => {
+    test('still shows the caller’s own answer as RESPONDED (409)', async () => {
+      const { service } = createService({
+        notification: openNotification({
+          miniAppId: null,
+          miniApp: null,
+          responses: [{ actionId: 'approve', values: null, respondedAt: NOW }],
+        }),
+      })
+
+      const result = await service.respond(NOTIFICATION_ID, session, { actionId: 'approve' })
+
+      expect(codeOf(result)).toBe(InternalErrorCode.NOTIFICATION_ALREADY_RESPONDED)
+    })
+  })
+
+  describe('closing between the read and the insert', () => {
+    test.each([
+      ['CLOSED', 'closed'],
+      ['EXPIRED', 'expired'],
+    ])('a %s verdict from the locked re-check is a 410', async (status, word) => {
+      const { service, repository, dispatcher, cloudMessaging } = createService()
+      repository.createResponse.mockResolvedValue(ok({ status }) as never)
+
+      const result = await service.respond(NOTIFICATION_ID, session, { actionId: 'approve' })
+      await flush()
+
+      const error = result._unsafeUnwrapErr()
+      expect(error.code).toBe(InternalErrorCode.NOTIFICATION_INTERACTION_CLOSED)
+      expect(error.message).toContain(word)
+      expect(dispatcher.dispatchSoon).not.toHaveBeenCalled()
+      expect(cloudMessaging.sendDismiss).not.toHaveBeenCalled()
     })
   })
 

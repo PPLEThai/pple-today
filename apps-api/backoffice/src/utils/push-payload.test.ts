@@ -10,7 +10,7 @@ import {
 } from './push-payload'
 
 import type { StoredInteraction } from '../modules/notification/interaction'
-import { verifyResponseToken } from '../modules/notification/response-token'
+import { deviceHash, verifyResponseToken } from '../modules/notification/response-token'
 
 const CONTENT: PushNotificationContent = {
   title: 'Canvassing today',
@@ -340,12 +340,13 @@ describe('interactive sends carry the tray data', () => {
         { id: 'reject', label: 'ไม่อนุมัติ', destructive: true, bg: true },
       ],
     })
-    const verified = verifyResponseToken(message.data.pple_response_token, SECRET, NOW)
+    const verified = verifyResponseToken(message.data.pple_response_token, [SECRET], NOW)
     expect(verified).toEqual({
       ok: true,
       notificationId: CONTENT.notificationId,
       userId: 'user-9',
       exp: Math.floor(EXPIRES.getTime() / 1000),
+      deviceHash: deviceHash('device-token'),
     })
   })
 
@@ -359,7 +360,7 @@ describe('interactive sends carry the tray data', () => {
       interactive({ interaction: { spec: SPEC, expiresAt: null } })
     )
 
-    const verified = verifyResponseToken(message.data.pple_response_token, SECRET, NOW)
+    const verified = verifyResponseToken(message.data.pple_response_token, [SECRET], NOW)
     expect(verified.ok && verified.exp).toBe(Math.floor(NOW.getTime() / 1000) + 30 * 24 * 60 * 60)
   })
 
@@ -370,6 +371,48 @@ describe('interactive sends carry the tray data', () => {
     expect(message.data.pple_response_token).toBeDefined()
     // ...on the `notification` payload the Notification Service Extension reads.
     expect(message.notification).toBeDefined()
+  })
+
+  test('each device gets a token bound to its own FCM token', () => {
+    const a = buildTray(capable({ token: 'fcm-a' }))
+    const b = buildTray(capable({ token: 'fcm-b' }))
+    const claimsOf = (m: { data: Record<string, string> }) =>
+      verifyResponseToken(m.data.pple_response_token, [SECRET], NOW)
+    expect(claimsOf(a)).toMatchObject({ deviceHash: deviceHash('fcm-a') })
+    expect(claimsOf(b)).toMatchObject({ deviceHash: deviceHash('fcm-b') })
+    expect(a.data.pple_response_token).not.toBe(b.data.pple_response_token)
+  })
+
+  test('an Android token on the legacy notification payload gets no tray data', () => {
+    // Capable of tray actions, but Play services displays the message itself.
+    const noBranding = buildTray(android({ supportsTrayInteraction: true }))
+    const killed = buildTray(capable(), interactive(), { androidBrandedPushDisabled: true })
+    for (const m of [noBranding, killed]) {
+      expect(m.notification).toBeDefined()
+      expect(m.data.pple_interaction).toBeUndefined()
+      expect(m.data.pple_response_token).toBeUndefined()
+    }
+  })
+
+  test('a token of unknown platform gets no tray data', () => {
+    const m = buildTray(token({ supportsAppBranding: true, supportsTrayInteraction: true }))
+    expect(m.data.pple_interaction).toBeUndefined()
+  })
+
+  test('a single text field with a confirming action is one open-the-app button', () => {
+    const spec: StoredInteraction = {
+      ...SPEC,
+      fields: [
+        { id: 'note', type: 'text', label: 'n', required: false, multiline: false, maxLength: 100 },
+      ],
+      actions: [{ id: 'go', label: 'Go', style: 'primary', confirm: { title: 'Sure?' } }],
+    }
+    const m = buildTray(capable(), interactive({ interaction: { spec, expiresAt: null } }))
+    expect(JSON.parse(m.data.pple_interaction)).toEqual({
+      id: CONTENT.notificationId,
+      kind: 'buttons',
+      actions: [{ id: 'go', label: 'Go', bg: false }],
+    })
   })
 
   test('a token that did not assert the capability gets neither key', () => {

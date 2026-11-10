@@ -155,6 +155,8 @@ describe('validateInteractionSpec', () => {
       ['number', 5],
       ['date-only', '2026-11-12'],
       ['impossible date', '2026-13-45T00:00:00Z'],
+      ['no offset', '2026-11-12T00:00:00'],
+      ['no offset with millis', '2026-11-12T00:00:00.000'],
     ])('rejects %s', (_n, expiresAt) => {
       const r = invalid({ ...approveReject, expiresAt })
       expect(r.path).toBe('interaction.expiresAt')
@@ -166,6 +168,20 @@ describe('validateInteractionSpec', () => {
         const r = invalid({ ...approveReject, expiresAt: d.toISOString() })
         expect(r).toMatchObject({ path: 'interaction.expiresAt', message: 'must be in the future' })
       }
+    })
+
+    test.each(['2026-11-12T00:00:00Z', '2026-11-12T07:00:00+07:00', '2026-11-12T07:00:00.5-00:00'])(
+      'accepts an explicit offset: %s',
+      (expiresAt) => {
+        valid({ ...approveReject, expiresAt })
+      }
+    )
+
+    test('an offset is honoured when comparing', () => {
+      // 2026-11-10T06:00+07:00 is 2026-11-09T23:00Z: before NOW.
+      expect(invalid({ ...approveReject, expiresAt: '2026-11-10T06:00:00+07:00' }).message).toBe(
+        'must be in the future'
+      )
     })
 
     test('allows exactly 30 days, refuses beyond', () => {
@@ -181,6 +197,26 @@ describe('validateInteractionSpec', () => {
   })
 
   describe('ids', () => {
+    test.each(['__proto__', 'constructor', 'prototype'])('reserved id %j is rejected', (rid) => {
+      expect(invalid({ actions: [{ id: rid, label: 'a' }] }).path).toBe('interaction.actions[0].id')
+      expect(
+        invalid({
+          fields: [{ id: rid, type: 'text', label: 'f' }],
+          actions: [{ id: 'a', label: 'a' }],
+        }).path
+      ).toBe('interaction.fields[0].id')
+      const options = [
+        { id: rid, label: 'x' },
+        { id: 'b', label: 'y' },
+      ]
+      expect(
+        invalid({
+          fields: [{ id: 'r', type: 'radio', label: 'f', options }],
+          actions: [{ id: 'a', label: 'a' }],
+        }).path
+      ).toBe('interaction.fields[0].options[0].id')
+    })
+
     test.each(['', 'UPPER', 'has space', 'a'.repeat(33), 'ไทย', 'a.b'])(
       'bad action id %j',
       (id) => {
@@ -627,8 +663,41 @@ describe('validateAnswer', () => {
   })
 })
 
+describe('validateAnswer with prototype-ish keys', () => {
+  const spec = valid({
+    fields: [{ id: 'note', type: 'text', label: 'n' }],
+    actions: [{ id: 'go', label: 'Go' }],
+  })
+
+  test.each(['__proto__', 'constructor', 'toString', 'hasOwnProperty'])(
+    'a %s key in values is not a field',
+    (key) => {
+      const values = JSON.parse(`{"${key}": "x"}`)
+      expect(validateAnswer(spec, { actionId: 'go', values })).toMatchObject({
+        ok: false,
+        path: `values.${key}`,
+      })
+    }
+  )
+
+  test('inherited members are not read as answers, and output has no inherited keys', () => {
+    const values = Object.create({ note: 'inherited' })
+    const r = validateAnswer(spec, { actionId: 'go', values })
+    expect(r).toEqual({ ok: true, actionId: 'go', values: undefined })
+  })
+
+  test('does not pollute Object.prototype', () => {
+    const r = validateAnswer(spec, {
+      actionId: 'go',
+      values: JSON.parse('{"__proto__": {"x": 1}}'),
+    })
+    expect(r.ok).toBe(false)
+    expect(({} as Record<string, unknown>).x).toBeUndefined()
+  })
+})
+
 describe('deriveInteractionState', () => {
-  const base = { hasResponse: false, closedAt: null, expiresAt: null, appRetired: false, now: NOW }
+  const base = { hasResponse: false, closedAt: null, expiresAt: null, appGone: false, now: NOW }
   const past = new Date(NOW.getTime() - 1000)
   const future = new Date(NOW.getTime() + 1000)
 
@@ -642,9 +711,13 @@ describe('deriveInteractionState', () => {
     expect(deriveInteractionState({ ...base, expiresAt: NOW })).toBe('EXPIRED')
   })
 
-  test('CLOSED by closedAt or retired app', () => {
+  test('CLOSED by closedAt or app gone', () => {
     expect(deriveInteractionState({ ...base, closedAt: past })).toBe('CLOSED')
-    expect(deriveInteractionState({ ...base, appRetired: true })).toBe('CLOSED')
+    expect(deriveInteractionState({ ...base, appGone: true })).toBe('CLOSED')
+  })
+
+  test('a recorded answer still reads RESPONDED when the app is gone', () => {
+    expect(deriveInteractionState({ ...base, hasResponse: true, appGone: true })).toBe('RESPONDED')
   })
 
   test('precedence RESPONDED > CLOSED > EXPIRED > OPEN', () => {
@@ -653,12 +726,12 @@ describe('deriveInteractionState', () => {
         hasResponse: true,
         closedAt: past,
         expiresAt: past,
-        appRetired: true,
+        appGone: true,
         now: NOW,
       })
     ).toBe('RESPONDED')
     expect(deriveInteractionState({ ...base, closedAt: past, expiresAt: past })).toBe('CLOSED')
-    expect(deriveInteractionState({ ...base, appRetired: true, expiresAt: past })).toBe('CLOSED')
+    expect(deriveInteractionState({ ...base, appGone: true, expiresAt: past })).toBe('CLOSED')
   })
 })
 
@@ -769,12 +842,18 @@ describe('trayShape', () => {
     })
   })
 
-  test('a confirming single action cannot be a reply box', () => {
+  test('a confirming single action is one open-the-app button, not a reply box', () => {
     expect(
       trayShape(
-        valid({ fields: [text()], actions: [{ id: 'a', label: 'A', confirm: { title: 't' } }] })
+        valid({
+          fields: [text()],
+          actions: [{ id: 'a', label: 'A', icon: 'check', confirm: { title: 't' } }],
+        })
       )
-    ).toBeNull()
+    ).toEqual({
+      kind: 'buttons',
+      actions: [{ id: 'a', label: 'A', icon: 'check', bg: false }],
+    })
   })
 
   test('only optional text fields with several actions: buttons; requires opens the form', () => {

@@ -12,6 +12,7 @@ import {
 } from '@pple-today/ui/dialog'
 import { Icon } from '@pple-today/ui/icon'
 import { Text } from '@pple-today/ui/text'
+import { getMessaging, getToken } from '@react-native-firebase/messaging'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   AuthRequest,
@@ -37,6 +38,7 @@ import { AuthSession, getAuthSession, getAuthSessionAsync, setAuthSession } from
 
 import { fetchClient, reactQueryClient } from '../api-client'
 import { getBrowserPackage } from '../get-browser-package'
+import { clearInteractiveNotifications } from '../notification-display'
 
 const authRequest: AuthRequest = new AuthRequest({
   responseType: ResponseType.Code,
@@ -344,6 +346,7 @@ export const AuthLifeCycleHook = () => {
           <Button
             onPress={async () => {
               await sessionMutation.mutateAsync(null)
+              await clearInteractiveNotifications()
               router.navigate('/profile')
               setDialogOpen(false)
             }}
@@ -433,6 +436,29 @@ export const useLoginMutation = () => {
   })
 }
 
+const UNREGISTER_TIMEOUT_MS = 5000
+
+/** Best effort: logout must not hang or fail because of it. */
+const unregisterDeviceToken = async (session: AuthSession) => {
+  try {
+    const deviceToken = await getToken(getMessaging())
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), UNREGISTER_TIMEOUT_MS)
+    try {
+      await fetchClient('/notifications/unregister', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.accessToken}` },
+        body: { deviceToken },
+        signal: controller.signal,
+      })
+    } finally {
+      clearTimeout(timer)
+    }
+  } catch (error) {
+    console.error('Failed to unregister the device token on logout', error)
+  }
+}
+
 export const logout = async ({
   discovery,
   session,
@@ -443,6 +469,9 @@ export const logout = async ({
   if (!discovery.revocationEndpoint) {
     throw new Error('Revocation endpoint is not available.')
   }
+  // Forget this device for this user while the session is still valid, so it
+  // stops getting their pushes and its tray response tokens stop working.
+  await unregisterDeviceToken(session)
   return fetch(discovery.revocationEndpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -469,6 +498,7 @@ export const useLogoutMutation = () => {
       // Even error occurred, reset session anyway
       // Clear tokens from secure storage
       await sessionMutation.mutateAsync(null)
+      await clearInteractiveNotifications()
       // reset all reactQueryClient cache
       queryClient.resetQueries({ queryKey: reactQueryClient.getKey() })
       router.dismissTo('/profile')
