@@ -162,6 +162,16 @@ export const resolveMiniAppAccess = (
 export const isMiniAppAccessible = (miniApp: EligibilityMiniApp, viewer: MiniAppViewer): boolean =>
   resolveMiniAppAccess(miniApp, viewer) === 'ALLOWED'
 
+const toListedMiniApp = (miniApp: MiniAppForListing): ListedMiniApp => ({
+  slug: miniApp.slug,
+  name: miniApp.name,
+  iconUrl: miniApp.icon,
+  order: miniApp.order,
+  url: miniApp.clientUrl,
+  requiresAuth: miniApp.requiresAuth,
+  tier: miniApp.tier,
+})
+
 /**
  * Filter a full mini-app list down to the apps *listable* to the requesting user
  * and shape them into the public listing DTO. Pure over its inputs so it can be
@@ -171,14 +181,28 @@ export const selectVisibleMiniApps = (
   miniApps: MiniAppForListing[],
   viewer: MiniAppViewer
 ): ListedMiniApp[] =>
-  miniApps
-    .filter((miniApp) => isMiniAppListable(miniApp, viewer))
-    .map((miniApp) => ({
-      slug: miniApp.slug,
-      name: miniApp.name,
-      iconUrl: miniApp.icon,
-      order: miniApp.order,
-      url: miniApp.clientUrl,
-      requiresAuth: miniApp.requiresAuth,
-      tier: miniApp.tier,
-    }))
+  miniApps.filter((miniApp) => isMiniAppListable(miniApp, viewer)).map(toListedMiniApp)
+
+/**
+ * Describe one app for a caller who arrived by its link rather than from the
+ * list — a notification, a deep link — so the host knows whether it needs a
+ * session before opening it. This is *how to open*, not access: the exchange
+ * still decides who gets a session.
+ *
+ * - `LIVE` — always, listed or not. An unlisted or role-gated Live app is still
+ *   reachable by link, and its slug already resolves publicly on the redirect
+ *   host; a public one (`requiresAuth: false`) then opens with no exchange, even
+ *   for an anonymous caller.
+ * - `DRAFT` / `BETA` — only when listable to the caller, so a link reveals
+ *   nothing about an app still being built.
+ */
+export const selectMiniAppBySlug = (
+  miniApps: MiniAppForListing[],
+  slug: string,
+  viewer: MiniAppViewer
+): ListedMiniApp | null => {
+  const miniApp = miniApps.find((candidate) => candidate.slug === slug)
+  if (!miniApp) return null
+  if (miniApp.tier !== MiniAppTier.LIVE && !isMiniAppListable(miniApp, viewer)) return null
+  return toListedMiniApp(miniApp)
+}

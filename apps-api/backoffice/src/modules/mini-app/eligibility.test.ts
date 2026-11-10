@@ -7,6 +7,7 @@ import {
   MiniAppForListing,
   MiniAppViewer,
   resolveMiniAppAccess,
+  selectMiniAppBySlug,
   selectVisibleMiniApps,
 } from './eligibility'
 
@@ -379,5 +380,41 @@ describe('access outcomes — role mismatch vs. hard denial', () => {
     expect(resolveMiniAppAccess(unlisted, makeViewer({ sub: OTHER_SUB, roles: [] }))).toBe(
       'ALLOWED'
     )
+  })
+})
+
+describe('lookup by slug — opening from a link', () => {
+  const bySlug = (miniApp: MiniAppForListing, viewer: MiniAppViewer) =>
+    selectMiniAppBySlug([miniApp], miniApp.slug, viewer)
+
+  test('an unlisted public Live app resolves for an anonymous caller, so it opens without a session', () => {
+    const unlisted = makeMiniApp({ slug: 'hidden', unlisted: true, requiresAuth: false })
+
+    expect(bySlug(unlisted, makeViewer())).toMatchObject({ slug: 'hidden', requiresAuth: false })
+  })
+
+  test('any Live app resolves, whatever the caller’s roles — the exchange still decides access', () => {
+    const membersOnly = makeMiniApp({ unlisted: true, miniAppRoles: [{ role: MEMBER_ROLE }] })
+
+    expect(bySlug(membersOnly, makeViewer())).not.toBeNull()
+    expect(
+      bySlug(makeMiniApp({ miniAppRoles: [{ role: MEMBER_ROLE }] }), makeViewer())
+    ).not.toBeNull()
+  })
+
+  test('a Draft or Beta app resolves only for those it is listed to', () => {
+    const draft = makeMiniApp({ tier: MiniAppTier.DRAFT, ownerSub: OWNER_SUB })
+    const beta = makeMiniApp({ id: 'beta-id', tier: MiniAppTier.BETA, ownerSub: OWNER_SUB })
+
+    expect(bySlug(draft, makeViewer({ sub: OWNER_SUB }))).not.toBeNull()
+    expect(bySlug(draft, makeViewer({ sub: OTHER_SUB }))).toBeNull()
+    expect(bySlug(beta, makeViewer())).toBeNull()
+    expect(
+      bySlug(beta, makeViewer({ sub: INVITEE_SUB, acceptedInviteMiniAppIds: new Set(['beta-id']) }))
+    ).not.toBeNull()
+  })
+
+  test('an unknown slug resolves to nothing', () => {
+    expect(selectMiniAppBySlug([makeMiniApp()], 'missing', makeViewer())).toBeNull()
   })
 })

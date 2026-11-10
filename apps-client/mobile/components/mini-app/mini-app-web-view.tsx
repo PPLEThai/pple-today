@@ -16,11 +16,14 @@ import { refreshMiniAppLists } from '@app/components/mini-app/invite-inbox'
 import { MiniAppRoleGateDialog } from '@app/components/mini-app/role-gate-dialog'
 import { MiniAppRoleSwitchDialog } from '@app/components/mini-app/role-switch-dialog'
 import { reactQueryClient } from '@app/libs/api-client'
+import { useSession } from '@app/libs/auth'
 import { miniAppUrlWithPath } from '@app/utils/mini-app'
 import { findMiniAppForUrl, hostnameOf, originOf } from '@app/utils/mini-app-bridge'
 import { roleMismatchFromError } from '@app/utils/mini-app-role-gate'
 
+import { MiniAppSignInDialog, MiniAppSignInRequired } from './sign-in-dialog'
 import { type BridgeResolvedApp, useSessionBridge } from './use-session-bridge'
+import { useSignInPrompt } from './use-sign-in-prompt'
 import { useSwitchToPerson } from './use-switch-to-person'
 
 export interface MiniAppWebViewHandle {
@@ -80,7 +83,40 @@ export function MiniAppWebView({
     '/mini-app',
     { query: {} }
   )
-  const currentMiniApp = miniAppListData?.find((app) => app.slug === slug)
+  const listedMiniApp = miniAppListData?.find((app) => app.slug === slug)
+  // An app reached by its link may not be in the list — an unlisted Live app is
+  // listed to no one. Ask for it by slug so a public one still opens without a
+  // session, for a signed-out reader too, instead of failing the exchange.
+  const needsLookup = !!slug && (!!miniAppListData || isMiniAppListError) && !listedMiniApp
+  const miniAppLookup = reactQueryClient.useQuery(
+    '/mini-app/:slug',
+    { pathParams: { slug } },
+    { enabled: needsLookup, retry: false }
+  )
+  const currentMiniApp = listedMiniApp ?? (needsLookup ? miniAppLookup.data : undefined)
+  // Settled once the list is in (or failed) and, when it does not name the app,
+  // the lookup has answered either way.
+  const isMiniAppResolved =
+    (!!miniAppListData || isMiniAppListError) && (!needsLookup || !miniAppLookup.isPending)
+
+  const isSignedIn = !!useSession()
+  const signInPrompt = useSignInPrompt()
+  // Signed out, an app that needs a session (or one the lookup could not
+  // describe — signing in may be what reveals it) cannot be exchanged for: the
+  // user is asked to sign in first, not shown an error.
+  const needsSignInToOpen =
+    !isSignedIn && isMiniAppResolved && (!currentMiniApp || currentMiniApp.requiresAuth)
+  // Set when the opening prompt is cancelled. A tab keeps this screen mounted
+  // after `onClose` leaves it, so coming back shows a way to sign in rather
+  // than a spinner waiting on a prompt that will not reappear.
+  const [signInDeclined, setSignInDeclined] = useState(false)
+  const signInToOpen = async ({ closeOnCancel }: { closeOnCancel: boolean }) => {
+    setSignInDeclined(false)
+    // Signing in flips `isSignedIn`, which lets the exchange run.
+    if (await signInPrompt.ask()) return
+    setSignInDeclined(true)
+    if (closeOnCancel) onClose()
+  }
 
   const [canGoBack, setCanGoBack] = useState(false)
   const miniAppRef = useRef<WebView>(null)
@@ -114,10 +150,15 @@ export function MiniAppWebView({
     // On cold start params may hydrate a tick after mount; do nothing until
     // slug is available rather than bouncing to home on a transient empty value.
     if (!slug) return
-    // Wait for the mini app list to know whether authentication is needed,
-    // but fall back to the token exchange if the list cannot be fetched.
-    if (!miniAppListData && !isMiniAppListError) return
+    // Wait for the list (and the slug lookup when the list does not name the
+    // app) to know whether authentication is needed, but fall back to the token
+    // exchange if neither can tell.
+    if (!isMiniAppResolved) return
     if (currentMiniApp && !currentMiniApp.requiresAuth) return
+    if (needsSignInToOpen) {
+      if (!signInDeclined) void signInToOpen({ closeOnCancel: true })
+      return
+    }
 
     const exchangeKey = JSON.stringify([slug, path, roleMismatchAcknowledged])
     if (startedExchangeRef.current === exchangeKey) return
@@ -131,7 +172,7 @@ export function MiniAppWebView({
       },
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug, path, miniAppListData, isMiniAppListError, roleMismatchAcknowledged])
+  }, [slug, path, isMiniAppResolved, currentMiniApp, needsSignInToOpen, roleMismatchAcknowledged])
 
   useEffect(() => {
     // A role mismatch has its own prompt; only genuine failures get the toast.
@@ -167,6 +208,7 @@ export function MiniAppWebView({
 
   const bridge = useSessionBridge({
     webViewRef: miniAppRef,
+    requestSignIn: signInPrompt.ask,
     onResolved: (app: BridgeResolvedApp, origin: string) => {
       // An iframe on another origin can ask too; only the main frame's app
       // belongs in the bar.
@@ -281,7 +323,10 @@ export function MiniAppWebView({
             source={{ uri: noAuthUrl }}
             startInLoadingState={true}
           />
-        ) : (!miniAppListData && !isMiniAppListError) ||
+        ) : needsSignInToOpen && signInDeclined && !signInPrompt.prompt ? (
+          <MiniAppSignInRequired onSignIn={() => void signInToOpen({ closeOnCancel: false })} />
+        ) : !isMiniAppResolved ||
+          needsSignInToOpen ||
           tokenExchangeMiniAppResult.isPending ||
           // The role prompt is a decision still in flight, not a dead end — the
           // app is behind it, so the screen keeps loading rather than flashing
@@ -304,7 +349,11 @@ export function MiniAppWebView({
           />
         )}
       </View>
-      {roleMismatch ? (
+      {signInPrompt.prompt ? (
+        // Opening or a page's request: either way nothing else can be asked
+        // until the user is signed in.
+        <MiniAppSignInDialog appName={shownAppName || null} {...signInPrompt.prompt} />
+      ) : roleMismatch ? (
         <MiniAppRoleGateDialog
           appName={roleMismatch.appName}
           requiredRoles={roleMismatch.requiredRoles}

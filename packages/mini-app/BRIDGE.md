@@ -75,7 +75,10 @@ type SessionResponse =
 4. `MINI_APP_ROLE_NOT_ELIGIBLE` → show the role prompt; confirm → retry with
    `acknowledgeRoleMismatch=true`; cancel → `denied: role-declined`.
 5. Cache sessions per `clientId` + origin until ~60 s before expiry.
-6. Logged-out user → `denied: not-signed-in` without calling the server.
+6. Logged-out user → the host asks them to sign in and answers once they have. If they
+   decline, `denied: not-signed-in` without calling the server. A sign-in that outlasts
+   the SDK's 120 s response wait is answered by reloading the page, which then asks
+   again.
 
 ## Role switching
 
