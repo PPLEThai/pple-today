@@ -9,6 +9,7 @@ import { requireOptionalNativeModule } from 'expo'
 type LiveActivityLog = { startToken: string; log: string[] }
 type NotificationActionsModule = {
   getLiveActivityLog(): LiveActivityLog
+  startLocalTestActivity(): string
   clearLiveActivityLog(): void
 }
 
@@ -37,6 +38,13 @@ export default function DebugLiveActivity() {
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
         <Button title="Refresh" onPress={refresh} />
         <Button title="Share" onPress={() => Share.share({ message: text })} />
+        <Button
+          title="Start local test"
+          onPress={() => {
+            native?.startLocalTestActivity()
+            refresh()
+          }}
+        />
         <Button
           title="Clear log"
           onPress={() => {
