@@ -1,3 +1,4 @@
+import { createId } from '@paralleldrive/cuid2'
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import type { NotificationApiKeySource } from '@pple-today/database/prisma'
@@ -11,6 +12,7 @@ import {
   phonesToResolve,
   settleDirectDelivery,
 } from './direct-recipients'
+import { prepareInteractionSend } from './interaction-send'
 import { type BoundApp, isMeteredKey, requireAppBoundKey } from './key-binding'
 import type { CreateAppNotificationBody, DirectRecipientResult } from './models'
 import { evaluateDailyQuota, quotaDayStart } from './quota'
@@ -68,6 +70,8 @@ interface SendPlan {
 /** What a usage-log row has to carry to answer a retry without re-sending. */
 interface StoredSendResult {
   recipientCount: number
+  /** The notification this call created, so a replay can return the same id. */
+  notificationId?: string
   statuses?: DirectRecipientResult['status'][]
 }
 
@@ -166,7 +170,11 @@ export class AppNotificationService {
      */
     private readonly miniAppRedirectOrigin: string,
     /** Injected so the quota window is testable without a fake timer. */
-    private readonly now: () => Date = () => new Date()
+    private readonly now: () => Date = () => new Date(),
+    private readonly options: {
+      /** `INTERACTIVE_NOTIFICATIONS_ENABLED`. While false a send with `interaction` is refused. */
+      interactiveNotificationsEnabled?: boolean
+    } = {}
   ) {}
 
   /**
@@ -231,6 +239,19 @@ export class AppNotificationService {
       sendContent = { ...body.content, link: linkResult.value }
     }
 
+    // Refused before the budget is touched, like a bad linkPath: junk never
+    // costs quota. The key is app-bound here, so the callback target is that
+    // app's; an ADMIN app with no callback URL is refused.
+    const interaction = await prepareInteractionSend({
+      input: body.interaction,
+      enabled: this.options.interactiveNotificationsEnabled ?? false,
+      bypass: false, // `linkPath` can never set bypass
+      app,
+      getCallbackTarget: (miniAppId) => this.notificationRepository.getCallbackTarget(miniAppId),
+      now: this.now(),
+    })
+    if (interaction.isErr()) return err(interaction.error)
+
     // The same audience a broadcast resolves to, whether or not recipients were
     // named — which is what makes naming a narrowing and never a widening.
     const audience = resolveAppAudience(audienceInput.value)
@@ -246,8 +267,13 @@ export class AppNotificationService {
     // enforced here and what the Console shows cannot drift apart.
     const metered = isMeteredKey(boundKey.value)
 
+    // Chosen here, before the claim, so the usage row that answers a replay
+    // already holds it. An audience of nobody creates no notification.
+    const notificationId = plan.deliverTo.length > 0 ? createId() : undefined
+
     const storedResult: StoredSendResult = {
       recipientCount: plan.deliverTo.length,
+      notificationId,
       statuses: plan.results?.map((result) => result.status),
     }
 
@@ -322,6 +348,8 @@ export class AppNotificationService {
           // log as well would both double-count the send and copy the resolved
           // recipients into the log.
           app,
+          notificationId,
+          interaction: interaction.value,
         }
       )
 
@@ -333,6 +361,7 @@ export class AppNotificationService {
     }
 
     return ok({
+      notificationId,
       ...reportReach(plan),
       ...remainingBudget(metered ? key : undefined, claim.used, now),
     })
@@ -412,6 +441,7 @@ export class AppNotificationService {
     }
 
     return ok({
+      notificationId: stored.notificationId,
       // Reported the same way a first attempt is: a named send answers with
       // outcomes and no count (see `reportReach`), a broadcast with the count.
       ...(statuses && recipients

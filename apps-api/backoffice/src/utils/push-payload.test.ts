@@ -1,7 +1,16 @@
 import { NotificationTokenPlatform } from '@pple-today/database/prisma'
 import { describe, expect, test } from 'vitest'
 
-import { buildFcmMessage, PushNotificationContent, PushToken } from './push-payload'
+import {
+  buildDismissMessage,
+  buildFcmMessage,
+  type BuildFcmMessageOptions,
+  PushNotificationContent,
+  PushToken,
+} from './push-payload'
+
+import type { StoredInteraction } from '../modules/notification/interaction'
+import { verifyResponseToken } from '../modules/notification/response-token'
 
 const CONTENT: PushNotificationContent = {
   title: 'Canvassing today',
@@ -13,8 +22,10 @@ const APP = { name: 'Canvassing', icon: 'https://cdn.example/canvassing.png' }
 
 const token = (overrides: Partial<PushToken> = {}): PushToken => ({
   token: 'device-token',
+  userId: 'user-1',
   platform: null,
   supportsAppBranding: false,
+  supportsTrayInteraction: false,
   ...overrides,
 })
 
@@ -278,5 +289,179 @@ describe('the kill switch', () => {
     const message = build(ios(), { ...CONTENT, app: APP }, true)
 
     expect(message.apns?.payload.aps.alert?.subtitle).toBe(APP.name)
+  })
+})
+
+describe('interactive sends carry the tray data', () => {
+  const NOW = new Date('2026-11-10T04:00:00.000Z')
+  const SECRET = 'tray-secret'
+  const EXPIRES = new Date('2026-11-17T00:00:00.000Z')
+
+  const SPEC: StoredInteraction = {
+    v: 1,
+    ref: 'leave:123',
+    fields: [],
+    actions: [
+      { id: 'approve', label: 'อนุมัติ', icon: 'check', style: 'primary' },
+      { id: 'reject', label: 'ไม่อนุมัติ', style: 'destructive' },
+    ],
+    tray: true,
+  }
+  const interactive = (
+    overrides: Partial<PushNotificationContent> = {}
+  ): PushNotificationContent => ({
+    ...CONTENT,
+    app: APP,
+    interaction: { spec: SPEC, expiresAt: EXPIRES },
+    ...overrides,
+  })
+  const capable = (overrides: Partial<PushToken> = {}) =>
+    android({ supportsAppBranding: true, supportsTrayInteraction: true, ...overrides })
+  const buildTray = (
+    target: PushToken,
+    data: PushNotificationContent = interactive(),
+    options: Partial<BuildFcmMessageOptions> = {}
+  ) =>
+    buildFcmMessage(target, data, {
+      androidBrandedPushDisabled: false,
+      responseTokenSecret: SECRET,
+      now: NOW,
+      ...options,
+    })
+
+  test('a capable token gets the shape and a token minted for that user and notification', () => {
+    const message = buildTray(capable({ userId: 'user-9' }))
+
+    expect(JSON.parse(message.data.pple_interaction)).toEqual({
+      id: CONTENT.notificationId,
+      kind: 'buttons',
+      actions: [
+        { id: 'approve', label: 'อนุมัติ', icon: 'check', bg: true },
+        { id: 'reject', label: 'ไม่อนุมัติ', destructive: true, bg: true },
+      ],
+    })
+    const verified = verifyResponseToken(message.data.pple_response_token, SECRET, NOW)
+    expect(verified).toEqual({
+      ok: true,
+      notificationId: CONTENT.notificationId,
+      userId: 'user-9',
+      exp: Math.floor(EXPIRES.getTime() / 1000),
+    })
+  })
+
+  test('the notification id is in the data, because the client keys on it', () => {
+    expect(buildTray(capable()).data.notificationId).toBe(CONTENT.notificationId)
+  })
+
+  test('without an expiry the token lives 30 days', () => {
+    const message = buildTray(
+      capable(),
+      interactive({ interaction: { spec: SPEC, expiresAt: null } })
+    )
+
+    const verified = verifyResponseToken(message.data.pple_response_token, SECRET, NOW)
+    expect(verified.ok && verified.exp).toBe(Math.floor(NOW.getTime() / 1000) + 30 * 24 * 60 * 60)
+  })
+
+  test('iOS gets it too, when the build supports it', () => {
+    const message = buildTray(ios({ supportsTrayInteraction: true }))
+
+    expect(message.data.pple_interaction).toBeDefined()
+    expect(message.data.pple_response_token).toBeDefined()
+    // ...on the `notification` payload the Notification Service Extension reads.
+    expect(message.notification).toBeDefined()
+  })
+
+  test('a token that did not assert the capability gets neither key', () => {
+    const message = buildTray(android({ supportsAppBranding: true }))
+
+    expect(message.data.pple_interaction).toBeUndefined()
+    expect(message.data.pple_response_token).toBeUndefined()
+  })
+
+  test.each([
+    ['the tray kill switch is on', { trayInteractionDisabled: true }],
+    ['no secret is configured', { responseTokenSecret: undefined }],
+  ])('nothing is sent when %s', (_name, options) => {
+    const message = buildTray(capable(), interactive(), options)
+
+    expect(message.data.pple_interaction).toBeUndefined()
+    expect(message.data.pple_response_token).toBeUndefined()
+  })
+
+  test('nothing is sent for a shape the tray cannot show', () => {
+    const form = {
+      ...SPEC,
+      fields: [
+        {
+          id: 'pick',
+          type: 'radio' as const,
+          label: 'เลือก',
+          required: false,
+          options: [
+            { id: 'a', label: 'A' },
+            { id: 'b', label: 'B' },
+          ],
+        },
+      ],
+    }
+
+    const message = buildTray(
+      capable(),
+      interactive({ interaction: { spec: form, expiresAt: null } })
+    )
+    const optedOut = buildTray(
+      capable(),
+      interactive({ interaction: { spec: { ...SPEC, tray: false }, expiresAt: null } })
+    )
+
+    for (const m of [message, optedOut]) {
+      expect(m.data.pple_interaction).toBeUndefined()
+      expect(m.data.pple_response_token).toBeUndefined()
+    }
+  })
+
+  test('nothing is sent once the interaction has expired', () => {
+    const message = buildTray(
+      capable(),
+      interactive({ interaction: { spec: SPEC, expiresAt: new Date('2026-11-10T03:00:00.000Z') } })
+    )
+
+    expect(message.data.pple_interaction).toBeUndefined()
+  })
+
+  test('a plain send carries neither key, whatever the token supports', () => {
+    const message = buildTray(capable(), { ...CONTENT, app: APP })
+
+    expect(message.data.pple_interaction).toBeUndefined()
+    expect(message.data.pple_response_token).toBeUndefined()
+  })
+
+  test('the three-action payload stays well inside the 4KB data limit', () => {
+    const long = {
+      ...SPEC,
+      actions: ['a', 'b', 'c'].map((id) => ({
+        id,
+        label: 'ก'.repeat(24),
+        style: 'primary' as const,
+      })),
+    }
+    const message = buildTray(
+      capable(),
+      interactive({ interaction: { spec: long, expiresAt: EXPIRES } })
+    )
+
+    const bytes = Object.values(message.data).reduce((n, v) => n + Buffer.byteLength(v), 0)
+    expect(bytes).toBeLessThan(4096)
+  })
+})
+
+describe('the dismiss message', () => {
+  test('is data-only, high priority, and names just the notification', () => {
+    expect(buildDismissMessage('device-token', 'notification-id')).toEqual({
+      token: 'device-token',
+      data: { pple_dismiss: 'notification-id' },
+      android: { priority: 'HIGH' },
+    })
   })
 })

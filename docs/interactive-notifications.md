@@ -290,6 +290,12 @@ X-Notification-Response-Token: <token>      ← tray (see below)
 → 200 { "interaction": { …same shape as above, state RESPONDED… } }
 ```
 
+`/response` is the canonical path, and the one native tray code calls. The typed
+Eden client cannot express it (a path segment named `response` collides with
+Elysia's route-type key and drops `GET /notifications/:id` from the typed path
+list), so the same handler is also mounted at `POST /notifications/:id/answer`,
+which is the one the in-app form calls through the typed client.
+
 The request must carry exactly one of the two credentials. It is checked against
 the stored spec on the server, whichever credential it uses. Checks on the
 client are only there for a better experience.

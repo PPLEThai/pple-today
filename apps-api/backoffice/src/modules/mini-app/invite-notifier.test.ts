@@ -24,9 +24,12 @@ afterEach(() => {
 
 describe('InviteNotifier.notifyInvitee', () => {
   test('sends through the shared pipeline addressed to the one number, with no API key', async () => {
-    const sendNotificationToUser = vi
-      .fn()
-      .mockResolvedValue(ok({ success: [INVITEE_PHONE], failed: [] }))
+    const sendNotificationToUser = vi.fn().mockResolvedValue(
+      ok({
+        notificationId: 'notification-id',
+        delivery: { success: [INVITEE_PHONE], failed: [] },
+      })
+    )
 
     await createNotifier(sendNotificationToUser).notifyInvitee(INVITEE_PHONE, miniApp)
 
@@ -41,9 +44,12 @@ describe('InviteNotifier.notifyInvitee', () => {
     // The only send that reaches someone who has never opened the app, for an
     // app that may still be DRAFT. Attributing it would let an unreviewed
     // Builder put a name and icon of their choosing in a stranger's tray.
-    const sendNotificationToUser = vi
-      .fn()
-      .mockResolvedValue(ok({ success: [INVITEE_PHONE], failed: [] }))
+    const sendNotificationToUser = vi.fn().mockResolvedValue(
+      ok({
+        notificationId: 'notification-id',
+        delivery: { success: [INVITEE_PHONE], failed: [] },
+      })
+    )
 
     await createNotifier(sendNotificationToUser).notifyInvitee(INVITEE_PHONE, miniApp)
 
@@ -52,9 +58,12 @@ describe('InviteNotifier.notifyInvitee', () => {
   })
 
   test('names the inviter in the message when one is given', async () => {
-    const sendNotificationToUser = vi
-      .fn()
-      .mockResolvedValue(ok({ success: [INVITEE_PHONE], failed: [] }))
+    const sendNotificationToUser = vi.fn().mockResolvedValue(
+      ok({
+        notificationId: 'notification-id',
+        delivery: { success: [INVITEE_PHONE], failed: [] },
+      })
+    )
 
     await createNotifier(sendNotificationToUser).notifyInvitee(INVITEE_PHONE, miniApp, 'สมชาย')
 
@@ -64,9 +73,12 @@ describe('InviteNotifier.notifyInvitee', () => {
   })
 
   test('falls back to passive phrasing when the inviter is unknown', async () => {
-    const sendNotificationToUser = vi
-      .fn()
-      .mockResolvedValue(ok({ success: [INVITEE_PHONE], failed: [] }))
+    const sendNotificationToUser = vi.fn().mockResolvedValue(
+      ok({
+        notificationId: 'notification-id',
+        delivery: { success: [INVITEE_PHONE], failed: [] },
+      })
+    )
 
     await createNotifier(sendNotificationToUser).notifyInvitee(INVITEE_PHONE, miniApp)
 
@@ -84,9 +96,12 @@ describe('InviteNotifier.notifyInvitee', () => {
   })
 
   test('reports delivered when the number reached a PPLE Today account', async () => {
-    const sendNotificationToUser = vi
-      .fn()
-      .mockResolvedValue(ok({ success: [INVITEE_PHONE], failed: [] }))
+    const sendNotificationToUser = vi.fn().mockResolvedValue(
+      ok({
+        notificationId: 'notification-id',
+        delivery: { success: [INVITEE_PHONE], failed: [] },
+      })
+    )
 
     expect(await createNotifier(sendNotificationToUser).notifyInvitee(INVITEE_PHONE, miniApp)).toBe(
       true
@@ -97,9 +112,12 @@ describe('InviteNotifier.notifyInvitee', () => {
     // The pipeline resolves Ok even for a number it could not reach — it lists
     // it under `failed`. Trusting Ok alone would tell the Builder their tester
     // had been contacted when nobody was.
-    const sendNotificationToUser = vi
-      .fn()
-      .mockResolvedValue(ok({ success: [], failed: [INVITEE_PHONE] }))
+    const sendNotificationToUser = vi.fn().mockResolvedValue(
+      ok({
+        notificationId: 'notification-id',
+        delivery: { success: [], failed: [INVITEE_PHONE] },
+      })
+    )
 
     expect(await createNotifier(sendNotificationToUser).notifyInvitee(INVITEE_PHONE, miniApp)).toBe(
       false

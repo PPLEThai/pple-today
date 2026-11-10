@@ -1,7 +1,10 @@
 import {
   ListCursorResponse,
   Notification,
+  NotificationInteraction,
+  NotificationInteractionSpec,
   NotificationInteractionState,
+  NotificationResponseBody,
   NotificationSenderApp,
 } from '@pple-today/api-common/dtos'
 import { NotificationTokenPlatform } from '@pple-today/database/prisma'
@@ -160,6 +163,7 @@ export const CreateNewExternalNotificationBody = t.Composite([
           'SMS sent to people who will not get a push. For PHONE_NUMBER that is numbers with no account and accounts with no push token. For SUB that is accounts with no push token, texted on the number the account holds; a sub that matches no account is not texted, because there is no number to send to.',
       })
     ),
+    interaction: t.Optional(NotificationInteractionSpec),
   }),
   t.Pick(Notification, ['content']),
 ])
@@ -255,6 +259,7 @@ export const CreateAppNotificationBody = t.Object({
         'Path-only deep link into this app (must start with `/`). Resolved server-side against the key’s bound mini app; absolute URLs and cross-app targets are rejected.',
     })
   ),
+  interaction: t.Optional(NotificationInteractionSpec),
   idempotencyKey: t.Optional(
     t.String({
       description:
@@ -289,6 +294,12 @@ export type DirectRecipientResult = Static<typeof DirectRecipientResult>
  * nothing enforces.
  */
 export const CreateAppNotificationResponse = t.Object({
+  notificationId: t.Optional(
+    t.String({
+      description:
+        'The id of the notification this call created, for `POST /external/notifications/:notificationId/interaction/close`. Absent when the audience was empty and no notification was created. A replay of an `idempotencyKey` returns the original id.',
+    })
+  ),
   recipientCount: t.Optional(
     t.Integer({
       description:
@@ -322,6 +333,10 @@ export type CreateAppNotificationResponse = Static<typeof CreateAppNotificationR
 
 export const CreateNewExternalNotificationResponse = t.Object({
   success: t.Boolean(),
+  notificationId: t.String({
+    description:
+      'The id of the notification this call created, for `POST /external/notifications/:notificationId/interaction/close`.',
+  }),
   phoneNumber: t.Optional(
     t.Object({
       success: t.Array(t.String()),
@@ -420,3 +435,37 @@ export const CountAppInstallResponse = t.Object({
   }),
 })
 export type CountAppInstallResponse = Static<typeof CountAppInstallResponse>
+
+export const RespondNotificationParams = t.Object({ id: t.String() })
+export type RespondNotificationParams = Static<typeof RespondNotificationParams>
+
+/**
+ * Exactly one credential: the user session (`Authorization`) or, from the OS
+ * notification, the per-notification response token. Both are optional here and
+ * the rule is enforced in the controller, so it can answer with the contract's
+ * status codes rather than a generic validation error.
+ */
+export const RespondNotificationHeaders = t.Object({
+  authorization: t.Optional(t.String()),
+  'x-notification-response-token': t.Optional(
+    t.String({
+      description:
+        'Tray credential minted into the push (`pple_response_token`). Authorises answering that one notification as that one user. Send it instead of the session, never with it.',
+    })
+  ),
+})
+export type RespondNotificationHeaders = Static<typeof RespondNotificationHeaders>
+
+export const RespondNotificationBody = NotificationResponseBody
+export type RespondNotificationBody = Static<typeof RespondNotificationBody>
+
+export const RespondNotificationResponse = t.Object({ interaction: NotificationInteraction })
+export type RespondNotificationResponse = Static<typeof RespondNotificationResponse>
+
+export const CloseInteractionParams = t.Object({ notificationId: t.String() })
+export type CloseInteractionParams = Static<typeof CloseInteractionParams>
+
+export const CloseInteractionResponse = t.Object({
+  closedAt: t.Date({ description: 'When the interaction was closed (the first close wins).' }),
+})
+export type CloseInteractionResponse = Static<typeof CloseInteractionResponse>

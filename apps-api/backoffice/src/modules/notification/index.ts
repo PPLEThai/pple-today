@@ -1,9 +1,11 @@
 import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
-import Elysia from 'elysia'
+import Elysia, { type AnyElysia } from 'elysia'
 
 import { requireUnboundKey } from './key-binding'
 import {
+  CloseInteractionParams,
+  CloseInteractionResponse,
   CountAppInstallBody,
   CountAppInstallResponse,
   CreateAppNotificationBody,
@@ -22,24 +24,106 @@ import {
   ReadNotificationResponse,
   RegisterNotificationBody,
   RegisterNotificationResponse,
+  RespondNotificationBody,
+  RespondNotificationHeaders,
+  RespondNotificationParams,
+  RespondNotificationResponse,
   SendExternalNotificationHeader,
 } from './models'
-import { AppNotificationServicePlugin, NotificationServicePlugin } from './services'
+import {
+  AppNotificationServicePlugin,
+  InteractionServicePlugin,
+  NotificationServicePlugin,
+} from './services'
 
 import { AuthGuardPlugin } from '../../plugins/auth-guard'
 
-export const NotificationController = new Elysia({
+/**
+ * The answer endpoint, mounted twice (see `NotificationController`): at
+ * `/:id/response`, the path in the spec and the one native tray code calls, and
+ * at `/:id/answer`, the alias the typed client uses.
+ *
+ * Auth is resolved here rather than by the `requiredLocalUser` macro because the
+ * route takes either of two credentials: the user session (in-app), or the
+ * per-notification response token a tray action carries, which has no session
+ * behind it by design. Exactly one must be sent.
+ */
+const respondRoute = <const TPath extends string>(path: TPath) =>
+  new Elysia().use([AuthGuardPlugin, InteractionServicePlugin]).post(
+    path,
+    async ({ params, body, headers, authGuard, interactionService, status }) => {
+      const responseToken = headers['x-notification-response-token']
+      const hasSession = Boolean(headers['authorization'])
+
+      if (responseToken !== undefined && hasSession) {
+        return mapErrorCodeToResponse(
+          {
+            code: InternalErrorCode.NOTIFICATION_RESPONSE_INVALID,
+            message: 'Send either the session or X-Notification-Response-Token, not both',
+          },
+          status
+        )
+      }
+
+      let credential: { kind: 'token'; token: string } | { kind: 'session'; userId: string }
+      if (responseToken !== undefined) {
+        credential = { kind: 'token', token: responseToken }
+      } else {
+        const user = await authGuard.getCurrentUser(headers)
+        if (user.isErr()) return mapErrorCodeToResponse(user.error, status)
+        credential = { kind: 'session', userId: user.value.id }
+      }
+
+      const result = await interactionService.respond(params.id, credential, body)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      detail: {
+        summary: 'Answer an interactive notification',
+        description:
+          "Records the caller's answer and marks the notification read; the answer is then delivered to the sending app in the background. Send exactly one credential: the user session, or `X-Notification-Response-Token` (what an OS notification action carries). The first accepted answer is final.\n\n404 means the notification does not exist, the caller is not a recipient, or it has no interaction (all identical). 401 is a bad or expired token, or one minted for another notification. 409 carries the existing answer. 410 is expired, closed, or the sending app was retired. 400 names the failing field.",
+      },
+      params: RespondNotificationParams,
+      headers: RespondNotificationHeaders,
+      body: RespondNotificationBody,
+      response: {
+        200: RespondNotificationResponse,
+        ...createErrorSchema(
+          InternalErrorCode.BAD_REQUEST,
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.NOTIFICATION_RESPONSE_TOKEN_INVALID,
+          InternalErrorCode.NOTIFICATION_RESPONSE_INVALID,
+          InternalErrorCode.INTERACTIVE_NOTIFICATIONS_DISABLED,
+          InternalErrorCode.NOTIFICATION_NOT_FOUND,
+          InternalErrorCode.NOTIFICATION_ALREADY_RESPONDED,
+          InternalErrorCode.NOTIFICATION_INTERACTION_CLOSED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+
+const TypedNotificationController = new Elysia({
   prefix: '/notifications',
   tags: ['Notifications'],
 })
-  .use([AuthGuardPlugin, NotificationServicePlugin])
+  .use([AuthGuardPlugin, NotificationServicePlugin, InteractionServicePlugin])
   .post(
     '/register',
     async ({ body, user, notificationService, status }) => {
       const registerResult = await notificationService.registerDeviceToken(
         user.id,
         body.deviceToken,
-        { platform: body.platform, supportsAppBranding: body.supportsAppBranding }
+        {
+          platform: body.platform,
+          supportsAppBranding: body.supportsAppBranding,
+          supportsTrayInteraction: body.supportsTrayInteraction,
+        }
       )
 
       if (registerResult.isErr()) {
@@ -122,6 +206,7 @@ export const NotificationController = new Elysia({
       },
     }
   )
+  .use(respondRoute('/:id/answer'))
   .put(
     '/read/:id',
     async ({ params, notificationService, user, status }) => {
@@ -203,11 +288,23 @@ export const NotificationController = new Elysia({
     }
   )
 
+/**
+ * `POST /notifications/:id/response` is the spec'd path, but a path segment named
+ * `response` collides with the `response` key of Elysia's route-type tree: the
+ * Eden client then reads `/notifications/:id` as a leaf and drops its GET from
+ * the typed path list (the mobile client stops compiling). So the route is
+ * mounted here for real, and cast out of the exported type; the typed client uses
+ * the `/:id/answer` alias above. Both run the same handler.
+ */
+export const NotificationController = TypedNotificationController.use(
+  respondRoute('/:id/response') as unknown as AnyElysia
+) as unknown as typeof TypedNotificationController
+
 export const ExternalNotificationController = new Elysia({
   prefix: '/external/notifications',
   tags: ['External Notifications'],
 })
-  .use([NotificationServicePlugin, AppNotificationServicePlugin])
+  .use([NotificationServicePlugin, AppNotificationServicePlugin, InteractionServicePlugin])
   // Audience-bound send. The key identifies the app; the body says whether the
   // notification is for all of that app's audience or a named subset of it.
   // Either way the audience is the same: that app's App Users within its
@@ -262,6 +359,10 @@ export const ExternalNotificationController = new Elysia({
           InternalErrorCode.NOTIFICATION_INVALID_LINK_PATH,
           InternalErrorCode.NOTIFICATION_INVALID_IN_APP_NAVIGATION,
           InternalErrorCode.NOTIFICATION_INVALID_BYPASS,
+          InternalErrorCode.NOTIFICATION_INVALID_INTERACTION,
+          InternalErrorCode.NOTIFICATION_INTERACTION_NO_CALLBACK,
+          InternalErrorCode.NOTIFICATION_INTERACTION_BYPASS_NOT_ALLOWED,
+          InternalErrorCode.INTERACTIVE_NOTIFICATIONS_DISABLED,
           InternalErrorCode.NOTIFICATION_SENT_FAILED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
@@ -309,10 +410,13 @@ export const ExternalNotificationController = new Elysia({
         return mapErrorCodeToResponse(sendResult.error, status)
       }
 
+      const { notificationId, delivery } = sendResult.value
+
       return status(201, {
         success: true,
-        phoneNumber: body.audience.type === 'PHONE_NUMBER' ? sendResult.value : undefined,
-        ...(body.audience.type === 'SUB' ? { sub: sendResult.value } : {}),
+        notificationId,
+        phoneNumber: body.audience.type === 'PHONE_NUMBER' ? delivery : undefined,
+        ...(body.audience.type === 'SUB' ? { sub: delivery } : {}),
       })
     },
     {
@@ -333,7 +437,61 @@ export const ExternalNotificationController = new Elysia({
           InternalErrorCode.NOTIFICATION_INVALID_IN_APP_NAVIGATION,
           InternalErrorCode.NOTIFICATION_INVALID_BYPASS,
           InternalErrorCode.NOTIFICATION_INVALID_LINK_PATH,
+          InternalErrorCode.NOTIFICATION_INVALID_INTERACTION,
+          InternalErrorCode.NOTIFICATION_INTERACTION_NO_CALLBACK,
+          InternalErrorCode.NOTIFICATION_INTERACTION_BYPASS_NOT_ALLOWED,
+          InternalErrorCode.INTERACTIVE_NOTIFICATIONS_DISABLED,
           InternalErrorCode.NOTIFICATION_SENT_FAILED
+        ),
+      },
+    }
+  )
+  // Stop accepting answers to one of the calling app's interactive
+  // notifications. Authorised by the app's own notification key: the key's bound
+  // app is the only caller that may close its own notification, and everyone
+  // else (an unbound key, another app, a missing id) gets the same 404.
+  .post(
+    '/:notificationId/interaction/close',
+    async ({ interactionService, notificationService, params, headers, status }) => {
+      const token = headers['authorization'].split(' ')[1]
+      const tokenResult = await notificationService.checkApiToken(token)
+
+      if (tokenResult.isErr()) return mapErrorCodeToResponse(tokenResult.error, status)
+
+      if (!tokenResult.value) {
+        return mapErrorCodeToResponse(
+          {
+            code: InternalErrorCode.UNAUTHORIZED,
+            message: 'Invalid API token',
+          },
+          status
+        )
+      }
+
+      const result = await interactionService.closeInteraction(
+        tokenResult.value,
+        params.notificationId
+      )
+
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, result.value)
+    },
+    {
+      detail: {
+        summary: 'Close an interactive notification to further answers',
+        description:
+          "Recipients who have not answered then see the interaction as closed, and a tray tap is refused the same way (410). Answers already recorded are still delivered. Idempotent. Only the app the notification is attributed to may close it; any other caller gets 404, so this cannot be used to find other apps' notification ids.",
+      },
+      headers: CreateNewExternalNotificationHeader,
+      params: CloseInteractionParams,
+      response: {
+        200: CloseInteractionResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.INTERACTIVE_NOTIFICATIONS_DISABLED,
+          InternalErrorCode.NOTIFICATION_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
     }

@@ -51,10 +51,11 @@ export const NOTIFICATION_INTERACTION_ICONS = [
   'help',
 ] as const
 
-export const NotificationInteractionIcon = t.Union(
-  NOTIFICATION_INTERACTION_ICONS.map((icon) => t.Literal(icon)),
-  { description: 'One name from the interaction icon allowlist' }
-)
+// `UnionEnum` rather than `t.Union(ICONS.map(t.Literal))`: mapping an array loses
+// the tuple type, and Elysia then infers the icon as `undefined` in route types.
+export const NotificationInteractionIcon = t.UnionEnum(NOTIFICATION_INTERACTION_ICONS, {
+  description: 'One name from the interaction icon allowlist',
+})
 export type NotificationInteractionIcon = (typeof NOTIFICATION_INTERACTION_ICONS)[number]
 
 export const NOTIFICATION_INTERACTION_ACTION_STYLES = ['primary', 'outline', 'destructive'] as const

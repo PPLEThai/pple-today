@@ -81,7 +81,7 @@ export class InviteNotifier {
     // such numbers under `failed`. Reporting that as delivered would tell the
     // Builder their tester had been contacted when no PPLE Today account
     // exists to receive it, so the number must actually appear in `success`.
-    const delivered = sendResult.value?.success.includes(phoneNumber) ?? false
+    const delivered = sendResult.value.delivery?.success.includes(phoneNumber) ?? false
 
     if (!delivered) {
       this.loggerService.warn({
