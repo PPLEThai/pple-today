@@ -64,9 +64,21 @@ platform :ios do
     )
     sync_code_signing(
       type: "appstore",
-      app_identifier: [app_identifier, "#{app_identifier}.NotificationServiceExtension", "#{app_identifier}.LiveActivity"],
+      app_identifier: [app_identifier, "#{app_identifier}.NotificationServiceExtension"],
       readonly: true,
       output_path: "./builds"
+    )
+    # SPIKE (Live Activity): CI's match credentials are read-only, so the
+    # LiveActivity profile (created on the portal by register_live_activity) is
+    # downloaded from Apple instead of the match repo. Signed with the same
+    # distribution certificate match just installed.
+    get_provisioning_profile(
+      app_identifier: "#{app_identifier}.LiveActivity",
+      provisioning_name: "#{ENV['PROVISIONING_PROFILE_SPECIFIER']}.LiveActivity",
+      ignore_profiles_with_different_name: true,
+      readonly: true,
+      output_path: "./builds",
+      filename: "live-activity.mobileprovision"
     )
     get_certificates( # Create or get certificate, and install it
       output_path: "./builds" # Download certificate in the build folder (you don't need to create the folder)
