@@ -1,5 +1,15 @@
 # @client/mobile
 
+## 2.11.0
+
+### Minor Changes
+
+- [#519](https://github.com/PPLEThai/pple-today/pull/519) [`e590dd0`](https://github.com/PPLEThai/pple-today/commit/e590dd0a05fcd27d5c8a7d120c46b886765cfc2e) Thanks [@PanJ](https://github.com/PanJ)! - Interactive notifications (#515): app-bound sends can carry an `interaction` (fields + actions). Recipients answer once, in the app or from the OS tray; answers are recorded, then delivered to the sending app's callback (signed for ADMIN apps, via the platform relay for PLATFORM apps) with retries. Adds the answer and close endpoints, the callback sweep route, admin-portal callback settings, and the in-app form. Behind `INTERACTIVE_NOTIFICATIONS_ENABLED`.
+
+### Patch Changes
+
+- [#517](https://github.com/PPLEThai/pple-today/pull/517) [`0b4e083`](https://github.com/PPLEThai/pple-today/commit/0b4e083382f90b21cea4e21412087684cbfdb02a) Thanks [@PanJ](https://github.com/PanJ)! - Separate mandatory and optional app updates: `CHECK_APP_UPDATE` now accepts an optional per-platform `minimumVersion` (below it the update is mandatory), while `version` is the latest version offered as an optional update. `isForceUpdate` is still honoured for older builds.
+
 ## 2.10.3
 
 ### Patch Changes
