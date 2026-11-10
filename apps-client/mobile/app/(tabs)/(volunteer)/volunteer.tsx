@@ -5,6 +5,7 @@ import { useFocusEffect, useRouter } from 'expo-router'
 
 import { MiniAppWebView, MiniAppWebViewHandle } from '@app/components/mini-app/mini-app-web-view'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
+import { useSession } from '@app/libs/auth'
 
 // อาสาประชาชน — embedded as the อาสา tab instead of opened as a mini app screen.
 export const VOLUNTEER_MINI_APP_SLUG = 'noble-aqua-dove'
@@ -12,6 +13,7 @@ export const VOLUNTEER_MINI_APP_SLUG = 'noble-aqua-dove'
 export default function VolunteerScreen() {
   const router = useRouter()
   const miniAppRef = useRef<MiniAppWebViewHandle>(null)
+  const session = useSession()
 
   // Android back walks the mini app's own history first while this tab is
   // focused; once it has none, the default (tab/stack) behaviour applies.
@@ -28,6 +30,9 @@ export default function VolunteerScreen() {
   return (
     <SafeAreaLayout>
       <MiniAppWebView
+        // The tab outlives sign-in and sign-out. Remounting on either drops
+        // the previous user's session and opens the app afresh as the new one.
+        key={session ? 'signed-in' : 'signed-out'}
         ref={miniAppRef}
         slug={VOLUNTEER_MINI_APP_SLUG}
         showTopBar={false}

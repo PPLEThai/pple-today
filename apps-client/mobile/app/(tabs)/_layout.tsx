@@ -53,17 +53,16 @@ export default function BottomTabsLayout() {
               tabBarButton: TabBarButton,
             }}
           />
-          <Tabs.Protected guard={!!session}>
-            <Tabs.Screen
-              name="(volunteer)"
-              options={{
-                title: 'อาสา',
-                tabBarIcon: (props) => <TabBarIcon {...props} icon={PeopleIcon} />,
-                tabBarLabel: TabBarLabel,
-                ...(session ? { tabBarButton: TabBarButton } : { href: null }),
-              }}
-            />
-          </Tabs.Protected>
+          {/* Shown signed out too: อาสาประชาชน asks the user to sign in itself. */}
+          <Tabs.Screen
+            name="(volunteer)"
+            options={{
+              title: 'อาสา',
+              tabBarIcon: (props) => <TabBarIcon {...props} icon={PeopleIcon} />,
+              tabBarLabel: TabBarLabel,
+              tabBarButton: TabBarButton,
+            }}
+          />
           <Tabs.Screen
             name="(official)"
             options={{
@@ -85,7 +84,8 @@ export default function BottomTabsLayout() {
           <Tabs.Screen
             name="(profile)"
             options={{
-              title: 'ฉัน',
+              // Signed out, this tab is the sign-in screen, and says so.
+              title: session ? 'ฉัน' : 'เข้าสู่ระบบ',
               tabBarIcon: (props) => <TabBarIcon {...props} icon={CircleUserRoundIcon} />,
               tabBarLabel: TabBarLabel,
               tabBarButton: TabBarButton,

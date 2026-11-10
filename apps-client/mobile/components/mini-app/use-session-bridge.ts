@@ -36,6 +36,11 @@ export interface BridgeResolvedApp {
   baseUrl: string
 }
 
+// The SDK gives up on an answer 120 s after the ack (`RESPONSE_TIMEOUT_MS` in
+// packages/mini-app/src/bridge.ts). A sign-in that outlasts this answers a page
+// that has stopped listening, so the page is reloaded to ask again instead.
+const SDK_RESPONSE_WAIT_MS = 110_000
+
 type Outcome =
   | { status: 'ok'; session: MiniAppSession }
   | { status: 'denied'; reason: SessionDeniedReason }
@@ -89,10 +94,16 @@ const invalidateMiniAppLists = (queryClient: QueryClient) =>
 export function useSessionBridge({
   webViewRef,
   onResolved,
+  requestSignIn,
 }: {
   webViewRef: React.RefObject<WebView | null>
   /** A request resolved to a known app; `origin` is the page that asked. */
   onResolved: (app: BridgeResolvedApp, origin: string) => void
+  /**
+   * Asks a signed-out user to sign in; `true` once they have. A session
+   * request waits on it rather than being refused as `not-signed-in`.
+   */
+  requestSignIn: () => Promise<boolean>
 }) {
   const session = useSession()
   // Requests outlive renders (the prompt can sit for a minute), so they read
@@ -101,6 +112,8 @@ export function useSessionBridge({
   signedInRef.current = !!session
   const onResolvedRef = useRef(onResolved)
   onResolvedRef.current = onResolved
+  const requestSignInRef = useRef(requestSignIn)
+  requestSignInRef.current = requestSignIn
 
   const cacheRef = useRef(new SessionCache())
   // Apps already resolved, per cache key — a cache hit still relabels the bar.
@@ -230,10 +243,17 @@ export function useSessionBridge({
     return { status: 'ok', session: resolved.session }
   }
 
-  const resolveSession = (clientId: string, origin: string, pageUrl: string): Promise<Outcome> => {
-    // Asking the server would only fail; the page can offer its own sign-in.
+  const resolveSession = async (
+    clientId: string,
+    origin: string,
+    pageUrl: string
+  ): Promise<Outcome> => {
+    // Asking the server signed out would only fail, so the user is asked to
+    // sign in first. Declining leaves the page to offer its own sign-in.
     if (!signedInRef.current) {
-      return Promise.resolve({ status: 'denied', reason: 'not-signed-in' })
+      if (!(await requestSignInRef.current())) return { status: 'denied', reason: 'not-signed-in' }
+      // The session query catches up on the next render; this request goes on now.
+      signedInRef.current = true
     }
 
     const key = SessionCache.key(clientId, origin)
@@ -359,8 +379,15 @@ export function useSessionBridge({
     }
 
     reply(origin, ackReply(request.requestId))
+    const ackedAt = Date.now()
     void (async () => {
       const outcome = await resolveSession(request.clientId, origin, pageUrl)
+      // Only a sign-in can hold a request this long. The page has given up on
+      // this answer; reloaded, it asks again and gets the cached session.
+      if (outcome.status === 'ok' && Date.now() - ackedAt > SDK_RESPONSE_WAIT_MS) {
+        webViewRef.current?.reload()
+        return
+      }
       reply(
         origin,
         outcome.status === 'ok'

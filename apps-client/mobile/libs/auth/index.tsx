@@ -436,6 +436,33 @@ export const useLoginMutation = () => {
   })
 }
 
+/**
+ * Sign in without leaving the screen — for when something on screen is waiting
+ * on the answer (a mini app asking the host for a session). Unlike
+ * `useLoginMutation` it neither navigates nor resets the API cache: a reset
+ * empties the queries that screen is rendered from, and swapping it for a
+ * spinner would drop whatever was waiting. Queries are refetched in place
+ * instead, now as the signed-in user.
+ *
+ * A brand-new account is not sent to onboarding here: the user came to use
+ * the mini app, and nothing in the app requires onboarding to be finished.
+ */
+export const useSignInInPlaceMutation = () => {
+  const sessionMutation = useSessionMutation()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: login,
+    onSuccess: async (result) => {
+      await sessionMutation.mutateAsync({
+        accessToken: result.tokenResponse.accessToken,
+        refreshToken: result.tokenResponse.refreshToken ?? '',
+        idToken: result.tokenResponse.idToken ?? null,
+      })
+      await queryClient.invalidateQueries({ queryKey: reactQueryClient.getKey() })
+    },
+  })
+}
+
 const UNREGISTER_TIMEOUT_MS = 5000
 
 /** Best effort: logout must not hang or fail because of it. */
