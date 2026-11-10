@@ -22,5 +22,10 @@ notificationDisplay.ensureDefaultNotificationChannel()
 // pressed while the app is killed starts the bundle headless, and the task has to
 // exist by the time `expo-task-manager` goes looking for it.
 notificationDisplay.registerTrayInteractionTask()
+// expo-notifications 58 shows a notification that arrives while the app is open,
+// unless told otherwise. The app shows its own toast for those (see `onMessage` in
+// `app/_layout.tsx`), so a system banner as well would show everything twice.
+// `null` restores the earlier behaviour: nothing shown by expo-notifications.
+require('expo-notifications').setNotificationHandler(null)
 
 require('expo-router/entry')

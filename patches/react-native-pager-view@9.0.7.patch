@@ -1,0 +1,32 @@
+diff --git a/src/utils.ios.tsx b/src/utils.ios.tsx
+index 7bb5a33984da643053cea4afaea9b893e222ce83..afe49760c409d5fdd16167f426c239e5cd5f2553 100644
+--- a/src/utils.ios.tsx
++++ b/src/utils.ios.tsx
+@@ -6,6 +6,11 @@ export const childrenWithOverriddenStyle = (
+   pageMargin = 0
+ ) => {
+   return Children.map(children, (child) => {
++    // PPLE patch: conditional pages (`{cond && <Page />}`) put `false`/`null`
++    // children here; cloning them throws. Pass non-elements through untouched.
++    if (!React.isValidElement(child)) {
++      return child;
++    }
+     const element = child as React.ReactElement<any>;
+     return (
+       <View
+diff --git a/src/utils.tsx b/src/utils.tsx
+index bf2367a550d7ba0e6e6e83432192fa957af16f6f..2d0f145fbe07f880a922b54417f41625e699aae9 100644
+--- a/src/utils.tsx
++++ b/src/utils.tsx
+@@ -6,6 +6,11 @@ export const childrenWithOverriddenStyle = (
+   _pageMargin = 0
+ ) => {
+   return Children.map(children, (child) => {
++    // PPLE patch: conditional pages (`{cond && <Page />}`) put `false`/`null`
++    // children here; cloning them throws. Pass non-elements through untouched.
++    if (!React.isValidElement(child)) {
++      return child;
++    }
+     const element = child as React.ReactElement<any>;
+     return (
+       <View style={StyleSheet.absoluteFill} collapsable={false}>

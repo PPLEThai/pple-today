@@ -18,6 +18,9 @@ export default {
     userInterfaceStyle: 'automatic',
     ios: {
       supportsTablet: true,
+      // Expo SDK 56+ requires 16.4. ActivityKit (16.1) and AppIntents (16.0) are
+      // always available from here, so the Live Activity code links them normally.
+      deploymentTarget: '16.4',
       googleServicesFile: './credentials/GoogleService-Info.plist',
       bundleIdentifier: process.env.DEVELOPER_APP_IDENTIFIER,
       // Live Activity: @bacons/apple-targets signs the widget target with this team.
@@ -40,7 +43,6 @@ export default {
         foregroundImage: './assets/images/adaptive-icon.png',
         backgroundColor: '#FF6A13',
       },
-      edgeToEdgeEnabled: true,
       package: process.env.DEVELOPER_APP_IDENTIFIER,
       googleServicesFile: './credentials/google-services.json',
       softwareKeyboardLayoutMode: 'pan',
@@ -72,22 +74,15 @@ export default {
         'expo-build-properties',
         {
           ios: {
-            deploymentTarget: '15.1',
             reactNativeReleaseLevel: 'experimental',
 
-            // https://github.com/invertase/react-native-firebase/issues/8657#issuecomment-3309893085
-            useFrameworks: 'static',
-            forceStaticLinking: ['RNFBApp', 'RNFBMessaging', 'RNFBAnalytics', 'RNFBRemoteConfig'],
-            extraPods: [
-              {
-                name: 'GoogleUtilities',
-              },
-            ],
+            // React Native Firebase 27 installs the Firebase Apple SDK (13+, only on
+            // Swift Package Manager), which needs dynamic frameworks.
+            // https://rnfirebase.io/migrating-to-v27
+            useFrameworks: 'dynamic',
           },
           android: {
-            compileSdkVersion: 36,
             targetSdkVersion: 36,
-            buildToolsVersion: '36.0.0',
             reactNativeReleaseLevel: 'experimental',
 
             // Run R8 on release builds: shrinks and obfuscates the DEX. Play Console
@@ -149,7 +144,6 @@ export default {
     ],
     experiments: {
       typedRoutes: true,
-      reactCanary: true,
       reactCompiler: true,
     },
   },

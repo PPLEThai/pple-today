@@ -1,24 +1,10 @@
+import { ColorValue } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Text } from '@pple-today/ui/text'
-import type {
-  MaterialTopTabNavigationEventMap,
-  MaterialTopTabNavigationOptions,
-} from '@react-navigation/material-top-tabs'
-import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs'
-import { type ParamListBase, type TabNavigationState } from '@react-navigation/native'
-import { withLayoutContext } from 'expo-router'
+import { TopTabs as MaterialTopTabs } from 'expo-router/js-top-tabs'
 
 import { KeyboardAvoidingViewLayout } from '@app/components/keyboard-avoiding-view-layout'
-
-const { Navigator } = createMaterialTopTabNavigator()
-
-const MaterialTopTabs = withLayoutContext<
-  MaterialTopTabNavigationOptions,
-  typeof Navigator,
-  TabNavigationState<ParamListBase>,
-  MaterialTopTabNavigationEventMap
->(Navigator)
 
 /**
  * Note: TapBar Indicator might be glitchy on Android
@@ -30,10 +16,9 @@ export default function MaterialTopTabsLayout() {
   return (
     <KeyboardAvoidingViewLayout>
       <MaterialTopTabs
-        initialRouteName="playground"
         style={{ paddingTop: insets.top }}
         screenOptions={{
-          tabBarLabel: (props) => {
+          tabBarLabel: (props: { focused: boolean; color: ColorValue; children: string }) => {
             return (
               <Text
                 className="text-sm font-heading-semibold"

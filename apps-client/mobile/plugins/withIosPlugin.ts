@@ -1,4 +1,4 @@
-import { ConfigPlugin, withInfoPlist, withPodfile, withXcodeProject } from 'expo/config-plugins'
+import { ConfigPlugin, withInfoPlist } from 'expo/config-plugins'
 
 /**
  * The API base URL, written to Info.plist as `PPLEBackendBaseURL`.
@@ -24,56 +24,19 @@ const withBackendBaseUrl: ConfigPlugin = (config) => {
 }
 
 /**
- * Live Activity. The `_shared` Swift in `targets/live-activity` is also
- * compiled into the app, whose deployment target is 15.1. ActivityKit (16.1)
- * and AppIntents (16.0) must be weak-linked or the app fails to launch on 15.
- * Also declares Live Activity support.
+ * Live Activity: declares support in Info.plist. ActivityKit and AppIntents need
+ * no weak-linking now that the deployment target (16.4) is above both.
  */
 const withLiveActivitySupport: ConfigPlugin = (config) => {
-  config = withInfoPlist(config, (config) => {
+  return withInfoPlist(config, (config) => {
     config.modResults.NSSupportsLiveActivities = true
-    return config
-  })
-  return withXcodeProject(config, (config) => {
-    const project = config.modResults
-    const configurations = project.pbxXCBuildConfigurationSection()
-    for (const key of Object.keys(configurations)) {
-      const buildSettings = configurations[key]?.buildSettings
-      // The main app target only: its configurations carry the app's Info.plist.
-      if (
-        !buildSettings ||
-        !String(buildSettings.INFOPLIST_FILE ?? '').includes('PPLEToday/Info.plist')
-      ) {
-        continue
-      }
-      const existing = buildSettings.OTHER_LDFLAGS
-      const flags: string[] = Array.isArray(existing)
-        ? existing
-        : existing
-          ? [existing]
-          : ['"$(inherited)"']
-      for (const flag of ['"-weak_framework"', 'ActivityKit', '"-weak_framework"', 'AppIntents']) {
-        flags.push(flag)
-      }
-      buildSettings.OTHER_LDFLAGS = flags
-    }
     return config
   })
 }
 
 const withIosPlugin: ConfigPlugin = (config) => {
   config = withBackendBaseUrl(config)
-  config = withLiveActivitySupport(config)
-  return withPodfile(config, (config) => {
-    config.modResults.contents += `
-target 'NotificationServiceExtension' do
-  use_frameworks! :linkage => :static
-  pod 'Firebase/Messaging'
-  pod 'GoogleUtilities'
-end
-`
-    return config
-  })
+  return withLiveActivitySupport(config)
 }
 
 export default withIosPlugin

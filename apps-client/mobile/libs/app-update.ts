@@ -1,13 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AppState, Linking, Platform } from 'react-native'
 
-import {
-  fetchAndActivate,
-  getRemoteConfig,
-  getValue,
-  setConfigSettings,
-  setDefaults,
-} from '@react-native-firebase/remote-config'
+import { fetchAndActivate, getRemoteConfig, getValue } from '@react-native-firebase/remote-config'
 import Constants from 'expo-constants'
 import { z } from 'zod'
 
@@ -54,15 +48,17 @@ export function initAppUpdate() {
   if (initialized) return
   initialized = true
   const remoteConfig = getRemoteConfig()
-  setConfigSettings(remoteConfig, {
+  // React Native Firebase 25+ dropped `setConfigSettings`/`setDefaults` from the
+  // modular API in favour of these setters (as in the Firebase JS SDK). Both take
+  // effect on the instance immediately and reach the native SDK before the next
+  // fetch, so `readConfig` needs nothing to await.
+  remoteConfig.settings = {
     minimumFetchIntervalMillis: __DEV__ ? 0 : 60 * 60 * 1000,
-    fetchTimeMillis: 60 * 1000,
-  })
-  setDefaults(remoteConfig, {
+    fetchTimeoutMillis: 60 * 1000,
+  }
+  remoteConfig.defaultConfig = {
     [REMOTE_CONFIG_KEY]: JSON.stringify(DEFAULT_CONFIG),
-  }).catch((err) => {
-    if (__DEV__) console.warn('[AppUpdate] setDefaults failed', err)
-  })
+  }
 }
 
 function getCurrentVersion(): string {

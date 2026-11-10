@@ -1,4 +1,4 @@
-import EXNotifications
+import ExpoNotifications
 import Foundation
 import UIKit
 import UserNotifications
