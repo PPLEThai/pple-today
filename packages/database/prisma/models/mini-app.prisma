@@ -51,16 +51,26 @@ model MiniApp {
   // audit. Null for every live app.
   retiredAt DateTime?
 
+  // Where answers to this app's interactive notifications are POSTed.
+  // ADMIN apps only, set in the admin portal. PLATFORM apps ignore it and
+  // always deliver through the platform at the predefined path.
+  notificationCallbackUrl    String?
+  // HMAC key for the callback signature. Generated when a URL is first set,
+  // revealed once, rotatable. Stored encrypted: it must be usable to sign, so it
+  // cannot be hashed like the notification key.
+  notificationCallbackSecret String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   banners Banner[]
 
-  miniAppRoles        MiniAppRole[]
-  appUsers            MiniAppUser[]
-  notificationApiKeys NotificationApiKey[]
-  notifications       Notification[]
-  invites             MiniAppInvite[]
+  miniAppRoles          MiniAppRole[]
+  appUsers              MiniAppUser[]
+  notificationApiKeys   NotificationApiKey[]
+  notifications         Notification[]
+  invites               MiniAppInvite[]
+  notificationResponses NotificationResponse[]
 }
 
 enum MiniAppInviteStatus {

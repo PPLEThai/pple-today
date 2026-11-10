@@ -177,6 +177,50 @@ export const envSchema = t.Object({
     .Decode((value) => value === 'true')
     .Encode((value) => (value ? 'true' : 'false')),
 
+  INTERACTIVE_NOTIFICATIONS_ENABLED: t
+    .Transform(
+      t.Union([t.Literal('true'), t.Literal('false')], {
+        default: 'false',
+        description:
+          'Feature flag for interactive notifications. While false, a send that includes `interaction` is refused with 400 rather than silently dropped.',
+      })
+    )
+    .Decode((value) => value === 'true')
+    .Encode((value) => (value ? 'true' : 'false')),
+  NOTIFICATION_RESPONSE_TOKEN_SECRET: t.Optional(
+    t.String({
+      description:
+        'HMAC secret for the per-recipient response token carried in interactive pushes (tray actions). Without it, no tray data is sent.',
+    })
+  ),
+  TRAY_INTERACTION_DISABLED: t
+    .Transform(
+      t.Union([t.Literal('true'), t.Literal('false')], {
+        default: 'false',
+        description:
+          'Kill switch for tray actions on both platforms. When true, interactive pushes carry no tray data and a tap opens the form. Does not affect branding.',
+      })
+    )
+    .Decode((value) => value === 'true')
+    .Encode((value) => (value ? 'true' : 'false')),
+  PLATFORM_CALLBACK_RELAY_URL: t.Optional(
+    t.String({
+      description:
+        'Base URL of the pple-platform relay that delivers notification responses to PLATFORM apps',
+    })
+  ),
+  PLATFORM_CALLBACK_RELAY_TOKEN: t.Optional(
+    t.String({
+      description: 'Bearer token for the pple-platform notification-response relay',
+    })
+  ),
+  NOTIFICATION_CALLBACK_SECRET_KEY: t.Optional(
+    t.String({
+      description:
+        'Encryption key for the stored per-app notification callback signing secrets (MiniApp.notificationCallbackSecret)',
+    })
+  ),
+
   SMS_SERVICE_BASE_URL: t.Optional(
     t.String({
       description: 'Base URL for SMS service provider',

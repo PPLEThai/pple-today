@@ -25,6 +25,11 @@ model UserNotificationToken {
   // proven `notification` payload.
   supportsAppBranding Boolean @default(false)
 
+  // This build can show interaction actions on the OS notification and submit
+  // them with a response token. Re-asserted on every registration, like
+  // supportsAppBranding.
+  supportsTrayInteraction Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -88,13 +93,64 @@ model Notification {
   miniAppId String?
   miniApp   MiniApp? @relation(fields: [miniAppId], references: [id])
 
+  // The interaction spec as sent, after validation. Versioned ({ v: 1, ... }) so
+  // a client can refuse a shape it doesn't know rather than render it wrongly.
+  interaction          Json?
+  interactionExpiresAt DateTime? // lifted out so "is it open?" is a column check
+  interactionClosedAt  DateTime? // set by /close; never unset
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   sentNotifications UserNotification[]
   phoneNumbers      NotificationPhoneNumber[]
+  responses         NotificationResponse[]
 
   @@index([miniAppId])
+}
+
+enum NotificationCallbackStatus {
+  PENDING // waiting for its next attempt
+  DELIVERED // the app answered 2xx
+  FAILED // gave up: retries exhausted, permanent 4xx/410, or the app retired
+}
+
+enum NotificationResponseChannel {
+  APP // the in-app form (detail screen)
+  TRAY // an OS notification action
+}
+
+// One recipient's answer to one interactive notification. The unique key is
+// what makes "answer once" a database fact rather than a client courtesy.
+// The row is also the delivery outbox: there is no separate queue table.
+model NotificationResponse {
+  id             String @id @default(cuid()) // also the callback's idempotency id
+  notificationId String
+  userId         String
+  miniAppId      String // denormalised: per-app delivery queries and Console views
+
+  actionId    String
+  values      Json? // { [fieldId]: string | string[] }; null once purged
+  channel     NotificationResponseChannel
+  respondedAt DateTime                    @default(now())
+
+  deliveryStatus NotificationCallbackStatus @default(PENDING)
+  attempts       Int                        @default(0)
+  nextAttemptAt  DateTime?                  @default(now())
+  lastAttemptAt  DateTime?
+  lastStatusCode Int?
+  lastError      String? // truncated; never the response body
+  deliveredAt    DateTime?
+  valuesPurgedAt DateTime?
+
+  notification Notification @relation(fields: [notificationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+  miniApp      MiniApp      @relation(fields: [miniAppId], references: [id])
+
+  @@unique([notificationId, userId])
+  @@index([deliveryStatus, nextAttemptAt]) // the delivery sweep
+  @@index([miniAppId, deliveryStatus]) // per-app failure views
+  @@index([valuesPurgedAt, deliveredAt]) // the retention sweep
 }
 
 model NotificationPhoneNumber {

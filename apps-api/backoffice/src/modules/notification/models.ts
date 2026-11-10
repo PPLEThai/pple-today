@@ -1,6 +1,7 @@
 import {
   ListCursorResponse,
   Notification,
+  NotificationInteractionState,
   NotificationSenderApp,
 } from '@pple-today/api-common/dtos'
 import { NotificationTokenPlatform } from '@pple-today/database/prisma'
@@ -26,6 +27,12 @@ export const RegisterNotificationBody = t.Object({
     t.Boolean({
       description:
         'Whether this build can render an app-branded notification from a data-only message. Only tokens that assert this receive the data-only Android payload.',
+    })
+  ),
+  supportsTrayInteraction: t.Optional(
+    t.Boolean({
+      description:
+        'Whether this build can show interaction actions on the OS notification and submit them with a response token.',
     })
   ),
 })
@@ -65,6 +72,8 @@ export const ListHistoryNotificationResponse = ListCursorResponse(
     image: t.Optional(t.String()),
     /** The sending app, or absent for PPLE Today's own notifications. */
     app: t.Optional(NotificationSenderApp),
+    /** Present only on an interactive notification; the list shows a "รอตอบกลับ" chip when OPEN. */
+    interactionState: t.Optional(NotificationInteractionState),
     isRead: t.Boolean(),
     createdAt: t.Date(),
   })
