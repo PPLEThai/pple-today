@@ -6,8 +6,8 @@ expo-env.d.ts
 # @end expo-cli
 
 app-example
-android
-ios
+/android
+/ios
 *.apk
 *.aab
 .idea
