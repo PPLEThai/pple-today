@@ -89,6 +89,12 @@ export default {
             targetSdkVersion: 36,
             buildToolsVersion: '36.0.0',
             reactNativeReleaseLevel: 'experimental',
+
+            // Run R8 on release builds: shrinks and obfuscates the DEX. Play Console
+            // flags apps under 25% obfuscation, and without this we sat at ~1%.
+            // https://developer.android.com/topic/performance/vitals/code-optimization
+            enableMinifyInReleaseBuilds: true,
+            enableShrinkResourcesInReleaseBuilds: true,
           },
         },
       ],
