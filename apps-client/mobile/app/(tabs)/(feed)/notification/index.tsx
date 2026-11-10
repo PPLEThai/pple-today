@@ -207,6 +207,11 @@ const NotificationItem = ({ item }: { item: ListHistoryNotificationResponse['ite
           {item.description}
         </Text>
       ) : null}
+      {item.interactionState === 'OPEN' ? (
+        <View className="self-start rounded-full bg-base-primary-light/20 px-2 py-0.5">
+          <Text className="text-xs font-heading-medium text-base-primary-default">รอตอบกลับ</Text>
+        </View>
+      ) : null}
     </AnimatedBackgroundPressable>
   )
 }

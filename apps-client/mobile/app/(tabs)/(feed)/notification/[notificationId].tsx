@@ -6,11 +6,15 @@ import { Icon } from '@pple-today/ui/icon'
 import { Skeleton } from '@pple-today/ui/skeleton'
 import { Text } from '@pple-today/ui/text'
 import { H1 } from '@pple-today/ui/typography'
+import { useQueryClient } from '@tanstack/react-query'
 import { useLocalSearchParams, useRouter } from 'expo-router'
+import { produce } from 'immer'
 import { ArrowLeftIcon, ArrowUpRightIcon } from 'lucide-react-native'
 
+import type { NotificationInteraction as NotificationInteractionDto } from '@api/backoffice/app'
 import { LinkifiedText } from '@app/components/linkified-text'
 import { MiniAppInviteInbox } from '@app/components/mini-app/invite-inbox'
+import { NotificationInteraction } from '@app/components/notification/interaction'
 import {
   NotificationSenderIcon,
   PLATFORM_SENDER_NAME,
@@ -20,10 +24,19 @@ import { formatNotificationTime } from '@app/libs/format-notification-time'
 import { openLink } from '@app/utils/link'
 import { pathnameToMiniAppRoute } from '@app/utils/mini-app'
 
+import { infiniteNotificationsQueryOptions } from './index'
+
 export default function NotificationDetailPage() {
   const router = useRouter()
   const params = useLocalSearchParams()
   const notificationId = params.notificationId as string
+  // Set by a tray action that has to open the app (it has a confirm dialog or
+  // required fields): the id of the interaction action to leave pending.
+  const pendingActionId =
+    typeof params.pendingActionId === 'string' && params.pendingActionId !== ''
+      ? params.pendingActionId
+      : undefined
+  const queryClient = useQueryClient()
   useEffect(() => {
     if (!notificationId) {
       router.dismissTo('/')
@@ -43,6 +56,33 @@ export default function NotificationDetailPage() {
     }
   }, [notificationDetailQuery.error, router])
   const item = notificationDetailQuery.data
+  const detailQueryKey = reactQueryClient.getQueryKey('/notifications/:id', {
+    pathParams: { id: notificationId! },
+  })
+  // The answer is recorded: keep the detail and the list in step with it so the
+  // summary survives a remount and the "รอตอบกลับ" chip goes away.
+  const onResponded = (interaction: NotificationInteractionDto) => {
+    queryClient.setQueryData(detailQueryKey, (old: typeof item) =>
+      // The api-client types a cached action's `icon` as `undefined`; the DTO's is
+      // the allowlist union, which is what the server really sends.
+      old ? { ...old, interaction: interaction as typeof old.interaction } : old
+    )
+    queryClient.setQueryData(infiniteNotificationsQueryOptions.queryKey, (old) =>
+      old
+        ? produce(old, (draft) => {
+            for (const page of draft.pages) {
+              for (const n of page.items) {
+                if (n.id === notificationId) n.interactionState = interaction.state
+              }
+            }
+          })
+        : old
+    )
+  }
+  const onStale = () => {
+    queryClient.invalidateQueries({ queryKey: detailQueryKey })
+    queryClient.invalidateQueries({ queryKey: infiniteNotificationsQueryOptions.queryKey })
+  }
   // A Beta invite is delivered as an ordinary notification carrying the
   // MINI_APP_INVITE marker. Rather than dead-end on the message, we render the
   // same accept/decline inbox shown on the แอป tab inline here, and drop the
@@ -107,6 +147,15 @@ export default function NotificationDetailPage() {
             <LinkifiedText className="text-base-text-medium font-body-regular text-base">
               {item.content.message}
             </LinkifiedText>
+            {item.interaction && (
+              <NotificationInteraction
+                notificationId={notificationId}
+                interaction={item.interaction}
+                pendingActionId={pendingActionId}
+                onResponded={onResponded}
+                onStale={onStale}
+              />
+            )}
             {isInvite && (
               // The inbox owns its own px-4; cancel the ScrollView's so its cards
               // line up with the message above. It renders nothing once every
