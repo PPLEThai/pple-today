@@ -27,6 +27,12 @@ import { pathnameToMiniAppRoute } from '@app/utils/mini-app'
 
 import { infiniteNotificationsQueryOptions } from './index'
 
+const DEFAULT_ACTION_LABEL = {
+  MINI_APP: 'ไปยังแอป',
+  IN_APP_NAVIGATION: 'ดูรายละเอียด',
+  EXTERNAL_BROWSER: 'เปิดลิงก์',
+} as const
+
 export default function NotificationDetailPage() {
   const router = useRouter()
   const params = useLocalSearchParams()
@@ -98,7 +104,9 @@ export default function NotificationDetailPage() {
   const appRoute = item?.app?.slug ? pathnameToMiniAppRoute(item.app.slug) : null
   const action = item?.content.link
     ? {
-        label: item.content.actionButtonText,
+        // The sender may leave the button text out; a button must still say
+        // where it goes rather than render as a bare arrow.
+        label: item.content.actionButtonText || DEFAULT_ACTION_LABEL[item.content.link.type],
         onPress: () => openLink(item.content.link!),
       }
     : appRoute && item?.app
