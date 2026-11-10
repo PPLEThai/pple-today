@@ -22,6 +22,7 @@ import {
 import { reactQueryClient } from '@app/libs/api-client'
 import { formatNotificationTime } from '@app/libs/format-notification-time'
 import { openLink } from '@app/utils/link'
+import { pendingActionFromParams } from '@app/utils/live-activity'
 import { pathnameToMiniAppRoute } from '@app/utils/mini-app'
 
 import { infiniteNotificationsQueryOptions } from './index'
@@ -31,11 +32,9 @@ export default function NotificationDetailPage() {
   const params = useLocalSearchParams()
   const notificationId = params.notificationId as string
   // Set by a tray action that has to open the app (it has a confirm dialog or
-  // required fields): the id of the interaction action to leave pending.
-  const pendingActionId =
-    typeof params.pendingActionId === 'string' && params.pendingActionId !== ''
-      ? params.pendingActionId
-      : undefined
+  // required fields): the id of the interaction action to leave pending. A Live
+  // Activity button opens `pple-today://notification/<id>?action=<actionId>`.
+  const pendingActionId = pendingActionFromParams(params)
   const queryClient = useQueryClient()
   useEffect(() => {
     if (!notificationId) {

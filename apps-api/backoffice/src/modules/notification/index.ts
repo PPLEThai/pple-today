@@ -20,6 +20,10 @@ import {
   GetUnreadNotificationCountResponse,
   ListHistoryNotificationQuery,
   ListHistoryNotificationResponse,
+  LiveActivityTokenBody,
+  LiveActivityTokenHeaders,
+  LiveActivityTokenParams,
+  LiveActivityTokenResponse,
   ReadNotificationParams,
   ReadNotificationResponse,
   RegisterNotificationBody,
@@ -34,6 +38,7 @@ import {
 import {
   AppNotificationServicePlugin,
   InteractionServicePlugin,
+  LiveActivityServicePlugin,
   NotificationServicePlugin,
 } from './services'
 
@@ -109,6 +114,44 @@ const respondRoute = <const TPath extends string>(path: TPath) =>
     }
   )
 
+/**
+ * Live Activity update-token upload. Auth is the tray response token alone (no
+ * session: the app calls it headless), verified exactly as the tray answer path
+ * does. Answers with this user's interaction state so the app can end an
+ * activity that is already answered, closed or expired.
+ */
+const liveActivityRoute = new Elysia().use([LiveActivityServicePlugin]).post(
+  '/:id/live-activity',
+  async ({ params, body, headers, liveActivityService, status }) => {
+    const result = await liveActivityService.registerPushToken(
+      params.id,
+      headers['x-notification-response-token'],
+      body.pushToken
+    )
+    if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+    return status(200, result.value)
+  },
+  {
+    detail: {
+      summary: 'Upload the update token of a Live Activity',
+      description:
+        "Stores the Live Activity's update token so the server can end it when the question is answered elsewhere, closed or expired. Authorised by `X-Notification-Response-Token` alone (no session). A token rotation overwrites. Answers with the caller's interaction state; when it is not OPEN the activity is recorded as already ended and the app ends it locally. 401 is a bad or expired token, one for another notification, or a device no longer registered to that user. 404 means the notification does not exist, the caller is not a recipient, or it has no interaction.",
+    },
+    params: LiveActivityTokenParams,
+    headers: LiveActivityTokenHeaders,
+    body: LiveActivityTokenBody,
+    response: {
+      200: LiveActivityTokenResponse,
+      ...createErrorSchema(
+        InternalErrorCode.BAD_REQUEST,
+        InternalErrorCode.NOTIFICATION_RESPONSE_TOKEN_INVALID,
+        InternalErrorCode.NOTIFICATION_NOT_FOUND,
+        InternalErrorCode.INTERNAL_SERVER_ERROR
+      ),
+    },
+  }
+)
+
 const TypedNotificationController = new Elysia({
   prefix: '/notifications',
   tags: ['Notifications'],
@@ -124,6 +167,8 @@ const TypedNotificationController = new Elysia({
           platform: body.platform,
           supportsAppBranding: body.supportsAppBranding,
           supportsTrayInteraction: body.supportsTrayInteraction,
+          liveActivityStartToken: body.liveActivityStartToken,
+          liveActivitiesEnabled: body.liveActivitiesEnabled,
         }
       )
 
@@ -229,6 +274,7 @@ const TypedNotificationController = new Elysia({
     }
   )
   .use(respondRoute('/:id/answer'))
+  .use(liveActivityRoute)
   .put(
     '/read/:id',
     async ({ params, notificationService, user, status }) => {

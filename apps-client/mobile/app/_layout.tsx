@@ -57,12 +57,17 @@ import { reactQueryClient } from '@app/libs/api-client'
 import { initAppUpdate } from '@app/libs/app-update'
 import { AuthLifeCycleHook, useAuthMe, useSession } from '@app/libs/auth'
 import {
+  addLiveActivityRegistrationListener,
+  getLiveActivityRegistration,
+} from '@app/libs/live-activity'
+import {
   addTrayActionListener,
   dismissTrayNotification,
   toTrayResponseInput,
 } from '@app/libs/notification-display'
 import { parseBrandedPush, pushBadgeCount, pushSenderApp } from '@app/utils/branded-push'
 import { openLink } from '@app/utils/link'
+import { liveActivityRegistrationFields } from '@app/utils/live-activity'
 import { resolveIncomingDeepLinkPath } from '@app/utils/mini-app'
 import {
   DEFAULT_ACTION_IDENTIFIER,
@@ -297,6 +302,8 @@ async function requestUserPermission() {
   throw new Error(`Unsupported platform: ${Platform.OS}`)
 }
 
+const LIVE_ACTIVITY_REREGISTER_DELAY_MS = 2000
+
 /** An interactive push on iOS, whose taps `expo-notifications` routes instead of RNFB. */
 const isIosInteractive = (data: Record<string, unknown>) =>
   Platform.OS === 'ios' && !!data['pple_interaction']
@@ -396,12 +403,13 @@ function NotificationTokenConsentPopup() {
       }
     }
 
-    const registerNotification = async () => {
+    // Registers (or re-registers) this device's token. Returns whether it did.
+    const register = async () => {
       try {
-        if (!authMe.data) return
+        if (!authMe.data) return false
 
         const requestPermissionResult = await requestUserPermission()
-        if (!requestPermissionResult) return
+        if (!requestPermissionResult) return false
 
         const token = await getToken(messaging)
 
@@ -425,15 +433,35 @@ function NotificationTokenConsentPopup() {
             // submit (`modules/notification-actions`). Switched off in one place,
             // `TRAY_INTERACTION_ENABLED`.
             supportsTrayInteraction: supportsTrayInteraction(Platform.OS),
+            // iOS 17.2+ only: the push-to-start token and whether the user allows
+            // Live Activities. Empty elsewhere. A change re-registers, below.
+            ...liveActivityRegistrationFields(Platform.OS, getLiveActivityRegistration()),
           },
         })
-        await handleInitialMessaging()
+        return true
       } catch (err) {
         console.error('Failed to register notification token', JSON.stringify(err))
+        return false
+      }
+    }
+
+    const registerNotification = async () => {
+      if (await register()) {
+        await handleInitialMessaging()
       }
     }
 
     registerNotification()
+
+    // The push-to-start token arrives (or rotates) after launch, and the user can
+    // switch Live Activities off in Settings: tell the server, debounced.
+    let reRegisterTimer: ReturnType<typeof setTimeout> | undefined
+    const liveActivitySubscription = addLiveActivityRegistrationListener(() => {
+      clearTimeout(reRegisterTimer)
+      reRegisterTimer = setTimeout(() => {
+        register()
+      }, LIVE_ACTIVITY_REREGISTER_DELAY_MS)
+    })
 
     const unsubscribeOpenedApp = onNotificationOpenedApp(messaging, async (remoteMessage) => {
       if (remoteMessage && remoteMessage.data && !isIosInteractive(remoteMessage.data)) {
@@ -500,6 +528,8 @@ function NotificationTokenConsentPopup() {
       unsubscribeOpenedApp()
       unsubscribeOnMessage()
       unsubscribeTrayActions.remove()
+      clearTimeout(reRegisterTimer)
+      liveActivitySubscription.remove()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authMe.data])

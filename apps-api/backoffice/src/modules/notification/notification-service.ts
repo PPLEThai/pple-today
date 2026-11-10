@@ -190,6 +190,8 @@ export class NotificationService {
       platform?: NotificationTokenPlatform
       supportsAppBranding?: boolean
       supportsTrayInteraction?: boolean
+      liveActivityStartToken?: string
+      liveActivitiesEnabled?: boolean
     } = {}
   ) {
     const registerResult = await this.notificationRepository.registerDeviceToken(

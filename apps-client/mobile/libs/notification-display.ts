@@ -5,6 +5,7 @@ import * as Notifications from 'expo-notifications'
 import * as TaskManager from 'expo-task-manager'
 
 import { environment } from '@app/env'
+import { endAllLiveActivities } from '@app/libs/live-activity'
 import { BrandedPushNotification, parseBrandedPush } from '@app/utils/branded-push'
 import {
   buildTrayCategory,
@@ -259,6 +260,8 @@ export async function dismissTrayNotification(notificationId: string) {
  * unregistered; this is the UX half. Never throws.
  */
 export async function clearInteractiveNotifications() {
+  // iOS Live Activities are interactive cards too (a no-op elsewhere).
+  endAllLiveActivities()
   if (Platform.OS !== 'android' && Platform.OS !== 'ios') {
     return
   }

@@ -14,6 +14,7 @@ import {
   readClientInteraction,
 } from './interaction-read'
 import type { InteractionRepository } from './interaction-repository'
+import type { LiveActivityEnder } from './live-activity'
 import { verifyResponseToken } from './response-token'
 
 /** The one thing the service needs from FCM; kept narrow so tests need no config graph. */
@@ -58,7 +59,9 @@ export class InteractionService {
       responseTokenSecretPrevious?: string
     },
     /** Injected so expiry is testable without a fake timer. */
-    private readonly now: () => Date = () => new Date()
+    private readonly now: () => Date = () => new Date(),
+    /** Ends iOS Live Activities after an answer or a close. Absent: none are ended. */
+    private readonly liveActivities?: LiveActivityEnder
   ) {}
 
   private disabled() {
@@ -194,6 +197,13 @@ export class InteractionService {
       })
     }
     void this.dismissOnTrayDevices(userId, notificationId)
+    void this.endLiveActivities(() =>
+      this.liveActivities?.endForAnswer(
+        notificationId,
+        userId,
+        spec.actions.find((a) => a.id === answer.actionId)?.label ?? answer.actionId
+      )
+    )
 
     const interaction = readClientInteraction({ ...notification, responses: [response] }, now, {
       enabled: true,
@@ -257,13 +267,22 @@ export class InteractionService {
     }
   }
 
+  /** Best effort, after the commit: a failure must never reach the request. */
+  private async endLiveActivities(run: () => Promise<void> | undefined) {
+    try {
+      await run()
+    } catch (e) {
+      this.loggerService.error({ message: 'Failed to end Live Activities', details: e })
+    }
+  }
+
   /**
    * Stop accepting answers ("first approver wins"). Idempotent: closing a closed
    * interaction returns the original close time. Only the attributed app may
    * close; an unbound key, another app's notification, a missing id and a
    * notification with no interaction are all the same 404, so the endpoint
    * cannot be used to probe other apps' ids. Answers already recorded are still
-   * delivered. No dismiss is sent to recipients: a stale card answers 410.
+   * delivered. No dismiss is sent to recipients: a stale card answers 410. Live Activities of the notification are ended.
    */
   async closeInteraction(key: { miniApp: { id: string } | null }, notificationId: string) {
     if (!this.options.interactiveNotificationsEnabled) return this.disabled()
@@ -272,10 +291,15 @@ export class InteractionService {
     const own = await this.interactionRepository.getOwnInteraction(notificationId, key.miniApp.id)
     if (own.isErr()) return mapRepositoryError(own.error)
     if (!own.value) return notFound()
-    if (own.value.interactionClosedAt) return ok({ closedAt: own.value.interactionClosedAt })
+    // Also on a repeat close, so activities whose first end push was lost are retried.
+    if (own.value.interactionClosedAt) {
+      void this.endLiveActivities(() => this.liveActivities?.endForClose(notificationId))
+      return ok({ closedAt: own.value.interactionClosedAt })
+    }
 
     const closed = await this.interactionRepository.closeInteraction(notificationId, this.now())
     if (closed.isErr()) return mapRepositoryError(closed.error)
+    void this.endLiveActivities(() => this.liveActivities?.endForClose(notificationId))
     return ok({ closedAt: closed.value })
   }
 }

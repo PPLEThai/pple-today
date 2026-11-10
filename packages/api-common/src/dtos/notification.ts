@@ -129,6 +129,7 @@ export const NotificationInteractionSpec = t.Object(
     fields: t.Optional(t.Array(NotificationInteractionSpecField)),
     actions: t.Array(NotificationInteractionSpecAction),
     tray: t.Optional(t.Boolean()),
+    liveActivity: t.Optional(t.Boolean()),
   },
   {
     description:

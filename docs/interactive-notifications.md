@@ -88,6 +88,7 @@ and never designs for the tray separately.
 | `fields` | Field[] | 0–5, rendered in order above the actions. |
 | `actions` | Action[] | 1–3. Required. |
 | `tray` | boolean | Optional, default `true`. `false` keeps the OS notification free of action buttons, so tapping it always opens the form. |
+| `liveActivity` | boolean | Optional, default `false`. On capable iPhones, deliver this question as a Live Activity with its buttons always visible instead of as a notification. Requires `expiresAt` ≤ 8 h ahead, a shape with tray buttons, and `tray` not `false`. See [Live Activity (iOS)](#live-activity-ios). |
 
 Ids (`field.id`, `action.id`, `option.id`) must match `^[a-z0-9_-]{1,32}$` and be
 unique within their list. The ids `__proto__`, `constructor` and `prototype` are
@@ -129,6 +130,7 @@ All of these are `400`, and nothing is sent:
 | `NOTIFICATION_INVALID_INTERACTION` | A rule above is broken. The message names the first failing path, e.g. `interaction.actions[1].requires[0]`. |
 | `NOTIFICATION_INTERACTION_NO_CALLBACK` | The sending app has no usable callback target: an `ADMIN` app with no callback URL, no callback secret, or no encryption key configured (`NOTIFICATION_CALLBACK_SECRET_KEY`); a `PLATFORM` app while the relay isn't configured; or an unbound legacy key with no app at all. |
 | `NOTIFICATION_INTERACTION_BYPASS_NOT_ALLOWED` | `content.link.bypassNotificationCenter: true` on the raw path, together with `interaction` (D9). |
+| `NOTIFICATION_INVALID_INTERACTION` (Live Activity) | `liveActivity: true` with no `expiresAt` or one more than 8 h ahead, with `tray: false`, or with an interaction whose tray shape is not `kind: "buttons"` (the reply shape and the form-only shapes) (D18). |
 
 Every interactive notification also follows these rules:
 
@@ -594,6 +596,222 @@ If the app is open when an interactive push arrives, the existing in-app toast
 shows it, as it does today. Tapping the toast opens the detail screen. The toast
 has no action buttons.
 
+## Live Activity (iOS)
+
+> **Status: implemented 2026-11-11.** Spikes S4–S6 done (see [results](#live-activity-spike-results-2026-11-10)).
+
+iOS only shows a notification's actions after a long press, and no API changes
+that. A **Live Activity** is the one iOS surface where buttons are visible
+without one: on the Lock Screen and in the Dynamic Island. A sender opts in with
+`interaction.liveActivity: true` for urgent, time-boxed questions. Every other
+interactive send stays an ordinary notification.
+
+```text
+send (liveActivity: true)
+  ├─ capable iPhone  → FCM push-to-start  → Live Activity (+ alert sound/banner)
+  │                                          ├─ button → LiveActivityIntent → POST /notifications/:id/response
+  │                                          └─ app woken → update token → POST /notifications/:id/live-activity
+  └─ everything else → the normal push, unchanged (tray buttons as above)
+
+answered (any channel) · closed · expired
+  └─ server → FCM "end" to every recorded activity of that notification
+```
+
+### Who gets one
+
+A recipient token gets a Live Activity **instead of** the normal push only when
+all of these hold. Otherwise it gets the normal push, exactly as without the
+flag:
+
+- the send has `liveActivity: true`, and the interaction is open;
+- the token is `IOS`, with `supportsTrayInteraction`;
+- the token has a `liveActivityStartToken`, and `liveActivitiesEnabled` is true
+  (see [Live Activity registration](#live-activity-registration));
+- `LIVE_ACTIVITY_DISABLED` is not set on the server (the kill switch).
+
+The notification is still created and listed in the app as usual. Only the
+OS-level delivery differs. Older builds and Android are unaffected.
+
+### What it shows
+
+The view is the same on the Lock Screen and in the expanded Dynamic Island:
+
+- **Header:** PPLE Today's icon and the sending app's name. A Live Activity
+  can't load remote images, so the app's own icon isn't shown.
+- **Body:** `content.header` (1 line) and `content.message` (2 lines).
+- **Buttons:** one per action, at most 3. They use the action label and the
+  SF Symbol for its `icon`, and `destructive` actions are red.
+- **After the activity ends:** the buttons are replaced by a status line:
+  "ตอบแล้ว: <action label>", "ปิดรับคำตอบแล้ว" or "หมดเวลาตอบกลับ".
+
+The compact Dynamic Island shows the app icon on the leading side and "ตอบ" on
+the trailing side, and the minimal one shows the icon only. Tapping anywhere
+except a button opens the notification detail screen (`widgetURL`), as a body
+tap does today.
+
+Buttons follow the tray rules for `bg`:
+- `bg: true` runs the answer in the background (`Button(intent:)`).
+- `bg: false` (`confirm` or `requires`) is a `Link` that opens the detail screen
+  with that action pending, as the tray does.
+
+### Starting it: push-to-start through FCM
+
+FCM's HTTP v1 API sends ActivityKit pushes through `apns.live_activity_token`.
+The API already calls HTTP v1 directly (`plugins/cloud-messaging.ts`), so this
+is a different message from `buildFcmMessage`, not a new transport:
+
+```jsonc
+{
+  "message": {
+    "token": "<FCM registration token>",
+    "apns": {
+      "live_activity_token": "<push-to-start token>",
+      "headers": { "apns-priority": "10" },
+      "payload": {
+        "aps": {
+          "timestamp": 1794300000,
+          "event": "start",
+          "attributes-type": "PPLEInteractionAttributes",
+          "attributes": {
+            "notificationId": "clw…",
+            "appName": "Test App",
+            "header": "คำขอลางาน",
+            "message": "สมชายขอลา 12–14 พ.ย.",
+            "actions": [{ "id": "approve", "label": "อนุมัติ", "icon": "check", "bg": true }],
+            "responseToken": "v1.…"
+          },
+          "content-state": { "status": "open" },
+          "stale-date": 1794328800,
+          "input-push-token": 1,
+          "alert": { "title": "คำขอลางาน", "body": "สมชายขอลา 12–14 พ.ย." }
+        }
+      }
+    }
+  }
+}
+```
+
+- **`attributes-type` must match the Swift struct name.** Attributes can't
+  change after the start, so everything fixed goes there, including the
+  response token: it's the same per-recipient, device-bound token the tray uses.
+  `content-state` holds only what changes.
+- **`stale-date` = `expiresAt`.** iOS greys the activity out at that moment even
+  if the end push is lost. The 8 h cap (D18) keeps the whole question inside
+  iOS's active-activity limit.
+- **`alert`** lights the screen and plays the sound, so the user gets one item,
+  not a notification plus an activity.
+- **`input-push-token: 1`** asks iOS 18+ to issue an update token for the new
+  activity. On 17.2–17.x the token comes without it.
+
+There is no delivery receipt for a Live Activity: if iOS drops the start (for
+example because Live Activities were turned off a moment ago), the user isn't
+told on the device. The question is still in the app's notification list, which
+is the backstop. S5 measures how often this happens and decides whether a
+fallback push is needed.
+
+### Answering
+
+A button is a `LiveActivityIntent` (`AnswerInteractionIntent(notificationId,
+actionId)`). It runs in the app's process, which iOS starts in the background if
+needed, and does the following:
+
+1. Finds the activity by `notificationId` and reads `responseToken` from its
+   attributes.
+2. POSTs `/notifications/:id/response` with `X-Notification-Response-Token`.
+   It's the same submit the tray's `TrayActionDelegate` does, and it moves into
+   a shared Swift function.
+3. Ends the activity locally with the result. On `200` it shows "ตอบแล้ว:
+   <label>" and is dismissed after 15 min. On `409`/`410` it shows the matching
+   status. On a network error it stays open and shows "ส่งคำตอบไม่สำเร็จ ลองอีกครั้ง".
+
+**Unlock first.** The tray asks for an unlock on every action, and a Live
+Activity on the Lock Screen must not be weaker. The intent sets
+`authenticationPolicy = .requiresAuthentication`. Whether iOS honours that for
+Live Activity buttons on the Lock Screen is S4. If it doesn't, every Live
+Activity button becomes a `Link` that opens the detail screen. Unlocking
+then happens naturally, and the buttons are still visible without a long
+press.
+
+The server records the answer as `channel: "TRAY"`. No new channel is needed:
+the app treats both the same.
+
+### Ending it on every device
+
+Each activity has its own **update token**. iOS issues it after the start and
+wakes the app in the background to receive it. The app watches
+`Activity<PPLEInteractionAttributes>.activityUpdates` and each activity's
+`pushTokenUpdates` from launch. When a token arrives it calls:
+
+```
+POST /notifications/:id/live-activity
+X-Notification-Response-Token: v1.…   // from the activity's attributes
+{ "pushToken": "<hex>" }
+```
+
+The response token is the credential, for the same reason as the tray (D7):
+this runs headless and must not touch the session. A token rotation upserts.
+
+New table `NotificationLiveActivity`:
+
+| Column | Notes |
+| --- | --- |
+| `notificationId`, `userId` | FK, cascade with the notification and the user |
+| `deviceToken` | The FCM token it was started on. FK to `UserNotificationToken`, cascade, so logout and unregister drop it |
+| `pushToken` | The latest update token |
+| `endedAt` | Set when we send the end push |
+
+The server sends `event: "end"` to every un-ended row of the notification when
+any of these happens. Each end push uses the row's `pushToken` and the device's
+FCM token, and carries a final `content-state`:
+
+| Trigger | Final state | `dismissal-date` |
+| --- | --- | --- |
+| The user answered (any device, any channel) | `answered`, with the action label | now + 15 min on the answering device, now on others |
+| `/close` | `closed` | now + 15 min |
+| `expiresAt` passed (the callback sweep also picks these up) | `expired` | now + 15 min |
+| Logout / unregister | none: the app ends its activities locally, as it clears tray cards | — |
+
+This is one push per started activity, not one per recipient, so `/close` on a
+broadcast only costs pushes for the people who actually have an activity open.
+
+**When the update token never arrives.** Reportedly this happens after a
+force-quit (S5). Without the token, the activity can't be ended remotely. Two
+things bound the damage:
+- `stale-date` greys it out at expiry, and iOS removes it by its own limits;
+- every app launch reconciles: for each running activity it reads the
+  notification, and ends any that are answered, closed or expired.
+
+A stale button that is tapped gets `409`/`410` and shows the matching status,
+as a stale tray card does.
+
+### Live Activity registration
+
+`RegisterNotificationBody` gains two fields, stored on `UserNotificationToken`:
+
+- `liveActivityStartToken` (hex). The app reads it from
+  `Activity<PPLEInteractionAttributes>.pushToStartTokenUpdates` on iOS 17.2+,
+  and re-registers when it changes.
+- `liveActivitiesEnabled`, from `ActivityAuthorizationInfo`. The app
+  re-registers when `activityEnablementUpdates` reports a change.
+
+A build sends these only once its widget extension and intent are in place.
+`supportsTrayInteraction` keeps its meaning.
+
+### Native pieces
+
+| Piece | Where |
+| --- | --- |
+| Widget extension target (SwiftUI `ActivityConfiguration`: Lock Screen and Dynamic Island) | `targets/live-activity/`, generated by `@bacons/apple-targets` from a config plugin |
+| `PPLEInteractionAttributes` (shared by the app and the extension; the name is the wire `attributes-type`) | `targets/live-activity/` + app target |
+| `AnswerInteractionIntent: LiveActivityIntent` and the shared submit | `modules/notification-actions/ios` |
+| Start-token, enablement and update-token observers, and launch reconcile | `modules/notification-actions/ios` (`ExpoAppDelegateSubscriber`), with JS events for the registration fields |
+| `NSSupportsLiveActivities = YES` | Info.plist via the config plugin |
+| Server: start/end message builders | `utils/push-payload.ts` (`buildLiveActivityStart`, `buildLiveActivityEnd`) |
+| Server: token endpoint, end fan-out | `notification/live-activity.ts` |
+
+The app's deployment target stays 15.1. All of this is gated with
+`@available(iOS 17.2, *)`.
+
 ## Callback — today-v2 → app
 
 ### Target
@@ -802,6 +1020,8 @@ be made, as a fallback. The send docs say so, but it isn't enforced.
 | Android category, background task, dismiss | `libs/notification-display.ts`, `index.js` |
 | iOS dynamic category | `assets/NotificationService.m` |
 | iOS background submit | `modules/notification-actions` (Swift `ExpoAppDelegateSubscriber` + `NotificationDelegate`) |
+| Live Activity (iOS): widget extension, intent, token observers | `targets/live-activity/`, `modules/notification-actions` (see [Native pieces](#native-pieces)) |
+| Live Activity start/end messages, token endpoint, end fan-out | `utils/push-payload.ts`, `notification/live-activity.ts` |
 
 ## Rollout
 
@@ -822,6 +1042,19 @@ be made, as a fallback. The send docs say so, but it isn't enforced.
    - `supportsTrayInteraction`.
 6. pple-platform: the relay endpoint, the wrapper path, and the template handler
    (in its own ADR). Then turn on the PLATFORM target.
+7. **Live Activity (iOS):**
+   1. Spikes S4–S6, on a TestFlight build with a throwaway activity.
+   2. Server work, behind `LIVE_ACTIVITY_DISABLED` (a kill switch; the feature
+      only does anything for tokens that report a start token):
+      - `liveActivity` validation;
+      - the registration fields;
+      - `NotificationLiveActivity` and its migration;
+      - the start/end builders, the token endpoint, and the end fan-out from
+        answer, `/close` and the sweep.
+   3. Mobile release: the widget extension, the intent, the observers and the
+      reconcile. This is a native build, not OTA.
+   4. pple-platform: pass `liveActivity` through the template's `notify()` and
+      `pple notify test`, and document it in the Skill's `mini-app.md`.
 
 ## Decisions
 
@@ -844,6 +1077,10 @@ be made, as a fallback. The send docs say so, but it isn't enforced.
 | D15 | What does a read show while the kill switch is off? | `CLOSED` for anything not already answered. | The form would be shown but couldn't be submitted. |
 | D16 | Does `/close` guarantee "first approver wins"? | No. Answers already in flight still land, and delivery is unordered. Apps arbitrate by `respondedAt`, then `id`. Answers are refused only once the close has committed. | Strict ordering across replicas would need a per-notification lock for a rare case. The app has the authoritative record, so it decides. |
 | D17 | How many deliveries run at once? | At most 10 in flight per app per API replica, covering both the immediate attempt and the sweep. The sweep claims at most 20 rows per app and 100 per batch. | One slow app, or one big backlog, mustn't starve the others. An immediate attempt that finds its app at the cap leaves the row to the sweep. |
+| D18 | Which sends can be a Live Activity? | Opt-in per send (`liveActivity: true`), only with `expiresAt` ≤ 8 h, `tray` not `false`, and a `kind: "buttons"` tray shape. Anything else is refused with `400`. | Apple meant Live Activities for ongoing, time-bound events, so they shouldn't be the default for every question. iOS ends an active activity after 8 h, so a longer question would outlive its own buttons. A Live Activity can't take text input, so the reply and form shapes have nothing to put on it. |
+| D19 | A Live Activity instead of, or as well as, the notification? | Instead of, on tokens that qualify. The start push carries the `alert`. The question still appears in the in-app list. | Two items for one question is noise. The alert gives the same sound and screen wake as a notification. |
+| D20 | How does an activity end on other devices? | Each activity's update token is stored (`NotificationLiveActivity`), and the server sends `end` on answer, `/close` and expiry. `stale-date`, plus a reconcile on every app launch, covers lost tokens. | Without it, a question answered on another device would keep live buttons on this one until it expired. |
+| D21 | Credential for the Live Activity token upload and the intent | The tray's response token, carried in the activity's attributes. | Both run headless, so the session must not be touched (D7). The token is already bound to the notification, the user and the device. |
 
 ## Spikes
 
@@ -881,6 +1118,73 @@ be made, as a fallback. The send docs say so, but it isn't enforced.
     `expo-notifications` patch, alongside the large-icon patch we already carry.
     If it does, decide whether to require unlock on Android too.
 
+- **S4 — unlock before a Live Activity answer.** On iOS 17.2, 18 and 26, with
+  the phone locked, does a Lock Screen button whose intent has
+  `authenticationPolicy = .requiresAuthentication` ask for Face ID / passcode
+  before `perform()`? Check the Dynamic Island too. If it doesn't on any
+  supported version, buttons become `Link`s that open the detail screen on that
+  version.
+- **S5 — push-to-start reliability.** Through FCM, with our APNs key:
+  - the start arrives when the app is backgrounded, killed, and force-quit;
+  - an update token reaches the server in each of those cases (with and without
+    `input-push-token`);
+  - what happens when Live Activities are off for the app, and how fast
+    `activityEnablementUpdates` reports it;
+  - whether several starts within minutes are throttled.
+
+  If update tokens are commonly missing after a force-quit, the launch
+  reconcile stays the backstop. If starts are dropped silently while the app
+  reports Live Activities as enabled, add a fallback normal push when no update
+  token arrives within 2 min.
+- **S6 — FCM ActivityKit sends.** Check that our HTTP v1 call with
+  `apns.live_activity_token` works with the project's APNs credentials. FCM
+  needs a token-based (.p8) APNs key for this, not a certificate. Also check
+  that an end push with `dismissal-date` and a final `content-state` renders the
+  status line.
+
+### Live Activity spike results (2026-11-10)
+
+- **Setup:** production app, TestFlight builds 2.11.0 (39) and (40) from branch
+  `panj/live-activity-spike`, one iPhone (Face ID) on iOS 27.0.1.
+- **How it was sent:** pushes sent by hand through FCM HTTP v1, with real
+  interactive notifications and server-minted response tokens.
+
+| Spike | Result |
+| --- | --- |
+| **S4** | **Pass.** Phone locked, Face ID blocked: a Lock Screen button asked for Face ID before `perform()` ran. The log shows `protectedData=true` inside `perform()` every time. Buttons stay background intents; no `Link` fallback needed. |
+| **S6** | **Pass.** FCM accepted start and end pushes with the project's existing APNs credentials (a bogus activity token came back `BadDeviceToken` from APNs, so auth passed). An end push with `content-state: {status: "closed"}` replaced the buttons with "ปิดรับคำตอบแล้ว". |
+| **S5 — start** | **Pass.** The activity appeared with the app backgrounded and after a force-quit. Both times iOS launched the app in the background (`launch state=background`) within the same second. The push-to-start token arrived about 1 s after the first launch and stayed the same afterwards. |
+| **S5 — first start** | The first push-started activity showed an inline "Allow Live Activities from PPLE Today?" prompt under the activity. Tapping **Allow** reported `activityEnablementUpdates = true`. |
+| **S5 — update token** | **Unreliable while the process lives.** The first activity's token arrived only when **Allow** was tapped. Two later activities, started while the app process was still alive, got no `pushTokenUpdates` emission at all. This matches [Apple forum 784913](https://developer.apple.com/forums/thread/784913), which has no reply. On the next fresh launch (after a force-quit), the stream emitted at once for every running activity, including the old one. |
+| **S5 — `pushToken` property** | **Works when the stream doesn't.** A locally started activity's `pushToken` property held its token about 1 min before `pushTokenUpdates` emitted it. For a push-started activity, the property matched what the stream delivered. |
+| **S5 — dismissal** | An end push with `dismissal-date` = now + 15 min removed the activity exactly 15 min later. Activities the intent ended on the phone (`dismissalPolicy: .after(15 min)`) went after about 1.5 min, when the next activity arrived. |
+
+**What this changes:**
+- **D20 holds, but remote end is best effort.** The server ends every activity
+  it has a token for.
+- **The app uploads tokens more often:** at every launch and every foreground,
+  re-read `Activity.activities`, and upload each activity's token from the
+  stream or the `pushToken` property, so tokens missed while the process lived
+  still reach the server.
+- **Final state on the answering device:** that device's final state comes from
+  the intent itself, so it doesn't depend on a token.
+- **The backstop is part of the design:** `stale-date`, the launch reconcile,
+  and `409`/`410` on a stale tap are no longer only a fallback.
+- **The first Live Activity carries the Allow prompt.** Senders should expect
+  the first question delivered this way to go unanswered more often. If the user
+  taps "Don't Allow", the app reports `liveActivitiesEnabled: false` and later
+  sends fall back to the normal push.
+
+**Still open:**
+- What a start does while Live Activities are off.
+- The same checks on iOS 17.2–18. Everything above ran on iOS 27.
+- Throttling of several starts within minutes. Four starts in 6 min weren't
+  throttled.
+- Signing: CI's match credentials are read-only. The spike built the extension
+  with a profile fetched from Apple (`get_provisioning_profile`). Before a
+  release, someone with write access adds `<app>.LiveActivity` to the match
+  repo, or the lane keeps fetching that profile from Apple.
+
 ## Out of scope (v1)
 
 - **Moving `MINI_APP_INVITE` onto this.** The invite is deliberately not
@@ -893,3 +1197,8 @@ be made, as a fallback. The send docs say so, but it isn't enforced.
   everyone, like `content`.
 - Action buttons on the in-app foreground toast.
 - Dismissing tray cards on iOS, or for every recipient on `/close`.
+- A Live Activity equivalent on Android. Android 16's Live Updates are meant for
+  progress-style notifications. Android's expanded heads-up notification
+  already shows the buttons without a long press.
+- Live Activities for the reply and form shapes, and broadcast-channel Live
+  Activities (iOS 18).

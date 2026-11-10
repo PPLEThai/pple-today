@@ -28,6 +28,7 @@
     "fastlane:ios:prod": "bun run prebuild:ios && bun run fastlane:setup && cd ios && fastlane production"
   },
   "dependencies": {
+    "@bacons/apple-targets": "5.0.0",
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo-google-fonts/noto-sans-thai": "^0.4.2",
     "@expo-google-fonts/noto-sans-thai-looped": "^0.4.2",

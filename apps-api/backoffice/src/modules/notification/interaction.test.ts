@@ -149,6 +149,73 @@ describe('validateInteractionSpec', () => {
     expect(invalid(input).path).toBe(path)
   })
 
+  describe('liveActivity', () => {
+    const HOUR = 60 * 60 * 1000
+    const in3h = new Date(NOW.getTime() + 3 * HOUR).toISOString()
+    const live = { ...approveReject, expiresAt: in3h, liveActivity: true }
+
+    test('is stored only when true', () => {
+      expect(valid(live).liveActivity).toBe(true)
+      expect('liveActivity' in valid({ ...live, liveActivity: false })).toBe(false)
+      expect('liveActivity' in valid(approveReject)).toBe(false)
+    })
+
+    test('must be a boolean', () => {
+      expect(invalid({ ...live, liveActivity: 'yes' })).toMatchObject({
+        path: 'interaction.liveActivity',
+      })
+    })
+
+    test('requires expiresAt', () => {
+      const r = invalid({ ...approveReject, liveActivity: true })
+      expect(r.path).toBe('interaction.expiresAt')
+      expect(r.message).toMatch(/required/)
+    })
+
+    test('allows exactly 8 h ahead and refuses more', () => {
+      valid({ ...live, expiresAt: new Date(NOW.getTime() + 8 * HOUR).toISOString() })
+      const r = invalid({
+        ...live,
+        expiresAt: new Date(NOW.getTime() + 8 * HOUR + 1000).toISOString(),
+      })
+      expect(r).toMatchObject({ path: 'interaction.expiresAt' })
+      expect(r.message).toMatch(/8 hours/)
+    })
+
+    test('refuses tray: false', () => {
+      expect(invalid({ ...live, tray: false })).toMatchObject({ path: 'interaction.tray' })
+    })
+
+    test('refuses shapes that are not buttons: reply and form-only', () => {
+      const reply = {
+        fields: [{ id: 'note', type: 'text', label: 'Note' }],
+        actions: [{ id: 'send', label: 'Send' }],
+        expiresAt: in3h,
+        liveActivity: true,
+      }
+      expect(invalid(reply)).toMatchObject({ path: 'interaction.liveActivity' })
+      const form = {
+        fields: [{ id: 'note', type: 'text', label: 'Note', required: true }],
+        actions: [{ id: 'send', label: 'Send' }],
+        expiresAt: in3h,
+        liveActivity: true,
+      }
+      expect(invalid(form)).toMatchObject({ path: 'interaction.liveActivity' })
+    })
+
+    test('accepts buttons with optional text fields and confirm actions', () => {
+      valid({
+        fields: [{ id: 'note', type: 'text', label: 'Note' }],
+        actions: [
+          { id: 'a', label: 'A' },
+          { id: 'b', label: 'B', confirm: { title: 'Sure?' } },
+        ],
+        expiresAt: in3h,
+        liveActivity: true,
+      })
+    })
+  })
+
   describe('expiresAt', () => {
     test.each([
       ['not a date', 'tomorrow'],

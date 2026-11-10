@@ -168,6 +168,30 @@ describe('NotificationRepository.registerDeviceToken', () => {
     }
   })
 
+  test('records the Live Activity fields on both branches, and clears them when absent', async () => {
+    const { prismaService, repository } = createRepository()
+
+    await repository.registerDeviceToken('user-id', 'device-token', {
+      platform: NotificationTokenPlatform.IOS,
+      liveActivityStartToken: 'abcdef01',
+      liveActivitiesEnabled: true,
+    })
+    await repository.registerDeviceToken('user-id', 'device-token', {
+      platform: NotificationTokenPlatform.IOS,
+    })
+
+    const [asserted] = prismaService.userNotificationToken.upsert.mock.calls[0]
+    for (const branch of [asserted.create, asserted.update]) {
+      expect(branch.liveActivityStartToken).toBe('abcdef01')
+      expect(branch.liveActivitiesEnabled).toBe(true)
+    }
+    const [cleared] = prismaService.userNotificationToken.upsert.mock.calls[1]
+    for (const branch of [cleared.create, cleared.update]) {
+      expect(branch.liveActivityStartToken).toBeNull()
+      expect(branch.liveActivitiesEnabled).toBe(false)
+    }
+  })
+
   test('an older client that says nothing records no platform and no branding', async () => {
     // Registration asserts what this install can do *now*, so omission is a
     // negative assertion rather than "leave whatever was there" — which also

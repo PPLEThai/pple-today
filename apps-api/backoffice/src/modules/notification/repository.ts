@@ -299,12 +299,17 @@ export class NotificationRepository {
       platform?: NotificationTokenPlatform
       supportsAppBranding?: boolean
       supportsTrayInteraction?: boolean
+      liveActivityStartToken?: string
+      liveActivitiesEnabled?: boolean
     } = {}
   ) {
     const capability = {
       platform: device.platform ?? null,
       supportsAppBranding: device.supportsAppBranding ?? false,
       supportsTrayInteraction: device.supportsTrayInteraction ?? false,
+      // Re-asserted every time, like the flags above: absent clears them.
+      liveActivityStartToken: device.liveActivityStartToken ?? null,
+      liveActivitiesEnabled: device.liveActivitiesEnabled ?? false,
     }
 
     return fromRepositoryPromise(
@@ -633,6 +638,8 @@ export class NotificationRepository {
               platform: true,
               supportsAppBranding: true,
               supportsTrayInteraction: true,
+              liveActivityStartToken: true,
+              liveActivitiesEnabled: true,
             },
           },
         },

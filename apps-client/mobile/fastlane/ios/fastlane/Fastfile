@@ -46,6 +46,15 @@ platform :ios do
       profile_name: "#{ENV['PROVISIONING_PROFILE_SPECIFIER']}.NotificationServiceExtension",
       path: './PPLEToday.xcodeproj'
     )
+    # Live Activity: the widget extension from targets/live-activity.
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      team_id: team_id,
+      targets: ['LiveActivity'],
+      code_sign_identity: "Apple Distribution",
+      profile_name: "#{ENV['PROVISIONING_PROFILE_SPECIFIER']}.LiveActivity",
+      path: './PPLEToday.xcodeproj'
+    )
     # https://medium.com/@iamCoder/how-to-solve-missing-compliance-status-in-testflight-and-invites-not-coming-to-testers-4cbbe3c4ed12
     # https://github.com/fastlane/fastlane/issues/15591
     set_info_plist_value( 
@@ -58,6 +67,18 @@ platform :ios do
       app_identifier: [app_identifier, "#{app_identifier}.NotificationServiceExtension"],
       readonly: true,
       output_path: "./builds"
+    )
+    # Live Activity: CI's match credentials are read-only, so the LiveActivity
+    # profile (already created on the Apple developer portal) is downloaded from
+    # Apple instead of the match repo. Signed with the same distribution
+    # certificate match just installed.
+    get_provisioning_profile(
+      app_identifier: "#{app_identifier}.LiveActivity",
+      provisioning_name: "#{ENV['PROVISIONING_PROFILE_SPECIFIER']}.LiveActivity",
+      ignore_profiles_with_different_name: true,
+      readonly: true,
+      output_path: "./builds",
+      filename: "live-activity.mobileprovision"
     )
     get_certificates( # Create or get certificate, and install it
       output_path: "./builds" # Download certificate in the build folder (you don't need to create the folder)
@@ -87,7 +108,8 @@ platform :ios do
       export_options: {
         provisioningProfiles: {
           app_identifier => ENV['PROVISIONING_PROFILE_SPECIFIER'],
-          "#{app_identifier}.NotificationServiceExtension" => "#{ENV['PROVISIONING_PROFILE_SPECIFIER']}.NotificationServiceExtension"
+          "#{app_identifier}.NotificationServiceExtension" => "#{ENV['PROVISIONING_PROFILE_SPECIFIER']}.NotificationServiceExtension",
+          "#{app_identifier}.LiveActivity" => "#{ENV['PROVISIONING_PROFILE_SPECIFIER']}.LiveActivity"
         },
         # installerSigningCertificate: "Apple Distribution: <COMPANY_NAME> (<ID>)", 
       },
