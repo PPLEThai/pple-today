@@ -20,6 +20,8 @@ export default {
       supportsTablet: true,
       googleServicesFile: './credentials/GoogleService-Info.plist',
       bundleIdentifier: process.env.DEVELOPER_APP_IDENTIFIER,
+      // SPIKE (Live Activity): @bacons/apple-targets signs the widget target with this team.
+      appleTeamId: process.env.DEVELOPER_PORTAL_TEAM_ID,
       ...(miniAppDeepLink.ios?.associatedDomains
         ? { associatedDomains: miniAppDeepLink.ios.associatedDomains }
         : {}),
@@ -125,6 +127,8 @@ export default {
       ],
       ['./plugins/withAndroidPlugin'],
       ['./plugins/withIosPlugin'],
+      // SPIKE (Live Activity): generates the targets/live-activity widget extension.
+      '@bacons/apple-targets',
 
       '@react-native-firebase/app',
       '@react-native-firebase/messaging',

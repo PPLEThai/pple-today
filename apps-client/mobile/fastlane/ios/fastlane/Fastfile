@@ -46,6 +46,15 @@ platform :ios do
       profile_name: "#{ENV['PROVISIONING_PROFILE_SPECIFIER']}.NotificationServiceExtension",
       path: './PPLEToday.xcodeproj'
     )
+    # SPIKE (Live Activity): the widget extension from targets/live-activity.
+    update_code_signing_settings(
+      use_automatic_signing: false,
+      team_id: team_id,
+      targets: ['LiveActivity'],
+      code_sign_identity: "Apple Distribution",
+      profile_name: "#{ENV['PROVISIONING_PROFILE_SPECIFIER']}.LiveActivity",
+      path: './PPLEToday.xcodeproj'
+    )
     # https://medium.com/@iamCoder/how-to-solve-missing-compliance-status-in-testflight-and-invites-not-coming-to-testers-4cbbe3c4ed12
     # https://github.com/fastlane/fastlane/issues/15591
     set_info_plist_value( 
@@ -58,6 +67,18 @@ platform :ios do
       app_identifier: [app_identifier, "#{app_identifier}.NotificationServiceExtension"],
       readonly: true,
       output_path: "./builds"
+    )
+    # SPIKE (Live Activity): CI's match credentials are read-only, so the
+    # LiveActivity profile (created on the portal by register_live_activity) is
+    # downloaded from Apple instead of the match repo. Signed with the same
+    # distribution certificate match just installed.
+    get_provisioning_profile(
+      app_identifier: "#{app_identifier}.LiveActivity",
+      provisioning_name: "#{ENV['PROVISIONING_PROFILE_SPECIFIER']}.LiveActivity",
+      ignore_profiles_with_different_name: true,
+      readonly: true,
+      output_path: "./builds",
+      filename: "live-activity.mobileprovision"
     )
     get_certificates( # Create or get certificate, and install it
       output_path: "./builds" # Download certificate in the build folder (you don't need to create the folder)
@@ -87,7 +108,8 @@ platform :ios do
       export_options: {
         provisioningProfiles: {
           app_identifier => ENV['PROVISIONING_PROFILE_SPECIFIER'],
-          "#{app_identifier}.NotificationServiceExtension" => "#{ENV['PROVISIONING_PROFILE_SPECIFIER']}.NotificationServiceExtension"
+          "#{app_identifier}.NotificationServiceExtension" => "#{ENV['PROVISIONING_PROFILE_SPECIFIER']}.NotificationServiceExtension",
+          "#{app_identifier}.LiveActivity" => "#{ENV['PROVISIONING_PROFILE_SPECIFIER']}.LiveActivity"
         },
         # installerSigningCertificate: "Apple Distribution: <COMPANY_NAME> (<ID>)", 
       },
@@ -107,6 +129,32 @@ platform :ios do
       # in App Store Connect when creating the internal group
       groups: ENV['DISTRIBUTE_GROUPS'], 
       skip_waiting_for_build_processing: true,
+    )
+  end
+
+  # SPIKE (Live Activity): one-off. Registers the widget extension's bundle id
+  # and creates its App Store profile in the match repo. Idempotent.
+  desc "Register the LiveActivity bundle id and create its match profile"
+  lane :register_live_activity do
+    setup_ci() if ENV['CI']
+    app_store_connect_api_key(
+      key_id: ENV['APP_STORE_CONNECT_API_KEY_ID'],
+      issuer_id: ENV['APP_STORE_CONNECT_API_KEY_ISSUER_ID'],
+      key_content: ENV['APP_STORE_CONNECT_API_KEY_CONTENT'],
+      duration: 1200
+    )
+    app_identifier = CredentialsManager::AppfileConfig.try_fetch_value(:app_identifier)
+    identifier = "#{app_identifier}.LiveActivity"
+    if Spaceship::ConnectAPI::BundleId.find(identifier)
+      UI.message("Bundle id #{identifier} already registered")
+    else
+      Spaceship::ConnectAPI::BundleId.create(name: "PPLE Today LiveActivity", identifier: identifier, platform: "IOS")
+      UI.success("Registered bundle id #{identifier}")
+    end
+    sync_code_signing(
+      type: "appstore",
+      app_identifier: [identifier],
+      readonly: false
     )
   end
 
