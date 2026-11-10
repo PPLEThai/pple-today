@@ -9,22 +9,17 @@ import {
   setDefaults,
 } from '@react-native-firebase/remote-config'
 import Constants from 'expo-constants'
-import semver from 'semver'
 import { z } from 'zod'
+
+import { PlatformUpdateConfigSchema, resolveUpdateRequirement } from '@app/utils/app-update-config'
 
 import packageJson from '../package.json'
 
 const REMOTE_CONFIG_KEY = 'CHECK_APP_UPDATE'
 
-const PlatformConfigSchema = z.object({
-  isForceUpdate: z.boolean(),
-  version: z.string(),
-  url: z.string(),
-})
-
 const AppUpdateConfigSchema = z.object({
-  ios: PlatformConfigSchema,
-  android: PlatformConfigSchema,
+  ios: PlatformUpdateConfigSchema,
+  android: PlatformUpdateConfigSchema,
   alert: z.object({
     title: z.string(),
     message: z.string(),
@@ -74,11 +69,6 @@ function getCurrentVersion(): string {
   return Constants.expoConfig?.version ?? packageJson.version
 }
 
-function coerceSemver(value: string): string | null {
-  const coerced = semver.coerce(value)
-  return coerced ? coerced.version : null
-}
-
 async function readConfig(): Promise<AppUpdateConfig | null> {
   try {
     const remoteConfig = getRemoteConfig()
@@ -102,14 +92,11 @@ function evaluateStatus(config: AppUpdateConfig): AppUpdateStatus | null {
     Platform.OS === 'ios' ? config.ios : Platform.OS === 'android' ? config.android : null
   if (!platform) return null
 
-  const current = coerceSemver(getCurrentVersion())
-  const target = coerceSemver(platform.version)
-  if (!current || !target) return null
-  if (!semver.lt(current, target)) return null
+  const requirement = resolveUpdateRequirement(getCurrentVersion(), platform)
+  if (!requirement) return null
 
   return {
-    mode: platform.isForceUpdate ? 'hard' : 'soft',
-    targetVersion: platform.version,
+    ...requirement,
     storeUrl: platform.url,
     alert: config.alert,
   }
