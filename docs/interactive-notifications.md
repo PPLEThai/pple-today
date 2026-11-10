@@ -1142,6 +1142,49 @@ be made, as a fallback. The send docs say so, but it isn't enforced.
   that an end push with `dismissal-date` and a final `content-state` renders the
   status line.
 
+### Live Activity spike results (2026-11-10)
+
+- **Setup:** production app, TestFlight build 2.11.0 (39) from branch
+  `panj/live-activity-spike`, one iPhone (Face ID).
+- **How it was sent:** pushes sent by hand through FCM HTTP v1, with real
+  interactive notifications and server-minted response tokens.
+
+| Spike | Result |
+| --- | --- |
+| **S4** | **Pass.** Phone locked, Face ID blocked: a Lock Screen button asked for Face ID before `perform()` ran. The log shows `protectedData=true` inside `perform()` every time. Buttons stay background intents; no `Link` fallback needed. |
+| **S6** | **Pass.** FCM accepted start and end pushes with the project's existing APNs credentials (a bogus activity token came back `BadDeviceToken` from APNs, so auth passed). An end push with `content-state: {status: "closed"}` replaced the buttons with "ปิดรับคำตอบแล้ว". |
+| **S5 — start** | **Pass.** The activity appeared with the app backgrounded and after a force-quit. Both times iOS launched the app in the background (`launch state=background`) within the same second. The push-to-start token arrived about 1 s after the first launch and stayed the same afterwards. |
+| **S5 — first start** | The first push-started activity showed an inline "Allow Live Activities from PPLE Today?" prompt under the activity. Tapping **Allow** reported `activityEnablementUpdates = true`. |
+| **S5 — update token** | **Unreliable while the process lives.** The first activity's token arrived only when **Allow** was tapped. Two later activities, started while the app process was still alive, got no `pushTokenUpdates` emission at all. This matches [Apple forum 784913](https://developer.apple.com/forums/thread/784913), which has no reply. On the next fresh launch (after a force-quit), the stream emitted at once for every running activity, including the old one. |
+| **S5 — dismissal** | An ended activity was removed after about 1.5 min, not after the 15 min `dismissalPolicy` asked for. |
+
+**What this changes:**
+- **D20 holds, but remote end is best effort.** The server ends every activity
+  it has a token for.
+- **The app uploads tokens more often:** at every launch and every foreground,
+  re-read `Activity.activities`, and upload each activity's token from the
+  stream or the `pushToken` property, so tokens missed while the process lived
+  still reach the server.
+- **Final state on the answering device:** that device's final state comes from
+  the intent itself, so it doesn't depend on a token.
+- **The backstop is part of the design:** `stale-date`, the launch reconcile,
+  and `409`/`410` on a stale tap are no longer only a fallback.
+- **The first Live Activity carries the Allow prompt.** Senders should expect
+  the first question delivered this way to go unanswered more often. If the user
+  taps "Don't Allow", the app reports `liveActivitiesEnabled: false` and later
+  sends fall back to the normal push.
+
+**Still open:**
+- Whether `activity.pushToken` (the property) holds a value when the stream
+  hasn't emitted.
+- What a start does while Live Activities are off.
+- Throttling of several starts within minutes. Four starts in 6 min weren't
+  throttled.
+- Signing: CI's match credentials are read-only. The spike built the extension
+  with a profile fetched from Apple (`get_provisioning_profile`). Before a
+  release, someone with write access adds `<app>.LiveActivity` to the match
+  repo, or the lane keeps fetching that profile from Apple.
+
 ## Out of scope (v1)
 
 - **Moving `MINI_APP_INVITE` onto this.** The invite is deliberately not
