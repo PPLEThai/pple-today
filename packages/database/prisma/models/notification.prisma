@@ -30,10 +30,16 @@ model UserNotificationToken {
   // supportsAppBranding.
   supportsTrayInteraction Boolean @default(false)
 
+  // iOS Live Activity push-to-start token (hex) and whether the user allows
+  // Live Activities. Re-asserted on every registration: absent -> null / false.
+  liveActivityStartToken String?
+  liveActivitiesEnabled  Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id])
+  user           User                       @relation(fields: [userId], references: [id])
+  liveActivities NotificationLiveActivity[]
 }
 
 enum NotificationInAppType {
@@ -105,6 +111,7 @@ model Notification {
   sentNotifications UserNotification[]
   phoneNumbers      NotificationPhoneNumber[]
   responses         NotificationResponse[]
+  liveActivities    NotificationLiveActivity[]
 
   @@index([miniAppId])
 }
@@ -153,6 +160,30 @@ model NotificationResponse {
   @@index([deliveryStatus, nextAttemptAt]) // the delivery sweep
   @@index([miniAppId, deliveryStatus]) // per-app failure views
   @@index([valuesPurgedAt, deliveredAt]) // the retention sweep
+}
+
+// One iOS Live Activity started for a notification on one device. The row holds
+// the activity's update token so the server can end it remotely (answered on
+// another device, closed, expired). Dropped with the device on logout.
+model NotificationLiveActivity {
+  id             String    @id @default(cuid())
+  notificationId String
+  userId         String
+  // The FCM registration token the activity was started on.
+  deviceToken    String
+  // The activity's latest update token (hex).
+  pushToken      String
+  // Set once the end push was attempted (or there was nothing to end).
+  endedAt        DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  notification Notification          @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  device       UserNotificationToken @relation(fields: [deviceToken], references: [token], onDelete: Cascade)
+
+  @@unique([notificationId, deviceToken])
+  @@index([notificationId, endedAt])
 }
 
 model NotificationPhoneNumber {

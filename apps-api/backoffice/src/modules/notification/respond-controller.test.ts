@@ -24,6 +24,7 @@ vi.mock('./services', async () => {
     InteractionServicePlugin: plugin('test-interaction-service', {
       interactionService: { respond: mocks.respond },
     }),
+    LiveActivityServicePlugin: plugin('test-live-activity-service', { liveActivityService: {} }),
   }
 })
 vi.mock('../../plugins/auth-guard', async () => {

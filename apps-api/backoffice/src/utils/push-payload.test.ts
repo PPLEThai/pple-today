@@ -5,8 +5,12 @@ import {
   buildDismissMessage,
   buildFcmMessage,
   type BuildFcmMessageOptions,
+  buildLiveActivityEnd,
+  buildLiveActivityStart,
+  type BuildLiveActivityStartOptions,
   PushNotificationContent,
   PushToken,
+  qualifiesForLiveActivity,
 } from './push-payload'
 
 import type { StoredInteraction } from '../modules/notification/interaction'
@@ -505,6 +509,157 @@ describe('the dismiss message', () => {
       token: 'device-token',
       data: { pple_dismiss: 'notification-id' },
       android: { priority: 'HIGH' },
+    })
+  })
+})
+
+describe('Live Activity', () => {
+  const NOW = new Date('2026-11-10T04:00:00.000Z')
+  const EXPIRES = new Date(NOW.getTime() + 3 * 60 * 60 * 1000)
+  const SECRET = 'live-secret'
+  const options = { responseTokenSecret: SECRET, now: NOW }
+
+  const spec = (overrides: Partial<StoredInteraction> = {}): StoredInteraction => ({
+    v: 1,
+    fields: [],
+    actions: [
+      { id: 'approve', label: 'อนุมัติ', icon: 'check', style: 'primary' },
+      { id: 'reject', label: 'ไม่อนุมัติ', style: 'destructive', requires: [] },
+      { id: 'later', label: 'ภายหลัง', style: 'outline', confirm: { title: 'Sure?' } },
+    ],
+    tray: true,
+    liveActivity: true,
+    ...overrides,
+  })
+  const content = (
+    interaction: PushNotificationContent['interaction'] = { spec: spec(), expiresAt: EXPIRES },
+    extra: Partial<PushNotificationContent> = {}
+  ): PushNotificationContent => ({ ...CONTENT, interaction, ...extra })
+  const capable = (overrides: Partial<PushToken> = {}) =>
+    ios({
+      supportsTrayInteraction: true,
+      liveActivityStartToken: 'aabbcc',
+      liveActivitiesEnabled: true,
+      ...overrides,
+    })
+
+  describe('recipient selection', () => {
+    test('a capable iOS token qualifies', () => {
+      expect(qualifiesForLiveActivity(capable(), content(), options)).toBe(true)
+    })
+
+    test.each<
+      [string, PushToken, PushNotificationContent?, Partial<BuildLiveActivityStartOptions>?]
+    >([
+      ['Android', capable({ platform: NotificationTokenPlatform.ANDROID })],
+      ['unknown platform', capable({ platform: null })],
+      ['no tray support', capable({ supportsTrayInteraction: false })],
+      ['no start token', capable({ liveActivityStartToken: null })],
+      ['activities disabled by the user', capable({ liveActivitiesEnabled: false })],
+      [
+        'send without the flag',
+        capable(),
+        content({ spec: spec({ liveActivity: undefined }), expiresAt: EXPIRES }),
+      ],
+      ['send with no interaction', capable(), CONTENT],
+      [
+        'expired interaction',
+        capable(),
+        content({ spec: spec(), expiresAt: new Date(NOW.getTime() - 1) }),
+      ],
+      ['no expiry', capable(), content({ spec: spec(), expiresAt: null })],
+      ['not buttons', capable(), content({ spec: spec({ tray: false }), expiresAt: EXPIRES })],
+      ['no notification id', capable(), content(undefined, { notificationId: undefined })],
+      ['kill switch', capable(), undefined, { liveActivityDisabled: true }],
+      ['no secret', capable(), undefined, { responseTokenSecret: undefined }],
+    ])('does not qualify: %s', (_name, target, data = content(), extra = {}) => {
+      expect(qualifiesForLiveActivity(target, data, { ...options, ...extra })).toBe(false)
+      expect(buildLiveActivityStart(target, data, { ...options, ...extra })).toBeNull()
+    })
+  })
+
+  describe('buildLiveActivityStart', () => {
+    const message = buildLiveActivityStart(
+      capable({ token: 'fcm-1', userId: 'user-9' }),
+      content(undefined, { app: APP }),
+      options
+    )!
+    const aps = message.apns.payload.aps as Record<string, any>
+
+    test('is an FCM message to the device with the push-to-start token', () => {
+      expect(message.token).toBe('fcm-1')
+      expect(message.apns.live_activity_token).toBe('aabbcc')
+      expect(message.apns.headers).toEqual({ 'apns-priority': '10' })
+      expect(Object.keys(message)).toEqual(['token', 'apns'])
+    })
+
+    test('has the start envelope', () => {
+      expect(aps.event).toBe('start')
+      expect(aps.timestamp).toBe(Math.floor(NOW.getTime() / 1000))
+      expect(aps['attributes-type']).toBe('PPLEInteractionAttributes')
+      expect(aps['content-state']).toEqual({ status: 'open' })
+      expect(aps['stale-date']).toBe(Math.floor(EXPIRES.getTime() / 1000))
+      expect(aps['input-push-token']).toBe(1)
+      expect(aps.alert).toEqual({ title: CONTENT.title, body: CONTENT.message })
+    })
+
+    test('carries the tray buttons, app name and header in the attributes', () => {
+      const { responseToken, ...rest } = aps.attributes
+      expect(rest).toEqual({
+        notificationId: 'notification-id',
+        appName: 'Canvassing',
+        header: CONTENT.title,
+        message: CONTENT.message,
+        actions: [
+          { id: 'approve', label: 'อนุมัติ', icon: 'check', bg: true },
+          { id: 'reject', label: 'ไม่อนุมัติ', destructive: true, bg: true },
+          { id: 'later', label: 'ภายหลัง', bg: false },
+        ],
+      })
+      expect(typeof responseToken).toBe('string')
+    })
+
+    test('mints the per-recipient response token the tray uses, expiring with the interaction', () => {
+      const verified = verifyResponseToken(aps.attributes.responseToken, [SECRET], NOW)
+      expect(verified).toEqual({
+        ok: true,
+        notificationId: 'notification-id',
+        userId: 'user-9',
+        exp: Math.floor(EXPIRES.getTime() / 1000),
+        deviceHash: deviceHash('fcm-1'),
+      })
+    })
+
+    test('names PPLE Today when no app sent it', () => {
+      const own = buildLiveActivityStart(capable(), content(), options)!
+      expect((own.apns.payload.aps as any).attributes.appName).toBe('PPLE Today')
+    })
+  })
+
+  describe('buildLiveActivityEnd', () => {
+    test('is an end message for the activity with the final state and a 15 min dismissal', () => {
+      expect(
+        buildLiveActivityEnd({
+          deviceToken: 'fcm-1',
+          pushToken: 'ddeeff',
+          state: { status: 'answered', label: 'อนุมัติ' },
+          now: NOW,
+        })
+      ).toEqual({
+        token: 'fcm-1',
+        apns: {
+          live_activity_token: 'ddeeff',
+          headers: { 'apns-priority': '10' },
+          payload: {
+            aps: {
+              timestamp: Math.floor(NOW.getTime() / 1000),
+              event: 'end',
+              'content-state': { status: 'answered', label: 'อนุมัติ' },
+              'dismissal-date': Math.floor(NOW.getTime() / 1000) + 15 * 60,
+            },
+          },
+        },
+      })
     })
   })
 })

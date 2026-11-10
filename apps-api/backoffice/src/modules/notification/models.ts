@@ -38,6 +38,18 @@ export const RegisterNotificationBody = t.Object({
         'Whether this build can show interaction actions on the OS notification and submit them with a response token.',
     })
   ),
+  liveActivityStartToken: t.Optional(
+    t.String({
+      pattern: '^[0-9a-fA-F]{1,512}$',
+      description: 'iOS Live Activity push-to-start token (hex). Absent clears the stored token.',
+    })
+  ),
+  liveActivitiesEnabled: t.Optional(
+    t.Boolean({
+      description:
+        'Whether the user allows Live Activities for this app (ActivityAuthorizationInfo). Absent counts as false.',
+    })
+  ),
 })
 export type RegisterNotificationBody = Static<typeof RegisterNotificationBody>
 
@@ -478,3 +490,33 @@ export const CloseInteractionResponse = t.Object({
   closedAt: t.Date({ description: 'When the interaction was closed (the first close wins).' }),
 })
 export type CloseInteractionResponse = Static<typeof CloseInteractionResponse>
+
+export const LiveActivityTokenParams = t.Object({ id: t.String() })
+export type LiveActivityTokenParams = Static<typeof LiveActivityTokenParams>
+
+/** Optional so a missing token is the contract's 401 rather than a generic validation error. */
+export const LiveActivityTokenHeaders = t.Object({
+  'x-notification-response-token': t.Optional(
+    t.String({
+      description:
+        'The tray response token carried in the activity attributes. Authorises uploading the update token of that one notification, for that one user and device.',
+    })
+  ),
+})
+export type LiveActivityTokenHeaders = Static<typeof LiveActivityTokenHeaders>
+
+export const LiveActivityTokenBody = t.Object({
+  pushToken: t.String({
+    pattern: '^[0-9a-fA-F]{1,512}$',
+    description: "The Live Activity's update (push) token, hex.",
+  }),
+})
+export type LiveActivityTokenBody = Static<typeof LiveActivityTokenBody>
+
+export const LiveActivityTokenResponse = t.Object({
+  state: NotificationInteractionState,
+  actionLabel: t.Optional(
+    t.String({ description: 'Label of the action the user answered with, when RESPONDED.' })
+  ),
+})
+export type LiveActivityTokenResponse = Static<typeof LiveActivityTokenResponse>

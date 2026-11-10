@@ -24,7 +24,7 @@ const withBackendBaseUrl: ConfigPlugin = (config) => {
 }
 
 /**
- * SPIKE (Live Activity). The `_shared` Swift in `targets/live-activity` is also
+ * Live Activity. The `_shared` Swift in `targets/live-activity` is also
  * compiled into the app, whose deployment target is 15.1. ActivityKit (16.1)
  * and AppIntents (16.0) must be weak-linked or the app fails to launch on 15.
  * Also declares Live Activity support.

@@ -18,6 +18,10 @@ export interface PushToken {
   supportsAppBranding: boolean
   /** Whether this build can show interaction actions on the OS notification and submit them. */
   supportsTrayInteraction: boolean
+  /** iOS Live Activity push-to-start token (hex), when the build reported one. */
+  liveActivityStartToken?: string | null
+  /** Whether the user allows Live Activities. */
+  liveActivitiesEnabled?: boolean
 }
 
 /** The app a notification is attributed to, as the push needs to name it. */
@@ -333,3 +337,146 @@ export const buildDismissMessage = (token: string, notificationId: string): FcmM
   data: { pple_dismiss: notificationId },
   android: { priority: 'HIGH' },
 })
+
+/** The `content-state` of a Live Activity: what changes after the start. */
+export type LiveActivityContentState =
+  | { status: 'open' }
+  | { status: 'answered'; label: string }
+  | { status: 'closed' }
+  | { status: 'expired' }
+
+/** What `buildLiveActivityStart` needs beyond the target and content. */
+export interface BuildLiveActivityStartOptions {
+  /** `LIVE_ACTIVITY_DISABLED`. */
+  liveActivityDisabled?: boolean
+  /** `NOTIFICATION_RESPONSE_TOKEN_SECRET`. Unset means no Live Activity: the token cannot be minted. */
+  responseTokenSecret?: string
+  /** Injected so expiry is testable. */
+  now?: Date
+}
+
+/** An FCM HTTP v1 message carrying an ActivityKit push through `apns.live_activity_token`. */
+export interface LiveActivityMessage {
+  token: string
+  apns: {
+    live_activity_token: string
+    headers: { 'apns-priority': '10' }
+    payload: { aps: Record<string, unknown> }
+  }
+}
+
+/** How long an ended activity stays on the Lock Screen showing its final status. */
+const LIVE_ACTIVITY_DISMISSAL_MS = 15 * 60 * 1000
+
+const unixSeconds = (d: Date) => Math.floor(d.getTime() / 1000)
+
+/**
+ * Whether this token gets a Live Activity instead of the normal push: the send
+ * opted in, the interaction is open, and the token is an iOS install that can
+ * show tray buttons, holds a push-to-start token and has Live Activities
+ * allowed, with neither kill switch nor missing secret in the way.
+ */
+export const qualifiesForLiveActivity = (
+  target: PushToken,
+  data: PushNotificationContent,
+  options: BuildLiveActivityStartOptions
+): boolean => {
+  const { interaction, notificationId } = data
+  if (!interaction || !notificationId || interaction.spec.liveActivity !== true) return false
+  if (options.liveActivityDisabled || !options.responseTokenSecret) return false
+  if (target.platform !== NotificationTokenPlatform.IOS) return false
+  if (!target.supportsTrayInteraction) return false
+  if (!target.liveActivityStartToken || !target.liveActivitiesEnabled) return false
+  const now = options.now ?? new Date()
+  // A Live Activity always has an expiry (validated at send); without one there is no stale-date.
+  if (!interaction.expiresAt || interaction.expiresAt.getTime() <= now.getTime()) return false
+  return trayShape(interaction.spec)?.kind === 'buttons'
+}
+
+/**
+ * The push-to-start message for one token, or null when the token does not
+ * qualify (see `qualifiesForLiveActivity`) and should get the normal push.
+ *
+ * Attributes are fixed for the life of the activity, so everything static goes
+ * there, including the same per-recipient response token the tray uses.
+ * `attributes-type` must match the Swift struct name.
+ */
+export const buildLiveActivityStart = (
+  target: PushToken,
+  data: PushNotificationContent,
+  options: BuildLiveActivityStartOptions
+): LiveActivityMessage | null => {
+  if (!qualifiesForLiveActivity(target, data, options)) return null
+  const { interaction, notificationId } = data
+  const shape = trayShape(interaction!.spec)
+  if (!interaction || !notificationId || !shape || shape.kind !== 'buttons') return null
+  const now = options.now ?? new Date()
+  const expiresAt = interaction.expiresAt!
+  const expiresAtSeconds = unixSeconds(expiresAt)
+
+  const responseToken = mintResponseToken(
+    {
+      notificationId,
+      userId: target.userId,
+      exp: expiresAtSeconds,
+      deviceHash: deviceHash(target.token),
+    },
+    options.responseTokenSecret!
+  )
+
+  return {
+    token: target.token,
+    apns: {
+      live_activity_token: target.liveActivityStartToken!,
+      headers: { 'apns-priority': '10' },
+      payload: {
+        aps: {
+          timestamp: unixSeconds(now),
+          event: 'start',
+          'attributes-type': 'PPLEInteractionAttributes',
+          attributes: {
+            notificationId,
+            appName: data.app?.name ?? 'PPLE Today',
+            header: data.title,
+            message: data.message,
+            actions: shape.actions,
+            responseToken,
+          },
+          'content-state': { status: 'open' } satisfies LiveActivityContentState,
+          'stale-date': expiresAtSeconds,
+          'input-push-token': 1,
+          alert: { title: data.title, body: data.message },
+        },
+      },
+    },
+  }
+}
+
+/**
+ * The end message for one started activity: the device's FCM token plus the
+ * activity's own update token, with the final `content-state`. The activity
+ * stays on screen for 15 minutes showing that state, then iOS removes it.
+ */
+export const buildLiveActivityEnd = (input: {
+  deviceToken: string
+  pushToken: string
+  state: LiveActivityContentState
+  now?: Date
+}): LiveActivityMessage => {
+  const now = input.now ?? new Date()
+  return {
+    token: input.deviceToken,
+    apns: {
+      live_activity_token: input.pushToken,
+      headers: { 'apns-priority': '10' },
+      payload: {
+        aps: {
+          timestamp: unixSeconds(now),
+          event: 'end',
+          'content-state': input.state,
+          'dismissal-date': unixSeconds(new Date(now.getTime() + LIVE_ACTIVITY_DISMISSAL_MS)),
+        },
+      },
+    },
+  }
+}

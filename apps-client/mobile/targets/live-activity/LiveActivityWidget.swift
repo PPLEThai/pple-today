@@ -1,4 +1,4 @@
-// SPIKE. The interactive-notification Live Activity: Lock Screen and Dynamic
+// The interactive-notification Live Activity: Lock Screen and Dynamic
 // Island. Buttons with `bg` answer in the background through
 // `AnswerInteractionIntent`; the rest open the detail screen.
 import ActivityKit
@@ -13,19 +13,31 @@ struct PPLELiveActivityBundle: WidgetBundle {
   }
 }
 
+/// PPLE Today's brand orange (#FF6A13).
+private let brandOrange = Color(red: 1.0, green: 106.0 / 255.0, blue: 19.0 / 255.0)
+
 private func detailURL(_ notificationId: String) -> URL? {
   URL(string: "pple-today://notification/\(notificationId)")
 }
 
 private func sfSymbol(_ icon: String?) -> String? {
   switch icon {
+  // Mirrors PPLESymbolMap in assets/NotificationService.m and the icon allowlist
+  // in @pple-today/api-common. Keep the three in step.
   case "check": return "checkmark"
   case "x": return "xmark"
   case "thumbs-up": return "hand.thumbsup"
   case "thumbs-down": return "hand.thumbsdown"
-  case "calendar": return "calendar"
+  case "calendar-check": return "calendar.badge.checkmark"
+  case "calendar-x": return "calendar.badge.minus"
   case "clock": return "clock"
   case "send": return "paperplane"
+  case "heart": return "heart"
+  case "star": return "star"
+  case "flag": return "flag"
+  case "user-check": return "person.badge.checkmark"
+  case "user-x": return "person.badge.minus"
+  case "help": return "questionmark.circle"
   default: return nil
   }
 }
@@ -46,7 +58,7 @@ struct ActionButtons: View {
   var body: some View {
     HStack(spacing: 8) {
       ForEach(attributes.actions, id: \.id) { action in
-        let tint: Color = action.destructive == true ? .red : .orange
+        let tint: Color = action.destructive == true ? Color.red : brandOrange
         if action.bg {
           Button(intent: AnswerInteractionIntent(notificationId: attributes.notificationId, actionId: action.id)) {
             label(action)
@@ -81,7 +93,7 @@ struct LockScreenView: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 6) {
-        Image(systemName: "bell.badge.fill").foregroundStyle(.orange)
+        Image(systemName: "bell.badge.fill").foregroundStyle(brandOrange)
         Text(context.attributes.appName).font(.caption).foregroundStyle(.secondary)
       }
       Text(context.attributes.header).font(.headline).lineLimit(1)
@@ -107,7 +119,7 @@ struct PPLEInteractionLiveActivity: Widget {
     } dynamicIsland: { context in
       DynamicIsland {
         DynamicIslandExpandedRegion(.leading) {
-          Image(systemName: "bell.badge.fill").foregroundStyle(.orange)
+          Image(systemName: "bell.badge.fill").foregroundStyle(brandOrange)
         }
         DynamicIslandExpandedRegion(.center) {
           Text(context.attributes.header).font(.headline).lineLimit(1)
@@ -123,11 +135,11 @@ struct PPLEInteractionLiveActivity: Widget {
           }
         }
       } compactLeading: {
-        Image(systemName: "bell.badge.fill").foregroundStyle(.orange)
+        Image(systemName: "bell.badge.fill").foregroundStyle(brandOrange)
       } compactTrailing: {
-        Text(context.state.status == "open" ? "ตอบ" : "✓").font(.caption.bold())
+        Text((context.state.status == "open" || context.state.status == "failed") ? "ตอบ" : "✓").font(.caption.bold())
       } minimal: {
-        Image(systemName: "bell.badge.fill").foregroundStyle(.orange)
+        Image(systemName: "bell.badge.fill").foregroundStyle(brandOrange)
       }
       .widgetURL(detailURL(context.attributes.notificationId))
     }

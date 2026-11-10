@@ -40,19 +40,20 @@ model User {
 
   linkedPage FacebookPage?
 
-  feedItems             FeedItem[]
-  feedReactions         FeedItemReaction[]
-  feedComments          FeedItemComment[]
-  roles                 UserRole[]
-  feedItemScores        FeedItemScore[]
-  notifications         UserNotification[]
-  notificationTokens    UserNotificationToken[]
-  notificationResponses NotificationResponse[]
-  miniAppUsers          MiniAppUser[]
-  miniAppInvites        MiniAppInvite[]
-  reactionLogs          FeedItemReactionLog[]
-  commentLogs           FeedItemCommentLog[]
-  followTopicLogs       UserFollowsTopicLog[]
+  feedItems                  FeedItem[]
+  feedReactions              FeedItemReaction[]
+  feedComments               FeedItemComment[]
+  roles                      UserRole[]
+  feedItemScores             FeedItemScore[]
+  notifications              UserNotification[]
+  notificationTokens         UserNotificationToken[]
+  notificationResponses      NotificationResponse[]
+  notificationLiveActivities NotificationLiveActivity[]
+  miniAppUsers               MiniAppUser[]
+  miniAppInvites             MiniAppInvite[]
+  reactionLogs               FeedItemReactionLog[]
+  commentLogs                FeedItemCommentLog[]
+  followTopicLogs            UserFollowsTopicLog[]
 
   followingLogs UserFollowsUserLog[] @relation("FollowingLog")
   followerLogs  UserFollowsUserLog[] @relation("FollowerLog")

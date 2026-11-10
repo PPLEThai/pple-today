@@ -598,7 +598,7 @@ has no action buttons.
 
 ## Live Activity (iOS)
 
-> **Status: proposed 2026-11-10.** Not built. Spikes S4–S6 come first.
+> **Status: implemented 2026-11-11.** Spikes S4–S6 done (see [results](#live-activity-spike-results-2026-11-10)).
 
 iOS only shows a notification's actions after a long press, and no API changes
 that. A **Live Activity** is the one iOS surface where buttons are visible

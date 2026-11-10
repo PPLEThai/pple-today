@@ -15,6 +15,8 @@ import {
  */
 
 const MAX_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000
+/** iOS ends an activity after 8 h, so a Live Activity question must fit inside that. */
+const MAX_LIVE_ACTIVITY_MS = 8 * 60 * 60 * 1000
 const ID_PATTERN = /^[a-z0-9_-]{1,32}$/
 /** Ids that would collide with Object.prototype members if ever used as keys. */
 const RESERVED_IDS = new Set(['__proto__', 'constructor', 'prototype'])
@@ -30,6 +32,8 @@ export type StoredInteraction = {
   fields: NotificationInteractionField[]
   actions: NotificationInteractionAction[]
   tray: boolean
+  /** Deliver as an iOS Live Activity where the device supports it. Absent = false. */
+  liveActivity?: boolean
 }
 
 export type ValidateInteractionSpecResult =
@@ -290,6 +294,8 @@ export function validateInteractionSpec(input: unknown, now: Date): ValidateInte
 
     const tray = optBool(input.tray, 'interaction.tray') ?? true
 
+    const liveActivity = optBool(input.liveActivity, 'interaction.liveActivity') ?? false
+
     const spec: StoredInteraction = compact({
       v: 1 as const,
       ref,
@@ -297,7 +303,27 @@ export function validateInteractionSpec(input: unknown, now: Date): ValidateInte
       fields,
       actions,
       tray,
+      liveActivity: liveActivity ? true : undefined,
     })
+
+    if (liveActivity) {
+      if (!expiresAt) {
+        return bail('interaction.expiresAt', 'is required when liveActivity is true')
+      }
+      if (expiresAt.getTime() > now.getTime() + MAX_LIVE_ACTIVITY_MS) {
+        return bail(
+          'interaction.expiresAt',
+          'must be at most 8 hours ahead when liveActivity is true'
+        )
+      }
+      if (!tray) return bail('interaction.tray', 'must not be false when liveActivity is true')
+      if (trayShape(spec)?.kind !== 'buttons') {
+        return bail(
+          'interaction.liveActivity',
+          'needs an interaction whose actions are buttons (no reply or form-only shape)'
+        )
+      }
+    }
     return { ok: true, spec, expiresAt }
   } catch (e) {
     if (e instanceof SpecError) return fail(e.path, e.message)

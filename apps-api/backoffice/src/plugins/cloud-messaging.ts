@@ -13,6 +13,9 @@ import { promiseWithExponentialBackoff } from '../utils/promise'
 import {
   buildDismissMessage,
   buildFcmMessage,
+  buildLiveActivityEnd,
+  buildLiveActivityStart,
+  type LiveActivityContentState,
   type PushNotificationContent,
   type PushToken,
 } from '../utils/push-payload'
@@ -37,6 +40,8 @@ export class CloudMessagingService {
       TRAY_INTERACTION_DISABLED?: boolean
       /** Signs the per-recipient tray response token. Unset: no tray data is sent. */
       NOTIFICATION_RESPONSE_TOKEN_SECRET?: string
+      /** Kill switch for iOS Live Activities: starts fall back to the normal push. */
+      LIVE_ACTIVITY_DISABLED?: boolean
     }
   ) {
     this.FCM_URL = `https://fcm.googleapis.com/v1/projects/${this.config.PROJECT_ID}/messages:send`
@@ -107,12 +112,19 @@ export class CloudMessagingService {
       targets.map((target) =>
         fromPromise(
           promiseWithExponentialBackoff(async () => {
+            // A qualifying iOS token gets a Live Activity start instead of the
+            // normal push; every other token gets the normal one, unchanged.
             const body = {
-              message: buildFcmMessage(target, data, {
-                androidBrandedPushDisabled: this.config.ANDROID_BRANDED_PUSH_DISABLED,
-                trayInteractionDisabled: this.config.TRAY_INTERACTION_DISABLED,
-                responseTokenSecret: this.config.NOTIFICATION_RESPONSE_TOKEN_SECRET,
-              }),
+              message:
+                buildLiveActivityStart(target, data, {
+                  liveActivityDisabled: this.config.LIVE_ACTIVITY_DISABLED,
+                  responseTokenSecret: this.config.NOTIFICATION_RESPONSE_TOKEN_SECRET,
+                }) ??
+                buildFcmMessage(target, data, {
+                  androidBrandedPushDisabled: this.config.ANDROID_BRANDED_PUSH_DISABLED,
+                  trayInteractionDisabled: this.config.TRAY_INTERACTION_DISABLED,
+                  responseTokenSecret: this.config.NOTIFICATION_RESPONSE_TOKEN_SECRET,
+                }),
             }
 
             const resp = await fetch(this.FCM_URL, {
@@ -233,6 +245,45 @@ export class CloudMessagingService {
     }
     return ok()
   }
+
+  /**
+   * Send `event: "end"` to started Live Activities. One result per input, in
+   * order: an `Err` carries what FCM said (or the auth failure). Best effort;
+   * the caller decides what a failure means.
+   */
+  async sendLiveActivityEnds(
+    ends: { deviceToken: string; pushToken: string; state: LiveActivityContentState }[]
+  ) {
+    if (ends.length === 0) return []
+
+    const accessToken = await fromPromise(this.getAccessTokenAsync(), (e) => e)
+    if (accessToken.isErr() || typeof accessToken.value !== 'string') {
+      const reason = accessToken.isErr() ? accessToken.error : accessToken.value
+      return ends.map(() => ({ ok: false as const, error: reason as unknown }))
+    }
+    const bearer = accessToken.value
+
+    return Promise.all(
+      ends.map(async (end) => {
+        const sent = await fromPromise(
+          (async () => {
+            const resp = await fetch(this.FCM_URL, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${bearer}`,
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ message: buildLiveActivityEnd(end) }),
+            })
+            if (!resp.ok) throw await resp.json()
+          })(),
+          (e) => e
+        )
+        return sent.isOk() ? { ok: true as const } : { ok: false as const, error: sent.error }
+      })
+    )
+  }
 }
 
 export const CloudMessagingServicePlugin = new Elysia()
@@ -245,5 +296,6 @@ export const CloudMessagingServicePlugin = new Elysia()
       ANDROID_BRANDED_PUSH_DISABLED: configService.get('ANDROID_BRANDED_PUSH_DISABLED'),
       TRAY_INTERACTION_DISABLED: configService.get('TRAY_INTERACTION_DISABLED'),
       NOTIFICATION_RESPONSE_TOKEN_SECRET: configService.get('NOTIFICATION_RESPONSE_TOKEN_SECRET'),
+      LIVE_ACTIVITY_DISABLED: configService.get('LIVE_ACTIVITY_DISABLED'),
     }),
   }))

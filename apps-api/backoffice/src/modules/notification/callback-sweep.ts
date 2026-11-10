@@ -4,6 +4,7 @@ import Elysia, { t } from 'elysia'
 
 import { NotificationCallbackDeliveryPlugin } from './callback-delivery-plugin'
 import { CallbackSweepAuthGuard } from './callback-sweep-guard'
+import { LiveActivityServicePlugin } from './services'
 
 import { ConfigServicePlugin } from '../../plugins/config'
 
@@ -13,19 +14,30 @@ export const NotificationCallbackSweepController = new Elysia({
 })
   .use(ConfigServicePlugin)
   .use(NotificationCallbackDeliveryPlugin)
-  .decorate(({ configService, notificationCallbackDeliveryService }) => ({
+  .use(LiveActivityServicePlugin)
+  .decorate(({ configService, notificationCallbackDeliveryService, liveActivityService }) => ({
     notificationCallbackDeliveryService,
+    liveActivityService,
     callbackSweepAuthGuard: new CallbackSweepAuthGuard(
       configService.get('NOTIFICATION_CALLBACK_SWEEP_TOKEN')
     ),
   }))
   .post(
     '/sweep',
-    async ({ callbackSweepAuthGuard, notificationCallbackDeliveryService, headers, status }) => {
+    async ({
+      callbackSweepAuthGuard,
+      notificationCallbackDeliveryService,
+      liveActivityService,
+      headers,
+      status,
+    }) => {
       const auth = callbackSweepAuthGuard.authenticate(headers)
       if (auth.isErr()) return mapErrorCodeToResponse(auth.error, status)
 
-      return status(200, await notificationCallbackDeliveryService.sweep())
+      const callbacks = await notificationCallbackDeliveryService.sweep()
+      // Never throws: it logs and returns 0, so it cannot fail the callback sweep.
+      const liveActivitiesEnded = await liveActivityService.sweepExpired()
+      return status(200, { ...callbacks, liveActivitiesEnded })
     },
     {
       response: {
@@ -35,13 +47,14 @@ export const NotificationCallbackSweepController = new Elysia({
           retried: t.Integer(),
           failed: t.Integer(),
           purged: t.Integer(),
+          liveActivitiesEnded: t.Integer(),
         }),
         ...createErrorSchema(InternalErrorCode.UNAUTHORIZED),
       },
       detail: {
         summary: 'Deliver due notification callbacks (CronJob only)',
         description:
-          'Claims due NotificationResponse rows (FOR UPDATE SKIP LOCKED), delivers them with at most 10 in flight per app, then runs the 90-day values purge. Bearer NOTIFICATION_CALLBACK_SWEEP_TOKEN.',
+          'Claims due NotificationResponse rows (FOR UPDATE SKIP LOCKED), delivers them with at most 10 in flight per app, then runs the 90-day values purge, then ends Live Activities of expired questions (up to 200). Bearer NOTIFICATION_CALLBACK_SWEEP_TOKEN.',
         hide: true,
       },
     }

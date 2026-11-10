@@ -1,5 +1,5 @@
-// SPIKE (S4–S6, docs/interactive-notifications.md "Live Activity (iOS)").
-// The Live Activity widget extension. No `entitlements` on purpose: defining
+// The Live Activity widget extension (docs/interactive-notifications.md,
+// "Live Activity (iOS)"). No `entitlements` on purpose: defining
 // them would make @bacons/apple-targets mirror the main app's app group onto
 // this target, which the bundle id is not registered for.
 /** @type {import('@bacons/apple-targets/app.plugin').ConfigFunction} */

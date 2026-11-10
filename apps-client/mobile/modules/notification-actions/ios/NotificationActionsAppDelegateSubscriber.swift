@@ -17,7 +17,7 @@ public class NotificationActionsAppDelegateSubscriber: ExpoAppDelegateSubscriber
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
     NotificationCenterManager.shared.addDelegate(delegate)
-    // SPIKE (Live Activity): the observer is a main-target type (targets/live-activity/_shared),
+    // Live Activity: the observer is a main-target type (targets/live-activity/_shared),
     // invisible to this pod at compile time, so it is started by name.
     if let observer: AnyObject = NSClassFromString("PPLELiveActivityObserver") {
       let start = NSSelectorFromString("start")

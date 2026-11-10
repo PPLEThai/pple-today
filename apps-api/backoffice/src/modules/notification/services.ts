@@ -6,6 +6,8 @@ import type { NotificationCallbackDispatcher } from './callback-delivery'
 import { NotificationCallbackDeliveryPlugin } from './callback-delivery-plugin'
 import { InteractionRepository } from './interaction-repository'
 import { InteractionService } from './interaction-service'
+import { LiveActivityService } from './live-activity'
+import { LiveActivityRepository } from './live-activity-repository'
 import { NotificationService } from './notification-service'
 import { NotificationRepository } from './repository'
 
@@ -93,6 +95,44 @@ export const NotificationCallbackDispatcherPlugin = new Elysia({
       notificationCallbackDispatcher as NotificationCallbackDispatcher,
   }))
 
+const createLiveActivityService = (
+  prismaService: ConstructorParameters<typeof LiveActivityRepository>[0],
+  cloudMessagingService: ConstructorParameters<typeof LiveActivityService>[2],
+  loggerService: ConstructorParameters<typeof LiveActivityService>[3],
+  options: ConstructorParameters<typeof LiveActivityService>[4]
+) =>
+  new LiveActivityService(
+    new LiveActivityRepository(prismaService),
+    new InteractionRepository(prismaService),
+    cloudMessagingService,
+    loggerService,
+    options
+  )
+
+/** Token upload for iOS Live Activities, and ending them (the sweep calls `sweepExpired`). */
+export const LiveActivityServicePlugin = new Elysia({ name: 'LiveActivityService' })
+  .use([
+    PrismaServicePlugin,
+    CloudMessagingServicePlugin,
+    ConfigServicePlugin,
+    ElysiaLoggerPlugin({ name: 'LiveActivityService' }),
+  ])
+  .decorate(({ prismaService, cloudMessagingService, configService, loggerService }) => ({
+    liveActivityService: createLiveActivityService(
+      prismaService,
+      cloudMessagingService,
+      loggerService,
+      {
+        interactiveNotificationsEnabled: configService.get('INTERACTIVE_NOTIFICATIONS_ENABLED'),
+        liveActivityDisabled: configService.get('LIVE_ACTIVITY_DISABLED'),
+        responseTokenSecret: configService.get('NOTIFICATION_RESPONSE_TOKEN_SECRET'),
+        responseTokenSecretPrevious: configService.get(
+          'NOTIFICATION_RESPONSE_TOKEN_SECRET_PREVIOUS'
+        ),
+      }
+    ),
+  }))
+
 export const InteractionServicePlugin = new Elysia({ name: 'InteractionService' })
   .use([
     PrismaServicePlugin,
@@ -120,7 +160,16 @@ export const InteractionServicePlugin = new Elysia({ name: 'InteractionService' 
           responseTokenSecretPrevious: configService.get(
             'NOTIFICATION_RESPONSE_TOKEN_SECRET_PREVIOUS'
           ),
-        }
+        },
+        () => new Date(),
+        createLiveActivityService(prismaService, cloudMessagingService, loggerService, {
+          interactiveNotificationsEnabled: configService.get('INTERACTIVE_NOTIFICATIONS_ENABLED'),
+          liveActivityDisabled: configService.get('LIVE_ACTIVITY_DISABLED'),
+          responseTokenSecret: configService.get('NOTIFICATION_RESPONSE_TOKEN_SECRET'),
+          responseTokenSecretPrevious: configService.get(
+            'NOTIFICATION_RESPONSE_TOKEN_SECRET_PREVIOUS'
+          ),
+        })
       ),
     })
   )

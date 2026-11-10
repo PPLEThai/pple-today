@@ -94,6 +94,10 @@ const createService = (
   const cloudMessaging = { sendDismiss: vi.fn(async () => ok()) }
   const dispatcher = { dispatchSoon: vi.fn() } satisfies NotificationCallbackDispatcher
   const logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() }
+  const liveActivities = {
+    endForAnswer: vi.fn(async (_n: string, _u: string, _label: string) => {}),
+    endForClose: vi.fn(async (_n: string) => {}),
+  }
 
   const service = new InteractionService(
     repository as unknown as InteractionRepository,
@@ -105,9 +109,10 @@ const createService = (
       responseTokenSecret: 'secret' in options ? options.secret : SECRET,
       responseTokenSecretPrevious: options.previousSecret,
     },
-    () => NOW
+    () => NOW,
+    liveActivities
   )
-  return { service, repository, cloudMessaging, dispatcher, logger }
+  return { service, repository, cloudMessaging, dispatcher, logger, liveActivities }
 }
 
 const session = { kind: 'session' as const, userId: USER_ID }
@@ -529,5 +534,61 @@ describe('InteractionService.closeInteraction', () => {
     const result = await service.closeInteraction(key, NOTIFICATION_ID)
 
     expect(codeOf(result)).toBe(InternalErrorCode.INTERACTIVE_NOTIFICATIONS_DISABLED)
+  })
+})
+
+describe('Live Activity fan-out', () => {
+  test('an answer ends the answering user’s activities with the action label', async () => {
+    const { service, liveActivities } = createService()
+
+    await service.respond(NOTIFICATION_ID, session, { actionId: 'approve' })
+    await flush()
+
+    expect(liveActivities.endForAnswer).toHaveBeenCalledWith(NOTIFICATION_ID, USER_ID, 'อนุมัติ')
+  })
+
+  test('a refused answer ends nothing', async () => {
+    const { service, liveActivities } = createService({
+      notification: openNotification({ interactionClosedAt: NOW }),
+    })
+
+    await service.respond(NOTIFICATION_ID, session, { actionId: 'approve' })
+    await flush()
+
+    expect(liveActivities.endForAnswer).not.toHaveBeenCalled()
+  })
+
+  test('a throwing ender never fails the answer', async () => {
+    const { service, liveActivities, logger } = createService()
+    liveActivities.endForAnswer.mockRejectedValue(new Error('boom'))
+
+    const result = await service.respond(NOTIFICATION_ID, session, { actionId: 'approve' })
+    await flush()
+
+    expect(result.isOk()).toBe(true)
+    expect(logger.error).toHaveBeenCalled()
+  })
+
+  test('close ends every activity of the notification, also on a repeat close', async () => {
+    const { service, repository, liveActivities } = createService()
+    const key = { miniApp: { id: APP_ID } }
+
+    await service.closeInteraction(key, NOTIFICATION_ID)
+    repository.getOwnInteraction.mockResolvedValue(ok({ interactionClosedAt: NOW }))
+    await service.closeInteraction(key, NOTIFICATION_ID)
+    await flush()
+
+    expect(liveActivities.endForClose).toHaveBeenCalledTimes(2)
+    expect(liveActivities.endForClose).toHaveBeenCalledWith(NOTIFICATION_ID)
+  })
+
+  test('a throwing ender never fails the close', async () => {
+    const { service, liveActivities } = createService()
+    liveActivities.endForClose.mockRejectedValue(new Error('boom'))
+
+    const result = await service.closeInteraction({ miniApp: { id: APP_ID } }, NOTIFICATION_ID)
+    await flush()
+
+    expect(result.isOk()).toBe(true)
   })
 })

@@ -209,6 +209,16 @@ export const envSchema = t.Object({
     )
     .Decode((value) => value === 'true')
     .Encode((value) => (value ? 'true' : 'false')),
+  LIVE_ACTIVITY_DISABLED: t
+    .Transform(
+      t.Union([t.Literal('true'), t.Literal('false')], {
+        default: 'false',
+        description:
+          'Kill switch for iOS Live Activities. When true, `liveActivity` sends fall back to the normal push and no Live Activity end pushes are sent.',
+      })
+    )
+    .Decode((value) => value === 'true')
+    .Encode((value) => (value ? 'true' : 'false')),
   PLATFORM_CALLBACK_RELAY_URL: t.Optional(
     t.String({
       description:
