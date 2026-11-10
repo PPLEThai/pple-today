@@ -7,6 +7,14 @@ export const ListMiniAppsResponse = t.Array(
 )
 export type ListMiniAppsResponse = Static<typeof ListMiniAppsResponse>
 
+export const GetMiniAppParams = t.Object({
+  slug: t.String({ description: 'Slug of the mini app' }),
+})
+export type GetMiniAppParams = Static<typeof GetMiniAppParams>
+
+export const GetMiniAppResponse = ListMiniAppsResponse.items
+export type GetMiniAppResponse = Static<typeof GetMiniAppResponse>
+
 export const ListMiniAppsQuery = t.Object({
   role: t.Optional(
     t.String({

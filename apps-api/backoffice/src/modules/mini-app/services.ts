@@ -1,10 +1,11 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import { MiniAppTier } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
-import { ok } from 'neverthrow'
+import { err, ok } from 'neverthrow'
 
 import { AppUserService } from './app-user-service'
-import { selectVisibleMiniApps } from './eligibility'
+import { selectMiniAppBySlug, selectVisibleMiniApps } from './eligibility'
 import { InviteNotifier } from './invite-notifier'
 import { MiniAppInviteRepository } from './invite-repository'
 import { MiniAppInviteService } from './invite-service'
@@ -34,6 +35,39 @@ export class MiniAppService {
    *                Used to gate owner-only (DRAFT) and invite-gated (BETA) apps.
    */
   async listMiniApps(roles: string[], userSub: string | null) {
+    const context = await this.loadEligibilityContext(roles, userSub)
+
+    if (context.isErr()) return err(context.error)
+
+    // Eligibility filtering happens here in the backend layer, over the full
+    // cached mini-app list, rather than in the database query, so the cached
+    // data can be reused across requests with different roles and users.
+    return ok(selectVisibleMiniApps(context.value.miniApps, context.value.viewer))
+  }
+
+  /**
+   * One app by slug, for a caller who has its link but may not see it listed
+   * (an unlisted Live app). See `selectMiniAppBySlug` for which apps resolve —
+   * roles play no part there, so none are resolved.
+   */
+  async getMiniAppBySlug(slug: string, userSub: string | null) {
+    const context = await this.loadEligibilityContext([], userSub)
+
+    if (context.isErr()) return err(context.error)
+
+    const miniApp = selectMiniAppBySlug(context.value.miniApps, slug, context.value.viewer)
+
+    if (!miniApp) {
+      return err({
+        code: InternalErrorCode.MINI_APP_NOT_FOUND,
+        message: 'Mini app not found',
+      })
+    }
+
+    return ok(miniApp)
+  }
+
+  private async loadEligibilityContext(roles: string[], userSub: string | null) {
     let miniApps = this.miniAppListCache.get()
 
     if (!miniApps) {
@@ -62,10 +96,7 @@ export class MiniAppService {
       acceptedInviteMiniAppIds = invites.value
     }
 
-    // Eligibility filtering happens here in the backend layer, over the full
-    // cached mini-app list, rather than in the database query, so the cached
-    // data can be reused across requests with different roles and users.
-    return ok(selectVisibleMiniApps(miniApps, { roles, sub: userSub, acceptedInviteMiniAppIds }))
+    return ok({ miniApps, viewer: { roles, sub: userSub, acceptedInviteMiniAppIds } })
   }
 }
 

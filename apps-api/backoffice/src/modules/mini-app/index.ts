@@ -3,6 +3,8 @@ import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-commo
 import Elysia from 'elysia'
 
 import {
+  GetMiniAppParams,
+  GetMiniAppResponse,
   ListMiniAppsQuery,
   ListMiniAppsResponse,
   ListMyMiniAppInvitesResponse,
@@ -147,6 +149,40 @@ export const MiniAppController = new Elysia({ prefix: '/mini-app', tags: ['Mini 
         ...createErrorSchema(
           InternalErrorCode.MINI_APP_INVITE_NOT_FOUND,
           InternalErrorCode.MINI_APP_INVITE_ALREADY_RESPONDED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  // Registered last, after the static `/invites` routes it could otherwise
+  // be mistaken for.
+  .get(
+    '/:slug',
+    async ({ status, miniAppService, headers, authGuard, params }) => {
+      // Anonymous callers are welcome: the `sub` only matters for Draft/Beta,
+      // which then simply do not resolve.
+      const oidcUserResult = await authGuard.getOIDCUser(headers)
+      const userSub = oidcUserResult.isOk() ? oidcUserResult.value.sub : null
+
+      const miniApp = await miniAppService.getMiniAppBySlug(params.slug, userSub)
+
+      if (miniApp.isErr()) {
+        return mapErrorCodeToResponse(miniApp.error, status)
+      }
+
+      return status(200, miniApp.value)
+    },
+    {
+      detail: {
+        summary: 'Get Mini App by slug',
+        description:
+          'Describe one mini app reached by its link, listed or not, so the client knows whether it needs a session. Any Live app resolves (an unlisted one included); a Draft or Beta app only for its builders and accepted testers.',
+      },
+      params: GetMiniAppParams,
+      response: {
+        200: GetMiniAppResponse,
+        ...createErrorSchema(
+          InternalErrorCode.MINI_APP_NOT_FOUND,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),
       },
