@@ -21,6 +21,14 @@ public final class PPLELiveActivityObserver: NSObject {
     guard #available(iOS 17.2, *) else { return "" }
     let hex = Activity<PPLEInteractionAttributes>.pushToStartToken?.ppleHex ?? ""
     if !hex.isEmpty { UserDefaults.standard.set(hex, forKey: "pple.la.startToken") }
+    // S5: the pushTokenUpdates stream often never emits for push-started
+    // activities. Read each running activity's token property directly.
+    for activity in Activity<PPLEInteractionAttributes>.activities {
+      observe(activity, origin: "refresh")
+      PPLELiveActivityLog.append(
+        "pushToken.property n=\(activity.attributes.notificationId) state=\(activity.activityState) \(activity.pushToken?.ppleHex ?? "nil")"
+      )
+    }
     return hex as NSString
   }
 
