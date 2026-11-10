@@ -1144,8 +1144,8 @@ be made, as a fallback. The send docs say so, but it isn't enforced.
 
 ### Live Activity spike results (2026-11-10)
 
-- **Setup:** production app, TestFlight build 2.11.0 (39) from branch
-  `panj/live-activity-spike`, one iPhone (Face ID).
+- **Setup:** production app, TestFlight builds 2.11.0 (39) and (40) from branch
+  `panj/live-activity-spike`, one iPhone (Face ID) on iOS 27.0.1.
 - **How it was sent:** pushes sent by hand through FCM HTTP v1, with real
   interactive notifications and server-minted response tokens.
 
@@ -1156,7 +1156,8 @@ be made, as a fallback. The send docs say so, but it isn't enforced.
 | **S5 — start** | **Pass.** The activity appeared with the app backgrounded and after a force-quit. Both times iOS launched the app in the background (`launch state=background`) within the same second. The push-to-start token arrived about 1 s after the first launch and stayed the same afterwards. |
 | **S5 — first start** | The first push-started activity showed an inline "Allow Live Activities from PPLE Today?" prompt under the activity. Tapping **Allow** reported `activityEnablementUpdates = true`. |
 | **S5 — update token** | **Unreliable while the process lives.** The first activity's token arrived only when **Allow** was tapped. Two later activities, started while the app process was still alive, got no `pushTokenUpdates` emission at all. This matches [Apple forum 784913](https://developer.apple.com/forums/thread/784913), which has no reply. On the next fresh launch (after a force-quit), the stream emitted at once for every running activity, including the old one. |
-| **S5 — dismissal** | An ended activity was removed after about 1.5 min, not after the 15 min `dismissalPolicy` asked for. |
+| **S5 — `pushToken` property** | **Works when the stream doesn't.** A locally started activity's `pushToken` property held its token about 1 min before `pushTokenUpdates` emitted it. For a push-started activity, the property matched what the stream delivered. |
+| **S5 — dismissal** | An end push with `dismissal-date` = now + 15 min removed the activity exactly 15 min later. Activities the intent ended on the phone (`dismissalPolicy: .after(15 min)`) went after about 1.5 min, when the next activity arrived. |
 
 **What this changes:**
 - **D20 holds, but remote end is best effort.** The server ends every activity
@@ -1175,9 +1176,8 @@ be made, as a fallback. The send docs say so, but it isn't enforced.
   sends fall back to the normal push.
 
 **Still open:**
-- Whether `activity.pushToken` (the property) holds a value when the stream
-  hasn't emitted.
 - What a start does while Live Activities are off.
+- The same checks on iOS 17.2–18. Everything above ran on iOS 27.
 - Throttling of several starts within minutes. Four starts in 6 min weren't
   throttled.
 - Signing: CI's match credentials are read-only. The spike built the extension
