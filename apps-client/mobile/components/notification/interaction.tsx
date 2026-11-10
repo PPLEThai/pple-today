@@ -18,7 +18,6 @@ import { RadioGroup, RadioGroupItem } from '@pple-today/ui/radio-group'
 import { Text } from '@pple-today/ui/text'
 import { Textarea } from '@pple-today/ui/textarea'
 import { toast } from '@pple-today/ui/toast'
-import type { UseMutationResult } from '@tanstack/react-query'
 import {
   CalendarCheckIcon,
   CalendarXIcon,
@@ -48,7 +47,6 @@ import {
   type InteractionField,
   interactionFromConflict,
   type InteractionIconName,
-  type InteractionValues,
   isActionValid,
   isFieldRequiredFor,
   messageForClosed,
@@ -81,23 +79,6 @@ const ICONS: Record<InteractionIconName, LucideIcon> = {
   help: CircleHelpIcon,
 }
 
-type SubmitVariables = {
-  pathParams: { id: string }
-  body: { actionId: string; values?: InteractionValues }
-}
-type SubmitMutation = UseMutationResult<
-  { interaction: NotificationInteractionDto },
-  unknown,
-  SubmitVariables
->
-
-// TODO(#515): remove cast once the `POST /notifications/:id/response` server route
-// lands and is part of ApplicationApiSchema; call reactQueryClient.useMutation directly.
-const useRespondMutation = reactQueryClient.useMutation as unknown as (
-  method: 'post',
-  path: '/notifications/:id/response'
-) => SubmitMutation
-
 type Props = {
   notificationId: string
   interaction: NotificationInteractionDto
@@ -124,7 +105,7 @@ export function NotificationInteraction({
   onResponded,
   onStale,
 }: Props) {
-  const mutation = useRespondMutation('post', '/notifications/:id/response')
+  const mutation = reactQueryClient.useMutation('post', '/notifications/:id/answer')
 
   // What the server told us this session, which can be newer than `interaction`.
   const [answered, setAnswered] = useState<NotificationInteractionDto | null>(null)
@@ -154,6 +135,8 @@ export function NotificationInteraction({
       mutation.mutate(
         {
           pathParams: { id: notificationId },
+          // The session is attached by the client; the route also accepts a tray token.
+          headers: {},
           body: { actionId: action.id, values: normaliseValues(fields, values) },
         },
         {

@@ -355,7 +355,7 @@ export type SweepResult = {
   purged: number
 }
 
-type Logger = { error: (obj: unknown) => void; warn?: (obj: unknown) => void }
+export type Logger = { error: (obj: unknown) => void; warn?: (obj: unknown) => void }
 
 export class NotificationCallbackDeliveryService implements NotificationCallbackDispatcher {
   constructor(

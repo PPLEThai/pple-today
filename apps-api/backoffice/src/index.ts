@@ -12,6 +12,9 @@ import * as R from 'remeda'
 import { createMiniAppRedirectApp } from './miniapp-redirect'
 import { ApplicationController } from './modules'
 import { AdminController } from './modules/admin'
+// Internal (CronJob-only) route, kept out of ApplicationApiSchema so clients
+// never see it in their typed route tree.
+import { NotificationCallbackSweepController } from './modules/notification/callback-sweep'
 import { VersionController } from './modules/version'
 import { ConfigServicePlugin } from './plugins/config'
 
@@ -64,7 +67,12 @@ let app = new Elysia()
     ConfigServicePlugin,
     cors(),
   ])
-  .use([ApplicationController, AdminController, VersionController])
+  .use([
+    ApplicationController,
+    AdminController,
+    VersionController,
+    NotificationCallbackSweepController,
+  ])
 
 if (process.env.ENABLE_SWAGGER === 'true') {
   const getTagsFromController = (controller: AnyElysia) =>

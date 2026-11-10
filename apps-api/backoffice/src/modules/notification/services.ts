@@ -2,10 +2,8 @@ import Elysia from 'elysia'
 
 import { AppNotificationRepository } from './app-notification-repository'
 import { AppNotificationService } from './app-notification-service'
-import {
-  NoopNotificationCallbackDispatcher,
-  type NotificationCallbackDispatcher,
-} from './callback-delivery'
+import type { NotificationCallbackDispatcher } from './callback-delivery'
+import { NotificationCallbackDeliveryPlugin } from './callback-delivery-plugin'
 import { InteractionRepository } from './interaction-repository'
 import { InteractionService } from './interaction-service'
 import { NotificationService } from './notification-service'
@@ -66,21 +64,20 @@ export const AppNotificationServicePlugin = new Elysia({ name: 'AppNotificationS
   }))
 
 /**
- * THE INJECTION POINT for delivering an answer to the sending app.
- *
- * Answering an interactive notification calls
+ * Delivers an answer to the sending app: the answer endpoint calls
  * `notificationCallbackDispatcher.dispatchSoon(responseId)` after the response
- * row commits. This decorates it with the no-op, so answers are recorded but
- * not yet delivered (the sweep, once it exists, picks them up from the outbox).
- * The callback-delivery track replaces this one decoration with the real
- * dispatcher; nothing else needs to change.
+ * row commits; the sweep retries anything left PENDING.
  */
 export const NotificationCallbackDispatcherPlugin = new Elysia({
   name: 'NotificationCallbackDispatcher',
-}).decorate({
-  notificationCallbackDispatcher:
-    new NoopNotificationCallbackDispatcher() as NotificationCallbackDispatcher,
 })
+  .use(NotificationCallbackDeliveryPlugin)
+  // Narrowed to the interface: the delivery service class must not leak into the
+  // exported route types, which clients can't name (TS2742).
+  .decorate(({ notificationCallbackDispatcher }) => ({
+    notificationCallbackDispatcher:
+      notificationCallbackDispatcher as NotificationCallbackDispatcher,
+  }))
 
 export const InteractionServicePlugin = new Elysia({ name: 'InteractionService' })
   .use([
