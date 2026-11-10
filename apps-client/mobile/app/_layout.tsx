@@ -56,9 +56,21 @@ import { useScreenTracking } from '@app/libs/analytics'
 import { reactQueryClient } from '@app/libs/api-client'
 import { initAppUpdate } from '@app/libs/app-update'
 import { AuthLifeCycleHook, useAuthMe, useSession } from '@app/libs/auth'
+import {
+  addTrayActionListener,
+  dismissTrayNotification,
+  toTrayResponseInput,
+} from '@app/libs/notification-display'
 import { parseBrandedPush, pushBadgeCount, pushSenderApp } from '@app/utils/branded-push'
 import { openLink } from '@app/utils/link'
 import { resolveIncomingDeepLinkPath } from '@app/utils/mini-app'
+import {
+  DEFAULT_ACTION_IDENTIFIER,
+  parseDismiss,
+  pendingActionFromResponse,
+  supportsTrayInteraction,
+  TRAY_RESULT_CATEGORY,
+} from '@app/utils/tray-interaction'
 
 import { optimisticMarkAsRead } from './(tabs)/(feed)/notification'
 
@@ -285,6 +297,10 @@ async function requestUserPermission() {
   throw new Error(`Unsupported platform: ${Platform.OS}`)
 }
 
+/** An interactive push on iOS, whose taps `expo-notifications` routes instead of RNFB. */
+const isIosInteractive = (data: Record<string, unknown>) =>
+  Platform.OS === 'ios' && !!data['pple_interaction']
+
 function NotificationTokenConsentPopup() {
   const registerNotificationTokenMutation = reactQueryClient.useMutation(
     'post',
@@ -297,7 +313,11 @@ function NotificationTokenConsentPopup() {
   // `Record<string, unknown>` rather than RNFB's own data type, because the same
   // handler now also receives the data off a notification this client presented,
   // which `expo-notifications` types as unknown values.
-  const handleRemoteMessage = async (data: Record<string, unknown>) => {
+  //
+  // `pendingActionId` is set when the user pressed a tray action that opens the app
+  // (one with `confirm` or `requires`): the detail screen opens with that action
+  // pending, instead of wherever `link` points.
+  const handleRemoteMessage = async (data: Record<string, unknown>, pendingActionId?: string) => {
     const linkData = data['link']
 
     if (typeof linkData === 'string' && linkData) {
@@ -314,7 +334,12 @@ function NotificationTokenConsentPopup() {
           markAsReadMutation.mutateAsync({ pathParams: { id: notificationId } })
         }
 
-        if (link.type && link.destination) {
+        if (pendingActionId && notificationId) {
+          router.navigate({
+            pathname: '/notification/[notificationId]',
+            params: { notificationId, pendingActionId },
+          })
+        } else if (link.type && link.destination) {
           await openLink(link)
         }
       } catch (err) {
@@ -333,15 +358,29 @@ function NotificationTokenConsentPopup() {
   // (`android:priority="-1"`) and so only ever reports responses for notifications
   // we built; on iOS it is the `UNUserNotificationCenter` delegate and would report
   // FCM-displayed ones as well, double-handling every tap.
+  //
+  // iOS joins in for the notifications RNFB cannot route: an interactive one, whose
+  // action presses RNFB reports as a plain open, and the local notification that
+  // reports a failed tray answer, which RNFB never sees. A background tray action
+  // is submitted natively (`modules/notification-actions`) and is ignored here.
   const lastNotificationResponse = Notifications.useLastNotificationResponse()
   React.useEffect(() => {
-    if (Platform.OS !== 'android' || !lastNotificationResponse) return
-    const data = lastNotificationResponse.notification.request.content.data
+    if (!lastNotificationResponse) return
+    const input = toTrayResponseInput(lastNotificationResponse)
+    const data = input.data
+    const isIosTray =
+      Platform.OS === 'ios' &&
+      (input.categoryIdentifier === TRAY_RESULT_CATEGORY || !!data?.['pple_interaction'])
+    if (Platform.OS !== 'android' && !isIosTray) return
     // Cleared once handled so that a remount cannot replay a tap that has already
     // been navigated.
     Notifications.clearLastNotificationResponseAsync().catch(() => {})
+    // A tray action that is submitted in the background (Android: the task or
+    // listener; iOS: native) must not also navigate.
+    const pendingActionId = pendingActionFromResponse(input)
+    if (input.actionIdentifier !== DEFAULT_ACTION_IDENTIFIER && !pendingActionId) return
     if (data) {
-      handleRemoteMessage(data)
+      handleRemoteMessage(data, pendingActionId)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastNotificationResponse])
@@ -350,7 +389,9 @@ function NotificationTokenConsentPopup() {
     const handleInitialMessaging = async () => {
       const remoteMessage = await getInitialNotification(messaging)
 
-      if (remoteMessage && remoteMessage.data) {
+      // iOS routes interactive notifications through `expo-notifications`, which
+      // can tell a body tap from an action press; RNFB cannot.
+      if (remoteMessage && remoteMessage.data && !isIosInteractive(remoteMessage.data)) {
         await handleRemoteMessage(remoteMessage.data)
       }
     }
@@ -377,6 +418,13 @@ function NotificationTokenConsentPopup() {
             // already runs on every cold start after auth, so an upgraded install
             // re-asserts this without any new trigger.
             supportsAppBranding: Platform.OS === 'android',
+            // Asserts that this build can show interaction actions on the OS
+            // notification and submit them with a response token: on Android the
+            // background task and listener in `libs/notification-display.ts`, on
+            // iOS the extension (`assets/NotificationService.m`) and the native
+            // submit (`modules/notification-actions`). Switched off in one place,
+            // `TRAY_INTERACTION_ENABLED`.
+            supportsTrayInteraction: supportsTrayInteraction(Platform.OS),
           },
         })
         await handleInitialMessaging()
@@ -388,12 +436,20 @@ function NotificationTokenConsentPopup() {
     registerNotification()
 
     const unsubscribeOpenedApp = onNotificationOpenedApp(messaging, async (remoteMessage) => {
-      if (remoteMessage && remoteMessage.data) {
+      if (remoteMessage && remoteMessage.data && !isIosInteractive(remoteMessage.data)) {
         await handleRemoteMessage(remoteMessage.data)
       }
     })
 
+    const unsubscribeTrayActions = addTrayActionListener()
+
     const unsubscribeOnMessage = onMessage(messaging, async (remoteMessage) => {
+      // Another device answered: take the card out of this device's tray.
+      const dismissId = parseDismiss(remoteMessage.data)
+      if (dismissId) {
+        await dismissTrayNotification(dismissId)
+        return
+      }
       // An attributed Android push arrives data-only — Play services must not
       // display it, or there would be nothing left for the client to brand — so
       // its title and body are in `data` rather than in a `notification` block.
@@ -443,6 +499,7 @@ function NotificationTokenConsentPopup() {
     return () => {
       unsubscribeOpenedApp()
       unsubscribeOnMessage()
+      unsubscribeTrayActions.remove()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authMe.data])

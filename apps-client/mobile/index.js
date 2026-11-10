@@ -18,5 +18,9 @@ const notificationDisplay = require('./libs/notification-display')
 
 notificationDisplay.registerBrandedPushBackgroundHandler()
 notificationDisplay.ensureDefaultNotificationChannel()
+// Defined for the same reason as the background message handler: a tray action
+// pressed while the app is killed starts the bundle headless, and the task has to
+// exist by the time `expo-task-manager` goes looking for it.
+notificationDisplay.registerTrayInteractionTask()
 
 require('expo-router/entry')
