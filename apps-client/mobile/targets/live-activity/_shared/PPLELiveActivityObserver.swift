@@ -196,10 +196,14 @@ public final class PPLELiveActivityObserver: NSObject {
       if let final = PPLELiveActivityFinish.finalState(uploadState: uploadState, actionLabel: actionLabel) {
         await PPLELiveActivityFinish.end(activity, state: final)
       }
-    case 401, 404:
-      // The server does not know this notification or token (logged out, deleted).
+    case 401:
+      // The response token is no longer valid (logged out, device re-registered,
+      // expired): nothing can answer this activity any more.
       rememberUploaded(token, for: activity.id)
       await PPLELiveActivityFinish.endImmediately(activity)
+    // 404 is deliberately not final: it is also what a server without this
+    // endpoint returns (an older API during rollout or a rollback). The activity
+    // stays; its stale-date and the next trigger's retry settle it.
     default:
       // Not recorded: the next trigger (foreground, token emission) retries.
       log.notice("token upload failed status=\(result.status ?? -1, privacy: .public)")
