@@ -34,7 +34,9 @@ else
     echo "Android upload keystore file created at ./android/upload-keystore.jks."
   fi
 
-  cp .env ./android/fastlane/.env.default
+  # `.env.local` holds the keys Expo only allows in a .local file (FASTLANE_USER,
+  # ...); see scripts/write-ci-env.mjs. Fastlane needs both.
+  cat .env $( [ -f .env.local ] && echo .env.local ) > ./android/fastlane/.env.default
   echo "Fastlane environment variables file created at ./android/fastlane/.env.default"
 fi
 if [ ! -d "./ios" ]; then
@@ -43,6 +45,8 @@ else
   cp -r ./fastlane/ios/* ./ios
   echo "Fastlane directory copied to ios folder."
 
-  cp .env ./ios/fastlane/.env.default
+  # `.env.local` holds the keys Expo only allows in a .local file (FASTLANE_USER,
+  # ...); see scripts/write-ci-env.mjs. Fastlane needs both.
+  cat .env $( [ -f .env.local ] && echo .env.local ) > ./ios/fastlane/.env.default
   echo "Fastlane environment variables file created at ./ios/fastlane/.env.default"
 fi

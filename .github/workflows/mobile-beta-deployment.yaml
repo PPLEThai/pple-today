@@ -63,7 +63,7 @@ jobs:
           DISTRIBUTE_GROUPS: ${{ inputs.groups }}
         run: |
           bash ./scripts/setup-credentials.sh
-          env > .env
+          env | node ./scripts/write-ci-env.mjs
 
       - name: Prebuild Android
         working-directory: apps-client/mobile
@@ -123,7 +123,7 @@ jobs:
           DISTRIBUTE_GROUPS: ${{ inputs.groups }}
         run: |
           bash ./scripts/setup-credentials.sh
-          env > .env
+          env | node ./scripts/write-ci-env.mjs
 
       - name: Prebuild iOS
         working-directory: apps-client/mobile
