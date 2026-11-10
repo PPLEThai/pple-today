@@ -367,7 +367,11 @@ jobs:
       - name: 'SPIKE: register LiveActivity bundle id and profile'
         if: ${{ inputs.register-live-activity == true }}
         working-directory: apps-client/mobile/ios
-        run: fastlane register_live_activity
+        run: |
+          # match commits the new profile to its repo; a fresh runner has no git identity.
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          fastlane register_live_activity --verbose
         env:
           CI: true
 
