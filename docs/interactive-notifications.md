@@ -84,14 +84,15 @@ and never designs for the tray separately.
 | Field | Type | Rules |
 | --- | --- | --- |
 | `ref` | string | Optional, ≤ 200 chars. Opaque to us. It comes back in the callback so the app can match an answer to its own record without keeping a map of notification ids. Never sent to the client. |
-| `expiresAt` | ISO date-time | Optional. Must be in the future and ≤ 30 days ahead. After that, answers are refused and the UI shows "หมดเวลาตอบกลับ". |
+| `expiresAt` | ISO date-time | Optional. Must include `Z` or a UTC offset (a bare local time is refused), be in the future, and be ≤ 30 days ahead. After that, answers are refused and the UI shows "หมดเวลาตอบกลับ". |
 | `fields` | Field[] | 0–5, rendered in order above the actions. |
 | `actions` | Action[] | 1–3. Required. |
 | `tray` | boolean | Optional, default `true`. `false` keeps the OS notification free of action buttons, so tapping it always opens the form. |
 
 Ids (`field.id`, `action.id`, `option.id`) must match `^[a-z0-9_-]{1,32}$` and be
-unique within their list. The callback reports these ids, so the app should pick
-names it can switch on.
+unique within their list. The ids `__proto__`, `constructor` and `prototype` are
+reserved and refused, because answers are keyed by field id. The callback reports
+these ids, so the app should pick names it can switch on.
 
 ### Action
 
@@ -126,7 +127,7 @@ All of these are `400`, and nothing is sent:
 | Code | When |
 | --- | --- |
 | `NOTIFICATION_INVALID_INTERACTION` | A rule above is broken. The message names the first failing path, e.g. `interaction.actions[1].requires[0]`. |
-| `NOTIFICATION_INTERACTION_NO_CALLBACK` | The sending app has no callback target: an `ADMIN` app with no callback URL set, or an unbound legacy key with no app at all. |
+| `NOTIFICATION_INTERACTION_NO_CALLBACK` | The sending app has no usable callback target: an `ADMIN` app with no callback URL, no callback secret, or no encryption key configured (`NOTIFICATION_CALLBACK_SECRET_KEY`); a `PLATFORM` app while the relay isn't configured; or an unbound legacy key with no app at all. |
 | `NOTIFICATION_INTERACTION_BYPASS_NOT_ALLOWED` | `content.link.bypassNotificationCenter: true` on the raw path, together with `interaction` (D9). |
 
 Every interactive notification also follows these rules:
@@ -155,11 +156,16 @@ POST /external/notifications/:notificationId/interaction/close
 Authorization: Bearer <app notification key>
 ```
 
-This covers the "first approver wins" race. The call is idempotent and only the
-attributed app may make it. Any other caller gets `404`, so the endpoint can't
-be used to find out other apps' notification ids. Recipients who haven't
-answered see "ปิดรับคำตอบแล้ว", and a tray tap is refused the same way. Answers
-already recorded are still delivered.
+This narrows the "first approver wins" race, but doesn't settle it alone. The
+call is idempotent and only the attributed app may make it. Any other caller gets
+`404`, so the endpoint can't be used to find out other apps' notification ids.
+Recipients who haven't answered see "ปิดรับคำตอบแล้ว", and a tray tap is refused
+the same way. Answers already recorded are still delivered.
+
+`/close` doesn't stop answers already in flight, and delivery is unordered, so an
+app may receive answers after it has called `/close`. Answers are refused only
+once the close has committed. An app that needs "first wins" must arbitrate on
+its own side by `respondedAt` (then `id`), and ignore or reverse later answers.
 
 ## Storage
 
@@ -179,7 +185,8 @@ model Notification {
 enum NotificationCallbackStatus {
   PENDING    // waiting for its next attempt
   DELIVERED  // the app answered 2xx
-  FAILED     // gave up: retries exhausted, permanent 4xx/410, or the app retired
+  FAILED     // gave up: retries exhausted, permanent 4xx/410/3xx, answer 7 days old
+             // with the app still misconfigured, or the app retired or deleted
 }
 
 enum NotificationResponseChannel {
@@ -194,7 +201,8 @@ model NotificationResponse {
   id             String   @id @default(cuid())   // also the callback's idempotency id
   notificationId String
   userId         String
-  miniAppId      String   // denormalised: per-app delivery queries and Console views
+  miniAppId      String?  // denormalised: per-app delivery queries and Console views.
+                          // Null once an ADMIN app is deleted (the answer is kept).
 
   actionId    String
   values      Json?       // { [fieldId]: string | string[] }; null once purged
@@ -211,8 +219,8 @@ model NotificationResponse {
   valuesPurgedAt DateTime?
 
   notification Notification @relation(fields: [notificationId], references: [id])
-  user         User         @relation(fields: [userId], references: [id])
-  miniApp      MiniApp      @relation(fields: [miniAppId], references: [id])
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  miniApp      MiniApp?     @relation(fields: [miniAppId], references: [id], onDelete: SetNull)
 
   @@unique([notificationId, userId])
   @@index([deliveryStatus, nextAttemptAt])  // the delivery sweep
@@ -230,7 +238,12 @@ model MiniApp {
   // HMAC key for the callback signature. Generated when a URL is first set,
   // revealed once, rotatable. Stored encrypted: it must be usable to sign, so it
   // cannot be hashed like the notification key.
+  // Encrypted values carry a key id, so the key can be rotated (see below).
   notificationCallbackSecret String?
+  // The secret this one replaced, kept for 24 h so a receiver that hasn't
+  // switched yet keeps verifying. Cleared when the grace window ends.
+  notificationCallbackPreviousSecret          String?
+  notificationCallbackPreviousSecretExpiresAt DateTime?
 }
 
 model UserNotificationToken {
@@ -246,6 +259,21 @@ model UserNotificationToken {
 **The callback target is looked up when the callback is sent, not when the user
 answers.** If an app with stuck deliveries fixes its URL, the pending answers go
 to the new URL.
+
+**Stored secret keys.** Encrypted callback secrets carry a key id, so the
+encryption key (`NOTIFICATION_CALLBACK_SECRET_KEY`) can be rotated.
+`NOTIFICATION_CALLBACK_SECRET_KEY_PREVIOUS` decrypts secrets written under the old
+key. A job that re-encrypts old rows under the new key is a follow-up.
+
+**Deletion (D14).**
+
+- **Deleting an `ADMIN` app keeps its users' answers.** `miniAppId` becomes null.
+  Its `PENDING` deliveries are marked `FAILED` ("app deleted"). Recipients who
+  haven't answered see `CLOSED`.
+- **Deleting a user deletes their answers**, and any pending delivery for them is
+  dropped with them.
+- **`ref` is kept for the life of the notification.** It is the sender's own id,
+  not user data.
 
 **Retention (D4).** 90 days after a row reaches `DELIVERED` or `FAILED`, the
 sweep sets `values` to null and stamps `valuesPurgedAt`. The `actionId` is kept,
@@ -275,7 +303,9 @@ The app received its copy when the callback was delivered.
 If more than one state applies, the earlier one in this list wins: `RESPONDED`,
 then `CLOSED`, then `EXPIRED`, then `OPEN`. So someone who answered always sees
 their answer, even after the interaction is closed. If the sending app has been
-retired, the state is `CLOSED`.
+retired or deleted, the state is `CLOSED`. While `INTERACTIVE_NOTIFICATIONS_ENABLED`
+is off, a read reports `CLOSED` for anything not already answered, so the app never
+shows a form that can't be submitted (D15).
 
 Items from `GET /notifications/history` gain `interactionState?` (same enum).
 The list uses it to show a "รอตอบกลับ" chip without loading every detail.
@@ -289,6 +319,12 @@ X-Notification-Response-Token: <token>      ← tray (see below)
 { "actionId": "approve", "values": { "note": "โอเค" } }
 → 200 { "interaction": { …same shape as above, state RESPONDED… } }
 ```
+
+`/response` is the canonical path, and the one native tray code calls. The typed
+Eden client cannot express it (a path segment named `response` collides with
+Elysia's route-type key and drops `GET /notifications/:id` from the typed path
+list), so the same handler is also mounted at `POST /notifications/:id/answer`,
+which is the one the in-app form calls through the typed client.
 
 The request must carry exactly one of the two credentials. It is checked against
 the stored spec on the server, whichever credential it uses. Checks on the
@@ -304,10 +340,10 @@ client are only there for a better experience.
 | Status | Code | When |
 | --- | --- | --- |
 | 400 | `NOTIFICATION_RESPONSE_INVALID` | Validation failed. The body names the field. |
-| 401 | `NOTIFICATION_RESPONSE_TOKEN_INVALID` | Bad signature, expired token, or a token for a different notification. |
+| 401 | `NOTIFICATION_RESPONSE_TOKEN_INVALID` | Bad signature, expired token, a token for a different notification, or a token whose device is no longer registered to the user (for example after logout). |
 | 404 | `NOTIFICATION_NOT_FOUND` | The notification doesn't exist, the caller isn't a recipient (no `UserNotification` row), or it has no interaction. All three return the same response. |
 | 409 | `NOTIFICATION_ALREADY_RESPONDED` | The unique key already exists. The body includes the existing answer. |
-| 410 | `NOTIFICATION_INTERACTION_CLOSED` | Expired, closed, or the sending app has been retired. |
+| 410 | `NOTIFICATION_INTERACTION_CLOSED` | Expired, closed, the sending app has been retired or deleted, or the feature is switched off. |
 
 A successful submit does three things:
 
@@ -328,7 +364,7 @@ tray shows:
 | Interaction shape | What the OS notification shows |
 | --- | --- |
 | No fields | One button per action. Tapping one submits it in the background. |
-| Exactly one `text` field and one action | An inline reply box. The action's label is the send button. |
+| Exactly one `text` field and one action | An inline reply box. The action's label is the send button. If that action has `confirm`, it is one button that opens the app (`bg: false`) instead, with the dialog open. |
 | Only `text` fields, none `required` | One button per action. Submits with empty values. An action with `requires` opens the form instead. |
 | Any `radio` or `checkbox`, or a `required` field (other than the reply shape) | No action buttons. Tapping opens the form. |
 
@@ -336,7 +372,9 @@ The following rules apply on top of the table:
 
 - **An action with `confirm` opens the app** to the detail screen with the
   dialog already open. A dialog can't be shown in the tray, and leaving it out
-  would turn a deliberate two-step action into a one-tap one.
+  would turn a deliberate two-step action into a one-tap one. This is why a single
+  text field with a single `confirm` action becomes one `kind: "buttons"` card
+  with a single `bg: false` button, not a reply box.
 - **`interaction.tray: false`, an expired or closed interaction, or a token
   that doesn't support tray interaction:** no buttons. The body tap opens the
   form, as for any notification.
@@ -361,19 +399,29 @@ token** that authorises exactly one thing: answering *this* notification as
 *this* user.
 
 ```
-v1.<base64url({ "n": notificationId, "u": userId, "e": expUnix })>.<base64url(HMAC-SHA256)>
+v1.<base64url({ "n": notificationId, "u": userId, "e": expUnix, "d": deviceHash, "k": keyId })>.<base64url(HMAC-SHA256)>
 ```
 
-- It is signed with `NOTIFICATION_RESPONSE_TOKEN_SECRET` and stateless, so
-  there is nothing to store. Single use is already enforced by the unique
-  response row. Closing and expiry are checked at submit time like any other
-  answer.
+- It is signed with `NOTIFICATION_RESPONSE_TOKEN_SECRET`. Nothing is stored for
+  it. Single use is already enforced by the unique response row. Closing and
+  expiry are checked at submit time like any other answer.
 - `e` = `interactionExpiresAt`, or 30 days if the interaction has none.
+- `d` binds the token to a device: the base64url of the first 16 bytes of the
+  SHA-256 of the FCM token the push was sent to. On submit, the user must still
+  have that device registered. Logging out unregisters the device, which kills
+  its tokens, and the app also clears interactive cards from the tray on logout
+  (D12).
+- `k` is the key id: the first 8 hex characters of the SHA-256 of the secret.
+  `NOTIFICATION_RESPONSE_TOKEN_SECRET_PREVIOUS` is also accepted for
+  verification, so the secret can be rotated without breaking cards already in
+  the tray.
 - It is minted per recipient. The send path already builds one FCM message per
   token (`buildFcmMessage`), so a value per user costs nothing extra. `PushToken`
   gains `userId`.
 - It is only included for tokens with `supportsTrayInteraction`, and only when
-  the shape gets tray actions.
+  the shape gets tray actions. Tray data goes only to iOS tokens with tray
+  support, and to Android tokens with tray support that are on the branded
+  data-only path. Other Android tokens get a plain `notification` payload.
 - If the token leaks through Google or Apple, the damage is limited to one answer
   to one question, by one person, before it expires.
 
@@ -446,7 +494,11 @@ handles it. **Before** handing the content to `FIRMessaging extensionHelper`, it
    - `.foreground` when `bg` is false
 3. Merges the category into `getNotificationCategories`, prunes it to the newest
    50 `pple.ix.*`, and calls `setNotificationCategories`.
-4. Sets `bestAttemptContent.categoryIdentifier`.
+4. Reads the categories back with `getNotificationCategories`, bounded by the
+   same timeout, so iOS has committed the set before the notification is shown.
+   If the new category isn't in the read-back, it is set anyway: the worst case
+   is a notification without actions.
+5. Sets `bestAttemptContent.categoryIdentifier`.
 
 If anything fails, or the extension times out, the notification is shown without
 actions and the tap opens the form. That fallback is the same as on a client
@@ -519,6 +571,23 @@ card, they get the `409` "คุณตอบกลับแล้ว" result.
 of thousands of pushes for a cosmetic effect. A stale card that is tapped
 returns `410`.
 
+### Logout
+
+Before revoking the session, the app calls `POST /notifications/unregister
+{ deviceToken }`. It removes the caller's own registration of that token (a
+token since re-registered by someone else is left alone), so the device stops
+getting the user's pushes and every response token bound to it stops working.
+The call is best effort with a 5 s timeout, so logout never hangs on it. If it
+fails, the tokens still die when another user registers the device, when FCM
+drops the token, or when they expire.
+
+The app also removes every interactive card from the tray: on Android,
+presented notifications whose identifier starts with `pple.notification.` and
+whose data carries `pple_interaction`; on iOS, those whose category starts with
+`pple.ix.`. It also deletes the `pple.ix.*` categories and leaves other categories
+alone. The server refuses their tokens as well (the device is unregistered), so
+this is the UX half.
+
 ### Foreground
 
 If the app is open when an interactive push arrives, the existing in-app toast
@@ -531,7 +600,7 @@ has no action buttons.
 
 | `MiniApp.source` | Target |
 | --- | --- |
-| `ADMIN` | `MiniApp.notificationCallbackUrl`. Must be https, and must not resolve to a private, loopback or link-local address (SSRF guard). Checked when saved and again when sent. |
+| `ADMIN` | `MiniApp.notificationCallbackUrl`. https only, with no credentials in the URL. Every address the host resolves to must be public (not private, loopback or link-local), the connection is pinned to the address that was checked, and redirects are never followed: a `3xx` is a permanent failure (SSRF guard, D13). Checked when saved and again on every send. |
 | `PLATFORM` | The predefined path **`/.pple/notification-response`**, reached **through the platform**. today-v2 POSTs to a pple-platform relay, which calls the tenant through the dispatch-namespace binding (D1). |
 
 ```
@@ -557,6 +626,9 @@ X-PPLE-Timestamp: <unix seconds>
 X-PPLE-Signature: v1=<hex HMAC-SHA256(secret, "<timestamp>.<raw body>")>   // ADMIN apps
 ```
 
+During a secret rotation (below) the header carries two values, same HMAC input:
+`v1=<new>,v1=<old>`. A receiver accepts the request if **any** `v1=` value matches.
+
 ```jsonc
 {
   "type": "notification.response",
@@ -578,6 +650,9 @@ X-PPLE-Signature: v1=<hex HMAC-SHA256(secret, "<timestamp>.<raw body>")>   // AD
   wrapper's per-app secret, the same as cron. For PLATFORM apps the
   `X-PPLE-Signature` header is reserved but not sent yet. Turning it on later
   only means provisioning a per-app secret. The contract doesn't change.
+- **Rotation.** Rotating an ADMIN app's callback secret keeps the old one for
+  24 h. During that window requests carry both signatures, so receivers can
+  switch at their own pace. Clearing the URL clears both secrets (D11).
 - **Identity.** We send only `sub`, the identity the app already gets through
   OIDC. Phone number and name are left out on purpose. An app that needs more
   uses the services it has already been granted.
@@ -592,26 +667,40 @@ There is no ordering across responders.
 | Outcome | Result |
 | --- | --- |
 | `2xx` within 10 s | `DELIVERED`. The response body is ignored. |
-| `408`, `429`, `5xx`, timeout, network error | Retry |
+| `401`, `403`, `404`, `408`, `429`, `5xx`, timeout, network error | Retry |
 | `410 Gone` | `FAILED`, no retry. This is how an app says "stop sending me these" (D6). |
-| other `4xx` | `FAILED`, no retry. A broken receiver won't fix itself on retry. |
+| `3xx`, other `4xx` | `FAILED`, no retry. A broken receiver won't fix itself on retry. |
+
+`401`, `403` and `404` are retried because a rotated secret, a bad deploy, or a
+relay tenant that doesn't have the handler yet must not lose answers (D10).
 
 Retries back off: immediately, then +1 min, +5 min, +30 min, +2 h, +6 h, +24 h.
 After that the row is `FAILED` (7 attempts over about 32 h).
+
+**Our own misconfiguration doesn't use up attempts.** If the relay isn't
+configured, the URL or secret is missing, or an encryption key is unset or can't
+decrypt, the row is rescheduled every 30 min without counting an attempt. It
+becomes `FAILED` once the answer is 7 days old. A deleted app fails at once with
+"app deleted".
 
 **Scheduling** follows the existing gitops CronJob pattern. A CronJob runs every
 minute and calls the internal-only route
 `POST /internal/notification-callbacks/sweep`. The route:
 
-- claims due rows with `FOR UPDATE SKIP LOCKED`;
-- delivers them, with at most 10 in flight per app, so one slow app can't hold
-  up the others;
+- claims due rows with `FOR UPDATE SKIP LOCKED`, at most 20 per app and 100 in
+  total per batch, so one app's backlog can't starve the others;
+- delivers them, with at most 10 in flight per app per API replica, so one slow
+  app can't hold up the others;
 - runs the 90-day `values` purge.
+
+The same cap of 10 applies to the immediate attempt after an answer: if the app
+is already at its cap, that attempt is skipped and the sweep picks the row up.
 
 There are no in-process timers, so it stays correct with several API replicas.
 
 **Retiring an app** marks its `PENDING` rows `FAILED` (`lastError: "app
-retired"`), in the same step that deactivates its key.
+retired"`), in the same step that deactivates its key. Deleting one does the same
+with "app deleted" (see [Storage](#storage)).
 
 ## Mobile client — in-app form
 
@@ -747,6 +836,14 @@ be made, as a fallback. The send docs say so, but it isn't enforced.
 | D7 | Tray credential | A per-recipient, stateless response token in the push. Never the session. | Tray handling may run headless. A background refresh-token rotation that races the foreground app could log the user out. |
 | D8 | Tray on iOS | Single phase. The extension registers categories dynamically, and a native `NotificationDelegate` submits in the background with the response token, so a tap doesn't open the app. Only `confirm`/`requires` actions open it. | Categories have to exist before display. expo-notifications reaches JS too late on a cold background launch, but its `addDelegate` hook lets native code handle the response first. |
 | D9 | `bypassNotificationCenter` on an interactive send? | Refused with `400` (`NOTIFICATION_INTERACTION_BYPASS_NOT_ALLOWED`). **pple-platform's Granted Notifications must not set bypass when they carry an `interaction`.** ADR-0033 says they always set it, so that ADR needs an amendment. | Bypass skips the detail screen, which is the only place the form exists. Forcing it off without telling the sender would be a silent override, and this API refuses conflicts rather than resolving them. |
+| D10 | Which callback statuses are retried? | `401`, `403`, `404`, `408`, `429`, `5xx`, timeouts and network errors retry on the normal backoff. `410`, `3xx` and other `4xx` are permanent. Our own misconfiguration reschedules every 30 min without using an attempt, and fails once the answer is 7 days old. | A rotated secret (`401`/`403`), a bad deploy or a relay tenant without the handler (`404`) is fixable by the app, and must not lose answers. Misconfiguration is ours, so it shouldn't burn the app's attempts. |
+| D11 | How is a callback secret rotated? | The old secret is kept for 24 h. Requests carry `v1=<new>,v1=<old>`, and a receiver accepts any match. Clearing the URL clears both. | A receiver can't switch the instant we rotate. Two signatures over the same input let it switch at its own pace, with no lost answers. |
+| D12 | What stops a response token being used after logout? | The token carries a hash of the FCM token (`d`) and a key id (`k`). The user must still have that device registered, and logout unregisters it. The app also clears interactive cards from the tray. `NOTIFICATION_RESPONSE_TOKEN_SECRET_PREVIOUS` is accepted for verification. | A token left in a tray after logout, or on a shared device, would otherwise answer as the previous user. The previous-secret slot lets the secret rotate without breaking cards still in the tray. |
+| D13 | SSRF rules for ADMIN callback URLs | https only, no credentials in the URL, every resolved address public, the connection pinned to the checked address, redirects never followed (`3xx` is permanent). Checked on save and on every send. | A user-set URL is fetched from inside our network. Checking once and then connecting by name leaves a rebinding gap, and a followed redirect skips the check altogether. |
+| D14 | What happens to answers on app or user deletion? | Deleting an ADMIN app keeps the answers (`miniAppId` becomes null), fails its pending deliveries ("app deleted"), and unanswered recipients see `CLOSED`. Deleting a user deletes their answers and pending deliveries. `ref` stays. | The answer is the user's record, and doesn't depend on the app existing. A deleted user's data should go with them. `ref` is the sender's own id, not user data. |
+| D15 | What does a read show while the kill switch is off? | `CLOSED` for anything not already answered. | The form would be shown but couldn't be submitted. |
+| D16 | Does `/close` guarantee "first approver wins"? | No. Answers already in flight still land, and delivery is unordered. Apps arbitrate by `respondedAt`, then `id`. Answers are refused only once the close has committed. | Strict ordering across replicas would need a per-notification lock for a rare case. The app has the authoritative record, so it decides. |
+| D17 | How many deliveries run at once? | At most 10 in flight per app per API replica, covering both the immediate attempt and the sweep. The sweep claims at most 20 rows per app and 100 per batch. | One slow app, or one big backlog, mustn't starve the others. An immediate attempt that finds its app at the cap leaves the row to the sweep. |
 
 ## Spikes
 
@@ -755,7 +852,10 @@ be made, as a fallback. The send docs say so, but it isn't enforced.
   before `populateNotificationContent` show their actions on:
   - the first notification after install;
   - a cold device (the extension process hasn't run yet);
-  - a burst of 5 notifications that all have different categories.
+  - a burst of 5 notifications that all have different categories;
+  - reading the categories back after `setNotificationCategories` before
+    displaying (as OneSignal does) makes the actions appear reliably, including
+    on the first and cold-device cases.
 
   Also check that SF Symbol icons and `authenticationRequired` render. If it
   fails, iOS falls back to tap-to-open only, and Android is unaffected.

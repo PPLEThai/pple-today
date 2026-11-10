@@ -2,6 +2,7 @@ import { MiniAppSource } from '@pple-today/database/prisma'
 import { ok } from 'neverthrow'
 import { describe, expect, test, vi } from 'vitest'
 
+import type { PreparedInteraction } from './interaction-send'
 import { NotificationService } from './notification-service'
 import type { NotificationRepository } from './repository'
 
@@ -48,7 +49,33 @@ const NOTIFICATION_ROW = {
   },
 }
 
-const createService = (checkApiKeyResult: unknown = LEGACY_KEY) => {
+const INTERACTION = {
+  ref: 'leave:123',
+  expiresAt: '2026-08-05T00:00:00.000Z',
+  actions: [{ id: 'approve', label: 'อนุมัติ' }],
+}
+const SENT_AT = new Date('2026-07-30T00:00:00.000Z')
+const ENABLED = { interactiveNotificationsEnabled: true, now: () => SENT_AT }
+
+const CALLBACK_CONFIG = {
+  platformRelayUrl: 'https://relay.example',
+  platformRelayToken: 'relay-token',
+  secretKey: 'secret-key',
+}
+
+const createService = (
+  checkApiKeyResult: unknown = LEGACY_KEY,
+  options: { interactiveNotificationsEnabled?: boolean; now?: () => Date } = { now: () => SENT_AT },
+  callbackTarget: {
+    source: MiniAppSource
+    notificationCallbackUrl: string | null
+    notificationCallbackSecret: string | null
+  } | null = {
+    source: MiniAppSource.PLATFORM,
+    notificationCallbackUrl: null,
+    notificationCallbackSecret: null,
+  }
+) => {
   const notificationRepository = {
     checkApiKey: vi.fn(async (_token: string) => ok(checkApiKeyResult)),
     getNotificationDetailsById: vi.fn(async () => ok(NOTIFICATION_ROW)),
@@ -59,9 +86,19 @@ const createService = (checkApiKeyResult: unknown = LEGACY_KEY) => {
       async (
         _audience: { type: string; details?: unknown },
         _content: unknown,
-        _options?: { apiKeyId?: string; app?: unknown; smsFallbackText?: string }
-      ) => ok({ success: ['+66812345678'], failed: [] })
+        _options?: {
+          apiKeyId?: string
+          app?: unknown
+          smsFallbackText?: string
+          interaction?: PreparedInteraction
+        }
+      ) =>
+        ok({
+          notificationId: 'new-notification-id',
+          delivery: { success: ['+66812345678'], failed: [] },
+        })
     ),
+    getCallbackTarget: vi.fn(async (_miniAppId: string) => callbackTarget),
     getAppInstallStatus: vi.fn(async (_phoneNumber: string) =>
       ok({ isAppInstalled: true, hasPushToken: true })
     ),
@@ -74,7 +111,8 @@ const createService = (checkApiKeyResult: unknown = LEGACY_KEY) => {
     notificationRepository,
     service: new NotificationService(
       notificationRepository as unknown as NotificationRepository,
-      'https://miniapp.peoplesparty.or.th'
+      'https://miniapp.peoplesparty.or.th',
+      { callbackConfig: CALLBACK_CONFIG, ...options }
     ),
   }
 }
@@ -275,7 +313,10 @@ describe('NotificationService.sendExternalNotification (legacy behaviour)', () =
       body.content,
       { apiKeyId: LEGACY_KEY.id, app: undefined, smsFallbackText: body.smsFallbackText }
     )
-    expect(result._unsafeUnwrap()).toEqual({ success: ['+66812345678'], failed: [] })
+    expect(result._unsafeUnwrap()).toEqual({
+      notificationId: 'new-notification-id',
+      delivery: { success: ['+66812345678'], failed: [] },
+    })
   })
 
   test('a central-team key attributes its broadcast to its app', async () => {
@@ -471,5 +512,268 @@ describe('NotificationService.countAppInstall', () => {
       'withAccount',
       'withPushToken',
     ])
+  })
+})
+
+describe('NotificationService.sendExternalNotification with an interaction', () => {
+  const content = { header: 'คำขอลางาน', message: 'สมชายขอลา' }
+  const direct = { type: 'SUB' as const, details: ['user-1'] }
+  const send = (
+    service: NotificationService,
+    key: Parameters<NotificationService['sendExternalNotification']>[1],
+    overrides: { content?: unknown; interaction?: unknown } = {}
+  ) =>
+    service.sendExternalNotification(
+      {
+        audience: direct,
+        content: (overrides.content ?? content) as typeof content,
+        interaction: ('interaction' in overrides ? overrides.interaction : INTERACTION) as never,
+      },
+      key
+    )
+
+  test('is refused while the feature flag is off', async () => {
+    const { service, notificationRepository } = createService(CENTRAL_TEAM_KEY, {
+      interactiveNotificationsEnabled: false,
+      now: () => SENT_AT,
+    })
+
+    const result = await send(service, CENTRAL_TEAM_KEY)
+
+    expect(result._unsafeUnwrapErr().code).toBe('INTERACTIVE_NOTIFICATIONS_DISABLED')
+    expect(notificationRepository.sendNotificationToUser).not.toHaveBeenCalled()
+  })
+
+  test('an unbound key has no app to call back', async () => {
+    const { service, notificationRepository } = createService(LEGACY_KEY, ENABLED)
+
+    const result = await send(service, LEGACY_KEY)
+
+    expect(result._unsafeUnwrapErr().code).toBe('NOTIFICATION_INTERACTION_NO_CALLBACK')
+    expect(notificationRepository.sendNotificationToUser).not.toHaveBeenCalled()
+  })
+
+  test('an ADMIN app with no callback URL is refused', async () => {
+    const { service } = createService(CENTRAL_TEAM_KEY, ENABLED, {
+      source: MiniAppSource.ADMIN,
+      notificationCallbackUrl: null,
+      notificationCallbackSecret: null,
+    })
+
+    const result = await send(service, CENTRAL_TEAM_KEY)
+
+    expect(result._unsafeUnwrapErr().code).toBe('NOTIFICATION_INTERACTION_NO_CALLBACK')
+  })
+
+  test('bypassNotificationCenter is refused rather than overridden', async () => {
+    const { service, notificationRepository } = createService(CENTRAL_TEAM_KEY, ENABLED)
+
+    const result = await send(service, CENTRAL_TEAM_KEY, {
+      content: {
+        ...content,
+        link: {
+          type: 'MINI_APP',
+          destination: 'https://x.example/a',
+          bypassNotificationCenter: true,
+        },
+      },
+    })
+
+    expect(result._unsafeUnwrapErr().code).toBe('NOTIFICATION_INTERACTION_BYPASS_NOT_ALLOWED')
+    expect(notificationRepository.sendNotificationToUser).not.toHaveBeenCalled()
+  })
+
+  test('an invalid interaction names its path', async () => {
+    const { service } = createService(CENTRAL_TEAM_KEY, ENABLED)
+
+    const result = await send(service, CENTRAL_TEAM_KEY, { interaction: { actions: [] } })
+
+    const error = result._unsafeUnwrapErr()
+    expect(error.code).toBe('NOTIFICATION_INVALID_INTERACTION')
+    expect(error.message).toContain('interaction.actions')
+  })
+
+  test('stores the validated interaction and returns the notification id', async () => {
+    const { service, notificationRepository } = createService(CENTRAL_TEAM_KEY, ENABLED, {
+      source: MiniAppSource.ADMIN,
+      notificationCallbackUrl: 'https://app.example/callback',
+      notificationCallbackSecret: 'enc',
+    })
+
+    const result = await send(service, CENTRAL_TEAM_KEY)
+
+    expect(result._unsafeUnwrap().notificationId).toBe('new-notification-id')
+    const [, , options] = notificationRepository.sendNotificationToUser.mock.calls[0]
+    expect(options?.interaction?.spec).toMatchObject({ v: 1, ref: 'leave:123', tray: true })
+    expect(options?.interaction?.expiresAt).toEqual(new Date(INTERACTION.expiresAt))
+  })
+})
+
+describe('the interaction a notification carries when it is read', () => {
+  const stored = {
+    v: 1,
+    ref: 'leave:123',
+    fields: [],
+    actions: [{ id: 'approve', label: 'อนุมัติ', style: 'primary' }],
+    tray: true,
+  }
+  const interactiveRow = (overrides: Record<string, unknown> = {}, responses: unknown[] = []) => ({
+    ...NOTIFICATION_ROW,
+    notification: {
+      ...NOTIFICATION_ROW.notification,
+      interaction: stored,
+      interactionExpiresAt: null,
+      interactionClosedAt: null,
+      miniApp: { ...SENDING_APP, retiredAt: null },
+      responses,
+      ...overrides,
+    },
+  })
+  const ON = { interactiveNotificationsEnabled: true, now: () => SENT_AT }
+  const serviceReading = (row: unknown) => {
+    const made = createService(LEGACY_KEY, ON)
+    made.notificationRepository.getNotificationDetailsById.mockResolvedValue(ok(row) as never)
+    made.notificationRepository.listNotifications.mockResolvedValue(
+      ok({ notifications: [row], nextCursor: null, previousCursor: null }) as never
+    )
+    return made.service
+  }
+
+  test('a plain notification has no interaction', async () => {
+    const { service } = createService()
+
+    expect((await service.getNotificationDetailsById('u', 'n'))._unsafeUnwrap().interaction).toBe(
+      undefined
+    )
+    expect((await service.listNotifications('u'))._unsafeUnwrap().items[0].interactionState).toBe(
+      undefined
+    )
+  })
+
+  test('an open interaction is served without its ref', async () => {
+    const service = serviceReading(interactiveRow())
+
+    const { interaction } = (await service.getNotificationDetailsById('u', 'n'))._unsafeUnwrap()
+
+    expect(interaction?.state).toBe('OPEN')
+    expect(interaction).not.toHaveProperty('ref')
+    expect(interaction?.actions).toHaveLength(1)
+  })
+
+  test('carries the caller’s own answer, which wins over closed', async () => {
+    const respondedAt = new Date('2026-07-30T01:00:00.000Z')
+    const service = serviceReading(
+      interactiveRow({ interactionClosedAt: SENT_AT }, [
+        { actionId: 'approve', values: { note: 'ok' }, respondedAt },
+      ])
+    )
+
+    const { interaction } = (await service.getNotificationDetailsById('u', 'n'))._unsafeUnwrap()
+
+    expect(interaction?.state).toBe('RESPONDED')
+    expect(interaction?.response).toEqual({
+      actionId: 'approve',
+      values: { note: 'ok' },
+      respondedAt,
+    })
+  })
+
+  test('a retired sending app closes it', async () => {
+    const service = serviceReading(
+      interactiveRow({ miniApp: { ...SENDING_APP, retiredAt: new Date('2026-07-01') } })
+    )
+
+    expect(
+      (await service.getNotificationDetailsById('u', 'n'))._unsafeUnwrap().interaction?.state
+    ).toBe('CLOSED')
+  })
+
+  test('an expired one reads as expired', async () => {
+    const service = serviceReading(
+      interactiveRow({ interactionExpiresAt: new Date('2026-07-29T00:00:00.000Z') })
+    )
+
+    expect(
+      (await service.getNotificationDetailsById('u', 'n'))._unsafeUnwrap().interaction?.state
+    ).toBe('EXPIRED')
+  })
+
+  test('the history list carries just the state, still without extra queries', async () => {
+    const { service, notificationRepository } = (() => {
+      const made = createService(LEGACY_KEY, ON)
+      made.notificationRepository.listNotifications.mockResolvedValue(
+        ok({ notifications: [interactiveRow()], nextCursor: null, previousCursor: null }) as never
+      )
+      return made
+    })()
+
+    const item = (await service.listNotifications('u'))._unsafeUnwrap().items[0]
+
+    expect(item.interactionState).toBe('OPEN')
+    expect(notificationRepository.listNotifications).toHaveBeenCalledTimes(1)
+  })
+
+  describe('while the flag is off', () => {
+    const readOff = (row: unknown) => {
+      const made = createService(LEGACY_KEY, {
+        interactiveNotificationsEnabled: false,
+        now: () => SENT_AT,
+      })
+      made.notificationRepository.getNotificationDetailsById.mockResolvedValue(ok(row) as never)
+      made.notificationRepository.listNotifications.mockResolvedValue(
+        ok({ notifications: [row], nextCursor: null, previousCursor: null }) as never
+      )
+      return made.service
+    }
+
+    test('an open interaction still renders, but as CLOSED, on detail and in history', async () => {
+      const service = readOff(interactiveRow())
+
+      const { interaction } = (await service.getNotificationDetailsById('u', 'n'))._unsafeUnwrap()
+      const item = (await service.listNotifications('u'))._unsafeUnwrap().items[0]
+
+      expect(interaction?.state).toBe('CLOSED')
+      expect(interaction?.actions).toHaveLength(1)
+      expect(item.interactionState).toBe('CLOSED')
+    })
+
+    test('an expired one reads CLOSED too', async () => {
+      const service = readOff(
+        interactiveRow({ interactionExpiresAt: new Date('2026-07-29T00:00:00.000Z') })
+      )
+
+      expect(
+        (await service.getNotificationDetailsById('u', 'n'))._unsafeUnwrap().interaction?.state
+      ).toBe('CLOSED')
+    })
+
+    test('the caller’s own answer still reads RESPONDED', async () => {
+      const service = readOff(
+        interactiveRow({}, [{ actionId: 'approve', values: null, respondedAt: SENT_AT }])
+      )
+
+      expect(
+        (await service.getNotificationDetailsById('u', 'n'))._unsafeUnwrap().interaction?.state
+      ).toBe('RESPONDED')
+      expect((await service.listNotifications('u'))._unsafeUnwrap().items[0].interactionState).toBe(
+        'RESPONDED'
+      )
+    })
+  })
+
+  test('a deleted sending app (no miniApp) reads CLOSED, unless answered', async () => {
+    const closed = serviceReading(interactiveRow({ miniApp: null }))
+    const answered = serviceReading(
+      interactiveRow({ miniApp: null }, [
+        { actionId: 'approve', values: null, respondedAt: SENT_AT },
+      ])
+    )
+
+    expect(
+      (await closed.getNotificationDetailsById('u', 'n'))._unsafeUnwrap().interaction?.state
+    ).toBe('CLOSED')
+    expect(
+      (await answered.getNotificationDetailsById('u', 'n'))._unsafeUnwrap().interaction?.state
+    ).toBe('RESPONDED')
   })
 })

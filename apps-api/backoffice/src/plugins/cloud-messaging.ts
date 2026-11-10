@@ -11,6 +11,7 @@ import { ElysiaLoggerPlugin } from './log'
 
 import { promiseWithExponentialBackoff } from '../utils/promise'
 import {
+  buildDismissMessage,
   buildFcmMessage,
   type PushNotificationContent,
   type PushToken,
@@ -18,6 +19,7 @@ import {
 
 export class CloudMessagingService {
   private JWT_TOKEN: Credentials | null = null
+  private warnedMissingTraySecret = false
   private FCM_URL: string
 
   constructor(
@@ -31,6 +33,10 @@ export class CloudMessagingService {
        * the one lever if OEM background restrictions start swallowing them.
        */
       ANDROID_BRANDED_PUSH_DISABLED: boolean
+      /** Withdraw tray actions on both platforms; a tap opens the form instead. */
+      TRAY_INTERACTION_DISABLED?: boolean
+      /** Signs the per-recipient tray response token. Unset: no tray data is sent. */
+      NOTIFICATION_RESPONSE_TOKEN_SECRET?: string
     }
   ) {
     this.FCM_URL = `https://fcm.googleapis.com/v1/projects/${this.config.PROJECT_ID}/messages:send`
@@ -82,6 +88,21 @@ export class CloudMessagingService {
       return err(accessToken.error)
     }
 
+    const trayEnabled = !this.config.TRAY_INTERACTION_DISABLED
+    if (
+      data.interaction &&
+      trayEnabled &&
+      !this.config.NOTIFICATION_RESPONSE_TOKEN_SECRET &&
+      !this.warnedMissingTraySecret
+    ) {
+      // Once per process: every interactive send would otherwise repeat it.
+      this.warnedMissingTraySecret = true
+      this.loggerService.warn({
+        message:
+          'NOTIFICATION_RESPONSE_TOKEN_SECRET is not set: interactive pushes are sent without tray actions',
+      })
+    }
+
     const sendResult = await Promise.all(
       targets.map((target) =>
         fromPromise(
@@ -89,6 +110,8 @@ export class CloudMessagingService {
             const body = {
               message: buildFcmMessage(target, data, {
                 androidBrandedPushDisabled: this.config.ANDROID_BRANDED_PUSH_DISABLED,
+                trayInteractionDisabled: this.config.TRAY_INTERACTION_DISABLED,
+                responseTokenSecret: this.config.NOTIFICATION_RESPONSE_TOKEN_SECRET,
               }),
             }
 
@@ -165,6 +188,51 @@ export class CloudMessagingService {
 
     return ok()
   }
+
+  /**
+   * Tell these Android devices to remove an answered notification from the tray.
+   * Best effort: a device that rejects it is simply left alone (the stale card
+   * answers 409 if tapped), and tokens FCM calls invalid are not pruned here —
+   * the next real send does that.
+   */
+  async sendDismiss(tokens: string[], notificationId: string) {
+    if (tokens.length === 0) return ok()
+
+    const accessToken = await fromPromise(this.getAccessTokenAsync(), () => ({
+      code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+      message: 'Failed to send dismiss',
+    }))
+    if (accessToken.isErr()) return err(accessToken.error)
+
+    const results = await Promise.all(
+      tokens.map((token) =>
+        fromPromise(
+          (async () => {
+            const resp = await fetch(this.FCM_URL, {
+              method: 'POST',
+              headers: {
+                Authorization: `Bearer ${accessToken.value}`,
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ message: buildDismissMessage(token, notificationId) }),
+            })
+            if (!resp.ok) throw await resp.json()
+          })(),
+          (e) => e
+        )
+      )
+    )
+
+    const failures = results.filter((r) => r.isErr())
+    if (failures.length > 0) {
+      return err({
+        code: InternalErrorCode.NOTIFICATION_SENT_FAILED,
+        message: `Failed to send dismiss to ${failures.length} of ${tokens.length} devices`,
+      })
+    }
+    return ok()
+  }
 }
 
 export const CloudMessagingServicePlugin = new Elysia()
@@ -175,5 +243,7 @@ export const CloudMessagingServicePlugin = new Elysia()
       PRIVATE_KEY: configService.get('FIREBASE_PRIVATE_KEY'),
       PROJECT_ID: configService.get('FIREBASE_PROJECT_ID'),
       ANDROID_BRANDED_PUSH_DISABLED: configService.get('ANDROID_BRANDED_PUSH_DISABLED'),
+      TRAY_INTERACTION_DISABLED: configService.get('TRAY_INTERACTION_DISABLED'),
+      NOTIFICATION_RESPONSE_TOKEN_SECRET: configService.get('NOTIFICATION_RESPONSE_TOKEN_SECRET'),
     }),
   }))

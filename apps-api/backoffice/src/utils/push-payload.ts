@@ -1,12 +1,23 @@
+import type { TrayInteraction } from '@pple-today/api-common/dtos'
 import { NotificationInAppType, NotificationTokenPlatform } from '@pple-today/database/prisma'
+
+import { type StoredInteraction, trayShape } from '../modules/notification/interaction'
+import { deviceHash, mintResponseToken } from '../modules/notification/response-token'
+
+/** A response token with no interaction expiry lives this long (see the spec). */
+const DEFAULT_RESPONSE_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000
 
 /** One device, and what its install can be told apart by. */
 export interface PushToken {
   token: string
+  /** The owner. The tray response token is minted per recipient, so it travels with the device. */
+  userId: string
   /** Null for tokens registered before the platform was recorded. */
   platform: NotificationTokenPlatform | null
   /** Whether this build can render a branded notification from a data message. */
   supportsAppBranding: boolean
+  /** Whether this build can show interaction actions on the OS notification and submit them. */
+  supportsTrayInteraction: boolean
 }
 
 /** The app a notification is attributed to, as the push needs to name it. */
@@ -52,9 +63,26 @@ export interface PushNotificationContent {
    * staler number but never a wrong-looking zero.
    */
   unreadCount?: number
+  /**
+   * Present on an interactive send. The full spec never travels in the push:
+   * only the server-computed tray shape does (`pple_interaction`), with a
+   * per-recipient response token (`pple_response_token`).
+   */
+  interaction?: { spec: StoredInteraction; expiresAt: Date | null }
 }
 
-interface FcmMessage {
+/** What `buildFcmMessage` needs beyond the message itself. */
+export interface BuildFcmMessageOptions {
+  androidBrandedPushDisabled: boolean
+  /** `TRAY_INTERACTION_DISABLED`: no tray data for anyone. */
+  trayInteractionDisabled?: boolean
+  /** `NOTIFICATION_RESPONSE_TOKEN_SECRET`. Unset means no tray data, since the token cannot be minted. */
+  responseTokenSecret?: string
+  /** Injected so expiry is testable. */
+  now?: Date
+}
+
+export interface FcmMessage {
   token: string
   notification?: { title: string; body: string }
   data: Record<string, string>
@@ -112,12 +140,17 @@ const fetchableIcon = (icon: string | null | undefined) =>
 export const buildFcmMessage = (
   target: PushToken,
   data: PushNotificationContent,
-  options: { androidBrandedPushDisabled: boolean }
+  options: BuildFcmMessageOptions
 ): FcmMessage => {
   const app = data.app
   const isAndroid = target.platform === NotificationTokenPlatform.ANDROID
   const appIconUrl = app ? fetchableIcon(app.icon) : undefined
   const badge = data.unreadCount
+  const brandedAndroid =
+    isAndroid &&
+    app !== undefined &&
+    target.supportsAppBranding &&
+    !options.androidBrandedPushDisabled
 
   // These key names are a contract with the mobile client, which restates them in
   // `apps-client/mobile/utils/branded-push.ts` — sharing them would drag Elysia and
@@ -137,12 +170,8 @@ export const buildFcmMessage = (
     // read back, so this is the only place a foregrounded client can learn the
     // authoritative count — otherwise it is left incrementing a local guess.
     ...(badge !== undefined ? { badge: String(badge) } : {}),
+    ...trayData(target, data, options, brandedAndroid),
   }
-  const brandedAndroid =
-    isAndroid &&
-    app !== undefined &&
-    target.supportsAppBranding &&
-    !options.androidBrandedPushDisabled
 
   if (brandedAndroid) {
     return {
@@ -237,3 +266,70 @@ export const buildFcmMessage = (
 
   return message
 }
+
+/**
+ * The two tray data keys for one token, or nothing.
+ *
+ * Only for a token that asserted `supportsTrayInteraction` and whose payload the
+ * client can actually turn into tray actions: iOS (the Notification Service
+ * Extension and category), or Android on the data-only branded path, where the
+ * client builds the notification itself. An Android token on the legacy
+ * `notification` payload is displayed by Play services with no code of ours, so
+ * it gets no tray data. Only while the tray
+ * is not switched off, only while the interaction is still open, and only when
+ * the interaction's shape gets tray actions (`trayShape`; otherwise a tap opens
+ * the form). Both values are strings, because FCM `data` values must be. The
+ * token expires with the interaction, or after 30 days when it has no expiry.
+ *
+ * These key names are a contract with the mobile client
+ * (`apps-client/mobile/libs/notification-display.ts`).
+ */
+const trayData = (
+  target: PushToken,
+  data: PushNotificationContent,
+  options: BuildFcmMessageOptions,
+  brandedAndroid: boolean
+): Record<string, string> => {
+  const { interaction, notificationId } = data
+  if (!interaction || !notificationId) return {}
+  if (!target.supportsTrayInteraction || options.trayInteractionDisabled) return {}
+  const trayCapable =
+    target.platform === NotificationTokenPlatform.IOS ||
+    (target.platform === NotificationTokenPlatform.ANDROID && brandedAndroid)
+  if (!trayCapable) return {}
+  if (!options.responseTokenSecret) return {}
+
+  const now = options.now ?? new Date()
+  if (interaction.expiresAt && interaction.expiresAt.getTime() <= now.getTime()) return {}
+
+  const shape = trayShape(interaction.spec)
+  if (!shape) return {}
+
+  const expiresAtMs =
+    interaction.expiresAt?.getTime() ?? now.getTime() + DEFAULT_RESPONSE_TOKEN_TTL_MS
+  const tray = { id: notificationId, ...shape } as TrayInteraction
+
+  return {
+    pple_interaction: JSON.stringify(tray),
+    pple_response_token: mintResponseToken(
+      {
+        notificationId,
+        userId: target.userId,
+        exp: Math.floor(expiresAtMs / 1000),
+        deviceHash: deviceHash(target.token),
+      },
+      options.responseTokenSecret
+    ),
+  }
+}
+
+/**
+ * A data-only message that tells an Android device to remove an answered
+ * notification from its tray (`pple_dismiss`). High priority, because a
+ * data-only message to a dozing device is otherwise delayed or dropped.
+ */
+export const buildDismissMessage = (token: string, notificationId: string): FcmMessage => ({
+  token,
+  data: { pple_dismiss: notificationId },
+  android: { priority: 'HIGH' },
+})

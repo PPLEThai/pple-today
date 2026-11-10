@@ -26,6 +26,7 @@ const createRepository = (
       token: string
       platform: NotificationTokenPlatform | null
       supportsAppBranding: boolean
+      supportsTrayInteraction: boolean
     }[]
   }[] = []
 ) => {
@@ -55,6 +56,8 @@ const createRepository = (
       count: vi.fn(async (_args: unknown) => 0),
     },
     userNotification: {
+      findMany: vi.fn(async (_args: unknown) => []),
+      findUniqueOrThrow: vi.fn(async (_args: unknown) => ({})),
       createMany: vi.fn(async (_args: unknown) => ({ count: users.length })),
       // The badge counts, read after the rows are written — so every recipient
       // is at least one unread deep. Overridden where a test needs recipients
@@ -73,7 +76,11 @@ const createRepository = (
     sendNotifications: vi.fn(
       async (
         _targets: unknown[],
-        _data: { app?: { name: string; icon: string | null }; unreadCount?: number }
+        _data: {
+          app?: { name: string; icon: string | null }
+          unreadCount?: number
+          interaction?: unknown
+        }
       ) => ok()
     ),
   }
@@ -142,6 +149,25 @@ describe('NotificationRepository.registerDeviceToken', () => {
     }
   })
 
+  test('records the tray capability on both branches, and defaults it off', async () => {
+    const { prismaService, repository } = createRepository()
+
+    await repository.registerDeviceToken('user-id', 'device-token', {
+      platform: NotificationTokenPlatform.ANDROID,
+      supportsTrayInteraction: true,
+    })
+    await repository.registerDeviceToken('user-id', 'older-token')
+
+    const [asserted] = prismaService.userNotificationToken.upsert.mock.calls[0]
+    for (const branch of [asserted.create, asserted.update]) {
+      expect(branch.supportsTrayInteraction).toBe(true)
+    }
+    const [older] = prismaService.userNotificationToken.upsert.mock.calls[1]
+    for (const branch of [older.create, older.update]) {
+      expect(branch.supportsTrayInteraction).toBe(false)
+    }
+  })
+
   test('an older client that says nothing records no platform and no branding', async () => {
     // Registration asserts what this install can do *now*, so omission is a
     // negative assertion rather than "leave whatever was there" — which also
@@ -158,6 +184,22 @@ describe('NotificationRepository.registerDeviceToken', () => {
   })
 })
 
+describe('NotificationRepository.unregisterDeviceToken', () => {
+  test("removes only the caller's own registration of the token", async () => {
+    // Scoped by user: if the device has since been re-registered by someone
+    // else, a late logout from the previous user must not remove their row.
+    const { prismaService, repository } = createRepository()
+    prismaService.userNotificationToken.deleteMany.mockResolvedValue({ count: 1 })
+
+    const result = await repository.unregisterDeviceToken('user-id', 'device-token')
+
+    expect(result.isOk()).toBe(true)
+    expect(prismaService.userNotificationToken.deleteMany).toHaveBeenCalledWith({
+      where: { userId: 'user-id', token: 'device-token' },
+    })
+  })
+})
+
 describe('NotificationRepository.sendNotificationToUser', () => {
   const recipient = {
     id: 'user-id',
@@ -167,6 +209,7 @@ describe('NotificationRepository.sendNotificationToUser', () => {
         token: 'device-token',
         platform: NotificationTokenPlatform.ANDROID,
         supportsAppBranding: true,
+        supportsTrayInteraction: true,
       },
     ],
   }
@@ -197,7 +240,10 @@ describe('NotificationRepository.sendNotificationToUser', () => {
     const [targets, details] = cloudMessagingService.sendNotifications.mock.calls[0]
     // The payload is chosen per token, so the platform and the asserted
     // capability have to survive the trip from the query to the builder.
-    expect(targets).toEqual(recipient.notificationTokens)
+    // ...and so does the owner, because the tray response token is per user.
+    expect(targets).toEqual(
+      recipient.notificationTokens.map((token) => ({ ...token, userId: recipient.id }))
+    )
     expect(details.app).toEqual({ name: BOUND_APP.name, icon: BOUND_APP.icon })
   })
 
@@ -287,7 +333,7 @@ describe('NotificationRepository.sendNotificationToUser', () => {
       { smsFallbackText: 'open PPLE Today' }
     )
 
-    expect(result._unsafeUnwrap()).toEqual({
+    expect(result._unsafeUnwrap().delivery).toEqual({
       success: ['user-id', 'no-token-sub'],
       failed: ['missing-sub'],
     })
@@ -306,8 +352,66 @@ describe('NotificationRepository.sendNotificationToUser', () => {
       { smsFallbackText: 'install the app' }
     )
 
-    expect(result._unsafeUnwrap()).toEqual({ success: [], failed: ['+66812345678'] })
+    expect(result._unsafeUnwrap().delivery).toEqual({ success: [], failed: ['+66812345678'] })
     expect(smsService.sendSms).toHaveBeenCalledWith('+66812345678', 'install the app')
+  })
+
+  describe('an interactive send', () => {
+    const SPEC = {
+      v: 1 as const,
+      ref: 'leave:123',
+      fields: [],
+      actions: [{ id: 'ok', label: 'OK', style: 'primary' as const }],
+      tray: true,
+    }
+    const EXPIRES = new Date('2026-11-17T00:00:00.000Z')
+
+    test('stores the spec and lifts the expiry into its own column', async () => {
+      const { prismaService, repository } = createRepository([recipient])
+
+      await repository.sendNotificationToUser({ type: 'BROADCAST' }, CONTENT, {
+        app: BOUND_APP,
+        interaction: { spec: SPEC, expiresAt: EXPIRES },
+      })
+
+      const [args] = prismaService.notification.create.mock.calls[0]
+      expect(args.data.interaction).toEqual(SPEC)
+      expect(args.data.interactionExpiresAt).toEqual(EXPIRES)
+    })
+
+    test('a plain send stores no interaction', async () => {
+      const { prismaService, repository } = createRepository([recipient])
+
+      await repository.sendNotificationToUser({ type: 'BROADCAST' }, CONTENT)
+
+      const [args] = prismaService.notification.create.mock.calls[0]
+      expect(args.data.interaction).toBeUndefined()
+      expect(args.data.interactionExpiresAt).toBeUndefined()
+    })
+
+    test('carries the spec into the push, but never into the log', async () => {
+      const { cloudMessagingService, repository } = createRepository([recipient])
+
+      await repository.sendNotificationToUser({ type: 'BROADCAST' }, CONTENT, {
+        app: BOUND_APP,
+        interaction: { spec: SPEC, expiresAt: EXPIRES },
+      })
+
+      const [, details] = cloudMessagingService.sendNotifications.mock.calls[0]
+      expect(details.interaction).toEqual({ spec: SPEC, expiresAt: EXPIRES })
+    })
+
+    test('uses the id it was given, and reports the id it created', async () => {
+      const { prismaService, repository } = createRepository([recipient])
+
+      const result = await repository.sendNotificationToUser({ type: 'BROADCAST' }, CONTENT, {
+        notificationId: 'chosen-id',
+      })
+
+      const [args] = prismaService.notification.create.mock.calls[0]
+      expect(args.data.id).toBe('chosen-id')
+      expect(result._unsafeUnwrap().notificationId).toBe('new-notification-id')
+    })
   })
 
   test('still meters against the key when one is given', async () => {
@@ -427,5 +531,32 @@ describe('NotificationRepository.countAppInstall', () => {
 
     expect(prismaService.user.findMany).not.toHaveBeenCalled()
     expect(prismaService.user.findUnique).not.toHaveBeenCalled()
+  })
+})
+
+describe('NotificationRepository reads for the interaction state', () => {
+  test('the history list fetches the caller’s own response and the app’s retirement in the same query', async () => {
+    const { prismaService, repository } = createRepository()
+
+    await repository.listNotifications('user-id')
+
+    const [args] = prismaService.userNotification.findMany.mock.calls[0] as [
+      { include: { notification: { include: Record<string, any> } } },
+    ]
+    const include = args.include.notification.include
+    // One joined query for the page, not one lookup per row.
+    expect(include.responses.where).toEqual({ userId: 'user-id' })
+    expect(include.miniApp.select.retiredAt).toBe(true)
+  })
+
+  test('the detail read fetches only the caller’s own response', async () => {
+    const { prismaService, repository } = createRepository()
+
+    await repository.getNotificationDetailsById('user-id', 'notification-id')
+
+    const [args] = prismaService.userNotification.findUniqueOrThrow.mock.calls[0] as [
+      { include: { notification: { include: Record<string, any> } } },
+    ]
+    expect(args.include.notification.include.responses.where).toEqual({ userId: 'user-id' })
   })
 })

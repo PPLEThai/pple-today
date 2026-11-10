@@ -13,6 +13,7 @@ import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { DtFilter } from 'components/datatable/DtFilter'
 import { MiniAppCreate } from 'components/mini-app/MiniAppCreate'
 import { MiniAppEdit } from 'components/mini-app/MiniAppEdit'
+import { MiniAppNotificationCallback } from 'components/mini-app/MiniAppNotificationCallback'
 import {
   isPushIconUsable,
   MiniAppNotificationKeys,
@@ -33,6 +34,7 @@ import {
   Pencil,
   Plus,
   Trash2,
+  Webhook,
 } from 'lucide-react'
 
 import { MiniApp, ZitadelApp } from '@api/backoffice/admin'
@@ -277,6 +279,15 @@ export const Data = () => {
 
           return (
             <div className="flex gap-3">
+              <MiniAppNotificationCallback
+                miniApp={miniApp}
+                trigger={
+                  <Button variant="outline" size="icon" className="size-8">
+                    <span className="sr-only">Callback การตอบแจ้งเตือน</span>
+                    <Webhook className="size-4" />
+                  </Button>
+                }
+              />
               <MiniAppNotificationKeys
                 miniApp={miniApp}
                 trigger={

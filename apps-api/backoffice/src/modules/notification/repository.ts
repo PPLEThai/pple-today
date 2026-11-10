@@ -23,6 +23,7 @@ import crypto from 'crypto'
 import { ok } from 'neverthrow'
 import * as R from 'remeda'
 
+import type { CallbackTarget, PreparedInteraction } from './interaction-send'
 import type { BoundApp } from './key-binding'
 import { CreateNewExternalNotificationBody } from './models'
 
@@ -243,8 +244,18 @@ export class NotificationRepository {
         include: {
           // The sending app is read live rather than snapshotted onto the
           // notification, so a rename or new icon re-labels its whole history.
+          //
+          // `retiredAt` and the caller's own response (just its existence) are
+          // what the list needs to derive an interaction's state, fetched in the
+          // same round trip so a page of notifications costs no extra queries.
           notification: {
-            include: { miniApp: { select: { name: true, icon: true, slug: true } } },
+            include: {
+              miniApp: { select: { name: true, icon: true, slug: true, retiredAt: true } },
+              responses: {
+                where: { userId },
+                select: { actionId: true, values: true, respondedAt: true },
+              },
+            },
           },
         },
       })
@@ -273,14 +284,27 @@ export class NotificationRepository {
    * could never assert the capability at all. Writing them on every
    * registration also makes a downgrade self-correcting.
    */
+  async unregisterDeviceToken(userId: string, deviceToken: string) {
+    return fromRepositoryPromise(
+      this.prismaService.userNotificationToken.deleteMany({
+        where: { userId, token: deviceToken },
+      })
+    )
+  }
+
   async registerDeviceToken(
     userId: string,
     deviceToken: string,
-    device: { platform?: NotificationTokenPlatform; supportsAppBranding?: boolean } = {}
+    device: {
+      platform?: NotificationTokenPlatform
+      supportsAppBranding?: boolean
+      supportsTrayInteraction?: boolean
+    } = {}
   ) {
     const capability = {
       platform: device.platform ?? null,
       supportsAppBranding: device.supportsAppBranding ?? false,
+      supportsTrayInteraction: device.supportsTrayInteraction ?? false,
     }
 
     return fromRepositoryPromise(
@@ -418,12 +442,40 @@ export class NotificationRepository {
         include: {
           // The sending app is read live rather than snapshotted onto the
           // notification, so a rename or new icon re-labels its whole history.
+          //
+          // Also the caller's own response and whether the app is retired, which
+          // together decide the interaction's state.
           notification: {
-            include: { miniApp: { select: { name: true, icon: true, slug: true } } },
+            include: {
+              miniApp: { select: { name: true, icon: true, slug: true, retiredAt: true } },
+              responses: {
+                where: { userId },
+                select: { actionId: true, values: true, respondedAt: true },
+              },
+            },
           },
         },
       })
     )
+  }
+
+  /**
+   * Where this app's answers go, for the send-time "has a callback target"
+   * check. Null when the app does not exist.
+   */
+  async getCallbackTarget(miniAppId: string): Promise<CallbackTarget | null> {
+    const result = await fromRepositoryPromise(
+      this.prismaService.miniApp.findUnique({
+        where: { id: miniAppId },
+        select: {
+          source: true,
+          notificationCallbackUrl: true,
+          notificationCallbackSecret: true,
+        },
+      })
+    )
+    // A failed lookup reads as "no target": refusing the send is the safe side.
+    return result.isOk() ? result.value : null
   }
 
   /**
@@ -447,9 +499,16 @@ export class NotificationRepository {
       /** The app that sent this. Absent = PPLE Today. */
       app?: BoundApp
       smsFallbackText?: string
+      /** A validated interaction to store on the notification and carry into the push. */
+      interaction?: PreparedInteraction
+      /**
+       * Use this id for the notification instead of generating one, so a caller
+       * that has to record the id before the send (an idempotency log) knows it.
+       */
+      notificationId?: string
     } = {}
   ) {
-    const { apiKeyId, app, smsFallbackText } = options
+    const { apiKeyId, app, smsFallbackText, interaction } = options
     const audience: NotificationAudience =
       conditions.type === 'PHONE_NUMBER'
         ? {
@@ -523,6 +582,7 @@ export class NotificationRepository {
       const [newNotification] = await this.prismaService.$transaction([
         this.prismaService.notification.create({
           data: {
+            id: options.notificationId,
             ...linkNavigation,
             linkBypassNotificationCenter: data.link?.bypassNotificationCenter ?? null,
             title: data.header,
@@ -533,6 +593,13 @@ export class NotificationRepository {
             // A foreign key, so a later rename or new icon re-labels this
             // notification too. Null is PPLE Today itself.
             miniAppId: app?.id ?? null,
+
+            // The same spec for every recipient, like `content`. The expiry is
+            // lifted into its own column so "is it open?" is a column check.
+            interaction: interaction
+              ? (interaction.spec as unknown as Prisma.InputJsonValue)
+              : undefined,
+            interactionExpiresAt: interaction?.expiresAt ?? undefined,
 
             isBroadcast: audience.type === 'BROADCAST' ? true : false,
             districts: audience.type === 'ADDRESS' ? audience.details.districts : undefined,
@@ -565,6 +632,7 @@ export class NotificationRepository {
               token: true,
               platform: true,
               supportsAppBranding: true,
+              supportsTrayInteraction: true,
             },
           },
         },
@@ -585,7 +653,7 @@ export class NotificationRepository {
     })
 
     if (createResult.isErr()) {
-      return createResult
+      return err(createResult.error)
     }
 
     const { users, newNotification } = createResult.value
@@ -593,7 +661,8 @@ export class NotificationRepository {
     const phoneNumberWithTokens = users.flatMap((u) => ({
       userId: u.id,
       phoneNumber: u.phoneNumber,
-      tokens: u.notificationTokens,
+      // The owner rides with each device: the tray response token is per user.
+      tokens: u.notificationTokens.map((token) => ({ ...token, userId: u.id })),
     }))
 
     const notFound =
@@ -633,6 +702,10 @@ export class NotificationRepository {
       // and keep the platform bell.
       app: app ? { name: app.name, icon: app.icon } : undefined,
     }
+    // Kept out of `notificationDetails` so the spec is not written to the log.
+    const pushInteraction = interaction
+      ? { spec: interaction.spec, expiresAt: interaction.expiresAt }
+      : undefined
 
     this.loggerService.info({
       message: 'Attempt sending push notification to user',
@@ -653,6 +726,7 @@ export class NotificationRepository {
           phoneNumber: p.phoneNumber,
           result: await this.cloudMessagingService.sendNotifications(p.tokens, {
             ...notificationDetails,
+            interaction: pushInteraction,
             // The one field that differs per recipient: their own unread total,
             // for the app-icon badge. Undefined when the count could not be
             // read, which leaves the badge alone rather than failing the send.
@@ -747,19 +821,21 @@ export class NotificationRepository {
       )
     }
 
-    return ok(
-      audience.type === 'PHONE_NUMBER'
-        ? {
-            success: phoneNumberWithTokens.map((p) => p.phoneNumber),
-            failed: notFound ?? [],
-          }
-        : audience.type === 'SUB'
+    return ok({
+      notificationId: newNotification.id,
+      delivery:
+        audience.type === 'PHONE_NUMBER'
           ? {
-              success: phoneNumberWithTokens.map((p) => p.userId),
+              success: phoneNumberWithTokens.map((p) => p.phoneNumber),
               failed: notFound ?? [],
             }
-          : undefined
-    )
+          : audience.type === 'SUB'
+            ? {
+                success: phoneNumberWithTokens.map((p) => p.userId),
+                failed: notFound ?? [],
+              }
+            : undefined,
+    })
   }
 
   /**

@@ -20,6 +20,9 @@ const createPrismaService = () => {
       create: vi.fn().mockResolvedValue({ id: 'key-1' }),
       updateMany: vi.fn().mockResolvedValue({ count: 1 }),
     },
+    notificationResponse: {
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
+    },
     miniAppRole: {
       deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
       createMany: vi.fn().mockResolvedValue({ count: 0 }),
@@ -118,6 +121,23 @@ describe('PlatformMiniAppRepository.retire', () => {
     expect(tx.notificationApiKey.updateMany).toHaveBeenCalledWith({
       where: { miniAppId: 'app-1', active: true },
       data: { active: false },
+    })
+  })
+
+  test('fails the app\'s PENDING notification responses with "app retired"', async () => {
+    const { prismaService, tx } = createPrismaService()
+    const repository = new PlatformMiniAppRepository(prismaService)
+
+    await repository.retire('app-1')
+
+    expect(tx.notificationResponse.updateMany).toHaveBeenCalledWith({
+      where: { miniAppId: 'app-1', deliveryStatus: 'PENDING' },
+      data: {
+        deliveryStatus: 'FAILED',
+        lastError: 'app retired',
+        lastAttemptAt: expect.any(Date),
+        nextAttemptAt: null,
+      },
     })
   })
 })

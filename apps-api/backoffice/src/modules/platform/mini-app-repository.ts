@@ -1,6 +1,11 @@
 import type { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
-import { MiniAppSource, MiniAppTier, NotificationApiKeySource } from '@pple-today/database/prisma'
+import {
+  MiniAppSource,
+  MiniAppTier,
+  NotificationApiKeySource,
+  NotificationCallbackStatus,
+} from '@pple-today/database/prisma'
 
 import {
   generateNotificationApiKey,
@@ -197,6 +202,16 @@ export class PlatformMiniAppRepository {
         await tx.notificationApiKey.updateMany({
           where: { miniAppId: id, active: true },
           data: { active: false },
+        })
+        // Answers still waiting for delivery have nowhere to go: the app is gone.
+        await tx.notificationResponse.updateMany({
+          where: { miniAppId: id, deliveryStatus: NotificationCallbackStatus.PENDING },
+          data: {
+            deliveryStatus: NotificationCallbackStatus.FAILED,
+            lastError: 'app retired',
+            lastAttemptAt: new Date(),
+            nextAttemptAt: null,
+          },
         })
         return miniApp
       })

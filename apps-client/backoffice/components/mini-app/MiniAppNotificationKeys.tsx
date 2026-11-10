@@ -322,7 +322,7 @@ export const MiniAppNotificationKeys = (props: MiniAppNotificationKeysProps) => 
   )
 }
 
-const CopyButton = ({ value }: { value: string }) => {
+export const CopyButton = ({ value }: { value: string }) => {
   const [copied, setCopied] = useState(false)
   const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
 

@@ -2,6 +2,7 @@ import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 
+import { AdminMiniAppCallbackServicePlugin } from './callback-service-plugin'
 import {
   CreateMiniAppBody,
   CreateMiniAppResponse,
@@ -13,7 +14,12 @@ import {
   GetMiniAppsResponse,
   GetRoleOptionsResponse,
   GetZitadelAppsResponse,
+  NotificationCallbackSettings,
+  RotateNotificationCallbackSecretResponse,
   SetMiniAppOrderBody,
+  SetNotificationCallbackUrlBody,
+  SetNotificationCallbackUrlResponse,
+  TestNotificationCallbackResponse,
   UpdateMiniAppBody,
   UpdateMiniAppParams,
   UpdateMiniAppResponse,
@@ -29,7 +35,7 @@ export const AdminMiniAppController = new Elysia({
   prefix: '/mini-app',
   tags: ['Admin Mini App'],
 })
-  .use([AdminMiniAppServicePlugin, AdminAuthGuardPlugin])
+  .use([AdminMiniAppServicePlugin, AdminMiniAppCallbackServicePlugin, AdminAuthGuardPlugin])
   .get(
     '/',
     async ({ adminMiniAppService, status }) => {
@@ -247,6 +253,131 @@ export const AdminMiniAppController = new Elysia({
       detail: {
         summary: 'Update a mini app',
         description: 'Update an existing mini app with the provided data',
+      },
+    }
+  )
+  .get(
+    '/:id/notification-callback',
+    async ({ adminMiniAppCallbackService, params, status }) => {
+      const result = await adminMiniAppCallbackService.get(params.id)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      params: UpdateMiniAppParams,
+      response: {
+        200: NotificationCallbackSettings,
+        ...createErrorSchema(
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.MINI_APP_PLATFORM_MANAGED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Get notification callback settings',
+        description: 'The callback URL of an ADMIN app and whether a signing secret exists',
+      },
+    }
+  )
+  .put(
+    '/:id/notification-callback',
+    async ({ adminMiniAppCallbackService, params, body, status }) => {
+      const result = await adminMiniAppCallbackService.setUrl(params.id, body.url)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      params: UpdateMiniAppParams,
+      body: SetNotificationCallbackUrlBody,
+      response: {
+        200: SetNotificationCallbackUrlResponse,
+        ...createErrorSchema(
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.MINI_APP_PLATFORM_MANAGED,
+          InternalErrorCode.MINI_APP_CALLBACK_URL_INVALID,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Set the notification callback URL',
+        description:
+          'Validates (https, not private/loopback/link-local, by literal and by DNS) and saves the URL. The first time a URL is set the signing secret is generated and returned once.',
+      },
+    }
+  )
+  .delete(
+    '/:id/notification-callback',
+    async ({ adminMiniAppCallbackService, params, status }) => {
+      const result = await adminMiniAppCallbackService.clear(params.id)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      params: UpdateMiniAppParams,
+      response: {
+        200: NotificationCallbackSettings,
+        ...createErrorSchema(
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.MINI_APP_PLATFORM_MANAGED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Clear the notification callback URL and secret',
+      },
+    }
+  )
+  .post(
+    '/:id/notification-callback/secret',
+    async ({ adminMiniAppCallbackService, params, status }) => {
+      const result = await adminMiniAppCallbackService.rotateSecret(params.id)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      params: UpdateMiniAppParams,
+      response: {
+        200: RotateNotificationCallbackSecretResponse,
+        ...createErrorSchema(
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.MINI_APP_PLATFORM_MANAGED,
+          InternalErrorCode.MINI_APP_CALLBACK_NOT_CONFIGURED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Rotate the notification callback signing secret',
+        description:
+          'The new secret is returned once. The old one keeps signing for 24 hours: X-PPLE-Signature carries both (v1=<new>,v1=<old>) until then.',
+      },
+    }
+  )
+  .post(
+    '/:id/notification-callback/test',
+    async ({ adminMiniAppCallbackService, params, status }) => {
+      const result = await adminMiniAppCallbackService.sendTestEvent(params.id)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      params: UpdateMiniAppParams,
+      response: {
+        200: TestNotificationCallbackResponse,
+        ...createErrorSchema(
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.MINI_APP_PLATFORM_MANAGED,
+          InternalErrorCode.MINI_APP_CALLBACK_NOT_CONFIGURED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Send a notification.test event to the callback URL',
+        description: 'POSTs a signed notification.test event and returns the receiver status code.',
       },
     }
   )

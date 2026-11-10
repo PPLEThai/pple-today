@@ -14,6 +14,7 @@ import {
   AppNotificationService,
 } from './app-notification-service'
 import { MAX_DIRECT_RECIPIENTS, type NamedRecipient } from './direct-recipients'
+import type { CallbackTarget, PreparedInteraction } from './interaction-send'
 import type { CreateAppNotificationBody } from './models'
 import type { NotificationRepository } from './repository'
 
@@ -186,21 +187,40 @@ const createFakeAppNotificationRepository = (
   }
 }
 
-const createFakeNotificationRepository = () => ({
+const createFakeNotificationRepository = (
+  callbackTarget: CallbackTarget | null = {
+    source: MiniAppSource.PLATFORM,
+    notificationCallbackUrl: null,
+    notificationCallbackSecret: null,
+  }
+) => ({
   sendNotificationToUser: vi.fn(
     async (
       _audience: { type: string; details?: string[] },
       _content: AppNotificationContent,
-      _options?: { apiKeyId?: string; app?: { id: string; name: string } }
+      _options?: {
+        apiKeyId?: string
+        app?: { id: string; name: string }
+        notificationId?: string
+        interaction?: PreparedInteraction
+      }
     ) => ok(undefined)
   ),
+  getCallbackTarget: vi.fn(async (_miniAppId: string) => callbackTarget),
 })
 
 const REDIRECT_ORIGIN = 'https://miniapp.peoplesparty.or.th'
 
+const CALLBACK_CONFIG = {
+  platformRelayUrl: 'https://relay.example',
+  platformRelayToken: 'relay-token',
+  secretKey: 'secret-key',
+}
+
 const createService = (
   appNotificationRepository = createFakeAppNotificationRepository(),
-  notificationRepository = createFakeNotificationRepository()
+  notificationRepository = createFakeNotificationRepository(),
+  options: { interactiveNotificationsEnabled?: boolean; callbackConfig?: object } = {}
 ) => ({
   appNotificationRepository,
   notificationRepository,
@@ -208,7 +228,8 @@ const createService = (
     appNotificationRepository as unknown as AppNotificationRepository,
     notificationRepository as unknown as NotificationRepository,
     REDIRECT_ORIGIN,
-    () => NOW
+    () => NOW,
+    { callbackConfig: CALLBACK_CONFIG, ...options }
   ),
 })
 
@@ -695,6 +716,7 @@ describe('AppNotificationService.send', () => {
       )
 
       expect(result._unsafeUnwrap()).toEqual({
+        notificationId: expect.any(String),
         recipientCount: 3,
         results: undefined,
         dailyQuota: undefined,
@@ -947,5 +969,150 @@ describe('AppNotificationService.getNotificationUsage', () => {
     const result = await service.getNotificationUsage(MINI_APP_ID)
 
     expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.NOTIFICATION_API_KEY_NOT_FOUND)
+  })
+})
+
+describe('AppNotificationService.send with an interaction', () => {
+  const INTERACTION = {
+    ref: 'leave:123',
+    expiresAt: '2026-07-25T00:00:00.000Z',
+    actions: [{ id: 'approve', label: 'อนุมัติ' }],
+  }
+  const enabled = { interactiveNotificationsEnabled: true }
+  const codeOf = (result: { _unsafeUnwrapErr(): { code: string } }) =>
+    result._unsafeUnwrapErr().code
+
+  test('is refused while the feature flag is off, and nothing is sent or charged', async () => {
+    const { service, notificationRepository, appNotificationRepository } = createService(
+      undefined,
+      undefined,
+      { interactiveNotificationsEnabled: false }
+    )
+
+    const result = await service.send(appBoundKey(), toAll({ interaction: INTERACTION }))
+
+    expect(codeOf(result)).toBe(InternalErrorCode.INTERACTIVE_NOTIFICATIONS_DISABLED)
+    expect(notificationRepository.sendNotificationToUser).not.toHaveBeenCalled()
+    expect(appNotificationRepository.usage).toHaveLength(0)
+  })
+
+  test('a plain send is unaffected by the flag', async () => {
+    const { service } = createService(undefined, undefined, {
+      interactiveNotificationsEnabled: false,
+    })
+
+    expect((await service.send(appBoundKey(), toAll())).isOk()).toBe(true)
+  })
+
+  test('names the first failing path, before any budget is touched', async () => {
+    const { service, notificationRepository, appNotificationRepository } = createService(
+      undefined,
+      undefined,
+      enabled
+    )
+
+    const result = await service.send(
+      appBoundKey(),
+      toAll({
+        interaction: {
+          actions: [
+            { id: 'a', label: 'A' },
+            { id: 'b', label: 'B', requires: ['ghost'] },
+          ],
+        },
+      })
+    )
+
+    const error = result._unsafeUnwrapErr()
+    expect(error.code).toBe(InternalErrorCode.NOTIFICATION_INVALID_INTERACTION)
+    expect(error.message).toContain('interaction.actions[1].requires[0]')
+    expect(notificationRepository.sendNotificationToUser).not.toHaveBeenCalled()
+    expect(appNotificationRepository.usage).toHaveLength(0)
+  })
+
+  test('an ADMIN app with no callback URL has nowhere to send the answer', async () => {
+    const { service, notificationRepository } = createService(
+      undefined,
+      createFakeNotificationRepository({
+        source: MiniAppSource.ADMIN,
+        notificationCallbackUrl: null,
+        notificationCallbackSecret: null,
+      }),
+      enabled
+    )
+
+    const result = await service.send(
+      appBoundKey({ miniApp: centralTeamApp }),
+      toAll({ interaction: INTERACTION })
+    )
+
+    expect(codeOf(result)).toBe(InternalErrorCode.NOTIFICATION_INTERACTION_NO_CALLBACK)
+    expect(notificationRepository.sendNotificationToUser).not.toHaveBeenCalled()
+  })
+
+  test('an ADMIN app with a callback URL, and any PLATFORM app, may ask', async () => {
+    const admin = createService(
+      undefined,
+      createFakeNotificationRepository({
+        source: MiniAppSource.ADMIN,
+        notificationCallbackUrl: 'https://app.example/callback',
+        notificationCallbackSecret: 'enc',
+      }),
+      enabled
+    )
+    const platform = createService(undefined, undefined, enabled)
+
+    const adminResult = await admin.service.send(
+      appBoundKey({ miniApp: centralTeamApp }),
+      toAll({ interaction: INTERACTION })
+    )
+    const platformResult = await platform.service.send(
+      appBoundKey(),
+      toAll({ interaction: INTERACTION })
+    )
+
+    expect(adminResult.isOk()).toBe(true)
+    expect(platformResult.isOk()).toBe(true)
+  })
+
+  test('stores the validated spec, with the id the usage log holds', async () => {
+    const { service, notificationRepository, appNotificationRepository } = createService(
+      undefined,
+      undefined,
+      enabled
+    )
+
+    const result = await service.send(appBoundKey(), toAll({ interaction: INTERACTION }))
+
+    const { notificationId } = result._unsafeUnwrap()
+    expect(notificationId).toEqual(expect.any(String))
+    const [, , options] = notificationRepository.sendNotificationToUser.mock.calls[0]
+    expect(options?.notificationId).toBe(notificationId)
+    expect(options?.interaction?.spec).toMatchObject({ v: 1, ref: 'leave:123', tray: true })
+    expect(options?.interaction?.expiresAt).toEqual(new Date(INTERACTION.expiresAt))
+    expect(lastUsageBody(appNotificationRepository).result.notificationId).toBe(notificationId)
+  })
+
+  test('an idempotency replay returns the original notification id and sends nothing new', async () => {
+    const { service, notificationRepository } = createService(undefined, undefined, enabled)
+    const body = toAll({ interaction: INTERACTION, idempotencyKey: 'retry-1' })
+
+    const first = (await service.send(appBoundKey(), body))._unsafeUnwrap()
+    const replay = (await service.send(appBoundKey(), body))._unsafeUnwrap()
+
+    expect(replay.notificationId).toBe(first.notificationId)
+    expect(notificationRepository.sendNotificationToUser).toHaveBeenCalledTimes(1)
+  })
+
+  test('an audience of nobody creates no notification, so reports no id', async () => {
+    const { service } = createService(
+      createFakeAppNotificationRepository({ appUserIds: [] }),
+      undefined,
+      enabled
+    )
+
+    const result = await service.send(appBoundKey(), toAll())
+
+    expect(result._unsafeUnwrap().notificationId).toBeUndefined()
   })
 })

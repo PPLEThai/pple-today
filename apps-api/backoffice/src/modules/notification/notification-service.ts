@@ -7,6 +7,8 @@ import {
 import type { NotificationTokenPlatform } from '@pple-today/database/prisma'
 import { err, ok } from 'neverthrow'
 
+import { readClientInteraction } from './interaction-read'
+import { type CallbackSendConfig, prepareInteractionSend } from './interaction-send'
 import type { BoundApp } from './key-binding'
 import type {
   CreateNewExternalNotificationBody,
@@ -42,8 +44,24 @@ export class NotificationService {
      * send is joined to `{origin}/{slug}` before it is stored, so the phone
      * opens the same URL an app-bound `linkPath` produces.
      */
-    private readonly miniAppRedirectOrigin: string
+    private readonly miniAppRedirectOrigin: string,
+    private readonly options: {
+      /** `INTERACTIVE_NOTIFICATIONS_ENABLED`. While false a send with `interaction` is refused. */
+      interactiveNotificationsEnabled?: boolean
+      /** Relay and secret-key config the send-time callback check mirrors. */
+      callbackConfig?: CallbackSendConfig
+      /** Injected so interaction state is testable without a fake timer. */
+      now?: () => Date
+    } = {}
   ) {}
+
+  private interactionsEnabled() {
+    return { enabled: this.options.interactiveNotificationsEnabled ?? false }
+  }
+
+  private now() {
+    return this.options.now?.() ?? new Date()
+  }
 
   /**
    * Resolve a presented API key, or null when it is unknown or deactivated.
@@ -70,6 +88,7 @@ export class NotificationService {
       return mapRepositoryError(listResult.error)
     }
 
+    const now = this.now()
     const notifications: ListHistoryNotificationResponse['items'] =
       listResult.value.notifications.map(({ notification, isRead, createdAt }) => ({
         id: notification.id,
@@ -77,6 +96,8 @@ export class NotificationService {
         description: notification.message ?? undefined,
         image: notification.image ?? undefined,
         app: toSenderApp(notification.miniApp),
+        interactionState: readClientInteraction(notification, now, this.interactionsEnabled())
+          ?.state,
         isRead,
         createdAt,
       }))
@@ -139,15 +160,37 @@ export class NotificationService {
                 ...linkBypassFields,
               },
       },
+      // An existing interaction keeps rendering while the flag is off, but as
+      // CLOSED (unless already answered): nothing can be answered then.
+      interaction: readClientInteraction(
+        notificationDetails,
+        this.now(),
+        this.interactionsEnabled()
+      ),
       isRead: notification.isRead,
       createdAt: notification.createdAt,
     } satisfies GetNotificationDetailsByIdResponse)
   }
 
+  /**
+   * Forgets this device for this user (logout). Removing the row also invalidates
+   * every tray response token minted for the device, since a token is bound to
+   * its device registration.
+   */
+  async unregisterDeviceToken(userId: string, deviceToken: string) {
+    const result = await this.notificationRepository.unregisterDeviceToken(userId, deviceToken)
+    if (result.isErr()) return mapRepositoryError(result.error)
+    return ok()
+  }
+
   async registerDeviceToken(
     userId: string,
     deviceToken: string,
-    device: { platform?: NotificationTokenPlatform; supportsAppBranding?: boolean } = {}
+    device: {
+      platform?: NotificationTokenPlatform
+      supportsAppBranding?: boolean
+      supportsTrayInteraction?: boolean
+    } = {}
   ) {
     const registerResult = await this.notificationRepository.registerDeviceToken(
       userId,
@@ -304,6 +347,19 @@ export class NotificationService {
     const content = this.resolveMiniAppPath(data.content, key.slug ?? null)
     if (content.isErr()) return err(content.error)
 
+    // The attributed app is the one that gets called back, so an unbound key
+    // (no app) cannot carry an interaction.
+    const interaction = await prepareInteractionSend({
+      input: data.interaction,
+      enabled: this.options.interactiveNotificationsEnabled ?? false,
+      bypass: content.value.link?.bypassNotificationCenter === true,
+      app: key.miniApp,
+      getCallbackTarget: (miniAppId) => this.notificationRepository.getCallbackTarget(miniAppId),
+      callbackConfig: this.options.callbackConfig,
+      now: this.now(),
+    })
+    if (interaction.isErr()) return err(interaction.error)
+
     const sendResult = await this.notificationRepository.sendNotificationToUser(
       data.audience,
       content.value,
@@ -311,6 +367,7 @@ export class NotificationService {
         apiKeyId: key.id,
         app: key.miniApp ?? undefined,
         smsFallbackText: data.smsFallbackText,
+        interaction: interaction.value,
       }
     )
 

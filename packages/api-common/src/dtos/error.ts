@@ -1,6 +1,8 @@
 import { TAnySchema } from '@sinclair/typebox'
 import { InvertedStatusMap, t } from 'elysia'
 
+import { NotificationInteraction } from './notification'
+
 export type InternalErrorSchema = {
   status: keyof InvertedStatusMap
   data?: TAnySchema
@@ -362,6 +364,15 @@ const MINI_APP_ERROR_SCHEMA = {
   MINI_APP_ORDER_NOT_LISTED: {
     status: 409,
   },
+  // The notification callback URL failed validation: not https, or it points
+  // (literally or by DNS) at a private, loopback or link-local address.
+  MINI_APP_CALLBACK_URL_INVALID: {
+    status: 400,
+  },
+  // Rotate / test asked of an app that has no callback URL (and so no secret).
+  MINI_APP_CALLBACK_NOT_CONFIGURED: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 const ZITADEL_ERROR_SCHEMA = {
@@ -431,6 +442,50 @@ export const NOTIFICATION_KEY_ERROR_SCHEMA = {
   // misreport who was reached.
   NOTIFICATION_IDEMPOTENCY_KEY_CONFLICT: {
     status: 409,
+  },
+  // Interactive notifications (docs/interactive-notifications.md).
+  //
+  // Send-time refusals. All 400, and nothing is sent.
+  // A rule on `interaction` is broken; the message names the first failing path.
+  NOTIFICATION_INVALID_INTERACTION: {
+    status: 400,
+  },
+  // The sending app has no callback target (an ADMIN app with no callback URL, or
+  // an unbound legacy key with no app at all).
+  NOTIFICATION_INTERACTION_NO_CALLBACK: {
+    status: 400,
+  },
+  // `bypassNotificationCenter: true` together with `interaction`. Refused rather
+  // than overridden, because the form lives on the detail screen.
+  NOTIFICATION_INTERACTION_BYPASS_NOT_ALLOWED: {
+    status: 400,
+  },
+  // `interaction` was sent while INTERACTIVE_NOTIFICATIONS_ENABLED is off. Refused
+  // so it is never silently dropped.
+  INTERACTIVE_NOTIFICATIONS_DISABLED: {
+    status: 400,
+  },
+  // Answering. The body names the failing field.
+  NOTIFICATION_RESPONSE_INVALID: {
+    status: 400,
+  },
+  // Bad signature, expired token, or a token for a different notification.
+  NOTIFICATION_RESPONSE_TOKEN_INVALID: {
+    status: 401,
+  },
+  // The notification doesn't exist, the caller isn't a recipient, or it has no
+  // interaction. All three answer the same.
+  NOTIFICATION_NOT_FOUND: {
+    status: 404,
+  },
+  // The recipient already answered. Carries the existing answer.
+  NOTIFICATION_ALREADY_RESPONDED: {
+    status: 409,
+    data: t.Object({ interaction: NotificationInteraction }),
+  },
+  // Expired, closed, or the sending app has been retired.
+  NOTIFICATION_INTERACTION_CLOSED: {
+    status: 410,
   },
   NOTIFICATION_QUOTA_EXCEEDED: {
     status: 429,
