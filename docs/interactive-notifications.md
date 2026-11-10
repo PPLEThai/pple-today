@@ -1,10 +1,9 @@
 # Interactive notifications — spec
 
-> **Status: draft, decisions agreed 2026-11-10.** Nothing here is built yet.
-> [Decisions](#decisions) records what was settled and why. Two things still
-> need checking before the build: pple-platform has to agree to the relay
-> (D1), and two spikes on the notification-tray path have to pass (see
-> [Spikes](#spikes)).
+> **Status: accepted 2026-11-10.** Nothing here is built yet.
+> [Decisions](#decisions) records what was settled and why. pple-platform has
+> agreed to the relay (D1). What remains before the tray build is the spikes
+> (see [Spikes](#spikes)).
 
 Follow-up to [app-bound notifications](./app-bound-notifications.md) and
 [direct notifications](./direct-notifications.md). Those let an app *tell* its
@@ -128,11 +127,17 @@ All of these are `400`, and nothing is sent:
 | --- | --- |
 | `NOTIFICATION_INVALID_INTERACTION` | A rule above is broken. The message names the first failing path, e.g. `interaction.actions[1].requires[0]`. |
 | `NOTIFICATION_INTERACTION_NO_CALLBACK` | The sending app has no callback target: an `ADMIN` app with no callback URL set, or an unbound legacy key with no app at all. |
+| `NOTIFICATION_INTERACTION_BYPASS_NOT_ALLOWED` | `content.link.bypassNotificationCenter: true` on the raw path, together with `interaction` (D9). |
 
-Every interactive notification also has two fixed rules:
+Every interactive notification also follows these rules:
 
-- **`bypassNotificationCenter` is forced off.** Tapping the notification body
-  has to land on the notification detail, because that is where the form is.
+- **`bypassNotificationCenter` is refused, not overridden.** Tapping the
+  notification body has to land on the notification detail, because that is
+  where the form is. A sender that asks for bypass gets a `400`. Silently
+  turning it off would send the notification somewhere other than where the
+  sender asked, and every other conflict on this API is a refusal. The app-key
+  path can't set bypass (`linkPath` never does), so in practice this applies to
+  the raw path, including Granted Notifications (D9).
 - **The content is still required and has to make sense on its own.** Older
   clients show the message and the `linkPath` button and ignore the interaction
   (see [Older clients](#older-clients)).
@@ -617,7 +622,7 @@ retired"`), in the same step that deactivates its key.
   is built from `@pple-today/ui` `textarea`/`input`, `radio-group`, `checkbox`,
   `button` and `alert-dialog`, which all exist already.
 - **Notification list**: a "รอตอบกลับ" chip when `interactionState === 'OPEN'`.
-- **Push tap**: opens the detail screen (bypass is forced off). When a tray
+- **Push tap**: opens the detail screen (bypass is refused on send). When a tray
   action opens the app (a `confirm` or `requires` action, or an S2 fallback),
   it opens the detail screen with that action pending.
 
@@ -733,7 +738,7 @@ be made, as a fallback. The send docs say so, but it isn't enforced.
 
 | # | Question | Decision | Why |
 | --- | --- | --- | --- |
-| D1 | How do platform apps receive answers? | Through a pple-platform relay to `/.pple/notification-response`, via the dispatch binding. **Needs pple-platform's agreement and an ADR there.** | The dispatch Worker refuses `/.pple/*` from the public (ADR-0021). Every other path goes through the membership door (ADR-0013), which would turn away our POST for Draft and Beta apps. Cron delivery already gets past both this way, tested in production. |
+| D1 | How do platform apps receive answers? | Through a pple-platform relay to `/.pple/notification-response`, via the dispatch binding. **Agreed by pple-platform 2026-11-10.** The wrapper and template handler are specified in an ADR there. | The dispatch Worker refuses `/.pple/*` from the public (ADR-0021). Every other path goes through the membership door (ADR-0013), which would turn away our POST for Draft and Beta apps. Cron delivery already gets past both this way, tested in production. |
 | D2 | Per-app signing for platform apps? | Not yet. The relay token and wrapper secret are enough, and the header is reserved. ADMIN apps are always signed. | The path can't be reached publicly. Adding signing later only means provisioning a secret. |
 | D3 | Can the app reject an answer? | No. The answer is recorded, then delivered in the background. `/close` handles races. | The user's tap never depends on the app's uptime, and "answer once" stays a database fact. A synchronous refusal could be added later as an optional fast path. |
 | D4 | How long are free-text answers kept? | `values` is purged 90 days after delivery (or failure). `actionId` is kept. | Senders write the prompts, so we can't control what personal data users type. The app already has its copy. |
@@ -741,6 +746,7 @@ be made, as a fallback. The send docs say so, but it isn't enforced.
 | D6 | Interactions on `kind: "all"`? | Allowed. Per-app concurrency, and `410` stops delivery. | Broadcast polls and RSVPs are real uses. The load falls on the app's own server, so the app decides. |
 | D7 | Tray credential | A per-recipient, stateless response token in the push. Never the session. | Tray handling may run headless. A background refresh-token rotation that races the foreground app could log the user out. |
 | D8 | Tray on iOS | Single phase. The extension registers categories dynamically, and a native `NotificationDelegate` submits in the background with the response token, so a tap doesn't open the app. Only `confirm`/`requires` actions open it. | Categories have to exist before display. expo-notifications reaches JS too late on a cold background launch, but its `addDelegate` hook lets native code handle the response first. |
+| D9 | `bypassNotificationCenter` on an interactive send? | Refused with `400` (`NOTIFICATION_INTERACTION_BYPASS_NOT_ALLOWED`). **pple-platform's Granted Notifications must not set bypass when they carry an `interaction`.** ADR-0033 says they always set it, so that ADR needs an amendment. | Bypass skips the detail screen, which is the only place the form exists. Forcing it off without telling the sender would be a silent override, and this API refuses conflicts rather than resolving them. |
 
 ## Spikes
 
