@@ -1,5 +1,19 @@
 # @client/mobile
 
+## 2.13.0
+
+### Minor Changes
+
+- [#524](https://github.com/PPLEThai/pple-today/pull/524) [`76fb922`](https://github.com/PPLEThai/pple-today/commit/76fb9228fe88d55b77c50ccc73955e42caab5b13) Thanks [@PanJ](https://github.com/PanJ)! - A signed-out user is asked to sign in when a mini app needs a session, instead of being refused. Opening an app that requires sign-in, or a page asking over the session bridge, shows a เข้าสู่ระบบ prompt; after PPLE ID sign-in the app opens (or the page gets its session) without leaving the screen. Cancelling closes an app being opened, or answers the page's request with `not-signed-in` as before.
+
+- [#524](https://github.com/PPLEThai/pple-today/pull/524) [`76fb922`](https://github.com/PPLEThai/pple-today/commit/76fb9228fe88d55b77c50ccc73955e42caab5b13) Thanks [@PanJ](https://github.com/PanJ)! - The อาสา tab now shows when signed out: opening it asks the user to sign in (and, if they decline, offers a เข้าสู่ระบบ button when they come back to the tab). Signed out, the ฉัน tab is labelled เข้าสู่ระบบ, since that is the screen it opens.
+
+### Patch Changes
+
+- [#524](https://github.com/PPLEThai/pple-today/pull/524) [`f29f4c8`](https://github.com/PPLEThai/pple-today/commit/f29f4c8af4ce054b933f412328894cf75d0ddf34) Thanks [@PanJ](https://github.com/PanJ)! - A notification with a link but no `actionButtonText` no longer shows a blank button on its detail screen: the button falls back to ไปยังแอป (mini app link), ดูรายละเอียด (in-app link) or เปิดลิงก์ (external link).
+
+- [#524](https://github.com/PPLEThai/pple-today/pull/524) [`3d16e71`](https://github.com/PPLEThai/pple-today/commit/3d16e719750003b814b77e4c9dc2d8b369d548a3) Thanks [@PanJ](https://github.com/PanJ)! - An unlisted mini app opened by its link (a notification button, a deep link) now opens the same way as a listed one. Adds `GET /mini-app/:slug`, which describes an app the caller may not see listed — any Live app, or a Draft/Beta app for its builders and accepted testers — so the mobile app knows whether it needs a session. A public (`requiresAuth: false`) unlisted app now opens directly, signed out included, instead of failing the sign-in exchange with an error toast; a signed-in user's exchange no longer hands it a token either.
+
 ## 2.12.0
 
 ### Minor Changes
