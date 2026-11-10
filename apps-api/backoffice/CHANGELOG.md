@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.23.0
+
+### Minor Changes
+
+- [#524](https://github.com/PPLEThai/pple-today/pull/524) [`3d16e71`](https://github.com/PPLEThai/pple-today/commit/3d16e719750003b814b77e4c9dc2d8b369d548a3) Thanks [@PanJ](https://github.com/PanJ)! - An unlisted mini app opened by its link (a notification button, a deep link) now opens the same way as a listed one. Adds `GET /mini-app/:slug`, which describes an app the caller may not see listed — any Live app, or a Draft/Beta app for its builders and accepted testers — so the mobile app knows whether it needs a session. A public (`requiresAuth: false`) unlisted app now opens directly, signed out included, instead of failing the sign-in exchange with an error toast; a signed-in user's exchange no longer hands it a token either.
+
 ## 1.22.0
 
 ### Minor Changes
