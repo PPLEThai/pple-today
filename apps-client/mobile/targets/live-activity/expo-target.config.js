@@ -10,4 +10,8 @@ module.exports = () => ({
   bundleIdentifier: '.LiveActivity',
   deploymentTarget: '17.0',
   frameworks: ['SwiftUI', 'WidgetKit', 'ActivityKit', 'AppIntents'],
+  // A Live Activity cannot load remote images, so the party mark is bundled.
+  images: {
+    partyLogo: './assets/party-logo.png',
+  },
 })

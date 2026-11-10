@@ -87,13 +87,26 @@ struct ActionButtons: View {
   }
 }
 
+/// The party mark, bundled in the extension's asset catalog (`partyLogo`).
+struct PartyLogo: View {
+  var size: CGFloat = 18
+
+  var body: some View {
+    Image("partyLogo")
+      .resizable()
+      .scaledToFit()
+      .frame(width: size, height: size)
+      .accessibilityHidden(true)
+  }
+}
+
 struct LockScreenView: View {
   let context: ActivityViewContext<PPLEInteractionAttributes>
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 6) {
-        Image(systemName: "bell.badge.fill").foregroundStyle(brandOrange)
+        PartyLogo()
         Text(context.attributes.appName).font(.caption).foregroundStyle(.secondary)
       }
       Text(context.attributes.header).font(.headline).lineLimit(1)
@@ -119,7 +132,7 @@ struct PPLEInteractionLiveActivity: Widget {
     } dynamicIsland: { context in
       DynamicIsland {
         DynamicIslandExpandedRegion(.leading) {
-          Image(systemName: "bell.badge.fill").foregroundStyle(brandOrange)
+          PartyLogo(size: 28)
         }
         DynamicIslandExpandedRegion(.center) {
           Text(context.attributes.header).font(.headline).lineLimit(1)
@@ -135,11 +148,11 @@ struct PPLEInteractionLiveActivity: Widget {
           }
         }
       } compactLeading: {
-        Image(systemName: "bell.badge.fill").foregroundStyle(brandOrange)
+        PartyLogo()
       } compactTrailing: {
         Text((context.state.status == "open" || context.state.status == "failed") ? "ตอบ" : "✓").font(.caption.bold())
       } minimal: {
-        Image(systemName: "bell.badge.fill").foregroundStyle(brandOrange)
+        PartyLogo()
       }
       .widgetURL(detailURL(context.attributes.notificationId))
     }
