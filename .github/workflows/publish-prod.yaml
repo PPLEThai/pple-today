@@ -24,6 +24,10 @@ on:
       mini-app:
         type: boolean
         description: 'Publish Mini App Package'
+      register-live-activity:
+        type: boolean
+        description: 'SPIKE: register the LiveActivity bundle id and match profile before the iOS build'
+        default: false
 
 jobs:
   get-affected-apps:
@@ -359,6 +363,13 @@ jobs:
         run: |
           bash ./fastlane/setup.sh
           cd ios && bundle install
+
+      - name: 'SPIKE: register LiveActivity bundle id and profile'
+        if: ${{ inputs.register-live-activity == true }}
+        working-directory: apps-client/mobile/ios
+        run: fastlane register_live_activity
+        env:
+          CI: true
 
       - name: Build iOS App via fastlane
         working-directory: apps-client/mobile/ios

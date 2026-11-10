@@ -1,6 +1,7 @@
 {
   "platforms": ["apple"],
   "apple": {
+    "modules": ["NotificationActionsModule"],
     "appDelegateSubscribers": ["NotificationActionsAppDelegateSubscriber"]
   }
 }
