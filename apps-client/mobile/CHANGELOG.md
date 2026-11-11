@@ -1,5 +1,15 @@
 # @client/mobile
 
+## 2.14.0
+
+### Minor Changes
+
+- [#526](https://github.com/PPLEThai/pple-today/pull/526) [`1672633`](https://github.com/PPLEThai/pple-today/commit/1672633e17f2e377bdc81b73036fb942ce2e0ccb) Thanks [@PanJ](https://github.com/PanJ)! - Upgrade to Expo SDK 58 (React Native 0.88, React 19.3) and React Native Firebase 27, raising the minimum iOS version to 16.4
+
+### Patch Changes
+
+- [#526](https://github.com/PPLEThai/pple-today/pull/526) [`02b56a0`](https://github.com/PPLEThai/pple-today/commit/02b56a03b299dabdfb8ed34f1e07d571611a7a1e) Thanks [@PanJ](https://github.com/PanJ)! - Enable R8 minification and resource shrinking on Android release builds so Play Console's DEX obfuscation check passes
+
 ## 2.13.0
 
 ### Minor Changes
