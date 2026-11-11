@@ -139,6 +139,8 @@ export default {
         {
           mode: 'development',
           iosNSEFilePath: './assets/NotificationService.m',
+          // Plugin defaults to 11.0, which Xcode 27 rejects (min 15.0). Match the app.
+          iPhoneDeploymentTarget: '16.4',
         },
       ],
     ],
