@@ -1,6 +1,5 @@
 import React from 'react'
 import { Linking, Platform, Pressable, PressableProps, RefreshControl, View } from 'react-native'
-import { AccessToken, LoginManager } from 'react-native-fbsdk-next'
 import { ScrollView } from 'react-native-gesture-handler'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 
@@ -66,7 +65,11 @@ import {
   useSession,
 } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
-import { useFacebookConfigQuery } from '@app/libs/facebook'
+import {
+  FacebookLoginCancelledError,
+  getFacebookPageAccessToken,
+  useFacebookConfigQuery,
+} from '@app/libs/facebook'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 import { getRoleName } from '@app/utils/get-role-name'
 import { createImageUrl } from '@app/utils/image'
@@ -418,28 +421,14 @@ function LinkFacebookPage() {
   const user = useAuthMe()
 
   const logitWithFacebookMutation = useMutation({
-    mutationFn: async () => {
-      const loginResult = await LoginManager.logInWithPermissions([
-        'pages_show_list',
-        'pages_read_engagement',
-        'pages_read_user_content',
-        'pages_manage_metadata',
-      ])
-      if (loginResult.isCancelled) {
-        console.log('User cancelled login')
-        // toast({ text1: 'Facebook login is cancelled' })
-        throw new Error('User cancelled login')
-      }
-      const accessTokenResult = await AccessToken.getCurrentAccessToken()
-      if (!accessTokenResult || !accessTokenResult.accessToken) {
-        throw new Error('Failed to get facebook access token')
-      }
-      return accessTokenResult
-    },
-    onSuccess: (accessTokenResult) => {
-      router.push(`/profile/facebook?facebookAccessToken=${accessTokenResult.accessToken}`)
+    mutationFn: getFacebookPageAccessToken,
+    onSuccess: (facebookAccessToken) => {
+      router.push(
+        `/profile/facebook?facebookAccessToken=${encodeURIComponent(facebookAccessToken)}`
+      )
     },
     onError: (error) => {
+      if (error instanceof FacebookLoginCancelledError) return
       console.error('Login Error: ', error)
     },
   })
