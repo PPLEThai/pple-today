@@ -168,6 +168,17 @@ jobs:
           CI: true
           CD: true
 
-      # - name: Log Build Output
-      #   run: cat /Users/runner/Library/Logs/gym/PPLEToday-PPLEToday.log
-      #   if: failure()
+      # Never `cat` the gym log: this repo's Actions logs are public, and xcodebuild
+      # writes the whole build environment (fastlane loads every secret into it) as
+      # `export NAME=value` lines before each script phase. Print diagnostics only.
+      - name: Show build errors
+        if: failure()
+        shell: bash
+        run: |
+          echo "Installed Xcode versions:"; ls -d /Applications/Xcode*.app
+          log=$(ls -t ~/Library/Logs/gym/*.log 2>/dev/null | head -1)
+          if [ -z "$log" ]; then echo "No gym log found."; exit 0; fi
+          grep -v -E '^[[:space:]]*(export|setenv) ' "$log" \
+            | grep -E -B8 '(^|[[:space:]])(error|fatal error):|Command [A-Za-z]+ failed|\*\* (ARCHIVE|BUILD) FAILED' \
+            | grep -v -E '^[[:space:]]*(cd|/bin/sh -c|builtin-|/usr/bin/env) ' \
+            | cut -c1-400 | head -150
