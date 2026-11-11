@@ -80,15 +80,24 @@ export const MoreOrLess = ({
     if (lines !== null && numberOfLines !== previousNumberOfLines) setLines(null)
   }, [lines, numberOfLines, previousNumberOfLines])
 
-  useEffect(() => {
-    if (animated)
-      LayoutAnimation.configureNext({
-        duration: 600,
-        create: { type: 'linear', property: 'opacity' },
-        update: { type: 'spring', springDamping: 2 },
-        delete: { type: 'linear', property: 'opacity' },
-      })
-  }, [animated, isExpanded])
+  // LayoutAnimation.configureNext applies to every view in the next native commit, not just
+  // this component. Arm it only right before an expand/collapse the user triggered; arming it
+  // on mount made every feed card mounted alongside this text fade in for 600ms.
+  const setExpanded = useCallback(
+    (expanded: boolean) => {
+      if (animated)
+        LayoutAnimation.configureNext({
+          duration: 600,
+          create: { type: 'linear', property: 'opacity' },
+          update: { type: 'spring', springDamping: 2 },
+          delete: { type: 'linear', property: 'opacity' },
+        })
+      if (expanded) expandText()
+      else shrinkText()
+    },
+    [animated, expandText, shrinkText]
+  )
+  const onLessPress = useCallback(() => setExpanded(false), [setExpanded])
 
   const onTextLayoutGetLines = useCallback(
     (event: NativeSyntheticEvent<TextLayoutEventData>) => {
@@ -109,7 +118,10 @@ export const MoreOrLess = ({
     [numberOfLines]
   )
 
-  const onMorePress = useMemo(() => (hasMore ? expandText : undefined), [expandText, hasMore])
+  const onMorePress = useMemo(
+    () => (hasMore ? () => setExpanded(true) : undefined),
+    [hasMore, setExpanded]
+  )
 
   if (!children) return null
 
@@ -134,7 +146,7 @@ export const MoreOrLess = ({
   const Comp = hasMore ? Pressable : View
   if (linesToRender) {
     return (
-      <Comp onPress={isExpanded ? shrinkText : onMorePress}>
+      <Comp onPress={isExpanded ? onLessPress : onMorePress}>
         {isExpanded ? (
           <TextComponent>
             {children}
