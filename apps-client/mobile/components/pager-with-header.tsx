@@ -38,7 +38,7 @@ import { Text } from '@pple-today/ui/text'
 
 import { ScrollContextProvider } from '@app/libs/scroll-context'
 
-import { ExpoScrollForwarderView } from '../../../packages/expo-scroll-forwarder/build'
+import { ExpoScrollForwarderView } from '../../../packages/expo-scroll-forwarder/src'
 
 // brief structure for PagerView with Header
 // <Pager>
