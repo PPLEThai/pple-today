@@ -10,7 +10,10 @@ default_platform(:ios)
 
 before_all do
   # https://www.polpiella.dev/managing-xcode-installs-using-fastlane
-  xcodes(version: "26.3", select_for_current_build_only: true)
+  # Keep in step with the Xcode the workflows select (mobile-beta-deployment.yaml,
+  # publish-prod.yaml) and PPLEToday/.xcode-version. Expo SDK 58 needs 26.4+:
+  # expo-modules-jsi does not compile with 26.3's Swift.
+  xcodes(version: "26.4", select_for_current_build_only: true)
 end
 
 platform :ios do
