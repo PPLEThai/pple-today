@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Pressable, View } from 'react-native'
+import { Dimensions, Pressable, View } from 'react-native'
 
 import { cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
@@ -169,6 +169,12 @@ interface AttachmentProps {
   attachment: PostCardAttachment
   className?: string
 }
+// Grid cells are square and never wider than the screen, so a screen-wide square is
+// enough (createImageUrl multiplies by the pixel ratio). The full-size image is only
+// loaded in the lightbox viewer. Requesting 1000x1000 points here meant decoding
+// 3000x3000 px images on 3x phones for every feed card.
+const THUMBNAIL_SIZE = Math.ceil(Dimensions.get('window').width)
+
 function Attachment(props: AttachmentProps) {
   switch (props.attachment.type) {
     case 'VIDEO':
@@ -190,8 +196,8 @@ function Attachment(props: AttachmentProps) {
             style={{ width: '100%', height: '100%' }}
             source={{
               uri: createImageUrl(props.attachment.url, {
-                width: 1000,
-                height: 1000,
+                width: THUMBNAIL_SIZE,
+                height: THUMBNAIL_SIZE,
               }),
             }}
             alt={props.attachment.description ?? ''}
