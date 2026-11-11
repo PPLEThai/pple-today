@@ -145,9 +145,11 @@ add:
 - `apns.payload.aps.alert.subtitle` = app name
 - `fcm_options.image` = app icon URL
 
-The Notification Service Extension already calls `FIRMessaging
-extensionHelper`, which downloads `fcm_options.image` and attaches it — so the
-icon lands in the thumbnail slot with no native change at all.
+The Notification Service Extension (`assets/NotificationService.m`) downloads
+`fcm_options.image` and attaches it, so the icon lands in the thumbnail slot.
+It used to hand this to `FIRMessaging extensionHelper`; since Firebase's Apple
+SDK moved to Swift Package Manager only, the extension does the download itself
+and links no Firebase.
 
 **Android — data-only, for attributed sends to capable tokens.** Send no
 `notification` block; the client builds the notification (see below). Every

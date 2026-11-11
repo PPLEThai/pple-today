@@ -1,16 +1,16 @@
 // https://www.reactnativereusables.com/extras/material-top-tabs/
 
 import React, { useCallback, useEffect } from 'react'
-import { View } from 'react-native'
+import { ColorValue, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { Icon } from '@pple-today/ui/icon'
 import { clsx } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
-import { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs'
-import { PlatformPressable } from '@react-navigation/elements'
 import { Image } from 'expo-image'
 import { Tabs, usePathname } from 'expo-router'
+import { BottomTabBarButtonProps } from 'expo-router/js-tabs'
+import { PlatformPressable } from 'expo-router/react-navigation'
 import { CircleUserRoundIcon, HandshakeIcon, HouseIcon, LucideIcon } from 'lucide-react-native'
 import { cssInterop } from 'nativewind'
 
@@ -42,7 +42,6 @@ export default function BottomTabsLayout() {
             },
             tabBarHideOnKeyboard: true,
           }}
-          initialRouteName="(feed)"
         >
           <Tabs.Screen
             name="(feed)"
@@ -119,7 +118,7 @@ function TabBarIcon(props: { focused: boolean; icon: LucideIcon; size?: number }
 }
 function TabBarLabel(props: {
   focused: boolean
-  color: string
+  color: ColorValue
   // position: LabelPosition
   children: string
 }) {

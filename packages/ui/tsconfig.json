@@ -1,5 +1,10 @@
 {
   "extends": "@pple-today/project-config/tsconfig/react.json",
+  "compilerOptions": {
+    // Same reason as in project-config's expo.json: nativewind 4 can only add
+    // `className` to React Native's legacy type definitions.
+    "customConditions": ["react-native-legacy-deep-imports"]
+  },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "build", "coverage", "storybook-static"]
 }

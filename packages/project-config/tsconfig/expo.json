@@ -8,6 +8,11 @@
     "jsx": "react-jsx",
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    // React Native 0.87+ serves its Strict TypeScript API by default. nativewind 4
+    // adds `className` by augmenting the `react-native` module, which only merges
+    // with the legacy type definitions, so resolve those instead. React Native
+    // drops this condition after 0.89; moving to nativewind 5 removes the need.
+    "customConditions": ["react-native-legacy-deep-imports"],
     "resolveJsonModule": true,
     "target": "ES2022",
     "allowJs": true,

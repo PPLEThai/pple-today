@@ -7,8 +7,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 
-export const AnimatedPressable: React.ComponentType<PressableProps> =
-  Animated.createAnimatedComponent(Pressable)
+export const AnimatedPressable = Animated.createAnimatedComponent(Pressable)
 
 export function AnimatedBackgroundPressable(props: PressableProps) {
   const [isActive, setIsActive] = React.useState(false)

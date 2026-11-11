@@ -4,11 +4,17 @@ import { Stack } from 'expo-router'
 
 import { KeyboardAvoidingViewLayout } from '@app/components/keyboard-avoiding-view-layout'
 
+// Expo Router 58 replaced the Stack's `initialRouteName` with this: the screen
+// placed below one opened by a deep link, so back has somewhere to go.
+export const unstable_settings = {
+  anchor: 'index',
+}
+
 export default function Layout() {
   return (
     <KeyboardAvoidingViewLayout>
       <SearchingProvider>
-        <Stack initialRouteName="index" screenOptions={{ headerShown: false }} />
+        <Stack screenOptions={{ headerShown: false }} />
       </SearchingProvider>
     </KeyboardAvoidingViewLayout>
   )

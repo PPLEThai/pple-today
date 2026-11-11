@@ -485,7 +485,7 @@ iOS shows the notification from the APNs payload, so the category has to exist
 **before** it is shown. Our actions change per notification, so they can't be
 registered ahead of time. The Notification Service Extension
 (`assets/NotificationService.m`, which already runs because of `mutable-content`)
-handles it. **Before** handing the content to `FIRMessaging extensionHelper`, it:
+handles it. **Before** downloading the notification's image (`fcm_options.image`), it:
 
 1. Reads `pple_interaction` from `userInfo`.
 2. Builds a `UNNotificationCategory` with id `pple.ix.<id>`:

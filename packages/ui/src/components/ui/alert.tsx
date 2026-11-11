@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { View, type ViewProps } from 'react-native'
 
-import { useTheme } from '@react-navigation/native'
 import { cva, type VariantProps } from 'class-variance-authority'
+import { useTheme } from 'expo-router/react-navigation'
 import type { LucideIcon } from 'lucide-react-native'
 
 import { Text } from './text'

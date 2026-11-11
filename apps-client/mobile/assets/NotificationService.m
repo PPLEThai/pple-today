@@ -1,5 +1,5 @@
 #import "NotificationService.h"
-#import <Firebase.h>
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 
 // ---------------------------------------------------------------------------
 // Interactive notifications (docs/interactive-notifications.md, "iOS").
@@ -28,7 +28,7 @@ static const NSUInteger kPPLEMaxCategories = 50;
 // lost) counts as oldest.
 static NSString *const kPPLECategoryOrderKey = @"pple.ix.category-order";
 // How long to wait for `getNotificationCategories`. The extension gets roughly 30
-// seconds; this leaves nearly all of it for FIRMessaging's image download.
+// seconds; this leaves nearly all of it for the image download.
 static const int64_t kPPLECategoriesTimeoutSeconds = 3;
 
 static NSDictionary<NSString *, NSString *> *PPLESymbolMap(void) {
@@ -277,10 +277,83 @@ static BOOL PPLERegisterCategory(UNNotificationCategory *category) {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Notification image. FCM puts the image URL of an APNs push in
+// `fcm_options.image`; this downloads it and attaches it, so iOS shows it as the
+// notification's thumbnail. It does what `[FIRMessaging extensionHelper]` used to:
+// Firebase's Apple SDK is only distributed through Swift Package Manager since
+// v13, so the extension no longer links Firebase at all.
+// ---------------------------------------------------------------------------
+
+static NSURL *PPLEImageURL(NSDictionary *userInfo) {
+    id options = userInfo[@"fcm_options"];
+    if (![options isKindOfClass:[NSDictionary class]] || !PPLEIsNonEmptyString(options[@"image"])) {
+        return nil;
+    }
+    NSURL *url = [NSURL URLWithString:options[@"image"]];
+    return url.scheme.length > 0 ? url : nil;
+}
+
+// The file extension iOS needs to recognise the downloaded image: from the
+// server's suggested file name, else from the MIME type.
+static NSString *PPLEImageFileExtension(NSURLResponse *response) {
+    NSString *extension = response.suggestedFilename.pathExtension;
+    if (extension.length > 0) {
+        return extension;
+    }
+    if (response.MIMEType.length > 0) {
+        UTType *type = [UTType typeWithMIMEType:response.MIMEType];
+        if (type.preferredFilenameExtension.length > 0) {
+            return type.preferredFilenameExtension;
+        }
+    }
+    return nil;
+}
+
+// Downloads `url` and calls back with an attachment, or nil if anything fails.
+static void PPLELoadImageAttachment(NSURL *url, void (^completion)(UNNotificationAttachment *attachment)) {
+    NSURLSessionDownloadTask *task = [[NSURLSession sharedSession]
+        downloadTaskWithURL:url
+          completionHandler:^(NSURL *location, NSURLResponse *response, NSError *error) {
+            if (error != nil || location == nil) {
+                NSLog(@"[NotificationService] could not download the image: %@", error);
+                completion(nil);
+                return;
+            }
+            NSString *extension = PPLEImageFileExtension(response);
+            if (extension == nil) {
+                NSLog(@"[NotificationService] the image has no recognisable type");
+                completion(nil);
+                return;
+            }
+            // The download is deleted when this handler returns, so move it first,
+            // under a name that ends in the extension.
+            NSURL *file = [[NSURL fileURLWithPath:NSTemporaryDirectory()]
+                URLByAppendingPathComponent:[[NSUUID UUID].UUIDString stringByAppendingPathExtension:extension]];
+            NSError *moveError = nil;
+            if (![[NSFileManager defaultManager] moveItemAtURL:location toURL:file error:&moveError]) {
+                NSLog(@"[NotificationService] could not keep the image: %@", moveError);
+                completion(nil);
+                return;
+            }
+            NSError *attachmentError = nil;
+            UNNotificationAttachment *attachment = [UNNotificationAttachment attachmentWithIdentifier:@""
+                                                                                                 URL:file
+                                                                                             options:nil
+                                                                                               error:&attachmentError];
+            if (attachment == nil) {
+                NSLog(@"[NotificationService] could not attach the image: %@", attachmentError);
+            }
+            completion(attachment);
+          }];
+    [task resume];
+}
+
 @interface NotificationService ()
 
 @property (nonatomic, strong) void (^contentHandler)(UNNotificationContent *contentToDeliver);
 @property (nonatomic, strong) UNMutableNotificationContent *bestAttemptContent;
+@property (nonatomic) BOOL delivered;
 
 @end
 
@@ -291,8 +364,8 @@ static BOOL PPLERegisterCategory(UNNotificationCategory *category) {
     self.bestAttemptContent = [request.content mutableCopy];
 
     // Interactive notification: register its category before the system shows it.
-    // This must come before the FIRMessaging helper, which may take a while to
-    // download an image, and any failure leaves the notification as it was.
+    // This must come before the image download, which may take a while, and any
+    // failure leaves the notification as it was.
     @try {
         NSDictionary *interaction = PPLEParseInteraction(request.content.userInfo);
         if (interaction) {
@@ -305,15 +378,41 @@ static BOOL PPLERegisterCategory(UNNotificationCategory *category) {
         NSLog(@"[NotificationService] could not register the interaction category: %@", exception);
     }
 
-    // Call FIRMessaging extension helper API.
-    [[FIRMessaging extensionHelper] populateNotificationContent:self.bestAttemptContent
-                                             withContentHandler:contentHandler];
+    NSURL *imageURL = PPLEImageURL(request.content.userInfo);
+    if (imageURL == nil) {
+        [self deliver];
+        return;
+    }
+    __weak NotificationService *weakSelf = self;
+    PPLELoadImageAttachment(imageURL, ^(UNNotificationAttachment *attachment) {
+        NotificationService *strongSelf = weakSelf;
+        if (strongSelf == nil) {
+            return;
+        }
+        @synchronized(strongSelf) {
+            if (attachment != nil && !strongSelf.delivered) {
+                strongSelf.bestAttemptContent.attachments = @[attachment];
+            }
+        }
+        [strongSelf deliver];
+    });
+}
+
+// Hands the content to iOS once only: the download and the expiry below race.
+- (void)deliver {
+    @synchronized(self) {
+        if (self.delivered) {
+            return;
+        }
+        self.delivered = YES;
+    }
+    self.contentHandler(self.bestAttemptContent);
 }
 
 - (void)serviceExtensionTimeWillExpire {
     // Called just before the extension will be terminated by the system.
     // Use this as an opportunity to deliver your "best attempt" at modified content, otherwise the original push payload will be used.
-    self.contentHandler(self.bestAttemptContent);
+    [self deliver];
 }
 
 @end

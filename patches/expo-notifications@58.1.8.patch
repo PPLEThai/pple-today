@@ -1,34 +1,34 @@
 diff --git a/android/src/main/java/expo/modules/notifications/notifications/ArgumentsNotificationContentBuilder.java b/android/src/main/java/expo/modules/notifications/notifications/ArgumentsNotificationContentBuilder.java
-index f7d3a451735314493e282c02dfe74d5acfca98c1..52103c45153c7da7dd7c7b910a77b8246021ebc3 100644
+index c3be248847eaca64d828f25805893d24c284fc36..c32c2795dc4640badad5ac637ca57f04f5150fd4 100644
 --- a/android/src/main/java/expo/modules/notifications/notifications/ArgumentsNotificationContentBuilder.java
 +++ b/android/src/main/java/expo/modules/notifications/notifications/ArgumentsNotificationContentBuilder.java
-@@ -29,6 +29,8 @@ public class ArgumentsNotificationContentBuilder extends NotificationContent.Bui
-   private static final String AUTO_DISMISS_KEY = "autoDismiss";
+@@ -30,6 +30,8 @@ public class ArgumentsNotificationContentBuilder extends NotificationContent.Bui
    private static final String CATEGORY_IDENTIFIER_KEY = "categoryIdentifier";
    private static final String STICKY_KEY = "sticky";
+   private static final String THREAD_IDENTIFIER_KEY = "threadIdentifier";
 +  // PPLE patch: see NotificationContent.Builder#setLargeIconUrl.
 +  private static final String LARGE_ICON_URL_KEY = "largeIconUrl";
  
    private SoundResolver mSoundResolver;
  
-@@ -46,7 +48,8 @@ public class ArgumentsNotificationContentBuilder extends NotificationContent.Bui
-       .setColor(getColor(payload))
+@@ -48,7 +50,8 @@ public class ArgumentsNotificationContentBuilder extends NotificationContent.Bui
        .setAutoDismiss(getAutoDismiss(payload))
        .setCategoryId(getCategoryId(payload))
--      .setSticky(getSticky(payload));
-+      .setSticky(getSticky(payload))
+       .setSticky(getSticky(payload))
+-      .setGroup(getGroup(payload));
++      .setGroup(getGroup(payload))
 +      .setLargeIconUrl(payload.getString(LARGE_ICON_URL_KEY, null));
  
      if (shouldPlayDefaultSound(payload)) {
        useDefaultSound();
 diff --git a/android/src/main/java/expo/modules/notifications/notifications/model/NotificationContent.java b/android/src/main/java/expo/modules/notifications/notifications/model/NotificationContent.java
-index 191b64e101c03eeec37920c2d6582bfd50d8b902..8357b414ae480f621d55f984200d8b07d8084fdb 100644
+index ae6d3927f1df283ab976f086201d189ae8de3299..793d31eeffc15ef2db0747ffd6874fbc8a83a5c5 100644
 --- a/android/src/main/java/expo/modules/notifications/notifications/model/NotificationContent.java
 +++ b/android/src/main/java/expo/modules/notifications/notifications/model/NotificationContent.java
-@@ -49,6 +49,10 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
-   private boolean mAutoDismiss;
+@@ -45,6 +45,10 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
    private String mCategoryId;
    private boolean mSticky;
+   private String mGroup;
 +  // PPLE patch: a per-notification large icon, as a remote URL. Upstream can only
 +  // put the one static icon from manifest meta-data in that slot, which cannot
 +  // say which app a notification came from.
@@ -36,7 +36,7 @@ index 191b64e101c03eeec37920c2d6582bfd50d8b902..8357b414ae480f621d55f984200d8b07
  
    protected NotificationContent() {
    }
-@@ -152,6 +156,12 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
+@@ -144,6 +148,12 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
      return mSticky;
    }
  
@@ -49,39 +49,38 @@ index 191b64e101c03eeec37920c2d6582bfd50d8b902..8357b414ae480f621d55f984200d8b07
    @Override
    public int describeContents() {
      return 0;
-@@ -179,6 +189,7 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
-     mAutoDismiss = in.readByte() == 1;
+@@ -172,6 +182,7 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
      mCategoryId = in.readString();
      mSticky = in.readByte() == 1;
+     mGroup = in.readString();
 +    mLargeIconUrl = in.readString();
    }
  
    @Override
-@@ -197,6 +208,7 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
-     dest.writeByte((byte) (mAutoDismiss ? 1 : 0));
+@@ -191,6 +202,7 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
      dest.writeString(mCategoryId);
      dest.writeByte((byte) (mSticky ? 1 : 0));
+     dest.writeString(mGroup);
 +    dest.writeString(mLargeIconUrl);
    }
  
    //                                           EXPONOTIFCONTENT02
-@@ -224,6 +236,7 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
-     out.writeByte(mAutoDismiss ? 1 : 0);
+@@ -219,6 +231,7 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
      out.writeObject(mCategoryId != null ? mCategoryId.toString() : null);
      out.writeByte(mSticky ? 1 : 0);
+     out.writeObject(mGroup);
 +    out.writeObject(mLargeIconUrl);
    }
  
    private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
-@@ -271,6 +284,16 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
-       mCategoryId = new String(categoryIdString);
+@@ -271,6 +284,15 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
+     } catch (java.io.OptionalDataException | java.io.EOFException e) {
+       // Backward compatibility: old serialized data won't have this field
      }
-     mSticky = in.readByte() == 1;
 +    // PPLE patch: read the trailing large-icon URL only if it is there. A
 +    // notification scheduled by a build from before this field existed is still
 +    // sitting in SharedPreferences under the same serialVersionUID, and its
-+    // stream simply ends after mSticky — so the absence is expected, not a
-+    // corrupt record.
++    // stream simply ends earlier, so the absence is expected, not a corrupt record.
 +    try {
 +      mLargeIconUrl = (String) in.readObject();
 +    } catch (java.io.OptionalDataException | java.io.EOFException e) {
@@ -90,7 +89,7 @@ index 191b64e101c03eeec37920c2d6582bfd50d8b902..8357b414ae480f621d55f984200d8b07
    }
  
    private void readObjectNoData() throws ObjectStreamException {
-@@ -368,6 +391,20 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
+@@ -374,6 +396,20 @@ public class NotificationContent implements Parcelable, Serializable, INotificat
        return this;
      }
  
@@ -112,7 +111,7 @@ index 191b64e101c03eeec37920c2d6582bfd50d8b902..8357b414ae480f621d55f984200d8b07
        return content;
      }
 diff --git a/android/src/main/java/expo/modules/notifications/notifications/presentation/builders/ExpoNotificationBuilder.kt b/android/src/main/java/expo/modules/notifications/notifications/presentation/builders/ExpoNotificationBuilder.kt
-index 610d3039cefd589647538ad8ba14587d29fab338..b7ec9e3a617ac6bc7ca7dcf11a3c9ce8dac8fcde 100644
+index 769b5522b9e20caba4b4bebd50a7817759be1eff..2a5eb61604f58dd8f1115956774db7909c4f6915 100644
 --- a/android/src/main/java/expo/modules/notifications/notifications/presentation/builders/ExpoNotificationBuilder.kt
 +++ b/android/src/main/java/expo/modules/notifications/notifications/presentation/builders/ExpoNotificationBuilder.kt
 @@ -5,6 +5,7 @@ import android.content.Context
@@ -131,7 +130,7 @@ index 610d3039cefd589647538ad8ba14587d29fab338..b7ec9e3a617ac6bc7ca7dcf11a3c9ce8
  import expo.modules.notifications.notifications.model.NotificationRequest
  import expo.modules.notifications.notifications.model.NotificationResponse
  import expo.modules.notifications.notifications.model.TextInputNotificationAction
-@@ -147,7 +149,15 @@ open class ExpoNotificationBuilder(
+@@ -152,7 +154,15 @@ open class ExpoNotificationBuilder(
        )
      )
  
@@ -149,10 +148,10 @@ index 610d3039cefd589647538ad8ba14587d29fab338..b7ec9e3a617ac6bc7ca7dcf11a3c9ce8
        bitmap?.let { builder.setLargeIcon(it) }
      } else {
 diff --git a/build/Notifications.types.d.ts b/build/Notifications.types.d.ts
-index 1c9226d2aa3f8c5bd4450d9c7cd57be2c8ced55e..dd457aa9dd199edff30ea4766410d79c9b9559cb 100644
+index 9f0f1b202f6c3d4c63160b780d9bab64a6c650be..15cec9e981a50e1b624be6647fca7447538f81bb 100644
 --- a/build/Notifications.types.d.ts
 +++ b/build/Notifications.types.d.ts
-@@ -562,6 +562,15 @@ export type NotificationContentInput = {
+@@ -622,6 +622,15 @@ export type NotificationContentInput = {
       * @platform android
       */
      sticky?: boolean;
@@ -169,10 +168,10 @@ index 1c9226d2aa3f8c5bd4450d9c7cd57be2c8ced55e..dd457aa9dd199edff30ea4766410d79c
       * The visual and audio attachments to display alongside the notification’s main content.
       * @platform ios
 diff --git a/src/Notifications.types.ts b/src/Notifications.types.ts
-index 7cd3ba38dd22a9e0b695efc17211ee8c542502b5..022db552f4e9168d87b3209382d1c8c62fd802b3 100644
+index 7a8792d649549d2690f681332c41779071007f03..37c00a3f4a34458ed226edcf7f57b254a046ba42 100644
 --- a/src/Notifications.types.ts
 +++ b/src/Notifications.types.ts
-@@ -609,6 +609,15 @@ export type NotificationContentInput = {
+@@ -672,6 +672,15 @@ export type NotificationContentInput = {
     * @platform android
     */
    sticky?: boolean;

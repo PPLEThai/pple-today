@@ -27,7 +27,8 @@ class ExpoScrollForwarderView: ExpoView, UIGestureRecognizerDelegate {
             return
         }
         
-        let rctScrollView = self.appContext?.reactBridge?.uiManager.view(forReactTag: NSNumber(value: scrollViewTag)) as? UIView
+        // Expo SDK 58 made `reactBridge` internal (bridgeless). `findView` works under the New Architecture.
+        let rctScrollView = self.appContext?.findView(withTag: scrollViewTag, ofType: UIView.self)
         if (rctScrollView != nil) {
             self.scrollView = self.findScrollView(in: rctScrollView!)
         }

@@ -68,7 +68,7 @@ jobs:
         env: ${{ secrets }}
         run: |
           bash ./scripts/setup-credentials.sh
-          env > .env
+          node ./scripts/write-ci-env.mjs
 
       - name: Run Prebuild
         run: bun run turbo prebuild ${{ steps.get-turbo-filter.outputs.TURBO_FILTER }}

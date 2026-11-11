@@ -22,10 +22,11 @@ export function useScreenTracking() {
     if (screenName === previousScreen.current) return
     previousScreen.current = screenName
 
-    logEvent(analytics, 'screen_view' as any, {
+    // Synchronous since React Native Firebase 26: it returns nothing to catch.
+    logEvent(analytics, 'screen_view', {
       screen_name: screenName,
       screen_class: screenName,
-    }).catch(() => {})
+    })
 
     if (__DEV__) {
       console.log(`[Analytics] 🚀 Tracked: ${screenName}`)

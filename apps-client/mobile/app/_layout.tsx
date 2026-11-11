@@ -35,7 +35,6 @@ import {
   onNotificationOpenedApp,
   requestPermission,
 } from '@react-native-firebase/messaging'
-import { DarkTheme, DefaultTheme, Theme, ThemeProvider } from '@react-navigation/native'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import buddhistEra from 'dayjs/plugin/buddhistEra'
@@ -45,6 +44,7 @@ import { useFonts } from 'expo-font'
 import * as Linking from 'expo-linking'
 import * as Notifications from 'expo-notifications'
 import { type Href, router, Stack, useRootNavigationState } from 'expo-router'
+import { DarkTheme, DefaultTheme, Theme, ThemeProvider } from 'expo-router/react-navigation'
 import * as SplashScreen from 'expo-splash-screen'
 import { InfoIcon } from 'lucide-react-native'
 
@@ -104,6 +104,12 @@ const messaging = getMessaging()
 initAppUpdate()
 
 const queryClient = new QueryClient()
+// Expo Router 58 replaced the Stack's `initialRouteName` with this: the screen
+// placed below one opened by a deep link, so back has somewhere to go.
+export const unstable_settings = {
+  anchor: '(tabs)',
+}
+
 export default function RootLayout() {
   return (
     <>
@@ -114,7 +120,7 @@ export default function RootLayout() {
               <FontProvider>
                 <GestureHandlerRootView>
                   <BottomSheetModalProvider>
-                    <Stack initialRouteName="(tabs)" screenOptions={{ headerShown: false }}>
+                    <Stack screenOptions={{ headerShown: false }}>
                       <Stack.Screen name="loading" options={{ gestureEnabled: false }} />
                     </Stack>
                     <InitialDeepLinkHandler />
