@@ -66,6 +66,7 @@ import {
 } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import {
+  describeFacebookError,
   FacebookLoginCancelledError,
   getFacebookPageAccessToken,
   useFacebookConfigQuery,
@@ -428,8 +429,16 @@ function LinkFacebookPage() {
       )
     },
     onError: (error) => {
-      if (error instanceof FacebookLoginCancelledError) return
+      if (error instanceof FacebookLoginCancelledError) {
+        toast({ type: 'info', text1: 'ยกเลิกการเชื่อมต่อ Facebook' })
+        return
+      }
       console.error('Login Error: ', error)
+      toast({
+        type: 'error',
+        text1: 'เชื่อมต่อ Facebook ไม่สำเร็จ',
+        text2: describeFacebookError(error),
+      })
     },
   })
   function addFacebookPage() {

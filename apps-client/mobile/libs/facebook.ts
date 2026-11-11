@@ -41,6 +41,20 @@ export async function getFacebookPageAccessToken(): Promise<string> {
   return accessToken.accessToken
 }
 
+/**
+ * A short, user-visible description of a Facebook login failure. Native SDK
+ * errors reject with a generic "Login Failed" message and carry the real cause
+ * in `domain` / `userInfo`, so include those when present.
+ */
+export function describeFacebookError(error: unknown): string {
+  if (!(error instanceof Error)) return String(error)
+  const native = error as Error & { domain?: string; userInfo?: unknown }
+  const details = [native.domain, native.userInfo ? JSON.stringify(native.userInfo) : undefined]
+    .filter(Boolean)
+    .join(' ')
+  return (details ? `${error.message} (${details})` : error.message).slice(0, 300)
+}
+
 async function getCachedFacebookPageAccessToken(): Promise<string | null> {
   const current = await AccessToken.getCurrentAccessToken()
   if (!current?.accessToken) return null
