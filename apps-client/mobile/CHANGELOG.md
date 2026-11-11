@@ -1,5 +1,15 @@
 # @client/mobile
 
+## 2.14.1
+
+### Patch Changes
+
+- [#528](https://github.com/PPLEThai/pple-today/pull/528) [`12a11ee`](https://github.com/PPLEThai/pple-today/commit/12a11ee1d329ea9c10884209bf0bd6de352963fe) Thanks [@PanJ](https://github.com/PanJ)! - On iOS, connecting a Facebook page now signs in through a browser sheet instead of switching to the Facebook app, whose in-app browser asked users to log in even when they were already signed in there.
+
+- [#528](https://github.com/PPLEThai/pple-today/pull/528) [`12ef072`](https://github.com/PPLEThai/pple-today/commit/12ef072db073a48f109e9aa4e0f876a1677af0d9) Thanks [@PanJ](https://github.com/PanJ)! - Tapping เพิ่มเพจที่ดูแล no longer opens the Facebook login every time: if the app already holds a valid Facebook token with the page permissions, it goes straight to the page list.
+
+- [#529](https://github.com/PPLEThai/pple-today/pull/529) [`0c454de`](https://github.com/PPLEThai/pple-today/commit/0c454de9db8274cb752d6e49b519923447e995cd) Thanks [@PanJ](https://github.com/PanJ)! - Load feed images at screen size instead of 3000×3000 px, so they appear with their post without lag
+
 ## 2.14.0
 
 ### Minor Changes
