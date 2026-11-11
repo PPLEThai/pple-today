@@ -264,7 +264,7 @@ jobs:
           EXPO_PUBLIC_APP_ENVIRONMENT: production
         run: |
           bash ./scripts/setup-credentials.sh
-          env | node ./scripts/write-ci-env.mjs
+          node ./scripts/write-ci-env.mjs
 
       - name: Prebuild Android
         working-directory: apps-client/mobile
@@ -323,7 +323,7 @@ jobs:
           EXPO_PUBLIC_APP_ENVIRONMENT: production
         run: |
           bash ./scripts/setup-credentials.sh
-          env | node ./scripts/write-ci-env.mjs
+          node ./scripts/write-ci-env.mjs
 
       - name: Prebuild iOS
         working-directory: apps-client/mobile
