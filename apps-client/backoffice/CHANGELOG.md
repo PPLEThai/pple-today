@@ -1,5 +1,11 @@
 # @client/backoffice
 
+## 1.9.2
+
+### Patch Changes
+
+- [#538](https://github.com/PPLEThai/pple-today/pull/538) [`d7caadb`](https://github.com/PPLEThai/pple-today/commit/d7caadb9274f3fdf079d22ec8af4fae46e4b5c77) Thanks [@PanJ](https://github.com/PanJ)! - The login page no longer crashes when the API cannot be reached (for example on a network that blocks it); it shows a connection error instead
+
 ## 1.9.1
 
 ### Patch Changes
