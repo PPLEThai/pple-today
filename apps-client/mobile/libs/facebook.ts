@@ -30,6 +30,11 @@ export async function getFacebookPageAccessToken(): Promise<string> {
   const cachedToken = await getCachedFacebookPageAccessToken()
   if (cachedToken) return cachedToken
 
+  // Start from a clean SDK state. Whatever token, authentication token or
+  // profile the SDK still holds is unusable at this point, and leftovers from an
+  // earlier failed login made every new login fail with com.facebook.sdk.login
+  // until the app was reinstalled.
+  LoginManager.logOut()
   const loginResult = await LoginManager.logInWithPermissions(FACEBOOK_PAGE_PERMISSIONS)
   if (loginResult.isCancelled) {
     throw new FacebookLoginCancelledError()
