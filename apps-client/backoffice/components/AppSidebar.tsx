@@ -29,6 +29,7 @@ import {
   ChevronUp,
   Facebook,
   Handshake,
+  ListChecks,
   Newspaper,
   PieChart,
   UserCircle,
@@ -106,6 +107,14 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
                     <Link to="/facebook">
                       <Facebook />
                       <span>เพจเฟสบุ๊ค</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link to="/facebook/connect-attempts">
+                      <ListChecks />
+                      <span>ประวัติเชื่อมต่อเพจ</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

@@ -9,15 +9,15 @@ so support can see exactly what happened without asking them anything.
 One row in `FacebookConnectAttempt` per attempt. An attempt starts when the
 user presses **เพิ่มเพจที่ดูแล** on the profile tab and ends when:
 
-| `outcome`   | When                                                                                       |
-| ----------- | ------------------------------------------------------------------------------------------ |
-| `SUCCESS`   | A page was linked                                                                          |
-| `FAILED`    | Login, Graph `/me/accounts`, linking, or the iOS tracking permission failed                |
-| `CANCELLED` | The user cancelled the Facebook login or the tracking-permission dialog                    |
-| `ABANDONED` | The user left the page picker, went to Settings, or started a new attempt before finishing |
+| `outcome`   | When                                                                                           |
+| ----------- | ---------------------------------------------------------------------------------------------- |
+| `SUCCESS`   | A page was linked                                                                              |
+| `FAILED`    | Login, Graph `/me/accounts`, no page came back, linking, or the iOS tracking permission failed |
+| `CANCELLED` | The user cancelled the Facebook login or the tracking-permission dialog                        |
+| `ABANDONED` | The user left the page picker, went to Settings, or started a new attempt before finishing     |
 
 Columns: `id` (attempt id), `referenceCode`, `userId`, `outcome`, `failedStep`
-(`tracking_permission`, `login`, `graph_accounts`, `link_page`), `platform`,
+(`tracking_permission`, `login`, `graph_accounts`, `no_pages`, `link_page`), `platform`,
 `osVersion`, `appVersion`, `buildNumber`, `errorDomain`, `errorCode`,
 `errorMessage`, `context` (device model, whether the Facebook app is installed,
 iOS tracking-permission status), `steps`, `startedAt`, `createdAt`.
@@ -25,20 +25,21 @@ iOS tracking-permission status), `steps`, `startedAt`, `createdAt`.
 `steps` is a JSON array of `{ at, name, data }`, `at` being milliseconds since
 the button press:
 
-| `name`                   | `data`                                                                                                                      |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
-| `start`                  | `entry`: `profile_button`, or `page_picker` / `page_picker_retry` when the attempt began on the page picker                 |
-| `tracking_prompt`        | iOS tracking status that made the app show its permission dialog                                                            |
-| `tracking_prompt_result` | status after the system prompt                                                                                              |
-| `cached_token`           | `result`: `none`, `missing_permissions` (+ `missingPermissions`), `refresh_failed` (+ `error`), `reused`                    |
-| `login_start`            | the SDK login (Facebook app or browser) was opened                                                                          |
-| `login_result`           | `result`: `success` (+ `grantedPermissions`, `declinedPermissions`, `expiresAt`), `cancelled`, `error` (+ `error`)          |
-| `page_picker_open`       | `receivedLogin`: whether the screen got a token from the login step                                                         |
-| `graph_accounts`         | `success` (+ `pageCount`, `pages` ids and names) or `error` (+ `status`, `code`, `subcode`, `type`, `message`, `fbtraceId`) |
-| `linked_page_available`  | `availability` per page id, or `error`                                                                                      |
-| `link_page_start`        | `pageId`                                                                                                                    |
-| `link_page_result`       | `success`, or `error` (+ `status`, `code`, `message` from the API)                                                          |
-| `end`                    | `outcome`                                                                                                                   |
+| `name`                   | `data`                                                                                                                                                                                                                        |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `start`                  | `entry`: `profile_button`, or `page_picker` / `page_picker_retry` when the attempt began on the page picker                                                                                                                   |
+| `tracking_prompt`        | iOS tracking status that made the app show its permission dialog                                                                                                                                                              |
+| `tracking_prompt_result` | status after the system prompt                                                                                                                                                                                                |
+| `cached_token`           | `result`: `none`, `missing_permissions` (+ `missingPermissions`), `refresh_failed` (+ `error`), `reused`                                                                                                                      |
+| `login_start`            | the SDK login (Facebook app or browser) was opened                                                                                                                                                                            |
+| `login_result`           | `result`: `success` (+ `grantedPermissions`, `declinedPermissions`, `expiresAt`), `cancelled`, `error` (+ `error`)                                                                                                            |
+| `page_picker_open`       | `receivedLogin`: whether the screen got a token from the login step                                                                                                                                                           |
+| `graph_accounts`         | `success` (+ `pageCount`, `pages` ids and names) or `error` (+ `status`, `code`, `subcode`, `type`, `message`, `fbtraceId`)                                                                                                   |
+| `graph_permissions`      | only when no page came back: `granted`, `declined`, `expired` from Graph `/me/permissions`. All granted but no pages usually means the user left every page unticked in Facebook's page selection, or has no role on the page |
+| `linked_page_available`  | `availability` per page id, or `error`                                                                                                                                                                                        |
+| `link_page_start`        | `pageId`                                                                                                                                                                                                                      |
+| `link_page_result`       | `success`, or `error` (+ `status`, `code`, `message` from the API)                                                                                                                                                            |
+| `end`                    | `outcome`                                                                                                                                                                                                                     |
 
 The API also logs one line per attempt (`message: "Facebook connect attempt"`,
 field `facebookConnectAttempt`), so recent attempts can be found in the logs
@@ -55,11 +56,28 @@ carries only `errorDomain` (e.g. `com.facebook.sdk.login`) and an empty
 applied. `buildNumber` comes from the app config, which may be empty with EAS
 remote versioning; `appVersion` is reliable.
 
+## Backoffice
+
+Admins see the same data without SQL:
+
+- **ประวัติเชื่อมต่อเพจ** in the sidebar (`/facebook/connect-attempts`): outcome
+  totals and the most common failure causes for the last 1, 7, 30 or 90 days,
+  and every attempt, searchable by reference code, user name or phone number
+  and filterable by outcome.
+- An attempt's page (`/facebook/connect-attempts/:attemptId`): user, device,
+  error and the step timeline with each step's data.
+- A user's page (`/user/:userId`): that user's attempts.
+
+The API behind it is `GET /admin/facebook/connect-attempts`,
+`/admin/facebook/connect-attempts/summary` and
+`/admin/facebook/connect-attempts/:attemptId`, open to any backoffice admin,
+like the other Facebook admin routes.
+
 ## Reference codes
 
-When an attempt fails, the error toast shows **รหัสอ้างอิง XXXXXX**: the first
+When an attempt fails, the error toast (or the "No Facebook pages found" screen) shows **รหัสอ้างอิง XXXXXX**: the first
 six characters of the attempt id, from an alphabet without 0/O/1/I/L. Ask the
-MP for a screenshot of the toast, then look up the code.
+MP for a screenshot of the toast, then search for the code in the backoffice.
 
 ## Queries
 
