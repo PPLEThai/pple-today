@@ -1,8 +1,21 @@
 diff --git a/ios/RCTFBSDK/login/RCTFBSDKLoginManager.m b/ios/RCTFBSDK/login/RCTFBSDKLoginManager.m
-index 3ffb92ff78b9e1fce566f3a4dfbd439eee9e74da..981d1ecbb07ef16a6a67775cb072d3a2a36c6938 100644
+index 3ffb92ff78b9e1fce566f3a4dfbd439eee9e74da..74ced0f5cac90c7d57324c7b939b3103996c1407 100644
 --- a/ios/RCTFBSDK/login/RCTFBSDKLoginManager.m
 +++ b/ios/RCTFBSDK/login/RCTFBSDKLoginManager.m
-@@ -77,17 +77,25 @@ + (BOOL)requiresMainQueueSetup
+@@ -70,24 +70,37 @@ + (BOOL)requiresMainQueueSetup
+ {
+     FBSDKLoginManagerLoginResultBlock requestHandler = ^(FBSDKLoginManagerLoginResult *result, NSError *error) {
+         if (error) {
+-            reject(@"FacebookSDK", @"Login Failed", error);
++            // PPLE patch: React Native's bridge drops NSError.code and any
++            // userInfo it cannot serialize, which leaves JS with a bare
++            // "Login Failed". Put the domain/code/description in the message.
++            NSString *message = [NSString stringWithFormat:@"Login Failed: %@ %ld %@",
++                                 error.domain, (long)error.code, error.localizedDescription];
++            reject(@"FacebookSDK", message, error);
+         } else {
+             resolve(RCTBuildResultDictionary(result));
+         }
      };
      FBSDKLoginConfiguration *configuration;
      FBSDKLoginTracking tracking = [loginTracking  isEqualToString: @"limited"] ? FBSDKLoginTrackingLimited : FBSDKLoginTrackingEnabled;

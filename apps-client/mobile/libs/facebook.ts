@@ -30,6 +30,11 @@ export async function getFacebookPageAccessToken(): Promise<string> {
   const cachedToken = await getCachedFacebookPageAccessToken()
   if (cachedToken) return cachedToken
 
+  // Start from a clean SDK state. Whatever token, authentication token or
+  // profile the SDK still holds is unusable at this point, and leftovers from an
+  // earlier failed login made every new login fail with com.facebook.sdk.login
+  // until the app was reinstalled.
+  LoginManager.logOut()
   const loginResult = await LoginManager.logInWithPermissions(FACEBOOK_PAGE_PERMISSIONS)
   if (loginResult.isCancelled) {
     throw new FacebookLoginCancelledError()
@@ -39,6 +44,20 @@ export async function getFacebookPageAccessToken(): Promise<string> {
     throw new Error('Failed to get facebook access token')
   }
   return accessToken.accessToken
+}
+
+/**
+ * A short, user-visible description of a Facebook login failure. Native SDK
+ * errors reject with a generic "Login Failed" message and carry the real cause
+ * in `domain` / `userInfo`, so include those when present.
+ */
+export function describeFacebookError(error: unknown): string {
+  if (!(error instanceof Error)) return String(error)
+  const native = error as Error & { domain?: string; userInfo?: unknown }
+  const details = [native.domain, native.userInfo ? JSON.stringify(native.userInfo) : undefined]
+    .filter(Boolean)
+    .join(' ')
+  return (details ? `${error.message} (${details})` : error.message).slice(0, 300)
 }
 
 async function getCachedFacebookPageAccessToken(): Promise<string | null> {
