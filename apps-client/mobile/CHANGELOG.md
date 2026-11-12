@@ -1,5 +1,15 @@
 # @client/mobile
 
+## 2.14.2
+
+### Patch Changes
+
+- [#533](https://github.com/PPLEThai/pple-today/pull/533) [`0c5ad2b`](https://github.com/PPLEThai/pple-today/commit/0c5ad2b5201541fc25b016f7045fad03b5fbb9e8) Thanks [@PanJ](https://github.com/PanJ)! - Connecting a Facebook page is more reliable: returning from the Facebook app no longer lands on the ไม่พบเนื้อหา screen, a failed login no longer leaves the app stuck until it is reinstalled, and a failure now shows a toast with the error instead of silently returning to the profile screen.
+
+- [#534](https://github.com/PPLEThai/pple-today/pull/534) [`07fbdbb`](https://github.com/PPLEThai/pple-today/commit/07fbdbbfc127223939478f45df6d33cb14335d37) Thanks [@PanJ](https://github.com/PanJ)! - Connecting a Facebook page now records what happened on each attempt for support, and a failed attempt, including one where no page came back, shows a reference code (รหัสอ้างอิง)
+
+- [#531](https://github.com/PPLEThai/pple-today/pull/531) [`ff4a013`](https://github.com/PPLEThai/pple-today/commit/ff4a013d9d01f4b0f8b84ce729a3bb2a7049a6be) Thanks [@PanJ](https://github.com/PanJ)! - Feed cards no longer fade in with a stutter when the feed finishes loading
+
 ## 2.14.1
 
 ### Patch Changes
