@@ -1,5 +1,11 @@
 # @client/backoffice
 
+## 1.9.1
+
+### Patch Changes
+
+- [#536](https://github.com/PPLEThai/pple-today/pull/536) [`8030b0f`](https://github.com/PPLEThai/pple-today/commit/8030b0f00e714abb4252f801dc73255734007155) Thanks [@PanJ](https://github.com/PanJ)! - Group the Facebook page admin pages in the sidebar, and highlight only the current one: the page list no longer lights up with the connect history
+
 ## 1.9.0
 
 ### Minor Changes
