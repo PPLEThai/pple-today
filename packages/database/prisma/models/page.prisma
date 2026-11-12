@@ -23,3 +23,43 @@ model FacebookPage {
   managerId String? @unique
   manager   User?   @relation(fields: [managerId], references: [id], onDelete: SetNull)
 }
+
+enum FacebookConnectAttemptOutcome {
+  SUCCESS
+  FAILED
+  CANCELLED
+  ABANDONED
+}
+
+/// One "connect a Facebook page" attempt from the mobile app, recorded so
+/// support can see what happened for a user without asking them. Holds no
+/// access token or other secret. Rows older than 90 days are deleted by the
+/// API (see `FacebookService.recordConnectAttempt`).
+model FacebookConnectAttempt {
+  /// Client-generated attempt id (16 chars from an unambiguous alphabet)
+  id            String                        @id
+  /// The first 6 chars of `id`, shown to the user in the error toast
+  referenceCode String
+  userId        String
+  user          User                          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  outcome       FacebookConnectAttemptOutcome
+  /// The step that ended a FAILED attempt, e.g. `login`, `graph_accounts`
+  failedStep    String?
+  platform      String
+  osVersion     String?
+  appVersion    String?
+  buildNumber   String?
+  errorDomain   String?
+  errorCode     String?
+  errorMessage  String?
+  /// Device context: Facebook app installed, tracking permission, device model
+  context       Json
+  /// Timestamped steps, see the mobile app's `libs/facebook-connect-trace.ts`
+  steps         Json
+  startedAt     DateTime
+  createdAt     DateTime                      @default(now())
+
+  @@index([userId, createdAt])
+  @@index([referenceCode])
+  @@index([createdAt])
+}

@@ -20,6 +20,8 @@ import { createHmac } from 'crypto'
 import { Elysia, t } from 'elysia'
 import { fromPromise, ok } from 'neverthrow'
 
+import { ConnectAttemptRecord } from './connect-attempt'
+
 import { ConfigServicePlugin } from '../../plugins/config'
 import { FileServicePlugin } from '../../plugins/file'
 import { ElysiaLoggerPlugin } from '../../plugins/log'
@@ -540,6 +542,23 @@ export class FacebookRepository {
       profileImagePath: linkedPage.value.profilePicturePath,
       pageAccessToken: linkedPage.value.pageAccessToken,
     })
+  }
+
+  async createConnectAttempt(record: ConnectAttemptRecord) {
+    return await fromRepositoryPromise(
+      this.prismaService.facebookConnectAttempt.create({
+        data: record,
+        select: { id: true, referenceCode: true },
+      })
+    )
+  }
+
+  async deleteConnectAttemptsCreatedBefore(cutoff: Date) {
+    return await fromRepositoryPromise(
+      this.prismaService.facebookConnectAttempt.deleteMany({
+        where: { createdAt: { lt: cutoff } },
+      })
+    )
   }
 
   async handleUploadedProfilePicture(fileUrl: string, fileName: FilePath) {
