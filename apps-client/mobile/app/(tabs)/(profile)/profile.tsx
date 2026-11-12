@@ -65,7 +65,11 @@ import {
   useSession,
 } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
-import { FacebookLoginCancelledError, useFacebookConfigQuery } from '@app/libs/facebook'
+import {
+  describeFacebookError,
+  FacebookLoginCancelledError,
+  useFacebookConfigQuery,
+} from '@app/libs/facebook'
 import {
   finishActiveFacebookConnectAttempt,
   finishFacebookLoginAttempt,
@@ -435,11 +439,21 @@ function LinkFacebookPage() {
     },
     onError: (error) => {
       const referenceCode = finishFacebookLoginAttempt(error)
-      if (error instanceof FacebookLoginCancelledError) return
+      if (error instanceof FacebookLoginCancelledError) {
+        toast({ type: 'info', text1: 'ยกเลิกการเชื่อมต่อ Facebook' })
+        return
+      }
       console.error('Login Error: ', error)
-      toast.error({
+      toast({
+        type: 'error',
         text1: 'เชื่อมต่อ Facebook ไม่สำเร็จ',
-        text2: referenceCode ? referenceCodeToastText(referenceCode) : undefined,
+        // The reference code first, so it survives the toast truncating the error
+        text2: [
+          referenceCode && referenceCodeToastText(referenceCode),
+          describeFacebookError(error),
+        ]
+          .filter(Boolean)
+          .join(' · '),
       })
     },
   })
