@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.24.0
+
+### Minor Changes
+
+- [#534](https://github.com/PPLEThai/pple-today/pull/534) [`878dab2`](https://github.com/PPLEThai/pple-today/commit/878dab2ac95b727b66ce2129dca419168086114d) Thanks [@PanJ](https://github.com/PanJ)! - Add `POST /facebook/connect-attempts`, which stores a diagnostic trace of each "connect a Facebook page" attempt from the mobile app for 90 days, and admin routes to list, summarise and view those attempts
+
 ## 1.23.0
 
 ### Minor Changes
