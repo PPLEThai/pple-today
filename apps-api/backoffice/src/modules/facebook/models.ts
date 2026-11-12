@@ -1,5 +1,10 @@
-import { FacebookPageLinkedStatus } from '@pple-today/database/prisma'
+import {
+  FacebookConnectAttemptOutcome,
+  FacebookPageLinkedStatus,
+} from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
+
+import { CONNECT_ATTEMPT_ID_PATTERN } from './connect-attempt'
 
 export const RequestAccessTokenQuery = t.Object({
   code: t.String({
@@ -126,3 +131,53 @@ export const GetFacebookConfigResponse = t.Object({
   }),
 })
 export type GetFacebookConfigResponse = Static<typeof GetFacebookConfigResponse>
+
+const ConnectAttemptText = (maxLength: number, description: string) =>
+  t.Optional(t.String({ maxLength, description }))
+
+export const CreateFacebookConnectAttemptBody = t.Object({
+  attemptId: t.String({
+    pattern: CONNECT_ATTEMPT_ID_PATTERN,
+    description:
+      'Client-generated attempt id. Its first 6 characters are the reference code shown to the user',
+  }),
+  outcome: t.Enum(FacebookConnectAttemptOutcome, {
+    description: 'How the attempt ended',
+  }),
+  startedAt: t.String({ format: 'date-time', description: 'When the user pressed the button' }),
+  failedStep: ConnectAttemptText(64, 'The step that ended a FAILED attempt'),
+  error: t.Optional(
+    t.Object({
+      domain: ConnectAttemptText(200, 'Native error domain, e.g. com.facebook.sdk.login'),
+      code: ConnectAttemptText(64, 'Native, Graph API or backend error code'),
+      message: ConnectAttemptText(1000, 'Error message, with secrets redacted'),
+    })
+  ),
+  context: t.Object({
+    platform: t.String({ maxLength: 16, description: 'ios or android' }),
+    osVersion: ConnectAttemptText(32, 'OS version'),
+    appVersion: ConnectAttemptText(32, 'App version'),
+    buildNumber: ConnectAttemptText(32, 'Native build number'),
+    deviceModel: ConnectAttemptText(64, 'Device model name'),
+    facebookAppInstalled: t.Optional(
+      t.Nullable(t.Boolean({ description: 'Whether the Facebook app is installed' }))
+    ),
+    trackingPermission: ConnectAttemptText(32, 'iOS App Tracking Transparency status'),
+  }),
+  steps: t.Array(
+    t.Object({
+      at: t.Integer({ minimum: 0, description: 'Milliseconds since the attempt started' }),
+      name: t.String({ maxLength: 64, description: 'Step name, e.g. login_result' }),
+      data: t.Optional(t.Record(t.String(), t.Unknown())),
+    }),
+    { maxItems: 50 }
+  ),
+})
+export type CreateFacebookConnectAttemptBody = Static<typeof CreateFacebookConnectAttemptBody>
+
+export const CreateFacebookConnectAttemptResponse = t.Object({
+  referenceCode: t.String({ description: 'The reference code of the stored attempt' }),
+})
+export type CreateFacebookConnectAttemptResponse = Static<
+  typeof CreateFacebookConnectAttemptResponse
+>

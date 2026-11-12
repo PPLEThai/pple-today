@@ -68,9 +68,17 @@ import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import {
   describeFacebookError,
   FacebookLoginCancelledError,
-  getFacebookPageAccessToken,
   useFacebookConfigQuery,
 } from '@app/libs/facebook'
+import {
+  finishActiveFacebookConnectAttempt,
+  finishFacebookLoginAttempt,
+  getActiveFacebookConnectAttempt,
+  getFacebookPageAccessTokenWithTrace,
+  getOrStartFacebookConnectAttempt,
+  referenceCodeToastText,
+  startFacebookConnectAttempt,
+} from '@app/libs/facebook-connect-attempt'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 import { getRoleName } from '@app/utils/get-role-name'
 import { createImageUrl } from '@app/utils/image'
@@ -422,13 +430,15 @@ function LinkFacebookPage() {
   const user = useAuthMe()
 
   const logitWithFacebookMutation = useMutation({
-    mutationFn: getFacebookPageAccessToken,
+    mutationFn: () =>
+      getFacebookPageAccessTokenWithTrace(getOrStartFacebookConnectAttempt('profile_button')),
     onSuccess: (facebookAccessToken) => {
       router.push(
         `/profile/facebook?facebookAccessToken=${encodeURIComponent(facebookAccessToken)}`
       )
     },
     onError: (error) => {
+      const referenceCode = finishFacebookLoginAttempt(error)
       if (error instanceof FacebookLoginCancelledError) {
         toast({ type: 'info', text1: 'ยกเลิกการเชื่อมต่อ Facebook' })
         return
@@ -437,7 +447,13 @@ function LinkFacebookPage() {
       toast({
         type: 'error',
         text1: 'เชื่อมต่อ Facebook ไม่สำเร็จ',
-        text2: describeFacebookError(error),
+        // The reference code first, so it survives the toast truncating the error
+        text2: [
+          referenceCode && referenceCodeToastText(referenceCode),
+          describeFacebookError(error),
+        ]
+          .filter(Boolean)
+          .join(' · '),
       })
     },
   })
@@ -452,7 +468,9 @@ function LinkFacebookPage() {
     if (permissionStatus === null) {
       return
     }
+    const attempt = startFacebookConnectAttempt()
     if (permissionStatus.status !== PermissionStatus.GRANTED) {
+      attempt.record('tracking_prompt', { status: permissionStatus.status })
       setPermissionDialogOpen(true)
       return
     }
@@ -460,7 +478,14 @@ function LinkFacebookPage() {
   }
   /* This dialog should only open on iOS when permission is not granted */
   return (
-    <Dialog open={permissionDialogOpen} onOpenChange={setPermissionDialogOpen}>
+    <Dialog
+      open={permissionDialogOpen}
+      onOpenChange={(open) => {
+        setPermissionDialogOpen(open)
+        if (!open)
+          finishActiveFacebookConnectAttempt('CANCELLED', { failedStep: 'tracking_prompt' })
+      }}
+    >
       <Button
         variant="secondary"
         disabled={
@@ -482,7 +507,13 @@ function LinkFacebookPage() {
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="ghost" onPress={() => setPermissionDialogOpen(false)}>
+          <Button
+            variant="ghost"
+            onPress={() => {
+              setPermissionDialogOpen(false)
+              finishActiveFacebookConnectAttempt('CANCELLED', { failedStep: 'tracking_prompt' })
+            }}
+          >
             <Text>ยกเลิก</Text>
           </Button>
           <Button
@@ -494,9 +525,17 @@ function LinkFacebookPage() {
               if (!permissionStatus.granted) {
                 if (permissionStatus.canAskAgain) {
                   const { status } = await requestPermission()
+                  getActiveFacebookConnectAttempt()?.record('tracking_prompt_result', { status })
                   if (status !== PermissionStatus.GRANTED) {
                     console.log('Permission not granted')
-                    toast({ text1: 'Permission not granted' })
+                    const referenceCode = finishActiveFacebookConnectAttempt('FAILED', {
+                      failedStep: 'tracking_permission',
+                      error: { code: status },
+                    })
+                    toast({
+                      text1: 'Permission not granted',
+                      text2: referenceCode ? referenceCodeToastText(referenceCode) : undefined,
+                    })
                     return
                   }
                   setPermissionDialogOpen(false)
@@ -505,6 +544,7 @@ function LinkFacebookPage() {
                   setTimeout(() => logitWithFacebookMutation.mutate(), 1000)
                   return
                 }
+                finishActiveFacebookConnectAttempt('ABANDONED', { failedStep: 'opened_settings' })
                 Linking.openSettings()
                 return
               }
