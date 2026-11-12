@@ -85,6 +85,7 @@ jobs:
           eval `ssh-agent -s`
           ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
           ssh -fN -L 5432:${{ secrets.DATABASE_HOST }}:5432 ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}
+          bunx prisma migrate resolve --rolled-back 20261112090000_add_facebook_connect_attempt || true
           bunx prisma migrate deploy
         shell: bash
         env:
