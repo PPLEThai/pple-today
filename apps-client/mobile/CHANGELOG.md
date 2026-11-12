@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 2.14.3
+
+### Patch Changes
+
+- [#539](https://github.com/PPLEThai/pple-today/pull/539) [`d6ed161`](https://github.com/PPLEThai/pple-today/commit/d6ed161be12984b24683d9d9dd7c92f8ef549361) Thanks [@PanJ](https://github.com/PanJ)! - A Facebook connect trace that cannot be sent (for example on a network that blocks the API) is kept on the device and sent later, so support still sees the attempt
+
 ## 2.14.2
 
 ### Patch Changes
