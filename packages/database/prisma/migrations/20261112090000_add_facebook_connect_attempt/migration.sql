@@ -1,4 +1,3 @@
-[dotenv@17.0.1] injecting env (0) from .env – [tip] encrypt with dotenvx: https://dotenvx.com
 -- CreateEnum
 CREATE TYPE "public"."FacebookConnectAttemptOutcome" AS ENUM ('SUCCESS', 'FAILED', 'CANCELLED', 'ABANDONED');
 
