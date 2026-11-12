@@ -17,6 +17,10 @@ import FacebookIcon from '@app/assets/facebook-icon.svg'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useFacebookPagesQuery } from '@app/libs/facebook'
+import {
+  referenceCodeToastText,
+  useFacebookPagePickerTrace,
+} from '@app/libs/facebook-connect-attempt'
 import { createImageUrl } from '@app/utils/image'
 
 export default function FacebookListPage() {
@@ -41,11 +45,22 @@ export default function FacebookListPage() {
     { query: { pageIds: facebookPagesQuery.data?.map((p) => p.id) || [] } },
     { enabled: !!facebookPagesQuery.data }
   )
+  const trace = useFacebookPagePickerTrace({
+    receivedLogin: typeof facebookAccessToken === 'string' && facebookAccessToken.length > 0,
+    pages: facebookPagesQuery.data,
+    pagesError: facebookPagesQuery.error,
+    availability: availableLinkPagesQuery.data,
+    availabilityError: availableLinkPagesQuery.error,
+  })
   useEffect(() => {
     if (facebookPagesQuery.error) {
       console.error('Failed to fetch Facebook pages', JSON.stringify(facebookPagesQuery.error))
-      toast({ text1: 'Failed to fetch Facebook pages' })
+      toast({
+        text1: 'Failed to fetch Facebook pages',
+        text2: referenceCodeToastText(trace.getReferenceCode()),
+      })
     }
+    // Only when the error changes; the trace is stable for the screen
   }, [facebookPagesQuery.error])
 
   const queryClient = useQueryClient()
@@ -82,10 +97,12 @@ export default function FacebookListPage() {
           if (!page) {
             return
           }
+          trace.recordLinkStart(page.id)
           linkPageMutation.mutateAsync(
             { body: { facebookPageId: page.id, facebookPageAccessToken: page.access_token } },
             {
               onSuccess: () => {
+                trace.finishLinked()
                 queryClient.resetQueries({
                   queryKey: reactQueryClient.getQueryKey('/facebook/linked-page'),
                 })
@@ -93,7 +110,10 @@ export default function FacebookListPage() {
               },
               onError: (error) => {
                 console.error('Failed to link Facebook page', JSON.stringify(error))
-                toast.error({ text1: 'Failed to link Facebook page' })
+                toast.error({
+                  text1: 'Failed to link Facebook page',
+                  text2: referenceCodeToastText(trace.finishLinkFailed(error)),
+                })
               },
             }
           )
