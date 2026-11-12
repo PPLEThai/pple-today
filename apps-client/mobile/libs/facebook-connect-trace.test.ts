@@ -13,6 +13,7 @@ import {
   redactSecrets,
   referenceCodeFromAttemptId,
   sanitizeForTrace,
+  summarizeGraphPermissions,
 } from './facebook-connect-trace'
 
 const TOKEN = 'EAAGm0PX4ZCpsBAKZCZBabcdefghijklmnop1234567890'
@@ -259,5 +260,31 @@ describe('createConnectTrace', () => {
     expect(JSON.stringify(steps).length).toBeLessThanOrEqual(MAX_TRACE_STEPS_JSON_LENGTH)
     expect(steps[0].data).toEqual({ truncated: true })
     expect(steps).toHaveLength(45)
+  })
+})
+
+describe('summarizeGraphPermissions', () => {
+  test('splits permissions by status', () => {
+    const body = {
+      data: [
+        { permission: 'pages_show_list', status: 'granted' },
+        { permission: 'pages_read_engagement', status: 'declined' },
+        { permission: 'pages_manage_metadata', status: 'expired' },
+        { permission: 'public_profile', status: 'granted' },
+      ],
+    }
+    expect(summarizeGraphPermissions(body)).toEqual({
+      granted: ['pages_show_list', 'public_profile'],
+      declined: ['pages_read_engagement'],
+      expired: ['pages_manage_metadata'],
+    })
+  })
+
+  test('is empty for an unexpected body', () => {
+    expect(summarizeGraphPermissions({ error: {} })).toEqual({
+      granted: [],
+      declined: [],
+      expired: [],
+    })
   })
 })

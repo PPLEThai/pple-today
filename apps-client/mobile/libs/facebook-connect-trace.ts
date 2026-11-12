@@ -203,6 +203,26 @@ export function describeApiError(error: unknown): ConnectTraceError & { status?:
   }
 }
 
+/**
+ * Graph `/me/permissions` (`{ data: [{ permission, status }] }`) as lists of
+ * granted, declined and expired permissions.
+ */
+export function summarizeGraphPermissions(body: unknown) {
+  const rows =
+    body && typeof body === 'object' && Array.isArray((body as { data?: unknown }).data)
+      ? ((body as { data: unknown[] }).data as { permission?: unknown; status?: unknown }[])
+      : []
+  const byStatus = (status: string) =>
+    rows
+      .filter((row) => row?.status === status && typeof row.permission === 'string')
+      .map((row) => row.permission as string)
+  return {
+    granted: byStatus('granted'),
+    declined: byStatus('declined'),
+    expired: byStatus('expired'),
+  }
+}
+
 export interface ConnectTrace {
   readonly attemptId: string
   readonly referenceCode: string

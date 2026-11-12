@@ -21,6 +21,7 @@ import {
   describeApiError,
   describeErrorForTrace,
   describeGraphError,
+  summarizeGraphPermissions,
 } from './facebook-connect-trace'
 
 /**
@@ -173,6 +174,20 @@ export function referenceCodeToastText(referenceCode: string) {
   return `รหัสอ้างอิง ${referenceCode}`
 }
 
+async function fetchGraphPermissions(accessToken: string | undefined) {
+  if (!accessToken) return { result: 'skipped' }
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/v23.0/me/permissions?access_token=${encodeURIComponent(accessToken)}`
+    )
+    const body: unknown = await response.json()
+    if (!response.ok) return { result: 'error', ...describeGraphError(response.status, body) }
+    return { result: 'success', ...summarizeGraphPermissions(body) }
+  } catch (error) {
+    return { result: 'error', error: describeErrorForTrace(error) }
+  }
+}
+
 async function collectContext(): Promise<ConnectTraceContext> {
   const [facebookAppInstalled, trackingPermission] = await Promise.all([
     Linking.canOpenURL('fbapi://').catch(() => null),
@@ -220,7 +235,8 @@ async function sendTrace(
 }
 
 interface FacebookPagePickerState {
-  receivedLogin: boolean
+  /** Only used to ask Graph for the permissions when no page comes back; never recorded */
+  facebookAccessToken: string | undefined
   pages: { id: string; name: string }[] | undefined
   pagesError: unknown
   availability: Record<string, boolean> | undefined
@@ -230,9 +246,10 @@ interface FacebookPagePickerState {
 /**
  * Trace the page-picker screen (`/profile/facebook`) on the active attempt:
  * the Graph `/me/accounts` result, the `/facebook/linked-page/available`
- * result, and linking a page. Leaving the screen before a page is linked ends
- * the attempt as ABANDONED. Picking a page again after a failed link starts a
- * new attempt, so every failure the user sees has its own reference code.
+ * result, and linking a page. No pages, or a Graph error, ends the attempt as
+ * FAILED; leaving the screen before a page is linked ends it as ABANDONED.
+ * Picking a page again after a failed link starts a new attempt, so every
+ * failure the user sees has its own reference code.
  */
 export function useFacebookPagePickerTrace(state: FacebookPagePickerState) {
   const attemptRef = useRef<FacebookConnectAttempt | null>(null)
@@ -242,29 +259,53 @@ export function useFacebookPagePickerTrace(state: FacebookPagePickerState) {
     }
     return attemptRef.current
   }, [])
+  /** The screen's attempt while it is open. Refetches never start a new one. */
+  const getOpenAttempt = useCallback(() => {
+    const attempt = attemptRef.current
+    return attempt && !attempt.finished ? attempt : null
+  }, [])
 
-  const { receivedLogin, pages, pagesError, availability, availabilityError } = state
+  const { facebookAccessToken, pages, pagesError, availability, availabilityError } = state
+  const tokenRef = useRef(facebookAccessToken)
+  tokenRef.current = facebookAccessToken
 
   useEffect(() => {
-    getAttempt('page_picker').record('page_picker_open', { receivedLogin })
+    getAttempt('page_picker').record('page_picker_open', {
+      receivedLogin: !!tokenRef.current,
+    })
     return () => {
       attemptRef.current?.finish('ABANDONED', { failedStep: 'page_picker' })
     }
     // Once per screen
-  }, [])
+  }, [getAttempt])
 
   useEffect(() => {
-    if (!pages) return
-    getAttempt('page_picker').record('graph_accounts', {
+    const attempt = getOpenAttempt()
+    if (!pages || !attempt) return
+    attempt.record('graph_accounts', {
       result: 'success',
       pageCount: pages.length,
       pages: pages.map(({ id, name }) => ({ id, name })),
     })
-  }, [getAttempt, pages])
+    if (pages.length > 0) return
+    // Usually the user left every page unticked in Facebook's page selection,
+    // or lacks a role on the page. The permissions tell the two apart.
+    void (async () => {
+      attempt.record('graph_permissions', await fetchGraphPermissions(tokenRef.current))
+      attempt.finish('FAILED', {
+        failedStep: 'no_pages',
+        error: {
+          domain: 'graph.facebook.com',
+          code: 'NO_PAGES',
+          message: '/me/accounts returned no pages',
+        },
+      })
+    })()
+  }, [getOpenAttempt, pages])
 
   useEffect(() => {
-    if (!pagesError) return
-    const attempt = getAttempt('page_picker')
+    const attempt = getOpenAttempt()
+    if (!pagesError || !attempt) return
     void (async () => {
       const graphError = await describeFacebookPagesError(pagesError)
       attempt.record('graph_accounts', { result: 'error', ...graphError })
@@ -277,24 +318,24 @@ export function useFacebookPagePickerTrace(state: FacebookPagePickerState) {
         },
       })
     })()
-  }, [getAttempt, pagesError])
+  }, [getOpenAttempt, pagesError])
 
   useEffect(() => {
-    if (availability) getAttempt('page_picker').record('linked_page_available', { availability })
-  }, [getAttempt, availability])
+    if (availability) getOpenAttempt()?.record('linked_page_available', { availability })
+  }, [getOpenAttempt, availability])
 
   useEffect(() => {
     if (availabilityError) {
-      getAttempt('page_picker').record('linked_page_available', {
+      getOpenAttempt()?.record('linked_page_available', {
         result: 'error',
         error: describeApiError(availabilityError),
       })
     }
-  }, [getAttempt, availabilityError])
+  }, [getOpenAttempt, availabilityError])
 
   return {
-    /** The code to show for a failure on this screen. */
-    getReferenceCode: () => getAttempt('page_picker').referenceCode,
+    /** The code to show for a failure on this screen, without starting an attempt. */
+    getReferenceCode: () => attemptRef.current?.referenceCode ?? null,
     recordLinkStart: (pageId: string) =>
       getAttempt('page_picker_retry').record('link_page_start', { pageId }),
     finishLinked: () => {

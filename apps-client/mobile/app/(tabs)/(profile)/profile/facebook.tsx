@@ -46,7 +46,7 @@ export default function FacebookListPage() {
     { enabled: !!facebookPagesQuery.data }
   )
   const trace = useFacebookPagePickerTrace({
-    receivedLogin: typeof facebookAccessToken === 'string' && facebookAccessToken.length > 0,
+    facebookAccessToken: typeof facebookAccessToken === 'string' ? facebookAccessToken : undefined,
     pages: facebookPagesQuery.data,
     pagesError: facebookPagesQuery.error,
     availability: availableLinkPagesQuery.data,
@@ -55,9 +55,10 @@ export default function FacebookListPage() {
   useEffect(() => {
     if (facebookPagesQuery.error) {
       console.error('Failed to fetch Facebook pages', JSON.stringify(facebookPagesQuery.error))
+      const referenceCode = trace.getReferenceCode()
       toast({
         text1: 'Failed to fetch Facebook pages',
-        text2: referenceCodeToastText(trace.getReferenceCode()),
+        text2: referenceCode ? referenceCodeToastText(referenceCode) : undefined,
       })
     }
     // Only when the error changes; the trace is stable for the screen
@@ -136,8 +137,13 @@ export default function FacebookListPage() {
             <Text>Error loading Facebook pages</Text>
           </View>
         ) : facebookPagesQuery.data!.length === 0 ? (
-          <View className="flex flex-row justify-center w-full">
+          <View className="flex flex-col items-center gap-1 w-full">
             <Text className="text-base-text-placeholder">No Facebook pages found</Text>
+            {trace.getReferenceCode() && (
+              <Text className="text-base-text-placeholder text-sm">
+                {referenceCodeToastText(trace.getReferenceCode()!)}
+              </Text>
+            )}
           </View>
         ) : (
           facebookPagesQuery.data!.map((page) => {
