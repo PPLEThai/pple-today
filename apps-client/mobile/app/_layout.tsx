@@ -56,6 +56,7 @@ import { useScreenTracking } from '@app/libs/analytics'
 import { reactQueryClient } from '@app/libs/api-client'
 import { initAppUpdate } from '@app/libs/app-update'
 import { AuthLifeCycleHook, useAuthMe, useSession } from '@app/libs/auth'
+import { useFacebookConnectOutboxFlush } from '@app/libs/facebook-connect-attempt'
 import {
   addLiveActivityRegistrationListener,
   getLiveActivityRegistration,
@@ -136,6 +137,7 @@ export default function RootLayout() {
           )}
           <AuthLifeCycleHook />
           <AnalyticsScreenTracker />
+          <FacebookConnectOutboxFlush />
           <NotificationTokenConsentPopup />
           <AppIconBadgeSync />
           <AppUpdateGate />
@@ -256,6 +258,12 @@ function ColorSchemeProvider({ children }: { children: React.ReactNode }) {
 
 function AnalyticsScreenTracker() {
   useScreenTracking()
+  return null
+}
+
+/** Sends Facebook connect-attempt traces an earlier failed send kept on the device. */
+function FacebookConnectOutboxFlush() {
+  useFacebookConnectOutboxFlush()
   return null
 }
 

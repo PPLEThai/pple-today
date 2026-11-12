@@ -40,6 +40,7 @@ the button press:
 | `link_page_start`        | `pageId`                                                                                                                                                                                                                      |
 | `link_page_result`       | `success`, or `error` (+ `status`, `code`, `message` from the API)                                                                                                                                                            |
 | `end`                    | `outcome`                                                                                                                                                                                                                     |
+| `delivered_late`         | the first send failed (no network, or a network that blocks the API, such as Parliament's wifi) and the app sent the trace later: `failedSends`, `firstFailedAt`, `lastError`                                                 |
 
 The API also logs one line per attempt (`message: "Facebook connect attempt"`,
 field `facebookConnectAttempt`), so recent attempts can be found in the logs
@@ -49,6 +50,13 @@ too.
 drops any key containing `token`, `secret`, `password`, `authorization` or
 `cookie` (which removes `access_token` from the Graph response), and all text
 is scrubbed of token-like values. The API scrubs again before storing.
+
+**Unreachable API.** If the trace cannot be sent (no network, a network that
+blocks the API, a 5xx, an expired session), the app keeps it on the device
+(up to 20 traces, 30 days) and sends it on the next launch or foreground, or
+right after a later trace gets through. Such a row has `createdAt` well after
+`startedAt` and ends with a `delivered_late` step. A trace the API rejects
+(another 4xx) is dropped.
 
 Known gaps: React Native drops `NSError.code`, so a native iOS login failure
 carries only `errorDomain` (e.g. `com.facebook.sdk.login`) and an empty

@@ -1,22 +1,26 @@
 import { useCallback, useEffect, useRef } from 'react'
-import { Linking, Platform } from 'react-native'
+import { AppState, Linking, Platform } from 'react-native'
 import { AccessToken } from 'react-native-fbsdk-next'
 
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import Constants from 'expo-constants'
 import * as Device from 'expo-device'
 import { getTrackingPermissionsAsync } from 'expo-tracking-transparency'
 
 import { fetchClient } from './api-client'
+import { getAuthSessionAsync } from './auth/session'
 import {
   FacebookCachedTokenCheck,
   FacebookLoginCancelledError,
   getFacebookPageAccessToken,
 } from './facebook'
+import { classifySendResult, createOutbox, type SendOutcome } from './facebook-connect-outbox'
 import {
   type ConnectAttemptOutcome,
   type ConnectTrace,
   type ConnectTraceContext,
   type ConnectTraceError,
+  type ConnectTracePayload,
   createConnectTrace,
   describeApiError,
   describeErrorForTrace,
@@ -225,13 +229,66 @@ async function sendTrace(
       ),
     ])
     const body = trace.toPayload({ outcome, context: resolvedContext, ...details })
-    const response = await fetchClient('/facebook/connect-attempts', { method: 'POST', body })
-    if (response.error) {
-      console.warn('Failed to send Facebook connect attempt', trace.referenceCode, response.error)
+    const result = await postTrace(body)
+    if (result.outcome === 'retry') {
+      console.warn(
+        'Keeping Facebook connect attempt to send later',
+        trace.referenceCode,
+        result.error
+      )
+      await outbox.add(body, result.error ?? 'unknown')
+    } else if (result.outcome === 'drop') {
+      console.warn('Facebook connect attempt rejected', trace.referenceCode, result.error)
+    } else {
+      // The API is reachable again: send whatever an earlier failure kept
+      void flushFacebookConnectOutbox()
     }
   } catch (error) {
     console.warn('Failed to send Facebook connect attempt', trace.referenceCode, error)
   }
+}
+
+const outbox = createOutbox(AsyncStorage)
+
+async function postTrace(
+  body: ConnectTracePayload
+): Promise<{ outcome: SendOutcome; error?: string }> {
+  try {
+    const response = await fetchClient('/facebook/connect-attempts', { method: 'POST', body })
+    const outcome = classifySendResult({ status: response.status })
+    return outcome === 'sent' ? { outcome } : { outcome, error: `HTTP ${response.status}` }
+  } catch (error) {
+    // fetch itself failed: no network, or a network that blocks the API
+    return {
+      outcome: 'retry',
+      error: describeErrorForTrace(error).message ?? 'network error',
+    }
+  }
+}
+
+/**
+ * Send traces kept by an earlier failed send. Safe to call often: it does
+ * nothing without a session or with an empty outbox, and never throws.
+ */
+export async function flushFacebookConnectOutbox() {
+  try {
+    if (!(await getAuthSessionAsync())) return 0
+    return await outbox.flush(postTrace)
+  } catch (error) {
+    console.warn('Failed to flush Facebook connect attempts', error)
+    return 0
+  }
+}
+
+/** Flush kept traces on launch and whenever the app comes to the foreground. */
+export function useFacebookConnectOutboxFlush() {
+  useEffect(() => {
+    void flushFacebookConnectOutbox()
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void flushFacebookConnectOutbox()
+    })
+    return () => subscription.remove()
+  }, [])
 }
 
 interface FacebookPagePickerState {
