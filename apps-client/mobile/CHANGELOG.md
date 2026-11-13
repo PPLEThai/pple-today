@@ -1,5 +1,13 @@
 # @client/mobile
 
+## 2.15.1
+
+### Patch Changes
+
+- [#548](https://github.com/PPLEThai/pple-today/pull/548) [`3be065d`](https://github.com/PPLEThai/pple-today/commit/3be065dbb42ec40d40bf7c03d387d61c68088cc5) Thanks [@PanJ](https://github.com/PanJ)! - On iOS 26, the post, hashtag, notification detail, election, user profile, followed content and Facebook page screens use the native Liquid Glass header, and their content scrolls under it with the system blur. Android and older iOS keep the current headers.
+
+- [#546](https://github.com/PPLEThai/pple-today/pull/546) [`a227513`](https://github.com/PPLEThai/pple-today/commit/a2275131933e2a568fe1bba9027a7467ecc1e457) Thanks [@PanJ](https://github.com/PanJ)! - On iOS 26, the อาสา tab tells อาสาประชาชน how tall the floating tab bar is (as the CSS variable `--pple-today-inset-bottom`), so the mini app can keep its own bottom menu above the bar instead of under it.
+
 ## 2.15.0
 
 ### Minor Changes
