@@ -1,6 +1,8 @@
 import type { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import {
+  NotificationCallbackStatus,
+  NotificationOrigin,
   NotificationResponseChannel,
   NotificationTokenPlatform,
   Prisma,
@@ -39,6 +41,7 @@ export class InteractionRepository {
               interactionClosedAt: true,
               miniAppId: true,
               miniApp: { select: { retiredAt: true } },
+              origin: true,
               responses: { where: { userId }, select: callerResponseSelect },
             },
           },
@@ -121,6 +124,7 @@ export class InteractionRepository {
               interactionClosedAt: true,
               interactionExpiresAt: true,
               miniApp: { select: { retiredAt: true } },
+              origin: true,
             },
           })
           if (!row) return { status: 'CLOSED' }
@@ -128,11 +132,14 @@ export class InteractionRepository {
             hasResponse: false,
             closedAt: row.interactionClosedAt,
             expiresAt: row.interactionExpiresAt,
-            appGone: row.miniAppId === null || isAppGone(row.miniApp),
+            appGone: isAppGone(row),
             now: input.now,
           })
           if (state === 'CLOSED' || state === 'EXPIRED') return { status: state }
 
+          // An admin-portal answer is kept here and read in the portal: nothing is
+          // delivered, so the row is never an outbox entry for the sweep.
+          const kept = row.origin === NotificationOrigin.ADMIN_PORTAL
           const response = await tx.notificationResponse.create({
             data: {
               notificationId: input.notificationId,
@@ -141,9 +148,13 @@ export class InteractionRepository {
               actionId: input.actionId,
               values: input.values,
               channel: input.channel,
-              // The app's clock, not the database default: the sweep compares this
-              // against the app's `now`, and the two clocks can differ.
-              nextAttemptAt: new Date(),
+              ...(kept
+                ? { deliveryStatus: NotificationCallbackStatus.NONE, nextAttemptAt: null }
+                : {
+                    // The app's clock, not the database default: the sweep compares this
+                    // against the app's `now`, and the two clocks can differ.
+                    nextAttemptAt: new Date(),
+                  }),
             },
             select: { id: true, ...callerResponseSelect },
           })
@@ -186,6 +197,20 @@ export class InteractionRepository {
     return fromRepositoryPromise(
       this.prismaService.notification.findFirst({
         where: { id: notificationId, miniAppId, interaction: { not: Prisma.DbNull } },
+        select: { interactionClosedAt: true },
+      })
+    )
+  }
+
+  /** An admin-portal notification's interaction, or null. */
+  async getPortalInteraction(notificationId: string) {
+    return fromRepositoryPromise(
+      this.prismaService.notification.findFirst({
+        where: {
+          id: notificationId,
+          origin: NotificationOrigin.ADMIN_PORTAL,
+          interaction: { not: Prisma.DbNull },
+        },
         select: { interactionClosedAt: true },
       })
     )

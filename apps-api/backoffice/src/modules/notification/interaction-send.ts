@@ -45,6 +45,12 @@ export async function prepareInteractionSend(args: {
   bypass: boolean
   /** The sending app, or null for an unbound key. */
   app: { id: string } | null
+  /**
+   * Answers are kept in today-v2 and read in the admin portal rather than
+   * POSTed to an app (`NotificationOrigin.ADMIN_PORTAL`). There is no callback
+   * target to check, so `app` and the callback config are not consulted.
+   */
+  collectedInPortal?: boolean
   getCallbackTarget: (miniAppId: string) => Promise<CallbackTarget | null>
   /** Callback config of this deployment. Absent counts as nothing configured. */
   callbackConfig?: CallbackSendConfig
@@ -72,6 +78,13 @@ export async function prepareInteractionSend(args: {
     return err({
       code: InternalErrorCode.NOTIFICATION_INVALID_INTERACTION,
       message: `${validated.path}: ${validated.message}`,
+    })
+  }
+
+  if (args.collectedInPortal) {
+    return ok<PreparedInteraction | undefined>({
+      spec: validated.spec,
+      expiresAt: validated.expiresAt,
     })
   }
 

@@ -69,6 +69,20 @@ enum NotificationInAppType {
   MINI_APP_INVITE
 }
 
+// Where a notification was sent from, which decides where answers to its
+// interaction go.
+//
+// `API` — a notification key (raw or audience-bound send) or a platform-internal
+// send. Answers are POSTed back to the sending app; with no app there is no
+// interaction.
+// `ADMIN_PORTAL` — composed and sent by an admin in the backoffice, always as
+// PPLE Today. Answers are kept here and read in the portal; there is no app and
+// no callback.
+enum NotificationOrigin {
+  API
+  ADMIN_PORTAL
+}
+
 model Notification {
   id               String                @id @default(cuid())
   title            String
@@ -105,6 +119,12 @@ model Notification {
   interactionExpiresAt DateTime? // lifted out so "is it open?" is a column check
   interactionClosedAt  DateTime? // set by /close; never unset
 
+  origin       NotificationOrigin @default(API)
+  // The admin who sent an ADMIN_PORTAL notification. Null for API sends, and
+  // once that admin's account is deleted (the notification and answers stay).
+  sentByUserId String?
+  sentByUser   User?              @relation("NotificationSentBy", fields: [sentByUserId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -114,12 +134,17 @@ model Notification {
   liveActivities    NotificationLiveActivity[]
 
   @@index([miniAppId])
+  // The admin portal's history list.
+  @@index([origin, createdAt])
 }
 
 enum NotificationCallbackStatus {
   PENDING // waiting for its next attempt
   DELIVERED // the app answered 2xx
   FAILED // gave up: retries exhausted, permanent 4xx/410, or the app retired
+  // Nothing to deliver: an answer to an ADMIN_PORTAL notification, which is kept
+  // here and read in the portal. Never claimed by the sweep, never purged.
+  NONE
 }
 
 enum NotificationResponseChannel {
