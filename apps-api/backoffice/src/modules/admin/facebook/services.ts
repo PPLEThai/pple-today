@@ -104,10 +104,16 @@ export class AdminFacebookPageService {
       const pageId = updateResult.value.id
       const pageAccessToken = updateResult.value.pageAccessToken
 
+      // Only unsubscribe pages that were actually subscribed (i.e. previously
+      // approved). Rejecting a PENDING page that was never subscribed makes
+      // Facebook answer DELETE /subscribed_apps with "(#15) This method must be
+      // called with an app access_token".
       const subscriptionResult =
         data.status === 'APPROVED'
           ? await this.subscribeToPostUpdates(userId, pageId, pageAccessToken)
-          : await this.unsubscribeToPostUpdates(pageId, pageAccessToken)
+          : updateResult.value.isSubscribed
+            ? await this.unsubscribeToPostUpdates(pageId, pageAccessToken)
+            : ok()
       if (subscriptionResult.isErr()) {
         const rollbackResult = await this.adminFacebookPageRepository.updateFacebookPageById(
           facebookPageId,

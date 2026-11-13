@@ -76,9 +76,18 @@ export class FacebookRepository {
         message: 'Failed to parse Facebook API response',
       })
 
+      // Surface Facebook's own message (e.g. "(#200) ... pages_manage_metadata")
+      // rather than the raw JSON body, so the backoffice UI can show it as-is.
+      let errorBody: unknown
+      try {
+        errorBody = JSON.parse(responseText)
+      } catch {
+        errorBody = null
+      }
+
       return err({
         code: InternalErrorCode.FACEBOOK_API_ERROR,
-        message: responseText,
+        message: Check(ErrorBody, errorBody) ? errorBody.error.message : responseText,
       })
     }
 

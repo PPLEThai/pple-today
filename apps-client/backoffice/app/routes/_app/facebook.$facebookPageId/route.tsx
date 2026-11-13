@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 
 import { Badge } from '@pple-today/web-ui/badge'
 import {
@@ -13,6 +13,8 @@ import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { AlertDialog, AlertDialogRef } from 'components/AlertDialog'
+import { facebookPageStatusErrorAlert } from 'components/facebook/facebook-page-status-error'
 import { FacebookPageEdit } from 'components/facebook/FacebookPageEdit'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
 import {
@@ -42,6 +44,7 @@ export const Route = createFileRoute('/_app/facebook/$facebookPageId')({
 function FacebookDetailPage() {
   const { facebookPageId } = Route.useParams()
 
+  const alertDialogRef = useRef<AlertDialogRef>(null)
   const queryClient = useQueryClient()
   const query = reactQueryClient.useQuery('/admin/facebook/:facebookPageId', {
     pathParams: { facebookPageId },
@@ -66,6 +69,8 @@ function FacebookDetailPage() {
         { pathParams: { facebookPageId }, body: { status } },
         {
           onSuccess: () => invalidateQuery(),
+          onError: (error) =>
+            alertDialogRef.current?.alert(facebookPageStatusErrorAlert(status, error)),
         }
       )
     },
@@ -245,6 +250,7 @@ function FacebookDetailPage() {
           )}
         </>
       )}
+      <AlertDialog ref={alertDialogRef} />
     </div>
   )
 }
