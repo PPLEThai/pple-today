@@ -6,6 +6,7 @@ import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
 import { Badge } from '@pple-today/ui/badge'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
+import { cn } from '@pple-today/ui/lib/utils'
 import { Skeleton } from '@pple-today/ui/skeleton'
 import { Slide, SlideIndicators, SlideItem, SlideScrollView } from '@pple-today/ui/slide'
 import { Text } from '@pple-today/ui/text'
@@ -20,7 +21,12 @@ import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { FeedFooter, FeedRefreshControl } from '@app/components/feed'
 import { FeedCard } from '@app/components/feed/feed-card'
 import { useUserFollow } from '@app/components/feed/user-card'
-import { BackHeader, nativeHeaderScrollProps } from '@app/components/page-header'
+import {
+  BackHeader,
+  CollapsingTitle,
+  FadeInHeaderTitle,
+  useCollapsingTitle,
+} from '@app/components/page-header'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { useAuthMe } from '@app/libs/auth'
@@ -136,14 +142,20 @@ export default function ProfilePage() {
     return userFeedInfiniteQuery.data.pages.flatMap((page) => page.items)
   }, [userFeedInfiniteQuery.data])
 
+  // Shows the user's name in the header once their name row scrolls under it.
+  const collapsing = useCollapsingTitle()
+
   const renderProfileSection = () => {
     if (userDetailsQuery.isLoading || !userDetailsQuery.data) {
       return <ProfileSectionSkeleton />
     }
 
     return (
-      <View className="w-full flex flex-col bg-base-bg-white">
-        <View className="flex flex-row items-center gap-4 px-4 pb-4">
+      <View className={cn('w-full flex flex-col bg-base-bg-white', supportsLiquidGlass && 'pt-2')}>
+        <View
+          className="flex flex-row items-center gap-4 px-4 pb-4"
+          onLayout={collapsing.onTitleLayout}
+        >
           <Avatar alt={userDetailsQuery.data.name} className="w-16 h-16">
             <AvatarImage
               source={{
@@ -195,14 +207,26 @@ export default function ProfilePage() {
 
   return (
     <Layout className="flex-1">
-      <BackHeader className="flex flex-col bg-base-bg-white p-4" />
+      <BackHeader
+        className="bg-base-bg-white p-4"
+        glass={collapsing.scrolled}
+        title={
+          userDetailsQuery.data && (
+            <CollapsedProfileTitle
+              name={userDetailsQuery.data.name}
+              profileImage={userDetailsQuery.data.profileImage}
+              collapsing={collapsing}
+            />
+          )
+        }
+      />
       <Animated.FlatList
+        {...collapsing.scrollProps}
         refreshControl={<FeedRefreshControl headerHeight={0} onRefresh={onRefresh} />}
         data={data}
         renderItem={renderFeedItem}
         className="flex-1"
         contentContainerClassName="pb-4 bg-base-bg-default flex-grow"
-        {...nativeHeaderScrollProps}
         ListHeaderComponent={
           <>
             {renderProfileSection()}
@@ -217,6 +241,35 @@ export default function ProfilePage() {
         showsVerticalScrollIndicator={false}
       />
     </Layout>
+  )
+}
+
+/** The user's avatar and name for the header. */
+function CollapsedProfileTitle(props: {
+  name: string
+  profileImage?: string | null
+  collapsing: CollapsingTitle
+}) {
+  return (
+    <FadeInHeaderTitle collapsing={props.collapsing}>
+      <Avatar alt={props.name} className="w-7 h-7">
+        <AvatarImage
+          source={{
+            uri: props.profileImage
+              ? createImageUrl(props.profileImage, { width: 28, height: 28 })
+              : undefined,
+          }}
+        />
+        <AvatarPPLEFallback />
+      </Avatar>
+      <Text
+        className="shrink font-heading-semibold text-lg text-base-text-high"
+        numberOfLines={1}
+        maxFontSizeMultiplier={1}
+      >
+        {props.name}
+      </Text>
+    </FadeInHeaderTitle>
   )
 }
 
@@ -302,7 +355,7 @@ function AnnouncementSection() {
 
 const ProfileSectionSkeleton = () => {
   return (
-    <View className="w-full flex flex-col bg-base-bg-white">
+    <View className={cn('w-full flex flex-col bg-base-bg-white', supportsLiquidGlass && 'pt-2')}>
       <View className="flex flex-row items-center gap-4 px-4 pb-4">
         {/* Avatar */}
         <Skeleton className="h-16 w-16 rounded-full" />

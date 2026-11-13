@@ -5,10 +5,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 
 import { FeedCommentSection } from '@app/components/feed/comment-section'
 import { FeedDetail, FeedDetailSkeleton } from '@app/components/feed/feed-card'
-import { BackHeader } from '@app/components/page-header'
+import { BackHeader, useHeaderGlass } from '@app/components/page-header'
 import { reactQueryClient } from '@app/libs/api-client'
 
 export default function FeedDetailPage() {
+  const headerGlass = useHeaderGlass()
   const router = useRouter()
   const params = useLocalSearchParams()
   const feedId = params.feedId as string
@@ -32,10 +33,10 @@ export default function FeedDetailPage() {
   }
   return (
     <View className="flex-1 flex-col">
-      <BackHeader />
+      <BackHeader glass={headerGlass.glass} />
       <FeedCommentSection
         feedId={feedId}
-        underNativeHeader
+        scrollProps={headerGlass.scrollProps}
         headerComponent={
           feedContentQuery.isLoading || !feedContentQuery.data ? (
             <FeedDetailSkeleton />

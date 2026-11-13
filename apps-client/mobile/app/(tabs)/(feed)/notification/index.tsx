@@ -19,19 +19,26 @@ import {
   NotificationSenderIcon,
   PLATFORM_SENDER_NAME,
 } from '@app/components/notification/sender-icon'
-import { PageHeader, usePageHeaderInset } from '@app/components/page-header'
+import {
+  HeaderGlass,
+  PageHeader,
+  useHeaderGlass,
+  usePageHeaderInset,
+} from '@app/components/page-header'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { formatNotificationTime } from '@app/libs/format-notification-time'
 
 export default function NotificationHistoryPage() {
+  const headerGlass = useHeaderGlass({ padded: true })
   return (
     <View className="flex-1 bg-base-bg-light flex flex-col">
       <PageHeader
         icon={BellIcon}
         title="แจ้งเตือน"
         subtitle="รวมทุกการแจ้งเตือนของคุณ ไว้ในที่เดียว"
+        glass={headerGlass.glass}
       />
-      <NotificationHistory />
+      <NotificationHistory scrollProps={headerGlass.scrollProps} />
     </View>
   )
 }
@@ -105,7 +112,7 @@ export function optimisticMarkAllAsRead(queryClient: QueryClient) {
   )
 }
 
-function NotificationHistory() {
+function NotificationHistory(props: { scrollProps: HeaderGlass['scrollProps'] }) {
   const headerInset = usePageHeaderInset()
   const infiniteNotificationsQuery = useInfiniteQuery(infiniteNotificationsQueryOptions)
 
@@ -151,10 +158,10 @@ function NotificationHistory() {
 
   return (
     <FlatList
+      {...props.scrollProps}
       className="flex-1"
       contentContainerClassName="px-[12.5px] pb-4 gap-3"
       contentContainerStyle={{ paddingTop: headerInset + 12 }}
-      scrollIndicatorInsets={{ top: headerInset }}
       data={data}
       onEndReachedThreshold={0.8}
       onEndReached={onEndReached}

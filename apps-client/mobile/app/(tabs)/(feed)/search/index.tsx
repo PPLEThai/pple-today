@@ -2,17 +2,15 @@ import React from 'react'
 import { FlatList, Keyboard, Pressable, View } from 'react-native'
 
 import { FormControl, FormItem } from '@pple-today/ui/form'
-import { Input, InputGroup, InputLeftIcon } from '@pple-today/ui/input'
 import { Text } from '@pple-today/ui/text'
 import { useForm } from '@tanstack/react-form'
 import { keepPreviousData } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
-import { SearchIcon } from 'lucide-react-native'
 
 import { GetSearchKeywordResponse } from '@api/backoffice/app'
-import { BackButton } from '@app/components/back-button'
-import { SafeAreaLayout } from '@app/components/safe-area-layout'
+import { useHeaderGlass, usePageHeaderInset } from '@app/components/page-header'
 import { QuerySearchCard } from '@app/components/search/query-card'
+import { SearchHeader, SearchInput } from '@app/components/search/search-header'
 import { SearchNotEntered, SearchNotFound } from '@app/components/search/search-status'
 import { TopicSearchCard } from '@app/components/search/topic-card'
 import { UserSearchCard } from '@app/components/search/user-card'
@@ -23,6 +21,8 @@ import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import { useSearchingContext } from './_layout'
 
 export default function SearchPage() {
+  const headerGlass = useHeaderGlass()
+  const headerInset = usePageHeaderInset()
   const router = useRouter()
   const { state, dispatch } = useSearchingContext()
   const [isFocused, setIsFocused] = React.useState(true)
@@ -61,6 +61,12 @@ export default function SearchPage() {
     return items.sort((a, b) => getKeywordPriority(b) - getKeywordPriority(a))
   }, [keywords])
 
+  const hasList =
+    !keywordQuery.isLoading &&
+    !(!isFocused && !state.searchQuery) &&
+    !!keywordQuery.data &&
+    keywordList.length > 0
+
   const RenderKeywordSuggestions = () => {
     // State: loading
     if (keywordQuery.isLoading) {
@@ -94,6 +100,7 @@ export default function SearchPage() {
     // Normal condition
     return (
       <FlatList
+        {...headerGlass.scrollProps}
         data={keywordList}
         renderItem={({ item, index }) => {
           switch (item.type) {
@@ -119,54 +126,44 @@ export default function SearchPage() {
   }
 
   return (
-    <Pressable onPress={Keyboard.dismiss} className="flex-1">
-      <SafeAreaLayout>
-        <View className="flex flex-col">
-          <View className="p-4 flex flex-row items-center gap-3">
-            <BackButton
-              onPress={() => (router.canGoBack() ? router.back() : router.dismissTo('/'))}
-              aria-label="Go back"
-            />
-            <View className="flex-1">
-              <searchForm.Field
-                name="query"
-                listeners={{
-                  onChangeDebounceMs: 300,
-                  onChange: ({ value }) => {
-                    dispatch({ type: 'updateQuery', query: value })
-                  },
-                }}
-              >
-                {(field) => (
-                  <FormItem field={field}>
-                    <FormControl>
-                      <InputGroup>
-                        <InputLeftIcon icon={SearchIcon} className="text-base-text-medium" />
-                        <Input
-                          autoFocus
-                          placeholder="ค้นหา"
-                          className="rounded-lg"
-                          value={field.state.value}
-                          onChangeText={field.handleChange}
-                          returnKeyType="search"
-                          onSubmitEditing={searchForm.handleSubmit}
-                          onFocus={() => {
-                            setIsFocused(true)
-                          }}
-                          onBlur={() => {
-                            setIsFocused(false)
-                          }}
-                        />
-                      </InputGroup>
-                    </FormControl>
-                  </FormItem>
-                )}
-              </searchForm.Field>
-            </View>
-          </View>
-        </View>
+    <Pressable onPress={Keyboard.dismiss} className="flex-1 bg-base-bg-white">
+      <SearchHeader
+        glass={headerGlass.glass}
+        onBack={() => (router.canGoBack() ? router.back() : router.dismissTo('/'))}
+      >
+        <searchForm.Field
+          name="query"
+          listeners={{
+            onChangeDebounceMs: 300,
+            onChange: ({ value }) => {
+              dispatch({ type: 'updateQuery', query: value })
+            },
+          }}
+        >
+          {(field) => (
+            <FormItem field={field}>
+              <FormControl>
+                <SearchInput
+                  autoFocus
+                  value={field.state.value}
+                  onChangeText={field.handleChange}
+                  onSubmitEditing={searchForm.handleSubmit}
+                  onFocus={() => {
+                    setIsFocused(true)
+                  }}
+                  onBlur={() => {
+                    setIsFocused(false)
+                  }}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        </searchForm.Field>
+      </SearchHeader>
+      {/* The list scrolls under the iOS 26 bar; the other states sit below it. */}
+      <View className="flex-1" style={{ paddingTop: hasList ? 0 : headerInset }}>
         {RenderKeywordSuggestions()}
-      </SafeAreaLayout>
+      </View>
     </Pressable>
   )
 }

@@ -5,6 +5,7 @@ import Animated from 'react-native-reanimated'
 import { QUERY_KEY_SYMBOL } from '@pple-today/api-client'
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
+import { cn } from '@pple-today/ui/lib/utils'
 import { Skeleton } from '@pple-today/ui/skeleton'
 import { Text } from '@pple-today/ui/text'
 import { H1, H2, H3 } from '@pple-today/ui/typography'
@@ -33,8 +34,14 @@ import { Event, FeedItem, FeedItemPoll, ListPollsResponse } from '@api/backoffic
 import { ActivityCard, ActivityCardSkeleton } from '@app/components/activity/activity-card'
 import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/announcement'
 import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
+import {
+  CollapsingTitle,
+  TabHeader,
+  TabScreenLayout,
+  tabTitleBlockClassName,
+  useCollapsingTitle,
+} from '@app/components/page-header'
 import { RefreshControl } from '@app/components/refresh-control'
-import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
 import { createImageUrl } from '@app/utils/image'
@@ -42,13 +49,30 @@ import { createImageUrl } from '@app/utils/image'
 import { useBottomTabOnPress } from '../_layout'
 
 export default function ActivityPage() {
+  const collapsing = useCollapsingTitle()
   return (
-    <SafeAreaLayout>
+    <TabScreenLayout>
+      <TabHeader
+        title="กิจกรรม"
+        icon={
+          <Icon
+            icon={HandshakeIcon}
+            size={26}
+            strokeWidth={2}
+            className="text-base-primary-default"
+          />
+        }
+        collapsing={collapsing}
+      />
       <PollFeedSection
+        collapsing={collapsing}
         ListHeaderComponent={
           <>
-            <View className="flex flex-col p-4 bg-base-bg-white">
-              <View className="flex flex-row gap-2 items-center">
+            <View className={cn('flex flex-col bg-base-bg-white', tabTitleBlockClassName)}>
+              <View
+                className="flex flex-row gap-2 items-center"
+                onLayout={collapsing.onTitleLayout}
+              >
                 <Icon
                   icon={HandshakeIcon}
                   size={32}
@@ -70,7 +94,7 @@ export default function ActivityPage() {
           </>
         }
       />
-    </SafeAreaLayout>
+    </TabScreenLayout>
   )
 }
 
@@ -215,7 +239,10 @@ function RecentActivity() {
   )
 }
 
-function PollFeedSection(props: { ListHeaderComponent: React.ReactNode }) {
+function PollFeedSection(props: {
+  ListHeaderComponent: React.ReactNode
+  collapsing: CollapsingTitle
+}) {
   const session = useSession()
 
   const listPollQuery = useInfiniteQuery({
@@ -275,11 +302,12 @@ function PollFeedSection(props: { ListHeaderComponent: React.ReactNode }) {
 
   const flatListRef = React.useRef<Animated.FlatList<any>>(null)
   useBottomTabOnPress(() => {
-    flatListRef.current?.scrollToOffset({ offset: 0, animated: true })
+    flatListRef.current?.scrollToOffset({ offset: props.collapsing.topOffset, animated: true })
   })
   return (
     <Animated.FlatList
       ref={flatListRef}
+      {...props.collapsing.scrollProps}
       className="flex-1"
       contentContainerClassName="flex flex-col bg-base-bg-default flex-grow mb-4"
       refreshControl={<RefreshControl onRefresh={onRefresh} />}

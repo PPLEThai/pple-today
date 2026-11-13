@@ -9,19 +9,30 @@ import { MegaphoneIcon } from 'lucide-react-native'
 
 import type { GetAnnouncementsResponse } from '@api/backoffice/app'
 import { AnnouncementCard } from '@app/components/announcement'
-import { PageHeader, usePageHeaderInset } from '@app/components/page-header'
+import {
+  HeaderGlass,
+  PageHeader,
+  useHeaderGlass,
+  usePageHeaderInset,
+} from '@app/components/page-header'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 
 export default function AnnouncementListPage() {
+  const headerGlass = useHeaderGlass({ padded: true })
   return (
     <View className="flex-1 bg-base-bg-light flex flex-col">
-      <PageHeader icon={MegaphoneIcon} title="ประกาศ" subtitle="ประกาศสำคัญจาก พรรคประชาชน" />
-      <AnnouncementList />
+      <PageHeader
+        icon={MegaphoneIcon}
+        title="ประกาศ"
+        subtitle="ประกาศสำคัญจาก พรรคประชาชน"
+        glass={headerGlass.glass}
+      />
+      <AnnouncementList scrollProps={headerGlass.scrollProps} />
     </View>
   )
 }
 
-function AnnouncementList() {
+function AnnouncementList(props: { scrollProps: HeaderGlass['scrollProps'] }) {
   const headerInset = usePageHeaderInset()
   const announcementsQuery = reactQueryClient.useQuery('/announcements', {
     query: { limit: 5 },
@@ -106,10 +117,10 @@ function AnnouncementList() {
 
   return (
     <FlatList
+      {...props.scrollProps}
       className="flex-1"
       contentContainerClassName="px-[12.5px] pb-4"
       contentContainerStyle={{ paddingTop: headerInset + 4 }}
-      scrollIndicatorInsets={{ top: headerInset }}
       data={infiniteAnnouncementsQuery.data}
       onEndReachedThreshold={0.8}
       onEndReached={onEndReached}

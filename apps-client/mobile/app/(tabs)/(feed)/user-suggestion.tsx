@@ -6,12 +6,13 @@ import { UserRoundPlusIcon } from 'lucide-react-native'
 
 import { GetUserRecommendationResponse } from '@api/backoffice/app'
 import { UserCard } from '@app/components/feed/user-card'
-import { PageHeader, usePageHeaderInset } from '@app/components/page-header'
+import { PageHeader, useHeaderGlass, usePageHeaderInset } from '@app/components/page-header'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
 
 export default function UserSuggestion() {
   const headerInset = usePageHeaderInset()
+  const headerGlass = useHeaderGlass({ padded: true })
   const session = useSession()
   const userSuggestionQuery = reactQueryClient.useQuery(
     '/profile/recommend',
@@ -40,11 +41,12 @@ export default function UserSuggestion() {
         icon={UserRoundPlusIcon}
         title="แนะนำให้ติดตาม"
         subtitle="คุณติดตามบุคคลเหล่านี้แล้วหรือยัง?"
+        glass={headerGlass.glass}
       />
       <FlatList
+        {...headerGlass.scrollProps}
         contentContainerClassName="pb-4 px-3 gap-4"
         contentContainerStyle={{ paddingTop: headerInset + 16 }}
-        scrollIndicatorInsets={{ top: headerInset }}
         showsVerticalScrollIndicator={false}
         data={userSuggestionQuery.data ?? []}
         numColumns={2}

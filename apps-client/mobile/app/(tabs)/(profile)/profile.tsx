@@ -1,5 +1,13 @@
 import React from 'react'
-import { Linking, Platform, Pressable, PressableProps, RefreshControl, View } from 'react-native'
+import {
+  LayoutChangeEvent,
+  Linking,
+  Platform,
+  Pressable,
+  PressableProps,
+  RefreshControl,
+  View,
+} from 'react-native'
 import { ScrollView } from 'react-native-gesture-handler'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 
@@ -18,6 +26,7 @@ import {
   DialogTrigger,
 } from '@pple-today/ui/dialog'
 import { Icon } from '@pple-today/ui/icon'
+import { cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 import { toast } from '@pple-today/ui/toast'
 import { H1, H2 } from '@pple-today/ui/typography'
@@ -52,6 +61,12 @@ import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { ElectionStatusBadge } from '@app/components/election/election-card'
+import {
+  TabHeader,
+  TabScreenLayout,
+  tabTitleBlockClassName,
+  useCollapsingTitle,
+} from '@app/components/page-header'
 import { PartyInformationSection } from '@app/components/party-information'
 import { PollStatusBadge } from '@app/components/poll/poll-card'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
@@ -151,14 +166,28 @@ const ProfileSetting = () => {
     }
   }, [queryClient])
 
+  const collapsing = useCollapsingTitle()
   const ref = React.useRef<ScrollView>(null)
   useBottomTabOnPress(() => {
-    ref.current?.scrollTo({ y: 0, animated: true })
+    ref.current?.scrollTo({ y: collapsing.topOffset, animated: true })
   })
   return (
-    <SafeAreaLayout>
-      <ScrollView
+    <TabScreenLayout>
+      <TabHeader
+        title="โปรไฟล์"
+        icon={
+          <Icon
+            icon={CircleUserRoundIcon}
+            size={26}
+            strokeWidth={2}
+            className="text-base-primary-default"
+          />
+        }
+        collapsing={collapsing}
+      />
+      <AnimatedScrollView
         ref={ref}
+        {...collapsing.scrollProps}
         className="flex-1"
         contentContainerClassName="flex-grow"
         refreshControl={
@@ -170,7 +199,7 @@ const ProfileSetting = () => {
         }
       >
         <View className="bg-base-bg-white flex flex-col">
-          <HeaderSection />
+          <HeaderSection onTitleLayout={collapsing.onTitleLayout} />
           <View className="p-4 flex flex-col gap-3">
             <ProfileSection />
             <AddressSection />
@@ -184,15 +213,18 @@ const ProfileSetting = () => {
           <PartyInformationSection className="py-1" />
           <SettingSection />
         </View>
-      </ScrollView>
-    </SafeAreaLayout>
+      </AnimatedScrollView>
+    </TabScreenLayout>
   )
 }
 
-const HeaderSection = () => {
+// Gesture handler's ScrollView, driven by a reanimated scroll handler.
+const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView)
+
+const HeaderSection = (props: { onTitleLayout: (event: LayoutChangeEvent) => void }) => {
   return (
-    <View className="p-4 flex flex-col gap-1">
-      <View className="flex flex-row gap-1 items-center">
+    <View className={cn('flex flex-col gap-1', tabTitleBlockClassName)}>
+      <View className="flex flex-row gap-1 items-center" onLayout={props.onTitleLayout}>
         <Icon
           icon={CircleUserRoundIcon}
           size={32}
