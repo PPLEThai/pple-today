@@ -14,7 +14,11 @@ import { MapPinnedIcon, VoteIcon } from 'lucide-react-native'
 import { ElectionWithCurrentStatus, GetElectionResponse } from '@api/backoffice/app'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { ElectionDetailCard } from '@app/components/election/election-card'
-import { BackHeader, usePageHeaderInset } from '@app/components/page-header'
+import {
+  BackHeader,
+  nativeHeaderScrollProps,
+  usePageHeaderInset,
+} from '@app/components/page-header'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useAuthMe } from '@app/libs/auth'
@@ -62,8 +66,7 @@ export default function ElectionDetailPage() {
         <>
           <ScrollView
             contentContainerClassName="flex flex-col gap-3 px-4"
-            contentContainerStyle={{ paddingTop: headerInset }}
-            scrollIndicatorInsets={{ top: headerInset }}
+            {...nativeHeaderScrollProps}
           >
             <H1 className="text-xl font-heading-semibold text-base-text-high">{election.name}</H1>
             <ElectionDetailCard election={election} />

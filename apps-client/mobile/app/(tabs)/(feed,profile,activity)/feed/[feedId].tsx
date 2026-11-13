@@ -5,14 +5,13 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 
 import { FeedCommentSection } from '@app/components/feed/comment-section'
 import { FeedDetail, FeedDetailSkeleton } from '@app/components/feed/feed-card'
-import { BackHeader, usePageHeaderInset } from '@app/components/page-header'
+import { BackHeader } from '@app/components/page-header'
 import { reactQueryClient } from '@app/libs/api-client'
 
 export default function FeedDetailPage() {
   const router = useRouter()
   const params = useLocalSearchParams()
   const feedId = params.feedId as string
-  const headerInset = usePageHeaderInset()
   useEffect(() => {
     if (!feedId) {
       router.dismissTo('/')
@@ -36,7 +35,7 @@ export default function FeedDetailPage() {
       <BackHeader />
       <FeedCommentSection
         feedId={feedId}
-        topInset={headerInset}
+        underNativeHeader
         headerComponent={
           feedContentQuery.isLoading || !feedContentQuery.data ? (
             <FeedDetailSkeleton />

@@ -19,7 +19,11 @@ import {
   NotificationSenderIcon,
   PLATFORM_SENDER_NAME,
 } from '@app/components/notification/sender-icon'
-import { BackHeader, usePageHeaderInset } from '@app/components/page-header'
+import {
+  BackHeader,
+  nativeHeaderScrollProps,
+  usePageHeaderInset,
+} from '@app/components/page-header'
 import { reactQueryClient } from '@app/libs/api-client'
 import { formatNotificationTime } from '@app/libs/format-notification-time'
 import { openLink } from '@app/utils/link'
@@ -129,9 +133,8 @@ export default function NotificationDetailPage() {
         <>
           <ScrollView
             className="flex-1"
-            contentContainerClassName="pb-2 bg-base-bg-white flex-grow flex flex-col gap-3 px-4"
-            contentContainerStyle={{ paddingTop: headerInset + 4 }}
-            scrollIndicatorInsets={{ top: headerInset }}
+            contentContainerClassName="pt-1 pb-2 bg-base-bg-white flex-grow flex flex-col gap-3 px-4"
+            {...nativeHeaderScrollProps}
           >
             <View className="flex flex-row items-center gap-2">
               <NotificationSenderIcon app={item.app} />

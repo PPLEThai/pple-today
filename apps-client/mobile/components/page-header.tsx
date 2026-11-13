@@ -42,7 +42,8 @@ const NAVIGATION_BAR_HEIGHT = 44
 /**
  * Top padding for the list of a screen with a native header (<PageHeader />,
  * <BackHeader />, <NativeHeader />): on iOS 26 the list scrolls under the
- * native header, so it has to start below it. 0 elsewhere.
+ * native header, so it has to start below it. 0 elsewhere. For a list with
+ * `nativeHeaderScrollProps`, pad only what doesn't scroll (e.g. a skeleton).
  *
  * Not `useHeaderHeight()`: the native stack never reports this header's height,
  * so it stays 0.
@@ -51,6 +52,17 @@ export function usePageHeaderInset() {
   const insets = useSafeAreaInsets()
   return supportsLiquidGlass ? insets.top + NAVIGATION_BAR_HEIGHT : 0
 }
+
+/**
+ * Spread on the scrolling list of a screen with a native header. On iOS 26 UIKit
+ * insets the list below the bar (and places its scroll indicator and refresh
+ * spinner), so don't pad it with `usePageHeaderInset()` as well. Set it
+ * explicitly: react-native-screens only switches the screen's first scroll view
+ * to `automatic`, and that lookup can miss. Nothing elsewhere.
+ */
+export const nativeHeaderScrollProps = supportsLiquidGlass
+  ? ({ contentInsetAdjustmentBehavior: 'automatic' } as const)
+  : {}
 
 interface NativeHeaderProps {
   /** Left out for a bar with only the back button. */
@@ -64,8 +76,8 @@ interface NativeHeaderProps {
  * iOS 26 only (check `supportsLiquidGlass`): shows the stack's native
  * navigation bar, so the back button is a Liquid Glass button and the
  * swipe-back gesture matches the system. The screen scrolls under the bar and
- * iOS blurs it at the top edge (this needs our react-native-screens patch), so
- * pad the screen's list with `usePageHeaderInset()` to start it below the bar.
+ * iOS blurs it at the top edge (this needs our react-native-screens patch). Spread
+ * `nativeHeaderScrollProps` on the screen's list to start it below the bar.
  */
 export function NativeHeader(props: NativeHeaderProps) {
   const hasTitle = !!props.title
@@ -73,6 +85,9 @@ export function NativeHeader(props: NativeHeaderProps) {
     <Stack.Screen
       options={{
         headerShown: true,
+        // The default with Liquid Glass, set so the screen always extends under
+        // the bar: react-native-screens insets the content of an opaque header.
+        headerTransparent: true,
         title: props.title ?? '',
         headerTitle: hasTitle
           ? () => (
@@ -103,10 +118,10 @@ export function NativeHeader(props: NativeHeaderProps) {
           : '',
         headerBackButtonDisplayMode: 'minimal',
         headerTintColor: PRIMARY_COLOR,
-        // With a title, the default soft edge only fades a thin band and the
-        // list would show through the text; hard draws a solid backing under the
-        // bar. A bar with only the back button keeps the soft blur.
-        scrollEdgeEffects: { top: hasTitle ? 'hard' : 'automatic' },
+        // The default soft edge only fades a thin band under the status bar;
+        // hard blurs the whole bar's backing, so the list doesn't show through
+        // the title or around the back button.
+        scrollEdgeEffects: { top: 'hard' },
       }}
     />
   )
@@ -120,8 +135,8 @@ interface BackHeaderProps {
 
 /**
  * A header with only a back button, fixed above the screen's content. On iOS 26
- * the native bar (see <NativeHeader />): pad the list with
- * `usePageHeaderInset()`. Elsewhere a white row with the outlined back button.
+ * the native bar (see <NativeHeader />). Elsewhere a white row with the
+ * outlined back button.
  */
 export function BackHeader({
   className = 'pt-safe-offset-4 pb-2 px-4 bg-base-bg-white',
