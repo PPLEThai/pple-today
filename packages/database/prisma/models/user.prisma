@@ -49,6 +49,7 @@ model User {
   notifications              UserNotification[]
   notificationTokens         UserNotificationToken[]
   notificationResponses      NotificationResponse[]
+  sentNotifications          Notification[]             @relation("NotificationSentBy")
   notificationLiveActivities NotificationLiveActivity[]
   miniAppUsers               MiniAppUser[]
   miniAppInvites             MiniAppInvite[]

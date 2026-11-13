@@ -189,6 +189,8 @@ enum NotificationCallbackStatus {
   DELIVERED  // the app answered 2xx
   FAILED     // gave up: retries exhausted, permanent 4xx/410/3xx, answer 7 days old
              // with the app still misconfigured, or the app retired or deleted
+  NONE       // nothing to deliver: an answer to an ADMIN_PORTAL notification,
+             // kept here and read in the admin portal (never swept, never purged)
 }
 
 enum NotificationResponseChannel {
@@ -1000,6 +1002,22 @@ be made, as a fallback. The send docs say so, but it isn't enforced.
 - **Admin portal → mini app settings (ADMIN apps):** a callback URL field, the
   signing secret (shown once, rotatable), and a "send test event" button. The
   button POSTs a `notification.test` event and shows the status code.
+- **Admin portal → แจ้งเตือน (sent as PPLE Today):** an admin composes and sends
+  a notification with an interaction directly from the portal
+  (`POST /admin/notifications/send`). There is no sending app, so there is no
+  callback. Instead, the notification is stored with
+  `origin: ADMIN_PORTAL`, and its answers are kept in today-v2 and read in the
+  portal (`GET /admin/notifications/sent/:id/responses`, with a CSV export). The
+  portal can close the form early (`POST /admin/notifications/sent/:id/close`).
+  Three rules differ from an app's interaction:
+  - Having no app is the normal state of such a notification, not a deleted app,
+    so it stays open (`isAppGone` checks `origin`).
+  - Its answers are written with `deliveryStatus: NONE`. The delivery sweep
+    never claims them, and the retention sweep never purges them, because the
+    portal holds the only copy (D4 does not apply).
+  - The send-time check skips the callback target
+    (`prepareInteractionSend({ collectedInPortal: true })`). Every other rule
+    still applies: shape, bypass (D9), the kill switch and Live Activity (D18).
 - **Platform Console (PLATFORM apps):** nothing to configure, because the path is
   fixed. A follow-up adds a delivery-failures view
   (`GET /platform/mini-apps/:id/notification-callbacks?status=FAILED`) and a

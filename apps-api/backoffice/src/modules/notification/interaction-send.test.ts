@@ -74,3 +74,42 @@ describe('prepareInteractionSend callback check mirrors resolveCallbackTarget', 
     )
   })
 })
+
+describe('prepareInteractionSend for an admin-portal send', () => {
+  const portal = (overrides: Partial<Parameters<typeof prepareInteractionSend>[0]> = {}) =>
+    prepareInteractionSend({
+      input: INTERACTION,
+      enabled: true,
+      bypass: false,
+      app: null,
+      collectedInPortal: true,
+      getCallbackTarget: async () => {
+        throw new Error('a portal send has no callback target to look up')
+      },
+      now: NOW,
+      ...overrides,
+    })
+
+  test('needs no app and no callback: the answers stay here', async () => {
+    const r = await portal()
+    expect(r._unsafeUnwrap()?.expiresAt).toEqual(new Date(INTERACTION.expiresAt))
+  })
+
+  test('still refuses a malformed interaction, bypass, and the flag being off', async () => {
+    expect((await portal({ input: { actions: [] } }))._unsafeUnwrapErr().code).toBe(
+      InternalErrorCode.NOTIFICATION_INVALID_INTERACTION
+    )
+    expect((await portal({ bypass: true }))._unsafeUnwrapErr().code).toBe(
+      InternalErrorCode.NOTIFICATION_INTERACTION_BYPASS_NOT_ALLOWED
+    )
+    expect((await portal({ enabled: false }))._unsafeUnwrapErr().code).toBe(
+      InternalErrorCode.INTERACTIVE_NOTIFICATIONS_DISABLED
+    )
+  })
+
+  test('without the flag, an unbound send is still refused for having no callback', async () => {
+    expect((await portal({ collectedInPortal: false }))._unsafeUnwrapErr().code).toBe(
+      InternalErrorCode.NOTIFICATION_INTERACTION_NO_CALLBACK
+    )
+  })
+})

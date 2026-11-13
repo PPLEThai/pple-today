@@ -24,6 +24,7 @@ import {
 } from '@pple-today/web-ui/sidebar'
 import { Link, useRouterState } from '@tanstack/react-router'
 import {
+  Bell,
   Blocks,
   ChevronsUpDownIcon,
   ChevronUp,
@@ -141,6 +142,14 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
                     <Link to="/mini-app">
                       <Blocks />
                       <span>Mini App</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link to="/notification">
+                      <Bell />
+                      <span>แจ้งเตือน</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

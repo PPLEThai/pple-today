@@ -41,6 +41,7 @@ type Loaded = {
   interactionClosedAt: Date | null
   miniAppId: string | null
   miniApp: { retiredAt: Date | null } | null
+  origin?: 'API' | 'ADMIN_PORTAL'
   responses: { actionId: string; values: unknown; respondedAt: Date }[]
 }
 
@@ -87,6 +88,9 @@ const createService = (
     ),
     getTrayDismissTokens: vi.fn(async (_userId: string) => ok(['android-1', 'android-2'])),
     getOwnInteraction: vi.fn(async (_id: string, _appId: string) =>
+      ok({ interactionClosedAt: null } as { interactionClosedAt: Date | null } | null)
+    ),
+    getPortalInteraction: vi.fn(async (_id: string) =>
       ok({ interactionClosedAt: null } as { interactionClosedAt: Date | null } | null)
     ),
     closeInteraction: vi.fn(async (_id: string, closedAt: Date) => ok(closedAt)),
@@ -360,6 +364,32 @@ describe('InteractionService.respond', () => {
     })
   })
 
+  describe('an admin-portal notification', () => {
+    // Sent as PPLE Today: it never had an app, so having none is not "deleted".
+    const portal = () =>
+      openNotification({ miniAppId: null, miniApp: null, origin: 'ADMIN_PORTAL' })
+
+    test('is open and takes an answer although it has no app', async () => {
+      const { service, repository } = createService({ notification: portal() })
+
+      const result = await service.respond(NOTIFICATION_ID, session, { actionId: 'approve' })
+
+      expect(result.isOk()).toBe(true)
+      expect(result._unsafeUnwrap().interaction.state).toBe('RESPONDED')
+      expect(repository.createResponse).toHaveBeenCalledOnce()
+    })
+
+    test('the same row without the portal origin still reads as a deleted app (410)', async () => {
+      const { service } = createService({
+        notification: openNotification({ miniAppId: null, miniApp: null }),
+      })
+
+      const result = await service.respond(NOTIFICATION_ID, session, { actionId: 'approve' })
+
+      expect(codeOf(result)).toBe(InternalErrorCode.NOTIFICATION_INTERACTION_CLOSED)
+    })
+  })
+
   describe('closing between the read and the insert', () => {
     test.each([
       ['CLOSED', 'closed'],
@@ -532,6 +562,49 @@ describe('InteractionService.closeInteraction', () => {
     const { service } = createService({ enabled: false })
 
     const result = await service.closeInteraction(key, NOTIFICATION_ID)
+
+    expect(codeOf(result)).toBe(InternalErrorCode.INTERACTIVE_NOTIFICATIONS_DISABLED)
+  })
+})
+
+describe('InteractionService.closePortalInteraction', () => {
+  test('closes an admin-portal notification and ends its Live Activities', async () => {
+    const { service, repository, liveActivities } = createService()
+
+    const result = await service.closePortalInteraction(NOTIFICATION_ID)
+    await flush()
+
+    expect(result._unsafeUnwrap()).toEqual({ closedAt: NOW })
+    expect(repository.getPortalInteraction).toHaveBeenCalledWith(NOTIFICATION_ID)
+    expect(repository.closeInteraction).toHaveBeenCalledWith(NOTIFICATION_ID, NOW)
+    expect(liveActivities.endForClose).toHaveBeenCalledWith(NOTIFICATION_ID)
+  })
+
+  test('an app’s notification, a missing id and no interaction are one 404', async () => {
+    const { service, repository } = createService()
+    repository.getPortalInteraction.mockResolvedValue(ok(null))
+
+    const result = await service.closePortalInteraction('an-apps-notification')
+
+    expect(codeOf(result)).toBe(InternalErrorCode.NOTIFICATION_NOT_FOUND)
+    expect(repository.closeInteraction).not.toHaveBeenCalled()
+  })
+
+  test('is idempotent', async () => {
+    const first = new Date('2026-11-09T00:00:00.000Z')
+    const { service, repository } = createService()
+    repository.getPortalInteraction.mockResolvedValue(ok({ interactionClosedAt: first }))
+
+    const result = await service.closePortalInteraction(NOTIFICATION_ID)
+
+    expect(result._unsafeUnwrap()).toEqual({ closedAt: first })
+    expect(repository.closeInteraction).not.toHaveBeenCalled()
+  })
+
+  test('is refused while the feature flag is off', async () => {
+    const { service } = createService({ enabled: false })
+
+    const result = await service.closePortalInteraction(NOTIFICATION_ID)
 
     expect(codeOf(result)).toBe(InternalErrorCode.INTERACTIVE_NOTIFICATIONS_DISABLED)
   })

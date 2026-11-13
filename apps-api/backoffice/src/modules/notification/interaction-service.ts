@@ -138,7 +138,7 @@ export class InteractionService {
       closedAt: notification.interactionClosedAt,
       expiresAt: notification.interactionExpiresAt,
       // No app (deleted) reads like a retired one: closed.
-      appGone: isAppGone(notification.miniApp),
+      appGone: isAppGone(notification),
       now,
     })
     if (state === 'RESPONDED') return this.alreadyResponded(notification, now)
@@ -289,6 +289,25 @@ export class InteractionService {
     if (!key.miniApp) return notFound()
 
     const own = await this.interactionRepository.getOwnInteraction(notificationId, key.miniApp.id)
+    return this.closeLoaded(notificationId, own)
+  }
+
+  /**
+   * Close an admin-portal notification's interaction, from the portal. Only an
+   * `ADMIN_PORTAL` notification qualifies: an app's notification is the app's
+   * to close, and answers the same 404 as a missing one.
+   */
+  async closePortalInteraction(notificationId: string) {
+    if (!this.options.interactiveNotificationsEnabled) return this.disabled()
+
+    const own = await this.interactionRepository.getPortalInteraction(notificationId)
+    return this.closeLoaded(notificationId, own)
+  }
+
+  private async closeLoaded(
+    notificationId: string,
+    own: Awaited<ReturnType<InteractionRepository['getOwnInteraction']>>
+  ) {
     if (own.isErr()) return mapRepositoryError(own.error)
     if (!own.value) return notFound()
     // Also on a repeat close, so activities whose first end push was lost are retried.

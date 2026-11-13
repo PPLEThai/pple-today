@@ -7,6 +7,7 @@ export const UploadFileCategory = {
   PROFILE_IMAGE: 'PROFILE_IMAGE',
   BANNER: 'BANNER',
   MINI_APP: 'MINI_APP',
+  NOTIFICATION: 'NOTIFICATION',
 } as const
 
 export type UploadFileCategory = keyof typeof UploadFileCategory
@@ -26,6 +27,10 @@ export const CreateUploadSignedUrlBody = t.Union([
   }),
   t.Object({
     category: t.Literal(UploadFileCategory.MINI_APP),
+    contentType: ImageFileMimeType,
+  }),
+  t.Object({
+    category: t.Literal(UploadFileCategory.NOTIFICATION),
     contentType: ImageFileMimeType,
   }),
   t.Object({

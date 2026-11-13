@@ -12,6 +12,7 @@ import {
   HashTagStatus,
   NotificationInAppType,
   NotificationLinkType,
+  NotificationOrigin,
   NotificationTokenPlatform,
   PollStatus,
   PostStatus,
@@ -140,6 +141,25 @@ export class NotificationRepository {
       default:
         exhaustiveGuard(inAppType)
     }
+  }
+
+  /**
+   * How many accounts an audience matches, and how many of those have a push
+   * token — the admin portal's preview before a send. Uses the send's own
+   * filter, so the preview and the send cannot disagree about who is in it.
+   * Phone numbers must already be normalised, as the send normalises them.
+   */
+  async countAudience(audience: NotificationAudience) {
+    const where = this.getFilterConditions(audience)
+    return fromRepositoryPromise(async () => {
+      const [userCount, pushReachableCount] = await Promise.all([
+        this.prismaService.user.count({ where }),
+        this.prismaService.user.count({
+          where: { AND: [where ?? {}, { notificationTokens: { some: {} } }] },
+        }),
+      ])
+      return { userCount, pushReachableCount }
+    })
   }
 
   private getFilterConditions(audience: NotificationAudience): Prisma.UserFindManyArgs['where'] {
@@ -511,6 +531,11 @@ export class NotificationRepository {
        * that has to record the id before the send (an idempotency log) knows it.
        */
       notificationId?: string
+      /**
+       * Composed in the admin portal by this admin: stored as `ADMIN_PORTAL`,
+       * which is what keeps its answers here instead of calling an app back.
+       */
+      sentFromAdminPortal?: { userId: string }
     } = {}
   ) {
     const { apiKeyId, app, smsFallbackText, interaction } = options
@@ -598,6 +623,13 @@ export class NotificationRepository {
             // A foreign key, so a later rename or new icon re-labels this
             // notification too. Null is PPLE Today itself.
             miniAppId: app?.id ?? null,
+
+            ...(options.sentFromAdminPortal
+              ? {
+                  origin: NotificationOrigin.ADMIN_PORTAL,
+                  sentByUserId: options.sentFromAdminPortal.userId,
+                }
+              : {}),
 
             // The same spec for every recipient, like `content`. The expiry is
             // lifted into its own column so "is it open?" is a column check.
