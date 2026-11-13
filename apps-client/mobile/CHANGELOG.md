@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 2.15.2
+
+### Patch Changes
+
+- [#549](https://github.com/PPLEThai/pple-today/pull/549) [`b7a5eea`](https://github.com/PPLEThai/pple-today/commit/b7a5eeab4affc88a8f8c27d0020edfe863cebdb5) Thanks [@PanJ](https://github.com/PanJ)! - On iOS 26, the post, hashtag, notification detail, election, user profile and followed content screens no longer leave an empty gap under the header, and their content now blurs under the glass header when scrolled.
+
 ## 2.15.1
 
 ### Patch Changes
