@@ -20,7 +20,11 @@ import type {
   AdminSentNotificationDetail,
   AdminSentNotificationSummary,
 } from './models'
-import type { AdminSentNotificationRepository, SentNotificationRow } from './sent-repository'
+import type {
+  AdminSentNotificationRepository,
+  SentNotificationRow,
+  SentNotificationViewer,
+} from './sent-repository'
 
 import { deriveInteractionState } from '../../notification/interaction'
 import { isStoredInteraction } from '../../notification/interaction-read'
@@ -44,6 +48,16 @@ const IN_APP_TYPES_WITH_ID = new Set<NotificationInAppType>([
   NotificationInAppType.ELECTION_VOTE,
   NotificationInAppType.HASHTAG,
 ])
+
+/**
+ * How long a test send stays visible to the admin who sent it: long enough to
+ * check the phone and open the result, then it leaves their history too.
+ * Nobody else ever sees it.
+ */
+export const TEST_SEND_VISIBLE_MS = 60 * 60 * 1000
+
+const notificationNotFound = () =>
+  err({ code: InternalErrorCode.NOTIFICATION_NOT_FOUND, message: 'Notification not found' })
 
 const invalidRecipients = (message: string) =>
   err({ code: InternalErrorCode.NOTIFICATION_INVALID_RECIPIENTS, message })
@@ -198,6 +212,7 @@ export class AdminNotificationSendService {
       | 'listSent'
       | 'getSent'
       | 'listResponses'
+      | 'isVisible'
     >,
     private readonly notificationRepository: Pick<
       NotificationRepository,
@@ -214,6 +229,20 @@ export class AdminNotificationSendService {
 
   private now() {
     return this.options.now?.() ?? new Date()
+  }
+
+  private viewer(admin: { userId: string }): SentNotificationViewer {
+    return {
+      userId: admin.userId,
+      testSince: new Date(this.now().getTime() - TEST_SEND_VISIBLE_MS),
+    }
+  }
+
+  /** NOTIFICATION_NOT_FOUND unless this admin may see it; for actions that read nothing back. */
+  async checkVisible(notificationId: string, admin: { userId: string }) {
+    const visible = await this.sentRepository.isVisible(notificationId, this.viewer(admin))
+    if (visible.isErr()) return mapRepositoryError(visible.error)
+    return visible.value ? ok(undefined) : notificationNotFound()
   }
 
   /** Turn the portal's link into the stored link shape, resolving a mini app to its URL. */
@@ -413,10 +442,10 @@ export class AdminNotificationSendService {
     return ok(roles.value)
   }
 
-  async listSent(query: { page?: number; limit?: number }) {
+  async listSent(query: { page?: number; limit?: number }, admin: { userId: string }) {
     const page = query.page ?? 1
     const limit = query.limit ?? 10
-    const result = await this.sentRepository.listSent({ page, limit })
+    const result = await this.sentRepository.listSent({ page, limit }, this.viewer(admin))
     if (result.isErr()) return mapRepositoryError(result.error)
 
     const now = this.now()
@@ -426,15 +455,10 @@ export class AdminNotificationSendService {
     } satisfies AdminListSentNotificationsResponse)
   }
 
-  async getSent(notificationId: string) {
-    const result = await this.sentRepository.getSent(notificationId)
+  async getSent(notificationId: string, admin: { userId: string }) {
+    const result = await this.sentRepository.getSent(notificationId, this.viewer(admin))
     if (result.isErr()) return mapRepositoryError(result.error)
-    if (!result.value) {
-      return err({
-        code: InternalErrorCode.NOTIFICATION_NOT_FOUND,
-        message: 'Notification not found',
-      })
-    }
+    if (!result.value) return notificationNotFound()
 
     const { row, readCount, actionCounts } = result.value
     const spec = isStoredInteraction(row.interaction) ? row.interaction : null
@@ -462,17 +486,20 @@ export class AdminNotificationSendService {
     } satisfies AdminSentNotificationDetail)
   }
 
-  async listResponses(notificationId: string, query: { page?: number; limit?: number }) {
+  async listResponses(
+    notificationId: string,
+    query: { page?: number; limit?: number },
+    admin: { userId: string }
+  ) {
     const page = query.page ?? 1
     const limit = query.limit ?? 20
-    const result = await this.sentRepository.listResponses(notificationId, { page, limit })
+    const result = await this.sentRepository.listResponses(
+      notificationId,
+      { page, limit },
+      this.viewer(admin)
+    )
     if (result.isErr()) return mapRepositoryError(result.error)
-    if (!result.value) {
-      return err({
-        code: InternalErrorCode.NOTIFICATION_NOT_FOUND,
-        message: 'Notification not found',
-      })
-    }
+    if (!result.value) return notificationNotFound()
 
     return ok({
       data: result.value.rows.map((row) => ({

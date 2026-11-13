@@ -89,7 +89,8 @@ export const formatAudience = (
         ? 'เบอร์โทร 1 เบอร์'
         : `เบอร์โทร ${audience.phoneNumberCount.toLocaleString()} เบอร์`
     case 'TEST':
-      return 'ทดสอบ (ส่งหาผู้ส่ง)'
+      // Only its sender ever sees a test, and only for an hour.
+      return 'ทดสอบ (เห็นเฉพาะคุณ 1 ชั่วโมง)'
   }
 }
 
