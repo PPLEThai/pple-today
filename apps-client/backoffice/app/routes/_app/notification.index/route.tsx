@@ -32,7 +32,7 @@ function NotificationPage() {
         <Typography variant="h1" className="mr-auto">
           แจ้งเตือน
         </Typography>
-        <Button asChild>
+        <Button className="gap-2" asChild>
           <Link to="/notification/new">
             <Plus />
             สร้างการแจ้งเตือน

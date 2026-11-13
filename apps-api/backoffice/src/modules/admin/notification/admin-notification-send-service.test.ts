@@ -333,6 +333,53 @@ describe('AdminNotificationSendService.send', () => {
   })
 })
 
+describe('AdminNotificationSendService.sendTest', () => {
+  test('goes to the admin’s own account only, as an admin-portal send, never by SMS', async () => {
+    const { service, notificationRepository } = createService()
+
+    const result = await service.sendTest(
+      {
+        content: { header: 'h', message: 'm' },
+        interaction: { actions: [{ id: 'ok', label: 'OK' }] },
+      },
+      ADMIN
+    )
+
+    expect(result._unsafeUnwrap()).toEqual({ notificationId: 'n-1', hasPushToken: true })
+    const [audience, , options] = sentArgs(notificationRepository)
+    expect(audience).toEqual({ type: 'USER_ID', details: [ADMIN.userId] })
+    expect(options.sentFromAdminPortal).toEqual(ADMIN)
+    expect(options.smsFallbackText).toBeUndefined()
+    expect(options.interaction.spec.actions[0].id).toBe('ok')
+  })
+
+  test('says when the admin has no device to push to', async () => {
+    const { service, notificationRepository } = createService()
+    notificationRepository.countAudience.mockResolvedValue(
+      ok({ userCount: 1, pushReachableCount: 0 })
+    )
+
+    const result = await service.sendTest({ content: { header: 'h', message: 'm' } }, ADMIN)
+
+    expect(result._unsafeUnwrap().hasPushToken).toBe(false)
+  })
+
+  test('runs the same content checks as the real send', async () => {
+    const { service, notificationRepository } = createService()
+
+    const result = await service.sendTest(
+      {
+        content: { header: 'h', message: 'm' },
+        link: { type: 'IN_APP_NAVIGATION', inAppType: 'POST' },
+      },
+      ADMIN
+    )
+
+    expect(codeOf(result)).toBe(InternalErrorCode.NOTIFICATION_INVALID_IN_APP_NAVIGATION)
+    expect(notificationRepository.sendNotificationToUser).not.toHaveBeenCalled()
+  })
+})
+
 describe('AdminNotificationSendService.countAudience', () => {
   test('counts the well-formed numbers and lists the rest', async () => {
     const { service, notificationRepository } = createService()
@@ -390,6 +437,8 @@ describe('reading back what was sent', () => {
       provinces: [],
       districts: ['บางรัก'],
     })
+    // Only a test send (to the sender, by user id) sets no audience column.
+    expect(toSentAudience(row())).toEqual({ type: 'TEST' })
     expect(toSentAudience(row({ _count: { ...counts, phoneNumbers: 3 } }))).toEqual({
       type: 'PHONE_NUMBER',
       phoneNumberCount: 3,

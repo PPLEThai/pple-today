@@ -99,6 +99,7 @@ const FieldOptions = ({ index }: { index: number }) => {
       />
       {options.fields.length < max && (
         <Button
+          className="gap-1.5"
           type="button"
           variant="outline"
           size="sm"
@@ -499,6 +500,7 @@ export const NotificationInteractionSection = () => {
               <div className="flex flex-wrap gap-2">
                 {(Object.keys(FIELD_TYPE_LABELS) as InteractionFieldForm['type'][]).map((type) => (
                   <Button
+                    className="gap-1.5"
                     key={type}
                     type="button"
                     variant="outline"
@@ -536,6 +538,7 @@ export const NotificationInteractionSection = () => {
             />
             {actionArray.fields.length < INTERACTION_LIMITS.actions && (
               <Button
+                className="gap-1.5"
                 type="button"
                 variant="outline"
                 size="sm"

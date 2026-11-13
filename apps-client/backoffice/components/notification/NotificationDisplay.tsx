@@ -88,6 +88,8 @@ export const formatAudience = (
       return audience.phoneNumberCount === 1
         ? 'เบอร์โทร 1 เบอร์'
         : `เบอร์โทร ${audience.phoneNumberCount.toLocaleString()} เบอร์`
+    case 'TEST':
+      return 'ทดสอบ (ส่งหาผู้ส่ง)'
   }
 }
 
