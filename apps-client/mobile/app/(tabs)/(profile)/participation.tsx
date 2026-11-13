@@ -4,17 +4,17 @@ import Animated, { useAnimatedScrollHandler } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { ExtractBodyResponse } from '@pple-today/api-client'
-import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 import { H1 } from '@pple-today/ui/typography'
 import { InfiniteData, useInfiniteQuery, UseInfiniteQueryResult } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
-import { ArrowLeftIcon, HandIcon, PackageOpenIcon } from 'lucide-react-native'
+import { HandIcon, PackageOpenIcon } from 'lucide-react-native'
 
 import { ApplicationApiSchema, ListCursorResponse } from '@api/backoffice/app'
 import { Participation } from '@app/app/(tabs)/(profile)/profile'
+import { BackButton } from '@app/components/back-button'
 import {
   Pager,
   PagerContent,
@@ -39,16 +39,12 @@ export default function MyParticipationPage() {
         <PagerHeader>
           <PagerHeaderOnly>
             <View className="p-4 flex flex-row justify-between items-center bg-base-bg-white border-b border-base-outline-default">
-              <Button
-                variant="outline-primary"
-                size="icon"
+              <BackButton
                 onPress={() => {
                   router.back()
                 }}
                 aria-label="กลับ"
-              >
-                <Icon icon={ArrowLeftIcon} size={24} strokeWidth={2} />
-              </Button>
+              />
               <View className="flex flex-col bg-base-bg-white items-end">
                 <View className="flex flex-row gap-2 items-center">
                   <Icon

@@ -2,9 +2,7 @@ import React from 'react'
 import { Keyboard, Pressable, View } from 'react-native'
 import Animated from 'react-native-reanimated'
 
-import { Button } from '@pple-today/ui/button'
 import { FormControl, FormItem } from '@pple-today/ui/form'
-import { Icon } from '@pple-today/ui/icon'
 import { Input, InputGroup, InputLeftIcon } from '@pple-today/ui/input'
 import { cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
@@ -17,7 +15,7 @@ import {
   UseInfiniteQueryResult,
 } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
-import { ArrowLeftIcon, SearchIcon } from 'lucide-react-native'
+import { SearchIcon } from 'lucide-react-native'
 
 import {
   GetSearchAnnouncementResponse,
@@ -25,6 +23,7 @@ import {
   GetSearchTopicsResponse,
   GetSearchUsersResponse,
 } from '@api/backoffice/app'
+import { BackButton } from '@app/components/back-button'
 import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { AnnouncementSearchCard } from '@app/components/search/announcement-card'
@@ -52,14 +51,7 @@ export default function SearchResultPage() {
       <SafeAreaLayout>
         <View className="p-4">
           <View className="flex flex-row gap-3 items-center">
-            <Button
-              variant="outline-primary"
-              size="icon"
-              onPress={() => router.back()}
-              aria-label="Go back"
-            >
-              <Icon icon={ArrowLeftIcon} size={24} />
-            </Button>
+            <BackButton onPress={() => router.back()} aria-label="Go back" />
             <View className="flex-1">
               <searchForm.Field
                 name="query"

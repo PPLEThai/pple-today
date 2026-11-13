@@ -26,9 +26,10 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { Image } from 'expo-image'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Link, useLocalSearchParams, useRouter } from 'expo-router'
-import { ArrowLeftIcon, CheckIcon, HashIcon, InfoIcon, PlusIcon } from 'lucide-react-native'
+import { CheckIcon, HashIcon, InfoIcon, PlusIcon } from 'lucide-react-native'
 
 import { GetTopicFeedResponse, GetTopicsResponse } from '@api/backoffice/app'
+import { BackButton } from '@app/components/back-button'
 import { FeedFooter } from '@app/components/feed'
 import { FeedCard } from '@app/components/feed/feed-card'
 import { useTopicFollow } from '@app/components/feed/topic-card'
@@ -225,14 +226,7 @@ export default function TopicDetailPage() {
           style={linearGradientStyle}
         />
         <View className="p-4 flex flex-row gap-2">
-          <Button
-            variant="outline-primary"
-            size="icon"
-            onPress={() => router.back()}
-            aria-label="กลับ"
-          >
-            <Icon icon={ArrowLeftIcon} size={24} />
-          </Button>
+          <BackButton onPress={() => router.back()} aria-label="กลับ" />
           <View className="flex-1">
             <Animated.View
               className="flex flex-row justify-end items-center gap-3 absolute left-0 right-0"

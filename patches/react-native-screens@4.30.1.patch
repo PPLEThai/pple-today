@@ -1,0 +1,120 @@
+diff --git a/ios/RNSScreen.mm b/ios/RNSScreen.mm
+index 049fd22427b2bde17fd7ca59b8de65d0ee07b4b5..18f827f6ca795bc363a358080af0b82889cb2d0a 100644
+--- a/ios/RNSScreen.mm
++++ b/ios/RNSScreen.mm
+@@ -1454,6 +1454,7 @@ Class<RCTComponentViewProtocol> RNSScreenCls(void)
+ 
+ @implementation RNSScreen {
+   __weak id _previousFirstResponder;
++  __weak UIScrollView *_ppleContentScrollView; // pple-today patch
+   CGRect _lastViewFrame;
+   UIView *_fakeView;
+   CADisplayLink *_animationTimer;
+@@ -1549,6 +1550,7 @@ Class<RCTComponentViewProtocol> RNSScreenCls(void)
+ - (void)viewDidAppear:(BOOL)animated
+ {
+   [super viewDidAppear:animated];
++  [self ppleUpdateContentScrollView]; // pple-today patch
+   if (!_isSwiping || _shouldNotify) {
+     // we are going forward or dismissing without swipe
+     // or successfully swiped back
+@@ -1586,9 +1588,91 @@ Class<RCTComponentViewProtocol> RNSScreenCls(void)
+   _shouldNotify = YES;
+ }
+ 
++#pragma mark - pple-today patch: content scroll view for the iOS 26 navigation bar
++
++// The classic stack never tells UIKit which scroll view sits under the
++// navigation bar (the tabs and gamma stack screens do, via
++// `setContentScrollView:forEdge:`), so iOS 26 draws no scroll edge effect under
++// a transparent bar. On top of that, on iOS 26 the content sits in a
++// SafeAreaView whose first child can be an empty view, so the first-descendant
++// lookup finds nothing. Only for screens pushed in a navigation controller.
++
++// Breadth-first: the shallowest visible, vertical, page-sized scroll view.
++static UIScrollView *PPLEFindPageScrollView(UIView *root)
++{
++  CGSize rootSize = root.bounds.size;
++  NSMutableArray<UIView *> *queue = [NSMutableArray arrayWithObject:root];
++  while (queue.count > 0) {
++    UIView *view = queue.firstObject;
++    [queue removeObjectAtIndex:0];
++    if (view.hidden || view.alpha <= 0.01) {
++      continue;
++    }
++    if ([view isKindOfClass:UIScrollView.class]) {
++      UIScrollView *scrollView = static_cast<UIScrollView *>(view);
++      CGSize size = scrollView.bounds.size;
++      BOOL laidOut = size.width > 0 && size.height > 0 && rootSize.width > 0 && rootSize.height > 0;
++      BOOL pageSized = !laidOut || (size.width >= rootSize.width * 0.9 && size.height >= rootSize.height * 0.5);
++      if (!scrollView.pagingEnabled && pageSized) {
++        return scrollView;
++      }
++      // Don't look inside other scroll views (carousels, nested lists).
++      continue;
++    }
++    [queue addObjectsFromArray:view.subviews];
++  }
++  return nil;
++}
++
++// The page can turn its header on after the first layout, which changes the
++// safe area.
++- (void)viewSafeAreaInsetsDidChange
++{
++  [super viewSafeAreaInsetsDidChange];
++  [self ppleUpdateContentScrollView];
++}
++
++- (void)ppleUpdateContentScrollView
++{
++  [self ppleUpdateContentScrollViewInNavigationController:self.navigationController];
++}
++
++// UIKit sets up the bar's edge effect for the content scroll view during the
++// push, so this also runs from `willMoveToParentViewController:`, before
++// `self.navigationController` is set. A screen whose bar is hidden still gets
++// one registered: with no bar there is nothing to draw, and the page may show
++// its header right after mounting.
++- (void)ppleUpdateContentScrollViewInNavigationController:(nullable UIViewController *)parent
++{
++  if (@available(iOS 26, *)) {
++    BOOL inNavigationController =
++        [parent isKindOfClass:UINavigationController.class] && !self.screenView.isPresentedAsNativeModal;
++
++    UIScrollView *scrollView = nil;
++    if (inNavigationController) {
++      UIScrollView *cached = _ppleContentScrollView;
++      scrollView = (cached != nil && [cached isDescendantOfView:self.view] && !cached.hidden)
++          ? cached
++          : PPLEFindPageScrollView(self.view);
++    }
++
++    if (scrollView != _ppleContentScrollView) {
++      _ppleContentScrollView = scrollView;
++      [self setContentScrollView:scrollView forEdge:NSDirectionalRectEdgeAll];
++    }
++    // Every time, not only on registration: the page sets `scrollEdgeEffects`
++    // after mounting, and RNS reapplies them only to the first-descendant
++    // scroll view, which doesn't find this one.
++    if (scrollView != nil) {
++      [RNSScrollEdgeEffectApplicator applyToScrollView:scrollView withProvider:self.screenView];
++    }
++  }
++}
++
+ - (void)viewDidLayoutSubviews
+ {
+   [super viewDidLayoutSubviews];
++  [self ppleUpdateContentScrollView]; // pple-today patch
+ 
+   // The below code makes the screen view adapt dimensions provided by the system. We take these
+   // into account only when the view is mounted under RNSNavigationController, in which case the
+@@ -1731,6 +1815,7 @@ Class<RCTComponentViewProtocol> RNSScreenCls(void)
+   } else {
+     [self.screenView overrideScrollViewBehaviorInFirstDescendantChainIfNeeded];
+     [self.screenView updateContentScrollViewEdgeEffectsIfExists];
++    [self ppleUpdateContentScrollViewInNavigationController:parent]; // pple-today patch
+   }
+ }
+ 

@@ -3,7 +3,6 @@ import { Dimensions, View } from 'react-native'
 import Animated, { useAnimatedScrollHandler } from 'react-native-reanimated'
 
 import { QUERY_KEY_SYMBOL } from '@pple-today/api-client'
-import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
 import { Text } from '@pple-today/ui/text'
 import { H1 } from '@pple-today/ui/typography'
@@ -14,7 +13,7 @@ import {
   useQueryClient,
 } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
-import { ArrowLeftIcon, HandshakeIcon } from 'lucide-react-native'
+import { HandshakeIcon } from 'lucide-react-native'
 
 import { GetTodayEventsResponse, GetUpcomingEventsResponse } from '@api/backoffice/app'
 import {
@@ -22,6 +21,7 @@ import {
   ActivityCardProps,
   ActivityCardSkeleton,
 } from '@app/components/activity/activity-card'
+import { BackButton } from '@app/components/back-button'
 import {
   Pager,
   PagerContent,
@@ -46,16 +46,12 @@ export default function RecentActivityPage() {
         <PagerHeader>
           <PagerHeaderOnly>
             <View className="p-4 flex flex-row justify-between items-center bg-base-bg-white">
-              <Button
-                variant="outline-primary"
-                size="icon"
+              <BackButton
                 onPress={() => {
                   router.back()
                 }}
                 aria-label="กลับ"
-              >
-                <Icon icon={ArrowLeftIcon} size={24} strokeWidth={2} />
-              </Button>
+              />
               <View className="flex flex-col bg-base-bg-white items-end">
                 <View className="flex flex-row gap-2 items-center">
                   <Icon
