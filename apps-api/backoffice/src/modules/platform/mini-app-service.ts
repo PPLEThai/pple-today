@@ -136,6 +136,10 @@ export class PlatformMiniAppService {
    * Set the effective tier. The platform enforces *who may* change tier
    * (Draft→Beta self-service, Beta→Live approved); today-v2 records the
    * effective value and re-lists accordingly.
+   *
+   * The first promotion to Live stamps `publishedAt`, which is what makes the
+   * app "new" in PPLE Today. A later demotion and re-promotion keeps the
+   * original stamp, so pulling an app back briefly does not re-announce it.
    */
   async setTier(id: string, tier: MiniAppTier) {
     // Confirm the target is a platform app (getMiniAppById is scoped to
@@ -143,7 +147,12 @@ export class PlatformMiniAppService {
     const existingResult = await this.platformMiniAppRepository.getMiniAppById(id)
     if (existingResult.isErr()) return mapRepositoryError(existingResult.error, NOT_FOUND)
 
-    const result = await this.platformMiniAppRepository.setTier(id, tier)
+    const publishedAt =
+      tier === MiniAppTier.LIVE && existingResult.value.publishedAt === null
+        ? new Date()
+        : undefined
+
+    const result = await this.platformMiniAppRepository.setTier(id, tier, publishedAt)
     if (result.isErr()) return mapRepositoryError(result.error, NOT_FOUND)
 
     this.miniAppListCache.invalidate()

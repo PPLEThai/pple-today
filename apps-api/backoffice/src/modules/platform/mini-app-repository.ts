@@ -11,6 +11,7 @@ import {
   generateNotificationApiKey,
   hashNotificationApiKey,
 } from '../../utils/notification-api-key'
+import { normalizeTagline } from '../mini-app/tagline'
 
 export interface CreatePlatformMiniAppData {
   name: string
@@ -20,6 +21,7 @@ export interface CreatePlatformMiniAppData {
   clientId: string
   zitadelAppId: string
   iconUrl?: string
+  tagline?: string
   /**
    * Daily notification quota for the app's key. The platform owns Resource
    * Limits, so it passes the limit the app was provisioned with; omitted leaves
@@ -32,6 +34,8 @@ export interface UpdatePlatformMiniAppData {
   name?: string
   url?: string
   iconUrl?: string
+  /** `null` clears it; `undefined` leaves it untouched. */
+  tagline?: string | null
 }
 
 /**
@@ -67,6 +71,7 @@ export class PlatformMiniAppRepository {
             clientId: data.clientId,
             zitadelAppId: data.zitadelAppId,
             icon: data.iconUrl,
+            tagline: normalizeTagline(data.tagline),
             requiresAuth: true,
             tier: MiniAppTier.DRAFT,
             source: MiniAppSource.PLATFORM,
@@ -118,18 +123,22 @@ export class PlatformMiniAppRepository {
           name: data.name,
           clientUrl: data.url,
           icon: data.iconUrl,
+          tagline: normalizeTagline(data.tagline),
         },
         include: { miniAppRoles: true },
       })
     )
   }
 
-  /** Set the effective tier. The platform decides *who may*; today-v2 records it. */
-  async setTier(id: string, tier: MiniAppTier) {
+  /**
+   * Set the effective tier. The platform decides *who may*; today-v2 records it.
+   * `publishedAt` is stamped by the caller on an app's first promotion to Live.
+   */
+  async setTier(id: string, tier: MiniAppTier, publishedAt?: Date) {
     return await fromRepositoryPromise(
       this.prismaService.miniApp.update({
         where: { id },
-        data: { tier },
+        data: { tier, publishedAt },
         include: { miniAppRoles: true },
       })
     )

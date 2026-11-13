@@ -1,6 +1,6 @@
 import { MiniAppTier } from '@pple-today/database/prisma'
 
-import { ListMiniAppsResponse } from './models'
+import { ListedMiniApp as ListedMiniAppSchema, MiniAppRelation } from './models'
 
 /**
  * The mini-app fields the tier-aware eligibility rules read — used by both
@@ -13,6 +13,7 @@ export interface MiniAppForListing {
   slug: string
   name: string
   icon: string | null
+  tagline: string | null
   order: number
   clientUrl: string
   requiresAuth: boolean
@@ -52,7 +53,7 @@ export interface MiniAppViewer {
  * The public listing shape returned to the client — derived from the response
  * DTO so the projection below and the schema in `models.ts` cannot drift apart.
  */
-export type ListedMiniApp = ListMiniAppsResponse[number]
+export type ListedMiniApp = ListedMiniAppSchema
 
 // NOTE: a new `MiniAppTier` case must be handled in three places that switch on
 // tier — `isMiniAppListable` and `resolveMiniAppAccess` here, and
@@ -162,15 +163,36 @@ export const resolveMiniAppAccess = (
 export const isMiniAppAccessible = (miniApp: EligibilityMiniApp, viewer: MiniAppViewer): boolean =>
   resolveMiniAppAccess(miniApp, viewer) === 'ALLOWED'
 
-const toListedMiniApp = (miniApp: MiniAppForListing): ListedMiniApp => ({
-  slug: miniApp.slug,
-  name: miniApp.name,
-  iconUrl: miniApp.icon,
-  order: miniApp.order,
-  url: miniApp.clientUrl,
-  requiresAuth: miniApp.requiresAuth,
-  tier: miniApp.tier,
-})
+/**
+ * How the caller relates to a Draft or Beta app, so the client can file it
+ * under "apps I'm building" or "apps I'm testing" instead of mixing it into the
+ * party's apps. A builder who also holds an invite is a builder. Live apps are
+ * listed by role, not by relation, so they carry none — even for their builder.
+ */
+export const resolveMiniAppRelation = (
+  miniApp: EligibilityMiniApp,
+  viewer: MiniAppViewer
+): MiniAppRelation | undefined => {
+  if (miniApp.tier === MiniAppTier.LIVE) return undefined
+  if (isBuilder(miniApp, viewer)) return 'BUILDER'
+  if (isBetaMember(miniApp, viewer)) return 'TESTER'
+  return undefined
+}
+
+const toListedMiniApp = (miniApp: MiniAppForListing, viewer: MiniAppViewer): ListedMiniApp => {
+  const relation = resolveMiniAppRelation(miniApp, viewer)
+  return {
+    slug: miniApp.slug,
+    name: miniApp.name,
+    iconUrl: miniApp.icon,
+    tagline: miniApp.tagline,
+    order: miniApp.order,
+    url: miniApp.clientUrl,
+    requiresAuth: miniApp.requiresAuth,
+    tier: miniApp.tier,
+    ...(relation ? { relation } : {}),
+  }
+}
 
 /**
  * Filter a full mini-app list down to the apps *listable* to the requesting user
@@ -181,7 +203,9 @@ export const selectVisibleMiniApps = (
   miniApps: MiniAppForListing[],
   viewer: MiniAppViewer
 ): ListedMiniApp[] =>
-  miniApps.filter((miniApp) => isMiniAppListable(miniApp, viewer)).map(toListedMiniApp)
+  miniApps
+    .filter((miniApp) => isMiniAppListable(miniApp, viewer))
+    .map((miniApp) => toListedMiniApp(miniApp, viewer))
 
 /**
  * Describe one app for a caller who arrived by its link rather than from the
@@ -204,5 +228,5 @@ export const selectMiniAppBySlug = (
   const miniApp = miniApps.find((candidate) => candidate.slug === slug)
   if (!miniApp) return null
   if (miniApp.tier !== MiniAppTier.LIVE && !isMiniAppListable(miniApp, viewer)) return null
-  return toListedMiniApp(miniApp)
+  return toListedMiniApp(miniApp, viewer)
 }

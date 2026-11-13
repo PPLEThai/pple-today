@@ -8,13 +8,10 @@ import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 /**
  * Marks an app that is not yet published to everyone.
  *
- * A Builder's own Draft app sits in the grid alongside their real apps, and a
- * Beta tester's invited app does too — the badge is how either of them tells
- * the two apart, without a separate developer menu. LIVE apps, which is nearly
- * all of them, render nothing.
- *
- * The badge has a fixed h-6 height so a caller can overlap it on the icon's top
- * edge with a deterministic offset (see the official app grid).
+ * Draft and Beta apps no longer share the grid with the party's apps — they
+ * sit in "แอปที่ฉันกำลังสร้าง" and "แอปที่ได้รับเชิญให้ทดลองใช้" — so the badge sits
+ * on its own line under the app's name rather than over its icon. LIVE apps, which is
+ * nearly all of them, render nothing.
  */
 export function MiniAppTierBadge({
   tier,
@@ -31,9 +28,12 @@ export function MiniAppTierBadge({
 
   return (
     <Badge
-      className={cn('h-6 justify-center border-transparent px-2 py-0', badge.className, className)}
+      className={cn('h-5 justify-center border-transparent px-2 py-0', badge.className, className)}
     >
-      <Text className="text-base-bg-white font-heading-bold">{badge.label}</Text>
+      {/* Thai glyphs sit high in the line box; nudge the label down to look centred. */}
+      <Text className="relative top-0.5 text-xs text-base-bg-white font-heading-bold">
+        {badge.label}
+      </Text>
     </Badge>
   )
 }
@@ -45,7 +45,8 @@ function getMiniAppTierBadge(tier: MiniApp['tier']) {
       return { label: 'ฉบับร่าง', className: 'bg-system-danger-default' }
     case 'BETA':
       // Blue pill: an invited beta test.
-      return { label: 'ทดลอง', className: 'bg-system-info-default' }
+      // PPLE Platform's word for the Beta tier (CONTEXT.md, Thai renderings).
+      return { label: 'ทดลองใช้', className: 'bg-system-info-default' }
     case 'LIVE':
       // The ordinary case carries no badge.
       return null

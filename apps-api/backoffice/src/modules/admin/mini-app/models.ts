@@ -1,6 +1,8 @@
 import { MiniApp, TemporaryFilePath } from '@pple-today/api-common/dtos'
 import { Static, t } from 'elysia'
 
+import { TaglineInput } from '../../mini-app/tagline'
+
 export const ZitadelOidcAppType = t.Union([
   t.Literal('OIDC_APP_TYPE_USER_AGENT'),
   t.Literal('OIDC_APP_TYPE_WEB'),
@@ -33,6 +35,7 @@ export const CreateMiniAppBody = t.Composite([
   t.Partial(t.Pick(MiniApp, ['roles', 'requiresAuth', 'clientId'])),
   t.Object({
     iconFilePath: t.Optional(TemporaryFilePath),
+    tagline: t.Optional(t.Nullable(TaglineInput)),
     createZitadelApp: t.Optional(CreateZitadelAppInput),
   }),
 ])
@@ -50,6 +53,7 @@ export const UpdateMiniAppBody = t.Composite([
   t.Partial(t.Pick(MiniApp, ['name', 'slug', 'clientId', 'url', 'roles', 'order', 'requiresAuth'])),
   t.Object({
     iconFilePath: t.Optional(TemporaryFilePath),
+    tagline: t.Optional(t.Nullable(TaglineInput)),
   }),
 ])
 export type UpdateMiniAppBody = Static<typeof UpdateMiniAppBody>
