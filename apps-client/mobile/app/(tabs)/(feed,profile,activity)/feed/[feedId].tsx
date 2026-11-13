@@ -1,11 +1,9 @@
 import React, { useEffect } from 'react'
 import { View } from 'react-native'
 
-import { Button } from '@pple-today/ui/button'
-import { Icon } from '@pple-today/ui/icon'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { ArrowLeftIcon } from 'lucide-react-native'
 
+import { BackButton } from '@app/components/back-button'
 import { FeedCommentSection } from '@app/components/feed/comment-section'
 import { FeedDetail, FeedDetailSkeleton } from '@app/components/feed/feed-card'
 import { reactQueryClient } from '@app/libs/api-client'
@@ -35,14 +33,7 @@ export default function FeedDetailPage() {
   return (
     <View className="flex-1 flex-col">
       <View className="pt-safe-offset-4 pb-2 px-4 bg-base-bg-white">
-        <Button
-          variant="outline-primary"
-          size="icon"
-          onPress={() => router.back()}
-          aria-label="Go back"
-        >
-          <Icon icon={ArrowLeftIcon} size={24} />
-        </Button>
+        <BackButton onPress={() => router.back()} aria-label="Go back" />
       </View>
       <FeedCommentSection
         feedId={feedId}

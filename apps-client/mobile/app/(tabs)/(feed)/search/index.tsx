@@ -1,17 +1,16 @@
 import React from 'react'
 import { FlatList, Keyboard, Pressable, View } from 'react-native'
 
-import { Button } from '@pple-today/ui/button'
 import { FormControl, FormItem } from '@pple-today/ui/form'
-import { Icon } from '@pple-today/ui/icon'
 import { Input, InputGroup, InputLeftIcon } from '@pple-today/ui/input'
 import { Text } from '@pple-today/ui/text'
 import { useForm } from '@tanstack/react-form'
 import { keepPreviousData } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
-import { ArrowLeftIcon, SearchIcon } from 'lucide-react-native'
+import { SearchIcon } from 'lucide-react-native'
 
 import { GetSearchKeywordResponse } from '@api/backoffice/app'
+import { BackButton } from '@app/components/back-button'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { QuerySearchCard } from '@app/components/search/query-card'
 import { SearchNotEntered, SearchNotFound } from '@app/components/search/search-status'
@@ -124,14 +123,10 @@ export default function SearchPage() {
       <SafeAreaLayout>
         <View className="flex flex-col">
           <View className="p-4 flex flex-row items-center gap-3">
-            <Button
-              variant="outline-primary"
-              size="icon"
+            <BackButton
               onPress={() => (router.canGoBack() ? router.back() : router.dismissTo('/'))}
               aria-label="Go back"
-            >
-              <Icon icon={ArrowLeftIcon} size={24} />
-            </Button>
+            />
             <View className="flex-1">
               <searchForm.Field
                 name="query"

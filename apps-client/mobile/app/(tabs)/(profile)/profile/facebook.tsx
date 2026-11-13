@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react'
 import { View } from 'react-native'
 
 import { Avatar, AvatarImage } from '@pple-today/ui/avatar'
-import { Button } from '@pple-today/ui/button'
-import { Icon } from '@pple-today/ui/icon'
 import { clsx } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 import { toast } from '@pple-today/ui/toast'
@@ -11,10 +9,10 @@ import { H1 } from '@pple-today/ui/typography'
 import * as RadioGroupPrimitive from '@rn-primitives/radio-group'
 import { useQueryClient } from '@tanstack/react-query'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { ArrowLeftIcon } from 'lucide-react-native'
 
 import FacebookIcon from '@app/assets/facebook-icon.svg'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
+import { BackButton } from '@app/components/back-button'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useFacebookPagesQuery } from '@app/libs/facebook'
 import {
@@ -73,14 +71,7 @@ export default function FacebookListPage() {
   return (
     <View className="pt-safe flex-1 flex-col">
       <View className="p-4 flex flex-row justify-between items-center border-b border-base-outline-default">
-        <Button
-          variant="outline-primary"
-          size="icon"
-          onPress={() => router.back()}
-          aria-label="กลับ"
-        >
-          <Icon icon={ArrowLeftIcon} size={24} strokeWidth={2} />
-        </Button>
+        <BackButton onPress={() => router.back()} aria-label="กลับ" />
         <View className="flex flex-row gap-2">
           <FacebookIcon size={32} />
           <H1 className="font-heading-bold text-2xl text-base-text-high">จัดการเพจที่ดูแล</H1>

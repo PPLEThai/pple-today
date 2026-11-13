@@ -10,6 +10,7 @@ import { Text } from '@pple-today/ui/text'
 import { Image } from 'expo-image'
 import { Tabs, usePathname } from 'expo-router'
 import { BottomTabBarButtonProps } from 'expo-router/js-tabs'
+import { NativeTabs } from 'expo-router/native-tabs'
 import { PlatformPressable } from 'expo-router/react-navigation'
 import { CircleUserRoundIcon, HandshakeIcon, HouseIcon, LucideIcon } from 'lucide-react-native'
 import { cssInterop } from 'nativewind'
@@ -17,89 +18,162 @@ import { cssInterop } from 'nativewind'
 import PeopleIcon from '@app/assets/people.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { useSession } from '@app/libs/auth'
+import { supportsLiquidGlass } from '@app/utils/liquid-glass'
 import { useCallbackRef } from '@app/utils/use-callback-ref'
 
 cssInterop(Image, { className: 'style' })
 
 export default function BottomTabsLayout() {
+  return (
+    <BottomTabActionProvider>
+      {supportsLiquidGlass ? <NativeTabsLayout /> : <JsTabsLayout />}
+    </BottomTabActionProvider>
+  )
+}
+
+const PRIMARY_COLOR = '#FF6A13' // base-primary-default
+
+/**
+ * iOS 26: a UIKit tab bar, which the system draws with Liquid Glass. It floats
+ * over the screens and stays full size while scrolling.
+ */
+function NativeTabsLayout() {
+  const session = useSession()
+  const { actions } = useBottomTabActionContext()
+  const pathname = usePathname()
+  const pathnameRef = React.useRef(pathname)
+  pathnameRef.current = pathname
+
+  return (
+    <NativeTabs
+      minimizeBehavior="never"
+      tintColor={PRIMARY_COLOR}
+      labelStyle={{
+        default: { fontFamily: 'NotoSansThai-Regular', fontSize: 11 },
+        selected: { fontFamily: 'NotoSansThai-SemiBold', fontSize: 11, color: PRIMARY_COLOR },
+      }}
+      screenListeners={({ navigation }) => ({
+        // Tapping the selected tab again: a stacked screen is popped natively,
+        // and on the tab's root screen we run its action (scroll to top), as
+        // <TabBarButton /> does for the JS tab bar.
+        tabPress: () => {
+          if (navigation.isFocused()) {
+            actions.current?.[pathnameRef.current]?.()
+          }
+        },
+      })}
+    >
+      <NativeTabs.Trigger name="(feed)">
+        <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} />
+        <NativeTabs.Trigger.Label>หน้าแรก</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="(volunteer)">
+        <NativeTabs.Trigger.Icon sf={{ default: 'person.2', selected: 'person.2.fill' }} />
+        <NativeTabs.Trigger.Label>อาสา</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="(official)">
+        <NativeTabs.Trigger.Icon
+          src={require('@app/assets/tab-icons/pple.png')}
+          renderingMode="template"
+        />
+        <NativeTabs.Trigger.Label>แอปฯ</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="(activity)">
+        <NativeTabs.Trigger.Icon
+          src={require('@app/assets/tab-icons/handshake.png')}
+          renderingMode="template"
+        />
+        <NativeTabs.Trigger.Label>กิจกรรม</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="(profile)">
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }}
+        />
+        <NativeTabs.Trigger.Label>{session ? 'ฉัน' : 'เข้าสู่ระบบ'}</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="(top-tabs)" hidden />
+    </NativeTabs>
+  )
+}
+
+/** Android and iOS before 26. */
+function JsTabsLayout() {
   const insets = useSafeAreaInsets()
   const session = useSession()
 
   return (
-    <BottomTabActionProvider>
-      <View className="flex-1 px-safe">
-        <Tabs
-          screenOptions={{
-            headerShown: false,
-            animation: 'none',
-            tabBarStyle: {
-              paddingHorizontal: 16,
-              height: 60 + insets.bottom,
-              paddingBottom: insets.bottom,
-              borderTopColor: 'transparent',
-              borderTopWidth: 0,
-              elevation: 0,
-            },
-            tabBarHideOnKeyboard: true,
+    <View className="flex-1 px-safe">
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          animation: 'none',
+          tabBarStyle: {
+            paddingHorizontal: 16,
+            height: 60 + insets.bottom,
+            paddingBottom: insets.bottom,
+            borderTopColor: 'transparent',
+            borderTopWidth: 0,
+            elevation: 0,
+          },
+          tabBarHideOnKeyboard: true,
+        }}
+      >
+        <Tabs.Screen
+          name="(feed)"
+          options={{
+            title: 'หน้าแรก',
+            tabBarIcon: (props) => <TabBarIcon {...props} icon={HouseIcon} />,
+            tabBarLabel: TabBarLabel,
+            tabBarButton: TabBarButton,
           }}
-        >
-          <Tabs.Screen
-            name="(feed)"
-            options={{
-              title: 'หน้าแรก',
-              tabBarIcon: (props) => <TabBarIcon {...props} icon={HouseIcon} />,
-              tabBarLabel: TabBarLabel,
-              tabBarButton: TabBarButton,
-            }}
-          />
-          {/* Shown signed out too: อาสาประชาชน asks the user to sign in itself. */}
-          <Tabs.Screen
-            name="(volunteer)"
-            options={{
-              title: 'อาสา',
-              tabBarIcon: (props) => <TabBarIcon {...props} icon={PeopleIcon} />,
-              tabBarLabel: TabBarLabel,
-              tabBarButton: TabBarButton,
-            }}
-          />
-          <Tabs.Screen
-            name="(official)"
-            options={{
-              title: 'แอปฯ',
-              tabBarIcon: (props) => <TabBarIcon {...props} icon={PPLEIcon} />,
-              tabBarLabel: TabBarLabel,
-              tabBarButton: TabBarButton,
-            }}
-          />
-          <Tabs.Screen
-            name="(activity)"
-            options={{
-              title: 'กิจกรรม',
-              tabBarIcon: (props) => <TabBarIcon {...props} icon={HandshakeIcon} />,
-              tabBarLabel: TabBarLabel,
-              tabBarButton: TabBarButton,
-            }}
-          />
-          <Tabs.Screen
-            name="(profile)"
-            options={{
-              // Signed out, this tab is the sign-in screen, and says so.
-              title: session ? 'ฉัน' : 'เข้าสู่ระบบ',
-              tabBarIcon: (props) => <TabBarIcon {...props} icon={CircleUserRoundIcon} />,
-              tabBarLabel: TabBarLabel,
-              tabBarButton: TabBarButton,
-            }}
-          />
-          <Tabs.Screen
-            name="(top-tabs)"
-            options={{
-              title: 'Playground',
-              href: null,
-            }}
-          />
-        </Tabs>
-      </View>
-    </BottomTabActionProvider>
+        />
+        {/* Shown signed out too: อาสาประชาชน asks the user to sign in itself. */}
+        <Tabs.Screen
+          name="(volunteer)"
+          options={{
+            title: 'อาสา',
+            tabBarIcon: (props) => <TabBarIcon {...props} icon={PeopleIcon} />,
+            tabBarLabel: TabBarLabel,
+            tabBarButton: TabBarButton,
+          }}
+        />
+        <Tabs.Screen
+          name="(official)"
+          options={{
+            title: 'แอปฯ',
+            tabBarIcon: (props) => <TabBarIcon {...props} icon={PPLEIcon} />,
+            tabBarLabel: TabBarLabel,
+            tabBarButton: TabBarButton,
+          }}
+        />
+        <Tabs.Screen
+          name="(activity)"
+          options={{
+            title: 'กิจกรรม',
+            tabBarIcon: (props) => <TabBarIcon {...props} icon={HandshakeIcon} />,
+            tabBarLabel: TabBarLabel,
+            tabBarButton: TabBarButton,
+          }}
+        />
+        <Tabs.Screen
+          name="(profile)"
+          options={{
+            // Signed out, this tab is the sign-in screen, and says so.
+            title: session ? 'ฉัน' : 'เข้าสู่ระบบ',
+            tabBarIcon: (props) => <TabBarIcon {...props} icon={CircleUserRoundIcon} />,
+            tabBarLabel: TabBarLabel,
+            tabBarButton: TabBarButton,
+          }}
+        />
+        <Tabs.Screen
+          name="(top-tabs)"
+          options={{
+            title: 'Playground',
+            href: null,
+          }}
+        />
+      </Tabs>
+    </View>
   )
 }
 

@@ -9,9 +9,10 @@ import { H1 } from '@pple-today/ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { produce } from 'immer'
-import { ArrowLeftIcon, ArrowUpRightIcon } from 'lucide-react-native'
+import { ArrowUpRightIcon } from 'lucide-react-native'
 
 import type { NotificationInteraction as NotificationInteractionDto } from '@api/backoffice/app'
+import { BackButton } from '@app/components/back-button'
 import { LinkifiedText } from '@app/components/linkified-text'
 import { MiniAppInviteInbox } from '@app/components/mini-app/invite-inbox'
 import { NotificationInteraction } from '@app/components/notification/interaction'
@@ -121,14 +122,7 @@ export default function NotificationDetailPage() {
   return (
     <View className="flex-1 flex-col">
       <View className="pt-safe-offset-4 pb-2 px-4 bg-base-bg-white">
-        <Button
-          variant="outline-primary"
-          size="icon"
-          onPress={() => router.back()}
-          aria-label="Go back"
-        >
-          <Icon icon={ArrowLeftIcon} size={24} />
-        </Button>
+        <BackButton onPress={() => router.back()} aria-label="Go back" />
       </View>
       {notificationDetailQuery.isLoading || !item ? (
         <NotificationDetailSkeleton />

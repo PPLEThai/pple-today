@@ -9,10 +9,11 @@ import { Text } from '@pple-today/ui/text'
 import { H1, H2 } from '@pple-today/ui/typography'
 import * as Linking from 'expo-linking'
 import { Link, useLocalSearchParams, useRouter } from 'expo-router'
-import { ArrowLeftIcon, MapPinnedIcon, VoteIcon } from 'lucide-react-native'
+import { MapPinnedIcon, VoteIcon } from 'lucide-react-native'
 
 import { ElectionWithCurrentStatus, GetElectionResponse } from '@api/backoffice/app'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
+import { BackButton } from '@app/components/back-button'
 import { ElectionDetailCard } from '@app/components/election/election-card'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { reactQueryClient } from '@app/libs/api-client'
@@ -47,14 +48,7 @@ export default function ElectionDetailPage() {
   return (
     <SafeAreaLayout className="flex-1 flex-col bg-base-bg-white">
       <View className="pt-4 pb-2 px-4 bg-base-bg-white">
-        <Button
-          variant="outline-primary"
-          size="icon"
-          onPress={() => router.back()}
-          aria-label="Go back"
-        >
-          <Icon icon={ArrowLeftIcon} size={24} />
-        </Button>
+        <BackButton onPress={() => router.back()} aria-label="Go back" />
       </View>
       {!election ? (
         <View className="flex flex-col gap-3 px-4">

@@ -12,11 +12,12 @@ import { Text } from '@pple-today/ui/text'
 import { H3 } from '@pple-today/ui/typography'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { ArrowLeftIcon, ArrowRightIcon, MegaphoneIcon, UserIcon } from 'lucide-react-native'
+import { ArrowRightIcon, MegaphoneIcon, UserIcon } from 'lucide-react-native'
 
 import { GetFeedItemsByUserIdResponse } from '@api/backoffice/app'
 import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/announcement'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
+import { BackButton } from '@app/components/back-button'
 import { FeedFooter, FeedRefreshControl } from '@app/components/feed'
 import { FeedCard } from '@app/components/feed/feed-card'
 import { useUserFollow } from '@app/components/feed/user-card'
@@ -191,14 +192,7 @@ export default function ProfilePage() {
   return (
     <SafeAreaLayout>
       <View className="flex flex-col bg-base-bg-white p-4">
-        <Button
-          variant="outline-primary"
-          size="icon"
-          onPress={() => router.back()}
-          aria-label="กลับ"
-        >
-          <Icon icon={ArrowLeftIcon} size={24} />
-        </Button>
+        <BackButton onPress={() => router.back()} aria-label="กลับ" />
       </View>
       <Animated.FlatList
         refreshControl={<FeedRefreshControl headerHeight={0} onRefresh={onRefresh} />}
