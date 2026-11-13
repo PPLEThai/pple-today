@@ -7,9 +7,9 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 
 import { ApplicationApiSchema } from '@api/backoffice/app'
-import { BackButton } from '@app/components/back-button'
 import { FeedFooter } from '@app/components/feed'
 import { FeedCard } from '@app/components/feed/feed-card'
+import { BackHeader, usePageHeaderInset } from '@app/components/page-header'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 
 export default function HashtagFeedPage() {
@@ -36,9 +36,7 @@ export default function HashtagFeedPage() {
   }
   return (
     <View className="flex-1 flex-col">
-      <View className="pt-safe-offset-4 pb-2 px-4 bg-base-bg-white">
-        <BackButton onPress={() => router.back()} aria-label="Go back" />
-      </View>
+      <BackHeader />
       <HashtagFeed
         hashtagId={hashtagId}
         header={
@@ -55,6 +53,7 @@ export default function HashtagFeedPage() {
 
 const LIMIT = 10
 function HashtagFeed(props: { hashtagId: string; header?: React.ReactElement }) {
+  const headerInset = usePageHeaderInset()
   const feedInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/feed/hashtag'),
     queryFn: async ({ pageParam }) => {
@@ -106,6 +105,8 @@ function HashtagFeed(props: { hashtagId: string; header?: React.ReactElement }) 
       data={data}
       className="flex-1"
       contentContainerClassName="flex flex-col flex-grow bg-base-bg-default"
+      contentContainerStyle={{ paddingTop: headerInset }}
+      scrollIndicatorInsets={{ top: headerInset }}
       ListHeaderComponent={props.header}
       // ListHeaderComponent={<AnnouncementSection />}
       ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} className="mt-4 mx-4" />}

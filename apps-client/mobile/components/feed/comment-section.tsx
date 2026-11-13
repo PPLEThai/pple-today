@@ -20,9 +20,12 @@ const LIMIT = 10
 export function FeedCommentSection({
   feedId,
   headerComponent,
+  topInset = 0,
 }: {
   feedId: string
   headerComponent?: React.ReactElement
+  /** Space a native header covers at the top of the list (`usePageHeaderInset()`). */
+  topInset?: number
 }) {
   const commentInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/feed/:id/comments', { pathParams: { id: feedId! } }),
@@ -101,6 +104,8 @@ export function FeedCommentSection({
     <FlatList
       className="flex-1"
       contentContainerClassName="pb-2 bg-base-bg-default flex-grow"
+      contentContainerStyle={{ paddingTop: topInset }}
+      scrollIndicatorInsets={{ top: topInset }}
       data={data}
       onEndReached={onEndReached}
       onEndReachedThreshold={1}

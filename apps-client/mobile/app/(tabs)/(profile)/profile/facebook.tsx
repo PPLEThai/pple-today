@@ -13,6 +13,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import FacebookIcon from '@app/assets/facebook-icon.svg'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { BackButton } from '@app/components/back-button'
+import { NativeHeader, usePageHeaderInset } from '@app/components/page-header'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useFacebookPagesQuery } from '@app/libs/facebook'
 import {
@@ -20,6 +21,7 @@ import {
   useFacebookPagePickerTrace,
 } from '@app/libs/facebook-connect-attempt'
 import { createImageUrl } from '@app/utils/image'
+import { supportsLiquidGlass } from '@app/utils/liquid-glass'
 
 export default function FacebookListPage() {
   const params = useLocalSearchParams()
@@ -65,20 +67,26 @@ export default function FacebookListPage() {
   const queryClient = useQueryClient()
   const linkPageMutation = reactQueryClient.useMutation('post', '/facebook/linked-page')
   const [value, setValue] = useState('')
+  const headerInset = usePageHeaderInset()
   if (!facebookAccessToken) {
     return null
   }
   return (
-    <View className="pt-safe flex-1 flex-col">
-      <View className="p-4 flex flex-row justify-between items-center border-b border-base-outline-default">
-        <BackButton onPress={() => router.back()} aria-label="กลับ" />
-        <View className="flex flex-row gap-2">
-          <FacebookIcon size={32} />
-          <H1 className="font-heading-bold text-2xl text-base-text-high">จัดการเพจที่ดูแล</H1>
+    <View className={clsx('flex-1 flex-col', !supportsLiquidGlass && 'pt-safe')}>
+      {supportsLiquidGlass ? (
+        <NativeHeader icon={<FacebookIcon size={20} />} title="จัดการเพจที่ดูแล" />
+      ) : (
+        <View className="p-4 flex flex-row justify-between items-center border-b border-base-outline-default">
+          <BackButton onPress={() => router.back()} aria-label="กลับ" />
+          <View className="flex flex-row gap-2">
+            <FacebookIcon size={32} />
+            <H1 className="font-heading-bold text-2xl text-base-text-high">จัดการเพจที่ดูแล</H1>
+          </View>
         </View>
-      </View>
+      )}
       <RadioGroupPrimitive.Root
         className="p-4 flex flex-col"
+        style={{ paddingTop: headerInset + 16 }}
         value={value}
         onValueChange={(val) => {
           setValue(val)

@@ -12,7 +12,6 @@ import { produce } from 'immer'
 import { ArrowUpRightIcon } from 'lucide-react-native'
 
 import type { NotificationInteraction as NotificationInteractionDto } from '@api/backoffice/app'
-import { BackButton } from '@app/components/back-button'
 import { LinkifiedText } from '@app/components/linkified-text'
 import { MiniAppInviteInbox } from '@app/components/mini-app/invite-inbox'
 import { NotificationInteraction } from '@app/components/notification/interaction'
@@ -20,6 +19,7 @@ import {
   NotificationSenderIcon,
   PLATFORM_SENDER_NAME,
 } from '@app/components/notification/sender-icon'
+import { BackHeader, usePageHeaderInset } from '@app/components/page-header'
 import { reactQueryClient } from '@app/libs/api-client'
 import { formatNotificationTime } from '@app/libs/format-notification-time'
 import { openLink } from '@app/utils/link'
@@ -38,6 +38,7 @@ export default function NotificationDetailPage() {
   const router = useRouter()
   const params = useLocalSearchParams()
   const notificationId = params.notificationId as string
+  const headerInset = usePageHeaderInset()
   // Set by a tray action that has to open the app (it has a confirm dialog or
   // required fields): the id of the interaction action to leave pending. A Live
   // Activity button opens `pple-today://notification/<id>?action=<actionId>`.
@@ -121,16 +122,16 @@ export default function NotificationDetailPage() {
   }
   return (
     <View className="flex-1 flex-col">
-      <View className="pt-safe-offset-4 pb-2 px-4 bg-base-bg-white">
-        <BackButton onPress={() => router.back()} aria-label="Go back" />
-      </View>
+      <BackHeader />
       {notificationDetailQuery.isLoading || !item ? (
-        <NotificationDetailSkeleton />
+        <NotificationDetailSkeleton topInset={headerInset} />
       ) : (
         <>
           <ScrollView
             className="flex-1"
-            contentContainerClassName="pt-1 pb-2 bg-base-bg-white flex-grow flex flex-col gap-3 px-4"
+            contentContainerClassName="pb-2 bg-base-bg-white flex-grow flex flex-col gap-3 px-4"
+            contentContainerStyle={{ paddingTop: headerInset + 4 }}
+            scrollIndicatorInsets={{ top: headerInset }}
           >
             <View className="flex flex-row items-center gap-2">
               <NotificationSenderIcon app={item.app} />
@@ -180,9 +181,12 @@ export default function NotificationDetailPage() {
   )
 }
 
-function NotificationDetailSkeleton() {
+function NotificationDetailSkeleton({ topInset }: { topInset: number }) {
   return (
-    <View className="flex-1 pt-1 pb-2 bg-base-bg-white flex-grow flex flex-col gap-3 px-4">
+    <View
+      className="flex-1 pb-2 bg-base-bg-white flex-grow flex flex-col gap-3 px-4"
+      style={{ paddingTop: topInset + 4 }}
+    >
       <View className="flex flex-row items-center gap-2">
         <Skeleton className="size-8 rounded-full" />
         <Skeleton className="h-[14px] w-20" />

@@ -13,18 +13,23 @@ import { MapPinnedIcon, VoteIcon } from 'lucide-react-native'
 
 import { ElectionWithCurrentStatus, GetElectionResponse } from '@api/backoffice/app'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
-import { BackButton } from '@app/components/back-button'
 import { ElectionDetailCard } from '@app/components/election/election-card'
+import { BackHeader, usePageHeaderInset } from '@app/components/page-header'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useAuthMe } from '@app/libs/auth'
 import { createImageUrl } from '@app/utils/image'
+import { supportsLiquidGlass } from '@app/utils/liquid-glass'
+
+// On iOS 26 the page scrolls under the native header, up to the top edge.
+const Layout = supportsLiquidGlass ? View : SafeAreaLayout
 
 export default function ElectionDetailPage() {
   const router = useRouter()
 
   const params = useLocalSearchParams()
   const electionId = params.electionId as string
+  const headerInset = usePageHeaderInset()
   useEffect(() => {
     if (!electionId) {
       router.dismissTo('/')
@@ -46,18 +51,20 @@ export default function ElectionDetailPage() {
   }
   const election = electionQuery.data
   return (
-    <SafeAreaLayout className="flex-1 flex-col bg-base-bg-white">
-      <View className="pt-4 pb-2 px-4 bg-base-bg-white">
-        <BackButton onPress={() => router.back()} aria-label="Go back" />
-      </View>
+    <Layout className="flex-1 flex-col bg-base-bg-white">
+      <BackHeader className="pt-4 pb-2 px-4 bg-base-bg-white" />
       {!election ? (
-        <View className="flex flex-col gap-3 px-4">
+        <View className="flex flex-col gap-3 px-4" style={{ paddingTop: headerInset }}>
           <Skeleton className="h-5 mt-2 w-1/2 rounded-2xl" />
           <Skeleton className="h-40 w-full rounded-2xl" />
         </View>
       ) : (
         <>
-          <ScrollView contentContainerClassName="flex flex-col gap-3 px-4">
+          <ScrollView
+            contentContainerClassName="flex flex-col gap-3 px-4"
+            contentContainerStyle={{ paddingTop: headerInset }}
+            scrollIndicatorInsets={{ top: headerInset }}
+          >
             <H1 className="text-xl font-heading-semibold text-base-text-high">{election.name}</H1>
             <ElectionDetailCard election={election} />
             {election.status !== 'RESULT_ANNOUNCE' && election.description && (
@@ -71,7 +78,7 @@ export default function ElectionDetailPage() {
           <ElectionAction election={election} />
         </>
       )}
-    </SafeAreaLayout>
+    </Layout>
   )
 }
 

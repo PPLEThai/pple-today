@@ -11,14 +11,20 @@ import { RefreshControl } from '../refresh-control'
 
 interface FeedRefreshControlProps {
   headerHeight: number
+  /** iOS: space a native header covers at the top of the list (`usePageHeaderInset()`). */
+  topInset?: number
   onRefresh: () => void | Promise<void>
 }
 // TODO: make RefreshControl appear on top of the header so that we dont need the headerHeight offset on Android
-export function FeedRefreshControl({ headerHeight, ...rest }: FeedRefreshControlProps) {
+export function FeedRefreshControl({
+  headerHeight,
+  topInset = 0,
+  ...rest
+}: FeedRefreshControlProps) {
   return (
     <RefreshControl
       {...rest}
-      progressViewOffset={Platform.select({ ios: 0, android: headerHeight })}
+      progressViewOffset={Platform.select({ ios: topInset, android: headerHeight })}
     />
   )
 }
