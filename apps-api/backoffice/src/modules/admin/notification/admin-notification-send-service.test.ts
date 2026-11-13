@@ -5,12 +5,13 @@ import { describe, expect, test, vi } from 'vitest'
 import {
   AdminNotificationSendService,
   normalizePhoneNumbers,
+  TEST_SEND_VISIBLE_MS,
   toPipelineAudience,
   toSentAudience,
   toSentInteractionState,
 } from './admin-notification-send-service'
 import type { AdminSendNotificationBody } from './models'
-import type { SentNotificationRow } from './sent-repository'
+import { type SentNotificationRow, visibleTo } from './sent-repository'
 
 const NOW = new Date('2026-11-13T04:00:00.000Z')
 const ORIGIN = 'https://apps.example'
@@ -24,9 +25,10 @@ const createService = (options: { interactive?: boolean } = {}) => {
     listRoles: vi.fn(async () => ok([{ role: 'member', userCount: 3 }])),
     publishImage: vi.fn(async (path: string) => ok(`https://cdn.example/${path}`)),
     countRecipients: vi.fn(async (_id: string) => ok(42)),
-    listSent: vi.fn(),
-    getSent: vi.fn(),
-    listResponses: vi.fn(),
+    listSent: vi.fn(async (..._args: unknown[]) => ok({ rows: [], count: 0 })),
+    getSent: vi.fn(async (..._args: unknown[]) => ok(null)),
+    listResponses: vi.fn(async (..._args: unknown[]) => ok(null)),
+    isVisible: vi.fn(async (..._args: unknown[]) => ok(true)),
   }
   const notificationRepository = {
     sendNotificationToUser: vi.fn(
@@ -458,5 +460,52 @@ describe('reading back what was sent', () => {
         NOW
       )
     ).toBe('EXPIRED')
+  })
+})
+
+describe('who sees a test send', () => {
+  const viewer = { userId: ADMIN.userId, testSince: new Date(NOW.getTime() - TEST_SEND_VISIBLE_MS) }
+
+  test('every read is scoped to the viewer, with tests from the last hour', async () => {
+    const { service, sentRepository } = createService()
+
+    await service.listSent({}, ADMIN)
+    await service.getSent('n-1', ADMIN)
+    await service.listResponses('n-1', {}, ADMIN)
+
+    expect(sentRepository.listSent).toHaveBeenCalledWith({ page: 1, limit: 10 }, viewer)
+    expect(sentRepository.getSent).toHaveBeenCalledWith('n-1', viewer)
+    expect(sentRepository.listResponses).toHaveBeenCalledWith('n-1', { page: 1, limit: 20 }, viewer)
+    expect(viewer.testSince).toEqual(new Date('2026-11-13T03:00:00.000Z'))
+  })
+
+  test('someone else’s or an expired test reads as missing', async () => {
+    const { service, sentRepository } = createService()
+    sentRepository.isVisible.mockResolvedValue(ok(false))
+
+    expect(codeOf(await service.checkVisible('n-1', ADMIN))).toBe(
+      InternalErrorCode.NOTIFICATION_NOT_FOUND
+    )
+    expect(codeOf(await service.getSent('n-1', ADMIN))).toBe(
+      InternalErrorCode.NOTIFICATION_NOT_FOUND
+    )
+  })
+
+  test('the filter keeps every real send, and only the viewer’s own recent tests', () => {
+    const where = visibleTo(viewer)
+    expect(where.origin).toBe('ADMIN_PORTAL')
+    const [real, ownTest] = where.OR as [Record<string, any>, Record<string, any>]
+    // A test is the send with no audience column set.
+    const isTest = {
+      isBroadcast: false,
+      roles: { isEmpty: true },
+      provinces: { isEmpty: true },
+      districts: { isEmpty: true },
+      phoneNumbers: { none: {} },
+    }
+    expect(real).toEqual({ NOT: isTest })
+    expect(ownTest).toEqual({
+      AND: [isTest, { sentByUserId: ADMIN.userId, createdAt: { gte: viewer.testSince } }],
+    })
   })
 })
