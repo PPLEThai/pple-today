@@ -44,7 +44,17 @@ export interface MiniAppWebViewProps {
    * true; mini apps embedded as a tab hide it and own the top safe area.
    */
   showTopBar?: boolean
+  /**
+   * How much of the web view's bottom a native bar floats over, in points.
+   * The page reads it as the CSS variable `--pple-today-inset-bottom` to keep
+   * its own bottom UI clear of the bar while content still scrolls under it.
+   */
+  bottomInset?: number
   ref?: React.Ref<MiniAppWebViewHandle>
+}
+
+function bottomInsetScript(bottomInset: number) {
+  return `document.documentElement.style.setProperty('--pple-today-inset-bottom', '${bottomInset}px'); true;`
 }
 
 /**
@@ -62,6 +72,7 @@ export function MiniAppWebView({
   path,
   onClose,
   showTopBar = true,
+  bottomInset,
   ref,
 }: MiniAppWebViewProps) {
   const tokenExchangeMiniAppResult = reactQueryClient.useMutation('post', '/auth/mini-app/:slug', {
@@ -120,6 +131,13 @@ export function MiniAppWebView({
 
   const [canGoBack, setCanGoBack] = useState(false)
   const miniAppRef = useRef<WebView>(null)
+
+  // Set before each page's own scripts run, and again on the open page when
+  // the inset changes, since an injected script only runs on the next load.
+  const injectedBottomInset = bottomInset === undefined ? undefined : bottomInsetScript(bottomInset)
+  useEffect(() => {
+    if (injectedBottomInset) miniAppRef.current?.injectJavaScript(injectedBottomInset)
+  }, [injectedBottomInset])
 
   useImperativeHandle(
     ref,
@@ -322,6 +340,7 @@ export function MiniAppWebView({
             userAgent={userAgent}
             source={{ uri: noAuthUrl }}
             startInLoadingState={true}
+            injectedJavaScriptBeforeContentLoaded={injectedBottomInset}
           />
         ) : needsSignInToOpen && signInDeclined && !signInPrompt.prompt ? (
           <MiniAppSignInRequired onSignIn={() => void signInToOpen({ closeOnCancel: false })} />
@@ -346,6 +365,7 @@ export function MiniAppWebView({
             // SDKs that predate the bridge keep working.
             source={{ uri: tokenExchangeMiniAppResult.data.url }}
             startInLoadingState={true}
+            injectedJavaScriptBeforeContentLoaded={injectedBottomInset}
           />
         )}
       </View>
