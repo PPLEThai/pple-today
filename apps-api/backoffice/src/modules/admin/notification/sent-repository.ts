@@ -29,11 +29,45 @@ const sentNotificationSelect = {
 } as const satisfies Prisma.NotificationSelect
 
 /**
+ * Who is looking, for `visibleTo`. `testSince` is the oldest test send the
+ * viewer may still see: their own tests are listed for a short while after
+ * sending, so they can check the result, and nobody else ever sees them.
+ */
+export interface SentNotificationViewer {
+  userId: string
+  testSince: Date
+}
+
+/**
+ * A test send is addressed to its sender by user id, which the row does not
+ * record, so it is the one portal send with no audience column set. Every other
+ * kind refuses an empty selection, and a phone send stores its numbers whether
+ * or not they matched anyone. (`toSentAudience` reads `TEST` the same way.)
+ */
+const isTestSend = {
+  isBroadcast: false,
+  roles: { isEmpty: true },
+  provinces: { isEmpty: true },
+  districts: { isEmpty: true },
+  phoneNumbers: { none: {} },
+} satisfies Prisma.NotificationWhereInput
+
+/** Portal notifications this viewer may see: every real send, and their own recent tests. */
+export const visibleTo = (viewer: SentNotificationViewer): Prisma.NotificationWhereInput => ({
+  origin: NotificationOrigin.ADMIN_PORTAL,
+  OR: [
+    { NOT: isTestSend },
+    { AND: [isTestSend, { sentByUserId: viewer.userId, createdAt: { gte: viewer.testSince } }] },
+  ],
+})
+
+/**
  * Persistence for the admin portal's own notifications: the history list, one
  * notification's detail and answers, and the lookups the send form needs.
  *
- * Every read is scoped to `origin: ADMIN_PORTAL`, so an app's notifications and
- * their answers (which belong to that app) are never listed here.
+ * Every read goes through `visibleTo`: scoped to `origin: ADMIN_PORTAL`, so an
+ * app's notifications and their answers (which belong to that app) are never
+ * listed here, and to tests the viewer sent recently.
  *
  * Kept free of Elysia/config imports so it can be unit-tested without booting
  * the app's config graph; the plugin wiring lives in `services.ts`.
@@ -87,8 +121,8 @@ export class AdminSentNotificationRepository {
     )
   }
 
-  async listSent(query: { page: number; limit: number }) {
-    const where = { origin: NotificationOrigin.ADMIN_PORTAL }
+  async listSent(query: { page: number; limit: number }, viewer: SentNotificationViewer) {
+    const where = visibleTo(viewer)
     return fromRepositoryPromise(async () => {
       const [rows, count] = await this.prismaService.$transaction([
         this.prismaService.notification.findMany({
@@ -105,10 +139,10 @@ export class AdminSentNotificationRepository {
   }
 
   /** One portal notification with its read and per-action answer counts, or null. */
-  async getSent(notificationId: string) {
+  async getSent(notificationId: string, viewer: SentNotificationViewer) {
     return fromRepositoryPromise(async () => {
       const row = await this.prismaService.notification.findFirst({
-        where: { id: notificationId, origin: NotificationOrigin.ADMIN_PORTAL },
+        where: { AND: [{ id: notificationId }, visibleTo(viewer)] },
         select: sentNotificationSelect,
       })
       if (!row) return null
@@ -130,11 +164,25 @@ export class AdminSentNotificationRepository {
     })
   }
 
+  /** Whether this viewer may see this portal notification. */
+  async isVisible(notificationId: string, viewer: SentNotificationViewer) {
+    return fromRepositoryPromise(async () => {
+      const count = await this.prismaService.notification.count({
+        where: { AND: [{ id: notificationId }, visibleTo(viewer)] },
+      })
+      return count > 0
+    })
+  }
+
   /** Answers to one portal notification, oldest first, or null when it is not one. */
-  async listResponses(notificationId: string, query: { page: number; limit: number }) {
+  async listResponses(
+    notificationId: string,
+    query: { page: number; limit: number },
+    viewer: SentNotificationViewer
+  ) {
     return fromRepositoryPromise(async () => {
       const exists = await this.prismaService.notification.count({
-        where: { id: notificationId, origin: NotificationOrigin.ADMIN_PORTAL },
+        where: { AND: [{ id: notificationId }, visibleTo(viewer)] },
       })
       if (exists === 0) return null
 

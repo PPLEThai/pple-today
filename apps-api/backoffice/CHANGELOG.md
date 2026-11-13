@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.26.1
+
+### Patch Changes
+
+- [#557](https://github.com/PPLEThai/pple-today/pull/557) [`5cae232`](https://github.com/PPLEThai/pple-today/commit/5cae2327d505b258528a6675e6f1912d39b22412) Thanks [@PanJ](https://github.com/PanJ)! - Test sends (ทดสอบส่งหาฉัน) no longer appear in other admins' แจ้งเตือน history, and their details and answers can't be opened by other admins. The admin who sent a test sees it, labelled ทดสอบ (เห็นเฉพาะคุณ 1 ชั่วโมง), for one hour after sending, and after that it leaves their history too.
+
 ## 1.26.0
 
 ### Minor Changes

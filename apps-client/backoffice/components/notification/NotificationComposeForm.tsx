@@ -207,7 +207,8 @@ export const NotificationComposeForm = () => {
                   className="underline"
                 >
                   ดูรายละเอียด
-                </Link>
+                </Link>{' '}
+                <span className="text-base-text-medium">(เห็นเฉพาะคุณ ภายใน 1 ชั่วโมง)</span>
               </p>
             )}
             {testResult && 'error' in testResult && (

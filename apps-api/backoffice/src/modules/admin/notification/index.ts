@@ -159,8 +159,8 @@ export const AdminNotificationController = new Elysia({
   )
   .get(
     '/sent',
-    async ({ adminNotificationSendService, query, status }) => {
-      const result = await adminNotificationSendService.listSent(query)
+    async ({ adminNotificationSendService, query, user, status }) => {
+      const result = await adminNotificationSendService.listSent(query, { userId: user.id })
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
       return status(200, result.value)
     },
@@ -168,7 +168,8 @@ export const AdminNotificationController = new Elysia({
       requiredLocalUser: true,
       detail: {
         summary: 'List notifications sent from the admin portal',
-        description: 'Newest first. Notifications sent through an API key are not listed.',
+        description:
+          "Newest first. Notifications sent through an API key are not listed, and neither are test sends, except the caller's own for an hour after sending.",
       },
       query: AdminListSentNotificationsQuery,
       response: {
@@ -179,8 +180,8 @@ export const AdminNotificationController = new Elysia({
   )
   .get(
     '/sent/:id',
-    async ({ adminNotificationSendService, params, status }) => {
-      const result = await adminNotificationSendService.getSent(params.id)
+    async ({ adminNotificationSendService, params, user, status }) => {
+      const result = await adminNotificationSendService.getSent(params.id, { userId: user.id })
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
       return status(200, result.value)
     },
@@ -203,8 +204,10 @@ export const AdminNotificationController = new Elysia({
   )
   .get(
     '/sent/:id/responses',
-    async ({ adminNotificationSendService, params, query, status }) => {
-      const result = await adminNotificationSendService.listResponses(params.id, query)
+    async ({ adminNotificationSendService, params, query, user, status }) => {
+      const result = await adminNotificationSendService.listResponses(params.id, query, {
+        userId: user.id,
+      })
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
       return status(200, result.value)
     },
@@ -228,7 +231,13 @@ export const AdminNotificationController = new Elysia({
   )
   .post(
     '/sent/:id/close',
-    async ({ interactionService, params, status }) => {
+    async ({ adminNotificationSendService, interactionService, params, user, status }) => {
+      // Someone else's test is not this admin's to see, so not theirs to close either.
+      const visible = await adminNotificationSendService.checkVisible(params.id, {
+        userId: user.id,
+      })
+      if (visible.isErr()) return mapErrorCodeToResponse(visible.error, status)
+
       const result = await interactionService.closePortalInteraction(params.id)
       if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
       return status(200, result.value)
