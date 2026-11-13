@@ -1,5 +1,11 @@
 # @client/backoffice
 
+## 1.9.3
+
+### Patch Changes
+
+- [#543](https://github.com/PPLEThai/pple-today/pull/543) [`237230e`](https://github.com/PPLEThai/pple-today/commit/237230e9d62d6ba8ba548d2176375722556743d0) Thanks [@PanJ](https://github.com/PanJ)! - Fix rejecting a pending Facebook page failing with "(#15) This method must be called with an app access_token", and show Facebook errors in the backoffice when approving or rejecting a page fails
+
 ## 1.9.2
 
 ### Patch Changes
