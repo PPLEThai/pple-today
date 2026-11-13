@@ -16,13 +16,14 @@ import { Button } from '@pple-today/web-ui/button'
 import { Card } from '@pple-today/web-ui/card'
 import { Form } from '@pple-today/web-ui/form'
 import { Typography } from '@pple-today/web-ui/typography'
-import { useNavigate } from '@tanstack/react-router'
-import { Loader2, Send } from 'lucide-react'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { FlaskConical, Loader2, Send } from 'lucide-react'
 import { handleUploadFile } from 'utils/file-upload'
 
 import type {
   AdminCountNotificationAudienceResponse,
   AdminSendNotificationResponse,
+  AdminSendTestNotificationResponse,
 } from '@api/backoffice/admin'
 
 import { reactQueryClient } from '~/libs/api-client'
@@ -57,6 +58,7 @@ export const NotificationComposeForm = () => {
   const countMutation = reactQueryClient.useMutation('post', '/admin/notifications/audience-count')
   const uploadUrlMutation = reactQueryClient.useMutation('post', '/admin/file/upload-url')
   const sendMutation = reactQueryClient.useMutation('post', '/admin/notifications/send')
+  const testMutation = reactQueryClient.useMutation('post', '/admin/notifications/send-test')
 
   const [pending, setPending] = useState<{
     values: NotificationFormValues
@@ -65,6 +67,55 @@ export const NotificationComposeForm = () => {
   const [sent, setSent] = useState<AdminSendNotificationResponse | null>(null)
   const [sendError, setSendError] = useState<string | null>(null)
   const [isSending, setIsSending] = useState(false)
+  const [testResult, setTestResult] = useState<
+    { ok: AdminSendTestNotificationResponse } | { error: string } | null
+  >(null)
+  const [isTesting, setIsTesting] = useState(false)
+
+  const uploadImage = async (image: File | undefined) => {
+    if (!image) return undefined
+    const upload = await uploadUrlMutation.mutateAsync({
+      body: { category: 'NOTIFICATION', contentType: image.type as 'image/png' },
+    })
+    await handleUploadFile(image, upload.uploadUrl, upload.uploadFields)
+    return upload.filePath as `temp/${string}`
+  }
+
+  /**
+   * Validate everything except the audience: a test goes to the admin alone,
+   * so it should work before the recipients are filled in. Errors land on the
+   * same fields the real send would mark.
+   */
+  const sendTest = async () => {
+    setTestResult(null)
+    form.clearErrors()
+    const parsed = NotificationFormSchema.safeParse({
+      ...form.getValues(),
+      audienceMode: 'BROADCAST',
+      smsEnabled: false,
+    })
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        form.setError(issue.path.join('.') as never, { message: issue.message })
+      }
+      return
+    }
+
+    setIsTesting(true)
+    try {
+      const imageFilePath = await uploadImage(parsed.data.imageFile)
+      const {
+        audience: _audience,
+        smsFallbackText: _sms,
+        ...body
+      } = toSendBody(parsed.data, imageFilePath)
+      setTestResult({ ok: await testMutation.mutateAsync({ body }) })
+    } catch (error) {
+      setTestResult({ error: apiErrorMessage(error) ?? 'ส่งทดสอบไม่สำเร็จ' })
+    } finally {
+      setIsTesting(false)
+    }
+  }
 
   const onValid = async (values: NotificationFormValues) => {
     setSendError(null)
@@ -81,15 +132,7 @@ export const NotificationComposeForm = () => {
     setIsSending(true)
     setSendError(null)
     try {
-      let imageFilePath: `temp/${string}` | undefined
-      const image = pending.values.imageFile
-      if (image) {
-        const upload = await uploadUrlMutation.mutateAsync({
-          body: { category: 'NOTIFICATION', contentType: image.type as 'image/png' },
-        })
-        await handleUploadFile(image, upload.uploadUrl, upload.uploadFields)
-        imageFilePath = upload.filePath as `temp/${string}`
-      }
+      const imageFilePath = await uploadImage(pending.values.imageFile)
       const result = await sendMutation.mutateAsync({
         body: toSendBody(pending.values, imageFilePath),
       })
@@ -135,7 +178,47 @@ export const NotificationComposeForm = () => {
           {Object.keys(form.formState.errors).length > 0 && (
             <p className="text-sm text-system-danger-default">กรุณาแก้ไขข้อมูลที่ไม่ถูกต้อง</p>
           )}
-          <Button type="submit" className="w-full" disabled={countMutation.isPending || isSending}>
+          <div className="space-y-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="gap-2 w-full"
+              onClick={sendTest}
+              disabled={isTesting || isSending}
+            >
+              {isTesting ? <Loader2 className="animate-spin" /> : <FlaskConical />}
+              ทดสอบส่งหาฉัน
+            </Button>
+            {testResult && 'ok' in testResult && (
+              <p
+                className={
+                  testResult.ok.hasPushToken
+                    ? 'text-sm text-system-success-default'
+                    : 'text-sm text-system-warning-dark'
+                }
+              >
+                {testResult.ok.hasPushToken
+                  ? 'ส่งทดสอบไปที่มือถือของคุณแล้ว'
+                  : 'ส่งเข้ากล่องแจ้งเตือนในแอปของคุณแล้ว แต่ไม่พบอุปกรณ์ที่รับการแจ้งเตือนได้ (ยังไม่ได้เข้าสู่ระบบแอป PPLE Today หรือปิดการแจ้งเตือนไว้)'}{' '}
+                <Link
+                  to="/notification/$notificationId"
+                  params={{ notificationId: testResult.ok.notificationId }}
+                  target="_blank"
+                  className="underline"
+                >
+                  ดูรายละเอียด
+                </Link>
+              </p>
+            )}
+            {testResult && 'error' in testResult && (
+              <p className="text-sm text-system-danger-default">{testResult.error}</p>
+            )}
+          </div>
+          <Button
+            type="submit"
+            className="gap-2 w-full"
+            disabled={countMutation.isPending || isSending}
+          >
             {countMutation.isPending ? <Loader2 className="animate-spin" /> : <Send />}
             ส่งการแจ้งเตือน
           </Button>
@@ -178,6 +261,7 @@ export const NotificationComposeForm = () => {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isSending}>ยกเลิก</AlertDialogCancel>
             <AlertDialogAction
+              className="gap-2"
               disabled={isSending}
               onClick={(e) => {
                 e.preventDefault()

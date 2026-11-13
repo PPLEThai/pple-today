@@ -304,6 +304,7 @@ export const NotificationAudienceSection = () => {
 
       <div className="flex flex-wrap items-center gap-3">
         <Button
+          className="gap-1.5"
           type="button"
           variant="outline"
           size="sm"

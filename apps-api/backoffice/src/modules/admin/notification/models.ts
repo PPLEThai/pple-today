@@ -199,6 +199,22 @@ export const AdminSendNotificationResponse = t.Object({
 })
 export type AdminSendNotificationResponse = Static<typeof AdminSendNotificationResponse>
 
+/** The same notification minus its audience: a test send goes to the sender only, and never by SMS. */
+export const AdminSendTestNotificationBody = t.Omit(AdminSendNotificationBody, [
+  'audience',
+  'smsFallbackText',
+])
+export type AdminSendTestNotificationBody = Static<typeof AdminSendTestNotificationBody>
+
+export const AdminSendTestNotificationResponse = t.Object({
+  notificationId: t.String(),
+  hasPushToken: t.Boolean({
+    description:
+      "Whether the admin's own account has a device to push to. False means it reached only their notification centre: they have not signed in to the PPLE Today app, or notifications are off.",
+  }),
+})
+export type AdminSendTestNotificationResponse = Static<typeof AdminSendTestNotificationResponse>
+
 export const AdminCountNotificationAudienceBody = t.Object({ audience: AdminNotificationAudience })
 export type AdminCountNotificationAudienceBody = Static<typeof AdminCountNotificationAudienceBody>
 
@@ -232,6 +248,7 @@ export const AdminSentNotificationAudience = t.Union([
     districts: t.Array(t.String()),
   }),
   t.Object({ type: t.Literal('PHONE_NUMBER'), phoneNumberCount: t.Integer() }),
+  t.Object({ type: t.Literal('TEST') }, { description: 'A test send to the sender only.' }),
 ])
 export type AdminSentNotificationAudience = Static<typeof AdminSentNotificationAudience>
 

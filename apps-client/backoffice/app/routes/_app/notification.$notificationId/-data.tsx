@@ -215,6 +215,7 @@ const ResponsesTable = ({
         </Typography>
         {exportError && <span className="text-sm text-system-danger-default">{exportError}</span>}
         <Button
+          className="gap-2"
           variant="outline"
           onClick={exportCsv}
           disabled={isExporting || (query.data?.meta.count ?? 0) === 0}
@@ -307,6 +308,7 @@ export const Data = () => {
             <InteractionStateBadge state={notification.interactionState} />
             {notification.interactionState === 'OPEN' && (
               <Button
+                className="gap-2"
                 variant="outline-destructive"
                 onClick={closeInteraction}
                 disabled={closeMutation.isPending}

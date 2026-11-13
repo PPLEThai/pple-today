@@ -14,6 +14,8 @@ import type {
   AdminNotificationAudience,
   AdminNotificationLink,
   AdminSendNotificationBody,
+  AdminSendTestNotificationBody,
+  AdminSendTestNotificationResponse,
   AdminSentNotificationAudience,
   AdminSentNotificationDetail,
   AdminSentNotificationSummary,
@@ -99,7 +101,14 @@ export const toPipelineAudience = (audience: AdminNotificationAudience) => {
   }
 }
 
-/** The audience as stored on a notification row, for display. */
+/**
+ * The audience as stored on a notification row, for display.
+ *
+ * A test send is addressed to the sender's own account by user id, which the
+ * row does not record. It is the one portal send that sets none of the audience
+ * columns: every other kind refuses an empty selection, and a phone send stores
+ * its numbers whether or not they matched anyone.
+ */
 export const toSentAudience = (
   row: Pick<SentNotificationRow, 'isBroadcast' | 'roles' | 'provinces' | 'districts' | '_count'>
 ): AdminSentNotificationAudience => {
@@ -108,6 +117,7 @@ export const toSentAudience = (
   if (row.provinces.length > 0 || row.districts.length > 0) {
     return { type: 'ADDRESS', provinces: row.provinces, districts: row.districts }
   }
+  if (row._count.phoneNumbers === 0) return { type: 'TEST' }
   return { type: 'PHONE_NUMBER', phoneNumberCount: row._count.phoneNumbers }
 }
 
@@ -251,17 +261,12 @@ export class AdminNotificationSendService {
     }
   }
 
-  async send(body: AdminSendNotificationBody, admin: { userId: string }) {
-    const audience = toPipelineAudience(body.audience)
-    if (audience.isErr()) return err(audience.error)
-
-    if (body.smsFallbackText !== undefined && audience.value.type !== 'PHONE_NUMBER') {
-      return err({
-        code: InternalErrorCode.BAD_REQUEST,
-        message: 'SMS fallback is only available when sending to phone numbers.',
-      })
-    }
-
+  /**
+   * Everything about a send except who it is for: the link resolved, the
+   * interaction checked, and the image published. Shared by the real send and
+   * the test send, so a test proves exactly what the real send will deliver.
+   */
+  private async prepareContent(body: AdminSendTestNotificationBody) {
     const link = await this.resolveLink(body.link)
     if (link.isErr()) return err(link.error)
 
@@ -287,18 +292,38 @@ export class AdminNotificationSendService {
       image = published.value
     }
 
-    const sent = await this.notificationRepository.sendNotificationToUser(
-      audience.value,
-      {
+    return ok({
+      content: {
         header: body.content.header,
         message: body.content.message,
         image,
         actionButtonText: link.value ? body.content.actionButtonText : undefined,
         link: link.value,
       },
+      interaction: interaction.value,
+    })
+  }
+
+  async send(body: AdminSendNotificationBody, admin: { userId: string }) {
+    const audience = toPipelineAudience(body.audience)
+    if (audience.isErr()) return err(audience.error)
+
+    if (body.smsFallbackText !== undefined && audience.value.type !== 'PHONE_NUMBER') {
+      return err({
+        code: InternalErrorCode.BAD_REQUEST,
+        message: 'SMS fallback is only available when sending to phone numbers.',
+      })
+    }
+
+    const prepared = await this.prepareContent(body)
+    if (prepared.isErr()) return err(prepared.error)
+
+    const sent = await this.notificationRepository.sendNotificationToUser(
+      audience.value,
+      prepared.value.content,
       {
         smsFallbackText: body.smsFallbackText,
-        interaction: interaction.value,
+        interaction: prepared.value.interaction,
         sentFromAdminPortal: { userId: admin.userId },
       }
     )
@@ -315,6 +340,36 @@ export class AdminNotificationSendService {
           ? sent.value.delivery
           : undefined,
     })
+  }
+
+  /**
+   * Send the notification to the admin's own PPLE Today account only: the
+   * account with the id they signed in to the portal with. It is a real send —
+   * listed in the history as a test, with an interaction that can be answered —
+   * so the admin sees exactly what recipients will get. It never texts anyone.
+   */
+  async sendTest(body: AdminSendTestNotificationBody, admin: { userId: string }) {
+    const prepared = await this.prepareContent(body)
+    if (prepared.isErr()) return err(prepared.error)
+
+    const audience = { type: 'USER_ID' as const, details: [admin.userId] }
+    const devices = await this.notificationRepository.countAudience(audience)
+    if (devices.isErr()) return mapRepositoryError(devices.error)
+
+    const sent = await this.notificationRepository.sendNotificationToUser(
+      audience,
+      prepared.value.content,
+      {
+        interaction: prepared.value.interaction,
+        sentFromAdminPortal: { userId: admin.userId },
+      }
+    )
+    if (sent.isErr()) return mapRepositoryError(sent.error)
+
+    return ok({
+      notificationId: sent.value.notificationId,
+      hasPushToken: devices.value.pushReachableCount > 0,
+    } satisfies AdminSendTestNotificationResponse)
   }
 
   /**

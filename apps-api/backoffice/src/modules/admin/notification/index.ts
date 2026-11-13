@@ -13,6 +13,8 @@ import {
   AdminNotificationRolesResponse,
   AdminSendNotificationBody,
   AdminSendNotificationResponse,
+  AdminSendTestNotificationBody,
+  AdminSendTestNotificationResponse,
   AdminSentNotificationDetail,
   AdminSentNotificationParams,
   CreateApiKeyNotificationBody,
@@ -72,6 +74,39 @@ export const AdminNotificationController = new Elysia({
           InternalErrorCode.NOTIFICATION_INTERACTION_BYPASS_NOT_ALLOWED,
           // Never returned for a portal send (answers stay here, so there is no
           // callback to lack), but the shared send-time check can name it.
+          InternalErrorCode.NOTIFICATION_INTERACTION_NO_CALLBACK,
+          InternalErrorCode.INTERACTIVE_NOTIFICATIONS_DISABLED,
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.FILE_MOVE_ERROR,
+          InternalErrorCode.NOTIFICATION_SENT_FAILED,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+    }
+  )
+  .post(
+    '/send-test',
+    async ({ adminNotificationSendService, body, user, status }) => {
+      const result = await adminNotificationSendService.sendTest(body, { userId: user.id })
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+      return status(201, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      detail: {
+        summary: 'Send a test notification to yourself',
+        description:
+          "The same notification as /send, delivered only to the calling admin's own PPLE Today account (the account with their PPLE ID). It is listed in the history as a test, and its interaction can be answered. Never sent by SMS.",
+      },
+      body: AdminSendTestNotificationBody,
+      response: {
+        201: AdminSendTestNotificationResponse,
+        ...createErrorSchema(
+          InternalErrorCode.NOTIFICATION_INVALID_IN_APP_NAVIGATION,
+          InternalErrorCode.NOTIFICATION_INVALID_BYPASS,
+          InternalErrorCode.NOTIFICATION_INVALID_LINK_PATH,
+          InternalErrorCode.NOTIFICATION_INVALID_INTERACTION,
+          InternalErrorCode.NOTIFICATION_INTERACTION_BYPASS_NOT_ALLOWED,
           InternalErrorCode.NOTIFICATION_INTERACTION_NO_CALLBACK,
           InternalErrorCode.INTERACTIVE_NOTIFICATIONS_DISABLED,
           InternalErrorCode.MINI_APP_NOT_FOUND,
