@@ -10,6 +10,7 @@ import { QueryClient, useQueryClient } from '@tanstack/react-query'
 import { MailOpenIcon } from 'lucide-react-native'
 
 import { reactQueryClient } from '@app/libs/api-client'
+import { announceAcceptedInvite } from '@app/libs/apps-tab-storage'
 import { useSession } from '@app/libs/auth'
 import {
   inviteErrorMessage,
@@ -75,7 +76,7 @@ export function MiniAppInviteInbox() {
   const isRespondingRef = useRef(false)
 
   const respond = useCallback(
-    (miniAppId: string, miniAppName: string, response: InviteResponse) => {
+    (miniAppId: string, miniAppName: string, miniAppSlug: string, response: InviteResponse) => {
       if (isRespondingRef.current) {
         return
       }
@@ -98,6 +99,9 @@ export function MiniAppInviteInbox() {
                   ? `เพิ่ม “${miniAppName}” ในรายการแอปของคุณแล้ว`
                   : 'ปฏิเสธคำเชิญแล้ว',
             })
+
+            // Point the แอปฯ tab at the app that just arrived, once.
+            if (response === 'ACCEPT') announceAcceptedInvite(miniAppSlug)
 
             refreshMiniAppLists(queryClient)
           },
@@ -147,8 +151,12 @@ export function MiniAppInviteInbox() {
             inviterName={invite.inviterName}
             disabled={responding !== null}
             respondingWith={responding?.miniAppId === invite.miniAppId ? responding.response : null}
-            onAccept={() => respond(invite.miniAppId, invite.miniAppName, 'ACCEPT')}
-            onDecline={() => respond(invite.miniAppId, invite.miniAppName, 'DECLINE')}
+            onAccept={() =>
+              respond(invite.miniAppId, invite.miniAppName, invite.miniAppSlug, 'ACCEPT')
+            }
+            onDecline={() =>
+              respond(invite.miniAppId, invite.miniAppName, invite.miniAppSlug, 'DECLINE')
+            }
           />
         ))}
       </View>

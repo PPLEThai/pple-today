@@ -34,10 +34,12 @@ import { MiniApp, TemporaryFilePath, UpdateMiniAppBody } from '@api/backoffice/a
 
 import { reactQueryClient } from '~/libs/api-client'
 
+import { MiniAppTaglineField, miniAppTaglineSchema } from './MiniAppTaglineField'
 import { useMiniAppRoleOptions } from './useMiniAppRoleOptions'
 
 const EditMiniAppFormSchema = z.object({
   name: z.string().min(1, 'กรุณากรอกชื่อ Mini App'),
+  tagline: miniAppTaglineSchema,
   slug: z.string().min(1, 'กรุณากรอก slug'),
   url: z.url('กรุณากรอก URL ที่ถูกต้อง'),
   order: z.number().int('กรุณากรอกลำดับเป็นจำนวนเต็ม'),
@@ -72,6 +74,7 @@ export const MiniAppEdit = (props: MiniAppEditProps) => {
   const defaultValues = useCallback(
     (): EditMiniAppFormSchema => ({
       name: props.miniApp.name,
+      tagline: props.miniApp.tagline ?? '',
       slug: props.miniApp.slug,
       url: props.miniApp.url,
       order: props.miniApp.order,
@@ -120,6 +123,7 @@ export const MiniAppEdit = (props: MiniAppEditProps) => {
 
     const body: UpdateMiniAppBody = {
       name: data.name,
+      tagline: data.tagline,
       slug: data.slug,
       url: data.url,
       order: data.order,
@@ -180,6 +184,7 @@ export const MiniAppEdit = (props: MiniAppEditProps) => {
                 </FormItem>
               )}
             />
+            <MiniAppTaglineField control={form.control} name="tagline" />
             <FormField
               control={form.control}
               name="slug"

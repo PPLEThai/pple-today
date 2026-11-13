@@ -16,6 +16,11 @@ model MiniApp {
   icon  String? // Public icon URL (legacy rows may still hold a base64 data URI)
   order Int     @default(0)
 
+  // One verb-first line saying what the app does (≤ 60 chars), shown under the
+  // name and searched by the แอปฯ tab. Required by the admin and platform forms,
+  // not here, so existing rows need no backfill.
+  tagline String?
+
   clientId     String
   clientUrl    String
   requiresAuth Boolean @default(true)
@@ -50,6 +55,11 @@ model MiniApp {
   // from the mini-app list but the row (and its App User registry) is kept for
   // audit. Null for every live app.
   retiredAt DateTime?
+
+  // When the app first went Live. Stamped once, on the first promotion to LIVE
+  // (or at creation for central-team apps, which start Live). Null for apps
+  // that were Live before this column existed, so they never count as new.
+  publishedAt DateTime?
 
   // Where answers to this app's interactive notifications are POSTed.
   // ADMIN apps only, set in the admin portal. PLATFORM apps ignore it and

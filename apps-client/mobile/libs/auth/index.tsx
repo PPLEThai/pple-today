@@ -37,6 +37,7 @@ import { type ActiveRoleInfo, activeRoleInfoFromUserInfo } from '@app/utils/acti
 import { AuthSession, getAuthSession, getAuthSessionAsync, setAuthSession } from './session'
 
 import { fetchClient, reactQueryClient } from '../api-client'
+import { clearRecentMiniApps } from '../apps-tab-storage'
 import { getBrowserPackage } from '../get-browser-package'
 import { clearInteractiveNotifications } from '../notification-display'
 
@@ -526,6 +527,8 @@ export const useLogoutMutation = () => {
       // Clear tokens from secure storage
       await sessionMutation.mutateAsync(null)
       await clearInteractiveNotifications()
+      // The next person on this device shouldn't see this one's recent apps.
+      await clearRecentMiniApps()
       // reset all reactQueryClient cache
       queryClient.resetQueries({ queryKey: reactQueryClient.getKey() })
       router.dismissTo('/profile')

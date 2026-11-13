@@ -26,6 +26,7 @@ const makeRow = (
     slug: 'my-app',
     name: 'My App',
     icon: null,
+    tagline: null,
     order: 0,
     clientId: 'client-1',
     clientUrl: 'https://my-app.ppleth.ai',
@@ -35,6 +36,7 @@ const makeRow = (
     ownerSub: 'owner-sub',
     zitadelAppId: 'zitadel-app-1',
     retiredAt: null,
+    publishedAt: null,
     collaboratorSubs: [],
     unlisted: false,
     createdAt: new Date('2026-01-01'),
@@ -270,9 +272,31 @@ describe('PlatformMiniAppService.setTier', () => {
 
     const result = await service.setTier('app-1', MiniAppTier.LIVE)
 
-    expect(repository.setTier).toHaveBeenCalledWith('app-1', MiniAppTier.LIVE)
+    expect(repository.setTier).toHaveBeenCalledWith('app-1', MiniAppTier.LIVE, expect.any(Date))
     expect(result._unsafeUnwrap().tier).toBe(MiniAppTier.LIVE)
     expect(cache.invalidate).toHaveBeenCalledOnce()
+  })
+
+  test('stamps publishedAt only on the first promotion to Live', async () => {
+    const { service, repository } = makeService()
+    repository.getMiniAppById.mockResolvedValue(
+      ok(makeRow({ tier: MiniAppTier.BETA, publishedAt: new Date('2026-06-01') }))
+    )
+    repository.setTier.mockResolvedValue(ok(makeRow({ tier: MiniAppTier.LIVE })))
+
+    await service.setTier('app-1', MiniAppTier.LIVE)
+
+    expect(repository.setTier).toHaveBeenCalledWith('app-1', MiniAppTier.LIVE, undefined)
+  })
+
+  test('does not stamp publishedAt for a non-Live tier', async () => {
+    const { service, repository } = makeService()
+    repository.getMiniAppById.mockResolvedValue(ok(makeRow()))
+    repository.setTier.mockResolvedValue(ok(makeRow({ tier: MiniAppTier.BETA })))
+
+    await service.setTier('app-1', MiniAppTier.BETA)
+
+    expect(repository.setTier).toHaveBeenCalledWith('app-1', MiniAppTier.BETA, undefined)
   })
 
   test('returns MINI_APP_NOT_FOUND for an unknown id, without attempting the write', async () => {

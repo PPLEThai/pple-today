@@ -10,6 +10,12 @@ export const MiniApp = t.Object({
       description: 'Icon URL of the mini app',
     })
   ),
+  tagline: t.Nullable(
+    t.String({
+      description:
+        'One verb-first line saying what the app does, shown under its name and searched in PPLE Today',
+    })
+  ),
   url: t.String({
     description: 'Client URL of the mini app',
     format: 'uri',

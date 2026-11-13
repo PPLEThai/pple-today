@@ -7,6 +7,7 @@ import {
   MiniAppForListing,
   MiniAppViewer,
   resolveMiniAppAccess,
+  resolveMiniAppRelation,
   selectMiniAppBySlug,
   selectVisibleMiniApps,
 } from './eligibility'
@@ -22,6 +23,7 @@ const makeMiniApp = (overrides: Partial<MiniAppForListing> = {}): MiniAppForList
   slug: 'mini-app',
   name: 'Mini App',
   icon: null,
+  tagline: null,
   order: 0,
   clientUrl: 'https://mini.example.com',
   requiresAuth: true,
@@ -241,12 +243,70 @@ describe('tier eligibility — listing', () => {
         slug: 'my-draft',
         name: 'Mini App',
         iconUrl: null,
+        tagline: null,
         order: 0,
         url: 'https://mini.example.com',
         requiresAuth: true,
         tier: MiniAppTier.DRAFT,
+        relation: 'BUILDER',
       },
     ])
+  })
+
+  test('the listing carries the tagline', () => {
+    const miniApps = [makeMiniApp({ tagline: 'ค้นคลังความรู้และเอกสารพรรค' })]
+
+    expect(selectVisibleMiniApps(miniApps, makeViewer())[0]?.tagline).toBe(
+      'ค้นคลังความรู้และเอกสารพรรค'
+    )
+  })
+})
+
+// The client files Draft/Beta apps by relation: "apps I'm building" on the ฉัน
+// tab, "apps I'm testing" in a section of their own — never among party apps.
+describe('relation — building vs testing', () => {
+  const inviteeViewer = makeViewer({
+    sub: INVITEE_SUB,
+    acceptedInviteMiniAppIds: new Set(['beta-id']),
+  })
+
+  test('the owner of a Draft or Beta app is its BUILDER', () => {
+    for (const tier of [MiniAppTier.DRAFT, MiniAppTier.BETA]) {
+      const miniApp = makeMiniApp({ tier, ownerSub: OWNER_SUB })
+      expect(resolveMiniAppRelation(miniApp, makeViewer({ sub: OWNER_SUB }))).toBe('BUILDER')
+    }
+  })
+
+  test('a Collaborator is a BUILDER too', () => {
+    const miniApp = makeMiniApp({
+      tier: MiniAppTier.BETA,
+      ownerSub: OWNER_SUB,
+      collaboratorSubs: [COLLABORATOR_SUB],
+    })
+    expect(resolveMiniAppRelation(miniApp, makeViewer({ sub: COLLABORATOR_SUB }))).toBe('BUILDER')
+  })
+
+  test('an accepted invitee of a Beta app is its TESTER', () => {
+    const miniApp = makeMiniApp({ id: 'beta-id', tier: MiniAppTier.BETA, ownerSub: OWNER_SUB })
+    expect(resolveMiniAppRelation(miniApp, inviteeViewer)).toBe('TESTER')
+  })
+
+  test('a builder who also holds an invite is a BUILDER', () => {
+    const miniApp = makeMiniApp({ id: 'beta-id', tier: MiniAppTier.BETA, ownerSub: INVITEE_SUB })
+    expect(resolveMiniAppRelation(miniApp, inviteeViewer)).toBe('BUILDER')
+  })
+
+  test('a Live app carries no relation, even for its builder', () => {
+    const miniApp = makeMiniApp({ tier: MiniAppTier.LIVE, ownerSub: OWNER_SUB })
+    expect(resolveMiniAppRelation(miniApp, makeViewer({ sub: OWNER_SUB }))).toBeUndefined()
+    expect(selectVisibleMiniApps([miniApp], makeViewer({ sub: OWNER_SUB }))[0]).not.toHaveProperty(
+      'relation'
+    )
+  })
+
+  test('opening a Beta app by its link carries the relation too', () => {
+    const miniApp = makeMiniApp({ id: 'beta-id', slug: 'beta', tier: MiniAppTier.BETA })
+    expect(selectMiniAppBySlug([miniApp], 'beta', inviteeViewer)?.relation).toBe('TESTER')
   })
 })
 
