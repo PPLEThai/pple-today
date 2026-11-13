@@ -1,5 +1,19 @@
 # @client/mobile
 
+## 2.15.3
+
+### Patch Changes
+
+- [#551](https://github.com/PPLEThai/pple-today/pull/551) [`85ff210`](https://github.com/PPLEThai/pple-today/commit/85ff2109f89420da9587d39d55b1741daddc90da) Thanks [@PanJ](https://github.com/PanJ)! - On iOS 26, the tab bar shows the selected tab in an orange glass pill (hold and drag to switch tabs), and screen headers show a Liquid Glass bar when the page scrolls under them. The แอปฯ, กิจกรรม and ฉัน tabs show a compact title once their large title scrolls away, and the role picker on แอปฯ moves into the header. A user's profile shows their name in the header once it scrolls away. Alert dialog titles use the app's heading font.
+
+  On Android and older iOS, the tab bar's tabs are evenly spaced and centred again, and the selected tab is underlined.
+
+- [#551](https://github.com/PPLEThai/pple-today/pull/551) [`85ff210`](https://github.com/PPLEThai/pple-today/commit/85ff2109f89420da9587d39d55b1741daddc90da) Thanks [@PanJ](https://github.com/PanJ)! - Native buttons, alerts and pickers stay light when the phone is in dark mode, matching the rest of the app.
+
+- [#551](https://github.com/PPLEThai/pple-today/pull/551) [`85ff210`](https://github.com/PPLEThai/pple-today/commit/85ff2109f89420da9587d39d55b1741daddc90da) Thanks [@PanJ](https://github.com/PanJ)! - On iOS 26, the search screens' back button and search field sit in the Liquid Glass bar, and results scroll under it.
+
+- [#551](https://github.com/PPLEThai/pple-today/pull/551) [`85ff210`](https://github.com/PPLEThai/pple-today/commit/85ff2109f89420da9587d39d55b1741daddc90da) Thanks [@PanJ](https://github.com/PanJ)! - The search page shows its search bar and results again, instead of a blank screen with only the keyboard.
+
 ## 2.15.2
 
 ### Patch Changes
