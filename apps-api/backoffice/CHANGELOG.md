@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.26.0
+
+### Minor Changes
+
+- [#555](https://github.com/PPLEThai/pple-today/pull/555) [`f75e9de`](https://github.com/PPLEThai/pple-today/commit/f75e9de7b29e72e1bf80018226a26eedf3d1997e) Thanks [@PanJ](https://github.com/PanJ)! - The แจ้งเตือน form has a ทดสอบส่งหาฉัน button above ส่งการแจ้งเตือน. It sends the notification exactly as filled in (content, image, link and reply form) to the admin's own PPLE Today account, never by SMS, and the recipients don't need to be filled in first. The result says whether it reached the admin's phone or only their in-app notifications, and links to the test, which the history lists as ทดสอบ (ส่งหาผู้ส่ง). Buttons with an icon on the แจ้งเตือน pages now have space between the icon and the label.
+
 ## 1.25.0
 
 ### Minor Changes
