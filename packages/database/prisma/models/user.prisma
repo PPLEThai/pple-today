@@ -38,7 +38,8 @@ model User {
   voters      ElectionEligibleVoter[]
   voteRecords ElectionVoteRecord[]
 
-  linkedPage FacebookPage?
+  linkedPage              FacebookPage?
+  facebookConnectAttempts FacebookConnectAttempt[]
 
   feedItems                  FeedItem[]
   feedReactions              FeedItemReaction[]

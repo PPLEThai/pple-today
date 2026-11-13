@@ -1,5 +1,23 @@
 # @client/backoffice
 
+## 1.9.2
+
+### Patch Changes
+
+- [#538](https://github.com/PPLEThai/pple-today/pull/538) [`d7caadb`](https://github.com/PPLEThai/pple-today/commit/d7caadb9274f3fdf079d22ec8af4fae46e4b5c77) Thanks [@PanJ](https://github.com/PanJ)! - The login page no longer crashes when the API cannot be reached (for example on a network that blocks it); it shows a connection error instead
+
+## 1.9.1
+
+### Patch Changes
+
+- [#536](https://github.com/PPLEThai/pple-today/pull/536) [`8030b0f`](https://github.com/PPLEThai/pple-today/commit/8030b0f00e714abb4252f801dc73255734007155) Thanks [@PanJ](https://github.com/PanJ)! - Group the Facebook page admin pages in the sidebar, and highlight only the current one: the page list no longer lights up with the connect history
+
+## 1.9.0
+
+### Minor Changes
+
+- [#534](https://github.com/PPLEThai/pple-today/pull/534) [`f7feff0`](https://github.com/PPLEThai/pple-today/commit/f7feff0896ff2d558ba709d15c39d56e18a08009) Thanks [@PanJ](https://github.com/PanJ)! - Add a Facebook page connect history: outcome totals and common failure causes, every attempt searchable by reference code, name or phone, each attempt's step timeline, and a user's attempts on their page
+
 ## 1.8.0
 
 ### Minor Changes

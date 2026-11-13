@@ -1,20 +1,96 @@
 import { FilePath, InternalErrorCode } from '@pple-today/api-common/dtos'
+import { ElysiaLoggerInstance } from '@pple-today/api-common/plugins'
 import { FileTransactionService } from '@pple-today/api-common/services'
 import { mapRepositoryError } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
 import { err, ok } from 'neverthrow'
 import * as R from 'remeda'
 
+import {
+  CONNECT_ATTEMPT_PURGE_INTERVAL_MS,
+  CONNECT_ATTEMPT_RETENTION_MS,
+  isConnectAttemptWithinSizeLimit,
+  toConnectAttemptRecord,
+} from './connect-attempt'
+import { CreateFacebookConnectAttemptBody } from './models'
 import { FacebookRepository, FacebookRepositoryPlugin } from './repository'
 
 import { FileServicePlugin } from '../../plugins/file'
+import { ElysiaLoggerPlugin } from '../../plugins/log'
 import { FileServerService, FileServerServicePlugin } from '../files/services'
 
 export class FacebookService {
   constructor(
     private readonly facebookRepository: FacebookRepository,
-    private readonly fileServerService: FileServerService
+    private readonly fileServerService: FileServerService,
+    private readonly loggerService?: ElysiaLoggerInstance,
+    private readonly now: () => Date = () => new Date()
   ) {}
+
+  private lastConnectAttemptPurgeAt = 0
+
+  /**
+   * Store a connect-attempt trace from the mobile app and log a one-line
+   * summary. A resend of the same attempt id is accepted as already stored.
+   */
+  async recordConnectAttempt(userId: string, body: CreateFacebookConnectAttemptBody) {
+    if (!isConnectAttemptWithinSizeLimit(body)) {
+      return err({
+        code: InternalErrorCode.BAD_REQUEST,
+        message: 'Connect attempt trace is too large',
+      })
+    }
+
+    const record = toConnectAttemptRecord(userId, body)
+    const result = await this.facebookRepository.createConnectAttempt(record)
+    if (result.isErr() && result.error.code !== 'UNIQUE_CONSTRAINT_FAILED') {
+      return mapRepositoryError(result.error)
+    }
+
+    this.loggerService?.info({
+      message: 'Facebook connect attempt',
+      facebookConnectAttempt: {
+        referenceCode: record.referenceCode,
+        userId,
+        outcome: record.outcome,
+        failedStep: record.failedStep,
+        platform: record.platform,
+        osVersion: record.osVersion,
+        appVersion: record.appVersion,
+        buildNumber: record.buildNumber,
+        errorDomain: record.errorDomain,
+        errorCode: record.errorCode,
+        errorMessage: record.errorMessage,
+        steps: body.steps.map((step) => step.name).join(' > '),
+      },
+    })
+
+    void this.purgeExpiredConnectAttempts()
+
+    return ok({ referenceCode: record.referenceCode })
+  }
+
+  /**
+   * The 90-day retention delete. Runs at most once an hour per API process,
+   * piggybacking on incoming attempts, so it needs no scheduled job. Never throws.
+   */
+  async purgeExpiredConnectAttempts() {
+    const now = this.now().getTime()
+    if (now - this.lastConnectAttemptPurgeAt < CONNECT_ATTEMPT_PURGE_INTERVAL_MS) return 0
+    this.lastConnectAttemptPurgeAt = now
+
+    const result = await this.facebookRepository.deleteConnectAttemptsCreatedBefore(
+      new Date(now - CONNECT_ATTEMPT_RETENTION_MS)
+    )
+    if (result.isErr()) {
+      this.loggerService?.error({
+        message: 'Failed to delete expired Facebook connect attempts',
+        error: result.error,
+      })
+      return 0
+    }
+    return result.value.count
+  }
 
   async getUserAccessToken(code: string, redirectUri: string) {
     return await this.facebookRepository.getUserAccessToken(code, redirectUri)
@@ -216,6 +292,7 @@ export const FacebookServicePlugin = new Elysia({
   name: 'FacebookService',
 })
   .use([FacebookRepositoryPlugin, FileServicePlugin, FileServerServicePlugin])
-  .decorate(({ facebookRepository, fileServerService }) => ({
-    facebookService: new FacebookService(facebookRepository, fileServerService),
+  .use(ElysiaLoggerPlugin({ name: 'FacebookService' }))
+  .decorate(({ facebookRepository, fileServerService, loggerService }) => ({
+    facebookService: new FacebookService(facebookRepository, fileServerService, loggerService),
   }))

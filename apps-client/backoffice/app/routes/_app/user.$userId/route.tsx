@@ -13,6 +13,7 @@ import { Button } from '@pple-today/web-ui/button'
 import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { FacebookConnectAttemptTable } from 'components/facebook/FacebookConnectAttempts'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
 import { UserEdit } from 'components/user/UserEdit'
 import { Eye, EyeOff, LinkIcon, MapPinned, Pencil, Phone, User, UserSquare } from 'lucide-react'
@@ -201,6 +202,10 @@ function UserDetailPage() {
                 decoding="async"
               />
             </div>
+          </div>
+          <div className="flex flex-col gap-3 p-4 border border-base-outline-default rounded-xl">
+            <Typography variant="h3">ประวัติการเชื่อมต่อเพจ Facebook</Typography>
+            <FacebookConnectAttemptTable userId={query.data.id} />
           </div>
         </div>
       )}

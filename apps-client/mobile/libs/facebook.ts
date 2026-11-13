@@ -18,6 +18,21 @@ export class FacebookLoginCancelledError extends Error {
   }
 }
 
+/** Why the cached token was or was not reused, for `facebook-connect-attempt.ts`. */
+export interface FacebookCachedTokenCheck {
+  result: 'none' | 'missing_permissions' | 'refresh_failed' | 'reused'
+  missingPermissions?: string[]
+  error?: unknown
+}
+
+/**
+ * Where `getCachedFacebookPageAccessToken` reports its decision; set for the
+ * duration of one `getFacebookPageAccessToken` call. A module variable rather
+ * than a parameter keeps that function's signature, which other work edits
+ * next to, unchanged.
+ */
+let reportCachedTokenCheck: (check: FacebookCachedTokenCheck) => void = () => {}
+
 /**
  * Returns a Facebook user access token carrying the page permissions.
  *
@@ -26,10 +41,20 @@ export class FacebookLoginCancelledError extends Error {
  * `LoginManager.logInWithPermissions` — which switches to the Facebook app or a
  * browser — when there is no usable token.
  */
-export async function getFacebookPageAccessToken(): Promise<string> {
-  const cachedToken = await getCachedFacebookPageAccessToken()
+export async function getFacebookPageAccessToken(
+  onCachedTokenCheck?: (check: FacebookCachedTokenCheck) => void
+): Promise<string> {
+  reportCachedTokenCheck = onCachedTokenCheck ?? (() => {})
+  const cachedToken = await getCachedFacebookPageAccessToken().finally(() => {
+    reportCachedTokenCheck = () => {}
+  })
   if (cachedToken) return cachedToken
 
+  // Start from a clean SDK state. Whatever token, authentication token or
+  // profile the SDK still holds is unusable at this point, and leftovers from an
+  // earlier failed login made every new login fail with com.facebook.sdk.login
+  // until the app was reinstalled.
+  LoginManager.logOut()
   const loginResult = await LoginManager.logInWithPermissions(FACEBOOK_PAGE_PERMISSIONS)
   if (loginResult.isCancelled) {
     throw new FacebookLoginCancelledError()
@@ -41,11 +66,32 @@ export async function getFacebookPageAccessToken(): Promise<string> {
   return accessToken.accessToken
 }
 
+/**
+ * A short, user-visible description of a Facebook login failure. Native SDK
+ * errors reject with a generic "Login Failed" message and carry the real cause
+ * in `domain` / `userInfo`, so include those when present.
+ */
+export function describeFacebookError(error: unknown): string {
+  if (!(error instanceof Error)) return String(error)
+  const native = error as Error & { domain?: string; userInfo?: unknown }
+  const details = [native.domain, native.userInfo ? JSON.stringify(native.userInfo) : undefined]
+    .filter(Boolean)
+    .join(' ')
+  return (details ? `${error.message} (${details})` : error.message).slice(0, 300)
+}
+
 async function getCachedFacebookPageAccessToken(): Promise<string | null> {
+  const report = reportCachedTokenCheck
   const current = await AccessToken.getCurrentAccessToken()
-  if (!current?.accessToken) return null
-  const granted = new Set(current.permissions)
-  if (!FACEBOOK_PAGE_PERMISSIONS.every((permission) => granted.has(permission))) return null
+  if (!current?.accessToken) {
+    report({ result: 'none' })
+    return null
+  }
+  const missing = missingPagePermissions(current.permissions)
+  if (missing.length > 0) {
+    report({ result: 'missing_permissions', missingPermissions: missing })
+    return null
+  }
   try {
     // Round-trips to Facebook: extends the token, refreshes its permission list,
     // and fails if the token expired or the user revoked the app.
@@ -53,15 +99,26 @@ async function getCachedFacebookPageAccessToken(): Promise<string | null> {
   } catch (error) {
     console.warn('Cached Facebook access token is no longer valid', error)
     LoginManager.logOut()
+    report({ result: 'refresh_failed', error })
     return null
   }
   const refreshed = await AccessToken.getCurrentAccessToken()
-  if (!refreshed?.accessToken) return null
-  const refreshedGranted = new Set(refreshed.permissions)
-  if (!FACEBOOK_PAGE_PERMISSIONS.every((permission) => refreshedGranted.has(permission))) {
+  if (!refreshed?.accessToken) {
+    report({ result: 'none' })
     return null
   }
+  const refreshedMissing = missingPagePermissions(refreshed.permissions)
+  if (refreshedMissing.length > 0) {
+    report({ result: 'missing_permissions', missingPermissions: refreshedMissing })
+    return null
+  }
+  report({ result: 'reused' })
   return refreshed.accessToken
+}
+
+function missingPagePermissions(permissions: string[]) {
+  const granted = new Set(permissions)
+  return FACEBOOK_PAGE_PERMISSIONS.filter((permission) => !granted.has(permission))
 }
 
 export const useFacebookPagesQuery = createQuery({
