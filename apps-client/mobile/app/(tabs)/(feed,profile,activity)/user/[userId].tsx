@@ -17,16 +17,20 @@ import { ArrowRightIcon, MegaphoneIcon, UserIcon } from 'lucide-react-native'
 import { GetFeedItemsByUserIdResponse } from '@api/backoffice/app'
 import { AnnouncementCard, AnnouncementCardSkeleton } from '@app/components/announcement'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
-import { BackButton } from '@app/components/back-button'
 import { FeedFooter, FeedRefreshControl } from '@app/components/feed'
 import { FeedCard } from '@app/components/feed/feed-card'
 import { useUserFollow } from '@app/components/feed/user-card'
+import { BackHeader, usePageHeaderInset } from '@app/components/page-header'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { useAuthMe } from '@app/libs/auth'
 import { renderCount } from '@app/utils/count'
 import { getRoleName } from '@app/utils/get-role-name'
 import { createImageUrl } from '@app/utils/image'
+import { supportsLiquidGlass } from '@app/utils/liquid-glass'
+
+// On iOS 26 the page scrolls under the native header, up to the top edge.
+const Layout = supportsLiquidGlass ? View : SafeAreaLayout
 
 const LIMIT = 10
 export default function ProfilePage() {
@@ -34,6 +38,7 @@ export default function ProfilePage() {
   const params = useLocalSearchParams()
   const queryClient = useQueryClient()
   const userId = params.userId as string
+  const headerInset = usePageHeaderInset()
   React.useEffect(() => {
     if (!userId) {
       router.dismissTo('/')
@@ -190,16 +195,18 @@ export default function ProfilePage() {
   }
 
   return (
-    <SafeAreaLayout>
-      <View className="flex flex-col bg-base-bg-white p-4">
-        <BackButton onPress={() => router.back()} aria-label="กลับ" />
-      </View>
+    <Layout className="flex-1">
+      <BackHeader className="flex flex-col bg-base-bg-white p-4" />
       <Animated.FlatList
-        refreshControl={<FeedRefreshControl headerHeight={0} onRefresh={onRefresh} />}
+        refreshControl={
+          <FeedRefreshControl headerHeight={0} topInset={headerInset} onRefresh={onRefresh} />
+        }
         data={data}
         renderItem={renderFeedItem}
         className="flex-1"
         contentContainerClassName="pb-4 bg-base-bg-default flex-grow"
+        contentContainerStyle={{ paddingTop: headerInset }}
+        scrollIndicatorInsets={{ top: headerInset }}
         ListHeaderComponent={
           <>
             {renderProfileSection()}
@@ -213,7 +220,7 @@ export default function ProfilePage() {
         onEndReachedThreshold={1}
         showsVerticalScrollIndicator={false}
       />
-    </SafeAreaLayout>
+    </Layout>
   )
 }
 

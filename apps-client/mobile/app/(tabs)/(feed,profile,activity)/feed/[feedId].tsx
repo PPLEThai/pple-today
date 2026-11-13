@@ -3,15 +3,16 @@ import { View } from 'react-native'
 
 import { useLocalSearchParams, useRouter } from 'expo-router'
 
-import { BackButton } from '@app/components/back-button'
 import { FeedCommentSection } from '@app/components/feed/comment-section'
 import { FeedDetail, FeedDetailSkeleton } from '@app/components/feed/feed-card'
+import { BackHeader, usePageHeaderInset } from '@app/components/page-header'
 import { reactQueryClient } from '@app/libs/api-client'
 
 export default function FeedDetailPage() {
   const router = useRouter()
   const params = useLocalSearchParams()
   const feedId = params.feedId as string
+  const headerInset = usePageHeaderInset()
   useEffect(() => {
     if (!feedId) {
       router.dismissTo('/')
@@ -32,11 +33,10 @@ export default function FeedDetailPage() {
   }
   return (
     <View className="flex-1 flex-col">
-      <View className="pt-safe-offset-4 pb-2 px-4 bg-base-bg-white">
-        <BackButton onPress={() => router.back()} aria-label="Go back" />
-      </View>
+      <BackHeader />
       <FeedCommentSection
         feedId={feedId}
+        topInset={headerInset}
         headerComponent={
           feedContentQuery.isLoading || !feedContentQuery.data ? (
             <FeedDetailSkeleton />
