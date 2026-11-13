@@ -22,6 +22,7 @@ import {
   ActivityCardSkeleton,
 } from '@app/components/activity/activity-card'
 import { BackButton } from '@app/components/back-button'
+import { useTabBarScrollInsets } from '@app/components/glass-tab-bar'
 import {
   Pager,
   PagerContent,
@@ -98,6 +99,7 @@ export default function RecentActivityPage() {
 const LIMIT = 10
 const minHeight = Dimensions.get('window').height
 function TodayActivityContent(props: PagerScrollViewProps) {
+  const tabBarInsets = useTabBarScrollInsets()
   const { headerHeight, scrollElRef } = props
 
   const scrollContext = useScrollContext()
@@ -173,6 +175,7 @@ function TodayActivityContent(props: PagerScrollViewProps) {
   }, [recentActivityInfiniteQuery.refetch, queryClient])
   return (
     <Animated.FlatList
+      {...tabBarInsets}
       ref={scrollElRef}
       onScroll={scrollHandler}
       data={data}
@@ -192,6 +195,7 @@ function TodayActivityContent(props: PagerScrollViewProps) {
 }
 
 function UpcomingActivityContent(props: PagerScrollViewProps) {
+  const tabBarInsets = useTabBarScrollInsets()
   const { headerHeight, scrollElRef } = props
 
   const scrollContext = useScrollContext()
@@ -270,6 +274,7 @@ function UpcomingActivityContent(props: PagerScrollViewProps) {
 
   return (
     <Animated.FlatList
+      {...tabBarInsets}
       ref={scrollElRef}
       onScroll={scrollHandler}
       data={data}

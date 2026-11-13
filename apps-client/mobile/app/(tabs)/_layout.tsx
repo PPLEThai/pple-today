@@ -10,13 +10,13 @@ import { Text } from '@pple-today/ui/text'
 import { Image } from 'expo-image'
 import { Tabs, usePathname } from 'expo-router'
 import { BottomTabBarButtonProps } from 'expo-router/js-tabs'
-import { NativeTabs } from 'expo-router/native-tabs'
 import { PlatformPressable } from 'expo-router/react-navigation'
 import { CircleUserRoundIcon, HandshakeIcon, HouseIcon, LucideIcon } from 'lucide-react-native'
 import { cssInterop } from 'nativewind'
 
 import PeopleIcon from '@app/assets/people.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
+import { GlassTab, GlassTabBar, TabBarSafeArea } from '@app/components/glass-tab-bar'
 import { useSession } from '@app/libs/auth'
 import { supportsLiquidGlass } from '@app/utils/liquid-glass'
 import { useCallbackRef } from '@app/utils/use-callback-ref'
@@ -26,75 +26,56 @@ cssInterop(Image, { className: 'style' })
 export default function BottomTabsLayout() {
   return (
     <BottomTabActionProvider>
-      {supportsLiquidGlass ? <NativeTabsLayout /> : <JsTabsLayout />}
+      {supportsLiquidGlass ? <GlassTabsLayout /> : <JsTabsLayout />}
     </BottomTabActionProvider>
   )
 }
 
-const PRIMARY_COLOR = '#FF6A13' // base-primary-default
+const GLASS_TABS: GlassTab[] = [
+  { name: '(feed)', icon: { sf: { default: 'house', selected: 'house.fill' } } },
+  { name: '(volunteer)', icon: { sf: { default: 'person.2', selected: 'person.2.fill' } } },
+  { name: '(official)', icon: { image: require('@app/assets/tab-icons/pple.png') } },
+  { name: '(activity)', icon: { image: require('@app/assets/tab-icons/handshake.png') } },
+  {
+    name: '(profile)',
+    icon: { sf: { default: 'person.crop.circle', selected: 'person.crop.circle.fill' } },
+  },
+]
 
 /**
- * iOS 26: a UIKit tab bar, which the system draws with Liquid Glass. It floats
- * over the screens and stays full size while scrolling.
+ * iOS 26: our own Liquid Glass tab bar (see <GlassTabBar />), so the selected
+ * tab can sit in an orange glass pill; the native bar's selection can't be
+ * tinted.
  */
-function NativeTabsLayout() {
+function GlassTabsLayout() {
   const session = useSession()
   const { actions } = useBottomTabActionContext()
-  const pathname = usePathname()
-  const pathnameRef = React.useRef(pathname)
-  pathnameRef.current = pathname
 
   return (
-    <NativeTabs
-      minimizeBehavior="never"
-      tintColor={PRIMARY_COLOR}
-      labelStyle={{
-        default: { fontFamily: 'NotoSansThai-Regular', fontSize: 11 },
-        selected: { fontFamily: 'NotoSansThai-SemiBold', fontSize: 11, color: PRIMARY_COLOR },
-      }}
-      screenListeners={({ navigation }) => ({
-        // Tapping the selected tab again: a stacked screen is popped natively,
-        // and on the tab's root screen we run its action (scroll to top), as
-        // <TabBarButton /> does for the JS tab bar.
-        tabPress: () => {
-          if (navigation.isFocused()) {
-            actions.current?.[pathnameRef.current]?.()
-          }
-        },
-      })}
+    <Tabs
+      tabBar={(props) => (
+        <GlassTabBar
+          {...props}
+          tabs={GLASS_TABS}
+          // Tapping the selected tab again: the tab's stack pops to its root,
+          // and on the root screen we run its action (scroll to top).
+          onReselect={(pathname) => actions.current?.[pathname]?.()}
+        />
+      )}
+      screenOptions={{ headerShown: false, animation: 'none' }}
+      screenLayout={({ children }) => <TabBarSafeArea>{children}</TabBarSafeArea>}
     >
-      <NativeTabs.Trigger name="(feed)">
-        <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} />
-        <NativeTabs.Trigger.Label>หน้าแรก</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="(volunteer)">
-        <NativeTabs.Trigger.Icon sf={{ default: 'person.2', selected: 'person.2.fill' }} />
-        <NativeTabs.Trigger.Label>อาสา</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="(official)">
-        <NativeTabs.Trigger.Icon
-          src={require('@app/assets/tab-icons/pple.png')}
-          renderingMode="template"
-        />
-        <NativeTabs.Trigger.Label>แอปฯ</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="(activity)">
-        <NativeTabs.Trigger.Icon
-          src={require('@app/assets/tab-icons/handshake.png')}
-          renderingMode="template"
-        />
-        <NativeTabs.Trigger.Label>กิจกรรม</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="(profile)">
-        <NativeTabs.Trigger.Icon
-          sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }}
-        />
-        <NativeTabs.Trigger.Label>{session ? 'ฉัน' : 'เข้าสู่ระบบ'}</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="(top-tabs)" hidden />
-    </NativeTabs>
+      <Tabs.Screen name="(feed)" options={{ title: 'หน้าแรก' }} />
+      <Tabs.Screen name="(volunteer)" options={{ title: 'อาสา' }} />
+      <Tabs.Screen name="(official)" options={{ title: 'แอปฯ' }} />
+      <Tabs.Screen name="(activity)" options={{ title: 'กิจกรรม' }} />
+      <Tabs.Screen name="(profile)" options={{ title: session ? 'ฉัน' : 'เข้าสู่ระบบ' }} />
+      <Tabs.Screen name="(top-tabs)" options={{ title: 'Playground', href: null }} />
+    </Tabs>
   )
 }
+
+const PRIMARY_COLOR = '#FF6A13' // base-primary-default
 
 /** Android and iOS before 26. */
 function JsTabsLayout() {
@@ -215,11 +196,19 @@ function TabBarButton({ style, ...props }: BottomTabBarButtonProps) {
   return (
     <PlatformPressable
       {...props}
-      style={{ paddingHorizontal: 0, paddingVertical: 8, height: 60 }}
-      className={clsx(
-        'border-b-2 flex flex-col items-center justify-center',
-        props['aria-selected'] ? 'border-base-primary-default' : 'border-transparent'
-      )}
+      // Styles, not classes: this pressable isn't styled by className. Each tab
+      // takes an equal share of the bar (the default button's `flex: 1`, from
+      // the style this button drops), centred, with the selected one underlined.
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 0,
+        paddingVertical: 8,
+        height: 60,
+        borderBottomWidth: 2,
+        borderBottomColor: props['aria-selected'] ? PRIMARY_COLOR : 'transparent',
+      }}
       android_ripple={{ color: undefined }}
       onPress={(e) => {
         props.onPress?.(e)

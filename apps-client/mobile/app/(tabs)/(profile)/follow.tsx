@@ -26,24 +26,26 @@ import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { useTopicFollow } from '@app/components/feed/topic-card'
 import { useUserFollow } from '@app/components/feed/user-card'
 import { Header } from '@app/components/header-navigation'
-import { NativeHeader, nativeHeaderScrollProps } from '@app/components/page-header'
+import { NativeHeader, useHeaderGlass } from '@app/components/page-header'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useAuthMe } from '@app/libs/auth'
 import { createImageUrl } from '@app/utils/image'
 import { supportsLiquidGlass } from '@app/utils/liquid-glass'
 
 export default function FollowPage() {
+  const headerGlass = useHeaderGlass()
   return (
     <View className={cn('flex-1 flex-col', !supportsLiquidGlass && 'pt-safe')}>
       {supportsLiquidGlass ? (
         <NativeHeader
+          glass={headerGlass.glass}
           icon={<Icon icon={Heart} size={20} className="text-base-primary-default" />}
           title="จัดการเนื้อหาที่ติดตาม"
         />
       ) : (
         <Header icon={Heart} title="จัดการเนื้อหาที่ติดตาม" />
       )}
-      <ScrollView {...nativeHeaderScrollProps}>
+      <ScrollView {...headerGlass.scrollProps}>
         <NumberFollowingSection />
         <PeopleFollowingSection />
         <TopicsFollowingSection />

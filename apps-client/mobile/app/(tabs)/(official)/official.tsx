@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Pressable, PressableProps, ScrollView, View } from 'react-native'
+import { Pressable, PressableProps, View } from 'react-native'
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
 
 import { Icon } from '@pple-today/ui/icon'
@@ -19,12 +19,18 @@ import { ElectionCard } from '@app/components/election/election-card'
 import { MiniAppInviteInbox, refreshMiniAppLists } from '@app/components/mini-app/invite-inbox'
 import { PersonRolePickerDialog } from '@app/components/mini-app/role-person-picker'
 import { MiniAppTierBadge } from '@app/components/mini-app/tier-badge'
+import {
+  TabHeader,
+  TabScreenLayout,
+  tabTitleBlockClassName,
+  useCollapsingTitle,
+} from '@app/components/page-header'
 import { RefreshControl } from '@app/components/refresh-control'
-import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { Spinner } from '@app/components/spinner'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useActiveRole, useSession, useSwitchRoleMutation } from '@app/libs/auth'
 import { activePersonLabel } from '@app/utils/active-role'
+import { supportsLiquidGlass } from '@app/utils/liquid-glass'
 
 import { useBottomTabOnPress } from '../_layout'
 
@@ -76,44 +82,38 @@ export default function OfficialPage() {
     ])
   }, [queryClient])
 
+  const collapsing = useCollapsingTitle()
   useBottomTabOnPress(() => {
-    scrollViewRef.current?.scrollTo({ y: 0, animated: true })
+    scrollViewRef.current?.scrollTo({ y: collapsing.topOffset, animated: true })
   })
-  const scrollViewRef = React.useRef<ScrollView>(null)
+  const scrollViewRef = React.useRef<Animated.ScrollView>(null)
   return (
-    <SafeAreaLayout>
-      <ScrollView
+    <TabScreenLayout>
+      <TabHeader
+        title="แอป"
+        icon={<PPLEIcon width={30} height={26} />}
+        collapsing={collapsing}
+        right={
+          triggerLabel ? (
+            <RolePickerTrigger
+              label={triggerLabel}
+              disabled={isSwitchingRole}
+              onPress={() => setPickerOpen(true)}
+            />
+          ) : undefined
+        }
+      />
+      <Animated.ScrollView
         ref={scrollViewRef}
+        {...collapsing.scrollProps}
         className="flex-1"
         contentContainerClassName="bg-base-bg-default flex-grow"
         refreshControl={<RefreshControl onRefresh={onRefresh} />}
       >
-        <View className="flex flex-col p-4 bg-base-bg-white">
-          <View className="flex flex-row gap-2 items-center justify-between">
-            <View className="flex flex-row gap-2 items-center">
-              <PPLEIcon width={35} height={30} />
-              <H1 className="text-3xl font-heading-semibold text-base-primary-default">แอป</H1>
-            </View>
-            {triggerLabel && (
-              <View className="flex flex-row gap-2 items-center">
-                <Text className="font-heading-regular text-base-text-medium">บทบาท:</Text>
-                <Pressable
-                  accessibilityRole="button"
-                  aria-label="บทบาท"
-                  disabled={isSwitchingRole}
-                  onPress={() => setPickerOpen(true)}
-                  className={cn(
-                    'flex flex-row h-10 min-w-[120px] items-center justify-between rounded-lg border border-input bg-background px-3 py-2',
-                    isSwitchingRole && 'opacity-50'
-                  )}
-                >
-                  <Text className="text-[0.875rem] font-heading-regular text-foreground">
-                    {triggerLabel}
-                  </Text>
-                  <Icon icon={ChevronDownIcon} size={16} className="text-foreground" />
-                </Pressable>
-              </View>
-            )}
+        <View className={cn('flex flex-col bg-base-bg-white', tabTitleBlockClassName)}>
+          <View className="flex flex-row gap-2 items-center" onLayout={collapsing.onTitleLayout}>
+            <PPLEIcon width={35} height={30} />
+            <H1 className="text-3xl font-heading-semibold text-base-primary-default">แอป</H1>
           </View>
           <Text className="font-heading-regular text-base-text-medium">
             แอปพลิเคชันจากพรรคประชาชน
@@ -124,7 +124,7 @@ export default function OfficialPage() {
           <ElectionSection />
           <MiniAppSection isSwitchingRole={isSwitchingRole} />
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
       {pickerOpen && (
         <PersonRolePickerDialog
           title="เลือกบทบาทที่ต้องการใช้งาน"
@@ -139,7 +139,44 @@ export default function OfficialPage() {
           onConfirm={onConfirmPerson}
         />
       )}
-    </SafeAreaLayout>
+    </TabScreenLayout>
+  )
+}
+
+/**
+ * Opens the บทบาท picker, in the header. On iOS 26 the native bar puts it in a
+ * glass capsule; elsewhere it is an outlined select.
+ */
+function RolePickerTrigger(props: { label: string; disabled: boolean; onPress: () => void }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      aria-label="บทบาท"
+      disabled={props.disabled}
+      onPress={props.onPress}
+      className={cn(
+        'flex flex-row items-center gap-1.5',
+        supportsLiquidGlass
+          ? 'h-8 px-1.5'
+          : 'h-10 min-w-[120px] justify-between rounded-lg border border-input bg-background px-3',
+        props.disabled && 'opacity-50'
+      )}
+    >
+      <Text
+        className="text-[0.875rem] font-heading-regular text-base-text-medium"
+        maxFontSizeMultiplier={1}
+      >
+        บทบาท:
+      </Text>
+      <Text
+        className="shrink text-[0.875rem] font-heading-semibold text-foreground"
+        numberOfLines={1}
+        maxFontSizeMultiplier={1}
+      >
+        {props.label}
+      </Text>
+      <Icon icon={ChevronDownIcon} size={16} className="text-foreground" />
+    </Pressable>
   )
 }
 

@@ -14,11 +14,7 @@ import { MapPinnedIcon, VoteIcon } from 'lucide-react-native'
 import { ElectionWithCurrentStatus, GetElectionResponse } from '@api/backoffice/app'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { ElectionDetailCard } from '@app/components/election/election-card'
-import {
-  BackHeader,
-  nativeHeaderScrollProps,
-  usePageHeaderInset,
-} from '@app/components/page-header'
+import { BackHeader, useHeaderGlass, usePageHeaderInset } from '@app/components/page-header'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useAuthMe } from '@app/libs/auth'
@@ -29,6 +25,7 @@ import { supportsLiquidGlass } from '@app/utils/liquid-glass'
 const Layout = supportsLiquidGlass ? View : SafeAreaLayout
 
 export default function ElectionDetailPage() {
+  const headerGlass = useHeaderGlass()
   const router = useRouter()
 
   const params = useLocalSearchParams()
@@ -56,7 +53,7 @@ export default function ElectionDetailPage() {
   const election = electionQuery.data
   return (
     <Layout className="flex-1 flex-col bg-base-bg-white">
-      <BackHeader className="pt-4 pb-2 px-4 bg-base-bg-white" />
+      <BackHeader className="pt-4 pb-2 px-4 bg-base-bg-white" glass={headerGlass.glass} />
       {!election ? (
         <View className="flex flex-col gap-3 px-4" style={{ paddingTop: headerInset }}>
           <Skeleton className="h-5 mt-2 w-1/2 rounded-2xl" />
@@ -66,7 +63,7 @@ export default function ElectionDetailPage() {
         <>
           <ScrollView
             contentContainerClassName="flex flex-col gap-3 px-4"
-            {...nativeHeaderScrollProps}
+            {...headerGlass.scrollProps}
           >
             <H1 className="text-xl font-heading-semibold text-base-text-high">{election.name}</H1>
             <ElectionDetailCard election={election} />

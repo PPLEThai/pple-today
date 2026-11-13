@@ -47,6 +47,7 @@ import { FeedFooter, FeedRefreshControl } from '@app/components/feed'
 import { FeedCard } from '@app/components/feed/feed-card'
 import { TopicSuggestion } from '@app/components/feed/topic-card'
 import { UserSuggestion } from '@app/components/feed/user-card'
+import { useTabBarScrollInsets } from '@app/components/glass-tab-bar'
 import {
   Pager,
   PagerContent,
@@ -537,6 +538,7 @@ const TopicSkeleton = () => {
 }
 
 function FeedFollowingContent(props: PagerScrollViewProps) {
+  const tabBarInsets = useTabBarScrollInsets()
   const { headerHeight, scrollElRef, onLayout } = props
 
   const feedInfiniteQuery = useInfiniteQuery({
@@ -609,6 +611,7 @@ function FeedFollowingContent(props: PagerScrollViewProps) {
 
   return (
     <Animated.FlatList
+      {...tabBarInsets}
       ref={scrollElRef}
       onScroll={scrollHandler}
       refreshControl={<FeedRefreshControl headerHeight={headerHeight} onRefresh={onRefresh} />}
@@ -653,6 +656,7 @@ function FeedFollowingContent(props: PagerScrollViewProps) {
 
 const LIMIT = 10
 function FeedContent(props: PagerScrollViewProps) {
+  const tabBarInsets = useTabBarScrollInsets()
   const { headerHeight, scrollElRef, onLayout } = props
 
   type MyFeedItem = GetMyFeedResponse['items'][number] | { type: 'SUGGESTION' }
@@ -741,6 +745,7 @@ function FeedContent(props: PagerScrollViewProps) {
 
   return (
     <Animated.FlatList
+      {...tabBarInsets}
       ref={scrollElRef}
       onScroll={scrollHandler}
       refreshControl={<FeedRefreshControl headerHeight={headerHeight} onRefresh={onRefresh} />}
@@ -764,6 +769,7 @@ interface FeedTopicContentProps extends PagerScrollViewProps {
 }
 
 function FeedTopicContent(props: FeedTopicContentProps) {
+  const tabBarInsets = useTabBarScrollInsets()
   const { headerHeight, scrollElRef, topicId, onLayout } = props
 
   const feedInfiniteQuery = useInfiniteQuery({
@@ -836,6 +842,7 @@ function FeedTopicContent(props: FeedTopicContentProps) {
 
   return (
     <Animated.FlatList
+      {...tabBarInsets}
       ref={scrollElRef}
       onScroll={scrollHandler}
       refreshControl={<FeedRefreshControl headerHeight={headerHeight} onRefresh={onRefresh} />}

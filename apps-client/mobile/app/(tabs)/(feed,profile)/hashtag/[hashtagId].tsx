@@ -9,10 +9,11 @@ import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ApplicationApiSchema } from '@api/backoffice/app'
 import { FeedFooter } from '@app/components/feed'
 import { FeedCard } from '@app/components/feed/feed-card'
-import { BackHeader, nativeHeaderScrollProps } from '@app/components/page-header'
+import { BackHeader, HeaderGlass, useHeaderGlass } from '@app/components/page-header'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 
 export default function HashtagFeedPage() {
+  const headerGlass = useHeaderGlass()
   const router = useRouter()
   const params = useLocalSearchParams()
   const hashtagId = params.hashtagId as string
@@ -36,9 +37,10 @@ export default function HashtagFeedPage() {
   }
   return (
     <View className="flex-1 flex-col">
-      <BackHeader />
+      <BackHeader glass={headerGlass.glass} />
       <HashtagFeed
         hashtagId={hashtagId}
+        scrollProps={headerGlass.scrollProps}
         header={
           <View className="pt-2 pb-3 px-4 bg-base-bg-white">
             <Text className="text-3xl text-base-text-high font-heading-bold">
@@ -52,7 +54,11 @@ export default function HashtagFeedPage() {
 }
 
 const LIMIT = 10
-function HashtagFeed(props: { hashtagId: string; header?: React.ReactElement }) {
+function HashtagFeed(props: {
+  hashtagId: string
+  header?: React.ReactElement
+  scrollProps: HeaderGlass['scrollProps']
+}) {
   const feedInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/feed/hashtag'),
     queryFn: async ({ pageParam }) => {
@@ -104,7 +110,7 @@ function HashtagFeed(props: { hashtagId: string; header?: React.ReactElement }) 
       data={data}
       className="flex-1"
       contentContainerClassName="flex flex-col flex-grow bg-base-bg-default"
-      {...nativeHeaderScrollProps}
+      {...props.scrollProps}
       ListHeaderComponent={props.header}
       // ListHeaderComponent={<AnnouncementSection />}
       ListFooterComponent={<FeedFooter queryResult={feedInfiniteQuery} className="mt-4 mx-4" />}

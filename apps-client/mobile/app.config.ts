@@ -15,7 +15,9 @@ export default {
     version: version,
     orientation: 'portrait',
     icon: './assets/images/favicon1024.png',
-    userInterfaceStyle: 'automatic',
+    // The app has no dark theme: keep native controls (Liquid Glass buttons,
+    // alerts, pickers) light when the phone is in dark mode.
+    userInterfaceStyle: 'light',
     ios: {
       supportsTablet: true,
       // Expo SDK 56+ requires 16.4. ActivityKit (16.1) and AppIntents (16.0) are

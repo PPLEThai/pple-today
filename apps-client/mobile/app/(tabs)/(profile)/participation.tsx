@@ -15,6 +15,7 @@ import { HandIcon, PackageOpenIcon } from 'lucide-react-native'
 import { ApplicationApiSchema, ListCursorResponse } from '@api/backoffice/app'
 import { Participation } from '@app/app/(tabs)/(profile)/profile'
 import { BackButton } from '@app/components/back-button'
+import { useTabBarScrollInsets } from '@app/components/glass-tab-bar'
 import {
   Pager,
   PagerContent,
@@ -85,6 +86,7 @@ export default function MyParticipationPage() {
 
 const LIMIT = 10
 const MyPollContent = (props: PagerScrollViewProps) => {
+  const tabBarInsets = useTabBarScrollInsets()
   const { headerHeight, scrollElRef } = props
 
   const scrollContext = useScrollContext()
@@ -146,6 +148,7 @@ const MyPollContent = (props: PagerScrollViewProps) => {
 
   return (
     <Animated.FlatList
+      {...tabBarInsets}
       ref={scrollElRef}
       onScroll={scrollHandler}
       data={data}
@@ -164,6 +167,7 @@ const MyPollContent = (props: PagerScrollViewProps) => {
 
 const minHeight = Dimensions.get('window').height
 const MyElectionContent = (props: PagerScrollViewProps) => {
+  const tabBarInsets = useTabBarScrollInsets()
   const { headerHeight, scrollElRef } = props
 
   const scrollContext = useScrollContext()
@@ -229,6 +233,7 @@ const MyElectionContent = (props: PagerScrollViewProps) => {
 
   return (
     <Animated.FlatList
+      {...tabBarInsets}
       ref={scrollElRef}
       onScroll={scrollHandler}
       data={data}

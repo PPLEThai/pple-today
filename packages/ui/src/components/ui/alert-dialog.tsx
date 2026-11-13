@@ -111,7 +111,7 @@ function AlertDialogTitle({
 }) {
   return (
     <AlertDialogPrimitive.Title
-      className={cn('text-lg native:text-xl text-foreground font-semibold', className)}
+      className={cn('text-xl text-base-text-high font-heading-semibold', className)}
       {...props}
     />
   )

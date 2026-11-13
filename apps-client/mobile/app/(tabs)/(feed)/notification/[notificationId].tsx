@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { ScrollView, View } from 'react-native'
+import { ScrollView, useWindowDimensions, View } from 'react-native'
 
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
@@ -12,6 +12,7 @@ import { produce } from 'immer'
 import { ArrowUpRightIcon } from 'lucide-react-native'
 
 import type { NotificationInteraction as NotificationInteractionDto } from '@api/backoffice/app'
+import { useTabBarOverlap } from '@app/components/glass-tab-bar'
 import { LinkifiedText } from '@app/components/linkified-text'
 import { MiniAppInviteInbox } from '@app/components/mini-app/invite-inbox'
 import { NotificationInteraction } from '@app/components/notification/interaction'
@@ -19,13 +20,10 @@ import {
   NotificationSenderIcon,
   PLATFORM_SENDER_NAME,
 } from '@app/components/notification/sender-icon'
-import {
-  BackHeader,
-  nativeHeaderScrollProps,
-  usePageHeaderInset,
-} from '@app/components/page-header'
+import { BackHeader, useHeaderGlass, usePageHeaderInset } from '@app/components/page-header'
 import { reactQueryClient } from '@app/libs/api-client'
 import { formatNotificationTime } from '@app/libs/format-notification-time'
+import type { PushSenderApp } from '@app/utils/branded-push'
 import { openLink } from '@app/utils/link'
 import { pendingActionFromParams } from '@app/utils/live-activity'
 import { pathnameToMiniAppRoute } from '@app/utils/mini-app'
@@ -39,10 +37,12 @@ const DEFAULT_ACTION_LABEL = {
 } as const
 
 export default function NotificationDetailPage() {
+  const headerGlass = useHeaderGlass()
   const router = useRouter()
   const params = useLocalSearchParams()
   const notificationId = params.notificationId as string
   const headerInset = usePageHeaderInset()
+  const tabBarOverlap = useTabBarOverlap()
   // Set by a tray action that has to open the app (it has a confirm dialog or
   // required fields): the id of the interaction action to leave pending. A Live
   // Activity button opens `pple-today://notification/<id>?action=<actionId>`.
@@ -126,28 +126,33 @@ export default function NotificationDetailPage() {
   }
   return (
     <View className="flex-1 flex-col">
-      <BackHeader />
+      <BackHeader
+        glass={headerGlass.glass}
+        leading={item && <NotificationSenderTitle app={item.app} />}
+        trailing={
+          item && (
+            <Text
+              className="text-sm text-base-text-medium font-heading-regular"
+              numberOfLines={1}
+              maxFontSizeMultiplier={1}
+            >
+              {formatNotificationTime(item.createdAt)}
+            </Text>
+          )
+        }
+      />
       {notificationDetailQuery.isLoading || !item ? (
         <NotificationDetailSkeleton topInset={headerInset} />
       ) : (
         <>
+          {/* No flex-grow on the content: grown to the frame, the header and tab bar
+              insets would push it past the frame and a short message would scroll. */}
           <ScrollView
-            className="flex-1"
-            contentContainerClassName="pt-1 pb-2 bg-base-bg-white flex-grow flex flex-col gap-3 px-4"
-            {...nativeHeaderScrollProps}
+            className="flex-1 bg-base-bg-white"
+            contentContainerClassName="pt-1 pb-2 flex flex-col gap-3 px-4"
+            alwaysBounceVertical={false}
+            {...headerGlass.scrollProps}
           >
-            <View className="flex flex-row items-center gap-2">
-              <NotificationSenderIcon app={item.app} />
-              <Text
-                className="text-sm text-base-text-medium font-heading-medium flex-1"
-                numberOfLines={1}
-              >
-                {item.app?.name ?? PLATFORM_SENDER_NAME}
-              </Text>
-              <Text className="text-sm text-base-text-medium font-heading-regular">
-                {formatNotificationTime(item.createdAt)}
-              </Text>
-            </View>
             <H1 className="text-lg font-heading-semibold">{item.content.header}</H1>
             <LinkifiedText className="text-base-text-medium font-body-regular text-base">
               {item.content.message}
@@ -171,7 +176,9 @@ export default function NotificationDetailPage() {
             )}
           </ScrollView>
           {action && !isInvite && (
-            <View className="p-4 pb-6 bg-base-bg-white">
+            // The floating tab bar covers the screen's bottom: end the button
+            // above it (the overlap already holds the gap), else keep pb-6.
+            <View className="p-4 bg-base-bg-white" style={{ paddingBottom: tabBarOverlap || 24 }}>
               <Button onPress={action.onPress}>
                 <Icon icon={ArrowUpRightIcon} />
                 <Text>{action.label}</Text>
@@ -184,18 +191,33 @@ export default function NotificationDetailPage() {
   )
 }
 
+/** The header's title, beside the back button: who sent the notification. */
+function NotificationSenderTitle({ app }: { app?: PushSenderApp }) {
+  const { width } = useWindowDimensions()
+  return (
+    <View className="flex flex-row items-center gap-2">
+      <NotificationSenderIcon app={app} size={28} />
+      <Text
+        className="text-base text-base-text-high font-heading-semibold"
+        numberOfLines={1}
+        // The native bar is a fixed 44pt and doesn't grow for a custom title.
+        maxFontSizeMultiplier={1}
+        // A bar item sizes to its content: cap a long name so it leaves room
+        // for the back button and the time.
+        style={{ maxWidth: width - 200 }}
+      >
+        {app?.name ?? PLATFORM_SENDER_NAME}
+      </Text>
+    </View>
+  )
+}
+
 function NotificationDetailSkeleton({ topInset }: { topInset: number }) {
   return (
     <View
       className="flex-1 pb-2 bg-base-bg-white flex-grow flex flex-col gap-3 px-4"
       style={{ paddingTop: topInset + 4 }}
     >
-      <View className="flex flex-row items-center gap-2">
-        <Skeleton className="size-8 rounded-full" />
-        <Skeleton className="h-[14px] w-20" />
-        <View className="flex-1" />
-        <Skeleton className="h-[14px] w-20" />
-      </View>
       <Skeleton className="w-full h-[18px] mt-[10px]" />
       <View>
         <Skeleton className="w-full h-4 mt-2" />
