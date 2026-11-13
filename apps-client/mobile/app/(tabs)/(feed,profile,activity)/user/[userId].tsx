@@ -20,7 +20,7 @@ import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { FeedFooter, FeedRefreshControl } from '@app/components/feed'
 import { FeedCard } from '@app/components/feed/feed-card'
 import { useUserFollow } from '@app/components/feed/user-card'
-import { BackHeader, usePageHeaderInset } from '@app/components/page-header'
+import { BackHeader, nativeHeaderScrollProps } from '@app/components/page-header'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { useAuthMe } from '@app/libs/auth'
@@ -38,7 +38,6 @@ export default function ProfilePage() {
   const params = useLocalSearchParams()
   const queryClient = useQueryClient()
   const userId = params.userId as string
-  const headerInset = usePageHeaderInset()
   React.useEffect(() => {
     if (!userId) {
       router.dismissTo('/')
@@ -198,15 +197,12 @@ export default function ProfilePage() {
     <Layout className="flex-1">
       <BackHeader className="flex flex-col bg-base-bg-white p-4" />
       <Animated.FlatList
-        refreshControl={
-          <FeedRefreshControl headerHeight={0} topInset={headerInset} onRefresh={onRefresh} />
-        }
+        refreshControl={<FeedRefreshControl headerHeight={0} onRefresh={onRefresh} />}
         data={data}
         renderItem={renderFeedItem}
         className="flex-1"
         contentContainerClassName="pb-4 bg-base-bg-default flex-grow"
-        contentContainerStyle={{ paddingTop: headerInset }}
-        scrollIndicatorInsets={{ top: headerInset }}
+        {...nativeHeaderScrollProps}
         ListHeaderComponent={
           <>
             {renderProfileSection()}

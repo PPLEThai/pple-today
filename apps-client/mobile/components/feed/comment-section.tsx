@@ -12,6 +12,7 @@ import { EyeOffIcon } from 'lucide-react-native'
 
 import type { ApplicationApiSchema, GetFeedCommentResponse } from '@api/backoffice/app'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
+import { nativeHeaderScrollProps } from '@app/components/page-header'
 import { fetchClient, reactQueryClient } from '@app/libs/api-client'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 import { createImageUrl } from '@app/utils/image'
@@ -20,12 +21,12 @@ const LIMIT = 10
 export function FeedCommentSection({
   feedId,
   headerComponent,
-  topInset = 0,
+  underNativeHeader = false,
 }: {
   feedId: string
   headerComponent?: React.ReactElement
-  /** Space a native header covers at the top of the list (`usePageHeaderInset()`). */
-  topInset?: number
+  /** The screen shows a native header (<BackHeader />) the list scrolls under. */
+  underNativeHeader?: boolean
 }) {
   const commentInfiniteQuery = useInfiniteQuery({
     queryKey: reactQueryClient.getQueryKey('/feed/:id/comments', { pathParams: { id: feedId! } }),
@@ -104,8 +105,7 @@ export function FeedCommentSection({
     <FlatList
       className="flex-1"
       contentContainerClassName="pb-2 bg-base-bg-default flex-grow"
-      contentContainerStyle={{ paddingTop: topInset }}
-      scrollIndicatorInsets={{ top: topInset }}
+      {...(underNativeHeader ? nativeHeaderScrollProps : {})}
       data={data}
       onEndReached={onEndReached}
       onEndReachedThreshold={1}
