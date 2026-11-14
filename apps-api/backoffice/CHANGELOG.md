@@ -1,5 +1,11 @@
 # @api/backoffice
 
+## 1.27.1
+
+### Patch Changes
+
+- [#563](https://github.com/PPLEThai/pple-today/pull/563) [`78b85ff`](https://github.com/PPLEThai/pple-today/commit/78b85ffc2ed9c4f00d76ba3e7b53f49a915ab928) Thanks [@PanJ](https://github.com/PanJ)! - Authenticated requests stay fast when the SSO slows down. Token introspection is reused for 20 seconds per token and shared between concurrent requests, SSO calls give up after 3 seconds instead of waiting indefinitely, `/auth/me` only rewrites a user's roles when they changed, and the database pool size and wait time are set explicitly (`DATABASE_POOL_MAX`, `DATABASE_POOL_CONNECTION_TIMEOUT_MS`).
+
 ## 1.27.0
 
 ### Minor Changes
