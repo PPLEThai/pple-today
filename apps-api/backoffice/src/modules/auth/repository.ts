@@ -2,6 +2,7 @@ import { IntrospectAccessTokenResult } from '@pple-today/api-common/dtos'
 import { PrismaService } from '@pple-today/api-common/services'
 import { err, fromRepositoryPromise } from '@pple-today/api-common/utils'
 import Elysia from 'elysia'
+import { ok } from 'neverthrow'
 
 import { PrismaServicePlugin } from '../../plugins/prisma'
 import { CommonRepository, CommonRepositoryPlugin } from '../common/repository'
@@ -19,6 +20,39 @@ export class AuthRepository {
         include: { address: true, roles: true },
       })
     )
+  }
+
+  /**
+   * Mirror the token's roles (and public role, when given) onto the local user,
+   * writing only when they differ from what is stored.
+   *
+   * `/auth/me` runs this on every app open. Rewriting unchanged roles cost a
+   * delete-and-recreate transaction each time, and under load those writes
+   * were the first to time out waiting for a connection.
+   */
+  async syncUserRoles(id: string, roles: string[], publicRole?: string | null) {
+    const current = await fromRepositoryPromise(
+      this.prismaService.user.findUniqueOrThrow({
+        where: { id },
+        select: { responsibleArea: true, roles: { select: { role: true } } },
+      })
+    )
+    if (current.isErr()) return err(current.error)
+
+    const storedRoles = new Set(current.value.roles.map(({ role }) => role))
+    const wantedRoles = new Set(roles)
+    const rolesUnchanged =
+      storedRoles.size === wantedRoles.size &&
+      Array.from(wantedRoles).every((r) => storedRoles.has(r))
+    const publicRoleUnchanged =
+      publicRole === undefined || publicRole === current.value.responsibleArea
+
+    if (rolesUnchanged && publicRoleUnchanged) return ok({ updated: false })
+
+    const updated = await this.replaceUserRoles(id, roles, publicRole)
+    if (updated.isErr()) return err(updated.error)
+
+    return ok({ updated: true })
   }
 
   async replaceUserRoles(id: string, roles: string[], publicRole?: string | null) {

@@ -72,6 +72,7 @@ describe('fetchAdVisibleRoles', () => {
     expect(result._unsafeUnwrap()).toEqual(['pple-ad:mp', 'pple-ad:ad:admin'])
     expect(fetchMock).toHaveBeenCalledWith('https://id.example.com/oidc/v1/userinfo', {
       headers: { Authorization: 'Bearer user-token' },
+      signal: expect.any(AbortSignal),
     })
   })
 
@@ -108,5 +109,31 @@ describe('fetchAdVisibleRoles', () => {
     )
 
     expect(result._unsafeUnwrap()).toEqual([])
+  })
+
+  test('fails instead of hanging when the SSO does not answer in time', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(
+      new DOMException('The operation was aborted due to timeout', 'TimeoutError')
+    )
+
+    const result = await fetchAdVisibleRoles(
+      { authorization: 'Bearer user-token' },
+      'https://id.example.com'
+    )
+
+    expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.INTERNAL_SERVER_ERROR)
+  })
+
+  test('treats an HTML body on a 200 as a bad response instead of throwing', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response('<!DOCTYPE html><p>upstream error</p>', { status: 200 })
+    )
+
+    const result = await fetchAdVisibleRoles(
+      { authorization: 'Bearer user-token' },
+      'https://id.example.com'
+    )
+
+    expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.INTERNAL_SERVER_ERROR)
   })
 })
