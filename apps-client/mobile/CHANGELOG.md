@@ -1,5 +1,13 @@
 # @client/mobile
 
+## 2.16.1
+
+### Patch Changes
+
+- [#561](https://github.com/PPLEThai/pple-today/pull/561) [`7945bb6`](https://github.com/PPLEThai/pple-today/commit/7945bb6482e99f7bf9f3f34b237ada6ebde499b6) Thanks [@PanJ](https://github.com/PanJ)! - Mini apps opened from the feed or แอปฯ now end above the tab bar, with a border between them, so a page that does not leave room for the bar is no longer covered by iOS 26's floating bar or runs into the bar elsewhere.
+
+- [#561](https://github.com/PPLEThai/pple-today/pull/561) [`7945bb6`](https://github.com/PPLEThai/pple-today/commit/7945bb6482e99f7bf9f3f34b237ada6ebde499b6) Thanks [@PanJ](https://github.com/PanJ)! - Opening อาสาประชาชน from แอปฯ, a notification, a feed link or a deep link now switches to the อาสา tab instead of opening a second copy of it over the current screen.
+
 ## 2.16.0
 
 ### Minor Changes
