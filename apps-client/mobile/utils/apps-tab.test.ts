@@ -8,6 +8,7 @@ import {
   normalizeSearchText,
   partitionMiniApps,
   pushRecent,
+  RECENTS_STORED_LIMIT,
   searchMiniApps,
   selectRecentApps,
   showsDiscoveryTools,
@@ -104,7 +105,12 @@ describe('monogramColor', () => {
 describe('recents', () => {
   test('pushRecent moves an app to the front and caps the list', () => {
     expect(pushRecent(['a', 'b', 'c', 'd'], 'c')).toEqual(['c', 'a', 'b', 'd'])
-    expect(pushRecent(['a', 'b', 'c', 'd'], 'e')).toEqual(['e', 'a', 'b', 'c'])
+    expect(pushRecent(['a', 'b', 'c', 'd'], 'e')).toEqual(['e', 'a', 'b', 'c', 'd'])
+    const full = Array.from({ length: RECENTS_STORED_LIMIT }, (_, i) => `app-${i}`)
+    const pushed = pushRecent(full, 'new')
+    expect(pushed).toHaveLength(RECENTS_STORED_LIMIT)
+    expect(pushed[0]).toBe('new')
+    expect(pushed).not.toContain(`app-${RECENTS_STORED_LIMIT - 1}`)
   })
 
   test('selectRecentApps keeps order and drops apps no longer listed', () => {
