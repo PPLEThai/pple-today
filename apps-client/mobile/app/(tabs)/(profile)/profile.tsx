@@ -82,7 +82,9 @@ import {
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import {
   describeFacebookError,
+  FACEBOOK_MISSING_PERMISSIONS_MESSAGE,
   FacebookLoginCancelledError,
+  FacebookMissingPermissionsError,
   useFacebookConfigQuery,
 } from '@app/libs/facebook'
 import {
@@ -431,22 +433,29 @@ const FacebookPageSection = () => {
       {linkedPageQuery.status !== 'success' ? (
         <View className="bg-base-bg-default h-10 rounded-lg w-full" />
       ) : linkedPageQuery.data.linkedFacebookPage ? (
-        <View className="flex flex-row gap-3 items-center">
-          <Avatar alt={linkedPageQuery.data.linkedFacebookPage.name} className="size-8">
-            <AvatarImage
-              source={{
-                uri: createImageUrl(linkedPageQuery.data.linkedFacebookPage.profilePictureUrl, {
-                  width: 32,
-                  height: 32,
-                }),
-              }}
-            />
-            <AvatarFallback />
-          </Avatar>
-          <Text className="text-base-text-medium text-sm font-heading-semibold flex-1 line-clamp-2">
-            {linkedPageQuery.data.linkedFacebookPage.name}
-          </Text>
-          <FacebookPageStatusBadge linkedFacebookPage={linkedPageQuery.data.linkedFacebookPage} />
+        <View className="flex flex-col gap-2">
+          <View className="flex flex-row gap-3 items-center">
+            <Avatar alt={linkedPageQuery.data.linkedFacebookPage.name} className="size-8">
+              <AvatarImage
+                source={{
+                  uri: createImageUrl(linkedPageQuery.data.linkedFacebookPage.profilePictureUrl, {
+                    width: 32,
+                    height: 32,
+                  }),
+                }}
+              />
+              <AvatarFallback />
+            </Avatar>
+            <Text className="text-base-text-medium text-sm font-heading-semibold flex-1 line-clamp-2">
+              {linkedPageQuery.data.linkedFacebookPage.name}
+            </Text>
+            <FacebookPageStatusBadge linkedFacebookPage={linkedPageQuery.data.linkedFacebookPage} />
+          </View>
+          {linkedPageQuery.data.linkedFacebookPage.status === 'REJECTED' && (
+            <Text className="text-sm text-base-text-medium font-body-regular">
+              สามารถลบเพจแล้วเชื่อมต่อใหม่ได้
+            </Text>
+          )}
         </View>
       ) : (
         <LinkFacebookPage />
@@ -475,6 +484,18 @@ function LinkFacebookPage() {
         toast({ type: 'info', text1: 'ยกเลิกการเชื่อมต่อ Facebook' })
         return
       }
+      if (error instanceof FacebookMissingPermissionsError) {
+        toast.error({
+          text1: FACEBOOK_MISSING_PERMISSIONS_MESSAGE.text1,
+          text2: [
+            FACEBOOK_MISSING_PERMISSIONS_MESSAGE.text2,
+            referenceCode && referenceCodeToastText(referenceCode),
+          ]
+            .filter(Boolean)
+            .join(' · '),
+        })
+        return
+      }
       console.error('Login Error: ', error)
       toast({
         type: 'error',
@@ -489,6 +510,13 @@ function LinkFacebookPage() {
       })
     },
   })
+  const [explainerOpen, setExplainerOpen] = React.useState(false)
+  function proceedAfterExplainer() {
+    setExplainerOpen(false)
+    // Wait for the dialog to close: on iOS, starting Facebook login (or the
+    // tracking dialog) while it animates out cancels the login.
+    setTimeout(addFacebookPage, Platform.OS === 'ios' ? 1000 : 300)
+  }
   function addFacebookPage() {
     if (user.data?.isSuspended) {
       return
@@ -510,81 +538,134 @@ function LinkFacebookPage() {
   }
   /* This dialog should only open on iOS when permission is not granted */
   return (
-    <Dialog
-      open={permissionDialogOpen}
-      onOpenChange={(open) => {
-        setPermissionDialogOpen(open)
-        if (!open)
-          finishActiveFacebookConnectAttempt('CANCELLED', { failedStep: 'tracking_prompt' })
-      }}
-    >
-      <Button
-        variant="secondary"
-        disabled={
-          permissionStatus === null || logitWithFacebookMutation.isPending || user.data?.isSuspended
-        }
-        onPress={addFacebookPage}
+    <>
+      <FacebookConnectExplainerDialog
+        open={explainerOpen}
+        onOpenChange={setExplainerOpen}
+        onContinue={proceedAfterExplainer}
+      />
+      <Dialog
+        open={permissionDialogOpen}
+        onOpenChange={(open) => {
+          setPermissionDialogOpen(open)
+          if (!open)
+            finishActiveFacebookConnectAttempt('CANCELLED', { failedStep: 'tracking_prompt' })
+        }}
       >
-        <Icon icon={PlusIcon} />
-        <Text>เพิ่มเพจที่ดูแล</Text>
-      </Button>
-      <DialogContent className="gap-6">
-        <DialogHeader className="gap-4">
-          <Icon icon={TriangleAlertIcon} size={40} strokeWidth={1.5} />
-          <DialogTitle>กรุณาอนุญาตการติดตาม</DialogTitle>
+        <Button
+          variant="secondary"
+          disabled={
+            permissionStatus === null ||
+            logitWithFacebookMutation.isPending ||
+            user.data?.isSuspended
+          }
+          onPress={() => setExplainerOpen(true)}
+        >
+          <Icon icon={PlusIcon} />
+          <Text>เพิ่มเพจที่ดูแล</Text>
+        </Button>
+        <DialogContent className="gap-6">
+          <DialogHeader className="gap-4">
+            <Icon icon={TriangleAlertIcon} size={40} strokeWidth={1.5} />
+            <DialogTitle>กรุณาอนุญาตการติดตาม</DialogTitle>
+            <DialogDescription>
+              {
+                'เพื่อเชื่อมต่อข้อมูลเพจ Facebook\nกรุณาเปิดใช้งานการติดตามในการตั้งค่า\nความเป็นส่วนตัว'
+              }
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onPress={() => {
+                setPermissionDialogOpen(false)
+                finishActiveFacebookConnectAttempt('CANCELLED', { failedStep: 'tracking_prompt' })
+              }}
+            >
+              <Text>ยกเลิก</Text>
+            </Button>
+            <Button
+              onPress={async () => {
+                if (permissionStatus === null) {
+                  console.warn('permissionStatus is null')
+                  return
+                }
+                if (!permissionStatus.granted) {
+                  if (permissionStatus.canAskAgain) {
+                    const { status } = await requestPermission()
+                    getActiveFacebookConnectAttempt()?.record('tracking_prompt_result', { status })
+                    if (status !== PermissionStatus.GRANTED) {
+                      console.log('Permission not granted')
+                      const referenceCode = finishActiveFacebookConnectAttempt('FAILED', {
+                        failedStep: 'tracking_permission',
+                        error: { code: status },
+                      })
+                      toast({
+                        text1: 'Permission not granted',
+                        text2: referenceCode ? referenceCodeToastText(referenceCode) : undefined,
+                      })
+                      return
+                    }
+                    setPermissionDialogOpen(false)
+                    // add a delay to wait for dialog to close
+                    // otherwise loginWithFacebook will be cancelled
+                    setTimeout(() => logitWithFacebookMutation.mutate(), 1000)
+                    return
+                  }
+                  finishActiveFacebookConnectAttempt('ABANDONED', { failedStep: 'opened_settings' })
+                  Linking.openSettings()
+                  return
+                }
+                setPermissionDialogOpen(false)
+                setTimeout(() => logitWithFacebookMutation.mutate(), 1000)
+              }}
+            >
+              <Text>ตกลง</Text>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  )
+}
+
+/**
+ * Explains the Facebook page feature before the user leaves for Facebook
+ * login, including what to pick in Facebook's dialog so the page passes the
+ * permission check at link time.
+ */
+function FacebookConnectExplainerDialog(props: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  onContinue: () => void
+}) {
+  const profileQuery = reactQueryClient.useQuery('/profile/me', {})
+  const fullName = profileQuery.data?.name
+  return (
+    <Dialog open={props.open} onOpenChange={props.onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>เชื่อมต่อเพจ Facebook กับ PPLE Today</DialogTitle>
           <DialogDescription>
-            {
-              'เพื่อเชื่อมต่อข้อมูลเพจ Facebook\nกรุณาเปิดใช้งานการติดตามในการตั้งค่า\nความเป็นส่วนตัว'
-            }
+            {`เมื่อเชื่อมต่อเพจที่คุณดูแลและได้รับการอนุมัติจากทีมผู้ดูแลแล้ว โพสต์จากเพจของคุณจะแสดงบนฟีดของ PPLE Today โดยอัตโนมัติ${fullName ? ` ภายใต้ชื่อ ${fullName}` : ''}`}
+          </DialogDescription>
+          <DialogDescription className="text-left">
+            {[
+              'ก่อนดำเนินการต่อ กรุณาตรวจสอบว่า',
+              '• คุณเป็นผู้มีสิทธิสูงสุดของเพจนั้น',
+              '• ในหน้าต่าง Facebook ให้เลือกเพจที่ต้องการเชื่อมต่อ และอนุญาตสิทธิ์ทั้งหมดที่ขอ',
+              '- หากเลือกเพจหรือสิทธิ์ไม่ครบ สามารถกด "ยกเลิกการเชื่อมต่อ" แล้วเริ่มใหม่ได้',
+            ].join('\n')}
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button
-            variant="ghost"
-            onPress={() => {
-              setPermissionDialogOpen(false)
-              finishActiveFacebookConnectAttempt('CANCELLED', { failedStep: 'tracking_prompt' })
-            }}
-          >
-            <Text>ยกเลิก</Text>
-          </Button>
-          <Button
-            onPress={async () => {
-              if (permissionStatus === null) {
-                console.warn('permissionStatus is null')
-                return
-              }
-              if (!permissionStatus.granted) {
-                if (permissionStatus.canAskAgain) {
-                  const { status } = await requestPermission()
-                  getActiveFacebookConnectAttempt()?.record('tracking_prompt_result', { status })
-                  if (status !== PermissionStatus.GRANTED) {
-                    console.log('Permission not granted')
-                    const referenceCode = finishActiveFacebookConnectAttempt('FAILED', {
-                      failedStep: 'tracking_permission',
-                      error: { code: status },
-                    })
-                    toast({
-                      text1: 'Permission not granted',
-                      text2: referenceCode ? referenceCodeToastText(referenceCode) : undefined,
-                    })
-                    return
-                  }
-                  setPermissionDialogOpen(false)
-                  // add a delay to wait for dialog to close
-                  // otherwise loginWithFacebook will be cancelled
-                  setTimeout(() => logitWithFacebookMutation.mutate(), 1000)
-                  return
-                }
-                finishActiveFacebookConnectAttempt('ABANDONED', { failedStep: 'opened_settings' })
-                Linking.openSettings()
-                return
-              }
-              setPermissionDialogOpen(false)
-              setTimeout(() => logitWithFacebookMutation.mutate(), 1000)
-            }}
-          >
-            <Text>ตกลง</Text>
+          <DialogClose asChild>
+            <Button variant="secondary">
+              <Text>ยกเลิก</Text>
+            </Button>
+          </DialogClose>
+          <Button onPress={props.onContinue}>
+            <Text>ดำเนินการต่อ</Text>
           </Button>
         </DialogFooter>
       </DialogContent>
