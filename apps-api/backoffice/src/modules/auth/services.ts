@@ -255,8 +255,8 @@ export class AuthService {
     return ok({ ...this.describeMiniApp(miniApp), url, session })
   }
 
-  async replaceUserRoles(id: string, roles: string[], publicRole?: string | null) {
-    const result = await this.authRepository.replaceUserRoles(id, roles, publicRole)
+  async syncUserRoles(id: string, roles: string[], publicRole?: string | null) {
+    const result = await this.authRepository.syncUserRoles(id, roles, publicRole)
 
     if (result.isErr()) {
       return mapRepositoryError(result.error)

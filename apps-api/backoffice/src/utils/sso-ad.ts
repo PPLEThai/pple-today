@@ -4,6 +4,8 @@ import { Check } from '@sinclair/typebox/value'
 import { Static, t } from 'elysia'
 import { ok } from 'neverthrow'
 
+import { SSO_REQUEST_TIMEOUT_MS } from './jwt'
+
 import { AD_ROLE_PREFIX } from '../constants/roles'
 
 /**
@@ -50,18 +52,25 @@ export type AdUserInfo = Static<typeof AdUserInfo>
  * Fetch the SSO AD user info for the given user access token.
  */
 export const fetchAdUserInfo = async (token: string, oidcUrl: string) => {
-  const response = await fetch(`${oidcUrl}/oidc/v1/userinfo`, {
-    headers: { Authorization: `Bearer ${token}` },
+  const fetchFailed = err({
+    code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+    message: 'An error occurred while fetching the SSO AD user info',
   })
 
-  if (!response.ok) {
-    return err({
-      code: InternalErrorCode.INTERNAL_SERVER_ERROR,
-      message: 'An error occurred while fetching the SSO AD user info',
+  let response: Response
+  try {
+    response = await fetch(`${oidcUrl}/oidc/v1/userinfo`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(SSO_REQUEST_TIMEOUT_MS),
     })
+  } catch {
+    // Timeout or network failure: same answer as an SSO error response.
+    return fetchFailed
   }
 
-  const body = await response.json()
+  if (!response.ok) return fetchFailed
+
+  const body = await response.json().catch(() => null)
 
   if (!Check(AdUserInfo, body)) {
     return err({

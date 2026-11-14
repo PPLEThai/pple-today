@@ -53,7 +53,7 @@ export const AuthController = new Elysia({
   .get(
     '/me',
     async ({ status, user, authService }) => {
-      const updatedRolesResult = await authService.replaceUserRoles(
+      const updatedRolesResult = await authService.syncUserRoles(
         user.id,
         user.roles,
         user.publicRole
