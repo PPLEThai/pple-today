@@ -1,4 +1,7 @@
-export type MiniAppRoutePath = `/mini-app/${string}`
+// อาสาประชาชน — embedded as the อาสา tab instead of opened as a mini app screen.
+export const VOLUNTEER_MINI_APP_SLUG = 'noble-aqua-dove'
+
+export type MiniAppRoutePath = `/mini-app/${string}` | '/volunteer' | `/volunteer?path=${string}`
 
 /**
  * Maps a mini-app redirect pathname (e.g. `/my-slug/nested/path`) to an in-app route.
@@ -25,9 +28,20 @@ export function pathnameToMiniAppRoute(pathname: string): MiniAppRoutePath | nul
     return null
   }
 
-  const subPath = segments.slice(1).join('/')
+  return miniAppRoute(slug, segments.slice(1).join('/'))
+}
 
-  return subPath ? (`/mini-app/${slug}?path=${subPath}` as const) : (`/mini-app/${slug}` as const)
+/**
+ * The in-app route that opens the mini app `slug`, at `path` within it.
+ * อาสาประชาชน opens in its own tab: a second copy pushed over the feed would be
+ * a separate WebView with its own session and history.
+ */
+export function miniAppRoute(slug: string, path?: string): MiniAppRoutePath {
+  if (slug === VOLUNTEER_MINI_APP_SLUG) {
+    return path ? `/volunteer?path=${path}` : '/volunteer'
+  }
+
+  return path ? `/mini-app/${slug}?path=${path}` : `/mini-app/${slug}`
 }
 
 /**

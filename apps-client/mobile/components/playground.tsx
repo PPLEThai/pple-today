@@ -56,6 +56,7 @@ import { z } from 'zod/v4'
 import { ElectionWithCurrentStatus, FeedItemPoll } from '@api/backoffice/app'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useFacebookPagesQuery } from '@app/libs/facebook'
+import { miniAppRoute } from '@app/utils/mini-app'
 
 import { ActivityCard } from './activity/activity-card'
 import { AuthPlayground } from './auth-playground'
@@ -1181,7 +1182,7 @@ function MiniAppExample() {
           variant="outline"
           key={miniApp.slug}
           className="flex flex-row items-center gap-1"
-          onPress={() => router.push(`/mini-app/${miniApp.slug}`)}
+          onPress={() => router.push(miniAppRoute(miniApp.slug))}
         >
           {miniApp.iconUrl && (
             <Image source={{ uri: miniApp.iconUrl }} className="w-4 h-4 color-primary" />
