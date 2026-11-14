@@ -134,7 +134,8 @@ versions out of their own apps.
 
 ### ใช้ล่าสุด
 
-- Shown above 8 Live apps. One row, up to 4 apps.
+- Shown above 8 Live apps. One row: 4 apps on phones, more as the window
+  widens (tablets, landscape). The last 20 are kept so the row can fill.
 - Stored on the device, keyed per active person (the list is role-scoped). Fall
   back to a user-level key when `activePersonId` is null.
 - Intersected with the current list at render time, so retired, unlisted,

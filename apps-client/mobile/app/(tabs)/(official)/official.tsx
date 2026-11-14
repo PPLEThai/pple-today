@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { Pressable, PressableProps, View } from 'react-native'
+import { Pressable, PressableProps, useWindowDimensions, View } from 'react-native'
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
 
 import { Button } from '@pple-today/ui/button'
@@ -53,7 +53,7 @@ import {
 import { useActiveRole, useSession, useSwitchRoleMutation } from '@app/libs/auth'
 import { activePersonLabel } from '@app/utils/active-role'
 import {
-  RECENTS_LIMIT,
+  RECENTS_MIN_SHOWN,
   searchMiniApps,
   selectRecentApps,
   showsDiscoveryTools,
@@ -378,14 +378,36 @@ function SearchResults({
   )
 }
 
+/** Narrowest a shelf slot gets: a 48pt icon plus room for a two-line name. */
+const RECENTS_MIN_SLOT_WIDTH = 72
+/** Gap between shelf slots (gap-2). */
+const RECENTS_SLOT_GAP = 8
+/** Page padding (px-4), card border and card padding (p-3), both sides. */
+const RECENTS_SHELF_INSET = 32 + 2 + 24
+
+/**
+ * How many recents fit in the shelf's single row at the current window width.
+ * Phones keep 4; wider windows show more. Follows rotation and window resizes.
+ */
+function useRecentsSlots() {
+  const { width } = useWindowDimensions()
+  const inner = width - RECENTS_SHELF_INSET
+  return Math.max(
+    RECENTS_MIN_SHOWN,
+    Math.floor((inner + RECENTS_SLOT_GAP) / (RECENTS_MIN_SLOT_WIDTH + RECENTS_SLOT_GAP))
+  )
+}
+
 function RecentApps({
-  apps,
+  apps: allApps,
   onOpen,
 }: {
   apps: MiniAppListItem[]
   onOpen: (app: MiniAppListItem) => void
 }) {
-  if (apps.length === 0) return null
+  const slots = useRecentsSlots()
+  if (allApps.length === 0) return null
+  const apps = allApps.slice(0, slots)
 
   return (
     <View className="px-4 gap-2">
@@ -410,12 +432,27 @@ function RecentApps({
             </Text>
           </Pressable>
         ))}
-        {Array.from({ length: RECENTS_LIMIT - apps.length }, (_, i) => (
+        {Array.from({ length: slots - apps.length }, (_, i) => (
           <View key={`filler-${i}`} className="flex-1" />
         ))}
       </View>
     </View>
   )
+}
+
+/** Narrowest a grid cell gets: a 64pt icon plus room for a two-line name. */
+const GRID_MIN_CELL_WIDTH = 104
+/** The grid's px-4 on each side. */
+const GRID_HORIZONTAL_PADDING = 32
+
+/**
+ * How many apps fit in a grid row at the current window width. Phones keep 3;
+ * wider windows (tablets, landscape, split view) get more columns instead of
+ * stretched cells. Follows rotation and window resizes.
+ */
+function useGridColumns() {
+  const { width } = useWindowDimensions()
+  return Math.max(3, Math.floor((width - GRID_HORIZONTAL_PADDING) / GRID_MIN_CELL_WIDTH))
 }
 
 function MiniAppGrid({
@@ -430,13 +467,14 @@ function MiniAppGrid({
   onOpen: (app: MiniAppListItem) => void
   emptyState: React.ReactNode
 }) {
+  const columns = useGridColumns()
   const rows = useMemo(() => {
     const grouped: MiniAppListItem[][] = []
-    for (let i = 0; i < apps.length; i += 3) {
-      grouped.push(apps.slice(i, i + 3))
+    for (let i = 0; i < apps.length; i += columns) {
+      grouped.push(apps.slice(i, i + columns))
     }
     return grouped
-  }, [apps])
+  }, [apps, columns])
 
   if (apps.length === 0) return <>{emptyState}</>
 
@@ -466,7 +504,7 @@ function MiniAppGrid({
                 </InfoItem>
               </View>
             ))}
-            {Array.from({ length: 3 - group.length }, (_, i) => (
+            {Array.from({ length: columns - group.length }, (_, i) => (
               <View key={`filler-${i}`} className="flex-1" />
             ))}
           </View>
@@ -600,13 +638,15 @@ function MiniAppItemSkeleton() {
 }
 
 function MiniAppSkeleton() {
+  const columns = useGridColumns()
   return (
     <View className="px-4">
       <View className="flex flex-col gap-4">
         <View className="flex flex-row gap-4 w-full">
           <MiniAppItemSkeleton />
-          <View className="flex-1" />
-          <View className="flex-1" />
+          {Array.from({ length: columns - 1 }, (_, i) => (
+            <View key={i} className="flex-1" />
+          ))}
         </View>
       </View>
     </View>

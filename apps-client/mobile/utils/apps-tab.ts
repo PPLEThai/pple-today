@@ -112,11 +112,19 @@ export function monogramColor(slug: string): string {
   return MONOGRAM_COLORS[hash % MONOGRAM_COLORS.length]!
 }
 
-export const RECENTS_LIMIT = 4
+/** The fewest slots the ใช้ล่าสุด shelf shows, on the narrowest phones. */
+export const RECENTS_MIN_SHOWN = 4
 
-/** Put a just-opened app first, without duplicates, keeping at most `RECENTS_LIMIT`. */
+/**
+ * How many recents are kept on the device: enough to fill one row on the widest
+ * window (a 12.9" iPad in landscape), with spares for apps that drop out of the
+ * Live list. The shelf shows only as many as fit its width.
+ */
+export const RECENTS_STORED_LIMIT = 20
+
+/** Put a just-opened app first, without duplicates, keeping at most `RECENTS_STORED_LIMIT`. */
 export function pushRecent(recents: string[], slug: string): string[] {
-  return [slug, ...recents.filter((entry) => entry !== slug)].slice(0, RECENTS_LIMIT)
+  return [slug, ...recents.filter((entry) => entry !== slug)].slice(0, RECENTS_STORED_LIMIT)
 }
 
 /**
