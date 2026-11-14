@@ -100,6 +100,8 @@ export const AdminFacebookPageController = new Elysia({
           InternalErrorCode.FACEBOOK_PAGE_NOT_FOUND,
           InternalErrorCode.FACEBOOK_PAGE_AUTHOR_NOT_FOUND,
           InternalErrorCode.FACEBOOK_API_ERROR,
+          InternalErrorCode.FACEBOOK_INVALID_ACCESS_TOKEN,
+          InternalErrorCode.FACEBOOK_INSUFFICIENT_PERMISSION,
           InternalErrorCode.FACEBOOK_INVALID_RESPONSE,
           InternalErrorCode.INTERNAL_SERVER_ERROR
         ),

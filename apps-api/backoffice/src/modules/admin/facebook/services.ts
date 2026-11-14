@@ -100,10 +100,14 @@ export class AdminFacebookPageService {
       const pageId = updateResult.value.id
       const pageAccessToken = updateResult.value.pageAccessToken
 
+      // Only unsubscribe a page that is subscribed. Rejecting a pending page
+      // then never calls Facebook, so a dead page token cannot block it.
       const subscriptionResult =
         data.status === 'APPROVED'
           ? await this.subscribeToPostUpdates(userId, pageId, pageAccessToken)
-          : await this.unsubscribeToPostUpdates(pageId, pageAccessToken)
+          : updateResult.value.isSubscribed
+            ? await this.unsubscribeToPostUpdates(pageId, pageAccessToken)
+            : ok()
       if (subscriptionResult.isErr()) {
         const rollbackResult = await this.adminFacebookPageRepository.updateFacebookPageById(
           facebookPageId,

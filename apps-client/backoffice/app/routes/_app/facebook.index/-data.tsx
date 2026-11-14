@@ -8,9 +8,11 @@ import { DataTable } from '@pple-today/web-ui/data-table'
 import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
+import { AlertDialog, AlertDialogRef } from 'components/AlertDialog'
 import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { DtFilter } from 'components/datatable/DtFilter'
 import { DtMovement } from 'components/datatable/DtMovement'
+import { facebookPageStatusErrorAlert } from 'components/facebook/facebookPageStatusError'
 import { Check, Eye, EyeOff, Pencil, X } from 'lucide-react'
 
 import {
@@ -25,6 +27,7 @@ const columnHelper = createColumnHelper<GetFacebookPagesResponse['items'][number
 
 export const Data = () => {
   const confirmDialogRef = useRef<ConfirmDialogRef>(null)
+  const alertDialogRef = useRef<AlertDialogRef>(null)
 
   const [queryLimit, setQueryLimit] = useState(10)
   const [queryPage, setQueryPage] = useState(1)
@@ -90,6 +93,9 @@ export const Data = () => {
                 return data
               }
             )
+          },
+          onError: ({ value }) => {
+            alertDialogRef.current?.alert(facebookPageStatusErrorAlert(value.error.code))
           },
         }
       )
@@ -271,6 +277,7 @@ export const Data = () => {
         }
       />
       <ConfirmDialog ref={confirmDialogRef} />
+      <AlertDialog ref={alertDialogRef} />
     </>
   )
 }

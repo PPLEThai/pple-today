@@ -231,6 +231,8 @@ export const FacebookController = new Elysia({
               InternalErrorCode.FACEBOOK_INVALID_RESPONSE,
               InternalErrorCode.FACEBOOK_INVALID_ACCESS_TOKEN,
               InternalErrorCode.FACEBOOK_PAGE_ALREADY_LINKED,
+              InternalErrorCode.FACEBOOK_INSUFFICIENT_PERMISSION,
+              InternalErrorCode.FACEBOOK_INSUFFICIENT_PAGE_ROLE,
               InternalErrorCode.FILE_UPLOAD_ERROR,
               InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,
               InternalErrorCode.FILE_MOVE_ERROR,

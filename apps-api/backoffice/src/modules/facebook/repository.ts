@@ -25,6 +25,40 @@ import { FileServicePlugin } from '../../plugins/file'
 import { ElysiaLoggerPlugin } from '../../plugins/log'
 import { PrismaServicePlugin } from '../../plugins/prisma'
 
+/**
+ * Permissions a page token needs once the page is approved: reading its posts
+ * and subscribing to its feed webhook. Keep in step with the permissions the
+ * mobile app requests (`FACEBOOK_PAGE_PERMISSIONS`).
+ */
+const FACEBOOK_REQUIRED_PAGE_PERMISSIONS = [
+  'pages_read_engagement',
+  'pages_read_user_content',
+  'pages_manage_metadata',
+] as const
+
+/**
+ * Sorts a Graph API error by what the caller can do about it, from the raw
+ * error body that `makeRequest` puts in the message:
+ * - `invalid-token`: OAuth error 190, the token expired or was revoked.
+ * - `permission`: the token lacks a permission, or the person lacks the page
+ *   role, for this call (codes 3, 10, 200–299, and 100 with subcode 33).
+ */
+function classifyFacebookError(rawMessage: string): 'invalid-token' | 'permission' | null {
+  let body: unknown
+  try {
+    body = JSON.parse(rawMessage)
+  } catch {
+    return null
+  }
+  const error = (body as { error?: { code?: unknown; error_subcode?: unknown } } | null)?.error
+  const code = error?.code
+  if (typeof code !== 'number') return null
+  if (code === 190) return 'invalid-token'
+  if (code === 3 || code === 10 || (code >= 200 && code < 300)) return 'permission'
+  if (code === 100 && error?.error_subcode === 33) return 'permission'
+  return null
+}
+
 export class FacebookRepository {
   private apiAccessToken: {
     access_token: string
@@ -176,10 +210,13 @@ export class FacebookRepository {
       access_token: adminToken.value,
     })
 
+    // An invalid token's debug data leaves out fields a valid one carries, so
+    // check validity before the full schema. Otherwise a dead token would come
+    // back as an invalid response instead of an invalid token.
     const response = await this.makeRequest({
       path: `/debug_token`,
       query: queryParams,
-      responseSchema: InspectAccessTokenResponse,
+      responseSchema: t.Object({ data: t.Object({ is_valid: t.Boolean() }) }),
     })
 
     if (response.isErr()) {
@@ -190,6 +227,17 @@ export class FacebookRepository {
       return err({
         code: InternalErrorCode.FACEBOOK_INVALID_ACCESS_TOKEN,
         message: 'The provided access token is invalid',
+      })
+    }
+
+    if (!Check(InspectAccessTokenResponse, response.value)) {
+      this.loggerService.error({
+        error: response.value,
+        message: 'Invalid debug_token response format from Facebook API',
+      })
+      return err({
+        code: InternalErrorCode.FACEBOOK_INVALID_RESPONSE,
+        message: 'Invalid response format from Facebook API',
       })
     }
 
@@ -213,7 +261,23 @@ export class FacebookRepository {
     })
 
     if (result.isErr()) {
-      return err(result.error)
+      // Name the fix for whoever approves: only the page manager can repair
+      // a token that lost its permissions, by reconnecting the page in the app.
+      switch (classifyFacebookError(result.error.message)) {
+        case 'invalid-token':
+          return err({
+            code: InternalErrorCode.FACEBOOK_INVALID_ACCESS_TOKEN,
+            message:
+              'The page access token is no longer valid. The page manager must unlink and reconnect the page in the app.',
+          })
+        case 'permission':
+          return err({
+            code: InternalErrorCode.FACEBOOK_INSUFFICIENT_PERMISSION,
+            message: `The page manager did not grant enough Facebook access for this page and must unlink and reconnect it in the app. Facebook said: ${result.error.message}`,
+          })
+        default:
+          return err(result.error)
+      }
     }
 
     if (!result.value.success) {
@@ -371,6 +435,69 @@ export class FacebookRepository {
     }
 
     return ok(response.value)
+  }
+
+  /**
+   * Fails with FACEBOOK_INSUFFICIENT_PERMISSION unless the page token can do
+   * everything an approved page needs, so a gap surfaces to the page manager at
+   * link time instead of to an admin at approval time.
+   *
+   * Two checks, because neither is enough alone:
+   * - The token's scopes. Facebook lets a person grant a permission for only
+   *   some of their pages, so a page-scoped permission must also list this page
+   *   in its granular target ids.
+   * - A read of `/{page}/subscribed_apps`. Approval writes to this edge, which
+   *   also needs the person to hold the MODERATE task on the page. Reading it
+   *   catches a missing page role without subscribing. It is a close proxy,
+   *   not a guarantee: the write can still fail for reasons the read does not
+   *   need, so approval reports such failures as needing a reconnect too.
+   */
+  async verifyPageAccessTokenPermissions(pageId: string, pageAccessToken: string) {
+    const inspectResponse = await this.inspectUserAccessToken(pageAccessToken)
+    if (inspectResponse.isErr()) {
+      return err(inspectResponse.error)
+    }
+
+    const { scopes, granular_scopes } = inspectResponse.value.data
+    const missingScopes = FACEBOOK_REQUIRED_PAGE_PERMISSIONS.filter((permission) => {
+      if (!scopes.includes(permission)) return true
+      const targetIds = granular_scopes.find((g) => g.scope === permission)?.target_ids
+      // No target ids means the permission covers every page.
+      return targetIds !== undefined && !targetIds.some((id) => String(id) === pageId)
+    })
+    if (missingScopes.length > 0) {
+      return err({
+        code: InternalErrorCode.FACEBOOK_INSUFFICIENT_PERMISSION,
+        message: `Missing Facebook permissions for this page: ${missingScopes.join(', ')}`,
+      })
+    }
+
+    const probe = await this.makeRequest({
+      path: `/${pageId}/subscribed_apps`,
+      query: new URLSearchParams({ access_token: pageAccessToken }),
+      accessToken: pageAccessToken,
+      responseSchema: t.Object({ data: t.Array(t.Unknown()) }),
+    })
+    if (probe.isErr()) {
+      switch (classifyFacebookError(probe.error.message)) {
+        case 'invalid-token':
+          return err({
+            code: InternalErrorCode.FACEBOOK_INVALID_ACCESS_TOKEN,
+            message: 'The page access token is no longer valid',
+          })
+        case 'permission':
+          // The scopes above already passed, so what is missing is the
+          // person's role on the page, which reconnecting cannot fix.
+          return err({
+            code: InternalErrorCode.FACEBOOK_INSUFFICIENT_PAGE_ROLE,
+            message: `The user's role on this page cannot manage its subscriptions. Facebook said: ${probe.error.message}`,
+          })
+        default:
+          return err(probe.error)
+      }
+    }
+
+    return ok()
   }
 
   async getPagePosts(pageAccessToken: string, pageId: string) {
@@ -539,6 +666,7 @@ export class FacebookRepository {
       status: linkedPage.value.linkedStatus,
       profileImagePath: linkedPage.value.profilePicturePath,
       pageAccessToken: linkedPage.value.pageAccessToken,
+      isSubscribed: linkedPage.value.isSubscribed,
     })
   }
 

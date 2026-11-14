@@ -169,6 +169,12 @@ const FACEBOOK_ERROR_SCHEMA = {
   FACEBOOK_PAGE_AUTHOR_NOT_FOUND: {
     status: 404,
   },
+  FACEBOOK_INSUFFICIENT_PERMISSION: {
+    status: 403,
+  },
+  FACEBOOK_INSUFFICIENT_PAGE_ROLE: {
+    status: 403,
+  },
 } satisfies InternalErrorSchemas
 
 const POLL_ERROR_SCHEMA = {

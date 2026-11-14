@@ -100,6 +100,15 @@ export class FacebookService {
       })
     }
 
+    const permissionCheck = await this.facebookRepository.verifyPageAccessTokenPermissions(
+      facebookPageId,
+      facebookPageAccessToken
+    )
+
+    if (permissionCheck.isErr()) {
+      return mapRepositoryError(permissionCheck.error)
+    }
+
     const pageDetails = await this.facebookRepository.getFacebookPageById(
       facebookPageId,
       facebookPageAccessToken
@@ -177,13 +186,23 @@ export class FacebookService {
       })
     }
 
-    const pageAccessTokenResult = await this.facebookRepository.updatePageAccessToken(
-      pageResult.value.id,
-      pageResult.value.pageAccessToken
-    )
-
-    if (pageAccessTokenResult.isErr()) {
-      return mapRepositoryError(pageAccessTokenResult.error)
+    // Only a subscribed page has anything to undo on Facebook. A page that was
+    // never approved (pending or rejected) skips Facebook entirely, so a dead
+    // token cannot stop its manager from removing it and connecting again.
+    if (pageResult.value.isSubscribed) {
+      // Best effort: once the page has no manager, the webhook ignores its
+      // posts, so a subscription left behind by a dead token does no harm.
+      // Blocking the unlink on it would leave the manager stuck.
+      const pageAccessTokenResult = await this.facebookRepository.updatePageAccessToken(
+        pageResult.value.id,
+        pageResult.value.pageAccessToken
+      )
+      if (pageAccessTokenResult.isOk()) {
+        await this.facebookRepository.unsubscribeFromPostUpdates(
+          pageResult.value.id,
+          pageAccessTokenResult.value.pageAccessToken
+        )
+      }
     }
 
     const unlinkResult = await this.facebookRepository.unlinkFacebookPageFromUser(userId)
@@ -195,17 +214,6 @@ export class FacebookService {
           message: 'Linked Facebook page not found',
         },
       })
-    }
-
-    if (unlinkResult.value.isSubscribed) {
-      const unlinkPostsResult = await this.facebookRepository.unsubscribeFromPostUpdates(
-        unlinkResult.value.id,
-        pageAccessTokenResult.value.pageAccessToken
-      )
-
-      if (unlinkPostsResult.isErr()) {
-        return mapRepositoryError(unlinkPostsResult.error)
-      }
     }
 
     return ok()
