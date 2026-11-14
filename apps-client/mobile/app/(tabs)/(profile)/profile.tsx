@@ -645,16 +645,25 @@ function FacebookConnectExplainerDialog(props: {
     <Dialog open={props.open} onOpenChange={props.onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>เชื่อมต่อเพจ Facebook กับ PPLE Today</DialogTitle>
-          <DialogDescription>
-            {`เมื่อเชื่อมต่อเพจที่คุณดูแลและได้รับการอนุมัติจากทีมผู้ดูแลแล้ว โพสต์จากเพจของคุณจะแสดงบนฟีดของ PPLE Today โดยอัตโนมัติ${fullName ? ` ภายใต้ชื่อ ${fullName}` : ''}`}
+          <DialogTitle>เชื่อมต่อเพจ Facebook</DialogTitle>
+          <DialogDescription className="text-left font-body-regular">
+            {
+              'เมื่อเชื่อมต่อเพจที่คุณดูแลและได้รับการอนุมัติจากทีมผู้ดูแลแล้ว โพสต์จากเพจของคุณจะแสดงบนฟีดของ PPLE Today โดยอัตโนมัติ'
+            }
+            {fullName ? (
+              <>
+                {' ภายใต้ชื่อ\n\n'}
+                <Text className="font-body-bold">{fullName}</Text>
+                {'\n'}
+              </>
+            ) : null}
           </DialogDescription>
-          <DialogDescription className="text-left">
+          <DialogDescription className="text-left font-body-regular">
             {[
               'ก่อนดำเนินการต่อ กรุณาตรวจสอบว่า',
               '• คุณเป็นผู้มีสิทธิสูงสุดของเพจนั้น',
-              '• ในหน้าต่าง Facebook ให้เลือกเพจที่ต้องการเชื่อมต่อ และอนุญาตสิทธิ์ทั้งหมดที่ขอ',
-              '- หากเลือกเพจหรือสิทธิ์ไม่ครบ สามารถกด "ยกเลิกการเชื่อมต่อ" แล้วเริ่มใหม่ได้',
+              '• ในหน้าต่าง Facebook ให้เลือกเพจที่ต้องการเชื่อมต่อ และอนุญาตสิทธิ์ทั้งหมดที่แอปฯขอ',
+              '• หากเลือกเพจผิด หรือให้สิทธิ์ไม่ครบ สามารถกด "ยกเลิกการเชื่อมต่อ" แล้วเริ่มใหม่ได้',
             ].join('\n')}
           </DialogDescription>
         </DialogHeader>
