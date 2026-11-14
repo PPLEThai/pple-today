@@ -37,10 +37,25 @@ function barBottomOffset(safeAreaBottom: number) {
 }
 
 const SPRING = { damping: 20, stiffness: 220, mass: 0.8 }
+// The pill's move to a tab. A spring of fixed stiffness takes about as long for
+// any distance, so it would cross the whole bar far faster than it moves to the
+// next tab; instead the move's duration grows with the square root of the
+// tabs it crosses.
+const TRAVEL_MS_PER_TAB = 320
+const TRAVEL_DAMPING_RATIO = 0.8
+function travelSpring(tabs: number) {
+  'worklet'
+  return {
+    duration: TRAVEL_MS_PER_TAB * Math.sqrt(Math.max(tabs, 0.25)),
+    dampingRatio: TRAVEL_DAMPING_RATIO,
+  }
+}
 // The pill's size while a finger is on the bar.
 const PILL_DRAGGING_SCALE = 1.25
-// The pill trails the finger by a quick spring.
+// The pill trails the finger by a quick spring, once it has caught up with it.
 const FOLLOW_SPRING = { damping: 28, stiffness: 600, mass: 0.6 }
+// How close, in tabs, the pill must come to the finger to count as caught up.
+const CAUGHT_UP = 0.5
 // How far a finger can move and still count as a tap.
 const TAP_SLOP = 10
 
@@ -175,6 +190,15 @@ export function GlassTabBarView({
   const hovered = useSharedValue(-1)
   const startX = useSharedValue(0)
   const activated = useSharedValue(false)
+  // The pill has reached the finger and now trails it closely.
+  const caughtUp = useSharedValue(false)
+
+  /** Moves the pill to `x`, taking longer the farther it goes. */
+  const travelTo = (x: number) => {
+    'worklet'
+    const tabs = tabWidth.value > 0 ? Math.abs(x - pillX.value) / tabWidth.value : 1
+    pillX.value = withSpring(x, travelSpring(tabs))
+  }
 
   // The pill sits on the selected tab once both it and the bar's width are
   // known, whichever comes last: springing there when it moves, jumping there
@@ -184,8 +208,10 @@ export function GlassTabBarView({
   React.useEffect(() => {
     if (rowWidth <= 0 || selectedIndex < 0 || dragging.value) return
     const x = selectedIndex * (rowWidth / tabs.length)
-    pillX.value = pillPlaced.current ? withSpring(x, SPRING) : x
+    if (pillPlaced.current) travelTo(x)
+    else pillX.value = x
     pillPlaced.current = true
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- travelTo reads only shared values
   }, [selectedIndex, rowWidth, tabs.length, dragging, pillX])
 
   const onRowLayout = (event: LayoutChangeEvent) => {
@@ -227,7 +253,14 @@ export function GlassTabBarView({
   const followFinger = (x: number) => {
     'worklet'
     const maxX = (count - 1) * tabWidth.value
-    pillX.value = withSpring(Math.min(maxX, Math.max(0, x - tabWidth.value / 2)), FOLLOW_SPRING)
+    const target = Math.min(maxX, Math.max(0, x - tabWidth.value / 2))
+    // A touch far from the pill sends it there at the pace of a tap; from
+    // then on it trails the finger closely.
+    if (!caughtUp.value && Math.abs(target - pillX.value) < CAUGHT_UP * tabWidth.value) {
+      caughtUp.value = true
+    }
+    if (caughtUp.value) pillX.value = withSpring(target, FOLLOW_SPRING)
+    else travelTo(target)
     const index = indexAt(x)
     if (index !== hovered.value) {
       const first = hovered.value === -1
@@ -249,6 +282,7 @@ export function GlassTabBarView({
       hovered.value = -1
       startX.value = event.x
       activated.value = false
+      caughtUp.value = false
       runOnJS(setIsDragging)(true)
       pillScale.value = withSpring(PILL_DRAGGING_SCALE, SPRING)
       followFinger(event.x)
@@ -269,12 +303,12 @@ export function GlassTabBarView({
       // A quick tap ends before the pan activates, reported as cancelled; only
       // a pan cancelled once moving (e.g. by the system) puts the pill back.
       if (event.canceled && activated.value) {
-        if (selectedIndex >= 0) pillX.value = withSpring(selectedIndex * tabWidth.value, SPRING)
+        if (selectedIndex >= 0) travelTo(selectedIndex * tabWidth.value)
         runOnJS(cancelTouch)()
         return
       }
       const index = indexAt(event.x)
-      pillX.value = withSpring(index * tabWidth.value, SPRING)
+      travelTo(index * tabWidth.value)
       runOnJS(endTouch)(index, Math.abs(event.x - startX.value) > TAP_SLOP)
     },
   })
