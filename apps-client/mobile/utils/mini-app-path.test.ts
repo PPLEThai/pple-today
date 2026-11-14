@@ -52,6 +52,11 @@ describe('pathnameToMiniAppRoute', () => {
     expect(pathnameToMiniAppRoute('/kaitom-mp')).toBe('/mini-app/kaitom-mp')
   })
 
+  test('อาสาประชาชน opens in its tab, keeping the sub-path', () => {
+    expect(pathnameToMiniAppRoute('/noble-aqua-dove')).toBe('/volunteer')
+    expect(pathnameToMiniAppRoute('/noble-aqua-dove/events/7')).toBe('/volunteer?path=events/7')
+  })
+
   test('no pathname resolves to no route', () => {
     expect(pathnameToMiniAppRoute('/')).toBeNull()
     expect(pathnameToMiniAppRoute('')).toBeNull()

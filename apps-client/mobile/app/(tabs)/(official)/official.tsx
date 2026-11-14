@@ -59,6 +59,7 @@ import {
   showsDiscoveryTools,
 } from '@app/utils/apps-tab'
 import { supportsLiquidGlass } from '@app/utils/liquid-glass'
+import { miniAppRoute } from '@app/utils/mini-app'
 
 import { useBottomTabOnPress } from '../_layout'
 
@@ -124,7 +125,7 @@ export default function OfficialPage() {
     (app: MiniAppListItem, source: MiniAppOpenSource) => {
       if (app.tier === 'LIVE') recordRecent(app.slug)
       logMiniAppOpen(app.slug, source)
-      router.navigate(`/mini-app/${app.slug}`)
+      router.navigate(miniAppRoute(app.slug))
     },
     [recordRecent, router]
   )
