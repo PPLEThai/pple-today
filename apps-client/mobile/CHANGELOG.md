@@ -1,5 +1,69 @@
 # @client/mobile
 
+## 2.16.1
+
+### Patch Changes
+
+- [#561](https://github.com/PPLEThai/pple-today/pull/561) [`7945bb6`](https://github.com/PPLEThai/pple-today/commit/7945bb6482e99f7bf9f3f34b237ada6ebde499b6) Thanks [@PanJ](https://github.com/PanJ)! - Mini apps opened from the feed or แอปฯ now end above the tab bar, with a border between them, so a page that does not leave room for the bar is no longer covered by iOS 26's floating bar or runs into the bar elsewhere.
+
+- [#561](https://github.com/PPLEThai/pple-today/pull/561) [`7945bb6`](https://github.com/PPLEThai/pple-today/commit/7945bb6482e99f7bf9f3f34b237ada6ebde499b6) Thanks [@PanJ](https://github.com/PanJ)! - Opening อาสาประชาชน from แอปฯ, a notification, a feed link or a deep link now switches to the อาสา tab instead of opening a second copy of it over the current screen.
+
+## 2.16.0
+
+### Minor Changes
+
+- [#559](https://github.com/PPLEThai/pple-today/pull/559) [`4775bb3`](https://github.com/PPLEThai/pple-today/commit/4775bb33b7e0051b9add74251214d09d2d8699a8) Thanks [@PanJ](https://github.com/PanJ)! - The แอปฯ tab is tidier. Apps that aren't published yet move out of the main grid into two collapsed sections, "แอปทดลองใช้" and "แอปฉบับร่าง". Apps without an icon show a coloured letter, so they no longer look the same. When a role has more than 8 apps, the tab adds search and a "ใช้ล่าสุด" row. The mini-app list API returns each app's `tagline` and, for Draft and Beta apps, the caller's `relation` (`BUILDER` or `TESTER`). The admin portal asks for a short description of each app, and an app's first promotion to Live is recorded for the upcoming "new apps" section. Run the database migration before deploying the API.
+
+## 2.15.3
+
+### Patch Changes
+
+- [#551](https://github.com/PPLEThai/pple-today/pull/551) [`85ff210`](https://github.com/PPLEThai/pple-today/commit/85ff2109f89420da9587d39d55b1741daddc90da) Thanks [@PanJ](https://github.com/PanJ)! - On iOS 26, the tab bar shows the selected tab in an orange glass pill (hold and drag to switch tabs), and screen headers show a Liquid Glass bar when the page scrolls under them. The แอปฯ, กิจกรรม and ฉัน tabs show a compact title once their large title scrolls away, and the role picker on แอปฯ moves into the header. A user's profile shows their name in the header once it scrolls away. Alert dialog titles use the app's heading font.
+
+  On Android and older iOS, the tab bar's tabs are evenly spaced and centred again, and the selected tab is underlined.
+
+- [#551](https://github.com/PPLEThai/pple-today/pull/551) [`85ff210`](https://github.com/PPLEThai/pple-today/commit/85ff2109f89420da9587d39d55b1741daddc90da) Thanks [@PanJ](https://github.com/PanJ)! - Native buttons, alerts and pickers stay light when the phone is in dark mode, matching the rest of the app.
+
+- [#551](https://github.com/PPLEThai/pple-today/pull/551) [`85ff210`](https://github.com/PPLEThai/pple-today/commit/85ff2109f89420da9587d39d55b1741daddc90da) Thanks [@PanJ](https://github.com/PanJ)! - On iOS 26, the search screens' back button and search field sit in the Liquid Glass bar, and results scroll under it.
+
+- [#551](https://github.com/PPLEThai/pple-today/pull/551) [`85ff210`](https://github.com/PPLEThai/pple-today/commit/85ff2109f89420da9587d39d55b1741daddc90da) Thanks [@PanJ](https://github.com/PanJ)! - The search page shows its search bar and results again, instead of a blank screen with only the keyboard.
+
+## 2.15.2
+
+### Patch Changes
+
+- [#549](https://github.com/PPLEThai/pple-today/pull/549) [`b7a5eea`](https://github.com/PPLEThai/pple-today/commit/b7a5eeab4affc88a8f8c27d0020edfe863cebdb5) Thanks [@PanJ](https://github.com/PanJ)! - On iOS 26, the post, hashtag, notification detail, election, user profile and followed content screens no longer leave an empty gap under the header, and their content now blurs under the glass header when scrolled.
+
+## 2.15.1
+
+### Patch Changes
+
+- [#548](https://github.com/PPLEThai/pple-today/pull/548) [`3be065d`](https://github.com/PPLEThai/pple-today/commit/3be065dbb42ec40d40bf7c03d387d61c68088cc5) Thanks [@PanJ](https://github.com/PanJ)! - On iOS 26, the post, hashtag, notification detail, election, user profile, followed content and Facebook page screens use the native Liquid Glass header, and their content scrolls under it with the system blur. Android and older iOS keep the current headers.
+
+- [#546](https://github.com/PPLEThai/pple-today/pull/546) [`a227513`](https://github.com/PPLEThai/pple-today/commit/a2275131933e2a568fe1bba9027a7467ecc1e457) Thanks [@PanJ](https://github.com/PanJ)! - On iOS 26, the อาสา tab tells อาสาประชาชน how tall the floating tab bar is (as the CSS variable `--pple-today-inset-bottom`), so the mini app can keep its own bottom menu above the bar instead of under it.
+
+## 2.15.0
+
+### Minor Changes
+
+- [#541](https://github.com/PPLEThai/pple-today/pull/541) [`c3db33b`](https://github.com/PPLEThai/pple-today/commit/c3db33b649b6ff8d66e989aa96e34166a407a38e) Thanks [@PanJ](https://github.com/PanJ)! - On iOS 26, the app uses Liquid Glass: the native tab bar, native headers on the notification, announcement and suggestion pages, and glass back buttons on the other pages. Android and older iOS keep the current design. The notification page subtitle now reads "รวมทุกการแจ้งเตือนของคุณ ไว้ในที่เดียว" on every platform, and React Native's warning and error toasts in development builds are readable again.
+
+## 2.14.3
+
+### Patch Changes
+
+- [#539](https://github.com/PPLEThai/pple-today/pull/539) [`d6ed161`](https://github.com/PPLEThai/pple-today/commit/d6ed161be12984b24683d9d9dd7c92f8ef549361) Thanks [@PanJ](https://github.com/PanJ)! - A Facebook connect trace that cannot be sent (for example on a network that blocks the API) is kept on the device and sent later, so support still sees the attempt
+
+## 2.14.2
+
+### Patch Changes
+
+- [#533](https://github.com/PPLEThai/pple-today/pull/533) [`0c5ad2b`](https://github.com/PPLEThai/pple-today/commit/0c5ad2b5201541fc25b016f7045fad03b5fbb9e8) Thanks [@PanJ](https://github.com/PanJ)! - Connecting a Facebook page is more reliable: returning from the Facebook app no longer lands on the ไม่พบเนื้อหา screen, a failed login no longer leaves the app stuck until it is reinstalled, and a failure now shows a toast with the error instead of silently returning to the profile screen.
+
+- [#534](https://github.com/PPLEThai/pple-today/pull/534) [`07fbdbb`](https://github.com/PPLEThai/pple-today/commit/07fbdbbfc127223939478f45df6d33cb14335d37) Thanks [@PanJ](https://github.com/PanJ)! - Connecting a Facebook page now records what happened on each attempt for support, and a failed attempt, including one where no page came back, shows a reference code (รหัสอ้างอิง)
+
+- [#531](https://github.com/PPLEThai/pple-today/pull/531) [`ff4a013`](https://github.com/PPLEThai/pple-today/commit/ff4a013d9d01f4b0f8b84ce729a3bb2a7049a6be) Thanks [@PanJ](https://github.com/PanJ)! - Feed cards no longer fade in with a stutter when the feed finishes loading
+
 ## 2.14.1
 
 ### Patch Changes

@@ -1,5 +1,52 @@
 # @api/backoffice
 
+## 1.27.1
+
+### Patch Changes
+
+- [#563](https://github.com/PPLEThai/pple-today/pull/563) [`78b85ff`](https://github.com/PPLEThai/pple-today/commit/78b85ffc2ed9c4f00d76ba3e7b53f49a915ab928) Thanks [@PanJ](https://github.com/PanJ)! - Authenticated requests stay fast when the SSO slows down. Token introspection is reused for 20 seconds per token and shared between concurrent requests, SSO calls give up after 3 seconds instead of waiting indefinitely, `/auth/me` only rewrites a user's roles when they changed, and the database pool size and wait time are set explicitly (`DATABASE_POOL_MAX`, `DATABASE_POOL_CONNECTION_TIMEOUT_MS`).
+
+## 1.27.0
+
+### Minor Changes
+
+- [#559](https://github.com/PPLEThai/pple-today/pull/559) [`4775bb3`](https://github.com/PPLEThai/pple-today/commit/4775bb33b7e0051b9add74251214d09d2d8699a8) Thanks [@PanJ](https://github.com/PanJ)! - The แอปฯ tab is tidier. Apps that aren't published yet move out of the main grid into two collapsed sections, "แอปทดลองใช้" and "แอปฉบับร่าง". Apps without an icon show a coloured letter, so they no longer look the same. When a role has more than 8 apps, the tab adds search and a "ใช้ล่าสุด" row. The mini-app list API returns each app's `tagline` and, for Draft and Beta apps, the caller's `relation` (`BUILDER` or `TESTER`). The admin portal asks for a short description of each app, and an app's first promotion to Live is recorded for the upcoming "new apps" section. Run the database migration before deploying the API.
+
+## 1.26.1
+
+### Patch Changes
+
+- [#557](https://github.com/PPLEThai/pple-today/pull/557) [`5cae232`](https://github.com/PPLEThai/pple-today/commit/5cae2327d505b258528a6675e6f1912d39b22412) Thanks [@PanJ](https://github.com/PanJ)! - Test sends (ทดสอบส่งหาฉัน) no longer appear in other admins' แจ้งเตือน history, and their details and answers can't be opened by other admins. The admin who sent a test sees it, labelled ทดสอบ (เห็นเฉพาะคุณ 1 ชั่วโมง), for one hour after sending, and after that it leaves their history too.
+
+## 1.26.0
+
+### Minor Changes
+
+- [#555](https://github.com/PPLEThai/pple-today/pull/555) [`f75e9de`](https://github.com/PPLEThai/pple-today/commit/f75e9de7b29e72e1bf80018226a26eedf3d1997e) Thanks [@PanJ](https://github.com/PanJ)! - The แจ้งเตือน form has a ทดสอบส่งหาฉัน button above ส่งการแจ้งเตือน. It sends the notification exactly as filled in (content, image, link and reply form) to the admin's own PPLE Today account, never by SMS, and the recipients don't need to be filled in first. The result says whether it reached the admin's phone or only their in-app notifications, and links to the test, which the history lists as ทดสอบ (ส่งหาผู้ส่ง). Buttons with an icon on the แจ้งเตือน pages now have space between the icon and the label.
+
+## 1.25.0
+
+### Minor Changes
+
+- [#552](https://github.com/PPLEThai/pple-today/pull/552) [`92fde4f`](https://github.com/PPLEThai/pple-today/commit/92fde4f07002747cbf594ba95db3e37962e7dd79) Thanks [@PanJ](https://github.com/PanJ)! - Admins can send notifications from the new แจ้งเตือน section, below Mini App. A notification can go to everyone, to some roles, to some provinces or districts, to one phone number, or to a list of numbers. It can carry an image, a link (a page in the app, a mini app, or an external URL), an option to skip the notification centre, and an SMS fallback for phone numbers. It can also carry a reply form with fields, buttons, an expiry, tray buttons and an iOS Live Activity. These notifications are always sent as PPLE Today. Answers to the form are kept in the portal: the notification's page lists them with who answered, counts the answers for each button, exports them to CSV, and can close the form early.
+
+### Patch Changes
+
+- Updated dependencies [[`92fde4f`](https://github.com/PPLEThai/pple-today/commit/92fde4f07002747cbf594ba95db3e37962e7dd79)]:
+  - @pple-today/database@1.12.0
+
+## 1.24.1
+
+### Patch Changes
+
+- [#543](https://github.com/PPLEThai/pple-today/pull/543) [`237230e`](https://github.com/PPLEThai/pple-today/commit/237230e9d62d6ba8ba548d2176375722556743d0) Thanks [@PanJ](https://github.com/PanJ)! - Fix rejecting a pending Facebook page failing with "(#15) This method must be called with an app access_token", and show Facebook errors in the backoffice when approving or rejecting a page fails
+
+## 1.24.0
+
+### Minor Changes
+
+- [#534](https://github.com/PPLEThai/pple-today/pull/534) [`878dab2`](https://github.com/PPLEThai/pple-today/commit/878dab2ac95b727b66ce2129dca419168086114d) Thanks [@PanJ](https://github.com/PanJ)! - Add `POST /facebook/connect-attempts`, which stores a diagnostic trace of each "connect a Facebook page" attempt from the mobile app for 90 days, and admin routes to list, summarise and view those attempts
+
 ## 1.23.0
 
 ### Minor Changes

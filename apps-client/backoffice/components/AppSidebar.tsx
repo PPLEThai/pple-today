@@ -22,8 +22,9 @@ import {
   SidebarMenuSubItem,
   SidebarProvider,
 } from '@pple-today/web-ui/sidebar'
-import { Link } from '@tanstack/react-router'
+import { Link, useRouterState } from '@tanstack/react-router'
 import {
+  Bell,
   Blocks,
   ChevronsUpDownIcon,
   ChevronUp,
@@ -42,6 +43,9 @@ import { SidebarUser } from './SidebarUser'
 export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
   const auth = useAuthContext()
   const user = auth.user
+  const isConnectAttempts = useRouterState({
+    select: (state) => state.location.pathname.startsWith('/facebook/connect-attempts'),
+  })
   return (
     <SidebarProvider>
       <Sidebar collapsible="none">
@@ -101,19 +105,51 @@ export const AppSidebar = ({ children }: { children: React.ReactNode }) => {
                     </CollapsibleContent>
                   </SidebarMenuItem>
                 </Collapsible>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild>
-                    <Link to="/facebook">
-                      <Facebook />
-                      <span>เพจเฟสบุ๊ค</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <Collapsible defaultOpen className="group/collapsible">
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton>
+                        <Facebook />
+                        <span>เพจเฟสบุ๊ค</span>
+                        <ChevronUp className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton asChild>
+                            {/* Active on /facebook and a page's detail, but not on
+                                /facebook/connect-attempts, which is under the same prefix */}
+                            <Link
+                              to="/facebook"
+                              activeProps={{ className: isConnectAttempts ? '' : 'active' }}
+                            >
+                              จัดการเพจ
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton asChild>
+                            <Link to="/facebook/connect-attempts">ประวัติการเชื่อมต่อ</Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
                 <SidebarMenuItem>
                   <SidebarMenuButton asChild>
                     <Link to="/mini-app">
                       <Blocks />
                       <span>Mini App</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+                <SidebarMenuItem>
+                  <SidebarMenuButton asChild>
+                    <Link to="/notification">
+                      <Bell />
+                      <span>แจ้งเตือน</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

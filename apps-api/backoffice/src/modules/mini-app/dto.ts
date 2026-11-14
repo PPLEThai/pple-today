@@ -11,6 +11,7 @@ export const toMiniAppDto = (miniApp: MiniAppModel & { miniAppRoles: MiniAppRole
   name: miniApp.name,
   slug: miniApp.slug,
   iconUrl: miniApp.icon,
+  tagline: miniApp.tagline,
   url: miniApp.clientUrl,
   clientId: miniApp.clientId,
   requiresAuth: miniApp.requiresAuth,

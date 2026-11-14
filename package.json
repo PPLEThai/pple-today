@@ -38,7 +38,8 @@
   "patchedDependencies": {
     "expo-notifications@58.1.8": "patches/expo-notifications@58.1.8.patch",
     "react-native-fbsdk-next@13.4.3": "patches/react-native-fbsdk-next@13.4.3.patch",
-    "react-native-pager-view@9.0.7": "patches/react-native-pager-view@9.0.7.patch"
+    "react-native-pager-view@9.0.7": "patches/react-native-pager-view@9.0.7.patch",
+    "react-native-screens@4.30.1": "patches/react-native-screens@4.30.1.patch"
   },
   "trustedDependencies": [
     "@firebase/util",

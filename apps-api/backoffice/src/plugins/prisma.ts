@@ -9,7 +9,14 @@ export const PrismaServicePlugin = new Elysia({ name: 'PrismaService' })
   .use([ConfigServicePlugin, ElysiaLoggerPlugin({ name: 'PrismaService' })])
   .decorate(({ loggerService, configService }) => {
     const connectionString = configService.get('DATABASE_URL')
-    const adapter = new PrismaPg({ connectionString })
+    // The pool is sized explicitly: the driver default (10, waiting forever for
+    // a free connection) let requests queue without bound when the database
+    // slowed down, holding them open instead of failing fast.
+    const adapter = new PrismaPg({
+      connectionString,
+      max: configService.get('DATABASE_POOL_MAX'),
+      connectionTimeoutMillis: configService.get('DATABASE_POOL_CONNECTION_TIMEOUT_MS'),
+    })
     const prismaService = new PrismaService(loggerService, {
       adapter,
     })

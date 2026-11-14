@@ -38,7 +38,8 @@ model User {
   voters      ElectionEligibleVoter[]
   voteRecords ElectionVoteRecord[]
 
-  linkedPage FacebookPage?
+  linkedPage              FacebookPage?
+  facebookConnectAttempts FacebookConnectAttempt[]
 
   feedItems                  FeedItem[]
   feedReactions              FeedItemReaction[]
@@ -48,6 +49,7 @@ model User {
   notifications              UserNotification[]
   notificationTokens         UserNotificationToken[]
   notificationResponses      NotificationResponse[]
+  sentNotifications          Notification[]             @relation("NotificationSentBy")
   notificationLiveActivities NotificationLiveActivity[]
   miniAppUsers               MiniAppUser[]
   miniAppInvites             MiniAppInvite[]

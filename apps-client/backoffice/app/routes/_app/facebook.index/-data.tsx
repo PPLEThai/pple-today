@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogRef } from 'components/AlertDialog'
 import { ConfirmDialog, ConfirmDialogRef } from 'components/ConfirmDialog'
 import { DtFilter } from 'components/datatable/DtFilter'
 import { DtMovement } from 'components/datatable/DtMovement'
-import { facebookPageStatusErrorAlert } from 'components/facebook/facebookPageStatusError'
+import { facebookPageStatusErrorAlert } from 'components/facebook/facebook-page-status-error'
 import { Check, Eye, EyeOff, Pencil, X } from 'lucide-react'
 
 import {
@@ -94,9 +94,8 @@ export const Data = () => {
               }
             )
           },
-          onError: ({ value }) => {
-            alertDialogRef.current?.alert(facebookPageStatusErrorAlert(value.error.code))
-          },
+          onError: (error) =>
+            alertDialogRef.current?.alert(facebookPageStatusErrorAlert(status, error)),
         }
       )
     },

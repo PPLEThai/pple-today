@@ -1,5 +1,53 @@
 # @client/backoffice
 
+## 1.12.0
+
+### Minor Changes
+
+- [#559](https://github.com/PPLEThai/pple-today/pull/559) [`4775bb3`](https://github.com/PPLEThai/pple-today/commit/4775bb33b7e0051b9add74251214d09d2d8699a8) Thanks [@PanJ](https://github.com/PanJ)! - The แอปฯ tab is tidier. Apps that aren't published yet move out of the main grid into two collapsed sections, "แอปทดลองใช้" and "แอปฉบับร่าง". Apps without an icon show a coloured letter, so they no longer look the same. When a role has more than 8 apps, the tab adds search and a "ใช้ล่าสุด" row. The mini-app list API returns each app's `tagline` and, for Draft and Beta apps, the caller's `relation` (`BUILDER` or `TESTER`). The admin portal asks for a short description of each app, and an app's first promotion to Live is recorded for the upcoming "new apps" section. Run the database migration before deploying the API.
+
+## 1.11.1
+
+### Patch Changes
+
+- [#557](https://github.com/PPLEThai/pple-today/pull/557) [`5cae232`](https://github.com/PPLEThai/pple-today/commit/5cae2327d505b258528a6675e6f1912d39b22412) Thanks [@PanJ](https://github.com/PanJ)! - Test sends (ทดสอบส่งหาฉัน) no longer appear in other admins' แจ้งเตือน history, and their details and answers can't be opened by other admins. The admin who sent a test sees it, labelled ทดสอบ (เห็นเฉพาะคุณ 1 ชั่วโมง), for one hour after sending, and after that it leaves their history too.
+
+## 1.11.0
+
+### Minor Changes
+
+- [#555](https://github.com/PPLEThai/pple-today/pull/555) [`f75e9de`](https://github.com/PPLEThai/pple-today/commit/f75e9de7b29e72e1bf80018226a26eedf3d1997e) Thanks [@PanJ](https://github.com/PanJ)! - The แจ้งเตือน form has a ทดสอบส่งหาฉัน button above ส่งการแจ้งเตือน. It sends the notification exactly as filled in (content, image, link and reply form) to the admin's own PPLE Today account, never by SMS, and the recipients don't need to be filled in first. The result says whether it reached the admin's phone or only their in-app notifications, and links to the test, which the history lists as ทดสอบ (ส่งหาผู้ส่ง). Buttons with an icon on the แจ้งเตือน pages now have space between the icon and the label.
+
+## 1.10.0
+
+### Minor Changes
+
+- [#552](https://github.com/PPLEThai/pple-today/pull/552) [`92fde4f`](https://github.com/PPLEThai/pple-today/commit/92fde4f07002747cbf594ba95db3e37962e7dd79) Thanks [@PanJ](https://github.com/PanJ)! - Admins can send notifications from the new แจ้งเตือน section, below Mini App. A notification can go to everyone, to some roles, to some provinces or districts, to one phone number, or to a list of numbers. It can carry an image, a link (a page in the app, a mini app, or an external URL), an option to skip the notification centre, and an SMS fallback for phone numbers. It can also carry a reply form with fields, buttons, an expiry, tray buttons and an iOS Live Activity. These notifications are always sent as PPLE Today. Answers to the form are kept in the portal: the notification's page lists them with who answered, counts the answers for each button, exports them to CSV, and can close the form early.
+
+## 1.9.3
+
+### Patch Changes
+
+- [#543](https://github.com/PPLEThai/pple-today/pull/543) [`237230e`](https://github.com/PPLEThai/pple-today/commit/237230e9d62d6ba8ba548d2176375722556743d0) Thanks [@PanJ](https://github.com/PanJ)! - Fix rejecting a pending Facebook page failing with "(#15) This method must be called with an app access_token", and show Facebook errors in the backoffice when approving or rejecting a page fails
+
+## 1.9.2
+
+### Patch Changes
+
+- [#538](https://github.com/PPLEThai/pple-today/pull/538) [`d7caadb`](https://github.com/PPLEThai/pple-today/commit/d7caadb9274f3fdf079d22ec8af4fae46e4b5c77) Thanks [@PanJ](https://github.com/PanJ)! - The login page no longer crashes when the API cannot be reached (for example on a network that blocks it); it shows a connection error instead
+
+## 1.9.1
+
+### Patch Changes
+
+- [#536](https://github.com/PPLEThai/pple-today/pull/536) [`8030b0f`](https://github.com/PPLEThai/pple-today/commit/8030b0f00e714abb4252f801dc73255734007155) Thanks [@PanJ](https://github.com/PanJ)! - Group the Facebook page admin pages in the sidebar, and highlight only the current one: the page list no longer lights up with the connect history
+
+## 1.9.0
+
+### Minor Changes
+
+- [#534](https://github.com/PPLEThai/pple-today/pull/534) [`f7feff0`](https://github.com/PPLEThai/pple-today/commit/f7feff0896ff2d558ba709d15c39d56e18a08009) Thanks [@PanJ](https://github.com/PanJ)! - Add a Facebook page connect history: outcome totals and common failure causes, every attempt searchable by reference code, name or phone, each attempt's step timeline, and a user's attempts on their page
+
 ## 1.8.0
 
 ### Minor Changes

@@ -1,7 +1,7 @@
 {
   "name": "@client/mobile",
   "main": "index.js",
-  "version": "2.14.1",
+  "version": "2.16.1",
   "scripts": {
     "dev": "node --env-file .env ./scripts/update-redirect.js && expo start --dev-client",
     "start": "expo start",
@@ -36,6 +36,7 @@
     "@gorhom/bottom-sheet": "^5.2.14",
     "@pple-today/api-client": "workspace:^",
     "@pple-today/ui": "workspace:^",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-firebase/analytics": "27.1.0",
     "@react-native-firebase/app": "27.1.0",
     "@react-native-firebase/messaging": "27.1.0",
@@ -54,6 +55,7 @@
     "expo-constants": "~58.0.15",
     "expo-device": "~58.0.5",
     "expo-font": "~58.0.11",
+    "expo-glass-effect": "~58.0.5",
     "expo-haptics": "~58.0.7",
     "expo-image": "~58.0.18",
     "expo-image-picker": "~58.0.10",

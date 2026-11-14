@@ -24,3 +24,6 @@ export const formatDisplayDate = (date: Date) => dayjs(date).locale('th').format
 
 export const getTimelineString = (start: Date, end: Date) =>
   `${formatDisplayDate(start)} - ${formatDisplayDate(end)}`
+
+export const formatDisplayDateTime = (date: Date) =>
+  dayjs(date).locale('th').format('DD/MM/BBBB HH:mm')

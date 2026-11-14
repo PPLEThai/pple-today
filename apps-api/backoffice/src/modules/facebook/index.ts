@@ -3,6 +3,8 @@ import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-commo
 import Elysia from 'elysia'
 
 import {
+  CreateFacebookConnectAttemptBody,
+  CreateFacebookConnectAttemptResponse,
   GetFacebookConfigResponse,
   GetFacebookUserPageListQuery,
   GetFacebookUserPageListResponse,
@@ -81,6 +83,34 @@ export const FacebookController = new Elysia({
         summary: 'Get Facebook Feature Config',
         description:
           'Whether the caller may connect a Facebook page, decided from their SSO AD roles so clients need no role list of their own',
+      },
+    }
+  )
+  .post(
+    '/connect-attempts',
+    async ({ body, status, facebookService, user }) => {
+      const result = await facebookService.recordConnectAttempt(user.id, body)
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+      return status(201, result.value)
+    },
+    {
+      // Only a signed-in user, not FACEBOOK_CONNECT_PRECONDITION: an attempt that
+      // failed because of the role check must still be recorded.
+      requiredLocalUser: true,
+      body: CreateFacebookConnectAttemptBody,
+      response: {
+        201: CreateFacebookConnectAttemptResponse,
+        ...createErrorSchema(
+          InternalErrorCode.BAD_REQUEST,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Record Facebook Connect Attempt',
+        description:
+          'Stores the diagnostic trace of one "connect a Facebook page" attempt from the mobile app, kept for 90 days. The trace never contains access tokens.',
       },
     }
   )

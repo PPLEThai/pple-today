@@ -2,9 +2,19 @@ import { MiniApp } from '@pple-today/api-common/dtos'
 import { MiniAppInviteStatus } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
-export const ListMiniAppsResponse = t.Array(
-  t.Pick(MiniApp, ['slug', 'name', 'iconUrl', 'order', 'url', 'requiresAuth', 'tier'])
-)
+export const MiniAppRelation = t.Union([t.Literal('BUILDER'), t.Literal('TESTER')], {
+  description:
+    'How the caller relates to a Draft or Beta app: BUILDER (its Owner or a Collaborator) or TESTER (an accepted Beta invitee). BUILDER wins when both hold. Absent for an app listed by role. Clients that predate it ignore it; clients must tolerate it missing from an older server.',
+})
+export type MiniAppRelation = Static<typeof MiniAppRelation>
+
+export const ListedMiniApp = t.Composite([
+  t.Pick(MiniApp, ['slug', 'name', 'iconUrl', 'tagline', 'order', 'url', 'requiresAuth', 'tier']),
+  t.Object({ relation: t.Optional(MiniAppRelation) }),
+])
+export type ListedMiniApp = Static<typeof ListedMiniApp>
+
+export const ListMiniAppsResponse = t.Array(ListedMiniApp)
 export type ListMiniAppsResponse = Static<typeof ListMiniAppsResponse>
 
 export const GetMiniAppParams = t.Object({

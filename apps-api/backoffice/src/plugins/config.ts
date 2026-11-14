@@ -35,6 +35,16 @@ export const envSchema = t.Object({
     })
   ),
   DATABASE_URL: t.String(),
+  DATABASE_POOL_MAX: t.Number({
+    default: 10,
+    description:
+      'Database connections per API pod. Keep pods x this under the Postgres connection limit, which other services share.',
+  }),
+  DATABASE_POOL_CONNECTION_TIMEOUT_MS: t.Number({
+    default: 5000,
+    description:
+      'How long a query waits for a free pooled connection before failing, instead of waiting forever.',
+  }),
   APP_ENV: t.Union([t.Literal('development'), t.Literal('production')], {
     default: 'production',
   }),

@@ -14,8 +14,8 @@ import { Typography } from '@pple-today/web-ui/typography'
 import { useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { AlertDialog, AlertDialogRef } from 'components/AlertDialog'
+import { facebookPageStatusErrorAlert } from 'components/facebook/facebook-page-status-error'
 import { FacebookPageEdit } from 'components/facebook/FacebookPageEdit'
-import { facebookPageStatusErrorAlert } from 'components/facebook/facebookPageStatusError'
 import { FeedDetailCopyId } from 'components/feed/FeedDetailCopyId'
 import {
   ArrowUpRight,
@@ -44,12 +44,12 @@ export const Route = createFileRoute('/_app/facebook/$facebookPageId')({
 function FacebookDetailPage() {
   const { facebookPageId } = Route.useParams()
 
+  const alertDialogRef = useRef<AlertDialogRef>(null)
   const queryClient = useQueryClient()
   const query = reactQueryClient.useQuery('/admin/facebook/:facebookPageId', {
     pathParams: { facebookPageId },
   })
   const patchMutation = reactQueryClient.useMutation('patch', '/admin/facebook/:facebookPageId')
-  const alertDialogRef = useRef<AlertDialogRef>(null)
   const invalidateQuery = useCallback(() => {
     queryClient.invalidateQueries({
       queryKey: reactQueryClient.getQueryKey('/admin/facebook/:facebookPageId', {
@@ -69,11 +69,8 @@ function FacebookDetailPage() {
         { pathParams: { facebookPageId }, body: { status } },
         {
           onSuccess: () => invalidateQuery(),
-          onError: ({ value }) => {
-            alertDialogRef.current?.alert(facebookPageStatusErrorAlert(value.error.code))
-            // The server rolls the status back on failure; show what it kept.
-            invalidateQuery()
-          },
+          onError: (error) =>
+            alertDialogRef.current?.alert(facebookPageStatusErrorAlert(status, error)),
         }
       )
     },

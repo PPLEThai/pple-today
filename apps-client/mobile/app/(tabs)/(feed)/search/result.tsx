@@ -2,10 +2,7 @@ import React from 'react'
 import { Keyboard, Pressable, View } from 'react-native'
 import Animated from 'react-native-reanimated'
 
-import { Button } from '@pple-today/ui/button'
 import { FormControl, FormItem } from '@pple-today/ui/form'
-import { Icon } from '@pple-today/ui/icon'
-import { Input, InputGroup, InputLeftIcon } from '@pple-today/ui/input'
 import { cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 import { H2 } from '@pple-today/ui/typography'
@@ -17,7 +14,6 @@ import {
   UseInfiniteQueryResult,
 } from '@tanstack/react-query'
 import { useRouter } from 'expo-router'
-import { ArrowLeftIcon, SearchIcon } from 'lucide-react-native'
 
 import {
   GetSearchAnnouncementResponse,
@@ -26,9 +22,10 @@ import {
   GetSearchUsersResponse,
 } from '@api/backoffice/app'
 import { FeedCard, FeedCardSkeleton } from '@app/components/feed/feed-card'
-import { SafeAreaLayout } from '@app/components/safe-area-layout'
+import { HeaderGlass, useHeaderGlass, usePageHeaderInset } from '@app/components/page-header'
 import { AnnouncementSearchCard } from '@app/components/search/announcement-card'
 import { HashtagSearchCard } from '@app/components/search/hashtag-card'
+import { SearchHeader, SearchInput } from '@app/components/search/search-header'
 import { SearchNotEntered, SearchNotFound } from '@app/components/search/search-status'
 import { TopicSearchBigCard } from '@app/components/search/topic-card'
 import { UserSearchCard } from '@app/components/search/user-card'
@@ -40,6 +37,7 @@ import { useSearchingContext } from './_layout'
 const LIMIT = 10
 export default function SearchResultPage() {
   const router = useRouter()
+  const headerGlass = useHeaderGlass()
   const { state, dispatch } = useSearchingContext()
   const searchForm = useForm({
     defaultValues: {
@@ -48,51 +46,31 @@ export default function SearchResultPage() {
   })
 
   return (
-    <Pressable onPress={Keyboard.dismiss} className="flex-1">
-      <SafeAreaLayout>
-        <View className="p-4">
-          <View className="flex flex-row gap-3 items-center">
-            <Button
-              variant="outline-primary"
-              size="icon"
-              onPress={() => router.back()}
-              aria-label="Go back"
-            >
-              <Icon icon={ArrowLeftIcon} size={24} />
-            </Button>
-            <View className="flex-1">
-              <searchForm.Field
-                name="query"
-                listeners={{
-                  onChangeDebounceMs: 300,
-                  onChange: ({ value }) => {
-                    dispatch({ type: 'updateQuery', query: value })
-                  },
-                }}
-              >
-                {(field) => (
-                  <FormItem field={field}>
-                    <FormControl>
-                      <InputGroup>
-                        <InputLeftIcon icon={SearchIcon} className="text-base-text-medium" />
-                        <Input
-                          placeholder="ค้นหา"
-                          className="rounded-lg"
-                          value={field.state.value}
-                          onChangeText={field.handleChange}
-                          returnKeyType="search"
-                          onSubmitEditing={searchForm.handleSubmit}
-                        />
-                      </InputGroup>
-                    </FormControl>
-                  </FormItem>
-                )}
-              </searchForm.Field>
-            </View>
-          </View>
-        </View>
-        <SearchResult query={state.searchQuery} />
-      </SafeAreaLayout>
+    <Pressable onPress={Keyboard.dismiss} className="flex-1 bg-base-bg-white">
+      <SearchHeader glass={headerGlass.glass} onBack={() => router.back()}>
+        <searchForm.Field
+          name="query"
+          listeners={{
+            onChangeDebounceMs: 300,
+            onChange: ({ value }) => {
+              dispatch({ type: 'updateQuery', query: value })
+            },
+          }}
+        >
+          {(field) => (
+            <FormItem field={field}>
+              <FormControl>
+                <SearchInput
+                  value={field.state.value}
+                  onChangeText={field.handleChange}
+                  onSubmitEditing={searchForm.handleSubmit}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        </searchForm.Field>
+      </SearchHeader>
+      <SearchResult query={state.searchQuery} scrollProps={headerGlass.scrollProps} />
     </Pressable>
   )
 }
@@ -188,7 +166,15 @@ const AnnouncementSearchSection = ({ data }: AnnouncementSearchSectionProps) => 
   )
 }
 
-const SearchResult = ({ query }: { query: string }) => {
+const SearchResult = ({
+  query,
+  scrollProps,
+}: {
+  query: string
+  scrollProps: HeaderGlass['scrollProps']
+}) => {
+  // The list scrolls under the iOS 26 bar; the other states sit below it.
+  const headerInset = usePageHeaderInset()
   const userSearchQuery = reactQueryClient.useQuery(
     '/search/details/users',
     {
@@ -282,14 +268,18 @@ const SearchResult = ({ query }: { query: string }) => {
 
   if (isLoading) {
     return (
-      <View className="items-center py-6">
+      <View className="items-center py-6" style={{ marginTop: headerInset }}>
         <Spinner />
       </View>
     )
   }
 
   if (query.length === 0) {
-    return <SearchNotEntered />
+    return (
+      <View style={{ paddingTop: headerInset }}>
+        <SearchNotEntered />
+      </View>
+    )
   }
 
   if (
@@ -301,7 +291,11 @@ const SearchResult = ({ query }: { query: string }) => {
     announcementSearchQuery.data.length === 0 &&
     feedData.length === 0
   ) {
-    return <SearchNotFound />
+    return (
+      <View style={{ paddingTop: headerInset }}>
+        <SearchNotFound />
+      </View>
+    )
   }
 
   if (
@@ -314,11 +308,16 @@ const SearchResult = ({ query }: { query: string }) => {
     announcementSearchQuery.data.length === 0 &&
     feedData.length === 0
   ) {
-    return <SearchNotFound />
+    return (
+      <View style={{ paddingTop: headerInset }}>
+        <SearchNotFound />
+      </View>
+    )
   }
 
   return (
     <Animated.FlatList
+      {...scrollProps}
       data={feedData}
       renderItem={renderFeedItem}
       ListHeaderComponent={

@@ -41,7 +41,7 @@ export const AlertDialog = forwardRef<AlertDialogRef>(function AlertDialog(_, re
           <AlertDialogTitle asChild>
             <Typography variant="h3">{data.title}</Typography>
           </AlertDialogTitle>
-          <AlertDialogDescription className="text-sm text-base-text-medium leading-tight">
+          <AlertDialogDescription className="text-sm text-base-text-medium leading-tight whitespace-pre-line break-words">
             {data.description}
           </AlertDialogDescription>
         </AlertDialogHeader>

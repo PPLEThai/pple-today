@@ -5,11 +5,13 @@ import { useRouter } from 'expo-router'
 import { MegaphoneIcon } from 'lucide-react-native'
 
 import { TopicCard } from '@app/components/feed/topic-card'
-import { PageHeader } from '@app/components/page-header'
+import { PageHeader, useHeaderGlass, usePageHeaderInset } from '@app/components/page-header'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
 
 export default function TopicSuggestionPage() {
+  const headerInset = usePageHeaderInset()
+  const headerGlass = useHeaderGlass({ padded: true })
   const session = useSession()
   const topicSuggestionQuery = reactQueryClient.useQuery(
     '/topics/recommend',
@@ -28,9 +30,12 @@ export default function TopicSuggestionPage() {
         icon={MegaphoneIcon}
         title="หัวข้อน่าสนใจ"
         subtitle="คุณติดตามหัวข้อเหล่านี้แล้วหรือยัง?"
+        glass={headerGlass.glass}
       />
       <FlatList
-        contentContainerClassName="py-4 px-3 gap-3"
+        {...headerGlass.scrollProps}
+        contentContainerClassName="pb-4 px-3 gap-3"
+        contentContainerStyle={{ paddingTop: headerInset + 16 }}
         showsVerticalScrollIndicator={false}
         data={topicSuggestionQuery.data ?? []}
         renderItem={({ item }) => <TopicCard topic={item} className="w-full h-[243px]" />}

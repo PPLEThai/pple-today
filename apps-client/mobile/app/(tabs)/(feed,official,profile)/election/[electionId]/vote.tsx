@@ -16,7 +16,6 @@ import * as Linking from 'expo-linking'
 import * as Location from 'expo-location'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import {
-  ArrowLeftIcon,
   ArrowRightIcon,
   CalendarIcon,
   CheckIcon,
@@ -28,6 +27,7 @@ import {
 import { FilePath, GetElectionResponse } from '@api/backoffice/app'
 import FaceScan from '@app/assets/face-scan.svg'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
+import { BackButton } from '@app/components/back-button'
 import { ElectionStatusBadge, ElectionTypeBadge } from '@app/components/election/election-card'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { Spinner } from '@app/components/spinner'
@@ -144,14 +144,7 @@ function ElectionHeader() {
   const router = useRouter()
   return (
     <View className="p-4 pb-2 flex flex-row gap-3 items-center">
-      <Button
-        variant="outline-primary"
-        size="icon"
-        onPress={() => router.back()}
-        aria-label="Go back"
-      >
-        <Icon icon={ArrowLeftIcon} size={24} />
-      </Button>
+      <BackButton onPress={() => router.back()} aria-label="Go back" />
       <Progress value={(step / 3) * 100} className="flex-1" />
       <Text className="px-2 text-base font-heading-semibold text-base-text-medium">{step}/3</Text>
     </View>

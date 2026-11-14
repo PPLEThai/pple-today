@@ -3,6 +3,12 @@ import { createErrorSchema, mapErrorCodeToResponse } from '@pple-today/api-commo
 import Elysia, { t } from 'elysia'
 
 import {
+  FacebookConnectAttemptIdParams,
+  GetFacebookConnectAttemptResponse,
+  GetFacebookConnectAttemptsQuery,
+  GetFacebookConnectAttemptsResponse,
+  GetFacebookConnectFailureSummaryQuery,
+  GetFacebookConnectFailureSummaryResponse,
   GetFacebookPageByIdParams,
   GetFacebookPageByIdResponse,
   GetFacebookPagesQuery,
@@ -48,6 +54,80 @@ export const AdminFacebookPageController = new Elysia({
       detail: {
         summary: 'Get list of facebook page',
         description: 'Fetch a list of facebook page',
+      },
+    }
+  )
+  // Connect-attempt diagnostics from the mobile app; see
+  // docs/facebook-connect-diagnostics.md. Static paths, so they win over
+  // `/:facebookPageId`.
+  .get(
+    '/connect-attempts',
+    async ({ query, status, adminFacebookPageService }) => {
+      const result = await adminFacebookPageService.getConnectAttempts({
+        limit: query.limit ?? 20,
+        page: query.page ?? 1,
+        search: query.search,
+        userId: query.userId,
+        outcome: query.outcome,
+      })
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      query: t.Partial(GetFacebookConnectAttemptsQuery),
+      response: {
+        200: GetFacebookConnectAttemptsResponse,
+        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+      detail: {
+        summary: 'List Facebook connect attempts',
+        description:
+          'Diagnostic traces of "connect a Facebook page" attempts from the mobile app, newest first. Search matches the reference code exactly, or part of the user name or phone number.',
+      },
+    }
+  )
+  .get(
+    '/connect-attempts/summary',
+    async ({ query, status, adminFacebookPageService }) => {
+      const result = await adminFacebookPageService.getConnectFailureSummary(query.days ?? 7)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      query: GetFacebookConnectFailureSummaryQuery,
+      response: {
+        200: GetFacebookConnectFailureSummaryResponse,
+        ...createErrorSchema(InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+      detail: {
+        summary: 'Summarise Facebook connect failures',
+        description:
+          'Outcome totals, and failed attempts grouped by failed step, platform and error, over the last N days',
+      },
+    }
+  )
+  .get(
+    '/connect-attempts/:attemptId',
+    async ({ params, status, adminFacebookPageService }) => {
+      const result = await adminFacebookPageService.getConnectAttemptById(params.attemptId)
+      if (result.isErr()) return mapErrorCodeToResponse(result.error, status)
+
+      return status(200, result.value)
+    },
+    {
+      requiredLocalUser: true,
+      params: FacebookConnectAttemptIdParams,
+      response: {
+        200: GetFacebookConnectAttemptResponse,
+        ...createErrorSchema(InternalErrorCode.NOT_FOUND, InternalErrorCode.INTERNAL_SERVER_ERROR),
+      },
+      detail: {
+        summary: 'Get a Facebook connect attempt',
+        description: 'One diagnostic trace with its device context and steps',
       },
     }
   )

@@ -55,6 +55,7 @@ jobs:
             NAME=$1
             PACKAGE_PATH=$2
             DOCKER_COMPOSE_PATH=$3
+            GITOPS_IMAGE=$4 # images[].name in anakotmai/gitops dist/default/kustomization.yml
             REF=${{ github.ref }}
             IMAGE_TAG=production-$(cat $PACKAGE_PATH/package.json | jq -r '.version')
 
@@ -64,7 +65,8 @@ jobs:
               \"imageTag\": \"$IMAGE_TAG\",
               \"path\": \"$PACKAGE_PATH\",
               \"version\": \"$IMAGE_TAG\",
-              \"dockerComposePath\": \"$DOCKER_COMPOSE_PATH\"
+              \"dockerComposePath\": \"$DOCKER_COMPOSE_PATH\",
+              \"gitopsImage\": \"$GITOPS_IMAGE\"
             }"
             
             echo $ITEM
@@ -73,12 +75,12 @@ jobs:
           PACKAGES="[]"
 
           if [[ ${{ inputs.api }} == true ]]; then
-            METADATA=$(constructMetadata "pple-api" "apps-api/backoffice" "docker-compose.api.yaml")
+            METADATA=$(constructMetadata "pple-api" "apps-api/backoffice" "docker-compose.api.yaml" "today-v2-api")
             PACKAGES=$(echo $PACKAGES | jq -c ". += [${METADATA}]")
           fi
 
           if [[ ${{ inputs.ballot-crypto }} == true ]]; then
-              METADATA=$(constructMetadata "pple-ballot-crypto" "apps-api/ballot-crypto" "docker-compose.api.yaml")
+              METADATA=$(constructMetadata "pple-ballot-crypto" "apps-api/ballot-crypto" "docker-compose.api.yaml" "today-v2-ballot-crypto")
               PACKAGES=$(echo $PACKAGES | jq -c ". += [${METADATA}]")
           fi
 
@@ -125,6 +127,27 @@ jobs:
           build-args: |
             "VERSION=${{ matrix.packages.version }}"
           tags: ${{ secrets.GAR_REGISTRY }}/${{ secrets.GAR_REGISTRY_PREFIX }}/${{ matrix.packages.name }}:${{ matrix.packages.imageTag }}
+
+      # Per matrix leg, so one image's bump doesn't wait on (or die with) the other's build.
+      # Pushing to gitops main is what deploys (Cloud Build applies dist/default).
+      # GITOPS_TOKEN: fine-grained token with Contents read/write on anakotmai/gitops only.
+      - name: Checkout gitops
+        uses: actions/checkout@v4
+        with:
+          repository: anakotmai/gitops
+          token: ${{ secrets.GITOPS_TOKEN }}
+          path: gitops
+
+      - name: Bump image tag in gitops
+        working-directory: gitops
+        env:
+          IMAGE: ${{ matrix.packages.gitopsImage }}
+          TAG: ${{ matrix.packages.imageTag }}
+          BUMP_SOURCE: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          scripts/bump-image.sh --push "$IMAGE" "$TAG"
 
   publish-backoffice:
     name: Publish Backoffice Static Files

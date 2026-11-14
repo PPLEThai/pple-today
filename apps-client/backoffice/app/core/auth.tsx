@@ -7,6 +7,7 @@ import { GetAuthMeResponse } from '@api/backoffice/admin'
 
 import { userManager } from '~/config/oidc'
 import { reactQueryClient } from '~/libs/api-client'
+import { apiErrorCode } from '~/libs/api-error'
 
 export interface AuthState {
   user: GetAuthMeResponse | null
@@ -41,8 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleError = async () => {
       if (authMeQuery.isError) {
-        console.error('Auth Me error:', JSON.stringify(authMeQuery.error))
-        if (authMeQuery.error.value.error.code === 'FORBIDDEN') {
+        console.error('Auth Me error:', authMeQuery.error)
+        if (apiErrorCode(authMeQuery.error) === 'FORBIDDEN') {
           await userManager.revokeTokens()
           await userManager.removeUser()
         }

@@ -4,6 +4,10 @@ import Elysia from 'elysia'
 import { ok } from 'neverthrow'
 
 import {
+  GetFacebookConnectAttemptResponse,
+  GetFacebookConnectAttemptsQuery,
+  GetFacebookConnectAttemptsResponse,
+  GetFacebookConnectFailureSummaryResponse,
   GetFacebookPageByIdResponse,
   GetFacebookPagesQuery,
   GetFacebookPagesResponse,
@@ -100,8 +104,10 @@ export class AdminFacebookPageService {
       const pageId = updateResult.value.id
       const pageAccessToken = updateResult.value.pageAccessToken
 
-      // Only unsubscribe a page that is subscribed. Rejecting a pending page
-      // then never calls Facebook, so a dead page token cannot block it.
+      // Only unsubscribe pages that were actually subscribed (i.e. previously
+      // approved). Rejecting a PENDING page that was never subscribed makes
+      // Facebook answer DELETE /subscribed_apps with "(#15) This method must be
+      // called with an app access_token".
       const subscriptionResult =
         data.status === 'APPROVED'
           ? await this.subscribeToPostUpdates(userId, pageId, pageAccessToken)
@@ -127,6 +133,74 @@ export class AdminFacebookPageService {
 
     return ok({ message: `Facebook Page "${updateResult.value.id}" updated.` })
   }
+
+  async getConnectAttempts(query: GetFacebookConnectAttemptsQuery) {
+    const result = await this.adminFacebookPageRepository.getConnectAttempts(query)
+    if (result.isErr()) return mapRepositoryError(result.error)
+
+    return ok(result.value satisfies GetFacebookConnectAttemptsResponse)
+  }
+
+  async getConnectAttemptById(attemptId: string) {
+    const result = await this.adminFacebookPageRepository.getConnectAttemptById(attemptId)
+    if (result.isErr())
+      return mapRepositoryError(result.error, {
+        RECORD_NOT_FOUND: {
+          code: InternalErrorCode.NOT_FOUND,
+          message: 'Facebook connect attempt not found',
+        },
+      })
+
+    const { context, steps, ...attempt } = result.value
+    return ok({
+      ...attempt,
+      context: isPlainObject(context) ? context : {},
+      steps: Array.isArray(steps) ? (steps as GetFacebookConnectAttemptResponse['steps']) : [],
+    } satisfies GetFacebookConnectAttemptResponse)
+  }
+
+  /** Outcome totals and failures grouped by cause over the last `days` days. */
+  async getConnectFailureSummary(days: number, now = new Date()) {
+    const since = new Date(now.getTime() - days * 24 * 60 * 60 * 1000)
+    const result = await this.adminFacebookPageRepository.getConnectFailureSummary(since)
+    if (result.isErr()) return mapRepositoryError(result.error)
+
+    const { outcomes, failures, failureUsers } = result.value
+    const countOf = (outcome: string) =>
+      outcomes.find((row) => row.outcome === outcome)?._count._all ?? 0
+    const groupKey = (row: {
+      failedStep: string | null
+      platform: string
+      errorDomain: string | null
+      errorCode: string | null
+    }) => JSON.stringify([row.failedStep, row.platform, row.errorDomain, row.errorCode])
+    const usersPerGroup = new Map<string, number>()
+    for (const row of failureUsers) {
+      const key = groupKey(row)
+      usersPerGroup.set(key, (usersPerGroup.get(key) ?? 0) + 1)
+    }
+
+    return ok({
+      days,
+      totals: {
+        attempts: outcomes.reduce((sum, row) => sum + row._count._all, 0),
+        succeeded: countOf('SUCCESS'),
+        failed: countOf('FAILED'),
+        cancelled: countOf('CANCELLED'),
+        abandoned: countOf('ABANDONED'),
+      },
+      failures: failures.map((row) => ({
+        failedStep: row.failedStep,
+        platform: row.platform,
+        errorDomain: row.errorDomain,
+        errorCode: row.errorCode,
+        attempts: row._count._all,
+        users: usersPerGroup.get(groupKey(row)) ?? 0,
+        lastSeenAt: row._max.createdAt ?? since,
+        exampleMessage: row._max.errorMessage,
+      })),
+    } satisfies GetFacebookConnectFailureSummaryResponse)
+  }
 }
 
 export const AdminFacebookPageServicePlugin = new Elysia({
@@ -139,3 +213,7 @@ export const AdminFacebookPageServicePlugin = new Elysia({
       facebookRepository
     ),
   }))
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}

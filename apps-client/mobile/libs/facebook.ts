@@ -25,21 +25,9 @@ export class FacebookMissingPermissionsError extends Error {
   }
 }
 
-/** Facebook rejected the token itself: it expired or the person revoked it. */
-export class FacebookTokenRejectedError extends Error {
-  constructor() {
-    super('Facebook rejected the access token')
-  }
-}
-
 export const FACEBOOK_MISSING_PERMISSIONS_MESSAGE = {
   text1: 'ยังไม่ได้อนุญาตสิทธิ์ที่จำเป็น',
   text2: 'กรุณาเชื่อมต่อใหม่และอนุญาตสิทธิ์ทั้งหมดที่ขอ',
-}
-
-function missingPagePermissions(granted: Iterable<string> | undefined) {
-  const grantedSet = new Set(granted)
-  return FACEBOOK_PAGE_PERMISSIONS.filter((permission) => !grantedSet.has(permission))
 }
 
 /**
@@ -87,6 +75,34 @@ async function isInvalidTokenResponse(response: Response) {
 }
 
 /**
+ * Whether `useFacebookPagesQuery` failed because Facebook rejected the token
+ * (its fetcher has then already dropped the token), rather than a network
+ * error or a Facebook outage.
+ */
+export function isFacebookTokenRejection(error: unknown) {
+  return (
+    typeof Response !== 'undefined' &&
+    error instanceof Response &&
+    (error.status === 400 || error.status === 401)
+  )
+}
+
+/** Why the cached token was or was not reused, for `facebook-connect-attempt.ts`. */
+export interface FacebookCachedTokenCheck {
+  result: 'none' | 'missing_permissions' | 'refresh_failed' | 'reused'
+  missingPermissions?: string[]
+  error?: unknown
+}
+
+/**
+ * Where `getCachedFacebookPageAccessToken` reports its decision; set for the
+ * duration of one `getFacebookPageAccessToken` call. A module variable rather
+ * than a parameter keeps that function's signature, which other work edits
+ * next to, unchanged.
+ */
+let reportCachedTokenCheck: (check: FacebookCachedTokenCheck) => void = () => {}
+
+/**
  * Returns a Facebook user access token carrying the page permissions.
  *
  * The SDK persists the token from an earlier login, so reuse it when it already
@@ -94,10 +110,20 @@ async function isInvalidTokenResponse(response: Response) {
  * `LoginManager.logInWithPermissions` — which switches to the Facebook app or a
  * browser — when there is no usable token.
  */
-export async function getFacebookPageAccessToken(): Promise<string> {
-  const cachedToken = await getCachedFacebookPageAccessToken()
+export async function getFacebookPageAccessToken(
+  onCachedTokenCheck?: (check: FacebookCachedTokenCheck) => void
+): Promise<string> {
+  reportCachedTokenCheck = onCachedTokenCheck ?? (() => {})
+  const cachedToken = await getCachedFacebookPageAccessToken().finally(() => {
+    reportCachedTokenCheck = () => {}
+  })
   if (cachedToken) return cachedToken
 
+  // Start from a clean SDK state. Whatever token, authentication token or
+  // profile the SDK still holds is unusable at this point, and leftovers from an
+  // earlier failed login made every new login fail with com.facebook.sdk.login
+  // until the app was reinstalled.
+  LoginManager.logOut()
   const loginResult = await LoginManager.logInWithPermissions(FACEBOOK_PAGE_PERMISSIONS)
   if (loginResult.isCancelled) {
     throw new FacebookLoginCancelledError()
@@ -116,10 +142,32 @@ export async function getFacebookPageAccessToken(): Promise<string> {
   return accessToken.accessToken
 }
 
+/**
+ * A short, user-visible description of a Facebook login failure. Native SDK
+ * errors reject with a generic "Login Failed" message and carry the real cause
+ * in `domain` / `userInfo`, so include those when present.
+ */
+export function describeFacebookError(error: unknown): string {
+  if (!(error instanceof Error)) return String(error)
+  const native = error as Error & { domain?: string; userInfo?: unknown }
+  const details = [native.domain, native.userInfo ? JSON.stringify(native.userInfo) : undefined]
+    .filter(Boolean)
+    .join(' ')
+  return (details ? `${error.message} (${details})` : error.message).slice(0, 300)
+}
+
 async function getCachedFacebookPageAccessToken(): Promise<string | null> {
+  const report = reportCachedTokenCheck
   const current = await AccessToken.getCurrentAccessToken()
-  if (!current?.accessToken) return null
-  if (missingPagePermissions(current.permissions).length > 0) return null
+  if (!current?.accessToken) {
+    report({ result: 'none' })
+    return null
+  }
+  const missing = missingPagePermissions(current.permissions)
+  if (missing.length > 0) {
+    report({ result: 'missing_permissions', missingPermissions: missing })
+    return null
+  }
   try {
     // Round-trips to Facebook: extends the token, refreshes its permission list,
     // and fails if the token expired or the user revoked the app.
@@ -127,12 +175,26 @@ async function getCachedFacebookPageAccessToken(): Promise<string | null> {
   } catch (error) {
     console.warn('Cached Facebook access token is no longer valid', error)
     LoginManager.logOut()
+    report({ result: 'refresh_failed', error })
     return null
   }
   const refreshed = await AccessToken.getCurrentAccessToken()
-  if (!refreshed?.accessToken) return null
-  if (missingPagePermissions(refreshed.permissions).length > 0) return null
+  if (!refreshed?.accessToken) {
+    report({ result: 'none' })
+    return null
+  }
+  const refreshedMissing = missingPagePermissions(refreshed.permissions)
+  if (refreshedMissing.length > 0) {
+    report({ result: 'missing_permissions', missingPermissions: refreshedMissing })
+    return null
+  }
+  report({ result: 'reused' })
   return refreshed.accessToken
+}
+
+function missingPagePermissions(permissions: string[]) {
+  const granted = new Set(permissions)
+  return FACEBOOK_PAGE_PERMISSIONS.filter((permission) => !granted.has(permission))
 }
 
 export const useFacebookPagesQuery = createQuery({
@@ -140,8 +202,7 @@ export const useFacebookPagesQuery = createQuery({
   // Facebook's 4xx answers (bad token, missing permission) do not change on
   // retry, so show the failure at once; still retry network errors and 5xx.
   retry: (failureCount, error) =>
-    !(error instanceof FacebookTokenRejectedError) &&
-    !(error instanceof Response && error.status < 500) &&
+    !(typeof Response !== 'undefined' && error instanceof Response && error.status < 500) &&
     failureCount < 2,
   fetcher: async (variables: { facebookAccessToken: string }): Promise<FacebookPageData[]> => {
     // Note that we limit the page size at 100
@@ -149,12 +210,10 @@ export const useFacebookPagesQuery = createQuery({
       `https://graph.facebook.com/v23.0/me/accounts?fields=access_token,id,name,tasks,picture{cache_key,url}&limit=100&access_token=${variables.facebookAccessToken}`
     )
     if (!response.ok) {
-      // Facebook rejected the token itself (expired or revoked after we read
-      // it). Drop the SDK's cached token so the next attempt goes through a
-      // fresh login. Outages and rate limits keep the token.
-      if (await isInvalidTokenResponse(response)) {
+      // The token was rejected (expired or revoked after we read it). Drop the
+      // SDK's cached token so the next attempt goes through a fresh login.
+      if (isFacebookTokenRejection(response)) {
         clearFacebookLogin()
-        throw new FacebookTokenRejectedError()
       }
       throw response
     }

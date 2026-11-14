@@ -1,4 +1,5 @@
 import type { NotificationInteraction } from '@pple-today/api-common/dtos'
+import { NotificationOrigin } from '@pple-today/database/prisma'
 
 import { deriveInteractionState, type StoredInteraction, toClientInteraction } from './interaction'
 
@@ -8,6 +9,8 @@ export interface InteractionRow {
   interactionExpiresAt: Date | null
   interactionClosedAt: Date | null
   miniApp: { retiredAt: Date | null } | null
+  /** Absent reads as `API`: the row predates origin, or the caller did not select it. */
+  origin?: NotificationOrigin
   /** Already filtered to the caller by the query: zero or one row. */
   responses: {
     actionId: string
@@ -23,9 +26,13 @@ export const isStoredInteraction = (value: unknown): value is StoredInteraction 
 /**
  * True when the app that sent the notification no longer accepts answers: it was
  * retired, or deleted (`miniApp` is null because `miniAppId` was set null).
+ *
+ * An `ADMIN_PORTAL` notification never had an app: its answers are kept here and
+ * read in the admin portal, so having no app is its normal state, not a gone one.
  */
-export const isAppGone = (miniApp: InteractionRow['miniApp']) =>
-  miniApp === null || miniApp.retiredAt != null
+export const isAppGone = (row: Pick<InteractionRow, 'miniApp' | 'origin'>) =>
+  row.origin !== NotificationOrigin.ADMIN_PORTAL &&
+  (row.miniApp === null || row.miniApp.retiredAt != null)
 
 /**
  * The client-facing interaction for one caller, or undefined for a notification
@@ -46,7 +53,7 @@ export function readClientInteraction(
     hasResponse: response !== undefined,
     closedAt: row.interactionClosedAt,
     expiresAt: row.interactionExpiresAt,
-    appGone: isAppGone(row.miniApp),
+    appGone: isAppGone(row),
     now,
   })
   return toClientInteraction(

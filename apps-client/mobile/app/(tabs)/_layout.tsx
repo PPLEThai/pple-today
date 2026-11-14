@@ -16,90 +16,145 @@ import { cssInterop } from 'nativewind'
 
 import PeopleIcon from '@app/assets/people.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
+import { GlassTab, GlassTabBar, TabBarSafeArea } from '@app/components/glass-tab-bar'
 import { useSession } from '@app/libs/auth'
+import { supportsLiquidGlass } from '@app/utils/liquid-glass'
 import { useCallbackRef } from '@app/utils/use-callback-ref'
 
 cssInterop(Image, { className: 'style' })
 
 export default function BottomTabsLayout() {
+  return (
+    <BottomTabActionProvider>
+      {supportsLiquidGlass ? <GlassTabsLayout /> : <JsTabsLayout />}
+    </BottomTabActionProvider>
+  )
+}
+
+const GLASS_TABS: GlassTab[] = [
+  { name: '(feed)', icon: { sf: { default: 'house', selected: 'house.fill' } } },
+  { name: '(volunteer)', icon: { sf: { default: 'person.2', selected: 'person.2.fill' } } },
+  { name: '(official)', icon: { image: require('@app/assets/tab-icons/pple.png') } },
+  { name: '(activity)', icon: { image: require('@app/assets/tab-icons/handshake.png') } },
+  {
+    name: '(profile)',
+    icon: { sf: { default: 'person.crop.circle', selected: 'person.crop.circle.fill' } },
+  },
+]
+
+/**
+ * iOS 26: our own Liquid Glass tab bar (see <GlassTabBar />), so the selected
+ * tab can sit in an orange glass pill; the native bar's selection can't be
+ * tinted.
+ */
+function GlassTabsLayout() {
+  const session = useSession()
+  const { actions } = useBottomTabActionContext()
+
+  return (
+    <Tabs
+      tabBar={(props) => (
+        <GlassTabBar
+          {...props}
+          tabs={GLASS_TABS}
+          // Tapping the selected tab again: the tab's stack pops to its root,
+          // and on the root screen we run its action (scroll to top).
+          onReselect={(pathname) => actions.current?.[pathname]?.()}
+        />
+      )}
+      screenOptions={{ headerShown: false, animation: 'none' }}
+      screenLayout={({ children }) => <TabBarSafeArea>{children}</TabBarSafeArea>}
+    >
+      <Tabs.Screen name="(feed)" options={{ title: 'หน้าแรก' }} />
+      <Tabs.Screen name="(volunteer)" options={{ title: 'อาสา' }} />
+      <Tabs.Screen name="(official)" options={{ title: 'แอปฯ' }} />
+      <Tabs.Screen name="(activity)" options={{ title: 'กิจกรรม' }} />
+      <Tabs.Screen name="(profile)" options={{ title: session ? 'ฉัน' : 'เข้าสู่ระบบ' }} />
+      <Tabs.Screen name="(top-tabs)" options={{ title: 'Playground', href: null }} />
+    </Tabs>
+  )
+}
+
+const PRIMARY_COLOR = '#FF6A13' // base-primary-default
+
+/** Android and iOS before 26. */
+function JsTabsLayout() {
   const insets = useSafeAreaInsets()
   const session = useSession()
 
   return (
-    <BottomTabActionProvider>
-      <View className="flex-1 px-safe">
-        <Tabs
-          screenOptions={{
-            headerShown: false,
-            animation: 'none',
-            tabBarStyle: {
-              paddingHorizontal: 16,
-              height: 60 + insets.bottom,
-              paddingBottom: insets.bottom,
-              borderTopColor: 'transparent',
-              borderTopWidth: 0,
-              elevation: 0,
-            },
-            tabBarHideOnKeyboard: true,
+    <View className="flex-1 px-safe">
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          animation: 'none',
+          tabBarStyle: {
+            paddingHorizontal: 16,
+            height: 60 + insets.bottom,
+            paddingBottom: insets.bottom,
+            borderTopColor: 'transparent',
+            borderTopWidth: 0,
+            elevation: 0,
+          },
+          tabBarHideOnKeyboard: true,
+        }}
+      >
+        <Tabs.Screen
+          name="(feed)"
+          options={{
+            title: 'หน้าแรก',
+            tabBarIcon: (props) => <TabBarIcon {...props} icon={HouseIcon} />,
+            tabBarLabel: TabBarLabel,
+            tabBarButton: TabBarButton,
           }}
-        >
-          <Tabs.Screen
-            name="(feed)"
-            options={{
-              title: 'หน้าแรก',
-              tabBarIcon: (props) => <TabBarIcon {...props} icon={HouseIcon} />,
-              tabBarLabel: TabBarLabel,
-              tabBarButton: TabBarButton,
-            }}
-          />
-          {/* Shown signed out too: อาสาประชาชน asks the user to sign in itself. */}
-          <Tabs.Screen
-            name="(volunteer)"
-            options={{
-              title: 'อาสา',
-              tabBarIcon: (props) => <TabBarIcon {...props} icon={PeopleIcon} />,
-              tabBarLabel: TabBarLabel,
-              tabBarButton: TabBarButton,
-            }}
-          />
-          <Tabs.Screen
-            name="(official)"
-            options={{
-              title: 'แอปฯ',
-              tabBarIcon: (props) => <TabBarIcon {...props} icon={PPLEIcon} />,
-              tabBarLabel: TabBarLabel,
-              tabBarButton: TabBarButton,
-            }}
-          />
-          <Tabs.Screen
-            name="(activity)"
-            options={{
-              title: 'กิจกรรม',
-              tabBarIcon: (props) => <TabBarIcon {...props} icon={HandshakeIcon} />,
-              tabBarLabel: TabBarLabel,
-              tabBarButton: TabBarButton,
-            }}
-          />
-          <Tabs.Screen
-            name="(profile)"
-            options={{
-              // Signed out, this tab is the sign-in screen, and says so.
-              title: session ? 'ฉัน' : 'เข้าสู่ระบบ',
-              tabBarIcon: (props) => <TabBarIcon {...props} icon={CircleUserRoundIcon} />,
-              tabBarLabel: TabBarLabel,
-              tabBarButton: TabBarButton,
-            }}
-          />
-          <Tabs.Screen
-            name="(top-tabs)"
-            options={{
-              title: 'Playground',
-              href: null,
-            }}
-          />
-        </Tabs>
-      </View>
-    </BottomTabActionProvider>
+        />
+        {/* Shown signed out too: อาสาประชาชน asks the user to sign in itself. */}
+        <Tabs.Screen
+          name="(volunteer)"
+          options={{
+            title: 'อาสา',
+            tabBarIcon: (props) => <TabBarIcon {...props} icon={PeopleIcon} />,
+            tabBarLabel: TabBarLabel,
+            tabBarButton: TabBarButton,
+          }}
+        />
+        <Tabs.Screen
+          name="(official)"
+          options={{
+            title: 'แอปฯ',
+            tabBarIcon: (props) => <TabBarIcon {...props} icon={PPLEIcon} />,
+            tabBarLabel: TabBarLabel,
+            tabBarButton: TabBarButton,
+          }}
+        />
+        <Tabs.Screen
+          name="(activity)"
+          options={{
+            title: 'กิจกรรม',
+            tabBarIcon: (props) => <TabBarIcon {...props} icon={HandshakeIcon} />,
+            tabBarLabel: TabBarLabel,
+            tabBarButton: TabBarButton,
+          }}
+        />
+        <Tabs.Screen
+          name="(profile)"
+          options={{
+            // Signed out, this tab is the sign-in screen, and says so.
+            title: session ? 'ฉัน' : 'เข้าสู่ระบบ',
+            tabBarIcon: (props) => <TabBarIcon {...props} icon={CircleUserRoundIcon} />,
+            tabBarLabel: TabBarLabel,
+            tabBarButton: TabBarButton,
+          }}
+        />
+        <Tabs.Screen
+          name="(top-tabs)"
+          options={{
+            title: 'Playground',
+            href: null,
+          }}
+        />
+      </Tabs>
+    </View>
   )
 }
 
@@ -141,11 +196,19 @@ function TabBarButton({ style, ...props }: BottomTabBarButtonProps) {
   return (
     <PlatformPressable
       {...props}
-      style={{ paddingHorizontal: 0, paddingVertical: 8, height: 60 }}
-      className={clsx(
-        'border-b-2 flex flex-col items-center justify-center',
-        props['aria-selected'] ? 'border-base-primary-default' : 'border-transparent'
-      )}
+      // Styles, not classes: this pressable isn't styled by className. Each tab
+      // takes an equal share of the bar (the default button's `flex: 1`, from
+      // the style this button drops), centred, with the selected one underlined.
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 0,
+        paddingVertical: 8,
+        height: 60,
+        borderBottomWidth: 2,
+        borderBottomColor: props['aria-selected'] ? PRIMARY_COLOR : 'transparent',
+      }}
       android_ripple={{ color: undefined }}
       onPress={(e) => {
         props.onPress?.(e)

@@ -1,5 +1,13 @@
 import React from 'react'
-import { Linking, Platform, Pressable, PressableProps, RefreshControl, View } from 'react-native'
+import {
+  LayoutChangeEvent,
+  Linking,
+  Platform,
+  Pressable,
+  PressableProps,
+  RefreshControl,
+  View,
+} from 'react-native'
 import { ScrollView } from 'react-native-gesture-handler'
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 
@@ -18,6 +26,7 @@ import {
   DialogTrigger,
 } from '@pple-today/ui/dialog'
 import { Icon } from '@pple-today/ui/icon'
+import { cn } from '@pple-today/ui/lib/utils'
 import { Text } from '@pple-today/ui/text'
 import { toast } from '@pple-today/ui/toast'
 import { H1, H2 } from '@pple-today/ui/typography'
@@ -52,6 +61,12 @@ import FacebookIcon from '@app/assets/facebook-icon.svg'
 import PPLEIcon from '@app/assets/pple-icon.svg'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { ElectionStatusBadge } from '@app/components/election/election-card'
+import {
+  TabHeader,
+  TabScreenLayout,
+  tabTitleBlockClassName,
+  useCollapsingTitle,
+} from '@app/components/page-header'
 import { PartyInformationSection } from '@app/components/party-information'
 import { PollStatusBadge } from '@app/components/poll/poll-card'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
@@ -66,12 +81,21 @@ import {
 } from '@app/libs/auth'
 import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 import {
+  describeFacebookError,
   FACEBOOK_MISSING_PERMISSIONS_MESSAGE,
   FacebookLoginCancelledError,
   FacebookMissingPermissionsError,
-  getFacebookPageAccessToken,
   useFacebookConfigQuery,
 } from '@app/libs/facebook'
+import {
+  finishActiveFacebookConnectAttempt,
+  finishFacebookLoginAttempt,
+  getActiveFacebookConnectAttempt,
+  getFacebookPageAccessTokenWithTrace,
+  getOrStartFacebookConnectAttempt,
+  referenceCodeToastText,
+  startFacebookConnectAttempt,
+} from '@app/libs/facebook-connect-attempt'
 import { formatDateInterval } from '@app/libs/format-date-interval'
 import { getRoleName } from '@app/utils/get-role-name'
 import { createImageUrl } from '@app/utils/image'
@@ -144,14 +168,28 @@ const ProfileSetting = () => {
     }
   }, [queryClient])
 
+  const collapsing = useCollapsingTitle()
   const ref = React.useRef<ScrollView>(null)
   useBottomTabOnPress(() => {
-    ref.current?.scrollTo({ y: 0, animated: true })
+    ref.current?.scrollTo({ y: collapsing.topOffset, animated: true })
   })
   return (
-    <SafeAreaLayout>
-      <ScrollView
+    <TabScreenLayout>
+      <TabHeader
+        title="โปรไฟล์"
+        icon={
+          <Icon
+            icon={CircleUserRoundIcon}
+            size={26}
+            strokeWidth={2}
+            className="text-base-primary-default"
+          />
+        }
+        collapsing={collapsing}
+      />
+      <AnimatedScrollView
         ref={ref}
+        {...collapsing.scrollProps}
         className="flex-1"
         contentContainerClassName="flex-grow"
         refreshControl={
@@ -163,7 +201,7 @@ const ProfileSetting = () => {
         }
       >
         <View className="bg-base-bg-white flex flex-col">
-          <HeaderSection />
+          <HeaderSection onTitleLayout={collapsing.onTitleLayout} />
           <View className="p-4 flex flex-col gap-3">
             <ProfileSection />
             <AddressSection />
@@ -177,15 +215,18 @@ const ProfileSetting = () => {
           <PartyInformationSection className="py-1" />
           <SettingSection />
         </View>
-      </ScrollView>
-    </SafeAreaLayout>
+      </AnimatedScrollView>
+    </TabScreenLayout>
   )
 }
 
-const HeaderSection = () => {
+// Gesture handler's ScrollView, driven by a reanimated scroll handler.
+const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView)
+
+const HeaderSection = (props: { onTitleLayout: (event: LayoutChangeEvent) => void }) => {
   return (
-    <View className="p-4 flex flex-col gap-1">
-      <View className="flex flex-row gap-1 items-center">
+    <View className={cn('flex flex-col gap-1', tabTitleBlockClassName)}>
+      <View className="flex flex-row gap-1 items-center" onLayout={props.onTitleLayout}>
         <Icon
           icon={CircleUserRoundIcon}
           size={32}
@@ -430,20 +471,43 @@ function LinkFacebookPage() {
   const user = useAuthMe()
 
   const logitWithFacebookMutation = useMutation({
-    mutationFn: getFacebookPageAccessToken,
+    mutationFn: () =>
+      getFacebookPageAccessTokenWithTrace(getOrStartFacebookConnectAttempt('profile_button')),
     onSuccess: (facebookAccessToken) => {
       router.push(
         `/profile/facebook?facebookAccessToken=${encodeURIComponent(facebookAccessToken)}`
       )
     },
     onError: (error) => {
-      if (error instanceof FacebookLoginCancelledError) return
+      const referenceCode = finishFacebookLoginAttempt(error)
+      if (error instanceof FacebookLoginCancelledError) {
+        toast({ type: 'info', text1: 'ยกเลิกการเชื่อมต่อ Facebook' })
+        return
+      }
       if (error instanceof FacebookMissingPermissionsError) {
-        toast.error(FACEBOOK_MISSING_PERMISSIONS_MESSAGE)
+        toast.error({
+          text1: FACEBOOK_MISSING_PERMISSIONS_MESSAGE.text1,
+          text2: [
+            FACEBOOK_MISSING_PERMISSIONS_MESSAGE.text2,
+            referenceCode && referenceCodeToastText(referenceCode),
+          ]
+            .filter(Boolean)
+            .join(' · '),
+        })
         return
       }
       console.error('Login Error: ', error)
-      toast.error({ text1: 'เชื่อมต่อ Facebook ไม่สำเร็จ', text2: 'กรุณาลองใหม่อีกครั้ง' })
+      toast({
+        type: 'error',
+        text1: 'เชื่อมต่อ Facebook ไม่สำเร็จ',
+        // The reference code first, so it survives the toast truncating the error
+        text2: [
+          referenceCode && referenceCodeToastText(referenceCode),
+          describeFacebookError(error),
+        ]
+          .filter(Boolean)
+          .join(' · '),
+      })
     },
   })
   const [explainerOpen, setExplainerOpen] = React.useState(false)
@@ -464,7 +528,9 @@ function LinkFacebookPage() {
     if (permissionStatus === null) {
       return
     }
+    const attempt = startFacebookConnectAttempt()
     if (permissionStatus.status !== PermissionStatus.GRANTED) {
+      attempt.record('tracking_prompt', { status: permissionStatus.status })
       setPermissionDialogOpen(true)
       return
     }
@@ -478,7 +544,14 @@ function LinkFacebookPage() {
         onOpenChange={setExplainerOpen}
         onContinue={proceedAfterExplainer}
       />
-      <Dialog open={permissionDialogOpen} onOpenChange={setPermissionDialogOpen}>
+      <Dialog
+        open={permissionDialogOpen}
+        onOpenChange={(open) => {
+          setPermissionDialogOpen(open)
+          if (!open)
+            finishActiveFacebookConnectAttempt('CANCELLED', { failedStep: 'tracking_prompt' })
+        }}
+      >
         <Button
           variant="secondary"
           disabled={
@@ -502,7 +575,13 @@ function LinkFacebookPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="ghost" onPress={() => setPermissionDialogOpen(false)}>
+            <Button
+              variant="ghost"
+              onPress={() => {
+                setPermissionDialogOpen(false)
+                finishActiveFacebookConnectAttempt('CANCELLED', { failedStep: 'tracking_prompt' })
+              }}
+            >
               <Text>ยกเลิก</Text>
             </Button>
             <Button
@@ -514,9 +593,17 @@ function LinkFacebookPage() {
                 if (!permissionStatus.granted) {
                   if (permissionStatus.canAskAgain) {
                     const { status } = await requestPermission()
+                    getActiveFacebookConnectAttempt()?.record('tracking_prompt_result', { status })
                     if (status !== PermissionStatus.GRANTED) {
                       console.log('Permission not granted')
-                      toast({ text1: 'Permission not granted' })
+                      const referenceCode = finishActiveFacebookConnectAttempt('FAILED', {
+                        failedStep: 'tracking_permission',
+                        error: { code: status },
+                      })
+                      toast({
+                        text1: 'Permission not granted',
+                        text2: referenceCode ? referenceCodeToastText(referenceCode) : undefined,
+                      })
                       return
                     }
                     setPermissionDialogOpen(false)
@@ -525,6 +612,7 @@ function LinkFacebookPage() {
                     setTimeout(() => logitWithFacebookMutation.mutate(), 1000)
                     return
                   }
+                  finishActiveFacebookConnectAttempt('ABANDONED', { failedStep: 'opened_settings' })
                   Linking.openSettings()
                   return
                 }

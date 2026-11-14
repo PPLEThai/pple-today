@@ -1,8 +1,10 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { FacebookConnectAttemptOutcome, Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
 import {
+  GetFacebookConnectAttemptsQuery,
   GetFacebookPageByIdResponse,
   GetFacebookPagesQuery,
   GetFacebookPagesResponse,
@@ -10,6 +12,20 @@ import {
 } from './models'
 
 import { PrismaServicePlugin } from '../../../plugins/prisma'
+
+/**
+ * The part of a stored phone number (`+66XXXXXXXXX`) a search means, or null
+ * when the search is not a phone number. "081-234-5678" -> "+66812345678",
+ * "5678" -> "5678".
+ */
+export function phoneSearchTerm(search: string) {
+  if (!/^[0-9+\s-]+$/.test(search)) return null
+  const digits = search.replace(/[^0-9]/g, '')
+  if (digits.length < 4) return null
+  if (search.trim().startsWith('+')) return `+${digits}`
+  if (digits.startsWith('0')) return `+66${digits.slice(1)}`
+  return digits
+}
 
 export class AdminFacebookPageRepository {
   constructor(private readonly prismaService: PrismaService) {}
@@ -112,6 +128,75 @@ export class AdminFacebookPageRepository {
         },
       })
     )
+  }
+
+  async getConnectAttempts(query: GetFacebookConnectAttemptsQuery) {
+    const { limit, page } = query
+    const search = query.search?.trim()
+    const where: Prisma.FacebookConnectAttemptWhereInput = {
+      ...(query.userId && { userId: query.userId }),
+      ...(query.outcome && query.outcome.length > 0 && { outcome: { in: query.outcome } }),
+      ...(search && {
+        OR: [
+          { referenceCode: search.toUpperCase() },
+          { user: { name: { contains: search, mode: 'insensitive' } } },
+          ...(phoneSearchTerm(search)
+            ? [{ user: { phoneNumber: { contains: phoneSearchTerm(search)! } } }]
+            : []),
+        ],
+      }),
+    }
+
+    return fromRepositoryPromise(async () => {
+      const [items, count] = await Promise.all([
+        this.prismaService.facebookConnectAttempt.findMany({
+          where,
+          omit: { context: true, steps: true, userId: true },
+          include: { user: { select: { id: true, name: true, phoneNumber: true } } },
+          orderBy: { createdAt: 'desc' },
+          take: limit,
+          skip: (page - 1) * limit,
+        }),
+        this.prismaService.facebookConnectAttempt.count({ where }),
+      ])
+      return { items, meta: { count } }
+    })
+  }
+
+  async getConnectAttemptById(attemptId: string) {
+    return fromRepositoryPromise(
+      this.prismaService.facebookConnectAttempt.findUniqueOrThrow({
+        where: { id: attemptId },
+        omit: { userId: true },
+        include: { user: { select: { id: true, name: true, phoneNumber: true } } },
+      })
+    )
+  }
+
+  async getConnectFailureSummary(since: Date) {
+    return fromRepositoryPromise(async () => {
+      const [outcomes, failures, failureUsers] = await Promise.all([
+        this.prismaService.facebookConnectAttempt.groupBy({
+          by: ['outcome'],
+          where: { createdAt: { gte: since } },
+          _count: { _all: true },
+        }),
+        this.prismaService.facebookConnectAttempt.groupBy({
+          by: ['failedStep', 'platform', 'errorDomain', 'errorCode'],
+          where: { createdAt: { gte: since }, outcome: FacebookConnectAttemptOutcome.FAILED },
+          _count: { _all: true },
+          _max: { createdAt: true, errorMessage: true },
+          orderBy: { _count: { id: 'desc' } },
+          take: 50,
+        }),
+        // groupBy cannot count distinct users, so group by user too and fold below
+        this.prismaService.facebookConnectAttempt.groupBy({
+          by: ['failedStep', 'platform', 'errorDomain', 'errorCode', 'userId'],
+          where: { createdAt: { gte: since }, outcome: FacebookConnectAttemptOutcome.FAILED },
+        }),
+      ])
+      return { outcomes, failures, failureUsers }
+    })
   }
 }
 

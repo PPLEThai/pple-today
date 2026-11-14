@@ -118,6 +118,32 @@ describe('InteractionRepository', () => {
     expect(nextAttemptAt.getTime()).toBeLessThanOrEqual(Date.now())
   })
 
+  test('keeps an admin-portal answer here: never PENDING, so the sweep never claims it', async () => {
+    const { prismaService, repository } = createRepository()
+    prismaService.notification.findUnique.mockResolvedValue({
+      ...open,
+      miniAppId: null,
+      miniApp: null,
+      origin: 'ADMIN_PORTAL',
+    })
+
+    const result = await repository.createResponse(input)
+
+    expect(result._unsafeUnwrap()).toMatchObject({ status: 'CREATED' })
+    const created = prismaService.notificationResponse.create.mock.calls[0][0].data
+    expect(created).toMatchObject({ miniAppId: null, deliveryStatus: 'NONE', nextAttemptAt: null })
+  })
+
+  test('an app answer is left PENDING for delivery', async () => {
+    const { prismaService, repository } = createRepository()
+    prismaService.notification.findUnique.mockResolvedValue({ ...open, origin: 'API' })
+
+    await repository.createResponse(input)
+
+    const created = prismaService.notificationResponse.create.mock.calls[0][0].data
+    expect(created.deliveryStatus).toBeUndefined()
+  })
+
   test.each([
     ['closed', { interactionClosedAt: new Date('2026-11-09') }, 'CLOSED'],
     ['expired', { interactionExpiresAt: new Date('2026-11-09') }, 'EXPIRED'],

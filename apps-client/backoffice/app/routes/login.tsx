@@ -10,6 +10,7 @@ import * as z from 'zod/v4'
 import { userManager } from '~/config/oidc'
 import { userQueryOptions } from '~/core/auth'
 import { reactQueryClient } from '~/libs/api-client'
+import { apiErrorMessage } from '~/libs/api-error'
 
 const loginSearchSchema = z.object({
   redirect: z.string().optional(),
@@ -85,7 +86,7 @@ function RouteComponent() {
         </Button>
         {(authMeQuery.isError || signInMutation.error?.message) && (
           <Typography variant="p" fontWeight="bold" className="text-red-600 text-center">
-            {authMeQuery.error?.value.error.message || signInMutation.error?.message}
+            {apiErrorMessage(authMeQuery.error) || signInMutation.error?.message}
           </Typography>
         )}
       </section>

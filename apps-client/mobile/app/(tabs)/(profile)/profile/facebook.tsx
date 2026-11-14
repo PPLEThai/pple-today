@@ -21,10 +21,12 @@ import { H1 } from '@pple-today/ui/typography'
 import * as RadioGroupPrimitive from '@rn-primitives/radio-group'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useLocalSearchParams, useRouter } from 'expo-router'
-import { ArrowLeftIcon, TriangleAlertIcon, UnlinkIcon } from 'lucide-react-native'
+import { TriangleAlertIcon, UnlinkIcon } from 'lucide-react-native'
 
 import FacebookIcon from '@app/assets/facebook-icon.svg'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
+import { BackButton } from '@app/components/back-button'
+import { NativeHeader, usePageHeaderInset } from '@app/components/page-header'
 import { reactQueryClient } from '@app/libs/api-client'
 import {
   canManageFacebookPage,
@@ -33,12 +35,19 @@ import {
   FACEBOOK_MISSING_PERMISSIONS_MESSAGE,
   FacebookLoginCancelledError,
   FacebookMissingPermissionsError,
-  FacebookTokenRejectedError,
-  getFacebookPageAccessToken,
+  isFacebookTokenRejection,
   useFacebookPagesQuery,
 } from '@app/libs/facebook'
+import {
+  finishFacebookLoginAttempt,
+  getFacebookPageAccessTokenWithTrace,
+  getOrStartFacebookConnectAttempt,
+  referenceCodeToastText,
+  useFacebookPagePickerTrace,
+} from '@app/libs/facebook-connect-attempt'
 import { responseErrorCode } from '@app/libs/notification-interaction'
 import { createImageUrl } from '@app/utils/image'
+import { supportsLiquidGlass } from '@app/utils/liquid-glass'
 
 export default function FacebookListPage() {
   const params = useLocalSearchParams()
@@ -62,12 +71,19 @@ export default function FacebookListPage() {
     { query: { pageIds: facebookPagesQuery.data?.map((p) => p.id) || [] } },
     { enabled: !!facebookPagesQuery.data }
   )
+  const trace = useFacebookPagePickerTrace({
+    facebookAccessToken: typeof facebookAccessToken === 'string' ? facebookAccessToken : undefined,
+    pages: facebookPagesQuery.data,
+    pagesError: facebookPagesQuery.error,
+    availability: availableLinkPagesQuery.data,
+    availabilityError: availableLinkPagesQuery.error,
+  })
   // Set when linking a page fails in a way only a new Facebook login can fix.
   const [linkFailure, setLinkFailure] = useState<ConnectionFailure | null>(null)
   const failure: ConnectionFailure | null =
     linkFailure ??
     (facebookPagesQuery.isError
-      ? facebookPagesQuery.error instanceof FacebookTokenRejectedError
+      ? isFacebookTokenRejection(facebookPagesQuery.error)
         ? 'connection-failed'
         : 'network-error'
       : null)
@@ -88,7 +104,10 @@ export default function FacebookListPage() {
   const [value, setValue] = useState('')
 
   const reconnectMutation = useMutation({
-    mutationFn: getFacebookPageAccessToken,
+    mutationFn: () =>
+      getFacebookPageAccessTokenWithTrace(
+        getOrStartFacebookConnectAttempt('page_picker_reconnect')
+      ),
     onSuccess: (newAccessToken) => {
       setLinkFailure(null)
       setValue('')
@@ -101,13 +120,17 @@ export default function FacebookListPage() {
       }
     },
     onError: (error) => {
+      const referenceCode = finishFacebookLoginAttempt(error)
       if (error instanceof FacebookLoginCancelledError) return
       if (error instanceof FacebookMissingPermissionsError) {
         setLinkFailure('insufficient-permission')
         return
       }
       console.error('Failed to reconnect Facebook', error)
-      toast.error({ text1: 'เชื่อมต่อ Facebook ไม่สำเร็จ', text2: 'กรุณาลองใหม่อีกครั้ง' })
+      toast.error({
+        text1: 'เชื่อมต่อ Facebook ไม่สำเร็จ',
+        text2: referenceCode ? referenceCodeToastText(referenceCode) : 'กรุณาลองใหม่อีกครั้ง',
+      })
     },
   })
 
@@ -125,28 +148,27 @@ export default function FacebookListPage() {
     },
   })
 
+  const headerInset = usePageHeaderInset()
   if (!facebookAccessToken) {
     return null
   }
   const busy = linkPageMutation.isPending || disconnectMutation.isPending
   return (
-    <View className="pt-safe flex-1 flex-col">
-      <View className="p-4 flex flex-row justify-between items-center border-b border-base-outline-default">
-        <Button
-          variant="outline-primary"
-          size="icon"
-          onPress={() => router.back()}
-          aria-label="กลับ"
-        >
-          <Icon icon={ArrowLeftIcon} size={24} strokeWidth={2} />
-        </Button>
-        <View className="flex flex-row gap-2">
-          <FacebookIcon size={32} />
-          <H1 className="font-heading-bold text-2xl text-base-text-high">จัดการเพจที่ดูแล</H1>
+    <View className={clsx('flex-1 flex-col', !supportsLiquidGlass && 'pt-safe')}>
+      {supportsLiquidGlass ? (
+        <NativeHeader icon={<FacebookIcon size={20} />} title="จัดการเพจที่ดูแล" />
+      ) : (
+        <View className="p-4 flex flex-row justify-between items-center border-b border-base-outline-default">
+          <BackButton onPress={() => router.back()} aria-label="กลับ" />
+          <View className="flex flex-row gap-2">
+            <FacebookIcon size={32} />
+            <H1 className="font-heading-bold text-2xl text-base-text-high">จัดการเพจที่ดูแล</H1>
+          </View>
         </View>
-      </View>
+      )}
       <RadioGroupPrimitive.Root
         className="p-4 flex flex-col"
+        style={{ paddingTop: headerInset + 16 }}
         value={value}
         onValueChange={(val) => {
           setValue(val)
@@ -157,10 +179,12 @@ export default function FacebookListPage() {
           if (!page) {
             return
           }
+          trace.recordLinkStart(page.id)
           linkPageMutation.mutate(
             { body: { facebookPageId: page.id, facebookPageAccessToken: page.access_token } },
             {
               onSuccess: () => {
+                trace.finishLinked()
                 queryClient.resetQueries({
                   queryKey: reactQueryClient.getQueryKey('/facebook/linked-page'),
                 })
@@ -168,6 +192,7 @@ export default function FacebookListPage() {
               },
               onError: (error) => {
                 console.error('Failed to link Facebook page', JSON.stringify(error))
+                const referenceCode = trace.finishLinkFailed(error)
                 setValue('')
                 switch (responseErrorCode(error)) {
                   case 'FACEBOOK_INSUFFICIENT_PERMISSION':
@@ -176,7 +201,10 @@ export default function FacebookListPage() {
                     return
                   case 'FACEBOOK_INSUFFICIENT_PAGE_ROLE':
                     setInsufficientRolePageIds((ids) => new Set(ids).add(page.id))
-                    toast.error(INSUFFICIENT_PAGE_ROLE_MESSAGE)
+                    toast.error({
+                      ...INSUFFICIENT_PAGE_ROLE_MESSAGE,
+                      text2: `${INSUFFICIENT_PAGE_ROLE_MESSAGE.text2} · ${referenceCodeToastText(referenceCode)}`,
+                    })
                     return
                   case 'FACEBOOK_INVALID_ACCESS_TOKEN':
                   case 'FACEBOOK_API_ERROR':
@@ -185,7 +213,10 @@ export default function FacebookListPage() {
                     setLinkFailure('connection-failed')
                     return
                   default:
-                    toast.error({ text1: 'เชื่อมต่อเพจไม่สำเร็จ', text2: 'กรุณาลองใหม่อีกครั้ง' })
+                    toast.error({
+                      text1: 'เชื่อมต่อเพจไม่สำเร็จ',
+                      text2: referenceCodeToastText(referenceCode),
+                    })
                 }
               },
             }
@@ -195,6 +226,7 @@ export default function FacebookListPage() {
         {failure ? (
           <ConnectionFailedState
             failure={failure}
+            referenceCode={trace.getReferenceCode()}
             retrying={reconnectMutation.isPending || facebookPagesQuery.isFetching}
             onRetry={() =>
               failure === 'network-error'
@@ -215,10 +247,15 @@ export default function FacebookListPage() {
             </View>
           </>
         ) : !facebookPagesQuery.data || facebookPagesQuery.data.length === 0 ? (
-          <View className="flex flex-row justify-center w-full">
+          <View className="flex flex-col items-center gap-1 w-full">
             <Text className="text-base-text-placeholder">
               ไม่พบเพจที่คุณดูแลในบัญชี Facebook นี้
             </Text>
+            {trace.getReferenceCode() && (
+              <Text className="text-base-text-placeholder text-sm">
+                {referenceCodeToastText(trace.getReferenceCode()!)}
+              </Text>
+            )}
           </View>
         ) : (
           facebookPagesQuery.data.map((page) => {
@@ -338,6 +375,7 @@ const CONNECTION_FAILURE_COPY: Record<
 
 function ConnectionFailedState(props: {
   failure: ConnectionFailure
+  referenceCode: string | null
   retrying: boolean
   onRetry: () => void
 }) {
@@ -357,6 +395,11 @@ function ConnectionFailedState(props: {
         <Text className="text-sm text-base-text-medium font-body-regular text-center">
           {copy.description}
         </Text>
+        {props.referenceCode && (
+          <Text className="text-xs text-base-text-placeholder font-body-regular text-center">
+            {referenceCodeToastText(props.referenceCode)}
+          </Text>
+        )}
       </View>
       <Button disabled={props.retrying} onPress={props.onRetry}>
         <Text>{copy.action}</Text>

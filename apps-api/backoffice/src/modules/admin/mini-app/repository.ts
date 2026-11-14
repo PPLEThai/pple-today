@@ -8,6 +8,7 @@ import { CreateMiniAppBody, UpdateMiniAppBody } from './models'
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
+import { normalizeTagline } from '../../mini-app/tagline'
 
 export type CreateMiniAppData = Omit<CreateMiniAppBody, 'createZitadelApp' | 'clientId'> & {
   clientId: string
@@ -121,7 +122,11 @@ export class AdminMiniAppRepository {
           clientId: data.clientId,
           requiresAuth: data.requiresAuth,
           icon: newIconPath ? this.fileService.getPublicFileUrl(newIconPath) : undefined,
+          tagline: normalizeTagline(data.tagline),
           order: data.order,
+          // A central-team app is Live from the moment it is created, so that is
+          // when it was published.
+          publishedAt: new Date(),
           miniAppRoles: data.roles
             ? {
                 createMany: {
@@ -186,6 +191,7 @@ export class AdminMiniAppRepository {
           clientId: data.clientId,
           requiresAuth: data.requiresAuth,
           icon: newIconPath ? this.fileService.getPublicFileUrl(newIconPath) : undefined,
+          tagline: normalizeTagline(data.tagline),
           order: data.order,
           miniAppRoles: data.roles
             ? {

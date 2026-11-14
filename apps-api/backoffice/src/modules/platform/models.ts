@@ -3,6 +3,7 @@ import { MiniAppTier } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
 import { MiniAppInvite, MiniAppInvitePhoneNumber } from '../mini-app/models'
+import { TaglineInput } from '../mini-app/tagline'
 
 export const GetMiniAppUserCountParams = t.Object({
   id: t.String({ description: 'Mini app id' }),
@@ -50,6 +51,7 @@ export const CreateMiniAppBody = t.Object({
   url: t.String({ description: 'Client URL of the mini app', format: 'uri' }),
   ownerSub: t.String({ description: "The Builder's PPLE ID `sub` — the app's owner" }),
   iconUrl: t.Optional(t.String({ description: 'Public icon URL of the mini app' })),
+  tagline: t.Optional(TaglineInput),
   dailyQuota: t.Optional(
     t.Integer({
       minimum: 0,
@@ -84,6 +86,7 @@ export const UpdateMiniAppBody = t.Object({
     })
   ),
   iconUrl: t.Optional(t.String({ description: 'Public icon URL of the mini app' })),
+  tagline: t.Optional(t.Nullable(TaglineInput)),
 })
 export type UpdateMiniAppBody = Static<typeof UpdateMiniAppBody>
 

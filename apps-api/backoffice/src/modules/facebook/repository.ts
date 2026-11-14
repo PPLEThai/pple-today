@@ -20,6 +20,8 @@ import { createHmac } from 'crypto'
 import { Elysia, t } from 'elysia'
 import { fromPromise, ok } from 'neverthrow'
 
+import { ConnectAttemptRecord } from './connect-attempt'
+
 import { ConfigServicePlugin } from '../../plugins/config'
 import { FileServicePlugin } from '../../plugins/file'
 import { ElysiaLoggerPlugin } from '../../plugins/log'
@@ -108,9 +110,18 @@ export class FacebookRepository {
         message: 'Failed to parse Facebook API response',
       })
 
+      // Surface Facebook's own message (e.g. "(#200) ... pages_manage_metadata")
+      // rather than the raw JSON body, so the backoffice UI can show it as-is.
+      let errorBody: unknown
+      try {
+        errorBody = JSON.parse(responseText)
+      } catch {
+        errorBody = null
+      }
+
       return err({
         code: InternalErrorCode.FACEBOOK_API_ERROR,
-        message: responseText,
+        message: Check(ErrorBody, errorBody) ? errorBody.error.message : responseText,
       })
     }
 
@@ -668,6 +679,23 @@ export class FacebookRepository {
       pageAccessToken: linkedPage.value.pageAccessToken,
       isSubscribed: linkedPage.value.isSubscribed,
     })
+  }
+
+  async createConnectAttempt(record: ConnectAttemptRecord) {
+    return await fromRepositoryPromise(
+      this.prismaService.facebookConnectAttempt.create({
+        data: record,
+        select: { id: true, referenceCode: true },
+      })
+    )
+  }
+
+  async deleteConnectAttemptsCreatedBefore(cutoff: Date) {
+    return await fromRepositoryPromise(
+      this.prismaService.facebookConnectAttempt.deleteMany({
+        where: { createdAt: { lt: cutoff } },
+      })
+    )
   }
 
   async handleUploadedProfilePicture(fileUrl: string, fileName: FilePath) {
