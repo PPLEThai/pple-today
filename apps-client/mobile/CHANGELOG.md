@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 2.16.3
+
+### Patch Changes
+
+- [#568](https://github.com/PPLEThai/pple-today/pull/568) [`40b1ffe`](https://github.com/PPLEThai/pple-today/commit/40b1ffe8a4d2994f95389a4b6a8424c04c439ec1) Thanks [@PanJ](https://github.com/PanJ)! - The Facebook page connect dialog reads more clearly. The title is now เชื่อมต่อเพจ Facebook, the text uses the body font and is left-aligned, the user's name sits on its own bold line, and every checklist item is a bullet with clearer wording.
+
 ## 2.16.2
 
 ### Patch Changes
