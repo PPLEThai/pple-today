@@ -1,5 +1,11 @@
 # @pple-today/api-common
 
+## 1.12.1
+
+### Patch Changes
+
+- [#571](https://github.com/PPLEThai/pple-today/pull/571) [`6994071`](https://github.com/PPLEThai/pple-today/commit/6994071c61091f4c33de03a68ae043ce5463230a) Thanks [@PanJ](https://github.com/PanJ)! - Admin Facebook pages: fix the broken profile image of the user who linked a page, and show that user's name in the page list.
+
 ## 1.12.0
 
 ### Minor Changes
