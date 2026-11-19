@@ -200,7 +200,7 @@ function FacebookDetailPage() {
               <div className="flex items-center w-fit rounded-xl border p-3 gap-2 bg-base-bg-light border-base-outline-default max-w-[350px]">
                 <img
                   className="size-8 shrink-0 rounded-full"
-                  src={query.data.user?.profileImagePath ?? '/images/placeholder.svg'}
+                  src={query.data.user?.profileImage ?? '/images/placeholder.svg'}
                   alt=""
                   width={32}
                   height={32}

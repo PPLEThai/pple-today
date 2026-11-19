@@ -1,4 +1,4 @@
-import { PrismaService } from '@pple-today/api-common/services'
+import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { ok } from 'neverthrow'
 import { describe, expect, test, vi } from 'vitest'
 
@@ -10,6 +10,9 @@ import type { FacebookRepository } from '../../facebook/repository'
 // repository.ts and services.ts also export Elysia plugins that boot the config graph.
 vi.mock('../../../plugins/prisma', async () => ({
   PrismaServicePlugin: new (await import('elysia')).default({ name: 'PrismaServiceStub' }),
+}))
+vi.mock('../../../plugins/file', async () => ({
+  FileServicePlugin: new (await import('elysia')).default({ name: 'FileServiceStub' }),
 }))
 vi.mock('../../facebook/repository', async () => ({
   FacebookRepositoryPlugin: new (await import('elysia')).default({ name: 'FacebookRepoStub' }),
@@ -35,9 +38,10 @@ describe('AdminFacebookPageRepository.getConnectAttempts', () => {
       findMany: vi.fn().mockResolvedValue([]),
       count: vi.fn().mockResolvedValue(0),
     }
-    const repository = new AdminFacebookPageRepository({
-      facebookConnectAttempt,
-    } as unknown as PrismaService)
+    const repository = new AdminFacebookPageRepository(
+      { facebookConnectAttempt } as unknown as PrismaService,
+      {} as FileService
+    )
     return { facebookConnectAttempt, repository }
   }
 

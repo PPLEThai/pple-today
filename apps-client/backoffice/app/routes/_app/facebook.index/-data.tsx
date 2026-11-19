@@ -116,6 +116,19 @@ export const Data = () => {
           </Link>
         ),
       }),
+      columnHelper.accessor((row) => row.user?.name, {
+        id: 'user',
+        header: 'ผู้เชื่อมต่อ',
+        cell: (info) => {
+          const user = info.row.original.user
+          if (!user) return '-'
+          return (
+            <Link className="hover:underline" to="/user/$userId" params={{ userId: user.id }}>
+              {user.name}
+            </Link>
+          )
+        },
+      }),
       columnHelper.accessor('numberOfFollowers', {
         header: 'ยอดผู้ติดตาม',
         cell: (info) => {

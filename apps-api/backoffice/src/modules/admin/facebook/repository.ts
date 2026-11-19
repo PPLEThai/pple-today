@@ -1,4 +1,4 @@
-import { PrismaService } from '@pple-today/api-common/services'
+import { FileService, PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { FacebookConnectAttemptOutcome, Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
@@ -11,6 +11,7 @@ import {
   UpdateFacebookPageBody,
 } from './models'
 
+import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
 
 /**
@@ -28,7 +29,10 @@ export function phoneSearchTerm(search: string) {
 }
 
 export class AdminFacebookPageRepository {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly fileService: FileService
+  ) {}
 
   async getFacebookPages(query: GetFacebookPagesQuery = { limit: 10, page: 1 }) {
     const { limit, page } = query
@@ -58,6 +62,8 @@ export class AdminFacebookPageRepository {
             manager: {
               select: {
                 numberOfFollowers: true,
+                id: true,
+                name: true,
               },
             },
             linkedStatus: true,
@@ -78,6 +84,7 @@ export class AdminFacebookPageRepository {
         items: data.map(({ manager, ...facebookPageData }) => ({
           ...facebookPageData,
           numberOfFollowers: manager?.numberOfFollowers,
+          ...(manager && { user: { id: manager.id, name: manager.name } }),
         })),
         meta: { count },
       } satisfies GetFacebookPagesResponse
@@ -111,7 +118,9 @@ export class AdminFacebookPageRepository {
           user: {
             id: manager.id,
             name: manager.name,
-            profileImagePath: manager.profileImagePath,
+            profileImage: manager.profileImagePath
+              ? this.fileService.getPublicFileUrl(manager.profileImagePath)
+              : null,
           },
         }),
       } satisfies GetFacebookPageByIdResponse
@@ -201,7 +210,7 @@ export class AdminFacebookPageRepository {
 }
 
 export const AdminFacebookPageRepositoryPlugin = new Elysia({ name: 'AdminFacebookPageRepository' })
-  .use([PrismaServicePlugin])
-  .decorate(({ prismaService }) => ({
-    facebookPageRepository: new AdminFacebookPageRepository(prismaService),
+  .use([PrismaServicePlugin, FileServicePlugin])
+  .decorate(({ prismaService, fileService }) => ({
+    facebookPageRepository: new AdminFacebookPageRepository(prismaService, fileService),
   }))
