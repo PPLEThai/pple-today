@@ -339,6 +339,11 @@ export const WebhookFeedChanges = t.Union([
 ])
 export type WebhookFeedChanges = Static<typeof WebhookFeedChanges>
 
+const FacebookPageUser = t.Object({
+  id: t.String({ description: 'The ID of the user who linked the facebook page' }),
+  name: t.String({ description: 'The name of the user who linked the facebook page' }),
+})
+
 export const FacebookPage = t.Object({
   id: t.String({ description: 'The ID of the facebook page' }),
   name: t.String({ description: 'The name of the facebook page' }),
@@ -348,23 +353,25 @@ export const FacebookPage = t.Object({
   linkedStatus: t.Enum(FacebookPageLinkedStatus, {
     description: 'The status of the facebook page',
   }),
+  user: t.Optional(FacebookPageUser),
 })
 export type FacebookPage = Static<typeof FacebookPage>
 
 export const DetailedFacebookPage = t.Composite([
-  FacebookPage,
+  t.Omit(FacebookPage, ['user']),
   t.Object({
     createdAt: t.Date({ description: 'The creation date of the facebook page entry' }),
     user: t.Optional(
-      t.Object({
-        id: t.String({ description: 'The ID of the user who linked the facebook page' }),
-        name: t.String({ description: 'The name of the user who linked the facebook page' }),
-        profileImagePath: t.Nullable(
-          t.String({
-            description: 'The profile image URL of the user who linked the facebook page',
-          })
-        ),
-      })
+      t.Composite([
+        FacebookPageUser,
+        t.Object({
+          profileImage: t.Nullable(
+            t.String({
+              description: 'The profile image URL of the user who linked the facebook page',
+            })
+          ),
+        }),
+      ])
     ),
   }),
 ])
