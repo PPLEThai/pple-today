@@ -38,6 +38,10 @@ export default {
       },
       infoPlist: {
         UIBackgroundModes: ['fetch', 'remote-notification'],
+        // The share sheet's "Save Image", for an image a mini app offers for
+        // download (a QR to pay with): iOS refuses (and the app crashes) without it.
+        NSPhotoLibraryAddUsageDescription:
+          'Allow PPLE Today to save images you choose to save, such as a payment QR code, to your photos.',
       },
     },
     android: {

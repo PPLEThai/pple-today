@@ -27,7 +27,30 @@ const profile = await miniApp.getProfile()
 | `switchRole()`             | Lets the user switch บทบาท (see [BRIDGE.md](./BRIDGE.md#role-switching)).                        |
 | `startKyc({ returnTo? })`  | Sends the user to PPLE ID to verify their identity.                                              |
 | `consumeKycResult()`       | How the user left KYC, if they just came back from it. A UI hint only.                           |
+| `saveFile(file, options?)` | Saves a `Blob` or URL: PPLE Today's share sheet, else the browser's (see below).                 |
 | `isMiniApp()` / `logout()` | Whether the app runs inside PPLE Today / ends the session.                                       |
+
+## Saving a file
+
+```ts
+import { saveFile } from '@pplethai/pple-today-miniapp-sdk'
+
+button.onclick = async () => {
+  const result = await saveFile(qrBlob, { fileName: 'promptpay-qr.png' }) // or a URL
+  // { status: 'shared' | 'downloaded' | 'cancelled' } or { status: 'failed', reason }
+}
+```
+
+Inside PPLE Today the host opens the share sheet with the file, where Save Image puts an image in
+Photos. In a phone's browser it uses the browser's share sheet; on a computer it downloads. It
+also works without `init()`, and as `miniApp.saveFile()`.
+
+- PPLE Today takes PNG, JPEG, GIF, WebP, HEIC and PDF files of up to 10 MB.
+- A URL is fetched by the page, so a file on another origin needs that origin to allow it (CORS).
+- Call it from a tap, because the browser's share sheet needs one.
+- A plain download link (`<a href download>`) to a file on the app's own origin also works in
+  PPLE Today on iPhone without the SDK. Use `saveFile()` for files made in code, files on another
+  origin, or saves after an `await`. See [BRIDGE.md](./BRIDGE.md#saving-a-file).
 
 ## Identity verification (KYC)
 

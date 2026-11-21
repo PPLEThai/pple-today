@@ -18,9 +18,11 @@ import {
   UserInfo,
   UserInfoSchema,
 } from './models'
+import { saveFile, SaveFileOptions, SaveFileResult } from './save-file'
 import { fetchRoleInfo, showRoleSwitchDialog, switchRoleOnServer } from './web-role-switcher'
 
-export type { Kyc, KycResult, User, UserInfo }
+export type { Kyc, KycResult, SaveFileOptions, SaveFileResult, User, UserInfo }
+export { saveFile }
 
 /**
  * How a `switchRole()` call ended. `unavailable` covers every case where no
@@ -550,6 +552,15 @@ export class PPLEMiniApp {
       new URLSearchParams(this.launchSearch).get(KYC_RESULT_PARAM)
     )
     return result.success ? result.data : null
+  }
+
+  /**
+   * Saves a file — a `Blob`/`File` or a URL — through PPLE Today's share sheet,
+   * or the browser's own way elsewhere. The same as the exported `saveFile()`,
+   * which needs no `init()`.
+   */
+  saveFile(source: Blob | string, options?: SaveFileOptions): Promise<SaveFileResult> {
+    return saveFile(source, options)
   }
 
   isMiniApp() {

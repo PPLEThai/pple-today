@@ -22,6 +22,7 @@ import { findMiniAppForUrl, hostnameOf, originOf } from '@app/utils/mini-app-bri
 import { roleMismatchFromError } from '@app/utils/mini-app-role-gate'
 
 import { MiniAppSignInDialog, MiniAppSignInRequired } from './sign-in-dialog'
+import { useSaveFile } from './use-save-file'
 import { type BridgeResolvedApp, useSessionBridge } from './use-session-bridge'
 import { useSignInPrompt } from './use-sign-in-prompt'
 import { useSwitchToPerson } from './use-switch-to-person'
@@ -135,6 +136,9 @@ export function MiniAppWebView({
   // Set before each page's own scripts run, and again on the open page when
   // the inset changes, since an injected script only runs on the next load.
   const injectedBottomInset = bottomInset === undefined ? undefined : bottomInsetScript(bottomInset)
+  // Saving what a page offers with <a download> (a QR, a receipt): the WebView cannot itself.
+  const saveFile = useSaveFile(miniAppRef)
+  const injectedBeforeLoad = [saveFile.script, injectedBottomInset].filter(Boolean).join('\n')
   useEffect(() => {
     if (injectedBottomInset) miniAppRef.current?.injectJavaScript(injectedBottomInset)
   }, [injectedBottomInset])
@@ -336,11 +340,13 @@ export function MiniAppWebView({
             // Registering onMessage is what exposes window.ReactNativeWebView,
             // which tells the SDK this host speaks the session bridge. Public
             // apps get it too: they may link to an app that needs a session.
-            onMessage={bridge.onMessage}
+            onMessage={(event) => {
+              if (!saveFile.onMessage(event)) bridge.onMessage(event)
+            }}
             userAgent={userAgent}
             source={{ uri: noAuthUrl }}
             startInLoadingState={true}
-            injectedJavaScriptBeforeContentLoaded={injectedBottomInset}
+            injectedJavaScriptBeforeContentLoaded={injectedBeforeLoad}
           />
         ) : needsSignInToOpen && signInDeclined && !signInPrompt.prompt ? (
           <MiniAppSignInRequired onSignIn={() => void signInToOpen({ closeOnCancel: false })} />
@@ -359,13 +365,15 @@ export function MiniAppWebView({
           <WebView
             ref={miniAppRef}
             onNavigationStateChange={onNavigationStateChange}
-            onMessage={bridge.onMessage}
+            onMessage={(event) => {
+              if (!saveFile.onMessage(event)) bridge.onMessage(event)
+            }}
             userAgent={userAgent}
             // The launch URL still carries the tokens in its query string, so
             // SDKs that predate the bridge keep working.
             source={{ uri: tokenExchangeMiniAppResult.data.url }}
             startInLoadingState={true}
-            injectedJavaScriptBeforeContentLoaded={injectedBottomInset}
+            injectedJavaScriptBeforeContentLoaded={injectedBeforeLoad}
           />
         )}
       </View>

@@ -3,6 +3,8 @@ import {
   BridgeSession,
   RoleSwitchResponse,
   RoleSwitchResponseSchema,
+  SaveFileResponse,
+  SaveFileResponseSchema,
 } from './models'
 
 // See BRIDGE.md for the protocol.
@@ -181,6 +183,33 @@ export async function requestRoleSwitchFromHost(
 
   if (!outcome.ok) {
     console.warn(`[PPLE Mini App] Role switch: ${FAILURE_WARNINGS[outcome.failure]}`)
+    return { status: 'unavailable', reason: outcome.failure }
+  }
+
+  return outcome.data
+}
+
+/**
+ * Hands a file to the host, which opens the share sheet with it (Save Image,
+ * Save to Files, another app). Resolves once the sheet has closed — there is
+ * no response timeout, as the user may take their time — or with
+ * `unavailable` when the host does not answer (an older PPLE Today).
+ */
+export async function requestSaveFileFromHost(file: {
+  fileName: string
+  mimeType: string
+  dataBase64: string
+}): Promise<SaveFileResponse | { status: 'unavailable'; reason: BridgeFailure }> {
+  const outcome = await sendBridgeRequest({
+    message: { type: 'pple:save-file-request', ...file },
+    ackType: 'pple:save-file-ack',
+    responseType: 'pple:save-file-response',
+    parseResponse: (data) => SaveFileResponseSchema.safeParse(data).data ?? null,
+    responseTimeoutMs: null,
+  })
+
+  if (!outcome.ok) {
+    console.warn(`[PPLE Mini App] Save file: ${FAILURE_WARNINGS[outcome.failure]}`)
     return { status: 'unavailable', reason: outcome.failure }
   }
 

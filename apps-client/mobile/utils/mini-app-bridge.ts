@@ -8,6 +8,8 @@
  * script, and remembering sessions already handed out.
  */
 
+import type { SaveFileReply } from './mini-app-save-file'
+
 export const SESSION_REQUEST_TYPE = 'pple:session-request'
 export const SESSION_ACK_TYPE = 'pple:session-ack'
 export const SESSION_RESPONSE_TYPE = 'pple:session-response'
@@ -89,7 +91,12 @@ export type RoleSwitchResponse =
 
 export type BridgeRequest = SessionRequest | RoleSwitchRequest
 
-export type BridgeReply = SessionAck | SessionResponse | RoleSwitchAck | RoleSwitchResponse
+export type BridgeReply =
+  | SessionAck
+  | SessionResponse
+  | RoleSwitchAck
+  | RoleSwitchResponse
+  | SaveFileReply
 
 // Ids are echoed back into the page and used as map keys; anything longer than
 // this is not an SDK talking, so it is not worth holding on to.
