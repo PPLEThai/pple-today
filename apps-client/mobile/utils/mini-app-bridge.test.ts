@@ -7,6 +7,7 @@ import {
   deniedReply,
   findMiniAppForUrl,
   hostnameOf,
+  isMainFrameOrigin,
   type MiniAppSession,
   okReply,
   originOf,
@@ -136,6 +137,25 @@ describe('resolvePageUrl', () => {
 
   test('keeps the event URL when the main frame is unknown', () => {
     expect(resolvePageUrl('https://a.example/x', null)).toBe('https://a.example/x')
+  })
+})
+
+describe('isMainFrameOrigin', () => {
+  test('accepts the main frame, whether the event carries its URL or only its origin', () => {
+    expect(isMainFrameOrigin('https://a.example', 'https://a.example/th/app')).toBe(true)
+    expect(isMainFrameOrigin('https://a.example/x', 'https://a.example/th/app')).toBe(true)
+  })
+
+  test('refuses another origin', () => {
+    expect(isMainFrameOrigin('https://iframe.example', 'https://a.example/th/')).toBe(false)
+    expect(isMainFrameOrigin('http://a.example', 'https://a.example/')).toBe(false)
+    expect(isMainFrameOrigin('', 'https://a.example/')).toBe(false)
+  })
+
+  test('falls back to the event alone while the main frame is unknown', () => {
+    expect(isMainFrameOrigin('https://a.example', null)).toBe(true)
+    expect(isMainFrameOrigin('https://a.example', undefined)).toBe(true)
+    expect(isMainFrameOrigin('https://a.example', 'about:blank')).toBe(true)
   })
 })
 

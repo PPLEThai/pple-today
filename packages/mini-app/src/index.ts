@@ -1,11 +1,14 @@
 import { User, UserManager, WebStorageStateStore } from 'oidc-client-ts'
 
 import {
+  getHostCapabilities,
   hasBridge,
+  hasCapability,
   isMiniAppUserAgent,
   requestRoleSwitchFromHost,
   requestSessionFromHost,
 } from './bridge'
+import { haptic, type HapticStyle, ready } from './host-features'
 import {
   AccessTokenDetails,
   AccessTokenDetailsSchema,
@@ -21,8 +24,8 @@ import {
 import { saveFile, SaveFileOptions, SaveFileResult } from './save-file'
 import { fetchRoleInfo, showRoleSwitchDialog, switchRoleOnServer } from './web-role-switcher'
 
-export type { Kyc, KycResult, SaveFileOptions, SaveFileResult, User, UserInfo }
-export { saveFile }
+export type { HapticStyle, Kyc, KycResult, SaveFileOptions, SaveFileResult, User, UserInfo }
+export { getHostCapabilities, haptic, hasCapability, ready, saveFile }
 
 /**
  * How a `switchRole()` call ended. `unavailable` covers every case where no
@@ -561,6 +564,16 @@ export class PPLEMiniApp {
    */
   saveFile(source: Blob | string, options?: SaveFileOptions): Promise<SaveFileResult> {
     return saveFile(source, options)
+  }
+
+  /** Plays a haptic tap inside PPLE Today. The same as the exported `haptic()`, which needs no `init()`. */
+  haptic(style: HapticStyle): void {
+    haptic(style)
+  }
+
+  /** Tells PPLE Today the first screen has rendered. The same as the exported `ready()`. */
+  ready(): void {
+    ready()
   }
 
   isMiniApp() {

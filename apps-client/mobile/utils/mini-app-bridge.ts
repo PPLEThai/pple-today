@@ -188,6 +188,21 @@ export function resolvePageUrl(eventUrl: string, mainFrameUrl: string | null | u
 }
 
 /**
+ * Whether a message came from the main frame's page, by origin. Both inputs
+ * come from the native layer. A cross-origin iframe is not the main frame, so
+ * it is refused. While the main frame's URL is not known (or has no web
+ * origin, like `about:blank`), the event URL stands alone.
+ */
+export function isMainFrameOrigin(
+  eventUrl: string | null | undefined,
+  mainFrameUrl: string | null | undefined
+): boolean {
+  const mainOrigin = originOf(mainFrameUrl)
+  if (!mainOrigin) return true
+  return originOf(eventUrl) === mainOrigin
+}
+
+/**
  * JSON that is also safe to drop into a script source.
  *
  * `JSON.stringify` output is valid JS on modern engines, but `<` would let a

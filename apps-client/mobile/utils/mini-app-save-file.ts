@@ -1,9 +1,14 @@
+import { trustedPageSnippet } from './mini-app-capabilities'
+
 /**
  * Saving a file a mini app offers, two ways (packages/mini-app/BRIDGE.md):
  *
  * - `saveFile()` in the SDK sends `pple:save-file-request` over the bridge, on
  *   both platforms, and gets an answer (`parseSaveFileBridgeRequest`).
- * - An ordinary download link (`<a download>`), on iOS, below.
+ * - An ordinary download link (`<a download>`), below: on iOS a same-origin, `blob:` or `data:`
+ *   link, on Android only `blob:` and `data:` (the WebView downloads an http(s) link itself).
+ *
+ * Only pages on the party's own domains save (`isTrustedMiniAppOrigin`).
  *
  * Download links: a QR to pay with, a receipt. The WebView itself cannot: iOS's WKWebView opens the file
  * instead of saving it, and a native download would not carry the page's
@@ -11,7 +16,7 @@
  *
  * So the host injects a script (`saveFileScript`) that catches the tap on a
  * same-origin `<a download>` link, fetches the file as the page (with its
- * cookies), and posts it to the host as `pple:save-file`; the host opens the
+ * cookies), and posts it to the host as `pple:download-link`; the host opens the
  * share sheet with it (Save Image puts an image in Photos). Mini apps
  * change nothing: an ordinary download link is enough (packages/mini-app/BRIDGE.md).
  *
@@ -20,10 +25,18 @@
  * itself; and the script acts on a real tap only (`isTrusted`).
  */
 
-export const SAVE_FILE_REQUEST_TYPE = 'pple:save-file'
+export const SAVE_FILE_REQUEST_TYPE = 'pple:download-link'
 export const SAVE_FILE_BRIDGE_REQUEST_TYPE = 'pple:save-file-request'
 export const SAVE_FILE_ACK_TYPE = 'pple:save-file-ack'
 export const SAVE_FILE_RESPONSE_TYPE = 'pple:save-file-response'
+
+/** A share sheet that has just closed holds the next request off for this long (ms). */
+export const SAVE_FILE_COOLDOWN_MS = 1_000
+
+/** Whether a sheet closed at `closedAt` (a `Date.now()`, or `null`) still holds requests off at `now`. */
+export function isInSaveFileCooldown(closedAt: number | null, now: number): boolean {
+  return closedAt !== null && now - closedAt < SAVE_FILE_COOLDOWN_MS
+}
 
 /** What the host hands to the share sheet (Save Image for an image), with its iOS type. Nothing else. */
 export const SAVE_FILE_TYPES: Record<
@@ -38,6 +51,21 @@ export const SAVE_FILE_TYPES: Record<
   'application/pdf': { kind: 'document', extension: 'pdf', uti: 'com.adobe.pdf' },
 }
 
+/** Common non-standard names for the types above. The host and the injected script read them as the standard one. */
+export const SAVE_FILE_TYPE_ALIASES: Record<string, string> = {
+  'image/jpg': 'image/jpeg',
+  'image/pjpeg': 'image/jpeg',
+  'image/x-png': 'image/png',
+}
+
+/** The standard name for a type: lower case, without parameters, aliases resolved. */
+export function canonicalMimeType(type: string): string {
+  const base = type.split(';')[0].trim().toLowerCase()
+  return Object.prototype.hasOwnProperty.call(SAVE_FILE_TYPE_ALIASES, base)
+    ? SAVE_FILE_TYPE_ALIASES[base]
+    : base
+}
+
 /** The largest file the script sends (bytes). Bigger ones open in the WebView as before. */
 export const SAVE_FILE_MAX_BYTES = 10 * 1024 * 1024
 
@@ -49,12 +77,18 @@ export interface SaveFileRequest {
   dataBase64: string
 }
 
-export type SaveFileDeniedReason = 'unsupported-type' | 'too-large' | 'busy' | 'error'
+export type SaveFileDeniedReason =
+  | 'unsupported-type'
+  | 'too-large'
+  | 'busy'
+  | 'insecure-origin'
+  | 'not-allowed'
+  | 'error'
 
 export type SaveFileAck = { type: typeof SAVE_FILE_ACK_TYPE; requestId: string }
 
 export type SaveFileResponse =
-  | { type: typeof SAVE_FILE_RESPONSE_TYPE; requestId: string; status: 'shared' }
+  | { type: typeof SAVE_FILE_RESPONSE_TYPE; requestId: string; status: 'presented' }
   | {
       type: typeof SAVE_FILE_RESPONSE_TYPE
       requestId: string
@@ -69,10 +103,10 @@ export const saveFileAckReply = (requestId: string): SaveFileAck => ({
   requestId,
 })
 
-export const saveFileSharedReply = (requestId: string): SaveFileResponse => ({
+export const saveFilePresentedReply = (requestId: string): SaveFileResponse => ({
   type: SAVE_FILE_RESPONSE_TYPE,
   requestId,
-  status: 'shared',
+  status: 'presented',
 })
 
 export const saveFileDeniedReply = (
@@ -82,23 +116,30 @@ export const saveFileDeniedReply = (
 
 /**
  * The script the host injects before the page's own: it waits for a tap on a
- * same-origin (or `blob:`/`data:`) `<a download>` link. Anything it cannot
- * handle (another origin, too big, a failed fetch, a type the host does not
- * save) is left to the WebView, which opens the file as it always did.
+ * `<a download>` link that is same-origin (iOS only) or `blob:`/`data:`. On
+ * Android an http(s) link is left to the WebView's own downloader. Anything it
+ * cannot handle (another origin, too big, a failed fetch, a type the host does
+ * not save, a page off the allowed domains) is left to the WebView, which
+ * opens the file as it always did.
  */
-export function saveFileScript(secret: string): string {
+export function saveFileScript(
+  secret: string,
+  { platform }: { platform: 'ios' | 'android' }
+): string {
   const types = JSON.stringify(Object.keys(SAVE_FILE_TYPES))
+  const aliases = JSON.stringify(SAVE_FILE_TYPE_ALIASES)
   return `(function(){
 if (window.__ppleSaveFile) return; window.__ppleSaveFile = true;
-var SECRET = ${JSON.stringify(secret)}, TYPES = ${types}, MAX = ${SAVE_FILE_MAX_BYTES};
+var SECRET = ${JSON.stringify(secret)}, TYPES = ${types}, ALIASES = ${aliases}, MAX = ${SAVE_FILE_MAX_BYTES}, SAME_ORIGIN = ${platform === 'ios'};
 var rn = window.ReactNativeWebView, post = rn && rn.postMessage ? rn.postMessage.bind(rn) : null;
 var get = window.fetch ? window.fetch.bind(window) : null, Reader = window.FileReader;
+${trustedPageSnippet()}
 document.addEventListener('click', function (e) {
-  if (!e.isTrusted || !post || !get || !e.target || !e.target.closest) return;
+  if (!trusted() || !e.isTrusted || !post || !get || !e.target || !e.target.closest) return;
   var a = e.target.closest('a[download]');
   if (!a || !a.href) return;
   var u; try { u = new URL(a.href, location.href); } catch (_) { return; }
-  if (u.protocol !== 'blob:' && u.protocol !== 'data:' && u.origin !== location.origin) return;
+  if (u.protocol !== 'blob:' && u.protocol !== 'data:' && !(SAME_ORIGIN && u.origin === location.origin)) return;
   e.preventDefault();
   var open = function () { location.href = u.href; };
   get(u.href, { credentials: 'include' }).then(function (r) {
@@ -106,11 +147,12 @@ document.addEventListener('click', function (e) {
     return r.blob();
   }).then(function (b) {
     var type = (b.type || '').split(';')[0].trim().toLowerCase();
+    if (Object.prototype.hasOwnProperty.call(ALIASES, type)) type = ALIASES[type];
     if (b.size > MAX || TYPES.indexOf(type) < 0) throw new Error('type');
     var reader = new Reader();
     reader.onload = function () {
       var d = String(reader.result), i = d.indexOf(',');
-      post(JSON.stringify({ type: 'pple:save-file', version: 1, secret: SECRET,
+      post(JSON.stringify({ type: 'pple:download-link', version: 1, secret: SECRET,
         fileName: a.getAttribute('download') || u.pathname.split('/').pop() || '',
         mimeType: type, dataBase64: d.slice(i + 1) }));
     };
@@ -123,6 +165,9 @@ document.addEventListener('click', function (e) {
 
 const BASE64 = /^[A-Za-z0-9+/]+={0,2}$/
 
+/** A trailing extension of one of the saved types: the only kind `safeFileName` replaces. */
+const KNOWN_EXTENSION = /\.(png|jpe?g|gif|webp|heic|heif|pdf)$/i
+
 /** A file name safe to write in the cache: no path, no control characters, the type's extension. */
 export function safeFileName(name: string, mimeType: string): string {
   const extension = SAVE_FILE_TYPES[mimeType]?.extension ?? 'bin'
@@ -133,7 +178,7 @@ export function safeFileName(name: string, mimeType: string): string {
       // Control characters are exactly what this strips.
       // eslint-disable-next-line no-control-regex
       .replace(/[\u0000-\u001f\u007f<>:"|?*]/g, '')
-      .replace(/\.[A-Za-z0-9]{1,5}$/, '')
+      .replace(KNOWN_EXTENSION, '')
       .trim()
       .slice(0, 80) || 'file'
   return `${base}.${extension}`
@@ -161,7 +206,8 @@ function checkFile(
     typeof m.dataBase64 !== 'string'
   )
     return { ok: false, reason: 'error' }
-  const type = SAVE_FILE_TYPES[m.mimeType]
+  const mimeType = canonicalMimeType(m.mimeType)
+  const type = SAVE_FILE_TYPES[mimeType]
   if (!type) return { ok: false, reason: 'unsupported-type' }
   if (m.dataBase64.length > Math.ceil(SAVE_FILE_MAX_BYTES / 3) * 4)
     return { ok: false, reason: 'too-large' }
@@ -169,8 +215,8 @@ function checkFile(
   return {
     ok: true,
     file: {
-      fileName: safeFileName(m.fileName, m.mimeType),
-      mimeType: m.mimeType,
+      fileName: safeFileName(m.fileName, mimeType),
+      mimeType,
       kind: type.kind,
       dataBase64: m.dataBase64,
     },

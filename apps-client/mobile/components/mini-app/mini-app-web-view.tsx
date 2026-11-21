@@ -1,6 +1,6 @@
-import { useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react'
+import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, View } from 'react-native'
-import { WebView, type WebViewNavigation } from 'react-native-webview'
+import { WebView, type WebViewMessageEvent, type WebViewNavigation } from 'react-native-webview'
 
 import { Button } from '@pple-today/ui/button'
 import { Icon } from '@pple-today/ui/icon'
@@ -15,13 +15,17 @@ import LoadingPage from '@app/app/loading'
 import { refreshMiniAppLists } from '@app/components/mini-app/invite-inbox'
 import { MiniAppRoleGateDialog } from '@app/components/mini-app/role-gate-dialog'
 import { MiniAppRoleSwitchDialog } from '@app/components/mini-app/role-switch-dialog'
+import { Spinner } from '@app/components/spinner'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
 import { miniAppUrlWithPath } from '@app/utils/mini-app'
 import { findMiniAppForUrl, hostnameOf, originOf } from '@app/utils/mini-app-bridge'
+import { hostCapabilitiesScript, hostScript } from '@app/utils/mini-app-capabilities'
 import { roleMismatchFromError } from '@app/utils/mini-app-role-gate'
 
 import { MiniAppSignInDialog, MiniAppSignInRequired } from './sign-in-dialog'
+import { useHaptics } from './use-haptics'
+import { useLoadingOverlay } from './use-loading-overlay'
 import { useSaveFile } from './use-save-file'
 import { type BridgeResolvedApp, useSessionBridge } from './use-session-bridge'
 import { useSignInPrompt } from './use-sign-in-prompt'
@@ -53,6 +57,20 @@ export interface MiniAppWebViewProps {
   bottomInset?: number
   ref?: React.Ref<MiniAppWebViewHandle>
 }
+
+/**
+ * What the WebView may use without a bridge ("Web features that work in PPLE
+ * Today" in packages/mini-app/BRIDGE.md). Autoplay stays as the WebView
+ * defaults it: media with sound still needs a tap.
+ */
+const webViewFeatures = {
+  // Camera and microphone for getUserMedia (iOS 15+): the system asks, each time.
+  mediaCapturePermissionGrantType: 'prompt',
+  // Video plays in the page, which getUserMedia previews and inline players need (iOS).
+  allowsInlineMediaPlayback: true,
+  // navigator.geolocation; Android asks for its location permission when the page does.
+  geolocationEnabled: true,
+} as const
 
 function bottomInsetScript(bottomInset: number) {
   return `document.documentElement.style.setProperty('--pple-today-inset-bottom', '${bottomInset}px'); true;`
@@ -136,9 +154,6 @@ export function MiniAppWebView({
   // Set before each page's own scripts run, and again on the open page when
   // the inset changes, since an injected script only runs on the next load.
   const injectedBottomInset = bottomInset === undefined ? undefined : bottomInsetScript(bottomInset)
-  // Saving what a page offers with <a download> (a QR, a receipt): the WebView cannot itself.
-  const saveFile = useSaveFile(miniAppRef)
-  const injectedBeforeLoad = [saveFile.script, injectedBottomInset].filter(Boolean).join('\n')
   useEffect(() => {
     if (injectedBottomInset) miniAppRef.current?.injectJavaScript(injectedBottomInset)
   }, [injectedBottomInset])
@@ -227,6 +242,34 @@ export function MiniAppWebView({
   // actually on screen — not the one the user tapped.
   const [pageApp, setPageApp] = useState<PageApp | null>(null)
   const currentPageUrlRef = useRef<string | null>(null)
+  // The main frame's URL, for checking where a message came from. Unlike
+  // `currentPageUrlRef` it starts as the launch URL (set below, before the
+  // WebView renders), so an iframe is checked during the first load too.
+  const mainFrameUrlRef = useRef<string | null>(null)
+  const launchUrl = noAuthUrl ?? (tokenExchangeMiniAppResult.data?.url || null)
+  // Whether a WebView is on screen (the same conditions as the JSX below).
+  const webViewShown =
+    !!noAuthUrl ||
+    (isMiniAppResolved &&
+      !needsSignInToOpen &&
+      !tokenExchangeMiniAppResult.isPending &&
+      !roleMismatch &&
+      !isSwitching &&
+      tokenExchangeMiniAppResult.isSuccess)
+  useLayoutEffect(() => {
+    if (launchUrl && mainFrameUrlRef.current === null) mainFrameUrlRef.current = launchUrl
+  }, [launchUrl])
+
+  // Saving what a page offers (a QR, a receipt): the WebView cannot itself. Only
+  // the main frame's page may save, so it gets the main frame's URL.
+  const saveFile = useSaveFile(miniAppRef, mainFrameUrlRef)
+  // Haptics a page asks for, and the loading overlay a page can hold until it is ready.
+  const haptics = useHaptics(mainFrameUrlRef)
+  const loading = useLoadingOverlay(mainFrameUrlRef, webViewShown, launchUrl)
+  // The host script first: it lists what this page may use (window.__ppleHost).
+  const injectedBeforeLoad = [hostScript(), saveFile.script, injectedBottomInset]
+    .filter(Boolean)
+    .join('\n')
 
   const bridge = useSessionBridge({
     webViewRef: miniAppRef,
@@ -258,6 +301,7 @@ export function MiniAppWebView({
   const onNavigationStateChange = (navState: WebViewNavigation) => {
     setCanGoBack(navState.canGoBack)
     currentPageUrlRef.current = navState.url
+    mainFrameUrlRef.current = navState.url
     bridge.trackMainFrameUrl(navState.url)
 
     const origin = originOf(navState.url)
@@ -277,6 +321,19 @@ export function MiniAppWebView({
         : { name: hostnameOf(navState.url) ?? '', url: null, origin }
     )
   }
+
+  // Each handler answers true when the message was its own; the rest is the session bridge's.
+  const onWebViewMessage = (event: WebViewMessageEvent) => {
+    if (saveFile.onMessage(event) || haptics.onMessage(event) || loading.onMessage(event)) return
+    bridge.onMessage(event)
+  }
+
+  // The loading screen the page may hold. The WebView below stays mounted so it loads.
+  const loadingOverlay = loading.visible ? (
+    <View className="absolute inset-0 items-center justify-center bg-base-bg-default">
+      <Spinner />
+    </View>
+  ) : null
 
   const shownAppName = pageApp ? pageApp.name : openedAppName
   const shownAppUrl = pageApp ? pageApp.url : openedAppUrl
@@ -334,20 +391,24 @@ export function MiniAppWebView({
       )}
       <View className="flex-1">
         {noAuthUrl ? (
-          <WebView
-            ref={miniAppRef}
-            onNavigationStateChange={onNavigationStateChange}
-            // Registering onMessage is what exposes window.ReactNativeWebView,
-            // which tells the SDK this host speaks the session bridge. Public
-            // apps get it too: they may link to an app that needs a session.
-            onMessage={(event) => {
-              if (!saveFile.onMessage(event)) bridge.onMessage(event)
-            }}
-            userAgent={userAgent}
-            source={{ uri: noAuthUrl }}
-            startInLoadingState={true}
-            injectedJavaScriptBeforeContentLoaded={injectedBeforeLoad}
-          />
+          <>
+            <WebView
+              ref={miniAppRef}
+              onNavigationStateChange={onNavigationStateChange}
+              // Registering onMessage is what exposes window.ReactNativeWebView,
+              // which tells the SDK this host speaks the session bridge. Public
+              // apps get it too: they may link to an app that needs a session.
+              onMessage={onWebViewMessage}
+              userAgent={userAgent}
+              source={{ uri: noAuthUrl }}
+              {...webViewFeatures}
+              {...loading.handlers}
+              injectedJavaScript={hostCapabilitiesScript()}
+              injectedJavaScriptBeforeContentLoaded={injectedBeforeLoad}
+            />
+
+            {loadingOverlay}
+          </>
         ) : needsSignInToOpen && signInDeclined && !signInPrompt.prompt ? (
           <MiniAppSignInRequired onSignIn={() => void signInToOpen({ closeOnCancel: false })} />
         ) : !isMiniAppResolved ||
@@ -362,19 +423,23 @@ export function MiniAppWebView({
         ) : !tokenExchangeMiniAppResult.isSuccess ? (
           <NotFound />
         ) : (
-          <WebView
-            ref={miniAppRef}
-            onNavigationStateChange={onNavigationStateChange}
-            onMessage={(event) => {
-              if (!saveFile.onMessage(event)) bridge.onMessage(event)
-            }}
-            userAgent={userAgent}
-            // The launch URL still carries the tokens in its query string, so
-            // SDKs that predate the bridge keep working.
-            source={{ uri: tokenExchangeMiniAppResult.data.url }}
-            startInLoadingState={true}
-            injectedJavaScriptBeforeContentLoaded={injectedBeforeLoad}
-          />
+          <>
+            <WebView
+              ref={miniAppRef}
+              onNavigationStateChange={onNavigationStateChange}
+              onMessage={onWebViewMessage}
+              userAgent={userAgent}
+              // The launch URL still carries the tokens in its query string, so
+              // SDKs that predate the bridge keep working.
+              source={{ uri: tokenExchangeMiniAppResult.data.url }}
+              {...webViewFeatures}
+              {...loading.handlers}
+              injectedJavaScript={hostCapabilitiesScript()}
+              injectedJavaScriptBeforeContentLoaded={injectedBeforeLoad}
+            />
+
+            {loadingOverlay}
+          </>
         )}
       </View>
       {signInPrompt.prompt ? (
